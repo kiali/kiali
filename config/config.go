@@ -276,6 +276,7 @@ type TempoConfig struct {
 type TracingConfig struct {
 	Auth                 Auth              `yaml:"auth"`
 	CustomHeaders        map[string]string `yaml:"custom_headers,omitempty"`
+	DisableVersionCheck  bool              `yaml:"disable_version_check,omitempty"`
 	Enabled              bool              `yaml:"enabled"`      // Enable Tracing in Kiali
 	ExternalURL          string            `yaml:"external_url"` // replaces the old url
 	HealthCheckUrl       string            `yaml:"health_check_url,omitempty"`
@@ -777,16 +778,17 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				CustomHeaders:     map[string]string{},
-				Enabled:           false,
-				ExternalURL:       "",
-				GrpcPort:          9095,
-				InternalURL:       "http://tracing.istio-system:16685/jaeger",
-				IsCore:            false,
-				Provider:          JaegerProvider,
-				NamespaceSelector: true,
-				QueryScope:        map[string]string{},
-				QueryTimeout:      5,
+				CustomHeaders:       map[string]string{},
+				DisableVersionCheck: true,
+				Enabled:             false,
+				ExternalURL:         "",
+				GrpcPort:            9095,
+				InternalURL:         "http://tracing.istio-system:16685/jaeger",
+				IsCore:              false,
+				Provider:            JaegerProvider,
+				NamespaceSelector:   true,
+				QueryScope:          map[string]string{},
+				QueryTimeout:        5,
 				TempoConfig: TempoConfig{
 					CacheCapacity: 200,
 					CacheEnabled:  true,
