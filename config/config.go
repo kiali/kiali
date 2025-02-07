@@ -779,7 +779,7 @@ func NewConfig() (c *Config) {
 					Type: AuthTypeNone,
 				},
 				CustomHeaders:       map[string]string{},
-				DisableVersionCheck: true,
+				DisableVersionCheck: false,
 				Enabled:             false,
 				ExternalURL:         "",
 				GrpcPort:            9095,
