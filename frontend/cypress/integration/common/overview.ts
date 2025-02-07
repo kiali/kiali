@@ -272,14 +272,16 @@ Then(
       cy.get(`[data-test="CardItem_${ns}_${cluster1}"]`).find('[data-test="overview-type-app"]').contains(`5 app`);
       cy.get(`[data-test="CardItem_${ns}_${cluster2}"]`).find('[data-test="overview-type-app"]').contains(`4 app`);
     } else {
-      cy.exec(`kubectl get pods -n ${ns} -l app --context ${CLUSTER1_CONTEXT} --no-headers | wc -l`).then(r1 => {
+      cy.exec(
+        `kubectl get pods -n ${ns} -l app --context ${CLUSTER1_CONTEXT} --no-headers | grep Running | wc -l`
+      ).then(r1 => {
         let appPods = parseInt(r1.stdout);
         cy.exec(
-          `kubectl get pods -n ${ns} -l 'app.kubernetes.io/name,!app' --context ${CLUSTER1_CONTEXT} --no-headers | wc -l`
+          `kubectl get pods -n ${ns} -l 'app.kubernetes.io/name,!app' --context ${CLUSTER1_CONTEXT} --no-headers | grep Running | wc -l`
         ).then(r2 => {
           appPods += parseInt(r2.stdout);
           cy.exec(
-            `kubectl get pods -n ${ns} -l 'service.istio.io/canonical-name,!app.kubernetes.io/name,!app' --context ${CLUSTER1_CONTEXT} --no-headers | wc -l`
+            `kubectl get pods -n ${ns} -l 'service.istio.io/canonical-name,!app.kubernetes.io/name,!app' --context ${CLUSTER1_CONTEXT} --no-headers | grep Running | wc -l`
           ).then(r3 => {
             appPods += parseInt(r3.stdout);
             cy.get(`[data-test="CardItem_${ns}_${cluster1}"]`)
@@ -289,14 +291,16 @@ Then(
         });
       });
 
-      cy.exec(`kubectl get pods -n ${ns} -l app --context ${CLUSTER2_CONTEXT} --no-headers | wc -l`).then(r1 => {
+      cy.exec(
+        `kubectl get pods -n ${ns} -l app --context ${CLUSTER2_CONTEXT} --no-headers | grep Running | wc -l`
+      ).then(r1 => {
         let appPods = parseInt(r1.stdout);
         cy.exec(
-          `kubectl get pods -n ${ns} -l 'app.kubernetes.io/name,!app' --context ${CLUSTER2_CONTEXT} --no-headers | wc -l`
+          `kubectl get pods -n ${ns} -l 'app.kubernetes.io/name,!app' --context ${CLUSTER2_CONTEXT} --no-headers | grep Running | wc -l`
         ).then(r2 => {
           appPods += parseInt(r2.stdout);
           cy.exec(
-            `kubectl get pods -n ${ns} -l 'service.istio.io/canonical-name,!app.kubernetes.io/name,!app' --context ${CLUSTER2_CONTEXT} --no-headers | wc -l`
+            `kubectl get pods -n ${ns} -l 'service.istio.io/canonical-name,!app.kubernetes.io/name,!app' --context ${CLUSTER2_CONTEXT} --no-headers | grep Running | wc -l`
           ).then(r3 => {
             appPods += parseInt(r3.stdout);
             cy.get(`[data-test="CardItem_${ns}_${cluster2}"]`)

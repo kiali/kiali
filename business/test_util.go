@@ -21,8 +21,13 @@ import (
 // Consolidate fake/mock data used in tests per package
 
 func FakeDeployments(conf config.Config) []apps_v1.Deployment {
-	appLabel := conf.IstioLabels.AppLabelName
-	versionLabel := conf.IstioLabels.VersionLabelName
+	appLabelName := conf.IstioLabels.AppLabelName
+	versionLabelName := conf.IstioLabels.VersionLabelName
+	if appLabelName == "" {
+		appLabelName = "service.istio.io/canonical-name"
+		versionLabelName = "service.istio.io/canonical-revision"
+	}
+
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	return []apps_v1.Deployment{
 		{
@@ -38,7 +43,7 @@ func FakeDeployments(conf config.Config) []apps_v1.Deployment {
 			Spec: apps_v1.DeploymentSpec{
 				Template: core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
-						Labels: map[string]string{appLabel: "httpbin"},
+						Labels: map[string]string{appLabelName: "httpbin"},
 					},
 				},
 			},
@@ -61,7 +66,7 @@ func FakeDeployments(conf config.Config) []apps_v1.Deployment {
 			Spec: apps_v1.DeploymentSpec{
 				Template: core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
-						Labels: map[string]string{appLabel: "httpbin", versionLabel: "v2"},
+						Labels: map[string]string{appLabelName: "httpbin", versionLabelName: "v2"},
 					},
 				},
 			},
@@ -1097,16 +1102,21 @@ func FakeCustomControllerRSSyncedWithPods(conf *config.Config) []apps_v1.Replica
 	}
 }
 
-func FakeServices() []core_v1.Service {
+func FakeServices(conf config.Config) []core_v1.Service {
+	appLabelName := conf.IstioLabels.AppLabelName
+	if appLabelName == "" {
+		appLabelName = "service.istio.io/canonical-name"
+	}
+
 	return []core_v1.Service{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "httpbin",
 				Namespace: "Namespace",
-				Labels:    map[string]string{"app": "httpbin"},
+				Labels:    map[string]string{appLabelName: "httpbin"},
 			},
 			Spec: core_v1.ServiceSpec{
-				Selector: map[string]string{"app": "httpbin"},
+				Selector: map[string]string{appLabelName: "httpbin"},
 			},
 		},
 	}

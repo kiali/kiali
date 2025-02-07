@@ -287,7 +287,7 @@ func TestAppDetailsEndpoint(t *testing.T) {
 		o := obj
 		kubeObjects = append(kubeObjects, &o)
 	}
-	for _, obj := range business.FakeServices() {
+	for _, obj := range business.FakeServices(*conf) {
 		o := obj
 		kubeObjects = append(kubeObjects, &o)
 	}

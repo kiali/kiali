@@ -51,7 +51,7 @@ func (n DestinationRuleReferences) getServiceReferences(dr *networking_v1.Destin
 
 func (n DestinationRuleReferences) getWorkloadReferences(dr *networking_v1.DestinationRule) []models.WorkloadReference {
 	keys := make(map[string]bool)
-	allWorklaods := make([]models.WorkloadReference, 0)
+	allWorkloads := make([]models.WorkloadReference, 0)
 	result := make([]models.WorkloadReference, 0)
 
 	host := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, n.Namespaces.GetNames())
@@ -88,14 +88,14 @@ func (n DestinationRuleReferences) getWorkloadReferences(dr *networking_v1.Desti
 				wlLabelSet := labels.Set(wl.Labels)
 				if selector.Matches(wlLabelSet) {
 					if subsetSelector.Matches(wlLabelSet) {
-						allWorklaods = append(allWorklaods, models.WorkloadReference{Name: wl.Name, Namespace: localNs})
+						allWorkloads = append(allWorkloads, models.WorkloadReference{Name: wl.Name, Namespace: localNs})
 					}
 				}
 			}
 		}
 	}
 	// filter unique references
-	for _, wl := range allWorklaods {
+	for _, wl := range allWorkloads {
 		if !keys[wl.Name+"/"+wl.Namespace] {
 			result = append(result, wl)
 			keys[wl.Name+"/"+wl.Namespace] = true
