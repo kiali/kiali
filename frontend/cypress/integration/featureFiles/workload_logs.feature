@@ -17,8 +17,8 @@ Feature: Workload logs tab
     When I go to the Logs tab of the workload detail page
     Then I should see the "sidecar-proxy" container listed
     And I should see the "ratings" container listed
-    And the "sidecar-proxy" container should be checked
-    And the "ratings" container should be checked
+    And the "container-sidecar-proxy" container should be checked
+    And the "container-ratings" container should be checked
     And I should see some "ratings-v1" pod selected in the pod selector
 
   @bookinfo-app
@@ -44,6 +44,33 @@ Feature: Workload logs tab
     Given I am on the logs tab of the "ratings-v1" workload detail page of the "bookinfo" namespace
     When I select only the "ratings" container
     Then the log pane should only show logs for the "ratings" container
+
+  @bookinfo-app
+  @ambient
+  @waypoint
+  Scenario: The logs tab should show the ztunnel logs for a pod
+    Given I am on the "ratings-v1" workload detail page of the "bookinfo" namespace
+    When I go to the Logs tab of the workload detail page
+    Then I should see the "ztunnel" container listed
+    And I should see the "ratings" container listed
+    And I select the "ztunnel-ratings" container
+    And the "ztunnel-ratings" container should be checked
+    And the "container-ratings" container should be checked
+    And I should see some "ratings-v1" pod selected in the pod selector
+    Then the log pane should show log lines containing "ztunnel"
+
+  @bookinfo-app
+  @waypoint
+  Scenario: The logs tab should show the waypoint logs for a pod
+    Given I am on the "ratings-v1" workload detail page of the "bookinfo" namespace
+    When I go to the Logs tab of the workload detail page
+    Then I should see the "waypoint" container listed
+    And I should see the "ratings" container listed
+    And I select the "waypoint-ratings" container
+    And the "waypoint-ratings" container should be checked
+    And the "container-ratings" container should be checked
+    And I should see some "ratings-v1" pod selected in the pod selector
+    Then the log pane should show log lines containing "envoy://internal_client_address/"
 
   @bookinfo-app
   @tracing

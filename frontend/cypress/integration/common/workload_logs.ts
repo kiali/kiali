@@ -50,6 +50,12 @@ When('I select only the {string} container', (containerName: string) => {
   });
 });
 
+When('I select the {string} container', (containerName: string) => {
+  cy.get('[data-test=workload-logs-pod-containers]').within(() => {
+    cy.get(`input#${containerName}`).check();
+  });
+});
+
 When('I enable visualization of spans', () => {
   cy.get('#trace-limit-dropdown-toggle').should('not.exist');
   cy.get('[data-test=workload-logs-pod-containers]').within(() => {
@@ -67,7 +73,7 @@ Then('I should see the {string} container listed', (containerName: string) => {
 });
 
 Then('the {string} container should be checked', (containerName: string) => {
-  cy.get('[data-test=workload-logs-pod-containers]').find(`input#container-${containerName}`).should('be.checked');
+  cy.get('[data-test=workload-logs-pod-containers]').find(`input#${containerName}`).should('be.checked');
 });
 
 Then('I should see some {string} pod selected in the pod selector', (podNamePrefix: string) => {
@@ -87,6 +93,16 @@ Then('the log pane should only show log lines not containing {string}', (filterT
     .find('p')
     .each(line => {
       expect(line).to.not.contain(filterText);
+    });
+});
+
+Then('the log pane should show log lines containing {string}', (filterText: string) => {
+  cy.get('#logsText')
+    .find('p')
+    .then(lines => {
+      const linesArray = lines.toArray();
+      const found = linesArray.some(line => line.innerText.includes(filterText));
+      assert.isTrue(found);
     });
 });
 
