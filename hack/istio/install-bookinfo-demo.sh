@@ -16,22 +16,23 @@ source ${HACK_SCRIPT_DIR}/functions.sh
 
 # ISTIO_DIR is where the Istio download is installed and thus where the bookinfo demo files are found.
 # CLIENT_EXE_NAME is going to either be "oc" or "kubectl"
-ISTIO_DIR=
-CLIENT_EXE_NAME="oc"
-NAMESPACE="bookinfo"
-ISTIO_NAMESPACE="istio-system"
-INGRESS_NAMESPACE=${ISTIO_NAMESPACE}
-RATE=1
+AMBIENT_ENABLED="false" # the script will set this to true only if Ambient is enabled and no sidecars are injected
+ARCH="amd64"
 AUTO_INJECTION="true"
 AUTO_INJECTION_LABEL="istio-injection=enabled"
-MANUAL_INJECTION="false"
+CLIENT_EXE_NAME="oc"
 DELETE_BOOKINFO="false"
+INGRESS_NAMESPACE=${ISTIO_NAMESPACE}
+ISTIO_DIR=
+ISTIO_NAMESPACE="istio-system"
+MANUAL_INJECTION="false"
 MINIKUBE_PROFILE="minikube"
-ARCH="amd64"
+NAMESPACE="bookinfo"
+RATE=1
+SERVICE_VERSIONS="false"
 WAIT_TIMEOUT="0" # can be things like "60s" or "30m"
 WAYPOINT="false"
 
-AMBIENT_ENABLED="false" # the script will set this to true only if Ambient is enabled and no sidecars are injected
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -97,6 +98,10 @@ while [[ $# -gt 0 ]]; do
       MYSQL_ENABLED="true"
       shift;
       ;;
+    -sv|--service-versions)
+      SERVICE_VERSIONS="true"
+      shift;
+      ;;
     -tg|--traffic-generator)
       TRAFFIC_GENERATOR_ENABLED="true"
       shift;
@@ -127,6 +132,7 @@ Valid command line arguments:
   -g|--gateway.yaml <file>: A custom yaml file to deploy the bookinfo-gateway resources
   --mongo: Install a Mongo DB that a ratings service will access
   --mysql: Install a MySQL DB that a ratings service will access
+  -sv|--service-versions: Install bookinfo service versions and http routes. By default is false.
   -w|--waypoint: Install a waypoint proxy in bookinfo namespace when Ambient is enabled. By default is false.
   -wt|--wait-timeout <timeout>: If not "0", then this script will wait for all pods in the new bookinfo namespace to be Ready before exiting. This value can be things like "60s" or "30m". (default: 0)
   -tg|--traffic-generator: Install Kiali Traffic Generator on Bookinfo
@@ -276,13 +282,22 @@ else
     $ISTIOCTL kube-inject -f ${BOOKINFO_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
   else
     $CLIENT_EXE apply -n ${NAMESPACE} -f ${BOOKINFO_YAML}
-    if [ "${AMBIENT_ENABLED}" == "true" ]; then
-      $CLIENT_EXE apply -f "${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-versions.yaml" -n ${NAMESPACE}
-    fi
   fi
 fi
 
 $CLIENT_EXE apply -n ${NAMESPACE} -f ${GATEWAY_YAML}
+
+if [ "${SERVICE_VERSIONS}" == "true" ]; then
+  if [ "${GATEWAY_YAML}" == "${ISTIO_DIR}/samples/bookinfo/networking/bookinfo-gateway.yaml" ]; then
+    echo "Services version error: Gateway yaml should be a k8s Gateway"
+  else
+    echo "Applying services versions"
+   $CLIENT_EXE apply -f "${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-versions.yaml" -n ${NAMESPACE}
+   $CLIENT_EXE apply -f "${ISTIO_DIR}/samples/bookinfo/gateway-api/route-all-v1.yaml" -n ${NAMESPACE}
+   $CLIENT_EXE apply -f "${ISTIO_DIR}/samples/bookinfo/gateway-api/route-reviews-50-v3.yaml" -n ${NAMESPACE}
+   $CLIENT_EXE apply -f "${HACK_SCRIPT_DIR}/bookinfo-traffic/http-route-productpage-v1.yaml" -n ${NAMESPACE}
+  fi
+fi
 
 if [ "${AMBIENT_ENABLED}" == "true" ]; then
   $CLIENT_EXE annotate gateway bookinfo-gateway networking.istio.io/service-type=ClusterIP --namespace=${NAMESPACE}
