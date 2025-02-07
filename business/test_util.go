@@ -24,8 +24,8 @@ func FakeDeployments(conf config.Config) []apps_v1.Deployment {
 	appLabelName := conf.IstioLabels.AppLabelName
 	versionLabelName := conf.IstioLabels.VersionLabelName
 	if appLabelName == "" {
-		appLabelName = "service.istio.io/canonical-name"
-		versionLabelName = "service.istio.io/canonical-revision"
+		appLabelName = "app"
+		versionLabelName = "version"
 	}
 
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -1105,7 +1105,7 @@ func FakeCustomControllerRSSyncedWithPods(conf *config.Config) []apps_v1.Replica
 func FakeServices(conf config.Config) []core_v1.Service {
 	appLabelName := conf.IstioLabels.AppLabelName
 	if appLabelName == "" {
-		appLabelName = "service.istio.io/canonical-name"
+		appLabelName = "app"
 	}
 
 	return []core_v1.Service{
