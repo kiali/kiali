@@ -158,7 +158,7 @@
             "Username" : "xxx"
           },
           "CustomHeaders" : { },
-          "DisableVersionCheck" : true,
+          "DisableVersionCheck" : false,
           "Enabled" : true,
           "ExternalURL" : "",
           "HealthCheckUrl" : "",
