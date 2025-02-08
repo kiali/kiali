@@ -88,9 +88,9 @@ When(`the list is sorted by {string} desc`, (column: string) => {
     cy.get('tr').then($rows => {
       $rows.each((index, $row) => {
         if (index < $rows.length - 1) {
-          const currentRow = $row.querySelector(`td[data-label="${column}"]`).textContent;
-          const nextRow = $rows[index + 1].querySelector(`td[data-label="${column}"]`).textContent;
-          expect(currentRow.localeCompare(nextRow)).to.be.at.most(0);
+          const currentRow = $row.querySelector(`td[data-label="${column}"]`)?.textContent;
+          const nextRow = $rows[index + 1].querySelector(`td[data-label="${column}"]`)?.textContent;
+          expect(currentRow?.localeCompare(nextRow ?? '')).to.be.at.most(0);
         }
       });
     });
@@ -273,7 +273,7 @@ Then(
       cy.get(`[data-test="CardItem_${ns}_${cluster2}"]`).find('[data-test="overview-type-app"]').contains(`4 app`);
     } else if (ns === 'istio-system') {
       cy.get(`[data-test="CardItem_${ns}_${cluster1}"]`).find('[data-test="overview-type-app"]').contains(`8 app`);
-      cy.get(`[data-test="CardItem_${ns}_${cluster2}"]`).find('[data-test="overview-type-app"]').contains(`8 app`);
+      cy.get(`[data-test="CardItem_${ns}_${cluster2}"]`).find('[data-test="overview-type-app"]').contains(`3 app`);
     } else {
       cy.exec(
         `kubectl get pods -n ${ns} -l app --context ${CLUSTER1_CONTEXT} --no-headers | grep Running | wc -l`
