@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -480,8 +481,15 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 			ws[selectedWorkload.Name] = selectedWorkload
 		}
 	}
+	// return in sorted order, doesn't hurt, may help client, and helps test consistency
+	keys := make([]string, 0, len(ws))
+	for k := range ws {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
 	allEntities := make(namespaceApps)
-	for _, w := range ws {
+	for _, k := range keys {
+		w := ws[k]
 		// WorkloadGroup.Labels can be empty
 		if len(w.Labels) > 0 {
 			// Check if namespace is cached

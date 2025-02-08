@@ -1488,7 +1488,9 @@ func (config *Config) GetAppVersionLabelSelectors(app, version string) []AppVers
 	return labelSelectors
 }
 
-// GetAppLabelName returns the app label name found in the labels, and a "found" bool
+// GetAppLabelName returns the app label name found in the labels, and a "found" bool. If
+// multiple app label names exist in the labels, the "canonical" app label name is
+// returned, using the same preference as Istio.
 func (config *Config) GetAppLabelName(labels map[string]string) (string, bool) {
 	for i := 0; i < len(appLabelNames); i++ {
 		appLabelName := appLabelNames[i]
@@ -1499,7 +1501,9 @@ func (config *Config) GetAppLabelName(labels map[string]string) (string, bool) {
 	return "", false
 }
 
-// GetVersionLabelName returns the version label name found in the labels, and a "found" bool
+// GetVersionLabelName returns the version label name found in the labels, and a "found" bool. If
+// multiple version label names exist in the labels, the "canonical" version label name is
+// returned, using the same preference as Istio.
 func (config *Config) GetVersionLabelName(labels map[string]string) (string, bool) {
 	for i := 0; i < len(versionLabelNames); i++ {
 		versionLabelName := versionLabelNames[i]
