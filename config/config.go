@@ -1440,9 +1440,11 @@ type AppVersionLabelSelector struct {
 var appLabelNames, versionLabelNames []string
 
 // GetAppVersionLabelSelectors takes an app and/or version value and returns one or
-// more label selectors to be subsequently tried via label selector fetched. In general,
-// the first label selector that returns data is sufficient, and subsequent selectors
-// can be ignored. Only one selector is returned if config.IstioLabels.AppLabelName and
+// more label selectors to be subsequently tried via label selector fetched. Callers
+// should account for the fact that the same object may be labeled in multiple ways, and
+// therefore could be returned by more than one of the returned selectors.
+//
+// Only one selector is returned if config.IstioLabels.AppLabelName and
 // config.IstioLabels.VersionLabelName are set. If they are unset then three selectors will be
 // returned, in this order (the same order of preference used by Istio when setting the
 // canonical values for telemetry, etc):

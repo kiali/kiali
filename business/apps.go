@@ -461,8 +461,8 @@ func castAppDetails(appLabel string, allEntities namespaceApps, ss *models.Servi
 // Return an error on any problem.
 func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, cluster string, appName string) (namespaceApps, error) {
 	var ss *models.ServiceList
-	var ws models.Workloads
 	var err error
+	ws := map[string]*models.Workload{}
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
@@ -471,14 +471,13 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 	}
 
 	appNameSelectors := config.Get().GetAppVersionLabelSelectors(appName, "")
-	var appNameSelector config.AppVersionLabelSelector
-	for _, appNameSelector = range appNameSelectors {
-		ws, err = in.businessLayer.Workload.fetchWorkloadsFromCluster(ctx, cluster, namespace, appNameSelector.LabelSelector)
+	for _, appNameSelector := range appNameSelectors {
+		selectedWorkloads, err := in.businessLayer.Workload.fetchWorkloadsFromCluster(ctx, cluster, namespace, appNameSelector.LabelSelector)
 		if err != nil {
 			return nil, err
 		}
-		if len(ws) > 0 {
-			break
+		for _, selectedWorkload := range selectedWorkloads {
+			ws[selectedWorkload.Name] = selectedWorkload
 		}
 	}
 	allEntities := make(namespaceApps)
@@ -502,6 +501,9 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 			ss = nil
 		}
 		appLabelName, _ := in.conf.GetAppLabelName(w.Labels)
+		if strings.Contains(w.Name, "reviews") {
+			log.Infof("appLabelName=%s workload=%s, %v", appLabelName, w.Name, w.Labels)
+		}
 		castAppDetails(appLabelName, allEntities, ss, w, cluster)
 	}
 
