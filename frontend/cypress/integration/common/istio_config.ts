@@ -631,6 +631,7 @@ function waitUntilConfigIsVisible(
   if (attempt === 0) {
     throw new Error(`Condition not met after retries`);
   }
+
   cy.request({ method: 'GET', url: `${Cypress.config('baseUrl')}/api/istio/config?refresh=0` });
   cy.get('[data-test="refresh-button"]').click();
   ensureKialiFinishedLoading();
@@ -650,14 +651,9 @@ function waitUntilConfigIsVisible(
               const colorVar = `--pf-v5-global--${healthStatus}-color--100`;
               const statusColor = getComputedStyle(icon[0]).getPropertyValue(colorVar).replace('#', '');
 
-              cy.wrap(icon[0])
-                .invoke('css', 'color')
-                .then(iconColor => {
-                  // Convert the status color to RGB format to compare it with the icon color
-                  if (iconColor.toString() === hexToRgb(statusColor)) {
-                    found = true;
-                  }
-                });
+              cy.wrap(icon[0]).should('have.css', 'color', hexToRgb(statusColor));
+
+              found = true;
             });
         }
       }
