@@ -163,7 +163,36 @@ setup_kind_singlecluster() {
 
       "${SCRIPT_DIR}/keycloak.sh" -kcd "${KEYCLOAK_CERTS_DIR}" create-ca
 
-      docker network create kind || true
+      "${DORP}" network create kind || true
+      
+      local subnet
+      # we always use docker today, but we'll leave this here just in case in the future Kind and podman play nice
+      if [ "${DORP}" == "docker" ]; then
+        # loop through all known subnets in the kind network and pick out the IPv4 subnet, ignoring any IPv6 that might be in the list
+        local subnets_count="$(docker network inspect kind | jq '.[0].IPAM.Config | length')"
+        infomsg "There are [$subnets_count] subnets in the kind network"
+        for ((i=0; i<subnets_count; i++)); do
+          subnet=$(docker network inspect kind --format '{{(index .IPAM.Config '$i').Subnet}}' 2> /dev/null)
+          if [[ -n $subnet && $subnet != *:* && $subnet == *\.* ]]; then
+            infomsg "Using subnet [$subnet]"
+            break
+          else
+            infomsg "Ignoring subnet [$subnet]"
+            subnet=""
+          fi
+        done
+        if [ -z "$subnet" ]; then
+          infomsg "No subnets found in the expected docker network list. Maybe this is a podman network - let's check"
+          subnet=$(docker network inspect kind | jq -r '.[0].subnets[] | select(.subnet | test("^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+/")) | .subnet' 2>/dev/null)
+        fi
+      else
+        subnet=$(podman network inspect kind | jq -r '.[0].subnets[] | select(.subnet | test("^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+/")) | .subnet' 2>/dev/null)
+      fi
+
+      if [ -z "$subnet" ]; then
+        infomsg "There does not appear to be any IPv4 subnets configured"
+        exit 1
+      fi
 
       # Given: 172.18.0.0/16 this should return 172.18
       beginning_subnet_octets=$(docker network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}' | cut -d'.' -f1,2)
@@ -384,7 +413,7 @@ setup_kind_multicluster() {
       --kiali-enabled false \
       --manage-kind true \
       --certs-dir "${certs_dir}" \
-      -dorp docker \
+      -dorp "${DORP}" \
       --istio-dir "${istio_dir}" \
       ${kind_node_image:-}
       ${hub_arg:-} \
@@ -396,7 +425,7 @@ setup_kind_multicluster() {
     kubectl rollout status deployment prometheus -n istio-system --context kind-east
     kubectl rollout status deployment prometheus -n istio-system --context kind-west
   elif [ "${MULTICLUSTER}" == "${PRIMARY_REMOTE}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" ${kind_node_image:-} ${hub_arg:-}
+    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp "${DORP}" -te ${TEMPO} --istio-dir "${istio_dir}" ${kind_node_image:-} ${hub_arg:-}
     cluster1_context="kind-east"
     cluster2_context="kind-west"
     cluster1_name="east"
@@ -427,7 +456,7 @@ setup_kind_multicluster() {
     --cluster2-name ${cluster2_name} \
     --manage-kind true \
     ${auth_flags[@]} \
-    -dorp docker \
+    -dorp "${DORP}" \
     -kas "${AUTH_STRATEGY}" \
     -kudi true \
     -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz \

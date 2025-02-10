@@ -79,13 +79,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# TODO KinD doesn't play nice with podman today. Force docker.
-if [ "${DORP}" != "docker" ]; then
-  DORP="docker"
-  infomsg "This script will not work with 'podman' - forcing the use of 'docker'"
-  #export KIND_EXPERIMENTAL_PROVIDER=podman
-fi
-
 # abort on any error
 set -e
 
@@ -105,6 +98,15 @@ if [  -x "${KUBECTL_EXE}" ]; then
 else
   echo "Cannot find the kubectl executable. You must install it in your PATH."
   exit 1
+fi
+
+if [ "${DORP}" == "podman" ]; then
+  # Run rootful podman
+  echo "Using podman"
+  DORP="podman"
+  # Need the -E to get teh same env vars...
+  KIND_EXE="sudo -E ${KIND_EXE}"
+  export KIND_EXPERIMENTAL_PROVIDER=podman
 fi
 
 start_image_registry_daemon() {
@@ -219,7 +221,7 @@ start_kind() {
   infomsg "Kind cluster to be created with name [${NAME}]"
   infomsg "networking.ipFamily will be set to [${IP_FAMILY}]"
   KIND_NODE_IMAGE=${IMAGE:+image: ${IMAGE}}
-  cat <<EOF | ${KIND_EXE} create cluster --name "${NAME}" --config -
+  cat <<EOF | KIND_EXPERIMENTAL_PROVIDER=${DORP} ${KIND_EXE} create cluster --name "${NAME}" --config -
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 networking:
@@ -274,11 +276,15 @@ config_metallb() {
   ${KUBECTL_EXE} rollout status daemonset speaker -n metallb-system
 
   local subnet_trimmed
-  subnet_trimmed=$(echo ${subnet} | sed -E 's/([0-9]+\.[0-9]+)\.[0-9]+\..*/\1/')
+  # 10.89.0.70 --> 10.89.0
+  subnet_trimmed=$(cut -d "." -f 1-3 <<< "$subnet")
   local first_ip
-  first_ip="${subnet_trimmed}.$(echo "${LOAD_BALANCER_RANGE}" | cut -d '-' -f 1)"
+  # LB RANGE is something like 70-89
+  # This results in 10.89.0.70
+  first_ip="${subnet_trimmed}.$(cut -d '-' -f 1 <<< "${LOAD_BALANCER_RANGE}")"
   local last_ip
-  last_ip="${subnet_trimmed}.$(echo "${LOAD_BALANCER_RANGE}" | cut -d '-' -f 2)"
+  # This results in 10.89.0.89
+  last_ip="${subnet_trimmed}.$(cut -d '-' -f 2 <<< "${LOAD_BALANCER_RANGE}")"
   infomsg "LoadBalancer IP Address pool: ${first_ip}-${last_ip}"
   cat <<LBPOOL | ${KUBECTL_EXE} apply -f -
 apiVersion: metallb.io/v1beta1
