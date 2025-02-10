@@ -186,15 +186,9 @@ Cypress.Commands.add('login', (username: string, password: string) => {
     {
       cacheAcrossSpecs: true,
       validate: () => {
-        // For some reason validate is needed to preserve the kiali-token-aes cookie.
         if (auth_strategy === 'openshift' || auth_strategy === 'openid') {
-          cy.getCookies()
-            .should('exist')
-            .and('have.length.at.least', 1)
-            .then((cookies: any) => {
-              // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-              expect(cookies.some(cookie => cookie.name.startsWith('kiali-token'))).to.be.true;
-            });
+          // Make an API request that returns a 200 only when logged in
+          cy.request({ url: '/api/status' }).its('status').should('eq', 200);
         }
       }
     }
