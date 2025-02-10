@@ -509,9 +509,6 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 			ss = nil
 		}
 		appLabelName, _ := in.conf.GetAppLabelName(w.Labels)
-		if strings.Contains(w.Name, "reviews") {
-			log.Infof("appLabelName=%s workload=%s, %v", appLabelName, w.Name, w.Labels)
-		}
 		castAppDetails(appLabelName, allEntities, ss, w, cluster)
 	}
 
