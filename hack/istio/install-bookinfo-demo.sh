@@ -292,10 +292,10 @@ if [ "${SERVICE_VERSIONS}" == "true" ]; then
     echo "Services version error: Gateway yaml should be a k8s Gateway"
   else
     echo "Applying services versions"
-   $CLIENT_EXE apply -f "${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-versions.yaml" -n ${NAMESPACE}
-   $CLIENT_EXE apply -f "${ISTIO_DIR}/samples/bookinfo/gateway-api/route-all-v1.yaml" -n ${NAMESPACE}
-   $CLIENT_EXE apply -f "${ISTIO_DIR}/samples/bookinfo/gateway-api/route-reviews-50-v3.yaml" -n ${NAMESPACE}
-   $CLIENT_EXE apply -f "${HACK_SCRIPT_DIR}/bookinfo-traffic/http-route-productpage-v1.yaml" -n ${NAMESPACE}
+    $CLIENT_EXE apply -f "${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-versions.yaml" -n ${NAMESPACE}
+    $CLIENT_EXE apply -f "${ISTIO_DIR}/samples/bookinfo/gateway-api/route-all-v1.yaml" -n ${NAMESPACE}
+    $CLIENT_EXE apply -f "${ISTIO_DIR}/samples/bookinfo/gateway-api/route-reviews-50-v3.yaml" -n ${NAMESPACE}
+    $CLIENT_EXE apply -f "${HACK_SCRIPT_DIR}/bookinfo-traffic/http-route-productpage-v1.yaml" -n ${NAMESPACE}
   fi
 fi
 
