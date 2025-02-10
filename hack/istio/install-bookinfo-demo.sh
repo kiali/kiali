@@ -99,8 +99,8 @@ while [[ $# -gt 0 ]]; do
       shift;
       ;;
     -sv|--service-versions)
-      SERVICE_VERSIONS="true"
-      shift;
+      SERVICE_VERSIONS="$2"
+      shift;shift
       ;;
     -tg|--traffic-generator)
       TRAFFIC_GENERATOR_ENABLED="true"
@@ -213,6 +213,7 @@ fi
 
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 echo "AMBIENT_ENABLED=${AMBIENT_ENABLED}"
+echo "SERVICE_VERSIONS=${SERVICE_VERSIONS}"
 
 # check arch values and prepare new bookinfo-arch.yaml with matching images
 if [ "${ARCH}" == "ppc64le" ]; then
@@ -296,6 +297,12 @@ if [ "${SERVICE_VERSIONS}" == "true" ]; then
     $CLIENT_EXE apply -f "${ISTIO_DIR}/samples/bookinfo/gateway-api/route-all-v1.yaml" -n ${NAMESPACE}
     $CLIENT_EXE apply -f "${ISTIO_DIR}/samples/bookinfo/gateway-api/route-reviews-50-v3.yaml" -n ${NAMESPACE}
     $CLIENT_EXE apply -f "${HACK_SCRIPT_DIR}/bookinfo-traffic/http-route-productpage-v1.yaml" -n ${NAMESPACE}
+    $CLIENT_EXE label svc/details-v1 -n ${NAMESPACE} app=details
+    $CLIENT_EXE label svc/productpage-v1 -n ${NAMESPACE} app=productpage
+    $CLIENT_EXE label svc/reviews-v1 -n ${NAMESPACE} app=reviews
+    $CLIENT_EXE label svc/reviews-v2 -n ${NAMESPACE} app=reviews
+    $CLIENT_EXE label svc/reviews-v3 -n ${NAMESPACE} app=reviews
+    $CLIENT_EXE label svc/ratings-v1 -n ${NAMESPACE} app=ratings
   fi
 fi
 
