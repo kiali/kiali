@@ -98,7 +98,7 @@ while [[ $# -gt 0 ]]; do
       MYSQL_ENABLED="true"
       shift;
       ;;
-    -sv|--service-versions)
+    --service-versions)
       SERVICE_VERSIONS="$2"
       shift;shift
       ;;
@@ -132,7 +132,7 @@ Valid command line arguments:
   -g|--gateway.yaml <file>: A custom yaml file to deploy the bookinfo-gateway resources
   --mongo: Install a Mongo DB that a ratings service will access
   --mysql: Install a MySQL DB that a ratings service will access
-  -sv|--service-versions: Install bookinfo service versions and http routes. By default is false.
+  --service-versions: Install bookinfo service versions and http routes. By default is false.
   -w|--waypoint: Install a waypoint proxy in bookinfo namespace when Ambient is enabled. By default is false.
   -wt|--wait-timeout <timeout>: If not "0", then this script will wait for all pods in the new bookinfo namespace to be Ready before exiting. This value can be things like "60s" or "30m". (default: 0)
   -tg|--traffic-generator: Install Kiali Traffic Generator on Bookinfo
