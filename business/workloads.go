@@ -114,11 +114,12 @@ type LogEntry struct {
 }
 
 type filterOpts struct {
-	app    regexp.Regexp
-	destWk regexp.Regexp
-	destNs regexp.Regexp
-	srcWk  regexp.Regexp
-	srcNs  regexp.Regexp
+	app     regexp.Regexp
+	destWk  regexp.Regexp
+	destNs  regexp.Regexp
+	srcWk   regexp.Regexp
+	srcNs   regexp.Regexp
+	destSvc regexp.Regexp
 }
 
 // LogOptions holds query parameter values
@@ -2726,13 +2727,15 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 		nsDstPattern := fmt.Sprintf(`dst\.namespace=("?%s"?)`, namespace)
 		wkSrcPattern := fmt.Sprintf(`src\.workload=("?%s"?)`, name)
 		nsSrcPattern := fmt.Sprintf(`src\.namespace=("?%s"?)`, namespace)
+		svcPattern := fmt.Sprintf(`dst\.service=("?%s.%s.?)`, app, namespace)
 
 		// The ztunnel line should include the pod and the namespace
 		fs := filterOpts{
-			destWk: *regexp.MustCompile(wkDstPattern),
-			destNs: *regexp.MustCompile(nsDstPattern),
-			srcWk:  *regexp.MustCompile(wkSrcPattern),
-			srcNs:  *regexp.MustCompile(nsSrcPattern),
+			destWk:  *regexp.MustCompile(wkDstPattern),
+			destNs:  *regexp.MustCompile(nsDstPattern),
+			srcWk:   *regexp.MustCompile(wkSrcPattern),
+			srcNs:   *regexp.MustCompile(nsSrcPattern),
+			destSvc: *regexp.MustCompile(svcPattern),
 		}
 		opts.filter = fs
 		for _, pod := range pods {
@@ -2774,7 +2777,7 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 
 // AND filter
 func filterMatches(line string, filter filterOpts) bool {
-	if (filter.destNs.MatchString(line) && filter.destWk.MatchString(line)) || (filter.srcNs.MatchString(line) && filter.srcWk.MatchString(line)) {
+	if (filter.destNs.MatchString(line) && filter.destWk.MatchString(line)) || (filter.srcNs.MatchString(line) && filter.srcWk.MatchString(line) || filter.destSvc.MatchString(line)) {
 		return true
 	}
 	return false
