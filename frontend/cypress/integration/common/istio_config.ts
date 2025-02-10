@@ -622,15 +622,12 @@ const hexToRgb = (hex: string): string => {
 };
 
 function waitUntilConfigIsVisible(
-  attempt: number,
+  retries: number,
   crdInstanceName: string,
   crdName: string,
   namespace: string,
   healthStatus: string
 ): void {
-  if (attempt === 0) {
-    throw new Error(`Condition not met after retries`);
-  }
   cy.request({ method: 'GET', url: `${Cypress.config('baseUrl')}/api/istio/config?refresh=0` });
   cy.get('[data-test="refresh-button"]').click();
   ensureKialiFinishedLoading();
@@ -664,8 +661,12 @@ function waitUntilConfigIsVisible(
     })
     .then(() => {
       if (!found) {
-        cy.wait(10000);
-        waitUntilConfigIsVisible(attempt - 1, crdInstanceName, crdName, namespace, healthStatus);
+        if (retries === 0) {
+          throw new Error(`Condition not met after retries`);
+        } else {
+          cy.wait(20000);
+          waitUntilConfigIsVisible(retries - 1, crdInstanceName, crdName, namespace, healthStatus);
+        }
       }
     });
 }
