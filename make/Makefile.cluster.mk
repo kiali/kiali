@@ -312,11 +312,13 @@ ifeq ($(CLUSTER_TYPE),kind)
 	@echo Pushing Kiali image to kind cluster: ${CLUSTER_KIALI_TAG}
 	@rm -f /tmp/kiali-cluster-push-kiali.tar
 	${DORP} save -o /tmp/kiali-cluster-push-kiali.tar ${CLUSTER_KIALI_TAG}
-	${KIND} load image-archive /tmp/kiali-cluster-push-kiali.tar --name ${KIND_NAME}
 	@# If there is an external repo used by Kind, push it there, too, so it can be loaded from there
 ifeq ($(DORP),docker)
+	${KIND} load image-archive /tmp/kiali-cluster-push-kiali.tar --name ${KIND_NAME}
 	@if [ -n "${CLUSTER_REPO}" ]; then docker push ${CLUSTER_KIALI_TAG}; fi
 else
+# If it's rootful podman then we need to detect that.
+	@if podman ps | grep -q kind; then ${KIND} load image-archive /tmp/kiali-cluster-push-kiali.tar --name ${KIND_NAME}; else sudo KIND_EXPERIMENTAL_PROVIDER=podman ${KIND} load image-archive /tmp/kiali-cluster-push-kiali.tar --name ${KIND_NAME}; fi
 	@if [ -n "${CLUSTER_REPO}" ]; then podman push --tls-verify=false ${CLUSTER_KIALI_TAG}; fi
 endif
 else
