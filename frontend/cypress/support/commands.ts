@@ -186,10 +186,8 @@ Cypress.Commands.add('login', (username: string, password: string) => {
     {
       cacheAcrossSpecs: true,
       validate: () => {
-        if (auth_strategy === 'openshift' || auth_strategy === 'openid') {
-          // Make an API request that returns a 200 only when logged in
-          cy.request({ url: '/api/status' }).its('status').should('eq', 200);
-        }
+        // Make an API request that returns a 200 only when logged in
+        cy.request({ url: '/api/status' }).its('status').should('eq', 200);
       }
     }
   );
