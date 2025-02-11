@@ -2350,3 +2350,85 @@ func TestDiscoverTagsWithExternalCluster(t *testing.T) {
 	expectedNamespaces := []models.Namespace{{Name: "bookinfo", Cluster: "remote", Labels: map[string]string{models.IstioRevisionLabel: "prod"}, Revision: "prod"}}
 	require.Equal(expectedNamespaces, externalControlPlane.ManagedNamespaces)
 }
+
+func TestDiscoverWithMaistra(t *testing.T) {
+	conf := config.NewConfig()
+
+	defaultIstiod := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
+
+	maistraIstiod := defaultIstiod.DeepCopy()
+	maistraIstiod.Name = "istiod-basic"
+	maistraIstiod.Labels["maistra.io/owner"] = "basic"
+	maistraIstiod.Labels["istio.io/rev"] = "basic"
+
+	cases := map[string]struct {
+		BookinfoLabels            map[string]string
+		ExpectedMaistraNamespaces []string
+		ExpectedIstioNamespaces   []string
+	}{
+		"maistra manages bookinfo": {
+			BookinfoLabels:            map[string]string{"maistra.io/member-of": "istio-system", "istio.io/rev": "default"},
+			ExpectedMaistraNamespaces: []string{"bookinfo"},
+		},
+		"istiod manages bookinfo": {
+			BookinfoLabels:          map[string]string{"istio.io/rev": "default"},
+			ExpectedIstioNamespaces: []string{"bookinfo"},
+		},
+		"maistra ignore label - istiod manages bookinfo": {
+			BookinfoLabels: map[string]string{
+				"maistra.io/member-of":        "istio-system",
+				"maistra.io/ignore-namespace": "true",
+				"istio.io/rev":                "default",
+			},
+			ExpectedIstioNamespaces: []string{"bookinfo"},
+		},
+		"no maistra label - no istiod label": {
+			BookinfoLabels: map[string]string{},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+			bookinfo := &core_v1.Namespace{
+				ObjectMeta: v1.ObjectMeta{
+					Name:   "bookinfo",
+					Labels: tc.BookinfoLabels,
+				},
+			}
+
+			client := kubetest.NewFakeK8sClient(
+				bookinfo,
+				defaultIstiod,
+				maistraIstiod,
+				&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+				fakeIstioConfigMap("default"),
+				fakeIstioConfigMap("basic"),
+				FakeCertificateConfigMap("istio-system"),
+			)
+			cache := cache.NewTestingCache(t, client, *conf)
+			discovery := istio.NewDiscovery(map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client}, cache, conf)
+
+			mesh, err := discovery.Mesh(context.TODO())
+			require.NoError(err)
+			require.Len(mesh.ControlPlanes, 2)
+
+			istiod := slicetest.FindOrFail(t, mesh.ControlPlanes, func(cp models.ControlPlane) bool {
+				return cp.IstiodName == "istiod"
+			})
+			maistra := slicetest.FindOrFail(t, mesh.ControlPlanes, func(cp models.ControlPlane) bool {
+				return cp.IstiodName == "istiod-basic"
+			})
+
+			require.False(istiod.IsMaistra())
+			require.True(maistra.IsMaistra())
+
+			require.Len(istiod.ManagedNamespaces, len(tc.ExpectedIstioNamespaces))
+			require.Len(maistra.ManagedNamespaces, len(tc.ExpectedMaistraNamespaces))
+			if len(tc.ExpectedIstioNamespaces) > 0 {
+				require.Equal("bookinfo", istiod.ManagedNamespaces[0].Name)
+			} else if len(tc.ExpectedMaistraNamespaces) > 0 {
+				require.Equal("bookinfo", maistra.ManagedNamespaces[0].Name)
+			}
+		})
+	}
+}
