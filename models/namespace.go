@@ -83,7 +83,7 @@ func CastNamespace(ns core_v1.Namespace, cluster string) Namespace {
 			namespace.Revision = ""
 		} else if injectionLabel == IstioInjectionEnabledLabelValue {
 			namespace.Revision = DefaultRevisionLabel
-		} else if label, hasLabel := ns.Labels[IstioRevisionLabel]; hasLabel {
+		} else if label, hasLabel := ns.Labels[config.IstioRevisionLabel]; hasLabel {
 			namespace.Revision = label
 		}
 	}

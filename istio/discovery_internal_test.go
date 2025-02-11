@@ -104,7 +104,7 @@ func TestIstioConfigMapName(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "istio",
 					Namespace: "istio-system",
-					Labels:    map[string]string{models.IstioRevisionLabel: "default"},
+					Labels:    map[string]string{config.IstioRevisionLabel: "default"},
 				},
 				Data: map[string]string{"mesh": ""},
 			},
@@ -115,7 +115,7 @@ func TestIstioConfigMapName(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "istio-v1",
 					Namespace: "istio-system",
-					Labels:    map[string]string{models.IstioRevisionLabel: "v1"},
+					Labels:    map[string]string{config.IstioRevisionLabel: "v1"},
 				},
 				Data: map[string]string{"mesh": ""},
 			},
@@ -126,7 +126,7 @@ func TestIstioConfigMapName(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "istio",
 					Namespace: "istio-system",
-					Labels:    map[string]string{models.IstioRevisionLabel: "default"},
+					Labels:    map[string]string{config.IstioRevisionLabel: "default"},
 				},
 				Data: map[string]string{"mesh": ""},
 			},
@@ -139,7 +139,7 @@ func TestIstioConfigMapName(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "istio-v2",
 					Namespace: "istio-system",
-					Labels:    map[string]string{models.IstioRevisionLabel: "v2"},
+					Labels:    map[string]string{config.IstioRevisionLabel: "v2"},
 				},
 				Data: map[string]string{"mesh": ""},
 			},
@@ -180,7 +180,7 @@ func TestIstioConfigMapName(t *testing.T) {
 			controlPlane := &models.ControlPlane{
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
 				IstiodNamespace: "istio-system",
-				Revision:        tc.configMap.Labels[models.IstioRevisionLabel],
+				Revision:        tc.configMap.Labels[config.IstioRevisionLabel],
 			}
 			_, err = discovery.getControlPlaneConfiguration(kubeCache, controlPlane)
 			if tc.expectErr {

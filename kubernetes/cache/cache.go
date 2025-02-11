@@ -29,7 +29,6 @@ const (
 
 const (
 	kialiCacheMeshKey = "mesh"
-	ztunnelApp        = "ztunnel"
 )
 
 // KialiCache stores both kube objects and non-kube related data such as pods' proxy status.
@@ -269,7 +268,7 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 		}
 
 		selector := map[string]string{
-			"app": ztunnelApp,
+			config.IstioAppLabel: config.Ztunnel,
 		}
 		daemonsets, err := kubeCache.GetDaemonSetsWithSelector(metav1.NamespaceAll, selector)
 		if err != nil {
@@ -301,7 +300,7 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 
 	}
 	selector := map[string]string{
-		"app": ztunnelApp,
+		config.IstioAppLabel: config.Ztunnel,
 	}
 	daemonsets, err := kubeCache.GetDaemonSetsWithSelector(metav1.NamespaceAll, selector)
 	if err != nil {
@@ -323,7 +322,7 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 	}
 
 	for _, pod := range dsPods {
-		if strings.Contains(pod.Name, ztunnelApp) {
+		if strings.Contains(pod.Name, config.Ztunnel) {
 			ztunnelPods = append(ztunnelPods, pod)
 		}
 	}

@@ -117,7 +117,7 @@ func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.
 			Name:      istioConfigMapName,
 			Namespace: "istio-system",
 			Labels: map[string]string{
-				models.IstioRevisionLabel: "1-19-0",
+				config.IstioRevisionLabel: "1-19-0",
 			},
 		},
 		Data: map[string]string{"mesh": ""},
@@ -130,7 +130,7 @@ func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.
 			Name:      istiodDeploymentName,
 			Namespace: "istio-system",
 			Labels: map[string]string{
-				models.IstioRevisionLabel: "1-19-0",
+				config.IstioRevisionLabel: "1-19-0",
 				"app":                     "istiod",
 			},
 		},
@@ -839,7 +839,7 @@ defaultVirtualServiceExportTo:
 			Name:      "istio",
 			Namespace: "istio-system",
 			Labels: map[string]string{
-				models.IstioRevisionLabel: "default",
+				config.IstioRevisionLabel: "default",
 			},
 		},
 		Data: map[string]string{"mesh": configMapData},

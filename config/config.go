@@ -74,6 +74,9 @@ const (
 const (
 	AmbientAnnotation         = "ambient.istio.io/redirection"
 	AmbientAnnotationEnabled  = "enabled"
+	IstioAppLabel             = "app"          // we can assume istio components are labeled with "app"
+	IstioRevisionLabel        = "istio.io/rev" // the standard label key used to identify the istio revision.
+	IstioVersionLabel         = "version"      // we can assume istio components are labeled with "version", if versioned
 	Waypoint                  = "waypoint"
 	WaypointFor               = "istio.io/waypoint-for"
 	WaypointForAll            = "all"
@@ -807,7 +810,7 @@ func NewConfig() (c *Config) {
 			AmbientWaypointUseLabel:     WaypointUseLabel,
 			AppLabelName:                "",
 			InjectionLabelName:          "istio-injection",
-			InjectionLabelRev:           "istio.io/rev",
+			InjectionLabelRev:           IstioRevisionLabel,
 			VersionLabelName:            "",
 		},
 		KialiFeatureFlags: KialiFeatureFlags{

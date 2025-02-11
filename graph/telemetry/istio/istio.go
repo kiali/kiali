@@ -34,6 +34,7 @@ import (
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry"
 	"github.com/kiali/kiali/graph/telemetry/istio/appender"
@@ -366,7 +367,7 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, metri
 		ztunnel := false
 		if protocol == graph.TCP.Name {
 			if lApp, appOk := m["app"]; appOk {
-				ztunnel = string(lApp) == "ztunnel"
+				ztunnel = string(lApp) == config.Ztunnel
 			}
 		}
 

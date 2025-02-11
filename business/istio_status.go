@@ -208,7 +208,7 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster
 
 	// Map workloads there by app name
 	for _, workload := range workloads {
-		appLabel := labels.Set(workload.Labels).Get("app")
+		appLabel := labels.Set(workload.Labels).Get(config.IstioAppLabel)
 		if appLabel == "" {
 			continue
 		}

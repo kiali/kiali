@@ -599,8 +599,9 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 	for _, item := range rSvcs {
 		// app label selector of services should match, loading all versions
 		if selector, err3 := labels.ConvertSelectorToLabelsMap(labelsSelector); err3 == nil {
-			if appSelector, ok := item.Attributes.LabelSelectors["app"]; ok && selector.Has("app") && appSelector == selector.Get("app") {
-				if _, ok1 := item.Attributes.LabelSelectors["version"]; ok1 {
+			appLabelName, appLabelNameFound := in.config.GetAppLabelName(selector)
+			if appSelector, ok := item.Attributes.LabelSelectors[appLabelName]; ok && appLabelNameFound && appSelector == selector.Get(appLabelName) {
+				if _, verLabelNameFound := in.config.GetVersionLabelName(item.Attributes.LabelSelectors); verLabelNameFound {
 					ports := map[string]int{}
 					for _, port := range item.Ports {
 						ports[port.Name] = port.Port
@@ -873,7 +874,7 @@ func (in *SvcService) GetServiceTracingName(ctx context.Context, cluster, namesp
 
 	svc, err := in.GetService(ctx, cluster, namespace, service)
 	if err != nil {
-		return tracingName, fmt.Errorf("Service [cluster: %s] [namespace: %s] [name: %s] doesn't exist.", cluster, namespace, service)
+		return tracingName, fmt.Errorf("Service [cluster: %s] [namespace: %s] [name: %s] doesn't exist", cluster, namespace, service)
 	}
 	// Waypoint proxies don't have the label app, but they do have traces
 	if IsWaypoint(svc) {
@@ -888,7 +889,12 @@ func (in *SvcService) GetServiceTracingName(ctx context.Context, cluster, namesp
 		return tracingName, nil
 	}
 
-	appLabelName, _ := in.config.GetAppLabelName(svc.Selectors) // Is it OK that this assumes the label is found?
+	appLabelName, found := in.config.GetAppLabelName(svc.Selectors)
+	// the prior code assumed the svc.Selectors had the configured appLabelName entry. I'm going to assume the same
+	// thing in the new code, that a valid appLabelName is found. I will log something if the assumption proves false.
+	if !found {
+		log.Debugf("Expected appLabelName not found in svc.Selectors for [%s:%s:%s]", svc.Cluster, svc.Namespace, svc.Name)
+	}
 	app := svc.Selectors[appLabelName]
 	tracingName.App = app
 	tracingName.Lookup = app
