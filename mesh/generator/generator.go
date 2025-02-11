@@ -185,6 +185,57 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			mesh.CheckError(err)
 		}
 
+		// if ambient, add ztunnel
+		if gi.KialiCache.IsAmbientEnabled(cp.Cluster.Name) {
+			// fetch the detail for each waypoint because we need the waypoint workloads and/or services
+			// TODO: Fix this (and other) hardcoded "app" labelNames after the labelName PR is merged
+			ztunnels, err := gi.Business.Workload.GetAllWorkloads(ctx, cp.Cluster.Name, "app=ztunnel")
+			mesh.CheckError(err)
+
+			for _, ztunnel := range ztunnels {
+				var infraData interface{}
+				infraData = struct {
+					Annotations         map[string]string
+					Labels              map[string]string
+					TemplateAnnotations map[string]string
+					TemplateLabels      map[string]string
+				}{
+					Annotations:         ztunnel.Annotations,
+					Labels:              ztunnel.Labels,
+					TemplateAnnotations: ztunnel.TemplateAnnotations,
+					TemplateLabels:      ztunnel.TemplateLabels,
+				}
+
+				if ztunnel.PodCount > 0 {
+					infraData = gi.Business.Workload.GetZtunnelConfig(ztunnel.Cluster, ztunnel.Namespace, ztunnel.Pods[0].Name)
+					mesh.CheckError(err)
+				}
+
+				version := models.DefaultRevisionLabel
+				if rev, ok := ztunnel.Labels[models.IstioRevisionLabel]; ok {
+					version = rev
+				}
+
+				ztunnelNode, _, err := addInfra(meshMap, mesh.InfraTypeWaypoint, ztunnel.Cluster, ztunnel.Namespace, ztunnel.Name, infraData, version, false, "")
+				mesh.CheckError(err)
+
+				// add edge to the managing control plane
+				for _, infraNode := range meshMap {
+					if infraNode.InfraType == mesh.InfraTypeIstiod && infraNode.Cluster == ztunnel.Cluster {
+						cp := infraNode.Metadata[mesh.InfraData].(models.ControlPlane)
+						tag := "default"
+						if cp.Tag != nil {
+							tag = cp.Tag.Name
+						}
+						if tag == ztunnelNode.Metadata[mesh.Version] {
+							infraNode.AddEdge(ztunnelNode)
+							break
+						}
+					}
+				}
+			}
+		}
+
 		// if included, add any waypoints
 		if o.IncludeWaypoints {
 			for _, wp := range gi.Business.Workload.GetWaypoints(ctx) {

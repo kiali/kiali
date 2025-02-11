@@ -158,7 +158,7 @@ func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1.Au
 }
 
 // GetAllWorkloads fetches all workloads across every namespace in the cluster.
-func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string) (models.Workloads, error) {
+func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string, labelSelector string) (models.Workloads, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetAllWorkloads",
 		observability.Attribute("package", "business"),
@@ -173,7 +173,7 @@ func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string) 
 
 	var workloads models.Workloads
 	for _, namespace := range namespaces {
-		w, err := in.fetchWorkloadsFromCluster(ctx, cluster, namespace.Name, "")
+		w, err := in.fetchWorkloadsFromCluster(ctx, cluster, namespace.Name, labelSelector)
 		if err != nil {
 			return nil, err
 		}
@@ -185,8 +185,8 @@ func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string) 
 }
 
 // GetAllGateways fetches all gateway workloads across every namespace in the cluster.
-func (in *WorkloadService) GetAllGateways(ctx context.Context, cluster string) (models.Workloads, error) {
-	workloads, err := in.GetAllWorkloads(ctx, cluster)
+func (in *WorkloadService) GetAllGateways(ctx context.Context, cluster string, labelSelector string) (models.Workloads, error) {
+	workloads, err := in.GetAllWorkloads(ctx, cluster, labelSelector)
 	if err != nil {
 		return nil, err
 	}

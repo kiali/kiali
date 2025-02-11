@@ -108,7 +108,7 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 	}
 
 	// Autodiscover gateways.
-	gateways, err := iss.workloads.GetAllGateways(ctx, cluster)
+	gateways, err := iss.workloads.GetAllGateways(ctx, cluster, "")
 	if err != nil {
 		// Don't error on gateways since they are non-essential.
 		log.Debugf("Unable to get gateway workloads when building istio component status. Cluster: %s. Err: %s", cluster, err)
