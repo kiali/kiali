@@ -229,6 +229,7 @@ export const renderNodeLink = (meshData: MeshNodeData, style?: string): React.Re
       pfBadge = PFBadges.Workload;
       break;
     case MeshInfraType.WAYPOINT:
+    case MeshInfraType.ZTUNNEL:
       link = `/namespaces/${encodeURIComponent(meshData.namespace)}/workloads/${encodeURIComponent(
         meshData.infraName
       )}`;
