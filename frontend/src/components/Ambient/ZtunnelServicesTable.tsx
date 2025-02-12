@@ -8,6 +8,7 @@ import { t } from 'i18next';
 import { SortableCompareTh } from './ZtunnelConfig';
 
 type ZtunnelServicesProps = {
+  items: any;
   config?: ZtunnelService[];
 };
 

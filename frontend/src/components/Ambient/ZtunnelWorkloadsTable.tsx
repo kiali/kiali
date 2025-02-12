@@ -8,6 +8,7 @@ import { t } from 'i18next';
 import { SortableCompareTh } from './ZtunnelConfig';
 
 type ZtunnelWorkloadsProps = {
+  items: any;
   config?: ZtunnelWorkload[];
 };
 

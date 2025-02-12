@@ -6,6 +6,7 @@ import { ServiceInfo } from './ServiceInfo';
 export type WorkloadId = {
   namespace: string;
   workload: string;
+  service: string;
 };
 
 export type WorkloadInfo = {

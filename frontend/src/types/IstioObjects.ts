@@ -1451,8 +1451,8 @@ export type ZtunnelConfigDump = {
   certificates?: Certificate[];
   config?: ZtunnelConfig;
   policies?: any[];
-  services?: ZtunnelService[];
-  workloads?: ZtunnelWorkload[];
+  services: ZtunnelService[];
+  workloads: ZtunnelWorkload[];
 };
 
 export type Certificate = {
@@ -1505,9 +1505,11 @@ export type ZtunnelConfig = {
   requireOriginalSource?: string;
   secretTtl: TimeDuration;
   selfTerminationDeadline: TimeDuration;
+  services: string;
   socks5Addr?: string;
   statsAddr: SocketAddress;
   windowSize: number;
+  workload: string;
   xdsAddress: string;
   xdsOnDemand: boolean;
   xdsRootCert: FilePath;
@@ -1569,12 +1571,15 @@ export type SocketAddress = {
 };
 
 export type ZtunnelService = {
+  info: any;
+  services: string;
   endpoints: Record<string, ZtunnelEndpoint>;
   hostname: string;
   ipFamilies: string;
   name: string;
   namespace: string;
   ports: Record<string, number>;
+  service: string;
   subjectAltNames: string[];
   vips: string[];
   waypoint: ZtunnelWaypoint;
@@ -1592,6 +1597,7 @@ export type ZtunnelWaypoint = {
 };
 
 export type ZtunnelWorkload = {
+  forEach: any;
   canonicalName: string;
   canonicalRevision: string;
   clusterId: string;
@@ -1601,11 +1607,12 @@ export type ZtunnelWorkload = {
   node: string;
   protocol: string;
   serviceAccount: string;
-  services: string[];
+  services: string;
   status: string;
   trustDomain: string;
   uid: string;
   waypoint?: ZtunnelWaypoint;
+  workload: string;
   workloadIps: string[];
   workloadName: string;
   workloadType: string;
