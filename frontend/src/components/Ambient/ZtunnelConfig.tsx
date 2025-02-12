@@ -187,7 +187,11 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
       <Card className={fullHeightStyle}>
         <CardBody>
           <div className={fullHeightStyle}>
-            <ZtunnelMetrics />
+            <ZtunnelMetrics
+              lastRefreshAt={props.lastRefreshAt}
+              namespace={props.namespace}
+              cluster={props.workload.cluster ? props.workload.cluster : ''}
+            />
           </div>
         </CardBody>
       </Card>
