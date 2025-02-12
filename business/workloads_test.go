@@ -1774,7 +1774,7 @@ func TestGetAllGateways(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
-	workloads, err := svc.GetAllGateways(context.Background(), conf.KubernetesConfig.ClusterName)
+	workloads, err := svc.GetAllGateways(context.Background(), conf.KubernetesConfig.ClusterName, "")
 	require.NoError(err)
 
 	require.Len(workloads, 1)

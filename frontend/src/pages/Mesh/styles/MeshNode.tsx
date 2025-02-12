@@ -18,6 +18,7 @@ import { ReactComponent as GrafanaLogo } from '../../../assets/img/mesh/grafana.
 import { ReactComponent as IstioLogo } from '../../../assets/img/mesh/istio.svg';
 import { ReactComponent as KialiLogo } from '../../../assets/img/mesh/kiali.svg';
 import { ReactComponent as TempoLogo } from '../../../assets/img/mesh/tempo.svg';
+import { ReactComponent as ZtunnelLogo } from '../../../assets/img/mesh/ztunnel-blue-on-transparent.svg';
 import { store } from 'store/ConfigStore';
 import { JAEGER, TEMPO } from 'types/Tracing';
 import { GlobeRouteIcon, InfrastructureIcon, LayerGroupIcon } from '@patternfly/react-icons';
@@ -69,6 +70,10 @@ const renderIcon = (element: Node): React.ReactNode => {
     case MeshInfraType.WAYPOINT:
       Component = InfrastructureIcon;
       iconSizeMultiplier = 0.5;
+      break;
+    case MeshInfraType.ZTUNNEL:
+      Component = ZtunnelLogo;
+      iconSizeMultiplier = 1.05;
       break;
   }
 

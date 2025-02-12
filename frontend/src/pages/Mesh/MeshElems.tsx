@@ -169,6 +169,9 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap): void => {
       case MeshInfraType.WAYPOINT:
         pfBadge = PFBadges.Waypoint;
         break;
+      case MeshInfraType.ZTUNNEL:
+        pfBadge = PFBadges.ZTUNNEL;
+        break;
       default:
         console.warn(`MeshElems: Unexpected infraType [${infraType}] `);
     }
