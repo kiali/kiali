@@ -20,10 +20,11 @@ import { ZtunnelServicesTable } from './ZtunnelServicesTable';
 import { ZtunnelWorkloadsTable } from './ZtunnelWorkloadsTable';
 import { t } from 'i18next';
 import { SortableTh } from '../Table/SimpleTable';
+import { ZtunnelMetrics } from './ZtunnelMetrics';
 
-const resources: string[] = ['services', 'workloads'];
+const resources: string[] = ['services', 'workloads', 'metrics'];
 
-const ztunnelTabs = ['services', 'workloads'];
+const ztunnelTabs = ['services', 'workloads', 'metrics'];
 const tabName = 'ztunnelTab';
 const defaultTab = 'services';
 
@@ -65,7 +66,6 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
       .then(resultConfig => {
         setConfig(resultConfig.data);
         setFetch(false);
-        console.log(resultConfig.data);
       })
       .catch(error => {
         AlertUtils.addError(`Could not fetch ztunnel config for ${name}.`, error);
@@ -181,6 +181,19 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
     </Tab>
   );
   tabs.push(workloadsTab);
+
+  const metricsTab = (
+    <Tab title={t('Metrics')} eventKey={2} key="metrics">
+      <Card className={fullHeightStyle}>
+        <CardBody>
+          <div className={fullHeightStyle}>
+            <ZtunnelMetrics />
+          </div>
+        </CardBody>
+      </Card>
+    </Tab>
+  );
+  tabs.push(metricsTab);
 
   return (
     <RenderComponentScroll>
