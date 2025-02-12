@@ -21,8 +21,13 @@ import (
 // Consolidate fake/mock data used in tests per package
 
 func FakeDeployments(conf config.Config) []apps_v1.Deployment {
-	appLabel := conf.IstioLabels.AppLabelName
-	versionLabel := conf.IstioLabels.VersionLabelName
+	appLabelName := conf.IstioLabels.AppLabelName
+	versionLabelName := conf.IstioLabels.VersionLabelName
+	if appLabelName == "" {
+		appLabelName = "app"
+		versionLabelName = "version"
+	}
+
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	return []apps_v1.Deployment{
 		{
@@ -38,7 +43,7 @@ func FakeDeployments(conf config.Config) []apps_v1.Deployment {
 			Spec: apps_v1.DeploymentSpec{
 				Template: core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
-						Labels: map[string]string{appLabel: "httpbin"},
+						Labels: map[string]string{appLabelName: "httpbin"},
 					},
 				},
 			},
@@ -61,7 +66,7 @@ func FakeDeployments(conf config.Config) []apps_v1.Deployment {
 			Spec: apps_v1.DeploymentSpec{
 				Template: core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
-						Labels: map[string]string{appLabel: "httpbin", versionLabel: "v2"},
+						Labels: map[string]string{appLabelName: "httpbin", versionLabelName: "v2"},
 					},
 				},
 			},
@@ -246,8 +251,7 @@ func FakeDuplicatedReplicaSets() []apps_v1.ReplicaSet {
 	}
 }
 
-func FakeReplicationControllers() []core_v1.ReplicationController {
-	conf := config.NewConfig()
+func FakeReplicationControllers(conf *config.Config) []core_v1.ReplicationController {
 	// Enable ReplicationController, those are not fetched by default
 	conf.KubernetesConfig.ExcludeWorkloads = []string{}
 
@@ -327,8 +331,7 @@ func FakeReplicationControllers() []core_v1.ReplicationController {
 	}
 }
 
-func FakeDeploymentConfigs() []osapps_v1.DeploymentConfig {
-	conf := config.NewConfig()
+func FakeDeploymentConfigs(conf *config.Config) []osapps_v1.DeploymentConfig {
 	conf.KubernetesConfig.ExcludeWorkloads = []string{}
 
 	appLabel := conf.IstioLabels.AppLabelName
@@ -407,8 +410,7 @@ func FakeDeploymentConfigs() []osapps_v1.DeploymentConfig {
 	}
 }
 
-func FakeStatefulSets() []apps_v1.StatefulSet {
-	conf := config.NewConfig()
+func FakeStatefulSets(conf *config.Config) []apps_v1.StatefulSet {
 	conf.KubernetesConfig.ExcludeWorkloads = []string{}
 
 	appLabel := conf.IstioLabels.AppLabelName
@@ -484,8 +486,7 @@ func FakeStatefulSets() []apps_v1.StatefulSet {
 	}
 }
 
-func FakeDaemonSets() []apps_v1.DaemonSet {
-	conf := config.NewConfig()
+func FakeDaemonSets(conf *config.Config) []apps_v1.DaemonSet {
 	conf.KubernetesConfig.ExcludeWorkloads = []string{}
 
 	appLabel := conf.IstioLabels.AppLabelName
@@ -564,9 +565,7 @@ func FakeDaemonSets() []apps_v1.DaemonSet {
 	}
 }
 
-func FakeDuplicatedStatefulSets() []apps_v1.StatefulSet {
-	conf := config.NewConfig()
-
+func FakeDuplicatedStatefulSets(conf *config.Config) []apps_v1.StatefulSet {
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -596,9 +595,7 @@ func FakeDuplicatedStatefulSets() []apps_v1.StatefulSet {
 	}
 }
 
-func FakeDepSyncedWithRS() []apps_v1.Deployment {
-	conf := config.NewConfig()
-
+func FakeDepSyncedWithRS(conf *config.Config) []apps_v1.Deployment {
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -629,9 +626,7 @@ func FakeDepSyncedWithRS() []apps_v1.Deployment {
 	}
 }
 
-func FakeRSSyncedWithPods() []apps_v1.ReplicaSet {
-	conf := config.NewConfig()
-
+func FakeRSSyncedWithPods(conf *config.Config) []apps_v1.ReplicaSet {
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -669,9 +664,7 @@ func FakeRSSyncedWithPods() []apps_v1.ReplicaSet {
 	}
 }
 
-func FakePodsSyncedWithDeployments() []core_v1.Pod {
-	conf := config.NewConfig()
-
+func FakePodsSyncedWithDeployments(conf *config.Config) []core_v1.Pod {
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -705,9 +698,7 @@ func FakePodsSyncedWithDeployments() []core_v1.Pod {
 	}
 }
 
-func FakePodSyncedWithDeployments() *core_v1.Pod {
-	conf := config.NewConfig()
-
+func FakePodSyncedWithDeployments(conf *config.Config) *core_v1.Pod {
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -804,9 +795,7 @@ func FakePodLogsWaypoint() *kubernetes.PodLogs {
 	}
 }
 
-func FakePodsSyncedWithDuplicated() []core_v1.Pod {
-	conf := config.NewConfig()
-
+func FakePodsSyncedWithDuplicated(conf *config.Config) []core_v1.Pod {
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -865,9 +854,7 @@ func FakePodsSyncedWithDuplicated() []core_v1.Pod {
 	}
 }
 
-func FakePodsNoController() []core_v1.Pod {
-	conf := config.NewConfig()
-
+func FakePodsNoController(conf *config.Config) []core_v1.Pod {
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -899,9 +886,7 @@ func FakePodsNoController() []core_v1.Pod {
 	}
 }
 
-func FakePodsFromCustomController() []core_v1.Pod {
-	conf := config.NewConfig()
-
+func FakePodsFromCustomController(conf *config.Config) []core_v1.Pod {
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -935,9 +920,7 @@ func FakePodsFromCustomController() []core_v1.Pod {
 	}
 }
 
-func FakeZtunnelPods() []core_v1.Pod {
-	conf := config.NewConfig()
-
+func FakeZtunnelPods(conf *config.Config) []core_v1.Pod {
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -989,9 +972,7 @@ func FakeWaypointPod() []core_v1.Pod {
 	}
 }
 
-func FakeWaypointNamespaceEnrolledPods(waypoint bool) []core_v1.Pod {
-	conf := config.NewConfig()
-
+func FakeWaypointNamespaceEnrolledPods(conf *config.Config, waypoint bool) []core_v1.Pod {
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	waypointLabel := conf.IstioLabels.AmbientWaypointUseLabel
@@ -1032,8 +1013,7 @@ func FakeWaypointNamespaceEnrolledPods(waypoint bool) []core_v1.Pod {
 	}
 }
 
-func FakeWaypointNServiceEnrolledPods() []core_v1.Service {
-	conf := config.NewConfig()
+func FakeWaypointNServiceEnrolledPods(conf *config.Config) []core_v1.Service {
 	waypointLabel := conf.IstioLabels.AmbientWaypointUseLabel
 
 	return []core_v1.Service{
@@ -1048,11 +1028,9 @@ func FakeWaypointNServiceEnrolledPods() []core_v1.Service {
 			},
 		},
 	}
-
 }
 
-func FakeZtunnelDaemonSet() []apps_v1.DaemonSet {
-	conf := config.NewConfig()
+func FakeZtunnelDaemonSet(conf *config.Config) []apps_v1.DaemonSet {
 	conf.KubernetesConfig.ExcludeWorkloads = []string{}
 
 	appLabel := conf.IstioLabels.AppLabelName
@@ -1087,9 +1065,7 @@ func FakeZtunnelDaemonSet() []apps_v1.DaemonSet {
 	}
 }
 
-func FakeCustomControllerRSSyncedWithPods() []apps_v1.ReplicaSet {
-	conf := config.NewConfig()
-
+func FakeCustomControllerRSSyncedWithPods(conf *config.Config) []apps_v1.ReplicaSet {
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -1126,16 +1102,21 @@ func FakeCustomControllerRSSyncedWithPods() []apps_v1.ReplicaSet {
 	}
 }
 
-func FakeServices() []core_v1.Service {
+func FakeServices(conf config.Config) []core_v1.Service {
+	appLabelName := conf.IstioLabels.AppLabelName
+	if appLabelName == "" {
+		appLabelName = "app"
+	}
+
 	return []core_v1.Service{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "httpbin",
 				Namespace: "Namespace",
-				Labels:    map[string]string{"app": "httpbin"},
+				Labels:    map[string]string{appLabelName: "httpbin"},
 			},
 			Spec: core_v1.ServiceSpec{
-				Selector: map[string]string{"app": "httpbin"},
+				Selector: map[string]string{appLabelName: "httpbin"},
 			},
 		},
 	}

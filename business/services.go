@@ -306,14 +306,15 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 		}
 
 		/** Check if Service has the label app required by Istio */
-		_, appLabel := item.Spec.Selector[conf.IstioLabels.AppLabelName]
+		_, appLabelNameFound := conf.GetAppLabelName(item.Spec.Selector)
+
 		/** Check if Service has additional item icon */
 		services[i] = models.ServiceOverview{
 			Name:                   item.Name,
 			Namespace:              item.Namespace,
 			IstioSidecar:           hasSidecar,
 			IsAmbient:              hasAmbient,
-			AppLabel:               appLabel,
+			AppLabel:               appLabelNameFound,
 			AdditionalDetailSample: models.GetFirstAdditionalIcon(&conf, item.ObjectMeta.Annotations),
 			Health:                 models.EmptyServiceHealth(),
 			HealthAnnotations:      models.GetHealthAnnotation(item.Annotations, models.GetHealthConfigAnnotation()),
@@ -377,7 +378,9 @@ func (in *SvcService) buildRegistryServices(rSvcs []*kubernetes.RegistryService,
 		if !filterIstioServiceByClusterId(clusterId, item) {
 			continue
 		}
-		_, appLabel := item.Attributes.LabelSelectors[conf.IstioLabels.AppLabelName]
+
+		_, appLabelFound := conf.GetAppLabelName(item.Attributes.LabelSelectors)
+
 		// ServiceEntry/External and Federation will be marked as hasSidecar == true as they will have telemetry
 		hasSidecar := true
 		if item.Attributes.ServiceRegistry != "External" && item.Attributes.ServiceRegistry != "Federation" {
@@ -411,7 +414,7 @@ func (in *SvcService) buildRegistryServices(rSvcs []*kubernetes.RegistryService,
 			Name:              item.Attributes.Name,
 			Namespace:         item.Attributes.Namespace,
 			IstioSidecar:      hasSidecar,
-			AppLabel:          appLabel,
+			AppLabel:          appLabelFound,
 			Health:            models.EmptyServiceHealth(),
 			HealthAnnotations: map[string]string{},
 			Labels:            item.Attributes.Labels,
@@ -596,8 +599,9 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 	for _, item := range rSvcs {
 		// app label selector of services should match, loading all versions
 		if selector, err3 := labels.ConvertSelectorToLabelsMap(labelsSelector); err3 == nil {
-			if appSelector, ok := item.Attributes.LabelSelectors["app"]; ok && selector.Has("app") && appSelector == selector.Get("app") {
-				if _, ok1 := item.Attributes.LabelSelectors["version"]; ok1 {
+			appLabelName, appLabelNameFound := in.config.GetAppLabelName(selector)
+			if appSelector, ok := item.Attributes.LabelSelectors[appLabelName]; ok && appLabelNameFound && appSelector == selector.Get(appLabelName) {
+				if _, verLabelNameFound := in.config.GetVersionLabelName(item.Attributes.LabelSelectors); verLabelNameFound {
 					ports := map[string]int{}
 					for _, port := range item.Ports {
 						ports[port.Name] = port.Port
@@ -870,7 +874,7 @@ func (in *SvcService) GetServiceTracingName(ctx context.Context, cluster, namesp
 
 	svc, err := in.GetService(ctx, cluster, namespace, service)
 	if err != nil {
-		return tracingName, fmt.Errorf("Service [cluster: %s] [namespace: %s] [name: %s] doesn't exist.", cluster, namespace, service)
+		return tracingName, fmt.Errorf("Service [cluster: %s] [namespace: %s] [name: %s] doesn't exist", cluster, namespace, service)
 	}
 	// Waypoint proxies don't have the label app, but they do have traces
 	if IsWaypoint(svc) {
@@ -885,7 +889,12 @@ func (in *SvcService) GetServiceTracingName(ctx context.Context, cluster, namesp
 		return tracingName, nil
 	}
 
-	appLabelName := in.config.IstioLabels.AppLabelName
+	appLabelName, found := in.config.GetAppLabelName(svc.Selectors)
+	// the prior code assumed the svc.Selectors had the configured appLabelName entry. I'm going to assume the same
+	// thing in the new code, that a valid appLabelName is found. I will log something if the assumption proves false.
+	if !found {
+		log.Debugf("Expected appLabelName not found in svc.Selectors for [%s:%s:%s]", svc.Cluster, svc.Namespace, svc.Name)
+	}
 	app := svc.Selectors[appLabelName]
 	tracingName.App = app
 	tracingName.Lookup = app

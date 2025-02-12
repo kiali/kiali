@@ -29,8 +29,7 @@ const (
 
 const (
 	istioControlPlaneClustersLabel        = "topology.istio.io/controlPlaneClusters"
-	istiodAppNameLabelKey                 = "app"
-	istiodAppNameLabelValue               = "istiod"
+	istiodAppLabelValue                   = "istiod"
 	istiodClusterIDEnvKey                 = "CLUSTER_ID"
 	istiodExternalEnvKey                  = "EXTERNAL_ISTIOD"
 	istiodScopeGatewayEnvKey              = "PILOT_SCOPE_GATEWAY_TO_NAMESPACE"
@@ -293,7 +292,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		}
 
 		// If there's an istiod on it, then it's a controlplane cluster. Otherwise it is a remote cluster.
-		istiods, err := kubeCache.GetDeploymentsWithSelector(metav1.NamespaceAll, istiodAppNameLabelKey+"="+istiodAppNameLabelValue)
+		istiods, err := kubeCache.GetDeploymentsWithSelector(metav1.NamespaceAll, config.IstioAppLabel+"="+istiodAppLabelValue)
 		if err != nil {
 			return nil, err
 		}
@@ -311,7 +310,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				Labels:          istiod.Labels,
 				IstiodName:      istiod.Name,
 				IstiodNamespace: istiod.Namespace,
-				Revision:        istiod.Labels[models.IstioRevisionLabel],
+				Revision:        istiod.Labels[config.IstioRevisionLabel],
 			}
 
 			controlPlaneConfig, err := in.getControlPlaneConfiguration(kubeCache, &controlPlane)
@@ -604,7 +603,7 @@ func (in *Discovery) setTags(ctx context.Context, controlPlanes []models.Control
 			tag := models.Tag{
 				Cluster:  cluster,
 				Name:     webhook.Labels[models.IstioTagLabel],
-				Revision: webhook.Labels[models.IstioRevisionLabel],
+				Revision: webhook.Labels[config.IstioRevisionLabel],
 			}
 			key := tag.Cluster + tag.Revision
 			if _, found := tagsByClusterRev[key]; found {

@@ -22,8 +22,10 @@ func HasDRCircuitBreaker(dr *networking_v1.DestinationRule, namespace, serviceNa
 				if version == "" {
 					return true
 				}
-				if versionValue, ok := subset.Labels[cfg.IstioLabels.VersionLabelName]; ok && versionValue == version {
-					return true
+				if verLabelName, found := cfg.GetVersionLabelName(subset.Labels); found {
+					if versionValue, ok := subset.Labels[verLabelName]; ok && versionValue == version {
+						return true
+					}
 				}
 			}
 		}

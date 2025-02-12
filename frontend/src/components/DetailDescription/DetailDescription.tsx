@@ -169,7 +169,6 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
     const applicationList =
       props.apps && props.apps.length > 0
         ? props.apps
-            .sort((a1: string, a2: string) => (a1 < a2 ? -1 : 1))
             .filter(name => {
               if (name === undefined) {
                 return null;
@@ -321,6 +320,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
       const item = props.health.getWorkloadStatus();
 
       if (item) {
+        item.children?.sort((i1, i2) => (i1.text < i2.text ? -1 : 1));
         return (
           <div>
             {item.text}
@@ -343,15 +343,13 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
           <div>
             <ul id="workload-list" style={{ listStyleType: 'none' }}>
               {props.workloads
-                ? props.workloads
-                    .sort((w1: AppWorkload, w2: AppWorkload) => (w1.workloadName < w2.workloadName ? -1 : 1))
-                    .map((wkd, subIdx) => {
-                      return (
-                        <li key={subIdx} className={itemStyle}>
-                          {renderWorkloadItem(wkd)}
-                        </li>
-                      );
-                    })
+                ? props.workloads.map((wkd, subIdx) => {
+                    return (
+                      <li key={subIdx} className={itemStyle}>
+                        {renderWorkloadItem(wkd)}
+                      </li>
+                    );
+                  })
                 : undefined}
             </ul>
           </div>
@@ -368,9 +366,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
   const serviceList = (): React.ReactNode => {
     const serviceList =
       props.services && props.services.length > 0
-        ? props.services
-            .sort((s1: string, s2: string) => (s1 < s2 ? -1 : 1))
-            .map(name => renderServiceItem(props.namespace, name))
+        ? props.services.map(name => renderServiceItem(props.namespace, name))
         : renderEmptyItem('services');
 
     return [
@@ -381,6 +377,11 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
       </div>
     ];
   };
+
+  props.apps?.sort((a1: string, a2: string) => (a1 < a2 ? -1 : 1));
+  props.services?.sort((s1: string, s2: string) => (s1 < s2 ? -1 : 1));
+  props.waypointWorkloads?.sort((w1: WorkloadInfo, w2: WorkloadInfo) => (w1.name < w2.name ? -1 : 1));
+  props.workloads?.sort((w1: AppWorkload, w2: AppWorkload) => (w1.workloadName < w2.workloadName ? -1 : 1));
 
   return (
     <div className={containerStyle}>

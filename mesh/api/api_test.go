@@ -48,7 +48,7 @@ func setupMocks(t *testing.T) *mesh.GlobalInfo {
 			Namespace: "istio-system",
 			Labels: map[string]string{
 				"app":                     "istiod",
-				models.IstioRevisionLabel: "default",
+				config.IstioRevisionLabel: "default",
 			},
 		},
 		Spec: apps_v1.DeploymentSpec{
@@ -94,7 +94,7 @@ trustDomain: cluster.local
 			Name:      "istio",
 			Namespace: "istio-system",
 			Labels: map[string]string{
-				models.IstioRevisionLabel: "default",
+				config.IstioRevisionLabel: "default",
 			},
 		},
 		Data: map[string]string{"mesh": configMapData},
@@ -136,7 +136,7 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 	}
 
 	defaultInjection := map[string]string{models.IstioInjectionLabel: models.IstioInjectionEnabledLabelValue}
-	revLabel := map[string]string{models.IstioRevisionLabel: "default"}
+	revLabel := map[string]string{config.IstioRevisionLabel: "default"}
 	primaryClient := kubetest.NewFakeK8sClient(
 		kubetest.FakeNamespace("istio-system"),
 		kubetest.FakeNamespaceWithLabels("data-plane-1", defaultInjection),

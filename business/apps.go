@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -461,13 +462,8 @@ func castAppDetails(appLabel string, allEntities namespaceApps, ss *models.Servi
 // Return an error on any problem.
 func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, cluster string, appName string) (namespaceApps, error) {
 	var ss *models.ServiceList
-	var ws models.Workloads
-
-	appNameSelector := ""
-	if appName != "" {
-		selector := labels.Set(map[string]string{in.conf.IstioLabels.AppLabelName: appName})
-		appNameSelector = selector.String()
-	}
+	var err error
+	ws := map[string]*models.Workload{}
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
@@ -475,13 +471,25 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 		return nil, err
 	}
 
-	var err error
-	ws, err = in.businessLayer.Workload.fetchWorkloadsFromCluster(ctx, cluster, namespace, appNameSelector)
-	if err != nil {
-		return nil, err
+	appNameSelectors := config.Get().GetAppVersionLabelSelectors(appName, "")
+	for _, appNameSelector := range appNameSelectors {
+		selectedWorkloads, err := in.businessLayer.Workload.fetchWorkloadsFromCluster(ctx, cluster, namespace, appNameSelector.LabelSelector)
+		if err != nil {
+			return nil, err
+		}
+		for _, selectedWorkload := range selectedWorkloads {
+			ws[selectedWorkload.Name] = selectedWorkload
+		}
 	}
+	// return in sorted order, doesn't hurt, may help client, and helps test consistency
+	keys := make([]string, 0, len(ws))
+	for k := range ws {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
 	allEntities := make(namespaceApps)
-	for _, w := range ws {
+	for _, k := range keys {
+		w := ws[k]
 		// WorkloadGroup.Labels can be empty
 		if len(w.Labels) > 0 {
 			// Check if namespace is cached
@@ -500,7 +508,8 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 		} else {
 			ss = nil
 		}
-		castAppDetails(in.conf.IstioLabels.AppLabelName, allEntities, ss, w, cluster)
+		appLabelName, _ := in.conf.GetAppLabelName(w.Labels)
+		castAppDetails(appLabelName, allEntities, ss, w, cluster)
 	}
 
 	return allEntities, nil

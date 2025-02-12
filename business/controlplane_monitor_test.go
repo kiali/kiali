@@ -20,7 +20,6 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
-	"github.com/kiali/kiali/models"
 )
 
 func TestRegistryServices(t *testing.T) {
@@ -98,7 +97,7 @@ func runningIstiodPod() *core_v1.Pod {
 			Namespace: "istio-system",
 			Labels: map[string]string{
 				"app":                     "istiod",
-				models.IstioRevisionLabel: "default",
+				config.IstioRevisionLabel: "default",
 			},
 		},
 		Status: core_v1.PodStatus{
@@ -114,7 +113,7 @@ func fakeIstiodDeployment(cluster string, manageExternal bool) *apps_v1.Deployme
 			Namespace: "istio-system",
 			Labels: map[string]string{
 				"app":                     "istiod",
-				models.IstioRevisionLabel: "default",
+				config.IstioRevisionLabel: "default",
 			},
 		},
 		Spec: apps_v1.DeploymentSpec{
@@ -156,7 +155,7 @@ func TestRefreshIstioCache(t *testing.T) {
 			Name:      "istio",
 			Namespace: "istio-system",
 			Labels: map[string]string{
-				models.IstioRevisionLabel: "default",
+				config.IstioRevisionLabel: "default",
 			},
 		},
 		Data: map[string]string{"mesh": ""},
@@ -228,7 +227,7 @@ func TestPollingPopulatesCache(t *testing.T) {
 			Name:      "istio",
 			Namespace: "istio-system",
 			Labels: map[string]string{
-				models.IstioRevisionLabel: "default",
+				config.IstioRevisionLabel: "default",
 			},
 		},
 		Data: map[string]string{"mesh": ""},

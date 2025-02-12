@@ -70,6 +70,7 @@ import { ANYTHING, PRESENCE } from './RequestRouting/MatchBuilder';
 import { t } from 'utils/I18nUtils';
 import { defaultGatewayLabel, defaultGatewayLabelValue } from 'config/Constants';
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
+import { getAppLabelName, getVersionLabelName } from 'config/ServerConfig';
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_TCP_TRAFFIC_SHIFTING = 'tcp_traffic_shifting';
@@ -653,15 +654,14 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
     const subsets = wProps.workloads
       .filter(workload => {
         // Filter out workloads without version label
-        const versionLabelName = serverConfig.istioLabels.versionLabelName;
-        return workload.labels![versionLabelName];
+        return getVersionLabelName(workload.labels);
       })
       .map(workload => {
         // Using version
-        const versionLabelName = serverConfig.istioLabels.versionLabelName;
-        const versionValue = workload.labels![versionLabelName];
+        const versionLabelName = getVersionLabelName(workload.labels);
+        const versionValue = workload.labels![versionLabelName!];
         const labels: { [key: string]: string } = {};
-        labels[versionLabelName] = versionValue;
+        labels[versionLabelName!] = versionValue;
         // Populate helper table workloadName -> version
         wkdNameVersion[workload.name] = versionValue;
         return {
@@ -931,9 +931,10 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
 
     if (wState.trafficPolicy.peerAuthnSelector.addPeerAuthentication) {
       const peerAuthnLabels: { [key: string]: string } = {};
-      peerAuthnLabels[serverConfig.istioLabels.appLabelName] = wProps.workloads[0].labels![
-        serverConfig.istioLabels.appLabelName
-      ];
+      const appLabelName = getAppLabelName(wProps.workloads[0].labels);
+      if (appLabelName) {
+        peerAuthnLabels[appLabelName] = wProps.workloads[0].labels![appLabelName];
+      }
 
       wizardPA = {
         apiVersion: ISTIO_SECURITY_VERSION,
@@ -1267,13 +1268,18 @@ const getWorkloadsByVersion = (
   workloads: WorkloadOverview[],
   destinationRules: DestinationRule[]
 ): { [key: string]: string } => {
-  const versionLabelName = serverConfig.istioLabels.versionLabelName;
   const wkdVersionName: { [key: string]: string } = {};
-  workloads.forEach(workload => (wkdVersionName[workload.labels![versionLabelName]] = workload.name));
+  workloads.forEach(workload => {
+    const versionLabelName = getVersionLabelName(workload.labels);
+    if (versionLabelName) {
+      wkdVersionName[workload.labels![versionLabelName]] = workload.name;
+    }
+  });
   if (destinationRules.length > 0) {
     destinationRules.forEach(dr => {
       dr.spec.subsets?.forEach(ss => {
-        const version = ss.labels![versionLabelName];
+        const versionLabelName = getVersionLabelName(ss.labels);
+        const version = ss.labels![versionLabelName!];
         wkdVersionName[ss.name] = wkdVersionName[version];
       });
     });

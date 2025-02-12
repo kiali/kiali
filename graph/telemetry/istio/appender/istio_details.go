@@ -185,7 +185,6 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, servic
 		}
 	}
 
-	appLabelName := config.Get().IstioLabels.AppLabelName
 	for _, n := range trafficMap {
 		if serviceList, ok := serviceLists[n.Cluster]; ok {
 			// make sure service nodes have the defined app label so it can be used for app grouping in the UI.
@@ -205,6 +204,7 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, servic
 						}
 
 						if svc, found := svcMap[graph.GetClusterSensitiveKey(n.Cluster, hostToTest)]; found {
+							appLabelName, _ := config.Get().GetAppLabelName(svc.Labels)
 							if app, ok := svc.Labels[appLabelName]; ok {
 								n.App = app
 							}
@@ -221,8 +221,11 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, servic
 				if svc, found := svcMap[graph.GetClusterSensitiveKey(n.Cluster, n.Service)]; !found {
 					log.Debugf("Service not found, may not apply app label correctly for [%s:%s]", n.Namespace, n.Service)
 					continue
-				} else if app, ok := svc.Labels[appLabelName]; ok {
-					n.App = app
+				} else {
+					appLabelName, _ := config.Get().GetAppLabelName(svc.Labels)
+					if app, ok := svc.Labels[appLabelName]; ok {
+						n.App = app
+					}
 				}
 			}
 		}
@@ -289,8 +292,6 @@ func decorateMatchingAPIGateways(cluster string, gwCrd *k8s_networking_v1.Gatewa
 }
 
 func resolveGatewayNodeMapping(gatewayWorkloads map[string][]models.WorkloadListItem, nodeMetadataKey graph.MetadataKey, trafficMap graph.TrafficMap) map[*models.WorkloadListItem][]*graph.Node {
-	istioAppLabelName := config.Get().IstioLabels.AppLabelName
-
 	gatewayNodeMapping := make(map[*models.WorkloadListItem][]*graph.Node)
 	for key, gwWorkloadsList := range gatewayWorkloads {
 		split := strings.Split(key, ":")
@@ -299,7 +300,8 @@ func resolveGatewayNodeMapping(gatewayWorkloads map[string][]models.WorkloadList
 		for _, gw := range gwWorkloadsList {
 			for _, node := range trafficMap {
 				if _, ok := node.Metadata[nodeMetadataKey]; !ok {
-					if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && node.App == gw.Labels[istioAppLabelName] && node.Cluster == gwCluster && node.Namespace == gwNs {
+					appLabelName, _ := config.Get().GetAppLabelName(gw.Labels)
+					if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && node.App == gw.Labels[appLabelName] && node.Cluster == gwCluster && node.Namespace == gwNs {
 						node.Metadata[nodeMetadataKey] = graph.GatewaysMetadata{}
 						gatewayNodeMapping[&gw] = append(gatewayNodeMapping[&gw], node)
 					}

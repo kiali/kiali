@@ -27,9 +27,11 @@ func setupAppService(clients map[string]kubernetes.ClientInterface) *AppService 
 func TestGetAppListFromDeployments(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
-
 	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	config.Set(conf)
+
 	// Auxiliar fake* tests defined in workload_test.go
 	objects := []runtime.Object{
 		kubetest.FakeNamespace("Namespace"),
@@ -65,7 +67,10 @@ func TestGetAppListFromWorkloadGroups(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	config.Set(conf)
+
 	// Auxiliar fake* tests defined in workload_test.go
 	kubeObjs := []runtime.Object{
 		kubetest.FakeNamespace("Namespace"),
@@ -114,6 +119,8 @@ func TestGetAppFromDeployments(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	conf.ExternalServices.CustomDashboards.Enabled = false
 	config.Set(conf)
 
@@ -125,7 +132,51 @@ func TestGetAppFromDeployments(t *testing.T) {
 		o := obj
 		objects = append(objects, &o)
 	}
-	for _, obj := range FakeServices() {
+	for _, obj := range FakeServices(*conf) {
+		o := obj
+		objects = append(objects, &o)
+	}
+
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = true
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
+
+	SetupBusinessLayer(t, k8s, *conf)
+
+	svc := setupAppService(mockClientFactory.Clients)
+
+	criteria := AppCriteria{Namespace: "Namespace", AppName: "httpbin", Cluster: conf.KubernetesConfig.ClusterName}
+	appDetails, appDetailsErr := svc.GetAppDetails(context.TODO(), criteria)
+	require.NoError(appDetailsErr)
+
+	assert.Equal("Namespace", appDetails.Namespace.Name)
+	assert.Equal("httpbin", appDetails.Name)
+
+	assert.Equal(2, len(appDetails.Workloads))
+	assert.Equal("httpbin-v1", appDetails.Workloads[0].WorkloadName)
+	assert.Equal("httpbin-v2", appDetails.Workloads[1].WorkloadName)
+	assert.Equal(1, len(appDetails.ServiceNames))
+	assert.Equal("httpbin", appDetails.ServiceNames[0])
+}
+
+func TestGetAppFromDeploymentsNoAppVerLabelNames(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.CustomDashboards.Enabled = false
+	config.Set(conf)
+
+	// Setup mocks
+	objects := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+	}
+	for _, obj := range FakeDeployments(*conf) {
+		o := obj
+		objects = append(objects, &o)
+	}
+	for _, obj := range FakeServices(*conf) {
 		o := obj
 		objects = append(objects, &o)
 	}
@@ -158,6 +209,8 @@ func TestGetAppFromWorkloadGroups(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	conf.ExternalServices.CustomDashboards.Enabled = false
 	config.Set(conf)
 
@@ -202,6 +255,9 @@ func TestGetAppFromWorkloadGroups(t *testing.T) {
 func TestGetAppListFromReplicaSets(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
 
 	// Setup mocks
 	// Auxiliar fake* tests defined in workload_test.go
@@ -237,6 +293,8 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 	// otherwise this adds 10s to the test due to an http timeout.
 	conf := config.NewConfig()
 	conf.ExternalServices.CustomDashboards.Enabled = false
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	kubernetes.SetConfig(t, *conf)
 
 	// Setup mocks
@@ -247,7 +305,7 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 		o := obj
 		objects = append(objects, &o)
 	}
-	for _, obj := range FakeServices() {
+	for _, obj := range FakeServices(*conf) {
 		o := obj
 		objects = append(objects, &o)
 	}

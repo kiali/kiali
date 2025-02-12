@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ServiceDetailsInfo, WorkloadOverview } from '../../types/ServiceInfo';
 import { AppWorkload } from '../../types/App';
-import { isMultiCluster, serverConfig } from '../../config';
+import { isMultiCluster } from '../../config';
 import { Labels } from '../../components/Label/Labels';
 import { kialiStyle } from 'styles/StyleUtils';
 import { LocalTime } from '../../components/Time/LocalTime';
@@ -16,6 +16,7 @@ import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLa
 import { infoStyle } from 'styles/IconStyle';
 import { classes } from 'typestyle';
 import { getIstioObjectGVK } from '../../utils/IstioConfigUtils';
+import { getAppLabelName } from 'config/ServerConfig';
 
 interface ServiceInfoDescriptionProps {
   namespace: string;
@@ -61,10 +62,12 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
         .sort((w1: WorkloadOverview, w2: WorkloadOverview) => (w1.name < w2.name ? -1 : 1))
         .forEach(wk => {
           if (wk.labels) {
-            const appName = wk.labels[serverConfig.istioLabels.appLabelName];
-
-            if (!apps.includes(appName)) {
-              apps.push(appName);
+            const appLabelName = getAppLabelName(wk.labels);
+            if (appLabelName) {
+              const appName = wk.labels[appLabelName];
+              if (!apps.includes(appName)) {
+                apps.push(appName);
+              }
             }
           }
 

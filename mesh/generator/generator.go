@@ -196,7 +196,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				mesh.CheckError(err)
 
 				version := models.DefaultRevisionLabel
-				if rev, ok := wp.Labels[models.IstioRevisionLabel]; ok {
+				if rev, ok := wp.Labels[config.IstioRevisionLabel]; ok {
 					version = rev
 				}
 
@@ -241,24 +241,24 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			configMap, err := gi.Business.IstioConfig.GetIstioConfigMap(ctx, "", criteria)
 			mesh.CheckError(err)
 
-			for cluster, config := range configMap {
+			for cluster, conf := range configMap {
 				gwNodes := []*mesh.Node{}
-				for _, gw := range config.Gateways {
+				for _, gw := range conf.Gateways {
 					version := models.DefaultRevisionLabel
-					if rev, ok := gw.Labels[models.IstioRevisionLabel]; ok {
+					if rev, ok := gw.Labels[config.IstioRevisionLabel]; ok {
 						version = rev
 					}
 					gwNode, _, err := addInfra(meshMap, mesh.InfraTypeGateway, cluster, gw.Namespace, gw.Name, gw, version, false, "")
 					mesh.CheckError(err)
 					gwNodes = append(gwNodes, gwNode)
 				}
-				for _, gw := range config.K8sGateways {
+				for _, gw := range conf.K8sGateways {
 					// skip waypoints because they are treated independently
 					if strings.Contains(strings.ToLower(string(gw.Spec.GatewayClassName)), "waypoint") {
 						continue
 					}
 					version := models.DefaultRevisionLabel
-					if rev, ok := gw.Labels[models.IstioRevisionLabel]; ok {
+					if rev, ok := gw.Labels[config.IstioRevisionLabel]; ok {
 						version = rev
 					}
 					gwNode, _, err := addInfra(meshMap, mesh.InfraTypeGateway, cluster, gw.Namespace, gw.Name, gw, version, false, "")

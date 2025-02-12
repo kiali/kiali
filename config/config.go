@@ -12,6 +12,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config/dashboards"
 	"github.com/kiali/kiali/config/security"
@@ -73,6 +74,9 @@ const (
 const (
 	AmbientAnnotation         = "ambient.istio.io/redirection"
 	AmbientAnnotationEnabled  = "enabled"
+	IstioAppLabel             = "app"          // we can assume istio components are labeled with "app"
+	IstioRevisionLabel        = "istio.io/rev" // the standard label key used to identify the istio revision.
+	IstioVersionLabel         = "version"      // we can assume istio components are labeled with "version", if versioned
 	Waypoint                  = "waypoint"
 	WaypointFor               = "istio.io/waypoint-for"
 	WaypointForAll            = "all"
@@ -804,10 +808,10 @@ func NewConfig() (c *Config) {
 			AmbientWaypointLabel:        WaypointLabel,
 			AmbientWaypointLabelValue:   WaypointLabelValue,
 			AmbientWaypointUseLabel:     WaypointUseLabel,
-			AppLabelName:                "app",
+			AppLabelName:                "",
 			InjectionLabelName:          "istio-injection",
-			InjectionLabelRev:           "istio.io/rev",
-			VersionLabelName:            "version",
+			InjectionLabelRev:           IstioRevisionLabel,
+			VersionLabelName:            "",
 		},
 		KialiFeatureFlags: KialiFeatureFlags{
 			Clustering: FeatureFlagClustering{
@@ -1017,6 +1021,17 @@ func Set(conf *Config) {
 	defer rwMutex.Unlock()
 	conf.AddHealthDefault()
 	configuration = *conf
+
+	// init these one time, they don't change
+	if appLabelNames == nil {
+		if conf.IstioLabels.AppLabelName != "" && conf.IstioLabels.VersionLabelName != "" {
+			appLabelNames = []string{conf.IstioLabels.AppLabelName}
+			versionLabelNames = []string{conf.IstioLabels.VersionLabelName}
+		} else {
+			appLabelNames = []string{"service.istio.io/canonical-name", "app.kubernetes.io/name", "app"}
+			versionLabelNames = []string{"service.istio.io/canonical-revision", "app.kubernetes.io/version", "version"}
+		}
+	}
 }
 
 func (conf Config) Obfuscate() (obf Config) {
@@ -1416,4 +1431,88 @@ func (config *Config) extractAccessibleNamespaceList() ([]string, error) {
 	} else {
 		return namespaceNames, errors.New(strings.Join(errs, "\n"))
 	}
+}
+
+type AppVersionLabelSelector struct {
+	AppLabelName     string
+	LabelSelector    string
+	Requirements     map[string]string
+	VersionLabelName string
+}
+
+var appLabelNames, versionLabelNames []string
+
+// GetAppVersionLabelSelectors takes an app and/or version value and returns one or
+// more label selectors to be subsequently tried via label selector fetched. Callers
+// should account for the fact that the same object may be labeled in multiple ways, and
+// therefore could be returned by more than one of the returned selectors.
+//
+// Only one selector is returned if config.IstioLabels.AppLabelName and
+// config.IstioLabels.VersionLabelName are set. If they are unset then three selectors will be
+// returned, in this order (the same order of preference used by Istio when setting the
+// canonical values for telemetry, etc):
+//
+// [0]   service.istio.io/canonical-name    service.istio.io/canonical-revision
+// [1]   app.kubernetes.io/name             app.kubernetes.io/version
+// [2]   app                                version
+//
+// It is assumed that the app and version naming scheme will match for any particular entity.
+func (config *Config) GetAppVersionLabelSelectors(app, version string) []AppVersionLabelSelector {
+	// if neither app or version are set, just return a single, empty entry
+	if app == "" && version == "" {
+		return []AppVersionLabelSelector{{
+			AppLabelName:     "",
+			LabelSelector:    "",
+			Requirements:     map[string]string{},
+			VersionLabelName: "",
+		}}
+	}
+
+	labelSelectors := make([]AppVersionLabelSelector, len(appLabelNames))
+
+	for i := 0; i < len(appLabelNames); i++ {
+		appLabelName := appLabelNames[i]
+		versionLabelName := versionLabelNames[i]
+		requirements := map[string]string{}
+		if app != "" {
+			requirements[appLabelName] = app
+		}
+		if version != "" {
+			requirements[versionLabelName] = version
+		}
+		labelSelectors[i] = AppVersionLabelSelector{
+			AppLabelName:     appLabelName,
+			LabelSelector:    labels.Set(requirements).String(),
+			Requirements:     requirements,
+			VersionLabelName: versionLabelName,
+		}
+	}
+
+	return labelSelectors
+}
+
+// GetAppLabelName returns the app label name found in the labels, and a "found" bool. If
+// multiple app label names exist in the labels, the "canonical" app label name is
+// returned, using the same preference as Istio.
+func (config *Config) GetAppLabelName(labels map[string]string) (string, bool) {
+	for i := 0; i < len(appLabelNames); i++ {
+		appLabelName := appLabelNames[i]
+		if _, ok := labels[appLabelName]; ok {
+			return appLabelName, true
+		}
+	}
+	return "", false
+}
+
+// GetVersionLabelName returns the version label name found in the labels, and a "found" bool. If
+// multiple version label names exist in the labels, the "canonical" version label name is
+// returned, using the same preference as Istio.
+func (config *Config) GetVersionLabelName(labels map[string]string) (string, bool) {
+	for i := 0; i < len(versionLabelNames); i++ {
+		versionLabelName := versionLabelNames[i]
+		if _, ok := labels[versionLabelName]; ok {
+			return versionLabelName, true
+		}
+	}
+	return "", false
 }

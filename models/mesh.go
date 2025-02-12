@@ -11,8 +11,6 @@ import (
 )
 
 const (
-	// IstioRevisionLabel is the standard label key used to identify the istio revision.
-	IstioRevisionLabel = "istio.io/rev"
 	// IstioTagLabel is the standard label key used on webhooks to identify the tag.
 	IstioTagLabel = "istio.io/tag"
 	// DefaultRevisionLabel is the value for the default revision.

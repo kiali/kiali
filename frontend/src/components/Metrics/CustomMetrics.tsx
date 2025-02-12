@@ -11,7 +11,6 @@ import {
   EmptyStateHeader
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { serverConfig } from '../../config/ServerConfig';
 import { router, HistoryManager, URLParam, location } from '../../app/History';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
@@ -54,12 +53,14 @@ type MetricsState = {
 
 type CustomMetricsProps = {
   app: string;
+  appLabelName?: string;
   embedded?: boolean;
   height?: number;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   template: string;
   version?: string;
+  versionLabelName?: string;
   workload?: string;
   workloadType?: string;
 };
@@ -120,11 +121,11 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
   }
 
   private initOptions = (settings: MetricsSettings): DashboardQuery => {
-    const filters = `${serverConfig.istioLabels.appLabelName}:${this.props.app}`;
+    const filters = this.props.app && this.props.appLabelName ? `${this.props.appLabelName}:${this.props.app}` : '';
 
     const options: DashboardQuery = this.props.version
       ? {
-          labelsFilters: `${filters},${serverConfig.istioLabels.versionLabelName}:${this.props.version}`
+          labelsFilters: `${filters},${this.props.versionLabelName}:${this.props.version}`
         }
       : {
           labelsFilters: filters,

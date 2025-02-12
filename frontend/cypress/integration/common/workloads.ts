@@ -81,6 +81,38 @@ Then('user should only see workloads with the {string} label', (label: string) =
   });
 });
 
+Then('user should only see workloads with an app label', () => {
+  cy.wait('@refresh');
+  cy.get('tbody').within(() => {
+    const regex = new RegExp(`app=|service\.istio\.io\/canonical-name=|app\.kubernetes\.io\/name=`);
+
+    cy.get('tr').each($item => {
+      cy.wrap($item)
+        .find('td')
+        .eq(4)
+        .within(() => {
+          cy.get('span').children().contains(regex);
+        });
+    });
+  });
+});
+
+Then('user should only see workloads with a version label', () => {
+  cy.wait('@refresh');
+  cy.get('tbody').within(() => {
+    const regex = new RegExp(`version=|service\.istio\.io\/canonical-revision=|app\.kubernetes\.io\/version=`);
+
+    cy.get('tr').each($item => {
+      cy.wrap($item)
+        .find('td')
+        .eq(4)
+        .within(() => {
+          cy.get('span').children().contains(regex);
+        });
+    });
+  });
+});
+
 When('user filters for version {string}', (state: string) => {
   activateFilter(state);
 });

@@ -13,8 +13,8 @@ import (
 
 func prepareTestForWorkloadGroup(name string) models.IstioReferences {
 	wgReferences := WorkloadGroupReferences{
-		WorkloadGroups:  data.CreateWorkloadGroups(*config.NewConfig()),
-		WorkloadEntries: data.CreateWorkloadEntries(*config.NewConfig()),
+		WorkloadGroups:  data.CreateWorkloadGroups(*config.Get()),
+		WorkloadEntries: data.CreateWorkloadEntries(*config.Get()),
 		WorkloadsPerNamespace: map[string]models.WorkloadList{
 			"Namespace": data.CreateWorkloadList("Namespace",
 				data.CreateWorkloadListItem("ratings-vm", map[string]string{"app": "ratings-vm", "class": "vm", "version": "v3"}),
@@ -29,6 +29,8 @@ func prepareTestForWorkloadGroup(name string) models.IstioReferences {
 func TestWorkloadGroupReferences(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	config.Set(conf)
 
 	// Setup mocks

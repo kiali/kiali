@@ -78,7 +78,7 @@ Feature: Kiali Workloads page
     And user selects filter "App Label"
     And user filters for app label "Present"
     Then user sees "workloads" in workloads table
-    And user should only see workloads with the "app" label
+    And user should only see workloads with an app label
 
   @bookinfo-app
   Scenario: Filter workloads table by Version Label
@@ -86,7 +86,7 @@ Feature: Kiali Workloads page
     And user selects filter "Version Label"
     And user filters for version "Present"
     Then user sees "workloads" in workloads table
-    And user should only see workloads with the "version" label
+    And user should only see workloads with a version label
 
   @bookinfo-app
   Scenario: Filter workloads table by label

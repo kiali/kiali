@@ -11,14 +11,15 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/models"
 )
 
 func GetHealthyIstiodPods(kubeCache cache.KubeCache, revision string, namespace string) ([]*corev1.Pod, error) {
 	podLabels := map[string]string{
-		"app":          "istiod",
-		"istio.io/rev": revision,
+		config.IstioAppLabel:      istiodAppLabelValue,
+		config.IstioRevisionLabel: revision,
 	}
 
 	istiods, err := kubeCache.GetPods(namespace, labels.Set(podLabels).String())
@@ -38,7 +39,7 @@ func GetHealthyIstiodPods(kubeCache cache.KubeCache, revision string, namespace 
 
 func GetHealthyIstiodRevisions(kubeCache cache.KubeCache, namespace string) ([]string, error) {
 	podLabels := map[string]string{
-		"app": "istiod",
+		config.IstioAppLabel: istiodAppLabelValue,
 	}
 
 	istiods, err := kubeCache.GetPods(namespace, labels.Set(podLabels).String())
@@ -49,7 +50,7 @@ func GetHealthyIstiodRevisions(kubeCache cache.KubeCache, namespace string) ([]s
 	healthyRevisions := make(map[string]bool)
 	for i, istiod := range istiods {
 		if istiod.Status.Phase == corev1.PodRunning {
-			if revision, ok := istiods[i].Labels["istio.io/rev"]; ok {
+			if revision, ok := istiods[i].Labels[config.IstioRevisionLabel]; ok {
 				healthyRevisions[revision] = true
 			}
 		}
@@ -87,7 +88,7 @@ func GetRevision(namespace models.Namespace) string {
 			return memberOf
 		}
 	}
-	rev, hasRevLabel := namespace.Labels[models.IstioRevisionLabel]
+	rev, hasRevLabel := namespace.Labels[config.IstioRevisionLabel]
 	injectionEnabled := namespace.Labels[models.IstioInjectionLabel] == models.IstioInjectionEnabledLabelValue
 	// Injection label takes precedence over revision label.
 	// Or if there's no rev label and ambient is enabled then set to default.

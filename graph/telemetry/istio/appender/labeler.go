@@ -33,10 +33,6 @@ func (f *LabelerAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 
 // labelNodes puts all k8s labels in the metadata for all nodes.
 func labelNodes(trafficMap graph.TrafficMap, gi *graph.GlobalInfo) {
-	// We need to know the names of the Istio labels for app and version because we do not label the nodes with those.
-	// There is no need to get the Istio label names multiple times, so get them once now.
-	istioLabelNames := config.Get().IstioLabels
-
 	for _, n := range trafficMap {
 		// can't get labels for nodes on the outside or inaccessible nodes, so just go to the next and ignore this one.
 		if b, ok := n.Metadata[graph.IsOutside]; ok && b.(bool) {
@@ -82,8 +78,12 @@ func labelNodes(trafficMap graph.TrafficMap, gi *graph.GlobalInfo) {
 
 		if len(labelsMetadata) > 0 {
 			n.Metadata[graph.Labels] = labelsMetadata
-			delete(n.Metadata[graph.Labels].(graph.LabelsMetadata), istioLabelNames.AppLabelName)
-			delete(n.Metadata[graph.Labels].(graph.LabelsMetadata), istioLabelNames.VersionLabelName)
+			if appLabelName, found := config.Get().GetAppLabelName(labelsMetadata); found {
+				delete(n.Metadata[graph.Labels].(graph.LabelsMetadata), appLabelName)
+			}
+			if verLabelName, found := config.Get().GetVersionLabelName(labelsMetadata); found {
+				delete(n.Metadata[graph.Labels].(graph.LabelsMetadata), verLabelName)
+			}
 		}
 	}
 }

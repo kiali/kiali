@@ -13,8 +13,8 @@ type MissingLabelProps = {
 };
 
 export const MissingLabel: React.FC<MissingLabelProps> = (props: MissingLabelProps) => {
-  const appLabel = serverConfig.istioLabels.appLabelName;
-  const versionLabel = serverConfig.istioLabels.versionLabelName;
+  const appLabelName = serverConfig.istioLabels.appLabelName ?? 'app'; // just need a value for badge text
+  const versionLabelName = serverConfig.istioLabels.versionLabelName ?? 'version'; // just need a value for badge text
   const icon = icons.istio.missingLabel.icon;
   const color = icons.istio.missingLabel.color;
 
@@ -23,7 +23,8 @@ export const MissingLabel: React.FC<MissingLabelProps> = (props: MissingLabelPro
       {props.missingApp && (
         <>
           <div>
-            <PFBadge badge={{ badge: appLabel }} isRead={true} style={{ marginRight: 0 }} /> label is missing. <br />
+            <PFBadge badge={{ badge: appLabelName }} isRead={true} style={{ marginRight: 0 }} /> label is missing.{' '}
+            <br />
           </div>
           <div>This workload won't be linked with an application.</div>
         </>
@@ -32,7 +33,7 @@ export const MissingLabel: React.FC<MissingLabelProps> = (props: MissingLabelPro
       {props.missingVersion && (
         <>
           <div>
-            <PFBadge badge={{ badge: versionLabel }} isRead={true} style={{ marginRight: 0 }} /> label is missing.{' '}
+            <PFBadge badge={{ badge: versionLabelName }} isRead={true} style={{ marginRight: 0 }} /> label is missing.{' '}
             <br />
           </div>
           <div>The label is recommended as it affects telemetry.</div>

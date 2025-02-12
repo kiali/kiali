@@ -400,7 +400,7 @@
   "The meshConfig.meshMTLS.minProtocolVersion field specifies the minimum TLS version for the TLS                   connections among Istio workloads. N/A if it was not set.": "The meshConfig.meshMTLS.minProtocolVersion field specifies the minimum TLS version for the TLS                   connections among Istio workloads. N/A if it was not set.",
   "The Side Panel shows details about the currently selected node or edge, otherwise the whole graph.": "侧面板显示有关当前选定节点或边的详细信息，否则显示整个视图。",
   "The Side Panel shows details about the currently selected node or edge, otherwise the whole mesh.": "The Side Panel shows details about the currently selected node or edge, otherwise the whole mesh.",
-  "There are not Workloads with sidecar for this service": "此服务没有具有sidecar的工作负载",
+  "There are no Workloads with sidecar for this service": "There are no Workloads with sidecar for this service",
   "This chart shows cpu consumption for the istiod {{cpuMetricSource}}": "This chart shows cpu consumption for the istiod {{cpuMetricSource}}",
   "This chart shows memory consumption for the istiod {{memoryMetricSource}}": "This chart shows memory consumption for the istiod {{memoryMetricSource}}",
   "This rule is not accessible.": "该规则将无法生效。",

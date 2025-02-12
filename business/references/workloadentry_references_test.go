@@ -13,8 +13,8 @@ import (
 
 func prepareTestForWorkloadEntry(name string) models.IstioReferences {
 	weReferences := WorkloadEntryReferences{
-		WorkloadGroups:  data.CreateWorkloadGroups(*config.NewConfig()),
-		WorkloadEntries: data.CreateWorkloadEntries(*config.NewConfig()),
+		WorkloadGroups:  data.CreateWorkloadGroups(*config.Get()),
+		WorkloadEntries: data.CreateWorkloadEntries(*config.Get()),
 	}
 	return *weReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.WorkloadEntries, Namespace: "Namespace", Name: name}]
 }
@@ -22,6 +22,8 @@ func prepareTestForWorkloadEntry(name string) models.IstioReferences {
 func TestWorkloadEntryReferences(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	config.Set(conf)
 
 	// Setup mocks
