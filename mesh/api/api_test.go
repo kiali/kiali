@@ -200,6 +200,7 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 	globalInfo := mesh.NewGlobalInfo()
 	globalInfo.Business = layer
 	globalInfo.Discovery = discovery
+	globalInfo.KialiCache = cache
 
 	return globalInfo
 }
