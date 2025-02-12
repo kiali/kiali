@@ -25,6 +25,14 @@ const (
 	IstioInjectionEnabledLabelValue = "enabled"
 )
 
+const (
+	maistraOwnerLabel     = "maistra.io/owner"
+	maistraOwnerNameLabel = "maistra.io/owner-name"
+	maistraVersionLabel   = "maistra-version"
+)
+
+var maistraLabels = []string{maistraOwnerLabel, maistraOwnerNameLabel, maistraVersionLabel}
+
 // Mesh is one or more controlplanes (primaries) managing a dataPlane across one or more clusters.
 // There can be multiple primaries on a single cluster when istio revisions are used. A single
 // primary can also manage multiple clusters (primary-remote deployment).
@@ -69,6 +77,10 @@ type ControlPlane struct {
 	// IstiodNamespace is the namespace name of the deployed control plane
 	IstiodNamespace string `json:"istiodNamespace"`
 
+	// Labels are the labels on the istiod deployment.
+	// omitted from the json serialization because they aren't used on the frontend.
+	Labels map[string]string `json:"-"`
+
 	// ManagedClusters are the clusters that this controlplane manages.
 	// This could include the cluster that the controlplane is running on.
 	ManagedClusters []*KubeCluster `json:"managedClusters"`
@@ -103,6 +115,17 @@ type ControlPlane struct {
 
 	// Version is the version of the controlplane.
 	Version *ExternalServiceInfo `json:"version,omitempty"`
+}
+
+// IsMaistra determines if the controlplane is Maistra or not.
+// TODO: Remove this when maistra 2.6 goes out of support.
+func (c ControlPlane) IsMaistra() bool {
+	for _, maistraLabel := range maistraLabels {
+		if _, hasLabel := c.Labels[maistraLabel]; hasLabel {
+			return true
+		}
+	}
+	return false
 }
 
 // ControlPlaneConfiguration is the configuration for the controlPlane and any associated dataPlane.

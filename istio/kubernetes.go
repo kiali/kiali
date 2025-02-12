@@ -80,6 +80,13 @@ func GetLatestPod(pods []*corev1.Pod) *corev1.Pod {
 // it is managed by the default revision.
 // If a namespace is out of the mesh, then the empty string is returned.
 func GetRevision(namespace models.Namespace) string {
+	const maistraMemberOfLabel = "maistra.io/member-of"
+	const maistraIgnoreNamespaceLabel = "maistra.io/ignore-namespace"
+	if _, hasMaistraIgnoreLabel := namespace.Labels[maistraIgnoreNamespaceLabel]; !hasMaistraIgnoreLabel {
+		if memberOf, hasMemberOfLabel := namespace.Labels[maistraMemberOfLabel]; hasMemberOfLabel {
+			return memberOf
+		}
+	}
 	rev, hasRevLabel := namespace.Labels[models.IstioRevisionLabel]
 	injectionEnabled := namespace.Labels[models.IstioInjectionLabel] == models.IstioInjectionEnabledLabelValue
 	// Injection label takes precedence over revision label.

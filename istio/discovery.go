@@ -308,6 +308,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 			log.Debugf("Found controlplane [%s/%s] on cluster [%s].", istiod.Name, istiod.Namespace, cluster.Name)
 			controlPlane := models.ControlPlane{
 				Cluster:         &cluster,
+				Labels:          istiod.Labels,
 				IstiodName:      istiod.Name,
 				IstiodNamespace: istiod.Namespace,
 				Revision:        istiod.Labels[models.IstioRevisionLabel],
@@ -544,6 +545,19 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 
 	for _, cp := range controlPlanes {
 		for _, cluster := range cp.ManagedClusters {
+			if cp.IsMaistra() {
+				// In maistra the Revision is actually the maistra.io/member-of label which is the namespace where the controlplane lives.
+				key := clusterRevisionKey{Cluster: cluster.Name, Revision: cp.IstiodNamespace}
+				if namespaces, ok := namespacesByClusterAndRev[key]; ok {
+					for _, namespace := range namespaces {
+						// Exclude the namespace where the controlplane lives
+						if namespace.Name != cp.IstiodNamespace {
+							cp.ManagedNamespaces = append(cp.ManagedNamespaces, namespace)
+						}
+					}
+				}
+				continue
+			}
 			// Default to controlplane revision but if there's a tag then overwrite with that.
 			rev := cp.Revision
 			if cp.Tag != nil {
