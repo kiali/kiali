@@ -42,6 +42,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
 
   React.useEffect(() => {
     fetchMetrics();
+    // @ts-ignore
   }, []);
 
   // 20px (card margin) + 24px (card padding) + 51px (toolbar) + 15px (toolbar padding) + 24px (card padding) + 20px (card margin)
