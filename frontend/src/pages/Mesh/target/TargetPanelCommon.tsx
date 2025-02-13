@@ -155,6 +155,9 @@ export const renderNodeHeader = (
     case MeshInfraType.WAYPOINT:
       pfBadge = PFBadges.Waypoint;
       break;
+    case MeshInfraType.ZTUNNEL:
+      pfBadge = PFBadges.Ztunnel;
+      break;
     default:
       console.warn(`MeshElems: Unexpected infraType [${data.infraType}] `);
   }

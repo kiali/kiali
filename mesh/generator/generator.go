@@ -195,13 +195,10 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 
 				if len(ztunnel.Pods) > 0 {
 					dump := gi.Business.Workload.GetZtunnelConfig(ztunnel.Cluster, ztunnel.Namespace, ztunnel.Pods[0].Name)
-					// scrub dump
+					// The dump can be huge, just return the config part and defer to the ztunnel workload tab for the other stuff
 					if dump != nil {
-						for i := range dump.Certificates {
-							dump.Certificates[i].CertChain = []kubernetes.CertChain{}
-						}
+						infraData = dump.Config
 					}
-					infraData = dump
 				}
 
 				// if we couldn't fetch a ztunnel config, just return labels and annotation
