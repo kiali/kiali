@@ -1,6 +1,6 @@
 #!/bin/bash
 ##############################################################################
-# install-waypoins.sh
+# install-waypoints.sh
 #
 # Installs 6 different namespaces with a pod calling a service and a waypoint proxy
 # with different tags in each one to validate different waypoint implementations
