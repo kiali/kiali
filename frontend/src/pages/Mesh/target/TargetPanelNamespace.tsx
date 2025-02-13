@@ -106,18 +106,9 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
 
     const data = targetNode.getData()!;
 
-    // Find the controlplanes nodes and pull out the controlplane
-    // object from infraData. The controlplane object has all the
-    // managed namespaces that is needed by elements on this page.
-    const controlPlanes: ControlPlane[] | undefined = props.target.elem
-      ?.getGraph()
-      .getData()
-      .meshData.elements.nodes?.filter(node => node.data.infraType === MeshInfraType.ISTIOD)
-      .map(node => node.data.infraData);
-
     this.state = {
       ...defaultState,
-      controlPlanes: controlPlanes,
+      controlPlanes: this.getControlPlanes(),
       targetCluster: data.cluster,
       targetNamespace: data.namespace,
       targetNode: targetNode
@@ -160,8 +151,8 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   }
 
   render(): React.ReactNode {
-    if (this.state.loading || !this.state.nsInfo) {
-      return this.getLoading();
+    if (!this.state.nsInfo) {
+      return this.state.loading ? this.getLoading() : <></>;
     }
 
     const listItemStyle = { marginTop: 0 };
@@ -310,6 +301,18 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         </Card>
       </div>
     );
+  };
+
+  // Find the controlplanes nodes and pull out the controlplane
+  // object from infraData. The controlplane object has all the
+  // managed namespaces that is needed by elements on this page.
+  private getControlPlanes = (): ControlPlane[] | undefined => {
+    const controlPlanes: ControlPlane[] | undefined = this.props.target.elem
+      ?.getGraph()
+      .getData()
+      .meshData.elements.nodes?.filter(node => node.data.infraType === MeshInfraType.ISTIOD)
+      .map(node => node.data.infraData);
+    return controlPlanes;
   };
 
   private getNamespaceActions = (): OverviewNamespaceAction[] => {
@@ -467,7 +470,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     this.promises
       .registerAll(`promises`, [this.fetchNamespaceInfo(), this.fetchHealthStatus(), this.fetchMetrics()])
       .then(() => {
-        this.setState({ loading: false });
+        this.setState({ controlPlanes: this.getControlPlanes(), loading: false });
       })
       .catch(err => {
         if (err.isCanceled) {

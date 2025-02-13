@@ -61,9 +61,9 @@ export const shouldRefreshData = (prevProps: TargetPanelCommonProps, nextProps: 
   return (
     // Verify the time of the last request
     prevProps.updateTime !== nextProps.updateTime ||
-    // Check if going from no data to data
+    // Check if going from no target to target
     (!prevProps.target && nextProps.target) ||
-    // Check if the target changed
+    // Check if the target elem changed
     prevProps.target.elem !== nextProps.target.elem
   );
 };
