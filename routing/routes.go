@@ -874,6 +874,27 @@ func NewRoutes(
 			handlers.ControlPlaneMetrics(handlers.DefaultPromClientSupplier),
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/controlplanes/{controlplane}/metrics controlplanes ztunelMetrics
+		// ---
+		// Endpoint to fetch metrics to be displayed, related to a single control plane
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
+		{
+			"ZtunnelMetrics",
+			"GET",
+			"/api/namespaces/{namespace}/ztunnel/{controlplane}/metrics",
+			handlers.ZtunnelMetrics(handlers.DefaultPromClientSupplier, conf, grafana),
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/dashboard services serviceDashboard
 		// ---
 		// Endpoint to fetch dashboard to be displayed, related to a single service
@@ -935,27 +956,6 @@ func NewRoutes(
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}/dashboard",
 			handlers.WorkloadDashboard(conf, grafana),
-			true,
-		},
-		// swagger:route GET /namespaces/{namespace}/ztunnel/{workload}/dashboard workloads workloadDashboard
-		// ---
-		// Endpoint to fetch dashboard to be displayed, related to a ztunnel workload
-		//
-		//     Produces:
-		//     - application/json
-		//
-		//     Schemes: http, https
-		//
-		// responses:
-		//      400: badRequestError
-		//      503: serviceUnavailableError
-		//      200: dashboardResponse
-		//
-		{
-			"ZtunnelDashboard",
-			"GET",
-			"/api/namespaces/{namespace}/ztunnel/{workload}/dashboard",
-			handlers.ZtunnelDashboard(conf, grafana),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/customdashboard/{dashboard} dashboards customDashboard

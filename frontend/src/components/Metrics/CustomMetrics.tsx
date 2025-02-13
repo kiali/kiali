@@ -259,7 +259,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     const toolbarHeight = this.toolbarRef.current ? this.toolbarRef.current.clientHeight : 51;
     const toolbarSpace = 20 + 24 + toolbarHeight + 15 + 24 + 20;
     const dashboardHeight = (this.props.height ? this.props.height : this.state.tabHeight) - toolbarSpace;
-
+    console.log(this.state.dashboard);
     const dashboard = this.state.dashboard && (
       <Dashboard
         dashboard={this.state.dashboard}

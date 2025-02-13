@@ -30,6 +30,7 @@ type ClientInterface interface {
 	FetchHistogramValues(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error)
 	FetchRange(metricName, labels, grouping, aggregator string, q *RangeQuery) Metric
 	FetchRateRange(metricName string, labels []string, grouping string, q *RangeQuery) Metric
+	FetchSimpleQuery(metricName string, labels []string, funct string, grouping string, q *RangeQuery, useTimeRange bool) Metric
 	GetAllRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetAppRequestRates(namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 	GetConfiguration() (prom_v1.ConfigResult, error)
@@ -252,6 +253,11 @@ func (in *Client) FetchRange(metricName, labels, grouping, aggregator string, q 
 // FetchRateRange fetches a counter's rate in given range
 func (in *Client) FetchRateRange(metricName string, labels []string, grouping string, q *RangeQuery) Metric {
 	return fetchRateRange(in.ctx, in.api, metricName, labels, grouping, q)
+}
+
+// FetchSimpleQuery fetches a counter's rate in given range
+func (in *Client) FetchSimpleQuery(metricName string, labels []string, funct string, grouping string, q *RangeQuery, useTimeRange bool) Metric {
+	return fetchSimpleQuery(in.ctx, in.api, metricName, labels, funct, grouping, q, useTimeRange)
 }
 
 // FetchHistogramRange fetches bucketed metric as histogram in given range

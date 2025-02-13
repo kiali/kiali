@@ -240,6 +240,26 @@ export const getControlPlaneMetrics = (
   );
 };
 
+export const getZtunnelMetrics = (
+  namespace: string,
+  controlPlane: string,
+  params: IstioMetricsOptions,
+  cluster?: string
+): Promise<ApiResponse<Readonly<DashboardModel>>> => {
+  const queryParams: QueryParams<IstioMetricsOptions> = { ...params };
+
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+
+  return newRequest<Readonly<DashboardModel>>(
+    HTTP_VERBS.GET,
+    urls.ztunnelMetrics(namespace, controlPlane),
+    queryParams,
+    {}
+  );
+};
+
 // comma separated list of namespaces
 export const getClustersMetrics = (
   namespaces: string,
@@ -1155,20 +1175,6 @@ export const getPodZtunnelConfig = (
   }
 
   return newRequest<ZtunnelConfigDump>(HTTP_VERBS.GET, urls.podZtunnelConfig(namespace, pod), params, {});
-};
-
-export const getZtunnelDashboard = (
-  namespace: string,
-  workload: string,
-  cluster?: string
-): Promise<ApiResponse<DashboardModel>> => {
-  const queryParams: ClusterParam = {};
-
-  if (cluster) {
-    queryParams.clusterName = cluster;
-  }
-
-  return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.ztunnelDashboard(namespace, workload), queryParams, {});
 };
 
 export const getPodEnvoyProxyResourceEntries = (
