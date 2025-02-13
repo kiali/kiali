@@ -116,8 +116,8 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
   }
 
   render(): React.ReactNode {
-    if (this.state.loading || !this.state.nsInfo) {
-      return this.getLoading();
+    if (!this.state.nsInfo) {
+      return this.state.loading ? this.getLoading() : <></>;
     }
 
     const nsInfo = this.state.nsInfo;
