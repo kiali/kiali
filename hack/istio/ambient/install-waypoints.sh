@@ -17,7 +17,7 @@ while [ $# -gt 0 ]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
-  -d|--delete: either 'true' or 'false'. If 'true' the waypont namespaces demo will be deleted, not installed.
+  -d|--delete: either 'true' or 'false'. If 'true' the waypoint namespaces demo will be deleted, not installed.
   -h|--help: this text
 HELPMSG
       exit 1
