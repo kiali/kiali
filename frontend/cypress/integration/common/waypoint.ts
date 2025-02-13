@@ -122,7 +122,7 @@ Then('user goes to the waypoint {string} subtab', (subtab: string) => {
 
 Then('validates Services data', () => {
   cy.get('[data-test="enrolled-data-title"]').should('be.visible');
-  cy.get('[role="grid"]').should('be.visible').get('[data-label="Name"]').and('contain', 'productpage-v1');
+  cy.get('[role="grid"]').should('be.visible').get('[data-label="Name"]').and('contain', 'productpage');
   cy.get('[role="grid"]').should('be.visible').get('#pfbadge-S').should('exist');
   cy.get('[role="grid"]').should('be.visible').get('[data-label="Namespace"]').and('contain', 'bookinfo');
   cy.get('[role="grid"]').should('be.visible').get('[data-label="Labeled by"]').and('contain', 'namespace');
