@@ -11,7 +11,7 @@ import {
   tabName as workloadTabName,
   defaultTab as workloadDefaultTab
 } from '../../pages/WorkloadDetails/WorkloadDetailsPage';
-import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
+import { TimeInMilliseconds, TimeRange } from '../../types/Common';
 import { subTabStyle } from 'styles/TabStyles';
 import { ToolbarDropdown } from '../Dropdown/ToolbarDropdown';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
@@ -29,9 +29,9 @@ const tabName = 'ztunnelTab';
 const defaultTab = 'services';
 
 type ZtunnelConfigProps = {
-  duration: DurationInSeconds;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
+  rangeDuration: TimeRange;
   workload: Workload;
 };
 
@@ -187,14 +187,12 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
     <Tab title={t('Metrics')} eventKey={2} key="metrics">
       <Card className={fullHeightStyle}>
         <CardBody>
-          <div className={fullHeightStyle}>
-            <ZtunnelMetrics
-              duration={props.duration}
-              lastRefreshAt={props.lastRefreshAt}
-              namespace={props.namespace}
-              cluster={props.workload.cluster ? props.workload.cluster : ''}
-            />
-          </div>
+          <ZtunnelMetrics
+            rangeDuration={props.rangeDuration}
+            lastRefreshAt={props.lastRefreshAt}
+            namespace={props.namespace}
+            cluster={props.workload.cluster ? props.workload.cluster : ''}
+          />
         </CardBody>
       </Card>
     </Tab>

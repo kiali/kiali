@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Title, TitleSizes } from '@patternfly/react-core';
-import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
+import { TimeInMilliseconds, TimeRange } from '../../types/Common';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { computePrometheusRateParams } from '../../services/Prometheus';
@@ -11,25 +11,29 @@ import { serverConfig } from '../../config';
 import * as MetricsHelper from '../Metrics/Helper';
 import { Dashboard } from '../Charts/Dashboard';
 import { DashboardModel } from '../../types/Dashboards';
+import { RenderComponentScroll } from '../Nav/Page';
 
 type ZtunnelMetricsProps = {
   cluster: string;
-  duration: DurationInSeconds;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
+  rangeDuration: TimeRange;
 };
 
 export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetricsProps) => {
   const urlParams = new URLSearchParams(location.getSearch());
   const expandedChart = urlParams.get('expand') ?? undefined;
   const toolbarRef = React.createRef<HTMLDivElement>();
-  const tabHeight = 300;
+  const [tabHeight, setTabHeight] = React.useState<number>(800);
   const [metrics, setMetrics] = React.useState<DashboardModel>();
-  const rateParams = computePrometheusRateParams(props.duration, 10);
+  const rateParams = computePrometheusRateParams(
+    props.rangeDuration.rangeDuration ? props.rangeDuration.rangeDuration : 60,
+    10
+  );
   const direction: DirectionType = 'outbound';
   const options: IstioMetricsOptions = {
     direction: direction,
-    duration: props.duration,
+    duration: props.rangeDuration.rangeDuration,
     filters: ['request_count', 'request_error_count'],
     includeAmbient: serverConfig.ambientEnabled,
     rateInterval: rateParams.rateInterval,
@@ -51,10 +55,8 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
   React.useEffect(() => {
     fetchMetrics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [props.rangeDuration.rangeDuration]);
 
-  // 20px (card margin) + 24px (card padding) + 51px (toolbar) + 15px (toolbar padding) + 24px (card padding) + 20px (card margin)
-  //const toolbarHeight = toolbarRef.current ? toolbarRef.current.clientHeight : 51;
   const toolbarHeight = toolbarRef.current ? toolbarRef.current.clientHeight : 51;
   const toolbarSpace = 20 + 24 + toolbarHeight + 15 + 24 + 20;
   const settings = MetricsHelper.retrieveMetricsSettings(200);
@@ -70,67 +72,9 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
 
     router.navigate(`${location.getPathname()}?${urlParams.toString()}`);
   };
-  /*
-    let memorySeries: VCLine<RichDataPoint>[] = [];
 
-
-    const ZtunnelMetricsChart = (m: ZtunnelMetricsMap|undefined): React.ReactNode => {
-      if (m?.ztunnel_connections) {
-        const data = toVCLine(m?.ztunnel_connections[0].datapoints, 'Mb', PFColors.Green400);
-        memorySeries.push(data);
-      }
-
-      return (<>
-        {m?.ztunnel_connections && (
-            <Grid data-test="memory-chart" style={{ marginBottom: '1.25rem' }} hasGutter>
-        <GridItem md={2}>
-          <Flex
-              className="pf-u-h-100-on-md"
-              direction={{ md: 'column' }}
-              spaceItems={{ md: 'spaceItemsNone' }}
-              justifyContent={{ md: 'justifyContentCenter' }}
-              style={{ textAlign: 'right', paddingRight: '2rem' }}
-          >
-            <FlexItem>
-              <b>{t('Memory')}</b>
-              <Tooltip
-                  position={TooltipPosition.right}
-                  content={
-                    <div style={{ textAlign: 'left' }}>
-                      {t('This chart shows memory consumption for the istiod {{memoryMetricSource}}', {
-
-                      })}
-                    </div>
-                  }
-              >
-                <KialiIcon.Info className={infoStyle} />
-              </Tooltip>
-            </FlexItem>
-          </Flex>
-        </GridItem>
-
-        <GridItem md={10}>
-          <SparklineChart
-              ariaTitle="Memory"
-              name="memory"
-              height={65}
-              showLegend={false}
-              showYAxis={true}
-              padding={{ top: 10, left: 40, right: 10, bottom: 0 }}
-              tooltipFormat={dp =>
-                  `${(dp.x as Date).toLocaleStringWithConditionalDate()}\n${dp.y.toFixed(2)} ${dp.name}`
-              }
-              series={memorySeries}
-              labelName={t('mb')}
-          />
-        </GridItem>
-      </Grid>
-        )}
-      </>)
-    }
-  */
   return (
-    <>
+    <RenderComponentScroll onResize={height => setTabHeight(height)}>
       <div>
         <Title headingLevel="h5" size={TitleSizes.lg} data-test="enrolled-data-title">
           Ztunnel metrics
@@ -147,6 +91,6 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
           )}
         </Title>
       </div>
-    </>
+    </RenderComponentScroll>
   );
 };
