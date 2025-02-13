@@ -187,8 +187,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 
 		// if ambient, add ztunnel
 		if gi.KialiCache.IsAmbientEnabled(cp.Cluster.Name) {
-			// TODO: Fix this hardcoded "app" labelNames after the labelName PR is merged
-			ztunnels, err := gi.Business.Workload.GetAllWorkloads(ctx, cp.Cluster.Name, "app=ztunnel")
+			ztunnels, err := gi.Business.Workload.GetAllWorkloads(ctx, cp.Cluster.Name, fmt.Sprintf("%s=%s", config.IstioAppLabel, config.Ztunnel))
 			mesh.CheckError(err)
 
 			for _, ztunnel := range ztunnels {
@@ -221,7 +220,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				}
 
 				version := models.DefaultRevisionLabel
-				if rev, ok := ztunnel.Labels[models.IstioRevisionLabel]; ok {
+				if rev, ok := ztunnel.Labels[config.IstioRevisionLabel]; ok {
 					version = rev
 				}
 
