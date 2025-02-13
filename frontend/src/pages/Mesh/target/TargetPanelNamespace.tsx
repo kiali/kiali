@@ -102,18 +102,9 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
 
     const data = targetNode.getData()!;
 
-    // Find the controlplanes nodes and pull out the controlplane
-    // object from infraData. The controlplane object has all the
-    // managed namespaces that is needed by elements on this page.
-    const controlPlanes: ControlPlane[] | undefined = props.target.elem
-      ?.getGraph()
-      .getData()
-      .meshData.elements.nodes?.filter(node => node.data.infraType === MeshInfraType.ISTIOD)
-      .map(node => node.data.infraData);
-
     this.state = {
       ...defaultState,
-      controlPlanes: controlPlanes,
+      controlPlanes: this.getControlPlanes(),
       targetCluster: data.cluster,
       targetNamespace: data.namespace,
       targetNode: targetNode
@@ -287,6 +278,18 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     );
   };
 
+  // Find the controlplanes nodes and pull out the controlplane
+  // object from infraData. The controlplane object has all the
+  // managed namespaces that is needed by elements on this page.
+  private getControlPlanes = (): ControlPlane[] | undefined => {
+    const controlPlanes: ControlPlane[] | undefined = this.props.target.elem
+      ?.getGraph()
+      .getData()
+      .meshData.elements.nodes?.filter(node => node.data.infraType === MeshInfraType.ISTIOD)
+      .map(node => node.data.infraData);
+    return controlPlanes;
+  };
+
   private getNamespaceActions = (): OverviewNamespaceAction[] => {
     // Today actions are fixed, but soon actions may depend of the state of a namespace
     // So we keep this wrapped in a showActions function.
@@ -442,7 +445,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     this.promises
       .registerAll(`promises`, [this.fetchNamespaceInfo(), this.fetchHealthStatus(), this.fetchMetrics()])
       .then(() => {
-        this.setState({ loading: false });
+        this.setState({ controlPlanes: this.getControlPlanes(), loading: false });
       })
       .catch(err => {
         if (err.isCanceled) {
