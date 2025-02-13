@@ -86,7 +86,7 @@ test-integration: test-integration-setup
 	@echo Test results can be found here: $$(ls -1 ${ROOTDIR}/tests/integration/junit-rest-report.xml)
 
 ## test-integration-controller: Run controller integration test suite. These are not real e2e tests like the other integration tests.
-test-integration-controller: .ensure-envtest-bin-dir-exists
+test-integration-controller: .ensure-envtest-bin-dir-exists download-istio-crds
 	@echo Running controller integration tests
 	cd tests/integration/controller && ${GO} test -v
 
@@ -113,4 +113,22 @@ lint:
 .ensure-envtest-exists:
 	@if [ ! -x envtest ]; then \
 	  ${GO} install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest; \
+	fi
+
+YQ := $(shell command -v yq 2> /dev/null)
+.ensure-yq-exists:
+ifndef YQ
+	$(error "'yq' needs to be installed to run this command. Please install 'yq' and re-run this command.")
+endif
+
+## Download istio-crds to testdata dir if necessary.
+## You can specify the istio version like this: make ISTIO_VERSION=1.24 download-istio-crds
+download-istio-crds: .find-helm-exe .ensure-yq-exists
+	$(eval ISTIO_VERSION ?= $(shell helm show chart --repo https://istio-release.storage.googleapis.com/charts base | yq '.version'))
+	$(eval MINOR_ISTIO_VERSION := $(shell cut -d "." -f 1-2 <<< ${ISTIO_VERSION}))
+	$(eval CRD_FILE := tests/integration/controller/testdata/istio-crds-${MINOR_ISTIO_VERSION}.yaml)
+	@if [ ! -f "${CRD_FILE}" ]; then \
+		echo "Downloading istio crds to ${CRD_FILE}"; \
+		mkdir -p tests/integration/controller/testdata; \
+		helm template --include-crds --version ${ISTIO_VERSION} --repo https://istio-release.storage.googleapis.com/charts base | yq ea 'select(.kind == "CustomResourceDefinition")' > ${CRD_FILE}; \
 	fi
