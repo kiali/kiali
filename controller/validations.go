@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networkingv1 "istio.io/client-go/pkg/apis/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -46,7 +46,7 @@ func NewValidationsController(
 	// Setting name/namespace here so that all work items are the same.
 	// That way if validations are taking longer than the timer then we
 	// won't try to re-validate until the existing work is done.
-	emptyObject := &networkingv1beta1.VirtualService{ObjectMeta: metav1.ObjectMeta{Name: "queue", Namespace: "queue"}}
+	emptyObject := &networkingv1.VirtualService{ObjectMeta: metav1.ObjectMeta{Name: "queue", Namespace: "queue"}}
 	go func() {
 		// Prime the pump
 		select {

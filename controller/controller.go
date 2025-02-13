@@ -12,7 +12,7 @@ import (
 	"context"
 	"fmt"
 
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networkingv1 "istio.io/client-go/pkg/apis/networking/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -30,7 +30,7 @@ func NewScheme() (*runtime.Scheme, error) {
 	scheme := runtime.NewScheme()
 	addSchemeFuncs := []func(s *runtime.Scheme) error{
 		clientgoscheme.AddToScheme,
-		networkingv1beta1.AddToScheme,
+		networkingv1.AddToScheme,
 	}
 
 	for _, addToScheme := range addSchemeFuncs {
