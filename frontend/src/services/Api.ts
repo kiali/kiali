@@ -1157,6 +1157,20 @@ export const getPodZtunnelConfig = (
   return newRequest<ZtunnelConfigDump>(HTTP_VERBS.GET, urls.podZtunnelConfig(namespace, pod), params, {});
 };
 
+export const getZtunnelDashboard = (
+  namespace: string,
+  workload: string,
+  cluster?: string
+): Promise<ApiResponse<DashboardModel>> => {
+  const queryParams: ClusterParam = {};
+
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+
+  return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.ztunnelDashboard(namespace, workload), queryParams, {});
+};
+
 export const getPodEnvoyProxyResourceEntries = (
   namespace: string,
   pod: string,

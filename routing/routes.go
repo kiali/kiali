@@ -937,6 +937,27 @@ func NewRoutes(
 			handlers.WorkloadDashboard(conf, grafana),
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/ztunnel/{workload}/dashboard workloads workloadDashboard
+		// ---
+		// Endpoint to fetch dashboard to be displayed, related to a ztunnel workload
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: dashboardResponse
+		//
+		{
+			"ZtunnelDashboard",
+			"GET",
+			"/api/namespaces/{namespace}/ztunnel/{workload}/dashboard",
+			handlers.ZtunnelDashboard(conf, grafana),
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/customdashboard/{dashboard} dashboards customDashboard
 		// ---
 		// Endpoint to fetch a custom dashboard

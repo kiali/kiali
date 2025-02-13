@@ -7,8 +7,6 @@ import { Dashboard } from '../Charts/Dashboard';
 import { DashboardModel } from '../../types/Dashboards';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { IstioMetricsOptions } from '../../types/MetricsOptions';
-import { MetricsReporter } from '../MetricsOptions/MetricsReporter';
 
 type ZtunnelMetricsProps = {
   cluster: string;
@@ -24,13 +22,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
   const [dashboard, setDashboard] = React.useState<DashboardModel>();
 
   const fetchMetrics = (): Promise<void> => {
-    const options: IstioMetricsOptions = {
-      direction: 'inbound',
-      includeAmbient: true,
-      reporter: MetricsReporter.initialReporter('inbound')
-    };
-
-    return API.getWorkloadDashboard(props.namespace, 'ztunnel', options, props.cluster)
+    return API.getZtunnelDashboard(props.namespace, 'ztunnel', props.cluster)
       .then(response => {
         setDashboard(response.data);
       })

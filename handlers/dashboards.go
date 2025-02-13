@@ -223,3 +223,34 @@ func WorkloadDashboard(conf *config.Config, grafana *grafana.Service) http.Handl
 		RespondWithJSON(w, http.StatusOK, dashboard)
 	}
 }
+
+// ZtunnelDashboard is the API handler to fetch Istio dashboard, related to a single workload
+func ZtunnelDashboard(conf *config.Config, grafana *grafana.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		namespace := vars["namespace"]
+		workload := vars["workload"]
+		cluster := clusterNameFromQuery(r.URL.Query())
+
+		metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, DefaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
+		if metricsService == nil {
+			// any returned value nil means error & response already written
+			return
+		}
+
+		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, Workload: workload}
+		err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		metrics, err := metricsService.GetMetrics(params, business.GetZtunnelScaler())
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+		dashboard := business.NewDashboardsService(conf, grafana, namespaceInfo, nil).BuildIstioDashboard(metrics, params.Direction)
+		RespondWithJSON(w, http.StatusOK, dashboard)
+	}
+}

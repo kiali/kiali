@@ -506,8 +506,125 @@ func getIstioCharts() []istioChart {
 	return istioCharts
 }
 
+func getZtunnelCharts() []istioChart {
+	istioCharts := []istioChart{
+		{
+			Chart: models.Chart{
+				Name:  "Ztunnel Versions",
+				Unit:  "ops",
+				Spans: 3,
+			},
+			refName: "istio_build{component=\"ztunnel\"})",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "Memory usage",
+				Unit:  "seconds",
+				Spans: 3,
+			},
+			refName: "sum by (pod) (container_memory_working_set_bytes{container=\"istio-proxy\",pod=~\"ztunnel-.*\"})",
+			scale:   0.001,
+		},
+		{
+			Chart: models.Chart{
+				Name:  "CPU usage",
+				Unit:  "bytes",
+				Spans: 3,
+			},
+			refName: "sum by (pod) (irate(container_cpu_usage_seconds_total{container=\"istio-proxy\",pod=~\"ztunnel-.*\"}[$__rate_interval]))",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "Response size",
+				Unit:  "bytes",
+				Spans: 3,
+			},
+			refName: "response_size",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "Request throughput",
+				Unit:  "bitrate",
+				Spans: 3,
+			},
+			refName: "request_throughput",
+			scale:   8, // Bps to bps
+		},
+		{
+			Chart: models.Chart{
+				Name:  "Response throughput",
+				Unit:  "bitrate",
+				Spans: 3,
+			},
+			refName: "response_throughput",
+			scale:   8, // Bps to bps
+		},
+		{
+			Chart: models.Chart{
+				Name:  "gRPC received",
+				Unit:  "msgrate",
+				Spans: 3,
+			},
+			refName: "grpc_received",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "gRPC sent",
+				Unit:  "msgrate",
+				Spans: 3,
+			},
+			refName: "grpc_sent",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "TCP opened",
+				Unit:  "connrate",
+				Spans: 3,
+			},
+			refName: "tcp_opened",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "TCP closed",
+				Unit:  "connrate",
+				Spans: 3,
+			},
+			refName: "tcp_closed",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "TCP received",
+				Unit:  "bitrate",
+				Spans: 3,
+			},
+			refName: "tcp_received",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "TCP sent",
+				Unit:  "bitrate",
+				Spans: 3,
+			},
+			refName: "tcp_sent",
+		},
+	}
+	return istioCharts
+}
+
 func GetIstioScaler() func(name string) float64 {
 	charts := getIstioCharts()
+	return func(name string) float64 {
+		for _, c := range charts {
+			if c.refName == name {
+				return c.scale
+			}
+		}
+		return 1.0
+	}
+}
+
+func GetZtunnelScaler() func(name string) float64 {
+	charts := getZtunnelCharts()
 	return func(name string) float64 {
 		for _, c := range charts {
 			if c.refName == name {
