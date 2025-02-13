@@ -20,13 +20,16 @@ package controller
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"testing"
 
+	"github.com/Masterminds/semver/v3"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/rest"
@@ -56,6 +59,9 @@ func TestControllers(t *testing.T) {
 	RunSpecs(t, "Controller Suite")
 }
 
+//go:embed testdata/istio-crds
+var istioCRDDir embed.FS
+
 var (
 	kialiOutputFolder     = filepath.Join(kialicmd.KialiProjectRoot, "_output")
 	binaryAssetsDirectory = filepath.Join(kialiOutputFolder, "k8s")
@@ -67,25 +73,42 @@ var _ = BeforeSuite(func() {
 	ctx, cancel = context.WithCancel(context.TODO())
 
 	istioVersion := os.Getenv("ISTIO_VERSION")
-	if istioVersion == "" {
-		files, err := os.ReadDir(kialiOutputFolder)
-		Expect(err).NotTo(HaveOccurred())
-		for _, file := range files {
-			// Simply pick one that beings with istio-
-			if strings.HasPrefix(file.Name(), "istio-") {
-				istioVersion = file.Name()
-				break
-			}
+	// Istio CRDs needs to be downloaded to the testdata folder in order for these tests to run because
+	// these tests spin up a real API server and the Istio CRDs need to be installed in the API server.
+	if istioVersion != "" {
+		// Take version of the form 1.23.0 and convert it to it's minor form: 1.23
+		parts := strings.Split(istioVersion, ".")
+		if len(parts) < 2 {
+			Fail(fmt.Sprintf("Invalid ISTIO_VERSION env var. Expected version of the form '1.23.0'. Got: %s", istioVersion))
 		}
+
+		// Put it back together with just the major/minor
+		istioVersion = parts[0] + "." + parts[1]
+	} else {
+		// Find the latest version
+		crdFiles, err := istioCRDDir.ReadDir("testdata/istio-crds")
+		if err != nil {
+			Fail(fmt.Sprintf("Unable to read istio-crds dir: %s", err))
+		}
+
+		var versions semver.Collection
+		for _, f := range crdFiles {
+			version := strings.TrimSuffix(f.Name(), ".yaml")
+			v, err := semver.NewVersion(version)
+			if err != nil {
+				Fail(fmt.Sprintf("Unable to determine version of file: '%s': %s", f.Name(), err))
+			}
+			versions = append(versions, v)
+		}
+		if len(versions) == 0 {
+			Fail("No istio-crd files found")
+		}
+
+		sort.Sort(sort.Reverse(versions))
+		istioVersion = fmt.Sprintf("%d.%d", versions[0].Major(), versions[0].Minor())
 	}
 
-	// Istio needs to be installed in the kiali/_output folder in order for these tests to run because
-	// these tests spin up a real API server and we need to find the Istio CRDs in the output folder
-	// so they can be installed in the API server.
-	if istioVersion == "" {
-		Fail(fmt.Sprintf("ISTIO_VERSION not set and could not be automatically determined. Have you installed istio in your kiali output directory: '%s'?", kialiOutputFolder))
-	}
-
+	By(fmt.Sprintf("Using istio version: %s", istioVersion))
 	kubeVersion := os.Getenv("KUBE_VERSION")
 	if kubeVersion == "" {
 		// Find one that ends with -<os>-<arch>.
@@ -101,10 +124,7 @@ var _ = BeforeSuite(func() {
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		// TODO: This method of loading in the istio CRDs needs to change. It is too reliant on the structure of the manifests dir
-		// which we don't control. Would be better to embed the CRDs if possible.
-		// e.g. _output/istio-1.24.0/manifests/charts/base/files/crd-all.gen.yaml
-		CRDDirectoryPaths:     []string{"testdata"},
+		CRDInstallOptions:     envtest.CRDInstallOptions{Paths: []string{"testdata/istio-crds/" + istioVersion + ".yaml"}},
 		ErrorIfCRDPathMissing: true,
 		// e.g. "_output/k8s/1.29.1-linux-amd64"
 		BinaryAssetsDirectory: filepath.Join(kialiOutputFolder, "k8s", kubeVersion),

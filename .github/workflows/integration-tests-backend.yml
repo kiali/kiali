@@ -56,7 +56,7 @@ jobs:
       run: hack/run-integration-tests.sh --test-suite backend $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
     - name: Run backend controller integration tests
-      run: make test-integration-controller
+      run: make ISTIO_VERSION="${{ inputs.istio_version }}" test-integration-controller
 
     - name: Get debug info when integration tests fail
       if: ${{ failure() && steps.intTests.conclusion == 'failure' }}

@@ -3,6 +3,7 @@ module github.com/kiali/kiali
 go 1.23.2
 
 require (
+	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/go-jose/go-jose v2.6.3+incompatible
 	github.com/gogo/protobuf v1.3.2
