@@ -2132,18 +2132,20 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		}
 
 		// If the pod is a waypoint proxy, check if it is attached to a namespace or to a service account, and get the affected workloads
-		if criteria.IncludeWaypoints && w.IsWaypoint() && w.WaypointFor() != config.WaypointForNone {
+		if criteria.IncludeWaypoints && w.IsWaypoint() {
 			w.Ambient = config.Waypoint
-			includeServices := false
-			if w.WaypointFor() == config.WaypointForService || w.WaypointFor() == config.WaypointForAll {
-				includeServices = true
-			}
-			// Get waypoint workloads
-			in.cache.GetWaypointList()
-			waypointWorkloads, waypointServices := in.listWaypointWorkloads(ctx, w.Name, w.Namespace, criteria.Cluster, includeServices)
-			w.WaypointWorkloads = waypointWorkloads
-			if includeServices {
-				w.WaypointServices = waypointServices
+			if w.WaypointFor() != config.WaypointForNone {
+				includeServices := false
+				if w.WaypointFor() == config.WaypointForService || w.WaypointFor() == config.WaypointForAll {
+					includeServices = true
+				}
+				// Get waypoint workloads
+				in.cache.GetWaypointList()
+				waypointWorkloads, waypointServices := in.listWaypointWorkloads(ctx, w.Name, w.Namespace, criteria.Cluster, includeServices)
+				w.WaypointWorkloads = waypointWorkloads
+				if includeServices {
+					w.WaypointServices = waypointServices
+				}
 			}
 		}
 		if w.IsZtunnel() {
