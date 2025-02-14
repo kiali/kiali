@@ -235,7 +235,7 @@ func ZtunnelDashboard(promSupplier promClientSupplier, conf *config.Config, graf
 		}
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
-		controlPlane := vars["controlplane"]
+		workload := vars["workload"]
 		cluster := clusterNameFromQuery(r.URL.Query())
 
 		metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
@@ -261,7 +261,7 @@ func ZtunnelDashboard(promSupplier promClientSupplier, conf *config.Config, graf
 		cpWorkload, err := layer.Workload.GetWorkload(r.Context(), business.WorkloadCriteria{
 			Cluster:               cluster,
 			Namespace:             namespace,
-			WorkloadName:          controlPlane,
+			WorkloadName:          workload,
 			IncludeServices:       false,
 			IncludeIstioResources: false,
 			IncludeHealth:         false,
@@ -271,21 +271,13 @@ func ZtunnelDashboard(promSupplier promClientSupplier, conf *config.Config, graf
 			return
 		}
 
-		//metrics := make(models.MetricsMap)
-
 		ztunnelMetrics, err := metricsService.GetZtunnelMetrics(params, cpWorkload.Pods)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
 		}
 		ns := namespaceInfo[0]
-		dashboard := business.NewDashboardsService(conf, grafana, &ns, nil).BuildZtunnelDashboard(ztunnelMetrics, params.Direction)
-		/*
-			for k, v := range ztunnelMetrics {
-				metrics[k] = v
-			}
-		*/
+		dashboard := business.NewDashboardsService(conf, grafana, &ns, nil).BuildZtunnelDashboard(ztunnelMetrics)
 		RespondWithJSON(w, http.StatusOK, dashboard)
-		//RespondWithJSON(w, http.StatusOK, metrics)
 	}
 }

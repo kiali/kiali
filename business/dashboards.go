@@ -571,18 +571,17 @@ func GetIstioScaler() func(name string) float64 {
 }
 
 // BuildIstioDashboard returns Istio dashboard filled-in with metrics
-func (in *DashboardsService) BuildZtunnelDashboard(metrics models.MetricsMap, direction string) *models.MonitoringDashboard {
-	var dashboard models.MonitoringDashboard
-	// Copy dashboard
-	if direction == "inbound" {
-		dashboard = models.PrepareIstioDashboard("Inbound")
-	} else {
-		dashboard = models.PrepareIstioDashboard("Outbound")
+func (in *DashboardsService) BuildZtunnelDashboard(metrics models.MetricsMap) *models.MonitoringDashboard {
+	dashboard := models.MonitoringDashboard{
+		Title:        fmt.Sprintf("Ztunnel Metrics"),
+		Aggregations: []models.Aggregation{},
+		Charts:       []models.Chart{},
+		Rows:         4,
 	}
 
-	istioCharts := getZtunnelCharts()
+	ztunnelCharts := getZtunnelCharts()
 
-	for _, chartTpl := range istioCharts {
+	for _, chartTpl := range ztunnelCharts {
 		newChart := chartTpl.Chart
 		conversionParams := models.ConversionParams{Scale: 1.0}
 		if chartTpl.scale != 0.0 {

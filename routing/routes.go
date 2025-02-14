@@ -937,7 +937,7 @@ func NewRoutes(
 			handlers.WorkloadDashboard(conf, grafana),
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/ztunnel/{controlplane}/dashboard ztunnel Dashboard
+		// swagger:route GET /namespaces/{namespace}/ztunnel/{workload}/dashboard ztunnel Dashboard
 		// ---
 		// Endpoint to fetch dashboard to be displayed, related to a ztunnel workload
 		//
@@ -954,7 +954,7 @@ func NewRoutes(
 		{
 			"ZtunnelMetrics",
 			"GET",
-			"/api/namespaces/{namespace}/ztunnel/{controlplane}/dashboard",
+			"/api/namespaces/{namespace}/ztunnel/{workload}/dashboard",
 			handlers.ZtunnelDashboard(handlers.DefaultPromClientSupplier, conf, grafana),
 			true,
 		},
