@@ -573,7 +573,7 @@ func GetIstioScaler() func(name string) float64 {
 // BuildIstioDashboard returns Istio dashboard filled-in with metrics
 func (in *DashboardsService) BuildZtunnelDashboard(metrics models.MetricsMap) *models.MonitoringDashboard {
 	dashboard := models.MonitoringDashboard{
-		Title:        fmt.Sprintf("Ztunnel Metrics"),
+		Title:        "Ztunnel Metrics",
 		Aggregations: []models.Aggregation{},
 		Charts:       []models.Chart{},
 		Rows:         4,
