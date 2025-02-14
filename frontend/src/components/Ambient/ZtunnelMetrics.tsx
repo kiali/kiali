@@ -41,7 +41,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
   };
 
   const fetchMetrics = (): Promise<void> => {
-    return API.getZtunnelMetrics(props.namespace, 'ztunnel', options, props.cluster)
+    return API.getZtunnelDashboard(props.namespace, 'ztunnel', options, props.cluster)
       .then(response => {
         setMetrics(response.data);
       })

@@ -240,7 +240,7 @@ export const getControlPlaneMetrics = (
   );
 };
 
-export const getZtunnelMetrics = (
+export const getZtunnelDashboard = (
   namespace: string,
   controlPlane: string,
   params: IstioMetricsOptions,
@@ -254,7 +254,7 @@ export const getZtunnelMetrics = (
 
   return newRequest<Readonly<DashboardModel>>(
     HTTP_VERBS.GET,
-    urls.ztunnelMetrics(namespace, controlPlane),
+    urls.ztunnelDashboard(namespace, controlPlane),
     queryParams,
     {}
   );

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/kiali/kiali/grafana"
 	"io"
 	"net/http"
 	"net/url"
@@ -226,71 +225,6 @@ func ControlPlaneMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 		}
 
 		RespondWithJSON(w, http.StatusOK, metrics)
-	}
-}
-
-// ZtunnelMetrics is the API handler to fetch metrics to be displayed, related to a single control plane revision
-func ZtunnelMetrics(promSupplier promClientSupplier, conf *config.Config, grafana *grafana.Service) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		layer, err := getBusiness(r)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		vars := mux.Vars(r)
-		namespace := vars["namespace"]
-		controlPlane := vars["controlplane"]
-		cluster := clusterNameFromQuery(r.URL.Query())
-
-		metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
-		if metricsService == nil {
-			// any returned value nil means error & response already written
-			return
-		}
-		oldestNs := GetOldestNamespace(namespaceInfo)
-
-		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace}
-
-		err = extractIstioMetricsQueryParams(r, &params, oldestNs)
-		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		if namespace != config.Get().IstioNamespace {
-			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
-			return
-		}
-
-		cpWorkload, err := layer.Workload.GetWorkload(r.Context(), business.WorkloadCriteria{
-			Cluster:               cluster,
-			Namespace:             namespace,
-			WorkloadName:          controlPlane,
-			IncludeServices:       false,
-			IncludeIstioResources: false,
-			IncludeHealth:         false,
-		})
-		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		//metrics := make(models.MetricsMap)
-
-		ztunnelMetrics, err := metricsService.GetZtunnelMetrics(params, cpWorkload.Pods)
-		if err != nil {
-			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-			return
-		}
-		ns := namespaceInfo[0]
-		dashboard := business.NewDashboardsService(conf, grafana, &ns, nil).BuildZtunnelDashboard(ztunnelMetrics, params.Direction)
-		/*
-			for k, v := range ztunnelMetrics {
-				metrics[k] = v
-			}
-		*/
-		RespondWithJSON(w, http.StatusOK, dashboard)
-		//RespondWithJSON(w, http.StatusOK, metrics)
 	}
 }
 
