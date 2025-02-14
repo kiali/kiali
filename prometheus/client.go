@@ -256,8 +256,8 @@ func (in *Client) FetchRateRange(metricName string, labels []string, grouping st
 }
 
 // FetchSimpleQuery fetches a counter's rate in given range
-func (in *Client) FetchSimpleQuery(metricName string, labels []string, funct string, grouping string, q *RangeQuery) Metric {
-	return fetchSimpleQuery(in.ctx, in.api, metricName, labels, funct, grouping, q)
+func (in *Client) FetchSimpleQuery(metricName string, labels []string, function string, grouping string, q *RangeQuery) Metric {
+	return fetchSimpleQuery(in.ctx, in.api, metricName, labels, function, grouping, q)
 }
 
 // FetchHistogramRange fetches bucketed metric as histogram in given range
