@@ -11,6 +11,11 @@ import * as MetricsHelper from '../Metrics/Helper';
 import { Dashboard } from '../Charts/Dashboard';
 import { DashboardModel } from '../../types/Dashboards';
 import { RenderComponentScroll } from '../Nav/Page';
+import { GrafanaLinks } from '../Metrics/GrafanaLinks';
+import { Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
+import { MetricsObjectTypes } from '../../types/Metrics';
+import { GrafanaInfo } from '../../types/GrafanaInfo';
+import { MessageType } from '../../types/MessageCenter';
 
 type ZtunnelMetricsProps = {
   cluster: string;
@@ -25,6 +30,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
   const toolbarRef = React.createRef<HTMLDivElement>();
   const [tabHeight, setTabHeight] = React.useState<number>(800);
   const [metrics, setMetrics] = React.useState<DashboardModel>();
+  const [grafanaLinks, setGrafanaLinks] = React.useState<GrafanaInfo>();
   const rateParams = computePrometheusRateParams(
     props.rangeDuration.rangeDuration ? props.rangeDuration.rangeDuration : 60,
     10
@@ -51,10 +57,32 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
       });
   };
 
+  const fetchGrafanaInfo = (): void => {
+    API.getGrafanaInfo()
+      .then(grafanaInfo => {
+        if (grafanaInfo) {
+          setGrafanaLinks(grafanaInfo.data);
+        }
+      })
+      .catch(err => {
+        AlertUtils.addMessage({
+          ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
+          group: 'default',
+          type: MessageType.INFO,
+          showNotification: false
+        });
+      });
+  };
+
   React.useEffect(() => {
     fetchMetrics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.rangeDuration.rangeDuration]);
+
+  React.useEffect(() => {
+    fetchGrafanaInfo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toolbarHeight = toolbarRef.current ? toolbarRef.current.clientHeight : 51;
   const toolbarSpace = 20 + 24 + toolbarHeight + 15 + 24 + 20;
@@ -75,6 +103,22 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
   return (
     <RenderComponentScroll onResize={height => setTabHeight(height)}>
       <div>
+        {grafanaLinks && (
+          <div ref={toolbarRef}>
+            <Toolbar style={{ padding: 0, marginBottom: '1.25rem' }}>
+              <ToolbarGroup>
+                <ToolbarItem style={{ marginLeft: 'auto', paddingRight: '20px' }}>
+                  <GrafanaLinks
+                    links={grafanaLinks?.externalLinks}
+                    namespace={props.namespace}
+                    object="ztunnel"
+                    objectType={MetricsObjectTypes.ZTUNNEL}
+                  />
+                </ToolbarItem>
+              </ToolbarGroup>
+            </Toolbar>
+          </div>
+        )}
         {metrics && (
           <Dashboard
             dashboard={metrics}

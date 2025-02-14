@@ -23,21 +23,26 @@ export class GrafanaLinks extends React.PureComponent<Props, {}> {
       switch (props.objectType) {
         case MetricsObjectTypes.SERVICE:
           const fullServiceName = `${props.object}.${props.namespace}.svc.cluster.local`;
-          if (d.variables.service) {
+          if (d.variables.service && d.name !== 'Istio Ztunnel Dashboard') {
             const url = `${d.url}${first}${d.variables.service}=${fullServiceName}${nsvar}${vervar}`;
             links.push([d.name, url]);
           }
           break;
         case MetricsObjectTypes.WORKLOAD:
-          if (d.variables.workload) {
+          if (d.variables.workload && d.name !== 'Istio Ztunnel Dashboard') {
             const url = `${d.url}${first}${d.variables.workload}=${props.object}${nsvar}${vervar}`;
             links.push([d.name, url]);
           }
           break;
         case MetricsObjectTypes.APP:
-          if (d.variables.app) {
+          if (d.variables.app && d.name !== 'Istio Ztunnel Dashboard') {
             const url = `${d.url}${first}${d.variables.app}=${props.object}${nsvar}${vervar}`;
             links.push([d.name, url]);
+          }
+          break;
+        case MetricsObjectTypes.ZTUNNEL:
+          if (d.name === 'Istio Ztunnel Dashboard') {
+            links.push([d.name, d.url]);
           }
           break;
         default:
@@ -47,7 +52,7 @@ export class GrafanaLinks extends React.PureComponent<Props, {}> {
     return links;
   }
 
-  render() {
+  render(): React.ReactElement {
     const links = GrafanaLinks.buildGrafanaLinks(this.props);
     return (
       <>
@@ -63,7 +68,7 @@ export class GrafanaLinks extends React.PureComponent<Props, {}> {
             View in Grafana:&nbsp;
             {links
               .map((link, idx) => (
-                <a id={'grafana_link_' + idx} title={link[0]} href={link[1]} target="_blank" rel="noopener noreferrer">
+                <a id={`grafana_link_${idx}`} title={link[0]} href={link[1]} target="_blank" rel="noopener noreferrer">
                   {link[0]} <ExternalLinkAltIcon />
                 </a>
               ))
