@@ -87,6 +87,7 @@ const (
 	WaypointLabel             = "gateway.istio.io/managed"
 	WaypointLabelValue        = "istio.io-mesh-controller"
 	WaypointUseLabel          = "istio.io/use-waypoint"
+	WaypointNone              = "none"
 	WaypointUseNamespaceLabel = "istio.io/use-waypoint-namespace"
 	Ztunnel                   = "ztunnel"
 )
