@@ -324,12 +324,6 @@ func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, pod
 }
 
 func (in *MetricsService) GetZtunnelMetrics(q models.IstioMetricsQuery, pods models.Pods) (models.MetricsMap, error) {
-	podRegex := ""
-	separator := ""
-	for _, pod := range pods {
-		podRegex = fmt.Sprintf("%s%s%s", podRegex, separator, pod.Name)
-		separator = "|"
-	}
 
 	metrics := make(models.MetricsMap)
 	var err error
@@ -375,19 +369,19 @@ func (in *MetricsService) GetZtunnelMetrics(q models.IstioMetricsQuery, pods mod
 	}
 	metrics["ztunnel_cpu_usage"] = append(metrics[metricName], converted...)
 
-	// ztunnel_bytes_trasmitted
+	// ztunnel_bytes_transmitted
 	metric = in.prom.FetchRateRange("istio_tcp_received_bytes_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
-	converted, err = models.ConvertMetric("ztunnel_bytes_trasmitted", metric, models.ConversionParams{Scale: 0.001})
+	converted, err = models.ConvertMetric("ztunnel_bytes_transmitted", metric, models.ConversionParams{Scale: 0.001})
 	if err != nil {
 		return nil, err
 	}
-	metrics["ztunnel_bytes_trasmitted"] = append(metrics["ztunnel_bytes_trasmitted"], converted...)
+	metrics["ztunnel_bytes_transmitted"] = append(metrics["ztunnel_bytes_transmitted"], converted...)
 	metric = in.prom.FetchRateRange("istio_tcp_sent_bytes_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
-	converted, err = models.ConvertMetric("ztunnel_bytes_trasmitted", metric, models.ConversionParams{Scale: 0.001})
+	converted, err = models.ConvertMetric("ztunnel_bytes_transmitted", metric, models.ConversionParams{Scale: 0.001})
 	if err != nil {
 		return nil, err
 	}
-	metrics["ztunnel_bytes_trasmitted"] = append(metrics["ztunnel_bytes_trasmitted"], converted...)
+	metrics["ztunnel_bytes_transmitted"] = append(metrics["ztunnel_bytes_transmitted"], converted...)
 
 	// ztunnel_workload_manager
 	metric = in.prom.FetchSimpleQuery("workload_manager_active_proxy_count", []string{"{pod=~\"ztunnel-.*\"}"}, "sum", "pod", &q.RangeQuery)

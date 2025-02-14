@@ -541,11 +541,11 @@ func getZtunnelCharts() []istioChart {
 		},
 		{
 			Chart: models.Chart{
-				Name:  "Ztunnel bytes trasmitted",
+				Name:  "Ztunnel bytes transmitted",
 				Unit:  "kB",
 				Spans: 4,
 			},
-			refName: "ztunnel_bytes_trasmitted",
+			refName: "ztunnel_bytes_transmitted",
 		},
 		{
 			Chart: models.Chart{
