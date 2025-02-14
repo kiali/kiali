@@ -511,52 +511,48 @@ func getZtunnelCharts() []istioChart {
 		{
 			Chart: models.Chart{
 				Name:  "Ztunnel Connections",
-				Unit:  "ops",
-				Spans: 3,
+				Unit:  "cps",
+				Spans: 4,
 			},
 			refName: "ztunnel_connections",
+			scale:   100000000,
 		},
 		{
 			Chart: models.Chart{
 				Name:  "Ztunnel versions",
-				Unit:  "seconds",
-				Spans: 3,
+				Spans: 4,
 			},
 			refName: "ztunnel_versions",
-			scale:   0.001,
 		},
 		{
 			Chart: models.Chart{
 				Name:  "Ztunnel memory usage",
-				Unit:  "bytes",
-				Spans: 3,
+				Unit:  "MiB",
+				Spans: 4,
 			},
 			refName: "ztunnel_memory_usage",
 		},
 		{
 			Chart: models.Chart{
 				Name:  "Ztunnel CPU usage",
-				Unit:  "bytes",
-				Spans: 3,
+				Spans: 4,
 			},
 			refName: "ztunnel_cpu_usage",
 		},
 		{
 			Chart: models.Chart{
 				Name:  "Ztunnel bytes trasmitted",
-				Unit:  "bytes",
-				Spans: 3,
+				Unit:  "kB",
+				Spans: 4,
 			},
 			refName: "ztunnel_bytes_trasmitted",
 		},
 		{
 			Chart: models.Chart{
 				Name:  "Ztunnel workload manager",
-				Unit:  "bitrate",
-				Spans: 3,
+				Spans: 4,
 			},
 			refName: "ztunnel_workload_manager",
-			scale:   8, // Bps to bps
 		},
 	}
 	return istioCharts

@@ -34,25 +34,17 @@ func fetchRateRange(ctx context.Context, api prom_v1.API, metricName string, lab
 	return fetchRange(ctx, api, query, q.Range)
 }
 
-func fetchSimpleQuery(ctx context.Context, api prom_v1.API, metricName string, labels []string, funct string, grouping string, q *RangeQuery, useTimeRange bool) Metric {
+func fetchSimpleQuery(ctx context.Context, api prom_v1.API, metricName string, labels []string, funct string, grouping string, q *RangeQuery) Metric {
 	var query string
 	// Example: sum(rate(my_counter{foo=bar}[5m])) by (baz)
 	for i, labelsInstance := range labels {
 		if i > 0 {
 			query += " OR "
 		}
-		if useTimeRange {
-			if grouping == "" {
-				query += fmt.Sprintf("%s(%s%s[%s])", funct, metricName, labelsInstance, q.RateInterval)
-			} else {
-				query += fmt.Sprintf("%s(%s%s[%s]) by (%s)", funct, metricName, labelsInstance, q.RateInterval, grouping)
-			}
+		if grouping == "" {
+			query += fmt.Sprintf("%s(%s%s)", funct, metricName, labelsInstance)
 		} else {
-			if grouping == "" {
-				query += fmt.Sprintf("%s(%s%s)", funct, metricName, labelsInstance)
-			} else {
-				query += fmt.Sprintf("%s(%s%s) by (%s)", funct, metricName, labelsInstance, grouping)
-			}
+			query += fmt.Sprintf("%s(%s%s) by (%s)", funct, metricName, labelsInstance, grouping)
 		}
 	}
 	if len(labels) > 1 {

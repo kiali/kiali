@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Title, TitleSizes } from '@patternfly/react-core';
 import { TimeInMilliseconds, TimeRange } from '../../types/Common';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -76,20 +75,17 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
   return (
     <RenderComponentScroll onResize={height => setTabHeight(height)}>
       <div>
-        <Title headingLevel="h5" size={TitleSizes.lg} data-test="enrolled-data-title">
-          Ztunnel metrics
-          {metrics && (
-            <Dashboard
-              dashboard={metrics}
-              labelValues={MetricsHelper.convertAsPromLabels(settings.labelsSettings)}
-              maximizedChart={expandedChart}
-              expandHandler={expandHandler}
-              labelPrettifier={MetricsHelper.prettyLabelValues}
-              showSpans={false}
-              dashboardHeight={dashboardHeight}
-            />
-          )}
-        </Title>
+        {metrics && (
+          <Dashboard
+            dashboard={metrics}
+            labelValues={MetricsHelper.convertAsPromLabels(settings.labelsSettings)}
+            maximizedChart={expandedChart}
+            expandHandler={expandHandler}
+            labelPrettifier={MetricsHelper.prettyLabelValues}
+            showSpans={false}
+            dashboardHeight={dashboardHeight}
+          />
+        )}
       </div>
     </RenderComponentScroll>
   );
