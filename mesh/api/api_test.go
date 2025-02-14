@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/mux"
@@ -31,6 +32,7 @@ import (
 	"github.com/kiali/kiali/mesh"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
+	"github.com/kiali/kiali/tests/data"
 )
 
 // Setup mock
@@ -135,6 +137,57 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 		},
 	}
 
+	gwObject := data.CreateEmptyGateway("gateway", "istio-system", map[string]string{
+		"istio": "ingressgateway",
+	})
+
+	wpObject := &apps_v1.Deployment{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "waypoint",
+			Namespace: "data-plane-1",
+			Labels: map[string]string{
+				"gateway.istio.io/managed": "istio.io-mesh-controller",
+			},
+		},
+		Spec: apps_v1.DeploymentSpec{
+			Template: core_v1.PodTemplateSpec{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{
+						"gateway.istio.io/managed": "istio.io-mesh-controller",
+					},
+				},
+			},
+		},
+	}
+
+	ztunnelObject := &apps_v1.DaemonSet{
+
+		TypeMeta: v1.TypeMeta{
+			APIVersion: kubernetes.DaemonSets.GroupVersion().String(),
+			Kind:       kubernetes.DaemonSets.Kind,
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:              "ztunnel",
+			Namespace:         "istio-system",
+			CreationTimestamp: v1.NewTime(time.Now()),
+		},
+		Spec: apps_v1.DaemonSetSpec{
+			Template: core_v1.PodTemplateSpec{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"app": "ztunnel"},
+				},
+			},
+			Selector: &v1.LabelSelector{
+				MatchLabels: map[string]string{"app": "ztunnel"},
+			},
+		},
+		Status: apps_v1.DaemonSetStatus{
+			DesiredNumberScheduled: 1,
+			CurrentNumberScheduled: 1,
+			NumberAvailable:        1,
+		},
+	}
+
 	defaultInjection := map[string]string{models.IstioInjectionLabel: models.IstioInjectionEnabledLabelValue}
 	revLabel := map[string]string{config.IstioRevisionLabel: "default"}
 	primaryClient := kubetest.NewFakeK8sClient(
@@ -146,6 +199,9 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 		&istioConfigMap,
 		&sidecarConfigMap,
 		&kialiSvc,
+		gwObject,
+		wpObject,
+		ztunnelObject,
 	)
 	primaryClient.KubeClusterInfo = kubernetes.ClusterInfo{
 		ClientConfig: &rest.Config{
@@ -200,6 +256,7 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 	globalInfo := mesh.NewGlobalInfo()
 	globalInfo.Business = layer
 	globalInfo.Discovery = discovery
+	globalInfo.KialiCache = cache
 
 	return globalInfo
 }
@@ -275,7 +332,7 @@ func TestMeshGraph(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	url := ts.URL + "/api/mesh/graph?queryTime=1523364075"
+	url := ts.URL + "/api/mesh/graph?queryTime=1523364075&includeGateways=true&includeWaypoints=true"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -292,6 +349,8 @@ func TestMeshGraph(t *testing.T) {
 	if !assert.JSONEq(t, string(expected), string(actual)) {
 		// The diff is more readable using cmp
 		t.Logf("%s", cmp.Diff(string(expected), string(actual)))
+		// The dump is more useful for updating the .expected file
+		//t.Logf("%s", string(actual))
 	}
 	assert.Equal(t, 200, resp.StatusCode)
 }

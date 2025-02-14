@@ -155,6 +155,9 @@ export const renderNodeHeader = (
     case MeshInfraType.WAYPOINT:
       pfBadge = PFBadges.Waypoint;
       break;
+    case MeshInfraType.ZTUNNEL:
+      pfBadge = PFBadges.Ztunnel;
+      break;
     default:
       console.warn(`MeshElems: Unexpected infraType [${data.infraType}] `);
   }
@@ -229,6 +232,7 @@ export const renderNodeLink = (meshData: MeshNodeData, style?: string): React.Re
       pfBadge = PFBadges.Workload;
       break;
     case MeshInfraType.WAYPOINT:
+    case MeshInfraType.ZTUNNEL:
       link = `/namespaces/${encodeURIComponent(meshData.namespace)}/workloads/${encodeURIComponent(
         meshData.infraName
       )}`;

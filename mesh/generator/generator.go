@@ -185,6 +185,62 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			mesh.CheckError(err)
 		}
 
+		// if ambient, add ztunnel
+		if gi.KialiCache.IsAmbientEnabled(cp.Cluster.Name) {
+			ztunnels, err := gi.Business.Workload.GetAllWorkloads(ctx, cp.Cluster.Name, fmt.Sprintf("%s=%s", config.IstioAppLabel, config.Ztunnel))
+			mesh.CheckError(err)
+
+			for _, ztunnel := range ztunnels {
+				var infraData interface{}
+
+				if len(ztunnel.Pods) > 0 {
+					dump := gi.Business.Workload.GetZtunnelConfig(ztunnel.Cluster, ztunnel.Namespace, ztunnel.Pods[0].Name)
+					// The dump can be huge, just return the config part and defer to the ztunnel workload tab for the other stuff
+					if dump != nil {
+						infraData = dump.Config
+					}
+				}
+
+				// if we couldn't fetch a ztunnel config, just return labels and annotation
+				if infraData == nil {
+					infraData = struct {
+						Annotations         map[string]string
+						Labels              map[string]string
+						TemplateAnnotations map[string]string
+						TemplateLabels      map[string]string
+					}{
+						Annotations:         ztunnel.Annotations,
+						Labels:              ztunnel.Labels,
+						TemplateAnnotations: ztunnel.TemplateAnnotations,
+						TemplateLabels:      ztunnel.TemplateLabels,
+					}
+				}
+
+				version := models.DefaultRevisionLabel
+				if rev, ok := ztunnel.Labels[config.IstioRevisionLabel]; ok {
+					version = rev
+				}
+
+				ztunnelNode, _, err := addInfra(meshMap, mesh.InfraTypeZtunnel, ztunnel.Cluster, ztunnel.Namespace, ztunnel.Name, infraData, version, false, "")
+				mesh.CheckError(err)
+
+				// add edge to the managing control plane
+				for _, infraNode := range meshMap {
+					if infraNode.InfraType == mesh.InfraTypeIstiod && infraNode.Cluster == ztunnel.Cluster {
+						cp := infraNode.Metadata[mesh.InfraData].(models.ControlPlane)
+						tag := "default"
+						if cp.Tag != nil {
+							tag = cp.Tag.Name
+						}
+						if tag == ztunnelNode.Metadata[mesh.Version] {
+							infraNode.AddEdge(ztunnelNode)
+							break
+						}
+					}
+				}
+			}
+		}
+
 		// if included, add any waypoints
 		if o.IncludeWaypoints {
 			for _, wp := range gi.Business.Workload.GetWaypoints(ctx) {

@@ -35,7 +35,8 @@ export enum MeshInfraType {
   METRIC_STORE = 'metricStore',
   NAMESPACE = 'namespace',
   TRACE_STORE = 'traceStore',
-  WAYPOINT = 'waypoint'
+  WAYPOINT = 'waypoint',
+  ZTUNNEL = 'ztunnel'
 }
 
 export enum MeshNodeType {
@@ -102,6 +103,11 @@ export interface WaypointNodeData extends BaseNodeData {
   infraType: MeshInfraType.WAYPOINT;
 }
 
+export interface ZtunnelNodeData extends BaseNodeData {
+  // ZTunnel node data is the ztunnel config dump, or if that is unavailable, the configured labels and annotations
+  infraType: MeshInfraType.ZTUNNEL;
+}
+
 // Node data expected from server. Depending on the infraType,
 // infraData and some other fields may change between the types.
 // Fields that are common to all are defined in BaseNodeData.
@@ -115,7 +121,8 @@ export type MeshNodeData =
   | KialiNodeData
   | MetricStoreNodeData
   | TraceStoreNodeData
-  | WaypointNodeData;
+  | WaypointNodeData
+  | ZtunnelNodeData;
 
 // BaseNodeData has common fields for all MeshNodeData types.
 interface BaseNodeData {
