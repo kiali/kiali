@@ -77,7 +77,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
   React.useEffect(() => {
     fetchMetrics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.rangeDuration.rangeDuration]);
+  }, [props.rangeDuration.rangeDuration, props.lastRefreshAt]);
 
   React.useEffect(() => {
     fetchGrafanaInfo();
