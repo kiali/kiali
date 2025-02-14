@@ -31,13 +31,16 @@ const fullHeightStyle = kialiStyle({
 });
 
 export const isWaypointFor = (wk: Workload): string => {
-  if (wk.labels[WaypointForLabel] === WaypointType.Workload) {
-    return WaypointType.Workload;
+  switch (wk.labels[WaypointForLabel]) {
+    case WaypointType.All:
+      return WaypointType.All;
+    case WaypointType.None:
+      return WaypointType.None;
+    case WaypointType.Workload:
+      return WaypointType.Workload;
+    default:
+      return WaypointType.Service;
   }
-  if (wk.labels[WaypointForLabel] === WaypointType.All) {
-    return WaypointType.All;
-  }
-  return WaypointType.Service;
 };
 
 const showProxyStatus = (workload: Workload): React.ReactNode => {
