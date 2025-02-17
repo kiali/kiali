@@ -42,8 +42,8 @@ Feature: Kiali App Details page for multicluster
     Then user sees span details
     And user can filter spans by app "productpage"
 
-  Scenario: Don't see tracing info after selecting a trace
-    And user is at the details page for the "app" "bookinfo/details" located in the "east" cluster
+  Scenario: Don't see tracing info
+    And user is at the details page for the "app" "bookinfo/details" located in the "west" cluster
     Then user see no traces
 
   Scenario: See details for an app, which is not deployed in the specific cluster.
