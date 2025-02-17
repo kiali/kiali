@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -50,6 +51,10 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context, cluster string) (k
 		observability.Attribute("package", "business"),
 	)
 	defer end()
+
+	if _, ok := iss.userClients[cluster]; !ok {
+		return kubernetes.IstioComponentStatus{}, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
+	}
 
 	if !iss.conf.ExternalServices.Istio.ComponentStatuses.Enabled || !iss.conf.ExternalServices.Istio.IstioAPIEnabled {
 		return kubernetes.IstioComponentStatus{}, nil
