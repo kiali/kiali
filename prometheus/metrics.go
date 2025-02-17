@@ -34,25 +34,6 @@ func fetchRateRange(ctx context.Context, api prom_v1.API, metricName string, lab
 	return fetchRange(ctx, api, query, q.Range)
 }
 
-func fetchSimpleQuery(ctx context.Context, api prom_v1.API, metricName string, labels []string, funct string, grouping string, q *RangeQuery) Metric {
-	var query string
-	// Example: sum(rate(my_counter{foo=bar}[5m])) by (baz)
-	for i, labelsInstance := range labels {
-		if i > 0 {
-			query += " OR "
-		}
-		if grouping == "" {
-			query += fmt.Sprintf("%s(%s%s)", funct, metricName, labelsInstance)
-		} else {
-			query += fmt.Sprintf("%s(%s%s) by (%s)", funct, metricName, labelsInstance, grouping)
-		}
-	}
-	if len(labels) > 1 {
-		query = fmt.Sprintf("(%s)", query)
-	}
-	return fetchRange(ctx, api, query, q.Range)
-}
-
 func fetchHistogramRange(ctx context.Context, api prom_v1.API, metricName, labels, grouping string, q *RangeQuery) Histogram {
 	// Note: the p8s queries are not run in parallel here, but they are at the caller's place.
 	//	This is because we may not want to create too many threads in the lowest layer
