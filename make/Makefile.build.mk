@@ -123,7 +123,7 @@ endif
 
 ## Download istio-crds to testdata dir if necessary.
 ## You can specify the istio version like this: make ISTIO_VERSION=1.24 download-istio-crds
-download-istio-crds: .find-helm-exe .ensure-yq-exists
+download-istio-crds: .ensure-yq-exists
 	$(eval ISTIO_VERSION ?= $(shell helm show chart --repo https://istio-release.storage.googleapis.com/charts base | yq '.version'))
 	$(eval ISTIO_MINOR_VERSION := $(shell cut -d "." -f 1-2 <<< ${ISTIO_VERSION}))
 	$(eval CRD_FILE := tests/integration/controller/testdata/istio-crds/${ISTIO_MINOR_VERSION}.yaml)
