@@ -45,7 +45,7 @@ Feature: Kiali Service Details page for remote cluster
     When user selects a trace
     Then user sees span details
 
-  Scenario: Don't see tracing info after selecting a trace
+  Scenario: Don't see tracing info
     And user is at the details page for the "service" "bookinfo/productpage" located in the "west" cluster
     Then user see no traces
 
