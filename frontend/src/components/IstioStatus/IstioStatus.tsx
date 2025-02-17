@@ -117,7 +117,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   const tooltipContent = (): React.ReactNode => {
     return (
       <>
-        <IstioStatusList status={props.status} />
+        <IstioStatusList status={props.status} cluster={cluster} />
 
         {!props.location?.endsWith('/mesh') && isControlPlaneAccessible() && (
           <div className={meshLinkStyle}>
