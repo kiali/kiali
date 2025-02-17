@@ -70,5 +70,5 @@ type Appender interface {
 
 // IstioStatusGetter gets the status of the mesh graph components
 type IstioStatusGetter interface {
-	GetStatus(ctx context.Context) (kubernetes.IstioComponentStatus, error)
+	GetStatus(ctx context.Context, cluster string) (kubernetes.IstioComponentStatus, error)
 }

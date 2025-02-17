@@ -16,14 +16,14 @@ func IstioStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	istioStatus, err := business.IstioStatus.GetStatus(r.Context())
+	queryParams := r.URL.Query()
+	cluster := clusterNameFromQuery(queryParams)
+
+	istioStatus, err := business.IstioStatus.GetStatus(r.Context(), cluster)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
 	}
-
-	queryParams := r.URL.Query()
-	cluster := clusterNameFromQuery(queryParams)
 
 	istioStatus = sliceutil.Filter(istioStatus, func(status kubernetes.ComponentStatus) bool {
 		// empty Cluster for addons
