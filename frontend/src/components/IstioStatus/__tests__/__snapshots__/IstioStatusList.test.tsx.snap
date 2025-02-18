@@ -13,6 +13,18 @@ exports[`lists all the components grouped 1`] = `
   >
     Istio Components Status
   </Text>
+  <PFBadge
+    badge={
+      Object {
+        "badge": "C",
+        "style": Object {
+          "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+        },
+        "tt": "Cluster",
+      }
+    }
+    size="sm"
+  />
   <List
     aria-label="Istio Component List"
     className="kiali_f6tdqla"
