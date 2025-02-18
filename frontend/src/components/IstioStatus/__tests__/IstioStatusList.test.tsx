@@ -28,7 +28,7 @@ it('lists all the components grouped', () => {
     }
   ];
 
-  const wrapper = shallow(<IstioStatusList status={components} />);
+  const wrapper = shallow(<IstioStatusList status={components} cluster={'Kubernetes'} />);
 
   expect(shallowToJson(wrapper)).toBeDefined();
   expect(shallowToJson(wrapper)).toMatchSnapshot();

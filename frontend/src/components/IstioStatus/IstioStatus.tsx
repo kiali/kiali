@@ -11,7 +11,7 @@ import { istioStatusSelector, namespaceItemsSelector } from '../../store/Selecto
 import { bindActionCreators } from 'redux';
 import { IstioStatusActions } from '../../actions/IstioStatusActions';
 import { connect } from 'react-redux';
-import { Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Text, TextVariants, TextContent, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { IstioStatusList } from './IstioStatusList';
 import { PFColors } from '../Pf/PfColors';
 import { ResourcesFullIcon } from '@patternfly/react-icons';
@@ -24,15 +24,18 @@ import { Link } from 'react-router-dom-v5-compat';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { MASTHEAD } from 'components/Nav/Masthead/Masthead';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
+import { serverConfig } from '../../config';
+
+type ClusterStatusMap = { [cluster: string]: ComponentStatus[] };
 
 type ReduxStateProps = {
   namespaces?: Namespace[];
-  status: ComponentStatus[];
+  statusMap: ClusterStatusMap; // map of clusters to ComponentStatus[]
 };
 
 type ReduxDispatchProps = {
   refreshNamespaces: () => void;
-  setIstioStatus: (istioStatus: ComponentStatus[]) => void;
+  setIstioStatus: (cluster: string, istioStatus: ComponentStatus[]) => void;
 };
 
 type StatusIcons = {
@@ -87,44 +90,54 @@ export const meshLinkStyle = kialiStyle({
 export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
 
-  const { cluster, namespaces, setIstioStatus, refreshNamespaces, lastRefreshAt } = props;
+  const { clusterParam, namespaces, setIstioStatus, refreshNamespaces, lastRefreshAt } = props;
 
   React.useEffect(() => {
     refreshNamespaces();
   }, [refreshNamespaces]);
 
-  const fetchStatus = React.useCallback((): void => {
-    API.getIstioStatus(cluster)
-      .then(response => {
-        setIstioStatus(response.data);
-      })
-      .catch(error => {
-        // User without namespaces can't have access to mTLS information. Reduce severity to info.
-        const informative = namespaces && namespaces.length < 1;
+  const fetchStatus = React.useCallback(
+    (cluster: string): void => {
+      API.getIstioStatus(cluster)
+        .then(response => {
+          setIstioStatus(cluster, response.data);
+        })
+        .catch(error => {
+          // User without namespaces can't have access to mTLS information. Reduce severity to info.
+          const informative = namespaces && namespaces.length < 1;
 
-        if (informative) {
-          AlertUtils.addError(t('Istio deployment status disabled.'), error, 'default', MessageType.INFO);
-        } else {
-          AlertUtils.addError(t('Error fetching Istio deployment status.'), error, 'default', MessageType.ERROR);
-        }
-      });
-  }, [cluster, namespaces, setIstioStatus, t]);
+          if (informative) {
+            AlertUtils.addError(t('Istio deployment status disabled.'), error, 'default', MessageType.INFO);
+          } else {
+            AlertUtils.addError(t('Error fetching Istio deployment status.'), error, 'default', MessageType.ERROR);
+          }
+        });
+    },
+    [clusterParam, namespaces, setIstioStatus, t]
+  );
 
   React.useEffect(() => {
-    fetchStatus();
+    if (clusterParam) {
+      fetchStatus(clusterParam);
+    } else {
+      Object.keys(serverConfig.clusters).forEach(cl => fetchStatus(cl));
+    }
   }, [lastRefreshAt, fetchStatus]);
 
   const tooltipContent = (): React.ReactNode => {
     return (
       <>
-        <IstioStatusList status={props.status} cluster={cluster} />
+        <TextContent style={{ color: PFColors.White }}>
+          <Text component={TextVariants.h4}>{t('Istio Components Status')}</Text>
+          <IstioStatusList status={props.status} cluster={cluster} />
 
-        {!props.location?.endsWith('/mesh') && isControlPlaneAccessible() && (
-          <div className={meshLinkStyle}>
-            <span>{t('More info at')}</span>
-            <Link to="/mesh">{t('Mesh page')}</Link>
-          </div>
-        )}
+          {!props.location?.endsWith('/mesh') && isControlPlaneAccessible() && (
+            <div className={meshLinkStyle}>
+              <span>{t('More info at')}</span>
+              <Link to="/mesh">{t('Mesh page')}</Link>
+            </div>
+          )}
+        </TextContent>
       </>
     );
   };

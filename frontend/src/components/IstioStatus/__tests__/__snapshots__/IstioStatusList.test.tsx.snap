@@ -25,6 +25,7 @@ exports[`lists all the components grouped 1`] = `
     }
     size="sm"
   />
+  Kubernetes
   <List
     aria-label="Istio Component List"
     className="kiali_f6tdqla"
