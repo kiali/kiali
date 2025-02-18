@@ -72,6 +72,11 @@ else
   exit 1
 fi
 
+# Verify Gateway API
+echo "Verifying that Gateway API is installed; if it is not then it will be installed now."
+$CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+{ $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=v1.2.0" | $CLIENT_EXE apply -f -; }
+
 ${CLIENT_EXE} create ns waypoint-forservice
 ${CLIENT_EXE} create ns waypoint-forworkload
 ${CLIENT_EXE} create ns waypoint-forall
