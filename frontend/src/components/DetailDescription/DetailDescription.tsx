@@ -220,7 +220,9 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
           <KialiIcon.Info className={infoStyle} />
         </Tooltip>
 
-        {hasMissingSidecar(workload) && <MissingSidecar tooltip={true} className={infoStyle} text="" />}
+        {hasMissingSidecar(workload, props.namespace) && (
+          <MissingSidecar tooltip={true} className={infoStyle} text="" />
+        )}
       </span>
     );
   };
@@ -238,7 +240,6 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
         }
       }
     }
-
     if (workload) {
       let href = `/namespaces/${props.namespace}/workloads/${workload.workloadName}`;
 
@@ -258,7 +259,6 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
       ) : (
         <Link to={href}>{workload.workloadName}</Link>
       );
-
       return (
         <span key={`WorkloadItem_${workload.workloadName}`}>
           <div className={iconStyle}>
@@ -280,7 +280,9 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
             <span style={{ marginLeft: '0.5rem' }}>{createIcon(sub.status)}</span>
           </Tooltip>
 
-          {hasMissingSidecar(workload) && <MissingSidecar tooltip={true} className={infoStyle} text="" />}
+          {hasMissingSidecar(workload, props.namespace) && (
+            <MissingSidecar tooltip={true} className={infoStyle} text="" />
+          )}
         </span>
       );
     } else {
@@ -318,7 +320,6 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
   const renderWorkloadStatus = (): React.ReactNode => {
     if (props.health) {
       const item = props.health.getWorkloadStatus();
-
       if (item) {
         item.children?.sort((i1, i2) => (i1.text < i2.text ? -1 : 1));
         return (

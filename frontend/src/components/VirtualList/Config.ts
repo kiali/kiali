@@ -28,18 +28,20 @@ export const hasHealth = (r: RenderResource): r is SortResource => {
   return (r as SortResource).health !== undefined;
 };
 
-export const hasMissingSidecar = (workload: Workload | WorkloadListItem | AppWorkload | AppListItem): boolean => {
+export const hasMissingSidecar = (
+  workload: Workload | WorkloadListItem | AppWorkload | AppListItem,
+  namespace?: string
+): boolean => {
+  const ns = workload.namespace ? workload.namespace : namespace ? namespace : '';
+
   return (
-    (!serverConfig.ambientEnabled &&
-      !workload.istioSidecar &&
-      !workload.isGateway &&
-      !isIstioNamespace(workload.namespace)) ||
+    (!serverConfig.ambientEnabled && !workload.istioSidecar && !workload.isGateway && !isIstioNamespace(ns)) ||
     (serverConfig.ambientEnabled &&
       !workload.isAmbient &&
       !workload.istioSidecar &&
       workload.ambient !== 'waypoint' &&
       !workload.isGateway &&
-      !isIstioNamespace(workload.namespace))
+      !isIstioNamespace(ns))
   );
 };
 
