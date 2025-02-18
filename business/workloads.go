@@ -448,7 +448,6 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 
 	criteria.IncludeWaypoints = true
 	workload, err2 := in.fetchWorkload(ctx, criteria)
-
 	if err2 != nil {
 		return nil, err2
 	}
@@ -1431,12 +1430,13 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 
 		// Add the Proxy Status to the workload
 		for _, pod := range w.Pods {
-			if config.Get().ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || w.IsWaypoint()) {
-				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(cluster, namespace, pod.Name, !w.IsWaypoint())
+			isWaypoint := w.IsWaypoint()
+			if config.Get().ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
+				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(cluster, namespace, pod.Name, !isWaypoint)
 			}
 			// Add the Proxy Status to the workload
 			if pod.AmbientEnabled() {
-				w.WaypointWorkloads = in.GetWaypointsForWorkload(ctx, *w)
+				w.WaypointWorkloads = in.GetWaypointsForWorkload(ctx, *w, false)
 			}
 		}
 
@@ -2111,12 +2111,13 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 
 		// Add the Proxy Status to the workload
 		for _, pod := range w.Pods {
-			if config.Get().ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || w.IsWaypoint()) {
-				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(criteria.Cluster, criteria.Namespace, pod.Name, !w.IsWaypoint())
+			isWaypoint := w.IsWaypoint()
+			if config.Get().ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
+				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(criteria.Cluster, criteria.Namespace, pod.Name, !isWaypoint)
 			}
 			// If Ambient is enabled for pod, check if has any Waypoint proxy
 			if pod.AmbientEnabled() && criteria.IncludeWaypoints {
-				w.WaypointWorkloads = in.GetWaypointsForWorkload(ctx, w)
+				w.WaypointWorkloads = in.GetWaypointsForWorkload(ctx, w, false)
 				// TODO: Maybe user doesn't have permissions
 				ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
 				for _, zPod := range ztunnelPods {
@@ -2165,46 +2166,45 @@ func (in *WorkloadService) GetZtunnelConfig(cluster, namespace, pod string) *kub
 
 }
 
-// GetWaypoints: Return the list of workloads when the waypoint proxy is applied per namespace
+// GetWaypoints: Return the list of waypoint workloads.  This looks for all k8s gateways and then tests their labels
 func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
 	if !in.cache.IsWaypointListExpired() {
 		log.Tracef("GetWaypoints: Returning list from cache")
 		return in.cache.GetWaypointList()
 	}
 
-	labelSelector := fmt.Sprintf("%s=%s", config.WaypointLabel, config.WaypointLabelValue)
 	waypoints := []*models.Workload{}
 
-	for cluster := range in.userClients {
-		nslist, errNs := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
-		if errNs != nil {
-			log.Errorf("GetWaypoints: Error fetching namespaces for cluster %s. %s", cluster, errNs.Error())
+	for _, cluster := range in.userClients {
+		gateways, err := in.GetAllWorkloads(ctx, cluster.ClusterInfo().Name, config.GatewayLabel)
+		if err != nil {
+			log.Debugf("GetWaypoints: Error fetching k8s gateway workloads for cluster=[%s]: %s", cluster.ClusterInfo().Name, err.Error())
+			continue
 		}
 
-		for _, ns := range nslist {
-			nsWaypoints, err := in.fetchWorkloadsFromCluster(ctx, cluster, ns.Name, labelSelector)
-			if err != nil {
-				log.Debugf("GetWaypoints: Error fetching workloads for namespace %s, labelSelector %s. %s", ns.Name, labelSelector, err.Error())
-				continue
-			}
-			waypoints = append(waypoints, nsWaypoints...)
-		}
-
+		clusterWaypoints := sliceutil.Filter(gateways, func(gw *models.Workload) bool { return gw.IsWaypoint() })
+		waypoints = append(waypoints, clusterWaypoints...)
 	}
 	in.cache.SetWaypointList(waypoints)
 	return waypoints
 }
 
-// getCapturingWaypoints returns waypoint references that capture the workload
-func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload models.Workload) ([]models.Waypoint, bool) {
-	waypoints := make([]models.Waypoint, 0, 1)
+// getCapturingWaypoints returns waypoint references that capture the workload. Only the active waypoint is returned unless <all>
+// is true, in which case all capturing waypoints will be returned. If so, they are returned in order of priority, so [0]
+// reflects the active waypoint, the others have been overriden.
+func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload models.Workload, all bool) ([]models.Waypoint, bool) {
+	waypoints := make([]models.Waypoint, 0, 3)
 
-	// the highest override is at the pod level but Kiali doesn't really deal with the pod level, we
-	// are working at the workload level. We will make an assumption here that pods will be labeled
-	// with the template labels set on the workload.
-	// TODO? we may want to surface differences in waypoint labeling at the workload and workload template levels)
+	// the highest override is at the pod level. for Pod workloads, check labels on the pod. for other workload
+	// types check the template labels, which we assume will be consistently applied to the pods (Kiali doesn't
+	// really deal at the pod level, and won't deal with any sort on manually applied label on pod managed by a
+	// higher-level workload type).
 	waypointUse, waypointUseFound := workload.TemplateLabels[config.WaypointUseLabel]
 	waypointUseNamespace, waypointUseNamespaceFound := workload.TemplateLabels[config.WaypointUseNamespaceLabel]
+	if workload.WorkloadGVK.Kind == kubernetes.PodType {
+		waypointUse, waypointUseFound = workload.Labels[config.WaypointUseLabel]
+		waypointUseNamespace, waypointUseNamespaceFound = workload.Labels[config.WaypointUseNamespaceLabel]
+	}
 	if waypointUseFound {
 		// if the workload opts-out from waypoint capture, then we are done
 		// note: this opt-out is currently undocumented but exists (2/14/25)
@@ -2216,12 +2216,15 @@ func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload m
 		}
 		// Ambient doesn't support multicluster (For now), cluster is the same as the workload
 		waypoints = append(waypoints, models.Waypoint{Name: waypointUse, Type: "pod", Namespace: waypointUseNamespace, Cluster: workload.Cluster})
-		return waypoints, true
+		if !all {
+			return waypoints, true
+		}
 	}
 
 	// the next level of override is service level, if necessary, fetch the workload's service
+	// - note that workloads with no labels (and therefore no service selector) are not associated with a service
 	services := workload.Services
-	if len(services) == 0 {
+	if len(services) == 0 && len(workload.Labels) > 0 {
 		serviceCriteria := ServiceCriteria{
 			Cluster:                workload.Cluster,
 			Namespace:              workload.Namespace,
@@ -2233,13 +2236,16 @@ func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload m
 		if err != nil {
 			log.Debugf("isWorkloadCaptured: Error fetching services %s", err.Error())
 		}
-		// Should only be a single service, right?
-		if len(svc.Services) != 1 {
-			log.Warningf("Expected to find a single service for workload [%s:%s:%s], found [%d]", workload.Cluster, workload.Namespace, workload.Name, len(svc.Services))
+		// a proper service selector on the workload should, I think, return only a single service (there are ways
+		// a workload can map to multiple services, but I think only one should be returned using a proper selector). If
+		// multiple were returned I'm not sure how the waypoint capture logic should work, so for now, more than 1 will
+		// indicate that the labels did not have a proper service selector. In this case, ignore the returned services.
+		if len(svc.Services) > 1 {
+			log.Warningf("Ignoring service override for waypoint cature. Found [%d] services for [%s] workload [%s:%s:%s]", len(svc.Services), workload.WorkloadGVK.GroupKind(), workload.Cluster, workload.Namespace, workload.Name)
+		} else {
+			services = svc.Services
 		}
-		services = svc.Services
 	}
-
 	if len(services) > 0 {
 		svc := services[0]
 		waypointUse, waypointUseFound = svc.Labels[config.WaypointUseLabel]
@@ -2252,25 +2258,11 @@ func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload m
 				waypointUseNamespace = workload.Namespace
 			}
 			waypoints = append(waypoints, models.Waypoint{Name: waypointUse, Type: "service", Namespace: waypointUseNamespace, Cluster: workload.Cluster})
-			return waypoints, true
-		}
-	}
-
-	// Is a workload pod labeled?
-	/* I don't think we need to concern ourselves with pod labeling unless we want to warn about a difference in pod and workload labeling
-	for _, pod := range workload.Pods {
-		waypointName, waypointNameFound := pod.Labels[config.WaypointUseLabel]
-		waypointNamespace, waypointNamespaceFound := pod.Labels[config.WaypointUseNamespaceLabel]
-
-		if waypointNameFound {
-			if !waypointNamespaceFound {
-				waypointNamespace = workload.Namespace
+			if !all {
+				return waypoints, true
 			}
-			// Ambient doesn't support multicluster (For now), cluster is the same as the workload
-			waypoints = append(waypoints, models.Waypoint{Name: waypointName, Type: "pod", Namespace: waypointNamespace, Cluster: workload.Cluster})
 		}
 	}
-	*/
 
 	// If we don't have a workload or service override, look for a namespace-level waypoint
 	if ns, nsFound := in.cache.GetNamespace(workload.Cluster, in.userClients[workload.Cluster].GetToken(), workload.Namespace); nsFound {
@@ -2285,16 +2277,19 @@ func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload m
 				waypointUseNamespace = workload.Namespace
 			}
 			waypoints = append(waypoints, models.Waypoint{Name: waypointUse, Type: "namespace", Namespace: waypointUseNamespace, Cluster: workload.Cluster})
-			return waypoints, true
+			if !all {
+				return waypoints, true
+			}
 		}
 	}
 
 	return waypoints, len(waypoints) > 0
 }
 
-// GetWaypointsForWorkload Returns a list of waypoint references that capture a workload
-// It should be related with just one waypoint, but this is up to the user, it can help to detect issues in the Ambient Mesh
-func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload models.Workload) []models.WorkloadReferenceInfo {
+// GetWaypointsForWorkload Returns the waypoint references capturing the workload. Only the active waypoint is returned unless <all>
+// is true, in which case all capturing waypoints will be returned. If so, they are returned in order of priority, so [0]
+// reflects the active waypoint, the others have been overriden.
+func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload models.Workload, all bool) []models.WorkloadReferenceInfo {
 	var workloadslist []models.WorkloadReferenceInfo
 	workloadsMap := map[string]bool{} // Ensure unique
 
@@ -2303,7 +2298,7 @@ func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload
 	}
 
 	// get waypoint references for the workload
-	waypoints, found := in.getCapturingWaypoints(ctx, workload)
+	waypoints, found := in.getCapturingWaypoints(ctx, workload, all)
 	if !found {
 		return workloadslist
 	}
@@ -2312,7 +2307,7 @@ func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload
 	for _, waypoint := range waypoints {
 		waypointWorkload, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: workload.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, WorkloadGVK: schema.GroupVersionKind{}, IncludeWaypoints: false})
 		if err != nil {
-			log.Debugf("GetWaypointsForWorkload: Error fetching workload %s", err.Error())
+			log.Debugf("GetWaypointsForWorkload: Error fetching waypoint workload %s", err.Error())
 			return nil
 		}
 		waypointFor, waypointForFound := waypointWorkload.Labels[config.WaypointFor]
@@ -2543,7 +2538,7 @@ func (in *WorkloadService) GetWorkloadTracingName(ctx context.Context, cluster, 
 	}
 
 	tracingName.App = workload
-	if wkd.IsGateway() || wkd.IsWaypoint() {
+	if wkd.IsGateway() { // note - waypoints are gateways
 		// Waypoints and Gateways doesn't have an app label, but they have valid traces data
 		tracingName.Lookup = workload
 		return tracingName, nil

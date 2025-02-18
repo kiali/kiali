@@ -935,5 +935,5 @@ func (in *SvcService) GetServiceRouteURL(ctx context.Context, cluster, namespace
 
 // IsWaypoint returns true if the service is from a Waypoint proxy, based on the service labels
 func IsWaypoint(service models.Service) bool {
-	return service.Labels[config.WaypointLabel] == config.WaypointLabelValue
+	return config.IsWaypoint(service.Labels)
 }

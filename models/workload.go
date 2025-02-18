@@ -693,7 +693,7 @@ func (workload *Workload) IsGateway() bool {
 
 // IsWaypoint return true if the workload is a waypoint proxy (Based in labels)
 func (workload *Workload) IsWaypoint() bool {
-	return workload.Labels[config.WaypointLabel] == config.WaypointLabelValue
+	return config.IsWaypoint(workload.Labels)
 }
 
 // WaypointFor returns the waypoint type (workload/service)
