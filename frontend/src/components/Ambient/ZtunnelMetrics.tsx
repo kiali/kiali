@@ -47,7 +47,10 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
   };
 
   const fetchMetrics = (): Promise<void> => {
-    return API.getZtunnelDashboard(props.namespace, 'ztunnel', options, props.cluster)
+    MetricsHelper.timeRangeToOptions(props.rangeDuration, options);
+    let opts = { ...options };
+
+    return API.getZtunnelDashboard(props.namespace, 'ztunnel', opts, props.cluster)
       .then(response => {
         setMetrics(response.data);
       })
@@ -77,7 +80,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
   React.useEffect(() => {
     fetchMetrics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.rangeDuration.rangeDuration, props.lastRefreshAt]);
+  }, [props.rangeDuration, props.lastRefreshAt]);
 
   React.useEffect(() => {
     fetchGrafanaInfo();
