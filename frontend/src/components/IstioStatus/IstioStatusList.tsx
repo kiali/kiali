@@ -1,14 +1,13 @@
 import * as React from 'react';
-import { List, Text, TextContent, TextVariants } from '@patternfly/react-core';
+import { List } from '@patternfly/react-core';
 import { ComponentStatus, Status } from '../../types/IstioStatus';
 import { IstioComponentStatus } from './IstioComponentStatus';
-import { PFColors } from '../Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
 
 type Props = {
-  cluster?: string;
+  cluster: string;
   status: ComponentStatus[];
 };
 
@@ -51,13 +50,12 @@ export const IstioStatusList: React.FC<Props> = (props: Props) => {
   };
 
   return (
-    <TextContent style={{ color: PFColors.White }}>
-      <Text component={TextVariants.h4}>{t('Istio Components Status')}</Text>
+    <>
       <PFBadge badge={PFBadges.Cluster} size="sm" />
       {props.cluster}
       <List id="istio-status" aria-label={t('Istio Component List')} className={listStyle}>
         {renderComponentList()}
       </List>
-    </TextContent>
+    </>
   );
 };

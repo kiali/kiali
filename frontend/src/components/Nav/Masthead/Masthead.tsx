@@ -76,7 +76,7 @@ export const MastheadItems: React.FC = () => {
             </FlexItem>
             {isControlPlaneAccessible() && (
               <FlexItem>
-                <IstioStatus location={MASTHEAD} cluster={homeCluster?.name} />
+                <IstioStatus location={MASTHEAD} />
               </FlexItem>
             )}
 
