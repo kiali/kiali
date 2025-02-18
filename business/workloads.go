@@ -2175,10 +2175,10 @@ func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
 
 	waypoints := []*models.Workload{}
 
-	for _, cluster := range in.userClients {
-		gateways, err := in.GetAllWorkloads(ctx, cluster.ClusterInfo().Name, config.GatewayLabel)
+	for cluster := range in.userClients {
+		gateways, err := in.GetAllWorkloads(ctx, cluster, config.GatewayLabel)
 		if err != nil {
-			log.Debugf("GetWaypoints: Error fetching k8s gateway workloads for cluster=[%s]: %s", cluster.ClusterInfo().Name, err.Error())
+			log.Debugf("GetWaypoints: Error fetching k8s gateway workloads for cluster=[%s]: %s", cluster, err.Error())
 			continue
 		}
 
@@ -2538,7 +2538,7 @@ func (in *WorkloadService) GetWorkloadTracingName(ctx context.Context, cluster, 
 	}
 
 	tracingName.App = workload
-	if wkd.IsGateway() { // note - waypoints are gateways
+	if wkd.IsGateway() || wkd.IsWaypoint() {
 		// Waypoints and Gateways doesn't have an app label, but they have valid traces data
 		tracingName.Lookup = workload
 		return tracingName, nil

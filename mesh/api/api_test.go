@@ -146,14 +146,16 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 			Name:      "waypoint",
 			Namespace: "data-plane-1",
 			Labels: map[string]string{
-				"gateway.istio.io/managed": "istio.io-mesh-controller",
+				config.WaypointLabel: config.WaypointLabelValue,
+				config.GatewayLabel:  "waypoint",
 			},
 		},
 		Spec: apps_v1.DeploymentSpec{
 			Template: core_v1.PodTemplateSpec{
 				ObjectMeta: v1.ObjectMeta{
 					Labels: map[string]string{
-						"gateway.istio.io/managed": "istio.io-mesh-controller",
+						config.WaypointLabel: config.WaypointLabelValue,
+						config.GatewayLabel:  "waypoint",
 					},
 				},
 			},
