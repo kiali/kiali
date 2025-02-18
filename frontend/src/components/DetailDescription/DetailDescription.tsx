@@ -238,6 +238,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
         }
       }
     }
+
     if (workload) {
       let href = `/namespaces/${props.namespace}/workloads/${workload.workloadName}`;
 
@@ -257,6 +258,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
       ) : (
         <Link to={href}>{workload.workloadName}</Link>
       );
+
       return (
         <span key={`WorkloadItem_${workload.workloadName}`}>
           <div className={iconStyle}>
@@ -316,6 +318,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
   const renderWorkloadStatus = (): React.ReactNode => {
     if (props.health) {
       const item = props.health.getWorkloadStatus();
+
       if (item) {
         item.children?.sort((i1, i2) => (i1.text < i2.text ? -1 : 1));
         return (
