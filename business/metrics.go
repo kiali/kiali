@@ -352,7 +352,7 @@ func (in *MetricsService) GetZtunnelMetrics(q models.IstioMetricsQuery, pods mod
 	metrics["ztunnel_versions"] = append(metrics["istio_build"], converted...)
 
 	// Ztunnel memory usage ztunnel_memory_usage
-	metric = in.prom.FetchRange("container_memory_working_set_bytes", "{container=\"istio-proxy\",pod=~\"ztunnel-.*\"}", "pod", "sum", &q.RangeQuery)
+	metric = in.prom.FetchRange("container_memory_working_set_bytes", "{pod=~\"ztunnel-.*\"}", "pod", "sum", &q.RangeQuery)
 	converted, err = models.ConvertMetric("container_memory_working_set_bytes", metric, models.ConversionParams{Scale: 0.000001})
 	if err != nil {
 		return nil, err
@@ -360,7 +360,7 @@ func (in *MetricsService) GetZtunnelMetrics(q models.IstioMetricsQuery, pods mod
 	metrics["ztunnel_memory_usage"] = append(metrics["container_memory_working_set_bytes"], converted...)
 
 	// Ztunnel ztunnel_cpu_usage
-	metricName := fmt.Sprintf("irate(container_cpu_usage_seconds_total{container=\"istio-proxy\",pod=~\"ztunnel-.*\"}[%s])", q.RateInterval)
+	metricName := fmt.Sprintf("irate(container_cpu_usage_seconds_total{pod=~\"ztunnel-.*\"}[%s])", q.RateInterval)
 	metric = in.prom.FetchRange(metricName, "", "pod", "sum", &q.RangeQuery)
 	converted, err = models.ConvertMetric(metricName, metric, models.ConversionParams{Scale: 1})
 	if err != nil {
