@@ -220,9 +220,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
           <KialiIcon.Info className={infoStyle} />
         </Tooltip>
 
-        {hasMissingSidecar(workload, props.namespace) && (
-          <MissingSidecar tooltip={true} className={infoStyle} text="" />
-        )}
+        {hasMissingSidecar(workload) && <MissingSidecar tooltip={true} className={infoStyle} text="" />}
       </span>
     );
   };
@@ -280,9 +278,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
             <span style={{ marginLeft: '0.5rem' }}>{createIcon(sub.status)}</span>
           </Tooltip>
 
-          {hasMissingSidecar(workload, props.namespace) && (
-            <MissingSidecar tooltip={true} className={infoStyle} text="" />
-          )}
+          {hasMissingSidecar(workload) && <MissingSidecar tooltip={true} className={infoStyle} text="" />}
         </span>
       );
     } else {
