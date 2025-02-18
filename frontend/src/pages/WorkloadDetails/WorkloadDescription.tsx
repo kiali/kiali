@@ -194,7 +194,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             />
           )}
 
-          {workload.isAmbient && workload.ambient !== 'waypoint' && (
+          {workload.isAmbient && !workload.isWaypoint && (
             <AmbientLabel
               tooltip={tooltipMsgType.workload}
               waypoint={workload.waypointWorkloads && workload.waypointWorkloads.length > 0 ? true : false}
@@ -210,7 +210,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             />
           )}
 
-          {(!workload.appLabel || !workload.versionLabel) && workload.ambient !== 'waypoint' && (
+          {(!workload.appLabel || !workload.versionLabel) && !workload.isWaypoint && (
             <MissingLabel
               missingApp={!workload.appLabel}
               missingVersion={!workload.versionLabel}
@@ -219,7 +219,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             />
           )}
 
-          {workload.ambient === 'waypoint' && renderWaypointSimpleLabel()}
+          {workload.isWaypoint && renderWaypointSimpleLabel()}
         </Title>
 
         {workload.cluster && isMultiCluster && (
@@ -251,8 +251,8 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
           services={services}
           health={props.health}
           cluster={props.workload?.cluster}
-          isWaypoint={workload.ambient === 'waypoint'}
-          waypointWorkloads={workload.ambient !== 'waypoint' ? workload.waypointWorkloads : []}
+          isWaypoint={workload.isWaypoint}
+          waypointWorkloads={!workload.isWaypoint ? workload.waypointWorkloads : []}
         />
       </CardBody>
     </Card>

@@ -294,9 +294,6 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		}
 		wItem.Cluster = cluster
 		wItem.Namespace = namespace
-		if w.IsWaypoint() {
-			wItem.Ambient = "waypoint"
-		}
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
 
@@ -2108,15 +2105,18 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		}
 
 		w.WorkloadListItem.IsGateway = w.IsGateway()
+		isWaypoint := w.IsWaypoint()
+		w.WorkloadListItem.IsWaypoint = isWaypoint
+		w.WorkloadListItem.IsZtunnel = w.IsZtunnel()
+		w.WorkloadListItem.IsAmbient = isWaypoint || w.WorkloadListItem.IsZtunnel || w.HasIstioAmbient()
 
 		// Add the Proxy Status to the workload
 		for _, pod := range w.Pods {
-			isWaypoint := w.IsWaypoint()
 			if config.Get().ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
 				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(criteria.Cluster, criteria.Namespace, pod.Name, !isWaypoint)
 			}
 			// If Ambient is enabled for pod, check if has any Waypoint proxy
-			if pod.AmbientEnabled() && criteria.IncludeWaypoints {
+			if !isWaypoint && pod.AmbientEnabled() && criteria.IncludeWaypoints {
 				w.WaypointWorkloads = in.GetWaypointsForWorkload(ctx, w, false)
 				// TODO: Maybe user doesn't have permissions
 				ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
@@ -2133,8 +2133,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		}
 
 		// If the pod is a waypoint proxy, check if it is attached to a namespace or to a service account, and get the affected workloads
-		if criteria.IncludeWaypoints && w.IsWaypoint() {
-			w.Ambient = config.Waypoint
+		if isWaypoint && criteria.IncludeWaypoints {
 			if w.WaypointFor() != config.WaypointForNone {
 				includeServices := false
 				if w.WaypointFor() == config.WaypointForService || w.WaypointFor() == config.WaypointForAll {
@@ -2148,9 +2147,6 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 					w.WaypointServices = waypointServices
 				}
 			}
-		}
-		if w.IsZtunnel() {
-			w.Ambient = config.Ztunnel
 		}
 
 		if cnFound {

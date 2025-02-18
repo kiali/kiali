@@ -11,9 +11,10 @@ export type AppId = {
 };
 
 export interface AppWorkload {
-  ambient?: string;
   isAmbient: boolean;
   isGateway: boolean;
+  isWaypoint: boolean;
+  isZtunnel: boolean;
   istioSidecar: boolean;
   labels: { [key: string]: string };
   namespace: string;

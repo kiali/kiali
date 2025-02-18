@@ -8,12 +8,13 @@ export interface AppList {
 }
 
 export interface AppListItem {
-  ambient?: string;
   cluster?: string;
   health: AppHealth;
   instanceType: InstanceType.App;
   isAmbient: boolean;
   isGateway: boolean;
+  isWaypoint: boolean;
+  isZtunnel: boolean;
   istioReferences: ObjectReference[];
   istioSidecar: boolean;
   labels: { [key: string]: string };

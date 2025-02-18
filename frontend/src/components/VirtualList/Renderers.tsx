@@ -99,9 +99,9 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
   item: AppListItem | WorkloadListItem | ServiceListItem
 ) => {
   const isWorkload = item.instanceType === InstanceType.Workload;
-  const isAmbientWaypoint = item.ambient === 'waypoint';
-  const hasMissingApp = isWorkload && !item['appLabel'] && item.ambient !== 'waypoint';
-  const hasMissingVersion = isWorkload && !item['versionLabel'] && item.ambient !== 'waypoint';
+  const isAmbientWaypoint = item.isWaypoint;
+  const hasMissingApp = isWorkload && !item['appLabel'] && !item.isWaypoint;
+  const hasMissingVersion = isWorkload && !item['versionLabel'] && !item.isWaypoint;
   const additionalDetails = (item as WorkloadListItem | ServiceListItem).additionalDetailSample;
   const spacer = isWorkload && hasMissingSidecar(item) && additionalDetails && additionalDetails.icon;
   const hasMissingAP = isWorkload && (item as WorkloadListItem).notCoveredAuthPolicy;

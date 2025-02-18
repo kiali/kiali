@@ -120,6 +120,8 @@ class ServiceListPageComponent extends FilterComponent.Component<
         instanceType: InstanceType.Service,
         istioSidecar: service.istioSidecar,
         isAmbient: service.isAmbient,
+        isWaypoint: service.isWaypoint,
+        isZtunnel: service.isZtunnel,
         namespace: service.namespace,
         cluster: service.cluster,
         health: ServiceHealth.fromJson(service.namespace, service.name, service.health, {
