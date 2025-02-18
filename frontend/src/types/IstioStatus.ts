@@ -17,6 +17,7 @@ export const statusMsg = {
 };
 
 export interface ComponentStatus {
+  cluster: string;
   is_core: boolean;
   name: string;
   status: Status;
