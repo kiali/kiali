@@ -32,6 +32,7 @@ export const hasMissingSidecar = (
   workload: Workload | WorkloadListItem | AppWorkload | AppListItem,
   namespace?: string
 ): boolean => {
+  // Application workloads doesn't include the namespace, so we use the app namespace
   const ns = workload.namespace ? workload.namespace : namespace ? namespace : '';
 
   return (
