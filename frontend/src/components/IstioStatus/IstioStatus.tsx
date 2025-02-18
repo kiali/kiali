@@ -8,7 +8,6 @@ import { MessageType } from '../../types/MessageCenter';
 import { Namespace } from '../../types/Namespace';
 import { KialiAppState } from '../../store/Store';
 import { istioStatusSelector, namespaceItemsSelector } from '../../store/Selectors';
-import { bindActionCreators } from 'redux';
 import { IstioStatusActions } from '../../actions/IstioStatusActions';
 import { connect } from 'react-redux';
 import { Text, TextVariants, TextContent, Tooltip, TooltipPosition } from '@patternfly/react-core';
@@ -26,7 +25,7 @@ import { MASTHEAD } from 'components/Nav/Masthead/Masthead';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
 import { serverConfig } from '../../config';
 
-type ClusterStatusMap = { [cluster: string]: ComponentStatus[] };
+export type ClusterStatusMap = { [cluster: string]: ComponentStatus[] };
 
 type ReduxStateProps = {
   namespaces?: Namespace[];
@@ -90,17 +89,17 @@ export const meshLinkStyle = kialiStyle({
 export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
 
-  const { clusterParam, namespaces, setIstioStatus, refreshNamespaces, lastRefreshAt } = props;
+  const { cluster, namespaces, setIstioStatus, refreshNamespaces, lastRefreshAt } = props;
 
   React.useEffect(() => {
     refreshNamespaces();
   }, [refreshNamespaces]);
 
   const fetchStatus = React.useCallback(
-    (cluster: string): void => {
-      API.getIstioStatus(cluster)
+    (cl: string): void => {
+      API.getIstioStatus(cl)
         .then(response => {
-          setIstioStatus(cluster, response.data);
+          setIstioStatus(cl, response.data);
         })
         .catch(error => {
           // User without namespaces can't have access to mTLS information. Reduce severity to info.
@@ -113,23 +112,25 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
           }
         });
     },
-    [clusterParam, namespaces, setIstioStatus, t]
+    [namespaces, setIstioStatus, t]
   );
 
   React.useEffect(() => {
-    if (clusterParam) {
-      fetchStatus(clusterParam);
+    if (cluster) {
+      fetchStatus(cluster);
     } else {
       Object.keys(serverConfig.clusters).forEach(cl => fetchStatus(cl));
     }
-  }, [lastRefreshAt, fetchStatus]);
+  }, [cluster, lastRefreshAt, fetchStatus]);
 
   const tooltipContent = (): React.ReactNode => {
     return (
       <>
         <TextContent style={{ color: PFColors.White }}>
           <Text component={TextVariants.h4}>{t('Istio Components Status')}</Text>
-          <IstioStatusList status={props.status} cluster={cluster} />
+          {Object.keys(props.statusMap).map(cl => (
+            <IstioStatusList status={props.statusMap[cl] || []} cluster={cl} />
+          ))}
 
           {!props.location?.endsWith('/mesh') && isControlPlaneAccessible() && (
             <div className={meshLinkStyle}>
@@ -147,8 +148,8 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     let addonUnhealthy = false;
     let notReady = false;
 
-    Object.keys(props.status ?? {}).forEach((compKey: string) => {
-      const { status, is_core } = props.status[compKey];
+    Object.keys(Object.values(props.statusMap).flat() ?? {}).forEach((compKey: string) => {
+      const { status, is_core } = Object.values(props.statusMap).flat()[compKey];
       const isNotReady: boolean = status === Status.NotReady;
       const isUnhealthy: boolean = status !== Status.Healthy && !isNotReady;
 
@@ -165,9 +166,11 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   };
 
   const healthyComponents = (): boolean => {
-    return props.status.reduce((healthy: boolean, compStatus: ComponentStatus) => {
-      return healthy && compStatus.status === Status.Healthy;
-    }, true);
+    return Object.values(props.statusMap)
+      .flat()
+      .reduce((healthy: boolean, compStatus: ComponentStatus) => {
+        return healthy && compStatus.status === Status.Healthy;
+      }, true);
   };
 
   if (!healthyComponents()) {
@@ -208,12 +211,14 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
 };
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
-  status: istioStatusSelector(state),
+  statusMap: istioStatusSelector(state),
   namespaces: namespaceItemsSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
-  setIstioStatus: bindActionCreators(IstioStatusActions.setinfo, dispatch),
+  setIstioStatus: (cluster: string, istioStatus: ComponentStatus[]) => {
+    dispatch(IstioStatusActions.setinfo({ cluster, istioStatus }));
+  },
   refreshNamespaces: () => {
     dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded());
   }
