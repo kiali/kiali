@@ -86,7 +86,13 @@ test-integration: test-integration-setup
 	@echo Test results can be found here: $$(ls -1 ${ROOTDIR}/tests/integration/junit-rest-report.xml)
 
 ## test-integration-controller: Run controller integration test suite. These are not real e2e tests like the other integration tests.
-test-integration-controller: .ensure-envtest-bin-dir-exists download-istio-crds
+test-integration-controller: .ensure-envtest-bin-dir-exists .ensure-yq-exists
+	$(eval ISTIO_VERSION ?= $(shell helm show chart --repo https://istio-release.storage.googleapis.com/charts base | yq '.version'))
+	$(eval ISTIO_MINOR_VERSION := $(shell cut -d "." -f 1-2 <<< ${ISTIO_VERSION}))
+	$(eval CRD_FILE := tests/integration/controller/testdata/istio-crds/${ISTIO_MINOR_VERSION}.yaml)
+	@if [ ! -f "${CRD_FILE}" ]; then \
+		echo "the CRD yamls for Istio version '${ISTIO_MINOR_VERSION}' are missing at '${CRD_FILE}' - run 'make download-istio-crds' to download them and then check them into git" && exit 1; \
+	fi
 	@echo Running controller integration tests
 	cd tests/integration/controller && ${GO} test -v
 
