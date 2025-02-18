@@ -84,7 +84,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const toolbarHeight = toolbarRef.current ? toolbarRef.current.clientHeight : 51;
+  const toolbarHeight = toolbarRef.current ? toolbarRef.current.clientHeight : -200;
   const toolbarSpace = 20 + 24 + toolbarHeight + 15 + 24 + 20;
   const settings = MetricsHelper.retrieveMetricsSettings(200);
   const dashboardHeight = tabHeight - toolbarSpace;
