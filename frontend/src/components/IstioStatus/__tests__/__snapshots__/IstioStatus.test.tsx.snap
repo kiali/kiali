@@ -4,24 +4,38 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
 <Tooltip
   content={
     <React.Fragment>
-      <IstioStatusList
-        status={
-          Array [
-            Object {
-              "cluster": "Kubernetes",
-              "is_core": false,
-              "name": "grafana",
-              "status": "Unhealthy",
-            },
-            Object {
-              "cluster": "Kubernetes",
-              "is_core": true,
-              "name": "istio-egressgateway",
-              "status": "Healthy",
-            },
-          ]
+      <TextContent
+        style={
+          Object {
+            "color": "var(--pf-v5-global--palette--white)",
+          }
         }
-      />
+      >
+        <Text
+          component="h4"
+        >
+          Istio Components Status
+        </Text>
+        <IstioStatusList
+          cluster="Kubernetes"
+          status={
+            Array [
+              Object {
+                "cluster": "Kubernetes",
+                "is_core": false,
+                "name": "grafana",
+                "status": "Unhealthy",
+              },
+              Object {
+                "cluster": "Kubernetes",
+                "is_core": true,
+                "name": "istio-egressgateway",
+                "status": "Healthy",
+              },
+            ]
+          }
+        />
+      </TextContent>
     </React.Fragment>
   }
   enableFlip={true}
@@ -41,24 +55,38 @@ exports[`When both core and addon component have problems any component is in no
 <Tooltip
   content={
     <React.Fragment>
-      <IstioStatusList
-        status={
-          Array [
-            Object {
-              "cluster": "Kubernetes",
-              "is_core": false,
-              "name": "grafana",
-              "status": "Unhealthy",
-            },
-            Object {
-              "cluster": "Kubernetes",
-              "is_core": true,
-              "name": "istio-egressgateway",
-              "status": "Unhealthy",
-            },
-          ]
+      <TextContent
+        style={
+          Object {
+            "color": "var(--pf-v5-global--palette--white)",
+          }
         }
-      />
+      >
+        <Text
+          component="h4"
+        >
+          Istio Components Status
+        </Text>
+        <IstioStatusList
+          cluster="Kubernetes"
+          status={
+            Array [
+              Object {
+                "cluster": "Kubernetes",
+                "is_core": false,
+                "name": "grafana",
+                "status": "Unhealthy",
+              },
+              Object {
+                "cluster": "Kubernetes",
+                "is_core": true,
+                "name": "istio-egressgateway",
+                "status": "Unhealthy",
+              },
+            ]
+          }
+        />
+      </TextContent>
     </React.Fragment>
   }
   enableFlip={true}
@@ -78,24 +106,38 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
 <Tooltip
   content={
     <React.Fragment>
-      <IstioStatusList
-        status={
-          Array [
-            Object {
-              "cluster": "Kubernetes",
-              "is_core": false,
-              "name": "grafana",
-              "status": "Healthy",
-            },
-            Object {
-              "cluster": "Kubernetes",
-              "is_core": true,
-              "name": "istio-egressgateway",
-              "status": "Unhealthy",
-            },
-          ]
+      <TextContent
+        style={
+          Object {
+            "color": "var(--pf-v5-global--palette--white)",
+          }
         }
-      />
+      >
+        <Text
+          component="h4"
+        >
+          Istio Components Status
+        </Text>
+        <IstioStatusList
+          cluster="Kubernetes"
+          status={
+            Array [
+              Object {
+                "cluster": "Kubernetes",
+                "is_core": false,
+                "name": "grafana",
+                "status": "Healthy",
+              },
+              Object {
+                "cluster": "Kubernetes",
+                "is_core": true,
+                "name": "istio-egressgateway",
+                "status": "Unhealthy",
+              },
+            ]
+          }
+        />
+      </TextContent>
     </React.Fragment>
   }
   enableFlip={true}
@@ -115,24 +157,38 @@ exports[`When there are not-ready components mixed with other not healthy compon
 <Tooltip
   content={
     <React.Fragment>
-      <IstioStatusList
-        status={
-          Array [
-            Object {
-              "cluster": "Kubernetes",
-              "is_core": false,
-              "name": "grafana",
-              "status": "Unhealthy",
-            },
-            Object {
-              "cluster": "Kubernetes",
-              "is_core": false,
-              "name": "jaeger",
-              "status": "NotReady",
-            },
-          ]
+      <TextContent
+        style={
+          Object {
+            "color": "var(--pf-v5-global--palette--white)",
+          }
         }
-      />
+      >
+        <Text
+          component="h4"
+        >
+          Istio Components Status
+        </Text>
+        <IstioStatusList
+          cluster="Kubernetes"
+          status={
+            Array [
+              Object {
+                "cluster": "Kubernetes",
+                "is_core": false,
+                "name": "grafana",
+                "status": "Unhealthy",
+              },
+              Object {
+                "cluster": "Kubernetes",
+                "is_core": false,
+                "name": "jaeger",
+                "status": "NotReady",
+              },
+            ]
+          }
+        />
+      </TextContent>
     </React.Fragment>
   }
   enableFlip={true}
@@ -152,36 +208,50 @@ exports[`When there are not-ready components mixed with other not healthy compon
 <Tooltip
   content={
     <React.Fragment>
-      <IstioStatusList
-        status={
-          Array [
-            Object {
-              "cluster": "Kubernetes",
-              "is_core": false,
-              "name": "grafana",
-              "status": "Unhealthy",
-            },
-            Object {
-              "cluster": "Kubernetes",
-              "is_core": false,
-              "name": "jaeger",
-              "status": "NotReady",
-            },
-            Object {
-              "cluster": "Kubernetes",
-              "is_core": true,
-              "name": "istio-egressgateway",
-              "status": "Unhealthy",
-            },
-            Object {
-              "cluster": "Kubernetes",
-              "is_core": true,
-              "name": "istio-ingressgateway",
-              "status": "NotReady",
-            },
-          ]
+      <TextContent
+        style={
+          Object {
+            "color": "var(--pf-v5-global--palette--white)",
+          }
         }
-      />
+      >
+        <Text
+          component="h4"
+        >
+          Istio Components Status
+        </Text>
+        <IstioStatusList
+          cluster="Kubernetes"
+          status={
+            Array [
+              Object {
+                "cluster": "Kubernetes",
+                "is_core": false,
+                "name": "grafana",
+                "status": "Unhealthy",
+              },
+              Object {
+                "cluster": "Kubernetes",
+                "is_core": false,
+                "name": "jaeger",
+                "status": "NotReady",
+              },
+              Object {
+                "cluster": "Kubernetes",
+                "is_core": true,
+                "name": "istio-egressgateway",
+                "status": "Unhealthy",
+              },
+              Object {
+                "cluster": "Kubernetes",
+                "is_core": true,
+                "name": "istio-ingressgateway",
+                "status": "NotReady",
+              },
+            ]
+          }
+        />
+      </TextContent>
     </React.Fragment>
   }
   enableFlip={true}
@@ -201,24 +271,38 @@ exports[`When there are not-ready components mixed with other not healthy compon
 <Tooltip
   content={
     <React.Fragment>
-      <IstioStatusList
-        status={
-          Array [
-            Object {
-              "cluster": "Kubernetes",
-              "is_core": true,
-              "name": "istio-egressgateway",
-              "status": "Unhealthy",
-            },
-            Object {
-              "cluster": "Kubernetes",
-              "is_core": true,
-              "name": "istio-ingressgateway",
-              "status": "NotReady",
-            },
-          ]
+      <TextContent
+        style={
+          Object {
+            "color": "var(--pf-v5-global--palette--white)",
+          }
         }
-      />
+      >
+        <Text
+          component="h4"
+        >
+          Istio Components Status
+        </Text>
+        <IstioStatusList
+          cluster="Kubernetes"
+          status={
+            Array [
+              Object {
+                "cluster": "Kubernetes",
+                "is_core": true,
+                "name": "istio-egressgateway",
+                "status": "Unhealthy",
+              },
+              Object {
+                "cluster": "Kubernetes",
+                "is_core": true,
+                "name": "istio-ingressgateway",
+                "status": "NotReady",
+              },
+            ]
+          }
+        />
+      </TextContent>
     </React.Fragment>
   }
   enableFlip={true}
@@ -238,18 +322,32 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
 <Tooltip
   content={
     <React.Fragment>
-      <IstioStatusList
-        status={
-          Array [
-            Object {
-              "cluster": "Kubernetes",
-              "is_core": true,
-              "name": "istiod",
-              "status": "NotReady",
-            },
-          ]
+      <TextContent
+        style={
+          Object {
+            "color": "var(--pf-v5-global--palette--white)",
+          }
         }
-      />
+      >
+        <Text
+          component="h4"
+        >
+          Istio Components Status
+        </Text>
+        <IstioStatusList
+          cluster="Kubernetes"
+          status={
+            Array [
+              Object {
+                "cluster": "Kubernetes",
+                "is_core": true,
+                "name": "istiod",
+                "status": "NotReady",
+              },
+            ]
+          }
+        />
+      </TextContent>
     </React.Fragment>
   }
   enableFlip={true}
@@ -269,18 +367,32 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
 <Tooltip
   content={
     <React.Fragment>
-      <IstioStatusList
-        status={
-          Array [
-            Object {
-              "cluster": "Kubernetes",
-              "is_core": false,
-              "name": "jaeger",
-              "status": "NotReady",
-            },
-          ]
+      <TextContent
+        style={
+          Object {
+            "color": "var(--pf-v5-global--palette--white)",
+          }
         }
-      />
+      >
+        <Text
+          component="h4"
+        >
+          Istio Components Status
+        </Text>
+        <IstioStatusList
+          cluster="Kubernetes"
+          status={
+            Array [
+              Object {
+                "cluster": "Kubernetes",
+                "is_core": false,
+                "name": "jaeger",
+                "status": "NotReady",
+              },
+            ]
+          }
+        />
+      </TextContent>
     </React.Fragment>
   }
   enableFlip={true}

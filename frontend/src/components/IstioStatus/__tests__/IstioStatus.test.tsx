@@ -8,7 +8,7 @@ import { CLUSTER_DEFAULT } from '../../../types/Graph';
 const mockIcon = (componentList: ComponentStatus[]): ShallowWrapper => {
   return shallow(
     <IstioStatusComponent
-      statusMap={{ CLUSTER_DEFAULT: componentList }}
+      statusMap={{ Kubernetes: componentList }}
       lastRefreshAt={848152}
       namespaces={[{ name: 'bookinfo' }, { name: 'istio-system' }]}
       setIstioStatus={jest.fn()}
