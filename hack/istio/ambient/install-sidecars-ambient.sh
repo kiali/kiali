@@ -10,8 +10,8 @@
 ##############################################################################
 
 # Go to the main output directory and try to find an Istio there.
-AMBIENT_NS="ambient"
-CLIENT_EXE="kubectl"
+AMBIENT_NS="test-ambient"
+CLIENT_EXE="test-kubectl"
 HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../../_output}"
 SIDECAR_NS="sidecar"
