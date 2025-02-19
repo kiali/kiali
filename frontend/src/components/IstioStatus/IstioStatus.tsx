@@ -116,6 +116,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   );
 
   React.useEffect(() => {
+    // when cluster is set, retrieve only for this one, Overview page
     if (cluster) {
       fetchStatus(cluster);
     } else {
@@ -128,10 +129,13 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
       <>
         <TextContent style={{ color: PFColors.White }}>
           <Text component={TextVariants.h4}>{t('Istio Components Status')}</Text>
-          {Object.keys(props.statusMap).map(cl => (
-            <IstioStatusList status={props.statusMap[cl] || []} cluster={cl} />
-          ))}
-
+          {cluster ? (
+            <IstioStatusList status={props.statusMap[cluster] || []} cluster={cluster} />
+          ) : (
+            Object.keys(props.statusMap).map(cl => (
+              <IstioStatusList key={cl} status={props.statusMap[cl] || []} cluster={cl} />
+            ))
+          )}
           {!props.location?.endsWith('/mesh') && isControlPlaneAccessible() && (
             <div className={meshLinkStyle}>
               <span>{t('More info at')}</span>
@@ -147,9 +151,11 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     let coreUnhealthy = false;
     let addonUnhealthy = false;
     let notReady = false;
+    // when cluster is set, this is in Overview page, otherwise masthead
+    const values = cluster ? props.statusMap[cluster] ?? [] : Object.values(props.statusMap).flat();
 
-    Object.keys(Object.values(props.statusMap).flat() ?? {}).forEach((compKey: string) => {
-      const { status, is_core } = Object.values(props.statusMap).flat()[compKey];
+    Object.keys(values ?? {}).forEach((compKey: string) => {
+      const { status, is_core } = values[compKey];
       const isNotReady: boolean = status === Status.NotReady;
       const isUnhealthy: boolean = status !== Status.Healthy && !isNotReady;
 
@@ -166,11 +172,11 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   };
 
   const healthyComponents = (): boolean => {
-    return Object.values(props.statusMap)
-      .flat()
-      .reduce((healthy: boolean, compStatus: ComponentStatus) => {
-        return healthy && compStatus.status === Status.Healthy;
-      }, true);
+    // when cluster is set, this is in Overview page, otherwise masthead
+    const values = cluster ? props.statusMap[cluster] ?? [] : Object.values(props.statusMap).flat();
+    return values.reduce((healthy: boolean, compStatus: ComponentStatus) => {
+      return healthy && compStatus.status === Status.Healthy;
+    }, true);
   };
 
   if (!healthyComponents()) {
