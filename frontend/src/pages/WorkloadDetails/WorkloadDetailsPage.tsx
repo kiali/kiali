@@ -285,8 +285,8 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           {this.state.workload && (
             <ZtunnelConfig
               lastRefreshAt={this.props.lastRefreshAt}
-              rangeDuration={this.props.rangeDuration}
               namespace={this.props.workloadId.namespace}
+              rangeDuration={this.props.rangeDuration}
               workload={this.state.workload}
             />
           )}
