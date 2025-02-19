@@ -5,7 +5,6 @@ import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { Card, CardBody, Grid, GridItem, Tab, Tabs, TooltipPosition } from '@patternfly/react-core';
 import { activeTab } from '../../components/Tab/Tabs';
-import { RenderComponentScroll } from 'components/Nav/Page';
 import { location, router } from '../../app/History';
 import {
   tabName as workloadTabName,
@@ -36,7 +35,12 @@ type ZtunnelConfigProps = {
 };
 
 const fullHeightStyle = kialiStyle({
-  height: '100%'
+  height: '80%'
+});
+
+const marginStyle = kialiStyle({
+  margin: '2em',
+  height: 'auto'
 });
 
 const iconStyle = kialiStyle({
@@ -133,9 +137,9 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
 
   const servicesTab = (
     <Tab title={t('Services')} eventKey={0} key="services">
-      <Card className={fullHeightStyle}>
+      <Card>
         <CardBody>
-          <div className={fullHeightStyle}>
+          <div>
             <div style={{ marginBottom: '1.25rem' }}>
               <div key="service-icon" className={iconStyle}>
                 <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
@@ -161,7 +165,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
     <Tab title={t('Workloads')} eventKey={1} key="workloads">
       <Card className={fullHeightStyle}>
         <CardBody>
-          <div className={fullHeightStyle}>
+          <div>
             <div style={{ marginBottom: '1.25rem' }}>
               <div key="service-icon" className={iconStyle}>
                 <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
@@ -185,7 +189,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
 
   const metricsTab = (
     <Tab title={t('Metrics')} eventKey={2} key="metrics">
-      <Card className={fullHeightStyle}>
+      <Card>
         <CardBody>
           <ZtunnelMetrics
             rangeDuration={props.rangeDuration}
@@ -200,7 +204,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
   tabs.push(metricsTab);
 
   return (
-    <RenderComponentScroll>
+    <div className={marginStyle}>
       <Grid>
         <GridItem span={12}>
           <Tabs
@@ -215,6 +219,6 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
           </Tabs>
         </GridItem>
       </Grid>
-    </RenderComponentScroll>
+    </div>
   );
 };
