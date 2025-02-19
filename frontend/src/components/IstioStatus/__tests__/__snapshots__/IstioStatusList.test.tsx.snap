@@ -1,18 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`lists all the components grouped 1`] = `
-<TextContent
-  style={
-    Object {
-      "color": "var(--pf-v5-global--palette--white)",
-    }
-  }
->
-  <Text
-    component="h4"
-  >
-    Istio Components Status
-  </Text>
+<Fragment>
   <PFBadge
     badge={
       Object {
@@ -34,6 +23,7 @@ exports[`lists all the components grouped 1`] = `
     <IstioComponentStatus
       componentStatus={
         Object {
+          "cluster": "Kubernetes",
           "is_core": true,
           "name": "istiod",
           "status": "NotFound",
@@ -44,6 +34,7 @@ exports[`lists all the components grouped 1`] = `
     <IstioComponentStatus
       componentStatus={
         Object {
+          "cluster": "Kubernetes",
           "is_core": true,
           "name": "istio-egressgateway",
           "status": "Unhealthy",
@@ -54,6 +45,7 @@ exports[`lists all the components grouped 1`] = `
     <IstioComponentStatus
       componentStatus={
         Object {
+          "cluster": "Kubernetes",
           "is_core": false,
           "name": "grafana",
           "status": "NotFound",
@@ -64,6 +56,7 @@ exports[`lists all the components grouped 1`] = `
     <IstioComponentStatus
       componentStatus={
         Object {
+          "cluster": "Kubernetes",
           "is_core": false,
           "name": "prometheus",
           "status": "Unhealthy",
@@ -72,5 +65,5 @@ exports[`lists all the components grouped 1`] = `
       key="status-addon-prometheus"
     />
   </List>
-</TextContent>
+</Fragment>
 `;

@@ -3,11 +3,12 @@ import { ShallowWrapper, shallow } from 'enzyme';
 import { ComponentStatus, Status } from '../../../types/IstioStatus';
 import { IstioStatusComponent } from '../IstioStatus';
 import { shallowToJson } from 'enzyme-to-json';
+import { CLUSTER_DEFAULT } from '../../../types/Graph';
 
 const mockIcon = (componentList: ComponentStatus[]): ShallowWrapper => {
   return shallow(
     <IstioStatusComponent
-      status={componentList}
+      statusMap={{ CLUSTER_DEFAULT: componentList }}
       lastRefreshAt={848152}
       namespaces={[{ name: 'bookinfo' }, { name: 'istio-system' }]}
       setIstioStatus={jest.fn()}
@@ -39,11 +40,13 @@ describe('When core component has a problem', () => {
   it('the Icon shows is displayed in Red', () => {
     const wrapper = mockIcon([
       {
+        cluster: CLUSTER_DEFAULT,
         name: 'grafana',
         status: Status.Healthy,
         is_core: false
       },
       {
+        cluster: CLUSTER_DEFAULT,
         name: 'istio-egressgateway',
         status: Status.Unhealthy,
         is_core: true
@@ -60,11 +63,13 @@ describe('When addon component has a problem', () => {
   it('the Icon shows is displayed in orange', () => {
     const wrapper = mockIcon([
       {
+        cluster: CLUSTER_DEFAULT,
         name: 'grafana',
         status: Status.Unhealthy,
         is_core: false
       },
       {
+        cluster: CLUSTER_DEFAULT,
         name: 'istio-egressgateway',
         status: Status.Healthy,
         is_core: true
@@ -82,11 +87,13 @@ describe('When both core and addon component have problems', () => {
     it('the Icon shows is displayed in red', () => {
       const wrapper = mockIcon([
         {
+          cluster: CLUSTER_DEFAULT,
           name: 'grafana',
           status: Status.Unhealthy,
           is_core: false
         },
         {
+          cluster: CLUSTER_DEFAULT,
           name: 'istio-egressgateway',
           status: Status.Unhealthy,
           is_core: true
@@ -106,11 +113,13 @@ describe('When there are not-ready components', () => {
       it('the Icon is displayed in red', () => {
         const wrapper = mockIcon([
           {
+            cluster: CLUSTER_DEFAULT,
             name: 'istio-egressgateway',
             status: Status.Unhealthy,
             is_core: true
           },
           {
+            cluster: CLUSTER_DEFAULT,
             name: 'istio-ingressgateway',
             status: Status.NotReady,
             is_core: true
@@ -127,11 +136,13 @@ describe('When there are not-ready components', () => {
       it('the Icon is displayed in orange', () => {
         const wrapper = mockIcon([
           {
+            cluster: CLUSTER_DEFAULT,
             name: 'grafana',
             status: Status.Unhealthy,
             is_core: false
           },
           {
+            cluster: CLUSTER_DEFAULT,
             name: 'jaeger',
             status: Status.NotReady,
             is_core: false
@@ -148,21 +159,25 @@ describe('When there are not-ready components', () => {
       it('the Icon shows is displayed in red', () => {
         const wrapper = mockIcon([
           {
+            cluster: CLUSTER_DEFAULT,
             name: 'grafana',
             status: Status.Unhealthy,
             is_core: false
           },
           {
+            cluster: CLUSTER_DEFAULT,
             name: 'jaeger',
             status: Status.NotReady,
             is_core: false
           },
           {
+            cluster: CLUSTER_DEFAULT,
             name: 'istio-egressgateway',
             status: Status.Unhealthy,
             is_core: true
           },
           {
+            cluster: CLUSTER_DEFAULT,
             name: 'istio-ingressgateway',
             status: Status.NotReady,
             is_core: true
@@ -181,6 +196,7 @@ describe('When there are not-ready components', () => {
       it('renders the Icon in blue', () => {
         const wrapper = mockIcon([
           {
+            cluster: CLUSTER_DEFAULT,
             name: 'jaeger',
             status: Status.NotReady,
             is_core: false
@@ -197,6 +213,7 @@ describe('When there are not-ready components', () => {
       it('renders the Icon in blue', () => {
         const wrapper = mockIcon([
           {
+            cluster: CLUSTER_DEFAULT,
             name: 'istiod',
             status: Status.NotReady,
             is_core: true
@@ -215,11 +232,13 @@ describe('When all components are good', () => {
   it('the Icon shows is displayed in green', () => {
     const wrapper = mockIcon([
       {
+        cluster: CLUSTER_DEFAULT,
         name: 'grafana',
         status: Status.Healthy,
         is_core: false
       },
       {
+        cluster: CLUSTER_DEFAULT,
         name: 'istio-egressgateway',
         status: Status.Healthy,
         is_core: true
