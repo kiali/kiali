@@ -34,10 +34,6 @@ type ZtunnelConfigProps = {
   workload: Workload;
 };
 
-const fullHeightStyle = kialiStyle({
-  height: '80%'
-});
-
 const marginStyle = kialiStyle({
   margin: '2em',
   height: 'auto'
@@ -46,6 +42,11 @@ const marginStyle = kialiStyle({
 const iconStyle = kialiStyle({
   display: 'inline-block',
   alignSelf: 'center'
+});
+
+export const yoverflow = kialiStyle({
+  height: 'calc(100vh - 400px)',
+  overflow: 'auto'
 });
 
 export interface SortableCompareTh<T> extends SortableTh {
@@ -163,7 +164,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
 
   const workloadsTab = (
     <Tab title={t('Workloads')} eventKey={1} key="workloads">
-      <Card className={fullHeightStyle}>
+      <Card>
         <CardBody>
           <div>
             <div style={{ marginBottom: '1.25rem' }}>
