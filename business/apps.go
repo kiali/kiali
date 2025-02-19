@@ -386,7 +386,7 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 
 	appInstance.Workloads = make([]models.WorkloadItem, len(appDetails.Workloads))
 	for i, wkd := range appDetails.Workloads {
-		appInstance.Workloads[i] = models.WorkloadItem{WorkloadName: wkd.Name, WorkloadGVK: wkd.WorkloadGVK, IstioSidecar: wkd.IstioSidecar, Labels: wkd.Labels, IsAmbient: wkd.IsAmbient, ServiceAccountNames: wkd.Pods.ServiceAccounts(), WaypointWorkloads: wkd.WaypointWorkloads}
+		appInstance.Workloads[i] = models.WorkloadItem{WorkloadName: wkd.Name, Namespace: wkd.Namespace, WorkloadGVK: wkd.WorkloadGVK, IstioSidecar: wkd.IstioSidecar, Labels: wkd.Labels, IsAmbient: wkd.IsAmbient, ServiceAccountNames: wkd.Pods.ServiceAccounts(), WaypointWorkloads: wkd.WaypointWorkloads}
 	}
 
 	appInstance.ServiceNames = make([]string, len(appDetails.Services))
