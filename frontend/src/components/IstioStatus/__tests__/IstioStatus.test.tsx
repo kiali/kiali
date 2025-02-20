@@ -245,6 +245,6 @@ describe('When all components are good', () => {
       }
     ]);
 
-    expect(wrapper.isEmptyRender()).toBeTruthy();
+    testIcon(wrapper, 'istio-status-success');
   });
 });

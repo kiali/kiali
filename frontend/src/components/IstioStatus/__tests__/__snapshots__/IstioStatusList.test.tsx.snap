@@ -1,69 +1,54 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`lists all the components grouped 1`] = `
-<Fragment>
-  <PFBadge
-    badge={
+<List
+  aria-label="Istio Component List"
+  className="kiali_f6tdqla"
+  id="istio-status"
+>
+  <IstioComponentStatus
+    componentStatus={
       Object {
-        "badge": "C",
-        "style": Object {
-          "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
-        },
-        "tt": "Cluster",
+        "cluster": "Kubernetes",
+        "is_core": true,
+        "name": "istiod",
+        "status": "NotFound",
       }
     }
-    size="sm"
+    key="status-core-istiod"
   />
-  Kubernetes
-  <List
-    aria-label="Istio Component List"
-    className="kiali_f6tdqla"
-    id="istio-status"
-  >
-    <IstioComponentStatus
-      componentStatus={
-        Object {
-          "cluster": "Kubernetes",
-          "is_core": true,
-          "name": "istiod",
-          "status": "NotFound",
-        }
+  <IstioComponentStatus
+    componentStatus={
+      Object {
+        "cluster": "Kubernetes",
+        "is_core": true,
+        "name": "istio-egressgateway",
+        "status": "Unhealthy",
       }
-      key="status-core-istiod"
-    />
-    <IstioComponentStatus
-      componentStatus={
-        Object {
-          "cluster": "Kubernetes",
-          "is_core": true,
-          "name": "istio-egressgateway",
-          "status": "Unhealthy",
-        }
+    }
+    key="status-core-istio-egressgateway"
+  />
+  <IstioComponentStatus
+    componentStatus={
+      Object {
+        "cluster": "Kubernetes",
+        "is_core": false,
+        "name": "grafana",
+        "status": "NotFound",
       }
-      key="status-core-istio-egressgateway"
-    />
-    <IstioComponentStatus
-      componentStatus={
-        Object {
-          "cluster": "Kubernetes",
-          "is_core": false,
-          "name": "grafana",
-          "status": "NotFound",
-        }
+    }
+    key="status-addon-grafana"
+  />
+  <IstioComponentStatus
+    componentStatus={
+      Object {
+        "cluster": "Kubernetes",
+        "is_core": false,
+        "name": "prometheus",
+        "status": "Unhealthy",
       }
-      key="status-addon-grafana"
-    />
-    <IstioComponentStatus
-      componentStatus={
-        Object {
-          "cluster": "Kubernetes",
-          "is_core": false,
-          "name": "prometheus",
-          "status": "Unhealthy",
-        }
-      }
-      key="status-addon-prometheus"
-    />
-  </List>
-</Fragment>
+    }
+    key="status-addon-prometheus"
+  />
+</List>
 `;
