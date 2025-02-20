@@ -10,10 +10,16 @@ import { KialiAppState } from '../../store/Store';
 import { istioStatusSelector, namespaceItemsSelector } from '../../store/Selectors';
 import { IstioStatusActions } from '../../actions/IstioStatusActions';
 import { connect } from 'react-redux';
-import { Text, TextVariants, TextContent, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Text, TextVariants, TextContent, Tooltip, TooltipPosition, Label } from '@patternfly/react-core';
 import { IstioStatusList } from './IstioStatusList';
 import { PFColors } from '../Pf/PfColors';
-import { ResourcesFullIcon } from '@patternfly/react-icons';
+import {
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  ExclamationTriangleIcon,
+  InfoCircleIcon,
+  QuestionCircleIcon
+} from '@patternfly/react-icons';
 import { KialiDispatch } from 'types/Redux';
 import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
 import { connectRefresh } from '../Refresh/connectRefresh';
@@ -65,20 +71,28 @@ const ValidToColor = {
 };
 
 const defaultIcons = {
-  ErrorIcon: ResourcesFullIcon,
-  HealthyIcon: ResourcesFullIcon,
-  InfoIcon: ResourcesFullIcon,
-  WarningIcon: ResourcesFullIcon
+  ErrorIcon: ExclamationCircleIcon,
+  HealthyIcon: CheckCircleIcon,
+  InfoIcon: InfoCircleIcon,
+  WarningIcon: ExclamationTriangleIcon
 };
 
 const iconStyle = kialiStyle({
-  marginLeft: '2rem',
+  marginLeft: '0.5rem',
   fontSize: '1rem'
 });
 
 const clusterStyle = kialiStyle({
   display: 'flex',
   alignItems: 'center'
+});
+
+const labelStyle = kialiStyle({
+  $nest: {
+    '& .pf-v5-c-label__icon': {
+      marginRight: '0.5rem'
+    }
+  }
 });
 
 export const meshLinkStyle = kialiStyle({
@@ -213,10 +227,12 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
 
   const tooltipPosition = props.location === MASTHEAD ? TooltipPosition.bottom : TooltipPosition.top;
 
+  let statusIcon: React.ReactElement;
+
   if (!healthyComponents()) {
     const icons = props.icons ? { ...defaultIcons, ...props.icons } : defaultIcons;
     const iconColor = tooltipColor();
-    let icon = ResourcesFullIcon;
+    let icon = QuestionCircleIcon;
     let dataTest = 'istio-status';
 
     if (iconColor === PFColors.Danger) {
@@ -238,24 +254,30 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
       dataTest: dataTest
     };
 
-    return (
-      <Tooltip position={tooltipPosition} enableFlip={true} content={tooltipContent()} maxWidth="25rem">
-        {createIcon(iconProps, icon, iconColor)}
-      </Tooltip>
-    );
+    statusIcon = createIcon(iconProps, icon, iconColor);
   } else if (!cluster) {
     const iconProps: IconProps = {
       className: iconStyle,
       dataTest: 'istio-status-success'
     };
-    return (
-      <Tooltip position={tooltipPosition} enableFlip={true} content={tooltipContent()} maxWidth="25rem">
-        {createIcon(iconProps, defaultIcons.HealthyIcon, ValidToColor['false-false-false'])}
-      </Tooltip>
-    );
+
+    statusIcon = createIcon(iconProps, defaultIcons.HealthyIcon, ValidToColor['false-false-false']);
+  } else {
+    return null;
   }
 
-  return null;
+  return (
+    <Tooltip position={tooltipPosition} enableFlip={true} content={tooltipContent()} maxWidth="25rem">
+      <>
+        {homeCluster?.name && (
+          <Label className={labelStyle} data-test="cluster-icon" color="blue" icon={<KialiIcon.Cluster />}>
+            {homeCluster?.name}
+            {isControlPlaneAccessible() && statusIcon}
+          </Label>
+        )}
+      </>
+    </Tooltip>
+  );
 };
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
