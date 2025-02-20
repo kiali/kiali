@@ -1069,7 +1069,7 @@ export const getPodLogs = (
   namespace: string,
   name: string,
   workload: string,
-  app?: string,
+  service?: string,
   container?: string,
   maxLines?: number,
   sinceTime?: number,
@@ -1107,8 +1107,8 @@ export const getPodLogs = (
     params.workload = workload;
   }
 
-  if (app) {
-    params.app = app;
+  if (service) {
+    params.service = service;
   }
 
   return newRequest<PodLogs>(HTTP_VERBS.GET, urls.podLogs(namespace, name), params, {});

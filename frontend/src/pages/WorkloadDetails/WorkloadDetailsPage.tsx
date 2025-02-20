@@ -36,6 +36,7 @@ type WorkloadDetailsState = {
   currentTab: string;
   error?: ErrorMsg;
   health?: WorkloadHealth;
+  waypointServiceFilter?: string;
   workload?: Workload;
 };
 
@@ -122,6 +123,10 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
     return API.getWorkload(this.props.workloadId.namespace, this.props.workloadId.workload, params, cluster)
       .then(details => {
+        if (details.data.services && details.data.services.length > 0) {
+          this.setState({ waypointServiceFilter: details.data.services[0].name });
+        }
+
         this.setState({
           workload: details.data,
           health: WorkloadHealth.fromJson(
@@ -184,13 +189,13 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           <Tab title="Logs" eventKey={2} key="Logs" data-test="workload-details-logs-tab">
             {hasPods ? (
               <WorkloadPodLogs
-                app={this.state.workload?.labels['app']}
                 lastRefreshAt={this.props.lastRefreshAt}
                 namespace={this.props.workloadId.namespace}
                 workload={this.props.workloadId.workload}
                 pods={this.state.workload!.pods}
                 cluster={this.state.cluster}
                 waypoints={this.state.workload!.waypointWorkloads}
+                waypointServiceFilter={this.state.waypointServiceFilter}
               />
             ) : (
               <EmptyState variant={EmptyStateVariant.full}>
@@ -244,13 +249,13 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         tabsArray.push(
           <Tab eventKey={5} title="Traces" key="Traces">
             <TracesComponent
-              app={this.state.workload?.labels['app']}
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.workloadId.namespace}
               cluster={this.state.cluster}
               target={this.props.workloadId.workload}
               targetKind="workload"
               fromWaypoint={fromWaypoint}
+              waypointServiceFilter={this.state.waypointServiceFilter}
             />
           </Tab>
         );

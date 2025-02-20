@@ -55,13 +55,13 @@ type ReduxProps = {
 };
 
 type TracesProps = ReduxProps & {
-  app?: string;
   cluster?: string;
   fromWaypoint: boolean;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   target: string;
   targetKind: TargetKind;
+  waypointServiceFilter?: string;
 };
 
 interface TracesState {
@@ -366,7 +366,6 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                 </Tab>
                 <Tab eventKey={spansDetailsTab} title="Span Details">
                   <SpanDetails
-                    app={this.props.app}
                     namespace={this.props.namespace}
                     target={this.props.target}
                     externalURLProvider={this.urlProvider}
@@ -374,6 +373,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                     traceID={this.props.selectedTrace.traceID}
                     cluster={this.props.cluster ? this.props.cluster : ''}
                     fromWaypoint={this.props.fromWaypoint}
+                    waypointServiceFilter={this.props.waypointServiceFilter}
                   />
                 </Tab>
               </Tabs>

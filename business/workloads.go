@@ -2657,7 +2657,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 				continue
 			}
 
-			if opts.LogType == models.LogTypeWaypoint && !opts.filter.app.MatchString(entry.Message) {
+			if opts.LogType == models.LogTypeWaypoint && (opts.filter.app.MatchString("") || !opts.filter.app.MatchString(entry.Message)) {
 				continue
 			}
 
@@ -2732,7 +2732,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 
 // StreamPodLogs streams pod logs to an HTTP Response given the provided options
 // The workload name is used to get the waypoint workloads when opts.LogType is "waypoint"
-func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace, workload, app, name string, opts *LogOptions, w http.ResponseWriter) error {
+func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace, workload, service, name string, opts *LogOptions, w http.ResponseWriter) error {
 	names := []string{}
 	if opts.LogType == models.LogTypeZtunnel {
 		// First, get ztunnel namespace and containers
@@ -2743,7 +2743,7 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 		nsDstPattern := fmt.Sprintf(`dst\.namespace=("?%s"?)`, namespace)
 		wkSrcPattern := fmt.Sprintf(`src\.workload=("?%s"?)`, name)
 		nsSrcPattern := fmt.Sprintf(`src\.namespace=("?%s"?)`, namespace)
-		svcPattern := fmt.Sprintf(`dst\.service=("?%s.%s.?)`, app, namespace)
+		svcPattern := fmt.Sprintf(`dst\.service=("?%s.%s.?)`, service, namespace)
 
 		// The ztunnel line should include the pod and the namespace
 		fs := filterOpts{
@@ -2768,10 +2768,9 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 			if len(wk.WaypointWorkloads) > 0 {
 				// Waypoint filter by the app name
 				fs := filterOpts{
-					app: *regexp.MustCompile(app),
+					app: *regexp.MustCompile(service),
 				}
 				opts.filter = fs
-				// TODO: Get efective one
 				waypoint := wk.WaypointWorkloads[0]
 				waypointWk, errWaypoint := in.GetWorkload(ctx, WorkloadCriteria{Cluster: waypoint.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, IncludeServices: false})
 				if errWaypoint != nil {
