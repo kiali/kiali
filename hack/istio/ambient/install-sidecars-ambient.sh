@@ -11,10 +11,10 @@
 
 # Go to the main output directory and try to find an Istio there.
 AMBIENT_NS="test-ambient"
-CLIENT_EXE="test-kubectl"
+CLIENT_EXE="kubectl"
 HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../../_output}"
-SIDECAR_NS="sidecar"
+SIDECAR_NS="test-sidecar"
 WAYPOINT="false"
 
 while [ $# -gt 0 ]; do
@@ -89,7 +89,7 @@ ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/echo-service.yaml -n ${AMBIENT_NS}
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/echo-service.yaml -n ${SIDECAR_NS}
 
 # Create the echo service
-cat <<NAD | ${CLIENT_EXE} -n sidecar apply -f -
+cat <<NAD | ${CLIENT_EXE} -n ${SIDECAR_NS} apply -f -
 apiVersion: v1
 kind: Pod
 metadata:
@@ -100,10 +100,10 @@ spec:
     image: curlimages/curl
     command: ["/bin/sh", "-c"]
     args:
-    - while true; do echo "Calling echo-service..."; curl -s http://echo-service.ambient sleep 5; done;
+    - while true; do echo "Calling echo-service..."; curl -s http://echo-service.test-ambient sleep 5; done;
 NAD
 
-cat <<NAD | ${CLIENT_EXE} -n ambient apply -f -
+cat <<NAD | ${CLIENT_EXE} -n ${AMBIENT_NS} apply -f -
 apiVersion: v1
 kind: Pod
 metadata:
@@ -114,7 +114,7 @@ spec:
     image: curlimages/curl
     command: ["/bin/sh", "-c"]
     args:
-    - while true; do echo "Calling echo-service..."; curl -s http://echo-service.sidecar sleep 5; done;
+    - while true; do echo "Calling echo-service..."; curl -s http://echo-service.test-sidecar sleep 5; done;
 NAD
 
 # Use waypoint?
