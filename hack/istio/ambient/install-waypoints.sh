@@ -43,6 +43,7 @@ if [ "${DELETE}" == "true" ]; then
   ${CLIENT_EXE} delete namespace waypoint-fornone
   ${CLIENT_EXE} delete namespace waypoint-differentns
   ${CLIENT_EXE} delete namespace waypoint-override
+  ${CLIENT_EXE} delete namespace waypoint-common-infrastructure
   exit 0
 fi
 
@@ -82,6 +83,7 @@ ${CLIENT_EXE} create ns waypoint-forworkload
 ${CLIENT_EXE} create ns waypoint-forall
 ${CLIENT_EXE} create ns waypoint-fornone
 ${CLIENT_EXE} create ns waypoint-differentns
+${CLIENT_EXE} create ns waypoint-common-infrastructure
 ${CLIENT_EXE} create ns waypoint-override
 
 ${CLIENT_EXE} label ns waypoint-forservice istio.io/dataplane-mode=ambient
@@ -137,8 +139,9 @@ ${CLIENT_EXE} label namespace waypoint-fornone istio.io/use-waypoint=waypoint
 # Use a waypoint from another ns
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/echo-service.yaml -n waypoint-differentns
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/curl-pod.yaml -n waypoint-differentns
-${CLIENT_EXE} label namespace waypoint-differentns istio.io/use-waypoint=waypoint
-${CLIENT_EXE} label namespace waypoint-differentns istio.io/use-waypoint-namespace=waypoint-forservice
+${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/egress-gateway.yaml -n waypoint-common-infrastructure
+${CLIENT_EXE} label namespace waypoint-differentns istio.io/use-waypoint=egress-gateway
+${CLIENT_EXE} label namespace waypoint-differentns istio.io/use-waypoint-namespace=waypoint-common-infrastructure
 
 # Override ns waypoint labeling a service
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/echo-service.yaml -n waypoint-override
