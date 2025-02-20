@@ -15,25 +15,19 @@ import { Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { GrafanaInfo } from '../../types/GrafanaInfo';
 import { MessageType } from '../../types/MessageCenter';
-import { kialiStyle } from '../../styles/StyleUtils';
 
 type ZtunnelMetricsProps = {
   cluster: string;
+  dashboardHeight: number;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   rangeDuration: TimeRange;
 };
 
-const fullHeightStyle = kialiStyle({
-  height: 'calc(100vh - 380px)',
-  overflowY: 'auto'
-});
-
 export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetricsProps) => {
   const urlParams = new URLSearchParams(location.getSearch());
   const expandedChart = urlParams.get('expand') ?? undefined;
   const toolbarRef = React.createRef<HTMLDivElement>();
-  const tabHeight = 600;
   const [metrics, setMetrics] = React.useState<DashboardModel>();
   const [grafanaLinks, setGrafanaLinks] = React.useState<GrafanaInfo>();
   const rateParams = computePrometheusRateParams(
@@ -51,7 +45,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
     step: rateParams.step
   };
 
-  const fetchMetrics = (): Promise<void> => {
+  const fetchMetrics = async (): Promise<void> => {
     MetricsHelper.timeRangeToOptions(props.rangeDuration, options);
     let opts = { ...options };
 
@@ -93,17 +87,12 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
   }, []);
 
   const settings = MetricsHelper.retrieveMetricsSettings(200);
-  const [dashboardHeight, setDashboardHeight] = React.useState<number>(1000);
-
   const expandHandler = (expandedChart?: string): void => {
     const urlParams = new URLSearchParams(location.getSearch());
     urlParams.delete('expand');
 
     if (expandedChart) {
-      setDashboardHeight(tabHeight);
       urlParams.set('expand', expandedChart);
-    } else {
-      setDashboardHeight(1000);
     }
 
     router.navigate(`${location.getPathname()}?${urlParams.toString()}`);
@@ -115,7 +104,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
         <div ref={toolbarRef}>
           <Toolbar style={{ padding: 0, marginBottom: '1.25rem' }}>
             <ToolbarGroup>
-              <ToolbarItem style={{ marginLeft: 'auto', paddingRight: '20px' }}>
+              <ToolbarItem style={{ marginLeft: 'auto', paddingRight: '1.25rem' }}>
                 <GrafanaLinks
                   links={grafanaLinks?.externalLinks}
                   namespace={props.namespace}
@@ -128,17 +117,15 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
         </div>
       )}
       {metrics && (
-        <div className={fullHeightStyle}>
-          <Dashboard
-            dashboard={metrics}
-            labelValues={MetricsHelper.convertAsPromLabels(settings.labelsSettings)}
-            maximizedChart={expandedChart}
-            expandHandler={expandHandler}
-            labelPrettifier={MetricsHelper.prettyLabelValues}
-            showSpans={false}
-            dashboardHeight={dashboardHeight}
-          />
-        </div>
+        <Dashboard
+          dashboard={metrics}
+          labelValues={MetricsHelper.convertAsPromLabels(settings.labelsSettings)}
+          maximizedChart={expandedChart}
+          expandHandler={expandHandler}
+          labelPrettifier={MetricsHelper.prettyLabelValues}
+          showSpans={false}
+          dashboardHeight={props.dashboardHeight}
+        />
       )}
     </div>
   );
