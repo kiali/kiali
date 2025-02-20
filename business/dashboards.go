@@ -576,7 +576,7 @@ func (in *DashboardsService) BuildZtunnelDashboard(metrics models.MetricsMap) *m
 		Title:        "Ztunnel Metrics",
 		Aggregations: []models.Aggregation{},
 		Charts:       []models.Chart{},
-		Rows:         4,
+		Rows:         2,
 	}
 
 	ztunnelCharts := getZtunnelCharts()

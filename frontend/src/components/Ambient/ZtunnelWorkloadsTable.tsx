@@ -5,7 +5,7 @@ import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react
 import { emtpytStyle } from './ZtunnelServicesTable';
 import { SimpleTable } from '../Table/SimpleTable';
 import { t } from 'i18next';
-import { SortableCompareTh, yoverflow } from './ZtunnelConfig';
+import { SortableCompareTh } from './ZtunnelConfig';
 
 type ZtunnelWorkloadsProps = {
   config?: ZtunnelWorkload[];
@@ -88,17 +88,14 @@ export const ZtunnelWorkloadsTable: React.FC<ZtunnelWorkloadsProps> = (props: Zt
   );
 
   return (
-    <div className={yoverflow}>
-      <SimpleTable
-        label={t('Ztunnel workloads config')}
-        columns={columns}
-        rows={rows}
-        theadStyle={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}
-        variant={TableVariant.compact}
-        emptyState={noWorkloadsConfig}
-        sortBy={sort}
-        onSort={onSort}
-      />
-    </div>
+    <SimpleTable
+      label={t('Ztunnel workloads config')}
+      columns={columns}
+      rows={rows}
+      variant={TableVariant.compact}
+      emptyState={noWorkloadsConfig}
+      sortBy={sort}
+      onSort={onSort}
+    />
   );
 };

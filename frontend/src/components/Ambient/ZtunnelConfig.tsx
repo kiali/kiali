@@ -3,7 +3,7 @@ import { Workload } from 'types/Workload';
 import { Pod, ZtunnelConfigDump } from 'types/IstioObjects';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { Card, CardBody, Grid, GridItem, Tab, Tabs, TooltipPosition } from '@patternfly/react-core';
+import { Card, CardBody, Tab, Tabs, TooltipPosition } from '@patternfly/react-core';
 import { activeTab } from '../../components/Tab/Tabs';
 import { location, router } from '../../app/History';
 import {
@@ -20,6 +20,7 @@ import { ZtunnelWorkloadsTable } from './ZtunnelWorkloadsTable';
 import { t } from 'i18next';
 import { SortableTh } from '../Table/SimpleTable';
 import { ZtunnelMetrics } from './ZtunnelMetrics';
+import { RenderComponentScroll } from 'components/Nav/Page';
 
 const resources: string[] = ['services', 'workloads', 'metrics'];
 
@@ -34,19 +35,9 @@ type ZtunnelConfigProps = {
   workload: Workload;
 };
 
-const marginStyle = kialiStyle({
-  margin: '2em',
-  height: 'auto'
-});
-
 const iconStyle = kialiStyle({
   display: 'inline-block',
   alignSelf: 'center'
-});
-
-export const yoverflow = kialiStyle({
-  height: 'calc(100vh - 400px)',
-  overflow: 'auto'
 });
 
 export interface SortableCompareTh<T> extends SortableTh {
@@ -63,6 +54,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
   const [fetch, setFetch] = React.useState(true);
   const [activeKey, setActiveKey] = React.useState(ztunnelTabs.indexOf(activeTab(tabName, defaultTab)));
   const [resource, setResource] = React.useState(activeTab(tabName, defaultTab));
+  const [tabHeight, setTabHeight] = React.useState<number>(700);
 
   const prevResource = React.createRef();
   const prevPod = React.createRef();
@@ -197,6 +189,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
             lastRefreshAt={props.lastRefreshAt}
             namespace={props.namespace}
             cluster={props.workload.cluster ? props.workload.cluster : ''}
+            dashboardHeight={tabHeight - 200}
           />
         </CardBody>
       </Card>
@@ -205,21 +198,17 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
   tabs.push(metricsTab);
 
   return (
-    <div className={marginStyle}>
-      <Grid>
-        <GridItem span={12}>
-          <Tabs
-            id="ztunnel-details"
-            className={subTabStyle}
-            activeKey={activeKey}
-            onSelect={ztunnelHandleTabClick}
-            mountOnEnter={true}
-            unmountOnExit={true}
-          >
-            {tabs}
-          </Tabs>
-        </GridItem>
-      </Grid>
-    </div>
+    <RenderComponentScroll onResize={height => setTabHeight(height)}>
+      <Tabs
+        id="ztunnel-details"
+        className={subTabStyle}
+        activeKey={activeKey}
+        onSelect={ztunnelHandleTabClick}
+        mountOnEnter={true}
+        unmountOnExit={true}
+      >
+        {tabs}
+      </Tabs>
+    </RenderComponentScroll>
   );
 };

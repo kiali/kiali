@@ -20,7 +20,7 @@ const EMBEDDED_PADDING = 42;
 const globalScrollbar = process.env.GLOBAL_SCROLLBAR ?? 'false';
 
 const componentStyle = kialiStyle({
-  padding: '20px'
+  padding: '1.25rem'
 });
 
 interface Props {

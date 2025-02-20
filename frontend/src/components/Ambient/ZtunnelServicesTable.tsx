@@ -5,7 +5,7 @@ import { SimpleTable } from '../Table/SimpleTable';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { t } from 'i18next';
-import { SortableCompareTh, yoverflow } from './ZtunnelConfig';
+import { SortableCompareTh } from './ZtunnelConfig';
 
 type ZtunnelServicesProps = {
   config?: ZtunnelService[];
@@ -101,17 +101,14 @@ export const ZtunnelServicesTable: React.FC<ZtunnelServicesProps> = (props: Ztun
   );
 
   return (
-    <div className={yoverflow}>
-      <SimpleTable
-        label={t('Ztunnel services config')}
-        columns={columns}
-        rows={rows}
-        variant={TableVariant.compact}
-        emptyState={noServicesConfig}
-        sortBy={sort}
-        onSort={onSort}
-        theadStyle={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}
-      />
-    </div>
+    <SimpleTable
+      label={t('Ztunnel services config')}
+      columns={columns}
+      rows={rows}
+      variant={TableVariant.compact}
+      emptyState={noServicesConfig}
+      sortBy={sort}
+      onSort={onSort}
+    />
   );
 };
