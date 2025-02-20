@@ -73,11 +73,11 @@ type ReduxProps = {
 };
 
 export type WorkloadPodLogsProps = ReduxProps & {
-  app?: string;
   cluster?: string;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   pods: Pod[];
+  waypointServiceFilter?: string;
   waypoints?: WaypointInfo[];
   workload: string;
 };
@@ -595,7 +595,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                     >
                       <KialiIcon.Info key={`al-i-ki`} className={checkInfoIcon} color={proxyContainerColor} />
                     </Tooltip>
-                    {this.props.waypoints && (
+                    {this.props.waypoints && this.props.waypoints.length > 0 && (
                       <>
                         <Checkbox
                           id={`waypoint-${c.displayName}`}
@@ -1219,7 +1219,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         namespace,
         podName,
         this.props.workload,
-        this.props.app,
+        this.props.waypointServiceFilter,
         c.name,
         maxLines,
         sinceTime,
@@ -1237,7 +1237,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             namespace,
             podName,
             this.props.workload,
-            this.props.app,
+            this.props.waypointServiceFilter,
             c.name,
             maxLines,
             sinceTime,

@@ -2643,7 +2643,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 				continue
 			}
 
-			if opts.LogType == models.LogTypeWaypoint && !opts.filter.app.MatchString(entry.Message) {
+			if opts.LogType == models.LogTypeWaypoint && (opts.filter.app.MatchString("") || !opts.filter.app.MatchString(entry.Message)) {
 				continue
 			}
 
@@ -2757,7 +2757,6 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 					app: *regexp.MustCompile(app),
 				}
 				opts.filter = fs
-				// TODO: Get efective one
 				waypoint := wk.WaypointWorkloads[0]
 				waypointWk, errWaypoint := in.GetWorkload(ctx, WorkloadCriteria{Cluster: waypoint.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, IncludeServices: false})
 				if errWaypoint != nil {
