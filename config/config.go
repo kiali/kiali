@@ -74,19 +74,20 @@ const (
 const (
 	AmbientAnnotation         = "ambient.istio.io/redirection"
 	AmbientAnnotationEnabled  = "enabled"
-	IstioAppLabel             = "app"          // we can assume istio components are labeled with "app"
-	IstioRevisionLabel        = "istio.io/rev" // the standard label key used to identify the istio revision.
-	IstioVersionLabel         = "version"      // we can assume istio components are labeled with "version", if versioned
+	GatewayLabel              = "gateway.networking.k8s.io/gateway-name" // On any k8s GW API gateway
+	IstioAppLabel             = "app"                                    // we can assume istio components are labeled with "app"
+	IstioRevisionLabel        = "istio.io/rev"                           // the standard label key used to identify the istio revision.
+	IstioVersionLabel         = "version"                                // we can assume istio components are labeled with "version", if versioned
 	Waypoint                  = "waypoint"
 	WaypointFor               = "istio.io/waypoint-for"
 	WaypointForAll            = "all"
 	WaypointForNone           = "none"
 	WaypointForService        = "service"
 	WaypointForWorkload       = "workload"
-	WaypointGatewayLabel      = "gateway.networking.k8s.io/gateway-name"
-	WaypointLabel             = "gateway.istio.io/managed"
-	WaypointLabelValue        = "istio.io-mesh-controller"
+	WaypointLabel             = "gateway.istio.io/managed" // only identifies istio waypoint
+	WaypointLabelValue        = "istio.io-mesh-controller" // only identifies istio waypoint
 	WaypointUseLabel          = "istio.io/use-waypoint"
+	WaypointNone              = "none"
 	WaypointUseNamespaceLabel = "istio.io/use-waypoint-namespace"
 	Ztunnel                   = "ztunnel"
 )
@@ -804,9 +805,7 @@ func NewConfig() (c *Config) {
 		IstioLabels: IstioLabels{
 			AmbientNamespaceLabel:       "istio.io/dataplane-mode",
 			AmbientNamespaceLabelValue:  "ambient",
-			AmbientWaypointGatewayLabel: WaypointGatewayLabel,
-			AmbientWaypointLabel:        WaypointLabel,
-			AmbientWaypointLabelValue:   WaypointLabelValue,
+			AmbientWaypointGatewayLabel: GatewayLabel,
 			AmbientWaypointUseLabel:     WaypointUseLabel,
 			AppLabelName:                "",
 			InjectionLabelName:          "istio-injection",
@@ -1276,9 +1275,22 @@ func IsFeatureDisabled(featureName FeatureName) bool {
 	return false
 }
 
-// IsWaypoint returns true if the labels contain a waypoint proxy
+// IsWaypoint returns true if the labels indicate a waypoint.
 func IsWaypoint(labels map[string]string) bool {
-	return labels[WaypointLabel] == WaypointLabelValue
+	// test for Istio waypoint labeling
+	if labels[WaypointLabel] == WaypointLabelValue {
+		return true
+	}
+	// test for K8s GW API labeling with waypoint name
+	// note - this is weak but maybe sufficient as a required convention. I think the real
+	//        way to do this would be to use the Gateway config and test to see if
+	//        gatewayClassName contained "waypoint". But that involves config
+	//
+	if gatewayName, ok := labels[GatewayLabel]; ok {
+		return strings.Contains(strings.ToLower(gatewayName), "waypoint")
+	}
+
+	return false
 }
 
 // GetSafeClusterName checks the input value provides a default cluster name if it's empty

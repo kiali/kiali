@@ -31,13 +31,16 @@ const fullHeightStyle = kialiStyle({
 });
 
 export const isWaypointFor = (wk: Workload): string => {
-  if (wk.labels[WaypointForLabel] === WaypointType.Workload) {
-    return WaypointType.Workload;
+  switch (wk.labels[WaypointForLabel]) {
+    case WaypointType.All:
+      return WaypointType.All;
+    case WaypointType.None:
+      return WaypointType.None;
+    case WaypointType.Workload:
+      return WaypointType.Workload;
+    default:
+      return WaypointType.Service;
   }
-  if (wk.labels[WaypointForLabel] === WaypointType.All) {
-    return WaypointType.All;
-  }
-  return WaypointType.Service;
 };
 
 const showProxyStatus = (workload: Workload): React.ReactNode => {
@@ -65,7 +68,17 @@ const showProxyStatus = (workload: Workload): React.ReactNode => {
 
 export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointConfigProps) => {
   const waypointFor = isWaypointFor(props.workload);
-  const defaultTab = waypointFor === WaypointType.Workload ? WaypointType.Workload : WaypointType.Service;
+  let defaultTab: string;
+  switch (waypointFor) {
+    case WaypointType.None:
+      defaultTab = 'information';
+      break;
+    case WaypointType.Workload:
+      defaultTab = WaypointType.Workload;
+      break;
+    default:
+      defaultTab = WaypointType.Service;
+  }
   const [activeKey, setActiveKey] = React.useState(waypointTabs.indexOf(activeTab(tabName, defaultTab)));
   const [resource, setResource] = React.useState(activeTab(tabName, defaultTab));
 
@@ -150,7 +163,7 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
   }
 
   const infoTab = (
-    <Tab title={t('Info')} eventKey={2} key={t('information')}>
+    <Tab title={t('Info')} eventKey={2} key="information">
       <Card className={fullHeightStyle}>
         <CardBody>
           <div className={fullHeightStyle}>

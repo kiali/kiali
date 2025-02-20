@@ -18,6 +18,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 func NewAppService(businessLayer *Layer, conf *config.Config, prom prometheus.ClientInterface, grafana *grafana.Service, userClients map[string]kubernetes.ClientInterface) AppService {
@@ -477,7 +478,9 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 		if err != nil {
 			return nil, err
 		}
-		for _, selectedWorkload := range selectedWorkloads {
+		// remove ambient infra workloads, which are labeled but not really apps
+		filteredWorkloads := sliceutil.Filter(selectedWorkloads, func(w *models.Workload) bool { return !(w.IsInfra()) })
+		for _, selectedWorkload := range filteredWorkloads {
 			ws[selectedWorkload.Name] = selectedWorkload
 		}
 	}

@@ -116,7 +116,6 @@ class WorkloadListPageComponent extends FilterComponent.Component<
   getDeploymentItems(data: ClusterWorkloadsResponse): WorkloadListItem[] {
     if (data.workloads) {
       return data.workloads.map(deployment => ({
-        ambient: deployment.ambient,
         cluster: deployment.cluster,
         namespace: deployment.namespace,
         name: deployment.name,
@@ -127,6 +126,8 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         istioSidecar: deployment.istioSidecar,
         isAmbient: deployment.isAmbient,
         isGateway: deployment.isGateway,
+        isWaypoint: deployment.isWaypoint,
+        isZtunnel: deployment.isZtunnel,
         additionalDetailSample: deployment.additionalDetailSample,
         health: WorkloadHealth.fromJson(deployment.namespace, deployment.name, deployment.health, {
           rateInterval: this.props.duration,

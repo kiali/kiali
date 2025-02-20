@@ -12,6 +12,8 @@ export const getAppItems = (data: AppList, rateInterval: number): AppListItem[] 
       istioSidecar: app.istioSidecar,
       isAmbient: app.isAmbient,
       isGateway: app.isGateway,
+      isWaypoint: app.isWaypoint,
+      isZtunnel: app.isZtunnel,
       health: AppHealth.fromJson(app.namespace, app.name, app.health, {
         rateInterval: rateInterval,
         hasSidecar: app.istioSidecar,

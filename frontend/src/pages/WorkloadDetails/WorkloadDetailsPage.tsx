@@ -30,7 +30,6 @@ import { basicTabStyle } from 'styles/TabStyles';
 import { ZtunnelConfig } from '../../components/Ambient/ZtunnelConfig';
 import { WaypointConfig } from '../../components/Ambient/WaypointConfig';
 import { isGVKSupported } from '../../utils/IstioConfigUtils';
-import { Waypoint } from '../../types/Ambient';
 
 type WorkloadDetailsState = {
   cluster?: string;
@@ -258,10 +257,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       }
     }
 
-    if (
-      this.state.workload &&
-      (this.hasIstioSidecars(this.state.workload) || this.state.workload.ambient === Waypoint)
-    ) {
+    if (this.state.workload && (this.hasIstioSidecars(this.state.workload) || this.state.workload.isWaypoint)) {
       const envoyTab = (
         <Tab title="Envoy" eventKey={10} key="Envoy">
           {this.state.workload && (
@@ -277,7 +273,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       paramToTab['envoy'] = 10;
     }
 
-    if (this.state.workload && this.state.workload.ambient === 'ztunnel') {
+    if (this.state.workload && this.state.workload.isZtunnel) {
       const ztunnelTab = (
         <Tab title="Ztunnel" eventKey={11} key="Ztunnel">
           {this.state.workload && (
@@ -293,7 +289,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       paramToTab['ztunnel'] = 11;
     }
 
-    if (this.state.workload && this.state.workload.ambient === Waypoint) {
+    if (this.state.workload && this.state.workload.isWaypoint) {
       const waypointTab = (
         <Tab title="Waypoint" eventKey={12} key="Waypoint">
           {this.state.workload && <WaypointConfig workload={this.state.workload} />}
@@ -322,8 +318,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           // Ztunnel doesn't have Envoy
           hasIstioSidecars =
             hasIstioSidecars ||
-            (!!pod.containers &&
-              pod.containers.some(cont => cont.name === istioProxyName && workload.ambient !== 'ztunnel'));
+            (!!pod.containers && pod.containers.some(cont => cont.name === istioProxyName && !workload.isZtunnel));
         }
       });
     }

@@ -166,18 +166,22 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
   };
 
   const appList = (): React.ReactNode => {
-    const applicationList =
-      props.apps && props.apps.length > 0
-        ? props.apps
-            .filter(name => {
-              if (name === undefined) {
-                return null;
-              }
+    let applicationList: React.ReactNode = <></>;
 
-              return name;
-            })
-            .map(name => renderAppItem(props.namespace, name))
-        : renderEmptyItem('applications');
+    if (props.apps !== undefined) {
+      applicationList =
+        props.apps && props.apps.length > 0
+          ? props.apps
+              .filter(name => {
+                if (name === undefined) {
+                  return null;
+                }
+
+                return name;
+              })
+              .map(name => renderAppItem(props.namespace, name))
+          : renderEmptyItem('applications');
+    }
 
     return [
       <div key="app-list" className={resourceListStyle}>
@@ -364,10 +368,14 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
   };
 
   const serviceList = (): React.ReactNode => {
-    const serviceList =
-      props.services && props.services.length > 0
-        ? props.services.map(name => renderServiceItem(props.namespace, name))
-        : renderEmptyItem('services');
+    let serviceList: React.ReactNode = <></>;
+
+    if (serviceList !== undefined) {
+      serviceList =
+        props.services && props.services.length > 0
+          ? props.services.map(name => renderServiceItem(props.namespace, name))
+          : renderEmptyItem('services');
+    }
 
     return [
       <div key="service-list" className={resourceListStyle}>

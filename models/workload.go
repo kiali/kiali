@@ -69,11 +69,6 @@ type WorkloadListItem struct {
 	// Namespace of the workload
 	Namespace string `json:"namespace"`
 
-	// If is part of the Ambient infrastructure
-	// required: false
-	// example: waypoint/ztunnel
-	Ambient string `json:"ambient"`
-
 	// The kube cluster where this workload is located.
 	Cluster string `json:"cluster"`
 
@@ -108,10 +103,20 @@ type WorkloadListItem struct {
 	// example: true
 	IsAmbient bool `json:"isAmbient"`
 
-	// Define if Labels related to this Workload contains any Gateway label
+	// Define if this Workload is a gateway (but not a waypoint)
 	// required: true
 	// example: true
 	IsGateway bool `json:"isGateway"`
+
+	// Define if this Workload is an ambient waypoint
+	// required: true
+	// example: true
+	IsWaypoint bool `json:"isWaypoint"`
+
+	// Define if this Workload is an ambient ztunnel
+	// required: true
+	// example: true
+	IsZtunnel bool `json:"isZtunnel"`
 
 	// Additional item sample, such as type of api being served (graphql, grpc, rest)
 	// example: rest
@@ -287,7 +292,9 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 		workload.IstioSidecar = w.HasIstioSidecar()
 	}
 	workload.IsGateway = w.IsGateway()
-	workload.IsAmbient = w.HasIstioAmbient()
+	workload.IsWaypoint = w.IsWaypoint()
+	workload.IsZtunnel = w.IsZtunnel()
+	workload.IsAmbient = workload.IsWaypoint || workload.IsZtunnel || w.HasIstioAmbient()
 	workload.Labels = w.Labels
 	workload.PodCount = len(w.Pods)
 	workload.ServiceAccountNames = w.Pods.ServiceAccounts()
@@ -299,9 +306,6 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	}
 	workload.HealthAnnotations = w.HealthAnnotations
 	workload.IstioReferences = []*IstioValidationKey{}
-	if w.IsWaypoint() {
-		workload.Ambient = "waypoint"
-	}
 	/** Check the labels app and version required by Istio in template Pods*/
 	if appLabelName, found := conf.GetAppLabelName(w.Labels); found {
 		_, workload.AppLabel = w.Labels[appLabelName]
@@ -691,9 +695,14 @@ func (workload *Workload) IsGateway() bool {
 	return false
 }
 
+// IsInfra return true if the workload is a waypoint proxy or ztunnel (Based in labels)
+func (workload *Workload) IsInfra() bool {
+	return workload.IsWaypoint() || workload.IsZtunnel()
+}
+
 // IsWaypoint return true if the workload is a waypoint proxy (Based in labels)
 func (workload *Workload) IsWaypoint() bool {
-	return workload.Labels[config.WaypointLabel] == config.WaypointLabelValue
+	return config.IsWaypoint(workload.Labels)
 }
 
 // WaypointFor returns the waypoint type (workload/service)

@@ -155,13 +155,8 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
       path: ''
     };
 
-    const istioLabels = serverConfig.istioLabels;
     const istioAnnotations = serverConfig.istioAnnotations;
     const validations: Validations = {};
-    const isWaypoint =
-      serverConfig.ambientEnabled &&
-      workload.labels &&
-      workload.labels[istioLabels.ambientWaypointLabel] === istioLabels.ambientWaypointLabelValue;
 
     if (workload.pods.length > 0) {
       validations.pod = {};
@@ -175,7 +170,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
         };
 
         if (!isIstioNamespace(this.props.namespace) && !workload.isGateway) {
-          if (!isWaypoint) {
+          if (!workload.isWaypoint) {
             if (
               (!pod.istioContainers || pod.istioContainers.length === 0) &&
               (!pod.istioInitContainers || pod.istioInitContainers.length === 0)
