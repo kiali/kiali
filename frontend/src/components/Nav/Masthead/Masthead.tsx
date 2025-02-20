@@ -1,16 +1,14 @@
 import * as React from 'react';
-import { Label, Flex, FlexItem, Toolbar, ToolbarItem } from '@patternfly/react-core';
+import { Flex, FlexItem, Toolbar, ToolbarItem } from '@patternfly/react-core';
 
-import { homeCluster, serverConfig } from '../../../config';
+import { serverConfig } from '../../../config';
 import { IstioStatus } from '../../IstioStatus/IstioStatus';
 import { UserDropdown } from './UserDropdown';
 import { HelpDropdown } from './HelpDropdown';
 import { MessageCenterTrigger } from '../../../components/MessageCenter/MessageCenterTrigger';
 import { ThemeSwitch } from './ThemeSwitch';
 import { LanguageSwitch } from './LanguageSwitch';
-import { KialiIcon } from 'config/KialiIcon';
 import { PfSpinner } from 'components/Pf/PfSpinner';
-import { isControlPlaneAccessible } from '../../../utils/MeshUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 
 export const MASTHEAD = 'masthead';
@@ -24,9 +22,8 @@ const toolbarStyle = kialiStyle({
   }
 });
 
-const themeClusterStyle = kialiStyle({
-  display: 'flex',
-  alignItems: 'center'
+const istioStatusStyle = kialiStyle({
+  marginRight: '2.5rem'
 });
 
 const themeSwitchStyle = kialiStyle({
@@ -59,22 +56,19 @@ export const MastheadItems: React.FC = () => {
       <Toolbar>
         <ToolbarItem className={toolbarStyle}>
           <Flex>
-            <FlexItem className={themeClusterStyle}>
-              {homeCluster?.name && (
-                <Label data-test="cluster-icon" color="blue" icon={<KialiIcon.Cluster />}>
-                  {isControlPlaneAccessible() && (
-                    <FlexItem className={themeClusterStyle}>
-                      <IstioStatus location={MASTHEAD} />
-                    </FlexItem>
-                  )}
-                  {homeCluster?.name}
-                </Label>
-              )}
+            <FlexItem className={istioStatusStyle}>
+              <IstioStatus location={MASTHEAD} />
             </FlexItem>
 
             <FlexItem className={themeSwitchStyle}>
               <ThemeSwitch />
             </FlexItem>
+
+            {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
+              <FlexItem className={languageSwitchStyle}>
+                <LanguageSwitch />
+              </FlexItem>
+            )}
 
             <FlexItem className={messageCenterStyle}>
               <MessageCenterTrigger />
@@ -83,12 +77,6 @@ export const MastheadItems: React.FC = () => {
             <FlexItem className={helpDropdownStyle}>
               <HelpDropdown />
             </FlexItem>
-
-            {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
-              <FlexItem className={languageSwitchStyle}>
-                <LanguageSwitch />
-              </FlexItem>
-            )}
 
             <FlexItem data-test="user-dropdown" className={userDropdownStyle}>
               <UserDropdown />
