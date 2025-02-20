@@ -695,6 +695,11 @@ func (workload *Workload) IsGateway() bool {
 	return false
 }
 
+// IsInfra return true if the workload is a waypoint proxy or ztunnel (Based in labels)
+func (workload *Workload) IsInfra() bool {
+	return workload.IsWaypoint() || workload.IsZtunnel()
+}
+
 // IsWaypoint return true if the workload is a waypoint proxy (Based in labels)
 func (workload *Workload) IsWaypoint() bool {
 	return config.IsWaypoint(workload.Labels)

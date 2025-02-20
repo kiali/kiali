@@ -61,7 +61,8 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
       props.serviceDetails.workloads
         .sort((w1: WorkloadOverview, w2: WorkloadOverview) => (w1.name < w2.name ? -1 : 1))
         .forEach(wk => {
-          if (wk.labels) {
+          // ignore app links for ambient infra
+          if (wk.labels && !wk.isWaypoint && !wk.isZtunnel) {
             const appLabelName = getAppLabelName(wk.labels);
             if (appLabelName) {
               const appName = wk.labels[appLabelName];
@@ -200,7 +201,7 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
 
         <DetailDescription
           namespace={props.namespace}
-          apps={apps}
+          apps={apps.length > 0 ? apps : undefined}
           workloads={workloads}
           health={props.serviceDetails?.health}
           cluster={props.serviceDetails?.service.cluster}

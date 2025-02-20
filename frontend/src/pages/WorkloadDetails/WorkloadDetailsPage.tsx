@@ -318,7 +318,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           // Ztunnel doesn't have Envoy
           hasIstioSidecars =
             hasIstioSidecars ||
-            (!!pod.containers && pod.containers.some(cont => cont.name === istioProxyName && workload.isZtunnel));
+            (!!pod.containers && pod.containers.some(cont => cont.name === istioProxyName && !workload.isZtunnel));
         }
       });
     }

@@ -78,9 +78,12 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
   const apps: string[] = [];
   const services: string[] = [];
 
-  const appLabelName = getAppLabelName(workload.labels);
-  if (appLabelName) {
-    apps.push(workload.labels[appLabelName]);
+  // ignore app links for ambient infra
+  if (!workload.isWaypoint && !workload.isZtunnel) {
+    const appLabelName = getAppLabelName(workload.labels);
+    if (appLabelName) {
+      apps.push(workload.labels[appLabelName]);
+    }
   }
 
   workload.services?.forEach(s => services.push(s.name));
@@ -247,7 +250,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
 
         <DetailDescription
           namespace={props.namespace}
-          apps={apps}
+          apps={apps.length > 0 ? apps : undefined}
           services={services}
           health={props.health}
           cluster={props.workload?.cluster}

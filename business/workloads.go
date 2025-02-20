@@ -2286,17 +2286,17 @@ func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload m
 // is true, in which case all capturing waypoints will be returned. If so, they are returned in order of priority, so [0]
 // reflects the active waypoint, the others have been overriden.
 func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload models.Workload, all bool) []models.WorkloadReferenceInfo {
-	var workloadslist []models.WorkloadReferenceInfo
+	workloadsList := []models.WorkloadReferenceInfo{}
 	workloadsMap := map[string]bool{} // Ensure unique
 
 	if workload.Labels[config.WaypointUseLabel] == config.WaypointNone {
-		return workloadslist
+		return workloadsList
 	}
 
 	// get waypoint references for the workload
 	waypoints, found := in.getCapturingWaypoints(ctx, workload, all)
 	if !found {
-		return workloadslist
+		return workloadsList
 	}
 
 	// then, get the waypoint workloads to filter out "forNone" waypoints
@@ -2310,13 +2310,13 @@ func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload
 		if !waypointForFound || waypointFor != config.WaypointForNone {
 			key := fmt.Sprintf("%s_%s_%s", workload.Cluster, waypoint.Namespace, waypoint.Name)
 			if waypointWorkload != nil && !workloadsMap[key] {
-				workloadslist = append(workloadslist, models.WorkloadReferenceInfo{Name: waypoint.Name, Namespace: waypoint.Namespace, Cluster: waypoint.Cluster, Type: waypointWorkload.WaypointFor()})
+				workloadsList = append(workloadsList, models.WorkloadReferenceInfo{Name: waypoint.Name, Namespace: waypoint.Namespace, Cluster: waypoint.Cluster, Type: waypointWorkload.WaypointFor()})
 				workloadsMap[key] = true
 			}
 		}
 	}
 
-	return workloadslist
+	return workloadsList
 }
 
 // listWaypointWorkloads returns the list of workloads when the waypoint proxy is applied per namespace
@@ -2398,6 +2398,10 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, name
 					log.Infof("Error getting services %s", err.Error())
 				} else {
 					for _, service := range services.Services {
+						// waypoints don't capture other waypoints, so skip them
+						if config.IsWaypoint(service.Labels) {
+							continue
+						}
 						key := fmt.Sprintf("%s_%s_%s", service.Name, service.Namespace, service.Cluster)
 						if !servicesMap[key] && service.Labels[config.WaypointUseLabel] != config.WaypointNone {
 							servicesList = append(servicesList, models.ServiceReferenceInfo{Name: service.Name, Namespace: service.Namespace, LabelType: labelType, Cluster: service.Cluster})
