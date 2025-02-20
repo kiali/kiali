@@ -278,11 +278,11 @@ export enum LogType {
 }
 
 export interface PodLogsQuery {
-  app?: string;
   container?: string;
   duration?: string;
   logType?: LogType;
   maxLines?: number;
+  service?: string;
   sinceTime?: number;
   workload?: string;
 }
