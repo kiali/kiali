@@ -40,7 +40,8 @@ export type IstioMetricsMap = {
 export enum MetricsObjectTypes {
   SERVICE,
   WORKLOAD,
-  APP
+  APP,
+  ZTUNNEL
 }
 
 export interface MetricsStatsResult {

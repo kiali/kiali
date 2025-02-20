@@ -168,6 +168,7 @@ type MetricsStatsResult struct {
 // MODEL CONVERSION
 
 type ConversionParams struct {
+	LabelPrefix      string
 	Scale            float64
 	SortLabel        string
 	SortLabelParseAs string
@@ -229,6 +230,11 @@ func convertSampleStream(from *pmod.SampleStream, name, stat string, conversionP
 			continue
 		}
 		labelSet[string(k)] = string(v)
+		if conversionParams.LabelPrefix != "" {
+			for i, _ := range labelSet {
+				labelSet[i] = fmt.Sprintf("%s (%s)", conversionParams.LabelPrefix, v)
+			}
+		}
 	}
 	values := make([]Datapoint, len(from.Values))
 	for i, v := range from.Values {

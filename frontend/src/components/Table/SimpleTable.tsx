@@ -31,6 +31,7 @@ interface SimpleTableProps {
   rows: IRow[];
   sort?: (columnIndex: number) => ThProps['sort'];
   sortBy?: ISortBy;
+  theadStyle?: React.CSSProperties;
   variant?: TableVariant;
   verticalAlign?: string;
 }
@@ -74,7 +75,7 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
 
   return (
     <Table aria-label={props.label} variant={props.variant} className={props.className}>
-      <Thead>
+      <Thead style={props.theadStyle}>
         <Tr>
           {props.columns.map((column: SortableTh | ThProps, index: number) => (
             <Th
