@@ -4,7 +4,6 @@ import { ComponentStatus, Status } from '../../types/IstioStatus';
 import { IstioComponentStatus } from './IstioComponentStatus';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { PFBadge, PFBadges } from '../Pf/PfBadges';
 
 type Props = {
   cluster: string;
@@ -50,12 +49,8 @@ export const IstioStatusList: React.FC<Props> = (props: Props) => {
   };
 
   return (
-    <>
-      <PFBadge badge={PFBadges.Cluster} size="sm" />
-      {props.cluster}
-      <List id="istio-status" aria-label={t('Istio Component List')} className={listStyle}>
-        {renderComponentList()}
-      </List>
-    </>
+    <List id="istio-status" aria-label={t('Istio Component List')} className={listStyle}>
+      {renderComponentList()}
+    </List>
   );
 };

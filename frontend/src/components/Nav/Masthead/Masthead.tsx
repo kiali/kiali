@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Label, Flex, FlexItem, Tooltip, Toolbar, ToolbarItem } from '@patternfly/react-core';
+import { Label, Flex, FlexItem, Toolbar, ToolbarItem } from '@patternfly/react-core';
 
 import { homeCluster, serverConfig } from '../../../config';
 import { IstioStatus } from '../../IstioStatus/IstioStatus';
@@ -9,7 +9,6 @@ import { MessageCenterTrigger } from '../../../components/MessageCenter/MessageC
 import { ThemeSwitch } from './ThemeSwitch';
 import { LanguageSwitch } from './LanguageSwitch';
 import { KialiIcon } from 'config/KialiIcon';
-import { useKialiTranslation } from 'utils/I18nUtils';
 import { PfSpinner } from 'components/Pf/PfSpinner';
 import { isControlPlaneAccessible } from '../../../utils/MeshUtils';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -25,9 +24,14 @@ const toolbarStyle = kialiStyle({
   }
 });
 
+const themeClusterStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center'
+});
+
 const themeSwitchStyle = kialiStyle({
-  marginLeft: '1.5rem',
-  marginRight: 0
+  marginLeft: 0,
+  marginRight: '1.5rem'
 });
 
 const messageCenterStyle = kialiStyle({
@@ -49,36 +53,28 @@ const userDropdownStyle = kialiStyle({
 });
 
 export const MastheadItems: React.FC = () => {
-  const { t } = useKialiTranslation();
-
   return (
     <>
       <PfSpinner />
       <Toolbar>
         <ToolbarItem className={toolbarStyle}>
           <Flex>
-            <FlexItem align={{ default: 'alignRight' }}>
+            <FlexItem className={themeClusterStyle}>
               {homeCluster?.name && (
-                <Tooltip
-                  entryDelay={0}
-                  position="bottom"
-                  content={<div>{t('Kiali home cluster: {{name}}', { name: homeCluster?.name })}</div>}
-                >
-                  <Label data-test="cluster-icon" color="blue" icon={<KialiIcon.Cluster />}>
-                    {homeCluster?.name}
-                  </Label>
-                </Tooltip>
+                <Label data-test="cluster-icon" color="blue" icon={<KialiIcon.Cluster />}>
+                  {isControlPlaneAccessible() && (
+                    <FlexItem className={themeClusterStyle}>
+                      <IstioStatus location={MASTHEAD} />
+                    </FlexItem>
+                  )}
+                  {homeCluster?.name}
+                </Label>
               )}
             </FlexItem>
 
             <FlexItem className={themeSwitchStyle}>
               <ThemeSwitch />
             </FlexItem>
-            {isControlPlaneAccessible() && (
-              <FlexItem>
-                <IstioStatus location={MASTHEAD} />
-              </FlexItem>
-            )}
 
             <FlexItem className={messageCenterStyle}>
               <MessageCenterTrigger />
