@@ -14,27 +14,46 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
         <Text
           component="h4"
         >
-          Istio Components Status
+          Cluster Status
         </Text>
-        <IstioStatusList
-          cluster="Kubernetes"
-          status={
-            Array [
-              Object {
-                "cluster": "Kubernetes",
-                "is_core": false,
-                "name": "grafana",
-                "status": "Unhealthy",
-              },
-              Object {
-                "cluster": "Kubernetes",
-                "is_core": true,
-                "name": "istio-egressgateway",
-                "status": "Healthy",
-              },
-            ]
-          }
-        />
+        <React.Fragment>
+          <div
+            className="kiali_f8qnpeg"
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            Kubernetes
+          </div>
+          <IstioStatusList
+            cluster="Kubernetes"
+            status={
+              Array [
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": false,
+                  "name": "grafana",
+                  "status": "Unhealthy",
+                },
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": true,
+                  "name": "istio-egressgateway",
+                  "status": "Healthy",
+                },
+              ]
+            }
+          />
+        </React.Fragment>
       </TextContent>
     </React.Fragment>
   }
@@ -65,27 +84,46 @@ exports[`When both core and addon component have problems any component is in no
         <Text
           component="h4"
         >
-          Istio Components Status
+          Cluster Status
         </Text>
-        <IstioStatusList
-          cluster="Kubernetes"
-          status={
-            Array [
-              Object {
-                "cluster": "Kubernetes",
-                "is_core": false,
-                "name": "grafana",
-                "status": "Unhealthy",
-              },
-              Object {
-                "cluster": "Kubernetes",
-                "is_core": true,
-                "name": "istio-egressgateway",
-                "status": "Unhealthy",
-              },
-            ]
-          }
-        />
+        <React.Fragment>
+          <div
+            className="kiali_f8qnpeg"
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            Kubernetes
+          </div>
+          <IstioStatusList
+            cluster="Kubernetes"
+            status={
+              Array [
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": false,
+                  "name": "grafana",
+                  "status": "Unhealthy",
+                },
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": true,
+                  "name": "istio-egressgateway",
+                  "status": "Unhealthy",
+                },
+              ]
+            }
+          />
+        </React.Fragment>
       </TextContent>
     </React.Fragment>
   }
@@ -116,27 +154,46 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
         <Text
           component="h4"
         >
-          Istio Components Status
+          Cluster Status
         </Text>
-        <IstioStatusList
-          cluster="Kubernetes"
-          status={
-            Array [
-              Object {
-                "cluster": "Kubernetes",
-                "is_core": false,
-                "name": "grafana",
-                "status": "Healthy",
-              },
-              Object {
-                "cluster": "Kubernetes",
-                "is_core": true,
-                "name": "istio-egressgateway",
-                "status": "Unhealthy",
-              },
-            ]
-          }
-        />
+        <React.Fragment>
+          <div
+            className="kiali_f8qnpeg"
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            Kubernetes
+          </div>
+          <IstioStatusList
+            cluster="Kubernetes"
+            status={
+              Array [
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": false,
+                  "name": "grafana",
+                  "status": "Healthy",
+                },
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": true,
+                  "name": "istio-egressgateway",
+                  "status": "Unhealthy",
+                },
+              ]
+            }
+          />
+        </React.Fragment>
       </TextContent>
     </React.Fragment>
   }
@@ -167,27 +224,46 @@ exports[`When there are not-ready components mixed with other not healthy compon
         <Text
           component="h4"
         >
-          Istio Components Status
+          Cluster Status
         </Text>
-        <IstioStatusList
-          cluster="Kubernetes"
-          status={
-            Array [
-              Object {
-                "cluster": "Kubernetes",
-                "is_core": false,
-                "name": "grafana",
-                "status": "Unhealthy",
-              },
-              Object {
-                "cluster": "Kubernetes",
-                "is_core": false,
-                "name": "jaeger",
-                "status": "NotReady",
-              },
-            ]
-          }
-        />
+        <React.Fragment>
+          <div
+            className="kiali_f8qnpeg"
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            Kubernetes
+          </div>
+          <IstioStatusList
+            cluster="Kubernetes"
+            status={
+              Array [
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": false,
+                  "name": "grafana",
+                  "status": "Unhealthy",
+                },
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": false,
+                  "name": "jaeger",
+                  "status": "NotReady",
+                },
+              ]
+            }
+          />
+        </React.Fragment>
       </TextContent>
     </React.Fragment>
   }
@@ -218,39 +294,58 @@ exports[`When there are not-ready components mixed with other not healthy compon
         <Text
           component="h4"
         >
-          Istio Components Status
+          Cluster Status
         </Text>
-        <IstioStatusList
-          cluster="Kubernetes"
-          status={
-            Array [
-              Object {
-                "cluster": "Kubernetes",
-                "is_core": false,
-                "name": "grafana",
-                "status": "Unhealthy",
-              },
-              Object {
-                "cluster": "Kubernetes",
-                "is_core": false,
-                "name": "jaeger",
-                "status": "NotReady",
-              },
-              Object {
-                "cluster": "Kubernetes",
-                "is_core": true,
-                "name": "istio-egressgateway",
-                "status": "Unhealthy",
-              },
-              Object {
-                "cluster": "Kubernetes",
-                "is_core": true,
-                "name": "istio-ingressgateway",
-                "status": "NotReady",
-              },
-            ]
-          }
-        />
+        <React.Fragment>
+          <div
+            className="kiali_f8qnpeg"
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            Kubernetes
+          </div>
+          <IstioStatusList
+            cluster="Kubernetes"
+            status={
+              Array [
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": false,
+                  "name": "grafana",
+                  "status": "Unhealthy",
+                },
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": false,
+                  "name": "jaeger",
+                  "status": "NotReady",
+                },
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": true,
+                  "name": "istio-egressgateway",
+                  "status": "Unhealthy",
+                },
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": true,
+                  "name": "istio-ingressgateway",
+                  "status": "NotReady",
+                },
+              ]
+            }
+          />
+        </React.Fragment>
       </TextContent>
     </React.Fragment>
   }
@@ -281,27 +376,46 @@ exports[`When there are not-ready components mixed with other not healthy compon
         <Text
           component="h4"
         >
-          Istio Components Status
+          Cluster Status
         </Text>
-        <IstioStatusList
-          cluster="Kubernetes"
-          status={
-            Array [
-              Object {
-                "cluster": "Kubernetes",
-                "is_core": true,
-                "name": "istio-egressgateway",
-                "status": "Unhealthy",
-              },
-              Object {
-                "cluster": "Kubernetes",
-                "is_core": true,
-                "name": "istio-ingressgateway",
-                "status": "NotReady",
-              },
-            ]
-          }
-        />
+        <React.Fragment>
+          <div
+            className="kiali_f8qnpeg"
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            Kubernetes
+          </div>
+          <IstioStatusList
+            cluster="Kubernetes"
+            status={
+              Array [
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": true,
+                  "name": "istio-egressgateway",
+                  "status": "Unhealthy",
+                },
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": true,
+                  "name": "istio-ingressgateway",
+                  "status": "NotReady",
+                },
+              ]
+            }
+          />
+        </React.Fragment>
       </TextContent>
     </React.Fragment>
   }
@@ -332,21 +446,40 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
         <Text
           component="h4"
         >
-          Istio Components Status
+          Cluster Status
         </Text>
-        <IstioStatusList
-          cluster="Kubernetes"
-          status={
-            Array [
-              Object {
-                "cluster": "Kubernetes",
-                "is_core": true,
-                "name": "istiod",
-                "status": "NotReady",
-              },
-            ]
-          }
-        />
+        <React.Fragment>
+          <div
+            className="kiali_f8qnpeg"
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            Kubernetes
+          </div>
+          <IstioStatusList
+            cluster="Kubernetes"
+            status={
+              Array [
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": true,
+                  "name": "istiod",
+                  "status": "NotReady",
+                },
+              ]
+            }
+          />
+        </React.Fragment>
       </TextContent>
     </React.Fragment>
   }
@@ -377,21 +510,40 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
         <Text
           component="h4"
         >
-          Istio Components Status
+          Cluster Status
         </Text>
-        <IstioStatusList
-          cluster="Kubernetes"
-          status={
-            Array [
-              Object {
-                "cluster": "Kubernetes",
-                "is_core": false,
-                "name": "jaeger",
-                "status": "NotReady",
-              },
-            ]
-          }
-        />
+        <React.Fragment>
+          <div
+            className="kiali_f8qnpeg"
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            Kubernetes
+          </div>
+          <IstioStatusList
+            cluster="Kubernetes"
+            status={
+              Array [
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": false,
+                  "name": "jaeger",
+                  "status": "NotReady",
+                },
+              ]
+            }
+          />
+        </React.Fragment>
       </TextContent>
     </React.Fragment>
   }

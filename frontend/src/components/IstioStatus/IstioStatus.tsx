@@ -18,12 +18,13 @@ import { KialiDispatch } from 'types/Redux';
 import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
 import { connectRefresh } from '../Refresh/connectRefresh';
 import { kialiStyle } from 'styles/StyleUtils';
-import { IconProps, createIcon } from 'config/KialiIcon';
+import { IconProps, createIcon, KialiIcon } from 'config/KialiIcon';
 import { Link } from 'react-router-dom-v5-compat';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { MASTHEAD } from 'components/Nav/Masthead/Masthead';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
-import { serverConfig } from '../../config';
+import { homeCluster, serverConfig } from '../../config';
+import { PFBadge, PFBadges } from '../Pf/PfBadges';
 
 export type ClusterStatusMap = { [cluster: string]: ComponentStatus[] };
 
@@ -73,6 +74,11 @@ const defaultIcons = {
 const iconStyle = kialiStyle({
   marginLeft: '2rem',
   fontSize: '1rem'
+});
+
+const clusterStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center'
 });
 
 export const meshLinkStyle = kialiStyle({
@@ -128,12 +134,38 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     return (
       <>
         <TextContent style={{ color: PFColors.White }}>
-          <Text component={TextVariants.h4}>{t('Istio Components Status')}</Text>
           {cluster ? (
-            <IstioStatusList status={props.statusMap[cluster] || []} cluster={cluster} />
+            <Text component={TextVariants.h4}>{t('Istio Components Status')}</Text>
           ) : (
+            <Text component={TextVariants.h4}>{t('Cluster Status')}</Text>
+          )}
+          {cluster ? (
+            // for Overview page
+            <>
+              <div className={clusterStyle}>
+                <PFBadge badge={PFBadges.Cluster} size="sm" />
+                {cluster}
+                <span style={{ marginLeft: '0.25rem' }}>
+                  <KialiIcon.Star />
+                </span>
+              </div>
+              <IstioStatusList status={props.statusMap[cluster] || []} cluster={cluster} />
+            </>
+          ) : (
+            // for Masthead
             Object.keys(props.statusMap).map(cl => (
-              <IstioStatusList key={cl} status={props.statusMap[cl] || []} cluster={cl} />
+              <>
+                <div className={clusterStyle}>
+                  <PFBadge badge={PFBadges.Cluster} size="sm" />
+                  {cl}
+                  {cl === homeCluster?.name && (
+                    <span style={{ marginLeft: '0.25rem' }}>
+                      <KialiIcon.Star />
+                    </span>
+                  )}
+                </div>
+                <IstioStatusList key={cl} status={props.statusMap[cl] || []} cluster={cl} />
+              </>
             ))
           )}
           {!props.location?.endsWith('/mesh') && isControlPlaneAccessible() && (
@@ -179,6 +211,8 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     }, true);
   };
 
+  const tooltipPosition = props.location === MASTHEAD ? TooltipPosition.bottom : TooltipPosition.top;
+
   if (!healthyComponents()) {
     const icons = props.icons ? { ...defaultIcons, ...props.icons } : defaultIcons;
     const iconColor = tooltipColor();
@@ -204,11 +238,19 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
       dataTest: dataTest
     };
 
-    const tooltipPosition = props.location === MASTHEAD ? TooltipPosition.bottom : TooltipPosition.top;
-
     return (
       <Tooltip position={tooltipPosition} enableFlip={true} content={tooltipContent()} maxWidth="25rem">
         {createIcon(iconProps, icon, iconColor)}
+      </Tooltip>
+    );
+  } else if (!cluster) {
+    const iconProps: IconProps = {
+      className: iconStyle,
+      dataTest: 'istio-status-success'
+    };
+    return (
+      <Tooltip position={tooltipPosition} enableFlip={true} content={tooltipContent()} maxWidth="25rem">
+        {createIcon(iconProps, defaultIcons.HealthyIcon, ValidToColor['false-false-false'])}
       </Tooltip>
     );
   }
