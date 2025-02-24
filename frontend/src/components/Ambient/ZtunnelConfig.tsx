@@ -44,6 +44,18 @@ export interface SortableCompareTh<T> extends SortableTh {
   compare?: (a: T, b: T) => number;
 }
 
+export const yoverflow = kialiStyle({
+  height: 'calc(100vh - 400px)',
+  overflow: 'auto'
+});
+
+export const stickyThead: React.CSSProperties = {
+  position: 'sticky',
+  top: 0,
+  backgroundColor: 'white',
+  zIndex: 1
+};
+
 export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfigProps) => {
   const sortedPods = (): Pod[] => {
     return props.workload?.pods.sort((p1: Pod, p2: Pod) => (p1.name >= p2.name ? 1 : -1));
