@@ -1293,6 +1293,62 @@ func IsWaypoint(labels map[string]string) bool {
 	return false
 }
 
+// IsGateway returns true if the labels indicate a gateway.
+func IsGateway(labels, templateAnnotations map[string]string) bool {
+	// test for Istio gateway labeling
+	// There's not consistent labeling for gateways.
+	// In case of using istioctl, you get:
+	// istio: ingressgateway
+	// or
+	// istio: egressgateway
+	//
+	// In case of using helm, you get:
+	// istio: <gateway-name>
+	//
+	// In case of gateway injection you get:
+	// istio: <gateway-name>
+	//
+	// In case of gateway-api you get:
+	// istio.io/gateway-name: gateway
+	//
+	// In case of east/west gateways you get:
+	// istio: eastwestgateway
+	//
+	// We're going to do different checks for all the ways you can label/deploy gateways
+
+	// istioctl
+	if labelValue, ok := labels["operator.istio.io/component"]; ok && (labelValue == "IngressGateways" || labelValue == "EgressGateways") {
+		return true
+	}
+
+	// There's a lot of unit tests that look specifically for istio: ingressgateway and istio: egressgateway.
+	// These should be covered by istioctl and gateway injection cases but adding checks for these just in case.
+	if labelValue, ok := labels["istio"]; ok && (labelValue == "ingressgateway" || labelValue == "egressgateway") {
+		return true
+	}
+
+	// Gateway injection. Includes helm because the helm template uses gateway injection.
+	// If the pod injection template is a gateway then it's a gateway.
+	if templateAnnotations != nil && templateAnnotations["inject.istio.io/templates"] == "gateway" {
+		return true
+	}
+
+	// gateway-api
+	// This is the old gateway-api label that was removed in 1.24.
+	// If this label exists then it's a gateway
+	if _, ok := labels["istio.io/gateway-name"]; ok {
+		return true
+	}
+
+	// This is the new gateway-api label that was added in 1.24
+	// The value distinguishes gateways from waypoints.
+	if labels["gateway.istio.io/managed"] == "istio.io-gateway-controller" {
+		return true
+	}
+
+	return false
+}
+
 // GetSafeClusterName checks the input value provides a default cluster name if it's empty
 func GetSafeClusterName(cluster string) string {
 	if cluster == "" {

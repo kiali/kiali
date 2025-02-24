@@ -48,7 +48,7 @@ func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
 		return validations, len(validations) == 0
 	}
 	// Ignoring waypoint Services as auto-generated
-	if config.IsWaypoint(p.Service.Labels) {
+	if config.IsWaypoint(p.Service.Labels) || config.IsGateway(p.Service.Labels, map[string]string{}) {
 		log.Tracef("Skipping Port matching check for waypoint Service %s from Namespace %s", p.Service.Name, p.Service.Namespace)
 		return validations, len(validations) == 0
 	}

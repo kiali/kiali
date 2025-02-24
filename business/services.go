@@ -428,7 +428,8 @@ func (in *SvcService) buildRegistryServices(rSvcs []*kubernetes.RegistryService,
 }
 
 // GetService returns a single service and associated data using the interval and queryTime
-func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace, service, interval string, queryTime time.Time) (*models.ServiceDetails, error) {
+// includeValidations: Service specific validations outside the istio configs
+func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace, service, interval string, queryTime time.Time, includeValidations bool) (*models.ServiceDetails, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetServiceDetails",
 		observability.Attribute("package", "business"),
@@ -654,6 +655,17 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		s.WaypointWorkloads = waypointWk
 	}
 
+	if includeValidations {
+		svcs, err := kubeCache.GetServicesBySelectorLabels(namespace, svc.Labels)
+		if err != nil {
+			log.Errorf("Error fetching Services per namespace %s: %s", namespace, err)
+		}
+		deployments, err := kubeCache.GetDeployments(namespace)
+		if err != nil {
+			log.Errorf("Error fetching Deployments per namespace %s: %s", namespace, err)
+		}
+		s.Validations = in.getServiceValidations(svcs, deployments, pods)
+	}
 	return &s, nil
 }
 
@@ -810,7 +822,7 @@ func (in *SvcService) UpdateService(ctx context.Context, cluster, namespace, ser
 	kubeCache.Refresh(namespace)
 
 	// After the update we fetch the whole workload
-	return in.GetServiceDetails(ctx, cluster, namespace, service, interval, queryTime)
+	return in.GetServiceDetails(ctx, cluster, namespace, service, interval, queryTime, false)
 }
 
 func (in *SvcService) GetService(ctx context.Context, cluster, namespace, service string) (models.Service, error) {

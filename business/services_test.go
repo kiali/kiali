@@ -265,7 +265,7 @@ func TestMultiClusterGetServiceDetails(t *testing.T) {
 	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
 	prom.Inject(promMock)
 	svc := NewWithBackends(clients, clients, prom, nil).Svc
-	s, err := svc.GetServiceDetails(context.TODO(), "west", "bookinfo", "ratings-west-cluster", "60s", time.Now())
+	s, err := svc.GetServiceDetails(context.TODO(), "west", "bookinfo", "ratings-west-cluster", "60s", time.Now(), true)
 	require.NoError(err)
 
 	assert.Equal(s.Service.Name, "ratings-west-cluster")
