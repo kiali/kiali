@@ -4,15 +4,8 @@ import { serverConfig } from '../../config';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { RemoteClusterBadge } from './RemoteClusterBadge';
 import { Link, useLocation } from 'react-router-dom-v5-compat';
-import { IstioStatus, meshLinkStyle } from 'components/IstioStatus/IstioStatus';
-import {
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  ExclamationTriangleIcon,
-  MinusCircleIcon
-} from '@patternfly/react-icons';
+import { meshLinkStyle } from 'components/IstioStatus/IstioStatus';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { isControlPlaneAccessible } from '../../utils/MeshUtils';
 import { isRemoteCluster } from 'pages/Mesh/target/TargetPanelControlPlane';
 
 type Props = {
@@ -46,23 +39,10 @@ export const ControlPlaneBadge: React.FC<Props> = (props: Props) => {
         </Label>
       </Tooltip>
 
-      {isRemoteCluster(props.annotations) && <RemoteClusterBadge />}
+      {isRemoteCluster(props.annotations) && props.cluster && <RemoteClusterBadge cluster={props.cluster} />}
 
       {serverConfig.ambientEnabled && (
         <AmbientBadge tooltip={t('Istio Ambient ztunnel detected in the Control plane')}></AmbientBadge>
-      )}
-
-      {!isRemoteCluster(props.annotations) && props.cluster && isControlPlaneAccessible(props.cluster) && (
-        <IstioStatus
-          icons={{
-            ErrorIcon: ExclamationCircleIcon,
-            HealthyIcon: CheckCircleIcon,
-            InfoIcon: MinusCircleIcon,
-            WarningIcon: ExclamationTriangleIcon
-          }}
-          cluster={props.cluster}
-          location={pathname}
-        />
       )}
     </>
   );
