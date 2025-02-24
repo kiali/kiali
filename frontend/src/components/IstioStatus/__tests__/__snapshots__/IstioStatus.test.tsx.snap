@@ -33,6 +33,15 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
               size="sm"
             />
             Kubernetes
+            <span
+              style={
+                Object {
+                  "marginLeft": "0.25rem",
+                }
+              }
+            >
+              <Star />
+            </span>
           </div>
           <IstioStatusList
             cluster="Kubernetes"
@@ -54,6 +63,18 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
             }
           />
         </React.Fragment>
+        <div
+          className="kiali_f1kewvaf"
+        >
+          <span>
+            More info at
+          </span>
+          <Link
+            to="/mesh"
+          >
+            Mesh page
+          </Link>
+        </div>
       </TextContent>
     </React.Fragment>
   }
@@ -61,12 +82,20 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
   maxWidth="25rem"
   position="top"
 >
-  <Icon
-    className="kiali_f1wuoq20 kiali_frkkrth"
-    data-test="istio-status-warning"
+  <Label
+    className="kiali_frds3np"
+    color="blue"
+    data-test="cluster-icon"
+    icon={<Cluster />}
   >
-    <ResourcesFullIcon />
-  </Icon>
+    Kubernetes
+    <Icon
+      className="kiali_f10wsz75 kiali_frkkrth"
+      data-test="istio-status-warning"
+    >
+      <ExclamationTriangleIcon />
+    </Icon>
+  </Label>
 </Tooltip>
 `;
 
@@ -103,6 +132,15 @@ exports[`When both core and addon component have problems any component is in no
               size="sm"
             />
             Kubernetes
+            <span
+              style={
+                Object {
+                  "marginLeft": "0.25rem",
+                }
+              }
+            >
+              <Star />
+            </span>
           </div>
           <IstioStatusList
             cluster="Kubernetes"
@@ -124,6 +162,18 @@ exports[`When both core and addon component have problems any component is in no
             }
           />
         </React.Fragment>
+        <div
+          className="kiali_f1kewvaf"
+        >
+          <span>
+            More info at
+          </span>
+          <Link
+            to="/mesh"
+          >
+            Mesh page
+          </Link>
+        </div>
       </TextContent>
     </React.Fragment>
   }
@@ -131,12 +181,20 @@ exports[`When both core and addon component have problems any component is in no
   maxWidth="25rem"
   position="top"
 >
-  <Icon
-    className="kiali_f1wuoq20 kiali_f1h37jb8"
-    data-test="istio-status-danger"
+  <Label
+    className="kiali_frds3np"
+    color="blue"
+    data-test="cluster-icon"
+    icon={<Cluster />}
   >
-    <ResourcesFullIcon />
-  </Icon>
+    Kubernetes
+    <Icon
+      className="kiali_f10wsz75 kiali_f1h37jb8"
+      data-test="istio-status-danger"
+    >
+      <ExclamationCircleIcon />
+    </Icon>
+  </Label>
 </Tooltip>
 `;
 
@@ -173,6 +231,15 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
               size="sm"
             />
             Kubernetes
+            <span
+              style={
+                Object {
+                  "marginLeft": "0.25rem",
+                }
+              }
+            >
+              <Star />
+            </span>
           </div>
           <IstioStatusList
             cluster="Kubernetes"
@@ -194,6 +261,18 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
             }
           />
         </React.Fragment>
+        <div
+          className="kiali_f1kewvaf"
+        >
+          <span>
+            More info at
+          </span>
+          <Link
+            to="/mesh"
+          >
+            Mesh page
+          </Link>
+        </div>
       </TextContent>
     </React.Fragment>
   }
@@ -201,12 +280,20 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
   maxWidth="25rem"
   position="top"
 >
-  <Icon
-    className="kiali_f1wuoq20 kiali_f1h37jb8"
-    data-test="istio-status-danger"
+  <Label
+    className="kiali_frds3np"
+    color="blue"
+    data-test="cluster-icon"
+    icon={<Cluster />}
   >
-    <ResourcesFullIcon />
-  </Icon>
+    Kubernetes
+    <Icon
+      className="kiali_f10wsz75 kiali_f1h37jb8"
+      data-test="istio-status-danger"
+    >
+      <ExclamationCircleIcon />
+    </Icon>
+  </Label>
 </Tooltip>
 `;
 
@@ -243,6 +330,15 @@ exports[`When there are not-ready components mixed with other not healthy compon
               size="sm"
             />
             Kubernetes
+            <span
+              style={
+                Object {
+                  "marginLeft": "0.25rem",
+                }
+              }
+            >
+              <Star />
+            </span>
           </div>
           <IstioStatusList
             cluster="Kubernetes"
@@ -264,6 +360,18 @@ exports[`When there are not-ready components mixed with other not healthy compon
             }
           />
         </React.Fragment>
+        <div
+          className="kiali_f1kewvaf"
+        >
+          <span>
+            More info at
+          </span>
+          <Link
+            to="/mesh"
+          >
+            Mesh page
+          </Link>
+        </div>
       </TextContent>
     </React.Fragment>
   }
@@ -271,12 +379,20 @@ exports[`When there are not-ready components mixed with other not healthy compon
   maxWidth="25rem"
   position="top"
 >
-  <Icon
-    className="kiali_f1wuoq20 kiali_frkkrth"
-    data-test="istio-status-warning"
+  <Label
+    className="kiali_frds3np"
+    color="blue"
+    data-test="cluster-icon"
+    icon={<Cluster />}
   >
-    <ResourcesFullIcon />
-  </Icon>
+    Kubernetes
+    <Icon
+      className="kiali_f10wsz75 kiali_frkkrth"
+      data-test="istio-status-warning"
+    >
+      <ExclamationTriangleIcon />
+    </Icon>
+  </Label>
 </Tooltip>
 `;
 
@@ -313,6 +429,15 @@ exports[`When there are not-ready components mixed with other not healthy compon
               size="sm"
             />
             Kubernetes
+            <span
+              style={
+                Object {
+                  "marginLeft": "0.25rem",
+                }
+              }
+            >
+              <Star />
+            </span>
           </div>
           <IstioStatusList
             cluster="Kubernetes"
@@ -346,6 +471,18 @@ exports[`When there are not-ready components mixed with other not healthy compon
             }
           />
         </React.Fragment>
+        <div
+          className="kiali_f1kewvaf"
+        >
+          <span>
+            More info at
+          </span>
+          <Link
+            to="/mesh"
+          >
+            Mesh page
+          </Link>
+        </div>
       </TextContent>
     </React.Fragment>
   }
@@ -353,12 +490,20 @@ exports[`When there are not-ready components mixed with other not healthy compon
   maxWidth="25rem"
   position="top"
 >
-  <Icon
-    className="kiali_f1wuoq20 kiali_f1h37jb8"
-    data-test="istio-status-danger"
+  <Label
+    className="kiali_frds3np"
+    color="blue"
+    data-test="cluster-icon"
+    icon={<Cluster />}
   >
-    <ResourcesFullIcon />
-  </Icon>
+    Kubernetes
+    <Icon
+      className="kiali_f10wsz75 kiali_f1h37jb8"
+      data-test="istio-status-danger"
+    >
+      <ExclamationCircleIcon />
+    </Icon>
+  </Label>
 </Tooltip>
 `;
 
@@ -395,6 +540,15 @@ exports[`When there are not-ready components mixed with other not healthy compon
               size="sm"
             />
             Kubernetes
+            <span
+              style={
+                Object {
+                  "marginLeft": "0.25rem",
+                }
+              }
+            >
+              <Star />
+            </span>
           </div>
           <IstioStatusList
             cluster="Kubernetes"
@@ -416,6 +570,18 @@ exports[`When there are not-ready components mixed with other not healthy compon
             }
           />
         </React.Fragment>
+        <div
+          className="kiali_f1kewvaf"
+        >
+          <span>
+            More info at
+          </span>
+          <Link
+            to="/mesh"
+          >
+            Mesh page
+          </Link>
+        </div>
       </TextContent>
     </React.Fragment>
   }
@@ -423,12 +589,20 @@ exports[`When there are not-ready components mixed with other not healthy compon
   maxWidth="25rem"
   position="top"
 >
-  <Icon
-    className="kiali_f1wuoq20 kiali_f1h37jb8"
-    data-test="istio-status-danger"
+  <Label
+    className="kiali_frds3np"
+    color="blue"
+    data-test="cluster-icon"
+    icon={<Cluster />}
   >
-    <ResourcesFullIcon />
-  </Icon>
+    Kubernetes
+    <Icon
+      className="kiali_f10wsz75 kiali_f1h37jb8"
+      data-test="istio-status-danger"
+    >
+      <ExclamationCircleIcon />
+    </Icon>
+  </Label>
 </Tooltip>
 `;
 
@@ -465,6 +639,15 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
               size="sm"
             />
             Kubernetes
+            <span
+              style={
+                Object {
+                  "marginLeft": "0.25rem",
+                }
+              }
+            >
+              <Star />
+            </span>
           </div>
           <IstioStatusList
             cluster="Kubernetes"
@@ -480,6 +663,18 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
             }
           />
         </React.Fragment>
+        <div
+          className="kiali_f1kewvaf"
+        >
+          <span>
+            More info at
+          </span>
+          <Link
+            to="/mesh"
+          >
+            Mesh page
+          </Link>
+        </div>
       </TextContent>
     </React.Fragment>
   }
@@ -487,12 +682,20 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
   maxWidth="25rem"
   position="top"
 >
-  <Icon
-    className="kiali_f1wuoq20 kiali_f1elceoh"
-    data-test="istio-status-info"
+  <Label
+    className="kiali_frds3np"
+    color="blue"
+    data-test="cluster-icon"
+    icon={<Cluster />}
   >
-    <ResourcesFullIcon />
-  </Icon>
+    Kubernetes
+    <Icon
+      className="kiali_f10wsz75 kiali_f1elceoh"
+      data-test="istio-status-info"
+    >
+      <InfoCircleIcon />
+    </Icon>
+  </Label>
 </Tooltip>
 `;
 
@@ -529,6 +732,15 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
               size="sm"
             />
             Kubernetes
+            <span
+              style={
+                Object {
+                  "marginLeft": "0.25rem",
+                }
+              }
+            >
+              <Star />
+            </span>
           </div>
           <IstioStatusList
             cluster="Kubernetes"
@@ -544,6 +756,18 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
             }
           />
         </React.Fragment>
+        <div
+          className="kiali_f1kewvaf"
+        >
+          <span>
+            More info at
+          </span>
+          <Link
+            to="/mesh"
+          >
+            Mesh page
+          </Link>
+        </div>
       </TextContent>
     </React.Fragment>
   }
@@ -551,11 +775,19 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
   maxWidth="25rem"
   position="top"
 >
-  <Icon
-    className="kiali_f1wuoq20 kiali_f1elceoh"
-    data-test="istio-status-info"
+  <Label
+    className="kiali_frds3np"
+    color="blue"
+    data-test="cluster-icon"
+    icon={<Cluster />}
   >
-    <ResourcesFullIcon />
-  </Icon>
+    Kubernetes
+    <Icon
+      className="kiali_f10wsz75 kiali_f1elceoh"
+      data-test="istio-status-info"
+    >
+      <InfoCircleIcon />
+    </Icon>
+  </Label>
 </Tooltip>
 `;
