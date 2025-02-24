@@ -174,6 +174,16 @@ EOMCNI
       global_platform="openshift"
       istio_profile="openshift"
     fi
+
+    # find out where Tempo is
+    if [ -z "${TEMPO_NAMESPACE:-}" ]; then
+      TEMPO_NAMESPACE="$(${OC} get pods -l app.kubernetes.io/name=tempo --all-namespaces --no-headers --ignore-not-found=true 2>/dev/null | head -n1 | awk '{print $1}')"
+      if [ -z "${TEMPO_NAMESPACE:-}" ]; then
+        errormsg "TEMPO_NAMESPACE not defined and cannot be auto-detected. Is Tempo installed?"
+        exit 1
+      fi
+    fi
+
     local istio_yaml_file="/tmp/istio-cr.yaml"
     cat <<EOM > ${istio_yaml_file}
 apiVersion: sailoperator.io/v1alpha1
