@@ -193,8 +193,8 @@ spec:
   namespace: ${control_plane_namespace}
   updateStrategy:
     type: RevisionBased
+  profile: ${istio_profile}
   values:
-    profile: ${istio_profile}
     meshConfig:
       defaultConfig:
         tracing:
