@@ -952,6 +952,48 @@ func FakeZtunnelPods(conf *config.Config) []core_v1.Pod {
 	}
 }
 
+func FakeDeploymentWithPort(deployment string, port int32) *apps_v1.Deployment {
+	controller := true
+	return &apps_v1.Deployment{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:              fmt.Sprintf("%s-v1-3618568057-dnkjp", deployment),
+			Namespace:         "bookinfo",
+			CreationTimestamp: meta_v1.NewTime(time.Now()),
+			Labels:            map[string]string{"app": deployment},
+			OwnerReferences: []meta_v1.OwnerReference{{
+				Controller: &controller,
+				APIVersion: kubernetes.ReplicaSets.GroupVersion().String(),
+				Kind:       kubernetes.ReplicaSets.Kind,
+				Name:       fmt.Sprintf("%s-v1-3618568057-dnkjp", deployment),
+			}},
+			Annotations: kubetest.FakeIstioAnnotations(),
+		},
+		Spec: apps_v1.DeploymentSpec{
+			Selector: &meta_v1.LabelSelector{
+				MatchLabels: map[string]string{"app": deployment},
+			},
+			Template: core_v1.PodTemplateSpec{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Labels: map[string]string{"app": deployment},
+				},
+				Spec: core_v1.PodSpec{
+					Containers: []core_v1.Container{
+						{
+							Name:  deployment,
+							Image: "docker.io/istio/examples-bookinfo-ratings-v1:1.20.1",
+							Ports: []core_v1.ContainerPort{
+								{
+									ContainerPort: port,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func FakeWaypointPod() []core_v1.Pod {
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	return []core_v1.Pod{
