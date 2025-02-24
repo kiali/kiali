@@ -168,10 +168,8 @@ EOMCNI
 
   infomsg "Installing Istio CR"
   if [ "${istio_yaml_file}" == "" ]; then
-    local global_platform=""
     local istio_profile="demo"
     if [ "${IS_OPENSHIFT}" == "true" ]; then
-      global_platform="openshift"
       istio_profile="openshift"
     fi
 
@@ -197,8 +195,6 @@ spec:
     type: RevisionBased
   values:
     profile: ${istio_profile}
-    global:
-      platform: "${global_platform}"
     meshConfig:
       defaultConfig:
         tracing:
