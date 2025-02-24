@@ -170,7 +170,7 @@ EOMCNI
   if [ "${istio_yaml_file}" == "" ]; then
     local istio_profile="demo"
     if [ "${IS_OPENSHIFT}" == "true" ]; then
-      istio_profile="openshift"
+      istio_profile="demo" # no need to specify openshift here - the operator will detect we are openshift and apply the openshift platform profile for us in addition to the demo profile values
     fi
 
     # find out where Tempo is
