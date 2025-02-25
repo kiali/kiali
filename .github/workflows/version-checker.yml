@@ -5,30 +5,30 @@ on:
   push:
     branches: [master, "^v\\d+\\.\\d+$"]
     paths:
-      - 'frontend/package.json'
-      - 'Makefile'
+    - 'frontend/package.json'
+    - 'Makefile'
   pull_request:
     branches: [master, "^v\\d+\\.\\d+$"]
     paths:
-      - 'frontend/package.json'
-      - 'Makefile'
+    - 'frontend/package.json'
+    - 'Makefile'
 jobs:
   version:
     name: Check version
     runs-on: ubuntu-latest
     steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-      - name: calculate versions
-        id: version_info
-        run: |
-          CORE_VERSION=$(grep '^VERSION ?=' ./Makefile | sed -e "s/^VERSION\s?=\sv//" -e "s/-SNAPSHOT//")
-          PACKAGE_VERSION=$(grep '"version":' ./frontend/package.json | sed -e "s/\s*\"version\":\s\"//" -e "s/\",//")
-          echo "CORE_VERSION=$CORE_VERSION" >> $GITHUB_ENV 
-          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV 
-      - name: verify version
-        if: ${{ steps.version_info.outputs.CORE_VERSION != steps.version_info.outputs.PACKAGE_VERSION }}
-        run: |
-          echo "Versions in Makefile ( ${{ env.CORE_VERSION }} ) and frontend/package.json ( ${{ env.PACKAGE_VERSION }} ) are not aligned"
-          exit 1
+    - name: Check out code
+      uses: actions/checkout@v4
+    - name: calculate versions
+      id: version_info
+      run: |
+        CORE_VERSION=$(grep '^VERSION ?=' ./Makefile | sed -e "s/^VERSION\s?=\sv//" -e "s/-SNAPSHOT//")
+        PACKAGE_VERSION=$(grep '"version":' ./frontend/package.json | sed -e "s/\s*\"version\":\s\"//" -e "s/\",//")
+        echo "CORE_VERSION=$CORE_VERSION" >> $GITHUB_ENV
+        echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
+    - name: verify version
+      if: ${{ steps.version_info.outputs.CORE_VERSION != steps.version_info.outputs.PACKAGE_VERSION }}
+      run: |
+        echo "Versions in Makefile ( ${{ env.CORE_VERSION }} ) and frontend/package.json ( ${{ env.PACKAGE_VERSION }} ) are not aligned"
+        exit 1
 
