@@ -163,10 +163,10 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
-	serviceDetails, err := business.Svc.GetServiceDetails(r.Context(), cluster, namespace, service, rateInterval, queryTime)
+	serviceDetails, err := business.Svc.GetServiceDetails(r.Context(), cluster, namespace, service, rateInterval, queryTime, includeValidations)
 	if includeValidations && err == nil {
 		wg.Wait()
-		serviceDetails.Validations = istioConfigValidations
+		serviceDetails.Validations = istioConfigValidations.MergeValidations(serviceDetails.Validations)
 		err = errValidations
 	}
 

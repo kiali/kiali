@@ -103,7 +103,7 @@ func (in *IstioValidationsService) GetValidationsForService(ctx context.Context,
 		return nil, fmt.Errorf("Service [namespace: %s] [name: %s] doesn't exist for Validations.", namespace, service)
 	}
 
-	return models.IstioValidations(validationsForCluster(in.kialiCache.Validations().Items(), cluster)).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "service"}, service), nil
+	return validationsForCluster(in.kialiCache.Validations().Items(), cluster).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "service"}, service), nil
 }
 
 func (in *IstioValidationsService) GetValidationsForWorkload(ctx context.Context, cluster, namespace, workload string) (models.IstioValidations, error) {
@@ -116,7 +116,7 @@ func (in *IstioValidationsService) GetValidationsForWorkload(ctx context.Context
 		return nil, err
 	}
 
-	return models.IstioValidations(validationsForCluster(in.kialiCache.Validations().Items(), cluster)).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}, workload), nil
+	return validationsForCluster(in.kialiCache.Validations().Items(), cluster).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}, workload), nil
 }
 
 // CreateValidations returns an IstioValidations object with all the checks found when running
