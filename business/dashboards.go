@@ -506,6 +506,58 @@ func getIstioCharts() []istioChart {
 	return istioCharts
 }
 
+func getZtunnelCharts() []istioChart {
+	istioCharts := []istioChart{
+		{
+			Chart: models.Chart{
+				Name:  "Ztunnel Connections",
+				Unit:  "cps",
+				Spans: 4,
+			},
+			refName: "ztunnel_connections",
+			scale:   100000000,
+		},
+		{
+			Chart: models.Chart{
+				Name:  "Ztunnel versions",
+				Spans: 4,
+			},
+			refName: "ztunnel_versions",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "Ztunnel memory usage",
+				Unit:  "MiB",
+				Spans: 4,
+			},
+			refName: "ztunnel_memory_usage",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "Ztunnel CPU usage",
+				Spans: 4,
+			},
+			refName: "ztunnel_cpu_usage",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "Ztunnel bytes transmitted",
+				Unit:  "kB",
+				Spans: 4,
+			},
+			refName: "ztunnel_bytes_transmitted",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "Ztunnel workload manager",
+				Spans: 4,
+			},
+			refName: "ztunnel_workload_manager",
+		},
+	}
+	return istioCharts
+}
+
 func GetIstioScaler() func(name string) float64 {
 	charts := getIstioCharts()
 	return func(name string) float64 {
@@ -516,6 +568,33 @@ func GetIstioScaler() func(name string) float64 {
 		}
 		return 1.0
 	}
+}
+
+// BuildIstioDashboard returns Istio dashboard filled-in with metrics
+func (in *DashboardsService) BuildZtunnelDashboard(metrics models.MetricsMap) *models.MonitoringDashboard {
+	dashboard := models.MonitoringDashboard{
+		Title:        "Ztunnel Metrics",
+		Aggregations: []models.Aggregation{},
+		Charts:       []models.Chart{},
+		Rows:         2,
+	}
+
+	ztunnelCharts := getZtunnelCharts()
+
+	for _, chartTpl := range ztunnelCharts {
+		newChart := chartTpl.Chart
+		conversionParams := models.ConversionParams{Scale: 1.0}
+		if chartTpl.scale != 0.0 {
+			conversionParams.Scale = chartTpl.scale
+		}
+		if metrics := metrics[chartTpl.refName]; metrics != nil {
+			newChart.Metrics = metrics
+		} else {
+			newChart.Metrics = []models.Metric{}
+		}
+		dashboard.Charts = append(dashboard.Charts, newChart)
+	}
+	return &dashboard
 }
 
 // BuildIstioDashboard returns Istio dashboard filled-in with metrics

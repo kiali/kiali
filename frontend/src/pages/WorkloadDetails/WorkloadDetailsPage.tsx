@@ -10,9 +10,9 @@ import { MetricsObjectTypes } from '../../types/Metrics';
 import { CustomMetrics } from '../../components/Metrics/CustomMetrics';
 import { getAppLabelName, getVersionLabelName, serverConfig } from '../../config/ServerConfig';
 import { WorkloadPodLogs } from './WorkloadPodLogs';
-import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
+import { DurationInSeconds, TimeInMilliseconds, TimeRange } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
-import { durationSelector } from '../../store/Selectors';
+import { durationSelector, timeRangeSelector } from '../../store/Selectors';
 import { ParameterizedTabs, activeTab } from '../../components/Tab/Tabs';
 import { TracesComponent } from 'components/TracingIntegration/TracesComponent';
 import { TracingInfo } from 'types/TracingInfo';
@@ -42,6 +42,7 @@ type WorkloadDetailsState = {
 
 type ReduxProps = {
   duration: DurationInSeconds;
+  rangeDuration: TimeRange;
   tracingInfo?: TracingInfo;
 };
 
@@ -285,6 +286,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
             <ZtunnelConfig
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.workloadId.namespace}
+              rangeDuration={this.props.rangeDuration}
               workload={this.state.workload}
             />
           )}
@@ -437,6 +439,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   duration: durationSelector(state),
+  rangeDuration: timeRangeSelector(state),
   tracingInfo: state.tracingState.info
 });
 

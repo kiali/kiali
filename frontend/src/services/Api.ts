@@ -240,6 +240,26 @@ export const getControlPlaneMetrics = (
   );
 };
 
+export const getZtunnelDashboard = (
+  namespace: string,
+  controlPlane: string,
+  params: IstioMetricsOptions,
+  cluster?: string
+): Promise<ApiResponse<Readonly<DashboardModel>>> => {
+  const queryParams: QueryParams<IstioMetricsOptions> = { ...params };
+
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+
+  return newRequest<Readonly<DashboardModel>>(
+    HTTP_VERBS.GET,
+    urls.ztunnelDashboard(namespace, controlPlane),
+    queryParams,
+    {}
+  );
+};
+
 // comma separated list of namespaces
 export const getClustersMetrics = (
   namespaces: string,

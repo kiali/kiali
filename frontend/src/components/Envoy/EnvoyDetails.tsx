@@ -7,18 +7,7 @@ import { Workload } from 'types/Workload';
 import { EnvoyProxyDump, Pod } from 'types/IstioObjects';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import {
-  Button,
-  ButtonVariant,
-  Card,
-  CardBody,
-  Grid,
-  GridItem,
-  Tab,
-  Tabs,
-  Tooltip,
-  TooltipPosition
-} from '@patternfly/react-core';
+import { Button, ButtonVariant, Card, CardBody, Tab, Tabs, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { SummaryTableBuilder } from './tables/BaseTable';
 import { Namespace } from 'types/Namespace';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -379,20 +368,16 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
 
     return (
       <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-        <Grid>
-          <GridItem span={12}>
-            <Tabs
-              id="envoy-details"
-              className={subTabStyle}
-              activeKey={this.state.activeKey}
-              onSelect={this.envoyHandleTabClick}
-              mountOnEnter={true}
-              unmountOnExit={true}
-            >
-              {tabs}
-            </Tabs>
-          </GridItem>
-        </Grid>
+        <Tabs
+          id="envoy-details"
+          className={subTabStyle}
+          activeKey={this.state.activeKey}
+          onSelect={this.envoyHandleTabClick}
+          mountOnEnter={true}
+          unmountOnExit={true}
+        >
+          {tabs}
+        </Tabs>
       </RenderComponentScroll>
     );
   }
