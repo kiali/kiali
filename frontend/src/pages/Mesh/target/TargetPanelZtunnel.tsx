@@ -45,10 +45,9 @@ export const TargetPanelZtunnel: React.FC<TargetPanelZtunnelProps<MeshNodeData>>
     };
 
     const data = props.target.elem.getData();
-    console.log(data);
+
     return API.getZtunnelMetrics(data?.namespace ? data.namespace : '', 'ztunnel', options, data?.cluster)
       .then(response => {
-        console.log(response);
         const controlPlaneMetrics: ZtunnelMetricsMap = {
           ztunnel_cpu_usage: response.data.ztunnel_cpu_usage,
           ztunnel_memory_usage: response.data.ztunnel_memory_usage
