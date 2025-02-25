@@ -310,6 +310,15 @@ export const getRequestErrorsSubItem = (thresholdStatus: ThresholdStatus, prefix
   };
 };
 
+export const isRequestHealthNotEmpty = (requests: RequestHealth): boolean => {
+  return (
+    requests &&
+    (Object.keys(requests.inbound).length > 0 ||
+      Object.keys(requests.outbound).length > 0 ||
+      Object.keys(requests.healthAnnotations).length > 0)
+  );
+};
+
 export abstract class Health {
   constructor(public health: HealthConfig) {}
 
@@ -372,7 +381,7 @@ export class ServiceHealth extends Health {
     const items: HealthItem[] = [];
     let statusConfig: HealthItemConfig | undefined = undefined;
 
-    if (ctx.hasSidecar) {
+    if (isRequestHealthNotEmpty(requests)) {
       // Request errors
       const reqError = calculateErrorRate(ns, srv, 'service', requests);
       const reqErrorsText =
@@ -406,7 +415,7 @@ export class ServiceHealth extends Health {
         type: HealthItemType.TRAFFIC_STATUS,
         title: t('Traffic Status'),
         status: NA,
-        text: 'No Istio sidecar'
+        text: NA.name
       });
     }
     return { items, statusConfig };
@@ -459,7 +468,7 @@ export class AppHealth extends Health {
     }
 
     // Request errors
-    if (ctx.hasSidecar) {
+    if (isRequestHealthNotEmpty(requests)) {
       const reqError = calculateErrorRate(ns, app, 'app', requests);
       const reqIn = reqError.errorRatio.inbound.status;
       const reqOut = reqError.errorRatio.outbound.status;
@@ -567,7 +576,7 @@ export class WorkloadHealth extends Health {
     }
 
     // Request errors
-    if (ctx.hasSidecar) {
+    if (isRequestHealthNotEmpty(requests)) {
       const reqError = calculateErrorRate(ns, workload, 'workload', requests);
       const reqIn = reqError.errorRatio.inbound.status;
       const reqOut = reqError.errorRatio.outbound.status;
