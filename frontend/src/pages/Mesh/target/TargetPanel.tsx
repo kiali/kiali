@@ -7,14 +7,14 @@ import { TourStop } from 'components/Tour/TourStop';
 import { classes } from 'typestyle';
 import { PFColors } from 'components/Pf/PfColors';
 import {
-  MeshInfraType,
-  DataPlaneNodeData,
-  NodeTarget,
-  IstiodNodeData,
   BoxTarget,
   ClusterNodeData,
+  DataPlaneNodeData,
+  IstiodNodeData,
+  MeshInfraType,
+  MeshType,
   NamespaceNodeData,
-  MeshType
+  NodeTarget
 } from 'types/Mesh';
 import { TargetPanelCommonProps, targetPanelStyle } from './TargetPanelCommon';
 import { MeshTourStops } from '../MeshHelpTour';
@@ -27,6 +27,7 @@ import { meshWideMTLSStatusSelector, minTLSVersionSelector } from 'store/Selecto
 import { TargetPanelDataPlane } from './TargetPanelDataPlane';
 import { TargetPanelControlPlane } from './TargetPanelControlPlane';
 import { useKialiTranslation } from 'utils/I18nUtils';
+import { TargetPanelZtunnel } from './TargetPanelZtunnel';
 
 type ReduxProps = {
   kiosk: string;
@@ -148,6 +149,17 @@ export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPa
                 refreshInterval={props.refreshInterval}
                 // TODO: Can we further narrow down these targets with guards?
                 target={target as NodeTarget<DataPlaneNodeData>}
+                updateTime={props.updateTime}
+              />
+            );
+          case MeshInfraType.ZTUNNEL:
+            return (
+              <TargetPanelZtunnel
+                duration={props.duration}
+                istioAPIEnabled={props.istioAPIEnabled}
+                kiosk={props.kiosk}
+                refreshInterval={props.refreshInterval}
+                target={target}
                 updateTime={props.updateTime}
               />
             );

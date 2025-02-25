@@ -1,6 +1,7 @@
 {
   " DENY action requires at least one Rule": " DENY action requires at least one Rule",
   " in cluster {{clusterName}}": " in cluster {{clusterName}}",
+  " metrics": " metrics",
   "{{count}} application_other": "{{count}} 应用",
   "{{count}} label_other": "{{count}} 标签",
   "{{count}} Open Issue_other": "{{count}} Open Issues",
@@ -401,8 +402,8 @@
   "The Side Panel shows details about the currently selected node or edge, otherwise the whole graph.": "侧面板显示有关当前选定节点或边的详细信息，否则显示整个视图。",
   "The Side Panel shows details about the currently selected node or edge, otherwise the whole mesh.": "The Side Panel shows details about the currently selected node or edge, otherwise the whole mesh.",
   "There are no Workloads with sidecar for this service": "There are no Workloads with sidecar for this service",
-  "This chart shows cpu consumption for the istiod {{cpuMetricSource}}": "This chart shows cpu consumption for the istiod {{cpuMetricSource}}",
-  "This chart shows memory consumption for the istiod {{memoryMetricSource}}": "This chart shows memory consumption for the istiod {{memoryMetricSource}}",
+  "This chart shows cpu consumption for the {{component}} {{cpuMetricSource}}": "This chart shows cpu consumption for the {{component}} {{cpuMetricSource}}",
+  "This chart shows memory consumption for the {{component}} {{memoryMetricSource}}": "This chart shows memory consumption for the {{component}} {{memoryMetricSource}}",
   "This rule is not accessible.": "该规则将无法生效。",
   "This shows the meshConfig.outboundTrafficPolicy.mode setting. It controls the sidecar handling of                 requests to external services (services not defined in Istio’s internal service registry). When                 set to ALLOW_ANY the Istio proxy performs a passthrough to the unknown services. When set to REGISTRY_ONLY                 the Istio proxy blocks requets to hosts without a defined HTTP service or service entry.": "This shows the meshConfig.outboundTrafficPolicy.mode setting. It controls the sidecar handling of                 requests to external services (services not defined in Istio’s internal service registry). When                 set to ALLOW_ANY the Istio proxy performs a passthrough to the unknown services. When set to REGISTRY_ONLY                 the Istio proxy blocks requets to hosts without a defined HTTP service or service entry.",
   "This type of workload is read-only": "This type of workload is read-only",
