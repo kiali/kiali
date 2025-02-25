@@ -706,6 +706,7 @@ export const getClustersAppHealth = async (
             if (namespaceAppHealth[ns][k]) {
               const ah = AppHealth.fromJson(namespaces, k, namespaceAppHealth[ns][k], {
                 rateInterval: duration,
+                // @TODO replace hardcoded values
                 hasSidecar: true,
                 hasAmbient: false
               });
@@ -757,6 +758,7 @@ export const getClustersServiceHealth = async (
             if (namespaceServiceHealth[ns][k]) {
               const sh = ServiceHealth.fromJson(namespaces, k, namespaceServiceHealth[ns][k], {
                 rateInterval: duration,
+                // @TODO replace hardcoded values
                 hasSidecar: true,
                 hasAmbient: false
               });
@@ -806,6 +808,7 @@ export const getClustersWorkloadHealth = async (
             if (namespaceWorkloadHealth[ns][k]) {
               const wh = WorkloadHealth.fromJson(namespaces, k, namespaceWorkloadHealth[ns][k], {
                 rateInterval: duration,
+                // @TODO replace hardcoded values
                 hasSidecar: true,
                 hasAmbient: false
               });
