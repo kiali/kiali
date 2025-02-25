@@ -16,7 +16,7 @@ func NewExecCommand() string {
 	if command != "" {
 		return command
 	} else {
-		return "oc"
+		return "kubectl"
 	}
 }
 
