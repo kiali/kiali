@@ -41,3 +41,17 @@ func Some[S ~[]E, E any](slice S, f func(E) bool) bool {
 	}
 	return false
 }
+
+// Find returns first element matching the predicate, otherwise nil
+func Find[S ~[]E, E any](slice S, f func(E) bool) *E {
+	if slice == nil {
+		return nil
+	}
+
+	for _, e := range slice {
+		if f(e) {
+			return &e
+		}
+	}
+	return nil
+}
