@@ -382,7 +382,7 @@ export class ServiceHealth extends Health {
     let statusConfig: HealthItemConfig | undefined = undefined;
 
     // hasAmbient and hasSidecars can be false, but still health requests have info
-    if (isRequestHealthNotEmpty(requests)) {
+    if (ctx.hasSidecar || ctx.hasAmbient || isRequestHealthNotEmpty(requests)) {
       // Request errors
       const reqError = calculateErrorRate(ns, srv, 'service', requests);
       const reqErrorsText =
@@ -470,7 +470,7 @@ export class AppHealth extends Health {
 
     // Request errors
     // hasAmbient and hasSidecars can be false, but still health requests have info
-    if (isRequestHealthNotEmpty(requests)) {
+    if (ctx.hasSidecar || ctx.hasAmbient || isRequestHealthNotEmpty(requests)) {
       const reqError = calculateErrorRate(ns, app, 'app', requests);
       const reqIn = reqError.errorRatio.inbound.status;
       const reqOut = reqError.errorRatio.outbound.status;
@@ -579,7 +579,7 @@ export class WorkloadHealth extends Health {
 
     // Request errors
     // hasAmbient and hasSidecars can be false, but still health requests have info
-    if (isRequestHealthNotEmpty(requests)) {
+    if (ctx.hasSidecar || ctx.hasAmbient || isRequestHealthNotEmpty(requests)) {
       const reqError = calculateErrorRate(ns, workload, 'workload', requests);
       const reqIn = reqError.errorRatio.inbound.status;
       const reqOut = reqError.errorRatio.outbound.status;
