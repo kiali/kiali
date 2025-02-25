@@ -1,6 +1,7 @@
 {
   " DENY action requires at least one Rule": " DENY action requires at least one Rule",
   " in cluster {{clusterName}}": " in cluster {{clusterName}}",
+  " metrics": " metrics",
   "{{count}} application_other": "{{count}} 应用",
   "{{count}} label_other": "{{count}} 标签",
   "{{count}} Open Issue_other": "{{count}} Open Issues",

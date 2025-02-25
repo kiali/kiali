@@ -228,6 +228,50 @@ func ControlPlaneMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 	}
 }
 
+// ZtunnelMetrics is the API handler to fetch metrics to be displayed, related to a single control plane revision
+func ZtunnelMetrics(promSupplier promClientSupplier) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		vars := mux.Vars(r)
+		namespace := vars["namespace"]
+		cluster := clusterNameFromQuery(r.URL.Query())
+
+		metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
+		if metricsService == nil {
+			// any returned value nil means error & response already written
+			return
+		}
+		oldestNs := GetOldestNamespace(namespaceInfo)
+
+		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace}
+
+		err := extractIstioMetricsQueryParams(r, &params, oldestNs)
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if namespace != config.Get().IstioNamespace {
+			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
+			return
+		}
+
+		metrics := make(models.MetricsMap)
+
+		ztunnelMetrics, err := metricsService.GetZtunnelMetrics(params)
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+
+		for k, v := range ztunnelMetrics {
+			metrics[k] = v
+		}
+
+		RespondWithJSON(w, http.StatusOK, metrics)
+	}
+}
+
 // NamespaceMetrics is the API handler to fetch metrics to be displayed, related to all
 // services in the namespace
 func NamespaceMetrics(promSupplier promClientSupplier) http.HandlerFunc {

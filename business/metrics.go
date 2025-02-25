@@ -323,7 +323,7 @@ func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, pod
 	return metrics, nil
 }
 
-func (in *MetricsService) GetZtunnelMetrics(q models.IstioMetricsQuery, pods models.Pods) (models.MetricsMap, error) {
+func (in *MetricsService) GetZtunnelMetrics(q models.IstioMetricsQuery) (models.MetricsMap, error) {
 
 	metrics := make(models.MetricsMap)
 	var err error

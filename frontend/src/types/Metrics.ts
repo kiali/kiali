@@ -16,6 +16,15 @@ export type ControlPlaneMetricsMap = {
   istiod_proxy_time?: Metric[];
 };
 
+export type ZtunnelMetricsMap = {
+  ztunnel_bytes_transmitted?: Metric[];
+  ztunnel_connections?: Metric[];
+  ztunnel_cpu_usage?: Metric[];
+  ztunnel_memory_usage?: Metric[];
+  ztunnel_versions?: Metric[];
+  ztunnel_workload_manager?: Metric[];
+};
+
 export type MetricsPerNamespace = { [key: string]: IstioMetricsMap };
 
 export type IstioMetricsMap = {

@@ -17,6 +17,7 @@ type ControlPlaneProps = {
   istiodProcessMemory?: Metric[];
   istiodResourceThresholds?: IstiodResourceThresholds;
   pilotLatency?: Metric[];
+  type?: string;
 };
 
 const showMetrics = (metrics: Metric[] | undefined): boolean => {
@@ -107,7 +108,7 @@ export const TargetPanelControlPlaneMetrics: React.FC<ControlPlaneProps> = (prop
     <div style={{ textAlign: 'center' }}>
       <div>
         <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>
-          {t('Control plane metrics')}
+          {props.type ? `${props.type} ${t(' metrics')}` : t('Control plane metrics')}
         </div>
       </div>
       <div
