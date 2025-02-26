@@ -171,6 +171,9 @@ func HasMatchingServiceEntries(service string, serviceEntries map[string][]strin
 }
 
 func HasMatchingVirtualServices(host Host, virtualServices []*networking_v1.VirtualService) bool {
+	vHostTwoParts := fmt.Sprintf("%s.%s", host.Service, host.Namespace)
+	vHostFqdnNoWild := fmt.Sprintf("%s.%s.%s", host.Service, host.Namespace, config.Get().ExternalServices.Istio.IstioIdentityDomain)
+	vHostFqdnWild := fmt.Sprintf("*.%s.%s", host.Namespace, config.Get().ExternalServices.Istio.IstioIdentityDomain)
 	for _, vs := range virtualServices {
 		for hostIdx := 0; hostIdx < len(vs.Spec.Hosts); hostIdx++ {
 			vHost := vs.Spec.Hosts[hostIdx]
@@ -186,17 +189,17 @@ func HasMatchingVirtualServices(host Host, virtualServices []*networking_v1.Virt
 			}
 
 			// vHost twoparts name
-			if vHost == fmt.Sprintf("%s.%s", host.Service, host.Namespace) {
+			if vHost == vHostTwoParts {
 				return true
 			}
 
 			// vHost FQDN (no-wildcarded)
-			if vHost == fmt.Sprintf("%s.%s.%s", host.Service, host.Namespace, config.Get().ExternalServices.Istio.IstioIdentityDomain) {
+			if vHost == vHostFqdnNoWild {
 				return true
 			}
 
 			// vHost if wildcard FQDN
-			if vHost == fmt.Sprintf("*.%s.%s", host.Namespace, config.Get().ExternalServices.Istio.IstioIdentityDomain) {
+			if vHost == vHostFqdnWild {
 				return true
 			}
 

@@ -267,14 +267,15 @@ func toWorkloadMap(workloads models.Workloads) map[string]models.WorkloadList {
 		wItem := &models.WorkloadListItem{Health: *models.EmptyWorkloadHealth()}
 		wItem.ParseWorkload(w)
 		workloadList, ok := workloadMap[w.Namespace]
-		if !ok {
-			workloadMap[w.Namespace] = models.WorkloadList{
+		if ok {
+			workloadList.Workloads = append(workloadList.Workloads, *wItem)
+		} else {
+			workloadList = models.WorkloadList{
 				Namespace: w.Namespace,
 				Workloads: []models.WorkloadListItem{*wItem},
 			}
-		} else {
-			workloadList.Workloads = append(workloadList.Workloads, *wItem)
 		}
+		workloadMap[w.Namespace] = workloadList
 	}
 	return workloadMap
 }
