@@ -124,7 +124,7 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	for _, cluster := range r.clusters {
-		clusterValidations, err := r.validationsService.CreateValidations(ctx, cluster, &vInfo)
+		clusterValidations, err := r.validationsService.Validate(ctx, cluster, vInfo)
 		if err != nil {
 			log.Errorf("[ValidationsReconciler] Error creating validations for cluster %s: %s", cluster, err)
 			return ctrl.Result{}, err
