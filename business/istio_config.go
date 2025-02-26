@@ -156,6 +156,16 @@ func (in *IstioConfigService) GetIstioConfigMap(ctx context.Context, namespace s
 	return istioConfigMap, nil
 }
 
+// GetIstioConfigMap returns a map of Istio config objects list per cluster
+// @TODO this method should replace GetIstioConfigList
+func (in *IstioConfigService) GetIstioConfigListForCluster(ctx context.Context, cluster, namespace string, criteria IstioConfigCriteria) (*models.IstioConfigList, error) {
+	if namespace == meta_v1.NamespaceAll {
+		return in.GetIstioConfigList(ctx, cluster, criteria)
+	}
+
+	return in.GetIstioConfigListForNamespace(ctx, cluster, namespace, criteria)
+}
+
 func (in *IstioConfigService) GetIstioConfigListForNamespace(ctx context.Context, cluster, namespace string, criteria IstioConfigCriteria) (*models.IstioConfigList, error) {
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
