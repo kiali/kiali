@@ -368,8 +368,8 @@ export abstract class Health {
 }
 
 interface HealthContext {
-  hasAmbient: boolean;
-  hasSidecar: boolean;
+  hasAmbient?: boolean;
+  hasSidecar?: boolean;
   rateInterval: number;
 }
 
