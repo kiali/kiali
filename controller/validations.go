@@ -115,8 +115,16 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// Check version before performing replace.
 	version := r.kialiCache.Validations().Version()
 	allClusterValidations := make(models.IstioValidations)
+
+	// validation requires cross-cluster service account information.
+	vInfo, err := r.validationsService.NewValidationInfo(ctx, r.clusters)
+	if err != nil {
+		log.Errorf("[ValidationsReconciler] Error creating validation info: %s", err)
+		return ctrl.Result{}, err
+	}
+
 	for _, cluster := range r.clusters {
-		clusterValidations, err := r.validationsService.CreateValidations(ctx, cluster)
+		clusterValidations, err := r.validationsService.CreateValidations(ctx, cluster, &vInfo)
 		if err != nil {
 			log.Errorf("[ValidationsReconciler] Error creating validations for cluster %s: %s", cluster, err)
 			return ctrl.Result{}, err
@@ -126,7 +134,7 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	if r.kialiCache.Validations().Version() != version {
-		return ctrl.Result{}, fmt.Errorf("validations have been updated since reconciling started. Requeing to revalidate")
+		return ctrl.Result{}, fmt.Errorf("validations have been updated since reconciling started. Requeuing validation")
 	}
 
 	r.kialiCache.Validations().Replace(allClusterValidations)
