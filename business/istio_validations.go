@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
@@ -242,14 +241,12 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 			namespace: &namespace,
 		}
 
-		// TODO: rename to setNamespaceIstioConfig
-		err := in.setIstioConfigList(vInfo)
+		err := in.setNamespaceIstioConfig(vInfo)
 		if err != nil {
 			return nil, err
 		}
 
-		// TODO: rename to setNonLocalMTLSConfig
-		if err := in.fetchNonLocalmTLSConfigs(vInfo); err != nil {
+		if err := in.setNonLocalMTLSConfig(vInfo); err != nil {
 			return nil, err
 		}
 
@@ -375,32 +372,17 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	}
 	vInfo.clusterInfo.istioConfig = clusterIstioConfigList
 
-	wg := sync.WaitGroup{}
-	errChan := make(chan error, 1)
-
-	// Get all the Istio objects from a Namespace and all gateways from every namespace
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
-		if len(errChan) > 0 {
-			return
-		}
-		if fetchErr := in.setIstioConfigList(vInfo); fetchErr != nil {
-			errChan <- fetchErr
-		}
-	}()
-
-	if err := in.fetchNonLocalmTLSConfigs(vInfo); err != nil {
-		return nil, nil, err
-	}
-
 	if registryStatus := in.kialiCache.GetRegistryStatus(cluster); registryStatus != nil {
 		vInfo.clusterInfo.registryServices = registryStatus.Services
 	}
 
-	wg.Wait()
+	if err := in.setNamespaceIstioConfig(vInfo); err != nil {
+		return nil, nil, err
+	}
+
+	if err := in.setNonLocalMTLSConfig(vInfo); err != nil {
+		return nil, nil, err
+	}
 
 	namespaces := vInfo.nsMap[cluster]
 	istioConfigList := vInfo.nsInfo.istioConfig
@@ -496,13 +478,6 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		err = fmt.Errorf("object type not found: %v", objectGVK.String())
 	}
 
-	close(errChan)
-	for e := range errChan {
-		if e != nil { // Check that default value wasn't returned
-			return nil, istioReferences, err
-		}
-	}
-
 	if referenceChecker != nil {
 		istioReferences = runObjectReferenceChecker(referenceChecker)
 	}
@@ -575,7 +550,7 @@ func (in *IstioValidationsService) getServiceAccounts(
 	return serviceAccounts
 }
 
-// setIstioConfigList assumes the following are set:
+// setNamespaceIstioConfig assumes the following are set:
 //
 //	vInfo.clusterInfo.istioConfig
 //	vInfo.nsInfo.namespace
@@ -585,7 +560,7 @@ func (in *IstioValidationsService) getServiceAccounts(
 //	vInfo.nsInfo.istioConfig
 //	vInfo.nsInfo.mtlsDetails
 //	vInfo.nsInfo.rbacDetails
-func (in *IstioValidationsService) setIstioConfigList(
+func (in *IstioValidationsService) setNamespaceIstioConfig(
 	vInfo *validationInfo,
 ) error {
 	var namespaceIstioConfigList models.IstioConfigList
@@ -735,7 +710,8 @@ func (in *IstioValidationsService) isExportedObjectIncluded(exportTo []string, m
 	return false
 }
 
-func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(vInfo *validationInfo) error {
+// setNonLocalMTLSConfig updates vInfo.nsInfo.mtlsDetails.EnabledAutoMtls based on the kiali home control plane
+func (in *IstioValidationsService) setNonLocalMTLSConfig(vInfo *validationInfo) error {
 	// TODO: Multi-primary support
 	for _, controlPlane := range vInfo.mesh.ControlPlanes {
 		if controlPlane.Cluster.IsKialiHome {
