@@ -149,8 +149,11 @@ type validationInfo struct {
 	nsInfo *validationNamespaceInfo
 }
 
-// CreateValidations returns an IstioValidations object with all the checks found when running all the enabled checkers.
-// TODO: rename to Validate
+// NewValidationInfo returns an initialized validationInfo structure. This is not a "free" call, the initial structure is
+// populated with cross-cluster information to be used during the validation. This structure should then be used throughout
+// a validation pass to hold "computed" information, and avoid performing the same work multiple times, when evaluating
+// different clusters, or different namespaces for a cluster. Initially unused structures/maps will be set to nil, and
+// arrays will be initialized to empty.
 func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, clusters []string) (*validationInfo, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "newValidationInfo",
@@ -160,6 +163,9 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 
 	vInfo := validationInfo{
 		clusters: clusters,
+		nsMap:    map[string][]models.Namespace{},
+		saMap:    map[string][]string{},
+		wlMap:    map[string]map[string]models.WorkloadList{},
 	}
 	mesh, err := in.mesh.discovery.Mesh(ctx)
 	if err != nil {
@@ -180,18 +186,15 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 		}
 		vInfo.nsMap[cluster] = namespaces
 
-		vInfo.saMap[cluster] = in.fetchServiceAccounts(namespaces, vInfo.wlMap[cluster])
-		if err != nil {
-			return nil, err
-		}
+		vInfo.saMap[cluster] = in.getServiceAccounts(namespaces, vInfo.wlMap[cluster])
 	}
 
 	return &vInfo, nil
 }
 
-// CreateValidations returns an IstioValidations object with all the checks found when running all the enabled checkers.
-// TODO: rename to Validate
-func (in *IstioValidationsService) CreateValidations(ctx context.Context, cluster string, vInfo *validationInfo) (models.IstioValidations, error) {
+// Validate runs a full validation on all objects. It returns an IstioValidations object with all the checks found when running all
+// the enabled checkers.
+func (in *IstioValidationsService) Validate(ctx context.Context, cluster string, vInfo *validationInfo) (models.IstioValidations, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "getValidations",
 		observability.Attribute("package", "business"),
@@ -240,7 +243,7 @@ func (in *IstioValidationsService) CreateValidations(ctx context.Context, cluste
 		}
 
 		// TODO: rename to setNamespaceIstioConfig
-		err := in.fetchIstioConfigList(ctx, vInfo)
+		err := in.setIstioConfigList(vInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -259,25 +262,28 @@ func (in *IstioValidationsService) CreateValidations(ctx context.Context, cluste
 	return validations, nil
 }
 
-// toWorkloadMap takes a list of workloads from different namespaces, and returns a map of namespace->WorkloadList
+// toWorkloadMap takes a list of workloads from different namespaces, and returns a map: namespace => WorkloadList
 func toWorkloadMap(workloads models.Workloads) map[string]models.WorkloadList {
-	var workloadMap map[string]models.WorkloadList
+	workloadMap := map[string]models.WorkloadList{}
 
 	for _, w := range workloads {
 		wItem := &models.WorkloadListItem{Health: *models.EmptyWorkloadHealth()}
 		wItem.ParseWorkload(w)
-		if workloadList, ok := workloadMap[w.Namespace]; !ok {
+		workloadList, ok := workloadMap[w.Namespace]
+		if !ok {
 			workloadMap[w.Namespace] = models.WorkloadList{
 				Namespace: w.Namespace,
 				Workloads: []models.WorkloadListItem{*wItem},
 			}
+		} else {
 			workloadList.Workloads = append(workloadList.Workloads, *wItem)
 		}
 	}
-
 	return workloadMap
 }
 
+// getAllObjectCheckers returns all of the checkers to be executed for a full validation.
+// TODO: we may want to to pass vInfo into all of these, if the checkers themselves are re-computing information
 func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) []checkers.ObjectChecker {
 	cluster := vInfo.clusterInfo.cluster
 	namespaces := vInfo.nsMap[cluster]
@@ -307,9 +313,9 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) [
 	}
 }
 
-// GetIstioObjectValidations validates a single Istio object of the given type with the given name found in the given namespace.
-// TODO rename to ValidateIstioObect
-func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context, cluster, namespace string, objectGVK schema.GroupVersionKind, object string) (models.IstioValidations, models.IstioReferencesMap, error) {
+// ValidateIstioObject validates a single Istio object of the given type with the given name found in the given namespace. Note that
+// even validating a single object requires a fair amount of information, as it may interact with many other configs.
+func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, cluster, namespace string, objectGVK schema.GroupVersionKind, object string) (models.IstioValidations, models.IstioReferencesMap, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetIstioObjectValidations",
 		observability.Attribute("package", "business"),
@@ -343,7 +349,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		cluster: cluster,
 	}
 	vInfo.nsInfo = &validationNamespaceInfo{
-		namespace: ns,
+		namespace:   ns,
+		mtlsDetails: &kubernetes.MTLSDetails{},
 	}
 
 	criteria := IstioConfigCriteria{
@@ -380,7 +387,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		if len(errChan) > 0 {
 			return
 		}
-		if fetchErr := in.fetchIstioConfigList(ctx, vInfo); fetchErr != nil {
+		if fetchErr := in.setIstioConfigList(vInfo); fetchErr != nil {
 			errChan <- fetchErr
 		}
 	}()
@@ -539,9 +546,8 @@ func runObjectReferenceChecker(referenceChecker ReferenceChecker) models.IstioRe
 	return referenceChecker.References()
 }
 
-// rename to SetServiceAccounts
-// fetchServiceAccounts set serviceAccountf for the given cluster. It expects the workloadMap and NsMap to already be set.
-func (in *IstioValidationsService) fetchServiceAccounts(
+// getServiceAccounts gets SA information given the namespaces and workloads for a given cluster.
+func (in *IstioValidationsService) getServiceAccounts(
 	namespaces []models.Namespace,
 	workloadsMap map[string]models.WorkloadList,
 ) []string {
@@ -569,8 +575,17 @@ func (in *IstioValidationsService) fetchServiceAccounts(
 	return serviceAccounts
 }
 
-func (in *IstioValidationsService) fetchIstioConfigList(
-	ctx context.Context,
+// setIstioConfigList assumes the following are set:
+//
+//	vInfo.clusterInfo.istioConfig
+//	vInfo.nsInfo.namespace
+//
+// It takes the clusterInfoConfig and calculates the namespace config information. It sets:
+//
+//	vInfo.nsInfo.istioConfig
+//	vInfo.nsInfo.mtlsDetails
+//	vInfo.nsInfo.rbacDetails
+func (in *IstioValidationsService) setIstioConfigList(
 	vInfo *validationInfo,
 ) error {
 	var namespaceIstioConfigList models.IstioConfigList

@@ -795,7 +795,7 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, clust
 	kubeCache.Refresh(namespace)
 
 	// Re-run validations for that object to refresh the validation cache.
-	if _, _, err := in.businessLayer.Validations.GetIstioObjectValidations(ctx, cluster, namespace, resourceType, name); err != nil {
+	if _, _, err := in.businessLayer.Validations.ValidateIstioObject(ctx, cluster, namespace, resourceType, name); err != nil {
 		// Logging the error and swallowing it since the object was updated successfully.
 		log.Errorf("Error while validating Istio object: %s", err)
 	}
@@ -975,7 +975,7 @@ func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, clust
 	kubeCache.Refresh(namespace)
 
 	// Re-run validations for that object to refresh the validation cache.
-	if _, _, err := in.businessLayer.Validations.GetIstioObjectValidations(ctx, cluster, namespace, resourceType, name); err != nil {
+	if _, _, err := in.businessLayer.Validations.ValidateIstioObject(ctx, cluster, namespace, resourceType, name); err != nil {
 		// Logging the error and swallowing it since the object was created successfully.
 		log.Errorf("Error while validating Istio object: %s", err)
 	}
