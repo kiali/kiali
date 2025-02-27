@@ -462,8 +462,6 @@ func castAppDetails(appLabel string, allEntities namespaceApps, ss *models.Servi
 // Optionally if appName parameter is provided, it filters apps for that name.
 // Return an error on any problem.
 func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, cluster string, appName string) (namespaceApps, error) {
-	var ss *models.ServiceList
-	var err error
 	ws := map[string]*models.Workload{}
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
@@ -490,29 +488,61 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 		keys = append(keys, k)
 	}
 	slices.Sort(keys)
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	errChan := make(chan error, len(keys)) // Buffered channel to collect errors
+
 	allEntities := make(namespaceApps)
+
 	for _, k := range keys {
 		w := ws[k]
-		// WorkloadGroup.Labels can be empty
-		if len(w.Labels) > 0 {
-			// Check if namespace is cached
-			serviceCriteria := ServiceCriteria{
-				Cluster:                cluster,
-				Namespace:              namespace,
-				IncludeHealth:          false,
-				IncludeIstioResources:  false,
-				IncludeOnlyDefinitions: true,
-				ServiceSelector:        labels.Set(w.Labels).String(),
+
+		wg.Add(1) // Increment the WaitGroup counter
+
+		go func(k string, w models.Workload) {
+			defer wg.Done() // Decrement the counter when goroutine finishes
+
+			var ss *models.ServiceList
+			var err error
+
+			// WorkloadGroup.Labels can be empty
+			if len(w.Labels) > 0 {
+				// Check if namespace is cached
+				serviceCriteria := ServiceCriteria{
+					Cluster:                cluster,
+					Namespace:              namespace,
+					IncludeHealth:          false,
+					IncludeIstioResources:  false,
+					IncludeOnlyDefinitions: true,
+					ServiceSelector:        labels.Set(w.Labels).String(),
+				}
+
+				ss, err = in.businessLayer.Svc.GetServiceList(ctx, serviceCriteria)
+				if err != nil {
+					errChan <- err
+					return
+				}
+			} else {
+				ss = nil
 			}
-			ss, err = in.businessLayer.Svc.GetServiceList(ctx, serviceCriteria)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			ss = nil
+
+			appLabelName, _ := in.conf.GetAppLabelName(w.Labels)
+
+			mu.Lock()
+			castAppDetails(appLabelName, allEntities, ss, &w, cluster)
+			mu.Unlock()
+
+		}(k, *w)
+	}
+
+	wg.Wait()
+	close(errChan)
+
+	for err := range errChan {
+		if err != nil {
+			return nil, err
 		}
-		appLabelName, _ := in.conf.GetAppLabelName(w.Labels)
-		castAppDetails(appLabelName, allEntities, ss, w, cluster)
 	}
 
 	return allEntities, nil

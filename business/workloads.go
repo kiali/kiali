@@ -450,6 +450,8 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		return nil, err2
 	}
 
+	var services *models.ServiceList
+
 	var runtimes []models.Runtime
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -463,27 +465,32 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		runtimes = NewDashboardsService(in.config, in.grafana, ns, workload).GetCustomDashboardRefs(criteria.Namespace, app, version, workload.Pods)
 	}()
 
-	// WorkloadGroup.Labels can be empty
-	if criteria.IncludeServices && len(workload.Labels) > 0 {
-		var services *models.ServiceList
-		var err error
-
-		serviceCriteria := ServiceCriteria{
-			Cluster:                criteria.Cluster,
-			Namespace:              criteria.Namespace,
-			ServiceSelector:        labels.Set(workload.Labels).String(),
-			IncludeHealth:          false,
-			IncludeOnlyDefinitions: true,
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		// WorkloadGroup.Labels can be empty
+		if criteria.IncludeServices && len(workload.Labels) > 0 {
+			serviceCriteria := ServiceCriteria{
+				Cluster:                criteria.Cluster,
+				Namespace:              criteria.Namespace,
+				ServiceSelector:        labels.Set(workload.Labels).String(),
+				IncludeHealth:          false,
+				IncludeOnlyDefinitions: true,
+			}
+			services, err = in.businessLayer.Svc.GetServiceList(ctx, serviceCriteria)
 		}
-		services, err = in.businessLayer.Svc.GetServiceList(ctx, serviceCriteria)
-		if err != nil {
-			return nil, err
-		}
-		workload.SetServices(services)
-	}
+	}()
 
 	wg.Wait()
 	workload.Runtimes = runtimes
+
+	if err != nil {
+		return nil, err
+	}
+
+	if services != nil {
+		workload.SetServices(services)
+	}
 
 	return workload, nil
 }
