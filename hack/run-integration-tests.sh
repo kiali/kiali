@@ -156,6 +156,13 @@ setKialiURL() {
   KIALI_URL="http://${ingress_ip}/kiali"
 }
 
+detectRaceConditions() {
+  local kubecontext=$1
+
+  local context_arg=${kubecontext:+--context ${kubecontext}}
+  kubectl ${context_arg} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system | grep -vzq "WARNING: DATA RACE"
+}
+
 ensureCypressInstalled() {
   cd "${SCRIPT_DIR}"/../frontend
   if ! yarn cypress --help &> /dev/null; then
@@ -318,6 +325,7 @@ if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
   # Run backend multicluster integration tests
   cd "${SCRIPT_DIR}"/../tests/integration/tests
   go test -v -failfast
+  detectRaceConditions
 elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
     export CLUSTER1_CONTEXT=kind-controlplane
@@ -346,6 +354,7 @@ elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
   # Run backend multicluster integration tests
   cd "${SCRIPT_DIR}"/../tests/integration/multicluster/
   go test -v -failfast
+  detectRaceConditions "${CLUSTER1_CONTEXT}"
 elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
   ensureCypressInstalled
   
@@ -369,6 +378,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run
+  detectRaceConditions
 elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
   ensureCypressInstalled
   ensureKialiTracesReady "true"
@@ -395,6 +405,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:ambient
+  detectRaceConditions
 elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
   ensureCypressInstalled
   
@@ -421,6 +432,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:multi-cluster
+  detectRaceConditions ${CYPRESS_CLUSTER1_CONTEXT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   ensureCypressInstalled
 
@@ -447,6 +459,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:multi-primary
+  detectRaceConditions ${CYPRESS_CLUSTER1_CONTEXT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
   ensureCypressInstalled
 
@@ -470,4 +483,5 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:tracing
+  detectRaceConditions
 fi
