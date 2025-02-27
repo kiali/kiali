@@ -158,7 +158,12 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	istioConfigValidations := models.IstioValidations{}
+	health := models.WorkloadHealth{}
 	var errValidations error
+	var errHealth error
+
+	// Fetch and build workload
+	workloadDetails, err := business.Workload.GetWorkload(r.Context(), criteria)
 
 	wg := sync.WaitGroup{}
 	if includeValidations {
@@ -169,19 +174,24 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
-	// Fetch and build workload
-	workloadDetails, err := business.Workload.GetWorkload(r.Context(), criteria)
+	if criteria.IncludeHealth {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			health, errHealth = business.Health.GetWorkloadHealth(r.Context(), criteria.Namespace, criteria.Cluster, criteria.WorkloadName, criteria.RateInterval, criteria.QueryTime, workloadDetails)
+		}()
+	}
+
+	wg.Wait()
+
 	if includeValidations && err == nil {
-		wg.Wait()
 		workloadDetails.Validations = istioConfigValidations
 		err = errValidations
 	}
 
 	if criteria.IncludeHealth && err == nil {
-		workloadDetails.Health, err = business.Health.GetWorkloadHealth(r.Context(), criteria.Namespace, criteria.Cluster, criteria.WorkloadName, criteria.RateInterval, criteria.QueryTime, workloadDetails)
-		if err != nil {
-			handleErrorResponse(w, err)
-		}
+		workloadDetails.Health = health
+		err = errHealth
 	}
 
 	if err != nil {
