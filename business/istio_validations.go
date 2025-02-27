@@ -367,7 +367,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		IncludeWorkloadEntries:        true,
 		IncludeWorkloadGroups:         true,
 	}
-	clusterIstioConfigList, err := in.istioConfig.GetIstioConfigListForCluster(ctx, cluster, namespace, criteria)
+	clusterIstioConfigList, err := in.istioConfig.GetIstioConfigListForCluster(ctx, cluster, meta_v1.NamespaceAll, criteria)
 	if err != nil {
 		return nil, istioReferences, err
 	}
