@@ -14,6 +14,7 @@ for req in "${requirements[@]}"; do
   ensure_command "$req"
 done
 
+ADDONS="prometheus grafana jaeger"
 CUSTOM_INSTALL_SETTINGS=""
 PATCH_FILE=""
 
@@ -21,6 +22,10 @@ PATCH_FILE=""
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    -a|--addons)
+      ADDONS="$2"
+      shift;shift
+      ;;
     -pf|--patch-file)
       PATCH_FILE="$2"
       shift;shift
@@ -36,6 +41,11 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -a|--addons <space-separated addon names>:
+       The names of the addons you want to install along with the core Istio components.
+       Make sure this value is space-separated. Valid addon names can be found in your Istio
+       distribution directory samples/addons.
+       Default: prometheus grafana jaeger
   -pf|--patch-file <name=value>:
        filepath to a yaml file of an Istio resource that will overlay the default Istio resource.
        --patch-file /path/to/patch-file.yaml
@@ -113,12 +123,12 @@ if [ -n "${CUSTOM_INSTALL_SETTINGS}" ]; then
 fi
 
 kubectl get ns istio-system || kubectl create ns istio-system
+
 kubectl apply -f - <<<"$ISTIO_YAML"
-kubectl wait --for=condition=Ready istios/default -n istio-system
+kubectl wait --for=condition=Ready istios/default -n istio-system --timeout=300s
 
 # Install addons
-addons=("prometheus" "grafana" "jaeger")
-for addon in "${addons[@]}"; do
+for addon in ${ADDONS}; do
   istio_version=$(kubectl get istios default -o jsonpath='{.spec.version}')
   # Verison comes in the form v1.23.0 but we want 1.23
   # Remove the 'v' and remove the .0 from 1.23.0 and we should be left with 1.23

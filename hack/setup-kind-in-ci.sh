@@ -290,12 +290,44 @@ setup_kind_tempo() {
   infomsg "Installing tempo"
   ${SCRIPT_DIR}/istio/tempo/install-tempo-env.sh -c kubectl -ot true
 
-  infomsg "Installing istio"
-  if [[ "${ISTIO_VERSION}" == *-dev ]]; then
-    local hub_arg="--image-hub default"
+  if [ "${SAIL}" == "true" ]; then
+
+  kubectl create ns istio-system
+  kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
+  kubectl wait --for=condition=Available deployment/opentelemetry-operator-controller-manager -n opentelemetry-operator-system --timeout=300s
+
+  kubectl apply -f ${SCRIPT_DIR}/istio/tempo/otel-collector.yaml
+
+  infomsg "Installing Istio with Sail"
+
+  local patch_file
+     patch_file=$(mktemp)
+     cat <<EOF > "$patch_file"
+spec:
+  values:
+    global:
+      meshID: mesh-default
+      network: network-default
+      multiCluster:
+        clusterName: cluster-default
+    meshConfig:
+      extensionProviders:
+      - name: otel-tracing
+        opentelemetry:
+          port: 4317
+          service: otel-collector.istio-system.svc.cluster.local
+EOF
+
+     "${SCRIPT_DIR}"/istio/install-istio-via-sail.sh --patch-file "$patch_file" -a "prometheus grafana"
+
+  else
+    infomsg "Installing istio"
+    if [[ "${ISTIO_VERSION}" == *-dev ]]; then
+      local hub_arg="--image-hub default"
+    fi
+
+    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
   fi
-  
-  "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
 
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
