@@ -295,7 +295,8 @@ setup_kind_tempo() {
   kubectl create ns istio-system
   kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
   kubectl wait --for=condition=Available deployment/opentelemetry-operator-controller-manager -n opentelemetry-operator-system --timeout=300s
-
+  wait 10
+  
   kubectl apply -f ${SCRIPT_DIR}/istio/tempo/otel-collector.yaml
 
   infomsg "Installing Istio with Sail"
