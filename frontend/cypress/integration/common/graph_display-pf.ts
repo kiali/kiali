@@ -69,6 +69,9 @@ When('user {string} {string} option', (action: string, option: string) => {
     case 'virtual services':
       option = 'filterVS';
       break;
+    case 'waypoint proxies':
+      option = 'filterWaypoints';
+      break;
     default:
       option = 'xxx';
   }
