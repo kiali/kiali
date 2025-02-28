@@ -523,3 +523,24 @@ Then('the {string} node {string} exists', (nodeName: string, action: string) => 
       }
     });
 });
+
+Then('the {string} service {string} exists', (serviceName: string, action: string) => {
+  cy.waitForReact();
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
+
+      const foundNode = nodes.filter(node => node.getData().service === serviceName);
+
+      if (action === 'does') {
+        assert.equal(foundNode.length, 1);
+      } else {
+        assert.equal(foundNode.length, 0);
+      }
+    });
+});
