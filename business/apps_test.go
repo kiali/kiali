@@ -202,6 +202,9 @@ func TestGetAppFromDeploymentsNoAppVerLabelNames(t *testing.T) {
 	assert.Equal("httpbin", appDetails.Name)
 
 	assert.Equal(2, len(appDetails.Workloads))
+	sort.Slice(appDetails.Workloads, func(i, j int) bool {
+		return appDetails.Workloads[i].WorkloadName < appDetails.Workloads[j].WorkloadName
+	})
 	assert.Equal("httpbin-v1", appDetails.Workloads[0].WorkloadName)
 	assert.Equal("httpbin-v2", appDetails.Workloads[1].WorkloadName)
 	assert.Equal(1, len(appDetails.ServiceNames))
@@ -330,6 +333,9 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 	assert.Equal("httpbin", appDetails.Name)
 
 	assert.Equal(2, len(appDetails.Workloads))
+	sort.Slice(appDetails.Workloads, func(i, j int) bool {
+		return appDetails.Workloads[i].WorkloadName < appDetails.Workloads[j].WorkloadName
+	})
 	assert.Equal("httpbin-v1", appDetails.Workloads[0].WorkloadName)
 	assert.Equal("httpbin-v2", appDetails.Workloads[1].WorkloadName)
 	assert.Equal(1, len(appDetails.ServiceNames))
