@@ -79,8 +79,10 @@ func (pc PrincipalsChecker) hasMatchingServiceAccount(serviceAccounts []string, 
 		return true
 	}
 
+	principalRegex := regexpFromPrincipal(principal)
+	hasWild := strings.HasPrefix(principal, wildCardMatch) || strings.HasSuffix(principal, wildCardMatch)
 	for _, sa := range serviceAccounts {
-		if (strings.HasPrefix(principal, wildCardMatch) || strings.HasSuffix(principal, wildCardMatch)) && regexpFromPrincipal(principal).MatchString(sa) {
+		if hasWild && principalRegex.MatchString(sa) {
 			// Prefix match: “abc*” will match on value “abc” and “abcd”.
 			// Suffix match: “*abc” will match on value “abc” and “xabc”.
 			return true

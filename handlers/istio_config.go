@@ -153,7 +153,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 				loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
 				for _, ns := range loadedNamespaces {
 					if util.InSlice(exportTo, ns.Name) && ns.Name != namespace {
-						istioConfigValidationResults, istioConfigReferencesResults, err := business.Validations.GetIstioObjectValidations(r.Context(), cluster, ns.Name, gvk, object)
+						istioConfigValidationResults, istioConfigReferencesResults, err := business.Validations.ValidateIstioObject(r.Context(), cluster, ns.Name, gvk, object)
 						if err != nil {
 							validationsResult <- err
 						}
@@ -163,7 +163,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			// also validate own namespace
-			istioConfigValidationResults, istioConfigReferencesResults, err := business.Validations.GetIstioObjectValidations(r.Context(), cluster, namespace, gvk, object)
+			istioConfigValidationResults, istioConfigReferencesResults, err := business.Validations.ValidateIstioObject(r.Context(), cluster, namespace, gvk, object)
 			if err != nil {
 				validationsResult <- err
 			}

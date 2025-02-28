@@ -156,6 +156,16 @@ func (in *IstioConfigService) GetIstioConfigMap(ctx context.Context, namespace s
 	return istioConfigMap, nil
 }
 
+// GetIstioConfigMap returns a map of Istio config objects list per cluster
+// @TODO this method should replace GetIstioConfigList
+func (in *IstioConfigService) GetIstioConfigListForCluster(ctx context.Context, cluster, namespace string, criteria IstioConfigCriteria) (*models.IstioConfigList, error) {
+	if namespace == meta_v1.NamespaceAll {
+		return in.GetIstioConfigList(ctx, cluster, criteria)
+	}
+
+	return in.GetIstioConfigListForNamespace(ctx, cluster, namespace, criteria)
+}
+
 func (in *IstioConfigService) GetIstioConfigListForNamespace(ctx context.Context, cluster, namespace string, criteria IstioConfigCriteria) (*models.IstioConfigList, error) {
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
@@ -785,7 +795,7 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, clust
 	kubeCache.Refresh(namespace)
 
 	// Re-run validations for that object to refresh the validation cache.
-	if _, _, err := in.businessLayer.Validations.GetIstioObjectValidations(ctx, cluster, namespace, resourceType, name); err != nil {
+	if _, _, err := in.businessLayer.Validations.ValidateIstioObject(ctx, cluster, namespace, resourceType, name); err != nil {
 		// Logging the error and swallowing it since the object was updated successfully.
 		log.Errorf("Error while validating Istio object: %s", err)
 	}
@@ -965,7 +975,7 @@ func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, clust
 	kubeCache.Refresh(namespace)
 
 	// Re-run validations for that object to refresh the validation cache.
-	if _, _, err := in.businessLayer.Validations.GetIstioObjectValidations(ctx, cluster, namespace, resourceType, name); err != nil {
+	if _, _, err := in.businessLayer.Validations.ValidateIstioObject(ctx, cluster, namespace, resourceType, name); err != nil {
 		// Logging the error and swallowing it since the object was created successfully.
 		log.Errorf("Error while validating Istio object: %s", err)
 	}
