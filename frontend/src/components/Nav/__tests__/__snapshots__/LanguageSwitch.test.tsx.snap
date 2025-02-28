@@ -24,7 +24,7 @@ exports[`Language switch renders correctly 1`] = `
   >
     <DropdownList>
       <DropdownItem
-        key="English"
+        key="english"
         onClick={[Function]}
       >
         <span>
@@ -35,7 +35,15 @@ exports[`Language switch renders correctly 1`] = `
         />
       </DropdownItem>
       <DropdownItem
-        key="Chinese"
+        key="spanish"
+        onClick={[Function]}
+      >
+        <span>
+          Español
+        </span>
+      </DropdownItem>
+      <DropdownItem
+        key="chinese"
         onClick={[Function]}
       >
         <span>
