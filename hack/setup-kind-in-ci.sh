@@ -201,18 +201,7 @@ setup_kind_singlecluster() {
       # At least with Ambient 1.21
       "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -gae true ${hub_arg:-} -cp ambient
   elif [ "${SAIL}" == "true" ]; then
-    local patch_file
-    patch_file=$(mktemp)
-    cat <<EOF > "$patch_file"
-spec:
-  values:
-    global:
-      meshID: mesh-default
-      network: network-default
-      multiCluster:
-        clusterName: cluster-default
-EOF
-    "${SCRIPT_DIR}"/istio/install-istio-via-sail.sh --patch-file "$patch_file"
+    "${SCRIPT_DIR}"/istio/install-istio-via-sail.sh
   else
     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae true ${hub_arg:-}
   fi
@@ -287,15 +276,29 @@ EOF
 setup_kind_tempo() {
   "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
 
-  infomsg "Installing tempo"
-  ${SCRIPT_DIR}/istio/tempo/install-tempo-env.sh -c kubectl -ot true
+  if [ "${SAIL}" == "true" ]; then
 
-  infomsg "Installing istio"
-  if [[ "${ISTIO_VERSION}" == *-dev ]]; then
-    local hub_arg="--image-hub default"
+    infomsg "Installing Istio with Sail"
+
+    "${SCRIPT_DIR}"/istio/install-istio-via-sail.sh -a "prometheus grafana tempo"
+
+  else
+    infomsg "Installing tempo"
+    ${SCRIPT_DIR}/istio/tempo/install-tempo-env.sh -c kubectl -ot true
+
+    kubectl create ns istio-system
+    kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
+    kubectl wait pods --all -n opentelemetry-operator-system --for=condition=Ready --timeout=5m
+
+    kubectl apply -f ${SCRIPT_DIR}/istio/tempo/otel-collector.yaml
+
+    infomsg "Installing istio"
+    if [[ "${ISTIO_VERSION}" == *-dev ]]; then
+      local hub_arg="--image-hub default"
+    fi
+
+    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
   fi
-  
-  "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
 
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
