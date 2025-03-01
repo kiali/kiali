@@ -39,15 +39,6 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-// checkIstioAPIsExist checks if the istio APIs are present in the cluster
-// and returns an error if they are not.
-func checkIstioAPIsExist(client kubernetes.ClientInterface) error {
-	if !client.IsIstioAPI() {
-		return fmt.Errorf("istio APIs and resources are not present in cluster [%s]", client.ClusterInfo().Name)
-	}
-	return nil
-}
-
 const K8sExpGatewayAPIMessage = "k8s experimental Gateway API CRD is needed to be installed"
 
 const K8sGatewayAPIMessage = "k8s Gateway API CRDs are installed, Kiali needs to be restarted to apply"
@@ -236,6 +227,18 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, err
 	}
 
 	return c, nil
+}
+
+// c.checkIstioAPISExist checks if the istio APIs are present in the cluster
+// and returns an error if they are not.
+func (c *kubeCache) checkIstioAPISExist(client kubernetes.ClientInterface) error {
+	c.cacheLock.RLock()
+	defer c.cacheLock.RUnlock()
+
+	if !client.IsIstioAPI() {
+		return fmt.Errorf("istio APIs and resources are not present in cluster [%s]", client.ClusterInfo().Name)
+	}
+	return nil
 }
 
 // It will indicate if a namespace should have a cache
@@ -1108,7 +1111,7 @@ func (c *kubeCache) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, erro
 }
 
 func (c *kubeCache) GetDestinationRule(namespace, name string) (*networking_v1.DestinationRule, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1129,7 +1132,7 @@ func (c *kubeCache) GetDestinationRule(namespace, name string) (*networking_v1.D
 }
 
 func (c *kubeCache) GetDestinationRules(namespace, labelSelector string) ([]*networking_v1.DestinationRule, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1178,7 +1181,7 @@ func (c *kubeCache) GetDestinationRules(namespace, labelSelector string) ([]*net
 }
 
 func (c *kubeCache) GetEnvoyFilter(namespace, name string) (*networking_v1alpha3.EnvoyFilter, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1199,7 +1202,7 @@ func (c *kubeCache) GetEnvoyFilter(namespace, name string) (*networking_v1alpha3
 }
 
 func (c *kubeCache) GetEnvoyFilters(namespace, labelSelector string) ([]*networking_v1alpha3.EnvoyFilter, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1247,7 +1250,7 @@ func (c *kubeCache) GetEnvoyFilters(namespace, labelSelector string) ([]*network
 }
 
 func (c *kubeCache) GetGateway(namespace, name string) (*networking_v1.Gateway, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1267,7 +1270,7 @@ func (c *kubeCache) GetGateway(namespace, name string) (*networking_v1.Gateway, 
 }
 
 func (c *kubeCache) GetGateways(namespace, labelSelector string) ([]*networking_v1.Gateway, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1315,7 +1318,7 @@ func (c *kubeCache) GetGateways(namespace, labelSelector string) ([]*networking_
 }
 
 func (c *kubeCache) GetServiceEntry(namespace, name string) (*networking_v1.ServiceEntry, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1335,7 +1338,7 @@ func (c *kubeCache) GetServiceEntry(namespace, name string) (*networking_v1.Serv
 }
 
 func (c *kubeCache) GetServiceEntries(namespace, labelSelector string) ([]*networking_v1.ServiceEntry, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1383,7 +1386,7 @@ func (c *kubeCache) GetServiceEntries(namespace, labelSelector string) ([]*netwo
 }
 
 func (c *kubeCache) GetSidecar(namespace, name string) (*networking_v1.Sidecar, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1403,7 +1406,7 @@ func (c *kubeCache) GetSidecar(namespace, name string) (*networking_v1.Sidecar, 
 }
 
 func (c *kubeCache) GetSidecars(namespace, labelSelector string) ([]*networking_v1.Sidecar, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1451,7 +1454,7 @@ func (c *kubeCache) GetSidecars(namespace, labelSelector string) ([]*networking_
 }
 
 func (c *kubeCache) GetVirtualService(namespace, name string) (*networking_v1.VirtualService, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1471,7 +1474,7 @@ func (c *kubeCache) GetVirtualService(namespace, name string) (*networking_v1.Vi
 }
 
 func (c *kubeCache) GetVirtualServices(namespace, labelSelector string) ([]*networking_v1.VirtualService, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1519,7 +1522,7 @@ func (c *kubeCache) GetVirtualServices(namespace, labelSelector string) ([]*netw
 }
 
 func (c *kubeCache) GetWorkloadEntry(namespace, name string) (*networking_v1.WorkloadEntry, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1539,7 +1542,7 @@ func (c *kubeCache) GetWorkloadEntry(namespace, name string) (*networking_v1.Wor
 }
 
 func (c *kubeCache) GetWorkloadEntries(namespace, labelSelector string) ([]*networking_v1.WorkloadEntry, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1590,7 +1593,7 @@ func (c *kubeCache) GetWorkloadEntries(namespace, labelSelector string) ([]*netw
 }
 
 func (c *kubeCache) GetWorkloadGroup(namespace, name string) (*networking_v1.WorkloadGroup, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1610,7 +1613,7 @@ func (c *kubeCache) GetWorkloadGroup(namespace, name string) (*networking_v1.Wor
 }
 
 func (c *kubeCache) GetWorkloadGroups(namespace, labelSelector string) ([]*networking_v1.WorkloadGroup, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1666,7 +1669,7 @@ func (c *kubeCache) GetWorkloadGroups(namespace, labelSelector string) ([]*netwo
 }
 
 func (c *kubeCache) GetWasmPlugin(namespace, name string) (*extentions_v1alpha1.WasmPlugin, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1686,7 +1689,7 @@ func (c *kubeCache) GetWasmPlugin(namespace, name string) (*extentions_v1alpha1.
 }
 
 func (c *kubeCache) GetWasmPlugins(namespace, labelSelector string) ([]*extentions_v1alpha1.WasmPlugin, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1734,7 +1737,7 @@ func (c *kubeCache) GetWasmPlugins(namespace, labelSelector string) ([]*extentio
 }
 
 func (c *kubeCache) GetTelemetry(namespace, name string) (*telemetry_v1.Telemetry, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1754,7 +1757,7 @@ func (c *kubeCache) GetTelemetry(namespace, name string) (*telemetry_v1.Telemetr
 }
 
 func (c *kubeCache) GetTelemetries(namespace, labelSelector string) ([]*telemetry_v1.Telemetry, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1816,7 +1819,7 @@ func (c *kubeCache) isK8sExpGatewayListerInit(namespace string) bool {
 }
 
 func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1.Gateway, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
@@ -1838,7 +1841,7 @@ func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1.Gatewa
 }
 
 func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewayapi_v1.Gateway, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1888,7 +1891,7 @@ func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewaya
 }
 
 func (c *kubeCache) GetK8sGRPCRoute(namespace, name string) (*gatewayapi_v1.GRPCRoute, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1911,7 +1914,7 @@ func (c *kubeCache) GetK8sGRPCRoute(namespace, name string) (*gatewayapi_v1.GRPC
 }
 
 func (c *kubeCache) GetK8sGRPCRoutes(namespace, labelSelector string) ([]*gatewayapi_v1.GRPCRoute, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1960,7 +1963,7 @@ func (c *kubeCache) GetK8sGRPCRoutes(namespace, labelSelector string) ([]*gatewa
 }
 
 func (c *kubeCache) GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1.HTTPRoute, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -1983,7 +1986,7 @@ func (c *kubeCache) GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1.HTTP
 }
 
 func (c *kubeCache) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewayapi_v1.HTTPRoute, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -2032,7 +2035,7 @@ func (c *kubeCache) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewa
 }
 
 func (c *kubeCache) GetK8sReferenceGrant(namespace, name string) (*gatewayapi_v1beta1.ReferenceGrant, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -2055,7 +2058,7 @@ func (c *kubeCache) GetK8sReferenceGrant(namespace, name string) (*gatewayapi_v1
 }
 
 func (c *kubeCache) GetK8sReferenceGrants(namespace, labelSelector string) ([]*gatewayapi_v1beta1.ReferenceGrant, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -2104,7 +2107,7 @@ func (c *kubeCache) GetK8sReferenceGrants(namespace, labelSelector string) ([]*g
 }
 
 func (c *kubeCache) GetK8sTCPRoute(namespace, name string) (*gatewayapi_v1alpha2.TCPRoute, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -2127,7 +2130,7 @@ func (c *kubeCache) GetK8sTCPRoute(namespace, name string) (*gatewayapi_v1alpha2
 }
 
 func (c *kubeCache) GetK8sTCPRoutes(namespace, labelSelector string) ([]*gatewayapi_v1alpha2.TCPRoute, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -2176,7 +2179,7 @@ func (c *kubeCache) GetK8sTCPRoutes(namespace, labelSelector string) ([]*gateway
 }
 
 func (c *kubeCache) GetK8sTLSRoute(namespace, name string) (*gatewayapi_v1alpha2.TLSRoute, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -2199,7 +2202,7 @@ func (c *kubeCache) GetK8sTLSRoute(namespace, name string) (*gatewayapi_v1alpha2
 }
 
 func (c *kubeCache) GetK8sTLSRoutes(namespace, labelSelector string) ([]*gatewayapi_v1alpha2.TLSRoute, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -2248,7 +2251,7 @@ func (c *kubeCache) GetK8sTLSRoutes(namespace, labelSelector string) ([]*gateway
 }
 
 func (c *kubeCache) GetAuthorizationPolicy(namespace, name string) (*security_v1.AuthorizationPolicy, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -2268,7 +2271,7 @@ func (c *kubeCache) GetAuthorizationPolicy(namespace, name string) (*security_v1
 }
 
 func (c *kubeCache) GetAuthorizationPolicies(namespace, labelSelector string) ([]*security_v1.AuthorizationPolicy, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -2316,7 +2319,7 @@ func (c *kubeCache) GetAuthorizationPolicies(namespace, labelSelector string) ([
 }
 
 func (c *kubeCache) GetPeerAuthentication(namespace, name string) (*security_v1.PeerAuthentication, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -2336,7 +2339,7 @@ func (c *kubeCache) GetPeerAuthentication(namespace, name string) (*security_v1.
 }
 
 func (c *kubeCache) GetPeerAuthentications(namespace, labelSelector string) ([]*security_v1.PeerAuthentication, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -2384,7 +2387,7 @@ func (c *kubeCache) GetPeerAuthentications(namespace, labelSelector string) ([]*
 }
 
 func (c *kubeCache) GetRequestAuthentication(namespace, name string) (*security_v1.RequestAuthentication, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 
@@ -2404,7 +2407,7 @@ func (c *kubeCache) GetRequestAuthentication(namespace, name string) (*security_
 }
 
 func (c *kubeCache) GetRequestAuthentications(namespace, labelSelector string) ([]*security_v1.RequestAuthentication, error) {
-	if err := checkIstioAPIsExist(c.client); err != nil {
+	if err := c.checkIstioAPISExist(c.client); err != nil {
 		return nil, err
 	}
 

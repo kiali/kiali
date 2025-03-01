@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	api_security_v1 "istio.io/api/security/v1"
+	api_security_v1beta1 "istio.io/api/security/v1beta1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
@@ -146,7 +147,7 @@ func TestPolicyHasMTLSEnabledPermissiveMode(t *testing.T) {
 
 func createMtls(mode string) *api_security_v1.PeerAuthentication_MutualTLS {
 	mtls := &api_security_v1.PeerAuthentication_MutualTLS{}
-	mtls.Mode = api_security_v1.PeerAuthentication_MutualTLS_Mode(api_security_v1.PeerAuthentication_MutualTLS_Mode_value[mode])
+	mtls.Mode = api_security_v1.PeerAuthentication_MutualTLS_Mode(api_security_v1beta1.PeerAuthentication_MutualTLS_Mode_value[mode])
 	return mtls
 }
 

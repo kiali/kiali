@@ -7,6 +7,7 @@ import (
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	api_security_v1 "istio.io/api/security/v1"
+	api_security_v1beta1 "istio.io/api/security/v1beta1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -537,7 +538,7 @@ func fakeStrictMeshPeerAuthentication(name string) []*security_v1.PeerAuthentica
 
 func fakeMeshPeerAuthenticationWithMtlsMode(name, mTLSmode string) []*security_v1.PeerAuthentication {
 	mtls := &api_security_v1.PeerAuthentication_MutualTLS{
-		Mode: api_security_v1.PeerAuthentication_MutualTLS_Mode(api_security_v1.PeerAuthentication_MutualTLS_Mode_value[mTLSmode]),
+		Mode: api_security_v1.PeerAuthentication_MutualTLS_Mode(api_security_v1beta1.PeerAuthentication_MutualTLS_Mode_value[mTLSmode]),
 	}
 	return fakeMeshPeerAuthentication(name, mtls)
 }

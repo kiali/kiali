@@ -138,6 +138,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	exportTo := istioConfigDetails.GetExportTo()
 	istioConfigValidations := models.IstioValidations{}
 	istioConfigReferences := models.IstioReferencesMap{}
 
@@ -147,7 +148,6 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 			defer func() {
 				close(validationsResult)
 			}()
-			exportTo := istioConfigDetails.GetExportTo()
 			if len(exportTo) != 0 {
 				// validations should be done per exported namespaces to apply exportTo configs
 				loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
@@ -169,7 +169,6 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 			}
 			*istioConfigValidations = istioConfigValidations.MergeValidations(istioConfigValidationResults)
 			*istioConfigReferences = istioConfigReferences.MergeReferencesMap(istioConfigReferencesResults)
-
 		}(&istioConfigValidations, &istioConfigReferences)
 	}
 

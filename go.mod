@@ -35,8 +35,8 @@ require (
 	google.golang.org/grpc v1.66.2
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v2 v2.4.0
-	istio.io/api v1.22.0
-	istio.io/client-go v1.22.0
+	istio.io/api v1.24.3
+	istio.io/client-go v1.24.3
 	k8s.io/api v0.31.1
 	k8s.io/apimachinery v0.31.1
 	k8s.io/client-go v0.31.1

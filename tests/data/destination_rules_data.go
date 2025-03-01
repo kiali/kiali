@@ -2,6 +2,7 @@ package data
 
 import (
 	api_networking_v1 "istio.io/api/networking/v1"
+	api_networking_v1alpha3 "istio.io/api/networking/v1alpha3"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 )
 
@@ -88,7 +89,7 @@ func CreateSimpleTLSTrafficPolicyForDestinationRules() *api_networking_v1.Traffi
 func CreateTrafficPolicyForDestinationRules(mode string) *api_networking_v1.TrafficPolicy {
 	tp := api_networking_v1.TrafficPolicy{}
 	tp.Tls = &api_networking_v1.ClientTLSSettings{}
-	if m, ok := api_networking_v1.ClientTLSSettings_TLSmode_value[mode]; ok {
+	if m, ok := api_networking_v1alpha3.ClientTLSSettings_TLSmode_value[mode]; ok {
 		tp.Tls.Mode = api_networking_v1.ClientTLSSettings_TLSmode(m)
 	}
 	return &tp

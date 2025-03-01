@@ -2,6 +2,7 @@ package data
 
 import (
 	api_security_v1 "istio.io/api/security/v1"
+	api_security_v1beta1 "istio.io/api/security/v1beta1"
 	api_v1beta1 "istio.io/api/type/v1beta1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 )
@@ -37,7 +38,7 @@ func AddSelectorToPeerAuthn(selector map[string]string, mp *security_v1.PeerAuth
 
 func CreateMTLS(mode string) *api_security_v1.PeerAuthentication_MutualTLS {
 	mtls := api_security_v1.PeerAuthentication_MutualTLS{}
-	if m, ok := api_security_v1.PeerAuthentication_MutualTLS_Mode_value[mode]; ok {
+	if m, ok := api_security_v1beta1.PeerAuthentication_MutualTLS_Mode_value[mode]; ok {
 		mtls.Mode = api_security_v1.PeerAuthentication_MutualTLS_Mode(m)
 	}
 	return &mtls
