@@ -35,6 +35,8 @@ When('user {string} {string} edge labels', (action: string, edgeLabel: string) =
 });
 
 When('user {string} {string} option', (action: string, option: string) => {
+  cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
+
   switch (option.toLowerCase()) {
     case 'cluster boxes':
       option = 'boxByCluster';
@@ -85,6 +87,8 @@ When('user {string} {string} option', (action: string, option: string) => {
   } else {
     cy.get('div#graph-display-menu').find(`input#${option}`).uncheck();
   }
+  cy.wait('@graphNamespaces');
+  ensureKialiFinishedLoading();
 });
 
 When('user resets to factory default', () => {
@@ -488,7 +492,7 @@ Then('{int} edges appear in the graph', (graphEdges: number) => {
   cy.waitForReact();
   ensureKialiFinishedLoading();
 
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true }, timeout: 10000 })
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
