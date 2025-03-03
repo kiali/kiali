@@ -3,6 +3,8 @@ package business
 import (
 	"context"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
@@ -100,7 +102,7 @@ func (in *IstioValidationsService) GetValidationsForService(ctx context.Context,
 		if err != nil {
 			log.Warningf("Error invoking GetService %s", err)
 		}
-		return nil, fmt.Errorf("Service [namespace: %s] [name: %s] doesn't exist for Validations.", namespace, service)
+		return nil, fmt.Errorf("service [namespace: %s] [name: %s] doesn't exist for Validations", namespace, service)
 	}
 
 	return validationsForCluster(in.kialiCache.Validations().Items(), cluster).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "service"}, service), nil
@@ -108,7 +110,7 @@ func (in *IstioValidationsService) GetValidationsForService(ctx context.Context,
 
 func (in *IstioValidationsService) GetValidationsForWorkload(ctx context.Context, cluster, namespace, workload string) (models.IstioValidations, error) {
 	if namespace == "" {
-		return nil, fmt.Errorf("Namespace param should be set for Validations in cluster %s", cluster)
+		return nil, fmt.Errorf("namespace param should be set for Validations in cluster %s", cluster)
 	}
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
@@ -527,28 +529,20 @@ func (in *IstioValidationsService) getServiceAccounts(
 	namespaces []models.Namespace,
 	workloadsMap map[string]models.WorkloadList,
 ) []string {
-	serviceAccounts := []string{}
+	serviceAccounts := map[string]bool{}
 	istioDomain := strings.Replace(config.Get().ExternalServices.Istio.IstioIdentityDomain, "svc.", "", 1)
 
 	for _, ns := range namespaces {
+		saFullNameNs := fmt.Sprintf("%s/ns/%s/sa/", istioDomain, ns.Name)
 		workloadList := workloadsMap[ns.Name]
 		for _, wl := range workloadList.Workloads {
 			for _, sAccountName := range wl.ServiceAccountNames {
-				saFullName := fmt.Sprintf("%s/ns/%s/sa/%s", istioDomain, ns.Name, sAccountName)
-				found := false
-				for _, name := range serviceAccounts {
-					if name == saFullName {
-						found = true
-						break
-					}
-				}
-				if !found {
-					serviceAccounts = append(serviceAccounts, saFullName)
-				}
+				saFullName := saFullNameNs + sAccountName
+				serviceAccounts[saFullName] = true
 			}
 		}
 	}
-	return serviceAccounts
+	return slices.Collect(maps.Keys(serviceAccounts))
 }
 
 // setNamespaceIstioConfig assumes the following are set:
