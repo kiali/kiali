@@ -18,7 +18,6 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -99,9 +98,6 @@ func (in *IstioValidationsService) GetValidationsForService(ctx context.Context,
 	// Ensure the service exists
 	_, err := in.service.GetService(ctx, cluster, namespace, service)
 	if err != nil {
-		if err != nil {
-			log.Warningf("Error invoking GetService %s", err)
-		}
 		return nil, fmt.Errorf("service [namespace: %s] [name: %s] doesn't exist for Validations", namespace, service)
 	}
 
