@@ -126,6 +126,15 @@ Feature: Kiali Waypoint related features
     Then 2 edges appear in the graph
     And the "echo-server" node "does" exists
     And the "curl-client" node "does" exists
+
+  Scenario: [Traffic] Waypoint for different namespaces working as expected with waypoints
+    Given user is at the "graphpf" page
+    When user graphs "waypoint-differentns" namespaces
+    Then user sees the "waypoint-differentns" namespace
+    Then user opens traffic menu
+    And user "enables" "ambient" traffic option
+    And user "enables" "http" traffic option
+    Then user opens display menu
     And user "enables" "waypoint proxies" option
     Then 4 edges appear in the graph
     Then user opens traffic menu

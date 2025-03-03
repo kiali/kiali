@@ -84,10 +84,12 @@ When('user {string} {string} option', (action: string, option: string) => {
     if (option === 'rank') {
       cy.get(`input#inboundEdges`).check();
     }
+    if (option === 'filterWaypoints') {
+      cy.wait('@graphNamespaces');
+    }
   } else {
     cy.get('div#graph-display-menu').find(`input#${option}`).uncheck();
   }
-  cy.wait('@graphNamespaces');
   ensureKialiFinishedLoading();
 });
 
