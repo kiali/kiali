@@ -28,8 +28,9 @@ func (sac ServiceAccountsChecker) Check() ([]*models.IstioCheck, bool) {
 }
 
 func (sac ServiceAccountsChecker) hasMatchingServiceAccount(serviceAccounts []string, namespace, serviceAccount string) bool {
+	targetSA := fmt.Sprintf("cluster.local/ns/%s/sa/%s", namespace, serviceAccount)
 	for _, sa := range serviceAccounts {
-		if sa == fmt.Sprintf("cluster.local/ns/%s/sa/%s", namespace, serviceAccount) {
+		if sa == targetSA {
 			return true
 		}
 	}

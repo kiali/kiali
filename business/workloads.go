@@ -157,7 +157,7 @@ func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1.Au
 	return validations
 }
 
-// GetAllWorkloads fetches all workloads across every namespace in the cluster.
+// GetAllWorkloads fetches all workloads across the cluster's namespaces.
 func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string, labelSelector string) (models.Workloads, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetAllWorkloads",
@@ -250,19 +250,20 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		}
 	}(ctx)
 
-	istioConfigCriteria := IstioConfigCriteria{
-		IncludeAuthorizationPolicies:  true,
-		IncludeEnvoyFilters:           true,
-		IncludeGateways:               true,
-		IncludeK8sGateways:            true,
-		IncludePeerAuthentications:    true,
-		IncludeRequestAuthentications: true,
-		IncludeSidecars:               true,
-		IncludeWorkloadGroups:         true,
-	}
 	var istioConfigMap models.IstioConfigMap
 
 	if criteria.IncludeIstioResources {
+		istioConfigCriteria := IstioConfigCriteria{
+			IncludeAuthorizationPolicies:  true,
+			IncludeEnvoyFilters:           true,
+			IncludeGateways:               true,
+			IncludeK8sGateways:            true,
+			IncludePeerAuthentications:    true,
+			IncludeRequestAuthentications: true,
+			IncludeSidecars:               true,
+			IncludeWorkloadGroups:         true,
+		}
+
 		go func(ctx context.Context) {
 			defer wg.Done()
 			var err2 error
