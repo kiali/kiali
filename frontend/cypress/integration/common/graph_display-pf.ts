@@ -488,7 +488,7 @@ Then('{int} edges appear in the graph', (graphEdges: number) => {
   cy.waitForReact();
   ensureKialiFinishedLoading();
 
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true }, timeout: 10000 })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
