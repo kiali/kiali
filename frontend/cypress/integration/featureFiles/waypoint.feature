@@ -153,6 +153,15 @@ Feature: Kiali Waypoint related features
     Then 2 edges appear in the graph
     And the "echo-server" node "does" exists
     And the "curl-client" node "does" exists
+
+  Scenario: [Traffic] Waypoint for all with waypoint
+    Given user is at the "graphpf" page
+    When user graphs "waypoint-forall" namespaces
+    Then user sees the "waypoint-forall" namespace
+    Then user opens traffic menu
+    And user "enables" "ambient" traffic option
+    And user "enables" "http" traffic option
+    Then user opens display menu
     And user "enables" "waypoint proxies" option
     Then 4 edges appear in the graph
     And the "cgw" node "does" exists
@@ -172,6 +181,15 @@ Feature: Kiali Waypoint related features
     Then 2 edges appear in the graph
     And the "echo-server" node "does" exists
     And the "curl-client" node "does" exists
+
+  Scenario: [Traffic] Waypoint for none with waypoint proxies
+    Given user is at the "graphpf" page
+    When user graphs "waypoint-fornone" namespaces
+    Then user sees the "waypoint-fornone" namespace
+    Then user opens traffic menu
+    And user "enables" "ambient" traffic option
+    And user "enables" "http" traffic option
+    Then user opens display menu
     And user "enables" "waypoint proxies" option
     Then 2 edges appear in the graph
     Then user opens traffic menu
@@ -189,6 +207,14 @@ Feature: Kiali Waypoint related features
     Then 2 edges appear in the graph
     And the "echo-server" node "does" exists
     And the "curl-client" node "does" exists
+
+  Scenario: [Traffic] Waypoint for service with waypoints
+    Given user is at the "graphpf" page
+    When user graphs "waypoint-forservice" namespaces
+    Then user sees the "waypoint-forservice" namespace
+    Then user opens traffic menu
+    And user "enables" "http" traffic option
+    Then user opens display menu
     And user "enables" "waypoint proxies" option
     Then 4 edges appear in the graph
     And the "waypoint" node "does" exists
@@ -207,6 +233,14 @@ Feature: Kiali Waypoint related features
     Then 1 edges appear in the graph
     And the "unknown" service "does" exists
     And the "curl-client" node "does" exists
+
+  Scenario: [Traffic] Waypoint for workload with waypoints
+    Given user is at the "graphpf" page
+    When user graphs "waypoint-forworkload" namespaces
+    Then user sees the "waypoint-forworkload" namespace
+    Then user opens traffic menu
+    And user "enables" "http" traffic option
+    Then user opens display menu
     And user "enables" "waypoint proxies" option
     Then 3 edges appear in the graph
     And the "bwaypoint" node "does" exists
@@ -225,6 +259,14 @@ Feature: Kiali Waypoint related features
     Then 2 edges appear in the graph
     And the "echo-server" node "does" exists
     And the "curl-client" node "does" exists
+
+  Scenario: [Traffic] Waypoint override with waypoints
+    Given user is at the "graphpf" page
+    When user graphs "waypoint-override" namespaces
+    Then user sees the "waypoint-override" namespace
+    Then user opens traffic menu
+    And user "enables" "http" traffic option
+    Then user opens display menu
     And user "enables" "waypoint proxies" option
     Then 4 edges appear in the graph
     And the "use-this" node "does" exists
