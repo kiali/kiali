@@ -132,7 +132,6 @@ Feature: Kiali Waypoint related features
     And user "disables" "http" traffic option
     Then 2 edges appear in the graph
 
-  @waypoint-tracing
   Scenario: [Traffic] Waypoint for all
     Given user is at the "graphpf" page
     When user graphs "waypoint-forall" namespaces
@@ -152,7 +151,6 @@ Feature: Kiali Waypoint related features
     And user "disables" "http" traffic option
     Then 2 edges appear in the graph
 
-  @waypoint-tracing
   Scenario: [Traffic] Waypoint for none
     Given user is at the "graphpf" page
     When user graphs "waypoint-fornone" namespaces
@@ -171,7 +169,6 @@ Feature: Kiali Waypoint related features
     And user "disables" "http" traffic option
     Then 0 edges appear in the graph
 
-  @waypoint-tracing
   Scenario: [Traffic] Waypoint for service
     Given user is at the "graphpf" page
     When user graphs "waypoint-forservice" namespaces
@@ -190,7 +187,6 @@ Feature: Kiali Waypoint related features
     And user "disables" "http" traffic option
     Then 2 edges appear in the graph
 
-  @waypoint-tracing
   Scenario: [Traffic] Waypoint for workload
     Given user is at the "graphpf" page
     When user graphs "waypoint-forworkload" namespaces
@@ -209,7 +205,6 @@ Feature: Kiali Waypoint related features
     And user "disables" "http" traffic option
     Then 2 edges appear in the graph
 
-  @waypoint-tracing
   Scenario: [Traffic] Waypoint override
     Given user is at the "graphpf" page
     When user graphs "waypoint-override" namespaces
