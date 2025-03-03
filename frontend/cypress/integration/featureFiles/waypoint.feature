@@ -114,12 +114,12 @@ Feature: Kiali Waypoint related features
     Then user sees a "LIST" "bookinfo" namespace
     And badge for "istio.io/use-waypoint=waypoint" is visible in the LIST view in the namespace "bookinfo"
 
-  @waypoint-tracing
   Scenario: [Traffic] Waypoint for different namespaces working as expected
     Given user is at the "graphpf" page
     When user graphs "waypoint-differentns" namespaces
     Then user sees the "waypoint-differentns" namespace
     Then user opens traffic menu
+    And user "enables" "ambient" traffic option
     And user "enables" "http" traffic option
     Then user opens display menu
     And user "disables" "waypoint proxies" option
@@ -138,6 +138,7 @@ Feature: Kiali Waypoint related features
     When user graphs "waypoint-forall" namespaces
     Then user sees the "waypoint-forall" namespace
     Then user opens traffic menu
+    And user "enables" "ambient" traffic option
     And user "enables" "http" traffic option
     Then user opens display menu
     And user "disables" "waypoint proxies" option
@@ -157,6 +158,7 @@ Feature: Kiali Waypoint related features
     When user graphs "waypoint-fornone" namespaces
     Then user sees the "waypoint-fornone" namespace
     Then user opens traffic menu
+    And user "enables" "ambient" traffic option
     And user "enables" "http" traffic option
     Then user opens display menu
     And user "disables" "waypoint proxies" option
