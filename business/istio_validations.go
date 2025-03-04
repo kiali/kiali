@@ -2,7 +2,9 @@ package business
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"hash"
 	"maps"
 	"slices"
 	"strings"
@@ -130,6 +132,10 @@ type validationClusterInfo struct {
 	registryServices []*kubernetes.RegistryService // registry services for the cluster (all namespaces)
 }
 
+// changeMap key values are determined by the validation logic, and should represent some repeatable set of
+// configuration objects. The value is the resourceVersion hash of that object set.
+type changeMap map[string]string
+
 // validationInfo holds information gathered during a single validation reconciliation. It is used to hold information that
 // may otherwise need to be recalculated.
 type validationInfo struct {
@@ -142,8 +148,14 @@ type validationInfo struct {
 
 	// clusterInfo is reset for each cluster being validated
 	clusterInfo *validationClusterInfo
+
 	// nsInfo is reset for each namespace being validated (for the cluster being validated)
 	nsInfo *validationNamespaceInfo
+
+	// changeMap is used to store "hashes" of config resourceVersion information. It can be supplied
+	// to NewValidationInfo() and used on subsequent runs to check for changes and eliminate checker runs
+	// when nothing significant has changed. If not supplied then no change detection is performed.
+	changeMap changeMap
 }
 
 // NewValidationInfo returns an initialized validationInfo structure. This is not a "free" call, the initial structure is
@@ -151,7 +163,7 @@ type validationInfo struct {
 // a validation pass to hold "computed" information, and avoid performing the same work multiple times, when evaluating
 // different clusters, or different namespaces for a cluster. Initially unused structures/maps will be set to nil, and
 // arrays will be initialized to empty.
-func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, clusters []string) (*validationInfo, error) {
+func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, clusters []string, changeMap changeMap) (*validationInfo, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "newValidationInfo",
 		observability.Attribute("package", "business"),
@@ -159,10 +171,11 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 	defer end()
 
 	vInfo := validationInfo{
-		clusters: clusters,
-		nsMap:    map[string][]models.Namespace{},
-		saMap:    map[string][]string{},
-		wlMap:    map[string]map[string]models.WorkloadList{},
+		changeMap: changeMap,
+		clusters:  clusters,
+		nsMap:     map[string][]models.Namespace{},
+		saMap:     map[string][]string{},
+		wlMap:     map[string]map[string]models.WorkloadList{},
 	}
 	mesh, err := in.mesh.discovery.Mesh(ctx)
 	if err != nil {
@@ -234,6 +247,17 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 	}
 	vInfo.clusterInfo.istioConfig = istioConfigList
 
+	// if using the changeMap, calculate the hash for the cluster's config, and decide if we have work to do...
+	if nil != vInfo.changeMap {
+		clusterKey := vInfo.clusterInfo.cluster
+		clusterHash := getClusterConfigHash(vInfo)
+		prevClusterHash, ok := vInfo.changeMap[clusterKey]
+		if ok && prevClusterHash == clusterHash {
+			return nil, nil
+		}
+		vInfo.changeMap[clusterKey] = clusterHash
+	}
+
 	for _, namespace := range vInfo.nsMap[cluster] {
 		vInfo.nsInfo = &validationNamespaceInfo{
 			namespace: &namespace,
@@ -276,6 +300,82 @@ func toWorkloadMap(workloads models.Workloads) map[string]models.WorkloadList {
 		workloadMap[w.Namespace] = workloadList
 	}
 	return workloadMap
+}
+
+// getClusterConfigHash combines the resourceVersion values for all of the relevant cluster config, returning
+// a single string that can be used a value to detect config changes
+func getClusterConfigHash(vInfo *validationInfo) string {
+	var hasher hash.Hash = sha256.New()
+
+	// loop through the workloads and gather up their resourceVersions
+	workloadLists := vInfo.wlMap[vInfo.clusterInfo.cluster]
+	for _, wl := range workloadLists {
+		for _, w := range wl.Workloads {
+			hasher.Write([]byte(w.ResourceVersion))
+		}
+	}
+
+	// loop through the config and gather up their resourceVersions
+	config := vInfo.clusterInfo.istioConfig
+	for _, c := range config.AuthorizationPolicies {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+	for _, c := range config.DestinationRules {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+	for _, c := range config.EnvoyFilters {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+	for _, c := range config.Gateways {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+	for _, c := range config.K8sGateways {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+	for _, c := range config.K8sGRPCRoutes {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+	for _, c := range config.K8sHTTPRoutes {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+	for _, c := range config.K8sReferenceGrants {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+	for _, c := range config.K8sTCPRoutes {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+	for _, c := range config.K8sTLSRoutes {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+	for _, c := range config.PeerAuthentications {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+	for _, c := range config.RequestAuthentications {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+	for _, c := range config.ServiceEntries {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+	for _, c := range config.Sidecars {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+	for _, c := range config.Telemetries {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+	for _, c := range config.VirtualServices {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+	for _, c := range config.WasmPlugins {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+	for _, c := range config.WorkloadEntries {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+	for _, c := range config.WorkloadGroups {
+		hasher.Write([]byte(c.ResourceVersion))
+	}
+
+	return fmt.Sprintf("%x", hasher.Sum(nil))
 }
 
 // getAllObjectCheckers returns all of the checkers to be executed for a full validation.
@@ -336,7 +436,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	defer timer.ObserveDuration()
 
 	// validating a single object is not particularly efficient, it still requires a lot of up-front setup
-	vInfo, err := in.NewValidationInfo(ctx, in.namespace.GetClusterList())
+	vInfo, err := in.NewValidationInfo(ctx, in.namespace.GetClusterList(), nil)
 	if err != nil {
 		return nil, models.IstioReferencesMap{}, err
 	}

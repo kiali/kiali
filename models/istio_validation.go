@@ -415,6 +415,17 @@ func (iv IstioValidations) FilterByKey(objectGVK schema.GroupVersionKind, name s
 	return fiv
 }
 
+func (iv IstioValidations) FilterByCluster(cluster string) IstioValidations {
+	fiv := IstioValidations{}
+	for k, v := range iv {
+		if v.Cluster == cluster {
+			fiv[k] = v
+		}
+	}
+
+	return fiv
+}
+
 // FilterByTypes takes an input as ObjectTypes, transforms to singular types and filters the validations
 func (iv IstioValidations) FilterByTypes(objectTypes []string) IstioValidations {
 	types := make(map[string]bool, len(objectTypes))

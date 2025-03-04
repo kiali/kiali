@@ -68,7 +68,7 @@ func TestGetValidationsPerf(t *testing.T) {
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
 
 	now := time.Now()
-	vInfo, err := vs.NewValidationInfo(context.TODO(), []string{conf.KubernetesConfig.ClusterName})
+	vInfo, err := vs.NewValidationInfo(context.TODO(), []string{conf.KubernetesConfig.ClusterName}, nil)
 	require.NoError(err)
 	validations, err := vs.Validate(context.TODO(), conf.KubernetesConfig.ClusterName, vInfo)
 	require.NoError(err)
