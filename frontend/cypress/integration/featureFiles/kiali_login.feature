@@ -9,6 +9,7 @@ Feature: Kiali login
     Given user opens base url
     And user clicks my_htpasswd_provider
 
+  @skip-lpinterop
   Scenario: Try to log in without filling the username and password
     And user does not fill in username and password
     Then user sees the "Login is required. Please try again." phrase displayed
