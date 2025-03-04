@@ -20,6 +20,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -308,11 +309,14 @@ func toWorkloadMap(workloads models.Workloads) map[string]models.WorkloadList {
 func getClusterConfigHash(vInfo *validationInfo) string {
 	var hasher hash.Hash = sha256.New()
 
-	// loop through the workloads and gather up their resourceVersions
+	// loop through the workloads and gather up their specVersions
 	workloadLists := vInfo.wlMap[vInfo.clusterInfo.cluster]
 	for _, wl := range workloadLists {
 		for _, w := range wl.Workloads {
-			hasher.Write([]byte(w.ResourceVersion))
+			hasher.Write(w.SpecVersion)
+			if w.Name == "ratings-v1" {
+				log.Infof("validations ratings-v1 SPEC: %x", w.SpecVersion)
+			}
 		}
 	}
 
