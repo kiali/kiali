@@ -27,7 +27,7 @@ import (
 var numberOfObjectsFlag int
 
 func init() {
-	flag.IntVar(&numberOfObjectsFlag, "num-objects", 10, "Number of objects to create of variosu kinds in the benchmark setup.")
+	flag.IntVar(&numberOfObjectsFlag, "num-objects", 10, "Number of objects to create of various kinds in the benchmark setup.")
 }
 
 func parseFlags(t testing.TB) {
