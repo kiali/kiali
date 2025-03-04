@@ -62,7 +62,7 @@ func TestGetNamespaceValidations(t *testing.T) {
 	vs := mockCombinedValidationService(t, conf, fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
 
-	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName})
+	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, nil)
 	require.NoError(err)
 	validations, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
 	require.NoError(err)
@@ -704,7 +704,7 @@ func TestValidatingSingleObjectUpdatesList(t *testing.T) {
 	v, err := vs.userClients[conf.KubernetesConfig.ClusterName].Istio().NetworkingV1().VirtualServices("test").Get(context.Background(), "product-vs", v1.GetOptions{})
 	require.NoError(err)
 
-	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName})
+	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, nil)
 	require.NoError(err)
 	validations, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
 	require.NoError(err)
@@ -721,7 +721,7 @@ func TestValidatingSingleObjectUpdatesList(t *testing.T) {
 	require.NoError(err)
 
 	// make sure validations are updated in a cache before retrieving them
-	vInfo, err = vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName})
+	vInfo, err = vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, nil)
 	require.NoError(err)
 	validations, err = vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
 	require.NoError(err)

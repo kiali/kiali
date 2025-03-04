@@ -96,6 +96,8 @@ type ValidationsReconciler struct {
 	validationsService *business.IstioValidationsService
 }
 
+var changeMap = map[string]string{}
+
 // Reconcile fetches the VirtualService and prints its name
 func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log.Debug("[ValidationsReconciler] Started reconciling ")
@@ -113,11 +115,12 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}()
 
 	// Check version before performing replace.
+	prevValidations := r.kialiCache.Validations().Items()
 	version := r.kialiCache.Validations().Version()
-	allClusterValidations := make(models.IstioValidations)
+	newValidations := make(models.IstioValidations)
 
 	// validation requires cross-cluster service account information.
-	vInfo, err := r.validationsService.NewValidationInfo(ctx, r.clusters)
+	vInfo, err := r.validationsService.NewValidationInfo(ctx, r.clusters, changeMap)
 	if err != nil {
 		log.Errorf("[ValidationsReconciler] Error creating validation info: %s", err)
 		return ctrl.Result{}, err
@@ -130,14 +133,19 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			return ctrl.Result{}, err
 		}
 
-		allClusterValidations = allClusterValidations.MergeValidations(clusterValidations)
+		// if there have been no config changes for the cluster, just re-use the prior validations
+		if clusterValidations == nil {
+			clusterValidations = models.IstioValidations(prevValidations).FilterByCluster(cluster)
+		}
+
+		newValidations = newValidations.MergeValidations(clusterValidations)
 	}
 
 	if r.kialiCache.Validations().Version() != version {
 		return ctrl.Result{}, fmt.Errorf("validations have been updated since reconciling started. Requeuing validation")
 	}
 
-	r.kialiCache.Validations().Replace(allClusterValidations)
+	r.kialiCache.Validations().Replace(newValidations)
 
 	return ctrl.Result{}, nil
 }
