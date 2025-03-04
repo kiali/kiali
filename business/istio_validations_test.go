@@ -62,7 +62,8 @@ func TestGetNamespaceValidations(t *testing.T) {
 	vs := mockCombinedValidationService(t, conf, fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
 
-	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, nil)
+	var changeMap = map[string]string{}
+	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
 	require.NoError(err)
 	validations, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
 	require.NoError(err)
@@ -72,6 +73,20 @@ func TestGetNamespaceValidations(t *testing.T) {
 	require.NoError(err)
 	require.NotEmpty(validations)
 	assert.True(validations[models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "test", Name: "product-vs"}].Valid)
+
+	// reValidating w/o a config change should skip running the checkers
+	validations, err = vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+	require.NoError(err)
+	assert.Nil(validations)
+
+	// refresh the config but keep the changeMap, and we should see new validations. (note PeerAuthentication config updates its ResourceVersion)
+	vs = mockCombinedValidationService(t, conf, fakeIstioConfigList(),
+		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
+	vInfo, err = vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
+	require.NoError(err)
+	validations, err = vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+	require.NoError(err)
+	assert.NotNil(validations)
 }
 
 func TestGetIstioObjectValidations(t *testing.T) {
