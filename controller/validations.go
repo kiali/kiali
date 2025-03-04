@@ -135,7 +135,10 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 		// if there have been no config changes for the cluster, just re-use the prior validations
 		if clusterValidations == nil {
+			log.Tracef("No changes for cluster [%s], re-using validations", cluster)
 			clusterValidations = models.IstioValidations(prevValidations).FilterByCluster(cluster)
+		} else {
+			log.Tracef("Config changes found for cluster [%s], updating validations ", cluster)
 		}
 
 		newValidations = newValidations.MergeValidations(clusterValidations)
