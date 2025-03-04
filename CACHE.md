@@ -26,39 +26,39 @@ Kiali maintains an internal cache for commonly used Kubernetes resources such as
 - ConfigMaps
 
 - Workloads:
--- Deployments
--- StatefulSets
--- DaemonSets
--- Endpoints
--- Pods
--- ReplicaSets
+  - Deployments
+  - StatefulSets
+  - DaemonSets
+  - Endpoints
+  - Pods
+  - ReplicaSets
 
 - Services
 
 - Istio Resources: 
--- Gateways
--- VirtualServices
--- Sidecars
--- DestinationRules
--- WorkloadEntries
--- WorkloadGroups
--- WasmPlugins
--- Telemetries
--- EnvoyFilters
--- ServiceEntries
+  - Gateways
+  - VirtualServices
+  - Sidecars
+  - DestinationRules
+  - WorkloadEntries
+  - WorkloadGroups
+  - WasmPlugins
+  - Telemetries
+  - EnvoyFilters
+  - ServiceEntries
 
 - Security Policies: 
--- AuthorizationPolicies
--- PeerAuthentications
--- RequestAuthentications
+  - AuthorizationPolicies
+  - PeerAuthentications
+  - RequestAuthentications
 
 - K8s Gateway API Resources: 
--- Gateways
--- HTTPRoutes
--- GRPCRoutes
--- TCPRoutes
--- TLSRoutes
--- ReferenceGrants
+  - Gateways
+  - HTTPRoutes
+  - GRPCRoutes
+  - TCPRoutes
+  - TLSRoutes
+  - ReferenceGrants
 
 ## Prometheus Cache
 
@@ -76,7 +76,7 @@ Kiali uses a cache for distributed tracing data retrieved from Tempo to improve 
 
 ## Non cached data. Directly Fetched Kubernetes Resources
 
-Some Kubernetes resources are not cached and are always retrieved directly from the K8s API.
+Some Kubernetes resources could not be cached and are always retrieved directly from the K8s API.
 
 - CronJobs
 - Jobs
