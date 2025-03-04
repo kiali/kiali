@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"hash"
 	"maps"
@@ -20,7 +21,6 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -309,13 +309,16 @@ func toWorkloadMap(workloads models.Workloads) map[string]models.WorkloadList {
 func getClusterConfigHash(vInfo *validationInfo) string {
 	var hasher hash.Hash = sha256.New()
 
-	// loop through the workloads and gather up their specVersions
+	// loop through the workloads and gather up hashes of their relevant checker info
 	workloadLists := vInfo.wlMap[vInfo.clusterInfo.cluster]
 	for _, wl := range workloadLists {
 		for _, w := range wl.Workloads {
-			hasher.Write(w.SpecVersion)
-			if w.Name == "ratings-v1" {
-				log.Infof("validations ratings-v1 SPEC: %x", w.SpecVersion)
+			// add to the hash any mutable values used in the checkers
+			if json, err := json.Marshal(w.Labels); err == nil {
+				hasher.Write(json)
+			}
+			if json, err := json.Marshal(w.TemplateLabels); err == nil {
+				hasher.Write(json)
 			}
 		}
 	}

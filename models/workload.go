@@ -1,8 +1,6 @@
 package models
 
 import (
-	"crypto/sha256"
-	"encoding/json"
 	"strconv"
 	"time"
 
@@ -174,10 +172,6 @@ type WorkloadListItem struct {
 
 	// Names of the waypoint proxy workloads, if any
 	WaypointWorkloads []string `json:"waypointWorkloads"`
-
-	// SpecVersion is a hash value representing the workload's Spec, to be used for detecting change.
-	// it is set at parse-time.
-	SpecVersion []byte
 }
 
 type WorkloadOverviews []*WorkloadListItem
@@ -291,7 +285,6 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	workload.WorkloadGVK = w.WorkloadGVK
 	workload.CreatedAt = w.CreatedAt
 	workload.ResourceVersion = w.ResourceVersion
-	workload.SpecVersion = w.SpecVersion
 	if w.WorkloadGVK == kubernetes.WorkloadGroups {
 		// For WorkloadGroups IstioSidecar is already calculated while fetching
 		workload.IstioSidecar = w.IstioSidecar
@@ -392,10 +385,6 @@ func (workload *Workload) ParseDeployment(d *apps_v1.Deployment) {
 	}
 	workload.CurrentReplicas = d.Status.Replicas
 	workload.AvailableReplicas = d.Status.AvailableReplicas
-	if json, err := json.Marshal(d.Spec); err == nil {
-		hash := sha256.Sum256(json)
-		workload.SpecVersion = hash[:]
-	}
 }
 
 func (workload *Workload) ParseReplicaSet(r *apps_v1.ReplicaSet) {
@@ -406,10 +395,6 @@ func (workload *Workload) ParseReplicaSet(r *apps_v1.ReplicaSet) {
 	}
 	workload.CurrentReplicas = r.Status.Replicas
 	workload.AvailableReplicas = r.Status.AvailableReplicas
-	if json, err := json.Marshal(r.Spec); err == nil {
-		hash := sha256.Sum256(json)
-		workload.SpecVersion = hash[:]
-	}
 }
 
 func (workload *Workload) ParseReplicaSetParent(r *apps_v1.ReplicaSet, workloadName string, workloadGVK schema.GroupVersionKind) {
@@ -424,10 +409,6 @@ func (workload *Workload) ParseReplicaSetParent(r *apps_v1.ReplicaSet, workloadN
 	}
 	workload.CurrentReplicas = r.Status.Replicas
 	workload.AvailableReplicas = r.Status.AvailableReplicas
-	if json, err := json.Marshal(r.Spec); err == nil {
-		hash := sha256.Sum256(json)
-		workload.SpecVersion = hash[:]
-	}
 }
 
 func (workload *Workload) ParseReplicationController(r *core_v1.ReplicationController) {
@@ -438,10 +419,6 @@ func (workload *Workload) ParseReplicationController(r *core_v1.ReplicationContr
 	}
 	workload.CurrentReplicas = r.Status.Replicas
 	workload.AvailableReplicas = r.Status.AvailableReplicas
-	if json, err := json.Marshal(r.Spec); err == nil {
-		hash := sha256.Sum256(json)
-		workload.SpecVersion = hash[:]
-	}
 }
 
 func (workload *Workload) ParseDeploymentConfig(dc *osapps_v1.DeploymentConfig) {
@@ -450,10 +427,6 @@ func (workload *Workload) ParseDeploymentConfig(dc *osapps_v1.DeploymentConfig) 
 	workload.DesiredReplicas = dc.Spec.Replicas
 	workload.CurrentReplicas = dc.Status.Replicas
 	workload.AvailableReplicas = dc.Status.AvailableReplicas
-	if json, err := json.Marshal(dc.Spec); err == nil {
-		hash := sha256.Sum256(json)
-		workload.SpecVersion = hash[:]
-	}
 }
 
 func (workload *Workload) ParseStatefulSet(s *apps_v1.StatefulSet) {
@@ -464,10 +437,6 @@ func (workload *Workload) ParseStatefulSet(s *apps_v1.StatefulSet) {
 	}
 	workload.CurrentReplicas = s.Status.Replicas
 	workload.AvailableReplicas = s.Status.ReadyReplicas
-	if json, err := json.Marshal(s.Spec); err == nil {
-		hash := sha256.Sum256(json)
-		workload.SpecVersion = hash[:]
-	}
 }
 
 func (workload *Workload) ParsePod(pod *core_v1.Pod) {
@@ -492,10 +461,6 @@ func (workload *Workload) ParsePod(pod *core_v1.Pod) {
 	// Pod has not concept of replica
 	workload.CurrentReplicas = workload.DesiredReplicas
 	workload.AvailableReplicas = podAvailableReplicas
-	if json, err := json.Marshal(pod.Spec); err == nil {
-		hash := sha256.Sum256(json)
-		workload.SpecVersion = hash[:]
-	}
 }
 
 func (workload *Workload) ParseJob(job *batch_v1.Job) {
@@ -506,10 +471,6 @@ func (workload *Workload) ParseJob(job *batch_v1.Job) {
 	workload.DesiredReplicas = job.Status.Active + job.Status.Succeeded + job.Status.Failed
 	workload.CurrentReplicas = workload.DesiredReplicas
 	workload.AvailableReplicas = job.Status.Active + job.Status.Succeeded
-	if json, err := json.Marshal(job.Spec); err == nil {
-		hash := sha256.Sum256(json)
-		workload.SpecVersion = hash[:]
-	}
 }
 
 func (workload *Workload) ParseCronJob(cnjb *batch_v1.CronJob) {
@@ -535,10 +496,6 @@ func (workload *Workload) ParseCronJob(cnjb *batch_v1.CronJob) {
 	workload.DesiredReplicas = workload.CurrentReplicas
 	workload.AvailableReplicas = podAvailableReplicas
 	workload.HealthAnnotations = GetHealthAnnotation(cnjb.Annotations, GetHealthConfigAnnotation())
-	if json, err := json.Marshal(cnjb.Spec); err == nil {
-		hash := sha256.Sum256(json)
-		workload.SpecVersion = hash[:]
-	}
 }
 
 func (workload *Workload) ParseDaemonSet(ds *apps_v1.DaemonSet) {
@@ -551,10 +508,6 @@ func (workload *Workload) ParseDaemonSet(ds *apps_v1.DaemonSet) {
 	workload.CurrentReplicas = ds.Status.CurrentNumberScheduled
 	workload.AvailableReplicas = ds.Status.NumberAvailable
 	workload.HealthAnnotations = GetHealthAnnotation(ds.Annotations, GetHealthConfigAnnotation())
-	if json, err := json.Marshal(ds.Spec); err == nil {
-		hash := sha256.Sum256(json)
-		workload.SpecVersion = hash[:]
-	}
 }
 
 func (workload *Workload) ParseWorkloadGroup(wg *networking_v1.WorkloadGroup, wentries []*networking_v1.WorkloadEntry, sidecars []*networking_v1.Sidecar) {
