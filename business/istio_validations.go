@@ -217,7 +217,8 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 
 	validations := models.IstioValidations{}
 	vInfo.clusterInfo = &validationClusterInfo{
-		cluster: cluster,
+		cluster:          cluster,
+		registryServices: []*kubernetes.RegistryService{},
 	}
 
 	if registryStatus := in.kialiCache.GetRegistryStatus(cluster); registryStatus != nil {
@@ -313,6 +314,11 @@ func getClusterConfigHash(vInfo *validationInfo) string {
 		for _, w := range wl.Workloads {
 			hasher.Write([]byte(w.ResourceVersion))
 		}
+	}
+
+	// loop through the services and gather up their resourceVersions
+	for _, s := range vInfo.clusterInfo.registryServices {
+		hasher.Write([]byte(s.ResourceVersion))
 	}
 
 	// loop through the config and gather up their resourceVersions
