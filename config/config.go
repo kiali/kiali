@@ -321,10 +321,11 @@ type IstioConfig struct {
 	IstiodPodMonitoringPort           int               `yaml:"istiod_pod_monitoring_port,omitempty"`
 	// IstiodPollingIntervalSeconds is how often in seconds Kiali will poll istiod(s) for
 	// proxy status and registry services. Polling is not performed if IstioAPIEnabled is false.
-	IstiodPollingIntervalSeconds int             `yaml:"istiod_polling_interval_seconds,omitempty"`
-	Registry                     *RegistryConfig `yaml:"registry,omitempty"`
-	RootNamespace                string          `yaml:"root_namespace,omitempty"`
-	UrlServiceVersion            string          `yaml:"url_service_version"`
+	IstiodPollingIntervalSeconds     int             `yaml:"istiod_polling_interval_seconds,omitempty"`
+	Registry                         *RegistryConfig `yaml:"registry,omitempty"`
+	RootNamespace                    string          `yaml:"root_namespace,omitempty"`
+	UrlServiceVersion                string          `yaml:"url_service_version"`
+	ValidationChangeDetectionEnabled bool            `yaml:"validation_hashing_enabled,omitempty"`
 	// ValidationReconcileInterval sets how often Kiali will validate Istio configuration.
 	// Validations cannot be disabled at the moment but you can set this to a long period of time.
 	ValidationReconcileInterval *time.Duration `yaml:"validation_reconcile_interval,omitempty"`
@@ -758,6 +759,7 @@ func NewConfig() (c *Config) {
 				IstiodPollingIntervalSeconds:      20,
 				RootNamespace:                     "istio-system",
 				UrlServiceVersion:                 "",
+				ValidationChangeDetectionEnabled:  true,
 				ValidationReconcileInterval:       util.AsPtr(time.Minute),
 				GatewayAPIClasses:                 []GatewayAPIClass{},
 			},

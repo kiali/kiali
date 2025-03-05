@@ -14,6 +14,7 @@ import (
 	ctrlsource "sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -96,8 +97,6 @@ type ValidationsReconciler struct {
 	validationsService *business.IstioValidationsService
 }
 
-var changeMap = map[string]string{}
-
 // Reconcile fetches the VirtualService and prints its name
 func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log.Debug("[ValidationsReconciler] Started reconciling ")
@@ -115,9 +114,13 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}()
 
 	// Check version before performing replace.
-	prevValidations := r.kialiCache.Validations().Items()
 	version := r.kialiCache.Validations().Version()
 	newValidations := make(models.IstioValidations)
+	prevValidations := r.kialiCache.Validations().Items()
+	var changeMap map[string][]byte
+	if config.Get().ExternalServices.Istio.ValidationChangeDetectionEnabled {
+		changeMap = r.kialiCache.ValidationHashes().Items()
+	}
 
 	// validation requires cross-cluster service account information.
 	vInfo, err := r.validationsService.NewValidationInfo(ctx, r.clusters, changeMap)
@@ -149,6 +152,7 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	r.kialiCache.Validations().Replace(newValidations)
+	r.kialiCache.ValidationHashes().Replace(changeMap)
 
 	return ctrl.Result{}, nil
 }
