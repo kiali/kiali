@@ -3,7 +3,6 @@ package business
 import (
 	"context"
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
 	"hash"
 	"maps"
@@ -314,12 +313,8 @@ func getClusterConfigHash(vInfo *validationInfo) string {
 	for _, wl := range workloadLists {
 		for _, w := range wl.Workloads {
 			// add to the hash any mutable values used in the checkers
-			if json, err := json.Marshal(w.Labels); err == nil {
-				hasher.Write(json)
-			}
-			if json, err := json.Marshal(w.TemplateLabels); err == nil {
-				hasher.Write(json)
-			}
+			hasher.Write([]byte(fmt.Sprintf("%v", w.Labels)))         // this automatically sorts by map key
+			hasher.Write([]byte(fmt.Sprintf("%v", w.TemplateLabels))) // this automatically sorts by map key
 		}
 	}
 
