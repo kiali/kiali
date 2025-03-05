@@ -1,6 +1,7 @@
 package business
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"fmt"
@@ -60,18 +61,9 @@ type ReferenceChecker interface {
 	References() models.IstioReferencesMap
 }
 
-func validationsForCluster(validations models.IstioValidations, cluster string) models.IstioValidations {
-	clusterValidations := models.IstioValidations{}
-	for validationKey, validation := range validations {
-		if validationKey.Cluster == cluster {
-			clusterValidations[validationKey] = validation
-		}
-	}
-	return clusterValidations
-}
-
 func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster string) (models.IstioValidations, error) {
-	return validationsForCluster(in.kialiCache.Validations().Items(), cluster), nil
+	validations := in.kialiCache.Validations().Items()
+	return models.IstioValidations(validations).FilterByCluster(cluster), nil
 }
 
 func (in *IstioValidationsService) GetValidationsForNamespace(ctx context.Context, cluster, namespace string) (models.IstioValidations, error) {
@@ -103,7 +95,8 @@ func (in *IstioValidationsService) GetValidationsForService(ctx context.Context,
 		return nil, fmt.Errorf("service [namespace: %s] [name: %s] doesn't exist for Validations", namespace, service)
 	}
 
-	return validationsForCluster(in.kialiCache.Validations().Items(), cluster).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "service"}, service), nil
+	validations := in.kialiCache.Validations().Items()
+	return models.IstioValidations(validations).FilterByCluster(cluster).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "service"}, service), nil
 }
 
 func (in *IstioValidationsService) GetValidationsForWorkload(ctx context.Context, cluster, namespace, workload string) (models.IstioValidations, error) {
@@ -116,7 +109,8 @@ func (in *IstioValidationsService) GetValidationsForWorkload(ctx context.Context
 		return nil, err
 	}
 
-	return validationsForCluster(in.kialiCache.Validations().Items(), cluster).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}, workload), nil
+	validations := in.kialiCache.Validations().Items()
+	return models.IstioValidations(validations).FilterByCluster(cluster).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}, workload), nil
 }
 
 type validationNamespaceInfo struct {
@@ -134,7 +128,7 @@ type validationClusterInfo struct {
 
 // changeMap key values are determined by the validation logic, and should represent some repeatable set of
 // configuration objects. The value is the resourceVersion hash of that object set.
-type changeMap map[string]string
+type changeMap map[string][]byte
 
 // validationInfo holds information gathered during a single validation reconciliation. It is used to hold information that
 // may otherwise need to be recalculated.
@@ -152,10 +146,15 @@ type validationInfo struct {
 	// nsInfo is reset for each namespace being validated (for the cluster being validated)
 	nsInfo *validationNamespaceInfo
 
-	// changeMap is used to store "hashes" of config resourceVersion information. It can be supplied
-	// to NewValidationInfo() and used on subsequent runs to check for changes and eliminate checker runs
+	// changeMap is used to store "hashes" of config resourceVersion information. When supplied to
+	// NewValidationInfo() it sets changeDetection enabled.  It is expected to persist through
+	// multiple validation runs, and it is used to check for changes and eliminate checker runs
 	// when nothing significant has changed. If not supplied then no change detection is performed.
 	changeMap changeMap
+
+	// hasBaseChange indicates whether a change is detected in the base data, likely meaning that
+	// we need a full validation pass, on each cluster
+	hasBaseChange bool
 }
 
 // NewValidationInfo returns an initialized validationInfo structure. This is not a "free" call, the initial structure is
@@ -183,6 +182,7 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 	}
 	vInfo.mesh = mesh
 
+	// gather base info, mapped by cluster
 	for _, cluster := range clusters {
 		workloads, err := in.workload.GetAllWorkloads(ctx, cluster, "")
 		if err != nil {
@@ -199,7 +199,43 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 		vInfo.saMap[cluster] = in.getServiceAccounts(namespaces, vInfo.wlMap[cluster])
 	}
 
+	// if changeDetection is enabled then loop through the base info, building a hash of relevant checker info
+	if changeMap != nil {
+		var hasher hash.Hash = sha256.New()
+		for _, workloadLists := range vInfo.wlMap {
+			for _, wl := range workloadLists {
+				for _, w := range wl.Workloads {
+					// add to the hash any mutable values used in the checkers
+					slices.Sort(w.ServiceAccountNames)
+					hasher.Write([]byte(fmt.Sprintf("%v", w.Labels)))              // this automatically sorts by map key
+					hasher.Write([]byte(fmt.Sprintf("%v", w.ServiceAccountNames))) // sorted above
+					hasher.Write([]byte(fmt.Sprintf("%v", w.TemplateLabels)))      // this automatically sorts by map key
+				}
+			}
+		}
+		vInfo.hasBaseChange = vInfo.updateChangeHash("vInfoBaseConfigData", hasher.Sum(nil))
+	}
+
 	return &vInfo, nil
+}
+
+func (in *validationInfo) changeDetectionEnabled() bool {
+	return in.changeMap != nil
+}
+
+func (in *validationInfo) forceCheckers() bool {
+	return in.hasBaseChange
+}
+
+// updateChangeHash updates, if necessary, the hash value for the given key. Returns true for a new key an update, false if the hash value is unchanged
+func (in *validationInfo) updateChangeHash(key string, hash []byte) bool {
+	if currHash, ok := in.changeMap[key]; ok {
+		if bytes.Equal(currHash, hash) {
+			return false
+		}
+	}
+	in.changeMap[key] = hash
+	return true
 }
 
 // Validate runs a full validation on all objects. It returns an IstioValidations object with all the checks found when running all
@@ -248,15 +284,13 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 	}
 	vInfo.clusterInfo.istioConfig = istioConfigList
 
-	// if using the changeMap, calculate the hash for the cluster's config, and decide if we have work to do...
-	if nil != vInfo.changeMap {
+	// if change detection is enabled, calculate the hash for the cluster's config, and decide if we have work to do...
+	if vInfo.changeDetectionEnabled() {
 		clusterKey := vInfo.clusterInfo.cluster
 		clusterHash := getClusterConfigHash(vInfo)
-		prevClusterHash, ok := vInfo.changeMap[clusterKey]
-		if ok && prevClusterHash == clusterHash {
+		if hashChanged := vInfo.updateChangeHash(clusterKey, clusterHash); !hashChanged && !vInfo.forceCheckers() {
 			return nil, nil
 		}
-		vInfo.changeMap[clusterKey] = clusterHash
 	}
 
 	for _, namespace := range vInfo.nsMap[cluster] {
@@ -305,18 +339,8 @@ func toWorkloadMap(workloads models.Workloads) map[string]models.WorkloadList {
 
 // getClusterConfigHash combines the resourceVersion values for all of the relevant cluster config, returning
 // a single string that can be used a value to detect config changes
-func getClusterConfigHash(vInfo *validationInfo) string {
+func getClusterConfigHash(vInfo *validationInfo) []byte {
 	var hasher hash.Hash = sha256.New()
-
-	// loop through the workloads and gather up hashes of their relevant checker info
-	workloadLists := vInfo.wlMap[vInfo.clusterInfo.cluster]
-	for _, wl := range workloadLists {
-		for _, w := range wl.Workloads {
-			// add to the hash any mutable values used in the checkers
-			hasher.Write([]byte(fmt.Sprintf("%v", w.Labels)))         // this automatically sorts by map key
-			hasher.Write([]byte(fmt.Sprintf("%v", w.TemplateLabels))) // this automatically sorts by map key
-		}
-	}
 
 	// loop through the services and gather up their resourceVersions
 	for _, s := range vInfo.clusterInfo.registryServices {
@@ -383,7 +407,7 @@ func getClusterConfigHash(vInfo *validationInfo) string {
 		hasher.Write([]byte(c.ResourceVersion))
 	}
 
-	return fmt.Sprintf("%x", hasher.Sum(nil))
+	return hasher.Sum(nil)
 }
 
 // getAllObjectCheckers returns all of the checkers to be executed for a full validation.

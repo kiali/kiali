@@ -62,7 +62,7 @@ func TestGetNamespaceValidations(t *testing.T) {
 	vs := mockCombinedValidationService(t, conf, fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
 
-	var changeMap = map[string]string{}
+	var changeMap = map[string][]byte{}
 	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
 	require.NoError(err)
 	validations, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
@@ -74,7 +74,9 @@ func TestGetNamespaceValidations(t *testing.T) {
 	require.NotEmpty(validations)
 	assert.True(validations[models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "test", Name: "product-vs"}].Valid)
 
-	// reValidating w/o a config change should skip running the checkers
+	// simulate a reconcile w/o a config change should skip running the checkers (new vInfo but re-use the changemap)
+	vInfo, err = vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
+	require.NoError(err)
 	validations, err = vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
 	require.NoError(err)
 	assert.Nil(validations)
