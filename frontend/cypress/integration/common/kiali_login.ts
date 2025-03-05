@@ -39,13 +39,6 @@ When('user fill in username and password', () => {
   }
 });
 
-When('user does not fill in username and password', () => {
-  if (auth_strategy === 'openshift') {
-    cy.log('Log in with empty credentials');
-    cy.get('button[type="submit"]').click();
-  }
-});
-
 When('user fills in an invalid username', () => {
   if (auth_strategy === 'openshift') {
     var invalid: string = 'foobar';
