@@ -465,11 +465,11 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		runtimes = NewDashboardsService(in.config, in.grafana, ns, workload).GetCustomDashboardRefs(criteria.Namespace, app, version, workload.Pods)
 	}()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		// WorkloadGroup.Labels can be empty
-		if criteria.IncludeServices && len(workload.Labels) > 0 {
+	// WorkloadGroup.Labels can be empty
+	if criteria.IncludeServices && len(workload.Labels) > 0 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 			serviceCriteria := ServiceCriteria{
 				Cluster:                criteria.Cluster,
 				Namespace:              criteria.Namespace,
@@ -478,8 +478,8 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 				IncludeOnlyDefinitions: true,
 			}
 			services, err = in.businessLayer.Svc.GetServiceList(ctx, serviceCriteria)
-		}
-	}()
+		}()
+	}
 
 	wg.Wait()
 	workload.Runtimes = runtimes

@@ -491,17 +491,17 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
-	errChan := make(chan error, len(keys)) // Buffered channel to collect errors
+	errChan := make(chan error, len(keys)) // for all keys
 
 	allEntities := make(namespaceApps)
 
 	for _, k := range keys {
 		w := ws[k]
 
-		wg.Add(1) // Increment the WaitGroup counter
+		wg.Add(1) // per workload to load in parallel
 
 		go func(k string, w models.Workload) {
-			defer wg.Done() // Decrement the counter when goroutine finishes
+			defer wg.Done() // per key
 
 			var ss *models.ServiceList
 			var err error
