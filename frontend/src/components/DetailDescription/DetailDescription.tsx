@@ -396,8 +396,8 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
       {props.apps !== undefined && appList()}
       {props.workloads !== undefined && workloadSummary()}
       {props.services !== undefined && serviceList()}
-      {props.health && renderTrafficStatus(props.health)}
       {props.waypointWorkloads && renderWaypoints()}
+      {props.health && renderTrafficStatus(props.health)}
     </div>
   );
 };
