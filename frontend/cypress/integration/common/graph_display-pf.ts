@@ -35,6 +35,8 @@ When('user {string} {string} edge labels', (action: string, edgeLabel: string) =
 });
 
 When('user {string} {string} option', (action: string, option: string) => {
+  cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
+
   switch (option.toLowerCase()) {
     case 'cluster boxes':
       option = 'boxByCluster';
@@ -69,6 +71,9 @@ When('user {string} {string} option', (action: string, option: string) => {
     case 'virtual services':
       option = 'filterVS';
       break;
+    case 'waypoint proxies':
+      option = 'filterWaypoints';
+      break;
     default:
       option = 'xxx';
   }
@@ -79,9 +84,13 @@ When('user {string} {string} option', (action: string, option: string) => {
     if (option === 'rank') {
       cy.get(`input#inboundEdges`).check();
     }
+    if (option === 'filterWaypoints') {
+      cy.wait('@graphNamespaces');
+    }
   } else {
     cy.get('div#graph-display-menu').find(`input#${option}`).uncheck();
   }
+  ensureKialiFinishedLoading();
 });
 
 When('user resets to factory default', () => {
@@ -512,6 +521,27 @@ Then('the {string} node {string} exists', (nodeName: string, action: string) => 
       const { nodes } = elems(controller);
 
       const foundNode = nodes.filter(node => node.getData().workload === nodeName);
+
+      if (action === 'does') {
+        assert.equal(foundNode.length, 1);
+      } else {
+        assert.equal(foundNode.length, 0);
+      }
+    });
+});
+
+Then('the {string} service {string} exists', (serviceName: string, action: string) => {
+  cy.waitForReact();
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
+
+      const foundNode = nodes.filter(node => node.getData().service === serviceName);
 
       if (action === 'does') {
         assert.equal(foundNode.length, 1);
