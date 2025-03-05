@@ -16,6 +16,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
@@ -761,7 +762,9 @@ func fakeValidationMeshServiceWithRegistryStatus(t *testing.T, cfg config.Config
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[cfg.KubernetesConfig.ClusterName] = k8s
-	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}, Config: models.ControlPlaneConfiguration{}}}},
+	}
 	namespace := NewNamespaceService(k8sclients, k8sclients, cache, conf, discovery)
 	mesh := NewMeshService(k8sclients, discovery)
 	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
