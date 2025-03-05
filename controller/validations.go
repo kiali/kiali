@@ -14,6 +14,7 @@ import (
 	ctrlsource "sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -114,10 +115,15 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	// Check version before performing replace.
 	version := r.kialiCache.Validations().Version()
-	allClusterValidations := make(models.IstioValidations)
+	newValidations := make(models.IstioValidations)
+	prevValidations := r.kialiCache.Validations().Items()
+	var changeMap map[string][]byte
+	if config.Get().ExternalServices.Istio.ValidationChangeDetectionEnabled {
+		changeMap = r.kialiCache.ValidationHashes().Items()
+	}
 
 	// validation requires cross-cluster service account information.
-	vInfo, err := r.validationsService.NewValidationInfo(ctx, r.clusters)
+	vInfo, err := r.validationsService.NewValidationInfo(ctx, r.clusters, changeMap)
 	if err != nil {
 		log.Errorf("[ValidationsReconciler] Error creating validation info: %s", err)
 		return ctrl.Result{}, err
@@ -130,14 +136,23 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			return ctrl.Result{}, err
 		}
 
-		allClusterValidations = allClusterValidations.MergeValidations(clusterValidations)
+		// if there have been no config changes for the cluster, just re-use the prior validations
+		if clusterValidations == nil {
+			log.Tracef("No changes for cluster [%s], re-using validations", cluster)
+			clusterValidations = models.IstioValidations(prevValidations).FilterByCluster(cluster)
+		} else {
+			log.Tracef("Config changes found for cluster [%s], updating validations ", cluster)
+		}
+
+		newValidations = newValidations.MergeValidations(clusterValidations)
 	}
 
 	if r.kialiCache.Validations().Version() != version {
 		return ctrl.Result{}, fmt.Errorf("validations have been updated since reconciling started. Requeuing validation")
 	}
 
-	r.kialiCache.Validations().Replace(allClusterValidations)
+	r.kialiCache.Validations().Replace(newValidations)
+	r.kialiCache.ValidationHashes().Replace(changeMap)
 
 	return ctrl.Result{}, nil
 }

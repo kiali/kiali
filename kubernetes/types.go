@@ -252,7 +252,8 @@ type IstioService struct {
 		Port     int    `json:"port"`
 		Protocol string `json:"protocol,omitempty"`
 	} `json:"ports"`
-	Hostname string `json:"hostname"`
+	Hostname        string `json:"hostname"`
+	ResourceVersion string `json:"ResourceVersion"`
 	// ClusterVIPs defined in Istio 1.11.x
 	ClusterVIPs11 map[string]string `json:"cluster-vips,omitempty"`
 	// ClusterVIPs defined in Istio 1.12.x

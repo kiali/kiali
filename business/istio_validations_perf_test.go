@@ -68,7 +68,7 @@ func TestGetValidationsPerf(t *testing.T) {
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
 
 	now := time.Now()
-	vInfo, err := vs.NewValidationInfo(context.TODO(), []string{conf.KubernetesConfig.ClusterName})
+	vInfo, err := vs.NewValidationInfo(context.TODO(), []string{conf.KubernetesConfig.ClusterName}, nil)
 	require.NoError(err)
 	validations, err := vs.Validate(context.TODO(), conf.KubernetesConfig.ClusterName, vInfo)
 	require.NoError(err)
@@ -170,7 +170,7 @@ func BenchmarkValidate(b *testing.B) {
 	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
 	vs := NewValidationsService(&layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
 
-	vInfo, err := vs.NewValidationInfo(context.TODO(), []string{conf.KubernetesConfig.ClusterName})
+	vInfo, err := vs.NewValidationInfo(context.TODO(), []string{conf.KubernetesConfig.ClusterName}, nil)
 	if err != nil {
 		b.Fatal(err)
 	}

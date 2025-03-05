@@ -62,7 +62,8 @@ func TestGetNamespaceValidations(t *testing.T) {
 	vs := mockCombinedValidationService(t, conf, fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
 
-	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName})
+	var changeMap = map[string][]byte{}
+	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
 	require.NoError(err)
 	validations, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
 	require.NoError(err)
@@ -72,6 +73,22 @@ func TestGetNamespaceValidations(t *testing.T) {
 	require.NoError(err)
 	require.NotEmpty(validations)
 	assert.True(validations[models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "test", Name: "product-vs"}].Valid)
+
+	// simulate a reconcile w/o a config change should skip running the checkers (new vInfo but re-use the changemap)
+	vInfo, err = vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
+	require.NoError(err)
+	validations, err = vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+	require.NoError(err)
+	assert.Nil(validations)
+
+	// refresh the config but keep the changeMap, and we should see new validations. (note PeerAuthentication config updates its ResourceVersion)
+	vs = mockCombinedValidationService(t, conf, fakeIstioConfigList(),
+		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
+	vInfo, err = vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
+	require.NoError(err)
+	validations, err = vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+	require.NoError(err)
+	assert.NotNil(validations)
 }
 
 func TestGetIstioObjectValidations(t *testing.T) {
@@ -704,7 +721,7 @@ func TestValidatingSingleObjectUpdatesList(t *testing.T) {
 	v, err := vs.userClients[conf.KubernetesConfig.ClusterName].Istio().NetworkingV1().VirtualServices("test").Get(context.Background(), "product-vs", v1.GetOptions{})
 	require.NoError(err)
 
-	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName})
+	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, nil)
 	require.NoError(err)
 	validations, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
 	require.NoError(err)
@@ -721,7 +738,7 @@ func TestValidatingSingleObjectUpdatesList(t *testing.T) {
 	require.NoError(err)
 
 	// make sure validations are updated in a cache before retrieving them
-	vInfo, err = vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName})
+	vInfo, err = vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, nil)
 	require.NoError(err)
 	validations, err = vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
 	require.NoError(err)
