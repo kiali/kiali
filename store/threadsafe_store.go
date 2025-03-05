@@ -67,6 +67,8 @@ func (s *threadSafeStore[K, V]) Keys() []K {
 }
 
 func (s *threadSafeStore[K, V]) Version() uint {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
 	return s.version
 }
 
