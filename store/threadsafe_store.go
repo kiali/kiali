@@ -1,9 +1,9 @@
 package store
 
 import (
+	"maps"
+	"slices"
 	"sync"
-
-	"golang.org/x/exp/maps"
 )
 
 // threadSafeStore implements the Store interface and is safe for concurrent use.
@@ -25,10 +25,11 @@ func (s *threadSafeStore[K, V]) Get(key K) (V, bool) {
 	return v, found
 }
 
+// Items returns a copy of all items in the store.
 func (s *threadSafeStore[K, V]) Items() map[K]V {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	return s.data
+	return maps.Clone(s.data)
 }
 
 // Replace replaces the contents of the store with the given map.
@@ -63,7 +64,7 @@ func (s *threadSafeStore[K, V]) Remove(key K) {
 func (s *threadSafeStore[K, V]) Keys() []K {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	return maps.Keys(s.data)
+	return slices.Collect(maps.Keys(s.data))
 }
 
 func (s *threadSafeStore[K, V]) Version() uint {
