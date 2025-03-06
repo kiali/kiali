@@ -143,6 +143,18 @@ func TestItemsReturnsWholeMap(t *testing.T) {
 	require.Equal(99, contents["key2"])
 }
 
+func TestItemsReturnsCopy(t *testing.T) {
+	require := require.New(t)
+
+	testStore := store.New[string, int]()
+	testStore.Replace(map[string]int{"key1": 42, "key2": 99})
+
+	contents := testStore.Items()
+	contents["key1"] = 52
+
+	require.Equal(42, testStore.Items()["key1"])
+}
+
 func TestDeleteKey(t *testing.T) {
 	require := require.New(t)
 
