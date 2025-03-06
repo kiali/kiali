@@ -21,6 +21,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -155,6 +156,9 @@ type validationInfo struct {
 	// hasBaseChange indicates whether a change is detected in the base data, likely meaning that
 	// we need a full validation pass, on each cluster
 	hasBaseChange bool
+
+	// reportChange is an internal flag for debugging, that logs keys that have a changed hash
+	reportChange bool
 }
 
 // NewValidationInfo returns an initialized validationInfo structure. This is not a "free" call, the initial structure is
@@ -201,19 +205,22 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 
 	// if changeDetection is enabled then loop through the base info, building a hash of relevant checker info
 	if changeMap != nil {
-		var hasher hash.Hash = sha256.New()
+		vInfo.reportChange = false
+		var hasher = NewSortedHasher(&vInfo)
 		for _, workloadLists := range vInfo.wlMap {
 			for _, wl := range workloadLists {
 				for _, w := range wl.Workloads {
 					// add to the hash any mutable values used in the checkers
+					// sort the SA names for consistency, note that sprintf will sort the maps for us
 					slices.Sort(w.ServiceAccountNames)
-					hasher.Write([]byte(fmt.Sprintf("%v", w.Labels)))              // this automatically sorts by map key
-					hasher.Write([]byte(fmt.Sprintf("%v", w.ServiceAccountNames))) // sorted above
-					hasher.Write([]byte(fmt.Sprintf("%v", w.TemplateLabels)))      // this automatically sorts by map key
+					// note, it's confusing but w.Labels are actually the labels from the owner template. We don't
+					// actually have the owner's labels here.
+					wlHash := []byte(fmt.Sprintf("%v%v", w.Labels, w.ServiceAccountNames))
+					hasher.add("WL", w.Cluster, w.Namespace, w.Name, wlHash)
 				}
 			}
 		}
-		vInfo.hasBaseChange = vInfo.updateChangeHash("vInfoBaseConfigData", hasher.Sum(nil))
+		vInfo.hasBaseChange = vInfo.updateChangeHash("vInfoBaseConfigData", hasher.sum())
 	}
 
 	return &vInfo, nil
@@ -236,6 +243,46 @@ func (in *validationInfo) updateChangeHash(key string, hash []byte) bool {
 	}
 	in.changeMap[key] = hash
 	return true
+}
+
+type sortedHasher struct {
+	hashes map[string][]byte
+	vInfo  *validationInfo
+}
+
+func NewSortedHasher(vInfo *validationInfo) *sortedHasher {
+	return &sortedHasher{
+		hashes: map[string][]byte{},
+		vInfo:  vInfo,
+	}
+}
+
+func (in *sortedHasher) add(kind, cluster, namespace, name string, hash []byte) {
+	key := fmt.Sprintf("%s:%s:%s:%s", kind, cluster, namespace, name)
+	in.hashes[key] = hash
+}
+
+func (in *sortedHasher) sum() []byte {
+	keys := slices.Collect(maps.Keys(in.hashes))
+	slices.Sort(keys)
+	var hasher hash.Hash = sha256.New()
+
+	for _, key := range keys {
+		hash := in.hashes[key]
+		hasher.Write(hash)
+		if in.vInfo.reportChange {
+			if prev, exists := in.vInfo.changeMap[key]; exists {
+				if !bytes.Equal(prev, hash) {
+					log.Tracef("validations: config change detected: %s", key)
+				}
+			} else {
+				log.Tracef("validations: new config detected: %s", key)
+			}
+			in.vInfo.changeMap[key] = hash
+		}
+	}
+
+	return hasher.Sum(nil)
 }
 
 // Validate runs a full validation on all objects. It returns an IstioValidations object with all the checks found when running all
@@ -340,74 +387,75 @@ func toWorkloadMap(workloads models.Workloads) map[string]models.WorkloadList {
 // getClusterConfigHash combines the resourceVersion values for all of the relevant cluster config, returning
 // a single string that can be used a value to detect config changes
 func getClusterConfigHash(vInfo *validationInfo) []byte {
-	var hasher hash.Hash = sha256.New()
+	hasher := NewSortedHasher(vInfo)
+	cluster := vInfo.clusterInfo.cluster
 
 	// loop through the services and gather up their resourceVersions
 	for _, s := range vInfo.clusterInfo.registryServices {
-		hasher.Write([]byte(s.ResourceVersion))
+		hasher.add("SV", cluster, s.Attributes.Namespace, s.Attributes.Name, []byte(s.ResourceVersion))
 	}
 
 	// loop through the config and gather up their resourceVersions
 	config := vInfo.clusterInfo.istioConfig
 	for _, c := range config.AuthorizationPolicies {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("AP", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 	for _, c := range config.DestinationRules {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("DR", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 	for _, c := range config.EnvoyFilters {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("EF", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 	for _, c := range config.Gateways {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("GW", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 	for _, c := range config.K8sGateways {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("KG", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 	for _, c := range config.K8sGRPCRoutes {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("KGRPC", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 	for _, c := range config.K8sHTTPRoutes {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("KHTTP", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 	for _, c := range config.K8sReferenceGrants {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("KRG", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 	for _, c := range config.K8sTCPRoutes {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("KTCP", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 	for _, c := range config.K8sTLSRoutes {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("KTLS", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 	for _, c := range config.PeerAuthentications {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("PA", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 	for _, c := range config.RequestAuthentications {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("RA", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 	for _, c := range config.ServiceEntries {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("SE", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 	for _, c := range config.Sidecars {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("SC", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 	for _, c := range config.Telemetries {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("TE", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 	for _, c := range config.VirtualServices {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("VS", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 	for _, c := range config.WasmPlugins {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("WP", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 	for _, c := range config.WorkloadEntries {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("WE", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 	for _, c := range config.WorkloadGroups {
-		hasher.Write([]byte(c.ResourceVersion))
+		hasher.add("WG", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
 	}
 
-	return hasher.Sum(nil)
+	return hasher.sum()
 }
 
 // getAllObjectCheckers returns all of the checkers to be executed for a full validation.
