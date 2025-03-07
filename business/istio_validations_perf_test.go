@@ -170,7 +170,12 @@ func BenchmarkValidate(b *testing.B) {
 	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
 	vs := NewValidationsService(&layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
 
-	vInfo, err := vs.NewValidationInfo(context.TODO(), []string{conf.KubernetesConfig.ClusterName}, nil)
+	var changeMap ValidationChangeMap
+	if conf.ExternalServices.Istio.ValidationChangeDetectionEnabled {
+		changeMap = ValidationChangeMap{}
+	}
+
+	vInfo, err := vs.NewValidationInfo(context.TODO(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
 	if err != nil {
 		b.Fatal(err)
 	}

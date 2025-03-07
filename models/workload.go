@@ -173,7 +173,11 @@ type WorkloadListItem struct {
 	// Names of the waypoint proxy workloads, if any
 	WaypointWorkloads []string `json:"waypointWorkloads"`
 
-	ValidationKey     string
+	// ValidationKey is a pre-calculated key string: "cluster:namespace:name"
+	ValidationKey string
+
+	// ValidationVersion is a pre-calculated string representing the workload "version", basically
+	// the workload information that, if changed, requires re-validation.
 	ValidationVersion string
 }
 

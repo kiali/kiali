@@ -167,7 +167,7 @@ type validationInfo struct {
 	// nsInfo is reset for each namespace being validated (for the cluster being validated)
 	nsInfo *validationNamespaceInfo
 
-	// changeMap is used to store "hashes" of config resourceVersion information. When supplied to
+	// changeMap is used to store config ResourceVersion, or an equivalent. When supplied to
 	// NewValidationInfo() it sets changeDetection enabled.  It is expected to persist through
 	// multiple validation runs, and it is used to check for changes and eliminate checker runs
 	// when nothing significant has changed. If not supplied then no change detection is performed.
@@ -177,7 +177,7 @@ type validationInfo struct {
 	// we need a full validation pass, on each cluster
 	hasBaseChange bool
 
-	// reportChange is an internal flag for debugging, that logs keys that have a changed hash
+	// reportChange is an internal flag for debugging, that logs keys that have a value change
 	reportChange bool
 }
 
@@ -303,7 +303,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 	}
 	vInfo.clusterInfo.istioConfig = istioConfigList
 
-	// if change detection is enabled, calculate the hash for the cluster's config, and decide if we have work to do...
+	// if change detection is enabled then decide if we need to run the checkers
 	if vInfo.changeDetectionEnabled() {
 		changeDetected := detectClusterConfigChange(vInfo)
 		if !changeDetected && !vInfo.forceCheckers() {
@@ -327,14 +327,13 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 
 		objectCheckers := in.getAllObjectCheckers(vInfo)
 
-		// Get group validations for same kind istio objects
 		validations.MergeValidations(runObjectCheckers(objectCheckers))
 	}
 
 	return validations, nil
 }
 
-// toWorkloadMap takes a list of workloads from different namespaces, and returns a map: namespace => []*Workload
+// toWorkloadMap takes a list of workloads from different namespaces, and returns a map: namespace => models.Workloads
 func toWorkloadMap(workloads models.Workloads) map[string]models.Workloads {
 	workloadMap := map[string]models.Workloads{}
 
@@ -350,8 +349,8 @@ func toWorkloadMap(workloads models.Workloads) map[string]models.Workloads {
 	return workloadMap
 }
 
-// getClusterConfigHash combines the resourceVersion values for all of the relevant cluster config, returning
-// a single string that can be used a value to detect config changes
+// detectClusterConfigChange checks the version values for all of the relevant cluster config, updating
+// as needed, and returns whether a change was detected.
 func detectClusterConfigChange(vInfo *validationInfo) bool {
 	change := false
 	cluster := vInfo.clusterInfo.cluster
