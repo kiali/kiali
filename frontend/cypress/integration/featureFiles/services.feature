@@ -163,3 +163,12 @@ Feature: Kiali Services page
     Then the list is sorted by column "Cluster" in "ascending" order
     When user sorts the list by column "Cluster" in "descending" order
     Then the list is sorted by column "Cluster" in "descending" order
+
+  @ambient
+  Scenario: Filter services table by health
+    And user is at the "services" page
+    When user selects the "bookinfo" namespace
+    And user selects filter "Health"
+    And user filters for health "Healthy"
+    Then user sees "something" in the table
+    And user should only see healthy services in the table
