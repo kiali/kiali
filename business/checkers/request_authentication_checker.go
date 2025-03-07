@@ -10,7 +10,7 @@ import (
 
 type RequestAuthenticationChecker struct {
 	RequestAuthentications []*security_v1.RequestAuthentication
-	WorkloadsPerNamespace  map[string]models.WorkloadList
+	WorkloadsPerNamespace  map[string]models.Workloads
 	Cluster                string
 }
 

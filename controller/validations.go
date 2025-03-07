@@ -117,9 +117,9 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	version := r.kialiCache.Validations().Version()
 	newValidations := make(models.IstioValidations)
 	prevValidations := r.kialiCache.Validations().Items()
-	var changeMap map[string][]byte
+	var changeMap business.ValidationChangeMap
 	if config.Get().ExternalServices.Istio.ValidationChangeDetectionEnabled {
-		changeMap = r.kialiCache.ValidationHashes().Items()
+		changeMap = r.kialiCache.ValidationConfig().Items()
 	}
 
 	// validation requires cross-cluster service account information.
@@ -152,7 +152,7 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	r.kialiCache.Validations().Replace(newValidations)
-	r.kialiCache.ValidationHashes().Replace(changeMap)
+	r.kialiCache.ValidationConfig().Replace(changeMap)
 
 	return ctrl.Result{}, nil
 }

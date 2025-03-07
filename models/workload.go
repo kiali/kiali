@@ -172,6 +172,9 @@ type WorkloadListItem struct {
 
 	// Names of the waypoint proxy workloads, if any
 	WaypointWorkloads []string `json:"waypointWorkloads"`
+
+	ValidationKey     string
+	ValidationVersion string
 }
 
 type WorkloadOverviews []*WorkloadListItem
@@ -278,8 +281,7 @@ type Workloads []*Workload
 
 type WorkloadEntries []*WorkloadEntry
 
-func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
-	conf := config.Get()
+func (workload *WorkloadListItem) ParseWorkload(w *Workload, conf *config.Config) {
 	workload.Name = w.Name
 	workload.Namespace = w.Namespace
 	workload.WorkloadGVK = w.WorkloadGVK
@@ -717,9 +719,9 @@ func (workloads WorkloadOverviews) HasIstioSidecar() bool {
 	return false
 }
 
-func (wl WorkloadList) GetLabels() []labels.Set {
-	wLabels := make([]labels.Set, 0, len(wl.Workloads))
-	for _, w := range wl.Workloads {
+func GetLabels(workloads []*Workload) []labels.Set {
+	wLabels := make([]labels.Set, 0, len(workloads))
+	for _, w := range workloads {
 		wLabels = append(wLabels, labels.Set(w.Labels))
 	}
 	return wLabels

@@ -62,7 +62,7 @@ func TestGetNamespaceValidations(t *testing.T) {
 	vs := mockCombinedValidationService(t, conf, fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
 
-	var changeMap = map[string][]byte{}
+	var changeMap = map[string]string{}
 	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
 	require.NoError(err)
 	validations, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)

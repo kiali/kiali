@@ -15,7 +15,7 @@ type DestinationRuleReferences struct {
 	Namespaces            models.Namespaces
 	DestinationRules      []*networking_v1.DestinationRule
 	VirtualServices       []*networking_v1.VirtualService
-	WorkloadsPerNamespace map[string]models.WorkloadList
+	WorkloadsPerNamespace map[string]models.Workloads
 	ServiceEntries        []*networking_v1.ServiceEntry
 	RegistryServices      []*kubernetes.RegistryService
 }
@@ -84,11 +84,11 @@ func (n DestinationRuleReferences) getWorkloadReferences(dr *networking_v1.Desti
 			subsetLabelSet := labels.Set(subset.Labels)
 			subsetSelector := labels.SelectorFromSet(subsetLabelSet)
 
-			for _, wl := range n.WorkloadsPerNamespace[localNs].Workloads {
-				wlLabelSet := labels.Set(wl.Labels)
+			for _, w := range n.WorkloadsPerNamespace[localNs] {
+				wlLabelSet := labels.Set(w.Labels)
 				if selector.Matches(wlLabelSet) {
 					if subsetSelector.Matches(wlLabelSet) {
-						allWorkloads = append(allWorkloads, models.WorkloadReference{Name: wl.Name, Namespace: localNs})
+						allWorkloads = append(allWorkloads, models.WorkloadReference{Name: w.Name, Namespace: localNs})
 					}
 				}
 			}

@@ -25,7 +25,7 @@ func TestCoveredworkloads(t *testing.T) {
 	var vals []*models.IstioCheck
 	var valid bool
 
-	for _, wl := range workloadListNS2().Workloads {
+	for _, wl := range workloadsNS2() {
 		//firstCase - one authorization policy namespace is wide mesh and has no selector (covers all workloads including current workload),
 		// while other auths has diffrenet namespaces than current workload
 		vals, valid = UncoveredWorkloadChecker{
@@ -51,8 +51,9 @@ func TestCoveredworkloads(t *testing.T) {
 	}
 
 	// third case - curr workload in the same namespace and has a matching authorization policy (same ns and labels)
+	workloadsNS1 := workloadsNS1()
 	vals, valid = UncoveredWorkloadChecker{
-		Workload:              workloadListNS1().Workloads[1],
+		Workload:              workloadsNS1[1],
 		Namespace:             ns1,
 		AuthorizationPolicies: authorizationPoliciesNS1(),
 	}.Check()
@@ -65,25 +66,28 @@ func TestUnCoveredWorkloads(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
+	workloadsNS1 := workloadsNS1()
+	workloadsNS2 := workloadsNS2()
+
 	assert := assert.New(t)
 	//case 1 - authpolicy in root ns with unmatching selector, other auths from another ns
 	testFailure(assert, ns2,
 		variedAuthPolicies3(),
-		workloadListNS2().Workloads[0])
+		workloadsNS2[0])
 
 	// case 2 - curr workload has different namespace than of all authpolicies
-	testFailure(assert, ns2, authorizationPoliciesNS1(), workloadListNS2().Workloads[1])
+	testFailure(assert, ns2, authorizationPoliciesNS1(), workloadsNS2[1])
 
 	//case3 - workload and authpolicies have same namespace but all auth policies have unmatching labels
 	testFailure(assert, ns1,
 		authorizationPoliciesNS1(),
-		workloadListNS1().Workloads[3])
+		workloadsNS1[3])
 
 	//case4 - no authorization policy found
-	testFailure(assert, ns2, []*security_v1.AuthorizationPolicy{}, workloadListNS2().Workloads[0])
+	testFailure(assert, ns2, []*security_v1.AuthorizationPolicy{}, workloadsNS2[0])
 }
 
-func testFailure(assert *assert.Assertions, ns string, authpolicies []*security_v1.AuthorizationPolicy, workload models.WorkloadListItem) {
+func testFailure(assert *assert.Assertions, ns string, authpolicies []*security_v1.AuthorizationPolicy, workload *models.Workload) {
 	vals, valid := UncoveredWorkloadChecker{
 		Workload:              workload,
 		Namespace:             ns,
@@ -96,23 +100,23 @@ func testFailure(assert *assert.Assertions, ns string, authpolicies []*security_
 
 }
 
-func workloadListNS1() models.WorkloadList {
-	wlitems := []models.WorkloadListItem{
-		data.CreateWorkloadListItem("covered-workload1", map[string]string{"app": "ratings", "version": "v1"}),
-		data.CreateWorkloadListItem("covered-workload2", map[string]string{"app": "productpage", "version": "v1"}),
-		data.CreateWorkloadListItem("covered-workload3", map[string]string{"app": "details", "version": "v3"}),
-		data.CreateWorkloadListItem("uncovered-workload", map[string]string{"app": "wrong", "version": "v5"}),
+func workloadsNS1() models.Workloads {
+	workloads := models.Workloads{
+		data.CreateWorkload("covered-workload1", map[string]string{"app": "ratings", "version": "v1"}),
+		data.CreateWorkload("covered-workload2", map[string]string{"app": "productpage", "version": "v1"}),
+		data.CreateWorkload("covered-workload3", map[string]string{"app": "details", "version": "v3"}),
+		data.CreateWorkload("uncovered-workload", map[string]string{"app": "wrong", "version": "v5"}),
 	}
 
-	return data.CreateWorkloadList(ns1, wlitems...)
+	return workloads
 }
 
-func workloadListNS2() models.WorkloadList {
-	wlitems := []models.WorkloadListItem{
-		data.CreateWorkloadListItem("uncovered-workload1", map[string]string{"app": "ratings", "version": "v1"}),
-		data.CreateWorkloadListItem("uncovered-workload2", map[string]string{"app": "details", "version": "v2"}),
+func workloadsNS2() models.Workloads {
+	workloads := models.Workloads{
+		data.CreateWorkload("uncovered-workload1", map[string]string{"app": "ratings", "version": "v1"}),
+		data.CreateWorkload("uncovered-workload2", map[string]string{"app": "details", "version": "v2"}),
 	}
-	return data.CreateWorkloadList(ns2, wlitems...)
+	return workloads
 }
 
 func authorizationPoliciesNS1() []*security_v1.AuthorizationPolicy {

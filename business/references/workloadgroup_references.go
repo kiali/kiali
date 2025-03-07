@@ -12,7 +12,7 @@ import (
 type WorkloadGroupReferences struct {
 	WorkloadGroups        []*networking_v1.WorkloadGroup
 	WorkloadEntries       []*networking_v1.WorkloadEntry
-	WorkloadsPerNamespace map[string]models.WorkloadList
+	WorkloadsPerNamespace map[string]models.Workloads
 }
 
 func (n WorkloadGroupReferences) References() models.IstioReferencesMap {
@@ -33,10 +33,10 @@ func (n WorkloadGroupReferences) getWorkloadReferences(wg *networking_v1.Workloa
 	result := make([]models.WorkloadReference, 0)
 
 	// Searches Workloads from all namespace
-	for _, wls := range n.WorkloadsPerNamespace {
-		for _, wl := range wls.Workloads {
-			if wg.Namespace == wls.Namespace && wg.Name == wl.Name {
-				result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: wls.Namespace})
+	for ns, workloads := range n.WorkloadsPerNamespace {
+		for _, w := range workloads {
+			if wg.Namespace == ns && wg.Name == w.Name {
+				result = append(result, models.WorkloadReference{Name: w.Name, Namespace: ns})
 			}
 		}
 	}

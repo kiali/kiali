@@ -1,13 +1,11 @@
 package business
 
 import (
-	"bytes"
 	"context"
-	"crypto/sha256"
 	"fmt"
-	"hash"
 	"maps"
 	"slices"
+	"strconv"
 	"strings"
 
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
@@ -127,19 +125,41 @@ type validationClusterInfo struct {
 	registryServices []*kubernetes.RegistryService // registry services for the cluster (all namespaces)
 }
 
-// changeMap key values are determined by the validation logic, and should represent some repeatable set of
-// configuration objects. The value is the resourceVersion hash of that object set.
-type changeMap map[string][]byte
+// changeMap key values are determined by the validation logic, and typically identifies a config object,
+// or set of confg objects. The value is typically resourceVersion, or some equivalent.
+type ValidationChangeMap map[string]string
+
+func (in ValidationChangeMap) update(key, value string, report bool) bool {
+	prev, exists := in[key]
+
+	if !exists {
+		if report {
+			log.Tracef("validations: new config detected: %s", key)
+		}
+		in[key] = value
+		return true
+	}
+
+	if prev != value {
+		if report {
+			log.Tracef("validations: config change detected: %s", key)
+		}
+		in[key] = value
+		return true
+	}
+
+	return false
+}
 
 // validationInfo holds information gathered during a single validation reconciliation. It is used to hold information that
 // may otherwise need to be recalculated.
 type validationInfo struct {
 	// cross-cluster information
-	clusters []string                                  // all clusters being validated
-	mesh     *models.Mesh                              // control plane info
-	nsMap    map[string][]models.Namespace             // cluster => namespaces
-	saMap    map[string][]string                       // cluster => serviceAccounts
-	wlMap    map[string]map[string]models.WorkloadList // cluster => namespace => WorkloadList, all workloads
+	clusters []string                               // all clusters being validated
+	mesh     *models.Mesh                           // control plane info
+	nsMap    map[string][]models.Namespace          // cluster => namespaces
+	saMap    map[string][]string                    // cluster => serviceAccounts
+	wlMap    map[string]map[string]models.Workloads // cluster => namespace => []Workload, all workloads
 
 	// clusterInfo is reset for each cluster being validated
 	clusterInfo *validationClusterInfo
@@ -151,7 +171,7 @@ type validationInfo struct {
 	// NewValidationInfo() it sets changeDetection enabled.  It is expected to persist through
 	// multiple validation runs, and it is used to check for changes and eliminate checker runs
 	// when nothing significant has changed. If not supplied then no change detection is performed.
-	changeMap changeMap
+	changeMap ValidationChangeMap
 
 	// hasBaseChange indicates whether a change is detected in the base data, likely meaning that
 	// we need a full validation pass, on each cluster
@@ -166,7 +186,7 @@ type validationInfo struct {
 // a validation pass to hold "computed" information, and avoid performing the same work multiple times, when evaluating
 // different clusters, or different namespaces for a cluster. Initially unused structures/maps will be set to nil, and
 // arrays will be initialized to empty.
-func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, clusters []string, changeMap changeMap) (*validationInfo, error) {
+func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, clusters []string, changeMap ValidationChangeMap) (*validationInfo, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "newValidationInfo",
 		observability.Attribute("package", "business"),
@@ -178,7 +198,7 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 		clusters:  clusters,
 		nsMap:     map[string][]models.Namespace{},
 		saMap:     map[string][]string{},
-		wlMap:     map[string]map[string]models.WorkloadList{},
+		wlMap:     map[string]map[string]models.Workloads{},
 	}
 	mesh, err := in.mesh.discovery.Mesh(ctx)
 	if err != nil {
@@ -203,24 +223,22 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 		vInfo.saMap[cluster] = in.getServiceAccounts(namespaces, vInfo.wlMap[cluster])
 	}
 
-	// if changeDetection is enabled then loop through the base info, building a hash of relevant checker info
+	// if changeDetection is enabled then loop through the workloads, looking for a change
 	if changeMap != nil {
-		vInfo.reportChange = false
-		var hasher = NewSortedHasher(&vInfo)
-		for _, workloadLists := range vInfo.wlMap {
-			for _, wl := range workloadLists {
-				for _, w := range wl.Workloads {
-					// add to the hash any mutable values used in the checkers
-					// sort the SA names for consistency, note that sprintf will sort the maps for us
-					slices.Sort(w.ServiceAccountNames)
-					// note, it's confusing but w.Labels are actually the labels from the owner template. We don't
-					// actually have the owner's labels here.
-					wlHash := []byte(fmt.Sprintf("%v%v", w.Labels, w.ServiceAccountNames))
-					hasher.add("WL", w.Cluster, w.Namespace, w.Name, wlHash)
+		vInfo.reportChange = true
+
+		changeDetected := false
+		numWorkloads := 0
+		for _, workloadsMap := range vInfo.wlMap {
+			for _, workloads := range workloadsMap {
+				numWorkloads += len(workloads)
+				for _, w := range workloads {
+					changeDetected = changeMap.update(w.ValidationKey, w.ValidationVersion, vInfo.reportChange) || changeDetected
 				}
 			}
 		}
-		vInfo.hasBaseChange = vInfo.updateChangeHash("vInfoBaseConfigData", hasher.sum())
+		changeDetected = changeMap.update("validation-num-workloads", strconv.Itoa(numWorkloads), vInfo.reportChange) || changeDetected
+		vInfo.hasBaseChange = changeDetected
 	}
 
 	return &vInfo, nil
@@ -230,59 +248,13 @@ func (in *validationInfo) changeDetectionEnabled() bool {
 	return in.changeMap != nil
 }
 
+func (in *validationInfo) update(kind, cluster, namespace, name, value string) bool {
+	key := fmt.Sprintf("%s:%s:%s:%s", kind, cluster, namespace, name)
+	return in.changeMap.update(key, value, in.reportChange)
+}
+
 func (in *validationInfo) forceCheckers() bool {
 	return in.hasBaseChange
-}
-
-// updateChangeHash updates, if necessary, the hash value for the given key. Returns true for a new key an update, false if the hash value is unchanged
-func (in *validationInfo) updateChangeHash(key string, hash []byte) bool {
-	if currHash, ok := in.changeMap[key]; ok {
-		if bytes.Equal(currHash, hash) {
-			return false
-		}
-	}
-	in.changeMap[key] = hash
-	return true
-}
-
-type sortedHasher struct {
-	hashes map[string][]byte
-	vInfo  *validationInfo
-}
-
-func NewSortedHasher(vInfo *validationInfo) *sortedHasher {
-	return &sortedHasher{
-		hashes: map[string][]byte{},
-		vInfo:  vInfo,
-	}
-}
-
-func (in *sortedHasher) add(kind, cluster, namespace, name string, hash []byte) {
-	key := fmt.Sprintf("%s:%s:%s:%s", kind, cluster, namespace, name)
-	in.hashes[key] = hash
-}
-
-func (in *sortedHasher) sum() []byte {
-	keys := slices.Collect(maps.Keys(in.hashes))
-	slices.Sort(keys)
-	var hasher hash.Hash = sha256.New()
-
-	for _, key := range keys {
-		hash := in.hashes[key]
-		hasher.Write(hash)
-		if in.vInfo.reportChange {
-			if prev, exists := in.vInfo.changeMap[key]; exists {
-				if !bytes.Equal(prev, hash) {
-					log.Tracef("validations: config change detected: %s", key)
-				}
-			} else {
-				log.Tracef("validations: new config detected: %s", key)
-			}
-			in.vInfo.changeMap[key] = hash
-		}
-	}
-
-	return hasher.Sum(nil)
 }
 
 // Validate runs a full validation on all objects. It returns an IstioValidations object with all the checks found when running all
@@ -333,9 +305,8 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 
 	// if change detection is enabled, calculate the hash for the cluster's config, and decide if we have work to do...
 	if vInfo.changeDetectionEnabled() {
-		clusterKey := vInfo.clusterInfo.cluster
-		clusterHash := getClusterConfigHash(vInfo)
-		if hashChanged := vInfo.updateChangeHash(clusterKey, clusterHash); !hashChanged && !vInfo.forceCheckers() {
+		changeDetected := detectClusterConfigChange(vInfo)
+		if !changeDetected && !vInfo.forceCheckers() {
 			return nil, nil
 		}
 	}
@@ -363,99 +334,115 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 	return validations, nil
 }
 
-// toWorkloadMap takes a list of workloads from different namespaces, and returns a map: namespace => WorkloadList
-func toWorkloadMap(workloads models.Workloads) map[string]models.WorkloadList {
-	workloadMap := map[string]models.WorkloadList{}
+// toWorkloadMap takes a list of workloads from different namespaces, and returns a map: namespace => []*Workload
+func toWorkloadMap(workloads models.Workloads) map[string]models.Workloads {
+	workloadMap := map[string]models.Workloads{}
 
 	for _, w := range workloads {
-		wItem := &models.WorkloadListItem{Health: *models.EmptyWorkloadHealth()}
-		wItem.ParseWorkload(w)
-		workloadList, ok := workloadMap[w.Namespace]
+		workloads, ok := workloadMap[w.Namespace]
 		if ok {
-			workloadList.Workloads = append(workloadList.Workloads, *wItem)
+			workloads = append(workloads, w)
 		} else {
-			workloadList = models.WorkloadList{
-				Namespace: w.Namespace,
-				Workloads: []models.WorkloadListItem{*wItem},
-			}
+			workloads = models.Workloads{w}
 		}
-		workloadMap[w.Namespace] = workloadList
+		workloadMap[w.Namespace] = workloads
 	}
 	return workloadMap
 }
 
 // getClusterConfigHash combines the resourceVersion values for all of the relevant cluster config, returning
 // a single string that can be used a value to detect config changes
-func getClusterConfigHash(vInfo *validationInfo) []byte {
-	hasher := NewSortedHasher(vInfo)
+func detectClusterConfigChange(vInfo *validationInfo) bool {
+	change := false
 	cluster := vInfo.clusterInfo.cluster
 
 	// loop through the services and gather up their resourceVersions
 	for _, s := range vInfo.clusterInfo.registryServices {
-		hasher.add("SV", cluster, s.Attributes.Namespace, s.Attributes.Name, []byte(s.ResourceVersion))
+		change = vInfo.update("SV", cluster, s.Attributes.Namespace, s.Attributes.Name, s.ResourceVersion) || change
 	}
 
 	// loop through the config and gather up their resourceVersions
 	config := vInfo.clusterInfo.istioConfig
 	for _, c := range config.AuthorizationPolicies {
-		hasher.add("AP", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("AP", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 	for _, c := range config.DestinationRules {
-		hasher.add("DR", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("DR", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 	for _, c := range config.EnvoyFilters {
-		hasher.add("EF", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("EF", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 	for _, c := range config.Gateways {
-		hasher.add("GW", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("GW", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 	for _, c := range config.K8sGateways {
-		hasher.add("KG", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("KG", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 	for _, c := range config.K8sGRPCRoutes {
-		hasher.add("KGRPC", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("KGRPC", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 	for _, c := range config.K8sHTTPRoutes {
-		hasher.add("KHTTP", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("KHTTP", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 	for _, c := range config.K8sReferenceGrants {
-		hasher.add("KRG", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("KRG", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 	for _, c := range config.K8sTCPRoutes {
-		hasher.add("KTCP", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("KTCP", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 	for _, c := range config.K8sTLSRoutes {
-		hasher.add("KTLS", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("KTLS", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 	for _, c := range config.PeerAuthentications {
-		hasher.add("PA", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("PA", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 	for _, c := range config.RequestAuthentications {
-		hasher.add("RA", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("RA", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 	for _, c := range config.ServiceEntries {
-		hasher.add("SE", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("SE", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 	for _, c := range config.Sidecars {
-		hasher.add("SC", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("SC", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 	for _, c := range config.Telemetries {
-		hasher.add("TE", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("TE", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 	for _, c := range config.VirtualServices {
-		hasher.add("VS", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("VS", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 	for _, c := range config.WasmPlugins {
-		hasher.add("WP", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("WP", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 	for _, c := range config.WorkloadEntries {
-		hasher.add("WE", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("WE", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 	for _, c := range config.WorkloadGroups {
-		hasher.add("WG", cluster, c.Namespace, c.Name, []byte(c.ResourceVersion))
+		change = vInfo.update("WG", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
 
-	return hasher.sum()
+	numConfig := len(config.AuthorizationPolicies) +
+		len(config.DestinationRules) +
+		len(config.EnvoyFilters) +
+		len(config.Gateways) +
+		len(config.K8sGateways) +
+		len(config.K8sGRPCRoutes) +
+		len(config.K8sHTTPRoutes) +
+		len(config.K8sReferenceGrants) +
+		len(config.K8sTCPRoutes) +
+		len(config.K8sTLSRoutes) +
+		len(config.PeerAuthentications) +
+		len(config.RequestAuthentications) +
+		len(config.ServiceEntries) +
+		len(config.Sidecars) +
+		len(config.Telemetries) +
+		len(config.VirtualServices) +
+		len(config.WorkloadEntries) +
+		len(config.WorkloadGroups) +
+		len(config.WasmPlugins)
+	change = vInfo.update("validation-num-config", cluster, "", "", strconv.Itoa(numConfig)) || change
+
+	return change
 }
 
 // getAllObjectCheckers returns all of the checkers to be executed for a full validation.
@@ -703,16 +690,16 @@ func runObjectReferenceChecker(referenceChecker ReferenceChecker) models.IstioRe
 // getServiceAccounts gets SA information given the namespaces and workloads for a given cluster.
 func (in *IstioValidationsService) getServiceAccounts(
 	namespaces []models.Namespace,
-	workloadsMap map[string]models.WorkloadList,
+	workloadsMap map[string]models.Workloads,
 ) []string {
 	serviceAccounts := map[string]bool{}
 	istioDomain := strings.Replace(config.Get().ExternalServices.Istio.IstioIdentityDomain, "svc.", "", 1)
 
 	for _, ns := range namespaces {
 		saFullNameNs := fmt.Sprintf("%s/ns/%s/sa/", istioDomain, ns.Name)
-		workloadList := workloadsMap[ns.Name]
-		for _, wl := range workloadList.Workloads {
-			for _, sAccountName := range wl.ServiceAccountNames {
+		workloads := workloadsMap[ns.Name]
+		for _, w := range workloads {
+			for _, sAccountName := range w.ServiceAccountNames {
 				saFullName := saFullNameNs + sAccountName
 				serviceAccounts[saFullName] = true
 			}

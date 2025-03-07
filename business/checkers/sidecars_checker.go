@@ -13,7 +13,7 @@ type SidecarChecker struct {
 	Sidecars              []*networking_v1.Sidecar
 	ServiceEntries        []*networking_v1.ServiceEntry
 	Namespaces            models.Namespaces
-	WorkloadsPerNamespace map[string]models.WorkloadList
+	WorkloadsPerNamespace map[string]models.Workloads
 	RegistryServices      []*kubernetes.RegistryService
 	Cluster               string
 }

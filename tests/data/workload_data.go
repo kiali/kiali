@@ -12,10 +12,10 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func CreateWorkloadsPerNamespace(namespaces []string, items ...models.WorkloadListItem) map[string]models.WorkloadList {
-	allWorkloads := map[string]models.WorkloadList{}
+func CreateWorkloadsPerNamespace(namespaces []string, workloads models.Workloads) map[string]models.Workloads {
+	allWorkloads := map[string]models.Workloads{}
 	for _, namespace := range namespaces {
-		allWorkloads[namespace] = CreateWorkloadList(namespace, items...)
+		allWorkloads[namespace] = workloads
 	}
 	return allWorkloads
 }
@@ -25,6 +25,22 @@ func CreateWorkloadList(namespace string, items ...models.WorkloadListItem) mode
 		Namespace: namespace,
 		Workloads: items,
 	}
+}
+
+func CreateWorkload(name string, labels map[string]string) *models.Workload {
+	w := models.Workload{}
+	w.Name = name
+	w.Labels = labels
+
+	if _, found := labels["app"]; found {
+		w.AppLabel = true
+	}
+
+	if _, found := labels["version"]; found {
+		w.VersionLabel = true
+	}
+
+	return &w
 }
 
 func CreateWorkloadListItem(name string, labels map[string]string) models.WorkloadListItem {
