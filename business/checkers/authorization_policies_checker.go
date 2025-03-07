@@ -20,7 +20,7 @@ type AuthorizationPolicyChecker struct {
 	ServiceEntries        []*networking_v1.ServiceEntry
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	VirtualServices       []*networking_v1.VirtualService
-	WorkloadsPerNamespace map[string]models.WorkloadList
+	WorkloadsPerNamespace map[string]models.Workloads
 }
 
 func (a AuthorizationPolicyChecker) Check() models.IstioValidations {

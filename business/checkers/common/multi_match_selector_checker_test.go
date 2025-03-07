@@ -27,7 +27,7 @@ func TestTwoSidecarsWithSelector(t *testing.T) {
 				"app": "details",
 			}, data.CreateSidecar("sidecar2", "bookinfo")),
 		},
-		workloadList(),
+		workloads(),
 	).Check()
 
 	assert.Empty(validations)
@@ -42,7 +42,7 @@ func TestTwoSidecarsWithoutSelector(t *testing.T) {
 			data.CreateSidecar("sidecar2", "bookinfo"),
 			data.CreateSidecar("sidecar3", "bookinfo2"),
 		},
-		workloadList(),
+		workloads(),
 	).Check()
 
 	assertMultimatchFailure(t, "generic.multimatch.selectorless", validations, "sidecar1", []string{"sidecar2"})
@@ -59,7 +59,7 @@ func TestTwoSidecarsWithoutSelectorDifferentNamespaces(t *testing.T) {
 			data.CreateSidecar("sidecar1", "bookinfo"),
 			data.CreateSidecar("sidecar2", "bookinfo2"),
 		},
-		workloadList(),
+		workloads(),
 	).Check()
 
 	assert.Empty(validations)
@@ -86,7 +86,7 @@ func TestTwoSidecarsTargetingOneDeployment(t *testing.T) {
 		config.Get().KubernetesConfig.ClusterName,
 		kubernetes.Sidecars,
 		sidecars,
-		workloadList(),
+		workloads(),
 	).Check()
 
 	assertMultimatchFailure(t, "generic.multimatch.selector", validations, "sidecar1", []string{"sidecar3", "sidecar4"})
@@ -117,7 +117,7 @@ func TestSidecarsCrossNamespaces(t *testing.T) {
 		config.Get().KubernetesConfig.ClusterName,
 		kubernetes.Sidecars,
 		sidecars,
-		workloadList(),
+		workloads(),
 	).Check()
 
 	assertMultimatchFailure(t, "generic.multimatch.selector", validations, "sidecar1", []string{"sidecar2"})
@@ -149,7 +149,7 @@ func TestSidecarsDifferentNamespaces(t *testing.T) {
 		config.Get().KubernetesConfig.ClusterName,
 		kubernetes.Sidecars,
 		sidecars,
-		workloadList(),
+		workloads(),
 	).Check()
 
 	assert.Empty(validations)
@@ -179,12 +179,12 @@ func assertMultimatchFailure(t *testing.T, code string, vals models.IstioValidat
 	}
 }
 
-func workloadList() map[string]models.WorkloadList {
-	wli := []models.WorkloadListItem{
-		data.CreateWorkloadListItem("details-v1", map[string]string{"app": "details", "version": "v1"}),
-		data.CreateWorkloadListItem("details-v2", map[string]string{"app": "details", "version": "v2"}),
-		data.CreateWorkloadListItem("details-v3", map[string]string{"app": "details", "version": "v3"}),
+func workloads() map[string]models.Workloads {
+	workloads := models.Workloads{
+		data.CreateWorkload("details-v1", map[string]string{"app": "details", "version": "v1"}),
+		data.CreateWorkload("details-v2", map[string]string{"app": "details", "version": "v2"}),
+		data.CreateWorkload("details-v3", map[string]string{"app": "details", "version": "v3"}),
 	}
 
-	return data.CreateWorkloadsPerNamespace([]string{"bookinfo", "bookinfo2", "bookinfo3", "bookinfo4"}, wli...)
+	return data.CreateWorkloadsPerNamespace([]string{"bookinfo", "bookinfo2", "bookinfo3", "bookinfo4"}, workloads)
 }

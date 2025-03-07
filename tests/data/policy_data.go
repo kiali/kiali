@@ -1,6 +1,9 @@
 package data
 
 import (
+	"fmt"
+	"math/rand/v2"
+
 	api_security_v1 "istio.io/api/security/v1"
 	api_security_v1beta1 "istio.io/api/security/v1beta1"
 	api_v1beta1 "istio.io/api/type/v1beta1"
@@ -11,6 +14,7 @@ func CreateEmptyPeerAuthentication(name, namespace string, mtls *api_security_v1
 	pa := security_v1.PeerAuthentication{}
 	pa.Name = name
 	pa.Namespace = namespace
+	pa.ResourceVersion = fmt.Sprintf("%d", rand.Int64())
 	pa.Spec.Mtls = mtls
 	return &pa
 }

@@ -13,7 +13,7 @@ import (
 type PeerAuthenticationChecker struct {
 	PeerAuthentications   []*security_v1.PeerAuthentication
 	MTLSDetails           kubernetes.MTLSDetails
-	WorkloadsPerNamespace map[string]models.WorkloadList
+	WorkloadsPerNamespace map[string]models.Workloads
 	Cluster               string
 }
 

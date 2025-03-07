@@ -31,17 +31,17 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 	assert := assert.New(t)
 
 	vals := NoServiceChecker{
-		WorkloadsPerNamespace: map[string]models.WorkloadList{
-			"test": data.CreateWorkloadList("test",
-				data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
-				data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
-				data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
-				data.CreateWorkloadListItem("detailsv2", appVersionLabel("details", "v2")),
-				data.CreateWorkloadListItem("productv1", appVersionLabel("product", "v1")),
-				data.CreateWorkloadListItem("productv2", appVersionLabel("product", "v2")),
-				data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
-				data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2"))),
-		},
+		WorkloadsPerNamespace: map[string]models.Workloads{
+			"test": {
+				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
+				data.CreateWorkload("reviewsv2", appVersionLabel("reviews", "v2")),
+				data.CreateWorkload("detailsv1", appVersionLabel("details", "v1")),
+				data.CreateWorkload("detailsv2", appVersionLabel("details", "v2")),
+				data.CreateWorkload("productv1", appVersionLabel("product", "v1")),
+				data.CreateWorkload("productv2", appVersionLabel("product", "v2")),
+				data.CreateWorkload("customerv1", appVersionLabel("customer", "v1")),
+				data.CreateWorkload("customerv2", appVersionLabel("customer", "v2")),
+			}},
 		IstioConfigList:      fakeIstioConfigList(),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 		RegistryServices: append(data.CreateFakeRegistryServices("product.test.svc.cluster.local", "test", "test"),
@@ -63,15 +63,15 @@ func TestDetectObjectWithoutService(t *testing.T) {
 
 	vals := NoServiceChecker{
 		IstioConfigList: fakeIstioConfigList(),
-		WorkloadsPerNamespace: map[string]models.WorkloadList{
-			"test": data.CreateWorkloadList("test",
-				data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
-				data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
-				data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
-				data.CreateWorkloadListItem("detailsv2", appVersionLabel("details", "v2")),
-				data.CreateWorkloadListItem("productv1", appVersionLabel("product", "v1")),
-				data.CreateWorkloadListItem("productv2", appVersionLabel("product", "v2"))),
-		},
+		WorkloadsPerNamespace: map[string]models.Workloads{
+			"test": {
+				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
+				data.CreateWorkload("reviewsv2", appVersionLabel("reviews", "v2")),
+				data.CreateWorkload("detailsv1", appVersionLabel("details", "v1")),
+				data.CreateWorkload("detailsv2", appVersionLabel("details", "v2")),
+				data.CreateWorkload("productv1", appVersionLabel("product", "v1")),
+				data.CreateWorkload("productv2", appVersionLabel("product", "v2")),
+			}},
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 		RegistryServices: append(data.CreateFakeRegistryServices("product.test.svc.cluster.local", "test", "."),
 			data.CreateFakeMultiRegistryServices([]string{"reviews.test.svc.cluster.local", "details.test.svc.cluster.local"}, "test", "*")...),
@@ -86,15 +86,15 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", customerDr.Checks[0]))
 
 	vals = NoServiceChecker{
-		WorkloadsPerNamespace: map[string]models.WorkloadList{
-			"test": data.CreateWorkloadList("test",
-				data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
-				data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
-				data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
-				data.CreateWorkloadListItem("detailsv2", appVersionLabel("details", "v2")),
-				data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
-				data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2"))),
-		},
+		WorkloadsPerNamespace: map[string]models.Workloads{
+			"test": {
+				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
+				data.CreateWorkload("reviewsv2", appVersionLabel("reviews", "v2")),
+				data.CreateWorkload("detailsv1", appVersionLabel("details", "v1")),
+				data.CreateWorkload("detailsv2", appVersionLabel("details", "v2")),
+				data.CreateWorkload("customerv1", appVersionLabel("customer", "v1")),
+				data.CreateWorkload("customerv2", appVersionLabel("customer", "v2")),
+			}},
 		IstioConfigList:      fakeIstioConfigList(),
 		RegistryServices:     data.CreateFakeMultiRegistryServices([]string{"reviews.test.svc.cluster.local", "details.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", "*"),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
@@ -111,15 +111,15 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", productVs.Checks[1]))
 
 	vals = NoServiceChecker{
-		WorkloadsPerNamespace: map[string]models.WorkloadList{
-			"test": data.CreateWorkloadList("test",
-				data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
-				data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
-				data.CreateWorkloadListItem("productv1", appVersionLabel("product", "v1")),
-				data.CreateWorkloadListItem("productv2", appVersionLabel("product", "v2")),
-				data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
-				data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2"))),
-		},
+		WorkloadsPerNamespace: map[string]models.Workloads{
+			"test": {
+				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
+				data.CreateWorkload("reviewsv2", appVersionLabel("reviews", "v2")),
+				data.CreateWorkload("productv1", appVersionLabel("product", "v1")),
+				data.CreateWorkload("productv2", appVersionLabel("product", "v2")),
+				data.CreateWorkload("customerv1", appVersionLabel("customer", "v1")),
+				data.CreateWorkload("customerv2", appVersionLabel("customer", "v2")),
+			}},
 		IstioConfigList:      fakeIstioConfigList(),
 		RegistryServices:     data.CreateFakeMultiRegistryServices([]string{"reviews.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", "*"),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
@@ -129,15 +129,15 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert.True(vals[models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "test", Name: "customer-dr"}].Valid)
 
 	vals = NoServiceChecker{
-		WorkloadsPerNamespace: map[string]models.WorkloadList{
-			"test": data.CreateWorkloadList("test",
-				data.CreateWorkloadListItem("productv1", appVersionLabel("product", "v1")),
-				data.CreateWorkloadListItem("productv2", appVersionLabel("product", "v2")),
-				data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
-				data.CreateWorkloadListItem("detailsv2", appVersionLabel("details", "v2")),
-				data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
-				data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2"))),
-		},
+		WorkloadsPerNamespace: map[string]models.Workloads{
+			"test": {
+				data.CreateWorkload("productv1", appVersionLabel("product", "v1")),
+				data.CreateWorkload("productv2", appVersionLabel("product", "v2")),
+				data.CreateWorkload("detailsv1", appVersionLabel("details", "v1")),
+				data.CreateWorkload("detailsv2", appVersionLabel("details", "v2")),
+				data.CreateWorkload("customerv1", appVersionLabel("customer", "v1")),
+				data.CreateWorkload("customerv2", appVersionLabel("customer", "v2")),
+			}},
 		IstioConfigList:      fakeIstioConfigList(),
 		RegistryServices:     data.CreateFakeMultiRegistryServices([]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", "*"),
 		AuthorizationDetails: &kubernetes.RBACDetails{},

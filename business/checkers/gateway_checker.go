@@ -10,7 +10,7 @@ import (
 
 type GatewayChecker struct {
 	Gateways              []*networking_v1.Gateway
-	WorkloadsPerNamespace map[string]models.WorkloadList
+	WorkloadsPerNamespace map[string]models.Workloads
 	IsGatewayToNamespace  bool
 	Cluster               string
 }

@@ -13,7 +13,7 @@ import (
 
 type PeerAuthReferences struct {
 	MTLSDetails           kubernetes.MTLSDetails
-	WorkloadsPerNamespace map[string]models.WorkloadList
+	WorkloadsPerNamespace map[string]models.Workloads
 }
 
 func (n PeerAuthReferences) References() models.IstioReferencesMap {
@@ -101,10 +101,10 @@ func (n PeerAuthReferences) getWorkloadReferences(pa *security_v1.PeerAuthentica
 		selector := labels.SelectorFromSet(pa.Spec.Selector.MatchLabels)
 
 		// PeerAuth searches Workloads from own namespace
-		for _, wl := range n.WorkloadsPerNamespace[pa.Namespace].Workloads {
-			wlLabelSet := labels.Set(wl.Labels)
+		for _, w := range n.WorkloadsPerNamespace[pa.Namespace] {
+			wlLabelSet := labels.Set(w.Labels)
 			if selector.Matches(wlLabelSet) {
-				result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: pa.Namespace})
+				result = append(result, models.WorkloadReference{Name: w.Name, Namespace: pa.Namespace})
 			}
 		}
 	}

@@ -9,7 +9,7 @@ import (
 )
 
 type UncoveredWorkloadChecker struct {
-	Workload              models.WorkloadListItem
+	Workload              *models.Workload
 	Namespace             string
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 }
