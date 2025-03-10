@@ -12,7 +12,7 @@ import (
 type NoServiceChecker struct {
 	Namespaces            models.Namespaces
 	IstioConfigList       *models.IstioConfigList
-	WorkloadsPerNamespace map[string]models.WorkloadList
+	WorkloadsPerNamespace map[string]models.Workloads
 	AuthorizationDetails  *kubernetes.RBACDetails
 	RegistryServices      []*kubernetes.RegistryService
 	PolicyAllowAny        bool
@@ -71,7 +71,7 @@ func runGatewayCheck(virtualService *networking_v1.VirtualService, gatewayNames 
 	return models.IstioValidations{key: validations}
 }
 
-func runDestinationRuleCheck(destinationRule *networking_v1.DestinationRule, workloads map[string]models.WorkloadList,
+func runDestinationRuleCheck(destinationRule *networking_v1.DestinationRule, workloads map[string]models.Workloads,
 	serviceEntries []*networking_v1.ServiceEntry, clusterNamespaces models.Namespaces, registryStatus []*kubernetes.RegistryService, virtualServices []*networking_v1.VirtualService,
 	policyAllowAny bool, cluster string) models.IstioValidations {
 	key, validations := EmptyValidValidation(destinationRule.Name, destinationRule.Namespace, kubernetes.DestinationRules, cluster)

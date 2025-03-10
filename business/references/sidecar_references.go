@@ -18,7 +18,7 @@ type SidecarReferences struct {
 	Namespaces            models.Namespaces
 	ServiceEntries        []*networking_v1.ServiceEntry
 	RegistryServices      []*kubernetes.RegistryService
-	WorkloadsPerNamespace map[string]models.WorkloadList
+	WorkloadsPerNamespace map[string]models.Workloads
 }
 
 func (n SidecarReferences) References() models.IstioReferencesMap {
@@ -106,10 +106,10 @@ func (n SidecarReferences) getWorkloadReferences(sc *networking_v1.Sidecar) []mo
 		selector := labels.SelectorFromSet(sc.Spec.WorkloadSelector.Labels)
 
 		// Sidecar searches Workloads from own namespace
-		for _, wl := range n.WorkloadsPerNamespace[sc.Namespace].Workloads {
-			wlLabelSet := labels.Set(wl.Labels)
+		for _, w := range n.WorkloadsPerNamespace[sc.Namespace] {
+			wlLabelSet := labels.Set(w.Labels)
 			if selector.Matches(wlLabelSet) {
-				result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: sc.Namespace})
+				result = append(result, models.WorkloadReference{Name: w.Name, Namespace: sc.Namespace})
 			}
 		}
 	}

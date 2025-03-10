@@ -8,7 +8,7 @@ import (
 )
 
 type SelectorChecker struct {
-	WorkloadsPerNamespace map[string]models.WorkloadList
+	WorkloadsPerNamespace map[string]models.Workloads
 	Gateway               *networking_v1.Gateway
 	IsGatewayToNamespace  bool
 }
@@ -26,12 +26,12 @@ func (s SelectorChecker) Check() ([]*models.IstioCheck, bool) {
 func (s SelectorChecker) hasMatchingWorkload(labelSelector map[string]string) bool {
 	selector := labels.SelectorFromSet(labelSelector)
 
-	for _, wls := range s.WorkloadsPerNamespace {
-		if s.IsGatewayToNamespace && wls.Namespace != s.Gateway.Namespace {
+	for ns, workloads := range s.WorkloadsPerNamespace {
+		if s.IsGatewayToNamespace && ns != s.Gateway.Namespace {
 			continue
 		}
-		for _, wl := range wls.Workloads {
-			wlLabelSet := labels.Set(wl.Labels)
+		for _, w := range workloads {
+			wlLabelSet := labels.Set(w.Labels)
 			if selector.Matches(wlLabelSet) {
 				return true
 			}

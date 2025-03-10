@@ -20,7 +20,7 @@ func TestPresentWorkloads(t *testing.T) {
 			"app":     "details",
 			"version": "v1",
 		},
-		workloadList(),
+		workloads(),
 	).Check()
 
 	// Well configured object
@@ -32,7 +32,7 @@ func TestPresentWorkloads(t *testing.T) {
 		map[string]string{
 			"app": "details",
 		},
-		workloadList(),
+		workloads(),
 	).Check()
 
 	// Well configured object
@@ -51,14 +51,14 @@ func TestWorkloadNotFound(t *testing.T) {
 }
 
 func testFailureWithWorkloadList(assert *assert.Assertions, selector map[string]string) {
-	testFailure(assert, selector, workloadList(), "generic.selector.workloadnotfound")
+	testFailure(assert, selector, workloads(), "generic.selector.workloadnotfound")
 }
 
 func testFailureWithEmptyWorkloadList(assert *assert.Assertions, selector map[string]string) {
-	testFailure(assert, selector, data.CreateWorkloadsPerNamespace([]string{"test"}, models.WorkloadListItem{}), "generic.selector.workloadnotfound")
+	testFailure(assert, selector, data.CreateWorkloadsPerNamespace([]string{"test"}, models.Workloads{}), "generic.selector.workloadnotfound")
 }
 
-func testFailure(assert *assert.Assertions, selector map[string]string, wl map[string]models.WorkloadList, code string) {
+func testFailure(assert *assert.Assertions, selector map[string]string, wl map[string]models.Workloads, code string) {
 	vals, valid := WorkloadSelectorNoWorkloadFoundChecker(
 		kubernetes.Sidecars,
 		selector,
