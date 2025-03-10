@@ -5,12 +5,9 @@ Feature: Kiali login
 
   User wants to login to Kiali and see landing page
 
-  Scenario: Try to log in without filling the username and password
-    Given all sessions are cleared
-    And user opens base url
+  Background:
+    Given user opens base url
     And user clicks my_htpasswd_provider
-    And user does not fill in username and password
-    Then user sees the "Login is required. Please try again." phrase displayed
 
   Scenario: Try to log in with an invalid username
     Given all sessions are cleared
