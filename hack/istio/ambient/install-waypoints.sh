@@ -100,6 +100,8 @@ ${ISTIOCTL} waypoint apply -n waypoint-forservice --enroll-namespace
 
 # Create a waypoint for workload and send requests to pod b
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/echo-service.yaml -n waypoint-forworkload
+${CLIENT_EXE} wait --for=condition=Ready pod/echo-server -n waypoint-forworkload --timeout=60s
+
 sleep 15
 # Update with echo-server IP
 POD_IP=$($CLIENT_EXE get pod echo-server -n waypoint-forworkload -o jsonpath="{.status.podIP}")

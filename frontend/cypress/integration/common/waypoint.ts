@@ -75,7 +75,12 @@ Then('the user hovers in the {string} label and sees {string} in the tooltip', (
   cy.get(`[data-test=workload-description-card]`).contains('span', label).trigger('mouseleave');
 });
 
+Then("the user doesn't see a L7 link", () => {
+  cy.get('[data-test=workload-description-card]').should('not.contain', 'L7');
+});
+
 Then('the user sees the L7 {string} link', (waypoint: string) => {
+  cy.get('[data-test=workload-description-card]').should('contain', 'L7');
   cy.get(`[data-test=waypoint-list]`).contains('span', 'L7');
   cy.get(`[data-test=waypoint-link]`).contains('a', waypoint);
 });
@@ -120,6 +125,10 @@ Then('user goes to the waypoint {string} subtab', (subtab: string) => {
   cy.get('#waypoint-details').should('be.visible').contains(subtab).click();
 });
 
+Then("the {string} subtab doesn't exist", (subtab: string) => {
+  cy.get('#waypoint-details').should('be.visible').should('not.contain', subtab);
+});
+
 Then('validates Services data', () => {
   cy.get('[data-test="enrolled-data-title"]').should('be.visible');
   cy.get('[role="grid"]').should('be.visible').get('[data-label="Name"]').and('contain', 'productpage');
@@ -128,8 +137,20 @@ Then('validates Services data', () => {
   cy.get('[role="grid"]').should('be.visible').get('[data-label="Labeled by"]').and('contain', 'namespace');
 });
 
-Then('validates waypoint Info data', () => {
-  cy.get('[data-test=waypointfor-title]').should('exist').and('contain', 'service');
+Then(
+  'validates Services data with {string} rows and {string} workload, {string} namespace, {string} label for, {string} badge',
+  (rows: number, workload: string, ns: string, label: string, badge: string) => {
+    cy.get('[data-test="enrolled-data-title"]').should('be.visible');
+    cy.get('table tbody tr').should('have.length', rows);
+    cy.get('[role="grid"]').should('be.visible').get('[data-label="Name"]').and('contain', workload);
+    cy.get('[role="grid"]').should('be.visible').get(`#${badge}`).should('exist');
+    cy.get('[role="grid"]').should('be.visible').get('[data-label="Namespace"]').and('contain', ns);
+    cy.get('[role="grid"]').should('be.visible').get('[data-label="Labeled by"]').and('contain', label);
+  }
+);
+
+Then('validates waypoint Info data for {string}', (type: string) => {
+  cy.get('[data-test=waypointfor-title]').should('exist').and('contain', type);
   cy.get('[role="grid"]').should('be.visible').get('[data-label=RDS]').and('contain', 'IGNORED');
 });
 
