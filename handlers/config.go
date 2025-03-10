@@ -106,10 +106,15 @@ func Config(conf *config.Config, discovery *istio.Discovery) http.HandlerFunc {
 				return err
 			}
 
+			gatewayAPIClasses, err := layer.IstioConfig.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+			if err != nil {
+				return fmt.Errorf("failure while fetching Gateway API classes: %w", err)
+			}
+
 			// @TODO hardcoded home cluster
 			publicConfig.GatewayAPIEnabled = layer.IstioConfig.IsGatewayAPI(conf.KubernetesConfig.ClusterName)
 			publicConfig.AmbientEnabled = layer.IstioConfig.IsAmbientEnabled(conf.KubernetesConfig.ClusterName)
-			publicConfig.GatewayAPIClasses = layer.IstioConfig.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+			publicConfig.GatewayAPIClasses = gatewayAPIClasses
 
 			// Fetch the list of all clusters in the mesh
 			// One usage of this data is to cross-link Kiali instances, when possible.

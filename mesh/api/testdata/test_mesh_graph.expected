@@ -308,6 +308,7 @@
             "ConfigMapName": "",
             "EnvoyAdminLocalPort": 15000,
             "GatewayAPIClasses": [],
+            "GatewayAPIClassesLabelSelector": "",
             "IstioAPIEnabled": true,
             "IstioIdentityDomain": "svc.cluster.local",
             "IstioInjectionAnnotation": "sidecar.istio.io/inject",

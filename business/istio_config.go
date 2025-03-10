@@ -987,8 +987,49 @@ func (in *IstioConfigService) IsGatewayAPI(cluster string) bool {
 	return in.userClients[cluster].IsGatewayAPI()
 }
 
-func (in *IstioConfigService) GatewayAPIClasses(cluster string) []config.GatewayAPIClass {
-	return kubernetes.GatewayAPIClasses(in.IsAmbientEnabled(cluster))
+// API classes can come from three different places depending on the configuration:
+// 1. From explicitly listed classes in the configuration
+// 2. From classes matching a label selector in the configuration
+// 3. If neither are configured, all classes that use Istio as a controller
+func (in *IstioConfigService) GatewayAPIClasses(cluster string) ([]config.GatewayAPIClass, error) {
+	k8sCache, err := in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	// First case: explicitly listed classes
+	result := []config.GatewayAPIClass{}
+	expicitlyDefinedClasses := config.Get().ExternalServices.Istio.GatewayAPIClasses
+	for i, gwClass := range expicitlyDefinedClasses {
+		if gwClass.ClassName != "" && gwClass.Name != "" {
+			result = append(result, gwClass)
+			continue
+		}
+
+		log.Warningf("Gateway API class %d is missing a name or class name field. Currently set name %q, class name %q.",
+			i, gwClass.Name, gwClass.ClassName)
+	}
+
+	labelSelector := config.Get().ExternalServices.Istio.GatewayAPIClassesLabelSelector
+	labelSelector = strings.TrimSpace(labelSelector)
+
+	// If label selector is defined (case 2) or there are no configured classes (case 3), get classes
+	// using the Istio controller
+	if labelSelector != "" || len(expicitlyDefinedClasses) == 0 {
+		classes, err := k8sCache.GetK8sGatewayClasses(labelSelector)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, class := range classes {
+			// Filter out classes that don't use Istio as a controller
+			if strings.HasPrefix(string(class.Spec.ControllerName), "istio.io") {
+				result = append(result, config.GatewayAPIClass{Name: class.Name, ClassName: class.Name})
+			}
+		}
+	}
+
+	return result, nil
 }
 
 func (in *IstioConfigService) IsAmbientEnabled(cluster string) bool {
