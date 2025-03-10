@@ -79,7 +79,7 @@ Kiali uses a cache for distributed tracing data retrieved from Tempo to improve 
 Some Kubernetes resources could not be cached and are always retrieved directly from the K8s API.
 
 - CronJobs
+- DeploymentConfigs
 - Jobs
 - ReplicationControllers
-- DeploymentConfigs
 
