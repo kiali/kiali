@@ -2506,11 +2506,11 @@ var controllerOrder = map[string]int{
 func controllerPriority(type1, type2 string) string {
 	w1, e1 := controllerOrder[type1]
 	if !e1 {
-		log.Errorf("This controller %s is assigned in a Pod and it's not properly managed", type1)
+		log.Debugf("This controller %s is assigned in a Pod and it's not properly managed", type1)
 	}
 	w2, e2 := controllerOrder[type2]
 	if !e2 {
-		log.Errorf("This controller %s is assigned in a Pod and it's not properly managed", type2)
+		log.Debugf("This controller %s is assigned in a Pod and it's not properly managed", type2)
 	}
 	if w1 >= w2 {
 		return type1
