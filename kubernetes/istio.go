@@ -31,8 +31,8 @@ const (
 
 type ComponentStatus struct {
 	// Cluster where this component is deployed.
-	// Can be unknown or external for external services.
-	Cluster string `json:"-"`
+	// Can be the name of external cluster
+	Cluster string `json:"cluster"`
 
 	// Namespace where the component is deployed.
 	// This field is ignored when marshalling to JSON.
