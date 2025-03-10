@@ -54,11 +54,11 @@ Kiali maintains an internal cache for commonly used Kubernetes resources such as
 
 - K8s Gateway API Resources: 
   - Gateways
-  - HTTPRoutes
   - GRPCRoutes
+  - HTTPRoutes
+  - ReferenceGrants
   - TCPRoutes
   - TLSRoutes
-  - ReferenceGrants
 
 ## Prometheus Cache
 
