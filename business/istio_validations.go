@@ -248,7 +248,10 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 			return nil, err
 		}
 
-		objectCheckers := in.getAllObjectCheckers(vInfo)
+		objectCheckers, err := in.getAllObjectCheckers(vInfo)
+		if err != nil {
+			return nil, err
+		}
 
 		// Get group validations for same kind istio objects
 		validations.MergeValidations(runObjectCheckers(objectCheckers))
@@ -280,7 +283,7 @@ func toWorkloadMap(workloads models.Workloads) map[string]models.WorkloadList {
 
 // getAllObjectCheckers returns all of the checkers to be executed for a full validation.
 // TODO: we may want to to pass vInfo into all of these, if the checkers themselves are re-computing information
-func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) []checkers.ObjectChecker {
+func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) ([]checkers.ObjectChecker, error) {
 	cluster := vInfo.clusterInfo.cluster
 	namespaces := vInfo.nsMap[cluster]
 	istioConfigList := vInfo.nsInfo.istioConfig
@@ -288,11 +291,17 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) [
 	mtlsDetails := vInfo.nsInfo.mtlsDetails
 	rbacDetails := vInfo.nsInfo.rbacDetails
 	registryServices := vInfo.clusterInfo.registryServices
+
+	gatewayAPIClasses, err := in.istioConfig.GatewayAPIClasses(cluster)
+	if err != nil {
+		return nil, err
+	}
+
 	return []checkers.ObjectChecker{
 		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries, WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: *mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh), Cluster: cluster, ServiceAccounts: vInfo.saMap},
 		checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, MTLSDetails: *mtlsDetails, ServiceEntries: istioConfigList.ServiceEntries, Cluster: cluster},
 		checkers.GatewayChecker{Gateways: istioConfigList.Gateways, WorkloadsPerNamespace: workloadsPerNamespace, IsGatewayToNamespace: in.isGatewayToNamespace(vInfo.mesh), Cluster: cluster},
-		checkers.K8sGatewayChecker{K8sGateways: istioConfigList.K8sGateways, Cluster: cluster, GatewayClasses: in.istioConfig.GatewayAPIClasses(cluster)},
+		checkers.K8sGatewayChecker{K8sGateways: istioConfigList.K8sGateways, Cluster: cluster, GatewayClasses: gatewayAPIClasses},
 		checkers.K8sGRPCRouteChecker{K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices, Cluster: cluster},
 		checkers.K8sHTTPRouteChecker{K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices, Cluster: cluster},
 		checkers.K8sReferenceGrantChecker{K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Cluster: cluster},
@@ -306,7 +315,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) [
 		checkers.WasmPluginChecker{WasmPlugins: istioConfigList.WasmPlugins, Namespaces: namespaces},
 		checkers.WorkloadChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster},
 		checkers.WorkloadGroupsChecker{Cluster: cluster, WorkloadGroups: istioConfigList.WorkloadGroups, ServiceAccounts: vInfo.saMap},
-	}
+	}, nil
 }
 
 // ValidateIstioObject validates a single Istio object of the given type with the given name found in the given namespace. Note that
@@ -453,8 +462,14 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		// Validation on Telemetries is not expected
 	case kubernetes.K8sGateways:
 		// Validations on K8sGateways
+		gatewayAPIClasses, err := in.istioConfig.GatewayAPIClasses(cluster)
+		if err != nil {
+			err = fmt.Errorf("unable to get GatewayAPIClasses for cluster %s: %w", cluster, err)
+			break
+		}
+
 		objectCheckers = []checkers.ObjectChecker{
-			checkers.K8sGatewayChecker{Cluster: cluster, K8sGateways: istioConfigList.K8sGateways, GatewayClasses: in.istioConfig.GatewayAPIClasses(cluster)},
+			checkers.K8sGatewayChecker{Cluster: cluster, K8sGateways: istioConfigList.K8sGateways, GatewayClasses: gatewayAPIClasses},
 		}
 		referenceChecker = references.K8sGatewayReferences{K8sGateways: istioConfigList.K8sGateways, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.K8sGRPCRoutes:
