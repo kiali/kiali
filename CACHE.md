@@ -6,18 +6,18 @@ Kiali implements multiple caching layers to optimize performance and reduce the 
 
 The Kiali cache stores essential metadata and service mesh-related information to improve UI responsiveness and reduce the load on backend services.
 
-- Webhooks Availability: Cached information about whether webhooks can be listed for a given cluster.
+- Mesh Configuration: Caches mesh-wide settings, such as control planes running in the mesh from various sources e.g. istio configmap, istiod deployment envvars, etc.
+- Ambient Mesh Status: Stores a flag indicating whether Istio Ambient mode is enabled.
 - Build Information: Cached version and build details of the running Kiali instance.
 - Clusters: Stores the list of known clusters to optimize multi-cluster queries.
-- Namespaces: Holds namespace data stored per cluster.
-- Ztunnel Pods: Maintains a cache of ztunnel pods discovered in the mesh.
-- Ztunnel Config Dump: Caches Ztunnel pod configurations for additional retrieval of protocol details.
-- Proxy Status: Stores the status of pod proxies, suc as xDS.
-- Waypoint Proxies: Stores workload data for waypoint proxies to enhance service mesh observability.
-- Mesh Configuration: Caches mesh-wide settings, such as control planes running in the mesh from various sources e.g. istio configmap, istiod deployment envvars, etc.
 - Istio Validations: Caches Istio Config validation results by cluster and namespaces.
-- Ambient Mesh Status: Stores a flag indicating whether Istio Ambient mode is enabled.
+- Namespaces: Holds namespace data stored per cluster.
+- Proxy Status: Stores the status of pod proxies, suc as xDS.
 - Registry Services: Caches Kubernetes service registry data to speed up service discovery and loading.
+- Waypoint Proxies: Stores workload data for waypoint proxies to enhance service mesh observability.
+- Webhooks Availability: Cached information about whether webhooks can be listed for a given cluster.
+- Ztunnel Config Dump: Caches Ztunnel pod configurations for additional retrieval of protocol details.
+- Ztunnel Pods: Maintains a cache of ztunnel pods discovered in the mesh.
 
 ## Kubernetes Cache
 
