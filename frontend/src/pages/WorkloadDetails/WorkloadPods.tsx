@@ -21,6 +21,7 @@ import { Labels } from '../../components/Label/Labels';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { infoStyle } from 'styles/IconStyle';
+import { PodRevision } from './PodRevision';
 
 type WorkloadPodsProps = {
   namespace: string;
@@ -139,6 +140,7 @@ export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsPro
                 <KialiIcon.Info className={infoStyle} />
               </span>
             </Tooltip>
+            <PodRevision annotations={pod.annotations} />
           </span>,
 
           <PodStatus proxyStatus={pod.proxyStatus} checks={validation.checks} />
