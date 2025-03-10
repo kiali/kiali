@@ -26,12 +26,12 @@ Kiali maintains an internal cache for commonly used Kubernetes resources such as
 - ConfigMaps
 
 - Workloads:
-  - Deployments
-  - StatefulSets
   - DaemonSets
+  - Deployments
   - Endpoints
   - Pods
   - ReplicaSets
+  - StatefulSets
 
 - Services
 
