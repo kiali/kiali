@@ -36,16 +36,16 @@ Kiali maintains an internal cache for commonly used Kubernetes resources such as
 - Services
 
 - Istio Resources: 
-  - Gateways
-  - VirtualServices
-  - Sidecars
   - DestinationRules
+  - EnvoyFilters
+  - Gateways
+  - Sidecars
+  - ServiceEntries
+  - Telemetries
+  - VirtualServices
+  - WasmPlugins
   - WorkloadEntries
   - WorkloadGroups
-  - WasmPlugins
-  - Telemetries
-  - EnvoyFilters
-  - ServiceEntries
 
 - Security Policies: 
   - AuthorizationPolicies
