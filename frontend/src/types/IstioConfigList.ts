@@ -286,8 +286,8 @@ export const vsToIstioItems = (
   cluster?: string
 ): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
-  const hasValidations = (vKey: string): ObjectValidation =>
-    validations.virtualservice && validations.virtualservice[vKey];
+  const objectGVK = getGVKTypeString(gvkType.VirtualService);
+  const hasValidations = (vKey: string): ObjectValidation => validations[objectGVK] && validations[objectGVK][vKey];
 
   vss.forEach(vs => {
     const vKey = validationKey(vs.metadata.name, vs.metadata.namespace);
@@ -301,7 +301,7 @@ export const vsToIstioItems = (
       creationTimestamp: vs.metadata.creationTimestamp,
       resource: vs,
       resourceVersion: vs.metadata.resourceVersion,
-      validation: hasValidations(vKey) ? validations.virtualservice[vKey] : undefined
+      validation: hasValidations(vKey) ? validations[objectGVK][vKey] : undefined
     };
 
     istioItems.push(item);
@@ -316,8 +316,8 @@ export const drToIstioItems = (
   cluster?: string
 ): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
-  const hasValidations = (vKey: string): ObjectValidation =>
-    validations.destinationrule && validations.destinationrule[vKey];
+  const objectGVK = getGVKTypeString(gvkType.DestinationRule);
+  const hasValidations = (vKey: string): ObjectValidation => validations[objectGVK] && validations[objectGVK][vKey];
 
   drs.forEach(dr => {
     const vKey = validationKey(dr.metadata.name, dr.metadata.namespace);
@@ -331,7 +331,7 @@ export const drToIstioItems = (
       creationTimestamp: dr.metadata.creationTimestamp,
       resource: dr,
       resourceVersion: dr.metadata.resourceVersion,
-      validation: hasValidations(vKey) ? validations.destinationrule[vKey] : undefined
+      validation: hasValidations(vKey) ? validations[objectGVK][vKey] : undefined
     };
 
     istioItems.push(item);
@@ -347,7 +347,8 @@ export const gwToIstioItems = (
   cluster?: string
 ): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
-  const hasValidations = (vKey: string): ObjectValidation => validations.gateway && validations.gateway[vKey];
+  const objectGVK = getGVKTypeString(gvkType.Gateway);
+  const hasValidations = (vKey: string): ObjectValidation => validations[objectGVK] && validations[objectGVK][vKey];
   const vsGateways = new Set();
 
   vss.forEach(vs => {
@@ -373,7 +374,7 @@ export const gwToIstioItems = (
         creationTimestamp: gw.metadata.creationTimestamp,
         resource: gw,
         resourceVersion: gw.metadata.resourceVersion,
-        validation: hasValidations(vKey) ? validations.gateway[vKey] : undefined
+        validation: hasValidations(vKey) ? validations[objectGVK][vKey] : undefined
       };
 
       istioItems.push(item);
@@ -392,7 +393,8 @@ export const k8sGwToIstioItems = (
   gatewayLabel?: string
 ): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
-  const hasValidations = (vKey: string): ObjectValidation => validations.k8sgateway && validations.k8sgateway[vKey];
+  const objectGVK = getGVKTypeString(gvkType.K8sGateway);
+  const hasValidations = (vKey: string): ObjectValidation => validations[objectGVK] && validations[objectGVK][vKey];
   const k8sGateways = new Set();
 
   k8srs.forEach(k8sr => {
@@ -430,7 +432,7 @@ export const k8sGwToIstioItems = (
         creationTimestamp: gw.metadata.creationTimestamp,
         resource: gw,
         resourceVersion: gw.metadata.resourceVersion,
-        validation: hasValidations(vKey) ? validations.k8sgateway[vKey] : undefined
+        validation: hasValidations(vKey) ? validations[objectGVK][vKey] : undefined
       };
 
       istioItems.push(item);
@@ -442,7 +444,8 @@ export const k8sGwToIstioItems = (
 
 export const seToIstioItems = (see: ServiceEntry[], validations: Validations, cluster?: string): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
-  const hasValidations = (vKey: string): ObjectValidation => validations.serviceentry && validations.serviceentry[vKey];
+  const objectGVK = getGVKTypeString(gvkType.ServiceEntry);
+  const hasValidations = (vKey: string): ObjectValidation => validations[objectGVK] && validations[objectGVK][vKey];
 
   see.forEach(se => {
     const vKey = validationKey(se.metadata.name, se.metadata.namespace);
@@ -456,7 +459,7 @@ export const seToIstioItems = (see: ServiceEntry[], validations: Validations, cl
       creationTimestamp: se.metadata.creationTimestamp,
       resource: se,
       resourceVersion: se.metadata.resourceVersion,
-      validation: hasValidations(vKey) ? validations.serviceentry[vKey] : undefined
+      validation: hasValidations(vKey) ? validations[objectGVK][vKey] : undefined
     };
 
     istioItems.push(item);
@@ -471,7 +474,8 @@ export const k8sHTTPRouteToIstioItems = (
   cluster?: string
 ): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
-  const hasValidations = (vKey: string): ObjectValidation => validations.k8shttproute && validations.k8shttproute[vKey];
+  const objectGVK = getGVKTypeString(gvkType.K8sHTTPRoute);
+  const hasValidations = (vKey: string): ObjectValidation => validations[objectGVK] && validations[objectGVK][vKey];
 
   routes.forEach(route => {
     const vKey = validationKey(route.metadata.name, route.metadata.namespace);
@@ -485,7 +489,7 @@ export const k8sHTTPRouteToIstioItems = (
       creationTimestamp: route.metadata.creationTimestamp,
       resource: route,
       resourceVersion: route.metadata.resourceVersion,
-      validation: hasValidations(vKey) ? validations.k8shttproute[vKey] : undefined
+      validation: hasValidations(vKey) ? validations[objectGVK][vKey] : undefined
     };
 
     istioItems.push(item);
@@ -500,7 +504,8 @@ export const k8sGRPCRouteToIstioItems = (
   cluster?: string
 ): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
-  const hasValidations = (vKey: string): ObjectValidation => validations.k8sgrpcroute && validations.k8sgrpcroute[vKey];
+  const objectGVK = getGVKTypeString(gvkType.K8sGRPCRoute);
+  const hasValidations = (vKey: string): ObjectValidation => validations[objectGVK] && validations[objectGVK][vKey];
 
   grpcRoutes.forEach(route => {
     const vKey = validationKey(route.metadata.name, route.metadata.namespace);
@@ -514,7 +519,7 @@ export const k8sGRPCRouteToIstioItems = (
       creationTimestamp: route.metadata.creationTimestamp,
       resource: route,
       resourceVersion: route.metadata.resourceVersion,
-      validation: hasValidations(vKey) ? validations.k8sgrpcroute[vKey] : undefined
+      validation: hasValidations(vKey) ? validations[objectGVK][vKey] : undefined
     };
 
     istioItems.push(item);
