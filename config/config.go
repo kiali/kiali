@@ -325,7 +325,7 @@ type IstioConfig struct {
 	Registry                         *RegistryConfig `yaml:"registry,omitempty"`
 	RootNamespace                    string          `yaml:"root_namespace,omitempty"`
 	UrlServiceVersion                string          `yaml:"url_service_version"`
-	ValidationChangeDetectionEnabled bool            `yaml:"validation_hashing_enabled,omitempty"`
+	ValidationChangeDetectionEnabled bool            `yaml:"validation_change_detection_enabled,omitempty"`
 	// ValidationReconcileInterval sets how often Kiali will validate Istio configuration.
 	// Validations cannot be disabled at the moment but you can set this to a long period of time.
 	ValidationReconcileInterval *time.Duration `yaml:"validation_reconcile_interval,omitempty"`
