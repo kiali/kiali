@@ -4,13 +4,15 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type DisabledNamespaceWideChecker struct {
-	PeerAuthn        *security_v1.PeerAuthentication
+	Conf             *config.Config
 	DestinationRules []*networking_v1.DestinationRule
+	PeerAuthn        *security_v1.PeerAuthentication
 }
 
 func (c DisabledNamespaceWideChecker) Check() ([]*models.IstioCheck, bool) {
@@ -25,7 +27,7 @@ func (c DisabledNamespaceWideChecker) Check() ([]*models.IstioCheck, bool) {
 	meshEnabledDRFound := false
 	for _, dr := range c.DestinationRules {
 		// If ns-wide Destination Rule enabling mtls found, error found
-		_, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(c.PeerAuthn.Namespace, dr)
+		_, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(c.PeerAuthn.Namespace, dr, c.Conf)
 		if mode == "ISTIO_MUTUAL" || mode == "MUTUAL" {
 			check := models.Build("peerauthentications.mtls.disabledestinationrulemissing", "spec/mtls")
 			return append(validations, &check), false

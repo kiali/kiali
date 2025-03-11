@@ -14,6 +14,7 @@ import (
 
 func prepareTestForSidecar(sc *networking_v1.Sidecar, vs *networking_v1.VirtualService, se *networking_v1.ServiceEntry) models.IstioReferences {
 	drReferences := SidecarReferences{
+		Conf:      config.Get(),
 		Namespace: "istio-system",
 		Namespaces: models.Namespaces{
 			{Name: "istio-system"},

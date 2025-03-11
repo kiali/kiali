@@ -21,6 +21,7 @@ func prepareTestForVirtualService(vs *networking_v1.VirtualService) models.Istio
 	}
 
 	virtualServiceChecker := VirtualServiceChecker{
+		Conf:             config.Get(),
 		DestinationRules: destinationList,
 		VirtualServices:  vss,
 	}
@@ -87,6 +88,7 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 	}
 
 	virtualServiceChecker := VirtualServiceChecker{
+		Conf:             config.Get(),
 		DestinationRules: destinationList,
 		VirtualServices:  fakeVirtualServiceMultipleIstioObjects(),
 	}

@@ -988,7 +988,7 @@ func (in *IstioConfigService) IsGatewayAPI(cluster string) bool {
 }
 
 func (in *IstioConfigService) GatewayAPIClasses(cluster string) []config.GatewayAPIClass {
-	return kubernetes.GatewayAPIClasses(in.IsAmbientEnabled(cluster))
+	return kubernetes.GatewayAPIClasses(in.IsAmbientEnabled(cluster), &in.config)
 }
 
 func (in *IstioConfigService) IsAmbientEnabled(cluster string) bool {

@@ -71,7 +71,7 @@ func addBadging(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, names
 	}
 
 	applyCircuitBreakers(trafficMap, namespaceInfo.Namespace, destinationRuleLists)
-	applyVirtualServices(trafficMap, namespaceInfo.Namespace, virtualServiceLists)
+	applyVirtualServices(trafficMap, namespaceInfo.Namespace, virtualServiceLists, globalInfo.Conf)
 }
 
 func applyCircuitBreakers(trafficMap graph.TrafficMap, namespace string, destinationRuleLists map[string]models.IstioConfigList) {
@@ -121,14 +121,14 @@ NODES:
 	}
 }
 
-func applyVirtualServices(trafficMap graph.TrafficMap, namespace string, virtualServiceLists map[string]models.IstioConfigList) {
+func applyVirtualServices(trafficMap graph.TrafficMap, namespace string, virtualServiceLists map[string]models.IstioConfigList, conf *config.Config) {
 NODES:
 	for _, n := range trafficMap {
 		if n.NodeType != graph.NodeTypeService {
 			continue
 		}
 		for _, virtualService := range virtualServiceLists[n.Cluster].VirtualServices {
-			if models.IsVSValidHost(virtualService, n.Namespace, n.Service) {
+			if models.IsVSValidHost(virtualService, n.Namespace, n.Service, conf) {
 				var vsMetadata graph.VirtualServicesMetadata
 				var vsOk bool
 				if vsMetadata, vsOk = n.Metadata[graph.HasVS].(graph.VirtualServicesMetadata); !vsOk {
@@ -176,7 +176,7 @@ NODES:
 
 // addLabels is a chance to add any missing label info to nodes when the telemetry does not provide enough information.
 // For example, service injection has this problem.
-func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, serviceLists map[string]*models.ServiceList) {
+func addLabels(trafficMap graph.TrafficMap, gi *graph.GlobalInfo, serviceLists map[string]*models.ServiceList) {
 	// build map for quick lookup
 	svcMap := map[graph.ClusterSensitiveKey]models.ServiceOverview{}
 	for cluster, serviceList := range serviceLists {
@@ -204,7 +204,7 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, servic
 						}
 
 						if svc, found := svcMap[graph.GetClusterSensitiveKey(n.Cluster, hostToTest)]; found {
-							appLabelName, _ := config.Get().GetAppLabelName(svc.Labels)
+							appLabelName, _ := gi.Conf.GetAppLabelName(svc.Labels)
 							if app, ok := svc.Labels[appLabelName]; ok {
 								n.App = app
 							}
@@ -222,7 +222,7 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, servic
 					log.Debugf("Service not found, may not apply app label correctly for [%s:%s]", n.Namespace, n.Service)
 					continue
 				} else {
-					appLabelName, _ := config.Get().GetAppLabelName(svc.Labels)
+					appLabelName, _ := gi.Conf.GetAppLabelName(svc.Labels)
 					if app, ok := svc.Labels[appLabelName]; ok {
 						n.App = app
 					}
@@ -291,7 +291,7 @@ func decorateMatchingAPIGateways(cluster string, gwCrd *k8s_networking_v1.Gatewa
 	}
 }
 
-func resolveGatewayNodeMapping(gatewayWorkloads map[string][]models.WorkloadListItem, nodeMetadataKey graph.MetadataKey, trafficMap graph.TrafficMap) map[*models.WorkloadListItem][]*graph.Node {
+func resolveGatewayNodeMapping(gatewayWorkloads map[string][]models.WorkloadListItem, nodeMetadataKey graph.MetadataKey, trafficMap graph.TrafficMap, gi *graph.GlobalInfo) map[*models.WorkloadListItem][]*graph.Node {
 	gatewayNodeMapping := make(map[*models.WorkloadListItem][]*graph.Node)
 	for key, gwWorkloadsList := range gatewayWorkloads {
 		split := strings.Split(key, ":")
@@ -300,7 +300,7 @@ func resolveGatewayNodeMapping(gatewayWorkloads map[string][]models.WorkloadList
 		for _, gw := range gwWorkloadsList {
 			for _, node := range trafficMap {
 				if _, ok := node.Metadata[nodeMetadataKey]; !ok {
-					appLabelName, _ := config.Get().GetAppLabelName(gw.Labels)
+					appLabelName, _ := gi.Conf.GetAppLabelName(gw.Labels)
 					if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && node.App == gw.Labels[appLabelName] && node.Cluster == gwCluster && node.Namespace == gwNs {
 						node.Metadata[nodeMetadataKey] = graph.GatewaysMetadata{}
 						gatewayNodeMapping[&gw] = append(gatewayNodeMapping[&gw], node)
@@ -316,15 +316,15 @@ func resolveGatewayNodeMapping(gatewayWorkloads map[string][]models.WorkloadList
 func (a IstioAppender) decorateGateways(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	// Get ingress-gateways deployments in the namespace. Then, find if the graph is showing any of them. If so, flag the GW nodes.
 	ingressWorkloads := a.getIngressGatewayWorkloads(globalInfo)
-	ingressNodeMapping := resolveGatewayNodeMapping(ingressWorkloads, graph.IsIngressGateway, trafficMap)
+	ingressNodeMapping := resolveGatewayNodeMapping(ingressWorkloads, graph.IsIngressGateway, trafficMap, globalInfo)
 
 	// Get egress-gateways deployments in the namespace. (Same logic as in the previous chunk of code)
 	egressWorkloads := a.getEgressGatewayWorkloads(globalInfo)
-	egressNodeMapping := resolveGatewayNodeMapping(egressWorkloads, graph.IsEgressGateway, trafficMap)
+	egressNodeMapping := resolveGatewayNodeMapping(egressWorkloads, graph.IsEgressGateway, trafficMap, globalInfo)
 
 	// Get Gateway API workloads (ingress)
 	gatewayAPIWorkloads := a.getGatewayAPIWorkloads(globalInfo)
-	gatewayAPINodeMapping := resolveGatewayNodeMapping(gatewayAPIWorkloads, graph.IsGatewayAPI, trafficMap)
+	gatewayAPINodeMapping := resolveGatewayNodeMapping(gatewayAPIWorkloads, graph.IsGatewayAPI, trafficMap, globalInfo)
 
 	// If there is any ingress or egress gateway node in the processing namespace, find Gateway CRDs and
 	// match them against gateways in the graph.

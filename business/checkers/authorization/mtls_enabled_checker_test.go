@@ -242,6 +242,7 @@ func mtlsCheckerTestPrep(scenario string, autoMtls bool, t *testing.T) models.Is
 	}
 
 	validations := MtlsEnabledChecker{
+		Conf:                  config.Get(),
 		AuthorizationPolicies: loader.GetResources().AuthorizationPolicies,
 		RegistryServices:      data.CreateFakeRegistryServicesLabels("ratings", "bookinfo"),
 		MtlsDetails: kubernetes.MTLSDetails{

@@ -9,12 +9,12 @@ import (
 )
 
 func HasDRCircuitBreaker(dr *networking_v1.DestinationRule, namespace, serviceName, version string) bool {
-	if kubernetes.FilterByHost(dr.Spec.Host, dr.Namespace, serviceName, namespace) {
+	conf := config.Get()
+	if kubernetes.FilterByHost(dr.Spec.Host, dr.Namespace, serviceName, namespace, conf) {
 		if isCB(dr.Spec.TrafficPolicy) {
 			return true
 		}
 		for _, subset := range dr.Spec.Subsets {
-			cfg := config.Get()
 			if subset == nil {
 				continue
 			}
@@ -22,7 +22,7 @@ func HasDRCircuitBreaker(dr *networking_v1.DestinationRule, namespace, serviceNa
 				if version == "" {
 					return true
 				}
-				if verLabelName, found := cfg.GetVersionLabelName(subset.Labels); found {
+				if verLabelName, found := conf.GetVersionLabelName(subset.Labels); found {
 					if versionValue, ok := subset.Labels[verLabelName]; ok && versionValue == version {
 						return true
 					}

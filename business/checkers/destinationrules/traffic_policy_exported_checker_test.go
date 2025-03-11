@@ -573,6 +573,7 @@ func testValidationAddedExported(t *testing.T, destinationRules []*networking_v1
 	assert := assert.New(t)
 
 	vals := TrafficPolicyChecker{
+		Conf:             config.Get(),
 		Cluster:          config.DefaultClusterID,
 		DestinationRules: append(destinationRules, exportedDestinationRules...),
 		MTLSDetails:      mTLSDetails,
@@ -603,6 +604,7 @@ func testValidationsNotAddedExported(t *testing.T, destinationRules []*networkin
 	assert := assert.New(t)
 
 	vals := TrafficPolicyChecker{
+		Conf:             config.Get(),
 		Cluster:          config.DefaultClusterID,
 		DestinationRules: append(destinationRules, exportedDestinationRules...),
 		MTLSDetails:      mTLSDetails,

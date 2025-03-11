@@ -140,12 +140,12 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 		for _, srv := range valueApp.Services {
 			joinMap(applabels, srv.Labels)
 			if criteria.IncludeIstioResources {
-				vsFiltered := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, srv.Namespace, srv.Name)
+				vsFiltered := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, srv.Namespace, srv.Name, in.conf)
 				for _, v := range vsFiltered {
 					ref := models.BuildKey(kubernetes.VirtualServices, v.Name, v.Namespace, cluster)
 					svcReferences = append(svcReferences, &ref)
 				}
-				drFiltered := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, srv.Namespace, srv.Name)
+				drFiltered := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, srv.Namespace, srv.Name, in.conf)
 				for _, d := range drFiltered {
 					ref := models.BuildKey(kubernetes.DestinationRules, d.Name, d.Namespace, cluster)
 					svcReferences = append(svcReferences, &ref)
@@ -282,6 +282,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 		}
 	}
 
+	conf := config.Get()
 	for _, clusterApps := range allApps {
 		for keyApp, valueApp := range clusterApps {
 			appItem := &models.AppListItem{
@@ -298,12 +299,12 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 			for _, srv := range valueApp.Services {
 				joinMap(applabels, srv.Labels)
 				if criteria.IncludeIstioResources {
-					vsFiltered := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, srv.Namespace, srv.Name)
+					vsFiltered := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, srv.Namespace, srv.Name, conf)
 					for _, v := range vsFiltered {
 						ref := models.BuildKey(kubernetes.VirtualServices, v.Name, v.Namespace, criteria.Cluster)
 						svcReferences = append(svcReferences, &ref)
 					}
-					drFiltered := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, srv.Namespace, srv.Name)
+					drFiltered := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, srv.Namespace, srv.Name, conf)
 					for _, d := range drFiltered {
 						ref := models.BuildKey(kubernetes.DestinationRules, d.Name, d.Namespace, criteria.Cluster)
 						svcReferences = append(svcReferences, &ref)

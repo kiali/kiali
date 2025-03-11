@@ -447,9 +447,9 @@ func TestIsValidHost(t *testing.T) {
 	vs = data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v2", 50), vs)
 	vs = data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v3", 50), vs)
 
-	assert.False(t, models.IsVSValidHost(vs, "test", ""))
-	assert.False(t, models.IsVSValidHost(vs, "test", "ratings"))
-	assert.True(t, models.IsVSValidHost(vs, "test", "reviews"))
+	assert.False(t, models.IsVSValidHost(vs, "test", "", conf))
+	assert.False(t, models.IsVSValidHost(vs, "test", "ratings", conf))
+	assert.True(t, models.IsVSValidHost(vs, "test", "reviews", conf))
 }
 
 func TestHasCircuitBreaker(t *testing.T) {

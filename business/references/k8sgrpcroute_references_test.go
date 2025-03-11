@@ -16,6 +16,7 @@ import (
 
 func prepareTestForK8sGRPCRoute(route *k8s_networking_v1.GRPCRoute) models.IstioReferences {
 	routeReferences := K8sGRPCRouteReferences{
+		Conf: config.Get(),
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 			{Name: "bookinfo2"},

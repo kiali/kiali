@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
@@ -18,6 +19,7 @@ func TestOneVirtualServicePerHost(t *testing.T) {
 		buildVirtualService("virtual-2", "ratings"),
 	}
 	vals := SingleHostChecker{
+		Conf:            config.Get(),
 		VirtualServices: vss,
 	}.Check()
 
@@ -29,6 +31,7 @@ func TestOneVirtualServicePerHost(t *testing.T) {
 		buildVirtualService("virtual-2", "ratings"),
 	}
 	vals = SingleHostChecker{
+		Conf:            config.Get(),
 		VirtualServices: vss,
 	}.Check()
 
@@ -41,6 +44,7 @@ func TestOneVirtualServicePerHost(t *testing.T) {
 		buildVirtualServiceWithGateway("virtual-2", "ratings", "bookinfo-gateway"),
 	}
 	vals = SingleHostChecker{
+		Conf:            config.Get(),
 		VirtualServices: vss,
 	}.Check()
 
@@ -54,6 +58,7 @@ func TestOneVirtualServicePerHost(t *testing.T) {
 	}
 
 	vals = SingleHostChecker{
+		Conf:            config.Get(),
 		VirtualServices: vss,
 	}.Check()
 
@@ -67,6 +72,7 @@ func TestOneVirtualServicePerFQDNHost(t *testing.T) {
 		buildVirtualService("virtual-2", "ratings.bookinfo.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
+		Conf:            config.Get(),
 		VirtualServices: vss,
 	}.Check()
 
@@ -79,6 +85,7 @@ func TestOneVirtualServicePerFQDNWildcardHost(t *testing.T) {
 		buildVirtualService("virtual-2", "*.eshop.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
+		Conf:            config.Get(),
 		VirtualServices: vss,
 	}.Check()
 
@@ -93,6 +100,7 @@ func TestRepeatingSimpleHost(t *testing.T) {
 	}
 
 	vals := SingleHostChecker{
+		Conf:            config.Get(),
 		VirtualServices: vss,
 	}.Check()
 
@@ -119,6 +127,7 @@ func TestRepeatingSimpleHostWithGateway(t *testing.T) {
 	}
 
 	vals := SingleHostChecker{
+		Conf:            config.Get(),
 		VirtualServices: vss,
 	}.Check()
 
@@ -131,6 +140,7 @@ func TestRepeatingSimpleHostWithGateway(t *testing.T) {
 	}
 
 	vals = SingleHostChecker{
+		Conf:            config.Get(),
 		VirtualServices: vss,
 	}.Check()
 
@@ -143,6 +153,7 @@ func TestRepeatingSimpleHostWithGateway(t *testing.T) {
 	}
 
 	vals = SingleHostChecker{
+		Conf:            config.Get(),
 		VirtualServices: vss,
 	}.Check()
 
@@ -161,6 +172,7 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		buildVirtualService("virtual-2", "reviews.bookinfo"),
 	}
 	vals := SingleHostChecker{
+		Conf: config.Get(),
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 		},
@@ -175,6 +187,7 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		buildVirtualService("virtual-2", "reviews.bookinfo"),
 	}
 	vals = SingleHostChecker{
+		Conf: config.Get(),
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 		},
@@ -190,6 +203,7 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		buildVirtualServiceWithGateway("virtual-3", "reviews", "bookinfo-gateway-auto"),
 	}
 	vals = SingleHostChecker{
+		Conf: config.Get(),
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 		},
@@ -204,6 +218,7 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		buildVirtualService("virtual-2", "reviews.bookinfo"),
 	}
 	vals = SingleHostChecker{
+		Conf: config.Get(),
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 		},
@@ -218,6 +233,7 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		buildVirtualService("virtual-2", "details.bookinfo"),
 	}
 	vals = SingleHostChecker{
+		Conf: config.Get(),
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 		},
@@ -233,6 +249,7 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		buildVirtualService("virtual-2", "details.bookinfo"),
 	}
 	vals = SingleHostChecker{
+		Conf: config.Get(),
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 		},
@@ -251,6 +268,7 @@ func TestRepeatingFQDNHost(t *testing.T) {
 		buildVirtualService("virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
+		Conf:            config.Get(),
 		VirtualServices: vss,
 	}.Check()
 
@@ -277,6 +295,7 @@ func TestRepeatingFQDNWildcardHost(t *testing.T) {
 		buildVirtualService("virtual-3", "*.bookinfo.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
+		Conf:            config.Get(),
 		VirtualServices: vss,
 	}.Check()
 
@@ -303,6 +322,7 @@ func TestIncludedIntoWildCard(t *testing.T) {
 		buildVirtualService("virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
+		Conf:            config.Get(),
 		VirtualServices: vss,
 	}.Check()
 
@@ -328,6 +348,7 @@ func TestIncludedIntoWildCard(t *testing.T) {
 		buildVirtualService("virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
 	vals = SingleHostChecker{
+		Conf:            config.Get(),
 		VirtualServices: vss,
 	}.Check()
 
@@ -354,6 +375,7 @@ func TestShortHostNameIncludedIntoWildCard(t *testing.T) {
 		buildVirtualService("virtual-3", "reviews"),
 	}
 	vals := SingleHostChecker{
+		Conf:            config.Get(),
 		VirtualServices: vss,
 	}.Check()
 
@@ -380,6 +402,7 @@ func TestWildcardisMarkedInvalid(t *testing.T) {
 		buildVirtualService("virtual-3", "reviews"),
 	}
 	vals := SingleHostChecker{
+		Conf:            config.Get(),
 		VirtualServices: vss,
 	}.Check()
 
@@ -406,6 +429,7 @@ func TestMultipleHostsFailing(t *testing.T) {
 			"mongo.backup.svc.cluster.local", "mongo.staging.svc.cluster.local"}),
 	}
 	vals := SingleHostChecker{
+		Conf:            config.Get(),
 		VirtualServices: vss,
 	}.Check()
 
@@ -429,6 +453,7 @@ func TestMultipleHostsPassing(t *testing.T) {
 			"mongo.backup.svc.cluster.local", "mongo.staging.svc.cluster.local"}),
 	}
 	vals := SingleHostChecker{
+		Conf:            config.Get(),
 		VirtualServices: vss,
 	}.Check()
 

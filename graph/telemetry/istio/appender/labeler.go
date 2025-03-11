@@ -1,7 +1,6 @@
 package appender
 
 import (
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 )
@@ -78,10 +77,10 @@ func labelNodes(trafficMap graph.TrafficMap, gi *graph.GlobalInfo) {
 
 		if len(labelsMetadata) > 0 {
 			n.Metadata[graph.Labels] = labelsMetadata
-			if appLabelName, found := config.Get().GetAppLabelName(labelsMetadata); found {
+			if appLabelName, found := gi.Conf.GetAppLabelName(labelsMetadata); found {
 				delete(n.Metadata[graph.Labels].(graph.LabelsMetadata), appLabelName)
 			}
-			if verLabelName, found := config.Get().GetVersionLabelName(labelsMetadata); found {
+			if verLabelName, found := gi.Conf.GetVersionLabelName(labelsMetadata); found {
 				delete(n.Metadata[graph.Labels].(graph.LabelsMetadata), verLabelName)
 			}
 		}

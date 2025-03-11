@@ -4,11 +4,13 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/business/checkers/gateways"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type GatewayChecker struct {
+	Conf                  *config.Config
 	Gateways              []*networking_v1.Gateway
 	WorkloadsPerNamespace map[string]models.Workloads
 	IsGatewayToNamespace  bool
@@ -19,6 +21,7 @@ type GatewayChecker struct {
 func (g GatewayChecker) Check() models.IstioValidations {
 	// Multinamespace checkers
 	validations := gateways.MultiMatchChecker{
+		Conf:     g.Conf,
 		Gateways: g.Gateways,
 		Cluster:  g.Cluster,
 	}.Check()

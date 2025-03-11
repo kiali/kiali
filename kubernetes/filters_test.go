@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"testing"
 
+	"github.com/kiali/kiali/config"
 	"github.com/stretchr/testify/assert"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	apps_v1 "k8s.io/api/apps/v1"
@@ -264,11 +265,11 @@ func TestFilterK8sHTTPRoutesByService(t *testing.T) {
 	rt2 := createHTTPRoute("testroute2", "wrong", "details", "bookinfo")
 	rt3 := createHTTPRoute("testroute3", "default", "wrong", "bookinfo")
 	rt4 := createHTTPRoute("testroute4", "default", "details", "wrong")
-	filtered := FilterK8sHTTPRoutesByService([]*k8s_networking_v1.HTTPRoute{rt1, rt2, rt3, rt4}, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("grant1", "bookinfo", "default")}, "bookinfo", "details")
+	filtered := FilterK8sHTTPRoutesByService([]*k8s_networking_v1.HTTPRoute{rt1, rt2, rt3, rt4}, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("grant1", "bookinfo", "default")}, "bookinfo", "details", config.Get())
 	expected := []*k8s_networking_v1.HTTPRoute{rt1}
 	assert.EqualValues(expected, filtered)
 
-	emptyFiltered := FilterK8sHTTPRoutesByService([]*k8s_networking_v1.HTTPRoute{rt1, rt2, rt3, rt4}, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("grant1", "bookinfo", "default")}, "wrong", "wrong")
+	emptyFiltered := FilterK8sHTTPRoutesByService([]*k8s_networking_v1.HTTPRoute{rt1, rt2, rt3, rt4}, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("grant1", "bookinfo", "default")}, "wrong", "wrong", config.Get())
 	assert.Empty(emptyFiltered)
 }
 

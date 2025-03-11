@@ -7,12 +7,14 @@ import (
 
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util"
 )
 
 type SidecarReferences struct {
+	Conf                  *config.Config
 	Sidecars              []*networking_v1.Sidecar
 	Namespace             string
 	Namespaces            models.Namespaces
@@ -38,7 +40,7 @@ func (n SidecarReferences) References() models.IstioReferencesMap {
 					if hostNs == "*" || hostNs == "~" || hostNs == "." || dnsName == "*" {
 						continue
 					}
-					fqdn := kubernetes.ParseHost(dnsName, hostNs)
+					fqdn := kubernetes.ParseHost(dnsName, hostNs, n.Conf)
 
 					configRef := n.getConfigReferences(fqdn, hostNs)
 					references.ObjectReferences = append(references.ObjectReferences, configRef...)

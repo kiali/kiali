@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/models"
@@ -79,10 +80,10 @@ func (in *ProxyStatusService) GetConfigDumpResourceEntries(cluster, namespace, p
 		return nil, err
 	}
 
-	return buildDump(dump, resource, namespaces)
+	return buildDump(dump, resource, namespaces, in.businessLayer.App.conf)
 }
 
-func buildDump(dump *kubernetes.ConfigDump, resource string, namespaces []models.Namespace) (*models.EnvoyProxyDump, error) {
+func buildDump(dump *kubernetes.ConfigDump, resource string, namespaces []models.Namespace, conf *config.Config) (*models.EnvoyProxyDump, error) {
 	response := &models.EnvoyProxyDump{}
 	var err error
 
@@ -94,11 +95,11 @@ func buildDump(dump *kubernetes.ConfigDump, resource string, namespaces []models
 	switch resource {
 	case "clusters":
 		summary := &models.Clusters{}
-		err = summary.Parse(dump)
+		err = summary.Parse(dump, conf)
 		response.Clusters = summary
 	case "routes":
 		summary := &models.Routes{}
-		err = summary.Parse(dump, nss)
+		err = summary.Parse(dump, nss, conf)
 		response.Routes = summary
 	case "bootstrap":
 		summary := &models.Bootstrap{}

@@ -5,11 +5,13 @@ import (
 
 	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/business/checkers/virtualservices"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type VirtualServiceChecker struct {
+	Conf             *config.Config
 	Namespaces       models.Namespaces
 	Cluster          string
 	VirtualServices  []*networking_v1.VirtualService
@@ -45,7 +47,7 @@ func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	enabledCheckers := []GroupChecker{
-		virtualservices.SingleHostChecker{Namespaces: in.Namespaces, VirtualServices: in.VirtualServices, Cluster: in.Cluster},
+		virtualservices.SingleHostChecker{Conf: in.Conf, Namespaces: in.Namespaces, VirtualServices: in.VirtualServices, Cluster: in.Cluster},
 	}
 
 	for _, checker := range enabledCheckers {
@@ -61,8 +63,8 @@ func (in VirtualServiceChecker) runChecks(virtualService *networking_v1.VirtualS
 	key, rrValidation := EmptyValidValidation(virtualServiceName, virtualService.Namespace, kubernetes.VirtualServices, in.Cluster)
 
 	enabledCheckers := []Checker{
-		virtualservices.RouteChecker{VirtualService: virtualService, Namespaces: in.Namespaces.GetNames()},
-		virtualservices.SubsetPresenceChecker{Namespaces: in.Namespaces.GetNames(), VirtualService: virtualService, DestinationRules: in.DestinationRules},
+		virtualservices.RouteChecker{Conf: in.Conf, VirtualService: virtualService, Namespaces: in.Namespaces.GetNames()},
+		virtualservices.SubsetPresenceChecker{Conf: in.Conf, Namespaces: in.Namespaces.GetNames(), VirtualService: virtualService, DestinationRules: in.DestinationRules},
 	}
 	if !in.Namespaces.IsNamespaceAmbient(virtualService.Namespace, in.Cluster) {
 		enabledCheckers = append(enabledCheckers, common.ExportToNamespaceChecker{ExportTo: virtualService.Spec.ExportTo, Namespaces: in.Namespaces})

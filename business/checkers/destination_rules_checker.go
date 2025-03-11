@@ -5,11 +5,13 @@ import (
 
 	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/business/checkers/destinationrules"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type DestinationRulesChecker struct {
+	Conf             *config.Config
 	DestinationRules []*networking_v1.DestinationRule
 	MTLSDetails      kubernetes.MTLSDetails
 	ServiceEntries   []*networking_v1.ServiceEntry
@@ -32,10 +34,10 @@ func (in DestinationRulesChecker) runGroupChecks() models.IstioValidations {
 	seHosts := kubernetes.ServiceEntryHostnames(in.ServiceEntries)
 
 	enabledDRCheckers := []GroupChecker{
-		destinationrules.MultiMatchChecker{Namespaces: in.Namespaces, ServiceEntries: seHosts, DestinationRules: in.DestinationRules, Cluster: in.Cluster},
+		destinationrules.MultiMatchChecker{Conf: in.Conf, Namespaces: in.Namespaces, ServiceEntries: seHosts, DestinationRules: in.DestinationRules, Cluster: in.Cluster},
 	}
 
-	enabledDRCheckers = append(enabledDRCheckers, destinationrules.TrafficPolicyChecker{DestinationRules: in.DestinationRules, MTLSDetails: in.MTLSDetails, Cluster: in.Cluster})
+	enabledDRCheckers = append(enabledDRCheckers, destinationrules.TrafficPolicyChecker{Conf: in.Conf, DestinationRules: in.DestinationRules, MTLSDetails: in.MTLSDetails, Cluster: in.Cluster})
 
 	for _, checker := range enabledDRCheckers {
 		validations = validations.MergeValidations(checker.Check())
@@ -59,14 +61,14 @@ func (in DestinationRulesChecker) runChecks(destinationRule *networking_v1.Desti
 	key, rrValidation := EmptyValidValidation(destinationRuleName, destinationRule.Namespace, kubernetes.DestinationRules, in.Cluster)
 
 	enabledCheckers := []Checker{
-		destinationrules.DisabledNamespaceWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails},
+		destinationrules.DisabledNamespaceWideMTLSChecker{Conf: in.Conf, DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails},
 		destinationrules.DisabledMeshWideMTLSChecker{DestinationRule: destinationRule, MeshPeerAuthns: in.MTLSDetails.MeshPeerAuthentications},
 	}
 	if !in.Namespaces.IsNamespaceAmbient(destinationRule.Namespace, in.Cluster) {
 		enabledCheckers = append(enabledCheckers, common.ExportToNamespaceChecker{ExportTo: destinationRule.Spec.ExportTo, Namespaces: in.Namespaces})
 	}
 
-	enabledCheckers = append(enabledCheckers, destinationrules.NamespaceWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails})
+	enabledCheckers = append(enabledCheckers, destinationrules.NamespaceWideMTLSChecker{Conf: in.Conf, DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails})
 	enabledCheckers = append(enabledCheckers, destinationrules.MeshWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails})
 
 	for _, checker := range enabledCheckers {

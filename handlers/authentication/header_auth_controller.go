@@ -62,8 +62,9 @@ func NewHeaderAuthController(conf *config.Config, homeClusterSAClient kubernetes
 func (c headerAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	authInfo := c.getTokenStringFromHeader(r)
 
+	conf := config.Get()
 	if authInfo == nil || authInfo.Token == "" {
-		c.SessionStore.TerminateSession(r, w, config.Get().KubernetesConfig.ClusterName)
+		c.SessionStore.TerminateSession(r, w, conf.KubernetesConfig.ClusterName)
 		return nil, &AuthenticationFailureError{
 			HttpStatus: http.StatusUnauthorized,
 			Reason:     "Token is missing",
@@ -88,8 +89,8 @@ func (c headerAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 	}
 
 	// Create the session
-	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
-	sessionData, err := NewSessionData(config.Get().KubernetesConfig.ClusterName, config.AuthStrategyHeader, timeExpire, &headerSessionPayload{Token: authInfo.Token, Subject: tokenSubject})
+	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(conf.LoginToken.ExpirationSeconds))
+	sessionData, err := NewSessionData(conf.KubernetesConfig.ClusterName, config.AuthStrategyHeader, timeExpire, &headerSessionPayload{Token: authInfo.Token, Subject: tokenSubject})
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +111,8 @@ func (c headerAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 func (c headerAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (UserSessions, error) {
 	log.Tracef("Using header for authentication, Url: [%s]", r.URL.String())
 
-	sData, err := c.SessionStore.ReadSession(r, w, config.Get().KubernetesConfig.ClusterName)
+	conf := config.Get()
+	sData, err := c.SessionStore.ReadSession(r, w, conf.KubernetesConfig.ClusterName)
 	if err != nil && !errors.Is(err, ErrSessionNotFound) {
 		log.Warningf("Could not read the session: %v", err)
 		return nil, err
@@ -138,7 +140,7 @@ func (c headerAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 	}
 
 	return UserSessions{
-		config.Get().KubernetesConfig.ClusterName: &UserSessionData{
+		conf.KubernetesConfig.ClusterName: &UserSessionData{
 			ExpiresOn: expiration,
 			Username:  subject,
 			AuthInfo:  authInfo,

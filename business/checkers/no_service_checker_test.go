@@ -17,6 +17,7 @@ func TestNoCrashOnEmpty(t *testing.T) {
 	assert := assert.New(t)
 
 	typeValidations := NoServiceChecker{
+		Conf:             config.Get(),
 		IstioConfigList:  emptyIstioConfigList(),
 		RegistryServices: data.CreateEmptyRegistryServices(),
 	}.Check()
@@ -31,6 +32,7 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 	assert := assert.New(t)
 
 	vals := NoServiceChecker{
+		Conf: config.Get(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test": {
 				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -62,6 +64,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert := assert.New(t)
 
 	vals := NoServiceChecker{
+		Conf:            config.Get(),
 		IstioConfigList: fakeIstioConfigList(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test": {
@@ -86,6 +89,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", customerDr.Checks[0]))
 
 	vals = NoServiceChecker{
+		Conf: config.Get(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test": {
 				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -111,6 +115,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", productVs.Checks[1]))
 
 	vals = NoServiceChecker{
+		Conf: config.Get(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test": {
 				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -129,6 +134,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert.True(vals[models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "test", Name: "customer-dr"}].Valid)
 
 	vals = NoServiceChecker{
+		Conf: config.Get(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test": {
 				data.CreateWorkload("productv1", appVersionLabel("product", "v1")),
@@ -158,6 +164,7 @@ func TestObjectWithoutGateway(t *testing.T) {
 
 	istioDetails.VirtualServices[0].Spec.Gateways = gateways
 	vals := NoServiceChecker{
+		Conf:                 config.Get(),
 		IstioConfigList:      istioDetails,
 		RegistryServices:     data.CreateFakeMultiRegistryServices([]string{"reviews.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", "*"),
 		AuthorizationDetails: &kubernetes.RBACDetails{},

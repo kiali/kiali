@@ -17,7 +17,7 @@ func TestServiceDetailParsing(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	service := ServiceDetails{}
-	service.SetService(config.DefaultClusterID, fakeService())
+	service.SetService(config.DefaultClusterID, fakeService(), config.Get())
 	service.SetEndpoints(fakeEndpoints())
 	service.SetPods(fakePods())
 	service.SetIstioSidecar(fakeWorkloads())
@@ -57,7 +57,7 @@ func TestServiceParse(t *testing.T) {
 	service.Name = "service"
 	service.Namespace = "namespace"
 
-	service.Parse(config.DefaultClusterID, fakeService())
+	service.Parse(config.DefaultClusterID, fakeService(), config.Get())
 	assert.Equal("labelName1", service.Labels["label1"])
 	assert.Equal("labelName2", service.Labels["label2"])
 	assert.Equal("ClusterIP", service.Type)

@@ -54,18 +54,19 @@ func InitTracer(collectorURL string) *sdktrace.TracerProvider {
 		log.Errorf("Failed to initialize tracer. Kiali will not log its own tracing data: %v", err)
 		return nil
 	}
+	conf := config.Get()
 	tp := sdktrace.NewTracerProvider(
-		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(config.Get().Server.Observability.Tracing.SamplingRate))),
+		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(conf.Server.Observability.Tracing.SamplingRate))),
 		sdktrace.WithBatcher(exporter),
 		// Record information about this application in an Resource.
 		sdktrace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceNameKey.String(TracerName()),
-			semconv.ServiceNamespaceKey.String(config.Get().Deployment.Namespace),
+			semconv.ServiceNamespaceKey.String(conf.Deployment.Namespace),
 			// In order for kiali to dog food its own traces, this attribute is set. When determining if an app's
 			// traces match its workload, the business logic will parse this hostname attribute.
 			attribute.String("hostname", TracerName()),
-			attribute.String("instance_name", config.Get().Deployment.InstanceName),
+			attribute.String("instance_name", conf.Deployment.InstanceName),
 		)),
 	)
 	otel.SetTracerProvider(tp)

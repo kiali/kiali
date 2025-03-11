@@ -145,7 +145,7 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 	}
 
 	return models.MTLSStatus{
-		Status:          mtlsStatus.NamespaceMtlsStatus(namespace).OverallStatus,
+		Status:          mtlsStatus.NamespaceMtlsStatus(namespace, in.businessLayer.App.conf).OverallStatus,
 		AutoMTLSEnabled: mtlsStatus.AutoMtlsEnabled,
 		Cluster:         cluster,
 		Namespace:       namespace,
@@ -186,7 +186,7 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 		}
 
 		result = append(result, models.MTLSStatus{
-			Status:          mtlsStatus.NamespaceMtlsStatus(namespace.Name).OverallStatus,
+			Status:          mtlsStatus.NamespaceMtlsStatus(namespace.Name, in.businessLayer.App.conf).OverallStatus,
 			AutoMTLSEnabled: mtlsStatus.AutoMtlsEnabled,
 			Cluster:         cluster,
 			Namespace:       namespace.Name,

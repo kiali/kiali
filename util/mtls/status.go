@@ -5,6 +5,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -45,9 +46,9 @@ func (m MtlsStatus) hasPeerAuthnNamespacemTLSDefinition() string {
 	return ""
 }
 
-func (m MtlsStatus) hasDesinationRuleEnablingNamespacemTLS(namespace string) string {
+func (m MtlsStatus) hasDesinationRuleEnablingNamespacemTLS(namespace string, conf *config.Config) string {
 	for _, dr := range m.DestinationRules {
-		if _, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(namespace, dr); mode != "" {
+		if _, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(namespace, dr, conf); mode != "" {
 			return mode
 		}
 	}
@@ -56,7 +57,7 @@ func (m MtlsStatus) hasDesinationRuleEnablingNamespacemTLS(namespace string) str
 }
 
 // Returns the mTLS status at workload level (matching the m.MatchingLabels)
-func (m MtlsStatus) WorkloadMtlsStatus(namespace string) string {
+func (m MtlsStatus) WorkloadMtlsStatus(namespace string, conf *config.Config) string {
 	for _, pa := range m.PeerAuthentications {
 		var selectorLabels map[string]string
 		if pa.Spec.Selector != nil {
@@ -88,7 +89,7 @@ func (m MtlsStatus) WorkloadMtlsStatus(namespace string) string {
 					nameNamespaces = append(nameNamespaces, NameNamespace{rSvc.IstioService.Attributes.Name, rSvc.IstioService.Attributes.Namespace})
 				}
 				for _, nameNamespace := range nameNamespaces {
-					filteredDrs := kubernetes.FilterDestinationRulesByService(m.DestinationRules, nameNamespace.Namespace, nameNamespace.Name)
+					filteredDrs := kubernetes.FilterDestinationRulesByService(m.DestinationRules, nameNamespace.Namespace, nameNamespace.Name, conf)
 					for _, dr := range filteredDrs {
 						enabled, mode := kubernetes.DestinationRuleHasMTLSEnabled(dr)
 						if enabled || mode == "MUTUAL" {
@@ -107,8 +108,8 @@ func (m MtlsStatus) WorkloadMtlsStatus(namespace string) string {
 	return MTLSNotEnabled
 }
 
-func (m MtlsStatus) NamespaceMtlsStatus(namespace string) TlsStatus {
-	drStatus := m.hasDesinationRuleEnablingNamespacemTLS(namespace)
+func (m MtlsStatus) NamespaceMtlsStatus(namespace string, conf *config.Config) TlsStatus {
+	drStatus := m.hasDesinationRuleEnablingNamespacemTLS(namespace, conf)
 	paStatus := m.hasPeerAuthnNamespacemTLSDefinition()
 	return m.finalStatus(drStatus, paStatus)
 }

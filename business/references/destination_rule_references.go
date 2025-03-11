@@ -5,12 +5,14 @@ import (
 
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util"
 )
 
 type DestinationRuleReferences struct {
+	Conf                  *config.Config
 	Namespace             string
 	Namespaces            models.Namespaces
 	DestinationRules      []*networking_v1.DestinationRule
@@ -42,7 +44,7 @@ func (n DestinationRuleReferences) References() models.IstioReferencesMap {
 func (n DestinationRuleReferences) getServiceReferences(dr *networking_v1.DestinationRule) []models.ServiceReference {
 	result := make([]models.ServiceReference, 0)
 
-	fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, n.Namespaces.GetNames())
+	fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, n.Namespaces.GetNames(), n.Conf)
 	if !fqdn.IsWildcard() && kubernetes.HasMatchingRegistryService(dr.Namespace, fqdn.String(), n.RegistryServices) {
 		result = append(result, models.ServiceReference{Name: fqdn.Service, Namespace: fqdn.Namespace})
 	}
@@ -54,7 +56,7 @@ func (n DestinationRuleReferences) getWorkloadReferences(dr *networking_v1.Desti
 	allWorkloads := make([]models.WorkloadReference, 0)
 	result := make([]models.WorkloadReference, 0)
 
-	host := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, n.Namespaces.GetNames())
+	host := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, n.Namespaces.GetNames(), n.Conf)
 	if host.IsWildcard() {
 		return result
 	}
@@ -107,7 +109,7 @@ func (n DestinationRuleReferences) getWorkloadReferences(dr *networking_v1.Desti
 func (n DestinationRuleReferences) getSEReferences(dr *networking_v1.DestinationRule) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 
-	fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, n.Namespaces.GetNames())
+	fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, n.Namespaces.GetNames(), n.Conf)
 	if !fqdn.IsWildcard() {
 		for _, se := range n.ServiceEntries {
 			for _, seHost := range se.Spec.Hosts {
@@ -141,9 +143,9 @@ func (n DestinationRuleReferences) getConfigReferences(dr *networking_v1.Destina
 									continue
 								}
 								host := dest.Destination.Host
-								drHost := kubernetes.GetHost(host, dr.Namespace, n.Namespaces.GetNames())
-								vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, n.Namespaces.GetNames())
-								if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) {
+								drHost := kubernetes.GetHost(host, dr.Namespace, n.Namespaces.GetNames(), n.Conf)
+								vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, n.Namespaces.GetNames(), n.Conf)
+								if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace, n.Conf) {
 									allConfigs = append(allConfigs, models.IstioReference{Name: virtualService.Name, Namespace: virtualService.Namespace, ObjectGVK: kubernetes.VirtualServices})
 								}
 							}
@@ -162,9 +164,9 @@ func (n DestinationRuleReferences) getConfigReferences(dr *networking_v1.Destina
 									continue
 								}
 								host := dest.Destination.Host
-								drHost := kubernetes.GetHost(host, dr.Namespace, n.Namespaces.GetNames())
-								vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, n.Namespaces.GetNames())
-								if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) {
+								drHost := kubernetes.GetHost(host, dr.Namespace, n.Namespaces.GetNames(), n.Conf)
+								vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, n.Namespaces.GetNames(), n.Conf)
+								if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace, n.Conf) {
 									allConfigs = append(allConfigs, models.IstioReference{Name: virtualService.Name, Namespace: virtualService.Namespace, ObjectGVK: kubernetes.VirtualServices})
 								}
 							}
@@ -183,9 +185,9 @@ func (n DestinationRuleReferences) getConfigReferences(dr *networking_v1.Destina
 									continue
 								}
 								host := dest.Destination.Host
-								drHost := kubernetes.GetHost(host, dr.Namespace, n.Namespaces.GetNames())
-								vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, n.Namespaces.GetNames())
-								if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) {
+								drHost := kubernetes.GetHost(host, dr.Namespace, n.Namespaces.GetNames(), n.Conf)
+								vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, n.Namespaces.GetNames(), n.Conf)
+								if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace, n.Conf) {
 									allConfigs = append(allConfigs, models.IstioReference{Name: virtualService.Name, Namespace: virtualService.Namespace, ObjectGVK: kubernetes.VirtualServices})
 								}
 							}

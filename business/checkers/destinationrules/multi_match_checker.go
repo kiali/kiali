@@ -6,12 +6,14 @@ import (
 
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type MultiMatchChecker struct {
 	Cluster          string
+	Conf             *config.Config
 	DestinationRules []*networking_v1.DestinationRule
 	ServiceEntries   map[string][]string
 	Namespaces       models.Namespaces
@@ -38,7 +40,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	for _, dr := range m.DestinationRules {
 		destinationRulesName := dr.Name
 		destinationRulesNamespace := dr.Namespace
-		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, m.Namespaces.GetNames())
+		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, m.Namespaces.GetNames(), m.Conf)
 
 		// Skip DR validation if it enables mTLS either namespace or mesh-wide
 		if isNonLocalmTLSForServiceEnabled(dr, fqdn.String()) {
