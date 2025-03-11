@@ -117,6 +117,10 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	version := r.kialiCache.Validations().Version()
 	newValidations := make(models.IstioValidations)
 	prevValidations := r.kialiCache.Validations().Items()
+
+	// If enabled, the same changeMap is used on each Reconcile. It holds the "resource version" of
+	// each object used in the validation, and is then used to look for version changes (or a change in
+	// the number of objects).  We keep it in the cache for sane access.
 	var changeMap business.ValidationChangeMap
 	if config.Get().ExternalServices.Istio.ValidationChangeDetectionEnabled {
 		changeMap = r.kialiCache.ValidationConfig().Items()
@@ -130,14 +134,14 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	for _, cluster := range r.clusters {
-		clusterValidations, err := r.validationsService.Validate(ctx, cluster, vInfo)
+		validationPerformed, clusterValidations, err := r.validationsService.Validate(ctx, cluster, vInfo)
 		if err != nil {
-			log.Errorf("[ValidationsReconciler] Error creating validations for cluster %s: %s", cluster, err)
+			log.Errorf("[ValidationsReconciler] Error performing validation for cluster %s: %s", cluster, err)
 			return ctrl.Result{}, err
 		}
 
 		// if there have been no config changes for the cluster, just re-use the prior validations
-		if clusterValidations == nil {
+		if !validationPerformed {
 			log.Tracef("validations: no changes for cluster [%s], re-using", cluster)
 			clusterValidations = models.IstioValidations(prevValidations).FilterByCluster(cluster)
 		} else {

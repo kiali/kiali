@@ -257,9 +257,11 @@ func (in *validationInfo) forceCheckers() bool {
 	return in.hasBaseChange
 }
 
-// Validate runs a full validation on all objects. It returns an IstioValidations object with all the checks found when running all
-// the enabled checkers.
-func (in *IstioValidationsService) Validate(ctx context.Context, cluster string, vInfo *validationInfo) (models.IstioValidations, error) {
+// Validate runs a full validation on all objects. The first return variable is the "validationPerformed" bool, indicating whether or not
+// the validation checkers were run. It will return false if a changeMap is provided in vInfo and no config changes were detected for the
+// cluster. Otherwise, it will return true. When true the new "validations" are returned in the second return variable. When false
+// the second argument is nil.
+func (in *IstioValidationsService) Validate(ctx context.Context, cluster string, vInfo *validationInfo) (bool, models.IstioValidations, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "getValidations",
 		observability.Attribute("package", "business"),
@@ -299,7 +301,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 	}
 	istioConfigList, err := in.istioConfig.GetIstioConfigListForCluster(ctx, cluster, meta_v1.NamespaceAll, criteria)
 	if err != nil {
-		return nil, err
+		return false, nil, err
 	}
 	vInfo.clusterInfo.istioConfig = istioConfigList
 
@@ -307,7 +309,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 	if vInfo.changeDetectionEnabled() {
 		changeDetected := detectClusterConfigChange(vInfo)
 		if !changeDetected && !vInfo.forceCheckers() {
-			return nil, nil
+			return false, nil, nil
 		}
 	}
 
@@ -318,11 +320,11 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 
 		err := in.setNamespaceIstioConfig(vInfo)
 		if err != nil {
-			return nil, err
+			return false, nil, err
 		}
 
 		if err := in.setNonLocalMTLSConfig(vInfo); err != nil {
-			return nil, err
+			return false, nil, err
 		}
 
 		objectCheckers := in.getAllObjectCheckers(vInfo)
@@ -330,7 +332,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 		validations.MergeValidations(runObjectCheckers(objectCheckers))
 	}
 
-	return validations, nil
+	return true, validations, nil
 }
 
 // toWorkloadMap takes a list of workloads from different namespaces, and returns a map: namespace => models.Workloads

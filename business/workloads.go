@@ -282,10 +282,9 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		return *workloadList, err
 	}
 
-	config := config.Get()
 	for _, w := range ws {
 		wItem := &models.WorkloadListItem{Health: *models.EmptyWorkloadHealth()}
-		wItem.ParseWorkload(w, config)
+		wItem.ParseWorkload(w, in.config)
 		if istioConfigList, ok := istioConfigMap[cluster]; ok && criteria.IncludeIstioResources {
 			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(in.config, wItem.Labels, istioConfigList, cluster))
 		}
@@ -1432,7 +1431,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			// Add the Proxy Status to the workload
 			for _, pod := range w.Pods {
 				isWaypoint := w.IsWaypoint()
-				if config.Get().ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
+				if in.config.ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
 					pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(cluster, namespace, pod.Name, !isWaypoint)
 				}
 				// Add the Proxy Status to the workload
@@ -2122,7 +2121,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 
 		// Add the Proxy Status to the workload
 		for _, pod := range w.Pods {
-			if config.Get().ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
+			if in.config.ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
 				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(criteria.Cluster, criteria.Namespace, pod.Name, !isWaypoint)
 			}
 			// If Ambient is enabled for pod, check if has any Waypoint proxy

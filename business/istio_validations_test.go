@@ -65,8 +65,9 @@ func TestGetNamespaceValidations(t *testing.T) {
 	var changeMap = map[string]string{}
 	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
 	require.NoError(err)
-	validations, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+	validationPerformed, validations, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
 	require.NoError(err)
+	assert.True(validationPerformed)
 	vs.kialiCache.Validations().Replace(validations)
 
 	validations, err = vs.GetValidations(context.TODO(), conf.KubernetesConfig.ClusterName)
@@ -77,8 +78,9 @@ func TestGetNamespaceValidations(t *testing.T) {
 	// simulate a reconcile w/o a config change should skip running the checkers (new vInfo but re-use the changemap)
 	vInfo, err = vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
 	require.NoError(err)
-	validations, err = vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+	validationPerformed, validations, err = vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
 	require.NoError(err)
+	assert.False(validationPerformed)
 	assert.Nil(validations)
 
 	// refresh the config but keep the changeMap, and we should see new validations. (note PeerAuthentication config updates its ResourceVersion)
@@ -86,8 +88,9 @@ func TestGetNamespaceValidations(t *testing.T) {
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
 	vInfo, err = vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
 	require.NoError(err)
-	validations, err = vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+	validationPerformed, validations, err = vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
 	require.NoError(err)
+	assert.True(validationPerformed)
 	assert.NotNil(validations)
 }
 
@@ -723,8 +726,9 @@ func TestValidatingSingleObjectUpdatesList(t *testing.T) {
 
 	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, nil)
 	require.NoError(err)
-	validations, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+	validationPerformed, validations, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
 	require.NoError(err)
+	assert.True(validationPerformed)
 	vs.kialiCache.Validations().Replace(validations)
 
 	currentValidations, err := vs.GetValidations(context.Background(), conf.KubernetesConfig.ClusterName)
@@ -740,8 +744,9 @@ func TestValidatingSingleObjectUpdatesList(t *testing.T) {
 	// make sure validations are updated in a cache before retrieving them
 	vInfo, err = vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, nil)
 	require.NoError(err)
-	validations, err = vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+	validationPerformed, validations, err = vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
 	require.NoError(err)
+	assert.True(validationPerformed)
 	vs.kialiCache.Validations().Replace(validations)
 
 	updatedValidations, _, err := vs.ValidateIstioObject(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "product-vs")
