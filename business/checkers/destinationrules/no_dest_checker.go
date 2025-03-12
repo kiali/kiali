@@ -12,7 +12,7 @@ import (
 
 type NoDestinationChecker struct {
 	Namespaces            models.Namespaces
-	WorkloadsPerNamespace map[string]models.WorkloadList
+	WorkloadsPerNamespace map[string]models.Workloads
 	DestinationRule       *networking_v1.DestinationRule
 	VirtualServices       []*networking_v1.VirtualService
 	ServiceEntries        []*networking_v1.ServiceEntry
@@ -97,10 +97,10 @@ func (n NoDestinationChecker) hasMatchingWorkload(host kubernetes.Host, subsetLa
 	if len(selectors) != 0 {
 		selector := labels.SelectorFromSet(labels.Set(selectors))
 
-		for _, wl := range n.WorkloadsPerNamespace[localNs].Workloads {
-			wlLabelSet := labels.Set(wl.Labels)
-			if selector.Matches(wlLabelSet) {
-				if subsetSelector.Matches(wlLabelSet) {
+		for _, w := range n.WorkloadsPerNamespace[localNs] {
+			wLabelSet := labels.Set(w.Labels)
+			if selector.Matches(wLabelSet) {
+				if subsetSelector.Matches(wLabelSet) {
 					return true
 				}
 			}
@@ -130,7 +130,7 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 
 	if localNs == itemNamespace {
 		// Check Workloads
-		if matches := kubernetes.HasMatchingWorkloads(localSvc, n.WorkloadsPerNamespace[localNs].GetLabels()); matches {
+		if matches := kubernetes.HasMatchingWorkloads(localSvc, models.GetLabels(n.WorkloadsPerNamespace[localNs])); matches {
 			return matches
 		}
 	}

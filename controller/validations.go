@@ -14,6 +14,7 @@ import (
 	ctrlsource "sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -114,30 +115,48 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	// Check version before performing replace.
 	version := r.kialiCache.Validations().Version()
-	allClusterValidations := make(models.IstioValidations)
+	newValidations := make(models.IstioValidations)
+	prevValidations := r.kialiCache.Validations().Items()
+
+	// If enabled, the same changeMap is used on each Reconcile. It holds the "resource version" of
+	// each object used in the validation, and is then used to look for version changes (or a change in
+	// the number of objects).  We keep it in the cache for sane access.
+	var changeMap business.ValidationChangeMap
+	if config.Get().ExternalServices.Istio.ValidationChangeDetectionEnabled {
+		changeMap = r.kialiCache.ValidationConfig().Items()
+	}
 
 	// validation requires cross-cluster service account information.
-	vInfo, err := r.validationsService.NewValidationInfo(ctx, r.clusters)
+	vInfo, err := r.validationsService.NewValidationInfo(ctx, r.clusters, changeMap)
 	if err != nil {
 		log.Errorf("[ValidationsReconciler] Error creating validation info: %s", err)
 		return ctrl.Result{}, err
 	}
 
 	for _, cluster := range r.clusters {
-		clusterValidations, err := r.validationsService.Validate(ctx, cluster, vInfo)
+		validationPerformed, clusterValidations, err := r.validationsService.Validate(ctx, cluster, vInfo)
 		if err != nil {
-			log.Errorf("[ValidationsReconciler] Error creating validations for cluster %s: %s", cluster, err)
+			log.Errorf("[ValidationsReconciler] Error performing validation for cluster %s: %s", cluster, err)
 			return ctrl.Result{}, err
 		}
 
-		allClusterValidations = allClusterValidations.MergeValidations(clusterValidations)
+		// if there have been no config changes for the cluster, just re-use the prior validations
+		if !validationPerformed {
+			log.Tracef("validations: no changes for cluster [%s], re-using", cluster)
+			clusterValidations = models.IstioValidations(prevValidations).FilterByCluster(cluster)
+		} else {
+			log.Tracef("validations: config changes found for cluster [%s], updating", cluster)
+		}
+
+		newValidations = newValidations.MergeValidations(clusterValidations)
 	}
 
 	if r.kialiCache.Validations().Version() != version {
 		return ctrl.Result{}, fmt.Errorf("validations have been updated since reconciling started. Requeuing validation")
 	}
 
-	r.kialiCache.Validations().Replace(allClusterValidations)
+	r.kialiCache.Validations().Replace(newValidations)
+	r.kialiCache.ValidationConfig().Replace(changeMap)
 
 	return ctrl.Result{}, nil
 }

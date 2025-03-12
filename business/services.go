@@ -581,11 +581,12 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		return nil, err
 	}
 
+	config := config.Get()
 	wo := models.WorkloadOverviews{}
 	isAmbient := len(ws) > 0
 	for _, w := range ws {
 		wi := &models.WorkloadListItem{}
-		wi.ParseWorkload(w)
+		wi.ParseWorkload(w, config)
 		wo = append(wo, wi)
 		// The service is not marked as Ambient if any of the workloads is Ambient
 		if !w.IsAmbient {

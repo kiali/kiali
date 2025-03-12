@@ -13,7 +13,7 @@ import (
 type GatewayReferences struct {
 	Gateways              []*networking_v1.Gateway
 	VirtualServices       []*networking_v1.VirtualService
-	WorkloadsPerNamespace map[string]models.WorkloadList
+	WorkloadsPerNamespace map[string]models.Workloads
 }
 
 func (n GatewayReferences) References() models.IstioReferencesMap {
@@ -38,11 +38,11 @@ func (n GatewayReferences) getWorkloadReferences(gw *networking_v1.Gateway) []mo
 	selector := labels.SelectorFromSet(gw.Spec.Selector)
 
 	// Gateway searches Workloads from all namespace
-	for _, wls := range n.WorkloadsPerNamespace {
-		for _, wl := range wls.Workloads {
+	for ns, workloads := range n.WorkloadsPerNamespace {
+		for _, wl := range workloads {
 			wlLabelSet := labels.Set(wl.Labels)
 			if selector.Matches(wlLabelSet) {
-				result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: wls.Namespace})
+				result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: ns})
 			}
 		}
 	}

@@ -20,11 +20,10 @@ func prepareTestForSidecar(sc *networking_v1.Sidecar, vs *networking_v1.VirtualS
 		},
 		Sidecars:       []*networking_v1.Sidecar{sc},
 		ServiceEntries: []*networking_v1.ServiceEntry{se},
-		WorkloadsPerNamespace: map[string]models.WorkloadList{
-			"istio-system": data.CreateWorkloadList("istio-system",
-				data.CreateWorkloadListItem("istiod", map[string]string{"app": "istio-ingressgateway"}),
-			),
-		},
+		WorkloadsPerNamespace: map[string]models.Workloads{
+			"istio-system": {
+				data.CreateWorkload("istiod", map[string]string{"app": "istio-ingressgateway"}),
+			}},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("foo-service", "istio-system"),
 	}
 	return *drReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.Sidecars, Namespace: sc.Namespace, Name: sc.Name}]

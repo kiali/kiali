@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -148,7 +149,7 @@ func (in *WorkloadService) isWorkloadValid(workloadType string) bool {
 }
 
 // @TODO do validations per cluster
-func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1.AuthorizationPolicy, workloadsPerNamespace map[string]models.WorkloadList) models.IstioValidations {
+func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1.AuthorizationPolicy, workloadsPerNamespace map[string]models.Workloads) models.IstioValidations {
 	validations := checkers.WorkloadChecker{
 		AuthorizationPolicies: authpolicies,
 		WorkloadsPerNamespace: workloadsPerNamespace,
@@ -283,7 +284,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 
 	for _, w := range ws {
 		wItem := &models.WorkloadListItem{Health: *models.EmptyWorkloadHealth()}
-		wItem.ParseWorkload(w)
+		wItem.ParseWorkload(w, in.config)
 		if istioConfigList, ok := istioConfigMap[cluster]; ok && criteria.IncludeIstioResources {
 			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(in.config, wItem.Labels, istioConfigList, cluster))
 		}
@@ -301,8 +302,8 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	for _, istioConfigList := range istioConfigMap {
 		// @TODO multi cluster validations
 		authpolicies := istioConfigList.AuthorizationPolicies
-		allWorkloads := map[string]models.WorkloadList{}
-		allWorkloads[namespace] = *workloadList
+		allWorkloads := map[string]models.Workloads{}
+		allWorkloads[namespace] = ws
 		validations := in.getWorkloadValidations(authpolicies, allWorkloads)
 		validations.StripIgnoredChecks()
 		workloadList.Validations = workloadList.Validations.MergeValidations(validations)
@@ -1426,19 +1427,26 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			w.SetPods(cPods)
 		}
 
-		// Add the Proxy Status to the workload
-		for _, pod := range w.Pods {
-			isWaypoint := w.IsWaypoint()
-			if config.Get().ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
-				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(cluster, namespace, pod.Name, !isWaypoint)
-			}
-			// Add the Proxy Status to the workload
-			if pod.AmbientEnabled() {
-				w.WaypointWorkloads = in.GetWaypointsForWorkload(ctx, *w, false)
-			}
-		}
-
 		if cnFound {
+			// Add the Proxy Status to the workload
+			for _, pod := range w.Pods {
+				isWaypoint := w.IsWaypoint()
+				if in.config.ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
+					pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(cluster, namespace, pod.Name, !isWaypoint)
+				}
+				// Add the Proxy Status to the workload
+				if pod.AmbientEnabled() {
+					w.WaypointWorkloads = in.GetWaypointsForWorkload(ctx, *w, false)
+				}
+			}
+
+			// Add some precalculated fields useful for validation
+			w.ValidationKey = fmt.Sprintf("%s:%s:%s", w.Cluster, w.Namespace, w.Name)
+
+			w.ServiceAccountNames = w.Pods.ServiceAccounts()
+			slices.Sort(w.ServiceAccountNames)
+			w.ValidationVersion = fmt.Sprintf("%v:%v", w.Labels, w.ServiceAccountNames)
+
 			ws = append(ws, w)
 		}
 	}
@@ -2113,7 +2121,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 
 		// Add the Proxy Status to the workload
 		for _, pod := range w.Pods {
-			if config.Get().ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
+			if in.config.ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
 				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(criteria.Cluster, criteria.Namespace, pod.Name, !isWaypoint)
 			}
 			// If Ambient is enabled for pod, check if has any Waypoint proxy
@@ -2170,7 +2178,7 @@ func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
 		return in.cache.GetWaypointList()
 	}
 
-	waypoints := []*models.Workload{}
+	waypoints := models.Workloads{}
 
 	for cluster := range in.userClients {
 		gateways, err := in.GetAllWorkloads(ctx, cluster, config.GatewayLabel)

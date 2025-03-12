@@ -68,11 +68,12 @@ func TestGetValidationsPerf(t *testing.T) {
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
 
 	now := time.Now()
-	vInfo, err := vs.NewValidationInfo(context.TODO(), []string{conf.KubernetesConfig.ClusterName})
+	vInfo, err := vs.NewValidationInfo(context.TODO(), []string{conf.KubernetesConfig.ClusterName}, nil)
 	require.NoError(err)
-	validations, err := vs.Validate(context.TODO(), conf.KubernetesConfig.ClusterName, vInfo)
+	validationPerformed, validations, err := vs.Validate(context.TODO(), conf.KubernetesConfig.ClusterName, vInfo)
 	require.NoError(err)
 	log.Debugf("Validation Performance test took %f seconds for %d namespaces", time.Since(now).Seconds(), numNs)
+	assert.True(validationPerformed)
 	assert.NotEmpty(validations)
 }
 
@@ -170,14 +171,19 @@ func BenchmarkValidate(b *testing.B) {
 	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
 	vs := NewValidationsService(&layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
 
-	vInfo, err := vs.NewValidationInfo(context.TODO(), []string{conf.KubernetesConfig.ClusterName})
+	var changeMap ValidationChangeMap
+	if conf.ExternalServices.Istio.ValidationChangeDetectionEnabled {
+		changeMap = ValidationChangeMap{}
+	}
+
+	vInfo, err := vs.NewValidationInfo(context.TODO(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_, err = vs.Validate(context.TODO(), conf.KubernetesConfig.ClusterName, vInfo)
+		_, _, err = vs.Validate(context.TODO(), conf.KubernetesConfig.ClusterName, vInfo)
 		if err != nil {
 			b.Fatal(err)
 		}

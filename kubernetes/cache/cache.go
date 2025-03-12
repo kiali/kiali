@@ -79,8 +79,11 @@ type KialiCache interface {
 	ProxyStatusCache
 	ZtunnelDumpCache
 
-	// SetValidations caches validations for a cluster/namespace.
+	// Validations caches validations for a cluster/namespace.
 	Validations() store.Store[models.IstioValidationKey, *models.IstioValidation]
+
+	// ValidationWatcher stores values used for detecting changes in config used for validation
+	ValidationConfig() store.Store[string, string]
 
 	// SetClusters sets the list of clusters that the cache knows about.
 	SetClusters([]models.KubeCluster)
@@ -131,7 +134,8 @@ type kialiCacheImpl struct {
 
 	waypointList models.WaypointStore
 	// validations key'd by the validation key
-	validations store.Store[models.IstioValidationKey, *models.IstioValidation]
+	validations      store.Store[models.IstioValidationKey, *models.IstioValidation]
+	validationConfig store.Store[string, string]
 
 	// Info about the kube clusters that the cache knows about.
 	clusters    []models.KubeCluster
@@ -148,6 +152,7 @@ func NewKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, cfg con
 		conf:                    cfg,
 		kubeCache:               make(map[string]KubeCache),
 		validations:             store.New[models.IstioValidationKey, *models.IstioValidation](),
+		validationConfig:        store.New[string, string](),
 		meshStore:               store.NewExpirationStore(ctx, store.New[string, *models.Mesh](), util.AsPtr(meshExpirationTime), nil),
 		namespaceStore:          store.NewExpirationStore(ctx, store.New[namespacesKey, map[string]models.Namespace](), &namespaceKeyTTL, nil),
 		refreshDuration:         time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
@@ -254,6 +259,10 @@ func (c *kialiCacheImpl) SetMesh(mesh *models.Mesh) {
 
 func (c *kialiCacheImpl) Validations() store.Store[models.IstioValidationKey, *models.IstioValidation] {
 	return c.validations
+}
+
+func (c *kialiCacheImpl) ValidationConfig() store.Store[string, string] {
+	return c.validationConfig
 }
 
 // IsAmbientEnabled checks if the istio Ambient profile was enabled

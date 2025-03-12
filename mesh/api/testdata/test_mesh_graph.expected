@@ -319,6 +319,7 @@
             "Registry": null,
             "RootNamespace": "istio-system",
             "UrlServiceVersion": "",
+            "ValidationChangeDetectionEnabled": true,
             "ValidationReconcileInterval": 60000000000
           }
         }

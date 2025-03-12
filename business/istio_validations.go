@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strconv"
 	"strings"
 
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
@@ -18,6 +19,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -58,18 +60,9 @@ type ReferenceChecker interface {
 	References() models.IstioReferencesMap
 }
 
-func validationsForCluster(validations models.IstioValidations, cluster string) models.IstioValidations {
-	clusterValidations := models.IstioValidations{}
-	for validationKey, validation := range validations {
-		if validationKey.Cluster == cluster {
-			clusterValidations[validationKey] = validation
-		}
-	}
-	return clusterValidations
-}
-
 func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster string) (models.IstioValidations, error) {
-	return validationsForCluster(in.kialiCache.Validations().Items(), cluster), nil
+	validations := in.kialiCache.Validations().Items()
+	return models.IstioValidations(validations).FilterByCluster(cluster), nil
 }
 
 func (in *IstioValidationsService) GetValidationsForNamespace(ctx context.Context, cluster, namespace string) (models.IstioValidations, error) {
@@ -101,7 +94,8 @@ func (in *IstioValidationsService) GetValidationsForService(ctx context.Context,
 		return nil, fmt.Errorf("service [namespace: %s] [name: %s] doesn't exist for Validations", namespace, service)
 	}
 
-	return validationsForCluster(in.kialiCache.Validations().Items(), cluster).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "service"}, service), nil
+	validations := in.kialiCache.Validations().Items()
+	return models.IstioValidations(validations).FilterByCluster(cluster).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "service"}, service), nil
 }
 
 func (in *IstioValidationsService) GetValidationsForWorkload(ctx context.Context, cluster, namespace, workload string) (models.IstioValidations, error) {
@@ -114,7 +108,8 @@ func (in *IstioValidationsService) GetValidationsForWorkload(ctx context.Context
 		return nil, err
 	}
 
-	return validationsForCluster(in.kialiCache.Validations().Items(), cluster).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}, workload), nil
+	validations := in.kialiCache.Validations().Items()
+	return models.IstioValidations(validations).FilterByCluster(cluster).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}, workload), nil
 }
 
 type validationNamespaceInfo struct {
@@ -130,20 +125,60 @@ type validationClusterInfo struct {
 	registryServices []*kubernetes.RegistryService // registry services for the cluster (all namespaces)
 }
 
+// changeMap key values are determined by the validation logic, and typically identifies a config object,
+// or set of confg objects. The value is typically resourceVersion, or some equivalent.
+type ValidationChangeMap map[string]string
+
+func (in ValidationChangeMap) update(key, value string, report bool) bool {
+	prev, exists := in[key]
+
+	if !exists {
+		if report {
+			log.Tracef("validations: new config detected: %s", key)
+		}
+		in[key] = value
+		return true
+	}
+
+	if prev != value {
+		if report {
+			log.Tracef("validations: config change detected: %s", key)
+		}
+		in[key] = value
+		return true
+	}
+
+	return false
+}
+
 // validationInfo holds information gathered during a single validation reconciliation. It is used to hold information that
 // may otherwise need to be recalculated.
 type validationInfo struct {
 	// cross-cluster information
-	clusters []string                                  // all clusters being validated
-	mesh     *models.Mesh                              // control plane info
-	nsMap    map[string][]models.Namespace             // cluster => namespaces
-	saMap    map[string][]string                       // cluster => serviceAccounts
-	wlMap    map[string]map[string]models.WorkloadList // cluster => namespace => WorkloadList, all workloads
+	clusters []string                               // all clusters being validated
+	mesh     *models.Mesh                           // control plane info
+	nsMap    map[string][]models.Namespace          // cluster => namespaces
+	saMap    map[string][]string                    // cluster => serviceAccounts
+	wlMap    map[string]map[string]models.Workloads // cluster => namespace => []Workload, all workloads
 
 	// clusterInfo is reset for each cluster being validated
 	clusterInfo *validationClusterInfo
+
 	// nsInfo is reset for each namespace being validated (for the cluster being validated)
 	nsInfo *validationNamespaceInfo
+
+	// changeMap is used to store config ResourceVersion, or an equivalent. When supplied to
+	// NewValidationInfo() it sets changeDetection enabled.  It is expected to persist through
+	// multiple validation runs, and it is used to check for changes and eliminate checker runs
+	// when nothing significant has changed. If not supplied then no change detection is performed.
+	changeMap ValidationChangeMap
+
+	// hasBaseChange indicates whether a change is detected in the base data, likely meaning that
+	// we need a full validation pass, on each cluster
+	hasBaseChange bool
+
+	// reportChange is an internal flag for debugging, that logs keys that have a value change
+	reportChange bool
 }
 
 // NewValidationInfo returns an initialized validationInfo structure. This is not a "free" call, the initial structure is
@@ -151,7 +186,7 @@ type validationInfo struct {
 // a validation pass to hold "computed" information, and avoid performing the same work multiple times, when evaluating
 // different clusters, or different namespaces for a cluster. Initially unused structures/maps will be set to nil, and
 // arrays will be initialized to empty.
-func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, clusters []string) (*validationInfo, error) {
+func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, clusters []string, changeMap ValidationChangeMap) (*validationInfo, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "newValidationInfo",
 		observability.Attribute("package", "business"),
@@ -159,10 +194,11 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 	defer end()
 
 	vInfo := validationInfo{
-		clusters: clusters,
-		nsMap:    map[string][]models.Namespace{},
-		saMap:    map[string][]string{},
-		wlMap:    map[string]map[string]models.WorkloadList{},
+		changeMap: changeMap,
+		clusters:  clusters,
+		nsMap:     map[string][]models.Namespace{},
+		saMap:     map[string][]string{},
+		wlMap:     map[string]map[string]models.Workloads{},
 	}
 	mesh, err := in.mesh.discovery.Mesh(ctx)
 	if err != nil {
@@ -170,6 +206,7 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 	}
 	vInfo.mesh = mesh
 
+	// gather base info, mapped by cluster
 	for _, cluster := range clusters {
 		workloads, err := in.workload.GetAllWorkloads(ctx, cluster, "")
 		if err != nil {
@@ -186,12 +223,45 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 		vInfo.saMap[cluster] = in.getServiceAccounts(namespaces, vInfo.wlMap[cluster])
 	}
 
+	// if changeDetection is enabled then loop through the workloads, looking for a change
+	if changeMap != nil {
+		vInfo.reportChange = true
+
+		changeDetected := false
+		numWorkloads := 0
+		for _, workloadsMap := range vInfo.wlMap {
+			for _, workloads := range workloadsMap {
+				numWorkloads += len(workloads)
+				for _, w := range workloads {
+					changeDetected = changeMap.update(w.ValidationKey, w.ValidationVersion, vInfo.reportChange) || changeDetected
+				}
+			}
+		}
+		changeDetected = changeMap.update("validation-num-workloads", strconv.Itoa(numWorkloads), vInfo.reportChange) || changeDetected
+		vInfo.hasBaseChange = changeDetected
+	}
+
 	return &vInfo, nil
 }
 
-// Validate runs a full validation on all objects. It returns an IstioValidations object with all the checks found when running all
-// the enabled checkers.
-func (in *IstioValidationsService) Validate(ctx context.Context, cluster string, vInfo *validationInfo) (models.IstioValidations, error) {
+func (in *validationInfo) changeDetectionEnabled() bool {
+	return in.changeMap != nil
+}
+
+func (in *validationInfo) update(kind, cluster, namespace, name, value string) bool {
+	key := fmt.Sprintf("%s:%s:%s:%s", kind, cluster, namespace, name)
+	return in.changeMap.update(key, value, in.reportChange)
+}
+
+func (in *validationInfo) forceCheckers() bool {
+	return in.hasBaseChange
+}
+
+// Validate runs a full validation on all objects. The first return variable is the "validationPerformed" bool, indicating whether or not
+// the validation checkers were run. It will return false if a changeMap is provided in vInfo and no config changes were detected for the
+// cluster. Otherwise, it will return true. When true the new "validations" are returned in the second return variable. When false
+// the second argument is nil.
+func (in *IstioValidationsService) Validate(ctx context.Context, cluster string, vInfo *validationInfo) (bool, models.IstioValidations, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "getValidations",
 		observability.Attribute("package", "business"),
@@ -204,7 +274,8 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 
 	validations := models.IstioValidations{}
 	vInfo.clusterInfo = &validationClusterInfo{
-		cluster: cluster,
+		cluster:          cluster,
+		registryServices: []*kubernetes.RegistryService{},
 	}
 
 	if registryStatus := in.kialiCache.GetRegistryStatus(cluster); registryStatus != nil {
@@ -230,9 +301,17 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 	}
 	istioConfigList, err := in.istioConfig.GetIstioConfigListForCluster(ctx, cluster, meta_v1.NamespaceAll, criteria)
 	if err != nil {
-		return nil, err
+		return false, nil, err
 	}
 	vInfo.clusterInfo.istioConfig = istioConfigList
+
+	// if change detection is enabled then decide if we need to run the checkers
+	if vInfo.changeDetectionEnabled() {
+		changeDetected := detectClusterConfigChange(vInfo)
+		if !changeDetected && !vInfo.forceCheckers() {
+			return false, nil, nil
+		}
+	}
 
 	for _, namespace := range vInfo.nsMap[cluster] {
 		vInfo.nsInfo = &validationNamespaceInfo{
@@ -241,41 +320,130 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 
 		err := in.setNamespaceIstioConfig(vInfo)
 		if err != nil {
-			return nil, err
+			return false, nil, err
 		}
 
 		if err := in.setNonLocalMTLSConfig(vInfo); err != nil {
-			return nil, err
+			return false, nil, err
 		}
 
 		objectCheckers := in.getAllObjectCheckers(vInfo)
 
-		// Get group validations for same kind istio objects
 		validations.MergeValidations(runObjectCheckers(objectCheckers))
 	}
 
-	return validations, nil
+	return true, validations, nil
 }
 
-// toWorkloadMap takes a list of workloads from different namespaces, and returns a map: namespace => WorkloadList
-func toWorkloadMap(workloads models.Workloads) map[string]models.WorkloadList {
-	workloadMap := map[string]models.WorkloadList{}
+// toWorkloadMap takes a list of workloads from different namespaces, and returns a map: namespace => models.Workloads
+func toWorkloadMap(workloads models.Workloads) map[string]models.Workloads {
+	workloadMap := map[string]models.Workloads{}
 
 	for _, w := range workloads {
-		wItem := &models.WorkloadListItem{Health: *models.EmptyWorkloadHealth()}
-		wItem.ParseWorkload(w)
-		workloadList, ok := workloadMap[w.Namespace]
+		workloads, ok := workloadMap[w.Namespace]
 		if ok {
-			workloadList.Workloads = append(workloadList.Workloads, *wItem)
+			workloads = append(workloads, w)
 		} else {
-			workloadList = models.WorkloadList{
-				Namespace: w.Namespace,
-				Workloads: []models.WorkloadListItem{*wItem},
-			}
+			workloads = models.Workloads{w}
 		}
-		workloadMap[w.Namespace] = workloadList
+		workloadMap[w.Namespace] = workloads
 	}
 	return workloadMap
+}
+
+// detectClusterConfigChange checks the version values for all of the relevant cluster config, updating
+// as needed, and returns whether a change was detected.
+func detectClusterConfigChange(vInfo *validationInfo) bool {
+	change := false
+	cluster := vInfo.clusterInfo.cluster
+
+	// loop through the services and gather up their resourceVersions
+	for _, s := range vInfo.clusterInfo.registryServices {
+		change = vInfo.update("SV", cluster, s.Attributes.Namespace, s.Attributes.Name, s.ResourceVersion) || change
+	}
+
+	// loop through the config and gather up their resourceVersions
+	config := vInfo.clusterInfo.istioConfig
+	for _, c := range config.AuthorizationPolicies {
+		change = vInfo.update("AP", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+	for _, c := range config.DestinationRules {
+		change = vInfo.update("DR", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+	for _, c := range config.EnvoyFilters {
+		change = vInfo.update("EF", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+	for _, c := range config.Gateways {
+		change = vInfo.update("GW", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+	for _, c := range config.K8sGateways {
+		change = vInfo.update("KG", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+	for _, c := range config.K8sGRPCRoutes {
+		change = vInfo.update("KGRPC", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+	for _, c := range config.K8sHTTPRoutes {
+		change = vInfo.update("KHTTP", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+	for _, c := range config.K8sReferenceGrants {
+		change = vInfo.update("KRG", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+	for _, c := range config.K8sTCPRoutes {
+		change = vInfo.update("KTCP", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+	for _, c := range config.K8sTLSRoutes {
+		change = vInfo.update("KTLS", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+	for _, c := range config.PeerAuthentications {
+		change = vInfo.update("PA", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+	for _, c := range config.RequestAuthentications {
+		change = vInfo.update("RA", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+	for _, c := range config.ServiceEntries {
+		change = vInfo.update("SE", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+	for _, c := range config.Sidecars {
+		change = vInfo.update("SC", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+	for _, c := range config.Telemetries {
+		change = vInfo.update("TE", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+	for _, c := range config.VirtualServices {
+		change = vInfo.update("VS", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+	for _, c := range config.WasmPlugins {
+		change = vInfo.update("WP", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+	for _, c := range config.WorkloadEntries {
+		change = vInfo.update("WE", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+	for _, c := range config.WorkloadGroups {
+		change = vInfo.update("WG", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
+
+	numConfig := len(config.AuthorizationPolicies) +
+		len(config.DestinationRules) +
+		len(config.EnvoyFilters) +
+		len(config.Gateways) +
+		len(config.K8sGateways) +
+		len(config.K8sGRPCRoutes) +
+		len(config.K8sHTTPRoutes) +
+		len(config.K8sReferenceGrants) +
+		len(config.K8sTCPRoutes) +
+		len(config.K8sTLSRoutes) +
+		len(config.PeerAuthentications) +
+		len(config.RequestAuthentications) +
+		len(config.ServiceEntries) +
+		len(config.Sidecars) +
+		len(config.Telemetries) +
+		len(config.VirtualServices) +
+		len(config.WorkloadEntries) +
+		len(config.WorkloadGroups) +
+		len(config.WasmPlugins)
+	change = vInfo.update("validation-num-config", cluster, "", "", strconv.Itoa(numConfig)) || change
+
+	return change
 }
 
 // getAllObjectCheckers returns all of the checkers to be executed for a full validation.
@@ -336,7 +504,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	defer timer.ObserveDuration()
 
 	// validating a single object is not particularly efficient, it still requires a lot of up-front setup
-	vInfo, err := in.NewValidationInfo(ctx, in.namespace.GetClusterList())
+	vInfo, err := in.NewValidationInfo(ctx, in.namespace.GetClusterList(), nil)
 	if err != nil {
 		return nil, models.IstioReferencesMap{}, err
 	}
@@ -523,16 +691,16 @@ func runObjectReferenceChecker(referenceChecker ReferenceChecker) models.IstioRe
 // getServiceAccounts gets SA information given the namespaces and workloads for a given cluster.
 func (in *IstioValidationsService) getServiceAccounts(
 	namespaces []models.Namespace,
-	workloadsMap map[string]models.WorkloadList,
+	workloadsMap map[string]models.Workloads,
 ) []string {
 	serviceAccounts := map[string]bool{}
 	istioDomain := strings.Replace(config.Get().ExternalServices.Istio.IstioIdentityDomain, "svc.", "", 1)
 
 	for _, ns := range namespaces {
 		saFullNameNs := fmt.Sprintf("%s/ns/%s/sa/", istioDomain, ns.Name)
-		workloadList := workloadsMap[ns.Name]
-		for _, wl := range workloadList.Workloads {
-			for _, sAccountName := range wl.ServiceAccountNames {
+		workloads := workloadsMap[ns.Name]
+		for _, w := range workloads {
+			for _, sAccountName := range w.ServiceAccountNames {
 				saFullName := saFullNameNs + sAccountName
 				serviceAccounts[saFullName] = true
 			}
