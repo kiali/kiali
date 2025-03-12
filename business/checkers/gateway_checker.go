@@ -10,11 +10,11 @@ import (
 )
 
 type GatewayChecker struct {
+	Cluster               string
 	Conf                  *config.Config
 	Gateways              []*networking_v1.Gateway
-	WorkloadsPerNamespace map[string]models.Workloads
 	IsGatewayToNamespace  bool
-	Cluster               string
+	WorkloadsPerNamespace map[string]models.Workloads
 }
 
 // Check runs checks for the all namespaces actions as well as for the single namespace validations

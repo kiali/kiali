@@ -13,13 +13,13 @@ import (
 
 type NoDestinationChecker struct {
 	Conf                  *config.Config
-	Namespaces            models.Namespaces
-	WorkloadsPerNamespace map[string]models.Workloads
 	DestinationRule       *networking_v1.DestinationRule
-	VirtualServices       []*networking_v1.VirtualService
-	ServiceEntries        []*networking_v1.ServiceEntry
-	RegistryServices      []*kubernetes.RegistryService
+	Namespaces            models.Namespaces
 	PolicyAllowAny        bool
+	RegistryServices      []*kubernetes.RegistryService
+	ServiceEntries        []*networking_v1.ServiceEntry
+	VirtualServices       []*networking_v1.VirtualService
+	WorkloadsPerNamespace map[string]models.Workloads
 }
 
 // Check parses the DestinationRule definitions and verifies that they point to an existing service, including any subset definitions

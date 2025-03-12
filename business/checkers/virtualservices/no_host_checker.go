@@ -14,10 +14,10 @@ import (
 type NoHostChecker struct {
 	Conf              *config.Config
 	Namespaces        models.Namespaces
-	VirtualService    *networking_v1.VirtualService
-	ServiceEntryHosts map[string][]string
-	RegistryServices  []*kubernetes.RegistryService
 	PolicyAllowAny    bool
+	RegistryServices  []*kubernetes.RegistryService
+	ServiceEntryHosts map[string][]string
+	VirtualService    *networking_v1.VirtualService
 }
 
 func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {

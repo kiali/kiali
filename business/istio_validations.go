@@ -160,7 +160,7 @@ type validationInfo struct {
 	mesh     *models.Mesh                           // control plane info
 	nsMap    map[string][]models.Namespace          // cluster => namespaces
 	saMap    map[string][]string                    // cluster => serviceAccounts
-	wlMap    map[string]map[string]models.Workloads // cluster => namespace => WorkloadList, all workloads
+	wlMap    map[string]map[string]models.Workloads // cluster => namespace => Workloads, all workloads
 
 	// clusterInfo is reset for each cluster being validated
 	clusterInfo *validationClusterInfo

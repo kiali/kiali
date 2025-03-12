@@ -15,8 +15,8 @@ type MultiMatchChecker struct {
 	Cluster          string
 	Conf             *config.Config
 	DestinationRules []*networking_v1.DestinationRule
-	ServiceEntries   map[string][]string
 	Namespaces       models.Namespaces
+	ServiceEntries   map[string][]string
 }
 
 type subset struct {

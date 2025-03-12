@@ -11,13 +11,13 @@ import (
 )
 
 type SidecarChecker struct {
-	Conf                  *config.Config
-	Sidecars              []*networking_v1.Sidecar
-	ServiceEntries        []*networking_v1.ServiceEntry
-	Namespaces            models.Namespaces
-	WorkloadsPerNamespace map[string]models.Workloads
-	RegistryServices      []*kubernetes.RegistryService
 	Cluster               string
+	Conf                  *config.Config
+	Namespaces            models.Namespaces
+	RegistryServices      []*kubernetes.RegistryService
+	ServiceEntries        []*networking_v1.ServiceEntry
+	Sidecars              []*networking_v1.Sidecar
+	WorkloadsPerNamespace map[string]models.Workloads
 }
 
 func (s SidecarChecker) Check() models.IstioValidations {

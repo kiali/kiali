@@ -11,11 +11,11 @@ import (
 )
 
 type VirtualServiceChecker struct {
-	Conf             *config.Config
-	Namespaces       models.Namespaces
 	Cluster          string
-	VirtualServices  []*networking_v1.VirtualService
+	Conf             *config.Config
 	DestinationRules []*networking_v1.DestinationRule
+	Namespaces       models.Namespaces
+	VirtualServices  []*networking_v1.VirtualService
 }
 
 // An Object Checker runs all checkers for an specific object type (i.e.: pod, route rule,...)

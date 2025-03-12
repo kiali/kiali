@@ -12,8 +12,8 @@ import (
 
 type SubsetPresenceChecker struct {
 	Conf             *config.Config
-	Namespaces       []string
 	DestinationRules []*networking_v1.DestinationRule
+	Namespaces       []string
 	VirtualService   *networking_v1.VirtualService
 }
 

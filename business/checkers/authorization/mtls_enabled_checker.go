@@ -20,8 +20,8 @@ type MtlsEnabledChecker struct {
 	Cluster               string
 	Conf                  *config.Config
 	MtlsDetails           kubernetes.MTLSDetails
-	ServiceEntries        []networking_v1.ServiceEntry
 	RegistryServices      []*kubernetes.RegistryService
+	ServiceEntries        []networking_v1.ServiceEntry
 }
 
 // Checks if mTLS is enabled, mark all Authz Policies with error
