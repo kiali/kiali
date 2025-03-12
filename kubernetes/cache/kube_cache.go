@@ -171,7 +171,7 @@ type kubeCache struct {
 	cacheLock sync.RWMutex
 	// refreshOnce enforces thread safety around the re-starting of informers
 	refreshOnce        *OnceWrapper
-	cfg                config.Config
+	conf               config.Config
 	errorHandler       ErrorHandler
 	client             kubernetes.ClientInterface
 	clusterCacheLister *cacheLister
@@ -190,17 +190,17 @@ type kubeCache struct {
 }
 
 // Starts all informers. These run until context is cancelled.
-func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, errorHandler ErrorHandler) (*kubeCache, error) {
-	refreshDuration := time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second
+func NewKubeCache(kialiClient kubernetes.ClientInterface, conf config.Config, errorHandler ErrorHandler) (*kubeCache, error) {
+	refreshDuration := time.Duration(conf.KubernetesConfig.CacheDuration) * time.Second
 
 	c := &kubeCache{
-		cfg:          cfg,
+		conf:         conf,
 		errorHandler: errorHandler,
 		client:       kialiClient,
 		// Only when all namespaces are accessible should the cache be cluster scoped.
 		// Otherwise, kiali may not have access to all namespaces since
 		// the operator only grants clusterroles when all namespaces are accessible.
-		clusterScoped:   cfg.AllNamespacesAccessible(),
+		clusterScoped:   conf.AllNamespacesAccessible(),
 		refreshDuration: refreshDuration,
 		refreshOnce:     &OnceWrapper{once: &sync.Once{}},
 	}
@@ -219,7 +219,7 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, err
 		// However, we know the list of accessible namespaces based on the discovery selectors found in the main Kiali configuration.
 		// Note if this is a remote cluster, that remote cluster must have the same namespaces as those in our own local
 		// cluster's accessible namespaces. This is one reason why we suggest enabling CWA for multi-cluster environments.
-		for _, ns := range c.cfg.Deployment.AccessibleNamespaces {
+		for _, ns := range c.conf.Deployment.AccessibleNamespaces {
 			if err := c.startInformers(ns); err != nil {
 				return nil, err
 			}
@@ -244,7 +244,7 @@ func (c *kubeCache) checkIstioAPISExist(client kubernetes.ClientInterface) error
 // It will indicate if a namespace should have a cache
 func (c *kubeCache) isCached(namespace string) bool {
 	if !c.clusterScoped && namespace != "" {
-		return slices.Contains(c.cfg.Deployment.AccessibleNamespaces, namespace)
+		return slices.Contains(c.conf.Deployment.AccessibleNamespaces, namespace)
 	}
 	return false
 }

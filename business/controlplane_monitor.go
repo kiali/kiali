@@ -30,7 +30,7 @@ type ControlPlaneMonitor interface {
 	RefreshIstioCache(ctx context.Context) error
 }
 
-func NewControlPlaneMonitor(cache cache.KialiCache, clientFactory kubernetes.ClientFactory, conf config.Config, discovery *istio.Discovery) *controlPlaneMonitor {
+func NewControlPlaneMonitor(cache cache.KialiCache, clientFactory kubernetes.ClientFactory, conf *config.Config, discovery *istio.Discovery) *controlPlaneMonitor {
 	return &controlPlaneMonitor{
 		cache:           cache,
 		clientFactory:   clientFactory,
@@ -51,7 +51,7 @@ type controlPlaneMonitor struct {
 	// Since these can change when clusters are added/removed we want to get
 	// these directly from the client factory rather than passing in a static list.
 	clientFactory   kubernetes.ClientFactory
-	conf            config.Config
+	conf            *config.Config
 	discovery       *istio.Discovery
 	pollingInterval time.Duration
 }

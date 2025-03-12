@@ -45,18 +45,18 @@ func NewWorkloadService(
 	prom prometheus.ClientInterface,
 	cache cache.KialiCache,
 	layer *Layer,
-	config *config.Config,
+	conf *config.Config,
 	grafana *grafana.Service,
 ) *WorkloadService {
 	excludedWorkloads := make(map[string]bool)
-	for _, w := range config.KubernetesConfig.ExcludeWorkloads {
+	for _, w := range conf.KubernetesConfig.ExcludeWorkloads {
 		excludedWorkloads[w] = true
 	}
 
 	return &WorkloadService{
 		businessLayer:     layer,
 		cache:             cache,
-		conf:              config,
+		conf:              conf,
 		excludedWorkloads: excludedWorkloads,
 		prom:              prom,
 		userClients:       userClients,
@@ -312,7 +312,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	return *workloadList, nil
 }
 
-func FilterWorkloadReferences(config *config.Config, wLabels map[string]string, istioConfigList models.IstioConfigList, cluster string) []*models.IstioValidationKey {
+func FilterWorkloadReferences(conf *config.Config, wLabels map[string]string, istioConfigList models.IstioConfigList, cluster string) []*models.IstioValidationKey {
 	wkdReferences := make([]*models.IstioValidationKey, 0)
 	wSelector := labels.Set(wLabels).AsSelector().String()
 	gwFiltered := kubernetes.FilterGatewaysBySelector(wSelector, istioConfigList.Gateways)
@@ -326,7 +326,7 @@ func FilterWorkloadReferences(config *config.Config, wLabels map[string]string, 
 			wkdReferences = append(wkdReferences, &ref)
 		}
 	}
-	k8sGwFiltered := kubernetes.FilterK8sGatewaysByLabel(istioConfigList.K8sGateways, wLabels[config.IstioLabels.AmbientWaypointGatewayLabel])
+	k8sGwFiltered := kubernetes.FilterK8sGatewaysByLabel(istioConfigList.K8sGateways, wLabels[conf.IstioLabels.AmbientWaypointGatewayLabel])
 	for _, g := range k8sGwFiltered {
 		ref := models.BuildKey(kubernetes.K8sGateways, g.Name, g.Namespace, cluster)
 		exist := false

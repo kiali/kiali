@@ -37,14 +37,14 @@ func HandleClusters(lSourceCluster model.LabelValue, sourceClusterOk bool, lDest
 // HandleDestination modifies the destination information, when necessary, for various corner
 // cases.  It should be called after source validation and before destination processing.
 // Returns destSvcNs, destSvcName, destWlNs, destWl, destApp, destVersion, isupdated
-func HandleDestination(sourceCluster, sourceWlNs, sourceWl, destCluster, destSvcNs, destSvc, destSvcName, destWlNs, destWl, destApp, destVer string, config *config.Config) (string, string, string, string, string, string, string, bool) {
+func HandleDestination(sourceCluster, sourceWlNs, sourceWl, destCluster, destSvcNs, destSvc, destSvcName, destWlNs, destWl, destApp, destVer string, conf *config.Config) (string, string, string, string, string, string, string, bool) {
 	// Handle egressgateway (kiali#2999)
 	if egressHost == "" {
-		egressHost = fmt.Sprintf("istio-egressgateway.%s.svc.cluster.local", config.IstioNamespace)
+		egressHost = fmt.Sprintf("istio-egressgateway.%s.svc.cluster.local", conf.IstioNamespace)
 	}
 
 	if destSvc == egressHost && destSvc == destSvcName {
-		istioNs := config.IstioNamespace
+		istioNs := conf.IstioNamespace
 		log.Debugf("HandleDestination: destCluster=%s, destSvcNs=%s", sourceCluster, istioNs)
 		return sourceCluster, istioNs, "istio-egressgateway", istioNs, "istio-egressgateway", "istio-egressgateway", "latest", true
 	}
@@ -128,8 +128,8 @@ func IsBadDestTelemetry(cluster string, clusterOK bool, svcNs, svc, svcName, wl 
 
 // AddQueryScope returns the prom query unchanged if there is no configured queryScope, otherwise
 // it returns the query with the queryScope injected after each occurrence of a leading '{'.
-func AddQueryScope(query string, config *config.Config) string {
-	queryScope := config.ExternalServices.Prometheus.QueryScope
+func AddQueryScope(query string, conf *config.Config) string {
+	queryScope := conf.ExternalServices.Prometheus.QueryScope
 	if len(queryScope) == 0 {
 		return query
 	}
