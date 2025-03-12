@@ -40,7 +40,7 @@ func setupWorkloadService(k8s kubernetes.ClientInterface, conf *config.Config) W
 func callStreamPodLogs(svc WorkloadService, namespace, workload, app, podName string, opts *LogOptions) PodLog {
 	w := httptest.NewRecorder()
 
-	_ = svc.StreamPodLogs(context.TODO(), svc.config.KubernetesConfig.ClusterName, namespace, workload, app, podName, opts, w)
+	_ = svc.StreamPodLogs(context.TODO(), svc.conf.KubernetesConfig.ClusterName, namespace, workload, app, podName, opts, w)
 
 	response := w.Result()
 	body, _ := io.ReadAll(response.Body)
@@ -997,7 +997,7 @@ func TestGetWaypointPodLogsProxy(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
-	a, v := svc.GetWorkload(context.TODO(), WorkloadCriteria{Cluster: svc.config.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", IncludeServices: false})
+	a, v := svc.GetWorkload(context.TODO(), WorkloadCriteria{Cluster: svc.conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", IncludeServices: false})
 	assert.Nil(v)
 	assert.NotNil(a)
 	maxLines := 2

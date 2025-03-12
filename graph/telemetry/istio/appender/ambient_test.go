@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -109,8 +110,7 @@ func TestRemoveWaypoint(t *testing.T) {
 	businessLayer := setupMocks(t)
 	trafficMap := workloadEntriesTrafficMap()
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 
 	assert.Equal(5, len(trafficMap))
@@ -140,8 +140,7 @@ func TestIsWaypointExcludedNs(t *testing.T) {
 	businessLayer := setupMocks(t)
 	trafficMap := workloadEntriesTrafficMapExcludedNs()
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 
 	assert.Equal(9, len(trafficMap))

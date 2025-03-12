@@ -56,7 +56,7 @@ func NewWorkloadService(
 	return &WorkloadService{
 		businessLayer:     layer,
 		cache:             cache,
-		config:            config,
+		conf:              config,
 		excludedWorkloads: excludedWorkloads,
 		prom:              prom,
 		userClients:       userClients,
@@ -70,8 +70,8 @@ type WorkloadService struct {
 	businessLayer *Layer
 	// The global kiali cache. This should be passed into the workload service rather than created inside of it.
 	cache cache.KialiCache
-	// The global kiali config.
-	config            *config.Config
+	// The global kiali conf.
+	conf              *config.Config
 	excludedWorkloads map[string]bool
 	grafana           *grafana.Service
 	prom              prometheus.ClientInterface
@@ -284,9 +284,9 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 
 	for _, w := range ws {
 		wItem := &models.WorkloadListItem{Health: *models.EmptyWorkloadHealth()}
-		wItem.ParseWorkload(w, in.config)
+		wItem.ParseWorkload(w, in.conf)
 		if istioConfigList, ok := istioConfigMap[cluster]; ok && criteria.IncludeIstioResources {
-			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(in.config, wItem.Labels, istioConfigList, cluster))
+			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(in.conf, wItem.Labels, istioConfigList, cluster))
 		}
 		if criteria.IncludeHealth {
 			wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, namespace, cluster, wItem.Name, criteria.RateInterval, criteria.QueryTime, w)
@@ -305,7 +305,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		allWorkloads := map[string]models.Workloads{}
 		allWorkloads[namespace] = ws
 		validations := in.getWorkloadValidations(authpolicies, allWorkloads)
-		validations.StripIgnoredChecks()
+		validations.StripIgnoredChecks(in.conf)
 		workloadList.Validations = workloadList.Validations.MergeValidations(validations)
 	}
 
@@ -456,12 +456,12 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		conf := in.config
+		conf := in.conf
 		appLabelName, _ := conf.GetAppLabelName(workload.Labels)
 		verLabelName, _ := conf.GetVersionLabelName(workload.Labels)
 		app := workload.Labels[appLabelName]
 		version := workload.Labels[verLabelName]
-		runtimes = NewDashboardsService(in.config, in.grafana, ns, workload).GetCustomDashboardRefs(criteria.Namespace, app, version, workload.Pods)
+		runtimes = NewDashboardsService(in.conf, in.grafana, ns, workload).GetCustomDashboardRefs(criteria.Namespace, app, version, workload.Pods)
 	}()
 
 	// WorkloadGroup.Labels can be empty
@@ -1431,7 +1431,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			// Add the Proxy Status to the workload
 			for _, pod := range w.Pods {
 				isWaypoint := w.IsWaypoint()
-				if in.config.ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
+				if in.conf.ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
 					pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(cluster, namespace, pod.Name, !isWaypoint)
 				}
 				// Add the Proxy Status to the workload
@@ -2120,7 +2120,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		w.WorkloadListItem.IsAmbient = isWaypoint || w.WorkloadListItem.IsZtunnel || w.HasIstioAmbient()
 
 		// Add the Proxy Status to the workload
-		istioAPIEnabled := in.config.ExternalServices.Istio.IstioAPIEnabled
+		istioAPIEnabled := in.conf.ExternalServices.Istio.IstioAPIEnabled
 		for _, pod := range w.Pods {
 			if istioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
 				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(criteria.Cluster, criteria.Namespace, pod.Name, !isWaypoint)
@@ -2357,7 +2357,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, name
 			}
 			for _, wk := range workloadList {
 				// This annotation disables other labels (Like the ns one)
-				if wk.Labels[in.config.IstioLabels.AmbientNamespaceLabel] != "none" && wk.Labels[config.WaypointUseLabel] != config.WaypointNone {
+				if wk.Labels[in.conf.IstioLabels.AmbientNamespaceLabel] != "none" && wk.Labels[config.WaypointUseLabel] != config.WaypointNone {
 					workloadslist = append(workloadslist, models.WorkloadReferenceInfo{Name: wk.Name, Namespace: wk.Namespace, Labels: wk.Labels, LabelType: labelType, Cluster: wk.Cluster})
 				} else {
 					excludedWk[wk.Name] = true
@@ -2553,7 +2553,7 @@ func (in *WorkloadService) GetWorkloadTracingName(ctx context.Context, cluster, 
 		tracingName.Lookup = workload
 		return tracingName, nil
 	}
-	appLabelName, _ := in.config.GetAppLabelName(wkd.Labels)
+	appLabelName, _ := in.conf.GetAppLabelName(wkd.Labels)
 	app := wkd.Labels[appLabelName]
 	tracingName.App = app
 	tracingName.Lookup = app

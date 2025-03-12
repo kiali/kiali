@@ -71,7 +71,7 @@ func TestValidationsFailsToUpdateWithOldCache(t *testing.T) {
 	mesh := business.NewMeshService(k8sclients, discovery)
 	layer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	validations := business.NewValidationsService(&layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
-	reconciler := controller.NewValidationsReconciler([]string{conf.KubernetesConfig.ClusterName}, cache, &validations, 0)
+	reconciler := controller.NewValidationsReconciler([]string{conf.KubernetesConfig.ClusterName}, conf, cache, &validations, 0)
 
 	// We want to test that the reconciler won't update the cache if the version has changed.
 	// Going to test this by having an implementation of the store which increments the version

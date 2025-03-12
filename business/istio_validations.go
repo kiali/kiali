@@ -197,7 +197,7 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 	vInfo := validationInfo{
 		changeMap: changeMap,
 		clusters:  clusters,
-		conf:      config.Get(),
+		conf:      in.istioConfig.conf,
 		nsMap:     map[string][]models.Namespace{},
 		saMap:     map[string][]string{},
 		wlMap:     map[string]map[string]models.Workloads{},
@@ -222,7 +222,7 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 		}
 		vInfo.nsMap[cluster] = namespaces
 
-		vInfo.saMap[cluster] = in.getServiceAccounts(namespaces, vInfo.wlMap[cluster], &in.service.config)
+		vInfo.saMap[cluster] = in.getServiceAccounts(namespaces, vInfo.wlMap[cluster], in.service.conf)
 	}
 
 	// if changeDetection is enabled then loop through the workloads, looking for a change
@@ -331,7 +331,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 
 		objectCheckers := in.getAllObjectCheckers(vInfo)
 
-		validations.MergeValidations(runObjectCheckers(objectCheckers))
+		validations.MergeValidations(runObjectCheckers(objectCheckers, in.istioConfig.conf))
 	}
 
 	return true, validations, nil
@@ -458,7 +458,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) [
 	mtlsDetails := vInfo.nsInfo.mtlsDetails
 	rbacDetails := vInfo.nsInfo.rbacDetails
 	registryServices := vInfo.clusterInfo.registryServices
-	conf := &in.istioConfig.config
+	conf := in.istioConfig.conf
 
 	return []checkers.ObjectChecker{
 		checkers.AuthorizationPolicyChecker{Conf: conf, AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries, WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: *mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh), Cluster: cluster, ServiceAccounts: vInfo.saMap},
@@ -563,7 +563,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	registryServices := vInfo.clusterInfo.registryServices
 	var objectCheckers []checkers.ObjectChecker
 	var referenceChecker ReferenceChecker
-	conf := &in.istioConfig.config
+	conf := in.istioConfig.conf
 
 	noServiceChecker := checkers.NoServiceChecker{Conf: conf, Cluster: cluster, Namespaces: namespaces, IstioConfigList: istioConfigList, WorkloadsPerNamespace: workloadsPerNamespace, AuthorizationDetails: rbacDetails, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh)}
 
@@ -659,7 +659,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		return models.IstioValidations{}, istioReferences, err
 	}
 
-	validations := runObjectCheckers(objectCheckers).FilterByKey(objectGVK, object)
+	validations := runObjectCheckers(objectCheckers, conf).FilterByKey(objectGVK, object)
 	for k, v := range validations {
 		in.kialiCache.Validations().Set(k, v)
 	}
@@ -667,7 +667,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	return validations, istioReferences, nil
 }
 
-func runObjectCheckers(objectCheckers []checkers.ObjectChecker) models.IstioValidations {
+func runObjectCheckers(objectCheckers []checkers.ObjectChecker, conf *config.Config) models.IstioValidations {
 	objectTypeValidations := models.IstioValidations{}
 
 	// Run checks for each IstioObject type
@@ -675,7 +675,7 @@ func runObjectCheckers(objectCheckers []checkers.ObjectChecker) models.IstioVali
 		objectTypeValidations.MergeValidations(runObjectChecker(objectChecker))
 	}
 
-	objectTypeValidations.StripIgnoredChecks()
+	objectTypeValidations.StripIgnoredChecks(conf)
 
 	return objectTypeValidations
 }

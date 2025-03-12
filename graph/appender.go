@@ -35,8 +35,13 @@ func NewVendorInfo() VendorInfo {
 	return make(map[string]interface{})
 }
 
-func NewGlobalInfo() *GlobalInfo {
-	return &GlobalInfo{Conf: config.Get(), Vendor: NewVendorInfo()}
+func NewGlobalInfo(ctx context.Context, business *business.Layer, prom *prometheus.Client, conf *config.Config) *GlobalInfo {
+	return &GlobalInfo{
+		Business:   business,
+		Conf:       conf,
+		Context:    ctx,
+		PromClient: prom,
+		Vendor:     NewVendorInfo()}
 }
 
 func NewAppenderNamespaceInfo(namespace string) *AppenderNamespaceInfo {

@@ -114,7 +114,7 @@ func newLayer(
 	// TODO: Modify the k8s argument to other services to pass the whole k8s map if needed
 	temporaryLayer.App = NewAppService(temporaryLayer, conf, prom, grafana, userClients)
 	temporaryLayer.Health = HealthService{prom: prom, businessLayer: temporaryLayer, userClients: userClients}
-	temporaryLayer.IstioConfig = IstioConfigService{config: *conf, userClients: userClients, kialiCache: cache, businessLayer: temporaryLayer, controlPlaneMonitor: cpm}
+	temporaryLayer.IstioConfig = IstioConfigService{conf: conf, userClients: userClients, kialiCache: cache, businessLayer: temporaryLayer, controlPlaneMonitor: cpm}
 	temporaryLayer.Namespace = NewNamespaceService(userClients, kialiSAClients, cache, conf, discovery)
 	temporaryLayer.Mesh = NewMeshService(kialiSAClients, discovery)
 	temporaryLayer.ProxyStatus = ProxyStatusService{kialiSAClients: kialiSAClients, kialiCache: cache, businessLayer: temporaryLayer}
@@ -122,7 +122,7 @@ func newLayer(
 	temporaryLayer.ProxyLogging = ProxyLoggingService{userClients: userClients, proxyStatus: &temporaryLayer.ProxyStatus}
 	temporaryLayer.RegistryStatus = RegistryStatusService{kialiCache: cache}
 	temporaryLayer.TLS = TLSService{discovery: discovery, userClients: userClients, kialiCache: cache, businessLayer: temporaryLayer}
-	temporaryLayer.Svc = SvcService{config: *conf, kialiCache: cache, businessLayer: temporaryLayer, prom: prom, userClients: userClients}
+	temporaryLayer.Svc = SvcService{conf: conf, kialiCache: cache, businessLayer: temporaryLayer, prom: prom, userClients: userClients}
 	temporaryLayer.Workload = *NewWorkloadService(userClients, kialiSAClients, prom, cache, temporaryLayer, conf, grafana)
 	temporaryLayer.Validations = NewValidationsService(&temporaryLayer.IstioConfig, cache, &temporaryLayer.Mesh, &temporaryLayer.Namespace, &temporaryLayer.Svc, userClients, &temporaryLayer.Workload)
 

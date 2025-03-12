@@ -10,8 +10,9 @@ import (
 
 func TestMetricsLabelsBuilderInboundHttp(t *testing.T) {
 	assert := assert.New(t)
+	config.Set(config.NewConfig())
 
-	lb := NewMetricsLabelsBuilder("inbound")
+	lb := NewMetricsLabelsBuilder("inbound", config.Get())
 	lb.App("test", "ns")
 	lb.Reporter("source", false)
 	lb.Protocol("http")
@@ -24,8 +25,9 @@ func TestMetricsLabelsBuilderInboundHttp(t *testing.T) {
 
 func TestMetricsLabelsBuilderOutboundGrpc(t *testing.T) {
 	assert := assert.New(t)
+	config.Set(config.NewConfig())
 
-	lb := NewMetricsLabelsBuilder("outbound")
+	lb := NewMetricsLabelsBuilder("outbound", config.Get())
 	lb.Workload("test", "ns")
 	lb.Reporter("destination", false)
 	lb.Protocol("grpc")
@@ -40,7 +42,7 @@ func TestMetricsLabelsBuilderOutboundGrpc(t *testing.T) {
 func TestMetricsLabelsBuilderInboundPeerLabels(t *testing.T) {
 	assert := assert.New(t)
 
-	lb := NewMetricsLabelsBuilder("inbound")
+	lb := NewMetricsLabelsBuilder("inbound", config.Get())
 	lb.Service("test", "ns")
 	lb.PeerApp("peer", "ns2")
 	assert.Equal(`{destination_service_name="test",destination_service_namespace="ns",source_workload_namespace="ns2",source_canonical_service="peer"}`, lb.Build())
@@ -49,7 +51,7 @@ func TestMetricsLabelsBuilderInboundPeerLabels(t *testing.T) {
 func TestMetricsLabelsBuilderOutboundPeerLabels(t *testing.T) {
 	assert := assert.New(t)
 
-	lb := NewMetricsLabelsBuilder("outbound")
+	lb := NewMetricsLabelsBuilder("outbound", config.Get())
 	lb.Workload("test", "ns")
 	lb.PeerService("peer", "ns2")
 	assert.Equal(`{source_workload_namespace="ns",source_workload="test",destination_service_name="peer",destination_service_namespace="ns2"}`, lb.Build())
@@ -62,7 +64,7 @@ func TestMetricsLabelsBuilderQueryScope(t *testing.T) {
 
 	assert := assert.New(t)
 
-	lb := NewMetricsLabelsBuilder("outbound")
+	lb := NewMetricsLabelsBuilder("outbound", config.Get())
 	lb.QueryScope()
 	lb.Workload("test", "ns")
 	lb.PeerService("peer", "ns2")

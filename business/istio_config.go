@@ -32,7 +32,7 @@ const allResources string = "*"
 
 type IstioConfigService struct {
 	userClients         map[string]kubernetes.ClientInterface
-	config              config.Config
+	conf                *config.Config
 	kialiCache          cache.KialiCache
 	businessLayer       *Layer
 	controlPlaneMonitor ControlPlaneMonitor
@@ -486,7 +486,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 
 	go func(ctx context.Context) {
 		defer wg.Done()
-		canCreate, canUpdate, canDelete := getPermissions(ctx, in.userClients[cluster], cluster, namespace, objectGVK)
+		canCreate, canUpdate, canDelete := getPermissions(ctx, in.userClients[cluster], cluster, namespace, objectGVK, in.conf)
 		istioConfigDetail.Permissions = models.ResourcePermissions{
 			Create: canCreate,
 			Update: canUpdate,
@@ -690,7 +690,7 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(ctx context.Context, clust
 		return err
 	}
 
-	if in.config.ExternalServices.Istio.IstioAPIEnabled {
+	if in.conf.ExternalServices.Istio.IstioAPIEnabled {
 		// Refreshing the istio cache in case something has changed with the registry services. Not sure if this is really needed.
 		if err := in.controlPlaneMonitor.RefreshIstioCache(ctx); err != nil {
 			log.Errorf("Error while refreshing Istio cache: %s", err)
@@ -965,7 +965,7 @@ func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, clust
 		return istioConfigDetail, err
 	}
 
-	if in.config.ExternalServices.Istio.IstioAPIEnabled {
+	if in.conf.ExternalServices.Istio.IstioAPIEnabled {
 		// Refreshing the istio cache in case something has changed with the registry services. Not sure if this is really needed.
 		if err := in.controlPlaneMonitor.RefreshIstioCache(ctx); err != nil {
 			log.Errorf("Error while refreshing Istio cache: %s", err)
@@ -988,7 +988,7 @@ func (in *IstioConfigService) IsGatewayAPI(cluster string) bool {
 }
 
 func (in *IstioConfigService) GatewayAPIClasses(cluster string) []config.GatewayAPIClass {
-	return kubernetes.GatewayAPIClasses(in.IsAmbientEnabled(cluster), &in.config)
+	return kubernetes.GatewayAPIClasses(in.IsAmbientEnabled(cluster), in.conf)
 }
 
 func (in *IstioConfigService) IsAmbientEnabled(cluster string) bool {
@@ -1036,7 +1036,7 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 			*/
 			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, networkingPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, kubernetes.NetworkingGroupVersionV1.Group, allResources)
+				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, kubernetes.NetworkingGroupVersionV1.Group, allResources, in.conf)
 				for _, rs := range newNetworkingConfigTypes {
 					networkingRP[rs.String()] = &models.ResourcePermissions{
 						Create: canCreate,
@@ -1048,7 +1048,7 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 
 			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, k8sNetworkingPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, kubernetes.K8sNetworkingGroupVersionV1.Group, allResources)
+				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, kubernetes.K8sNetworkingGroupVersionV1.Group, allResources, in.conf)
 				for _, rs := range newK8sNetworkingConfigTypes {
 					k8sNetworkingRP[rs.String()] = &models.ResourcePermissions{
 						Create: canCreate && in.userClients[cluster].IsGatewayAPI(),
@@ -1060,7 +1060,7 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 
 			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, securityPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, kubernetes.SecurityGroupVersionV1.Group, allResources)
+				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, kubernetes.SecurityGroupVersionV1.Group, allResources, in.conf)
 				for _, rs := range newSecurityConfigTypes {
 					securityRP[rs.String()] = &models.ResourcePermissions{
 						Create: canCreate,
@@ -1090,18 +1090,17 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 	return istioConfigPermissions
 }
 
-func getPermissions(ctx context.Context, k8s kubernetes.ClientInterface, cluster string, namespace string, objectGVK schema.GroupVersionKind) (bool, bool, bool) {
+func getPermissions(ctx context.Context, k8s kubernetes.ClientInterface, cluster string, namespace string, objectGVK schema.GroupVersionKind, conf *config.Config) (bool, bool, bool) {
 	var canCreate, canPatch, canDelete bool
 
 	if _, ok := kubernetes.ResourceTypesToAPI[objectGVK.String()]; ok {
-		return getPermissionsApi(ctx, k8s, cluster, namespace, objectGVK.Group, objectGVK.Kind)
+		return getPermissionsApi(ctx, k8s, cluster, namespace, objectGVK.Group, objectGVK.Kind, conf)
 	}
 	return canCreate, canPatch, canDelete
 }
 
-func getPermissionsApi(ctx context.Context, k8s kubernetes.ClientInterface, cluster string, namespace, api, resourceType string) (bool, bool, bool) {
+func getPermissionsApi(ctx context.Context, k8s kubernetes.ClientInterface, cluster string, namespace, api, resourceType string, conf *config.Config) (bool, bool, bool) {
 	var canCreate, canPatch, canDelete bool
-	conf := config.Get()
 
 	// In view only mode, there is not need to check RBAC permissions, return false early
 	if conf.Deployment.ViewOnlyMode {

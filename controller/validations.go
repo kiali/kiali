@@ -26,13 +26,14 @@ import (
 func NewValidationsController(
 	ctx context.Context,
 	clusters []string,
+	conf *config.Config,
 	kialiCache cache.KialiCache,
 	validationsService *business.IstioValidationsService,
 	mgr ctrl.Manager,
-	reconcileInterval *time.Duration,
 ) error {
+	reconcileInterval := conf.ExternalServices.Istio.ValidationReconcileInterval
 	log.Infof("Kiali will validate Istio configuration every: %s", *reconcileInterval)
-	reconciler := NewValidationsReconciler(clusters, kialiCache, validationsService, *reconcileInterval)
+	reconciler := NewValidationsReconciler(clusters, conf, kialiCache, validationsService, *reconcileInterval)
 
 	validationsController, err := controller.New("validations-controller", mgr, controller.Options{
 		Reconciler: reconciler,
@@ -77,12 +78,14 @@ func NewValidationsController(
 
 func NewValidationsReconciler(
 	clusters []string,
+	conf *config.Config,
 	kialiCache cache.KialiCache,
 	validationsService *business.IstioValidationsService,
 	reconcileInterval time.Duration,
 ) *ValidationsReconciler {
 	return &ValidationsReconciler{
 		clusters:           clusters,
+		conf:               conf,
 		kialiCache:         kialiCache,
 		reconcileInterval:  reconcileInterval,
 		validationsService: validationsService,
@@ -92,6 +95,7 @@ func NewValidationsReconciler(
 // validationsReconciler fetches Istio VirtualService objects and prints their names
 type ValidationsReconciler struct {
 	clusters           []string
+	conf               *config.Config
 	kialiCache         cache.KialiCache
 	reconcileInterval  time.Duration
 	validationsService *business.IstioValidationsService
@@ -122,7 +126,7 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// each object used in the validation, and is then used to look for version changes (or a change in
 	// the number of objects).  We keep it in the cache for sane access.
 	var changeMap business.ValidationChangeMap
-	if config.Get().ExternalServices.Istio.ValidationChangeDetectionEnabled {
+	if r.conf.ExternalServices.Istio.ValidationChangeDetectionEnabled {
 		changeMap = r.kialiCache.ValidationConfig().Items()
 	}
 

@@ -45,7 +45,7 @@ func GraphMesh(
 	globalInfo := mesh.NewGlobalInfo()
 	globalInfo.Business = business
 	globalInfo.ClientFactory = clientFactory
-	globalInfo.Config = conf
+	globalInfo.Conf = conf
 	globalInfo.Discovery = discovery
 	globalInfo.Grafana = grafana
 	globalInfo.KialiCache = kialiCache

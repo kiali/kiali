@@ -78,7 +78,7 @@ func TestSummarizeValidations(t *testing.T) {
 	conf := config.NewConfig()
 	conf.KialiFeatureFlags.Validations.Ignore = []string{"FOO2", "FOO3"}
 	config.Set(conf)
-	validations.StripIgnoredChecks()
+	validations.StripIgnoredChecks(conf)
 	assert.Equal(1, len(validations[key1].Checks))
 	assert.Equal(1, len(validations[key2].Checks))
 	summary = validations.SummarizeValidation("bookinfo", "east")

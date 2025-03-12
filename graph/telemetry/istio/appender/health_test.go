@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -36,8 +37,7 @@ func TestServicesHealthConfigPasses(t *testing.T) {
 	trafficMap := buildServiceTrafficMap()
 	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := HealthAppender{}
@@ -54,8 +54,7 @@ func TestServicesHealthNoConfigPasses(t *testing.T) {
 	trafficMap := buildServiceTrafficMap()
 	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(""), buildFakeWorkloadDeploymentsHealth(""), buildFakePodsHealth(""))
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := HealthAppender{}
@@ -72,8 +71,7 @@ func TestWorkloadHealthConfigPasses(t *testing.T) {
 	trafficMap := buildWorkloadTrafficMap()
 	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := HealthAppender{}
@@ -90,8 +88,7 @@ func TestWorkloadHealthNoConfigPasses(t *testing.T) {
 	trafficMap := buildWorkloadTrafficMap()
 	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(""), buildFakeWorkloadDeploymentsHealth(""), buildFakePodsHealth(""))
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := HealthAppender{}
@@ -122,8 +119,7 @@ func TestHealthDataPresent(t *testing.T) {
 	}
 	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := HealthAppender{}
@@ -187,8 +183,7 @@ func TestHealthDataPresent200SvcWk(t *testing.T) {
 	}
 	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := HealthAppender{}
@@ -245,8 +240,7 @@ func TestHealthDataPresent200500WkSvc(t *testing.T) {
 	}
 	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := HealthAppender{}
@@ -301,8 +295,7 @@ func TestHealthDataPresentToApp(t *testing.T) {
 	}
 	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := HealthAppender{}
@@ -356,8 +349,7 @@ func TestHealthDataPresentFromApp(t *testing.T) {
 	}
 	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := HealthAppender{}
@@ -417,8 +409,7 @@ func TestHealthDataBadResponses(t *testing.T) {
 	edge2.Metadata[graph.ProtocolKey] = 20000
 	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := HealthAppender{}
@@ -449,8 +440,7 @@ func TestIdleNodesHaveHealthData(t *testing.T) {
 	idleNode.Metadata[graph.IsInaccessible] = true
 	businessLayer := setupHealthConfig(t, buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := HealthAppender{}
@@ -514,8 +504,7 @@ func TestErrorCausesPanic(t *testing.T) {
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, prom, nil)
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := HealthAppender{}
@@ -571,8 +560,7 @@ func TestMultiClusterHealthConfig(t *testing.T) {
 	prom.MockAllRequestRates("testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
 	businessLayer := business.NewWithBackends(factory.GetSAClients(), factory.GetSAClients(), prom, nil)
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := HealthAppender{}

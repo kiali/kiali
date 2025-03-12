@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/config/cytoscape"
 	"github.com/kiali/kiali/graph/telemetry/istio"
@@ -16,7 +17,7 @@ import (
 )
 
 // GraphNamespaces generates a namespaces graph using the provided options
-func GraphNamespaces(ctx context.Context, business *business.Layer, o graph.Options) (code int, config interface{}) {
+func GraphNamespaces(ctx context.Context, business *business.Layer, o graph.Options) (code int, graphConfig interface{}) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GraphNamespaces",
 		observability.Attribute("package", "api"),
@@ -30,7 +31,7 @@ func GraphNamespaces(ctx context.Context, business *business.Layer, o graph.Opti
 	case graph.VendorIstio:
 		prom, err := prometheus.NewClient()
 		graph.CheckError(err)
-		code, config = graphNamespacesIstio(ctx, business, prom, o)
+		code, graphConfig = graphNamespacesIstio(ctx, business, prom, o)
 	default:
 		graph.Error(fmt.Sprintf("TelemetryVendor [%s] not supported", o.TelemetryVendor))
 	}
@@ -38,26 +39,23 @@ func GraphNamespaces(ctx context.Context, business *business.Layer, o graph.Opti
 	// update metrics
 	internalmetrics.SetGraphNodes(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes, 0)
 
-	return code, config
+	return code, graphConfig
 }
 
 // graphNamespacesIstio provides a test hook that accepts mock clients
-func graphNamespacesIstio(ctx context.Context, business *business.Layer, prom *prometheus.Client, o graph.Options) (code int, config interface{}) {
+func graphNamespacesIstio(ctx context.Context, business *business.Layer, prom *prometheus.Client, o graph.Options) (code int, graphConfig interface{}) {
 
 	// Create a 'global' object to store the business. Global only to the request.
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = business
-	globalInfo.Context = ctx
-	globalInfo.PromClient = prom
+	globalInfo := graph.NewGlobalInfo(ctx, business, prom, config.Get())
 
 	trafficMap := istio.BuildNamespacesTrafficMap(ctx, o.TelemetryOptions, globalInfo)
-	code, config = generateGraph(trafficMap, o)
+	code, graphConfig = generateGraph(trafficMap, o)
 
-	return code, config
+	return code, graphConfig
 }
 
 // GraphNode generates a node graph using the provided options
-func GraphNode(ctx context.Context, business *business.Layer, o graph.Options) (code int, config interface{}) {
+func GraphNode(ctx context.Context, business *business.Layer, o graph.Options) (code int, graphConfig interface{}) {
 	if len(o.Namespaces) != 1 {
 		graph.Error("Node graph does not support the 'namespaces' query parameter or the 'all' namespace")
 	}
@@ -70,29 +68,29 @@ func GraphNode(ctx context.Context, business *business.Layer, o graph.Options) (
 	case graph.VendorIstio:
 		prom, err := prometheus.NewClient()
 		graph.CheckError(err)
-		code, config = graphNodeIstio(ctx, business, prom, o)
+		code, graphConfig = graphNodeIstio(ctx, business, prom, o)
 	default:
 		graph.Error(fmt.Sprintf("TelemetryVendor [%s] not supported", o.TelemetryVendor))
 	}
 	// update metrics
 	internalmetrics.SetGraphNodes(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes, 0)
 
-	return code, config
+	return code, graphConfig
 }
 
 // graphNodeIstio provides a test hook that accepts mock clients
-func graphNodeIstio(ctx context.Context, business *business.Layer, prom *prometheus.Client, o graph.Options) (code int, config interface{}) {
+func graphNodeIstio(ctx context.Context, business *business.Layer, prom *prometheus.Client, o graph.Options) (code int, graphConfig interface{}) {
 
 	// Create a 'global' object to store the business. Global only to the request.
-	globalInfo := graph.NewGlobalInfo()
+	globalInfo := graph.NewGlobalInfo(ctx, business, prom, config.Get())
 	globalInfo.Business = business
 	globalInfo.Context = ctx
 	globalInfo.PromClient = prom
 
 	trafficMap, _ := istio.BuildNodeTrafficMap(o.TelemetryOptions, globalInfo)
-	code, config = generateGraph(trafficMap, o)
+	code, graphConfig = generateGraph(trafficMap, o)
 
-	return code, config
+	return code, graphConfig
 }
 
 func generateGraph(trafficMap graph.TrafficMap, o graph.Options) (int, interface{}) {

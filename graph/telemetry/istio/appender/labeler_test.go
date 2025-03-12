@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -122,8 +123,7 @@ func TestLabeler(t *testing.T) {
 	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.Labels])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.Labels])
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 
 	a := LabelerAppender{}
 	a.AppendGraph(trafficMap, globalInfo, nil)

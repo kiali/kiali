@@ -67,7 +67,7 @@ const (
 )
 
 const (
-	// DefaultClusterID is generally not for use outside of test-code. In general you should use config.Get().KubernetesConfig.ClusterName
+	// DefaultClusterID is generally not for use outside of test-code. In general you should use conf.KubernetesConfig.ClusterName
 	DefaultClusterID = "Kubernetes"
 )
 

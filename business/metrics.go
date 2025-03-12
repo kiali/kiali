@@ -7,28 +7,30 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 )
 
 // MetricsService deals with fetching metrics from prometheus
 type MetricsService struct {
+	conf *config.Config
 	prom prometheus.ClientInterface
 }
 
 // NewMetricsService initializes this business service
-func NewMetricsService(prom prometheus.ClientInterface) *MetricsService {
-	return &MetricsService{prom: prom}
+func NewMetricsService(prom prometheus.ClientInterface, conf *config.Config) *MetricsService {
+	return &MetricsService{conf: conf, prom: prom}
 }
 
 func (in *MetricsService) GetMetrics(q models.IstioMetricsQuery, scaler func(n string) float64) (models.MetricsMap, error) {
-	lb := createMetricsLabelsBuilder(&q)
+	lb := createMetricsLabelsBuilder(&q, in.conf)
 	grouping := strings.Join(q.ByLabels, ",")
 	return in.fetchAllMetrics(q, lb, grouping, scaler)
 }
 
-func createMetricsLabelsBuilder(q *models.IstioMetricsQuery) *MetricsLabelsBuilder {
-	lb := NewMetricsLabelsBuilder(q.Direction)
+func createMetricsLabelsBuilder(q *models.IstioMetricsQuery, conf *config.Config) *MetricsLabelsBuilder {
+	lb := NewMetricsLabelsBuilder(q.Direction, conf)
 	if q.Reporter != "both" {
 		lb.Reporter(q.Reporter, q.IncludeAmbient)
 	}
@@ -203,7 +205,7 @@ func (in *MetricsService) GetStats(queries []models.MetricsStatsQuery) (map[stri
 }
 
 func (in *MetricsService) getSingleQueryStats(q *models.MetricsStatsQuery) (*models.MetricsStats, error) {
-	lb := createStatsMetricsLabelsBuilder(q)
+	lb := createStatsMetricsLabelsBuilder(q, in.conf)
 	labels := lb.Build()
 	stats, err := in.prom.FetchHistogramValues("istio_request_duration_milliseconds", labels, "", q.Interval, q.Avg, q.Quantiles, q.QueryTime)
 	if err != nil {
@@ -227,8 +229,8 @@ func (in *MetricsService) getSingleQueryStats(q *models.MetricsStatsQuery) (*mod
 	return &metricsStats, nil
 }
 
-func createStatsMetricsLabelsBuilder(q *models.MetricsStatsQuery) *MetricsLabelsBuilder {
-	lb := NewMetricsLabelsBuilder(q.Direction)
+func createStatsMetricsLabelsBuilder(q *models.MetricsStatsQuery, conf *config.Config) *MetricsLabelsBuilder {
+	lb := NewMetricsLabelsBuilder(q.Direction, conf)
 	lb.SelfReporter()
 	if q.Target.Kind == "app" {
 		lb.App(q.Target.Name, q.Target.Namespace)
