@@ -3,7 +3,6 @@ package kubernetes
 import (
 	"testing"
 
-	"github.com/kiali/kiali/config"
 	"github.com/stretchr/testify/assert"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	apps_v1 "k8s.io/api/apps/v1"
@@ -16,6 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+
+	"github.com/kiali/kiali/config"
 )
 
 func TestFilterPodsForEndpoints(t *testing.T) {

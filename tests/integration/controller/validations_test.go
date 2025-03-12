@@ -54,7 +54,8 @@ var _ = Describe("Validations controller", Ordered, func() {
 			layer, err := business.NewLayerWithSAClients(conf, kialiCache, nil, nil, nil, nil, discovery, saClients)
 			Expect(err).ToNot(HaveOccurred())
 
-			err = controller.NewValidationsController(ctx, []string{conf.KubernetesConfig.ClusterName}, kialiCache, &layer.Validations, k8sManager, util.AsPtr(time.Millisecond*100))
+			conf.ExternalServices.Istio.ValidationReconcileInterval = util.AsPtr(time.Millisecond * 100)
+			err = controller.NewValidationsController(ctx, []string{conf.KubernetesConfig.ClusterName}, conf, kialiCache, &layer.Validations, k8sManager)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
