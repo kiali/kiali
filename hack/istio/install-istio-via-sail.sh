@@ -108,7 +108,7 @@ fi
 
 ISTIO_YAML=$(
 cat <<EOF
-apiVersion: sailoperator.io/v1alpha1
+apiVersion: sailoperator.io/v1
 kind: Istio
 metadata:
   name: default

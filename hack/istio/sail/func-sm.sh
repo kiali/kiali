@@ -145,7 +145,7 @@ install_istio() {
       fi
       infomsg "Installing IstioCNI CR"
       cat <<EOMCNI > ${istiocni_yaml_file}
-apiVersion: sailoperator.io/v1alpha1
+apiVersion: sailoperator.io/v1
 kind: IstioCNI
 metadata:
   name: ${istiocni_name}
@@ -184,7 +184,7 @@ EOMCNI
 
     local istio_yaml_file="/tmp/istio-cr.yaml"
     cat <<EOM > ${istio_yaml_file}
-apiVersion: sailoperator.io/v1alpha1
+apiVersion: sailoperator.io/v1
 kind: Istio
 metadata:
   name: default
