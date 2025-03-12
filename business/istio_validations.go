@@ -155,12 +155,12 @@ func (in ValidationChangeMap) update(key, value string, report bool) bool {
 // may otherwise need to be recalculated.
 type validationInfo struct {
 	// cross-cluster information
-	clusters []string                                  // all clusters being validated
-	conf     *config.Config                            // kiali config
-	mesh     *models.Mesh                              // control plane info
-	nsMap    map[string][]models.Namespace             // cluster => namespaces
-	saMap    map[string][]string                       // cluster => serviceAccounts
-	wlMap    map[string]map[string]models.WorkloadList // cluster => namespace => WorkloadList, all workloads
+	clusters []string                               // all clusters being validated
+	conf     *config.Config                         // kiali config
+	mesh     *models.Mesh                           // control plane info
+	nsMap    map[string][]models.Namespace          // cluster => namespaces
+	saMap    map[string][]string                    // cluster => serviceAccounts
+	wlMap    map[string]map[string]models.Workloads // cluster => namespace => WorkloadList, all workloads
 
 	// clusterInfo is reset for each cluster being validated
 	clusterInfo *validationClusterInfo

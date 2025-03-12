@@ -684,8 +684,8 @@ func TestNoLabelsInSubset(t *testing.T) {
 	config.Set(conf)
 
 	vals, valid := NoDestinationChecker{
+		Conf: config.Get(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
-			Conf: config.Get(),
 			"test-namespace": {
 				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
 				data.CreateWorkload("reviewsv2", appVersionLabel("reviews", "v2"))},

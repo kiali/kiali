@@ -132,7 +132,7 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 
 	if localNs == itemNamespace {
 		// Check Workloads
-		if matches := kubernetes.HasMatchingWorkloads(localSvc, n.WorkloadsPerNamespace[localNs].GetLabels(), n.Conf); matches {
+		if matches := kubernetes.HasMatchingWorkloads(localSvc, models.GetLabels(n.WorkloadsPerNamespace[localNs]), n.Conf); matches {
 			return matches
 		}
 	}
