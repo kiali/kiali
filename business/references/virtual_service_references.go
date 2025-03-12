@@ -11,12 +11,12 @@ import (
 )
 
 type VirtualServiceReferences struct {
+	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	Conf                  *config.Config
+	DestinationRules      []*networking_v1.DestinationRule
 	Namespace             string
 	Namespaces            models.Namespaces
 	VirtualServices       []*networking_v1.VirtualService
-	DestinationRules      []*networking_v1.DestinationRule
-	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 }
 
 func (n VirtualServiceReferences) References() models.IstioReferencesMap {

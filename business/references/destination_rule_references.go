@@ -13,13 +13,13 @@ import (
 
 type DestinationRuleReferences struct {
 	Conf                  *config.Config
+	DestinationRules      []*networking_v1.DestinationRule
 	Namespace             string
 	Namespaces            models.Namespaces
-	DestinationRules      []*networking_v1.DestinationRule
+	RegistryServices      []*kubernetes.RegistryService
+	ServiceEntries        []*networking_v1.ServiceEntry
 	VirtualServices       []*networking_v1.VirtualService
 	WorkloadsPerNamespace map[string]models.Workloads
-	ServiceEntries        []*networking_v1.ServiceEntry
-	RegistryServices      []*kubernetes.RegistryService
 }
 
 func (n DestinationRuleReferences) References() models.IstioReferencesMap {

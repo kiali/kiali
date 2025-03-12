@@ -15,11 +15,11 @@ import (
 
 type SidecarReferences struct {
 	Conf                  *config.Config
-	Sidecars              []*networking_v1.Sidecar
 	Namespace             string
 	Namespaces            models.Namespaces
-	ServiceEntries        []*networking_v1.ServiceEntry
 	RegistryServices      []*kubernetes.RegistryService
+	ServiceEntries        []*networking_v1.ServiceEntry
+	Sidecars              []*networking_v1.Sidecar
 	WorkloadsPerNamespace map[string]models.Workloads
 }
 
