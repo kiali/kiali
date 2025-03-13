@@ -680,7 +680,7 @@ func NewRoutes(
 			"ClustersApps",
 			"GET",
 			"/api/clusters/apps",
-			handlers.ClustersApps,
+			handlers.ClustersApps(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/apps/{app} apps appDetails
@@ -701,7 +701,7 @@ func NewRoutes(
 			"AppDetails",
 			"GET",
 			"/api/namespaces/{namespace}/apps/{app}",
-			handlers.AppDetails,
+			handlers.AppDetails(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces namespaces namespaceList
