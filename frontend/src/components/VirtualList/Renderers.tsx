@@ -260,9 +260,7 @@ export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo, _config: Reso
     >
       <PFBadge badge={badge} />
       {ns.name}
-      {ns.name === serverConfig.istioNamespace && (
-        <ControlPlaneBadge />
-      )}
+      {ns.name === serverConfig.istioNamespace && <ControlPlaneBadge />}
     </Td>
   );
 };
