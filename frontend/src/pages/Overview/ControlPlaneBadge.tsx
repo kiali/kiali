@@ -2,18 +2,11 @@ import { Label, Tooltip } from '@patternfly/react-core';
 import * as React from 'react';
 import { serverConfig } from '../../config';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
-import { RemoteClusterBadge } from './RemoteClusterBadge';
 import { Link, useLocation } from 'react-router-dom-v5-compat';
 import { meshLinkStyle } from 'components/IstioStatus/IstioStatus';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { isRemoteCluster } from 'pages/Mesh/target/TargetPanelControlPlane';
 
-type Props = {
-  annotations?: { [key: string]: string };
-  cluster?: string;
-};
-
-export const ControlPlaneBadge: React.FC<Props> = (props: Props) => {
+export const ControlPlaneBadge: React.FC = () => {
   const { t } = useKialiTranslation();
   const { pathname } = useLocation();
 
@@ -38,8 +31,6 @@ export const ControlPlaneBadge: React.FC<Props> = (props: Props) => {
           {t('Control plane')}
         </Label>
       </Tooltip>
-
-      {isRemoteCluster(props.annotations) && props.cluster && <RemoteClusterBadge cluster={props.cluster} />}
 
       {serverConfig.ambientEnabled && (
         <AmbientBadge tooltip={t('Istio Ambient ztunnel detected in the Control plane')}></AmbientBadge>

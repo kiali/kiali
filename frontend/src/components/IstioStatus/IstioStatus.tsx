@@ -53,7 +53,6 @@ type StatusIcons = {
 
 type Props = ReduxStateProps &
   ReduxDispatchProps & {
-    cluster?: string;
     icons?: StatusIcons;
     lastRefreshAt: TimeInMilliseconds;
     location?: string;
@@ -109,7 +108,7 @@ export const meshLinkStyle = kialiStyle({
 export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
 
-  const { cluster, namespaces, setIstioStatus, refreshNamespaces, lastRefreshAt } = props;
+  const { namespaces, setIstioStatus, refreshNamespaces, lastRefreshAt } = props;
 
   React.useEffect(() => {
     refreshNamespaces();
@@ -136,37 +135,16 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   );
 
   React.useEffect(() => {
-    // when cluster is set, retrieve only for this one, Overview page
-    if (cluster) {
-      fetchStatus(cluster);
-    } else {
-      Object.keys(serverConfig.clusters).forEach(cl => fetchStatus(cl));
-    }
-  }, [cluster, lastRefreshAt, fetchStatus]);
+    // retrieve status per cluster, similar to all other API calls where clusterName param is set
+    Object.keys(serverConfig.clusters).forEach(cl => fetchStatus(cl));
+  }, [lastRefreshAt, fetchStatus]);
 
   const tooltipContent = (): React.ReactNode => {
     return (
       <>
         <TextContent style={{ color: PFColors.White }}>
-          {cluster ? (
-            <Text component={TextVariants.h4}>{t('Istio Components Status')}</Text>
-          ) : (
-            <Text component={TextVariants.h4}>{t('Cluster Status')}</Text>
-          )}
-          {cluster ? (
-            // for Overview page
-            <>
-              <div className={clusterStyle}>
-                <PFBadge badge={PFBadges.Cluster} size="sm" />
-                {cluster}
-                <span style={{ marginLeft: '0.25rem' }}>
-                  <KialiIcon.Star />
-                </span>
-              </div>
-              <IstioStatusList status={props.statusMap[cluster] || []} cluster={cluster} />
-            </>
-          ) : (
-            // for Masthead
+          <Text component={TextVariants.h4}>{t('Cluster Status')}</Text>
+          {
             Object.keys(props.statusMap).map(cl => (
               <>
                 <div className={clusterStyle}>
@@ -181,7 +159,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
                 <IstioStatusList key={cl} status={props.statusMap[cl] || []} cluster={cl} />
               </>
             ))
-          )}
+          }
           {!props.location?.endsWith('/mesh') && isControlPlaneAccessible() && (
             <div className={meshLinkStyle}>
               <span>{t('More info at')}</span>
@@ -197,8 +175,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     let coreUnhealthy = false;
     let addonUnhealthy = false;
     let notReady = false;
-    // when cluster is set, this is in Overview page, otherwise masthead
-    const values = cluster ? props.statusMap[cluster] ?? [] : Object.values(props.statusMap).flat();
+    const values = Object.values(props.statusMap).flat();
 
     Object.keys(values ?? {}).forEach((compKey: string) => {
       const { status, is_core } = values[compKey];
@@ -218,8 +195,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   };
 
   const healthyComponents = (): boolean => {
-    // when cluster is set, this is in Overview page, otherwise masthead
-    const values = cluster ? props.statusMap[cluster] ?? [] : Object.values(props.statusMap).flat();
+    const values = Object.values(props.statusMap).flat();
     return values.reduce((healthy: boolean, compStatus: ComponentStatus) => {
       return healthy && compStatus.status === Status.Healthy;
     }, true);
@@ -255,15 +231,13 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     };
 
     statusIcon = createIcon(iconProps, icon, iconColor);
-  } else if (!cluster) {
+  } else {
     const iconProps: IconProps = {
       className: iconStyle,
       dataTest: 'istio-status-success'
     };
 
     statusIcon = createIcon(iconProps, defaultIcons.HealthyIcon, ValidToColor['false-false-false']);
-  } else {
-    return null;
   }
 
   return (

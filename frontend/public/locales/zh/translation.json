@@ -201,7 +201,6 @@
   "Istio {{type}} created": "Istio {{type}} created",
   "Istio Ambient ztunnel detected in the Control plane": "在Istio的控制平面中检测到环境ztunnel",
   "Istio Component List": "Istio Component List",
-  "Istio Components Status": "Istio Components Status",
   "Istio config": "Istio配置",
   "Istio Config": "Istio配置",
   "Istio control plane": "Istio控制面板",

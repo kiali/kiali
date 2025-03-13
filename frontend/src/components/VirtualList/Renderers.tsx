@@ -261,7 +261,7 @@ export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo, _config: Reso
       <PFBadge badge={badge} />
       {ns.name}
       {ns.name === serverConfig.istioNamespace && (
-        <ControlPlaneBadge cluster={ns.cluster} annotations={ns.annotations} />
+        <ControlPlaneBadge />
       )}
     </Td>
   );
