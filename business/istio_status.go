@@ -60,31 +60,17 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context, cluster string) (k
 		return kubernetes.IstioComponentStatus{}, nil
 	}
 	result := kubernetes.IstioComponentStatus{}
-	// the logic is longer, but more readable
+	ics, err := iss.getIstioComponentStatus(ctx, cluster)
+	if err != nil {
+		// istiod should be running
+		return nil, err
+	}
+	result.Merge(ics)
+
 	if cluster == iss.conf.KubernetesConfig.ClusterName {
 		// local cluster
-		ics, err := iss.getIstioComponentStatus(ctx, cluster)
-		if err != nil {
-			// istiod should be running
-			return nil, err
-		}
-		result.Merge(ics)
-		// get all addons
-		result.Merge(iss.getAddonComponentStatus(cluster, false))
-	} else {
-		// remote cluster
-		ics, err := iss.getIstioComponentStatus(ctx, cluster)
-		if err == nil {
-			// when no error, then istiod is there
-			// multi-primary
-			result.Merge(ics)
-			result.Merge(iss.getAddonComponentStatus(cluster, false))
-		} else {
-			// @TODO to distinguish primary-remote and multi-primary before checking istiod existence
-			// when error, then istiod is not there
-			// primary-remote
-			result.Merge(iss.getAddonComponentStatus(cluster, true))
-		}
+		// get addons
+		result.Merge(iss.getAddonComponentStatus(cluster))
 	}
 
 	return result, nil
@@ -307,15 +293,9 @@ func GetWorkloadStatus(wl models.Workload) string {
 	return status
 }
 
-func (iss *IstioStatusService) getAddonComponentStatus(cluster string, skipAddons bool) kubernetes.IstioComponentStatus {
+func (iss *IstioStatusService) getAddonComponentStatus(cluster string) kubernetes.IstioComponentStatus {
 	var wg sync.WaitGroup
-	if skipAddons {
-		// primary-remote
-		wg.Add(1)
-	} else {
-		// multi-primary
-		wg.Add(4)
-	}
+	wg.Add(4)
 
 	staChan := make(chan kubernetes.IstioComponentStatus, 4)
 	extServices := iss.conf.ExternalServices
@@ -328,17 +308,15 @@ func (iss *IstioStatusService) getAddonComponentStatus(cluster string, skipAddon
 	ics := kubernetes.IstioComponentStatus{}
 
 	go iss.getAddonStatus(cluster, "prometheus", true, extServices.Prometheus.IsCore, &extServices.Prometheus.Auth, extServices.Prometheus.URL, extServices.Prometheus.HealthCheckUrl, staChan, &wg)
-	if !skipAddons {
-		go iss.getAddonStatus(cluster, "grafana", extServices.Grafana.Enabled, extServices.Grafana.IsCore, &extServices.Grafana.Auth, extServices.Grafana.InternalURL, extServices.Grafana.HealthCheckUrl, staChan, &wg)
-		go iss.getTracingStatus(cluster, "tracing", extServices.Tracing.Enabled, extServices.Tracing.IsCore, staChan, &wg)
+	go iss.getAddonStatus(cluster, "grafana", extServices.Grafana.Enabled, extServices.Grafana.IsCore, &extServices.Grafana.Auth, extServices.Grafana.InternalURL, extServices.Grafana.HealthCheckUrl, staChan, &wg)
+	go iss.getTracingStatus(cluster, "tracing", extServices.Tracing.Enabled, extServices.Tracing.IsCore, staChan, &wg)
 
-		// Custom dashboards may use the main Prometheus config
-		customProm := extServices.CustomDashboards.Prometheus
-		if customProm.URL == "" {
-			customProm = extServices.Prometheus
-		}
-		go iss.getAddonStatus(cluster, "custom dashboards", extServices.CustomDashboards.Enabled, extServices.CustomDashboards.IsCore, &customProm.Auth, customProm.URL, customProm.HealthCheckUrl, staChan, &wg)
+	// Custom dashboards may use the main Prometheus config
+	customProm := extServices.CustomDashboards.Prometheus
+	if customProm.URL == "" {
+		customProm = extServices.Prometheus
 	}
+	go iss.getAddonStatus(cluster, "custom dashboards", extServices.CustomDashboards.Enabled, extServices.CustomDashboards.IsCore, &customProm.Auth, customProm.URL, customProm.HealthCheckUrl, staChan, &wg)
 
 	wg.Wait()
 

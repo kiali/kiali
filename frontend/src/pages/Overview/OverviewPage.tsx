@@ -1314,7 +1314,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     return (
       <>
         {ns.name === serverConfig.istioNamespace && (
-          <ControlPlaneBadge cluster={ns.cluster} annotations={ns.annotations}></ControlPlaneBadge>
+          <ControlPlaneBadge />
         )}
 
         {ns.name !== serverConfig.istioNamespace && ns.revision && <ControlPlaneVersionBadge version={ns.revision} />}
