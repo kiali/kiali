@@ -144,22 +144,20 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
       <>
         <TextContent style={{ color: PFColors.White }}>
           <Text component={TextVariants.h4}>{t('Cluster Status')}</Text>
-          {
-            Object.keys(props.statusMap).map(cl => (
-              <>
-                <div className={clusterStyle}>
-                  <PFBadge badge={PFBadges.Cluster} size="sm" />
-                  {cl}
-                  {cl === homeCluster?.name && (
-                    <span style={{ marginLeft: '0.25rem' }}>
-                      <KialiIcon.Star />
-                    </span>
-                  )}
-                </div>
-                <IstioStatusList key={cl} status={props.statusMap[cl] || []} cluster={cl} />
-              </>
-            ))
-          }
+          {Object.keys(props.statusMap).map(cl => (
+            <>
+              <div className={clusterStyle}>
+                <PFBadge badge={PFBadges.Cluster} size="sm" />
+                {cl}
+                {cl === homeCluster?.name && (
+                  <span style={{ marginLeft: '0.25rem' }}>
+                    <KialiIcon.Star />
+                  </span>
+                )}
+              </div>
+              <IstioStatusList key={cl} status={props.statusMap[cl] || []} cluster={cl} />
+            </>
+          ))}
           {!props.location?.endsWith('/mesh') && isControlPlaneAccessible() && (
             <div className={meshLinkStyle}>
               <span>{t('More info at')}</span>
