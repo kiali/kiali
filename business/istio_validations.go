@@ -570,7 +570,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	switch objectGVK {
 	case kubernetes.Gateways:
 		objectCheckers = []checkers.ObjectChecker{
-			checkers.GatewayChecker{Cluster: cluster, Gateways: istioConfigList.Gateways, WorkloadsPerNamespace: workloadsPerNamespace, IsGatewayToNamespace: in.isGatewayToNamespace(vInfo.mesh)},
+			checkers.GatewayChecker{Conf: conf, Cluster: cluster, Gateways: istioConfigList.Gateways, WorkloadsPerNamespace: workloadsPerNamespace, IsGatewayToNamespace: in.isGatewayToNamespace(vInfo.mesh)},
 		}
 		referenceChecker = references.GatewayReferences{Conf: conf, Gateways: istioConfigList.Gateways, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.VirtualServices:
