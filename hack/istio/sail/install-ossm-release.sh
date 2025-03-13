@@ -28,7 +28,7 @@ DEFAULT_ADDONS="prometheus grafana"
 DEFAULT_OC="oc"
 DEFAULT_ISTIO_VERSION="latest"
 DEFAULT_KIALI_VERSION="default"
-DEFAULT_CATALOG_SOURCE="community"
+DEFAULT_CATALOG_SOURCE="redhat"
 
 _CMD=""
 while [[ $# -gt 0 ]]; do

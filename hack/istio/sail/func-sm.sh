@@ -21,12 +21,12 @@ install_servicemesh_operators() {
     redhat)
       local servicemesh_subscription_source="redhat-operators"
       local servicemesh_subscription_name="servicemeshoperator3"
-      local servicemesh_subscription_channel="candidates"
+      local servicemesh_subscription_channel="stable"
       ;;
     community)
       local servicemesh_subscription_source="community-operators"
       local servicemesh_subscription_name="sailoperator"
-      local servicemesh_subscription_channel="candidates"
+      local servicemesh_subscription_channel="stable"
       ;;
     *)
       local servicemesh_subscription_source="${catalog_source}"
@@ -214,8 +214,9 @@ EOM
 delete_servicemesh_operators() {
   local abort_operation="false"
   for cr in \
-    $(${OC} get istio    -o custom-columns=K:.kind,N:.metadata.name --no-headers | sed 's/  */:/g' ) \
-    $(${OC} get istiocni -o custom-columns=K:.kind,N:.metadata.name --no-headers | sed 's/  */:/g' )
+    $(${OC} get istio             -o custom-columns=K:.kind,N:.metadata.name --no-headers | sed 's/  */:/g' ) \
+    $(${OC} get istiocni          -o custom-columns=K:.kind,N:.metadata.name --no-headers | sed 's/  */:/g' ) \
+    $(${OC} get istiorevisiontags -o custom-columns=K:.kind,N:.metadata.name --no-headers | sed 's/  */:/g' )
   do
     abort_operation="true"
     local res_kind=$(echo ${cr} | cut -d: -f1)
@@ -236,13 +237,12 @@ delete_servicemesh_operators() {
     ${OC} delete csv -n $(echo -n $csv | cut -d: -f1) $(echo -n $csv | cut -d: -f2)
   done
 
-  # TODO: Sail operator doesn't leave any cluster-scoped resources behind (yet)
-  #infomsg "Deleting any cluster-scoped resources that are getting left behind"
-  #for r in \
-  #  $(${OC} get clusterroles -o name | grep -E 'istio')
-  #do
-  #  ${OC} delete ${r}
-  #done
+  infomsg "Deleting any cluster-scoped resources that are getting left behind"
+  for r in \
+    $(${OC} get clusterroles -o name | grep -E 'sail|servicemesh|istio')
+  do
+    ${OC} delete ${r}
+  done
 
   infomsg "Delete any resources that are getting left behind"
   for r in \
@@ -257,15 +257,16 @@ delete_servicemesh_operators() {
   done
 
   infomsg "Delete the CRDs"
-  ${OC} get crds -o name | grep '.*\.istio\.io' | xargs -r -n 1 ${OC} delete
+  ${OC} get crds -o name | grep -E 'sail|servicemesh|istio' | xargs -r -n 1 ${OC} delete
 }
 
 delete_istio() {
   infomsg "Deleting all Istio and IstioCNI CRs (if they exist) which uninstalls all the Service Mesh components"
   local doomed_namespaces=""
   for cr in \
-    $(${OC} get istio    -o custom-columns=K:.kind,N:.metadata.name,NS:.spec.namespace --no-headers | sed 's/  */:/g' ) \
-    $(${OC} get istiocni -o custom-columns=K:.kind,N:.metadata.name,NS:.spec.namespace --no-headers | sed 's/  */:/g' )
+    $(${OC} get istio             -o custom-columns=K:.kind,N:.metadata.name,NS:.spec.namespace --no-headers | sed 's/  */:/g' ) \
+    $(${OC} get istiocni          -o custom-columns=K:.kind,N:.metadata.name,NS:.spec.namespace --no-headers | sed 's/  */:/g' ) \
+    $(${OC} get istiorevisiontags -o custom-columns=K:.kind,N:.metadata.name,NS:.spec.namespace --no-headers | sed 's/  */:/g' )
   do
     local res_kind=$(echo ${cr} | cut -d: -f1)
     local res_name=$(echo ${cr} | cut -d: -f2)
