@@ -187,7 +187,7 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 		}
 
 		result = append(result, models.MTLSStatus{
-			Status:          mtlsStatus.NamespaceMtlsStatus(namespace.Name, in.businessLayer.App.conf).OverallStatus,
+			Status:          mtlsStatus.NamespaceMtlsStatus(namespace.Name, in.conf).OverallStatus,
 			AutoMTLSEnabled: mtlsStatus.AutoMtlsEnabled,
 			Cluster:         cluster,
 			Namespace:       namespace.Name,
