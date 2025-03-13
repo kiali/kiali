@@ -40,13 +40,13 @@ import (
 )
 
 func NewWorkloadService(
-	userClients map[string]kubernetes.ClientInterface,
-	kialiSAclients map[string]kubernetes.ClientInterface,
-	prom prometheus.ClientInterface,
 	cache cache.KialiCache,
-	layer *Layer,
 	conf *config.Config,
 	grafana *grafana.Service,
+	kialiSAclients map[string]kubernetes.ClientInterface,
+	layer *Layer,
+	prom prometheus.ClientInterface,
+	userClients map[string]kubernetes.ClientInterface,
 ) *WorkloadService {
 	excludedWorkloads := make(map[string]bool)
 	for _, w := range conf.KubernetesConfig.ExcludeWorkloads {

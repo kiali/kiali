@@ -3,12 +3,14 @@ package business
 import (
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 )
 
 type RegistryStatusService struct {
+	conf       *config.Config
 	kialiCache cache.KialiCache
 }
 

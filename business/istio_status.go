@@ -18,11 +18,11 @@ import (
 
 func NewIstioStatusService(
 	conf *config.Config,
-	homeClusterSAClient kubernetes.ClientInterface,
-	userClients map[string]kubernetes.ClientInterface,
-	tracing *TracingService,
-	workloads *WorkloadService,
 	discovery istio.MeshDiscovery,
+	homeClusterSAClient kubernetes.ClientInterface,
+	tracing *TracingService,
+	userClients map[string]kubernetes.ClientInterface,
+	workloads *WorkloadService,
 ) IstioStatusService {
 	return IstioStatusService{
 		conf:                conf,

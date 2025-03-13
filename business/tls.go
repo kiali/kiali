@@ -19,9 +19,10 @@ import (
 
 type TLSService struct {
 	businessLayer *Layer
+	conf          *config.Config
 	discovery     istio.MeshDiscovery
-	userClients   map[string]kubernetes.ClientInterface
 	kialiCache    cache.KialiCache
+	userClients   map[string]kubernetes.ClientInterface
 }
 
 const (
@@ -145,7 +146,7 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 	}
 
 	return models.MTLSStatus{
-		Status:          mtlsStatus.NamespaceMtlsStatus(namespace, in.businessLayer.App.conf).OverallStatus,
+		Status:          mtlsStatus.NamespaceMtlsStatus(namespace, in.conf).OverallStatus,
 		AutoMTLSEnabled: mtlsStatus.AutoMtlsEnabled,
 		Cluster:         cluster,
 		Namespace:       namespace,

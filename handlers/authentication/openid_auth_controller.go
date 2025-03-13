@@ -237,7 +237,7 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 			return nil, fmt.Errorf("unable to create a Kubernetes client from the auth token: %w", err)
 		}
 
-		namespaceService := business.NewNamespaceService(userClients, c.clientFactory.GetSAClients(), c.kialiCache, c.conf, c.discovery)
+		namespaceService := business.NewNamespaceService(c.kialiCache, c.conf, c.discovery, userClients, c.clientFactory.GetSAClients())
 		_, err = namespaceService.GetNamespaces(r.Context())
 		if err != nil {
 			log.Warningf("Token error!: %v", err)
@@ -1381,7 +1381,7 @@ func verifyOpenIdUserAccess(token string, clientFactory kubernetes.ClientFactory
 	}
 	userClients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: userClient}
 
-	namespaceService := business.NewNamespaceService(userClients, clientFactory.GetSAClients(), kialiCache, conf, discovery)
+	namespaceService := business.NewNamespaceService(kialiCache, conf, discovery, userClients, clientFactory.GetSAClients())
 
 	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
 	// anonymous access, so it's not feasible to use the version API for token verification.

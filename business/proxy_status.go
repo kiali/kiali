@@ -11,9 +11,10 @@ import (
 )
 
 type ProxyStatusService struct {
+	businessLayer  *Layer
+	conf           *config.Config
 	kialiCache     cache.KialiCache
 	kialiSAClients map[string]kubernetes.ClientInterface
-	businessLayer  *Layer
 }
 
 // GetPodProxyStatus isSubscribed is used to return IGNORED if sent is empty, instead of NOT_SENT
@@ -80,7 +81,7 @@ func (in *ProxyStatusService) GetConfigDumpResourceEntries(cluster, namespace, p
 		return nil, err
 	}
 
-	return buildDump(dump, resource, namespaces, in.businessLayer.App.conf)
+	return buildDump(dump, resource, namespaces, in.conf)
 }
 
 func buildDump(dump *kubernetes.ConfigDump, resource string, namespaces []models.Namespace, conf *config.Config) (*models.EnvoyProxyDump, error) {

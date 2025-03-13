@@ -129,6 +129,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 	if o.IncludeIdleEdges {
 		idleCondition = ""
 	}
+	promApi := globalInfo.PromClient.API()
 	var query string
 	var trafficVector model.Vector
 
@@ -146,7 +147,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 			int(duration.Seconds()), // range duration for the query
 			groupBy,
 			idleCondition)
-		trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+		trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 		populateTrafficMap(trafficMap, &trafficVector, metric, o, globalInfo)
 
 		// 1) Incoming: Ambient only: query source telemetry, typically from a non-waypoint ingress gateway, that will likely not have overlapping dest or waypoint telem for the traffic (that traffic will be picked up in query #2)
@@ -158,7 +159,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 				int(duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(trafficMap, &trafficVector, metric, o, globalInfo)
 		}
 
@@ -170,7 +171,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 			int(duration.Seconds()), // range duration for the query
 			groupBy,
 			idleCondition)
-		trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+		trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 		populateTrafficMap(trafficMap, &trafficVector, metric, o, globalInfo)
 
 		// 3) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
@@ -181,7 +182,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 			int(duration.Seconds()), // range duration for the query
 			groupBy,
 			idleCondition)
-		trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+		trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 		populateTrafficMap(trafficMap, &trafficVector, metric, o, globalInfo)
 	}
 
@@ -211,7 +212,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 				int(duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 1) Incoming: Ambient only: query source telemetry, typically from a non-waypoint ingress gateway, that will likely not have overlapping dest or waypoint telem for the traffic (that traffic will be picked up in query #2)
@@ -223,7 +224,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 					int(duration.Seconds()), // range duration for the query
 					groupBy,
 					idleCondition)
-				trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+				trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 				populateTrafficMap(trafficMap, &trafficVector, metric, o, globalInfo)
 			}
 
@@ -235,7 +236,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 				int(duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 3) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
@@ -246,7 +247,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 				int(duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(trafficMap, &trafficVector, metric, o, globalInfo)
 		}
 	}
@@ -279,7 +280,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 				int(duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 1) Incoming: query destination telemetry to capture namespace services' incoming traffic	query = fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s"} [%vs])) by (%s) %s`,
@@ -291,7 +292,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 				int(duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
@@ -303,7 +304,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 				int(duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(trafficMap, &trafficVector, metric, o, globalInfo)
 		}
 	}
@@ -601,6 +602,7 @@ func buildNodeTrafficMap(cluster string, namespaceInfo graph.NamespaceInfo, n *g
 	if o.IncludeIdleEdges {
 		idleCondition = ""
 	}
+	promApi := globalInfo.PromClient.API()
 	var query string
 	var trafficVector model.Vector
 
@@ -671,7 +673,7 @@ func buildNodeTrafficMap(cluster string, namespaceInfo graph.NamespaceInfo, n *g
 				int(duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 1.b) query dest telemetry for requests to the service, serviced by service workloads
@@ -688,7 +690,7 @@ func buildNodeTrafficMap(cluster string, namespaceInfo graph.NamespaceInfo, n *g
 		default:
 			graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 		}
-		trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+		trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 		populateTrafficMap(trafficMap, &trafficVector, metric, o, globalInfo)
 
 		// 2) query for outbound traffic
@@ -731,7 +733,7 @@ func buildNodeTrafficMap(cluster string, namespaceInfo graph.NamespaceInfo, n *g
 		default:
 			graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 		}
-		trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+		trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 		populateTrafficMap(trafficMap, &trafficVector, metric, o, globalInfo)
 	}
 
@@ -801,7 +803,7 @@ func buildNodeTrafficMap(cluster string, namespaceInfo graph.NamespaceInfo, n *g
 			default:
 				graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 			}
-			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 2) query for outbound traffic
@@ -844,7 +846,7 @@ func buildNodeTrafficMap(cluster string, namespaceInfo graph.NamespaceInfo, n *g
 			default:
 				graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 			}
-			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(trafficMap, &trafficVector, metric, o, globalInfo)
 		}
 	}
@@ -931,7 +933,7 @@ func buildNodeTrafficMap(cluster string, namespaceInfo graph.NamespaceInfo, n *g
 			default:
 				graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 			}
-			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 2) query for outbound traffic
@@ -977,7 +979,7 @@ func buildNodeTrafficMap(cluster string, namespaceInfo graph.NamespaceInfo, n *g
 			default:
 				graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 			}
-			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+			trafficVector = promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(trafficMap, &trafficVector, metric, o, globalInfo)
 		}
 	}
@@ -1023,6 +1025,7 @@ func buildAggregateNodeTrafficMap(namespace string, n graph.Node, o graph.Teleme
 
 	// create map to aggregate traffic by response code
 	trafficMap := graph.NewTrafficMap()
+	promApi := globalInfo.PromClient.API()
 
 	// It takes only one prometheus query to get everything involving the target operation
 	serviceFragment := ""
@@ -1052,7 +1055,7 @@ func buildAggregateNodeTrafficMap(namespace string, n graph.Node, o graph.Teleme
 	query := fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
 	*/
 	query := httpQuery
-	vector := promQuery(query, time.Unix(o.QueryTime, 0), globalInfo.PromClient.API(), globalInfo.Conf)
+	vector := promQuery(query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 	populateTrafficMap(trafficMap, &vector, metric, o, globalInfo)
 
 	return trafficMap
