@@ -11,6 +11,7 @@ import (
 )
 
 type PeerAuthenticationChecker struct {
+	Conf                  *config.Config
 	PeerAuthentications   []*security_v1.PeerAuthentication
 	MTLSDetails           kubernetes.MTLSDetails
 	WorkloadsPerNamespace map[string]models.Workloads
@@ -44,7 +45,7 @@ func (m PeerAuthenticationChecker) runChecks(peerAuthn *security_v1.PeerAuthenti
 	if config.IsRootNamespace(peerAuthn.Namespace) {
 		enabledCheckers = append(enabledCheckers, peerauthentications.DisabledMeshWideChecker{PeerAuthn: peerAuthn, DestinationRules: m.MTLSDetails.DestinationRules})
 	} else {
-		enabledCheckers = append(enabledCheckers, peerauthentications.DisabledNamespaceWideChecker{PeerAuthn: peerAuthn, DestinationRules: m.MTLSDetails.DestinationRules})
+		enabledCheckers = append(enabledCheckers, peerauthentications.DisabledNamespaceWideChecker{Conf: m.Conf, PeerAuthn: peerAuthn, DestinationRules: m.MTLSDetails.DestinationRules})
 	}
 
 	// PeerAuthentications into  the root namespace namespace are considered Mesh-wide objects
@@ -53,7 +54,7 @@ func (m PeerAuthenticationChecker) runChecks(peerAuthn *security_v1.PeerAuthenti
 			peerauthentications.MeshMtlsChecker{MeshPolicy: peerAuthn, MTLSDetails: m.MTLSDetails, IsServiceMesh: false})
 	} else {
 		enabledCheckers = append(enabledCheckers,
-			peerauthentications.NamespaceMtlsChecker{PeerAuthn: peerAuthn, MTLSDetails: m.MTLSDetails})
+			peerauthentications.NamespaceMtlsChecker{Conf: m.Conf, PeerAuthn: peerAuthn, MTLSDetails: m.MTLSDetails})
 	}
 
 	for _, checker := range enabledCheckers {

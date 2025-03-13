@@ -15,6 +15,7 @@ import (
 
 func prepareTestForServiceEntry(ap *security_v1.AuthorizationPolicy, dr *networking_v1.DestinationRule, se *networking_v1.ServiceEntry, sc *networking_v1.Sidecar) models.IstioReferences {
 	drReferences := ServiceEntryReferences{
+		Conf:      config.Get(),
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},

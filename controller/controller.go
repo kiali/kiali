@@ -73,7 +73,7 @@ func Start(ctx context.Context, conf *config.Config, cf kubernetes.ClientFactory
 		clusters = append(clusters, client.ClusterInfo().Name)
 	}
 
-	if err := NewValidationsController(ctx, clusters, kialiCache, validationsService, mgr, conf.ExternalServices.Istio.ValidationReconcileInterval); err != nil {
+	if err := NewValidationsController(ctx, clusters, conf, kialiCache, validationsService, mgr); err != nil {
 		return fmt.Errorf("error setting up ValidationsController: %s", err)
 	}
 

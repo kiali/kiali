@@ -42,11 +42,11 @@ func IsAccessibleError(err error) bool {
 }
 
 func NewNamespaceService(
-	userClients map[string]kubernetes.ClientInterface,
-	kialiSAClients map[string]kubernetes.ClientInterface,
 	cache cache.KialiCache,
 	conf *config.Config,
 	discovery istio.MeshDiscovery,
+	kialiSAClients map[string]kubernetes.ClientInterface,
+	userClients map[string]kubernetes.ClientInterface,
 ) NamespaceService {
 	homeClusterName := conf.KubernetesConfig.ClusterName
 	hasProjects := make(map[string]bool)

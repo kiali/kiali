@@ -6,18 +6,20 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type NoDestinationChecker struct {
-	Namespaces            models.Namespaces
-	WorkloadsPerNamespace map[string]models.Workloads
+	Conf                  *config.Config
 	DestinationRule       *networking_v1.DestinationRule
-	VirtualServices       []*networking_v1.VirtualService
-	ServiceEntries        []*networking_v1.ServiceEntry
-	RegistryServices      []*kubernetes.RegistryService
+	Namespaces            models.Namespaces
 	PolicyAllowAny        bool
+	RegistryServices      []*kubernetes.RegistryService
+	ServiceEntries        []*networking_v1.ServiceEntry
+	VirtualServices       []*networking_v1.VirtualService
+	WorkloadsPerNamespace map[string]models.Workloads
 }
 
 // Check parses the DestinationRule definitions and verifies that they point to an existing service, including any subset definitions
@@ -28,7 +30,7 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 
 	namespace := n.DestinationRule.Namespace
 
-	fqdn := kubernetes.GetHost(n.DestinationRule.Spec.Host, namespace, n.Namespaces.GetNames())
+	fqdn := kubernetes.GetHost(n.DestinationRule.Spec.Host, namespace, n.Namespaces.GetNames(), n.Conf)
 	// Testing Kubernetes Services + Istio ServiceEntries + Istio Runtime Registry (cross namespace)
 	if !n.hasMatchingService(fqdn, namespace) {
 		validation := models.Build("destinationrules.nodest.matchingregistry", "spec/host")
@@ -130,7 +132,7 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 
 	if localNs == itemNamespace {
 		// Check Workloads
-		if matches := kubernetes.HasMatchingWorkloads(localSvc, models.GetLabels(n.WorkloadsPerNamespace[localNs])); matches {
+		if matches := kubernetes.HasMatchingWorkloads(localSvc, models.GetLabels(n.WorkloadsPerNamespace[localNs]), n.Conf); matches {
 			return matches
 		}
 	}
@@ -174,10 +176,10 @@ func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virt
 						}
 						host := dest.Destination.Host
 						subset := dest.Destination.Subset
-						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.Namespaces.GetNames())
-						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, n.Namespaces.GetNames())
+						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.Namespaces.GetNames(), n.Conf)
+						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, n.Namespaces.GetNames(), n.Conf)
 						// Host could be in another namespace (FQDN)
-						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
+						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace, n.Conf) && subset == virtualServiceSubset {
 							vss = append(vss, virtualService)
 						}
 					}
@@ -197,10 +199,10 @@ func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virt
 						}
 						host := dest.Destination.Host
 						subset := dest.Destination.Subset
-						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.Namespaces.GetNames())
-						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, n.Namespaces.GetNames())
+						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.Namespaces.GetNames(), n.Conf)
+						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, n.Namespaces.GetNames(), n.Conf)
 						// Host could be in another namespace (FQDN)
-						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
+						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace, n.Conf) && subset == virtualServiceSubset {
 							vss = append(vss, virtualService)
 						}
 					}
@@ -220,10 +222,10 @@ func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virt
 						}
 						host := dest.Destination.Host
 						subset := dest.Destination.Subset
-						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.Namespaces.GetNames())
-						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, n.Namespaces.GetNames())
+						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.Namespaces.GetNames(), n.Conf)
+						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, n.Namespaces.GetNames(), n.Conf)
 						// Host could be in another namespace (FQDN)
-						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
+						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace, n.Conf) && subset == virtualServiceSubset {
 							vss = append(vss, virtualService)
 						}
 					}

@@ -640,13 +640,12 @@ func (in *DashboardsService) GetCustomDashboardRefs(namespace, app, version stri
 	runtimes := in.SearchExplicitDashboards(podsCast)
 
 	if len(runtimes) == 0 {
-		cfg := config.Get()
 		discoveredRuntimes := map[string]models.Runtime{}
-		discoveryEnabled := cfg.ExternalServices.CustomDashboards.DiscoveryEnabled
+		discoveryEnabled := in.conf.ExternalServices.CustomDashboards.DiscoveryEnabled
 		if discoveryEnabled == config.DashboardsDiscoveryEnabled ||
 			(discoveryEnabled == config.DashboardsDiscoveryAuto &&
-				len(pods) <= cfg.ExternalServices.CustomDashboards.DiscoveryAutoThreshold) {
-			for _, appVersionLabelSelector := range cfg.GetAppVersionLabelSelectors(app, version) {
+				len(pods) <= in.conf.ExternalServices.CustomDashboards.DiscoveryAutoThreshold) {
+			for _, appVersionLabelSelector := range in.conf.GetAppVersionLabelSelectors(app, version) {
 				for _, discoveredDashboard := range in.discoverDashboards(namespace, appVersionLabelSelector.Requirements) {
 					discoveredRuntimes[discoveredDashboard.Name] = discoveredDashboard
 				}

@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -87,8 +88,7 @@ func TestCBAll(t *testing.T) {
 	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := IstioAppender{}
@@ -154,8 +154,7 @@ func TestCBSubset(t *testing.T) {
 	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := IstioAppender{}
@@ -328,8 +327,7 @@ func TestSEInAppBox(t *testing.T) {
 	}
 	trafficMap[serviceEntryNode.ID] = serviceEntryNode
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := IstioAppender{}

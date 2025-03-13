@@ -32,20 +32,20 @@ func GetDiscoverySelectorsForCluster(cluster string, kialiConfig *config.Config)
 // will select the control plane namespace as defined in the Kiali config in order to assure Kiali will always match
 // the control plane namespace (Kiali should always see that namespace).
 // NOTE: You probably don't want to use this func; instead, see getDiscoverySelectorsForCluster()
-func GetKialiDiscoverySelectors(cluster string, cfg *config.Config) config.DiscoverySelectorsType {
-	if cfg == nil {
+func GetKialiDiscoverySelectors(cluster string, conf *config.Config) config.DiscoverySelectorsType {
+	if conf == nil {
 		return nil
 	}
 
 	cpNamespaceSelector := config.DiscoverySelectorsType{
 		&config.DiscoverySelectorType{
 			MatchLabels: map[string]string{
-				"kubernetes.io/metadata.name": cfg.IstioNamespace,
+				"kubernetes.io/metadata.name": conf.IstioNamespace,
 			},
 		},
 	}
 
-	dsConfig := cfg.Deployment.DiscoverySelectors
+	dsConfig := conf.Deployment.DiscoverySelectors
 
 	// if the cluster has its own overrides, we use those
 	dsOverrides := dsConfig.Overrides

@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -59,9 +60,7 @@ func TestExtension(t *testing.T) {
 	}
 
 	duration, _ := time.ParseDuration("60s")
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
-	globalInfo.PromClient = client
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, client, config.Get())
 
 	appender := ExtensionsAppender{
 		Duration:         duration,

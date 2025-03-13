@@ -50,8 +50,7 @@ func (a ExtensionsAppender) IsFinalizer() bool {
 
 // AppendGraph implements Appender
 func (a ExtensionsAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
-	cfg := config.Get()
-	if len(cfg.Extensions) == 0 {
+	if len(globalInfo.Conf.Extensions) == 0 {
 		return
 	}
 
@@ -65,7 +64,7 @@ func (a ExtensionsAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo 
 	a.urls = map[string]string{}
 
 	// Process the extensions defined in the config
-	for _, extension := range cfg.Extensions {
+	for _, extension := range globalInfo.Conf.Extensions {
 		if !extension.Enabled {
 			continue
 		}
@@ -97,7 +96,7 @@ func (a ExtensionsAppender) appendGraph(ext config.ExtensionConfig, trafficMap g
 			groupBy,
 			idleCondition)
 		log.Tracef("Extension [%s] requests query [%s]", ext.Name, query)
-		vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
+		vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a.globalInfo.Conf, a)
 		a.appendTrafficMap(ext, trafficMap, &vector, metric)
 	}
 
@@ -131,7 +130,7 @@ func (a ExtensionsAppender) appendGraph(ext config.ExtensionConfig, trafficMap g
 				groupBy,
 				idleCondition)
 			log.Tracef("Extension [%s] tcp query [%s]", ext.Name, query)
-			vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
+			vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a.globalInfo.Conf, a)
 			a.appendTrafficMap(ext, trafficMap, &vector, metric)
 		}
 	}

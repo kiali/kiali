@@ -157,21 +157,21 @@ func (so *ServiceOverview) ParseToService() *Service {
 	return &svc
 }
 
-func (ss *Services) Parse(cluster string, services []core_v1.Service) {
+func (ss *Services) Parse(cluster string, services []core_v1.Service, conf *config.Config) {
 	if ss == nil {
 		return
 	}
 
 	for _, item := range services {
 		service := &Service{}
-		service.Parse(cluster, &item)
+		service.Parse(cluster, &item, conf)
 		*ss = append(*ss, service)
 	}
 }
 
-func (s *Service) Parse(cluster string, service *core_v1.Service) {
+func (s *Service) Parse(cluster string, service *core_v1.Service, conf *config.Config) {
 	if service != nil {
-		s.AdditionalDetails = GetAdditionalDetails(config.Get(), service.ObjectMeta.Annotations)
+		s.AdditionalDetails = GetAdditionalDetails(conf, service.ObjectMeta.Annotations)
 		if len(service.Annotations) > 0 {
 			s.Annotations = service.Annotations
 		} else {
@@ -208,8 +208,8 @@ func (s *Service) ParseRegistryService(cluster string, service *kubernetes.Regis
 	}
 }
 
-func (s *ServiceDetails) SetService(cluster string, svc *core_v1.Service) {
-	s.Service.Parse(cluster, svc)
+func (s *ServiceDetails) SetService(cluster string, svc *core_v1.Service, conf *config.Config) {
+	s.Service.Parse(cluster, svc, conf)
 }
 
 func (s *ServiceDetails) SetEndpoints(eps *core_v1.Endpoints) {

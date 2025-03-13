@@ -3,6 +3,7 @@ package business
 import (
 	"fmt"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -22,8 +23,9 @@ func IsValidProxyLogLevel(level string) bool {
 
 // ProxyLoggingService is a thin layer over the kube interface for proxy logging functions.
 type ProxyLoggingService struct {
-	userClients map[string]kubernetes.ClientInterface
+	conf        *config.Config
 	proxyStatus *ProxyStatusService
+	userClients map[string]kubernetes.ClientInterface
 }
 
 // SetLogLevel sets the pod's proxy log level.

@@ -15,6 +15,7 @@ import (
 
 func prepareTestForPeerAuth(pa *security_v1.PeerAuthentication, drs []*networking_v1.DestinationRule) models.IstioReferences {
 	drReferences := PeerAuthReferences{
+		Conf: config.Get(),
 		MTLSDetails: kubernetes.MTLSDetails{
 			PeerAuthentications: []*security_v1.PeerAuthentication{pa},
 			DestinationRules:    drs,

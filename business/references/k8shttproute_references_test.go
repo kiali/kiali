@@ -16,6 +16,7 @@ import (
 
 func prepareTestForK8sHTTPRoute(route *k8s_networking_v1.HTTPRoute) models.IstioReferences {
 	routeReferences := K8sHTTPRouteReferences{
+		Conf: config.Get(),
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 			{Name: "bookinfo2"},

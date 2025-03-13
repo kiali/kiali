@@ -38,9 +38,10 @@ type OtelHTTPClient struct {
 func NewOtelClient(ctx context.Context) (otelClient *OtelHTTPClient, err error) {
 
 	otelHTTPClient := &OtelHTTPClient{}
-	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
+	conf := config.Get()
+	if conf.ExternalServices.Tracing.TempoConfig.CacheEnabled {
 		s := store.New[string, *model.TracingSingleTrace]()
-		fifoStore := store.NewFIFOStore(s, config.Get().ExternalServices.Tracing.TempoConfig.CacheCapacity, "tempo")
+		fifoStore := store.NewFIFOStore(s, conf.ExternalServices.Tracing.TempoConfig.CacheCapacity, "tempo")
 		otelHTTPClient.TempoCache = store.NewExpirationStore[string, *model.TracingSingleTrace](ctx, fifoStore, util.AsPtr(TTL), util.AsPtr(expirationCheckInterval))
 	}
 

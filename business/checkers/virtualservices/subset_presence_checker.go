@@ -5,13 +5,15 @@ import (
 
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type SubsetPresenceChecker struct {
-	Namespaces       []string
+	Conf             *config.Config
 	DestinationRules []*networking_v1.DestinationRule
+	Namespaces       []string
 	VirtualService   *networking_v1.VirtualService
 }
 
@@ -114,11 +116,11 @@ func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost stri
 	for _, destinationRule := range checker.DestinationRules {
 		host := destinationRule.Spec.Host
 
-		drHost := kubernetes.GetHost(host, destinationRule.Namespace, checker.Namespaces)
-		vsHost := kubernetes.GetHost(virtualServiceHost, checker.VirtualService.Namespace, checker.Namespaces)
+		drHost := kubernetes.GetHost(host, destinationRule.Namespace, checker.Namespaces, checker.Conf)
+		vsHost := kubernetes.GetHost(virtualServiceHost, checker.VirtualService.Namespace, checker.Namespaces, checker.Conf)
 
 		// TODO Host could be in another namespace (FQDN)
-		if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) {
+		if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace, checker.Conf) {
 			drs = append(drs, destinationRule)
 		}
 	}

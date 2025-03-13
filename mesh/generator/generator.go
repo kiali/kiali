@@ -44,7 +44,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 	meshMap := mesh.NewMeshMap()
 
 	// get the current status info to determine versions
-	statusInfo := mesh.StatusGetter(ctx, gi.Config, gi.ClientFactory, gi.KialiCache, gi.Grafana)
+	statusInfo := mesh.StatusGetter(ctx, gi.Conf, gi.ClientFactory, gi.KialiCache, gi.Grafana)
 	esVersions := make(map[string]string)
 	for _, es := range statusInfo.ExternalServices {
 		esVersions[es.Name] = es.Version
@@ -135,7 +135,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 		}
 
 		// add any Kiali instances
-		conf := config.Get().Obfuscate()
+		conf := gi.Conf.Obfuscate()
 		es := conf.ExternalServices
 		hasExternalServices := false // external to the cluster/mesh (or a URL that can't be parsed)
 
@@ -418,7 +418,7 @@ func discoverInfraService(url string, ctx context.Context, gi *mesh.GlobalInfo) 
 		return
 	}
 
-	svc, err := gi.Business.Svc.GetService(ctx, config.Get().KubernetesConfig.ClusterName, matches[2], matches[1])
+	svc, err := gi.Business.Svc.GetService(ctx, gi.Conf.KubernetesConfig.ClusterName, matches[2], matches[1])
 	if err != nil {
 		return
 	}

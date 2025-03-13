@@ -6,12 +6,14 @@ import (
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/business/checkers/k8shttproutes"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type NoK8sGatewayChecker struct {
 	Cluster      string
+	Conf         *config.Config
 	GatewayNames map[string]k8s_networking_v1.Gateway
 	K8sGRPCRoute *k8s_networking_v1.GRPCRoute
 	Namespaces   models.Namespaces
@@ -39,7 +41,7 @@ func (s NoK8sGatewayChecker) ValidateGRPCRouteGateways(validations *[]*models.Is
 				if parentRef.Namespace != nil && string(*parentRef.Namespace) != "" {
 					namespace = string(*parentRef.Namespace)
 				}
-				valid = k8shttproutes.CheckGateway(string(parentRef.Name), namespace, s.K8sGRPCRoute.Namespace, s.Cluster, s.GatewayNames, s.Namespaces, validations, fmt.Sprintf("spec/parentRefs[%d]/name/%s", index, string(parentRef.Name))) && valid
+				valid = k8shttproutes.CheckGateway(string(parentRef.Name), namespace, s.K8sGRPCRoute.Namespace, s.Cluster, s.GatewayNames, s.Namespaces, validations, fmt.Sprintf("spec/parentRefs[%d]/name/%s", index, string(parentRef.Name)), s.Conf) && valid
 			}
 		}
 	}

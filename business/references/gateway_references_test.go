@@ -14,6 +14,7 @@ import (
 
 func prepareTestForGateway(gw *networking_v1.Gateway, vss []*networking_v1.VirtualService) models.IstioReferences {
 	gwReferences := GatewayReferences{
+		Conf:            config.Get(),
 		Gateways:        []*networking_v1.Gateway{gw},
 		VirtualServices: vss,
 		WorkloadsPerNamespace: map[string]models.Workloads{

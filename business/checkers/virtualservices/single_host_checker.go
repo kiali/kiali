@@ -3,12 +3,14 @@ package virtualservices
 import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type SingleHostChecker struct {
 	Cluster         string
+	Conf            *config.Config
 	Namespaces      models.Namespaces
 	VirtualServices []*networking_v1.VirtualService
 }
@@ -148,7 +150,7 @@ func (s SingleHostChecker) getHosts(virtualService *networking_v1.VirtualService
 	targetHosts := make([]kubernetes.Host, 0, len(virtualService.Spec.Hosts))
 
 	for _, hostName := range virtualService.Spec.Hosts {
-		targetHosts = append(targetHosts, kubernetes.GetHost(hostName, namespace, s.Namespaces.GetNames()))
+		targetHosts = append(targetHosts, kubernetes.GetHost(hostName, namespace, s.Namespaces.GetNames(), s.Conf))
 	}
 	return targetHosts
 }

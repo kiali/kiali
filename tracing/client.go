@@ -81,13 +81,13 @@ func (c *basicAuth) RequireTransportSecurity() bool {
 
 // NewClient creates a tracing Client. If it fails to create the client for any reason,
 // it will retry indefinitely until the context is cancelled.
-func NewClient(ctx context.Context, cfg *config.Config, token string) (*Client, error) {
+func NewClient(ctx context.Context, conf *config.Config, token string) (*Client, error) {
 	var (
 		client *Client
 		err    error
 	)
 	retryErr := wait.PollUntilContextCancel(ctx, newClientRetryInterval, true, func(ctx context.Context) (bool, error) {
-		client, err = newClient(ctx, cfg, token)
+		client, err = newClient(ctx, conf, token)
 		if err != nil {
 			log.Errorf("Error creating tracing client: %v. Retrying in %s", err, newClientRetryInterval)
 			return false, nil
@@ -103,8 +103,8 @@ func NewClient(ctx context.Context, cfg *config.Config, token string) (*Client, 
 	return client, nil
 }
 
-func newClient(ctx context.Context, cfg *config.Config, token string) (*Client, error) {
-	cfgTracing := cfg.ExternalServices.Tracing
+func newClient(ctx context.Context, conf *config.Config, token string) (*Client, error) {
+	cfgTracing := conf.ExternalServices.Tracing
 	if !cfgTracing.Enabled {
 		return nil, errors.New("tracing is not enabled")
 	}
@@ -115,7 +115,7 @@ func newClient(ctx context.Context, cfg *config.Config, token string) (*Client, 
 	}
 
 	u, errParse := url.Parse(cfgTracing.InternalURL)
-	if !cfg.InCluster {
+	if !conf.InCluster {
 		u, errParse = url.Parse(cfgTracing.ExternalURL)
 	}
 	if errParse != nil {
@@ -198,7 +198,7 @@ func newClient(ctx context.Context, cfg *config.Config, token string) (*Client, 
 				} else {
 					dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
 				}
-				grpcAddress := fmt.Sprintf("%s:%d", u.Hostname(), cfg.ExternalServices.Tracing.GrpcPort)
+				grpcAddress := fmt.Sprintf("%s:%d", u.Hostname(), conf.ExternalServices.Tracing.GrpcPort)
 				clientConn, _ := grpc.NewClient(grpcAddress, dialOps...)
 				streamClient, err := tempo.NewgRPCClient(clientConn)
 				if err != nil {

@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -124,8 +125,7 @@ func TestDeadNode(t *testing.T) {
 	assert.Equal("istio-ingressgateway", ingressNode.Workload)
 	assert.Equal(10, len(ingressNode.Edges))
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := DeadNodeAppender{
@@ -288,8 +288,7 @@ func TestDeadNodeIssue2783(t *testing.T) {
 	assert.Equal(true, found)
 	assert.Equal(0, len(bNode.Edges))
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := DeadNodeAppender{
@@ -347,8 +346,7 @@ func TestDeadNodeIssue2982(t *testing.T) {
 	assert.Equal(true, found)
 	assert.Equal(0, len(bNode.Edges))
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := DeadNodeAppender{
@@ -404,8 +402,7 @@ func TestDeadNodeIssue7179(t *testing.T) {
 	assert.Equal(true, found)
 	assert.Equal(0, len(bNode.Edges))
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := DeadNodeAppender{

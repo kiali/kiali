@@ -60,7 +60,7 @@ func createMetricsServiceForNamespaceMC(w http.ResponseWriter, r *http.Request, 
 		nsInfo = append(nsInfo, *ns)
 	}
 
-	metrics := business.NewMetricsService(prom)
+	metrics := business.NewMetricsService(prom, config.Get())
 
 	return metrics, nsInfo
 }
@@ -93,7 +93,7 @@ func createMetricsServiceForClusterMC(w http.ResponseWriter, r *http.Request, pr
 		nsInfo = append(nsInfo, *ns)
 	}
 
-	metrics := business.NewMetricsService(prom)
+	metrics := business.NewMetricsService(prom, config.Get())
 
 	return metrics, nsInfo
 }
@@ -145,7 +145,7 @@ func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, p
 		info, err := checkNamespaceAccess(r.Context(), layer.Namespace, ns.Name, ns.Cluster)
 		nsInfos[ns.Name] = nsInfoError{info: info, err: err}
 	}
-	metrics := business.NewMetricsService(prom)
+	metrics := business.NewMetricsService(prom, config.Get())
 	return metrics, nsInfos
 }
 

@@ -166,10 +166,10 @@ func BenchmarkValidate(b *testing.B) {
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}, Config: models.ControlPlaneConfiguration{}}}},
 	}
-	namespace := NewNamespaceService(k8sclients, k8sclients, cache, conf, discovery)
-	mesh := NewMeshService(k8sclients, discovery)
+	namespace := NewNamespaceService(cache, conf, discovery, k8sclients, k8sclients)
+	mesh := NewMeshService(conf, discovery, k8sclients)
 	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
-	vs := NewValidationsService(&layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
+	vs := NewValidationsService(conf, &layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
 
 	var changeMap ValidationChangeMap
 	if conf.ExternalServices.Istio.ValidationChangeDetectionEnabled {

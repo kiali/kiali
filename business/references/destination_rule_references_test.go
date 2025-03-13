@@ -14,6 +14,7 @@ import (
 
 func prepareTestForDestinationRule(dr *networking_v1.DestinationRule, vs *networking_v1.VirtualService) models.IstioReferences {
 	drReferences := DestinationRuleReferences{
+		Conf:      config.Get(),
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},

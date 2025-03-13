@@ -6,6 +6,7 @@ import (
 
 	"github.com/prometheus/common/model"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/log"
@@ -52,10 +53,10 @@ func (a SecurityPolicyAppender) AppendGraph(trafficMap graph.TrafficMap, globalI
 		graph.CheckError(err)
 	}
 
-	a.appendGraph(trafficMap, namespaceInfo.Namespace, globalInfo.PromClient)
+	a.appendGraph(trafficMap, namespaceInfo.Namespace, globalInfo.PromClient, globalInfo.Conf)
 }
 
-func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client) {
+func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client, conf *config.Config) {
 	log.Tracef("Resolving security policy for namespace [%v], rates [%+v]", namespace, a.Rates)
 	duration := a.Namespaces[namespace].Duration
 
@@ -132,7 +133,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		}
 	}
 
-	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
+	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), conf, a)
 
 	// 2) query for requests originating from a workload inside of the namespace
 	query = ""
@@ -229,7 +230,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		}
 	}
 
-	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
+	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), conf, a)
 
 	// create map to quickly look up securityPolicy
 	securityPolicyMap := make(map[string]PolicyRates)

@@ -3,16 +3,17 @@ package models
 import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 )
 
 // IsValidHost returns true if VirtualService hosts applies to the service
-func IsVSValidHost(vs *networking_v1.VirtualService, namespace string, serviceName string) bool {
+func IsVSValidHost(vs *networking_v1.VirtualService, namespace string, serviceName string, conf *config.Config) bool {
 	if serviceName == "" {
 		return false
 	}
 
-	return kubernetes.FilterVirtualServiceByRoute(vs, serviceName, namespace)
+	return kubernetes.FilterVirtualServiceByRoute(vs, serviceName, namespace, conf)
 }
 
 // HasVSRequestTimeout determines if the spec has an http timeout set.

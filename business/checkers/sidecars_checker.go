@@ -5,17 +5,19 @@ import (
 
 	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/business/checkers/sidecars"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type SidecarChecker struct {
-	Sidecars              []*networking_v1.Sidecar
-	ServiceEntries        []*networking_v1.ServiceEntry
-	Namespaces            models.Namespaces
-	WorkloadsPerNamespace map[string]models.Workloads
-	RegistryServices      []*kubernetes.RegistryService
 	Cluster               string
+	Conf                  *config.Config
+	Namespaces            models.Namespaces
+	RegistryServices      []*kubernetes.RegistryService
+	ServiceEntries        []*networking_v1.ServiceEntry
+	Sidecars              []*networking_v1.Sidecar
+	WorkloadsPerNamespace map[string]models.Workloads
 }
 
 func (s SidecarChecker) Check() models.IstioValidations {
@@ -62,7 +64,7 @@ func (s SidecarChecker) runChecks(sidecar *networking_v1.Sidecar) models.IstioVa
 
 	enabledCheckers := []Checker{
 		common.WorkloadSelectorNoWorkloadFoundChecker(kubernetes.Sidecars, selectorLabels, s.WorkloadsPerNamespace),
-		sidecars.EgressHostChecker{Sidecar: sidecar, ServiceEntries: serviceHosts, RegistryServices: s.RegistryServices},
+		sidecars.EgressHostChecker{Conf: s.Conf, Sidecar: sidecar, ServiceEntries: serviceHosts, RegistryServices: s.RegistryServices},
 		sidecars.GlobalChecker{Sidecar: sidecar},
 		sidecars.OutboundTrafficPolicyModeChecker{Sidecar: sidecar},
 	}

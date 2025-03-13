@@ -26,6 +26,7 @@ func TestCorrectGateways(t *testing.T) {
 	gws := []*networking_v1.Gateway{gwObject}
 
 	vals := MultiMatchChecker{
+		Conf:     config.Get(),
 		Gateways: gws,
 	}.Check()
 
@@ -53,6 +54,7 @@ func TestCaseMatching(t *testing.T) {
 	gws := []*networking_v1.Gateway{gwObject}
 
 	vals := MultiMatchChecker{
+		Conf:     config.Get(),
 		Gateways: gws,
 	}.Check()
 
@@ -82,6 +84,7 @@ func TestDashSubdomainMatching(t *testing.T) {
 	gws := []*networking_v1.Gateway{gwObject}
 
 	vals := MultiMatchChecker{
+		Conf:     config.Get(),
 		Gateways: gws,
 	}.Check()
 
@@ -109,6 +112,7 @@ func TestSameHostPortConfigInDifferentIngress(t *testing.T) {
 	gws := []*networking_v1.Gateway{gwObject, gwObject2}
 
 	vals := MultiMatchChecker{
+		Conf:     config.Get(),
 		Gateways: gws,
 	}.Check()
 
@@ -135,6 +139,7 @@ func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
 	gws := []*networking_v1.Gateway{gwObject, gwObject2}
 
 	vals := MultiMatchChecker{
+		Conf:     config.Get(),
 		Gateways: gws,
 	}.Check()
 
@@ -172,6 +177,7 @@ func TestSameHostDifferentPortConfig(t *testing.T) {
 	gws := []*networking_v1.Gateway{gwObject, gwObject2}
 
 	vals := MultiMatchChecker{
+		Conf:     config.Get(),
 		Gateways: gws,
 	}.Check()
 
@@ -204,6 +210,7 @@ func TestWildCardMatchingHost(t *testing.T) {
 	gws := []*networking_v1.Gateway{gwObject, gwObject2, gwObject3}
 
 	vals := MultiMatchChecker{
+		Conf:     config.Get(),
 		Gateways: gws,
 	}.Check()
 
@@ -252,6 +259,7 @@ func TestSkipWildCardMatchingHost(t *testing.T) {
 	gws := []*networking_v1.Gateway{gwObject, gwObject2, gwObject3}
 
 	vals := MultiMatchChecker{
+		Conf:     config.Get(),
 		Gateways: gws,
 	}.Check()
 
@@ -274,6 +282,7 @@ func TestSameWildcardHostPortConfigInDifferentNamespace(t *testing.T) {
 	gws := []*networking_v1.Gateway{gwObject, gwObject2}
 
 	vals := MultiMatchChecker{
+		Conf:     config.Get(),
 		Gateways: gws,
 	}.Check()
 
@@ -311,6 +320,7 @@ func TestAnotherSubdomainWildcardCombination(t *testing.T) {
 	gws := []*networking_v1.Gateway{gwObject}
 
 	vals := MultiMatchChecker{
+		Conf:     config.Get(),
 		Gateways: gws,
 	}.Check()
 
@@ -340,6 +350,7 @@ func TestNoMatchOnSubdomainHost(t *testing.T) {
 	gws := []*networking_v1.Gateway{gwObject}
 
 	vals := MultiMatchChecker{
+		Conf:     config.Get(),
 		Gateways: gws,
 	}.Check()
 
@@ -366,6 +377,7 @@ func TestTwoWildCardsMatching(t *testing.T) {
 	gws := []*networking_v1.Gateway{gwObject, gwObject2}
 
 	vals := MultiMatchChecker{
+		Conf:     config.Get(),
 		Gateways: gws,
 	}.Check()
 
@@ -396,6 +408,7 @@ func TestDuplicateGatewaysErrorCount(t *testing.T) {
 	gws := []*networking_v1.Gateway{gwObject, gwObjectIdentical}
 
 	vals := MultiMatchChecker{
+		Conf:     config.Get(),
 		Gateways: gws,
 	}.Check()
 
@@ -435,6 +448,7 @@ func TestNoMatchOnDifferentTargetNamespaces(t *testing.T) {
 	gws := []*networking_v1.Gateway{gwObject}
 
 	vals := MultiMatchChecker{
+		Conf:     config.Get(),
 		Gateways: gws,
 	}.Check()
 
@@ -461,6 +475,7 @@ func TestMatchOnSameTargetNamespace(t *testing.T) {
 	gws := []*networking_v1.Gateway{gwObject}
 
 	vals := MultiMatchChecker{
+		Conf:     config.Get(),
 		Gateways: gws,
 	}.Check()
 
@@ -491,6 +506,7 @@ func TestMatchOnWildcardTargetNamespace(t *testing.T) {
 	gws := []*networking_v1.Gateway{gwObject}
 
 	vals := MultiMatchChecker{
+		Conf:     config.Get(),
 		Gateways: gws,
 	}.Check()
 
@@ -521,6 +537,7 @@ func TestMatchOnImplicitWildcardTargetNamespace(t *testing.T) {
 	gws := []*networking_v1.Gateway{gwObject}
 
 	vals := MultiMatchChecker{
+		Conf:     config.Get(),
 		Gateways: gws,
 	}.Check()
 

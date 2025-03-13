@@ -182,7 +182,7 @@ func TestRefreshIstioCache(t *testing.T) {
 	cf := kubetest.NewFakeClientFactory(conf, k8sclients)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	discovery := istio.NewDiscovery(k8sclients, cache, conf)
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
+	cpm := NewControlPlaneMonitor(cache, cf, conf, discovery)
 
 	assert.Nil(cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName))
 	err := cpm.RefreshIstioCache(context.TODO())
@@ -208,7 +208,7 @@ func TestCancelingContextEndsPolling(t *testing.T) {
 	cf := kubetest.NewFakeClientFactory(conf, k8sclients)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	discovery := istio.NewDiscovery(k8sclients, cache, conf)
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
+	cpm := NewControlPlaneMonitor(cache, cf, conf, discovery)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -255,7 +255,7 @@ func TestPollingPopulatesCache(t *testing.T) {
 	cf := kubetest.NewFakeClientFactory(conf, k8sclients)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	discovery := istio.NewDiscovery(k8sclients, cache, conf)
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
+	cpm := NewControlPlaneMonitor(cache, cf, conf, discovery)
 	// Make this really low so that we get something sooner.
 	cpm.pollingInterval = time.Millisecond * 1
 

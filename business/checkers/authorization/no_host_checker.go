@@ -7,12 +7,14 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type NoHostChecker struct {
 	AuthorizationPolicy *security_v1.AuthorizationPolicy
+	Conf                *config.Config
 	Namespaces          models.Namespaces
 	ServiceEntries      map[string][]string
 	VirtualServices     []*networking_v1.VirtualService
@@ -64,7 +66,7 @@ func (n NoHostChecker) validateHost(ruleIdx int, to []*api_security_v1.Rule_To) 
 		}
 
 		for hostIdx, h := range t.Operation.Hosts {
-			fqdn := kubernetes.GetHost(h, namespace, n.Namespaces.GetNames())
+			fqdn := kubernetes.GetHost(h, namespace, n.Namespaces.GetNames(), n.Conf)
 			if !n.hasMatchingService(fqdn, namespace) {
 				path := fmt.Sprintf("spec/rules[%d]/to[%d]/operation/hosts[%d]", ruleIdx, toIdx, hostIdx)
 				validation := models.Build("authorizationpolicy.nodest.matchingregistry", path)
@@ -95,7 +97,7 @@ func (n NoHostChecker) hasMatchingService(host kubernetes.Host, itemNamespace st
 	}
 
 	// Check VirtualServices
-	if kubernetes.HasMatchingVirtualServices(host, n.VirtualServices) {
+	if kubernetes.HasMatchingVirtualServices(host, n.VirtualServices, n.Conf) {
 		return true
 	}
 

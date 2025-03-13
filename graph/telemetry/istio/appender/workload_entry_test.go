@@ -1,6 +1,7 @@
 package appender_test
 
 import (
+	"context"
 	"sort"
 	"testing"
 	"time"
@@ -125,8 +126,7 @@ func TestWorkloadEntry(t *testing.T) {
 	assert.True(found)
 	assert.NotContains(v4Node.Metadata, graph.HasWorkloadEntry)
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
@@ -204,8 +204,7 @@ func TestWorkloadEntryAppLabelNotMatching(t *testing.T) {
 	assert.True(found)
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
@@ -291,8 +290,7 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 	assert.True(found)
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
@@ -360,8 +358,7 @@ func TestWorkloadWithoutWorkloadEntries(t *testing.T) {
 	assert.True(found)
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
@@ -409,8 +406,7 @@ func TestWEKiali7305(t *testing.T) {
 
 	assert.Equal(1, len(trafficMap))
 
-	globalInfo := graph.NewGlobalInfo()
-	globalInfo.Business = businessLayer
+	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 

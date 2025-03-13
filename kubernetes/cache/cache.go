@@ -142,20 +142,20 @@ type kialiCacheImpl struct {
 	clusterLock sync.RWMutex
 }
 
-func NewKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, cfg config.Config) (KialiCache, error) {
+func NewKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, conf config.Config) (KialiCache, error) {
 	ctx, cancel := context.WithCancel(context.Background())
-	namespaceKeyTTL := time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
+	namespaceKeyTTL := time.Duration(conf.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
 	kialiCacheImpl := kialiCacheImpl{
 		ambientChecksPerCluster: store.NewExpirationStore(ctx, store.New[string, bool](), util.AsPtr(ambientCheckExpirationTime), nil),
 		canReadWebhookByCluster: make(map[string]bool),
 		cleanup:                 cancel,
-		conf:                    cfg,
+		conf:                    conf,
 		kubeCache:               make(map[string]KubeCache),
 		validations:             store.New[models.IstioValidationKey, *models.IstioValidation](),
 		validationConfig:        store.New[string, string](),
 		meshStore:               store.NewExpirationStore(ctx, store.New[string, *models.Mesh](), util.AsPtr(meshExpirationTime), nil),
 		namespaceStore:          store.NewExpirationStore(ctx, store.New[namespacesKey, map[string]models.Namespace](), &namespaceKeyTTL, nil),
-		refreshDuration:         time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
+		refreshDuration:         time.Duration(conf.KubernetesConfig.CacheDuration) * time.Second,
 		proxyStatusStore:        store.New[string, *kubernetes.ProxyStatus](),
 		registryStatusStore:     store.New[string, *kubernetes.RegistryStatus](),
 		ztunnelConfigStore:      store.New[string, *kubernetes.ZtunnelConfigDump](),
@@ -164,10 +164,10 @@ func NewKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, cfg con
 	for cluster, client := range kialiSAClients {
 		// we only need our deleteNamespace function called when an error occurs in a namespace-scoped cache
 		var errHandler ErrorHandler
-		if !cfg.Deployment.ClusterWideAccess {
+		if !conf.Deployment.ClusterWideAccess {
 			errHandler = kialiCacheImpl.deleteNamespace
 		}
-		cache, err := NewKubeCache(client, cfg, errHandler)
+		cache, err := NewKubeCache(client, conf, errHandler)
 		if err != nil {
 			log.Errorf("[Kiali Cache] Error creating kube cache for cluster: [%s]. Err: %v", cluster, err)
 			return nil, err
@@ -197,7 +197,7 @@ func NewKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, cfg con
 
 	// TODO: Treat all clusters the same way.
 	// Ensure home client got set.
-	if _, found := kialiCacheImpl.kubeCache[cfg.KubernetesConfig.ClusterName]; !found {
+	if _, found := kialiCacheImpl.kubeCache[conf.KubernetesConfig.ClusterName]; !found {
 		return nil, fmt.Errorf("home cluster not configured in kiali cache")
 	}
 

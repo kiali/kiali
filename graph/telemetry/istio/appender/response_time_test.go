@@ -226,7 +226,8 @@ func TestResponseTimeP95(t *testing.T) {
 		},
 	}
 
-	appender.appendGraph(trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: true}, client)
+	gi := &graph.GlobalInfo{Conf: config.Get(), PromClient: client}
+	appender.appendGraph(trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: true}, gi)
 
 	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)
@@ -500,7 +501,8 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		},
 	}
 
-	appender.appendGraph(trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: false}, client)
+	gi := &graph.GlobalInfo{Conf: config.Get(), PromClient: client}
+	appender.appendGraph(trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: false}, gi)
 
 	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)
@@ -774,7 +776,8 @@ func TestResponseTimeAvg(t *testing.T) {
 		},
 	}
 
-	appender.appendGraph(trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: false}, client)
+	gi := &graph.GlobalInfo{Conf: config.Get(), PromClient: client}
+	appender.appendGraph(trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: false}, gi)
 
 	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)

@@ -96,10 +96,10 @@ func main() {
 
 	updateConfigWithIstioInfo()
 
-	cfg := config.Get()
-	log.Tracef("Kiali Configuration:\n%s", cfg)
+	conf := config.Get()
+	log.Tracef("Kiali Configuration:\n%s", conf)
 
-	if err := config.Validate(*cfg); err != nil {
+	if err := config.Validate(*conf); err != nil {
 		log.Fatal(err)
 	}
 
@@ -113,7 +113,7 @@ func main() {
 	}
 
 	log.Info("Initializing Kiali Cache")
-	cache, err := cache.NewKialiCache(clientFactory.GetSAClients(), *cfg)
+	cache, err := cache.NewKialiCache(clientFactory.GetSAClients(), *conf)
 	if err != nil {
 		log.Fatalf("Error initializing Kiali Cache. Details: %s", err)
 	}
@@ -126,14 +126,14 @@ func main() {
 		Version:          version,
 	})
 
-	discovery := istio.NewDiscovery(clientFactory.GetSAClients(), cache, cfg)
-	cpm := business.NewControlPlaneMonitor(cache, clientFactory, *cfg, discovery)
+	discovery := istio.NewDiscovery(clientFactory.GetSAClients(), cache, conf)
+	cpm := business.NewControlPlaneMonitor(cache, clientFactory, conf, discovery)
 
 	// This context is used for polling and for creating some high level clients like tracing.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	if cfg.ExternalServices.Istio.IstioAPIEnabled {
+	if conf.ExternalServices.Istio.IstioAPIEnabled {
 		cpm.PollIstiodForProxyStatus(ctx)
 	}
 
@@ -153,9 +153,9 @@ func main() {
 	tracingLoader := func() tracing.ClientInterface {
 		return tracingClient
 	}
-	if cfg.ExternalServices.Tracing.Enabled {
+	if conf.ExternalServices.Tracing.Enabled {
 		go func() {
-			client, err := tracing.NewClient(ctx, cfg, clientFactory.GetSAHomeClusterClient().GetToken())
+			client, err := tracing.NewClient(ctx, conf, clientFactory.GetSAHomeClusterClient().GetToken())
 			if err != nil {
 				log.Fatalf("Error creating tracing client: %s", err)
 				return
@@ -166,10 +166,10 @@ func main() {
 		log.Debug("Tracing is disabled")
 	}
 
-	grafana := grafana.NewService(cfg, clientFactory.GetSAHomeClusterClient())
+	grafana := grafana.NewService(conf, clientFactory.GetSAHomeClusterClient())
 
 	// Start listening to requests
-	server, err := server.NewServer(cpm, clientFactory, cache, cfg, prom, tracingLoader, discovery)
+	server, err := server.NewServer(cpm, clientFactory, cache, conf, prom, tracingLoader, discovery)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -178,11 +178,11 @@ func main() {
 	// Needs to be started after the server so that the cache is started because the controllers use the cache.
 	// Passing nil here because the tracing client is not used for validations and that is all this layer is used for.
 	// Passing the `tracingClient` above would be a race condition since it gets set in a goroutine.
-	layer, err := business.NewLayerWithSAClients(cfg, cache, prom, nil, cpm, grafana, discovery, clientFactory.GetSAClients())
+	layer, err := business.NewLayerWithSAClients(conf, cache, prom, nil, cpm, grafana, discovery, clientFactory.GetSAClients())
 	if err != nil {
 		log.Fatalf("Error creating business layer: %s", err)
 	}
-	if err := controller.Start(ctx, cfg, clientFactory, cache, &layer.Validations); err != nil {
+	if err := controller.Start(ctx, conf, clientFactory, cache, &layer.Validations); err != nil {
 		log.Fatalf("Error creating validations controller: %s", err)
 	}
 

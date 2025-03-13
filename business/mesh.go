@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -25,16 +26,19 @@ const (
 // when Istio is installed with multi-cluster enabled. Prefer initializing this
 // type via the NewMeshService function.
 type MeshService struct {
+	conf           *config.Config
 	discovery      istio.MeshDiscovery
 	kialiSAClients map[string]kubernetes.ClientInterface
 }
 
 // NewMeshService initializes a new MeshService structure with the given k8s clients.
 func NewMeshService(
-	kialiSAClients map[string]kubernetes.ClientInterface,
+	conf *config.Config,
 	discovery istio.MeshDiscovery,
+	kialiSAClients map[string]kubernetes.ClientInterface,
 ) MeshService {
 	return MeshService{
+		conf:           conf,
 		discovery:      discovery,
 		kialiSAClients: kialiSAClients,
 	}

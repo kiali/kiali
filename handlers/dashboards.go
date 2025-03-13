@@ -248,7 +248,7 @@ func ZtunnelDashboard(promSupplier promClientSupplier, conf *config.Config, graf
 			return
 		}
 
-		if namespace != config.Get().IstioNamespace {
+		if namespace != conf.IstioNamespace {
 			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
 			return
 		}

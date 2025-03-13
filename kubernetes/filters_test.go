@@ -15,6 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+
+	"github.com/kiali/kiali/config"
 )
 
 func TestFilterPodsForEndpoints(t *testing.T) {
@@ -264,11 +266,11 @@ func TestFilterK8sHTTPRoutesByService(t *testing.T) {
 	rt2 := createHTTPRoute("testroute2", "wrong", "details", "bookinfo")
 	rt3 := createHTTPRoute("testroute3", "default", "wrong", "bookinfo")
 	rt4 := createHTTPRoute("testroute4", "default", "details", "wrong")
-	filtered := FilterK8sHTTPRoutesByService([]*k8s_networking_v1.HTTPRoute{rt1, rt2, rt3, rt4}, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("grant1", "bookinfo", "default")}, "bookinfo", "details")
+	filtered := FilterK8sHTTPRoutesByService([]*k8s_networking_v1.HTTPRoute{rt1, rt2, rt3, rt4}, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("grant1", "bookinfo", "default")}, "bookinfo", "details", config.Get())
 	expected := []*k8s_networking_v1.HTTPRoute{rt1}
 	assert.EqualValues(expected, filtered)
 
-	emptyFiltered := FilterK8sHTTPRoutesByService([]*k8s_networking_v1.HTTPRoute{rt1, rt2, rt3, rt4}, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("grant1", "bookinfo", "default")}, "wrong", "wrong")
+	emptyFiltered := FilterK8sHTTPRoutesByService([]*k8s_networking_v1.HTTPRoute{rt1, rt2, rt3, rt4}, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("grant1", "bookinfo", "default")}, "wrong", "wrong", config.Get())
 	assert.Empty(emptyFiltered)
 }
 

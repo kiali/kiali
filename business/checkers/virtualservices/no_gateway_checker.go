@@ -6,13 +6,15 @@ import (
 
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type NoGatewayChecker struct {
-	VirtualService *networking_v1.VirtualService
+	Conf           *config.Config
 	GatewayNames   map[string]struct{}
+	VirtualService *networking_v1.VirtualService
 }
 
 // Check validates that all the VirtualServices are pointing to an existing Gateway
@@ -57,10 +59,10 @@ GatewaySearch:
 		// Gateways should be using <namespace>/<gateway>
 		checkNomenclature(gate, index, validations)
 
-		hostname := kubernetes.ParseGatewayAsHost(gate, namespace)
+		hostname := kubernetes.ParseGatewayAsHost(gate, namespace, s.Conf)
 		for gw := range s.GatewayNames {
-			gwHostname := kubernetes.ParseHost(gw, namespace)
-			if found := kubernetes.FilterByHost(hostname.String(), hostname.Namespace, gw, gwHostname.Namespace); found {
+			gwHostname := kubernetes.ParseHost(gw, namespace, s.Conf)
+			if found := kubernetes.FilterByHost(hostname.String(), hostname.Namespace, gw, gwHostname.Namespace, s.Conf); found {
 				continue GatewaySearch
 			}
 		}

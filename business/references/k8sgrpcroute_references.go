@@ -4,12 +4,14 @@ import (
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util"
 )
 
 type K8sGRPCRouteReferences struct {
+	Conf               *config.Config
 	K8sGRPCRoutes      []*k8s_networking_v1.GRPCRoute
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant
 	Namespaces         models.Namespaces
@@ -43,7 +45,7 @@ func (n K8sGRPCRouteReferences) getServiceReferences(rt *k8s_networking_v1.GRPCR
 			if ref.Namespace != nil && string(*ref.Namespace) != "" {
 				namespace = string(*ref.Namespace)
 			}
-			fqdn := kubernetes.GetHost(string(ref.Name), namespace, n.Namespaces.GetNames())
+			fqdn := kubernetes.GetHost(string(ref.Name), namespace, n.Namespaces.GetNames(), n.Conf)
 			if !fqdn.IsWildcard() {
 				allServices = append(allServices, models.ServiceReference{Name: fqdn.Service, Namespace: fqdn.Namespace})
 			}
@@ -64,7 +66,7 @@ func (n K8sGRPCRouteReferences) getServiceReferences(rt *k8s_networking_v1.GRPCR
 func (n K8sGRPCRouteReferences) getConfigReferences(rt *k8s_networking_v1.GRPCRoute) []models.IstioReference {
 	keys := make(map[string]bool)
 	result := make([]models.IstioReference, 0)
-	allGateways := getAllK8sGateways(rt.Spec.ParentRefs, rt.Namespace)
+	allGateways := getAllK8sGateways(rt.Spec.ParentRefs, rt.Namespace, n.Conf)
 	// filter unique references
 	for _, gw := range allGateways {
 		key := util.BuildNameNSTypeKey(gw.Name, gw.Namespace, gw.ObjectGVK)

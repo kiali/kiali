@@ -17,6 +17,7 @@ import (
 
 func prepareTestForVirtualService(vs *networking_v1.VirtualService, dr *networking_v1.DestinationRule, ap *security_v1.AuthorizationPolicy) models.IstioReferences {
 	virtualServiceReferences := VirtualServiceReferences{
+		Conf:      config.Get(),
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},

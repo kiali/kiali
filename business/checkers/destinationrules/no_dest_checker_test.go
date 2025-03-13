@@ -24,8 +24,11 @@ func appVersionLabel(app, version string) map[string]string {
 
 func TestValidHost(t *testing.T) {
 	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	vals, valid := NoDestinationChecker{
+		Conf: config.Get(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -41,8 +44,11 @@ func TestValidHost(t *testing.T) {
 
 func TestValidWildcardHost(t *testing.T) {
 	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	vals, valid := NoDestinationChecker{
+		Conf: config.Get(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -64,6 +70,7 @@ func TestValidMeshWideHost(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NoDestinationChecker{
+		Conf: config.Get(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -84,6 +91,7 @@ func TestValidShortSvcHost(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NoDestinationChecker{
+		Conf: config.Get(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -104,6 +112,7 @@ func TestValidServiceNamespace(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NoDestinationChecker{
+		Conf: config.Get(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -124,6 +133,7 @@ func TestValidServiceNamespaceInvalid(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NoDestinationChecker{
+		Conf: config.Get(),
 		Namespaces: models.Namespaces{
 			models.Namespace{Name: "test-namespace"},
 			models.Namespace{Name: "outside-ns"},
@@ -151,6 +161,7 @@ func TestValidServiceNamespaceCrossNamespace(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NoDestinationChecker{
+		Conf: config.Get(),
 		Namespaces: models.Namespaces{
 			models.Namespace{Name: "test-namespace"},
 			models.Namespace{Name: "outside-ns"},
@@ -178,6 +189,7 @@ func TestNoValidHost(t *testing.T) {
 
 	// reviews is not part of services
 	vals, valid := NoDestinationChecker{
+		Conf: config.Get(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("detailsv1", appVersionLabel("details", "v1")),
@@ -207,6 +219,7 @@ func TestNoValidShortSvcHost(t *testing.T) {
 	// Not valid:
 	// reviews.test-namespace.svc.cluster
 	vals, valid := NoDestinationChecker{
+		Conf: config.Get(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("detailsv1", appVersionLabel("details", "v1")),
@@ -231,6 +244,7 @@ func TestNoMatchingSubset(t *testing.T) {
 
 	// reviews does not have v2 in known services
 	vals, valid := NoDestinationChecker{
+		Conf: config.Get(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("reviews", appVersionLabel("reviews", "v1"))},
@@ -274,6 +288,7 @@ func TestNoMatchingSubsetWithMoreLabels(t *testing.T) {
 		data.AddSubsetToDestinationRule(s2, data.CreateEmptyDestinationRule("test-namespace", "name", "reviews")))
 
 	vals, valid := NoDestinationChecker{
+		Conf: config.Get(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("reviews", appVersionLabel("reviews", "v1")),
@@ -297,6 +312,8 @@ func TestNoMatchingSubsetWithMoreLabels(t *testing.T) {
 
 func TestSubsetNotReferenced(t *testing.T) {
 	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	loader := yamlFixtureLoaderFor1("subset-presence-not-referenced.yaml")
 	err := loader.Load()
@@ -307,6 +324,7 @@ func TestSubsetNotReferenced(t *testing.T) {
 	dr := loader.FindDestinationRule("testrule", "bookinfo")
 
 	vals, valid := NoDestinationChecker{
+		Conf:       config.Get(),
 		Namespaces: models.Namespaces{models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo"}},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"bookinfo": {
@@ -327,6 +345,8 @@ func TestSubsetNotReferenced(t *testing.T) {
 
 func TestSubsetReferenced(t *testing.T) {
 	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	loader := yamlFixtureLoaderFor1("subset-presence-referenced.yaml")
 	err := loader.Load()
@@ -339,6 +359,7 @@ func TestSubsetReferenced(t *testing.T) {
 	vs := loader.FindVirtualService("testvs", "bookinfo")
 
 	vals, valid := NoDestinationChecker{
+		Conf:       config.Get(),
 		Namespaces: models.Namespaces{models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo"}},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"bookinfo": {
@@ -363,6 +384,8 @@ func TestSubsetReferenced(t *testing.T) {
 
 func TestSubsetPresentMatchingNotReferenced(t *testing.T) {
 	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	loader := yamlFixtureLoaderFor1("subset-presence-matching-not-referenced.yaml")
 	err := loader.Load()
@@ -375,6 +398,7 @@ func TestSubsetPresentMatchingNotReferenced(t *testing.T) {
 	vs := loader.FindVirtualService("testvs", "bookinfo")
 
 	vals, valid := NoDestinationChecker{
+		Conf:       config.Get(),
 		Namespaces: models.Namespaces{models.Namespace{Name: "bookinfo"}},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"bookinfo": {
@@ -392,6 +416,8 @@ func TestSubsetPresentMatchingNotReferenced(t *testing.T) {
 
 func TestWronglyReferenced(t *testing.T) {
 	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	loader := yamlFixtureLoaderFor1("subset-presence-wrongly-referenced.yaml")
 	err := loader.Load()
@@ -404,6 +430,7 @@ func TestWronglyReferenced(t *testing.T) {
 	vs := loader.FindVirtualService("testvs", "bookinfo")
 
 	vals, valid := NoDestinationChecker{
+		Conf:       config.Get(),
 		Namespaces: models.Namespaces{models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo"}},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"bookinfo": {
@@ -426,6 +453,7 @@ func TestFailCrossNamespaceHost(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NoDestinationChecker{
+		Conf: config.Get(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -461,6 +489,7 @@ func TestSNIProxyExample(t *testing.T) {
 		data.CreateEmptyMeshExternalServiceEntry("sni-proxy", "test", []string{"sni-proxy.local"}))
 
 	vals, valid := NoDestinationChecker{
+		Conf:            config.Get(),
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -480,6 +509,7 @@ func TestWildcardServiceEntry(t *testing.T) {
 		data.CreateEmptyMeshExternalServiceEntry("sni-proxy", "test", []string{"*.local"}))
 
 	vals, valid := NoDestinationChecker{
+		Conf:            config.Get(),
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -498,6 +528,7 @@ func TestExportedInternalServiceEntry(t *testing.T) {
 	se := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details.bookinfo2.svc.cluster.local"})
 
 	vals, valid := NoDestinationChecker{
+		Conf:            config.Get(),
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -516,6 +547,7 @@ func TestWildcardExportedInternalServiceEntry(t *testing.T) {
 	se := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"*.bookinfo2.svc.cluster.local"})
 
 	vals, valid := NoDestinationChecker{
+		Conf:            config.Get(),
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -534,6 +566,7 @@ func TestExportedInternalServiceEntryFail(t *testing.T) {
 	se := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details.bookinfo3.svc.cluster.local"})
 
 	vals, valid := NoDestinationChecker{
+		Conf:            config.Get(),
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -555,6 +588,7 @@ func TestWildcardExportedInternalServiceEntryFail(t *testing.T) {
 	se := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"*.bookinfo3.svc.cluster.local"})
 
 	vals, valid := NoDestinationChecker{
+		Conf:            config.Get(),
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -576,6 +610,7 @@ func TestExportedNonFQDNInternalServiceEntryFail(t *testing.T) {
 	se := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details"})
 
 	vals, valid := NoDestinationChecker{
+		Conf:            config.Get(),
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -589,6 +624,7 @@ func TestExportedNonFQDNInternalServiceEntryFail(t *testing.T) {
 	dr = data.CreateEmptyDestinationRule("bookinfo", "details", "details")
 
 	vals, valid = NoDestinationChecker{
+		Conf:            config.Get(),
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -610,6 +646,7 @@ func TestExportedExternalServiceEntry(t *testing.T) {
 	se := data.CreateEmptyMeshExternalServiceEntry("details-se", "bookinfo3", []string{"www.myhost.com"})
 
 	vals, valid := NoDestinationChecker{
+		Conf:            config.Get(),
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -628,6 +665,7 @@ func TestExportedExternalServiceEntryFail(t *testing.T) {
 	se := data.CreateEmptyMeshExternalServiceEntry("details-se", "bookinfo3", []string{"www.myhost.com"})
 
 	vals, valid := NoDestinationChecker{
+		Conf:            config.Get(),
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 		PolicyAllowAny:  true,
@@ -642,8 +680,11 @@ func TestExportedExternalServiceEntryFail(t *testing.T) {
 
 func TestNoLabelsInSubset(t *testing.T) {
 	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	vals, valid := NoDestinationChecker{
+		Conf: config.Get(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -662,8 +703,11 @@ func TestNoLabelsInSubset(t *testing.T) {
 
 func TestSubsetWithoutLabels(t *testing.T) {
 	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	vals, valid := NoDestinationChecker{
+		Conf: config.Get(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -691,6 +735,7 @@ func TestValidServiceRegistry(t *testing.T) {
 
 	dr := data.CreateEmptyDestinationRule("test", "test-exported", "ratings.mesh2-bookinfo.svc.mesh1-imports.local")
 	vals, valid := NoDestinationChecker{
+		Conf:            config.Get(),
 		DestinationRule: dr,
 	}.Check()
 
@@ -698,6 +743,7 @@ func TestValidServiceRegistry(t *testing.T) {
 	assert.NotEmpty(vals)
 
 	vals, valid = NoDestinationChecker{
+		Conf:             config.Get(),
 		DestinationRule:  dr,
 		RegistryServices: data.CreateFakeRegistryServices("ratings.mesh2-bookinfo.svc.mesh1-imports.local", "test", "*"),
 	}.Check()
@@ -706,6 +752,7 @@ func TestValidServiceRegistry(t *testing.T) {
 	assert.Empty(vals)
 
 	vals, valid = NoDestinationChecker{
+		Conf:             config.Get(),
 		DestinationRule:  dr,
 		RegistryServices: data.CreateFakeRegistryServices("ratings2.mesh2-bookinfo.svc.mesh1-imports.local", "test", "."),
 	}.Check()
@@ -716,6 +763,7 @@ func TestValidServiceRegistry(t *testing.T) {
 	dr = data.CreateEmptyDestinationRule("test", "test-exported", "ratings.bookinfo.svc.cluster.local")
 
 	vals, valid = NoDestinationChecker{
+		Conf:             config.Get(),
 		DestinationRule:  dr,
 		RegistryServices: data.CreateFakeRegistryServices("ratings.bookinfo.svc.cluster.local", "test", "test"),
 	}.Check()
@@ -724,6 +772,7 @@ func TestValidServiceRegistry(t *testing.T) {
 	assert.Empty(vals)
 
 	vals, valid = NoDestinationChecker{
+		Conf:             config.Get(),
 		DestinationRule:  dr,
 		RegistryServices: data.CreateFakeRegistryServices("ratings2.bookinfo.svc.cluster.local", "test", "test"),
 	}.Check()
@@ -742,6 +791,7 @@ func TestServiceEntryLabelsMatchSubsets(t *testing.T) {
 	se := data.AddEndpointToServiceEntry("details.bookinfo.svc.cluster.local", "cluster", "global", data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo", []string{"details.bookinfo.svc.cluster.local"}))
 
 	vals, valid := NoDestinationChecker{
+		Conf:            config.Get(),
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -760,6 +810,7 @@ func TestServiceEntryLabelsNoMatchingSubsets(t *testing.T) {
 	se := data.AddEndpointToServiceEntry("details.bookinfo.svc.cluster.local", "cluster", "wrong", data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo", []string{"details.bookinfo.svc.cluster.local"}))
 
 	vals, _ := NoDestinationChecker{
+		Conf:            config.Get(),
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()

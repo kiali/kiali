@@ -67,7 +67,7 @@ const (
 )
 
 const (
-	// DefaultClusterID is generally not for use outside of test-code. In general you should use config.Get().KubernetesConfig.ClusterName
+	// DefaultClusterID is generally not for use outside of test-code. In general you should use conf.KubernetesConfig.ClusterName
 	DefaultClusterID = "Kubernetes"
 )
 
@@ -1268,8 +1268,8 @@ func IsRootNamespace(namespace string) bool {
 
 // IsFeatureDisabled will return true if the named feature is to be disabled.
 func IsFeatureDisabled(featureName FeatureName) bool {
-	cfg := Get()
-	for _, f := range cfg.KialiFeatureFlags.DisabledFeatures {
+	conf := Get()
+	for _, f := range conf.KialiFeatureFlags.DisabledFeatures {
 		if f == string(featureName) {
 			return true
 		}
@@ -1361,19 +1361,19 @@ func GetSafeClusterName(cluster string) string {
 
 // Validate will ensure the config is valid. This should be called after the config
 // is initialized and before the config is used.
-func Validate(cfg Config) error {
-	if cfg.Server.Port < 0 {
-		return fmt.Errorf("server port is negative: %v", cfg.Server.Port)
+func Validate(conf Config) error {
+	if conf.Server.Port < 0 {
+		return fmt.Errorf("server port is negative: %v", conf.Server.Port)
 	}
 
-	if strings.Contains(cfg.Server.StaticContentRootDirectory, "..") {
-		return fmt.Errorf("server static content root directory must not contain '..': %v", cfg.Server.StaticContentRootDirectory)
+	if strings.Contains(conf.Server.StaticContentRootDirectory, "..") {
+		return fmt.Errorf("server static content root directory must not contain '..': %v", conf.Server.StaticContentRootDirectory)
 	}
-	if _, err := os.Stat(cfg.Server.StaticContentRootDirectory); os.IsNotExist(err) {
-		return fmt.Errorf("server static content root directory does not exist: %v", cfg.Server.StaticContentRootDirectory)
+	if _, err := os.Stat(conf.Server.StaticContentRootDirectory); os.IsNotExist(err) {
+		return fmt.Errorf("server static content root directory does not exist: %v", conf.Server.StaticContentRootDirectory)
 	}
 
-	webRoot := cfg.Server.WebRoot
+	webRoot := conf.Server.WebRoot
 	if !validPathRegEx.MatchString(webRoot) {
 		return fmt.Errorf("web root must begin with a / and contain valid URL path characters: %v", webRoot)
 	}
@@ -1385,7 +1385,7 @@ func Validate(cfg Config) error {
 	}
 
 	// log some messages to let the administrator know when credentials are configured certain ways
-	auth := cfg.Auth
+	auth := conf.Auth
 	log.Infof("Using authentication strategy [%v]", auth.Strategy)
 	if auth.Strategy == AuthStrategyAnonymous {
 		log.Warningf("Kiali auth strategy is configured for anonymous access - users will not be authenticated.")
@@ -1397,20 +1397,20 @@ func Validate(cfg Config) error {
 	}
 
 	// Check the ciphering key for sessions
-	signingKey := cfg.LoginToken.SigningKey
+	signingKey := conf.LoginToken.SigningKey
 	if err := validateSigningKey(signingKey, auth.Strategy); err != nil {
 		return err
 	}
 
 	// log a warning if the user is ignoring some validations
-	if len(cfg.KialiFeatureFlags.Validations.Ignore) > 0 {
-		log.Infof("Some validation errors will be ignored %v. If these errors do occur, they will still be logged. If you think the validation errors you see are incorrect, please report them to the Kiali team if you have not done so already and provide the details of your scenario. This will keep Kiali validations strong for the whole community.", cfg.KialiFeatureFlags.Validations.Ignore)
+	if len(conf.KialiFeatureFlags.Validations.Ignore) > 0 {
+		log.Infof("Some validation errors will be ignored %v. If these errors do occur, they will still be logged. If you think the validation errors you see are incorrect, please report them to the Kiali team if you have not done so already and provide the details of your scenario. This will keep Kiali validations strong for the whole community.", conf.KialiFeatureFlags.Validations.Ignore)
 	}
 
 	// log a info message if the user is disabling some features
-	if len(cfg.KialiFeatureFlags.DisabledFeatures) > 0 {
-		log.Infof("Some features are disabled: [%v]", strings.Join(cfg.KialiFeatureFlags.DisabledFeatures, ","))
-		for _, fn := range cfg.KialiFeatureFlags.DisabledFeatures {
+	if len(conf.KialiFeatureFlags.DisabledFeatures) > 0 {
+		log.Infof("Some features are disabled: [%v]", strings.Join(conf.KialiFeatureFlags.DisabledFeatures, ","))
+		for _, fn := range conf.KialiFeatureFlags.DisabledFeatures {
 			if err := FeatureName(fn).IsValid(); err != nil {
 				return err
 			}
@@ -1418,14 +1418,14 @@ func Validate(cfg Config) error {
 	}
 
 	// Check the observability section
-	observTracing := cfg.Server.Observability.Tracing
+	observTracing := conf.Server.Observability.Tracing
 	// If collector is not defined it would be the default "otel"
 	if observTracing.Enabled && observTracing.CollectorType != OTELCollectorType {
 		return fmt.Errorf("error in configuration options getting the observability exporter. Invalid collector type [%s]", observTracing.CollectorType)
 	}
 
 	// Check the tracing section
-	cfgTracing := cfg.ExternalServices.Tracing
+	cfgTracing := conf.ExternalServices.Tracing
 	if cfgTracing.Enabled && cfgTracing.Provider != JaegerProvider && cfgTracing.Provider != TempoProvider {
 		return fmt.Errorf("error in configuration options for the external services tracing provider. Invalid provider type [%s]", cfgTracing.Provider)
 	}

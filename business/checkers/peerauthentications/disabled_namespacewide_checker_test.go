@@ -62,6 +62,7 @@ func disabledNamespacetestPrep(scenario string, t *testing.T) ([]*models.IstioCh
 	err := loader.Load()
 
 	vals, valid := DisabledNamespaceWideChecker{
+		Conf:             config.Get(),
 		PeerAuthn:        loader.GetResources().PeerAuthentications[0],
 		DestinationRules: loader.GetResources().DestinationRules,
 	}.Check()

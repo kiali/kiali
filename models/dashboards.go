@@ -157,17 +157,17 @@ func metricsDefaults(local, remote string) []Aggregation {
 
 func buildIstioAggregations(direction string) []Aggregation {
 	var aggregations []Aggregation
-	cfg := config.Get()
+	conf := config.Get()
 
 	if direction == "Inbound" {
 		aggregations = metricsDefaults("destination", "source")
-		if len(cfg.KialiFeatureFlags.UIDefaults.MetricsInbound.Aggregations) != 0 {
-			aggregations = append(aggregations, cfg.KialiFeatureFlags.UIDefaults.MetricsInbound.Aggregations...)
+		if len(conf.KialiFeatureFlags.UIDefaults.MetricsInbound.Aggregations) != 0 {
+			aggregations = append(aggregations, conf.KialiFeatureFlags.UIDefaults.MetricsInbound.Aggregations...)
 		}
 	} else {
 		aggregations = metricsDefaults("source", "destination")
-		if len(cfg.KialiFeatureFlags.UIDefaults.MetricsOutbound.Aggregations) != 0 {
-			aggregations = append(aggregations, cfg.KialiFeatureFlags.UIDefaults.MetricsOutbound.Aggregations...)
+		if len(conf.KialiFeatureFlags.UIDefaults.MetricsOutbound.Aggregations) != 0 {
+			aggregations = append(aggregations, conf.KialiFeatureFlags.UIDefaults.MetricsOutbound.Aggregations...)
 		}
 	}
 
