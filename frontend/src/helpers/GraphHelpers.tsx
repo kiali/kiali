@@ -88,7 +88,16 @@ export const selectAnd = (elems: GraphElement[], ands: SelectAnd): GraphElement[
 
 export const select = (elems: GraphElement[], exp: SelectExp): GraphElement[] => {
   return elems.filter(e => {
-    const propVal = e.getData()[exp.prop] || '';
+    let propVal = e.getData()[exp.prop];
+
+    switch (exp.op) {
+      case 'falsy':
+        return !propVal;
+      case 'truthy':
+        return !!propVal;
+      default:
+        propVal = propVal ?? '';
+    }
 
     switch (exp.op) {
       case '!=':
@@ -113,10 +122,6 @@ export const select = (elems: GraphElement[], exp: SelectExp): GraphElement[] =>
         return (propVal as string).endsWith(exp.val as string);
       case '^=':
         return (propVal as string).startsWith(exp.val as string);
-      case 'falsy':
-        return !propVal;
-      case 'truthy':
-        return !!propVal;
       default:
         return propVal === exp.val;
     }

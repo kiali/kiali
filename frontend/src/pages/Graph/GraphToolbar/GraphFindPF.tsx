@@ -1191,7 +1191,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
         // special node operand
         if (field.startsWith('label:')) {
           const safeFieldName = CytoscapeGraphUtils.toSafeCyFieldName(field);
-          return { target: 'node', selector: { prop: safeFieldName, op: isNegation ? '<=' : '>', val: 0 } };
+          return { target: 'node', selector: { prop: safeFieldName, op: isNegation ? 'falsy' : 'truthy' } };
         }
 
         return undefined;
