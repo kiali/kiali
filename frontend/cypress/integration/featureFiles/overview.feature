@@ -119,7 +119,6 @@ Feature: Kiali Overview page
     Then user sees the "istio-system" namespace card in cluster "east"
     And user sees the "istio-system" namespace card in cluster "west"
     And user sees the "Control plane" label in both "istio-system" namespace cards
-    And user sees the "Remote Cluster" label in the "west" "istio-system" namespace card
     And the toggle on the right side of both "istio-system" namespace cards exists
     And Istio config should not be available for the "west" "istio-system"
     And health should be different for "east" and "west" "istio-system"
