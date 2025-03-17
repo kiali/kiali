@@ -88,7 +88,7 @@ func (c *tokenAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 		return nil, fmt.Errorf("could not get the clients: %w", err)
 	}
 
-	namespaceService := business.NewNamespaceService(c.kialiCache, c.conf, c.discovery, clients, c.clientFactory.GetSAClients())
+	namespaceService := business.NewNamespaceService(c.kialiCache, c.conf, c.discovery, c.clientFactory.GetSAClients(), clients)
 
 	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
 	// anonymous access, so it's not feasible to use the version API for token verification.
@@ -144,7 +144,7 @@ func (c *tokenAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 		return nil, fmt.Errorf("could create user clients from token: %w", err)
 	}
 
-	namespaceService := business.NewNamespaceService(c.kialiCache, c.conf, c.discovery, clients, c.clientFactory.GetSAClients())
+	namespaceService := business.NewNamespaceService(c.kialiCache, c.conf, c.discovery, c.clientFactory.GetSAClients(), clients)
 	_, err = namespaceService.GetNamespaces(r.Context())
 	if err != nil {
 		// The Kubernetes API rejected the token.
