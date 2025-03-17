@@ -3,7 +3,7 @@ import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { TimeInMilliseconds } from '../../types/Common';
-import { ComponentStatus, Status } from '../../types/IstioStatus';
+import { ComponentStatus, Status, statusSeverity } from '../../types/IstioStatus';
 import { MessageType } from '../../types/MessageCenter';
 import { Namespace } from '../../types/Namespace';
 import { KialiAppState } from '../../store/Store';
@@ -139,12 +139,27 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     Object.keys(serverConfig.clusters).forEach(cl => fetchStatus(cl));
   }, [lastRefreshAt, fetchStatus]);
 
+  const getSeverity = (components: ComponentStatus[]): number =>
+    Math.max(
+      ...components.map(
+        cs =>
+          statusSeverity[cs.status] +
+          (cs.is_core && statusSeverity[cs.status] !== statusSeverity[Status.Healthy] ? 10 : 0)
+      )
+    ); // non health core component has much higher severity
+
+  const sortedClusters = Object.keys(props.statusMap).sort((a, b) => {
+    const worstA = getSeverity(props.statusMap[a]);
+    const worstB = getSeverity(props.statusMap[b]);
+    return worstB - worstA;
+  });
+
   const tooltipContent = (): React.ReactNode => {
     return (
       <>
         <TextContent style={{ color: PFColors.White }}>
           <Text component={TextVariants.h4}>{t('Cluster Status')}</Text>
-          {Object.keys(props.statusMap).map(cl => (
+          {sortedClusters.map(cl => (
             <>
               <div className={clusterStyle}>
                 <PFBadge badge={PFBadges.Cluster} size="sm" />
