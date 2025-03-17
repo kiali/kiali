@@ -97,6 +97,7 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 	}
 
 	var istiodStatus kubernetes.IstioComponentStatus
+	var managesExternal = false
 	for _, cp := range mesh.ControlPlanes {
 		if cp.Cluster.Name == cluster {
 			istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
@@ -107,8 +108,13 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 				IsCore:    true,
 			})
 		}
+		if cp.ManagesExternal {
+			managesExternal = true
+		}
 	}
-	if len(istiodStatus) == 0 {
+
+	// if no control plane and no any other control plane which manages external
+	if len(istiodStatus) == 0 && !managesExternal {
 		istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
 			Cluster:   cluster,
 			Name:      "istiod",
