@@ -58,7 +58,34 @@ jobs:
             *) echo "Invalid schedule or unknown trigger! Cannot determine Istio version." && exit 1 ;;
           esac
         fi
-        LATEST_ISTIO_VERSIONS="$(curl -s https://api.github.com/repos/istio/istio/releases | jq -r '.[].tag_name' | sort -rV | awk -F. '!seen[$1"."$2]++' | head -n $((OFFSET + 1)))"
+        LATEST_ISTIO_VERSIONS="$(curl -s https://api.github.com/repos/istio/istio/releases | jq -r '.[].tag_name' | sort -rV | awk -F'[-.]' '
+          {
+            minor = $1"."$2
+            is_rc = ($4 == "rc")
+            z = is_rc ? $3 : $3
+            rc_ver = is_rc ? $5 : ""
+
+            if (!minor_ga[minor] && !minor_rc[minor]) {
+              if (is_rc) { minor_rc[minor] = $0; minor_rc_z[minor] = z; minor_rc_rc[minor] = rc_ver }
+              else { minor_ga[minor] = $0; minor_ga_z[minor] = z }
+            } else if (!is_rc && minor_ga[minor]) {
+              if (z > minor_ga_z[minor]) { minor_ga[minor] = $0; minor_ga_z[minor] = z }
+            } else if (!is_rc && !minor_ga[minor]) {
+              minor_ga[minor] = $0; minor_ga_z[minor] = z; delete minor_rc[minor]; delete minor_rc_z[minor]; delete minor_rc_rc[minor]
+            } else if (is_rc && !minor_ga[minor]) {
+              current_rc_stored = minor_rc[minor]
+              split(current_rc_stored, current_rc_parts, "[-.]")
+              current_rc_num_stored = current_rc_parts[5]
+
+              if (!minor_rc[minor] || z > minor_rc_z[minor] || (z == minor_rc_z[minor] && rc_ver > current_rc_num_stored)) {
+                minor_rc[minor] = $0; minor_rc_z[minor] = z; minor_rc_rc[minor] = rc_ver
+              }
+            }
+          }
+          END {
+            for (m in minor_ga) { print minor_ga[m] }
+            for (m in minor_rc) { print minor_rc[m] }
+          }' | sort -Vr | grep -v '^$' | head -n $((OFFSET + 1)))"
         ISTIO_VERSION=$(echo "${LATEST_ISTIO_VERSIONS}" | tail -n 1)
         echo "The latest Istio versions are:"
         echo "${LATEST_ISTIO_VERSIONS}"
