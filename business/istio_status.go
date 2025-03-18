@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -45,33 +44,29 @@ type IstioStatusService struct {
 	workloads           *WorkloadService
 }
 
-func (iss *IstioStatusService) GetStatus(ctx context.Context, cluster string) (kubernetes.IstioComponentStatus, error) {
+func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioComponentStatus, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetStatus",
 		observability.Attribute("package", "business"),
 	)
 	defer end()
 
-	if _, ok := iss.userClients[cluster]; !ok {
-		return kubernetes.IstioComponentStatus{}, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
-	}
-
 	if !iss.conf.ExternalServices.Istio.ComponentStatuses.Enabled || !iss.conf.ExternalServices.Istio.IstioAPIEnabled {
 		return kubernetes.IstioComponentStatus{}, nil
 	}
 	result := kubernetes.IstioComponentStatus{}
-	ics, err := iss.getIstioComponentStatus(ctx, cluster)
-	if err != nil {
-		// istiod should be running
-		return nil, err
-	}
-	result.Merge(ics)
 
-	if cluster == iss.conf.KubernetesConfig.ClusterName {
-		// local cluster
-		// get addons
-		result.Merge(iss.getAddonComponentStatus(cluster))
+	for cluster := range iss.userClients {
+		ics, err := iss.getIstioComponentStatus(ctx, cluster)
+		if err != nil {
+			// istiod should be running
+			return nil, err
+		}
+		result.Merge(ics)
 	}
+
+	// for local cluster only get addons
+	result.Merge(iss.getAddonComponentStatus(iss.conf.KubernetesConfig.ClusterName))
 
 	return result, nil
 }
@@ -97,7 +92,7 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 	}
 
 	var istiodStatus kubernetes.IstioComponentStatus
-	var managesExternal = false
+	var isManaged = false
 	for _, cp := range mesh.ControlPlanes {
 		if cp.Cluster.Name == cluster {
 			istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
@@ -108,13 +103,16 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 				IsCore:    true,
 			})
 		}
-		if cp.ManagesExternal {
-			managesExternal = true
+		for _, cl := range cp.ManagedClusters {
+			if cl.Name == cluster {
+				isManaged = true
+				break
+			}
 		}
 	}
 
-	// if no control plane and no any other control plane which manages external
-	if len(istiodStatus) == 0 && !managesExternal {
+	// if no control plane and no any other control plane which manages this cluster
+	if len(istiodStatus) == 0 && !isManaged {
 		istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
 			Cluster:   cluster,
 			Name:      "istiod",

@@ -197,7 +197,7 @@ func TestGrafanaWorking(t *testing.T) {
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
-	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
 	// Requests to AddOns have to be 1
@@ -236,7 +236,7 @@ func TestGrafanaDisabled(t *testing.T) {
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
-	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
 	// No request performed to Grafana endpoint
@@ -293,7 +293,7 @@ func TestGrafanaNotWorking(t *testing.T) {
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
-	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
 	// Requests to AddOns have to be 1
@@ -326,7 +326,7 @@ func TestFailingTracingService(t *testing.T) {
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockFailingJaeger()).IstioStatus
-	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
 	// Requests to AddOns have to be 1
@@ -355,7 +355,7 @@ func TestOverriddenUrls(t *testing.T) {
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
-	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
 	// Requests to AddOns have to be 1
@@ -386,7 +386,7 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 	clients := make(map[string]kubernetes.ClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
-	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
 	// Requests to AddOns have to be 1
@@ -413,7 +413,7 @@ func TestNoIstioComponentFoundError(t *testing.T) {
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 
 	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
-	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 	assertComponent(assert, icsl, "istiod", kubernetes.ComponentNotFound, true)
 }
@@ -447,7 +447,7 @@ func TestDefaults(t *testing.T) {
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
-	icsl, err := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
+	icsl, err := iss.GetStatus(context.TODO())
 	assert.NoError(err)
 
 	// One istio component is not found or unhealthy
@@ -501,7 +501,7 @@ func TestNonDefaults(t *testing.T) {
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
-	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
 	// All Istio components are healthy
@@ -554,7 +554,7 @@ func TestIstiodNotReady(t *testing.T) {
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
-	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
 	// Two istio components are unhealthy, not found or not ready
@@ -612,7 +612,7 @@ func TestCustomizedAppLabel(t *testing.T) {
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
-	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
 	// istio component not found or unhealthy
@@ -666,7 +666,7 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
-	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
 	// One istio components is unhealthy
@@ -717,7 +717,7 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
 
-	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
 	// Two istio components are unhealthy

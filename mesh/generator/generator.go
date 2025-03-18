@@ -55,8 +55,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 	graph.CheckError(err)
 
 	// get istio status components (istiod, grafana, prometheus, tracing)
-	// @ TODO multi-cluster support, loop over control planes
-	istioStatus, err := gi.IstioStatusGetter.GetStatus(ctx, config.Get().KubernetesConfig.ClusterName)
+	istioStatus, err := gi.IstioStatusGetter.GetStatus(ctx)
 	if errors.IsForbidden(err) {
 		return nil, err
 	} else if err != nil {
