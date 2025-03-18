@@ -1,4 +1,4 @@
-package cytoscape
+package common
 
 import (
 	"testing"
@@ -92,10 +92,10 @@ func TestHasWorkloadEntryAddedToGraph(t *testing.T) {
 	n0, _ := graph.NewNode("testCluster", "appNamespace", "ratings", "appNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
 	n0.Metadata[graph.HasWorkloadEntry] = []graph.WEInfo{{Name: "ratings-v1"}}
 	traffic[n0.ID] = n0
-	cytoConfig := NewConfig(traffic, graph.ConfigOptions{})
+	graphConfig := NewConfig(traffic, graph.ConfigOptions{})
 
-	cytoNode := cytoConfig.Elements.Nodes[0]
-	assert.Equal(cytoNode.Data.HasWorkloadEntry, n0.Metadata[graph.HasWorkloadEntry])
+	graphNode := graphConfig.Elements.Nodes[0]
+	assert.Equal(graphNode.Data.HasWorkloadEntry, n0.Metadata[graph.HasWorkloadEntry])
 }
 
 func TestHasWorkloadEntryEmpty(t *testing.T) {
@@ -105,10 +105,10 @@ func TestHasWorkloadEntryEmpty(t *testing.T) {
 
 	n0, _ := graph.NewNode("testCluster", "appNamespace", "ratings", "appNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
 	traffic[n0.ID] = n0
-	cytoConfig := NewConfig(traffic, graph.ConfigOptions{})
+	graphConfig := NewConfig(traffic, graph.ConfigOptions{})
 
-	cytoNode := cytoConfig.Elements.Nodes[0]
-	assert.Empty(cytoNode.Data.HasWorkloadEntry)
+	graphNode := graphConfig.Elements.Nodes[0]
+	assert.Empty(graphNode.Data.HasWorkloadEntry)
 }
 
 func TestHTTPToTrafficRate(t *testing.T) {
@@ -135,9 +135,9 @@ func TestHTTPToTrafficRate(t *testing.T) {
 	}
 	e.Metadata[graph.MetadataKey("http")] = 1.00
 
-	cytoConfig := NewConfig(traffic, graph.ConfigOptions{})
+	graphConfig := NewConfig(traffic, graph.ConfigOptions{})
 
-	cytoNode := cytoConfig.Elements.Edges[0]
-	assert.NotNil(cytoNode.Data.Traffic)
-	assert.NotNil(cytoNode.Data.Traffic.Rates)
+	graphNode := graphConfig.Elements.Edges[0]
+	assert.NotNil(graphNode.Data.Traffic)
+	assert.NotNil(graphNode.Data.Traffic.Rates)
 }

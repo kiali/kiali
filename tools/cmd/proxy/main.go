@@ -14,7 +14,7 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/kiali/kiali/graph/config/cytoscape"
+	"github.com/kiali/kiali/graph/config/common"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tools/cmd"
 	"github.com/kiali/kiali/tools/generator"
@@ -56,25 +56,25 @@ func init() {
 	flag.Var(&popStratFlag, "population-strategy", "whether the graph should have many or few connections")
 }
 
-func loadGraphFromFile(filename string) (*cytoscape.Config, error) {
+func loadGraphFromFile(filename string) (*common.Config, error) {
 	contents, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	cyGraph := &cytoscape.Config{}
-	err = json.Unmarshal(contents, cyGraph)
+	graphConfig := &common.Config{}
+	err = json.Unmarshal(contents, graphConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	return cyGraph, nil
+	return graphConfig, nil
 }
 
 type graphProxy struct {
 	httpProxy *httputil.ReverseProxy
 	generator *generator.Generator
-	graph     *cytoscape.Config
+	graph     *common.Config
 }
 
 func (p graphProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -159,7 +159,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var graph *cytoscape.Config
+	var graph *common.Config
 	if dataDirFlag == "" {
 		log.Info("Populating graph data...")
 		g := gen.Generate()

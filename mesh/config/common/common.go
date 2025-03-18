@@ -1,19 +1,14 @@
-// Package cytoscape provides conversion from our graph to the CystoscapeJS
-// configuration json model.
-//
-// The following links are useful for understanding CytoscapeJS and it's configuration:
-//
-// Main page:   http://js.cytoscape.org/
-// JSON config: http://js.cytoscape.org/#notation/elements-json
-// Demos:       http://js.cytoscape.org/#demos
+// Package "common" provides conversion from our graph structure to a common JSON provided back to clients.
+// This is likely the only JSON format that will be needed, although the architecture provides fo multiple providers.
 //
 // Algorithm: Process the graph structure adding nodes and edges, decorating each
-//            with information provided.  An optional second pass generates compound
-//            nodes for requested boxing.
 //
-// The package provides the Cytoscape implementation of graph/ConfigVendor.
+//	with information provided.  An optional second pass generates box
+//	nodes for requested boxing.
+//
+// The package provides the Common implementation of graph/ConfigVendor.
 
-package cytoscape
+package common
 
 import (
 	"crypto/sha256"
@@ -24,18 +19,13 @@ import (
 )
 
 type NodeData struct {
-	// Cytoscape Fields
-	ID     string `json:"id"`               // unique internal node ID (n0, n1...)
-	Parent string `json:"parent,omitempty"` // Compound Node parent ID
-
-	// Required Fields (not required by Cytoscape)
-	Cluster   string `json:"cluster"`
-	InfraName string `json:"infraName"`
-	InfraType string `json:"infraType"`
-	Namespace string `json:"namespace"`
-	NodeType  string `json:"nodeType"`
-
-	// Other Fields
+	ID             string      `json:"id"`               // unique internal node ID (n0, n1...)
+	Parent         string      `json:"parent,omitempty"` // Compound Node parent ID
+	Cluster        string      `json:"cluster"`
+	InfraName      string      `json:"infraName"`
+	InfraType      string      `json:"infraType"`
+	Namespace      string      `json:"namespace"`
+	NodeType       string      `json:"nodeType"`
 	HasInfra       bool        `json:"-"`                        // for local when generating boxes
 	HealthData     interface{} `json:"healthData"`               // data to calculate health status from configurations
 	InfraData      interface{} `json:"infraData,omitempty"`      // infraType-dependent data
@@ -48,12 +38,9 @@ type NodeData struct {
 }
 
 type EdgeData struct {
-	// Cytoscape Fields
 	ID     string `json:"id"`     // unique internal edge ID (e0, e1...)
 	Source string `json:"source"` // parent node ID
 	Target string `json:"target"` // child node ID
-
-	// App Fields (not required by Cytoscape)
 }
 
 type NodeWrapper struct {

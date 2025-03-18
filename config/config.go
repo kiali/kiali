@@ -122,7 +122,7 @@ func (fn FeatureName) IsValid() error {
 	case FeatureLogView:
 		return nil
 	}
-	return fmt.Errorf("Invalid feature name: %v", fn)
+	return fmt.Errorf("invalid feature name: %v", fn)
 }
 
 // Global configuration for the application.
@@ -514,14 +514,8 @@ type GraphFindOption struct {
 
 // GraphSettings affect the graph visualization.
 // Animation: animation type point (default) | dash
-// FontLabel: font used for node text (edge label font is determined from this value) TODO: Cytoscape only - remove when cytoscape is removed
-// MinFontBadge: smallest effective font (zoomed font) before removing node badges TODO: Cytoscape only - remove when cytoscape is removed
-// MinFontLabel: smallest effective node text font (zoomed font) before removing labels TODO: Cytoscape only - remove when cytoscape is removed
 type GraphSettings struct {
-	Animation    string  `yaml:"animation,omitempty" json:"animation,omitempty"`
-	FontLabel    float32 `yaml:"font_label,omitempty" json:"fontLabel,omitempty"`
-	MinFontBadge float32 `yaml:"min_font_badge,omitempty" json:"minFontBadge,omitempty"`
-	MinFontLabel float32 `yaml:"min_font_label,omitempty" json:"minFontLabel,omitempty"`
+	Animation string `yaml:"animation,omitempty" json:"animation,omitempty"`
 }
 
 // GraphTraffic defines the protocol-specific rates used to determine traffic for graph generation.
@@ -540,7 +534,6 @@ type GraphTraffic struct {
 type GraphUIDefaults struct {
 	FindOptions []GraphFindOption `yaml:"find_options,omitempty" json:"findOptions,omitempty"`
 	HideOptions []GraphFindOption `yaml:"hide_options,omitempty" json:"hideOptions,omitempty"`
-	Impl        string            `yaml:"impl,omitempty" json:"impl,omitempty"` // TODO: remove when cytoscape is removed
 	Settings    GraphSettings     `yaml:"settings,omitempty" json:"settings,omitempty"`
 	Traffic     GraphTraffic      `yaml:"traffic,omitempty" json:"traffic,omitempty"`
 }
@@ -856,12 +849,8 @@ func NewConfig() (c *Config) {
 							Expression:  "rank > 2",
 						},
 					},
-					Impl: "pf",
 					Settings: GraphSettings{
-						Animation:    "point",
-						FontLabel:    13,
-						MinFontBadge: 7,
-						MinFontLabel: 10,
+						Animation: "point",
 					},
 					Traffic: GraphTraffic{
 						Ambient: "total",
@@ -1393,7 +1382,7 @@ func Validate(conf Config) error {
 		auth.Strategy != AuthStrategyOpenshift &&
 		auth.Strategy != AuthStrategyToken &&
 		auth.Strategy != AuthStrategyHeader {
-		return fmt.Errorf("Invalid authentication strategy [%v]", auth.Strategy)
+		return fmt.Errorf("invalid authentication strategy [%v]", auth.Strategy)
 	}
 
 	// Check the ciphering key for sessions
