@@ -131,14 +131,12 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   };
 
   private graphTraffic?: SummaryPanelGraphTraffic;
-  private isPF = false;
   private metricsPromise?: CancelablePromise<ApiResponse<IstioMetricsMap>[]>;
   private validationSummaryPromises: PromisesRegistry = new PromisesRegistry();
 
   constructor(props: SummaryPanelPropType) {
     super(props);
 
-    this.isPF = !!props.data.isPF;
     this.state = { ...defaultState };
   }
 
@@ -197,40 +195,21 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
       tcpOut: TrafficRateTcp,
       tcpTotal: TrafficRateTcp;
 
-    if (this.isPF) {
-      // PF Graph
-      const controller = this.props.data.summaryTarget as Visualization;
+    const controller = this.props.data.summaryTarget as Visualization;
 
-      if (!controller) {
-        return null;
-      }
-      const { nodes, edges } = elems(controller);
-
-      numSvc = select(nodes, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).length;
-      numWorkloads = select(nodes, { prop: NodeAttr.nodeType, val: NodeType.WORKLOAD }).length;
-
-      ({ numApps, numVersions } = this.countApps());
-      numEdges = edges.length;
-
-      ({ grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
-        this.graphTraffic ?? this.getGraphTraffic());
-    } else {
-      // CY Graph
-      const cy = this.props.data.summaryTarget;
-
-      if (!cy) {
-        return null;
-      }
-
-      numSvc = cy.nodes(`[nodeType = "${NodeType.SERVICE}"]`).size();
-      numWorkloads = cy.nodes(`[nodeType = "${NodeType.WORKLOAD}"]`).size();
-
-      ({ numApps, numVersions } = this.countApps());
-      numEdges = cy.edges().size();
-
-      ({ grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
-        this.graphTraffic ?? this.getGraphTraffic());
+    if (!controller) {
+      return null;
     }
+    const { nodes, edges } = elems(controller);
+
+    numSvc = select(nodes, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).length;
+    numWorkloads = select(nodes, { prop: NodeAttr.nodeType, val: NodeType.WORKLOAD }).length;
+
+    ({ numApps, numVersions } = this.countApps());
+    numEdges = edges.length;
+
+    ({ grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
+      this.graphTraffic ?? this.getGraphTraffic());
 
     const tooltipInboundRef = React.createRef();
     const tooltipOutboundRef = React.createRef();
@@ -381,34 +360,6 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   }
 
   private getGraphTraffic = (): SummaryPanelGraphTraffic => {
-    if (this.isPF) {
-      return this.getGraphTrafficPF();
-    }
-
-    // when getting total traffic rates don't count requests from injected service nodes
-    const cy = this.props.data.summaryTarget;
-    const totalEdges = cy.nodes(`[nodeType != "${NodeType.SERVICE}"][!isBox]`).edgesTo('*');
-    const inboundEdges = cy.nodes(`[?${NodeAttr.isRoot}]`).edgesTo('*');
-    const outboundEdges = cy
-      .nodes()
-      .leaves(`node[?${NodeAttr.isOutside}],[?${NodeAttr.isServiceEntry}]`)
-      .connectedEdges();
-
-    return {
-      grpcIn: getAccumulatedTrafficRateGrpc(inboundEdges),
-      grpcOut: getAccumulatedTrafficRateGrpc(outboundEdges),
-      grpcTotal: getAccumulatedTrafficRateGrpc(totalEdges),
-      httpIn: getAccumulatedTrafficRateHttp(inboundEdges),
-      httpOut: getAccumulatedTrafficRateHttp(outboundEdges),
-      httpTotal: getAccumulatedTrafficRateHttp(totalEdges),
-      isGrpcRequests: this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST),
-      tcpIn: getAccumulatedTrafficRateTcp(inboundEdges),
-      tcpOut: getAccumulatedTrafficRateTcp(outboundEdges),
-      tcpTotal: getAccumulatedTrafficRateTcp(totalEdges)
-    };
-  };
-
-  private getGraphTrafficPF = (): SummaryPanelGraphTraffic => {
     const controller = this.props.data.summaryTarget as Visualization;
     const { nodes } = elems(controller);
 
@@ -426,46 +377,20 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     );
 
     return {
-      grpcIn: getAccumulatedTrafficRateGrpc(inboundEdges, true),
-      grpcOut: getAccumulatedTrafficRateGrpc(outboundEdges, true),
-      grpcTotal: getAccumulatedTrafficRateGrpc(totalEdges, true),
-      httpIn: getAccumulatedTrafficRateHttp(inboundEdges, true),
-      httpOut: getAccumulatedTrafficRateHttp(outboundEdges, true),
-      httpTotal: getAccumulatedTrafficRateHttp(totalEdges, true),
+      grpcIn: getAccumulatedTrafficRateGrpc(inboundEdges),
+      grpcOut: getAccumulatedTrafficRateGrpc(outboundEdges),
+      grpcTotal: getAccumulatedTrafficRateGrpc(totalEdges),
+      httpIn: getAccumulatedTrafficRateHttp(inboundEdges),
+      httpOut: getAccumulatedTrafficRateHttp(outboundEdges),
+      httpTotal: getAccumulatedTrafficRateHttp(totalEdges),
       isGrpcRequests: this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST),
-      tcpIn: getAccumulatedTrafficRateTcp(inboundEdges, true),
-      tcpOut: getAccumulatedTrafficRateTcp(outboundEdges, true),
-      tcpTotal: getAccumulatedTrafficRateTcp(totalEdges, true)
+      tcpIn: getAccumulatedTrafficRateTcp(inboundEdges),
+      tcpOut: getAccumulatedTrafficRateTcp(outboundEdges),
+      tcpTotal: getAccumulatedTrafficRateTcp(totalEdges)
     };
   };
 
   private countApps = (): { numApps: number; numVersions: number } => {
-    if (this.isPF) {
-      return this.countAppsPF();
-    }
-
-    const cy = this.props.data.summaryTarget;
-    const appVersions: { [key: string]: Set<string> } = {};
-
-    cy.$(`node[nodeType = "${NodeType.APP}"]`).forEach(node => {
-      const app = node.data(NodeAttr.app);
-
-      if (appVersions[app] === undefined) {
-        appVersions[app] = new Set();
-      }
-
-      appVersions[app].add(node.data(NodeAttr.version));
-    });
-
-    return {
-      numApps: Object.getOwnPropertyNames(appVersions).length,
-      numVersions: Object.getOwnPropertyNames(appVersions).reduce((totalCount: number, version: string) => {
-        return totalCount + appVersions[version].size;
-      }, 0)
-    };
-  };
-
-  private countAppsPF = (): { numApps: number; numVersions: number } => {
     const controller = this.props.data.summaryTarget as Visualization;
     const { nodes } = elems(controller);
 

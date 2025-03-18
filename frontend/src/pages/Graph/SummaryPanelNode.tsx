@@ -9,7 +9,6 @@ import {
 } from './SummaryLink';
 import { DecoratedGraphNodeData, DestService, NodeType, RankResult, SummaryPanelPropType } from '../../types/Graph';
 import { getTitle, summaryBodyTabs, summaryFont, summaryPanel } from './SummaryPanelCommon';
-import { decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { clickHandler, getOptions } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import {
@@ -123,7 +122,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 
   render(): React.ReactNode {
     const node = this.props.data.summaryTarget;
-    const nodeData = this.props.data.isPF ? node.getData() : decoratedNodeData(node);
+    const nodeData = node.getData();
     const { nodeType, app, service, workload, isServiceEntry } = nodeData;
     const servicesList = nodeType !== NodeType.SERVICE && renderDestServicesLinks(nodeData);
     const destsList = nodeType === NodeType.SERVICE && isServiceEntry && this.renderDestServices(nodeData);
@@ -546,7 +545,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 
     if (this.props.onLaunchWizard) {
       const node = this.props.data.summaryTarget;
-      const nodeData = this.props.data.isPF ? node.getData() : decoratedNodeData(node);
+      const nodeData = node.getData();
 
       this.props.onLaunchWizard(
         key,
@@ -578,7 +577,7 @@ export const SummaryPanelNode: React.FC<SummaryPanelNodeProps> = (props: Summary
   const [isKebabOpen, setIsKebabOpen] = React.useState<boolean>(false);
 
   const node = props.data.summaryTarget;
-  const nodeData = props.data.isPF ? node.getData() : decoratedNodeData(node);
+  const nodeData = node.getData();
 
   const [serviceDetails, gateways, peerAuthentications, isServiceDetailsLoading] = useServiceDetailForGraphNode(
     nodeData,

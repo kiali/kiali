@@ -2,6 +2,7 @@ import { Namespace } from './Namespace';
 import { AppenderString, DurationInSeconds, TimeInSeconds } from './Common';
 import { Health } from './Health';
 import { HealthAnnotationType } from './HealthAnnotation';
+import { Controller, GraphElement } from '@patternfly/react-topology';
 
 export interface Layout {
   name: string;
@@ -12,7 +13,6 @@ export const SUMMARY_PANEL_CHART_WIDTH = 250;
 export type SummaryType = 'graph' | 'node' | 'edge' | 'box';
 
 export interface SummaryData {
-  isPF?: boolean;
   summaryTarget: any;
   summaryType: SummaryType;
 }
@@ -254,13 +254,9 @@ export type CytoscapeGlobalScratchData = {
   trafficRates: TrafficRate[];
 };
 
-export interface CytoscapeBaseEvent {
-  summaryTarget: any; // the cytoscape element that was the target of the event
+export interface GraphEvent {
+  summaryTarget: GraphElement | Controller; // the target of the event
   summaryType: SummaryType; // what the summary panel should show
-}
-
-export interface GraphEvent extends CytoscapeBaseEvent {
-  isPF?: boolean;
 }
 
 // Graph Structures

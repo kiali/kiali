@@ -33,9 +33,6 @@ import { canCreate, canUpdate } from '../../types/Permissions';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
 import { ServiceNetwork } from './ServiceNetwork';
-import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
-import { location, router, URLParam } from '../../app/History';
-import { MiniGraphCard } from '../../components/CytoscapeGraph/MiniGraphCard';
 import { IstioConfigCard } from '../../components/IstioConfigCard/IstioConfigCard';
 import { ServiceWizard } from '../../components/IstioWizards/ServiceWizard';
 import { ConfirmDeleteTrafficRoutingModal } from '../../components/IstioWizards/ConfirmDeleteTrafficRoutingModal';
@@ -99,19 +96,6 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
       this.fetchBackend();
     }
   }
-
-  goToMetrics = (e: GraphEdgeTapEvent): void => {
-    if (e.source !== e.target) {
-      const direction = e.source === this.props.service ? 'outbound' : 'inbound';
-      const destination = direction === 'inbound' ? 'source_canonical_service' : 'destination_canonical_service';
-      const urlParams = new URLSearchParams(location.getSearch());
-
-      urlParams.set('tab', 'metrics');
-      urlParams.set(URLParam.BY_LABELS, `${destination}=${e.source === this.props.service ? e.target : e.source}`);
-
-      router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
-    }
-  };
 
   private fetchBackend = (): void => {
     if (!this.props.serviceDetails) {
@@ -253,8 +237,6 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
     // RenderComponentScroll handles height to provide an inner scroll combined with tabs
     // This height needs to be propagated to minigraph to proper resize in height
     // Graph resizes correctly on width
-    const height = this.state.tabHeight ? this.state.tabHeight - 115 : 300;
-    const graphContainerStyle = kialiStyle({ width: '100%', height: height });
     const includeMiniGraphCy = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'pf';
     const includeMiniGraphPF = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'cy';
     const miniGraphSpan = includeMiniGraphCy && includeMiniGraphPF ? 4 : 8;
@@ -282,20 +264,6 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
                 </StackItem>
               </Stack>
             </GridItem>
-
-            {includeMiniGraphCy && (
-              <GridItem span={miniGraphSpan}>
-                <MiniGraphCard
-                  dataSource={this.graphDataSource}
-                  onEdgeTap={this.goToMetrics}
-                  namespace={this.props.namespace}
-                  graphContainerStyle={graphContainerStyle}
-                  serviceDetails={this.props.serviceDetails}
-                  onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
-                  onLaunchWizard={this.handleLaunchWizard}
-                />
-              </GridItem>
-            )}
 
             {includeMiniGraphPF && (
               <GridItem span={miniGraphSpan}>

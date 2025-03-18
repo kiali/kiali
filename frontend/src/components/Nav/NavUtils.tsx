@@ -44,8 +44,8 @@ const buildCommonQueryParams = (params: GraphUrlParams): string => {
   return q;
 };
 
-export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams, isPf = false): string => {
-  const route = isPf ? 'graphpf' : 'graph';
+export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams): string => {
+  const route = 'graphpf';
   let queryParams = buildCommonQueryParams(params);
   if (params.activeNamespaces.length > 0) {
     const namespaces = params.activeNamespaces.map(namespace => namespace.name).join(',');
@@ -58,8 +58,8 @@ export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams, isPf = 
   return `/${route}/namespaces?${queryParams}`;
 };
 
-export const makeNodeGraphUrlFromParams = (params: GraphUrlParams, isPf = false): string => {
-  const route = isPf ? 'graphpf' : 'graph';
+export const makeNodeGraphUrlFromParams = (params: GraphUrlParams): string => {
+  const route = 'graphpf';
   const node = params.node;
   if (node) {
     switch (node.nodeType) {
@@ -91,7 +91,7 @@ export const makeNodeGraphUrlFromParams = (params: GraphUrlParams, isPf = false)
         )}`;
       default:
         console.debug('makeNodeUrl defaulting to makeNamespaceUrl');
-        return makeNamespacesGraphUrlFromParams(params, isPf);
+        return makeNamespacesGraphUrlFromParams(params);
     }
   } else {
     // this should never happen but typescript needs this

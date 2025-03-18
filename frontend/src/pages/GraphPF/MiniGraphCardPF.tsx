@@ -440,9 +440,9 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
 
     // To ensure updated components get the updated URL, update the URL first and then the state
     if (isParentKiosk(this.props.kiosk)) {
-      kioskContextMenuAction(makeNodeGraphUrlFromParams(urlParams, true));
+      kioskContextMenuAction(makeNodeGraphUrlFromParams(urlParams));
     } else {
-      router.navigate(makeNodeGraphUrlFromParams(urlParams, true));
+      router.navigate(makeNodeGraphUrlFromParams(urlParams));
     }
   };
 

@@ -3,7 +3,6 @@ import * as React from 'react';
 import { Link, useLocation, useNavigate, matchPath } from 'react-router-dom-v5-compat';
 import { Nav, NavList, NavItem } from '@patternfly/react-core';
 import { navMenuItems } from '../../routes';
-import { serverConfig } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { ExternalServiceInfo } from '../../types/StatusState';
 import { KialiIcon } from 'config/KialiIcon';
@@ -60,8 +59,6 @@ export const Menu: React.FC<MenuProps> = (props: MenuProps) => {
 
   const renderMenuItems = (): React.ReactNode => {
     const allNavMenuItems = navMenuItems;
-    const graphEnableCytoscape = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'pf';
-    const graphEnablePatternfly = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'cy';
 
     const activeMenuItem = allNavMenuItems.find(item => {
       let isRoute = matchPath({ path: item.to }, pathname) ? true : false;
@@ -77,14 +74,6 @@ export const Menu: React.FC<MenuProps> = (props: MenuProps) => {
 
     return allNavMenuItems
       .filter(item => {
-        if (item.id === 'traffic_graph_cy') {
-          return graphEnableCytoscape;
-        }
-
-        if (item.id === 'traffic_graph_pf') {
-          return graphEnablePatternfly;
-        }
-
         if (item.id === 'mesh') {
           return isControlPlaneAccessible();
         }
@@ -96,13 +85,6 @@ export const Menu: React.FC<MenuProps> = (props: MenuProps) => {
 
         if (item.id === 'tracing') {
           return tracingUrl && <ExternalLink key={item.to} href={tracingUrl} name={t(title)} />;
-        }
-
-        if (
-          (item.id === 'traffic_graph_cy' && !graphEnablePatternfly) ||
-          (item.id === 'traffic_graph_pf' && !graphEnableCytoscape)
-        ) {
-          title = t('Traffic Graph');
         }
 
         return (

@@ -113,15 +113,9 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
       : collapsedStyle;
 
     let tourStops = [GraphTourStops.SidePanel];
-    const summary: SummaryData = this.props.data;
 
-    if (summary.isPF) {
-      tourStops.unshift(GraphTourStops.GraphPF);
-      tourStops.unshift(GraphTourStops.ContextualMenuPF);
-    } else {
-      tourStops.unshift(GraphTourStops.Graph);
-      tourStops.unshift(GraphTourStops.ContextualMenu);
-    }
+    tourStops.unshift(GraphTourStops.GraphPF);
+    tourStops.unshift(GraphTourStops.ContextualMenuPF);
 
     return (
       <TourStop info={tourStops}>
@@ -161,14 +155,11 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
   }
 
   private getSummaryPanel = (summary: SummaryData): React.ReactFragment => {
-    const isPF = !!summary.isPF;
     const summaryType = summary.summaryType as string;
 
     switch (summaryType) {
       case 'box': {
-        const boxType: BoxByType = isPF
-          ? summary.summaryTarget.getData()[NodeAttr.isBox]
-          : summary.summaryTarget.data(NodeAttr.isBox);
+        const boxType: BoxByType = summary.summaryTarget.getData()[NodeAttr.isBox];
         switch (boxType) {
           case 'app':
             return (

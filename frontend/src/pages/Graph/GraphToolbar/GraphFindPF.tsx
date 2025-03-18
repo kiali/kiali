@@ -19,7 +19,6 @@ import { KialiAppState } from '../../../store/Store';
 import { findValueSelector, hideValueSelector, edgeLabelsSelector, edgeModeSelector } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import { GraphHelpFind } from '../../../pages/Graph/GraphHelpFind';
-import * as CytoscapeGraphUtils from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { EdgeLabelMode, NodeType, Layout, EdgeMode, NodeAttr, EdgeAttr } from '../../../types/Graph';
 import * as AlertUtils from '../../../utils/AlertUtils';
 import { KialiIcon } from 'config/KialiIcon';
@@ -33,7 +32,7 @@ import { GraphFindOptions } from './GraphFindOptions';
 import { location, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
 import { EdgeData, NodeData } from 'pages/GraphPF/GraphPFElems';
-import { elems, SelectAnd, SelectExp, selectOr, SelectOr, setObserved } from 'helpers/GraphHelpers';
+import { elems, SelectAnd, SelectExp, selectOr, SelectOr, setObserved, toSafeFieldName } from 'helpers/GraphHelpers';
 import { descendents } from 'helpers/GraphHelpers';
 import { isArray } from 'lodash';
 import { graphLayout, LayoutType } from 'pages/GraphPF/GraphPF';
@@ -1047,7 +1046,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
         if (field.startsWith('label:')) {
           return {
             target: 'node',
-            selector: { prop: CytoscapeGraphUtils.toSafeCyFieldName(field), op: op, val: val }
+            selector: { prop: toSafeFieldName(field), op: op, val: val }
           };
         }
 
@@ -1190,7 +1189,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
       default:
         // special node operand
         if (field.startsWith('label:')) {
-          const safeFieldName = CytoscapeGraphUtils.toSafeCyFieldName(field);
+          const safeFieldName = toSafeFieldName(field);
           return { target: 'node', selector: { prop: safeFieldName, op: isNegation ? 'falsy' : 'truthy' } };
         }
 

@@ -14,9 +14,6 @@ import { DurationInSeconds } from 'types/Common';
 import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
 import { gvkType, IstioConfigList, skipUnrelatedK8sGateways, toIstioItems } from '../../types/IstioConfigList';
 import { WorkloadPods } from './WorkloadPods';
-import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
-import { location, router, URLParam } from '../../app/History';
-import { MiniGraphCard } from '../../components/CytoscapeGraph/MiniGraphCard';
 import { IstioConfigCard } from '../../components/IstioConfigCard/IstioConfigCard';
 import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
 import { getGVKTypeString, stringToGVK } from '../../utils/IstioConfigUtils';
@@ -250,22 +247,6 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     return validations;
   }
 
-  goToMetrics = (e: GraphEdgeTapEvent): void => {
-    if (e.source !== e.target && this.props.workload) {
-      const direction = e.source === this.props.workload.name ? 'outbound' : 'inbound';
-      const destination = direction === 'inbound' ? 'source_canonical_service' : 'destination_canonical_service';
-
-      const urlParams = new URLSearchParams(location.getSearch());
-      urlParams.set('tab', direction === 'inbound' ? 'in_metrics' : 'out_metrics');
-      urlParams.set(
-        URLParam.BY_LABELS,
-        `${destination}=${e.source === this.props.workload.name ? e.target : e.source}`
-      );
-
-      router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
-    }
-  };
-
   render(): React.ReactNode {
     const workload = this.props.workload;
     const pods = workload?.pods ?? [];
@@ -279,8 +260,6 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     // RenderComponentScroll handles height to provide an inner scroll combined with tabs
     // This height needs to be propagated to minigraph to proper resize in height
     // Graph resizes correctly on width
-    const height = this.state.tabHeight ? this.state.tabHeight - 115 : 300;
-    const graphContainerStyle = kialiStyle({ width: '100%', height: height });
     const includeMiniGraphCy = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'pf';
     const includeMiniGraphPF = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'cy';
     const miniGraphSpan = includeMiniGraphCy && includeMiniGraphPF ? 4 : 8;
@@ -324,19 +303,6 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                 </StackItem>
               </Stack>
             </GridItem>
-
-            {includeMiniGraphCy && (
-              <GridItem span={miniGraphSpan}>
-                <MiniGraphCard
-                  onEdgeTap={this.goToMetrics}
-                  dataSource={this.graphDataSource}
-                  namespace={this.props.namespace}
-                  graphContainerStyle={graphContainerStyle}
-                  workload={this.props.workload}
-                  refreshWorkload={this.props.refreshWorkload}
-                />
-              </GridItem>
-            )}
 
             {includeMiniGraphPF && (
               <GridItem span={miniGraphSpan}>

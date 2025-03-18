@@ -40,7 +40,7 @@ import screenfull, { Screenfull } from 'screenfull';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { timeRangeSelector } from '../../store/Selectors';
-import { PFColors, PFColorVal } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import { AccessLogModal } from 'components/Envoy/AccessLogModal';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { location, router, URLParam } from 'app/History';
@@ -83,7 +83,7 @@ export type WorkloadPodLogsProps = ReduxProps & {
 };
 
 type ContainerOption = {
-  color: PFColorVal;
+  color: PFColors;
   displayName: string;
   isAmbient: boolean;
   isProxy: boolean;

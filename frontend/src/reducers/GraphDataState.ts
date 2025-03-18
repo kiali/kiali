@@ -82,7 +82,6 @@ export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, a
     case getType(GraphActions.updateSummary):
       return updateState(state, {
         summaryData: updateState(state.summaryData, {
-          isPF: action.payload.isPF,
           summaryType: action.payload.summaryType,
           summaryTarget: action.payload.summaryTarget
         })

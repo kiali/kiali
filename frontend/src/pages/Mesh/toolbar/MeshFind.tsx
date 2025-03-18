@@ -17,7 +17,6 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { KialiAppState } from '../../../store/Store';
 import { meshFindValueSelector, meshHideValueSelector } from '../../../store/Selectors';
-import * as CytoscapeGraphUtils from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { TourStop } from 'components/Tour/TourStop';
@@ -27,7 +26,16 @@ import { AutoComplete } from 'utils/AutoComplete';
 import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { location, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
-import { setObserved, elems, SelectAnd, SelectExp, selectOr, SelectOr, descendents } from 'helpers/GraphHelpers';
+import {
+  setObserved,
+  elems,
+  SelectAnd,
+  SelectExp,
+  selectOr,
+  SelectOr,
+  descendents,
+  toSafeFieldName
+} from 'helpers/GraphHelpers';
 import { isArray } from 'lodash';
 import { MeshAttr, MeshEdgeData, MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { Layout } from 'types/Graph';
@@ -816,7 +824,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
         if (field.startsWith('label:')) {
           return {
             target: 'node',
-            selector: { prop: CytoscapeGraphUtils.toSafeCyFieldName(field), op: op, val: val }
+            selector: { prop: toSafeFieldName(field), op: op, val: val }
           };
         }
 
@@ -886,7 +894,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
       default:
         // special node operand
         if (field.startsWith('label:')) {
-          const safeFieldName = CytoscapeGraphUtils.toSafeCyFieldName(field);
+          const safeFieldName = toSafeFieldName(field);
           return { target: 'node', selector: { prop: safeFieldName, op: isNegation ? '<=' : '>', val: 0 } };
         }
 

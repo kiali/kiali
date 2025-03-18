@@ -68,12 +68,11 @@ import { deleteServiceTrafficRouting } from 'services/Api';
 import { canCreate, canUpdate } from '../../types/Permissions';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { triggerRefresh } from '../../hooks/refresh';
-import { GraphData } from 'pages/Graph/GraphPage';
 import { GraphPF, FocusNode, getLayoutByName } from './GraphPF';
-import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { Controller } from '@patternfly/react-topology';
 import { GraphLegendPF } from './GraphLegendPF';
 import { HistoryManager, URLParam } from 'app/History';
+import { elementsChanged } from 'helpers/GraphHelpers';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 export type GraphURLPathProps = {
@@ -146,6 +145,16 @@ export type GraphPagePropsPF = Partial<GraphURLPathProps> &
   ReduxProps & {
     lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
   };
+
+export type GraphData = {
+  elements: DecoratedGraphElements;
+  elementsChanged: boolean; // true if current elements differ from previous fetch, can be used as an optimization.
+  errorMessage?: string;
+  fetchParams: FetchParams;
+  isError?: boolean;
+  isLoading: boolean;
+  timestamp: TimeInMilliseconds;
+};
 
 // GraphRefs are passed back from the graph when it is ready, to allow for
 // other components, or test code, to manipulate the graph programatically.
@@ -450,7 +459,6 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
               controller={this.state.graphRefs?.getController()}
               disabled={this.state.graphData.isLoading}
               elementsChanged={this.state.graphData.elementsChanged}
-              isPF={true}
               onToggleHelp={this.toggleHelp}
             />
           </div>
@@ -575,11 +583,10 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
     fetchParams: FetchParams
   ): void => {
     const prevElements = this.state.graphData.elements;
-    const elementsChanged = CytoscapeGraphUtils.elementsChanged(prevElements, elements);
     this.setState({
       graphData: {
         elements: elements,
-        elementsChanged: elementsChanged,
+        elementsChanged: elementsChanged(prevElements, elements),
         isLoading: false,
         fetchParams: fetchParams,
         timestamp: graphTimestamp * 1000
@@ -593,7 +600,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
     this.setState({
       graphData: {
         elements: EMPTY_GRAPH_DATA,
-        elementsChanged: CytoscapeGraphUtils.elementsChanged(prevElements, EMPTY_GRAPH_DATA),
+        elementsChanged: elementsChanged(prevElements, EMPTY_GRAPH_DATA),
         errorMessage: !!errorMessage ? errorMessage : undefined,
         isError: true,
         isLoading: false,
@@ -608,7 +615,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
     this.setState({
       graphData: {
         elements: EMPTY_GRAPH_DATA,
-        elementsChanged: CytoscapeGraphUtils.elementsChanged(prevElements, EMPTY_GRAPH_DATA),
+        elementsChanged: elementsChanged(prevElements, EMPTY_GRAPH_DATA),
         isLoading: false,
         fetchParams: fetchParams,
         timestamp: Date.now()

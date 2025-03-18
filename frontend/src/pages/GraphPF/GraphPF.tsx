@@ -28,7 +28,6 @@ import {
   GRAPH_AREA_SELECTED_EVENT,
   GraphLayoutEndEventListener
 } from '@patternfly/react-topology';
-import { GraphData } from 'pages/Graph/GraphPage';
 import {
   BoxByType,
   EdgeLabelMode,
@@ -68,7 +67,7 @@ import { HistoryManager, URLParam } from 'app/History';
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { supportsGroups } from 'utils/GraphUtils';
-import { GraphRefs } from './GraphPagePF';
+import { GraphData, GraphRefs } from './GraphPagePF';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { ServiceDetailsInfo } from 'types/ServiceInfo';
 import { PeerAuthentication } from 'types/IstioObjects';
@@ -256,7 +255,7 @@ const TopologyContent: React.FC<{
             return;
           }
           default:
-            updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: controller } as GraphEvent);
+            updateSummary({ summaryType: 'graph', summaryTarget: controller } as GraphEvent);
         }
       }
       return;
@@ -267,25 +266,25 @@ const TopologyContent: React.FC<{
       switch (elem?.getKind()) {
         case ModelKind.edge: {
           highlighter.setSelectedId(selectedIds[0]);
-          updateSummary({ isPF: true, summaryType: 'edge', summaryTarget: elem } as GraphEvent);
+          updateSummary({ summaryType: 'edge', summaryTarget: elem } as GraphEvent);
           return;
         }
         case ModelKind.node: {
           highlighter.setSelectedId(selectedIds[0]);
           const isBox = (elem.getData() as NodeData).isBox;
-          updateSummary({ isPF: true, summaryType: isBox ? 'box' : 'node', summaryTarget: elem } as GraphEvent);
+          updateSummary({ summaryType: isBox ? 'box' : 'node', summaryTarget: elem } as GraphEvent);
           return;
         }
         case ModelKind.graph:
         default:
           highlighter.setSelectedId(undefined);
           setSelectedIds([]);
-          updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: controller } as GraphEvent);
+          updateSummary({ summaryType: 'graph', summaryTarget: controller } as GraphEvent);
           return;
       }
     } else {
       highlighter.setSelectedId(undefined);
-      updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: controller } as GraphEvent);
+      updateSummary({ summaryType: 'graph', summaryTarget: controller } as GraphEvent);
     }
   }, [controller, highlighter, isMiniGraph, onEdgeTap, onNodeTap, selectedIds, setSelectedIds, updateSummary]);
 
@@ -730,7 +729,7 @@ const TopologyContent: React.FC<{
   React.useEffect(() => {
     return () => {
       if (updateSummary) {
-        updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: undefined });
+        updateSummary({ summaryType: 'graph', summaryTarget: controller });
       }
     };
   }, [updateSummary]);

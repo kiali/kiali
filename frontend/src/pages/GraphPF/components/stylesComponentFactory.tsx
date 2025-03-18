@@ -23,7 +23,6 @@ import { store } from 'store/ConfigStore';
 import { NamespaceActions } from 'actions/NamespaceAction';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
 import { router } from '../../../app/History';
-import { GraphNodeDoubleTapEvent } from 'components/CytoscapeGraph/CytoscapeGraph';
 import { isMultiCluster, serverConfig } from '../../../config';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 import * as API from '../../../services/Api';
@@ -264,7 +263,7 @@ const handleDoubleTap = (doubleTapNode: GraphElement, kiosk: string): void => {
   }
 
   const { app, cluster, namespace, nodeType, service, version, workload } = dtNodeData;
-  const event = { app, cluster, namespace, nodeType, service, version, workload } as GraphNodeDoubleTapEvent;
+  const event = { app, cluster, namespace, nodeType, service, version, workload } as any;
   const targetNode: NodeParamsType = { ...event, namespace: { name: dtNodeData.namespace } };
 
   // If, while in the drilled-down graph, the user double clicked the same
@@ -298,7 +297,7 @@ const handleDoubleTap = (doubleTapNode: GraphElement, kiosk: string): void => {
   };
 
   // To ensure updated components get the updated URL, update the URL first and then the state
-  const nodeGraphUrl = makeNodeGraphUrlFromParams(urlParams, true);
+  const nodeGraphUrl = makeNodeGraphUrlFromParams(urlParams);
 
   if (isParentKiosk(kiosk)) {
     kioskContextMenuAction(nodeGraphUrl);
