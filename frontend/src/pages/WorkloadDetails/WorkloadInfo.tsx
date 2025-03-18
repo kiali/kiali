@@ -260,9 +260,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     // RenderComponentScroll handles height to provide an inner scroll combined with tabs
     // This height needs to be propagated to minigraph to proper resize in height
     // Graph resizes correctly on width
-    const includeMiniGraphCy = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'pf';
-    const includeMiniGraphPF = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'cy';
-    const miniGraphSpan = includeMiniGraphCy && includeMiniGraphPF ? 4 : 8;
+    const miniGraphSpan = 8;
 
     return (
       <>
@@ -304,16 +302,14 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
               </Stack>
             </GridItem>
 
-            {includeMiniGraphPF && (
-              <GridItem span={miniGraphSpan}>
-                <MiniGraphCardPF
-                  dataSource={this.graphDataSource}
-                  namespace={this.props.namespace}
-                  workload={this.props.workload}
-                  refreshWorkload={this.props.refreshWorkload}
-                />
-              </GridItem>
-            )}
+            <GridItem span={miniGraphSpan}>
+              <MiniGraphCardPF
+                dataSource={this.graphDataSource}
+                namespace={this.props.namespace}
+                workload={this.props.workload}
+                refreshWorkload={this.props.refreshWorkload}
+              />
+            </GridItem>
           </Grid>
         </RenderComponentScroll>
       </>

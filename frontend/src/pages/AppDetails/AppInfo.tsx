@@ -7,7 +7,6 @@ import { DurationInSeconds } from 'types/Common';
 import { GraphDataSource } from 'services/GraphDataSource';
 import { AppHealth } from 'types/Health';
 import { kialiStyle } from 'styles/StyleUtils';
-import { serverConfig } from 'config';
 import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
 
 type AppInfoProps = {
@@ -60,9 +59,7 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
     // RenderComponentScroll handles height to provide an inner scroll combined with tabs
     // This height needs to be propagated to minigraph to proper resize in height
     // Graph resizes correctly on width
-    const includeMiniGraphCy = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'pf';
-    const includeMiniGraphPF = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'cy';
-    const miniGraphSpan = includeMiniGraphCy && includeMiniGraphPF ? 4 : 8;
+    const miniGraphSpan = 8;
     return (
       <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
         <Grid hasGutter={true} className={fullHeightStyle}>
@@ -70,11 +67,9 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
             <AppDescription app={this.props.app} health={this.props.health} isSupported={this.props.isSupported} />
           </GridItem>
 
-          {includeMiniGraphPF && (
-            <GridItem span={miniGraphSpan}>
-              <MiniGraphCardPF dataSource={this.graphDataSource} />
-            </GridItem>
-          )}
+          <GridItem span={miniGraphSpan}>
+            <MiniGraphCardPF dataSource={this.graphDataSource} />
+          </GridItem>
         </Grid>
       </RenderComponentScroll>
     );

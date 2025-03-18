@@ -41,8 +41,8 @@ type ContextMenuOptionPF = ContextMenuOption & {
   node?: GraphElement;
 };
 
-const doubleTapHandler = (node: GraphElement, kiosk: string): void => {
-  handleDoubleTap(node, kiosk);
+const graphNavHandler = (node: GraphElement, kiosk: string): void => {
+  handleGraphNav(node, kiosk);
 };
 
 const promises = new PromisesRegistry();
@@ -63,7 +63,7 @@ const nodeContextMenu = (node: GraphElement, kiosk: string): Promise<React.React
       nodeData.isOutside
         ? ({
             text: 'Namespace Graph',
-            altClickHandler: doubleTapHandler,
+            altClickHandler: graphNavHandler,
             external: false,
             node: node,
             target: '',
@@ -71,7 +71,7 @@ const nodeContextMenu = (node: GraphElement, kiosk: string): Promise<React.React
           } as ContextMenuOptionPF)
         : ({
             text: 'Node Graph',
-            altClickHandler: doubleTapHandler,
+            altClickHandler: graphNavHandler,
             external: false,
             node: node,
             target: '',
@@ -187,21 +187,19 @@ const handleDeleteTrafficRouting = (key: string, node: GraphElement, serviceDeta
   node.getGraph().getData().onDeleteTrafficRouting(key, serviceDetails);
 };
 
-// This is temporary until the PFT graph properly handles DoubleTap.  Until then
-// we offer a ContextMenu option for what would normally be handled via DoubleTap.
-const handleDoubleTap = (doubleTapNode: GraphElement, kiosk: string): void => {
-  const dtNodeData = doubleTapNode.getData() as DecoratedGraphNodeData;
-  const graphData = doubleTapNode.getGraph().getData().graphData;
+const handleGraphNav = (fromNode: GraphElement, kiosk: string): void => {
+  const fromNodeData = fromNode.getData() as DecoratedGraphNodeData;
+  const graphData = fromNode.getGraph().getData().graphData;
 
   if (
-    dtNodeData.isInaccessible ||
-    dtNodeData.isServiceEntry ||
-    (dtNodeData.nodeType === NodeType.BOX && dtNodeData.isBox !== BoxByType.APP)
+    fromNodeData.isInaccessible ||
+    fromNodeData.isServiceEntry ||
+    (fromNodeData.nodeType === NodeType.BOX && fromNodeData.isBox !== BoxByType.APP)
   ) {
     return;
   }
 
-  if (dtNodeData.isOutOfMesh) {
+  if (fromNodeData.isOutOfMesh) {
     if (!serverConfig.ambientEnabled) {
       AlertUtils.add(
         `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`,
@@ -218,7 +216,7 @@ const handleDoubleTap = (doubleTapNode: GraphElement, kiosk: string): void => {
 
     return;
   }
-  if (dtNodeData.isIdle) {
+  if (fromNodeData.isIdle) {
     AlertUtils.add(
       `An idle node has no node-specific traffic and can not provide a node detail graph.`,
       undefined,
@@ -226,56 +224,56 @@ const handleDoubleTap = (doubleTapNode: GraphElement, kiosk: string): void => {
     );
     return;
   }
-  if (dtNodeData.isOutside) {
-    store.dispatch(NamespaceActions.setActiveNamespaces([{ name: dtNodeData.namespace }]));
+  if (fromNodeData.isOutside) {
+    store.dispatch(NamespaceActions.setActiveNamespaces([{ name: fromNodeData.namespace }]));
     return;
   }
 
   // If graph is in the drilled-down view, there is the chance that the user
-  // double clicked the same node as in the full graph. Determine if this is
-  // the case.
+  // selected the same node as in the full graph. Determine if this is the case.
+  // note = this may not be a concern in PF graph, but I'm not sure...
   let sameNode = false;
   const node = graphData.fetchParams.node;
   if (node) {
-    sameNode = node && node.nodeType === dtNodeData.nodeType;
-    switch (dtNodeData.nodeType) {
+    sameNode = node && node.nodeType === fromNodeData.nodeType;
+    switch (fromNodeData.nodeType) {
       case NodeType.AGGREGATE:
-        sameNode = sameNode && node.aggregate === dtNodeData.aggregate;
-        sameNode = sameNode && node.aggregateValue === dtNodeData.aggregateValue;
+        sameNode = sameNode && node.aggregate === fromNodeData.aggregate;
+        sameNode = sameNode && node.aggregateValue === fromNodeData.aggregateValue;
         break;
       case NodeType.APP:
-        sameNode = sameNode && node.app === dtNodeData.app;
-        sameNode = sameNode && node.version === dtNodeData.version;
+        sameNode = sameNode && node.app === fromNodeData.app;
+        sameNode = sameNode && node.version === fromNodeData.version;
         break;
       case NodeType.BOX:
         // we only support node graphs on app boxes, so assume app box
-        sameNode = sameNode && node.app === dtNodeData.app;
+        sameNode = sameNode && node.app === fromNodeData.app;
         break;
       case NodeType.SERVICE:
-        sameNode = sameNode && node.service === dtNodeData.service;
+        sameNode = sameNode && node.service === fromNodeData.service;
         break;
       case NodeType.WORKLOAD:
-        sameNode = sameNode && node.workload === dtNodeData.workload;
+        sameNode = sameNode && node.workload === fromNodeData.workload;
         break;
       default:
         sameNode = true; // don't navigate to unsupported node type
     }
   }
 
-  const { app, cluster, namespace, nodeType, service, version, workload } = dtNodeData;
+  const { app, cluster, namespace, nodeType, service, version, workload } = fromNodeData;
   const event = { app, cluster, namespace, nodeType, service, version, workload } as any;
-  const targetNode: NodeParamsType = { ...event, namespace: { name: dtNodeData.namespace } };
+  const targetNode: NodeParamsType = { ...event, namespace: { name: fromNodeData.namespace } };
 
-  // If, while in the drilled-down graph, the user double clicked the same
+  // If, while in the drilled-down graph, the user selected the same
   // node as in the main graph, it doesn't make sense to re-load the same view.
   // Instead, assume that the user wants more details for the node and do a
   // redirect to the details page.
   if (sameNode) {
-    handleDoubleTapSameNode(targetNode, kiosk);
+    handleSameNode(targetNode, kiosk);
     return;
   }
 
-  // In case user didn't double-tap the same node, or if graph is in
+  // In case user didn't select the same node, or if graph is in
   // full graph mode, redirect to the drilled-down graph of the chosen node.
   const state = store.getState();
   const urlParams: GraphUrlParams = {
@@ -307,7 +305,7 @@ const handleDoubleTap = (doubleTapNode: GraphElement, kiosk: string): void => {
 };
 
 // This allows us to navigate to the service details page when zoomed in on nodes
-const handleDoubleTapSameNode = (targetNode: NodeParamsType, kiosk: string): void => {
+const handleSameNode = (targetNode: NodeParamsType, kiosk: string): void => {
   const makeAppDetailsPageUrl = (namespace: string, nodeType: string, name?: string): string => {
     return `/namespaces/${namespace}/${nodeType}/${name}`;
   };
