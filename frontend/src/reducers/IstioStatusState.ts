@@ -9,10 +9,7 @@ export const INITIAL_ISTIO_STATUS_STATE: ClusterStatusMap = {};
 export const IstioStatusStateReducer = (state: ClusterStatusMap = {}, action: KialiAppAction): ClusterStatusMap => {
   switch (action.type) {
     case getType(IstioStatusActions.setinfo):
-      return {
-        ...state,
-        [action.payload.cluster]: action.payload.istioStatus
-      };
+      return action.payload;
     default:
       return state;
   }

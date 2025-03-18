@@ -29,7 +29,7 @@ import { Link } from 'react-router-dom-v5-compat';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { MASTHEAD } from 'components/Nav/Masthead/Masthead';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
-import { homeCluster, serverConfig } from '../../config';
+import { homeCluster } from '../../config';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
 
 export type ClusterStatusMap = { [cluster: string]: ComponentStatus[] };
@@ -41,7 +41,7 @@ type ReduxStateProps = {
 
 type ReduxDispatchProps = {
   refreshNamespaces: () => void;
-  setIstioStatus: (cluster: string, istioStatus: ComponentStatus[]) => void;
+  setIstioStatus: (statusMap: ClusterStatusMap) => void;
 };
 
 type StatusIcons = {
@@ -114,29 +114,35 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     refreshNamespaces();
   }, [refreshNamespaces]);
 
-  const fetchStatus = React.useCallback(
-    (cl: string): void => {
-      API.getIstioStatus(cl)
-        .then(response => {
-          setIstioStatus(cl, response.data);
-        })
-        .catch(error => {
-          // User without namespaces can't have access to mTLS information. Reduce severity to info.
-          const informative = namespaces && namespaces.length < 1;
+  const fetchStatus = React.useCallback((): void => {
+    API.getIstioStatus()
+      .then(response => {
+        const statusMap: ClusterStatusMap = {};
 
-          if (informative) {
-            AlertUtils.addError(t('Istio deployment status disabled.'), error, 'default', MessageType.INFO);
-          } else {
-            AlertUtils.addError(t('Error fetching Istio deployment status.'), error, 'default', MessageType.ERROR);
+        response.data.forEach(status => {
+          if (!statusMap[status.cluster]) {
+            statusMap[status.cluster] = [];
           }
+          statusMap[status.cluster].push(status);
         });
-    },
-    [namespaces, setIstioStatus, t]
-  );
+
+        setIstioStatus(statusMap);
+      })
+      .catch(error => {
+        // User without namespaces can't have access to mTLS information. Reduce severity to info.
+        const informative = namespaces && namespaces.length < 1;
+
+        if (informative) {
+          AlertUtils.addError(t('Istio deployment status disabled.'), error, 'default', MessageType.INFO);
+        } else {
+          AlertUtils.addError(t('Error fetching Istio deployment status.'), error, 'default', MessageType.ERROR);
+        }
+      });
+  }, [namespaces, setIstioStatus, t]);
 
   React.useEffect(() => {
-    // retrieve status per cluster, similar to all other API calls where clusterName param is set
-    Object.keys(serverConfig.clusters).forEach(cl => fetchStatus(cl));
+    // retrieve status for all clusters
+    fetchStatus();
   }, [lastRefreshAt, fetchStatus]);
 
   const getSeverity = (components: ComponentStatus[]): number =>
@@ -273,8 +279,8 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
-  setIstioStatus: (cluster: string, istioStatus: ComponentStatus[]) => {
-    dispatch(IstioStatusActions.setinfo({ cluster, istioStatus }));
+  setIstioStatus: (statusMap: ClusterStatusMap) => {
+    dispatch(IstioStatusActions.setinfo(statusMap));
   },
   refreshNamespaces: () => {
     dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded());
