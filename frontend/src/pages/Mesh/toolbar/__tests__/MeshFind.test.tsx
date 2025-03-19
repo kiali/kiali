@@ -1,11 +1,10 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import { MeshFindComponent } from '../MeshFind';
-import { MeshLayout } from 'pages/Mesh/layouts/layoutFactory';
+import { MeshLayout } from 'pages/Mesh/Mesh';
 
 const testHandler = () => undefined;
 const testSetter = _val => undefined;
-const layout = MeshLayout.Dagre;
 
 // TODO Find out why typescript is unhappy and get rid of all of these ts-ignores
 describe('Parse find value test', () => {
@@ -20,7 +19,7 @@ describe('Parse find value test', () => {
         setFindValue={testSetter}
         setHideValue={testSetter}
         toggleFindHelp={testHandler}
-        layout={layout}
+        layout={MeshLayout.Dagre}
       />
     );
 

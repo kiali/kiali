@@ -32,7 +32,7 @@ import {
   MeshDefinition,
   MeshTarget
 } from 'types/Mesh';
-import { Mesh } from './Mesh';
+import { Mesh, MeshLayout, getValidMeshLayout } from './Mesh';
 import { MeshActions } from 'actions/MeshActions';
 import { MeshLegend } from './MeshLegend';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
@@ -42,7 +42,6 @@ import { MeshTour } from './MeshHelpTour';
 import { MeshThunkActions } from 'actions/MeshThunkActions';
 import { toRangeString } from 'components/Time/Utils';
 import { HistoryManager, URLParam } from 'app/History';
-import { getValidMeshLayout, MeshLayout } from './layouts/layoutFactory';
 
 type ReduxStateProps = {
   activeTour?: TourInfo;
