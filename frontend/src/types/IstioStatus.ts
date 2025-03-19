@@ -16,7 +16,16 @@ export const statusMsg = {
   [Status.Unreachable]: t('Unreachable')
 };
 
+export const statusSeverity: Record<Status, number> = {
+  [Status.Unhealthy]: 5,
+  [Status.Unreachable]: 4,
+  [Status.NotReady]: 3,
+  [Status.NotFound]: 2,
+  [Status.Healthy]: 1
+};
+
 export interface ComponentStatus {
+  cluster: string;
   is_core: boolean;
   name: string;
   status: Status;

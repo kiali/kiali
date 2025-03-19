@@ -308,14 +308,8 @@ export const getOutboundTrafficPolicyMode = (): Promise<ApiResponse<OutboundTraf
   return newRequest<OutboundTrafficPolicy>(HTTP_VERBS.GET, urls.outboundTrafficPolicyMode(), {}, {});
 };
 
-export const getIstioStatus = (cluster?: string): Promise<ApiResponse<ComponentStatus[]>> => {
-  const queryParams: ClusterParam = {};
-
-  if (cluster) {
-    queryParams.clusterName = cluster;
-  }
-
-  return newRequest<ComponentStatus[]>(HTTP_VERBS.GET, urls.istioStatus(), queryParams, {});
+export const getIstioStatus = (): Promise<ApiResponse<ComponentStatus[]>> => {
+  return newRequest<ComponentStatus[]>(HTTP_VERBS.GET, urls.istioStatus(), {}, {});
 };
 
 export const getIstioCertsInfo = (): Promise<ApiResponse<CertsInfo[]>> => {
