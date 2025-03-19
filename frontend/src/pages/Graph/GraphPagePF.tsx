@@ -11,7 +11,6 @@ import {
   EdgeLabelMode,
   GraphDefinition,
   GraphType,
-  Layout,
   NodeParamsType,
   NodeType,
   SummaryData,
@@ -68,7 +67,7 @@ import { deleteServiceTrafficRouting } from 'services/Api';
 import { canCreate, canUpdate } from '../../types/Permissions';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { triggerRefresh } from '../../hooks/refresh';
-import { GraphPF, FocusNode, getLayoutByName } from './GraphPF';
+import { GraphPF, FocusNode, getValidGraphLayout, GraphLayout } from './GraphPF';
 import { Controller } from '@patternfly/react-topology';
 import { GraphLegendPF } from './GraphLegendPF';
 import { HistoryManager, URLParam } from 'app/History';
@@ -92,7 +91,7 @@ type ReduxDispatchProps = {
   setActiveNamespaces: (namespaces: Namespace[]) => void;
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setGraphDefinition: (graphDefinition: GraphDefinition) => void;
-  setLayout: (layout: Layout) => void;
+  setLayout: (layout: GraphLayout) => void;
   setNode: (node?: NodeParamsType) => void;
   setRankResult: (result: RankResult) => void;
   setTraceId: (traceId?: string) => void;
@@ -116,9 +115,9 @@ type ReduxStateProps = {
   isPageVisible: boolean;
   istioAPIEnabled: boolean;
   kiosk: string;
-  layout: Layout;
+  layout: GraphLayout;
   mtlsEnabled: boolean;
-  namespaceLayout: Layout;
+  namespaceLayout: GraphLayout;
   node?: NodeParamsType;
   rankBy: RankMode[];
   refreshInterval: IntervalInMilliseconds;
@@ -366,11 +365,13 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
     // layout url info
     const urlLayout = HistoryManager.getParam(URLParam.GRAPH_LAYOUT);
     if (urlLayout) {
-      if (urlLayout !== this.props.layout.name) {
-        this.props.setLayout(getLayoutByName(urlLayout));
+      const validLayout = getValidGraphLayout(urlLayout);
+      if (validLayout !== this.props.layout) {
+        this.props.setLayout(validLayout);
+        HistoryManager.setParam(URLParam.GRAPH_LAYOUT, validLayout);
       }
     } else {
-      HistoryManager.setParam(URLParam.GRAPH_LAYOUT, this.props.layout.name);
+      HistoryManager.setParam(URLParam.GRAPH_LAYOUT, this.props.layout);
     }
 
     // Ensure we initialize the graph. We wait for the toolbar to render and
@@ -419,11 +420,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
       this.loadGraphDataFromBackend();
     }
 
-    if (
-      prev.layout.name !== curr.layout.name ||
-      prev.namespaceLayout.name !== curr.namespaceLayout.name ||
-      activeNamespacesChanged
-    ) {
+    if (prev.layout !== curr.layout || prev.namespaceLayout !== curr.namespaceLayout || activeNamespacesChanged) {
       this.errorBoundaryRef.current.cleanError();
     }
 

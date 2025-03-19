@@ -33,7 +33,6 @@ import {
   EdgeLabelMode,
   EdgeMode,
   GraphEvent,
-  Layout,
   NodeAttr,
   NodeType,
   RankMode,
@@ -59,10 +58,6 @@ import { layoutFactory } from './layouts/layoutFactory';
 import { hideTrace, showTrace } from './TracePF';
 import { GraphHighlighterPF } from './GraphHighlighterPF';
 import { TimeInMilliseconds } from 'types/Common';
-import { KialiConcentricGraph } from 'pages/Graph/graphs/KialiConcentricGraph';
-import { KialiDagreGraph } from 'pages/Graph/graphs/KialiDagreGraph';
-import { KialiGridGraph } from 'pages/Graph/graphs/KialiGridGraph';
-import { KialiBreadthFirstGraph } from 'pages/Graph/graphs/KialiBreadthFirstGraph';
 import { HistoryManager, URLParam } from 'app/History';
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
@@ -82,13 +77,6 @@ const ZOOM_OUT = 3 / 4;
 
 export const FIT_PADDING = 90;
 
-export enum LayoutName {
-  BreadthFirst = 'BreadthFirst',
-  Concentric = 'Concentric',
-  Dagre = 'Dagre',
-  Grid = 'Grid'
-}
-
 export enum LayoutType {
   Layout = 'layout',
   LayoutNoFit = 'layoutNoFit',
@@ -98,16 +86,24 @@ export enum LayoutType {
 let initialLayout = false;
 let layoutInProgress: LayoutType | undefined;
 
-export function getLayoutByName(layoutName: string): Layout {
-  switch (layoutName) {
-    case LayoutName.BreadthFirst:
-      return KialiBreadthFirstGraph.getLayout();
-    case LayoutName.Concentric:
-      return KialiConcentricGraph.getLayout();
-    case LayoutName.Grid:
-      return KialiGridGraph.getLayout();
+// the layouts offered by the traffic graph page
+export enum GraphLayout {
+  BreadthFirst = 'breadthfirst',
+  Concentric = 'concentric',
+  Dagre = 'dagre',
+  Grid = 'grid'
+}
+
+export function getValidGraphLayout(layout: string): GraphLayout {
+  switch (layout) {
+    case GraphLayout.BreadthFirst:
+      return GraphLayout.BreadthFirst;
+    case GraphLayout.Concentric:
+      return GraphLayout.Concentric;
+    case GraphLayout.Grid:
+      return GraphLayout.Grid;
     default:
-      return KialiDagreGraph.getLayout();
+      return GraphLayout.Dagre;
   }
 }
 
@@ -146,7 +142,7 @@ const TopologyContent: React.FC<{
   graphData: GraphData;
   highlighter: GraphHighlighterPF;
   isMiniGraph: boolean;
-  layoutName: LayoutName;
+  layoutName: GraphLayout;
   onDeleteTrafficRouting: (key: string, serviceDetails: ServiceDetailsInfo) => void;
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onLaunchWizard: (
@@ -161,7 +157,7 @@ const TopologyContent: React.FC<{
   onReady: (refs: GraphRefs) => void;
   rankBy: RankMode[];
   setEdgeMode: (edgeMode: EdgeMode) => void;
-  setLayout: (val: LayoutName) => void;
+  setLayout: (val: GraphLayout) => void;
   setRankResult: (rankResult: RankResult) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   showLegend: boolean;
@@ -800,12 +796,12 @@ const TopologyContent: React.FC<{
                       id: 'toolbar_layout_dagre',
                       icon: (
                         <KialiIcon.Topology
-                          className={LayoutName.Dagre === layoutName ? toolbarActiveStyle : undefined}
+                          className={GraphLayout.Dagre === layoutName ? toolbarActiveStyle : undefined}
                         />
                       ),
                       tooltip: 'Dagre - boxing layout',
                       callback: () => {
-                        setLayoutName(LayoutName.Dagre);
+                        setLayoutName(GraphLayout.Dagre);
                       }
                     },
                     {
@@ -813,12 +809,12 @@ const TopologyContent: React.FC<{
                       id: 'toolbar_layout_grid',
                       icon: (
                         <KialiIcon.Topology
-                          className={LayoutName.Grid === layoutName ? toolbarActiveStyle : undefined}
+                          className={GraphLayout.Grid === layoutName ? toolbarActiveStyle : undefined}
                         />
                       ),
                       tooltip: 'Grid - non-boxing layout',
                       callback: () => {
-                        setLayoutName(LayoutName.Grid);
+                        setLayoutName(GraphLayout.Grid);
                       }
                     },
                     {
@@ -826,12 +822,12 @@ const TopologyContent: React.FC<{
                       id: 'toolbar_layout_concentric',
                       icon: (
                         <KialiIcon.Topology
-                          className={LayoutName.Concentric === layoutName ? toolbarActiveStyle : undefined}
+                          className={GraphLayout.Concentric === layoutName ? toolbarActiveStyle : undefined}
                         />
                       ),
                       tooltip: 'Concentric - non-boxing layout',
                       callback: () => {
-                        setLayoutName(LayoutName.Concentric);
+                        setLayoutName(GraphLayout.Concentric);
                       }
                     },
                     {
@@ -839,12 +835,12 @@ const TopologyContent: React.FC<{
                       id: 'toolbar_layout_breadth_first',
                       icon: (
                         <KialiIcon.Topology
-                          className={LayoutName.BreadthFirst === layoutName ? toolbarActiveStyle : undefined}
+                          className={GraphLayout.BreadthFirst === layoutName ? toolbarActiveStyle : undefined}
                         />
                       ),
                       tooltip: 'Breadth First - non-boxing layout',
                       callback: () => {
-                        setLayoutName(LayoutName.BreadthFirst);
+                        setLayoutName(GraphLayout.BreadthFirst);
                       }
                     }
                   ],
@@ -887,7 +883,7 @@ export const GraphPF: React.FC<{
   focusNode?: FocusNode;
   graphData: GraphData;
   isMiniGraph: boolean;
-  layout: Layout;
+  layout: GraphLayout;
   onDeleteTrafficRouting: (key: string, serviceDetails: ServiceDetailsInfo) => void;
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onLaunchWizard: (
@@ -902,7 +898,7 @@ export const GraphPF: React.FC<{
   onReady: (refs: GraphRefs) => void;
   rankBy: RankMode[];
   setEdgeMode: (edgeMode: EdgeMode) => void;
-  setLayout: (layout: Layout) => void;
+  setLayout: (layout: GraphLayout) => void;
   setRankResult: (rankResult: RankResult) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   showLegend: boolean;
@@ -959,25 +955,12 @@ export const GraphPF: React.FC<{
     setTrafficAnimation(new TrafficAnimation(c));
   }, []);
 
-  const getLayoutName = (layout: Layout): LayoutName => {
-    switch (layout.name) {
-      case 'kiali-breadthfirst':
-        return LayoutName.BreadthFirst;
-      case 'kiali-concentric':
-        return LayoutName.Concentric;
-      case 'kiali-grid':
-        return LayoutName.Grid;
-      default:
-        return LayoutName.Dagre;
-    }
-  };
-
-  const setLayoutByName = (layoutName: LayoutName): void => {
-    const layout = getLayoutByName(layoutName);
-    HistoryManager.setParam(URLParam.GRAPH_LAYOUT, layout.name);
+  const setLayoutByName = (layout: GraphLayout): void => {
+    const validLayout = getValidGraphLayout(layout);
+    HistoryManager.setParam(URLParam.GRAPH_LAYOUT, validLayout);
     // TODO: PF graph does have support for namespace box layout, just use dagre
-    HistoryManager.setParam(URLParam.GRAPH_NAMESPACE_LAYOUT, KialiDagreGraph.getLayout().name);
-    setLayout(layout);
+    HistoryManager.setParam(URLParam.GRAPH_NAMESPACE_LAYOUT, GraphLayout.Dagre);
+    setLayout(validLayout);
   };
 
   if (!controller || !graphData || graphData.isLoading) {
@@ -999,7 +982,7 @@ export const GraphPF: React.FC<{
         graphData={graphData}
         highlighter={highlighter!}
         isMiniGraph={isMiniGraph}
-        layoutName={getLayoutName(layout)}
+        layoutName={layout}
         onDeleteTrafficRouting={onDeleteTrafficRouting}
         onEdgeTap={onEdgeTap}
         onLaunchWizard={onLaunchWizard}

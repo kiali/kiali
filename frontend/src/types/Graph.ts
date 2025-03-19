@@ -4,10 +4,6 @@ import { Health } from './Health';
 import { HealthAnnotationType } from './HealthAnnotation';
 import { Controller, GraphElement } from '@patternfly/react-topology';
 
-export interface Layout {
-  name: string;
-}
-
 export const SUMMARY_PANEL_CHART_WIDTH = 250;
 
 export type SummaryType = 'graph' | 'node' | 'edge' | 'box';

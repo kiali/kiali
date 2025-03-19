@@ -28,7 +28,6 @@ import {
   GraphAreaSelectedEventListener,
   GRAPH_AREA_SELECTED_EVENT
 } from '@patternfly/react-topology';
-import { Layout } from 'types/Graph';
 import { elementFactory } from './elements/elementFactory';
 import { layoutFactory } from './layouts/layoutFactory';
 import { TimeInMilliseconds } from 'types/Common';
@@ -50,9 +49,6 @@ import {
 } from './MeshElems';
 import { elems, setObserved } from 'helpers/GraphHelpers';
 import { MeshTourStops } from './MeshHelpTour';
-import { KialiMeshDagre } from './layouts/KialiMeshDagre';
-//import { KialiMeshCola } from './layouts/KialiMeshCola';
-import { KialiDagreGraph } from 'pages/Graph/graphs/KialiDagreGraph';
 import { KialiIcon } from 'config/KialiIcon';
 import { toolbarActiveStyle } from 'styles/GraphStyle';
 
@@ -63,12 +59,6 @@ const ZOOM_OUT = 3 / 4;
 
 export const FIT_PADDING = 90;
 
-export enum LayoutName {
-  Dagre = 'dagre',
-  //MeshCola = 'kiali-mesh-cola',
-  MeshDagre = 'kiali-mesh-dagre'
-}
-
 export enum LayoutType {
   Layout = 'layout',
   LayoutNoFit = 'layoutNoFit',
@@ -78,14 +68,19 @@ export enum LayoutType {
 let initialLayout = false;
 let layoutInProgress: LayoutType | undefined;
 
-export function getLayoutByName(layoutName: string): Layout {
-  switch (layoutName) {
-    // case LayoutName.MeshCola:
-    // return KialiMeshCola.getLayout();
-    case LayoutName.MeshDagre:
-      return KialiMeshDagre.getLayout();
+// the layouts offered by the mesh page
+export enum MeshLayout {
+  Dagre = 'dagre',
+  //MeshCola = 'kiali-mesh-cola',
+  MeshDagre = 'kiali-mesh-dagre'
+}
+
+export function getValidMeshLayout(layout: string): MeshLayout {
+  switch (layout) {
+    case MeshLayout.MeshDagre:
+      return MeshLayout.MeshDagre;
     default:
-      return KialiDagreGraph.getLayout();
+      return MeshLayout.Dagre;
   }
 }
 
@@ -115,12 +110,12 @@ const TopologyContent: React.FC<{
   controller: Controller;
   highlighter: MeshHighlighter;
   isMiniMesh: boolean;
-  layoutName: LayoutName;
+  layout: MeshLayout;
   meshData: MeshData;
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (refs: MeshRefs) => void;
-  setLayout: (val: LayoutName) => void;
+  setLayout: (val: MeshLayout) => void;
   setTarget: (meshTarget: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   showLegend: boolean;
@@ -129,7 +124,7 @@ const TopologyContent: React.FC<{
   controller,
   highlighter,
   isMiniMesh,
-  layoutName,
+  layout,
   meshData,
   onEdgeTap,
   onNodeTap,
@@ -257,7 +252,7 @@ const TopologyContent: React.FC<{
           graph: {
             id: 'mesh',
             type: 'graph',
-            layout: layoutName
+            layout: layout
           }
         };
         controller.fromModel(defaultModel, false);
@@ -420,7 +415,7 @@ const TopologyContent: React.FC<{
 
     // notify that the graph has been updated
     setUpdateTime(Date.now());
-  }, [controller, meshData, highlighter, layoutName, onReady, setDetailsLevel, setSelectedIds, setUpdateTime]);
+  }, [controller, meshData, highlighter, layout, onReady, setDetailsLevel, setSelectedIds, setUpdateTime]);
 
   //TODO REMOVE THESE DEBUGGING MESSAGES...
   // Leave them for now, they are just good for understanding state changes while we develop this PFT graph.
@@ -464,9 +459,9 @@ const TopologyContent: React.FC<{
       return;
     }
 
-    controller.getGraph().setLayout(layoutName);
+    controller.getGraph().setLayout(layout);
     meshLayout(controller, LayoutType.Layout);
-  }, [controller, layoutName]);
+  }, [controller, layout]);
 
   //
   // Set back to mesh target at unmount-time (not every post-render)
@@ -523,13 +518,11 @@ const TopologyContent: React.FC<{
                       ariaLabel: 'Layout - Dagre',
                       id: 'toolbar_layout_dagre',
                       icon: (
-                        <KialiIcon.Topology
-                          className={LayoutName.Dagre === layoutName ? toolbarActiveStyle : undefined}
-                        />
+                        <KialiIcon.Topology className={MeshLayout.Dagre === layout ? toolbarActiveStyle : undefined} />
                       ),
                       tooltip: 'Layout - Dagre',
                       callback: () => {
-                        _setLayoutName(LayoutName.Dagre);
+                        _setLayoutName(MeshLayout.Dagre);
                       }
                     },
                     {
@@ -537,12 +530,12 @@ const TopologyContent: React.FC<{
                       id: 'toolbar_layout_mesh_dagre',
                       icon: (
                         <KialiIcon.Topology
-                          className={LayoutName.MeshDagre === layoutName ? toolbarActiveStyle : undefined}
+                          className={MeshLayout.MeshDagre === layout ? toolbarActiveStyle : undefined}
                         />
                       ),
                       tooltip: 'Layout - Mesh Dagre',
                       callback: () => {
-                        _setLayoutName(LayoutName.MeshDagre);
+                        _setLayoutName(MeshLayout.MeshDagre);
                       }
                     }
                   ],
@@ -581,12 +574,12 @@ const TopologyContent: React.FC<{
 
 export const Mesh: React.FC<{
   isMiniMesh: boolean;
-  layout: Layout;
+  layout: MeshLayout;
   meshData: MeshData;
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (refs: MeshRefs) => void;
-  setLayout: (layout: Layout) => void;
+  setLayout: (layout: MeshLayout) => void;
   setTarget: (meshTarget: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   showLegend: boolean;
@@ -619,20 +612,10 @@ export const Mesh: React.FC<{
     setHighlighter(new MeshHighlighter(c));
   }, []);
 
-  const getLayoutName = (layout: Layout): LayoutName => {
-    switch (layout.name) {
-      // case LayoutName.MeshCola:
-      case LayoutName.MeshDagre:
-        return layout.name;
-      default:
-        return LayoutName.Dagre;
-    }
-  };
-
-  const setLayoutByName = (layoutName: LayoutName): void => {
-    const layout = getLayoutByName(layoutName);
-    HistoryManager.setParam(URLParam.MESH_LAYOUT, layout.name);
-    setLayout(layout);
+  const setLayoutByName = (layout: MeshLayout): void => {
+    const validLayout = getValidMeshLayout(layout);
+    HistoryManager.setParam(URLParam.MESH_LAYOUT, validLayout);
+    setLayout(validLayout);
   };
 
   if (!controller || !meshData || meshData.isLoading) {
@@ -651,7 +634,7 @@ export const Mesh: React.FC<{
         meshData={meshData}
         highlighter={highlighter!}
         isMiniMesh={isMiniMesh}
-        layoutName={getLayoutName(layout)}
+        layout={layout}
         onEdgeTap={onEdgeTap}
         onNodeTap={onNodeTap}
         onReady={onReady}

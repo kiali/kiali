@@ -3,16 +3,16 @@ import { GraphActions } from '../../actions/GraphActions';
 import { GlobalActions } from '../../actions/GlobalActions';
 import { DefaultTrafficRates, EdgeMode, GraphType } from '../../types/Graph';
 import { GraphState } from 'store/Store';
-import { KialiDagreGraph } from '../../pages/Graph/graphs/KialiDagreGraph';
 import { GraphElement } from '@patternfly/react-topology';
+import { GraphLayout } from 'pages/Graph/GraphPF';
 
 describe('GraphDataState', () => {
   it('should return the initial state', () => {
     expect(GraphDataStateReducer(undefined, GlobalActions.unknown())).toEqual({
       edgeMode: EdgeMode.ALL,
       graphDefinition: null,
-      layout: KialiDagreGraph.getLayout(),
-      namespaceLayout: KialiDagreGraph.getLayout(),
+      layout: GraphLayout.Dagre,
+      namespaceLayout: GraphLayout.Dagre,
       node: undefined,
       rankResult: { upperBound: 0 },
       summaryData: null,

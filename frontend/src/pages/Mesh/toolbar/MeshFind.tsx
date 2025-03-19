@@ -38,17 +38,16 @@ import {
 } from 'helpers/GraphHelpers';
 import { isArray } from 'lodash';
 import { MeshAttr, MeshEdgeData, MeshInfraType, MeshNodeData } from 'types/Mesh';
-import { Layout } from 'types/Graph';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
 import { MeshFindOptions } from './MeshFindOptions';
 import { MeshHelpFind } from '../MeshHelpFind';
-import { LayoutType, meshLayout } from '../Mesh';
+import { LayoutType, MeshLayout, meshLayout } from '../Mesh';
 import { infoStyle } from 'styles/IconStyle';
 
 type ReduxStateProps = {
   findValue: string;
   hideValue: string;
-  layout: Layout;
+  layout: MeshLayout;
   showFindHelp: boolean;
 };
 

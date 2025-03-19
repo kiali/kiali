@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import { MeshFindComponent } from '../MeshFind';
+import { MeshLayout } from 'pages/Mesh/Mesh';
 
 const testHandler = () => undefined;
 const testSetter = _val => undefined;
@@ -18,7 +19,7 @@ describe('Parse find value test', () => {
         setFindValue={testSetter}
         setHideValue={testSetter}
         toggleFindHelp={testHandler}
-        layout={{ name: '' }}
+        layout={MeshLayout.Dagre}
       />
     );
 

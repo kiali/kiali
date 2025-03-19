@@ -1,6 +1,6 @@
-import { LayoutName } from 'pages/Graph/GraphPF';
+import { GraphLayout } from 'pages/Graph/GraphPF';
 
 // check if the graph layout supports grouping
-export const supportsGroups = (layoutName: LayoutName): boolean => {
-  return layoutName === LayoutName.Dagre;
+export const supportsGroups = (layoutName: GraphLayout): boolean => {
+  return layoutName === GraphLayout.Dagre;
 };

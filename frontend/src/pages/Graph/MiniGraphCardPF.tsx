@@ -15,13 +15,13 @@ import {
 import { Edge, EdgeModel, Node, NodeModel } from '@patternfly/react-topology';
 import { URLParam, location, router } from '../../app/History';
 import { GraphDataSource } from '../../services/GraphDataSource';
-import { DecoratedGraphElements, EdgeMode, GraphEvent, GraphType, Layout, NodeType } from '../../types/Graph';
+import { DecoratedGraphElements, EdgeMode, GraphEvent, GraphType, NodeType } from '../../types/Graph';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
 import { store } from 'store/ConfigStore';
 import { TimeInMilliseconds } from '../../types/Common';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { KialiAppState } from '../../store/Store';
-import { GraphPF } from './GraphPF';
+import { GraphLayout, GraphPF } from './GraphPF';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { isKiosk, isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 import { ServiceWizardActionsDropdownGroup } from 'components/IstioWizards/ServiceWizardActionsDropdownGroup';
@@ -29,7 +29,6 @@ import { toRangeString } from 'components/Time/Utils';
 import { KioskElement } from 'components/Kiosk/KioskElement';
 import { TimeDurationIndicator } from 'components/Time/TimeDurationIndicator';
 import { TimeDurationModal } from 'components/Time/TimeDurationModal';
-import { KialiDagreGraph } from 'pages/Graph/graphs/KialiDagreGraph';
 import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { GraphActions } from 'actions/GraphActions';
@@ -45,7 +44,7 @@ import { EmptyGraphLayout } from 'pages/Graph/EmptyGraphLayout';
 
 type ReduxDispatchProps = {
   setEdgeMode: (edgeMode: EdgeMode) => void;
-  setLayout: (layout: Layout) => void;
+  setLayout: (layout: GraphLayout) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   updateSummary: (event: GraphEvent) => void;
 };
@@ -209,7 +208,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
                     timestamp: this.props.dataSource.graphTimestamp
                   }}
                   isMiniGraph={true}
-                  layout={KialiDagreGraph.getLayout()}
+                  layout={GraphLayout.Dagre}
                   onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
                   onEdgeTap={this.handleEdgeTap}
                   onLaunchWizard={this.handleLaunchWizard}

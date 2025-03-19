@@ -1,6 +1,6 @@
 import { DagreLayout, Graph, Layout, LayoutFactory } from '@patternfly/react-topology';
 import { MeshDagreLayout } from './MeshDagreLayout';
-import { LayoutName } from '../Mesh';
+import { MeshLayout } from '../Mesh';
 //import { MeshColaLayout } from './MeshColaLayout';
 
 /*
@@ -24,7 +24,7 @@ export const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout
     //  return new MeshColaLayout(graph, {
     //    layoutOnDrag: false
     //  });
-    case LayoutName.MeshDagre:
+    case MeshLayout.MeshDagre:
       return new MeshDagreLayout(graph, {
         layoutOnDrag: false,
         ranksep: 15

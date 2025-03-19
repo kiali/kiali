@@ -6,7 +6,7 @@ import {
   LayoutFactory,
   BreadthFirstLayout
 } from '@patternfly/react-topology';
-import { LayoutName } from '../GraphPF';
+import { GraphLayout } from '../GraphPF';
 import { ExtendedDagreLayout } from './ExtendedDagreLayout';
 
 /*
@@ -26,11 +26,11 @@ export const LAYOUT_DEFAULTS: LayoutOptions = {
 
 export const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout | undefined => {
   switch (type) {
-    case LayoutName.BreadthFirst:
+    case GraphLayout.BreadthFirst:
       return new BreadthFirstLayout(graph);
-    case LayoutName.Concentric:
+    case GraphLayout.Concentric:
       return new ConcentricLayout(graph);
-    case LayoutName.Grid:
+    case GraphLayout.Grid:
       return new GridLayout(graph, {
         nodeDistance: 50
       });

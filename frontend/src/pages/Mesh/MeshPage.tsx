@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import FlexView from 'react-flexview';
 import { kialiStyle } from 'styles/StyleUtils';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
-import { Layout, UNKNOWN } from '../../types/Graph';
+import { UNKNOWN } from '../../types/Graph';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
 import {
@@ -32,7 +32,7 @@ import {
   MeshDefinition,
   MeshTarget
 } from 'types/Mesh';
-import { Mesh, getLayoutByName } from './Mesh';
+import { Mesh, MeshLayout, getValidMeshLayout } from './Mesh';
 import { MeshActions } from 'actions/MeshActions';
 import { MeshLegend } from './MeshLegend';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
@@ -51,7 +51,7 @@ type ReduxStateProps = {
   isPageVisible: boolean;
   istioAPIEnabled: boolean;
   kiosk: string;
-  layout: Layout;
+  layout: MeshLayout;
   mtlsEnabled: boolean;
   refreshInterval: IntervalInMilliseconds;
   showGateways: boolean;
@@ -65,7 +65,7 @@ type ReduxDispatchProps = {
   endTour: () => void;
   onReady: (controller: Controller) => void;
   setDefinition: (meshDefinition: MeshDefinition) => void;
-  setLayout: (layout: Layout) => void;
+  setLayout: (layout: MeshLayout) => void;
   setTarget: (target: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   startTour: ({ info, stop }) => void;
@@ -162,11 +162,13 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     const urlLayout = HistoryManager.getParam(URLParam.MESH_LAYOUT);
 
     if (urlLayout) {
-      if (urlLayout !== this.props.layout.name) {
-        this.props.setLayout(getLayoutByName(urlLayout));
+      const validLayout = getValidMeshLayout(urlLayout);
+      if (validLayout !== this.props.layout) {
+        this.props.setLayout(validLayout);
+        HistoryManager.setParam(URLParam.MESH_LAYOUT, validLayout);
       }
     } else {
-      HistoryManager.setParam(URLParam.MESH_LAYOUT, this.props.layout.name);
+      HistoryManager.setParam(URLParam.MESH_LAYOUT, this.props.layout);
     }
 
     // Connect to mesh data source updates
@@ -194,7 +196,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
       this.loadMeshFromBackend();
     }
 
-    if (prev.layout.name !== curr.layout.name) {
+    if (prev.layout !== curr.layout) {
       this.errorBoundaryRef.current.cleanError();
     }
 

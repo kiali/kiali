@@ -35,7 +35,7 @@ import { getEdgeHealth } from 'types/ErrorRate/GraphEdgeStatus';
 import { Span } from 'types/TracingInfo';
 import { IconType } from 'config/Icons';
 import { NodeDecorator } from './NodeDecorator';
-import { LayoutName } from './GraphPF';
+import { GraphLayout } from './GraphPF';
 import { supportsGroups } from 'utils/GraphUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { TrafficPointGenerator } from '../Graph/TrafficAnimation/TrafficRendererPF';
@@ -227,7 +227,7 @@ export const setNodeLabel = (
   node: NodeModel,
   nodeMap: NodeMap,
   settings: GraphPFSettings,
-  layoutName: LayoutName
+  layoutName: GraphLayout
 ): void => {
   const data = node.data as NodeData;
   const app = data.app ?? '';
