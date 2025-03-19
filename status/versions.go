@@ -90,7 +90,7 @@ func istioVersion() (*ExternalServiceInfo, error) {
 
 	if err != nil {
 		AddWarningMessages(configWarnings)
-		return nil, fmt.Errorf(configWarnings)
+		return nil, fmt.Errorf("%v", configWarnings)
 	}
 	if code >= 400 {
 		return nil, fmt.Errorf("getting istio version returned error code [%d]", code)
