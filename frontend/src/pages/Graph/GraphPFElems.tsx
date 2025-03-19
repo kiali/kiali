@@ -38,7 +38,7 @@ import { NodeDecorator } from './NodeDecorator';
 import { LayoutName } from './GraphPF';
 import { supportsGroups } from 'utils/GraphUtils';
 import { kialiStyle } from 'styles/StyleUtils';
-import { TrafficPointGenerator } from './TrafficAnimation/TrafficRendererPF';
+import { TrafficPointGenerator } from '../Graph/TrafficAnimation/TrafficRendererPF';
 
 // Utilities for working with PF Topology
 

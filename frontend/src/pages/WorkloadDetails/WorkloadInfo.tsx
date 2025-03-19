@@ -15,7 +15,7 @@ import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
 import { gvkType, IstioConfigList, skipUnrelatedK8sGateways, toIstioItems } from '../../types/IstioConfigList';
 import { WorkloadPods } from './WorkloadPods';
 import { IstioConfigCard } from '../../components/IstioConfigCard/IstioConfigCard';
-import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
+import { MiniGraphCardPF } from 'pages/Graph/MiniGraphCardPF';
 import { getGVKTypeString, stringToGVK } from '../../utils/IstioConfigUtils';
 import { WorkloadEntries } from './WorkloadEntries';
 

@@ -7,7 +7,7 @@ import {
 import { Protocol } from '../../../types/Graph';
 import { timerConfig, tcpTimerConfig } from './AnimationTimerConfig';
 import { Controller, Edge, EdgeAnimationSpeed, EdgeStyle } from '@patternfly/react-topology';
-import { EdgeData } from 'pages/GraphPF/GraphPFElems';
+import { EdgeData } from 'pages/Graph/GraphPFElems';
 import { PFColors } from 'components/Pf/PfColors';
 import { setObserved } from 'helpers/GraphHelpers';
 import { serverConfig } from 'config';

@@ -42,7 +42,7 @@ import {
 } from 'types/Graph';
 import { JaegerTrace } from 'types/TracingInfo';
 import { stylesComponentFactory } from './components/stylesComponentFactory';
-import { elementFactory } from './elements/elementFactory';
+import { elementFactory } from '../Graph/elements/elementFactory';
 import {
   assignEdgeHealth,
   EdgeData,
@@ -74,7 +74,7 @@ import { PeerAuthentication } from 'types/IstioObjects';
 import { KialiIcon } from 'config/KialiIcon';
 import { toolbarActiveStyle } from 'styles/GraphStyle';
 import { scoreNodes, ScoringCriteria } from 'components/CytoscapeGraph/GraphScore';
-import { TrafficAnimation } from './TrafficAnimation/TrafficRendererPF';
+import { TrafficAnimation } from '../Graph/TrafficAnimation/TrafficRendererPF';
 
 const DEFAULT_NODE_SIZE = 40;
 const ZOOM_IN = 4 / 3;

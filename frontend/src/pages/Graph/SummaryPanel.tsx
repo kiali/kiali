@@ -18,7 +18,7 @@ import { summaryPanelWidth } from './SummaryPanelCommon';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { PeerAuthentication } from '../../types/IstioObjects';
-import { FocusNode } from 'pages/GraphPF/GraphPF';
+import { FocusNode } from 'pages/Graph/GraphPF';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelStyle } from './SummaryPanelStyle';
 import { PFColors } from 'components/Pf/PfColors';

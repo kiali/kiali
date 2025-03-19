@@ -41,7 +41,7 @@ import { deleteServiceTrafficRouting } from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { triggerRefresh } from '../../hooks/refresh';
 import { serverConfig } from 'config';
-import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
+import { MiniGraphCardPF } from 'pages/Graph/MiniGraphCardPF';
 
 type ReduxProps = {
   duration: DurationInSeconds;

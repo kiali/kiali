@@ -14,8 +14,8 @@ import * as React from 'react';
 import { KeyIcon, TopologyIcon } from '@patternfly/react-icons';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
-import { Triangle } from '../elements/triangle';
-import { Plate } from '../elements/plate';
+import { Triangle } from '../../Graph/elements/triangle';
+import { Plate } from '../../Graph/elements/plate';
 
 // This is the registered Node component override that utilizes our customized Node.tsx component.
 

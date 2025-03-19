@@ -21,7 +21,7 @@ import { responseFlags } from 'utils/ResponseFlags';
 import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
 import { Visualization, Node } from '@patternfly/react-topology';
 import { elems, selectAnd } from 'helpers/GraphHelpers';
-import { FocusNode } from 'pages/GraphPF/GraphPF';
+import { FocusNode } from 'pages/Graph/GraphPF';
 import { ExternalServiceInfo } from '../../types/StatusState';
 import { isMultiCluster } from '../../config';
 import { KialiIcon } from 'config/KialiIcon';

@@ -1,4 +1,4 @@
-import { LayoutName } from 'pages/GraphPF/GraphPF';
+import { LayoutName } from 'pages/Graph/GraphPF';
 
 // check if the graph layout supports grouping
 export const supportsGroups = (layoutName: LayoutName): boolean => {

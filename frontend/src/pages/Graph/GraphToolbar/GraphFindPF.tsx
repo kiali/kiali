@@ -31,11 +31,11 @@ import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { GraphFindOptions } from './GraphFindOptions';
 import { location, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
-import { EdgeData, NodeData } from 'pages/GraphPF/GraphPFElems';
+import { EdgeData, NodeData } from 'pages/Graph/GraphPFElems';
 import { elems, SelectAnd, SelectExp, selectOr, SelectOr, setObserved, toSafeFieldName } from 'helpers/GraphHelpers';
 import { descendents } from 'helpers/GraphHelpers';
 import { isArray } from 'lodash';
-import { graphLayout, LayoutType } from 'pages/GraphPF/GraphPF';
+import { graphLayout, LayoutType } from 'pages/Graph/GraphPF';
 import { infoStyle } from 'styles/IconStyle';
 
 type ReduxStateProps = {

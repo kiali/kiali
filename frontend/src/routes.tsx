@@ -13,7 +13,7 @@ import { AppDetailsRoute } from 'routes/AppDetailsRoute';
 import { IstioConfigDetailsRoute } from 'routes/IstioConfigDetailsRoute';
 import { IstioConfigNewRoute } from 'routes/IstioConfigNewRoute';
 import { GraphRoutePF } from 'routes/GraphRoutePF';
-import { GraphPagePF } from 'pages/GraphPF/GraphPagePF';
+import { GraphPagePF } from 'pages/Graph/GraphPagePF';
 import { t } from 'utils/I18nUtils';
 import { RouteObject } from 'react-router-dom-v5-compat';
 import { WildcardRoute } from 'routes/WildcardRoute';

@@ -7,7 +7,7 @@ import { DurationInSeconds } from 'types/Common';
 import { GraphDataSource } from 'services/GraphDataSource';
 import { AppHealth } from 'types/Health';
 import { kialiStyle } from 'styles/StyleUtils';
-import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
+import { MiniGraphCardPF } from 'pages/Graph/MiniGraphCardPF';
 
 type AppInfoProps = {
   app?: App;
