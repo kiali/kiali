@@ -146,6 +146,7 @@ fi
 
 # Determine where this script is and make it the cwd
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+source ${SCRIPT_DIR}/istio/functions.sh
 
 # This is used in multiple places and you need to call 'setKialiURL' first.
 KIALI_URL=""
@@ -380,6 +381,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
   yarn run cypress:run
   detectRaceConditions
 elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
+
   ensureCypressInstalled
   ensureKialiTracesReady "true"
 
@@ -394,6 +396,9 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
   ensureKialiServerReady
   ensureBookinfoGraphReady
 
+echo ${ISTIO_VERSION_ARG}
+echo ${ISTIO_VERSION}
+
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
@@ -401,6 +406,16 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
 
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
+  fi
+
+  if [ "${ISTIO_VERSION}" != "" ]; then
+
+    is_istio_version_eq_greater_than_expected "1.24.0" ${ISTIO_VERSION}
+
+    if [ $? -ne 0 ]; then
+      echo "Istio version 1.23"
+      export ISTIO_1_23="true"
+    fi
   fi
 
   cd "${SCRIPT_DIR}"/../frontend
