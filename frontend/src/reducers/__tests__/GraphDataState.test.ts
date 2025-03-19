@@ -4,6 +4,7 @@ import { GlobalActions } from '../../actions/GlobalActions';
 import { DefaultTrafficRates, EdgeMode, GraphType } from '../../types/Graph';
 import { GraphState } from 'store/Store';
 import { KialiDagreGraph } from '../../components/CytoscapeGraph/graphs/KialiDagreGraph';
+import { GraphElement } from '@patternfly/react-topology';
 
 describe('GraphDataState', () => {
   it('should return the initial state', () => {
@@ -42,9 +43,9 @@ describe('GraphDataState', () => {
   });
 
   it('should handle UPDATE_SUMMARY', () => {
-    const action = GraphActions.updateSummary({ summaryType: 'node', summaryTarget: 'mynode' });
+    const action = GraphActions.updateSummary({ summaryType: 'node', summaryTarget: {} as GraphElement });
     const updatedState = GraphDataStateReducer(undefined, action);
 
-    expect(updatedState.summaryData).toEqual({ summaryType: 'node', summaryTarget: 'mynode' });
+    expect(updatedState.summaryData).toEqual({ summaryType: 'node', summaryTarget: {} as GraphElement });
   });
 });

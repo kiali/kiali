@@ -19,7 +19,7 @@ import { KialiAppState } from '../../../store/Store';
 import { findValueSelector, hideValueSelector, edgeLabelsSelector, edgeModeSelector } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import { GraphHelpFind } from '../../../pages/Graph/GraphHelpFind';
-import { EdgeLabelMode, NodeType, Layout, EdgeMode, NodeAttr, EdgeAttr } from '../../../types/Graph';
+import { EdgeLabelMode, NodeType, EdgeMode, NodeAttr, EdgeAttr } from '../../../types/Graph';
 import * as AlertUtils from '../../../utils/AlertUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -43,8 +43,6 @@ type ReduxStateProps = {
   edgeMode: EdgeMode;
   findValue: string;
   hideValue: string;
-  layout: Layout;
-  namespaceLayout: Layout;
   showFindHelp: boolean;
   showIdleNodes: boolean;
   showRank: boolean;
@@ -164,7 +162,7 @@ const operands: string[] = [
   'workloadentry'
 ];
 
-class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindState> {
+export class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindState> {
   static contextTypes = {
     router: (): null => null
   };
@@ -215,9 +213,9 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
     }
   }
 
-  // We only update on a change to the find/hide values, or a graph change.  Although we use other props
-  // in processing (layout, etc), a change to those settings will generate a graph change, so we
-  // wait for the graph change to do the update.
+  // We only update on a change to the find/hide values, or a graph change.  We may use other props
+  // in processing, a change to those settings will generate a graph change, so we wait for the graph
+  // change to force the update.
   shouldComponentUpdate(nextProps: GraphFindProps, nextState: GraphFindState): boolean {
     const controllerChanged = this.props.controller !== nextProps.controller;
     const edgeModeChanged = this.props.edgeMode !== nextProps.edgeMode;
@@ -1203,8 +1201,6 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   edgeMode: edgeModeSelector(state),
   findValue: findValueSelector(state),
   hideValue: hideValueSelector(state),
-  layout: state.graph.layout,
-  namespaceLayout: state.graph.namespaceLayout,
   showFindHelp: state.graph.toolbarState.showFindHelp,
   showIdleNodes: state.graph.toolbarState.showIdleNodes,
   showRank: state.graph.toolbarState.showRank,
