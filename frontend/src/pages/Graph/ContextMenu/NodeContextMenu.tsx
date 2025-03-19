@@ -2,7 +2,7 @@ import { router } from 'app/History';
 import { BoxByType, DecoratedGraphNodeData, NodeType } from 'types/Graph';
 import { TracingInfo } from 'types/TracingInfo';
 import { isMultiCluster, Paths } from 'config';
-import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions';
+import { isParentKiosk, kioskContextMenuAction } from '../../../components/Kiosk/KioskActions';
 type LinkParams = { cluster?: string; name: string; namespace: string; type: string };
 
 const getLinkParamsForNode = (node: DecoratedGraphNodeData): LinkParams | undefined => {

@@ -10,7 +10,7 @@ import {
 import { DecoratedGraphNodeData, DestService, NodeType, RankResult, SummaryPanelPropType } from '../../types/Graph';
 import { getTitle, summaryBodyTabs, summaryFont, summaryPanel } from './SummaryPanelCommon';
 import { KialiIcon } from 'config/KialiIcon';
-import { clickHandler, getOptions } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
+import { clickHandler, getOptions } from 'pages/Graph/ContextMenu/NodeContextMenu';
 import {
   Dropdown,
   DropdownGroup,

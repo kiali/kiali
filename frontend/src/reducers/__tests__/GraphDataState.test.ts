@@ -3,7 +3,7 @@ import { GraphActions } from '../../actions/GraphActions';
 import { GlobalActions } from '../../actions/GlobalActions';
 import { DefaultTrafficRates, EdgeMode, GraphType } from '../../types/Graph';
 import { GraphState } from 'store/Store';
-import { KialiDagreGraph } from '../../components/CytoscapeGraph/graphs/KialiDagreGraph';
+import { KialiDagreGraph } from '../../pages/Graph/graphs/KialiDagreGraph';
 import { GraphElement } from '@patternfly/react-topology';
 
 describe('GraphDataState', () => {

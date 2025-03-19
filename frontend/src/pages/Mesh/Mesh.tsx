@@ -52,7 +52,7 @@ import { elems, setObserved } from 'helpers/GraphHelpers';
 import { MeshTourStops } from './MeshHelpTour';
 import { KialiMeshDagre } from './layouts/KialiMeshDagre';
 //import { KialiMeshCola } from './layouts/KialiMeshCola';
-import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGraph';
+import { KialiDagreGraph } from 'pages/Graph/graphs/KialiDagreGraph';
 import { KialiIcon } from 'config/KialiIcon';
 import { toolbarActiveStyle } from 'styles/GraphStyle';
 

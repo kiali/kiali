@@ -4,7 +4,7 @@ import { MeshState } from '../store/Store';
 import { updateState } from '../utils/Reducer';
 import { MeshActions } from 'actions/MeshActions';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
-import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGraph';
+import { KialiDagreGraph } from 'pages/Graph/graphs/KialiDagreGraph';
 
 export const INITIAL_MESH_STATE: MeshState = {
   definition: null,

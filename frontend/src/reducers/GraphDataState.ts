@@ -5,7 +5,7 @@ import { GraphState } from '../store/Store';
 import { EdgeMode, GraphType, TrafficRate } from '../types/Graph';
 import { GraphToolbarActions } from '../actions/GraphToolbarActions';
 import { updateState } from '../utils/Reducer';
-import { KialiDagreGraph } from '../components/CytoscapeGraph/graphs/KialiDagreGraph';
+import { KialiDagreGraph } from '../pages/Graph/graphs/KialiDagreGraph';
 
 export const INITIAL_GRAPH_STATE: GraphState = {
   edgeMode: EdgeMode.ALL,

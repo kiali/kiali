@@ -25,7 +25,7 @@ import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
 import { GraphToolbar } from '../Graph/GraphToolbar/GraphToolbar';
-import { EmptyGraphLayout } from '../../components/CytoscapeGraph/EmptyGraphLayout';
+import { EmptyGraphLayout } from '../../pages/Graph/EmptyGraphLayout';
 import { SummaryPanel } from '../Graph/SummaryPanel';
 import {
   activeNamespacesSelector,

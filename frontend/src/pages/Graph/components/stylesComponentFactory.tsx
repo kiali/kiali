@@ -11,7 +11,7 @@ import {
   withSelection
 } from '@patternfly/react-topology';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
-import { clickHandler, ContextMenuOption, getOptions } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
+import { clickHandler, ContextMenuOption, getOptions } from 'pages/Graph/ContextMenu/NodeContextMenu';
 import * as React from 'react';
 import { StyleEdge } from '../styles/styleEdge';
 import { StyleGroup } from '../styles/styleGroup';

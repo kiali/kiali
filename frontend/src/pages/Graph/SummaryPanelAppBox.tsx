@@ -28,7 +28,7 @@ import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
 import { Reporter } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
-import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
+import { getOptions, clickHandler } from 'pages/Graph/ContextMenu/NodeContextMenu';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { edgesIn, edgesOut, select, selectAnd, selectOr } from 'helpers/GraphHelpers';
 import { classes } from 'typestyle';

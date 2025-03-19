@@ -29,7 +29,7 @@ import { toRangeString } from 'components/Time/Utils';
 import { KioskElement } from 'components/Kiosk/KioskElement';
 import { TimeDurationIndicator } from 'components/Time/TimeDurationIndicator';
 import { TimeDurationModal } from 'components/Time/TimeDurationModal';
-import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGraph';
+import { KialiDagreGraph } from 'pages/Graph/graphs/KialiDagreGraph';
 import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { GraphActions } from 'actions/GraphActions';
@@ -41,7 +41,7 @@ import { kebabToggleStyle } from 'styles/DropdownStyles';
 import { WorkloadWizardActionsDropdownGroup } from 'components/IstioWizards/WorkloadWizardActionsDropdownGroup';
 import { Workload } from 'types/Workload';
 import { GraphRefs } from './GraphPagePF';
-import { EmptyGraphLayout } from 'components/CytoscapeGraph/EmptyGraphLayout';
+import { EmptyGraphLayout } from 'pages/Graph/EmptyGraphLayout';
 
 type ReduxDispatchProps = {
   setEdgeMode: (edgeMode: EdgeMode) => void;
