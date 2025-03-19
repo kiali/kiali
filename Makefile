@@ -29,7 +29,7 @@ VERSION_LABEL ?= ${VERSION}
 # The go commands and the minimum Go version that must be used to build the app.
 GO ?= go
 GOFMT ?= $(shell ${GO} env GOROOT)/bin/gofmt
-GO_VERSION_KIALI = 1.22.5
+GO_VERSION_KIALI = 1.23.6
 GO_TEST_FLAGS ?=
 
 # Identifies the Kiali container image that will be built.

@@ -1,11 +1,12 @@
 run:
-  skip-files:
-    - doc.go
-    - ".*\\.pb\\.go$"
-  skip-dirs:
-    - frontend  
   timeout: 5m
-  tests: true  
+  tests: true
+issues:
+  exclude-files:
+  - doc.go
+  - ".*\\.pb\\.go$"
+  exclude-dirs:
+  - frontend
 linters:
   enable:
     - goimports
