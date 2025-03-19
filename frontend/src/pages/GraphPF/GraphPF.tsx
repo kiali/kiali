@@ -732,7 +732,7 @@ const TopologyContent: React.FC<{
         updateSummary({ summaryType: 'graph', summaryTarget: controller });
       }
     };
-  }, [updateSummary]);
+  }, [controller, updateSummary]);
 
   // Enable the selection-based zoom
   useEventListener<GraphAreaSelectedEventListener>(
