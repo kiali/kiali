@@ -240,8 +240,8 @@ export class GraphFindPFComponent extends React.Component<GraphFindProps, GraphF
   }
 
   // Note that we may have redux hide/find values set at mount-time. But because the toolbar mounts prior to
-  // the graph loading, we can't perform this graph "post-processing" until we have a valid cy graph.  But the
-  // find/hide processing will be initiated externally (CytoscapeGraph:processgraphUpdate) when the graph is ready.
+  // the graph loading, we can't perform this graph "post-processing" until we have a valid graph.  But the
+  // find/hide processing will be initiated externally when the graph is ready.
   componentDidUpdate(prevProps: GraphFindProps): void {
     if (!this.props.controller) {
       this.findElements = undefined;

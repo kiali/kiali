@@ -13,7 +13,7 @@ import { isIstioNamespace } from '../../config/ServerConfig';
 import { AppHealth, NA, ServiceHealth, WorkloadHealth } from 'types/Health';
 import { toSafeFieldName } from 'helpers/GraphHelpers';
 
-// When updating the cytoscape graph, the element data expects to have all the changes
+// When updating the graph, the element data expects to have all the changes.
 // non-provided values are taken as "this didn't change", similar as setState does.
 // Put default values for all fields that are omitted.
 export const decorateGraphData = (graphData: GraphElements, duration: number): DecoratedGraphElements => {

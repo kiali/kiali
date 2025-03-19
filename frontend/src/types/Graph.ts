@@ -238,22 +238,6 @@ export interface NodeParamsType {
   workload: string;
 }
 
-// This data is stored in the _global scratch area in the cy graph
-// for use by code that needs access to it.
-// We can add more props to this scratch data as the need arises.
-export const CytoscapeGlobalScratchNamespace = '_global';
-export type CytoscapeGlobalScratchData = {
-  activeNamespaces: Namespace[];
-  edgeLabels: EdgeLabelMode[];
-  forceLabels: boolean;
-  graphType: GraphType;
-  homeCluster: string;
-  showOutOfMesh: boolean;
-  showSecurity: boolean;
-  showVirtualServices: boolean;
-  trafficRates: TrafficRate[];
-};
-
 export interface GraphEvent {
   summaryTarget: GraphElement | Controller; // the target of the event
   summaryType: SummaryType; // what the summary panel should show

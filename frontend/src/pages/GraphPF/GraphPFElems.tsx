@@ -41,7 +41,6 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { TrafficPointGenerator } from './TrafficAnimation/TrafficRendererPF';
 
 // Utilities for working with PF Topology
-// - most of these add cytoscape-like functions
 
 export type NodeMap = Map<string, NodeModel>;
 
@@ -162,7 +161,7 @@ const getDecorator = (element: Node, quadrant: TopologyQuadrant, icon: IconType,
 
 export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphPFSettings): void => {
   // PFT provides the ability to add a single Icon (badge) on the label. And so we will use
-  // attachments (up to 4) to display what we would have done with label badges in Cytoscape.
+  // attachments (up to 4) to display things that we'd prefer to have shown with more icons.
   const data = node.getData() as NodeData;
   const attachments = [] as React.ReactNode[];
 
@@ -259,9 +258,8 @@ export const setNodeLabel = (
   // Icon Badges portion of label...
 
   // PFT provides the ability to add a single Icon (badge) on the label. Given that we can't
-  // duplicate what we do with Cytoscape, which is to add multiple badges on the label,
-  // we'll reserve the single icon to be used only to identify traffic sources (i.e. roots).
-  // Note that a gateway is a special traffic source.
+  // do what we'd like, which is to use multiple icons,  we'll reserve the single icon to be
+  // used only to identify traffic sources (i.e. roots). Note that a gateway is a special traffic source.
   // Other badges will be added as attachments (decorators) on the node, but that requires
   // the Node, not the NodeModel, and it;s no longer part of the label, so it's not done here.
 

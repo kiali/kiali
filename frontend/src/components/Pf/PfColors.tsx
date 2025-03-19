@@ -2,11 +2,7 @@
 // PF colors, and moreover, use the defined color variables such that any changes made by PF are
 // picked up when the PF version is updated.  The preferred, standard way, is in CSS styling.  In
 // those cases we can directly let CSS resolve the PF var. So, whenever possible use the PFColors
-// enum below.  In certain cases (like in cytoscape), we need the explicit hex value.  In that case
-// we must actually get the computed value.  We do this as soon as we get an initial document (in
-// StartupInitializer.tsx). In those cases use PFColorVals.  Note that those values are not
-// available until they can be computed, so don't use them in constants or before they are
-// available.
+// enum below.
 
 // Colors used by Kiali for CSS styling
 export enum PFColors {

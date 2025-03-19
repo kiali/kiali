@@ -3,20 +3,6 @@ import * as ReactDOM from 'react-dom';
 import { App } from '../App';
 
 it('renders full App without crashing', () => {
-  // Mock getComputedStyle: Cytoscape relies on the result of this to have a valid paddingXXX
-  // Current implementation returns '' which is parsed to float as NAN, breaking cytoscape.
-  // Uses the default implementation and ensures we are returning a valid paddingXXX
-  const defaultGetComputedStyle = window.getComputedStyle;
-  window.getComputedStyle = jest.fn().mockImplementation(element => {
-    const computedStyle = defaultGetComputedStyle(element);
-    for (const prop of ['paddingTop', 'paddingRight', 'paddingLeft', 'paddingBottom']) {
-      if (computedStyle[prop] === '') {
-        computedStyle[prop] = '0px';
-      }
-    }
-    return computedStyle;
-  });
-
   // jest.mock('../../services/Api');
 
   process.env.REACT_APP_NAME = 'kiali-ui-test';
