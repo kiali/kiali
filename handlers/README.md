@@ -30,7 +30,7 @@ func PizzaHandler(conf *config.Config, cache cache.KialiCache) http.HandlerFunc 
 }
 ```
 
-When writing a unit test you should use the actual handler. Aside from a few helper functions that simply reduce the amount of boilerplate you need to write, there is no magic and no global variables being to test your handler.
+When writing a unit test you should use the actual handler. Aside from a few helper functions that simply reduce the amount of boilerplate you need to write, there is no magic and there are no global variables being used to test your handler.
 ```go
 handlers/pizza_test.go
 
