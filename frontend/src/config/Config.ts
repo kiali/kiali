@@ -195,8 +195,7 @@ const conf = {
       workloadDashboard: (namespace: string, workload: string) =>
         `api/namespaces/${namespace}/workloads/${workload}/dashboard`,
       ztunnelDashboard: (namespace: string, controlPlane: string) =>
-        `api/namespaces/${namespace}/ztunnel/${controlPlane}/dashboard`,
-      ztunnelMetrics: (namespace: string, workload: string) => `api/namespaces/${namespace}/ztunnel/${workload}/metrics`
+        `api/namespaces/${namespace}/ztunnel/${controlPlane}/dashboard`
     }
   },
   /** Graph configurations */
