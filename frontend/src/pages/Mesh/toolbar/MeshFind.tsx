@@ -41,8 +41,9 @@ import { MeshAttr, MeshEdgeData, MeshInfraType, MeshNodeData } from 'types/Mesh'
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
 import { MeshFindOptions } from './MeshFindOptions';
 import { MeshHelpFind } from '../MeshHelpFind';
-import { LayoutType, MeshLayout, meshLayout } from '../Mesh';
+import { layoutMesh } from '../Mesh';
 import { infoStyle } from 'styles/IconStyle';
+import { MeshLayoutType, MeshLayout } from '../layouts/layoutFactory';
 
 type ReduxStateProps = {
   findValue: string;
@@ -576,7 +577,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
 
     // always perform a full layout, because if this function is invoked at all, we know either we're dealing with either
     // a new controller, a different topology, a new hide expression, etc
-    meshLayout(controller, LayoutType.Layout);
+    layoutMesh(controller, MeshLayoutType.Layout);
   };
 
   private handleFind = (controller: Controller): void => {

@@ -4,7 +4,7 @@ import { MeshState } from '../store/Store';
 import { updateState } from '../utils/Reducer';
 import { MeshActions } from 'actions/MeshActions';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
-import { MeshLayout } from 'pages/Mesh/Mesh';
+import { MeshLayout } from 'pages/Mesh/layouts/layoutFactory';
 
 export const INITIAL_MESH_STATE: MeshState = {
   definition: null,

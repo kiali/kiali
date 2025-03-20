@@ -29,7 +29,7 @@ import {
   GRAPH_AREA_SELECTED_EVENT
 } from '@patternfly/react-topology';
 import { elementFactory } from './elements/elementFactory';
-import { layoutFactory } from './layouts/layoutFactory';
+import { getValidMeshLayout, layoutFactory, MeshLayoutType, MeshLayout } from './layouts/layoutFactory';
 import { TimeInMilliseconds } from 'types/Common';
 import { HistoryManager, URLParam } from 'app/History';
 import { TourStop } from 'components/Tour/TourStop';
@@ -59,32 +59,10 @@ const ZOOM_OUT = 3 / 4;
 
 export const FIT_PADDING = 90;
 
-export enum LayoutType {
-  Layout = 'layout',
-  LayoutNoFit = 'layoutNoFit',
-  Resize = 'resize'
-}
-
 let initialLayout = false;
-let layoutInProgress: LayoutType | undefined;
+let layoutInProgress: MeshLayoutType | undefined;
 
-// the layouts offered by the mesh page
-export enum MeshLayout {
-  Dagre = 'dagre',
-  //MeshCola = 'kiali-mesh-cola',
-  MeshDagre = 'kiali-mesh-dagre'
-}
-
-export function getValidMeshLayout(layout: string): MeshLayout {
-  switch (layout) {
-    case MeshLayout.MeshDagre:
-      return MeshLayout.MeshDagre;
-    default:
-      return MeshLayout.Dagre;
-  }
-}
-
-export function meshLayout(controller: Controller, layoutType: LayoutType, reset: boolean = true): void {
+export function layoutMesh(controller: Controller, layoutType: MeshLayoutType, reset: boolean = true): void {
   if (!controller?.hasGraph()) {
     console.debug('Skip meshLayout, no graph');
     return;
@@ -194,7 +172,7 @@ const TopologyContent: React.FC<{
   // Layout and resize handling
   //
   const handleResize = React.useCallback(() => {
-    meshLayout(controller, LayoutType.Resize);
+    layoutMesh(controller, MeshLayoutType.Resize);
   }, [controller]);
 
   const onLayoutEnd = React.useCallback(() => {
@@ -205,12 +183,12 @@ const TopologyContent: React.FC<{
       return;
     }
 
-    if (layoutInProgress !== LayoutType.LayoutNoFit) {
+    if (layoutInProgress !== MeshLayoutType.LayoutNoFit) {
       controller.getGraph().fit(FIT_PADDING);
 
       // On a resize, perform a delayed second fit, this one is performed [hopefully] after
       // the canvas size is updated (which needs to happen in the underlying PFT code)
-      if (layoutInProgress === LayoutType.Resize) {
+      if (layoutInProgress === MeshLayoutType.Resize) {
         setTimeout(() => {
           controller.getGraph().fit(FIT_PADDING);
         }, 500);
@@ -427,7 +405,7 @@ const TopologyContent: React.FC<{
   React.useEffect(() => {
     console.debug(`meshData changed, elementsChange=${meshData.elementsChanged}`);
     if (meshData.elementsChanged) {
-      meshLayout(controller, LayoutType.Layout);
+      layoutMesh(controller, MeshLayoutType.Layout);
     }
   }, [controller, meshData]);
 
@@ -460,7 +438,7 @@ const TopologyContent: React.FC<{
     }
 
     controller.getGraph().setLayout(layout);
-    meshLayout(controller, LayoutType.Layout);
+    layoutMesh(controller, MeshLayoutType.Layout);
   }, [controller, layout]);
 
   //
@@ -552,7 +530,7 @@ const TopologyContent: React.FC<{
                     controller.getGraph().fit(FIT_PADDING);
                   },
                   resetViewCallback: () => {
-                    meshLayout(controller, LayoutType.Layout);
+                    layoutMesh(controller, MeshLayoutType.Layout);
                   },
                   legend: true,
                   legendIcon: <KialiIcon.Map className={showLegend ? toolbarActiveStyle : undefined} />,
