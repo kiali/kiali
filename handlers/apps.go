@@ -53,8 +53,8 @@ func (p *appParams) extract(r *http.Request) {
 	}
 }
 
-// ClustersApps is the API handler to fetch all the apps to be displayed, related to a single cluster
-func ClustersApps(
+// ClusterApps is the API handler to fetch all the apps to be displayed, related to a single cluster
+func ClusterApps(
 	conf *config.Config,
 	kialiCache cache.KialiCache,
 	clientFactory kubernetes.ClientFactory,

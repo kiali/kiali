@@ -215,7 +215,7 @@ func setupAppListEndpoint(t *testing.T, k8s kubernetes.ClientInterface, conf *co
 	}
 	prom.Inject(promMock)
 
-	clusterAppsHandler := WithFakeAuthInfo(conf, ClustersApps(conf, cache, cf, prom, cpm, traceLoader, nil, discovery))
+	clusterAppsHandler := WithFakeAuthInfo(conf, ClusterApps(conf, cache, cf, prom, cpm, traceLoader, nil, discovery))
 	appDetailsHandler := WithFakeAuthInfo(conf, AppDetails(conf, cache, cf, prom, cpm, traceLoader, nil, discovery))
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/clusters/apps", clusterAppsHandler)
