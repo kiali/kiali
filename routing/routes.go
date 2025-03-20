@@ -895,6 +895,27 @@ func NewRoutes(
 			handlers.ZtunnelMetrics(handlers.DefaultPromClientSupplier),
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/{workload}/usage_metrics resource usage metrics
+		// ---
+		// Endpoint to fetch metrics to be displayed, related to cpu and memory usage
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
+		{
+			"UsageMetrics",
+			"GET",
+			"/api/namespaces/{namespace}/{app}/usage_metrics",
+			handlers.ResourceUsageMetrics(handlers.DefaultPromClientSupplier),
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/dashboard services serviceDashboard
 		// ---
 		// Endpoint to fetch dashboard to be displayed, related to a single service

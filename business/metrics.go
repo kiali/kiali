@@ -402,3 +402,30 @@ func (in *MetricsService) GetZtunnelMetrics(q models.IstioMetricsQuery) (models.
 
 	return metrics, nil
 }
+
+func (in *MetricsService) GetResourceMetrics(q models.IstioMetricsQuery) (models.MetricsMap, error) {
+
+	metrics := make(models.MetricsMap)
+	var err error
+	var converted []models.Metric
+
+	// Component memory usage memory_usage
+	labels := fmt.Sprintf("{pod=~\"%s-.*\"}", q.App)
+	metric := in.prom.FetchRange("container_memory_working_set_bytes", labels, "pod", "sum", &q.RangeQuery)
+	converted, err = models.ConvertMetric("container_memory_working_set_bytes", metric, models.ConversionParams{Scale: 0.000001})
+	if err != nil {
+		return nil, err
+	}
+	metrics["memory_usage"] = append(metrics["container_memory_working_set_bytes"], converted...)
+
+	// Component cpu_usage
+	metricName := fmt.Sprintf("irate(container_cpu_usage_seconds_total{pod=~\"%s-.*\"}[%s])", q.App, q.RateInterval)
+	metric = in.prom.FetchRange(metricName, "", "pod", "sum", &q.RangeQuery)
+	converted, err = models.ConvertMetric(metricName, metric, models.ConversionParams{Scale: 1})
+	if err != nil {
+		return nil, err
+	}
+	metrics["cpu_usage"] = append(metrics[metricName], converted...)
+
+	return metrics, nil
+}
