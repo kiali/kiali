@@ -396,9 +396,6 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
   ensureKialiServerReady
   ensureBookinfoGraphReady
 
-echo ${ISTIO_VERSION_ARG}
-echo ${ISTIO_VERSION}
-
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
@@ -408,19 +405,24 @@ echo ${ISTIO_VERSION}
     exit 0
   fi
 
+  cd "${SCRIPT_DIR}"/../frontend
+
   if [ "${ISTIO_VERSION}" != "" ]; then
-
-    is_istio_version_eq_greater_than_expected "1.24.0" ${ISTIO_VERSION}
-
-    if [ $? -ne 0 ]; then
-      echo "Istio version 1.23"
-      export ISTIO_1_23="true"
+    set +e
+    is_istio_version_eq_greater_than_expected "1.24.0" "${ISTIO_VERSION}"
+    status=$?
+    if [ "$status" -eq 0 ]; then
+      yarn run cypress:run:ambient123
+    else
+      yarn run cypress:run:ambient
     fi
+    set -e
+  else
+    yarn run cypress:run:ambient
   fi
 
-  cd "${SCRIPT_DIR}"/../frontend
-  yarn run cypress:run:ambient
   detectRaceConditions
+
 elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
   ensureCypressInstalled
   
