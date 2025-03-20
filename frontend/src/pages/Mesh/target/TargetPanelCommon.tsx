@@ -233,6 +233,7 @@ export const renderNodeLink = (meshData: MeshNodeData, style?: string): React.Re
       break;
     case MeshInfraType.WAYPOINT:
     case MeshInfraType.ZTUNNEL:
+    case MeshInfraType.KIALI:
       link = `/namespaces/${encodeURIComponent(meshData.namespace)}/workloads/${encodeURIComponent(
         meshData.infraName
       )}`;
