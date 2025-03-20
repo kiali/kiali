@@ -412,7 +412,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
     is_istio_version_eq_greater_than_expected "1.24.0" "${ISTIO_VERSION}"
     status=$?
     if [ "$status" -eq 0 ]; then
-      yarn run cypress:run:ambient123
+      yarn run cypress:run:ambient124
     else
       yarn run cypress:run:ambient
     fi
