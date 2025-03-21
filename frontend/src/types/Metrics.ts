@@ -25,6 +25,11 @@ export type ZtunnelMetricsMap = {
   ztunnel_workload_manager?: Metric[];
 };
 
+export type ResourceUsageMetricsMap = {
+  cpu_usage?: Metric[];
+  memory_usage?: Metric[];
+};
+
 export type MetricsPerNamespace = { [key: string]: IstioMetricsMap };
 
 export type IstioMetricsMap = {

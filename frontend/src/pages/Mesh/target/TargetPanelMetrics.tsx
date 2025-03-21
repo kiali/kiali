@@ -12,7 +12,7 @@ import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
 import { TargetPanelEditor } from './TargetPanelEditor';
-import { ZtunnelMetricsMap } from '../../../types/Metrics';
+import { ResourceUsageMetricsMap } from '../../../types/Metrics';
 import { TargetPanelControlPlaneMetrics } from './TargetPanelControlPlaneMetrics';
 import * as API from '../../../services/Api';
 import * as AlertUtils from '../../../utils/AlertUtils';
@@ -20,17 +20,17 @@ import { computePrometheusRateParams } from '../../../services/Prometheus';
 import { IstioMetricsOptions } from '../../../types/MetricsOptions';
 import { serverConfig } from '../../../config';
 
-type TargetPanelZtunnelProps<T extends MeshNodeData> = TargetPanelCommonProps & {
+type TargetPanelMetricsProps<T extends MeshNodeData> = TargetPanelCommonProps & {
   target: NodeTarget<T>;
 };
 
-export const TargetPanelZtunnel: React.FC<TargetPanelZtunnelProps<MeshNodeData>> = (
-  props: TargetPanelZtunnelProps<MeshNodeData>
+export const TargetPanelMetrics: React.FC<TargetPanelMetricsProps<MeshNodeData>> = (
+  props: TargetPanelMetricsProps<MeshNodeData>
 ) => {
   const { t } = useKialiTranslation();
 
   const node = props.target;
-  const [metrics, setMetrics] = React.useState<ZtunnelMetricsMap>();
+  const [metrics, setMetrics] = React.useState<ResourceUsageMetricsMap>();
 
   const fetchMetrics = async (): Promise<void> => {
     const rateParams = computePrometheusRateParams(props.duration, 10);
@@ -46,16 +46,21 @@ export const TargetPanelZtunnel: React.FC<TargetPanelZtunnelProps<MeshNodeData>>
 
     const data = props.target.elem.getData();
 
-    return API.getZtunnelMetrics(data?.namespace ? data.namespace : '', 'ztunnel', options, data?.cluster)
+    return API.getResourceUsageMetrics(
+      data?.namespace ? data.namespace : '',
+      data?.infraName ? data.infraName : '',
+      options,
+      data?.cluster
+    )
       .then(response => {
-        const controlPlaneMetrics: ZtunnelMetricsMap = {
-          ztunnel_cpu_usage: response.data.ztunnel_cpu_usage,
-          ztunnel_memory_usage: response.data.ztunnel_memory_usage
+        const controlPlaneMetrics: ResourceUsageMetricsMap = {
+          cpu_usage: response.data.cpu_usage,
+          memory_usage: response.data.memory_usage
         };
         setMetrics(controlPlaneMetrics);
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch ztunnel metrics.', error);
+        AlertUtils.addError('Could not fetch component metrics.', error);
         throw error;
       });
   };
@@ -63,7 +68,7 @@ export const TargetPanelZtunnel: React.FC<TargetPanelZtunnelProps<MeshNodeData>>
   React.useEffect(() => {
     fetchMetrics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.duration]);
+  }, [props.duration, props.target.elem]);
 
   if (!node) {
     return null;
@@ -79,9 +84,9 @@ export const TargetPanelZtunnel: React.FC<TargetPanelZtunnelProps<MeshNodeData>>
         {targetPanelHR}
         <TargetPanelControlPlaneMetrics
           key={data.namespace}
-          istiodContainerMemory={metrics?.ztunnel_memory_usage}
-          istiodContainerCpu={metrics?.ztunnel_cpu_usage}
-          type="Ztunnel"
+          istiodContainerMemory={metrics?.memory_usage}
+          istiodContainerCpu={metrics?.cpu_usage}
+          type={data.infraName}
         />
         {targetPanelHR}
 

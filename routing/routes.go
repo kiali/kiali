@@ -874,9 +874,9 @@ func NewRoutes(
 			handlers.ControlPlaneMetrics(handlers.DefaultPromClientSupplier),
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/ztunnel/{workload}/metrics ztunnel metrics
+		// swagger:route GET /namespaces/{namespace}/{workload}/usage_metrics resource usage metrics
 		// ---
-		// Endpoint to fetch metrics to be displayed, related to a single control plane
+		// Endpoint to fetch metrics to be displayed, related to cpu and memory usage
 		//
 		//     Produces:
 		//     - application/json
@@ -889,10 +889,10 @@ func NewRoutes(
 		//      200: metricsResponse
 		//
 		{
-			"ZtunnelMetrics",
+			"UsageMetrics",
 			"GET",
-			"/api/namespaces/{namespace}/ztunnel/{workload}/metrics",
-			handlers.ZtunnelMetrics(handlers.DefaultPromClientSupplier),
+			"/api/namespaces/{namespace}/{app}/usage_metrics",
+			handlers.ResourceUsageMetrics(handlers.DefaultPromClientSupplier),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/dashboard services serviceDashboard

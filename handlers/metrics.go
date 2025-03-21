@@ -228,12 +228,13 @@ func ControlPlaneMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 	}
 }
 
-// ZtunnelMetrics is the API handler to fetch metrics to be displayed, related to a single control plane revision
-func ZtunnelMetrics(promSupplier promClientSupplier) http.HandlerFunc {
+// ResourceUsageMetrics is the API handler to fetch metrics to be displayed, related to a single control plane revision
+func ResourceUsageMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
+		app := vars["app"]
 		cluster := clusterNameFromQuery(r.URL.Query())
 
 		metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
@@ -243,7 +244,7 @@ func ZtunnelMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 		}
 		oldestNs := GetOldestNamespace(namespaceInfo)
 
-		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace}
+		params := models.IstioMetricsQuery{App: app, Cluster: cluster, Namespace: namespace}
 
 		err := extractIstioMetricsQueryParams(r, &params, oldestNs)
 		if err != nil {
@@ -258,7 +259,7 @@ func ZtunnelMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 
 		metrics := make(models.MetricsMap)
 
-		ztunnelMetrics, err := metricsService.GetZtunnelMetrics(params)
+		ztunnelMetrics, err := metricsService.GetResourceMetrics(params)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return

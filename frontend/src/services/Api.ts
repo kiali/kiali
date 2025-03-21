@@ -50,7 +50,7 @@ import { ComponentStatus, IstiodResourceThresholds } from '../types/IstioStatus'
 import { TracingInfo, TracingResponse, TracingSingleResponse } from '../types/TracingInfo';
 import { ControlPlane, MeshDefinition, MeshQuery } from '../types/Mesh';
 import { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
-import { IstioMetricsMap, MetricsPerNamespace, MetricsStatsResult, ZtunnelMetricsMap } from '../types/Metrics';
+import { IstioMetricsMap, MetricsPerNamespace, MetricsStatsResult, ResourceUsageMetricsMap } from '../types/Metrics';
 import { Namespace } from '../types/Namespace';
 import { KialiCrippledFeatures, ServerConfig } from '../types/ServerConfig';
 import { StatusState } from '../types/StatusState';
@@ -240,21 +240,21 @@ export const getControlPlaneMetrics = (
   );
 };
 
-export const getZtunnelMetrics = (
+export const getResourceUsageMetrics = (
   namespace: string,
   workload: string,
   params: IstioMetricsOptions,
   cluster?: string
-): Promise<ApiResponse<Readonly<ZtunnelMetricsMap>>> => {
+): Promise<ApiResponse<Readonly<ResourceUsageMetricsMap>>> => {
   const queryParams: QueryParams<IstioMetricsOptions> = { ...params };
 
   if (cluster) {
     queryParams.clusterName = cluster;
   }
 
-  return newRequest<Readonly<ZtunnelMetricsMap>>(
+  return newRequest<Readonly<ResourceUsageMetricsMap>>(
     HTTP_VERBS.GET,
-    urls.ztunnelMetrics(namespace, workload),
+    urls.resourceUsageMetrics(namespace, workload),
     queryParams,
     {}
   );

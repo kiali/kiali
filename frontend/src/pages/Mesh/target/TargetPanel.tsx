@@ -27,7 +27,7 @@ import { meshWideMTLSStatusSelector, minTLSVersionSelector } from 'store/Selecto
 import { TargetPanelDataPlane } from './TargetPanelDataPlane';
 import { TargetPanelControlPlane } from './TargetPanelControlPlane';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { TargetPanelZtunnel } from './TargetPanelZtunnel';
+import { TargetPanelMetrics } from './TargetPanelMetrics';
 
 type ReduxProps = {
   kiosk: string;
@@ -153,8 +153,9 @@ export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPa
               />
             );
           case MeshInfraType.ZTUNNEL:
+          case MeshInfraType.KIALI:
             return (
-              <TargetPanelZtunnel
+              <TargetPanelMetrics
                 duration={props.duration}
                 istioAPIEnabled={props.istioAPIEnabled}
                 kiosk={props.kiosk}
