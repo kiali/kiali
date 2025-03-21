@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/kiali/kiali/mesh/config/cytoscape"
+	"github.com/kiali/kiali/mesh/config/common"
 	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"github.com/kiali/kiali/util/sliceutil"
 )
@@ -18,7 +18,7 @@ func TestMeshShowsExternalControlPlane(t *testing.T) {
 	mesh, err := kiali.MeshGraph()
 	require.NoError(err)
 
-	istiodNodes := sliceutil.Filter(mesh.Elements.Nodes, func(node *cytoscape.NodeWrapper) bool {
+	istiodNodes := sliceutil.Filter(mesh.Elements.Nodes, func(node *common.NodeWrapper) bool {
 		return node.Data.InfraType == "istiod"
 	})
 

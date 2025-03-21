@@ -11,8 +11,6 @@ import { TracingThunkActions } from 'actions/TracingThunkActions';
 import { GraphActions } from 'actions/GraphActions';
 import { PFColors } from 'components/Pf/PfColors';
 import { findChildren, findParent, formatDuration } from 'utils/tracing/TracingHelper';
-import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
-import { FocusAnimation } from 'components/CytoscapeGraph/FocusAnimation';
 import { FormattedTraceInfo, shortIDStyle } from 'components/TracingIntegration/TracingResults/FormattedTraceInfo';
 import { SimpleSelect } from 'components/Select/SimpleSelect';
 import { summaryFont, summaryTitle } from './SummaryPanelCommon';
@@ -23,8 +21,7 @@ import { responseFlags } from 'utils/ResponseFlags';
 import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
 import { Visualization, Node } from '@patternfly/react-topology';
 import { elems, selectAnd } from 'helpers/GraphHelpers';
-import { FocusNode } from 'pages/GraphPF/GraphPF';
-import { GraphSelectorBuilder } from './GraphSelector';
+import { FocusNode } from 'pages/Graph/GraphPF';
 import { ExternalServiceInfo } from '../../types/StatusState';
 import { isMultiCluster } from '../../config';
 import { KialiIcon } from 'config/KialiIcon';
@@ -99,13 +96,12 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
   }
 
   render(): React.ReactNode {
-    const isPF = this.props.data.isPF;
     let node: any = {};
     let nodeData: any = {};
 
     if (this.props.data.summaryType === 'node') {
       node = this.props.data.summaryTarget;
-      nodeData = isPF ? node.getData() : decoratedNodeData(node);
+      nodeData = node.getData();
     }
 
     const tracesDetailsURL = nodeData.namespace
@@ -133,7 +129,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
       </span>
     );
 
-    const spans: RichSpanData[] = (isPF ? nodeData['hasSpans'] : nodeData['spans']) || [];
+    const spans: RichSpanData[] = nodeData['hasSpans'] ?? [];
     let currentSpan = spans.find(s => s.spanID === this.state.selectedSpanID);
 
     if (!currentSpan && spans.length > 0) {
@@ -236,7 +232,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
 
   private spanViewLink(span: RichSpanData): string | undefined {
     const node = this.props.data.summaryTarget;
-    const nodeData = this.props.data.isPF ? node.getData() : decoratedNodeData(node);
+    const nodeData = node.getData();
 
     return nodeData.namespace
       ? `/namespaces/${nodeData.namespace}${
@@ -312,64 +308,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
   }
 
   private linkToSpan(current: RichSpanData, target: RichSpanData, text: string): React.ReactNode {
-    if (this.props.data.isPF) {
-      return this.linkToSpanPF(current, target, text);
-    }
-
-    const useApp = this.props.graphType === GraphType.APP || this.props.graphType === GraphType.SERVICE;
-    const currentElt = useApp ? current.app : current.workload;
-    const targetElt = useApp ? target.app : target.workload;
-
-    let tooltipContent = <>{text}</>;
-
-    if (targetElt) {
-      const cy = this.props.data.summaryTarget.cy();
-      const selBuilder = new GraphSelectorBuilder().namespace(target.namespace).class('span');
-      const selector = useApp ? selBuilder.app(targetElt).build() : selBuilder.workload(targetElt).build();
-
-      tooltipContent = (
-        <>
-          <Button
-            variant={ButtonVariant.link}
-            style={{ marginRight: '0.25rem' }}
-            onClick={() => {
-              this.setState({ selectedSpanID: target.spanID });
-
-              if (targetElt !== currentElt || target.namespace !== current.namespace) {
-                cy.elements(selector).trigger('tap');
-              }
-            }}
-            isInline
-          >
-            <span style={summaryFont}>{text}</span>
-          </Button>
-
-          <Button
-            variant={ButtonVariant.link}
-            onClick={() => new FocusAnimation(cy).start(cy.elements(selector))}
-            isInline
-          >
-            <span style={summaryFont}>
-              <KialiIcon.MapMarker />
-            </span>
-          </Button>
-        </>
-      );
-    }
-
-    return (
-      <Tooltip
-        key={target.spanID}
-        content={
-          <>
-            <div>Operation name: {target.operationName}</div>
-            <div>Workload: {target.workload ?? 'unknown'}</div>
-          </>
-        }
-      >
-        {tooltipContent}
-      </Tooltip>
-    );
+    return this.linkToSpanPF(current, target, text);
   }
 
   private linkToSpanPF(current: RichSpanData, target: RichSpanData, text: string): React.ReactNode {

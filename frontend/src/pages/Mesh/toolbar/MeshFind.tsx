@@ -17,7 +17,6 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { KialiAppState } from '../../../store/Store';
 import { meshFindValueSelector, meshHideValueSelector } from '../../../store/Selectors';
-import * as CytoscapeGraphUtils from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { TourStop } from 'components/Tour/TourStop';
@@ -27,20 +26,29 @@ import { AutoComplete } from 'utils/AutoComplete';
 import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { location, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
-import { setObserved, elems, SelectAnd, SelectExp, selectOr, SelectOr, descendents } from 'helpers/GraphHelpers';
+import {
+  setObserved,
+  elems,
+  SelectAnd,
+  SelectExp,
+  selectOr,
+  SelectOr,
+  descendents,
+  toSafeFieldName
+} from 'helpers/GraphHelpers';
 import { isArray } from 'lodash';
 import { MeshAttr, MeshEdgeData, MeshInfraType, MeshNodeData } from 'types/Mesh';
-import { Layout } from 'types/Graph';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
 import { MeshFindOptions } from './MeshFindOptions';
 import { MeshHelpFind } from '../MeshHelpFind';
-import { LayoutType, meshLayout } from '../Mesh';
+import { layoutMesh } from '../Mesh';
 import { infoStyle } from 'styles/IconStyle';
+import { MeshLayoutType, MeshLayout } from '../layouts/layoutFactory';
 
 type ReduxStateProps = {
   findValue: string;
   hideValue: string;
-  layout: Layout;
+  layout: MeshLayout;
   showFindHelp: boolean;
 };
 
@@ -569,7 +577,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
 
     // always perform a full layout, because if this function is invoked at all, we know either we're dealing with either
     // a new controller, a different topology, a new hide expression, etc
-    meshLayout(controller, LayoutType.Layout);
+    layoutMesh(controller, MeshLayoutType.Layout);
   };
 
   private handleFind = (controller: Controller): void => {
@@ -816,7 +824,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
         if (field.startsWith('label:')) {
           return {
             target: 'node',
-            selector: { prop: CytoscapeGraphUtils.toSafeCyFieldName(field), op: op, val: val }
+            selector: { prop: toSafeFieldName(field), op: op, val: val }
           };
         }
 
@@ -886,7 +894,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
       default:
         // special node operand
         if (field.startsWith('label:')) {
-          const safeFieldName = CytoscapeGraphUtils.toSafeCyFieldName(field);
+          const safeFieldName = toSafeFieldName(field);
           return { target: 'node', selector: { prop: safeFieldName, op: isNegation ? '<=' : '>', val: 0 } };
         }
 

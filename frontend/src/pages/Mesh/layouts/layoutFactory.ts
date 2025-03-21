@@ -1,6 +1,5 @@
 import { DagreLayout, Graph, Layout, LayoutFactory } from '@patternfly/react-topology';
 import { MeshDagreLayout } from './MeshDagreLayout';
-import { LayoutName } from '../Mesh';
 //import { MeshColaLayout } from './MeshColaLayout';
 
 /*
@@ -18,13 +17,35 @@ export const LAYOUT_DEFAULTS: LayoutOptions = {
 };
 */
 
+export enum MeshLayoutType {
+  Layout = 'layout',
+  LayoutNoFit = 'layoutNoFit',
+  Resize = 'resize'
+}
+
+// the layouts offered by the mesh page
+export enum MeshLayout {
+  Dagre = 'dagre',
+  //MeshCola = 'kiali-mesh-cola',
+  MeshDagre = 'kiali-mesh-dagre'
+}
+
+export function getValidMeshLayout(layout: string): MeshLayout {
+  switch (layout) {
+    case MeshLayout.MeshDagre:
+      return MeshLayout.MeshDagre;
+    default:
+      return MeshLayout.Dagre;
+  }
+}
+
 export const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout | undefined => {
   switch (type) {
     //case LayoutName.MeshCola:
     //  return new MeshColaLayout(graph, {
     //    layoutOnDrag: false
     //  });
-    case LayoutName.MeshDagre:
+    case MeshLayout.MeshDagre:
       return new MeshDagreLayout(graph, {
         layoutOnDrag: false,
         ranksep: 15

@@ -16,7 +16,7 @@ package istio
 //   Step 2) For the global traffic map
 //     a) Apply standard and requested finalizers to alter or append-to the final traffic-map
 //
-//     b) Convert the final traffic-map to the requested vendor configiration (i.e. Cytoscape) and return
+//     b) Convert the final traffic-map to the requested vendor configuration (i.e. Common) and return
 //
 // Supports three vendor-specific query parameters:
 //   aggregate: Must be a valid metric attribute (default: request_operation)

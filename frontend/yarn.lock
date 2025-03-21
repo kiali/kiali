@@ -2671,11 +2671,6 @@
   resolved "https://registry.yarnpkg.com/@types/cypress-cucumber-preprocessor/-/cypress-cucumber-preprocessor-4.0.5.tgz#5c4d791e9b1f5928bcf179a496538193cb4298b4"
   integrity sha512-5+eM+RWNOW7X9JMQ4auux/HxTWxBK+Mz2wStEnnbuJr0HRLqCNJDUDvkeLtob8X74uA3L0bCFNyC2WotfJtM6Q==
 
-"@types/cytoscape@3.14.0":
-  version "3.14.0"
-  resolved "https://registry.yarnpkg.com/@types/cytoscape/-/cytoscape-3.14.0.tgz#346b5430a7a1533784bcf44fcbe6c5255b948d36"
-  integrity sha512-qOhhZFGb35457vmCu9YHqwjqleraSAEikaIFmMUPWzTC7FrwkS7VR/6ymqRHW7Z8wivHuzsZDYCoePIepd69qg==
-
 "@types/d3-array@*", "@types/d3-array@^3.0.3":
   version "3.0.5"
   resolved "https://registry.yarnpkg.com/@types/d3-array/-/d3-array-3.0.5.tgz#857c1afffd3f51319bbc5b301956aca68acaa7b8"
@@ -5103,11 +5098,6 @@ csstype@3.0.10, csstype@^3.0.2:
   resolved "https://registry.yarnpkg.com/csstype/-/csstype-3.0.10.tgz#2ad3a7bed70f35b965707c092e5f30b327c290e5"
   integrity sha512-2u44ZG2OcNUO9HDp/Jl8C07x6pU/eTR3ncV91SiK3dhG9TWvRVsCoJw14Ckx5DgWkzGA3waZWO3d7pgqpUI/XA==
 
-cy-node-html-label@2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/cy-node-html-label/-/cy-node-html-label-2.0.0.tgz#822c0c8afc88b4ba05268544289d0b367ce21e3b"
-  integrity sha512-hjvXlYAXaOjRryy8D3fHaeoRUVsgFi3589rcMtQRky08Ok+y7Lucqh895pNLJLNmXGm2N7083b8sPkPdhP3pag==
-
 cypress-multi-reporters@^1.6.0:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/cypress-multi-reporters/-/cypress-multi-reporters-1.6.0.tgz#2c6833b92e3df412c233657c55009e2d5e1cc7c1"
@@ -5171,26 +5161,6 @@ cypress@^13.6.1:
     tmp "~0.2.1"
     untildify "^4.0.0"
     yauzl "^2.10.0"
-
-cytoscape-canvas@3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/cytoscape-canvas/-/cytoscape-canvas-3.0.1.tgz#7d963be51e6e5f3f2482b05d22562c8ee941d125"
-  integrity sha512-R1nCLnJHGTR5fWEpNQQBPyoigdnfhnk1lOHegzmzz1Kg6yxzVf0hfdRAMa0wPAhtC4kkgyoViiIfZ/zyCqMhEQ==
-
-cytoscape-popper@1.0.7:
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/cytoscape-popper/-/cytoscape-popper-1.0.7.tgz#8154ff507d0cc1a17952f00643e71fc1f8ea9fae"
-  integrity sha512-b/vfoBL2u9GU+J7eceGT9cZ4hctn/ZzV7PXq4w6fk+45qQuOHtlhpP3WxGKpBXNqENhk7Dk0BwlIYROjYQmidQ==
-  dependencies:
-    popper.js "^1.0.0"
-
-cytoscape@3.15.5:
-  version "3.15.5"
-  resolved "https://registry.yarnpkg.com/cytoscape/-/cytoscape-3.15.5.tgz#34f4d5e54ffadbbbd044d5c041f17d251e741748"
-  integrity sha512-wkF2zkwvbBvT3Gj9ZVYhxqx6TvyZIuDx7Dhdy8m0z4QmDOXteMz+9oUgV+1btaBxA1VePZRUpoz1lwJixAyyYw==
-  dependencies:
-    heap "^0.2.6"
-    lodash.debounce "^4.0.8"
 
 "d3-array@2 - 3", "d3-array@2.10.0 - 3", "d3-array@2.5.0 - 3", d3-array@3, d3-array@^3.1.6, d3-array@^3.2.0:
   version "3.2.4"
@@ -7373,11 +7343,6 @@ he@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/he/-/he-1.2.0.tgz#84ae65fa7eafb165fddb61566ae14baf05664f0f"
   integrity sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==
-
-heap@^0.2.6:
-  version "0.2.6"
-  resolved "https://registry.yarnpkg.com/heap/-/heap-0.2.6.tgz#087e1f10b046932fc8594dd9e6d378afc9d1e5ac"
-  integrity sha1-CH4fELBGky/IWU3Z5tN4r8nR5aw=
 
 heimdalljs-logger@^0.1.10, heimdalljs-logger@^0.1.7:
   version "0.1.10"
@@ -9887,7 +9852,7 @@ point-in-svg-path@^1.0.1:
   resolved "https://registry.yarnpkg.com/point-in-svg-path/-/point-in-svg-path-1.0.2.tgz#e7b25370e96f58a858c34882ffb57d41b7a574bf"
   integrity sha512-+Smsf7B9e7eRFHIwpN+4rE8inF2APbFWeywPfUgbeh02xdJSkbTz6Pqdt7A36wVCR+CnLbaNkRnBjgOpF5RMVQ==
 
-popper.js@^1.0.0, popper.js@^1.14.4, popper.js@^1.14.6, popper.js@^1.16.1:
+popper.js@^1.14.4, popper.js@^1.14.6, popper.js@^1.16.1:
   version "1.16.1"
   resolved "https://registry.yarnpkg.com/popper.js/-/popper.js-1.16.1.tgz#2a223cb3dc7b6213d740e40372be40de43e65b1b"
   integrity sha512-Wb4p1J4zyFTbM+u6WuO4XstYx4Ky9Cewe4DWrel7B0w6VVICvPwdOpotjzcf6eD8TsckVnIMNONQyPIUFOUbCQ==
@@ -12004,7 +11969,14 @@ stringify-object@^3.3.0:
     is-obj "^1.0.1"
     is-regexp "^1.0.0"
 
-strip-ansi@6.0.1, strip-ansi@^6.0.0, strip-ansi@^6.0.1, "strip-ansi-cjs@npm:strip-ansi@^6.0.1":
+"strip-ansi-cjs@npm:strip-ansi@^6.0.1":
+  version "6.0.1"
+  resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-6.0.1.tgz#9e26c63d30f53443e9489495b2105d37b67a85d9"
+  integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
+  dependencies:
+    ansi-regex "^5.0.1"
+
+strip-ansi@6.0.1, strip-ansi@^6.0.0, strip-ansi@^6.0.1:
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-6.0.1.tgz#9e26c63d30f53443e9489495b2105d37b67a85d9"
   integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
@@ -13521,6 +13493,15 @@ workerpool@^6.5.1:
   resolved "https://registry.yarnpkg.com/workerpool/-/workerpool-6.5.1.tgz#060f73b39d0caf97c6db64da004cd01b4c099544"
   integrity sha512-Fs4dNYcsdpYSAfVxhnl1L5zTksjvOJxtC5hzMNl+1t9B8hTJTdKDyZ5ju7ztgPy+ft9tBFXoOlDNiOT9WUXZlA==
 
+"wrap-ansi-cjs@npm:wrap-ansi@^7.0.0":
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-7.0.0.tgz#67e145cff510a6a6984bdf1152911d69d2eb9e43"
+  integrity sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==
+  dependencies:
+    ansi-styles "^4.0.0"
+    string-width "^4.1.0"
+    strip-ansi "^6.0.0"
+
 wrap-ansi@^6.2.0:
   version "6.2.0"
   resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-6.2.0.tgz#e9393ba07102e6c91a3b221478f0257cd2856e53"
@@ -13530,7 +13511,7 @@ wrap-ansi@^6.2.0:
     string-width "^4.1.0"
     strip-ansi "^6.0.0"
 
-wrap-ansi@^7.0.0, "wrap-ansi-cjs@npm:wrap-ansi@^7.0.0":
+wrap-ansi@^7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-7.0.0.tgz#67e145cff510a6a6984bdf1152911d69d2eb9e43"
   integrity sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==

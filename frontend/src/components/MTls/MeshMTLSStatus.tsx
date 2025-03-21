@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import { KialiAppState } from '../../store/Store';
-import { MTLSIconTypes } from './MTLSIcon';
 import { MTLSStatus, emptyDescriptor, StatusDescriptor } from './MTLSStatus';
 import { kialiStyle } from 'styles/StyleUtils';
 import { meshWideMTLSEnabledSelector, meshWideMTLSStatusSelector, namespaceItemsSelector } from '../../store/Selectors';
@@ -16,6 +15,7 @@ import { MeshTlsActions } from '../../actions/MeshTlsActions';
 import { TimeInMilliseconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import { connectRefresh } from '../Refresh/connectRefresh';
+import { MTLSIconTypes } from './NamespaceMTLSStatus';
 
 type ReduxProps = {
   autoMTLSEnabled: boolean;

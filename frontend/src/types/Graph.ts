@@ -2,17 +2,13 @@ import { Namespace } from './Namespace';
 import { AppenderString, DurationInSeconds, TimeInSeconds } from './Common';
 import { Health } from './Health';
 import { HealthAnnotationType } from './HealthAnnotation';
-
-export interface Layout {
-  name: string;
-}
+import { Controller, GraphElement } from '@patternfly/react-topology';
 
 export const SUMMARY_PANEL_CHART_WIDTH = 250;
 
 export type SummaryType = 'graph' | 'node' | 'edge' | 'box';
 
 export interface SummaryData {
-  isPF?: boolean;
   summaryTarget: any;
   summaryType: SummaryType;
 }
@@ -238,29 +234,9 @@ export interface NodeParamsType {
   workload: string;
 }
 
-// This data is stored in the _global scratch area in the cy graph
-// for use by code that needs access to it.
-// We can add more props to this scratch data as the need arises.
-export const CytoscapeGlobalScratchNamespace = '_global';
-export type CytoscapeGlobalScratchData = {
-  activeNamespaces: Namespace[];
-  edgeLabels: EdgeLabelMode[];
-  forceLabels: boolean;
-  graphType: GraphType;
-  homeCluster: string;
-  showOutOfMesh: boolean;
-  showSecurity: boolean;
-  showVirtualServices: boolean;
-  trafficRates: TrafficRate[];
-};
-
-export interface CytoscapeBaseEvent {
-  summaryTarget: any; // the cytoscape element that was the target of the event
+export interface GraphEvent {
+  summaryTarget: GraphElement | Controller; // the target of the event
   summaryType: SummaryType; // what the summary panel should show
-}
-
-export interface GraphEvent extends CytoscapeBaseEvent {
-  isPF?: boolean;
 }
 
 // Graph Structures

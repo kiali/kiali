@@ -1,18 +1,19 @@
-import { Layout, EdgeLabelMode, NodeType, NodeParamsType, GraphType, TrafficRate, EdgeMode } from '../../types/Graph';
+import { EdgeLabelMode, NodeType, NodeParamsType, GraphType, TrafficRate, EdgeMode } from '../../types/Graph';
 import { DurationInSeconds, IntervalInMilliseconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import { URLParam } from '../../app/History';
 import { getKioskMode, isKioskMode } from '../../utils/SearchParamUtils';
 import { isMultiCluster } from 'config';
+import { GraphLayout } from 'pages/Graph/GraphPF';
 
 export type GraphUrlParams = {
   activeNamespaces: Namespace[];
   duration: DurationInSeconds;
   edgeLabels: EdgeLabelMode[];
   edgeMode: EdgeMode;
-  graphLayout: Layout;
+  graphLayout: GraphLayout;
   graphType: GraphType;
-  namespaceLayout: Layout;
+  namespaceLayout: GraphLayout;
   node?: NodeParamsType;
   refreshInterval: IntervalInMilliseconds;
   showIdleEdges: boolean;
@@ -26,8 +27,8 @@ export type GraphUrlParams = {
 const buildCommonQueryParams = (params: GraphUrlParams): string => {
   let q = `&${URLParam.GRAPH_EDGE_LABEL}=${params.edgeLabels}`;
   q += `&${URLParam.GRAPH_EDGE_MODE}=${params.edgeMode}`;
-  q += `&${URLParam.GRAPH_LAYOUT}=${params.graphLayout.name}`;
-  q += `&${URLParam.GRAPH_NAMESPACE_LAYOUT}=${params.namespaceLayout.name}`;
+  q += `&${URLParam.GRAPH_LAYOUT}=${params.graphLayout}`;
+  q += `&${URLParam.GRAPH_NAMESPACE_LAYOUT}=${params.namespaceLayout}`;
   q += `&${URLParam.GRAPH_IDLE_EDGES}=${params.showIdleEdges}`;
   q += `&${URLParam.GRAPH_IDLE_NODES}=${params.showIdleNodes}`;
   q += `&${URLParam.GRAPH_SERVICE_NODES}=${params.showServiceNodes}`;
@@ -44,8 +45,8 @@ const buildCommonQueryParams = (params: GraphUrlParams): string => {
   return q;
 };
 
-export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams, isPf = false): string => {
-  const route = isPf ? 'graphpf' : 'graph';
+export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams): string => {
+  const route = 'graphpf';
   let queryParams = buildCommonQueryParams(params);
   if (params.activeNamespaces.length > 0) {
     const namespaces = params.activeNamespaces.map(namespace => namespace.name).join(',');
@@ -58,8 +59,8 @@ export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams, isPf = 
   return `/${route}/namespaces?${queryParams}`;
 };
 
-export const makeNodeGraphUrlFromParams = (params: GraphUrlParams, isPf = false): string => {
-  const route = isPf ? 'graphpf' : 'graph';
+export const makeNodeGraphUrlFromParams = (params: GraphUrlParams): string => {
+  const route = 'graphpf';
   const node = params.node;
   if (node) {
     switch (node.nodeType) {
@@ -91,7 +92,7 @@ export const makeNodeGraphUrlFromParams = (params: GraphUrlParams, isPf = false)
         )}`;
       default:
         console.debug('makeNodeUrl defaulting to makeNamespaceUrl');
-        return makeNamespacesGraphUrlFromParams(params, isPf);
+        return makeNamespacesGraphUrlFromParams(params);
     }
   } else {
     // this should never happen but typescript needs this

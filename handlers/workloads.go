@@ -335,10 +335,6 @@ func ConfigDumpZtunnel(w http.ResponseWriter, r *http.Request) {
 	pod := params["pod"]
 
 	dump := business.Workload.GetZtunnelConfig(cluster, namespace, pod)
-	if err != nil {
-		handleErrorResponse(w, err)
-		return
-	}
 
 	RespondWithJSON(w, http.StatusOK, dump)
 }

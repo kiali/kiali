@@ -30,9 +30,8 @@ import {
 } from './SummaryPanelCommon';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { Reporter } from '../../types/MetricsOptions';
-import { decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import { edgesOut, nodesIn, select } from 'helpers/GraphHelpers';
+import { edgesOut, nodesIn, nodesOut, select } from 'helpers/GraphHelpers';
 import { ApiResponse } from 'types/Api';
 import { serverConfig } from 'config';
 
@@ -127,9 +126,8 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
   }
 
   updateCharts(props: SummaryPanelNodeProps): void {
-    const isPF = !!props.data.isPF;
     const node = props.data.summaryTarget;
-    const nodeData = isPF ? (node.getData() as DecoratedGraphNodeData) : decoratedNodeData(node);
+    const nodeData = node.getData();
     const nodeMetricType = getNodeMetricType(nodeData);
     const isGrpcRequests = this.isGrpcRequests();
 
@@ -377,9 +375,8 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
   };
 
   render(): React.ReactNode {
-    const isPF = !!this.props.data.isPF;
     const node = this.props.data.summaryTarget;
-    const nodeData = isPF ? node.getData() : decoratedNodeData(node);
+    const nodeData = node.getData();
     const hasGrpc = this.hasGrpcTraffic(nodeData);
     const hasGrpcIn = hasGrpc && this.hasGrpcIn(nodeData);
     const hasGrpcOut = hasGrpc && this.hasGrpcOut(nodeData);
@@ -394,20 +391,20 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
       <>
         {hasGrpc && this.isGrpcRequests() && (
           <>
-            {this.renderGrpcRates(node, isPF)}
+            {this.renderGrpcRates(node)}
             {hr()}
           </>
         )}
 
         {hasHttp && (
           <>
-            {this.renderHttpRates(node, isPF)}
+            {this.renderHttpRates(node)}
             {hr()}
           </>
         )}
 
         <div>
-          {this.renderSparklines(node, isPF)}
+          {this.renderSparklines(node)}
           {hr()}
         </div>
 
@@ -426,9 +423,9 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     );
   }
 
-  private renderGrpcRates = (node: any, isPF: boolean): React.ReactNode => {
-    const inbound = getTrafficRateGrpc(node, isPF);
-    const outboundEdges = isPF ? edgesOut([node]) : node.edgesTo('*');
+  private renderGrpcRates = (node: any): React.ReactNode => {
+    const inbound = getTrafficRateGrpc(node);
+    const outboundEdges = edgesOut([node]);
     const outbound = getAccumulatedTrafficRateGrpc(outboundEdges);
 
     return (
@@ -444,10 +441,10 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     );
   };
 
-  private renderHttpRates = (node: any, isPF: boolean): React.ReactNode => {
-    const inbound = getTrafficRateHttp(node, isPF);
-    const outboundEdges = isPF ? edgesOut([node]) : node.edgesTo('*');
-    const outbound = getAccumulatedTrafficRateHttp(outboundEdges, isPF);
+  private renderHttpRates = (node: any): React.ReactNode => {
+    const inbound = getTrafficRateHttp(node);
+    const outboundEdges = edgesOut([node]);
+    const outbound = getAccumulatedTrafficRateHttp(outboundEdges);
 
     return (
       <InOutRateTableHttp
@@ -466,8 +463,8 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     );
   };
 
-  private renderSparklines = (node: any, isPF: boolean): React.ReactNode => {
-    const nodeData = isPF ? node.getData() : decoratedNodeData(node);
+  private renderSparklines = (node: any): React.ReactNode => {
+    const nodeData = node.getData();
 
     if (NodeType.UNKNOWN === nodeData.nodeType) {
       return (
@@ -507,9 +504,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     let serviceWithUnknownSource = false;
 
     if (isServiceNode) {
-      serviceWithUnknownSource = isPF
-        ? select(nodesIn([node]), { prop: NodeAttr.nodeType, val: NodeType.UNKNOWN }).length > 0
-        : (serviceWithUnknownSource = node.incomers(`node[${NodeAttr.nodeType} = "${NodeType.UNKNOWN}"]`).size() > 0);
+      serviceWithUnknownSource = select(nodesIn([node]), { prop: NodeAttr.nodeType, val: NodeType.UNKNOWN }).length > 0;
     }
 
     let grpcCharts: React.ReactNode, httpCharts: React.ReactNode, tcpCharts: React.ReactNode;
@@ -541,7 +536,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
                 hide={isInOutSameNode}
               />
 
-              {!isPF && this.isIstioOutboundCornerCase(node) && (
+              {this.isIstioOutboundCornerCase(node) && (
                 <div>
                   <KialiIcon.Info /> Traffic to Istio namespaces not included. Use edge for details.
                 </div>
@@ -600,7 +595,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
                 hide={isInOutSameNode}
               />
 
-              {!isPF && this.isIstioOutboundCornerCase(node) && (
+              {this.isIstioOutboundCornerCase(node) && (
                 <div>
                   <KialiIcon.Info />" Traffic to Istio namespaces not included. Use edge for details.
                 </div>
@@ -657,15 +652,14 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
 
   // We need to handle the special case of a non-istio, non-unknown node with outbound traffic to istio.
   // The traffic is lost because it is dest-only and we use source-reporting.
-  // TODO: Currently not called for PFT
   private isIstioOutboundCornerCase = (node: any): boolean => {
-    const nodeData = decoratedNodeData(node);
+    const nodeData = node.getData();
 
     if (nodeData.nodeType === NodeType.UNKNOWN || nodeData.isIstio) {
       return false;
     }
 
-    return node.edgesTo(`node[?${NodeAttr.isIstio}]`).size() > 0;
+    return nodesOut([node]).filter(n => (n.getData() as DecoratedGraphNodeData).isIstio).length > 0;
   };
 
   private hasGrpcTraffic = (data: DecoratedGraphNodeData): boolean => {

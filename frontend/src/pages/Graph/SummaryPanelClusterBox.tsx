@@ -68,18 +68,13 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
   }
 
   render(): React.ReactNode {
-    const isPF = !!this.props.data.isPF;
     const clusterBox = this.props.data.summaryTarget;
-    const data = isPF ? clusterBox.getData() : clusterBox.data();
-    const boxed = isPF ? descendents(clusterBox) : clusterBox.descendants();
+    const data = clusterBox.getData();
+    const boxed = descendents(clusterBox);
     const cluster = data[NodeAttr.cluster];
     const kialiInstances = serverConfig.clusters[cluster] ? serverConfig.clusters[cluster].kialiInstances : [];
 
-    let numSvc: number;
-    let numWorkloads: number;
-    let numEdges: number;
-
-    const { numApps, numVersions } = this.countApps(boxed, isPF);
+    const { numApps, numVersions } = this.countApps(boxed);
     const {
       grpcIn,
       grpcOut,
@@ -91,17 +86,11 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
       tcpIn,
       tcpOut,
       tcpTotal
-    } = this.getBoxTraffic(boxed, isPF);
+    } = this.getBoxTraffic(boxed);
 
-    if (isPF) {
-      numSvc = select(boxed, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).length;
-      numWorkloads = select(boxed, { prop: NodeAttr.nodeType, val: NodeType.WORKLOAD }).length;
-      numEdges = edgesInOut(boxed).length;
-    } else {
-      numSvc = boxed.filter(`node[nodeType = "${NodeType.SERVICE}"]`).size();
-      numWorkloads = boxed.filter(`node[nodeType = "${NodeType.WORKLOAD}"]`).size();
-      numEdges = boxed.connectedEdges().size();
-    }
+    const numSvc = select(boxed, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).length;
+    const numWorkloads = select(boxed, { prop: NodeAttr.nodeType, val: NodeType.WORKLOAD }).length;
+    const numEdges = edgesInOut(boxed).length;
 
     const tooltipInboundRef = React.createRef();
     const tooltipOutboundRef = React.createRef();
@@ -243,8 +232,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
   }
 
   private getBoxTraffic = (
-    boxed: any,
-    isPF: boolean
+    boxed: any
   ): {
     grpcIn: TrafficRateGrpc;
     grpcOut: TrafficRateGrpc;
@@ -258,73 +246,39 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     tcpTotal: TrafficRateTcp;
   } => {
     const clusterBox = this.props.data.summaryTarget;
-    const data = isPF ? clusterBox.getData() : clusterBox.data();
+    const data = clusterBox.getData();
     const cluster = data[NodeAttr.cluster];
 
     let inboundEdges: Edge[] | any;
     let outboundEdges: Edge[] | any;
     let totalEdges: Edge[] | any;
 
-    if (isPF) {
-      const controller = (clusterBox as Node).getController();
-      const { nodes } = elems(controller);
-      const outsideNodes = select(nodes, { prop: NodeAttr.cluster, op: '!=', val: cluster }) as Node[];
-      // inbound edges are from a different cluster
-      inboundEdges = edgesOut(outsideNodes, boxed);
-      // outbound edges are to a different different cluster
-      outboundEdges = edgesIn(outsideNodes, boxed);
-      // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
-      totalEdges = [...inboundEdges];
-      totalEdges.push(...edgesOut(select(boxed, { prop: NodeAttr.workload, op: 'truthy' }) as Node[]));
-    } else {
-      // inbound edges are from a different cluster
-      inboundEdges = clusterBox.cy().nodes(`[${NodeAttr.cluster} != "${cluster}"]`).edgesTo(boxed);
-      // outbound edges are to a different cluster
-      outboundEdges = boxed.edgesTo(`[${NodeAttr.cluster} != "${cluster}"]`);
-      // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
-      totalEdges = inboundEdges.add(boxed.filter(`[?${NodeAttr.workload}]`).edgesTo('*'));
-    }
+    const controller = (clusterBox as Node).getController();
+    const { nodes } = elems(controller);
+    const outsideNodes = select(nodes, { prop: NodeAttr.cluster, op: '!=', val: cluster }) as Node[];
+    // inbound edges are from a different cluster
+    inboundEdges = edgesOut(outsideNodes, boxed);
+    // outbound edges are to a different different cluster
+    outboundEdges = edgesIn(outsideNodes, boxed);
+    // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
+    totalEdges = [...inboundEdges];
+    totalEdges.push(...edgesOut(select(boxed, { prop: NodeAttr.workload, op: 'truthy' }) as Node[]));
 
     return {
-      grpcIn: getAccumulatedTrafficRateGrpc(inboundEdges, isPF),
-      grpcOut: getAccumulatedTrafficRateGrpc(outboundEdges, isPF),
-      grpcTotal: getAccumulatedTrafficRateGrpc(totalEdges, isPF),
-      httpIn: getAccumulatedTrafficRateHttp(inboundEdges, isPF),
-      httpOut: getAccumulatedTrafficRateHttp(outboundEdges, isPF),
-      httpTotal: getAccumulatedTrafficRateHttp(totalEdges, isPF),
+      grpcIn: getAccumulatedTrafficRateGrpc(inboundEdges),
+      grpcOut: getAccumulatedTrafficRateGrpc(outboundEdges),
+      grpcTotal: getAccumulatedTrafficRateGrpc(totalEdges),
+      httpIn: getAccumulatedTrafficRateHttp(inboundEdges),
+      httpOut: getAccumulatedTrafficRateHttp(outboundEdges),
+      httpTotal: getAccumulatedTrafficRateHttp(totalEdges),
       isGrpcRequests: this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST),
-      tcpIn: getAccumulatedTrafficRateTcp(inboundEdges, isPF),
-      tcpOut: getAccumulatedTrafficRateTcp(outboundEdges, isPF),
-      tcpTotal: getAccumulatedTrafficRateTcp(totalEdges, isPF)
+      tcpIn: getAccumulatedTrafficRateTcp(inboundEdges),
+      tcpOut: getAccumulatedTrafficRateTcp(outboundEdges),
+      tcpTotal: getAccumulatedTrafficRateTcp(totalEdges)
     };
   };
 
-  private countApps = (boxed: any, isPF: boolean): { numApps: number; numVersions: number } => {
-    if (isPF) {
-      return this.countAppsPF(boxed);
-    }
-
-    const appVersions: { [key: string]: Set<string> } = {};
-
-    boxed.filter(`node[nodeType = "${NodeType.APP}"]`).forEach((node: any) => {
-      const app = node.data(NodeAttr.app);
-
-      if (appVersions[app] === undefined) {
-        appVersions[app] = new Set();
-      }
-
-      appVersions[app].add(node.data(NodeAttr.version));
-    });
-
-    return {
-      numApps: Object.getOwnPropertyNames(appVersions).length,
-      numVersions: Object.getOwnPropertyNames(appVersions).reduce((totalCount: number, version: string) => {
-        return totalCount + appVersions[version].size;
-      }, 0)
-    };
-  };
-
-  private countAppsPF = (boxed: any): { numApps: number; numVersions: number } => {
+  private countApps = (boxed: any): { numApps: number; numVersions: number } => {
     const appVersions: { [key: string]: Set<string> } = {};
 
     select(boxed, { prop: NodeAttr.nodeType, val: NodeType.APP }).forEach((node: GraphElement) => {

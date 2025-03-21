@@ -29,7 +29,6 @@ import {
 } from './SummaryPanelCommon';
 import { Datapoint, IstioMetricsMap, Labels, Metric } from '../../types/Metrics';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
-import { decoratedEdgeData, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { ResponseFlagsTable } from 'components/SummaryPanel/ResponseFlagsTable';
 import { ResponseHostsTable } from 'components/SummaryPanel/ResponseHostsTable';
 import { KialiIcon } from 'config/KialiIcon';
@@ -159,15 +158,10 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
   };
 
   render(): React.ReactNode {
-    const isPF = !!this.props.data.isPF;
     const edge = this.props.data.summaryTarget;
-    const edgeData = isPF ? ((edge as Edge).getData() as DecoratedGraphEdgeData) : decoratedEdgeData(edge);
-    const sourceData = isPF
-      ? ((edge as Edge).getSource().getData() as DecoratedGraphNodeData)
-      : decoratedNodeData(edge.source());
-    const destData = isPF
-      ? ((edge as Edge).getTarget().getData() as DecoratedGraphNodeData)
-      : decoratedNodeData(edge.target());
+    const edgeData = (edge as Edge).getData() as DecoratedGraphEdgeData;
+    const sourceData = (edge as Edge).getSource().getData() as DecoratedGraphNodeData;
+    const destData = (edge as Edge).getTarget().getData() as DecoratedGraphNodeData;
     const mTLSPercentage = edgeData.isMTLS;
     const isMtls = mTLSPercentage && mTLSPercentage > 0;
     const hasPrincipals = !!edgeData.sourcePrincipal || !!edgeData.destPrincipal;
@@ -289,7 +283,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
                 </Tab>
               </SimpleTabs>
               {hr()}
-              {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF)}
+              {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests)}
             </div>
           )}
 
@@ -317,7 +311,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
 
               {hr()}
 
-              {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF, isReversed)}
+              {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isReversed)}
             </div>
           )}
 
@@ -431,15 +425,10 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
   };
 
   private updateCharts = (props: SummaryPanelPropType): void => {
-    const isPF = !!props.data.isPF;
     const edge = this.props.data.summaryTarget;
-    const edgeData = isPF ? ((edge as Edge).getData() as DecoratedGraphEdgeData) : decoratedEdgeData(edge);
-    const sourceData = isPF
-      ? ((edge as Edge).getSource().getData() as DecoratedGraphNodeData)
-      : decoratedNodeData(edge.source());
-    const destData = isPF
-      ? ((edge as Edge).getTarget().getData() as DecoratedGraphNodeData)
-      : decoratedNodeData(edge.target());
+    const edgeData = (edge as Edge).getData() as DecoratedGraphEdgeData;
+    const sourceData = (edge as Edge).getSource().getData() as DecoratedGraphNodeData;
+    const destData = (edge as Edge).getTarget().getData() as DecoratedGraphNodeData;
     const sourceMetricType = getNodeMetricType(sourceData);
     const destMetricType = getNodeMetricType(destData);
     const protocol = edgeData.protocol;
@@ -459,7 +448,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     if (
       !destMetricType ||
       !sourceMetricType ||
-      !this.hasSupportedCharts(edge, isPF) ||
+      !this.hasSupportedCharts(edge) ||
       (!isGrpc && !isHttp && !isTcp) ||
       destData.isInaccessible
     ) {
@@ -713,10 +702,9 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     isHttp: boolean,
     isTcp: boolean,
     isRequests: boolean,
-    isPF: boolean,
     isWaypointEdge?: boolean
   ): React.ReactNode => {
-    if (!this.hasSupportedCharts(edge, isPF)) {
+    if (!this.hasSupportedCharts(edge)) {
       return isGrpc || isHttp ? (
         <>
           <KialiIcon.Info /> Service graphs do not support service-to-service aggregate sparklines. See the chart above
@@ -731,7 +719,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       );
     }
 
-    const destData = isPF ? (edge as Edge).getTarget().getData() : decoratedNodeData(edge.target());
+    const destData = (edge as Edge).getTarget().getData();
 
     if (destData.isInaccessible) {
       return (
@@ -817,9 +805,9 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     );
   };
 
-  private hasSupportedCharts = (edge: any, isPF: boolean): boolean => {
-    const sourceData = isPF ? (edge as Edge).getSource().getData() : decoratedNodeData(edge.source());
-    const destData = isPF ? (edge as Edge).getTarget().getData() : decoratedNodeData(edge.target());
+  private hasSupportedCharts = (edge: any): boolean => {
+    const sourceData = (edge as Edge).getSource().getData();
+    const destData = (edge as Edge).getTarget().getData();
     const sourceMetricType = getNodeMetricType(sourceData);
     const destMetricType = getNodeMetricType(destData);
 

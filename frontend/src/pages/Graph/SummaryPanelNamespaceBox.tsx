@@ -148,15 +148,15 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
 
   componentDidMount(): void {
     this.boxTraffic = this.getBoxTraffic();
-    this.updateCharts(!!this.props.data.isPF);
-    this.updateValidation(!!this.props.data.isPF);
+    this.updateCharts();
+    this.updateValidation();
   }
 
   componentDidUpdate(prevProps: SummaryPanelPropType): void {
     if (shouldRefreshData(prevProps, this.props)) {
       this.boxTraffic = this.getBoxTraffic();
-      this.updateCharts(!!this.props.data.isPF);
-      this.updateValidation(!!this.props.data.isPF);
+      this.updateCharts();
+      this.updateValidation();
     }
   }
 
@@ -170,29 +170,18 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
   }
 
   render(): React.ReactNode {
-    const isPF = !!this.props.data.isPF;
     const namespaceBox = this.props.data.summaryTarget;
-    const data = isPF ? namespaceBox.getData() : namespaceBox.data();
-    const boxed = isPF ? descendents(namespaceBox) : namespaceBox.descendants();
+    const data = namespaceBox.getData();
+    const boxed = descendents(namespaceBox);
     const namespace = data[NodeAttr.namespace];
 
-    let numSvc: number;
-    let numWorkloads: number;
-    let numEdges: number;
-
-    const { numApps, numVersions } = this.countApps(boxed, isPF);
+    const { numApps, numVersions } = this.countApps(boxed);
     const { grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
       this.boxTraffic ?? this.getBoxTraffic();
 
-    if (isPF) {
-      numSvc = select(boxed, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).length;
-      numWorkloads = select(boxed, { prop: NodeAttr.nodeType, val: NodeType.WORKLOAD }).length;
-      numEdges = edgesInOut(boxed).length;
-    } else {
-      numSvc = boxed.filter(`node[nodeType = "${NodeType.SERVICE}"]`).size();
-      numWorkloads = boxed.filter(`node[nodeType = "${NodeType.WORKLOAD}"]`).size();
-      numEdges = boxed.connectedEdges().size();
-    }
+    const numSvc = select(boxed, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).length;
+    const numWorkloads = select(boxed, { prop: NodeAttr.nodeType, val: NodeType.WORKLOAD }).length;
+    const numEdges = edgesInOut(boxed).length;
 
     const tooltipInboundRef = React.createRef();
     const tooltipOutboundRef = React.createRef();
@@ -333,7 +322,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
 
                 <div>
                   {hr()}
-                  {this.renderCharts(isPF)}
+                  {this.renderCharts()}
                 </div>
               </div>
             </Tab>
@@ -344,10 +333,9 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
   }
 
   private getBoxTraffic = (): SummaryPanelNamespaceBoxTraffic => {
-    const isPF = !!this.props.data.isPF;
     const namespaceBox = this.props.data.summaryTarget;
-    const data = isPF ? namespaceBox.getData() : namespaceBox.data();
-    const boxed = isPF ? descendents(namespaceBox) : namespaceBox.descendants();
+    const data = namespaceBox.getData();
+    const boxed = descendents(namespaceBox);
     const namespace = data[NodeAttr.namespace];
     const cluster = data[NodeAttr.cluster];
 
@@ -355,78 +343,39 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     let outboundEdges: Edge[] | any;
     let totalEdges: Edge[] | any;
 
-    if (isPF) {
-      const controller = (namespaceBox as Node).getController();
-      const { nodes } = elems(controller);
+    const controller = (namespaceBox as Node).getController();
+    const { nodes } = elems(controller);
 
-      const outsideNodes = selectOr(nodes, [
-        [{ prop: NodeAttr.namespace, op: '!=', val: namespace }],
-        [{ prop: NodeAttr.cluster, op: '!=', val: cluster }]
-      ]) as Node[];
+    const outsideNodes = selectOr(nodes, [
+      [{ prop: NodeAttr.namespace, op: '!=', val: namespace }],
+      [{ prop: NodeAttr.cluster, op: '!=', val: cluster }]
+    ]) as Node[];
 
-      // inbound edges are from a different namespace or a different cluster
-      inboundEdges = edgesOut(outsideNodes, boxed);
+    // inbound edges are from a different namespace or a different cluster
+    inboundEdges = edgesOut(outsideNodes, boxed);
 
-      // outbound edges are to a different namespace or a different cluster
-      outboundEdges = edgesIn(outsideNodes, boxed);
+    // outbound edges are to a different namespace or a different cluster
+    outboundEdges = edgesIn(outsideNodes, boxed);
 
-      // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
-      totalEdges = [...inboundEdges];
-      totalEdges.push(...edgesOut(select(boxed, { prop: NodeAttr.workload, op: 'truthy' }) as Node[]));
-    } else {
-      // inbound edges are from a different namespace or a different cluster
-      inboundEdges = namespaceBox
-        .cy()
-        .nodes(`[${NodeAttr.namespace} != "${namespace}"],[${NodeAttr.cluster} != "${cluster}"]`)
-        .edgesTo(boxed);
-
-      // outbound edges are to a different namespace or a different cluster
-      outboundEdges = boxed.edgesTo(`[${NodeAttr.namespace} != "${namespace}"],[${NodeAttr.cluster} != "${cluster}"]`);
-
-      // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
-      totalEdges = inboundEdges.add(boxed.filter(`[?${NodeAttr.workload}]`).edgesTo('*'));
-    }
+    // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
+    totalEdges = [...inboundEdges];
+    totalEdges.push(...edgesOut(select(boxed, { prop: NodeAttr.workload, op: 'truthy' }) as Node[]));
 
     return {
-      grpcIn: getAccumulatedTrafficRateGrpc(inboundEdges, isPF),
-      grpcOut: getAccumulatedTrafficRateGrpc(outboundEdges, isPF),
-      grpcTotal: getAccumulatedTrafficRateGrpc(totalEdges, isPF),
-      httpIn: getAccumulatedTrafficRateHttp(inboundEdges, isPF),
-      httpOut: getAccumulatedTrafficRateHttp(outboundEdges, isPF),
-      httpTotal: getAccumulatedTrafficRateHttp(totalEdges, isPF),
+      grpcIn: getAccumulatedTrafficRateGrpc(inboundEdges),
+      grpcOut: getAccumulatedTrafficRateGrpc(outboundEdges),
+      grpcTotal: getAccumulatedTrafficRateGrpc(totalEdges),
+      httpIn: getAccumulatedTrafficRateHttp(inboundEdges),
+      httpOut: getAccumulatedTrafficRateHttp(outboundEdges),
+      httpTotal: getAccumulatedTrafficRateHttp(totalEdges),
       isGrpcRequests: this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST),
-      tcpIn: getAccumulatedTrafficRateTcp(inboundEdges, isPF),
-      tcpOut: getAccumulatedTrafficRateTcp(outboundEdges, isPF),
-      tcpTotal: getAccumulatedTrafficRateTcp(totalEdges, isPF)
+      tcpIn: getAccumulatedTrafficRateTcp(inboundEdges),
+      tcpOut: getAccumulatedTrafficRateTcp(outboundEdges),
+      tcpTotal: getAccumulatedTrafficRateTcp(totalEdges)
     };
   };
 
-  private countApps = (boxed: any, isPF: boolean): { numApps: number; numVersions: number } => {
-    if (isPF) {
-      return this.countAppsPF(boxed);
-    }
-
-    const appVersions: { [key: string]: Set<string> } = {};
-
-    boxed.filter(`node[nodeType = "${NodeType.APP}"]`).forEach((node: any) => {
-      const app = node.data(NodeAttr.app);
-
-      if (appVersions[app] === undefined) {
-        appVersions[app] = new Set();
-      }
-
-      appVersions[app].add(node.data(NodeAttr.version));
-    });
-
-    return {
-      numApps: Object.getOwnPropertyNames(appVersions).length,
-      numVersions: Object.getOwnPropertyNames(appVersions).reduce((totalCount: number, version: string) => {
-        return totalCount + appVersions[version].size;
-      }, 0)
-    };
-  };
-
-  private countAppsPF = (boxed: Node[]): { numApps: number; numVersions: number } => {
+  private countApps = (boxed: any): { numApps: number; numVersions: number } => {
     const appVersions: { [key: string]: Set<string> } = {};
 
     select(boxed, { prop: NodeAttr.nodeType, val: NodeType.APP }).forEach((node: GraphElement) => {
@@ -516,12 +465,10 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     </>
   );
 
-  private renderCharts = (isPF: boolean): React.ReactNode => {
+  private renderCharts = (): React.ReactNode => {
     const props: SummaryPanelPropType = this.props;
 
-    const namespace = isPF
-      ? props.data.summaryTarget.getData()[NodeAttr.namespace]
-      : props.data.summaryTarget.data(NodeAttr.namespace);
+    const namespace = props.data.summaryTarget.getData()[NodeAttr.namespace];
 
     if (this.state.loading) {
       return <strong>Loading chart...</strong>;
@@ -615,16 +562,11 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     );
   };
 
-  private updateCharts = (isPF: boolean): void => {
+  private updateCharts = (): void => {
     const props: SummaryPanelPropType = this.props;
 
-    const cluster = isPF
-      ? props.data.summaryTarget.getData()[NodeAttr.cluster]
-      : props.data.summaryTarget.data(NodeAttr.cluster);
-
-    const namespace = isPF
-      ? props.data.summaryTarget.getData()[NodeAttr.namespace]
-      : props.data.summaryTarget.data(NodeAttr.namespace);
+    const cluster = props.data.summaryTarget.getData()[NodeAttr.cluster];
+    const namespace = props.data.summaryTarget.getData()[NodeAttr.namespace];
 
     if (namespace === UNKNOWN) {
       this.setState({
@@ -744,10 +686,8 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     this.setState({ loading: true, metricsLoadError: null });
   };
 
-  private updateValidation = (isPF: boolean): void => {
-    const namespace = isPF
-      ? this.props.data.summaryTarget.getData()[NodeAttr.namespace]
-      : this.props.data.summaryTarget.data(NodeAttr.namespace);
+  private updateValidation = (): void => {
+    const namespace = this.props.data.summaryTarget.getData()[NodeAttr.namespace];
 
     this.validationPromise = makeCancelablePromise(API.getNamespaceValidations(namespace));
 

@@ -38,15 +38,11 @@ interface GraphTraffic {
 
 interface GraphSettings {
   animation: 'point' | 'dash';
-  fontLabel: number;
-  minFontBadge: number;
-  minFontLabel: number;
 }
 
 interface GraphUIDefaults {
   findOptions: GraphFindOption[];
   hideOptions: GraphFindOption[];
-  impl: 'both' | 'cy' | 'pf';
   settings: GraphSettings;
   traffic: GraphTraffic;
 }

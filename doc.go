@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/kiali/kiali/graph/config/cytoscape"
+	config_common "github.com/kiali/kiali/graph/config/common"
 	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -583,11 +583,11 @@ type SwaggTokenGeneratedResp struct {
 	Body authentication.UserSessionData
 }
 
-// HTTP status code 200 and cytoscapejs Config in data
+// HTTP status code 200 and graph Config in data
 // swagger:response graphResponse
 type GraphResponse struct {
 	// in:body
-	Body cytoscape.Config
+	Body config_common.Config
 }
 
 // HTTP status code 200 and IstioConfigList model in data

@@ -1,9 +1,12 @@
 import * as React from 'react';
-
-import { MTLSIconTypes } from './MTLSIcon';
 import { MTLSStatus, emptyDescriptor, StatusDescriptor } from './MTLSStatus';
 import { kialiStyle } from 'styles/StyleUtils';
 import { MTLSStatuses } from '../../types/TLSStatus';
+
+export enum MTLSIconTypes {
+  LOCK_FULL = 'LOCK_FULL',
+  LOCK_HOLLOW = 'LOCK_HOLLOW'
+}
 
 type Props = {
   status: string;

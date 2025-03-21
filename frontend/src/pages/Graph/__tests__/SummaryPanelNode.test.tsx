@@ -22,7 +22,10 @@ describe('SummaryPanelNodeComponent', () => {
       destServices: []
     };
     const target = {
-      data: (destServices?) => (destServices ? [] : nodeData)
+      data: (destServices?) => (destServices ? [] : nodeData),
+      getData: () => {
+        return nodeData;
+      }
     };
     defaultProps = {
       tracingState: {},

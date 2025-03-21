@@ -359,10 +359,6 @@ func ClustersMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 				return
 			}
 
-			if err != nil {
-				RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-				return
-			}
 			result[namespace] = metrics
 		}
 

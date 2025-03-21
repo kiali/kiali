@@ -97,12 +97,8 @@ const defaultServerConfig: ComputedServerConfig = {
       graph: {
         findOptions: [],
         hideOptions: [],
-        impl: 'pf',
         settings: {
-          animation: 'point',
-          fontLabel: 13,
-          minFontBadge: 7,
-          minFontLabel: 10
+          animation: 'point'
         },
         traffic: {
           ambient: 'total',
