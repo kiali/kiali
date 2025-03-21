@@ -146,6 +146,7 @@ fi
 
 # Determine where this script is and make it the cwd
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+source ${SCRIPT_DIR}/istio/functions.sh
 
 # This is used in multiple places and you need to call 'setKialiURL' first.
 KIALI_URL=""
@@ -380,6 +381,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
   yarn run cypress:run
   detectRaceConditions
 elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
+
   ensureCypressInstalled
   ensureKialiTracesReady "true"
 
@@ -404,8 +406,25 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
   fi
 
   cd "${SCRIPT_DIR}"/../frontend
-  yarn run cypress:run:ambient
+
+  # TODO: Remove when no support for Istio 1.23 is required
+  # Replace by "yarn run cypress:run:ambient"
+  if [ "${ISTIO_VERSION}" != "" ]; then
+    set +e
+    is_istio_version_eq_greater_than_expected "1.24.0" "${ISTIO_VERSION}"
+    status=$?
+    if [ "$status" -eq 0 ]; then
+      yarn run cypress:run:ambient123
+    else
+      yarn run cypress:run:ambient
+    fi
+    set -e
+  else
+    yarn run cypress:run:ambient
+  fi
+
   detectRaceConditions
+
 elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
   ensureCypressInstalled
   

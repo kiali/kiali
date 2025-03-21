@@ -222,6 +222,7 @@ Feature: Kiali Waypoint related features
     And user "disables" "http" traffic option
     Then 2 edges appear in the graph
 
+  @skip-istio-1-23
   Scenario: [Traffic] Waypoint for workload
     Given user is at the "graphpf" page
     When user graphs "waypoint-forworkload" namespaces
@@ -234,6 +235,7 @@ Feature: Kiali Waypoint related features
     And the "unknown" service "does" exists
     And the "curl-client" node "does" exists
 
+  @skip-istio-1-23
   Scenario: [Traffic] Waypoint for workload with waypoints
     Given user is at the "graphpf" page
     When user graphs "waypoint-forworkload" namespaces
@@ -346,6 +348,7 @@ Feature: Kiali Waypoint related features
     Then user goes to the waypoint "Info" subtab
     And validates waypoint Info data for "service"
 
+  @skip-istio-1-23
   Scenario: [Traffic] Sidecar Ambient traffic
     Given user is at the "graphpf" page
     When user graphs "test-ambient,test-sidecar" namespaces
