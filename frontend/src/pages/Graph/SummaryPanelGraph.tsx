@@ -34,7 +34,7 @@ import { ValidationStatus } from 'types/IstioObjects';
 import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { NodeData } from 'pages/Graph/GraphPFElems';
+import { NodeData } from 'pages/Graph/GraphElems';
 import { edgesIn, edgesOut, elems, leafNodes, select } from 'helpers/GraphHelpers';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';

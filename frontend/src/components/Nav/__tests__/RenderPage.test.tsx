@@ -34,7 +34,7 @@ describe('RenderPage isGraph prop', () => {
     // we need a user session to render the navigation component
     store.dispatch(LoginActions.loginSuccess(session));
 
-    router.navigate('/graphpf/namespaces');
+    router.navigate('/graph/namespaces');
 
     const wrapper = mount(
       <Provider store={store}>

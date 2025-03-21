@@ -1,13 +1,13 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { EdgeAttr } from 'types/Graph';
-import { elems, select } from './graph-pf';
+import { elems, select } from './graph';
 import { Visualization } from '@patternfly/react-topology';
 
 When(
   'user graphs {string} namespaces with refresh {string} and duration {string}',
   (namespaces: string, refresh: string, duration: string) => {
     cy.visit({
-      url: `/console/graphpf/namespaces?refresh=${refresh}&duration=${duration}&namespaces=${namespaces}`
+      url: `/console/graph/namespaces?refresh=${refresh}&duration=${duration}&namespaces=${namespaces}`
     });
   }
 );
@@ -111,7 +111,7 @@ Then('user does not see graph traffic menu', () => {
 
 Then('user {string} {string} traffic', (action: string, protocol: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -214,7 +214,7 @@ Then('user sees selected graph refresh {string}', (refresh: string) => {
 
 Then('user sees a {string} graph', graphType => {
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];

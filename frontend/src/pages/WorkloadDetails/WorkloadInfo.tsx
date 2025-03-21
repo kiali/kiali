@@ -15,7 +15,7 @@ import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
 import { gvkType, IstioConfigList, skipUnrelatedK8sGateways, toIstioItems } from '../../types/IstioConfigList';
 import { WorkloadPods } from './WorkloadPods';
 import { IstioConfigCard } from '../../components/IstioConfigCard/IstioConfigCard';
-import { MiniGraphCardPF } from 'pages/Graph/MiniGraphCardPF';
+import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
 import { getGVKTypeString, stringToGVK } from '../../utils/IstioConfigUtils';
 import { WorkloadEntries } from './WorkloadEntries';
 
@@ -303,7 +303,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
             </GridItem>
 
             <GridItem span={miniGraphSpan}>
-              <MiniGraphCardPF
+              <MiniGraphCard
                 dataSource={this.graphDataSource}
                 namespace={this.props.namespace}
                 workload={this.props.workload}

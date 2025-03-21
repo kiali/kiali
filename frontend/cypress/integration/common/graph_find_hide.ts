@@ -31,7 +31,7 @@ Then('user sees unhealthy workloads highlighted on the graph', () => {
     }
   ];
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -54,7 +54,7 @@ Then('user sees unhealthy workloads highlighted on the graph', () => {
 
 Then('user sees nothing highlighted on the graph', () => {
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -85,7 +85,7 @@ When('user hides unhealthy workloads', () => {
 
 Then('user sees no unhealthy workloads on the graph', () => {
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -123,7 +123,7 @@ When('user selects the preset hide option {string}', (option: string) => {
 
 Then('user sees no healthy workloads on the graph', () => {
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];

@@ -15,7 +15,7 @@ describe('GraphActions', () => {
 
   it('should dispatch "update summary" action on render', () => {
     const dispatch = jest.fn();
-    GraphThunkActions.graphPFReady({} as Controller)(dispatch);
+    GraphThunkActions.graphReady({} as Controller)(dispatch);
 
     expect(dispatch.mock.calls.length).toBe(1);
     expect(dispatch.mock.calls[0][0]).toEqual(

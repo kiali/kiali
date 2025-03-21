@@ -35,10 +35,10 @@ import { getEdgeHealth } from 'types/ErrorRate/GraphEdgeStatus';
 import { Span } from 'types/TracingInfo';
 import { IconType } from 'config/Icons';
 import { NodeDecorator } from './NodeDecorator';
-import { GraphLayout } from './GraphPF';
+import { GraphLayout } from './Graph';
 import { supportsGroups } from 'utils/GraphUtils';
 import { kialiStyle } from 'styles/StyleUtils';
-import { TrafficPointGenerator } from '../Graph/TrafficAnimation/TrafficRendererPF';
+import { TrafficPointGenerator } from '../Graph/TrafficAnimation/TrafficRenderer';
 
 // Utilities for working with PF Topology
 
@@ -95,7 +95,7 @@ export type EdgeData = DecoratedGraphEdgeData & {
   tagStatus?: NodeStatus;
 };
 
-export type GraphPFSettings = {
+export type GraphSettings = {
   activeNamespaces: Namespace[];
   edgeLabels: EdgeLabelMode[];
   graphType: GraphType;
@@ -159,7 +159,7 @@ const getDecorator = (element: Node, quadrant: TopologyQuadrant, icon: IconType,
   return <NodeDecorator element={element} quadrant={quadrant} icon={icon} tooltip={tooltip} />;
 };
 
-export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphPFSettings): void => {
+export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphSettings): void => {
   // PFT provides the ability to add a single Icon (badge) on the label. And so we will use
   // attachments (up to 4) to display things that we'd prefer to have shown with more icons.
   const data = node.getData() as NodeData;
@@ -226,7 +226,7 @@ const waypointIconStyle = kialiStyle({
 export const setNodeLabel = (
   node: NodeModel,
   nodeMap: NodeMap,
-  settings: GraphPFSettings,
+  settings: GraphSettings,
   layoutName: GraphLayout
 ): void => {
   const data = node.data as NodeData;
@@ -389,7 +389,7 @@ export const setNodeLabel = (
   return;
 };
 
-const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettings): string => {
+const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphSettings): string => {
   const data = edge.data as EdgeData;
   const edgeLabels = settings.edgeLabels;
   const isVerbose = data.isSelected;
@@ -603,7 +603,7 @@ const getPathStyle = (data: EdgeData): React.CSSProperties => {
   } as React.CSSProperties;
 };
 
-export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettings): void => {
+export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphSettings): void => {
   const data = edge.data as EdgeData;
   if (data.waypoint?.fromEdge) {
     data.startTerminalType = EdgeTerminalType.directional;
@@ -617,7 +617,7 @@ export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: Grap
 export const assignEdgeHealth = (
   edges: DecoratedGraphEdgeWrapper[],
   nodeMap: NodeMap,
-  settings: GraphPFSettings
+  settings: GraphSettings
 ): void => {
   edges?.forEach(edge => {
     const edgeData = edge.data as EdgeData;

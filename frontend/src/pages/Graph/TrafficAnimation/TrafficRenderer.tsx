@@ -1,13 +1,9 @@
 import { Point, clamp, distance } from '../../../utils/MathUtils';
-import {
-  TrafficPointCircleRenderer,
-  TrafficPointDiamondRenderer,
-  TrafficPointRenderer
-} from './TrafficPointRendererPF';
+import { TrafficPointCircleRenderer, TrafficPointDiamondRenderer, TrafficPointRenderer } from './TrafficPointRenderer';
 import { Protocol } from '../../../types/Graph';
 import { timerConfig, tcpTimerConfig } from './AnimationTimerConfig';
 import { Controller, Edge, EdgeAnimationSpeed, EdgeStyle } from '@patternfly/react-topology';
-import { EdgeData } from 'pages/Graph/GraphPFElems';
+import { EdgeData } from 'pages/Graph/GraphElems';
 import { PFColors } from 'components/Pf/PfColors';
 import { setObserved } from 'helpers/GraphHelpers';
 import { serverConfig } from 'config';
@@ -227,19 +223,19 @@ export class TrafficPointGenerator {
   //   2) look for a sizeable change in error rate
   // and combine the values.
   getHash(edgeData: EdgeData) {
-    let animationSpeedPF = EdgeAnimationSpeed.none;
+    let animationSpeed = EdgeAnimationSpeed.none;
     switch (edgeData.protocol) {
       case Protocol.GRPC:
-        animationSpeedPF = timerConfig.computeAnimationSpeedPF(edgeData.grpc);
+        animationSpeed = timerConfig.computeAnimationSpeed(edgeData.grpc);
         break;
       case Protocol.HTTP:
-        animationSpeedPF = timerConfig.computeAnimationSpeedPF(edgeData.http);
+        animationSpeed = timerConfig.computeAnimationSpeed(edgeData.http);
         break;
       case Protocol.TCP:
-        animationSpeedPF = tcpTimerConfig.computeAnimationSpeedPF(edgeData.tcp);
+        animationSpeed = tcpTimerConfig.computeAnimationSpeed(edgeData.tcp);
         break;
     }
-    return `${animationSpeedPF}:${(this.errorRate / 100).toFixed(1)}:${this.type}`;
+    return `${animationSpeed}:${(this.errorRate / 100).toFixed(1)}:${this.type}`;
   }
 }
 
@@ -359,13 +355,13 @@ export class TrafficAnimation {
         const edgeData = e.getData() as EdgeData;
         switch (edgeData.protocol) {
           case Protocol.GRPC:
-            e.setEdgeAnimationSpeed(timerConfig.computeAnimationSpeedPF(edgeData.grpc));
+            e.setEdgeAnimationSpeed(timerConfig.computeAnimationSpeed(edgeData.grpc));
             break;
           case Protocol.HTTP:
-            e.setEdgeAnimationSpeed(timerConfig.computeAnimationSpeedPF(edgeData.http));
+            e.setEdgeAnimationSpeed(timerConfig.computeAnimationSpeed(edgeData.http));
             break;
           case Protocol.TCP:
-            e.setEdgeAnimationSpeed(tcpTimerConfig.computeAnimationSpeedPF(edgeData.tcp));
+            e.setEdgeAnimationSpeed(tcpTimerConfig.computeAnimationSpeed(edgeData.tcp));
             break;
         }
         if (e.getEdgeAnimationSpeed() !== EdgeAnimationSpeed.none) {

@@ -12,8 +12,8 @@ import { WorkloadDetailsRoute } from 'routes/WorkloadDetailsRoute';
 import { AppDetailsRoute } from 'routes/AppDetailsRoute';
 import { IstioConfigDetailsRoute } from 'routes/IstioConfigDetailsRoute';
 import { IstioConfigNewRoute } from 'routes/IstioConfigNewRoute';
-import { GraphRoutePF } from 'routes/GraphRoutePF';
-import { GraphPagePF } from 'pages/Graph/GraphPagePF';
+import { GraphRoute } from 'routes/GraphRoute';
+import { GraphPage } from 'pages/Graph/GraphPage';
 import { t } from 'utils/I18nUtils';
 import { RouteObject } from 'react-router-dom-v5-compat';
 import { WildcardRoute } from 'routes/WildcardRoute';
@@ -32,8 +32,8 @@ const navMenuItems: MenuItem[] = [
   {
     id: 'traffic_graph',
     title: t('Traffic Graph'),
-    to: '/graphpf/namespaces/',
-    pathsActive: [/^\/graphpf\/(.*)/]
+    to: '/graph/namespaces/',
+    pathsActive: [/^\/graph\/(.*)/]
   },
   {
     id: 'applications',
@@ -77,28 +77,28 @@ const pathRoutes: RouteObject[] = [
     element: <OverviewPage />
   },
   {
-    path: `/graphpf/node/namespaces/:namespace/${Paths.AGGREGATES}/:aggregate/:aggregateValue`,
-    element: <GraphRoutePF />
+    path: `/graph/node/namespaces/:namespace/${Paths.AGGREGATES}/:aggregate/:aggregateValue`,
+    element: <GraphRoute />
   },
   {
-    path: `/graphpf/node/namespaces/:namespace/${Paths.APPLICATIONS}/:app/versions/:version`,
-    element: <GraphRoutePF />
+    path: `/graph/node/namespaces/:namespace/${Paths.APPLICATIONS}/:app/versions/:version`,
+    element: <GraphRoute />
   },
   {
-    path: `/graphpf/node/namespaces/:namespace/${Paths.APPLICATIONS}/:app`,
-    element: <GraphRoutePF />
+    path: `/graph/node/namespaces/:namespace/${Paths.APPLICATIONS}/:app`,
+    element: <GraphRoute />
   },
   {
-    path: `/graphpf/node/namespaces/:namespace/${Paths.SERVICES}/:service`,
-    element: <GraphRoutePF />
+    path: `/graph/node/namespaces/:namespace/${Paths.SERVICES}/:service`,
+    element: <GraphRoute />
   },
   {
-    path: `/graphpf/node/namespaces/:namespace/${Paths.WORKLOADS}/:workload`,
-    element: <GraphRoutePF />
+    path: `/graph/node/namespaces/:namespace/${Paths.WORKLOADS}/:workload`,
+    element: <GraphRoute />
   },
   {
-    path: '/graphpf/namespaces',
-    element: <GraphPagePF />
+    path: '/graph/namespaces',
+    element: <GraphPage />
   },
   {
     path: `/namespaces/:namespace/${Paths.SERVICES}/:service`,

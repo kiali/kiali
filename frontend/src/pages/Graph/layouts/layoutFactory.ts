@@ -6,7 +6,7 @@ import {
   LayoutFactory,
   BreadthFirstLayout
 } from '@patternfly/react-topology';
-import { GraphLayout } from '../GraphPF';
+import { GraphLayout } from '../Graph';
 import { ExtendedDagreLayout } from './ExtendedDagreLayout';
 
 /*

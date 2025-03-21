@@ -7,7 +7,7 @@ import { DurationInSeconds } from 'types/Common';
 import { GraphDataSource } from 'services/GraphDataSource';
 import { AppHealth } from 'types/Health';
 import { kialiStyle } from 'styles/StyleUtils';
-import { MiniGraphCardPF } from 'pages/Graph/MiniGraphCardPF';
+import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
 
 type AppInfoProps = {
   app?: App;
@@ -68,7 +68,7 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
           </GridItem>
 
           <GridItem span={miniGraphSpan}>
-            <MiniGraphCardPF dataSource={this.graphDataSource} />
+            <MiniGraphCard dataSource={this.graphDataSource} />
           </GridItem>
         </Grid>
       </RenderComponentScroll>

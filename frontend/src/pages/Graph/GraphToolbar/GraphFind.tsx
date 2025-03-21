@@ -31,11 +31,11 @@ import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { GraphFindOptions } from './GraphFindOptions';
 import { location, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
-import { EdgeData, NodeData } from 'pages/Graph/GraphPFElems';
+import { EdgeData, NodeData } from 'pages/Graph/GraphElems';
 import { elems, SelectAnd, SelectExp, selectOr, SelectOr, setObserved, toSafeFieldName } from 'helpers/GraphHelpers';
 import { descendents } from 'helpers/GraphHelpers';
 import { isArray } from 'lodash';
-import { graphLayout, LayoutType } from 'pages/Graph/GraphPF';
+import { graphLayout, LayoutType } from 'pages/Graph/Graph';
 import { infoStyle } from 'styles/IconStyle';
 
 type ReduxStateProps = {
@@ -162,7 +162,7 @@ const operands: string[] = [
   'workloadentry'
 ];
 
-export class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindState> {
+export class GraphFindComponent extends React.Component<GraphFindProps, GraphFindState> {
   static contextTypes = {
     router: (): null => null
   };
@@ -1219,4 +1219,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   };
 };
 
-export const GraphFindPF = connect(mapStateToProps, mapDispatchToProps)(GraphFindPFComponent);
+export const GraphFind = connect(mapStateToProps, mapDispatchToProps)(GraphFindComponent);

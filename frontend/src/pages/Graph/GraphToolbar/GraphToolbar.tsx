@@ -35,7 +35,7 @@ import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { GraphSecondaryMasthead } from './GraphSecondaryMasthead';
 import { INITIAL_USER_SETTINGS_STATE } from 'reducers/UserSettingsState';
 import { GraphReset } from './GraphReset';
-import { GraphFindPF } from './GraphFindPF';
+import { GraphFind } from './GraphFind';
 import { kialiStyle } from 'styles/StyleUtils';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 
@@ -225,12 +225,12 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
             </ToolbarItem>
 
             <ToolbarItem>
-              <GraphFindPF controller={this.props.controller} elementsChanged={this.props.elementsChanged} />
+              <GraphFind controller={this.props.controller} elementsChanged={this.props.elementsChanged} />
             </ToolbarItem>
 
             <ToolbarItem style={{ marginLeft: 'auto', alignSelf: 'center' }}>
               <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content="Shortcuts and tips...">
-                <TourStop info={GraphTourStops.ShortcutsPF}>
+                <TourStop info={GraphTourStops.Shortcuts}>
                   <Button
                     id="graph-tour"
                     variant={ButtonVariant.link}
@@ -253,7 +253,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
   }
 
   private handleNamespaceReturn = (): void => {
-    const route = 'graphpf';
+    const route = 'graph';
     if (
       !this.props.summaryData ||
       (this.props.summaryData.summaryType !== 'node' && this.props.summaryData.summaryType !== 'box')

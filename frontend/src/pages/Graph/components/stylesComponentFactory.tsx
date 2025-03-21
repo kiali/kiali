@@ -36,11 +36,6 @@ import { DropdownGroup, DropdownItem } from '@patternfly/react-core';
 import { getGVKTypeString } from '../../../utils/IstioConfigUtils';
 import { gvkType } from '../../../types/IstioConfigList';
 
-type ContextMenuOptionPF = ContextMenuOption & {
-  altClickHandler?: (node: GraphElement, kiosk: string) => void;
-  node?: GraphElement;
-};
-
 const graphNavHandler = (node: GraphElement, kiosk: string): void => {
   handleGraphNav(node, kiosk);
 };
@@ -56,10 +51,9 @@ const nodeContextMenu = (node: GraphElement, kiosk: string): Promise<React.React
   }
 
   const options = getOptions(nodeData);
-  const optionsPF = options.map(o => o as ContextMenuOptionPF);
 
   if (!(nodeData.isServiceEntry || (nodeData.nodeType === NodeType.BOX && nodeData.isBox !== BoxByType.APP))) {
-    optionsPF.unshift(
+    options.unshift(
       nodeData.isOutside
         ? ({
             text: 'Namespace Graph',
@@ -68,7 +62,7 @@ const nodeContextMenu = (node: GraphElement, kiosk: string): Promise<React.React
             node: node,
             target: '',
             url: ''
-          } as ContextMenuOptionPF)
+          } as ContextMenuOption)
         : ({
             text: 'Node Graph',
             altClickHandler: graphNavHandler,
@@ -76,7 +70,7 @@ const nodeContextMenu = (node: GraphElement, kiosk: string): Promise<React.React
             node: node,
             target: '',
             url: ''
-          } as ContextMenuOptionPF)
+          } as ContextMenuOption)
     );
   }
 
@@ -85,7 +79,7 @@ const nodeContextMenu = (node: GraphElement, kiosk: string): Promise<React.React
     paddingBottom: 0
   });
 
-  const menuOptions = optionsPF.map((o, i) => {
+  const menuOptions = options.map((o, i) => {
     return (
       // TODO: fix kiosk param
       !!o.altClickHandler ? (

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
-import { GraphFindPFComponent } from '../GraphFindPF';
+import { GraphFindComponent } from '../GraphFind';
 import { EdgeLabelMode, EdgeMode } from 'types/Graph';
 import { Controller } from '@patternfly/react-topology';
 
@@ -11,7 +11,7 @@ const testSetter = _val => undefined;
 describe('Parse find value test', () => {
   it('should return the correct selector for raw find values', () => {
     const wrapper = shallow(
-      <GraphFindPFComponent
+      <GraphFindComponent
         controller={{} as Controller}
         edgeLabels={[] as EdgeLabelMode[]}
         edgeMode={EdgeMode.ALL}
@@ -32,7 +32,7 @@ describe('Parse find value test', () => {
       />
     );
 
-    const instance = wrapper.instance() as GraphFindPFComponent;
+    const instance = wrapper.instance() as GraphFindComponent;
 
     // check coverage of node operands
     // @ts-ignore

@@ -18,7 +18,7 @@ import { summaryPanelWidth } from './SummaryPanelCommon';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { PeerAuthentication } from '../../types/IstioObjects';
-import { FocusNode } from 'pages/Graph/GraphPF';
+import { FocusNode } from 'pages/Graph/Graph';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelStyle } from './SummaryPanelStyle';
 import { PFColors } from 'components/Pf/PfColors';
@@ -114,8 +114,8 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
 
     let tourStops = [GraphTourStops.SidePanel];
 
-    tourStops.unshift(GraphTourStops.GraphPF);
-    tourStops.unshift(GraphTourStops.ContextualMenuPF);
+    tourStops.unshift(GraphTourStops.Graph);
+    tourStops.unshift(GraphTourStops.ContextualMenu);
 
     return (
       <TourStop info={tourStops}>

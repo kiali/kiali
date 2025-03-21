@@ -21,7 +21,7 @@ import { responseFlags } from 'utils/ResponseFlags';
 import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
 import { Visualization, Node } from '@patternfly/react-topology';
 import { elems, selectAnd } from 'helpers/GraphHelpers';
-import { FocusNode } from 'pages/Graph/GraphPF';
+import { FocusNode } from 'pages/Graph/Graph';
 import { ExternalServiceInfo } from '../../types/StatusState';
 import { isMultiCluster } from '../../config';
 import { KialiIcon } from 'config/KialiIcon';
@@ -308,10 +308,6 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
   }
 
   private linkToSpan(current: RichSpanData, target: RichSpanData, text: string): React.ReactNode {
-    return this.linkToSpanPF(current, target, text);
-  }
-
-  private linkToSpanPF(current: RichSpanData, target: RichSpanData, text: string): React.ReactNode {
     const useApp = this.props.graphType === GraphType.APP || this.props.graphType === GraphType.SERVICE;
     const currentElt = useApp ? current.app : current.workload;
     const targetElt = useApp ? target.app : target.workload;
@@ -319,7 +315,6 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
     let tooltipContent = <>{text}</>;
 
     if (targetElt) {
-      // PF Graph
       const controller =
         this.props.data.summaryType === 'graph'
           ? (this.props.data.summaryTarget as Visualization)

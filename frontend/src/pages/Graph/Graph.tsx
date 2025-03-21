@@ -47,29 +47,29 @@ import {
   EdgeData,
   getNodeShape,
   getNodeStatus,
-  GraphPFSettings,
+  GraphSettings,
   NodeData,
   setEdgeOptions,
   setNodeAttachments,
   setNodeLabel
-} from './GraphPFElems';
+} from './GraphElems';
 import { elems, selectAnd, SelectAnd, setObserved } from 'helpers/GraphHelpers';
 import { layoutFactory } from './layouts/layoutFactory';
-import { hideTrace, showTrace } from './TracePF';
-import { GraphHighlighterPF } from './GraphHighlighterPF';
+import { hideTrace, showTrace } from './Trace';
 import { TimeInMilliseconds } from 'types/Common';
 import { HistoryManager, URLParam } from 'app/History';
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { supportsGroups } from 'utils/GraphUtils';
-import { GraphData, GraphRefs } from './GraphPagePF';
+import { GraphData, GraphRefs } from './GraphPage';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { ServiceDetailsInfo } from 'types/ServiceInfo';
 import { PeerAuthentication } from 'types/IstioObjects';
 import { KialiIcon } from 'config/KialiIcon';
 import { toolbarActiveStyle } from 'styles/GraphStyle';
 import { scoreNodes, ScoringCriteria } from 'pages/Graph/GraphScore';
-import { TrafficAnimation } from '../Graph/TrafficAnimation/TrafficRendererPF';
+import { TrafficAnimation } from '../Graph/TrafficAnimation/TrafficRenderer';
+import { GraphHighlighter } from './GraphHighlighter';
 
 const DEFAULT_NODE_SIZE = 40;
 const ZOOM_IN = 4 / 3;
@@ -140,7 +140,7 @@ const TopologyContent: React.FC<{
   edgeMode: EdgeMode;
   focusNode?: FocusNode;
   graphData: GraphData;
-  highlighter: GraphHighlighterPF;
+  highlighter: GraphHighlighter;
   isMiniGraph: boolean;
   layoutName: GraphLayout;
   onDeleteTrafficRouting: (key: string, serviceDetails: ServiceDetailsInfo) => void;
@@ -202,7 +202,7 @@ const TopologyContent: React.FC<{
 }) => {
   const [updateModelTime, setUpdateModelTime] = React.useState(0);
 
-  const graphSettings: GraphPFSettings = React.useMemo(() => {
+  const graphSettings: GraphSettings = React.useMemo(() => {
     return {
       activeNamespaces: graphData.fetchParams.namespaces,
       edgeLabels: edgeLabels,
@@ -211,7 +211,7 @@ const TopologyContent: React.FC<{
       showSecurity: showSecurity,
       showVirtualServices: showVirtualServices,
       trafficRates: graphData.fetchParams.trafficRates
-    } as GraphPFSettings;
+    } as GraphSettings;
   }, [graphData.fetchParams, edgeLabels, showOutOfMesh, showSecurity, showVirtualServices]);
 
   //
@@ -368,7 +368,7 @@ const TopologyContent: React.FC<{
       if (controller) {
         const defaultModel: Model = {
           graph: {
-            id: 'graphPF',
+            id: 'trafficgraph',
             layout: layoutName,
             type: 'graph'
           }
@@ -877,7 +877,7 @@ const TopologyContent: React.FC<{
   );
 };
 
-export const GraphPF: React.FC<{
+export const Graph: React.FC<{
   edgeLabels: EdgeLabelMode[];
   edgeMode: EdgeMode;
   focusNode?: FocusNode;
@@ -939,7 +939,7 @@ export const GraphPF: React.FC<{
 }) => {
   //create controller on startup and register factories
   const [controller, setController] = React.useState<Visualization>();
-  const [highlighter, setHighlighter] = React.useState<GraphHighlighterPF>();
+  const [highlighter, setHighlighter] = React.useState<GraphHighlighter>();
   const [trafficAnimation, setTrafficAnimation] = React.useState<TrafficAnimation>();
 
   // Set up the controller one time
@@ -951,7 +951,7 @@ export const GraphPF: React.FC<{
     c.registerLayoutFactory(layoutFactory);
     c.registerComponentFactory(stylesComponentFactory);
     setController(c);
-    setHighlighter(new GraphHighlighterPF(c));
+    setHighlighter(new GraphHighlighter(c));
     setTrafficAnimation(new TrafficAnimation(c));
   }, []);
 

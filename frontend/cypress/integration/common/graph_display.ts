@@ -1,14 +1,14 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 import { Visualization } from '@patternfly/react-topology';
-import { elems, select, selectAnd, selectOr } from './graph-pf';
+import { elems, select, selectAnd, selectOr } from './graph';
 import { EdgeAttr, NodeAttr } from 'types/Graph';
 
 When('user graphs {string} namespaces', (namespaces: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
   cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
 
-  cy.visit({ url: `/console/graphpf/namespaces?refresh=0&namespaces=${namespaces}` });
+  cy.visit({ url: `/console/graph/namespaces?refresh=0&namespaces=${namespaces}` });
 
   if (namespaces !== '') {
     cy.wait('@graphNamespaces');
@@ -139,7 +139,7 @@ Then('the display menu has default settings', () => {
 
 Then('the graph reflects default settings', () => {
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -199,7 +199,7 @@ Then('user sees {string} edge labels', (el: string) => {
   }
 
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -221,7 +221,7 @@ Then('user does not see {string} boxing', (boxByType: string) => {
   validateInput(`boxBy${boxByType}`, 'does not appear');
 
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -247,7 +247,7 @@ Then('idle edges {string} in the graph', (action: string) => {
 
   cy.waitForReact();
 
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -273,7 +273,7 @@ Then('idle nodes {string} in the graph', (action: string) => {
   validateInput('filterIdleNodes', action);
 
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -296,7 +296,7 @@ Then('ranks {string} in the graph', (action: string) => {
   validateInput('rank', action);
 
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -319,7 +319,7 @@ Then('user does not see service nodes', () => {
   validateInput('filterServiceNodes', 'do not appear');
 
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -341,7 +341,7 @@ Then('security {string} in the graph', (action: string) => {
   validateInput('filterSecurity', action);
 
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -398,7 +398,7 @@ Then('the {string} option should {string} and {string}', (option: string, option
 
 Then('only a single cluster box should be visible', () => {
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -494,7 +494,7 @@ Then('{int} edges appear in the graph', (graphEdges: number) => {
   cy.waitForReact();
   ensureKialiFinishedLoading();
 
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -511,7 +511,7 @@ Then('{int} edges appear in the graph', (graphEdges: number) => {
 
 Then('the {string} node {string} exists', (nodeName: string, action: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', 1)
     .then($graph => {
       const { state } = $graph[0];
@@ -532,7 +532,7 @@ Then('the {string} node {string} exists', (nodeName: string, action: string) => 
 
 Then('the {string} service {string} exists', (serviceName: string, action: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', 1)
     .then($graph => {
       const { state } = $graph[0];

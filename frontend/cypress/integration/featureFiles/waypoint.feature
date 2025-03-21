@@ -59,7 +59,7 @@ Feature: Kiali Waypoint related features
     And the user validates the Ztunnel tab
 
   Scenario: [Traffic Graph] User sees ztunnel traffic
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
@@ -67,7 +67,7 @@ Feature: Kiali Waypoint related features
     Then 7 edges appear in the graph
 
   Scenario: [Traffic Graph] User sees no Ambient traffic
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
@@ -75,7 +75,7 @@ Feature: Kiali Waypoint related features
     Then 2 edges appear in the graph
 
   Scenario: [Traffic Graph] User sees all Ambient traffic
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
@@ -96,7 +96,7 @@ Feature: Kiali Waypoint related features
     And the "waypoint" node "does" exists
 
   Scenario: [Traffic Graph] User sees waypoint traffic
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
@@ -115,7 +115,7 @@ Feature: Kiali Waypoint related features
     And badge for "istio.io/use-waypoint=waypoint" is visible in the LIST view in the namespace "bookinfo"
 
   Scenario: [Traffic] Waypoint for different namespaces working as expected
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "waypoint-differentns" namespaces
     Then user sees the "waypoint-differentns" namespace
     Then user opens traffic menu
@@ -128,7 +128,7 @@ Feature: Kiali Waypoint related features
     And the "curl-client" node "does" exists
 
   Scenario: [Traffic] Waypoint for different namespaces working as expected with waypoints
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "waypoint-differentns" namespaces
     Then user sees the "waypoint-differentns" namespace
     Then user opens traffic menu
@@ -142,7 +142,7 @@ Feature: Kiali Waypoint related features
     Then 2 edges appear in the graph
 
   Scenario: [Traffic] Waypoint for all
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "waypoint-forall" namespaces
     Then user sees the "waypoint-forall" namespace
     Then user opens traffic menu
@@ -155,7 +155,7 @@ Feature: Kiali Waypoint related features
     And the "curl-client" node "does" exists
 
   Scenario: [Traffic] Waypoint for all with waypoint
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "waypoint-forall" namespaces
     Then user sees the "waypoint-forall" namespace
     Then user opens traffic menu
@@ -170,7 +170,7 @@ Feature: Kiali Waypoint related features
     Then 2 edges appear in the graph
 
   Scenario: [Traffic] Waypoint for none
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "waypoint-fornone" namespaces
     Then user sees the "waypoint-fornone" namespace
     Then user opens traffic menu
@@ -183,7 +183,7 @@ Feature: Kiali Waypoint related features
     And the "curl-client" node "does" exists
 
   Scenario: [Traffic] Waypoint for none with waypoint proxies
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "waypoint-fornone" namespaces
     Then user sees the "waypoint-fornone" namespace
     Then user opens traffic menu
@@ -197,7 +197,7 @@ Feature: Kiali Waypoint related features
     Then 0 edges appear in the graph
 
   Scenario: [Traffic] Waypoint for service
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "waypoint-forservice" namespaces
     Then user sees the "waypoint-forservice" namespace
     Then user opens traffic menu
@@ -209,7 +209,7 @@ Feature: Kiali Waypoint related features
     And the "curl-client" node "does" exists
 
   Scenario: [Traffic] Waypoint for service with waypoints
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "waypoint-forservice" namespaces
     Then user sees the "waypoint-forservice" namespace
     Then user opens traffic menu
@@ -224,7 +224,7 @@ Feature: Kiali Waypoint related features
 
   @skip-istio-1-23
   Scenario: [Traffic] Waypoint for workload
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "waypoint-forworkload" namespaces
     Then user sees the "waypoint-forworkload" namespace
     Then user opens traffic menu
@@ -237,7 +237,7 @@ Feature: Kiali Waypoint related features
 
   @skip-istio-1-23
   Scenario: [Traffic] Waypoint for workload with waypoints
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "waypoint-forworkload" namespaces
     Then user sees the "waypoint-forworkload" namespace
     Then user opens traffic menu
@@ -251,7 +251,7 @@ Feature: Kiali Waypoint related features
     Then 2 edges appear in the graph
 
   Scenario: [Traffic] Waypoint override
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "waypoint-override" namespaces
     Then user sees the "waypoint-override" namespace
     Then user opens traffic menu
@@ -263,7 +263,7 @@ Feature: Kiali Waypoint related features
     And the "curl-client" node "does" exists
 
   Scenario: [Traffic] Waypoint override with waypoints
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "waypoint-override" namespaces
     Then user sees the "waypoint-override" namespace
     Then user opens traffic menu
@@ -350,7 +350,7 @@ Feature: Kiali Waypoint related features
 
   @skip-istio-1-23
   Scenario: [Traffic] Sidecar Ambient traffic
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "test-ambient,test-sidecar" namespaces
     Then user sees the "test-ambient" namespace
     Then user sees the "test-sidecar" namespace

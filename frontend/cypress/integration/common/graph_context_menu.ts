@@ -1,14 +1,14 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 import { Visualization } from '@patternfly/react-topology';
-import { elems, selectAnd } from './graph-pf';
+import { elems, selectAnd } from './graph';
 import { NodeAttr } from 'types/Graph';
 
 // Single cluster only.
 When('user opens the context menu of the {string} service node', (svcName: string) => {
   ensureKialiFinishedLoading();
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -32,7 +32,7 @@ When(
   (svcName: string, cluster: string) => {
     ensureKialiFinishedLoading();
     cy.waitForReact();
-    cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+    cy.getReact('GraphPageComponent', { state: { isReady: true } })
       .should('have.length', '1')
       .then($graph => {
         const { state } = $graph[0];
