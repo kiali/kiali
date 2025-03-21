@@ -31,12 +31,12 @@ const (
 )
 
 type Host struct {
-	Port            int
-	Hostname        string
-	Namespace       string
-	ServerIndex     int
-	HostIndex       int
 	GatewayRuleName string
+	Hostname        string
+	HostIndex       int
+	Namespace       string
+	Port            int
+	ServerIndex     int
 	TargetNamespace string
 }
 
