@@ -1,4 +1,4 @@
-import * as dagre from 'dagre';
+import * as dagre from '@dagrejs/dagre';
 import {
   BaseLayout,
   DagreLayoutOptions,
