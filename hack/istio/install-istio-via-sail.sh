@@ -1,6 +1,7 @@
 #!/bin/bash
 
-set -e
+set -eo xtrace
+
 
 is_in_array() {
   local value1="$1"

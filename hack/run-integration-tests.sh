@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -o xtrace
+
+
 infomsg() {
   echo "[INFO] ${1}"
 }

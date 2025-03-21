@@ -11,6 +11,9 @@
 #
 ##############################################################################
 
+set -o xtrace
+
+
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 source ${SCRIPT_DIR}/env.sh $*
 
@@ -23,7 +26,7 @@ install_istio() {
   if [ ! -z "${ISTIO_HUB}" ]; then
     local image_hub_arg="--image-hub ${ISTIO_HUB}"
   fi
-  "${ISTIO_INSTALL_SCRIPT}" ${image_tag_arg:-} ${image_hub_arg:-} --client-exe-path "${CLIENT_EXE}" --cluster-name "${clustername}" --istioctl "${ISTIOCTL}" --istio-dir "${ISTIO_DIR}" --mesh-id "${MESH_ID}" --namespace "${ISTIO_NAMESPACE}" --network "${network}"
+  "${ISTIO_INSTALL_SCRIPT}" 
   if [ "$?" != "0" ]; then
     echo "Failed to install Istio on cluster [${clustername}]"
     exit 1
@@ -94,7 +97,7 @@ create_remote_secret() {
 }
 
 # Find the hack script to be used to install istio
-ISTIO_INSTALL_SCRIPT="${SCRIPT_DIR}/../install-istio-via-istioctl.sh"
+ISTIO_INSTALL_SCRIPT="${SCRIPT_DIR}/../install-istio-via-sail.sh"
 if [ -x "${ISTIO_INSTALL_SCRIPT}" ]; then
   echo "Istio install script: ${ISTIO_INSTALL_SCRIPT}"
 else
