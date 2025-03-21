@@ -30,6 +30,18 @@ Then('user sees trace information', () => {
 
   // Ensures traces have loaded.
   cy.getBySel('tracing-scatterplot').contains('Traces');
+
+  // Bump the limit up to make it more likely we see spans from multiple apps.
+  cy.getBySel('traces-display-settings')
+    .click()
+    .then(() => {
+      cy.getBySel('limit-1000')
+        .click()
+        .then(() => {
+          // Click the display settings again to close the dropdown.
+          cy.getBySel('traces-display-settings').click();
+        });
+    });
 });
 
 Then('user see no traces', () => {
