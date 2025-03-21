@@ -32,7 +32,6 @@ import { TimeDurationModal } from 'components/Time/TimeDurationModal';
 import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { GraphActions } from 'actions/GraphActions';
-import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
 import { NodeData } from './GraphElems';
 import { elems, selectAnd } from 'helpers/GraphHelpers';
 import { KialiIcon } from 'config/KialiIcon';
@@ -365,37 +364,14 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
 
   private onViewFullGraph = (): void => {
     const namespace = this.props.dataSource.fetchParameters.namespaces[0].name;
-    let graphSelector = new GraphSelectorBuilder().namespace(namespace);
     let graphType: GraphType = GraphType.APP;
 
-    switch (this.props.dataSource.fetchParameters.node!.nodeType) {
-      case NodeType.AGGREGATE:
-        graphSelector = graphSelector
-          .aggregate(
-            this.props.dataSource.fetchParameters.node!.aggregate!,
-            this.props.dataSource.fetchParameters.node!.aggregateValue!
-          )
-          .nodeType(NodeType.AGGREGATE);
-        break;
-      case NodeType.APP:
-        graphSelector = graphSelector.app(this.props.dataSource.fetchParameters.node!.app).nodeType(NodeType.APP);
-        break;
-      case NodeType.SERVICE:
-        graphType = GraphType.SERVICE;
-        graphSelector = graphSelector.service(this.props.dataSource.fetchParameters.node!.service);
-        break;
-      case NodeType.WORKLOAD:
-        graphType = GraphType.WORKLOAD;
-        graphSelector = graphSelector.workload(this.props.dataSource.fetchParameters.node!.workload);
-        break;
-      default:
-        // NodeType.BOX is n/a
-        break;
-    }
+    const selected = selectAnd(elems(this.state.graphRefs!.getController()).nodes, [
+      { prop: 'isSelected', op: 'truthy' }
+    ]);
+    const focusSelector = selected.length > 0 ? `&focusSelector=${encodeURI(selected[0].getId())}` : '';
 
-    const graphUrl = `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}&focusSelector=${encodeURI(
-      graphSelector.build()
-    )}`;
+    const graphUrl = `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}${focusSelector}`;
 
     if (isParentKiosk(this.props.kiosk)) {
       kioskContextMenuAction(graphUrl);
