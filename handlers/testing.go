@@ -14,6 +14,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/util"
@@ -51,4 +52,10 @@ func WithAuthInfo(authInfo map[string]*api.AuthInfo, hf http.HandlerFunc) http.H
 		context := authentication.SetAuthInfoContext(r.Context(), authInfo)
 		hf(w, r.WithContext(context))
 	}
+}
+
+// WithFakeAuthInfo helper for WithAuthInfo that injects a fake token.
+func WithFakeAuthInfo(conf *config.Config, hf http.HandlerFunc) http.HandlerFunc {
+	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
+	return WithAuthInfo(authInfo, hf)
 }
