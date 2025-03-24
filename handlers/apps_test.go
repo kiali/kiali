@@ -24,12 +24,14 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers/authentication"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
+	"github.com/kiali/kiali/tracing"
 )
 
 func TestAppMetricsDefault(t *testing.T) {
@@ -198,8 +200,13 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 	return ts, xapi, k8s
 }
 
-func setupAppListEndpoint(t *testing.T, k8s kubernetes.ClientInterface, conf config.Config) *httptest.Server {
-	business.SetupBusinessLayer(t, k8s, conf)
+func setupAppListEndpoint(t *testing.T, k8s kubernetes.ClientInterface, conf *config.Config) *httptest.Server {
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	cpm := &business.FakeControlPlaneMonitor{}
+	discovery := istio.NewDiscovery(cf.Clients, cache, conf)
+	traceLoader := func() tracing.ClientInterface { return nil }
+
 	promMock := new(prometheustest.PromAPIMock)
 	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
 	prom, err := prometheus.NewClient()
@@ -207,20 +214,12 @@ func setupAppListEndpoint(t *testing.T, k8s kubernetes.ClientInterface, conf con
 		t.Fatal(err)
 	}
 	prom.Inject(promMock)
-	business.WithProm(prom)
 
+	clusterAppsHandler := WithFakeAuthInfo(conf, ClusterApps(conf, cache, cf, prom, cpm, traceLoader, nil, discovery))
+	appDetailsHandler := WithFakeAuthInfo(conf, AppDetails(conf, cache, cf, prom, cpm, traceLoader, nil, discovery))
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/clusters/apps", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}})
-			ClustersApps(w, r.WithContext(context))
-		}))
-
-	mr.HandleFunc("/api/namespaces/{namespace}/apps/{app}", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}})
-			AppDetails(w, r.WithContext(context))
-		}))
+	mr.HandleFunc("/api/clusters/apps", clusterAppsHandler)
+	mr.HandleFunc("/api/namespaces/{namespace}/apps/{app}", appDetailsHandler)
 
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)
@@ -252,7 +251,7 @@ func TestAppsEndpoint(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
 	k8s.OpenShift = true
-	ts := setupAppListEndpoint(t, k8s, *cfg)
+	ts := setupAppListEndpoint(t, k8s, cfg)
 
 	url := ts.URL + "/api/clusters/apps"
 
@@ -293,7 +292,7 @@ func TestAppDetailsEndpoint(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
 	k8s.OpenShift = true
-	ts := setupAppListEndpoint(t, k8s, *conf)
+	ts := setupAppListEndpoint(t, k8s, conf)
 
 	url := ts.URL + "/api/namespaces/Namespace/apps/httpbin"
 
