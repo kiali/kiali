@@ -1,3 +1,4 @@
+import { GraphElement } from '@patternfly/react-topology';
 import _ from 'lodash';
 import { EdgeAttr, NodeAttr } from 'types/Graph';
 
@@ -26,27 +27,23 @@ export interface TrafficRateGrpc {
   rateNoResponse: number;
 }
 
-const data = (elem: any, prop: string, isPF: boolean) => {
-  return isPF ? elem.getData()[prop] : elem.data(prop);
+const data = (elem: GraphElement, prop: string) => {
+  return elem.getData()[prop];
 };
 
-export const getTrafficRateGrpc = (
-  element: any,
-  isPF: boolean = false,
-  trafficType: TRAFFIC_GRPC = NODE_GRPC_IN
-): TrafficRateGrpc => {
+export const getTrafficRateGrpc = (element: any, trafficType: TRAFFIC_GRPC = NODE_GRPC_IN): TrafficRateGrpc => {
   return {
-    rate: safeRate(data(element, trafficType.RATE, isPF)),
-    rateGrpcErr: safeRate(data(element, trafficType.RATEGRPCERR, isPF)),
-    rateNoResponse: safeRate(data(element, trafficType.RATENORESPONSE, isPF))
+    rate: safeRate(data(element, trafficType.RATE)),
+    rateGrpcErr: safeRate(data(element, trafficType.RATEGRPCERR)),
+    rateNoResponse: safeRate(data(element, trafficType.RATENORESPONSE))
   };
 };
 
-export const getAccumulatedTrafficRateGrpc = (elements: any, isPF: boolean = false): TrafficRateGrpc => {
+export const getAccumulatedTrafficRateGrpc = (elements: any): TrafficRateGrpc => {
   return _.reduce(
     elements,
     (r: TrafficRateGrpc, element): TrafficRateGrpc => {
-      const elementTrafficRate = getTrafficRateGrpc(element, isPF, EDGE_GRPC);
+      const elementTrafficRate = getTrafficRateGrpc(element, EDGE_GRPC);
       r.rate += elementTrafficRate.rate;
       r.rateGrpcErr += elementTrafficRate.rateGrpcErr;
       r.rateNoResponse += elementTrafficRate.rateNoResponse;
@@ -87,25 +84,21 @@ export interface TrafficRateHttp {
   rateNoResponse: number;
 }
 
-export const getTrafficRateHttp = (
-  element: any,
-  isPF: boolean = false,
-  trafficType: TRAFFIC_HTTP = NODE_HTTP_IN
-): TrafficRateHttp => {
+export const getTrafficRateHttp = (element: any, trafficType: TRAFFIC_HTTP = NODE_HTTP_IN): TrafficRateHttp => {
   return {
-    rate: safeRate(data(element, trafficType.RATE, isPF)),
-    rate3xx: safeRate(data(element, trafficType.RATE3XX, isPF)),
-    rate4xx: safeRate(data(element, trafficType.RATE4XX, isPF)),
-    rate5xx: safeRate(data(element, trafficType.RATE5XX, isPF)),
-    rateNoResponse: safeRate(data(element, trafficType.RATENORESPONSE, isPF))
+    rate: safeRate(data(element, trafficType.RATE)),
+    rate3xx: safeRate(data(element, trafficType.RATE3XX)),
+    rate4xx: safeRate(data(element, trafficType.RATE4XX)),
+    rate5xx: safeRate(data(element, trafficType.RATE5XX)),
+    rateNoResponse: safeRate(data(element, trafficType.RATENORESPONSE))
   };
 };
 
-export const getAccumulatedTrafficRateHttp = (elements, isPF: boolean = false): TrafficRateHttp => {
+export const getAccumulatedTrafficRateHttp = (elements): TrafficRateHttp => {
   return _.reduce(
     elements,
     (r: TrafficRateHttp, element): TrafficRateHttp => {
-      const elementTrafficRate = getTrafficRateHttp(element, isPF, EDGE_HTTP);
+      const elementTrafficRate = getTrafficRateHttp(element, EDGE_HTTP);
       r.rate += elementTrafficRate.rate;
       r.rate3xx += elementTrafficRate.rate3xx;
       r.rate4xx += elementTrafficRate.rate4xx;
@@ -132,21 +125,17 @@ export interface TrafficRateTcp {
   rate: number;
 }
 
-export const getTrafficRateTcp = (
-  element: any,
-  isPF: boolean = false,
-  trafficType: TRAFFIC_TCP = NODE_TCP_IN
-): TrafficRateTcp => {
+export const getTrafficRateTcp = (element: any, trafficType: TRAFFIC_TCP = NODE_TCP_IN): TrafficRateTcp => {
   return {
-    rate: safeRate(data(element, trafficType.RATE, isPF))
+    rate: safeRate(data(element, trafficType.RATE))
   };
 };
 
-export const getAccumulatedTrafficRateTcp = (elements: any, isPF: boolean = false): TrafficRateTcp => {
+export const getAccumulatedTrafficRateTcp = (elements: any): TrafficRateTcp => {
   return _.reduce(
     elements,
     (r: TrafficRateTcp, element): TrafficRateTcp => {
-      const elementTrafficRate = getTrafficRateTcp(element, isPF, EDGE_TCP);
+      const elementTrafficRate = getTrafficRateTcp(element, EDGE_TCP);
       r.rate += elementTrafficRate.rate;
       return r;
     },

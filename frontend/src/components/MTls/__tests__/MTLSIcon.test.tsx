@@ -1,10 +1,11 @@
 import * as React from 'react';
+import { MTLSIcon } from '../MTLSIcon';
 import { mount } from 'enzyme';
-import { MTLSIcon, MTLSIconTypes } from '../MTLSIcon';
 import { mountToJson } from 'enzyme-to-json';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Provider } from 'react-redux';
 import { store } from 'store/ConfigStore';
+import { MTLSIconTypes } from '../NamespaceMTLSStatus';
 
 const mockIcon = (icon: string) => {
   const component = (

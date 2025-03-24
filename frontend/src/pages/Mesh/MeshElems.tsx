@@ -18,7 +18,6 @@ import { NamespaceInfo } from 'types/NamespaceInfo';
 import { PFColors } from 'components/Pf/PfColors';
 
 // Utilities for working with PF Topology
-// - most of these add cytoscape-like functions
 
 export type NodeMap = Map<string, NodeModel>;
 

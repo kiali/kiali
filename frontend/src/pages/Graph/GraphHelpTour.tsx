@@ -1,6 +1,5 @@
 import { PopoverPosition } from '@patternfly/react-core';
 import { TourStopInfo, TourInfo } from 'components/Tour/TourStop';
-import { GraphShortcuts } from './GraphToolbar/GraphShortcuts';
 import { t } from 'utils/I18nUtils';
 import { GraphShortcutsPF } from './GraphToolbar/GraphShortcutsPF';
 
@@ -79,11 +78,6 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     description: t('Select the namespaces you want to see in the graph.'),
     position: PopoverPosition.bottomStart
   },
-  Shortcuts: {
-    name: t('Shortcuts'),
-    htmlDescription: GraphShortcuts,
-    position: PopoverPosition.leftStart
-  },
   ShortcutsPF: {
     name: t('Shortcuts'),
     htmlDescription: GraphShortcutsPF,
@@ -103,24 +97,6 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     ),
     position: PopoverPosition.bottomEnd
   }
-};
-
-export const GraphTour: TourInfo = {
-  name: t('GraphTour'),
-  stops: [
-    GraphTourStops.Shortcuts,
-    GraphTourStops.Namespaces,
-    GraphTourStops.GraphTraffic,
-    GraphTourStops.GraphType,
-    GraphTourStops.Display,
-    GraphTourStops.Find,
-    GraphTourStops.TimeRange,
-    GraphTourStops.Graph,
-    GraphTourStops.ContextualMenu,
-    GraphTourStops.SidePanel,
-    GraphTourStops.Layout,
-    GraphTourStops.Legend
-  ]
 };
 
 export const GraphTourPF: TourInfo = {

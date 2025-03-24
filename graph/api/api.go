@@ -8,7 +8,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/graph/config/cytoscape"
+	config_common "github.com/kiali/kiali/graph/config/common"
 	"github.com/kiali/kiali/graph/telemetry/istio"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/observability"
@@ -101,10 +101,11 @@ func generateGraph(trafficMap graph.TrafficMap, o graph.Options) (int, interface
 
 	var vendorConfig interface{}
 	switch o.ConfigVendor {
-	case graph.VendorCytoscape:
-		vendorConfig = cytoscape.NewConfig(trafficMap, o.ConfigOptions)
+	case graph.VendorCommon:
+		vendorConfig = config_common.NewConfig(trafficMap, o.ConfigOptions)
 	default:
-		graph.Error(fmt.Sprintf("ConfigVendor [%s] not supported", o.ConfigVendor))
+		vendorConfig = config_common.NewConfig(trafficMap, o.ConfigOptions)
+		log.Debugf("ConfigVendor [%s] not supported, defaulting to [Common]", o.ConfigVendor)
 	}
 
 	log.Tracef("Done generating config for [%s] graph", o.ConfigVendor)

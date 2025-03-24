@@ -29,7 +29,7 @@ export interface ChildGroup {
   groups: LayoutGroup[];
 }
 
-// MeshLayout is a copy of PFT's DagreGroupsLayout, but for innermost groups it copies the simple
+// MeshDagreLayout is a copy of PFT's DagreGroupsLayout, but for innermost groups it copies the simple
 // logic of GridLayout, which works better when organizing nodes with few, or no edges.
 export class MeshDagreLayout extends BaseLayout implements Layout {
   protected dagreOptions: DagreLayoutOptions;

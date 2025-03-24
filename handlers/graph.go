@@ -1,9 +1,9 @@
 package handlers
 
 // Graph.go provides handlers for graph request endpoints.   The handlers access vendor-specific
-// telemetry (default istio) and return vendor-specific configuration (default cytoscape). The
-// configuration format depends on the vendor but is typically JSON and provides what is necessary
-// to allow the vendor's tool to render the graph.
+// telemetry (default istio) and return vendor-specific configuration. The configuration format
+// depends on the vendor but is typically JSON and provides what is necessary to allow the vendor's
+// tool to render the graph.
 //
 // The algorithm is two-phased:
 //   Phase One: Generate a TrafficMap using the requested TelemetryVendor. This typically queries
@@ -18,7 +18,7 @@ package handlers
 //
 // The handlers accept the following query parameters (see notes below)
 //   appenders:       Comma-separated list of TelemetryVendor-specific appenders to run. (default: all)
-//   configVendor:    default: cytoscape
+//   configVendor:    default: common
 //   duration:        time.Duration indicating desired query range duration, (default: 10m)
 //   graphType:       Determines how to present the telemetry data. app | service | versionedApp | workload (default: workload)
 //   boxBy:           If supported by vendor, visually box by a specified node attribute (default: none)
