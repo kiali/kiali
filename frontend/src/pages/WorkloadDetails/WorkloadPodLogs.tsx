@@ -433,7 +433,8 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                                 </Button>
                               </Tooltip>
                             )}
-
+                          </ToolbarItem>
+                          <ToolbarItem style={{ alignSelf: 'center' }}>
                             <TextInput
                               id="log_hide"
                               name="log_hide"
