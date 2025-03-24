@@ -13,14 +13,14 @@ export const kioskGraphAction = (
   duration: DurationInSeconds,
   refreshInterval: IntervalInMilliseconds,
   targetPage: string
-) => {
-  let showInParent = '/graph/namespaces?namespaces=' + namespace;
+): void => {
+  let showInParent = `/graph/namespaces?namespaces=${namespace}`;
   if (healthStatus === HEALTHY.name) {
     showInParent += '&graphFind=healthy';
   } else {
     showInParent += '&graphFind=!healthy';
   }
-  showInParent += '&duration=' + duration + '&refresh=' + refreshInterval;
+  showInParent += `&duration=${duration}&refresh=${refreshInterval}`;
   switch (targetPage) {
     case 'applications':
       showInParent += '&graphType=versionedApp';
@@ -35,13 +35,13 @@ export const kioskGraphAction = (
   sendParentMessage(showInParent);
 };
 
-export const kioskContextMenuAction = (href: string) => {
+export const kioskContextMenuAction = (href: string): void => {
   const showInParent = href;
   sendParentMessage(showInParent);
 };
 
-export const kioskIstioConfigAction = (namespace: string) => {
-  const showInParent = '/istio?namespaces=' + namespace;
+export const kioskIstioConfigAction = (namespace: string): void => {
+  const showInParent = `/istio?namespaces=${namespace}`;
   sendParentMessage(showInParent);
 };
 
@@ -50,32 +50,37 @@ export const kioskOverviewAction = (
   namespace: string,
   duration: DurationInSeconds,
   refreshInterval: IntervalInMilliseconds
-) => {
+): void => {
   let showInParent = 'overview';
   switch (showType) {
     case Show.GRAPH:
-      showInParent = '/graph/namespaces?namespaces=' + namespace;
+      showInParent = `/graph/namespaces?namespaces=${namespace}`;
       break;
     case Show.ISTIO_CONFIG:
-      showInParent = '/istio?namespaces=' + namespace;
+      showInParent = `/istio?namespaces=${namespace}`;
       break;
   }
-  showInParent += '&duration=' + duration + '&refresh=' + refreshInterval;
+  showInParent += `&duration=${duration}&refresh=${refreshInterval}`;
   sendParentMessage(showInParent);
 };
 
-export const kioskDurationAction = (duration: DurationInSeconds) => {
-  const showInParent = 'duration=' + duration;
+export const kioskDurationAction = (duration: DurationInSeconds): void => {
+  const showInParent = `duration=${duration}`;
   sendParentMessage(showInParent);
 };
 
-export const kioskTimeRangeAction = (timeRange: TimeRange) => {
-  const showInParent = 'timeRange=' + JSON.stringify(timeRange);
+export const kioskTimeRangeAction = (timeRange: TimeRange): void => {
+  const showInParent = `timeRange=${JSON.stringify(timeRange)}`;
   sendParentMessage(showInParent);
 };
 
-export const kioskRefreshAction = (refreshInterval: IntervalInMilliseconds) => {
-  const showInParent = 'refresh=' + refreshInterval;
+export const kioskRefreshAction = (refreshInterval: IntervalInMilliseconds): void => {
+  const showInParent = `refresh=${refreshInterval}`;
+  sendParentMessage(showInParent);
+};
+
+export const kioskTracingAction = (namespace: string, workload: string, traceID?: string): void => {
+  const showInParent = `/tracing/namespaces?namespaces=${namespace}&workload${workload}&trace=${traceID}`;
   sendParentMessage(showInParent);
 };
 

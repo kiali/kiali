@@ -12,7 +12,7 @@ import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { FormattedTraceInfo, fullIDStyle } from './FormattedTraceInfo';
 import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
-import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions';
+import { isParentKiosk, kioskContextMenuAction, kioskTracingAction } from '../../Kiosk/KioskActions';
 import { KialiIcon } from 'config/KialiIcon';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
 import { useKialiTranslation } from 'utils/I18nUtils';
@@ -52,7 +52,16 @@ const TracingTraceTitleComponent: React.FC<Props> = (props: Props) => {
 
   if (props.externalURL) {
     links.push(
-      <DropdownItem key="view_in_tracing" onClick={() => window.open(props.externalURL, '_blank')}>
+      <DropdownItem
+        key="view_in_tracing"
+        onClick={() => {
+          if (isParentKiosk(props.kiosk)) {
+            kioskTracingAction('', '', '');
+          } else {
+            window.open(props.externalURL, '_blank');
+          }
+        }}
+      >
         {t('View in Tracing')} <ExternalLinkAltIcon />
       </DropdownItem>
     );

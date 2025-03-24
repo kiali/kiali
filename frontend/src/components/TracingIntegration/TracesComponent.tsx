@@ -44,9 +44,11 @@ import { TracingUrlProvider } from 'types/Tracing';
 import { GetTracingUrlProvider } from 'utils/tracing/UrlProviders';
 import { ExternalServiceInfo } from 'types/StatusState';
 import { retrieveTimeRange } from '../Time/TimeRangeHelper';
+import { isParentKiosk, kioskTracingAction } from '../Kiosk/KioskActions';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
+  kiosk: string;
   namespaceSelector: boolean;
   provider?: string;
   selectedTrace?: JaegerTrace;
@@ -318,6 +320,15 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                           rel="noopener noreferrer"
                           style={{ marginLeft: '10px' }}
                           data-test="view-in-tracing"
+                          onClick={() => {
+                            if (isParentKiosk(this.props.kiosk)) {
+                              kioskTracingAction(
+                                this.props.namespace,
+                                this.props.target,
+                                this.props.selectedTrace?.traceID
+                              );
+                            }
+                          }}
                         >
                           View in Tracing <ExternalLinkAltIcon />
                         </a>
@@ -394,6 +405,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
 const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
     externalServices: state.statusState.externalServices,
+    kiosk: state.globalState.kiosk,
     namespaceSelector: state.tracingState.info ? state.tracingState.info.namespaceSelector : true,
     provider: state.tracingState.info?.provider,
     selectedTrace: state.tracingState.selectedTrace,
