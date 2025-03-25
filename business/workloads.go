@@ -2167,9 +2167,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 }
 
 func (in *WorkloadService) GetZtunnelConfig(cluster, namespace, pod string) *kubernetes.ZtunnelConfigDump {
-
 	return in.cache.GetZtunnelDump(cluster, namespace, pod)
-
 }
 
 // GetWaypoints: Return the list of waypoint workloads.  This looks for all k8s gateways and then tests their labels

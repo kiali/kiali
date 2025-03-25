@@ -14,19 +14,12 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 )
-
-type fakeMeshDiscovery struct {
-	mesh models.Mesh
-}
-
-func (fmd *fakeMeshDiscovery) Mesh(ctx context.Context) (*models.Mesh, error) {
-	return &fmd.mesh, nil
-}
 
 func setupBusinessLayer(t *testing.T, meshExportTo []string, istioObjects ...runtime.Object) *business.Layer {
 	conf := config.NewConfig()
@@ -45,8 +38,8 @@ func setupBusinessLayer(t *testing.T, meshExportTo []string, istioObjects ...run
 	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
 
 	if len(meshExportTo) != 0 {
-		discovery := &fakeMeshDiscovery{
-			mesh: models.Mesh{
+		discovery := &istiotest.FakeDiscovery{
+			MeshReturn: models.Mesh{
 				ControlPlanes: []models.ControlPlane{{
 					Cluster: &models.KubeCluster{Name: config.DefaultClusterID, IsKialiHome: true},
 					Config: models.ControlPlaneConfiguration{
@@ -223,7 +216,8 @@ func TestServiceEntry(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}},
+			},
+		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
@@ -342,7 +336,8 @@ func TestServiceEntryExportAll(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}},
+			},
+		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
@@ -455,7 +450,8 @@ func TestServiceEntryExportNamespaceFound(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}},
+			},
+		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
@@ -568,7 +564,8 @@ func TestServiceEntryExportDefinitionNamespace(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}},
+			},
+		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
@@ -681,7 +678,8 @@ func TestServiceEntryMeshExportDefinitionNamespace(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}},
+			},
+		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
@@ -794,7 +792,8 @@ func TestServiceEntryMeshExportAll(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}},
+			},
+		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
@@ -907,7 +906,8 @@ func TestServiceEntryExportNamespaceNotFound(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}},
+			},
+		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
@@ -1020,11 +1020,13 @@ func TestKiali7153_1(t *testing.T) {
 			testNamespaceKey: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
-				Name:              "testNamespace"},
+				Name:              "testNamespace",
+			},
 			otherNamespaceKey: &graph.AccessibleNamespace{
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
-				Name:              "otherNamespace"},
+				Name:              "otherNamespace",
+			},
 		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
@@ -1130,7 +1132,8 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "namespace",
-			}},
+			},
+		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
@@ -1273,7 +1276,8 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}},
+			},
+		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
@@ -1403,7 +1407,8 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "otherNamespace",
-			}},
+			},
+		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
@@ -1514,7 +1519,8 @@ func TestServiceEntryMultipleEdges(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}},
+			},
+		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
@@ -1576,7 +1582,8 @@ func TestSEKiali7305(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}},
+			},
+		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
@@ -1673,7 +1680,8 @@ func TestSEKiali7589(t *testing.T) {
 				Cluster:           "cluster2",
 				CreationTimestamp: time.Now(),
 				Name:              namespace,
-			}},
+			},
+		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
