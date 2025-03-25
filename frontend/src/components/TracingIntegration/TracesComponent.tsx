@@ -320,13 +320,12 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                           rel="noopener noreferrer"
                           style={{ marginLeft: '10px' }}
                           data-test="view-in-tracing"
-                          onClick={() => {
+                          onClick={e => {
                             if (isParentKiosk(this.props.kiosk)) {
-                              kioskTracingAction(
-                                this.props.namespace,
-                                this.props.target,
-                                this.props.selectedTrace?.traceID
-                              );
+                              e.preventDefault();
+                              kioskTracingAction(tracingURL);
+                            } else {
+                              window.open(tracingURL, '_blank');
                             }
                           }}
                         >

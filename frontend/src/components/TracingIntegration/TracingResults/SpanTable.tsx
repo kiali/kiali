@@ -25,7 +25,7 @@ import { Link } from 'react-router-dom-v5-compat';
 import { responseFlags } from 'utils/ResponseFlags';
 import { renderMetricsComparison } from './StatsComparison';
 import { router } from 'app/History';
-import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions';
+import { isParentKiosk, kioskContextMenuAction, kioskTracingAction } from '../../Kiosk/KioskActions';
 import { TracingUrlProvider } from 'types/Tracing';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTable, SortableTh } from 'components/Table/SimpleTable';
@@ -338,7 +338,14 @@ class SpanTableComponent extends React.Component<Props, State> {
               More span details <KialiIcon.ExternalLink className={linkIconStyle} />
             </span>
           ),
-          onClick: () => window.open(spanLink, '_blank')
+          onClick: e => {
+            if (parentKiosk) {
+              e.preventDefault();
+              kioskTracingAction(spanLink, this.props.traceID);
+            } else {
+              window.open(spanLink, '_blank');
+            }
+          }
         }
       ];
     }

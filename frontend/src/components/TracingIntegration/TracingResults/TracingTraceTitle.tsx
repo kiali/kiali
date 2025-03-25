@@ -27,6 +27,7 @@ type Props = ReduxProps & {
   externalURL?: string;
   formattedTrace: FormattedTraceInfo;
   graphURL: string;
+  traceId?: string;
 };
 
 const TracingTraceTitleComponent: React.FC<Props> = (props: Props) => {
@@ -54,9 +55,10 @@ const TracingTraceTitleComponent: React.FC<Props> = (props: Props) => {
     links.push(
       <DropdownItem
         key="view_in_tracing"
-        onClick={() => {
+        onClick={e => {
           if (isParentKiosk(props.kiosk)) {
-            kioskTracingAction('', '', '');
+            e.preventDefault();
+            kioskTracingAction(props.externalURL ? props.externalURL : '', props.traceId);
           } else {
             window.open(props.externalURL, '_blank');
           }
@@ -67,7 +69,7 @@ const TracingTraceTitleComponent: React.FC<Props> = (props: Props) => {
     );
   }
 
-  if (props.comparisonURL) {
+  if (props.comparisonURL && !isParentKiosk(props.kiosk)) {
     links.push(
       <DropdownItem key="compare_with_similar_traces" onClick={() => window.open(props.comparisonURL, '_blank')}>
         {t('Compare with similar traces')} <ExternalLinkAltIcon />

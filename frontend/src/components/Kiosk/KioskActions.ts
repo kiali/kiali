@@ -79,8 +79,8 @@ export const kioskRefreshAction = (refreshInterval: IntervalInMilliseconds): voi
   sendParentMessage(showInParent);
 };
 
-export const kioskTracingAction = (namespace: string, workload: string, traceID?: string): void => {
-  const showInParent = `/tracing/namespaces?namespaces=${namespace}&workload${workload}&trace=${traceID}`;
+export const kioskTracingAction = (url: string, traceID?: string): void => {
+  const showInParent = `/tracing/namespaces?trace=${traceID}&url=${url}`;
   sendParentMessage(showInParent);
 };
 
