@@ -66,7 +66,7 @@ export class AnimationTimerConfig {
     return this.threshold / initialThreshold;
   }
 
-  computeAnimationSpeedPF(rate: number): EdgeAnimationSpeed {
+  computeAnimationSpeed(rate: number): EdgeAnimationSpeed {
     const range = maxDelay - minDelay;
     const chunk = range / 5; // there are 5 animation speeds for PFT
     const delay = this.computeDelay(rate);

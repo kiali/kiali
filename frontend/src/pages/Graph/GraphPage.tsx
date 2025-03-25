@@ -56,7 +56,7 @@ import { GraphThunkActions } from '../../actions/GraphThunkActions';
 import { JaegerTrace } from 'types/TracingInfo';
 import { KialiDispatch } from 'types/Redux';
 import { TracingThunkActions } from 'actions/TracingThunkActions';
-import { GraphTourPF } from 'pages/Graph/GraphHelpTour';
+import { GraphTour } from 'pages/Graph/GraphHelpTour';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
 import { ServiceWizard } from 'components/IstioWizards/ServiceWizard';
 import { ServiceDetailsInfo } from 'types/ServiceInfo';
@@ -67,9 +67,9 @@ import { deleteServiceTrafficRouting } from 'services/Api';
 import { canCreate, canUpdate } from '../../types/Permissions';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { triggerRefresh } from '../../hooks/refresh';
-import { GraphPF, FocusNode, getValidGraphLayout, GraphLayout } from './GraphPF';
+import { Graph, FocusNode, getValidGraphLayout, GraphLayout } from './Graph';
 import { Controller } from '@patternfly/react-topology';
-import { GraphLegendPF } from './GraphLegendPF';
+import { GraphLegend } from './GraphLegend';
 import { HistoryManager, URLParam } from 'app/History';
 import { elementsChanged } from 'helpers/GraphHelpers';
 
@@ -140,7 +140,7 @@ type ReduxStateProps = {
 };
 type ReduxProps = ReduxStateProps & ReduxDispatchProps;
 
-export type GraphPagePropsPF = Partial<GraphURLPathProps> &
+export type GraphPageProps = Partial<GraphURLPathProps> &
   ReduxProps & {
     lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
   };
@@ -175,7 +175,7 @@ type WizardsData = {
   wizardType: string;
 };
 
-type GraphPageStatePF = {
+type GraphPageState = {
   graphData: GraphData;
   graphRefs?: GraphRefs;
   isReady: boolean;
@@ -229,7 +229,7 @@ const GraphErrorBoundaryFallback = (): React.ReactElement => {
   );
 };
 
-class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageStatePF> {
+class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState> {
   private readonly errorBoundaryRef: any;
   private focusNode?: FocusNode;
   private graphDataSource: GraphDataSource;
@@ -304,7 +304,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
     return false;
   }
 
-  constructor(props: GraphPagePropsPF) {
+  constructor(props: GraphPageProps) {
     super(props);
     this.errorBoundaryRef = React.createRef();
     const focusNodeId = getFocusSelector();
@@ -347,8 +347,8 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
     // the constructor but it seems to work better here when the initial URL
     // is for a node graph.  When setting the node here it is available for the
     // loadGraphFromBackend() call.
-    const urlNode = GraphPagePFComponent.getNodeParamsFromProps(this.props);
-    if (GraphPagePFComponent.isNodeChanged(urlNode, this.props.node)) {
+    const urlNode = GraphPageComponent.getNodeParamsFromProps(this.props);
+    if (GraphPageComponent.isNodeChanged(urlNode, this.props.node)) {
       // add the node namespace if necessary, but don't lose previously selected namespaces
       if (urlNode && !this.props.activeNamespaces.map(ns => ns.name).includes(urlNode.namespace.name)) {
         this.props.setActiveNamespaces([urlNode.namespace, ...this.props.activeNamespaces]);
@@ -380,7 +380,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
     setTimeout(() => this.loadGraphDataFromBackend(), 0);
   }
 
-  componentDidUpdate(prev: GraphPagePropsPF): void {
+  componentDidUpdate(prev: GraphPageProps): void {
     const curr = this.props;
 
     const activeNamespacesChanged = !arrayEquals(
@@ -415,7 +415,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
       prev.showIdleNodes !== curr.showIdleNodes ||
       prev.showWaypoints !== curr.showWaypoints ||
       prev.trafficRates !== curr.trafficRates ||
-      GraphPagePFComponent.isNodeChanged(prev.node, curr.node)
+      GraphPageComponent.isNodeChanged(prev.node, curr.node)
     ) {
       this.loadGraphDataFromBackend();
     }
@@ -465,7 +465,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
               onError={this.notifyError}
               fallBackComponent={<GraphErrorBoundaryFallback />}
             >
-              {this.props.showLegend && <GraphLegendPF closeLegend={this.props.toggleLegend} />}
+              {this.props.showLegend && <GraphLegend closeLegend={this.props.toggleLegend} />}
               {isReady && (
                 <Chip
                   className={`${graphTimeRange} ${this.props.replayActive ? replayBackground : graphBackground}`}
@@ -490,7 +490,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
                     showIdleNodes={this.props.showIdleNodes}
                     toggleIdleNodes={this.props.toggleIdleNodes}
                   >
-                    <GraphPF
+                    <Graph
                       {...this.props}
                       focusNode={this.focusNode}
                       graphData={this.state.graphData}
@@ -503,7 +503,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
                 </div>
               )}
             </ErrorBoundary>
-            {this.props.summaryData && (
+            {this.props.summaryData && (!this.props.replayActive || isReplayReady) && (
               <SummaryPanel
                 data={this.props.summaryData}
                 duration={this.state.graphData.fetchParams.duration}
@@ -708,8 +708,8 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
     if (this.props.activeTour) {
       this.props.endTour();
     } else {
-      const firstStop = getNextTourStop(GraphTourPF, -1, 'forward');
-      this.props.startTour({ info: GraphTourPF, stop: firstStop });
+      const firstStop = getNextTourStop(GraphTour, -1, 'forward');
+      this.props.startTour({ info: GraphTour, stop: firstStop });
     }
   };
 
@@ -792,7 +792,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   endTour: bindActionCreators(TourActions.endTour, dispatch),
   onNamespaceChange: bindActionCreators(GraphActions.onNamespaceChange, dispatch),
-  onReady: (controller: Controller) => dispatch(GraphThunkActions.graphPFReady(controller)),
+  onReady: (controller: Controller) => dispatch(GraphThunkActions.graphReady(controller)),
   setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
   setEdgeMode: bindActionCreators(GraphActions.setEdgeMode, dispatch),
   setGraphDefinition: bindActionCreators(GraphActions.setGraphDefinition, dispatch),
@@ -807,4 +807,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   updateSummary: (event: GraphEvent) => dispatch(GraphActions.updateSummary(event))
 });
 
-export const GraphPagePF = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(GraphPagePFComponent));
+export const GraphPage = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(GraphPageComponent));

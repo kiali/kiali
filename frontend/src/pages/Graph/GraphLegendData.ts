@@ -1,28 +1,28 @@
 // Node Shapes
-import workloadImage from '../../assets/img/graph/cy/node.svg';
-import appImage from '../../assets/img/graph/cy/app.svg';
-import serviceImage from '../../assets/img/graph/cy/service.svg';
-import operationImage from '../../assets/img/graph/cy/operation.svg';
-import serviceEntryImage from '../../assets/img/graph/cy/service-entry.svg';
+import workloadImage from '../../assets/img/graph/legend/node.svg';
+import appImage from '../../assets/img/graph/legend/app.svg';
+import serviceImage from '../../assets/img/graph/legend/service.svg';
+import operationImage from '../../assets/img/graph/legend/operation.svg';
+import serviceEntryImage from '../../assets/img/graph/legend/service-entry.svg';
 // Node Colors
-import nodeColorNormalImage from '../../assets/img/graph/cy/node-color-normal.svg';
-import nodeColorWarningImage from '../../assets/img/graph/cy/node-color-warning.svg';
-import nodeColorDangerImage from '../../assets/img/graph/cy/node-color-danger.svg';
-import nodeColorIdleImage from '../../assets/img/graph/cy/node-color-idle.svg';
+import nodeColorHealthyImage from '../../assets/img/graph/legend/node-color-healthy.svg';
+import nodeColorWarningImage from '../../assets/img/graph/legend/node-color-warning.svg';
+import nodeColorDangerImage from '../../assets/img/graph/legend/node-color-danger.svg';
+import nodeColorIdleImage from '../../assets/img/graph/legend/node-color-idle.svg';
 // Node Background
 import externalNamespaceImage from '../../assets/img/graph/external-namespace.svg';
 import restrictedNamespaceImage from '../../assets/img/graph/restricted-namespace.svg';
 // Edges
-import edgeSuccessImage from '../../assets/img/graph/cy/edge-success.svg';
-import edgeDangerImage from '../../assets/img/graph/cy/edge-danger.svg';
-import edgeWarnImage from '../../assets/img/graph/cy/edge-warn.svg';
-import edgeIdlemage from '../../assets/img/graph/cy/edge-idle.svg';
-import edgeTcpImage from '../../assets/img/graph/cy/edge-tcp.svg';
+import edgeSuccessImage from '../../assets/img/graph/legend/edge-success.svg';
+import edgeDangerImage from '../../assets/img/graph/legend/edge-danger.svg';
+import edgeWarnImage from '../../assets/img/graph/legend/edge-warn.svg';
+import edgeIdlemage from '../../assets/img/graph/legend/edge-idle.svg';
+import edgeTcpImage from '../../assets/img/graph/legend/edge-tcp.svg';
 import edgeMtlsImage from '../../assets/img/graph/mtls-badge.svg';
 // Traffic Animation
-import trafficNormalImage from '../../assets/img/graph/cy/traffic-normal-request.svg';
-import trafficFailedImage from '../../assets/img/graph/cy/traffic-failed-request.svg';
-import trafficTcpImage from '../../assets/img/graph/cy/traffic-tcp.svg';
+import trafficHealthyImage from '../../assets/img/graph/legend/traffic-healthy-request.svg';
+import trafficFailedImage from '../../assets/img/graph/legend/traffic-failed-request.svg';
+import trafficTcpImage from '../../assets/img/graph/legend/traffic-tcp.svg';
 // Badges
 import badgeCircuitBreakerImage from '../../assets/img/graph/node-badge-circuit-breaker.svg';
 import badgeFaultInjectionImage from '../../assets/img/graph/node-badge-fault-injection.svg';
@@ -50,7 +50,7 @@ export interface GraphLegendItemRow {
 }
 
 export const legendData = (): GraphLegendItem[] => {
-  const nodesBadges = [
+  const nodeBadges = [
     { label: t('Circuit Breaker'), icon: badgeCircuitBreakerImage },
     { label: t('Fault Injection'), icon: badgeFaultInjectionImage },
     { label: t('Gateway'), icon: badgeGatewaysImage },
@@ -64,7 +64,7 @@ export const legendData = (): GraphLegendItem[] => {
   ];
 
   if (serverConfig.ambientEnabled) {
-    nodesBadges.push({ label: t('Waypoint'), icon: badgeWaypointImage });
+    nodeBadges.push({ label: t('Waypoint'), icon: badgeWaypointImage });
   }
 
   return [
@@ -81,7 +81,7 @@ export const legendData = (): GraphLegendItem[] => {
     {
       title: t('Node Colors'),
       data: [
-        { label: t('Normal'), icon: nodeColorNormalImage },
+        { label: t('Healthy'), icon: nodeColorHealthyImage },
         { label: t('Warn'), icon: nodeColorWarningImage },
         { label: t('Unhealthy'), icon: nodeColorDangerImage },
         { label: t('Idle'), icon: nodeColorIdleImage }
@@ -108,7 +108,7 @@ export const legendData = (): GraphLegendItem[] => {
     {
       title: t('Traffic Animation'),
       data: [
-        { label: t('Normal Request'), icon: trafficNormalImage },
+        { label: t('Healthy Request'), icon: trafficHealthyImage },
         { label: t('Failed Request'), icon: trafficFailedImage },
         { label: t('TCP Traffic'), icon: trafficTcpImage }
       ]
@@ -116,7 +116,7 @@ export const legendData = (): GraphLegendItem[] => {
     {
       title: t('Node Badges'),
       isBadge: true,
-      data: nodesBadges
+      data: nodeBadges
     }
   ];
 };

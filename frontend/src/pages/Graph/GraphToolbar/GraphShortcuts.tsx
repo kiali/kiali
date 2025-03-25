@@ -30,7 +30,7 @@ const makeShortcut = (shortcut: Shortcut): React.ReactNode => {
   );
 };
 
-export const GraphShortcutsPF = (): React.ReactNode => (
+export const GraphShortcuts = (): React.ReactNode => (
   <>
     {shortcuts.map(
       (s: Shortcut): React.ReactNode => {

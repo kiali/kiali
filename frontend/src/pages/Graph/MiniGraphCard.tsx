@@ -21,7 +21,7 @@ import { store } from 'store/ConfigStore';
 import { TimeInMilliseconds } from '../../types/Common';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { KialiAppState } from '../../store/Store';
-import { GraphLayout, GraphPF } from './GraphPF';
+import { GraphLayout, Graph } from './Graph';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { isKiosk, isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 import { ServiceWizardActionsDropdownGroup } from 'components/IstioWizards/ServiceWizardActionsDropdownGroup';
@@ -32,14 +32,13 @@ import { TimeDurationModal } from 'components/Time/TimeDurationModal';
 import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { GraphActions } from 'actions/GraphActions';
-import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
-import { NodeData } from './GraphPFElems';
+import { NodeData } from './GraphElems';
 import { elems, selectAnd } from 'helpers/GraphHelpers';
 import { KialiIcon } from 'config/KialiIcon';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
 import { WorkloadWizardActionsDropdownGroup } from 'components/IstioWizards/WorkloadWizardActionsDropdownGroup';
 import { Workload } from 'types/Workload';
-import { GraphRefs } from './GraphPagePF';
+import { GraphRefs } from './GraphPage';
 import { EmptyGraphLayout } from 'pages/Graph/EmptyGraphLayout';
 
 type ReduxDispatchProps = {
@@ -53,7 +52,7 @@ type ReduxProps = ReduxDispatchProps & {
   kiosk: string;
 };
 
-type MiniGraphCardPropsPF = ReduxProps & {
+type MiniGraphCardProps = ReduxProps & {
   dataSource: GraphDataSource;
   namespace?: string;
   onDeleteTrafficRouting?: (key: string) => void;
@@ -71,8 +70,8 @@ type MiniGraphCardState = {
   isTimeOptionsOpen: boolean;
 };
 
-class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, MiniGraphCardState> {
-  constructor(props: MiniGraphCardPropsPF) {
+class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGraphCardState> {
+  constructor(props: MiniGraphCardProps) {
     super(props);
     this.state = {
       isReady: false,
@@ -195,7 +194,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
                 isError={this.props.dataSource.isError}
                 isMiniGraph={true}
               >
-                <GraphPF
+                <Graph
                   edgeLabels={this.props.dataSource.fetchParameters.edgeLabels}
                   edgeMode={EdgeMode.ALL}
                   graphData={{
@@ -365,37 +364,14 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
 
   private onViewFullGraph = (): void => {
     const namespace = this.props.dataSource.fetchParameters.namespaces[0].name;
-    let graphSelector = new GraphSelectorBuilder().namespace(namespace);
     let graphType: GraphType = GraphType.APP;
 
-    switch (this.props.dataSource.fetchParameters.node!.nodeType) {
-      case NodeType.AGGREGATE:
-        graphSelector = graphSelector
-          .aggregate(
-            this.props.dataSource.fetchParameters.node!.aggregate!,
-            this.props.dataSource.fetchParameters.node!.aggregateValue!
-          )
-          .nodeType(NodeType.AGGREGATE);
-        break;
-      case NodeType.APP:
-        graphSelector = graphSelector.app(this.props.dataSource.fetchParameters.node!.app).nodeType(NodeType.APP);
-        break;
-      case NodeType.SERVICE:
-        graphType = GraphType.SERVICE;
-        graphSelector = graphSelector.service(this.props.dataSource.fetchParameters.node!.service);
-        break;
-      case NodeType.WORKLOAD:
-        graphType = GraphType.WORKLOAD;
-        graphSelector = graphSelector.workload(this.props.dataSource.fetchParameters.node!.workload);
-        break;
-      default:
-        // NodeType.BOX is n/a
-        break;
-    }
+    const selected = selectAnd(elems(this.state.graphRefs!.getController()).nodes, [
+      { prop: 'isSelected', op: 'truthy' }
+    ]);
+    const focusSelector = selected.length > 0 ? `&focusSelector=${encodeURI(selected[0].getId())}` : '';
 
-    const graphUrl = `/graphpf/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}&focusSelector=${encodeURI(
-      graphSelector.build()
-    )}`;
+    const graphUrl = `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}${focusSelector}`;
 
     if (isParentKiosk(this.props.kiosk)) {
       kioskContextMenuAction(graphUrl);
@@ -461,4 +437,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   updateSummary: (event: GraphEvent) => dispatch(GraphActions.updateSummary(event))
 });
 
-export const MiniGraphCardPF = connect(mapStateToProps, mapDispatchToProps)(MiniGraphCardPFComponent);
+export const MiniGraphCard = connect(mapStateToProps, mapDispatchToProps)(MiniGraphCardComponent);

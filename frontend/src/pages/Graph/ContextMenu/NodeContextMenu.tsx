@@ -3,6 +3,7 @@ import { BoxByType, DecoratedGraphNodeData, NodeType } from 'types/Graph';
 import { TracingInfo } from 'types/TracingInfo';
 import { isMultiCluster, Paths } from 'config';
 import { isParentKiosk, kioskContextMenuAction } from '../../../components/Kiosk/KioskActions';
+import { GraphElement } from '@patternfly/react-topology';
 type LinkParams = { cluster?: string; name: string; namespace: string; type: string };
 
 const getLinkParamsForNode = (node: DecoratedGraphNodeData): LinkParams | undefined => {
@@ -47,7 +48,9 @@ const getTracingURL = (namespace: string, namespaceSelector: boolean, tracingURL
 };
 
 export type ContextMenuOption = {
+  altClickHandler?: (node: GraphElement, kiosk: string) => void;
   external?: boolean;
+  node?: GraphElement;
   target?: string;
   text: string;
   url: string;

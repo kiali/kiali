@@ -41,7 +41,7 @@ import { deleteServiceTrafficRouting } from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { triggerRefresh } from '../../hooks/refresh';
 import { serverConfig } from 'config';
-import { MiniGraphCardPF } from 'pages/Graph/MiniGraphCardPF';
+import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -264,7 +264,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
             </GridItem>
 
             <GridItem span={miniGraphSpan}>
-              <MiniGraphCardPF
+              <MiniGraphCard
                 dataSource={this.graphDataSource}
                 onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
                 onLaunchWizard={this.handleLaunchWizard}

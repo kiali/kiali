@@ -3,7 +3,7 @@ import { KialiDispatch } from '../types/Redux';
 import { GraphActions } from './GraphActions';
 
 export const GraphThunkActions = {
-  graphPFReady: (controller: Controller) => {
+  graphReady: (controller: Controller) => {
     return (dispatch: KialiDispatch) => {
       dispatch(
         GraphActions.updateSummary({

@@ -23,10 +23,10 @@
 import { Edge, Node } from '@patternfly/react-topology';
 import { Controller, GraphElement } from '@patternfly/react-topology';
 import { BoxByType, NodeAttr } from 'types/Graph';
-import { NodeData } from './GraphPFElems';
+import { NodeData } from './GraphElems';
 import { ancestors, predecessors, setObserved, successors } from 'helpers/GraphHelpers';
 
-export class GraphHighlighterPF {
+export class GraphHighlighter {
   controller: Controller;
   hovered?: GraphElement;
   selectedId?: string;

@@ -63,7 +63,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
   }, []);
 
   const isGraph = (): boolean => {
-    return pathname.startsWith('/graph') || pathname.startsWith('/graphpf') || pathname.startsWith('/mesh');
+    return pathname.startsWith('/graph') || pathname.startsWith('/graph') || pathname.startsWith('/mesh');
   };
 
   const onNavToggleDesktop = (): void => {

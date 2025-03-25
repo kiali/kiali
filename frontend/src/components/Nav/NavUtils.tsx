@@ -4,7 +4,7 @@ import { Namespace } from '../../types/Namespace';
 import { URLParam } from '../../app/History';
 import { getKioskMode, isKioskMode } from '../../utils/SearchParamUtils';
 import { isMultiCluster } from 'config';
-import { GraphLayout } from 'pages/Graph/GraphPF';
+import { GraphLayout } from 'pages/Graph/Graph';
 
 export type GraphUrlParams = {
   activeNamespaces: Namespace[];
@@ -46,7 +46,7 @@ const buildCommonQueryParams = (params: GraphUrlParams): string => {
 };
 
 export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams): string => {
-  const route = 'graphpf';
+  const route = 'graph';
   let queryParams = buildCommonQueryParams(params);
   if (params.activeNamespaces.length > 0) {
     const namespaces = params.activeNamespaces.map(namespace => namespace.name).join(',');
@@ -60,7 +60,7 @@ export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams): string
 };
 
 export const makeNodeGraphUrlFromParams = (params: GraphUrlParams): string => {
-  const route = 'graphpf';
+  const route = 'graph';
   const node = params.node;
   if (node) {
     switch (node.nodeType) {

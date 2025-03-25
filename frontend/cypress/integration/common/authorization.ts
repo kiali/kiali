@@ -1,5 +1,5 @@
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
-import { elems } from './graph-pf';
+import { elems } from './graph';
 import { Visualization } from '@patternfly/react-topology';
 
 Then(`user does not see the {string} link`, link => {
@@ -12,7 +12,7 @@ Then(`user see the {string} link`, link => {
 
 Then('the nodes located in the {string} cluster should be restricted', (cluster: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -31,7 +31,7 @@ Then('the nodes located in the {string} cluster should be restricted', (cluster:
 
 Then('the nodes on the minigraph located in the {string} cluster should be restricted', (cluster: string) => {
   cy.waitForReact();
-  cy.getReact('MiniGraphCardPFComponent', { state: { isReady: true } })
+  cy.getReact('MiniGraphCardComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];

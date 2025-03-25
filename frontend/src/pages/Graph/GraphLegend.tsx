@@ -7,7 +7,6 @@ import { KialiIcon } from 'config/KialiIcon';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
 interface GraphLegendProps {
-  className?: string;
   closeLegend: () => void;
 }
 
@@ -55,7 +54,7 @@ const legendColumnHeadingStyle = kialiStyle({
 
 const legendBadgeStyle = kialiStyle({
   borderRadius: '0.25rem',
-  backgroundColor: '#703fec'
+  backgroundColor: '#6a6e73'
 });
 
 export const GraphLegend: React.FC<GraphLegendProps> = (props: GraphLegendProps) => {

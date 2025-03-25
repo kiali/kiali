@@ -874,7 +874,7 @@ func NewRoutes(
 			handlers.ControlPlaneMetrics(handlers.DefaultPromClientSupplier),
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/{workload}/usage_metrics resource usage metrics
+		// swagger:route GET /namespaces/{namespace}/{app}/usage_metrics resource usageMetrics
 		// ---
 		// Endpoint to fetch metrics to be displayed, related to cpu and memory usage
 		//
@@ -958,7 +958,7 @@ func NewRoutes(
 			handlers.WorkloadDashboard(conf, grafana),
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/ztunnel/{workload}/dashboard ztunnel Dashboard
+		// swagger:route GET /namespaces/{namespace}/ztunnel/{workload}/dashboard workloads ztunnelDashboard
 		// ---
 		// Endpoint to fetch dashboard to be displayed, related to a ztunnel workload
 		//
@@ -973,7 +973,7 @@ func NewRoutes(
 		//      200: dashboardResponse
 		//
 		{
-			"ZtunnelMetrics",
+			"ZtunnelDashboard",
 			"GET",
 			"/api/namespaces/{namespace}/ztunnel/{workload}/dashboard",
 			handlers.ZtunnelDashboard(handlers.DefaultPromClientSupplier, conf, grafana),
@@ -1099,7 +1099,7 @@ func NewRoutes(
 		//      500: internalError
 		//
 		{
-			"NamespaceTls",
+			"MeshTls",
 			"GET",
 			"/api/mesh/tls",
 			handlers.MeshTls,
@@ -1465,7 +1465,7 @@ func NewRoutes(
 		},
 		// swagger:route GET /namespaces/{namespace}/pods/{pod}/config_dump/{resource} pods podProxyResource
 		// ---
-		// Endpoint to get pod logs
+		// Endpoint to get pod resource entries
 		//
 		//     Produces:
 		//     - application/json
@@ -1478,13 +1478,13 @@ func NewRoutes(
 		//      200: configDumpResource
 		//
 		{
-			"PodConfigDump",
+			"PodProxyResource",
 			"GET",
 			"/api/namespaces/{namespace}/pods/{pod}/config_dump/{resource}",
 			handlers.ConfigDumpResourceEntries,
 			true,
 		},
-		// swagger:route GET /api/namespaces/{namespace}/pods/{pod}/config_dump_ztunnel
+		// swagger:route GET /namespaces/{namespace}/pods/{pod}/config_dump_ztunnel
 		// ---
 		// Endpoint to get ztunnel pod config dump
 		//
@@ -1496,7 +1496,7 @@ func NewRoutes(
 		// responses:
 		//      500: internalError
 		//      404: notFoundError
-		//      200: ZtunnelConfigDump
+		//      200: ztunnelConfigDump
 		//
 		{
 			"ZtunnelConfigDump",
