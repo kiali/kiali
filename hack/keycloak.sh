@@ -109,7 +109,7 @@ EOF
   kubectl create secret tls keycloak-tls --cert="${KEYCLOAK_CERTS_DIR}"/cert.pem --key="${KEYCLOAK_CERTS_DIR}"/key.pem -n keycloak
 
   echo "Creating keycloak deployment"
-  helm upgrade --debug --install --wait --timeout 15m \
+  helm upgrade --install --wait --timeout 15m \
   --namespace keycloak \
   --set resources.limits.memory=15Gi \
   --set resources.requests.memory=5Gi \
