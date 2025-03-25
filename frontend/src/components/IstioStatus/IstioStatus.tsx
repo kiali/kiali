@@ -260,7 +260,13 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   }
 
   return (
-    <Tooltip position={tooltipPosition} enableFlip={true} content={tooltipContent()} maxWidth="25rem">
+    <Tooltip
+      data-test="component-status-tooltip"
+      position={tooltipPosition}
+      enableFlip={true}
+      content={tooltipContent()}
+      maxWidth="25rem"
+    >
       <>
         {homeCluster?.name && (
           <Label className={labelStyle} data-test="cluster-icon" color="blue" icon={<KialiIcon.Cluster />}>

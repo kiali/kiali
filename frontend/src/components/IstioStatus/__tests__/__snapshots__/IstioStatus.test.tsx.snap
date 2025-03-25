@@ -78,6 +78,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
       </TextContent>
     </React.Fragment>
   }
+  data-test="component-status-tooltip"
   enableFlip={true}
   maxWidth="25rem"
   position="top"
@@ -177,6 +178,7 @@ exports[`When both core and addon component have problems any component is in no
       </TextContent>
     </React.Fragment>
   }
+  data-test="component-status-tooltip"
   enableFlip={true}
   maxWidth="25rem"
   position="top"
@@ -276,6 +278,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
       </TextContent>
     </React.Fragment>
   }
+  data-test="component-status-tooltip"
   enableFlip={true}
   maxWidth="25rem"
   position="top"
@@ -375,6 +378,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
       </TextContent>
     </React.Fragment>
   }
+  data-test="component-status-tooltip"
   enableFlip={true}
   maxWidth="25rem"
   position="top"
@@ -486,6 +490,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
       </TextContent>
     </React.Fragment>
   }
+  data-test="component-status-tooltip"
   enableFlip={true}
   maxWidth="25rem"
   position="top"
@@ -585,6 +590,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
       </TextContent>
     </React.Fragment>
   }
+  data-test="component-status-tooltip"
   enableFlip={true}
   maxWidth="25rem"
   position="top"
@@ -678,6 +684,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
       </TextContent>
     </React.Fragment>
   }
+  data-test="component-status-tooltip"
   enableFlip={true}
   maxWidth="25rem"
   position="top"
@@ -771,6 +778,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
       </TextContent>
     </React.Fragment>
   }
+  data-test="component-status-tooltip"
   enableFlip={true}
   maxWidth="25rem"
   position="top"
