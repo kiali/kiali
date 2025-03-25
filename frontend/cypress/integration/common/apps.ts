@@ -30,18 +30,6 @@ Then('user sees trace information', () => {
 
   // Ensures traces have loaded.
   cy.getBySel('tracing-scatterplot').contains('Traces');
-
-  // Bump the limit up to make it more likely we see spans from multiple apps.
-  cy.getBySel('traces-display-settings')
-    .click()
-    .then(() => {
-      cy.getBySel('limit-1000')
-        .click()
-        .then(() => {
-          // Click the display settings again to close the dropdown.
-          cy.getBySel('traces-display-settings').click();
-        });
-    });
 });
 
 Then('user see no traces', () => {
@@ -60,10 +48,22 @@ Then('user sees trace details', () => {
 });
 
 When('user selects a trace', () => {
-  const tracingDotQuery =
-    '[style*="fill: var(--pf-v5-global--palette--blue-200)"][style*="stroke: var(--pf-v5-chart-scatter--data--stroke--Color, transparent)"]';
-
-  cy.getBySel('tracing-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
+  cy.getBySel('tracing-scatterplot').within(() => {
+    cy.waitForReact();
+    cy.getReact('Point')
+      .should('have.length.at.least', 1)
+      .then(($points: any) => {
+        // We want to find a point that has all of the spans loaded otherwise the trace is incomplete
+        // and some of the assertions around number of spans in the trace can fail.
+        // There doesn't seem to be a good way to inject a data-test attribute into individual points
+        // on the graph so here we are looking for the presence of traceName on the point to determine
+        // if the trace has completed or not since this is also what other parts of the frontend do to
+        // make the same determination.
+        const pointWithTraceName = $points.filter(point => point.props?.datum?.trace?.traceName)[0];
+        const dataPointInGraph = pointWithTraceName.children[0].props.d;
+        cy.get(`path[d="${dataPointInGraph}"]`).should('be.visible').click({ force: true });
+      });
+  });
 });
 
 Then('user sees span details', () => {
