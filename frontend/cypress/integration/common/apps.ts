@@ -56,10 +56,10 @@ When('user selects a trace', () => {
         // We want to find a point that has all of the spans loaded otherwise the trace is incomplete
         // and some of the assertions around number of spans in the trace can fail.
         // There doesn't seem to be a good way to inject a data-test attribute into individual points
-        // on the graph so here we are looking for the presence of traceName on the point to determine
-        // if the trace has completed or not since this is also what other parts of the frontend do to
-        // make the same determination.
-        const pointWithTraceName = $points.filter(point => point.props?.datum?.trace?.traceName)[0];
+        // on the graph so here we are looking for the presence of a certain number of spans since later
+        // assertions require there to be a certain number of spans.
+        // TODO: may want to make the number of spans we are looking for configurable in the future.
+        const pointWithTraceName = $points.filter(point => point.props?.datum?.trace?.spans.length >= 6)[0];
         const dataPointInGraph = pointWithTraceName.children[0].props.d;
         cy.get(`path[d="${dataPointInGraph}"]`).should('be.visible').click({ force: true });
       });
