@@ -177,6 +177,8 @@ func getNamespaceServicesRequestRates(ctx context.Context, api prom_v1.API, name
 // Note that it does not discriminate on "reporter", so rates can be inflated due to duplication, and therefore
 // should be used mainly for calculating ratios (e.g total rates / error rates)
 func getServiceRequestRates(ctx context.Context, api prom_v1.API, namespace, cluster, service string, queryTime time.Time, ratesInterval string) (model.Vector, error) {
+	// in certain scenarios, like 503, Istio fails to provide the destination_cluster. To handle this we use destination_cluster=~"%s|unknown".
+	// This gives better results in most cases, although may not always be correct.
 	lbl := fmt.Sprintf(`destination_service_name="%s",destination_service_namespace="%s",destination_cluster=~"%s|unknown"`, service, namespace, cluster)
 	in, err := getRequestRatesForLabel(ctx, api, queryTime, lbl, ratesInterval)
 	if err != nil {
