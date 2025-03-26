@@ -7,6 +7,7 @@ import { Target } from './MetricsOptions';
 export interface TracingInfo {
   enabled: boolean;
   integration: boolean;
+  internal_url: string;
   namespaceSelector: boolean;
   provider: string;
   url: string;
