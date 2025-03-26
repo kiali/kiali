@@ -7,7 +7,7 @@ describe('JaegerActions', () => {
       enabled: true,
       integration: true,
       url: 'jaeger-query-istio-system.127.0.0.1.nip.io',
-      internal_url: '',
+      internalURL: '',
       namespaceSelector: true,
       provider: 'jaeger',
       whiteListIstioSystem: ['jaeger-query']
