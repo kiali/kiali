@@ -48,18 +48,24 @@ Then('user sees trace details', () => {
 });
 
 When('user selects a trace', () => {
+  const tracingDotQuery =
+    '[style*="fill: var(--pf-v5-global--palette--blue-200)"][style*="stroke: var(--pf-v5-chart-scatter--data--stroke--Color, transparent)"]';
+
+  cy.getBySel('tracing-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
+});
+
+When('user selects a trace with at least {int} spans', (spans: number) => {
   cy.getBySel('tracing-scatterplot').within(() => {
     cy.waitForReact();
     cy.getReact('Point')
       .should('have.length.at.least', 1)
       .then(($points: any) => {
-        // We want to find a point that has all of the spans loaded otherwise the trace is incomplete
-        // and some of the assertions around number of spans in the trace can fail.
+        // We want to find a point that has all of the specified number of spans loaded
+        // since some of the later assertions look for a certain number of spans.
         // There doesn't seem to be a good way to inject a data-test attribute into individual points
-        // on the graph so here we are looking for the presence of a certain number of spans since later
-        // assertions require there to be a certain number of spans.
-        // TODO: may want to make the number of spans we are looking for configurable in the future.
-        const pointWithTraceName = $points.filter(point => point.props?.datum?.trace?.spans.length >= 6)[0];
+        // on the graph so here we are looking at the react state of the points and then finding one
+        // that matches the exact data path.
+        const pointWithTraceName = $points.filter(point => point.props?.datum?.trace?.spans.length >= spans)[0];
         const dataPointInGraph = pointWithTraceName.children[0].props.d;
         cy.get(`path[d="${dataPointInGraph}"]`).should('be.visible').click({ force: true });
       });

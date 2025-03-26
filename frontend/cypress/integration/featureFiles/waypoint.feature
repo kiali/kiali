@@ -35,7 +35,7 @@ Feature: Kiali Waypoint related features
     And the user sees the L7 "waypoint" link
     And the link for the waypoint "waypoint" should redirect to a valid workload details
 
-    Scenario: [Workload details - waypoint] The workload details for a waypoint are valid
+  Scenario: [Workload details - waypoint] The workload details for a waypoint are valid
     Given user is at the details page for the "workload" "bookinfo/waypoint" located in the "" cluster
     Then the user sees the "L7" badge
     Then the user cannot see the "missing-sidecar" badge for "waypoint" workload in "bookinfo" namespace
@@ -52,7 +52,7 @@ Feature: Kiali Waypoint related features
     Then user goes to the waypoint "Info" subtab
     And validates waypoint Info data
 
-    Scenario: [Workload details - ztunnel] The workload details for a ztunnel are valid
+  Scenario: [Workload details - ztunnel] The workload details for a ztunnel are valid
     Given user is at the details page for the "workload" "istio-system/ztunnel" located in the "" cluster
     Then the user cannot see the "missing-sidecar" badge for "ztunnel" workload in "istio-system" namespace
     And the proxy status is "healthy"
