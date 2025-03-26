@@ -13,7 +13,7 @@ import (
 
 type NoHostChecker struct {
 	Conf              *config.Config
-	Namespaces        models.Namespaces
+	Namespaces        []string
 	PolicyAllowAny    bool
 	RegistryServices  []*kubernetes.RegistryService
 	ServiceEntryHosts map[string][]string
@@ -33,7 +33,7 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 					if host == "" {
 						continue
 					}
-					fqdn := kubernetes.GetHost(host, namespace, n.Namespaces.GetNames(), n.Conf)
+					fqdn := kubernetes.GetHost(host, namespace, n.Namespaces, n.Conf)
 					if !n.checkDestination(fqdn.String(), namespace) {
 						path := fmt.Sprintf("spec/http[%d]/route[%d]/destination/host", k, i)
 						validation := models.Build("virtualservices.nohost.hostnotfound", path)
@@ -56,7 +56,7 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 					if host == "" {
 						continue
 					}
-					fqdn := kubernetes.GetHost(host, namespace, n.Namespaces.GetNames(), n.Conf)
+					fqdn := kubernetes.GetHost(host, namespace, n.Namespaces, n.Conf)
 					if !n.checkDestination(fqdn.String(), namespace) {
 						path := fmt.Sprintf("spec/tcp[%d]/route[%d]/destination/host", k, i)
 						validation := models.Build("virtualservices.nohost.hostnotfound", path)
@@ -79,7 +79,7 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 					if host == "" {
 						continue
 					}
-					fqdn := kubernetes.GetHost(host, namespace, n.Namespaces.GetNames(), n.Conf)
+					fqdn := kubernetes.GetHost(host, namespace, n.Namespaces, n.Conf)
 					if !n.checkDestination(fqdn.String(), namespace) {
 						path := fmt.Sprintf("spec/tls[%d]/route[%d]/destination/host", k, i)
 						validation := models.Build("virtualservices.nohost.hostnotfound", path)

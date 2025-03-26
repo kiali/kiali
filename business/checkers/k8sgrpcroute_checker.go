@@ -55,7 +55,7 @@ func (in K8sGRPCRouteChecker) runChecks(rt *k8s_networking_v1.GRPCRoute, gateway
 		},
 		k8sgrpcroutes.NoHostChecker{
 			Conf:               in.Conf,
-			Namespaces:         in.Namespaces,
+			Namespaces:         in.Namespaces.GetNames(),
 			K8sGRPCRoute:       rt,
 			K8sReferenceGrants: in.K8sReferenceGrants,
 			RegistryServices:   in.RegistryServices,

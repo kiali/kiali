@@ -15,7 +15,7 @@ type AuthorizationPolicyReferences struct {
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	Conf                  *config.Config
 	Namespace             string
-	Namespaces            models.Namespaces
+	Namespaces            []string
 	ServiceEntries        []*networking_v1.ServiceEntry
 	VirtualServices       []*networking_v1.VirtualService
 	RegistryServices      []*kubernetes.RegistryService
@@ -39,7 +39,7 @@ func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
 						continue
 					}
 					for _, h := range t.Operation.Hosts {
-						fqdn := kubernetes.GetHost(h, namespace, n.Namespaces.GetNames(), n.Conf)
+						fqdn := kubernetes.GetHost(h, namespace, n.Namespaces, n.Conf)
 						if !fqdn.IsWildcard() {
 							configRef := n.getConfigReferences(fqdn)
 							references.ObjectReferences = append(references.ObjectReferences, configRef...)

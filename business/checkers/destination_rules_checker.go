@@ -34,7 +34,7 @@ func (in DestinationRulesChecker) runGroupChecks() models.IstioValidations {
 	seHosts := kubernetes.ServiceEntryHostnames(in.ServiceEntries)
 
 	enabledDRCheckers := []GroupChecker{
-		destinationrules.MultiMatchChecker{Conf: in.Conf, Namespaces: in.Namespaces, ServiceEntries: seHosts, DestinationRules: in.DestinationRules, Cluster: in.Cluster},
+		destinationrules.MultiMatchChecker{Conf: in.Conf, Namespaces: in.Namespaces.GetNames(), ServiceEntries: seHosts, DestinationRules: in.DestinationRules, Cluster: in.Cluster},
 	}
 
 	enabledDRCheckers = append(enabledDRCheckers, destinationrules.TrafficPolicyChecker{Conf: in.Conf, DestinationRules: in.DestinationRules, MTLSDetails: in.MTLSDetails, Cluster: in.Cluster})
@@ -49,14 +49,15 @@ func (in DestinationRulesChecker) runGroupChecks() models.IstioValidations {
 func (in DestinationRulesChecker) runIndividualChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
+	nsNames := in.Namespaces.GetNames()
 	for _, destinationRule := range in.DestinationRules {
-		validations.MergeValidations(in.runChecks(destinationRule))
+		validations.MergeValidations(in.runChecks(destinationRule, nsNames))
 	}
 
 	return validations
 }
 
-func (in DestinationRulesChecker) runChecks(destinationRule *networking_v1.DestinationRule) models.IstioValidations {
+func (in DestinationRulesChecker) runChecks(destinationRule *networking_v1.DestinationRule, nsNames []string) models.IstioValidations {
 	destinationRuleName := destinationRule.Name
 	key, rrValidation := EmptyValidValidation(destinationRuleName, destinationRule.Namespace, kubernetes.DestinationRules, in.Cluster)
 
@@ -65,7 +66,7 @@ func (in DestinationRulesChecker) runChecks(destinationRule *networking_v1.Desti
 		destinationrules.DisabledMeshWideMTLSChecker{DestinationRule: destinationRule, MeshPeerAuthns: in.MTLSDetails.MeshPeerAuthentications},
 	}
 	if !in.Namespaces.IsNamespaceAmbient(destinationRule.Namespace, in.Cluster) {
-		enabledCheckers = append(enabledCheckers, common.ExportToNamespaceChecker{ExportTo: destinationRule.Spec.ExportTo, Namespaces: in.Namespaces.GetNames()})
+		enabledCheckers = append(enabledCheckers, common.ExportToNamespaceChecker{ExportTo: destinationRule.Spec.ExportTo, Namespaces: nsNames})
 	}
 
 	enabledCheckers = append(enabledCheckers, destinationrules.NamespaceWideMTLSChecker{Conf: in.Conf, DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails})
