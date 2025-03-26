@@ -14,13 +14,9 @@ import (
 
 func prepareTestForDestinationRule(dr *networking_v1.DestinationRule, vs *networking_v1.VirtualService) models.IstioReferences {
 	drReferences := DestinationRuleReferences{
-		Conf:      config.Get(),
-		Namespace: "bookinfo",
-		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-			{Name: "bookinfo2"},
-			{Name: "bookinfo3"},
-		},
+		Conf:             config.Get(),
+		Namespace:        "bookinfo",
+		Namespaces:       []string{"bookinfo", "bookinfo2", "bookinfo3"},
 		DestinationRules: []*networking_v1.DestinationRule{dr},
 		VirtualServices:  []*networking_v1.VirtualService{vs},
 		WorkloadsPerNamespace: map[string]models.Workloads{

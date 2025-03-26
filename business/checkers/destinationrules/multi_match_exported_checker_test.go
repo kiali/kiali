@@ -56,12 +56,7 @@ func TestExportMultiHostMatchInvalid(t *testing.T) {
 	vals := MultiMatchChecker{
 		Conf:             config.Get(),
 		DestinationRules: append(destinationRules, edr...),
-		Namespaces: models.Namespaces{
-			models.Namespace{Name: "test"},
-			models.Namespace{Name: "test2"},
-			models.Namespace{Name: "test3"},
-			models.Namespace{Name: "default"},
-		},
+		Namespaces:       []string{"test", "test2", "test3", "default"},
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -94,12 +89,7 @@ func TestExportMultiHostMatchInvalid2(t *testing.T) {
 	vals := MultiMatchChecker{
 		Conf:             config.Get(),
 		DestinationRules: append(destinationRules, edr...),
-		Namespaces: models.Namespaces{
-			models.Namespace{Name: "test"},
-			models.Namespace{Name: "test2"},
-			models.Namespace{Name: "test3"},
-			models.Namespace{Name: "default"},
-		},
+		Namespaces:       []string{"test", "test2", "test3", "default"},
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -195,12 +185,8 @@ func TestExportMultiHostMatchValidShortFormatDiffNamespace(t *testing.T) {
 	}
 
 	vals := MultiMatchChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			models.Namespace{Name: "bookinfo"},
-			models.Namespace{Name: "test"},
-			models.Namespace{Name: "test2"},
-		},
+		Conf:             config.Get(),
+		Namespaces:       []string{"bookinfo", "test", "test2"},
 		DestinationRules: append(destinationRules, edr...),
 	}.Check()
 

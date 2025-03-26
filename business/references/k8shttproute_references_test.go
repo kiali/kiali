@@ -16,12 +16,8 @@ import (
 
 func prepareTestForK8sHTTPRoute(route *k8s_networking_v1.HTTPRoute) models.IstioReferences {
 	routeReferences := K8sHTTPRouteReferences{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-			{Name: "bookinfo2"},
-			{Name: "bookinfo3"},
-		},
+		Conf:               config.Get(),
+		Namespaces:         []string{"bookinfo", "bookinfo2", "bookinfo3"},
 		K8sHTTPRoutes:      []*k8s_networking_v1.HTTPRoute{route},
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("rg", route.Namespace, "bookinfo")},
 	}

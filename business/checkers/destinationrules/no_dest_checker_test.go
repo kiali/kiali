@@ -133,11 +133,8 @@ func TestValidServiceNamespaceInvalid(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NoDestinationChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			models.Namespace{Name: "test-namespace"},
-			models.Namespace{Name: "outside-ns"},
-		},
+		Conf:       config.Get(),
+		Namespaces: []string{"test-namespace", "outside-ns"},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -161,11 +158,8 @@ func TestValidServiceNamespaceCrossNamespace(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NoDestinationChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			models.Namespace{Name: "test-namespace"},
-			models.Namespace{Name: "outside-ns"},
-		},
+		Conf:       config.Get(),
+		Namespaces: []string{"test-namespace", "outside-ns"},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"outside-ns": {
 				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -325,7 +319,7 @@ func TestSubsetNotReferenced(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Conf:       config.Get(),
-		Namespaces: models.Namespaces{models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo"}},
+		Namespaces: []string{"bookinfo2", "bookinfo"},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"bookinfo": {
 				data.CreateWorkload("reviews", appVersionLabel("reviews", "v1")),
@@ -360,7 +354,7 @@ func TestSubsetReferenced(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Conf:       config.Get(),
-		Namespaces: models.Namespaces{models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo"}},
+		Namespaces: []string{"bookinfo2", "bookinfo"},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"bookinfo": {
 				data.CreateWorkload("reviews", appVersionLabel("reviews", "v1")),
@@ -399,7 +393,7 @@ func TestSubsetPresentMatchingNotReferenced(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Conf:       config.Get(),
-		Namespaces: models.Namespaces{models.Namespace{Name: "bookinfo"}},
+		Namespaces: []string{"bookinfo"},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"bookinfo": {
 				data.CreateWorkload("reviews", appVersionLabel("reviews", "v1")),
@@ -431,7 +425,7 @@ func TestWronglyReferenced(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Conf:       config.Get(),
-		Namespaces: models.Namespaces{models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo"}},
+		Namespaces: []string{"bookinfo2", "bookinfo"},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"bookinfo": {
 				data.CreateWorkload("reviews", appVersionLabel("reviews", "v1")),
