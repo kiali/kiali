@@ -38,7 +38,7 @@ Feature: Kiali App Details page for multicluster
   Scenario: See span info after selecting app span
     And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     And user sees trace information
-    When user selects a trace
+    When user selects a trace with at least 6 spans
     Then user sees span details
     And user can filter spans by app
 

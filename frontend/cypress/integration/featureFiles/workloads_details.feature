@@ -41,7 +41,7 @@ Feature: Kiali Workload Details page
   @tracing
   Scenario: See workload span info after selecting a span
     And user sees trace information
-    When user selects a trace
+    When user selects a trace with at least 6 spans
     And user sees span details
     And user can filter spans by workload
 
@@ -50,7 +50,7 @@ Feature: Kiali Workload Details page
   Scenario: See tracing links
     And user sees trace information
     Then the user can see the "View in Tracing" link
-    When user selects a trace
+    When user selects a trace with at least 6 spans
     Then the user can see the "View in Tracing" trace link
     And user sees span details
     Then the user can see the "More span details" span link
