@@ -9,7 +9,7 @@ When('user hovers over the cluster icon', () => {
   cy.get('[data-test="cluster-icon"]').trigger('mouseenter');
 });
 
-When('user hovers out the cluster icon', () => {
+After({ tags: '@component-health' }, () => {
   cy.get('[data-test="cluster-icon"]').trigger('mouseleave');
 });
 
@@ -33,7 +33,7 @@ When(
   }
 );
 
-After({ tags: '@component-health' }, () => {
-  cy.exec(`kubectl scale -n istio-system --replicas=1 deployment/prometheus`);
+After({ tags: '@component-health-upscale' }, () => {
+  cy.exec(`kubectl scale -n istio-system --replicas=1 deployment/grafana`);
   cy.exec(`kubectl rollout status deployment prometheus -n istio-system`);
 });

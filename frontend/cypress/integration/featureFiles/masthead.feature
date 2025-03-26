@@ -11,6 +11,7 @@ Feature: Kiali masthead cluster components status
     And user is at the "overview" page
 
   @multi-cluster
+  @component-health
   Scenario: Cluster components healthy
     Then user sees "east" cluster label with a "success" icon
     When user hovers over the cluster icon
@@ -18,21 +19,20 @@ Feature: Kiali masthead cluster components status
     Then user sees a tooltip with text "west"
     Then user does not see any "Not" in the tooltip
     Then user does not see any "Unreachable" in the tooltip
-    Then user hovers out the cluster icon
 
   @multi-cluster
   @component-health
+  @component-health-upscale
   Scenario: Istio components unhealthy
-    When user scales to "0" the "prometheus" in namespace "istio-system"
+    When user scales to "0" the "grafana" in namespace "istio-system"
     Then the user refreshes the page
     Then user sees "east" cluster label with a "warning" icon
     When user hovers over the cluster icon
     Then user sees a tooltip with text "Unreachable"
     Then user hovers out the cluster icon
-    When user scales to "1" the "prometheus" in namespace "istio-system"
+    When user scales to "1" the "grafana" in namespace "istio-system"
     Then the user refreshes the page
     Then user sees "east" cluster label with a "success" icon
     When user hovers over the cluster icon
     Then user does not see any "Not" in the tooltip
     Then user does not see any "Unreachable" in the tooltip
-    Then user hovers out the cluster icon
