@@ -108,6 +108,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
           <MenuToggle
             ref={toggleRef}
             id={'traces-display-settings'}
+            data-test={'traces-display-settings'}
             onClick={() => this.onToggle(!isOpen)}
             isExpanded={isOpen}
           >
