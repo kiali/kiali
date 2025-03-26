@@ -111,7 +111,7 @@ Then('user does not see graph traffic menu', () => {
 
 Then('user {string} {string} traffic', (action: string, protocol: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -214,7 +214,7 @@ Then('user sees selected graph refresh {string}', (refresh: string) => {
 
 Then('user sees a {string} graph', graphType => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];

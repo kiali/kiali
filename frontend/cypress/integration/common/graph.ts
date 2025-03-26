@@ -5,6 +5,7 @@
 
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
 import { Controller, Edge, Node, isNode, isEdge, GraphElement, Visualization } from '@patternfly/react-topology';
+import { GraphDataSource } from 'services/GraphDataSource';
 
 Then('user does not see a minigraph', () => {
   cy.get('#MiniGraphCard').find('h5').contains('Empty Graph');
@@ -14,6 +15,11 @@ Then('user sees a minigraph', () => {
   cy.waitForReact();
   cy.getReact('MiniGraphCardComponent', { state: { isReady: true } })
     .should('have.length', '1')
+    .getProps('dataSource')
+    .should((dataSource: GraphDataSource) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      expect(dataSource.isLoading).to.be.false;
+    })
     .then($graph => {
       const { state } = $graph[0];
 
@@ -27,7 +33,7 @@ Then('user sees a minigraph', () => {
 
 Then('user sees the {string} namespace deployed across the east and west clusters', (namespace: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -48,7 +54,7 @@ Then('user sees the {string} namespace deployed across the east and west cluster
 
 Then('nodes in the {string} cluster should contain the cluster name in their links', (cluster: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -74,7 +80,7 @@ Then(
   'user clicks on the {string} workload in the {string} namespace in the {string} cluster',
   (workload: string, namespace: string, cluster: string) => {
     cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { isReady: true } })
+    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
       .should('have.length', '1')
       .then($graph => {
         const { state } = $graph[0];

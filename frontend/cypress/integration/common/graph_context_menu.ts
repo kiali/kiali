@@ -6,9 +6,8 @@ import { NodeAttr } from 'types/Graph';
 
 // Single cluster only.
 When('user opens the context menu of the {string} service node', (svcName: string) => {
-  ensureKialiFinishedLoading();
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -30,9 +29,8 @@ When('user opens the context menu of the {string} service node', (svcName: strin
 When(
   'user opens the context menu of the {string} service node on the {string} cluster',
   (svcName: string, cluster: string) => {
-    ensureKialiFinishedLoading();
     cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { isReady: true } })
+    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
       .should('have.length', '1')
       .then($graph => {
         const { state } = $graph[0];

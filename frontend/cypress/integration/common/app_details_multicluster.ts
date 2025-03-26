@@ -6,6 +6,7 @@ import { Visualization } from '@patternfly/react-topology';
 import { NodeType } from 'types/Graph';
 import { elems } from 'helpers/GraphHelpers';
 import { nodeInfo } from './graph';
+import { GraphDataSource } from 'services/GraphDataSource';
 
 Then('user sees details information for the remote {string} app', (name: string) => {
   cy.getBySel('app-description-card').within(() => {
@@ -64,6 +65,11 @@ Then('user sees {string} from a remote {string} cluster in the minigraph', (type
   cy.waitForReact();
   cy.getReact('MiniGraphCardComponent', { state: { isReady: true } })
     .should('have.length', '1')
+    .getProps('dataSource')
+    .should((dataSource: GraphDataSource) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      expect(dataSource.isLoading).to.be.false;
+    })
     .then($graph => {
       const { state } = $graph[0];
 
@@ -92,6 +98,11 @@ Given(
     cy.waitForReact();
     cy.getReact('MiniGraphCardComponent', { state: { isReady: true } })
       .should('have.length', '1')
+      .getProps('dataSource')
+      .should((dataSource: GraphDataSource) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        expect(dataSource.isLoading).to.be.false;
+      })
       .then($graph => {
         const { props, state } = $graph[0];
 
@@ -134,6 +145,11 @@ When(
     cy.waitForReact();
     cy.getReact('MiniGraphCardComponent', { state: { isReady: true } })
       .should('have.length', '1')
+      .getProps('dataSource')
+      .should((dataSource: GraphDataSource) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        expect(dataSource.isLoading).to.be.false;
+      })
       .then($graph => {
         const { props, state } = $graph[0];
 
