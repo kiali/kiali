@@ -5,7 +5,6 @@
 
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
 import { Controller, Edge, Node, isNode, isEdge, GraphElement, Visualization } from '@patternfly/react-topology';
-import { GraphDataSource } from 'services/GraphDataSource';
 
 Then('user does not see a minigraph', () => {
   cy.get('#MiniGraphCard').find('h5').contains('Empty Graph');
@@ -13,13 +12,8 @@ Then('user does not see a minigraph', () => {
 
 Then('user sees a minigraph', () => {
   cy.waitForReact();
-  cy.getReact('MiniGraphCardComponent', { state: { isReady: true } })
+  cy.getReact('MiniGraphCardComponent', { state: { isReady: true, isLoading: false } })
     .should('have.length', '1')
-    .getProps('dataSource')
-    .should((dataSource: GraphDataSource) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-      expect(dataSource.isLoading).to.be.false;
-    })
     .then($graph => {
       const { state } = $graph[0];
 

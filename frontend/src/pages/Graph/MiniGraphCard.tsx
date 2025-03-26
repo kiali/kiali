@@ -66,6 +66,7 @@ type MiniGraphCardState = {
   graphData: DecoratedGraphElements;
   graphRefs?: GraphRefs;
   isKebabOpen: boolean;
+  isLoading: boolean;
   isReady: boolean;
   isTimeOptionsOpen: boolean;
 };
@@ -74,8 +75,9 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
   constructor(props: MiniGraphCardProps) {
     super(props);
     this.state = {
-      isReady: false,
       isKebabOpen: false,
+      isLoading: props.dataSource.isLoading,
+      isReady: false,
       isTimeOptionsOpen: false,
       graphData: props.dataSource.graphData
     };
@@ -92,7 +94,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
   }
 
   private refresh = (): void => {
-    this.setState({ graphData: this.props.dataSource.graphData });
+    this.setState({ graphData: this.props.dataSource.graphData, isLoading: this.props.dataSource.isLoading });
   };
 
   render(): React.ReactNode {

@@ -32,13 +32,8 @@ Then('the nodes located in the {string} cluster should be restricted', (cluster:
 
 Then('the nodes on the minigraph located in the {string} cluster should be restricted', (cluster: string) => {
   cy.waitForReact();
-  cy.getReact('MiniGraphCardComponent', { state: { isReady: true } })
+  cy.getReact('MiniGraphCardComponent', { state: { isReady: true, isLoading: false } })
     .should('have.length', '1')
-    .getProps('dataSource')
-    .should((dataSource: GraphDataSource) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-      expect(dataSource.isLoading).to.be.false;
-    })
     .then($graph => {
       const { state } = $graph[0];
 
