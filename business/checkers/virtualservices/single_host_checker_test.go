@@ -172,10 +172,8 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		buildVirtualService("virtual-2", "reviews.bookinfo"),
 	}
 	vals := SingleHostChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-		},
+		Conf:            config.Get(),
+		Namespaces:      []string{"bookinfo"},
 		VirtualServices: vss,
 	}.Check()
 
@@ -187,10 +185,8 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		buildVirtualService("virtual-2", "reviews.bookinfo"),
 	}
 	vals = SingleHostChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-		},
+		Conf:            config.Get(),
+		Namespaces:      []string{"bookinfo"},
 		VirtualServices: vss,
 	}.Check()
 
@@ -203,10 +199,8 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		buildVirtualServiceWithGateway("virtual-3", "reviews", "bookinfo-gateway-auto"),
 	}
 	vals = SingleHostChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-		},
+		Conf:            config.Get(),
+		Namespaces:      []string{"bookinfo"},
 		VirtualServices: vss,
 	}.Check()
 
@@ -218,10 +212,8 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		buildVirtualService("virtual-2", "reviews.bookinfo"),
 	}
 	vals = SingleHostChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-		},
+		Conf:            config.Get(),
+		Namespaces:      []string{"bookinfo"},
 		VirtualServices: vss,
 	}.Check()
 
@@ -233,10 +225,8 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		buildVirtualService("virtual-2", "details.bookinfo"),
 	}
 	vals = SingleHostChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-		},
+		Conf:            config.Get(),
+		Namespaces:      []string{"bookinfo"},
 		VirtualServices: vss,
 	}.Check()
 
@@ -249,10 +239,8 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		buildVirtualService("virtual-2", "details.bookinfo"),
 	}
 	vals = SingleHostChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-		},
+		Conf:            config.Get(),
+		Namespaces:      []string{"bookinfo"},
 		VirtualServices: vss,
 	}.Check()
 

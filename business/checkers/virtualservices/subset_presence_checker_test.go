@@ -6,7 +6,10 @@ import (
 
 	core_v1 "k8s.io/api/core/v1"
 
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/testutils/validations"
 )
@@ -79,12 +82,13 @@ func subsetPresenceCheckerPrep(scenario string, t *testing.T) ([]*models.IstioCh
 
 	loader := yamlFixtureLoaderFor(scenario)
 	err := loader.Load()
+	nsNames := namespaceNames(loader.GetNamespaces())
 
 	vals, valid := SubsetPresenceChecker{
-		Conf:             config.Get(),
-		Namespaces:       namespaceNames(loader.GetNamespaces()),
-		DestinationRules: append(loader.FindDestinationRuleIn("bookinfo"), loader.FindDestinationRuleNotIn("bookinfo")...),
-		VirtualService:   loader.GetResources().VirtualServices[0],
+		Conf:           config.Get(),
+		Namespaces:     nsNames,
+		DRSubsets:      prepareSubsetMap(append(loader.FindDestinationRuleIn("bookinfo"), loader.FindDestinationRuleNotIn("bookinfo")...), nsNames, conf),
+		VirtualService: loader.GetResources().VirtualServices[0],
 	}.Check()
 
 	if err != nil {
@@ -120,4 +124,25 @@ func testSubsetPresenceValidationsFound(scenario string, t *testing.T) {
 	tb.AssertValidationsPresent(2, true)
 	tb.AssertValidationAt(0, models.WarningSeverity, "spec/http[0]/route[0]/destination", "virtualservices.subsetpresent.subsetnotfound")
 	tb.AssertValidationAt(1, models.WarningSeverity, "spec/http[1]/route[0]/destination", "virtualservices.subsetpresent.subsetnotfound")
+}
+
+func prepareSubsetMap(destinationRules []*networking_v1.DestinationRule, namespaces []string, conf *config.Config) map[string]map[string]kubernetes.Host {
+	subsetMap := make(map[string]map[string]kubernetes.Host)
+
+	for _, dr := range destinationRules {
+		host := dr.Spec.Host
+		drHost := kubernetes.GetHost(host, dr.Namespace, namespaces, conf)
+
+		if _, exists := subsetMap[drHost.String()]; !exists {
+			subsetMap[drHost.String()] = make(map[string]kubernetes.Host)
+		}
+
+		for _, subset := range dr.Spec.Subsets {
+			if subset != nil {
+				subsetMap[drHost.String()][subset.Name] = drHost
+			}
+		}
+	}
+
+	return subsetMap
 }

@@ -11,7 +11,7 @@ import (
 type SingleHostChecker struct {
 	Cluster         string
 	Conf            *config.Config
-	Namespaces      models.Namespaces
+	Namespaces      []string
 	VirtualServices []*networking_v1.VirtualService
 }
 
@@ -150,7 +150,7 @@ func (s SingleHostChecker) getHosts(virtualService *networking_v1.VirtualService
 	targetHosts := make([]kubernetes.Host, 0, len(virtualService.Spec.Hosts))
 
 	for _, hostName := range virtualService.Spec.Hosts {
-		targetHosts = append(targetHosts, kubernetes.GetHost(hostName, namespace, s.Namespaces.GetNames(), s.Conf))
+		targetHosts = append(targetHosts, kubernetes.GetHost(hostName, namespace, s.Namespaces, s.Conf))
 	}
 	return targetHosts
 }

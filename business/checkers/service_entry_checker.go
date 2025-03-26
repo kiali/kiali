@@ -35,7 +35,7 @@ func (s ServiceEntryChecker) runSingleChecks(se *networking_v1.ServiceEntry, wor
 		serviceentries.HasMatchingWorkloadEntryAddress{ServiceEntry: se, WorkloadEntries: workloadEntriesMap},
 	}
 	if !s.Namespaces.IsNamespaceAmbient(se.Namespace, s.Cluster) {
-		enabledCheckers = append(enabledCheckers, common.ExportToNamespaceChecker{ExportTo: se.Spec.ExportTo, Namespaces: s.Namespaces})
+		enabledCheckers = append(enabledCheckers, common.ExportToNamespaceChecker{ExportTo: se.Spec.ExportTo, Namespaces: s.Namespaces.GetNames()})
 	}
 
 	for _, checker := range enabledCheckers {

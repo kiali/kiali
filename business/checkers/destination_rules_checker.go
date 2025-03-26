@@ -65,7 +65,7 @@ func (in DestinationRulesChecker) runChecks(destinationRule *networking_v1.Desti
 		destinationrules.DisabledMeshWideMTLSChecker{DestinationRule: destinationRule, MeshPeerAuthns: in.MTLSDetails.MeshPeerAuthentications},
 	}
 	if !in.Namespaces.IsNamespaceAmbient(destinationRule.Namespace, in.Cluster) {
-		enabledCheckers = append(enabledCheckers, common.ExportToNamespaceChecker{ExportTo: destinationRule.Spec.ExportTo, Namespaces: in.Namespaces})
+		enabledCheckers = append(enabledCheckers, common.ExportToNamespaceChecker{ExportTo: destinationRule.Spec.ExportTo, Namespaces: in.Namespaces.GetNames()})
 	}
 
 	enabledCheckers = append(enabledCheckers, destinationrules.NamespaceWideMTLSChecker{Conf: in.Conf, DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails})

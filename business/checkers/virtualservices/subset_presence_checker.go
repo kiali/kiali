@@ -11,10 +11,10 @@ import (
 )
 
 type SubsetPresenceChecker struct {
-	Conf             *config.Config
-	DestinationRules []*networking_v1.DestinationRule
-	Namespaces       []string
-	VirtualService   *networking_v1.VirtualService
+	Conf           *config.Config
+	DRSubsets      map[string]map[string]kubernetes.Host
+	Namespaces     []string
+	VirtualService *networking_v1.VirtualService
 }
 
 func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
@@ -97,45 +97,15 @@ func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 }
 
 func (checker SubsetPresenceChecker) subsetPresent(host string, subset string) bool {
-	destinationRules, ok := checker.getDestinationRules(host)
-	if !ok || destinationRules == nil || len(destinationRules) == 0 {
-		return false
-	}
+	vsHost := kubernetes.GetHost(host, checker.VirtualService.Namespace, checker.Namespaces, checker.Conf)
 
-	for _, dr := range destinationRules {
-		if hasSubsetDefined(dr, subset) {
-			return true
-		}
-	}
-	return false
-}
-
-func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost string) ([]*networking_v1.DestinationRule, bool) {
-	drs := make([]*networking_v1.DestinationRule, 0, len(checker.DestinationRules))
-
-	for _, destinationRule := range checker.DestinationRules {
-		host := destinationRule.Spec.Host
-
-		drHost := kubernetes.GetHost(host, destinationRule.Namespace, checker.Namespaces, checker.Conf)
-		vsHost := kubernetes.GetHost(virtualServiceHost, checker.VirtualService.Namespace, checker.Namespaces, checker.Conf)
-
-		// TODO Host could be in another namespace (FQDN)
-		if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace, checker.Conf) {
-			drs = append(drs, destinationRule)
+	if subsets, exists := checker.DRSubsets[vsHost.String()]; exists {
+		if drHost, hostExists := subsets[subset]; hostExists {
+			if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace, checker.Conf) {
+				return true
+			}
 		}
 	}
 
-	return drs, len(drs) > 0
-}
-
-func hasSubsetDefined(destinationRule *networking_v1.DestinationRule, subsetTarget string) bool {
-	for _, subset := range destinationRule.Spec.Subsets {
-		if subset == nil {
-			continue
-		}
-		if subset.Name == subsetTarget {
-			return true
-		}
-	}
 	return false
 }
