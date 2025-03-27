@@ -325,7 +325,7 @@ class SpanTableComponent extends React.Component<Props, State> {
 
     let tracingActions: IAction[] = [];
 
-    if (this.props.externalURLProvider) {
+    if (this.props.externalURLProvider || parentKiosk) {
       const spanLink = this.props.externalURLProvider?.SpanUrl(item);
       tracingActions = [
         {

@@ -51,7 +51,7 @@ const TracingTraceTitleComponent: React.FC<Props> = (props: Props) => {
     </DropdownItem>
   ];
 
-  if (props.externalURL) {
+  if (props.externalURL || isParentKiosk(props.kiosk)) {
     links.push(
       <DropdownItem
         key="view_in_tracing"

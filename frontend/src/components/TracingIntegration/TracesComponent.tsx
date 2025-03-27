@@ -250,13 +250,12 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     GetTracingUrlProvider(this.props.externalServices, this.props.provider);
 
   private getTracingUrl = (): string | undefined => {
-    if (!this.urlProvider || !this.state.targetApp) {
+    if (!this.urlProvider || !this.state.targetApp || !this.urlProvider.HomeUrl()) {
       return undefined;
     }
     const range = retrieveTimeRange();
     // Convert any time range (like duration) to bounded from/to
     const boundsMillis = guardTimeRange(range, durationToBounds, b => b);
-
     return this.urlProvider.AppSearchUrl(
       this.state.targetApp,
       boundsMillis,
@@ -311,7 +310,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                   <ToolbarItem style={{ marginLeft: 'auto' }}>
                     {/*Blank item used as a separator do shift the following ToolbarItems to the right*/}
                   </ToolbarItem>
-                  {tracingURL && (
+                  {(tracingURL || isParentKiosk(this.props.kiosk)) && (
                     <ToolbarItem>
                       <Tooltip content={<>Open Chart in {this.props.provider} UI</>}>
                         <a

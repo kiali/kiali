@@ -79,7 +79,7 @@ export const kioskRefreshAction = (refreshInterval: IntervalInMilliseconds): voi
   sendParentMessage(showInParent);
 };
 
-export const kioskTracingAction = (url: string, traceID?: string): void => {
+export const kioskTracingAction = (url?: string, traceID?: string): void => {
   const showInParent = `/tracing/namespaces?trace=${traceID}&url=${url}`;
   sendParentMessage(showInParent);
 };
