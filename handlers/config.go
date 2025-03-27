@@ -11,6 +11,8 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
@@ -62,14 +64,13 @@ type PublicConfig struct {
 }
 
 // Config is a REST http.HandlerFunc serving up the Kiali configuration made public to clients.
-func Config(conf *config.Config, discovery *istio.Discovery) http.HandlerFunc {
+func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDiscovery, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer handlePanic(w)
 
 		// Note that we determine the Prometheus config at request time because it is not
 		// guaranteed to remain the same during the Kiali lifespan.
-		promConfig := getPrometheusConfig()
-		conf := config.Get()
+		promConfig := getPrometheusConfig(conf, prom)
 		publicConfig := PublicConfig{
 			AuthStrategy:      conf.Auth.Strategy,
 			Clusters:          make(map[string]models.KubeCluster),
@@ -97,35 +98,29 @@ func Config(conf *config.Config, discovery *istio.Discovery) http.HandlerFunc {
 			},
 		}
 
-		// The following code fetches the cluster info. Cluster info is not critical.
-		// It's even possible that it cannot be resolved (because of Istio not being with MC turned on).
-		// Because of these two reasons, let's simply ignore errors in the following code.
-		err := func() error {
-			layer, err := getBusiness(r)
-			if err != nil {
-				return err
-			}
-
-			// @TODO hardcoded home cluster
-			publicConfig.GatewayAPIEnabled = layer.IstioConfig.IsGatewayAPI(conf.KubernetesConfig.ClusterName)
-			publicConfig.AmbientEnabled = layer.IstioConfig.IsAmbientEnabled(conf.KubernetesConfig.ClusterName)
-			publicConfig.GatewayAPIClasses = layer.IstioConfig.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
-
-			// Fetch the list of all clusters in the mesh
-			// One usage of this data is to cross-link Kiali instances, when possible.
-			clusters, err := discovery.Clusters()
-			if err != nil {
-				return fmt.Errorf("failure while listing clusters in the mesh: %w", err)
-			}
-
-			for _, cluster := range clusters {
-				publicConfig.Clusters[cluster.Name] = cluster
-			}
-
-			return nil
-		}()
+		userClients, err := getUserClients(r, clientFactory)
 		if err != nil {
-			log.Warningf("Unable to resolve cluster info: %s", err)
+			RespondWithError(w, http.StatusInternalServerError, "Unable to convert session token into user client: "+err.Error())
+			return
+		}
+
+		// @TODO hardcoded home cluster
+		if client := userClients[conf.KubernetesConfig.ClusterName]; client != nil {
+			publicConfig.GatewayAPIEnabled = client.IsGatewayAPI()
+		}
+		publicConfig.AmbientEnabled = cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName)
+		publicConfig.GatewayAPIClasses = kubernetes.GatewayAPIClasses(publicConfig.AmbientEnabled, conf)
+
+		// Fetch the list of all clusters in the mesh
+		// One usage of this data is to cross-link Kiali instances, when possible.
+		clusters, err := discovery.Clusters()
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Failure while listing clusters in the mesh: "+err.Error())
+			return
+		}
+
+		for _, cluster := range clusters {
+			publicConfig.Clusters[cluster.Name] = cluster
 		}
 
 		RespondWithJSONIndent(w, http.StatusOK, publicConfig)
@@ -138,13 +133,13 @@ type PrometheusPartialConfig struct {
 	}
 }
 
-func getPrometheusConfig() PrometheusConfig {
+func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface) PrometheusConfig {
 	promConfig := PrometheusConfig{
 		GlobalScrapeInterval: defaultPrometheusGlobalScrapeInterval,
 		StorageTsdbRetention: defaultPrometheusGlobalStorageTSDBRetention,
 	}
 	// Check if thanosProxy
-	thanosConf := config.Get().ExternalServices.Prometheus.ThanosProxy
+	thanosConf := conf.ExternalServices.Prometheus.ThanosProxy
 	if thanosConf.Enabled {
 		scrapeInterval, err := model.ParseDuration(thanosConf.ScrapeInterval)
 		if checkErr(err, fmt.Sprintf("Invalid scrape interval in ThanosProxy configuration [%s]", scrapeInterval)) {
@@ -155,11 +150,6 @@ func getPrometheusConfig() PrometheusConfig {
 			promConfig.StorageTsdbRetention = int64(time.Duration(retention).Seconds())
 		}
 	} else {
-		client, err := prometheus.NewClient()
-		if !checkErr(err, "") {
-			log.Error(err)
-			return promConfig
-		}
 		configResult, err := client.GetConfiguration()
 		if checkErr(err, "Failed to fetch Prometheus configuration") {
 			var config PrometheusPartialConfig
@@ -210,61 +200,57 @@ type KialiCrippledFeatures struct {
 	ResponseTimePercentiles bool `json:"responseTimePercentiles"`
 }
 
-func CrippledFeatures(w http.ResponseWriter, r *http.Request) {
-	defer handlePanic(w)
+func CrippledFeatures(client prometheus.ClientInterface) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer handlePanic(w)
 
-	requiredMetrics := []string{
-		"istio_request_bytes_bucket",
-		"istio_request_bytes_count",
-		"istio_request_bytes_sum",
-		"istio_request_duration_milliseconds_bucket",
-		"istio_request_duration_milliseconds_count",
-		"istio_request_duration_milliseconds_sum",
-		"istio_requests_total",
-		"istio_response_bytes_bucket",
-		"istio_response_bytes_count",
-		"istio_response_bytes_sum",
-	}
+		requiredMetrics := []string{
+			"istio_request_bytes_bucket",
+			"istio_request_bytes_count",
+			"istio_request_bytes_sum",
+			"istio_request_duration_milliseconds_bucket",
+			"istio_request_duration_milliseconds_count",
+			"istio_request_duration_milliseconds_sum",
+			"istio_requests_total",
+			"istio_response_bytes_bucket",
+			"istio_response_bytes_count",
+			"istio_response_bytes_sum",
+		}
 
-	// assume nothing crippled on error
-	crippledFeatures := KialiCrippledFeatures{}
+		// assume nothing crippled on error
+		crippledFeatures := KialiCrippledFeatures{}
 
-	client, err := prometheus.NewClient()
-	if !checkErr(err, "") {
-		log.Error(err)
+		existingMetrics, err := client.GetExistingMetricNames(requiredMetrics)
+		if !checkErr(err, "") {
+			log.Error(err)
+			RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
+		}
+
+		// if we have all of the metrics then nothing is crippled, just return
+		// if we have no metrics then we have no requests (note that we check for istio_request_totals), nothing is known to be crippled
+		if len(existingMetrics) == len(requiredMetrics) || len(existingMetrics) == 0 {
+			RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
+		}
+
+		exists := make(map[string]bool, len(existingMetrics))
+		for _, metric := range existingMetrics {
+			exists[metric] = true
+		}
+
+		crippledFeatures.RequestSize = !exists["istio_request_bytes_sum"]
+		crippledFeatures.RequestSizeAverage = crippledFeatures.RequestSize || !exists["istio_request_bytes_count"]
+		crippledFeatures.RequestSizePercentiles = crippledFeatures.RequestSizeAverage || !exists["istio_request_bytes_bucket"]
+
+		crippledFeatures.ResponseSize = !exists["istio_response_bytes_sum"]
+		crippledFeatures.ResponseSizeAverage = crippledFeatures.ResponseSize || !exists["istio_response_bytes_count"]
+		crippledFeatures.ResponseSizePercentiles = crippledFeatures.ResponseSizeAverage || !exists["istio_response_bytes_bucket"]
+
+		crippledFeatures.ResponseTime = !exists["istio_request_duration_milliseconds_sum"]
+		crippledFeatures.ResponseTimeAverage = crippledFeatures.ResponseTime || !exists["istio_request_duration_milliseconds_count"]
+		crippledFeatures.ResponseTimePercentiles = crippledFeatures.ResponseTimeAverage || !exists["istio_request_duration_milliseconds_bucket"]
+
 		RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
 	}
-
-	existingMetrics, err := client.GetExistingMetricNames(requiredMetrics)
-	if !checkErr(err, "") {
-		log.Error(err)
-		RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
-	}
-
-	// if we have all of the metrics then nothing is crippled, just return
-	// if we have no metrics then we have no requests (note that we check for istio_request_totals), nothing is known to be crippled
-	if len(existingMetrics) == len(requiredMetrics) || len(existingMetrics) == 0 {
-		RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
-	}
-
-	exists := make(map[string]bool, len(existingMetrics))
-	for _, metric := range existingMetrics {
-		exists[metric] = true
-	}
-
-	crippledFeatures.RequestSize = !exists["istio_request_bytes_sum"]
-	crippledFeatures.RequestSizeAverage = crippledFeatures.RequestSize || !exists["istio_request_bytes_count"]
-	crippledFeatures.RequestSizePercentiles = crippledFeatures.RequestSizeAverage || !exists["istio_request_bytes_bucket"]
-
-	crippledFeatures.ResponseSize = !exists["istio_response_bytes_sum"]
-	crippledFeatures.ResponseSizeAverage = crippledFeatures.ResponseSize || !exists["istio_response_bytes_count"]
-	crippledFeatures.ResponseSizePercentiles = crippledFeatures.ResponseSizeAverage || !exists["istio_response_bytes_bucket"]
-
-	crippledFeatures.ResponseTime = !exists["istio_request_duration_milliseconds_sum"]
-	crippledFeatures.ResponseTimeAverage = crippledFeatures.ResponseTime || !exists["istio_request_duration_milliseconds_count"]
-	crippledFeatures.ResponseTimePercentiles = crippledFeatures.ResponseTimeAverage || !exists["istio_request_duration_milliseconds_bucket"]
-
-	RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
 }
 
 func checkErr(err error, message string) bool {

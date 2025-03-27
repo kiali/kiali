@@ -983,16 +983,8 @@ func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, clust
 	return istioConfigDetail, nil
 }
 
-func (in *IstioConfigService) IsGatewayAPI(cluster string) bool {
-	return in.userClients[cluster].IsGatewayAPI()
-}
-
 func (in *IstioConfigService) GatewayAPIClasses(cluster string) []config.GatewayAPIClass {
-	return kubernetes.GatewayAPIClasses(in.IsAmbientEnabled(cluster), in.conf)
-}
-
-func (in *IstioConfigService) IsAmbientEnabled(cluster string) bool {
-	return in.kialiCache.IsAmbientEnabled(cluster)
+	return kubernetes.GatewayAPIClasses(in.kialiCache.IsAmbientEnabled(cluster), in.conf)
 }
 
 func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, namespaces []string, cluster string) models.IstioConfigPermissions {

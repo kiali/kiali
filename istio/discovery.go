@@ -153,6 +153,7 @@ func sidecarInjectorConfigMapName(revision string) string {
 }
 
 type MeshDiscovery interface {
+	Clusters() ([]models.KubeCluster, error)
 	Mesh(ctx context.Context) (*models.Mesh, error)
 }
 

@@ -197,7 +197,7 @@ func NewRoutes(
 			"Config",
 			"GET",
 			"/api/config",
-			handlers.Config(conf, discovery),
+			handlers.Config(conf, kialiCache, discovery, clientFactory, prom),
 			true,
 		},
 		// swagger:route GET /crippled kiali getCrippledFeatures
@@ -216,7 +216,7 @@ func NewRoutes(
 			"Crippled",
 			"GET",
 			"/api/crippled",
-			handlers.CrippledFeatures,
+			handlers.CrippledFeatures(prom),
 			true,
 		},
 		// swagger:route GET /istio/permissions config getPermissions

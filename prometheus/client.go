@@ -33,11 +33,13 @@ type ClientInterface interface {
 	GetAllRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetAppRequestRates(namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 	GetConfiguration() (prom_v1.ConfigResult, error)
+	GetExistingMetricNames(metricNames []string) ([]string, error)
 	GetFlags() (prom_v1.FlagsResult, error)
+	GetMetricsForLabels(metricNames []string, labels string) ([]string, error)
 	GetNamespaceServicesRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error)
+	GetRuntimeinfo() (prom_v1.RuntimeinfoResult, error)
 	GetServiceRequestRates(namespace, cluster, service, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetWorkloadRequestRates(namespace, cluster, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
-	GetMetricsForLabels(metricNames []string, labels string) ([]string, error)
 }
 
 // Client for Prometheus API.
