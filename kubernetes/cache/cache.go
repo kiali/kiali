@@ -24,7 +24,7 @@ import (
 const (
 	ambientCheckExpirationTime = 10 * time.Minute
 	meshExpirationTime         = 20 * time.Second
-	waypointExpirationTime     = 1 * time.Minute
+	waypointExpirationTime     = 10 * time.Minute
 )
 
 const (

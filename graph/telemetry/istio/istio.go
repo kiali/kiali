@@ -40,7 +40,6 @@ import (
 	"github.com/kiali/kiali/graph/telemetry/istio/appender"
 	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/util/sliceutil"
@@ -51,12 +50,22 @@ const (
 	tsHashMap graph.MetadataKey = "tsHashMap"
 )
 
+type waypointKey = struct {
+	Cluster   string
+	Namespace string
+	Name      string
+}
+
+// wpKey is a re-usable key struct. This works because map keys are always copies
+var wpKey = waypointKey{}
+
+type waypointMap = map[waypointKey]bool
+
 var grpcMetric = regexp.MustCompile(`istio_.*_messages`)
 
 // BuildNamespacesTrafficMap is required by the graph/TelemetryVendor interface
-func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalInfo *graph.GlobalInfo) graph.TrafficMap {
-	var end observability.EndFunc
-	ctx, end = observability.StartSpan(ctx, "BuildNamespacesTrafficMap",
+func BuildNamespacesTrafficMap(o graph.TelemetryOptions, globalInfo *graph.GlobalInfo) graph.TrafficMap {
+	ctx, end := observability.StartSpan(globalInfo.Context, "BuildNamespacesTrafficMap",
 		observability.Attribute("package", "istio"),
 	)
 	defer end()
@@ -66,15 +75,11 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 	appenders, finalizers := appender.ParseAppenders(o)
 	trafficMap := graph.NewTrafficMap()
 
-	// To handle ambient telemetry we need to know about the configured waypoints. We typically avoid mixing
-	// config with telemetry because config is current and telemetry can be dated.  But for the moment
-	// it's unavoidable, as we need to do our best to identify source or dest waypoint workloads.  If in
-	// the future we can make that determination via the telem, we should change to that approach.
-	if sliceutil.Some(finalizers, func(f graph.Appender) bool {
+	handleAmbient := sliceutil.Some(finalizers, func(f graph.Appender) bool {
 		return f.Name() == appender.AmbientAppenderName
-	}) {
-		waypoints := globalInfo.Business.Workload.GetWaypoints(ctx)
-		globalInfo.Vendor[appender.AmbientWaypoints] = waypoints
+	})
+	if handleAmbient {
+		globalInfo.Vendor[appender.AmbientWaypoints] = GetWaypointMap(ctx, globalInfo)
 	}
 
 	for _, namespaceInfo := range o.Namespaces {
@@ -557,15 +562,11 @@ func BuildNodeTrafficMap(o graph.TelemetryOptions, globalInfo *graph.GlobalInfo)
 
 	appenders, finalizers := appender.ParseAppenders(o)
 
-	// To handle ambient telemetry we need to know about the configured waypoints. We typically avoid mixing
-	// config with telemetry because config is current and telemetry can be dated.  But for the moment
-	// it's unavoidable, as we need to do our best to identify source or dest waypoint workloads.  If in
-	// the future we can make that determination via the telem, we should change to that approach.
-	if sliceutil.Some(finalizers, func(f graph.Appender) bool {
+	handleAmbient := sliceutil.Some(finalizers, func(f graph.Appender) bool {
 		return f.Name() == appender.AmbientAppenderName
-	}) {
-		waypoints := globalInfo.Business.Workload.GetWaypoints(context.Background())
-		globalInfo.Vendor[appender.AmbientWaypoints] = waypoints
+	})
+	if handleAmbient {
+		globalInfo.Vendor[appender.AmbientWaypoints] = GetWaypointMap(globalInfo.Context, globalInfo)
 	}
 
 	trafficMap := buildNodeTrafficMap(o.Cluster, o.NodeOptions.Namespace, n, o, globalInfo)
@@ -858,11 +859,8 @@ func buildNodeTrafficMap(cluster string, namespaceInfo graph.NamespaceInfo, n *g
 
 		inboundReporter := `reporter="destination"`
 		outboutReporter := `reporter="source"`
-		if waypoints, ok := globalInfo.Vendor[appender.AmbientWaypoints]; ok {
-			isAWaypoint := sliceutil.Some(waypoints.(models.Workloads), func(wp *models.Workload) bool {
-				return isWaypoint(wp, n.Cluster, n.Namespace, n.Workload)
-			})
-			if isAWaypoint {
+		if wpMap, ok := globalInfo.Vendor[appender.AmbientWaypoints]; ok {
+			if isWaypoint(wpMap.(waypointMap), n.Cluster, n.Namespace, n.Workload) {
 				inboundReporter = util.GetReporter("source", o.Rates)
 				outboutReporter = util.GetReporter("destination", o.Rates)
 			}
@@ -1096,30 +1094,44 @@ func promQuery(query string, queryTime time.Time, api prom_v1.API, conf *config.
 	return nil
 }
 
-// hasWaypoint returns true if the source or dest workload is determined to be a waypoint workload.  Note that this logic can
-// go away if and when https://github.com/istio/ztunnel/issues/1128 is implemented, and then we can make this determination
-// directly from the telemetry
+// GetWaypointMap returns a waypointMap based on the current workloads. To handle ambient telemetry we
+// need to know about the configured waypoints. We typically avoid mixing config with telemetry because
+// config is current and telemetry can be dated.  But for the moment it's unavoidable, as we need to do
+// our best to identify source or dest waypoint workloads.  If in the future we can make that determination
+// via the telem, we should change to that approach (see https://github.com/istio/ztunnel/issues/1128).
+// Here we build a waypointMap to help quickly identify waypoints in telemetry.
+func GetWaypointMap(ctx context.Context, gi *graph.GlobalInfo) waypointMap {
+	waypoints := gi.Business.Workload.GetWaypoints(ctx)
+	wpMap := make(waypointMap, len(waypoints))
+	for _, wp := range waypoints {
+		wpKey.Cluster = wp.Cluster
+		wpKey.Namespace = wp.Namespace
+		wpKey.Name = wp.Name
+		wpMap[wpKey] = true
+		if wp.Cluster != graph.Unknown {
+			wpKey.Cluster = graph.Unknown
+		}
+		wpMap[wpKey] = true
+	}
+	return wpMap
+}
+
+// hasWaypoint returns true if the source or dest workload is determined to be a waypoint workload.
 func hasWaypoint(ztunnel bool, sourceCluster, sourceWlNs, srcWl, destCluster, destWlNs, destWl string, globalInfo *graph.GlobalInfo) (sourceIsWaypoint bool, destIsWaypoint bool) {
 	if !ztunnel {
 		return false, false
 	}
 
-	if waypoints, ok := globalInfo.Vendor[appender.AmbientWaypoints]; ok {
-		sourceIsWaypoint = sliceutil.Some(waypoints.(models.Workloads), func(wp *models.Workload) bool {
-			return isWaypoint(wp, sourceCluster, sourceWlNs, srcWl)
-		})
-		if !sourceIsWaypoint {
-			destIsWaypoint = sliceutil.Some(waypoints.(models.Workloads), func(wp *models.Workload) bool {
-				return isWaypoint(wp, destCluster, destWlNs, destWl)
-			})
-		}
-	}
+	wpMap := globalInfo.Vendor[appender.AmbientWaypoints].(waypointMap)
+	sourceIsWaypoint = isWaypoint(wpMap, sourceCluster, sourceWlNs, srcWl)
+	destIsWaypoint = isWaypoint(wpMap, destCluster, destWlNs, destWl)
 	return sourceIsWaypoint, destIsWaypoint
 }
 
-// isWaypoint returns true if the ns, name and cluster of a workload matches with one of the waypoints in the list
-// We need the waypoint list
-// NOTE: Skip cluster comparaison if cluster is unknown
-func isWaypoint(w *models.Workload, cluster, namespace, name string) bool {
-	return w.WorkloadListItem.Name == name && w.WorkloadListItem.Namespace == namespace && (cluster == "unknown" || w.Cluster == cluster)
+// isWaypoint returns true if the ns, name and cluster of a workload matches with one of the known waypoints
+func isWaypoint(wpMap waypointMap, cluster, namespace, name string) bool {
+	wpKey.Cluster = cluster
+	wpKey.Namespace = namespace
+	wpKey.Name = name
+	return wpMap[wpKey]
 }
