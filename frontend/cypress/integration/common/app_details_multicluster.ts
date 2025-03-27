@@ -6,6 +6,7 @@ import { Visualization } from '@patternfly/react-topology';
 import { NodeType } from 'types/Graph';
 import { elems } from 'helpers/GraphHelpers';
 import { nodeInfo } from './graph';
+import { GraphDataSource } from 'services/GraphDataSource';
 
 Then('user sees details information for the remote {string} app', (name: string) => {
   cy.getBySel('app-description-card').within(() => {
@@ -62,7 +63,7 @@ Then(
 
 Then('user sees {string} from a remote {string} cluster in the minigraph', (type: string, cluster: string) => {
   cy.waitForReact();
-  cy.getReact('MiniGraphCardComponent', { state: { isReady: true } })
+  cy.getReact('MiniGraphCardComponent', { state: { isReady: true, isLoading: false } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -90,7 +91,7 @@ Given(
   'the {string} {string} from the {string} cluster is visible in the minigraph',
   (name: string, type: string, cluster: string) => {
     cy.waitForReact();
-    cy.getReact('MiniGraphCardComponent', { state: { isReady: true } })
+    cy.getReact('MiniGraphCardComponent', { state: { isReady: true, isLoading: false } })
       .should('have.length', '1')
       .then($graph => {
         const { props, state } = $graph[0];
@@ -132,7 +133,7 @@ When(
   'user clicks on the {string} {string} from the {string} cluster in the minigraph',
   (name: string, type: string, cluster: string) => {
     cy.waitForReact();
-    cy.getReact('MiniGraphCardComponent', { state: { isReady: true } })
+    cy.getReact('MiniGraphCardComponent', { state: { isReady: true, isLoading: false } })
       .should('have.length', '1')
       .then($graph => {
         const { props, state } = $graph[0];

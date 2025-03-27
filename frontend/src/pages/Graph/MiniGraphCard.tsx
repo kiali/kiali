@@ -66,6 +66,7 @@ type MiniGraphCardState = {
   graphData: DecoratedGraphElements;
   graphRefs?: GraphRefs;
   isKebabOpen: boolean;
+  isLoading: boolean;
   isReady: boolean;
   isTimeOptionsOpen: boolean;
 };
@@ -74,8 +75,9 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
   constructor(props: MiniGraphCardProps) {
     super(props);
     this.state = {
-      isReady: false,
       isKebabOpen: false,
+      isLoading: props.dataSource.isLoading,
+      isReady: false,
       isTimeOptionsOpen: false,
       graphData: props.dataSource.graphData
     };
@@ -92,7 +94,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
   }
 
   private refresh = (): void => {
-    this.setState({ graphData: this.props.dataSource.graphData });
+    this.setState({ graphData: this.props.dataSource.graphData, isLoading: this.props.dataSource.isLoading });
   };
 
   render(): React.ReactNode {
@@ -131,7 +133,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     }
 
     // The parent component supplies the datasource and the target element. Here we protect against a lifecycle issue where the two
-    // can be out of sync. If so, just assume the parent is currently loading until it things get synchronized.
+    // can be out of sync. If so, just assume the parent is currently loading until things get synchronized.
     const isLoading =
       (this.props.workload && this.props.workload?.name !== this.props.dataSource.fetchParameters.node?.workload) ||
       (this.props.serviceDetails &&
@@ -202,7 +204,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
                     elementsChanged: true,
                     errorMessage: !!this.props.dataSource.errorMessage ? this.props.dataSource.errorMessage : undefined,
                     isError: this.props.dataSource.isError,
-                    isLoading: this.props.dataSource.isLoading,
+                    isLoading: isLoading,
                     fetchParams: this.props.dataSource.fetchParameters,
                     timestamp: this.props.dataSource.graphTimestamp
                   }}

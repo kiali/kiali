@@ -42,7 +42,10 @@ const measureLoadTime = (
           });
           if (isGraph) {
             cy.waitForReact();
-            cy.getReact('GraphPageComponent', { state: { isReady: true } }).should('have.length', '1');
+            cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } }).should(
+              'have.length',
+              '1'
+            );
             // @TODO this check fails on jenkins with CPU/Memory error, to find a better solution
             // .getCurrentState().then(state => {const controller = state.graphRefs.getController() as Visualization; assert.isTrue(controller.hasGraph()); });
           } else {

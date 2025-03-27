@@ -12,7 +12,7 @@ Then('user does not see a minigraph', () => {
 
 Then('user sees a minigraph', () => {
   cy.waitForReact();
-  cy.getReact('MiniGraphCardComponent', { state: { isReady: true } })
+  cy.getReact('MiniGraphCardComponent', { state: { isReady: true, isLoading: false } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -27,7 +27,7 @@ Then('user sees a minigraph', () => {
 
 Then('user sees the {string} namespace deployed across the east and west clusters', (namespace: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -48,7 +48,7 @@ Then('user sees the {string} namespace deployed across the east and west cluster
 
 Then('nodes in the {string} cluster should contain the cluster name in their links', (cluster: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -74,7 +74,7 @@ Then(
   'user clicks on the {string} workload in the {string} namespace in the {string} cluster',
   (workload: string, namespace: string, cluster: string) => {
     cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { isReady: true } })
+    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
       .should('have.length', '1')
       .then($graph => {
         const { state } = $graph[0];
