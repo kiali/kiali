@@ -42,7 +42,7 @@ const measureLoadTime = (
           });
           if (isGraph) {
             cy.waitForReact();
-            cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false, isReady: true } } }).should(
+            cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } }).should(
               'have.length',
               '1'
             );
