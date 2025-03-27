@@ -23,6 +23,7 @@ AMBIENT="false"
 DELETE_SLEEP="false"
 : ${ISTIO_NAMESPACE:=istio-system}
 : ${AUTO_INJECTION:=true}
+: ${AUTO_INJECTION_LABEL:="istio-injection=enabled"}
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -38,6 +39,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ai|--auto-injection)
       AUTO_INJECTION="$2"
+      shift;shift
+      ;;
+    -ail|--auto-injection-label)
+      AUTO_INJECTION_LABEL="$2"
       shift;shift
       ;;
     -ds|--delete-sleep)
@@ -62,6 +67,7 @@ Valid command line arguments:
   -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64).
   -ab|--ambient <true|false>: If you want to include to Ambient mesh (default: false).
   -ai|--auto-injection <true|false>: If you want sidecars to be auto-injected (default: true).
+  -ail|--auto-injection-label <name=value>: If auto-injection is enabled, this is the label added to the namespace. For revision-based installs, you can use something like "istio.io/rev=default-v1-23-0". default: istio-injection=enabled).
   -ds|--delete-sleep <true|false>: If true, uninstall sleep. If false, install sleep. (default: false).
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
   -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc"
@@ -132,11 +138,13 @@ else
     fi
   else
     if [ "${AUTO_INJECTION}" == "true" ]; then
-      ISTIO_INJECTION="istio-injection=enabled"
+      ISTIO_INJECTION=${AUTO_INJECTION_LABEL}
     fi
   fi
 
-  ${CLIENT_EXE} label namespace "sleep" ${ISTIO_INJECTION} --overwrite=true
+  if [ "${ISTIO_INJECTION}" != "" ]; then
+    ${CLIENT_EXE} label namespace "sleep" ${ISTIO_INJECTION} --overwrite=true
+  fi
 
   # For OpenShift 4.11, adds default service account in the current ns to use as a user
   if [ "${IS_OPENSHIFT}" == "true" ]; then

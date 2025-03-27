@@ -8,6 +8,8 @@
 # Works on both openshift and non-openshift environments.
 ##############################################################################
 
+: ${AUTO_INJECTION:=true}
+: ${AUTO_INJECTION_LABEL:="istio-injection=enabled"}
 : ${CLIENT_EXE:=oc}
 : ${DELETE_DEMOS:=false}
 : ${SSPAWNER:=service-spawner}
@@ -50,7 +52,9 @@ install_service_spawner_demo() {
     ${CLIENT_EXE} create ns ${SSPAWNER}
   fi
 
-  ${CLIENT_EXE} label namespace ${SSPAWNER} istio-injection=enabled --overwrite=true
+  if [ "${AUTO_INJECTION}" != "" ]; then
+    ${CLIENT_EXE} label namespace ${SSPAWNER} ${AUTO_INJECTION_LABEL} --overwrite=true
+  fi
 
   for (( c=0; c<$NUM_SPAWNS; c++ ))
   do
@@ -77,6 +81,14 @@ install_service_spawner_demo() {
 while [ $# -gt 0 ]; do
   key="$1"
   case $key in
+    -ai|--auto-injection)
+      AUTO_INJECTION="$2"
+      shift;shift
+      ;;
+    -ail|--auto-injection-label)
+      AUTO_INJECTION_LABEL="$2"
+      shift;shift
+      ;;
     -c|--client)
       CLIENT_EXE="$2"
       shift;shift
@@ -92,6 +104,8 @@ while [ $# -gt 0 ]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -ai|--auto-injection <true|false>: If you want sidecars to be auto-injected (default: true).
+  -ail|--auto-injection-label <name=value>: If auto-injection is enabled, this is the label added to the namespace. For revision-based installs, you can use something like "istio.io/rev=default-v1-23-0". default: istio-injection=enabled).
   -c|--client: either 'oc' or 'kubectl'
   -n|--spawns: Number of spawns. Default: 10
   -d|--delete: if 'true' demos will be deleted; otherwise, they will be installed

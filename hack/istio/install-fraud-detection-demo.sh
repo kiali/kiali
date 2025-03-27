@@ -5,9 +5,10 @@
 HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 source ${HACK_SCRIPT_DIR}/functions.sh
 
+: ${AUTO_INJECTION:=true}
+: ${AUTO_INJECTION_LABEL:="istio-injection=enabled"}
 : ${CLIENT_EXE:=oc}
 : ${DELETE_DEMO:=false}
-: ${ENABLE_INJECTION:=true}
 : ${ISTIO_NAMESPACE:=istio-system}
 : ${NAMESPACE:=fraud-detection}
 : ${SOURCE:="https://raw.githubusercontent.com/kiali/demos/master"}
@@ -15,16 +16,20 @@ source ${HACK_SCRIPT_DIR}/functions.sh
 while [ $# -gt 0 ]; do
   key="$1"
   case $key in
+    -ai|--auto-injection)
+      AUTO_INJECTION="$2"
+      shift;shift
+      ;;
+    -ail|--auto-injection-label)
+      AUTO_INJECTION_LABEL="$2"
+      shift;shift
+      ;;
     -c|--client)
       CLIENT_EXE="$2"
       shift;shift
       ;;
     -d|--delete)
       DELETE_DEMO="$2"
-      shift;shift
-      ;;
-    -ei|--enable-injection)
-      ENABLE_INJECTION="$2"
       shift;shift
       ;;
     -in|--istio-namespace)
@@ -34,9 +39,10 @@ while [ $# -gt 0 ]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -ai|--auto-injection <true|false>: If you want sidecars to be auto-injected (default: true).
+  -ail|--auto-injection-label <name=value>: If auto-injection is enabled, this is the label added to the namespace. For revision-based installs, you can use something like "istio.io/rev=default-v1-23-0". default: istio-injection=enabled).
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: either 'true' or 'false'. If 'true' the fraud detection demo will be deleted, not installed.
-  -ei|--enable-injection: either 'true' or 'false' (default is true). If 'true' auto-inject proxies for the workloads.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -h|--help: this text
   -s|--source: demo file source. For example: file:///home/me/demos Default: https://raw.githubusercontent.com/kiali/demos/master
@@ -57,7 +63,8 @@ done
 echo Will deploy Error Rates Demo using these settings:
 echo CLIENT_EXE=${CLIENT_EXE}
 echo DELETE_DEMO=${DELETE_DEMO}
-echo ENABLE_INJECTION=${ENABLE_INJECTION}
+echo AUTO_INJECTION=${AUTO_INJECTION}
+echo AUTO_INJECTION_LABEL=${AUTO_INJECTION_LABEL}
 echo ISTIO_NAMESPACE=${ISTIO_NAMESPACE}
 echo NAMESPACE=${NAMESPACE}
 echo SOURCE=${SOURCE}
@@ -112,8 +119,8 @@ SCC
 fi
    
 
-if [ "${ENABLE_INJECTION}" == "true" ]; then
-  ${CLIENT_EXE} label namespace ${NAMESPACE} istio-injection=enabled
+if [ "${AUTO_INJECTION}" == "true" ]; then
+  ${CLIENT_EXE} label namespace ${NAMESPACE} ${AUTO_INJECTION_LABEL}
 fi
 
 # Deploy the demo
