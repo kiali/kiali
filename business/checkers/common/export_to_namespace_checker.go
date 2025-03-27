@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/util"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 type ExportToNamespaceChecker struct {
@@ -17,7 +17,7 @@ func (p ExportToNamespaceChecker) Check() ([]*models.IstioCheck, bool) {
 
 	if len(p.ExportTo) > 0 {
 		for nsIndex, namespace := range p.ExportTo {
-			if namespace != "." && namespace != "*" && !util.InSlice(p.Namespaces, namespace) {
+			if namespace != "." && namespace != "*" && !sliceutil.SomeString(p.Namespaces, namespace) {
 				validation := models.Build("generic.exportto.namespacenotfound",
 					fmt.Sprintf("spec/exportTo[%d]", nsIndex))
 				validations = append(validations, &validation)

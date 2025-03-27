@@ -12,7 +12,7 @@ import (
 
 type SubsetPresenceChecker struct {
 	Conf           *config.Config
-	DRSubsets      map[string]map[string]kubernetes.Host
+	DRSubsets      models.DestinationRuleSubsets
 	Namespaces     []string
 	VirtualService *networking_v1.VirtualService
 }

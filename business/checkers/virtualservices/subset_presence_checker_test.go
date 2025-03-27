@@ -126,8 +126,8 @@ func testSubsetPresenceValidationsFound(scenario string, t *testing.T) {
 	tb.AssertValidationAt(1, models.WarningSeverity, "spec/http[1]/route[0]/destination", "virtualservices.subsetpresent.subsetnotfound")
 }
 
-func prepareSubsetMap(destinationRules []*networking_v1.DestinationRule, namespaces []string, conf *config.Config) map[string]map[string]kubernetes.Host {
-	subsetMap := make(map[string]map[string]kubernetes.Host)
+func prepareSubsetMap(destinationRules []*networking_v1.DestinationRule, namespaces []string, conf *config.Config) models.DestinationRuleSubsets {
+	subsetMap := make(models.DestinationRuleSubsets)
 
 	for _, dr := range destinationRules {
 		host := dr.Spec.Host

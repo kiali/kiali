@@ -8,6 +8,14 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
+type (
+	// DestinationRuleSubsets is a mapping of DestinationRule's hosts to their subsets and associated Host objects
+	// - The first key represents the host in FQDN format
+	// - The second key represents the subset name
+	// - The value is a Host object containing additional details such as the service, cluster, etc.
+	DestinationRuleSubsets map[string]map[string]kubernetes.Host
+)
+
 func HasDRCircuitBreaker(dr *networking_v1.DestinationRule, namespace, serviceName, version string) bool {
 	conf := config.Get()
 	if kubernetes.FilterByHost(dr.Spec.Host, dr.Namespace, serviceName, namespace, conf) {

@@ -60,7 +60,7 @@ func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
 }
 
 // runChecks runs all the individual checks for a single virtual service and appends the result into validations.
-func (in VirtualServiceChecker) runChecks(virtualService *networking_v1.VirtualService, nsNames []string, drSubsets map[string]map[string]kubernetes.Host) models.IstioValidations {
+func (in VirtualServiceChecker) runChecks(virtualService *networking_v1.VirtualService, nsNames []string, drSubsets models.DestinationRuleSubsets) models.IstioValidations {
 	virtualServiceName := virtualService.Name
 	key, rrValidation := EmptyValidValidation(virtualServiceName, virtualService.Namespace, kubernetes.VirtualServices, in.Cluster)
 
@@ -81,8 +81,8 @@ func (in VirtualServiceChecker) runChecks(virtualService *networking_v1.VirtualS
 	return models.IstioValidations{key: rrValidation}
 }
 
-func (in VirtualServiceChecker) prepareSubsetMap(namespaces []string) map[string]map[string]kubernetes.Host {
-	subsetMap := make(map[string]map[string]kubernetes.Host)
+func (in VirtualServiceChecker) prepareSubsetMap(namespaces []string) models.DestinationRuleSubsets {
+	subsetMap := make(models.DestinationRuleSubsets)
 
 	for _, dr := range in.DestinationRules {
 		host := dr.Spec.Host
