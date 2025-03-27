@@ -13,7 +13,7 @@ Then(`user see the {string} link`, link => {
 
 Then('the nodes located in the {string} cluster should be restricted', (cluster: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false, isReady: true } } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];

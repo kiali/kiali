@@ -7,7 +7,7 @@ import { NodeAttr } from 'types/Graph';
 // Single cluster only.
 When('user opens the context menu of the {string} service node', (svcName: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false, isReady: true } } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -30,7 +30,7 @@ When(
   'user opens the context menu of the {string} service node on the {string} cluster',
   (svcName: string, cluster: string) => {
     cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false, isReady: true } } })
       .should('have.length', '1')
       .then($graph => {
         const { state } = $graph[0];

@@ -5,7 +5,7 @@ import { NodeAttr } from 'types/Graph';
 
 When('user clicks the {string} {string} node', (svcName: string, nodeType: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false, isReady: true } } })
     .should('have.length', '1')
     .then($graph => {
       const { state } = $graph[0];
@@ -28,7 +28,7 @@ When(
   'user clicks the edge from {string} {string} to {string} {string}',
   (svcName: string, nodeType: string, destSvcName: string, destNodeType: string) => {
     cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false, isReady: true } } })
       .should('have.length', '1')
       .then($graph => {
         const { state } = $graph[0];
@@ -164,7 +164,7 @@ When(
   'user clicks the {string} service node in the {string} namespace in the {string} cluster',
   (service: string, namespace: string, cluster: string) => {
     cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false, isReady: true } } })
       .should('have.length', '1')
       .then($graph => {
         const { state } = $graph[0];
