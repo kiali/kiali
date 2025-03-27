@@ -242,9 +242,8 @@ func (in *K8SClient) IsGatewayAPI() bool {
 		v1beta1Types := map[string]string{
 			K8sReferenceGrantType: "referencegrants",
 		}
-		isGatewayAPIV1 := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1.String(), v1Types)
-		isGatewayAPIV1Beta1 := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1Beta1.String(), v1beta1Types)
-		isGatewayAPI := isGatewayAPIV1 && isGatewayAPIV1Beta1
+		isGatewayAPIV1 := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1.String(), v1Types, false)
+		isGatewayAPI := isGatewayAPIV1 && checkGatewayAPIs(in, K8sNetworkingGroupVersionV1Beta1.String(), v1beta1Types, false)
 		in.isGatewayAPI = &isGatewayAPI
 	}
 	return *in.isGatewayAPI
@@ -261,17 +260,19 @@ func (in *K8SClient) IsExpGatewayAPI() bool {
 			K8sTCPRouteType: "tcproutes",
 			K8sTLSRouteType: "tlsroutes",
 		}
-		isGatewayAPIV1Alpha2 := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1Alpha2.String(), v1alpha2Types)
+		isGatewayAPIV1Alpha2 := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1Alpha2.String(), v1alpha2Types, true)
 		in.isExpGatewayAPI = &isGatewayAPIV1Alpha2
 	}
 	return *in.isExpGatewayAPI
 }
 
-func checkGatewayAPIs(in *K8SClient, version string, types map[string]string) bool {
+func checkGatewayAPIs(in *K8SClient, version string, types map[string]string, isExperimental bool) bool {
 	found := 0
 	res, err := in.k8s.Discovery().ServerResourcesForGroupVersion(version)
 	if err != nil {
-		log.Debugf("Error while checking K8s Gateway API CRDs: %s. Required K8s Gateway API version: %s. Gateway API will not be used.", version, err.Error())
+		if !isExperimental {
+			log.Debugf("K8s Gateway API CRDs are not installed. Required K8s Gateway API version: %s. Gateway API will not be used.", version)
+		}
 		return false
 	}
 	for _, r := range res.APIResources {
