@@ -9,10 +9,6 @@ When('user hovers over the cluster icon', () => {
   cy.get('[data-test="cluster-icon"]').trigger('mouseenter');
 });
 
-After({ tags: '@component-health' }, () => {
-  cy.get('[data-test="cluster-icon"]').trigger('mouseleave');
-});
-
 Then('user sees a tooltip with text {string}', (text: string) => {
   cy.get('[data-test="component-status-tooltip"]').within(() => {
     cy.contains(text).should('be.visible');
