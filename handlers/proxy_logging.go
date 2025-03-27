@@ -40,7 +40,7 @@ func LoggingUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cluster := clusterNameFromQuery(query)
+	cluster := clusterNameFromQuery(config.Get(), query)
 
 	if err := businessLayer.ProxyLogging.SetLogLevel(cluster, namespace, pod, level); err != nil {
 		handleErrorResponse(w, err)

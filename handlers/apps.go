@@ -40,7 +40,7 @@ func (p *appParams) extract(r *http.Request) {
 	query := r.URL.Query()
 	p.baseExtract(r, vars)
 	p.Namespace = vars["namespace"]
-	p.ClusterName = clusterNameFromQuery(query)
+	p.ClusterName = clusterNameFromQuery(config.Get(), query)
 	p.AppName = vars["app"]
 	var err error
 	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))

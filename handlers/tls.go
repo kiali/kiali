@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/sliceutil"
@@ -24,7 +25,7 @@ func NamespaceTls(w http.ResponseWriter, r *http.Request) {
 
 	namespace := params["namespace"]
 
-	status, err := business.TLS.NamespaceWidemTLSStatus(r.Context(), namespace, clusterNameFromQuery(r.URL.Query()))
+	status, err := business.TLS.NamespaceWidemTLSStatus(r.Context(), namespace, clusterNameFromQuery(config.Get(), r.URL.Query()))
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -44,7 +45,7 @@ func ClustersTls(w http.ResponseWriter, r *http.Request) {
 			namespaceNamesFromQuery[name] = struct{}{}
 		}
 	}
-	cluster := clusterNameFromQuery(params)
+	cluster := clusterNameFromQuery(config.Get(), params)
 
 	business, err := getBusiness(r)
 	if err != nil {
@@ -87,7 +88,7 @@ func MeshTls(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cluster := clusterNameFromQuery(r.URL.Query())
+	cluster := clusterNameFromQuery(config.Get(), r.URL.Query())
 	revision := r.URL.Query().Get("revision")
 	if revision == "" {
 		revision = "default"

@@ -20,7 +20,7 @@ func CustomDashboard(conf *config.Config, grafana *grafana.Service) http.Handler
 	return func(w http.ResponseWriter, r *http.Request) {
 		queryParams := r.URL.Query()
 		pathParams := mux.Vars(r)
-		cluster := clusterNameFromQuery(queryParams)
+		cluster := clusterNameFromQuery(conf, queryParams)
 		namespace := pathParams["namespace"]
 		dashboardName := pathParams["dashboard"]
 
@@ -117,7 +117,7 @@ func AppDashboard(conf *config.Config, grafana *grafana.Service) http.HandlerFun
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		app := vars["app"]
-		cluster := clusterNameFromQuery(r.URL.Query())
+		cluster := clusterNameFromQuery(conf, r.URL.Query())
 
 		metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, DefaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
 		if metricsService == nil {
@@ -150,7 +150,7 @@ func ServiceDashboard(conf *config.Config, grafana *grafana.Service) http.Handle
 		service := vars["service"]
 
 		queryParams := r.URL.Query()
-		cluster := clusterNameFromQuery(queryParams)
+		cluster := clusterNameFromQuery(conf, queryParams)
 
 		metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, DefaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
 		if metricsService == nil {
@@ -200,7 +200,7 @@ func WorkloadDashboard(conf *config.Config, grafana *grafana.Service) http.Handl
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		workload := vars["workload"]
-		cluster := clusterNameFromQuery(r.URL.Query())
+		cluster := clusterNameFromQuery(conf, r.URL.Query())
 
 		metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, DefaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
 		if metricsService == nil {
@@ -231,7 +231,7 @@ func ZtunnelDashboard(promSupplier promClientSupplier, conf *config.Config, graf
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 
-		cluster := clusterNameFromQuery(r.URL.Query())
+		cluster := clusterNameFromQuery(conf, r.URL.Query())
 
 		metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
 		if metricsService == nil {

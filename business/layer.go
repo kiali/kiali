@@ -141,7 +141,7 @@ func NewLayer(
 	traceClient tracing.ClientInterface,
 	cpm ControlPlaneMonitor,
 	grafana *grafana.Service,
-	discovery *istio.Discovery,
+	discovery istio.MeshDiscovery,
 	authInfos map[string]*api.AuthInfo,
 ) (*Layer, error) {
 	userClients, err := cf.GetClients(authInfos)

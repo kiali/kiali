@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -34,7 +35,7 @@ func NamespaceInfo(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
-	cluster := clusterNameFromQuery(query)
+	cluster := clusterNameFromQuery(config.Get(), query)
 
 	business, err := getBusiness(r)
 	if err != nil {
@@ -61,7 +62,7 @@ func NamespaceValidationSummary(discovery *istio.Discovery) http.HandlerFunc {
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 
-		cluster := clusterNameFromQuery(query)
+		cluster := clusterNameFromQuery(config.Get(), query)
 
 		business, err := getBusiness(r)
 		if err != nil {
@@ -108,7 +109,7 @@ func ConfigValidationSummary(w http.ResponseWriter, r *http.Request) {
 	if len(namespaces) > 0 {
 		nss = strings.Split(namespaces, ",")
 	}
-	cluster := clusterNameFromQuery(params)
+	cluster := clusterNameFromQuery(config.Get(), params)
 
 	business, err := getBusiness(r)
 	if err != nil {
@@ -154,7 +155,7 @@ func NamespaceUpdate(w http.ResponseWriter, r *http.Request) {
 	jsonPatch := string(body)
 
 	query := r.URL.Query()
-	cluster := clusterNameFromQuery(query)
+	cluster := clusterNameFromQuery(config.Get(), query)
 
 	ns, err := business.Namespace.UpdateNamespace(r.Context(), namespace, jsonPatch, cluster)
 	if err != nil {
