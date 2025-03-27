@@ -106,12 +106,8 @@ func validateIstioObject(scenario string, objectType string, t *testing.T) ([]*m
 	}
 
 	validations, valid := ExportToNamespaceChecker{
-		ExportTo: exportTo,
-		Namespaces: models.Namespaces{
-			models.Namespace{Name: "bookinfo"},
-			models.Namespace{Name: "bookinfo2"},
-			models.Namespace{Name: "default"},
-		},
+		ExportTo:   exportTo,
+		Namespaces: []string{"bookinfo", "bookinfo2", "default"},
 	}.Check()
 
 	return validations, valid

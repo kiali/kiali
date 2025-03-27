@@ -14,7 +14,7 @@ type K8sHTTPRouteReferences struct {
 	Conf               *config.Config
 	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant
-	Namespaces         models.Namespaces
+	Namespaces         []string
 }
 
 func (n K8sHTTPRouteReferences) References() models.IstioReferencesMap {
@@ -45,7 +45,7 @@ func (n K8sHTTPRouteReferences) getServiceReferences(rt *k8s_networking_v1.HTTPR
 			if ref.Namespace != nil && string(*ref.Namespace) != "" {
 				namespace = string(*ref.Namespace)
 			}
-			fqdn := kubernetes.GetHost(string(ref.Name), namespace, n.Namespaces.GetNames(), n.Conf)
+			fqdn := kubernetes.GetHost(string(ref.Name), namespace, n.Namespaces, n.Conf)
 			if !fqdn.IsWildcard() {
 				allServices = append(allServices, models.ServiceReference{Name: fqdn.Service, Namespace: fqdn.Namespace})
 			}

@@ -14,7 +14,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/util"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 func IstioConfigList(w http.ResponseWriter, r *http.Request) {
@@ -152,7 +152,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 				// validations should be done per exported namespaces to apply exportTo configs
 				loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
 				for _, ns := range loadedNamespaces {
-					if util.InSlice(exportTo, ns.Name) && ns.Name != namespace {
+					if sliceutil.SomeString(exportTo, ns.Name) && ns.Name != namespace {
 						istioConfigValidationResults, istioConfigReferencesResults, err := business.Validations.ValidateIstioObject(r.Context(), cluster, ns.Name, gvk, object)
 						if err != nil {
 							validationsResult <- err

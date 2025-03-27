@@ -198,11 +198,8 @@ func TestRepeatingSVCNSHostExported(t *testing.T) {
 		buildVirtualServiceNS("bookinfo2", "virtual-2", "reviews.bookinfo.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-			{Name: "bookinfo2"},
-		},
+		Conf:            config.Get(),
+		Namespaces:      []string{"bookinfo", "bookinfo2"},
 		VirtualServices: append(vss, evss...),
 	}.Check()
 
@@ -216,11 +213,8 @@ func TestRepeatingSVCNSHostExported(t *testing.T) {
 		buildVirtualServiceNS("bookinfo2", "virtual-2", "reviews.bookinfo.svc.cluster.local"),
 	}
 	vals = SingleHostChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-			{Name: "bookinfo2"},
-		},
+		Conf:            config.Get(),
+		Namespaces:      []string{"bookinfo", "bookinfo2"},
 		VirtualServices: append(vss, evss...),
 	}.Check()
 
@@ -235,11 +229,8 @@ func TestRepeatingSVCNSHostExported(t *testing.T) {
 		buildVirtualServiceNS("bookinfo2", "virtual-2", "reviews.bookinfo.svc.cluster.local"),
 	}
 	vals = SingleHostChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-			{Name: "bookinfo2"},
-		},
+		Conf:            config.Get(),
+		Namespaces:      []string{"bookinfo", "bookinfo2"},
 		VirtualServices: append(vss, evss...),
 	}.Check()
 
@@ -253,11 +244,8 @@ func TestRepeatingSVCNSHostExported(t *testing.T) {
 		buildVirtualServiceNS("bookinfo2", "virtual-2", "reviews.bookinfo.svc.cluster.local"),
 	}
 	vals = SingleHostChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-			{Name: "bookinfo2"},
-		},
+		Conf:            config.Get(),
+		Namespaces:      []string{"bookinfo", "bookinfo2"},
 		VirtualServices: append(vss, evss...),
 	}.Check()
 
@@ -271,11 +259,8 @@ func TestRepeatingSVCNSHostExported(t *testing.T) {
 		buildVirtualServiceNS("bookinfo2", "virtual-2", "details.bookinfo.svc.cluster.local"),
 	}
 	vals = SingleHostChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-			{Name: "bookinfo2"},
-		},
+		Conf:            config.Get(),
+		Namespaces:      []string{"bookinfo", "bookinfo2"},
 		VirtualServices: append(vss, evss...),
 	}.Check()
 
@@ -291,11 +276,8 @@ func TestRepeatingSVCNSHostExported(t *testing.T) {
 		buildVirtualServiceNS("bookinfo2", "virtual-2", "details.bookinfo.svc.cluster.local"),
 	}
 	vals = SingleHostChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-			{Name: "bookinfo2"},
-		},
+		Conf:            config.Get(),
+		Namespaces:      []string{"bookinfo", "bookinfo2"},
 		VirtualServices: append(vss, evss...),
 	}.Check()
 

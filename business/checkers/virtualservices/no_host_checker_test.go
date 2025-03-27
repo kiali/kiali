@@ -156,11 +156,8 @@ func TestInvalidServiceNamespaceFormatHost(t *testing.T) {
 	)
 
 	vals, valid := NoHostChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			models.Namespace{Name: "test"},
-			models.Namespace{Name: "outside-namespace"},
-		},
+		Conf:             config.Get(),
+		Namespaces:       []string{"test", "outside-namespace"},
 		RegistryServices: append(registryService1, registryService2...),
 		VirtualService:   virtualService,
 		PolicyAllowAny:   true,
@@ -187,11 +184,8 @@ func TestInvalidServiceNamespaceFormatExportedHost(t *testing.T) {
 	)
 
 	vals, valid := NoHostChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			models.Namespace{Name: "test"},
-			models.Namespace{Name: "outside-namespace"},
-		},
+		Conf:             config.Get(),
+		Namespaces:       []string{"test", "outside-namespace"},
 		VirtualService:   virtualService,
 		RegistryServices: append(data.CreateFakeRegistryServices("ratings.bookinfo2.svc.cluster.local", "bookinfo2", "*"), append(registryService1, registryService2...)...),
 	}.Check()
@@ -207,11 +201,8 @@ func TestInvalidServiceNamespaceFormatExportedHost(t *testing.T) {
 	)
 
 	vals, valid = NoHostChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			models.Namespace{Name: "bookinfo"},
-			models.Namespace{Name: "bookinfo2"},
-		},
+		Conf:             config.Get(),
+		Namespaces:       []string{"bookinfo", "bookinfo2"},
 		VirtualService:   virtualService,
 		RegistryServices: append(data.CreateFakeRegistryServices("ratings.bookinfo2.svc.cluster.local", "bookinfo2", "."), append(registryService1, registryService2...)...),
 	}.Check()

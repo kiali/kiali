@@ -16,7 +16,7 @@ type NoHostChecker struct {
 	Conf               *config.Config
 	K8sGRPCRoute       *k8s_networking_v1.GRPCRoute
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant
-	Namespaces         models.Namespaces
+	Namespaces         []string
 	RegistryServices   []*kubernetes.RegistryService
 }
 
@@ -48,7 +48,7 @@ func (n NoHostChecker) checkReference(refNamespace *k8s_networking_v1.Namespace,
 	if refNamespace != nil && string(*refNamespace) != "" {
 		namespace = string(*refNamespace)
 	}
-	fqdn := kubernetes.GetHost(string(refName), namespace, n.Namespaces.GetNames(), n.Conf)
+	fqdn := kubernetes.GetHost(string(refName), namespace, n.Namespaces, n.Conf)
 	//service name should not be set in fqdn format
 	// if the grpc route is referencing to a service from the same namespace, then service should exist there
 	// if the grpc route is referencing to a service from other namespace, then a ReferenceGrant should exist to cross namespace reference, and the service should exist in remote namespace

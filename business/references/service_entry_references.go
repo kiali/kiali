@@ -13,7 +13,7 @@ import (
 type ServiceEntryReferences struct {
 	Conf                  *config.Config
 	Namespace             string
-	Namespaces            models.Namespaces
+	Namespaces            []string
 	ServiceEntries        []*networking_v1.ServiceEntry
 	Sidecars              []*networking_v1.Sidecar
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
@@ -39,7 +39,7 @@ func (n ServiceEntryReferences) References() models.IstioReferencesMap {
 func (n ServiceEntryReferences) getConfigReferences(se *networking_v1.ServiceEntry) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 	for _, dr := range n.DestinationRules {
-		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, n.Namespaces.GetNames(), n.Conf)
+		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, n.Namespaces, n.Conf)
 		if !fqdn.IsWildcard() {
 			for _, seHost := range se.Spec.Hosts {
 				if seHost == fqdn.String() {
@@ -93,7 +93,7 @@ func (n ServiceEntryReferences) getAuthPoliciesReferences(se *networking_v1.Serv
 						continue
 					}
 					for _, h := range t.Operation.Hosts {
-						fqdn := kubernetes.GetHost(h, namespace, n.Namespaces.GetNames(), n.Conf)
+						fqdn := kubernetes.GetHost(h, namespace, n.Namespaces, n.Conf)
 						if !fqdn.IsWildcard() {
 							for _, seHost := range se.Spec.Hosts {
 								if seHost == fqdn.String() {

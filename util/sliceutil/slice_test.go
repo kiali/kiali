@@ -71,3 +71,34 @@ func TestMap(t *testing.T) {
 		})
 	}
 }
+
+func TestSomeString(t *testing.T) {
+	testCases := map[string]struct {
+		slice          []string
+		value          string
+		someStringFunc func(int) string
+		expected       bool
+	}{
+		"array contains value, returns true": {
+			slice:    []string{"bookinfo", "bookinfo2", "default"},
+			value:    "bookinfo",
+			expected: true,
+		},
+		"array does not contain value, returns false": {
+			slice:    []string{"bookinfo", "bookinfo2", "default"},
+			value:    "bookinfo3",
+			expected: false,
+		},
+		"empty array, returns false": {
+			slice:    []string{},
+			value:    "",
+			expected: false,
+		},
+	}
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			assert.Equal(tc.expected, sliceutil.SomeString(tc.slice, tc.value))
+		})
+	}
+}

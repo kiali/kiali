@@ -15,7 +15,7 @@ type MultiMatchChecker struct {
 	Cluster          string
 	Conf             *config.Config
 	DestinationRules []*networking_v1.DestinationRule
-	Namespaces       models.Namespaces
+	Namespaces       []string
 	ServiceEntries   map[string][]string
 }
 
@@ -40,7 +40,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	for _, dr := range m.DestinationRules {
 		destinationRulesName := dr.Name
 		destinationRulesNamespace := dr.Namespace
-		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, m.Namespaces.GetNames(), m.Conf)
+		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, m.Namespaces, m.Conf)
 
 		// Skip DR validation if it enables mTLS either namespace or mesh-wide
 		if isNonLocalmTLSForServiceEnabled(dr, fqdn.String()) {

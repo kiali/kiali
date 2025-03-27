@@ -15,13 +15,9 @@ import (
 
 func prepareTestForAuthPolicy(ap *security_v1.AuthorizationPolicy, vs *networking_v1.VirtualService, se *networking_v1.ServiceEntry) models.IstioReferences {
 	drReferences := AuthorizationPolicyReferences{
-		Conf:      config.Get(),
-		Namespace: "bookinfo",
-		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-			{Name: "bookinfo2"},
-			{Name: "bookinfo3"},
-		},
+		Conf:                  config.Get(),
+		Namespace:             "bookinfo",
+		Namespaces:            []string{"bookinfo", "bookinfo2", "bookinfo3"},
 		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{ap},
 		ServiceEntries:        []*networking_v1.ServiceEntry{se},
 		VirtualServices:       []*networking_v1.VirtualService{vs},

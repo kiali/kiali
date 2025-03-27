@@ -144,11 +144,8 @@ func TestMultiHostMatchValidShortFormatDiffNamespace(t *testing.T) {
 	}
 
 	vals := MultiMatchChecker{
-		Conf: config.Get(),
-		Namespaces: models.Namespaces{
-			models.Namespace{Name: "bookinfo"},
-			models.Namespace{Name: "test"},
-		},
+		Conf:             config.Get(),
+		Namespaces:       []string{"bookinfo", "test"},
 		DestinationRules: destinationRules,
 	}.Check()
 

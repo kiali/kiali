@@ -15,7 +15,7 @@ import (
 type NoHostChecker struct {
 	AuthorizationPolicy *security_v1.AuthorizationPolicy
 	Conf                *config.Config
-	Namespaces          models.Namespaces
+	Namespaces          []string
 	ServiceEntries      map[string][]string
 	VirtualServices     []*networking_v1.VirtualService
 	RegistryServices    []*kubernetes.RegistryService
@@ -51,6 +51,7 @@ func (n NoHostChecker) validateHost(ruleIdx int, to []*api_security_v1.Rule_To) 
 		return nil, true
 	}
 	namespace := n.AuthorizationPolicy.Namespace
+
 	checks, valid := make([]*models.IstioCheck, 0, len(to)), true
 	for toIdx, t := range to {
 		if t == nil {
@@ -66,7 +67,7 @@ func (n NoHostChecker) validateHost(ruleIdx int, to []*api_security_v1.Rule_To) 
 		}
 
 		for hostIdx, h := range t.Operation.Hosts {
-			fqdn := kubernetes.GetHost(h, namespace, n.Namespaces.GetNames(), n.Conf)
+			fqdn := kubernetes.GetHost(h, namespace, n.Namespaces, n.Conf)
 			if !n.hasMatchingService(fqdn, namespace) {
 				path := fmt.Sprintf("spec/rules[%d]/to[%d]/operation/hosts[%d]", ruleIdx, toIdx, hostIdx)
 				validation := models.Build("authorizationpolicy.nodest.matchingregistry", path)

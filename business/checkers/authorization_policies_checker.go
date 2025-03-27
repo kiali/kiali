@@ -15,7 +15,7 @@ type AuthorizationPolicyChecker struct {
 	Cluster               string
 	Conf                  *config.Config
 	MtlsDetails           kubernetes.MTLSDetails
-	Namespaces            models.Namespaces
+	Namespaces            []string
 	PolicyAllowAny        bool
 	RegistryServices      []*kubernetes.RegistryService
 	ServiceAccounts       map[string][]string
@@ -57,7 +57,7 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy *security_v1.Authorizat
 
 	enabledCheckers := []Checker{
 		common.SelectorNoWorkloadFoundChecker(kubernetes.AuthorizationPolicies, matchLabels, a.WorkloadsPerNamespace),
-		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces.GetNames()},
+		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces},
 		authorization.NoHostChecker{Conf: a.Conf, AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces,
 			ServiceEntries: serviceHosts, VirtualServices: a.VirtualServices, RegistryServices: a.RegistryServices, PolicyAllowAny: a.PolicyAllowAny},
 		authorization.PrincipalsChecker{Cluster: a.Cluster, AuthorizationPolicy: authPolicy, ServiceAccounts: a.ServiceAccounts},

@@ -47,7 +47,7 @@ func runVirtualServiceCheck(virtualService *networking_v1.VirtualService, servic
 
 	result, valid := virtualservices.NoHostChecker{
 		Conf:              conf,
-		Namespaces:        clusterNamespaces,
+		Namespaces:        clusterNamespaces.GetNames(),
 		VirtualService:    virtualService,
 		ServiceEntryHosts: serviceHosts,
 		RegistryServices:  registryStatus,
@@ -82,7 +82,7 @@ func runDestinationRuleCheck(destinationRule *networking_v1.DestinationRule, wor
 
 	result, valid := destinationrules.NoDestinationChecker{
 		Conf:                  conf,
-		Namespaces:            clusterNamespaces,
+		Namespaces:            clusterNamespaces.GetNames(),
 		WorkloadsPerNamespace: workloads,
 		DestinationRule:       destinationRule,
 		VirtualServices:       virtualServices,
