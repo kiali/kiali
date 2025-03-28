@@ -6,6 +6,7 @@ set -e
 
 KEYCLOAK_CERTS_DIR=""
 KEYCLOAK_EXTERNAL_IP=""
+KEYCLOAK_RESOURCES_PRESET="large"
 
 infomsg() {
   echo "[INFO] ${1}"
@@ -19,6 +20,7 @@ while [[ $# -gt 0 ]]; do
     deploy) _CMD="deploy"; shift ;;
     -kcd|--keycloak-certs-dir)    KEYCLOAK_CERTS_DIR="$2";    shift;shift; ;;
     -kip|--keycloak-external-ip)    KEYCLOAK_EXTERNAL_IP="$2";    shift;shift; ;;
+    -krp|--keycloak-resources-preset) KEYCLOAK_RESOURCES_PRESET="$2" shift;shift ;;
     -h|--help)
       cat <<HELPMSG
 
@@ -31,6 +33,10 @@ Valid options:
   -kip|--keycloak-external-ip
       External IP address for the keycloak service.
       Required for the 'deploy' command.
+  -krp|--keycloak-resources-preset <size>:
+      The size of resources for keycloak. One of: small, medium, large, et. al. (Default: large)
+      See: https://github.com/bitnami/charts/blob/main/bitnami/keycloak/README.md#resource-requests-and-limits
+      See: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L13
 
 The command must be one of:
   create-ca:        create the root CA for keycloak.
@@ -109,10 +115,13 @@ EOF
   kubectl create secret tls keycloak-tls --cert="${KEYCLOAK_CERTS_DIR}"/cert.pem --key="${KEYCLOAK_CERTS_DIR}"/key.pem -n keycloak
 
   echo "Creating keycloak deployment"
+  helm repo add bitnami https://charts.bitnami.com/bitnami
+  helm repo update
   helm upgrade --install --wait --timeout 15m \
   --namespace keycloak \
-   keycloak oci://registry-1.docker.io/bitnamicharts/keycloak --version 24.3.2 \
+   keycloak bitnami/keycloak --version 24.3.2 \
   --reuse-values --values - <<EOF
+resourcesPreset: "${KEYCLOAK_RESOURCES_PRESET}"
 auth:
   createAdminUser: true
   adminUser: admin

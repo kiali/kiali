@@ -73,10 +73,13 @@ APPS_DOMAIN=$(echo "${CLUSTER1_OPENSHIFT_OAUTH_ROUTE}" | cut -d '.' -f2-)
 KEYCLOAK_HOSTNAME="keycloak-keycloak.${APPS_DOMAIN}"
 
 echo "Creating keycloak deployment"
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
 helm upgrade --kube-context "${CLUSTER1_CONTEXT}" --install --wait --timeout 15m \
   --namespace keycloak \
-   keycloak oci://registry-1.docker.io/bitnamicharts/keycloak \
+   keycloak bitnami/keycloak \
   --reuse-values --values - <<EOF
+resourcesPreset: "${KEYCLOAK_RESOURCES_PRESET}"
 auth:
   createAdminUser: true
   adminUser: admin

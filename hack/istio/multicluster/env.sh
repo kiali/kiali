@@ -143,6 +143,7 @@ MINIKUBE_MEMORY=""
 
 # Keycloak settings.
 KEYCLOAK_ADDRESS="${KEYCLOAK_ADDRESS:-}"
+KEYCLOAK_RESOURCES_PRESET="${KEYCLOAK_RESOURCES_PRESET:-large}"
 KEYCLOAK_DB_PASSWORD="${KEYCLOAK_DB_PASSWORD:-keycloak-password}"
 KEYCLOAK_KUBE_CLIENT_SECRET="${KEYCLOAK_KUBE_CLIENT_SECRET:-kube-client-secret}"
 KIALI_USER_PASSWORD="${KIALI_USER_PASSWORD:-kiali}"
@@ -244,6 +245,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ka|--keycloak-address)
       KEYCLOAK_ADDRESS="$2"
+      shift;shift
+      ;;
+    -krp|--keycloak-resources-preset)
+      KEYCLOAK_RESOURCES_PRESET="$2"
       shift;shift
       ;;
     -kas|--kiali-auth-strategy)
@@ -393,6 +398,9 @@ Valid command line arguments:
   -k2wf|--kiali2-web-fqdn <fqdn>: If specified, this will be the #2 Kaili setting for spec.server.web_fqdn.
   -k2ws|--kiali2-web-schema <schema>: If specified, this will be the #2 Kaili setting for spec.server.web_schema.
   -ka|--keycloak-address <ip or host name>: Address of the keycloak idp.
+  -krp|--keycloak-resources-preset <size>: The size of resources for keycloak. One of: small, medium, large, et. al. (Default: large)
+                                           See: https://github.com/bitnami/charts/blob/main/bitnami/keycloak/README.md#resource-requests-and-limits
+                                           See: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L13
   -kas|--kiali-auth-strategy <openid|openshift|anonymous>: The authentication strategy to use for Kiali (Default: openid)
   -kbdi|--kiali-build-dev-image <bool>: If "true" the local dev image of Kiali will be built and used in the Kiali deployment.
                                         Will be ignored if --kiali-enabled is 'false'. (Default: false)
@@ -592,6 +600,7 @@ export AUTH_GROUPS \
        ISTIO_HUB \
        ISTIO_TAG \
        KEYCLOAK_CERTS_DIR \
+       KEYCLOAK_RESOURCES_PRESET \
        KIALI_AUTH_STRATEGY \
        KIALI_BUILD_DEV_IMAGE \
        KIALI_CREATE_REMOTE_CLUSTER_SECRETS \
@@ -636,6 +645,7 @@ ISTIO_NAMESPACE=$ISTIO_NAMESPACE
 ISTIO_HUB=$ISTIO_HUB
 ISTIO_TAG=$ISTIO_TAG
 KEYCLOAK_CERTS_DIR=$KEYCLOAK_CERTS_DIR
+KEYCLOAK_RESOURCES_PRESET=$KEYCLOAK_RESOURCES_PRESET
 KIALI_AUTH_STRATEGY=$KIALI_AUTH_STRATEGY
 KIALI_BUILD_DEV_IMAGE=$KIALI_BUILD_DEV_IMAGE
 KIALI_CREATE_REMOTE_CLUSTER_SECRETS=$KIALI_CREATE_REMOTE_CLUSTER_SECRETS
