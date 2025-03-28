@@ -4,34 +4,99 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
 <Tooltip
   content={
     <React.Fragment>
-      <IstioStatusList
-        status={
-          Array [
-            Object {
-              "is_core": false,
-              "name": "grafana",
-              "status": "Unhealthy",
-            },
-            Object {
-              "is_core": true,
-              "name": "istio-egressgateway",
-              "status": "Healthy",
-            },
-          ]
+      <TextContent
+        style={
+          Object {
+            "color": "var(--pf-v5-global--palette--white)",
+          }
         }
-      />
+      >
+        <Text
+          component="h4"
+        >
+          Cluster Status
+        </Text>
+        <React.Fragment>
+          <div
+            className="kiali_f8qnpeg"
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            Kubernetes
+            <span
+              style={
+                Object {
+                  "marginLeft": "0.25rem",
+                }
+              }
+            >
+              <Star />
+            </span>
+          </div>
+          <IstioStatusList
+            cluster="Kubernetes"
+            status={
+              Array [
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": false,
+                  "name": "grafana",
+                  "status": "Unhealthy",
+                },
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": true,
+                  "name": "istio-egressgateway",
+                  "status": "Healthy",
+                },
+              ]
+            }
+          />
+        </React.Fragment>
+        <div
+          className="kiali_f1kewvaf"
+        >
+          <span>
+            More info at
+          </span>
+          <Link
+            to="/mesh"
+          >
+            Mesh page
+          </Link>
+        </div>
+      </TextContent>
     </React.Fragment>
   }
+  data-test="component-status-tooltip"
   enableFlip={true}
   maxWidth="25rem"
   position="top"
 >
-  <Icon
-    className="kiali_f1wuoq20 kiali_frkkrth"
-    data-test="istio-status-warning"
+  <Label
+    className="kiali_frds3np"
+    color="blue"
+    data-test="cluster-icon"
+    icon={<Cluster />}
   >
-    <ResourcesFullIcon />
-  </Icon>
+    Kubernetes
+    <Icon
+      className="kiali_f10wsz75 kiali_frkkrth"
+      data-test="istio-status-warning"
+    >
+      <ExclamationTriangleIcon />
+    </Icon>
+  </Label>
 </Tooltip>
 `;
 
@@ -39,34 +104,99 @@ exports[`When both core and addon component have problems any component is in no
 <Tooltip
   content={
     <React.Fragment>
-      <IstioStatusList
-        status={
-          Array [
-            Object {
-              "is_core": false,
-              "name": "grafana",
-              "status": "Unhealthy",
-            },
-            Object {
-              "is_core": true,
-              "name": "istio-egressgateway",
-              "status": "Unhealthy",
-            },
-          ]
+      <TextContent
+        style={
+          Object {
+            "color": "var(--pf-v5-global--palette--white)",
+          }
         }
-      />
+      >
+        <Text
+          component="h4"
+        >
+          Cluster Status
+        </Text>
+        <React.Fragment>
+          <div
+            className="kiali_f8qnpeg"
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            Kubernetes
+            <span
+              style={
+                Object {
+                  "marginLeft": "0.25rem",
+                }
+              }
+            >
+              <Star />
+            </span>
+          </div>
+          <IstioStatusList
+            cluster="Kubernetes"
+            status={
+              Array [
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": false,
+                  "name": "grafana",
+                  "status": "Unhealthy",
+                },
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": true,
+                  "name": "istio-egressgateway",
+                  "status": "Unhealthy",
+                },
+              ]
+            }
+          />
+        </React.Fragment>
+        <div
+          className="kiali_f1kewvaf"
+        >
+          <span>
+            More info at
+          </span>
+          <Link
+            to="/mesh"
+          >
+            Mesh page
+          </Link>
+        </div>
+      </TextContent>
     </React.Fragment>
   }
+  data-test="component-status-tooltip"
   enableFlip={true}
   maxWidth="25rem"
   position="top"
 >
-  <Icon
-    className="kiali_f1wuoq20 kiali_f1h37jb8"
-    data-test="istio-status-danger"
+  <Label
+    className="kiali_frds3np"
+    color="blue"
+    data-test="cluster-icon"
+    icon={<Cluster />}
   >
-    <ResourcesFullIcon />
-  </Icon>
+    Kubernetes
+    <Icon
+      className="kiali_f10wsz75 kiali_f1h37jb8"
+      data-test="istio-status-danger"
+    >
+      <ExclamationCircleIcon />
+    </Icon>
+  </Label>
 </Tooltip>
 `;
 
@@ -74,34 +204,99 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
 <Tooltip
   content={
     <React.Fragment>
-      <IstioStatusList
-        status={
-          Array [
-            Object {
-              "is_core": false,
-              "name": "grafana",
-              "status": "Healthy",
-            },
-            Object {
-              "is_core": true,
-              "name": "istio-egressgateway",
-              "status": "Unhealthy",
-            },
-          ]
+      <TextContent
+        style={
+          Object {
+            "color": "var(--pf-v5-global--palette--white)",
+          }
         }
-      />
+      >
+        <Text
+          component="h4"
+        >
+          Cluster Status
+        </Text>
+        <React.Fragment>
+          <div
+            className="kiali_f8qnpeg"
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            Kubernetes
+            <span
+              style={
+                Object {
+                  "marginLeft": "0.25rem",
+                }
+              }
+            >
+              <Star />
+            </span>
+          </div>
+          <IstioStatusList
+            cluster="Kubernetes"
+            status={
+              Array [
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": false,
+                  "name": "grafana",
+                  "status": "Healthy",
+                },
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": true,
+                  "name": "istio-egressgateway",
+                  "status": "Unhealthy",
+                },
+              ]
+            }
+          />
+        </React.Fragment>
+        <div
+          className="kiali_f1kewvaf"
+        >
+          <span>
+            More info at
+          </span>
+          <Link
+            to="/mesh"
+          >
+            Mesh page
+          </Link>
+        </div>
+      </TextContent>
     </React.Fragment>
   }
+  data-test="component-status-tooltip"
   enableFlip={true}
   maxWidth="25rem"
   position="top"
 >
-  <Icon
-    className="kiali_f1wuoq20 kiali_f1h37jb8"
-    data-test="istio-status-danger"
+  <Label
+    className="kiali_frds3np"
+    color="blue"
+    data-test="cluster-icon"
+    icon={<Cluster />}
   >
-    <ResourcesFullIcon />
-  </Icon>
+    Kubernetes
+    <Icon
+      className="kiali_f10wsz75 kiali_f1h37jb8"
+      data-test="istio-status-danger"
+    >
+      <ExclamationCircleIcon />
+    </Icon>
+  </Label>
 </Tooltip>
 `;
 
@@ -109,34 +304,99 @@ exports[`When there are not-ready components mixed with other not healthy compon
 <Tooltip
   content={
     <React.Fragment>
-      <IstioStatusList
-        status={
-          Array [
-            Object {
-              "is_core": false,
-              "name": "grafana",
-              "status": "Unhealthy",
-            },
-            Object {
-              "is_core": false,
-              "name": "jaeger",
-              "status": "NotReady",
-            },
-          ]
+      <TextContent
+        style={
+          Object {
+            "color": "var(--pf-v5-global--palette--white)",
+          }
         }
-      />
+      >
+        <Text
+          component="h4"
+        >
+          Cluster Status
+        </Text>
+        <React.Fragment>
+          <div
+            className="kiali_f8qnpeg"
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            Kubernetes
+            <span
+              style={
+                Object {
+                  "marginLeft": "0.25rem",
+                }
+              }
+            >
+              <Star />
+            </span>
+          </div>
+          <IstioStatusList
+            cluster="Kubernetes"
+            status={
+              Array [
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": false,
+                  "name": "grafana",
+                  "status": "Unhealthy",
+                },
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": false,
+                  "name": "jaeger",
+                  "status": "NotReady",
+                },
+              ]
+            }
+          />
+        </React.Fragment>
+        <div
+          className="kiali_f1kewvaf"
+        >
+          <span>
+            More info at
+          </span>
+          <Link
+            to="/mesh"
+          >
+            Mesh page
+          </Link>
+        </div>
+      </TextContent>
     </React.Fragment>
   }
+  data-test="component-status-tooltip"
   enableFlip={true}
   maxWidth="25rem"
   position="top"
 >
-  <Icon
-    className="kiali_f1wuoq20 kiali_frkkrth"
-    data-test="istio-status-warning"
+  <Label
+    className="kiali_frds3np"
+    color="blue"
+    data-test="cluster-icon"
+    icon={<Cluster />}
   >
-    <ResourcesFullIcon />
-  </Icon>
+    Kubernetes
+    <Icon
+      className="kiali_f10wsz75 kiali_frkkrth"
+      data-test="istio-status-warning"
+    >
+      <ExclamationTriangleIcon />
+    </Icon>
+  </Label>
 </Tooltip>
 `;
 
@@ -144,44 +404,111 @@ exports[`When there are not-ready components mixed with other not healthy compon
 <Tooltip
   content={
     <React.Fragment>
-      <IstioStatusList
-        status={
-          Array [
-            Object {
-              "is_core": false,
-              "name": "grafana",
-              "status": "Unhealthy",
-            },
-            Object {
-              "is_core": false,
-              "name": "jaeger",
-              "status": "NotReady",
-            },
-            Object {
-              "is_core": true,
-              "name": "istio-egressgateway",
-              "status": "Unhealthy",
-            },
-            Object {
-              "is_core": true,
-              "name": "istio-ingressgateway",
-              "status": "NotReady",
-            },
-          ]
+      <TextContent
+        style={
+          Object {
+            "color": "var(--pf-v5-global--palette--white)",
+          }
         }
-      />
+      >
+        <Text
+          component="h4"
+        >
+          Cluster Status
+        </Text>
+        <React.Fragment>
+          <div
+            className="kiali_f8qnpeg"
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            Kubernetes
+            <span
+              style={
+                Object {
+                  "marginLeft": "0.25rem",
+                }
+              }
+            >
+              <Star />
+            </span>
+          </div>
+          <IstioStatusList
+            cluster="Kubernetes"
+            status={
+              Array [
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": false,
+                  "name": "grafana",
+                  "status": "Unhealthy",
+                },
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": false,
+                  "name": "jaeger",
+                  "status": "NotReady",
+                },
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": true,
+                  "name": "istio-egressgateway",
+                  "status": "Unhealthy",
+                },
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": true,
+                  "name": "istio-ingressgateway",
+                  "status": "NotReady",
+                },
+              ]
+            }
+          />
+        </React.Fragment>
+        <div
+          className="kiali_f1kewvaf"
+        >
+          <span>
+            More info at
+          </span>
+          <Link
+            to="/mesh"
+          >
+            Mesh page
+          </Link>
+        </div>
+      </TextContent>
     </React.Fragment>
   }
+  data-test="component-status-tooltip"
   enableFlip={true}
   maxWidth="25rem"
   position="top"
 >
-  <Icon
-    className="kiali_f1wuoq20 kiali_f1h37jb8"
-    data-test="istio-status-danger"
+  <Label
+    className="kiali_frds3np"
+    color="blue"
+    data-test="cluster-icon"
+    icon={<Cluster />}
   >
-    <ResourcesFullIcon />
-  </Icon>
+    Kubernetes
+    <Icon
+      className="kiali_f10wsz75 kiali_f1h37jb8"
+      data-test="istio-status-danger"
+    >
+      <ExclamationCircleIcon />
+    </Icon>
+  </Label>
 </Tooltip>
 `;
 
@@ -189,34 +516,99 @@ exports[`When there are not-ready components mixed with other not healthy compon
 <Tooltip
   content={
     <React.Fragment>
-      <IstioStatusList
-        status={
-          Array [
-            Object {
-              "is_core": true,
-              "name": "istio-egressgateway",
-              "status": "Unhealthy",
-            },
-            Object {
-              "is_core": true,
-              "name": "istio-ingressgateway",
-              "status": "NotReady",
-            },
-          ]
+      <TextContent
+        style={
+          Object {
+            "color": "var(--pf-v5-global--palette--white)",
+          }
         }
-      />
+      >
+        <Text
+          component="h4"
+        >
+          Cluster Status
+        </Text>
+        <React.Fragment>
+          <div
+            className="kiali_f8qnpeg"
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            Kubernetes
+            <span
+              style={
+                Object {
+                  "marginLeft": "0.25rem",
+                }
+              }
+            >
+              <Star />
+            </span>
+          </div>
+          <IstioStatusList
+            cluster="Kubernetes"
+            status={
+              Array [
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": true,
+                  "name": "istio-egressgateway",
+                  "status": "Unhealthy",
+                },
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": true,
+                  "name": "istio-ingressgateway",
+                  "status": "NotReady",
+                },
+              ]
+            }
+          />
+        </React.Fragment>
+        <div
+          className="kiali_f1kewvaf"
+        >
+          <span>
+            More info at
+          </span>
+          <Link
+            to="/mesh"
+          >
+            Mesh page
+          </Link>
+        </div>
+      </TextContent>
     </React.Fragment>
   }
+  data-test="component-status-tooltip"
   enableFlip={true}
   maxWidth="25rem"
   position="top"
 >
-  <Icon
-    className="kiali_f1wuoq20 kiali_f1h37jb8"
-    data-test="istio-status-danger"
+  <Label
+    className="kiali_frds3np"
+    color="blue"
+    data-test="cluster-icon"
+    icon={<Cluster />}
   >
-    <ResourcesFullIcon />
-  </Icon>
+    Kubernetes
+    <Icon
+      className="kiali_f10wsz75 kiali_f1h37jb8"
+      data-test="istio-status-danger"
+    >
+      <ExclamationCircleIcon />
+    </Icon>
+  </Label>
 </Tooltip>
 `;
 
@@ -224,29 +616,93 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
 <Tooltip
   content={
     <React.Fragment>
-      <IstioStatusList
-        status={
-          Array [
-            Object {
-              "is_core": true,
-              "name": "istiod",
-              "status": "NotReady",
-            },
-          ]
+      <TextContent
+        style={
+          Object {
+            "color": "var(--pf-v5-global--palette--white)",
+          }
         }
-      />
+      >
+        <Text
+          component="h4"
+        >
+          Cluster Status
+        </Text>
+        <React.Fragment>
+          <div
+            className="kiali_f8qnpeg"
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            Kubernetes
+            <span
+              style={
+                Object {
+                  "marginLeft": "0.25rem",
+                }
+              }
+            >
+              <Star />
+            </span>
+          </div>
+          <IstioStatusList
+            cluster="Kubernetes"
+            status={
+              Array [
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": true,
+                  "name": "istiod",
+                  "status": "NotReady",
+                },
+              ]
+            }
+          />
+        </React.Fragment>
+        <div
+          className="kiali_f1kewvaf"
+        >
+          <span>
+            More info at
+          </span>
+          <Link
+            to="/mesh"
+          >
+            Mesh page
+          </Link>
+        </div>
+      </TextContent>
     </React.Fragment>
   }
+  data-test="component-status-tooltip"
   enableFlip={true}
   maxWidth="25rem"
   position="top"
 >
-  <Icon
-    className="kiali_f1wuoq20 kiali_f1elceoh"
-    data-test="istio-status-info"
+  <Label
+    className="kiali_frds3np"
+    color="blue"
+    data-test="cluster-icon"
+    icon={<Cluster />}
   >
-    <ResourcesFullIcon />
-  </Icon>
+    Kubernetes
+    <Icon
+      className="kiali_f10wsz75 kiali_f1elceoh"
+      data-test="istio-status-info"
+    >
+      <InfoCircleIcon />
+    </Icon>
+  </Label>
 </Tooltip>
 `;
 
@@ -254,28 +710,92 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
 <Tooltip
   content={
     <React.Fragment>
-      <IstioStatusList
-        status={
-          Array [
-            Object {
-              "is_core": false,
-              "name": "jaeger",
-              "status": "NotReady",
-            },
-          ]
+      <TextContent
+        style={
+          Object {
+            "color": "var(--pf-v5-global--palette--white)",
+          }
         }
-      />
+      >
+        <Text
+          component="h4"
+        >
+          Cluster Status
+        </Text>
+        <React.Fragment>
+          <div
+            className="kiali_f8qnpeg"
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            Kubernetes
+            <span
+              style={
+                Object {
+                  "marginLeft": "0.25rem",
+                }
+              }
+            >
+              <Star />
+            </span>
+          </div>
+          <IstioStatusList
+            cluster="Kubernetes"
+            status={
+              Array [
+                Object {
+                  "cluster": "Kubernetes",
+                  "is_core": false,
+                  "name": "jaeger",
+                  "status": "NotReady",
+                },
+              ]
+            }
+          />
+        </React.Fragment>
+        <div
+          className="kiali_f1kewvaf"
+        >
+          <span>
+            More info at
+          </span>
+          <Link
+            to="/mesh"
+          >
+            Mesh page
+          </Link>
+        </div>
+      </TextContent>
     </React.Fragment>
   }
+  data-test="component-status-tooltip"
   enableFlip={true}
   maxWidth="25rem"
   position="top"
 >
-  <Icon
-    className="kiali_f1wuoq20 kiali_f1elceoh"
-    data-test="istio-status-info"
+  <Label
+    className="kiali_frds3np"
+    color="blue"
+    data-test="cluster-icon"
+    icon={<Cluster />}
   >
-    <ResourcesFullIcon />
-  </Icon>
+    Kubernetes
+    <Icon
+      className="kiali_f10wsz75 kiali_f1elceoh"
+      data-test="istio-status-info"
+    >
+      <InfoCircleIcon />
+    </Icon>
+  </Label>
 </Tooltip>
 `;

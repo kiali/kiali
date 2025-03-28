@@ -1313,9 +1313,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   renderNamespaceBadges = (ns: NamespaceInfo, tooltip: boolean): React.ReactNode => {
     return (
       <>
-        {ns.name === serverConfig.istioNamespace && (
-          <ControlPlaneBadge cluster={ns.cluster} annotations={ns.annotations}></ControlPlaneBadge>
-        )}
+        {ns.name === serverConfig.istioNamespace && <ControlPlaneBadge />}
 
         {ns.name !== serverConfig.istioNamespace && ns.revision && <ControlPlaneVersionBadge version={ns.revision} />}
 

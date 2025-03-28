@@ -185,7 +185,7 @@ export interface KialiAppState {
   globalState: GlobalState;
   graph: GraphState;
   istioCertsInfo: CertsInfo[];
-  istioStatus: ComponentStatus[];
+  istioStatus: { [cluster: string]: ComponentStatus[] };
   mesh: MeshState;
   /** Tracing Settings */
   meshTLSStatus: TLSStatus;
