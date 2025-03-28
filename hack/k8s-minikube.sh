@@ -168,7 +168,7 @@ EOF
 26c26
 <       - image: dexidp/dex:v2.27.0 #or quay.io/dexidp/dex:v2.26.0
 ---
->       - image: docker.io/dexidp/dex:${DEX_VERSION}
+>       - image: ghcr.io/dexidp/dex:${DEX_VERSION}
 41c41
 <         - name: GITHUB_CLIENT_ID
 ---
