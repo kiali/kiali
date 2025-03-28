@@ -52,7 +52,7 @@ install_service_spawner_demo() {
     ${CLIENT_EXE} create ns ${SSPAWNER}
   fi
 
-  if [ "${AUTO_INJECTION}" != "" ]; then
+  if [ "${AUTO_INJECTION}" == "true" ]; then
     ${CLIENT_EXE} label namespace ${SSPAWNER} ${AUTO_INJECTION_LABEL} --overwrite=true
   fi
 
