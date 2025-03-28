@@ -54,7 +54,7 @@ install_scale_mesh_demo() {
     else
       ${CLIENT_EXE} create ns depth-${x}
     fi
-    if [ "${AUTO_INJECTION}" != "" ]; then
+    if [ "${AUTO_INJECTION}" == "true" ]; then
       ${CLIENT_EXE} label namespace  depth-${x} ${AUTO_INJECTION_LABEL} --overwrite=true
     fi
     x=$(( $x + 1 ))
