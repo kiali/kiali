@@ -207,6 +207,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
           externalURL={this.props.tracingURLProvider?.TraceUrl(trace)}
           graphURL={this.getGraphURL(trace.traceID)}
           comparisonURL={comparisonLink}
+          traceId={trace.traceID}
         />
         <CardBody>
           <Grid style={{ marginTop: '1.25rem' }}>

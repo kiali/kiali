@@ -23,6 +23,7 @@ func GetTracingInfo(w http.ResponseWriter, r *http.Request) {
 		info = models.TracingInfo{
 			Enabled:              true,
 			Integration:          tracingConfig.InternalURL != "",
+			InternalURL:          tracingConfig.InternalURL,
 			Provider:             string(tracingConfig.Provider),
 			TempoConfig:          tracingConfig.TempoConfig,
 			URL:                  tracingConfig.ExternalURL,

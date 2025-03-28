@@ -44,9 +44,11 @@ import { TracingUrlProvider } from 'types/Tracing';
 import { GetTracingUrlProvider } from 'utils/tracing/UrlProviders';
 import { ExternalServiceInfo } from 'types/StatusState';
 import { retrieveTimeRange } from '../Time/TimeRangeHelper';
+import { isParentKiosk, kioskTracingAction } from '../Kiosk/KioskActions';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
+  kiosk: string;
   namespaceSelector: boolean;
   provider?: string;
   selectedTrace?: JaegerTrace;
@@ -248,13 +250,12 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     GetTracingUrlProvider(this.props.externalServices, this.props.provider);
 
   private getTracingUrl = (): string | undefined => {
-    if (!this.urlProvider || !this.state.targetApp) {
+    if (!this.urlProvider || !this.state.targetApp || !this.urlProvider.HomeUrl()) {
       return undefined;
     }
     const range = retrieveTimeRange();
     // Convert any time range (like duration) to bounded from/to
     const boundsMillis = guardTimeRange(range, durationToBounds, b => b);
-
     return this.urlProvider.AppSearchUrl(
       this.state.targetApp,
       boundsMillis,
@@ -309,7 +310,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                   <ToolbarItem style={{ marginLeft: 'auto' }}>
                     {/*Blank item used as a separator do shift the following ToolbarItems to the right*/}
                   </ToolbarItem>
-                  {tracingURL && (
+                  {(tracingURL || isParentKiosk(this.props.kiosk)) && (
                     <ToolbarItem>
                       <Tooltip content={<>Open Chart in {this.props.provider} UI</>}>
                         <a
@@ -318,6 +319,14 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                           rel="noopener noreferrer"
                           style={{ marginLeft: '10px' }}
                           data-test="view-in-tracing"
+                          onClick={e => {
+                            if (isParentKiosk(this.props.kiosk)) {
+                              e.preventDefault();
+                              kioskTracingAction(tracingURL);
+                            } else {
+                              window.open(tracingURL, '_blank');
+                            }
+                          }}
                         >
                           View in Tracing <ExternalLinkAltIcon />
                         </a>
@@ -394,6 +403,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
 const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
     externalServices: state.statusState.externalServices,
+    kiosk: state.globalState.kiosk,
     namespaceSelector: state.tracingState.info ? state.tracingState.info.namespaceSelector : true,
     provider: state.tracingState.info?.provider,
     selectedTrace: state.tracingState.selectedTrace,
