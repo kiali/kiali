@@ -73,13 +73,41 @@ APPS_DOMAIN=$(echo "${CLUSTER1_OPENSHIFT_OAUTH_ROUTE}" | cut -d '.' -f2-)
 KEYCLOAK_HOSTNAME="keycloak-keycloak.${APPS_DOMAIN}"
 
 echo "Creating keycloak deployment"
+case ${KEYCLOAK_RESOURCES_PRESET} in
+  small)
+    _keycloak_requests_cpu="500m"
+    _keycloak_requests_memory="512Mi"
+    _keycloak_limits_cpu="750m"
+    _keycloak_limits_memory="768Mi"
+    ;;
+  large)
+    _keycloak_requests_cpu="750m"
+    _keycloak_requests_memory="1024Mi"
+    _keycloak_limits_cpu="1.5"
+    _keycloak_limits_memory="3072Mi"
+    ;;
+  medium) ;& # fallthrough - medium is the default
+  *)
+    _keycloak_requests_cpu="750m"
+    _keycloak_requests_memory="1024Mi"
+    _keycloak_limits_cpu="1.0"
+    _keycloak_limits_memory="2048Mi"
+    ;;
+esac
+
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update
 helm upgrade --kube-context "${CLUSTER1_CONTEXT}" --install --wait --timeout 15m \
   --namespace keycloak \
    keycloak bitnami/keycloak \
   --reuse-values --values - <<EOF
-resourcesPreset: "${KEYCLOAK_RESOURCES_PRESET}"
+resources:
+  requests:
+    cpu: ${_keycloak_requests_cpu}
+    memory: ${_keycloak_requests_memory}
+  limits:
+    cpu: ${_keycloak_limits_cpu}
+    memory: ${_keycloak_limits_memory}
 auth:
   createAdminUser: true
   adminUser: admin

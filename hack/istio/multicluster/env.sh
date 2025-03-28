@@ -143,7 +143,7 @@ MINIKUBE_MEMORY=""
 
 # Keycloak settings.
 KEYCLOAK_ADDRESS="${KEYCLOAK_ADDRESS:-}"
-KEYCLOAK_RESOURCES_PRESET="${KEYCLOAK_RESOURCES_PRESET:-large}"
+KEYCLOAK_RESOURCES_PRESET="${KEYCLOAK_RESOURCES_PRESET:-medium}"
 KEYCLOAK_DB_PASSWORD="${KEYCLOAK_DB_PASSWORD:-keycloak-password}"
 KEYCLOAK_KUBE_CLIENT_SECRET="${KEYCLOAK_KUBE_CLIENT_SECRET:-kube-client-secret}"
 KIALI_USER_PASSWORD="${KIALI_USER_PASSWORD:-kiali}"
@@ -398,9 +398,10 @@ Valid command line arguments:
   -k2wf|--kiali2-web-fqdn <fqdn>: If specified, this will be the #2 Kaili setting for spec.server.web_fqdn.
   -k2ws|--kiali2-web-schema <schema>: If specified, this will be the #2 Kaili setting for spec.server.web_schema.
   -ka|--keycloak-address <ip or host name>: Address of the keycloak idp.
-  -krp|--keycloak-resources-preset <size>: The size of resources for keycloak. One of: small, medium, large, et. al. (Default: large)
-                                           See: https://github.com/bitnami/charts/blob/main/bitnami/keycloak/README.md#resource-requests-and-limits
-                                           See: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L13
+  -krp|--keycloak-resources-preset <size>: The size of resources for keycloak. One of: small, medium, large (Default: medium)
+                                           Similar to what these are, but we change the values a little bit:
+                                             https://github.com/bitnami/charts/blob/main/bitnami/keycloak/README.md#resource-requests-and-limits
+                                             https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L13
   -kas|--kiali-auth-strategy <openid|openshift|anonymous>: The authentication strategy to use for Kiali (Default: openid)
   -kbdi|--kiali-build-dev-image <bool>: If "true" the local dev image of Kiali will be built and used in the Kiali deployment.
                                         Will be ignored if --kiali-enabled is 'false'. (Default: false)
