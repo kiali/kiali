@@ -97,56 +97,27 @@ create_remote_secret() {
   fi
 }
 
-MC_EAST_YAML=$(
-cat <<EOF
-apiVersion: sailoperator.io/v1
-kind: Istio
-metadata:
-  name: default
+MC_EAST_YAML=$(mktemp)
+cat <<EOF > "$MC_EAST_YAML"
 spec:
-  version: ${SAIL_VERSION}
-  namespace: istio-system
   values:
-    pilot:
-      resources:
-        requests:
-          cpu: 100m
-          memory: 1024Mi
     global:
-      meshID: mesh1
+      meshID: ${MESH_ID}
       multiCluster:
-        clusterName: east
-      network: network1`
+        clusterName: ${CLUSTER1_NAME}
+      network: ${NETWORK1_ID}
 EOF
-)
-mc_east=$(mktemp)
-echo "$MC_EAST_YAML" > "$mc_east"
 
-
-MC_WEST_YAML=$(
-cat <<EOF
-apiVersion: sailoperator.io/v1
-kind: Istio
-metadata:
-  name: default
+MC_WEST_YAML=$(mktemp)
+cat <<EOF > "$MC_WEST_YAML"
 spec:
-  version: ${SAIL_VERSION}
-  namespace: istio-system
   values:
-    pilot:
-      resources:
-        requests:
-          cpu: 100m
-          memory: 1024Mi
     global:
-      meshID: mesh1
+      meshID: ${MESH_ID}
       multiCluster:
-        clusterName: west
-      network: network2
+        clusterName: ${CLUSTER2_NAME}
+      network: ${NETWORK2_ID}
 EOF
-)
-mc_west=$(mktemp)
-echo "$MC_WEST_YAML" > "$mc_west"
 
 # Find the hack script to be used to install istio
 ISTIO_INSTALL_SCRIPT="${SCRIPT_DIR}/../install-istio-via-sail.sh"
