@@ -53,7 +53,7 @@ install_runtimes_demo() {
     $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${RUNTIMES}
   fi
 
-  if [ "${AUTO_INJECTION}" != "" ]; then
+  if [ "${AUTO_INJECTION}" == "true" ]; then
     ${CLIENT_EXE} label namespace ${RUNTIMES} ${AUTO_INJECTION_LABEL} --overwrite=true
   fi
   ${CLIENT_EXE} apply -f ${BASE_URL}/runtimes-demo/quickstart.yml -n ${RUNTIMES}
