@@ -57,7 +57,7 @@ install_topology_generator_demo() {
     $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${TOPO}
   fi
 
-  if [ "${AUTO_INJECTION}" != "" ]; then
+  if [ "${AUTO_INJECTION}" == "true" ]; then
     ${CLIENT_EXE} label namespace  ${TOPO} ${AUTO_INJECTION_LABEL} --overwrite=true
   fi
   ${CLIENT_EXE} apply -n ${TOPO}  -f ${BASE_URL}/topology-generator/deploy/generator.yaml
