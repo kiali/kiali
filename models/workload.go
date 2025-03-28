@@ -54,6 +54,10 @@ const (
 	LogTypeZtunnel  LogType = "ztunnel"
 )
 
+type GatewayStore struct {
+	LastUpdate time.Time
+	Gateways   Workloads
+}
 type WaypointStore struct {
 	LastUpdate time.Time
 	Waypoints  Workloads

@@ -23,6 +23,7 @@ import (
 
 const (
 	ambientCheckExpirationTime = 10 * time.Minute
+	gatewayExpirationTime      = 10 * time.Minute
 	meshExpirationTime         = 20 * time.Second
 	waypointExpirationTime     = 10 * time.Minute
 )
@@ -67,6 +68,11 @@ type KialiCache interface {
 	GetWaypointList() models.Workloads
 	SetWaypointList(models.Workloads)
 	IsWaypointListExpired() bool
+
+	// Returns a list of Gateways
+	GetGatewayList() (models.Workloads, error)
+	SetGatewayList(models.Workloads)
+	IsGatewayListExpired() bool
 
 	// IsAmbientEnabled checks if the istio Ambient profile was enabled
 	// by checking if the ztunnel daemonset exists on the cluster.
@@ -132,7 +138,9 @@ type kialiCacheImpl struct {
 	// ProxyStatusStore stores ztunnel config dump per cluster + namespace + pod.
 	ztunnelConfigStore store.Store[string, *kubernetes.ZtunnelConfigDump]
 
+	gatewayList  models.GatewayStore
 	waypointList models.WaypointStore
+
 	// validations key'd by the validation key
 	validations      store.Store[models.IstioValidationKey, *models.IstioValidation]
 	validationConfig store.Store[string, string]
@@ -353,6 +361,23 @@ func (c *kialiCacheImpl) SetWaypointList(wpList models.Workloads) {
 func (c *kialiCacheImpl) IsWaypointListExpired() bool {
 	currentTime := time.Now()
 	expirationTime := c.waypointList.LastUpdate.Add(waypointExpirationTime)
+	return currentTime.After(expirationTime)
+}
+
+// GetGatewayList Returns a list of gateways by cluster and namespace
+func (c *kialiCacheImpl) GetGatewayList() (models.Workloads, error) {
+	return c.gatewayList.Gateways, nil
+}
+
+// SetGatewayList Modifies the list of gateways by cluster and namespace
+func (c *kialiCacheImpl) SetGatewayList(wpList models.Workloads) {
+	c.gatewayList.Gateways = wpList
+	c.gatewayList.LastUpdate = time.Now()
+}
+
+func (c *kialiCacheImpl) IsGatewayListExpired() bool {
+	currentTime := time.Now()
+	expirationTime := c.gatewayList.LastUpdate.Add(gatewayExpirationTime)
 	return currentTime.After(expirationTime)
 }
 

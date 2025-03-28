@@ -188,14 +188,23 @@ func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string, 
 // GetAllGateways fetches all gateway workloads across every namespace in the cluster.
 func (in *WorkloadService) GetAllGateways(ctx context.Context, cluster string, labelSelector string) (models.Workloads, error) {
 
+	if !in.cache.IsGatewayListExpired() {
+		log.Tracef("GetAllGateways: Returning list from cache")
+		return in.cache.GetGatewayList()
+	}
+
 	workloads, err := in.GetAllWorkloads(ctx, cluster, labelSelector)
 	if err != nil {
 		return nil, err
 	}
 
-	return sliceutil.Filter(workloads, func(w *models.Workload) bool {
+	gateways := sliceutil.Filter(workloads, func(w *models.Workload) bool {
 		return w.IsGateway()
-	}), nil
+	})
+	in.cache.SetGatewayList(gateways)
+
+	return gateways, nil
+
 }
 
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
@@ -2310,7 +2319,7 @@ func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload
 
 	// then, get the waypoint workloads to filter out "forNone" waypoints
 	for _, waypoint := range waypoints {
-		waypointWorkloads := in.cache.GetWaypointList()
+		waypointWorkloads := in.GetWaypoints(ctx)
 		found := false
 		waypointWorkload := models.Workload{}
 		for _, ww := range waypointWorkloads {
