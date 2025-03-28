@@ -315,6 +315,7 @@ if [ "${MONGO_ENABLED}" == "true" ]; then
   MONGO_DB_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-db.yaml"
   MONGO_SERVICE_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2.yaml"
 
+  # Leaving these alone since they involve IBM arch testing. This is moving off docker.io anyway (https://github.com/kiali/kiali/issues/8278)
   if [ "${ARCH}" == "ppc64le" ]; then
     sed  "s;docker.io/istio.*;quay.io/maistra/examples-bookinfo-mongodb:2.0.0-ibm-p;g" ${MONGO_DB_YAML} > ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-db-ppc64le.yaml
     MONGO_DB_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-db-ppc64le.yaml"
@@ -352,6 +353,7 @@ if [ "${MYSQL_ENABLED}" == "true" ]; then
   MYSQL_DB_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-mysql.yaml"
   MYSQL_SERVICE_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql.yaml"
 
+  # Leaving these alone since they involve IBM arch testing. This is moving off docker.io anyway (https://github.com/kiali/kiali/issues/8278)
   if [ "${ARCH}" == "ppc64le" ]; then
     sed  "s;docker.io/istio.*;quay.io/maistra/examples-bookinfo-mysqldb:2.0.0-ibm-p;g" ${MYSQL_DB_YAML} > ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-mysql-ppc64le.yaml
     MYSQL_DB_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-mysql-ppc64le.yaml"

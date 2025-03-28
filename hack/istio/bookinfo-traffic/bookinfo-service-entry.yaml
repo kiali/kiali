@@ -10,7 +10,7 @@
 # To create this simulated external ratings:v1 service, you must run a ratings service
 # by executing this command:
 #
-#   $ docker run -t -i --network=host docker.io/istio/examples-bookinfo-ratings-v1
+#   $ docker run -t -i --network=host quay.io/sail-dev/examples-bookinfo-ratings-v1
 #
 # At this point, you have a ratings service running outside of your local cluster bound
 # to your host's IP on port 9080. To test, make sure you get a response (albeit a 404)
