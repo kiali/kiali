@@ -56,7 +56,7 @@ install_mstore_app() {
     $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${MSTORE}
   fi
 
-  if [ "${AUTO_INJECTION}" != "" ]; then
+  if [ "${AUTO_INJECTION}" == "true" ]; then
     ${CLIENT_EXE} label namespace ${MSTORE} ${AUTO_INJECTION_LABEL} --overwrite=true
   fi
   ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/leandroberetta/demos/master/music-store/ui.yaml -n ${MSTORE}
