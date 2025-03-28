@@ -210,7 +210,7 @@ deploy_kiali() {
   # If using openid auth strategy, create the keycloak realm and the kiali user.
 
   if [ "${KIALI_AUTH_STRATEGY}" == "openid" ]; then
-    # Get a token from keycloak to use the admin api
+    echo "## Kiali auth strategy is openid; get a token from keycloak at [${KEYCLOAK_ADDRESS}] to use the admin api"
     TOKEN_KEY=$(curl -k -X POST https://"${KEYCLOAK_ADDRESS}"/realms/master/protocol/openid-connect/token \
                 -d grant_type=password \
                 -d client_id=admin-cli \

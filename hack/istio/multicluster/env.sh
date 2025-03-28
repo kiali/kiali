@@ -57,7 +57,7 @@ ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-istio-system}"
 # If you want to pull Istio images from a different image repository than what the hack script
 # will tell Istio to pull from, then set that hub name here. If you set this to "default",
 # the images will come from the repo that the Istio distro pulls from.
-# Suffice it to say, this setting is needed to avoid docker.io (and its throttling behavior) for
+# Suffice it to say, this setting is needed to avoid Docker Hub (and its throttling behavior) for
 # Istio production releases but allows you to run with Istio dev builds (set this to "default" for dev builds).
 ISTIO_HUB=""
 

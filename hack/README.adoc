@@ -37,7 +37,7 @@ Runs OpenShift on the local machine using link:https://github.com/code-ready/crc
 
 * `link:docker-io-auth.sh[]`
 
-Creates the necessary resources allowing your cluster to authenticate itself with docker.io when pulling Docker Hub images. This helps avoid the annoying docker.io rate limiting errors.
+Creates the necessary resources allowing your cluster to authenticate itself with Docker Hub when pulling Docker Hub images. This helps avoid the annoying Docker Hub rate limiting errors.
 
 * `link:fix_imports.sh[]`
 

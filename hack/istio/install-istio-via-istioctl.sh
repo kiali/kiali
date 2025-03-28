@@ -247,7 +247,7 @@ Valid command line arguments:
   -ih|--image-hub <hub id>
        The hub where the Istio images will be pulled from.
        You can set this to "default" in order to use the default hub that the Istio charts use but
-       this may be using docker.io and docker hub rate limiting may cause the installation to fail.
+       this may be using Docker Hub, and Docker Hub rate limiting may cause the installation to fail.
        Default: gcr.io/istio-release
   -it|--image-tag <tag>
        The tag of the Istio images. Leave this as "default" (which means the default images are pulled)
