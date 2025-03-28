@@ -10,9 +10,10 @@ import (
 	"time"
 
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 
-	kialiConfig "github.com/kiali/kiali/config"
+	conf "github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
@@ -41,6 +42,8 @@ type clientFactory struct {
 	// Not all of the data in this base config is used - some will be overridden per client like token and host info.
 	baseRestConfig *rest.Config
 
+	conf *conf.Config
+
 	// clientEntries contain user clients that are used to authenticate as logged in users.
 	// Keyed by hash code generated from auth data.
 	clientEntries map[string]map[string]ClientInterface // By token by cluster
@@ -48,8 +51,6 @@ type clientFactory struct {
 	// Name of the home cluster. This is the cluster where Kiali is deployed which is usually the
 	// "in cluster" config. This name comes from the istio cluster id.
 	homeCluster string
-
-	kialiConfig *kialiConfig.Config
 
 	// mutex for when accessing the stored clients
 	mutex sync.RWMutex
@@ -66,6 +67,7 @@ type clientFactory struct {
 }
 
 // GetClientFactory returns the client factory. Creates a new one if necessary
+// TODO: Remove?
 func GetClientFactory() (ClientFactory, error) {
 	var err error
 	once.Do(func() {
@@ -73,15 +75,15 @@ func GetClientFactory() (ClientFactory, error) {
 			return
 		}
 
-		factory, err = getClientFactory(*kialiConfig.Get())
+		factory, err = getClientFactory(*conf.Get())
 	})
 	return factory, err
 }
 
-func getClientFactory(conf kialiConfig.Config) (*clientFactory, error) {
+func getClientFactory(conf conf.Config) (*clientFactory, error) {
 	// Get the normal configuration
 	var config *rest.Config
-	config, err := getConfigForLocalCluster()
+	config, err := getConfigForLocalCluster(&conf)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +104,7 @@ func getClientFactory(conf kialiConfig.Config) (*clientFactory, error) {
 // Does not set the global ClientFactory. You should probably use
 // GetClientFactory instead of this method unless you temporaily need
 // to create a client like when Kiali sets the cluster id.
-func NewClientFactory(ctx context.Context, conf kialiConfig.Config) (ClientFactory, error) {
+func NewClientFactory(ctx context.Context, conf conf.Config) (ClientFactory, error) {
 	cf, err := getClientFactory(conf)
 	if err != nil {
 		return nil, err
@@ -118,16 +120,99 @@ func NewClientFactory(ctx context.Context, conf kialiConfig.Config) (ClientFacto
 	return cf, nil
 }
 
-// newClientFactory allows for specifying the config and expiry duration
-// Mock friendly for testing purposes
-func newClientFactory(conf *kialiConfig.Config, restConfig *rest.Config) (*clientFactory, error) {
+func NewClientFactoryWithSAClients(ctx context.Context, conf conf.Config, saClients map[string]ClientInterface) (ClientFactory, error) {
 	f := &clientFactory{
-		kialiConfig:     conf,
-		baseRestConfig:  restConfig,
+		// Create a new config based on what was gathered above but don't specify the bearer token to use
+		baseRestConfig:  &rest.Config{},
+		conf:            &conf,
+		clientEntries:   make(map[string]map[string]ClientInterface),
+		recycleChan:     make(chan string),
+		saClientEntries: saClients,
+		homeCluster:     conf.KubernetesConfig.ClusterName,
+	}
+
+	// after creating a client factory
+	// background goroutines will be watching the clients` expiration
+	// if a client is expired, it will be removed from clientEntries
+	go f.watchClients()
+
+	// Need to cleanup the recycle chan since this client factory could be transitory.
+	go func() {
+		<-ctx.Done()
+		log.Debug("Stopping client factory recycle chan")
+		close(f.recycleChan)
+	}()
+
+	return f, nil
+}
+
+// NewClientFactory creates a new client factory that can be transitory.
+// Callers should close the ctx when done with the client factory.
+// Does not set the global ClientFactory. You should probably use
+// GetClientFactory instead of this method unless you temporaily need
+// to create a client like when Kiali sets the cluster id.
+func NewClientFactoryFromKubeConfig(ctx context.Context, conf conf.Config) (ClientFactory, error) {
+	f := &clientFactory{
+		// Create a new config based on what was gathered above but don't specify the bearer token to use
+		baseRestConfig:  &rest.Config{},
+		conf:            &conf,
 		clientEntries:   make(map[string]map[string]ClientInterface),
 		recycleChan:     make(chan string),
 		saClientEntries: make(map[string]ClientInterface),
-		homeCluster:     kialiConfig.Get().KubernetesConfig.ClusterName,
+		homeCluster:     conf.KubernetesConfig.ClusterName,
+	}
+
+	kubeConfig, err := clientcmd.LoadFromFile(conf.Deployment.RemoteSecretPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read kubeconfig from file: %s", conf.Deployment.RemoteSecretPath)
+	}
+
+	// TODO: Just current context for now but expand this out with args from cmdline.
+	currentContext := kubeConfig.Contexts[kubeConfig.CurrentContext]
+	if currentContext == nil {
+		return nil, fmt.Errorf("current context not set in kubeconfig file: %s", conf.Deployment.RemoteSecretPath)
+	}
+
+	// after creating a client factory
+	// background goroutines will be watching the clients` expiration
+	// if a client is expired, it will be removed from clientEntries
+	go f.watchClients()
+
+	contexts := map[string]*api.Context{kubeConfig.CurrentContext: currentContext}
+	for context, clusterInfo := range contexts {
+		remoteClusterInfo := &RemoteClusterInfo{Config: clientcmd.NewDefaultClientConfig(*kubeConfig, &clientcmd.ConfigOverrides{CurrentContext: context})}
+		clientConfig, err := remoteClusterInfo.Config.ClientConfig()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get client config for remote cluster [%s]. Err: %s", context, err)
+		}
+
+		client, err := NewClientWithRemoteClusterInfo(clientConfig, remoteClusterInfo)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create remote Kiali Service Account client. Err: %s", err)
+		}
+
+		f.saClientEntries[clusterInfo.Cluster] = client
+	}
+	// Need to cleanup the recycle chan since this client factory could be transitory.
+	go func() {
+		<-ctx.Done()
+		log.Debug("Stopping client factory recycle chan")
+		close(f.recycleChan)
+	}()
+
+	return f, nil
+}
+
+// newClientFactory allows for specifying the config and expiry duration
+// Mock friendly for testing purposes
+func newClientFactory(conf *conf.Config, restConfig *rest.Config) (*clientFactory, error) {
+	f := &clientFactory{
+		baseRestConfig:  restConfig,
+		conf:            conf,
+		clientEntries:   make(map[string]map[string]ClientInterface),
+		recycleChan:     make(chan string),
+		saClientEntries: make(map[string]ClientInterface),
+		homeCluster:     conf.KubernetesConfig.ClusterName,
 	}
 	// after creating a client factory
 	// background goroutines will be watching the clients` expiration
@@ -182,9 +267,9 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 	// So, if OpenID strategy is active, check if a proxy is configured.
 	// If there is, use it UNLESS the token is the one of the Kiali SA. If
 	// the token is the one of the Kiali SA, the proxy can be bypassed.
-	if cf.kialiConfig.Auth.Strategy == kialiConfig.AuthStrategyOpenId && cf.kialiConfig.Auth.OpenId.ApiProxy != "" && cf.kialiConfig.Auth.OpenId.ApiProxyCAData != "" {
+	if cf.conf.Auth.Strategy == conf.AuthStrategyOpenId && cf.conf.Auth.OpenId.ApiProxy != "" && cf.conf.Auth.OpenId.ApiProxyCAData != "" {
 		// Override the CA data on the client with the proxy CA from the Kiali config.
-		caData := cf.kialiConfig.Auth.OpenId.ApiProxyCAData
+		caData := cf.conf.Auth.OpenId.ApiProxyCAData
 		rootCaDecoded, err := base64.StdEncoding.DecodeString(caData)
 		if err != nil {
 			return nil, err
@@ -193,11 +278,11 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 		config.TLSClientConfig = rest.TLSClientConfig{
 			CAData: []byte(rootCaDecoded),
 		}
-		config.Host = cf.kialiConfig.Auth.OpenId.ApiProxy
+		config.Host = cf.conf.Auth.OpenId.ApiProxy
 	}
 
 	// Impersonation is valid only for header authentication strategy
-	if cf.kialiConfig.Auth.Strategy == kialiConfig.AuthStrategyHeader && authInfo.Impersonate != "" {
+	if cf.conf.Auth.Strategy == conf.AuthStrategyHeader && authInfo.Impersonate != "" {
 		config.Impersonate.UserName = authInfo.Impersonate
 		config.Impersonate.Groups = authInfo.ImpersonateGroups
 		config.Impersonate.Extra = authInfo.ImpersonateUserExtra
@@ -276,7 +361,7 @@ func (cf *clientFactory) GetSAClients() map[string]ClientInterface {
 
 // getClient returns a client for the specified token. Creating one if necessary.
 func (cf *clientFactory) GetClient(authInfo *api.AuthInfo, cluster string) (ClientInterface, error) {
-	if cf.kialiConfig.IsRBACDisabled() {
+	if cf.conf.IsRBACDisabled() {
 		return cf.GetSAClient(cluster), nil
 	}
 
@@ -285,7 +370,7 @@ func (cf *clientFactory) GetClient(authInfo *api.AuthInfo, cluster string) (Clie
 
 // getClient returns a client for the specified token. Creating one if necessary.
 func (cf *clientFactory) GetClients(authInfos map[string]*api.AuthInfo) (map[string]ClientInterface, error) {
-	if cf.kialiConfig.IsRBACDisabled() {
+	if cf.conf.IsRBACDisabled() {
 		return cf.GetSAClients(), nil
 	}
 
@@ -417,7 +502,6 @@ func (cf *clientFactory) GetSAHomeClusterClient() ClientInterface {
 }
 
 func (cf *clientFactory) getConfig(clusterInfo *RemoteClusterInfo) (*rest.Config, error) {
-	kialiConfig := kialiConfig.Get()
 	clientConfig := *cf.baseRestConfig
 
 	// Remote Cluster
@@ -432,7 +516,7 @@ func (cf *clientFactory) getConfig(clusterInfo *RemoteClusterInfo) (*rest.Config
 	} else {
 		// Just read the token and then use the base config.
 		// We're an in cluster client. Read the kiali service account token.
-		kialiToken, kialiTokenFile, err := GetKialiTokenForHomeCluster()
+		kialiToken, kialiTokenFile, err := GetKialiTokenForHomeCluster(cf.conf)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get Kiali service account token: %s", err)
 		}
@@ -442,13 +526,13 @@ func (cf *clientFactory) getConfig(clusterInfo *RemoteClusterInfo) (*rest.Config
 		clientConfig.BearerTokenFile = kialiTokenFile
 	}
 
-	if !kialiConfig.KialiFeatureFlags.Clustering.EnableExecProvider {
+	if !cf.conf.KialiFeatureFlags.Clustering.EnableExecProvider {
 		clientConfig.ExecProvider = nil
 	}
 
 	// Override some settings with what's in kiali config
-	clientConfig.QPS = kialiConfig.KubernetesConfig.QPS
-	clientConfig.Burst = kialiConfig.KubernetesConfig.Burst
+	clientConfig.QPS = cf.conf.KubernetesConfig.QPS
+	clientConfig.Burst = cf.conf.KubernetesConfig.Burst
 
 	return &clientConfig, nil
 }

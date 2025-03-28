@@ -130,6 +130,12 @@ export interface ToleranceConfig {
  End Health Config
 */
 
+// enum for run mode
+export enum RunMode {
+  LOCAL = 'local',
+  APP = 'app'
+}
+
 export interface ServerConfig {
   ambientEnabled: boolean;
   authStrategy: string;
@@ -150,4 +156,5 @@ export interface ServerConfig {
     globalScrapeInterval?: DurationInSeconds;
     storageTsdbRetention?: DurationInSeconds;
   };
+  runMode: RunMode;
 }
