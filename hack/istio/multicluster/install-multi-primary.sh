@@ -102,10 +102,10 @@ cat <<EOF > "$MC_EAST_YAML"
 spec:
   values:
     global:
-      meshID: mesh1
+      meshID: ${MESH_ID}
       multiCluster:
-        clusterName: east
-      network: network1
+        clusterName: ${CLUSTER1_NAME}
+      network: ${NETWORK1_ID}
 EOF
 
 MC_WEST_YAML=$(mktemp)
@@ -113,10 +113,10 @@ cat <<EOF > "$MC_WEST_YAML"
 spec:
   values:
     global:
-      meshID: mesh1
+      meshID: ${MESH_ID}
       multiCluster:
-        clusterName: west
-      network: network2
+        clusterName: ${CLUSTER2_NAME}
+      network: ${NETWORK2_ID}
 EOF
 
 # Find the hack script to be used to install istio
