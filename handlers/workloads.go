@@ -44,7 +44,7 @@ func (p *workloadParams) extract(r *http.Request) error {
 	p.baseExtract(r, vars)
 	p.Namespace = vars["namespace"]
 	p.WorkloadName = vars["workload"]
-	p.ClusterName = clusterNameFromQuery(query)
+	p.ClusterName = clusterNameFromQuery(config.Get(), query)
 
 	var err error
 	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))
@@ -216,7 +216,7 @@ func WorkloadUpdate(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, "Update request with bad workloadGVK param: "+errGVK.Error())
 	}
 
-	cluster := clusterNameFromQuery(query)
+	cluster := clusterNameFromQuery(config.Get(), query)
 	log.Debugf("Cluster: %s", cluster)
 
 	includeValidations := false
@@ -268,7 +268,7 @@ func PodDetails(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Pods initialization error: "+err.Error())
 		return
 	}
-	cluster := clusterNameFromQuery(query)
+	cluster := clusterNameFromQuery(config.Get(), query)
 	namespace := vars["namespace"]
 	pod := vars["pod"]
 
@@ -297,7 +297,7 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Pod Logs initialization error: "+err.Error())
 		return
 	}
-	cluster := clusterNameFromQuery(queryParams)
+	cluster := clusterNameFromQuery(config.Get(), queryParams)
 	namespace := vars["namespace"]
 	pod := vars["pod"]
 
@@ -330,7 +330,7 @@ func ConfigDumpZtunnel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cluster := clusterNameFromQuery(r.URL.Query())
+	cluster := clusterNameFromQuery(config.Get(), r.URL.Query())
 	namespace := params["namespace"]
 	pod := params["pod"]
 

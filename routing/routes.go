@@ -235,7 +235,7 @@ func NewRoutes(
 			"IstioConfigPermissions",
 			"GET",
 			"/api/istio/permissions",
-			handlers.IstioConfigPermissions,
+			handlers.IstioConfigPermissions(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/istio config istioConfigList
@@ -255,7 +255,7 @@ func NewRoutes(
 			"IstioConfigList",
 			"GET",
 			"/api/namespaces/{namespace}/istio",
-			handlers.IstioConfigList,
+			handlers.IstioConfigList(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
 			true,
 		},
 		// swagger:route GET /istio config istioConfigListAll
@@ -275,7 +275,7 @@ func NewRoutes(
 			"IstioConfigListAll",
 			"GET",
 			"/api/istio/config",
-			handlers.IstioConfigList,
+			handlers.IstioConfigList(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/istio/{group}/{version}/{kind}/{object} config istioConfigDetails
@@ -297,7 +297,7 @@ func NewRoutes(
 			"IstioConfigDetails",
 			"GET",
 			"/api/namespaces/{namespace}/istio/{group}/{version}/{kind}/{object}",
-			handlers.IstioConfigDetails,
+			handlers.IstioConfigDetails(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
 			true,
 		},
 		// swagger:route DELETE /namespaces/{namespace}/istio/{group}/{version}/{kind}/{object} config istioConfigDelete
@@ -318,7 +318,7 @@ func NewRoutes(
 			"IstioConfigDelete",
 			"DELETE",
 			"/api/namespaces/{namespace}/istio/{group}/{version}/{kind}/{object}",
-			handlers.IstioConfigDelete,
+			handlers.IstioConfigDelete(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
 			true,
 		},
 		// swagger:route PATCH /namespaces/{namespace}/istio/{group}/{version}/{kind}/{object} config istioConfigUpdate
@@ -343,7 +343,7 @@ func NewRoutes(
 			"IstioConfigUpdate",
 			"PATCH",
 			"/api/namespaces/{namespace}/istio/{group}/{version}/{kind}/{object}",
-			handlers.IstioConfigUpdate,
+			handlers.IstioConfigUpdate(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
 			true,
 		},
 		// swagger:route POST /namespaces/{namespace}/istio/{group}/{version}/{kind} config istioConfigCreate
@@ -366,7 +366,7 @@ func NewRoutes(
 			"IstioConfigCreate",
 			"POST",
 			"/api/namespaces/{namespace}/istio/{group}/{version}/{kind}",
-			handlers.IstioConfigCreate,
+			handlers.IstioConfigCreate(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
 			true,
 		},
 		// swagger:route GET /clusters/services services serviceList

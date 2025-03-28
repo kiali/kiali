@@ -119,14 +119,14 @@ func TestCreateMetricsServiceForSeveralNamespaces(t *testing.T) {
 
 func TestClusterNameFromQuery(t *testing.T) {
 	assert := assert.New(t)
-	conf := config.Get()
+	conf := config.NewConfig()
 
 	query := url.Values{"clusterName": []string{"east"}}
-	assert.Equal("east", clusterNameFromQuery(query))
+	assert.Equal("east", clusterNameFromQuery(conf, query))
 
 	query = url.Values{}
-	assert.Equal(conf.KubernetesConfig.ClusterName, clusterNameFromQuery(query))
+	assert.Equal(conf.KubernetesConfig.ClusterName, clusterNameFromQuery(conf, query))
 
 	query = url.Values{"notcluster": []string{"east"}}
-	assert.Equal(conf.KubernetesConfig.ClusterName, clusterNameFromQuery(query))
+	assert.Equal(conf.KubernetesConfig.ClusterName, clusterNameFromQuery(conf, query))
 }

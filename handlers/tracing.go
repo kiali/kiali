@@ -56,7 +56,7 @@ func AppTraces(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	cluster := clusterNameFromQuery(r.URL.Query())
+	cluster := clusterNameFromQuery(config.Get(), r.URL.Query())
 	tracingName := business.App.GetAppTracingName(r.Context(), cluster, namespace, app)
 	traces, err := business.Tracing.GetAppTraces(namespace, tracingName.Lookup, app, q)
 	if err != nil {
@@ -172,7 +172,7 @@ func AppSpans(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	cluster := clusterNameFromQuery(r.URL.Query())
+	cluster := clusterNameFromQuery(config.Get(), r.URL.Query())
 	spans, err := business.Tracing.GetAppSpans(r.Context(), cluster, namespace, app, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
@@ -239,7 +239,7 @@ func readQuery(values url.Values) (models.TracingQuery, error) {
 		End:     time.Now(),
 		Limit:   100,
 		Tags:    make(map[string]string),
-		Cluster: clusterNameFromQuery(values),
+		Cluster: clusterNameFromQuery(config.Get(), values),
 	}
 
 	if v := values.Get("startMicros"); v != "" {

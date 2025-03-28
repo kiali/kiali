@@ -31,7 +31,7 @@ func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClie
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	app := vars["app"]
-	cluster := clusterNameFromQuery(r.URL.Query())
+	cluster := clusterNameFromQuery(config.Get(), r.URL.Query())
 
 	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
 	if metricsService == nil {
@@ -65,7 +65,7 @@ func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier pro
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	workload := vars["workload"]
-	cluster := clusterNameFromQuery(r.URL.Query())
+	cluster := clusterNameFromQuery(config.Get(), r.URL.Query())
 
 	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
 	if metricsService == nil || namespaceInfo == nil {
@@ -99,7 +99,7 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promSupplier prom
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	service := vars["service"]
-	cluster := clusterNameFromQuery(r.URL.Query())
+	cluster := clusterNameFromQuery(config.Get(), r.URL.Query())
 
 	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
 	if metricsService == nil {
@@ -177,7 +177,7 @@ func ControlPlaneMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		controlPlane := vars["controlplane"]
-		cluster := clusterNameFromQuery(r.URL.Query())
+		cluster := clusterNameFromQuery(config.Get(), r.URL.Query())
 
 		metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
 		if metricsService == nil {
@@ -231,11 +231,10 @@ func ControlPlaneMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 // ResourceUsageMetrics is the API handler to fetch metrics to be displayed, related to a single control plane revision
 func ResourceUsageMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		app := vars["app"]
-		cluster := clusterNameFromQuery(r.URL.Query())
+		cluster := clusterNameFromQuery(config.Get(), r.URL.Query())
 
 		metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
 		if metricsService == nil {
@@ -285,7 +284,7 @@ func NamespaceMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
-		cluster := clusterNameFromQuery(r.URL.Query())
+		cluster := clusterNameFromQuery(config.Get(), r.URL.Query())
 
 		metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
 		if metricsService == nil {
@@ -322,7 +321,7 @@ func ClustersMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 		if len(namespaces) > 0 {
 			nss = strings.Split(namespaces, ",")
 		}
-		cluster := clusterNameFromQuery(query)
+		cluster := clusterNameFromQuery(config.Get(), query)
 
 		business, err := getBusiness(r)
 		if err != nil {

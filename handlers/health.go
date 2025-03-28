@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util"
@@ -25,7 +26,7 @@ func ClustersHealth(w http.ResponseWriter, r *http.Request) {
 	if len(namespaces) > 0 {
 		nss = strings.Split(namespaces, ",")
 	}
-	cluster := clusterNameFromQuery(params)
+	cluster := clusterNameFromQuery(config.Get(), params)
 
 	businessLayer, err := getBusiness(r)
 	if err != nil {
@@ -111,7 +112,7 @@ func (p *baseHealthParams) baseExtract(r *http.Request, vars map[string]string) 
 	if rateInterval := queryParams.Get("rateInterval"); rateInterval != "" {
 		p.RateInterval = rateInterval
 	}
-	p.ClusterName = clusterNameFromQuery(queryParams)
+	p.ClusterName = clusterNameFromQuery(config.Get(), queryParams)
 	if queryTime := queryParams.Get("queryTime"); queryTime != "" {
 		unix, err := strconv.ParseInt(queryTime, 10, 64)
 		if err == nil {
@@ -149,7 +150,6 @@ func (p *namespaceHealthParams) extract(r *http.Request, namespace string) (bool
 }
 
 func adjustRateInterval(ctx context.Context, business *business.Layer, namespace, rateInterval string, queryTime time.Time, cluster string) (string, error) {
-
 	namespaceInfo, err := business.Namespace.GetClusterNamespace(ctx, namespace, cluster)
 	if err != nil {
 		return "", err
