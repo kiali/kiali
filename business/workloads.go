@@ -187,6 +187,7 @@ func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string, 
 
 // GetAllGateways fetches all gateway workloads across every namespace in the cluster.
 func (in *WorkloadService) GetAllGateways(ctx context.Context, cluster string, labelSelector string) (models.Workloads, error) {
+
 	workloads, err := in.GetAllWorkloads(ctx, cluster, labelSelector)
 	if err != nil {
 		return nil, err
@@ -2309,17 +2310,23 @@ func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload
 
 	// then, get the waypoint workloads to filter out "forNone" waypoints
 	for _, waypoint := range waypoints {
-		waypointWorkload, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: workload.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, WorkloadGVK: schema.GroupVersionKind{}, IncludeWaypoints: false})
-		if err != nil {
-			log.Debugf("GetWaypointsForWorkload: Error fetching waypoint workload %s", err.Error())
-			return nil
+		waypointWorkloads := in.cache.GetWaypointList()
+		found := false
+		waypointWorkload := models.Workload{}
+		for _, ww := range waypointWorkloads {
+			if ww.Name == workload.Name && ww.Namespace == workload.Namespace && ww.Cluster == workload.Cluster {
+				found = true
+				waypointWorkload = *ww
+			}
 		}
-		waypointFor, waypointForFound := waypointWorkload.Labels[config.WaypointFor]
-		if !waypointForFound || waypointFor != config.WaypointForNone {
-			key := fmt.Sprintf("%s_%s_%s", workload.Cluster, waypoint.Namespace, waypoint.Name)
-			if waypointWorkload != nil && !workloadsMap[key] {
-				workloadsList = append(workloadsList, models.WorkloadReferenceInfo{Name: waypoint.Name, Namespace: waypoint.Namespace, Cluster: waypoint.Cluster, Type: waypointWorkload.WaypointFor()})
-				workloadsMap[key] = true
+		if found {
+			waypointFor, waypointForFound := waypointWorkload.Labels[config.WaypointFor]
+			if !waypointForFound || waypointFor != config.WaypointForNone {
+				key := fmt.Sprintf("%s_%s_%s", workload.Cluster, waypoint.Namespace, waypoint.Name)
+				if !workloadsMap[key] {
+					workloadsList = append(workloadsList, models.WorkloadReferenceInfo{Name: waypoint.Name, Namespace: waypoint.Namespace, Cluster: waypoint.Cluster, Type: waypointWorkload.WaypointFor()})
+					workloadsMap[key] = true
+				}
 			}
 		}
 	}
