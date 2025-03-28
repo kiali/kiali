@@ -6,11 +6,12 @@ HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 source ${HACK_SCRIPT_DIR}/functions.sh
 
 
-: ${CLIENT_EXE:=oc}
 : ${AMBIENT_ENABLED:="false"}
+: ${AUTO_INJECTION:=true}
+: ${AUTO_INJECTION_LABEL:="istio-injection=enabled"}
+: ${CLIENT_EXE:=oc}
 : ${ARCH:=amd64}
 : ${DELETE_DEMO:=false}
-: ${ENABLE_INJECTION:=true}
 : ${ISTIO_NAMESPACE:=istio-system}
 : ${NAMESPACE_ALPHA:=alpha}
 : ${NAMESPACE_BETA:=beta}
@@ -24,6 +25,14 @@ source ${HACK_SCRIPT_DIR}/functions.sh
 while [ $# -gt 0 ]; do
   key="$1"
   case $key in
+    -ai|--auto-injection)
+      AUTO_INJECTION="$2"
+      shift;shift
+      ;;
+    -ail|--auto-injection-label)
+      AUTO_INJECTION_LABEL="$2"
+      shift;shift
+      ;;
     -a|--arch)
       ARCH="$2"
       shift;shift
@@ -34,10 +43,6 @@ while [ $# -gt 0 ]; do
       ;;
     -d|--delete)
       DELETE_DEMO="$2"
-      shift;shift
-      ;;
-    -ei|--enable-injection)
-      ENABLE_INJECTION="$2"
       shift;shift
       ;;
     -in|--istio-namespace)
@@ -64,9 +69,10 @@ while [ $# -gt 0 ]; do
       cat <<HELPMSG
 Valid command line arguments:
   -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64).
+  -ai|--auto-injection <true|false>: If you want sidecars to be auto-injected (default: true).
+  -ail|--auto-injection-label <name=value>: If auto-injection is enabled, this is the label added to the namespace. For revision-based installs, you can use something like "istio.io/rev=default-v1-23-0". default: istio-injection=enabled).
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: either 'true' or 'false'. If 'true' the demo will be deleted, not installed.
-  -ei|--enable-injection: either 'true' or 'false' (default is true). If 'true' auto-inject proxies for the workloads.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -dd|--distribute-demo 'true' or 'false'. If 'true' alpha namespace will be created on east cluster, beta and gamma namespaces on west cluster.
   -c1|--cluster1: context name of the cluster 1. Doesn't do anything if --distribute-demo is set to false (default: east)
@@ -90,12 +96,13 @@ done
 
 echo Will deploy Error Rates Demo using these settings:
 echo ARCH=${ARCH}
+echo AUTO_INJECTION=${AUTO_INJECTION}
+echo AUTO_INJECTION_LABEL=${AUTO_INJECTION_LABEL}
 echo CLIENT_EXE=${CLIENT_EXE}
 echo CLUSTER1_CONTEXT=${CLUSTER1_CONTEXT}
 echo CLUSTER2_CONTEXT=${CLUSTER2_CONTEXT}
 echo DELETE_DEMO=${DELETE_DEMO}
 echo DISTRIBUTE_DEMO=${DISTRIBUTE_DEMO}
-echo ENABLE_INJECTION=${ENABLE_INJECTION}
 echo ISTIO_NAMESPACE=${ISTIO_NAMESPACE}
 echo NAMESPACE_ALPHA=${NAMESPACE_ALPHA}
 echo NAMESPACE_BETA=${NAMESPACE_BETA}
@@ -161,7 +168,7 @@ else
   fi
 fi
 
-if [ "${ENABLE_INJECTION}" == "false" ]; then
+if [ "${AUTO_INJECTION}" == "false" ]; then
   for n in $(${CLIENT_EXE} get daemonset --all-namespaces -o jsonpath='{.items[*].metadata.name}')
   do
     if [ "${n}" == "ztunnel" ]; then
@@ -192,8 +199,8 @@ if [ "${AMBIENT_ENABLED}" == "true" ]; then
     ${ISTIOCTL} x waypoint apply -n ${NAMESPACE_GAMMA}
   fi
 else
-  if [ "${ENABLE_INJECTION}" == "true" ]; then
-    ISTIO_INJECTION="istio-injection=enabled"
+  if [ "${AUTO_INJECTION}" == "true" ]; then
+    ISTIO_INJECTION=${AUTO_INJECTION_LABEL}
   fi
 fi
 
