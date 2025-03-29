@@ -51,6 +51,7 @@ func (jc JaegerGRPCClient) FindTraces(ctx context.Context, serviceName string, q
 		},
 	}
 
+	log.Debugf("Jaeger gRPC FindTraces request: %v", findTracesRQ)
 	tracesMap, err := jc.queryTraces(ctx, findTracesRQ)
 
 	if err != nil {
