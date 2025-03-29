@@ -1,6 +1,7 @@
 #!/bin/bash
 
-set -e
+set -eo xtrace
+
 
 is_in_array() {
   local value1="$1"
@@ -106,6 +107,7 @@ if is_in_array "tempo" "tempo" "${ADDONS}"; then
   SERVICE=otel-collector.istio-system.svc.cluster.local
 fi
 
+# default Istio yaml, we need to sail133 130 -mesh-id  network and some other stuff
 ISTIO_YAML=$(
 cat <<EOF
 apiVersion: sailoperator.io/v1
@@ -196,3 +198,8 @@ spec:
       - name: otel-tracing
     randomSamplingPercentage: 100
 EOF
+
+# deploy istio-ingressgateway 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+echo $SCRIPT_DIR
+kubectl apply -n istio-system -f "${SCRIPT_DIR}"/istio-gateway.yaml
