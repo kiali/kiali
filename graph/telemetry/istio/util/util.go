@@ -145,7 +145,7 @@ func AddQueryScope(query string, conf *config.Config) string {
 // GetReporter returns the "reporter=" prom query fragment based on whether the reporter must include waypoint traffic
 func GetReporter(reporter string, rates graph.RequestedRates) string {
 	if rates.Ambient == graph.AmbientTrafficWaypoint || rates.Ambient == graph.AmbientTrafficTotal {
-		return fmt.Sprintf(`reporter=~"%s|waypoint"`, reporter)
+		return fmt.Sprintf(`reporter=~"waypoint|%s"`, reporter)
 	}
 	return fmt.Sprintf(`reporter="%s"`, reporter)
 }

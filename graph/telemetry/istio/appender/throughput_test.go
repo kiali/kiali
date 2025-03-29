@@ -14,7 +14,7 @@ import (
 func TestResponseThroughput(t *testing.T) {
 	assert := assert.New(t)
 
-	q0 := `round(sum(rate(istio_response_bytes_sum{reporter=~"destination|waypoint",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision) > 0,0.001)`
+	q0 := `round(sum(rate(istio_response_bytes_sum{reporter=~"waypoint|destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision) > 0,0.001)`
 	q0m0 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "istio-system",
@@ -35,7 +35,7 @@ func TestResponseThroughput(t *testing.T) {
 			Value:  1000.0},
 	}
 
-	q1 := `round(sum(rate(istio_response_bytes_sum{reporter=~"destination|waypoint",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision) > 0,0.001)`
+	q1 := `round(sum(rate(istio_response_bytes_sum{reporter=~"waypoint|destination",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision) > 0,0.001)`
 	q1m0 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -242,7 +242,7 @@ func responseThroughputTestTraffic() graph.TrafficMap {
 func TestRequestThroughput(t *testing.T) {
 	assert := assert.New(t)
 
-	q0 := `round(sum(rate(istio_request_bytes_sum{reporter=~"source|waypoint",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision) > 0,0.001)`
+	q0 := `round(sum(rate(istio_request_bytes_sum{reporter=~"waypoint|source",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision) > 0,0.001)`
 	q0m0 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "istio-system",
@@ -263,7 +263,7 @@ func TestRequestThroughput(t *testing.T) {
 			Value:  1000.0},
 	}
 
-	q1 := `round(sum(rate(istio_request_bytes_sum{reporter=~"source|waypoint",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision) > 0,0.001)`
+	q1 := `round(sum(rate(istio_request_bytes_sum{reporter=~"waypoint|source",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision) > 0,0.001)`
 	q1m0 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -353,7 +353,7 @@ func TestRequestThroughput(t *testing.T) {
 func TestRequestThroughputSkipRates(t *testing.T) {
 	assert := assert.New(t)
 
-	q0 := `round(sum(rate(istio_request_bytes_sum{reporter=~"source|waypoint",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision) > 0,0.001)`
+	q0 := `round(sum(rate(istio_request_bytes_sum{reporter=~"waypoint|source",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision) > 0,0.001)`
 	q0m0 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "istio-system",
@@ -374,7 +374,7 @@ func TestRequestThroughputSkipRates(t *testing.T) {
 			Value:  1000.0},
 	}
 
-	q1 := `round(sum(rate(istio_request_bytes_sum{reporter=~"source|waypoint",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision) > 0,0.001)`
+	q1 := `round(sum(rate(istio_request_bytes_sum{reporter=~"waypoint|source",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision) > 0,0.001)`
 	q1m0 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
