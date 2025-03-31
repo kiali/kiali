@@ -1,12 +1,11 @@
 package handlers
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"net/url"
-	"strings"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
@@ -22,80 +21,83 @@ import (
 	"github.com/kiali/kiali/tracing"
 )
 
-type promClientSupplier func() (*prometheus.Client, error)
-
 const defaultPatchType = "merge"
 
-var DefaultPromClientSupplier = prometheus.NewClient
-
-func checkNamespaceAccess(ctx context.Context, nsServ business.NamespaceService, namespace string, cluster string) (*models.Namespace, error) {
-	return nsServ.GetClusterNamespace(ctx, namespace, cluster)
-}
-
-// createMetricsServiceForNamespaceMC is used when the service will query across all clusters for the namespace.
+// checkNamespaceAccess is used when the service will query across all clusters for the namespace.
 // It will return an error if the user does not have access to the namespace on all of the clusters.
-func createMetricsServiceForNamespaceMC(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, nsName string) (*business.MetricsService, []models.Namespace) {
-	layer, err := getBusiness(r)
+func checkNamespaceAccess(
+	w http.ResponseWriter,
+	r *http.Request,
+	conf *config.Config,
+	cache cache.KialiCache,
+	discovery istio.MeshDiscovery,
+	clientFactory kubernetes.ClientFactory,
+	namespace string,
+	cluster string,
+) (*models.Namespace, error) {
+	userClients, err := getUserClients(r, clientFactory)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return nil, nil
-	}
-	prom, err := promSupplier()
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
-		return nil, nil
-	}
-	var nsInfo []models.Namespace
-
-	for _, cluster := range layer.Namespace.GetClusterList() {
-		ns, err2 := checkNamespaceAccess(r.Context(), layer.Namespace, nsName, cluster)
-		if err2 != nil {
-			if strings.Contains(err2.Error(), "not found") {
-				continue
-			}
-			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err2.Error())
-			return nil, nil
-		}
-		nsInfo = append(nsInfo, *ns)
+		log.Errorf("Unable to create user clients from token: %s", err)
+		RespondWithError(w, http.StatusInternalServerError, "An error occurred while attempting to use your session token. Check your session token and the Kiali server logs.")
+		return nil, err
 	}
 
-	metrics := business.NewMetricsService(prom, config.Get())
-
-	return metrics, nsInfo
+	namespaceService := business.NewNamespaceService(cache, conf, discovery, clientFactory.GetSAClients(), userClients)
+	return checkNamespaceAccessWithService(w, r, &namespaceService, namespace, cluster)
 }
 
-// createMetricsServiceForClusterMC is used when the service will query across provided namespaces of given cluster.
-// It will return an error if the user does not have access to the namespace the given the cluster.
-func createMetricsServiceForClusterMC(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, cluster string, nss []string) (*business.MetricsService, []models.Namespace) {
-	layer, err := getBusiness(r)
+// checkNamespaceAccessWithService is used when the service will query across all clusters for the namespace.
+// It will return an error if the user does not have access to the namespace on all of the clusters.
+func checkNamespaceAccessWithService(
+	w http.ResponseWriter,
+	r *http.Request,
+	namespaceService *business.NamespaceService,
+	namespace string,
+	cluster string,
+) (*models.Namespace, error) {
+	ns, err := namespaceService.GetClusterNamespace(r.Context(), namespace, cluster)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return nil, nil
+		RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
+		return nil, err
 	}
-	prom, err := promSupplier()
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
-		return nil, nil
-	}
-	var nsInfo []models.Namespace
 
-	for _, nsName := range nss {
-		ns, err2 := checkNamespaceAccess(r.Context(), layer.Namespace, nsName, cluster)
-		if err2 != nil {
-			if strings.Contains(err2.Error(), "not found") {
+	return ns, nil
+}
+
+// checkNamespaceAccessMultiCluster is used when the service will query across all clusters for the namespace.
+// It will return an error if the user does not have access to the namespace on all of the clusters.
+func checkNamespaceAccessMultiCluster(
+	w http.ResponseWriter,
+	r *http.Request,
+	conf *config.Config,
+	cache cache.KialiCache,
+	discovery istio.MeshDiscovery,
+	clientFactory kubernetes.ClientFactory,
+	namespace string,
+) ([]models.Namespace, error) {
+	var nsInfo []models.Namespace
+	userClients, err := getUserClients(r, clientFactory)
+	if err != nil {
+		log.Errorf("Unable to create user clients from token: %s", err)
+		RespondWithError(w, http.StatusInternalServerError, "An error occurred while attempting to use your session token. Check your session token and the Kiali server logs.")
+		return nil, err
+	}
+
+	namespaceService := business.NewNamespaceService(cache, conf, discovery, clientFactory.GetSAClients(), userClients)
+
+	for _, cluster := range namespaceService.GetClusterList() {
+		ns, err := checkNamespaceAccessWithService(w, r, &namespaceService, namespace, cluster)
+		if err != nil {
+			if k8serrors.IsNotFound(err) {
 				continue
 			}
-			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err2.Error())
+			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
 			return nil, nil
 		}
 		nsInfo = append(nsInfo, *ns)
 	}
 
-	metrics := business.NewMetricsService(prom, config.Get())
-
-	return metrics, nsInfo
+	return nsInfo, nil
 }
 
 // GetOldestNamespace is a convenience function that takes a list of Namespaces and returns the
@@ -108,45 +110,6 @@ func GetOldestNamespace(namespaces []models.Namespace) *models.Namespace {
 		}
 	}
 	return oldestNamespace
-}
-
-func createMetricsServiceForNamespace(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, ns models.Namespace) (*business.MetricsService, *models.Namespace) {
-	metrics, infoMap := createMetricsServiceForNamespaces(w, r, promSupplier, []models.Namespace{ns})
-	if result, ok := infoMap[ns.Name]; ok {
-		if result.err != nil {
-			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+result.err.Error())
-			return nil, nil
-		}
-		return metrics, result.info
-	}
-	return nil, nil
-}
-
-type nsInfoError struct {
-	info *models.Namespace
-	err  error
-}
-
-func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, namespaces []models.Namespace) (*business.MetricsService, map[string]nsInfoError) {
-	layer, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return nil, nil
-	}
-	prom, err := promSupplier()
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
-		return nil, nil
-	}
-
-	nsInfos := make(map[string]nsInfoError)
-	for _, ns := range namespaces {
-		info, err := checkNamespaceAccess(r.Context(), layer.Namespace, ns.Name, ns.Cluster)
-		nsInfos[ns.Name] = nsInfoError{info: info, err: err}
-	}
-	metrics := business.NewMetricsService(prom, config.Get())
-	return metrics, nsInfos
 }
 
 func getUserClients(r *http.Request, cf kubernetes.ClientFactory) (map[string]kubernetes.UserClientInterface, error) {
@@ -165,21 +128,11 @@ func getAuthInfo(r *http.Request) (map[string]*api.AuthInfo, error) {
 		if authInfo, ok := authInfoContext.(map[string]*api.AuthInfo); ok {
 			return authInfo, nil
 		} else {
-			return nil, errors.New("authInfo is not of type *api.AuthInfo")
+			return nil, errors.New("authInfo is not of type map[string]*api.AuthInfo")
 		}
 	} else {
 		return nil, errors.New("authInfo missing from the request context")
 	}
-}
-
-// getBusiness returns the business layer specific to the users's request
-func getBusiness(r *http.Request) (*business.Layer, error) {
-	authInfo, err := getAuthInfo(r)
-	if err != nil {
-		return nil, err
-	}
-
-	return business.Get(authInfo)
 }
 
 // clusterNameFromQuery extracts the cluster name from the query parameters
