@@ -107,7 +107,6 @@ if is_in_array "tempo" "tempo" "${ADDONS}"; then
   SERVICE=otel-collector.istio-system.svc.cluster.local
 fi
 
-# default Istio yaml, we need to sail133 130 -mesh-id  network and some other stuff
 ISTIO_YAML=$(
 cat <<EOF
 apiVersion: sailoperator.io/v1
