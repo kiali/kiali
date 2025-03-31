@@ -611,10 +611,10 @@ func NewRoutes(
 		//      200: workloadListResponse
 		//
 		{
-			"ClustersWorkloads",
+			"ClusterWorkloads",
 			"GET",
 			"/api/clusters/workloads",
-			handlers.ClustersWorkloads,
+			handlers.ClusterWorkloads(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/workloads/{workload} workloads workloadDetails
@@ -635,7 +635,7 @@ func NewRoutes(
 			"WorkloadDetails",
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}",
-			handlers.WorkloadDetails,
+			handlers.WorkloadDetails(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route PATCH /namespaces/{namespace}/workloads/{workload} workloads workloadUpdate
@@ -660,7 +660,7 @@ func NewRoutes(
 			"WorkloadUpdate",
 			"PATCH",
 			"/api/namespaces/{namespace}/workloads/{workload}",
-			handlers.WorkloadUpdate,
+			handlers.WorkloadUpdate(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /clusters/apps apps appList
@@ -1165,7 +1165,7 @@ func NewRoutes(
 			"IstioStatus",
 			"GET",
 			"/api/istio/status",
-			handlers.IstioStatus,
+			handlers.IstioStatus(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
 			true,
 		},
 		// swagger:route GET /namespaces/graph graphs graphNamespaces
@@ -1418,7 +1418,7 @@ func NewRoutes(
 			"PodDetails",
 			"GET",
 			"/api/namespaces/{namespace}/pods/{pod}",
-			handlers.PodDetails,
+			handlers.PodDetails(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/pods/{pod}/logs pods podLogs
@@ -1439,7 +1439,7 @@ func NewRoutes(
 			"PodLogs",
 			"GET",
 			"/api/namespaces/{namespace}/pods/{pod}/logs",
-			handlers.PodLogs,
+			handlers.PodLogs(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/pods/{pod}/config_dump pods podProxyDump
@@ -1502,7 +1502,7 @@ func NewRoutes(
 			"ZtunnelConfigDump",
 			"GET",
 			"/api/namespaces/{namespace}/pods/{pod}/config_dump_ztunnel",
-			handlers.ConfigDumpZtunnel,
+			handlers.ConfigDumpZtunnel(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route POST /namespaces/{namespace}/pods/{pod}/logging pods podProxyLogging
