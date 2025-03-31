@@ -1,7 +1,5 @@
 #!/bin/bash
 
-
-
 infomsg() {
   echo "[INFO] ${1}"
 }

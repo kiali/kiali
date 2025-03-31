@@ -2,7 +2,6 @@
 
 set -e
 
-
 is_in_array() {
   local value1="$1"
   local value2="$2"
