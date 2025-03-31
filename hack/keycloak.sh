@@ -111,8 +111,6 @@ EOF
   echo "Creating keycloak deployment"
   helm upgrade --install --wait --timeout 15m \
   --namespace keycloak \
-  --set resources.limits.memory=15Gi \
-  --set resources.requests.memory=5Gi \
    keycloak oci://registry-1.docker.io/bitnamicharts/keycloak --version 24.3.2 \
   --reuse-values --values - <<EOF
 auth:
