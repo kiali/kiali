@@ -14,8 +14,6 @@ FRONTEND_AMBIENT="frontend-ambient"
 FRONTEND_PRIMARY_REMOTE="frontend-primary-remote"
 FRONTEND_MULTI_PRIMARY="frontend-multi-primary"
 FRONTEND_TEMPO="frontend-tempo"
-#
-
 ISTIO_VERSION=""
 HELM_CHARTS_DIR=""
 TEST_SUITE="${BACKEND}"
