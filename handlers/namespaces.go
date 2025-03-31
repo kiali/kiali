@@ -3,71 +3,89 @@ package handlers
 import (
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/mux"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/tracing"
 )
 
-func NamespaceList(w http.ResponseWriter, r *http.Request) {
-	business, err := getBusiness(r)
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
+func NamespaceList(conf *config.Config, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, discovery istio.MeshDiscovery) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userClients, err := getUserClients(r, clientFactory)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			return
+		}
 
-	namespaces, err := business.Namespace.GetNamespaces(r.Context())
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
+		namespace := business.NewNamespaceService(kialiCache, conf, discovery, clientFactory.GetSAClients(), userClients)
 
-	RespondWithJSON(w, http.StatusOK, namespaces)
+		namespaces, err := namespace.GetNamespaces(r.Context())
+		if err != nil {
+			log.Error(err)
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		RespondWithJSON(w, http.StatusOK, namespaces)
+	}
 }
 
-func NamespaceInfo(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query()
-	vars := mux.Vars(r)
-	namespace := vars["namespace"]
-	cluster := clusterNameFromQuery(config.Get(), query)
+func NamespaceInfo(conf *config.Config, cache cache.KialiCache, clientFactory kubernetes.ClientFactory, discovery istio.MeshDiscovery) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		vars := mux.Vars(r)
+		namespace := vars["namespace"]
+		cluster := clusterNameFromQuery(conf, query)
 
-	business, err := getBusiness(r)
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
+		userClients, err := getUserClients(r, clientFactory)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		namespaceService := business.NewNamespaceService(cache, conf, discovery, clientFactory.GetSAClients(), userClients)
+		namespaceInfo, err := namespaceService.GetClusterNamespace(r.Context(), namespace, cluster)
+		if err != nil {
+			log.Error(err)
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		RespondWithJSON(w, http.StatusOK, namespaceInfo)
 	}
-
-	namespaceInfo, err := business.Namespace.GetClusterNamespace(r.Context(), namespace, cluster)
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	RespondWithJSON(w, http.StatusOK, namespaceInfo)
 }
 
 // NamespaceValidationSummary is the API handler to fetch validations summary to be displayed.
 // It is related to all the Istio Objects within the namespace
-func NamespaceValidationSummary(discovery *istio.Discovery) http.HandlerFunc {
+func NamespaceValidationSummary(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery *istio.Discovery,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 
-		cluster := clusterNameFromQuery(config.Get(), query)
+		cluster := clusterNameFromQuery(conf, query)
 
-		business, err := getBusiness(r)
+		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
-			log.Error(err)
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 			return
 		}
 
@@ -100,68 +118,36 @@ func NamespaceValidationSummary(discovery *istio.Discovery) http.HandlerFunc {
 	}
 }
 
-// ConfigValidationSummary is the API handler to fetch validations summary to be displayed.
-// It is related to all the Istio Objects within given namespaces
-func ConfigValidationSummary(w http.ResponseWriter, r *http.Request) {
-	params := r.URL.Query()
-	namespaces := params.Get("namespaces") // csl of namespaces
-	nss := []string{}
-	if len(namespaces) > 0 {
-		nss = strings.Split(namespaces, ",")
-	}
-	cluster := clusterNameFromQuery(config.Get(), params)
-
-	business, err := getBusiness(r)
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	if len(nss) == 0 {
-		loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
-		for _, ns := range loadedNamespaces {
-			nss = append(nss, ns.Name)
-		}
-	}
-
-	validationSummaries := []models.IstioValidationSummary{}
-	for _, ns := range nss {
-		istioConfigValidationResults, errValidations := business.Validations.GetValidationsForNamespace(r.Context(), cluster, ns)
-		if errValidations != nil {
-			log.Error(errValidations)
-			RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
+// NamespaceUpdate is the API to perform a patch on a Namespace configuration
+func NamespaceUpdate(conf *config.Config, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, discovery istio.MeshDiscovery) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := mux.Vars(r)
+		namespace := params["namespace"]
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
 			return
 		}
-		validationSummaries = append(validationSummaries, *istioConfigValidationResults.SummarizeValidation(ns, cluster))
-	}
+		defer r.Body.Close()
 
-	RespondWithJSON(w, http.StatusOK, validationSummaries)
-}
+		jsonPatch := string(body)
 
-// NamespaceUpdate is the API to perform a patch on a Namespace configuration
-func NamespaceUpdate(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	business, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Namespace initialization error: "+err.Error())
-		return
-	}
-	namespace := params["namespace"]
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
-	}
-	jsonPatch := string(body)
+		query := r.URL.Query()
+		cluster := clusterNameFromQuery(conf, query)
 
-	query := r.URL.Query()
-	cluster := clusterNameFromQuery(config.Get(), query)
+		userClients, err := getUserClients(r, clientFactory)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			return
+		}
 
-	ns, err := business.Namespace.UpdateNamespace(r.Context(), namespace, jsonPatch, cluster)
-	if err != nil {
-		handleErrorResponse(w, err)
-		return
+		namespaceService := business.NewNamespaceService(kialiCache, conf, discovery, clientFactory.GetSAClients(), userClients)
+		ns, err := namespaceService.UpdateNamespace(r.Context(), namespace, jsonPatch, cluster)
+		if err != nil {
+			handleErrorResponse(w, err)
+			return
+		}
+		audit(r, "UPDATE on Namespace: "+namespace+" Patch: "+jsonPatch)
+		RespondWithJSON(w, http.StatusOK, ns)
 	}
-	audit(r, "UPDATE on Namespace: "+namespace+" Patch: "+jsonPatch)
-	RespondWithJSON(w, http.StatusOK, ns)
 }

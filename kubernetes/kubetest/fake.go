@@ -167,5 +167,8 @@ func (c *FakeK8sClient) IsGatewayAPI() bool                 { return c.GatewayAP
 func (c *FakeK8sClient) IsIstioAPI() bool                   { return c.IstioAPIEnabled }
 func (c *FakeK8sClient) GetToken() string                   { return c.Token }
 func (c *FakeK8sClient) ClusterInfo() kialikube.ClusterInfo { return c.KubeClusterInfo }
+func (c *FakeK8sClient) SetProxyLogLevel(namespace string, podName string, level string) error {
+	return nil
+}
 
 var _ kialikube.ClientInterface = &FakeK8sClient{}

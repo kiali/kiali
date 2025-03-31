@@ -721,7 +721,7 @@ func NewRoutes(
 			"NamespaceList",
 			"GET",
 			"/api/namespaces",
-			handlers.NamespaceList,
+			handlers.NamespaceList(conf, kialiCache, clientFactory, discovery),
 			true,
 		},
 		// swagger:route PATCH /namespaces/{namespace} namespaces namespaceUpdate
@@ -746,7 +746,7 @@ func NewRoutes(
 			"NamespaceUpdate",
 			"PATCH",
 			"/api/namespaces/{namespace}",
-			handlers.NamespaceUpdate,
+			handlers.NamespaceUpdate(conf, kialiCache, clientFactory, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/info namespaces namespaceInfo
@@ -766,7 +766,7 @@ func NewRoutes(
 			"NamespaceInfo",
 			"GET",
 			"/api/namespaces/{namespace}/info",
-			handlers.NamespaceInfo,
+			handlers.NamespaceInfo(conf, kialiCache, clientFactory, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/metrics services serviceMetrics
@@ -1060,7 +1060,7 @@ func NewRoutes(
 			"NamespaceValidationSummary",
 			"GET",
 			"/api/namespaces/{namespace}/validations",
-			handlers.NamespaceValidationSummary(discovery),
+			handlers.NamespaceValidationSummary(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /istio/validations namespaces namespacesValidations
@@ -1081,7 +1081,7 @@ func NewRoutes(
 			"ConfigValidationSummary",
 			"GET",
 			"/api/istio/validations",
-			handlers.ConfigValidationSummary,
+			handlers.IstioConfigValidationSummary(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /mesh/tls tls meshTls
@@ -1524,7 +1524,7 @@ func NewRoutes(
 			"PodProxyLogging",
 			"POST",
 			"/api/namespaces/{namespace}/pods/{pod}/logging",
-			handlers.LoggingUpdate,
+			handlers.LoggingUpdate(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /clusters/metrics clusterName namespaces clustersMetrics
