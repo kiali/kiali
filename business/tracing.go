@@ -97,6 +97,7 @@ func operationSpanFilter(ns, service string) SpanFilter {
 	// Filter out app spans based on operation name.
 	// For envoy traces, operation name is like "service-name.namespace.svc.cluster.local:8000/*"
 	return func(span *jaegerModels.Span) bool {
+		log.Tracef("[Tracing] operationSpanFilter '%s' has prefix '%s'", span.OperationName, fqService)
 		return strings.HasPrefix(span.OperationName, fqService)
 	}
 }
@@ -176,9 +177,11 @@ func (in *TracingService) GetServiceTraces(ctx context.Context, ns, service stri
 	}
 	if app.Lookup == service {
 		// No post-filtering
+		log.Tracef("[Tracing] GetServiceTraces '%s' for service '%s'", app.Lookup, service)
 		return in.GetAppTraces(ns, service, app.Lookup, query)
 	}
 
+	log.Tracef("[Tracing] GetServiceTraces '%s' for service '%s'", app.Lookup, service)
 	r, err := in.GetAppTraces(ns, app.Lookup, service, query)
 	if r != nil && err == nil {
 		// Filter out app traces based on operation name.
@@ -274,7 +277,7 @@ func spanMatchesWorkload(span *jaegerModels.Span, namespace string, tracingName 
 	// When the workload has a waypoint, the operation name is filtered by the service
 	if tracingName.WaypointName != "" {
 		op := fmt.Sprintf("%s.%s", tracingName.App, namespace)
-		log.Tracef("[Tracing] Filtering span trace by service %s", op)
+		log.Tracef("[Tracing] spanMatchesWorkload '%s' has prefix '%s'", span.OperationName, op)
 		return strings.HasPrefix(span.OperationName, op)
 	}
 	// For envoy traces, with a workload named "ai-locals", node_id is like:
@@ -283,6 +286,9 @@ func spanMatchesWorkload(span *jaegerModels.Span, namespace string, tracingName 
 		if tag.Key == "node_id" {
 			if v, ok := tag.Value.(string); ok {
 				parts := strings.Split(v, "~")
+				if len(parts) >= 3 {
+					log.Tracef("[Tracing] spanMatchesWorkload '%s' HasPrefix '%s' and suffix %s", parts[2], tracingName.Workload, namespace)
+				}
 				if len(parts) >= 3 && strings.HasPrefix(parts[2], tracingName.Workload) && strings.HasSuffix(parts[2], namespace) {
 					return true
 				}
@@ -291,6 +297,7 @@ func spanMatchesWorkload(span *jaegerModels.Span, namespace string, tracingName 
 		// For Tempo Traces
 		if tag.Key == "hostname" {
 			if v, ok := tag.Value.(string); ok {
+				log.Tracef("[Tracing] spanMatchesWorkload '%s' HasPrefix '%s'", v, tracingName.Workload)
 				if strings.HasPrefix(v, tracingName.Workload) {
 					return true
 				}
@@ -302,6 +309,7 @@ func spanMatchesWorkload(span *jaegerModels.Span, namespace string, tracingName 
 		for _, tag := range span.Process.Tags {
 			if tag.Key == "hostname" {
 				if v, ok := tag.Value.(string); ok {
+					log.Tracef("[Tracing] spanMatchesWorkload '%s' HasPrefix '%s'", v, tracingName.Workload)
 					if strings.HasPrefix(v, tracingName.Workload) {
 						return true
 					}
@@ -363,6 +371,6 @@ func tracesToSpans(app models.TracingName, r *model.TracingResponse, filter Span
 			}
 		}
 	}
-	log.Tracef("Found %d spans in the %d traces for app %s", len(spans), len(r.Data), app)
+	log.Tracef("[Tracing] Found %d spans in the %d traces for app %s", len(spans), len(r.Data), app)
 	return spans
 }
