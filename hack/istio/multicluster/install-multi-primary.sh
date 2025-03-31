@@ -243,6 +243,14 @@ echo "==== INSTALL ISTIO ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
 switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
 install_istio "${CLUSTER2_NAME}" "${NETWORK2_ID}" "${MC_WEST_YAML}"
 
+echo "==== DEPLOY ISTIO INGRESS GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
+kubectl apply -n istio-system -f "${SCRIPT_DIR}/../istio-gateway.yaml"
+
+echo "==== DEPLOY ISTIO INGRESS GATEWAY ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
+switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
+kubectl apply -n istio-system -f "${SCRIPT_DIR}/../istio-gateway.yaml"
+
 if [ "${CROSSNETWORK_GATEWAY_REQUIRED}" == "true" ]; then
   echo "==== CREATE CROSSNETWORK GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
   switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
