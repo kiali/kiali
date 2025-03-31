@@ -1,15 +1,17 @@
 import * as React from 'react';
+import { kialiStyle } from 'styles/StyleUtils';
 import { Node, NodeModel } from '@patternfly/react-topology';
 import {
   TargetPanelCommonProps,
   nodeStyle,
   renderNodeHeader,
   shouldRefreshData,
+  summaryTitle,
   targetBodyStyle,
   targetPanelHR,
   targetPanelStyle
 } from './TargetPanelCommon';
-import { Title, TitleSizes } from '@patternfly/react-core';
+import { Popover, Tab, TabAction, Title, TitleSizes } from '@patternfly/react-core';
 import { serverConfig } from 'config';
 import { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
 import { DirectionType } from 'pages/Overview/OverviewToolbar';
@@ -29,12 +31,14 @@ import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
 import { t } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
 import { TargetPanelEditor } from './TargetPanelEditor';
-import { load } from 'js-yaml';
 import { CertsInfo } from 'types/CertsInfo';
 import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
 import { TargetPanelControlPlaneMetrics } from './TargetPanelControlPlaneMetrics';
 import { TargetPanelControlPlaneStatus } from './TargetPanelControlPlaneStatus';
-import { ControlPlane, IstiodNodeData, NodeTarget } from 'types/Mesh';
+import { ConfigSource, ControlPlane, IstiodNodeData, NodeTarget } from 'types/Mesh';
+import { SimpleTabs } from 'components/Tab/SimpleTabs';
+import { HelpIcon } from '@patternfly/react-icons';
+import { OutboundTrafficPolicy } from 'types/IstioObjects';
 
 type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
   meshStatus: string;
@@ -73,6 +77,42 @@ export const isRemoteCluster = (annotations?: { [key: string]: string }): boolea
 
 // TODO: Should these remain fixed values?
 const direction: DirectionType = 'outbound';
+
+const helpPopover = (
+  header: string,
+  configDescription: React.ReactNode,
+  popoverRef: React.RefObject<any>
+): React.ReactElement => (
+  <Popover headerContent={<div>{header}</div>} bodyContent={<div>{configDescription}</div>} triggerRef={popoverRef} />
+);
+
+// This centers the info icon and the text together.
+const tabStyle = kialiStyle({
+  $nest: {
+    '& > ul > li': {
+      justifyContent: 'center'
+    }
+  }
+});
+
+const configMapDescription = (configSource?: ConfigSource): React.ReactElement => (
+  <div>
+    ConfigMap
+    <div style={{ paddingLeft: '1em' }}>
+      <b> Name:</b> {configSource?.name}
+      <br />
+      <b> Namespace:</b> {configSource?.namespace}
+      <br />
+      <b> Cluster:</b> {configSource?.cluster}
+    </div>
+  </div>
+);
+
+interface tabInfo {
+  config?: ConfigSource;
+  configDescription: React.ReactNode;
+  title: string;
+}
 
 export class TargetPanelControlPlane extends React.Component<
   TargetPanelControlPlaneProps,
@@ -113,18 +153,6 @@ export class TargetPanelControlPlane extends React.Component<
     this.promises.cancelAll();
   }
 
-  configMapToJson(configMap: Map<string, string>): unknown {
-    let cm = {};
-
-    if (configMap) {
-      for (const [key, value] of Object.entries(configMap)) {
-        cm[key] = load(value);
-      }
-    }
-
-    return cm;
-  }
-
   render(): React.ReactNode {
     if (this.state.loading || !this.state.nsInfo) {
       return this.getLoading();
@@ -134,7 +162,31 @@ export class TargetPanelControlPlane extends React.Component<
     const data = this.state.controlPlaneNode?.getData()!;
 
     const controlPlane: ControlPlane = data.infraData;
-    const configMapJson = controlPlane.config.configMap ? this.configMapToJson(controlPlane.config.configMap) : '';
+
+    const tabs: tabInfo[] = [
+      {
+        title: 'effective',
+        config: controlPlane.config.effectiveConfig,
+        configDescription:
+          'The effective config is the combination of the standard and shared configmaps. This is the configuration that the Control Plane uses.'
+      },
+      {
+        title: 'standard',
+        config: controlPlane.config.standardConfig,
+        configDescription:
+          'The standard mesh configmap for the Control Plane. Takes precedence over the shared mesh configmap.'
+      },
+      {
+        title: 'shared',
+        config: controlPlane.config.sharedConfig,
+        configDescription:
+          'The shared mesh configmap. Comes from the SHARED_MESH_CONFIG environment variable on the istiod. The Control Plane merges this with the standard mesh configmap. Configuration in the standard configmap takes precedence over the shared.'
+      }
+    ];
+
+    // This is defaulted to ALLOW_ANY inside istio but the backend only shows what is explicitly
+    // on the configmap but in this case the frontend wants to display the default.
+    const defaultOutboundTrafficPolicy: OutboundTrafficPolicy = { mode: 'ALLOW_ANY' };
 
     return (
       <div
@@ -143,7 +195,6 @@ export class TargetPanelControlPlane extends React.Component<
         className={classes(panelStyle, targetPanelStyle)}
       >
         <div className={panelHeadingStyle}>{renderNodeHeader(data, {})}</div>
-
         <div className={targetBodyStyle}>
           {controlPlane.tag && <div>{t('Tag: {{tag}}', { tag: controlPlane.tag.name })}</div>}
 
@@ -153,7 +204,9 @@ export class TargetPanelControlPlane extends React.Component<
 
           <TargetPanelControlPlaneStatus
             controlPlaneMetrics={this.state.controlPlaneMetrics}
-            outboundTrafficPolicy={controlPlane.config.outboundTrafficPolicy}
+            outboundTrafficPolicy={
+              controlPlane.config.effectiveConfig?.configMap.mesh.outboundTrafficPolicy || defaultOutboundTrafficPolicy
+            }
           />
 
           <TLSInfo version={this.props.minTLS} />
@@ -170,7 +223,46 @@ export class TargetPanelControlPlane extends React.Component<
           )}
 
           {targetPanelHR}
-          <TargetPanelEditor configData={configMapJson} targetName={data.infraName}></TargetPanelEditor>
+          <div className={summaryTitle}>Configuration</div>
+          {controlPlane.config.standardConfig && controlPlane.config.sharedConfig ? (
+            <SimpleTabs className={tabStyle} id="mesh-configs" defaultTab={0}>
+              {tabs.map((tabInfo, index) => {
+                const ref = React.createRef<HTMLElement>();
+                return (
+                  <Tab
+                    data-test={`config-tab-${tabInfo.title}`}
+                    key={index}
+                    style={{ gap: '0px', flex: '0' }}
+                    title={tabInfo.title}
+                    eventKey={index}
+                    actions={
+                      <>
+                        <TabAction aria-label={`Help action for ${tabInfo.title}`} ref={ref}>
+                          <HelpIcon />
+                        </TabAction>
+                        {helpPopover(tabInfo.title, tabInfo.configDescription, ref)}
+                      </>
+                    }
+                  >
+                    <div data-test={`${tabInfo.title}-config-editor`} style={{ paddingTop: '1em' }}>
+                      <TargetPanelEditor
+                        configData={tabInfo.config?.configMap}
+                        includeTitle={false}
+                        targetName={data.infraName}
+                      ></TargetPanelEditor>
+                      {tabInfo.title !== 'effective' && configMapDescription(tabInfo.config)}
+                    </div>
+                  </Tab>
+                );
+              })}
+            </SimpleTabs>
+          ) : (
+            <TargetPanelEditor
+              configData={controlPlane.config.effectiveConfig?.configMap}
+              includeTitle={false}
+              targetName={data.infraName}
+            ></TargetPanelEditor>
+          )}
 
           {data.infraData.config.certificates && targetPanelHR}
           {data.infraData.config.certificates && (

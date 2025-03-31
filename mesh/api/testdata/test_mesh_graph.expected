@@ -381,10 +381,6 @@
               "accessible": true
             },
             "config": {
-              "configMap": {
-                "mesh": "accessLogFile: /dev/stdout\nenableAutoMtls: true\nrootNamespace: istio-system\ntrustDomain: cluster.local\n"
-              },
-              "network": "kialiNetwork",
               "certificates": [
                 {
                   "dnsNames": null,
@@ -397,22 +393,30 @@
                   "cluster": ""
                 }
               ],
-              "defaultConfig": {
-                "MeshId": ""
+              "effectiveConfig": {
+                "configMap": {
+                  "mesh": {
+                    "accessLogFile": "/dev/stdout",
+                    "enableAutoMtls": true,
+                    "trustDomain": "cluster.local",
+                    "rootNamespace": "istio-system"
+                  }
+                }
               },
-              "DefaultDestinationRuleExportTo": null,
-              "DefaultServiceExportTo": null,
-              "DefaultVirtualServiceExportTo": null,
-              "DisableMixerHttpReports": false,
-              "DiscoverySelectors": null,
-              "EnableAutoMtls": true,
-              "MeshMTLS": {
-                "MinProtocolVersion": ""
-              },
-              "outboundTrafficPolicy": {
-                "mode": "ALLOW_ANY"
-              },
-              "TrustDomain": "cluster.local"
+              "network": "kialiNetwork",
+              "standardConfig": {
+              "cluster": "cluster-primary",
+                "configMap": {
+                  "mesh": {
+                    "accessLogFile": "/dev/stdout",
+                    "enableAutoMtls": true,
+                    "trustDomain": "cluster.local",
+                    "rootNamespace": "istio-system"
+                  }
+                },
+                "name": "istio",
+                "namespace": "istio-system"
+              }
             },
             "externalControlPlane": false,
             "id": "cluster-primary",

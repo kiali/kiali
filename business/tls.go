@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 
+	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
@@ -87,19 +88,20 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, cluster string, re
 	mtlsStatus := mtls.MtlsStatus{
 		PeerAuthentications: pas,
 		DestinationRules:    drs,
-		AutoMtlsEnabled:     controlPlane.Config.GetEnableAutoMtls(),
+		AutoMtlsEnabled:     controlPlane.MeshConfig.EnableAutoMtls.Value,
 		AllowPermissive:     false,
 	}
 
-	minTLS := controlPlane.Config.MeshMTLS.MinProtocolVersion
-	if minTLS == "" {
-		minTLS = "N/A"
+	// The default is TLSV1_2 unless it's explicitly set to TLSV1_3 so we can ignore AUTO.
+	minTLS := istiov1alpha1.MeshConfig_TLSConfig_TLSV1_2
+	if controlPlane.MeshConfig.MeshMTLS.MinProtocolVersion == istiov1alpha1.MeshConfig_TLSConfig_TLSV1_3 {
+		minTLS = istiov1alpha1.MeshConfig_TLSConfig_TLSV1_3
 	}
 
 	return models.MTLSStatus{
 		Status:          mtlsStatus.MeshMtlsStatus().OverallStatus,
 		AutoMTLSEnabled: mtlsStatus.AutoMtlsEnabled,
-		MinTLS:          minTLS,
+		MinTLS:          minTLS.String(),
 	}, nil
 }
 
@@ -218,5 +220,5 @@ func (in *TLSService) hasAutoMTLSEnabled(cluster string, namespace *models.Names
 		return true
 	}
 
-	return mesh.ControlPlanes[idx].Config.GetEnableAutoMtls()
+	return mesh.ControlPlanes[idx].MeshConfig.EnableAutoMtls.Value
 }

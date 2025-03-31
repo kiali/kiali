@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Grid, GridItem } from '@patternfly/react-core';
 import { CertsInfo } from 'types/CertsInfo';
+import { summaryTitle } from 'pages/Mesh/target/TargetPanelCommon';
 
 type IstioCertsInfoProps = {
   certificates: CertsInfo[];
@@ -46,7 +47,7 @@ const IstioCertsInfoComponent: React.FC<IstioCertsInfoProps> = (props: IstioCert
 
   return (
     <div data-test="control-plane-certificate">
-      <p style={{ marginBottom: '5px' }}>Certificates</p>
+      <div className={summaryTitle}>Certificates</div>
       <ul>
         {props.certificates.map((certInfo, index) => (
           <li key={index} style={{ marginBottom: '15px' }}>

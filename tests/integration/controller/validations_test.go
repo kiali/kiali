@@ -49,7 +49,10 @@ var _ = Describe("Validations controller", Ordered, func() {
 
 			kialiCache.SetMesh(
 				&models.Mesh{
-					ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}}},
+					ControlPlanes: []models.ControlPlane{{
+						MeshConfig: models.NewMeshConfig(),
+						Cluster:    &models.KubeCluster{IsKialiHome: true},
+					}},
 				},
 			)
 

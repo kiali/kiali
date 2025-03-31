@@ -10,11 +10,13 @@ import (
 
 	"golang.org/x/exp/maps"
 
+	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/config"
@@ -36,6 +38,7 @@ const (
 	istiodClusterIDEnvKey                 = "CLUSTER_ID"
 	istiodExternalEnvKey                  = "EXTERNAL_ISTIOD"
 	istiodScopeGatewayEnvKey              = "PILOT_SCOPE_GATEWAY_TO_NAMESPACE"
+	istiodSharedMeshConfigEnvKey          = "SHARED_MESH_CONFIG"
 	baseIstioConfigMapName                = "istio"                  // As of 1.19 this is hardcoded in the helm charts.
 	baseIstioSidecarInjectorConfigMapName = "istio-sidecar-injector" // As of 1.19 this is hardcoded in the helm charts.
 	certificatesConfigMapName             = "istio-ca-root-cert"
@@ -45,28 +48,36 @@ const (
 // 3 seconds is somewhat arbitrary but mesh discovery expires after 20s so it needs to be less than that.
 var getVersionTimeout = time.Second * 3
 
-func parseIstioConfigMap(istioConfig *corev1.ConfigMap) (*models.IstioMeshConfig, error) {
-	meshConfig := &models.IstioMeshConfig{}
-
+func parseIstioConfigMap(istioConfig *corev1.ConfigMap, into *models.MeshConfigMap) error {
 	meshConfigYaml, ok := istioConfig.Data["mesh"]
 	if !ok {
 		errMsg := "parseIstioConfigMap: Cannot find Istio mesh configuration [%v]"
 		log.Warningf(errMsg, istioConfig)
-		return nil, fmt.Errorf(errMsg, istioConfig)
+		return fmt.Errorf(errMsg, istioConfig)
 	}
 
-	if err := k8syaml.Unmarshal([]byte(meshConfigYaml), meshConfig); err != nil {
+	if into.Mesh == nil {
+		into.Mesh = &models.MeshConfig{MeshConfig: &istiov1alpha1.MeshConfig{}}
+	}
+	if err := k8syaml.Unmarshal([]byte(meshConfigYaml), into.Mesh); err != nil {
 		log.Warningf("parseIstioConfigMap: Cannot read Istio mesh configuration.")
-		return nil, err
+		return err
 	}
 
-	// Set some defaults if they are not set.
-	// TODO: Ideally we'd just display the raw yaml.
-	if meshConfig.OutboundTrafficPolicy.Mode == "" {
-		meshConfig.OutboundTrafficPolicy.Mode = "ALLOW_ANY"
+	meshNetworksYAML, ok := istioConfig.Data["meshNetworks"]
+	if !ok {
+		log.Debugf("parseIstioConfigMap: Cannot find Istio mesh networks [%v]", istioConfig)
+	} else {
+		if into.MeshNetworks == nil {
+			into.MeshNetworks = &istiov1alpha1.MeshNetworks{}
+		}
+		if err := k8syaml.Unmarshal([]byte(meshNetworksYAML), into.MeshNetworks); err != nil {
+			log.Warningf("parseIstioConfigMap: Cannot read Istio mesh configuration.")
+			return err
+		}
 	}
 
-	return meshConfig, nil
+	return nil
 }
 
 func parseIstioControlPlaneCertificate(certConfigMap *corev1.ConfigMap) models.Certificate {
@@ -76,8 +87,8 @@ func parseIstioControlPlaneCertificate(certConfigMap *corev1.ConfigMap) models.C
 	return cert
 }
 
-// gets the mesh configuration for a controlplane from the istio configmap.
-func (in *Discovery) getControlPlaneConfiguration(kubeCache ctrlclient.Reader, controlPlane *models.ControlPlane) (*models.ControlPlaneConfiguration, error) {
+// sets the mesh configuration for a controlplane from the istio configmap(s).
+func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlPlane *models.ControlPlane) error {
 	var configMapName string
 	// If the config map name is explicitly set we should always use that
 	// until the config option is removed.
@@ -87,31 +98,113 @@ func (in *Discovery) getControlPlaneConfiguration(kubeCache ctrlclient.Reader, c
 		configMapName = istioConfigMapName(controlPlane.Revision)
 	}
 
-	configMap := &corev1.ConfigMap{}
-	err := kubeCache.Get(context.Background(), ctrlclient.ObjectKey{Name: configMapName, Namespace: controlPlane.IstiodNamespace}, configMap)
-	if err != nil {
-		return nil, err
+	controlPlaneConf := &models.ControlPlaneConfiguration{
+		Network: in.resolveNetwork(kubeCache, controlPlane),
+		StandardConfig: &models.MeshConfigSource{
+			Cluster:   controlPlane.Cluster.Name,
+			ConfigMap: &models.MeshConfigMap{},
+			Name:      configMapName,
+			Namespace: controlPlane.IstiodNamespace,
+		},
+		EffectiveConfig: &models.MeshConfigSource{ConfigMap: &models.MeshConfigMap{}},
 	}
 
-	istioConfigMapInfo, err := parseIstioConfigMap(configMap)
-	if err != nil {
-		return nil, err
+	// First take the shared user configmap if the env var is set.
+	// Then unmarshal the standard configmap over the shared user
+	// config since the standard one takes precedence. When you unmarshal
+	// one config into another, you override the values that are present
+	// and the ones that aren't present remain unchanged.
+	// TODO: Skipping external controlplane for now (ID != cluster).
+	// For this to work with external controlplane,
+	// we would need to pass in the controlplane.ClusterID kubecache and to merge
+	// with the local /etc/istio/config file.
+	if controlPlane.SharedMeshConfig != "" && controlPlane.ID == controlPlane.Cluster.Name {
+		log.Tracef("Shared mesh config '%s' is present", controlPlane.SharedMeshConfig)
+		if err := setSharedConfig(controlPlane, controlPlaneConf, kubeCache); err != nil {
+			log.Errorf("There was a problem with the Shared Mesh ConfigMap. istio configuration may not be accurate: %s", err)
+		}
+	}
+
+	standardConfigMap := &corev1.ConfigMap{}
+	if err := kubeCache.Get(
+		context.Background(),
+		ctrlclient.ObjectKey{Name: configMapName, Namespace: controlPlane.IstiodNamespace},
+		standardConfigMap,
+	); err != nil {
+		return err
+	}
+
+	if err := parseIstioConfigMap(standardConfigMap, controlPlaneConf.StandardConfig.ConfigMap); err != nil {
+		return err
+	}
+
+	// Unmarshal again into effective.
+	if err := parseIstioConfigMap(standardConfigMap, controlPlaneConf.EffectiveConfig.ConfigMap); err != nil {
+		return err
+	}
+
+	// The rest of the configs are all shown to the user and don't have defaults applied. Internally
+	// in the Kiali backend we want the defaults applied and we don't care about MeshNetworks so we
+	// use a separate controlPlane.MeshConfig field rather than using EffectiveConfig. It's a lot of
+	// unmarshaling though...
+	if err := mergeMeshConfigs(controlPlaneConf.EffectiveConfig.ConfigMap.Mesh, controlPlane.MeshConfig); err != nil {
+		return err
 	}
 
 	certConfigMap := &corev1.ConfigMap{}
-	err = kubeCache.Get(context.Background(), ctrlclient.ObjectKey{Name: certificatesConfigMapName, Namespace: controlPlane.IstiodNamespace}, certConfigMap)
-	if err != nil {
+	if err := kubeCache.Get(
+		context.Background(),
+		ctrlclient.ObjectKey{Name: certificatesConfigMapName, Namespace: controlPlane.IstiodNamespace},
+		certConfigMap,
+	); err != nil {
 		log.Warningf("Unable to get certificate configmap [%s/%s]. Err: %s", controlPlane.IstiodNamespace, certificatesConfigMapName, err)
 	} else {
 		cert := parseIstioControlPlaneCertificate(certConfigMap)
-		istioConfigMapInfo.Certificates = append(istioConfigMapInfo.Certificates, cert)
+		controlPlaneConf.Certificates = append(controlPlaneConf.Certificates, cert)
 	}
 
-	return &models.ControlPlaneConfiguration{
-		IstioMeshConfig: *istioConfigMapInfo,
-		Network:         in.resolveNetwork(kubeCache, controlPlane),
-		ConfigMap:       configMap.Data,
-	}, nil
+	controlPlane.Config = *controlPlaneConf
+
+	return nil
+}
+
+func setSharedConfig(controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, kubeCache client.Reader) error {
+	sharedConfig := &models.MeshConfigSource{
+		Cluster:   controlPlane.Cluster.Name,
+		ConfigMap: &models.MeshConfigMap{},
+		Name:      controlPlane.SharedMeshConfig,
+		Namespace: controlPlane.IstiodNamespace,
+	}
+
+	sharedUserConfigMap := &corev1.ConfigMap{}
+	if err := kubeCache.Get(
+		context.Background(),
+		ctrlclient.ObjectKey{Name: controlPlane.SharedMeshConfig, Namespace: controlPlane.IstiodNamespace},
+		sharedUserConfigMap,
+	); err != nil {
+		return fmt.Errorf("unable to get Shared User ConfigMap %s in namespace %s on cluster %s: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
+	}
+
+	if err := parseIstioConfigMap(sharedUserConfigMap, sharedConfig.ConfigMap); err != nil {
+		return fmt.Errorf("unable to parse Shared User ConfigMap %s in namespace %s on cluster %s: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
+	}
+
+	// Unmarshal again into effective.
+	if err := parseIstioConfigMap(sharedUserConfigMap, controlPlaneConf.EffectiveConfig.ConfigMap); err != nil {
+		return fmt.Errorf("unable to parse Shared User ConfigMap %s in namespace %s on cluster %s into EffectiveConfig: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
+	}
+
+	controlPlaneConf.SharedConfig = sharedConfig
+	return nil
+}
+
+func mergeMeshConfigs(mesh *models.MeshConfig, into *models.MeshConfig) error {
+	b, err := mesh.MarshalJSON()
+	if err != nil {
+		return err
+	}
+
+	return into.UnmarshalJSON(b)
 }
 
 func revisionedConfigMapName(base string, revision string) string {
@@ -291,19 +384,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 
 		for _, istiod := range istiods {
 			log.Debugf("Found controlplane [%s/%s] on cluster [%s].", istiod.Name, istiod.Namespace, cluster.Name)
-			controlPlane := models.ControlPlane{
-				Cluster:         &cluster,
-				Labels:          istiod.Labels,
-				IstiodName:      istiod.Name,
-				IstiodNamespace: istiod.Namespace,
-				Revision:        istiod.Labels[config.IstioRevisionLabel],
-			}
-
-			controlPlaneConfig, err := in.getControlPlaneConfiguration(kubeCache, &controlPlane)
-			if err != nil {
-				return nil, err
-			}
-			controlPlane.Config = *controlPlaneConfig
+			controlPlane := newControlPlane(istiod, &cluster)
 
 			if containers := istiod.Spec.Template.Spec.Containers; len(containers) > 0 {
 				for _, env := range istiod.Spec.Template.Spec.Containers[0].Env {
@@ -311,9 +392,11 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 					case kubernetes.EnvVarIsTrue(istiodExternalEnvKey, env):
 						controlPlane.ManagesExternal = true
 					case kubernetes.EnvVarIsTrue(istiodScopeGatewayEnvKey, env):
-						controlPlane.Config.IsGatewayToNamespace = true
+						controlPlane.IsGatewayToNamespace = true
 					case env.Name == istiodClusterIDEnvKey:
 						controlPlane.ID = env.Value
+					case env.Name == istiodSharedMeshConfigEnvKey:
+						controlPlane.SharedMeshConfig = env.Value
 					}
 				}
 				controlPlane.Resources = containers[0].Resources
@@ -329,6 +412,14 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 					}
 					controlPlane.Thresholds.CPU = cpuLimit.AsApproximateFloat64()
 				}
+			}
+
+			// Need to get control plane config after reading env vars since reading config
+			// relies on reading some env vars.
+			if err := in.setControlPlaneConfig(kubeCache, &controlPlane); err != nil {
+				// If this errors the configuration will likely be wrong but Kiali will fallback
+				// to the istio defaults for the mesh config values it relies on.
+				log.Warningf("Unable to set control plane configuration: %s", err)
 			}
 
 			// If the cluster id that is set on the controlplane matches this cluster's id then it manages the cluster it is deployed on.
@@ -564,14 +655,45 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 
 	// Check if there are discovery selectors set and filter namespaces if there are.
 	for _, cp := range controlPlanes {
-		if cp.Config.DiscoverySelectors != nil {
-			cp.ManagedNamespaces = FilterNamespacesWithDiscoverySelectors(cp.ManagedNamespaces, cp.Config.DiscoverySelectors)
+		if cp.MeshConfig.DiscoverySelectors != nil {
+			cp.ManagedNamespaces = FilterNamespacesWithDiscoverySelectors(cp.ManagedNamespaces, convertToDiscoverySelectors(cp.MeshConfig.DiscoverySelectors))
 		}
 	}
 
 	in.kialiCache.SetMesh(mesh)
 
 	return mesh, nil
+}
+
+func newControlPlane(istiod appsv1.Deployment, cluster *models.KubeCluster) models.ControlPlane {
+	return models.ControlPlane{
+		Cluster:         cluster,
+		Labels:          istiod.Labels,
+		MeshConfig:      models.NewMeshConfig(),
+		IstiodName:      istiod.Name,
+		IstiodNamespace: istiod.Namespace,
+		Revision:        istiod.Labels[config.IstioRevisionLabel],
+	}
+}
+
+func convertToDiscoverySelectors(istioSelectors []*istiov1alpha1.LabelSelector) config.DiscoverySelectorsType {
+	var ds config.DiscoverySelectorsType
+	for _, s := range istioSelectors {
+		var reqs []metav1.LabelSelectorRequirement
+		for _, exp := range s.MatchExpressions {
+			reqs = append(reqs, metav1.LabelSelectorRequirement{
+				Key:      exp.Key,
+				Operator: metav1.LabelSelectorOperator(exp.Operator),
+				Values:   exp.Values,
+			})
+		}
+		labelSelector := config.DiscoverySelectorType(metav1.LabelSelector{
+			MatchExpressions: reqs,
+			MatchLabels:      s.MatchLabels,
+		})
+		ds = append(ds, &labelSelector)
+	}
+	return ds
 }
 
 func (in *Discovery) setTags(ctx context.Context, controlPlanes []models.ControlPlane) error {

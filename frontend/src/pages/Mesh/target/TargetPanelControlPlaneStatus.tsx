@@ -1,10 +1,8 @@
 import { Tooltip, TooltipPosition, Label } from '@patternfly/react-core';
-import { KialiIcon } from 'config/KialiIcon';
 import * as React from 'react';
 import { OutboundTrafficPolicy } from 'types/IstioObjects';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { ControlPlaneMetricsMap } from 'types/Metrics';
-import { infoStyle } from 'styles/IconStyle';
 
 type Props = {
   controlPlaneMetrics?: ControlPlaneMetricsMap;
@@ -39,7 +37,6 @@ export const TargetPanelControlPlaneStatus: React.FC<Props> = (props: Props) => 
           >
             <Label isCompact color="blue">
               {props.outboundTrafficPolicy.mode}
-              <KialiIcon.Info className={infoStyle} />
             </Label>
           </Tooltip>
         </div>
@@ -57,7 +54,6 @@ export const TargetPanelControlPlaneStatus: React.FC<Props> = (props: Props) => 
         >
           <Label isCompact color="blue">
             {proxySyncTimeStr}
-            <KialiIcon.Info className={infoStyle} />
           </Label>
         </Tooltip>
       </div>

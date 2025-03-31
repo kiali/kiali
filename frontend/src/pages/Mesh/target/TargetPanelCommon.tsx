@@ -58,6 +58,13 @@ const hrStyle = kialiStyle({
   margin: '0.75rem 0'
 });
 
+export const summaryTitle = kialiStyle({
+  fontWeight: 'bolder',
+  marginTop: '0.25rem',
+  marginBottom: '0.25rem',
+  textAlign: 'left'
+});
+
 export const targetPanelHR = <hr className={hrStyle} />;
 export const targetPanelUnderlineHR = <hr className={hrStyle} style={{ marginTop: 0 }} />;
 

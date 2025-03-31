@@ -70,10 +70,10 @@ func MeshGraph(
 		// Assuming that all controlplanes are part of the same mesh,
 		// just use the first one.
 		if len(meshInfo.ControlPlanes) > 0 {
-			meshId := meshInfo.ControlPlanes[0].Config.DefaultConfig.MeshId
+			meshId := meshInfo.ControlPlanes[0].MeshConfig.DefaultConfig.MeshId
 			if meshId == "" {
 				// MeshId defaults to trust domain in istio if not set.
-				meshId = meshInfo.ControlPlanes[0].Config.TrustDomain
+				meshId = meshInfo.ControlPlanes[0].MeshConfig.TrustDomain
 			}
 			o.MeshName = meshId
 		}

@@ -6,6 +6,7 @@ import (
 
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	api_security_v1 "istio.io/api/security/v1"
 	api_security_v1beta1 "istio.io/api/security/v1beta1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
@@ -19,10 +20,19 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/util"
 )
 
-var injectionEnabledLabel = map[string]string{IstioInjectionLabel: "enabled"}
+func meshConfig(automTLS bool) *models.MeshConfig {
+	mesh := models.NewMeshConfig()
+	mesh.EnableAutoMtls = wrapperspb.Bool(automTLS)
+	return mesh
+}
+
+var (
+	injectionEnabledLabel          = map[string]string{IstioInjectionLabel: "enabled"}
+	meshConfigWithAutomTLSDisabled = meshConfig(false)
+	meshConfigWithAutomTLSEnabled  = meshConfig(true)
+)
 
 func TestMeshStatusEnabled(t *testing.T) {
 	assert := assert.New(t)
@@ -53,11 +63,7 @@ func TestMeshStatusEnabled(t *testing.T) {
 				IstiodNamespace: conf.IstioNamespace,
 				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
-				Config: models.ControlPlaneConfiguration{
-					IstioMeshConfig: models.IstioMeshConfig{
-						EnableAutoMtls: util.AsPtr(false),
-					},
-				},
+				MeshConfig:      meshConfigWithAutomTLSDisabled,
 			}},
 		},
 	}
@@ -99,11 +105,7 @@ func TestMeshStatusEnabledAutoMtls(t *testing.T) {
 				IstiodNamespace: conf.IstioNamespace,
 				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
-				Config: models.ControlPlaneConfiguration{
-					IstioMeshConfig: models.IstioMeshConfig{
-						EnableAutoMtls: util.AsPtr(true),
-					},
-				},
+				MeshConfig:      meshConfigWithAutomTLSEnabled,
 			}},
 		},
 	}
@@ -148,11 +150,7 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 				IstiodNamespace: conf.IstioNamespace,
 				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
-				Config: models.ControlPlaneConfiguration{
-					IstioMeshConfig: models.IstioMeshConfig{
-						EnableAutoMtls: util.AsPtr(false),
-					},
-				},
+				MeshConfig:      meshConfigWithAutomTLSDisabled,
 			}},
 		},
 	}
@@ -193,11 +191,7 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 				IstiodNamespace: conf.IstioNamespace,
 				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
-				Config: models.ControlPlaneConfiguration{
-					IstioMeshConfig: models.IstioMeshConfig{
-						EnableAutoMtls: util.AsPtr(false),
-					},
-				},
+				MeshConfig:      meshConfigWithAutomTLSDisabled,
 			}},
 		},
 	}
@@ -241,11 +235,7 @@ func TestMeshStatusDisabled(t *testing.T) {
 				IstiodNamespace: conf.IstioNamespace,
 				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
-				Config: models.ControlPlaneConfiguration{
-					IstioMeshConfig: models.IstioMeshConfig{
-						EnableAutoMtls: util.AsPtr(false),
-					},
-				},
+				MeshConfig:      meshConfigWithAutomTLSDisabled,
 			}},
 		},
 	}
@@ -276,11 +266,7 @@ func TestMeshStatusNotEnabledAutoMtls(t *testing.T) {
 				IstiodNamespace: conf.IstioNamespace,
 				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
-				Config: models.ControlPlaneConfiguration{
-					IstioMeshConfig: models.IstioMeshConfig{
-						EnableAutoMtls: util.AsPtr(true),
-					},
-				},
+				MeshConfig:      meshConfigWithAutomTLSEnabled,
 			}},
 		},
 	}
@@ -420,11 +406,7 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 				IstiodNamespace: conf.IstioNamespace,
 				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
-				Config: models.ControlPlaneConfiguration{
-					IstioMeshConfig: models.IstioMeshConfig{
-						EnableAutoMtls: util.AsPtr(false),
-					},
-				},
+				MeshConfig:      meshConfigWithAutomTLSDisabled,
 			}},
 		},
 	}
@@ -471,11 +453,7 @@ func testNamespaceScenario(exStatus string, drs []*networking_v1.DestinationRule
 				IstiodNamespace: conf.IstioNamespace,
 				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
-				Config: models.ControlPlaneConfiguration{
-					IstioMeshConfig: models.IstioMeshConfig{
-						EnableAutoMtls: &autoMtls,
-					},
-				},
+				MeshConfig:      meshConfig(autoMtls),
 			}},
 		},
 	}

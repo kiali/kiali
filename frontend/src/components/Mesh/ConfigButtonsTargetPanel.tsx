@@ -6,10 +6,11 @@ import { KialiIcon } from 'config/KialiIcon';
 import CopyToClipboard from 'react-copy-to-clipboard';
 import { download } from '../../utils/Common';
 
-const configTitleStyle = kialiStyle({
-  display: 'flex',
-  justifyContent: 'space-between'
-});
+const configTitleStyle = (includeTitle?: boolean): string =>
+  kialiStyle({
+    display: 'flex',
+    justifyContent: includeTitle ? 'space-between' : 'flex-end'
+  });
 
 const iconStyle = kialiStyle({
   marginLeft: '0.25rem'
@@ -21,21 +22,23 @@ const downloadButtonStyle = kialiStyle({
 
 interface ConfigButtonsTargetPanelProps {
   copyText: string;
+  includeTitle?: boolean;
   targetName: string;
 }
 
-export const ConfigButtonsTargetPanel: React.FC<ConfigButtonsTargetPanelProps> = (
-  props: ConfigButtonsTargetPanelProps
-) => {
+export const ConfigButtonsTargetPanel: React.FC<ConfigButtonsTargetPanelProps> = ({
+  copyText,
+  includeTitle = true,
+  targetName
+}) => {
   const [copied, setCopied] = React.useState<boolean>(false);
 
   const { t } = useKialiTranslation();
-  const copyText = props.copyText;
 
   return (
     <>
-      <div className={configTitleStyle}>
-        <span>{t('Configuration:')}</span>
+      <div className={configTitleStyle(includeTitle)}>
+        {includeTitle && <span>{t('Configuration:')}</span>}
         <div>
           <Tooltip
             content={<>{t(copied ? 'Copied' : 'Copy configuration')}</>}
@@ -55,7 +58,7 @@ export const ConfigButtonsTargetPanel: React.FC<ConfigButtonsTargetPanelProps> =
               isInline
               aria-label={t('Download')}
               className={downloadButtonStyle}
-              onClick={() => download(copyText, `configuration_${props.targetName}.yaml`)}
+              onClick={() => download(copyText, `configuration_${targetName}.yaml`)}
             >
               <KialiIcon.Download />
               <span className={iconStyle}>{t('Download')}</span>

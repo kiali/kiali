@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	core_v1 "k8s.io/api/core/v1"
@@ -89,9 +91,9 @@ func testPerfScenario(exStatus string, namespaces []core_v1.Namespace, drs []*ne
 				IstiodNamespace: conf.IstioNamespace,
 				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
-				Config: models.ControlPlaneConfiguration{
-					IstioMeshConfig: models.IstioMeshConfig{
-						EnableAutoMtls: &autoMtls,
+				MeshConfig: &models.MeshConfig{
+					MeshConfig: &istiov1alpha1.MeshConfig{
+						EnableAutoMtls: wrapperspb.Bool(autoMtls),
 					},
 				},
 			}},

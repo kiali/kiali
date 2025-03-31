@@ -3,6 +3,8 @@ package business
 import (
 	"context"
 
+	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
@@ -50,21 +52,23 @@ func (in *MeshService) IsValidCluster(cluster string) bool {
 	return exists
 }
 
-func (in *MeshService) GetMeshConfig() models.IstioMeshConfig {
+// GetMeshConfig returns the home cluster's mesh config.
+// TODO: Remove when validations can read from a specific controlplane.
+func (in *MeshService) GetMeshConfig() *models.MeshConfig {
 	mesh, err := in.discovery.Mesh(context.TODO())
 	if err != nil {
 		log.Errorf("Error getting mesh config: %s", err)
-		return models.IstioMeshConfig{}
+		return &models.MeshConfig{MeshConfig: &istiov1alpha1.MeshConfig{}}
 	}
 
 	// TODO: Multi-primary support
 	for _, controlPlane := range mesh.ControlPlanes {
 		if controlPlane.Cluster.IsKialiHome {
-			return controlPlane.Config.IstioMeshConfig
+			return controlPlane.MeshConfig
 		}
 	}
 
 	// This should not happen
 	log.Warningf("No Kiali Home cluster found while getting mesh config")
-	return models.IstioMeshConfig{}
+	return &models.MeshConfig{MeshConfig: &istiov1alpha1.MeshConfig{}}
 }

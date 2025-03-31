@@ -12,6 +12,7 @@ import { dump } from 'js-yaml';
 
 interface TargetPanelEditorProps {
   configData: unknown;
+  includeTitle?: boolean;
   targetName: string;
 }
 
@@ -56,7 +57,7 @@ export const TargetPanelEditor: React.FC<TargetPanelEditorProps> = (props: Targe
 
   return (
     <>
-      <ConfigButtonsTargetPanel copyText={yaml} targetName={props.targetName} />
+      <ConfigButtonsTargetPanel copyText={yaml} includeTitle={props.includeTitle} targetName={props.targetName} />
 
       <AceEditor
         ref={aceEditorRef}

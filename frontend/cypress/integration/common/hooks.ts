@@ -157,3 +157,39 @@ After({ tags: '@clean-istio-namespace-resources-after' }, () => {
   cy.exec('kubectl -n istio-system delete PeerAuthentication default', { failOnNonZeroExit: false });
   cy.exec('kubectl -n istio-system delete Sidecar default', { failOnNonZeroExit: false });
 });
+
+Before({ tags: '@shared-mesh-config' }, () => {
+  cy.exec('kubectl apply -f cypress/integration/common/data/istio-shared-mesh-configmap.yaml');
+  const patch = '{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": "istio-user"}}}}}';
+  cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`).then(() => {
+    const maxTries = 10;
+    let tries = 0;
+    const doRequest = (): void => {
+      if (tries > maxTries) {
+        throw new Error('Timed out waiting for Kiali to see the Shared Mesh Config');
+      }
+
+      tries++;
+      cy.request('GET', '/api/mesh/graph').then(response => {
+        expect(response.status).to.equal(200);
+        console.log(response.body.elements.nodes.find(node => node.data.infraType === 'istiod'));
+        if (
+          response.body.elements.nodes.find(node => node.data.infraType === 'istiod')?.data?.infraData?.config
+            ?.sharedConfig === undefined
+        ) {
+          cy.log(`Kiali has not seen the Shared Mesh Config yet. Tries: ${tries}. Waiting 3s...`);
+          cy.wait(3000);
+          doRequest();
+        }
+      });
+    };
+
+    doRequest();
+  });
+});
+
+After({ tags: '@shared-mesh-config' }, () => {
+  cy.exec('kubectl delete -f cypress/integration/common/data/istio-shared-mesh-configmap.yaml');
+  const patch = '{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": null}}}}}';
+  cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`);
+});
