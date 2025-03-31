@@ -30,6 +30,8 @@ import (
 //
 // swagger:parameters workloadParams
 type workloadParams struct {
+	// TODO: No need to override Namespace and ClusterName here.
+	// Combine with baseHealthParams.
 	baseHealthParams
 	// The target workload
 	//
@@ -50,6 +52,7 @@ func (p *workloadParams) extract(r *http.Request) error {
 	p.baseExtract(r, vars)
 	p.Namespace = vars["namespace"]
 	p.WorkloadName = vars["workload"]
+	p.ClusterName = clusterNameFromQuery(config.Get(), query)
 
 	var err error
 	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))
