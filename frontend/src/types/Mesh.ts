@@ -181,9 +181,18 @@ export interface Tag {
   name: string;
 }
 
+export interface ConfigSource {
+  cluster?: string;
+  configMap: any;
+  name?: string;
+  namespace?: string;
+}
+
 export interface ControlPlaneConfig {
   certificates?: CertsInfo[];
-  configMap?: any;
+  standardConfig?: ConfigSource;
+  sharedConfig?: ConfigSource;
+  effectiveConfig?: ConfigSource;
   outboundTrafficPolicy?: any;
 }
 

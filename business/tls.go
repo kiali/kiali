@@ -87,11 +87,11 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, cluster string, re
 	mtlsStatus := mtls.MtlsStatus{
 		PeerAuthentications: pas,
 		DestinationRules:    drs,
-		AutoMtlsEnabled:     controlPlane.Config.GetEnableAutoMtls(),
+		AutoMtlsEnabled:     controlPlane.MeshConfig.EnableAutoMtls.Value,
 		AllowPermissive:     false,
 	}
 
-	minTLS := controlPlane.Config.MeshMTLS.MinProtocolVersion
+	minTLS := string(controlPlane.MeshConfig.MeshMTLS.MinProtocolVersion)
 	if minTLS == "" {
 		minTLS = "N/A"
 	}
@@ -218,5 +218,5 @@ func (in *TLSService) hasAutoMTLSEnabled(cluster string, namespace *models.Names
 		return true
 	}
 
-	return mesh.ControlPlanes[idx].Config.GetEnableAutoMtls()
+	return mesh.ControlPlanes[idx].MeshConfig.EnableAutoMtls.Value
 }
