@@ -201,5 +201,4 @@ EOF
 
 # deploy istio-ingressgateway 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
-echo $SCRIPT_DIR
 kubectl apply -n istio-system -f "${SCRIPT_DIR}"/istio-gateway.yaml
