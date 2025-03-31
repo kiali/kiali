@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -14,13 +15,17 @@ import (
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers/authentication"
+	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
@@ -243,11 +248,10 @@ func TestAggregateMetricsWithParams(t *testing.T) {
 }
 
 func TestAggregateMetricsInaccessibleNamespace(t *testing.T) {
-	ts, _ := setupAggregateMetricsEndpoint(t)
-
 	k := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
+	k.OpenShift = true
 
-	business.SetupBusinessLayer(t, &noPrivClient{k}, *config.Get())
+	ts, _ := setupAggregateMetricsEndpointWithClient(t, &noPrivClient{k})
 
 	url := ts.URL + "/api/namespaces/my_namespace/aggregates/my_aggregate/my_aggregate_value/metrics"
 	resp, err := http.Get(url)
@@ -255,7 +259,16 @@ func TestAggregateMetricsInaccessibleNamespace(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	assertExpectedStatusCode(t, http.StatusForbidden, resp)
+}
+
+func assertExpectedStatusCode(t *testing.T, expectedStatusCode int, resp *http.Response) {
+	t.Helper()
+	if expectedStatusCode != resp.StatusCode {
+		body, _ := io.ReadAll(resp.Body)
+		defer resp.Body.Close()
+		assert.Fail(t, fmt.Sprintf("Invalid http status code. Expected: %d\tGot: %d\tBody: %s", expectedStatusCode, resp.StatusCode, body))
+	}
 }
 
 func TestAggregateMetricsBadDirection(t *testing.T) {
@@ -307,7 +320,6 @@ func TestAggregateMetricsBadReporter(t *testing.T) {
 
 func setupAggregateMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
 	conf := config.NewConfig()
-	config.Set(conf)
 	xapi := new(prometheustest.PromAPIMock)
 	k := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
 	k.OpenShift = true
@@ -317,31 +329,70 @@ func setupAggregateMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 	}
 	prom.Inject(xapi)
 
-	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
+
+	handler := WithFakeAuthInfo(conf, AggregateMetrics(conf, cache, discovery, cf, prom))
+
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/metrics", http.HandlerFunc(
-		WithAuthInfo(authInfo, func(w http.ResponseWriter, r *http.Request) {
-			getAggregateMetrics(w, r, func() (*prometheus.Client, error) {
-				return prom, nil
-			})
-		})),
-	)
+	mr.HandleFunc("/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/metrics", handler)
 
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)
 
-	business.SetupBusinessLayer(t, k, *conf)
+	return ts, xapi
+}
+
+func setupAggregateMetricsEndpointWithClient(t *testing.T, k kubernetes.ClientInterface) (*httptest.Server, *prometheustest.PromAPIMock) {
+	conf := config.NewConfig()
+	xapi := new(prometheustest.PromAPIMock)
+	prom, err := prometheus.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	prom.Inject(xapi)
+
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k.(kubernetes.UserClientInterface))
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
+
+	handler := WithFakeAuthInfo(conf, AggregateMetrics(conf, cache, discovery, cf, prom))
+
+	mr := mux.NewRouter()
+	mr.HandleFunc("/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/metrics", handler)
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
 
 	return ts, xapi
 }
 
 func TestPrepareStatsQueriesPartialError(t *testing.T) {
 	assert := assert.New(t)
-	prom := utilSetupMocks(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	xapi := new(prometheustest.PromAPIMock)
+	prom, err := prometheus.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	prom.Inject(xapi)
+
+	k := &nsForbidden{kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("ns1"),
+		kubetest.FakeNamespace("ns2"),
+	), "nsNil"}
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	authInfo := map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}}
+	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
 	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), authInfo))
+	userClients, err := getUserClients(req, cf)
+	require.NoError(err)
+	namespace := business.NewNamespaceService(cache, conf, discovery, cf.GetSAClients(), userClients)
 	w := httptest.NewRecorder()
 	queryTime := time.Date(2020, 10, 22, 0, 0, 0, 0, time.UTC).Unix()
 
@@ -396,14 +447,13 @@ func TestPrepareStatsQueriesPartialError(t *testing.T) {
 		},
 	}
 
-	srv, queries, errs := prepareStatsQueries(w, req, rawQ, prom)
+	queries, errs := prepareStatsQueries(req.Context(), &namespace, rawQ)
 
 	assert.NotNil(errs)
 	errsStr := errs.Strings()
-	assert.Len(errsStr, 1)
-	assert.Equal("namespace 'nsNil': no privileges", errsStr[0])
-	assert.NotNil(srv)
-	assert.Len(queries, 3)
+	require.Len(errsStr, 1)
+	assert.Equal("namespace 'nsNil', cluster: '': no privileges", errsStr[0])
+	require.Len(queries, 3)
 	assert.Equal("ns1", queries[0].Target.Namespace)
 	assert.Equal("3h", queries[0].Interval)
 	assert.Equal("ns1", queries[1].Target.Namespace)
@@ -415,12 +465,21 @@ func TestPrepareStatsQueriesPartialError(t *testing.T) {
 
 func TestPrepareStatsQueriesNoErrorIntervalAdjusted(t *testing.T) {
 	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
 	queryTime := time.Date(2020, 10, 22, 0, 0, 0, 0, time.UTC)
-	prom := utilSetupMocks(t, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns3", CreationTimestamp: meta_v1.NewTime(queryTime.Add(-1 * time.Hour))}})
+	k := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns3", CreationTimestamp: meta_v1.NewTime(queryTime.Add(-1 * time.Hour))}})
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
 	authInfo := map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}}
 	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), authInfo))
+	userClients, err := getUserClients(req, cf)
+	require.NoError(err)
+	namespace := business.NewNamespaceService(cache, conf, discovery, cf.GetSAClients(), userClients)
 	w := httptest.NewRecorder()
 
 	rawQ := []models.MetricsStatsQuery{{
@@ -436,10 +495,9 @@ func TestPrepareStatsQueriesNoErrorIntervalAdjusted(t *testing.T) {
 		RawQueryTime: queryTime.Unix(),
 	}}
 
-	srv, queries, errs := prepareStatsQueries(w, req, rawQ, prom)
+	queries, errs := prepareStatsQueries(req.Context(), &namespace, rawQ)
 
 	assert.Nil(errs)
-	assert.NotNil(srv)
 	assert.Len(queries, 1)
 	assert.Equal("ns3", queries[0].Target.Namespace)
 	assert.Equal("3600s", queries[0].Interval) // 3h adjusted to 1h (3600s) due to namespace creation date
@@ -448,12 +506,20 @@ func TestPrepareStatsQueriesNoErrorIntervalAdjusted(t *testing.T) {
 
 func TestValidateBadRequest(t *testing.T) {
 	assert := assert.New(t)
-	prom := utilSetupMocks(t)
+	require := require.New(t)
+
 	queryTime := time.Date(2020, 10, 22, 0, 0, 0, 0, time.UTC)
+	conf := config.NewConfig()
+	k := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns3", CreationTimestamp: meta_v1.NewTime(queryTime.Add(-1 * time.Hour))}})
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), &api.AuthInfo{Token: "test"}))
-	w := httptest.NewRecorder()
+	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}))
+	userClients, err := getUserClients(req, cf)
+	require.NoError(err)
+	namespace := business.NewNamespaceService(cache, conf, discovery, cf.GetSAClients(), userClients)
 
 	rawQ := []models.MetricsStatsQuery{{
 		Target: models.Target{
@@ -468,7 +534,7 @@ func TestValidateBadRequest(t *testing.T) {
 		RawQueryTime: queryTime.Unix(),
 	}}
 
-	_, _, errs := prepareStatsQueries(w, req, rawQ, prom)
+	_, errs := prepareStatsQueries(req.Context(), &namespace, rawQ)
 
 	assert.NotNil(errs)
 	assert.Contains(errs.Error(), "bad request")
@@ -685,10 +751,9 @@ func TestWorkloadMetricsBadRateFunc(t *testing.T) {
 }
 
 func TestWorkloadMetricsInaccessibleNamespace(t *testing.T) {
-	ts, _ := setupWorkloadMetricsEndpoint(t)
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("ns"),
 		kubetest.FakeNamespace("my_namespace"))
-	business.SetupBusinessLayer(t, &nsForbidden{k8s, "my_namespace"}, *config.Get())
+	ts, _ := setupWorkloadMetricsEndpointWithClient(t, &nsForbidden{k8s, "my_namespace"})
 
 	url := ts.URL + "/api/namespaces/my_namespace/workloads/my_workload/metrics"
 	resp, err := http.Get(url)
@@ -702,7 +767,12 @@ func TestWorkloadMetricsInaccessibleNamespace(t *testing.T) {
 func setupWorkloadMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
-	config.Set(conf)
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("ns"))
+
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
+
 	xapi := new(prometheustest.PromAPIMock)
 	prom, err := prometheus.NewClient()
 	if err != nil {
@@ -710,22 +780,39 @@ func setupWorkloadMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheuste
 	}
 	prom.Inject(xapi)
 
+	handler := WithFakeAuthInfo(conf, WorkloadMetrics(conf, cache, discovery, cf, prom))
+
 	mr := mux.NewRouter()
-	authInfo := map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}}
-	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/metrics", http.HandlerFunc(
-		WithAuthInfo(authInfo, func(w http.ResponseWriter, r *http.Request) {
-			getWorkloadMetrics(w, r, func() (*prometheus.Client, error) {
-				return prom, nil
-			})
-		})),
-	)
+	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/metrics", handler)
 
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)
 
-	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("ns"))
+	return ts, xapi
+}
 
-	business.SetupBusinessLayer(t, k8s, *conf)
+func setupWorkloadMetricsEndpointWithClient(t *testing.T, k8s kubernetes.ClientInterface) (*httptest.Server, *prometheustest.PromAPIMock) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s.(kubernetes.UserClientInterface))
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
+
+	xapi := new(prometheustest.PromAPIMock)
+	prom, err := prometheus.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	prom.Inject(xapi)
+
+	handler := WithFakeAuthInfo(conf, WorkloadMetrics(conf, cache, discovery, cf, prom))
+
+	mr := mux.NewRouter()
+	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/metrics", handler)
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
 
 	return ts, xapi
 }
@@ -838,29 +925,25 @@ func TestNamespaceMetricsInaccessibleNamespace(t *testing.T) {
 }
 
 func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
-	client, xapi := setupMocked(t)
+	conf := config.NewConfig()
+	client, xapi, k8s := setupMocked(t)
 
-	authInfo := map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}}
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
+
+	handler := WithFakeAuthInfo(conf, NamespaceMetrics(conf, cache, discovery, cf, client))
+
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/metrics", http.HandlerFunc(
-		WithAuthInfo(
-			authInfo,
-			NamespaceMetrics(func() (*prometheus.Client, error) { return client, nil }),
-		),
-	))
+	mr.HandleFunc("/api/namespaces/{namespace}/metrics", handler)
 
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)
 	return ts, xapi
 }
 
-// Setup mock
-
-func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock) {
+func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.FakeK8sClient) {
 	t.Helper()
-
-	conf := config.NewConfig()
-	config.Set(conf)
 
 	k := kubetest.NewFakeK8sClient(
 		kubetest.FakeNamespace("bookinfo"),
@@ -876,11 +959,9 @@ func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock)
 	client, err := prometheus.NewClient()
 	if err != nil {
 		t.Fatal(err)
-		return nil, nil
+		return nil, nil, nil
 	}
 	client.Inject(api)
 
-	business.SetupBusinessLayer(t, k, *conf)
-
-	return client, api
+	return client, api, k
 }

@@ -8,18 +8,16 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	core_v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/tools/clientcmd/api"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/handlers/authentication"
+	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
-	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/prometheus"
-	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
 type nsForbidden struct {
@@ -34,89 +32,6 @@ func (n *nsForbidden) GetNamespace(name string) (*core_v1.Namespace, error) {
 	return n.UserClientInterface.GetNamespace(name)
 }
 
-// Setup mock
-func utilSetupMocks(t *testing.T, additionalObjs ...runtime.Object) promClientSupplier {
-	t.Helper()
-	conf := config.NewConfig()
-	// TODO: Find a way to mock out the istio endpoints so that the most used case can be tested by default.
-	conf.ExternalServices.Istio.IstioAPIEnabled = false
-	config.Set(conf)
-	objs := []runtime.Object{
-		kubetest.FakeNamespace("ns1"),
-		kubetest.FakeNamespace("ns2"),
-	}
-	objs = append(objs, additionalObjs...)
-	k := kubetest.NewFakeK8sClient(objs...)
-	k8s := &nsForbidden{k, "nsNil"}
-
-	promAPI := new(prometheustest.PromAPIMock)
-	prom, err := prometheus.NewClient()
-	if err != nil {
-		t.Fatal(err)
-		return nil
-	}
-	prom.Inject(promAPI)
-	business.WithProm(prom)
-
-	business.SetupBusinessLayer(t, k8s, *conf)
-	return func() (*prometheus.Client, error) { return prom, nil }
-}
-
-func TestCreateMetricsServiceForNamespace(t *testing.T) {
-	assert := assert.New(t)
-	prom := utilSetupMocks(t)
-
-	req := httptest.NewRequest("GET", "/foo", nil)
-	authInfo := map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}}
-	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), authInfo))
-
-	w := httptest.NewRecorder()
-	srv, info := createMetricsServiceForNamespace(w, req, prom, models.Namespace{Name: "ns1", Cluster: config.Get().KubernetesConfig.ClusterName})
-
-	assert.NotNil(srv)
-	assert.NotNil(info)
-	assert.Equal("ns1", info.Name)
-	assert.Equal(http.StatusOK, w.Code)
-}
-
-func TestCreateMetricsServiceForNamespaceForbidden(t *testing.T) {
-	assert := assert.New(t)
-	prom := utilSetupMocks(t)
-
-	req := httptest.NewRequest("GET", "/foo", nil)
-	authInfo := map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}}
-	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), authInfo))
-
-	w := httptest.NewRecorder()
-	srv, info := createMetricsServiceForNamespace(w, req, prom, models.Namespace{Name: "nsNil", Cluster: config.Get().KubernetesConfig.ClusterName})
-
-	assert.Nil(srv)
-	assert.Nil(info)
-	assert.Equal(http.StatusForbidden, w.Code)
-}
-
-func TestCreateMetricsServiceForSeveralNamespaces(t *testing.T) {
-	assert := assert.New(t)
-	prom := utilSetupMocks(t)
-
-	req := httptest.NewRequest("GET", "/foo", nil)
-	authInfo := map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}}
-	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), authInfo))
-
-	w := httptest.NewRecorder()
-	srv, info := createMetricsServiceForNamespaces(w, req, prom, []models.Namespace{{Name: "ns1"}, {Name: "ns2"}, {Name: "nsNil"}})
-
-	assert.NotNil(srv)
-	assert.Len(info, 3)
-	assert.Equal(http.StatusOK, w.Code)
-	assert.Equal("ns1", info["ns1"].info.Name)
-	assert.Nil(info["ns1"].err)
-	assert.Equal("ns2", info["ns2"].info.Name)
-	assert.Nil(info["ns2"].err)
-	assert.Nil(info["nsNil"].info)
-	assert.Equal("no privileges", info["nsNil"].err.Error())
-}
-
 func TestClusterNameFromQuery(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
@@ -129,4 +44,50 @@ func TestClusterNameFromQuery(t *testing.T) {
 
 	query = url.Values{"notcluster": []string{"east"}}
 	assert.Equal(conf.KubernetesConfig.ClusterName, clusterNameFromQuery(conf, query))
+}
+
+func TestCheckNamespaceAccessWithService(t *testing.T) {
+	cases := map[string]struct {
+		client       kubernetes.ClientInterface
+		expectedCode int
+		expectErr    bool
+	}{
+		"No errors returned with access": {
+			client: kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}),
+		},
+		"No access returns 403": {
+			client: &nsForbidden{
+				forbiddenNamespace:  "test",
+				UserClientInterface: kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}),
+			},
+			expectedCode: 403,
+			expectErr:    true,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodGet, "http://localhost", nil)
+
+			conf := config.NewConfig()
+			cache := cache.NewTestingCache(t, tc.client, *conf)
+			discovery := &istiotest.FakeDiscovery{}
+			clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: tc.client}
+			userClients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: tc.client.(kubernetes.UserClientInterface)}
+			service := business.NewNamespaceService(cache, conf, discovery, clients, userClients)
+
+			_, err := checkNamespaceAccessWithService(w, r, &service, "test", conf.KubernetesConfig.ClusterName)
+			if tc.expectErr {
+				require.Error(err)
+			} else {
+				require.NoError(err)
+			}
+
+			if tc.expectedCode > 0 {
+				require.Equal(tc.expectedCode, w.Code)
+			}
+		})
+	}
 }

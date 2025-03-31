@@ -425,7 +425,7 @@ func NewRoutes(
 			log.ClustersLogName,
 			"GET",
 			"/api/clusters/services",
-			handlers.ClustersServices,
+			handlers.ClustersServices(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/services/{service} services serviceDetails
@@ -447,7 +447,7 @@ func NewRoutes(
 			log.ResourcesLogName,
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}",
-			handlers.ServiceDetails,
+			handlers.ServiceDetails(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route PATCH /namespaces/{namespace}/services/{service} services serviceUpdate
@@ -473,7 +473,7 @@ func NewRoutes(
 			log.ResourcesLogName,
 			"PATCH",
 			"/api/namespaces/{namespace}/services/{service}",
-			handlers.ServiceUpdate,
+			handlers.ServiceUpdate(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/apps/{app}/spans traces appSpans
@@ -845,7 +845,7 @@ func NewRoutes(
 			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/metrics",
-			handlers.ServiceMetrics,
+			handlers.ServiceMetrics(conf, kialiCache, discovery, clientFactory, prom),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/metrics aggregates aggregateMetrics
@@ -867,7 +867,7 @@ func NewRoutes(
 			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/metrics",
-			handlers.AggregateMetrics,
+			handlers.AggregateMetrics(conf, kialiCache, discovery, clientFactory, prom),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/apps/{app}/metrics apps appMetrics
@@ -889,7 +889,7 @@ func NewRoutes(
 			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/apps/{app}/metrics",
-			handlers.AppMetrics,
+			handlers.AppMetrics(conf, kialiCache, discovery, clientFactory, prom),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/metrics workloads workloadMetrics
@@ -911,7 +911,7 @@ func NewRoutes(
 			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}/metrics",
-			handlers.WorkloadMetrics,
+			handlers.WorkloadMetrics(conf, kialiCache, discovery, clientFactory, prom),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/controlplanes/{controlplane}/metrics controlplanes controlPlaneMetrics
@@ -933,7 +933,7 @@ func NewRoutes(
 			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/controlplanes/{controlplane}/metrics",
-			handlers.ControlPlaneMetrics(handlers.DefaultPromClientSupplier),
+			handlers.ControlPlaneMetrics(conf, kialiCache, discovery, clientFactory, prom, cpm, traceClientLoader, grafana),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/{app}/usage_metrics resource usageMetrics
@@ -955,7 +955,7 @@ func NewRoutes(
 			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/{app}/usage_metrics",
-			handlers.ResourceUsageMetrics(handlers.DefaultPromClientSupplier),
+			handlers.ResourceUsageMetrics(conf, kialiCache, discovery, clientFactory, prom),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/dashboard services serviceDashboard
@@ -977,7 +977,7 @@ func NewRoutes(
 			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/dashboard",
-			handlers.ServiceDashboard(conf, grafana),
+			handlers.ServiceDashboard(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, discovery, grafana),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/apps/{app}/dashboard apps appDashboard
@@ -999,7 +999,7 @@ func NewRoutes(
 			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/apps/{app}/dashboard",
-			handlers.AppDashboard(conf, grafana),
+			handlers.AppDashboard(conf, kialiCache, discovery, clientFactory, prom, grafana),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/dashboard workloads workloadDashboard
@@ -1021,7 +1021,7 @@ func NewRoutes(
 			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}/dashboard",
-			handlers.WorkloadDashboard(conf, grafana),
+			handlers.WorkloadDashboard(conf, kialiCache, clientFactory, discovery, prom, grafana),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/ztunnel/{workload}/dashboard workloads ztunnelDashboard
@@ -1043,7 +1043,7 @@ func NewRoutes(
 			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/ztunnel/{workload}/dashboard",
-			handlers.ZtunnelDashboard(handlers.DefaultPromClientSupplier, conf, grafana),
+			handlers.ZtunnelDashboard(conf, kialiCache, discovery, clientFactory, grafana, prom),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/customdashboard/{dashboard} dashboards customDashboard
@@ -1065,7 +1065,7 @@ func NewRoutes(
 			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/customdashboard/{dashboard}",
-			handlers.CustomDashboard(conf, grafana),
+			handlers.CustomDashboard(conf, kialiCache, clientFactory, discovery, grafana, prom, traceClientLoader, cpm),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/metrics namespaces namespaceMetrics
@@ -1087,7 +1087,7 @@ func NewRoutes(
 			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/metrics",
-			handlers.NamespaceMetrics(handlers.DefaultPromClientSupplier),
+			handlers.NamespaceMetrics(conf, kialiCache, discovery, clientFactory, prom),
 			true,
 		},
 		// swagger:route GET /clusters/health cluster namespaces Health
@@ -1109,7 +1109,7 @@ func NewRoutes(
 			log.ClustersLogName,
 			"GET",
 			"/api/clusters/health",
-			handlers.ClustersHealth,
+			handlers.ClusterHealth(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/validations namespaces namespaceValidations
@@ -1639,7 +1639,7 @@ func NewRoutes(
 			log.ClustersLogName,
 			"GET",
 			"/api/clusters/metrics",
-			handlers.ClustersMetrics(handlers.DefaultPromClientSupplier),
+			handlers.ClustersMetrics(conf, kialiCache, discovery, clientFactory, prom),
 			true,
 		},
 		// swagger:route POST /stats/metrics stats metricsStats
@@ -1661,7 +1661,7 @@ func NewRoutes(
 			LogGroupName:  log.MetricsLogName,
 			Method:        "POST",
 			Pattern:       "/api/stats/metrics",
-			HandlerFunc:   handlers.MetricsStats,
+			HandlerFunc:   handlers.MetricsStats(conf, kialiCache, discovery, clientFactory, prom),
 			Authenticated: true,
 		},
 	}

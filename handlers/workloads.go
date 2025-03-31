@@ -8,9 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	"github.com/gorilla/mux"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -29,29 +28,24 @@ import (
 //
 // swagger:parameters workloadParams
 type workloadParams struct {
-	// TODO: No need to override Namespace and ClusterName here.
-	// Combine with baseHealthParams.
 	baseHealthParams
 	// The target workload
 	//
 	// in: path
-	Namespace    string `json:"namespace"`
 	WorkloadName string `json:"workload"`
 	// in: query
 	WorkloadGVK schema.GroupVersionKind `json:"gvk"`
 	// Optional
-	ClusterName           string `json:"clusterName,omitempty"`
-	IncludeHealth         bool   `json:"health"`
-	IncludeIstioResources bool   `json:"istioResources"`
+	IncludeHealth         bool `json:"health"`
+	IncludeIstioResources bool `json:"istioResources"`
 }
 
-func (p *workloadParams) extract(r *http.Request) error {
+func (p *workloadParams) extract(r *http.Request, conf *config.Config) error {
 	vars := mux.Vars(r)
 	query := r.URL.Query()
-	p.baseExtract(r, vars)
+	p.baseExtract(conf, r, vars)
 	p.Namespace = vars["namespace"]
 	p.WorkloadName = vars["workload"]
-	p.ClusterName = clusterNameFromQuery(config.Get(), query)
 
 	var err error
 	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))
@@ -85,7 +79,7 @@ func ClusterWorkloads(
 		query := r.URL.Query()
 		namespacesQueryParam := query.Get("namespaces") // csl of namespaces
 		p := workloadParams{}
-		errParse := p.extract(r)
+		errParse := p.extract(r, conf)
 		if errParse != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Request parsing error: "+errParse.Error())
 			return
@@ -160,7 +154,7 @@ func WorkloadDetails(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		p := workloadParams{}
-		errParse := p.extract(r)
+		errParse := p.extract(r, conf)
 		if errParse != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Request parsing error: "+errParse.Error())
 			return

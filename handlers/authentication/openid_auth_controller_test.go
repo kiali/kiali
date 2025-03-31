@@ -177,7 +177,7 @@ func TestValidateOpenIdTokenInHouse(t *testing.T) {
 
 	// because we have a hardcoded token for this test that is pre-encrypted with the issuer URL, we need to start the server on that same URL
 	testServerListenerFixedPort, err := net.Listen("tcp", "127.0.0.1:33333")
-	assert.Nil(t, err, "Cannot start test server on fixed port")
+	require.NoError(t, err, "Cannot start test server on fixed port")
 	testServer.Listener = testServerListenerFixedPort
 	testServer.Start()
 

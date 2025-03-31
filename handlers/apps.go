@@ -25,23 +25,18 @@ import (
 // swagger:parameters appList AppDetails
 type appParams struct {
 	baseHealthParams
-	// The target workload
-	//
-	// in: path
-	Namespace   string `json:"namespace"`
-	ClusterName string `json:"clusterName"`
-	AppName     string `json:"app"`
+	AppName string `json:"app"`
 	// Optional
 	IncludeHealth         bool `json:"health"`
 	IncludeIstioResources bool `json:"istioResources"`
 }
 
-func (p *appParams) extract(r *http.Request) {
+func (p *appParams) extract(r *http.Request, conf *config.Config) {
 	vars := mux.Vars(r)
 	query := r.URL.Query()
-	p.baseExtract(r, vars)
+	p.baseExtract(conf, r, vars)
 	p.Namespace = vars["namespace"]
-	p.ClusterName = clusterNameFromQuery(config.Get(), query)
+	p.ClusterName = clusterNameFromQuery(conf, query)
 	p.AppName = vars["app"]
 	var err error
 	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))
@@ -70,7 +65,7 @@ func ClusterApps(
 		query := r.URL.Query()
 		namespacesQueryParam := query.Get("namespaces") // csl of namespaces
 		p := appParams{}
-		p.extract(r)
+		p.extract(r, conf)
 
 		businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -139,14 +134,13 @@ func AppDetails(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		p := appParams{}
-		p.extract(r)
+		p.extract(r, conf)
 
 		criteria := business.AppCriteria{
 			Namespace: p.Namespace, AppName: p.AppName, IncludeIstioResources: true, IncludeHealth: p.IncludeHealth,
 			RateInterval: p.RateInterval, QueryTime: p.QueryTime, Cluster: p.ClusterName,
 		}
 
-		// Get business layer
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
