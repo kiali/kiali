@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eo xtrace
+set -e
 
 
 is_in_array() {
