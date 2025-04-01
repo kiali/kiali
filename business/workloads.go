@@ -187,9 +187,9 @@ func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string, 
 
 // GetAllGateways fetches all gateway workloads across every namespace in the cluster.
 func (in *WorkloadService) GetAllGateways(ctx context.Context, cluster string, labelSelector string) (models.Workloads, error) {
-	if !in.cache.IsGatewayListExpired() {
+	if gateways, ok := in.cache.GetGateways(); ok {
 		log.Tracef("GetAllGateways: Returning list from cache")
-		return in.cache.GetGatewayList()
+		return gateways, nil
 	}
 
 	workloads, err := in.GetAllWorkloads(ctx, cluster, labelSelector)
@@ -200,7 +200,7 @@ func (in *WorkloadService) GetAllGateways(ctx context.Context, cluster string, l
 	gateways := sliceutil.Filter(workloads, func(w *models.Workload) bool {
 		return w.IsGateway()
 	})
-	in.cache.SetGatewayList(gateways)
+	in.cache.SetGateways(gateways)
 
 	return gateways, nil
 }
@@ -2158,7 +2158,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 					includeServices = true
 				}
 				// Get waypoint workloads
-				in.cache.GetWaypointList()
+				in.cache.GetWaypoints()
 				waypointWorkloads, waypointServices := in.listWaypointWorkloads(ctx, w.Name, w.Namespace, criteria.Cluster, includeServices)
 				w.WaypointWorkloads = waypointWorkloads
 				if includeServices {
@@ -2180,13 +2180,12 @@ func (in *WorkloadService) GetZtunnelConfig(cluster, namespace, pod string) *kub
 
 // GetWaypoints: Return the list of waypoint workloads.  This looks for all k8s gateways and then tests their labels
 func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
-	if !in.cache.IsWaypointListExpired() {
+	if waypoints, ok := in.cache.GetWaypoints(); ok {
 		log.Tracef("GetWaypoints: Returning list from cache")
-		return in.cache.GetWaypointList()
+		return waypoints
 	}
 
 	waypoints := models.Workloads{}
-
 	for cluster := range in.userClients {
 		gateways, err := in.GetAllWorkloads(ctx, cluster, config.GatewayLabel)
 		if err != nil {
@@ -2197,7 +2196,7 @@ func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
 		clusterWaypoints := sliceutil.Filter(gateways, func(gw *models.Workload) bool { return gw.IsWaypoint() })
 		waypoints = append(waypoints, clusterWaypoints...)
 	}
-	in.cache.SetWaypointList(waypoints)
+	in.cache.SetWaypoints(waypoints)
 	return waypoints
 }
 

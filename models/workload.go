@@ -2,7 +2,6 @@ package models
 
 import (
 	"strconv"
-	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
@@ -53,15 +52,6 @@ const (
 	LogTypeWaypoint LogType = "waypoint"
 	LogTypeZtunnel  LogType = "ztunnel"
 )
-
-type GatewayStore struct {
-	LastUpdate time.Time
-	Gateways   Workloads
-}
-type WaypointStore struct {
-	LastUpdate time.Time
-	Waypoints  Workloads
-}
 
 // WorkloadListItem has the necessary information to display the console workload list
 type WorkloadListItem struct {
