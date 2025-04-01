@@ -276,6 +276,26 @@ Feature: Kiali Waypoint related features
     And user "disables" "http" traffic option
     Then 2 edges appear in the graph
 
+  Scenario: [Waypoint details] The waypoint details for a waypoint for none are valid
+    Given user is at the details page for the "workload" "waypoint-fornone/curl-client" located in the "" cluster
+    And the user doesn't see a L7 link
+    And user is at the details page for the "workload" "waypoint-fornone/waypoint" located in the "" cluster
+    When the user goes to the "Waypoint" tab
+    Then the "Services" subtab doesn't exist
+    Then the "Workloads" subtab doesn't exist
+    Then user goes to the waypoint "Info" subtab
+    And validates waypoint Info data for "none"
+
+  Scenario: [Waypoint details] The waypoint details for a waypoint for service are valid
+    Given user is at the details page for the "workload" "waypoint-forservice/curl-client" located in the "" cluster
+    And the user sees the L7 "waypoint" link
+    And the link for the waypoint "waypoint" should redirect to a valid workload details
+    When the user goes to the "Waypoint" tab
+    Then user goes to the waypoint "Services" subtab
+    And validates Services data with "1" rows and "echo-service" workload, "waypoint-forservice" namespace, "namespace" label for, "pfbadge-S" badge
+    Then user goes to the waypoint "Info" subtab
+    And validates waypoint Info data for "service"
+
   Scenario: [Waypoint details] The waypoint details for a waypoint in different ns are valid
     Given user is at the details page for the "workload" "waypoint-differentns/curl-client" located in the "" cluster
     And the user sees the L7 "egress-gateway" link
@@ -297,26 +317,6 @@ Feature: Kiali Waypoint related features
     And validates Services data with "2" rows and "echo-server" workload, "waypoint-forall" namespace, "namespace" label for, "pfbadge-W" badge
     Then user goes to the waypoint "Info" subtab
     And validates waypoint Info data for "all"
-
-  Scenario: [Waypoint details] The waypoint details for a waypoint for none are valid
-    Given user is at the details page for the "workload" "waypoint-fornone/curl-client" located in the "" cluster
-    And the user doesn't see a L7 link
-    And user is at the details page for the "workload" "waypoint-fornone/waypoint" located in the "" cluster
-    When the user goes to the "Waypoint" tab
-    Then the "Services" subtab doesn't exist
-    Then the "Workloads" subtab doesn't exist
-    Then user goes to the waypoint "Info" subtab
-    And validates waypoint Info data for "none"
-
-  Scenario: [Waypoint details] The waypoint details for a waypoint for service are valid
-    Given user is at the details page for the "workload" "waypoint-forservice/curl-client" located in the "" cluster
-    And the user sees the L7 "waypoint" link
-    And the link for the waypoint "waypoint" should redirect to a valid workload details
-    When the user goes to the "Waypoint" tab
-    Then user goes to the waypoint "Services" subtab
-    And validates Services data with "1" rows and "echo-service" workload, "waypoint-forservice" namespace, "namespace" label for, "pfbadge-S" badge
-    Then user goes to the waypoint "Info" subtab
-    And validates waypoint Info data for "service"
 
   Scenario: [Waypoint details] The waypoint details for a waypoint for workload are valid
     Given user is at the details page for the "workload" "waypoint-forworkload/echo-server" located in the "" cluster
