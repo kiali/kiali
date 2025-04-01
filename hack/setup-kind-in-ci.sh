@@ -244,7 +244,6 @@ setup_kind_singlecluster() {
     --set health_config.rate[0].tolerance[0].code="5xx" \
     --set health_config.rate[0].tolerance[0].degraded=2 \
     --set health_config.rate[0].tolerance[0].failure=100 \
-    --set kiali_feature_flags.ui_defaults.graph.impl="pf" \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 
@@ -336,7 +335,6 @@ setup_kind_tempo() {
     --set health_config.rate[0].tolerance[0].code="5xx" \
     --set health_config.rate[0].tolerance[0].degraded=2 \
     --set health_config.rate[0].tolerance[0].failure=100 \
-    --set kiali_feature_flags.ui_defaults.graph.impl="pf" \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
   
