@@ -12,6 +12,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/cache"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -143,6 +144,10 @@ type kialiCacheImpl struct {
 }
 
 func NewKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, conf config.Config) (KialiCache, error) {
+	return newKialiCache(kialiSAClients, conf, cache.WaitForCacheSync)
+}
+
+func newKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, conf config.Config, waitForSync waitForCacheSyncFunc) (KialiCache, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	namespaceKeyTTL := time.Duration(conf.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
 	kialiCacheImpl := kialiCacheImpl{
@@ -167,7 +172,7 @@ func NewKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, conf co
 		if !conf.Deployment.ClusterWideAccess {
 			errHandler = kialiCacheImpl.deleteNamespace
 		}
-		cache, err := NewKubeCache(client, conf, errHandler)
+		cache, err := NewKubeCache(client, conf, errHandler, waitForSync)
 		if err != nil {
 			log.Errorf("[Kiali Cache] Error creating kube cache for cluster: [%s]. Err: %v", cluster, err)
 			return nil, err

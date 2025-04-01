@@ -7,6 +7,8 @@ package cache
 import (
 	"testing"
 
+	"k8s.io/client-go/tools/cache"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -18,7 +20,7 @@ func newTestingCache(t testing.TB, cf kubernetes.ClientFactory, conf config.Conf
 	// when the cache is created.
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 
-	cache, err := NewKialiCache(cf.GetSAClients(), conf)
+	cache, err := newKialiCache(cf.GetSAClients(), conf, ConstantWaitForSync)
 	if err != nil {
 		t.Fatalf("Error creating KialiCache: %v", err)
 	}
@@ -47,4 +49,27 @@ func NewTestingCacheWithClients(t *testing.T, clients map[string]kubernetes.Clie
 	cf := kubetest.NewK8SClientFactoryMock(nil)
 	cf.SetClients(clients)
 	return newTestingCache(t, cf, conf)
+}
+
+// ConstantWaitForSync waits continuously with zero interval. Only use this for testing.
+func ConstantWaitForSync(stopCh <-chan struct{}, cacheSyncs ...cache.InformerSynced) bool {
+	for {
+		select {
+		case <-stopCh:
+			return false
+		default:
+			if allCachesSynced(cacheSyncs...) {
+				return true
+			}
+		}
+	}
+}
+
+func allCachesSynced(cacheSyncs ...cache.InformerSynced) bool {
+	for _, syncFunc := range cacheSyncs {
+		if !syncFunc() {
+			return false
+		}
+	}
+	return true
 }
