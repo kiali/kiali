@@ -506,6 +506,58 @@ func getIstioCharts() []istioChart {
 	return istioCharts
 }
 
+func getZtunnelCharts() []istioChart {
+	istioCharts := []istioChart{
+		{
+			Chart: models.Chart{
+				Name:  "Ztunnel Connections",
+				Unit:  "cps",
+				Spans: 4,
+			},
+			refName: "ztunnel_connections",
+			scale:   100000000,
+		},
+		{
+			Chart: models.Chart{
+				Name:  "Ztunnel versions",
+				Spans: 4,
+			},
+			refName: "ztunnel_versions",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "Ztunnel memory usage",
+				Unit:  "MiB",
+				Spans: 4,
+			},
+			refName: "ztunnel_memory_usage",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "Ztunnel CPU usage",
+				Spans: 4,
+			},
+			refName: "ztunnel_cpu_usage",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "Ztunnel bytes transmitted",
+				Unit:  "kB",
+				Spans: 4,
+			},
+			refName: "ztunnel_bytes_transmitted",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "Ztunnel workload manager",
+				Spans: 4,
+			},
+			refName: "ztunnel_workload_manager",
+		},
+	}
+	return istioCharts
+}
+
 func GetIstioScaler() func(name string) float64 {
 	charts := getIstioCharts()
 	return func(name string) float64 {
@@ -516,6 +568,33 @@ func GetIstioScaler() func(name string) float64 {
 		}
 		return 1.0
 	}
+}
+
+// BuildIstioDashboard returns Istio dashboard filled-in with metrics
+func (in *DashboardsService) BuildZtunnelDashboard(metrics models.MetricsMap) *models.MonitoringDashboard {
+	dashboard := models.MonitoringDashboard{
+		Title:        "Ztunnel Metrics",
+		Aggregations: []models.Aggregation{},
+		Charts:       []models.Chart{},
+		Rows:         2,
+	}
+
+	ztunnelCharts := getZtunnelCharts()
+
+	for _, chartTpl := range ztunnelCharts {
+		newChart := chartTpl.Chart
+		conversionParams := models.ConversionParams{Scale: 1.0}
+		if chartTpl.scale != 0.0 {
+			conversionParams.Scale = chartTpl.scale
+		}
+		if metrics := metrics[chartTpl.refName]; metrics != nil {
+			newChart.Metrics = metrics
+		} else {
+			newChart.Metrics = []models.Metric{}
+		}
+		dashboard.Charts = append(dashboard.Charts, newChart)
+	}
+	return &dashboard
 }
 
 // BuildIstioDashboard returns Istio dashboard filled-in with metrics
@@ -561,17 +640,19 @@ func (in *DashboardsService) GetCustomDashboardRefs(namespace, app, version stri
 	runtimes := in.SearchExplicitDashboards(podsCast)
 
 	if len(runtimes) == 0 {
-		cfg := config.Get()
-		discoveryEnabled := cfg.ExternalServices.CustomDashboards.DiscoveryEnabled
+		discoveredRuntimes := map[string]models.Runtime{}
+		discoveryEnabled := in.conf.ExternalServices.CustomDashboards.DiscoveryEnabled
 		if discoveryEnabled == config.DashboardsDiscoveryEnabled ||
 			(discoveryEnabled == config.DashboardsDiscoveryAuto &&
-				len(pods) <= cfg.ExternalServices.CustomDashboards.DiscoveryAutoThreshold) {
-			filters := make(map[string]string)
-			filters[cfg.IstioLabels.AppLabelName] = app
-			if version != "" {
-				filters[cfg.IstioLabels.VersionLabelName] = version
+				len(pods) <= in.conf.ExternalServices.CustomDashboards.DiscoveryAutoThreshold) {
+			for _, appVersionLabelSelector := range in.conf.GetAppVersionLabelSelectors(app, version) {
+				for _, discoveredDashboard := range in.discoverDashboards(namespace, appVersionLabelSelector.Requirements) {
+					discoveredRuntimes[discoveredDashboard.Name] = discoveredDashboard
+				}
 			}
-			runtimes = in.discoverDashboards(namespace, filters)
+			for _, runtime := range discoveredRuntimes {
+				runtimes = append(runtimes, runtime)
+			}
 		}
 	}
 	return runtimes

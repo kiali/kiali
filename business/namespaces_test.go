@@ -31,7 +31,7 @@ func setupNamespaceService(t *testing.T, k8s kubernetes.ClientInterface, conf *c
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	discovery := istio.NewDiscovery(k8sclients, cache, conf)
-	return NewNamespaceService(k8sclients, k8sclients, cache, conf, discovery)
+	return NewNamespaceService(cache, conf, discovery, k8sclients, k8sclients)
 }
 
 // Namespace service setup
@@ -241,7 +241,7 @@ func TestMultiClusterGetNamespace(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 
 	discovery := istio.NewDiscovery(clients, cache, conf)
-	nsservice := NewNamespaceService(clients, clients, cache, conf, discovery)
+	nsservice := NewNamespaceService(cache, conf, discovery, clients, clients)
 
 	ns, err := nsservice.GetClusterNamespace(context.TODO(), "bookinfo", conf.KubernetesConfig.ClusterName)
 	require.NoError(err)
@@ -274,7 +274,7 @@ func TestMultiClusterGetNamespaces(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 
 	discovery := istio.NewDiscovery(clients, cache, conf)
-	nsservice := NewNamespaceService(clients, clients, cache, conf, discovery)
+	nsservice := NewNamespaceService(cache, conf, discovery, clients, clients)
 	namespaces, err := nsservice.GetNamespaces(context.TODO())
 	require.NoError(err)
 
@@ -315,7 +315,7 @@ func TestGetNamespacesCached(t *testing.T) {
 	)
 
 	discovery := istio.NewDiscovery(clients, cache, conf)
-	nsservice := NewNamespaceService(clients, clients, cache, conf, discovery)
+	nsservice := NewNamespaceService(cache, conf, discovery, clients, clients)
 	namespaces, err := nsservice.GetNamespaces(context.TODO())
 	require.NoError(err)
 
@@ -359,7 +359,7 @@ func TestGetNamespacesDifferentTokens(t *testing.T) {
 	)
 
 	discovery := istio.NewDiscovery(clients, cache, conf)
-	nsservice := NewNamespaceService(clients, clients, cache, conf, discovery)
+	nsservice := NewNamespaceService(cache, conf, discovery, clients, clients)
 	namespaces, err := nsservice.GetNamespaces(context.TODO())
 	require.NoError(err)
 
@@ -412,7 +412,7 @@ func TestGetNamespacesForbiddenCached(t *testing.T) {
 	)
 
 	discovery := istio.NewDiscovery(clients, cache, conf)
-	nsservice := NewNamespaceService(clients, clients, cache, conf, discovery)
+	nsservice := NewNamespaceService(cache, conf, discovery, clients, clients)
 	// Try to get the bookinfo namespace from the home cluster.
 	_, err := nsservice.GetClusterNamespace(context.TODO(), "bookinfo", "east")
 	require.Error(err)
@@ -446,7 +446,7 @@ func TestMixedClustersNoError(t *testing.T) {
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
 
 	discovery := istio.NewDiscovery(clients, cache, conf)
-	nsservice := NewNamespaceService(clients, clients, cache, conf, discovery)
+	nsservice := NewNamespaceService(cache, conf, discovery, clients, clients)
 	namespaces, err := nsservice.GetNamespaces(context.TODO())
 	// There's no error for multi-cluster setups. This isn't great but it's how it works.
 	require.NoError(err)

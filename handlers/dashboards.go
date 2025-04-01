@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -19,7 +20,7 @@ func CustomDashboard(conf *config.Config, grafana *grafana.Service) http.Handler
 	return func(w http.ResponseWriter, r *http.Request) {
 		queryParams := r.URL.Query()
 		pathParams := mux.Vars(r)
-		cluster := clusterNameFromQuery(queryParams)
+		cluster := clusterNameFromQuery(conf, queryParams)
 		namespace := pathParams["namespace"]
 		dashboardName := pathParams["dashboard"]
 
@@ -116,7 +117,7 @@ func AppDashboard(conf *config.Config, grafana *grafana.Service) http.HandlerFun
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		app := vars["app"]
-		cluster := clusterNameFromQuery(r.URL.Query())
+		cluster := clusterNameFromQuery(conf, r.URL.Query())
 
 		metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, DefaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
 		if metricsService == nil {
@@ -149,7 +150,7 @@ func ServiceDashboard(conf *config.Config, grafana *grafana.Service) http.Handle
 		service := vars["service"]
 
 		queryParams := r.URL.Query()
-		cluster := clusterNameFromQuery(queryParams)
+		cluster := clusterNameFromQuery(conf, queryParams)
 
 		metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, DefaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
 		if metricsService == nil {
@@ -199,7 +200,7 @@ func WorkloadDashboard(conf *config.Config, grafana *grafana.Service) http.Handl
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		workload := vars["workload"]
-		cluster := clusterNameFromQuery(r.URL.Query())
+		cluster := clusterNameFromQuery(conf, r.URL.Query())
 
 		metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, DefaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
 		if metricsService == nil {
@@ -220,6 +221,45 @@ func WorkloadDashboard(conf *config.Config, grafana *grafana.Service) http.Handl
 			return
 		}
 		dashboard := business.NewDashboardsService(conf, grafana, namespaceInfo, nil).BuildIstioDashboard(metrics, params.Direction)
+		RespondWithJSON(w, http.StatusOK, dashboard)
+	}
+}
+
+// ZtunnelDashboard is the API handler to fetch metrics to be displayed, related to a single control plane revision
+func ZtunnelDashboard(promSupplier promClientSupplier, conf *config.Config, grafana *grafana.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		namespace := vars["namespace"]
+
+		cluster := clusterNameFromQuery(conf, r.URL.Query())
+
+		metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
+		if metricsService == nil {
+			// any returned value nil means error & response already written
+			return
+		}
+		oldestNs := GetOldestNamespace(namespaceInfo)
+
+		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace}
+
+		err := extractIstioMetricsQueryParams(r, &params, oldestNs)
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if namespace != conf.IstioNamespace {
+			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
+			return
+		}
+
+		ztunnelMetrics, err := metricsService.GetZtunnelMetrics(params)
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+		ns := namespaceInfo[0]
+		dashboard := business.NewDashboardsService(conf, grafana, &ns, nil).BuildZtunnelDashboard(ztunnelMetrics)
 		RespondWithJSON(w, http.StatusOK, dashboard)
 	}
 }

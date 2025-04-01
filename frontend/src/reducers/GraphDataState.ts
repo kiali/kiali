@@ -5,13 +5,13 @@ import { GraphState } from '../store/Store';
 import { EdgeMode, GraphType, TrafficRate } from '../types/Graph';
 import { GraphToolbarActions } from '../actions/GraphToolbarActions';
 import { updateState } from '../utils/Reducer';
-import { KialiDagreGraph } from '../components/CytoscapeGraph/graphs/KialiDagreGraph';
+import { GraphLayout } from 'pages/Graph/Graph';
 
 export const INITIAL_GRAPH_STATE: GraphState = {
   edgeMode: EdgeMode.ALL,
   graphDefinition: null,
-  layout: KialiDagreGraph.getLayout(),
-  namespaceLayout: KialiDagreGraph.getLayout(),
+  layout: GraphLayout.Dagre,
+  namespaceLayout: GraphLayout.Dagre,
   node: undefined,
   rankResult: {
     upperBound: 0
@@ -82,7 +82,6 @@ export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, a
     case getType(GraphActions.updateSummary):
       return updateState(state, {
         summaryData: updateState(state.summaryData, {
-          isPF: action.payload.isPF,
           summaryType: action.payload.summaryType,
           summaryTarget: action.payload.summaryTarget
         })

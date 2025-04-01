@@ -20,17 +20,8 @@ import {
   trafficRatesSelector
 } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
-import { GraphFind } from './GraphFind';
 import { GraphSettings } from './GraphSettings';
-import {
-  GraphType,
-  NodeParamsType,
-  EdgeLabelMode,
-  SummaryData,
-  TrafficRate,
-  RankMode,
-  NodeAttr
-} from '../../../types/Graph';
+import { GraphType, NodeParamsType, EdgeLabelMode, SummaryData, TrafficRate, RankMode } from '../../../types/Graph';
 import { router, HistoryManager, URLParam, location } from '../../../app/History';
 import { Namespace, namespacesFromString, namespacesToString } from '../../../types/Namespace';
 import { KialiDispatch } from '../../../types/Redux';
@@ -44,7 +35,7 @@ import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { GraphSecondaryMasthead } from './GraphSecondaryMasthead';
 import { INITIAL_USER_SETTINGS_STATE } from 'reducers/UserSettingsState';
 import { GraphReset } from './GraphReset';
-import { GraphFindPF } from './GraphFindPF';
+import { GraphFind } from './GraphFind';
 import { kialiStyle } from 'styles/StyleUtils';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 
@@ -79,7 +70,6 @@ type GraphToolbarProps = ReduxProps & {
   cy?: any;
   disabled: boolean;
   elementsChanged: boolean;
-  isPF?: boolean;
   onToggleHelp: () => void;
 };
 
@@ -234,19 +224,13 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
               </TourStop>
             </ToolbarItem>
 
-            {this.props.isPF ? (
-              <ToolbarItem>
-                <GraphFindPF controller={this.props.controller} elementsChanged={this.props.elementsChanged} />
-              </ToolbarItem>
-            ) : (
-              <ToolbarItem>
-                <GraphFind cy={this.props.cy} elementsChanged={this.props.elementsChanged} />
-              </ToolbarItem>
-            )}
+            <ToolbarItem>
+              <GraphFind controller={this.props.controller} elementsChanged={this.props.elementsChanged} />
+            </ToolbarItem>
 
             <ToolbarItem style={{ marginLeft: 'auto', alignSelf: 'center' }}>
               <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content="Shortcuts and tips...">
-                <TourStop info={this.props.isPF ? GraphTourStops.ShortcutsPF : GraphTourStops.Shortcuts}>
+                <TourStop info={GraphTourStops.Shortcuts}>
                   <Button
                     id="graph-tour"
                     variant={ButtonVariant.link}
@@ -269,7 +253,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
   }
 
   private handleNamespaceReturn = (): void => {
-    const route = this.props.isPF ? 'graphpf' : 'graph';
+    const route = 'graph';
     if (
       !this.props.summaryData ||
       (this.props.summaryData.summaryType !== 'node' && this.props.summaryData.summaryType !== 'box')
@@ -285,9 +269,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
       return;
     }
 
-    const selector = this.props.isPF
-      ? this.props.summaryData!.summaryTarget.getId()
-      : `node[id = "${this.props.summaryData!.summaryTarget.data(NodeAttr.id)}"]`;
+    const selector = this.props.summaryData!.summaryTarget.getId();
 
     this.props.setNode(undefined);
 

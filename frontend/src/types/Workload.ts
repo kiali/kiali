@@ -20,7 +20,6 @@ export type WaypointInfo = WorkloadInfo | ServiceInfo;
 
 export interface Workload {
   additionalDetails: AdditionalItem[];
-  ambient?: string;
   annotations: { [key: string]: string };
   appLabel: boolean;
   availableReplicas: Number;
@@ -31,6 +30,8 @@ export interface Workload {
   instanceType: InstanceType.Workload;
   isAmbient: boolean;
   isGateway: boolean;
+  isWaypoint: boolean;
+  isZtunnel: boolean;
   istioInjectionAnnotation?: boolean;
   istioSidecar: boolean;
   labels: { [key: string]: string };
@@ -57,6 +58,8 @@ export const emptyWorkload: Workload = {
   gvk: { Group: '', Version: '', Kind: '' },
   isAmbient: false,
   isGateway: false,
+  isWaypoint: false,
+  isZtunnel: false,
   istioSidecar: true, // true until proven otherwise
   labels: {},
   name: '',
@@ -74,7 +77,6 @@ export const emptyWorkload: Workload = {
 
 export interface WorkloadListItem {
   additionalDetailSample?: AdditionalItem;
-  ambient?: string;
   appLabel: boolean;
   cluster?: string;
   gvk: GroupVersionKind;
@@ -82,6 +84,8 @@ export interface WorkloadListItem {
   instanceType: InstanceType.Workload;
   isAmbient: boolean;
   isGateway: boolean;
+  isWaypoint: boolean;
+  isZtunnel: boolean;
   istioReferences: ObjectReference[];
   istioSidecar: boolean;
   labels: { [key: string]: string };

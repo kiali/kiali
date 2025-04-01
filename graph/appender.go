@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -15,6 +16,7 @@ type VendorInfo map[string]interface{}
 // generated for graph and is initially empty.
 type GlobalInfo struct {
 	Business   *business.Layer
+	Conf       *config.Config
 	Context    context.Context
 	PromClient *prometheus.Client
 	Vendor     VendorInfo // telemetry vendor's global info
@@ -33,8 +35,13 @@ func NewVendorInfo() VendorInfo {
 	return make(map[string]interface{})
 }
 
-func NewGlobalInfo() *GlobalInfo {
-	return &GlobalInfo{Vendor: NewVendorInfo()}
+func NewGlobalInfo(ctx context.Context, business *business.Layer, prom *prometheus.Client, conf *config.Config) *GlobalInfo {
+	return &GlobalInfo{
+		Business:   business,
+		Conf:       conf,
+		Context:    ctx,
+		PromClient: prom,
+		Vendor:     NewVendorInfo()}
 }
 
 func NewAppenderNamespaceInfo(namespace string) *AppenderNamespaceInfo {

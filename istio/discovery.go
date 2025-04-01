@@ -29,8 +29,7 @@ const (
 
 const (
 	istioControlPlaneClustersLabel        = "topology.istio.io/controlPlaneClusters"
-	istiodAppNameLabelKey                 = "app"
-	istiodAppNameLabelValue               = "istiod"
+	istiodAppLabelValue                   = "istiod"
 	istiodClusterIDEnvKey                 = "CLUSTER_ID"
 	istiodExternalEnvKey                  = "EXTERNAL_ISTIOD"
 	istiodScopeGatewayEnvKey              = "PILOT_SCOPE_GATEWAY_TO_NAMESPACE"
@@ -154,6 +153,7 @@ func sidecarInjectorConfigMapName(revision string) string {
 }
 
 type MeshDiscovery interface {
+	Clusters() ([]models.KubeCluster, error)
 	Mesh(ctx context.Context) (*models.Mesh, error)
 }
 
@@ -262,6 +262,7 @@ type clusterRevisionKey struct {
 
 // Mesh gathers information about the mesh and controlplanes running in the mesh
 // from various sources e.g. istio configmap, istiod deployment envvars, etc.
+// Do not edit the mesh object returned from here directly. It is shared across threads.
 func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "Mesh",
@@ -293,7 +294,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		}
 
 		// If there's an istiod on it, then it's a controlplane cluster. Otherwise it is a remote cluster.
-		istiods, err := kubeCache.GetDeploymentsWithSelector(metav1.NamespaceAll, istiodAppNameLabelKey+"="+istiodAppNameLabelValue)
+		istiods, err := kubeCache.GetDeploymentsWithSelector(metav1.NamespaceAll, config.IstioAppLabel+"="+istiodAppLabelValue)
 		if err != nil {
 			return nil, err
 		}
@@ -308,9 +309,10 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 			log.Debugf("Found controlplane [%s/%s] on cluster [%s].", istiod.Name, istiod.Namespace, cluster.Name)
 			controlPlane := models.ControlPlane{
 				Cluster:         &cluster,
+				Labels:          istiod.Labels,
 				IstiodName:      istiod.Name,
 				IstiodNamespace: istiod.Namespace,
-				Revision:        istiod.Labels[models.IstioRevisionLabel],
+				Revision:        istiod.Labels[config.IstioRevisionLabel],
 			}
 
 			controlPlaneConfig, err := in.getControlPlaneConfiguration(kubeCache, &controlPlane)
@@ -544,6 +546,19 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 
 	for _, cp := range controlPlanes {
 		for _, cluster := range cp.ManagedClusters {
+			if cp.IsMaistra() {
+				// In maistra the Revision is actually the maistra.io/member-of label which is the namespace where the controlplane lives.
+				key := clusterRevisionKey{Cluster: cluster.Name, Revision: cp.IstiodNamespace}
+				if namespaces, ok := namespacesByClusterAndRev[key]; ok {
+					for _, namespace := range namespaces {
+						// Exclude the namespace where the controlplane lives
+						if namespace.Name != cp.IstiodNamespace {
+							cp.ManagedNamespaces = append(cp.ManagedNamespaces, namespace)
+						}
+					}
+				}
+				continue
+			}
 			// Default to controlplane revision but if there's a tag then overwrite with that.
 			rev := cp.Revision
 			if cp.Tag != nil {
@@ -590,7 +605,7 @@ func (in *Discovery) setTags(ctx context.Context, controlPlanes []models.Control
 			tag := models.Tag{
 				Cluster:  cluster,
 				Name:     webhook.Labels[models.IstioTagLabel],
-				Revision: webhook.Labels[models.IstioRevisionLabel],
+				Revision: webhook.Labels[config.IstioRevisionLabel],
 			}
 			key := tag.Cluster + tag.Revision
 			if _, found := tagsByClusterRev[key]; found {

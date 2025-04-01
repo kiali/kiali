@@ -21,9 +21,9 @@ import (
 
 // The supported vendors
 const (
-	VendorCytoscape        string = "cytoscape"
+	VendorCommon           string = "common"
 	VendorIstio            string = "istio"
-	defaultConfigVendor    string = VendorCytoscape
+	defaultConfigVendor    string = VendorCommon
 	defaultTelemetryVendor string = VendorIstio
 )
 
@@ -179,7 +179,7 @@ func NewOptions(r *net_http.Request, namespacesService *business.NamespaceServic
 	}
 	if configVendor == "" {
 		configVendor = defaultConfigVendor
-	} else if configVendor != VendorCytoscape {
+	} else if configVendor != VendorCommon {
 		BadRequest(fmt.Sprintf("Invalid configVendor [%s]", configVendor))
 	}
 	if durationString == "" {

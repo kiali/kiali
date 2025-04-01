@@ -16,7 +16,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/graph/config/cytoscape"
+	"github.com/kiali/kiali/graph/config/common"
 	"github.com/kiali/kiali/log"
 )
 
@@ -37,7 +37,7 @@ type app struct {
 	IsIngress bool
 }
 
-// Generator creates cytoscape graph data based on the options provided.
+// Generator creates graph data based on the options provided.
 // It is used for testing a variety of graph layouts, large dense graphs in particular,
 // without needing to deploy the actual resources. It is not intended to be used for
 // anything other than testing.
@@ -113,10 +113,10 @@ func New(opts Options) (*Generator, error) {
 // EnsureNamespaces makes sure a kube namespace exists for the nodes.
 // The namespaces need to actually exist in order for the UI to render the graph.
 // Does nothing if a kubeclient is not configured.
-func (g *Generator) EnsureNamespaces(cyGraph cytoscape.Config) error {
+func (g *Generator) EnsureNamespaces(graphConfig common.Config) error {
 	if g.kubeClient != nil {
 		log.Info("Ensuring namespaces exist for graph...")
-		for _, node := range cyGraph.Elements.Nodes {
+		for _, node := range graphConfig.Elements.Nodes {
 			if err := g.ensureNamespace(node.Data.Namespace); err != nil {
 				return err
 			}
@@ -130,7 +130,7 @@ func (g *Generator) EnsureNamespaces(cyGraph cytoscape.Config) error {
 // 1. Workloads send requests to services.
 // 2. Services send requests to the workloads in their app.
 // 3. Ingress workloads are root nodes.
-func (g *Generator) Generate() cytoscape.Config {
+func (g *Generator) Generate() common.Config {
 	nodes := g.generate()
 	traffic := graph.NewTrafficMap()
 	for _, node := range nodes {
@@ -147,13 +147,13 @@ func (g *Generator) Generate() cytoscape.Config {
 		},
 		BoxBy: strings.Join([]string{graph.BoxByApp, graph.BoxByNamespace}, ","),
 	}
-	cyGraph := cytoscape.NewConfig(traffic, opts)
+	graphConfig := common.NewConfig(traffic, opts)
 
-	if err := g.EnsureNamespaces(cyGraph); err != nil {
+	if err := g.EnsureNamespaces(graphConfig); err != nil {
 		log.Errorf("unable to ensure namespaces exist. Err: %s", err)
 	}
 
-	return cyGraph
+	return graphConfig
 }
 
 func (g *Generator) strategyLimit() int {

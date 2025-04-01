@@ -11,10 +11,11 @@ export interface ServiceList {
 
 export interface ServiceOverview {
   additionalDetailSample?: AdditionalItem;
-  ambient?: string;
   cluster?: string;
   health: ServiceHealth;
   isAmbient: boolean;
+  isWaypoint: boolean;
+  isZtunnel: boolean;
   istioReferences: ObjectReference[];
   istioSidecar: boolean;
   kialiWizard: string;

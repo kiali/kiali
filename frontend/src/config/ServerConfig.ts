@@ -83,10 +83,10 @@ const defaultServerConfig: ComputedServerConfig = {
     ambientWaypointGatewayLabel: 'gateway.networking.k8s.io/gateway-name',
     ambientWaypointLabel: 'gateway.istio.io/managed',
     ambientWaypointLabelValue: 'istio.io-mesh-controller',
-    appLabelName: 'app',
+    appLabelName: '',
     injectionLabelName: 'istio-injection',
     injectionLabelRev: 'istio.io/rev',
-    versionLabelName: 'version'
+    versionLabelName: ''
   },
   kialiFeatureFlags: {
     disabledFeatures: [],
@@ -97,12 +97,8 @@ const defaultServerConfig: ComputedServerConfig = {
       graph: {
         findOptions: [],
         hideOptions: [],
-        impl: 'pf',
         settings: {
-          animation: 'point',
-          fontLabel: 13,
-          minFontBadge: 7,
-          minFontLabel: 10
+          animation: 'point'
         },
         traffic: {
           ambient: 'total',
@@ -142,6 +138,10 @@ let homeCluster = getHomeCluster(serverConfig);
 let isMultiCluster = isMC();
 export { homeCluster, isMultiCluster };
 
+// set when serverConfig is set
+let appLabelNames: string[] = [];
+let versionLabelNames: string[] = [];
+
 export const toValidDuration = (duration: number): number => {
   // Check if valid
   if (serverConfig.durations[duration]) {
@@ -171,6 +171,15 @@ export const setServerConfig = (cfg: ServerConfig): void => {
   if (!serverConfig.ambientEnabled) {
     serverConfig.kialiFeatureFlags.uiDefaults.graph.traffic.ambient = 'none';
   }
+
+  // set the current app and version label name possibilities
+  if (cfg.istioLabels.appLabelName !== '' && cfg.istioLabels.versionLabelName !== '') {
+    appLabelNames = [cfg.istioLabels.appLabelName];
+    versionLabelNames = [cfg.istioLabels.versionLabelName];
+  } else {
+    appLabelNames = ['service.istio.io/canonical-name', 'app.kubernetes.io/name', 'app'];
+    versionLabelNames = ['service.istio.io/canonical-revision', 'app.kubernetes.io/version', 'version'];
+  }
 };
 
 export const isIstioNamespace = (namespace: string): boolean => {
@@ -197,3 +206,19 @@ function isMC(): boolean {
     Object.values(serverConfig.clusters).filter(c => c.accessible).length > 1
   );
 }
+
+// getAppLabelName returns the app label name found in the labels, or undefined
+export const getAppLabelName = (labels?: { [key: string]: string }): string | undefined => {
+  if (labels) {
+    return appLabelNames.find(labelName => labels[labelName] !== undefined);
+  }
+  return undefined;
+};
+
+// getVersionLabelName returns the version label name found in the labels, or undefined
+export const getVersionLabelName = (labels?: { [key: string]: string }): string | undefined => {
+  if (labels) {
+    return versionLabelNames.find(labelName => labels[labelName] !== undefined);
+  }
+  return undefined;
+};

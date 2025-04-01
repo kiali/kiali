@@ -7,28 +7,30 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 )
 
 // MetricsService deals with fetching metrics from prometheus
 type MetricsService struct {
+	conf *config.Config
 	prom prometheus.ClientInterface
 }
 
 // NewMetricsService initializes this business service
-func NewMetricsService(prom prometheus.ClientInterface) *MetricsService {
-	return &MetricsService{prom: prom}
+func NewMetricsService(prom prometheus.ClientInterface, conf *config.Config) *MetricsService {
+	return &MetricsService{conf: conf, prom: prom}
 }
 
 func (in *MetricsService) GetMetrics(q models.IstioMetricsQuery, scaler func(n string) float64) (models.MetricsMap, error) {
-	lb := createMetricsLabelsBuilder(&q)
+	lb := createMetricsLabelsBuilder(&q, in.conf)
 	grouping := strings.Join(q.ByLabels, ",")
 	return in.fetchAllMetrics(q, lb, grouping, scaler)
 }
 
-func createMetricsLabelsBuilder(q *models.IstioMetricsQuery) *MetricsLabelsBuilder {
-	lb := NewMetricsLabelsBuilder(q.Direction)
+func createMetricsLabelsBuilder(q *models.IstioMetricsQuery, conf *config.Config) *MetricsLabelsBuilder {
+	lb := NewMetricsLabelsBuilder(q.Direction, conf)
 	if q.Reporter != "both" {
 		lb.Reporter(q.Reporter, q.IncludeAmbient)
 	}
@@ -203,7 +205,7 @@ func (in *MetricsService) GetStats(queries []models.MetricsStatsQuery) (map[stri
 }
 
 func (in *MetricsService) getSingleQueryStats(q *models.MetricsStatsQuery) (*models.MetricsStats, error) {
-	lb := createStatsMetricsLabelsBuilder(q)
+	lb := createStatsMetricsLabelsBuilder(q, in.conf)
 	labels := lb.Build()
 	stats, err := in.prom.FetchHistogramValues("istio_request_duration_milliseconds", labels, "", q.Interval, q.Avg, q.Quantiles, q.QueryTime)
 	if err != nil {
@@ -227,8 +229,8 @@ func (in *MetricsService) getSingleQueryStats(q *models.MetricsStatsQuery) (*mod
 	return &metricsStats, nil
 }
 
-func createStatsMetricsLabelsBuilder(q *models.MetricsStatsQuery) *MetricsLabelsBuilder {
-	lb := NewMetricsLabelsBuilder(q.Direction)
+func createStatsMetricsLabelsBuilder(q *models.MetricsStatsQuery, conf *config.Config) *MetricsLabelsBuilder {
+	lb := NewMetricsLabelsBuilder(q.Direction, conf)
 	lb.SelfReporter()
 	if q.Target.Kind == "app" {
 		lb.App(q.Target.Name, q.Target.Namespace)
@@ -300,6 +302,10 @@ func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, pod
 	metrics["container_cpu_usage_seconds_total"] = append(metrics["container_cpu_usage_seconds_total"], converted...)
 
 	metric = in.prom.FetchRateRange("process_cpu_seconds_total", []string{podLabel}, "", &q.RangeQuery)
+	if metric.Matrix != nil {
+		// With more than one pod, the metric is empty
+		metric = in.prom.FetchRateRange("process_cpu_seconds_total", []string{"{pod=~\"istiod-.*\"}"}, "", &q.RangeQuery)
+	}
 	converted, err = models.ConvertMetric("process_cpu_seconds_total", metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
@@ -307,6 +313,10 @@ func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, pod
 	metrics["process_cpu_seconds_total"] = append(metrics["process_cpu_seconds_total"], converted...)
 
 	metric = in.prom.FetchRange("container_memory_working_set_bytes", podLabel, "", "", &q.RangeQuery)
+	if metrics["container_memory_working_set_bytes"] == nil {
+		// In Kind container_memory_working_set_bytes is missing
+		metric = in.prom.FetchRange("container_memory_working_set_bytes", "{pod=~\"istiod-.*\"}", "", "", &q.RangeQuery)
+	}
 	converted, err = models.ConvertMetric("container_memory_working_set_bytes", metric, models.ConversionParams{Scale: 0.000001})
 	if err != nil {
 		return nil, err
@@ -319,6 +329,103 @@ func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, pod
 		return nil, err
 	}
 	metrics["process_resident_memory_bytes"] = append(metrics["process_resident_memory_bytes"], converted...)
+
+	return metrics, nil
+}
+
+func (in *MetricsService) GetZtunnelMetrics(q models.IstioMetricsQuery) (models.MetricsMap, error) {
+
+	metrics := make(models.MetricsMap)
+	var err error
+	var converted []models.Metric
+
+	// ZTunnel connections
+	metric := in.prom.FetchRateRange("istio_tcp_connections_opened_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
+	converted, err = models.ConvertMetric("istio_tcp_connections_opened_total", metric, models.ConversionParams{Scale: 1})
+	if err != nil {
+		return nil, err
+	}
+	metrics["ztunnel_connections"] = append(metrics["istio_tcp_connections_closed_total"], converted...)
+	metric = in.prom.FetchRateRange("istio_tcp_connections_closed_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
+	converted, err = models.ConvertMetric("istio_tcp_connections_closed_total", metric, models.ConversionParams{Scale: 1})
+	if err != nil {
+		return nil, err
+	}
+	metrics["ztunnel_connections"] = append(metrics["istio_tcp_connections_closed_total"], converted...)
+
+	// Ztunnel versions
+	metric = in.prom.FetchRange("istio_build", "{component=\"ztunnel\"}", "tag", "sum", &q.RangeQuery)
+	converted, err = models.ConvertMetric("istio_build", metric, models.ConversionParams{Scale: 1})
+	if err != nil {
+		return nil, err
+	}
+	metrics["ztunnel_versions"] = append(metrics["istio_build"], converted...)
+
+	// Ztunnel memory usage ztunnel_memory_usage
+	metric = in.prom.FetchRange("container_memory_working_set_bytes", "{pod=~\"ztunnel-.*\"}", "pod", "sum", &q.RangeQuery)
+	converted, err = models.ConvertMetric("container_memory_working_set_bytes", metric, models.ConversionParams{Scale: 0.000001})
+	if err != nil {
+		return nil, err
+	}
+	metrics["ztunnel_memory_usage"] = append(metrics["container_memory_working_set_bytes"], converted...)
+
+	// Ztunnel ztunnel_cpu_usage
+	metricName := fmt.Sprintf("irate(container_cpu_usage_seconds_total{pod=~\"ztunnel-.*\"}[%s])", q.RateInterval)
+	metric = in.prom.FetchRange(metricName, "", "pod", "sum", &q.RangeQuery)
+	converted, err = models.ConvertMetric(metricName, metric, models.ConversionParams{Scale: 1})
+	if err != nil {
+		return nil, err
+	}
+	metrics["ztunnel_cpu_usage"] = append(metrics[metricName], converted...)
+
+	// ztunnel_bytes_transmitted
+	metric = in.prom.FetchRateRange("istio_tcp_received_bytes_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
+	converted, err = models.ConvertMetric("ztunnel_bytes_transmitted", metric, models.ConversionParams{Scale: 0.001, LabelPrefix: "Received"})
+	if err != nil {
+		return nil, err
+	}
+	metrics["ztunnel_bytes_transmitted"] = append(metrics["ztunnel_bytes_transmitted"], converted...)
+	metric = in.prom.FetchRateRange("istio_tcp_sent_bytes_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
+	converted, err = models.ConvertMetric("ztunnel_bytes_transmitted", metric, models.ConversionParams{Scale: 0.001, LabelPrefix: "Sent"})
+	if err != nil {
+		return nil, err
+	}
+	metrics["ztunnel_bytes_transmitted"] = append(metrics["ztunnel_bytes_transmitted"], converted...)
+
+	// ztunnel_workload_manager
+	metric = in.prom.FetchRange("workload_manager_active_proxy_count", "{pod=~\"ztunnel-.*\"}", "pod", "sum", &q.RangeQuery)
+	converted, err = models.ConvertMetric("ztunnel_workload_manager", metric, models.ConversionParams{Scale: 1})
+	if err != nil {
+		return nil, err
+	}
+	metrics["ztunnel_workload_manager"] = append(metrics["ztunnel_workload_manager"], converted...)
+
+	return metrics, nil
+}
+
+func (in *MetricsService) GetResourceMetrics(q models.IstioMetricsQuery) (models.MetricsMap, error) {
+
+	metrics := make(models.MetricsMap)
+	var err error
+	var converted []models.Metric
+
+	// Component memory usage memory_usage
+	labels := fmt.Sprintf("{pod=~\"%s-.*\"}", q.App)
+	metric := in.prom.FetchRange("container_memory_working_set_bytes", labels, "pod", "sum", &q.RangeQuery)
+	converted, err = models.ConvertMetric("container_memory_working_set_bytes", metric, models.ConversionParams{Scale: 0.000001})
+	if err != nil {
+		return nil, err
+	}
+	metrics["memory_usage"] = append(metrics["container_memory_working_set_bytes"], converted...)
+
+	// Component cpu_usage
+	metricName := fmt.Sprintf("irate(container_cpu_usage_seconds_total{pod=~\"%s-.*\"}[%s])", q.App, q.RateInterval)
+	metric = in.prom.FetchRange(metricName, "", "pod", "sum", &q.RangeQuery)
+	converted, err = models.ConvertMetric(metricName, metric, models.ConversionParams{Scale: 1})
+	if err != nil {
+		return nil, err
+	}
+	metrics["cpu_usage"] = append(metrics[metricName], converted...)
 
 	return metrics, nil
 }

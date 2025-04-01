@@ -3,15 +3,14 @@ import { Workload } from 'types/Workload';
 import { Pod, ZtunnelConfigDump } from 'types/IstioObjects';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { Card, CardBody, Grid, GridItem, Tab, Tabs, TooltipPosition } from '@patternfly/react-core';
+import { Card, CardBody, Tab, Tabs, TooltipPosition } from '@patternfly/react-core';
 import { activeTab } from '../../components/Tab/Tabs';
-import { RenderComponentScroll } from 'components/Nav/Page';
 import { location, router } from '../../app/History';
 import {
   tabName as workloadTabName,
   defaultTab as workloadDefaultTab
 } from '../../pages/WorkloadDetails/WorkloadDetailsPage';
-import { TimeInMilliseconds } from '../../types/Common';
+import { TimeInMilliseconds, TimeRange } from '../../types/Common';
 import { subTabStyle } from 'styles/TabStyles';
 import { ToolbarDropdown } from '../Dropdown/ToolbarDropdown';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
@@ -20,22 +19,21 @@ import { ZtunnelServicesTable } from './ZtunnelServicesTable';
 import { ZtunnelWorkloadsTable } from './ZtunnelWorkloadsTable';
 import { t } from 'i18next';
 import { SortableTh } from '../Table/SimpleTable';
+import { ZtunnelMetrics } from './ZtunnelMetrics';
+import { RenderComponentScroll } from 'components/Nav/Page';
 
-const resources: string[] = ['services', 'workloads'];
+const resources: string[] = ['services', 'workloads', 'metrics'];
 
-const ztunnelTabs = ['services', 'workloads'];
+const ztunnelTabs = ['services', 'workloads', 'metrics'];
 const tabName = 'ztunnelTab';
 const defaultTab = 'services';
 
 type ZtunnelConfigProps = {
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
+  rangeDuration: TimeRange;
   workload: Workload;
 };
-
-const fullHeightStyle = kialiStyle({
-  height: '100%'
-});
 
 const iconStyle = kialiStyle({
   display: 'inline-block',
@@ -45,6 +43,18 @@ const iconStyle = kialiStyle({
 export interface SortableCompareTh<T> extends SortableTh {
   compare?: (a: T, b: T) => number;
 }
+
+export const yoverflow = kialiStyle({
+  height: 'calc(100vh - 400px)',
+  overflow: 'auto'
+});
+
+export const stickyThead: React.CSSProperties = {
+  position: 'sticky',
+  top: 0,
+  backgroundColor: 'white',
+  zIndex: 1
+};
 
 export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfigProps) => {
   const sortedPods = (): Pod[] => {
@@ -56,6 +66,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
   const [fetch, setFetch] = React.useState(true);
   const [activeKey, setActiveKey] = React.useState(ztunnelTabs.indexOf(activeTab(tabName, defaultTab)));
   const [resource, setResource] = React.useState(activeTab(tabName, defaultTab));
+  const [tabHeight, setTabHeight] = React.useState<number>(700);
 
   const prevResource = React.createRef();
   const prevPod = React.createRef();
@@ -65,7 +76,6 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
       .then(resultConfig => {
         setConfig(resultConfig.data);
         setFetch(false);
-        console.log(resultConfig.data);
       })
       .catch(error => {
         AlertUtils.addError(`Could not fetch ztunnel config for ${name}.`, error);
@@ -132,9 +142,9 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
 
   const servicesTab = (
     <Tab title={t('Services')} eventKey={0} key="services">
-      <Card className={fullHeightStyle}>
+      <Card>
         <CardBody>
-          <div className={fullHeightStyle}>
+          <div>
             <div style={{ marginBottom: '1.25rem' }}>
               <div key="service-icon" className={iconStyle}>
                 <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
@@ -158,9 +168,9 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
 
   const workloadsTab = (
     <Tab title={t('Workloads')} eventKey={1} key="workloads">
-      <Card className={fullHeightStyle}>
+      <Card>
         <CardBody>
-          <div className={fullHeightStyle}>
+          <div>
             <div style={{ marginBottom: '1.25rem' }}>
               <div key="service-icon" className={iconStyle}>
                 <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
@@ -182,22 +192,35 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
   );
   tabs.push(workloadsTab);
 
+  const metricsTab = (
+    <Tab title={t('Metrics')} eventKey={2} key="metrics">
+      <Card>
+        <CardBody>
+          <ZtunnelMetrics
+            rangeDuration={props.rangeDuration}
+            lastRefreshAt={props.lastRefreshAt}
+            namespace={props.namespace}
+            cluster={props.workload.cluster ? props.workload.cluster : ''}
+            dashboardHeight={tabHeight - 200}
+          />
+        </CardBody>
+      </Card>
+    </Tab>
+  );
+  tabs.push(metricsTab);
+
   return (
-    <RenderComponentScroll>
-      <Grid>
-        <GridItem span={12}>
-          <Tabs
-            id="ztunnel-details"
-            className={subTabStyle}
-            activeKey={activeKey}
-            onSelect={ztunnelHandleTabClick}
-            mountOnEnter={true}
-            unmountOnExit={true}
-          >
-            {tabs}
-          </Tabs>
-        </GridItem>
-      </Grid>
+    <RenderComponentScroll onResize={height => setTabHeight(height)}>
+      <Tabs
+        id="ztunnel-details"
+        className={subTabStyle}
+        activeKey={activeKey}
+        onSelect={ztunnelHandleTabClick}
+        mountOnEnter={true}
+        unmountOnExit={true}
+      >
+        {tabs}
+      </Tabs>
     </RenderComponentScroll>
   );
 };

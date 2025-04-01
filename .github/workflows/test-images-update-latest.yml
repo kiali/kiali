@@ -3,14 +3,14 @@ name: Update latest test suite images
 on:
   push:
     branches:
-      - master
+    - master
     paths:
-      - 'hack/**'
-      - 'frontend/**'
-      # ignore src folder 
-      - '!frontend/src/**'
-      - 'deploy/docker/Dockerfile-cypress'
-      - 'tests/integration/**'
+    - 'hack/**'
+    - 'frontend/**'
+    # ignore src folder
+    - '!frontend/src/**'
+    - 'deploy/docker/Dockerfile-cypress'
+    - 'tests/integration/**'
 
 jobs:
   determine_change:
@@ -43,14 +43,14 @@ jobs:
         else
           echo "Unknown change. A change in watched folders was detected, but the folder is not related to any test image. Review the workflow file and add that folder to the related test image in the filter step!"          exit 1
         fi
-        
+
         echo "build_mode=$MODE" >> $GITHUB_OUTPUT
     - name: Log information
       run: |
         echo "Change in folders related to int tests": ${{ steps.filter.outputs.integration }}
         echo "Change in folders related to cypress tests": ${{ steps.filter.outputs.cypress }}
         echo "Determined mode": ${{ steps.determine.outputs.build_mode }}
-  
+
   push_test_images:
     name: Build and push test images
     needs: [determine_change]

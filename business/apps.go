@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -17,6 +18,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 func NewAppService(businessLayer *Layer, conf *config.Config, prom prometheus.ClientInterface, grafana *grafana.Service, userClients map[string]kubernetes.ClientInterface) AppService {
@@ -138,12 +140,12 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 		for _, srv := range valueApp.Services {
 			joinMap(applabels, srv.Labels)
 			if criteria.IncludeIstioResources {
-				vsFiltered := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, srv.Namespace, srv.Name)
+				vsFiltered := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, srv.Namespace, srv.Name, in.conf)
 				for _, v := range vsFiltered {
 					ref := models.BuildKey(kubernetes.VirtualServices, v.Name, v.Namespace, cluster)
 					svcReferences = append(svcReferences, &ref)
 				}
-				drFiltered := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, srv.Namespace, srv.Name)
+				drFiltered := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, srv.Namespace, srv.Name, in.conf)
 				for _, d := range drFiltered {
 					ref := models.BuildKey(kubernetes.DestinationRules, d.Name, d.Namespace, cluster)
 					svcReferences = append(svcReferences, &ref)
@@ -296,12 +298,12 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 			for _, srv := range valueApp.Services {
 				joinMap(applabels, srv.Labels)
 				if criteria.IncludeIstioResources {
-					vsFiltered := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, srv.Namespace, srv.Name)
+					vsFiltered := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, srv.Namespace, srv.Name, in.conf)
 					for _, v := range vsFiltered {
 						ref := models.BuildKey(kubernetes.VirtualServices, v.Name, v.Namespace, criteria.Cluster)
 						svcReferences = append(svcReferences, &ref)
 					}
-					drFiltered := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, srv.Namespace, srv.Name)
+					drFiltered := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, srv.Namespace, srv.Name, in.conf)
 					for _, d := range drFiltered {
 						ref := models.BuildKey(kubernetes.DestinationRules, d.Name, d.Namespace, criteria.Cluster)
 						svcReferences = append(svcReferences, &ref)
@@ -385,7 +387,7 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 
 	appInstance.Workloads = make([]models.WorkloadItem, len(appDetails.Workloads))
 	for i, wkd := range appDetails.Workloads {
-		appInstance.Workloads[i] = models.WorkloadItem{WorkloadName: wkd.Name, WorkloadGVK: wkd.WorkloadGVK, IstioSidecar: wkd.IstioSidecar, Labels: wkd.Labels, IsAmbient: wkd.IsAmbient, ServiceAccountNames: wkd.Pods.ServiceAccounts(), WaypointWorkloads: wkd.WaypointWorkloads}
+		appInstance.Workloads[i] = models.WorkloadItem{WorkloadName: wkd.Name, Namespace: wkd.Namespace, WorkloadGVK: wkd.WorkloadGVK, IstioSidecar: wkd.IstioSidecar, Labels: wkd.Labels, IsAmbient: wkd.IsAmbient, ServiceAccountNames: wkd.Pods.ServiceAccounts(), WaypointWorkloads: wkd.WaypointWorkloads}
 	}
 
 	appInstance.ServiceNames = make([]string, len(appDetails.Services))
@@ -461,13 +463,8 @@ func castAppDetails(appLabel string, allEntities namespaceApps, ss *models.Servi
 // Return an error on any problem.
 func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, cluster string, appName string) (namespaceApps, error) {
 	var ss *models.ServiceList
-	var ws models.Workloads
-
-	appNameSelector := ""
-	if appName != "" {
-		selector := labels.Set(map[string]string{in.conf.IstioLabels.AppLabelName: appName})
-		appNameSelector = selector.String()
-	}
+	var err error
+	ws := map[string]*models.Workload{}
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
@@ -475,13 +472,27 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 		return nil, err
 	}
 
-	var err error
-	ws, err = in.businessLayer.Workload.fetchWorkloadsFromCluster(ctx, cluster, namespace, appNameSelector)
-	if err != nil {
-		return nil, err
+	appNameSelectors := in.conf.GetAppVersionLabelSelectors(appName, "")
+	for _, appNameSelector := range appNameSelectors {
+		selectedWorkloads, err := in.businessLayer.Workload.fetchWorkloadsFromCluster(ctx, cluster, namespace, appNameSelector.LabelSelector)
+		if err != nil {
+			return nil, err
+		}
+		// remove ambient infra workloads, which are labeled but not really apps
+		filteredWorkloads := sliceutil.Filter(selectedWorkloads, func(w *models.Workload) bool { return !(w.IsInfra()) })
+		for _, selectedWorkload := range filteredWorkloads {
+			ws[selectedWorkload.Name] = selectedWorkload
+		}
 	}
+	// return in sorted order, doesn't hurt, may help client, and helps test consistency
+	keys := make([]string, 0, len(ws))
+	for k := range ws {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
 	allEntities := make(namespaceApps)
-	for _, w := range ws {
+	for _, k := range keys {
+		w := ws[k]
 		// WorkloadGroup.Labels can be empty
 		if len(w.Labels) > 0 {
 			// Check if namespace is cached
@@ -500,7 +511,8 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 		} else {
 			ss = nil
 		}
-		castAppDetails(in.conf.IstioLabels.AppLabelName, allEntities, ss, w, cluster)
+		appLabelName, _ := in.conf.GetAppLabelName(w.Labels)
+		castAppDetails(appLabelName, allEntities, ss, w, cluster)
 	}
 
 	return allEntities, nil

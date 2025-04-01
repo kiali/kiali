@@ -1,4 +1,4 @@
-import * as dagre from 'dagre';
+import { graphlib, layout as dagreLayout } from '@dagrejs/dagre';
 import {
   BaseLayout,
   DagreLayoutOptions,
@@ -29,7 +29,7 @@ export interface ChildGroup {
   groups: LayoutGroup[];
 }
 
-// MeshLayout is a copy of PFT's DagreGroupsLayout, but for innermost groups it copies the simple
+// MeshDagreLayout is a copy of PFT's DagreGroupsLayout, but for innermost groups it copies the simple
 // logic of GridLayout, which works better when organizing nodes with few, or no edges.
 export class MeshDagreLayout extends BaseLayout implements Layout {
   protected dagreOptions: DagreLayoutOptions;
@@ -127,7 +127,7 @@ export class MeshDagreLayout extends BaseLayout implements Layout {
   protected startLayout(graph: Graph, initialRun: boolean, addingNodes: boolean): void {
     if (initialRun || addingNodes) {
       const doLayout = (parentGroup?: LayoutGroup) => {
-        const dagreGraph = new dagre.graphlib.Graph({ compound: true });
+        const dagreGraph = new graphlib.Graph({ compound: true });
         const options = { ...this.dagreOptions };
 
         Object.keys(LAYOUT_DEFAULTS).forEach(key => delete options[key]);
@@ -168,7 +168,7 @@ export class MeshDagreLayout extends BaseLayout implements Layout {
             dagreGraph.setEdge(dagreEdge.source.id, dagreEdge.target.id, dagreEdge);
           });
 
-          dagre.layout(dagreGraph);
+          dagreLayout(dagreGraph);
 
           // Update the node element positions
           layerNodes.forEach(node => {

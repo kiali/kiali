@@ -13,6 +13,7 @@ const (
 type TracingInfo struct {
 	Enabled              bool               `json:"enabled"`
 	Integration          bool               `json:"integration"`
+	InternalURL          string             `json:"internalURL"`
 	Provider             string             `json:"provider"`
 	TempoConfig          config.TempoConfig `json:"tempoConfig"`
 	URL                  string             `json:"url"`

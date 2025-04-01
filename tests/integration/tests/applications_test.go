@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -20,8 +21,8 @@ func TestApplicationsList(t *testing.T) {
 		require.NotNil(app.Health)
 		require.NotNil(app.Labels)
 		require.Equal(kiali.BOOKINFO, app.Namespace)
-		if !strings.Contains(app.Name, "traffic-generator") {
-			require.True(app.IstioSidecar)
+		if !strings.Contains(app.Name, "traffic-generator") && !app.IsGateway {
+			require.True(app.IstioSidecar, fmt.Sprintf("failed on %s:%s", app.Namespace, app.Name))
 			require.NotNil(app.IstioReferences)
 		}
 	}
@@ -40,7 +41,7 @@ func TestApplicationDetails(t *testing.T) {
 	for _, workload := range app.Workloads {
 		require.NotEmpty(workload.WorkloadName)
 		if !strings.Contains(workload.WorkloadName, "traffic-generator") {
-			require.True(workload.IstioSidecar)
+			require.True(workload.IstioSidecar, fmt.Sprintf("failed on %s:%s", app.Namespace.Name, app.Name))
 		}
 	}
 	require.NotEmpty(app.ServiceNames)

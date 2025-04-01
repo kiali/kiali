@@ -9,10 +9,11 @@ import (
 )
 
 type K8sGatewayReferences struct {
+	Conf                  *config.Config
 	K8sGateways           []*k8s_networking_v1.Gateway
 	K8sHTTPRoutes         []*k8s_networking_v1.HTTPRoute
 	K8sGRPCRoutes         []*k8s_networking_v1.GRPCRoute
-	WorkloadsPerNamespace map[string]models.WorkloadList
+	WorkloadsPerNamespace map[string]models.Workloads
 }
 
 func (g K8sGatewayReferences) References() models.IstioReferencesMap {
@@ -33,9 +34,9 @@ func (g K8sGatewayReferences) getWorkloadReferences(gw *k8s_networking_v1.Gatewa
 	result := make([]models.WorkloadReference, 0)
 
 	// Gateway searches Workloads from own namespace and Gateway Label
-	for _, wl := range g.WorkloadsPerNamespace[gw.Namespace].Workloads {
-		if gw.Name == wl.Labels[config.Get().IstioLabels.AmbientWaypointGatewayLabel] {
-			result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: gw.Namespace})
+	for _, w := range g.WorkloadsPerNamespace[gw.Namespace] {
+		if gw.Name == w.Labels[g.Conf.IstioLabels.AmbientWaypointGatewayLabel] {
+			result = append(result, models.WorkloadReference{Name: w.Name, Namespace: gw.Namespace})
 		}
 	}
 	return result

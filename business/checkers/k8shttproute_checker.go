@@ -5,12 +5,14 @@ import (
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/business/checkers/k8shttproutes"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type K8sHTTPRouteChecker struct {
 	Cluster            string
+	Conf               *config.Config
 	K8sGateways        []*k8s_networking_v1.Gateway
 	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant
@@ -31,7 +33,7 @@ func (in K8sHTTPRouteChecker) Check() models.IstioValidations {
 func (in K8sHTTPRouteChecker) runIndividualChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	gatewayNames := kubernetes.K8sGatewayNames(in.K8sGateways)
+	gatewayNames := kubernetes.K8sGatewayNames(in.K8sGateways, in.Conf)
 
 	for _, rt := range in.K8sHTTPRoutes {
 		validations.MergeValidations(in.runChecks(rt, gatewayNames))
@@ -46,12 +48,14 @@ func (in K8sHTTPRouteChecker) runChecks(rt *k8s_networking_v1.HTTPRoute, gateway
 	enabledCheckers := []Checker{
 		k8shttproutes.NoK8sGatewayChecker{
 			Cluster:      in.Cluster,
+			Conf:         in.Conf,
 			K8sHTTPRoute: rt,
 			GatewayNames: gatewayNames,
 			Namespaces:   in.Namespaces,
 		},
 		k8shttproutes.NoHostChecker{
-			Namespaces:         in.Namespaces,
+			Conf:               in.Conf,
+			Namespaces:         in.Namespaces.GetNames(),
 			K8sHTTPRoute:       rt,
 			K8sReferenceGrants: in.K8sReferenceGrants,
 			RegistryServices:   in.RegistryServices,

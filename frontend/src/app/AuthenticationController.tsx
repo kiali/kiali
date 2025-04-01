@@ -176,13 +176,6 @@ class AuthenticationControllerComponent extends React.Component<
       const getNamespaces = this.promises.register('getNamespaces', API.getNamespaces());
       const getServerConfig = this.promises.register('getServerConfig', API.getServerConfig());
 
-      const getStatusPromise = this.promises
-        .register('getStatus', API.getStatus())
-        .then(response => this.processServerStatus(response.data))
-        .catch(error => {
-          AlertUtils.addError('Error fetching server status.', error, 'default', MessageType.WARNING);
-        });
-
       const getTracingInfoPromise = this.promises
         .register('getTracingInfo', API.getTracingInfo())
         .then(response => this.props.setTracingInfo(response.data))
@@ -196,7 +189,14 @@ class AuthenticationControllerComponent extends React.Component<
           );
         });
 
-      const configs = await Promise.all([getNamespaces, getServerConfig, getStatusPromise, getTracingInfoPromise]);
+      // Get status is done outside await because it takes some time to respond, so the login screen is not blocked for this
+      API.getStatus()
+        .then(response => this.processServerStatus(response.data))
+        .catch(error => {
+          AlertUtils.addError('Error fetching server status.', error, 'default', MessageType.WARNING);
+        });
+
+      const configs = await Promise.all([getNamespaces, getServerConfig, getTracingInfoPromise]);
 
       this.props.setNamespaces(configs[0].data, new Date());
       setServerConfig(configs[1].data);

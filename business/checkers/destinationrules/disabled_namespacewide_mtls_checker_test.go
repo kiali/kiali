@@ -188,6 +188,7 @@ func testNoDisabledMtlsValidationsFound(t *testing.T, destinationRule *networkin
 	mTLSDetails.EnabledAutoMtls = autoMtls
 
 	validations, valid := DisabledNamespaceWideMTLSChecker{
+		Conf:            config.Get(),
 		DestinationRule: destinationRule,
 		MTLSDetails:     mTLSDetails,
 	}.Check()
@@ -205,6 +206,7 @@ func testDisabledMtlsValidationsFound(t *testing.T, validationId string, destina
 	mTLSDetails.EnabledAutoMtls = autoMtls
 
 	vals, valid := DisabledNamespaceWideMTLSChecker{
+		Conf:            config.Get(),
 		DestinationRule: destinationRule,
 		MTLSDetails:     mTLSDetails,
 	}.Check()

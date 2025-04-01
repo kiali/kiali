@@ -163,7 +163,7 @@ if [ "${MANAGE_KIND}" == "true" ]; then
       exit 1
     fi
 
-    Given: 172.18.0.0/16 this should return 172.18.0
+    # Given: 172.18.0.0/16 this should return 172.18.0
     beginning_subnet_octets=$(cut -d'.' -f1-3 <<< "$subnet")
     lb_range_start="70"
 

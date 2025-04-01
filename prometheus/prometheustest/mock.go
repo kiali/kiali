@@ -314,6 +314,11 @@ func (o *PromClientMock) GetConfiguration() (prom_v1.ConfigResult, error) {
 	return args.Get(0).(prom_v1.ConfigResult), args.Error(1)
 }
 
+func (o *PromClientMock) GetExistingMetricNames(metricNames []string) ([]string, error) {
+	args := o.Called(metricNames)
+	return args.Get(0).([]string), args.Error(1)
+}
+
 func (o *PromClientMock) GetFlags() (prom_v1.FlagsResult, error) {
 	args := o.Called()
 	return args.Get(0).(prom_v1.FlagsResult), args.Error(1)
@@ -367,6 +372,11 @@ func (o *PromClientMock) FetchHistogramValues(metricName, labels, grouping, rate
 func (o *PromClientMock) GetMetricsForLabels(metricNames []string, labels string) ([]string, error) {
 	args := o.Called(metricNames, labels)
 	return args.Get(0).([]string), args.Error(1)
+}
+
+func (o *PromClientMock) GetRuntimeinfo() (prom_v1.RuntimeinfoResult, error) {
+	args := o.Called()
+	return args.Get(0).(prom_v1.RuntimeinfoResult), args.Error(1)
 }
 
 func (o *PromClientMock) MockMetric(name string, labels string, q *prometheus.RangeQuery, value float64) {

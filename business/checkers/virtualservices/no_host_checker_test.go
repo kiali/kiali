@@ -26,6 +26,7 @@ func TestValidHost(t *testing.T) {
 	registryService2 := data.CreateFakeRegistryServices("reviews.bookinfo.svc.cluster.local", "bookinfo", "*")
 
 	vals, valid := NoHostChecker{
+		Conf:             config.Get(),
 		RegistryServices: append(registryService1, registryService2...),
 		VirtualService:   virtualService,
 	}.Check()
@@ -46,6 +47,7 @@ func TestValidHostExported(t *testing.T) {
 	registryService := data.CreateFakeRegistryServices("reviews.bookinfo.svc.cluster.local", "bookinfo", "*")
 
 	vals, valid := NoHostChecker{
+		Conf:             config.Get(),
 		VirtualService:   virtualService,
 		RegistryServices: append(data.CreateFakeRegistryServices("ratings.bookinfo2.svc.cluster.local", "bookinfo2", "bookinfo2"), registryService...),
 	}.Check()
@@ -66,6 +68,7 @@ func TestNoValidHost(t *testing.T) {
 	virtualService := data.CreateVirtualService()
 
 	vals, valid := NoHostChecker{
+		Conf:             config.Get(),
 		RegistryServices: append(registryService1, registryService2...),
 		VirtualService:   virtualService,
 	}.Check()
@@ -82,6 +85,7 @@ func TestNoValidHost(t *testing.T) {
 	virtualService.Spec.Http = nil
 
 	vals, valid = NoHostChecker{
+		Conf:             config.Get(),
 		RegistryServices: append(registryService1, registryService2...),
 		VirtualService:   virtualService,
 	}.Check()
@@ -109,6 +113,7 @@ func TestNoValidExportedHost(t *testing.T) {
 	)
 
 	vals, valid := NoHostChecker{
+		Conf:             config.Get(),
 		VirtualService:   virtualService,
 		RegistryServices: append(data.CreateFakeRegistryServices("ratings.bookinfo2.svc.cluster.local", "bookinfo2", "*"), append(registryService1, registryService2...)...),
 	}.Check()
@@ -125,6 +130,7 @@ func TestNoValidExportedHost(t *testing.T) {
 	virtualService.Spec.Http = nil
 
 	vals, valid = NoHostChecker{
+		Conf:             config.Get(),
 		VirtualService:   virtualService,
 		RegistryServices: append(data.CreateFakeRegistryServices("ratings.bookinfo2.svc.cluster.local", "bookinfo2", "."), append(registryService1, registryService2...)...),
 	}.Check()
@@ -150,10 +156,8 @@ func TestInvalidServiceNamespaceFormatHost(t *testing.T) {
 	)
 
 	vals, valid := NoHostChecker{
-		Namespaces: models.Namespaces{
-			models.Namespace{Name: "test"},
-			models.Namespace{Name: "outside-namespace"},
-		},
+		Conf:             config.Get(),
+		Namespaces:       []string{"test", "outside-namespace"},
 		RegistryServices: append(registryService1, registryService2...),
 		VirtualService:   virtualService,
 		PolicyAllowAny:   true,
@@ -180,10 +184,8 @@ func TestInvalidServiceNamespaceFormatExportedHost(t *testing.T) {
 	)
 
 	vals, valid := NoHostChecker{
-		Namespaces: models.Namespaces{
-			models.Namespace{Name: "test"},
-			models.Namespace{Name: "outside-namespace"},
-		},
+		Conf:             config.Get(),
+		Namespaces:       []string{"test", "outside-namespace"},
 		VirtualService:   virtualService,
 		RegistryServices: append(data.CreateFakeRegistryServices("ratings.bookinfo2.svc.cluster.local", "bookinfo2", "*"), append(registryService1, registryService2...)...),
 	}.Check()
@@ -199,10 +201,8 @@ func TestInvalidServiceNamespaceFormatExportedHost(t *testing.T) {
 	)
 
 	vals, valid = NoHostChecker{
-		Namespaces: models.Namespaces{
-			models.Namespace{Name: "bookinfo"},
-			models.Namespace{Name: "bookinfo2"},
-		},
+		Conf:             config.Get(),
+		Namespaces:       []string{"bookinfo", "bookinfo2"},
 		VirtualService:   virtualService,
 		RegistryServices: append(data.CreateFakeRegistryServices("ratings.bookinfo2.svc.cluster.local", "bookinfo2", "."), append(registryService1, registryService2...)...),
 	}.Check()
@@ -225,6 +225,7 @@ func TestValidServiceEntryHost(t *testing.T) {
 	virtualService := data.CreateVirtualServiceWithServiceEntryTarget()
 
 	vals, valid := NoHostChecker{
+		Conf:             config.Get(),
 		VirtualService:   virtualService,
 		RegistryServices: registryService1,
 	}.Check()
@@ -236,6 +237,7 @@ func TestValidServiceEntryHost(t *testing.T) {
 	serviceEntry := data.CreateExternalServiceEntry()
 
 	vals, valid = NoHostChecker{
+		Conf:              config.Get(),
 		VirtualService:    virtualService,
 		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{serviceEntry}),
 		RegistryServices:  registryService1,
@@ -257,6 +259,7 @@ func TestValidWildcardServiceEntryHost(t *testing.T) {
 		data.CreateEmptyVirtualService("googleIt", "google", []string{"www.google.com"}))
 
 	vals, valid := NoHostChecker{
+		Conf:             config.Get(),
 		VirtualService:   virtualService,
 		RegistryServices: registryService1,
 	}.Check()
@@ -268,6 +271,7 @@ func TestValidWildcardServiceEntryHost(t *testing.T) {
 	serviceEntry := data.CreateEmptyMeshExternalServiceEntry("googlecard", "google", []string{"*.google.com"})
 
 	vals, valid = NoHostChecker{
+		Conf:              config.Get(),
 		VirtualService:    virtualService,
 		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{serviceEntry}),
 		RegistryServices:  registryService1,
@@ -288,6 +292,7 @@ func TestValidServiceRegistry(t *testing.T) {
 		data.CreateEmptyVirtualService("federation-vs", "bookinfo", []string{"*"}))
 
 	vals, valid := NoHostChecker{
+		Conf:           config.Get(),
 		VirtualService: virtualService,
 	}.Check()
 
@@ -295,6 +300,7 @@ func TestValidServiceRegistry(t *testing.T) {
 	assert.NotEmpty(vals)
 
 	vals, valid = NoHostChecker{
+		Conf:             config.Get(),
 		VirtualService:   virtualService,
 		RegistryServices: data.CreateFakeRegistryServices("ratings.mesh2-bookinfo.svc.mesh1-imports.local", "bookinfo", "bookinfo"),
 	}.Check()
@@ -303,6 +309,7 @@ func TestValidServiceRegistry(t *testing.T) {
 	assert.Empty(vals)
 
 	vals, valid = NoHostChecker{
+		Conf:             config.Get(),
 		VirtualService:   virtualService,
 		RegistryServices: data.CreateFakeRegistryServices("ratings2.mesh2-bookinfo.svc.mesh1-imports.local", "bookinfo", "."),
 	}.Check()

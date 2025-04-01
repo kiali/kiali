@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"strconv"
@@ -10,12 +11,29 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	core_v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio/istiotest"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
+
+var numberOfObjectsFlag int
+
+func init() {
+	flag.IntVar(&numberOfObjectsFlag, "num-objects", 10, "Number of objects to create of various kinds in the benchmark setup.")
+}
+
+func parseFlags(t testing.TB) {
+	t.Helper()
+	flag.Parse()
+}
 
 func TestGetValidationsPerf(t *testing.T) {
 	assert := assert.New(t)
@@ -46,13 +64,16 @@ func TestGetValidationsPerf(t *testing.T) {
 		}
 	}
 
-	vs := mockCombinedValidationService(t, fakeIstioConfigListPerf(numNs, numDr, numVs, numGw),
+	vs := mockCombinedValidationService(t, conf, fakeIstioConfigListPerf(numNs, numDr, numVs, numGw),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
 
 	now := time.Now()
-	validations, err := vs.CreateValidations(context.TODO(), conf.KubernetesConfig.ClusterName)
+	vInfo, err := vs.NewValidationInfo(context.TODO(), []string{conf.KubernetesConfig.ClusterName}, nil)
+	require.NoError(err)
+	validationPerformed, validations, err := vs.Validate(context.TODO(), conf.KubernetesConfig.ClusterName, vInfo)
 	require.NoError(err)
 	log.Debugf("Validation Performance test took %f seconds for %d namespaces", time.Since(now).Seconds(), numNs)
+	assert.True(validationPerformed)
 	assert.NotEmpty(validations)
 }
 
@@ -84,4 +105,87 @@ func fakeIstioConfigListPerf(numNs, numDr, numVs, numGw int) *models.IstioConfig
 		n++
 	}
 	return &istioConfigList
+}
+
+func BenchmarkValidate(b *testing.B) {
+	parseFlags(b)
+	services := []string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"}
+	conf := config.NewConfig()
+	config.Set(conf)
+	istioConfigList := fakeIstioConfigListPerf(numberOfObjectsFlag, numberOfObjectsFlag, numberOfObjectsFlag, numberOfObjectsFlag)
+	fakeIstioObjects := []runtime.Object{
+		&core_v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+		kubetest.FakeNamespace("wrong"),
+		kubetest.FakeNamespace("istio-system"),
+	}
+	for _, p := range fakeMeshPolicies() {
+		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
+	}
+	for _, p := range fakePolicies() {
+		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
+	}
+	for _, p := range fakeCombinedServices(services, "test") {
+		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
+	}
+	for _, p := range FakeDepSyncedWithRS(conf) {
+		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
+	}
+	for _, p := range fakeNamespaces() {
+		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
+	}
+	for _, p := range FakeRSSyncedWithPods(conf) {
+		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
+	}
+	for _, p := range fakePods().Items {
+		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
+	}
+	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.Gateways)...)
+	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.DestinationRules)...)
+	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.VirtualServices)...)
+	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.ServiceEntries)...)
+	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.Sidecars)...)
+	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.WorkloadEntries)...)
+	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.RequestAuthentications)...)
+	for i := 0; i < numberOfObjectsFlag; i++ {
+		fakeIstioObjects = append(fakeIstioObjects, data.CreateAuthorizationPolicyWithPrincipals(fmt.Sprintf("name-%d", i), fmt.Sprintf("ns-%d", i), []string{"principal1", "principal2", "principal2"}))
+	}
+	for i := 0; i < numberOfObjectsFlag; i++ {
+		ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("ns-%d", i)}}
+		fakeIstioObjects = append(fakeIstioObjects, ns)
+	}
+	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
+	cache := SetupBusinessLayer(b, k8s, *conf)
+	cache.SetRegistryStatus(map[string]*kubernetes.RegistryStatus{
+		conf.KubernetesConfig.ClusterName: {
+			Services: data.CreateFakeMultiRegistryServices(services, "test", "*"),
+		},
+	})
+
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}, Config: models.ControlPlaneConfiguration{}}}},
+	}
+	namespace := NewNamespaceService(cache, conf, discovery, k8sclients, k8sclients)
+	mesh := NewMeshService(conf, discovery, k8sclients)
+	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
+	vs := NewValidationsService(conf, &layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
+
+	var changeMap ValidationChangeMap
+	if conf.ExternalServices.Istio.ValidationChangeDetectionEnabled {
+		changeMap = ValidationChangeMap{}
+	}
+
+	vInfo, err := vs.NewValidationInfo(context.TODO(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_, _, err = vs.Validate(context.TODO(), conf.KubernetesConfig.ClusterName, vInfo)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
 }

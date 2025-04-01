@@ -33,7 +33,7 @@ Then('user sees workload inbound metrics information', () => {
 
   openTab('Inbound Metrics');
   cy.wait('@fetchMetrics');
-  cy.waitForReact(1000, '#root');
+  cy.waitForReact();
 
   cy.getReact('IstioMetricsComponent', { props: { 'data-test': 'inbound-metrics-component' } })
     // HOCs can match the component name. This filters the HOCs for just the bare component.
@@ -52,7 +52,7 @@ Then('user sees workload outbound metrics information', () => {
 
   openTab('Outbound Metrics');
   cy.wait('@fetchMetrics');
-  cy.waitForReact(1000, '#root');
+  cy.waitForReact();
 
   cy.getReact('IstioMetricsComponent', { props: { 'data-test': 'outbound-metrics-component' } })
     // HOCs can match the component name. This filters the HOCs for just the bare component.
@@ -89,7 +89,7 @@ When(
     openTab('Envoy');
     openEnvoyTab(tab);
 
-    cy.waitForReact(1000, '#root');
+    cy.waitForReact();
 
     cy.get('button#filter_select_type-toggle').click();
     cy.contains('div#filter_select_type button', filter).click();
@@ -144,7 +144,7 @@ Then('the user sees the metrics tab', () => {
   openEnvoyTab('Metrics');
 
   cy.wait('@fetchEnvoyMetrics');
-  cy.waitForReact(1000, '#root');
+  cy.waitForReact();
 
   cy.contains('Loading metrics').should('not.exist');
 

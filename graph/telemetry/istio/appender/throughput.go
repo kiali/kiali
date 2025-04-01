@@ -7,6 +7,7 @@ import (
 
 	"github.com/prometheus/common/model"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/log"
@@ -59,12 +60,13 @@ func (a ThroughputAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo 
 		graph.CheckError(err)
 	}
 
-	a.appendGraph(trafficMap, namespaceInfo.Namespace, globalInfo.PromClient)
+	a.appendGraph(trafficMap, namespaceInfo.Namespace, globalInfo)
 }
 
-func (a ThroughputAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client) {
+func (a ThroughputAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, gi *graph.GlobalInfo) {
 	log.Tracef("Generating [%s] throughput; namespace = %v", a.ThroughputType, namespace)
 
+	client := gi.PromClient
 	// create map to quickly look up throughput
 	throughputMap := make(map[string]float64)
 	duration := a.Namespaces[namespace].Duration
@@ -86,8 +88,8 @@ func (a ThroughputAppender) appendGraph(trafficMap graph.TrafficMap, namespace s
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-	a.populateThroughputMap(throughputMap, &vector)
+	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), gi.Conf, a)
+	a.populateThroughputMap(throughputMap, &vector, gi.Conf)
 
 	// 2) query for requests originating from a workload inside of the namespace
 	query = fmt.Sprintf(`sum(rate(%s{%s,source_workload_namespace="%s"}[%vs])) by (%s) > 0`,
@@ -96,8 +98,8 @@ func (a ThroughputAppender) appendGraph(trafficMap graph.TrafficMap, namespace s
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	vector = promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-	a.populateThroughputMap(throughputMap, &vector)
+	vector = promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), gi.Conf, a)
+	a.populateThroughputMap(throughputMap, &vector, gi.Conf)
 
 	applyThroughput(trafficMap, throughputMap)
 }
@@ -113,7 +115,7 @@ func applyThroughput(trafficMap graph.TrafficMap, throughputMap map[string]float
 	}
 }
 
-func (a ThroughputAppender) populateThroughputMap(throughputMap map[string]float64, vector *model.Vector) {
+func (a ThroughputAppender) populateThroughputMap(throughputMap map[string]float64, vector *model.Vector, conf *config.Config) {
 	for _, s := range *vector {
 		m := s.Metric
 		lSourceCluster, sourceClusterOk := m["source_cluster"]
@@ -151,7 +153,7 @@ func (a ThroughputAppender) populateThroughputMap(throughputMap map[string]float
 		val := float64(s.Value)
 
 		// handle unusual destinations
-		destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, _ := util.HandleDestination(sourceCluster, sourceWlNs, sourceWl, destCluster, string(lDestSvcNs), string(lDestSvc), string(lDestSvcName), string(lDestWlNs), string(lDestWl), string(lDestApp), string(lDestVer))
+		destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, _ := util.HandleDestination(sourceCluster, sourceWlNs, sourceWl, destCluster, string(lDestSvcNs), string(lDestSvc), string(lDestSvcName), string(lDestWlNs), string(lDestWl), string(lDestApp), string(lDestVer), conf)
 
 		if util.IsBadDestTelemetry(destCluster, destClusterOk, destSvcNs, destSvc, destSvcName, destWl) {
 			continue

@@ -153,8 +153,8 @@ func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.Clie
 			// Look for an istio service with the rev label in the control plane namespace.
 			revLabelSelector := labels.Set(
 				map[string]string{
-					"istio.io/rev": revision,
-					"app":          "istiod",
+					config.IstioAppLabel:      istiodAppLabelValue,
+					config.IstioRevisionLabel: revision,
 				},
 			).AsSelector().String()
 			services, err := kubeCache.GetServices(namespace, revLabelSelector)

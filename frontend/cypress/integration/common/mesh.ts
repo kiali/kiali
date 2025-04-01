@@ -1,7 +1,7 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { Visualization } from '@patternfly/react-topology';
 import { MeshInfraType, MeshNodeData } from 'types/Mesh';
-import { elems } from './graph-pf';
+import { elems } from './graph';
 
 When('user closes mesh tour', () => {
   cy.waitForReact();

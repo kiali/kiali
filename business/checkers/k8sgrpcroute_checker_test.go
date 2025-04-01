@@ -17,6 +17,7 @@ func TestNoCrashOnEmptyRouteGRPC(t *testing.T) {
 	assert := assert.New(t)
 
 	typeValidations := K8sGRPCRouteChecker{
+		Conf:             config.Get(),
 		K8sGRPCRoutes:    []*k8s_networking_v1.GRPCRoute{},
 		K8sGateways:      []*k8s_networking_v1.Gateway{},
 		RegistryServices: data.CreateEmptyRegistryServices(),
@@ -32,6 +33,7 @@ func TestWithoutK8sGatewayGRPC(t *testing.T) {
 	assert := assert.New(t)
 
 	vals := K8sGRPCRouteChecker{
+		Conf: config.Get(),
 		K8sGRPCRoutes: []*k8s_networking_v1.GRPCRoute{
 			data.CreateGRPCRoute("route1", "bookinfo", "gatewayapi", []string{"bookinfo"}),
 			data.CreateGRPCRoute("route2", "bookinfo", "gatewayapi2", []string{"bookinfo"})},
@@ -57,6 +59,7 @@ func TestWithoutServiceGRPC(t *testing.T) {
 	registryService2 := data.CreateFakeRegistryServices("details.bookinfo.svc.cluster.local", "bookinfo2", "*")
 
 	vals := K8sGRPCRouteChecker{
+		Conf: config.Get(),
 		K8sGRPCRoutes: []*k8s_networking_v1.GRPCRoute{
 			data.AddBackendRefToGRPCRoute("ratings", "bookinfo", data.CreateGRPCRoute("route1", "bookinfo", "gatewayapi", []string{"bookinfo"})),
 			data.AddBackendRefToGRPCRoute("ratings", "bookinfo", data.CreateGRPCRoute("route2", "bookinfo2", "gatewayapi2", []string{"bookinfo2"}))},

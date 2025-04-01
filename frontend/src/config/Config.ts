@@ -167,6 +167,8 @@ const conf = {
         `api/namespaces/${namespace}/pods/${pod}/config_dump/${resource}`,
       podZtunnelConfig: (namespace: string, pod: string) =>
         `api/namespaces/${namespace}/pods/${pod}/config_dump_ztunnel`,
+      resourceUsageMetrics: (namespace: string, workload: string) =>
+        `api/namespaces/${namespace}/${workload}/usage_metrics`,
       serverConfig: `api/config`,
       service: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}`,
       serviceGraphElements: (namespace: string, service: string) =>
@@ -191,7 +193,9 @@ const conf = {
       workloadMetrics: (namespace: string, workload: string) =>
         `api/namespaces/${namespace}/workloads/${workload}/metrics`,
       workloadDashboard: (namespace: string, workload: string) =>
-        `api/namespaces/${namespace}/workloads/${workload}/dashboard`
+        `api/namespaces/${namespace}/workloads/${workload}/dashboard`,
+      ztunnelDashboard: (namespace: string, controlPlane: string) =>
+        `api/namespaces/${namespace}/ztunnel/${controlPlane}/dashboard`
     }
   },
   /** Graph configurations */

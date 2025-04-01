@@ -6,11 +6,13 @@ import (
 	api_networking_v1 "istio.io/api/networking/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type RouteChecker struct {
+	Conf           *config.Config
 	Namespaces     []string
 	VirtualService *networking_v1.VirtualService
 }
@@ -145,7 +147,7 @@ func (route RouteChecker) trackHttpSubset(routeIdx int, kind string, destination
 		if destinationWeight.Destination == nil {
 			return
 		}
-		fqdn := kubernetes.GetHost(destinationWeight.Destination.Host, route.VirtualService.Namespace, route.Namespaces)
+		fqdn := kubernetes.GetHost(destinationWeight.Destination.Host, route.VirtualService.Namespace, route.Namespaces, route.Conf)
 		subset := destinationWeight.Destination.Subset
 		key := fmt.Sprintf("%s%s", fqdn.String(), subset)
 		collisions := subsetCollitions[key]
@@ -168,7 +170,7 @@ func (route RouteChecker) trackTcpTlsSubset(routeIdx int, kind string, destinati
 		if destinationWeight.Destination == nil {
 			return
 		}
-		fqdn := kubernetes.GetHost(destinationWeight.Destination.Host, route.VirtualService.Namespace, route.Namespaces)
+		fqdn := kubernetes.GetHost(destinationWeight.Destination.Host, route.VirtualService.Namespace, route.Namespaces, route.Conf)
 		subset := destinationWeight.Destination.Subset
 		key := fmt.Sprintf("%s%s", fqdn.String(), subset)
 		collisions := subsetCollitions[key]

@@ -67,11 +67,11 @@ func TestValidationsFailsToUpdateWithOldCache(t *testing.T) {
 	cache := newIncrementFirstVersionCache(business.SetupBusinessLayer(t, client, *conf))
 	k8sclients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client}
 	discovery := istio.NewDiscovery(k8sclients, cache, conf)
-	namespace := business.NewNamespaceService(k8sclients, k8sclients, cache, conf, discovery)
-	mesh := business.NewMeshService(k8sclients, discovery)
+	namespace := business.NewNamespaceService(cache, conf, discovery, k8sclients, k8sclients)
+	mesh := business.NewMeshService(conf, discovery, k8sclients)
 	layer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
-	validations := business.NewValidationsService(&layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
-	reconciler := controller.NewValidationsReconciler([]string{conf.KubernetesConfig.ClusterName}, cache, &validations, 0)
+	validations := business.NewValidationsService(conf, &layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
+	reconciler := controller.NewValidationsReconciler([]string{conf.KubernetesConfig.ClusterName}, conf, cache, &validations, 0)
 
 	// We want to test that the reconciler won't update the cache if the version has changed.
 	// Going to test this by having an implementation of the store which increments the version

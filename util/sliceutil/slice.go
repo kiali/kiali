@@ -41,3 +41,27 @@ func Some[S ~[]E, E any](slice S, f func(E) bool) bool {
 	}
 	return false
 }
+
+// SomeString returns true if any of the elements from array equals to the value provided
+func SomeString(array []string, value string) bool {
+	for _, v := range array {
+		if v == value {
+			return true
+		}
+	}
+	return false
+}
+
+// Find returns first element matching the predicate, otherwise nil
+func Find[S ~[]E, E any](slice S, f func(E) bool) *E {
+	if slice == nil {
+		return nil
+	}
+
+	for _, e := range slice {
+		if f(e) {
+			return &e
+		}
+	}
+	return nil
+}

@@ -12,6 +12,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config/dashboards"
 	"github.com/kiali/kiali/config/security"
@@ -66,23 +67,27 @@ const (
 )
 
 const (
-	// DefaultClusterID is generally not for use outside of test-code. In general you should use config.Get().KubernetesConfig.ClusterName
+	// DefaultClusterID is generally not for use outside of test-code. In general you should use conf.KubernetesConfig.ClusterName
 	DefaultClusterID = "Kubernetes"
 )
 
 const (
 	AmbientAnnotation         = "ambient.istio.io/redirection"
 	AmbientAnnotationEnabled  = "enabled"
+	GatewayLabel              = "gateway.networking.k8s.io/gateway-name" // On any k8s GW API gateway
+	IstioAppLabel             = "app"                                    // we can assume istio components are labeled with "app"
+	IstioRevisionLabel        = "istio.io/rev"                           // the standard label key used to identify the istio revision.
+	IstioVersionLabel         = "version"                                // we can assume istio components are labeled with "version", if versioned
 	Waypoint                  = "waypoint"
 	WaypointFor               = "istio.io/waypoint-for"
 	WaypointForAll            = "all"
 	WaypointForNone           = "none"
 	WaypointForService        = "service"
 	WaypointForWorkload       = "workload"
-	WaypointGatewayLabel      = "gateway.networking.k8s.io/gateway-name"
-	WaypointLabel             = "gateway.istio.io/managed"
-	WaypointLabelValue        = "istio.io-mesh-controller"
+	WaypointLabel             = "gateway.istio.io/managed" // only identifies istio waypoint
+	WaypointLabelValue        = "istio.io-mesh-controller" // only identifies istio waypoint
 	WaypointUseLabel          = "istio.io/use-waypoint"
+	WaypointNone              = "none"
 	WaypointUseNamespaceLabel = "istio.io/use-waypoint-namespace"
 	Ztunnel                   = "ztunnel"
 )
@@ -117,7 +122,7 @@ func (fn FeatureName) IsValid() error {
 	case FeatureLogView:
 		return nil
 	}
-	return fmt.Errorf("Invalid feature name: %v", fn)
+	return fmt.Errorf("invalid feature name: %v", fn)
 }
 
 // Global configuration for the application.
@@ -276,6 +281,7 @@ type TempoConfig struct {
 type TracingConfig struct {
 	Auth                 Auth              `yaml:"auth"`
 	CustomHeaders        map[string]string `yaml:"custom_headers,omitempty"`
+	DisableVersionCheck  bool              `yaml:"disable_version_check,omitempty"`
 	Enabled              bool              `yaml:"enabled"`      // Enable Tracing in Kiali
 	ExternalURL          string            `yaml:"external_url"` // replaces the old url
 	HealthCheckUrl       string            `yaml:"health_check_url,omitempty"`
@@ -315,10 +321,11 @@ type IstioConfig struct {
 	IstiodPodMonitoringPort           int               `yaml:"istiod_pod_monitoring_port,omitempty"`
 	// IstiodPollingIntervalSeconds is how often in seconds Kiali will poll istiod(s) for
 	// proxy status and registry services. Polling is not performed if IstioAPIEnabled is false.
-	IstiodPollingIntervalSeconds int             `yaml:"istiod_polling_interval_seconds,omitempty"`
-	Registry                     *RegistryConfig `yaml:"registry,omitempty"`
-	RootNamespace                string          `yaml:"root_namespace,omitempty"`
-	UrlServiceVersion            string          `yaml:"url_service_version"`
+	IstiodPollingIntervalSeconds     int             `yaml:"istiod_polling_interval_seconds,omitempty"`
+	Registry                         *RegistryConfig `yaml:"registry,omitempty"`
+	RootNamespace                    string          `yaml:"root_namespace,omitempty"`
+	UrlServiceVersion                string          `yaml:"url_service_version"`
+	ValidationChangeDetectionEnabled bool            `yaml:"validation_change_detection_enabled,omitempty"`
 	// ValidationReconcileInterval sets how often Kiali will validate Istio configuration.
 	// Validations cannot be disabled at the moment but you can set this to a long period of time.
 	ValidationReconcileInterval *time.Duration `yaml:"validation_reconcile_interval,omitempty"`
@@ -507,14 +514,8 @@ type GraphFindOption struct {
 
 // GraphSettings affect the graph visualization.
 // Animation: animation type point (default) | dash
-// FontLabel: font used for node text (edge label font is determined from this value) TODO: Cytoscape only - remove when cytoscape is removed
-// MinFontBadge: smallest effective font (zoomed font) before removing node badges TODO: Cytoscape only - remove when cytoscape is removed
-// MinFontLabel: smallest effective node text font (zoomed font) before removing labels TODO: Cytoscape only - remove when cytoscape is removed
 type GraphSettings struct {
-	Animation    string  `yaml:"animation,omitempty" json:"animation,omitempty"`
-	FontLabel    float32 `yaml:"font_label,omitempty" json:"fontLabel,omitempty"`
-	MinFontBadge float32 `yaml:"min_font_badge,omitempty" json:"minFontBadge,omitempty"`
-	MinFontLabel float32 `yaml:"min_font_label,omitempty" json:"minFontLabel,omitempty"`
+	Animation string `yaml:"animation,omitempty" json:"animation,omitempty"`
 }
 
 // GraphTraffic defines the protocol-specific rates used to determine traffic for graph generation.
@@ -533,7 +534,6 @@ type GraphTraffic struct {
 type GraphUIDefaults struct {
 	FindOptions []GraphFindOption `yaml:"find_options,omitempty" json:"findOptions,omitempty"`
 	HideOptions []GraphFindOption `yaml:"hide_options,omitempty" json:"hideOptions,omitempty"`
-	Impl        string            `yaml:"impl,omitempty" json:"impl,omitempty"` // TODO: remove when cytoscape is removed
 	Settings    GraphSettings     `yaml:"settings,omitempty" json:"settings,omitempty"`
 	Traffic     GraphTraffic      `yaml:"traffic,omitempty" json:"traffic,omitempty"`
 }
@@ -752,6 +752,7 @@ func NewConfig() (c *Config) {
 				IstiodPollingIntervalSeconds:      20,
 				RootNamespace:                     "istio-system",
 				UrlServiceVersion:                 "",
+				ValidationChangeDetectionEnabled:  true,
 				ValidationReconcileInterval:       util.AsPtr(time.Minute),
 				GatewayAPIClasses:                 []GatewayAPIClass{},
 			},
@@ -777,16 +778,17 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				CustomHeaders:     map[string]string{},
-				Enabled:           false,
-				ExternalURL:       "",
-				GrpcPort:          9095,
-				InternalURL:       "http://tracing.istio-system:16685/jaeger",
-				IsCore:            false,
-				Provider:          JaegerProvider,
-				NamespaceSelector: true,
-				QueryScope:        map[string]string{},
-				QueryTimeout:      5,
+				CustomHeaders:       map[string]string{},
+				DisableVersionCheck: false,
+				Enabled:             false,
+				ExternalURL:         "",
+				GrpcPort:            9095,
+				InternalURL:         "http://tracing.istio-system:16685/jaeger",
+				IsCore:              false,
+				Provider:            JaegerProvider,
+				NamespaceSelector:   true,
+				QueryScope:          map[string]string{},
+				QueryTimeout:        5,
 				TempoConfig: TempoConfig{
 					CacheCapacity: 200,
 					CacheEnabled:  true,
@@ -798,14 +800,12 @@ func NewConfig() (c *Config) {
 		IstioLabels: IstioLabels{
 			AmbientNamespaceLabel:       "istio.io/dataplane-mode",
 			AmbientNamespaceLabelValue:  "ambient",
-			AmbientWaypointGatewayLabel: WaypointGatewayLabel,
-			AmbientWaypointLabel:        WaypointLabel,
-			AmbientWaypointLabelValue:   WaypointLabelValue,
+			AmbientWaypointGatewayLabel: GatewayLabel,
 			AmbientWaypointUseLabel:     WaypointUseLabel,
-			AppLabelName:                "app",
+			AppLabelName:                "",
 			InjectionLabelName:          "istio-injection",
-			InjectionLabelRev:           "istio.io/rev",
-			VersionLabelName:            "version",
+			InjectionLabelRev:           IstioRevisionLabel,
+			VersionLabelName:            "",
 		},
 		KialiFeatureFlags: KialiFeatureFlags{
 			Clustering: FeatureFlagClustering{
@@ -849,12 +849,8 @@ func NewConfig() (c *Config) {
 							Expression:  "rank > 2",
 						},
 					},
-					Impl: "pf",
 					Settings: GraphSettings{
-						Animation:    "point",
-						FontLabel:    13,
-						MinFontBadge: 7,
-						MinFontLabel: 10,
+						Animation: "point",
 					},
 					Traffic: GraphTraffic{
 						Ambient: "total",
@@ -1015,6 +1011,17 @@ func Set(conf *Config) {
 	defer rwMutex.Unlock()
 	conf.AddHealthDefault()
 	configuration = *conf
+
+	// init these one time, they don't change
+	if appLabelNames == nil {
+		if conf.IstioLabels.AppLabelName != "" && conf.IstioLabels.VersionLabelName != "" {
+			appLabelNames = []string{conf.IstioLabels.AppLabelName}
+			versionLabelNames = []string{conf.IstioLabels.VersionLabelName}
+		} else {
+			appLabelNames = []string{"service.istio.io/canonical-name", "app.kubernetes.io/name", "app"}
+			versionLabelNames = []string{"service.istio.io/canonical-revision", "app.kubernetes.io/version", "version"}
+		}
+	}
 }
 
 func (conf Config) Obfuscate() (obf Config) {
@@ -1250,8 +1257,8 @@ func IsRootNamespace(namespace string) bool {
 
 // IsFeatureDisabled will return true if the named feature is to be disabled.
 func IsFeatureDisabled(featureName FeatureName) bool {
-	cfg := Get()
-	for _, f := range cfg.KialiFeatureFlags.DisabledFeatures {
+	conf := Get()
+	for _, f := range conf.KialiFeatureFlags.DisabledFeatures {
 		if f == string(featureName) {
 			return true
 		}
@@ -1259,9 +1266,78 @@ func IsFeatureDisabled(featureName FeatureName) bool {
 	return false
 }
 
-// IsWaypoint returns true if the labels contain a waypoint proxy
+// IsWaypoint returns true if the labels indicate a waypoint.
 func IsWaypoint(labels map[string]string) bool {
-	return labels[WaypointLabel] == WaypointLabelValue
+	// test for Istio waypoint labeling
+	if labels[WaypointLabel] == WaypointLabelValue {
+		return true
+	}
+	// test for K8s GW API labeling with waypoint name
+	// note - this is weak but maybe sufficient as a required convention. I think the real
+	//        way to do this would be to use the Gateway config and test to see if
+	//        gatewayClassName contained "waypoint". But that involves config
+	//
+	if gatewayName, ok := labels[GatewayLabel]; ok {
+		return strings.Contains(strings.ToLower(gatewayName), "waypoint")
+	}
+
+	return false
+}
+
+// IsGateway returns true if the labels indicate a gateway.
+func IsGateway(labels, templateAnnotations map[string]string) bool {
+	// test for Istio gateway labeling
+	// There's not consistent labeling for gateways.
+	// In case of using istioctl, you get:
+	// istio: ingressgateway
+	// or
+	// istio: egressgateway
+	//
+	// In case of using helm, you get:
+	// istio: <gateway-name>
+	//
+	// In case of gateway injection you get:
+	// istio: <gateway-name>
+	//
+	// In case of gateway-api you get:
+	// istio.io/gateway-name: gateway
+	//
+	// In case of east/west gateways you get:
+	// istio: eastwestgateway
+	//
+	// We're going to do different checks for all the ways you can label/deploy gateways
+
+	// istioctl
+	if labelValue, ok := labels["operator.istio.io/component"]; ok && (labelValue == "IngressGateways" || labelValue == "EgressGateways") {
+		return true
+	}
+
+	// There's a lot of unit tests that look specifically for istio: ingressgateway and istio: egressgateway.
+	// These should be covered by istioctl and gateway injection cases but adding checks for these just in case.
+	if labelValue, ok := labels["istio"]; ok && (labelValue == "ingressgateway" || labelValue == "egressgateway") {
+		return true
+	}
+
+	// Gateway injection. Includes helm because the helm template uses gateway injection.
+	// If the pod injection template is a gateway then it's a gateway.
+	if templateAnnotations != nil && templateAnnotations["inject.istio.io/templates"] == "gateway" {
+		return true
+	}
+
+	// gateway-api
+	// This is the old gateway-api label that was removed in 1.24.
+	// If this label exists then it's a gateway
+	if _, ok := labels["istio.io/gateway-name"]; ok {
+		return true
+	}
+
+	// This is the new gateway-api label that was added in 1.24
+	// The value distinguishes gateways from waypoints.
+	if labels["gateway.istio.io/managed"] == "istio.io-gateway-controller" {
+		return true
+	}
+
+	return false
 }
 
 // GetSafeClusterName checks the input value provides a default cluster name if it's empty
@@ -1274,19 +1350,19 @@ func GetSafeClusterName(cluster string) string {
 
 // Validate will ensure the config is valid. This should be called after the config
 // is initialized and before the config is used.
-func Validate(cfg Config) error {
-	if cfg.Server.Port < 0 {
-		return fmt.Errorf("server port is negative: %v", cfg.Server.Port)
+func Validate(conf Config) error {
+	if conf.Server.Port < 0 {
+		return fmt.Errorf("server port is negative: %v", conf.Server.Port)
 	}
 
-	if strings.Contains(cfg.Server.StaticContentRootDirectory, "..") {
-		return fmt.Errorf("server static content root directory must not contain '..': %v", cfg.Server.StaticContentRootDirectory)
+	if strings.Contains(conf.Server.StaticContentRootDirectory, "..") {
+		return fmt.Errorf("server static content root directory must not contain '..': %v", conf.Server.StaticContentRootDirectory)
 	}
-	if _, err := os.Stat(cfg.Server.StaticContentRootDirectory); os.IsNotExist(err) {
-		return fmt.Errorf("server static content root directory does not exist: %v", cfg.Server.StaticContentRootDirectory)
+	if _, err := os.Stat(conf.Server.StaticContentRootDirectory); os.IsNotExist(err) {
+		return fmt.Errorf("server static content root directory does not exist: %v", conf.Server.StaticContentRootDirectory)
 	}
 
-	webRoot := cfg.Server.WebRoot
+	webRoot := conf.Server.WebRoot
 	if !validPathRegEx.MatchString(webRoot) {
 		return fmt.Errorf("web root must begin with a / and contain valid URL path characters: %v", webRoot)
 	}
@@ -1298,7 +1374,7 @@ func Validate(cfg Config) error {
 	}
 
 	// log some messages to let the administrator know when credentials are configured certain ways
-	auth := cfg.Auth
+	auth := conf.Auth
 	log.Infof("Using authentication strategy [%v]", auth.Strategy)
 	if auth.Strategy == AuthStrategyAnonymous {
 		log.Warningf("Kiali auth strategy is configured for anonymous access - users will not be authenticated.")
@@ -1306,24 +1382,24 @@ func Validate(cfg Config) error {
 		auth.Strategy != AuthStrategyOpenshift &&
 		auth.Strategy != AuthStrategyToken &&
 		auth.Strategy != AuthStrategyHeader {
-		return fmt.Errorf("Invalid authentication strategy [%v]", auth.Strategy)
+		return fmt.Errorf("invalid authentication strategy [%v]", auth.Strategy)
 	}
 
 	// Check the ciphering key for sessions
-	signingKey := cfg.LoginToken.SigningKey
+	signingKey := conf.LoginToken.SigningKey
 	if err := validateSigningKey(signingKey, auth.Strategy); err != nil {
 		return err
 	}
 
 	// log a warning if the user is ignoring some validations
-	if len(cfg.KialiFeatureFlags.Validations.Ignore) > 0 {
-		log.Infof("Some validation errors will be ignored %v. If these errors do occur, they will still be logged. If you think the validation errors you see are incorrect, please report them to the Kiali team if you have not done so already and provide the details of your scenario. This will keep Kiali validations strong for the whole community.", cfg.KialiFeatureFlags.Validations.Ignore)
+	if len(conf.KialiFeatureFlags.Validations.Ignore) > 0 {
+		log.Infof("Some validation errors will be ignored %v. If these errors do occur, they will still be logged. If you think the validation errors you see are incorrect, please report them to the Kiali team if you have not done so already and provide the details of your scenario. This will keep Kiali validations strong for the whole community.", conf.KialiFeatureFlags.Validations.Ignore)
 	}
 
 	// log a info message if the user is disabling some features
-	if len(cfg.KialiFeatureFlags.DisabledFeatures) > 0 {
-		log.Infof("Some features are disabled: [%v]", strings.Join(cfg.KialiFeatureFlags.DisabledFeatures, ","))
-		for _, fn := range cfg.KialiFeatureFlags.DisabledFeatures {
+	if len(conf.KialiFeatureFlags.DisabledFeatures) > 0 {
+		log.Infof("Some features are disabled: [%v]", strings.Join(conf.KialiFeatureFlags.DisabledFeatures, ","))
+		for _, fn := range conf.KialiFeatureFlags.DisabledFeatures {
 			if err := FeatureName(fn).IsValid(); err != nil {
 				return err
 			}
@@ -1331,14 +1407,14 @@ func Validate(cfg Config) error {
 	}
 
 	// Check the observability section
-	observTracing := cfg.Server.Observability.Tracing
+	observTracing := conf.Server.Observability.Tracing
 	// If collector is not defined it would be the default "otel"
 	if observTracing.Enabled && observTracing.CollectorType != OTELCollectorType {
 		return fmt.Errorf("error in configuration options getting the observability exporter. Invalid collector type [%s]", observTracing.CollectorType)
 	}
 
 	// Check the tracing section
-	cfgTracing := cfg.ExternalServices.Tracing
+	cfgTracing := conf.ExternalServices.Tracing
 	if cfgTracing.Enabled && cfgTracing.Provider != JaegerProvider && cfgTracing.Provider != TempoProvider {
 		return fmt.Errorf("error in configuration options for the external services tracing provider. Invalid provider type [%s]", cfgTracing.Provider)
 	}
@@ -1414,4 +1490,88 @@ func (config *Config) extractAccessibleNamespaceList() ([]string, error) {
 	} else {
 		return namespaceNames, errors.New(strings.Join(errs, "\n"))
 	}
+}
+
+type AppVersionLabelSelector struct {
+	AppLabelName     string
+	LabelSelector    string
+	Requirements     map[string]string
+	VersionLabelName string
+}
+
+var appLabelNames, versionLabelNames []string
+
+// GetAppVersionLabelSelectors takes an app and/or version value and returns one or
+// more label selectors to be subsequently tried via label selector fetched. Callers
+// should account for the fact that the same object may be labeled in multiple ways, and
+// therefore could be returned by more than one of the returned selectors.
+//
+// Only one selector is returned if config.IstioLabels.AppLabelName and
+// config.IstioLabels.VersionLabelName are set. If they are unset then three selectors will be
+// returned, in this order (the same order of preference used by Istio when setting the
+// canonical values for telemetry, etc):
+//
+// [0]   service.istio.io/canonical-name    service.istio.io/canonical-revision
+// [1]   app.kubernetes.io/name             app.kubernetes.io/version
+// [2]   app                                version
+//
+// It is assumed that the app and version naming scheme will match for any particular entity.
+func (config *Config) GetAppVersionLabelSelectors(app, version string) []AppVersionLabelSelector {
+	// if neither app or version are set, just return a single, empty entry
+	if app == "" && version == "" {
+		return []AppVersionLabelSelector{{
+			AppLabelName:     "",
+			LabelSelector:    "",
+			Requirements:     map[string]string{},
+			VersionLabelName: "",
+		}}
+	}
+
+	labelSelectors := make([]AppVersionLabelSelector, len(appLabelNames))
+
+	for i := 0; i < len(appLabelNames); i++ {
+		appLabelName := appLabelNames[i]
+		versionLabelName := versionLabelNames[i]
+		requirements := map[string]string{}
+		if app != "" {
+			requirements[appLabelName] = app
+		}
+		if version != "" {
+			requirements[versionLabelName] = version
+		}
+		labelSelectors[i] = AppVersionLabelSelector{
+			AppLabelName:     appLabelName,
+			LabelSelector:    labels.Set(requirements).String(),
+			Requirements:     requirements,
+			VersionLabelName: versionLabelName,
+		}
+	}
+
+	return labelSelectors
+}
+
+// GetAppLabelName returns the app label name found in the labels, and a "found" bool. If
+// multiple app label names exist in the labels, the "canonical" app label name is
+// returned, using the same preference as Istio.
+func (config *Config) GetAppLabelName(labels map[string]string) (string, bool) {
+	for i := 0; i < len(appLabelNames); i++ {
+		appLabelName := appLabelNames[i]
+		if _, ok := labels[appLabelName]; ok {
+			return appLabelName, true
+		}
+	}
+	return "", false
+}
+
+// GetVersionLabelName returns the version label name found in the labels, and a "found" bool. If
+// multiple version label names exist in the labels, the "canonical" version label name is
+// returned, using the same preference as Istio.
+func (config *Config) GetVersionLabelName(labels map[string]string) (string, bool) {
+	for i := 0; i < len(versionLabelNames); i++ {
+		versionLabelName := versionLabelNames[i]
+		if _, ok := labels[versionLabelName]; ok {
+			return versionLabelName, true
+		}
+	}
+	return "", false
 }

@@ -14,12 +14,13 @@ import (
 
 func prepareTestForGateway(gw *networking_v1.Gateway, vss []*networking_v1.VirtualService) models.IstioReferences {
 	gwReferences := GatewayReferences{
+		Conf:            config.Get(),
 		Gateways:        []*networking_v1.Gateway{gw},
 		VirtualServices: vss,
-		WorkloadsPerNamespace: map[string]models.WorkloadList{
-			"test": data.CreateWorkloadList("istio-system",
-				data.CreateWorkloadListItem("istio-ingressgateway", map[string]string{"istio": "ingressgateway"})),
-		},
+		WorkloadsPerNamespace: map[string]models.Workloads{
+			"istio-system": {
+				data.CreateWorkload("istio-ingressgateway", map[string]string{"istio": "ingressgateway"}),
+			}},
 	}
 	return *gwReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.Gateways, Namespace: gw.Namespace, Name: gw.Name}]
 }

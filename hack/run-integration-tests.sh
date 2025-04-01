@@ -146,6 +146,7 @@ fi
 
 # Determine where this script is and make it the cwd
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+source ${SCRIPT_DIR}/istio/functions.sh
 
 # This is used in multiple places and you need to call 'setKialiURL' first.
 KIALI_URL=""
@@ -154,6 +155,13 @@ setKialiURL() {
   kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
   local ingress_ip="$(kubectl get svc kiali -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
   KIALI_URL="http://${ingress_ip}/kiali"
+}
+
+detectRaceConditions() {
+  local kubecontext=$1
+
+  local context_arg=${kubecontext:+--context ${kubecontext}}
+  kubectl ${context_arg} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system | grep -vzq "WARNING: DATA RACE"
 }
 
 ensureCypressInstalled() {
@@ -318,6 +326,7 @@ if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
   # Run backend multicluster integration tests
   cd "${SCRIPT_DIR}"/../tests/integration/tests
   go test -v -failfast
+  detectRaceConditions
 elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
     export CLUSTER1_CONTEXT=kind-controlplane
@@ -346,6 +355,7 @@ elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
   # Run backend multicluster integration tests
   cd "${SCRIPT_DIR}"/../tests/integration/multicluster/
   go test -v -failfast
+  detectRaceConditions "${CLUSTER1_CONTEXT}"
 elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
   ensureCypressInstalled
   
@@ -369,7 +379,9 @@ elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run
+  detectRaceConditions
 elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
+
   ensureCypressInstalled
   ensureKialiTracesReady "true"
 
@@ -394,7 +406,25 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
   fi
 
   cd "${SCRIPT_DIR}"/../frontend
-  yarn run cypress:run:ambient
+
+  # TODO: Remove when no support for Istio 1.23 is required
+  # Replace by "yarn run cypress:run:ambient"
+  if [ "${ISTIO_VERSION}" != "" ]; then
+    set +e
+    is_istio_version_eq_greater_than_expected "1.24.0" "${ISTIO_VERSION}"
+    status=$?
+    if [ "$status" -eq 0 ]; then
+      yarn run cypress:run:ambient123
+    else
+      yarn run cypress:run:ambient
+    fi
+    set -e
+  else
+    yarn run cypress:run:ambient
+  fi
+
+  detectRaceConditions
+
 elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
   ensureCypressInstalled
   
@@ -421,6 +451,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:multi-cluster
+  detectRaceConditions ${CYPRESS_CLUSTER1_CONTEXT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   ensureCypressInstalled
 
@@ -447,14 +478,15 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:multi-primary
+  detectRaceConditions ${CYPRESS_CLUSTER1_CONTEXT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
   ensureCypressInstalled
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --tempo true --auth-strategy token ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
-    ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --tempo true --sail true --auth-strategy token ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+
     # Install demo apps
-    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}"
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true
   fi
 
   ensureKialiServerReady
@@ -470,4 +502,5 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:tracing
+  detectRaceConditions
 fi

@@ -26,15 +26,17 @@ func ControlPlanes(cache cache.KialiCache, clientFactory kubernetes.ClientFactor
 			RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		namespaceService := business.NewNamespaceService(userClients, clientFactory.GetSAClients(), cache, conf, discovery)
+		namespaceService := business.NewNamespaceService(cache, conf, discovery, clientFactory.GetSAClients(), userClients)
 
-		mesh, err := discovery.Mesh(r.Context())
+		m, err := discovery.Mesh(r.Context())
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
+		// We do not want to edit mesh directly because that is shared across threads.
+		mesh := *m
 
-		filterAccessibleControlPlanes(r.Context(), namespaceService, mesh)
+		filterAccessibleControlPlanes(r.Context(), namespaceService, &mesh)
 
 		RespondWithJSON(w, http.StatusOK, mesh.ControlPlanes)
 	}
@@ -59,9 +61,11 @@ func MeshGraph(
 
 		o := mesh.NewOptions(r, &business.Namespace)
 
-		meshInfo, err := discovery.Mesh(r.Context())
-		filterAccessibleControlPlanes(r.Context(), business.Namespace, meshInfo)
+		m, err := discovery.Mesh(r.Context())
 		mesh.CheckError(err)
+		// We do not want to edit mesh directly because that is shared across threads.
+		meshInfo := *m
+		filterAccessibleControlPlanes(r.Context(), business.Namespace, &meshInfo)
 
 		// Assuming that all controlplanes are part of the same mesh,
 		// just use the first one.

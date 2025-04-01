@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/sliceutil"
@@ -404,17 +403,15 @@ func getWorkload(cluster, namespace, workloadName string, gi *graph.GlobalInfo) 
 }
 
 func getAppWorkloads(cluster, namespace, app, version string, gi *graph.GlobalInfo) []models.WorkloadListItem {
-	cfg := config.Get()
-	appLabel := cfg.IstioLabels.AppLabelName
-	versionLabel := cfg.IstioLabels.VersionLabelName
-
 	result := []models.WorkloadListItem{}
 	versionOk := graph.IsOKVersion(version)
 	for _, workload := range getWorkloadList(cluster, namespace, gi).Workloads {
-		if appVal, ok := workload.Labels[appLabel]; ok && app == appVal {
+		appLabelName, appLabelNameFound := gi.Conf.GetAppLabelName(workload.Labels)
+		verLabelName, verLabelNameFound := gi.Conf.GetVersionLabelName(workload.Labels)
+		if appLabelNameFound && workload.Labels[appLabelName] == app {
 			if !versionOk {
 				result = append(result, workload)
-			} else if versionVal, ok := workload.Labels[versionLabel]; ok && version == versionVal {
+			} else if verLabelNameFound && workload.Labels[verLabelName] == version {
 				result = append(result, workload)
 			}
 		}

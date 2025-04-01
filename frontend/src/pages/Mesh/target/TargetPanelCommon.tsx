@@ -65,9 +65,9 @@ export const shouldRefreshData = (prevProps: TargetPanelCommonProps, nextProps: 
   return (
     // Verify the time of the last request
     prevProps.updateTime !== nextProps.updateTime ||
-    // Check if going from no data to data
+    // Check if going from no target to target
     (!prevProps.target && nextProps.target) ||
-    // Check if the target changed
+    // Check if the target elem changed
     prevProps.target.elem !== nextProps.target.elem
   );
 };
@@ -155,6 +155,9 @@ export const renderNodeHeader = (
     case MeshInfraType.WAYPOINT:
       pfBadge = PFBadges.Waypoint;
       break;
+    case MeshInfraType.ZTUNNEL:
+      pfBadge = PFBadges.Ztunnel;
+      break;
     default:
       console.warn(`MeshElems: Unexpected infraType [${data.infraType}] `);
   }
@@ -229,6 +232,8 @@ export const renderNodeLink = (meshData: MeshNodeData, style?: string): React.Re
       pfBadge = PFBadges.Workload;
       break;
     case MeshInfraType.WAYPOINT:
+    case MeshInfraType.ZTUNNEL:
+    case MeshInfraType.KIALI:
       link = `/namespaces/${encodeURIComponent(meshData.namespace)}/workloads/${encodeURIComponent(
         meshData.infraName
       )}`;

@@ -37,7 +37,7 @@ export const hasMissingSidecar = (workload: Workload | WorkloadListItem | AppWor
     (serverConfig.ambientEnabled &&
       !workload.isAmbient &&
       !workload.istioSidecar &&
-      workload.ambient !== 'waypoint' &&
+      !workload.isWaypoint &&
       !workload.isGateway &&
       !isIstioNamespace(workload.namespace))
   );

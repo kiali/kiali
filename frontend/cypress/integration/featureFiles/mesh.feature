@@ -68,6 +68,11 @@ Feature: Kiali Mesh page
     And user selects mesh node with label "waypoint"
     Then user sees "waypoint" node side panel
 
+  @waypoint-tracing
+  Scenario: Test ztunnel
+    When user selects mesh node with label "ztunnel"
+    Then user sees "ztunnel" node side panel
+
   @skip-ossmc
   Scenario: See the Mesh menu link
     Then user see the "mesh" menu

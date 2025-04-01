@@ -1,12 +1,9 @@
-import * as Cy from 'cytoscape';
 import * as React from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import FlexView from 'react-flexview';
 import { kialiStyle } from 'styles/StyleUtils';
-import { router } from '../../app/History';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
-import { MessageType } from '../../types/MessageCenter';
 import { Namespace } from '../../types/Namespace';
 import {
   GraphEvent,
@@ -14,12 +11,10 @@ import {
   EdgeLabelMode,
   GraphDefinition,
   GraphType,
-  Layout,
   NodeParamsType,
   NodeType,
   SummaryData,
   UNKNOWN,
-  BoxByType,
   TrafficRate,
   RankMode,
   RankResult,
@@ -27,14 +22,10 @@ import {
 } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { CytoscapeGraph, GraphNodeDoubleTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
-import { CytoscapeToolbar } from '../../components/CytoscapeGraph/CytoscapeToolbar';
 import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
-import { GraphUrlParams, makeNodeGraphUrlFromParams } from '../../components/Nav/NavUtils';
-import { GraphToolbar } from './GraphToolbar/GraphToolbar';
-import { GraphLegend } from './GraphLegend';
-import { EmptyGraphLayout } from '../../components/CytoscapeGraph/EmptyGraphLayout';
-import { SummaryPanel } from './SummaryPanel';
+import { GraphToolbar } from '../Graph/GraphToolbar/GraphToolbar';
+import { EmptyGraphLayout } from '../../pages/Graph/EmptyGraphLayout';
+import { SummaryPanel } from '../Graph/SummaryPanel';
 import {
   activeNamespacesSelector,
   durationSelector,
@@ -52,11 +43,10 @@ import {
 import { KialiAppState } from '../../store/Store';
 import { GraphActions } from '../../actions/GraphActions';
 import { GraphToolbarActions } from '../../actions/GraphToolbarActions';
-import { NodeContextMenu } from '../../components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import { PFColors } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
 import { arrayEquals } from 'utils/Common';
-import { isKioskMode, getFocusSelector, unsetFocusSelector, getTraceId, getClusterName } from 'utils/SearchParamUtils';
+import { isKioskMode, getFocusSelector, getTraceId, getClusterName, unsetFocusSelector } from 'utils/SearchParamUtils';
 import { Badge, Chip } from '@patternfly/react-core';
 import { toRangeString } from 'components/Time/Utils';
 import { replayBorder } from 'components/Time/Replay';
@@ -68,9 +58,6 @@ import { KialiDispatch } from 'types/Redux';
 import { TracingThunkActions } from 'actions/TracingThunkActions';
 import { GraphTour } from 'pages/Graph/GraphHelpTour';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
-import { EdgeContextMenu } from 'components/CytoscapeGraph/ContextMenu/EdgeContextMenu';
-import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
-import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
 import { ServiceWizard } from 'components/IstioWizards/ServiceWizard';
 import { ServiceDetailsInfo } from 'types/ServiceInfo';
 import { DestinationRuleC, PeerAuthentication } from 'types/IstioObjects';
@@ -80,7 +67,11 @@ import { deleteServiceTrafficRouting } from 'services/Api';
 import { canCreate, canUpdate } from '../../types/Permissions';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { triggerRefresh } from '../../hooks/refresh';
-import { isMultiCluster } from 'config';
+import { Graph, FocusNode, getValidGraphLayout, GraphLayout } from './Graph';
+import { Controller } from '@patternfly/react-topology';
+import { GraphLegend } from './GraphLegend';
+import { HistoryManager, URLParam } from 'app/History';
+import { elementsChanged } from 'helpers/GraphHelpers';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 export type GraphURLPathProps = {
@@ -96,9 +87,11 @@ export type GraphURLPathProps = {
 type ReduxDispatchProps = {
   endTour: () => void;
   onNamespaceChange: () => void;
-  onReady: (cytoscapeRef: any) => void;
+  onReady: (controller: any) => void;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
+  setEdgeMode: (edgeMode: EdgeMode) => void;
   setGraphDefinition: (graphDefinition: GraphDefinition) => void;
+  setLayout: (layout: GraphLayout) => void;
   setNode: (node?: NodeParamsType) => void;
   setRankResult: (result: RankResult) => void;
   setTraceId: (traceId?: string) => void;
@@ -108,7 +101,6 @@ type ReduxDispatchProps = {
   toggleLegend: () => void;
   updateSummary: (event: GraphEvent) => void;
 };
-
 type ReduxStateProps = {
   activeNamespaces: Namespace[];
   activeTour?: TourInfo;
@@ -123,9 +115,9 @@ type ReduxStateProps = {
   isPageVisible: boolean;
   istioAPIEnabled: boolean;
   kiosk: string;
-  layout: Layout;
+  layout: GraphLayout;
   mtlsEnabled: boolean;
-  namespaceLayout: Layout;
+  namespaceLayout: GraphLayout;
   node?: NodeParamsType;
   rankBy: RankMode[];
   refreshInterval: IntervalInMilliseconds;
@@ -143,16 +135,14 @@ type ReduxStateProps = {
   showVirtualServices: boolean;
   showWaypoints: boolean;
   summaryData: SummaryData | null;
-  theme: string;
   trace?: JaegerTrace;
   trafficRates: TrafficRate[];
 };
-
 type ReduxProps = ReduxStateProps & ReduxDispatchProps;
 
 export type GraphPageProps = Partial<GraphURLPathProps> &
   ReduxProps & {
-    lastRefreshAt: TimeInMilliseconds;
+    lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
   };
 
 export type GraphData = {
@@ -163,6 +153,13 @@ export type GraphData = {
   isError?: boolean;
   isLoading: boolean;
   timestamp: TimeInMilliseconds;
+};
+
+// GraphRefs are passed back from the graph when it is ready, to allow for
+// other components, or test code, to manipulate the graph programatically.
+export type GraphRefs = {
+  getController: () => Controller;
+  setSelectedIds: (values: string[]) => void;
 };
 
 type WizardsData = {
@@ -180,6 +177,8 @@ type WizardsData = {
 
 type GraphPageState = {
   graphData: GraphData;
+  graphRefs?: GraphRefs;
+  isReady: boolean;
   showConfirmDeleteTrafficRouting: boolean;
   wizardsData: WizardsData;
 };
@@ -194,25 +193,16 @@ const containerStyle = kialiStyle({
 
 const kioskContainerStyle = kialiStyle({
   minHeight: '350px',
-  height: 'calc(100vh - 0.5rem)' // View height minus top bar height
+  height: 'calc(100vh - 10px)' // View height minus top bar height
 });
 
-const cytoscapeGraphContainerStyle = kialiStyle({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '0.25rem' });
-const cytoscapeGraphWrapperDivStyle = kialiStyle({
-  position: 'relative',
-  backgroundColor: PFColors.BackgroundColor200
-});
-const cytoscapeToolbarWrapperDivStyle = kialiStyle({
-  position: 'absolute',
-  bottom: '0.25rem',
-  zIndex: 2,
-  borderStyle: 'hidden'
-});
+const graphContainerStyle = kialiStyle({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
+const graphWrapperDivStyle = kialiStyle({ position: 'relative', backgroundColor: PFColors.BackgroundColor200 });
 
 const graphTimeRange = kialiStyle({
   position: 'absolute',
-  top: '0.5rem',
-  left: '0.5rem',
+  top: '10px',
+  left: '10px',
   width: 'auto',
   zIndex: 2
 });
@@ -225,16 +215,9 @@ const graphBackground = kialiStyle({
   backgroundColor: PFColors.BackgroundColor100
 });
 
-const graphLegendStyle = kialiStyle({
-  right: '0',
-  bottom: '0.5rem',
-  position: 'absolute',
-  overflow: 'hidden'
-});
-
 const GraphErrorBoundaryFallback = (): React.ReactElement => {
   return (
-    <div className={cytoscapeGraphContainerStyle}>
+    <div className={graphContainerStyle}>
       <EmptyGraphLayout
         isError={true}
         isMiniGraph={false}
@@ -248,8 +231,7 @@ const GraphErrorBoundaryFallback = (): React.ReactElement => {
 
 class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState> {
   private readonly errorBoundaryRef: any;
-  private cytoscapeGraphRef: any;
-  private focusSelector?: string;
+  private focusNode?: FocusNode;
   private graphDataSource: GraphDataSource;
 
   static getNodeParamsFromProps(props: Partial<GraphURLPathProps>): NodeParamsType | undefined {
@@ -265,7 +247,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     const serviceOk = service && service !== UNKNOWN;
     const workload = props.workload;
     const workloadOk = workload && workload !== UNKNOWN;
-
     if (!aggregateOk && !aggregateValueOk && !appOk && !namespaceOk && !serviceOk && !workloadOk) {
       // @ts-ignore
       return;
@@ -273,7 +254,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
 
     let nodeType: NodeType;
     let version: string | undefined;
-
     if (aggregateOk) {
       nodeType = NodeType.AGGREGATE;
       version = '';
@@ -284,7 +264,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       nodeType = NodeType.SERVICE;
       version = '';
     }
-
     return {
       aggregate: aggregate!,
       aggregateValue: aggregateValue!,
@@ -302,11 +281,9 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     if (prevNode === node) {
       return false;
     }
-
     if ((prevNode && !node) || (!prevNode && node)) {
       return true;
     }
-
     if (prevNode && node) {
       const nodeAggregateHasChanged =
         prevNode.aggregate !== node.aggregate || prevNode.aggregateValue !== node.aggregateValue;
@@ -315,7 +292,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       const nodeVersionHasChanged = prevNode.version !== node.version;
       const nodeTypeHasChanged = prevNode.nodeType !== node.nodeType;
       const nodeWorkloadHasChanged = prevNode.workload !== node.workload;
-
       return (
         nodeAggregateHasChanged ||
         nodeAppHasChanged ||
@@ -325,16 +301,17 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
         nodeTypeHasChanged
       );
     }
-
     return false;
   }
 
   constructor(props: GraphPageProps) {
     super(props);
     this.errorBoundaryRef = React.createRef();
-    this.cytoscapeGraphRef = React.createRef();
-    this.focusSelector = getFocusSelector();
-
+    const focusNodeId = getFocusSelector();
+    if (focusNodeId) {
+      this.focusNode = { id: focusNodeId, isSelected: true } as FocusNode;
+      unsetFocusSelector();
+    }
     this.graphDataSource = new GraphDataSource();
 
     this.state = {
@@ -345,6 +322,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
         isLoading: true,
         timestamp: 0
       },
+      isReady: false,
       wizardsData: {
         showWizard: false,
         wizardType: '',
@@ -370,7 +348,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     // is for a node graph.  When setting the node here it is available for the
     // loadGraphFromBackend() call.
     const urlNode = GraphPageComponent.getNodeParamsFromProps(this.props);
-
     if (GraphPageComponent.isNodeChanged(urlNode, this.props.node)) {
       // add the node namespace if necessary, but don't lose previously selected namespaces
       if (urlNode && !this.props.activeNamespaces.map(ns => ns.name).includes(urlNode.namespace.name)) {
@@ -379,9 +356,22 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       this.props.setNode(urlNode);
     }
 
+    // trace url info
     const urlTrace = getTraceId();
     if (urlTrace !== this.props.trace?.traceID) {
       this.props.setTraceId(urlTrace);
+    }
+
+    // layout url info
+    const urlLayout = HistoryManager.getParam(URLParam.GRAPH_LAYOUT);
+    if (urlLayout) {
+      const validLayout = getValidGraphLayout(urlLayout);
+      if (validLayout !== this.props.layout) {
+        this.props.setLayout(validLayout);
+        HistoryManager.setParam(URLParam.GRAPH_LAYOUT, validLayout);
+      }
+    } else {
+      HistoryManager.setParam(URLParam.GRAPH_LAYOUT, this.props.layout);
     }
 
     // Ensure we initialize the graph. We wait for the toolbar to render and
@@ -403,6 +393,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     if (activeNamespacesChanged) {
       this.props.onNamespaceChange();
     }
+
     if (
       activeNamespacesChanged ||
       prev.boxByCluster !== curr.boxByCluster ||
@@ -429,16 +420,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       this.loadGraphDataFromBackend();
     }
 
-    if (this.focusSelector) {
-      this.focusSelector = undefined;
-      unsetFocusSelector();
-    }
-
-    if (
-      prev.layout.name !== curr.layout.name ||
-      prev.namespaceLayout.name !== curr.namespaceLayout.name ||
-      activeNamespacesChanged
-    ) {
+    if (prev.layout !== curr.layout || prev.namespaceLayout !== curr.namespaceLayout || activeNamespacesChanged) {
       this.errorBoundaryRef.current.cleanError();
     }
 
@@ -457,42 +439,33 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
 
   render(): React.ReactNode {
     let conStyle = containerStyle;
-
     if (isKioskMode()) {
       conStyle = kioskContainerStyle;
     }
-
     const isEmpty = !(
       this.state.graphData.elements.nodes && Object.keys(this.state.graphData.elements.nodes).length > 0
     );
-
     const isReady = !(isEmpty || this.state.graphData.isError);
     const isReplayReady = this.props.replayActive && !!this.props.replayQueryTime;
-    const cy = this.cytoscapeGraphRef && this.cytoscapeGraphRef.current ? this.cytoscapeGraphRef.current.getCy() : null;
 
     return (
       <>
         <FlexView className={conStyle} column={true}>
           <div>
             <GraphToolbar
-              cy={cy}
+              controller={this.state.graphRefs?.getController()}
               disabled={this.state.graphData.isLoading}
               elementsChanged={this.state.graphData.elementsChanged}
               onToggleHelp={this.toggleHelp}
             />
           </div>
-          <FlexView
-            grow={true}
-            className={`${cytoscapeGraphWrapperDivStyle} ${this.props.replayActive && replayBorder}`}
-          >
+          <FlexView grow={true} className={`${graphWrapperDivStyle} ${this.props.replayActive && replayBorder}`}>
             <ErrorBoundary
               ref={this.errorBoundaryRef}
               onError={this.notifyError}
               fallBackComponent={<GraphErrorBoundaryFallback />}
             >
-              {this.props.showLegend && (
-                <GraphLegend className={graphLegendStyle} closeLegend={this.props.toggleLegend} />
-              )}
+              {this.props.showLegend && <GraphLegend closeLegend={this.props.toggleLegend} />}
               {isReady && (
                 <Chip
                   className={`${graphTimeRange} ${this.props.replayActive ? replayBackground : graphBackground}`}
@@ -505,34 +478,32 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
                 </Chip>
               )}
               {(!this.props.replayActive || isReplayReady) && (
-                <CytoscapeGraph
-                  containerClassName={cytoscapeGraphContainerStyle}
-                  contextMenuEdgeComponent={EdgeContextMenu}
-                  contextMenuNodeComponent={NodeContextMenu}
-                  focusSelector={this.focusSelector}
-                  graphData={this.state.graphData}
-                  onEmptyGraphAction={this.handleEmptyGraphAction}
-                  onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
-                  onLaunchWizard={this.handleLaunchWizard}
-                  onNodeDoubleTap={this.handleDoubleTap}
-                  ref={refInstance => this.setCytoscapeGraph(refInstance)}
-                  {...this.props}
-                />
-              )}
-              {isReady && (
-                <div
-                  className={cytoscapeToolbarWrapperDivStyle}
-                  style={{ left: this.props.showLegend ? '225px' : '0' }}
-                >
-                  <CytoscapeToolbar
-                    cytoscapeGraphRef={this.cytoscapeGraphRef}
-                    disabled={this.state.graphData.isLoading}
-                  />
+                <div id="pft-graph" className={graphContainerStyle}>
+                  <EmptyGraphLayout
+                    action={this.handleEmptyGraphAction}
+                    elements={this.state.graphData.elements}
+                    error={this.state.graphData.errorMessage}
+                    isLoading={this.state.graphData.isLoading}
+                    isError={!!this.state.graphData.isError}
+                    isMiniGraph={false}
+                    namespaces={this.state.graphData.fetchParams.namespaces}
+                    showIdleNodes={this.props.showIdleNodes}
+                    toggleIdleNodes={this.props.toggleIdleNodes}
+                  >
+                    <Graph
+                      {...this.props}
+                      focusNode={this.focusNode}
+                      graphData={this.state.graphData}
+                      isMiniGraph={false}
+                      onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
+                      onLaunchWizard={this.handleLaunchWizard}
+                      onReady={this.handleReady}
+                    />
+                  </EmptyGraphLayout>
                 </div>
               )}
             </ErrorBoundary>
-
-            {isReady && this.props.summaryData && (
+            {this.props.summaryData && (!this.props.replayActive || isReplayReady) && (
               <SummaryPanel
                 data={this.props.summaryData}
                 duration={this.state.graphData.fetchParams.duration}
@@ -540,8 +511,9 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
                 injectServiceNodes={this.props.showServiceNodes}
                 isPageVisible={this.props.isPageVisible}
                 namespaces={this.props.activeNamespaces}
-                onLaunchWizard={this.handleLaunchWizard}
                 onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
+                onFocus={this.onFocus}
+                onLaunchWizard={this.handleLaunchWizard}
                 queryTime={this.state.graphData.timestamp / 1000}
                 trafficRates={this.props.trafficRates}
                 {...computePrometheusRateParams(this.props.duration, NUMBER_OF_DATAPOINTS)}
@@ -549,7 +521,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
             )}
           </FlexView>
         </FlexView>
-
         <ServiceWizard
           show={this.state.wizardsData.showWizard}
           type={this.state.wizardsData.wizardType}
@@ -574,7 +545,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
           onClose={this.handleWizardClose}
           istioAPIEnabled={this.props.istioAPIEnabled}
         />
-
         {this.state.showConfirmDeleteTrafficRouting && (
           <ConfirmDeleteTrafficRoutingModal
             isOpen={true}
@@ -590,6 +560,15 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     );
   }
 
+  // TODO Focus...
+  private onFocus = (focusNode: FocusNode): void => {
+    console.debug(`onFocus(${focusNode})`);
+  };
+
+  private handleReady = (refs: GraphRefs): void => {
+    this.setState({ graphRefs: refs, isReady: true });
+  };
+
   private handleEmptyGraphAction = (): void => {
     this.loadGraphDataFromBackend();
   };
@@ -601,17 +580,15 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     fetchParams: FetchParams
   ): void => {
     const prevElements = this.state.graphData.elements;
-
     this.setState({
       graphData: {
         elements: elements,
-        elementsChanged: CytoscapeGraphUtils.elementsChanged(prevElements, elements),
+        elementsChanged: elementsChanged(prevElements, elements),
         isLoading: false,
         fetchParams: fetchParams,
         timestamp: graphTimestamp * 1000
-      }
+      } as GraphData
     });
-
     this.props.setGraphDefinition(this.graphDataSource.graphDefinition);
   };
 
@@ -620,7 +597,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     this.setState({
       graphData: {
         elements: EMPTY_GRAPH_DATA,
-        elementsChanged: CytoscapeGraphUtils.elementsChanged(prevElements, EMPTY_GRAPH_DATA),
+        elementsChanged: elementsChanged(prevElements, EMPTY_GRAPH_DATA),
         errorMessage: !!errorMessage ? errorMessage : undefined,
         isError: true,
         isLoading: false,
@@ -635,7 +612,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     this.setState({
       graphData: {
         elements: EMPTY_GRAPH_DATA,
-        elementsChanged: CytoscapeGraphUtils.elementsChanged(prevElements, EMPTY_GRAPH_DATA),
+        elementsChanged: elementsChanged(prevElements, EMPTY_GRAPH_DATA),
         isLoading: false,
         fetchParams: fetchParams,
         timestamp: Date.now()
@@ -653,138 +630,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
         timestamp: isPreviousDataInvalid ? Date.now() : this.state.graphData.timestamp
       }
     });
-  };
-
-  private handleDoubleTap = (event: GraphNodeDoubleTapEvent): void => {
-    if (
-      event.isInaccessible ||
-      event.isServiceEntry ||
-      (event.nodeType === NodeType.BOX && event.isBox !== BoxByType.APP)
-    ) {
-      return;
-    }
-
-    if (event.isOutOfMesh) {
-      AlertUtils.add(
-        `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`,
-        undefined,
-        MessageType.WARNING
-      );
-      return;
-    }
-
-    if (event.isIdle) {
-      AlertUtils.add(
-        `An idle node has no node-specific traffic and can not provide a node detail graph.`,
-        undefined,
-        MessageType.WARNING
-      );
-      return;
-    }
-
-    if (event.isOutside && this.props.setActiveNamespaces) {
-      this.props.setActiveNamespaces([{ name: event.namespace }]);
-      return;
-    }
-
-    // If graph is in the drilled-down view, there is the chance that the user
-    // double clicked the same node as in the full graph. Determine if this is
-    // the case.
-    let sameNode = false;
-    const node = this.state.graphData.fetchParams.node;
-
-    if (node) {
-      sameNode = node && node.nodeType === event.nodeType;
-      switch (event.nodeType) {
-        case NodeType.AGGREGATE:
-          sameNode = sameNode && node.aggregate === event.aggregate;
-          sameNode = sameNode && node.aggregateValue === event.aggregateValue;
-          break;
-        case NodeType.APP:
-          sameNode = sameNode && node.app === event.app;
-          sameNode = sameNode && node.version === event.version;
-          break;
-        case NodeType.BOX:
-          // we only support node graphs on app boxes, so assume app box
-          sameNode = sameNode && node.app === event.app;
-          break;
-        case NodeType.SERVICE:
-          sameNode = sameNode && node.service === event.service;
-          break;
-        case NodeType.WORKLOAD:
-          sameNode = sameNode && node.workload === event.workload;
-          break;
-        default:
-          sameNode = true; // don't navigate to unsupported node type
-      }
-    }
-
-    const targetNode: NodeParamsType = { ...event, namespace: { name: event.namespace } };
-
-    // If, while in the drilled-down graph, the user double clicked the same
-    // node as in the main graph, it doesn't make sense to re-load the same view.
-    // Instead, assume that the user wants more details for the node and do a
-    // redirect to the details page.
-    if (sameNode) {
-      this.handleDoubleTapSameNode(targetNode);
-      return;
-    }
-
-    // In case user didn't double-tap the same node, or if graph is in
-    // full graph mode, redirect to the drilled-down graph of the chosen node.
-    const urlParams: GraphUrlParams = {
-      activeNamespaces: this.state.graphData.fetchParams.namespaces,
-      duration: this.state.graphData.fetchParams.duration,
-      edgeLabels: this.state.graphData.fetchParams.edgeLabels,
-      edgeMode: this.props.edgeMode,
-      graphLayout: this.props.layout,
-      graphType: this.state.graphData.fetchParams.graphType,
-      namespaceLayout: this.props.namespaceLayout,
-      node: targetNode,
-      refreshInterval: this.props.refreshInterval,
-      showIdleEdges: this.props.showIdleEdges,
-      showIdleNodes: this.props.showIdleNodes,
-      showOperationNodes: this.props.showOperationNodes,
-      showServiceNodes: this.props.showServiceNodes,
-      showWaypoints: this.props.showWaypoints,
-      trafficRates: this.state.graphData.fetchParams.trafficRates
-    };
-
-    // To ensure updated components get the updated URL, update the URL first and then the state
-    router.navigate(makeNodeGraphUrlFromParams(urlParams));
-  };
-
-  // This allows us to navigate to the service details page when zoomed in on nodes
-  private handleDoubleTapSameNode = (targetNode: NodeParamsType): string | undefined => {
-    const makeAppDetailsPageUrl = (namespace: string, nodeType: string, name?: string): string => {
-      return `/namespaces/${namespace}/${nodeType}/${name}`;
-    };
-
-    const nodeType = targetNode.nodeType;
-    let urlNodeType = `${targetNode.nodeType}s`;
-    let name = targetNode.app;
-
-    if (nodeType === 'service') {
-      name = targetNode.service;
-    } else if (nodeType === 'workload') {
-      name = targetNode.workload;
-    } else {
-      urlNodeType = 'applications';
-    }
-
-    let detailsPageUrl = makeAppDetailsPageUrl(targetNode.namespace.name, urlNodeType, name);
-
-    if (targetNode.cluster && isMultiCluster) {
-      detailsPageUrl = `${detailsPageUrl}?clusterName=${targetNode.cluster}`;
-    }
-
-    if (isParentKiosk(this.props.kiosk)) {
-      kioskContextMenuAction(detailsPageUrl);
-    } else {
-      router.navigate(detailsPageUrl);
-    }
-
-    return;
   };
 
   private handleLaunchWizard = (
@@ -817,7 +662,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
           showWizard: false
         }
       }));
-
       triggerRefresh();
     } else {
       this.setState(prevState => ({
@@ -861,7 +705,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     if (this.props.showLegend) {
       this.props.toggleLegend();
     }
-
     if (this.props.activeTour) {
       this.props.endTour();
     } else {
@@ -869,10 +712,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       this.props.startTour({ info: GraphTour, stop: firstStop });
     }
   };
-
-  private setCytoscapeGraph(cytoscapeGraph: any): void {
-    this.cytoscapeGraphRef.current = cytoscapeGraph;
-  }
 
   private loadGraphDataFromBackend = (): void => {
     const queryTime: TimeInMilliseconds | undefined = !!this.props.replayQueryTime
@@ -923,6 +762,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   findValue: findValueSelector(state),
   graphType: graphTypeSelector(state),
   hideValue: hideValueSelector(state),
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
   isPageVisible: state.globalState.isPageVisible,
   kiosk: state.globalState.kiosk,
   layout: state.graph.layout,
@@ -946,20 +786,20 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   showWaypoints: state.graph.toolbarState.showWaypoints,
   summaryData: state.graph.summaryData,
   trace: state.tracingState?.selectedTrace,
-  trafficRates: trafficRatesSelector(state),
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
-  theme: state.globalState.theme
+  trafficRates: trafficRatesSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   endTour: bindActionCreators(TourActions.endTour, dispatch),
   onNamespaceChange: bindActionCreators(GraphActions.onNamespaceChange, dispatch),
-  onReady: (cy: Cy.Core) => dispatch(GraphThunkActions.graphReady(cy)),
+  onReady: (controller: Controller) => dispatch(GraphThunkActions.graphReady(controller)),
   setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
+  setEdgeMode: bindActionCreators(GraphActions.setEdgeMode, dispatch),
   setGraphDefinition: bindActionCreators(GraphActions.setGraphDefinition, dispatch),
+  setLayout: bindActionCreators(GraphActions.setLayout, dispatch),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
   setRankResult: bindActionCreators(GraphActions.setRankResult, dispatch),
-  setTraceId: (traceId?: string) => dispatch(TracingThunkActions.setTraceId('', traceId)),
+  setTraceId: (traceId?: string) => dispatch(TracingThunkActions.setTraceId(traceId)),
   setUpdateTime: (val: TimeInMilliseconds) => dispatch(GraphActions.setUpdateTime(val)),
   startTour: bindActionCreators(TourActions.startTour, dispatch),
   toggleIdleNodes: bindActionCreators(GraphToolbarActions.toggleIdleNodes, dispatch),

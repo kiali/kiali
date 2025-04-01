@@ -8,6 +8,8 @@
 # Works on both openshift and non-openshift environments.
 ##############################################################################
 
+: ${AUTO_INJECTION:=true}
+: ${AUTO_INJECTION_LABEL:="istio-injection=enabled"}
 : ${CLIENT_EXE:=oc}
 : ${DELETE_DEMOS:=false}
 : ${FTRAVELS:=federated-travels}
@@ -51,7 +53,9 @@ install_ftravels_app() {
     else
       ${CLIENT_EXE} create namespace ${i}
     fi
-    ${CLIENT_EXE} label namespace ${i} istio-injection=enabled --overwrite
+    if [ "${AUTO_INJECTION}" == "true" ]; then
+      ${CLIENT_EXE} label namespace ${i} ${AUTO_INJECTION_LABEL} --overwrite
+    fi
   done
 
   ${CLIENT_EXE} apply -f ${BASE_URL}/${APP}/ossm-subs.yaml
@@ -80,6 +84,14 @@ install_ftravels_app() {
 while [ $# -gt 0 ]; do
   key="$1"
   case $key in
+    -ai|--auto-injection)
+      AUTO_INJECTION="$2"
+      shift;shift
+      ;;
+    -ail|--auto-injection-label)
+      AUTO_INJECTION_LABEL="$2"
+      shift;shift
+      ;;
     -c|--client)
       CLIENT_EXE="$2"
       shift;shift
@@ -91,6 +103,8 @@ while [ $# -gt 0 ]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -ai|--auto-injection <true|false>: If you want sidecars to be auto-injected (default: true).
+  -ail|--auto-injection-label <name=value>: If auto-injection is enabled, this is the label added to the namespace. For revision-based installs, you can use something like "istio.io/rev=default-v1-23-0". default: istio-injection=enabled).
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: if 'true' demos will be deleted; otherwise, they will be installed.
   -h|--help: this text

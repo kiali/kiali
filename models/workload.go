@@ -69,11 +69,6 @@ type WorkloadListItem struct {
 	// Namespace of the workload
 	Namespace string `json:"namespace"`
 
-	// If is part of the Ambient infrastructure
-	// required: false
-	// example: waypoint/ztunnel
-	Ambient string `json:"ambient"`
-
 	// The kube cluster where this workload is located.
 	Cluster string `json:"cluster"`
 
@@ -108,10 +103,20 @@ type WorkloadListItem struct {
 	// example: true
 	IsAmbient bool `json:"isAmbient"`
 
-	// Define if Labels related to this Workload contains any Gateway label
+	// Define if this Workload is a gateway (but not a waypoint)
 	// required: true
 	// example: true
 	IsGateway bool `json:"isGateway"`
+
+	// Define if this Workload is an ambient waypoint
+	// required: true
+	// example: true
+	IsWaypoint bool `json:"isWaypoint"`
+
+	// Define if this Workload is an ambient ztunnel
+	// required: true
+	// example: true
+	IsZtunnel bool `json:"isZtunnel"`
 
 	// Additional item sample, such as type of api being served (graphql, grpc, rest)
 	// example: rest
@@ -167,6 +172,13 @@ type WorkloadListItem struct {
 
 	// Names of the waypoint proxy workloads, if any
 	WaypointWorkloads []string `json:"waypointWorkloads"`
+
+	// ValidationKey is a pre-calculated key string: "cluster:namespace:name"
+	ValidationKey string
+
+	// ValidationVersion is a pre-calculated string representing the workload "version", basically
+	// the workload information that, if changed, requires re-validation.
+	ValidationVersion string
 }
 
 type WorkloadOverviews []*WorkloadListItem
@@ -273,8 +285,7 @@ type Workloads []*Workload
 
 type WorkloadEntries []*WorkloadEntry
 
-func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
-	conf := config.Get()
+func (workload *WorkloadListItem) ParseWorkload(w *Workload, conf *config.Config) {
 	workload.Name = w.Name
 	workload.Namespace = w.Namespace
 	workload.WorkloadGVK = w.WorkloadGVK
@@ -287,7 +298,9 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 		workload.IstioSidecar = w.HasIstioSidecar()
 	}
 	workload.IsGateway = w.IsGateway()
-	workload.IsAmbient = w.HasIstioAmbient()
+	workload.IsWaypoint = w.IsWaypoint()
+	workload.IsZtunnel = w.IsZtunnel()
+	workload.IsAmbient = workload.IsWaypoint || workload.IsZtunnel || w.HasIstioAmbient()
 	workload.Labels = w.Labels
 	workload.PodCount = len(w.Pods)
 	workload.ServiceAccountNames = w.Pods.ServiceAccounts()
@@ -299,12 +312,13 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	}
 	workload.HealthAnnotations = w.HealthAnnotations
 	workload.IstioReferences = []*IstioValidationKey{}
-	if w.IsWaypoint() {
-		workload.Ambient = "waypoint"
-	}
 	/** Check the labels app and version required by Istio in template Pods*/
-	_, workload.AppLabel = w.Labels[conf.IstioLabels.AppLabelName]
-	_, workload.VersionLabel = w.Labels[conf.IstioLabels.VersionLabelName]
+	if appLabelName, found := conf.GetAppLabelName(w.Labels); found {
+		_, workload.AppLabel = w.Labels[appLabelName]
+	}
+	if verLabelName, found := conf.GetVersionLabelName(w.Labels); found {
+		_, workload.VersionLabel = w.Labels[verLabelName]
+	}
 }
 
 func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *meta_v1.ObjectMeta) {
@@ -315,8 +329,12 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 		// TODO: This is not right since the template labels won't match the workload's labels.
 		workload.Labels = tplMeta.Labels
 		/** Check the labels app and version required by Istio in template Pods*/
-		_, workload.AppLabel = tplMeta.Labels[conf.IstioLabels.AppLabelName]
-		_, workload.VersionLabel = tplMeta.Labels[conf.IstioLabels.VersionLabelName]
+		if appLabelName, found := conf.GetAppLabelName(tplMeta.Labels); found {
+			_, workload.AppLabel = tplMeta.Labels[appLabelName]
+		}
+		if verLabelName, found := conf.GetVersionLabelName(tplMeta.Labels); found {
+			_, workload.VersionLabel = tplMeta.Labels[verLabelName]
+		}
 	} else {
 		workload.Labels = map[string]string{}
 	}
@@ -523,8 +541,13 @@ func (workload *Workload) ParseWorkloadGroup(wg *networking_v1.WorkloadGroup, we
 		}
 	}
 	/** Check the labels app and version required by Istio in template Pods*/
-	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
-	_, workload.VersionLabel = workload.Labels[conf.IstioLabels.VersionLabelName]
+	if appLabelName, found := conf.GetAppLabelName(workload.Labels); found {
+		_, workload.AppLabel = workload.Labels[appLabelName]
+	}
+	if verLabelName, found := conf.GetVersionLabelName(workload.Labels); found {
+		_, workload.VersionLabel = workload.Labels[verLabelName]
+	}
+
 	for _, entry := range wentries {
 		podStatus := core_v1.PodFailed
 		if healthutil.IsWorkloadEntryHealthy(entry) {
@@ -578,8 +601,12 @@ func (workload *Workload) ParsePods(controllerName string, controllerGVK schema.
 	}
 
 	/** Check the labels app and version required by Istio in template Pods*/
-	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
-	_, workload.VersionLabel = workload.Labels[conf.IstioLabels.VersionLabelName]
+	if appLabelName, found := conf.GetAppLabelName(workload.Labels); found {
+		_, workload.AppLabel = workload.Labels[appLabelName]
+	}
+	if verLabelName, found := conf.GetVersionLabelName(workload.Labels); found {
+		_, workload.VersionLabel = workload.Labels[verLabelName]
+	}
 }
 
 func (workload *Workload) SetPods(pods []core_v1.Pod) {
@@ -621,62 +648,17 @@ func (workload *Workload) HasIstioSidecar() bool {
 // IsGateway return true if the workload is Ingress, Egress or K8s Gateway
 // waypoint proxies are not included. Use IsWaypoint() instead
 func (workload *Workload) IsGateway() bool {
-	// There's not consistent labeling for gateways.
-	// In case of using istioctl, you get:
-	// istio: ingressgateway
-	// or
-	// istio: egressgateway
-	//
-	// In case of using helm, you get:
-	// istio: <gateway-name>
-	//
-	// In case of gateway injection you get:
-	// istio: <gateway-name>
-	//
-	// In case of gateway-api you get:
-	// istio.io/gateway-name: gateway
-	//
-	// In case of east/west gateways you get:
-	// istio: eastwestgateway
-	//
-	// We're going to do different checks for all the ways you can label/deploy gateways
+	return config.IsGateway(workload.Labels, workload.TemplateAnnotations)
+}
 
-	// istioctl
-	if labelValue, ok := workload.Labels["operator.istio.io/component"]; ok && (labelValue == "IngressGateways" || labelValue == "EgressGateways") {
-		return true
-	}
-
-	// There's a lot of unit tests that look specifically for istio: ingressgateway and istio: egressgateway.
-	// These should be covered by istioctl and gateway injection cases but adding checks for these just in case.
-	if labelValue, ok := workload.Labels["istio"]; ok && (labelValue == "ingressgateway" || labelValue == "egressgateway") {
-		return true
-	}
-
-	// Gateway injection. Includes helm because the helm template uses gateway injection.
-	// If the pod injection template is a gateway then it's a gateway.
-	if workload.TemplateAnnotations != nil && workload.TemplateAnnotations["inject.istio.io/templates"] == "gateway" {
-		return true
-	}
-
-	// gateway-api
-	// This is the old gateway-api label that was removed in 1.24.
-	// If this label exists then it's a gateway
-	if _, ok := workload.Labels["istio.io/gateway-name"]; ok {
-		return true
-	}
-
-	// This is the new gateway-api label that was added in 1.24
-	// The value distinguishes gateways from waypoints.
-	if workload.Labels["gateway.istio.io/managed"] == "istio.io-gateway-controller" {
-		return true
-	}
-
-	return false
+// IsInfra return true if the workload is a waypoint proxy or ztunnel (Based in labels)
+func (workload *Workload) IsInfra() bool {
+	return workload.IsWaypoint() || workload.IsZtunnel()
 }
 
 // IsWaypoint return true if the workload is a waypoint proxy (Based in labels)
 func (workload *Workload) IsWaypoint() bool {
-	return workload.Labels[config.WaypointLabel] == config.WaypointLabelValue
+	return config.IsWaypoint(workload.Labels)
 }
 
 // WaypointFor returns the waypoint type (workload/service)
@@ -708,7 +690,7 @@ func (workload *Workload) WaypointFor() string {
 // IsWaypoint return true if the workload is a ztunnel (Based in labels)
 func (workload *Workload) IsZtunnel() bool {
 	for _, pod := range workload.Pods {
-		if pod.Labels["app"] == "ztunnel" {
+		if pod.Labels[config.IstioAppLabel] == config.Ztunnel {
 			return true
 		}
 	}
@@ -741,9 +723,9 @@ func (workloads WorkloadOverviews) HasIstioSidecar() bool {
 	return false
 }
 
-func (wl WorkloadList) GetLabels() []labels.Set {
-	wLabels := make([]labels.Set, 0, len(wl.Workloads))
-	for _, w := range wl.Workloads {
+func GetLabels(workloads []*Workload) []labels.Set {
+	wLabels := make([]labels.Set, 0, len(workloads))
+	for _, w := range workloads {
 		wLabels = append(wLabels, labels.Set(w.Labels))
 	}
 	return wLabels

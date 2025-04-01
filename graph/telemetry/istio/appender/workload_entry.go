@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 )
@@ -41,10 +40,7 @@ func (a WorkloadEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalIn
 	a.applyWorkloadEntries(trafficMap, globalInfo, namespaceInfo)
 }
 
-func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
-	appLabel := config.Get().IstioLabels.AppLabelName
-	versionLabel := config.Get().IstioLabels.VersionLabelName
-
+func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap, gi *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	for _, n := range trafficMap {
 		// Skip the check if this node is outside the requested namespace, we limit badging to the requested namespaces
 		if n.Namespace != namespaceInfo.Namespace {
@@ -61,7 +57,7 @@ func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap,
 			continue
 		}
 
-		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigListForNamespace(context.TODO(), n.Cluster, n.Namespace, business.IstioConfigCriteria{
+		istioCfg, err := gi.Business.IstioConfig.GetIstioConfigListForNamespace(context.TODO(), n.Cluster, n.Namespace, business.IstioConfigCriteria{
 			IncludeWorkloadEntries: true,
 		})
 		graph.CheckError(err)
@@ -69,7 +65,9 @@ func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap,
 		log.Tracef("WorkloadEntries found: %d", len(istioCfg.WorkloadEntries))
 
 		for _, entry := range istioCfg.WorkloadEntries {
-			if entry.Spec.Labels[appLabel] == n.App && entry.Spec.Labels[versionLabel] == n.Version {
+			appLabelName, appLabelNameFound := gi.Conf.GetAppLabelName(entry.Spec.Labels)
+			verLabelName, verLabelNameFound := gi.Conf.GetVersionLabelName(entry.Spec.Labels)
+			if appLabelNameFound && verLabelNameFound && entry.Spec.Labels[appLabelName] == n.App && entry.Spec.Labels[verLabelName] == n.Version {
 				if n.Metadata[graph.HasWorkloadEntry] == nil {
 					n.Metadata[graph.HasWorkloadEntry] = []graph.WEInfo{}
 				}

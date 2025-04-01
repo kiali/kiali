@@ -16,8 +16,8 @@ import (
 
 // The supported vendors
 const (
-	VendorCytoscape     string = "cytoscape"
-	defaultConfigVendor string = VendorCytoscape
+	VendorCommon        string = "common"
+	defaultConfigVendor string = VendorCommon
 )
 
 const (
@@ -97,7 +97,7 @@ func NewOptions(r *http.Request, namespacesService *business.NamespaceService) O
 	}
 	if configVendor == "" {
 		configVendor = defaultConfigVendor
-	} else if configVendor != VendorCytoscape {
+	} else if configVendor != VendorCommon {
 		BadRequest(fmt.Sprintf("Invalid configVendor [%s]", configVendor))
 	}
 	if includeGatewaysString == "" {

@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -39,23 +40,23 @@ import (
 )
 
 func NewWorkloadService(
-	userClients map[string]kubernetes.ClientInterface,
-	kialiSAclients map[string]kubernetes.ClientInterface,
-	prom prometheus.ClientInterface,
 	cache cache.KialiCache,
-	layer *Layer,
-	config *config.Config,
+	conf *config.Config,
 	grafana *grafana.Service,
+	kialiSAclients map[string]kubernetes.ClientInterface,
+	layer *Layer,
+	prom prometheus.ClientInterface,
+	userClients map[string]kubernetes.ClientInterface,
 ) *WorkloadService {
 	excludedWorkloads := make(map[string]bool)
-	for _, w := range config.KubernetesConfig.ExcludeWorkloads {
+	for _, w := range conf.KubernetesConfig.ExcludeWorkloads {
 		excludedWorkloads[w] = true
 	}
 
 	return &WorkloadService{
 		businessLayer:     layer,
 		cache:             cache,
-		config:            config,
+		conf:              conf,
 		excludedWorkloads: excludedWorkloads,
 		prom:              prom,
 		userClients:       userClients,
@@ -69,8 +70,8 @@ type WorkloadService struct {
 	businessLayer *Layer
 	// The global kiali cache. This should be passed into the workload service rather than created inside of it.
 	cache cache.KialiCache
-	// The global kiali config.
-	config            *config.Config
+	// The global kiali conf.
+	conf              *config.Config
 	excludedWorkloads map[string]bool
 	grafana           *grafana.Service
 	prom              prometheus.ClientInterface
@@ -114,11 +115,12 @@ type LogEntry struct {
 }
 
 type filterOpts struct {
-	app    regexp.Regexp
-	destWk regexp.Regexp
-	destNs regexp.Regexp
-	srcWk  regexp.Regexp
-	srcNs  regexp.Regexp
+	app     regexp.Regexp
+	destWk  regexp.Regexp
+	destNs  regexp.Regexp
+	srcWk   regexp.Regexp
+	srcNs   regexp.Regexp
+	destSvc regexp.Regexp
 }
 
 // LogOptions holds query parameter values
@@ -147,7 +149,7 @@ func (in *WorkloadService) isWorkloadValid(workloadType string) bool {
 }
 
 // @TODO do validations per cluster
-func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1.AuthorizationPolicy, workloadsPerNamespace map[string]models.WorkloadList) models.IstioValidations {
+func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1.AuthorizationPolicy, workloadsPerNamespace map[string]models.Workloads) models.IstioValidations {
 	validations := checkers.WorkloadChecker{
 		AuthorizationPolicies: authpolicies,
 		WorkloadsPerNamespace: workloadsPerNamespace,
@@ -156,8 +158,8 @@ func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1.Au
 	return validations
 }
 
-// GetAllWorkloads fetches all workloads across every namespace in the cluster.
-func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string) (models.Workloads, error) {
+// GetAllWorkloads fetches all workloads across the cluster's namespaces.
+func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string, labelSelector string) (models.Workloads, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetAllWorkloads",
 		observability.Attribute("package", "business"),
@@ -172,7 +174,7 @@ func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string) 
 
 	var workloads models.Workloads
 	for _, namespace := range namespaces {
-		w, err := in.fetchWorkloadsFromCluster(ctx, cluster, namespace.Name, "")
+		w, err := in.fetchWorkloadsFromCluster(ctx, cluster, namespace.Name, labelSelector)
 		if err != nil {
 			return nil, err
 		}
@@ -184,8 +186,8 @@ func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string) 
 }
 
 // GetAllGateways fetches all gateway workloads across every namespace in the cluster.
-func (in *WorkloadService) GetAllGateways(ctx context.Context, cluster string) (models.Workloads, error) {
-	workloads, err := in.GetAllWorkloads(ctx, cluster)
+func (in *WorkloadService) GetAllGateways(ctx context.Context, cluster string, labelSelector string) (models.Workloads, error) {
+	workloads, err := in.GetAllWorkloads(ctx, cluster, labelSelector)
 	if err != nil {
 		return nil, err
 	}
@@ -249,19 +251,20 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		}
 	}(ctx)
 
-	istioConfigCriteria := IstioConfigCriteria{
-		IncludeAuthorizationPolicies:  true,
-		IncludeEnvoyFilters:           true,
-		IncludeGateways:               true,
-		IncludeK8sGateways:            true,
-		IncludePeerAuthentications:    true,
-		IncludeRequestAuthentications: true,
-		IncludeSidecars:               true,
-		IncludeWorkloadGroups:         true,
-	}
 	var istioConfigMap models.IstioConfigMap
 
 	if criteria.IncludeIstioResources {
+		istioConfigCriteria := IstioConfigCriteria{
+			IncludeAuthorizationPolicies:  true,
+			IncludeEnvoyFilters:           true,
+			IncludeGateways:               true,
+			IncludeK8sGateways:            true,
+			IncludePeerAuthentications:    true,
+			IncludeRequestAuthentications: true,
+			IncludeSidecars:               true,
+			IncludeWorkloadGroups:         true,
+		}
+
 		go func(ctx context.Context) {
 			defer wg.Done()
 			var err2 error
@@ -281,9 +284,9 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 
 	for _, w := range ws {
 		wItem := &models.WorkloadListItem{Health: *models.EmptyWorkloadHealth()}
-		wItem.ParseWorkload(w)
+		wItem.ParseWorkload(w, in.conf)
 		if istioConfigList, ok := istioConfigMap[cluster]; ok && criteria.IncludeIstioResources {
-			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(in.config, wItem.Labels, istioConfigList, cluster))
+			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(in.conf, wItem.Labels, istioConfigList, cluster))
 		}
 		if criteria.IncludeHealth {
 			wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, namespace, cluster, wItem.Name, criteria.RateInterval, criteria.QueryTime, w)
@@ -293,26 +296,23 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		}
 		wItem.Cluster = cluster
 		wItem.Namespace = namespace
-		if w.IsWaypoint() {
-			wItem.Ambient = "waypoint"
-		}
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
 
 	for _, istioConfigList := range istioConfigMap {
 		// @TODO multi cluster validations
 		authpolicies := istioConfigList.AuthorizationPolicies
-		allWorkloads := map[string]models.WorkloadList{}
-		allWorkloads[namespace] = *workloadList
+		allWorkloads := map[string]models.Workloads{}
+		allWorkloads[namespace] = ws
 		validations := in.getWorkloadValidations(authpolicies, allWorkloads)
-		validations.StripIgnoredChecks()
+		validations.StripIgnoredChecks(in.conf)
 		workloadList.Validations = workloadList.Validations.MergeValidations(validations)
 	}
 
 	return *workloadList, nil
 }
 
-func FilterWorkloadReferences(config *config.Config, wLabels map[string]string, istioConfigList models.IstioConfigList, cluster string) []*models.IstioValidationKey {
+func FilterWorkloadReferences(conf *config.Config, wLabels map[string]string, istioConfigList models.IstioConfigList, cluster string) []*models.IstioValidationKey {
 	wkdReferences := make([]*models.IstioValidationKey, 0)
 	wSelector := labels.Set(wLabels).AsSelector().String()
 	gwFiltered := kubernetes.FilterGatewaysBySelector(wSelector, istioConfigList.Gateways)
@@ -326,7 +326,7 @@ func FilterWorkloadReferences(config *config.Config, wLabels map[string]string, 
 			wkdReferences = append(wkdReferences, &ref)
 		}
 	}
-	k8sGwFiltered := kubernetes.FilterK8sGatewaysByLabel(istioConfigList.K8sGateways, wLabels[config.IstioLabels.AmbientWaypointGatewayLabel])
+	k8sGwFiltered := kubernetes.FilterK8sGatewaysByLabel(istioConfigList.K8sGateways, wLabels[conf.IstioLabels.AmbientWaypointGatewayLabel])
 	for _, g := range k8sGwFiltered {
 		ref := models.BuildKey(kubernetes.K8sGateways, g.Name, g.Namespace, cluster)
 		exist := false
@@ -447,7 +447,6 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 
 	criteria.IncludeWaypoints = true
 	workload, err2 := in.fetchWorkload(ctx, criteria)
-
 	if err2 != nil {
 		return nil, err2
 	}
@@ -457,10 +456,12 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		conf := in.config
-		app := workload.Labels[conf.IstioLabels.AppLabelName]
-		version := workload.Labels[conf.IstioLabels.VersionLabelName]
-		runtimes = NewDashboardsService(in.config, in.grafana, ns, workload).GetCustomDashboardRefs(criteria.Namespace, app, version, workload.Pods)
+		conf := in.conf
+		appLabelName, _ := conf.GetAppLabelName(workload.Labels)
+		verLabelName, _ := conf.GetVersionLabelName(workload.Labels)
+		app := workload.Labels[appLabelName]
+		version := workload.Labels[verLabelName]
+		runtimes = NewDashboardsService(in.conf, in.grafana, ns, workload).GetCustomDashboardRefs(criteria.Namespace, app, version, workload.Pods)
 	}()
 
 	// WorkloadGroup.Labels can be empty
@@ -1426,18 +1427,26 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			w.SetPods(cPods)
 		}
 
-		// Add the Proxy Status to the workload
-		for _, pod := range w.Pods {
-			if config.Get().ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || w.IsWaypoint()) {
-				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(cluster, namespace, pod.Name, !w.IsWaypoint())
-			}
-			// Add the Proxy Status to the workload
-			if pod.AmbientEnabled() {
-				w.WaypointWorkloads = in.GetWaypointsForWorkload(ctx, *w)
-			}
-		}
-
 		if cnFound {
+			// Add the Proxy Status to the workload
+			for _, pod := range w.Pods {
+				isWaypoint := w.IsWaypoint()
+				if in.conf.ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
+					pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(cluster, namespace, pod.Name, !isWaypoint)
+				}
+				// Add the Proxy Status to the workload
+				if pod.AmbientEnabled() {
+					w.WaypointWorkloads = in.GetWaypointsForWorkload(ctx, *w, false)
+				}
+			}
+
+			// Add some precalculated fields useful for validation
+			w.ValidationKey = fmt.Sprintf("%s:%s:%s", w.Cluster, w.Namespace, w.Name)
+
+			w.ServiceAccountNames = w.Pods.ServiceAccounts()
+			slices.Sort(w.ServiceAccountNames)
+			w.ValidationVersion = fmt.Sprintf("%v:%v", w.Labels, w.ServiceAccountNames)
+
 			ws = append(ws, w)
 		}
 	}
@@ -2105,15 +2114,20 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		}
 
 		w.WorkloadListItem.IsGateway = w.IsGateway()
+		isWaypoint := w.IsWaypoint()
+		w.WorkloadListItem.IsWaypoint = isWaypoint
+		w.WorkloadListItem.IsZtunnel = w.IsZtunnel()
+		w.WorkloadListItem.IsAmbient = isWaypoint || w.WorkloadListItem.IsZtunnel || w.HasIstioAmbient()
 
 		// Add the Proxy Status to the workload
+		istioAPIEnabled := in.conf.ExternalServices.Istio.IstioAPIEnabled
 		for _, pod := range w.Pods {
-			if config.Get().ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || w.IsWaypoint()) {
-				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(criteria.Cluster, criteria.Namespace, pod.Name, !w.IsWaypoint())
+			if istioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
+				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(criteria.Cluster, criteria.Namespace, pod.Name, !isWaypoint)
 			}
 			// If Ambient is enabled for pod, check if has any Waypoint proxy
-			if pod.AmbientEnabled() && criteria.IncludeWaypoints {
-				w.WaypointWorkloads = in.GetWaypointsForWorkload(ctx, w)
+			if !isWaypoint && pod.AmbientEnabled() && criteria.IncludeWaypoints {
+				w.WaypointWorkloads = in.GetWaypointsForWorkload(ctx, w, false)
 				// TODO: Maybe user doesn't have permissions
 				ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
 				for _, zPod := range ztunnelPods {
@@ -2129,22 +2143,20 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		}
 
 		// If the pod is a waypoint proxy, check if it is attached to a namespace or to a service account, and get the affected workloads
-		if w.IsWaypoint() && criteria.IncludeWaypoints {
-			w.Ambient = config.Waypoint
-			includeServices := false
-			if w.WaypointFor() == config.WaypointForService || w.WaypointFor() == config.WaypointForAll {
-				includeServices = true
+		if isWaypoint && criteria.IncludeWaypoints {
+			if w.WaypointFor() != config.WaypointForNone {
+				includeServices := false
+				if w.WaypointFor() == config.WaypointForService || w.WaypointFor() == config.WaypointForAll {
+					includeServices = true
+				}
+				// Get waypoint workloads
+				in.cache.GetWaypointList()
+				waypointWorkloads, waypointServices := in.listWaypointWorkloads(ctx, w.Name, w.Namespace, criteria.Cluster, includeServices)
+				w.WaypointWorkloads = waypointWorkloads
+				if includeServices {
+					w.WaypointServices = waypointServices
+				}
 			}
-			// Get waypoint workloads
-			in.cache.GetWaypointList()
-			waypointWorkloads, waypointServices := in.listWaypointWorkloads(ctx, w.Name, w.Namespace, criteria.Cluster, includeServices)
-			w.WaypointWorkloads = waypointWorkloads
-			if includeServices {
-				w.WaypointServices = waypointServices
-			}
-		}
-		if w.IsZtunnel() {
-			w.Ambient = config.Ztunnel
 		}
 
 		if cnFound {
@@ -2155,55 +2167,68 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 }
 
 func (in *WorkloadService) GetZtunnelConfig(cluster, namespace, pod string) *kubernetes.ZtunnelConfigDump {
-
 	return in.cache.GetZtunnelDump(cluster, namespace, pod)
-
 }
 
-// GetWaypoints: Return the list of workloads when the waypoint proxy is applied per namespace
+// GetWaypoints: Return the list of waypoint workloads.  This looks for all k8s gateways and then tests their labels
 func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
 	if !in.cache.IsWaypointListExpired() {
 		log.Tracef("GetWaypoints: Returning list from cache")
 		return in.cache.GetWaypointList()
 	}
 
-	labelSelector := fmt.Sprintf("%s=%s", config.WaypointLabel, config.WaypointLabelValue)
-	waypoints := []*models.Workload{}
+	waypoints := models.Workloads{}
 
 	for cluster := range in.userClients {
-		nslist, errNs := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
-		if errNs != nil {
-			log.Errorf("GetWaypoints: Error fetching namespaces for cluster %s. %s", cluster, errNs.Error())
+		gateways, err := in.GetAllWorkloads(ctx, cluster, config.GatewayLabel)
+		if err != nil {
+			log.Debugf("GetWaypoints: Error fetching k8s gateway workloads for cluster=[%s]: %s", cluster, err.Error())
+			continue
 		}
 
-		for _, ns := range nslist {
-			nsWaypoints, err := in.fetchWorkloadsFromCluster(ctx, cluster, ns.Name, labelSelector)
-			if err != nil {
-				log.Debugf("GetWaypoints: Error fetching workloads for namespace %s, labelSelector %s. %s", ns.Name, labelSelector, err.Error())
-				continue
-			}
-			waypoints = append(waypoints, nsWaypoints...)
-		}
-
+		clusterWaypoints := sliceutil.Filter(gateways, func(gw *models.Workload) bool { return gw.IsWaypoint() })
+		waypoints = append(waypoints, clusterWaypoints...)
 	}
 	in.cache.SetWaypointList(waypoints)
 	return waypoints
 }
 
-// isWorkloadCaptured Check if the pod is captured by a waypoint
-func (in *WorkloadService) isWorkloadCaptured(ctx context.Context, workload models.Workload) ([]models.Waypoint, bool) {
-	found := false
-	waypointNames := make([]models.Waypoint, 0)
+// getCapturingWaypoints returns waypoint references that capture the workload. Only the active waypoint is returned unless <all>
+// is true, in which case all capturing waypoints will be returned. If so, they are returned in order of priority, so [0]
+// reflects the active waypoint, the others have been overriden.
+func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload models.Workload, all bool) ([]models.Waypoint, bool) {
+	waypoints := make([]models.Waypoint, 0, 3)
 
-	if workload.Labels[config.WaypointUseLabel] == "none" {
-		return waypointNames, found
+	// the highest override is at the pod level. for Pod workloads, check labels on the pod. for other workload
+	// types check the template labels, which we assume will be consistently applied to the pods (Kiali doesn't
+	// really deal at the pod level, and won't deal with any sort on manually applied label on pod managed by a
+	// higher-level workload type).
+	waypointUse, waypointUseFound := workload.TemplateLabels[config.WaypointUseLabel]
+	waypointUseNamespace, waypointUseNamespaceFound := workload.TemplateLabels[config.WaypointUseNamespaceLabel]
+	if workload.WorkloadGVK.Kind == kubernetes.PodType {
+		waypointUse, waypointUseFound = workload.Labels[config.WaypointUseLabel]
+		waypointUseNamespace, waypointUseNamespaceFound = workload.Labels[config.WaypointUseNamespaceLabel]
+	}
+	if waypointUseFound {
+		// if the workload opts-out from waypoint capture, then we are done
+		// note: this opt-out is currently undocumented but exists (2/14/25)
+		if waypointUse == config.WaypointNone {
+			return waypoints, false
+		}
+		if !waypointUseNamespaceFound {
+			waypointUseNamespace = workload.Namespace
+		}
+		// Ambient doesn't support multicluster (For now), cluster is the same as the workload
+		waypoints = append(waypoints, models.Waypoint{Name: waypointUse, Type: "pod", Namespace: waypointUseNamespace, Cluster: workload.Cluster})
+		if !all {
+			return waypoints, true
+		}
 	}
 
-	var services []models.ServiceOverview
-	servicesExcluded := false
-
-	// Is the service labeled?
-	if len(workload.Services) == 0 {
+	// the next level of override is service level, if necessary, fetch the workload's service
+	// - note that workloads with no labels (and therefore no service selector) are not associated with a service
+	services := workload.Services
+	if len(services) == 0 && len(workload.Labels) > 0 {
 		serviceCriteria := ServiceCriteria{
 			Cluster:                workload.Cluster,
 			Namespace:              workload.Namespace,
@@ -2215,95 +2240,91 @@ func (in *WorkloadService) isWorkloadCaptured(ctx context.Context, workload mode
 		if err != nil {
 			log.Debugf("isWorkloadCaptured: Error fetching services %s", err.Error())
 		}
-		services = svc.Services
-	} else {
-		services = workload.Services
+		// a proper service selector on the workload should, I think, return only a single service (there are ways
+		// a workload can map to multiple services, but I think only one should be returned using a proper selector). If
+		// multiple were returned I'm not sure how the waypoint capture logic should work, so for now, more than 1 will
+		// indicate that the labels did not have a proper service selector. In this case, ignore the returned services.
+		if len(svc.Services) > 1 {
+			log.Warningf("Ignoring service override for waypoint cature. Found [%d] services for [%s] workload [%s:%s:%s]", len(svc.Services), workload.WorkloadGVK.GroupKind(), workload.Cluster, workload.Namespace, workload.Name)
+		} else {
+			services = svc.Services
+		}
 	}
 	if len(services) > 0 {
-		for _, svc := range services {
-			waypointName, ok := svc.Labels[config.WaypointUseLabel]
-			if ok && waypointName == "none" {
-				servicesExcluded = true
-			} else {
-				waypointNamespace, okNs := svc.Labels[config.WaypointUseNamespaceLabel]
-				// If there is no specific waypoint Namespace label, it is supposed to be the same
-				if !okNs {
-					waypointNamespace = workload.Namespace
-				}
-				if ok {
-					found = true
-					waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "service", Namespace: waypointNamespace, Cluster: workload.Cluster})
-				}
+		svc := services[0]
+		waypointUse, waypointUseFound = svc.Labels[config.WaypointUseLabel]
+		waypointUseNamespace, waypointUseNamespaceFound = svc.Labels[config.WaypointUseNamespaceLabel]
+		if waypointUseFound {
+			if waypointUse == config.WaypointNone {
+				return waypoints, false
+			}
+			if !waypointUseNamespaceFound {
+				waypointUseNamespace = workload.Namespace
+			}
+			waypoints = append(waypoints, models.Waypoint{Name: waypointUse, Type: "service", Namespace: waypointUseNamespace, Cluster: workload.Cluster})
+			if !all {
+				return waypoints, true
 			}
 		}
 	}
 
-	// Is the pod labeled?
-	for _, pod := range workload.Pods {
-		waypointName, ok := pod.Labels[config.WaypointUseLabel]
-		waypointNamespace, okNs := pod.Labels[config.WaypointUseNamespaceLabel]
-		if ok {
-			found = true
-			// If there is no specific waypoint Namespace label, it is supposed to be the same
-			if !okNs {
-				waypointNamespace = workload.Namespace
+	// If we don't have a workload or service override, look for a namespace-level waypoint
+	if ns, nsFound := in.cache.GetNamespace(workload.Cluster, in.userClients[workload.Cluster].GetToken(), workload.Namespace); nsFound {
+		waypointUse, waypointUseFound = ns.Labels[config.WaypointUseLabel]
+		waypointUseNamespace, waypointUseNamespaceFound = ns.Labels[config.WaypointUseNamespaceLabel]
+
+		if waypointUseFound {
+			if waypointUse == config.WaypointNone {
+				return waypoints, false
 			}
-			// Ambient doesn't support multicluster (For now), cluster is the same as the workload
-			waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "pod", Namespace: waypointNamespace, Cluster: workload.Cluster})
+			if !waypointUseNamespaceFound {
+				waypointUseNamespace = workload.Namespace
+			}
+			waypoints = append(waypoints, models.Waypoint{Name: waypointUse, Type: "namespace", Namespace: waypointUseNamespace, Cluster: workload.Cluster})
+			if !all {
+				return waypoints, true
+			}
 		}
 	}
 
-	// Is the namespace labeled?
-	ns, foundNS := in.cache.GetNamespace(workload.Cluster, in.userClients[workload.Cluster].GetToken(), workload.Namespace)
-
-	if foundNS && !servicesExcluded {
-		waypointName, ok := ns.Labels[config.WaypointUseLabel]
-		waypointNamespace, okNs := ns.Labels[config.WaypointUseNamespaceLabel]
-		// If there is no specific waypoint Namespace label, it is supposed to be the same
-		if !okNs {
-			waypointNamespace = workload.Namespace
-		}
-		if ok {
-			found = true
-			// Ambient doesn't support multicluster (For now), cluster is the same as the workload
-			waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "namespace", Namespace: waypointNamespace, Cluster: workload.Cluster})
-		}
-	}
-
-	return waypointNames, found
+	return waypoints, len(waypoints) > 0
 }
 
-// GetWaypointsForWorkload Returns a list of waypoint proxies that capture a workload
-// It should be related with just one waypoint, but this is up to the user, it can help to detect issues in the Ambient Mesh
-func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload models.Workload) []models.WorkloadReferenceInfo {
-	var workloadslist []models.WorkloadReferenceInfo
+// GetWaypointsForWorkload Returns the waypoint references capturing the workload. Only the active waypoint is returned unless <all>
+// is true, in which case all capturing waypoints will be returned. If so, they are returned in order of priority, so [0]
+// reflects the active waypoint, the others have been overriden.
+func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload models.Workload, all bool) []models.WorkloadReferenceInfo {
+	workloadsList := []models.WorkloadReferenceInfo{}
 	workloadsMap := map[string]bool{} // Ensure unique
 
-	if workload.Labels[config.WaypointUseLabel] == "none" {
-		return workloadslist
+	if workload.Labels[config.WaypointUseLabel] == config.WaypointNone {
+		return workloadsList
 	}
 
-	// Get Waypoint list names for the workload
-	waypoints, found := in.isWorkloadCaptured(ctx, workload)
+	// get waypoint references for the workload
+	waypoints, found := in.getCapturingWaypoints(ctx, workload, all)
 	if !found {
-		return workloadslist
+		return workloadsList
 	}
 
-	// Then, get workload waypoints
+	// then, get the waypoint workloads to filter out "forNone" waypoints
 	for _, waypoint := range waypoints {
-		wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: workload.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, WorkloadGVK: schema.GroupVersionKind{}, IncludeWaypoints: false})
+		waypointWorkload, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: workload.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, WorkloadGVK: schema.GroupVersionKind{}, IncludeWaypoints: false})
 		if err != nil {
-			log.Debugf("GetWaypointsForWorkload: Error fetching workloads %s", err.Error())
+			log.Debugf("GetWaypointsForWorkload: Error fetching waypoint workload %s", err.Error())
 			return nil
 		}
-		key := fmt.Sprintf("%s_%s_%s", workload.Cluster, waypoint.Namespace, waypoint.Name)
-		if wkd != nil && !workloadsMap[key] {
-			workloadslist = append(workloadslist, models.WorkloadReferenceInfo{Name: waypoint.Name, Namespace: waypoint.Namespace, Cluster: waypoint.Cluster, Type: wkd.WaypointFor()})
-			workloadsMap[key] = true
+		waypointFor, waypointForFound := waypointWorkload.Labels[config.WaypointFor]
+		if !waypointForFound || waypointFor != config.WaypointForNone {
+			key := fmt.Sprintf("%s_%s_%s", workload.Cluster, waypoint.Namespace, waypoint.Name)
+			if waypointWorkload != nil && !workloadsMap[key] {
+				workloadsList = append(workloadsList, models.WorkloadReferenceInfo{Name: waypoint.Name, Namespace: waypoint.Namespace, Cluster: waypoint.Cluster, Type: waypointWorkload.WaypointFor()})
+				workloadsMap[key] = true
+			}
 		}
 	}
 
-	return workloadslist
+	return workloadsList
 }
 
 // listWaypointWorkloads returns the list of workloads when the waypoint proxy is applied per namespace
@@ -2334,7 +2355,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, name
 			}
 			for _, wk := range workloadList {
 				// This annotation disables other labels (Like the ns one)
-				if wk.Labels[in.config.IstioLabels.AmbientNamespaceLabel] != "none" && wk.Labels[config.WaypointUseLabel] != "none" {
+				if wk.Labels[in.conf.IstioLabels.AmbientNamespaceLabel] != "none" && wk.Labels[config.WaypointUseLabel] != config.WaypointNone {
 					workloadslist = append(workloadslist, models.WorkloadReferenceInfo{Name: wk.Name, Namespace: wk.Namespace, Labels: wk.Labels, LabelType: labelType, Cluster: wk.Cluster})
 				} else {
 					excludedWk[wk.Name] = true
@@ -2356,7 +2377,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, name
 			}
 			for _, workload := range wlist {
 				// none disables the waypoint enrollment
-				if workload.Labels[config.WaypointUseLabel] != "none" {
+				if workload.Labels[config.WaypointUseLabel] != config.WaypointNone {
 					workloadslist = append(workloadslist, models.WorkloadReferenceInfo{Name: workload.Name, Namespace: workload.Namespace, LabelType: labelType, Labels: workload.Labels, Cluster: workload.Cluster})
 				} else {
 					excludedWk[workload.Name] = true
@@ -2385,8 +2406,12 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, name
 					log.Infof("Error getting services %s", err.Error())
 				} else {
 					for _, service := range services.Services {
+						// waypoints don't capture other waypoints, so skip them
+						if config.IsWaypoint(service.Labels) {
+							continue
+						}
 						key := fmt.Sprintf("%s_%s_%s", service.Name, service.Namespace, service.Cluster)
-						if !servicesMap[key] && service.Labels[config.WaypointUseLabel] != "none" {
+						if !servicesMap[key] && service.Labels[config.WaypointUseLabel] != config.WaypointNone {
 							servicesList = append(servicesList, models.ServiceReferenceInfo{Name: service.Name, Namespace: service.Namespace, LabelType: labelType, Cluster: service.Cluster})
 							servicesMap[key] = true
 						}
@@ -2488,11 +2513,11 @@ var controllerOrder = map[string]int{
 func controllerPriority(type1, type2 string) string {
 	w1, e1 := controllerOrder[type1]
 	if !e1 {
-		log.Errorf("This controller %s is assigned in a Pod and it's not properly managed", type1)
+		log.Debugf("This controller %s is assigned in a Pod and it's not properly managed", type1)
 	}
 	w2, e2 := controllerOrder[type2]
 	if !e2 {
-		log.Errorf("This controller %s is assigned in a Pod and it's not properly managed", type2)
+		log.Debugf("This controller %s is assigned in a Pod and it's not properly managed", type2)
 	}
 	if w1 >= w2 {
 		return type1
@@ -2526,7 +2551,7 @@ func (in *WorkloadService) GetWorkloadTracingName(ctx context.Context, cluster, 
 		tracingName.Lookup = workload
 		return tracingName, nil
 	}
-	appLabelName := in.config.IstioLabels.AppLabelName
+	appLabelName, _ := in.conf.GetAppLabelName(wkd.Labels)
 	app := wkd.Labels[appLabelName]
 	tracingName.App = app
 	tracingName.Lookup = app
@@ -2640,7 +2665,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 				continue
 			}
 
-			if opts.LogType == models.LogTypeWaypoint && !opts.filter.app.MatchString(entry.Message) {
+			if opts.LogType == models.LogTypeWaypoint && (opts.filter.app.MatchString("") || !opts.filter.app.MatchString(entry.Message)) {
 				continue
 			}
 
@@ -2715,7 +2740,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 
 // StreamPodLogs streams pod logs to an HTTP Response given the provided options
 // The workload name is used to get the waypoint workloads when opts.LogType is "waypoint"
-func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace, workload, app, name string, opts *LogOptions, w http.ResponseWriter) error {
+func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace, workload, service, name string, opts *LogOptions, w http.ResponseWriter) error {
 	names := []string{}
 	if opts.LogType == models.LogTypeZtunnel {
 		// First, get ztunnel namespace and containers
@@ -2726,13 +2751,15 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 		nsDstPattern := fmt.Sprintf(`dst\.namespace=("?%s"?)`, namespace)
 		wkSrcPattern := fmt.Sprintf(`src\.workload=("?%s"?)`, name)
 		nsSrcPattern := fmt.Sprintf(`src\.namespace=("?%s"?)`, namespace)
+		svcPattern := fmt.Sprintf(`dst\.service=("?%s.%s.?)`, service, namespace)
 
 		// The ztunnel line should include the pod and the namespace
 		fs := filterOpts{
-			destWk: *regexp.MustCompile(wkDstPattern),
-			destNs: *regexp.MustCompile(nsDstPattern),
-			srcWk:  *regexp.MustCompile(wkSrcPattern),
-			srcNs:  *regexp.MustCompile(nsSrcPattern),
+			destWk:  *regexp.MustCompile(wkDstPattern),
+			destNs:  *regexp.MustCompile(nsDstPattern),
+			srcWk:   *regexp.MustCompile(wkSrcPattern),
+			srcNs:   *regexp.MustCompile(nsSrcPattern),
+			destSvc: *regexp.MustCompile(svcPattern),
 		}
 		opts.filter = fs
 		for _, pod := range pods {
@@ -2749,10 +2776,9 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 			if len(wk.WaypointWorkloads) > 0 {
 				// Waypoint filter by the app name
 				fs := filterOpts{
-					app: *regexp.MustCompile(app),
+					app: *regexp.MustCompile(service),
 				}
 				opts.filter = fs
-				// TODO: Get efective one
 				waypoint := wk.WaypointWorkloads[0]
 				waypointWk, errWaypoint := in.GetWorkload(ctx, WorkloadCriteria{Cluster: waypoint.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, IncludeServices: false})
 				if errWaypoint != nil {
@@ -2774,7 +2800,7 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 
 // AND filter
 func filterMatches(line string, filter filterOpts) bool {
-	if (filter.destNs.MatchString(line) && filter.destWk.MatchString(line)) || (filter.srcNs.MatchString(line) && filter.srcWk.MatchString(line)) {
+	if (filter.destNs.MatchString(line) && filter.destWk.MatchString(line)) || (filter.srcNs.MatchString(line) && filter.srcWk.MatchString(line) || filter.destSvc.MatchString(line)) {
 		return true
 	}
 	return false

@@ -9,6 +9,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/mtls"
@@ -17,9 +18,10 @@ import (
 type MtlsEnabledChecker struct {
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	Cluster               string
+	Conf                  *config.Config
 	MtlsDetails           kubernetes.MTLSDetails
-	ServiceEntries        []networking_v1.ServiceEntry
 	RegistryServices      []*kubernetes.RegistryService
+	ServiceEntries        []networking_v1.ServiceEntry
 }
 
 // Checks if mTLS is enabled, mark all Authz Policies with error
@@ -133,7 +135,7 @@ func (c MtlsEnabledChecker) IsMtlsEnabledFor(labels labels.Set, namespace string
 		MatchingLabels:      labels,
 		PeerAuthentications: c.MtlsDetails.PeerAuthentications,
 		RegistryServices:    c.RegistryServices,
-	}.WorkloadMtlsStatus(namespace)
+	}.WorkloadMtlsStatus(namespace, c.Conf)
 
 	if workloadmTlsStatus == mtls.MTLSEnabled {
 		return true
@@ -181,5 +183,5 @@ func (c MtlsEnabledChecker) namespaceMtlsStatus(namespace string) mtls.TlsStatus
 		AllowPermissive:     true,
 	}
 
-	return mtlsStatus.NamespaceMtlsStatus(namespace)
+	return mtlsStatus.NamespaceMtlsStatus(namespace, c.Conf)
 }

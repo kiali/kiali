@@ -6,15 +6,17 @@ import (
 
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
 type EgressHostChecker struct {
-	Sidecar          *networking_v1.Sidecar
-	ServiceEntries   map[string][]string
+	Conf             *config.Config
 	RegistryServices []*kubernetes.RegistryService
+	ServiceEntries   map[string][]string
+	Sidecar          *networking_v1.Sidecar
 }
 
 type HostWithIndex struct {
@@ -74,7 +76,7 @@ func (elc EgressHostChecker) validateHost(host string, egrIdx, hostIdx int) ([]*
 		return checks, true
 	}
 
-	fqdn := kubernetes.ParseHost(dnsName, sns)
+	fqdn := kubernetes.ParseHost(dnsName, sns, elc.Conf)
 
 	// Lookup for matching services
 	if !elc.HasMatchingService(fqdn, sns) {

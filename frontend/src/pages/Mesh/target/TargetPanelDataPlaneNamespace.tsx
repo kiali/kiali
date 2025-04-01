@@ -104,7 +104,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
 
   componentDidUpdate(prevProps: TargetPanelDataPlaneNamespaceProps): void {
     const shouldLoad =
-      prevProps.updateTime !== this.props.updateTime || (!prevProps.isExpanded && this.props.isExpanded);
+      this.props.isExpanded && (!prevProps.isExpanded || prevProps.updateTime !== this.props.updateTime);
 
     if (shouldLoad) {
       this.load();
@@ -116,8 +116,8 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
   }
 
   render(): React.ReactNode {
-    if (this.state.loading || !this.state.nsInfo) {
-      return this.getLoading();
+    if (!this.state.nsInfo) {
+      return this.state.loading ? this.getLoading() : <></>;
     }
 
     const nsInfo = this.state.nsInfo;
@@ -344,7 +344,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
       .then(result => {
         const nsInfo = result.data;
         if (!nsInfo) {
-          AlertUtils.add(`Failed to find |${namespace}:${cluster}| in GetNamespace() result`);
+          AlertUtils.add(`Failed to find |${cluster}:${namespace}| in GetNamespaceInfo() result`);
           this.setState({ ...defaultState, loading: false });
           return;
         }
@@ -375,7 +375,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
         }
 
         this.setState({ ...defaultState, loading: false });
-        this.handleApiError('Could not fetch namespaces when loading target panel', err);
+        console.debug('Ignore missing namespace when loading target panel, likely deleted.', err);
       });
 
     this.setState({ loading: true });

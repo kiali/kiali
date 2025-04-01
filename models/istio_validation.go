@@ -415,6 +415,17 @@ func (iv IstioValidations) FilterByKey(objectGVK schema.GroupVersionKind, name s
 	return fiv
 }
 
+func (iv IstioValidations) FilterByCluster(cluster string) IstioValidations {
+	fiv := IstioValidations{}
+	for k, v := range iv {
+		if v.Cluster == cluster {
+			fiv[k] = v
+		}
+	}
+
+	return fiv
+}
+
 // FilterByTypes takes an input as ObjectTypes, transforms to singular types and filters the validations
 func (iv IstioValidations) FilterByTypes(objectTypes []string) IstioValidations {
 	types := make(map[string]bool, len(objectTypes))
@@ -551,9 +562,9 @@ func (iv *IstioValidations) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (iv *IstioValidations) StripIgnoredChecks() {
+func (iv *IstioValidations) StripIgnoredChecks(conf *config.Config) {
 	// strip away codes that are to be ignored
-	codesToIgnore := config.Get().KialiFeatureFlags.Validations.Ignore
+	codesToIgnore := conf.KialiFeatureFlags.Validations.Ignore
 	if len(codesToIgnore) > 0 {
 		for curValidationKey, curValidation := range *iv {
 			idx := 0

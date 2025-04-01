@@ -19,9 +19,10 @@ import (
 
 type TLSService struct {
 	businessLayer *Layer
+	conf          *config.Config
 	discovery     istio.MeshDiscovery
-	userClients   map[string]kubernetes.ClientInterface
 	kialiCache    cache.KialiCache
+	userClients   map[string]kubernetes.ClientInterface
 }
 
 const (
@@ -74,7 +75,7 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, cluster string, re
 
 	// Look for enabled if rev label isn't set: https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/#controlling-the-injection-policy
 	namespacesForRevision := sliceutil.Filter(namespaces, func(ns models.Namespace) bool {
-		return ns.Labels[models.IstioRevisionLabel] == revision || ns.Labels[models.IstioInjectionLabel] == "enabled"
+		return ns.Labels[config.IstioRevisionLabel] == revision || ns.Labels[models.IstioInjectionLabel] == "enabled"
 	})
 	namespaceNames := sliceutil.Map(namespacesForRevision, func(ns models.Namespace) string {
 		return ns.Name
@@ -145,7 +146,7 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 	}
 
 	return models.MTLSStatus{
-		Status:          mtlsStatus.NamespaceMtlsStatus(namespace).OverallStatus,
+		Status:          mtlsStatus.NamespaceMtlsStatus(namespace, in.conf).OverallStatus,
 		AutoMTLSEnabled: mtlsStatus.AutoMtlsEnabled,
 		Cluster:         cluster,
 		Namespace:       namespace,
@@ -186,7 +187,7 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 		}
 
 		result = append(result, models.MTLSStatus{
-			Status:          mtlsStatus.NamespaceMtlsStatus(namespace.Name).OverallStatus,
+			Status:          mtlsStatus.NamespaceMtlsStatus(namespace.Name, in.conf).OverallStatus,
 			AutoMTLSEnabled: mtlsStatus.AutoMtlsEnabled,
 			Cluster:         cluster,
 			Namespace:       namespace.Name,
@@ -203,7 +204,7 @@ func (in *TLSService) hasAutoMTLSEnabled(cluster string, namespace *models.Names
 	}
 
 	// Find the controlplane that is controlling that namespace.
-	rev := namespace.Labels[models.IstioRevisionLabel]
+	rev := namespace.Labels[config.IstioRevisionLabel]
 	if rev == "" {
 		// Assume that if there is no revision label, it is the default revision.
 		rev = models.DefaultRevisionLabel

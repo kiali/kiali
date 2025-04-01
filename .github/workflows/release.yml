@@ -28,7 +28,7 @@ on:
 jobs:
   initialize:
     name: Initialize
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     outputs:
       target_branch: ${{ github.ref_name }}
       release_type: ${{ env.release_type }}
@@ -40,7 +40,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        ref: ${{ github.ref_name }}
+        ref: ${{ github.event.inputs.release_branch || github.ref_name }}
 
     - name: Prepare scripts
       run: |
@@ -199,7 +199,7 @@ jobs:
   release:
     name: Release
     if: ${{ needs.initialize.outputs.release_type != 'skip' && ((github.event_name == 'schedule' && github.repository == 'kiali/kiali') || github.event_name != 'schedule') }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs: [initialize, build_backend, build_frontend]
     env:
       RELEASE_VERSION: ${{ needs.initialize.outputs.release_version }}
@@ -211,7 +211,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        ref: ${{ github.ref_name }}
+        ref: ${{ github.event.inputs.release_branch || github.ref_name }}
 
     - name: Set version to release
       run: |
@@ -261,8 +261,38 @@ jobs:
       run: |
         gh release create $RELEASE_VERSION -t "Kiali $RELEASE_VERSION"
 
-    - name: Create or update version branch
+    - name: Check if branch exists
+      run: |
+        if git ls-remote --exit-code --heads origin "$BRANCH_VERSION"; then
+          echo "EXISTS=true" >> $GITHUB_ENV
+        else
+          echo "EXISTS=false" >> $GITHUB_ENV
+        fi
+
+    - name: Create version branch
+      if: env.EXISTS == 'false'
       run: git push origin $(git rev-parse HEAD):refs/heads/$BRANCH_VERSION
+
+    - name: Create PR to update version branch
+      if: env.EXISTS == 'true'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git checkout -b update-$BRANCH_VERSION-$GITHUB_RUN_ID
+
+        sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
+        jq -r ".version |= \"${RELEASE_VERSION:1}\"" frontend/package.json > frontend/package.json.tmp
+        mv frontend/package.json.tmp frontend/package.json
+
+        git add Makefile frontend/package.json
+        git commit -m "Prepare for next version"
+
+        git push origin update-$BRANCH_VERSION-$GITHUB_RUN_ID
+
+        gh pr create --title "Update $BRANCH_VERSION" \
+                    --body "Automated PR to update $BRANCH_VERSION" \
+                    --base "$BRANCH_VERSION" \
+                    --head update-$BRANCH_VERSION-$GITHUB_RUN_ID
 
     - name: Create a PR to prepare for next version
       env:

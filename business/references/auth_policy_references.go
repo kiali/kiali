@@ -13,12 +13,13 @@ import (
 
 type AuthorizationPolicyReferences struct {
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
+	Conf                  *config.Config
 	Namespace             string
-	Namespaces            models.Namespaces
+	Namespaces            []string
 	ServiceEntries        []*networking_v1.ServiceEntry
 	VirtualServices       []*networking_v1.VirtualService
 	RegistryServices      []*kubernetes.RegistryService
-	WorkloadsPerNamespace map[string]models.WorkloadList
+	WorkloadsPerNamespace map[string]models.Workloads
 }
 
 func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
@@ -38,7 +39,7 @@ func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
 						continue
 					}
 					for _, h := range t.Operation.Hosts {
-						fqdn := kubernetes.GetHost(h, namespace, n.Namespaces.GetNames())
+						fqdn := kubernetes.GetHost(h, namespace, n.Namespaces, n.Conf)
 						if !fqdn.IsWildcard() {
 							configRef := n.getConfigReferences(fqdn)
 							references.ObjectReferences = append(references.ObjectReferences, configRef...)
@@ -80,7 +81,7 @@ func (n AuthorizationPolicyReferences) getConfigReferences(host kubernetes.Host)
 		for hostIdx := 0; hostIdx < len(vs.Spec.Hosts); hostIdx++ {
 			vHost := vs.Spec.Hosts[hostIdx]
 
-			hostS := kubernetes.ParseHost(vHost, vs.Namespace)
+			hostS := kubernetes.ParseHost(vHost, vs.Namespace, n.Conf)
 			if hostS.String() == host.String() {
 				result = append(result, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectGVK: kubernetes.VirtualServices})
 				continue
@@ -96,14 +97,14 @@ func (n AuthorizationPolicyReferences) getWorkloadReferences(ap *security_v1.Aut
 		selector := labels.SelectorFromSet(ap.Spec.Selector.MatchLabels)
 
 		// AuthPolicy searches Workloads from own namespace, or from all namespaces when AuthPolicy is in root namespace
-		for _, wls := range n.WorkloadsPerNamespace {
-			if !config.IsRootNamespace(ap.Namespace) && wls.Namespace != ap.Namespace {
+		for ns, workloads := range n.WorkloadsPerNamespace {
+			if !config.IsRootNamespace(ap.Namespace) && ns != ap.Namespace {
 				continue
 			}
-			for _, wl := range wls.Workloads {
+			for _, wl := range workloads {
 				wlLabelSet := labels.Set(wl.Labels)
 				if selector.Matches(wlLabelSet) {
-					result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: wls.Namespace})
+					result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: ns})
 				}
 			}
 		}

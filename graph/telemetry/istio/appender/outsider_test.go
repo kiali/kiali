@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -21,7 +22,7 @@ func TestOutsider(t *testing.T) {
 	accessible, _ := graph.NewNode(config.DefaultClusterID, "accessibleNamespace", "test", "accessibleNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
 	trafficMap[accessible.ID] = accessible
 
-	globalInfo := graph.NewGlobalInfo()
+	globalInfo := graph.NewGlobalInfo(context.TODO(), nil, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := OutsiderAppender{

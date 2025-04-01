@@ -6,6 +6,7 @@ import fullIconDark from '../../assets/img/mtls/mtls-status-full-dark.svg';
 import hollowIconDark from '../../assets/img/mtls/mtls-status-partial-dark.svg';
 import { useKialiTheme } from 'utils/ThemeUtils';
 import { Theme } from 'types/Common';
+import { MTLSIconTypes } from './NamespaceMTLSStatus';
 
 type MTLSIconProps = {
   icon: string;
@@ -13,11 +14,6 @@ type MTLSIconProps = {
   tooltipPosition: TooltipPosition;
   tooltipText: string;
 };
-
-export enum MTLSIconTypes {
-  LOCK_FULL = 'LOCK_FULL',
-  LOCK_HOLLOW = 'LOCK_HOLLOW'
-}
 
 export const MTLSIcon: React.FC<MTLSIconProps> = (props: MTLSIconProps) => {
   const darkTheme = useKialiTheme() === Theme.DARK;

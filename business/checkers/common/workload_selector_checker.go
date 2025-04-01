@@ -10,11 +10,11 @@ import (
 type GenericNoWorkloadFoundChecker struct {
 	ObjectGVK             schema.GroupVersionKind
 	SelectorLabels        map[string]string
-	WorkloadsPerNamespace map[string]models.WorkloadList
+	WorkloadsPerNamespace map[string]models.Workloads
 	Path                  string
 }
 
-func SelectorNoWorkloadFoundChecker(objectGVK schema.GroupVersionKind, selectorLabels map[string]string, workloadsPerNamespace map[string]models.WorkloadList) GenericNoWorkloadFoundChecker {
+func SelectorNoWorkloadFoundChecker(objectGVK schema.GroupVersionKind, selectorLabels map[string]string, workloadsPerNamespace map[string]models.Workloads) GenericNoWorkloadFoundChecker {
 	return GenericNoWorkloadFoundChecker{
 		ObjectGVK:             objectGVK,
 		SelectorLabels:        selectorLabels,
@@ -23,7 +23,7 @@ func SelectorNoWorkloadFoundChecker(objectGVK schema.GroupVersionKind, selectorL
 	}
 }
 
-func WorkloadSelectorNoWorkloadFoundChecker(objectGVK schema.GroupVersionKind, selectorLabels map[string]string, workloadsPerNamespace map[string]models.WorkloadList) GenericNoWorkloadFoundChecker {
+func WorkloadSelectorNoWorkloadFoundChecker(objectGVK schema.GroupVersionKind, selectorLabels map[string]string, workloadsPerNamespace map[string]models.Workloads) GenericNoWorkloadFoundChecker {
 	return GenericNoWorkloadFoundChecker{
 		ObjectGVK:             objectGVK,
 		SelectorLabels:        selectorLabels,
@@ -47,8 +47,8 @@ func (wsc GenericNoWorkloadFoundChecker) Check() ([]*models.IstioCheck, bool) {
 func (wsc GenericNoWorkloadFoundChecker) hasMatchingWorkload(labelSelector map[string]string) bool {
 	selector := labels.SelectorFromSet(labelSelector)
 
-	for _, wls := range wsc.WorkloadsPerNamespace {
-		for _, wl := range wls.Workloads {
+	for _, workloads := range wsc.WorkloadsPerNamespace {
+		for _, wl := range workloads {
 			wlLabelSet := labels.Set(wl.Labels)
 			if selector.Matches(wlLabelSet) {
 				return true

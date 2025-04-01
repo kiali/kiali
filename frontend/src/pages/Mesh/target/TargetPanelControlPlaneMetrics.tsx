@@ -17,6 +17,7 @@ type ControlPlaneProps = {
   istiodProcessMemory?: Metric[];
   istiodResourceThresholds?: IstiodResourceThresholds;
   pilotLatency?: Metric[];
+  type?: string;
 };
 
 const showMetrics = (metrics: Metric[] | undefined): boolean => {
@@ -53,6 +54,7 @@ export const TargetPanelControlPlaneMetrics: React.FC<ControlPlaneProps> = (prop
   // The memory metric can be respresented by a container or a process metric. We need to check which one to use
   let memoryMetricSource = 'process';
   let memory = props.istiodContainerMemory;
+  const component = props.type ? props.type : 'istiod';
 
   if (!showMetrics(props.istiodContainerMemory)) {
     memory = props.istiodProcessMemory;
@@ -107,7 +109,7 @@ export const TargetPanelControlPlaneMetrics: React.FC<ControlPlaneProps> = (prop
     <div style={{ textAlign: 'center' }}>
       <div>
         <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>
-          {t('Control plane metrics')}
+          {props.type ? `${component} ${t(' metrics')}` : t('Control plane metrics')}
         </div>
       </div>
       <div
@@ -134,7 +136,8 @@ export const TargetPanelControlPlaneMetrics: React.FC<ControlPlaneProps> = (prop
                         position={TooltipPosition.right}
                         content={
                           <div style={{ textAlign: 'left' }}>
-                            {t('This chart shows memory consumption for the istiod {{memoryMetricSource}}', {
+                            {t('This chart shows memory consumption for the {{component}} {{memoryMetricSource}}', {
+                              component,
                               memoryMetricSource
                             })}
                           </div>
@@ -181,7 +184,8 @@ export const TargetPanelControlPlaneMetrics: React.FC<ControlPlaneProps> = (prop
                         position={TooltipPosition.right}
                         content={
                           <div style={{ textAlign: 'left' }}>
-                            {t('This chart shows cpu consumption for the istiod {{cpuMetricSource}}', {
+                            {t('This chart shows cpu consumption for the {{component}} {{cpuMetricSource}}', {
+                              component,
                               cpuMetricSource
                             })}
                           </div>

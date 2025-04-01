@@ -87,7 +87,7 @@ func tracingVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientIn
 		versionUrl = tracingConfig.ExternalURL
 	}
 
-	if versionUrl != "" {
+	if versionUrl != "" && !tracingConfig.DisableVersionCheck {
 		// try to determine version by querying
 		if tracingConfig.Provider == config.JaegerProvider {
 			auth := tracingConfig.Auth

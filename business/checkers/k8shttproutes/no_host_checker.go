@@ -7,14 +7,16 @@ import (
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type NoHostChecker struct {
+	Conf               *config.Config
 	K8sHTTPRoute       *k8s_networking_v1.HTTPRoute
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant
-	Namespaces         models.Namespaces
+	Namespaces         []string
 	RegistryServices   []*kubernetes.RegistryService
 }
 
@@ -46,7 +48,7 @@ func (n NoHostChecker) checkReference(refNamespace *k8s_networking_v1.Namespace,
 	if refNamespace != nil && string(*refNamespace) != "" {
 		namespace = string(*refNamespace)
 	}
-	fqdn := kubernetes.GetHost(string(refName), namespace, n.Namespaces.GetNames())
+	fqdn := kubernetes.GetHost(string(refName), namespace, n.Namespaces, n.Conf)
 	//service name should not be set in fqdn format
 	// if the http route is referencing to a service from the same namespace, then service should exist there
 	// if the http route is referencing to a service from other namespace, then a ReferenceGrant should exist to cross namespace reference, and the service should exist in remote namespace

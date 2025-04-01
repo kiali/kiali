@@ -13,7 +13,6 @@ import {
   EdgeMode,
   GraphDefinition,
   GraphType,
-  Layout,
   NodeParamsType,
   RankMode,
   RankResult,
@@ -28,6 +27,8 @@ import { TracingState } from 'reducers/TracingState';
 import { MetricsStatsState } from 'reducers/MetricsStatsState';
 import { CertsInfo } from 'types/CertsInfo';
 import { MeshCluster, MeshDefinition, MeshTarget } from '../types/Mesh';
+import { GraphLayout } from 'pages/Graph/Graph';
+import { MeshLayout } from 'pages/Mesh/layouts/layoutFactory';
 
 // Store is the Redux Data store
 
@@ -96,8 +97,8 @@ export interface MessageCenterState {
 export interface GraphState {
   edgeMode: EdgeMode;
   graphDefinition: GraphDefinition | null; // Not for consumption. Only for "Debug" dialog.
-  layout: Layout;
-  namespaceLayout: Layout;
+  layout: GraphLayout;
+  namespaceLayout: GraphLayout;
   node?: NodeParamsType;
   rankResult: RankResult;
   summaryData: SummaryData | null;
@@ -142,7 +143,7 @@ export interface MeshToolbarState {
 
 export interface MeshState {
   definition: MeshDefinition | null;
-  layout: Layout;
+  layout: MeshLayout;
   target: MeshTarget | null;
   toolbarState: MeshToolbarState;
   updateTime: TimeInMilliseconds;
@@ -184,7 +185,7 @@ export interface KialiAppState {
   globalState: GlobalState;
   graph: GraphState;
   istioCertsInfo: CertsInfo[];
-  istioStatus: ComponentStatus[];
+  istioStatus: { [cluster: string]: ComponentStatus[] };
   mesh: MeshState;
   /** Tracing Settings */
   meshTLSStatus: TLSStatus;

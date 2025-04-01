@@ -15,16 +15,19 @@ import (
 
 func prepareTestForPeerAuth(pa *security_v1.PeerAuthentication, drs []*networking_v1.DestinationRule) models.IstioReferences {
 	drReferences := PeerAuthReferences{
+		Conf: config.Get(),
 		MTLSDetails: kubernetes.MTLSDetails{
 			PeerAuthentications: []*security_v1.PeerAuthentication{pa},
 			DestinationRules:    drs,
 			EnabledAutoMtls:     false,
 		},
-		WorkloadsPerNamespace: map[string]models.WorkloadList{
-			"istio-system": data.CreateWorkloadList("istio-system",
-				data.CreateWorkloadListItem("grafana", map[string]string{"app": "grafana"})),
-			"bookinfo": data.CreateWorkloadList("bookinfo",
-				data.CreateWorkloadListItem("details", map[string]string{"app": "details"})),
+		WorkloadsPerNamespace: map[string]models.Workloads{
+			"istio-system": {
+				data.CreateWorkload("grafana", map[string]string{"app": "grafana"}),
+			},
+			"bookinfo": {
+				data.CreateWorkload("details", map[string]string{"app": "details"}),
+			},
 		},
 	}
 	return *drReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.PeerAuthentications, Namespace: pa.Namespace, Name: pa.Name}]

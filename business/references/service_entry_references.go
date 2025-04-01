@@ -4,14 +4,16 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util"
 )
 
 type ServiceEntryReferences struct {
+	Conf                  *config.Config
 	Namespace             string
-	Namespaces            models.Namespaces
+	Namespaces            []string
 	ServiceEntries        []*networking_v1.ServiceEntry
 	Sidecars              []*networking_v1.Sidecar
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
@@ -37,7 +39,7 @@ func (n ServiceEntryReferences) References() models.IstioReferencesMap {
 func (n ServiceEntryReferences) getConfigReferences(se *networking_v1.ServiceEntry) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 	for _, dr := range n.DestinationRules {
-		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, n.Namespaces.GetNames())
+		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, n.Namespaces, n.Conf)
 		if !fqdn.IsWildcard() {
 			for _, seHost := range se.Spec.Hosts {
 				if seHost == fqdn.String() {
@@ -58,7 +60,7 @@ func (n ServiceEntryReferences) getConfigReferences(se *networking_v1.ServiceEnt
 					if hostNs == "*" || hostNs == "~" || hostNs == "." || dnsName == "*" {
 						continue
 					}
-					fqdn := kubernetes.ParseHost(dnsName, hostNs)
+					fqdn := kubernetes.ParseHost(dnsName, hostNs, n.Conf)
 
 					if se.Namespace != hostNs {
 						continue
@@ -91,7 +93,7 @@ func (n ServiceEntryReferences) getAuthPoliciesReferences(se *networking_v1.Serv
 						continue
 					}
 					for _, h := range t.Operation.Hosts {
-						fqdn := kubernetes.GetHost(h, namespace, n.Namespaces.GetNames())
+						fqdn := kubernetes.GetHost(h, namespace, n.Namespaces, n.Conf)
 						if !fqdn.IsWildcard() {
 							for _, seHost := range se.Spec.Hosts {
 								if seHost == fqdn.String() {

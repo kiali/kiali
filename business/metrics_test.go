@@ -22,7 +22,7 @@ func setupMocked() (*MetricsService, *prometheustest.PromAPIMock, error) {
 		return nil, nil, err
 	}
 	client.Inject(api)
-	return NewMetricsService(client), api, nil
+	return NewMetricsService(client, config.Get()), api, nil
 }
 
 func TestGetServiceMetrics(t *testing.T) {
@@ -356,7 +356,7 @@ func TestCreateMetricsLabelsBuilder(t *testing.T) {
 	}
 	q.FillDefaults()
 	q.Reporter = "source"
-	lb := createMetricsLabelsBuilder(&q)
+	lb := createMetricsLabelsBuilder(&q, config.Get())
 	assert.Equal(`{reporter="source",source_workload_namespace="bookinfo",source_canonical_service="productpage"}`, lb.Build())
 }
 
@@ -374,7 +374,7 @@ func TestCreateStatsMetricsLabelsBuilder(t *testing.T) {
 		Quantiles: []string{"0.90", "0.5"},
 		QueryTime: time.Now(),
 	}
-	lb := createStatsMetricsLabelsBuilder(&q)
+	lb := createStatsMetricsLabelsBuilder(&q, config.Get())
 	assert.Equal(`{reporter="destination",destination_workload_namespace="ns3",destination_canonical_service="foo"}`, lb.Build())
 }
 
@@ -397,7 +397,7 @@ func TestCreateStatsMetricsLabelsBuilderWithPeer(t *testing.T) {
 		Quantiles: []string{"0.90", "0.5"},
 		QueryTime: time.Now(),
 	}
-	lb := createStatsMetricsLabelsBuilder(&q)
+	lb := createStatsMetricsLabelsBuilder(&q, config.Get())
 	assert.Equal(`{reporter="destination",destination_workload_namespace="ns3",destination_canonical_service="foo",source_workload_namespace="ns4",source_canonical_service="bar"}`, lb.Build())
 }
 

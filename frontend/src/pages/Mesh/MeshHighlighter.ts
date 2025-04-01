@@ -1,6 +1,6 @@
 // There are three special states for a Node or Edge:
 //
-//   - selected: The node has been single-clicked and is 'selected' in cytoscape
+//   - selected: The node has been single-clicked and is 'selected' on the graph.
 //   - hovered: The mouse is currently over the element.  It is marked with HoveredClass
 //   - highlighted: The element is to be emphasized (see below).  It is marked with HighlightClass.
 //   - unhighlighted: The element is to be de-emphasized (see below).  It is marked with UnhighlightClass.

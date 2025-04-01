@@ -21,7 +21,7 @@ type VendorInfo map[string]interface{}
 type GlobalInfo struct {
 	Business          *business.Layer
 	ClientFactory     kubernetes.ClientFactory
-	Config            *config.Config
+	Conf              *config.Config
 	Discovery         *istio.Discovery
 	Grafana           *grafana.Service
 	IstioStatusGetter IstioStatusGetter

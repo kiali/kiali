@@ -60,7 +60,7 @@ func createMetricsServiceForNamespaceMC(w http.ResponseWriter, r *http.Request, 
 		nsInfo = append(nsInfo, *ns)
 	}
 
-	metrics := business.NewMetricsService(prom)
+	metrics := business.NewMetricsService(prom, config.Get())
 
 	return metrics, nsInfo
 }
@@ -93,7 +93,7 @@ func createMetricsServiceForClusterMC(w http.ResponseWriter, r *http.Request, pr
 		nsInfo = append(nsInfo, *ns)
 	}
 
-	metrics := business.NewMetricsService(prom)
+	metrics := business.NewMetricsService(prom, config.Get())
 
 	return metrics, nsInfo
 }
@@ -145,7 +145,7 @@ func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, p
 		info, err := checkNamespaceAccess(r.Context(), layer.Namespace, ns.Name, ns.Cluster)
 		nsInfos[ns.Name] = nsInfoError{info: info, err: err}
 	}
-	metrics := business.NewMetricsService(prom)
+	metrics := business.NewMetricsService(prom, config.Get())
 	return metrics, nsInfos
 }
 
@@ -184,10 +184,10 @@ func getBusiness(r *http.Request) (*business.Layer, error) {
 
 // clusterNameFromQuery extracts the cluster name from the query parameters
 // and provides a default value if it's not present.
-func clusterNameFromQuery(queryParams url.Values) string {
+func clusterNameFromQuery(conf *config.Config, queryParams url.Values) string {
 	cluster := queryParams.Get("clusterName")
 	if cluster == "" {
-		cluster = config.Get().KubernetesConfig.ClusterName
+		cluster = conf.KubernetesConfig.ClusterName
 	}
 	return cluster
 }
@@ -201,7 +201,7 @@ func getLayer(
 	prom prometheus.ClientInterface,
 	traceClientLoader func() tracing.ClientInterface,
 	grafana *grafana.Service,
-	discovery *istio.Discovery,
+	discovery istio.MeshDiscovery,
 ) (*business.Layer, error) {
 	authInfo, err := getAuthInfo(r)
 	if err != nil {

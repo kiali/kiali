@@ -44,7 +44,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 	meshMap := mesh.NewMeshMap()
 
 	// get the current status info to determine versions
-	statusInfo := mesh.StatusGetter(ctx, gi.Config, gi.ClientFactory, gi.KialiCache, gi.Grafana)
+	statusInfo := mesh.StatusGetter(ctx, gi.Conf, gi.ClientFactory, gi.KialiCache, gi.Grafana)
 	esVersions := make(map[string]string)
 	for _, es := range statusInfo.ExternalServices {
 		esVersions[es.Name] = es.Version
@@ -135,7 +135,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 		}
 
 		// add any Kiali instances
-		conf := config.Get().Obfuscate()
+		conf := gi.Conf.Obfuscate()
 		es := conf.ExternalServices
 		hasExternalServices := false // external to the cluster/mesh (or a URL that can't be parsed)
 
@@ -185,6 +185,62 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			mesh.CheckError(err)
 		}
 
+		// if ambient, add ztunnel
+		if gi.KialiCache.IsAmbientEnabled(cp.Cluster.Name) {
+			ztunnels, err := gi.Business.Workload.GetAllWorkloads(ctx, cp.Cluster.Name, fmt.Sprintf("%s=%s", config.IstioAppLabel, config.Ztunnel))
+			mesh.CheckError(err)
+
+			for _, ztunnel := range ztunnels {
+				var infraData interface{}
+
+				if len(ztunnel.Pods) > 0 {
+					dump := gi.Business.Workload.GetZtunnelConfig(ztunnel.Cluster, ztunnel.Namespace, ztunnel.Pods[0].Name)
+					// The dump can be huge, just return the config part and defer to the ztunnel workload tab for the other stuff
+					if dump != nil {
+						infraData = dump.Config
+					}
+				}
+
+				// if we couldn't fetch a ztunnel config, just return labels and annotation
+				if infraData == nil {
+					infraData = struct {
+						Annotations         map[string]string
+						Labels              map[string]string
+						TemplateAnnotations map[string]string
+						TemplateLabels      map[string]string
+					}{
+						Annotations:         ztunnel.Annotations,
+						Labels:              ztunnel.Labels,
+						TemplateAnnotations: ztunnel.TemplateAnnotations,
+						TemplateLabels:      ztunnel.TemplateLabels,
+					}
+				}
+
+				version := models.DefaultRevisionLabel
+				if rev, ok := ztunnel.Labels[config.IstioRevisionLabel]; ok {
+					version = rev
+				}
+
+				ztunnelNode, _, err := addInfra(meshMap, mesh.InfraTypeZtunnel, ztunnel.Cluster, ztunnel.Namespace, ztunnel.Name, infraData, version, false, "")
+				mesh.CheckError(err)
+
+				// add edge to the managing control plane
+				for _, infraNode := range meshMap {
+					if infraNode.InfraType == mesh.InfraTypeIstiod && infraNode.Cluster == ztunnel.Cluster {
+						cp := infraNode.Metadata[mesh.InfraData].(models.ControlPlane)
+						tag := "default"
+						if cp.Tag != nil {
+							tag = cp.Tag.Name
+						}
+						if tag == ztunnelNode.Metadata[mesh.Version] {
+							infraNode.AddEdge(ztunnelNode)
+							break
+						}
+					}
+				}
+			}
+		}
+
 		// if included, add any waypoints
 		if o.IncludeWaypoints {
 			for _, wp := range gi.Business.Workload.GetWaypoints(ctx) {
@@ -196,7 +252,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				mesh.CheckError(err)
 
 				version := models.DefaultRevisionLabel
-				if rev, ok := wp.Labels[models.IstioRevisionLabel]; ok {
+				if rev, ok := wp.Labels[config.IstioRevisionLabel]; ok {
 					version = rev
 				}
 
@@ -241,24 +297,24 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			configMap, err := gi.Business.IstioConfig.GetIstioConfigMap(ctx, "", criteria)
 			mesh.CheckError(err)
 
-			for cluster, config := range configMap {
+			for cluster, conf := range configMap {
 				gwNodes := []*mesh.Node{}
-				for _, gw := range config.Gateways {
+				for _, gw := range conf.Gateways {
 					version := models.DefaultRevisionLabel
-					if rev, ok := gw.Labels[models.IstioRevisionLabel]; ok {
+					if rev, ok := gw.Labels[config.IstioRevisionLabel]; ok {
 						version = rev
 					}
 					gwNode, _, err := addInfra(meshMap, mesh.InfraTypeGateway, cluster, gw.Namespace, gw.Name, gw, version, false, "")
 					mesh.CheckError(err)
 					gwNodes = append(gwNodes, gwNode)
 				}
-				for _, gw := range config.K8sGateways {
+				for _, gw := range conf.K8sGateways {
 					// skip waypoints because they are treated independently
 					if strings.Contains(strings.ToLower(string(gw.Spec.GatewayClassName)), "waypoint") {
 						continue
 					}
 					version := models.DefaultRevisionLabel
-					if rev, ok := gw.Labels[models.IstioRevisionLabel]; ok {
+					if rev, ok := gw.Labels[config.IstioRevisionLabel]; ok {
 						version = rev
 					}
 					gwNode, _, err := addInfra(meshMap, mesh.InfraTypeGateway, cluster, gw.Namespace, gw.Name, gw, version, false, "")
@@ -362,7 +418,7 @@ func discoverInfraService(url string, ctx context.Context, gi *mesh.GlobalInfo) 
 		return
 	}
 
-	svc, err := gi.Business.Svc.GetService(ctx, config.Get().KubernetesConfig.ClusterName, matches[2], matches[1])
+	svc, err := gi.Business.Svc.GetService(ctx, gi.Conf.KubernetesConfig.ClusterName, matches[2], matches[1])
 	if err != nil {
 		return
 	}

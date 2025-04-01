@@ -17,6 +17,7 @@ func TestNoCrashOnEmptyRoute(t *testing.T) {
 	assert := assert.New(t)
 
 	typeValidations := K8sHTTPRouteChecker{
+		Conf:             config.Get(),
 		K8sHTTPRoutes:    []*k8s_networking_v1.HTTPRoute{},
 		K8sGateways:      []*k8s_networking_v1.Gateway{},
 		RegistryServices: data.CreateEmptyRegistryServices(),
@@ -32,6 +33,7 @@ func TestWithoutK8sGateway(t *testing.T) {
 	assert := assert.New(t)
 
 	vals := K8sHTTPRouteChecker{
+		Conf: config.Get(),
 		K8sHTTPRoutes: []*k8s_networking_v1.HTTPRoute{
 			data.CreateHTTPRoute("route1", "bookinfo", "gatewayapi", []string{"bookinfo"}),
 			data.CreateHTTPRoute("route2", "bookinfo", "gatewayapi2", []string{"bookinfo"})},
@@ -57,6 +59,7 @@ func TestWithoutService(t *testing.T) {
 	registryService2 := data.CreateFakeRegistryServices("details.bookinfo.svc.cluster.local", "bookinfo2", "*")
 
 	vals := K8sHTTPRouteChecker{
+		Conf: config.Get(),
 		K8sHTTPRoutes: []*k8s_networking_v1.HTTPRoute{
 			data.AddBackendRefToHTTPRoute("ratings", "bookinfo", data.CreateHTTPRoute("route1", "bookinfo", "gatewayapi", []string{"bookinfo"})),
 			data.AddBackendRefToHTTPRoute("ratings", "bookinfo", data.CreateHTTPRoute("route2", "bookinfo2", "gatewayapi2", []string{"bookinfo2"}))},

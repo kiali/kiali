@@ -70,7 +70,7 @@ func fakeIstiodDeployment(cluster string, manageExternal bool) *apps_v1.Deployme
 			Namespace: "istio-system",
 			Labels: map[string]string{
 				"app":                     "istiod",
-				models.IstioRevisionLabel: "default",
+				config.IstioRevisionLabel: "default",
 			},
 		},
 		Spec: apps_v1.DeploymentSpec{
@@ -374,7 +374,7 @@ func TestMesh(t *testing.T) {
 			Namespace: "istio-system",
 			Labels: map[string]string{
 				"app":                     "istiod",
-				models.IstioRevisionLabel: "default",
+				config.IstioRevisionLabel: "default",
 			},
 		},
 	}
@@ -387,7 +387,7 @@ trustDomain: cluster.local
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "istio",
 			Namespace: "istio-system",
-			Labels:    map[string]string{models.IstioRevisionLabel: "default"},
+			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
 		},
 		Data: map[string]string{"mesh": configMapData},
 	}
@@ -429,7 +429,7 @@ func TestControlPlaneCertificate(t *testing.T) {
 			Namespace: "istio-system",
 			Labels: map[string]string{
 				"app":                     "istiod",
-				models.IstioRevisionLabel: "default",
+				config.IstioRevisionLabel: "default",
 			},
 		},
 	}
@@ -442,7 +442,7 @@ trustDomain: cluster.local
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "istio",
 			Namespace: "istio-system",
-			Labels:    map[string]string{models.IstioRevisionLabel: "default"},
+			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
 		},
 		Data: map[string]string{"mesh": configMapData},
 	}
@@ -585,7 +585,7 @@ func TestMeshResolvesNetwork(t *testing.T) {
 					Namespace: "istio-system",
 					Labels: map[string]string{
 						"app":                     "istiod",
-						models.IstioRevisionLabel: "default",
+						config.IstioRevisionLabel: "default",
 					},
 				},
 			}
@@ -593,7 +593,7 @@ func TestMeshResolvesNetwork(t *testing.T) {
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "istio",
 					Namespace: "istio-system",
-					Labels:    map[string]string{models.IstioRevisionLabel: "default"},
+					Labels:    map[string]string{config.IstioRevisionLabel: "default"},
 				},
 				Data: map[string]string{"mesh": ""},
 			}
@@ -625,7 +625,7 @@ func TestGetMeshMultipleRevisions(t *testing.T) {
 			Namespace: "istio-system",
 			Labels: map[string]string{
 				"app":                     "istiod",
-				models.IstioRevisionLabel: "1-18-0",
+				config.IstioRevisionLabel: "1-18-0",
 			},
 		},
 	}
@@ -635,7 +635,7 @@ func TestGetMeshMultipleRevisions(t *testing.T) {
 			Namespace: "istio-system",
 			Labels: map[string]string{
 				"app":                     "istiod",
-				models.IstioRevisionLabel: "1-19-0",
+				config.IstioRevisionLabel: "1-19-0",
 			},
 		},
 	}
@@ -649,7 +649,7 @@ trustDomain: cluster.local
 			Name:      "istio-1-18-0",
 			Namespace: "istio-system",
 			Labels: map[string]string{
-				models.IstioRevisionLabel: "1-18-0",
+				config.IstioRevisionLabel: "1-18-0",
 			},
 		},
 		Data: map[string]string{"mesh": configMap_1_18_Data},
@@ -664,7 +664,7 @@ trustDomain: cluster.local
 			Name:      "istio-1-19-0",
 			Namespace: "istio-system",
 			Labels: map[string]string{
-				models.IstioRevisionLabel: "1-19-0",
+				config.IstioRevisionLabel: "1-19-0",
 			},
 		},
 		Data: map[string]string{"mesh": configMap_1_19_Data},
@@ -733,7 +733,7 @@ trustDomain: cluster.local
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "istio",
 			Namespace: "istio-system",
-			Labels:    map[string]string{models.IstioRevisionLabel: "default"},
+			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
 		},
 		Data: map[string]string{"mesh": configMapData},
 	}
@@ -785,7 +785,7 @@ trustDomain: cluster.local
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "istio",
 			Namespace: "istio-system",
-			Labels:    map[string]string{models.IstioRevisionLabel: "default"},
+			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
 		},
 		Data: map[string]string{"mesh": configMapData},
 	}
@@ -839,7 +839,7 @@ trustDomain: cluster.local
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "istio",
 			Namespace: "istio-system",
-			Labels:    map[string]string{models.IstioRevisionLabel: "default"},
+			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
 		},
 		Data: map[string]string{"mesh": configMapData},
 	}
@@ -884,7 +884,7 @@ trustDomain: cluster.local
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "istio",
 			Namespace: "istio-system",
-			Labels:    map[string]string{models.IstioRevisionLabel: "default"},
+			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
 		},
 		Data: map[string]string{"mesh": configMapData},
 	}
@@ -940,7 +940,7 @@ trustDomain: cluster.local
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "istio",
 			Namespace: "istio-system",
-			Labels:    map[string]string{models.IstioRevisionLabel: "default"},
+			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
 		},
 		Data: map[string]string{"mesh": configMapData},
 	}
@@ -1025,7 +1025,7 @@ trustDomain: cluster.local
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "istio",
 			Namespace: "istio-system",
-			Labels:    map[string]string{models.IstioRevisionLabel: "default"},
+			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
 		},
 		Data: map[string]string{"mesh": configMapData},
 	}
@@ -1033,7 +1033,7 @@ trustDomain: cluster.local
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "istio",
 			Namespace: "external-istiod",
-			Labels:    map[string]string{models.IstioRevisionLabel: "default"},
+			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
 		},
 		Data: map[string]string{"mesh": configMapData},
 	}
@@ -1216,7 +1216,7 @@ trustDomain: cluster.local
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "istio",
 			Namespace: "istio-system",
-			Labels:    map[string]string{models.IstioRevisionLabel: "default"},
+			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
 		},
 		Data: map[string]string{"mesh": configMapData},
 	}
@@ -1248,7 +1248,7 @@ func TestIstiodResourceThresholds(t *testing.T) {
 	conf := config.NewConfig()
 	istiodAppLabels := map[string]string{
 		"app":                     "istiod",
-		models.IstioRevisionLabel: "default",
+		config.IstioRevisionLabel: "default",
 	}
 
 	testCases := map[string]struct {
@@ -1430,7 +1430,7 @@ func TestIstiodResourceThresholds(t *testing.T) {
 					ObjectMeta: v1.ObjectMeta{
 						Name:      "istio",
 						Namespace: "istio-system",
-						Labels:    map[string]string{models.IstioRevisionLabel: "default"},
+						Labels:    map[string]string{config.IstioRevisionLabel: "default"},
 					},
 					Data: map[string]string{"mesh": ""},
 				},
@@ -1495,7 +1495,7 @@ trustDomain: cluster.local
 		ObjectMeta: v1.ObjectMeta{
 			Name:      configMapName,
 			Namespace: "istio-system",
-			Labels:    map[string]string{models.IstioRevisionLabel: revision},
+			Labels:    map[string]string{config.IstioRevisionLabel: revision},
 		},
 		Data: map[string]string{"mesh": configMapData},
 	}
@@ -1529,7 +1529,7 @@ func runningIstiodPod(revision string) *core_v1.Pod {
 			Namespace: "istio-system",
 			Labels: map[string]string{
 				"app":                     "istiod",
-				models.IstioRevisionLabel: revision,
+				config.IstioRevisionLabel: revision,
 			},
 		},
 		Status: core_v1.PodStatus{
@@ -1604,7 +1604,7 @@ func TestCanConnectToUnreachableIstiod(t *testing.T) {
 
 func fakeIstiodWithRevision(cluster string, revision string, manageExternal bool) *apps_v1.Deployment {
 	deployment := fakeIstiodDeployment(cluster, manageExternal)
-	deployment.Labels[models.IstioRevisionLabel] = revision
+	deployment.Labels[config.IstioRevisionLabel] = revision
 	deployment.Name = "istiod-" + revision
 	return deployment
 }
@@ -1657,9 +1657,9 @@ func TestUpdateStatusMultipleHealthyRevs(t *testing.T) {
 	defaultIstiod := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
 	istiod_1_19 := fakeIstiodWithRevision(conf.KubernetesConfig.ClusterName, "1-19-0", false)
 	defaultPod := runningIstiodPod("default")
-	defaultPod.Labels[models.IstioRevisionLabel] = "default"
+	defaultPod.Labels[config.IstioRevisionLabel] = "default"
 	istiod_1_19_pod := runningIstiodPod("1-19-0")
-	istiod_1_19_pod.Labels[models.IstioRevisionLabel] = "1-19-0"
+	istiod_1_19_pod.Labels[config.IstioRevisionLabel] = "1-19-0"
 
 	k8s := kubetest.NewFakeK8sClient(
 		kubetest.FakeNamespace("istio-system"),
@@ -1716,7 +1716,7 @@ func TestDiscoverWithTags(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Name: "istio-revision-tag-default",
 			Labels: map[string]string{
-				models.IstioRevisionLabel: "default",
+				config.IstioRevisionLabel: "default",
 				models.IstioTagLabel:      "default",
 			},
 		},
@@ -1778,7 +1778,7 @@ func TestDiscoverWithTags(t *testing.T) {
 			setup: func() map[string][]runtime.Object {
 				return map[string][]runtime.Object{
 					conf.KubernetesConfig.ClusterName: {
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "default"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "default"}}},
 						defaultWebhook,
 						defaultIstiod,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
@@ -1812,7 +1812,7 @@ func TestDiscoverWithTags(t *testing.T) {
 			setup: func() map[string][]runtime.Object {
 				return map[string][]runtime.Object{
 					conf.KubernetesConfig.ClusterName: {
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "1.23.0"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "1.23.0"}}},
 						defaultWebhook,
 						defaultIstiod,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
@@ -1829,7 +1829,7 @@ func TestDiscoverWithTags(t *testing.T) {
 			setup: func() map[string][]runtime.Object {
 				return map[string][]runtime.Object{
 					conf.KubernetesConfig.ClusterName: {
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "prod"}}},
 						defaultWebhook,
 						defaultIstiod,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
@@ -1848,7 +1848,7 @@ func TestDiscoverWithTags(t *testing.T) {
 					ObjectMeta: v1.ObjectMeta{
 						Name: "istio-revision-tag-prod",
 						Labels: map[string]string{
-							models.IstioRevisionLabel: "1.23.0",
+							config.IstioRevisionLabel: "1.23.0",
 							models.IstioTagLabel:      "prod",
 						},
 					},
@@ -1858,21 +1858,21 @@ func TestDiscoverWithTags(t *testing.T) {
 					ObjectMeta: v1.ObjectMeta{
 						Name: "istio-revision-tag-dev",
 						Labels: map[string]string{
-							models.IstioRevisionLabel: "1.22.0",
+							config.IstioRevisionLabel: "1.22.0",
 							models.IstioTagLabel:      "dev",
 						},
 					},
 				}
 				istiod_1_22 := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
 				istiod_1_22.Name = "istiod-1-22-0"
-				istiod_1_22.Labels[models.IstioRevisionLabel] = "1.22.0"
+				istiod_1_22.Labels[config.IstioRevisionLabel] = "1.22.0"
 				istiod_1_23 := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
 				istiod_1_23.Name = "istiod-1-23-0"
-				istiod_1_23.Labels[models.IstioRevisionLabel] = "1.23.0"
+				istiod_1_23.Labels[config.IstioRevisionLabel] = "1.23.0"
 				return map[string][]runtime.Object{
 					conf.KubernetesConfig.ClusterName: {
 						defaultWebhook,
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "prod"}}},
 						tagProd,
 						tagDev,
 						istiod_1_23,
@@ -1900,7 +1900,7 @@ func TestDiscoverWithTags(t *testing.T) {
 					conf.KubernetesConfig.ClusterName: {
 						fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false),
 						defaultWebhook,
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "default"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "default"}}},
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						istioConfigMap,
 						FakeCertificateConfigMap("istio-system"),
@@ -1926,7 +1926,7 @@ func TestDiscoverWithTags(t *testing.T) {
 							ObjectMeta: v1.ObjectMeta{
 								Name: "bookinfo",
 								Labels: map[string]string{
-									models.IstioRevisionLabel: "default",
+									config.IstioRevisionLabel: "default",
 									"include":                 "true",
 								},
 							},
@@ -1953,7 +1953,7 @@ func TestDiscoverWithTags(t *testing.T) {
 					conf.KubernetesConfig.ClusterName: {
 						fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false),
 						defaultWebhook,
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "default"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "default"}}},
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						fakeIstioConfigMap("default"),
 						FakeCertificateConfigMap("istio-system"),
@@ -1976,7 +1976,7 @@ func TestDiscoverWithTags(t *testing.T) {
 					conf.KubernetesConfig.ClusterName: {
 						fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false),
 						defaultWebhook,
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "default"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "default"}}},
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						fakeIstioConfigMap("default"),
 						FakeCertificateConfigMap("istio-system"),
@@ -1993,7 +1993,7 @@ func TestDiscoverWithTags(t *testing.T) {
 					ObjectMeta: v1.ObjectMeta{
 						Name: "istio-revision-tag-prod",
 						Labels: map[string]string{
-							models.IstioRevisionLabel: "1-23-0",
+							config.IstioRevisionLabel: "1-23-0",
 							models.IstioTagLabel:      "prod",
 						},
 					},
@@ -2002,24 +2002,24 @@ func TestDiscoverWithTags(t *testing.T) {
 					ObjectMeta: v1.ObjectMeta{
 						Name: "istio-revision-tag-canary",
 						Labels: map[string]string{
-							models.IstioRevisionLabel: "1-24-0",
+							config.IstioRevisionLabel: "1-24-0",
 							models.IstioTagLabel:      "canary",
 						},
 					},
 				}
 				istiod_1_23 := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
-				istiod_1_23.Labels[models.IstioRevisionLabel] = "1-23-0"
+				istiod_1_23.Labels[config.IstioRevisionLabel] = "1-23-0"
 				istiod_1_23.Name = "istiod-1-23-0"
 				istiod_1_24 := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
-				istiod_1_24.Labels[models.IstioRevisionLabel] = "1-24-0"
+				istiod_1_24.Labels[config.IstioRevisionLabel] = "1-24-0"
 				istiod_1_23.Name = "istiod-1-24-0"
 				return map[string][]runtime.Object{
 					conf.KubernetesConfig.ClusterName: {
 						defaultWebhook,
 						tagProd,
 						tagCanary,
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}},
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "travels", Labels: map[string]string{models.IstioRevisionLabel: "canary"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "prod"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "travels", Labels: map[string]string{config.IstioRevisionLabel: "canary"}}},
 						istiod_1_23,
 						istiod_1_24,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
@@ -2044,7 +2044,7 @@ func TestDiscoverWithTags(t *testing.T) {
 				primary := fakeIstiodDeployment("primary", true)
 				return map[string][]runtime.Object{
 					"primary": {
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "default"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "default"}}},
 						defaultWebhook,
 						primary,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
@@ -2052,7 +2052,7 @@ func TestDiscoverWithTags(t *testing.T) {
 						FakeCertificateConfigMap("istio-system"),
 					},
 					"remote": {
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "default"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "default"}}},
 						defaultWebhook,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system", Annotations: map[string]string{"topology.istio.io/controlPlaneClusters": "primary"}}},
 						FakeCertificateConfigMap("istio-system"),
@@ -2074,17 +2074,17 @@ func TestDiscoverWithTags(t *testing.T) {
 					ObjectMeta: v1.ObjectMeta{
 						Name: "istio-revision-tag-prod",
 						Labels: map[string]string{
-							models.IstioRevisionLabel: "1-23-0",
+							config.IstioRevisionLabel: "1-23-0",
 							models.IstioTagLabel:      "prod",
 						},
 					},
 				}
 				primary := fakeIstiodDeployment("primary", true)
-				primary.Labels[models.IstioRevisionLabel] = "1-23-0"
+				primary.Labels[config.IstioRevisionLabel] = "1-23-0"
 				primary.Name = "istiod-1-23-0"
 				return map[string][]runtime.Object{
 					"primary": {
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "prod"}}},
 						defaultWebhook,
 						tagProd,
 						primary,
@@ -2093,7 +2093,7 @@ func TestDiscoverWithTags(t *testing.T) {
 						FakeCertificateConfigMap("istio-system"),
 					},
 					"remote": {
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "prod"}}},
 						tagProd,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system", Annotations: map[string]string{"topology.istio.io/controlPlaneClusters": "primary"}}},
 						FakeCertificateConfigMap("istio-system"),
@@ -2115,29 +2115,29 @@ func TestDiscoverWithTags(t *testing.T) {
 					ObjectMeta: v1.ObjectMeta{
 						Name: "istio-revision-tag-prod",
 						Labels: map[string]string{
-							models.IstioRevisionLabel: "1-23-0",
+							config.IstioRevisionLabel: "1-23-0",
 							models.IstioTagLabel:      "prod",
 						},
 					},
 				}
 				east := fakeIstiodDeployment("east", true)
-				east.Labels[models.IstioRevisionLabel] = "1-23-0"
+				east.Labels[config.IstioRevisionLabel] = "1-23-0"
 				east.Name = "istiod-1-23-0"
 				tagProdWest := &admissionregistrationv1.MutatingWebhookConfiguration{
 					ObjectMeta: v1.ObjectMeta{
 						Name: "istio-revision-tag-prod",
 						Labels: map[string]string{
-							models.IstioRevisionLabel: "1-23-0",
+							config.IstioRevisionLabel: "1-23-0",
 							models.IstioTagLabel:      "prod",
 						},
 					},
 				}
 				west := fakeIstiodDeployment("west", true)
-				west.Labels[models.IstioRevisionLabel] = "1-23-0"
+				west.Labels[config.IstioRevisionLabel] = "1-23-0"
 				west.Name = "istiod-1-23-0"
 				return map[string][]runtime.Object{
 					"east": {
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "prod"}}},
 						defaultWebhook,
 						tagProdEast,
 						east,
@@ -2146,7 +2146,7 @@ func TestDiscoverWithTags(t *testing.T) {
 						FakeCertificateConfigMap("istio-system"),
 					},
 					"west": {
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "prod"}}},
 						defaultWebhook,
 						tagProdWest,
 						west,
@@ -2216,7 +2216,7 @@ func TestDiscoverTagsWithoutWebhookPermissions(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Name: "istio-revision-tag-default",
 			Labels: map[string]string{
-				models.IstioRevisionLabel: "default",
+				config.IstioRevisionLabel: "default",
 				models.IstioTagLabel:      "default",
 			},
 		},
@@ -2237,7 +2237,7 @@ func TestDiscoverTagsWithoutWebhookPermissions(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(
 		defaultWebhook,
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "default"}}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "default"}}},
 		istiodDeployment,
 		istioConfigMap,
 		FakeCertificateConfigMap("istio-system"),
@@ -2282,7 +2282,7 @@ func fakeDefaultWebhook() *admissionregistrationv1.MutatingWebhookConfiguration 
 		ObjectMeta: v1.ObjectMeta{
 			Name: "istio-revision-tag-default",
 			Labels: map[string]string{
-				models.IstioRevisionLabel: "default",
+				config.IstioRevisionLabel: "default",
 				models.IstioTagLabel:      "default",
 			},
 		},
@@ -2298,13 +2298,13 @@ func TestDiscoverTagsWithExternalCluster(t *testing.T) {
 	config.Set(conf)
 
 	external := fakeIstiodDeployment("remote", true)
-	external.Labels[models.IstioRevisionLabel] = "1-23-0"
+	external.Labels[config.IstioRevisionLabel] = "1-23-0"
 	external.Name = "istiod-1-23-0"
 	external.Namespace = "external"
 	externalConfigMap := fakeIstioConfigMap("1-23-0")
 	externalConfigMap.Namespace = "external"
 	tagProdRemote := fakeDefaultWebhook()
-	tagProdRemote.Labels[models.IstioRevisionLabel] = "1-23-0"
+	tagProdRemote.Labels[config.IstioRevisionLabel] = "1-23-0"
 	tagProdRemote.Labels[models.IstioTagLabel] = "prod"
 	clients := map[string]kubernetes.ClientInterface{
 		"external": approvingClient(kubetest.NewFakeK8sClient(
@@ -2319,7 +2319,7 @@ func TestDiscoverTagsWithExternalCluster(t *testing.T) {
 			FakeCertificateConfigMap("external"),
 		)),
 		"remote": approvingClient(kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}},
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "prod"}}},
 			tagProdRemote,
 			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "external"}},
 		)),
@@ -2347,6 +2347,88 @@ func TestDiscoverTagsWithExternalCluster(t *testing.T) {
 	require.NotEqual(externalControlPlane.Tag.Cluster, externalControlPlane.Cluster.Name)
 	require.Equal(externalControlPlane.Tag.Cluster, externalControlPlane.ID)
 
-	expectedNamespaces := []models.Namespace{{Name: "bookinfo", Cluster: "remote", Labels: map[string]string{models.IstioRevisionLabel: "prod"}, Revision: "prod"}}
+	expectedNamespaces := []models.Namespace{{Name: "bookinfo", Cluster: "remote", Labels: map[string]string{config.IstioRevisionLabel: "prod"}, Revision: "prod"}}
 	require.Equal(expectedNamespaces, externalControlPlane.ManagedNamespaces)
+}
+
+func TestDiscoverWithMaistra(t *testing.T) {
+	conf := config.NewConfig()
+
+	defaultIstiod := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
+
+	maistraIstiod := defaultIstiod.DeepCopy()
+	maistraIstiod.Name = "istiod-basic"
+	maistraIstiod.Labels["maistra.io/owner"] = "basic"
+	maistraIstiod.Labels["istio.io/rev"] = "basic"
+
+	cases := map[string]struct {
+		BookinfoLabels            map[string]string
+		ExpectedMaistraNamespaces []string
+		ExpectedIstioNamespaces   []string
+	}{
+		"maistra manages bookinfo": {
+			BookinfoLabels:            map[string]string{"maistra.io/member-of": "istio-system", "istio.io/rev": "default"},
+			ExpectedMaistraNamespaces: []string{"bookinfo"},
+		},
+		"istiod manages bookinfo": {
+			BookinfoLabels:          map[string]string{"istio.io/rev": "default"},
+			ExpectedIstioNamespaces: []string{"bookinfo"},
+		},
+		"maistra ignore label - istiod manages bookinfo": {
+			BookinfoLabels: map[string]string{
+				"maistra.io/member-of":        "istio-system",
+				"maistra.io/ignore-namespace": "true",
+				"istio.io/rev":                "default",
+			},
+			ExpectedIstioNamespaces: []string{"bookinfo"},
+		},
+		"no maistra label - no istiod label": {
+			BookinfoLabels: map[string]string{},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+			bookinfo := &core_v1.Namespace{
+				ObjectMeta: v1.ObjectMeta{
+					Name:   "bookinfo",
+					Labels: tc.BookinfoLabels,
+				},
+			}
+
+			client := kubetest.NewFakeK8sClient(
+				bookinfo,
+				defaultIstiod,
+				maistraIstiod,
+				&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+				fakeIstioConfigMap("default"),
+				fakeIstioConfigMap("basic"),
+				FakeCertificateConfigMap("istio-system"),
+			)
+			cache := cache.NewTestingCache(t, client, *conf)
+			discovery := istio.NewDiscovery(map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client}, cache, conf)
+
+			mesh, err := discovery.Mesh(context.TODO())
+			require.NoError(err)
+			require.Len(mesh.ControlPlanes, 2)
+
+			istiod := slicetest.FindOrFail(t, mesh.ControlPlanes, func(cp models.ControlPlane) bool {
+				return cp.IstiodName == "istiod"
+			})
+			maistra := slicetest.FindOrFail(t, mesh.ControlPlanes, func(cp models.ControlPlane) bool {
+				return cp.IstiodName == "istiod-basic"
+			})
+
+			require.False(istiod.IsMaistra())
+			require.True(maistra.IsMaistra())
+
+			require.Len(istiod.ManagedNamespaces, len(tc.ExpectedIstioNamespaces))
+			require.Len(maistra.ManagedNamespaces, len(tc.ExpectedMaistraNamespaces))
+			if len(tc.ExpectedIstioNamespaces) > 0 {
+				require.Equal("bookinfo", istiod.ManagedNamespaces[0].Name)
+			} else if len(tc.ExpectedMaistraNamespaces) > 0 {
+				require.Equal("bookinfo", maistra.ManagedNamespaces[0].Name)
+			}
+		})
+	}
 }

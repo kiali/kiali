@@ -11,10 +11,10 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/graph/config/cytoscape"
+	"github.com/kiali/kiali/graph/config/common"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/log"
-	meshcyto "github.com/kiali/kiali/mesh/config/cytoscape"
+	mesh_config_common "github.com/kiali/kiali/mesh/config/common"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
 	"github.com/kiali/kiali/tracing/jaeger/model"
@@ -384,9 +384,9 @@ func IstioPermissions() (*models.IstioConfigPermissions, int, error) {
 	}
 }
 
-func Graph(params map[string]string) (*cytoscape.Config, int, error) {
+func Graph(params map[string]string) (*common.Config, int, error) {
 	url := fmt.Sprintf("%s/api/namespaces/graph?%s", client.kialiURL, ParamsAsString(params))
-	graph := new(cytoscape.Config)
+	graph := new(common.Config)
 
 	code, err := getRequestAndUnmarshalInto(url, graph)
 	if err == nil {
@@ -396,9 +396,9 @@ func Graph(params map[string]string) (*cytoscape.Config, int, error) {
 	}
 }
 
-func ObjectGraph(objectType, graphType, name, namespace string) (*cytoscape.Config, int, error) {
+func ObjectGraph(objectType, graphType, name, namespace string) (*common.Config, int, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/%s/%s/graph?duration=60s&graphType=%s", client.kialiURL, namespace, objectType, name, graphType)
-	graph := new(cytoscape.Config)
+	graph := new(common.Config)
 
 	code, err := getRequestAndUnmarshalInto(url, graph)
 	if err == nil {
@@ -408,9 +408,9 @@ func ObjectGraph(objectType, graphType, name, namespace string) (*cytoscape.Conf
 	}
 }
 
-func AppVersionGraph(graphType, name, version, namespace string) (*cytoscape.Config, int, error) {
+func AppVersionGraph(graphType, name, version, namespace string) (*common.Config, int, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/applications/%s/versions/%s/graph?duration=60s&graphType=%s", client.kialiURL, namespace, name, version, graphType)
-	graph := new(cytoscape.Config)
+	graph := new(common.Config)
 
 	code, err := getRequestAndUnmarshalInto(url, graph)
 	if err == nil {
@@ -539,9 +539,9 @@ func getRequestAndUnmarshalIntoWithCustomTimeout[T any](url string, timeout time
 	return code, nil
 }
 
-func MeshGraph() (*meshcyto.Config, error) {
+func MeshGraph() (*mesh_config_common.Config, error) {
 	url := fmt.Sprintf("%s/api/mesh/graph", client.kialiURL)
-	meshGraph := new(meshcyto.Config)
+	meshGraph := new(mesh_config_common.Config)
 	_, err := getRequestAndUnmarshalInto(url, meshGraph)
 	if err != nil {
 		return nil, err

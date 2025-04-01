@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	api_security_v1 "istio.io/api/security/v1"
+	api_security_v1beta1 "istio.io/api/security/v1beta1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
@@ -14,33 +15,33 @@ func TestFilterByHost(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	assert.True(t, FilterByHost("reviews", "bookinfo", "reviews", "bookinfo"))
-	assert.False(t, FilterByHost("reviews-bad", "bookinfo", "reviews", "bookinfo"))
+	assert.True(t, FilterByHost("reviews", "bookinfo", "reviews", "bookinfo", conf))
+	assert.False(t, FilterByHost("reviews-bad", "bookinfo", "reviews", "bookinfo", conf))
 
-	assert.True(t, FilterByHost("reviews.bookinfo", "bookinfo", "reviews", "bookinfo"))
-	assert.False(t, FilterByHost("reviews-bad.bookinfo", "bookinfo", "reviews", "bookinfo"))
-	assert.False(t, FilterByHost("reviews.bookinfo-bad", "bookinfo-bad", "reviews", "bookinfo"))
+	assert.True(t, FilterByHost("reviews.bookinfo", "bookinfo", "reviews", "bookinfo", conf))
+	assert.False(t, FilterByHost("reviews-bad.bookinfo", "bookinfo", "reviews", "bookinfo", conf))
+	assert.False(t, FilterByHost("reviews.bookinfo-bad", "bookinfo-bad", "reviews", "bookinfo", conf))
 
-	assert.True(t, FilterByHost("reviews.bookinfo.svc.cluster.local", "bookinfo", "reviews", "bookinfo"))
-	assert.False(t, FilterByHost("reviews-bad.bookinfo.svc.cluster.local", "bookinfo", "reviews", "bookinfo"))
-	assert.False(t, FilterByHost("reviews.bookinfo-bad.svc.cluster.local", "bookinfo-bad", "reviews", "bookinfo"))
+	assert.True(t, FilterByHost("reviews.bookinfo.svc.cluster.local", "bookinfo", "reviews", "bookinfo", conf))
+	assert.False(t, FilterByHost("reviews-bad.bookinfo.svc.cluster.local", "bookinfo", "reviews", "bookinfo", conf))
+	assert.False(t, FilterByHost("reviews.bookinfo-bad.svc.cluster.local", "bookinfo-bad", "reviews", "bookinfo", conf))
 }
 
 func TestFQDNHostname(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	assert.True(t, FilterByHost("reviews.bookinfo.svc", "bookinfo", "reviews", "bookinfo"))
-	assert.True(t, FilterByHost("reviews.bookinfo.svc.cluster.local", "bookinfo", "reviews", "bookinfo"))
+	assert.True(t, FilterByHost("reviews.bookinfo.svc", "bookinfo", "reviews", "bookinfo", conf))
+	assert.True(t, FilterByHost("reviews.bookinfo.svc.cluster.local", "bookinfo", "reviews", "bookinfo", conf))
 
-	assert.False(t, FilterByHost("reviews.foo.svc", "foo", "reviews", "bookinfo"))
-	assert.False(t, FilterByHost("reviews.foo.svc.cluster.local", "foo", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("reviews.foo.svc", "foo", "reviews", "bookinfo", conf))
+	assert.False(t, FilterByHost("reviews.foo.svc.cluster.local", "foo", "reviews", "bookinfo", conf))
 
-	assert.False(t, FilterByHost("ratings.bookinfo.svc", "bookinfo", "reviews", "bookinfo"))
-	assert.False(t, FilterByHost("ratings.bookinfo.svc.cluster.local", "bookinfo", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("ratings.bookinfo.svc", "bookinfo", "reviews", "bookinfo", conf))
+	assert.False(t, FilterByHost("ratings.bookinfo.svc.cluster.local", "bookinfo", "reviews", "bookinfo", conf))
 
-	assert.False(t, FilterByHost("ratings.foo.svc", "foo", "reviews", "bookinfo"))
-	assert.False(t, FilterByHost("ratings.foo.svc.cluster.local", "foo", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("ratings.foo.svc", "foo", "reviews", "bookinfo", conf))
+	assert.False(t, FilterByHost("ratings.foo.svc.cluster.local", "foo", "reviews", "bookinfo", conf))
 }
 
 func TestExactProtocolNameMatcher(t *testing.T) {
@@ -146,7 +147,7 @@ func TestPolicyHasMTLSEnabledPermissiveMode(t *testing.T) {
 
 func createMtls(mode string) *api_security_v1.PeerAuthentication_MutualTLS {
 	mtls := &api_security_v1.PeerAuthentication_MutualTLS{}
-	mtls.Mode = api_security_v1.PeerAuthentication_MutualTLS_Mode(api_security_v1.PeerAuthentication_MutualTLS_Mode_value[mode])
+	mtls.Mode = api_security_v1.PeerAuthentication_MutualTLS_Mode(api_security_v1beta1.PeerAuthentication_MutualTLS_Mode_value[mode])
 	return mtls
 }
 

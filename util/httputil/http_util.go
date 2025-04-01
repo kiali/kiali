@@ -180,11 +180,11 @@ func GetTLSConfig(auth *config.Auth) (*tls.Config, error) {
 	return nil, nil
 }
 
-func GuessKialiURL(cfg *config.Config, r *http.Request) string {
+func GuessKialiURL(conf *config.Config, r *http.Request) string {
 	// Take default values from configuration
-	schema := cfg.Server.WebSchema
-	port := strconv.Itoa(cfg.Server.Port)
-	host := cfg.Server.WebFQDN
+	schema := conf.Server.WebSchema
+	port := strconv.Itoa(conf.Server.Port)
+	host := conf.Server.WebFQDN
 
 	isDefaultPort := false
 	if r != nil {
@@ -218,8 +218,8 @@ func GuessKialiURL(cfg *config.Config, r *http.Request) string {
 		// priority, because this is the port where the pod is listening, which may
 		// be mapped to another public port via the Service/Ingress. So, HTTP headers
 		// take priority.
-		if cfg.Server.WebPort != "" {
-			port = cfg.Server.WebPort
+		if conf.Server.WebPort != "" {
+			port = conf.Server.WebPort
 		} else if fwdPort, ok := r.Header["X-Forwarded-Port"]; ok && len(fwdPort) == 1 {
 			port = fwdPort[0]
 		} else if len(r.URL.Host) != 0 {
@@ -232,8 +232,8 @@ func GuessKialiURL(cfg *config.Config, r *http.Request) string {
 	}
 
 	// If we haven't already set the port and there's a WebPort in the config, use it.
-	if isDefaultPort && cfg.Server.WebPort != "" {
-		port = cfg.Server.WebPort
+	if isDefaultPort && conf.Server.WebPort != "" {
+		port = conf.Server.WebPort
 	}
 
 	// If using standard ports, don't specify the port component part on the URL
@@ -242,9 +242,9 @@ func GuessKialiURL(cfg *config.Config, r *http.Request) string {
 		isDefaultPort = true
 	}
 	if isDefaultPort {
-		guessedKialiURL = fmt.Sprintf("%s://%s%s", schema, host, cfg.Server.WebRoot)
+		guessedKialiURL = fmt.Sprintf("%s://%s%s", schema, host, conf.Server.WebRoot)
 	} else {
-		guessedKialiURL = fmt.Sprintf("%s://%s:%s%s", schema, host, port, cfg.Server.WebRoot)
+		guessedKialiURL = fmt.Sprintf("%s://%s:%s%s", schema, host, port, conf.Server.WebRoot)
 	}
 
 	guessedKialiURL = strings.TrimRight(guessedKialiURL, "/")

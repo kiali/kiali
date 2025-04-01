@@ -1,7 +1,6 @@
 package appender
 
 import (
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -45,11 +44,11 @@ func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 		serviceLists = getServiceLists(nil, namespaceInfo.Namespace, globalInfo)
 	}
 
-	a.addIdleNodes(trafficMap, namespaceInfo.Namespace, serviceLists, workloadLists)
+	a.addIdleNodes(trafficMap, namespaceInfo.Namespace, serviceLists, workloadLists, globalInfo)
 }
 
-func (a IdleNodeAppender) addIdleNodes(trafficMap graph.TrafficMap, namespace string, serviceLists map[string]*models.ServiceList, workloadLists map[string]*models.WorkloadList) {
-	idleNodeTrafficMap := a.buildIdleNodeTrafficMap(trafficMap, namespace, serviceLists, workloadLists)
+func (a IdleNodeAppender) addIdleNodes(trafficMap graph.TrafficMap, namespace string, serviceLists map[string]*models.ServiceList, workloadLists map[string]*models.WorkloadList, gi *graph.GlobalInfo) {
+	idleNodeTrafficMap := a.buildIdleNodeTrafficMap(trafficMap, namespace, serviceLists, workloadLists, gi)
 
 	// Integrate the idle nodes into the existing traffic map
 	for id, idleNode := range idleNodeTrafficMap {
@@ -57,7 +56,7 @@ func (a IdleNodeAppender) addIdleNodes(trafficMap graph.TrafficMap, namespace st
 	}
 }
 
-func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, namespace string, serviceLists map[string]*models.ServiceList, workloadLists map[string]*models.WorkloadList) graph.TrafficMap {
+func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, namespace string, serviceLists map[string]*models.ServiceList, workloadLists map[string]*models.WorkloadList, gi *graph.GlobalInfo) graph.TrafficMap {
 	idleNodeTrafficMap := graph.NewTrafficMap()
 
 	for cluster, serviceList := range serviceLists {
@@ -74,19 +73,16 @@ func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, n
 			}
 		}
 
-		cfg := config.Get()
-		appLabel := cfg.IstioLabels.AppLabelName
-		versionLabel := cfg.IstioLabels.VersionLabelName
 		if workloadList, ok := workloadLists[cluster]; ok {
 			for _, w := range workloadList.Workloads {
 				labels := w.Labels
 				app := graph.Unknown
 				version := graph.Unknown
-				if v, ok := labels[appLabel]; ok {
-					app = v
+				if appLabelName, found := gi.Conf.GetAppLabelName(labels); found {
+					app = labels[appLabelName]
 				}
-				if v, ok := labels[versionLabel]; ok {
-					version = v
+				if verLabelName, found := gi.Conf.GetVersionLabelName(labels); found {
+					version = labels[verLabelName]
 				}
 				id, nodeType, _ := graph.Id(cluster, "", "", namespace, w.Name, app, version, a.GraphType)
 				if _, found := trafficMap[id]; !found {

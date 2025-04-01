@@ -20,7 +20,6 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
-	"github.com/kiali/kiali/models"
 )
 
 func TestRegistryServices(t *testing.T) {
@@ -98,7 +97,7 @@ func runningIstiodPod() *core_v1.Pod {
 			Namespace: "istio-system",
 			Labels: map[string]string{
 				"app":                     "istiod",
-				models.IstioRevisionLabel: "default",
+				config.IstioRevisionLabel: "default",
 			},
 		},
 		Status: core_v1.PodStatus{
@@ -114,7 +113,7 @@ func fakeIstiodDeployment(cluster string, manageExternal bool) *apps_v1.Deployme
 			Namespace: "istio-system",
 			Labels: map[string]string{
 				"app":                     "istiod",
-				models.IstioRevisionLabel: "default",
+				config.IstioRevisionLabel: "default",
 			},
 		},
 		Spec: apps_v1.DeploymentSpec{
@@ -156,7 +155,7 @@ func TestRefreshIstioCache(t *testing.T) {
 			Name:      "istio",
 			Namespace: "istio-system",
 			Labels: map[string]string{
-				models.IstioRevisionLabel: "default",
+				config.IstioRevisionLabel: "default",
 			},
 		},
 		Data: map[string]string{"mesh": ""},
@@ -183,7 +182,7 @@ func TestRefreshIstioCache(t *testing.T) {
 	cf := kubetest.NewFakeClientFactory(conf, k8sclients)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	discovery := istio.NewDiscovery(k8sclients, cache, conf)
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
+	cpm := NewControlPlaneMonitor(cache, cf, conf, discovery)
 
 	assert.Nil(cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName))
 	err := cpm.RefreshIstioCache(context.TODO())
@@ -209,7 +208,7 @@ func TestCancelingContextEndsPolling(t *testing.T) {
 	cf := kubetest.NewFakeClientFactory(conf, k8sclients)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	discovery := istio.NewDiscovery(k8sclients, cache, conf)
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
+	cpm := NewControlPlaneMonitor(cache, cf, conf, discovery)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -228,7 +227,7 @@ func TestPollingPopulatesCache(t *testing.T) {
 			Name:      "istio",
 			Namespace: "istio-system",
 			Labels: map[string]string{
-				models.IstioRevisionLabel: "default",
+				config.IstioRevisionLabel: "default",
 			},
 		},
 		Data: map[string]string{"mesh": ""},
@@ -256,7 +255,7 @@ func TestPollingPopulatesCache(t *testing.T) {
 	cf := kubetest.NewFakeClientFactory(conf, k8sclients)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	discovery := istio.NewDiscovery(k8sclients, cache, conf)
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
+	cpm := NewControlPlaneMonitor(cache, cf, conf, discovery)
 	// Make this really low so that we get something sooner.
 	cpm.pollingInterval = time.Millisecond * 1
 

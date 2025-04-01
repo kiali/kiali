@@ -142,7 +142,8 @@ func TestResponseThroughput(t *testing.T) {
 		ThroughputType: "response",
 	}
 
-	appender.appendGraph(trafficMap, "bookinfo", client)
+	gi := &graph.GlobalInfo{Conf: config.Get(), PromClient: client}
+	appender.appendGraph(trafficMap, "bookinfo", gi)
 
 	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)
@@ -318,7 +319,8 @@ func TestRequestThroughput(t *testing.T) {
 		ThroughputType: "request",
 	}
 
-	appender.appendGraph(trafficMap, "bookinfo", client)
+	gi := &graph.GlobalInfo{Conf: config.Get(), PromClient: client}
+	appender.appendGraph(trafficMap, "bookinfo", gi)
 
 	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)

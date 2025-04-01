@@ -14,12 +14,12 @@ type GenericMultiMatchChecker struct {
 	ObjectGVK             schema.GroupVersionKind
 	Keys                  []models.IstioValidationKey
 	Selectors             map[int]map[string]string
-	WorkloadsPerNamespace map[string]models.WorkloadList
+	WorkloadsPerNamespace map[string]models.Workloads
 	Path                  string
 	skipSelSubj           bool
 }
 
-func PeerAuthenticationMultiMatchChecker(cluster string, objectGVK schema.GroupVersionKind, pa []*security_v1.PeerAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
+func PeerAuthenticationMultiMatchChecker(cluster string, objectGVK schema.GroupVersionKind, pa []*security_v1.PeerAuthentication, workloadsPerNamespace map[string]models.Workloads) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(pa))
 	for i, p := range pa {
@@ -47,7 +47,7 @@ func PeerAuthenticationMultiMatchChecker(cluster string, objectGVK schema.GroupV
 	}
 }
 
-func RequestAuthenticationMultiMatchChecker(cluster string, objectGVK schema.GroupVersionKind, ra []*security_v1.RequestAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
+func RequestAuthenticationMultiMatchChecker(cluster string, objectGVK schema.GroupVersionKind, ra []*security_v1.RequestAuthentication, workloadsPerNamespace map[string]models.Workloads) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(ra))
 	for i, r := range ra {
@@ -76,13 +76,13 @@ func RequestAuthenticationMultiMatchChecker(cluster string, objectGVK schema.Gro
 	}
 }
 
-func SidecarSelectorMultiMatchChecker(cluster string, objectGVK schema.GroupVersionKind, sc []*networking_v1.Sidecar, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
+func SidecarSelectorMultiMatchChecker(cluster string, objectGVK schema.GroupVersionKind, sc []*networking_v1.Sidecar, workloadsPerNamespace map[string]models.Workloads) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(sc))
 	i := 0
 	for _, s := range sc {
-		for _, wls := range workloadsPerNamespace {
-			if s.Namespace != wls.Namespace {
+		for ns, _ := range workloadsPerNamespace {
+			if s.Namespace != ns {
 				// Workloads from Sidecar's own Namespaces only are considered in Selector
 				continue
 			}
@@ -227,12 +227,12 @@ func (m GenericMultiMatchChecker) multiMatchSubjects() ReferenceMap {
 			continue
 		}
 
-		for _, wls := range m.WorkloadsPerNamespace {
-			for _, w := range wls.Workloads {
+		for ns, workloads := range m.WorkloadsPerNamespace {
+			for _, w := range workloads {
 				if !selector.Matches(labels.Set(w.Labels)) {
 					continue
 				}
-				workloadKey := models.BuildKey(w.WorkloadGVK, w.Name, wls.Namespace, m.Cluster)
+				workloadKey := models.BuildKey(w.WorkloadGVK, w.Name, ns, m.Cluster)
 				workloadSubjects.Add(workloadKey, subjectKey)
 			}
 		}

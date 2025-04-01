@@ -91,6 +91,11 @@ type WorkloadItem struct {
 	// Labels for Workload
 	Labels map[string]string `json:"labels"`
 
+	// Namespace of a workload member of an application
+	// required: true
+	// example: bookinfo
+	Namespace string `json:"namespace"`
+
 	// List of service accounts involved in this application
 	// required: true
 	ServiceAccountNames []string `json:"serviceAccountNames"`

@@ -18,11 +18,11 @@ import (
 
 func NewIstioStatusService(
 	conf *config.Config,
-	homeClusterSAClient kubernetes.ClientInterface,
-	userClients map[string]kubernetes.ClientInterface,
-	tracing *TracingService,
-	workloads *WorkloadService,
 	discovery istio.MeshDiscovery,
+	homeClusterSAClient kubernetes.ClientInterface,
+	tracing *TracingService,
+	userClients map[string]kubernetes.ClientInterface,
+	workloads *WorkloadService,
 ) IstioStatusService {
 	return IstioStatusService{
 		conf:                conf,
@@ -54,15 +54,21 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 	if !iss.conf.ExternalServices.Istio.ComponentStatuses.Enabled || !iss.conf.ExternalServices.Istio.IstioAPIEnabled {
 		return kubernetes.IstioComponentStatus{}, nil
 	}
+	result := kubernetes.IstioComponentStatus{}
 
-	// TODO: Multi-primary and external controlplane support.
-	// Right now this only gets the status of the control plane in the home cluster.
-	ics, err := iss.getIstioComponentStatus(ctx, iss.conf.KubernetesConfig.ClusterName)
-	if err != nil {
-		return nil, err
+	for cluster := range iss.userClients {
+		ics, err := iss.getIstioComponentStatus(ctx, cluster)
+		if err != nil {
+			// istiod should be running
+			return nil, err
+		}
+		result.Merge(ics)
 	}
 
-	return ics.Merge(iss.getAddonComponentStatus()), nil
+	// for local cluster only get addons
+	result.Merge(iss.getAddonComponentStatus(iss.conf.KubernetesConfig.ClusterName))
+
+	return result, nil
 }
 
 func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, cluster string) (kubernetes.IstioComponentStatus, error) {
@@ -86,6 +92,7 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 	}
 
 	var istiodStatus kubernetes.IstioComponentStatus
+	var isManaged = false
 	for _, cp := range mesh.ControlPlanes {
 		if cp.Cluster.Name == cluster {
 			istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
@@ -96,8 +103,16 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 				IsCore:    true,
 			})
 		}
+		for _, cl := range cp.ManagedClusters {
+			if cl.Name == cluster {
+				isManaged = true
+				break
+			}
+		}
 	}
-	if len(istiodStatus) == 0 {
+
+	// if no control plane and no any other control plane which manages this cluster
+	if len(istiodStatus) == 0 && !isManaged {
 		istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
 			Cluster:   cluster,
 			Name:      "istiod",
@@ -108,7 +123,7 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 	}
 
 	// Autodiscover gateways.
-	gateways, err := iss.workloads.GetAllGateways(ctx, cluster)
+	gateways, err := iss.workloads.GetAllGateways(ctx, cluster, "")
 	if err != nil {
 		// Don't error on gateways since they are non-essential.
 		log.Debugf("Unable to get gateway workloads when building istio component status. Cluster: %s. Err: %s", cluster, err)
@@ -208,7 +223,7 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster
 
 	// Map workloads there by app name
 	for _, workload := range workloads {
-		appLabel := labels.Set(workload.Labels).Get("app")
+		appLabel := labels.Set(workload.Labels).Get(config.IstioAppLabel)
 		if appLabel == "" {
 			continue
 		}
@@ -282,7 +297,7 @@ func GetWorkloadStatus(wl models.Workload) string {
 	return status
 }
 
-func (iss *IstioStatusService) getAddonComponentStatus() kubernetes.IstioComponentStatus {
+func (iss *IstioStatusService) getAddonComponentStatus(cluster string) kubernetes.IstioComponentStatus {
 	var wg sync.WaitGroup
 	wg.Add(4)
 
@@ -296,16 +311,16 @@ func (iss *IstioStatusService) getAddonComponentStatus() kubernetes.IstioCompone
 
 	ics := kubernetes.IstioComponentStatus{}
 
-	go iss.getAddonStatus("prometheus", true, extServices.Prometheus.IsCore, &extServices.Prometheus.Auth, extServices.Prometheus.URL, extServices.Prometheus.HealthCheckUrl, staChan, &wg)
-	go iss.getAddonStatus("grafana", extServices.Grafana.Enabled, extServices.Grafana.IsCore, &extServices.Grafana.Auth, extServices.Grafana.InternalURL, extServices.Grafana.HealthCheckUrl, staChan, &wg)
-	go iss.getTracingStatus("tracing", extServices.Tracing.Enabled, extServices.Tracing.IsCore, staChan, &wg)
+	go iss.getAddonStatus(cluster, "prometheus", true, extServices.Prometheus.IsCore, &extServices.Prometheus.Auth, extServices.Prometheus.URL, extServices.Prometheus.HealthCheckUrl, staChan, &wg)
+	go iss.getAddonStatus(cluster, "grafana", extServices.Grafana.Enabled, extServices.Grafana.IsCore, &extServices.Grafana.Auth, extServices.Grafana.InternalURL, extServices.Grafana.HealthCheckUrl, staChan, &wg)
+	go iss.getTracingStatus(cluster, "tracing", extServices.Tracing.Enabled, extServices.Tracing.IsCore, staChan, &wg)
 
 	// Custom dashboards may use the main Prometheus config
 	customProm := extServices.CustomDashboards.Prometheus
 	if customProm.URL == "" {
 		customProm = extServices.Prometheus
 	}
-	go iss.getAddonStatus("custom dashboards", extServices.CustomDashboards.Enabled, extServices.CustomDashboards.IsCore, &customProm.Auth, customProm.URL, customProm.HealthCheckUrl, staChan, &wg)
+	go iss.getAddonStatus(cluster, "custom dashboards", extServices.CustomDashboards.Enabled, extServices.CustomDashboards.IsCore, &customProm.Auth, customProm.URL, customProm.HealthCheckUrl, staChan, &wg)
 
 	wg.Wait()
 
@@ -317,7 +332,7 @@ func (iss *IstioStatusService) getAddonComponentStatus() kubernetes.IstioCompone
 	return ics
 }
 
-func (iss *IstioStatusService) getAddonStatus(name string, enabled bool, isCore bool, auth *config.Auth, url string, healthCheckUrl string, staChan chan<- kubernetes.IstioComponentStatus, wg *sync.WaitGroup) {
+func (iss *IstioStatusService) getAddonStatus(cluster string, name string, enabled bool, isCore bool, auth *config.Auth, url string, healthCheckUrl string, staChan chan<- kubernetes.IstioComponentStatus, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	// When the addOn is disabled, don't perform any check
@@ -331,7 +346,7 @@ func (iss *IstioStatusService) getAddonStatus(name string, enabled bool, isCore 
 	}
 
 	if auth.UseKialiToken {
-		auth.Token = iss.homeClusterSAClient.GetToken()
+		auth.Token = iss.userClients[cluster].GetToken()
 	}
 
 	status := kubernetes.ComponentHealthy
@@ -344,14 +359,15 @@ func (iss *IstioStatusService) getAddonStatus(name string, enabled bool, isCore 
 
 	staChan <- kubernetes.IstioComponentStatus{
 		kubernetes.ComponentStatus{
-			Name:   name,
-			Status: status,
-			IsCore: isCore,
+			Cluster: cluster,
+			Name:    name,
+			Status:  status,
+			IsCore:  isCore,
 		},
 	}
 }
 
-func (iss *IstioStatusService) getTracingStatus(name string, enabled bool, isCore bool, staChan chan<- kubernetes.IstioComponentStatus, wg *sync.WaitGroup) {
+func (iss *IstioStatusService) getTracingStatus(cluster string, name string, enabled bool, isCore bool, staChan chan<- kubernetes.IstioComponentStatus, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	if !enabled {
@@ -368,9 +384,10 @@ func (iss *IstioStatusService) getTracingStatus(name string, enabled bool, isCor
 
 	staChan <- kubernetes.IstioComponentStatus{
 		kubernetes.ComponentStatus{
-			Name:   name,
-			Status: status,
-			IsCore: isCore,
+			Cluster: cluster,
+			Name:    name,
+			Status:  status,
+			IsCore:  isCore,
 		},
 	}
 }

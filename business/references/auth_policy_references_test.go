@@ -15,20 +15,16 @@ import (
 
 func prepareTestForAuthPolicy(ap *security_v1.AuthorizationPolicy, vs *networking_v1.VirtualService, se *networking_v1.ServiceEntry) models.IstioReferences {
 	drReferences := AuthorizationPolicyReferences{
-		Namespace: "bookinfo",
-		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-			{Name: "bookinfo2"},
-			{Name: "bookinfo3"},
-		},
+		Conf:                  config.Get(),
+		Namespace:             "bookinfo",
+		Namespaces:            []string{"bookinfo", "bookinfo2", "bookinfo3"},
 		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{ap},
 		ServiceEntries:        []*networking_v1.ServiceEntry{se},
 		VirtualServices:       []*networking_v1.VirtualService{vs},
-		WorkloadsPerNamespace: map[string]models.WorkloadList{
-			"istio-system": data.CreateWorkloadList("istio-system",
-				data.CreateWorkloadListItem("istiod", map[string]string{"app": "istio-ingressgateway"}),
-			),
-		},
+		WorkloadsPerNamespace: map[string]models.Workloads{
+			"istio-system": {
+				data.CreateWorkload("istiod", map[string]string{"app": "istio-ingressgateway"}),
+			}},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("foo-dev", "istio-system"),
 	}
 	return *drReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.AuthorizationPolicies, Namespace: ap.Namespace, Name: ap.Name}]

@@ -7,6 +7,7 @@ import (
 
 	"github.com/prometheus/common/model"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/log"
@@ -62,11 +63,12 @@ func (a ResponseTimeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 		graph.CheckError(err)
 	}
 
-	a.appendGraph(trafficMap, a.Namespaces[namespaceInfo.Namespace], globalInfo.PromClient)
+	a.appendGraph(trafficMap, a.Namespaces[namespaceInfo.Namespace], globalInfo)
 }
 
-func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespaceInfo graph.NamespaceInfo, client *prometheus.Client) {
+func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespaceInfo graph.NamespaceInfo, gi *graph.GlobalInfo) {
 	namespace := namespaceInfo.Name
+	client := gi.PromClient
 	// create map to quickly look up responseTime
 	responseTimeMap := make(map[string]float64)
 	duration := a.Namespaces[namespace].Duration
@@ -91,8 +93,8 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 				namespace,
 				int(duration.Seconds()), // range duration for the query
 				groupBy)
-			incomingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-			a.populateResponseTimeMap(responseTimeMap, &incomingVector)
+			incomingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), gi.Conf, a)
+			a.populateResponseTimeMap(responseTimeMap, &incomingVector, gi.Conf)
 		}
 
 		// 1) Incoming: query destination telemetry to capture namespace services' incoming traffic
@@ -109,8 +111,8 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
-		incomingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-		a.populateResponseTimeMap(responseTimeMap, &incomingVector)
+		incomingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), gi.Conf, a)
+		a.populateResponseTimeMap(responseTimeMap, &incomingVector, gi.Conf)
 
 		// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
 		query = fmt.Sprintf(`sum(rate(%s{%s,source_workload_namespace="%s"}[%vs])) by (%s) / sum(rate(%s{%s,source_workload_namespace="%s"}[%vs])) by (%s) > 0`,
@@ -124,8 +126,8 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
-		outgoingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-		a.populateResponseTimeMap(responseTimeMap, &outgoingVector)
+		outgoingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), gi.Conf, a)
+		a.populateResponseTimeMap(responseTimeMap, &outgoingVector, gi.Conf)
 
 	} else {
 		log.Tracef("Generating responseTime for quantile [%.2f]; namespace = %v", quantile, namespace)
@@ -142,8 +144,8 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 				namespace,
 				int(duration.Seconds()), // range duration for the query
 				groupBy)
-			incomingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-			a.populateResponseTimeMap(responseTimeMap, &incomingVector)
+			incomingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), gi.Conf, a)
+			a.populateResponseTimeMap(responseTimeMap, &incomingVector, gi.Conf)
 		}
 
 		// 1) Incoming: query destination telemetry to capture namespace services' incoming traffic
@@ -156,8 +158,8 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
-		incomingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-		a.populateResponseTimeMap(responseTimeMap, &incomingVector)
+		incomingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), gi.Conf, a)
+		a.populateResponseTimeMap(responseTimeMap, &incomingVector, gi.Conf)
 
 		// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
 		query = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{%s,source_workload_namespace="%s"}[%vs])) by (%s)) > 0`,
@@ -167,8 +169,8 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
-		outgoingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-		a.populateResponseTimeMap(responseTimeMap, &outgoingVector)
+		outgoingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), gi.Conf, a)
+		a.populateResponseTimeMap(responseTimeMap, &outgoingVector, gi.Conf)
 	}
 
 	applyResponseTime(trafficMap, responseTimeMap)
@@ -185,7 +187,7 @@ func applyResponseTime(trafficMap graph.TrafficMap, responseTimeMap map[string]f
 	}
 }
 
-func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string]float64, vector *model.Vector) {
+func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string]float64, vector *model.Vector, conf *config.Config) {
 	skipRequestsGrpc := a.Rates.Grpc != graph.RateRequests
 	skipRequestsHttp := a.Rates.Http != graph.RateRequests
 
@@ -232,7 +234,7 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		val := float64(s.Value)
 
 		// handle unusual destinations
-		destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, _ := util.HandleDestination(sourceCluster, sourceWlNs, sourceWl, destCluster, string(lDestSvcNs), string(lDestSvc), string(lDestSvcName), string(lDestWlNs), string(lDestWl), string(lDestApp), string(lDestVer))
+		destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, _ := util.HandleDestination(sourceCluster, sourceWlNs, sourceWl, destCluster, string(lDestSvcNs), string(lDestSvc), string(lDestSvcName), string(lDestWlNs), string(lDestWl), string(lDestApp), string(lDestVer), conf)
 
 		if util.IsBadDestTelemetry(destCluster, destClusterOk, destSvcNs, destSvc, destSvcName, destWl) {
 			continue

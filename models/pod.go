@@ -134,8 +134,12 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 	pod.Status = string(p.Status.Phase)
 	pod.StatusMessage = string(p.Status.Message)
 	pod.StatusReason = string(p.Status.Reason)
-	_, pod.AppLabel = p.Labels[conf.IstioLabels.AppLabelName]
-	_, pod.VersionLabel = p.Labels[conf.IstioLabels.VersionLabelName]
+	if appLabelName, found := conf.GetAppLabelName(p.Labels); found {
+		_, pod.AppLabel = p.Labels[appLabelName]
+	}
+	if verLabelName, found := conf.GetVersionLabelName(p.Labels); found {
+		_, pod.VersionLabel = p.Labels[verLabelName]
+	}
 	pod.ServiceAccountName = p.Spec.ServiceAccountName
 }
 

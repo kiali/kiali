@@ -134,21 +134,21 @@ exports[`GraphLegend test should render correctly 1`] = `
       Node Colors
       <div
         className="kiali_fxx5dxr"
-        key="node-color-normal.svg"
+        key="node-color-healthy.svg"
       >
         <span
           className="kiali_fzoxfwf"
         >
           <img
-            alt="Normal"
+            alt="Healthy"
             className=""
-            src="node-color-normal.svg"
+            src="node-color-healthy.svg"
           />
         </span>
         <span
           className="kiali_f7pgfh0"
         >
-          Normal
+          Healthy
         </span>
       </div>
       <div
@@ -380,21 +380,21 @@ exports[`GraphLegend test should render correctly 1`] = `
       Traffic Animation
       <div
         className="kiali_fxx5dxr"
-        key="traffic-normal-request.svg"
+        key="traffic-healthy-request.svg"
       >
         <span
           className="kiali_fzoxfwf"
         >
           <img
-            alt="Normal Request"
+            alt="Healthy Request"
             className=""
-            src="traffic-normal-request.svg"
+            src="traffic-healthy-request.svg"
           />
         </span>
         <span
           className="kiali_f7pgfh0"
         >
-          Normal Request
+          Healthy Request
         </span>
       </div>
       <div
@@ -450,7 +450,7 @@ exports[`GraphLegend test should render correctly 1`] = `
         >
           <img
             alt="Circuit Breaker"
-            className="kiali_fc81d57"
+            className="kiali_f8j7sv3"
             src="node-badge-circuit-breaker.svg"
           />
         </span>
@@ -469,7 +469,7 @@ exports[`GraphLegend test should render correctly 1`] = `
         >
           <img
             alt="Fault Injection"
-            className="kiali_fc81d57"
+            className="kiali_f8j7sv3"
             src="node-badge-fault-injection.svg"
           />
         </span>
@@ -488,7 +488,7 @@ exports[`GraphLegend test should render correctly 1`] = `
         >
           <img
             alt="Gateway"
-            className="kiali_fc81d57"
+            className="kiali_f8j7sv3"
             src="node-badge-gateways.svg"
           />
         </span>
@@ -507,7 +507,7 @@ exports[`GraphLegend test should render correctly 1`] = `
         >
           <img
             alt="Mirroring"
-            className="kiali_fc81d57"
+            className="kiali_f8j7sv3"
             src="node-badge-mirroring.svg"
           />
         </span>
@@ -526,7 +526,7 @@ exports[`GraphLegend test should render correctly 1`] = `
         >
           <img
             alt="Missing Sidecar"
-            className="kiali_fc81d57"
+            className="kiali_f8j7sv3"
             src="node-badge-missing-sidecar.svg"
           />
         </span>
@@ -545,7 +545,7 @@ exports[`GraphLegend test should render correctly 1`] = `
         >
           <img
             alt="Request Timeout"
-            className="kiali_fc81d57"
+            className="kiali_f8j7sv3"
             src="node-badge-request-timeout.svg"
           />
         </span>
@@ -564,7 +564,7 @@ exports[`GraphLegend test should render correctly 1`] = `
         >
           <img
             alt="Traffic Shifting / TCP Traffic Shifting"
-            className="kiali_fc81d57"
+            className="kiali_f8j7sv3"
             src="node-badge-traffic-shifting.svg"
           />
         </span>
@@ -583,7 +583,7 @@ exports[`GraphLegend test should render correctly 1`] = `
         >
           <img
             alt="Traffic Source"
-            className="kiali_fc81d57"
+            className="kiali_f8j7sv3"
             src="node-badge-traffic-source.svg"
           />
         </span>
@@ -602,7 +602,7 @@ exports[`GraphLegend test should render correctly 1`] = `
         >
           <img
             alt="Virtual Service / Request Routing"
-            className="kiali_fc81d57"
+            className="kiali_f8j7sv3"
             src="node-badge-virtual-services.svg"
           />
         </span>
@@ -621,7 +621,7 @@ exports[`GraphLegend test should render correctly 1`] = `
         >
           <img
             alt="Workload Entry"
-            className="kiali_fc81d57"
+            className="kiali_f8j7sv3"
             src="node-badge-workload-entry.svg"
           />
         </span>

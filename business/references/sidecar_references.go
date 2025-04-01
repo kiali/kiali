@@ -7,18 +7,20 @@ import (
 
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util"
 )
 
 type SidecarReferences struct {
-	Sidecars              []*networking_v1.Sidecar
+	Conf                  *config.Config
 	Namespace             string
 	Namespaces            models.Namespaces
-	ServiceEntries        []*networking_v1.ServiceEntry
 	RegistryServices      []*kubernetes.RegistryService
-	WorkloadsPerNamespace map[string]models.WorkloadList
+	ServiceEntries        []*networking_v1.ServiceEntry
+	Sidecars              []*networking_v1.Sidecar
+	WorkloadsPerNamespace map[string]models.Workloads
 }
 
 func (n SidecarReferences) References() models.IstioReferencesMap {
@@ -38,7 +40,7 @@ func (n SidecarReferences) References() models.IstioReferencesMap {
 					if hostNs == "*" || hostNs == "~" || hostNs == "." || dnsName == "*" {
 						continue
 					}
-					fqdn := kubernetes.ParseHost(dnsName, hostNs)
+					fqdn := kubernetes.ParseHost(dnsName, hostNs, n.Conf)
 
 					configRef := n.getConfigReferences(fqdn, hostNs)
 					references.ObjectReferences = append(references.ObjectReferences, configRef...)
@@ -106,10 +108,10 @@ func (n SidecarReferences) getWorkloadReferences(sc *networking_v1.Sidecar) []mo
 		selector := labels.SelectorFromSet(sc.Spec.WorkloadSelector.Labels)
 
 		// Sidecar searches Workloads from own namespace
-		for _, wl := range n.WorkloadsPerNamespace[sc.Namespace].Workloads {
-			wlLabelSet := labels.Set(wl.Labels)
+		for _, w := range n.WorkloadsPerNamespace[sc.Namespace] {
+			wlLabelSet := labels.Set(w.Labels)
 			if selector.Matches(wlLabelSet) {
-				result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: sc.Namespace})
+				result = append(result, models.WorkloadReference{Name: w.Name, Namespace: sc.Namespace})
 			}
 		}
 	}

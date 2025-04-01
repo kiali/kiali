@@ -40,7 +40,7 @@ import screenfull, { Screenfull } from 'screenfull';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { timeRangeSelector } from '../../store/Selectors';
-import { PFColors, PFColorVal } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import { AccessLogModal } from 'components/Envoy/AccessLogModal';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { location, router, URLParam } from 'app/History';
@@ -73,17 +73,17 @@ type ReduxProps = {
 };
 
 export type WorkloadPodLogsProps = ReduxProps & {
-  app?: string;
   cluster?: string;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   pods: Pod[];
+  waypointServiceFilter?: string;
   waypoints?: WaypointInfo[];
   workload: string;
 };
 
 type ContainerOption = {
-  color: PFColorVal;
+  color: PFColors;
   displayName: string;
   isAmbient: boolean;
   isProxy: boolean;
@@ -433,7 +433,8 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                                 </Button>
                               </Tooltip>
                             )}
-
+                          </ToolbarItem>
+                          <ToolbarItem style={{ alignSelf: 'center' }}>
                             <TextInput
                               id="log_hide"
                               name="log_hide"
@@ -595,7 +596,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                     >
                       <KialiIcon.Info key={`al-i-ki`} className={checkInfoIcon} color={proxyContainerColor} />
                     </Tooltip>
-                    {this.props.waypoints && (
+                    {this.props.waypoints && this.props.waypoints.length > 0 && (
                       <>
                         <Checkbox
                           id={`waypoint-${c.displayName}`}
@@ -1219,7 +1220,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         namespace,
         podName,
         this.props.workload,
-        this.props.app,
+        this.props.waypointServiceFilter,
         c.name,
         maxLines,
         sinceTime,
@@ -1237,7 +1238,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             namespace,
             podName,
             this.props.workload,
-            this.props.app,
+            this.props.waypointServiceFilter,
             c.name,
             maxLines,
             sinceTime,

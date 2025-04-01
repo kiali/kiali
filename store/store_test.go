@@ -1,7 +1,10 @@
 package store_test
 
 import (
+	"context"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -140,6 +143,18 @@ func TestItemsReturnsWholeMap(t *testing.T) {
 	require.Equal(99, contents["key2"])
 }
 
+func TestItemsReturnsCopy(t *testing.T) {
+	require := require.New(t)
+
+	testStore := store.New[string, int]()
+	testStore.Replace(map[string]int{"key1": 42, "key2": 99})
+
+	contents := testStore.Items()
+	contents["key1"] = 52
+
+	require.Equal(42, testStore.Items()["key1"])
+}
+
 func TestDeleteKey(t *testing.T) {
 	require := require.New(t)
 
@@ -153,4 +168,42 @@ func TestDeleteKey(t *testing.T) {
 	require.Equal(uint(2), testStore.Version())
 
 	testStore.Remove("nonexistent")
+}
+
+func TestVersionIsThreadsafe(t *testing.T) {
+	duration := time.Millisecond * 100
+	ctx, cancel := context.WithTimeout(context.Background(), duration)
+	defer cancel()
+
+	testStore := store.New[string, int]()
+	testStore.Replace(map[string]int{"key": 0})
+
+	finished := &sync.WaitGroup{}
+	finished.Add(1)
+	go func(ctx context.Context) {
+		defer finished.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				testStore.Version()
+			}
+		}
+	}(ctx)
+	finished.Add(1)
+	go func(ctx context.Context) {
+		defer finished.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				prev, _ := testStore.Get("key")
+				testStore.Set("key", prev+1)
+			}
+		}
+	}(ctx)
+
+	finished.Wait()
 }

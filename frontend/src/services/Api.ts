@@ -50,7 +50,7 @@ import { ComponentStatus, IstiodResourceThresholds } from '../types/IstioStatus'
 import { TracingInfo, TracingResponse, TracingSingleResponse } from '../types/TracingInfo';
 import { ControlPlane, MeshDefinition, MeshQuery } from '../types/Mesh';
 import { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
-import { IstioMetricsMap, MetricsPerNamespace, MetricsStatsResult } from '../types/Metrics';
+import { IstioMetricsMap, MetricsPerNamespace, MetricsStatsResult, ResourceUsageMetricsMap } from '../types/Metrics';
 import { Namespace } from '../types/Namespace';
 import { KialiCrippledFeatures, ServerConfig } from '../types/ServerConfig';
 import { StatusState } from '../types/StatusState';
@@ -240,6 +240,46 @@ export const getControlPlaneMetrics = (
   );
 };
 
+export const getResourceUsageMetrics = (
+  namespace: string,
+  workload: string,
+  params: IstioMetricsOptions,
+  cluster?: string
+): Promise<ApiResponse<Readonly<ResourceUsageMetricsMap>>> => {
+  const queryParams: QueryParams<IstioMetricsOptions> = { ...params };
+
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+
+  return newRequest<Readonly<ResourceUsageMetricsMap>>(
+    HTTP_VERBS.GET,
+    urls.resourceUsageMetrics(namespace, workload),
+    queryParams,
+    {}
+  );
+};
+
+export const getZtunnelDashboard = (
+  namespace: string,
+  controlPlane: string,
+  params: IstioMetricsOptions,
+  cluster?: string
+): Promise<ApiResponse<Readonly<DashboardModel>>> => {
+  const queryParams: QueryParams<IstioMetricsOptions> = { ...params };
+
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+
+  return newRequest<Readonly<DashboardModel>>(
+    HTTP_VERBS.GET,
+    urls.ztunnelDashboard(namespace, controlPlane),
+    queryParams,
+    {}
+  );
+};
+
 // comma separated list of namespaces
 export const getClustersMetrics = (
   namespaces: string,
@@ -268,14 +308,8 @@ export const getOutboundTrafficPolicyMode = (): Promise<ApiResponse<OutboundTraf
   return newRequest<OutboundTrafficPolicy>(HTTP_VERBS.GET, urls.outboundTrafficPolicyMode(), {}, {});
 };
 
-export const getIstioStatus = (cluster?: string): Promise<ApiResponse<ComponentStatus[]>> => {
-  const queryParams: ClusterParam = {};
-
-  if (cluster) {
-    queryParams.clusterName = cluster;
-  }
-
-  return newRequest<ComponentStatus[]>(HTTP_VERBS.GET, urls.istioStatus(), queryParams, {});
+export const getIstioStatus = (): Promise<ApiResponse<ComponentStatus[]>> => {
+  return newRequest<ComponentStatus[]>(HTTP_VERBS.GET, urls.istioStatus(), {}, {});
 };
 
 export const getIstioCertsInfo = (): Promise<ApiResponse<CertsInfo[]>> => {
@@ -1069,7 +1103,7 @@ export const getPodLogs = (
   namespace: string,
   name: string,
   workload: string,
-  app?: string,
+  service?: string,
   container?: string,
   maxLines?: number,
   sinceTime?: number,
@@ -1107,8 +1141,8 @@ export const getPodLogs = (
     params.workload = workload;
   }
 
-  if (app) {
-    params.app = app;
+  if (service) {
+    params.service = service;
   }
 
   return newRequest<PodLogs>(HTTP_VERBS.GET, urls.podLogs(namespace, name), params, {});

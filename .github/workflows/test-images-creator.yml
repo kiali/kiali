@@ -22,7 +22,7 @@ on:
         type: choice
         description: Which images should be built
         default: both
-        options: 
+        options:
         - integration
         - cypress
         - both
@@ -51,7 +51,7 @@ on:
       QUAY_PASSWORD:
         description: 'A quay user password passed from the caller workflow'
         required: true
-    
+
 
 jobs:
   build_and_push_integration_tests:
@@ -64,25 +64,25 @@ jobs:
       INT_TESTS_CONTAINER_VERSION: ${{ inputs.images_tag }}
       CYPRESS_TESTS_CONTAINER_VERSION: ${{ inputs.images_tag }}
     steps:
-      - name: Log information
-        run: |
-          echo "Branch": ${{ inputs.release_branch }}
-          echo "Quay organization": ${{ inputs.quay_org }}
-          echo "Images tag": ${{ inputs.images_tag }}
-          echo "Builde mode": ${{ inputs.build_mode }}
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.release_branch }}
-      - name: Login to Quay.io
-        uses: docker/login-action@v3
-        with:
-          registry: quay.io
-          username: ${{ secrets.QUAY_USER }}
-          password: ${{ secrets.QUAY_PASSWORD }}
-      - name: "Build integration test image"
-        run: |
-          make container-build-int-tests container-push-int-tests-quay
+    - name: Log information
+      run: |
+        echo "Branch": ${{ inputs.release_branch }}
+        echo "Quay organization": ${{ inputs.quay_org }}
+        echo "Images tag": ${{ inputs.images_tag }}
+        echo "Builde mode": ${{ inputs.build_mode }}
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.release_branch }}
+    - name: Login to Quay.io
+      uses: docker/login-action@v3
+      with:
+        registry: quay.io
+        username: ${{ secrets.QUAY_USER }}
+        password: ${{ secrets.QUAY_PASSWORD }}
+    - name: "Build integration test image"
+      run: |
+        make container-build-int-tests container-push-int-tests-quay
 
   build_and_push_cypress_tests:
     name: Generate and push cypress test docker images
@@ -94,22 +94,22 @@ jobs:
       INT_TESTS_CONTAINER_VERSION: ${{ inputs.images_tag }}
       CYPRESS_TESTS_CONTAINER_VERSION: ${{ inputs.images_tag }}
     steps:
-      - name: Log information
-        run: |
-          echo "Branch": ${{ inputs.release_branch }}
-          echo "Quay organization": ${{ inputs.quay_org }}
-          echo "Images tag": ${{ inputs.images_tag }}
-          echo "Builde mode": ${{ inputs.build_mode }}
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.release_branch }}
-      - name: Login to Quay.io
-        uses: docker/login-action@v3
-        with:
-          registry: quay.io
-          username: ${{ secrets.QUAY_USER }}
-          password: ${{ secrets.QUAY_PASSWORD }}
-      - name: "Build cypress test image"
-        run: |
-          make container-build-cypress-tests container-push-cypress-tests-quay
+    - name: Log information
+      run: |
+        echo "Branch": ${{ inputs.release_branch }}
+        echo "Quay organization": ${{ inputs.quay_org }}
+        echo "Images tag": ${{ inputs.images_tag }}
+        echo "Builde mode": ${{ inputs.build_mode }}
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.release_branch }}
+    - name: Login to Quay.io
+      uses: docker/login-action@v3
+      with:
+        registry: quay.io
+        username: ${{ secrets.QUAY_USER }}
+        password: ${{ secrets.QUAY_PASSWORD }}
+    - name: "Build cypress test image"
+      run: |
+        make container-build-cypress-tests container-push-cypress-tests-quay

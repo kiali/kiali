@@ -7,18 +7,7 @@ import { Workload } from 'types/Workload';
 import { EnvoyProxyDump, Pod } from 'types/IstioObjects';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import {
-  Button,
-  ButtonVariant,
-  Card,
-  CardBody,
-  Grid,
-  GridItem,
-  Tab,
-  Tabs,
-  Tooltip,
-  TooltipPosition
-} from '@patternfly/react-core';
+import { Button, ButtonVariant, Card, CardBody, Tab, Tabs, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { SummaryTableBuilder } from './tables/BaseTable';
 import { Namespace } from 'types/Namespace';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -32,7 +21,6 @@ import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { RenderComponentScroll } from 'components/Nav/Page';
 import { DashboardRef } from 'types/Runtimes';
 import { CustomMetrics } from 'components/Metrics/CustomMetrics';
-import { serverConfig } from 'config';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { location, router } from '../../app/History';
 import {
@@ -42,6 +30,7 @@ import {
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
 import { Theme, TimeInMilliseconds } from '../../types/Common';
 import { subTabStyle } from 'styles/TabStyles';
+import { getAppLabelName, getVersionLabelName } from 'config/ServerConfig';
 
 const resources: string[] = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
 
@@ -291,8 +280,10 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     const SummaryWriterComp = builder[0];
     const summaryWriter = builder[1];
     const height = this.state.tabHeight - 226;
-    const app = this.props.workload.labels[serverConfig.istioLabels.appLabelName];
-    const version = this.props.workload.labels[serverConfig.istioLabels.versionLabelName];
+    const appLabelName = getAppLabelName(this.props.workload.labels);
+    const verLabelName = getVersionLabelName(this.props.workload.labels);
+    const app = appLabelName ? this.props.workload.labels[appLabelName] : '';
+    const version = verLabelName ? this.props.workload.labels[verLabelName] : '';
     const envoyMetricsDashboardRef = this.getEnvoyMetricsDashboardRef();
     let filteredEnvoyTabs = envoyTabs;
 
@@ -348,15 +339,16 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                 </div>
               ) : this.showMetrics() && envoyMetricsDashboardRef ? (
                 <CustomMetrics
-                  lastRefreshAt={this.props.lastRefreshAt}
-                  namespace={this.props.namespace}
                   app={app}
-                  version={version}
-                  workload={this.props.workload!.name}
-                  template={envoyMetricsDashboardRef.template}
+                  appLabelName={appLabelName}
+                  data-test="envoy-metrics-component"
                   embedded={true}
                   height={this.state.tabHeight - 40 - 24 + 13}
-                  data-test="envoy-metrics-component"
+                  lastRefreshAt={this.props.lastRefreshAt}
+                  namespace={this.props.namespace}
+                  template={envoyMetricsDashboardRef.template}
+                  version={version}
+                  workload={this.props.workload!.name}
                 />
               ) : (
                 <SummaryWriterComp
@@ -376,20 +368,16 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
 
     return (
       <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-        <Grid>
-          <GridItem span={12}>
-            <Tabs
-              id="envoy-details"
-              className={subTabStyle}
-              activeKey={this.state.activeKey}
-              onSelect={this.envoyHandleTabClick}
-              mountOnEnter={true}
-              unmountOnExit={true}
-            >
-              {tabs}
-            </Tabs>
-          </GridItem>
-        </Grid>
+        <Tabs
+          id="envoy-details"
+          className={subTabStyle}
+          activeKey={this.state.activeKey}
+          onSelect={this.envoyHandleTabClick}
+          mountOnEnter={true}
+          unmountOnExit={true}
+        >
+          {tabs}
+        </Tabs>
       </RenderComponentScroll>
     );
   }

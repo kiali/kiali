@@ -11,7 +11,6 @@ import { ActiveFiltersInfo } from 'types/Filters';
 import { TraceLabels } from './TraceLabels';
 
 interface SpanDetailsProps {
-  app?: string; // This is used to match the span (operationName) as this is different than the workload
   cluster?: string;
   externalURLProvider?: TracingUrlProvider;
   fromWaypoint: boolean;
@@ -19,6 +18,7 @@ interface SpanDetailsProps {
   namespace: string;
   target: string;
   traceID: string;
+  waypointServiceFilter?: string; // This is used to match the span (operationName) as this is different than the workload
 }
 
 export const SpanDetails: React.FC<SpanDetailsProps> = (props: SpanDetailsProps) => {
@@ -44,7 +44,7 @@ export const SpanDetails: React.FC<SpanDetailsProps> = (props: SpanDetailsProps)
             namespace={props.namespace}
             externalURLProvider={props.externalURLProvider}
             cluster={props.cluster}
-            target={props.app ? props.app : props.target}
+            target={props.waypointServiceFilter ? props.waypointServiceFilter : props.target}
             traceID={props.traceID}
             fromWaypoint={props.fromWaypoint}
           />

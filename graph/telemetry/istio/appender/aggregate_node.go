@@ -6,6 +6,7 @@ import (
 
 	"github.com/prometheus/common/model"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/log"
@@ -63,13 +64,13 @@ func (a AggregateNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalIn
 	}
 
 	if a.AggregateValue == "" {
-		a.appendGraph(trafficMap, namespaceInfo.Namespace, globalInfo.PromClient)
+		a.appendGraph(trafficMap, namespaceInfo.Namespace, globalInfo.PromClient, globalInfo.Conf)
 	} else {
-		a.appendNodeGraph(trafficMap, namespaceInfo.Namespace, globalInfo.PromClient)
+		a.appendNodeGraph(trafficMap, namespaceInfo.Namespace, globalInfo.PromClient, globalInfo.Conf)
 	}
 }
 
-func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client) {
+func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client, conf *config.Config) {
 	log.Tracef("Resolving request aggregates for namespace=[%s], aggregate=[%s]", namespace, a.Aggregate)
 	duration := a.Namespaces[namespace].Duration
 
@@ -93,8 +94,8 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	query := httpQuery
-	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-	a.injectAggregates(trafficMap, &vector)
+	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), conf, a)
+	a.injectAggregates(trafficMap, &vector, conf)
 
 	// 2) query for requests originating from a workload inside of the namespace
 	httpQuery = fmt.Sprintf(`sum(rate(%s{%s,source_workload_namespace="%s",%s!="unknown"}[%vs])) by (%s) > 0`,
@@ -105,11 +106,11 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	query = httpQuery
-	vector = promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-	a.injectAggregates(trafficMap, &vector)
+	vector = promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), conf, a)
+	a.injectAggregates(trafficMap, &vector, conf)
 }
 
-func (a AggregateNodeAppender) appendNodeGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client) {
+func (a AggregateNodeAppender) appendNodeGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client, conf *config.Config) {
 	log.Tracef("Resolving node request aggregates for namespace=[%s], aggregate=[%s=%s]", namespace, a.Aggregate, a.AggregateValue)
 	duration := a.Namespaces[namespace].Duration
 
@@ -131,11 +132,11 @@ func (a AggregateNodeAppender) appendNodeGraph(trafficMap graph.TrafficMap, name
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	query := httpQuery
-	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-	a.injectAggregates(trafficMap, &vector)
+	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), conf, a)
+	a.injectAggregates(trafficMap, &vector, conf)
 }
 
-func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vector *model.Vector) {
+func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vector *model.Vector, conf *config.Config) {
 	skipRequestsGrpc := a.Rates.Grpc != graph.RateRequests
 	skipRequestsHttp := a.Rates.Http != graph.RateRequests
 
@@ -201,7 +202,7 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 		}
 
 		// handle unusual destinations
-		destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, _ := util.HandleDestination(sourceCluster, sourceWlNs, sourceWl, destCluster, string(lDestSvcNs), string(lDestSvc), string(lDestSvcName), string(lDestWlNs), string(lDestWl), string(lDestApp), string(lDestVer))
+		destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, _ := util.HandleDestination(sourceCluster, sourceWlNs, sourceWl, destCluster, string(lDestSvcNs), string(lDestSvc), string(lDestSvcName), string(lDestWlNs), string(lDestWl), string(lDestApp), string(lDestVer), conf)
 
 		if util.IsBadDestTelemetry(destCluster, destClusterOk, destSvcNs, destSvc, destSvcName, destWl) {
 			continue

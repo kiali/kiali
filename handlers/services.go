@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util"
 )
@@ -140,7 +141,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := mux.Vars(r)
-	cluster := clusterNameFromQuery(queryParams)
+	cluster := clusterNameFromQuery(config.Get(), queryParams)
 
 	namespace := params["namespace"]
 	service := params["service"]
@@ -163,10 +164,10 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
-	serviceDetails, err := business.Svc.GetServiceDetails(r.Context(), cluster, namespace, service, rateInterval, queryTime)
+	serviceDetails, err := business.Svc.GetServiceDetails(r.Context(), cluster, namespace, service, rateInterval, queryTime, includeValidations)
 	if includeValidations && err == nil {
 		wg.Wait()
-		serviceDetails.Validations = istioConfigValidations
+		serviceDetails.Validations = istioConfigValidations.MergeValidations(serviceDetails.Validations)
 		err = errValidations
 	}
 
@@ -203,7 +204,7 @@ func ServiceUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := mux.Vars(r)
-	cluster := clusterNameFromQuery(queryParams)
+	cluster := clusterNameFromQuery(config.Get(), queryParams)
 
 	namespace := params["namespace"]
 	service := params["service"]

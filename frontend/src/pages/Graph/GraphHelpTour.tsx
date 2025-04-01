@@ -1,22 +1,13 @@
 import { PopoverPosition } from '@patternfly/react-core';
 import { TourStopInfo, TourInfo } from 'components/Tour/TourStop';
-import { GraphShortcuts } from './GraphToolbar/GraphShortcuts';
 import { t } from 'utils/I18nUtils';
-import { GraphShortcutsPF } from './GraphToolbar/GraphShortcutsPF';
+import { GraphShortcuts } from './GraphToolbar/GraphShortcuts';
 
 export const GraphTourStops: { [name: string]: TourStopInfo } = {
   ContextualMenu: {
     name: t('Contextual Menu'),
     description: t(
-      'Right-click a node or an edge to see the contextual menu with links to details, traffic and inbound/outbound metrics for the node or edge.'
-    ),
-    position: PopoverPosition.left,
-    distance: 250
-  },
-  ContextualMenuPF: {
-    name: t('Contextual Menu'),
-    description: t(
-      'Click kebab menu on a node label for links to details, traffic, inbound/outbound metrics and node graph.'
+      'Right-click or click kebab menu on a node label for links to details, traffic, inbound/outbound metrics and node graph.'
     ),
     position: PopoverPosition.left,
     distance: 250
@@ -36,13 +27,6 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     position: PopoverPosition.bottom
   },
   Graph: {
-    name: t('Graph'),
-    description:
-      "Click on a node or edge to see its summary and emphasize its end-to-end paths. Double-click a node to see a graph focused on that node.\nDouble-click an t('external namespace' node to navigate directly to the namespace in the node's text label. Shift-Drag to quickly zoom in.",
-    position: PopoverPosition.left,
-    distance: 250
-  },
-  GraphPF: {
     name: t('Graph'),
     description: t('Click on a node or edge to see its summary and emphasize its end-to-end paths.'),
     position: PopoverPosition.left,
@@ -84,11 +68,6 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     htmlDescription: GraphShortcuts,
     position: PopoverPosition.leftStart
   },
-  ShortcutsPF: {
-    name: t('Shortcuts'),
-    htmlDescription: GraphShortcutsPF,
-    position: PopoverPosition.leftStart
-  },
   SidePanel: {
     name: t('Side Panel'),
     description: t(
@@ -117,24 +96,6 @@ export const GraphTour: TourInfo = {
     GraphTourStops.TimeRange,
     GraphTourStops.Graph,
     GraphTourStops.ContextualMenu,
-    GraphTourStops.SidePanel,
-    GraphTourStops.Layout,
-    GraphTourStops.Legend
-  ]
-};
-
-export const GraphTourPF: TourInfo = {
-  name: t('GraphTour'),
-  stops: [
-    GraphTourStops.ShortcutsPF,
-    GraphTourStops.Namespaces,
-    GraphTourStops.GraphTraffic,
-    GraphTourStops.GraphType,
-    GraphTourStops.Display,
-    GraphTourStops.Find,
-    GraphTourStops.TimeRange,
-    GraphTourStops.GraphPF,
-    GraphTourStops.ContextualMenuPF,
     GraphTourStops.SidePanel,
     GraphTourStops.Layout,
     GraphTourStops.Legend

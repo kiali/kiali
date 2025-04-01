@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/kiali/kiali/graph/config/cytoscape"
+	config_common "github.com/kiali/kiali/graph/config/common"
 	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -33,7 +33,7 @@ type AggregateValueParam struct {
 	Name string `json:"aggregateValue"`
 }
 
-// swagger:parameters appMetrics appDetails graphApp graphAppVersion appDashboard appSpans appTraces errorTraces
+// swagger:parameters appMetrics appDetails graphApp graphAppVersion appDashboard appSpans appTraces errorTraces usageMetrics
 type AppParam struct {
 	// The app name (label value).
 	//
@@ -69,6 +69,61 @@ type ContainerParam struct {
 	Name string `json:"container"`
 }
 
+// swagger:parameters controlPlaneMetrics
+type ControlPlaneParam struct {
+	// The control plane for metric collection, etc.
+	//
+	// in: path
+	// required: true
+	Name string `json:"controlplane"`
+}
+
+// swagger:parameters customDashboard
+type DashboardParam struct {
+	// The dashboard resource name.
+	//
+	// in: path
+	// required: true
+	Name string `json:"dashboard"`
+}
+
+// swagger:parameters podLogs
+type DurationLogParam struct {
+	// Query time-range duration (Golang string duration). Duration starts on
+	// `sinceTime` if set, or the time for the first log message if not set.
+	//
+	// in: query
+	// required: false
+	Name string `json:"duration"`
+}
+
+// swagger:parameters istioConfigCreate istioConfigDetails istioConfigDelete istioConfigUpdate
+type GVKGroupParam struct {
+	// The GVK group in a group/value/kind specification.
+	//
+	// in: path
+	// required: true
+	Name string `json:"group"`
+}
+
+// swagger:parameters istioConfigCreate istioConfigDetails istioConfigDelete istioConfigUpdate
+type GVKKindParam struct {
+	// The GVK kind in a group/value/kind specification.
+	//
+	// in: path
+	// required: true
+	Name string `json:"kind"`
+}
+
+// swagger:parameters istioConfigCreate istioConfigDetails istioConfigDelete istioConfigUpdate
+type GVKVersionParam struct {
+	// The GVK version in a group/value/kind specification.
+	//
+	// in: path
+	// required: true
+	Name string `json:"version"`
+}
+
 // swagger:parameters podProxyLogging
 type LoggingParam struct {
 	// The log level for the pod's proxy.
@@ -78,7 +133,7 @@ type LoggingParam struct {
 	Level ProxyLogLevel `json:"level"`
 }
 
-// swagger:parameters istioConfigList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations podProxyDump podProxyResource podProxyLogging namespaceInfo
+// swagger:parameters istioConfigList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations podProxyDump podProxyResource podProxyLogging namespaceInfo controlPlaneMetrics ztunnelDashboard ztunnelConfigDump usageMetrics
 type NamespacePathParam struct {
 	// The namespace name.
 	//
@@ -105,16 +160,6 @@ type ObjectNameParam struct {
 	Name string `json:"object"`
 }
 
-// swagger:parameters istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype istioConfigCreate istioConfigCreateSubtype
-type ObjectTypeParam struct {
-	// The Istio object type.
-	//
-	// in: path
-	// required: true
-	// pattern: ^(gateways|virtualservices|destinationrules|serviceentries|rules|quotaspecs|quotaspecbindings)$
-	Name string `json:"object_type"`
-}
-
 // swagger:parameters istioConfigList istioConfigDetails serviceDetails serviceUpdate
 type ValidateParam struct {
 	// Enable validation or not
@@ -124,7 +169,7 @@ type ValidateParam struct {
 	Name string `json:"validate"`
 }
 
-// swagger:parameters podDetails podLogs podProxyDump podProxyResource podProxyLogging
+// swagger:parameters podDetails podLogs podProxyDump podProxyResource podProxyLogging ztunnelConfigDump
 type PodParam struct {
 	// The pod name.
 	//
@@ -160,16 +205,6 @@ type SinceTimeParam struct {
 	Name string `json:"sinceTime"`
 }
 
-// swagger:parameters podLogs
-type DurationLogParam struct {
-	// Query time-range duration (Golang string duration). Duration starts on
-	// `sinceTime` if set, or the time for the first log message if not set.
-	//
-	// in: query
-	// required: false
-	Name string `json:"duration"`
-}
-
 // swagger:parameters traceDetails
 type TraceIDParam struct {
 	// The trace ID.
@@ -179,16 +214,7 @@ type TraceIDParam struct {
 	Name string `json:"traceID"`
 }
 
-// swagger:parameters customDashboard
-type DashboardParam struct {
-	// The dashboard resource name.
-	//
-	// in: path
-	// required: true
-	Name string `json:"dashboard"`
-}
-
-// swagger:parameters workloadDetails workloadUpdate workloadValidations workloadMetrics graphWorkload workloadDashboard workloadSpans workloadTraces
+// swagger:parameters workloadDetails workloadUpdate workloadValidations workloadMetrics graphWorkload workloadDashboard workloadSpans workloadTraces ztunnelDashboard
 type WorkloadParam struct {
 	// The workload name.
 	//
@@ -238,15 +264,6 @@ type GraphTypeParam struct {
 	// in: query
 	// required: false
 	// default: workload
-	Name string `json:"graphType"`
-}
-
-// swagger:parameters graphApp graphAppVersion
-type AppGraphTypeParam struct {
-	// Graph type. Available graph types: [app, versionedApp].
-	//
-	// in: query
-	// required: true
 	Name string `json:"graphType"`
 }
 
@@ -475,7 +492,7 @@ type StepParam struct {
 
 // swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics
 type VersionParam struct {
-	// Filters metrics by the specified version.
+	// Filters metrics by the specified version
 	//
 	// in: query
 	// required: false
@@ -583,11 +600,11 @@ type SwaggTokenGeneratedResp struct {
 	Body authentication.UserSessionData
 }
 
-// HTTP status code 200 and cytoscapejs Config in data
+// HTTP status code 200 and graph Config in data
 // swagger:response graphResponse
 type GraphResponse struct {
 	// in:body
-	Body cytoscape.Config
+	Body config_common.Config
 }
 
 // HTTP status code 200 and IstioConfigList model in data

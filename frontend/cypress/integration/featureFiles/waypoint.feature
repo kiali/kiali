@@ -35,7 +35,7 @@ Feature: Kiali Waypoint related features
     And the user sees the L7 "waypoint" link
     And the link for the waypoint "waypoint" should redirect to a valid workload details
 
-    Scenario: [Workload details - waypoint] The workload details for a waypoint are valid
+  Scenario: [Workload details - waypoint] The workload details for a waypoint are valid
     Given user is at the details page for the "workload" "bookinfo/waypoint" located in the "" cluster
     Then the user sees the "L7" badge
     Then the user cannot see the "missing-sidecar" badge for "waypoint" workload in "bookinfo" namespace
@@ -50,16 +50,16 @@ Feature: Kiali Waypoint related features
     Then user goes to the waypoint "Services" subtab
     And validates Services data
     Then user goes to the waypoint "Info" subtab
-    And validates waypoint Info data
+    And validates waypoint Info data for "service"
 
-    Scenario: [Workload details - ztunnel] The workload details for a ztunnel are valid
+  Scenario: [Workload details - ztunnel] The workload details for a ztunnel are valid
     Given user is at the details page for the "workload" "istio-system/ztunnel" located in the "" cluster
     Then the user cannot see the "missing-sidecar" badge for "ztunnel" workload in "istio-system" namespace
     And the proxy status is "healthy"
     And the user validates the Ztunnel tab
 
   Scenario: [Traffic Graph] User sees ztunnel traffic
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
@@ -67,7 +67,7 @@ Feature: Kiali Waypoint related features
     Then 7 edges appear in the graph
 
   Scenario: [Traffic Graph] User sees no Ambient traffic
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
@@ -75,7 +75,7 @@ Feature: Kiali Waypoint related features
     Then 2 edges appear in the graph
 
   Scenario: [Traffic Graph] User sees all Ambient traffic
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
@@ -96,7 +96,7 @@ Feature: Kiali Waypoint related features
     And the "waypoint" node "does" exists
 
   Scenario: [Traffic Graph] User sees waypoint traffic
-    Given user is at the "graphpf" page
+    Given user is at the "graph" page
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
@@ -113,3 +113,256 @@ Feature: Kiali Waypoint related features
     When user clicks in the "LIST" view
     Then user sees a "LIST" "bookinfo" namespace
     And badge for "istio.io/use-waypoint=waypoint" is visible in the LIST view in the namespace "bookinfo"
+
+  Scenario: [Traffic] Waypoint for different namespaces working as expected
+    Given user is at the "graph" page
+    When user graphs "waypoint-differentns" namespaces
+    Then user sees the "waypoint-differentns" namespace
+    Then user opens traffic menu
+    And user "enables" "ambient" traffic option
+    And user "enables" "http" traffic option
+    Then user opens display menu
+    And user "disables" "waypoint proxies" option
+    Then 2 edges appear in the graph
+    And the "echo-server" node "does" exists
+    And the "curl-client" node "does" exists
+
+  Scenario: [Traffic] Waypoint for different namespaces working as expected with waypoints
+    Given user is at the "graph" page
+    When user graphs "waypoint-differentns" namespaces
+    Then user sees the "waypoint-differentns" namespace
+    Then user opens traffic menu
+    And user "enables" "ambient" traffic option
+    And user "enables" "http" traffic option
+    Then user opens display menu
+    And user "enables" "waypoint proxies" option
+    Then 4 edges appear in the graph
+    Then user opens traffic menu
+    And user "disables" "http" traffic option
+    Then 2 edges appear in the graph
+
+  Scenario: [Traffic] Waypoint for all
+    Given user is at the "graph" page
+    When user graphs "waypoint-forall" namespaces
+    Then user sees the "waypoint-forall" namespace
+    Then user opens traffic menu
+    And user "enables" "ambient" traffic option
+    And user "enables" "http" traffic option
+    Then user opens display menu
+    And user "disables" "waypoint proxies" option
+    Then 2 edges appear in the graph
+    And the "echo-server" node "does" exists
+    And the "curl-client" node "does" exists
+
+  Scenario: [Traffic] Waypoint for all with waypoint
+    Given user is at the "graph" page
+    When user graphs "waypoint-forall" namespaces
+    Then user sees the "waypoint-forall" namespace
+    Then user opens traffic menu
+    And user "enables" "ambient" traffic option
+    And user "enables" "http" traffic option
+    Then user opens display menu
+    And user "enables" "waypoint proxies" option
+    Then 4 edges appear in the graph
+    And the "cgw" node "does" exists
+    Then user opens traffic menu
+    And user "disables" "http" traffic option
+    Then 2 edges appear in the graph
+
+  Scenario: [Traffic] Waypoint for none
+    Given user is at the "graph" page
+    When user graphs "waypoint-fornone" namespaces
+    Then user sees the "waypoint-fornone" namespace
+    Then user opens traffic menu
+    And user "enables" "ambient" traffic option
+    And user "enables" "http" traffic option
+    Then user opens display menu
+    And user "disables" "waypoint proxies" option
+    Then 2 edges appear in the graph
+    And the "echo-server" node "does" exists
+    And the "curl-client" node "does" exists
+
+  Scenario: [Traffic] Waypoint for none with waypoint proxies
+    Given user is at the "graph" page
+    When user graphs "waypoint-fornone" namespaces
+    Then user sees the "waypoint-fornone" namespace
+    Then user opens traffic menu
+    And user "enables" "ambient" traffic option
+    And user "enables" "http" traffic option
+    Then user opens display menu
+    And user "enables" "waypoint proxies" option
+    Then 2 edges appear in the graph
+    Then user opens traffic menu
+    And user "disables" "http" traffic option
+    Then 0 edges appear in the graph
+
+  Scenario: [Traffic] Waypoint for service
+    Given user is at the "graph" page
+    When user graphs "waypoint-forservice" namespaces
+    Then user sees the "waypoint-forservice" namespace
+    Then user opens traffic menu
+    And user "enables" "http" traffic option
+    Then user opens display menu
+    And user "disables" "waypoint proxies" option
+    Then 2 edges appear in the graph
+    And the "echo-server" node "does" exists
+    And the "curl-client" node "does" exists
+
+  Scenario: [Traffic] Waypoint for service with waypoints
+    Given user is at the "graph" page
+    When user graphs "waypoint-forservice" namespaces
+    Then user sees the "waypoint-forservice" namespace
+    Then user opens traffic menu
+    And user "enables" "http" traffic option
+    Then user opens display menu
+    And user "enables" "waypoint proxies" option
+    Then 4 edges appear in the graph
+    And the "waypoint" node "does" exists
+    Then user opens traffic menu
+    And user "disables" "http" traffic option
+    Then 2 edges appear in the graph
+
+  @skip-istio-1-23
+  Scenario: [Traffic] Waypoint for workload
+    Given user is at the "graph" page
+    When user graphs "waypoint-forworkload" namespaces
+    Then user sees the "waypoint-forworkload" namespace
+    Then user opens traffic menu
+    And user "enables" "http" traffic option
+    Then user opens display menu
+    And user "disables" "waypoint proxies" option
+    Then 1 edges appear in the graph
+    And the "unknown" service "does" exists
+    And the "curl-client" node "does" exists
+
+  @skip-istio-1-23
+  Scenario: [Traffic] Waypoint for workload with waypoints
+    Given user is at the "graph" page
+    When user graphs "waypoint-forworkload" namespaces
+    Then user sees the "waypoint-forworkload" namespace
+    Then user opens traffic menu
+    And user "enables" "http" traffic option
+    Then user opens display menu
+    And user "enables" "waypoint proxies" option
+    Then 3 edges appear in the graph
+    And the "bwaypoint" node "does" exists
+    Then user opens traffic menu
+    And user "disables" "http" traffic option
+    Then 2 edges appear in the graph
+
+  Scenario: [Traffic] Waypoint override
+    Given user is at the "graph" page
+    When user graphs "waypoint-override" namespaces
+    Then user sees the "waypoint-override" namespace
+    Then user opens traffic menu
+    And user "enables" "http" traffic option
+    Then user opens display menu
+    And user "disables" "waypoint proxies" option
+    Then 2 edges appear in the graph
+    And the "echo-server" node "does" exists
+    And the "curl-client" node "does" exists
+
+  Scenario: [Traffic] Waypoint override with waypoints
+    Given user is at the "graph" page
+    When user graphs "waypoint-override" namespaces
+    Then user sees the "waypoint-override" namespace
+    Then user opens traffic menu
+    And user "enables" "http" traffic option
+    Then user opens display menu
+    And user "enables" "waypoint proxies" option
+    Then 4 edges appear in the graph
+    And the "use-this" node "does" exists
+    Then user opens traffic menu
+    And user "disables" "http" traffic option
+    Then 2 edges appear in the graph
+
+  Scenario: [Waypoint details] The waypoint details for a waypoint in different ns are valid
+    Given user is at the details page for the "workload" "waypoint-differentns/curl-client" located in the "" cluster
+    And the user sees the L7 "egress-gateway" link
+    And the link for the waypoint "egress-gateway" should redirect to a valid workload details
+    When the user goes to the "Waypoint" tab
+    Then user goes to the waypoint "Services" subtab
+    And validates Services data with "1" rows and "echo-service" workload, "waypoint-differentns" namespace, "namespace" label for, "pfbadge-S" badge
+    Then user goes to the waypoint "Info" subtab
+    And validates waypoint Info data for "service"
+
+  Scenario: [Waypoint details] The waypoint details for a waypoint for all are valid
+    Given user is at the details page for the "workload" "waypoint-forall/curl-client" located in the "" cluster
+    And the user sees the L7 "cgw" link
+    And the link for the waypoint "cgw" should redirect to a valid workload details
+    When the user goes to the "Waypoint" tab
+    Then user goes to the waypoint "Services" subtab
+    And validates Services data with "1" rows and "echo-service" workload, "waypoint-forall" namespace, "namespace" label for, "pfbadge-S" badge
+    Then user goes to the waypoint "Workloads" subtab
+    And validates Services data with "2" rows and "echo-server" workload, "waypoint-forall" namespace, "namespace" label for, "pfbadge-W" badge
+    Then user goes to the waypoint "Info" subtab
+    And validates waypoint Info data for "all"
+
+  Scenario: [Waypoint details] The waypoint details for a waypoint for none are valid
+    Given user is at the details page for the "workload" "waypoint-fornone/curl-client" located in the "" cluster
+    And the user doesn't see a L7 link
+    And user is at the details page for the "workload" "waypoint-fornone/waypoint" located in the "" cluster
+    When the user goes to the "Waypoint" tab
+    Then the "Services" subtab doesn't exist
+    Then the "Workloads" subtab doesn't exist
+    Then user goes to the waypoint "Info" subtab
+    And validates waypoint Info data for "none"
+
+  Scenario: [Waypoint details] The waypoint details for a waypoint for service are valid
+    Given user is at the details page for the "workload" "waypoint-forservice/curl-client" located in the "" cluster
+    And the user sees the L7 "waypoint" link
+    And the link for the waypoint "waypoint" should redirect to a valid workload details
+    When the user goes to the "Waypoint" tab
+    Then user goes to the waypoint "Services" subtab
+    And validates Services data with "1" rows and "echo-service" workload, "waypoint-forservice" namespace, "namespace" label for, "pfbadge-S" badge
+    Then user goes to the waypoint "Info" subtab
+    And validates waypoint Info data for "service"
+
+  Scenario: [Waypoint details] The waypoint details for a waypoint for workload are valid
+    Given user is at the details page for the "workload" "waypoint-forworkload/echo-server" located in the "" cluster
+    And the user sees the L7 "bwaypoint" link
+    And the link for the waypoint "waypoint" should redirect to a valid workload details
+    When the user goes to the "Waypoint" tab
+    Then user goes to the waypoint "Workloads" subtab
+    And validates Services data with "1" rows and "echo-server" workload, "waypoint-forworkload" namespace, "workload" label for, "pfbadge-W" badge
+    Then user goes to the waypoint "Info" subtab
+    And validates waypoint Info data for "workload"
+
+  Scenario: [Waypoint details] The waypoint details for a waypoint override are valid
+  # TODO: This shouldn't be right
+    Given user is at the details page for the "workload" "waypoint-override/curl-client" located in the "" cluster
+    And the user sees the L7 "waypoint" link
+    And the link for the waypoint "waypoint" should redirect to a valid workload details
+    When the user goes to the "Waypoint" tab
+    Then user goes to the waypoint "Services" subtab
+    And validates Services data with "1" rows and "echo-service" workload, "waypoint-override" namespace, "namespace" label for, "pfbadge-S" badge
+    Then user goes to the waypoint "Info" subtab
+    And validates waypoint Info data for "service"
+  # TODO: End-Todo
+    Then user is at the details page for the "workload" "waypoint-override/echo-server" located in the "" cluster
+    And the user sees the L7 "use-this" link
+    And the link for the waypoint "use-this" should redirect to a valid workload details
+    When the user goes to the "Waypoint" tab
+    Then user goes to the waypoint "Services" subtab
+    And validates Services data with "1" rows and "echo-service" workload, "waypoint-override" namespace, "service" label for, "pfbadge-S" badge
+    Then user goes to the waypoint "Info" subtab
+    And validates waypoint Info data for "service"
+
+  @skip-istio-1-23
+  Scenario: [Traffic] Sidecar Ambient traffic
+    Given user is at the "graph" page
+    When user graphs "test-ambient,test-sidecar" namespaces
+    Then user sees the "test-ambient" namespace
+    Then user sees the "test-sidecar" namespace
+    Then user opens traffic menu
+    And user "enables" "http" traffic option
+    Then user opens display menu
+    And user "enables" "security" option
+    Then 9 edges appear in the graph
+    Then security "appears" in the graph
+    Then user opens traffic menu
+    And user "disables" "ambient" traffic option
+    Then 5 edges appear in the graph
+    Then user "enables" "ambient" traffic option
+    Then user "disables" "tcp" traffic option
+    Then 4 edges appear in the graph

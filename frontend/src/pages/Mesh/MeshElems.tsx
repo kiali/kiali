@@ -18,7 +18,6 @@ import { NamespaceInfo } from 'types/NamespaceInfo';
 import { PFColors } from 'components/Pf/PfColors';
 
 // Utilities for working with PF Topology
-// - most of these add cytoscape-like functions
 
 export type NodeMap = Map<string, NodeModel>;
 
@@ -168,6 +167,9 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap): void => {
         break;
       case MeshInfraType.WAYPOINT:
         pfBadge = PFBadges.Waypoint;
+        break;
+      case MeshInfraType.ZTUNNEL:
+        pfBadge = PFBadges.ZTUNNEL;
         break;
       default:
         console.warn(`MeshElems: Unexpected infraType [${infraType}] `);

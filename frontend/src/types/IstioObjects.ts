@@ -3,8 +3,8 @@ import { ServicePort } from './ServiceInfo';
 import { ProxyStatus } from './Health';
 import { TimeInSeconds } from './Common';
 import { KIALI_RELATED_LABEL, KIALI_WIZARD_LABEL } from 'components/IstioWizards/WizardActions';
-import { PFColorVal } from 'components/Pf/PfColors';
 import { TypeMeta } from './Kubernetes';
+import { PFColors } from 'components/Pf/PfColors';
 
 // Common types
 
@@ -258,7 +258,7 @@ export type AccessLog = {
 
 export type LogEntry = {
   accessLog?: AccessLog;
-  color?: PFColorVal;
+  color?: PFColors;
   message: string;
   severity: string;
   timestamp: string;
@@ -278,11 +278,11 @@ export enum LogType {
 }
 
 export interface PodLogsQuery {
-  app?: string;
   container?: string;
   duration?: string;
   logType?: LogType;
   maxLines?: number;
+  service?: string;
   sinceTime?: number;
   workload?: string;
 }

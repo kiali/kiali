@@ -31,8 +31,8 @@ const (
 
 type ComponentStatus struct {
 	// Cluster where this component is deployed.
-	// Can be unknown or external for external services.
-	Cluster string `json:"-"`
+	// Can be the name of external cluster
+	Cluster string `json:"cluster"`
 
 	// Namespace where the component is deployed.
 	// This field is ignored when marshalling to JSON.
@@ -264,20 +264,20 @@ func MatchPortAppProtocolWithValidProtocols(appProtocol *string) bool {
 }
 
 // GatewayNames extracts the gateway names for easier matching
-func GatewayNames(gateways []*networking_v1.Gateway) map[string]struct{} {
+func GatewayNames(gateways []*networking_v1.Gateway, conf *config.Config) map[string]struct{} {
 	var empty struct{}
 	names := make(map[string]struct{})
 	for _, gw := range gateways {
-		names[ParseHost(gw.Name, gw.Namespace).String()] = empty
+		names[ParseHost(gw.Name, gw.Namespace, conf).String()] = empty
 	}
 	return names
 }
 
 // K8sGatewayNames extracts the gateway names for easier matching
-func K8sGatewayNames(gateways []*k8s_networking_v1.Gateway) map[string]k8s_networking_v1.Gateway {
+func K8sGatewayNames(gateways []*k8s_networking_v1.Gateway, conf *config.Config) map[string]k8s_networking_v1.Gateway {
 	names := make(map[string]k8s_networking_v1.Gateway)
 	for _, gw := range gateways {
-		names[ParseHost(gw.Name, gw.Namespace).String()] = *gw
+		names[ParseHost(gw.Name, gw.Namespace, conf).String()] = *gw
 	}
 	return names
 }
@@ -310,10 +310,10 @@ func DestinationRuleHasMeshWideMTLSEnabled(destinationRule *networking_v1.Destin
 	return DestinationRuleHasMTLSEnabledForHost("*.local", destinationRule)
 }
 
-func DestinationRuleHasNamespaceWideMTLSEnabled(namespace string, destinationRule *networking_v1.DestinationRule) (bool, string) {
+func DestinationRuleHasNamespaceWideMTLSEnabled(namespace string, destinationRule *networking_v1.DestinationRule, conf *config.Config) (bool, string) {
 	// Following the suggested procedure to enable namespace-wide mTLS, host might be '*.namespace.svc.cluster.local'
 	// https://istio.io/docs/tasks/security/authn-policy/#namespace-wide-policy
-	nsHost := fmt.Sprintf("*.%s.%s", namespace, config.Get().ExternalServices.Istio.IstioIdentityDomain)
+	nsHost := fmt.Sprintf("*.%s.%s", namespace, conf.ExternalServices.Istio.IstioIdentityDomain)
 	return DestinationRuleHasMTLSEnabledForHost(nsHost, destinationRule)
 }
 
@@ -380,9 +380,9 @@ func ClusterNameFromIstiod(conf config.Config, k8s ClientInterface) (string, err
 	return clusterName, nil
 }
 
-func GatewayAPIClasses(ambientEnabled bool) []config.GatewayAPIClass {
+func GatewayAPIClasses(ambientEnabled bool, conf *config.Config) []config.GatewayAPIClass {
 	result := []config.GatewayAPIClass{}
-	for _, gwClass := range config.Get().ExternalServices.Istio.GatewayAPIClasses {
+	for _, gwClass := range conf.ExternalServices.Istio.GatewayAPIClasses {
 		if gwClass.ClassName != "" && gwClass.Name != "" {
 			result = append(result, gwClass)
 		}

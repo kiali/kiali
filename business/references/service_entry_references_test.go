@@ -15,12 +15,9 @@ import (
 
 func prepareTestForServiceEntry(ap *security_v1.AuthorizationPolicy, dr *networking_v1.DestinationRule, se *networking_v1.ServiceEntry, sc *networking_v1.Sidecar) models.IstioReferences {
 	drReferences := ServiceEntryReferences{
-		Namespace: "bookinfo",
-		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-			{Name: "bookinfo2"},
-			{Name: "bookinfo3"},
-		},
+		Conf:                  config.Get(),
+		Namespace:             "bookinfo",
+		Namespaces:            []string{"bookinfo", "bookinfo2", "bookinfo3"},
 		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{ap},
 		ServiceEntries:        []*networking_v1.ServiceEntry{se},
 		Sidecars:              []*networking_v1.Sidecar{sc},

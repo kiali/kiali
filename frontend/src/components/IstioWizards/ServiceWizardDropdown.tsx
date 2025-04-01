@@ -37,6 +37,7 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { t } from 'utils/I18nUtils';
+import { getAppLabelName, getVersionLabelName } from 'config/ServerConfig';
 
 type ReduxProps = {
   istioAPIEnabled: boolean;
@@ -62,9 +63,6 @@ type Props = ReduxProps & {
   virtualServices: VirtualService[];
   workloads: WorkloadOverview[];
 };
-
-const appLabelName = serverConfig.istioLabels.appLabelName;
-const versionLabelName = serverConfig.istioLabels.versionLabelName;
 
 const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
   const [isDeleting, setIsDeleting] = React.useState<boolean>(false);
@@ -99,11 +97,9 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
   const getValidWorkloads = (): WorkloadOverview[] => {
     return props.workloads.filter(workload => {
       // A workload could skip the version label on this check only when there is a single workload list
-      return (
-        workload.labels &&
-        workload.labels[appLabelName] &&
-        (workload.labels[versionLabelName] || props.workloads.length === 1)
-      );
+      const appLabelName = getAppLabelName(workload.labels);
+      const verLabelName = getVersionLabelName(workload.labels);
+      return workload.labels && appLabelName && (verLabelName || props.workloads.length === 1);
     });
   };
 
@@ -193,8 +189,10 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
 
   const hasMeshWorkloads = checkHasMeshWorkloads();
   const toolTipMsgActions = !hasMeshWorkloads
-    ? t('There are not Workloads with sidecar for this service')
-    : `There are not Workloads with ${appLabelName} and ${versionLabelName} labels`;
+    ? t('There are no Workloads with sidecar for this service')
+    : `There are no Workloads with ${serverConfig.istioLabels.appLabelName ?? 'app'} and ${
+        serverConfig.istioLabels.versionLabelName ?? 'version'
+      } labels`;
 
   const validWorkloads = getValidWorkloads();
   const validActions = hasMeshWorkloads && validWorkloads;

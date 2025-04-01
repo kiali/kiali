@@ -197,7 +197,7 @@ func NewRoutes(
 			"Config",
 			"GET",
 			"/api/config",
-			handlers.Config(conf, discovery),
+			handlers.Config(conf, kialiCache, discovery, clientFactory, prom),
 			true,
 		},
 		// swagger:route GET /crippled kiali getCrippledFeatures
@@ -216,7 +216,7 @@ func NewRoutes(
 			"Crippled",
 			"GET",
 			"/api/crippled",
-			handlers.CrippledFeatures,
+			handlers.CrippledFeatures(prom),
 			true,
 		},
 		// swagger:route GET /istio/permissions config getPermissions
@@ -235,7 +235,7 @@ func NewRoutes(
 			"IstioConfigPermissions",
 			"GET",
 			"/api/istio/permissions",
-			handlers.IstioConfigPermissions,
+			handlers.IstioConfigPermissions(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/istio config istioConfigList
@@ -255,7 +255,7 @@ func NewRoutes(
 			"IstioConfigList",
 			"GET",
 			"/api/namespaces/{namespace}/istio",
-			handlers.IstioConfigList,
+			handlers.IstioConfigList(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
 			true,
 		},
 		// swagger:route GET /istio config istioConfigListAll
@@ -275,7 +275,7 @@ func NewRoutes(
 			"IstioConfigListAll",
 			"GET",
 			"/api/istio/config",
-			handlers.IstioConfigList,
+			handlers.IstioConfigList(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/istio/{group}/{version}/{kind}/{object} config istioConfigDetails
@@ -297,7 +297,7 @@ func NewRoutes(
 			"IstioConfigDetails",
 			"GET",
 			"/api/namespaces/{namespace}/istio/{group}/{version}/{kind}/{object}",
-			handlers.IstioConfigDetails,
+			handlers.IstioConfigDetails(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
 			true,
 		},
 		// swagger:route DELETE /namespaces/{namespace}/istio/{group}/{version}/{kind}/{object} config istioConfigDelete
@@ -318,7 +318,7 @@ func NewRoutes(
 			"IstioConfigDelete",
 			"DELETE",
 			"/api/namespaces/{namespace}/istio/{group}/{version}/{kind}/{object}",
-			handlers.IstioConfigDelete,
+			handlers.IstioConfigDelete(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
 			true,
 		},
 		// swagger:route PATCH /namespaces/{namespace}/istio/{group}/{version}/{kind}/{object} config istioConfigUpdate
@@ -343,7 +343,7 @@ func NewRoutes(
 			"IstioConfigUpdate",
 			"PATCH",
 			"/api/namespaces/{namespace}/istio/{group}/{version}/{kind}/{object}",
-			handlers.IstioConfigUpdate,
+			handlers.IstioConfigUpdate(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
 			true,
 		},
 		// swagger:route POST /namespaces/{namespace}/istio/{group}/{version}/{kind} config istioConfigCreate
@@ -366,7 +366,7 @@ func NewRoutes(
 			"IstioConfigCreate",
 			"POST",
 			"/api/namespaces/{namespace}/istio/{group}/{version}/{kind}",
-			handlers.IstioConfigCreate,
+			handlers.IstioConfigCreate(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
 			true,
 		},
 		// swagger:route GET /clusters/services services serviceList
@@ -611,10 +611,10 @@ func NewRoutes(
 		//      200: workloadListResponse
 		//
 		{
-			"ClustersWorkloads",
+			"ClusterWorkloads",
 			"GET",
 			"/api/clusters/workloads",
-			handlers.ClustersWorkloads,
+			handlers.ClusterWorkloads(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/workloads/{workload} workloads workloadDetails
@@ -635,7 +635,7 @@ func NewRoutes(
 			"WorkloadDetails",
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}",
-			handlers.WorkloadDetails,
+			handlers.WorkloadDetails(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route PATCH /namespaces/{namespace}/workloads/{workload} workloads workloadUpdate
@@ -660,7 +660,7 @@ func NewRoutes(
 			"WorkloadUpdate",
 			"PATCH",
 			"/api/namespaces/{namespace}/workloads/{workload}",
-			handlers.WorkloadUpdate,
+			handlers.WorkloadUpdate(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /clusters/apps apps appList
@@ -680,7 +680,7 @@ func NewRoutes(
 			"ClustersApps",
 			"GET",
 			"/api/clusters/apps",
-			handlers.ClustersApps,
+			handlers.ClusterApps(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/apps/{app} apps appDetails
@@ -701,7 +701,7 @@ func NewRoutes(
 			"AppDetails",
 			"GET",
 			"/api/namespaces/{namespace}/apps/{app}",
-			handlers.AppDetails,
+			handlers.AppDetails(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces namespaces namespaceList
@@ -874,6 +874,27 @@ func NewRoutes(
 			handlers.ControlPlaneMetrics(handlers.DefaultPromClientSupplier),
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/{app}/usage_metrics resource usageMetrics
+		// ---
+		// Endpoint to fetch metrics to be displayed, related to cpu and memory usage
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
+		{
+			"UsageMetrics",
+			"GET",
+			"/api/namespaces/{namespace}/{app}/usage_metrics",
+			handlers.ResourceUsageMetrics(handlers.DefaultPromClientSupplier),
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/dashboard services serviceDashboard
 		// ---
 		// Endpoint to fetch dashboard to be displayed, related to a single service
@@ -935,6 +956,27 @@ func NewRoutes(
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}/dashboard",
 			handlers.WorkloadDashboard(conf, grafana),
+			true,
+		},
+		// swagger:route GET /namespaces/{namespace}/ztunnel/{workload}/dashboard workloads ztunnelDashboard
+		// ---
+		// Endpoint to fetch dashboard to be displayed, related to a ztunnel workload
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: dashboardResponse
+		//
+		{
+			"ZtunnelDashboard",
+			"GET",
+			"/api/namespaces/{namespace}/ztunnel/{workload}/dashboard",
+			handlers.ZtunnelDashboard(handlers.DefaultPromClientSupplier, conf, grafana),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/customdashboard/{dashboard} dashboards customDashboard
@@ -1057,7 +1099,7 @@ func NewRoutes(
 		//      500: internalError
 		//
 		{
-			"NamespaceTls",
+			"MeshTls",
 			"GET",
 			"/api/mesh/tls",
 			handlers.MeshTls,
@@ -1123,7 +1165,7 @@ func NewRoutes(
 			"IstioStatus",
 			"GET",
 			"/api/istio/status",
-			handlers.IstioStatus,
+			handlers.IstioStatus(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
 			true,
 		},
 		// swagger:route GET /namespaces/graph graphs graphNamespaces
@@ -1376,7 +1418,7 @@ func NewRoutes(
 			"PodDetails",
 			"GET",
 			"/api/namespaces/{namespace}/pods/{pod}",
-			handlers.PodDetails,
+			handlers.PodDetails(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/pods/{pod}/logs pods podLogs
@@ -1397,7 +1439,7 @@ func NewRoutes(
 			"PodLogs",
 			"GET",
 			"/api/namespaces/{namespace}/pods/{pod}/logs",
-			handlers.PodLogs,
+			handlers.PodLogs(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/pods/{pod}/config_dump pods podProxyDump
@@ -1423,7 +1465,7 @@ func NewRoutes(
 		},
 		// swagger:route GET /namespaces/{namespace}/pods/{pod}/config_dump/{resource} pods podProxyResource
 		// ---
-		// Endpoint to get pod logs
+		// Endpoint to get pod resource entries
 		//
 		//     Produces:
 		//     - application/json
@@ -1436,13 +1478,13 @@ func NewRoutes(
 		//      200: configDumpResource
 		//
 		{
-			"PodConfigDump",
+			"PodProxyResource",
 			"GET",
 			"/api/namespaces/{namespace}/pods/{pod}/config_dump/{resource}",
 			handlers.ConfigDumpResourceEntries,
 			true,
 		},
-		// swagger:route GET /api/namespaces/{namespace}/pods/{pod}/config_dump_ztunnel
+		// swagger:route GET /namespaces/{namespace}/pods/{pod}/config_dump_ztunnel
 		// ---
 		// Endpoint to get ztunnel pod config dump
 		//
@@ -1454,13 +1496,13 @@ func NewRoutes(
 		// responses:
 		//      500: internalError
 		//      404: notFoundError
-		//      200: ZtunnelConfigDump
+		//      200: ztunnelConfigDump
 		//
 		{
 			"ZtunnelConfigDump",
 			"GET",
 			"/api/namespaces/{namespace}/pods/{pod}/config_dump_ztunnel",
-			handlers.ConfigDumpZtunnel,
+			handlers.ConfigDumpZtunnel(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route POST /namespaces/{namespace}/pods/{pod}/logging pods podProxyLogging

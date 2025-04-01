@@ -33,7 +33,7 @@ type K8SClientFactoryMock struct {
 var _ kubernetes.ClientFactory = &K8SClientFactoryMock{}
 
 // Constructor
-// Deprecated: use NewFakeClientFactory instead since it doesn't rely on the global config.Get()
+// Deprecated: use NewFakeClientFactory or NewFakeClientFactoryWithClient instead since those doesn't rely on the global config.Get()
 func NewK8SClientFactoryMock(k8s kubernetes.ClientInterface) *K8SClientFactoryMock {
 	conf := config.Get()
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
@@ -42,6 +42,14 @@ func NewK8SClientFactoryMock(k8s kubernetes.ClientInterface) *K8SClientFactoryMo
 
 func NewFakeClientFactory(conf *config.Config, clients map[string]kubernetes.ClientInterface) *K8SClientFactoryMock {
 	return &K8SClientFactoryMock{conf: conf, Clients: clients}
+}
+
+// NewFakeClientFactoryWithClient lets you pass a single client instead of a map.
+func NewFakeClientFactoryWithClient(conf *config.Config, client kubernetes.ClientInterface) *K8SClientFactoryMock {
+	return &K8SClientFactoryMock{
+		conf:    conf,
+		Clients: map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client},
+	}
 }
 
 // Testing specific methods

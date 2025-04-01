@@ -16,7 +16,7 @@ import (
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/mesh"
-	"github.com/kiali/kiali/mesh/config/cytoscape"
+	"github.com/kiali/kiali/mesh/config/common"
 	"github.com/kiali/kiali/mesh/generator"
 	"github.com/kiali/kiali/observability"
 )
@@ -45,7 +45,7 @@ func GraphMesh(
 	globalInfo := mesh.NewGlobalInfo()
 	globalInfo.Business = business
 	globalInfo.ClientFactory = clientFactory
-	globalInfo.Config = conf
+	globalInfo.Conf = conf
 	globalInfo.Discovery = discovery
 	globalInfo.Grafana = grafana
 	globalInfo.KialiCache = kialiCache
@@ -78,8 +78,8 @@ func generateGraph(meshMap mesh.MeshMap, o mesh.Options) (int, interface{}) {
 
 	var vendorConfig interface{}
 	switch o.ConfigVendor {
-	case graph.VendorCytoscape:
-		vendorConfig = cytoscape.NewConfig(meshMap, o.ConfigOptions)
+	case graph.VendorCommon:
+		vendorConfig = common.NewConfig(meshMap, o.ConfigOptions)
 	default:
 		graph.Error(fmt.Sprintf("ConfigVendor [%s] not supported", o.ConfigVendor))
 	}

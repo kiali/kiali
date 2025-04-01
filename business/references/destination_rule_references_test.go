@@ -14,21 +14,18 @@ import (
 
 func prepareTestForDestinationRule(dr *networking_v1.DestinationRule, vs *networking_v1.VirtualService) models.IstioReferences {
 	drReferences := DestinationRuleReferences{
-		Namespace: "bookinfo",
-		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-			{Name: "bookinfo2"},
-			{Name: "bookinfo3"},
-		},
+		Conf:             config.Get(),
+		Namespace:        "bookinfo",
+		Namespaces:       []string{"bookinfo", "bookinfo2", "bookinfo3"},
 		DestinationRules: []*networking_v1.DestinationRule{dr},
 		VirtualServices:  []*networking_v1.VirtualService{vs},
-		WorkloadsPerNamespace: map[string]models.WorkloadList{
-			"test-namespace": data.CreateWorkloadList("test-namespace",
-				data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
-				data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
-				data.CreateWorkloadListItem("reviewsv3", appVersionLabel("reviews", "v3")),
-				data.CreateWorkloadListItem("reviewsv4", appVersionLabel("reviews", "v4"))),
-		},
+		WorkloadsPerNamespace: map[string]models.Workloads{
+			"test-namespace": {
+				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
+				data.CreateWorkload("reviewsv2", appVersionLabel("reviews", "v2")),
+				data.CreateWorkload("reviewsv3", appVersionLabel("reviews", "v3")),
+				data.CreateWorkload("reviewsv4", appVersionLabel("reviews", "v4")),
+			}},
 		ServiceEntries:   []*networking_v1.ServiceEntry{fakeServiceEntry()},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
 	}

@@ -12,7 +12,7 @@ import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { FormattedTraceInfo, fullIDStyle } from './FormattedTraceInfo';
 import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
-import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions';
+import { isParentKiosk, kioskContextMenuAction, kioskTracingAction } from '../../Kiosk/KioskActions';
 import { KialiIcon } from 'config/KialiIcon';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
 import { useKialiTranslation } from 'utils/I18nUtils';
@@ -27,6 +27,7 @@ type Props = ReduxProps & {
   externalURL?: string;
   formattedTrace: FormattedTraceInfo;
   graphURL: string;
+  traceId?: string;
 };
 
 const TracingTraceTitleComponent: React.FC<Props> = (props: Props) => {
@@ -50,15 +51,25 @@ const TracingTraceTitleComponent: React.FC<Props> = (props: Props) => {
     </DropdownItem>
   ];
 
-  if (props.externalURL) {
+  if (props.externalURL || isParentKiosk(props.kiosk)) {
     links.push(
-      <DropdownItem key="view_in_tracing" onClick={() => window.open(props.externalURL, '_blank')}>
+      <DropdownItem
+        key="view_in_tracing"
+        onClick={e => {
+          if (isParentKiosk(props.kiosk)) {
+            e.preventDefault();
+            kioskTracingAction(props.externalURL ? props.externalURL : '', props.traceId);
+          } else {
+            window.open(props.externalURL, '_blank');
+          }
+        }}
+      >
         {t('View in Tracing')} <ExternalLinkAltIcon />
       </DropdownItem>
     );
   }
 
-  if (props.comparisonURL) {
+  if (props.comparisonURL && !isParentKiosk(props.kiosk)) {
     links.push(
       <DropdownItem key="compare_with_similar_traces" onClick={() => window.open(props.comparisonURL, '_blank')}>
         {t('Compare with similar traces')} <ExternalLinkAltIcon />

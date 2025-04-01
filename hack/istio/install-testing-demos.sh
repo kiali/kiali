@@ -192,6 +192,13 @@ EOF
 
     echo "Deploying sleep demo ..."
     "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
+
+    echo "Deploying waypoint proxies ..."
+    "${SCRIPT_DIR}/ambient/install-waypoints.sh"
+
+    echo "Deploying sidecar-ambient ..."
+    "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh"
+
   else
     echo "Deploying bookinfo demo..."
     "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg -in ${ISTIO_NAMESPACE} -a ${ARCH} ${gateway_yaml:+-g ${gateway_yaml}} ${AMBIENT_ARGS_BOOKINFO}

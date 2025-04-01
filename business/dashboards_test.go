@@ -215,6 +215,10 @@ func TestDiscoveryMatcherWithComposition(t *testing.T) {
 
 func TestGetCustomDashboardRefs(t *testing.T) {
 	assert := assert.New(t)
+	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
 
 	// Setup mocks
 	service, prom := setupService("my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("1"), *fakeDashboard("2")})

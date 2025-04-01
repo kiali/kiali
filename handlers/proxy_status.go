@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+
+	"github.com/kiali/kiali/config"
 )
 
 func ConfigDump(w http.ResponseWriter, r *http.Request) {
@@ -15,7 +17,7 @@ func ConfigDump(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cluster := clusterNameFromQuery(r.URL.Query())
+	cluster := clusterNameFromQuery(config.Get(), r.URL.Query())
 	namespace := params["namespace"]
 	pod := params["pod"]
 
@@ -37,7 +39,7 @@ func ConfigDumpResourceEntries(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cluster := clusterNameFromQuery(r.URL.Query())
+	cluster := clusterNameFromQuery(config.Get(), r.URL.Query())
 	namespace := params["namespace"]
 	pod := params["pod"]
 	resource := params["resource"]

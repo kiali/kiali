@@ -16,13 +16,14 @@ const (
 )
 
 type MetricsLabelsBuilder struct {
-	side     string
+	conf     *config.Config
+	labelsKV []string
 	peerSide string
 	protocol string
-	labelsKV []string
+	side     string
 }
 
-func NewMetricsLabelsBuilder(direction string) *MetricsLabelsBuilder {
+func NewMetricsLabelsBuilder(direction string, conf *config.Config) *MetricsLabelsBuilder {
 	side := destination
 	peerSide := source
 	if direction == "outbound" {
@@ -30,8 +31,9 @@ func NewMetricsLabelsBuilder(direction string) *MetricsLabelsBuilder {
 		peerSide = destination
 	}
 	return &MetricsLabelsBuilder{
-		side:     side,
+		conf:     conf,
 		peerSide: peerSide,
+		side:     side,
 	}
 }
 
@@ -134,7 +136,7 @@ func (lb *MetricsLabelsBuilder) Aggregate(key, value string) *MetricsLabelsBuild
 
 // QueryScope adds scope labels, if configured
 func (lb *MetricsLabelsBuilder) QueryScope() *MetricsLabelsBuilder {
-	scope := config.Get().ExternalServices.Prometheus.QueryScope
+	scope := lb.conf.ExternalServices.Prometheus.QueryScope
 
 	for labelName, labelValue := range scope {
 		lb.Add(prometheus.SanitizeLabelName(labelName), labelValue)

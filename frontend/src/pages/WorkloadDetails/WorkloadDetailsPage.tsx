@@ -8,11 +8,11 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import { IstioMetrics } from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { CustomMetrics } from '../../components/Metrics/CustomMetrics';
-import { serverConfig } from '../../config/ServerConfig';
+import { getAppLabelName, getVersionLabelName, serverConfig } from '../../config/ServerConfig';
 import { WorkloadPodLogs } from './WorkloadPodLogs';
-import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
+import { DurationInSeconds, TimeInMilliseconds, TimeRange } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
-import { durationSelector } from '../../store/Selectors';
+import { durationSelector, timeRangeSelector } from '../../store/Selectors';
 import { ParameterizedTabs, activeTab } from '../../components/Tab/Tabs';
 import { TracesComponent } from 'components/TracingIntegration/TracesComponent';
 import { TracingInfo } from 'types/TracingInfo';
@@ -30,18 +30,19 @@ import { basicTabStyle } from 'styles/TabStyles';
 import { ZtunnelConfig } from '../../components/Ambient/ZtunnelConfig';
 import { WaypointConfig } from '../../components/Ambient/WaypointConfig';
 import { isGVKSupported } from '../../utils/IstioConfigUtils';
-import { Waypoint } from '../../types/Ambient';
 
 type WorkloadDetailsState = {
   cluster?: string;
   currentTab: string;
   error?: ErrorMsg;
   health?: WorkloadHealth;
+  waypointServiceFilter?: string;
   workload?: Workload;
 };
 
 type ReduxProps = {
   duration: DurationInSeconds;
+  rangeDuration: TimeRange;
   tracingInfo?: TracingInfo;
 };
 
@@ -123,6 +124,10 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
     return API.getWorkload(this.props.workloadId.namespace, this.props.workloadId.workload, params, cluster)
       .then(details => {
+        if (details.data.services && details.data.services.length > 0) {
+          this.setState({ waypointServiceFilter: details.data.services[0].name });
+        }
+
         this.setState({
           workload: details.data,
           health: WorkloadHealth.fromJson(
@@ -185,13 +190,13 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           <Tab title="Logs" eventKey={2} key="Logs" data-test="workload-details-logs-tab">
             {hasPods ? (
               <WorkloadPodLogs
-                app={this.state.workload?.labels['app']}
                 lastRefreshAt={this.props.lastRefreshAt}
                 namespace={this.props.workloadId.namespace}
                 workload={this.props.workloadId.workload}
                 pods={this.state.workload!.pods}
                 cluster={this.state.cluster}
                 waypoints={this.state.workload!.waypointWorkloads}
+                waypointServiceFilter={this.state.waypointServiceFilter}
               />
             ) : (
               <EmptyState variant={EmptyStateVariant.full}>
@@ -245,23 +250,20 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         tabsArray.push(
           <Tab eventKey={5} title="Traces" key="Traces">
             <TracesComponent
-              app={this.state.workload?.labels['app']}
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.workloadId.namespace}
               cluster={this.state.cluster}
               target={this.props.workloadId.workload}
               targetKind="workload"
               fromWaypoint={fromWaypoint}
+              waypointServiceFilter={this.state.waypointServiceFilter}
             />
           </Tab>
         );
       }
     }
 
-    if (
-      this.state.workload &&
-      (this.hasIstioSidecars(this.state.workload) || this.state.workload.ambient === Waypoint)
-    ) {
+    if (this.state.workload && (this.hasIstioSidecars(this.state.workload) || this.state.workload.isWaypoint)) {
       const envoyTab = (
         <Tab title="Envoy" eventKey={10} key="Envoy">
           {this.state.workload && (
@@ -277,13 +279,14 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       paramToTab['envoy'] = 10;
     }
 
-    if (this.state.workload && this.state.workload.ambient === 'ztunnel') {
+    if (this.state.workload && this.state.workload.isZtunnel) {
       const ztunnelTab = (
         <Tab title="Ztunnel" eventKey={11} key="Ztunnel">
           {this.state.workload && (
             <ZtunnelConfig
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.workloadId.namespace}
+              rangeDuration={this.props.rangeDuration}
               workload={this.state.workload}
             />
           )}
@@ -293,7 +296,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       paramToTab['ztunnel'] = 11;
     }
 
-    if (this.state.workload && this.state.workload.ambient === Waypoint) {
+    if (this.state.workload && this.state.workload.isWaypoint) {
       const waypointTab = (
         <Tab title="Waypoint" eventKey={12} key="Waypoint">
           {this.state.workload && <WaypointConfig workload={this.state.workload} />}
@@ -322,8 +325,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           // Ztunnel doesn't have Envoy
           hasIstioSidecars =
             hasIstioSidecars ||
-            (!!pod.containers &&
-              pod.containers.some(cont => cont.name === istioProxyName && workload.ambient !== 'ztunnel'));
+            (!!pod.containers && pod.containers.some(cont => cont.name === istioProxyName && !workload.isZtunnel));
         }
       });
     }
@@ -335,8 +337,10 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     const tabs: React.ReactNode[] = [];
 
     if (this.state.workload) {
-      const app = this.state.workload.labels[serverConfig.istioLabels.appLabelName];
-      const version = this.state.workload.labels[serverConfig.istioLabels.versionLabelName];
+      const appLabelName = getAppLabelName(this.state.workload.labels);
+      const verLabelName = getVersionLabelName(this.state.workload.labels);
+      const app = appLabelName ? this.state.workload.labels[appLabelName] : undefined;
+      const version = verLabelName ? this.state.workload.labels[verLabelName] : undefined;
       const isLabeled = app && version;
 
       if (isLabeled) {
@@ -350,13 +354,15 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
               const tab = (
                 <Tab key={dashboard.template} title={dashboard.title} eventKey={tabKey}>
                   <CustomMetrics
+                    app={app}
+                    appLabelName={appLabelName}
                     lastRefreshAt={this.props.lastRefreshAt}
                     namespace={this.props.workloadId.namespace}
-                    app={app}
+                    template={dashboard.template}
                     version={version}
+                    versionLabelName={verLabelName}
                     workload={this.state.workload!.name}
                     workloadType={this.state.workload!.gvk.Kind}
-                    template={dashboard.template}
                   />
                 </Tab>
               );
@@ -433,6 +439,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   duration: durationSelector(state),
+  rangeDuration: timeRangeSelector(state),
   tracingInfo: state.tracingState.info
 });
 

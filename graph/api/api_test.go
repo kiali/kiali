@@ -1228,6 +1228,7 @@ func assertObjectsEqual(t *testing.T, expected, actual []byte, expectedFileName 
 		}
 
 		t.Logf("Diff: %s", cmp.Diff(ev, av))
+		t.Logf("Actual: %s", actual)
 	}
 }
 
@@ -3902,7 +3903,7 @@ func ambientWorkloads(t *testing.T) *business.Layer {
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:        "waypoint",
 			Namespace:   "bookinfo",
-			Labels:      map[string]string{"app": "waypoint", "version": "v1", config.WaypointLabel: config.WaypointLabelValue},
+			Labels:      map[string]string{"app": "waypoint", "version": "v1", config.WaypointLabel: config.WaypointLabelValue, config.GatewayLabel: "waypoint"},
 			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
 		Spec: core_v1.PodSpec{
 			Containers: []core_v1.Container{

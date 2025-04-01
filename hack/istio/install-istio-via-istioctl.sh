@@ -583,7 +583,7 @@ else
   # Do some OpenShift specific things
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     if [ "${ISTIO_INGRESSGATEWAY_ENABLED}" == "true" ]; then
-      ${CLIENT_EXE} -n ${NAMESPACE} expose svc/istio-ingressgateway --port=http2
+      ${CLIENT_EXE} -n ${NAMESPACE} expose svc/istio-ingressgateway --port=http
     else
       echo "Ingressgateway is disabled - the OpenShift Route will not be created"
     fi

@@ -115,7 +115,7 @@ const meshwideMTLSEnabled = (state: KialiAppState): boolean => state.meshTLSStat
 
 export const meshWideMTLSEnabledSelector = createIdentitySelector(meshwideMTLSEnabled);
 
-const istioStatus = (state: KialiAppState): ComponentStatus[] => state.istioStatus;
+const istioStatus = (state: KialiAppState): { [cluster: string]: ComponentStatus[] } => state.istioStatus;
 
 export const istioStatusSelector = createIdentitySelector(istioStatus);
 
