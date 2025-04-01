@@ -90,7 +90,7 @@ function create_workload_pod {
     inject_sidecar "${POD_NAME}" "${WORKLOAD_NAME}"
     sudo podman run --name ${WORKLOAD_NAME} \
         -d --rm --pod "${POD_NAME}" \
-        docker.io/istio/examples-bookinfo-${WORKLOAD_NAME}:latest
+        quay.io/sail-dev/examples-bookinfo-${WORKLOAD_NAME}:latest
     # Wait for pod to be running to ensure it has been assigned an IP address.
     sudo podman wait "${WORKLOAD_NAME}" --condition "running"
     cat ${TEMPLATE_DIR}/bookinfo-service-entry.yaml | \
