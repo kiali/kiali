@@ -17,13 +17,14 @@ source ${SCRIPT_DIR}/env.sh $*
 install_istio() {
   local clustername="${1}"
   local network="${2}"
+  local pf_yaml="${3}"
   if [ ! -z "${ISTIO_TAG}" ]; then
     local image_tag_arg="--image-tag ${ISTIO_TAG}"
   fi
   if [ ! -z "${ISTIO_HUB}" ]; then
     local image_hub_arg="--image-hub ${ISTIO_HUB}"
   fi
-  "${ISTIO_INSTALL_SCRIPT}" ${image_tag_arg:-} ${image_hub_arg:-} --client-exe-path "${CLIENT_EXE}" --cluster-name "${clustername}" --istioctl "${ISTIOCTL}" --istio-dir "${ISTIO_DIR}" --mesh-id "${MESH_ID}" --namespace "${ISTIO_NAMESPACE}" --network "${network}"
+  "${ISTIO_INSTALL_SCRIPT}" -pf "${pf_yaml}"
   if [ "$?" != "0" ]; then
     echo "Failed to install Istio on cluster [${clustername}]"
     exit 1
@@ -93,8 +94,31 @@ create_remote_secret() {
   fi
 }
 
+MC_EAST_YAML=$(mktemp)
+cat <<EOF > "$MC_EAST_YAML"
+spec:
+  values:
+    global:
+      meshID: ${MESH_ID}
+      multiCluster:
+        clusterName: ${CLUSTER1_NAME}
+      network: ${NETWORK1_ID}
+EOF
+
+MC_WEST_YAML=$(mktemp)
+cat <<EOF > "$MC_WEST_YAML"
+spec:
+  values:
+    global:
+      meshID: ${MESH_ID}
+      multiCluster:
+        clusterName: ${CLUSTER2_NAME}
+      network: ${NETWORK2_ID}
+EOF
+
 # Find the hack script to be used to install istio
-ISTIO_INSTALL_SCRIPT="${SCRIPT_DIR}/../install-istio-via-istioctl.sh"
+ISTIO_INSTALL_SCRIPT="${SCRIPT_DIR}/../install-istio-via-sail.sh"
+
 if [ -x "${ISTIO_INSTALL_SCRIPT}" ]; then
   echo "Istio install script: ${ISTIO_INSTALL_SCRIPT}"
 else
@@ -211,11 +235,15 @@ source ${SCRIPT_DIR}/setup-ca.sh
 
 echo "==== INSTALL ISTIO ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
 switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-install_istio "${CLUSTER1_NAME}" "${NETWORK1_ID}"
+install_istio "${CLUSTER1_NAME}" "${NETWORK1_ID}" "${MC_EAST_YAML}"
 
 echo "==== INSTALL ISTIO ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
 switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
-install_istio "${CLUSTER2_NAME}" "${NETWORK2_ID}"
+install_istio "${CLUSTER2_NAME}" "${NETWORK2_ID}" "${MC_WEST_YAML}"
+
+echo "==== DEPLOY ISTIO INGRESS GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
+kubectl apply -n istio-system -f "${SCRIPT_DIR}/../istio-gateway.yaml"
 
 if [ "${CROSSNETWORK_GATEWAY_REQUIRED}" == "true" ]; then
   echo "==== CREATE CROSSNETWORK GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
