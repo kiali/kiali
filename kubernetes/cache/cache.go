@@ -23,9 +23,9 @@ import (
 
 const (
 	ambientCheckExpirationTime = 10 * time.Minute
-	gatewayExpirationTime      = 1 * time.Minute
+	gatewayExpirationTime      = 3 * time.Minute
 	meshExpirationTime         = 20 * time.Second
-	waypointExpirationTime     = 1 * time.Minute
+	waypointExpirationTime     = 3 * time.Minute
 )
 
 const (
