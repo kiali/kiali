@@ -23,9 +23,9 @@ import (
 
 const (
 	ambientCheckExpirationTime = 10 * time.Minute
-	gatewayExpirationTime      = 10 * time.Minute
+	gatewayExpirationTime      = 5 * time.Minute
 	meshExpirationTime         = 20 * time.Second
-	waypointExpirationTime     = 10 * time.Minute
+	waypointExpirationTime     = 5 * time.Minute
 )
 
 const (
@@ -64,15 +64,15 @@ type KialiCache interface {
 	// GetZtunnelPods returns a list of ztunnel pods from the ztunnel daemonset
 	GetZtunnelPods(cluster string) []v1.Pod
 
-	// GetWaypointList returns a list of waypoint proxies workloads by cluster and namespace
+	// GetWaypointList returns a list of waypoint proxy workloads by cluster and namespace
 	GetWaypointList() models.Workloads
-	SetWaypointList(models.Workloads)
 	IsWaypointListExpired() bool
+	SetWaypointList(models.Workloads)
 
 	// Returns a list of Gateways
 	GetGatewayList() (models.Workloads, error)
-	SetGatewayList(models.Workloads)
 	IsGatewayListExpired() bool
+	SetGatewayList(models.Workloads)
 
 	// IsAmbientEnabled checks if the istio Ambient profile was enabled
 	// by checking if the ztunnel daemonset exists on the cluster.

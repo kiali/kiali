@@ -187,7 +187,6 @@ func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string, 
 
 // GetAllGateways fetches all gateway workloads across every namespace in the cluster.
 func (in *WorkloadService) GetAllGateways(ctx context.Context, cluster string, labelSelector string) (models.Workloads, error) {
-
 	if !in.cache.IsGatewayListExpired() {
 		log.Tracef("GetAllGateways: Returning list from cache")
 		return in.cache.GetGatewayList()
@@ -204,7 +203,6 @@ func (in *WorkloadService) GetAllGateways(ctx context.Context, cluster string, l
 	in.cache.SetGatewayList(gateways)
 
 	return gateways, nil
-
 }
 
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
@@ -2305,35 +2303,34 @@ func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload m
 // reflects the active waypoint, the others have been overriden.
 func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload models.Workload, all bool) []models.WorkloadReferenceInfo {
 	workloadsList := []models.WorkloadReferenceInfo{}
-	workloadsMap := map[string]bool{} // Ensure unique
 
 	if workload.Labels[config.WaypointUseLabel] == config.WaypointNone {
 		return workloadsList
 	}
 
 	// get waypoint references for the workload
-	waypoints, found := in.getCapturingWaypoints(ctx, workload, all)
+	capturingWaypoints, found := in.getCapturingWaypoints(ctx, workload, all)
 	if !found {
 		return workloadsList
 	}
 
 	// then, get the waypoint workloads to filter out "forNone" waypoints
-	for _, waypoint := range waypoints {
-		waypointWorkloads := in.GetWaypoints(ctx)
-		found := false
-		waypointWorkload := models.Workload{}
+	waypointWorkloads := in.GetWaypoints(ctx)
+	workloadsMap := map[string]bool{} // Ensure unique
+	for _, capturingWaypoint := range capturingWaypoints {
+		var waypointWorkload *models.Workload
 		for _, ww := range waypointWorkloads {
-			if ww.Name == workload.Name && ww.Namespace == workload.Namespace && ww.Cluster == workload.Cluster {
-				found = true
-				waypointWorkload = *ww
+			if ww.Name == capturingWaypoint.Name && ww.Namespace == capturingWaypoint.Namespace && ww.Cluster == capturingWaypoint.Cluster {
+				waypointWorkload = ww
+				break
 			}
 		}
-		if found {
+		if waypointWorkload != nil {
 			waypointFor, waypointForFound := waypointWorkload.Labels[config.WaypointFor]
 			if !waypointForFound || waypointFor != config.WaypointForNone {
-				key := fmt.Sprintf("%s_%s_%s", workload.Cluster, waypoint.Namespace, waypoint.Name)
+				key := fmt.Sprintf("%s_%s_%s", workload.Cluster, capturingWaypoint.Namespace, capturingWaypoint.Name)
 				if !workloadsMap[key] {
-					workloadsList = append(workloadsList, models.WorkloadReferenceInfo{Name: waypoint.Name, Namespace: waypoint.Namespace, Cluster: waypoint.Cluster, Type: waypointWorkload.WaypointFor()})
+					workloadsList = append(workloadsList, models.WorkloadReferenceInfo{Name: capturingWaypoint.Name, Namespace: capturingWaypoint.Namespace, Cluster: capturingWaypoint.Cluster, Type: waypointWorkload.WaypointFor()})
 					workloadsMap[key] = true
 				}
 			}
@@ -2798,7 +2795,7 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 				waypoint := wk.WaypointWorkloads[0]
 				waypointWk, errWaypoint := in.GetWorkload(ctx, WorkloadCriteria{Cluster: waypoint.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, IncludeServices: false})
 				if errWaypoint != nil {
-					log.Errorf("Error when getting workload info: %s", err.Error())
+					log.Errorf("Error when getting waypoint workload info: %s", errWaypoint)
 				} else {
 					for _, pod := range waypointWk.Pods {
 						names = append(names, pod.Name)
