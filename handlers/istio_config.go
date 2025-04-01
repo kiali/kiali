@@ -421,3 +421,52 @@ func IstioConfigPermissions(
 		RespondWithJSON(w, http.StatusOK, istioConfigPermissions)
 	}
 }
+
+// IstioConfigValidationSummary is the API handler to fetch validations summary to be displayed.
+// It is related to all the Istio Objects within given namespaces
+func IstioConfigValidationSummary(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery *istio.Discovery,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := r.URL.Query()
+		namespaces := params.Get("namespaces") // csl of namespaces
+		nss := []string{}
+		if len(namespaces) > 0 {
+			nss = strings.Split(namespaces, ",")
+		}
+		cluster := clusterNameFromQuery(conf, params)
+
+		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			return
+		}
+
+		if len(nss) == 0 {
+			loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
+			for _, ns := range loadedNamespaces {
+				nss = append(nss, ns.Name)
+			}
+		}
+
+		validationSummaries := []models.IstioValidationSummary{}
+		for _, ns := range nss {
+			istioConfigValidationResults, errValidations := business.Validations.GetValidationsForNamespace(r.Context(), cluster, ns)
+			if errValidations != nil {
+				log.Error(errValidations)
+				RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
+				return
+			}
+			validationSummaries = append(validationSummaries, *istioConfigValidationResults.SummarizeValidation(ns, cluster))
+		}
+
+		RespondWithJSON(w, http.StatusOK, validationSummaries)
+	}
+}

@@ -9,43 +9,59 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
+	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/tracing"
 )
 
-func LoggingUpdate(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
+func LoggingUpdate(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	cpm business.ControlPlaneMonitor,
+	prom prometheus.ClientInterface,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery istio.MeshDiscovery,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := mux.Vars(r)
 
-	if config.Get().Deployment.ViewOnlyMode {
-		RespondWithError(w, http.StatusForbidden, "Log level cannot be changed in view-only mode")
-		return
+		if conf.Deployment.ViewOnlyMode {
+			RespondWithError(w, http.StatusForbidden, "Log level cannot be changed in view-only mode")
+			return
+		}
+
+		businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Apps initialization error: "+err.Error())
+			return
+		}
+
+		namespace := params["namespace"]
+		pod := params["pod"]
+		query := r.URL.Query()
+		level := query.Get("level")
+		switch {
+		case level == "":
+			RespondWithError(w, 400, "level query param is not set")
+			return
+		case !business.IsValidProxyLogLevel(level):
+			msg := fmt.Sprintf("%s is an invalid log level. Valid log levels are: %s", level, strings.Join(business.ValidProxyLogLevels, ", "))
+			RespondWithError(w, 400, msg)
+			return
+		}
+
+		cluster := clusterNameFromQuery(conf, query)
+
+		if err := businessLayer.ProxyLogging.SetLogLevel(cluster, namespace, pod, level); err != nil {
+			handleErrorResponse(w, err)
+			return
+		}
+		audit(r, "UPDATE Envoy log. Cluster: "+cluster+" Namespace: "+namespace+" Pod: "+pod+" Log level:"+level)
+		RespondWithCode(w, 200)
 	}
-
-	// Get business layer
-	businessLayer, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
-		return
-	}
-
-	namespace := params["namespace"]
-	pod := params["pod"]
-	query := r.URL.Query()
-	level := query.Get("level")
-	switch {
-	case level == "":
-		RespondWithError(w, 400, "level query param is not set")
-		return
-	case !business.IsValidProxyLogLevel(level):
-		msg := fmt.Sprintf("%s is an invalid log level. Valid log levels are: %s", level, strings.Join(business.ValidProxyLogLevels, ", "))
-		RespondWithError(w, 400, msg)
-		return
-	}
-
-	cluster := clusterNameFromQuery(config.Get(), query)
-
-	if err := businessLayer.ProxyLogging.SetLogLevel(cluster, namespace, pod, level); err != nil {
-		handleErrorResponse(w, err)
-		return
-	}
-	audit(r, "UPDATE Envoy log. Cluster: "+cluster+" Namespace: "+namespace+" Pod: "+pod+" Log level:"+level)
-	RespondWithCode(w, 200)
 }
