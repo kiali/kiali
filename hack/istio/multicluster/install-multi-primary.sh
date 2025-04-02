@@ -88,7 +88,8 @@ create_remote_secret() {
 
   # if kind, then we have to make sure the remote secret has the external IP to the API server
   if [ "${MANAGE_KIND}" == "true" ]; then
-    local kind_ip=$(${DORP} inspect ${clustername}-control-plane --format "{{ .NetworkSettings.Networks.kind.IPAddress }}")
+    local kind_ip
+    kind_ip=$(${CLIENT_EXE} get nodes -l node-role.kubernetes.io/control-plane -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
     REMOTE_SECRET="$(printf '%s' "${REMOTE_SECRET}" | sed -E 's!server:.*!server: https://'"${kind_ip}"':6443!')"
     echo "Updating remote secret for kind cluster [${clustername}] to use API IP [${kind_ip}]"
   fi
@@ -158,10 +159,6 @@ if [ "${MANAGE_KIND}" == "true" ]; then
     "${SCRIPT_DIR}/../../keycloak.sh" -kcd "${KEYCLOAK_CERTS_DIR}" create-ca
 
     docker network create kind || true
-
-    # Given: 172.18.0.0/16 this should return 172.18
-    subnet=""
-
     # we always use docker today, but we'll leave this here just in case in the future Kind and podman play nice
     if [ "${DORP}" == "docker" ]; then
       # loop through all known subnets in the kind network and pick out the IPv4 subnet, ignoring any IPv6 that might be in the list
@@ -190,43 +187,48 @@ if [ "${MANAGE_KIND}" == "true" ]; then
       exit 1
     fi
 
-    beginning_subnet_octets=$(echo $subnet | cut -d'.' -f1,2 2>/dev/null)
-    lb_range_start="255.70"
-    lb_range_end="255.84"
+    # Given: 172.18.0.0/16 this should return 172.18.0
+    beginning_subnet_octets=$(cut -d'.' -f1-3 <<< "$subnet")
+    lb_range_start="70"
 
     KEYCLOAK_ADDRESS="${beginning_subnet_octets}.${lb_range_start}"
 
+      # --load-balancer-range "${lb_range_start}-${lb_range_end}" \
     echo "==== START KIND FOR CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
     "${SCRIPT_DIR}"/../../start-kind.sh \
       --name "${CLUSTER1_NAME}" \
-      --load-balancer-range "${lb_range_start}-${lb_range_end}" \
+      --load-balancer-range "70-84" \
       --enable-keycloak true \
       --keycloak-certs-dir "${KEYCLOAK_CERTS_DIR}" \
       --keycloak-issuer-uri https://"${KEYCLOAK_ADDRESS}"/realms/kube \
-      --image "${KIND_NODE_IMAGE}"
+      --image "${KIND_NODE_IMAGE}" \
+      -dorp "${DORP}"
 
     "${SCRIPT_DIR}/../../keycloak.sh" -kcd "${KEYCLOAK_CERTS_DIR}" -kip "${KEYCLOAK_ADDRESS}" deploy
 
     echo "==== START KIND FOR CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
     "${SCRIPT_DIR}"/../../start-kind.sh \
       --name "${CLUSTER2_NAME}" \
-      --load-balancer-range "255.85-255.98" \
+      --load-balancer-range "85-98" \
       --enable-keycloak true \
       --keycloak-certs-dir "${KEYCLOAK_CERTS_DIR}" \
       --keycloak-issuer-uri https://"${KEYCLOAK_ADDRESS}"/realms/kube \
-      --image "${KIND_NODE_IMAGE}"
+      --image "${KIND_NODE_IMAGE}" \
+      -dorp "${DORP}"
   else
     echo "==== START KIND FOR CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
     "${SCRIPT_DIR}"/../../start-kind.sh \
       --name "${CLUSTER1_NAME}" \
-      --load-balancer-range "255.70-255.84" \
-      --image "${KIND_NODE_IMAGE}"
+      --load-balancer-range "70-84" \
+      --image "${KIND_NODE_IMAGE}" \
+      -dorp "${DORP}"
 
     echo "==== START KIND FOR CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
     "${SCRIPT_DIR}"/../../start-kind.sh \
       --name "${CLUSTER2_NAME}" \
-      --load-balancer-range "255.85-255.98" \
-      --image "${KIND_NODE_IMAGE}"
+      --load-balancer-range "85-98" \
+      --image "${KIND_NODE_IMAGE}" \
+      -dorp "${DORP}"
   fi
 fi
 
