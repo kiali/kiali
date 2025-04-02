@@ -739,9 +739,7 @@ export const getClustersAppHealth = async (
           Object.keys(namespaceAppHealth[ns]).forEach(k => {
             if (namespaceAppHealth[ns][k]) {
               const ah = AppHealth.fromJson(namespaces, k, namespaceAppHealth[ns][k], {
-                rateInterval: duration,
-                hasSidecar: true,
-                hasAmbient: false
+                rateInterval: duration
               });
 
               ret[ns][k] = ah;
@@ -790,9 +788,7 @@ export const getClustersServiceHealth = async (
           Object.keys(namespaceServiceHealth[ns]).forEach(k => {
             if (namespaceServiceHealth[ns][k]) {
               const sh = ServiceHealth.fromJson(namespaces, k, namespaceServiceHealth[ns][k], {
-                rateInterval: duration,
-                hasSidecar: true,
-                hasAmbient: false
+                rateInterval: duration
               });
 
               ret[ns][k] = sh;
@@ -839,9 +835,7 @@ export const getClustersWorkloadHealth = async (
           Object.keys(namespaceWorkloadHealth[ns]).forEach(k => {
             if (namespaceWorkloadHealth[ns][k]) {
               const wh = WorkloadHealth.fromJson(namespaces, k, namespaceWorkloadHealth[ns][k], {
-                rateInterval: duration,
-                hasSidecar: true,
-                hasAmbient: false
+                rateInterval: duration
               });
 
               ret[ns][k] = wh;
