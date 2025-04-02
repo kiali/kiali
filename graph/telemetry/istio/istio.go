@@ -56,9 +56,6 @@ type waypointKey = struct {
 	Name      string
 }
 
-// wpKey is a re-usable key struct. This works because map keys are always copies
-var wpKey = waypointKey{}
-
 type waypointMap = map[waypointKey]bool
 
 var grpcMetric = regexp.MustCompile(`istio_.*_messages`)
@@ -330,6 +327,8 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, metri
 	}
 	skipRequestsGrpc := isRequests && o.Rates.Grpc != graph.RateRequests
 	skipRequestsHttp := isRequests && o.Rates.Http != graph.RateRequests
+	wpKeySource := &waypointKey{}
+	wpKeyDest := &waypointKey{}
 
 	for _, s := range *vector {
 		val := float64(s.Value)
@@ -418,8 +417,10 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, metri
 		// - destSvcName is PassthroughCluster (see https://github.com/kiali/kiali/issues/4488)
 		// - dest node is already a service node
 		// - source or dest workload is an ambient waypoint
-		var inject bool
-		sourceIsWaypoint, destIsWaypoint := hasWaypoint(ztunnel, sourceCluster, sourceWlNs, sourceWl, destCluster, destWlNs, destWl, globalInfo)
+		var inject, sourceIsWaypoint, destIsWaypoint bool
+		if ztunnel {
+			sourceIsWaypoint, destIsWaypoint = hasWaypoint(setWaypointKey(wpKeySource, sourceCluster, sourceWlNs, sourceWl), setWaypointKey(wpKeyDest, destCluster, destWlNs, destWl), globalInfo)
+		}
 		if o.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
 			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o.GraphType)
 			if err != nil {
@@ -860,7 +861,7 @@ func buildNodeTrafficMap(cluster string, namespaceInfo graph.NamespaceInfo, n *g
 		inboundReporter := `reporter="destination"`
 		outboutReporter := `reporter="source"`
 		if wpMap, ok := globalInfo.Vendor[appender.AmbientWaypoints]; ok {
-			if isWaypoint(wpMap.(waypointMap), n.Cluster, n.Namespace, n.Workload) {
+			if isWaypoint(wpMap.(waypointMap), setWaypointKey(nil, n.Cluster, n.Namespace, n.Workload)) {
 				inboundReporter = util.GetReporter("source", o.Rates)
 				outboutReporter = util.GetReporter("destination", o.Rates)
 			}
@@ -1103,6 +1104,8 @@ func promQuery(query string, queryTime time.Time, api prom_v1.API, conf *config.
 func GetWaypointMap(ctx context.Context, gi *graph.GlobalInfo) waypointMap {
 	waypoints := gi.Business.Workload.GetWaypoints(ctx)
 	wpMap := make(waypointMap, len(waypoints))
+	var wpKey = waypointKey{} // a re-usable key struct. This works because map keys are always copies
+
 	for _, wp := range waypoints {
 		wpKey.Cluster = wp.Cluster
 		wpKey.Namespace = wp.Namespace
@@ -1116,22 +1119,25 @@ func GetWaypointMap(ctx context.Context, gi *graph.GlobalInfo) waypointMap {
 	return wpMap
 }
 
-// hasWaypoint returns true if the source or dest workload is determined to be a waypoint workload.
-func hasWaypoint(ztunnel bool, sourceCluster, sourceWlNs, srcWl, destCluster, destWlNs, destWl string, globalInfo *graph.GlobalInfo) (sourceIsWaypoint bool, destIsWaypoint bool) {
-	if !ztunnel {
-		return false, false
+func setWaypointKey(wpKey *waypointKey, cluster, namespace, name string) *waypointKey {
+	if wpKey == nil {
+		wpKey = &waypointKey{}
 	}
+	wpKey.Cluster = cluster
+	wpKey.Namespace = namespace
+	wpKey.Name = name
+	return wpKey
+}
 
+// hasWaypoint returns true if the source or dest workload is determined to be a waypoint workload.
+func hasWaypoint(wpKeySource, wpKeyDest *waypointKey, globalInfo *graph.GlobalInfo) (sourceIsWaypoint bool, destIsWaypoint bool) {
 	wpMap := globalInfo.Vendor[appender.AmbientWaypoints].(waypointMap)
-	sourceIsWaypoint = isWaypoint(wpMap, sourceCluster, sourceWlNs, srcWl)
-	destIsWaypoint = isWaypoint(wpMap, destCluster, destWlNs, destWl)
+	sourceIsWaypoint = wpMap[*wpKeySource]
+	destIsWaypoint = wpMap[*wpKeyDest]
 	return sourceIsWaypoint, destIsWaypoint
 }
 
 // isWaypoint returns true if the ns, name and cluster of a workload matches with one of the known waypoints
-func isWaypoint(wpMap waypointMap, cluster, namespace, name string) bool {
-	wpKey.Cluster = cluster
-	wpKey.Namespace = namespace
-	wpKey.Name = name
-	return wpMap[wpKey]
+func isWaypoint(wpMap waypointMap, wpKey *waypointKey) bool {
+	return wpMap[*wpKey]
 }
