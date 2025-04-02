@@ -171,10 +171,12 @@ endif
 
 	podman volume exists molecule-tests-volume && echo "Podman volume already exists; deleting it" && podman volume rm molecule-tests-volume || true
 	podman volume create molecule-tests-volume
-	podman create -v molecule-tests-volume:/data --name molecule-volume-helper docker.io/busybox true
-	podman cp "${HELM_CHARTS_REPO}" molecule-volume-helper:/data/helm-charts-repo
-	podman cp "${ROOTDIR}/operator/" molecule-volume-helper:/data/operator
-	podman cp "${MOLECULE_KUBECONFIG}" molecule-volume-helper:/data/kubeconfig
+	podman create -v molecule-tests-volume:/data --name molecule-volume-helper quay.io/fedora/fedora-minimal:latest sleep infinity
+	podman start molecule-volume-helper
+	podman run --rm -v molecule-tests-volume:/data -v "${HELM_CHARTS_REPO}":/source:ro,Z quay.io/fedora/fedora-minimal cp -r /source /data/helm-charts-repo
+	podman run --rm -v molecule-tests-volume:/data -v "$$(realpath ${ROOTDIR}/operator)":/source:ro,Z quay.io/fedora/fedora-minimal cp -r /source /data/operator
+	podman run --rm -v molecule-tests-volume:/data -v "${MOLECULE_KUBECONFIG}":/source:ro,Z quay.io/fedora/fedora-minimal cp -r /source /data/kubeconfig
+	podman stop molecule-volume-helper
 	podman rm molecule-volume-helper
 
 ## molecule-test: Runs Molecule tests using the Molecule docker image
