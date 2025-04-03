@@ -6,8 +6,8 @@ import {
   LayoutFactory,
   BreadthFirstLayout
 } from '@patternfly/react-topology';
-import { GraphLayout } from '../Graph';
 import { ExtendedDagreLayout } from './ExtendedDagreLayout';
+import { GraphLayout } from 'types/Graph';
 
 /*
 This is just for reference, a copy of PFT defaults, so we can compare any tweaks we've made below...

@@ -32,7 +32,10 @@ import {
   BoxByType,
   EdgeLabelMode,
   EdgeMode,
+  FocusNode,
   GraphEvent,
+  GraphLayout,
+  LayoutType,
   NodeAttr,
   NodeType,
   RankMode,
@@ -74,38 +77,10 @@ import { GraphHighlighter } from './GraphHighlighter';
 const DEFAULT_NODE_SIZE = 40;
 const ZOOM_IN = 4 / 3;
 const ZOOM_OUT = 3 / 4;
-
-export const FIT_PADDING = 90;
-
-export enum LayoutType {
-  Layout = 'layout',
-  LayoutNoFit = 'layoutNoFit',
-  Resize = 'resize'
-}
+const FIT_PADDING = 90;
 
 let initialLayout = false;
 let layoutInProgress: LayoutType | undefined;
-
-// the layouts offered by the traffic graph page
-export enum GraphLayout {
-  BreadthFirst = 'breadthfirst',
-  Concentric = 'concentric',
-  Dagre = 'dagre',
-  Grid = 'grid'
-}
-
-export function getValidGraphLayout(layout: string): GraphLayout {
-  switch (layout) {
-    case GraphLayout.BreadthFirst:
-      return GraphLayout.BreadthFirst;
-    case GraphLayout.Concentric:
-      return GraphLayout.Concentric;
-    case GraphLayout.Grid:
-      return GraphLayout.Grid;
-    default:
-      return GraphLayout.Dagre;
-  }
-}
 
 export function graphLayout(controller: Controller, layoutType: LayoutType, reset = true): void {
   if (!controller?.hasGraph()) {
@@ -126,11 +101,6 @@ export function graphLayout(controller: Controller, layoutType: LayoutType, rese
     controller.getGraph().reset();
   }
   controller.getGraph().layout();
-}
-
-export interface FocusNode {
-  id: string;
-  isSelected?: boolean;
 }
 
 // The is the main graph rendering component

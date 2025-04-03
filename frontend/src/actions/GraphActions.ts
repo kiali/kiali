@@ -1,8 +1,7 @@
 import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
-import { GraphEvent, EdgeMode, GraphDefinition, NodeParamsType, RankResult } from '../types/Graph';
+import { GraphEvent, EdgeMode, GraphDefinition, NodeParamsType, RankResult, GraphLayout } from '../types/Graph';
 import { ActionKeys } from './ActionKeys';
 import { TimeInMilliseconds } from 'types/Common';
-import { GraphLayout } from 'pages/Graph/Graph';
 
 export const GraphActions = {
   onNamespaceChange: createAction(ActionKeys.GRAPH_ON_NAMESPACE_CHANGE),

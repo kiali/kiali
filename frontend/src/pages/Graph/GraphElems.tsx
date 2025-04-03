@@ -20,6 +20,7 @@ import {
   DecoratedGraphEdgeWrapper,
   DecoratedGraphNodeData,
   EdgeLabelMode,
+  GraphLayout,
   GraphType,
   NodeType,
   numLabels,
@@ -35,7 +36,6 @@ import { getEdgeHealth } from 'types/ErrorRate/GraphEdgeStatus';
 import { Span } from 'types/TracingInfo';
 import { IconType } from 'config/Icons';
 import { NodeDecorator } from './NodeDecorator';
-import { GraphLayout } from './Graph';
 import { supportsGroups } from 'utils/GraphUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { TrafficPointGenerator } from '../Graph/TrafficAnimation/TrafficRenderer';
