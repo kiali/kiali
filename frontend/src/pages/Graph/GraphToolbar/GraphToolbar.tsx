@@ -67,7 +67,6 @@ type ReduxProps = ReduxStateProps & ReduxDispatchProps;
 
 type GraphToolbarProps = ReduxProps & {
   controller?: any;
-  cy?: any;
   disabled: boolean;
   elementsChanged: boolean;
   onToggleHelp: () => void;

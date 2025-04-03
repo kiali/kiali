@@ -57,7 +57,6 @@ type ReduxStateProps = {
   refreshInterval: IntervalInMilliseconds;
   showGateways: boolean;
   showLegend: boolean;
-  showOutOfMesh: boolean;
   showWaypoints: boolean;
   target: MeshTarget | null;
 };
@@ -418,7 +417,6 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   refreshInterval: refreshIntervalSelector(state),
   showGateways: state.mesh.toolbarState.showGateways,
   showLegend: state.mesh.toolbarState.showLegend,
-  showOutOfMesh: state.graph.toolbarState.showOutOfMesh,
   showWaypoints: state.mesh.toolbarState.showWaypoints,
   target: state.mesh.target
 });
