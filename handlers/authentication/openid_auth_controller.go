@@ -237,7 +237,7 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 			return nil, fmt.Errorf("unable to create a Kubernetes client from the auth token: %w", err)
 		}
 
-		namespaceService := business.NewNamespaceService(c.kialiCache, c.conf, c.discovery, c.clientFactory.GetSAClients(), userClients)
+		namespaceService := business.NewNamespaceService(c.kialiCache, c.conf, c.discovery, c.clientFactory.GetSAClients(), kubernetes.ConvertToUserClients(userClients))
 		_, err = namespaceService.GetNamespaces(r.Context())
 		if err != nil {
 			log.Warningf("Token error!: %v", err)
@@ -1379,7 +1379,7 @@ func verifyOpenIdUserAccess(token string, clientFactory kubernetes.ClientFactory
 	if err != nil {
 		return http.StatusInternalServerError, "Unable to create a Kubernetes client from the auth token", err
 	}
-	userClients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: userClient}
+	userClients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: userClient}
 
 	namespaceService := business.NewNamespaceService(kialiCache, conf, discovery, clientFactory.GetSAClients(), userClients)
 
