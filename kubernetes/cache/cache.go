@@ -24,12 +24,15 @@ import (
 
 const (
 	ambientCheckExpirationTime = 10 * time.Minute
+	gatewayExpirationTime      = 3 * time.Minute
 	meshExpirationTime         = 20 * time.Second
-	waypointExpirationTime     = 1 * time.Minute
+	waypointExpirationTime     = 3 * time.Minute
 )
 
 const (
-	kialiCacheMeshKey = "mesh"
+	kialiCacheGatewaysKey  = "gateways"
+	kialiCacheMeshKey      = "mesh"
+	kialiCacheWaypointsKey = "waypoints"
 )
 
 // KialiCache stores both kube objects and non-kube related data such as pods' proxy status.
@@ -49,6 +52,10 @@ type KialiCache interface {
 	// GetClusters returns the list of clusters that the cache knows about.
 	// This gets set by the mesh service.
 	GetClusters() []models.KubeCluster
+
+	GetGateways() (models.Workloads, bool)
+	SetGateways(models.Workloads)
+
 	GetKubeCaches() map[string]KubeCache
 	GetKubeCache(cluster string) (KubeCache, error)
 
@@ -61,13 +68,11 @@ type KialiCache interface {
 	// GetNamespaces returns all namespaces for the cluster/token from the in memory cache.
 	GetNamespaces(cluster string, token string) ([]models.Namespace, bool)
 
+	GetWaypoints() (models.Workloads, bool)
+	SetWaypoints(models.Workloads)
+
 	// GetZtunnelPods returns a list of ztunnel pods from the ztunnel daemonset
 	GetZtunnelPods(cluster string) []v1.Pod
-
-	// GetWaypointList returns a list of waypoint proxies workloads by cluster and namespace
-	GetWaypointList() models.Workloads
-	SetWaypointList(models.Workloads)
-	IsWaypointListExpired() bool
 
 	// IsAmbientEnabled checks if the istio Ambient profile was enabled
 	// by checking if the ztunnel daemonset exists on the cluster.
@@ -108,6 +113,13 @@ type kialiCacheImpl struct {
 	cleanup                 func()
 	conf                    config.Config
 
+	// Info about the kube clusters that the cache knows about.
+	clusters    []models.KubeCluster
+	clusterLock sync.RWMutex
+
+	// Cache gateways to speed up access for these specific workloads. The only key is kialiCacheGatewaysKey
+	gatewayStore store.Store[string, models.Workloads]
+
 	// Maps a cluster name to a KubeCache
 	kubeCache map[string]KubeCache
 
@@ -119,28 +131,28 @@ type kialiCacheImpl struct {
 	// so you can easily deref the namespace in GetNamespace and SetNamespace. The downside to this is that
 	// we need an additional lock for the namespace map that gets returned from the store to ensure it is threadsafe.
 	namespaceStore store.Store[namespacesKey, map[string]models.Namespace]
-
 	// Only necessary because we want to cache the namespaces per cluster and token as a map
 	// and maps are not thread safe. We need an additional lock on top of the Store to ensure
 	// that the map returned from the store is threadsafe.
 	namespacesLock sync.RWMutex
 
-	refreshDuration time.Duration
 	// ProxyStatusStore stores the proxy status and should be key'd off cluster + namespace + pod.
 	proxyStatusStore store.Store[string, *kubernetes.ProxyStatus]
+
+	refreshDuration time.Duration
+
 	// RegistryStatusStore stores the registry status and should be key'd off of the cluster name.
 	registryStatusStore store.Store[string, *kubernetes.RegistryStatus]
-	// ProxyStatusStore stores ztunnel config dump per cluster + namespace + pod.
-	ztunnelConfigStore store.Store[string, *kubernetes.ZtunnelConfigDump]
 
-	waypointList models.WaypointStore
 	// validations key'd by the validation key
 	validations      store.Store[models.IstioValidationKey, *models.IstioValidation]
 	validationConfig store.Store[string, string]
 
-	// Info about the kube clusters that the cache knows about.
-	clusters    []models.KubeCluster
-	clusterLock sync.RWMutex
+	// Cache gateways to speed up access for these specific workloads. The only key is kialiCacheWaypointsKey
+	waypointStore store.Store[string, models.Workloads]
+
+	// ProxyStatusStore stores ztunnel config dump per cluster + namespace + pod.
+	ztunnelConfigStore store.Store[string, *kubernetes.ZtunnelConfigDump]
 }
 
 func NewKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, conf config.Config) (KialiCache, error) {
@@ -155,14 +167,16 @@ func newKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, conf co
 		canReadWebhookByCluster: make(map[string]bool),
 		cleanup:                 cancel,
 		conf:                    conf,
+		gatewayStore:            store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(gatewayExpirationTime), nil),
 		kubeCache:               make(map[string]KubeCache),
-		validations:             store.New[models.IstioValidationKey, *models.IstioValidation](),
-		validationConfig:        store.New[string, string](),
 		meshStore:               store.NewExpirationStore(ctx, store.New[string, *models.Mesh](), util.AsPtr(meshExpirationTime), nil),
 		namespaceStore:          store.NewExpirationStore(ctx, store.New[namespacesKey, map[string]models.Namespace](), &namespaceKeyTTL, nil),
-		refreshDuration:         time.Duration(conf.KubernetesConfig.CacheDuration) * time.Second,
 		proxyStatusStore:        store.New[string, *kubernetes.ProxyStatus](),
+		refreshDuration:         time.Duration(conf.KubernetesConfig.CacheDuration) * time.Second,
 		registryStatusStore:     store.New[string, *kubernetes.RegistryStatus](),
+		waypointStore:           store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(waypointExpirationTime), nil),
+		validations:             store.New[models.IstioValidationKey, *models.IstioValidation](),
+		validationConfig:        store.New[string, string](),
 		ztunnelConfigStore:      store.New[string, *kubernetes.ZtunnelConfigDump](),
 	}
 
@@ -344,21 +358,24 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 	return ztunnelPods
 }
 
-// GetWaypointList Returns a list of waypoint proxies by cluster and namespace
-func (c *kialiCacheImpl) GetWaypointList() models.Workloads {
-	return c.waypointList.Waypoints
+// GetGateways Returns a list of all gateway workloads by cluster and namespace
+func (c *kialiCacheImpl) GetGateways() (models.Workloads, bool) {
+	return c.gatewayStore.Get(kialiCacheGatewaysKey)
 }
 
-// SetWaypointList Modifies the list of waypoint proxies by cluster and namespace
-func (c *kialiCacheImpl) SetWaypointList(wpList models.Workloads) {
-	c.waypointList.Waypoints = wpList
-	c.waypointList.LastUpdate = time.Now()
+// SetGateways Sets a list of all gateway workloads by cluster and namespace
+func (c *kialiCacheImpl) SetGateways(gateways models.Workloads) {
+	c.gatewayStore.Set(kialiCacheGatewaysKey, gateways)
 }
 
-func (c *kialiCacheImpl) IsWaypointListExpired() bool {
-	currentTime := time.Now()
-	expirationTime := c.waypointList.LastUpdate.Add(waypointExpirationTime)
-	return currentTime.After(expirationTime)
+// GetWaypoints Returns a list of waypoint proxies by cluster and namespace
+func (c *kialiCacheImpl) GetWaypoints() (models.Workloads, bool) {
+	return c.waypointStore.Get(kialiCacheWaypointsKey)
+}
+
+// SetWaypoints Sets a list of all waypoint workloads by cluster and namespace
+func (c *kialiCacheImpl) SetWaypoints(waypoints models.Workloads) {
+	c.waypointStore.Set(kialiCacheWaypointsKey, waypoints)
 }
 
 type namespacesKey struct {

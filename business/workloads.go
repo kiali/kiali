@@ -187,14 +187,22 @@ func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string, 
 
 // GetAllGateways fetches all gateway workloads across every namespace in the cluster.
 func (in *WorkloadService) GetAllGateways(ctx context.Context, cluster string, labelSelector string) (models.Workloads, error) {
+	if gateways, ok := in.cache.GetGateways(); ok {
+		log.Tracef("GetAllGateways: Returning list from cache")
+		return gateways, nil
+	}
+
 	workloads, err := in.GetAllWorkloads(ctx, cluster, labelSelector)
 	if err != nil {
 		return nil, err
 	}
 
-	return sliceutil.Filter(workloads, func(w *models.Workload) bool {
+	gateways := sliceutil.Filter(workloads, func(w *models.Workload) bool {
 		return w.IsGateway()
-	}), nil
+	})
+	in.cache.SetGateways(gateways)
+
+	return gateways, nil
 }
 
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
@@ -2150,7 +2158,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 					includeServices = true
 				}
 				// Get waypoint workloads
-				in.cache.GetWaypointList()
+				in.cache.GetWaypoints()
 				waypointWorkloads, waypointServices := in.listWaypointWorkloads(ctx, w.Name, w.Namespace, criteria.Cluster, includeServices)
 				w.WaypointWorkloads = waypointWorkloads
 				if includeServices {
@@ -2172,13 +2180,12 @@ func (in *WorkloadService) GetZtunnelConfig(cluster, namespace, pod string) *kub
 
 // GetWaypoints: Return the list of waypoint workloads.  This looks for all k8s gateways and then tests their labels
 func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
-	if !in.cache.IsWaypointListExpired() {
+	if waypoints, ok := in.cache.GetWaypoints(); ok {
 		log.Tracef("GetWaypoints: Returning list from cache")
-		return in.cache.GetWaypointList()
+		return waypoints
 	}
 
 	waypoints := models.Workloads{}
-
 	for cluster := range in.userClients {
 		gateways, err := in.GetAllWorkloads(ctx, cluster, config.GatewayLabel)
 		if err != nil {
@@ -2189,7 +2196,7 @@ func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
 		clusterWaypoints := sliceutil.Filter(gateways, func(gw *models.Workload) bool { return gw.IsWaypoint() })
 		waypoints = append(waypoints, clusterWaypoints...)
 	}
-	in.cache.SetWaypointList(waypoints)
+	in.cache.SetWaypoints(waypoints)
 	return waypoints
 }
 
@@ -2295,31 +2302,36 @@ func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload m
 // reflects the active waypoint, the others have been overriden.
 func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload models.Workload, all bool) []models.WorkloadReferenceInfo {
 	workloadsList := []models.WorkloadReferenceInfo{}
-	workloadsMap := map[string]bool{} // Ensure unique
 
 	if workload.Labels[config.WaypointUseLabel] == config.WaypointNone {
 		return workloadsList
 	}
 
 	// get waypoint references for the workload
-	waypoints, found := in.getCapturingWaypoints(ctx, workload, all)
+	capturingWaypoints, found := in.getCapturingWaypoints(ctx, workload, all)
 	if !found {
 		return workloadsList
 	}
 
 	// then, get the waypoint workloads to filter out "forNone" waypoints
-	for _, waypoint := range waypoints {
-		waypointWorkload, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: workload.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, WorkloadGVK: schema.GroupVersionKind{}, IncludeWaypoints: false})
-		if err != nil {
-			log.Debugf("GetWaypointsForWorkload: Error fetching waypoint workload %s", err.Error())
-			return nil
+	waypointWorkloads := in.GetWaypoints(ctx)
+	workloadsMap := map[string]bool{} // Ensure unique
+	for _, capturingWaypoint := range capturingWaypoints {
+		var waypointWorkload *models.Workload
+		for _, ww := range waypointWorkloads {
+			if ww.Name == capturingWaypoint.Name && ww.Namespace == capturingWaypoint.Namespace && ww.Cluster == capturingWaypoint.Cluster {
+				waypointWorkload = ww
+				break
+			}
 		}
-		waypointFor, waypointForFound := waypointWorkload.Labels[config.WaypointFor]
-		if !waypointForFound || waypointFor != config.WaypointForNone {
-			key := fmt.Sprintf("%s_%s_%s", workload.Cluster, waypoint.Namespace, waypoint.Name)
-			if waypointWorkload != nil && !workloadsMap[key] {
-				workloadsList = append(workloadsList, models.WorkloadReferenceInfo{Name: waypoint.Name, Namespace: waypoint.Namespace, Cluster: waypoint.Cluster, Type: waypointWorkload.WaypointFor()})
-				workloadsMap[key] = true
+		if waypointWorkload != nil {
+			waypointFor, waypointForFound := waypointWorkload.Labels[config.WaypointFor]
+			if !waypointForFound || waypointFor != config.WaypointForNone {
+				key := fmt.Sprintf("%s_%s_%s", workload.Cluster, capturingWaypoint.Namespace, capturingWaypoint.Name)
+				if !workloadsMap[key] {
+					workloadsList = append(workloadsList, models.WorkloadReferenceInfo{Name: capturingWaypoint.Name, Namespace: capturingWaypoint.Namespace, Cluster: capturingWaypoint.Cluster, Type: waypointWorkload.WaypointFor()})
+					workloadsMap[key] = true
+				}
 			}
 		}
 	}
@@ -2782,7 +2794,7 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 				waypoint := wk.WaypointWorkloads[0]
 				waypointWk, errWaypoint := in.GetWorkload(ctx, WorkloadCriteria{Cluster: waypoint.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, IncludeServices: false})
 				if errWaypoint != nil {
-					log.Errorf("Error when getting workload info: %s", err.Error())
+					log.Errorf("Error when getting waypoint workload info: %s", errWaypoint)
 				} else {
 					for _, pod := range waypointWk.Pods {
 						names = append(names, pod.Name)

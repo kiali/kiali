@@ -986,6 +986,29 @@ func TestGetWaypointPodLogsProxy(t *testing.T) {
 		kubeObjs = append(kubeObjs, &o)
 	}
 
+	kubeObjs = append(kubeObjs,
+		&apps_v1.Deployment{
+			TypeMeta: meta_v1.TypeMeta{
+				APIVersion: kubernetes.Deployments.GroupVersion().String(),
+				Kind:       kubernetes.Deployments.Kind,
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "waypoint",
+				Namespace: "Namespace",
+			},
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Labels: map[string]string{
+							"gateway.istio.io/managed":               "istio.io-mesh-controller",
+							"gateway.networking.k8s.io/gateway-name": "waypoint",
+						},
+					},
+				},
+			},
+		},
+	)
+
 	client := kubetest.NewFakeK8sClient(kubeObjs...)
 	client.OpenShift = true
 
@@ -1394,6 +1417,29 @@ func TestValidateWaypoint(t *testing.T) {
 		kubeObjs = append(kubeObjs, &o)
 	}
 
+	kubeObjs = append(kubeObjs,
+		&apps_v1.Deployment{
+			TypeMeta: meta_v1.TypeMeta{
+				APIVersion: kubernetes.Deployments.GroupVersion().String(),
+				Kind:       kubernetes.Deployments.Kind,
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "waypoint",
+				Namespace: "Namespace",
+			},
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Labels: map[string]string{
+							"gateway.istio.io/managed":               "istio.io-mesh-controller",
+							"gateway.networking.k8s.io/gateway-name": "waypoint",
+						},
+					},
+				},
+			},
+		},
+	)
+
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
 	SetupBusinessLayer(t, k8s, *conf)
@@ -1454,6 +1500,29 @@ func TestValidateWaypointNS(t *testing.T) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
+
+	kubeObjs = append(kubeObjs,
+		&apps_v1.Deployment{
+			TypeMeta: meta_v1.TypeMeta{
+				APIVersion: kubernetes.Deployments.GroupVersion().String(),
+				Kind:       kubernetes.Deployments.Kind,
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "waypoint",
+				Namespace: "Namespace",
+			},
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Labels: map[string]string{
+							"gateway.istio.io/managed":               "istio.io-mesh-controller",
+							"gateway.networking.k8s.io/gateway-name": "waypoint",
+						},
+					},
+				},
+			},
+		},
+	)
 
 	// cache
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
@@ -1533,6 +1602,29 @@ func TestValidateWaypointService(t *testing.T) {
 		kubeObjs = append(kubeObjs, &o)
 	}
 
+	kubeObjs = append(kubeObjs,
+		&apps_v1.Deployment{
+			TypeMeta: meta_v1.TypeMeta{
+				APIVersion: kubernetes.Deployments.GroupVersion().String(),
+				Kind:       kubernetes.Deployments.Kind,
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "waypoint",
+				Namespace: "Namespace",
+			},
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Labels: map[string]string{
+							"gateway.istio.io/managed":               "istio.io-mesh-controller",
+							"gateway.networking.k8s.io/gateway-name": "waypoint",
+						},
+					},
+				},
+			},
+		},
+	)
+
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
 	SetupBusinessLayer(t, k8s, *conf)
@@ -1601,6 +1693,29 @@ func TestGetWaypointWorkloads(t *testing.T) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
+
+	kubeObjs = append(kubeObjs,
+		&apps_v1.Deployment{
+			TypeMeta: meta_v1.TypeMeta{
+				APIVersion: kubernetes.Deployments.GroupVersion().String(),
+				Kind:       kubernetes.Deployments.Kind,
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "waypoint",
+				Namespace: "Namespace",
+			},
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Labels: map[string]string{
+							"gateway.istio.io/managed":               "istio.io-mesh-controller",
+							"gateway.networking.k8s.io/gateway-name": "waypoint",
+						},
+					},
+				},
+			},
+		},
+	)
 
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
