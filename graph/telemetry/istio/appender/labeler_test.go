@@ -106,7 +106,7 @@ func setupLabelerK8S(t *testing.T) *business.Layer {
 			kubetest.FakeNamespace("testNamespace"),
 		),
 	}
-	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil)
 	return businessLayer
 }
 

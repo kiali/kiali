@@ -322,6 +322,6 @@ func setupSidecarsCheckWorkloads(t *testing.T, deployments []apps_v1.Deployment,
 	business.SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil)
 	return businessLayer
 }

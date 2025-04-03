@@ -54,7 +54,7 @@ func setupBusinessLayer(t *testing.T, meshExportTo []string, istioObjects ...run
 		}
 		business.WithDiscovery(discovery)
 	}
-	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil)
 	return businessLayer
 }
 
@@ -1105,7 +1105,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 			kubetest.FakeNamespace("namespace"),
 		),
 	}
-	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil)
 
 	// Create a VersionedApp traffic map where a workload is calling a remote service entry and also an internal one
 	trafficMap := make(map[string]*graph.Node)
@@ -1202,7 +1202,7 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 			kubetest.FakeNamespace("testNamespace"),
 		),
 	}
-	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil)
 
 	assert := assert.New(t)
 
@@ -1338,7 +1338,7 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 			kubetest.FakeNamespace("otherNamespace"),
 		),
 	}
-	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil)
 
 	assert := assert.New(t)
 
@@ -1640,7 +1640,7 @@ func TestSEKiali7589(t *testing.T) {
 	business.WithDiscovery(discovery)
 	business.WithKialiCache(cache)
 	business.SetWithBackends(factory, nil)
-	businessLayer := business.NewWithBackends(clients, clients, nil, nil)
+	businessLayer := business.NewWithBackends(kubernetes.ConvertToUserClients(clients), clients, nil, nil)
 
 	// VersionedApp graph
 	trafficMap := make(map[string]*graph.Node)

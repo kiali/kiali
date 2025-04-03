@@ -20,7 +20,7 @@ import (
 
 func setupAppService(clients map[string]kubernetes.ClientInterface) *AppService {
 	prom := new(prometheustest.PromClientMock)
-	layer := NewWithBackends(clients, clients, prom, nil)
+	layer := NewWithBackends(kubernetes.ConvertToUserClients(clients), clients, prom, nil)
 	return &layer.App
 }
 

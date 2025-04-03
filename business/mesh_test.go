@@ -42,7 +42,7 @@ func TestGetMeshConfig(t *testing.T) {
 	}
 
 	business.WithDiscovery(discovery)
-	layer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	layer := business.NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil)
 	meshSvc := layer.Mesh
 
 	meshConfig := meshSvc.GetMeshConfig()

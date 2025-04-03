@@ -73,7 +73,7 @@ func TestCBAll(t *testing.T) {
 			kubetest.FakeNamespace("testNamespace"),
 		),
 	}
-	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _, _ := setupTrafficMap()
 
 	assert.Equal(7, len(trafficMap))
@@ -139,7 +139,7 @@ func TestCBSubset(t *testing.T) {
 			kubetest.FakeNamespace("testNamespace"),
 		),
 	}
-	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _, _ := setupTrafficMap()
 
 	assert.Equal(7, len(trafficMap))
@@ -316,7 +316,7 @@ func TestSEInAppBox(t *testing.T) {
 			kubetest.FakeNamespace("testNamespace"),
 		),
 	}
-	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil)
 
 	trafficMap := graph.NewTrafficMap()
 	serviceEntryNode, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "ratings", "", "", "", "", graph.GraphTypeVersionedApp)

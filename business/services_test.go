@@ -46,7 +46,7 @@ func TestServiceListParsing(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	svc := NewWithBackends(k8sclients, k8sclients, nil, nil).Svc
+	svc := NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil).Svc
 
 	criteria := ServiceCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	serviceList, err := svc.GetServiceList(context.TODO(), criteria)
@@ -82,7 +82,7 @@ func TestParseRegistryServices(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(objs...)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	svc := NewWithBackends(k8sclients, k8sclients, nil, nil).Svc
+	svc := NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil).Svc
 
 	servicesz := "../tests/data/registry/services-registryz.json"
 	bServicesz, err := os.ReadFile(servicesz)
@@ -148,7 +148,7 @@ func TestGetServiceListFromMultipleClusters(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	kialiCache = cache
 
-	svc := NewWithBackends(clients, clients, nil, nil).Svc
+	svc := NewWithBackends(kubernetes.ConvertToUserClients(clients), clients, nil, nil).Svc
 	svcs, err := svc.GetServiceList(context.TODO(), ServiceCriteria{Namespace: "bookinfo"})
 	require.NoError(err)
 	require.Len(svcs.Services, 2)
@@ -183,7 +183,7 @@ func TestMultiClusterGetService(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	kialiCache = cache
 
-	svc := NewWithBackends(clients, clients, nil, nil).Svc
+	svc := NewWithBackends(kubernetes.ConvertToUserClients(clients), clients, nil, nil).Svc
 	s, err := svc.GetService(context.TODO(), "west", "bookinfo", "ratings-west-cluster")
 	require.NoError(err)
 
@@ -224,7 +224,7 @@ func TestMultiClusterServiceUpdate(t *testing.T) {
 	promMock := new(prometheustest.PromAPIMock)
 	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
 	prom.Inject(promMock)
-	svc := NewWithBackends(clients, clients, prom, nil).Svc
+	svc := NewWithBackends(kubernetes.ConvertToUserClients(clients), clients, prom, nil).Svc
 	_, err = svc.UpdateService(context.TODO(), "west", "bookinfo", "ratings-west-cluster", "60s", time.Now(), `{"metadata":{"annotations":{"test":"newlabel"}}}`, "merge")
 	require.NoError(err)
 
@@ -266,7 +266,7 @@ func TestMultiClusterGetServiceDetails(t *testing.T) {
 	promMock := new(prometheustest.PromAPIMock)
 	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
 	prom.Inject(promMock)
-	svc := NewWithBackends(clients, clients, prom, nil).Svc
+	svc := NewWithBackends(kubernetes.ConvertToUserClients(clients), clients, prom, nil).Svc
 	s, err := svc.GetServiceDetails(context.TODO(), "west", "bookinfo", "ratings-west-cluster", "60s", time.Now(), true)
 	require.NoError(err)
 
@@ -305,7 +305,7 @@ func TestMultiClusterGetServiceAppName(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	kialiCache = cache
 
-	svc := NewWithBackends(clients, clients, nil, nil).Svc
+	svc := NewWithBackends(kubernetes.ConvertToUserClients(clients), clients, nil, nil).Svc
 	s, err := svc.GetServiceTracingName(context.TODO(), "west", "bookinfo", "ratings-west-cluster")
 	require.NoError(err)
 
@@ -341,7 +341,7 @@ func TestGetServiceRouteURL(t *testing.T) {
 	promMock := new(prometheustest.PromAPIMock)
 	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
 	prom.Inject(promMock)
-	svc := NewWithBackends(clients, clients, prom, nil).Svc
+	svc := NewWithBackends(kubernetes.ConvertToUserClients(clients), clients, prom, nil).Svc
 
 	url := svc.GetServiceRouteURL(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "ratings")
 	require.NoError(err)
@@ -366,7 +366,7 @@ func TestGetServicesFromWaypoint(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	kialiCache = cache
 
-	svc := NewWithBackends(clients, clients, nil, nil).Svc
+	svc := NewWithBackends(kubernetes.ConvertToUserClients(clients), clients, nil, nil).Svc
 
 	svcList := svc.ListWaypointServices(context.TODO(), "waypoint", "bookinfo", conf.KubernetesConfig.ClusterName)
 	require.NotNil(svcList)
@@ -391,7 +391,7 @@ func TestGetWaypointServices(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	kialiCache = cache
 
-	svc := NewWithBackends(clients, clients, nil, nil).Svc
+	svc := NewWithBackends(kubernetes.ConvertToUserClients(clients), clients, nil, nil).Svc
 
 	service, _ := svc.GetService(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "ratings")
 
@@ -432,7 +432,7 @@ func TestGetServiceDetailsValidations(t *testing.T) {
 	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
 	prom.Inject(promMock)
 	discovery := istio.NewDiscovery(clients, cache, conf)
-	svc := NewWithBackends(clients, clients, prom, nil).Svc
+	svc := NewWithBackends(kubernetes.ConvertToUserClients(clients), clients, prom, nil).Svc
 	svc.businessLayer.TLS.discovery = discovery
 
 	s, err := svc.GetServiceDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "ratings-home-cluster", "60s", time.Now(), true)
@@ -473,7 +473,7 @@ func TestGetServiceDetailsValidationErrors(t *testing.T) {
 	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
 	prom.Inject(promMock)
 	discovery := istio.NewDiscovery(clients, cache, conf)
-	svc := NewWithBackends(clients, clients, prom, nil).Svc
+	svc := NewWithBackends(kubernetes.ConvertToUserClients(clients), clients, prom, nil).Svc
 	svc.businessLayer.TLS.discovery = discovery
 
 	s, err := svc.GetServiceDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "ratings-home-cluster", "60s", time.Now(), true)

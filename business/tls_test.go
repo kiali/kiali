@@ -66,7 +66,7 @@ func TestMeshStatusEnabled(t *testing.T) {
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 
-	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
+	tlsService := NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil).TLS
 	status, err := tlsService.MeshWidemTLSStatus(context.TODO(), conf.KubernetesConfig.ClusterName, "default")
 
 	assert.NoError(err)
@@ -112,7 +112,7 @@ func TestMeshStatusEnabledAutoMtls(t *testing.T) {
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 
-	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
+	tlsService := NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil).TLS
 	status, err := tlsService.MeshWidemTLSStatus(context.TODO(), conf.KubernetesConfig.ClusterName, "default")
 
 	assert.NoError(err)
@@ -161,7 +161,7 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 
-	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
+	tlsService := NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil).TLS
 	status, err := tlsService.MeshWidemTLSStatus(context.TODO(), conf.KubernetesConfig.ClusterName, "default")
 
 	assert.NoError(err)
@@ -206,7 +206,7 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 
-	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
+	tlsService := NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil).TLS
 	status, err := tlsService.MeshWidemTLSStatus(context.TODO(), conf.KubernetesConfig.ClusterName, "default")
 
 	assert.NoError(err)
@@ -254,7 +254,7 @@ func TestMeshStatusDisabled(t *testing.T) {
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 
-	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
+	tlsService := NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil).TLS
 	status, err := tlsService.MeshWidemTLSStatus(context.TODO(), conf.KubernetesConfig.ClusterName, "default")
 
 	assert.NoError(err)
@@ -289,7 +289,7 @@ func TestMeshStatusNotEnabledAutoMtls(t *testing.T) {
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 
-	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
+	tlsService := NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil).TLS
 	status, err := tlsService.MeshWidemTLSStatus(context.TODO(), conf.KubernetesConfig.ClusterName, "default")
 
 	assert.NoError(err)
@@ -432,7 +432,7 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
+	tlsService := NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil).TLS
 	status, err := tlsService.NamespaceWidemTLSStatus(context.TODO(), "bookinfo", conf.KubernetesConfig.ClusterName)
 
 	assert.NoError(err)
@@ -481,7 +481,7 @@ func testNamespaceScenario(exStatus string, drs []*networking_v1.DestinationRule
 	}
 	WithDiscovery(discovery)
 
-	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
+	tlsService := NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil).TLS
 	status, err := tlsService.NamespaceWidemTLSStatus(context.TODO(), "bookinfo", conf.KubernetesConfig.ClusterName)
 
 	assert.NoError(err)

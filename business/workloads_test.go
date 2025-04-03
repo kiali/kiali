@@ -34,7 +34,7 @@ func setupWorkloadService(k8s kubernetes.ClientInterface, conf *config.Config) W
 	prom := new(prometheustest.PromClientMock)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	return NewWithBackends(k8sclients, k8sclients, prom, nil).Workload
+	return NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, prom, nil).Workload
 }
 
 func callStreamPodLogs(svc WorkloadService, namespace, workload, app, podName string, opts *LogOptions) PodLog {
@@ -1360,7 +1360,7 @@ func TestGetWorkloadMultiCluster(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	kialiCache = cache
 
-	workloadService := NewWithBackends(clients, clients, nil, nil).Workload
+	workloadService := NewWithBackends(kubernetes.ConvertToUserClients(clients), clients, nil, nil).Workload
 	workload, err := workloadService.GetWorkload(context.TODO(), WorkloadCriteria{Cluster: "west", Namespace: "bookinfo", WorkloadName: "ratings-v1"})
 	require.NoError(err)
 	assert.Equal("west", workload.Cluster)
