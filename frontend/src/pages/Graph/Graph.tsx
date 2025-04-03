@@ -63,7 +63,7 @@ import { TimeInMilliseconds } from 'types/Common';
 import { HistoryManager, URLParam } from 'app/History';
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
-import { supportsGroups } from 'utils/GraphUtils';
+import { getValidGraphLayout, supportsGroups } from 'utils/GraphUtils';
 import { GraphData, GraphRefs } from './GraphPage';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { ServiceDetailsInfo } from 'types/ServiceInfo';
