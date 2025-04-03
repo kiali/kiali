@@ -166,6 +166,8 @@ type cacheLister struct {
 // err: the error that occurred
 type ErrorHandler func(kc *kubeCache, namespace string, err error)
 
+type waitForCacheSyncFunc func(stopCh <-chan struct{}, cacheSyncs ...cache.InformerSynced) bool
+
 // kubeCache is a local cache of kube objects. Manages informers and listers.
 type kubeCache struct {
 	cacheLock sync.RWMutex
@@ -187,10 +189,13 @@ type kubeCache struct {
 	stopClusterScopedChan chan struct{}
 	// Stops the namespace scoped informers when a refresh is necessary.
 	stopNSChans map[string]chan struct{}
+	// This is only for testing purposes to speed up test runs since the default kube
+	// implementation polls for 100ms.
+	waitForCacheSync waitForCacheSyncFunc
 }
 
 // Starts all informers. These run until context is cancelled.
-func NewKubeCache(kialiClient kubernetes.ClientInterface, conf config.Config, errorHandler ErrorHandler) (*kubeCache, error) {
+func NewKubeCache(kialiClient kubernetes.ClientInterface, conf config.Config, errorHandler ErrorHandler, waitForCacheSync waitForCacheSyncFunc) (*kubeCache, error) {
 	refreshDuration := time.Duration(conf.KubernetesConfig.CacheDuration) * time.Second
 
 	c := &kubeCache{
@@ -200,9 +205,10 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, conf config.Config, er
 		// Only when all namespaces are accessible should the cache be cluster scoped.
 		// Otherwise, kiali may not have access to all namespaces since
 		// the operator only grants clusterroles when all namespaces are accessible.
-		clusterScoped:   conf.AllNamespacesAccessible(),
-		refreshDuration: refreshDuration,
-		refreshOnce:     &OnceWrapper{once: &sync.Once{}},
+		clusterScoped:    conf.AllNamespacesAccessible(),
+		refreshDuration:  refreshDuration,
+		refreshOnce:      &OnceWrapper{once: &sync.Once{}},
+		waitForCacheSync: waitForCacheSync,
 	}
 
 	if c.clusterScoped {
@@ -383,7 +389,7 @@ func (c *kubeCache) startInformers(namespace string) error {
 	}
 
 	log.Infof("[Kiali Cache] Waiting for %s cache to sync", scope)
-	if !cache.WaitForCacheSync(stop, c.getCacheLister(namespace).cachesSynced...) {
+	if !c.waitForCacheSync(stop, c.getCacheLister(namespace).cachesSynced...) {
 		log.Errorf("[Kiali Cache] Failed to sync %s cache", scope)
 		return errors.New("failed to sync cache")
 	}
