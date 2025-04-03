@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	"golang.org/x/exp/maps"
 
@@ -38,6 +39,9 @@ const (
 	certificatesConfigMapName             = "istio-ca-root-cert"
 	certificateName                       = "root-cert.pem"
 )
+
+// 3 seconds is somewhat arbitrary but mesh discovery expires after 20s so it needs to be less than that.
+var getVersionTimeout = time.Second * 3
 
 func parseIstioConfigMap(istioConfig *corev1.ConfigMap) (*models.IstioMeshConfig, error) {
 	meshConfig := &models.IstioMeshConfig{}
@@ -367,20 +371,25 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 			}
 
 			// Even if we fail to get the version we should still return the controlplane object.
-			func() {
+			func(ctx context.Context) {
 				saClient := in.kialiSAClients[cluster.Name]
 				if saClient == nil {
 					log.Warningf("Unable to get service account client for cluster [%s].", cluster.Name)
 					return
 				}
 
+				// If this call hangs it can cause the rest of the mesh discovery to timeout.
+				// Getting the version shouldn't block discovery.
+				var cancel context.CancelFunc
+				ctx, cancel = context.WithTimeout(ctx, getVersionTimeout)
+				defer cancel()
 				versionInfo, err := GetVersion(ctx, in.conf, saClient, kubeCache, controlPlane.Revision, controlPlane.IstiodNamespace)
 				if err != nil {
 					log.Warningf("Unable to get version info for controlplane [%s/%s] on cluster [%s]. Err: %s", controlPlane.IstiodName, controlPlane.IstiodNamespace, cluster.Name, err)
 					return
 				}
 				controlPlane.Version = versionInfo
-			}()
+			}(ctx)
 
 			// Get the status for the control plane.
 			status, err := in.canConnectToIstiodForRevision(controlPlane)

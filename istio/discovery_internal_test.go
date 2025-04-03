@@ -1,14 +1,15 @@
 package istio
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	core_v1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -18,8 +19,8 @@ import (
 )
 
 func FakeCertificateConfigMap(namespace string) *corev1.ConfigMap {
-	return &core_v1.ConfigMap{
-		ObjectMeta: v1.ObjectMeta{
+	return &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "istio-ca-root-cert",
 			Namespace: namespace,
 		},
@@ -190,4 +191,63 @@ func TestIstioConfigMapName(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestHangingOnGetVersionStillReturnsControlPlane(t *testing.T) {
+	istiodDeployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "istiod",
+			Namespace: "istio-system",
+			Labels: map[string]string{
+				"app":                     "istiod",
+				config.IstioRevisionLabel: "default",
+			},
+		},
+	}
+	const configMapData = `accessLogFile: /dev/stdout
+enableAutoMtls: true
+rootNamespace: istio-system
+trustDomain: cluster.local
+`
+	istioConfigMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "istio",
+			Namespace: "istio-system",
+			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
+		},
+		Data: map[string]string{"mesh": configMapData},
+	}
+	sideCarConfigMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "istio-sidecar-injector",
+			Namespace: "istio-system",
+		},
+		Data: map[string]string{
+			"values": "{ \"global\": { \"network\": \"kialiNetwork\" } }",
+		},
+	}
+
+	require := require.New(t)
+	conf := config.NewConfig()
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("istio-system"),
+		istiodDeployment,
+		istioConfigMap,
+		sideCarConfigMap,
+		FakeCertificateConfigMap("istio-system"),
+	)
+	cache := cache.NewTestingCache(t, k8s, *conf)
+
+	old := getVersionTimeout
+	t.Cleanup(func() {
+		getVersionTimeout = old
+	})
+	getVersionTimeout = time.Nanosecond
+
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	discovery := NewDiscovery(clients, cache, conf)
+	mesh, err := discovery.Mesh(context.Background())
+	require.NoError(err)
+	require.Len(mesh.ControlPlanes, 1)
+	require.Empty(mesh.ControlPlanes[0].Version)
 }
