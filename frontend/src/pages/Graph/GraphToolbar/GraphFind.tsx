@@ -19,7 +19,7 @@ import { KialiAppState } from '../../../store/Store';
 import { findValueSelector, hideValueSelector, edgeLabelsSelector, edgeModeSelector } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import { GraphHelpFind } from '../../../pages/Graph/GraphHelpFind';
-import { EdgeLabelMode, NodeType, EdgeMode, NodeAttr, EdgeAttr } from '../../../types/Graph';
+import { EdgeLabelMode, NodeType, EdgeMode, NodeAttr, EdgeAttr, LayoutType } from '../../../types/Graph';
 import * as AlertUtils from '../../../utils/AlertUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -35,7 +35,7 @@ import { EdgeData, NodeData } from 'pages/Graph/GraphElems';
 import { elems, SelectAnd, SelectExp, selectOr, SelectOr, setObserved, toSafeFieldName } from 'helpers/GraphHelpers';
 import { descendents } from 'helpers/GraphHelpers';
 import { isArray } from 'lodash';
-import { graphLayout, LayoutType } from 'pages/Graph/Graph';
+import { graphLayout } from 'pages/Graph/Graph';
 import { infoStyle } from 'styles/IconStyle';
 
 type ReduxStateProps = {

@@ -18,7 +18,9 @@ import {
   TrafficRate,
   RankMode,
   RankResult,
-  EdgeMode
+  EdgeMode,
+  GraphLayout,
+  FocusNode
 } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -67,11 +69,12 @@ import { deleteServiceTrafficRouting } from 'services/Api';
 import { canCreate, canUpdate } from '../../types/Permissions';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { triggerRefresh } from '../../hooks/refresh';
-import { Graph, FocusNode, getValidGraphLayout, GraphLayout } from './Graph';
+import { Graph } from './Graph';
 import { Controller } from '@patternfly/react-topology';
 import { GraphLegend } from './GraphLegend';
 import { HistoryManager, URLParam } from 'app/History';
 import { elementsChanged } from 'helpers/GraphHelpers';
+import { getValidGraphLayout } from 'utils/GraphUtils';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 export type GraphURLPathProps = {

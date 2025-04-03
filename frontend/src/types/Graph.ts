@@ -196,6 +196,20 @@ export const toTcpRate = (rate: string): TrafficRate | undefined => {
   }
 };
 
+export enum LayoutType {
+  Layout = 'layout',
+  LayoutNoFit = 'layoutNoFit',
+  Resize = 'resize'
+}
+
+// the layouts offered by the traffic graph page
+export enum GraphLayout {
+  BreadthFirst = 'breadthfirst',
+  Concentric = 'concentric',
+  Dagre = 'dagre',
+  Grid = 'grid'
+}
+
 export enum GraphType {
   APP = 'app',
   SERVICE = 'service',
@@ -232,6 +246,11 @@ export interface NodeParamsType {
   service: string;
   version?: string;
   workload: string;
+}
+
+export interface FocusNode {
+  id: string;
+  isSelected?: boolean;
 }
 
 export interface GraphEvent {

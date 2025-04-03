@@ -56,13 +56,12 @@ const DEFAULT_NODE_SIZE = 100;
 const NAMESPACE_NODE_SIZE = 70;
 const ZOOM_IN = 4 / 3;
 const ZOOM_OUT = 3 / 4;
-
-export const FIT_PADDING = 90;
+const FIT_PADDING = 90;
 
 let initialLayout = false;
 let layoutInProgress: MeshLayoutType | undefined;
 
-export function layoutMesh(controller: Controller, layoutType: MeshLayoutType, reset: boolean = true): void {
+export function layoutMesh(controller: Controller, layoutType: MeshLayoutType, reset = true): void {
   if (!controller?.hasGraph()) {
     console.debug('Skip meshLayout, no graph');
     return;

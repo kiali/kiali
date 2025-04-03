@@ -14,14 +14,13 @@ import { findChildren, findParent, formatDuration } from 'utils/tracing/TracingH
 import { FormattedTraceInfo, shortIDStyle } from 'components/TracingIntegration/TracingResults/FormattedTraceInfo';
 import { SimpleSelect } from 'components/Select/SimpleSelect';
 import { summaryFont, summaryTitle } from './SummaryPanelCommon';
-import { NodeParamsType, GraphType, SummaryData, NodeAttr } from 'types/Graph';
+import { NodeParamsType, GraphType, SummaryData, NodeAttr, FocusNode } from 'types/Graph';
 import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { responseFlags } from 'utils/ResponseFlags';
 import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
 import { Visualization, Node } from '@patternfly/react-topology';
 import { elems, selectAnd } from 'helpers/GraphHelpers';
-import { FocusNode } from 'pages/Graph/Graph';
 import { ExternalServiceInfo } from '../../types/StatusState';
 import { isMultiCluster } from '../../config';
 import { KialiIcon } from 'config/KialiIcon';

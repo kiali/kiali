@@ -12,6 +12,7 @@ import {
   EdgeLabelMode,
   EdgeMode,
   GraphDefinition,
+  GraphLayout,
   GraphType,
   NodeParamsType,
   RankMode,
@@ -27,7 +28,6 @@ import { TracingState } from 'reducers/TracingState';
 import { MetricsStatsState } from 'reducers/MetricsStatsState';
 import { CertsInfo } from 'types/CertsInfo';
 import { MeshCluster, MeshDefinition, MeshTarget } from '../types/Mesh';
-import { GraphLayout } from 'pages/Graph/Graph';
 import { MeshLayout } from 'pages/Mesh/layouts/layoutFactory';
 
 // Store is the Redux Data store

@@ -1,10 +1,9 @@
 import { GraphDataStateReducer } from '../GraphDataState';
 import { GraphActions } from '../../actions/GraphActions';
 import { GlobalActions } from '../../actions/GlobalActions';
-import { DefaultTrafficRates, EdgeMode, GraphType } from '../../types/Graph';
+import { DefaultTrafficRates, EdgeMode, GraphLayout, GraphType } from '../../types/Graph';
 import { GraphState } from 'store/Store';
 import { GraphElement } from '@patternfly/react-topology';
-import { GraphLayout } from 'pages/Graph/Graph';
 
 describe('GraphDataState', () => {
   it('should return the initial state', () => {

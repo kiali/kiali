@@ -1,10 +1,17 @@
-import { EdgeLabelMode, NodeType, NodeParamsType, GraphType, TrafficRate, EdgeMode } from '../../types/Graph';
+import {
+  EdgeLabelMode,
+  NodeType,
+  NodeParamsType,
+  GraphType,
+  TrafficRate,
+  EdgeMode,
+  GraphLayout
+} from '../../types/Graph';
 import { DurationInSeconds, IntervalInMilliseconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import { URLParam } from '../../app/History';
 import { getKioskMode, isKioskMode } from '../../utils/SearchParamUtils';
 import { isMultiCluster } from 'config';
-import { GraphLayout } from 'pages/Graph/Graph';
 
 export type GraphUrlParams = {
   activeNamespaces: Namespace[];

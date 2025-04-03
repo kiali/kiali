@@ -15,13 +15,13 @@ import {
 import { Edge, EdgeModel, Node, NodeModel } from '@patternfly/react-topology';
 import { URLParam, location, router } from '../../app/History';
 import { GraphDataSource } from '../../services/GraphDataSource';
-import { DecoratedGraphElements, EdgeMode, GraphEvent, GraphType, NodeType } from '../../types/Graph';
+import { DecoratedGraphElements, EdgeMode, GraphEvent, GraphLayout, GraphType, NodeType } from '../../types/Graph';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
 import { store } from 'store/ConfigStore';
 import { TimeInMilliseconds } from '../../types/Common';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { KialiAppState } from '../../store/Store';
-import { GraphLayout, Graph } from './Graph';
+import { Graph } from './Graph';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { isKiosk, isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 import { ServiceWizardActionsDropdownGroup } from 'components/IstioWizards/ServiceWizardActionsDropdownGroup';
