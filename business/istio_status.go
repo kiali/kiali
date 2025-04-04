@@ -56,11 +56,16 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 	}
 	result := kubernetes.IstioComponentStatus{}
 
+	log.Infof("**** ISTIO STATUS for [%d] user clients", len(iss.userClients))
 	for cluster := range iss.userClients {
 		ics, err := iss.getIstioComponentStatus(ctx, cluster)
 		if err != nil {
+			log.Infof("**** ISTIO STATUS error for cluster=[%s]: %s", cluster, err)
 			// istiod should be running
 			return nil, err
+		}
+		for _, ic := range ics {
+			log.Infof("**** ISTIO STATUS merge status for cluster=[%s] ics=[%s:%s]", cluster, ic.Cluster, ic.Status)
 		}
 		result.Merge(ics)
 	}
