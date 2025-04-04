@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/util/httputil"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 func NewIstioStatusService(
@@ -56,26 +57,17 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 	}
 	result := kubernetes.IstioComponentStatus{}
 
-	log.Infof("**** ISTIO STATUS for [%d] user clients", len(iss.userClients))
 	for cluster := range iss.userClients {
 		ics, err := iss.getIstioComponentStatus(ctx, cluster)
 		if err != nil {
-			log.Infof("**** ISTIO STATUS error for cluster=[%s]: %s", cluster, err)
 			// istiod should be running
 			return nil, err
-		}
-		for _, ic := range ics {
-			log.Infof("**** ISTIO STATUS merge status for cluster=[%s] ics=[%s:%s]", cluster, ic.Cluster, ic.Status)
 		}
 		result.Merge(ics)
 	}
 
 	// for local cluster only get addons
 	result.Merge(iss.getAddonComponentStatus(iss.conf.KubernetesConfig.ClusterName))
-
-	for _, s := range result {
-		log.Infof("**** ISTIO STATUS cluster=[%s] status=[%s]", s.Cluster, s.Status)
-	}
 
 	return result, nil
 }
@@ -132,19 +124,22 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 	}
 
 	// Autodiscover gateways.
-	gateways, err := iss.workloads.GetAllGateways(ctx, cluster, "")
+	allGateways, err := iss.workloads.GetGateways(ctx)
 	if err != nil {
 		// Don't error on gateways since they are non-essential.
 		log.Debugf("Unable to get gateway workloads when building istio component status. Cluster: %s. Err: %s", cluster, err)
 		return istiodStatus, nil
 	}
+	gateways := sliceutil.Filter(allGateways, func(gw *models.Workload) bool {
+		return gw.Cluster == cluster
+	})
 
-	for _, workload := range gateways {
+	for _, gateway := range gateways {
 		istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
-			Cluster:   workload.Cluster,
-			Name:      workload.Name,
-			Namespace: workload.Namespace,
-			Status:    GetWorkloadStatus(*workload),
+			Cluster:   gateway.Cluster,
+			Name:      gateway.Name,
+			Namespace: gateway.Namespace,
+			Status:    GetWorkloadStatus(*gateway),
 			IsCore:    false,
 		})
 	}
