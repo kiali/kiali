@@ -185,23 +185,28 @@ func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string, 
 	return workloads, nil
 }
 
-// GetAllGateways fetches all gateway workloads across every namespace in the cluster.
-func (in *WorkloadService) GetAllGateways(ctx context.Context, cluster string, labelSelector string) (models.Workloads, error) {
+// GetGateways fetches all gateway workloads across all clusters and namespaces.
+func (in *WorkloadService) GetGateways(ctx context.Context) (models.Workloads, error) {
 	if gateways, ok := in.cache.GetGateways(); ok {
-		log.Tracef("GetAllGateways: Returning list from cache")
+		log.Tracef("GetGateways: Returning list from cache")
 		return gateways, nil
 	}
 
-	workloads, err := in.GetAllWorkloads(ctx, cluster, labelSelector)
-	if err != nil {
-		return nil, err
+	gateways := models.Workloads{}
+	for cluster := range in.userClients {
+		workloads, err := in.GetAllWorkloads(ctx, cluster, "")
+		if err != nil {
+			log.Debugf("GetGateways: Error fetching workloads for cluster=[%s]: %s", cluster, err.Error())
+			continue
+		}
+
+		clusterGateways := sliceutil.Filter(workloads, func(w *models.Workload) bool {
+			return w.IsGateway()
+		})
+		gateways = append(gateways, clusterGateways...)
 	}
 
-	gateways := sliceutil.Filter(workloads, func(w *models.Workload) bool {
-		return w.IsGateway()
-	})
 	in.cache.SetGateways(gateways)
-
 	return gateways, nil
 }
 

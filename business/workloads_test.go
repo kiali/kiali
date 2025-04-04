@@ -27,6 +27,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 func setupWorkloadService(k8s kubernetes.ClientInterface, conf *config.Config) WorkloadService {
@@ -1889,11 +1890,14 @@ func TestGetAllGateways(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
-	workloads, err := svc.GetAllGateways(context.Background(), conf.KubernetesConfig.ClusterName, "")
+	gateways, err := svc.GetGateways(context.Background())
 	require.NoError(err)
+	gateways = sliceutil.Filter(gateways, func(gw *models.Workload) bool {
+		return gw.Cluster == conf.KubernetesConfig.ClusterName
+	})
 
-	require.Len(workloads, 1)
-	require.True(workloads[0].IsGateway(), "Expected IsGateway to be True but it was false")
+	require.Len(gateways, 1)
+	require.True(gateways[0].IsGateway(), "Expected IsGateway to be True but it was false")
 }
 
 func TestGetWorkloadListWithCustomKindThatMatchesCoreKind(t *testing.T) {

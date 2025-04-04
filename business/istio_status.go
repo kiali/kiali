@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/util/httputil"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 func NewIstioStatusService(
@@ -123,19 +124,22 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 	}
 
 	// Autodiscover gateways.
-	gateways, err := iss.workloads.GetAllGateways(ctx, cluster, "")
+	allGateways, err := iss.workloads.GetGateways(ctx)
 	if err != nil {
 		// Don't error on gateways since they are non-essential.
 		log.Debugf("Unable to get gateway workloads when building istio component status. Cluster: %s. Err: %s", cluster, err)
 		return istiodStatus, nil
 	}
+	gateways := sliceutil.Filter(allGateways, func(gw *models.Workload) bool {
+		return gw.Cluster == cluster
+	})
 
-	for _, workload := range gateways {
+	for _, gateway := range gateways {
 		istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
-			Cluster:   workload.Cluster,
-			Name:      workload.Name,
-			Namespace: workload.Namespace,
-			Status:    GetWorkloadStatus(*workload),
+			Cluster:   gateway.Cluster,
+			Name:      gateway.Name,
+			Namespace: gateway.Namespace,
+			Status:    GetWorkloadStatus(*gateway),
 			IsCore:    false,
 		})
 	}
