@@ -153,7 +153,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			cluster, namespace, isExternal := discoverInfraService(es.Prometheus.URL, ctx, gi)
 			var node *mesh.Node
 			name := "Prometheus"
-			node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, cluster, namespace, name, es.Prometheus, esVersions[name], isExternal, healthData["prometheus"])
+			node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, cluster, namespace, name, es.Prometheus, esVersions[name], isExternal, healthData[fmt.Sprintf("%s%s", "prometheus", gi.Conf.KubernetesConfig.ClusterName)])
 			mesh.CheckError(err)
 
 			kiali.AddEdge(node)
@@ -162,7 +162,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			if conf.ExternalServices.Tracing.Enabled {
 				cluster, namespace, isExternal = discoverInfraService(es.Tracing.InternalURL, ctx, gi)
 				name = string(es.Tracing.Provider)
-				node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, cluster, namespace, name, es.Tracing, esVersions[name], isExternal, healthData["tracing"])
+				node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, cluster, namespace, name, es.Tracing, esVersions[name], isExternal, healthData[fmt.Sprintf("%s%s", "tracing", gi.Conf.KubernetesConfig.ClusterName)])
 				mesh.CheckError(err)
 
 				kiali.AddEdge(node)
@@ -172,7 +172,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			if conf.ExternalServices.Grafana.Enabled {
 				cluster, namespace, isExternal = discoverInfraService(es.Grafana.InternalURL, ctx, gi)
 				name = "Grafana"
-				node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, cluster, namespace, name, es.Grafana, esVersions[name], isExternal, healthData["grafana"])
+				node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, cluster, namespace, name, es.Grafana, esVersions[name], isExternal, healthData[fmt.Sprintf("%s%s", "grafana", gi.Conf.KubernetesConfig.ClusterName)])
 				mesh.CheckError(err)
 
 				kiali.AddEdge(node)
