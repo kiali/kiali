@@ -68,6 +68,10 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 	// for local cluster only get addons
 	result.Merge(iss.getAddonComponentStatus(iss.conf.KubernetesConfig.ClusterName))
 
+	for _, s := range result {
+		log.Infof("**** ISTIO STATUS cluster=[%s] status=[%s]", s.Cluster, s.Status)
+	}
+
 	return result, nil
 }
 
