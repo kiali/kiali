@@ -26,7 +26,7 @@ func ControlPlanes(cache cache.KialiCache, clientFactory kubernetes.ClientFactor
 			RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		namespaceService := business.NewNamespaceService(cache, conf, discovery, clientFactory.GetSAClients(), userClients)
+		namespaceService := business.NewNamespaceService(cache, conf, discovery, clientFactory.GetSAClients(), kubernetes.ConvertToUserClients(userClients))
 
 		m, err := discovery.Mesh(r.Context())
 		if err != nil {

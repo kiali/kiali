@@ -766,9 +766,9 @@ func fakeValidationMeshService(t *testing.T, conf config.Config, objects ...runt
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	discovery := istio.NewDiscovery(k8sclients, cache, &conf)
-	namespace := NewNamespaceService(cache, &conf, discovery, k8sclients, k8sclients)
+	namespace := NewNamespaceService(cache, &conf, discovery, k8sclients, kubernetes.ConvertToUserClients(k8sclients))
 	mesh := NewMeshService(&conf, discovery, k8sclients)
-	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
+	layer := NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil)
 	return NewValidationsService(&conf, &layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
 }
 
@@ -787,9 +787,9 @@ func fakeValidationMeshServiceWithRegistryStatus(t *testing.T, cfg config.Config
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}, Config: models.ControlPlaneConfiguration{}}}},
 	}
-	namespace := NewNamespaceService(cache, conf, discovery, k8sclients, k8sclients)
+	namespace := NewNamespaceService(cache, conf, discovery, k8sclients, kubernetes.ConvertToUserClients(k8sclients))
 	mesh := NewMeshService(conf, discovery, k8sclients)
-	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
+	layer := NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil)
 	return NewValidationsService(conf, &layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
 }
 

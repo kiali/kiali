@@ -59,6 +59,31 @@ type ClientInterface interface {
 	OSClientInterface
 }
 
+// UserClientInterface provides access to the client interface with the logged in user's permissions
+type UserClientInterface ClientInterface
+
+// ConvertToUserClients is a utility to be used for the rare instances
+// where you have a map of base clients but need a map of user clients.
+// USE WITH EXTREME CAUTION!!
+// Using this means you potentially are going to make user clients with Kiali SA client permissions!
+func ConvertToUserClients(in map[string]ClientInterface) map[string]UserClientInterface {
+	out := make(map[string]UserClientInterface, len(in))
+	for k, v := range in {
+		out[k] = UserClientInterface(v)
+	}
+	return out
+}
+
+// ConvertFromUserClients is a utility to be used for the rare instances
+// where you have a map of user clients but need a map of base client interfaces.
+func ConvertFromUserClients(in map[string]UserClientInterface) map[string]ClientInterface {
+	out := make(map[string]ClientInterface, len(in))
+	for k, v := range in {
+		out[k] = ClientInterface(v)
+	}
+	return out
+}
+
 // K8SClient is the client struct for Kubernetes and Istio APIs
 // It hides the way it queries each API
 type K8SClient struct {

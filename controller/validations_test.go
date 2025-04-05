@@ -67,9 +67,9 @@ func TestValidationsFailsToUpdateWithOldCache(t *testing.T) {
 	cache := newIncrementFirstVersionCache(business.SetupBusinessLayer(t, client, *conf))
 	k8sclients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client}
 	discovery := istio.NewDiscovery(k8sclients, cache, conf)
-	namespace := business.NewNamespaceService(cache, conf, discovery, k8sclients, k8sclients)
+	namespace := business.NewNamespaceService(cache, conf, discovery, k8sclients, kubernetes.ConvertToUserClients(k8sclients))
 	mesh := business.NewMeshService(conf, discovery, k8sclients)
-	layer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	layer := business.NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil)
 	validations := business.NewValidationsService(conf, &layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
 	reconciler := controller.NewValidationsReconciler([]string{conf.KubernetesConfig.ClusterName}, conf, cache, &validations, 0)
 

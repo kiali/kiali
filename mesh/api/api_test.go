@@ -231,7 +231,7 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 	business.WithDiscovery(discovery)
 	business.WithKialiCache(cache)
 	business.SetWithBackends(factory, nil)
-	layer := business.NewWithBackends(clients, clients, nil, nil)
+	layer := business.NewWithBackends(kubernetes.ConvertToUserClients(clients), clients, nil, nil)
 
 	meshDef, err := discovery.Mesh(context.TODO())
 	require.NoError(err)

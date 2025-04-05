@@ -79,7 +79,7 @@ func Get(authInfos map[string]*api.AuthInfo) (*Layer, error) {
 	}
 
 	kialiSAClient := clientFactory.GetSAClients()
-	return NewWithBackends(userClients, kialiSAClient, prometheusClient, traceClient), nil
+	return NewWithBackends(kubernetes.ConvertToUserClients(userClients), kialiSAClient, prometheusClient, traceClient), nil
 }
 
 // SetWithBackends allows for specifying the ClientFactory and Prometheus clients to be used.
@@ -92,12 +92,12 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 // NewWithBackends creates the business layer using the passed k8sClients and prom clients.
 // Note that the client passed here should *not* be the Kiali ServiceAccount client.
 // It should be the user client based on the logged in user's token.
-func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, traceClient tracing.ClientInterface) *Layer {
+func NewWithBackends(userClients map[string]kubernetes.UserClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, traceClient tracing.ClientInterface) *Layer {
 	return newLayer(userClients, kialiSAClients, prom, traceClient, kialiCache, config.Get(), grafanaService, discovery, poller)
 }
 
 func newLayer(
-	userClients map[string]kubernetes.ClientInterface,
+	userClients map[string]kubernetes.UserClientInterface,
 	kialiSAClients map[string]kubernetes.ClientInterface,
 	prom prometheus.ClientInterface,
 	traceClient tracing.ClientInterface,
@@ -112,19 +112,19 @@ func newLayer(
 	homeClusterName := conf.KubernetesConfig.ClusterName
 
 	// TODO: Modify the k8s argument to other services to pass the whole k8s map if needed
-	temporaryLayer.App = NewAppService(temporaryLayer, conf, prom, grafana, userClients)
-	temporaryLayer.Health = HealthService{conf: conf, prom: prom, businessLayer: temporaryLayer, userClients: userClients}
-	temporaryLayer.IstioConfig = IstioConfigService{conf: conf, userClients: userClients, kialiCache: cache, businessLayer: temporaryLayer, controlPlaneMonitor: cpm}
+	temporaryLayer.App = NewAppService(temporaryLayer, conf, prom, grafana, kubernetes.ConvertFromUserClients(userClients))
+	temporaryLayer.Health = HealthService{conf: conf, prom: prom, businessLayer: temporaryLayer, userClients: kubernetes.ConvertFromUserClients(userClients)}
+	temporaryLayer.IstioConfig = IstioConfigService{conf: conf, userClients: kubernetes.ConvertFromUserClients(userClients), kialiCache: cache, businessLayer: temporaryLayer, controlPlaneMonitor: cpm}
 	temporaryLayer.IstioStatus = NewIstioStatusService(conf, discovery, kialiSAClients[homeClusterName], &temporaryLayer.Tracing, userClients, &temporaryLayer.Workload)
 	temporaryLayer.Namespace = NewNamespaceService(cache, conf, discovery, kialiSAClients, userClients)
 	temporaryLayer.Mesh = NewMeshService(conf, discovery, kialiSAClients)
 	temporaryLayer.ProxyStatus = ProxyStatusService{conf: conf, kialiSAClients: kialiSAClients, kialiCache: cache, businessLayer: temporaryLayer}
 	// Out of order because it relies on ProxyStatus
-	temporaryLayer.ProxyLogging = ProxyLoggingService{conf: conf, userClients: userClients, proxyStatus: &temporaryLayer.ProxyStatus}
+	temporaryLayer.ProxyLogging = ProxyLoggingService{conf: conf, userClients: kubernetes.ConvertFromUserClients(userClients), proxyStatus: &temporaryLayer.ProxyStatus}
 	temporaryLayer.RegistryStatus = RegistryStatusService{conf: conf, kialiCache: cache}
-	temporaryLayer.Svc = SvcService{conf: conf, kialiCache: cache, businessLayer: temporaryLayer, prom: prom, userClients: userClients}
-	temporaryLayer.TLS = TLSService{conf: conf, discovery: discovery, userClients: userClients, kialiCache: cache, businessLayer: temporaryLayer}
-	temporaryLayer.Validations = NewValidationsService(conf, &temporaryLayer.IstioConfig, cache, &temporaryLayer.Mesh, &temporaryLayer.Namespace, &temporaryLayer.Svc, userClients, &temporaryLayer.Workload)
+	temporaryLayer.Svc = SvcService{conf: conf, kialiCache: cache, businessLayer: temporaryLayer, prom: prom, userClients: kubernetes.ConvertFromUserClients(userClients)}
+	temporaryLayer.TLS = TLSService{conf: conf, discovery: discovery, userClients: kubernetes.ConvertFromUserClients(userClients), kialiCache: cache, businessLayer: temporaryLayer}
+	temporaryLayer.Validations = NewValidationsService(conf, &temporaryLayer.IstioConfig, cache, &temporaryLayer.Mesh, &temporaryLayer.Namespace, &temporaryLayer.Svc, kubernetes.ConvertFromUserClients(userClients), &temporaryLayer.Workload)
 	temporaryLayer.Workload = *NewWorkloadService(cache, conf, grafana, kialiSAClients, temporaryLayer, prom, userClients)
 	temporaryLayer.Tracing = NewTracingService(conf, traceClient, &temporaryLayer.Svc, &temporaryLayer.Workload, &temporaryLayer.App)
 	return temporaryLayer
@@ -150,7 +150,7 @@ func NewLayer(
 	}
 
 	kialiSAClients := cf.GetSAClients()
-	return newLayer(userClients, kialiSAClients, prom, traceClient, cache, conf, grafana, discovery, cpm), nil
+	return newLayer(kubernetes.ConvertToUserClients(userClients), kialiSAClients, prom, traceClient, cache, conf, grafana, discovery, cpm), nil
 }
 
 // NewLayer creates the business layer using the passed k8sClients and prom clients.
@@ -168,5 +168,5 @@ func NewLayerWithSAClients(
 	discovery *istio.Discovery,
 	saClients map[string]kubernetes.ClientInterface,
 ) (*Layer, error) {
-	return newLayer(saClients, saClients, prom, traceClient, cache, conf, grafana, discovery, cpm), nil
+	return newLayer(kubernetes.ConvertToUserClients(saClients), saClients, prom, traceClient, cache, conf, grafana, discovery, cpm), nil
 }

@@ -102,7 +102,7 @@ func testPerfScenario(exStatus string, namespaces []core_v1.Namespace, drs []*ne
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 
-	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
+	tlsService := NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, nil, nil).TLS
 
 	statuses, err := tlsService.ClusterWideNSmTLSStatus(context.TODO(), models.CastNamespaceCollection(namespaces, conf.KubernetesConfig.ClusterName), conf.KubernetesConfig.ClusterName)
 	assert.NoError(err)

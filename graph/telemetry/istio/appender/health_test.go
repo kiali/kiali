@@ -502,7 +502,7 @@ func TestErrorCausesPanic(t *testing.T) {
 	prom.MockAllRequestRates("testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, k8sclients, prom, nil)
+	businessLayer := business.NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, prom, nil)
 
 	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
@@ -558,7 +558,7 @@ func TestMultiClusterHealthConfig(t *testing.T) {
 	prom := new(prometheustest.PromClientMock)
 	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
 	prom.MockAllRequestRates("testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
-	businessLayer := business.NewWithBackends(factory.GetSAClients(), factory.GetSAClients(), prom, nil)
+	businessLayer := business.NewWithBackends(kubernetes.ConvertToUserClients(factory.GetSAClients()), factory.GetSAClients(), prom, nil)
 
 	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
@@ -635,6 +635,6 @@ func setupHealthConfig(t *testing.T, services []core_v1.Service, deployments []a
 	prom.MockAllRequestRates("testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, k8sclients, prom, nil)
+	businessLayer := business.NewWithBackends(kubernetes.ConvertToUserClients(k8sclients), k8sclients, prom, nil)
 	return businessLayer
 }

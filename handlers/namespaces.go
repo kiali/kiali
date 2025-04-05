@@ -26,7 +26,7 @@ func NamespaceList(conf *config.Config, kialiCache cache.KialiCache, clientFacto
 			return
 		}
 
-		namespace := business.NewNamespaceService(kialiCache, conf, discovery, clientFactory.GetSAClients(), userClients)
+		namespace := business.NewNamespaceService(kialiCache, conf, discovery, clientFactory.GetSAClients(), kubernetes.ConvertToUserClients(userClients))
 
 		namespaces, err := namespace.GetNamespaces(r.Context())
 		if err != nil {
@@ -52,7 +52,7 @@ func NamespaceInfo(conf *config.Config, cache cache.KialiCache, clientFactory ku
 			return
 		}
 
-		namespaceService := business.NewNamespaceService(cache, conf, discovery, clientFactory.GetSAClients(), userClients)
+		namespaceService := business.NewNamespaceService(cache, conf, discovery, clientFactory.GetSAClients(), kubernetes.ConvertToUserClients(userClients))
 		namespaceInfo, err := namespaceService.GetClusterNamespace(r.Context(), namespace, cluster)
 		if err != nil {
 			log.Error(err)
@@ -141,7 +141,7 @@ func NamespaceUpdate(conf *config.Config, kialiCache cache.KialiCache, clientFac
 			return
 		}
 
-		namespaceService := business.NewNamespaceService(kialiCache, conf, discovery, clientFactory.GetSAClients(), userClients)
+		namespaceService := business.NewNamespaceService(kialiCache, conf, discovery, clientFactory.GetSAClients(), kubernetes.ConvertToUserClients(userClients))
 		ns, err := namespaceService.UpdateNamespace(r.Context(), namespace, jsonPatch, cluster)
 		if err != nil {
 			handleErrorResponse(w, err)
