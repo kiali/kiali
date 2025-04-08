@@ -243,9 +243,9 @@ print_all_service_endpoints() {
 
 exec_ssh() {
   local sshcmd=${1}
-  # when network-mode is "user", the port is 2222.
+  # when network-mode is explicitly set to "user" or it is the default, the port is 2222.
   local port=22
-  if ${CRC_COMMAND} config get network-mode | grep -q ' user$'; then
+  if ${CRC_COMMAND} config get network-mode | grep -Eq " user$|'user'"; then
     port=2222
   fi
   ssh -y -p ${port} -i ${CRC_ROOT_DIR}/machines/crc/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null core@$(${CRC_COMMAND} ip) ${sshcmd}
@@ -509,10 +509,10 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="2.45.0"
+DEFAULT_CRC_DOWNLOAD_VERSION="2.49.0"
 
 # The default version of the crc bundle - this is typically the version included with the CRC download
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.17.7"
+DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.18.2"
 
 # The default virtual CPUs assigned to the CRC VM
 DEFAULT_CRC_CPUS="6"
