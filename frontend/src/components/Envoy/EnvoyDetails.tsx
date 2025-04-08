@@ -367,7 +367,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     });
 
     return (
-      <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
+      <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })} containTable>
         <Tabs
           id="envoy-details"
           className={subTabStyle}

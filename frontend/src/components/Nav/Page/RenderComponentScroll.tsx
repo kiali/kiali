@@ -25,6 +25,7 @@ const componentStyle = kialiStyle({
 
 interface Props {
   className?: any;
+  containTable?: boolean;
   onResize?: (height: number) => void;
 }
 
@@ -50,7 +51,6 @@ export class RenderComponentScroll extends React.Component<Props, State> {
   updateWindowDimensions = (): void => {
     const isStandalone = !isKiosk(store.getState().globalState.kiosk);
     const topPadding = isStandalone ? TOP_PADDING : EMBEDDED_PADDING;
-
     this.setState(
       {
         height: window.innerHeight - topPadding
@@ -67,7 +67,7 @@ export class RenderComponentScroll extends React.Component<Props, State> {
     let scrollStyle = {};
 
     // If there is no global scrollbar, height is fixed to force the scrollbar to appear in the component
-    if (globalScrollbar === 'false') {
+    if (globalScrollbar === 'false' && !this.props.containTable) {
       scrollStyle = { height: this.state.height, overflowY: 'auto', width: '100%' };
     }
 
