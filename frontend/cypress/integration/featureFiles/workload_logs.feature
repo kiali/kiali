@@ -48,16 +48,15 @@ Feature: Workload logs tab
   @bookinfo-app
   @ambient
   @waypoint
-  @selected
   Scenario: The logs tab should show the ztunnel logs for a pod
-    Given I am on the "ambient-logger" workload detail page of the "loggers" namespace
+    Given I am on the "ratings-v1" workload detail page of the "bookinfo" namespace
     When I go to the Logs tab of the workload detail page
     Then I should see the "ztunnel" container listed
-    And I should see the "ambient-logger" container listed
-    And I select the "ztunnel-ambient-logger" container
-    And the "ztunnel-ambient-logger" container should be checked
-    And the "container-ambient-logger" container should be checked
-    And I should see some "ambient-logger" pod selected in the pod selector
+    And I should see the "ratings" container listed
+    And I select the "ztunnel-ratings" container
+    And the "ztunnel-ratings" container should be checked
+    And the "container-ratings" container should be checked
+    And I should see some "ratings-v1" pod selected in the pod selector
     Then the log pane should show log lines containing "ztunnel"
 
   @bookinfo-app

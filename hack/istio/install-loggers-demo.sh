@@ -73,8 +73,8 @@ if [ "${DELETE_DEMO}" == "false" ]; then
   fi
 
   if [ "$AMBIENT_ENABLED" = "true" ]; then
-      echo "Deploying logger for Ambient"
-      $CLIENT_EXE run ambient-logger --image=busybox --namespace=$NAMESPACE --restart=Never --command -- /bin/sh -c "while true; do echo 'ztunnel'; sleep 1; done"
+      echo "Labeling namespace for Ambient"
+      $CLIENT_EXE label namespace ${NAMESPACE} istio.io/dataplane-mode=ambient --overwrite
   fi
 
   echo "Deploying logger for Bookinfo"
