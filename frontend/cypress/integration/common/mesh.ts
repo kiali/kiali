@@ -250,3 +250,13 @@ Then('user sees tracing node side panel', () => {
       cy.contains(new RegExp('jaeger|Jaeger|tempo|Tempo', 'g'));
     });
 });
+
+Then('user sees {string} icon side panel', (iconType: string) => {
+  cy.waitForReact();
+  cy.get('#target-panel-node').get(`[data-test="icon-${iconType}-validation"]`).should('be.visible');
+});
+
+Then('user does not see {string} icon side panel', (iconType: string) => {
+  cy.waitForReact();
+  cy.get('#target-panel-node').get(`[data-test="icon-${iconType}-validation"]`).should('not.exist');
+});
