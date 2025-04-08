@@ -22,7 +22,7 @@ type TLSService struct {
 	conf          *config.Config
 	discovery     istio.MeshDiscovery
 	kialiCache    cache.KialiCache
-	userClients   map[string]kubernetes.ClientInterface
+	userClients   map[string]kubernetes.UserClientInterface
 }
 
 const (

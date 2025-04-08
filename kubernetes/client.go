@@ -59,6 +59,25 @@ type ClientInterface interface {
 	OSClientInterface
 }
 
+type UserClientInterface interface {
+	ClientInterface
+	K8SUserClientInterface
+	IstioUserClientInterface
+	OSUserClientInterface
+}
+
+// ConvertFromUserClients is a utility to be used for the rare instances
+// where you have a map of user clients but need a map of base client interfaces.
+// This effectively cripples the user client by removing the ability to perform
+// write operations.
+func ConvertFromUserClients(in map[string]UserClientInterface) map[string]ClientInterface {
+	out := make(map[string]ClientInterface, len(in))
+	for k, v := range in {
+		out[k] = ClientInterface(v)
+	}
+	return out
+}
+
 // K8SClient is the client struct for Kubernetes and Istio APIs
 // It hides the way it queries each API
 type K8SClient struct {
@@ -95,8 +114,8 @@ type K8SClient struct {
 	getPodPortForwarderFunc func(namespace, name, portMap string) (httputil.PortForwarder, error)
 }
 
-// Ensure the K8SClient implements the ClientInterface
-var _ ClientInterface = &K8SClient{}
+// Ensure the K8SClient implements the full UserClientInterface
+var _ UserClientInterface = &K8SClient{}
 
 // GetToken returns the BearerToken used from the config
 func (client *K8SClient) GetToken() string {

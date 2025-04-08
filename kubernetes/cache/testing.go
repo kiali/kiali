@@ -31,9 +31,9 @@ func newTestingCache(t testing.TB, cf kubernetes.ClientFactory, conf config.Conf
 
 // NewTestingCache will create a cache for you from the kube client and will cleanup the cache
 // when the test ends.
-func NewTestingCache(t *testing.T, k8s kubernetes.ClientInterface, conf config.Config) KialiCache {
+func NewTestingCache(t *testing.T, k8s kubernetes.UserClientInterface, conf config.Config) KialiCache {
 	t.Helper()
-	cf := kubetest.NewFakeClientFactory(&conf, map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s})
+	cf := kubetest.NewFakeClientFactory(&conf, map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s})
 	return newTestingCache(t, cf, conf)
 }
 
@@ -44,7 +44,7 @@ func NewTestingCacheWithFactory(t testing.TB, cf kubernetes.ClientFactory, conf 
 }
 
 // NewTestingCacheWithClients allows you to pass in a map of clients instead of creating a client factory. Good for testing multicluster.
-func NewTestingCacheWithClients(t *testing.T, clients map[string]kubernetes.ClientInterface, conf config.Config) KialiCache {
+func NewTestingCacheWithClients(t *testing.T, clients map[string]kubernetes.UserClientInterface, conf config.Config) KialiCache {
 	t.Helper()
 	cf := kubetest.NewK8SClientFactoryMock(nil)
 	cf.SetClients(clients)

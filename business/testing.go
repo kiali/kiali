@@ -28,7 +28,7 @@ func setWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 
 // SetupBusinessLayer mocks out some global variables in the business package
 // such as the kiali cache and the prometheus client.
-func SetupBusinessLayer(t testing.TB, k8s kubernetes.ClientInterface, config config.Config) cache.KialiCache {
+func SetupBusinessLayer(t testing.TB, k8s kubernetes.UserClientInterface, config config.Config) cache.KialiCache {
 	t.Helper()
 
 	originalClientFactory := clientFactory
@@ -45,7 +45,7 @@ func SetupBusinessLayer(t testing.TB, k8s kubernetes.ClientInterface, config con
 	cf := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, cf, config)
 	cpm := &FakeControlPlaneMonitor{}
-	d := istio.NewDiscovery(cf.Clients, cache, &config)
+	d := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, &config)
 
 	setWithBackends(cf, nil, cache, cpm, d)
 	return cache

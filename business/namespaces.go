@@ -22,10 +22,10 @@ type NamespaceService struct {
 	conf                  *config.Config
 	discovery             istio.MeshDiscovery
 	hasProjects           map[string]bool
-	homeClusterUserClient kubernetes.ClientInterface
+	homeClusterUserClient kubernetes.UserClientInterface
 	kialiCache            cache.KialiCache
 	kialiSAClients        map[string]kubernetes.ClientInterface
-	userClients           map[string]kubernetes.ClientInterface
+	userClients           map[string]kubernetes.UserClientInterface
 }
 
 type AccessibleNamespaceError struct {
@@ -46,7 +46,7 @@ func NewNamespaceService(
 	conf *config.Config,
 	discovery istio.MeshDiscovery,
 	kialiSAClients map[string]kubernetes.ClientInterface,
-	userClients map[string]kubernetes.ClientInterface,
+	userClients map[string]kubernetes.UserClientInterface,
 ) NamespaceService {
 	homeClusterName := conf.KubernetesConfig.ClusterName
 	hasProjects := make(map[string]bool)
