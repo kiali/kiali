@@ -177,6 +177,14 @@ func (m MultiMatchChecker) findMatch(host Host, otherHosts []Host) (bool, []Host
 			continue
 		}
 
+		isHostWildcard := strings.HasPrefix(hostName, "*.")
+		isOtherWildcard := strings.HasPrefix(otherName, "*.")
+
+		// skip comparing wildcard to wildcard, for instance "*.host.com" does not match "*.subdomain.host.com"
+		if isHostWildcard && isOtherWildcard {
+			continue
+		}
+
 		// lazily compile hostname Regex
 		hostRegexp, ok := m.regexpMap[hostName]
 		if !ok {
