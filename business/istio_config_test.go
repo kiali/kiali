@@ -232,9 +232,9 @@ func mockGetIstioConfigList(t *testing.T) IstioConfigService {
 	conf := config.NewConfig()
 	cache := SetupBusinessLayer(t, k8s, *conf)
 
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
-	return IstioConfigService{userClients: k8sclients, kialiCache: cache, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil), conf: conf}
+	return IstioConfigService{userClients: k8sclients, kialiCache: cache, businessLayer: NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil), conf: conf}
 }
 
 func fakeGetGateways() []*networking_v1.Gateway {
@@ -393,7 +393,7 @@ func fakeGetSelfSubjectAccessReview() []*auth_v1.SelfSubjectAccessReview {
 }
 
 // Need to mock out the SelfSubjectAccessReview.
-type fakeAccessReview struct{ kubernetes.ClientInterface }
+type fakeAccessReview struct{ kubernetes.UserClientInterface }
 
 func (a *fakeAccessReview) GetSelfSubjectAccessReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
 	return fakeGetSelfSubjectAccessReview(), nil
@@ -414,9 +414,9 @@ func mockGetIstioConfigDetails(t *testing.T) IstioConfigService {
 
 	cache := SetupBusinessLayer(t, k8s, *conf)
 
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = &fakeAccessReview{k8s}
-	return IstioConfigService{userClients: k8sclients, kialiCache: cache, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil), conf: conf}
+	return IstioConfigService{userClients: k8sclients, kialiCache: cache, businessLayer: NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil), conf: conf}
 }
 
 func mockGetIstioConfigDetailsMulticluster(t *testing.T) IstioConfigService {
@@ -434,10 +434,10 @@ func mockGetIstioConfigDetailsMulticluster(t *testing.T) IstioConfigService {
 
 	cache := SetupBusinessLayer(t, k8s, *conf)
 
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = &fakeAccessReview{k8s}
 	k8sclients["east"] = &fakeAccessReview{k8s}
-	return IstioConfigService{userClients: k8sclients, kialiCache: cache, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil), conf: conf}
+	return IstioConfigService{userClients: k8sclients, kialiCache: cache, businessLayer: NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil), conf: conf}
 }
 
 func TestIsValidHost(t *testing.T) {
@@ -509,10 +509,10 @@ func TestDeleteIstioConfigDetails(t *testing.T) {
 	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
 	conf := config.Get()
 
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 
-	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
+	layer := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
 	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller, businessLayer: layer, conf: conf}
 
 	err := configService.DeleteIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "reviews-to-delete")
@@ -529,9 +529,9 @@ func TestUpdateIstioConfigDetails(t *testing.T) {
 	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
 	conf := config.Get()
 
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
+	layer := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
 	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller, businessLayer: layer, conf: conf}
 
 	updatedVirtualService, err := configService.UpdateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "reviews-to-update", "{}")
@@ -549,9 +549,9 @@ func TestCreateIstioConfigDetails(t *testing.T) {
 	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
 	conf := config.Get()
 
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
+	layer := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
 	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller, businessLayer: layer, conf: conf}
 
 	createVirtualService, err := configService.CreateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, []byte("{}"))
@@ -623,9 +623,9 @@ func TestListWithAllNamespacesButNoAccessReturnsEmpty(t *testing.T) {
 	// in it so the list should return empty.
 	k8s.Token = "test"
 	cache.SetNamespaces("test", []models.Namespace{{Name: "nottest", Cluster: "Kubernetes"}})
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	configService := NewWithBackends(k8sclients, k8sclients, nil, nil).IstioConfig
+	configService := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil).IstioConfig
 
 	criteria := IstioConfigCriteria{
 		IncludeGateways: true,
@@ -674,9 +674,9 @@ deployment:
 
 	SetupBusinessLayer(t, k8s, *conf)
 
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	configService := NewWithBackends(k8sclients, k8sclients, nil, nil).IstioConfig
+	configService := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil).IstioConfig
 
 	criteria := IstioConfigCriteria{
 		IncludeGateways: true,

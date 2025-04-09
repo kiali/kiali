@@ -123,7 +123,7 @@ func TestComponentNamespaces(t *testing.T) {
 	a.Len(nss, 4)
 }
 
-func mockAddOnsCalls(t *testing.T, objects []runtime.Object, _ bool, overrideAddonURLs bool) (kubernetes.ClientInterface, *int, *int) {
+func mockAddOnsCalls(t *testing.T, objects []runtime.Object, _ bool, overrideAddonURLs bool) (kubernetes.UserClientInterface, *int, *int) {
 	// Prepare the Call counts for each Addon
 	grafanaCalls, prometheusCalls := 0, 0
 
@@ -194,9 +194,9 @@ func TestGrafanaWorking(t *testing.T) {
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
 
-	clients := make(map[string]kubernetes.ClientInterface)
+	clients := make(map[string]kubernetes.UserClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
+	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
@@ -233,9 +233,9 @@ func TestGrafanaDisabled(t *testing.T) {
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
 
-	clients := make(map[string]kubernetes.ClientInterface)
+	clients := make(map[string]kubernetes.UserClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
+	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
@@ -290,9 +290,9 @@ func TestGrafanaNotWorking(t *testing.T) {
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
 
-	clients := make(map[string]kubernetes.ClientInterface)
+	clients := make(map[string]kubernetes.UserClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
+	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
@@ -323,9 +323,9 @@ func TestFailingTracingService(t *testing.T) {
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
 
-	clients := make(map[string]kubernetes.ClientInterface)
+	clients := make(map[string]kubernetes.UserClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockFailingJaeger()).IstioStatus
+	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockFailingJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
@@ -352,9 +352,9 @@ func TestOverriddenUrls(t *testing.T) {
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
 
-	clients := make(map[string]kubernetes.ClientInterface)
+	clients := make(map[string]kubernetes.UserClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
+	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
@@ -383,9 +383,9 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
 
-	clients := make(map[string]kubernetes.ClientInterface)
+	clients := make(map[string]kubernetes.UserClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
+	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
@@ -409,10 +409,10 @@ func TestNoIstioComponentFoundError(t *testing.T) {
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
 
-	clients := make(map[string]kubernetes.ClientInterface)
+	clients := make(map[string]kubernetes.UserClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 
-	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
+	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 	assertComponent(assert, icsl, "istiod", kubernetes.ComponentNotFound, true)
@@ -443,9 +443,9 @@ func TestDefaults(t *testing.T) {
 	}
 	WithDiscovery(discovery)
 
-	clients := make(map[string]kubernetes.ClientInterface)
+	clients := make(map[string]kubernetes.UserClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
+	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
 
 	icsl, err := iss.GetStatus(context.TODO())
 	assert.NoError(err)
@@ -497,9 +497,9 @@ func TestNonDefaults(t *testing.T) {
 	}
 	WithDiscovery(discovery)
 
-	clients := make(map[string]kubernetes.ClientInterface)
+	clients := make(map[string]kubernetes.UserClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
+	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
@@ -550,9 +550,9 @@ func TestIstiodNotReady(t *testing.T) {
 	}
 	WithDiscovery(discovery)
 
-	clients := make(map[string]kubernetes.ClientInterface)
+	clients := make(map[string]kubernetes.UserClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
+	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
@@ -608,9 +608,9 @@ func TestCustomizedAppLabel(t *testing.T) {
 	}
 	WithDiscovery(discovery)
 
-	clients := make(map[string]kubernetes.ClientInterface)
+	clients := make(map[string]kubernetes.UserClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
+	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
@@ -662,9 +662,9 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 	}
 	WithDiscovery(discovery)
 
-	clients := make(map[string]kubernetes.ClientInterface)
+	clients := make(map[string]kubernetes.UserClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
+	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
@@ -713,9 +713,9 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 	}
 	WithDiscovery(discovery)
 
-	clients := make(map[string]kubernetes.ClientInterface)
+	clients := make(map[string]kubernetes.UserClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
+	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)

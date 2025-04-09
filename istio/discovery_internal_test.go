@@ -171,9 +171,9 @@ func TestIstioConfigMapName(t *testing.T) {
 				FakeCertificateConfigMap("istio-system"),
 			)
 
-			clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+			clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s}
 			cache := cache.NewTestingCacheWithClients(t, clients, *conf)
-			discovery := NewDiscovery(clients, cache, conf)
+			discovery := NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 			kubeCache, err := cache.GetKubeCache(conf.KubernetesConfig.ClusterName)
 			require.NoError(err)
 

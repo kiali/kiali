@@ -141,7 +141,7 @@ func TestParseIstioRawVersion(t *testing.T) {
 }
 
 type fakeForwarder struct {
-	kubernetes.ClientInterface
+	kubernetes.UserClientInterface
 	testURL string
 }
 
@@ -196,7 +196,7 @@ func TestGetVersionRemoteCluster(t *testing.T) {
 
 	testServer := istiodTestServer(t)
 
-	clients := map[string]kubernetes.ClientInterface{
+	clients := map[string]kubernetes.UserClientInterface{
 		"test-cluster": kubetest.NewFakeK8sClient(),
 		"remote-cluster": kubetest.NewFakeK8sClient(
 			runningIstiodPod(),
@@ -215,8 +215,8 @@ func TestGetVersionRemoteCluster(t *testing.T) {
 	}
 
 	clients["remote-cluster"] = &fakeForwarder{
-		ClientInterface: clients["remote-cluster"],
-		testURL:         testServer.URL,
+		UserClientInterface: clients["remote-cluster"],
+		testURL:             testServer.URL,
 	}
 	factory := kubetest.NewFakeClientFactory(conf, clients)
 	cache := cache.NewTestingCacheWithFactory(t, factory, *conf)

@@ -22,6 +22,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/util"
@@ -239,7 +240,7 @@ QwIDAQAB
 	k8s.OpenShift = true
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, conf)
 
 	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), conf.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
@@ -315,7 +316,7 @@ func TestOpenIdAuthControllerRejectsImplicitFlow(t *testing.T) {
 	k8s.OpenShift = true
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, conf)
 
 	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), conf.LoginToken.SigningKey)))
 
@@ -395,7 +396,7 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, conf)
 
 	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), conf.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
@@ -480,7 +481,7 @@ func TestOpenIdCodeFlowShouldFailWithMissingIdTokenFromOpenIdServer(t *testing.T
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, cfg)
 
 	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
@@ -553,7 +554,7 @@ func TestOpenIdCodeFlowShouldFailWithBadResponseFromTokenEndpoint(t *testing.T) 
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, cfg)
 
 	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
@@ -626,7 +627,7 @@ func TestOpenIdCodeFlowShouldFailWithNonJsonResponse(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, cfg)
 
 	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
@@ -699,7 +700,7 @@ func TestOpenIdCodeFlowShouldFailWithNonJwtIdToken(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, cfg)
 
 	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
@@ -743,7 +744,7 @@ func TestOpenIdCodeFlowShouldRejectMissingAuthorizationCode(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, cfg)
 
 	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("/api/authenticate?state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
@@ -813,7 +814,7 @@ func TestOpenIdCodeFlowShouldFailWithIdTokenWithoutExpiration(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, cfg)
 
 	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
@@ -886,7 +887,7 @@ func TestOpenIdCodeFlowShouldFailWithIdTokenWithNonNumericExpClaim(t *testing.T)
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, cfg)
 
 	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
@@ -939,7 +940,7 @@ func TestOpenIdCodeFlowShouldRejectInvalidState(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, cfg)
 
 	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
 	require.NoError(t, err)
@@ -984,7 +985,7 @@ func TestOpenIdCodeFlowShouldRejectBadStateFormat(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, cfg)
 
 	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
 	require.NoError(t, err)
@@ -1027,7 +1028,7 @@ func TestOpenIdCodeFlowShouldRejectMissingState(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, cfg)
 
 	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
 	require.NoError(t, err)
@@ -1060,7 +1061,7 @@ func TestOpenIdCodeFlowShouldRejectMissingNonceCookie(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, cfg)
 
 	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
@@ -1126,7 +1127,7 @@ func TestOpenIdCodeFlowShouldRejectMissingNonceInToken(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, cfg)
 
 	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))

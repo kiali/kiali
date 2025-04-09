@@ -310,8 +310,8 @@ func FakeNamespaceWithLabels(name string, labels map[string]string) *core_v1.Nam
 	}
 }
 
-func FakeWaypointAndEnrolledClients(name, cluster, namespace string) map[string]kubernetes.ClientInterface {
-	return map[string]kubernetes.ClientInterface{
+func FakeWaypointAndEnrolledClients(name, cluster, namespace string) map[string]kubernetes.UserClientInterface {
+	return map[string]kubernetes.UserClientInterface{
 		cluster: NewFakeK8sClient(
 			FakeNamespaceWithLabels(namespace, map[string]string{}),
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: name, Namespace: namespace, Labels: map[string]string{

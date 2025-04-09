@@ -35,10 +35,10 @@ var _ = Describe("Validations controller", Ordered, func() {
 			kialiKubeClient, err := kubernetes.NewClientWithRemoteClusterInfo(cfg, nil)
 			Expect(err).ToNot(HaveOccurred())
 
-			saClients := map[string]kubernetes.ClientInterface{
+			saClients := map[string]kubernetes.UserClientInterface{
 				conf.KubernetesConfig.ClusterName: kialiKubeClient,
 			}
-			kialiCache, err = cache.NewKialiCache(saClients, *conf)
+			kialiCache, err = cache.NewKialiCache(kubernetes.ConvertFromUserClients(saClients), *conf)
 			Expect(err).ToNot(HaveOccurred())
 			DeferCleanup(func() {
 				kialiCache.Stop()
@@ -50,7 +50,7 @@ var _ = Describe("Validations controller", Ordered, func() {
 				},
 			)
 
-			discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+			discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(saClients), kialiCache, conf)
 			layer, err := business.NewLayerWithSAClients(conf, kialiCache, nil, nil, nil, nil, discovery, saClients)
 			Expect(err).ToNot(HaveOccurred())
 

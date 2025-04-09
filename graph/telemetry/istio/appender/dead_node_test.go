@@ -100,9 +100,9 @@ func setupWorkloads(t *testing.T) *business.Layer {
 
 	business.SetupBusinessLayer(t, k8s, *conf)
 
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[config.DefaultClusterID] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
 	return businessLayer
 }
 

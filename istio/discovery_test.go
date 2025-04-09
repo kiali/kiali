@@ -188,9 +188,9 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 		},
 	}
 
-	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s}
 	cache := cache.NewTestingCache(t, k8s, *conf)
-	discovery := istio.NewDiscovery(clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 
 	a, err := discovery.Clusters()
 	require.Nil(err, "GetClusters returned error: %v", err)
@@ -246,12 +246,12 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 			},
 		},
 	}
-	clients := map[string]kubernetes.ClientInterface{
+	clients := map[string]kubernetes.UserClientInterface{
 		"KialiCluster":                    remoteClient,
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(),
 	}
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
-	discovery := istio.NewDiscovery(clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 
 	a, err := discovery.Clusters()
 	check.Nil(err, "GetClusters returned error: %v", err)
@@ -412,8 +412,8 @@ trustDomain: cluster.local
 	)
 	cache := cache.NewTestingCache(t, k8s, *conf)
 
-	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
-	discovery := istio.NewDiscovery(clients, cache, conf)
+	clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	mesh, err := discovery.Mesh(context.TODO())
 	require.NoError(err)
 	require.Len(mesh.ControlPlanes, 1)
@@ -467,8 +467,8 @@ trustDomain: cluster.local
 	)
 	cache := cache.NewTestingCache(t, k8s, *conf)
 
-	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
-	discovery := istio.NewDiscovery(clients, cache, conf)
+	clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	mesh, err := discovery.Mesh(context.TODO())
 	require.NoError(err)
 	require.Len(mesh.ControlPlanes, 1)
@@ -607,8 +607,8 @@ func TestMeshResolvesNetwork(t *testing.T) {
 			)
 			cache := cache.NewTestingCache(t, k8s, *conf)
 
-			clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
-			discovery := istio.NewDiscovery(clients, cache, conf)
+			clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+			discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 			mesh, err := discovery.Mesh(context.TODO())
 			require.NoError(err)
 			require.Len(mesh.ControlPlanes, 1)
@@ -681,8 +681,8 @@ trustDomain: cluster.local
 		FakeCertificateConfigMap("istio-system"),
 	)
 
-	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
-	discovery := istio.NewDiscovery(clients, cache.NewTestingCache(t, k8s, *conf), conf)
+	clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache.NewTestingCache(t, k8s, *conf), conf)
 	mesh, err := discovery.Mesh(context.TODO())
 	require.NoError(err)
 	require.Len(mesh.ControlPlanes, 2)
@@ -706,7 +706,7 @@ trustDomain: cluster.local
 	// config.Set(conf)
 	// Create a new cache to clear the old mesh object.
 	cache := cache.NewTestingCache(t, k8s, *conf)
-	discovery = istio.NewDiscovery(clients, cache, conf)
+	discovery = istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	mesh, err = discovery.Mesh(context.TODO())
 	require.NoError(err)
 
@@ -752,9 +752,9 @@ trustDomain: cluster.local
 		kubetest.FakeNamespace("bookinfo"),
 	)
 
-	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s, "remote": remoteClient}
+	clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s, "remote": remoteClient}
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
-	discovery := istio.NewDiscovery(clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	mesh, err := discovery.Mesh(context.TODO())
 	require.NoError(err)
 	require.Len(mesh.ControlPlanes, 1)
@@ -805,9 +805,9 @@ trustDomain: cluster.local
 		FakeCertificateConfigMap("istio-system"),
 	)
 
-	clients := map[string]kubernetes.ClientInterface{"east": eastClient, "remote": remoteClient}
+	clients := map[string]kubernetes.UserClientInterface{"east": eastClient, "remote": remoteClient}
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
-	discovery := istio.NewDiscovery(clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	mesh, err := discovery.Mesh(context.TODO())
 	require.NoError(err)
 	require.Len(mesh.ControlPlanes, 1)
@@ -859,9 +859,9 @@ trustDomain: cluster.local
 		FakeCertificateConfigMap("istio-system"),
 	)
 
-	clients := map[string]kubernetes.ClientInterface{"east": eastClient, "remote": remoteClient}
+	clients := map[string]kubernetes.UserClientInterface{"east": eastClient, "remote": remoteClient}
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
-	discovery := istio.NewDiscovery(clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	mesh, err := discovery.Mesh(context.TODO())
 	require.NoError(err)
 	require.Len(mesh.ControlPlanes, 1)
@@ -904,9 +904,9 @@ trustDomain: cluster.local
 		FakeCertificateConfigMap("istio-system"),
 	)
 
-	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: eastClient, "west": westClient}
+	clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: eastClient, "west": westClient}
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
-	discovery := istio.NewDiscovery(clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	mesh, err := discovery.Mesh(context.TODO())
 	require.NoError(err)
 	require.Len(mesh.ControlPlanes, 2)
@@ -975,14 +975,14 @@ trustDomain: cluster.local
 		kubetest.FakeNamespace("bookinfo"),
 	)
 
-	clients := map[string]kubernetes.ClientInterface{
+	clients := map[string]kubernetes.UserClientInterface{
 		"east":        eastClient,
 		"east-remote": eastRemoteClient,
 		"west":        westClient,
 		"west-remote": westRemoteClient,
 	}
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
-	discovery := istio.NewDiscovery(clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	mesh, err := discovery.Mesh(context.TODO())
 	require.NoError(err)
 	require.Len(mesh.ControlPlanes, 2)
@@ -1066,14 +1066,14 @@ trustDomain: cluster.local
 		kubetest.FakeNamespace("bookinfo"),
 	)
 
-	clients := map[string]kubernetes.ClientInterface{
+	clients := map[string]kubernetes.UserClientInterface{
 		"controlplane":     controlPlaneClient,
 		"dataplane":        dataPlaneClient,
 		"dataplane-remote": dataPlaneRemoteClient,
 	}
 
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
-	discovery := istio.NewDiscovery(clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	mesh, err := discovery.Mesh(context.TODO())
 	require.NoError(err)
 	require.Len(mesh.ControlPlanes, 2)
@@ -1112,9 +1112,9 @@ func TestGetClustersShowsConfiguredKialiInstances(t *testing.T) {
 		URL:          "kiali.istio-system.west",
 	}}
 
-	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
+	clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
-	discovery := istio.NewDiscovery(clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 
 	clusters, err := discovery.Clusters()
 
@@ -1165,9 +1165,9 @@ deployment:
 		kubetest.FakeNamespace("istio-system"),
 		kialiService,
 	)
-	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s}
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
-	discovery := istio.NewDiscovery(clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	clusters, err := discovery.Clusters()
 
 	require.NoError(err)
@@ -1190,9 +1190,9 @@ func TestAddingKialiInstanceToExistingClusterDoesntAddNewCluster(t *testing.T) {
 	}}
 
 	k8s := kubetest.NewFakeK8sClient()
-	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s}
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
-	discovery := istio.NewDiscovery(clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	clusters, err := discovery.Clusters()
 
 	require.NoError(err)
@@ -1235,9 +1235,9 @@ trustDomain: cluster.local
 		kubetest.FakeNamespace("bookinfo"),
 	)
 
-	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s, "remote": remoteClient}
+	clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s, "remote": remoteClient}
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
-	discovery := istio.NewDiscovery(clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 
 	require.True(discovery.IsRemoteCluster(context.Background(), "remote"))
 	require.False(discovery.IsRemoteCluster(context.Background(), "east"))
@@ -1436,9 +1436,9 @@ func TestIstiodResourceThresholds(t *testing.T) {
 				},
 			)
 
-			clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+			clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s}
 			cache := cache.NewTestingCacheWithClients(t, clients, *conf)
-			discovery := istio.NewDiscovery(clients, cache, conf)
+			discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 
 			mesh, err := discovery.Mesh(context.Background())
 			if testCase.expectedErr != nil {
@@ -1502,7 +1502,7 @@ trustDomain: cluster.local
 }
 
 type fakeForwarder struct {
-	kubernetes.ClientInterface
+	kubernetes.UserClientInterface
 	testURL string
 }
 
@@ -1546,7 +1546,7 @@ func TestCanConnectToIstiod(t *testing.T) {
 
 	testServer := istiodTestServer(t)
 	fakeForwarder := &fakeForwarder{
-		ClientInterface: kubetest.NewFakeK8sClient(
+		UserClientInterface: kubetest.NewFakeK8sClient(
 			runningIstiodPod("default"),
 			fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false),
 			fakeIstioConfigMap("default"),
@@ -1556,10 +1556,10 @@ func TestCanConnectToIstiod(t *testing.T) {
 		testURL: testServer.URL,
 	}
 
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
 	cache := cache.NewTestingCacheWithClients(t, k8sclients, *conf)
-	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(k8sclients), cache, conf)
 
 	mesh, err := discovery.Mesh(context.Background())
 	require.NoError(err)
@@ -1568,7 +1568,7 @@ func TestCanConnectToIstiod(t *testing.T) {
 }
 
 type badForwarder struct {
-	kubernetes.ClientInterface
+	kubernetes.UserClientInterface
 }
 
 func (f *badForwarder) ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error) {
@@ -1582,7 +1582,7 @@ func TestCanConnectToUnreachableIstiod(t *testing.T) {
 	conf := config.NewConfig()
 
 	fakeForwarder := &badForwarder{
-		ClientInterface: kubetest.NewFakeK8sClient(
+		UserClientInterface: kubetest.NewFakeK8sClient(
 			runningIstiodPod("default"),
 			fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false),
 			fakeIstioConfigMap("default"),
@@ -1591,10 +1591,10 @@ func TestCanConnectToUnreachableIstiod(t *testing.T) {
 		),
 	}
 
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
 	cache := cache.NewTestingCacheWithClients(t, k8sclients, *conf)
-	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(k8sclients), cache, conf)
 
 	mesh, err := discovery.Mesh(context.Background())
 	require.NoError(err)
@@ -1631,14 +1631,14 @@ func TestUpdateStatusMultipleRevsWithoutHealthyPods(t *testing.T) {
 
 	testServer := istiodTestServer(t)
 	fakeForwarder := &fakeForwarder{
-		ClientInterface: k8s,
-		testURL:         testServer.URL,
+		UserClientInterface: k8s,
+		testURL:             testServer.URL,
 	}
 
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
 	cache := cache.NewTestingCacheWithClients(t, k8sclients, *conf)
-	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(k8sclients), cache, conf)
 
 	mesh, err := discovery.Mesh(context.Background())
 	require.NoError(err)
@@ -1676,14 +1676,14 @@ func TestUpdateStatusMultipleHealthyRevs(t *testing.T) {
 
 	testServer := istiodTestServer(t)
 	fakeForwarder := &fakeForwarder{
-		ClientInterface: k8s,
-		testURL:         testServer.URL,
+		UserClientInterface: k8s,
+		testURL:             testServer.URL,
 	}
 
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
 	cache := cache.NewTestingCacheWithClients(t, k8sclients, *conf)
-	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(k8sclients), cache, conf)
 
 	mesh, err := discovery.Mesh(context.Background())
 	require.NoError(err)
@@ -1694,7 +1694,7 @@ func TestUpdateStatusMultipleHealthyRevs(t *testing.T) {
 }
 
 type accessReviewClient struct {
-	kubernetes.ClientInterface
+	kubernetes.UserClientInterface
 	AccessReview []*authv1.SelfSubjectAccessReview
 }
 
@@ -2170,17 +2170,17 @@ func TestDiscoverWithTags(t *testing.T) {
 				conf = *tc.conf
 			}
 
-			clients := make(map[string]kubernetes.ClientInterface)
+			clients := make(map[string]kubernetes.UserClientInterface)
 			for cluster, objects := range tc.setup() {
 				k8s := kubetest.NewFakeK8sClient(objects...)
 				client := &accessReviewClient{
-					ClientInterface: k8s,
-					AccessReview:    []*authv1.SelfSubjectAccessReview{allowedToListWebhookReview},
+					UserClientInterface: k8s,
+					AccessReview:        []*authv1.SelfSubjectAccessReview{allowedToListWebhookReview},
 				}
 				clients[cluster] = client
 			}
 			cache := cache.NewTestingCacheWithClients(t, clients, conf)
-			discovery := istio.NewDiscovery(clients, cache, &conf)
+			discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, &conf)
 
 			mesh, err := discovery.Mesh(context.Background())
 			require.NoError(err)
@@ -2243,12 +2243,12 @@ func TestDiscoverTagsWithoutWebhookPermissions(t *testing.T) {
 		FakeCertificateConfigMap("istio-system"),
 	)
 	client := &accessReviewClient{
-		ClientInterface: k8s,
-		AccessReview:    []*authv1.SelfSubjectAccessReview{allowedToListWebhookReview},
+		UserClientInterface: k8s,
+		AccessReview:        []*authv1.SelfSubjectAccessReview{allowedToListWebhookReview},
 	}
-	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client}
+	clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: client}
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
-	discovery := istio.NewDiscovery(clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	require.False(cache.CanListWebhooks(conf.KubernetesConfig.ClusterName))
 
 	mesh, err := discovery.Mesh(context.TODO())
@@ -2257,9 +2257,9 @@ func TestDiscoverTagsWithoutWebhookPermissions(t *testing.T) {
 	require.Nil(mesh.ControlPlanes[0].Tag)
 }
 
-func approvingClient(client kubernetes.ClientInterface) *accessReviewClient {
+func approvingClient(client kubernetes.UserClientInterface) *accessReviewClient {
 	return &accessReviewClient{
-		ClientInterface: client,
+		UserClientInterface: client,
 		AccessReview: []*authv1.SelfSubjectAccessReview{
 			{
 				Spec: authv1.SelfSubjectAccessReviewSpec{
@@ -2306,7 +2306,7 @@ func TestDiscoverTagsWithExternalCluster(t *testing.T) {
 	tagProdRemote := fakeDefaultWebhook()
 	tagProdRemote.Labels[config.IstioRevisionLabel] = "1-23-0"
 	tagProdRemote.Labels[models.IstioTagLabel] = "prod"
-	clients := map[string]kubernetes.ClientInterface{
+	clients := map[string]kubernetes.UserClientInterface{
 		"external": approvingClient(kubetest.NewFakeK8sClient(
 			fakeDefaultWebhook(),
 			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
@@ -2326,7 +2326,7 @@ func TestDiscoverTagsWithExternalCluster(t *testing.T) {
 	}
 
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
-	discovery := istio.NewDiscovery(clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 
 	mesh, err := discovery.Mesh(context.TODO())
 	require.NoError(err)

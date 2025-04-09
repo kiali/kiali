@@ -41,7 +41,7 @@ func TestStrategyTokenAuthentication(t *testing.T) {
 	k8s.OpenShift = true
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, cfg)
 
 	authController, err := authentication.NewTokenAuthController(mockClientFactory, cache, cfg, discovery)
 	require.NoError(err)
@@ -83,7 +83,7 @@ func TestStrategyTokenFails(t *testing.T) {
 	rejectClient := &rejectClient{k8s}
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(rejectClient)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, cfg)
 
 	authController, err := authentication.NewTokenAuthController(mockClientFactory, cache, cfg, discovery)
 	require.NoError(err)
@@ -114,7 +114,7 @@ func TestLogoutWhenNoSession(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient()
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, conf)
 	authController, err := authentication.NewTokenAuthController(mockClientFactory, cache, conf, discovery)
 	require.NoError(err)
 
@@ -143,7 +143,7 @@ func TestLogout(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient()
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, conf)
 	authController, err := authentication.NewTokenAuthController(mockClientFactory, cache, conf, discovery)
 	require.NoError(err)
 
@@ -454,7 +454,7 @@ func TestAuthenticationInfo(t *testing.T) {
 	}
 }
 
-type rejectClient struct{ kubernetes.ClientInterface }
+type rejectClient struct{ kubernetes.UserClientInterface }
 
 func (r *rejectClient) GetProjects(ctx context.Context, labelSelector string) ([]osproject_v1.Project, error) {
 	return nil, fmt.Errorf("Rejecting")

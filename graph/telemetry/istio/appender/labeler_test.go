@@ -101,12 +101,12 @@ func setupLabelerK8S(t *testing.T) *business.Layer {
 	)
 
 	business.SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := map[string]kubernetes.ClientInterface{
+	k8sclients := map[string]kubernetes.UserClientInterface{
 		config.DefaultClusterID: kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("testNamespace"),
 		),
 	}
-	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
 	return businessLayer
 }
 

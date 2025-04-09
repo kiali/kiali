@@ -24,7 +24,7 @@ func TestGetMeshConfig(t *testing.T) {
 	k8s.On("IsGatewayAPI").Return(false)
 
 	// Create a MeshService and invoke IsMeshConfigured
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
@@ -42,7 +42,7 @@ func TestGetMeshConfig(t *testing.T) {
 	}
 
 	business.WithDiscovery(discovery)
-	layer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	layer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
 	meshSvc := layer.Mesh
 
 	meshConfig := meshSvc.GetMeshConfig()
