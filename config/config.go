@@ -389,12 +389,21 @@ type AdditionalDisplayItem struct {
 	Title          string `yaml:"title"`
 }
 
+// CacheExpirationConfig sets expiration time for various cache stores
+type CacheExpirationConfig struct {
+	AmbientCheck time.Duration `yaml:"ambient_check,omitempty"`
+	Gateway      time.Duration `yaml:"gateway,omitempty"`
+	Mesh         time.Duration `yaml:"mesh,omitempty"`
+	Waypoint     time.Duration `yaml:"waypoint,omitempty"`
+}
+
 // KubernetesConfig holds the k8s client, caching and performance configuration
 type KubernetesConfig struct {
 	Burst int `yaml:"burst,omitempty"`
 	// Cache duration expressed in seconds
 	// Cache uses watchers to sync with the backend, after a CacheDuration watchers are closed and re-opened
-	CacheDuration int `yaml:"cache_duration,omitempty"`
+	CacheDuration   int                   `yaml:"cache_duration,omitempty"`
+	CacheExpiration CacheExpirationConfig `yaml:"cache_expiration,omitempty"`
 	// Cache duration expressed in seconds
 	// Kiali cache list of namespaces per user, this is typically short lived cache compared with the duration of the
 	// namespace cache defined by previous CacheDuration parameter
@@ -894,8 +903,14 @@ func NewConfig() (c *Config) {
 			},
 		},
 		KubernetesConfig: KubernetesConfig{
-			Burst:                       200,
-			CacheDuration:               5 * 60,
+			Burst:         200,
+			CacheDuration: 5 * 60,
+			CacheExpiration: CacheExpirationConfig{
+				AmbientCheck: 10 * time.Minute,
+				Gateway:      4 * time.Minute,
+				Mesh:         20 * time.Second,
+				Waypoint:     4 * time.Minute,
+			},
 			CacheTokenNamespaceDuration: 10,
 			ClusterName:                 "", // leave this unset as a flag that we need to fetch the information
 			ExcludeWorkloads:            []string{"CronJob", "DeploymentConfig", "Job", "ReplicationController"},
