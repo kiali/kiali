@@ -17,7 +17,7 @@ When('user graphs {string} namespaces', (namespaces: string) => {
   ensureKialiFinishedLoading();
 });
 
-When('user opens display menu', () => {
+When('user {string} display menu', (_action: string) => {
   cy.get('button#display-settings').click();
 });
 
@@ -476,18 +476,6 @@ Then(
     });
   }
 );
-
-When('user opens traffic menu', () => {
-  cy.get('button#graph-traffic-dropdown').click();
-});
-
-When('user {string} {string} traffic option', (action: string, option: string) => {
-  if (action === 'enables') {
-    cy.get('div#graph-traffic-menu').find(`input#${option}`).check();
-  } else {
-    cy.get('div#graph-traffic-menu').find(`input#${option}`).uncheck();
-  }
-});
 
 Then('{int} edges appear in the graph', (graphEdges: number) => {
   cy.waitForReact();

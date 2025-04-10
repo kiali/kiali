@@ -55,16 +55,18 @@ Feature: Kiali Mesh page
 
   @bookinfo-app
   Scenario: User enables gateways
-    When user opens display menu
+    When user "opens" display menu
     And user "enables" mesh display option "gateways"
+    And user "closes" display menu
     And user selects mesh node with label "bookinfo-gateway"
     Then user sees "bookinfo-gateway" node side panel
 
   @waypoint-tracing
   @bookinfo-app
   Scenario: User enables waypoints
-    When user opens display menu
+    When user "opens" display menu
     And user "enables" mesh display option "waypoints"
+    And user "closes" display menu
     And user selects mesh node with label "waypoint"
     Then user sees "waypoint" node side panel
 

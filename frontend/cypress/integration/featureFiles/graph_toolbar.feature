@@ -49,7 +49,7 @@ Feature: Kiali Graph page - Toolbar (various)
   @error-rates-app
   Scenario: Enable http traffic
     When user disables all traffic
-    When user enables "http" traffic
+    When user "enables" "http" traffic option
     Then user "sees" "http" traffic
     And user "does not see" "tcp" traffic
     And user "does not see" "grpc" traffic

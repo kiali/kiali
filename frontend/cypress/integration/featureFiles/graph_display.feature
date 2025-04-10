@@ -26,8 +26,9 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   Scenario: User enables idle nodes
-    When user opens display menu
+    When user "opens" display menu
     And user "enables" "idle nodes" option
+    And user "closes" display menu
     Then user sees the "gamma" namespace
     And idle nodes "appear" in the graph
 
@@ -44,9 +45,10 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   Scenario: User clicks Display Menu
-    When user opens display menu
+    When user "opens" display menu
     Then the display menu opens
     And the display menu has default settings
+    And user "closes" display menu
     And the graph reflects default settings
 
   # percentile variable must match input id
@@ -195,7 +197,7 @@ Feature: Kiali Graph page - Display menu
   @error-rates-app
   Scenario: User resets to factory default setting
     When user resets to factory default
-    And user opens display menu
+    And user "opens" display menu
     Then the display menu opens
     And the display menu has default settings
 
@@ -204,12 +206,12 @@ Feature: Kiali Graph page - Display menu
     When user "disables" "service nodes" option
     And user "enables" "operation nodes" option
     And user selects "SERVICE" graph type
-    And user opens display menu
+    And user "opens" display menu
     Then the display menu opens
     And the "service nodes" option should "not be checked" and "disabled"
     And the "operation nodes" option should "be checked" and "disabled"
     When user selects "APP" graph type
-    And user opens display menu
+    And user "opens" display menu
     Then the display menu opens
     And the "service nodes" option should "not be checked" and "enabled"
     And the "operation nodes" option should "be checked" and "enabled"
@@ -263,14 +265,16 @@ Feature: Kiali Graph page - Display menu
   Scenario: User sees tcp traffic
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "disables" "http" traffic option
+    And user "closes" traffic menu
     Then 6 edges appear in the graph
 
   @ambient
   Scenario: User sees http traffic
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "disables" "tcp" traffic option
+    And user "closes" traffic menu
     Then 2 edges appear in the graph
