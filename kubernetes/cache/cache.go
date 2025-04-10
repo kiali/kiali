@@ -156,18 +156,18 @@ func newKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, conf co
 	ctx, cancel := context.WithCancel(context.Background())
 	namespaceKeyTTL := time.Duration(conf.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
 	kialiCacheImpl := kialiCacheImpl{
-		ambientChecksPerCluster: store.NewExpirationStore(ctx, store.New[string, bool](), util.AsPtr(conf.KubernetesConfig.CacheExpiration.AmbientCheck), nil),
+		ambientChecksPerCluster: store.NewExpirationStore(ctx, store.New[string, bool](), util.AsPtr(conf.KialiInternal.CacheExpiration.AmbientCheck), nil),
 		canReadWebhookByCluster: make(map[string]bool),
 		cleanup:                 cancel,
 		conf:                    conf,
-		gatewayStore:            store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(conf.KubernetesConfig.CacheExpiration.Gateway), nil),
+		gatewayStore:            store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(conf.KialiInternal.CacheExpiration.Gateway), nil),
 		kubeCache:               make(map[string]KubeCache),
-		meshStore:               store.NewExpirationStore(ctx, store.New[string, *models.Mesh](), util.AsPtr(conf.KubernetesConfig.CacheExpiration.Mesh), nil),
+		meshStore:               store.NewExpirationStore(ctx, store.New[string, *models.Mesh](), util.AsPtr(conf.KialiInternal.CacheExpiration.Mesh), nil),
 		namespaceStore:          store.NewExpirationStore(ctx, store.New[namespacesKey, map[string]models.Namespace](), &namespaceKeyTTL, nil),
 		proxyStatusStore:        store.New[string, *kubernetes.ProxyStatus](),
 		refreshDuration:         time.Duration(conf.KubernetesConfig.CacheDuration) * time.Second,
 		registryStatusStore:     store.New[string, *kubernetes.RegistryStatus](),
-		waypointStore:           store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(conf.KubernetesConfig.CacheExpiration.Waypoint), nil),
+		waypointStore:           store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(conf.KialiInternal.CacheExpiration.Waypoint), nil),
 		validations:             store.New[models.IstioValidationKey, *models.IstioValidation](),
 		validationConfig:        store.New[string, string](),
 		ztunnelConfigStore:      store.New[string, *kubernetes.ZtunnelConfigDump](),

@@ -179,7 +179,7 @@ deploy_kiali() {
   helm_command='helm upgrade --install
     ${helm_args[@]}
     --namespace ${ISTIO_NAMESPACE}
-    --set deployment.logger.log_level="debug"
+    --set deployment.logger.log_level="trace"
     --set external_services.grafana.external_url="http://grafana.istio-system:3000"
     --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard"
     --set external_services.istio.validation_reconcile_interval="5s"

@@ -389,21 +389,12 @@ type AdditionalDisplayItem struct {
 	Title          string `yaml:"title"`
 }
 
-// CacheExpirationConfig sets expiration time for various cache stores
-type CacheExpirationConfig struct {
-	AmbientCheck time.Duration `yaml:"ambient_check,omitempty"`
-	Gateway      time.Duration `yaml:"gateway,omitempty"`
-	Mesh         time.Duration `yaml:"mesh,omitempty"`
-	Waypoint     time.Duration `yaml:"waypoint,omitempty"`
-}
-
 // KubernetesConfig holds the k8s client, caching and performance configuration
 type KubernetesConfig struct {
 	Burst int `yaml:"burst,omitempty"`
 	// Cache duration expressed in seconds
 	// Cache uses watchers to sync with the backend, after a CacheDuration watchers are closed and re-opened
-	CacheDuration   int                   `yaml:"cache_duration,omitempty"`
-	CacheExpiration CacheExpirationConfig `yaml:"cache_expiration,omitempty"`
+	CacheDuration int `yaml:"cache_duration,omitempty"`
 	// Cache duration expressed in seconds
 	// Kiali cache list of namespaces per user, this is typically short lived cache compared with the duration of the
 	// namespace cache defined by previous CacheDuration parameter
@@ -417,6 +408,20 @@ type KubernetesConfig struct {
 	// can be skipped from Kiali workloads query if they are present in this list
 	ExcludeWorkloads []string `yaml:"excluded_workloads,omitempty"`
 	QPS              float32  `yaml:"qps,omitempty"`
+}
+
+// CacheExpirationConfig sets expiration time for various cache stores
+type CacheExpirationConfig struct {
+	AmbientCheck time.Duration `yaml:"ambient_check,omitempty"`
+	Gateway      time.Duration `yaml:"gateway,omitempty"`
+	Mesh         time.Duration `yaml:"mesh,omitempty"`
+	Waypoint     time.Duration `yaml:"waypoint,omitempty"`
+}
+
+// KialiInternalConfig holds configuration that is not typically touched by users, but could be in the event of
+// unusual circumstances. It may be undocumented and is subject to change. It is unstructured in the CRD schema.
+type KialiInternalConfig struct {
+	CacheExpiration CacheExpirationConfig `yaml:"cache_expiration,omitempty"`
 }
 
 // AuthConfig provides details on how users are to authenticate
@@ -679,6 +684,7 @@ type Config struct {
 	IstioLabels              IstioLabels                         `yaml:"istio_labels,omitempty"`
 	IstioNamespace           string                              `yaml:"istio_namespace,omitempty"` // default component namespace
 	KialiFeatureFlags        KialiFeatureFlags                   `yaml:"kiali_feature_flags,omitempty"`
+	KialiInternal            KialiInternalConfig                 `yaml:"kiali_internal,omitempty"`
 	KubernetesConfig         KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
 	LoginToken               LoginToken                          `yaml:"login_token,omitempty"`
 	Server                   Server                              `yaml:",omitempty"`
@@ -902,15 +908,17 @@ func NewConfig() (c *Config) {
 				Ignore: make([]string, 0),
 			},
 		},
-		KubernetesConfig: KubernetesConfig{
-			Burst:         200,
-			CacheDuration: 5 * 60,
+		KialiInternal: KialiInternalConfig{
 			CacheExpiration: CacheExpirationConfig{
 				AmbientCheck: 10 * time.Minute,
 				Gateway:      4 * time.Minute,
 				Mesh:         20 * time.Second,
 				Waypoint:     4 * time.Minute,
 			},
+		},
+		KubernetesConfig: KubernetesConfig{
+			Burst:                       200,
+			CacheDuration:               5 * 60,
 			CacheTokenNamespaceDuration: 10,
 			ClusterName:                 "", // leave this unset as a flag that we need to fetch the information
 			ExcludeWorkloads:            []string{"CronJob", "DeploymentConfig", "Job", "ReplicationController"},
