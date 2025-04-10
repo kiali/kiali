@@ -80,7 +80,7 @@
     "@patternfly/react-core": "^5.4.0",
     "@patternfly/react-table": "^5.4.0",
     "@patternfly/react-topology": "^5.4.1",
-    "axios": "^1.7.4",
+    "axios": "^1.8.4",
     "bootstrap-slider-without-jquery": "10.0.0",
     "deep-freeze": "0.0.1",
     "eventemitter3": "4.0.7",
@@ -154,6 +154,7 @@
     "typescript": "^4.9.5"
   },
   "resolutions": {
+    "esbuild": "^0.25.2",
     "nth-check": "^2.0.1",
     "postcss": "^8.4.31",
     "workbox-webpack-plugin": "^7.1.0"
