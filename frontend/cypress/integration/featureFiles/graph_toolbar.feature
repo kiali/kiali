@@ -37,7 +37,7 @@ Feature: Kiali Graph page - Toolbar (various)
 
   @error-rates-app
   Scenario: Open traffic dropdown
-    When user clicks graph traffic menu
+    When user "opens" traffic menu
     Then user sees "default" graph traffic menu
 
   @error-rates-app
@@ -56,14 +56,14 @@ Feature: Kiali Graph page - Toolbar (various)
 
   @error-rates-app
   Scenario: Close traffic dropdown
-    When user clicks graph traffic menu
+    When user "closes" traffic menu
     Then user does not see graph traffic menu
 
   @error-rates-app
   @graph-page-display
   Scenario: User resets to factory default
     When user resets to factory default
-    And user clicks graph traffic menu
+    And user "opens" traffic menu
     Then user sees "default" graph traffic menu
 
   @error-rates-app
