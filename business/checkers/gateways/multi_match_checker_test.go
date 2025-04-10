@@ -256,7 +256,13 @@ func TestSkipWildCardMatchingHost(t *testing.T) {
 			"istio": "istio-ingress",
 		}))
 
-	gws := []*networking_v1.Gateway{gwObject, gwObject2, gwObject3}
+	// Another namespace
+	gwObject4 := data.AddServerToGateway(data.CreateServer([]string{"*.subdomain.justhost.com"}, 80, "http", "http"),
+		data.CreateEmptyGateway("keepsvalid", "test", map[string]string{
+			"istio": "istio-ingress",
+		}))
+
+	gws := []*networking_v1.Gateway{gwObject, gwObject2, gwObject3, gwObject4}
 
 	vals := MultiMatchChecker{
 		Conf:     config.Get(),
@@ -341,6 +347,32 @@ func TestNoMatchOnSubdomainHost(t *testing.T) {
 		[]string{
 			"example.com",
 			"thisisfine.example.com",
+		}, 80, "http", "http"),
+
+		data.CreateEmptyGateway("shouldbevalid", "test", map[string]string{
+			"app": "someother",
+		}))
+
+	gws := []*networking_v1.Gateway{gwObject}
+
+	vals := MultiMatchChecker{
+		Conf:     config.Get(),
+		Gateways: gws,
+	}.Check()
+
+	assert.Empty(vals)
+}
+
+func TestNoMatchOnWildcardSubdomainHost(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gwObject := data.AddServerToGateway(data.CreateServer(
+		[]string{
+			"*.example.com",
+			"*.thisisfine.example.com",
 		}, 80, "http", "http"),
 
 		data.CreateEmptyGateway("shouldbevalid", "test", map[string]string{
@@ -528,6 +560,36 @@ func TestMatchOnImplicitWildcardTargetNamespace(t *testing.T) {
 		[]string{
 			"test/example.com",
 			"example.com",
+		}, 80, "http", "http"),
+
+		data.CreateEmptyGateway("shouldnotbevalid", "test", map[string]string{
+			"app": "ingressgateway",
+		}))
+
+	gws := []*networking_v1.Gateway{gwObject}
+
+	vals := MultiMatchChecker{
+		Conf:     config.Get(),
+		Gateways: gws,
+	}.Check()
+
+	assert.NotEmpty(vals)
+	assert.Equal(1, len(vals))
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "test", Name: "shouldnotbevalid"}]
+	assert.True(ok)
+	assert.True(validation.Valid)
+}
+
+func TestMatchOnImplicitWildcardMatchingHosts(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gwObject := data.AddServerToGateway(data.CreateServer(
+		[]string{
+			"*.example.com",
+			"*.example.com",
 		}, 80, "http", "http"),
 
 		data.CreateEmptyGateway("shouldnotbevalid", "test", map[string]string{
