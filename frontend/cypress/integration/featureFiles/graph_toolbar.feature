@@ -119,10 +119,10 @@ Feature: Kiali Graph page - Toolbar (various)
   @ambient
   Scenario: Open traffic dropdown for ambient
     When user graphs "" namespaces
-    And user clicks graph traffic menu
+    And user "opens" traffic menu
     Then user sees "ambient" graph traffic menu
 
   @ambient
   Scenario: Close traffic dropdown for ambient
-    When user clicks graph traffic menu
+    When user "closes" traffic menu
     Then user does not see graph traffic menu

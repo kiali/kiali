@@ -30,6 +30,7 @@ Feature: Kiali Graph page - Display menu
     And user "enables" "idle nodes" option
     Then user sees the "gamma" namespace
     And idle nodes "appear" in the graph
+    And user "closes" display menu
 
   @error-rates-app
   Scenario: User disables idle nodes
@@ -49,8 +50,8 @@ Feature: Kiali Graph page - Display menu
     When user "opens" display menu
     Then the display menu opens
     And the display menu has default settings
-    And user "closes" display menu
     And the graph reflects default settings
+    And user "closes" display menu
 
   # percentile variable must match input id
   # edge label variable must match edge data name
@@ -58,8 +59,8 @@ Feature: Kiali Graph page - Display menu
   Scenario: Average Response-time edge labels
     When user "opens" display menu
     And user enables "avg" "responseTime" edge labels
-    And user "closes" display menu
     Then user sees "responseTime" edge labels
+    And user "closes" display menu
 
   # percentile variable must match input id
   # edge label variable must match edge data name
@@ -255,7 +256,8 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   Scenario: User observes some options not being clickable when switching to Service graph
-    When user "disables" "service nodes" option
+    When user "opens" display menu
+    And user "disables" "service nodes" option
     And user "enables" "operation nodes" option
     And user selects "SERVICE" graph type
     And user "opens" display menu
