@@ -393,13 +393,15 @@ Feature: Kiali Waypoint related features
     And user "closes" traffic menu
     Then user "opens" display menu
     And user "enables" "security" option
-    And user "closes" display menu
     Then 9 edges appear in the graph
     Then security "appears" in the graph
+    And user "closes" display menu
     Then user "opens" traffic menu
     And user "disables" "ambient" traffic option
     And user "closes" traffic menu
     Then 5 edges appear in the graph
+    Then user "opens" traffic menu
     Then user "enables" "ambient" traffic option
     Then user "disables" "tcp" traffic option
     Then 4 edges appear in the graph
+    Then user "closes" traffic menu
