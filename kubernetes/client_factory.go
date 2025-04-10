@@ -26,7 +26,12 @@ var once sync.Once
 // defaultExpirationTime set the default expired time of a client
 const defaultExpirationTime = time.Minute * 15
 
-// ClientFactory interface for the clientFactory object
+// ClientFactory interface for the clientFactory object. The factory is the source
+// for all User Clients (UserClientInterface) and SA Clients (ClientInterface).
+// User Clients are those that have read and write capabilities, and perform those
+// functions as a specific user who has provided credentials and logged in.
+// SA clients are those that have read-only capabilities and use the Kiali SA
+// credentials for access.
 type ClientFactory interface {
 	GetClient(authInfo *api.AuthInfo, cluster string) (UserClientInterface, error)
 	GetClients(authInfos map[string]*api.AuthInfo) (map[string]UserClientInterface, error)
@@ -63,11 +68,15 @@ type clientFactory struct {
 	// remoteClusterInfos contains information on all remote clusters taken from the remote cluster secrets, keyed on cluster name.
 	remoteClusterInfos map[string]RemoteClusterInfo
 
-	// maps cluster name to a kiali client for that cluster. The kiali client uses the
-	// kiali service account to access the cluster API.
-	// Note that the type is UserClientInterface because the SA clients also have write capabilities.
-	// For safety, you should normally cast these clients to ClientInterface unless you explicitly want
-	// to use these to write data (as in the case when RBAC mode is disabled).
+	// saClientEntries is a map of cluster name to a Kiali SA client for that cluster.
+	// The Kiali SA client uses the Kiali service account to access the cluster API.
+	// Note that the underlying type for this map is UserClientInterface but this is only because
+	// the SA clients may need write capabilities in some special cases (i.e. when RBAC mode is disabled,
+	// or anonymous mode is used). However, for safety the client factory should normally cast these
+	// clients to ClientInterface to enforce read-only capabilities for SA clients (which is what they
+	// are supposed to be under normal circumstances. It is only when you explicitly want to use SA clients
+	// to write data when you expose them as UserClientInterface. Again, this is only for special cases
+	// like RBAC is disabled or anonymous mode is used).
 	saClientEntries map[string]UserClientInterface
 }
 
@@ -169,7 +178,7 @@ func newClientFactory(conf *kialiConfig.Config, restConfig *rest.Config) (*clien
 	return f, nil
 }
 
-// newClient creates a new ClientInterface based on a users k8s token. It is assumed users do not have a token file in authInfo.
+// newClient creates a new UserClientInterface based on a users k8s token. It is assumed users do not have a token file in authInfo.
 func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.Duration, cluster string) (UserClientInterface, error) {
 	config := *cf.baseRestConfig
 
@@ -273,14 +282,14 @@ func (cf *clientFactory) newSAClient(remoteClusterInfo *RemoteClusterInfo) (*K8S
 	return client, nil
 }
 
-// getClient returns a client for the specified token. Creating one if necessary.
+// GetSAClients returns all the read-only SA clients.
 func (cf *clientFactory) GetSAClients() map[string]ClientInterface {
 	cf.mutex.RLock()
 	defer cf.mutex.RUnlock()
 	return ConvertFromUserClients(cf.saClientEntries)
 }
 
-// getClient returns a client for the specified token. Creating one if necessary.
+// GetClient returns a read-write client for the specified user token and cluster, creating one if necessary.
 func (cf *clientFactory) GetClient(authInfo *api.AuthInfo, cluster string) (UserClientInterface, error) {
 	if cf.kialiConfig.IsRBACDisabled() {
 		return cf.GetSAClientAsUserClientInterface(cluster), nil
@@ -289,7 +298,7 @@ func (cf *clientFactory) GetClient(authInfo *api.AuthInfo, cluster string) (User
 	return cf.getRecycleClient(authInfo, defaultExpirationTime, cluster)
 }
 
-// getClient returns a client for the specified token. Creating one if necessary.
+// GetClients returns all read-write clients for the specified user tokens, creating them as necessary.
 func (cf *clientFactory) GetClients(authInfos map[string]*api.AuthInfo) (map[string]UserClientInterface, error) {
 	if cf.kialiConfig.IsRBACDisabled() {
 		return cf.GetSAClientsAsUserClientInterfaces(), nil
@@ -334,7 +343,7 @@ func (cf *clientFactory) getRecycleClient(authInfo *api.AuthInfo, expirationTime
 	}
 }
 
-// hasClient check if clientFactory has a client, return the client if clientFactory has it
+// hasClient checks if clientFactory has a client, returning the client if clientFactory has it.
 // This is a helper function for testing.
 // It uses the shared lock so beware of nested locking with other methods.
 func (cf *clientFactory) hasClient(authInfo *api.AuthInfo) (map[string]UserClientInterface, bool) {
@@ -345,7 +354,7 @@ func (cf *clientFactory) hasClient(authInfo *api.AuthInfo) (map[string]UserClien
 	return cEntry, ok
 }
 
-// getClientsLength returns the length of clients.
+// getClientsLength returns the number of known clients.
 // This is a helper function for testing.
 // It uses the shared lock so beware of nested locking with other methods.
 func (cf *clientFactory) getClientsLength() int {
@@ -410,32 +419,37 @@ func getTokenHash(authInfo *api.AuthInfo) string {
 	return string(h.Sum(nil))
 }
 
-// GetSAClient returns the client associated with the Kiali service account for the given cluster.
+// GetSAClient returns the read-only client associated with the Kiali service account for the given cluster.
 func (cf *clientFactory) GetSAClient(cluster string) ClientInterface {
 	cf.mutex.RLock()
 	defer cf.mutex.RUnlock()
 	return cf.saClientEntries[cluster]
 }
 
-// getSAClientAsUserClientInterface returns the client associated with the Kiali service account for the given cluster
-// but returns it as a UserClientInterface thus allowing you to write data with the returned client.
-// Use with caution!! This client gives you the Kiali SA write permissions.
+// getSAClientAsUserClientInterface returns a read-write client associated with the Kiali service account for the given cluster.
+//
+// USE WITH CAUTION!! This client gives you the Kiali SA write permissions!
+//
+// Note this is a special function that should be used sparingly. It returns an SA client (which is usually meant to be read-only)
+// as a UserClientInterface (aka a read-write client) thus allowing you to write data with the returned client.
 func (cf *clientFactory) GetSAClientAsUserClientInterface(cluster string) UserClientInterface {
 	cf.mutex.RLock()
 	defer cf.mutex.RUnlock()
 	return cf.saClientEntries[cluster]
 }
 
-// GetSAClientsAsUserClientInterfaces returns all the SA clients
-// but returns them as UserClientInterface objects thus allowing you to write data with the returned clients.
-// Use with caution!! These clients give you the Kiali SA write permissions.
+// GetSAClientsAsUserClientInterfaces returns all the SA clients as read-write clients (UserClientInterface).
+//
+// USE WITH CAUTION!! These clients give you the Kiali SA write permissions!
+//
+// Read the comments for GetSAClientAsUserClientInterface for more info.
 func (cf *clientFactory) GetSAClientsAsUserClientInterfaces() map[string]UserClientInterface {
 	cf.mutex.RLock()
 	defer cf.mutex.RUnlock()
 	return cf.saClientEntries
 }
 
-// KialiSAHomeClusterClient returns the Kiali service account client for the cluster where Kiali is running.
+// KialiSAHomeClusterClient returns the read-only Kiali SA client for the cluster where Kiali is running.
 func (cf *clientFactory) GetSAHomeClusterClient() ClientInterface {
 	return cf.GetSAClient(cf.homeCluster)
 }
