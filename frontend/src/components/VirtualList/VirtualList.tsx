@@ -39,7 +39,7 @@ const emptyStyle = kialiStyle({
 });
 
 // TOP_PADDING constant is used to adjust the height of the main div to allow scrolling in the inner container layer.
-const TOP_PADDING = 76 + 118;
+const TOP_PADDING = 76 + 160;
 
 // EMBEDDED_PADDING constant is a magic number used to adjust the height of the main div to allow scrolling in the inner container layer.
 // 42px is the height of the first tab menu
@@ -81,7 +81,7 @@ type VirtualListProps<R> = ReduxProps & {
 type VirtualListState<R extends RenderResource> = {
   columns: ResourceType<R>[];
   conf: Resource;
-  height: number;
+  scrollStyle: string;
   sortBy: {
     direction: Direction;
     index: number;
@@ -107,7 +107,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
         index,
         direction: HistoryManager.getParam(URLParam.DIRECTION) as Direction
       },
-      height: 0,
+      scrollStyle: kialiStyle({}),
       columns,
       conf
     };
@@ -146,17 +146,28 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     }
   }
 
+  getScrollStyle = (height: number): string => {
+    if (globalScrollbar === 'false') {
+      return kialiStyle({
+        height: height,
+        padding: '1.25rem',
+        marginBottom: '1.25rem',
+        width: '100%'
+      });
+    }
+    return kialiStyle({});
+  };
+
   updateWindowDimensions = (): void => {
     const isStandalone = !isKiosk(store.getState().globalState.kiosk);
     const topPadding = isStandalone ? TOP_PADDING : EMBEDDED_PADDING;
-
     this.setState(
       {
-        height: window.innerHeight - topPadding
+        scrollStyle: this.getScrollStyle(window.innerHeight - topPadding)
       },
       () => {
         if (this.props.onResize) {
-          this.props.onResize(this.state.height);
+          this.props.onResize(window.innerHeight - topPadding);
         }
       }
     );
@@ -199,17 +210,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
   };
 
   render(): React.ReactNode {
-    let scrollStyle = {};
-
     // If there is no global scrollbar, height is fixed to force the scrollbar to appear in the component
-    if (globalScrollbar === 'false') {
-      scrollStyle = kialiStyle({
-        height: this.state.height,
-        padding: '1.25rem',
-        marginBottom: '1.25rem',
-        width: '100%'
-      });
-    }
     const { rows } = this.props;
     const { sortBy, columns, conf } = this.state;
 
@@ -239,9 +240,9 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     });
 
     return (
-      <div className={classes(scrollStyle, this.props.className)}>
+      <div className={classes(this.state.scrollStyle, this.props.className)}>
         {childrenWithProps}
-        <InnerScrollContainer>
+        <InnerScrollContainer style={{ maxHeight: '95%' }}>
           <Table gridBreakPoint={TableGridBreakpoint.none} role="presentation" isStickyHeader>
             {conf.caption && <Caption>{conf.caption}</Caption>}
             <Thead>
