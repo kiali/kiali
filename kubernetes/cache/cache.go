@@ -170,7 +170,7 @@ func newKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, conf co
 		waypointStore:           store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(conf.KialiInternal.CacheExpiration.Waypoint), nil),
 		validations:             store.New[models.IstioValidationKey, *models.IstioValidation](),
 		validationConfig:        store.New[string, string](),
-		ztunnelConfigStore:      store.New[string, *kubernetes.ZtunnelConfigDump](),
+		ztunnelConfigStore:      store.NewExpirationStore(ctx, store.New[string, *kubernetes.ZtunnelConfigDump](), util.AsPtr(conf.KialiInternal.CacheExpiration.Gateway), nil),
 	}
 
 	for cluster, client := range kialiSAClients {

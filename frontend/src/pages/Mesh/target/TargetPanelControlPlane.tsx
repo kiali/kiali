@@ -9,7 +9,7 @@ import {
   targetPanelHR,
   targetPanelStyle
 } from './TargetPanelCommon';
-import { Title, TitleSizes } from '@patternfly/react-core';
+import { Popover, Tab, TabAction, Title, TitleSizes } from '@patternfly/react-core';
 import { serverConfig } from 'config';
 import { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
 import { DirectionType } from 'pages/Overview/OverviewToolbar';
@@ -29,12 +29,13 @@ import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
 import { t } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
 import { TargetPanelEditor } from './TargetPanelEditor';
-import { load } from 'js-yaml';
 import { CertsInfo } from 'types/CertsInfo';
 import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
 import { TargetPanelControlPlaneMetrics } from './TargetPanelControlPlaneMetrics';
 import { TargetPanelControlPlaneStatus } from './TargetPanelControlPlaneStatus';
-import { ControlPlane, IstiodNodeData, NodeTarget } from 'types/Mesh';
+import { ConfigSource, ControlPlane, IstiodNodeData, NodeTarget } from 'types/Mesh';
+import { SimpleTabs } from 'components/Tab/SimpleTabs';
+import { HelpIcon } from '@patternfly/react-icons';
 
 type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
   meshStatus: string;
@@ -73,6 +74,40 @@ export const isRemoteCluster = (annotations?: { [key: string]: string }): boolea
 
 // TODO: Should these remain fixed values?
 const direction: DirectionType = 'outbound';
+
+const helpPopover = (
+  header: string,
+  configDescription: React.ReactNode,
+  popoverRef: React.RefObject<any>,
+  configSource?: ConfigSource
+): React.ReactElement => (
+  <Popover
+    headerContent={<div>{header}</div>}
+    bodyContent={
+      <div>
+        {configDescription}
+        {configSource && (
+          <>
+            <br />
+            <br />
+            <b>Name:</b> {configSource.name}
+            <br />
+            <b>Namespace:</b> {configSource.namespace}
+            <br />
+            <b>Cluster:</b> {configSource.cluster}
+          </>
+        )}
+      </div>
+    }
+    triggerRef={popoverRef}
+  />
+);
+
+interface tabInfo {
+  config?: ConfigSource;
+  configDescription: React.ReactNode;
+  title: string;
+}
 
 export class TargetPanelControlPlane extends React.Component<
   TargetPanelControlPlaneProps,
@@ -113,18 +148,6 @@ export class TargetPanelControlPlane extends React.Component<
     this.promises.cancelAll();
   }
 
-  configMapToJson(configMap: Map<string, string>): unknown {
-    let cm = {};
-
-    if (configMap) {
-      for (const [key, value] of Object.entries(configMap)) {
-        cm[key] = load(value);
-      }
-    }
-
-    return cm;
-  }
-
   render(): React.ReactNode {
     if (this.state.loading || !this.state.nsInfo) {
       return this.getLoading();
@@ -134,8 +157,24 @@ export class TargetPanelControlPlane extends React.Component<
     const data = this.state.controlPlaneNode?.getData()!;
 
     const controlPlane: ControlPlane = data.infraData;
-    const configMapJson = controlPlane.config.configMap ? this.configMapToJson(controlPlane.config.configMap) : '';
 
+    const tabs: tabInfo[] = [
+      {
+        title: 'effective',
+        config: controlPlane.config.effectiveConfig,
+        configDescription: 'The effective config is the combination of the standard and shared configs.'
+      },
+      {
+        title: 'standard',
+        config: controlPlane.config.standardConfig,
+        configDescription: 'The standard mesh configmap. Takes precedence over the shared mesh configmap.'
+      },
+      {
+        title: 'shared',
+        config: controlPlane.config.sharedConfig,
+        configDescription: 'The shared mesh configmap.'
+      }
+    ];
     return (
       <div
         id="target-panel-control-plane"
@@ -170,7 +209,42 @@ export class TargetPanelControlPlane extends React.Component<
           )}
 
           {targetPanelHR}
-          <TargetPanelEditor configData={configMapJson} targetName={data.infraName}></TargetPanelEditor>
+          {controlPlane.config.standardConfig && controlPlane.config.sharedConfig ? (
+            <SimpleTabs id="mesh-configs" defaultTab={0}>
+              {tabs.map((tabInfo, index) => {
+                const ref = React.createRef<HTMLElement>();
+                return (
+                  <Tab
+                    title={tabInfo.title}
+                    eventKey={index}
+                    actions={
+                      <>
+                        <TabAction aria-label={`Help action for ${tabInfo.title}`} ref={ref}>
+                          <HelpIcon />
+                        </TabAction>
+                        {helpPopover(
+                          tabInfo.title,
+                          tabInfo.configDescription,
+                          ref,
+                          tabInfo.title !== 'effective' ? tabInfo.config : undefined
+                        )}
+                      </>
+                    }
+                  >
+                    <TargetPanelEditor
+                      configData={tabInfo.config?.configMap}
+                      targetName={data.infraName}
+                    ></TargetPanelEditor>
+                  </Tab>
+                );
+              })}
+            </SimpleTabs>
+          ) : (
+            <TargetPanelEditor
+              configData={controlPlane.config.effectiveConfig?.configMap}
+              targetName={data.infraName}
+            ></TargetPanelEditor>
+          )}
 
           {data.infraData.config.certificates && targetPanelHR}
           {data.infraData.config.certificates && (
