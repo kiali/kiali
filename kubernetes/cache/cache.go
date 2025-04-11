@@ -23,9 +23,24 @@ import (
 )
 
 const (
+<<<<<<< HEAD
 	kialiCacheGatewaysKey  = "gateways"
 	kialiCacheMeshKey      = "mesh"
 	kialiCacheWaypointsKey = "waypoints"
+=======
+	ambientCheckExpirationTime = 10 * time.Minute
+	gatewayExpirationTime      = 3 * time.Minute
+	istioStatusExpirationTime  = 30 * time.Second
+	meshExpirationTime         = 20 * time.Second
+	waypointExpirationTime     = 3 * time.Minute
+)
+
+const (
+	kialiCacheGatewaysKey    = "gateways"
+	kialiCacheIstioStatusKey = "istioStatus"
+	kialiCacheMeshKey        = "mesh"
+	kialiCacheWaypointsKey   = "waypoints"
+>>>>>>> 4b65df06d (Istio status cache (#19))
 )
 
 // KialiCache stores both kube objects and non-kube related data such as pods' proxy status.
@@ -48,6 +63,9 @@ type KialiCache interface {
 
 	GetGateways() (models.Workloads, bool)
 	SetGateways(models.Workloads)
+
+	GetIstioStatus() (kubernetes.IstioComponentStatus, bool)
+	SetIstioStatus(kubernetes.IstioComponentStatus)
 
 	GetKubeCaches() map[string]KubeCache
 	GetKubeCache(cluster string) (KubeCache, error)
@@ -113,6 +131,10 @@ type kialiCacheImpl struct {
 	// Cache gateways to speed up access for these specific workloads. The only key is kialiCacheGatewaysKey
 	gatewayStore store.Store[string, models.Workloads]
 
+	// There's only ever one IstioStatus but we want to reuse the store machinery
+	// so using a store here but the only key should be kialiCacheIstioStatusKey.
+	istioStatusStore store.Store[string, kubernetes.IstioComponentStatus]
+
 	// Maps a cluster name to a KubeCache
 	kubeCache map[string]KubeCache
 
@@ -161,6 +183,8 @@ func newKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, conf co
 		cleanup:                 cancel,
 		conf:                    conf,
 		gatewayStore:            store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(conf.KialiInternal.CacheExpiration.Gateway), nil),
+		istioStatusStore:        store.NewExpirationStore(ctx, store.New[string, kubernetes.IstioComponentStatus](), util.AsPtr(istioStatusExpirationTime), nil),
+		istioStatusStore:        store.NewExpirationStore(ctx, store.New[string, kubernetes.IstioComponentStatus](), util.AsPtr(istioStatusExpirationTime), nil),
 		kubeCache:               make(map[string]KubeCache),
 		meshStore:               store.NewExpirationStore(ctx, store.New[string, *models.Mesh](), util.AsPtr(conf.KialiInternal.CacheExpiration.Mesh), nil),
 		namespaceStore:          store.NewExpirationStore(ctx, store.New[namespacesKey, map[string]models.Namespace](), &namespaceKeyTTL, nil),
@@ -267,6 +291,14 @@ func (c *kialiCacheImpl) GetMesh() (*models.Mesh, bool) {
 
 func (c *kialiCacheImpl) SetMesh(mesh *models.Mesh) {
 	c.meshStore.Set(kialiCacheMeshKey, mesh)
+}
+
+func (c *kialiCacheImpl) GetIstioStatus() (kubernetes.IstioComponentStatus, bool) {
+	return c.istioStatusStore.Get(kialiCacheIstioStatusKey)
+}
+
+func (c *kialiCacheImpl) SetIstioStatus(istioStatus kubernetes.IstioComponentStatus) {
+	c.istioStatusStore.Set(kialiCacheIstioStatusKey, istioStatus)
 }
 
 func (c *kialiCacheImpl) Validations() store.Store[models.IstioValidationKey, *models.IstioValidation] {
