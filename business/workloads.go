@@ -2113,8 +2113,8 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				break
 			}
 
-			// 2. If no pods we're found for a ReplicaSet type, it's possible the controller
-			//    is managing the pods itself i.e. the pod's have an owner ref directly to the controller type.
+			// 2. If no pods were found for a ReplicaSet type, it's possible the controller
+			//    is managing the pods itself i.e. the pods have an owner ref directly to the controller type.
 			if len(cPods) == 0 {
 				cPods = kubernetes.FilterPodsByController(criteria.WorkloadName, discoveredControllerGVK, pods)
 				if len(cPods) > 0 {
@@ -2257,7 +2257,7 @@ func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload m
 		// multiple were returned I'm not sure how the waypoint capture logic should work, so for now, more than 1 will
 		// indicate that the labels did not have a proper service selector. In this case, ignore the returned services.
 		if len(svc.Services) > 1 {
-			log.Warningf("Ignoring service override for waypoint cature. Found [%d] services for [%s] workload [%s:%s:%s]", len(svc.Services), workload.WorkloadGVK.GroupKind(), workload.Cluster, workload.Namespace, workload.Name)
+			log.Warningf("Ignoring service override for waypoint capture. Found [%d] services for [%s] workload [%s:%s:%s]", len(svc.Services), workload.WorkloadGVK.GroupKind(), workload.Cluster, workload.Namespace, workload.Name)
 		} else {
 			services = svc.Services
 		}
