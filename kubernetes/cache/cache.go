@@ -23,14 +23,6 @@ import (
 )
 
 const (
-	ambientCheckExpirationTime = 10 * time.Minute
-	gatewayExpirationTime      = 3 * time.Minute
-	istioStatusExpirationTime  = 30 * time.Second
-	meshExpirationTime         = 20 * time.Second
-	waypointExpirationTime     = 3 * time.Minute
-)
-
-const (
 	kialiCacheGatewaysKey    = "gateways"
 	kialiCacheIstioStatusKey = "istioStatus"
 	kialiCacheMeshKey        = "mesh"
@@ -177,7 +169,7 @@ func newKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, conf co
 		cleanup:                 cancel,
 		conf:                    conf,
 		gatewayStore:            store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(conf.KialiInternal.CacheExpiration.Gateway), nil),
-		istioStatusStore:        store.NewExpirationStore(ctx, store.New[string, kubernetes.IstioComponentStatus](), util.AsPtr(istioStatusExpirationTime), nil),
+		istioStatusStore:        store.NewExpirationStore(ctx, store.New[string, kubernetes.IstioComponentStatus](), util.AsPtr(conf.KialiInternal.CacheExpiration.IstioStatus), nil),
 		kubeCache:               make(map[string]KubeCache),
 		meshStore:               store.NewExpirationStore(ctx, store.New[string, *models.Mesh](), util.AsPtr(conf.KialiInternal.CacheExpiration.Mesh), nil),
 		namespaceStore:          store.NewExpirationStore(ctx, store.New[namespacesKey, map[string]models.Namespace](), &namespaceKeyTTL, nil),

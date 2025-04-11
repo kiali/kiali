@@ -413,6 +413,7 @@ type KubernetesConfig struct {
 // CacheExpirationConfig sets expiration time for various cache stores
 type CacheExpirationConfig struct {
 	AmbientCheck time.Duration `yaml:"ambient_check,omitempty"`
+	IstioStatus  time.Duration `yaml:"istio_status,omitempty"`
 	Gateway      time.Duration `yaml:"gateway,omitempty"`
 	Mesh         time.Duration `yaml:"mesh,omitempty"`
 	Waypoint     time.Duration `yaml:"waypoint,omitempty"`
@@ -911,6 +912,7 @@ func NewConfig() (c *Config) {
 		KialiInternal: KialiInternalConfig{
 			CacheExpiration: CacheExpirationConfig{
 				AmbientCheck: 10 * time.Minute,
+				IstioStatus:  30 * time.Minute,
 				Gateway:      4 * time.Minute,
 				Mesh:         20 * time.Second,
 				Waypoint:     4 * time.Minute,

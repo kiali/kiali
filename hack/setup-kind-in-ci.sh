@@ -245,6 +245,7 @@ setup_kind_singlecluster() {
     --set health_config.rate[0].tolerance[0].degraded=2 \
     --set health_config.rate[0].tolerance[0].failure=100 \
     --set kiali_internal.cache_expiration.ambient_check="10s" \
+    --set kiali_internal.cache_expiration.istio_status="10s" \
     --set kiali_internal.cache_expiration.gateway="10s" \
     --set kiali_internal.cache_expiration.mesh="10s" \
     --set kiali_internal.cache_expiration.waypoint="10s" \
