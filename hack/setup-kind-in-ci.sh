@@ -244,11 +244,11 @@ setup_kind_singlecluster() {
     --set health_config.rate[0].tolerance[0].code="5xx" \
     --set health_config.rate[0].tolerance[0].degraded=2 \
     --set health_config.rate[0].tolerance[0].failure=100 \
-    --set kiali_internal.cache_expiration.ambient_check="3s" \
-    --set kiali_internal.cache_expiration.gateway="3s" \
-    --set kiali_internal.cache_expiration.istio_status="3s" \
-    --set kiali_internal.cache_expiration.mesh="3s" \
-    --set kiali_internal.cache_expiration.waypoint="3s" \
+    --set kiali_internal.cache_expiration.ambient_check="1m" \
+    --set kiali_internal.cache_expiration.gateway="1m" \
+    --set kiali_internal.cache_expiration.istio_status="30s" \
+    --set kiali_internal.cache_expiration.mesh="20s" \
+    --set kiali_internal.cache_expiration.waypoint="1m" \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 
