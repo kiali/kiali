@@ -161,6 +161,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
   updateWindowDimensions = (): void => {
     const isStandalone = !isKiosk(store.getState().globalState.kiosk);
     const topPadding = isStandalone ? TOP_PADDING : EMBEDDED_PADDING;
+
     this.setState(
       {
         scrollStyle: this.getScrollStyle(window.innerHeight - topPadding)
@@ -238,59 +239,59 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
         />
       );
     });
+    const table = (
+      <Table gridBreakPoint={TableGridBreakpoint.none} role="presentation" isStickyHeader>
+        {conf.caption && <Caption>{conf.caption}</Caption>}
+        <Thead>
+          <Tr>
+            {columns.map((column, index) => (
+              <Th
+                key={`column_${index}`}
+                dataLabel={column.title}
+                sort={this.getSortParams(column, index, sortBy, this.onSort)}
+                width={column.width}
+                textCenter={column.textCenter}
+              >
+                {column.title}
+              </Th>
+            ))}
+          </Tr>
+        </Thead>
 
+        <Tbody>
+          {this.props.rows.length > 0 ? (
+            rowItems
+          ) : (
+            <Tr className={emptyStyle}>
+              <Td colSpan={columns.length}>
+                {this.props.activeNamespaces.length > 0 ? (
+                  <EmptyState variant={EmptyStateVariant.full}>
+                    <EmptyStateHeader titleText={<>No {typeDisplay} found</>} headingLevel="h5" />
+                    <EmptyStateBody>
+                      No {typeDisplay} in namespace
+                      {this.props.activeNamespaces.length === 1
+                        ? ` ${this.props.activeNamespaces[0].name}`
+                        : `s: ${this.props.activeNamespaces.map(ns => ns.name).join(', ')}`}
+                    </EmptyStateBody>
+                  </EmptyState>
+                ) : (
+                  <EmptyState variant={EmptyStateVariant.full}>
+                    <EmptyStateHeader titleText="No namespace is selected" headingLevel="h5" />
+                    <EmptyStateBody>
+                      There is currently no namespace selected, please select one using the Namespace selector.
+                    </EmptyStateBody>
+                  </EmptyState>
+                )}
+              </Td>
+            </Tr>
+          )}
+        </Tbody>
+      </Table>
+    );
     return (
       <div className={classes(this.state.scrollStyle, this.props.className)}>
         {childrenWithProps}
-        <InnerScrollContainer style={{ maxHeight: '95%' }}>
-          <Table gridBreakPoint={TableGridBreakpoint.none} role="presentation" isStickyHeader>
-            {conf.caption && <Caption>{conf.caption}</Caption>}
-            <Thead>
-              <Tr>
-                {columns.map((column, index) => (
-                  <Th
-                    key={`column_${index}`}
-                    dataLabel={column.title}
-                    sort={this.getSortParams(column, index, sortBy, this.onSort)}
-                    width={column.width}
-                    textCenter={column.textCenter}
-                  >
-                    {column.title}
-                  </Th>
-                ))}
-              </Tr>
-            </Thead>
-
-            <Tbody>
-              {this.props.rows.length > 0 ? (
-                rowItems
-              ) : (
-                <Tr className={emptyStyle}>
-                  <Td colSpan={columns.length}>
-                    {this.props.activeNamespaces.length > 0 ? (
-                      <EmptyState variant={EmptyStateVariant.full}>
-                        <EmptyStateHeader titleText={<>No {typeDisplay} found</>} headingLevel="h5" />
-                        <EmptyStateBody>
-                          No {typeDisplay} in namespace
-                          {this.props.activeNamespaces.length === 1
-                            ? ` ${this.props.activeNamespaces[0].name}`
-                            : `s: ${this.props.activeNamespaces.map(ns => ns.name).join(', ')}`}
-                        </EmptyStateBody>
-                      </EmptyState>
-                    ) : (
-                      <EmptyState variant={EmptyStateVariant.full}>
-                        <EmptyStateHeader titleText="No namespace is selected" headingLevel="h5" />
-                        <EmptyStateBody>
-                          There is currently no namespace selected, please select one using the Namespace selector.
-                        </EmptyStateBody>
-                      </EmptyState>
-                    )}
-                  </Td>
-                </Tr>
-              )}
-            </Tbody>
-          </Table>
-        </InnerScrollContainer>
+        {this.props.actions ? table : <InnerScrollContainer style={{ maxHeight: '95%' }}>{table}</InnerScrollContainer>}
       </div>
     );
   }
