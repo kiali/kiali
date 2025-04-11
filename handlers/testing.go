@@ -26,7 +26,7 @@ func mockClock() {
 }
 
 type noPrivClient struct {
-	kubernetes.ClientInterface
+	kubernetes.UserClientInterface
 }
 
 func (n *noPrivClient) GetProjects(ctx context.Context, labelSelector string) ([]osproject_v1.Project, error) {

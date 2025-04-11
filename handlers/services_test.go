@@ -312,7 +312,7 @@ func TestServiceMetricsInaccessibleNamespace(t *testing.T) {
 	k := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
 	k.OpenShift = true
 
-	business.SetupBusinessLayer(t, &noPrivClient{ClientInterface: k}, *config.Get())
+	business.SetupBusinessLayer(t, &noPrivClient{UserClientInterface: k}, *config.Get())
 
 	url := ts.URL + "/api/namespaces/my_namespace/services/svc/metrics"
 

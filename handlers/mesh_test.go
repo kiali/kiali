@@ -76,7 +76,7 @@ func TestGetMeshGraph(t *testing.T) {
 	conf.KubernetesConfig.ClusterName = "Kubernetes"
 	kubernetes.SetConfig(t, *conf)
 
-	clients := map[string]kubernetes.ClientInterface{
+	clients := map[string]kubernetes.UserClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace(conf.IstioNamespace),
 			// Ideally we wouldn't need to set all this stuff up here but there's not a good way
@@ -112,7 +112,7 @@ func TestGetMeshGraph(t *testing.T) {
 	cf := kubetest.NewFakeClientFactory(conf, clients)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	grafana := grafana.NewService(conf, clients[conf.KubernetesConfig.ClusterName])
-	discovery := istio.NewDiscovery(clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	business.SetupBusinessLayer(t, clients[conf.KubernetesConfig.ClusterName], *conf)
 	business.WithKialiCache(cache)
 	business.WithDiscovery(discovery)
@@ -138,7 +138,7 @@ func TestControlPlanes(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
-	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
+	clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
 	cf := kubetest.NewFakeClientFactory(conf, clients)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	mesh := models.Mesh{
@@ -175,7 +175,7 @@ func TestControlPlanesUnauthorized(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
-	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
+	clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
 	cf := kubetest.NewFakeClientFactory(conf, clients)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	mesh := models.Mesh{

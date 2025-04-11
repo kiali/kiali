@@ -132,7 +132,7 @@ func TestIsAmbientMultiCluster(t *testing.T) {
 		kubetest.FakeNamespace("istio-system"),
 	)
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
-	clientFactory.SetClients(map[string]kubernetes.ClientInterface{
+	clientFactory.SetClients(map[string]kubernetes.UserClientInterface{
 		"east": east,
 		"west": west,
 	})

@@ -219,7 +219,7 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 		kubetest.FakeNamespaceWithLabels("data-plane-3", defaultInjection),
 		kubetest.FakeNamespaceWithLabels("data-plane-4", revLabel),
 	)
-	clients := map[string]kubernetes.ClientInterface{
+	clients := map[string]kubernetes.UserClientInterface{
 		conf.KubernetesConfig.ClusterName: primaryClient,
 		"cluster-remote":                  remoteClient,
 	}
@@ -227,11 +227,11 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 	factory.SetClients(clients)
 
 	cache := cache.NewTestingCacheWithFactory(t, factory, *conf)
-	discovery := istio.NewDiscovery(clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	business.WithDiscovery(discovery)
 	business.WithKialiCache(cache)
 	business.SetWithBackends(factory, nil)
-	layer := business.NewWithBackends(clients, clients, nil, nil)
+	layer := business.NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, nil)
 
 	meshDef, err := discovery.Mesh(context.TODO())
 	require.NoError(err)

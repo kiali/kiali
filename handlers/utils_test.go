@@ -23,7 +23,7 @@ import (
 )
 
 type nsForbidden struct {
-	kubernetes.ClientInterface
+	kubernetes.UserClientInterface
 	forbiddenNamespace string
 }
 
@@ -31,7 +31,7 @@ func (n *nsForbidden) GetNamespace(name string) (*core_v1.Namespace, error) {
 	if name == n.forbiddenNamespace {
 		return nil, errors.New("no privileges")
 	}
-	return n.ClientInterface.GetNamespace(name)
+	return n.UserClientInterface.GetNamespace(name)
 }
 
 // Setup mock

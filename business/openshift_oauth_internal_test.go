@@ -149,12 +149,12 @@ func TestExchangeUsesSystemPoolAndRestTLS(t *testing.T) {
 			}
 			tc.restConfig.Host = server.URL
 			client.KubeClusterInfo = kubernetes.ClusterInfo{ClientConfig: tc.restConfig}
-			clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client}
+			clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: client}
 
 			svc := &OpenshiftOAuthService{
 				conf:           conf,
 				clientFactory:  kubetest.NewFakeClientFactory(conf, clients),
-				kialiSAClients: clients,
+				kialiSAClients: kubernetes.ConvertFromUserClients(clients),
 				oAuthConfigs: map[string]*oAuthConfig{
 					conf.KubernetesConfig.ClusterName: {Config: oauth2.Config{
 						ClientID:    "kiali-istio-system",

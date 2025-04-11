@@ -55,6 +55,10 @@ type K8SClientInterface interface {
 	GetTokenSubject(authInfo *api.AuthInfo) (string, error)
 	ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error)
 	StreamPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error)
+}
+
+type K8SUserClientInterface interface {
+	K8SClientInterface
 	UpdateNamespace(namespace string, jsonPatch string) (*core_v1.Namespace, error)
 	UpdateService(namespace string, name string, jsonPatch string, patchType string) error
 	UpdateWorkload(namespace string, name string, workloadGVK schema.GroupVersionKind, jsonPatch string, patchType string) error
@@ -69,6 +73,10 @@ type OSClientInterface interface {
 	GetProjects(ctx context.Context, labelSelector string) ([]osproject_v1.Project, error)
 	GetRoute(ctx context.Context, namespace string, name string) (*osroutes_v1.Route, error)
 	GetUser(ctx context.Context, name string) (*osuser_v1.User, error)
+}
+
+type OSUserClientInterface interface {
+	OSClientInterface
 	UpdateProject(ctx context.Context, project string, jsonPatch string) (*osproject_v1.Project, error)
 }
 

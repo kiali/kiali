@@ -16,6 +16,7 @@ import (
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -31,7 +32,7 @@ func setupTestLoggingServer(t *testing.T, namespace, pod string) *httptest.Serve
 	prom := new(prometheustest.PromClientMock)
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	discovery := istio.NewDiscovery(cf.Clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
 	cpm := &business.FakeControlPlaneMonitor{}
 	traceLoader := func() tracing.ClientInterface { return nil }
 	grafana := grafana.NewService(conf, cf.GetSAHomeClusterClient())

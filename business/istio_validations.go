@@ -33,7 +33,7 @@ func NewValidationsService(
 	meshService *MeshService,
 	namespaceService *NamespaceService,
 	service *SvcService,
-	userClients map[string]kubernetes.ClientInterface,
+	userClients map[string]kubernetes.UserClientInterface,
 	workloadService *WorkloadService,
 ) IstioValidationsService {
 	return IstioValidationsService{
@@ -55,7 +55,7 @@ type IstioValidationsService struct {
 	mesh        *MeshService
 	namespace   *NamespaceService
 	service     *SvcService
-	userClients map[string]kubernetes.ClientInterface
+	userClients map[string]kubernetes.UserClientInterface
 	workload    *WorkloadService
 }
 

@@ -450,9 +450,9 @@ func TestClientCreatedWithProxyInfo(t *testing.T) {
 			}
 
 			// Service account clients should not have the proxy info.
-			client = clientFactory.GetSAClient(cfg.KubernetesConfig.ClusterName)
-			require.NotEqual(cfg.Auth.OpenId.ApiProxy, client.ClusterInfo().ClientConfig.Host)
-			require.NotEqual(proxyCAData, client.ClusterInfo().ClientConfig.CAData)
+			saclient := clientFactory.GetSAClient(cfg.KubernetesConfig.ClusterName)
+			require.NotEqual(cfg.Auth.OpenId.ApiProxy, saclient.ClusterInfo().ClientConfig.Host)
+			require.NotEqual(proxyCAData, saclient.ClusterInfo().ClientConfig.CAData)
 		})
 	}
 }

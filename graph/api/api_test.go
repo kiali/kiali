@@ -57,7 +57,7 @@ func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock,
 	business.SetWithBackends(mockClientFactory, nil)
 	cache := cache.NewTestingCache(t, k8s, *conf)
 	business.WithKialiCache(cache)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, conf)
 	business.WithDiscovery(discovery)
 
 	biz, err := business.NewLayer(conf, cache, mockClientFactory, client, nil, nil, nil, discovery, authInfo)
@@ -77,7 +77,7 @@ func firstKey[K comparable, V any](m map[K]V) K {
 	return k
 }
 
-func setupMockedWithIstioComponentNamespaces(t *testing.T, meshId string, userClients map[string]kubernetes.ClientInterface) (*prometheus.Client, *prometheustest.PromAPIMock, error, *business.Layer) {
+func setupMockedWithIstioComponentNamespaces(t *testing.T, meshId string, userClients map[string]kubernetes.UserClientInterface) (*prometheus.Client, *prometheustest.PromAPIMock, error, *business.Layer) {
 	testConfig := config.NewConfig()
 	testConfig.KubernetesConfig.ClusterName = firstKey(userClients)
 	if meshId != "" {
@@ -98,7 +98,7 @@ func setupMockedWithIstioComponentNamespaces(t *testing.T, meshId string, userCl
 	mockClientFactory.SetClients(userClients)
 
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *testConfig)
-	discovery := istio.NewDiscovery(userClients, cache, testConfig)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(userClients), cache, testConfig)
 
 	business.WithDiscovery(discovery)
 	business.WithKialiCache(cache)
@@ -3476,7 +3476,7 @@ func TestComplexGraph(t *testing.T) {
 	q17 := `round(sum(rate(istio_tcp_received_bytes_total{mesh_id="mesh1",app!="ztunnel",reporter="source",source_workload_namespace="istio-system"} [600s])) by (app,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags) > 0,0.001)`
 	v17 := model.Vector{}
 
-	clients := map[string]kubernetes.ClientInterface{
+	clients := map[string]kubernetes.UserClientInterface{
 		"cluster-tutorial": kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("bookinfo"),
 			kubetest.FakeNamespace("istio-system"),
@@ -3813,7 +3813,7 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 	q5 := `round(sum(rate(istio_tcp_received_bytes_total{app!="ztunnel",reporter="source",source_workload_namespace="bookinfo"} [600s])) by (app,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags) ,0.001)`
 	v5 := model.Vector{}
 
-	clients := map[string]kubernetes.ClientInterface{
+	clients := map[string]kubernetes.UserClientInterface{
 		"kukulcan": kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("bookinfo"),
 			kubetest.FakeNamespace("istio-system"),
@@ -3919,9 +3919,9 @@ func ambientWorkloads(t *testing.T) *business.Layer {
 	config.Set(conf)
 
 	business.SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients["Kubernetes"] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
 	return businessLayer
 }
 

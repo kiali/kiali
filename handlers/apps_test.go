@@ -141,14 +141,14 @@ func (c *cacheNoPrivileges) GetNamespace(token string, namespace string, cluster
 }
 
 type clientNoPrivileges struct {
-	kubernetes.ClientInterface
+	kubernetes.UserClientInterface
 }
 
 func (c *clientNoPrivileges) GetNamespace(namespace string) (*core_v1.Namespace, error) {
 	if namespace == "my_namespace" {
 		return nil, errors.New("No privileges")
 	}
-	return c.ClientInterface.GetNamespace(namespace)
+	return c.UserClientInterface.GetNamespace(namespace)
 }
 
 func TestAppMetricsInaccessibleNamespace(t *testing.T) {
@@ -166,7 +166,7 @@ func TestAppMetricsInaccessibleNamespace(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 }
 
-func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock, kubernetes.ClientInterface) {
+func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock, kubernetes.UserClientInterface) {
 	old := config.Get()
 	t.Cleanup(func() {
 		config.Set(old)
@@ -200,11 +200,11 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 	return ts, xapi, k8s
 }
 
-func setupAppListEndpoint(t *testing.T, k8s kubernetes.ClientInterface, conf *config.Config) *httptest.Server {
+func setupAppListEndpoint(t *testing.T, k8s kubernetes.UserClientInterface, conf *config.Config) *httptest.Server {
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	cpm := &business.FakeControlPlaneMonitor{}
-	discovery := istio.NewDiscovery(cf.Clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
 	traceLoader := func() tracing.ClientInterface { return nil }
 
 	promMock := new(prometheustest.PromAPIMock)

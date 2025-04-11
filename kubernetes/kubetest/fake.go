@@ -131,13 +131,13 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 	}
 
 	return &FakeK8sClient{
-		ClientInterface: kialikube.NewClient(kubeClient, istioClient, gatewayAPIClient, osAppsClient, projectClient, routeClient, userClient, oAuthClient),
-		KubeClientset:   kubeClient,
-		IstioClientset:  istioClient,
-		ProjectFake:     projectClient,
-		UserFake:        userClient,
-		IstioAPIEnabled: true,
-		OAuthFake:       oAuthClient,
+		UserClientInterface: kialikube.NewClient(kubeClient, istioClient, gatewayAPIClient, osAppsClient, projectClient, routeClient, userClient, oAuthClient),
+		KubeClientset:       kubeClient,
+		IstioClientset:      istioClient,
+		ProjectFake:         projectClient,
+		UserFake:            userClient,
+		IstioAPIEnabled:     true,
+		OAuthFake:           oAuthClient,
 	}
 }
 
@@ -146,7 +146,7 @@ type FakeK8sClient struct {
 	OpenShift         bool
 	GatewayAPIEnabled bool
 	IstioAPIEnabled   bool
-	kialikube.ClientInterface
+	kialikube.UserClientInterface
 	// Underlying kubernetes clientset.
 	KubeClientset kubernetes.Interface
 	// Underlying istio clientset.

@@ -25,7 +25,7 @@ func IsValidProxyLogLevel(level string) bool {
 type ProxyLoggingService struct {
 	conf        *config.Config
 	proxyStatus *ProxyStatusService
-	userClients map[string]kubernetes.ClientInterface
+	userClients map[string]kubernetes.UserClientInterface
 }
 
 // SetLogLevel sets the pod's proxy log level.

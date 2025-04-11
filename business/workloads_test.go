@@ -30,12 +30,12 @@ import (
 	"github.com/kiali/kiali/util/sliceutil"
 )
 
-func setupWorkloadService(k8s kubernetes.ClientInterface, conf *config.Config) WorkloadService {
+func setupWorkloadService(k8s kubernetes.UserClientInterface, conf *config.Config) WorkloadService {
 	// config needs to be set by other services since those rely on the global.
 	prom := new(prometheustest.PromClientMock)
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	return NewWithBackends(k8sclients, k8sclients, prom, nil).Workload
+	return NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), prom, nil).Workload
 }
 
 func callStreamPodLogs(svc WorkloadService, namespace, workload, app, podName string, opts *LogOptions) PodLog {
@@ -728,7 +728,7 @@ func TestGetPod(t *testing.T) {
 // a fake log streamer that returns a fixed string for testing.
 type logStreamer struct {
 	logs string
-	kubernetes.ClientInterface
+	kubernetes.UserClientInterface
 }
 
 func (l *logStreamer) StreamPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error) {
@@ -740,8 +740,8 @@ func TestGetPodLogs(t *testing.T) {
 	require := require.New(t)
 
 	k8s := &logStreamer{
-		logs:            FakePodLogsSyncedWithDeployments().Logs,
-		ClientInterface: kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}),
+		logs:                FakePodLogsSyncedWithDeployments().Logs,
+		UserClientInterface: kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}),
 	}
 
 	SetupBusinessLayer(t, k8s, *config.NewConfig())
@@ -776,8 +776,8 @@ func TestGetPodLogsMaxLines(t *testing.T) {
 	require := require.New(t)
 
 	k8s := &logStreamer{
-		logs:            FakePodLogsSyncedWithDeployments().Logs,
-		ClientInterface: kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}),
+		logs:                FakePodLogsSyncedWithDeployments().Logs,
+		UserClientInterface: kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}),
 	}
 
 	SetupBusinessLayer(t, k8s, *config.NewConfig())
@@ -799,8 +799,8 @@ func TestGetPodLogsDuration(t *testing.T) {
 
 	proj := &osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}
 	k8s := &logStreamer{
-		logs:            FakePodLogsSyncedWithDeployments().Logs,
-		ClientInterface: kubetest.NewFakeK8sClient(proj),
+		logs:                FakePodLogsSyncedWithDeployments().Logs,
+		UserClientInterface: kubetest.NewFakeK8sClient(proj),
 	}
 	SetupBusinessLayer(t, k8s, *config.NewConfig())
 	svc := setupWorkloadService(k8s, config.NewConfig())
@@ -812,8 +812,8 @@ func TestGetPodLogsDuration(t *testing.T) {
 
 	// Re-setup mocks
 	k8s = &logStreamer{
-		logs:            FakePodLogsSyncedWithDeployments().Logs,
-		ClientInterface: kubetest.NewFakeK8sClient(proj),
+		logs:                FakePodLogsSyncedWithDeployments().Logs,
+		UserClientInterface: kubetest.NewFakeK8sClient(proj),
 	}
 	svc = setupWorkloadService(k8s, conf)
 
@@ -825,8 +825,8 @@ func TestGetPodLogsDuration(t *testing.T) {
 
 	// Re-setup mocks
 	k8s = &logStreamer{
-		logs:            FakePodLogsSyncedWithDeployments().Logs,
-		ClientInterface: kubetest.NewFakeK8sClient(proj),
+		logs:                FakePodLogsSyncedWithDeployments().Logs,
+		UserClientInterface: kubetest.NewFakeK8sClient(proj),
 	}
 	svc = setupWorkloadService(k8s, conf)
 
@@ -846,8 +846,8 @@ func TestGetPodLogsMaxLinesAndDurations(t *testing.T) {
 	// Setup mocks
 	proj := &osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}
 	k8s := &logStreamer{
-		logs:            FakePodLogsSyncedWithDeployments().Logs,
-		ClientInterface: kubetest.NewFakeK8sClient(proj),
+		logs:                FakePodLogsSyncedWithDeployments().Logs,
+		UserClientInterface: kubetest.NewFakeK8sClient(proj),
 	}
 	SetupBusinessLayer(t, k8s, *config.NewConfig())
 	svc := setupWorkloadService(k8s, conf)
@@ -862,8 +862,8 @@ func TestGetPodLogsMaxLinesAndDurations(t *testing.T) {
 
 	// Re-setup mocks
 	k8s = &logStreamer{
-		logs:            FakePodLogsSyncedWithDeployments().Logs,
-		ClientInterface: kubetest.NewFakeK8sClient(proj),
+		logs:                FakePodLogsSyncedWithDeployments().Logs,
+		UserClientInterface: kubetest.NewFakeK8sClient(proj),
 	}
 	svc = setupWorkloadService(k8s, conf)
 
@@ -885,8 +885,8 @@ func TestGetPodLogsProxy(t *testing.T) {
 	// Setup mocks
 	proj := &osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}
 	k8s := &logStreamer{
-		logs:            FakePodLogsProxy().Logs,
-		ClientInterface: kubetest.NewFakeK8sClient(proj),
+		logs:                FakePodLogsProxy().Logs,
+		UserClientInterface: kubetest.NewFakeK8sClient(proj),
 	}
 	SetupBusinessLayer(t, k8s, *config.NewConfig())
 	svc := setupWorkloadService(k8s, conf)
@@ -927,8 +927,8 @@ func TestGetZtunnelPodLogsProxy(t *testing.T) {
 		kubeObjs = append(kubeObjs, &o)
 	}
 	k8s := &logStreamer{
-		logs:            FakePodLogsZtunnel().Logs,
-		ClientInterface: kubetest.NewFakeK8sClient(kubeObjs...),
+		logs:                FakePodLogsZtunnel().Logs,
+		UserClientInterface: kubetest.NewFakeK8sClient(kubeObjs...),
 	}
 	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
@@ -1014,8 +1014,8 @@ func TestGetWaypointPodLogsProxy(t *testing.T) {
 	client.OpenShift = true
 
 	k8s := &logStreamer{
-		logs:            FakePodLogsWaypoint().Logs,
-		ClientInterface: client,
+		logs:                FakePodLogsWaypoint().Logs,
+		UserClientInterface: client,
 	}
 
 	SetupBusinessLayer(t, k8s, *conf)
@@ -1317,8 +1317,8 @@ func TestGetPodLogsWithoutAccessLogs(t *testing.T) {
 2021-10-05T00:32:40.309457Z     ':method', 'GET'
 2021-10-05T00:32:40.309457Z     ':scheme', 'http'`
 	k8s := &logStreamer{
-		logs:            logs,
-		ClientInterface: kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}),
+		logs:                logs,
+		UserClientInterface: kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}),
 	}
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -1354,7 +1354,7 @@ func TestGetWorkloadMultiCluster(t *testing.T) {
 	config.Set(conf)
 
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
-	clients := map[string]kubernetes.ClientInterface{
+	clients := map[string]kubernetes.UserClientInterface{
 		"east": kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("bookinfo"),
 			&apps_v1.Deployment{
@@ -1384,7 +1384,7 @@ func TestGetWorkloadMultiCluster(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	kialiCache = cache
 
-	workloadService := NewWithBackends(clients, clients, nil, nil).Workload
+	workloadService := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, nil).Workload
 	workload, err := workloadService.GetWorkload(context.TODO(), WorkloadCriteria{Cluster: "west", Namespace: "bookinfo", WorkloadName: "ratings-v1"})
 	require.NoError(err)
 	assert.Equal("west", workload.Cluster)
@@ -1527,7 +1527,7 @@ func TestValidateWaypointNS(t *testing.T) {
 
 	// cache
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
-	clients := map[string]kubernetes.ClientInterface{
+	clients := map[string]kubernetes.UserClientInterface{
 		"": kubetest.NewFakeK8sClient(
 			&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace", Labels: map[string]string{waypointLabel: "waypoint"}}},
 		),
