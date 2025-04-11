@@ -344,11 +344,13 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   };
 
   private loadMeshFromBackend = (): void => {
-    this.meshDataSource.fetchMeshData({
-      includeLabels: this.props.findValue.includes('label:') || this.props.hideValue.includes('label:'),
-      showGateways: this.props.showGateways,
-      showWaypoints: this.props.showWaypoints
-    });
+    if (!this.meshDataSource.isLoading) {
+      this.meshDataSource.fetchMeshData({
+        includeLabels: this.props.findValue.includes('label:') || this.props.hideValue.includes('label:'),
+        showGateways: this.props.showGateways,
+        showWaypoints: this.props.showWaypoints
+      });
+    }
   };
 
   private notifyError = (error: Error, _componentStack: string): void => {

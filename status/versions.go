@@ -26,7 +26,7 @@ func getVersions(ctx context.Context, conf *config.Config, clientFactory kuberne
 		components = append(components, *pv)
 	}
 
-	if conf.ExternalServices.Grafana.Enabled {
+	if conf.ExternalServices.Grafana.Enabled && grafana != nil {
 		gv, err := grafanaVersion(ctx, grafana, conf.ExternalServices.Grafana, clientFactory.GetSAHomeClusterClient())
 		if err != nil {
 			log.Infof("Error getting Grafana version: %v", err)
