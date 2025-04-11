@@ -419,7 +419,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
         </FormGroup>
 
         <FormGroup label="Ports" fieldId="ports" isRequired={true}>
-          <SimpleTable label="Ports" columns={columns} rows={this.rows()} />
+          <SimpleTable label="Ports" columns={columns} rows={this.rows()} noScroll />
 
           <Button
             id="addPortBtn"
