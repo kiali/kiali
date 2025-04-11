@@ -20,8 +20,17 @@ When('user closes graph tour', () => {
   cy.get('div[role="dialog"]').find('button[aria-label="Close"]').click();
 });
 
-When('user clicks graph traffic menu', () => {
+When('user {string} traffic menu', (_action: string) => {
   cy.get('button#graph-traffic-dropdown').click();
+});
+
+When('user {string} {string} traffic option', (action: string, option: string) => {
+  if (action === 'enables') {
+    cy.get('div#graph-traffic-menu').find(`input#${option}`).should('exist').check();
+  } else {
+    cy.get('div#graph-traffic-menu').find(`input#${option}`).should('exist').uncheck();
+  }
+  cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
 When('user disables all traffic', () => {
@@ -33,11 +42,6 @@ When('user disables all traffic', () => {
     cy.get('input#tcp').should('exist').uncheck();
     cy.get('#loading_kiali_spinner').should('not.exist');
   });
-});
-
-When('user enables {string} traffic', (protocol: string) => {
-  cy.get('div#graph-traffic-menu').find(`input#${protocol}`).should('exist').check();
-  cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
 When('user clicks graph duration menu', () => {

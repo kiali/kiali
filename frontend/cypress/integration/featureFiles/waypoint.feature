@@ -62,36 +62,40 @@ Feature: Kiali Waypoint related features
     Given user is at the "graph" page
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "enables" "ambientZtunnel" traffic option
+    And user "closes" traffic menu
     Then 7 edges appear in the graph
 
   Scenario: [Traffic Graph] User sees no Ambient traffic
     Given user is at the "graph" page
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "disables" "ambient" traffic option
+    And user "closes" traffic menu
     Then 2 edges appear in the graph
 
   Scenario: [Traffic Graph] User sees all Ambient traffic
     Given user is at the "graph" page
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "enables" "ambientTotal" traffic option
     And user "enables" "ambient" traffic option
+    And user "closes" traffic menu
     Then 16 edges appear in the graph
 
   Scenario: [Traffic Graph] User doesn't see waypoint proxy
     And the "waypoint" node "doesn't" exists
 
   Scenario: [Traffic Graph] User sees waypoint proxy
-    When user opens display menu
+    When user "opens" display menu
     Then the display menu opens
     Then user "enables" "filterWaypoints" edge labels
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "enables" "ambientTotal" traffic option
+    And user "closes" traffic menu
     Then 16 edges appear in the graph
     And the "waypoint" node "does" exists
 
@@ -99,8 +103,9 @@ Feature: Kiali Waypoint related features
     Given user is at the "graph" page
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "enables" "ambientWaypoint" traffic option
+    And user "closes" traffic menu
     Then 11 edges appear in the graph
 
   Scenario: [Istio Config] Waypoint should not have validation errors
@@ -118,11 +123,13 @@ Feature: Kiali Waypoint related features
     Given user is at the "graph" page
     When user graphs "waypoint-differentns" namespaces
     Then user sees the "waypoint-differentns" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "enables" "ambient" traffic option
     And user "enables" "http" traffic option
-    Then user opens display menu
+    And user "closes" traffic menu
+    Then user "opens" display menu
     And user "disables" "waypoint proxies" option
+    And user "closes" display menu
     Then 2 edges appear in the graph
     And the "echo-server" node "does" exists
     And the "curl-client" node "does" exists
@@ -131,25 +138,30 @@ Feature: Kiali Waypoint related features
     Given user is at the "graph" page
     When user graphs "waypoint-differentns" namespaces
     Then user sees the "waypoint-differentns" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "enables" "ambient" traffic option
     And user "enables" "http" traffic option
-    Then user opens display menu
+    And user "closes" traffic menu
+    Then user "opens" display menu
     And user "enables" "waypoint proxies" option
+    And user "closes" display menu
     Then 4 edges appear in the graph
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "disables" "http" traffic option
+    And user "closes" traffic menu
     Then 2 edges appear in the graph
 
   Scenario: [Traffic] Waypoint for all
     Given user is at the "graph" page
     When user graphs "waypoint-forall" namespaces
     Then user sees the "waypoint-forall" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "enables" "ambient" traffic option
     And user "enables" "http" traffic option
-    Then user opens display menu
+    And user "closes" traffic menu
+    Then user "opens" display menu
     And user "disables" "waypoint proxies" option
+    And user "closes" display menu
     Then 2 edges appear in the graph
     And the "echo-server" node "does" exists
     And the "curl-client" node "does" exists
@@ -158,26 +170,31 @@ Feature: Kiali Waypoint related features
     Given user is at the "graph" page
     When user graphs "waypoint-forall" namespaces
     Then user sees the "waypoint-forall" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "enables" "ambient" traffic option
     And user "enables" "http" traffic option
-    Then user opens display menu
+    And user "closes" traffic menu
+    Then user "opens" display menu
     And user "enables" "waypoint proxies" option
+    And user "closes" display menu
     Then 4 edges appear in the graph
     And the "cgw" node "does" exists
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "disables" "http" traffic option
+    And user "closes" traffic menu
     Then 2 edges appear in the graph
 
   Scenario: [Traffic] Waypoint for none
     Given user is at the "graph" page
     When user graphs "waypoint-fornone" namespaces
     Then user sees the "waypoint-fornone" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "enables" "ambient" traffic option
     And user "enables" "http" traffic option
-    Then user opens display menu
+    And user "closes" traffic menu
+    Then user "opens" display menu
     And user "disables" "waypoint proxies" option
+    And user "closes" display menu
     Then 2 edges appear in the graph
     And the "echo-server" node "does" exists
     And the "curl-client" node "does" exists
@@ -186,24 +203,29 @@ Feature: Kiali Waypoint related features
     Given user is at the "graph" page
     When user graphs "waypoint-fornone" namespaces
     Then user sees the "waypoint-fornone" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "enables" "ambient" traffic option
     And user "enables" "http" traffic option
-    Then user opens display menu
+    And user "closes" traffic menu
+    Then user "opens" display menu
     And user "enables" "waypoint proxies" option
+    And user "closes" display menu
     Then 2 edges appear in the graph
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "disables" "http" traffic option
+    And user "closes" traffic menu
     Then 0 edges appear in the graph
 
   Scenario: [Traffic] Waypoint for service
     Given user is at the "graph" page
     When user graphs "waypoint-forservice" namespaces
     Then user sees the "waypoint-forservice" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "enables" "http" traffic option
-    Then user opens display menu
+    And user "closes" traffic menu
+    Then user "opens" display menu
     And user "disables" "waypoint proxies" option
+    And user "closes" display menu
     Then 2 edges appear in the graph
     And the "echo-server" node "does" exists
     And the "curl-client" node "does" exists
@@ -212,13 +234,15 @@ Feature: Kiali Waypoint related features
     Given user is at the "graph" page
     When user graphs "waypoint-forservice" namespaces
     Then user sees the "waypoint-forservice" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "enables" "http" traffic option
-    Then user opens display menu
+    And user "closes" traffic menu
+    Then user "opens" display menu
     And user "enables" "waypoint proxies" option
+    And user "closes" display menu
     Then 4 edges appear in the graph
     And the "waypoint" node "does" exists
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "disables" "http" traffic option
     Then 2 edges appear in the graph
 
@@ -227,10 +251,12 @@ Feature: Kiali Waypoint related features
     Given user is at the "graph" page
     When user graphs "waypoint-forworkload" namespaces
     Then user sees the "waypoint-forworkload" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "enables" "http" traffic option
-    Then user opens display menu
+    And user "closes" traffic menu
+    Then user "opens" display menu
     And user "disables" "waypoint proxies" option
+    And user "closes" display menu
     Then 1 edges appear in the graph
     And the "unknown" service "does" exists
     And the "curl-client" node "does" exists
@@ -240,24 +266,29 @@ Feature: Kiali Waypoint related features
     Given user is at the "graph" page
     When user graphs "waypoint-forworkload" namespaces
     Then user sees the "waypoint-forworkload" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "enables" "http" traffic option
-    Then user opens display menu
+    And user "closes" traffic menu
+    Then user "opens" display menu
     And user "enables" "waypoint proxies" option
+    And user "closes" display menu
     Then 3 edges appear in the graph
     And the "bwaypoint" node "does" exists
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "disables" "http" traffic option
+    And user "closes" traffic menu
     Then 2 edges appear in the graph
 
   Scenario: [Traffic] Waypoint override
     Given user is at the "graph" page
     When user graphs "waypoint-override" namespaces
     Then user sees the "waypoint-override" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "enables" "http" traffic option
-    Then user opens display menu
+    And user "closes" traffic menu
+    Then user "opens" display menu
     And user "disables" "waypoint proxies" option
+    And user "closes" display menu
     Then 2 edges appear in the graph
     And the "echo-server" node "does" exists
     And the "curl-client" node "does" exists
@@ -266,14 +297,17 @@ Feature: Kiali Waypoint related features
     Given user is at the "graph" page
     When user graphs "waypoint-override" namespaces
     Then user sees the "waypoint-override" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "enables" "http" traffic option
-    Then user opens display menu
+    And user "closes" traffic menu
+    Then user "opens" display menu
     And user "enables" "waypoint proxies" option
+    And user "closes" display menu
     Then 4 edges appear in the graph
     And the "use-this" node "does" exists
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "disables" "http" traffic option
+    And user "closes" traffic menu
     Then 2 edges appear in the graph
 
   Scenario: [Waypoint details] The waypoint details for a waypoint for none are valid
@@ -354,15 +388,20 @@ Feature: Kiali Waypoint related features
     When user graphs "test-ambient,test-sidecar" namespaces
     Then user sees the "test-ambient" namespace
     Then user sees the "test-sidecar" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "enables" "http" traffic option
-    Then user opens display menu
+    And user "closes" traffic menu
+    Then user "opens" display menu
     And user "enables" "security" option
     Then 9 edges appear in the graph
     Then security "appears" in the graph
-    Then user opens traffic menu
+    And user "closes" display menu
+    Then user "opens" traffic menu
     And user "disables" "ambient" traffic option
+    And user "closes" traffic menu
     Then 5 edges appear in the graph
+    Then user "opens" traffic menu
     Then user "enables" "ambient" traffic option
     Then user "disables" "tcp" traffic option
     Then 4 edges appear in the graph
+    Then user "closes" traffic menu

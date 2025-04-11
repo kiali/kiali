@@ -26,14 +26,17 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   Scenario: User enables idle nodes
-    When user opens display menu
+    When user "opens" display menu
     And user "enables" "idle nodes" option
     Then user sees the "gamma" namespace
     And idle nodes "appear" in the graph
+    And user "closes" display menu
 
   @error-rates-app
   Scenario: User disables idle nodes
-    When user "disables" "idle nodes" option
+    When user "opens" display menu
+    And user "disables" "idle nodes" option
+    And user "closes" display menu
     Then user sees empty graph
 
   @error-rates-app
@@ -44,175 +47,229 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   Scenario: User clicks Display Menu
-    When user opens display menu
+    When user "opens" display menu
     Then the display menu opens
     And the display menu has default settings
     And the graph reflects default settings
+    And user "closes" display menu
 
   # percentile variable must match input id
   # edge label variable must match edge data name
   @error-rates-app
   Scenario: Average Response-time edge labels
-    When user enables "avg" "responseTime" edge labels
+    When user "opens" display menu
+    And user enables "avg" "responseTime" edge labels
     Then user sees "responseTime" edge labels
+    And user "closes" display menu
 
   # percentile variable must match input id
   # edge label variable must match edge data name
   @error-rates-app
   Scenario: Median Response-time edge labels
-    When user enables "rt50" "responseTime" edge labels
+    When user "opens" display menu
+    And user enables "rt50" "responseTime" edge labels
     Then user sees "responseTime" edge labels
+    And user "closes" display menu
 
   # percentile variable must match input id
   # edge label variable must match edge data name
   @error-rates-app
   Scenario: 95th Percentile Response-time edge labels
-    When user enables "rt95" "responseTime" edge labels
+    When user "opens" display menu
+    And user enables "rt95" "responseTime" edge labels
     Then user sees "responseTime" edge labels
+    And user "closes" display menu
 
   # percentile variable must match input id
   # edge label variable must match edge data name
   @error-rates-app
   Scenario: 99th Percentile Response-time edge labels
-    When user enables "rt99" "responseTime" edge labels
+    When user "opens" display menu
+    And user enables "rt99" "responseTime" edge labels
     Then user sees "responseTime" edge labels
+    And user "closes" display menu
 
   # edge label variable must match edge data name
   @error-rates-app
   Scenario: Disable response time edge labels
-    When user "disables" "responseTime" edge labels
+    When user "opens" display menu
+    And user "disables" "responseTime" edge labels
     Then user sees "responseTime" edge label option is closed
+    And user "closes" display menu
 
   # percentile variable must match input id
   # edge label variable must match edge data name
   @error-rates-app
   Scenario: Request Throughput edge labels
-    When user enables "throughputRequest" "throughput" edge labels
+    When user "opens" display menu
+    And user enables "throughputRequest" "throughput" edge labels
     Then user sees "throughput" edge labels
+    And user "closes" display menu
 
   # percentile variable must match input id
   # edge label variable must match edge data name
   @error-rates-app
   Scenario: Response Throughput edge labels
-    When user enables "throughputResponse" "throughput" edge labels
+    When user "opens" display menu
+    And user enables "throughputResponse" "throughput" edge labels
     Then user sees "throughput" edge labels
+    And user "closes" display menu
 
   # edge label variable must match edge data name
   @error-rates-app
   Scenario: Disable throughput edge labels
-    When user "disables" "throughput" edge labels
+    When user "opens" display menu
+    And user "disables" "throughput" edge labels
     Then user sees "throughput" edge label option is closed
+    And user "closes" display menu
 
   # edge label variable must match edge data name
   @error-rates-app
   Scenario: Enable Traffic Distribution edge labels
-    When user "enables" "trafficDistribution" edge labels
+    When user "opens" display menu
+    And user "enables" "trafficDistribution" edge labels
     Then user sees "trafficDistribution" edge labels
+    And user "closes" display menu
 
   # edge label variable must match edge data name
   @error-rates-app
   Scenario: Disable Traffic Distribution edge labels
-    When user "disables" "trafficDistribution" edge labels
+    When user "opens" display menu
+    And user "disables" "trafficDistribution" edge labels
     Then user sees "trafficDistribution" edge label option is closed
+    And user "closes" display menu
 
   # edge label variable must match edge data name
   @error-rates-app
   Scenario: Enable Traffic Rate edge labels
-    When user "enables" "trafficRate" edge labels
+    When user "opens" display menu
+    And user "enables" "trafficRate" edge labels
     Then user sees "trafficRate" edge labels
+    And user "closes" display menu
 
   # edge label variable must match edge data name
   @error-rates-app
   Scenario: Disable Traffic Rate edge labels
-    When user "disables" "trafficRate" edge labels
+    When user "opens" display menu
+    And user "disables" "trafficRate" edge labels
     Then user sees "trafficRate" edge label option is closed
+    And user "closes" display menu
 
   @error-rates-app
   Scenario: User disables cluster boxes
-    When user "disables" "cluster boxes" option
+    When user "opens" display menu
+    And user "disables" "cluster boxes" option
     Then user does not see "Cluster" boxing
+    And user "closes" display menu
 
   @error-rates-app
   Scenario: User disables Namespace boxes
-    When user "disables" "namespace boxes" option
+    When user "opens" display menu
+    And user "disables" "namespace boxes" option
     Then user does not see "Namespace" boxing
+    And user "closes" display menu
 
   @error-rates-app
   Scenario: User enables idle edges
-    When user "enables" "idle edges" option
+    When user "opens" display menu
+    And user "enables" "idle edges" option
     Then idle edges "appear" in the graph
+    And user "closes" display menu
 
   @error-rates-app
   Scenario: User disables idle edges
-    When user "disables" "idle edges" option
+    When user "opens" display menu
+    And user "disables" "idle edges" option
     Then idle edges "do not appear" in the graph
+    And user "closes" display menu
 
   @error-rates-app
   Scenario: User enables rank
-    When user "enables" "rank" option
+    When user "opens" display menu
+    And user "enables" "rank" option
     Then ranks "appear" in the graph
+    And user "closes" display menu
 
   @error-rates-app
   Scenario: User disables rank
-    When user "disables" "rank" option
+    When user "opens" display menu
+    And user "disables" "rank" option
     Then ranks "do not appear" in the graph
+    And user "closes" display menu
 
   @error-rates-app
   Scenario: User disables service nodes
-    When user "disables" "service nodes" option
+    When user "opens" display menu
+    And user "disables" "service nodes" option
     Then user does not see service nodes
+    And user "closes" display menu
 
   @error-rates-app
   Scenario: User enables security
-    When user "enables" "security" option
+    When user "opens" display menu
+    And user "enables" "security" option
     Then security "appears" in the graph
+    And user "closes" display menu
 
   @error-rates-app
   Scenario: User disables security
-    When user "disables" "security" option
+    When user "opens" display menu
+    And user "disables" "security" option
     Then security "does not appear" in the graph
+    And user "closes" display menu
 
   @error-rates-app
   Scenario: User disables missing sidecars
-    When user "disables" "missing sidecars" option
+    When user "opens" display menu
+    And user "disables" "missing sidecars" option
     Then "missing sidecars" option "does not appear" in the graph
+    And user "closes" display menu
 
   @error-rates-app
   Scenario: User disables virtual services
-    When user "disables" "virtual services" option
+    When user "opens" display menu
+    And user "disables" "virtual services" option
     Then "virtual services" option "does not appear" in the graph
+    And user "closes" display menu
 
   @error-rates-app
   Scenario: User enables animation
-    When user "enables" "traffic animation" option
+    When user "opens" display menu
+    And user "enables" "traffic animation" option
     Then "traffic animation" option "appears" in the graph
+    And user "closes" display menu
 
   @error-rates-app
   Scenario: User disables animation
-    When user "disables" "traffic animation" option
+    When user "opens" display menu
+    And user "disables" "traffic animation" option
     Then "traffic animation" option "does not appear" in the graph
+    And user "closes" display menu
 
   @error-rates-app
   Scenario: User resets to factory default setting
     When user resets to factory default
-    And user opens display menu
+    And user "opens" display menu
     Then the display menu opens
     And the display menu has default settings
+    And user "closes" display menu
 
   @error-rates-app
   Scenario: User observes some options not being clickable when switching to Service graph
-    When user "disables" "service nodes" option
+    When user "opens" display menu
+    And user "disables" "service nodes" option
     And user "enables" "operation nodes" option
     And user selects "SERVICE" graph type
-    And user opens display menu
+    And user "opens" display menu
     Then the display menu opens
     And the "service nodes" option should "not be checked" and "disabled"
     And the "operation nodes" option should "be checked" and "disabled"
     When user selects "APP" graph type
-    And user opens display menu
+    And user "opens" display menu
     Then the display menu opens
     And the "service nodes" option should "not be checked" and "enabled"
     And the "operation nodes" option should "be checked" and "enabled"
+    And user "closes" display menu
 
   @bookinfo-app
   Scenario Outline: Multiple cluster boxes should not be visible in the graph
@@ -263,14 +320,16 @@ Feature: Kiali Graph page - Display menu
   Scenario: User sees tcp traffic
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "disables" "http" traffic option
+    And user "closes" traffic menu
     Then 6 edges appear in the graph
 
   @ambient
   Scenario: User sees http traffic
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
-    Then user opens traffic menu
+    Then user "opens" traffic menu
     And user "disables" "tcp" traffic option
+    And user "closes" traffic menu
     Then 2 edges appear in the graph

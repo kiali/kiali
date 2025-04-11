@@ -37,7 +37,7 @@ Feature: Kiali Graph page - Toolbar (various)
 
   @error-rates-app
   Scenario: Open traffic dropdown
-    When user clicks graph traffic menu
+    When user "opens" traffic menu
     Then user sees "default" graph traffic menu
 
   @error-rates-app
@@ -49,21 +49,21 @@ Feature: Kiali Graph page - Toolbar (various)
   @error-rates-app
   Scenario: Enable http traffic
     When user disables all traffic
-    When user enables "http" traffic
+    When user "enables" "http" traffic option
     Then user "sees" "http" traffic
     And user "does not see" "tcp" traffic
     And user "does not see" "grpc" traffic
 
   @error-rates-app
   Scenario: Close traffic dropdown
-    When user clicks graph traffic menu
+    When user "closes" traffic menu
     Then user does not see graph traffic menu
 
   @error-rates-app
   @graph-page-display
   Scenario: User resets to factory default
     When user resets to factory default
-    And user clicks graph traffic menu
+    And user "opens" traffic menu
     Then user sees "default" graph traffic menu
 
   @error-rates-app
@@ -119,10 +119,10 @@ Feature: Kiali Graph page - Toolbar (various)
   @ambient
   Scenario: Open traffic dropdown for ambient
     When user graphs "" namespaces
-    And user clicks graph traffic menu
+    And user "opens" traffic menu
     Then user sees "ambient" graph traffic menu
 
   @ambient
   Scenario: Close traffic dropdown for ambient
-    When user clicks graph traffic menu
+    When user "closes" traffic menu
     Then user does not see graph traffic menu
