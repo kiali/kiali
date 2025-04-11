@@ -43,7 +43,7 @@ func NewScheme() (*runtime.Scheme, error) {
 }
 
 // Start creates and starts all the controllers. They'll get cancelled when the context is cancelled.
-func Start(ctx context.Context, conf *config.Config, cf kubernetes.ClientFactory, kialiCache cache.KialiCache, validationsService *business.IstioValidationsService) error {
+func Start(ctx context.Context, conf *config.Config, cf kubernetes.ClientFactory, kialiCache cache.KialiCache, validationsService *business.IstioValidationsService) (<-chan struct{}, error) {
 	// TODO: Replace with kiali logging but if this isn't set some errors are thrown.
 	ctrl.SetLogger(zap.New())
 
@@ -51,7 +51,7 @@ func Start(ctx context.Context, conf *config.Config, cf kubernetes.ClientFactory
 	log.Debug("Setting up Validations Contoller")
 	scheme, err := NewScheme()
 	if err != nil {
-		return fmt.Errorf("error setting up ValidationsController when creating scheme: %s", err)
+		return nil, fmt.Errorf("error setting up ValidationsController when creating scheme: %s", err)
 	}
 
 	// In the future this could be any cluster and not just home cluster.
@@ -64,7 +64,7 @@ func Start(ctx context.Context, conf *config.Config, cf kubernetes.ClientFactory
 		Scheme:  scheme,
 	})
 	if err != nil {
-		return fmt.Errorf("error setting up ValidationsController when creating manager: %s", err)
+		return nil, fmt.Errorf("error setting up ValidationsController when creating manager: %s", err)
 	}
 
 	var clusters []string
@@ -74,15 +74,17 @@ func Start(ctx context.Context, conf *config.Config, cf kubernetes.ClientFactory
 	}
 
 	if err := NewValidationsController(ctx, clusters, conf, kialiCache, validationsService, mgr); err != nil {
-		return fmt.Errorf("error setting up ValidationsController: %s", err)
+		return nil, fmt.Errorf("error setting up ValidationsController: %s", err)
 	}
 
+	stopped := make(chan struct{})
 	go func() {
+		defer close(stopped)
 		if err := mgr.Start(ctx); err != nil {
 			log.Errorf("error starting Validations Controller: %s", err)
 		}
 		log.Debug("Stopped Validations Controller")
 	}()
 
-	return nil
+	return stopped, nil
 }
