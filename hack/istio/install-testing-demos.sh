@@ -185,6 +185,7 @@ EOF
     fi
     echo "Deploying sleep demo ..."
     "${SCRIPT_DIR}/install-sleep-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
+
   elif [ "${AMBIENT_ENABLED}" == "true" ]; then
     echo "Deploying bookinfo demo..."
     "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg ${AMBIENT_ARGS_BOOKINFO}
@@ -210,6 +211,9 @@ EOF
     "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
   fi
 
+  echo "Deploying loggers demo..."
+  "${SCRIPT_DIR}/install-loggers-demo.sh" -ab ${AMBIENT_ENABLED} -c ${CLIENT_EXE}
+
   if [[ -z "$GATEWAY_HOST" && "${USE_GATEWAY_API}" != "true" ]]; then
     # Assume that the '*' is used for hosts if the gateway host is not specified.
     # Some front-end tests have conflicts with the wildcard host in the bookinfo-gateway. Patch it with the host resolved for the traffic generator.
@@ -233,6 +237,8 @@ else
     "${SCRIPT_DIR}/install-bookinfo-demo.sh" --delete-bookinfo true
     echo "Deleting error rates demo ..."
     "${SCRIPT_DIR}/install-error-rates-demo.sh" --delete true
+    echo "Deleting loggers demo..."
+    "${SCRIPT_DIR}/install-loggers-demo.sh" --delete true
   else
     echo "Deleting sleep demo ..."
     "${SCRIPT_DIR}/install-sleep-demo.sh" --delete-sleep true -c kubectl
@@ -240,5 +246,7 @@ else
     "${SCRIPT_DIR}/install-bookinfo-demo.sh" --delete-bookinfo true -c kubectl
     echo "Deleting error rates demo..."
     "${SCRIPT_DIR}/install-error-rates-demo.sh" --delete true -c kubectl
+    echo "Deleting loggers demo..."
+    "${SCRIPT_DIR}/install-loggers-demo.sh" --delete true -c kubectl
   fi
 fi
