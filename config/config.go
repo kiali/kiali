@@ -912,8 +912,8 @@ func NewConfig() (c *Config) {
 		KialiInternal: KialiInternalConfig{
 			CacheExpiration: CacheExpirationConfig{
 				AmbientCheck: 10 * time.Minute,
-				IstioStatus:  30 * time.Minute,
 				Gateway:      4 * time.Minute,
+				IstioStatus:  30 * time.Second,
 				Mesh:         20 * time.Second,
 				Waypoint:     4 * time.Minute,
 			},
