@@ -50,7 +50,6 @@ export class RenderComponentScroll extends React.Component<Props, State> {
   updateWindowDimensions = (): void => {
     const isStandalone = !isKiosk(store.getState().globalState.kiosk);
     const topPadding = isStandalone ? TOP_PADDING : EMBEDDED_PADDING;
-
     this.setState(
       {
         height: window.innerHeight - topPadding

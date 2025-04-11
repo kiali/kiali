@@ -13,9 +13,19 @@ import {
   IRowData,
   ISortBy,
   OnSort,
-  ThProps
+  ThProps,
+  InnerScrollContainer
 } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
+import { isKiosk } from 'components/Kiosk/KioskActions';
+import { store } from 'store/ConfigStore';
+
+// TOP_PADDING constant is used to adjust the height of the main div to allow scrolling in the inner container layer.
+const TOP_PADDING = 76 + 340;
+
+// EMBEDDED_PADDING constant is a magic number used to adjust the height of the main div to allow scrolling in the inner container layer.
+// 42px is the height of the first tab menu
+const EMBEDDED_PADDING = 42;
 
 export interface SortableTh extends ThProps {
   sortable: boolean;
@@ -27,6 +37,7 @@ interface SimpleTableProps {
   columns: SortableTh[] | ThProps[];
   emptyState?: React.ReactNode;
   label: string;
+  noScroll?: boolean;
   onSort?: OnSort;
   rows: IRow[];
   sort?: (columnIndex: number) => ThProps['sort'];
@@ -37,10 +48,25 @@ interface SimpleTableProps {
 }
 
 export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps) => {
+  const [heigth, setHeight] = React.useState('600px');
+
   const tdStyle = kialiStyle({
     verticalAlign: props.verticalAlign ?? 'baseline'
   });
 
+  const updateWindowDimensions = (): void => {
+    const isStandalone = !isKiosk(store.getState().globalState.kiosk);
+    const topPadding = isStandalone ? TOP_PADDING : EMBEDDED_PADDING;
+    setHeight(`${(window.innerHeight - topPadding).toString()}px`);
+  };
+
+  React.useEffect(() => {
+    updateWindowDimensions();
+    window.addEventListener('resize', updateWindowDimensions);
+    return () => {
+      window.removeEventListener('resize', updateWindowDimensions);
+    };
+  });
   const getSortParams = (column: SortableTh | ThProps, index: number): ThProps['sort'] | undefined => {
     let thSort: ThProps['sort'] | undefined;
 
@@ -73,8 +99,8 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
     return undefined;
   };
 
-  return (
-    <Table aria-label={props.label} variant={props.variant} className={props.className}>
+  const table = (
+    <Table aria-label={props.label} variant={props.variant} className={props.className} isStickyHeader>
       <Thead style={props.theadStyle}>
         <Tr>
           {props.columns.map((column: SortableTh | ThProps, index: number) => (
@@ -115,5 +141,13 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
         )}
       </Tbody>
     </Table>
+  );
+
+  return props.noScroll ? (
+    table
+  ) : (
+    <div style={{ height: heigth }}>
+      <InnerScrollContainer style={{ maxHeight: '95%' }}>{table}</InnerScrollContainer>
+    </div>
   );
 };
