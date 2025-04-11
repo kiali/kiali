@@ -23,11 +23,6 @@ import (
 )
 
 const (
-<<<<<<< HEAD
-	kialiCacheGatewaysKey  = "gateways"
-	kialiCacheMeshKey      = "mesh"
-	kialiCacheWaypointsKey = "waypoints"
-=======
 	ambientCheckExpirationTime = 10 * time.Minute
 	gatewayExpirationTime      = 3 * time.Minute
 	istioStatusExpirationTime  = 30 * time.Second
@@ -40,7 +35,6 @@ const (
 	kialiCacheIstioStatusKey = "istioStatus"
 	kialiCacheMeshKey        = "mesh"
 	kialiCacheWaypointsKey   = "waypoints"
->>>>>>> 4b65df06d (Istio status cache (#19))
 )
 
 // KialiCache stores both kube objects and non-kube related data such as pods' proxy status.
@@ -183,7 +177,6 @@ func newKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, conf co
 		cleanup:                 cancel,
 		conf:                    conf,
 		gatewayStore:            store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(conf.KialiInternal.CacheExpiration.Gateway), nil),
-		istioStatusStore:        store.NewExpirationStore(ctx, store.New[string, kubernetes.IstioComponentStatus](), util.AsPtr(istioStatusExpirationTime), nil),
 		istioStatusStore:        store.NewExpirationStore(ctx, store.New[string, kubernetes.IstioComponentStatus](), util.AsPtr(istioStatusExpirationTime), nil),
 		kubeCache:               make(map[string]KubeCache),
 		meshStore:               store.NewExpirationStore(ctx, store.New[string, *models.Mesh](), util.AsPtr(conf.KialiInternal.CacheExpiration.Mesh), nil),
