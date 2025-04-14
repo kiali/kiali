@@ -33,7 +33,7 @@ fi
 deploy_kiali() {
   local helm_args=()
   #Enable tracing
-  helm_args+=("--set external_services.tracing.enabled=true")
+  helm_args+=(--set external_services.tracing.enabled="true")
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     helm_args+=("--disable-openapi-validation")
@@ -50,7 +50,7 @@ deploy_kiali() {
   [ -n "${web_schema}" ] && helm_args+=("--set server.web_schema=${web_schema}")
 
   if [ "${KIALI_AUTH_STRATEGY}" == "anonymous" ]; then
-    helm_args+=("--set auth.strategy=anonymous")
+    helm_args+=(--set auth.strategy="anonymous")
   elif [ "${KIALI_AUTH_STRATEGY}" == "openid" ]; then
     # These need to exist prior to installing Kiali.
     # Create secret with the oidc secret
@@ -69,15 +69,15 @@ deploy_kiali() {
     fi
 
     helm_args+=(
-      "--set auth.strategy=openid"
-      "--set auth.openid.client_id=kube"
-      "--set-string auth.openid.issuer_uri=https://${KEYCLOAK_ADDRESS}/realms/kube"
-      "--set auth.openid.insecure_skip_verify_tls=false"
-      "--set auth.openid.username_claim=preferred_username"
+      --set auth.strategy="openid"
+      --set auth.openid.client_id="kube"
+      --set-string auth.openid.issuer_uri="https://${KEYCLOAK_ADDRESS}/realms/kube"
+      --set auth.openid.insecure_skip_verify_tls="false"
+      --set auth.openid.username_claim="preferred_username"
     )
   elif [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
     helm_args+=(
-      "--set auth.strategy=openshift"
+      --set auth.strategy="openshift"
     )
   else
     echo "Kiali auth strategy [${KIALI_AUTH_STRATEGY}] is not supported for multi-cluster - will not install Kiali"
@@ -94,9 +94,9 @@ deploy_kiali() {
       echo "Pushing the images into the cluster..."
       make -e -C "${KIALI_REPO_ROOT}" DORP="${DORP}" CLUSTER_TYPE="kind" KIND_NAME="${cluster_name}" cluster-push-kiali
       helm_args+=(
-        '--set deployment.image_pull_policy="Never"'
-        "--set deployment.image_name=localhost/kiali/kiali"
-        "--set deployment.image_version=dev"
+        --set deployment.image_pull_policy="Never"
+        --set deployment.image_name="localhost/kiali/kiali"
+        --set deployment.image_version="dev"
       )
     elif [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
       echo "Pushing the images into the cluster..."
@@ -106,9 +106,9 @@ deploy_kiali() {
       image_name="$(oc get image.config.openshift.io/cluster -o custom-columns=INT:.status.internalRegistryHostname --no-headers 2>/dev/null)/kiali/kiali"
       make -e -C "${KIALI_REPO_ROOT}" DORP="${DORP}" CLUSTER_TYPE="openshift" cluster-push-kiali
       helm_args+=(
-        '--set deployment.image_pull_policy="Always"'
-        "--set deployment.image_name=${image_name}"
-        "--set deployment.image_version=dev"
+        --set deployment.image_pull_policy="Always"
+        --set deployment.image_name="${image_name}"
+        --set deployment.image_version="dev"
       )
     else
       local image_to_tag="quay.io/kiali/kiali:dev"
@@ -118,8 +118,8 @@ deploy_kiali() {
       echo "Pushing the dev image [${image_to_push}] to the cluster [${cluster_name}]..."
       ${DORP} push --tls-verify=false ${image_to_push}
       helm_args+=(
-        "--set deployment.image_name=localhost:5000/kiali/kiali"
-        "--set deployment.image_version=dev"
+        --set deployment.image_name="localhost:5000/kiali/kiali"
+        --set deployment.image_version="dev"
       )
     fi
   fi
@@ -160,51 +160,50 @@ deploy_kiali() {
   
     local kiali_route_url
     kiali_route_url="https://kiali-${ISTIO_NAMESPACE}.$(kubectl get ingresses.config/cluster -o jsonpath='{.spec.domain}')"
-    helm_args+=("--set kiali_route_url=${kiali_route_url}")
+    helm_args+=(--set kiali_route_url="${kiali_route_url}")
   fi
 
   if [ "${TEMPO}" == "true" ]; then
     helm_args+=(
-          "--set external_services.tracing.external_url=http://tempo-cr-query-frontend.tempo:3200"
-          "--set external_services.tracing.provider=tempo"
-          "--set external_services.tracing.internal_url=http://tempo-cr-query-frontend.tempo:3200"
-          "--set external_services.tracing.use_grpc=false"
+          --set external_services.tracing.external_url="http://tempo-cr-query-frontend.tempo:3200"
+          --set external_services.tracing.provider="tempo"
+          --set external_services.tracing.internal_url="http://tempo-cr-query-frontend.tempo:3200"
+          --set external_services.tracing.use_grpc="false"
         )
   else
     helm_args+=(
-          "--set external_services.tracing.external_url=http://tracing.istio-system/jaeger"
+          --set external_services.tracing.external_url="http://tracing.istio-system/jaeger"
         )
   fi
 
   if [ "${CI}" == "true" ]; then
     helm_args+=(
-          '--set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard"'
-          '--set external_services.istio.validation_reconcile_interval="5s"'
-          '--set health_config.rate[0].kind="service"'
-          '--set health_config.rate[0].name="y-server"'
-          '--set health_config.rate[0].namespace="alpha"'
-          '--set health_config.rate[0].tolerance[0].code="5xx"'
-          '--set health_config.rate[0].tolerance[0].degraded="2"'
-          '--set health_config.rate[0].tolerance[0].failure="100"'
-          '--set kiali_internal.cache_expiration.gateway="3m"'
-          '--set kiali_internal.cache_expiration.istio_status="0"'
-          '--set kiali_internal.cache_expiration.mesh="10s"'
-          '--set kiali_internal.cache_expiration.waypoint="3m"'
+          --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard"
+          --set external_services.istio.validation_reconcile_interval="5s"
+          --set health_config.rate[0].kind="service"
+          --set health_config.rate[0].name="y-server"
+          --set health_config.rate[0].namespace="alpha"
+          --set health_config.rate[0].tolerance[0].code="5xx"
+          --set health_config.rate[0].tolerance[0].degraded="2"
+          --set health_config.rate[0].tolerance[0].failure="100"
+          --set kiali_internal.cache_expiration.gateway="3m"
+          --set kiali_internal.cache_expiration.istio_status="0"
+          --set kiali_internal.cache_expiration.mesh="10s"
+          --set kiali_internal.cache_expiration.waypoint="3m"
         )
   fi
 
-  helm_command='helm upgrade --install
-    ${helm_args[@]}
-    --namespace ${ISTIO_NAMESPACE}
-    --set deployment.logger.log_level="trace"
-    --set external_services.grafana.external_url="http://grafana.istio-system:3000"
-    --set deployment.ingress.enabled=${ingress_enabled}
-    --set deployment.service_type=${service_type}
-    --set server.web_port=${web_port}
-    kiali-server
-    ${KIALI_SERVER_HELM_CHARTS}'
+  helm upgrade --install \
+    "${helm_args[@]}" \
+    --namespace "${ISTIO_NAMESPACE}" \
+    --set deployment.logger.log_level="trace" \
+    --set external_services.grafana.external_url="http://grafana.istio-system:3000" \
+    --set deployment.ingress.enabled="${ingress_enabled}" \
+    --set deployment.service_type="${service_type}" \
+    --set server.web_port="${web_port}" \
+    kiali-server \
+    "${KIALI_SERVER_HELM_CHARTS}"
 
-  eval $helm_command
   if [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
     local kiali_route_url
     kiali_route_url=$(kubectl get route kiali -n "${ISTIO_NAMESPACE}" -o jsonpath='{.spec.host}')
