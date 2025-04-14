@@ -165,11 +165,11 @@ type Discovery struct {
 }
 
 // NewDiscovery initializes a new Discovery.
-func NewDiscovery(kialiSAClients map[string]kubernetes.ClientInterface, cache cache.KialiCache, conf *config.Config) *Discovery {
+func NewDiscovery(clients map[string]kubernetes.ClientInterface, cache cache.KialiCache, conf *config.Config) *Discovery {
 	return &Discovery{
 		conf:           conf,
 		kialiCache:     cache,
-		kialiSAClients: kialiSAClients,
+		kialiSAClients: clients,
 	}
 }
 

@@ -96,12 +96,8 @@ func setupAmbientProjectWithNs() kubernetes.UserClientInterface {
 // Get namespaces
 func TestGetNamespaces(t *testing.T) {
 	conf := config.NewConfig()
-	config.Set(conf)
 
 	k8s := setupNamespaceServiceWithNs()
-
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
 
 	nsservice := setupNamespaceService(t, k8s, conf)
 
@@ -115,12 +111,8 @@ func TestGetNamespaces(t *testing.T) {
 // Get namespace
 func TestGetNamespace(t *testing.T) {
 	conf := config.NewConfig()
-	config.Set(conf)
 
 	k8s := setupNamespaceServiceWithNs()
-
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
 
 	nsservice := setupNamespaceService(t, k8s, conf)
 
@@ -133,12 +125,8 @@ func TestGetNamespace(t *testing.T) {
 // Get namespace error
 func TestGetNamespaceWithError(t *testing.T) {
 	conf := config.NewConfig()
-	config.Set(conf)
 
 	k8s := setupNamespaceServiceWithNs()
-
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
 
 	nsservice := setupNamespaceService(t, k8s, conf)
 
@@ -154,9 +142,6 @@ func TestAmbientNamespace(t *testing.T) {
 	config.Set(conf)
 
 	k8s := setupAmbientNamespaceServiceWithNs()
-
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
 
 	nsservice := setupNamespaceService(t, k8s, conf)
 
@@ -180,9 +165,6 @@ func TestAmbientProject(t *testing.T) {
 
 	k8s := setupAmbientProjectWithNs()
 
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
-
 	nsservice := setupNamespaceService(t, k8s, conf)
 
 	ns, _ := nsservice.GetClusterNamespace(context.TODO(), "bookinfo", config.Get().KubernetesConfig.ClusterName)
@@ -205,9 +187,6 @@ func TestUpdateNamespaces(t *testing.T) {
 
 	k8s := setupNamespaceServiceWithNs()
 
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
-
 	nsservice := setupNamespaceService(t, k8s, conf)
 
 	ns, err := nsservice.UpdateNamespace(context.TODO(), "bookinfo", `{"metadata": {"labels": {"new": "label"}}}`, conf.KubernetesConfig.ClusterName)
@@ -222,11 +201,7 @@ func TestMultiClusterGetNamespace(t *testing.T) {
 
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "east"
-	config.Set(conf)
 
-	k8s := setupNamespaceServiceWithNs()
-
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.UserClientInterface{
 		"east": kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("bookinfo"),
@@ -235,10 +210,7 @@ func TestMultiClusterGetNamespace(t *testing.T) {
 			kubetest.FakeNamespace("bookinfo"),
 		),
 	}
-	clientFactory.SetClients(clients)
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithClients(t, kubernetes.ConvertFromUserClients(clients), *conf)
 
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	nsservice := NewNamespaceService(cache, conf, discovery, kubernetes.ConvertFromUserClients(clients), clients)
@@ -255,11 +227,7 @@ func TestMultiClusterGetNamespaces(t *testing.T) {
 
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "east"
-	config.Set(conf)
 
-	k8s := setupNamespaceServiceWithNs()
-
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.UserClientInterface{
 		"east": kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("bookinfo"),
@@ -268,10 +236,7 @@ func TestMultiClusterGetNamespaces(t *testing.T) {
 			kubetest.FakeNamespace("bookinfo"),
 		),
 	}
-	clientFactory.SetClients(clients)
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithClients(t, kubernetes.ConvertFromUserClients(clients), *conf)
 
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	nsservice := NewNamespaceService(cache, conf, discovery, kubernetes.ConvertFromUserClients(clients), clients)
@@ -295,19 +260,14 @@ func TestGetNamespacesCached(t *testing.T) {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "east"
 	conf.KubernetesConfig.CacheTokenNamespaceDuration = 600000
-	config.Set(conf)
 
 	k8s := setupNamespaceServiceWithNs()
 
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.UserClientInterface{
 		"east": k8s,
 		"west": kubetest.NewFakeK8sClient(),
 	}
-	clientFactory.SetClients(clients)
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithClients(t, kubernetes.ConvertFromUserClients(clients), *conf)
 	cache.SetNamespaces(
 		k8s.GetToken(),
 		// gamma only exists in the cache.
@@ -335,20 +295,17 @@ func TestGetNamespacesDifferentTokens(t *testing.T) {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "east"
 	conf.KubernetesConfig.CacheTokenNamespaceDuration = 600000
-	config.Set(conf)
 
 	east := setupNamespaceServiceWithNs()
 	east.Token = "east-token"
 	west := kubetest.NewFakeK8sClient()
 	west.Token = "west-token"
 
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.UserClientInterface{
 		"east": east,
 		"west": west,
 	}
-	clientFactory.SetClients(clients)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithClients(t, kubernetes.ConvertFromUserClients(clients), *conf)
 	cache.SetNamespaces(
 		east.GetToken(),
 		[]models.Namespace{{Name: "bookinfo", Cluster: "east"}, {Name: "alpha", Cluster: "east"}, {Name: "beta", Cluster: "east"}},
@@ -390,20 +347,15 @@ func TestGetNamespacesForbiddenCached(t *testing.T) {
 
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "east"
-	config.Set(conf)
 
 	k8s := setupNamespaceServiceWithNs()
 
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	// Two clusters: one the user has access to, one they don't.
 	clients := map[string]kubernetes.UserClientInterface{
 		"east": &forbiddenFake{k8s},
 		"west": k8s,
 	}
-	clientFactory.SetClients(clients)
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithClients(t, kubernetes.ConvertFromUserClients(clients), *conf)
 	cache.SetNamespaces(
 		k8s.GetToken(),
 		// Bookinfo is cached for the west cluster that the user has access to
@@ -443,7 +395,7 @@ func TestMixedClustersNoError(t *testing.T) {
 		"openshift": openshift,
 		"vanilla":   vanilla,
 	}
-	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
+	cache := cache.NewTestingCacheWithClients(t, kubernetes.ConvertFromUserClients(clients), *conf)
 
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	nsservice := NewNamespaceService(cache, conf, discovery, kubernetes.ConvertFromUserClients(clients), clients)
