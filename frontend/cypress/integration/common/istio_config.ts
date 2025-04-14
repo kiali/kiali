@@ -405,7 +405,7 @@ When('the user refreshes the page', () => {
 });
 
 When('the user refreshes the page and waits', () => {
-  cy.intercept('**/api/status').as('getStatus');
+  cy.intercept('**/api/istio/status').as('getStatus');
   cy.get('[data-test="refresh-button"]').click();
   cy.wait('@getStatus');
   ensureKialiFinishedLoading();
