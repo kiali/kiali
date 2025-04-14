@@ -61,10 +61,8 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 		return kubernetes.IstioComponentStatus{}, nil
 	}
 
-	if iss.conf.KialiInternal.CacheExpiration.IstioStatus > 0 {
-		if istioStatus, ok := iss.cache.GetIstioStatus(); ok {
-			return istioStatus, nil
-		}
+	if istioStatus, ok := iss.cache.GetIstioStatus(); ok {
+		return istioStatus, nil
 	}
 
 	result := kubernetes.IstioComponentStatus{}
@@ -81,9 +79,7 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 	// for local cluster only get addons
 	result.Merge(iss.getAddonComponentStatus(iss.conf.KubernetesConfig.ClusterName))
 
-	if iss.conf.KialiInternal.CacheExpiration.IstioStatus > 0 {
-		iss.cache.SetIstioStatus(result)
-	}
+	iss.cache.SetIstioStatus(result)
 
 	return result, nil
 }
