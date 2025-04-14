@@ -27,10 +27,11 @@ type ExpirationStore[K comparable, V any] struct {
 	ttl                        time.Duration
 }
 
-// NewExpirationStore returns a new ExpirationStore with the given store and expiration time.
+// NewExpirationStore returns a new ExpirationStore with the given store and expiration interval. If keyTTL = 0 a store will
+// still be returned, but Sets will be ignored and Gets will always return false.
 // TODO: Provide functional options if the arguments list continues to grow.
 func NewExpirationStore[K comparable, V any](ctx context.Context, store Store[K, V], keyTTL *time.Duration, keyExpirationCheckInterval *time.Duration) *ExpirationStore[K, V] {
-	if keyExpirationCheckInterval == nil {
+	if keyExpirationCheckInterval == nil || *keyExpirationCheckInterval <= 0 {
 		keyExpirationCheckInterval = util.AsPtr(defaultKeyExpirationCheckInterval)
 	}
 
@@ -49,7 +50,19 @@ func NewExpirationStore[K comparable, V any](ctx context.Context, store Store[K,
 }
 
 // Set associates the given value with the given key and sets the expiration time.
+func (s *ExpirationStore[K, V]) Get(key K) (V, bool) {
+	if s.ttl == 0 {
+		var zeroVal V
+		return zeroVal, false
+	}
+	return s.Store.Get(key)
+}
+
+// Set associates the given value with the given key and sets the expiration time.
 func (s *ExpirationStore[K, V]) Set(key K, value V) {
+	if s.ttl == 0 {
+		return
+	}
 	s.Store.Set(key, value)
 	s.keyTTLs.Set(key, time.Now().Add(s.ttl))
 }

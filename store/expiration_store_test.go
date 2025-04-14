@@ -45,6 +45,22 @@ func TestKeyExpiration(t *testing.T) {
 	require.False(found)
 }
 
+func TestCacheDisable(t *testing.T) {
+	require := require.New(t)
+	ctx := testingContext(t)
+
+	ms := 0 * time.Millisecond
+	store := store.NewExpirationStore(ctx, store.New[string, string](), &ms, nil)
+	require.True(len(store.Items()) == 0)
+
+	key := "testKey"
+	value := "testValue"
+	store.Set(key, value)
+	_, found := store.Get(key)
+	require.False(found)
+	require.True(len(store.Items()) == 0)
+}
+
 func TestRemoveKey(t *testing.T) {
 	require := require.New(t)
 	ctx := testingContext(t)
