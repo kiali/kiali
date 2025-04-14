@@ -1379,7 +1379,7 @@ func verifyOpenIdUserAccess(token string, clientFactory kubernetes.ClientFactory
 	if err != nil {
 		return http.StatusInternalServerError, "Unable to create a Kubernetes client from the auth token", err
 	}
-	userClients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: userClient}
+	userClients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: userClient}
 
 	namespaceService := business.NewNamespaceService(kialiCache, conf, discovery, clientFactory.GetSAClients(), userClients)
 

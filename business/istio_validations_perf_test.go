@@ -161,14 +161,14 @@ func BenchmarkValidate(b *testing.B) {
 		},
 	})
 
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}, Config: models.ControlPlaneConfiguration{}}}},
 	}
-	namespace := NewNamespaceService(cache, conf, discovery, k8sclients, k8sclients)
-	mesh := NewMeshService(conf, discovery, k8sclients)
-	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
+	namespace := NewNamespaceService(cache, conf, discovery, kubernetes.ConvertFromUserClients(k8sclients), k8sclients)
+	mesh := NewMeshService(conf, discovery, kubernetes.ConvertFromUserClients(k8sclients))
+	layer := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
 	vs := NewValidationsService(conf, &layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
 
 	var changeMap ValidationChangeMap

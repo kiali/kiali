@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
@@ -26,7 +27,7 @@ func TestNamespaceInfo(t *testing.T) {
 
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	discovery := istio.NewDiscovery(cf.Clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
 
 	handler := handlers.WithFakeAuthInfo(conf, handlers.NamespaceInfo(conf, cache, cf, discovery))
 

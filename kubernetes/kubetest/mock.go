@@ -26,7 +26,7 @@ import (
 type K8SClientFactoryMock struct {
 	conf    *config.Config
 	lock    sync.RWMutex
-	Clients map[string]kubernetes.ClientInterface
+	Clients map[string]kubernetes.UserClientInterface
 }
 
 // Interface guard to ensure K8SClientFactoryMock implements ClientFactory.
@@ -34,40 +34,40 @@ var _ kubernetes.ClientFactory = &K8SClientFactoryMock{}
 
 // Constructor
 // Deprecated: use NewFakeClientFactory or NewFakeClientFactoryWithClient instead since those doesn't rely on the global config.Get()
-func NewK8SClientFactoryMock(k8s kubernetes.ClientInterface) *K8SClientFactoryMock {
+func NewK8SClientFactoryMock(k8s kubernetes.UserClientInterface) *K8SClientFactoryMock {
 	conf := config.Get()
-	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s}
 	return NewFakeClientFactory(conf, clients)
 }
 
-func NewFakeClientFactory(conf *config.Config, clients map[string]kubernetes.ClientInterface) *K8SClientFactoryMock {
+func NewFakeClientFactory(conf *config.Config, clients map[string]kubernetes.UserClientInterface) *K8SClientFactoryMock {
 	return &K8SClientFactoryMock{conf: conf, Clients: clients}
 }
 
 // NewFakeClientFactoryWithClient lets you pass a single client instead of a map.
-func NewFakeClientFactoryWithClient(conf *config.Config, client kubernetes.ClientInterface) *K8SClientFactoryMock {
+func NewFakeClientFactoryWithClient(conf *config.Config, client kubernetes.UserClientInterface) *K8SClientFactoryMock {
 	return &K8SClientFactoryMock{
 		conf:    conf,
-		Clients: map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client},
+		Clients: map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: client},
 	}
 }
 
 // Testing specific methods
-func (o *K8SClientFactoryMock) SetClients(clients map[string]kubernetes.ClientInterface) {
+func (o *K8SClientFactoryMock) SetClients(clients map[string]kubernetes.UserClientInterface) {
 	o.lock.Lock()
 	defer o.lock.Unlock()
 	o.Clients = clients
 }
 
 // Business Methods
-func (o *K8SClientFactoryMock) GetClient(authInfo *api.AuthInfo, cluster string) (kubernetes.ClientInterface, error) {
+func (o *K8SClientFactoryMock) GetClient(authInfo *api.AuthInfo, cluster string) (kubernetes.UserClientInterface, error) {
 	o.lock.RLock()
 	defer o.lock.RUnlock()
 	return o.Clients[cluster], nil
 }
 
 // Business Methods
-func (o *K8SClientFactoryMock) GetClients(map[string]*api.AuthInfo) (map[string]kubernetes.ClientInterface, error) {
+func (o *K8SClientFactoryMock) GetClients(map[string]*api.AuthInfo) (map[string]kubernetes.UserClientInterface, error) {
 	o.lock.RLock()
 	defer o.lock.RUnlock()
 	return o.Clients, nil
@@ -82,13 +82,19 @@ func (o *K8SClientFactoryMock) GetSAClient(cluster string) kubernetes.ClientInte
 func (o *K8SClientFactoryMock) GetSAClients() map[string]kubernetes.ClientInterface {
 	o.lock.RLock()
 	defer o.lock.RUnlock()
-	return o.Clients
+	return kubernetes.ConvertFromUserClients(o.Clients)
 }
 
 func (o *K8SClientFactoryMock) GetSAHomeClusterClient() kubernetes.ClientInterface {
 	o.lock.RLock()
 	defer o.lock.RUnlock()
 	return o.Clients[o.conf.KubernetesConfig.ClusterName]
+}
+
+func (o *K8SClientFactoryMock) GetSAClientsAsUserClientInterfaces() map[string]kubernetes.UserClientInterface {
+	o.lock.RLock()
+	defer o.lock.RUnlock()
+	return o.Clients
 }
 
 /////
@@ -304,8 +310,8 @@ func FakeNamespaceWithLabels(name string, labels map[string]string) *core_v1.Nam
 	}
 }
 
-func FakeWaypointAndEnrolledClients(name, cluster, namespace string) map[string]kubernetes.ClientInterface {
-	return map[string]kubernetes.ClientInterface{
+func FakeWaypointAndEnrolledClients(name, cluster, namespace string) map[string]kubernetes.UserClientInterface {
+	return map[string]kubernetes.UserClientInterface{
 		cluster: NewFakeK8sClient(
 			FakeNamespaceWithLabels(namespace, map[string]string{}),
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: name, Namespace: namespace, Labels: map[string]string{

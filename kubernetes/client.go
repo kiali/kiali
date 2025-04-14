@@ -43,7 +43,7 @@ type ClusterInfo struct {
 	SecretName string
 }
 
-// ClientInterface for mocks (only mocked function are necessary here)
+// ClientInterface defines a read-only client API (mocked functions are necessary here)
 type ClientInterface interface {
 	GetServerVersion() (*version.Info, error)
 	GetToken() string
@@ -57,6 +57,25 @@ type ClientInterface interface {
 	K8SClientInterface
 	IstioClientInterface
 	OSClientInterface
+}
+
+// UserClientInterface adds to ClientInterface all write APIs (mocked functions are necessary here)
+type UserClientInterface interface {
+	ClientInterface
+	K8SUserClientInterface
+	IstioUserClientInterface
+	OSUserClientInterface
+}
+
+// ConvertFromUserClients is a utility to be used for the rare instances where you
+// have a map of user clients but need a map of base client interfaces. This effectively
+// cripples the user client by removing the ability to perform write operations.
+func ConvertFromUserClients(in map[string]UserClientInterface) map[string]ClientInterface {
+	out := make(map[string]ClientInterface, len(in))
+	for k, v := range in {
+		out[k] = ClientInterface(v)
+	}
+	return out
 }
 
 // K8SClient is the client struct for Kubernetes and Istio APIs
@@ -95,8 +114,8 @@ type K8SClient struct {
 	getPodPortForwarderFunc func(namespace, name, portMap string) (httputil.PortForwarder, error)
 }
 
-// Ensure the K8SClient implements the ClientInterface
-var _ ClientInterface = &K8SClient{}
+// Ensure the K8SClient implements the full read-write UserClientInterface
+var _ UserClientInterface = &K8SClient{}
 
 // GetToken returns the BearerToken used from the config
 func (client *K8SClient) GetToken() string {

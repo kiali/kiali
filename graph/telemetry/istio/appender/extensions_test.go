@@ -16,6 +16,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
@@ -177,7 +178,7 @@ func setupMockedExt(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMo
 	business.SetWithBackends(mockClientFactory, nil)
 	cache := cache.NewTestingCache(t, k8s, *conf)
 	business.WithKialiCache(cache)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, conf)
 	business.WithDiscovery(discovery)
 
 	businessLayer, err := business.NewLayer(conf, cache, mockClientFactory, promClient, nil, nil, nil, discovery, authInfo)

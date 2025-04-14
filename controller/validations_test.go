@@ -65,11 +65,11 @@ func TestValidationsFailsToUpdateWithOldCache(t *testing.T) {
 		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
 	)
 	cache := newIncrementFirstVersionCache(business.SetupBusinessLayer(t, client, *conf))
-	k8sclients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client}
-	discovery := istio.NewDiscovery(k8sclients, cache, conf)
-	namespace := business.NewNamespaceService(cache, conf, discovery, k8sclients, k8sclients)
-	mesh := business.NewMeshService(conf, discovery, k8sclients)
-	layer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	k8sclients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: client}
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(k8sclients), cache, conf)
+	namespace := business.NewNamespaceService(cache, conf, discovery, kubernetes.ConvertFromUserClients(k8sclients), k8sclients)
+	mesh := business.NewMeshService(conf, discovery, kubernetes.ConvertFromUserClients(k8sclients))
+	layer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
 	validations := business.NewValidationsService(conf, &layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
 	reconciler := controller.NewValidationsReconciler([]string{conf.KubernetesConfig.ClusterName}, conf, cache, &validations, 0)
 

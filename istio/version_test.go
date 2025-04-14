@@ -218,8 +218,7 @@ func TestGetVersionRemoteCluster(t *testing.T) {
 		ClientInterface: clients["remote-cluster"],
 		testURL:         testServer.URL,
 	}
-	factory := kubetest.NewFakeClientFactory(conf, clients)
-	cache := cache.NewTestingCacheWithFactory(t, factory, *conf)
+	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
 	kubeCache, err := cache.GetKubeCache("remote-cluster")
 	require.NoError(err)
 

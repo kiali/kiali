@@ -81,6 +81,10 @@ type IstioClientInterface interface {
 
 	GetConfigDump(namespace, podName string) (*ConfigDump, error)
 	GetZtunnelConfigDump(namespace, podName string) (*ZtunnelConfigDump, error)
+}
+
+type IstioUserClientInterface interface {
+	IstioClientInterface
 	SetProxyLogLevel(namespace, podName, level string) error
 }
 

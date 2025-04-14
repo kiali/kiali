@@ -60,7 +60,7 @@ func TestTokenAuthControllerRejectsUserWithoutPrivilegesInAnyNamespace(t *testin
 	rr := httptest.NewRecorder()
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, conf)
 	controller, err := NewTokenAuthController(mockClientFactory, cache, conf, discovery)
 	require.NoError(t, err)
 	sData, err := controller.Authenticate(request, rr)
@@ -87,7 +87,7 @@ func TestTokenAuthControllerRejectsInvalidToken(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(forbiddenClient{k8s})
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, conf)
 	controller, err := NewTokenAuthController(mockClientFactory, cache, conf, discovery)
 	require.NoError(t, err)
 
@@ -117,7 +117,7 @@ func TestTokenAuthControllerRejectsEmptyToken(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient()
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, conf)
 	controller, err := NewTokenAuthController(mockClientFactory, cache, conf, discovery)
 	require.NoError(t, err)
 
@@ -166,7 +166,7 @@ func TestTokenAuthControllerValidatesSessionWithoutActiveSession(t *testing.T) {
 	rr := httptest.NewRecorder()
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, conf)
 	controller, err := NewTokenAuthController(mockClientFactory, cache, conf, discovery)
 	require.NoError(err)
 
@@ -176,7 +176,7 @@ func TestTokenAuthControllerValidatesSessionWithoutActiveSession(t *testing.T) {
 }
 
 type forbiddenClient struct {
-	kubernetes.ClientInterface
+	kubernetes.UserClientInterface
 }
 
 func (f forbiddenClient) GetNamespaces(labelSelector string) ([]v1.Namespace, error) {
@@ -230,7 +230,7 @@ func createValidSession(t *testing.T) (*httptest.ResponseRecorder, *UserSessionD
 	rr := httptest.NewRecorder()
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
-	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, conf)
 
 	controller, err := NewTokenAuthController(mockClientFactory, cache, conf, discovery)
 	require.NoError(t, err)

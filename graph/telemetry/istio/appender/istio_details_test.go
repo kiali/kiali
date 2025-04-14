@@ -68,12 +68,12 @@ func TestCBAll(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(dRule, kubetest.FakeNamespace("testNamespace"))
 	business.SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := map[string]kubernetes.ClientInterface{
+	k8sclients := map[string]kubernetes.UserClientInterface{
 		config.DefaultClusterID: kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("testNamespace"),
 		),
 	}
-	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _, _ := setupTrafficMap()
 
 	assert.Equal(7, len(trafficMap))
@@ -134,12 +134,12 @@ func TestCBSubset(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(dRule, kubetest.FakeNamespace("testNamespace"))
 	business.SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := map[string]kubernetes.ClientInterface{
+	k8sclients := map[string]kubernetes.UserClientInterface{
 		config.DefaultClusterID: kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("testNamespace"),
 		),
 	}
-	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _, _ := setupTrafficMap()
 
 	assert.Equal(7, len(trafficMap))
@@ -311,12 +311,12 @@ func TestSEInAppBox(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(svc, kubetest.FakeNamespace("testNamespace"))
 	business.SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := map[string]kubernetes.ClientInterface{
+	k8sclients := map[string]kubernetes.UserClientInterface{
 		config.DefaultClusterID: kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("testNamespace"),
 		),
 	}
-	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
 
 	trafficMap := graph.NewTrafficMap()
 	serviceEntryNode, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "ratings", "", "", "", "", graph.GraphTypeVersionedApp)

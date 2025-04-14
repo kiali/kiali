@@ -149,7 +149,7 @@ func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, p
 	return metrics, nsInfos
 }
 
-func getUserClients(r *http.Request, cf kubernetes.ClientFactory) (map[string]kubernetes.ClientInterface, error) {
+func getUserClients(r *http.Request, cf kubernetes.ClientFactory) (map[string]kubernetes.UserClientInterface, error) {
 	authInfos, err := getAuthInfo(r)
 	if err != nil {
 		return nil, err

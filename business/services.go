@@ -29,7 +29,7 @@ type SvcService struct {
 	kialiCache    cache.KialiCache
 	businessLayer *Layer
 	prom          prometheus.ClientInterface
-	userClients   map[string]kubernetes.ClientInterface
+	userClients   map[string]kubernetes.UserClientInterface
 }
 
 type ServiceCriteria struct {

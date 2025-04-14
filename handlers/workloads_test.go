@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -24,7 +25,7 @@ func setupWorkloadList(t *testing.T, k8s *kubetest.FakeK8sClient, conf *config.C
 	prom := new(prometheustest.PromClientMock)
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	discovery := istio.NewDiscovery(cf.Clients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
 	cpm := &business.FakeControlPlaneMonitor{}
 	traceLoader := func() tracing.ClientInterface { return nil }
 	grafana := grafana.NewService(conf, cf.GetSAHomeClusterClient())

@@ -20,7 +20,7 @@ type HealthService struct {
 	businessLayer *Layer
 	conf          *config.Config
 	prom          prometheus.ClientInterface
-	userClients   map[string]kubernetes.ClientInterface
+	userClients   map[string]kubernetes.UserClientInterface
 }
 
 type NamespaceHealthCriteria struct {

@@ -43,7 +43,7 @@ func TestRegistryServices(t *testing.T) {
 }
 
 type fakeForwarder struct {
-	kubernetes.ClientInterface
+	kubernetes.UserClientInterface
 	testURL string
 }
 
@@ -173,15 +173,15 @@ func TestRefreshIstioCache(t *testing.T) {
 
 	testServer := istiodTestServer(t)
 	fakeForwarder := &fakeForwarder{
-		ClientInterface: k8s,
-		testURL:         testServer.URL,
+		UserClientInterface: k8s,
+		testURL:             testServer.URL,
 	}
 
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
 	cf := kubetest.NewFakeClientFactory(conf, k8sclients)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(k8sclients), cache, conf)
 	cpm := NewControlPlaneMonitor(cache, cf, conf, discovery)
 
 	assert.Nil(cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName))
@@ -204,10 +204,10 @@ func TestCancelingContextEndsPolling(t *testing.T) {
 	conf := config.NewConfig()
 	kubernetes.SetConfig(t, *conf)
 
-	k8sclients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
+	k8sclients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
 	cf := kubetest.NewFakeClientFactory(conf, k8sclients)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(k8sclients), cache, conf)
 	cpm := NewControlPlaneMonitor(cache, cf, conf, discovery)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -246,15 +246,15 @@ func TestPollingPopulatesCache(t *testing.T) {
 	k8s.KubeClusterInfo.Name = conf.KubernetesConfig.ClusterName
 
 	fakeForwarder := &fakeForwarder{
-		ClientInterface: k8s,
-		testURL:         testServer.URL,
+		UserClientInterface: k8s,
+		testURL:             testServer.URL,
 	}
 
-	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
 	cf := kubetest.NewFakeClientFactory(conf, k8sclients)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(k8sclients), cache, conf)
 	cpm := NewControlPlaneMonitor(cache, cf, conf, discovery)
 	// Make this really low so that we get something sooner.
 	cpm.pollingInterval = time.Millisecond * 1

@@ -21,7 +21,7 @@ import (
 	"github.com/kiali/kiali/util/sliceutil"
 )
 
-func NewAppService(businessLayer *Layer, conf *config.Config, prom prometheus.ClientInterface, grafana *grafana.Service, userClients map[string]kubernetes.ClientInterface) AppService {
+func NewAppService(businessLayer *Layer, conf *config.Config, prom prometheus.ClientInterface, grafana *grafana.Service, userClients map[string]kubernetes.UserClientInterface) AppService {
 	return AppService{
 		businessLayer: businessLayer,
 		conf:          conf,
@@ -37,7 +37,7 @@ type AppService struct {
 	conf          *config.Config
 	grafana       *grafana.Service
 	prom          prometheus.ClientInterface
-	userClients   map[string]kubernetes.ClientInterface
+	userClients   map[string]kubernetes.UserClientInterface
 }
 
 type AppCriteria struct {

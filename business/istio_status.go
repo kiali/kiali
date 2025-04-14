@@ -22,7 +22,7 @@ func NewIstioStatusService(
 	discovery istio.MeshDiscovery,
 	homeClusterSAClient kubernetes.ClientInterface,
 	tracing *TracingService,
-	userClients map[string]kubernetes.ClientInterface,
+	userClients map[string]kubernetes.UserClientInterface,
 	workloads *WorkloadService,
 ) IstioStatusService {
 	return IstioStatusService{
@@ -41,7 +41,7 @@ type IstioStatusService struct {
 	discovery           istio.MeshDiscovery
 	homeClusterSAClient kubernetes.ClientInterface
 	tracing             *TracingService
-	userClients         map[string]kubernetes.ClientInterface
+	userClients         map[string]kubernetes.UserClientInterface
 	workloads           *WorkloadService
 }
 

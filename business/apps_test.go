@@ -18,9 +18,9 @@ import (
 	"github.com/kiali/kiali/tests/data"
 )
 
-func setupAppService(clients map[string]kubernetes.ClientInterface) *AppService {
+func setupAppService(clients map[string]kubernetes.UserClientInterface) *AppService {
 	prom := new(prometheustest.PromClientMock)
-	layer := NewWithBackends(clients, clients, prom, nil)
+	layer := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil)
 	return &layer.App
 }
 

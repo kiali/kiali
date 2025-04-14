@@ -31,7 +31,7 @@ import (
 const allResources string = "*"
 
 type IstioConfigService struct {
-	userClients         map[string]kubernetes.ClientInterface
+	userClients         map[string]kubernetes.UserClientInterface
 	conf                *config.Config
 	kialiCache          cache.KialiCache
 	businessLayer       *Layer
