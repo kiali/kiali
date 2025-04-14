@@ -193,6 +193,8 @@ deploy_kiali() {
           --set kiali_internal.cache_expiration.mesh="10s"
           --set kiali_internal.cache_expiration.waypoint="2m"
         )
+  else
+    echo "IGNORING CI OVERRIDES!"
   fi
 
 
