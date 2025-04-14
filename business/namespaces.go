@@ -322,16 +322,12 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 		return nil, fmt.Errorf("cluster [%s] is not found or is not accessible for Kiali", cluster)
 	}
 
-	if _, err := userClient.UpdateNamespace(namespace, jsonPatch); err != nil {
-		return nil, err
-	}
-
-	// Cache is stopped after a Create/Update/Delete operation to force a refresh
-	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	updatedNamespace, err := userClient.UpdateNamespace(namespace, jsonPatch)
 	if err != nil {
 		return nil, err
 	}
-	kubeCache.Refresh(namespace)
+
+	in.waitForCacheUpdate(ctx, cluster, updatedNamespace)
 	in.kialiCache.RefreshTokenNamespaces(cluster)
 
 	// Call GetClusterNamespaces to update the cache for this cluster.
@@ -340,6 +336,21 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 	}
 
 	return in.GetClusterNamespace(ctx, namespace, cluster)
+}
+
+func (in *NamespaceService) waitForCacheUpdate(ctx context.Context, cluster string, updatedNamespace *core_v1.Namespace) {
+	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
+		log.Errorf("Failed waiting for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
+		return
+	}
+
+	if err := kubernetes.WaitForObjectUpdateInCache(ctx, kubeCache, updatedNamespace); err != nil {
+		// It won't break anything if we return the object before it is updated in the cache.
+		// We will just show stale data so just log an error here instead of failing.
+		log.Errorf("Failed waiting for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
+		return
+	}
 }
 
 func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelector string, forwardedError error) ([]core_v1.Namespace, error) {

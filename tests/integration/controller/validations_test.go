@@ -38,7 +38,10 @@ var _ = Describe("Validations controller", Ordered, func() {
 			saClients := map[string]kubernetes.UserClientInterface{
 				conf.KubernetesConfig.ClusterName: kialiKubeClient,
 			}
-			kialiCache, err = cache.NewKialiCache(kubernetes.ConvertFromUserClients(saClients), *conf)
+			readers := map[string]client.Reader{
+				conf.KubernetesConfig.ClusterName: k8sManager.GetCache(),
+			}
+			kialiCache, err = cache.NewKialiCache(kubernetes.ConvertFromUserClients(saClients), readers, *conf)
 			Expect(err).ToNot(HaveOccurred())
 			DeferCleanup(func() {
 				kialiCache.Stop()

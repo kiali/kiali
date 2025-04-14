@@ -1631,10 +1631,10 @@ func TestValidateWaypointService(t *testing.T) {
 	require.NoError(err)
 	require.NotNil(waypoint)
 
-	assert.Equal(1, len(waypoint.Pods))
+	require.Equal(1, len(waypoint.Pods))
 	assert.True(waypoint.IsWaypoint())
 	assert.NotNil(waypoint.WaypointServices)
-	assert.Equal(1, len(waypoint.WaypointServices))
+	require.Equal(1, len(waypoint.WaypointServices))
 	assert.Equal("details", waypoint.WaypointServices[0].Name)
 	assert.Equal("Namespace", waypoint.WaypointServices[0].Namespace)
 	assert.Equal("service", waypoint.WaypointServices[0].LabelType)
@@ -1646,8 +1646,8 @@ func TestValidateWaypointService(t *testing.T) {
 	require.NoError(errDetails)
 	require.NotNil(workloadDetails)
 
-	assert.Equal(1, len(workloadDetails.Pods))
-	assert.Equal(1, len(workloadDetails.WaypointWorkloads))
+	require.Equal(1, len(workloadDetails.Pods))
+	require.Equal(1, len(workloadDetails.WaypointWorkloads))
 	assert.Equal("waypoint", workloadDetails.WaypointWorkloads[0].Name)
 
 	// productPage should not have a waypoint
@@ -1782,7 +1782,8 @@ func TestValidateWaypointProxyStatus(t *testing.T) {
 	// Set cache proxy status
 	ps := kubernetes.ProxyStatus{
 		Pilot: "istiod-54b6586f84-9bgw2",
-		SyncStatus: kubernetes.SyncStatus{ClusterID: "",
+		SyncStatus: kubernetes.SyncStatus{
+			ClusterID:     "",
 			ProxyID:       "waypoint.Namespace",
 			ProxyVersion:  "",
 			IstioVersion:  "1.24.1",

@@ -340,6 +340,7 @@
             "metadata": {
               "name": "gateway",
               "namespace": "istio-system",
+              "resourceVersion": "999",
               "creationTimestamp": null
             },
             "spec": {

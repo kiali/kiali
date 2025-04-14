@@ -10,10 +10,12 @@ import (
 
 	"golang.org/x/exp/maps"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -75,7 +77,7 @@ func parseIstioControlPlaneCertificate(certConfigMap *corev1.ConfigMap) models.C
 }
 
 // gets the mesh configuration for a controlplane from the istio configmap.
-func (in *Discovery) getControlPlaneConfiguration(kubeCache cache.KubeCache, controlPlane *models.ControlPlane) (*models.ControlPlaneConfiguration, error) {
+func (in *Discovery) getControlPlaneConfiguration(kubeCache ctrlclient.Reader, controlPlane *models.ControlPlane) (*models.ControlPlaneConfiguration, error) {
 	var configMapName string
 	// If the config map name is explicitly set we should always use that
 	// until the config option is removed.
@@ -85,7 +87,8 @@ func (in *Discovery) getControlPlaneConfiguration(kubeCache cache.KubeCache, con
 		configMapName = istioConfigMapName(controlPlane.Revision)
 	}
 
-	configMap, err := kubeCache.GetConfigMap(controlPlane.IstiodNamespace, configMapName)
+	configMap := &corev1.ConfigMap{}
+	err := kubeCache.Get(context.Background(), ctrlclient.ObjectKey{Name: configMapName, Namespace: controlPlane.IstiodNamespace}, configMap)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +98,8 @@ func (in *Discovery) getControlPlaneConfiguration(kubeCache cache.KubeCache, con
 		return nil, err
 	}
 
-	certConfigMap, err := kubeCache.GetConfigMap(controlPlane.IstiodNamespace, certificatesConfigMapName)
+	certConfigMap := &corev1.ConfigMap{}
+	err = kubeCache.Get(context.Background(), ctrlclient.ObjectKey{Name: certificatesConfigMapName, Namespace: controlPlane.IstiodNamespace}, certConfigMap)
 	if err != nil {
 		log.Warningf("Unable to get certificate configmap [%s/%s]. Err: %s", controlPlane.IstiodNamespace, certificatesConfigMapName, err)
 	} else {
@@ -271,10 +275,13 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		}
 
 		// If there's an istiod on it, then it's a controlplane cluster. Otherwise it is a remote cluster.
-		istiods, err := kubeCache.GetDeploymentsWithSelector(metav1.NamespaceAll, config.IstioAppLabel+"="+istiodAppLabelValue)
+		labels := map[string]string{config.IstioAppLabel: istiodAppLabelValue}
+		depList := &appsv1.DeploymentList{}
+		err = kubeCache.List(ctx, depList, ctrlclient.MatchingLabels(labels))
 		if err != nil {
 			return nil, err
 		}
+		istiods := depList.Items
 
 		if len(istiods) == 0 {
 			log.Debugf("Cluster [%s] is a remote cluster. Skipping adding a controlplane.", cluster.Name)
@@ -651,12 +658,13 @@ func (in *Discovery) discoverKiali(cluster models.KubeCluster) []models.KialiIns
 
 	// The operator and the helm charts set this fixed label. It's also
 	// present in the Istio addon manifest of Kiali.
-	kialiAppLabel := "app.kubernetes.io/part-of=kiali"
-	services, err := kubeCache.GetServices(metav1.NamespaceAll, kialiAppLabel)
+	svcList := &corev1.ServiceList{}
+	err = kubeCache.List(context.Background(), svcList, ctrlclient.MatchingLabels{"app.kubernetes.io/part-of": "kiali"})
 	if err != nil {
 		log.Warningf("Discovery for Kiali instances in cluster [%s] failed: %s", clusterName, err.Error())
 		return nil
 	}
+	services := svcList.Items
 
 	var instances []models.KialiInstance
 	for _, d := range services {
@@ -694,7 +702,7 @@ func appendKialiInstancesFromConfig(instances []models.KialiInstance, cfgurl con
 	return instances
 }
 
-func (in *Discovery) getNetworkFromSidecarInejctorConfigMap(kubeCache cache.KubeCache, namespace, revision string) string {
+func (in *Discovery) getNetworkFromSidecarInejctorConfigMap(kubeCache ctrlclient.Reader, namespace, revision string) string {
 	// Try to resolve the logical Istio's network ID of the cluster where
 	// Kiali is installed. This assumes that the mesh Control Plane is installed in the same
 	// cluster as Kiali.
@@ -705,7 +713,8 @@ func (in *Discovery) getNetworkFromSidecarInejctorConfigMap(kubeCache cache.Kube
 		configMapName = sidecarInjectorConfigMapName(revision)
 	}
 
-	istioSidecarConfig, err := kubeCache.GetConfigMap(namespace, configMapName)
+	istioSidecarConfig := &corev1.ConfigMap{}
+	err := kubeCache.Get(context.Background(), ctrlclient.ObjectKey{Name: configMapName, Namespace: namespace}, istioSidecarConfig)
 	if err != nil {
 		// Don't return an error, as this may mean that Kiali is not installed along the control plane.
 		// This setup is OK, it's just that it's not within our multi-cluster assumptions.
@@ -761,7 +770,7 @@ func (in *Discovery) getNetworkFromSidecarInejctorConfigMap(kubeCache cache.Kube
 //
 // No errors are returned because we don't want to block processing of other clusters if
 // one fails. So, errors are only logged to let processing continue.
-func (in *Discovery) resolveNetwork(kubeCache cache.KubeCache, controlPlane *models.ControlPlane) string {
+func (in *Discovery) resolveNetwork(kubeCache ctrlclient.Reader, controlPlane *models.ControlPlane) string {
 	clusterName := controlPlane.Cluster.Name
 	if network := in.getNetworkFromSidecarInejctorConfigMap(kubeCache, controlPlane.IstiodNamespace, controlPlane.Revision); network != "" {
 		return network

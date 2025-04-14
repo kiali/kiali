@@ -6,6 +6,8 @@ import (
 	goerrors "errors"
 	"fmt"
 	"io"
+	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,12 +26,15 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd/api"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -60,8 +65,8 @@ type K8SClientInterface interface {
 type K8SUserClientInterface interface {
 	K8SClientInterface
 	UpdateNamespace(namespace string, jsonPatch string) (*core_v1.Namespace, error)
-	UpdateService(namespace string, name string, jsonPatch string, patchType string) error
-	UpdateWorkload(namespace string, name string, workloadGVK schema.GroupVersionKind, jsonPatch string, patchType string) error
+	UpdateService(namespace string, name string, jsonPatch string, patchType string) (*core_v1.Service, error)
+	UpdateWorkload(namespace string, workloadName string, workloadObj runtime.Object, jsonPatch string, patchType string) error
 }
 
 type OSClientInterface interface {
@@ -465,47 +470,60 @@ func (in *K8SClient) GetSelfSubjectAccessReview(ctx context.Context, namespace, 
 	return result, err
 }
 
-func (in *K8SClient) UpdateWorkload(namespace string, workloadName string, workloadGVK schema.GroupVersionKind, jsonPatch string, patchType string) error {
+func (in *K8SClient) UpdateWorkload(namespace string, workloadName string, workloadObj runtime.Object, jsonPatch string, patchType string) error {
 	emptyPatchOptions := meta_v1.PatchOptions{}
 	bytePatch := []byte(jsonPatch)
-	var err error
-	switch workloadGVK {
-	case Deployments:
-		_, err = in.k8s.AppsV1().Deployments(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case ReplicaSets:
-		_, err = in.k8s.AppsV1().ReplicaSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case ReplicationControllers:
-		_, err = in.k8s.CoreV1().ReplicationControllers(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case DeploymentConfigs:
-		if in.IsOpenShift() {
-			result := &osapps_v1.DeploymentConfigList{}
-			err = in.k8s.Discovery().RESTClient().Patch(GetPatchType(patchType)).Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").SubResource(workloadName).Body(bytePatch).Do(in.ctx).Into(result)
-		}
-	case StatefulSets:
-		_, err = in.k8s.AppsV1().StatefulSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case Jobs:
-		_, err = in.k8s.BatchV1().Jobs(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case CronJobs:
-		_, err = in.k8s.BatchV1().CronJobs(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case Pods:
-		_, err = in.k8s.CoreV1().Pods(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case DaemonSets:
-		_, err = in.k8s.AppsV1().DaemonSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	default:
-		err = fmt.Errorf("Workload type %s not found", workloadGVK.String())
+
+	elem := reflect.ValueOf(&workloadObj).Elem()
+	// Make sure workloadObj is a pointer we can set.
+	if !elem.CanSet() {
+		return fmt.Errorf("workloadObj is invalid. Should be a pointer. Got: %T", workloadObj)
 	}
-	return err
+
+	var err error
+	var obj runtime.Object
+	switch workloadObj.(type) {
+	case *apps_v1.Deployment:
+		obj, err = in.k8s.AppsV1().Deployments(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
+	case *apps_v1.ReplicaSet:
+		obj, err = in.k8s.AppsV1().ReplicaSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
+	case *core_v1.ReplicationController:
+		obj, err = in.k8s.CoreV1().ReplicationControllers(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
+	case *osapps_v1.DeploymentConfig:
+		if in.IsOpenShift() {
+			result := &osapps_v1.DeploymentConfig{}
+			err = in.k8s.Discovery().RESTClient().Patch(GetPatchType(patchType)).Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").SubResource(workloadName).Body(bytePatch).Do(in.ctx).Into(result)
+			obj = result
+		}
+	case *apps_v1.StatefulSet:
+		obj, err = in.k8s.AppsV1().StatefulSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
+	case *batch_v1.Job:
+		obj, err = in.k8s.BatchV1().Jobs(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
+	case *batch_v1.CronJob:
+		obj, err = in.k8s.BatchV1().CronJobs(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
+	case *core_v1.Pod:
+		obj, err = in.k8s.CoreV1().Pods(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
+	case *apps_v1.DaemonSet:
+		obj, err = in.k8s.AppsV1().DaemonSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
+	default:
+		err = fmt.Errorf("Workload type %T not found", workloadObj)
+	}
+	if err != nil {
+		return err
+	}
+
+	elem.Set(reflect.ValueOf(obj))
+	return nil
 }
 
-func (in *K8SClient) UpdateService(namespace string, name string, jsonPatch string, patchType string) error {
+func (in *K8SClient) UpdateService(namespace string, name string, jsonPatch string, patchType string) (*core_v1.Service, error) {
 	emptyPatchOptions := meta_v1.PatchOptions{}
 	bytePatch := []byte(jsonPatch)
-	var err error
-	_, err = in.k8s.CoreV1().Services(namespace).Patch(in.ctx, name, GetPatchType(patchType), bytePatch, emptyPatchOptions)
+	svc, err := in.k8s.CoreV1().Services(namespace).Patch(in.ctx, name, GetPatchType(patchType), bytePatch, emptyPatchOptions)
 	if err != nil {
-		log.Errorf("Error is %s", err.Error())
+		return nil, err
 	}
-	return err
+	return svc, nil
 }
 
 func (in *K8SClient) UpdateNamespace(namespace string, jsonPatch string) (*core_v1.Namespace, error) {
@@ -540,4 +558,74 @@ func (in *K8SClient) GetTokenSubject(authInfo *api.AuthInfo) (string, error) {
 // Only use this when env.Value is a boolean string e.g. "true" or "false".
 func EnvVarIsTrue(key string, env core_v1.EnvVar) bool {
 	return env.Name == key && env.Value == "true"
+}
+
+// WaitForObjectUpdateInCache waits for the update to propgate to the cached object. Modifies obj passed
+// so don't use it afterward.
+func WaitForObjectUpdateInCache(ctx context.Context, kubeCache client.Reader, obj client.Object) error {
+	// Copy the resource version then reuse the obj so we have something to copy into.
+	currentResourceVersion, err := strconv.Atoi(obj.GetResourceVersion())
+	if err != nil {
+		return fmt.Errorf("unable to convert ResourceVersion for obj: %s/%s", obj.GetName(), obj.GetNamespace())
+	}
+
+	return wait.PollUntilContextTimeout(ctx, 100*time.Millisecond, time.Second*5, true, func(ctx context.Context) (bool, error) {
+		if err := kubeCache.Get(ctx, client.ObjectKeyFromObject(obj), obj); err != nil {
+			return false, err
+		}
+
+		// By convention, you are not supposed to convert this and do int comparisons.
+		// The API definition wants you to treat the ResourceVersion as an opaque string
+		// but in this case we want to if our update was picked up by the cache and there
+		// may have been other updates before or after that change the RV so simply
+		// compare a.RV != b.RV.
+		// Generation only gets incremented when modifying the spec so that won't work either.
+		cachedResourceVersion, err := strconv.Atoi(obj.GetResourceVersion())
+		if err != nil {
+			return false, fmt.Errorf("unable to convert ResourceVersion for obj: %s/%s", obj.GetName(), obj.GetNamespace())
+		}
+
+		// Our change has been propagated to the cache if the newRV from the object in the cache is >= the RV
+		// of the object when we submitted the change. It may be greater than because something else may have
+		// changed it but the cache only saw the last change.
+		if cachedResourceVersion < currentResourceVersion {
+			return false, nil
+		}
+
+		return true, nil
+	})
+}
+
+// WaitForObjectDeleteInCache waits for the object to be deleted from the cache.
+func WaitForObjectDeleteInCache(ctx context.Context, kubeCache client.Reader, obj client.Object) error {
+	currentUID := obj.GetUID()
+	return wait.PollUntilContextTimeout(ctx, 100*time.Millisecond, time.Second*5, true, func(ctx context.Context) (bool, error) {
+		if err := kubeCache.Get(ctx, client.ObjectKeyFromObject(obj), obj); err != nil {
+			if errors.IsNotFound(err) {
+				return true, nil
+			}
+			return false, err
+		}
+
+		// It's possible that something else recreated the object by the time we see the change.
+		// The UID will change if this happened so if the UID has changed then the original object
+		// was actually deleted.
+		return currentUID != obj.GetUID(), nil
+	})
+}
+
+// WaitForObjectCreateInCache waits for the object to be exist in the cache.
+// This probably isn't 100% reliable since something could delete the object
+// after it is created and before we have a chance to see it.
+func WaitForObjectCreateInCache(ctx context.Context, kubeCache client.Reader, obj client.Object) error {
+	return wait.PollUntilContextTimeout(ctx, 100*time.Millisecond, time.Second*5, true, func(ctx context.Context) (bool, error) {
+		if err := kubeCache.Get(ctx, client.ObjectKeyFromObject(obj), obj); err != nil {
+			if errors.IsNotFound(err) {
+				return false, nil
+			}
+			return false, err
+		}
+
+		return true, nil
+	})
 }

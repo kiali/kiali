@@ -21,7 +21,6 @@ func (c *kialiCacheImpl) SetZtunnelDump(key string, config *kubernetes.ZtunnelCo
 }
 
 func (c *kialiCacheImpl) GetZtunnelDump(cluster, namespace, pod string) *kubernetes.ZtunnelConfigDump {
-
 	key := ztunnelDumpKey(cluster, namespace, pod)
 
 	config, found := c.ztunnelConfigStore.Get(key)
@@ -38,22 +37,21 @@ func (c *kialiCacheImpl) GetZtunnelDump(cluster, namespace, pod string) *kuberne
 		return nil
 	}
 
-	client, err := c.GetKubeCache(cluster)
-	if err != nil {
-		log.Errorf("[GetZtunnelDump] Error getting kubecache for cluster %s: %v", cluster, err)
+	client, found := c.clients[cluster]
+	if !found {
+		log.Errorf("[GetZtunnelDump] Kiali Service Account client not found for cluster %s", cluster)
 		return nil
 	}
 
 	for _, zPod := range ztunnelPods {
 		if zPod.Name == pod {
-			resp, err := client.Client().ForwardGetRequest(zPod.Namespace, zPod.Name, 15000, "/config_dump")
+			resp, err := client.ForwardGetRequest(zPod.Namespace, zPod.Name, 15000, "/config_dump")
 			if err != nil {
 				log.Errorf("[GetZtunnelDump] Error forwarding the /config_dump request: %v", err)
 				return nil
 			}
 			var configDump *kubernetes.ZtunnelConfigDump
-			err = json.Unmarshal(resp, &configDump)
-			if err != nil {
+			if err := json.Unmarshal(resp, &configDump); err != nil {
 				log.Errorf("[GetZtunnelDump] Error Unmarshalling the config_dump: %v", err)
 				return nil
 			}
@@ -62,6 +60,6 @@ func (c *kialiCacheImpl) GetZtunnelDump(cluster, namespace, pod string) *kuberne
 			return configDump
 		}
 	}
-	log.Errorf("[GetZtunnelDump] Error Unmarshalling the config_dump: %v", err)
+
 	return nil
 }

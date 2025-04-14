@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/config"
@@ -114,7 +115,7 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 		deployments     []apps_v1.Deployment
 		istioConfigList models.IstioConfigList
 		err             error
-		kubeCache       cache.KubeCache
+		kubeCache       client.Reader
 	)
 
 	kubeCache, err = in.kialiCache.GetKubeCache(cluster)
@@ -131,11 +132,11 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 		}
 	}
 
-	svcs, err = kubeCache.GetServicesBySelectorLabels(criteria.Namespace, selectorLabels)
-	if err != nil {
-		log.Errorf("Error fetching Services per namespace %s: %s", criteria.Namespace, err)
-		return nil, err
+	svcList := &core_v1.ServiceList{}
+	if err := kubeCache.List(ctx, svcList, client.InNamespace(criteria.Namespace)); err != nil {
+		return nil, fmt.Errorf("Error fetching Services per namespace %s: %s", criteria.Namespace, err)
 	}
+	svcs = kubernetes.FilterServicesBySelector(svcList.Items, selectorLabels)
 
 	if in.conf.ExternalServices.Istio.IstioAPIEnabled && cluster == in.conf.KubernetesConfig.ClusterName {
 		registryCriteria := RegistryCriteria{
@@ -147,19 +148,19 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 	}
 
 	if !criteria.IncludeOnlyDefinitions {
-		pods, err = kubeCache.GetPods(criteria.Namespace, "")
-		if err != nil {
-			log.Errorf("Error fetching Pods per namespace %s: %s", criteria.Namespace, err)
-			return nil, err
+		podList := &core_v1.PodList{}
+		if err := kubeCache.List(ctx, podList, client.InNamespace(criteria.Namespace)); err != nil {
+			return nil, fmt.Errorf("Error fetching Pods per namespace %s: %s", criteria.Namespace, err)
 		}
+		pods = podList.Items
 	}
 
 	if !criteria.IncludeOnlyDefinitions {
-		deployments, err = kubeCache.GetDeployments(criteria.Namespace)
-		if err != nil {
-			log.Errorf("Error fetching Deployments per namespace %s: %s", criteria.Namespace, err)
-			return nil, err
+		depList := &apps_v1.DeploymentList{}
+		if err := kubeCache.List(ctx, depList, client.InNamespace(criteria.Namespace)); err != nil {
+			return nil, fmt.Errorf("Error fetching Deployments per namespace %s: %s", criteria.Namespace, err)
 		}
+		deployments = depList.Items
 	}
 
 	// Cross-namespace query of all Istio Resources to find references
@@ -471,15 +472,11 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 	labelsSelector := labels.Set(svc.Selectors).String()
 	// If service doesn't have any selector, we can't know which are the pods and workloads applying.
 	if labelsSelector != "" {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			var err2 error
-			pods, err2 = kubeCache.GetPods(namespace, labelsSelector)
-			if err2 != nil {
-				errChan <- err2
-			}
-		}()
+		podList := &core_v1.PodList{}
+		if err := kubeCache.List(ctx, podList, client.MatchingLabels(svc.Selectors), client.InNamespace(namespace)); err != nil {
+			return nil, fmt.Errorf("Error fetching Pods per namespace %s: %s", namespace, err)
+		}
+		pods = podList.Items
 
 		wg.Add(1)
 		go func(ctx context.Context) {
@@ -501,16 +498,14 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		}
 	}
 
-	wg.Add(1)
-	go func(ctx context.Context) {
-		defer wg.Done()
-		var err2 error
-		eps, err2 = kubeCache.GetEndpoints(namespace, service)
-		if err2 != nil && !errors.IsNotFound(err2) {
-			log.Errorf("Error fetching Endpoints namespace %s and service %s: %s", namespace, service, err2)
-			errChan <- err2
+	eps = &core_v1.Endpoints{}
+	if err := kubeCache.Get(ctx, client.ObjectKey{Name: service, Namespace: namespace}, eps); err != nil {
+		if errors.IsNotFound(err) {
+			eps = nil
+		} else {
+			return nil, fmt.Errorf("Error fetching Endpoints namespace %s: and service %s: %s", namespace, service, err)
 		}
-	}(ctx)
+	}
 
 	wg.Add(1)
 	go func(ctx context.Context) {
@@ -654,14 +649,16 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 	}
 
 	if includeValidations {
-		svcs, err := kubeCache.GetServicesBySelectorLabels(namespace, svc.Labels)
-		if err != nil {
-			log.Errorf("Error fetching Services per namespace %s: %s", namespace, err)
+		svcList := &core_v1.ServiceList{}
+		if err := kubeCache.List(ctx, svcList, client.InNamespace(namespace)); err != nil {
+			return nil, fmt.Errorf("Error fetching Services per namespace %s: %s", namespace, err)
 		}
-		deployments, err := kubeCache.GetDeployments(namespace)
-		if err != nil {
-			log.Errorf("Error fetching Deployments per namespace %s: %s", namespace, err)
+		svcs := kubernetes.FilterServicesBySelector(svcList.Items, svc.Labels)
+		depList := &apps_v1.DeploymentList{}
+		if err := kubeCache.List(ctx, depList, client.InNamespace(namespace)); err != nil {
+			return nil, fmt.Errorf("Error fetching deployments per namespace %s: %s", namespace, err)
 		}
+		deployments := depList.Items
 		s.Validations = in.getServiceValidations(svcs, deployments, pods)
 	}
 	return &s, nil
@@ -754,7 +751,6 @@ func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace,
 	// This is to verify there is no duplicated services
 	servicesMap := make(map[string]bool)
 
-	labelSelector := fmt.Sprintf("%s=%s", config.WaypointUseLabel, name)
 	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
 	if err != nil {
 		log.Infof("ListWaypointServices: error getting kube cache: %s", err.Error())
@@ -763,11 +759,11 @@ func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace,
 	namespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
 	if err == nil {
 		for _, ns := range namespaces {
-			svcs, err := kubeCache.GetServices(ns.Name, labelSelector)
-			if err != nil {
+			svcList := &core_v1.ServiceList{}
+			if err := kubeCache.List(ctx, svcList, client.InNamespace(ns.Name), client.MatchingLabels(map[string]string{config.WaypointUseLabel: name})); err != nil {
 				log.Infof("Error getting services %s", err.Error())
 			} else {
-				for _, service := range svcs {
+				for _, service := range svcList.Items {
 					key := fmt.Sprintf("%s_%s_%s", service.Name, service.Namespace, cluster)
 					if !servicesMap[key] && (service.Namespace == namespace || service.Labels[config.WaypointUseNamespaceLabel] == namespace) {
 						serviceInfoList = append(serviceInfoList, models.ServiceReferenceInfo{Name: service.Name, Namespace: service.Namespace, LabelType: "service", Cluster: cluster})
@@ -807,20 +803,30 @@ func (in *SvcService) UpdateService(ctx context.Context, cluster, namespace, ser
 		return nil, fmt.Errorf("cluster: %s not found", cluster)
 	}
 
-	if err := userClient.UpdateService(namespace, service, jsonPatch, patchType); err != nil {
-		return nil, err
-	}
-
-	// Stop and restart cache here after a Create/Update/Delete operation to force a refresh
-	// so that the next request that reads from the cache will be sure to have the write operation.
-	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	svc, err := userClient.UpdateService(namespace, service, jsonPatch, patchType)
 	if err != nil {
 		return nil, err
 	}
-	kubeCache.Refresh(namespace)
+
+	in.waitForCacheUpdate(ctx, cluster, svc)
 
 	// After the update we fetch the whole workload
 	return in.GetServiceDetails(ctx, cluster, namespace, service, interval, queryTime, false)
+}
+
+func (in *SvcService) waitForCacheUpdate(ctx context.Context, cluster string, updatedService *core_v1.Service) {
+	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
+		log.Errorf("Failed waiting for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
+		return
+	}
+
+	if err := kubernetes.WaitForObjectUpdateInCache(ctx, kubeCache, updatedService); err != nil {
+		// It won't break anything if we return the object before it is updated in the cache.
+		// We will just show stale data so just log an error here instead of failing.
+		log.Errorf("Failed waiting for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
+		return
+	}
 }
 
 func (in *SvcService) GetService(ctx context.Context, cluster, namespace, service string) (models.Service, error) {
@@ -847,8 +853,8 @@ func (in *SvcService) GetService(ctx context.Context, cluster, namespace, servic
 	svc := models.Service{}
 	// First try to get the service from kube.
 	// If it doesn't exist, try to get it from the Istio Registry.
-	kSvc, err := cache.GetService(namespace, service)
-	if err != nil {
+	kSvc := &core_v1.Service{}
+	if err := cache.Get(ctx, client.ObjectKey{Name: service, Namespace: namespace}, kSvc); err != nil {
 		// Check if this service is in the Istio Registry
 		criteria := RegistryCriteria{
 			Namespace: namespace,

@@ -1,6 +1,7 @@
 package cache_test
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"sync"
@@ -11,6 +12,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -22,10 +24,10 @@ import (
 func TestNoHomeClusterReturnsError(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
-	config.Set(conf)
 
 	clients := map[string]kubernetes.ClientInterface{"nothomecluster": kubetest.NewFakeK8sClient()}
-	_, err := cache.NewKialiCache(clients, *conf)
+	readers := map[string]ctrlclient.Reader{"nothomecluster": kubetest.NewFakeK8sClient()}
+	_, err := cache.NewKialiCache(clients, readers, *conf)
 	require.Error(err, "no home cluster should return an error")
 }
 
@@ -43,22 +45,28 @@ func TestKubeCacheCreatedPerClient(t *testing.T) {
 		conf.KubernetesConfig.ClusterName: client,
 		"cluster2":                        client2,
 	}
+	readers := map[string]ctrlclient.Reader{
+		conf.KubernetesConfig.ClusterName: client,
+		"cluster2":                        client2,
+	}
 
-	kialiCache, _ := cache.NewKialiCache(saClients, *conf)
+	kialiCache, _ := cache.NewKialiCache(saClients, readers, *conf)
 
-	caches := kialiCache.GetKubeCaches()
-	require.Equal(2, len(caches))
-
-	_, err := caches[conf.KubernetesConfig.ClusterName].GetDeployment("test", "deployment1")
+	_, err := kialiCache.GetKubeCache(conf.KubernetesConfig.ClusterName)
 	require.NoError(err)
 
-	_, err = caches["cluster2"].GetDeployment("test", "deployment2")
+	kubeCache1, err := kialiCache.GetKubeCache(conf.KubernetesConfig.ClusterName)
 	require.NoError(err)
 
-	_, err = kialiCache.GetKubeCache(conf.KubernetesConfig.ClusterName)
+	dep := &apps_v1.Deployment{}
+	err = kubeCache1.Get(context.Background(), ctrlclient.ObjectKey{Name: "deployment1", Namespace: "test"}, dep)
 	require.NoError(err)
 
-	_, err = kialiCache.GetKubeCache("cluster2")
+	kubeCache2, err := kialiCache.GetKubeCache("cluster2")
+	require.NoError(err)
+
+	dep = &apps_v1.Deployment{}
+	err = kubeCache2.Get(context.Background(), ctrlclient.ObjectKey{Name: "deployment2", Namespace: "test"}, dep)
 	require.NoError(err)
 
 	_, err = kialiCache.GetKubeCache("cluster3")
@@ -276,7 +284,8 @@ func TestValidationsSetByConstructor(t *testing.T) {
 	conf := config.NewConfig()
 
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
-	cache, err := cache.NewKialiCache(clients, *conf)
+	readers := map[string]ctrlclient.Reader{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
+	cache, err := cache.NewKialiCache(clients, readers, *conf)
 	require.NoError(err)
 
 	require.NotNil(cache.Validations())
@@ -287,7 +296,8 @@ func TestZtunnelDump(t *testing.T) {
 	conf := config.NewConfig()
 
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
-	cache, err := cache.NewKialiCache(clients, *conf)
+	readers := map[string]ctrlclient.Reader{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
+	cache, err := cache.NewKialiCache(clients, readers, *conf)
 	require.NoError(err)
 
 	initData := cache.GetZtunnelDump("cluster-default", "istio-system", "ztunnel-7hml8")

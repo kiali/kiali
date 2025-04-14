@@ -7,8 +7,10 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -708,4 +710,59 @@ func FilterByNamespace[T runtime.Object](objects []T, namespace string) []T {
 		}
 	}
 	return filtered
+}
+
+func FilterDaemonSetsBySelector(daemonSets []appsv1.DaemonSet, l map[string]string) ([]appsv1.DaemonSet, error) {
+	selector := labels.Set(l)
+	retDS := []appsv1.DaemonSet{}
+	for _, ds := range daemonSets {
+		// TODO: Can we eliminate error?
+		labelMap, err := metav1.LabelSelectorAsMap(ds.Spec.Selector)
+		if err != nil {
+			return nil, err
+		}
+		labelSet := labels.Set(labelMap)
+
+		svcSelector := labelSet.AsSelector()
+		// selector match is done after listing all daemonSets, similar to registry reading
+		if selector.AsSelector().Empty() || (!svcSelector.Empty() && svcSelector.Matches(selector)) {
+			retDS = append(retDS, ds)
+		}
+	}
+	return retDS, nil
+}
+
+func FilterServicesBySelector(services []core_v1.Service, l map[string]string) []core_v1.Service {
+	selector := labels.Set(l)
+	retSvc := []core_v1.Service{}
+	for _, svc := range services {
+		labelSet := labels.Set(svc.Spec.Selector)
+
+		svcSelector := labelSet.AsSelector()
+		// selector match is done after listing all daemonSets, similar to registry reading
+		if selector.AsSelector().Empty() || (!svcSelector.Empty() && svcSelector.Matches(selector)) {
+			retSvc = append(retSvc, svc)
+		}
+	}
+	return retSvc
+}
+
+func FilterDeploymentsBySelector(deployments []appsv1.Deployment, l map[string]string) ([]appsv1.Deployment, error) {
+	selector := labels.Set(l)
+	retDep := []appsv1.Deployment{}
+	for _, dep := range deployments {
+		// TODO: Can we eliminate error?
+		labelMap, err := metav1.LabelSelectorAsMap(dep.Spec.Selector)
+		if err != nil {
+			return nil, err
+		}
+		labelSet := labels.Set(labelMap)
+
+		depSelector := labelSet.AsSelector()
+		// selector match is done after listing all daemonSets, similar to registry reading
+		if selector.AsSelector().Empty() || (!depSelector.Empty() && depSelector.Matches(selector)) {
+			retDep = append(retDep, dep)
+		}
+	}
+	return retDep, nil
 }

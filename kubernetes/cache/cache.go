@@ -7,11 +7,9 @@ import (
 	"time"
 
 	"golang.org/x/exp/maps"
-
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/tools/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -28,9 +26,7 @@ const (
 	kialiCacheWaypointsKey   = "waypoints"
 )
 
-var (
-	klog = log.WithGroup("kialiCache")
-)
+var klog = log.WithGroup("kialiCache")
 
 // KialiCache stores both kube objects and non-kube related data such as pods' proxy status.
 // It is exclusively used by the business layer where it's expected to be a singleton.
@@ -56,8 +52,7 @@ type KialiCache interface {
 	GetIstioStatus() (kubernetes.IstioComponentStatus, bool)
 	SetIstioStatus(kubernetes.IstioComponentStatus)
 
-	GetKubeCaches() map[string]KubeCache
-	GetKubeCache(cluster string) (KubeCache, error)
+	GetKubeCache(cluster string) (client.Reader, error)
 
 	GetMesh() (*models.Mesh, bool)
 	SetMesh(*models.Mesh)
@@ -111,6 +106,7 @@ type kialiCacheImpl struct {
 	buildInfo               models.BuildInfo
 	canReadWebhookByCluster map[string]bool
 	cleanup                 func()
+	clients                 map[string]kubernetes.ClientInterface
 	conf                    config.Config
 
 	// Info about the kube clusters that the cache knows about.
@@ -125,7 +121,7 @@ type kialiCacheImpl struct {
 	istioStatusStore store.Store[string, kubernetes.IstioComponentStatus]
 
 	// Maps a cluster name to a KubeCache
-	kubeCache map[string]KubeCache
+	kubeCache map[string]client.Reader
 
 	// There's only ever one mesh but we want to reuse the store machinery
 	// so using a store here but the only key should be kialiCacheMeshKey.
@@ -135,6 +131,7 @@ type kialiCacheImpl struct {
 	// so you can easily deref the namespace in GetNamespace and SetNamespace. The downside to this is that
 	// we need an additional lock for the namespace map that gets returned from the store to ensure it is threadsafe.
 	namespaceStore store.Store[namespacesKey, map[string]models.Namespace]
+
 	// Only necessary because we want to cache the namespaces per cluster and token as a map
 	// and maps are not thread safe. We need an additional lock on top of the Store to ensure
 	// that the map returned from the store is threadsafe.
@@ -159,21 +156,18 @@ type kialiCacheImpl struct {
 	ztunnelConfigStore store.Store[string, *kubernetes.ZtunnelConfigDump]
 }
 
-func NewKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, conf config.Config) (KialiCache, error) {
-	return newKialiCache(kialiSAClients, conf, cache.WaitForCacheSync)
-}
-
-func newKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, conf config.Config, waitForSync waitForCacheSyncFunc) (KialiCache, error) {
+func NewKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, kubeCache map[string]client.Reader, conf config.Config) (KialiCache, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	namespaceKeyTTL := time.Duration(conf.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
 	kialiCacheImpl := kialiCacheImpl{
 		ambientChecksPerCluster: store.NewExpirationStore(ctx, store.New[string, bool](), util.AsPtr(conf.KialiInternal.CacheExpiration.AmbientCheck), nil),
 		canReadWebhookByCluster: make(map[string]bool),
 		cleanup:                 cancel,
+		clients:                 kialiSAClients,
 		conf:                    conf,
 		gatewayStore:            store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(conf.KialiInternal.CacheExpiration.Gateway), nil),
 		istioStatusStore:        store.NewExpirationStore(ctx, store.New[string, kubernetes.IstioComponentStatus](), util.AsPtr(conf.KialiInternal.CacheExpiration.IstioStatus), nil),
-		kubeCache:               make(map[string]KubeCache),
+		kubeCache:               kubeCache,
 		meshStore:               store.NewExpirationStore(ctx, store.New[string, *models.Mesh](), util.AsPtr(conf.KialiInternal.CacheExpiration.Mesh), nil),
 		namespaceStore:          store.NewExpirationStore(ctx, store.New[namespacesKey, map[string]models.Namespace](), &namespaceKeyTTL, nil),
 		proxyStatusStore:        store.New[string, *kubernetes.ProxyStatus](),
@@ -186,20 +180,6 @@ func newKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, conf co
 	}
 
 	for cluster, client := range kialiSAClients {
-		// we only need our deleteNamespace function called when an error occurs in a namespace-scoped cache
-		var errHandler ErrorHandler
-		if !conf.Deployment.ClusterWideAccess {
-			errHandler = kialiCacheImpl.deleteNamespace
-		}
-		cache, err := NewKubeCache(client, conf, errHandler, waitForSync)
-		if err != nil {
-			klog.Errorf("Error creating kube cache for cluster: [%s]. Err: %v", cluster, err)
-			return nil, err
-		}
-		klog.Infof("Kube cache is active for cluster: [%s]", cluster)
-
-		kialiCacheImpl.kubeCache[cluster] = cache
-
 		// Check if the cluster can list webhooks
 		reviews, err := client.GetSelfSubjectAccessReview(ctx, "", "admissionregistration.k8s.io", "mutatingwebhookconfigurations", []string{"list"})
 		if err != nil {
@@ -232,12 +212,7 @@ func (c *kialiCacheImpl) CanListWebhooks(cluster string) bool {
 	return c.canReadWebhookByCluster[cluster]
 }
 
-// GetKubeCaches returns a kube cache for every configured Kiali Service Account client keyed by cluster name.
-func (c *kialiCacheImpl) GetKubeCaches() map[string]KubeCache {
-	return c.kubeCache
-}
-
-func (c *kialiCacheImpl) GetKubeCache(cluster string) (KubeCache, error) {
+func (c *kialiCacheImpl) GetKubeCache(cluster string) (client.Reader, error) {
 	cache, found := c.kubeCache[cluster]
 	if !found {
 		// This should not happen but it probably means the user clients have clusters that the cache doesn't know about.
@@ -249,16 +224,7 @@ func (c *kialiCacheImpl) GetKubeCache(cluster string) (KubeCache, error) {
 // Stops all caches across all clusters.
 func (c *kialiCacheImpl) Stop() {
 	klog.Infof("Stopping Kiali Cache")
-
-	wg := sync.WaitGroup{}
-	for _, kc := range c.kubeCache {
-		wg.Add(1)
-		go func(c KubeCache) {
-			defer wg.Done()
-			c.Stop()
-		}(kc)
-	}
-	wg.Wait()
+	c.cleanup()
 }
 
 func (c *kialiCacheImpl) GetClusters() []models.KubeCluster {
@@ -308,10 +274,16 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 			return false
 		}
 
+		daemonSetList := &appsv1.DaemonSetList{}
+		if err := kubeCache.List(context.TODO(), daemonSetList); err != nil {
+			// Don't set the check so we will check again the next time since this error may be transient.
+			log.Debugf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
+			return false
+		}
 		selector := map[string]string{
 			config.IstioAppLabel: config.Ztunnel,
 		}
-		daemonsets, err := kubeCache.GetDaemonSetsWithSelector(metav1.NamespaceAll, selector)
+		daemonsets, err := kubernetes.FilterDaemonSetsBySelector(daemonSetList.Items, selector)
 		if err != nil {
 			// Don't set the check so we will check again the next time since this error may be transient.
 			klog.Debugf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
@@ -333,34 +305,40 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 
 // GetZtunnelPods returns the pods list from ztunnel daemonset
 func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
-	ztunnelPods := []v1.Pod{}
 	kubeCache, err := in.GetKubeCache(cluster)
 	if err != nil {
 		klog.Debugf("Unable to get kube cache when checking for ambient profile: %s", err)
-		return ztunnelPods
-
+		return nil
 	}
+
+	daemonSetList := &appsv1.DaemonSetList{}
+	if err := kubeCache.List(context.TODO(), daemonSetList); err != nil {
+		// Don't set the check so we will check again the next time since this error may be transient.
+		klog.Debugf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
+		return nil
+	}
+
 	selector := map[string]string{
 		config.IstioAppLabel: config.Ztunnel,
 	}
-	daemonsets, err := kubeCache.GetDaemonSetsWithSelector(metav1.NamespaceAll, selector)
+	daemonsets, err := kubernetes.FilterDaemonSetsBySelector(daemonSetList.Items, selector)
 	if err != nil {
-		// Don't set the check so we will check again the next time since this error may be transient.
 		klog.Debugf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
-		return ztunnelPods
+		return nil
 	}
 
 	if len(daemonsets) == 0 {
 		klog.Debugf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
-		return ztunnelPods
+		return nil
 	}
 
-	ztunnelPods, err = kubeCache.GetPods(daemonsets[0].Namespace, fmt.Sprintf("app=%s", config.Ztunnel))
-	if err != nil {
+	podList := &v1.PodList{}
+	if err := kubeCache.List(context.TODO(), podList, client.InNamespace(daemonsets[0].Namespace), client.MatchingLabels{"app": config.Ztunnel}); err != nil {
 		klog.Errorf("Unable to get ztunnel pods: %s", err)
+		return nil
 	}
 
-	return ztunnelPods
+	return podList.Items
 }
 
 // GetGateways Returns a list of all gateway workloads by cluster and namespace
@@ -458,18 +436,6 @@ func (c *kialiCacheImpl) SetNamespace(token string, namespace models.Namespace) 
 
 	ns[namespace.Name] = namespace
 	c.namespaceStore.Set(key, ns)
-}
-
-// deleteNamespace is an error handler that will clean up some internals related to the given namespace
-// if that namespace has been detected to have been deleted. This function is called by the kube cache
-// informers when they encounter an error.
-func (c *kialiCacheImpl) deleteNamespace(kc *kubeCache, namespace string, err error) {
-	if apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err) {
-		cluster := kc.client.ClusterInfo().Name
-		klog.Errorf("Namespace [%v] in cluster [%v] appears to have been deleted or Kiali is forbidden from seeing it [err=%v]. Shutting down namespace cache.", namespace, cluster, err)
-		c.RefreshTokenNamespaces(cluster)
-		kc.StopNamespace(namespace)
-	}
 }
 
 func (c *kialiCacheImpl) GetBuildInfo() models.BuildInfo {

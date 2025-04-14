@@ -234,7 +234,13 @@ func mockGetIstioConfigList(t *testing.T) IstioConfigService {
 
 	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
-	return IstioConfigService{userClients: k8sclients, kialiCache: cache, businessLayer: NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil), conf: conf}
+	return IstioConfigService{
+		userClients:   k8sclients,
+		saClients:     kubernetes.ConvertFromUserClients(k8sclients),
+		kialiCache:    cache,
+		businessLayer: NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil),
+		conf:          conf,
+	}
 }
 
 func fakeGetGateways() []*networking_v1.Gateway {
