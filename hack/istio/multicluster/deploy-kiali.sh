@@ -189,7 +189,7 @@ deploy_kiali() {
     --set health_config.rate[0].namespace="alpha" \
     --set health_config.rate[0].tolerance[0].code="5xx" \
     --set health_config.rate[0].tolerance[0].degraded="2" \
-    --set health_config.rate[0].tolerance[0].failure="100" \    
+    --set health_config.rate[0].tolerance[0].failure="100" \
     --set deployment.ingress.enabled="${ingress_enabled}" \
     --set deployment.service_type="${service_type}" \
     --set server.web_port="${web_port}" \
