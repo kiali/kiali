@@ -66,8 +66,8 @@ ISTIO_HUB=""
 # See: https://github.com/kiali/kiali/pull/3713#issuecomment-809920379)
 ISTIO_TAG=""
 
-# Is this running in a CI env? Typically the answer is yes for these hack scripts, so we'll default to true.
-CI="${CI:-true}"
+# If running in CI, apply CI config overrides. Typically the answer is yes for these hack scripts, so we'll default to true.
+CI_CONFIG="${CI_CONFIG:-true}"
 
 # Certs directory where you want the generates cert files to be written
 CERTS_DIR="/tmp/istio-multicluster-certs"
@@ -180,7 +180,7 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     -ci|--continuous-integration)
-      CI="$2"
+      CI_CONFIG="$2"
       shift;shift
       ;;
     -c1c|--cluster1-context)
@@ -583,7 +583,7 @@ export AUTH_GROUPS \
        BOOKINFO_ENABLED \
        BOOKINFO_NAMESPACE \
        CERTS_DIR \
-       CI \
+       CI_CONFIG \
        CLIENT_EXE_NAME \
        CLUSTER1_CONTEXT \
        CLUSTER1_NAME \
@@ -628,7 +628,7 @@ AUTH_GROUPS=$AUTH_GROUPS
 BOOKINFO_ENABLED=$BOOKINFO_ENABLED
 BOOKINFO_NAMESPACE=$BOOKINFO_NAMESPACE
 CERTS_DIR=$CERTS_DIR
-CI=$CI
+CI_CONFIG=$CI_CONFIG
 CLIENT_EXE_NAME=$CLIENT_EXE_NAME
 CLUSTER1_CONTEXT=$CLUSTER1_CONTEXT
 CLUSTER1_NAME=$CLUSTER1_NAME

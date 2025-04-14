@@ -176,8 +176,7 @@ deploy_kiali() {
         )
   fi
 
-  if [ "${CI}" == "true" ]; then
-    echo "SETTING CI OVERRIDES!"
+  if [ "${CI_CONFIG}" == "true" ]; then
     helm_args+=(
           --set external_services.grafana.external_url="http://grafana.istio-system:3000"
           --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard"
@@ -193,10 +192,7 @@ deploy_kiali() {
           --set kiali_internal.cache_expiration.mesh="10s"
           --set kiali_internal.cache_expiration.waypoint="2m"
         )
-  else
-    echo "IGNORING CI OVERRIDES!"
   fi
-
 
   helm upgrade --install \
     "${helm_args[@]}" \
