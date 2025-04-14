@@ -404,6 +404,13 @@ When('the user refreshes the page', () => {
   ensureKialiFinishedLoading();
 });
 
+When('the user refreshes the page and waits', () => {
+  cy.intercept('**/api/status').as('getStatus');
+  cy.get('[data-test="refresh-button"]').click();
+  cy.wait('@getStatus');
+  ensureKialiFinishedLoading();
+});
+
 When('user filters for config {string}', (configName: string) => {
   cy.get('button#filter_select_value-toggle').click();
   cy.contains('div#filter_select_value button', configName).click();
