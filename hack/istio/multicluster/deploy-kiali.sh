@@ -176,8 +176,6 @@ deploy_kiali() {
         )
   fi
 
-  if [ "${CI}" == "true" ]; then
-  fi
 
   helm upgrade --install \
     "${helm_args[@]}" \
