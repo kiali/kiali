@@ -10,6 +10,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
@@ -18,6 +19,7 @@ import (
 )
 
 func NewIstioStatusService(
+	cache cache.KialiCache,
 	conf *config.Config,
 	discovery istio.MeshDiscovery,
 	homeClusterSAClient kubernetes.ClientInterface,
@@ -26,6 +28,7 @@ func NewIstioStatusService(
 	workloads *WorkloadService,
 ) IstioStatusService {
 	return IstioStatusService{
+		cache:               cache,
 		conf:                conf,
 		discovery:           discovery,
 		homeClusterSAClient: homeClusterSAClient,
@@ -35,8 +38,10 @@ func NewIstioStatusService(
 	}
 }
 
-// SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
+// IstioStatusService deals with fetching istio/kubernetes component status
 type IstioStatusService struct {
+	// The global kiali cache. This should be passed into the IstioStatusService rather than created inside of it.
+	cache               cache.KialiCache
 	conf                *config.Config
 	discovery           istio.MeshDiscovery
 	homeClusterSAClient kubernetes.ClientInterface
@@ -55,6 +60,13 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 	if !iss.conf.ExternalServices.Istio.ComponentStatuses.Enabled || !iss.conf.ExternalServices.Istio.IstioAPIEnabled {
 		return kubernetes.IstioComponentStatus{}, nil
 	}
+
+	if iss.conf.KialiInternal.CacheExpiration.IstioStatus > 0 {
+		if istioStatus, ok := iss.cache.GetIstioStatus(); ok {
+			return istioStatus, nil
+		}
+	}
+
 	result := kubernetes.IstioComponentStatus{}
 
 	for cluster := range iss.userClients {
@@ -68,6 +80,10 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 
 	// for local cluster only get addons
 	result.Merge(iss.getAddonComponentStatus(iss.conf.KubernetesConfig.ClusterName))
+
+	if iss.conf.KialiInternal.CacheExpiration.IstioStatus > 0 {
+		iss.cache.SetIstioStatus(result)
+	}
 
 	return result, nil
 }

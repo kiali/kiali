@@ -66,6 +66,9 @@ ISTIO_HUB=""
 # See: https://github.com/kiali/kiali/pull/3713#issuecomment-809920379)
 ISTIO_TAG=""
 
+# Is this running in a CI env? Typically the answer is yes for these hack scripts, so we'll default to true.
+CI="${CI:-true}"
+
 # Certs directory where you want the generates cert files to be written
 CERTS_DIR="/tmp/istio-multicluster-certs"
 
@@ -174,6 +177,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -c|--client-exe)
       CLIENT_EXE_NAME="$2"
+      shift;shift
+      ;;
+    -ci|--continuous-integration)
+      CI="$2"
       shift;shift
       ;;
     -c1c|--cluster1-context)
@@ -371,6 +378,7 @@ Valid command line arguments:
   -bn|--bookinfo-namespace: If the bookinfo demo will be installed, this is its namespace (Default: bookinfo)
   -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc". If you use
                           kubectl, it is assumed minikube will be used and the cluster names are profile names.
+  -ci|--continuous-integration: If true apply any changes necessary for the CI environment (Default: true)
   -c1c|--cluster1-context <name>: If cluster1 is Kubernetes, this is the context used to connect to the cluster
   -c1n|--cluster1-name <name>: The name of cluster1 (Default: east)
   -c1p|--cluster1-password <name>: If cluster1 is OpenShift, this is the password used to log in (Default: kiali)
@@ -575,6 +583,7 @@ export AUTH_GROUPS \
        BOOKINFO_ENABLED \
        BOOKINFO_NAMESPACE \
        CERTS_DIR \
+       CI \
        CLIENT_EXE_NAME \
        CLUSTER1_CONTEXT \
        CLUSTER1_NAME \
@@ -619,6 +628,7 @@ AUTH_GROUPS=$AUTH_GROUPS
 BOOKINFO_ENABLED=$BOOKINFO_ENABLED
 BOOKINFO_NAMESPACE=$BOOKINFO_NAMESPACE
 CERTS_DIR=$CERTS_DIR
+CI=$CI
 CLIENT_EXE_NAME=$CLIENT_EXE_NAME
 CLUSTER1_CONTEXT=$CLUSTER1_CONTEXT
 CLUSTER1_NAME=$CLUSTER1_NAME

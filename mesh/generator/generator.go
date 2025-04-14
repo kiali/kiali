@@ -12,6 +12,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -43,17 +44,6 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 	_, finalizers := appender.ParseAppenders(o)
 	meshMap := mesh.NewMeshMap()
 
-	// get the current status info to determine versions
-	statusInfo := mesh.StatusGetter(ctx, gi.Conf, gi.ClientFactory, gi.KialiCache, gi.Grafana)
-	esVersions := make(map[string]string)
-	for _, es := range statusInfo.ExternalServices {
-		esVersions[es.Name] = es.Version
-	}
-
-	// start by adding istio control planes and the mesh clusters
-	meshDef, err := gi.Discovery.Mesh(ctx)
-	graph.CheckError(err)
-
 	// get istio status components (istiod, grafana, prometheus, tracing)
 	istioStatus, err := gi.IstioStatusGetter.GetStatus(ctx)
 	if errors.IsForbidden(err) {
@@ -69,6 +59,25 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 		key := componentHealthKey{Name: data.Name, Namespace: data.Namespace, Cluster: data.Cluster}.String()
 		healthData[key] = data.Status
 	}
+
+	grafanaHealthKey := componentHealthKey{Name: "grafana", Namespace: "", Cluster: gi.Conf.KubernetesConfig.ClusterName}.String()
+	promHealthKey := componentHealthKey{Name: "prometheus", Namespace: "", Cluster: gi.Conf.KubernetesConfig.ClusterName}.String()
+	tracingHealthKey := componentHealthKey{Name: "tracing", Namespace: "", Cluster: gi.Conf.KubernetesConfig.ClusterName}.String()
+
+	// get the current status info to determine versions
+	var grafanaService *grafana.Service
+	if gi.Grafana != nil && healthData[grafanaHealthKey] == kubernetes.ComponentHealthy {
+		grafanaService = gi.Grafana
+	}
+	kialiStatus := mesh.StatusGetter(ctx, gi.Conf, gi.ClientFactory, gi.KialiCache, grafanaService)
+	esVersions := make(map[string]string)
+	for _, es := range kialiStatus.ExternalServices {
+		esVersions[es.Name] = es.Version
+	}
+
+	// start by adding istio control planes and the mesh clusters
+	meshDef, err := gi.Discovery.Mesh(ctx)
+	graph.CheckError(err)
 
 	clusterMap := make(map[string]bool)
 	for _, cp := range meshDef.ControlPlanes {
@@ -153,7 +162,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			cluster, namespace, isExternal := discoverInfraService(es.Prometheus.URL, ctx, gi)
 			var node *mesh.Node
 			name := "Prometheus"
-			node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, cluster, namespace, name, es.Prometheus, esVersions[name], isExternal, healthData[fmt.Sprintf("%s%s", "prometheus", gi.Conf.KubernetesConfig.ClusterName)])
+			node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, cluster, namespace, name, es.Prometheus, esVersions[name], isExternal, healthData[promHealthKey])
 			mesh.CheckError(err)
 
 			kiali.AddEdge(node)
@@ -162,7 +171,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			if conf.ExternalServices.Tracing.Enabled {
 				cluster, namespace, isExternal = discoverInfraService(es.Tracing.InternalURL, ctx, gi)
 				name = string(es.Tracing.Provider)
-				node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, cluster, namespace, name, es.Tracing, esVersions[name], isExternal, healthData[fmt.Sprintf("%s%s", "tracing", gi.Conf.KubernetesConfig.ClusterName)])
+				node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, cluster, namespace, name, es.Tracing, esVersions[name], isExternal, healthData[tracingHealthKey])
 				mesh.CheckError(err)
 
 				kiali.AddEdge(node)
@@ -172,7 +181,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			if conf.ExternalServices.Grafana.Enabled {
 				cluster, namespace, isExternal = discoverInfraService(es.Grafana.InternalURL, ctx, gi)
 				name = "Grafana"
-				node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, cluster, namespace, name, es.Grafana, esVersions[name], isExternal, healthData[fmt.Sprintf("%s%s", "grafana", gi.Conf.KubernetesConfig.ClusterName)])
+				node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, cluster, namespace, name, es.Grafana, esVersions[name], isExternal, healthData[grafanaHealthKey])
 				mesh.CheckError(err)
 
 				kiali.AddEdge(node)
