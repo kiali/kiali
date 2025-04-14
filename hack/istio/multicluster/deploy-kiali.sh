@@ -178,7 +178,7 @@ deploy_kiali() {
 
   if [ "${CI}" == "true" ]; then
     helm_args+=(
-          "--set external_services.grafana.dashboards[0].name=IstioMeshDashboard"
+          '--set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard"'
           "--set external_services.istio.validation_reconcile_interval=5s"
           "--set health_config.rate[0].kind=service"
           "--set health_config.rate[0].name=y-server"
