@@ -176,24 +176,27 @@ deploy_kiali() {
         )
   fi
 
+  if [ "${CI}" == "true" ]; then
+    helm_args+=(
+          "--set external_services.grafana.dashboards[0].name=Istio Mesh Dashboard"
+          "--set external_services.istio.validation_reconcile_interval=5s"
+          "--set health_config.rate[0].kind=service"
+          "--set health_config.rate[0].name=y-server"
+          "--set health_config.rate[0].namespace=alpha"
+          "--set health_config.rate[0].tolerance[0].code=5xx"
+          "--set health_config.rate[0].tolerance[0].degraded=2"
+          "--set health_config.rate[0].tolerance[0].failure=100"
+          "--set kiali_internal.cache_expiration.gateway=3m"
+          "--set kiali_internal.cache_expiration.istio_status=0"
+          "--set kiali_internal.cache_expiration.waypoint=3m"
+        )
+  fi
+
   helm_command='helm upgrade --install
     ${helm_args[@]}
     --namespace ${ISTIO_NAMESPACE}
     --set deployment.logger.log_level="trace"
     --set external_services.grafana.external_url="http://grafana.istio-system:3000"
-    --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard"
-    --set external_services.istio.validation_reconcile_interval="5s"
-    --set health_config.rate[0].kind="service"
-    --set health_config.rate[0].name="y-server"
-    --set health_config.rate[0].namespace="alpha"
-    --set health_config.rate[0].tolerance[0].code="5xx"
-    --set health_config.rate[0].tolerance[0].degraded=2
-    --set health_config.rate[0].tolerance[0].failure=100
-    --set kiali_internal.cache_expiration.ambient_check="10m"
-    --set kiali_internal.cache_expiration.gateway="3m"
-    --set kiali_internal.cache_expiration.istio_status="0"
-    --set kiali_internal.cache_expiration.mesh="10s"
-    --set kiali_internal.cache_expiration.waypoint="3m"
     --set deployment.ingress.enabled=${ingress_enabled}
     --set deployment.service_type=${service_type}
     --set server.web_port=${web_port}
