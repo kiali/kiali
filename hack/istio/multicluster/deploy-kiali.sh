@@ -188,6 +188,7 @@ deploy_kiali() {
           "--set health_config.rate[0].tolerance[0].failure=100"
           "--set kiali_internal.cache_expiration.gateway=3m"
           "--set kiali_internal.cache_expiration.istio_status=0"
+          "--set kiali_internal.cache_expiration.mesh=10s"
           "--set kiali_internal.cache_expiration.waypoint=3m"
         )
   fi
