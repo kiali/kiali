@@ -103,13 +103,13 @@ Feature: Kiali Mesh page
   @component-health-upscale
   Scenario: Grafana Infra unreachable
     When user scales to "0" the "grafana" in namespace "istio-system"
-    Then the user refreshes the page and waits
+    Then the user refreshes the page
     When user selects mesh node with label "Grafana"
     Then user sees "Grafana" node side panel
     Then user sees "Version: unknown" node side panel
     Then user sees "error" icon side panel
     When user scales to "1" the "grafana" in namespace "istio-system"
-    Then the user refreshes the page and waits
+    Then the user refreshes the page
     When user selects mesh node with label "Grafana"
     Then user sees "Grafana" node side panel
     Then user sees "correct" icon side panel
