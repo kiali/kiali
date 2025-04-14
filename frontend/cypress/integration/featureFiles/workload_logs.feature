@@ -21,15 +21,13 @@ Feature: Workload logs tab
     And the "container-ratings" container should be checked
     And I should see some "ratings-v1" pod selected in the pod selector
 
-  @bookinfo-app
   Scenario: The log pane of the logs tab should only show the lines with the requested text
-    Given I am on the logs tab of the "bookinfo-logger" workload detail page of the "loggers" namespace
+    Given I am on the logs tab of the "custom-logger" workload detail page of the "loggers" namespace
     When I type "GET" on the Show text field
     Then the log pane should only show log lines containing "GET"
 
-  @bookinfo-app
   Scenario: The log pane of the logs tab should hide the lines with the requested text
-    Given I am on the logs tab of the "bookinfo-logger" workload detail page of the "loggers" namespace
+    Given I am on the logs tab of the "custom-logger" workload detail page of the "loggers" namespace
     When I type "GET" on the Hide text field
     Then the log pane should only show log lines not containing "GET"
 

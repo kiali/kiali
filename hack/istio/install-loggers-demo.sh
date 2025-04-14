@@ -78,7 +78,7 @@ if [ "${DELETE_DEMO}" == "false" ]; then
   fi
 
   echo "Deploying logger for Bookinfo"
-  $CLIENT_EXE run bookinfo-logger \
+  $CLIENT_EXE run custom-logger \
   --image=busybox \
   --namespace=$NAMESPACE \
   --restart=Never \
