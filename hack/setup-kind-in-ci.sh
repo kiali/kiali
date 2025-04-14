@@ -246,7 +246,7 @@ setup_kind_singlecluster() {
     --set health_config.rate[0].tolerance[0].failure=100 \
     --set kiali_internal.cache_expiration.ambient_check="10m" \
     --set kiali_internal.cache_expiration.gateway="3m" \
-    --set kiali_internal.cache_expiration.istio_status="100ms" \
+    --set kiali_internal.cache_expiration.istio_status="0" \
     --set kiali_internal.cache_expiration.mesh="20s" \
     --set kiali_internal.cache_expiration.waypoint="3m" \
     kiali-server \
@@ -342,7 +342,7 @@ setup_kind_tempo() {
     --set health_config.rate[0].tolerance[0].failure=100 \
     --set kiali_internal.cache_expiration.ambient_check="10m" \
     --set kiali_internal.cache_expiration.gateway="3m" \
-    --set kiali_internal.cache_expiration.istio_status="100ms" \
+    --set kiali_internal.cache_expiration.istio_status="0" \
     --set kiali_internal.cache_expiration.mesh="20s" \
     --set kiali_internal.cache_expiration.waypoint="3m" \
     kiali-server \

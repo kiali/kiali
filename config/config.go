@@ -913,7 +913,7 @@ func NewConfig() (c *Config) {
 			CacheExpiration: CacheExpirationConfig{
 				AmbientCheck: 10 * time.Minute,
 				Gateway:      4 * time.Minute,
-				IstioStatus:  0, // TODO
+				IstioStatus:  30 * time.Second, // Set to 0 to disable
 				Mesh:         20 * time.Second,
 				Waypoint:     4 * time.Minute,
 			},
