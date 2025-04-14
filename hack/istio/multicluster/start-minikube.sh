@@ -89,7 +89,6 @@ openssl genrsa -out "${KEYCLOAK_CERTS_DIR}"/key.pem 2048
 # create certificate signing request
 openssl req -new -key "${KEYCLOAK_CERTS_DIR}"/key.pem -out "${KEYCLOAK_CERTS_DIR}"/csr.pem \
   -subj "/CN=kube-ca" \
-  -addext "subjectAltName = DNS:${KEYCLOAK_HOSTNAME}" \
   -sha256 -config "${KEYCLOAK_CERTS_DIR}"/req.cnf
 
 # create certificate
