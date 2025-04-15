@@ -244,10 +244,10 @@ setup_kind_singlecluster() {
     --set health_config.rate[0].tolerance[0].code="5xx" \
     --set health_config.rate[0].tolerance[0].degraded=2 \
     --set health_config.rate[0].tolerance[0].failure=100 \
-    --set kiali_internal.cache_expiration.gateway="3m" \
+    --set kiali_internal.cache_expiration.gateway="2m" \
     --set kiali_internal.cache_expiration.istio_status="0" \
     --set kiali_internal.cache_expiration.mesh="10s" \
-    --set kiali_internal.cache_expiration.waypoint="3m" \
+    --set kiali_internal.cache_expiration.waypoint="2m" \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 
@@ -268,7 +268,8 @@ setup_kind_singlecluster() {
         -kas "${AUTH_STRATEGY}" \
         -kudi true \
         -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz \
-        -ag "default"
+        -ag "default" \
+        -ci true
   else
      # Helm chart doesn't support passing in service opts so patch them after the helm deploy.
       kubectl patch service kiali -n istio-system --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'
@@ -339,10 +340,10 @@ setup_kind_tempo() {
     --set health_config.rate[0].tolerance[0].code="5xx" \
     --set health_config.rate[0].tolerance[0].degraded=2 \
     --set health_config.rate[0].tolerance[0].failure=100 \
-    --set kiali_internal.cache_expiration.gateway="3m" \
+    --set kiali_internal.cache_expiration.gateway="2m" \
     --set kiali_internal.cache_expiration.istio_status="0" \
     --set kiali_internal.cache_expiration.mesh="10s" \
-    --set kiali_internal.cache_expiration.waypoint="3m" \
+    --set kiali_internal.cache_expiration.waypoint="2m" \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
   
@@ -440,7 +441,8 @@ setup_kind_multicluster() {
     -kas "${AUTH_STRATEGY}" \
     -kudi true \
     -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz \
-    --tempo ${TEMPO}
+    --tempo ${TEMPO} \
+    -ci true
 }
 
 if [ -n "${MULTICLUSTER}" ]; then
