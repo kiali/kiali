@@ -39,23 +39,54 @@ switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
 
 ${CLIENT_EXE} label namespace ${ISTIO_NAMESPACE} topology.istio.io/network=${NETWORK1_ID}
 
-ISTIO_INSTALL_SCRIPT="${SCRIPT_DIR}/../install-istio-via-istioctl.sh"
-if [ ! -z "${ISTIO_TAG}" ]; then
-  image_tag_arg="--image-tag ${ISTIO_TAG}"
+ISTIO_INSTALL_SCRIPT="${SCRIPT_DIR}/../install-istio-via-sail.sh"
+image_tag_arg=""
+image_hub_arg=""
+if [ -n "${ISTIO_TAG}" ]; then
+  image_tag_arg="--set spec.values.pilot.tag=${ISTIO_TAG}"
 fi
-if [ ! -z "${ISTIO_HUB}" ]; then
-  image_hub_arg="--image-hub ${ISTIO_HUB}"
+if [ -n "${ISTIO_HUB}" ]; then
+  image_hub_arg="--set spec.values.pilot.hub=${ISTIO_HUB}"
 fi
+
+MC_EAST_YAML=$(mktemp)
+cat <<EOF > "$MC_EAST_YAML"
+spec:
+  namespace: ${ISTIO_NAMESPACE}
+  values:
+    meshConfig:
+      defaultConfig:
+        tracing:
+          sampling: 100
+          zipkin:
+            address: zipkin.istio-system:9411
+      extensionProviders:
+        - name: prometheus
+          prometheus: {}
+    global:
+      meshID: ${MESH_ID}
+      multiCluster:
+        clusterName: ${CLUSTER1_NAME}
+      network: ${NETWORK1_ID}
+    pilot:
+      env:
+        EXTERNAL_ISTIOD: "true"
+EOF
+
 
 if [ "${TEMPO}" == "true" ]; then
-  "${SCRIPT_DIR}"/../tempo/install-tempo-env.sh -c ${CLIENT_EXE} -ot true
-  ${ISTIO_INSTALL_SCRIPT} ${image_tag_arg:-} ${image_hub_arg:-} --client-exe-path ${CLIENT_EXE} --cluster-name ${CLUSTER1_NAME} --istioctl ${ISTIOCTL} --istio-dir ${ISTIO_DIR} --mesh-id ${MESH_ID} --namespace ${ISTIO_NAMESPACE} --network ${NETWORK1_ID} --set values.pilot.env.EXTERNAL_ISTIOD=true --k8s-gateway-api-enabled true  -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
+  ${ISTIO_INSTALL_SCRIPT} -a "prometheus grafana tempo" --patch-file "${MC_EAST_YAML}" ${image_tag_arg} ${image_hub_arg}
 else
-  ${ISTIO_INSTALL_SCRIPT} ${image_tag_arg:-} ${image_hub_arg:-} --client-exe-path ${CLIENT_EXE} --cluster-name ${CLUSTER1_NAME} --istioctl ${ISTIOCTL} --istio-dir ${ISTIO_DIR} --mesh-id ${MESH_ID} --namespace ${ISTIO_NAMESPACE} --network ${NETWORK1_ID} --set values.pilot.env.EXTERNAL_ISTIOD=true --k8s-gateway-api-enabled true
+  ${ISTIO_INSTALL_SCRIPT} --patch-file "${MC_EAST_YAML}" ${image_tag_arg} ${image_hub_arg}
 fi
 
-GEN_GATEWAY_SCRIPT="${ISTIO_DIR}/samples/multicluster/gen-eastwest-gateway.sh"
-${GEN_GATEWAY_SCRIPT} --mesh ${MESH_ID} --cluster ${CLUSTER1_NAME} --network ${NETWORK1_ID} | ${ISTIOCTL} --context=${CLUSTER1_CONTEXT} install -y -f -
+helm install istio-eastwestgateway gateway \
+  --repo https://istio-release.storage.googleapis.com/charts \
+  --wait \
+  -n istio-system \
+  --kube-context "${CLUSTER1_CONTEXT}" \
+  --set name=istio-eastwestgateway \
+  --set networkGateway="${NETWORK1_ID}"
 
 EXPOSE_ISTIOD_YAML="${ISTIO_DIR}/samples/multicluster/expose-istiod.yaml"
 ${CLIENT_EXE} apply --context=${CLUSTER1_CONTEXT} -n ${ISTIO_NAMESPACE} -f $EXPOSE_ISTIOD_YAML
@@ -80,23 +111,23 @@ ${CLIENT_EXE} --context=${CLUSTER2_CONTEXT} label namespace ${ISTIO_NAMESPACE} t
 
 DISCOVERY_ADDRESS=$(${CLIENT_EXE} --context=${CLUSTER1_CONTEXT} -n ${ISTIO_NAMESPACE} get svc istio-eastwestgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
-# some previous versions of Istio do not install the Istio CRDs via the remote profile, thus we need to explicitly set
-# components.base.enabled=true to get the CRDs installed.
-# As of Istio 1.24, it seems this is no longer necessary, but it doesn't hurt anything if we specify it.
-${ISTIOCTL} install -y --force=true --set profile=remote --set components.base.enabled=true --set values.istiodRemote.injectionPath=/inject/cluster/${CLUSTER2_NAME}/net/${NETWORK2_ID} --set values.global.remotePilotAddress=${DISCOVERY_ADDRESS}
-${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/addons/prometheus.yaml -n ${ISTIO_NAMESPACE}
+MC_WEST_YAML=$(mktemp)
+cat <<EOF > "$MC_WEST_YAML"
+spec:
+  profile: remote
+  namespace: ${ISTIO_NAMESPACE}
+  values:
+    istiodRemote:
+      injectionPath: /inject/cluster/${CLUSTER2_NAME}/net/${NETWORK2_ID}
+    global:
+      remotePilotAddress: ${DISCOVERY_ADDRESS}
+EOF
+${ISTIO_INSTALL_SCRIPT} -a "prometheus" --patch-file "${MC_WEST_YAML}" --wait "false"
 
-CA_BUNDLE=$(${CLIENT_EXE} get secret cacerts -n ${ISTIO_NAMESPACE} --context ${CLUSTER1_CONTEXT} -o jsonpath={.data."ca-cert\.pem"})
-
-${CLIENT_EXE} patch mutatingwebhookconfigurations.admissionregistration.k8s.io -n ${ISTIO_NAMESPACE} istio-sidecar-injector -p "{\"webhooks\":[{\"clientConfig\":{\"caBundle\":\"${CA_BUNDLE}\"},\"name\":\"rev.namespace.sidecar-injector.istio.io\"}]}"
-${CLIENT_EXE} patch mutatingwebhookconfigurations.admissionregistration.k8s.io -n ${ISTIO_NAMESPACE} istio-sidecar-injector -p "{\"webhooks\":[{\"clientConfig\":{\"caBundle\":\"${CA_BUNDLE}\"},\"name\":\"rev.object.sidecar-injector.istio.io\"}]}"
-${CLIENT_EXE} patch mutatingwebhookconfigurations.admissionregistration.k8s.io -n ${ISTIO_NAMESPACE} istio-sidecar-injector -p "{\"webhooks\":[{\"clientConfig\":{\"caBundle\":\"${CA_BUNDLE}\"},\"name\":\"namespace.sidecar-injector.istio.io\"}]}"
-${CLIENT_EXE} patch mutatingwebhookconfigurations.admissionregistration.k8s.io -n ${ISTIO_NAMESPACE} istio-sidecar-injector -p "{\"webhooks\":[{\"clientConfig\":{\"caBundle\":\"${CA_BUNDLE}\"},\"name\":\"object.sidecar-injector.istio.io\"}]}"
-
-${CLIENT_EXE} patch mutatingwebhookconfigurations.admissionregistration.k8s.io -n ${ISTIO_NAMESPACE} istio-revision-tag-default -p "{\"webhooks\":[{\"clientConfig\":{\"caBundle\":\"${CA_BUNDLE}\"},\"name\":\"rev.namespace.sidecar-injector.istio.io\"}]}"
-${CLIENT_EXE} patch mutatingwebhookconfigurations.admissionregistration.k8s.io -n ${ISTIO_NAMESPACE} istio-revision-tag-default -p "{\"webhooks\":[{\"clientConfig\":{\"caBundle\":\"${CA_BUNDLE}\"},\"name\":\"rev.object.sidecar-injector.istio.io\"}]}"
-${CLIENT_EXE} patch mutatingwebhookconfigurations.admissionregistration.k8s.io -n ${ISTIO_NAMESPACE} istio-revision-tag-default -p "{\"webhooks\":[{\"clientConfig\":{\"caBundle\":\"${CA_BUNDLE}\"},\"name\":\"namespace.sidecar-injector.istio.io\"}]}"
-${CLIENT_EXE} patch mutatingwebhookconfigurations.admissionregistration.k8s.io -n ${ISTIO_NAMESPACE} istio-revision-tag-default -p "{\"webhooks\":[{\"clientConfig\":{\"caBundle\":\"${CA_BUNDLE}\"},\"name\":\"object.sidecar-injector.istio.io\"}]}"
+# We need the istio reconcile to get to the point where it has created the remote RBAC but fails on pinging the primary's istiod.
+# If we don't wait until the RBAC is created by istio, then the Sail reconiliation will fail because istioctl create-remote-secret
+# also creates the RBAC and if that happens Sail can't take ownership of those resources.
+kubectl --context="${CLUSTER2_CONTEXT}" wait --for='jsonpath={.status.conditions[?(@.type=="Ready")].message}="readiness probe on remote istiod failed"' istios/default --timeout=1m
 
 # For kind we need to use the container IP otherwise the unresolvable localhost will be used.
 SERVER_FLAG=""
@@ -106,7 +137,12 @@ if [ "${MANAGE_KIND}" == "true" ]; then
 fi
 ${ISTIOCTL} create-remote-secret --context=${CLUSTER2_CONTEXT} --name=${CLUSTER2_NAME} ${SERVER_FLAG} | ${CLIENT_EXE} apply -f - --context="${CLUSTER1_CONTEXT}"
 
-${GEN_GATEWAY_SCRIPT} --mesh ${MESH_ID} --cluster ${CLUSTER2_NAME} --network ${NETWORK2_ID} | ${ISTIOCTL} --context=${CLUSTER2_CONTEXT} install -y -f -
+helm install istio-eastwestgateway gateway \
+  --repo https://istio-release.storage.googleapis.com/charts \
+  -n istio-system \
+  --kube-context "${CLUSTER2_CONTEXT}" \
+  --set name=istio-eastwestgateway \
+  --set networkGateway="${NETWORK2_ID}"
 
 ${CLIENT_EXE} patch svc prometheus -n ${ISTIO_NAMESPACE} --context ${CLUSTER2_CONTEXT} -p "{\"spec\": {\"type\": \"LoadBalancer\"}}"
 
@@ -115,6 +151,9 @@ WEST_PROMETHEUS_ADDRESS=$(${CLIENT_EXE} --context=${CLUSTER2_CONTEXT} -n ${ISTIO
 sed -i "s/WEST_PROMETHEUS_ADDRESS/$WEST_PROMETHEUS_ADDRESS/g" ${SCRIPT_DIR}/prometheus.yaml
 ${CLIENT_EXE} apply -f ${SCRIPT_DIR}/prometheus.yaml -n ${ISTIO_NAMESPACE} --context ${CLUSTER1_CONTEXT} 
 sed -i "s/$WEST_PROMETHEUS_ADDRESS/WEST_PROMETHEUS_ADDRESS/g" ${SCRIPT_DIR}/prometheus.yaml
+
+echo "==== DEPLOY ISTIO INGRESS GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+kubectl --context "${CLUSTER1_CONTEXT}" apply -n "${ISTIO_NAMESPACE}" -f "${SCRIPT_DIR}/../istio-gateway.yaml"
 
 # Configure Tracing "federation"
 source ${SCRIPT_DIR}/setup-tracing.sh

@@ -28,6 +28,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: istio-ingressgateway
+  labels:
+    app: istio-ingressgateway
 spec:
   selector:
     matchLabels:
@@ -37,6 +39,7 @@ spec:
       annotations:
         inject.istio.io/templates: gateway
       labels:
+        app: istio-ingressgateway
         istio: ingressgateway
         sidecar.istio.io/inject: "true"
     spec:
@@ -49,6 +52,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: istio-ingressgateway
+  labels:
+    app: istio-ingressgateway
 spec:
   type: LoadBalancer
   selector:
