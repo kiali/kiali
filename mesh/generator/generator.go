@@ -436,5 +436,5 @@ func discoverInfraService(url string, ctx context.Context, gi *mesh.GlobalInfo) 
 }
 
 func timeSeriesHash(cluster, namespace, name string) string {
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprintf("%s:%s:%s", cluster, namespace, name))))
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join([]string{cluster, namespace, name}, ":"))))
 }

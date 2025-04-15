@@ -241,7 +241,7 @@ func (a ExtensionsAppender) addTraffic(ext config.ExtensionConfig, trafficMap gr
 	// processing the same information twice we keep track of the time series applied to a particular edge. The
 	// edgeTSHash incorporates information about the time series' source, destination and metric information,
 	// and uses that unique TS has to protect against applying the same information twice.
-	edgeTSHash := fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprintf("%s:%s:%s:%s:%s:%s", metric, source.Metadata[tsHash], dest.Metadata[tsHash], code, flags, destName))))
+	edgeTSHash := fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join([]string{metric, source.Metadata[tsHash].(string), dest.Metadata[tsHash].(string), code, flags, destName}, ":"))))
 
 	a.addEdgeTraffic(val, protocol, code, flags, secure, destName, source, dest, edgeTSHash)
 }
@@ -355,5 +355,5 @@ func (a ExtensionsAppender) addEdgeTraffic(val float64, protocol, code, flags, s
 }
 
 func timeSeriesHash(cluster, serviceNs, service, workloadNs, workload, app, version string) string {
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprintf("%s:%s:%s:%s:%s:%s:%s", cluster, serviceNs, service, workloadNs, workload, app, version))))
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join([]string{cluster, serviceNs, service, workloadNs, workload, app, version}, ":"))))
 }

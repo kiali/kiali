@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
@@ -341,7 +342,7 @@ func getServiceDefinition(cluster, namespace, serviceName string, gi *graph.Glob
 // getServiceEntryHosts returns ServiceEntryHost information cached for a specific cluster and namespace. If not
 // previously cached a new, empty cache entry is created and returned.
 func getServiceEntryHosts(cluster, namespace string, gi *graph.GlobalInfo) (serviceEntryHosts, bool) {
-	key := fmt.Sprintf("%s:%s:%s", serviceEntryHostsKey, cluster, namespace)
+	key := strings.Join([]string{serviceEntryHostsKey, cluster, namespace}, ":")
 	if seHosts, ok := gi.Vendor[key]; ok {
 		return seHosts.(serviceEntryHosts), true
 	}

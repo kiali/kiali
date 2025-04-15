@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"google.golang.org/grpc"
@@ -133,7 +134,7 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 		log.Errorf("Error while building GRPC dial options: %v", err)
 		return nil, err
 	}
-	address := fmt.Sprintf("%s:%s", u.Hostname(), port)
+	address := u.Hostname() + ":" + port
 	log.Tracef("%s GRPC client info: address=%s, auth.type=%s", cfgTracing.Provider, address, auth.Type)
 
 	if len(cfgTracing.CustomHeaders) > 0 {
@@ -193,7 +194,7 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 				if cfgTracing.Auth.Type == "basic" {
 					dialOps = append(dialOps, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
 					dialOps = append(dialOps, grpc.WithPerRPCCredentials(&basicAuth{
-						Header: fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", cfgTracing.Auth.Username, cfgTracing.Auth.Password)))),
+						Header: fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(strings.Join([]string{cfgTracing.Auth.Username, cfgTracing.Auth.Password}, ":")))),
 					}))
 				} else {
 					dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))

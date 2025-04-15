@@ -1454,7 +1454,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			}
 
 			// Add some precalculated fields useful for validation
-			w.ValidationKey = fmt.Sprintf("%s:%s:%s", w.Cluster, w.Namespace, w.Name)
+			w.ValidationKey = strings.Join([]string{w.Cluster, w.Namespace, w.Name}, ":")
 
 			w.ServiceAccountNames = w.Pods.ServiceAccounts()
 			slices.Sort(w.ServiceAccountNames)
