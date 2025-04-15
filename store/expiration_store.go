@@ -49,7 +49,7 @@ func NewExpirationStore[K comparable, V any](ctx context.Context, store Store[K,
 	return s
 }
 
-// Set associates the given value with the given key and sets the expiration time.
+// Get returns the value stored for key, if it exists. Otherwise it returns false.
 func (s *ExpirationStore[K, V]) Get(key K) (V, bool) {
 	if s.ttl == 0 {
 		var zeroVal V
