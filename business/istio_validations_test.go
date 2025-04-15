@@ -62,7 +62,7 @@ func TestGetNamespaceValidations(t *testing.T) {
 	vs := mockCombinedValidationService(t, conf, fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
 
-	var changeMap = map[string]string{}
+	changeMap := map[string]string{}
 	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
 	require.NoError(err)
 	validationPerformed, validations, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
@@ -785,7 +785,7 @@ func fakeValidationMeshServiceWithRegistryStatus(t *testing.T, cfg config.Config
 	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[cfg.KubernetesConfig.ClusterName] = k8s
 	discovery := &istiotest.FakeDiscovery{
-		MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}, Config: models.ControlPlaneConfiguration{}}}},
+		MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}, MeshConfig: models.NewMeshConfig()}}},
 	}
 	namespace := NewNamespaceService(cache, conf, discovery, kubernetes.ConvertFromUserClients(k8sclients), k8sclients)
 	mesh := NewMeshService(conf, discovery, kubernetes.ConvertFromUserClients(k8sclients))

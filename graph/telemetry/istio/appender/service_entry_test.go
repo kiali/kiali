@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"istio.io/api/mesh/v1alpha1"
 	api_networking_v1 "istio.io/api/networking/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -42,12 +43,10 @@ func setupBusinessLayer(t *testing.T, meshExportTo []string, istioObjects ...run
 			MeshReturn: models.Mesh{
 				ControlPlanes: []models.ControlPlane{{
 					Cluster: &models.KubeCluster{Name: config.DefaultClusterID, IsKialiHome: true},
-					Config: models.ControlPlaneConfiguration{
-						IstioMeshConfig: models.IstioMeshConfig{
-							DefaultServiceExportTo:         []string{meshExportTo[0]},
-							DefaultDestinationRuleExportTo: []string{meshExportTo[0]},
-							DefaultVirtualServiceExportTo:  []string{meshExportTo[0]},
-						},
+					MeshConfig: &v1alpha1.MeshConfig{
+						DefaultServiceExportTo:         []string{meshExportTo[0]},
+						DefaultDestinationRuleExportTo: []string{meshExportTo[0]},
+						DefaultVirtualServiceExportTo:  []string{meshExportTo[0]},
 					},
 				}},
 			},
