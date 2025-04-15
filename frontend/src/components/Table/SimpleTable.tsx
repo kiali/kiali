@@ -25,7 +25,7 @@ const TOP_PADDING = 76 + 340;
 
 // EMBEDDED_PADDING constant is a magic number used to adjust the height of the main div to allow scrolling in the inner container layer.
 // 42px is the height of the first tab menu
-const EMBEDDED_PADDING = 42;
+const EMBEDDED_PADDING = 42 + 200;
 
 export interface SortableTh extends ThProps {
   sortable: boolean;
