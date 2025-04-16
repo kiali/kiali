@@ -330,7 +330,7 @@ elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
     # Switch to the dataplane cluster before installing the demo apps because
     # that's where all the workloads should be in the external controlplane deployment.
     kubectl config use-context "${CLUSTER2_CONTEXT}"
-    "${SCRIPT_DIR}/istio/install-bookinfo-demo.sh" -c kubectl -tg -in istio-system -g "${ISTIO_DIR}/samples/bookinfo/gateway-api/bookinfo-gateway.yaml"
+    "${SCRIPT_DIR}/istio/install-bookinfo-demo.sh" -c kubectl -tg -in istio-system --auto-injection-label istio.io/rev=external-istiod
 
     # Switch back to controlplane since that is where kiali is installed.
     kubectl config use-context "${CLUSTER1_CONTEXT}"
