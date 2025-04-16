@@ -89,6 +89,15 @@ class TraceDetailsComponent extends React.Component<Props, State> {
   private getGraphURL = (traceID: string): string => {
     let graphType: GraphType = GraphType.APP;
 
+    switch (this.props.targetKind) {
+      case 'service':
+        graphType = GraphType.SERVICE;
+        break;
+      case 'workload':
+        graphType = GraphType.WORKLOAD;
+        break;
+    }
+
     return `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${this.props.namespace}&traceId=${traceID}`;
   };
 
