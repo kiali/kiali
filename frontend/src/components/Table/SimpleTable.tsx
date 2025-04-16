@@ -36,12 +36,12 @@ interface SimpleTableProps {
   className?: string;
   columns: SortableTh[] | ThProps[];
   emptyState?: React.ReactNode;
+  isStickyHeader?: boolean;
   label: string;
   onSort?: OnSort;
   rows: IRow[];
   sort?: (columnIndex: number) => ThProps['sort'];
-  sortBy?: ISortBy;
-  stickyHeaders?: boolean;
+  sortBy?: ISortBy;    
   theadStyle?: React.CSSProperties;
   variant?: TableVariant;
   verticalAlign?: string;
@@ -100,7 +100,7 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
   };
 
   const table = (
-    <Table aria-label={props.label} variant={props.variant} className={props.className} isStickyHeader>
+    <Table aria-label={props.label} variant={props.variant} className={props.className} isStickyHeader={props.isStickyHeader}>
       <Thead style={props.theadStyle}>
         <Tr>
           {props.columns.map((column: SortableTh | ThProps, index: number) => (
@@ -143,7 +143,7 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
     </Table>
   );
 
-  return !props.stickyHeaders ? (
+  return !props.isStickyHeader ? (
     table
   ) : (
     <div style={{ height: heigth }}>
