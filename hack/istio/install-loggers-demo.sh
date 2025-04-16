@@ -13,11 +13,16 @@ CLIENT_EXE_NAME="oc"
 NAMESPACE="loggers"
 AMBIENT_ENABLED="false"
 DELETE_DEMO="false"
+ARCH="amd64"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    -a|--arch)
+      ARCH="$2"
+      shift;shift
+      ;;
     -c|--client-exe)
       CLIENT_EXE_NAME="$2"
       shift;shift
@@ -37,7 +42,8 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
-  -a|--ambient: Istio Ambient enabled
+  -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64).
+  -ab|--ambient: Istio Ambient enabled
   -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc"  
   -d|--delete <true|false>: If true, uninstall logger demo. If false, install logger demo. (default: false).
   -n|--namespace <name>: Install the demo in this namespace (default: logger)
@@ -51,6 +57,12 @@ HELPMSG
       ;;
   esac
 done
+
+# check arch values
+if [ "${ARCH}" != "ppc64le" ] && [ "${ARCH}" != "s390x" ] && [ "${ARCH}" != "amd64" ] && [ "${ARCH}" != "arm64" ]; then
+  echo "${ARCH} is not supported. Exiting."
+  exit 1
+fi
 
 CLIENT_EXE=`which ${CLIENT_EXE_NAME}`
 if [ "$?" = "0" ]; then
@@ -69,6 +81,7 @@ if [ "${DELETE_DEMO}" == "false" ]; then
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     $CLIENT_EXE new-project ${NAMESPACE}
   else
+    echo "Creating loggers namespace"
     $CLIENT_EXE create namespace ${NAMESPACE}
   fi
 
@@ -83,6 +96,8 @@ if [ "${DELETE_DEMO}" == "false" ]; then
   --namespace=$NAMESPACE \
   --restart=Never \
   --command -- /bin/sh -c "while true; do echo 'GET'; echo 'DEBUG'; sleep 1; done"
+  
+  sleep 5
 else
-  $CLIENT_EXE delete ns $NAMESPACE
+  $CLIENT_EXE delete ns $NAMESPACE --ignore-not-found
 fi

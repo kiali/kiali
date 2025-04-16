@@ -17,6 +17,11 @@ const install_demoapp = (demoapp: string): void => {
     namespaces = 'sleep';
     tg = '';
     istio = '';
+  } else if (demoapp === 'loggers') {
+    namespaces = 'loggers';
+    tg = '';
+    istio = '';
+    deletion = '--delete';
   }
 
   cy.exec(`../hack/istio/cypress/${demoapp}-status.sh`, { failOnNonZeroExit: false, timeout: 120000 }).then(result => {
@@ -115,6 +120,10 @@ Before({ tags: '@error-rates-app' }, () => {
 
 Before({ tags: '@sleep-app' }, () => {
   install_demoapp('sleep');
+});
+
+Before({ tags: '@loggers-app' }, () => {
+  install_demoapp('loggers');
 });
 
 Before({ tags: '@remote-istio-crds' }, () => {
