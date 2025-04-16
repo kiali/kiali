@@ -53,8 +53,8 @@ fi
 MANIFEST_DIR=$(mktemp -d)
 
 "${ISTIOCTL}" install -f - -y --context="${CTX_EXTERNAL_CLUSTER}" <<EOF
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
+apiVersion: sailoperator.io/v1
+kind: Istio
 metadata:
   namespace: istio-system
 spec:
@@ -82,8 +82,8 @@ export EXTERNAL_ISTIOD_ADDR=$(kubectl -n istio-system --context="${CTX_EXTERNAL_
 export SSL_SECRET_NAME=NONE
 
 cat <<EOF > ${MANIFEST_DIR}/remote-config-cluster.yaml
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
+apiVersion: sailoperator.io/v1
+kind: Istio
 metadata:
   namespace: external-istiod
 spec:
@@ -127,8 +127,8 @@ kubectl get sa istiod-service-account -n external-istiod --context="${CTX_EXTERN
   kubectl apply -f - --context="${CTX_EXTERNAL_CLUSTER}"
 
 cat <<EOF > ${MANIFEST_DIR}/external-istiod.yaml
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
+apiVersion: sailoperator.io/v1
+kind: Istio
 metadata:
   namespace: external-istiod
 spec:
