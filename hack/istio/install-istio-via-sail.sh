@@ -103,6 +103,7 @@ helm upgrade sail-operator sail-operator \
   --install \
   --create-namespace \
   --namespace sail-operator \
+  --wait \
   --repo https://istio-ecosystem.github.io/sail-operator
 
 K8S_GATEWAY_API_VERSION=$(curl --head --silent "https://github.com/kubernetes-sigs/gateway-api/releases/latest" | grep "location: " | awk '{print $2}' | sed "s/.*tag\///g" | cat -v | sed "s/\^M//g")
@@ -119,6 +120,8 @@ cat <<EOF
 apiVersion: sailoperator.io/v1
 kind: Istio
 metadata:
+  labels:
+    kiali.io/testing: ""
   name: default
 spec:
   namespace: istio-system
@@ -165,11 +168,14 @@ if [ -n "${CUSTOM_INSTALL_SETTINGS}" ]; then
   ISTIO_YAML=$(printf "%s" "$ISTIO_YAML" | yq "$CUSTOM_INSTALL_SETTINGS")
 fi
 
-kubectl get ns istio-system || kubectl create ns istio-system
+ISTIO_NAME=$(yq '.metadata.name' <<< "$ISTIO_YAML")
+ISTIO_NAMESPACE=$(yq '.spec.namespace' <<< "$ISTIO_YAML")
+
+kubectl get ns "${ISTIO_NAMESPACE}" || kubectl create ns "${ISTIO_NAMESPACE}"
 
 kubectl apply -f - <<<"$ISTIO_YAML"
 if [ "${WAIT}" == "true" ]; then
-  kubectl wait --for=condition=Ready istios/default --timeout=300s
+  kubectl wait --for=condition=Ready istios -l kiali.io/testing --timeout=300s
 fi
 
 # Install addons
@@ -185,11 +191,13 @@ for addon in ${ADDONS}; do
     sleep 10
     kubectl apply -f ${SCRIPT_DIR}/tempo/otel-collector.yaml
   else
-    istio_version=$(kubectl get istios default -o jsonpath='{.spec.version}')
+    istio_version=$(kubectl get istios "${ISTIO_NAME}" -o jsonpath='{.spec.version}')
     # Verison comes in the form v1.23.0 but we want 1.23
     # Remove the 'v' and remove the .0 from 1.23.0 and we should be left with 1.23
     addon_version="${istio_version:1:4}"
-    kubectl apply -n istio-system -f "https://raw.githubusercontent.com/istio/istio/refs/heads/release-$addon_version/samples/addons/$addon.yaml"
+    curl -s "https://raw.githubusercontent.com/istio/istio/refs/heads/release-$addon_version/samples/addons/$addon.yaml" | \
+      yq "select(.metadata) | .metadata.namespace = \"${ISTIO_NAMESPACE}\"" - | \
+      kubectl apply -n "${ISTIO_NAMESPACE}" -f -
   fi
 done
 
@@ -200,7 +208,7 @@ apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: otel-tracing
-  namespace: istio-system
+  namespace: ${ISTIO_NAMESPACE}
 spec:
   tracing:
   - providers:
