@@ -11,7 +11,7 @@ ENV HOME=/tmp/kiali
 # install required packages and oc bin
 WORKDIR /usr/bin
 RUN apt -y update && \
-    apt install -y tar gzip bash gettext curl git && \
+    apt install -y tar gzip bash gettext curl && \
     apt-get clean && \
     curl -Lo ./oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz && \
     tar -xf oc.tar.gz && \
