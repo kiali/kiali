@@ -5,11 +5,11 @@ import * as AppListFilters from './FiltersAndSorts';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
 import { AppListItem } from '../../types/AppList';
-import { DurationInSeconds } from '../../types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { KialiAppState } from '../../store/Store';
-import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
+import { activeNamespacesSelector, durationSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import { namespaceEquals } from '../../utils/Common';
 import { SortField } from '../../types/SortFilters';
@@ -19,17 +19,21 @@ import * as API from '../../services/Api';
 import * as AppListClass from './AppListClass';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
-import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
 import { isMultiCluster, serverConfig } from '../../config';
+import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
+import { connectRefresh } from 'components/Refresh/connectRefresh';
 
 type AppListPageState = FilterComponent.State<AppListItem>;
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
   duration: DurationInSeconds;
+  refreshInterval: IntervalInMilliseconds;
 };
 
-type AppListPageProps = ReduxProps;
+type AppListPageProps = ReduxProps & {
+  lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
+};
 
 class AppListPageComponent extends FilterComponent.Component<AppListPageProps, AppListPageState, AppListItem> {
   private promises = new PromisesRegistry();
@@ -48,7 +52,9 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
   }
 
   componentDidMount(): void {
-    this.updateListItems();
+    if (this.props.refreshInterval !== RefreshIntervalManual) {
+      this.updateListItems();
+    }
   }
 
   componentDidUpdate(prevProps: AppListPageProps): void {
@@ -56,10 +62,14 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
 
     if (
-      !namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
-      this.props.duration !== prevProps.duration ||
-      this.state.currentSortField !== prevCurrentSortField ||
-      this.state.isSortAscending !== prevIsSortAscending
+      this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
+      (this.props.refreshInterval !== RefreshIntervalManual &&
+        (!namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
+          this.props.duration !== prevProps.duration ||
+          (this.props.refreshInterval !== prevProps.refreshInterval &&
+            this.props.refreshInterval !== RefreshIntervalPause) ||
+          this.state.currentSortField !== prevCurrentSortField ||
+          this.state.isSortAscending !== prevIsSortAscending))
     ) {
       this.setState({
         currentSortField: prevCurrentSortField,
@@ -152,8 +162,6 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
 
     return (
       <>
-        <RefreshNotifier onTick={this.updateListItems} />
-
         <DefaultSecondaryMasthead
           rightToolbar={
             <TimeDurationComponent key={'DurationDropdown'} id="app-list-duration-dropdown" disabled={false} />
@@ -177,7 +185,8 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   activeNamespaces: activeNamespacesSelector(state),
-  duration: durationSelector(state)
+  duration: durationSelector(state),
+  refreshInterval: refreshIntervalSelector(state)
 });
 
-export const AppListPage = connect(mapStateToProps)(AppListPageComponent);
+export const AppListPage = connectRefresh(connect(mapStateToProps)(AppListPageComponent));

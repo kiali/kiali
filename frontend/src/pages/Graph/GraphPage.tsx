@@ -74,7 +74,7 @@ import { GraphLegend } from './GraphLegend';
 import { HistoryManager, URLParam } from 'app/History';
 import { elementsChanged } from 'helpers/GraphHelpers';
 import { getValidGraphLayout } from 'utils/GraphUtils';
-import { RefreshIntervalManual } from 'config/Config';
+import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { INITIAL_GRAPH_STATE } from 'reducers/GraphDataState';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
@@ -408,31 +408,38 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       (n1, n2) => n1.name === n2.name
     );
 
-    if (prev.lastRefreshAt !== curr.lastRefreshAt && curr.replayQueryTime === 0) {
+    if (
+      (prev.lastRefreshAt !== curr.lastRefreshAt && curr.replayQueryTime === 0) ||
+      (curr.refreshInterval !== RefreshIntervalManual &&
+        (prev.duration !== curr.duration ||
+          (prev.edgeLabels !== curr.edgeLabels && // test for edge labels that invoke graph gen appenders
+            (curr.edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP) ||
+              curr.edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP))) ||
+          (prev.findValue !== curr.findValue && curr.findValue.includes('label:')) ||
+          (prev.hideValue !== curr.hideValue && curr.hideValue.includes('label:')) ||
+          (prev.refreshInterval !== curr.refreshInterval && curr.refreshInterval !== RefreshIntervalPause) ||
+          prev.replayQueryTime !== curr.replayQueryTime ||
+          prev.showSecurity !== curr.showSecurity ||
+          prev.trafficRates !== curr.trafficRates))
+    ) {
+      // refresh the graph but keep the side-panel
       this.loadGraphDataFromBackend();
     } else if (
       curr.refreshInterval !== RefreshIntervalManual &&
       (activeNamespacesChanged ||
         prev.boxByCluster !== curr.boxByCluster ||
         prev.boxByNamespace !== curr.boxByNamespace ||
-        prev.duration !== curr.duration ||
-        (prev.edgeLabels !== curr.edgeLabels && // test for edge labels that invoke graph gen appenders
-          (curr.edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP) ||
-            curr.edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP))) ||
-        (prev.findValue !== curr.findValue && curr.findValue.includes('label:')) ||
         prev.graphType !== curr.graphType ||
         (prev.hideValue !== curr.hideValue && curr.hideValue.includes('label:')) ||
         (prev.replayActive !== curr.replayActive && !curr.replayActive) ||
-        prev.replayQueryTime !== curr.replayQueryTime ||
         prev.showIdleEdges !== curr.showIdleEdges ||
         prev.showOperationNodes !== curr.showOperationNodes ||
         prev.showServiceNodes !== curr.showServiceNodes ||
-        prev.showSecurity !== curr.showSecurity ||
         prev.showIdleNodes !== curr.showIdleNodes ||
         prev.showWaypoints !== curr.showWaypoints ||
-        prev.trafficRates !== curr.trafficRates ||
         GraphPageComponent.isNodeChanged(prev.node, curr.node))
     ) {
+      // refresh the graph and init the side-panel
       this.props.updateSummary(INITIAL_GRAPH_STATE.summaryData);
       this.loadGraphDataFromBackend();
     }

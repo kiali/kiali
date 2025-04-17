@@ -76,7 +76,7 @@ import { ApiError } from 'types/Api';
 import { gvkType, IstioConfigList } from 'types/IstioConfigList';
 import { t } from 'utils/I18nUtils';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
-import { RefreshIntervalManual } from 'config/Config';
+import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
@@ -186,7 +186,11 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   }
 
   componentDidUpdate(prevProps: OverviewProps): void {
-    if (prevProps.duration !== this.props.duration || prevProps.navCollapse !== this.props.navCollapse) {
+    if (
+      prevProps.duration !== this.props.duration ||
+      prevProps.navCollapse !== this.props.navCollapse ||
+      (prevProps.refreshInterval !== this.props.refreshInterval && this.props.refreshInterval !== RefreshIntervalPause)
+    ) {
       // Reload to avoid graphical glitches with charts
       // TODO: this workaround should probably be deleted after switch to Patternfly 4, see https://issues.jboss.org/browse/KIALI-3116
       this.onChange();

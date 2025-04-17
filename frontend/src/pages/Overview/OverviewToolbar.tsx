@@ -22,6 +22,7 @@ import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
 import { PFColors } from 'components/Pf/PfColors';
 import { t, tMap } from 'utils/I18nUtils';
 
+// TODO: Are any of these redux state or dispatch props used?
 type ReduxStateProps = {
   duration: DurationInSeconds;
   language: string;

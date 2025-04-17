@@ -6,6 +6,7 @@ import { t } from 'utils/I18nUtils';
 const documentationUrl = process.env.REACT_APP_KIALI_DOC_URL!;
 
 export const RefreshIntervalManual = 1;
+export const RefreshIntervalPause = 0;
 
 const conf = {
   /** Configuration related with session */

@@ -4,7 +4,7 @@ import { RenderContent } from '../../components/Nav/Page';
 import * as ServiceListFilters from './FiltersAndSorts';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
 import { ServiceList, ServiceListItem } from '../../types/ServiceList';
-import { DurationInSeconds, InstanceType } from '../../types/Common';
+import { DurationInSeconds, InstanceType, IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { namespaceEquals } from '../../utils/Common';
@@ -15,24 +15,28 @@ import * as API from '../../services/Api';
 import { ObjectValidation, Validations } from '../../types/IstioObjects';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { KialiAppState } from '../../store/Store';
-import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
+import { activeNamespacesSelector, durationSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { connect } from 'react-redux';
 import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 import { validationKey } from '../../types/IstioConfigList';
 import { ServiceHealth } from '../../types/Health';
-import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
 import { isMultiCluster, serverConfig } from 'config';
+import { connectRefresh } from 'components/Refresh/connectRefresh';
+import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 
 type ServiceListPageState = FilterComponent.State<ServiceListItem>;
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
   duration: DurationInSeconds;
+  refreshInterval: IntervalInMilliseconds;
 };
 
-type ServiceListPageProps = ReduxProps;
+type ServiceListPageProps = ReduxProps & {
+  lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
+};
 
 class ServiceListPageComponent extends FilterComponent.Component<
   ServiceListPageProps,
@@ -55,7 +59,9 @@ class ServiceListPageComponent extends FilterComponent.Component<
   }
 
   componentDidMount(): void {
-    this.updateListItems();
+    if (this.props.refreshInterval !== RefreshIntervalManual) {
+      this.updateListItems();
+    }
   }
 
   componentDidUpdate(prevProps: ServiceListPageProps): void {
@@ -63,10 +69,14 @@ class ServiceListPageComponent extends FilterComponent.Component<
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
 
     if (
-      !namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
-      this.props.duration !== prevProps.duration ||
-      this.state.currentSortField !== prevCurrentSortField ||
-      this.state.isSortAscending !== prevIsSortAscending
+      this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
+      (this.props.refreshInterval !== RefreshIntervalManual &&
+        (!namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
+          this.props.duration !== prevProps.duration ||
+          (this.props.refreshInterval !== prevProps.refreshInterval &&
+            this.props.refreshInterval !== RefreshIntervalPause) ||
+          this.state.currentSortField !== prevCurrentSortField ||
+          this.state.isSortAscending !== prevIsSortAscending))
     ) {
       this.setState({
         currentSortField: prevCurrentSortField,
@@ -207,8 +217,6 @@ class ServiceListPageComponent extends FilterComponent.Component<
 
     return (
       <>
-        <RefreshNotifier onTick={this.updateListItems} />
-
         <DefaultSecondaryMasthead
           rightToolbar={
             <TimeDurationComponent key="DurationDropdown" id="service-list-duration-dropdown" disabled={false} />
@@ -232,7 +240,8 @@ class ServiceListPageComponent extends FilterComponent.Component<
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   activeNamespaces: activeNamespacesSelector(state),
-  duration: durationSelector(state)
+  duration: durationSelector(state),
+  refreshInterval: refreshIntervalSelector(state)
 });
 
-export const ServiceListPage = connect(mapStateToProps)(ServiceListPageComponent);
+export const ServiceListPage = connectRefresh(connect(mapStateToProps)(ServiceListPageComponent));
