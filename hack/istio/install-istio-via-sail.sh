@@ -38,6 +38,7 @@ done
 ADDONS="prometheus grafana jaeger"
 CUSTOM_INSTALL_SETTINGS=""
 PATCH_FILE=""
+WAIT=true
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -59,6 +60,10 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
+    -w|--wait)
+      WAIT="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -74,6 +79,9 @@ Valid command line arguments:
        Override any part of the Istio yaml providing a yq compatible path for that field.
        Options specified with --set take precedence over --patch-file. Some examples you may want to use:
        --set '.spec.version="v1.22.4"'
+  -w|--wait <true|false>:
+       If true, will wait until istiod is ready.
+       Default: true
   -h|--help:
        this message
 HELPMSG
@@ -160,7 +168,9 @@ fi
 kubectl get ns istio-system || kubectl create ns istio-system
 
 kubectl apply -f - <<<"$ISTIO_YAML"
-kubectl wait --for=condition=Ready istios/default -n istio-system --timeout=300s
+if [ "${WAIT}" == "true" ]; then
+  kubectl wait --for=condition=Ready istios/default --timeout=300s
+fi
 
 # Install addons
 for addon in ${ADDONS}; do
@@ -183,8 +193,9 @@ for addon in ${ADDONS}; do
   fi
 done
 
-# Activate the otel tracer.
-kubectl apply -f - <<EOF
+# Activate the otel tracer if the extension provider is present in meshConfig
+if [ "$(kubectl get istios default -o jsonpath='{.spec.values.meshConfig.extensionProviders[?(@.name=="otel-tracing")]}')" != "" ]; then
+  kubectl apply -f - <<EOF
 apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
@@ -196,3 +207,4 @@ spec:
       - name: otel-tracing
     randomSamplingPercentage: 100
 EOF
+fi
