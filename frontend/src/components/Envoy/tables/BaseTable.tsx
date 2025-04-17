@@ -89,6 +89,7 @@ export function SummaryTableRenderer<T extends SummaryTable>(): typeof React.Com
             rows={this.props.writer.rows()}
             sortBy={this.props.writer.sortBy()}
             onSort={this.onSort}
+            isStickyHeader
           />
         </>
       );

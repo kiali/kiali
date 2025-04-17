@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
   Caption,
+  InnerScrollContainer,
   IRow,
   ISortBy,
   OnSort,
@@ -29,15 +30,28 @@ import * as Sorts from '../../pages/Overview/Sorts';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SortableTh } from 'components/Table/SimpleTable';
-
-const virtualListStyle = kialiStyle({
-  padding: '1.25rem',
-  marginBottom: '1.25rem'
-});
+import { isKiosk } from 'components/Kiosk/KioskActions';
+import { store } from 'store/ConfigStore';
+import { classes } from 'typestyle';
 
 const emptyStyle = kialiStyle({
   borderBottom: 0
 });
+
+// TOP_PADDING constant is used to adjust the height of the main div to allow scrolling in the inner container layer.
+const TOP_PADDING = 76 + 160;
+
+// EMBEDDED_PADDING constant is a magic number used to adjust the height of the main div to allow scrolling in the inner container layer.
+// 42px is the height of the first tab menu
+const EMBEDDED_PADDING = 42 + 100;
+
+/**
+ * By default, Kiali hides the global scrollbar and fixes the height for some pages to force the scrollbar to appear
+ * Hiding global scrollbar is not possible when Kiali is embedded in other application (like Openshift Console)
+ * In these cases height is not fixed to avoid multiple scrollbars (https://github.com/kiali/kiali/issues/6601)
+ * GLOBAL_SCROLLBAR environment variable is not defined in standalone Kiali application (value is always false)
+ */
+const globalScrollbar = process.env.GLOBAL_SCROLLBAR ?? 'false';
 
 // ******************************
 // VirtualList and its associated classes are intended to be used for main list pages: Applications,
@@ -55,7 +69,9 @@ type ReduxProps = { activeNamespaces: Namespace[] };
 type VirtualListProps<R> = ReduxProps & {
   actions?: JSX.Element[];
   children?: React.ReactNode;
+  className?: any;
   hiddenColumns?: string[];
+  onResize?: (height: number) => void;
   rows: R[];
   sort?: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
   statefulProps?: StatefulFiltersRef;
@@ -65,6 +81,7 @@ type VirtualListProps<R> = ReduxProps & {
 type VirtualListState<R extends RenderResource> = {
   columns: ResourceType<R>[];
   conf: Resource;
+  scrollStyle: string;
   sortBy: {
     direction: Direction;
     index: number;
@@ -90,6 +107,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
         index,
         direction: HistoryManager.getParam(URLParam.DIRECTION) as Direction
       },
+      scrollStyle: kialiStyle({}),
       columns,
       conf
     };
@@ -111,6 +129,15 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     this.props.sort && this.props.sort(FilterHelper.currentSortField(Sorts.sortFields), direction === 'asc');
   };
 
+  componentDidMount(): void {
+    this.updateWindowDimensions();
+    window.addEventListener('resize', this.updateWindowDimensions);
+  }
+
+  componentWillUnmount(): void {
+    window.removeEventListener('resize', this.updateWindowDimensions);
+  }
+
   componentDidUpdate(): void {
     const columns = this.getColumns(this.props.type);
 
@@ -118,6 +145,34 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
       this.setState({ columns: columns });
     }
   }
+
+  getScrollStyle = (height: number): string => {
+    if (globalScrollbar === 'false') {
+      return kialiStyle({
+        height: height,
+        padding: '1.25rem',
+        marginBottom: '1.25rem',
+        width: '100%'
+      });
+    }
+    return kialiStyle({});
+  };
+
+  updateWindowDimensions = (): void => {
+    const isStandalone = !isKiosk(store.getState().globalState.kiosk);
+    const topPadding = isStandalone ? TOP_PADDING : EMBEDDED_PADDING;
+
+    this.setState(
+      {
+        scrollStyle: this.getScrollStyle(window.innerHeight - topPadding)
+      },
+      () => {
+        if (this.props.onResize) {
+          this.props.onResize(window.innerHeight - topPadding);
+        }
+      }
+    );
+  };
 
   private getColumns = (type: string): ResourceType<R>[] => {
     let columns = [] as ResourceType<R>[];
@@ -156,6 +211,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
   };
 
   render(): React.ReactNode {
+    // If there is no global scrollbar, height is fixed to force the scrollbar to appear in the component
     const { rows } = this.props;
     const { sortBy, columns, conf } = this.state;
 
@@ -183,58 +239,59 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
         />
       );
     });
+    const table = (
+      <Table gridBreakPoint={TableGridBreakpoint.none} role="presentation" isStickyHeader>
+        {conf.caption && <Caption>{conf.caption}</Caption>}
+        <Thead>
+          <Tr>
+            {columns.map((column, index) => (
+              <Th
+                key={`column_${index}`}
+                dataLabel={column.title}
+                sort={this.getSortParams(column, index, sortBy, this.onSort)}
+                width={column.width}
+                textCenter={column.textCenter}
+              >
+                {column.title}
+              </Th>
+            ))}
+          </Tr>
+        </Thead>
 
-    return (
-      <div className={virtualListStyle}>
-        {childrenWithProps}
-
-        <Table gridBreakPoint={TableGridBreakpoint.none} role="presentation">
-          {conf.caption && <Caption>{conf.caption}</Caption>}
-          <Thead>
-            <Tr>
-              {columns.map((column, index) => (
-                <Th
-                  key={`column_${index}`}
-                  dataLabel={column.title}
-                  sort={this.getSortParams(column, index, sortBy, this.onSort)}
-                  width={column.width}
-                  textCenter={column.textCenter}
-                >
-                  {column.title}
-                </Th>
-              ))}
+        <Tbody>
+          {this.props.rows.length > 0 ? (
+            rowItems
+          ) : (
+            <Tr className={emptyStyle}>
+              <Td colSpan={columns.length}>
+                {this.props.activeNamespaces.length > 0 ? (
+                  <EmptyState variant={EmptyStateVariant.full}>
+                    <EmptyStateHeader titleText={<>No {typeDisplay} found</>} headingLevel="h5" />
+                    <EmptyStateBody>
+                      No {typeDisplay} in namespace
+                      {this.props.activeNamespaces.length === 1
+                        ? ` ${this.props.activeNamespaces[0].name}`
+                        : `s: ${this.props.activeNamespaces.map(ns => ns.name).join(', ')}`}
+                    </EmptyStateBody>
+                  </EmptyState>
+                ) : (
+                  <EmptyState variant={EmptyStateVariant.full}>
+                    <EmptyStateHeader titleText="No namespace is selected" headingLevel="h5" />
+                    <EmptyStateBody>
+                      There is currently no namespace selected, please select one using the Namespace selector.
+                    </EmptyStateBody>
+                  </EmptyState>
+                )}
+              </Td>
             </Tr>
-          </Thead>
-
-          <Tbody>
-            {this.props.rows.length > 0 ? (
-              rowItems
-            ) : (
-              <Tr className={emptyStyle}>
-                <Td colSpan={columns.length}>
-                  {this.props.activeNamespaces.length > 0 ? (
-                    <EmptyState variant={EmptyStateVariant.full}>
-                      <EmptyStateHeader titleText={<>No {typeDisplay} found</>} headingLevel="h5" />
-                      <EmptyStateBody>
-                        No {typeDisplay} in namespace
-                        {this.props.activeNamespaces.length === 1
-                          ? ` ${this.props.activeNamespaces[0].name}`
-                          : `s: ${this.props.activeNamespaces.map(ns => ns.name).join(', ')}`}
-                      </EmptyStateBody>
-                    </EmptyState>
-                  ) : (
-                    <EmptyState variant={EmptyStateVariant.full}>
-                      <EmptyStateHeader titleText="No namespace is selected" headingLevel="h5" />
-                      <EmptyStateBody>
-                        There is currently no namespace selected, please select one using the Namespace selector.
-                      </EmptyStateBody>
-                    </EmptyState>
-                  )}
-                </Td>
-              </Tr>
-            )}
-          </Tbody>
-        </Table>
+          )}
+        </Tbody>
+      </Table>
+    );
+    return (
+      <div className={classes(this.state.scrollStyle, this.props.className)}>
+        {childrenWithProps}
+        {this.props.actions ? table : <InnerScrollContainer style={{ maxHeight: '95%' }}>{table}</InnerScrollContainer>}
       </div>
     );
   }

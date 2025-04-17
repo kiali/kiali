@@ -13,10 +13,11 @@ const divStyle = kialiStyle({
 
 export class RenderContent extends React.Component<{ needScroll?: boolean }> {
   render(): React.ReactNode {
-    return (
-      <RenderComponentScroll className={containerStyle}>
-        <div className={divStyle}>{this.props.children}</div>
-      </RenderComponentScroll>
+    const content = <div className={divStyle}>{this.props.children}</div>;
+    return this.props.needScroll ? (
+      <RenderComponentScroll className={containerStyle}>{content}</RenderComponentScroll>
+    ) : (
+      <div className={containerStyle}>{content}</div>
     );
   }
 }
