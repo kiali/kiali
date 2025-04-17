@@ -371,9 +371,9 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     const selected = selectAnd(elems(this.state.graphRefs!.getController()).nodes, [
       { prop: 'isSelected', op: 'truthy' }
     ]);
-    const focusSelector = selected.length > 0 ? `&focusSelector=${encodeURI(selected[0].getId())}` : '';
+    const focusSelector = selected.length > 0 ? `${URLParam.FOCUS_SELECTOR}=${encodeURI(selected[0].getId())}` : '';
 
-    const graphUrl = `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}${focusSelector}`;
+    const graphUrl = `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}&${focusSelector}`;
 
     if (isParentKiosk(this.props.kiosk)) {
       kioskContextMenuAction(graphUrl);
