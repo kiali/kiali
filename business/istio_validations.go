@@ -254,7 +254,7 @@ func (in *validationInfo) changeDetectionEnabled() bool {
 }
 
 func (in *validationInfo) update(kind, cluster, namespace, name, value string) bool {
-	key := fmt.Sprintf("%s:%s:%s:%s", kind, cluster, namespace, name)
+	key := strings.Join([]string{kind, cluster, namespace, name}, ":")
 	return in.changeMap.update(key, value, in.reportChange)
 }
 

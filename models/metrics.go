@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	pmod "github.com/prometheus/common/model"
@@ -108,11 +109,11 @@ func (q *MetricsStatsQuery) GenKey() string {
 	if q.PeerTarget != nil {
 		peer = q.PeerTarget.GenKey()
 	}
-	return fmt.Sprintf("%s:%s:%s:%s", q.Target.GenKey(), peer, q.Direction, q.RawInterval)
+	return strings.Join([]string{q.Target.GenKey(), peer, q.Direction, q.RawInterval}, ":")
 }
 
 func (t *Target) GenKey() string {
-	return fmt.Sprintf("%s:%s:%s", t.Namespace, t.Kind, t.Name)
+	return strings.Join([]string{t.Namespace, t.Kind, t.Name}, ":")
 }
 
 // ControlPlaneMetricsQuery holds query parameters for a control plane metrics query

@@ -52,7 +52,7 @@ type ClusterSensitiveKey = string
 
 // GetClusterSensitiveKey returns a valid key for maps using a ClusterSensitiveKey
 func GetClusterSensitiveKey(cluster, name string) ClusterSensitiveKey {
-	return fmt.Sprintf("%s:%s", cluster, name)
+	return cluster + ":" + name
 }
 
 type AccessibleNamespace struct {
