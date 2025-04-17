@@ -76,7 +76,9 @@ export class RefreshComponent extends React.PureComponent<Props> {
             value={String(this.props.refreshInterval)}
             label={t(REFRESH_INTERVALS[this.props.refreshInterval])}
             options={tMap(REFRESH_INTERVALS)}
-            tooltip={t('Refresh interval')}
+            tooltip={t(
+              'Refresh interval. "Pause" refreshes on page change or Refresh button click. Manual refreshes only on Refresh button click.'
+            )}
             tooltipPosition={TooltipPosition.left}
           />
 

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
-import { Node } from '@patternfly/react-topology';
+import { GraphElement, Node } from '@patternfly/react-topology';
 import { InOutRateTableGrpc, InOutRateTableHttp } from '../../components/SummaryPanel/InOutRateTable';
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
 import {
@@ -149,7 +149,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
   }
 
   render(): React.ReactNode {
-    const appBox = this.props.data.summaryTarget;
+    const appBox = this.props.data.summaryTarget as GraphElement;
     const nodeData = appBox.getData();
 
     const serviceList = this.renderServiceList(appBox);
@@ -286,7 +286,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
   };
 
   private updateCharts = (props: SummaryPanelPropType): void => {
-    const appBox = props.data.summaryTarget;
+    const appBox = props.data.summaryTarget as GraphElement;
     const nodeData = appBox.getData() as DecoratedGraphNodeData;
     const nodeMetricType = getNodeMetricType(nodeData);
     const isGrpcRequests = this.isGrpcRequests();

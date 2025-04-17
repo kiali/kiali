@@ -33,13 +33,13 @@ import {
   EdgeLabelMode,
   EdgeMode,
   FocusNode,
-  GraphEvent,
   GraphLayout,
   LayoutType,
   NodeAttr,
   NodeType,
   RankMode,
   RankResult,
+  SummaryData,
   UNKNOWN
 } from 'types/Graph';
 import { JaegerTrace } from 'types/TracingInfo';
@@ -139,7 +139,7 @@ const TopologyContent: React.FC<{
   toggleLegend?: () => void;
   trace?: JaegerTrace;
   trafficAnimation: TrafficAnimation;
-  updateSummary: (graphEvent: GraphEvent) => void;
+  updateSummary: (summaryData: SummaryData) => void;
 }> = ({
   controller,
   edgeLabels,
@@ -221,7 +221,7 @@ const TopologyContent: React.FC<{
             return;
           }
           default:
-            updateSummary({ summaryType: 'graph', summaryTarget: controller } as GraphEvent);
+            updateSummary({ summaryType: 'graph', summaryTarget: controller } as SummaryData);
         }
       }
       return;
@@ -232,25 +232,25 @@ const TopologyContent: React.FC<{
       switch (elem?.getKind()) {
         case ModelKind.edge: {
           highlighter.setSelectedId(selectedIds[0]);
-          updateSummary({ summaryType: 'edge', summaryTarget: elem } as GraphEvent);
+          updateSummary({ summaryType: 'edge', summaryTarget: elem } as SummaryData);
           return;
         }
         case ModelKind.node: {
           highlighter.setSelectedId(selectedIds[0]);
           const isBox = (elem.getData() as NodeData).isBox;
-          updateSummary({ summaryType: isBox ? 'box' : 'node', summaryTarget: elem } as GraphEvent);
+          updateSummary({ summaryType: isBox ? 'box' : 'node', summaryTarget: elem } as SummaryData);
           return;
         }
         case ModelKind.graph:
         default:
           highlighter.setSelectedId(undefined);
           setSelectedIds([]);
-          updateSummary({ summaryType: 'graph', summaryTarget: controller } as GraphEvent);
+          updateSummary({ summaryType: 'graph', summaryTarget: controller } as SummaryData);
           return;
       }
     } else {
       highlighter.setSelectedId(undefined);
-      updateSummary({ summaryType: 'graph', summaryTarget: controller } as GraphEvent);
+      updateSummary({ summaryType: 'graph', summaryTarget: controller } as SummaryData);
     }
   }, [controller, highlighter, isMiniGraph, onEdgeTap, onNodeTap, selectedIds, setSelectedIds, updateSummary]);
 
@@ -879,7 +879,7 @@ export const Graph: React.FC<{
   showVirtualServices: boolean;
   toggleLegend?: () => void;
   trace?: JaegerTrace;
-  updateSummary: (graphEvent: GraphEvent) => void;
+  updateSummary: (SummaryData: SummaryData) => void;
 }> = ({
   edgeLabels,
   edgeMode,

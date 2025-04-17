@@ -36,6 +36,7 @@ type Props = ReduxStateProps &
   ReduxDispatchProps & {
     displayMode: OverviewDisplayMode;
     onError: (msg: string) => void;
+    onChange: () => void;
     onRefresh: () => void;
     setDisplayMode: (mode: OverviewDisplayMode) => void;
     sort: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
@@ -168,7 +169,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
     if (isOverviewType(otype)) {
       HistoryManager.setParam(URLParam.OVERVIEW_TYPE, otype);
       this.setState({ overviewType: otype });
-      this.props.onRefresh();
+      this.props.onChange();
     } else {
       throw new Error(t('Overview type is not valid.'));
     }
@@ -180,7 +181,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
     if (isDirectionType(dtype)) {
       HistoryManager.setParam(URLParam.DIRECTION_TYPE, dtype);
       this.setState({ directionType: dtype });
-      this.props.onRefresh();
+      this.props.onChange();
     } else {
       throw new Error(t('Direction type is not valid.'));
     }
@@ -197,7 +198,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
     const filterToolbar = (
       <StatefulFilters
         initialFilters={Filters.availableFilters}
-        onFilterChange={this.props.onRefresh}
+        onFilterChange={this.props.onChange}
         ref={this.props.statefulFilterRef}
       >
         {this.props.displayMode !== OverviewDisplayMode.LIST && (

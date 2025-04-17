@@ -53,10 +53,6 @@ export const INITIAL_GRAPH_STATE: GraphState = {
 // This Reducer allows changes to the 'graphDataState' portion of Redux Store
 export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAppAction): GraphState => {
   switch (action.type) {
-    case getType(GraphActions.onNamespaceChange):
-      return updateState(state, {
-        summaryData: INITIAL_GRAPH_STATE.summaryData
-      });
     case getType(GraphActions.setEdgeMode): {
       return updateState(state, { edgeMode: action.payload });
     }
@@ -68,9 +64,7 @@ export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, a
       return updateState(state, { namespaceLayout: action.payload });
     case getType(GraphActions.setNode):
       return updateState(state, {
-        node: action.payload,
-        // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on node change)
-        summaryData: INITIAL_GRAPH_STATE.summaryData
+        node: action.payload
       });
     case getType(GraphActions.setRankResult):
       return updateState(state, { rankResult: action.payload });
@@ -80,10 +74,15 @@ export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, a
       });
     case getType(GraphActions.updateSummary):
       return updateState(state, {
-        summaryData: updateState(state.summaryData, {
-          summaryType: action.payload.summaryType,
-          summaryTarget: action.payload.summaryTarget
-        })
+        summaryData: updateState(
+          state.summaryData,
+          action.payload
+            ? {
+                summaryType: action.payload.summaryType,
+                summaryTarget: action.payload.summaryTarget
+              }
+            : null
+        )
       });
     // Filter actions
     //
@@ -103,9 +102,7 @@ export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, a
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
           graphType: action.payload
-        }),
-        // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on type change)
-        summaryData: INITIAL_GRAPH_STATE.summaryData
+        })
       });
     case getType(GraphToolbarActions.setHideValue):
       return updateState(state, {
@@ -193,9 +190,7 @@ export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, a
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
           showOperationNodes: !state.toolbarState.showOperationNodes
-        }),
-        // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on type change)
-        summaryData: INITIAL_GRAPH_STATE.summaryData
+        })
       });
     case getType(GraphToolbarActions.toggleRank):
       return updateState(state, {
@@ -207,9 +202,7 @@ export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, a
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
           showServiceNodes: !state.toolbarState.showServiceNodes
-        }),
-        // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on type change)
-        summaryData: INITIAL_GRAPH_STATE.summaryData
+        })
       });
     case getType(GraphToolbarActions.toggleTrafficAnimation):
       return updateState(state, {

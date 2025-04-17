@@ -6,7 +6,6 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import {
-  GraphEvent,
   DecoratedGraphElements,
   EdgeLabelMode,
   GraphDefinition,
@@ -75,6 +74,8 @@ import { GraphLegend } from './GraphLegend';
 import { HistoryManager, URLParam } from 'app/History';
 import { elementsChanged } from 'helpers/GraphHelpers';
 import { getValidGraphLayout } from 'utils/GraphUtils';
+import { RefreshIntervalManual } from 'config/Config';
+import { INITIAL_GRAPH_STATE } from 'reducers/GraphDataState';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 export type GraphURLPathProps = {
@@ -89,7 +90,6 @@ export type GraphURLPathProps = {
 
 type ReduxDispatchProps = {
   endTour: () => void;
-  onNamespaceChange: () => void;
   onReady: (controller: any) => void;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
   setEdgeMode: (edgeMode: EdgeMode) => void;
@@ -102,7 +102,7 @@ type ReduxDispatchProps = {
   startTour: ({ info, stop }) => void;
   toggleIdleNodes: () => void;
   toggleLegend: () => void;
-  updateSummary: (event: GraphEvent) => void;
+  updateSummary: (summaryData: SummaryData | null) => void;
 };
 type ReduxStateProps = {
   activeNamespaces: Namespace[];
@@ -377,10 +377,26 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       HistoryManager.setParam(URLParam.GRAPH_LAYOUT, this.props.layout);
     }
 
-    // Ensure we initialize the graph. We wait for the toolbar to render and
-    // ensure all redux props are updated with URL settings.
-    // That in turn ensures the initial fetchParams are correct.
-    setTimeout(() => this.loadGraphDataFromBackend(), 0);
+    // Unless we are waiting for Manual refresh, ensure we initialize the graph.
+    // We wait for the toolbar to render and ensure all redux props are updated
+    // with URL settings. That in turn ensures the initial fetchParams are correct.
+    if (this.props.refreshInterval !== RefreshIntervalManual) {
+      setTimeout(() => this.loadGraphDataFromBackend(), 0);
+    } else {
+      setTimeout(
+        () =>
+          this.setState({
+            graphData: {
+              elements: { edges: [], nodes: [] },
+              elementsChanged: false,
+              fetchParams: this.graphDataSource.fetchParameters,
+              isLoading: false,
+              timestamp: 0
+            }
+          }),
+        0
+      );
+    }
   }
 
   componentDidUpdate(prev: GraphPageProps): void {
@@ -392,34 +408,32 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       (n1, n2) => n1.name === n2.name
     );
 
-    // Ensure we initialize the graph when there is a change to activeNamespaces.
-    if (activeNamespacesChanged) {
-      this.props.onNamespaceChange();
-    }
-
-    if (
-      activeNamespacesChanged ||
-      prev.boxByCluster !== curr.boxByCluster ||
-      prev.boxByNamespace !== curr.boxByNamespace ||
-      prev.duration !== curr.duration ||
-      (prev.edgeLabels !== curr.edgeLabels && // test for edge labels that invoke graph gen appenders
-        (curr.edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP) ||
-          curr.edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP))) ||
-      (prev.findValue !== curr.findValue && curr.findValue.includes('label:')) ||
-      prev.graphType !== curr.graphType ||
-      (prev.hideValue !== curr.hideValue && curr.hideValue.includes('label:')) ||
-      (prev.lastRefreshAt !== curr.lastRefreshAt && curr.replayQueryTime === 0) ||
-      (prev.replayActive !== curr.replayActive && !curr.replayActive) ||
-      prev.replayQueryTime !== curr.replayQueryTime ||
-      prev.showIdleEdges !== curr.showIdleEdges ||
-      prev.showOperationNodes !== curr.showOperationNodes ||
-      prev.showServiceNodes !== curr.showServiceNodes ||
-      prev.showSecurity !== curr.showSecurity ||
-      prev.showIdleNodes !== curr.showIdleNodes ||
-      prev.showWaypoints !== curr.showWaypoints ||
-      prev.trafficRates !== curr.trafficRates ||
-      GraphPageComponent.isNodeChanged(prev.node, curr.node)
+    if (prev.lastRefreshAt !== curr.lastRefreshAt && curr.replayQueryTime === 0) {
+      this.loadGraphDataFromBackend();
+    } else if (
+      curr.refreshInterval !== RefreshIntervalManual &&
+      (activeNamespacesChanged ||
+        prev.boxByCluster !== curr.boxByCluster ||
+        prev.boxByNamespace !== curr.boxByNamespace ||
+        prev.duration !== curr.duration ||
+        (prev.edgeLabels !== curr.edgeLabels && // test for edge labels that invoke graph gen appenders
+          (curr.edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP) ||
+            curr.edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP))) ||
+        (prev.findValue !== curr.findValue && curr.findValue.includes('label:')) ||
+        prev.graphType !== curr.graphType ||
+        (prev.hideValue !== curr.hideValue && curr.hideValue.includes('label:')) ||
+        (prev.replayActive !== curr.replayActive && !curr.replayActive) ||
+        prev.replayQueryTime !== curr.replayQueryTime ||
+        prev.showIdleEdges !== curr.showIdleEdges ||
+        prev.showOperationNodes !== curr.showOperationNodes ||
+        prev.showServiceNodes !== curr.showServiceNodes ||
+        prev.showSecurity !== curr.showSecurity ||
+        prev.showIdleNodes !== curr.showIdleNodes ||
+        prev.showWaypoints !== curr.showWaypoints ||
+        prev.trafficRates !== curr.trafficRates ||
+        GraphPageComponent.isNodeChanged(prev.node, curr.node))
     ) {
+      this.props.updateSummary(INITIAL_GRAPH_STATE.summaryData);
       this.loadGraphDataFromBackend();
     }
 
@@ -573,6 +587,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
   };
 
   private handleEmptyGraphAction = (): void => {
+    // treat this like a manual refresh, the user is explicitly asking for a graph-gen
     this.loadGraphDataFromBackend();
   };
 
@@ -794,7 +809,6 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   endTour: bindActionCreators(TourActions.endTour, dispatch),
-  onNamespaceChange: bindActionCreators(GraphActions.onNamespaceChange, dispatch),
   onReady: (controller: Controller) => dispatch(GraphThunkActions.graphReady(controller)),
   setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
   setEdgeMode: bindActionCreators(GraphActions.setEdgeMode, dispatch),
@@ -807,7 +821,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   startTour: bindActionCreators(TourActions.startTour, dispatch),
   toggleIdleNodes: bindActionCreators(GraphToolbarActions.toggleIdleNodes, dispatch),
   toggleLegend: bindActionCreators(GraphToolbarActions.toggleLegend, dispatch),
-  updateSummary: (event: GraphEvent) => dispatch(GraphActions.updateSummary(event))
+  updateSummary: (summaryData: SummaryData | null) => dispatch(GraphActions.updateSummary(summaryData))
 });
 
 export const GraphPage = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(GraphPageComponent));

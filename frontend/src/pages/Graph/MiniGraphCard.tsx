@@ -15,7 +15,7 @@ import {
 import { Edge, EdgeModel, Node, NodeModel } from '@patternfly/react-topology';
 import { URLParam, location, router } from '../../app/History';
 import { GraphDataSource } from '../../services/GraphDataSource';
-import { DecoratedGraphElements, EdgeMode, GraphEvent, GraphLayout, GraphType, NodeType } from '../../types/Graph';
+import { DecoratedGraphElements, EdgeMode, SummaryData, GraphLayout, GraphType, NodeType } from '../../types/Graph';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
 import { store } from 'store/ConfigStore';
 import { TimeInMilliseconds } from '../../types/Common';
@@ -45,7 +45,7 @@ type ReduxDispatchProps = {
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (layout: GraphLayout) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
-  updateSummary: (event: GraphEvent) => void;
+  updateSummary: (summaryData: SummaryData) => void;
 };
 
 type ReduxProps = ReduxDispatchProps & {
@@ -436,7 +436,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setEdgeMode: bindActionCreators(GraphActions.setEdgeMode, dispatch),
   setLayout: bindActionCreators(GraphActions.setLayout, dispatch),
   setUpdateTime: (val: TimeInMilliseconds) => dispatch(GraphActions.setUpdateTime(val)),
-  updateSummary: (event: GraphEvent) => dispatch(GraphActions.updateSummary(event))
+  updateSummary: (summaryData: SummaryData) => dispatch(GraphActions.updateSummary(summaryData))
 });
 
 export const MiniGraphCard = connect(mapStateToProps, mapDispatchToProps)(MiniGraphCardComponent);

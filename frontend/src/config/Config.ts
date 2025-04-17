@@ -5,6 +5,8 @@ import { t } from 'utils/I18nUtils';
 // We assume this is always defined in the .env file
 const documentationUrl = process.env.REACT_APP_KIALI_DOC_URL!;
 
+export const RefreshIntervalManual = 1;
+
 const conf = {
   /** Configuration related with session */
   session: {
@@ -24,6 +26,7 @@ const conf = {
     /** Options in refresh */
     refreshInterval: {
       0: t('Pause'),
+      1: t('Manual'),
       10000: t('Every 10s'),
       15000: t('Every 15s'),
       30000: t('Every 30s'),

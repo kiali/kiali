@@ -68,7 +68,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
   }
 
   render(): React.ReactNode {
-    const clusterBox = this.props.data.summaryTarget;
+    const clusterBox = this.props.data.summaryTarget as Node;
     const data = clusterBox.getData();
     const boxed = descendents(clusterBox);
     const cluster = data[NodeAttr.cluster];
@@ -245,7 +245,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     tcpOut: TrafficRateTcp;
     tcpTotal: TrafficRateTcp;
   } => {
-    const clusterBox = this.props.data.summaryTarget;
+    const clusterBox = this.props.data.summaryTarget as Node;
     const data = clusterBox.getData();
     const cluster = data[NodeAttr.cluster];
 

@@ -230,7 +230,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
   }
 
   private spanViewLink(span: RichSpanData): string | undefined {
-    const node = this.props.data.summaryTarget;
+    const node = this.props.data.summaryTarget as Node;
     const nodeData = node.getData();
 
     return nodeData.namespace

@@ -40,6 +40,7 @@ import { isMultiCluster, serverConfig } from '../../config';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { renderWaypointLabel } from '../../components/Ambient/WaypointLabel';
+import { Node } from '@patternfly/react-topology';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -121,7 +122,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
   }
 
   render(): React.ReactNode {
-    const node = this.props.data.summaryTarget;
+    const node = this.props.data.summaryTarget as Node;
     const nodeData = node.getData();
     const { nodeType, app, service, workload, isServiceEntry } = nodeData;
     const servicesList = nodeType !== NodeType.SERVICE && renderDestServicesLinks(nodeData);
@@ -544,7 +545,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     this.onToggleActions(false);
 
     if (this.props.onLaunchWizard) {
-      const node = this.props.data.summaryTarget;
+      const node = this.props.data.summaryTarget as Node;
       const nodeData = node.getData();
 
       this.props.onLaunchWizard(
@@ -576,7 +577,7 @@ export const SummaryPanelNode: React.FC<SummaryPanelNodeProps> = (props: Summary
 
   const [isKebabOpen, setIsKebabOpen] = React.useState<boolean>(false);
 
-  const node = props.data.summaryTarget;
+  const node = props.data.summaryTarget as Node;
   const nodeData = node.getData();
 
   const [serviceDetails, gateways, peerAuthentications, isServiceDetailsLoading] = useServiceDetailForGraphNode(

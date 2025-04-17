@@ -34,6 +34,7 @@ import { KialiIcon } from 'config/KialiIcon';
 import { edgesOut, nodesIn, nodesOut, select } from 'helpers/GraphHelpers';
 import { ApiResponse } from 'types/Api';
 import { serverConfig } from 'config';
+import { Node } from '@patternfly/react-topology';
 
 type SummaryPanelNodeMetricsState = {
   grpcErrorCountIn: Datapoint[];
@@ -126,7 +127,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
   }
 
   updateCharts(props: SummaryPanelNodeProps): void {
-    const node = props.data.summaryTarget;
+    const node = props.data.summaryTarget as Node;
     const nodeData = node.getData();
     const nodeMetricType = getNodeMetricType(nodeData);
     const isGrpcRequests = this.isGrpcRequests();
@@ -375,7 +376,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
   };
 
   render(): React.ReactNode {
-    const node = this.props.data.summaryTarget;
+    const node = this.props.data.summaryTarget as Node;
     const nodeData = node.getData();
     const hasGrpc = this.hasGrpcTraffic(nodeData);
     const hasGrpcIn = hasGrpc && this.hasGrpcIn(nodeData);

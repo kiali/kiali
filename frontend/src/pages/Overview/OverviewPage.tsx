@@ -76,6 +76,7 @@ import { ApiError } from 'types/Api';
 import { gvkType, IstioConfigList } from 'types/IstioConfigList';
 import { t } from 'utils/I18nUtils';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
+import { RefreshIntervalManual } from 'config/Config';
 
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
@@ -188,13 +189,13 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     if (prevProps.duration !== this.props.duration || prevProps.navCollapse !== this.props.navCollapse) {
       // Reload to avoid graphical glitches with charts
       // TODO: this workaround should probably be deleted after switch to Patternfly 4, see https://issues.jboss.org/browse/KIALI-3116
-      this.load();
+      this.onChange();
     }
   }
 
   componentDidMount(): void {
     this.fetchGrafanaInfo();
-    this.load();
+    this.onChange();
   }
 
   componentWillUnmount(): void {
@@ -215,6 +216,12 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
     // In this case is the first time that we are loading Overview Page, calculate the best view
     return isCompact ? OverviewDisplayMode.COMPACT : OverviewDisplayMode.EXPAND;
+  };
+
+  onChange = (): void => {
+    if (this.props.refreshInterval !== RefreshIntervalManual) {
+      this.load();
+    }
   };
 
   load = (): void => {
@@ -938,7 +945,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           title: link.name,
           action: (_ns: string) => {
             window.open(link.url, '_blank');
-            this.load();
+            this.onChange();
           }
         };
 
@@ -983,6 +990,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     return (
       <>
         <OverviewToolbar
+          onChange={this.onChange}
           onRefresh={this.load}
           onError={FilterHelper.handleError}
           sort={this.sort}
@@ -1103,7 +1111,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             )[0]
           }
           duration={this.props.duration}
-          load={this.load}
+          load={this.onChange}
         />
       </>
     );

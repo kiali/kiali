@@ -54,7 +54,7 @@ export const useRefreshInterval = (): RefreshInterval => {
       intervalId = null;
     }
 
-    if (numSubscribers !== 0 && refreshInterval !== 0) {
+    if (numSubscribers !== 0 && refreshInterval > 1) {
       intervalId = window.setInterval(triggerRefresh, refreshInterval);
     }
 

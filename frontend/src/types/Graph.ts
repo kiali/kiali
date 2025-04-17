@@ -9,8 +9,8 @@ export const SUMMARY_PANEL_CHART_WIDTH = 250;
 export type SummaryType = 'graph' | 'node' | 'edge' | 'box';
 
 export interface SummaryData {
-  summaryTarget: any;
-  summaryType: SummaryType;
+  summaryTarget: GraphElement | Controller; // the target of the event
+  summaryType: SummaryType; // what the summary panel should show
 }
 
 export enum Protocol {
@@ -251,11 +251,6 @@ export interface NodeParamsType {
 export interface FocusNode {
   id: string;
   isSelected?: boolean;
-}
-
-export interface GraphEvent {
-  summaryTarget: GraphElement | Controller; // the target of the event
-  summaryType: SummaryType; // what the summary panel should show
 }
 
 // Graph Structures
