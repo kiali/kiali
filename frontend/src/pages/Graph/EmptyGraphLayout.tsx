@@ -14,6 +14,8 @@ import * as _ from 'lodash';
 import { Namespace } from '../../types/Namespace';
 import { KialiIcon } from '../../config/KialiIcon';
 import { DecoratedGraphElements } from '../../types/Graph';
+import { RefreshIntervalManual } from 'config/Config';
+import { IntervalInMilliseconds } from 'types/Common';
 
 type EmptyGraphLayoutProps = {
   action?: any;
@@ -23,6 +25,7 @@ type EmptyGraphLayoutProps = {
   isLoading?: boolean;
   isMiniGraph: boolean;
   namespaces?: Namespace[];
+  refreshInterval?: IntervalInMilliseconds;
   showIdleNodes?: boolean;
   toggleIdleNodes?: () => void;
 };
@@ -91,6 +94,7 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
         </EmptyState>
       );
     }
+
     if (this.props.isLoading) {
       return (
         <EmptyState id="empty-graph-is-loading" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
@@ -98,6 +102,8 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
         </EmptyState>
       );
     }
+
+    const isGraphEmpty = !this.props.elements || !this.props.elements.nodes || this.props.elements.nodes.length < 1;
 
     if (this.props.namespaces?.length === 0) {
       return (
@@ -110,7 +116,17 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
       );
     }
 
-    const isGraphEmpty = !this.props.elements || !this.props.elements.nodes || this.props.elements.nodes.length < 1;
+    if (!this.props.isMiniGraph && this.props.refreshInterval === RefreshIntervalManual && isGraphEmpty) {
+      return (
+        <EmptyState id="empty-graph-manual" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
+          <EmptyStateHeader titleText="Manual refresh required" headingLevel="h5" />
+          <EmptyStateBody>
+            The refresh interval is set to 'Manual'. To render the graph, select your desired filters and options and
+            then click the Refresh button. Or, if preferred, change the setting to the desired interval.
+          </EmptyStateBody>
+        </EmptyState>
+      );
+    }
 
     if (isGraphEmpty && !this.props.isMiniGraph) {
       return (

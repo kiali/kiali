@@ -3,17 +3,13 @@ import {
   Card,
   CardBody,
   CardHeader,
-  EmptyState,
-  EmptyStateBody,
-  EmptyStateVariant,
   Grid,
   GridItem,
   Label,
   Title,
   TitleSizes,
   Tooltip,
-  TooltipPosition,
-  EmptyStateHeader
+  TooltipPosition
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { FilterSelected, StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
@@ -77,6 +73,7 @@ import { gvkType, IstioConfigList } from 'types/IstioConfigList';
 import { t } from 'utils/I18nUtils';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
+import { EmptyOverview } from './EmptyOverview';
 
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
@@ -98,13 +95,6 @@ const cardGridStyle = kialiStyle({
   textAlign: 'center',
   marginTop: 0,
   marginBottom: '0.5rem'
-});
-
-const emptyStateStyle = kialiStyle({
-  height: '300px',
-  marginRight: '0.25rem',
-  marginBottom: '0.5rem',
-  marginTop: '0.5rem'
 });
 
 const namespaceHeaderStyle = kialiStyle({
@@ -139,6 +129,7 @@ type State = {
   displayMode: OverviewDisplayMode;
   grafanaLinks: ExternalLink[];
   kind: string;
+  loaded: boolean;
   namespaces: NamespaceInfo[];
   nsTarget: string;
   opTarget: string;
@@ -171,17 +162,18 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     const display = HistoryManager.getParam(URLParam.DISPLAY_MODE);
 
     this.state = {
-      namespaces: [],
-      type: OverviewToolbar.currentOverviewType(),
+      clusterTarget: '',
+      controlPlanes: undefined,
       direction: OverviewToolbar.currentDirectionType(),
       displayMode: display ? Number(display) : OverviewDisplayMode.EXPAND,
-      showTrafficPoliciesModal: false,
-      kind: '',
-      nsTarget: '',
-      clusterTarget: '',
-      opTarget: '',
       grafanaLinks: [],
-      controlPlanes: undefined
+      kind: '',
+      loaded: false,
+      namespaces: [],
+      nsTarget: '',
+      opTarget: '',
+      showTrafficPoliciesModal: false,
+      type: OverviewToolbar.currentOverviewType()
     };
   }
 
@@ -270,14 +262,15 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         this.setState(
           prevState => {
             return {
-              type: type,
               direction: direction,
-              namespaces: Sorts.sortFunc(allNamespaces, sortField, isAscending),
               displayMode: displayMode,
-              showTrafficPoliciesModal: prevState.showTrafficPoliciesModal,
               kind: prevState.kind,
+              loaded: true,
+              namespaces: Sorts.sortFunc(allNamespaces, sortField, isAscending),
               nsTarget: prevState.nsTarget,
-              opTarget: prevState.opTarget
+              opTarget: prevState.opTarget,
+              showTrafficPoliciesModal: prevState.showTrafficPoliciesModal,
+              type: type
             };
           },
           () => {
@@ -1002,7 +995,11 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           setDisplayMode={this.setDisplayMode}
           statefulFilterRef={this.sFOverviewToolbar}
         />
-        {filteredNamespaces.length > 0 ? (
+        <EmptyOverview
+          filteredNamespaces={filteredNamespaces}
+          loaded={this.state.loaded}
+          refreshInterval={this.props.refreshInterval}
+        >
           <RenderComponentScroll
             className={this.state.displayMode === OverviewDisplayMode.LIST ? gridStyleList : gridStyleCompact}
           >
@@ -1091,14 +1088,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               </Grid>
             )}
           </RenderComponentScroll>
-        ) : (
-          <EmptyState className={emptyStateStyle} variant={EmptyStateVariant.full}>
-            <EmptyStateHeader titleText="No unfiltered namespaces" headingLevel="h5" />
-            <EmptyStateBody>
-              Either all namespaces are being filtered or the user has no permission to access namespaces.
-            </EmptyStateBody>
-          </EmptyState>
-        )}
+        </EmptyOverview>
 
         <OverviewTrafficPolicies
           opTarget={this.state.opTarget}

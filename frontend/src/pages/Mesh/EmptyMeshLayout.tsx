@@ -11,6 +11,8 @@ import { kialiStyle } from 'styles/StyleUtils';
 import * as _ from 'lodash';
 import { KialiIcon } from '../../config/KialiIcon';
 import { DecoratedMeshElements } from 'types/Mesh';
+import { IntervalInMilliseconds } from 'types/Common';
+import { RefreshIntervalManual } from 'config/Config';
 
 type EmptyMeshLayoutProps = {
   action?: any;
@@ -18,6 +20,7 @@ type EmptyMeshLayoutProps = {
   isLoading?: boolean;
   isError: boolean;
   isMiniMesh: boolean;
+  refreshInterval: IntervalInMilliseconds;
   error?: string;
 };
 
@@ -72,6 +75,18 @@ export class EmptyMeshLayout extends React.Component<EmptyMeshLayoutProps, Empty
     }
 
     const isMeshEmpty = !this.props.elements || !this.props.elements.nodes || this.props.elements.nodes.length < 1;
+
+    if (!this.props.isMiniMesh && this.props.refreshInterval === RefreshIntervalManual && isMeshEmpty) {
+      return (
+        <EmptyState id="empty-graph-manual" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
+          <EmptyStateHeader titleText="Manual refresh required" headingLevel="h5" />
+          <EmptyStateBody>
+            The refresh interval is set to 'Manual'. To render the mesh, select your desired filters and options and
+            then click the Refresh button. Or, if preferred, change the setting to the desired interval.
+          </EmptyStateBody>
+        </EmptyState>
+      );
+    }
 
     if (isMeshEmpty && !this.props.isMiniMesh) {
       return (

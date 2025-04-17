@@ -22,8 +22,11 @@ import { TimeDurationComponent } from '../../components/Time/TimeDurationCompone
 import { isMultiCluster, serverConfig } from '../../config';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
+import { EmptyVirtualList } from 'components/VirtualList/EmptyVirtualList';
 
-type AppListPageState = FilterComponent.State<AppListItem>;
+type AppListPageState = FilterComponent.State<AppListItem> & {
+  loaded: boolean;
+};
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -45,9 +48,10 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
 
     this.state = {
-      listItems: [],
       currentSortField: prevCurrentSortField,
-      isSortAscending: prevIsSortAscending
+      isSortAscending: prevIsSortAscending,
+      listItems: [],
+      loaded: false
     };
   }
 
@@ -108,7 +112,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
     if (this.props.activeNamespaces.length !== 0) {
       this.fetchApps(Array.from(uniqueClusters), activeFilters, activeToggles, this.props.duration);
     } else {
-      this.setState({ listItems: [] });
+      this.setState({ listItems: [], loaded: true });
     }
   }
 
@@ -141,7 +145,8 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
       })
       .then(appListItems => {
         this.setState({
-          listItems: this.sortItemList(appListItems, this.state.currentSortField, this.state.isSortAscending)
+          listItems: this.sortItemList(appListItems, this.state.currentSortField, this.state.isSortAscending),
+          loaded: true
         });
       })
       .catch(err => {
@@ -167,17 +172,23 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
             <TimeDurationComponent key={'DurationDropdown'} id="app-list-duration-dropdown" disabled={false} />
           }
         />
-
-        <RenderContent>
-          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} sort={this.onSort} type="applications">
-            <StatefulFilters
-              initialFilters={AppListFilters.availableFilters}
-              initialToggles={this.initialToggles}
-              onFilterChange={this.onFilterChange}
-              onToggleChange={this.onFilterChange}
-            />
-          </VirtualList>
-        </RenderContent>
+        <EmptyVirtualList loaded={this.state.loaded} refreshInterval={this.props.refreshInterval}>
+          <RenderContent>
+            <VirtualList
+              rows={this.state.listItems}
+              hiddenColumns={hiddenColumns}
+              sort={this.onSort}
+              type="applications"
+            >
+              <StatefulFilters
+                initialFilters={AppListFilters.availableFilters}
+                initialToggles={this.initialToggles}
+                onFilterChange={this.onFilterChange}
+                onToggleChange={this.onFilterChange}
+              />
+            </VirtualList>
+          </RenderContent>
+        </EmptyVirtualList>
       </>
     );
   }

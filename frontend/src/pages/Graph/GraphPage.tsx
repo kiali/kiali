@@ -225,6 +225,7 @@ const GraphErrorBoundaryFallback = (): React.ReactElement => {
         isError={true}
         isMiniGraph={false}
         namespaces={[]}
+        refreshInterval={0}
         showIdleNodes={false}
         toggleIdleNodes={() => undefined}
       />
@@ -409,6 +410,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     );
 
     if (
+      // refresh the graph but keep the side-panel
       (prev.lastRefreshAt !== curr.lastRefreshAt && curr.replayQueryTime === 0) ||
       (curr.refreshInterval !== RefreshIntervalManual &&
         (prev.duration !== curr.duration ||
@@ -422,9 +424,9 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
           prev.showSecurity !== curr.showSecurity ||
           prev.trafficRates !== curr.trafficRates))
     ) {
-      // refresh the graph but keep the side-panel
       this.loadGraphDataFromBackend();
     } else if (
+      // refresh the graph and init the side-panel
       curr.refreshInterval !== RefreshIntervalManual &&
       (activeNamespacesChanged ||
         prev.boxByCluster !== curr.boxByCluster ||
@@ -439,7 +441,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
         prev.showWaypoints !== curr.showWaypoints ||
         GraphPageComponent.isNodeChanged(prev.node, curr.node))
     ) {
-      // refresh the graph and init the side-panel
       this.props.updateSummary(INITIAL_GRAPH_STATE.summaryData);
       this.loadGraphDataFromBackend();
     }
@@ -510,7 +511,8 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
                     isLoading={this.state.graphData.isLoading}
                     isError={!!this.state.graphData.isError}
                     isMiniGraph={false}
-                    namespaces={this.state.graphData.fetchParams.namespaces}
+                    namespaces={this.props.activeNamespaces}
+                    refreshInterval={this.props.refreshInterval}
                     showIdleNodes={this.props.showIdleNodes}
                     toggleIdleNodes={this.props.toggleIdleNodes}
                   >

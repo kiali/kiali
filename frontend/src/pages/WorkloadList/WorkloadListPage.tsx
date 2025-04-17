@@ -25,8 +25,11 @@ import { isMultiCluster, serverConfig } from 'config';
 import { validationKey } from '../../types/IstioConfigList';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
+import { EmptyVirtualList } from 'components/VirtualList/EmptyVirtualList';
 
-type WorkloadListPageState = FilterComponent.State<WorkloadListItem>;
+type WorkloadListPageState = FilterComponent.State<WorkloadListItem> & {
+  loaded: boolean;
+};
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -52,9 +55,10 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
 
     this.state = {
-      listItems: [],
       currentSortField: prevCurrentSortField,
-      isSortAscending: prevIsSortAscending
+      isSortAscending: prevIsSortAscending,
+      listItems: [],
+      loaded: false
     };
   }
 
@@ -119,7 +123,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     if (this.props.activeNamespaces.length !== 0) {
       this.fetchWorkloads(Array.from(uniqueClusters), activeFilters, activeToggles, this.props.duration);
     } else {
-      this.setState({ listItems: [] });
+      this.setState({ listItems: [], loaded: true });
     }
   }
 
@@ -192,7 +196,8 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         this.promises.cancel('sort');
 
         this.setState({
-          listItems: this.sortItemList(workloadsItems, this.state.currentSortField, this.state.isSortAscending)
+          listItems: this.sortItemList(workloadsItems, this.state.currentSortField, this.state.isSortAscending),
+          loaded: true
         });
       })
       .catch(err => {
@@ -219,17 +224,18 @@ class WorkloadListPageComponent extends FilterComponent.Component<
             <TimeDurationComponent key="DurationDropdown" id="workload-list-duration-dropdown" disabled={false} />
           }
         />
-
-        <RenderContent>
-          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} sort={this.onSort} type="workloads">
-            <StatefulFilters
-              initialFilters={WorkloadListFilters.availableFilters}
-              initialToggles={this.initialToggles}
-              onFilterChange={this.onFilterChange}
-              onToggleChange={this.onFilterChange}
-            />
-          </VirtualList>
-        </RenderContent>
+        <EmptyVirtualList loaded={this.state.loaded} refreshInterval={this.props.refreshInterval}>
+          <RenderContent>
+            <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} sort={this.onSort} type="workloads">
+              <StatefulFilters
+                initialFilters={WorkloadListFilters.availableFilters}
+                initialToggles={this.initialToggles}
+                onFilterChange={this.onFilterChange}
+                onToggleChange={this.onFilterChange}
+              />
+            </VirtualList>
+          </RenderContent>
+        </EmptyVirtualList>
       </>
     );
   }
