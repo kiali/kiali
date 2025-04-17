@@ -39,16 +39,6 @@ switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
 
 ${CLIENT_EXE} label namespace ${ISTIO_NAMESPACE} topology.istio.io/network=${NETWORK1_ID}
 
-ISTIO_INSTALL_SCRIPT="${SCRIPT_DIR}/../install-istio-via-sail.sh"
-image_tag_arg=""
-image_hub_arg=""
-if [ -n "${ISTIO_TAG}" ]; then
-  image_tag_arg="--set spec.values.pilot.tag=${ISTIO_TAG}"
-fi
-if [ -n "${ISTIO_HUB}" ]; then
-  image_hub_arg="--set spec.values.pilot.hub=${ISTIO_HUB}"
-fi
-
 MC_EAST_YAML=$(mktemp)
 cat <<EOF > "$MC_EAST_YAML"
 spec:
@@ -75,9 +65,9 @@ EOF
 
 
 if [ "${TEMPO}" == "true" ]; then
-  ${ISTIO_INSTALL_SCRIPT} -a "prometheus grafana tempo" --patch-file "${MC_EAST_YAML}" ${image_tag_arg} ${image_hub_arg}
+  install_istio -a "prometheus grafana tempo" --patch-file "${MC_EAST_YAML}"
 else
-  ${ISTIO_INSTALL_SCRIPT} --patch-file "${MC_EAST_YAML}" ${image_tag_arg} ${image_hub_arg}
+  install_istio --patch-file "${MC_EAST_YAML}"
 fi
 
 helm install istio-eastwestgateway gateway \
@@ -122,7 +112,7 @@ spec:
     global:
       remotePilotAddress: ${DISCOVERY_ADDRESS}
 EOF
-${ISTIO_INSTALL_SCRIPT} -a "prometheus" --patch-file "${MC_WEST_YAML}" --wait "false"
+install_istio -a "prometheus" --patch-file "${MC_WEST_YAML}" --wait "false"
 
 # We need the istio reconcile to get to the point where it has created the remote RBAC but fails on pinging the primary's istiod.
 # If we don't wait until the RBAC is created by istio, then the Sail reconiliation will fail because istioctl create-remote-secret

@@ -14,23 +14,6 @@
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 source ${SCRIPT_DIR}/env.sh $*
 
-install_istio() {
-  local clustername="${1}"
-  local network="${2}"
-  local pf_yaml="${3}"
-  if [ ! -z "${ISTIO_TAG}" ]; then
-    local image_tag_arg="--image-tag ${ISTIO_TAG}"
-  fi
-  if [ ! -z "${ISTIO_HUB}" ]; then
-    local image_hub_arg="--image-hub ${ISTIO_HUB}"
-  fi
-  "${ISTIO_INSTALL_SCRIPT}" -pf "${pf_yaml}"
-  if [ "$?" != "0" ]; then
-    echo "Failed to install Istio on cluster [${clustername}]"
-    exit 1
-  fi
-}
-
 create_crossnetwork_gateway() {
   local clustername="${1}"
   local network="${2}"
@@ -115,16 +98,6 @@ spec:
         clusterName: ${CLUSTER2_NAME}
       network: ${NETWORK2_ID}
 EOF
-
-# Find the hack script to be used to install istio
-ISTIO_INSTALL_SCRIPT="${SCRIPT_DIR}/../install-istio-via-sail.sh"
-
-if [ -x "${ISTIO_INSTALL_SCRIPT}" ]; then
-  echo "Istio install script: ${ISTIO_INSTALL_SCRIPT}"
-else
-  echo "Cannot find the Istio install script at: ${ISTIO_INSTALL_SCRIPT}"
-  exit 1
-fi
 
 # Find the files necessary to create the crossnetwork gateway, if required
 if [ "${CROSSNETWORK_GATEWAY_REQUIRED}" == "true" ]; then
@@ -235,11 +208,11 @@ source ${SCRIPT_DIR}/setup-ca.sh
 
 echo "==== INSTALL ISTIO ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
 switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-install_istio "${CLUSTER1_NAME}" "${NETWORK1_ID}" "${MC_EAST_YAML}"
+install_istio --patch-file "${MC_EAST_YAML}"
 
 echo "==== INSTALL ISTIO ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
 switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
-install_istio "${CLUSTER2_NAME}" "${NETWORK2_ID}" "${MC_WEST_YAML}"
+install_istio --patch-file "${MC_WEST_YAML}"
 
 echo "==== DEPLOY ISTIO INGRESS GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
 switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"

@@ -80,6 +80,27 @@ done
 # abort on any error
 set -e
 
+# Find the hack script to be used to install istio
+ISTIO_INSTALL_SCRIPT="${SCRIPT_DIR}/istio/install-istio-via-sail.sh"
+
+if [ -x "${ISTIO_INSTALL_SCRIPT}" ]; then
+  echo "Istio install script: ${ISTIO_INSTALL_SCRIPT}"
+else
+  echo "Cannot find the Istio install script at: ${ISTIO_INSTALL_SCRIPT}"
+  exit 1
+fi
+
+install_istio() {
+  local image_tag_arg=${ISTIO_TAG:+--set ".spec.values.pilot.tag=\"${ISTIO_TAG}\""}
+  local image_hub_arg=${ISTIO_HUB:+--set ".spec.values.pilot.hub=\"${ISTIO_HUB}\""}
+  local version_arg=${ISTIO_VERSION:+--set ".spec.version=\"v${ISTIO_VERSION}\""}
+  "${ISTIO_INSTALL_SCRIPT}" "$@" ${image_tag_arg} ${image_hub_arg} ${version_arg}
+  if [ "$?" != "0" ]; then
+    echo "Failed to install Istio"
+    exit 1
+  fi
+}
+
 # set up some of our defaults
 AUTH_STRATEGY="${AUTH_STRATEGY:-anonymous}"
 DORP="${DORP:-docker}"
@@ -201,7 +222,7 @@ setup_kind_singlecluster() {
       # At least with Ambient 1.21
       "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -gae true ${hub_arg:-} -cp ambient
   elif [ "${SAIL}" == "true" ]; then
-    "${SCRIPT_DIR}"/istio/install-istio-via-sail.sh
+    install_istio
   else
     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae true ${hub_arg:-}
   fi
@@ -281,11 +302,8 @@ setup_kind_tempo() {
   "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
 
   if [ "${SAIL}" == "true" ]; then
-
     infomsg "Installing Istio with Sail"
-
-    "${SCRIPT_DIR}"/istio/install-istio-via-sail.sh -a "prometheus grafana tempo"
-
+    install_istio -a "prometheus grafana tempo"
   else
     infomsg "Installing tempo"
     ${SCRIPT_DIR}/istio/tempo/install-tempo-env.sh -c kubectl -ot true
@@ -389,6 +407,7 @@ setup_kind_multicluster() {
   local cluster2_context
   local cluster1_name
   local cluster2_name
+  local istio_version_arg=${ISTIO_VERSION:+--istio-version ${ISTIO_VERSION}}
   if [ "${MULTICLUSTER}" == "${MULTI_PRIMARY}" ]; then
     "${SCRIPT_DIR}"/istio/multicluster/install-multi-primary.sh \
       --kiali-enabled false \
@@ -398,6 +417,7 @@ setup_kind_multicluster() {
       --istio-dir "${istio_dir}" \
       ${kind_node_image:-}
       ${hub_arg:-} \
+      ${istio_version_arg}
 
     cluster1_context="kind-east"
     cluster2_context="kind-west"
@@ -406,7 +426,7 @@ setup_kind_multicluster() {
     kubectl rollout status deployment prometheus -n istio-system --context kind-east
     kubectl rollout status deployment prometheus -n istio-system --context kind-west
   elif [ "${MULTICLUSTER}" == "${PRIMARY_REMOTE}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" ${kind_node_image:-} ${hub_arg:-}
+    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" ${kind_node_image:-} ${hub_arg:-} ${istio_version_arg}
     cluster1_context="kind-east"
     cluster2_context="kind-west"
     cluster1_name="east"
@@ -414,7 +434,7 @@ setup_kind_multicluster() {
     kubectl rollout status deployment prometheus -n istio-system --context kind-east
     kubectl rollout status deployment prometheus -n istio-system --context kind-west
   elif [ "${MULTICLUSTER}" == "${EXTERNAL_CONTROLPLANE}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh ${kind_node_image:-}
+    "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh ${kind_node_image:-} ${istio_version_arg}
     cluster1_context="kind-controlplane"
     cluster2_context="kind-dataplane"
     cluster1_name="controlplane"
