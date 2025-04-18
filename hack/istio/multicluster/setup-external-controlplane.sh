@@ -18,8 +18,6 @@ else
   exit 1
 fi
 
-ISTIO_INSTALL_SCRIPT="${SCRIPT_DIR}/../install-istio-via-sail.sh"
-
 install_bookinfo() {
   local profile="${1}"
   local traffic_gen_enabled="${2}"
@@ -63,7 +61,7 @@ spec:
 EOF
 
 switch_cluster "${CTX_EXTERNAL_CLUSTER}"
-${ISTIO_INSTALL_SCRIPT} --patch-file "${EXTERNAL_ISTIO_YAML}" -a "prometheus"
+install_istio --patch-file "${EXTERNAL_ISTIO_YAML}" -a "prometheus"
 kubectl wait --context "${CTX_EXTERNAL_CLUSTER}" --for=condition=Ready istios/default --timeout=3m
 
 helm upgrade --install --kube-context "${CTX_EXTERNAL_CLUSTER}" --wait -n istio-system istio-ingressgateway gateway --repo https://istio-release.storage.googleapis.com/charts -f - <<EOF
@@ -104,7 +102,7 @@ spec:
 EOF
 
 switch_cluster "${CTX_REMOTE_CLUSTER}"
-${ISTIO_INSTALL_SCRIPT} --patch-file "${REMOTE_ISTIO_YAML}" -a "prometheus" --wait false
+install_istio --patch-file "${REMOTE_ISTIO_YAML}" -a "prometheus" --wait false
 
 # Set up the control plane in the external cluster: https://istio.io/latest/docs/setup/install/external-controlplane/#set-up-the-control-plane-in-the-external-cluster
 

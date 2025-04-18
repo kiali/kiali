@@ -39,6 +39,27 @@ switch_cluster() {
   fi
 }
 
+# Find the hack script to be used to install istio
+ISTIO_INSTALL_SCRIPT="${SCRIPT_DIR}/../install-istio-via-sail.sh"
+
+if [ -x "${ISTIO_INSTALL_SCRIPT}" ]; then
+  echo "Istio install script: ${ISTIO_INSTALL_SCRIPT}"
+else
+  echo "Cannot find the Istio install script at: ${ISTIO_INSTALL_SCRIPT}"
+  exit 1
+fi
+
+install_istio() {
+  local image_tag_arg=${ISTIO_TAG:+--set ".spec.values.pilot.tag=\"${ISTIO_TAG}\""}
+  local image_hub_arg=${ISTIO_HUB:+--set ".spec.values.pilot.hub=\"${ISTIO_HUB}\""}
+  local version_arg=${ISTIO_VERSION:+--set ".spec.version=\"v${ISTIO_VERSION}\""}
+  "${ISTIO_INSTALL_SCRIPT}" "$@" ${image_tag_arg} ${image_hub_arg} ${version_arg}
+  if [ "$?" != "0" ]; then
+    echo "Failed to install Istio"
+    exit 1
+  fi
+}
+
 #
 # SET UP THE DEFAULTS FOR ALL SETTINGS
 #
@@ -65,6 +86,8 @@ ISTIO_HUB=""
 # (note: needed this because openshift requires a dev build of istioctl but we still want the released images.
 # See: https://github.com/kiali/kiali/pull/3713#issuecomment-809920379)
 ISTIO_TAG=""
+
+ISTIO_VERSION=""
 
 # If running in CI, apply CI config overrides. Typically the answer is yes for these hack scripts, so we'll default to true.
 CI_CONFIG="${CI_CONFIG:-true}"
@@ -249,6 +272,10 @@ while [[ $# -gt 0 ]]; do
       ISTIO_TAG="$2"
       shift;shift
       ;;
+    -iv|--istio-version)
+      ISTIO_VERSION="$2"
+      shift;shift
+      ;;
     -ka|--keycloak-address)
       KEYCLOAK_ADDRESS="$2"
       shift;shift
@@ -396,6 +423,9 @@ Valid command line arguments:
   -ih|--istio-hub <hub>: If you want to override the image hub used by istioctl (where the images are found),
                          set this to the hub name, or "default" to use the default image locations.
   -it|--istio-tag <tag>: If you want to override the image tag used by istioctl, set this to the tag name.
+  -iv|--istio-version <#.#.#>: The version of Istio you want to install.
+                               If not specified, the latest version of Istio is installed.
+                               Default: <the latest release>
   -k1wf|--kiali1-web-fqdn <fqdn>: If specified, this will be the #1 Kaili setting for spec.server.web_fqdn.
   -k1ws|--kiali1-web-schema <schema>: If specified, this will be the #1 Kaili setting for spec.server.web_schema.
   -k2wf|--kiali2-web-fqdn <fqdn>: If specified, this will be the #2 Kaili setting for spec.server.web_fqdn.
@@ -600,6 +630,7 @@ export AUTH_GROUPS \
        ISTIO_NAMESPACE \
        ISTIO_HUB \
        ISTIO_TAG \
+       ISTIO_VERSION \
        KEYCLOAK_CERTS_DIR \
        KIALI_AUTH_STRATEGY \
        KIALI_BUILD_DEV_IMAGE \
@@ -645,6 +676,7 @@ ISTIO_DIR=$ISTIO_DIR
 ISTIO_NAMESPACE=$ISTIO_NAMESPACE
 ISTIO_HUB=$ISTIO_HUB
 ISTIO_TAG=$ISTIO_TAG
+ISTIO_VERSION=$ISTIO_VERSION
 KEYCLOAK_CERTS_DIR=$KEYCLOAK_CERTS_DIR
 KIALI_AUTH_STRATEGY=$KIALI_AUTH_STRATEGY
 KIALI_BUILD_DEV_IMAGE=$KIALI_BUILD_DEV_IMAGE
