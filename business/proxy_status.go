@@ -10,16 +10,25 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
+func NewProxyStatusService(conf *config.Config, cache cache.KialiCache, kialiSAClients map[string]kubernetes.ClientInterface, namespace *NamespaceService) ProxyStatusService {
+	return ProxyStatusService{
+		conf:           conf,
+		kialiCache:     cache,
+		kialiSAClients: kialiSAClients,
+		namespace:      namespace,
+	}
+}
+
 type ProxyStatusService struct {
-	businessLayer  *Layer
 	conf           *config.Config
 	kialiCache     cache.KialiCache
 	kialiSAClients map[string]kubernetes.ClientInterface
+	namespace      *NamespaceService
 }
 
 // GetPodProxyStatus isSubscribed is used to return IGNORED if sent is empty, instead of NOT_SENT
 func (in *ProxyStatusService) GetPodProxyStatus(cluster, ns, pod string, isSubscribed bool) *models.ProxyStatus {
-	return castProxyStatus(kialiCache.GetPodProxyStatus(cluster, ns, pod), isSubscribed)
+	return castProxyStatus(in.kialiCache.GetPodProxyStatus(cluster, ns, pod), isSubscribed)
 }
 
 // castProxyStatus returns a status string depending on the proxyStatus and whether the proxy is subscribed
@@ -65,7 +74,7 @@ func (in *ProxyStatusService) GetConfigDump(cluster, namespace, pod string) (mod
 	return models.EnvoyProxyDump{ConfigDump: dump}, err
 }
 
-func (in *ProxyStatusService) GetConfigDumpResourceEntries(cluster, namespace, pod, resource string) (*models.EnvoyProxyDump, error) {
+func (in *ProxyStatusService) GetConfigDumpResourceEntries(ctx context.Context, cluster, namespace, pod, resource string) (*models.EnvoyProxyDump, error) {
 	kialiSAClient, ok := in.kialiSAClients[cluster]
 	if !ok {
 		return nil, fmt.Errorf("cluster [%s] not found", cluster)
@@ -76,7 +85,7 @@ func (in *ProxyStatusService) GetConfigDumpResourceEntries(cluster, namespace, p
 		return nil, err
 	}
 
-	namespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(context.TODO(), cluster)
+	namespaces, err := in.namespace.GetClusterNamespaces(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
