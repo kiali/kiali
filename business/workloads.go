@@ -36,6 +36,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/util"
 	"github.com/kiali/kiali/util/sliceutil"
 )
 
@@ -1071,6 +1072,13 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 							log.Errorf("could not parse OwnerReference api version %q: %v", ref.APIVersion, err)
 							continue
 						}
+						if util.IsRollout(ref.Kind, repset[iFound].Name, repset[iFound].Labels) {
+							// Heuristic for ArgoCD Rollout
+							// Replace Rollout with ReplicaSet in references
+							// Keep the controller name with rollouts-pod-template-hash, do not trim, not to cause conflicts
+							controllers[repset[iFound].Name] = kubernetes.ReplicaSets
+							continue
+						}
 						if _, exist := controllers[ref.Name]; !exist {
 							// For valid owner controllers, delete the child ReplicaSet and add the parent controller,
 							// otherwise (for custom controllers), defer to the replica set.
@@ -1794,6 +1802,13 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 						continue
 					}
 					if ref.Controller != nil && *ref.Controller {
+						if util.IsRollout(ref.Kind, repset[iFound].Name, repset[iFound].Labels) {
+							// Heuristic for ArgoCD Rollout
+							// Replace Rollout with ReplicaSet in references
+							// Keep the controller name with rollouts-pod-template-hash, do not trim, not to cause conflicts
+							controllers[repset[iFound].Name] = kubernetes.ReplicaSets
+							continue
+						}
 						// For valid owner controllers, delete the child ReplicaSet and add the parent controller,
 						// otherwise (for custom controllers), defer to the replica set.
 						if _, exist := controllers[ref.Name]; !exist {

@@ -8,6 +8,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+const RolloutsLabel = "rollouts-pod-template-hash"
+
 func RemoveNilValues(root interface{}) {
 	if mRoot, isMap := root.(map[string]interface{}); isMap {
 		for k, v := range mRoot {
@@ -100,4 +102,9 @@ func LabelsToSortedString(labels map[string]string) string {
 	}
 
 	return strings.Join(parts, ",")
+}
+
+func IsRollout(kind string, name string, labels map[string]string) bool {
+	return kind == "Rollout" && labels[RolloutsLabel] != "" &&
+		strings.HasSuffix(name, labels[RolloutsLabel])
 }
