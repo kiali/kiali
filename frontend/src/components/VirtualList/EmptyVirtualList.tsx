@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, EmptyStateHeader } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import * as _ from 'lodash';
 import { RefreshIntervalManual } from 'config/Config';
 import { IntervalInMilliseconds } from 'types/Common';
 
