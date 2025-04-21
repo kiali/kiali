@@ -530,8 +530,7 @@ type GraphFindOption struct {
 // GraphSettings affect the graph visualization.
 // Animation: animation type point (default) | dash
 type GraphSettings struct {
-	Animation       string `yaml:"animation,omitempty" json:"animation,omitempty"`
-	RefreshInterval string `yaml:"refresh_interval,omitempty" json:"refreshInterval,omitempty"`
+	Animation string `yaml:"animation,omitempty" json:"animation,omitempty"`
 }
 
 // GraphTraffic defines the protocol-specific rates used to determine traffic for graph generation.
@@ -867,8 +866,7 @@ func NewConfig() (c *Config) {
 						},
 					},
 					Settings: GraphSettings{
-						Animation:       "point",
-						RefreshInterval: "60s",
+						Animation: "point",
 					},
 					Traffic: GraphTraffic{
 						Ambient: "total",
