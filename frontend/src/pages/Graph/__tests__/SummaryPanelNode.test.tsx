@@ -26,7 +26,7 @@ describe('SummaryPanelNodeComponent', () => {
       getData: () => {
         return nodeData;
       }
-    };
+    } as any;
     defaultProps = {
       tracingState: {},
       data: {
