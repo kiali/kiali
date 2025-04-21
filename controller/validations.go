@@ -34,7 +34,7 @@ func NewValidationsController(
 	reconcileInterval := conf.ExternalServices.Istio.ValidationReconcileInterval
 
 	if reconcileInterval == nil || *reconcileInterval <= 0 {
-		log.Warning("Validation reconcile interval is 0 or less; skipping periodic validations.")
+		log.Info("Validation reconcile interval is 0 or less; skipping periodic validations.")
 		return nil
 	}
 
