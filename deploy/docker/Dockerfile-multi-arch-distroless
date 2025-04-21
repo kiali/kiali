@@ -1,10 +1,18 @@
-# ubi9/openssl is essentially ubi9-micro with openssl
-FROM registry.access.redhat.com/ubi9/openssl AS base-amd64
-FROM registry.access.redhat.com/ubi9/openssl AS base-arm64
-FROM registry.access.redhat.com/ubi9/openssl AS base-s390x
-FROM registry.access.redhat.com/ubi9/openssl AS base-ppc64le
+# We are building what was the old (now deprecated) ubi9/openssl, which is essentially ubi-micro image with openssl/root certs
+ARG UBI_MAJOR_VERSION="9"
+FROM registry.access.redhat.com/ubi${UBI_MAJOR_VERSION}/ubi AS ubi-build
+ARG UBI_MAJOR_VERSION
+RUN mkdir -p /mnt/rootfs/keys
+RUN chmod 0777 /mnt/rootfs/keys
+RUN yum install --installroot /mnt/rootfs --releasever ${UBI_MAJOR_VERSION} --setopt install_weak_deps=false --nodocs -y bash coreutils-single glibc-minimal-langpack openssl && \
+    yum --installroot /mnt/rootfs clean all
+RUN rm -rf /mnt/rootfs/var/cache/* /mnt/rootfs/var/log/dnf* /mnt/rootfs/var/log/yum.*
 
-FROM base-${TARGETARCH}
+FROM scratch
+COPY --from=ubi-build /mnt/rootfs/ /
+VOLUME  /keys
+
+# Start Kiali specific build
 
 LABEL maintainer="kiali-dev@googlegroups.com"
 
