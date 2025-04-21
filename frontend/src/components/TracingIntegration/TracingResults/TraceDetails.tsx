@@ -6,7 +6,7 @@ import { Button, ButtonVariant, Card, CardBody, Grid, GridItem, Tooltip } from '
 import { InfoAltIcon, WarningTriangleIcon } from '@patternfly/react-icons';
 import { JaegerTrace, RichSpanData } from 'types/TracingInfo';
 import { TracingTraceTitle } from './TracingTraceTitle';
-import { GraphType, NodeType } from 'types/Graph';
+import { GraphType } from 'types/Graph';
 import { FormattedTraceInfo, shortIDStyle } from './FormattedTraceInfo';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiAppState } from 'store/Store';
@@ -27,7 +27,6 @@ import { MetricsStatsThunkActions } from 'actions/MetricsStatsThunkActions';
 import { renderTraceHeatMap } from './StatsComparison';
 import { HeatMap, healthColorMap } from 'components/HeatMap/HeatMap';
 import { formatDuration, sameSpans } from 'utils/tracing/TracingHelper';
-import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
 import { TracingUrlProvider } from 'types/Tracing';
 import _ from 'lodash';
 
@@ -88,26 +87,18 @@ class TraceDetailsComponent extends React.Component<Props, State> {
   }
 
   private getGraphURL = (traceID: string): string => {
-    let graphSelector = new GraphSelectorBuilder().namespace(this.props.namespace);
     let graphType: GraphType = GraphType.APP;
 
     switch (this.props.targetKind) {
-      case 'app':
-        graphSelector = graphSelector.app(this.props.target).nodeType(NodeType.APP);
-        break;
       case 'service':
         graphType = GraphType.SERVICE;
-        graphSelector = graphSelector.service(this.props.target);
         break;
       case 'workload':
         graphType = GraphType.WORKLOAD;
-        graphSelector = graphSelector.workload(this.props.target);
         break;
     }
 
-    return `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${
-      this.props.namespace
-    }&traceId=${traceID}&focusSelector=${encodeURI(graphSelector.build())}`;
+    return `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${this.props.namespace}&traceId=${traceID}`;
   };
 
   private renderSimilarHeatmap = (

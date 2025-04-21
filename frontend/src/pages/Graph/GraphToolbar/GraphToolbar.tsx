@@ -272,7 +272,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
 
     this.props.setNode(undefined);
 
-    const returnUrl = `/${route}/namespaces?focusSelector=${encodeURI(selector)}`;
+    const returnUrl = `/${route}/namespaces?${URLParam.FOCUS_SELECTOR}=${encodeURI(selector)}`;
 
     if (isParentKiosk(this.props.kiosk)) {
       kioskContextMenuAction(returnUrl);
