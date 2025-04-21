@@ -381,7 +381,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     // Unless we are waiting for Manual refresh, ensure we initialize the graph.
     // We wait for the toolbar to render and ensure all redux props are updated
     // with URL settings. That in turn ensures the initial fetchParams are correct.
-    if (this.props.refreshInterval !== RefreshIntervalManual) {
+    if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
       setTimeout(() => this.loadGraphDataFromBackend(), 0);
     } else {
       setTimeout(

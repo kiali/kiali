@@ -26,6 +26,7 @@ import { isMultiCluster, serverConfig } from 'config';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { EmptyVirtualList } from 'components/VirtualList/EmptyVirtualList';
+import { HistoryManager } from 'app/History';
 
 type ServiceListPageState = FilterComponent.State<ServiceListItem> & {
   loaded: boolean;
@@ -63,7 +64,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
   }
 
   componentDidMount(): void {
-    if (this.props.refreshInterval !== RefreshIntervalManual) {
+    if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
       this.updateListItems();
     }
   }

@@ -215,7 +215,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   };
 
   onChange = (): void => {
-    if (this.props.refreshInterval !== RefreshIntervalManual) {
+    if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
       this.load();
     }
   };
