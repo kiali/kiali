@@ -32,6 +32,12 @@ func NewValidationsController(
 	mgr ctrl.Manager,
 ) error {
 	reconcileInterval := conf.ExternalServices.Istio.ValidationReconcileInterval
+
+	if reconcileInterval == nil || *reconcileInterval <= 0 {
+		log.Warning("Validation reconcile interval is 0 or less; skipping periodic validations.")
+		return nil
+	}
+
 	log.Infof("Kiali will validate Istio configuration every: %s", *reconcileInterval)
 	reconciler := NewValidationsReconciler(clusters, conf, kialiCache, validationsService, *reconcileInterval)
 
