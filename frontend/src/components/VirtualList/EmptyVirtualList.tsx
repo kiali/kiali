@@ -23,7 +23,12 @@ export class EmptyVirtualList extends React.Component<EmptyVirtualListProps, Emp
   render(): React.ReactNode {
     if (this.props.refreshInterval === RefreshIntervalManual && !this.props.loaded) {
       return (
-        <EmptyState id="empty-vl-manual" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
+        <EmptyState
+          id="empty-vl-manual"
+          data-test="manual-refresh"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        >
           <EmptyStateHeader titleText="Manual refresh required" headingLevel="h5" />
           <EmptyStateBody>
             The refresh interval is set to 'Manual'. To render the list, select your desired filters and options and

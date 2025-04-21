@@ -118,7 +118,12 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
 
     if (!this.props.isMiniGraph && this.props.refreshInterval === RefreshIntervalManual && isGraphEmpty) {
       return (
-        <EmptyState id="empty-graph-manual" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
+        <EmptyState
+          id="empty-graph-manual"
+          data-test="manual-refresh"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        >
           <EmptyStateHeader titleText="Manual refresh required" headingLevel="h5" />
           <EmptyStateBody>
             The refresh interval is set to 'Manual'. To render the graph, select your desired filters and options and

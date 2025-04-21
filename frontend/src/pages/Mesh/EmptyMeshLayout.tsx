@@ -78,7 +78,12 @@ export class EmptyMeshLayout extends React.Component<EmptyMeshLayoutProps, Empty
 
     if (!this.props.isMiniMesh && this.props.refreshInterval === RefreshIntervalManual && isMeshEmpty) {
       return (
-        <EmptyState id="empty-graph-manual" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
+        <EmptyState
+          id="empty-graph-manual"
+          data-test="manual-refresh"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        >
           <EmptyStateHeader titleText="Manual refresh required" headingLevel="h5" />
           <EmptyStateBody>
             The refresh interval is set to 'Manual'. To render the mesh, select your desired filters and options and
