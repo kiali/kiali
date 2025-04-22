@@ -10,236 +10,333 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/tracing"
 )
 
 // Get TracingInfo provides the Tracing URL and other info
-func GetTracingInfo(w http.ResponseWriter, r *http.Request) {
-	tracingConfig := config.Get().ExternalServices.Tracing
-	var info models.TracingInfo
+func GetTracingInfo(conf *config.Config) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tracingConfig := conf.ExternalServices.Tracing
+		var info models.TracingInfo
 
-	if tracingConfig.Enabled {
-		info = models.TracingInfo{
-			Enabled:              true,
-			Integration:          tracingConfig.InternalURL != "",
-			InternalURL:          tracingConfig.InternalURL,
-			Provider:             string(tracingConfig.Provider),
-			TempoConfig:          tracingConfig.TempoConfig,
-			URL:                  tracingConfig.ExternalURL,
-			NamespaceSelector:    tracingConfig.NamespaceSelector,
-			WhiteListIstioSystem: tracingConfig.WhiteListIstioSystem,
+		if tracingConfig.Enabled {
+			info = models.TracingInfo{
+				Enabled:              true,
+				Integration:          tracingConfig.InternalURL != "",
+				Provider:             string(tracingConfig.Provider),
+				TempoConfig:          tracingConfig.TempoConfig,
+				URL:                  tracingConfig.ExternalURL,
+				NamespaceSelector:    tracingConfig.NamespaceSelector,
+				WhiteListIstioSystem: tracingConfig.WhiteListIstioSystem,
+			}
+		} else {
+			// 0-values would work, but let's be explicit
+			info = models.TracingInfo{
+				Enabled:     false,
+				Integration: false,
+				URL:         "",
+			}
 		}
-	} else {
-		// 0-values would work, but let's be explicit
-		info = models.TracingInfo{
-			Enabled:     false,
-			Integration: false,
-			URL:         "",
+		RespondWithJSON(w, http.StatusOK, info)
+	}
+}
+
+func AppTraces(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery *istio.Discovery,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			return
 		}
+
+		params := mux.Vars(r)
+		namespace := params["namespace"]
+		app := params["app"]
+
+		q, err := readQuery(conf, r.URL.Query())
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		tracingName := business.App.GetAppTracingName(r.Context(), cluster, namespace, app)
+		traces, err := business.Tracing.GetAppTraces(namespace, tracingName.Lookup, app, q)
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+		RespondWithJSON(w, http.StatusOK, traces)
 	}
-	RespondWithJSON(w, http.StatusOK, info)
 }
 
-func AppTraces(w http.ResponseWriter, r *http.Request) {
-	business, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "AppTraces initialization error: "+err.Error())
-		return
+func ServiceTraces(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery *istio.Discovery,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			return
+		}
+		params := mux.Vars(r)
+		namespace := params["namespace"]
+		service := params["service"]
+		q, err := readQuery(conf, r.URL.Query())
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		traces, err := business.Tracing.GetServiceTraces(r.Context(), namespace, service, q)
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+		RespondWithJSON(w, http.StatusOK, traces)
 	}
-	params := mux.Vars(r)
-	namespace := params["namespace"]
-	app := params["app"]
-
-	q, err := readQuery(r.URL.Query())
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	cluster := clusterNameFromQuery(config.Get(), r.URL.Query())
-	tracingName := business.App.GetAppTracingName(r.Context(), cluster, namespace, app)
-	traces, err := business.Tracing.GetAppTraces(namespace, tracingName.Lookup, app, q)
-	if err != nil {
-		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, traces)
 }
 
-func ServiceTraces(w http.ResponseWriter, r *http.Request) {
-	business, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "ServiceTraces initialization error: "+err.Error())
-		return
+func WorkloadTraces(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery *istio.Discovery,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			return
+		}
+
+		params := mux.Vars(r)
+		namespace := params["namespace"]
+		workload := params["workload"]
+		q, err := readQuery(conf, r.URL.Query())
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		traces, err := business.Tracing.GetWorkloadTraces(r.Context(), namespace, workload, q)
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+		RespondWithJSON(w, http.StatusOK, traces)
 	}
-	params := mux.Vars(r)
-	namespace := params["namespace"]
-	service := params["service"]
-	q, err := readQuery(r.URL.Query())
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	traces, err := business.Tracing.GetServiceTraces(r.Context(), namespace, service, q)
-	if err != nil {
-		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, traces)
 }
 
-func WorkloadTraces(w http.ResponseWriter, r *http.Request) {
-	business, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "WorkloadTraces initialization error: "+err.Error())
-		return
+func ErrorTraces(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery *istio.Discovery,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			return
+		}
+		params := mux.Vars(r)
+		namespace := params["namespace"]
+		app := params["app"]
+		queryParams := r.URL.Query()
+		durationInSeconds := queryParams.Get("duration")
+		conv, err := strconv.ParseInt(durationInSeconds, 10, 64)
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, "Cannot parse parameter 'duration': "+err.Error())
+			return
+		}
+		traces, err := business.Tracing.GetErrorTraces(namespace, app, time.Second*time.Duration(conv))
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+		RespondWithJSON(w, http.StatusOK, traces)
 	}
-
-	params := mux.Vars(r)
-	namespace := params["namespace"]
-	workload := params["workload"]
-	q, err := readQuery(r.URL.Query())
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	traces, err := business.Tracing.GetWorkloadTraces(r.Context(), namespace, workload, q)
-	if err != nil {
-		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, traces)
 }
 
-func ErrorTraces(w http.ResponseWriter, r *http.Request) {
-	business, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error Traces initialization error: "+err.Error())
-		return
+func TraceDetails(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery *istio.Discovery,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			return
+		}
+		params := mux.Vars(r)
+		traceID := params["traceID"]
+		trace, err := business.Tracing.GetTraceDetail(traceID)
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+		if trace == nil {
+			// Trace not found
+			RespondWithError(w, http.StatusNotFound, fmt.Sprintf("Trace %s not found", traceID))
+			return
+		}
+		RespondWithJSON(w, http.StatusOK, trace)
 	}
-	params := mux.Vars(r)
-	namespace := params["namespace"]
-	app := params["app"]
-	queryParams := r.URL.Query()
-	durationInSeconds := queryParams.Get("duration")
-	conv, err := strconv.ParseInt(durationInSeconds, 10, 64)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "Cannot parse parameter 'duration': "+err.Error())
-		return
-	}
-	traces, err := business.Tracing.GetErrorTraces(namespace, app, time.Second*time.Duration(conv))
-	if err != nil {
-		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, traces)
-}
-
-func TraceDetails(w http.ResponseWriter, r *http.Request) {
-	business, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Trace Detail initialization error: "+err.Error())
-		return
-	}
-	params := mux.Vars(r)
-	traceID := params["traceID"]
-	trace, err := business.Tracing.GetTraceDetail(traceID)
-	if err != nil {
-		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-		return
-	}
-	if trace == nil {
-		// Trace not found
-		RespondWithError(w, http.StatusNotFound, fmt.Sprintf("Trace %s not found", traceID))
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, trace)
 }
 
 // AppSpans is the API handler to fetch Tracing spans of a specific app
-func AppSpans(w http.ResponseWriter, r *http.Request) {
-	business, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
-		return
-	}
+func AppSpans(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery *istio.Discovery,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			return
+		}
 
-	params := mux.Vars(r)
-	namespace := params["namespace"]
-	app := params["app"]
-	q, err := readQuery(r.URL.Query())
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	cluster := clusterNameFromQuery(config.Get(), r.URL.Query())
-	spans, err := business.Tracing.GetAppSpans(r.Context(), cluster, namespace, app, q)
-	if err != nil {
-		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-		return
-	}
+		params := mux.Vars(r)
+		namespace := params["namespace"]
+		app := params["app"]
+		q, err := readQuery(conf, r.URL.Query())
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		spans, err := business.Tracing.GetAppSpans(r.Context(), cluster, namespace, app, q)
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
 
-	RespondWithJSON(w, http.StatusOK, spans)
+		RespondWithJSON(w, http.StatusOK, spans)
+	}
 }
 
 // ServiceSpans is the API handler to fetch Tracing spans of a specific service
-func ServiceSpans(w http.ResponseWriter, r *http.Request) {
-	business, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
-		return
-	}
+func ServiceSpans(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery *istio.Discovery,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			return
+		}
 
-	params := mux.Vars(r)
-	namespace := params["namespace"]
-	service := params["service"]
-	q, err := readQuery(r.URL.Query())
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
+		params := mux.Vars(r)
+		namespace := params["namespace"]
+		service := params["service"]
+		q, err := readQuery(conf, r.URL.Query())
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 
-	spans, err := business.Tracing.GetServiceSpans(r.Context(), namespace, service, q)
-	if err != nil {
-		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-		return
-	}
+		spans, err := business.Tracing.GetServiceSpans(r.Context(), namespace, service, q)
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
 
-	RespondWithJSON(w, http.StatusOK, spans)
+		RespondWithJSON(w, http.StatusOK, spans)
+	}
 }
 
 // WorkloadSpans is the API handler to fetch Tracing spans of a specific workload
-func WorkloadSpans(w http.ResponseWriter, r *http.Request) {
-	business, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
-		return
-	}
+func WorkloadSpans(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery *istio.Discovery,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			return
+		}
 
-	params := mux.Vars(r)
-	namespace := params["namespace"]
-	workload := params["workload"]
-	q, err := readQuery(r.URL.Query())
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
+		params := mux.Vars(r)
+		namespace := params["namespace"]
+		workload := params["workload"]
+		q, err := readQuery(conf, r.URL.Query())
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 
-	spans, err := business.Tracing.GetWorkloadSpans(r.Context(), namespace, workload, q)
-	if err != nil {
-		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-		return
-	}
+		spans, err := business.Tracing.GetWorkloadSpans(r.Context(), namespace, workload, q)
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
 
-	RespondWithJSON(w, http.StatusOK, spans)
+		RespondWithJSON(w, http.StatusOK, spans)
+	}
 }
 
-func readQuery(values url.Values) (models.TracingQuery, error) {
+func readQuery(conf *config.Config, values url.Values) (models.TracingQuery, error) {
 	q := models.TracingQuery{
 		End:     time.Now(),
 		Limit:   100,
 		Tags:    make(map[string]string),
-		Cluster: clusterNameFromQuery(config.Get(), values),
+		Cluster: clusterNameFromQuery(conf, values),
 	}
 
 	if v := values.Get("startMicros"); v != "" {
