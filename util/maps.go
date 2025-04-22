@@ -113,9 +113,11 @@ func GetRolloutName(name string, labels map[string]string) string {
 	// Heuristic for ArgoCD Rollout
 	// ReplicaSets name contains rollouts label istio-rollout-6859f78556
 	// Consider Pods as well, name can be istio-rollout-6859f78556-v527f
-	suffix := fmt.Sprintf("-%s", labels[RolloutsLabel])
-	if idx := strings.LastIndex(name, suffix); idx != -1 {
-		return name[:idx]
+	if labels[RolloutsLabel] != "" {
+		suffix := fmt.Sprintf("-%s", labels[RolloutsLabel])
+		if idx := strings.LastIndex(name, suffix); idx != -1 {
+			return name[:idx]
+		}
 	}
 	return name
 }
