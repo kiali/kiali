@@ -104,7 +104,30 @@ func LabelsToSortedString(labels map[string]string) string {
 	return strings.Join(parts, ",")
 }
 
-func IsRollout(kind string, name string, labels map[string]string) bool {
-	return kind == "Rollout" && labels[RolloutsLabel] != "" &&
-		strings.HasSuffix(name, labels[RolloutsLabel])
+func IsRollout(name string, labels map[string]string) bool {
+	return labels[RolloutsLabel] != "" &&
+		strings.Contains(name, labels[RolloutsLabel])
+}
+
+func GetRolloutName(name string, labels map[string]string) string {
+	// Heuristic for ArgoCD Rollout
+	// ReplicaSets name contains rollouts label istio-rollout-6859f78556
+	// Consider Pods as well, name can be istio-rollout-6859f78556-v527f
+	suffix := fmt.Sprintf("-%s", labels[RolloutsLabel])
+	if idx := strings.LastIndex(name, suffix); idx != -1 {
+		return name[:idx]
+	}
+	return name
+}
+
+func JoinLabelsWithoutRollout(labelMaps ...map[string]string) map[string]string {
+	joined := make(map[string]string)
+	for _, m := range labelMaps {
+		for k, v := range m {
+			if k != RolloutsLabel {
+				joined[k] = v
+			}
+		}
+	}
+	return joined
 }

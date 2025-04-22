@@ -15,6 +15,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util"
 	"github.com/kiali/kiali/util/healthutil"
 )
 
@@ -395,6 +396,21 @@ func (workload *Workload) ParseReplicaSet(r *apps_v1.ReplicaSet) {
 	}
 	workload.CurrentReplicas = r.Status.Replicas
 	workload.AvailableReplicas = r.Status.AvailableReplicas
+}
+
+func (workload *Workload) MergeReplicaSets(rs []*apps_v1.ReplicaSet) {
+	workload.WorkloadGVK = kubernetes.ReplicaSets
+
+	for _, r := range rs {
+		workload.Name = util.GetRolloutName(r.Name, r.Labels)
+		workload.Labels = util.JoinLabelsWithoutRollout(workload.Labels, r.Labels)
+		workload.Annotations = util.JoinLabelsWithoutRollout(workload.Annotations, r.Annotations)
+		if r.Spec.Replicas != nil {
+			workload.DesiredReplicas += *r.Spec.Replicas
+		}
+		workload.CurrentReplicas += r.Status.Replicas
+		workload.AvailableReplicas += r.Status.AvailableReplicas
+	}
 }
 
 func (workload *Workload) ParseReplicaSetParent(r *apps_v1.ReplicaSet, workloadName string, workloadGVK schema.GroupVersionKind) {

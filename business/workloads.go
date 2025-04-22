@@ -1026,6 +1026,12 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 					continue
 				}
 				if ref.Controller != nil && *ref.Controller && in.isWorkloadIncluded(ref.Kind) {
+					if util.IsRollout(pod.Name, pod.Labels) {
+						// Heuristic for ArgoCD Rollout
+						// Trim the controller name by rollouts-pod-template-hash
+						controllers[util.GetRolloutName(pod.Name, pod.Labels)] = kubernetes.ReplicaSets
+						continue
+					}
 					if _, exist := controllers[ref.Name]; !exist {
 						controllers[ref.Name] = refGV.WithKind(ref.Kind)
 					} else {
@@ -1072,11 +1078,11 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 							log.Errorf("could not parse OwnerReference api version %q: %v", ref.APIVersion, err)
 							continue
 						}
-						if util.IsRollout(ref.Kind, repset[iFound].Name, repset[iFound].Labels) {
+						if util.IsRollout(repset[iFound].Name, repset[iFound].Labels) {
 							// Heuristic for ArgoCD Rollout
-							// Replace Rollout with ReplicaSet in references
-							// Keep the controller name with rollouts-pod-template-hash, do not trim, not to cause conflicts
-							controllers[repset[iFound].Name] = kubernetes.ReplicaSets
+							// Replace GVK with ReplicaSet
+							// Trim the controller name by rollouts-pod-template-hash
+							controllers[util.GetRolloutName(repset[iFound].Name, repset[iFound].Labels)] = kubernetes.ReplicaSets
 							continue
 						}
 						if _, exist := controllers[ref.Name]; !exist {
@@ -1275,17 +1281,25 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		case kubernetes.ReplicaSets:
 			found := false
 			iFound := -1
+			rollouts := []*apps_v1.ReplicaSet{}
 			for i, rs := range repset {
 				if rs.Name == controllerName {
 					found = true
 					iFound = i
 					break
 				}
+				// when one or more ReplicaSets are created by a Rollout
+				if util.IsRollout(rs.Name, rs.Labels) && util.GetRolloutName(rs.Name, rs.Labels) == controllerName {
+					rollouts = append(rollouts, &rs)
+				}
 			}
 			if found {
 				selector := labels.Set(repset[iFound].Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseReplicaSet(&repset[iFound])
+			} else if len(rollouts) > 0 {
+				w.MergeReplicaSets(rollouts)
+				w.SetPods(kubernetes.FilterPodsBySelector(labels.Set(w.Labels).AsSelector(), pods))
 			} else {
 				log.Errorf("Workload %s is not found as ReplicaSet", controllerName)
 				cnFound = false
@@ -1756,6 +1770,12 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 					continue
 				}
 				if ref.Controller != nil && *ref.Controller && in.isWorkloadIncluded(ref.Kind) {
+					if util.IsRollout(pod.Name, pod.Labels) {
+						// Heuristic for ArgoCD Rollout
+						// Trim the controller name by rollouts-pod-template-hash
+						controllers[util.GetRolloutName(pod.Name, pod.Labels)] = kubernetes.ReplicaSets
+						continue
+					}
 					if _, exist := controllers[ref.Name]; !exist {
 						controllers[ref.Name] = refGV.WithKind(ref.Kind)
 					} else {
@@ -1802,11 +1822,11 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 						continue
 					}
 					if ref.Controller != nil && *ref.Controller {
-						if util.IsRollout(ref.Kind, repset[iFound].Name, repset[iFound].Labels) {
+						if util.IsRollout(repset[iFound].Name, repset[iFound].Labels) {
 							// Heuristic for ArgoCD Rollout
-							// Replace Rollout with ReplicaSet in references
-							// Keep the controller name with rollouts-pod-template-hash, do not trim, not to cause conflicts
-							controllers[repset[iFound].Name] = kubernetes.ReplicaSets
+							// Replace GVK with ReplicaSet
+							// Trim the controller name by rollouts-pod-template-hash
+							controllers[util.GetRolloutName(repset[iFound].Name, repset[iFound].Labels)] = kubernetes.ReplicaSets
 							continue
 						}
 						// For valid owner controllers, delete the child ReplicaSet and add the parent controller,
@@ -1977,17 +1997,25 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		case kubernetes.ReplicaSets:
 			found := false
 			iFound := -1
+			rollouts := []*apps_v1.ReplicaSet{}
 			for i, rs := range repset {
 				if rs.Name == criteria.WorkloadName {
 					found = true
 					iFound = i
 					break
 				}
+				// when one or more ReplicaSets are created by a Rollout
+				if util.IsRollout(rs.Name, rs.Labels) && util.GetRolloutName(rs.Name, rs.Labels) == criteria.WorkloadName {
+					rollouts = append(rollouts, &rs)
+				}
 			}
 			if found {
 				selector := labels.Set(repset[iFound].Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseReplicaSet(&repset[iFound])
+			} else if len(rollouts) > 0 {
+				w.MergeReplicaSets(rollouts)
+				w.SetPods(kubernetes.FilterPodsBySelector(labels.Set(w.Labels).AsSelector(), pods))
 			} else {
 				log.Errorf("Workload %s is not found as ReplicaSet", criteria.WorkloadName)
 				cnFound = false
