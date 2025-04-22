@@ -179,7 +179,7 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
     if (isGraphEmpty && this.props.isMiniGraph) {
       return (
         <EmptyState id="empty-mini-graph" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText={t('No traffic')} headingLevel="h5" />
+          <EmptyStateHeader titleText={t('Empty Graph')} headingLevel="h5" />
           <EmptyStateBody>{t('No graph traffic for the time period.')}</EmptyStateBody>
         </EmptyState>
       );
