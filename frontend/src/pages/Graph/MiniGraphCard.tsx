@@ -195,6 +195,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
                 isLoading={isLoading}
                 isError={this.props.dataSource.isError}
                 isMiniGraph={true}
+                loaded={true}
               >
                 <Graph
                   edgeLabels={this.props.dataSource.fetchParameters.edgeLabels}
@@ -205,6 +206,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
                     errorMessage: !!this.props.dataSource.errorMessage ? this.props.dataSource.errorMessage : undefined,
                     isError: this.props.dataSource.isError,
                     isLoading: isLoading,
+                    loaded: true,
                     fetchParams: this.props.dataSource.fetchParameters,
                     timestamp: this.props.dataSource.graphTimestamp
                   }}

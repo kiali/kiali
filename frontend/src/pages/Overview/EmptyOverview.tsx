@@ -4,6 +4,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { RefreshIntervalManual } from 'config/Config';
 import { IntervalInMilliseconds } from 'types/Common';
 import { NamespaceInfo } from 'types/NamespaceInfo';
+import { t } from 'utils/I18nUtils';
 
 type EmptyOverviewProps = {
   filteredNamespaces: NamespaceInfo[];
@@ -31,10 +32,11 @@ export class EmptyOverview extends React.Component<EmptyOverviewProps, EmptyOver
           variant={EmptyStateVariant.lg}
           className={emptyStateStyle}
         >
-          <EmptyStateHeader titleText="Manual refresh required" headingLevel="h5" />
+          <EmptyStateHeader titleText={t('Manual refresh required')} headingLevel="h5" />
           <EmptyStateBody>
-            The refresh interval is set to 'Manual'. To render the overview, select your desired filters and options and
-            then click the Refresh button. Or, if preferred, change the setting to the desired interval.
+            {t(
+              'The refresh interval is set to "Manual". To render the overview, select your desired filters and options and then click the Refresh button. Or, if preferred, change the setting to the desired interval.'
+            )}
           </EmptyStateBody>
         </EmptyState>
       );
@@ -43,9 +45,9 @@ export class EmptyOverview extends React.Component<EmptyOverviewProps, EmptyOver
     if (this.props.filteredNamespaces.length === 0) {
       return (
         <EmptyState id="empty-vl-manual" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="No unfiltered namespaces" headingLevel="h5" />
+          <EmptyStateHeader titleText={t('No unfiltered namespaces')} headingLevel="h5" />
           <EmptyStateBody>
-            Either all namespaces are being filtered or the user has no permission to access namespaces.
+            {t('Either all namespaces are being filtered or the user has no permission to access namespaces.')}
           </EmptyStateBody>
         </EmptyState>
       );

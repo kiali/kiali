@@ -13,6 +13,7 @@ import { KialiIcon } from '../../config/KialiIcon';
 import { DecoratedMeshElements } from 'types/Mesh';
 import { IntervalInMilliseconds } from 'types/Common';
 import { RefreshIntervalManual } from 'config/Config';
+import { t } from 'utils/I18nUtils';
 
 type EmptyMeshLayoutProps = {
   action?: any;
@@ -20,6 +21,7 @@ type EmptyMeshLayoutProps = {
   isLoading?: boolean;
   isError: boolean;
   isMiniMesh: boolean;
+  loaded: boolean;
   refreshInterval: IntervalInMilliseconds;
   error?: string;
 };
@@ -58,7 +60,7 @@ export class EmptyMeshLayout extends React.Component<EmptyMeshLayoutProps, Empty
       return (
         <EmptyState id="empty-mesh-error" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
           <EmptyStateHeader
-            titleText="Error loading Mesh"
+            titleText={t('Error loading Mesh')}
             icon={<EmptyStateIcon icon={KialiIcon.Error} />}
             headingLevel="h5"
           />
@@ -69,14 +71,12 @@ export class EmptyMeshLayout extends React.Component<EmptyMeshLayoutProps, Empty
     if (this.props.isLoading) {
       return (
         <EmptyState id="empty-mesh-is-loading" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="Loading Mesh" headingLevel="h5" />
+          <EmptyStateHeader titleText={t('Loading Mesh')} headingLevel="h5" />
         </EmptyState>
       );
     }
 
-    const isMeshEmpty = !this.props.elements || !this.props.elements.nodes || this.props.elements.nodes.length < 1;
-
-    if (!this.props.isMiniMesh && this.props.refreshInterval === RefreshIntervalManual && isMeshEmpty) {
+    if (this.props.refreshInterval === RefreshIntervalManual && !this.props.loaded && !this.props.isMiniMesh) {
       return (
         <EmptyState
           id="empty-graph-manual"
@@ -84,22 +84,25 @@ export class EmptyMeshLayout extends React.Component<EmptyMeshLayoutProps, Empty
           variant={EmptyStateVariant.lg}
           className={emptyStateStyle}
         >
-          <EmptyStateHeader titleText="Manual refresh required" headingLevel="h5" />
+          <EmptyStateHeader titleText={t('Manual refresh required')} headingLevel="h5" />
           <EmptyStateBody>
-            The refresh interval is set to 'Manual'. To render the mesh, select your desired filters and options and
-            then click the Refresh button. Or, if preferred, change the setting to the desired interval.
+            {t(
+              'The refresh interval is set to "Manual". To render the mesh, select your desired filters and options and then click the Refresh button. Or, if preferred, change the setting to the desired interval.'
+            )}
           </EmptyStateBody>
         </EmptyState>
       );
     }
 
+    const isMeshEmpty = !this.props.elements || !this.props.elements.nodes || this.props.elements.nodes.length < 1;
     if (isMeshEmpty && !this.props.isMiniMesh) {
       return (
         <EmptyState id="empty-mesh" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="Empty Mesh" headingLevel="h5" />
+          <EmptyStateHeader titleText={t('Empty Mesh')} headingLevel="h5" />
           <EmptyStateBody>
-            There is currently no mesh information available. This may mean you do not have permission to see any mesh
-            information or have no access to any of the mesh namespaces.
+            {t(
+              'There is currently no mesh information available. This may mean you do not have permission to see any mesh information or have no access to any of the mesh namespaces.'
+            )}
           </EmptyStateBody>
           <EmptyStateFooter></EmptyStateFooter>
         </EmptyState>
@@ -109,8 +112,8 @@ export class EmptyMeshLayout extends React.Component<EmptyMeshLayoutProps, Empty
     if (isMeshEmpty && this.props.isMiniMesh) {
       return (
         <EmptyState id="empty-mini-mesh" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="Empty Mesh" headingLevel="h5" />
-          <EmptyStateBody>No mesh information available.</EmptyStateBody>
+          <EmptyStateHeader titleText={t('Empty Mesh')} headingLevel="h5" />
+          <EmptyStateBody>{t('No mesh information available.')}</EmptyStateBody>
         </EmptyState>
       );
     }

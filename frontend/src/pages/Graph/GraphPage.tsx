@@ -155,6 +155,7 @@ export type GraphData = {
   fetchParams: FetchParams;
   isError?: boolean;
   isLoading: boolean;
+  loaded: boolean;
   timestamp: TimeInMilliseconds;
 };
 
@@ -224,6 +225,7 @@ const GraphErrorBoundaryFallback = (): React.ReactElement => {
       <EmptyGraphLayout
         isError={true}
         isMiniGraph={false}
+        loaded={false}
         namespaces={[]}
         refreshInterval={0}
         showIdleNodes={false}
@@ -324,6 +326,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
         elementsChanged: false,
         fetchParams: this.graphDataSource.fetchParameters,
         isLoading: true,
+        loaded: false,
         timestamp: 0
       },
       isReady: false,
@@ -392,6 +395,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
               elementsChanged: false,
               fetchParams: this.graphDataSource.fetchParameters,
               isLoading: false,
+              loaded: false,
               timestamp: 0
             }
           }),
@@ -511,6 +515,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
                     isLoading={this.state.graphData.isLoading}
                     isError={!!this.state.graphData.isError}
                     isMiniGraph={false}
+                    loaded={this.state.graphData.loaded}
                     namespaces={this.props.activeNamespaces}
                     refreshInterval={this.props.refreshInterval}
                     showIdleNodes={this.props.showIdleNodes}
@@ -611,8 +616,9 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       graphData: {
         elements: elements,
         elementsChanged: elementsChanged(prevElements, elements),
-        isLoading: false,
         fetchParams: fetchParams,
+        isLoading: false,
+        loaded: true,
         timestamp: graphTimestamp * 1000
       } as GraphData
     });
@@ -626,9 +632,10 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
         elements: EMPTY_GRAPH_DATA,
         elementsChanged: elementsChanged(prevElements, EMPTY_GRAPH_DATA),
         errorMessage: !!errorMessage ? errorMessage : undefined,
+        fetchParams: fetchParams,
         isError: true,
         isLoading: false,
-        fetchParams: fetchParams,
+        loaded: true,
         timestamp: Date.now()
       }
     });
@@ -640,8 +647,9 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       graphData: {
         elements: EMPTY_GRAPH_DATA,
         elementsChanged: elementsChanged(prevElements, EMPTY_GRAPH_DATA),
-        isLoading: false,
         fetchParams: fetchParams,
+        isLoading: false,
+        loaded: true,
         timestamp: Date.now()
       }
     });
@@ -654,6 +662,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
         elementsChanged: false,
         fetchParams: fetchParams,
         isLoading: true,
+        loaded: this.state.graphData.loaded,
         timestamp: isPreviousDataInvalid ? Date.now() : this.state.graphData.timestamp
       }
     });

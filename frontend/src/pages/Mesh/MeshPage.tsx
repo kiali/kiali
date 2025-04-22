@@ -85,6 +85,7 @@ export type MeshData = {
   fetchParams: MeshFetchParams;
   isError?: boolean;
   isLoading: boolean;
+  loaded: boolean;
   name: string;
   timestamp: TimeInMilliseconds;
 };
@@ -131,7 +132,7 @@ const meshBackground = kialiStyle({
 const MeshErrorBoundaryFallback = (): JSX.Element => {
   return (
     <div className={meshContainerStyle}>
-      <EmptyMeshLayout isError={true} isMiniMesh={false} refreshInterval={0} />
+      <EmptyMeshLayout isError={true} isMiniMesh={false} loaded={false} refreshInterval={0} />
     </div>
   );
 };
@@ -152,6 +153,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         elementsChanged: false,
         fetchParams: this.meshDataSource.fetchParameters,
         isLoading: true,
+        loaded: false,
         name: UNKNOWN,
         timestamp: 0
       }
@@ -191,6 +193,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
               elementsChanged: false,
               fetchParams: this.meshDataSource.fetchParameters,
               isLoading: false,
+              loaded: false,
               name: UNKNOWN,
               timestamp: 0
             }
@@ -268,6 +271,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
                   isError={!!this.state.meshData.isError}
                   isLoading={this.state.meshData.isLoading}
                   isMiniMesh={false}
+                  loaded={this.state.meshData.loaded}
                   refreshInterval={this.props.refreshInterval}
                 >
                   <Mesh {...this.props} isMiniMesh={false} meshData={this.state.meshData} onReady={this.handleReady} />
@@ -314,6 +318,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         elementsChanged: elementsChanged,
         fetchParams: fetchParams,
         isLoading: false,
+        loaded: true,
         name: meshName,
         timestamp: meshTimestamp * 1000
       }
@@ -330,9 +335,10 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         elements: EMPTY_MESH_DATA,
         elementsChanged: this.elementsChanged(prevElements, EMPTY_MESH_DATA),
         errorMessage: !!errorMessage ? errorMessage : undefined,
+        fetchParams: fetchParams,
         isError: true,
         isLoading: false,
-        fetchParams: fetchParams,
+        loaded: true,
         name: UNKNOWN,
         timestamp: Date.now()
       }
@@ -346,6 +352,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         elementsChanged: false,
         fetchParams: fetchParams,
         isLoading: true,
+        loaded: this.state.meshData.loaded,
         name: isPreviousDataInvalid ? UNKNOWN : this.state.meshData.name,
         timestamp: isPreviousDataInvalid ? Date.now() : this.state.meshData.timestamp
       }

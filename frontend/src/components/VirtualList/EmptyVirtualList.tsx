@@ -3,6 +3,7 @@ import { EmptyState, EmptyStateBody, EmptyStateVariant, EmptyStateHeader } from 
 import { kialiStyle } from 'styles/StyleUtils';
 import { RefreshIntervalManual } from 'config/Config';
 import { IntervalInMilliseconds } from 'types/Common';
+import { t } from 'utils/I18nUtils';
 
 type EmptyVirtualListProps = {
   loaded?: boolean;
@@ -29,10 +30,11 @@ export class EmptyVirtualList extends React.Component<EmptyVirtualListProps, Emp
           variant={EmptyStateVariant.lg}
           className={emptyStateStyle}
         >
-          <EmptyStateHeader titleText="Manual refresh required" headingLevel="h5" />
+          <EmptyStateHeader titleText={t('Manual refresh required')} headingLevel="h5" />
           <EmptyStateBody>
-            The refresh interval is set to 'Manual'. To render the list, select your desired filters and options and
-            then click the Refresh button. Or, if preferred, change the setting to the desired interval.
+            {t(
+              'The refresh interval is set to "Manual". To render the list, select your desired filters and options and then click the Refresh button. Or, if preferred, change the setting to the desired interval.'
+            )}
           </EmptyStateBody>
         </EmptyState>
       );
