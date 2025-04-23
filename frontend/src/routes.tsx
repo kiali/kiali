@@ -32,7 +32,7 @@ const navMenuItems: MenuItem[] = [
   {
     id: 'traffic_graph',
     title: t('Traffic Graph'),
-    to: '/graph/namespaces/',
+    to: '/graph/namespaces',
     pathsActive: [/^\/graph\/(.*)/]
   },
   {
