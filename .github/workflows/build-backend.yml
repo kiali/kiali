@@ -9,7 +9,7 @@ on:
 jobs:
   build_backend:
     name: Build and unit test backend
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

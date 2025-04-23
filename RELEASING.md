@@ -71,7 +71,7 @@ on:
 jobs:
   initialize:
     name: Initialize
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     outputs:
       target_branch: ${{ github.ref_name }}
       release_type: ${{ steps.release_type.outputs.release_type }}
@@ -100,7 +100,7 @@ jobs:
   release:
     name: Release
     if: ${{ needs.initialize.outputs.release_type != 'skip' && ((github.event_name == 'schedule' && github.repository == 'kiali/kiali') || github.event_name != 'schedule') }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs: [initialize, build_backend, build_frontend, integration_tests_backend, integration_tests_frontend]
     env:  
       RELEASE_VERSION: ${{ needs.initialize.outputs.release_version }}
