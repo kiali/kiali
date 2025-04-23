@@ -14,7 +14,7 @@ on:
 jobs:
   molecules:
     name: Molecule tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout the hack script that runs the tests
       uses: actions/checkout@v4
