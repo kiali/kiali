@@ -33,6 +33,11 @@ const closeReplayStyle = kialiStyle({
   marginLeft: '1rem'
 });
 
+const refreshStyle = kialiStyle({
+  marginLeft: '0.4rem',
+  marginRight: '0.4rem'
+});
+
 const TimeDurationComp: React.FC<TimeControlsProps> = (props: TimeControlsProps) => {
   const { t } = useKialiTranslation();
 
@@ -69,7 +74,7 @@ const TimeDurationComp: React.FC<TimeControlsProps> = (props: TimeControlsProps)
       />
 
       {!(props.supportsReplay && props.replayActive) && (
-        <Refresh id="time_range_refresh" disabled={props.disabled} hideLabel={true} manageURL={true} />
+        <Refresh className={refreshStyle} id="time_range_refresh" disabled={props.disabled} manageURL={true} />
       )}
 
       {props.supportsReplay && props.replayActive && (

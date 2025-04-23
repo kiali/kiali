@@ -635,7 +635,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
         <RefreshNotifier onTick={this.onRefresh} />
 
         <RenderHeader
-          rightToolbar={<Refresh id="config_details_refresh" hideLabel={true} />}
+          rightToolbar={<Refresh id="config_details_refresh" />}
           actionsToolbar={!this.state.error ? this.renderActions() : undefined}
         />
 
