@@ -325,7 +325,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
         elements: { edges: [], nodes: [] },
         elementsChanged: false,
         fetchParams: this.graphDataSource.fetchParameters,
-        isLoading: true,
+        isLoading: false,
         loaded: false,
         timestamp: 0
       },
@@ -382,25 +382,10 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     }
 
     // Unless we are waiting for Manual refresh, ensure we initialize the graph.
-    // We wait for the toolbar to render and ensure all redux props are updated
+    // Using setTimeout() ensures we wait for the toolbar to render and ensure all redux props are updated
     // with URL settings. That in turn ensures the initial fetchParams are correct.
     if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
       setTimeout(() => this.loadGraphDataFromBackend(), 0);
-    } else {
-      setTimeout(
-        () =>
-          this.setState({
-            graphData: {
-              elements: { edges: [], nodes: [] },
-              elementsChanged: false,
-              fetchParams: this.graphDataSource.fetchParameters,
-              isLoading: false,
-              loaded: false,
-              timestamp: 0
-            }
-          }),
-        0
-      );
     }
   }
 

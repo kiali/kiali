@@ -152,7 +152,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         elements: { edges: [], nodes: [] },
         elementsChanged: false,
         fetchParams: this.meshDataSource.fetchParameters,
-        isLoading: true,
+        isLoading: false,
         loaded: false,
         name: UNKNOWN,
         timestamp: 0
@@ -179,27 +179,11 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     this.meshDataSource.on('fetchError', this.handleMeshDataSourceError);
     this.meshDataSource.on('fetchSuccess', this.handleMeshDataSourceSuccess);
 
-    // Unless we are waiting for Manual refresh, ensure we initialize the graph.
-    // We wait for the toolbar to render and ensure all redux props are updated
+    // Unless we are waiting for Manual refresh, ensure we initialize the mesh.
+    // Using setTimeout() ensures we wait for the toolbar to render and ensure all redux props are updated
     // with URL settings. That in turn ensures the initial fetchParams are correct.
     if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
       setTimeout(() => this.loadMeshFromBackend(), 0);
-    } else {
-      setTimeout(
-        () =>
-          this.setState({
-            meshData: {
-              elements: { edges: [], nodes: [] },
-              elementsChanged: false,
-              fetchParams: this.meshDataSource.fetchParameters,
-              isLoading: false,
-              loaded: false,
-              name: UNKNOWN,
-              timestamp: 0
-            }
-          }),
-        0
-      );
     }
   }
 

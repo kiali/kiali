@@ -18,7 +18,6 @@ import * as Filters from './Filters';
 import { kialiStyle } from 'styles/StyleUtils';
 import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
 import { KialiDispatch } from '../../types/Redux';
-import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
 import { PFColors } from 'components/Pf/PfColors';
 import { t, tMap } from 'utils/I18nUtils';
 
@@ -228,7 +227,6 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
 
     const timeToolbar = (
       <div className={timeToolbarStyle}>
-        <RefreshNotifier onTick={this.props.onRefresh} />
         <TimeDurationComponent key="overview-time-range" id="overview-time-range" disabled={false} />
       </div>
     );

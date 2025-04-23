@@ -2,7 +2,7 @@
 @ossmc
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
-Feature: Kiali Istio Config page
+Feature: Manual Refresh option
 
   Start on the Overview page, set the refresh interval to 'Manual', and then ensure all of the pages
   initially show the "Maunual refresh needed" message. Note that the Istio Config page is the only

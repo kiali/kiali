@@ -50,7 +50,7 @@ import { switchType } from './OverviewHelper';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import { ValidationSummary } from '../../components/Validations/ValidationSummary';
-import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
 import { Paths, isMultiCluster, serverConfig } from '../../config';
 import { PFColors } from '../../components/Pf/PfColors';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
@@ -74,6 +74,7 @@ import { t } from 'utils/I18nUtils';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { EmptyOverview } from './EmptyOverview';
+import { connectRefresh } from 'components/Refresh/connectRefresh';
 
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
@@ -148,7 +149,9 @@ type ReduxProps = {
   refreshInterval: IntervalInMilliseconds;
 };
 
-type OverviewProps = ReduxProps;
+type OverviewProps = ReduxProps & {
+  lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
+};
 
 export class OverviewPageComponent extends React.Component<OverviewProps, State> {
   private sFOverviewToolbar: StatefulFiltersRef = React.createRef();
@@ -177,21 +180,24 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     };
   }
 
-  componentDidUpdate(prevProps: OverviewProps): void {
-    if (
-      prevProps.duration !== this.props.duration ||
-      prevProps.navCollapse !== this.props.navCollapse ||
-      (prevProps.refreshInterval !== this.props.refreshInterval && this.props.refreshInterval !== RefreshIntervalPause)
-    ) {
-      // Reload to avoid graphical glitches with charts
-      // TODO: this workaround should probably be deleted after switch to Patternfly 4, see https://issues.jboss.org/browse/KIALI-3116
-      this.onChange();
+  componentDidMount(): void {
+    this.fetchGrafanaInfo();
+    if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
+      this.load();
     }
   }
 
-  componentDidMount(): void {
-    this.fetchGrafanaInfo();
-    this.onChange();
+  componentDidUpdate(prevProps: OverviewProps): void {
+    if (
+      this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
+      (this.props.refreshInterval !== RefreshIntervalManual &&
+        (prevProps.duration !== this.props.duration ||
+          prevProps.navCollapse !== this.props.navCollapse ||
+          (prevProps.refreshInterval !== this.props.refreshInterval &&
+            this.props.refreshInterval !== RefreshIntervalPause)))
+    ) {
+      this.load();
+    }
   }
 
   componentWillUnmount(): void {
@@ -1344,4 +1350,4 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   refreshInterval: refreshIntervalSelector(state)
 });
 
-export const OverviewPage = connect(mapStateToProps)(OverviewPageComponent);
+export const OverviewPage = connectRefresh(connect(mapStateToProps)(OverviewPageComponent));
