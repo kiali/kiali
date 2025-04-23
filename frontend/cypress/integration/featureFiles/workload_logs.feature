@@ -44,6 +44,8 @@ Feature: Workload logs tab
     When I select only the "productpage" container
     Then the log pane should only show logs for the "productpage" container
 
+  # Jaeger is not available in OCP 4.19, and we don't have Tempo setup yet in LPINTEROP pipelines (will be for OSSM3+)
+  @skip-lpinterop
   @bookinfo-app
   Scenario: The log pane of the logs tab should show spans
     Given I am on the logs tab of the "productpage-v1" workload detail page of the "bookinfo" namespace

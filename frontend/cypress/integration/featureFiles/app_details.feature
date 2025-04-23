@@ -33,12 +33,16 @@ Feature: Kiali App Details page
   Scenario: See Outbound Metrics
     Then user sees outbound metrics information
 
+  # Jaeger is not available in OCP 4.19, and we don't have Tempo setup yet in LPINTEROP pipelines (will be for OSSM3+)
+  @skip-lpinterop
   @bookinfo-app
   Scenario: See tracing info after selecting a trace
     And user sees trace information
     When user selects a trace
     Then user sees trace details
 
+  # Jaeger is not available in OCP 4.19, and we don't have Tempo setup yet in LPINTEROP pipelines (will be for OSSM3+)
+  @skip-lpinterop
   @bookinfo-app
   Scenario: See span info after selecting app span
     And user sees trace information

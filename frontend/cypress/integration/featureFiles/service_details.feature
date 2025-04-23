@@ -10,6 +10,8 @@ Feature: Kiali Service Details page
     Given user is at administrator perspective
     And user is at the details page for the "service" "bookinfo/productpage" located in the "" cluster
 
+  # Jaeger is not available in OCP 4.19, and we don't have Tempo setup yet in LPINTEROP pipelines (will be for OSSM3+)
+  @skip-lpinterop
   @bookinfo-app
   Scenario: See details for productpage
     Then sd::user sees a list with content "Overview"
@@ -51,12 +53,16 @@ Feature: Kiali Service Details page
   Scenario: See Graph data for productspage service details Inbound Metrics graphs
     Then sd::user does not see No data message in the "Request volume" graph
 
+  # Jaeger is not available in OCP 4.19, and we don't have Tempo setup yet in LPINTEROP pipelines (will be for OSSM3+)
+  @skip-lpinterop
   @bookinfo-app
   Scenario: See graph traces for productspage service details
     And user sees trace information
     When user selects a trace
     Then user sees trace details
 
+  # Jaeger is not available in OCP 4.19, and we don't have Tempo setup yet in LPINTEROP pipelines (will be for OSSM3+)
+  @skip-lpinterop
   @bookinfo-app
   Scenario: See span info after selecting service span
     And user sees trace information
