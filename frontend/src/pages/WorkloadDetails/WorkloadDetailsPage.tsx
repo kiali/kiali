@@ -29,7 +29,7 @@ import { HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
 import { ZtunnelConfig } from '../../components/Ambient/ZtunnelConfig';
 import { WaypointConfig } from '../../components/Ambient/WaypointConfig';
-import { isGVKSupported } from '../../utils/IstioConfigUtils';
+import { isWorkloadSupported } from '../../utils/IstioConfigUtils';
 
 type WorkloadDetailsState = {
   cluster?: string;
@@ -171,7 +171,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     );
     tabsArray.push(overTab);
 
-    if (this.state.workload && isGVKSupported(this.state.workload.gvk)) {
+    if (this.state.workload && isWorkloadSupported(this.state.workload)) {
       const trafficTab = (
         <Tab title="Traffic" eventKey={1} key="Traffic">
           <TrafficDetails

@@ -13,6 +13,7 @@ export type AppId = {
 export interface AppWorkload {
   isAmbient: boolean;
   isGateway: boolean;
+  isRollout: boolean;
   isWaypoint: boolean;
   isZtunnel: boolean;
   istioSidecar: boolean;

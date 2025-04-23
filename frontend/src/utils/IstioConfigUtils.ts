@@ -10,6 +10,8 @@ import {
 } from '../types/IstioObjects';
 import _ from 'lodash';
 import { dicTypeToGVK, gvkType, IstioConfigItem } from 'types/IstioConfigList';
+import { Workload } from '../types/Workload';
+import { AppWorkload } from '../types/App';
 
 export const mergeJsonPatch = (objectModified: object, object?: object): object => {
   if (!object) {
@@ -249,6 +251,11 @@ export function istioTypesToGVKString(istioTypes: string[]): string[] {
   return istioTypes.map(type => {
     return gvkToString(dicTypeToGVK[type]);
   });
+}
+
+export function isWorkloadSupported(workload: Workload | AppWorkload): boolean {
+  const gvk = 'gvk' in workload ? workload.gvk : workload.workloadGVK;
+  return !workload.isRollout && isGVKSupported(gvk);
 }
 
 export function isGVKSupported(gvk: GroupVersionKind): boolean {

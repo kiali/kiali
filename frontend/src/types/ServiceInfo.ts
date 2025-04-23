@@ -56,6 +56,7 @@ export interface WorkloadOverview {
   createdAt: string;
   isAmbient: boolean;
   isGateway: boolean;
+  isRollout: boolean;
   isWaypoint: boolean;
   isZtunnel: boolean;
   istioSidecar: boolean;

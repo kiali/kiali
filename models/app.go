@@ -52,6 +52,11 @@ type AppListItem struct {
 	// example: true
 	IsAmbient bool `json:"isAmbient"`
 
+	// Define if any of the Workloads are Argo Rollout
+	// required: true
+	// example: true
+	IsRollout bool `json:"isRollout"`
+
 	// Define if Labels related to this Workload contains any Gateway label
 	// required: true
 	// example: true
@@ -87,6 +92,11 @@ type WorkloadItem struct {
 	// required: true
 	// example: true
 	IsAmbient bool `json:"isAmbient"`
+
+	// Define if any of the Workloads are Argo Rollout
+	// required: true
+	// example: true
+	IsRollout bool `json:"isRollout"`
 
 	// Labels for Workload
 	Labels map[string]string `json:"labels"`
@@ -124,6 +134,11 @@ type App struct {
 	// required: true
 	// example: true
 	IsAmbient bool `json:"isAmbient"`
+
+	// Define if any of the Workloads are Argo Rollout
+	// required: true
+	// example: true
+	IsRollout bool `json:"isRollout"`
 
 	// Workloads for a given application
 	// required: true

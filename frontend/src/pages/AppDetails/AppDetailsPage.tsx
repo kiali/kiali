@@ -25,7 +25,7 @@ import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
 import { serverConfig } from 'config';
-import { isGVKSupported } from '../../utils/IstioConfigUtils';
+import { isWorkloadSupported } from '../../utils/IstioConfigUtils';
 import { getAppLabelName } from 'config/ServerConfig';
 
 type AppDetailsState = {
@@ -110,7 +110,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
             hasSidecar: details.data.workloads.some(w => w.istioSidecar),
             hasAmbient: details.data.workloads.some(w => w.isAmbient)
           }),
-          isSupported: details.data.workloads.some(w => isGVKSupported(w.workloadGVK))
+          isSupported: details.data.workloads.some(w => isWorkloadSupported(w))
         });
       })
       .catch(error => {

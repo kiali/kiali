@@ -17,7 +17,7 @@ import { WizardLabels } from './WizardLabels';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { WorkloadWizardActionsDropdownGroup } from './WorkloadWizardActionsDropdownGroup';
 import { t } from 'utils/I18nUtils';
-import { getGVKTypeString, isGVKSupported } from '../../utils/IstioConfigUtils';
+import { getGVKTypeString, isWorkloadSupported } from '../../utils/IstioConfigUtils';
 import { gvkType } from '../../types/IstioConfigList';
 
 interface Props {
@@ -96,7 +96,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
     // annotations
     getGVKTypeString(props.workload.gvk) === getGVKTypeString(gvkType.Deployment);
 
-  const supportedWorkload = isGVKSupported(props.workload.gvk);
+  const supportedWorkload = isWorkloadSupported(props.workload);
 
   const dropdown = (
     <Dropdown

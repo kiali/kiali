@@ -15,7 +15,7 @@ import { MissingSidecar } from '../../components/MissingSidecar/MissingSidecar';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { MissingLabel } from '../../components/MissingLabel/MissingLabel';
 import { MissingAuthPolicy } from 'components/MissingAuthPolicy/MissingAuthPolicy';
-import { getGVKTypeString, hasMissingAuthPolicy, isGVKSupported } from 'utils/IstioConfigUtils';
+import { getGVKTypeString, hasMissingAuthPolicy, isWorkloadSupported } from 'utils/IstioConfigUtils';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { gvkType, validationKey } from '../../types/IstioConfigList';
@@ -111,7 +111,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             </li>
           )}
 
-          {!isGVKSupported(workload.gvk) && (
+          {!isWorkloadSupported(workload) && (
             <li>
               <span>API Version</span>
               {`${workload.gvk.Group}.${workload.gvk.Version}`}
@@ -230,7 +230,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {workload.cluster}
           </div>
         )}
-        {!isGVKSupported(workload.gvk) && (
+        {!isWorkloadSupported(workload) && (
           <Alert
             variant="info"
             isInline={true}

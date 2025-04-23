@@ -79,6 +79,7 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
             istioSidecar: wk.istioSidecar,
             isAmbient: wk.isAmbient,
             isGateway: wk.isGateway,
+            isRollout: wk.isRollout,
             isWaypoint: wk.isWaypoint,
             isZtunnel: wk.isZtunnel,
             serviceAccountNames: wk.serviceAccountNames,

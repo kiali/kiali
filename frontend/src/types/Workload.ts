@@ -30,6 +30,7 @@ export interface Workload {
   instanceType: InstanceType.Workload;
   isAmbient: boolean;
   isGateway: boolean;
+  isRollout: boolean;
   isWaypoint: boolean;
   isZtunnel: boolean;
   istioInjectionAnnotation?: boolean;
@@ -58,6 +59,7 @@ export const emptyWorkload: Workload = {
   gvk: { Group: '', Version: '', Kind: '' },
   isAmbient: false,
   isGateway: false,
+  isRollout: false,
   isWaypoint: false,
   isZtunnel: false,
   istioSidecar: true, // true until proven otherwise

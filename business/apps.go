@@ -183,6 +183,9 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 			if w.IsGateway() {
 				appItem.IsGateway = true
 			}
+			if w.HasRollout() {
+				appItem.IsRollout = true
+			}
 		}
 		if criteria.IncludeHealth {
 			appItem.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, valueApp.cluster, appItem.Name, criteria.RateInterval, criteria.QueryTime, valueApp)
@@ -387,7 +390,7 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 
 	appInstance.Workloads = make([]models.WorkloadItem, len(appDetails.Workloads))
 	for i, wkd := range appDetails.Workloads {
-		appInstance.Workloads[i] = models.WorkloadItem{WorkloadName: wkd.Name, Namespace: wkd.Namespace, WorkloadGVK: wkd.WorkloadGVK, IstioSidecar: wkd.IstioSidecar, Labels: wkd.Labels, IsAmbient: wkd.IsAmbient, ServiceAccountNames: wkd.Pods.ServiceAccounts(), WaypointWorkloads: wkd.WaypointWorkloads}
+		appInstance.Workloads[i] = models.WorkloadItem{WorkloadName: wkd.Name, Namespace: wkd.Namespace, WorkloadGVK: wkd.WorkloadGVK, IstioSidecar: wkd.IstioSidecar, Labels: wkd.Labels, IsAmbient: wkd.IsAmbient, IsRollout: wkd.IsRollout, ServiceAccountNames: wkd.Pods.ServiceAccounts(), WaypointWorkloads: wkd.WaypointWorkloads}
 	}
 
 	appInstance.ServiceNames = make([]string, len(appDetails.Services))
@@ -397,11 +400,15 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 
 	pods := models.Pods{}
 	isAmbient := len(appDetails.Workloads) > 0
+	isRollout := false
 
 	for _, workload := range appDetails.Workloads {
 		pods = append(pods, workload.Pods...)
 		if !workload.IsAmbient {
 			isAmbient = false
+		}
+		if workload.IsRollout {
+			isRollout = true
 		}
 	}
 
@@ -413,6 +420,7 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 		}
 	}
 	appInstance.IsAmbient = isAmbient
+	appInstance.IsRollout = isRollout
 	appInstance.Cluster = appDetails.cluster
 
 	return *appInstance, nil

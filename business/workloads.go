@@ -1029,6 +1029,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 					if util.IsRollout(pod.Name, pod.Labels) {
 						// Heuristic for ArgoCD Rollout
 						// Trim the controller name by rollouts-pod-template-hash
+						// Prometheus does not store metrics per generated rollout workload, but for an app
 						controllers[util.GetRolloutName(pod.Name, pod.Labels)] = kubernetes.ReplicaSets
 						continue
 					}
@@ -1082,6 +1083,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 							// Heuristic for ArgoCD Rollout
 							// Replace GVK with ReplicaSet
 							// Trim the controller name by rollouts-pod-template-hash
+							// Prometheus does not store metrics per generated rollout workload, but for an app
 							controllers[util.GetRolloutName(repset[iFound].Name, repset[iFound].Labels)] = kubernetes.ReplicaSets
 							continue
 						}
@@ -1300,6 +1302,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			} else if len(rollouts) > 0 {
 				w.MergeReplicaSets(rollouts)
 				w.SetPods(kubernetes.FilterPodsBySelector(labels.Set(w.Labels).AsSelector(), pods))
+				w.IsRollout = true
 			} else {
 				log.Errorf("Workload %s is not found as ReplicaSet", controllerName)
 				cnFound = false
@@ -2016,6 +2019,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			} else if len(rollouts) > 0 {
 				w.MergeReplicaSets(rollouts)
 				w.SetPods(kubernetes.FilterPodsBySelector(labels.Set(w.Labels).AsSelector(), pods))
+				w.IsRollout = true
 			} else {
 				log.Errorf("Workload %s is not found as ReplicaSet", criteria.WorkloadName)
 				cnFound = false
@@ -2171,6 +2175,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 
 		w.WorkloadListItem.IsGateway = w.IsGateway()
 		isWaypoint := w.IsWaypoint()
+		w.WorkloadListItem.IsRollout = w.HasRollout()
 		w.WorkloadListItem.IsWaypoint = isWaypoint
 		w.WorkloadListItem.IsZtunnel = w.IsZtunnel()
 		w.WorkloadListItem.IsAmbient = isWaypoint || w.WorkloadListItem.IsZtunnel || w.HasIstioAmbient()
