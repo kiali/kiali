@@ -31,12 +31,16 @@ Feature: Kiali Workload Details page
   Scenario: See workload Outbound Metrics
     Then user sees workload outbound metrics information
 
+  # Jaeger is not available in OCP 4.19, and we don't have Tempo setup yet in LPINTEROP pipelines (will be for OSSM3+)
+  @skip-lpinterop
   @bookinfo-app
   Scenario: See workload tracing info after selecting a trace
     And user sees trace information
     When user selects a trace
     Then user sees trace details
 
+  # Jaeger is not available in OCP 4.19, and we don't have Tempo setup yet in LPINTEROP pipelines (will be for OSSM3+)
+  @skip-lpinterop
   @bookinfo-app
   Scenario: See workload span info after selecting a span
     And user sees trace information

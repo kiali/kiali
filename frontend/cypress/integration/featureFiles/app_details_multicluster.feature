@@ -47,6 +47,8 @@ Feature: Kiali App Details page for multicluster
     When user selects a trace
     Then user sees trace details
 
+  # Jaeger is not available in OCP 4.19, and we don't have Tempo setup yet in LPINTEROP pipelines (will be for OSSM3+)
+  @skip-lpinterop
   @app-details-page
   Scenario: See span info after selecting app span
     And user is at the details page for the "app" "bookinfo/productpage" located in the "west" cluster
