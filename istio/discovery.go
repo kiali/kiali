@@ -114,7 +114,7 @@ func (in *Discovery) getControlPlaneConfiguration(kubeCache cache.KubeCache, con
 				resp, err := client.ForwardGetRequest(zPod.Namespace, zPod.Name, 15000, "/config_dump")
 				if err != nil {
 					log.Errorf("[getZtunnelConfigDump] Error forwarding the /config_dump request: %v", err)
-					return nil, err
+					continue
 				}
 
 				configDump := &kubernetes.ZtunnelConfigDump{}
