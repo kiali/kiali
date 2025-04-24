@@ -142,12 +142,6 @@ func (in *WorkloadService) isWorkloadIncluded(workload string) bool {
 	return !in.excludedWorkloads[workload]
 }
 
-// isWorkloadValid returns true if it is a known workload type and it is not configured as excluded
-func (in *WorkloadService) isWorkloadValid(workloadType string) bool {
-	_, knownWorkloadType := controllerOrder[workloadType]
-	return knownWorkloadType && in.isWorkloadIncluded(workloadType)
-}
-
 // @TODO do validations per cluster
 func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1.AuthorizationPolicy, workloadsPerNamespace map[string]models.Workloads) models.IstioValidations {
 	validations := checkers.WorkloadChecker{
@@ -1071,21 +1065,15 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 							log.Errorf("could not parse OwnerReference api version %q: %v", ref.APIVersion, err)
 							continue
 						}
+						// Delete the child ReplicaSet and add the parent controller
 						if _, exist := controllers[ref.Name]; !exist {
-							// For valid owner controllers, delete the child ReplicaSet and add the parent controller,
-							// otherwise (for custom controllers), defer to the replica set.
-							if in.isWorkloadValid(ref.Kind) {
-								controllers[ref.Name] = refGV.WithKind(ref.Kind)
-								delete(controllers, controllerName)
-							} else {
-								log.Debugf("Add ReplicaSet to workload list for custom controller [%s][%s]", ref.Name, ref.Kind)
-							}
+							controllers[ref.Name] = refGV.WithKind(ref.Kind)
 						} else {
 							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
 								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
 							}
-							delete(controllers, controllerName)
 						}
+						delete(controllers, controllerName)
 					}
 				}
 			}
@@ -1429,13 +1417,34 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				cnFound = false
 			}
 		default:
-			// This covers the scenario of a custom controller without replicaset, controlling pods directly.
-			// Note that a custom controller with replicaset(s) will return the replicaset(s) as the workloads.
+			// Two scenarios:
+			// 1. Custom controller with replicaset
+			// 2. Custom controller without replicaset controlling pods directly.
+			//
+			// ReplicaSet should be used to link Pods with a custom controller type i.e. Argo Rollout
+			// Note, we will use the controller found in the Pod resolution, instead that the passed by parameter
+			// This will cover cornercase for https://github.com/kiali/kiali/issues/3830
 			var cPods []core_v1.Pod
-			cPods = kubernetes.FilterPodsByController(controllerName, controllerGVK, pods)
-			if len(cPods) > 0 {
-				w.ParsePods(controllerName, controllerGVK, cPods)
-				log.Debugf("Workload %s of type %s has no ReplicaSet as a child controller (this may be ok, but is unusual)", controllerName, controllerGVK)
+			for _, rs := range repset {
+				rsOwnerRef := meta_v1.GetControllerOf(&rs.ObjectMeta)
+				if rsOwnerRef != nil && rsOwnerRef.Name == controllerName && rsOwnerRef.Kind == controllerGVK.Kind {
+					w.ParseReplicaSetParent(&rs, controllerName, controllerGVK)
+					for _, pod := range pods {
+						if meta_v1.IsControlledBy(&pod, &rs) {
+							cPods = append(cPods, pod)
+						}
+					}
+					break
+				}
+			}
+			if len(cPods) == 0 {
+				// If no pods we're found for a ReplicaSet type, it's possible the controller
+				// is managing the pods itself i.e. the pod's have an owner ref directly to the controller type.
+				cPods = kubernetes.FilterPodsByController(controllerName, controllerGVK, pods)
+				if len(cPods) > 0 {
+					w.ParsePods(controllerName, controllerGVK, cPods)
+					log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", controllerName, controllerGVK.Kind)
+				}
 			}
 			w.SetPods(cPods)
 		}
@@ -1794,21 +1803,15 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 						continue
 					}
 					if ref.Controller != nil && *ref.Controller {
-						// For valid owner controllers, delete the child ReplicaSet and add the parent controller,
-						// otherwise (for custom controllers), defer to the replica set.
+						// Delete the child ReplicaSet and add the parent controller
 						if _, exist := controllers[ref.Name]; !exist {
-							if in.isWorkloadValid(ref.Kind) {
-								controllers[ref.Name] = refGV.WithKind(ref.Kind)
-								delete(controllers, controllerName)
-							} else {
-								log.Debugf("Use ReplicaSet as workload for custom controller [%s][%s]", ref.Name, ref.Kind)
-							}
+							controllers[ref.Name] = refGV.WithKind(ref.Kind)
 						} else {
 							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
 								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
 							}
-							delete(controllers, controllerName)
 						}
+						delete(controllers, controllerName)
 					}
 				}
 			}
@@ -2088,38 +2091,32 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				cnFound = false
 			}
 		default:
-			// Handle a custom type (criteria.WorkloadType is not a known type).
+			// Two scenarios:
 			// 1. Custom controller with replicaset
-			// 2. Custom controller without replicaset controlling pods directly
-
-			// 1. use the controller type found in the Pod resolution and ignore the unknown criteria type
+			// 2. Custom controller without replicaset controlling pods directly.
+			//
+			// ReplicaSet should be used to link Pods with a custom controller type i.e. Argo Rollout
+			// Note, we will use the controller found in the Pod resolution, instead that the passed by parameter
+			// This will cover cornercase for https://github.com/kiali/kiali/issues/3830
 			var cPods []core_v1.Pod
 			for _, rs := range repset {
-				if discoveredControllerGVK.Kind == kubernetes.ReplicaSetType && criteria.WorkloadName == rs.Name {
-					w.ParseReplicaSet(&rs)
-				} else {
-					rsOwnerRef := meta_v1.GetControllerOf(&rs.ObjectMeta)
-					if rsOwnerRef != nil && rsOwnerRef.Name == criteria.WorkloadName && rsOwnerRef.Kind == discoveredControllerGVK.Kind {
-						w.ParseReplicaSetParent(&rs, criteria.WorkloadName, discoveredControllerGVK)
-					} else {
-						continue
+				rsOwnerRef := meta_v1.GetControllerOf(&rs.ObjectMeta)
+				if rsOwnerRef != nil && rsOwnerRef.Name == criteria.WorkloadName && rsOwnerRef.Kind == discoveredControllerGVK.Kind {
+					w.ParseReplicaSetParent(&rs, criteria.WorkloadName, discoveredControllerGVK)
+					for _, pod := range pods {
+						if meta_v1.IsControlledBy(&pod, &rs) {
+							cPods = append(cPods, pod)
+						}
 					}
+					break
 				}
-				for _, pod := range pods {
-					if meta_v1.IsControlledBy(&pod, &rs) {
-						cPods = append(cPods, pod)
-					}
-				}
-				break
 			}
 
-			// 2. If no pods were found for a ReplicaSet type, it's possible the controller
-			//    is managing the pods itself i.e. the pods have an owner ref directly to the controller type.
 			if len(cPods) == 0 {
 				cPods = kubernetes.FilterPodsByController(criteria.WorkloadName, discoveredControllerGVK, pods)
 				if len(cPods) > 0 {
 					w.ParsePods(criteria.WorkloadName, discoveredControllerGVK, cPods)
-					log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", criteria.WorkloadName, discoveredControllerGVK)
+					log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", criteria.WorkloadName, discoveredControllerGVK.Kind)
 				}
 			}
 

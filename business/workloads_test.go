@@ -521,8 +521,8 @@ func TestGetWorkloadListFromPods(t *testing.T) {
 	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(1, len(workloads))
-	assert.Equal("custom-controller-RS-123", workloads[0].Name)
-	assert.Equal("ReplicaSet", workloads[0].WorkloadGVK.Kind)
+	assert.Equal("custom-controller", workloads[0].Name)
+	assert.Equal("CustomController", workloads[0].WorkloadGVK.Kind)
 	assert.Equal(true, workloads[0].AppLabel)
 	assert.Equal(true, workloads[0].VersionLabel)
 }
@@ -693,17 +693,10 @@ func TestGetWorkloadFromPods(t *testing.T) {
 
 	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "custom-controller", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
-	require.Error(err)
-
-	// custom controller is not a workload type, only its replica set(s)
-	assert.Equal((*models.Workload)(nil), workload)
-
-	criteria = WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "custom-controller-RS-123", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
-	workload, err = svc.GetWorkload(context.TODO(), criteria)
 	require.NoError(err)
 
-	assert.Equal("custom-controller-RS-123", workload.Name)
-	assert.Equal("ReplicaSet", workload.WorkloadGVK.Kind)
+	assert.Equal("custom-controller", workload.Name)
+	assert.Equal("CustomController", workload.WorkloadGVK.Kind)
 	assert.Equal(true, workload.AppLabel)
 	assert.Equal(true, workload.VersionLabel)
 	assert.Equal(0, len(workload.Runtimes))
@@ -1297,7 +1290,7 @@ func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 	workload, _ := svc.GetWorkload(context.TODO(), criteria)
 
 	require.Equal(len(workloads), 1)
-	assert.Nil(workload)
+	assert.NotNil(workload)
 
 	criteria.WorkloadName = workloads[0].Name
 	workload, _ = svc.GetWorkload(context.TODO(), criteria)
@@ -1929,6 +1922,6 @@ func TestGetWorkloadListWithCustomKindThatMatchesCoreKind(t *testing.T) {
 	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(1, len(workloads))
-	assert.Equal("custom-controller-RS-123", workloads[0].Name)
+	assert.Equal("custom-controller-123", workloads[0].Name)
 	assert.Equal("DaemonSet", workloads[0].WorkloadGVK.Kind)
 }
