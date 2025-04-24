@@ -1,12 +1,14 @@
 package log
 
 import (
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -72,7 +74,7 @@ func setLogFormat(l zerolog.Logger) zerolog.Logger {
 
 // ContextLogger will provide a logger that contains additional structured data that will be logged with each message
 type ContextLogger struct {
-	z zerolog.Logger
+	Z zerolog.Logger
 }
 
 // WithContext provides a logger that will log messages that are associated with some structured content provided in the map
@@ -81,13 +83,18 @@ func WithContext(fields map[string]string) ContextLogger {
 	for k, v := range fields {
 		ctx = ctx.Str(k, v)
 	}
-	cl := ContextLogger{z: setLogFormat(setSamplingRate(ctx.Logger()))}
+	cl := ContextLogger{Z: setLogFormat(setSamplingRate(ctx.Logger()))}
 	return cl
 }
 
 // WithGroup is a simple convienence function that provides a logger that will log messages associated with a group name in the log context
 func WithGroup(group string) ContextLogger {
 	return WithContext(map[string]string{"group": group})
+}
+
+// FromRequest is a convienence wrapper around zerolog's FromRequest thus helping callers avoid having to explicitly import hlog
+func FromRequest(r *http.Request) *zerolog.Logger {
+	return hlog.FromRequest(r)
 }
 
 // Info logs a message via the global logger
@@ -102,12 +109,12 @@ func Infof(format string, args ...interface{}) {
 
 // Info logs a message via a context logger such that the message will be associated with structured data in the context
 func (c ContextLogger) Info(args ...interface{}) {
-	c.z.Info().Msgf("%s", args...)
+	c.Z.Info().Msgf("%s", args...)
 }
 
 // Infof logs a message via a context logger such that the message will be associated with structured data in the context
 func (c ContextLogger) Infof(format string, args ...interface{}) {
-	c.z.Info().Msgf(format, args...)
+	c.Z.Info().Msgf(format, args...)
 }
 
 // Warning logs a warning message via the global logger
@@ -122,12 +129,12 @@ func Warningf(format string, args ...interface{}) {
 
 // Warning logs a warning message via a context logger such that the message will be associated with structured data in the context
 func (c ContextLogger) Warning(args ...interface{}) {
-	c.z.Warn().Msgf("%s", args...)
+	c.Z.Warn().Msgf("%s", args...)
 }
 
 // Warningf logs a warning message via a context logger such that the message will be associated with structured data in the context
 func (c ContextLogger) Warningf(format string, args ...interface{}) {
-	c.z.Warn().Msgf(format, args...)
+	c.Z.Warn().Msgf(format, args...)
 }
 
 // Error logs an error message via the global logger
@@ -142,12 +149,12 @@ func Errorf(format string, args ...interface{}) {
 
 // Error logs an error message via a context logger such that the message will be associated with structured data in the context
 func (c ContextLogger) Error(args ...interface{}) {
-	c.z.Error().Msgf("%s", args...)
+	c.Z.Error().Msgf("%s", args...)
 }
 
 // Errorf logs an error message via a context logger such that the message will be associated with structured data in the context
 func (c ContextLogger) Errorf(format string, args ...interface{}) {
-	c.z.Error().Msgf(format, args...)
+	c.Z.Error().Msgf(format, args...)
 }
 
 // Debug logs a debug message via the global logger
@@ -162,12 +169,12 @@ func Debugf(format string, args ...interface{}) {
 
 // Debug logs a debug message via a context logger such that the message will be associated with structured data in the context
 func (c ContextLogger) Debug(args ...interface{}) {
-	c.z.Debug().Msgf("%s", args...)
+	c.Z.Debug().Msgf("%s", args...)
 }
 
 // Debugf logs a debug message via a context logger such that the message will be associated with structured data in the context
 func (c ContextLogger) Debugf(format string, args ...interface{}) {
-	c.z.Debug().Msgf(format, args...)
+	c.Z.Debug().Msgf(format, args...)
 }
 
 // IsDebug returns true if the global logger will actually log debug or trace level messages
@@ -187,12 +194,12 @@ func Tracef(format string, args ...interface{}) {
 
 // Trace logs a trace message via a context logger such that the message will be associated with structured data in the context
 func (c ContextLogger) Trace(args ...interface{}) {
-	c.z.Trace().Msgf("%s", args...)
+	c.Z.Trace().Msgf("%s", args...)
 }
 
 // Tracef logs a trace message via a context logger such that the message will be associated with structured data in the context
 func (c ContextLogger) Tracef(format string, args ...interface{}) {
-	c.z.Trace().Msgf(format, args...)
+	c.Z.Trace().Msgf(format, args...)
 }
 
 // IsTrace returns true if the global logger will actually log trace level messages

@@ -344,7 +344,7 @@ func TestContextLoggerJson(t *testing.T) {
 	// WithGroup is simply WithContext under the covers so it should pass if the above tests pass.
 	buf := &bytes.Buffer{}
 	testlogger := WithGroup("testgroup")
-	testlogger.z = testlogger.z.Output(buf)
+	testlogger.Z = testlogger.Z.Output(buf)
 	testlogger.Info("test group message")
 	loggedMessage := buf.String()
 	assert.True(t, isJSON(loggedMessage))
@@ -441,7 +441,7 @@ func TestContextLoggerText(t *testing.T) {
 			// we know this test should not use json - this should be false always for this test
 			if !isJsonLogFormat() {
 				t.Logf("Overwrite logger for test %d", index)
-				testlogger.z = testlogger.z.Output(zerolog.ConsoleWriter{Out: buf, TimeFormat: zerolog.TimeFieldFormat, NoColor: true})
+				testlogger.Z = testlogger.Z.Output(zerolog.ConsoleWriter{Out: buf, TimeFormat: zerolog.TimeFieldFormat, NoColor: true})
 			}
 
 			switch test.expectedLevel {
@@ -479,7 +479,7 @@ func TestContextLoggerText(t *testing.T) {
 	// WithGroup is simply WithContext under the covers so it should pass if the above tests pass.
 	buf := &bytes.Buffer{}
 	testlogger := WithGroup("testgroup")
-	testlogger.z = testlogger.z.Output(zerolog.ConsoleWriter{Out: buf, TimeFormat: zerolog.TimeFieldFormat, NoColor: true})
+	testlogger.Z = testlogger.Z.Output(zerolog.ConsoleWriter{Out: buf, TimeFormat: zerolog.TimeFieldFormat, NoColor: true})
 	testlogger.Info("test group message")
 	loggedMessage := buf.String()
 	assert.False(t, isJSON(loggedMessage))

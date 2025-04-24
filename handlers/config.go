@@ -68,6 +68,8 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer handlePanic(w)
 
+		log.FromRequest(r).Debug().Msg("Kiali configuration has been requested")
+
 		// Note that we determine the Prometheus config at request time because it is not
 		// guaranteed to remain the same during the Kiali lifespan.
 		promConfig := getPrometheusConfig(conf, prom)
