@@ -1922,6 +1922,6 @@ func TestGetWorkloadListWithCustomKindThatMatchesCoreKind(t *testing.T) {
 	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(1, len(workloads))
-	assert.Equal("custom-controller-RS-123", workloads[0].Name)
+	assert.Equal("custom-controller-123", workloads[0].Name)
 	assert.Equal("DaemonSet", workloads[0].WorkloadGVK.Kind)
 }
