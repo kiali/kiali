@@ -902,7 +902,7 @@ func FakePodsFromCustomController(conf *config.Config) []core_v1.Pod {
 					Controller: &controller,
 					APIVersion: kubernetes.ReplicaSets.GroupVersion().String(),
 					Kind:       kubernetes.ReplicaSets.Kind,
-					Name:       "custom-controller-RS-123",
+					Name:       "custom-controller-123",
 				}},
 				Annotations: kubetest.FakeIstioAnnotations(),
 			},
@@ -1119,7 +1119,7 @@ func FakeCustomControllerRSSyncedWithPods(conf *config.Config) []apps_v1.Replica
 				Kind:       kubernetes.ReplicaSets.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name:              "custom-controller-RS-123",
+				Name:              "custom-controller-123",
 				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 				OwnerReferences: []meta_v1.OwnerReference{{
