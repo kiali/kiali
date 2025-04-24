@@ -179,7 +179,7 @@ func newKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, conf co
 		waypointStore:           store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(conf.KialiInternal.CacheExpiration.Waypoint), nil),
 		validations:             store.New[models.IstioValidationKey, *models.IstioValidation](),
 		validationConfig:        store.New[string, string](),
-		ztunnelConfigStore:      store.New[string, *kubernetes.ZtunnelConfigDump](),
+		ztunnelConfigStore:      store.NewExpirationStore(ctx, store.New[string, *kubernetes.ZtunnelConfigDump](), util.AsPtr(conf.KialiInternal.CacheExpiration.ZtunnelConfig), nil),
 	}
 
 	for cluster, client := range kialiSAClients {
@@ -360,7 +360,11 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 	}
 
 	for _, pod := range dsPods {
-		if strings.Contains(pod.Name, config.Ztunnel) {
+		podName := pod.Name
+		if len(pod.OwnerReferences) > 0 {
+			podName = pod.OwnerReferences[0].Name
+		}
+		if strings.Contains(podName, config.Ztunnel) {
 			ztunnelPods = append(ztunnelPods, pod)
 		}
 	}
