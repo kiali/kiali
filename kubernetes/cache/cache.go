@@ -28,6 +28,10 @@ const (
 	kialiCacheWaypointsKey   = "waypoints"
 )
 
+var (
+	klog = log.WithGroup("kialiCache")
+)
+
 // KialiCache stores both kube objects and non-kube related data such as pods' proxy status.
 // It is exclusively used by the business layer where it's expected to be a singleton.
 // This business layer cache needs access to all the kiali service account has access
@@ -189,17 +193,17 @@ func newKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, conf co
 		}
 		cache, err := NewKubeCache(client, conf, errHandler, waitForSync)
 		if err != nil {
-			log.Errorf("[Kiali Cache] Error creating kube cache for cluster: [%s]. Err: %v", cluster, err)
+			klog.Errorf("Error creating kube cache for cluster: [%s]. Err: %v", cluster, err)
 			return nil, err
 		}
-		log.Infof("[Kiali Cache] Kube cache is active for cluster: [%s]", cluster)
+		klog.Infof("Kube cache is active for cluster: [%s]", cluster)
 
 		kialiCacheImpl.kubeCache[cluster] = cache
 
 		// Check if the cluster can list webhooks
 		reviews, err := client.GetSelfSubjectAccessReview(ctx, "", "admissionregistration.k8s.io", "mutatingwebhookconfigurations", []string{"list"})
 		if err != nil {
-			log.Warningf("[Kiali Cache] Unable to check if kiali can read mutating webhooks to autodetect tags: %s", err)
+			klog.Warningf("Unable to check if kiali can read mutating webhooks to autodetect tags: %s", err)
 			kialiCacheImpl.canReadWebhookByCluster[cluster] = false
 		}
 
@@ -211,7 +215,7 @@ func newKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, conf co
 		}
 
 		if canReadMutatingWebhooks := kialiCacheImpl.canReadWebhookByCluster[cluster]; !canReadMutatingWebhooks {
-			log.Infof("[Kiali Cache] Unable to list webhooks for cluster [%s]. Give Kiali permission to read 'mutatingwebhookconfigurations'.", cluster)
+			klog.Infof("Unable to list webhooks for cluster [%s]. Give Kiali permission to read 'mutatingwebhookconfigurations'.", cluster)
 		}
 	}
 
@@ -244,7 +248,7 @@ func (c *kialiCacheImpl) GetKubeCache(cluster string) (KubeCache, error) {
 
 // Stops all caches across all clusters.
 func (c *kialiCacheImpl) Stop() {
-	log.Infof("Stopping Kiali Cache")
+	klog.Infof("Stopping Kiali Cache")
 
 	wg := sync.WaitGroup{}
 	for _, kc := range c.kubeCache {
@@ -300,7 +304,7 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 	if !found {
 		kubeCache, err := in.GetKubeCache(cluster)
 		if err != nil {
-			log.Debugf("Unable to get kube cache when checking for ambient profile: %s", err)
+			klog.Debugf("Unable to get kube cache when checking for ambient profile: %s", err)
 			return false
 		}
 
@@ -310,12 +314,12 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 		daemonsets, err := kubeCache.GetDaemonSetsWithSelector(metav1.NamespaceAll, selector)
 		if err != nil {
 			// Don't set the check so we will check again the next time since this error may be transient.
-			log.Debugf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
+			klog.Debugf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 			return false
 		}
 
 		if len(daemonsets) == 0 {
-			log.Debugf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
+			klog.Debugf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
 			in.ambientChecksPerCluster.Set(cluster, false)
 			return false
 		}
@@ -332,7 +336,7 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 	ztunnelPods := []v1.Pod{}
 	kubeCache, err := in.GetKubeCache(cluster)
 	if err != nil {
-		log.Debugf("Unable to get kube cache when checking for ambient profile: %s", err)
+		klog.Debugf("Unable to get kube cache when checking for ambient profile: %s", err)
 		return ztunnelPods
 
 	}
@@ -342,18 +346,18 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 	daemonsets, err := kubeCache.GetDaemonSetsWithSelector(metav1.NamespaceAll, selector)
 	if err != nil {
 		// Don't set the check so we will check again the next time since this error may be transient.
-		log.Debugf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
+		klog.Debugf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 		return ztunnelPods
 	}
 
 	if len(daemonsets) == 0 {
-		log.Debugf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
+		klog.Debugf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
 		return ztunnelPods
 	}
 
 	ztunnelPods, err = kubeCache.GetPods(daemonsets[0].Namespace, fmt.Sprintf("app=%s", config.Ztunnel))
 	if err != nil {
-		log.Errorf("Unable to get ztunnel pods: %s", err)
+		klog.Errorf("Unable to get ztunnel pods: %s", err)
 	}
 
 	return ztunnelPods
@@ -462,7 +466,7 @@ func (c *kialiCacheImpl) SetNamespace(token string, namespace models.Namespace) 
 func (c *kialiCacheImpl) deleteNamespace(kc *kubeCache, namespace string, err error) {
 	if apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err) {
 		cluster := kc.client.ClusterInfo().Name
-		log.Errorf("Namespace [%v] in cluster [%v] appears to have been deleted or Kiali is forbidden from seeing it [err=%v]. Shutting down namespace cache.", namespace, cluster, err)
+		klog.Errorf("Namespace [%v] in cluster [%v] appears to have been deleted or Kiali is forbidden from seeing it [err=%v]. Shutting down namespace cache.", namespace, cluster, err)
 		c.RefreshTokenNamespaces(cluster)
 		kc.StopNamespace(namespace)
 	}
