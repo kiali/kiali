@@ -187,7 +187,6 @@ export const TimeDurationModal: React.FC<Props> = (props: Props) => {
         <FormGroup label={t('Refresh interval')} fieldId="drform-refresh">
           <RefreshComponent
             id="drform-metrics-refresh"
-            hideLabel={true}
             hideRefreshButton={true}
             language={i18n.language}
             refreshInterval={refreshInterval}

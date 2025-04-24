@@ -3,17 +3,13 @@ import {
   Card,
   CardBody,
   CardHeader,
-  EmptyState,
-  EmptyStateBody,
-  EmptyStateVariant,
   Grid,
   GridItem,
   Label,
   Title,
   TitleSizes,
   Tooltip,
-  TooltipPosition,
-  EmptyStateHeader
+  TooltipPosition
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { FilterSelected, StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
@@ -54,7 +50,7 @@ import { switchType } from './OverviewHelper';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import { ValidationSummary } from '../../components/Validations/ValidationSummary';
-import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
 import { Paths, isMultiCluster, serverConfig } from '../../config';
 import { PFColors } from '../../components/Pf/PfColors';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
@@ -76,6 +72,9 @@ import { ApiError } from 'types/Api';
 import { gvkType, IstioConfigList } from 'types/IstioConfigList';
 import { t } from 'utils/I18nUtils';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
+import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
+import { EmptyOverview } from './EmptyOverview';
+import { connectRefresh } from 'components/Refresh/connectRefresh';
 
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
@@ -97,13 +96,6 @@ const cardGridStyle = kialiStyle({
   textAlign: 'center',
   marginTop: 0,
   marginBottom: '0.5rem'
-});
-
-const emptyStateStyle = kialiStyle({
-  height: '300px',
-  marginRight: '0.25rem',
-  marginBottom: '0.5rem',
-  marginTop: '0.5rem'
 });
 
 const namespaceHeaderStyle = kialiStyle({
@@ -138,6 +130,7 @@ type State = {
   displayMode: OverviewDisplayMode;
   grafanaLinks: ExternalLink[];
   kind: string;
+  loaded: boolean;
   namespaces: NamespaceInfo[];
   nsTarget: string;
   opTarget: string;
@@ -156,7 +149,9 @@ type ReduxProps = {
   refreshInterval: IntervalInMilliseconds;
 };
 
-type OverviewProps = ReduxProps;
+type OverviewProps = ReduxProps & {
+  lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
+};
 
 export class OverviewPageComponent extends React.Component<OverviewProps, State> {
   private sFOverviewToolbar: StatefulFiltersRef = React.createRef();
@@ -170,31 +165,39 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     const display = HistoryManager.getParam(URLParam.DISPLAY_MODE);
 
     this.state = {
-      namespaces: [],
-      type: OverviewToolbar.currentOverviewType(),
+      clusterTarget: '',
+      controlPlanes: undefined,
       direction: OverviewToolbar.currentDirectionType(),
       displayMode: display ? Number(display) : OverviewDisplayMode.EXPAND,
-      showTrafficPoliciesModal: false,
-      kind: '',
-      nsTarget: '',
-      clusterTarget: '',
-      opTarget: '',
       grafanaLinks: [],
-      controlPlanes: undefined
+      kind: '',
+      loaded: false,
+      namespaces: [],
+      nsTarget: '',
+      opTarget: '',
+      showTrafficPoliciesModal: false,
+      type: OverviewToolbar.currentOverviewType()
     };
-  }
-
-  componentDidUpdate(prevProps: OverviewProps): void {
-    if (prevProps.duration !== this.props.duration || prevProps.navCollapse !== this.props.navCollapse) {
-      // Reload to avoid graphical glitches with charts
-      // TODO: this workaround should probably be deleted after switch to Patternfly 4, see https://issues.jboss.org/browse/KIALI-3116
-      this.load();
-    }
   }
 
   componentDidMount(): void {
     this.fetchGrafanaInfo();
-    this.load();
+    if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
+      this.load();
+    }
+  }
+
+  componentDidUpdate(prevProps: OverviewProps): void {
+    if (
+      this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
+      (this.props.refreshInterval !== RefreshIntervalManual &&
+        (prevProps.duration !== this.props.duration ||
+          prevProps.navCollapse !== this.props.navCollapse ||
+          (prevProps.refreshInterval !== this.props.refreshInterval &&
+            this.props.refreshInterval !== RefreshIntervalPause)))
+    ) {
+      this.load();
+    }
   }
 
   componentWillUnmount(): void {
@@ -215,6 +218,12 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
     // In this case is the first time that we are loading Overview Page, calculate the best view
     return isCompact ? OverviewDisplayMode.COMPACT : OverviewDisplayMode.EXPAND;
+  };
+
+  onChange = (): void => {
+    if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
+      this.load();
+    }
   };
 
   load = (): void => {
@@ -259,14 +268,15 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         this.setState(
           prevState => {
             return {
-              type: type,
               direction: direction,
-              namespaces: Sorts.sortFunc(allNamespaces, sortField, isAscending),
               displayMode: displayMode,
-              showTrafficPoliciesModal: prevState.showTrafficPoliciesModal,
               kind: prevState.kind,
+              loaded: true,
+              namespaces: Sorts.sortFunc(allNamespaces, sortField, isAscending),
               nsTarget: prevState.nsTarget,
-              opTarget: prevState.opTarget
+              opTarget: prevState.opTarget,
+              showTrafficPoliciesModal: prevState.showTrafficPoliciesModal,
+              type: type
             };
           },
           () => {
@@ -938,7 +948,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           title: link.name,
           action: (_ns: string) => {
             window.open(link.url, '_blank');
-            this.load();
+            this.onChange();
           }
         };
 
@@ -983,6 +993,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     return (
       <>
         <OverviewToolbar
+          onChange={this.onChange}
           onRefresh={this.load}
           onError={FilterHelper.handleError}
           sort={this.sort}
@@ -990,7 +1001,11 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           setDisplayMode={this.setDisplayMode}
           statefulFilterRef={this.sFOverviewToolbar}
         />
-        {filteredNamespaces.length > 0 ? (
+        <EmptyOverview
+          filteredNamespaces={filteredNamespaces}
+          loaded={this.state.loaded}
+          refreshInterval={this.props.refreshInterval}
+        >
           <RenderComponentScroll
             className={this.state.displayMode === OverviewDisplayMode.LIST ? gridStyleList : gridStyleCompact}
           >
@@ -1079,14 +1094,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               </Grid>
             )}
           </RenderComponentScroll>
-        ) : (
-          <EmptyState className={emptyStateStyle} variant={EmptyStateVariant.full}>
-            <EmptyStateHeader titleText="No unfiltered namespaces" headingLevel="h5" />
-            <EmptyStateBody>
-              Either all namespaces are being filtered or the user has no permission to access namespaces.
-            </EmptyStateBody>
-          </EmptyState>
-        )}
+        </EmptyOverview>
 
         <OverviewTrafficPolicies
           opTarget={this.state.opTarget}
@@ -1103,7 +1111,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             )[0]
           }
           duration={this.props.duration}
-          load={this.load}
+          load={this.onChange}
         />
       </>
     );
@@ -1342,4 +1350,4 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   refreshInterval: refreshIntervalSelector(state)
 });
 
-export const OverviewPage = connect(mapStateToProps)(OverviewPageComponent);
+export const OverviewPage = connectRefresh(connect(mapStateToProps)(OverviewPageComponent));

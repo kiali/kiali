@@ -127,6 +127,15 @@ exports[`ToolbarDropdown Render correctly the toolbar dropdown 2`] = `
         Pause
       </SelectOption>
       <SelectOption
+        id="1"
+        isDisabled={false}
+        isSelected={false}
+        key="1"
+        value="1"
+      >
+        Manual
+      </SelectOption>
+      <SelectOption
         id="10000"
         isDisabled={false}
         isSelected={false}

@@ -14,6 +14,9 @@ import * as _ from 'lodash';
 import { Namespace } from '../../types/Namespace';
 import { KialiIcon } from '../../config/KialiIcon';
 import { DecoratedGraphElements } from '../../types/Graph';
+import { RefreshIntervalManual } from 'config/Config';
+import { IntervalInMilliseconds } from 'types/Common';
+import { t } from 'utils/I18nUtils';
 
 type EmptyGraphLayoutProps = {
   action?: any;
@@ -22,7 +25,9 @@ type EmptyGraphLayoutProps = {
   isError: boolean;
   isLoading?: boolean;
   isMiniGraph: boolean;
+  loaded: boolean;
   namespaces?: Namespace[];
+  refreshInterval?: IntervalInMilliseconds;
   showIdleNodes?: boolean;
   toggleIdleNodes?: () => void;
 };
@@ -59,9 +64,9 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
     if (this.props.namespaces && this.props.namespaces.length > 0) {
       if (this.props.namespaces.length === 1) {
         return (
-          <>
-            namespace <b>{this.props.namespaces[0].name}</b>
-          </>
+          <div>
+            <b>{this.props.namespaces[0].name}</b>
+          </div>
         );
       } else {
         const namespacesString = `${this.props.namespaces
@@ -69,9 +74,9 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
           .map(namespace => namespace.name)
           .join(',')} and ${this.props.namespaces[this.props.namespaces.length - 1].name}`;
         return (
-          <>
-            namespaces <b>{namespacesString}</b>
-          </>
+          <div>
+            <b>{namespacesString}</b>
+          </div>
         );
       }
     }
@@ -83,7 +88,7 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
       return (
         <EmptyState id="empty-graph-error" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
           <EmptyStateHeader
-            titleText="Error loading Graph"
+            titleText={t('Error loading graph')}
             icon={<EmptyStateIcon icon={KialiIcon.Error} />}
             headingLevel="h5"
           />
@@ -91,47 +96,72 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
         </EmptyState>
       );
     }
+
     if (this.props.isLoading) {
       return (
         <EmptyState id="empty-graph-is-loading" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="Loading Graph" headingLevel="h5" />
-        </EmptyState>
-      );
-    }
-
-    if (this.props.namespaces?.length === 0) {
-      return (
-        <EmptyState id="empty-graph-no-namespace" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="No namespace is selected" headingLevel="h5" />
-          <EmptyStateBody>
-            There is currently no namespace selected, please select one using the Namespace selector.
-          </EmptyStateBody>
+          <EmptyStateHeader titleText={t('Loading graph')} headingLevel="h5" />
         </EmptyState>
       );
     }
 
     const isGraphEmpty = !this.props.elements || !this.props.elements.nodes || this.props.elements.nodes.length < 1;
 
+    if (this.props.namespaces?.length === 0) {
+      return (
+        <EmptyState id="empty-graph-no-namespace" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
+          <EmptyStateHeader titleText={t('No namespace is selected')} headingLevel="h5" />
+          <EmptyStateBody>
+            {t('There is currently no namespace selected, please select one using the Namespace selector.')}
+          </EmptyStateBody>
+        </EmptyState>
+      );
+    }
+
+    if (this.props.refreshInterval === RefreshIntervalManual && !this.props.loaded && !this.props.isMiniGraph) {
+      return (
+        <EmptyState
+          id="empty-graph-manual"
+          data-test="manual-refresh"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        >
+          <EmptyStateHeader titleText={t('Manual refresh required')} headingLevel="h5" />
+          <EmptyStateBody>
+            {t(
+              'The refresh interval is set to "Manual". To render the graph, select your desired filters and options and then click the Refresh button. Or, if preferred, change the setting to the desired interval.'
+            )}
+          </EmptyStateBody>
+        </EmptyState>
+      );
+    }
+
     if (isGraphEmpty && !this.props.isMiniGraph) {
       return (
         <EmptyState id="empty-graph" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="Empty Graph" headingLevel="h5" />
+          <EmptyStateHeader titleText={t('Empty Graph')} headingLevel="h5" />
           <EmptyStateBody>
-            There is currently no graph available for {this.namespacesText()}. This could either mean there is no
-            service mesh available for {this.props.namespaces?.length === 1 ? 'this namespace' : 'these namespaces'} or
-            the service mesh has yet to see request traffic.
+            {t(
+              'There is currently no graph available for the selected namespaces. This usually means the namespaces do not have measurable traffic for the selected time period:'
+            )}
+            {this.namespacesText()}
+            <br />
             {this.props.showIdleNodes && (
-              <> You are currently displaying 'Idle nodes', send requests to the service mesh and click 'Refresh'.</>
+              <>
+                {t(
+                  'You are currently displaying "Idle nodes". Send requests to the service mesh and click the Refresh button.'
+                )}
+              </>
             )}
             {!this.props.showIdleNodes && (
-              <> You can enable 'Idle Nodes' to display service mesh nodes that have yet to see any request traffic.</>
+              <>{t('You can enable "Idle Nodes" to display nodes that have yet to see any request traffic.')}</>
             )}
             <p>
-              Click{' '}
+              <br />
+              {t('To read the FAQ entry about why your graph may be empty, ')}
               <a href={'https://kiali.io/docs/faq/graph/#emptygraph'} target="_blank" rel="noreferrer">
-                here
-              </a>{' '}
-              to read the FAQ entry about why your graph may be empty.{' '}
+                {t('click here.')}
+              </a>
             </p>
           </EmptyStateBody>
           <EmptyStateFooter>
@@ -139,7 +169,7 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
               onClick={this.props.showIdleNodes ? this.props.action : this.props.toggleIdleNodes}
               variant={ButtonVariant.primary}
             >
-              {(this.props.showIdleNodes && <>Refresh</>) || <>Display idle nodes</>}
+              {(this.props.showIdleNodes && <>{t('Refresh')}</>) || <>{t('Display idle nodes')}</>}
             </Button>
           </EmptyStateFooter>
         </EmptyState>
@@ -149,8 +179,8 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
     if (isGraphEmpty && this.props.isMiniGraph) {
       return (
         <EmptyState id="empty-mini-graph" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="Empty Graph" headingLevel="h5" />
-          <EmptyStateBody>No graph traffic for the time period.</EmptyStateBody>
+          <EmptyStateHeader titleText={t('Empty Graph')} headingLevel="h5" />
+          <EmptyStateBody>{t('No graph traffic for the time period.')}</EmptyStateBody>
         </EmptyState>
       );
     }

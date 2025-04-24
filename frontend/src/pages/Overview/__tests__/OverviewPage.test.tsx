@@ -109,6 +109,7 @@ describe('Overview page', () => {
   it('renders initial layout', () => {
     const wrapper = shallow(
       <OverviewPageComponent
+        lastRefreshAt={1720526431902}
         meshStatus={MTLSStatuses.NOT_ENABLED}
         navCollapse={false}
         duration={600}

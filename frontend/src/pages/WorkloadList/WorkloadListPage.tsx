@@ -4,7 +4,7 @@ import { RenderContent } from '../../components/Nav/Page';
 import * as WorkloadListFilters from './FiltersAndSorts';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
 import { WorkloadListItem, ClusterWorkloadsResponse } from '../../types/Workload';
-import { InstanceType, DurationInSeconds } from '../../types/Common';
+import { InstanceType, DurationInSeconds, TimeInMilliseconds, IntervalInMilliseconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { namespaceEquals } from '../../utils/Common';
@@ -14,25 +14,33 @@ import { FilterSelected, StatefulFilters, Toggles } from '../../components/Filte
 import * as API from '../../services/Api';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { KialiAppState } from '../../store/Store';
-import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
+import { activeNamespacesSelector, durationSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
 import { WorkloadHealth } from '../../types/Health';
-import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
 import { isMultiCluster, serverConfig } from 'config';
 import { validationKey } from '../../types/IstioConfigList';
+import { connectRefresh } from 'components/Refresh/connectRefresh';
+import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
+import { EmptyVirtualList } from 'components/VirtualList/EmptyVirtualList';
+import { HistoryManager } from 'app/History';
 
-type WorkloadListPageState = FilterComponent.State<WorkloadListItem>;
+type WorkloadListPageState = FilterComponent.State<WorkloadListItem> & {
+  loaded: boolean;
+};
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
   duration: DurationInSeconds;
+  refreshInterval: IntervalInMilliseconds;
 };
 
-type WorkloadListPageProps = ReduxProps;
+type WorkloadListPageProps = ReduxProps & {
+  lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
+};
 
 class WorkloadListPageComponent extends FilterComponent.Component<
   WorkloadListPageProps,
@@ -48,14 +56,17 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
 
     this.state = {
-      listItems: [],
       currentSortField: prevCurrentSortField,
-      isSortAscending: prevIsSortAscending
+      isSortAscending: prevIsSortAscending,
+      listItems: [],
+      loaded: false
     };
   }
 
   componentDidMount(): void {
-    this.updateListItems();
+    if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
+      this.updateListItems();
+    }
   }
 
   componentDidUpdate(prevProps: WorkloadListPageProps): void {
@@ -63,10 +74,14 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
 
     if (
-      !namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
-      this.props.duration !== prevProps.duration ||
-      this.state.currentSortField !== prevCurrentSortField ||
-      this.state.isSortAscending !== prevIsSortAscending
+      this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
+      (this.props.refreshInterval !== RefreshIntervalManual &&
+        (!namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
+          this.props.duration !== prevProps.duration ||
+          (this.props.refreshInterval !== prevProps.refreshInterval &&
+            this.props.refreshInterval !== RefreshIntervalPause) ||
+          this.state.currentSortField !== prevCurrentSortField ||
+          this.state.isSortAscending !== prevIsSortAscending))
     ) {
       this.setState({
         currentSortField: prevCurrentSortField,
@@ -109,7 +124,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     if (this.props.activeNamespaces.length !== 0) {
       this.fetchWorkloads(Array.from(uniqueClusters), activeFilters, activeToggles, this.props.duration);
     } else {
-      this.setState({ listItems: [] });
+      this.setState({ listItems: [], loaded: true });
     }
   }
 
@@ -182,7 +197,8 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         this.promises.cancel('sort');
 
         this.setState({
-          listItems: this.sortItemList(workloadsItems, this.state.currentSortField, this.state.isSortAscending)
+          listItems: this.sortItemList(workloadsItems, this.state.currentSortField, this.state.isSortAscending),
+          loaded: true
         });
       })
       .catch(err => {
@@ -204,24 +220,23 @@ class WorkloadListPageComponent extends FilterComponent.Component<
 
     return (
       <>
-        <RefreshNotifier onTick={this.updateListItems} />
-
         <DefaultSecondaryMasthead
           rightToolbar={
             <TimeDurationComponent key="DurationDropdown" id="workload-list-duration-dropdown" disabled={false} />
           }
         />
-
-        <RenderContent>
-          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} sort={this.onSort} type="workloads">
-            <StatefulFilters
-              initialFilters={WorkloadListFilters.availableFilters}
-              initialToggles={this.initialToggles}
-              onFilterChange={this.onFilterChange}
-              onToggleChange={this.onFilterChange}
-            />
-          </VirtualList>
-        </RenderContent>
+        <EmptyVirtualList loaded={this.state.loaded} refreshInterval={this.props.refreshInterval}>
+          <RenderContent>
+            <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} sort={this.onSort} type="workloads">
+              <StatefulFilters
+                initialFilters={WorkloadListFilters.availableFilters}
+                initialToggles={this.initialToggles}
+                onFilterChange={this.onFilterChange}
+                onToggleChange={this.onFilterChange}
+              />
+            </VirtualList>
+          </RenderContent>
+        </EmptyVirtualList>
       </>
     );
   }
@@ -229,7 +244,8 @@ class WorkloadListPageComponent extends FilterComponent.Component<
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   activeNamespaces: activeNamespacesSelector(state),
-  duration: durationSelector(state)
+  duration: durationSelector(state),
+  refreshInterval: refreshIntervalSelector(state)
 });
 
-export const WorkloadListPage = connect(mapStateToProps)(WorkloadListPageComponent);
+export const WorkloadListPage = connectRefresh(connect(mapStateToProps)(WorkloadListPageComponent));

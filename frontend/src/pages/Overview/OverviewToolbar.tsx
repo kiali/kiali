@@ -18,10 +18,10 @@ import * as Filters from './Filters';
 import { kialiStyle } from 'styles/StyleUtils';
 import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
 import { KialiDispatch } from '../../types/Redux';
-import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
 import { PFColors } from 'components/Pf/PfColors';
 import { t, tMap } from 'utils/I18nUtils';
 
+// TODO: Are any of these redux state or dispatch props used?
 type ReduxStateProps = {
   duration: DurationInSeconds;
   language: string;
@@ -36,6 +36,7 @@ type Props = ReduxStateProps &
   ReduxDispatchProps & {
     displayMode: OverviewDisplayMode;
     onError: (msg: string) => void;
+    onChange: () => void;
     onRefresh: () => void;
     setDisplayMode: (mode: OverviewDisplayMode) => void;
     sort: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
@@ -168,7 +169,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
     if (isOverviewType(otype)) {
       HistoryManager.setParam(URLParam.OVERVIEW_TYPE, otype);
       this.setState({ overviewType: otype });
-      this.props.onRefresh();
+      this.props.onChange();
     } else {
       throw new Error(t('Overview type is not valid.'));
     }
@@ -180,7 +181,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
     if (isDirectionType(dtype)) {
       HistoryManager.setParam(URLParam.DIRECTION_TYPE, dtype);
       this.setState({ directionType: dtype });
-      this.props.onRefresh();
+      this.props.onChange();
     } else {
       throw new Error(t('Direction type is not valid.'));
     }
@@ -197,7 +198,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
     const filterToolbar = (
       <StatefulFilters
         initialFilters={Filters.availableFilters}
-        onFilterChange={this.props.onRefresh}
+        onFilterChange={this.props.onChange}
         ref={this.props.statefulFilterRef}
       >
         {this.props.displayMode !== OverviewDisplayMode.LIST && (
@@ -226,7 +227,6 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
 
     const timeToolbar = (
       <div className={timeToolbarStyle}>
-        <RefreshNotifier onTick={this.props.onRefresh} />
         <TimeDurationComponent key="overview-time-range" id="overview-time-range" disabled={false} />
       </div>
     );

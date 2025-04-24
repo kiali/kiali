@@ -32,6 +32,15 @@ Given('user is at the {string} page for the {string} namespace', (page: string, 
   cy.visit({ url: `${Cypress.config('baseUrl')}/console/${page}?refresh=0&namespaces=${namespace}` });
 });
 
+Given('user is at the {string} page with manual refresh', (page: string) => {
+  // Forcing "Manual" to prevent any page load
+  if (page === 'graph') {
+    cy.visit({ url: `${Cypress.config('baseUrl')}/console/graph/namespaces?namespaces=default&refresh=1` });
+  } else {
+    cy.visit({ url: `${Cypress.config('baseUrl')}/console/${page}?refresh=1` });
+  }
+});
+
 Given('autorefresh is enabled', () => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
   cy.url().then(currentURL => {

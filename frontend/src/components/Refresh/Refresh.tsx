@@ -25,8 +25,8 @@ type ReduxDispatchProps = {
 };
 
 type ComponentProps = {
+  className?: string;
   disabled?: boolean;
-  hideLabel?: boolean;
   hideRefreshButton?: boolean;
   id: string;
   manageURL?: boolean;
@@ -65,18 +65,18 @@ export class RefreshComponent extends React.PureComponent<Props> {
 
   render(): React.ReactNode {
     if (this.props.refreshInterval !== undefined) {
-      const { hideLabel } = this.props;
       return (
         <>
-          {!hideLabel && <label style={{ paddingRight: '0.5em', marginLeft: '1.5em' }}>Refreshing</label>}
-
           <ToolbarDropdown
+            className={this.props.className}
             id={this.props.id}
             handleSelect={value => this.updateRefreshInterval(Number(value))}
             value={String(this.props.refreshInterval)}
             label={t(REFRESH_INTERVALS[this.props.refreshInterval])}
             options={tMap(REFRESH_INTERVALS)}
-            tooltip={t('Refresh interval')}
+            tooltip={t(
+              'Refresh interval. "Pause" refreshes on page change or Refresh button click. "Manual" refreshes only on Refresh button click.'
+            )}
             tooltipPosition={TooltipPosition.left}
           />
 

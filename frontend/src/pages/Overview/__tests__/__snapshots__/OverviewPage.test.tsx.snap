@@ -4,6 +4,7 @@ exports[`Overview page renders initial layout 1`] = `
 <Fragment>
   <Connect(OverviewToolbarComponent)
     displayMode={1}
+    onChange={[Function]}
     onError={[Function]}
     onRefresh={[Function]}
     setDisplayMode={[Function]}
@@ -14,18 +15,17 @@ exports[`Overview page renders initial layout 1`] = `
       }
     }
   />
-  <EmptyState
-    className="kiali_f1grtvu0"
-    variant="full"
+  <EmptyOverview
+    filteredNamespaces={Array []}
+    loaded={false}
+    refreshInterval={10000}
   >
-    <EmptyStateHeader
-      headingLevel="h5"
-      titleText="No unfiltered namespaces"
-    />
-    <EmptyStateBody>
-      Either all namespaces are being filtered or the user has no permission to access namespaces.
-    </EmptyStateBody>
-  </EmptyState>
+    <RenderComponentScroll
+      className="kiali_f10gijvm"
+    >
+      <Grid />
+    </RenderComponentScroll>
+  </EmptyOverview>
   <OverviewTrafficPolicies
     duration={600}
     hideConfirmModal={[Function]}

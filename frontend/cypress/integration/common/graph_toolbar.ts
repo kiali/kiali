@@ -194,8 +194,9 @@ Then('user sees selected graph duration {string}', (duration: string) => {
 Then('user sees graph refresh menu', () => {
   cy.get('button#time_range_refresh-toggle').invoke('attr', 'aria-expanded').should('eq', 'true');
   cy.get('div#time_range_refresh').within(() => {
-    cy.get('button').should('have.length', 7);
+    cy.get('button').should('have.length', 8);
     cy.get('button#0').should('exist');
+    cy.get('button#1').should('exist');
     cy.get('button#10000').should('exist');
     cy.get('button#15000').should('exist');
     cy.get('button#30000').should('exist');

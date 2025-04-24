@@ -3,10 +3,16 @@ import { Refresh } from '../Refresh/Refresh';
 import { TimeDurationComponent } from './TimeDurationComponent';
 import { TimeRangeComponent } from './TimeRangeComponent';
 import { useKialiTranslation } from 'utils/I18nUtils';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type TimeControlProps = {
   customDuration: boolean;
 };
+
+const refreshStyle = kialiStyle({
+  marginLeft: '0.4rem',
+  marginRight: '0.4rem'
+});
 
 export const TimeControl: React.FC<TimeControlProps> = (props: TimeControlProps) => {
   const { t } = useKialiTranslation();
@@ -18,7 +24,7 @@ export const TimeControl: React.FC<TimeControlProps> = (props: TimeControlProps)
   const timeRangeComponent = (
     <div style={{ display: 'flex' }}>
       <TimeRangeComponent manageURL={true} tooltip={t('Time range')} />
-      <Refresh id="metrics-refresh" hideLabel={true} manageURL={true} />
+      <Refresh className={refreshStyle} id="metrics-refresh" manageURL={true} />
     </div>
   );
 

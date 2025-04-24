@@ -170,7 +170,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
   }
 
   render(): React.ReactNode {
-    const namespaceBox = this.props.data.summaryTarget;
+    const namespaceBox = this.props.data.summaryTarget as Node;
     const data = namespaceBox.getData();
     const boxed = descendents(namespaceBox);
     const namespace = data[NodeAttr.namespace];
@@ -333,7 +333,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
   }
 
   private getBoxTraffic = (): SummaryPanelNamespaceBoxTraffic => {
-    const namespaceBox = this.props.data.summaryTarget;
+    const namespaceBox = this.props.data.summaryTarget as Node;
     const data = namespaceBox.getData();
     const boxed = descendents(namespaceBox);
     const namespace = data[NodeAttr.namespace];
@@ -467,8 +467,8 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
 
   private renderCharts = (): React.ReactNode => {
     const props: SummaryPanelPropType = this.props;
-
-    const namespace = props.data.summaryTarget.getData()[NodeAttr.namespace];
+    const elem = props.data.summaryTarget as GraphElement;
+    const namespace = elem.getData()[NodeAttr.namespace];
 
     if (this.state.loading) {
       return <strong>Loading chart...</strong>;
@@ -564,9 +564,9 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
 
   private updateCharts = (): void => {
     const props: SummaryPanelPropType = this.props;
-
-    const cluster = props.data.summaryTarget.getData()[NodeAttr.cluster];
-    const namespace = props.data.summaryTarget.getData()[NodeAttr.namespace];
+    const elem = props.data.summaryTarget as GraphElement;
+    const cluster = elem.getData()[NodeAttr.cluster];
+    const namespace = elem.getData()[NodeAttr.namespace];
 
     if (namespace === UNKNOWN) {
       this.setState({
@@ -687,8 +687,8 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
   };
 
   private updateValidation = (): void => {
-    const namespace = this.props.data.summaryTarget.getData()[NodeAttr.namespace];
-
+    const elem = this.props.data.summaryTarget as GraphElement;
+    const namespace = elem.getData()[NodeAttr.namespace];
     this.validationPromise = makeCancelablePromise(API.getNamespaceValidations(namespace));
 
     this.validationPromise.promise

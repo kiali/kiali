@@ -174,6 +174,10 @@ export class HistoryManager {
     return undefined;
   };
 
+  static getRefresh = (urlParams?: URLSearchParams): number | undefined => {
+    return HistoryManager.getNumericParam(URLParam.REFRESH_INTERVAL, urlParams);
+  };
+
   static getTimeBounds = (urlParams?: URLSearchParams): BoundsInMilliseconds | undefined => {
     const from = HistoryManager.getNumericParam(URLParam.FROM, urlParams);
 

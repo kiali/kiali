@@ -21,6 +21,7 @@ import { PeerAuthentication } from '../../types/IstioObjects';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelStyle } from './SummaryPanelStyle';
 import { PFColors } from 'components/Pf/PfColors';
+import { GraphElement } from '@patternfly/react-topology';
 
 type SummaryPanelState = {
   isVisible: boolean;
@@ -158,7 +159,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
 
     switch (summaryType) {
       case 'box': {
-        const boxType: BoxByType = summary.summaryTarget.getData()[NodeAttr.isBox];
+        const boxType: BoxByType = (summary.summaryTarget as GraphElement).getData()[NodeAttr.isBox];
         switch (boxType) {
           case 'app':
             return (
@@ -168,7 +169,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
                 kiosk={this.props.kiosk}
-                namespaces={this.props.data.summaryTarget.namespaces}
+                namespaces={this.props.namespaces}
                 queryTime={this.props.queryTime}
                 rateInterval={this.props.rateInterval}
                 step={this.props.step}
@@ -183,7 +184,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
                 kiosk={this.props.kiosk}
-                namespaces={this.props.data.summaryTarget.namespaces}
+                namespaces={this.props.namespaces}
                 queryTime={this.props.queryTime}
                 rateInterval={this.props.rateInterval}
                 step={this.props.step}
@@ -198,7 +199,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
                 kiosk={this.props.kiosk}
-                namespaces={this.props.data.summaryTarget.namespaces}
+                namespaces={this.props.namespaces}
                 queryTime={this.props.queryTime}
                 rateInterval={this.props.rateInterval}
                 step={this.props.step}

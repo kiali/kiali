@@ -43,6 +43,7 @@ import { MeshThunkActions } from 'actions/MeshThunkActions';
 import { toRangeString } from 'components/Time/Utils';
 import { HistoryManager, URLParam } from 'app/History';
 import { getValidMeshLayout, MeshLayout } from './layouts/layoutFactory';
+import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 
 type ReduxStateProps = {
   activeTour?: TourInfo;
@@ -84,6 +85,7 @@ export type MeshData = {
   fetchParams: MeshFetchParams;
   isError?: boolean;
   isLoading: boolean;
+  loaded: boolean;
   name: string;
   timestamp: TimeInMilliseconds;
 };
@@ -130,7 +132,7 @@ const meshBackground = kialiStyle({
 const MeshErrorBoundaryFallback = (): JSX.Element => {
   return (
     <div className={meshContainerStyle}>
-      <EmptyMeshLayout isError={true} isMiniMesh={false} />
+      <EmptyMeshLayout isError={true} isMiniMesh={false} loaded={false} refreshInterval={0} />
     </div>
   );
 };
@@ -150,7 +152,8 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         elements: { edges: [], nodes: [] },
         elementsChanged: false,
         fetchParams: this.meshDataSource.fetchParameters,
-        isLoading: true,
+        isLoading: false,
+        loaded: false,
         name: UNKNOWN,
         timestamp: 0
       }
@@ -176,22 +179,26 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     this.meshDataSource.on('fetchError', this.handleMeshDataSourceError);
     this.meshDataSource.on('fetchSuccess', this.handleMeshDataSourceSuccess);
 
-    // Ensure we initialize the mesh. We wait for the toolbar to render
-    // and ensure all redux props are updated with URL settings.
-    // That in turn ensures the initial fetchParams are correct.
-    setTimeout(() => this.loadMeshFromBackend(), 0);
+    // Unless we are waiting for Manual refresh, ensure we initialize the mesh.
+    // Using setTimeout() ensures we wait for the toolbar to render and ensure all redux props are updated
+    // with URL settings. That in turn ensures the initial fetchParams are correct.
+    if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
+      setTimeout(() => this.loadMeshFromBackend(), 0);
+    }
   }
 
   componentDidUpdate(prev: MeshPageProps): void {
     const curr = this.props;
 
     if (
-      prev.duration !== curr.duration ||
-      (prev.findValue !== curr.findValue && curr.findValue.includes('label:')) ||
-      (prev.hideValue !== curr.hideValue && curr.hideValue.includes('label:')) ||
       prev.lastRefreshAt !== curr.lastRefreshAt ||
-      prev.showGateways !== curr.showGateways ||
-      prev.showWaypoints !== curr.showWaypoints
+      (curr.refreshInterval !== RefreshIntervalManual &&
+        ((prev.refreshInterval !== curr.refreshInterval && curr.refreshInterval !== RefreshIntervalPause) ||
+          prev.duration !== curr.duration ||
+          (prev.findValue !== curr.findValue && curr.findValue.includes('label:')) ||
+          (prev.hideValue !== curr.hideValue && curr.hideValue.includes('label:')) ||
+          prev.showGateways !== curr.showGateways ||
+          prev.showWaypoints !== curr.showWaypoints))
     ) {
       this.loadMeshFromBackend();
     }
@@ -248,6 +255,8 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
                   isError={!!this.state.meshData.isError}
                   isLoading={this.state.meshData.isLoading}
                   isMiniMesh={false}
+                  loaded={this.state.meshData.loaded}
+                  refreshInterval={this.props.refreshInterval}
                 >
                   <Mesh {...this.props} isMiniMesh={false} meshData={this.state.meshData} onReady={this.handleReady} />
                 </EmptyMeshLayout>
@@ -275,6 +284,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   };
 
   private handleEmptyMeshAction = (): void => {
+    // treat this like a manual refresh, the user is explicitly asking for a mesh-gen
     this.loadMeshFromBackend();
   };
 
@@ -292,6 +302,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         elementsChanged: elementsChanged,
         fetchParams: fetchParams,
         isLoading: false,
+        loaded: true,
         name: meshName,
         timestamp: meshTimestamp * 1000
       }
@@ -308,9 +319,10 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         elements: EMPTY_MESH_DATA,
         elementsChanged: this.elementsChanged(prevElements, EMPTY_MESH_DATA),
         errorMessage: !!errorMessage ? errorMessage : undefined,
+        fetchParams: fetchParams,
         isError: true,
         isLoading: false,
-        fetchParams: fetchParams,
+        loaded: true,
         name: UNKNOWN,
         timestamp: Date.now()
       }
@@ -324,6 +336,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         elementsChanged: false,
         fetchParams: fetchParams,
         isLoading: true,
+        loaded: this.state.meshData.loaded,
         name: isPreviousDataInvalid ? UNKNOWN : this.state.meshData.name,
         timestamp: isPreviousDataInvalid ? Date.now() : this.state.meshData.timestamp
       }
