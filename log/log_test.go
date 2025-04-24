@@ -69,8 +69,8 @@ func TestEnvVarLogLevel(t *testing.T) {
 func TestLogRegression(t *testing.T) {
 	type loggedMessageAsJsonStruct struct {
 		Level   string
-		Time    string
-		Message string
+		Time    string `json:"ts"`
+		Message string `json:"msg"`
 	}
 
 	type logOutputTestStruct struct {
@@ -214,7 +214,7 @@ func TestSupportedTimeFormats(t *testing.T) {
 
 func TestContextLoggerJson(t *testing.T) {
 	type loggedMessageAsJsonStruct struct {
-		Message string
+		Message string `json:"msg"`
 		Level   string
 		Ctx1    string
 		Ctx2    string

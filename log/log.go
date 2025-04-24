@@ -40,6 +40,8 @@ var supportedTimeFormats = [...]string{
 // InitializeLogger configures the global log level and log format.
 func InitializeLogger() zerolog.Logger {
 	zerolog.TimeFieldFormat = resolveTimeFormatFromEnv()
+	zerolog.TimestampFieldName = "ts" // save chars in the json output
+	zerolog.MessageFieldName = "msg"  // save chars in the json output
 
 	log.Logger = setLogFormat(setSamplingRate(log.Logger))
 
