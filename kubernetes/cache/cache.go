@@ -3,7 +3,6 @@ package cache
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -352,21 +351,9 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 		return ztunnelPods
 	}
 
-	dsPods, err := kubeCache.GetPods(daemonsets[0].Namespace, "")
+	ztunnelPods, err = kubeCache.GetPods(daemonsets[0].Namespace, fmt.Sprintf("app=%s", config.Ztunnel))
 	if err != nil {
 		log.Errorf("Unable to get ztunnel pods: %s", err)
-		return ztunnelPods
-
-	}
-
-	for _, pod := range dsPods {
-		podName := pod.Name
-		if len(pod.OwnerReferences) > 0 {
-			podName = pod.OwnerReferences[0].Name
-		}
-		if strings.Contains(podName, config.Ztunnel) {
-			ztunnelPods = append(ztunnelPods, pod)
-		}
 	}
 
 	return ztunnelPods
