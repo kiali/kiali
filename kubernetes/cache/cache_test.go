@@ -82,16 +82,19 @@ func ztunnelDaemonSet() *apps_v1.DaemonSet {
 func k8sClientWithControlPlanePods(includeZtunnel bool) *kubetest.FakeK8sClient {
 	istioNamespace := "istio-system"
 	objs := []runtime.Object{}
+	// ztunnel pod with no label: Should not be selected
+	pod := &core_v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "ztunnel-khq59-123", Namespace: istioNamespace}}
 	pod1 := &core_v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "istiod-864675749b-lpq8c", Namespace: istioNamespace}}
 	pod2 := &core_v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "istio-cni-node-vd5sh", Namespace: istioNamespace}}
 	pod3 := &core_v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "prometheus-65db697fd-bfq5v", Namespace: istioNamespace}}
 	pod4 := &core_v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "istio-egressgateway-7bcb795b58-6jj6w", Namespace: istioNamespace}}
 	pod5 := &core_v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "istio-ingressgateway-7d97cd5c49-qhpcp", Namespace: istioNamespace}}
-	objs = append(objs, kubetest.FakeNamespace("istio-system"), ztunnelDaemonSet(), pod1, pod2, pod3, pod4, pod5)
+	objs = append(objs, kubetest.FakeNamespace("istio-system"), ztunnelDaemonSet(), pod, pod1, pod2, pod3, pod4, pod5)
 
 	if includeZtunnel {
 		pod6 := &core_v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "ztunnel-khq59", Namespace: istioNamespace, Labels: map[string]string{"app": "ztunnel"}}}
-		objs = append(objs, pod6)
+		pod7 := &core_v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "i-khq59", Namespace: istioNamespace, Labels: map[string]string{"app": "ztunnel"}}}
+		objs = append(objs, pod6, pod7)
 	}
 	return kubetest.NewFakeK8sClient(objs...)
 }
@@ -323,6 +326,7 @@ func TestGetNoZtunnelPods(t *testing.T) {
 	require.Equal(0, len(ztunnelPods))
 }
 
+// TestGetZtunnelPods: Just pods that are part of the
 func TestGetZtunnelPods(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
@@ -330,5 +334,5 @@ func TestGetZtunnelPods(t *testing.T) {
 	cache := cache.NewTestingCache(t, client, *conf)
 
 	ztunnelPods := cache.GetZtunnelPods(client.ClusterInfo().Name)
-	require.Equal(1, len(ztunnelPods))
+	require.Equal(2, len(ztunnelPods))
 }
