@@ -190,6 +190,25 @@ func NewRoutes(
 			handlers.Root(conf, clientFactory, kialiCache, grafana),
 			true,
 		},
+		// swagger:route GET /tracing/diagnose status getStatus
+		// ---
+		// Endpoint to get a diagnose for the tracing endpoint
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      200: tracingDiagnose
+		{
+			"Diagnose",
+			"GET",
+			"/api/tracing/diagnose",
+			handlers.TracingDiagnose(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
+			true,
+		},
 		// swagger:route GET /config kiali getConfig
 		// ---
 		// Endpoint to get the config of Kiali

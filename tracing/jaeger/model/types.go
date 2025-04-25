@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/kiali/kiali/config"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 )
 
@@ -32,4 +33,10 @@ type TracingSpan struct {
 
 type Services struct {
 	Data []string `json:"data"`
+}
+
+type TracingDiagnose struct {
+	Conf   config.TracingConfig `json:"config"`
+	Reason string               `json:"reason"`
+	Status string               `json:"status"`
 }

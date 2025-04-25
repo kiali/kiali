@@ -398,3 +398,40 @@ func readQuery(conf *config.Config, values url.Values) (models.TracingQuery, err
 
 	return q, nil
 }
+
+// TracingDiagnose is the API handler to diagnose Tracing configuration
+func TracingDiagnose(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery *istio.Discovery,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			return
+		}
+
+		params := mux.Vars(r)
+		namespace := params["namespace"]
+		app := params["app"]
+		q, err := readQuery(conf, r.URL.Query())
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		spans, err := business.Tracing.GetAppSpans(r.Context(), cluster, namespace, app, q)
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+
+		RespondWithJSON(w, http.StatusOK, spans)
+	}
+}
