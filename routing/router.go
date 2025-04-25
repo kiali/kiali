@@ -363,16 +363,8 @@ func (a alice) then(h http.Handler) http.Handler {
 func buildHttpHandlerLogger(route Route, handlerFunction http.Handler) http.Handler {
 	c := alice{}
 	c = c.append(hlog.NewHandler(log.WithGroup(route.Name).Z))
-	c = c.append(hlog.HostHandler("host", true))
-	c = c.append(hlog.HTTPVersionHandler("http_version"))
-	c = c.append(hlog.MethodHandler("method"))
-	c = c.append(hlog.ProtoHandler("proto"))
-	c = c.append(hlog.RefererHandler("referer"))
-	c = c.append(hlog.RemoteAddrHandler("remote_addr"))
-	c = c.append(hlog.RemoteIPHandler("remote_ip"))
-	c = c.append(hlog.RequestIDHandler("request_id", "Request-Id"))
-	c = c.append(hlog.URLHandler("url"))
-	c = c.append(hlog.UserAgentHandler("user_agent"))
+	c = c.append(hlog.HostHandler("Host", true))
+	c = c.append(hlog.RequestIDHandler("RequestID", "Request-Id"))
 
 	return c.then(handlerFunction)
 }
