@@ -2177,6 +2177,36 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 }
 
 func (in *WorkloadService) GetZtunnelConfig(cluster, namespace, pod string) *kubernetes.ZtunnelConfigDump {
+	if dump := in.cache.GetZtunnelDump(cluster, namespace, pod); dump != nil {
+		return dump
+	}
+
+	if in.cache.IsAmbientEnabled(cluster) {
+		ztunnelPods := in.cache.GetZtunnelPods(cluster)
+		if len(ztunnelPods) > 0 {
+			client := in.kialiSAClients[cluster]
+			zTunnel := make(map[string]*kubernetes.ZtunnelConfigDump)
+
+			for _, zPod := range ztunnelPods {
+				resp, err := client.ForwardGetRequest(zPod.Namespace, zPod.Name, 15000, "/config_dump")
+				if err != nil {
+					log.Errorf("[getZtunnelConfigDump] Error forwarding the /config_dump request: %v", err)
+					return nil
+				}
+
+				configDump := &kubernetes.ZtunnelConfigDump{}
+				err = json.Unmarshal(resp, configDump)
+				if err != nil {
+					log.Errorf("[getZtunnelConfigDump] Error Unmarshalling the config_dump: %v", err)
+				} else {
+					key := fmt.Sprintf("%s%s%s", cluster, zPod.Namespace, zPod.Name)
+					zTunnel[key] = configDump
+				}
+			}
+			in.cache.SetZtunnelDump(zTunnel)
+		}
+	}
+
 	return in.cache.GetZtunnelDump(cluster, namespace, pod)
 }
 
