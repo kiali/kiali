@@ -2,7 +2,6 @@ package httputil
 
 import (
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -26,7 +25,7 @@ func HttpMethods() []string {
 	}
 }
 
-func HttpGet(url string, auth *config.Auth, timeout time.Duration, customHeaders map[string]string, cookies []*http.Cookie) ([]byte, int, []*http.Cookie, error) {
+func HttpGet(url string, auth *config.Auth, timeout time.Duration, customHeaders map[string]string, cookies []*http.Cookie, conf *config.Config) ([]byte, int, []*http.Cookie, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, 0, nil, err
@@ -36,7 +35,7 @@ func HttpGet(url string, auth *config.Auth, timeout time.Duration, customHeaders
 		req.AddCookie(c)
 	}
 
-	transport, err := CreateTransport(auth, &http.Transport{}, timeout, customHeaders)
+	transport, err := CreateTransport(conf, auth, &http.Transport{}, timeout, customHeaders)
 	if err != nil {
 		return nil, 0, nil, err
 	}
@@ -53,13 +52,13 @@ func HttpGet(url string, auth *config.Auth, timeout time.Duration, customHeaders
 }
 
 // HttpPost sends an HTTP Post request to the given URL and returns the response body.
-func HttpPost(url string, auth *config.Auth, body io.Reader, timeout time.Duration, customHeaders map[string]string) ([]byte, int, []*http.Cookie, error) {
+func HttpPost(url string, auth *config.Auth, body io.Reader, timeout time.Duration, customHeaders map[string]string, conf *config.Config) ([]byte, int, []*http.Cookie, error) {
 	req, err := http.NewRequest(http.MethodPost, url, body)
 	if err != nil {
 		return nil, 0, nil, err
 	}
 
-	transport, err := CreateTransport(auth, &http.Transport{}, timeout, customHeaders)
+	transport, err := CreateTransport(conf, auth, &http.Transport{}, timeout, customHeaders)
 	if err != nil {
 		return nil, 0, nil, err
 	}
@@ -128,7 +127,7 @@ func newCustomHeadersRoundTripper(headers map[string]string, rt http.RoundTrippe
 // idle connections stay open for as long as 2 * timeout. This should only be
 // done in cases where you know the request is very likely going to be reused at
 // some point in the near future.
-func CreateTransport(auth *config.Auth, transportConfig *http.Transport, timeout time.Duration, customHeaders map[string]string) (http.RoundTripper, error) {
+func CreateTransport(conf *config.Config, auth *config.Auth, transportConfig *http.Transport, timeout time.Duration, customHeaders map[string]string) (http.RoundTripper, error) {
 	// Limits the time spent establishing a TCP connection if a new one is
 	// needed. If DialContext is not set, Dial is used, we only create a new one
 	// if neither is defined.
@@ -145,7 +144,7 @@ func CreateTransport(auth *config.Auth, transportConfig *http.Transport, timeout
 	outerRoundTripper := newCustomHeadersRoundTripper(customHeaders, transportConfig)
 
 	if auth != nil {
-		tlscfg, err := GetTLSConfig(auth)
+		tlscfg, err := GetTLSConfig(conf, auth)
 		if err != nil {
 			return nil, err
 		}
@@ -158,11 +157,10 @@ func CreateTransport(auth *config.Auth, transportConfig *http.Transport, timeout
 	return outerRoundTripper, nil
 }
 
-func GetTLSConfig(auth *config.Auth) (*tls.Config, error) {
+func GetTLSConfig(conf *config.Config, auth *config.Auth) (*tls.Config, error) {
 	if auth.InsecureSkipVerify || auth.CAFile != "" {
-		var certPool *x509.CertPool
+		certPool := conf.CertPool()
 		if auth.CAFile != "" {
-			certPool = x509.NewCertPool()
 			cert, err := os.ReadFile(auth.CAFile)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get root CA certificates: %s", err)

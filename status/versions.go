@@ -27,7 +27,7 @@ func getVersions(ctx context.Context, conf *config.Config, clientFactory kuberne
 	}
 
 	if conf.ExternalServices.Grafana.Enabled && grafana != nil {
-		gv, err := grafanaVersion(ctx, grafana, conf.ExternalServices.Grafana, clientFactory.GetSAHomeClusterClient())
+		gv, err := grafanaVersion(ctx, grafana, conf, clientFactory.GetSAHomeClusterClient())
 		if err != nil {
 			log.Infof("Error getting Grafana version: %v", err)
 		} else {
@@ -109,7 +109,7 @@ func tracingVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientIn
 				}
 			}
 
-			body, statusCode, _, err := httputil.HttpGet(versionUrl, &auth, 10*time.Second, nil, nil)
+			body, statusCode, _, err := httputil.HttpGet(versionUrl, &auth, 10*time.Second, nil, nil, conf)
 			if err != nil || statusCode > 399 {
 				log.Infof("jaeger version check failed: url=[%v], code=[%v], err=[%v]", versionUrl, statusCode, err)
 			} else {
@@ -130,7 +130,7 @@ func tracingVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientIn
 		} else {
 			// Tempo
 			if tracingConfig.Provider == config.TempoProvider {
-				body, statusCode, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/status/buildinfo", versionUrl), &tracingConfig.Auth, 10*time.Second, nil, nil)
+				body, statusCode, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/status/buildinfo", versionUrl), &tracingConfig.Auth, 10*time.Second, nil, nil, conf)
 				if err != nil || statusCode > 399 {
 					log.Infof("tempo version check failed: url=[%v], code=[%v], err=[%v]", versionUrl, statusCode, err)
 				} else {
@@ -157,7 +157,7 @@ type grafanaResponseVersion struct {
 	BuildInfo grafanaBuildInfo `json:"buildInfo"`
 }
 
-func grafanaVersion(ctx context.Context, grafana *grafana.Service, grafanaConfig config.GrafanaConfig, homeClusterSAClient kubernetes.ClientInterface) (*models.ExternalServiceInfo, error) {
+func grafanaVersion(ctx context.Context, grafana *grafana.Service, conf *config.Config, homeClusterSAClient kubernetes.ClientInterface) (*models.ExternalServiceInfo, error) {
 	product := models.ExternalServiceInfo{}
 	product.Name = "Grafana"
 	product.Url = grafana.URL(ctx)
@@ -165,11 +165,11 @@ func grafanaVersion(ctx context.Context, grafana *grafana.Service, grafanaConfig
 	versionUrl := grafana.VersionURL(ctx)
 	if versionUrl != "" {
 		// Be sure to copy config.Auth and not modify the existing
-		auth := grafanaConfig.Auth
+		auth := conf.ExternalServices.Grafana.Auth
 		if auth.UseKialiToken {
 			auth.Token = homeClusterSAClient.GetToken()
 		}
-		body, statusCode, _, err := httputil.HttpGet(versionUrl, &auth, 10*time.Second, nil, nil)
+		body, statusCode, _, err := httputil.HttpGet(versionUrl, &auth, 10*time.Second, nil, nil, conf)
 
 		if err != nil || statusCode > 399 {
 			log.Infof("grafana version check failed: url=[%v], code=[%v]", versionUrl, statusCode)
@@ -197,7 +197,7 @@ func prometheusVersion(conf *config.Config, homeClusterSAClient kubernetes.Clien
 	}
 
 	// see https://prometheus.io/docs/prometheus/latest/querying/api/#build-information
-	body, _, _, err := httputil.HttpGet(cfg.URL+"/api/v1/status/buildinfo", &auth, 10*time.Second, nil, nil)
+	body, _, _, err := httputil.HttpGet(cfg.URL+"/api/v1/status/buildinfo", &auth, 10*time.Second, nil, nil, conf)
 	if err == nil {
 		err = json.Unmarshal(body, &prometheusV)
 		if err == nil {

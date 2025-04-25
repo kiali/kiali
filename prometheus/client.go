@@ -68,12 +68,13 @@ func initPromCache(ctx context.Context) {
 // NewClient creates a new client to the Prometheus API.
 // It returns an error on any problem.
 func NewClient() (*Client, error) {
-	return NewClientForConfig(config.Get().ExternalServices.Prometheus)
+	return NewClientForConfig(*config.Get())
 }
 
 // NewClient creates a new client to the Prometheus API.
 // It returns an error on any problem.
-func NewClientForConfig(cfg config.PrometheusConfig) (*Client, error) {
+func NewClientForConfig(conf config.Config) (*Client, error) {
+	cfg := conf.ExternalServices.Prometheus
 	clientConfig := api.Config{Address: cfg.URL}
 
 	// Prom Cache will be initialized once at first use of Prometheus Client
@@ -113,7 +114,7 @@ func NewClientForConfig(cfg config.PrometheusConfig) (*Client, error) {
 		TLSHandshakeTimeout: 10 * time.Second,
 	}
 
-	transportConfig, err := httputil.CreateTransport(&auth, roundTripper, httputil.DefaultTimeout, cfg.CustomHeaders)
+	transportConfig, err := httputil.CreateTransport(&conf, &auth, roundTripper, httputil.DefaultTimeout, cfg.CustomHeaders)
 	if err != nil {
 		return nil, err
 	}

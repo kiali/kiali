@@ -105,7 +105,7 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 	}
 
 	var istiodStatus kubernetes.IstioComponentStatus
-	var isManaged = false
+	isManaged := false
 	for _, cp := range mesh.ControlPlanes {
 		if cp.Cluster.Name == cluster {
 			istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
@@ -367,7 +367,7 @@ func (iss *IstioStatusService) getAddonStatus(cluster string, name string, enabl
 
 	status := kubernetes.ComponentHealthy
 	// Call the addOn service endpoint to find out whether is reachable or not
-	_, statusCode, _, err := httputil.HttpGet(url, auth, 10*time.Second, nil, nil)
+	_, statusCode, _, err := httputil.HttpGet(url, auth, 10*time.Second, nil, nil, iss.conf)
 	if err != nil || statusCode > 399 {
 		log.Tracef("addon health check failed: name=[%v], url=[%v], code=[%v]", name, url, statusCode)
 		status = kubernetes.ComponentUnreachable

@@ -1,6 +1,8 @@
 package config
 
 import (
+	"crypto/x509"
+	_ "embed"
 	"fmt"
 	"math/rand"
 	"os"
@@ -14,7 +16,11 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/util"
+	"github.com/kiali/kiali/util/filetest"
 )
+
+//go:embed testdata/test-ca.pem
+var testCA []byte
 
 func TestSecretFileOverrides(t *testing.T) {
 	// create a mock volume mount directory where the test secret content will go
@@ -36,8 +42,11 @@ func TestSecretFileOverrides(t *testing.T) {
 	conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token = "cd-prometheustoken"
 
 	// Unmarshal will override settings found in env vars (if there are any env vars)
-	yamlString, _ := Marshal(conf)
-	conf, _ = Unmarshal(yamlString)
+	var err error
+	yamlString, err := Marshal(conf)
+	require.NoError(t, err)
+	conf, err = Unmarshal(yamlString)
+	require.NoError(t, err)
 
 	// we don't have the files yet - so nothing should be overridden from the original yaml
 	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Username, "grafanausername")
@@ -746,6 +755,57 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 				assert.Nil(err)
 			}
 			assert.Equal(tc.expectedNamespaces, actualNamespaces)
+		})
+	}
+}
+
+func TestLoadingCertPool(t *testing.T) {
+	systemPool, err := x509.SystemCertPool()
+	require.NoError(t, err)
+
+	addtionalCAPool := systemPool.Clone()
+	require.True(t, addtionalCAPool.AppendCertsFromPEM(testCA), "unable to add testCA to system pool")
+
+	invalidCA := filetest.TempFile(t, []byte("notarealCA")).Name()
+
+	cases := map[string]struct {
+		addtionalBundle string
+		expected        *x509.CertPool
+		expectedErr     bool
+	}{
+		"No addtional CAs loads system Pool": {
+			expected: systemPool.Clone(),
+		},
+		"Addtional CAs loads system Pool": {
+			addtionalBundle: "testdata/test-ca.pem",
+			expected:        addtionalCAPool,
+		},
+		"Non-existant CA file does not return err and still loads system pool": {
+			addtionalBundle: "non-existant",
+			expected:        systemPool.Clone(),
+		},
+		"CA file with bogus contents returns err and still loads system pool": {
+			addtionalBundle: invalidCA,
+			expected:        systemPool.Clone(),
+			expectedErr:     true,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+
+			conf := NewConfig()
+
+			err = conf.loadCertPool(tc.addtionalBundle)
+			if tc.expectedErr {
+				require.Error(err)
+			} else {
+				require.NoError(err)
+			}
+
+			actual := conf.CertPool()
+
+			require.True(tc.expected.Equal(actual))
 		})
 	}
 }

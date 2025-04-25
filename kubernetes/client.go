@@ -19,6 +19,7 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 
+	"github.com/kiali/kiali/config"
 	kialiconfig "github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util/httputil"
@@ -119,6 +120,8 @@ type K8SClient struct {
 
 	// Separated out for testing purposes
 	getPodPortForwarderFunc func(namespace, name, portMap string) (httputil.PortForwarder, error)
+
+	conf *config.Config
 }
 
 // Ensure the K8SClient implements the full read-write UserClientInterface
@@ -191,6 +194,7 @@ func getConfigForLocalCluster() (*rest.Config, error) {
 func newClientFromConfig(config *rest.Config) (*K8SClient, error) {
 	client := K8SClient{
 		token: config.BearerToken,
+		conf:  kialiconfig.Get(),
 	}
 
 	log.Debugf("Rest perf config QPS: %f Burst: %d", config.QPS, config.Burst)

@@ -1,8 +1,10 @@
 package config
 
 import (
+	"crypto/x509"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"regexp"
 	"sort"
@@ -90,6 +92,11 @@ const (
 	WaypointNone              = "none"
 	WaypointUseNamespaceLabel = "istio.io/use-waypoint-namespace"
 	Ztunnel                   = "ztunnel"
+)
+
+const (
+	additionalCABundle = "/kiali-cabundle/additional-ca-bundle.pem"
+	openshiftServingCA = "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt"
 )
 
 // TracingProvider is the type of tracing provider that Kiali will connect to.
@@ -461,6 +468,8 @@ type OpenIdConfig struct {
 
 // DeploymentConfig provides details on how Kiali was deployed.
 type DeploymentConfig struct {
+	certPool *x509.CertPool
+
 	AccessibleNamespaces []string                 // this is no longer part of the actual config - we will generate this in Unmarshal()
 	ClusterWideAccess    bool                     `yaml:"cluster_wide_access,omitempty"`
 	DiscoverySelectors   DiscoverySelectorsConfig `yaml:"discovery_selectors,omitempty"`
@@ -721,6 +730,7 @@ func NewConfig() (c *Config) {
 		},
 		CustomDashboards: dashboards.GetBuiltInMonitoringDashboards(),
 		Deployment: DeploymentConfig{
+			certPool:           x509.NewCertPool(),
 			ClusterWideAccess:  true,
 			DiscoverySelectors: DiscoverySelectorsConfig{Default: nil, Overrides: nil},
 			InstanceName:       "kiali",
@@ -1099,6 +1109,38 @@ func (conf *Config) prepareDashboards() {
 	}
 }
 
+// loadCertPool loads system certs and additional CAs from config.
+func (conf *Config) loadCertPool(additionalCABundlePaths ...string) error {
+	if certPool, err := x509.SystemCertPool(); err != nil {
+		log.Warningf("Unable to load system cert pool. Falling back to empty cert pool. Error: %s", err)
+	} else {
+		conf.Deployment.certPool = certPool
+	}
+
+	for _, path := range additionalCABundlePaths {
+		if _, err := os.Stat(path); err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				log.Debugf("Additional CA bundle %s does not exist. Skipping", path)
+			} else {
+				log.Debugf("Unable to read additional CA bundle %s. Skipping", path)
+			}
+			continue
+		}
+
+		log.Tracef("Adding CA bundle %s to pool", path)
+		bundle, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("unable to read CA bundle '%s': %s", path, err)
+		}
+
+		if !conf.Deployment.certPool.AppendCertsFromPEM(bundle) {
+			return fmt.Errorf("unable to append PEM bundle from file '%s': %s", path, err)
+		}
+	}
+
+	return nil
+}
+
 // Unmarshal parses the given YAML string and returns its Config object representation.
 func Unmarshal(yamlString string) (conf *Config, err error) {
 	conf = NewConfig()
@@ -1121,6 +1163,17 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	}
 
 	conf.prepareDashboards()
+
+	additionalCABundles := []string{additionalCABundle}
+	// Auth strategy isn't a great proxy for whether the cluster is running on openshift or not
+	// but the config is the very first thing loaded so we don't have access to a client.
+	if conf.Auth.Strategy == AuthStrategyOpenshift {
+		additionalCABundles = append(additionalCABundles, openshiftServingCA)
+	}
+	if err := conf.loadCertPool(additionalCABundles...); err != nil {
+		return nil, fmt.Errorf("unable to load cert pool. Check additional CAs specified at %s and ensure the file is properly formatted: %s",
+			strings.Join(additionalCABundles, ","), err)
+	}
 
 	// TODO: Still support deprecated settings, but remove this support in future versions
 	if conf.ExternalServices.Grafana.XInClusterURL != "" {
@@ -1607,4 +1660,11 @@ func (config *Config) GetVersionLabelName(labels map[string]string) (string, boo
 		}
 	}
 	return "", false
+}
+
+func (c *Config) CertPool() *x509.CertPool {
+	if pool := c.Deployment.certPool; pool != nil {
+		return pool.Clone()
+	}
+	return nil
 }
