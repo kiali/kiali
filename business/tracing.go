@@ -258,6 +258,19 @@ func (in *TracingService) GetStatus() (accessible bool, err error) {
 	return client.GetServiceStatus()
 }
 
+func (in *TracingService) TracingDiagnose() (trace *model.TracingDiagnose, err error) {
+	client, err := in.client()
+	diagnose := model.TracingDiagnose{}
+	if err != nil {
+		return nil, err
+	}
+	if client == nil {
+		diagnose.Status = "Failure"
+		diagnose.Reason = err.Error()
+	}
+	return &diagnose, nil
+}
+
 func matchesWorkload(trace *jaegerModels.Trace, namespace string, tracingName models.TracingName) bool {
 	for _, span := range trace.Spans {
 		if process, ok := trace.Processes[span.ProcessID]; ok {
