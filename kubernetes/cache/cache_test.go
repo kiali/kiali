@@ -2,6 +2,8 @@ package cache_test
 
 import (
 	"encoding/json"
+	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"os"
 	"sync"
 	"testing"
@@ -75,6 +77,23 @@ func ztunnelDaemonSet() *apps_v1.DaemonSet {
 			},
 		},
 	}
+}
+
+func k8sClientWithControlPlanePods(includeZtunnel bool) *kubetest.FakeK8sClient {
+	istioNamespace := "istio-system"
+	objs := []runtime.Object{}
+	pod1 := &core_v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "istiod-864675749b-lpq8c", Namespace: istioNamespace}}
+	pod2 := &core_v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "istio-cni-node-vd5sh", Namespace: istioNamespace}}
+	pod3 := &core_v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "prometheus-65db697fd-bfq5v", Namespace: istioNamespace}}
+	pod4 := &core_v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "istio-egressgateway-7bcb795b58-6jj6w", Namespace: istioNamespace}}
+	pod5 := &core_v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "istio-ingressgateway-7d97cd5c49-qhpcp", Namespace: istioNamespace}}
+	objs = append(objs, kubetest.FakeNamespace("istio-system"), ztunnelDaemonSet(), pod1, pod2, pod3, pod4, pod5)
+
+	if includeZtunnel {
+		pod6 := &core_v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "ztunnel-khq59", Namespace: istioNamespace, Labels: map[string]string{"app": "ztunnel"}}}
+		objs = append(objs, pod6)
+	}
+	return kubetest.NewFakeK8sClient(objs...)
 }
 
 func TestIsAmbientEnabled(t *testing.T) {
@@ -292,4 +311,24 @@ func TestZtunnelDump(t *testing.T) {
 	require.Equal(cacheData.Services[36].Hostname, "waypoint.bookinfo.svc.cluster.local")
 	require.Equal(cacheData.Services[36].Name, "waypoint")
 	require.Equal(cacheData.Services[36].Namespace, "bookinfo")
+}
+
+func TestGetNoZtunnelPods(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	client := k8sClientWithControlPlanePods(false)
+	cache := cache.NewTestingCache(t, client, *conf)
+
+	ztunnelPods := cache.GetZtunnelPods(client.ClusterInfo().Name)
+	require.Equal(0, len(ztunnelPods))
+}
+
+func TestGetZtunnelPods(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	client := k8sClientWithControlPlanePods(true)
+	cache := cache.NewTestingCache(t, client, *conf)
+
+	ztunnelPods := cache.GetZtunnelPods(client.ClusterInfo().Name)
+	require.Equal(1, len(ztunnelPods))
 }
