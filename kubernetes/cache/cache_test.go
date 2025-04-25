@@ -2,15 +2,15 @@ package cache_test
 
 import (
 	"encoding/json"
-	core_v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"os"
 	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	apps_v1 "k8s.io/api/apps/v1"
+	core_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
