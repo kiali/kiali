@@ -412,11 +412,12 @@ type KubernetesConfig struct {
 
 // CacheExpirationConfig sets expiration time for various cache stores
 type CacheExpirationConfig struct {
-	AmbientCheck time.Duration `yaml:"ambient_check,omitempty"`
-	IstioStatus  time.Duration `yaml:"istio_status,omitempty"`
-	Gateway      time.Duration `yaml:"gateway,omitempty"`
-	Mesh         time.Duration `yaml:"mesh,omitempty"`
-	Waypoint     time.Duration `yaml:"waypoint,omitempty"`
+	AmbientCheck  time.Duration `yaml:"ambient_check,omitempty"`
+	IstioStatus   time.Duration `yaml:"istio_status,omitempty"`
+	Gateway       time.Duration `yaml:"gateway,omitempty"`
+	Mesh          time.Duration `yaml:"mesh,omitempty"`
+	Waypoint      time.Duration `yaml:"waypoint,omitempty"`
+	ZtunnelConfig time.Duration `yaml:"ztunnel_config,omitempty"`
 }
 
 // KialiInternalConfig holds configuration that is not typically touched by users, but could be in the event of
@@ -911,11 +912,12 @@ func NewConfig() (c *Config) {
 		},
 		KialiInternal: KialiInternalConfig{
 			CacheExpiration: CacheExpirationConfig{
-				AmbientCheck: 10 * time.Minute,
-				Gateway:      4 * time.Minute,
-				IstioStatus:  30 * time.Second, // Set to 0 to disable
-				Mesh:         20 * time.Second,
-				Waypoint:     4 * time.Minute,
+				AmbientCheck:  10 * time.Minute,
+				Gateway:       4 * time.Minute,
+				IstioStatus:   30 * time.Second, // Set to 0 to disable
+				Mesh:          20 * time.Second,
+				Waypoint:      4 * time.Minute,
+				ZtunnelConfig: 2 * time.Minute,
 			},
 		},
 		KubernetesConfig: KubernetesConfig{

@@ -3,7 +3,6 @@ package cache
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -179,7 +178,7 @@ func newKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, conf co
 		waypointStore:           store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(conf.KialiInternal.CacheExpiration.Waypoint), nil),
 		validations:             store.New[models.IstioValidationKey, *models.IstioValidation](),
 		validationConfig:        store.New[string, string](),
-		ztunnelConfigStore:      store.New[string, *kubernetes.ZtunnelConfigDump](),
+		ztunnelConfigStore:      store.NewExpirationStore(ctx, store.New[string, *kubernetes.ZtunnelConfigDump](), util.AsPtr(conf.KialiInternal.CacheExpiration.ZtunnelConfig), nil),
 	}
 
 	for cluster, client := range kialiSAClients {
@@ -352,17 +351,9 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 		return ztunnelPods
 	}
 
-	dsPods, err := kubeCache.GetPods(daemonsets[0].Namespace, "")
+	ztunnelPods, err = kubeCache.GetPods(daemonsets[0].Namespace, fmt.Sprintf("app=%s", config.Ztunnel))
 	if err != nil {
 		log.Errorf("Unable to get ztunnel pods: %s", err)
-		return ztunnelPods
-
-	}
-
-	for _, pod := range dsPods {
-		if strings.Contains(pod.Name, config.Ztunnel) {
-			ztunnelPods = append(ztunnelPods, pod)
-		}
 	}
 
 	return ztunnelPods
