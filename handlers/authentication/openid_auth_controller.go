@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-jose/go-jose"
-	"github.com/go-jose/go-jose/jwt"
+	"github.com/go-jose/go-jose/v3"
+	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/gorilla/mux"
 	"golang.org/x/sync/singleflight"
 	"k8s.io/client-go/tools/clientcmd/api"
