@@ -2,6 +2,7 @@ package tests
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -38,6 +39,9 @@ func TestIstioPermissions(t *testing.T) {
 }
 
 func TestJaeger(t *testing.T) {
+	if os.Getenv("LPINTEROP") == "true" {
+		t.Skip("This test is not supported in LPINTEROP, skipping test...")
+	}
 	require := require.New(t)
 	response, statusCode, err := kiali.Jaeger()
 
