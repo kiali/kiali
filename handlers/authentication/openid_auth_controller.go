@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-jose/go-jose/v3"
-	"github.com/go-jose/go-jose/v3/jwt"
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/gorilla/mux"
 	"golang.org/x/sync/singleflight"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -25,6 +25,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
+	jwtpkg "github.com/kiali/kiali/jwt"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
@@ -202,7 +203,7 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 	// and these sanity checks must be skipped.
 	if c.conf.Auth.OpenId.ApiToken != "access_token" {
 		// Parse the sid claim (id_token) to check that the sub claim matches to the configured "username" claim of the id_token
-		parsedOidcToken, err := jwt.ParseSigned(sData.Payload.Token)
+		parsedOidcToken, err := jwtpkg.ParseSigned(sData.Payload.Token)
 		if err != nil {
 			log.Warningf("Cannot parse sid claim of the OIDC token!: %v", err)
 			return nil, fmt.Errorf("cannot parse sid claim of the OIDC token: %w", err)
@@ -670,7 +671,7 @@ func (p *openidFlowHelper) parseOpenIdToken() *openidFlowHelper {
 	}
 
 	// Parse the received id_token from the IdP (it is a JWT token) without validating its signature
-	parsedOidcToken, err := jwt.ParseSigned(p.IdToken)
+	parsedOidcToken, err := jwtpkg.ParseSigned(p.IdToken)
 	if err != nil {
 		p.Error = &AuthenticationFailureError{
 			Reason: "cannot parse received id_token from the OpenId provider",
@@ -1345,7 +1346,7 @@ func validateOpenIdTokenInHouse(openIdParams *openidFlowHelper) error {
 	if kidHeader := openIdParams.ParsedIdToken.Headers[0].KeyID; len(kidHeader) == 0 {
 		return errors.New("the OpenId token is missing the kid header claim")
 	} else {
-		if jws, parseErr := jose.ParseSigned(openIdParams.IdToken); parseErr != nil {
+		if jws, parseErr := jwtpkg.ParseSignedCompact(openIdParams.IdToken); parseErr != nil {
 			return fmt.Errorf("error when parsing the OpenId token: %w", parseErr)
 		} else {
 			if len(jws.Signatures) == 0 {
