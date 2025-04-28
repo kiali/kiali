@@ -3,7 +3,7 @@ package kubetest
 import (
 	"sync"
 
-	"github.com/go-jose/go-jose/jwt"
+	"github.com/go-jose/go-jose/v3/jwt"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/mock"
 	istio_fake "istio.io/client-go/pkg/clientset/versioned/fake"

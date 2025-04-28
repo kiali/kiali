@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-jose/go-jose"
+	"github.com/go-jose/go-jose/v3"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
