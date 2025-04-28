@@ -98,6 +98,7 @@ if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
     OLD_IFS=$IFS
     IFS='.' read -r major minor_patch <<< "$VERSION_WE_WANT"
     IFS='-' read -r minor patch <<< "$minor_patch"
+    IFS=$OLD_IFS
     if [[ "${patch}" != *latest* ]]; then
       echo "Latest just supported as the patch version"
        exit 1
