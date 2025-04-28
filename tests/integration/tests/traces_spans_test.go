@@ -2,6 +2,7 @@ package tests
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -11,6 +12,9 @@ import (
 )
 
 func TestServiceTraces(t *testing.T) {
+	if os.Getenv("LPINTEROP") == "true" {
+		t.Skip("This test is not supported in LPINTEROP, skipping test...")
+	}
 	require := require.New(t)
 	name := "details"
 	traces, statusCode, err := kiali.Traces("services", name, kiali.BOOKINFO)
@@ -18,6 +22,9 @@ func TestServiceTraces(t *testing.T) {
 }
 
 func TestWorkloadTraces(t *testing.T) {
+	if os.Getenv("LPINTEROP") == "true" {
+		t.Skip("This test is not supported in LPINTEROP, skipping test...")
+	}
 	require := require.New(t)
 	name := "details-v1"
 	traces, statusCode, err := kiali.Traces("workloads", name, kiali.BOOKINFO)
@@ -25,6 +32,9 @@ func TestWorkloadTraces(t *testing.T) {
 }
 
 func TestAppTraces(t *testing.T) {
+	if os.Getenv("LPINTEROP") == "true" {
+		t.Skip("This test is not supported in LPINTEROP, skipping test...")
+	}
 	require := require.New(t)
 	name := "details"
 	traces, statusCode, err := kiali.Traces("apps", name, kiali.BOOKINFO)
@@ -49,6 +59,9 @@ func TestWrongNamespaceTraces(t *testing.T) {
 }
 
 func TestServiceSpans(t *testing.T) {
+	if os.Getenv("LPINTEROP") == "true" {
+		t.Skip("This test is not supported in LPINTEROP, skipping test...")
+	}
 	require := require.New(t)
 	name := "details"
 	spans, statusCode, err := kiali.Spans("services", name, kiali.BOOKINFO)
@@ -56,6 +69,9 @@ func TestServiceSpans(t *testing.T) {
 }
 
 func TestAppSpans(t *testing.T) {
+	if os.Getenv("LPINTEROP") == "true" {
+		t.Skip("This test is not supported in LPINTEROP, skipping test...")
+	}
 	require := require.New(t)
 	name := "details"
 	spans, statusCode, err := kiali.Spans("apps", name, kiali.BOOKINFO)
@@ -63,6 +79,9 @@ func TestAppSpans(t *testing.T) {
 }
 
 func TestWorkloadSpans(t *testing.T) {
+	if os.Getenv("LPINTEROP") == "true" {
+		t.Skip("This test is not supported in LPINTEROP, skipping test...")
+	}
 	require := require.New(t)
 	name := "details-v1"
 	spans, statusCode, err := kiali.Spans("workloads", name, kiali.BOOKINFO)
