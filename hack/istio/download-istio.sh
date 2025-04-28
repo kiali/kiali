@@ -94,6 +94,26 @@ fi
 echo "Will look for Istio here: ${OUTPUT_DIR}/istio-${VERSION_WE_WANT}"
 if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
   echo "Cannot find Istio ${VERSION_WE_WANT} - will download it now..."
+  if [[ "${VERSION_WE_WANT}" == *latest ]]; then
+    OLD_IFS=$IFS
+    IFS='.' read -r major minor_patch <<< "$VERSION_WE_WANT"
+    IFS='-' read -r minor patch <<< "$minor_patch"
+    if [[ "${patch}" != *latest* ]]; then
+      echo "Latest just supported as the patch version"
+       exit 1
+    fi
+    VERSION_TO_MATCH="${major}.${minor}"
+    LATEST=$(curl -s "https://api.github.com/repos/istio/istio/releases" \
+     | jq -r --arg VERSION_TO_MATCH "$VERSION_TO_MATCH" '.[] | select(.tag_name | startswith($VERSION_TO_MATCH)) | .tag_name' \
+     | sort -V \
+     | tail -n 1)
+    if [[ -z ${LATEST} ]]; then
+      echo "Couldn't find the latest version"
+      exit 1
+    fi
+    echo "Will use Istio ${LATEST}"
+    VERSION_WE_WANT=${LATEST}
+  fi
   if [ -z "${DEV_ISTIO_VERSION}" ]; then
     export ISTIO_VERSION
     curl -L --retry 4 --retry-delay 5 https://istio.io/downloadIstio | sh -
