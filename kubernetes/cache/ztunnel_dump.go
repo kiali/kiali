@@ -52,8 +52,8 @@ func (c *kialiCacheImpl) GetZtunnelDump(cluster, namespace, pod string) *kuberne
 				log.Errorf("[GetZtunnelDump] Error forwarding the /config_dump request: %v", err)
 				return nil
 			}
-			configDump := &kubernetes.ZtunnelConfigDump{}
-			err = json.Unmarshal(resp, configDump)
+			var configDump *kubernetes.ZtunnelConfigDump
+			err = json.Unmarshal(resp, &configDump)
 			if err != nil {
 				log.Errorf("[GetZtunnelDump] Error Unmarshalling the config_dump: %v", err)
 				// Even not unmarshalling one field, others can be filled up
