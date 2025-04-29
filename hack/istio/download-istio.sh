@@ -114,6 +114,7 @@ if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
     fi
     echo "Will use Istio ${LATEST}"
     VERSION_WE_WANT=${LATEST}
+    ISTIO_VERSION=${LATEST}
   fi
   if [ -z "${DEV_ISTIO_VERSION}" ]; then
     export ISTIO_VERSION
