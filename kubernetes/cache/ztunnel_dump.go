@@ -2,6 +2,7 @@ package cache
 
 import (
 	"encoding/json"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 )
