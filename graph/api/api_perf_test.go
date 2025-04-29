@@ -3,17 +3,17 @@ package api
 import (
 	"flag"
 	"fmt"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/prometheus/common/model"
-	api2 "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/apimachinery/pkg/runtime"
+	cmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/business"
@@ -21,7 +21,7 @@ import (
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
-	cache2 "github.com/kiali/kiali/kubernetes/cache"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -940,7 +940,7 @@ func setupMockedPerf(b *testing.B, numNs int) (*prometheus.Client, *prometheuste
 	fakeNamespaces = append(fakeNamespaces, kubetest.FakeNamespace("tutorial"))
 
 	k8s := kubetest.NewFakeK8sClient(fakeNamespaces...)
-	authInfo := map[string]*api2.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
+	authInfo := map[string]*cmdapi.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
 
 	api := new(prometheustest.PromAPIMock)
 	client, err := prometheus.NewClient()
@@ -951,12 +951,12 @@ func setupMockedPerf(b *testing.B, numNs int) (*prometheus.Client, *prometheuste
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	business.SetWithBackends(mockClientFactory, nil)
-	cache := cache2.NewTestingCache(b, k8s, *conf)
-	business.WithKialiCache(cache)
-	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, conf)
+	testingCache := cache.NewTestingCache(b, k8s, *conf)
+	business.WithKialiCache(testingCache)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), testingCache, conf)
 	business.WithDiscovery(discovery)
 
-	biz, err := business.NewLayer(conf, cache, mockClientFactory, client, nil, nil, nil, discovery, authInfo)
+	biz, err := business.NewLayer(conf, testingCache, mockClientFactory, client, nil, nil, nil, discovery, authInfo)
 	require.NoError(b, err)
 
 	return client, api, biz
