@@ -108,7 +108,7 @@ type DNSResolverOptions struct {
 	ShuffleDnsServers      bool         `json:"shuffle_dns_servers"`
 	Timeout                TimeDuration `json:"timeout"`
 	TryTcpOnError          bool         `json:"try_tcp_on_error"`
-	UseHostsFile           bool         `json:"use_hosts_file"`
+	UseHostsFile           string       `json:"use_hosts_file"`
 	Validate               bool         `json:"validate"`
 }
 
