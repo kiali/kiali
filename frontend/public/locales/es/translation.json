@@ -177,6 +177,7 @@
   "Failure": "Failure",
   "Fault Injection": "Fault Injection",
   "Fault Injection not valid": "Fault Injection not valid",
+  "Filter": "Filter",
   "Filter by Application Health": "Filtrar por la salud de la aplicación",
   "Filter by mTLS": "Filtrar por mTLS",
   "Filter by Namespace": "Filtrar por el espacio de nombres",

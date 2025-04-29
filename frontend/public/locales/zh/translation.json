@@ -165,6 +165,7 @@
   "Failure": "Failure",
   "Fault Injection": "故障注入",
   "Fault Injection not valid": "故障注入无效",
+  "Filter": "Filter",
   "Filter by Application Health": "Filter by Application Health",
   "Filter by mTLS": "Filter by mTLS",
   "Filter by Namespace": "Filter by Namespace",
