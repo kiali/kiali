@@ -106,7 +106,7 @@ export const servicesFilters = (config: ZtunnelConfigDump): RunnableFilter<Ztunn
 };
 
 const getWorstStatus = (endpoints: Record<string, ZtunnelEndpoint>): string => {
-  const anyUnhealthy = Object.values(endpoints).find(e => e.status.toLowerCase() != 'healthy');
+  const anyUnhealthy = Object.values(endpoints).find(e => e.status.toLowerCase() !== 'healthy');
   return anyUnhealthy ? anyUnhealthy[0].status : 'Healthy';
 };
 
