@@ -1,11 +1,10 @@
 import { FILTER_ACTION_APPEND, AllFilterTypes, FilterValue, RunnableFilter } from 'types/Filters';
 import { ZtunnelConfigDump, ZtunnelItem, ZtunnelService, ZtunnelWorkload } from '../../../types/IstioObjects';
-import { ConfigType } from './ZtunnelLabels';
 
-const byName = (item: FilterValue[], type: ConfigType): RunnableFilter<ZtunnelItem> => {
+const byName = (item: FilterValue[], name: string): RunnableFilter<ZtunnelItem> => {
   return {
-    category: type,
-    placeholder: `Filter by ${type}`,
+    category: name,
+    placeholder: `Filter by ${name}`,
     filterType: AllFilterTypes.typeAhead,
     action: FILTER_ACTION_APPEND,
     filterValues: item,
@@ -36,7 +35,7 @@ export const servicesFilters = (config: ZtunnelConfigDump): RunnableFilter<Ztunn
   return [
     byName(
       Array.from(name).map(w => ({ id: w, title: w })),
-      ConfigType.SERVICE
+      'Service'
     ),
     byNamespace(Array.from(namespace).map(w => ({ id: w, title: w })))
   ];
@@ -54,7 +53,7 @@ export const workloadsFilters = (config: ZtunnelConfigDump): RunnableFilter<Ztun
   return [
     byName(
       Array.from(name).map(w => ({ id: w, title: w })),
-      ConfigType.WORKLOAD
+      'Pod Name'
     ),
     byNamespace(Array.from(namespace).map(w => ({ id: w, title: w })))
   ];

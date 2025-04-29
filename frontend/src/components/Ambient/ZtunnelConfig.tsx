@@ -188,7 +188,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
               <StatefulFilters
                 initialFilters={serviceFilters}
                 onFilterChange={active => setActiveServiceFilters(active)}
-                key="service-filter"
+                cleanState
               >
                 <ZtunnelLabels
                   key="service-labels"
@@ -226,7 +226,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
               <StatefulFilters
                 initialFilters={workloadFilters}
                 onFilterChange={active => setActiveWorkloadFilters(active)}
-                key="workload-filters"
+                cleanState
               >
                 <ZtunnelLabels
                   key="workload-labels"
@@ -235,7 +235,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
                 />
               </StatefulFilters>
             </div>
-            <ZtunnelWorkloadsTable config={config?.workloads} />
+            <ZtunnelWorkloadsTable config={filteredWorkloads} />
           </div>
         </CardBody>
       </Card>

@@ -76,6 +76,7 @@ type ReduxProps = {
 type StatefulFiltersProps = ReduxProps & {
   children?: React.ReactNode;
   childrenFirst?: boolean;
+  cleanState?: boolean; // For shared components, state is not saved in the URL
   initialFilters: FilterType[];
   initialToggles?: ToggleType[];
   onFilterChange: (active: ActiveFiltersInfo) => void;
@@ -186,11 +187,9 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
 
   constructor(props: StatefulFiltersProps) {
     super(props);
-
     this.textInputRef = React.createRef<HTMLInputElement>();
-
     this.state = {
-      activeFilters: FilterSelected.init(this.props.initialFilters),
+      activeFilters: this.props.cleanState ? { filters: [], op: 'or' } : FilterSelected.init(this.props.initialFilters),
       activeToggles: Toggles.init(this.props.initialToggles ?? []),
       currentFilterType: this.props.initialFilters[0],
       filterTypes: this.props.initialFilters,
@@ -265,7 +264,10 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
       });
 
       this.loadDynamicFilters();
-    } else if (!FilterHelper.filtersMatchURL(this.state.filterTypes, this.state.activeFilters)) {
+    } else if (
+      !this.props.cleanState &&
+      !FilterHelper.filtersMatchURL(this.state.filterTypes, this.state.activeFilters)
+    ) {
       FilterHelper.setFiltersToURL(this.state.filterTypes, this.state.activeFilters);
     }
 
