@@ -74,8 +74,9 @@ jobs:
               }
             }
             END {
-              for (m in minor_ga) { print minor_ga[m] }
-              for (m in minor_rc) { print minor_rc[m] }
+              # The latest patch version is not always available in Sail. Use -latest as patch version
+              for (m in minor_ga) { split(minor_ga[m], version_parts, "."); minor_ga[m] = version_parts[1] "." version_parts[2] "-latest"; print minor_ga[m] }
+              for (m in minor_rc) { split(minor_rc[m], version_parts, "."); minor_rc[m] = version_parts[1] "." version_parts[2] "-latest"; print minor_rc[m] }
             }' | sort -Vr | grep -v '^$' | head -n $((OFFSET + 1)))"
           ISTIO_VERSION=$(echo "${LATEST_ISTIO_VERSIONS}" | tail -n 1)
           echo "The latest Istio versions are:"
