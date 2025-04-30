@@ -12,7 +12,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
+	klog "github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -25,6 +25,7 @@ const IstioAppenderName = "istio"
 // Name: istio
 type IstioAppender struct {
 	AccessibleNamespaces graph.AccessibleNamespaces
+	log                  klog.ContextLogger
 }
 
 // Name implements Appender
@@ -46,7 +47,7 @@ func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *grap
 	serviceLists := getServiceLists(trafficMap, namespaceInfo.Namespace, globalInfo)
 
 	addBadging(trafficMap, globalInfo, namespaceInfo)
-	addLabels(trafficMap, globalInfo, serviceLists)
+	addLabels(trafficMap, globalInfo, serviceLists, a.log)
 	a.decorateGateways(trafficMap, globalInfo, namespaceInfo)
 }
 
@@ -176,7 +177,7 @@ NODES:
 
 // addLabels is a chance to add any missing label info to nodes when the telemetry does not provide enough information.
 // For example, service injection has this problem.
-func addLabels(trafficMap graph.TrafficMap, gi *graph.GlobalInfo, serviceLists map[string]*models.ServiceList) {
+func addLabels(trafficMap graph.TrafficMap, gi *graph.GlobalInfo, serviceLists map[string]*models.ServiceList, log klog.ContextLogger) {
 	// build map for quick lookup
 	svcMap := map[graph.ClusterSensitiveKey]models.ServiceOverview{}
 	for cluster, serviceList := range serviceLists {

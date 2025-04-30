@@ -2,14 +2,16 @@ package appender
 
 import (
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/log"
+	klog "github.com/kiali/kiali/log"
 )
 
 const LabelerAppenderName = "labeler"
 
 // LabelerAppender is responsible for obtaining and attaching all k8s labels to all nodes in the graph.
 // Name: labeler
-type LabelerAppender struct{}
+type LabelerAppender struct {
+	log klog.ContextLogger
+}
 
 // Name implements Appender
 func (f *LabelerAppender) Name() string {
@@ -27,11 +29,11 @@ func (f *LabelerAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 		return
 	}
 
-	labelNodes(trafficMap, globalInfo)
+	labelNodes(trafficMap, globalInfo, f.log)
 }
 
 // labelNodes puts all k8s labels in the metadata for all nodes.
-func labelNodes(trafficMap graph.TrafficMap, gi *graph.GlobalInfo) {
+func labelNodes(trafficMap graph.TrafficMap, gi *graph.GlobalInfo, log klog.ContextLogger) {
 	for _, n := range trafficMap {
 		// can't get labels for nodes on the outside or inaccessible nodes, so just go to the next and ignore this one.
 		if b, ok := n.Metadata[graph.IsOutside]; ok && b.(bool) {

@@ -3,6 +3,7 @@ package appender
 import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	klog "github.com/kiali/kiali/log"
 )
 
 const MeshCheckAppenderName = "meshCheck"
@@ -13,6 +14,7 @@ const SidecarsCheckAppenderName = "sidecarsCheck"
 // Name: meshCheck
 type MeshCheckAppender struct {
 	AccessibleNamespaces graph.AccessibleNamespaces
+	log                  klog.ContextLogger
 }
 
 // Name implements Appender

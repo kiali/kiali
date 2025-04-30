@@ -7,6 +7,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -19,6 +20,7 @@ func TestNonTrafficScenario(t *testing.T) {
 		graph.GraphTypeVersionedApp,
 		true,
 		false,
+		log.WithContext(map[string]string{"group": "graph", "appender": "idleNode"}),
 	}
 
 	// Empty trafficMap
@@ -92,6 +94,7 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 		graph.GraphTypeVersionedApp,
 		false,
 		false,
+		log.WithContext(map[string]string{"group": "graph", "appender": "idleNode"}),
 	}
 
 	trafficMap := a.oneNodeTraffic()
@@ -149,6 +152,7 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 		graph.GraphTypeVersionedApp,
 		false,
 		false,
+		log.WithContext(map[string]string{"group": "graph", "appender": "idleNode"}),
 	}
 
 	const cluster = config.DefaultClusterID

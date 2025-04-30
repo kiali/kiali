@@ -9,7 +9,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry/istio/util"
-	"github.com/kiali/kiali/log"
+	klog "github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -29,6 +29,7 @@ type AggregateNodeAppender struct {
 	QueryTime          int64 // unix time in seconds
 	Rates              graph.RequestedRates
 	Service            string
+	log                klog.ContextLogger
 }
 
 // Name implements Appender
@@ -71,7 +72,7 @@ func (a AggregateNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalIn
 }
 
 func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client, conf *config.Config) {
-	log.Tracef("Resolving request aggregates for namespace=[%s], aggregate=[%s]", namespace, a.Aggregate)
+	a.log.Tracef("Resolving request aggregates for namespace=[%s], aggregate=[%s]", namespace, a.Aggregate)
 	duration := a.Namespaces[namespace].Duration
 
 	// query prometheus for aggregate info in two queries (assume aggregation is typically request classification, so use dest telemetry):
@@ -111,7 +112,7 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 }
 
 func (a AggregateNodeAppender) appendNodeGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client, conf *config.Config) {
-	log.Tracef("Resolving node request aggregates for namespace=[%s], aggregate=[%s=%s]", namespace, a.Aggregate, a.AggregateValue)
+	a.log.Tracef("Resolving node request aggregates for namespace=[%s], aggregate=[%s=%s]", namespace, a.Aggregate, a.AggregateValue)
 	duration := a.Namespaces[namespace].Duration
 
 	// query prometheus for aggregate info in a single query (assume aggregation is typically request classification, so use dest telemetry):
@@ -166,7 +167,7 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 		}
 
 		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !flagsOk || !protocolOk {
-			log.Warningf("Skipping %v, missing expected labels", m.String())
+			a.log.Warningf("Skipping %v, missing expected labels", m.String())
 			continue
 		}
 
@@ -196,7 +197,7 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 			code = util.HandleResponseCode(protocol, code, grpcOk, string(lGrpc))
 		} else {
 			// because currently we only support requests traffic the protocol should be set
-			log.Warningf("Skipping %v, missing expected protocol label", m.String())
+			a.log.Warningf("Skipping %v, missing expected protocol label", m.String())
 			continue
 			// protocol = "tcp"
 		}
@@ -217,7 +218,7 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 		sourceID, _, _ := graph.Id(sourceCluster, sourceWlNs, "", sourceWlNs, sourceWl, sourceApp, sourceVer, a.GraphType)
 		sourceNode, sourceFound := trafficMap[sourceID]
 		if !sourceFound {
-			log.Debugf("Expected source [%s] node not found in traffic map. Skipping aggregate injection [%s]", sourceID, aggregate)
+			a.log.Debugf("Expected source [%s] node not found in traffic map. Skipping aggregate injection [%s]", sourceID, aggregate)
 			continue
 		}
 
@@ -233,7 +234,7 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 		}
 		destNode, destFound := trafficMap[destID]
 		if !destFound {
-			log.Debugf("Expected dest [%s] node not found in traffic map. Skipping aggregate injection [%s]", destID, aggregate)
+			a.log.Debugf("Expected dest [%s] node not found in traffic map. Skipping aggregate injection [%s]", destID, aggregate)
 			continue
 		}
 

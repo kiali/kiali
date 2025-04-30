@@ -7,6 +7,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
+	klog "github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -20,6 +21,7 @@ type HealthAppender struct {
 	Namespaces        graph.NamespaceInfoMap
 	QueryTime         int64 // unix time in seconds
 	RequestedDuration time.Duration
+	log               klog.ContextLogger
 }
 
 // Name implements Appender
@@ -298,6 +300,7 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 	}
 	if len(errors) > 0 {
 		// This just panics with the first error.
+		a.log.Errorf("all errors: %v", errors)
 		graph.CheckError(errors[0])
 	}
 

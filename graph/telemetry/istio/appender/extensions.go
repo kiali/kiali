@@ -11,7 +11,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/log"
+	klog "github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util/sliceutil"
 )
@@ -36,6 +36,7 @@ type ExtensionsAppender struct {
 	Rates            graph.RequestedRates
 	ShowUnrooted     bool
 	urls             map[string]string // map rootNode id to link url
+	log              klog.ContextLogger
 }
 
 // Name implements Appender
@@ -95,7 +96,7 @@ func (a ExtensionsAppender) appendGraph(ext config.ExtensionConfig, trafficMap g
 			int(a.Duration.Seconds()), // range duration for the query
 			groupBy,
 			idleCondition)
-		log.Tracef("Extension [%s] requests query [%s]", ext.Name, query)
+		a.log.Tracef("Extension [%s] requests query [%s]", ext.Name, query)
 		vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a.globalInfo.Conf, a)
 		a.appendTrafficMap(ext, trafficMap, &vector, metric)
 	}
@@ -129,7 +130,7 @@ func (a ExtensionsAppender) appendGraph(ext config.ExtensionConfig, trafficMap g
 				int(a.Duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			log.Tracef("Extension [%s] tcp query [%s]", ext.Name, query)
+			a.log.Tracef("Extension [%s] tcp query [%s]", ext.Name, query)
 			vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a.globalInfo.Conf, a)
 			a.appendTrafficMap(ext, trafficMap, &vector, metric)
 		}
@@ -160,7 +161,7 @@ func (a ExtensionsAppender) appendTrafficMap(ext config.ExtensionConfig, traffic
 		lDestName, destNameOk := m["dest_name"]
 
 		if !sourceClusterOk || !sourceIsRootOk || !sourceNsOk || !sourceNameOk || !destClusterOk || !destNsOk || !destNameOk {
-			log.Warningf("Extension [%s] skipping %s, missing expected source TS labels", ext.Name, m.String())
+			a.log.Warningf("Extension [%s] skipping %s, missing expected source TS labels", ext.Name, m.String())
 			continue
 		}
 
@@ -194,7 +195,7 @@ func (a ExtensionsAppender) appendTrafficMap(ext config.ExtensionConfig, traffic
 			lCode, codeOk := m["status_code"]
 
 			if !protocolOk || !codeOk {
-				log.Warningf("Extension [%s] skipping %s, missing expected request TS labels", ext.Name, m.String())
+				a.log.Warningf("Extension [%s] skipping %s, missing expected request TS labels", ext.Name, m.String())
 				continue
 			}
 
@@ -214,12 +215,12 @@ func (a ExtensionsAppender) addTraffic(ext config.ExtensionConfig, trafficMap gr
 	isRoot := sourceIsRoot == "true"
 	source, _, err := a.addNode(ext, trafficMap, isRoot, sourceCluster, sourceNs, sourceName, a.GraphType)
 	if err != nil {
-		log.Warningf("Extension [%s] skipping extension addTraffic (source) in extension, %s", ext.Name, err)
+		a.log.Warningf("Extension [%s] skipping extension addTraffic (source) in extension, %s", ext.Name, err)
 		return
 	}
 	dest, _, err := a.addNode(ext, trafficMap, false, destCluster, destNs, destName, a.GraphType)
 	if err != nil {
-		log.Warningf("Extension [%s] skipping extension addTraffic (dest), %s", ext.Name, err)
+		a.log.Warningf("Extension [%s] skipping extension addTraffic (dest), %s", ext.Name, err)
 		return
 	}
 
@@ -306,20 +307,20 @@ func (a ExtensionsAppender) getUrl(ext config.ExtensionConfig, source *graph.Nod
 		if routeUrl != "" {
 			return routeUrl
 		}
-		log.Debugf("Extension [%s] no route found for extension service [%s][%s][%s]", ext.Name, source.Cluster, source.Namespace, svcName)
+		a.log.Debugf("Extension [%s] no route found for extension service [%s][%s][%s]", ext.Name, source.Cluster, source.Namespace, svcName)
 	}
 
 	// otherwise, look for the annotation on the source service, or if that fails, a service named after the extension
 	for _, svcName := range []string{name, ext.Name} {
 		svc, err := a.globalInfo.Business.Svc.GetService(a.globalInfo.Context, source.Cluster, source.Namespace, svcName)
 		if err != nil {
-			log.Debugf("Extension [%s] no extension root node service found [%s][%s][%s]", ext.Name, source.Cluster, source.Namespace, svcName)
+			a.log.Debugf("Extension [%s] no extension root node service found [%s][%s][%s]", ext.Name, source.Cluster, source.Namespace, svcName)
 			continue
 		}
 		if url, found := svc.Annotations[urlAnnotation]; found {
 			return url
 		}
-		log.Debugf("Extension [%s] no url annotation found for extension root node service [%s][%s][%s]", ext.Name, source.Cluster, source.Namespace, svcName)
+		a.log.Debugf("Extension [%s] no url annotation found for extension root node service [%s][%s][%s]", ext.Name, source.Cluster, source.Namespace, svcName)
 	}
 
 	return urlNotFound

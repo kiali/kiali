@@ -12,18 +12,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-logr/zerologr"
 	networkingv1 "istio.io/client-go/pkg/apis/networking/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
-	"github.com/kiali/kiali/log"
+	klog "github.com/kiali/kiali/log"
 )
 
 func NewScheme() (*runtime.Scheme, error) {
@@ -44,8 +44,9 @@ func NewScheme() (*runtime.Scheme, error) {
 
 // Start creates and starts all the controllers. They'll get cancelled when the context is cancelled.
 func Start(ctx context.Context, conf *config.Config, cf kubernetes.ClientFactory, kialiCache cache.KialiCache, validationsService *business.IstioValidationsService) error {
-	// TODO: Replace with kiali logging but if this isn't set some errors are thrown.
-	ctrl.SetLogger(zap.New())
+	log := klog.WithGroup("validationsController")
+	ctx = context.WithValue(ctx, ctxKeyLogger{}, log)
+	ctrl.SetLogger(zerologr.New(&log.Z))
 
 	// Combine the istio scheme and the kube scheme.
 	log.Debug("Setting up Validations Contoller")
@@ -85,4 +86,16 @@ func Start(ctx context.Context, conf *config.Config, cf kubernetes.ClientFactory
 	}()
 
 	return nil
+}
+
+// ctxKeyLogger identifies the logger value in the context
+type ctxKeyLogger struct{}
+
+// getLogger returns the Kiali logger from the given context
+func getLogger(ctx context.Context) klog.ContextLogger {
+	if l, ok := ctx.Value(ctxKeyLogger{}).(klog.ContextLogger); ok {
+		return l
+	} else {
+		return klog.WithGroup("unknown") // paranoia - if for some reason the context doesn't have it, just give it something
+	}
 }

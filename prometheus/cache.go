@@ -7,7 +7,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	kialiConfig "github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/log"
 )
 
 type (
@@ -80,7 +79,7 @@ func (c *promCacheImpl) GetAllRequestRates(namespace, cluster string, ratesInter
 	if nsRates, okNs := c.cacheAllRequestRates[namespace][cluster]; okNs {
 		if rtInterval, okRt := nsRates[ratesInterval]; okRt {
 			if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
-				log.Tracef("[Prom Cache] GetAllRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
+				log.Tracef("GetAllRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
 				return true, rtInterval.inResult
 			}
 		}
@@ -104,7 +103,7 @@ func (c *promCacheImpl) SetAllRequestRates(namespace, cluster string, ratesInter
 		queryTime: queryTime,
 		inResult:  inResult,
 	}
-	log.Tracef("[Prom Cache] SetAllRequestRates [namespace: %s] [cluster: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, ratesInterval, queryTime.String())
+	log.Tracef("SetAllRequestRates [namespace: %s] [cluster: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, ratesInterval, queryTime.String())
 }
 
 func (c *promCacheImpl) GetAppRequestRates(namespace, cluster, app, ratesInterval string, queryTime time.Time) (bool, model.Vector, model.Vector) {
@@ -115,7 +114,7 @@ func (c *promCacheImpl) GetAppRequestRates(namespace, cluster, app, ratesInterva
 		if appInterval, okApp := nsRates[app][cluster]; okApp {
 			if rtInterval, okRt := appInterval[ratesInterval]; okRt {
 				if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
-					log.Tracef("[Prom Cache] GetAppRequestRates [namespace: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, app, ratesInterval, queryTime.String())
+					log.Tracef("GetAppRequestRates [namespace: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, app, ratesInterval, queryTime.String())
 					return true, rtInterval.inResult, rtInterval.outResult
 				}
 			}
@@ -143,7 +142,7 @@ func (c *promCacheImpl) SetAppRequestRates(namespace, cluster, app, ratesInterva
 		inResult:  inResult,
 		outResult: outResult,
 	}
-	log.Tracef("[Prom Cache] SetAppRequestRates [namespace: %s] [cluster: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, app, ratesInterval, queryTime.String())
+	log.Tracef("SetAppRequestRates [namespace: %s] [cluster: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, app, ratesInterval, queryTime.String())
 }
 
 func (c *promCacheImpl) GetNamespaceServicesRequestRates(namespace, cluster string, ratesInterval string, queryTime time.Time) (bool, model.Vector) {
@@ -153,7 +152,7 @@ func (c *promCacheImpl) GetNamespaceServicesRequestRates(namespace, cluster stri
 	if nsRates, okNs := c.cacheNsSvcRequestRates[namespace][cluster]; okNs {
 		if rtInterval, okRt := nsRates[ratesInterval]; okRt {
 			if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
-				log.Tracef("[Prom Cache] GetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
+				log.Tracef("GetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
 				return true, rtInterval.inResult
 			}
 		}
@@ -177,7 +176,7 @@ func (c *promCacheImpl) SetNamespaceServicesRequestRates(namespace, cluster stri
 		queryTime: queryTime,
 		inResult:  inResult,
 	}
-	log.Tracef("[Prom Cache] SetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
+	log.Tracef("SetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
 }
 
 func (c *promCacheImpl) GetServiceRequestRates(namespace, cluster, service, ratesInterval string, queryTime time.Time) (bool, model.Vector) {
@@ -186,7 +185,7 @@ func (c *promCacheImpl) GetServiceRequestRates(namespace, cluster, service, rate
 
 	if rtInterval, okRt := c.cacheSvcRequestRates[namespace][cluster][service][ratesInterval]; okRt {
 		if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
-			log.Tracef("[Prom Cache] GetServiceRequestRates [namespace: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, service, ratesInterval, queryTime.String())
+			log.Tracef("GetServiceRequestRates [namespace: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, service, ratesInterval, queryTime.String())
 			return true, rtInterval.inResult
 		}
 	}
@@ -211,7 +210,7 @@ func (c *promCacheImpl) SetServiceRequestRates(namespace, cluster, service, rate
 		queryTime: queryTime,
 		inResult:  inResult,
 	}
-	log.Tracef("[Prom Cache] SetServiceRequestRates [namespace: %s] [cluster: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, service, ratesInterval, queryTime.String())
+	log.Tracef("SetServiceRequestRates [namespace: %s] [cluster: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, service, ratesInterval, queryTime.String())
 }
 
 func (c *promCacheImpl) GetWorkloadRequestRates(namespace, cluster, workload, ratesInterval string, queryTime time.Time) (bool, model.Vector, model.Vector) {
@@ -222,7 +221,7 @@ func (c *promCacheImpl) GetWorkloadRequestRates(namespace, cluster, workload, ra
 		if wkInterval, okWk := nsRates[workload]; okWk {
 			if rtInterval, okRt := wkInterval[ratesInterval]; okRt {
 				if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
-					log.Tracef("[Prom Cache] GetWorkloadRequestRates [namespace: %s] [cluster :%s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, workload, ratesInterval, queryTime.String())
+					log.Tracef("GetWorkloadRequestRates [namespace: %s] [cluster :%s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, workload, ratesInterval, queryTime.String())
 					return true, rtInterval.inResult, rtInterval.outResult
 				}
 			}
@@ -250,7 +249,7 @@ func (c *promCacheImpl) SetWorkloadRequestRates(namespace, cluster, workload, ra
 		inResult:  inResult,
 		outResult: outResult,
 	}
-	log.Tracef("[Prom Cache] SetAppRequestRates [namespace: %s] [cluster: %s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, workload, ratesInterval, queryTime.String())
+	log.Tracef("SetAppRequestRates [namespace: %s] [cluster: %s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, workload, ratesInterval, queryTime.String())
 }
 
 // Expiration is done globally, this cache is designed as short term, so in the worst case it would populated the queries
@@ -277,6 +276,6 @@ func (c *promCacheImpl) watchExpiration() {
 		c.wkRequestRatesLock.Lock()
 		c.cacheWkRequestRates = make(map[string]map[string]map[string]map[string]timeInOutResult)
 		c.wkRequestRatesLock.Unlock()
-		log.Tracef("[Prom Cache] Expired")
+		log.Tracef("Expired")
 	}
 }

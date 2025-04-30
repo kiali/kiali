@@ -9,7 +9,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry/istio/util"
-	"github.com/kiali/kiali/log"
+	klog "github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -27,6 +27,7 @@ type SecurityPolicyAppender struct {
 	Namespaces         map[string]graph.NamespaceInfo
 	QueryTime          int64 // unix time in seconds
 	Rates              graph.RequestedRates
+	log                klog.ContextLogger
 }
 
 type PolicyRates map[string]float64
@@ -57,7 +58,7 @@ func (a SecurityPolicyAppender) AppendGraph(trafficMap graph.TrafficMap, globalI
 }
 
 func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client, conf *config.Config) {
-	log.Tracef("Resolving security policy for namespace [%v], rates [%+v]", namespace, a.Rates)
+	a.log.Tracef("Resolving security policy for namespace [%v], rates [%+v]", namespace, a.Rates)
 	duration := a.Namespaces[namespace].Duration
 
 	// query prometheus for mutual_tls info in two queries (use dest telemetry because it reports the security policy):
@@ -261,7 +262,7 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		lCsp, cspOk := m["connection_security_policy"]
 
 		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !sourcePrincipalOk || !destPrincipalOk {
-			log.Warningf("populateSecurityPolicyMap: Skipping %s, missing expected labels", m.String())
+			a.log.Warningf("populateSecurityPolicyMap: Skipping %s, missing expected labels", m.String())
 			continue
 		}
 
@@ -299,7 +300,7 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		if a.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
 			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
 			if err != nil {
-				log.Warningf("Skipping (sp) %s, %s", m.String(), err)
+				a.log.Warningf("Skipping (sp) %s, %s", m.String(), err)
 				continue
 			}
 			inject = (graph.NodeTypeService != destNodeType)
@@ -319,12 +320,12 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 func (a SecurityPolicyAppender) addSecurityPolicy(securityPolicyMap map[string]PolicyRates, csp string, val float64, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string) {
 	sourceId, _, err := graph.Id(sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
 	if err != nil {
-		log.Warningf("Skipping addSecurityPolicy (source), %s", err)
+		a.log.Warningf("Skipping addSecurityPolicy (source), %s", err)
 		return
 	}
 	destId, _, err := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
 	if err != nil {
-		log.Warningf("Skipping addSecurityPolicy (dest), %s", err)
+		a.log.Warningf("Skipping addSecurityPolicy (dest), %s", err)
 		return
 	}
 	key := fmt.Sprintf("%s %s", sourceId, destId)
@@ -375,12 +376,12 @@ func applySecurityPolicy(trafficMap graph.TrafficMap, securityPolicyMap map[stri
 func (a SecurityPolicyAppender) addPrincipal(principalMap map[string]map[graph.MetadataKey]string, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, sourcePrincipal, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, destPrincipal string) {
 	sourceID, _, err := graph.Id(sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
 	if err != nil {
-		log.Warningf("Skipping addPrincipal (source), %s", err)
+		a.log.Warningf("Skipping addPrincipal (source), %s", err)
 		return
 	}
 	destID, _, err := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
 	if err != nil {
-		log.Warningf("Skipping addPrincipal (dest), %s", err)
+		a.log.Warningf("Skipping addPrincipal (dest), %s", err)
 		return
 	}
 	key := fmt.Sprintf("%s %s", sourceID, destID)

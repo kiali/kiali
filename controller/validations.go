@@ -16,7 +16,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/cache"
-	"github.com/kiali/kiali/log"
+	klog "github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -32,8 +32,9 @@ func NewValidationsController(
 	mgr ctrl.Manager,
 ) error {
 	reconcileInterval := conf.ExternalServices.Istio.ValidationReconcileInterval
-	log.Infof("Kiali will validate Istio configuration every: %s", *reconcileInterval)
-	reconciler := NewValidationsReconciler(clusters, conf, kialiCache, validationsService, *reconcileInterval)
+	logger := getLogger(ctx)
+	reconciler := NewValidationsReconciler(logger, clusters, conf, kialiCache, validationsService, *reconcileInterval)
+	logger.Infof("Kiali will validate Istio configuration every: %s", *reconcileInterval)
 
 	validationsController, err := controller.New("validations-controller", mgr, controller.Options{
 		Reconciler: reconciler,
@@ -77,6 +78,7 @@ func NewValidationsController(
 }
 
 func NewValidationsReconciler(
+	log klog.ContextLogger,
 	clusters []string,
 	conf *config.Config,
 	kialiCache cache.KialiCache,
@@ -84,6 +86,7 @@ func NewValidationsReconciler(
 	reconcileInterval time.Duration,
 ) *ValidationsReconciler {
 	return &ValidationsReconciler{
+		log:                log,
 		clusters:           clusters,
 		conf:               conf,
 		kialiCache:         kialiCache,
@@ -94,6 +97,7 @@ func NewValidationsReconciler(
 
 // validationsReconciler fetches Istio VirtualService objects and prints their names
 type ValidationsReconciler struct {
+	log                klog.ContextLogger
 	clusters           []string
 	conf               *config.Config
 	kialiCache         cache.KialiCache
@@ -103,17 +107,17 @@ type ValidationsReconciler struct {
 
 // Reconcile fetches the VirtualService and prints its name
 func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log.Debug("[ValidationsReconciler] Started reconciling ")
+	r.log.Debug("Started reconciling ")
 	startTime := time.Now()
 	defer func() {
 		totalReconcileTime := time.Since(startTime)
-		log.Debugf("[ValidationsReconciler] Finished reconciling in %.2fs", totalReconcileTime.Seconds())
+		r.log.Debugf("Finished reconciling in %.2fs", totalReconcileTime.Seconds())
 		if totalReconcileTime > r.reconcileInterval {
-			const warningLog = "[ValidationsReconciler] Reconcile took longer than the reconcile interval of [%s]. " +
+			const warningLog = "Reconcile took longer than the reconcile interval of [%s]. " +
 				"If this continues, validations will be increasingly stale. You can configure how often Kiali validates " +
 				"istio configuration by setting the 'external_services.istio.validation_reconcile_interval' config option. " +
 				"If the issue still persists, please open an issue at www.github.com/kiali/kiali"
-			log.Warningf(warningLog, r.reconcileInterval)
+			r.log.Warningf(warningLog, r.reconcileInterval)
 		}
 	}()
 
@@ -133,23 +137,23 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// validation requires cross-cluster service account information.
 	vInfo, err := r.validationsService.NewValidationInfo(ctx, r.clusters, changeMap)
 	if err != nil {
-		log.Errorf("[ValidationsReconciler] Error creating validation info: %s", err)
+		r.log.Errorf("Error creating validation info: %s", err)
 		return ctrl.Result{}, err
 	}
 
 	for _, cluster := range r.clusters {
 		validationPerformed, clusterValidations, err := r.validationsService.Validate(ctx, cluster, vInfo)
 		if err != nil {
-			log.Errorf("[ValidationsReconciler] Error performing validation for cluster %s: %s", cluster, err)
+			r.log.Errorf("Error performing validation for cluster %s: %s", cluster, err)
 			return ctrl.Result{}, err
 		}
 
 		// if there have been no config changes for the cluster, just re-use the prior validations
 		if !validationPerformed {
-			log.Tracef("validations: no changes for cluster [%s], re-using", cluster)
+			r.log.Tracef("no changes for cluster [%s], re-using", cluster)
 			clusterValidations = models.IstioValidations(prevValidations).FilterByCluster(cluster)
 		} else {
-			log.Tracef("validations: config changes found for cluster [%s], updating", cluster)
+			r.log.Tracef("config changes found for cluster [%s], updating", cluster)
 		}
 
 		newValidations = newValidations.MergeValidations(clusterValidations)

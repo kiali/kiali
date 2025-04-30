@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 )
 
 func ztunnelDumpKey(cluster, namespace, pod string) string {

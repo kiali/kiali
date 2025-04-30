@@ -9,7 +9,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/log"
+	klog "github.com/kiali/kiali/log"
 )
 
 const ServiceEntryAppenderName = "serviceEntry"
@@ -44,6 +44,7 @@ const ServiceEntryAppenderName = "serviceEntry"
 type ServiceEntryAppender struct {
 	AccessibleNamespaces graph.AccessibleNamespaces
 	GraphType            string
+	log                  klog.ContextLogger
 }
 
 // Name implements Appender
@@ -189,7 +190,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, c
 	for se, seServiceNodes := range seMap {
 		serviceEntryNode, err := graph.NewNode(se.cluster, namespaceInfo.Namespace, se.name, "", "", "", "", a.GraphType)
 		if err != nil {
-			log.Warningf("Skipping serviceEntryNode, %s", err)
+			a.log.Warningf("Skipping serviceEntryNode, %s", err)
 			continue
 		}
 		serviceEntryNode.Metadata[graph.IsServiceEntry] = &graph.SEInfo{

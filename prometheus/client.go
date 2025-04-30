@@ -17,7 +17,6 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util/httputil"
 )
 
@@ -58,10 +57,10 @@ var (
 
 func initPromCache() {
 	if config.Get().ExternalServices.Prometheus.CacheEnabled {
-		log.Infof("[Prom Cache] Enabled")
+		log.Infof("Enabled")
 		promCache = NewPromCache()
 	} else {
-		log.Infof("[Prom Cache] Disabled")
+		log.Infof("Disabled")
 	}
 }
 
@@ -303,7 +302,7 @@ func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString str
 		return []string{}, nil
 	}
 
-	log.Tracef("[Prom] GetMetricsForLabels: labels=[%v] metricNames=[%v]", labelQueryString, metricNames)
+	log.Tracef("GetMetricsForLabels: labels=[%v] metricNames=[%v]", labelQueryString, metricNames)
 	startT := time.Now()
 	queryString := fmt.Sprintf("count(%v) by (__name__)", labelQueryString)
 	results, warnings, err := in.api.Query(in.ctx, queryString, time.Now())
@@ -327,7 +326,7 @@ func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString str
 		}
 	}
 
-	log.Tracef("[Prom] GetMetricsForLabels: exec time=[%v], results count=[%v], looking for count=[%v], found count=[%v]", time.Since(startT), len(results.(model.Vector)), len(metricsWeAreLookingFor), len(metricsWeFound))
+	log.Tracef("GetMetricsForLabels: exec time=[%v], results count=[%v], looking for count=[%v], found count=[%v]", time.Since(startT), len(results.(model.Vector)), len(metricsWeAreLookingFor), len(metricsWeFound))
 	return metricsWeFound, nil
 }
 
@@ -337,7 +336,7 @@ func (in *Client) GetExistingMetricNames(metricNames []string) ([]string, error)
 		return []string{}, nil
 	}
 
-	log.Tracef("[Prom] GetExistingMetricNames: metricNames=[%v]", metricNames)
+	log.Tracef("GetExistingMetricNames: metricNames=[%v]", metricNames)
 	startT := time.Now()
 	results, warnings, err := in.api.LabelValues(in.ctx, "__name__", []string{}, time.Unix(0, 0), time.Now())
 	if len(warnings) > 0 {
@@ -360,7 +359,7 @@ func (in *Client) GetExistingMetricNames(metricNames []string) ([]string, error)
 		}
 	}
 
-	log.Tracef("[Prom] GetExistingMetricNames: exec time=[%v], results count=[%v], looking for count=[%v], found count=[%v]", time.Since(startT), len(results), len(metricsWeAreLookingFor), len(metricsWeFound))
+	log.Tracef("GetExistingMetricNames: exec time=[%v], results count=[%v], looking for count=[%v], found count=[%v]", time.Since(startT), len(results), len(metricsWeAreLookingFor), len(metricsWeFound))
 	return metricsWeFound, nil
 }
 

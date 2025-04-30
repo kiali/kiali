@@ -10,7 +10,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry/istio/util"
-	"github.com/kiali/kiali/log"
+	klog "github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -31,6 +31,7 @@ type ThroughputAppender struct {
 	QueryTime          int64 // unix time in seconds
 	Rates              graph.RequestedRates
 	ThroughputType     string
+	log                klog.ContextLogger
 }
 
 // Name implements Appender
@@ -64,7 +65,7 @@ func (a ThroughputAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo 
 }
 
 func (a ThroughputAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, gi *graph.GlobalInfo) {
-	log.Tracef("Generating [%s] throughput; namespace = %v", a.ThroughputType, namespace)
+	a.log.Tracef("Generating [%s] throughput; namespace = %v", a.ThroughputType, namespace)
 
 	client := gi.PromClient
 	// create map to quickly look up throughput
@@ -133,7 +134,7 @@ func (a ThroughputAppender) populateThroughputMap(throughputMap map[string]float
 		lDestVer, destVerOk := m["destination_canonical_revision"]
 
 		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destSvcOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk {
-			log.Warningf("populateThroughputMap: Skipping %s, missing expected labels", m.String())
+			a.log.Warningf("populateThroughputMap: Skipping %s, missing expected labels", m.String())
 			continue
 		}
 
@@ -174,7 +175,7 @@ func (a ThroughputAppender) populateThroughputMap(throughputMap map[string]float
 		if a.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
 			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
 			if err != nil {
-				log.Warningf("Skipping (t) %s, %s", m.String(), err)
+				a.log.Warningf("Skipping (t) %s, %s", m.String(), err)
 				continue
 			}
 			inject = (graph.NodeTypeService != destNodeType)
@@ -193,12 +194,12 @@ func (a ThroughputAppender) populateThroughputMap(throughputMap map[string]float
 func (a ThroughputAppender) addThroughput(throughputMap map[string]float64, val float64, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string) {
 	sourceID, _, err := graph.Id(sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
 	if err != nil {
-		log.Warningf("Skipping addThroughput (source), %s", err)
+		a.log.Warningf("Skipping addThroughput (source), %s", err)
 		return
 	}
 	destID, _, err := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
 	if err != nil {
-		log.Warningf("Skipping addThroughput (dest), %s", err)
+		a.log.Warningf("Skipping addThroughput (dest), %s", err)
 		return
 	}
 	key := fmt.Sprintf("%s %s http", sourceID, destID)

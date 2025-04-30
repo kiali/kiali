@@ -2,7 +2,7 @@ package appender
 
 import (
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/log"
+	klog "github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -15,6 +15,7 @@ type IdleNodeAppender struct {
 	GraphType          string
 	InjectServiceNodes bool // This appender adds idle services only when service nodes are injected or graphType=service
 	IsNodeGraph        bool // This appender does not operate on node detail graphs because we want to focus on the specific node.
+	log                klog.ContextLogger
 }
 
 // Name implements Appender
@@ -64,7 +65,7 @@ func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, n
 			id, nodeType, _ := graph.Id(cluster, namespace, s.Name, "", "", "", "", a.GraphType)
 			if _, found := trafficMap[id]; !found {
 				if _, found = idleNodeTrafficMap[id]; !found {
-					log.Tracef("Adding idle node for service [%s]", s.Name)
+					a.log.Tracef("Adding idle node for service [%s]", s.Name)
 					node := graph.NewNodeExplicit(id, cluster, namespace, "", "", "", s.Name, nodeType, a.GraphType)
 					// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
 					node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, graph.IsIdle: true}
@@ -87,7 +88,7 @@ func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, n
 				id, nodeType, _ := graph.Id(cluster, "", "", namespace, w.Name, app, version, a.GraphType)
 				if _, found := trafficMap[id]; !found {
 					if _, found = idleNodeTrafficMap[id]; !found {
-						log.Tracef("Adding idle node for workload [%s] with labels [%v]", w.Name, labels)
+						a.log.Tracef("Adding idle node for workload [%s] with labels [%v]", w.Name, labels)
 						node := graph.NewNodeExplicit(id, cluster, namespace, w.Name, app, version, "", nodeType, a.GraphType)
 						// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
 						node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, graph.IsIdle: true}

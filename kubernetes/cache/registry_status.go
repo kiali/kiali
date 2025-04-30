@@ -16,7 +16,7 @@ func (c *kialiCacheImpl) GetRegistryStatus(cluster string) *kubernetes.RegistryS
 	if !found {
 		// Ignoring any errors here because registry services are optional. Most likely any errors
 		// here are due to cache misses since populating the cache is handled asynchronously.
-		klog.Tracef("Unable to get registry status for cluster [%s]. Registry status not found in cache.", cluster)
+		log.Tracef("Unable to get registry status for cluster [%s]. Registry status not found in cache.", cluster)
 		return nil
 	}
 

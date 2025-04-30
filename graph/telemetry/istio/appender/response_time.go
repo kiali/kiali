@@ -10,7 +10,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry/istio/util"
-	"github.com/kiali/kiali/log"
+	klog "github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -34,6 +34,7 @@ type ResponseTimeAppender struct {
 	Quantile           float64
 	QueryTime          int64 // unix time in seconds
 	Rates              graph.RequestedRates
+	log                klog.ContextLogger
 }
 
 // Name implements Appender
@@ -75,7 +76,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 
 	quantile := a.Quantile
 	if a.Quantile == 0.0 {
-		log.Tracef("Generating average responseTime; namespace = %v", namespace)
+		a.log.Tracef("Generating average responseTime; namespace = %v", namespace)
 
 		// query prometheus for the responseTime info in two queries:
 		groupBy := "source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol"
@@ -130,7 +131,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		a.populateResponseTimeMap(responseTimeMap, &outgoingVector, gi.Conf)
 
 	} else {
-		log.Tracef("Generating responseTime for quantile [%.2f]; namespace = %v", quantile, namespace)
+		a.log.Tracef("Generating responseTime for quantile [%.2f]; namespace = %v", quantile, namespace)
 
 		// query prometheus for the responseTime info in two queries:
 		groupBy := "le,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol"
@@ -209,7 +210,7 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		lProtocol, protocolOk := m["request_protocol"]
 
 		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destSvcOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !protocolOk {
-			log.Warningf("populateResponseTimeMap: Skipping %s, missing expected labels", m.String())
+			a.log.Warningf("populateResponseTimeMap: Skipping %s, missing expected labels", m.String())
 			continue
 		}
 
@@ -255,7 +256,7 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		if a.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
 			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
 			if err != nil {
-				log.Warningf("Skipping (rt) %s, %s", m.String(), err)
+				a.log.Warningf("Skipping (rt) %s, %s", m.String(), err)
 				continue
 			}
 			inject = (graph.NodeTypeService != destNodeType)
@@ -273,12 +274,12 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 func (a ResponseTimeAppender) addResponseTime(responseTimeMap map[string]float64, val float64, protocol, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string) {
 	sourceID, _, err := graph.Id(sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
 	if err != nil {
-		log.Warningf("Skipping addResponseTime (source), %s", err)
+		a.log.Warningf("Skipping addResponseTime (source), %s", err)
 		return
 	}
 	destID, _, err := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
 	if err != nil {
-		log.Warningf("Skipping addResponseTime (dest), %s", err)
+		a.log.Warningf("Skipping addResponseTime (dest), %s", err)
 		return
 	}
 

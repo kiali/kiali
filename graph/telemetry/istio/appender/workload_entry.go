@@ -5,7 +5,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/log"
+	klog "github.com/kiali/kiali/log"
 )
 
 const WorkloadEntryAppenderName = "workloadEntry"
@@ -17,6 +17,7 @@ const WorkloadEntryAppenderName = "workloadEntry"
 // A workload can have multiple matches.
 type WorkloadEntryAppender struct {
 	AccessibleNamespaces graph.AccessibleNamespaces
+	log                  klog.ContextLogger
 }
 
 // Name implements Appender
@@ -35,7 +36,7 @@ func (a WorkloadEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalIn
 		return
 	}
 
-	log.Trace("Running workload entry appender")
+	a.log.Trace("Running workload entry appender")
 
 	a.applyWorkloadEntries(trafficMap, globalInfo, namespaceInfo)
 }
@@ -62,7 +63,7 @@ func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap,
 		})
 		graph.CheckError(err)
 
-		log.Tracef("WorkloadEntries found: %d", len(istioCfg.WorkloadEntries))
+		a.log.Tracef("WorkloadEntries found: %d", len(istioCfg.WorkloadEntries))
 
 		for _, entry := range istioCfg.WorkloadEntries {
 			appLabelName, appLabelNameFound := gi.Conf.GetAppLabelName(entry.Spec.Labels)
@@ -76,7 +77,7 @@ func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap,
 				weMetadata := n.Metadata[graph.HasWorkloadEntry].([]graph.WEInfo)
 				weMetadata = append(weMetadata, we)
 				n.Metadata[graph.HasWorkloadEntry] = weMetadata
-				log.Trace("Found matching WorkloadEntry")
+				a.log.Trace("Found matching WorkloadEntry")
 			}
 		}
 	}

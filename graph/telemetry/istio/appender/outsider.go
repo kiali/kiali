@@ -2,6 +2,7 @@ package appender
 
 import (
 	"github.com/kiali/kiali/graph"
+	klog "github.com/kiali/kiali/log"
 )
 
 const OutsiderAppenderName = "outsider"
@@ -11,6 +12,7 @@ const OutsiderAppenderName = "outsider"
 type OutsiderAppender struct {
 	AccessibleNamespaces graph.AccessibleNamespaces
 	Namespaces           graph.NamespaceInfoMap
+	log                  klog.ContextLogger
 }
 
 // Name implements Appender

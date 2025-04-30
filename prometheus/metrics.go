@@ -10,7 +10,6 @@ import (
 	"github.com/prometheus/common/model"
 	"k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/util/sliceutil"
 )
@@ -51,7 +50,7 @@ func fetchHistogramValues(ctx context.Context, api prom_v1.API, metricName, labe
 	queries := buildHistogramQueries(metricName, labels, grouping, rateInterval, avg, quantiles)
 	histogram := make(map[string]model.Vector, len(queries))
 	for k, query := range queries {
-		log.Tracef("[Prom] fetchHistogramValues: %s", query)
+		log.Tracef("fetchHistogramValues: %s", query)
 		result, warnings, err := api.Query(ctx, query, queryTime)
 		if len(warnings) > 0 {
 			log.Warningf("fetchHistogramValues. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
@@ -208,7 +207,7 @@ func getItemRequestRates(ctx context.Context, api prom_v1.API, namespace, cluste
 
 func getRequestRatesForLabel(ctx context.Context, api prom_v1.API, time time.Time, labels, ratesInterval string) (model.Vector, error) {
 	query := fmt.Sprintf("rate(istio_requests_total{%s}[%s]) > 0", labels, ratesInterval)
-	log.Tracef("[Prom] getRequestRatesForLabel: %s", query)
+	log.Tracef("getRequestRatesForLabel: %s", query)
 	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Metrics-GetRequestRates")
 	result, warnings, err := api.Query(ctx, query, time)
 	if len(warnings) > 0 {

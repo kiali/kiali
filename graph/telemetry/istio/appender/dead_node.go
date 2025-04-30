@@ -2,7 +2,7 @@ package appender
 
 import (
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/log"
+	klog "github.com/kiali/kiali/log"
 )
 
 const DeadNodeAppenderName = "deadNode"
@@ -17,6 +17,7 @@ const DeadNodeAppenderName = "deadNode"
 // Name: deadNode
 type DeadNodeAppender struct {
 	AccessibleNamespaces graph.AccessibleNamespaces
+	log                  klog.ContextLogger
 }
 
 // Name implements Appender
@@ -47,7 +48,7 @@ func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 		maxTries--
 	}
 	if applyDeadNodes {
-		log.Warningf("DeadNodeAppender infinite loop detection! MaxTries=[%v]", maxTries)
+		a.log.Warningf("infinite loop detection! MaxTries=[%v]", maxTries)
 	}
 }
 

@@ -14,9 +14,13 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/dashboards"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
+	klog "github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/httputil"
+)
+
+var (
+	log = klog.WithGroup("grafana")
 )
 
 // Service provides discovery and info about Grafana.
@@ -75,7 +79,7 @@ func (s *Service) discover(ctx context.Context) string {
 			if len(parts) >= 2 {
 				routeURL, err = s.discoverServiceURL(ctx, parts[1], parts[0])
 				if err != nil {
-					log.Debugf("[GRAFANA] URL discovery failed: %v", err)
+					log.Debugf("URL discovery failed: %v", err)
 				}
 				s.routeURL = &routeURL
 			}
@@ -85,18 +89,18 @@ func (s *Service) discover(ctx context.Context) string {
 }
 
 func (s *Service) discoverServiceURL(ctx context.Context, ns, service string) (url string, err error) {
-	log.Debugf("[%s] URL discovery for service '%s', namespace '%s'...", strings.ToUpper(service), service, ns)
+	log.Debugf("URL discovery for service [%s], namespace '%s'...", service, ns)
 	url = ""
 	// If the client is not openshift return and avoid discover
 	if !s.homeClusterSAClient.IsOpenShift() {
-		log.Debugf("[%s] Client is not Openshift, discovery url is only supported in Openshift", strings.ToUpper(service))
+		log.Debugf("Client for service [%s] is not Openshift, discovery url is only supported in Openshift", service)
 		return
 	}
 
 	// Assuming service name == route name
 	route, err := s.homeClusterSAClient.GetRoute(ctx, ns, service)
 	if err != nil {
-		log.Debugf("[%s] Discovery failed: %v", strings.ToUpper(service), err)
+		log.Debugf("Discovery for service [%s] failed: %v", service, err)
 		return
 	}
 
@@ -106,7 +110,7 @@ func (s *Service) discoverServiceURL(ctx context.Context, ns, service string) (u
 	} else {
 		url = "http://" + host
 	}
-	log.Infof("[%s] URL discovered for %s: %s", strings.ToUpper(service), service, url)
+	log.Infof("URL discovered for service [%s]: %s", service, url)
 	return
 }
 
