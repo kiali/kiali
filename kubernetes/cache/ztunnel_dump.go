@@ -55,12 +55,7 @@ func (c *kialiCacheImpl) GetZtunnelDump(cluster, namespace, pod string) *kuberne
 			err = json.Unmarshal(resp, &configDump)
 			if err != nil {
 				log.Errorf("[GetZtunnelDump] Error Unmarshalling the config_dump: %v", err)
-				// Even not unmarshalling one field, others can be filled up
-				// From Istio 1.25 -> 1.26, one of the fields changed its type
-				// But still is able to return other data
-				if configDump == nil {
-					return nil
-				}
+				return nil
 			}
 
 			c.SetZtunnelDump(key, configDump)
