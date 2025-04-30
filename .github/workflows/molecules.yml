@@ -70,9 +70,6 @@ jobs:
           esac
         fi
 
-        # Convertir a valor absoluto por si se pasa un número negativo
-        OFFSET=$(( OFFSET < 0 ? -OFFSET : OFFSET ))
-
         LATEST_ISTIO_VERSIONS="$(curl -s https://api.github.com/repos/istio/istio/releases | jq -r '.[].tag_name' | sort -rV | awk -F'[-.]' '
           {
             minor = $1"."$2
