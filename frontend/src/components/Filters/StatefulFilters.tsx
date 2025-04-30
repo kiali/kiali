@@ -42,6 +42,7 @@ import { t } from 'utils/I18nUtils';
 import { connect } from 'react-redux';
 import { KialiAppState } from 'store/Store';
 import { languageSelector } from 'store/Selectors';
+import { classes } from 'typestyle';
 
 const toolbarStyle = kialiStyle({
   padding: 0,
@@ -82,6 +83,7 @@ type StatefulFiltersProps = ReduxProps & {
   onFilterChange: (active: ActiveFiltersInfo) => void;
   onToggleChange?: (active: ActiveTogglesInfo) => void;
   ref?: React.RefObject<StatefulFiltersComponent>;
+  toolbarClass?: string;
 };
 
 interface StatefulFiltersState {
@@ -630,7 +632,11 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
 
     return (
       <>
-        <Toolbar id="filter-selection" className={toolbarStyle} clearAllFilters={this.clearFilters}>
+        <Toolbar
+          id="filter-selection"
+          className={this.props.toolbarClass ? classes(toolbarStyle, this.props.toolbarClass) : toolbarStyle}
+          clearAllFilters={this.clearFilters}
+        >
           {this.props.childrenFirst && this.renderChildren()}
           <ToolbarContent>
             <ToolbarGroup variant="filter-group">

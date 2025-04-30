@@ -16,7 +16,7 @@ type Props = {
 export const ZtunnelLabels = (p: Props): React.ReactElement => {
   return (
     <>
-      <Label style={{ margin: 10 }} color="blue" key={p.type}>
+      <Label color="blue" key={p.type}>
         {`${p.filteredConfig && p.filteredConfig.length} / `}
         {p.filteredConfig && pluralize(p.filteredConfig?.length, p.type)}
       </Label>

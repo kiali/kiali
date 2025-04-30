@@ -51,6 +51,11 @@ const toolbarStyle = kialiStyle({
   alignItems: 'center'
 });
 
+const toolbarClass = kialiStyle({
+  display: 'flex',
+  paddingTop: '0'
+});
+
 export interface SortableCompareTh<T> extends SortableTh {
   compare?: (a: T, b: T) => number;
 }
@@ -188,6 +193,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
               <StatefulFilters
                 initialFilters={serviceFilters}
                 onFilterChange={active => setActiveServiceFilters(active)}
+                toolbarClass={toolbarClass}
                 cleanState
               >
                 <ZtunnelLabels
@@ -226,6 +232,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
               <StatefulFilters
                 initialFilters={workloadFilters}
                 onFilterChange={active => setActiveWorkloadFilters(active)}
+                toolbarClass={toolbarClass}
                 cleanState
               >
                 <ZtunnelLabels
