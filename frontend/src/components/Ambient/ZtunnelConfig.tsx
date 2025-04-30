@@ -22,7 +22,7 @@ import { SortableTh } from '../Table/SimpleTable';
 import { ZtunnelMetrics } from './ZtunnelMetrics';
 import { RenderComponentScroll } from 'components/Nav/Page';
 import { FilterSelected, StatefulFilters } from '../Filters/StatefulFilters';
-import { servicesFilters, workloadsFilters } from './Filters/Filters';
+import { servicesFilters, workloadsFilters } from './Filters/ZtunnelFilters';
 import { ActiveFiltersInfo } from '../../types/Filters';
 import { runFilters } from '../FilterList/FilterHelper';
 import { ConfigType, ZtunnelLabels } from './Filters/ZtunnelLabels';

@@ -66,7 +66,10 @@ const byNode = (workloads: FilterValue[]): RunnableFilter<ZtunnelWorkload> => {
     filterType: AllFilterTypes.typeAhead,
     action: FILTER_ACTION_APPEND,
     filterValues: workloads,
-    run: (workloads, filters) => filters.filters.some(f => f.value === workloads.node)
+    run: (workloads, filters) =>
+      filters.filters.some(f => {
+        return f.value === 'N/A' ? workloads.node === '' : f.value === workloads.node;
+      })
   };
 };
 
@@ -129,7 +132,7 @@ export const workloadsFilters = (config: ZtunnelConfigDump): RunnableFilter<Ztun
       'Pod Name'
     ),
     byNamespace(Array.from(namespace).map(w => ({ id: w, title: w }))),
-    byNode(Array.from(node).map(w => ({ id: w, title: w }))),
+    byNode(Array.from(node).map(w => ({ id: w, title: w == '' ? 'N/A' : w }))),
     byProtocol(Array.from(protocol).map(w => ({ id: w, title: w })))
   ];
 };
