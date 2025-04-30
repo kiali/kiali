@@ -415,7 +415,7 @@ setup_kind_multicluster() {
       --certs-dir "${certs_dir}" \
       -dorp docker \
       --istio-dir "${istio_dir}" \
-      ${kind_node_image:-}
+      ${kind_node_image:-} \
       ${hub_arg:-} \
       ${istio_version_arg}
 

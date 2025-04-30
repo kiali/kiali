@@ -81,9 +81,10 @@ var _ = BeforeSuite(func() {
 		if len(parts) < 2 {
 			Fail(fmt.Sprintf("Invalid ISTIO_VERSION env var. Expected version of the form '1.23.0'. Got: %s", istioVersion))
 		}
+		parts2 := strings.Split(parts[1], "-") // For the 1.23-latest format
 
 		// Put it back together with just the major/minor
-		istioVersion = parts[0] + "." + parts[1]
+		istioVersion = parts[0] + "." + parts2[0]
 	} else {
 		// Find the latest version
 		crdFiles, err := istioCRDDir.ReadDir("testdata/istio-crds")
