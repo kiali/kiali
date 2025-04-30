@@ -17,9 +17,7 @@ type ZtunnelDumpCache interface {
 }
 
 func (c *kialiCacheImpl) SetZtunnelDump(key string, config *kubernetes.ZtunnelConfigDump) {
-	ztunnelItems := c.ztunnelConfigStore.Items()
-	ztunnelItems[key] = config
-	c.ztunnelConfigStore.Replace(ztunnelItems)
+	c.ztunnelConfigStore.Set(key, config)
 }
 
 func (c *kialiCacheImpl) GetZtunnelDump(cluster, namespace, pod string) *kubernetes.ZtunnelConfigDump {
