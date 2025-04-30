@@ -1,5 +1,6 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { openTab } from './transition';
+import { getCellsForCol } from './table';
 
 // waitForWorkloadEnrolled waits until Kiali returns the namespace labels updated
 // Adding the waypoint label into the bookinfo namespace
@@ -154,7 +155,7 @@ Then('validates waypoint Info data for {string}', (type: string) => {
   cy.get('[role="grid"]').should('be.visible').get('[data-label=RDS]').and('contain', 'IGNORED');
 });
 
-When('the user validates the Ztunnel tab', () => {
+When('the user validates the Ztunnel tab for the {string} namespace', (namespace: string) => {
   openTab('Ztunnel');
   cy.get('#ztunnel-details').should('be.visible').contains('Services').click();
   cy.get('[role="grid"]').should('be.visible').get('[data-label="Service VIP"]');
@@ -164,4 +165,13 @@ When('the user validates the Ztunnel tab', () => {
   cy.get('[role="grid"]').should('be.visible').get('[data-label="Pod Name"]');
   cy.get('[role="grid"]').should('be.visible').get('[data-label=Node]');
   cy.get('[role="grid"]').should('be.visible').get('[data-label=Namespace]').and('contain', 'bookinfo');
+  // Validate filters in the Namespace column
+  cy.get('button#filter_select_type-toggle').click();
+  cy.contains('div#filter_select_type button', 'Namespace').click();
+  cy.get('input[placeholder="Filter by Namespace"]').type(`${namespace}{enter}`);
+  cy.get(`li[label="${namespace}"]`).should('be.visible').find('button').click();
+
+  getCellsForCol('Namespace').each($cell => {
+    cy.wrap($cell).contains(namespace);
+  });
 });
