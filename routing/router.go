@@ -12,6 +12,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/zerolog/hlog"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -225,11 +226,15 @@ func NewRouter(
 		} else {
 			handlerFunction = authenticationHandler.HandleUnauthenticated(handlerFunction)
 		}
+
+		// wrap the whole thing in our logger handler so we can get a logger in our http handling chain
+		finalHandler := buildHttpHandlerLogger(route, handlerFunction)
+
 		appRouter.
 			Methods(route.Method).
 			Path(route.Pattern).
 			Name(route.Name).
-			Handler(handlerFunction)
+			Handler(finalHandler)
 	}
 
 	if authController != nil {
@@ -337,4 +342,29 @@ func serveIndexFile(w http.ResponseWriter) {
 	if err != nil {
 		log.Errorf("HTTP I/O error [%v]", err.Error())
 	}
+}
+
+// Things to help build the logger handler chain (see https://pkg.go.dev/github.com/rs/zerolog/hlog#example-package-Handler)
+// fake alice to avoid dep
+type alice struct {
+	m []func(http.Handler) http.Handler
+}
+
+func (a alice) append(m func(http.Handler) http.Handler) alice {
+	a.m = append(a.m, m)
+	return a
+}
+func (a alice) then(h http.Handler) http.Handler {
+	for i := range a.m {
+		h = a.m[len(a.m)-1-i](h)
+	}
+	return h
+}
+func buildHttpHandlerLogger(route Route, handlerFunction http.Handler) http.Handler {
+	c := alice{}
+	c = c.append(hlog.NewHandler(log.WithGroup(route.Name).Z))
+	c = c.append(hlog.HostHandler("Host", true))
+	c = c.append(hlog.RequestIDHandler("RequestID", "Request-Id"))
+
+	return c.then(handlerFunction)
 }

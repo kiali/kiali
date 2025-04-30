@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
@@ -65,6 +66,7 @@ func ClusterApps(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.FromRequest(r).Debug().Msg("Fetching all apps in single cluster")
 		query := r.URL.Query()
 		namespacesQueryParam := query.Get("namespaces") // csl of namespaces
 		p := appParams{}

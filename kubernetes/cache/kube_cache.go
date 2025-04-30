@@ -36,7 +36,6 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 )
 
 const K8sExpGatewayAPIMessage = "k8s experimental Gateway API CRD is needed to be installed"
@@ -213,12 +212,12 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, conf config.Config, er
 
 	if c.clusterScoped {
 		// note that we ignore accessibleNamespaces - if we are cluster scoped, we will watch all namespaces
-		log.Debug("[Kiali Cache] Using 'cluster' scoped Kiali Cache")
+		klog.Debug("Using 'cluster' scoped Kiali Cache")
 		if err := c.startInformers(""); err != nil {
 			return nil, err
 		}
 	} else {
-		log.Debug("[Kiali Cache] Using 'namespace' scoped Kiali Cache")
+		klog.Debug("Using 'namespace' scoped Kiali Cache")
 		c.nsCacheLister = make(map[string]*cacheLister)
 		c.stopNSChans = make(map[string]chan struct{})
 		// Since we do not have cluster wide access, we do not have permission to list all namespaces.
@@ -267,7 +266,7 @@ func (c *kubeCache) Client() kubernetes.ClientInterface {
 // UpdateClient will update the client and refresh the cache.
 // This is used when the client is updated with a new token.
 func (c *kubeCache) UpdateClient(kialiClient kubernetes.ClientInterface) error {
-	log.Debug("[Kiali Cache] Updating Kiali client. Refreshing cache.")
+	klog.Debug("Updating Kiali client. Refreshing cache.")
 	c.cacheLock.Lock()
 	defer c.cacheLock.Unlock()
 
@@ -289,7 +288,7 @@ func (c *kubeCache) UpdateClient(kialiClient kubernetes.ClientInterface) error {
 
 // Stop will stop either the cluster wide cache or all of the namespace caches.
 func (c *kubeCache) Stop() {
-	log.Infof("Stopping Kiali Cache")
+	klog.Infof("Stopping Kiali Cache")
 	c.cacheLock.Lock()
 	defer c.cacheLock.Unlock()
 
@@ -303,7 +302,7 @@ func (c *kubeCache) Stop() {
 }
 
 func (c *kubeCache) StopNamespace(namespace string) {
-	log.Infof("Stopping Kiali Cache for namespace [%v]", namespace)
+	klog.Infof("Stopping Kiali Cache for namespace [%v]", namespace)
 	c.cacheLock.Lock()
 	defer c.cacheLock.Unlock()
 
@@ -331,7 +330,7 @@ func (c *kubeCache) Refresh(namespace string) {
 	defer c.cacheLock.Unlock()
 
 	if err := c.refresh(namespace); err != nil {
-		log.Errorf("[Kiali Cache] Error refreshing cache for namespace: %s. Err: %s", namespace, err)
+		klog.Errorf("Error refreshing cache for namespace: %s. Err: %s", namespace, err)
 	}
 }
 
@@ -347,7 +346,7 @@ func (c *kubeCache) refresh(namespace string) error {
 	// the number of times informers are created and then immediately thrown away and created again.
 	defer c.refreshOnce.Reset()
 	return c.refreshOnce.Do(func() error {
-		log.Debugf("Restarting cache informers for namespace [%v]", namespace)
+		klog.Debugf("Restarting cache informers for namespace [%v]", namespace)
 		c.stop(namespace)
 		return c.startInformers(namespace)
 	})
@@ -376,11 +375,11 @@ func (c *kubeCache) startInformers(namespace string) error {
 		c.stopNSChans[namespace] = stop
 	}
 
-	log.Debugf("[Kiali Cache] Starting %s informers", scope)
+	klog.Debugf("Starting %s informers", scope)
 
 	// TODO: This calls should not happen. At the moment, prevent the errors from these calls
 	if !c.clusterScoped && namespace == "" {
-		log.Errorf("[Kiali Cache] Error starting namespace-scoped cache for empty namespace")
+		klog.Errorf("Error starting namespace-scoped cache for empty namespace")
 		return nil
 	}
 
@@ -388,13 +387,13 @@ func (c *kubeCache) startInformers(namespace string) error {
 		go informer.Start(stop)
 	}
 
-	log.Infof("[Kiali Cache] Waiting for %s cache to sync", scope)
+	klog.Infof("Waiting for %s cache to sync", scope)
 	if !c.waitForCacheSync(stop, c.getCacheLister(namespace).cachesSynced...) {
-		log.Errorf("[Kiali Cache] Failed to sync %s cache", scope)
+		klog.Errorf("Failed to sync %s cache", scope)
 		return errors.New("failed to sync cache")
 	}
 
-	log.Info("[Kiali Cache] Started")
+	klog.Info("Started")
 	return nil
 }
 
@@ -576,14 +575,14 @@ func (c *kubeCache) createKubernetesInformers(namespace string) informers.Shared
 			if c.errorHandler != nil {
 				c.errorHandler(c, namespace, err)
 			} else {
-				log.Errorf("Error detected when watching namespace [%v] in cluster [%v]. error: %v", namespace, c.client.ClusterInfo().Name, err)
+				klog.Errorf("Error detected when watching namespace [%v] in cluster [%v]. error: %v", namespace, c.client.ClusterInfo().Name, err)
 			}
 		}
 
 		for _, informerToWatch := range informersToWatchList {
 			err := informerToWatch.SetWatchErrorHandler(watchErrorHandler)
 			if err != nil {
-				log.Errorf("Failed to install watch error handler for namespace [%v]; will not detect if it gets deleted", namespace)
+				klog.Errorf("Failed to install watch error handler for namespace [%v]; will not detect if it gets deleted", namespace)
 			}
 		}
 	}
@@ -626,16 +625,16 @@ func (c *kubeCache) getCacheLister(namespace string) *cacheLister {
 	lister, ok := c.nsCacheLister[namespace]
 	if !ok {
 		logPrefix := fmt.Sprintf("Kiali Cache for namespace [%v] in cluster [%v]", namespace, c.client.ClusterInfo().Name)
-		log.Debugf("%v: attempting to restart informers", logPrefix)
+		klog.Debugf("%v: attempting to restart informers", logPrefix)
 		if err := c.refresh(namespace); err != nil {
-			log.Errorf("%v: restarting informers failed with error: %v", logPrefix, err)
+			klog.Errorf("%v: restarting informers failed with error: %v", logPrefix, err)
 		}
 		lister, ok = c.nsCacheLister[namespace]
 		if ok {
-			log.Debugf("%v: successfully obtained listers", logPrefix)
+			klog.Debugf("%v: successfully obtained listers", logPrefix)
 		} else {
 			// this likely means the caller is going to segfault with nil pointer; TODO return error and let callers gracefully fail
-			log.Fatalf("%v: failed to obtain listers", logPrefix)
+			klog.Errorf("%v: failed to obtain listers", logPrefix)
 		}
 	}
 	return lister
@@ -646,7 +645,7 @@ func (c *kubeCache) GetConfigMap(namespace, name string) (*core_v1.ConfigMap, er
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	log.Tracef("[Kiali Cache] Get [resource: ConfigMap] for [namespace: %s] [name: %s]", namespace, name)
+	klog.Tracef("Get [resource: ConfigMap] for [namespace: %s] [name: %s]", namespace, name)
 	cfg, err := c.getCacheLister(namespace).configMapLister.ConfigMaps(namespace).Get(name)
 	if err != nil {
 		return nil, err
@@ -694,7 +693,7 @@ func (c *kubeCache) GetConfigMaps(namespace string, labelSelector string) ([]cor
 		}
 	}
 
-	log.Tracef("[Kiali Cache] Get [resource: ConfigMap] for [namespace: %s] = %d", namespace, len(configMaps))
+	klog.Tracef("Get [resource: ConfigMap] for [namespace: %s] = %d", namespace, len(configMaps))
 
 	var retConfigMaps []core_v1.ConfigMap
 	for _, cc := range configMaps {
@@ -714,7 +713,7 @@ func (c *kubeCache) GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error)
 	if err != nil {
 		return nil, err
 	}
-	log.Tracef("[Kiali Cache] Get [resource: DaemonSet] for [namespace: %s] = %d", namespace, len(daemonSets))
+	klog.Tracef("Get [resource: DaemonSet] for [namespace: %s] = %d", namespace, len(daemonSets))
 
 	retSets := []apps_v1.DaemonSet{}
 	for _, ds := range daemonSets {
@@ -732,7 +731,7 @@ func (c *kubeCache) GetDaemonSet(namespace, name string) (*apps_v1.DaemonSet, er
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	log.Tracef("[Kiali Cache] Get [resource: DaemonSet] for [namespace: %s] [name: %s]", namespace, name)
+	klog.Tracef("Get [resource: DaemonSet] for [namespace: %s] [name: %s]", namespace, name)
 	ds, err := c.getCacheLister(namespace).daemonSetLister.DaemonSets(namespace).Get(name)
 	if err != nil {
 		return nil, err
@@ -807,7 +806,7 @@ func (c *kubeCache) GetDeployments(namespace string) ([]apps_v1.Deployment, erro
 	if err != nil {
 		return nil, err
 	}
-	log.Tracef("[Kiali Cache] Get [resource: Deployment] for [namespace: %s] = %d", namespace, len(deployments))
+	klog.Tracef("Get [resource: Deployment] for [namespace: %s] = %d", namespace, len(deployments))
 
 	retDeployments := []apps_v1.Deployment{}
 	for _, deployment := range deployments {
@@ -869,7 +868,7 @@ func (c *kubeCache) GetDeployment(namespace, name string) (*apps_v1.Deployment, 
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	log.Tracef("[Kiali Cache] Get [resource: Deployment] for [namespace: %s] [name: %s]", namespace, name)
+	klog.Tracef("Get [resource: Deployment] for [namespace: %s] [name: %s]", namespace, name)
 	deployment, err := c.getCacheLister(namespace).deploymentLister.Deployments(namespace).Get(name)
 	if err != nil {
 		return nil, err
@@ -887,7 +886,7 @@ func (c *kubeCache) GetEndpoints(namespace, name string) (*core_v1.Endpoints, er
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	log.Tracef("[Kiali Cache] Get [resource: Endpoints] for [namespace: %s] [name: %s]", namespace, name)
+	klog.Tracef("Get [resource: Endpoints] for [namespace: %s] [name: %s]", namespace, name)
 	endpoints, err := c.getCacheLister(namespace).endpointLister.Endpoints(namespace).Get(name)
 	if err != nil {
 		return nil, err
@@ -909,7 +908,7 @@ func (c *kubeCache) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, er
 	if err != nil {
 		return nil, err
 	}
-	log.Tracef("[Kiali Cache] Get [resource: StatefulSet] for [namespace: %s] = %d", namespace, len(statefulSets))
+	klog.Tracef("Get [resource: StatefulSet] for [namespace: %s] = %d", namespace, len(statefulSets))
 
 	retSets := []apps_v1.StatefulSet{}
 	for _, ss := range statefulSets {
@@ -927,7 +926,7 @@ func (c *kubeCache) GetStatefulSet(namespace, name string) (*apps_v1.StatefulSet
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	log.Tracef("[Kiali Cache] Get [resource: StatefulSet] for [namespace: %s] [name: %s]", namespace, name)
+	klog.Tracef("Get [resource: StatefulSet] for [namespace: %s] [name: %s]", namespace, name)
 	statefulSet, err := c.getCacheLister(namespace).statefulSetLister.StatefulSets(namespace).Get(name)
 	if err != nil {
 		return nil, err
@@ -975,7 +974,7 @@ func (c *kubeCache) GetServices(namespace string, labelSelector string) ([]core_
 		}
 	}
 
-	log.Tracef("[Kiali Cache] Get [resource: Service] for [namespace: %s] = %d", namespace, len(services))
+	klog.Tracef("Get [resource: Service] for [namespace: %s] = %d", namespace, len(services))
 
 	var retServices []core_v1.Service
 	for _, ss := range services {
@@ -1021,7 +1020,7 @@ func (c *kubeCache) GetService(namespace, name string) (*core_v1.Service, error)
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	log.Tracef("[Kiali Cache] Get [resource: Service] for [namespace: %s] [name: %s]", namespace, name)
+	klog.Tracef("Get [resource: Service] for [namespace: %s] [name: %s]", namespace, name)
 	service, err := c.getCacheLister(namespace).serviceLister.Services(namespace).Get(name)
 	if err != nil {
 		return nil, err
@@ -1048,7 +1047,7 @@ func (c *kubeCache) GetPods(namespace, labelSelector string) ([]core_v1.Pod, err
 	if err != nil {
 		return nil, err
 	}
-	log.Tracef("[Kiali Cache] Get [resource: Pod] for [namespace: %s] = %d", namespace, len(pods))
+	klog.Tracef("Get [resource: Pod] for [namespace: %s] = %d", namespace, len(pods))
 
 	retPods := []core_v1.Pod{}
 	for _, pod := range pods {
@@ -1111,7 +1110,7 @@ func (c *kubeCache) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, erro
 			result[i] = *rs
 			i = i + 1
 		}
-		log.Tracef("[Kiali Cache] Get [resource: ReplicaSet] for [namespace: %s] = %d", namespace, lenRS)
+		klog.Tracef("Get [resource: ReplicaSet] for [namespace: %s] = %d", namespace, lenRS)
 	}
 	return result, nil
 }
@@ -1813,7 +1812,7 @@ func (c *kubeCache) GetTelemetries(namespace, labelSelector string) ([]*telemetr
 func (c *kubeCache) isK8sGatewayListerInit(namespace string) bool {
 	// potential issue can happen when CRDs are created after Kiali start
 	if !c.hasGatewayAPIStarted {
-		log.Info(K8sGatewayAPIMessage)
+		klog.Info(K8sGatewayAPIMessage)
 		return false
 	}
 	return true
