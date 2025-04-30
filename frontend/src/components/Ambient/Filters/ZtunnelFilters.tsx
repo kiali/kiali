@@ -132,7 +132,7 @@ export const workloadsFilters = (config: ZtunnelConfigDump): RunnableFilter<Ztun
       'Pod Name'
     ),
     byNamespace(Array.from(namespace).map(w => ({ id: w, title: w }))),
-    byNode(Array.from(node).map(w => ({ id: w, title: w == '' ? 'N/A' : w }))),
+    byNode(Array.from(node).map(w => ({ id: w, title: w === '' ? 'N/A' : w }))),
     byProtocol(Array.from(protocol).map(w => ({ id: w, title: w })))
   ];
 };
