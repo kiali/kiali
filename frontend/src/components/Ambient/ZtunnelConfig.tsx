@@ -198,8 +198,9 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
               >
                 <ZtunnelLabels
                   key="service-labels"
-                  type={ConfigType.SERVICE}
                   filteredConfig={activeServiceFilters.filters.length > 0 ? filteredServices : config.services}
+                  total={config?.services?.length ?? filteredServices.length}
+                  type={ConfigType.SERVICE}
                 />
               </StatefulFilters>
             </div>
@@ -237,8 +238,9 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
               >
                 <ZtunnelLabels
                   key="workload-labels"
-                  type={ConfigType.WORKLOAD}
                   filteredConfig={activeWorkloadFilters.filters.length > 0 ? filteredWorkloads : config?.workloads}
+                  total={config?.workloads?.length ?? filteredWorkloads.length}
+                  type={ConfigType.WORKLOAD}
                 />
               </StatefulFilters>
             </div>

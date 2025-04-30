@@ -10,6 +10,7 @@ export enum ConfigType {
 
 type Props = {
   filteredConfig?: ZtunnelItem[];
+  total: number;
   type: ConfigType;
 };
 
@@ -18,7 +19,7 @@ export const ZtunnelLabels = (p: Props): React.ReactElement => {
     <>
       <Label color="blue" key={p.type}>
         {`${p.filteredConfig && p.filteredConfig.length} / `}
-        {p.filteredConfig && pluralize(p.filteredConfig?.length, p.type)}
+        {p.filteredConfig && pluralize(p.total, p.type)}
       </Label>
     </>
   );
