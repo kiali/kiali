@@ -645,7 +645,6 @@ func (c *kubeCache) GetConfigMap(namespace, name string) (*core_v1.ConfigMap, er
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	klog.Tracef("Get [resource: ConfigMap] for [namespace: %s] [name: %s]", namespace, name)
 	cfg, err := c.getCacheLister(namespace).configMapLister.ConfigMaps(namespace).Get(name)
 	if err != nil {
 		return nil, err
@@ -693,8 +692,6 @@ func (c *kubeCache) GetConfigMaps(namespace string, labelSelector string) ([]cor
 		}
 	}
 
-	klog.Tracef("Get [resource: ConfigMap] for [namespace: %s] = %d", namespace, len(configMaps))
-
 	var retConfigMaps []core_v1.ConfigMap
 	for _, cc := range configMaps {
 		c := cc.DeepCopy()
@@ -713,7 +710,6 @@ func (c *kubeCache) GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error)
 	if err != nil {
 		return nil, err
 	}
-	klog.Tracef("Get [resource: DaemonSet] for [namespace: %s] = %d", namespace, len(daemonSets))
 
 	retSets := []apps_v1.DaemonSet{}
 	for _, ds := range daemonSets {
@@ -731,7 +727,6 @@ func (c *kubeCache) GetDaemonSet(namespace, name string) (*apps_v1.DaemonSet, er
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	klog.Tracef("Get [resource: DaemonSet] for [namespace: %s] [name: %s]", namespace, name)
 	ds, err := c.getCacheLister(namespace).daemonSetLister.DaemonSets(namespace).Get(name)
 	if err != nil {
 		return nil, err
@@ -806,7 +801,6 @@ func (c *kubeCache) GetDeployments(namespace string) ([]apps_v1.Deployment, erro
 	if err != nil {
 		return nil, err
 	}
-	klog.Tracef("Get [resource: Deployment] for [namespace: %s] = %d", namespace, len(deployments))
 
 	retDeployments := []apps_v1.Deployment{}
 	for _, deployment := range deployments {
@@ -868,7 +862,6 @@ func (c *kubeCache) GetDeployment(namespace, name string) (*apps_v1.Deployment, 
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	klog.Tracef("Get [resource: Deployment] for [namespace: %s] [name: %s]", namespace, name)
 	deployment, err := c.getCacheLister(namespace).deploymentLister.Deployments(namespace).Get(name)
 	if err != nil {
 		return nil, err
@@ -886,7 +879,6 @@ func (c *kubeCache) GetEndpoints(namespace, name string) (*core_v1.Endpoints, er
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	klog.Tracef("Get [resource: Endpoints] for [namespace: %s] [name: %s]", namespace, name)
 	endpoints, err := c.getCacheLister(namespace).endpointLister.Endpoints(namespace).Get(name)
 	if err != nil {
 		return nil, err
@@ -908,7 +900,6 @@ func (c *kubeCache) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, er
 	if err != nil {
 		return nil, err
 	}
-	klog.Tracef("Get [resource: StatefulSet] for [namespace: %s] = %d", namespace, len(statefulSets))
 
 	retSets := []apps_v1.StatefulSet{}
 	for _, ss := range statefulSets {
@@ -926,7 +917,6 @@ func (c *kubeCache) GetStatefulSet(namespace, name string) (*apps_v1.StatefulSet
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	klog.Tracef("Get [resource: StatefulSet] for [namespace: %s] [name: %s]", namespace, name)
 	statefulSet, err := c.getCacheLister(namespace).statefulSetLister.StatefulSets(namespace).Get(name)
 	if err != nil {
 		return nil, err
@@ -974,8 +964,6 @@ func (c *kubeCache) GetServices(namespace string, labelSelector string) ([]core_
 		}
 	}
 
-	klog.Tracef("Get [resource: Service] for [namespace: %s] = %d", namespace, len(services))
-
 	var retServices []core_v1.Service
 	for _, ss := range services {
 		s := ss.DeepCopy()
@@ -1020,7 +1008,6 @@ func (c *kubeCache) GetService(namespace, name string) (*core_v1.Service, error)
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	klog.Tracef("Get [resource: Service] for [namespace: %s] [name: %s]", namespace, name)
 	service, err := c.getCacheLister(namespace).serviceLister.Services(namespace).Get(name)
 	if err != nil {
 		return nil, err
@@ -1047,7 +1034,6 @@ func (c *kubeCache) GetPods(namespace, labelSelector string) ([]core_v1.Pod, err
 	if err != nil {
 		return nil, err
 	}
-	klog.Tracef("Get [resource: Pod] for [namespace: %s] = %d", namespace, len(pods))
 
 	retPods := []core_v1.Pod{}
 	for _, pod := range pods {
@@ -1110,7 +1096,6 @@ func (c *kubeCache) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, erro
 			result[i] = *rs
 			i = i + 1
 		}
-		klog.Tracef("Get [resource: ReplicaSet] for [namespace: %s] = %d", namespace, lenRS)
 	}
 	return result, nil
 }
