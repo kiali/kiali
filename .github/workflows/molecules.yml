@@ -91,8 +91,8 @@ jobs:
         echo "${LATEST_ISTIO_VERSIONS}"
         echo "The Istio minor version offset is [${OFFSET}], thus the Istio version to be used in the tests will be: ${ISTIO_VERSION}"
         echo "ISTIO_VERSION=${ISTIO_VERSION}" >> $GITHUB_ENV
-    - name: Run molecule tests
-      id: run-molecule-tests
+    - name: Run molecule tests HELM
+      id: run-molecule-tests-helm
       run: |
         ISTIO_VERSION="${{ env.ISTIO_VERSION }}"
         if [ -z "${ISTIO_VERSION}" ]; then
@@ -104,6 +104,13 @@ jobs:
         echo "================================================================"
         echo
         ./hack/ci-kind-molecule-tests.sh --istio-version ${ISTIO_VERSION} --client-exe $(which kubectl) --kind-exe $(which kind) --all-tests "${{ inputs.all_tests }}" --git-clone-protocol https --irc-room "" --upload-logs false --rebuild-cluster true -ci true --operator-installer helm --olm-enabled false
+    - name: Run molecule tests OLM
+      id: run-molecule-tests-olm
+      run: |
+        ISTIO_VERSION="${{ env.ISTIO_VERSION }}"
+        if [ -z "${ISTIO_VERSION}" ]; then
+          echo "Could not determine the Istio version to use." && exit 1
+        fi
         echo
         echo "================================================================"
         echo "Testing with Istio version [${ISTIO_VERSION}] using OLM install"
