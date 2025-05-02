@@ -79,7 +79,7 @@ var _ = BeforeSuite(func() {
 		// Take version of the form 1.23.0 and convert it to it's minor form: 1.23
 		parts := strings.Split(istioVersion, ".")
 		if len(parts) < 2 {
-			Fail(fmt.Sprintf("Invalid ISTIO_VERSION env var. Expected version of the form '1.23.0' of '1.23-latest'. Got: %s", istioVersion))
+			Fail(fmt.Sprintf("Invalid ISTIO_VERSION env var. Expected version of the form '1.23.0' or '1.23-latest'. Got: %s", istioVersion))
 		}
 		parts2 := strings.Split(parts[1], "-") // For the 1.23-latest format
 
