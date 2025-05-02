@@ -271,7 +271,6 @@ func TestZtunnelDump(t *testing.T) {
 	initData := cache.GetZtunnelDump("cluster-default", "istio-system", "ztunnel-7hml8")
 	require.Nil(initData)
 
-	zTunnel := make(map[string]*kubernetes.ZtunnelConfigDump)
 	zTunnelData, err := os.Open("../testdata/ztunnel-config.json")
 	require.NoError(err)
 	defer zTunnelData.Close()
@@ -280,8 +279,7 @@ func TestZtunnelDump(t *testing.T) {
 	errD := json.NewDecoder(zTunnelData).Decode(&configD)
 	require.NoError(errD)
 
-	zTunnel["cluster-defaultistio-systemztunnel-7hml8"] = configD
-	cache.SetZtunnelDump(zTunnel)
+	cache.SetZtunnelDump("cluster-defaultistio-systemztunnel-7hml8", configD)
 
 	cacheData := cache.GetZtunnelDump("cluster-default", "istio-system", "ztunnel-7hml8")
 	require.NotNil(cacheData)
@@ -292,4 +290,6 @@ func TestZtunnelDump(t *testing.T) {
 	require.Equal(cacheData.Services[36].Hostname, "waypoint.bookinfo.svc.cluster.local")
 	require.Equal(cacheData.Services[36].Name, "waypoint")
 	require.Equal(cacheData.Services[36].Namespace, "bookinfo")
+
+	require.Equal(cacheData.Config.DNSResolverOpts.UseHostsFile, kubernetes.BoolOrString("Auto"))
 }
