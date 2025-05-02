@@ -312,6 +312,7 @@ type IstioConfig struct {
 	ConfigMapName                     string            `yaml:"config_map_name,omitempty"`
 	EnvoyAdminLocalPort               int               `yaml:"envoy_admin_local_port,omitempty"`
 	GatewayAPIClasses                 []GatewayAPIClass `yaml:"gateway_api_classes,omitempty"`
+	GatewayAPIClassesLabelSelector    string            `yaml:"gateway_api_classes_label_selector,omitempty"`
 	IstioAPIEnabled                   bool              `yaml:"istio_api_enabled"`
 	IstioIdentityDomain               string            `yaml:"istio_identity_domain,omitempty"`
 	IstioInjectionAnnotation          string            `yaml:"istio_injection_annotation,omitempty"`
