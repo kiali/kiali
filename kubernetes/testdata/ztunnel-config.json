@@ -65,7 +65,7 @@
         "secs": 5
       },
       "try_tcp_on_error": false,
-      "use_hosts_file": "",
+      "use_hosts_file": "Auto",
       "validate": false
     },
     "fakeCa": false,

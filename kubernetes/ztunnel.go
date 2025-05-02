@@ -1,6 +1,9 @@
 package kubernetes
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type ZtunnelConfigDump struct {
 	Certificates []Certificate `json:"certificates"`
@@ -96,11 +99,13 @@ type BoolOrString string
 func (s *BoolOrString) UnmarshalJSON(data []byte) (err error) {
 	var boolVal bool
 	if err := json.Unmarshal(data, &boolVal); err == nil {
+		*s = BoolOrString(fmt.Sprintf("%t", boolVal))
 		return nil
 	}
 
 	var strVal string
 	if err := json.Unmarshal(data, &strVal); err == nil {
+		*s = BoolOrString(strVal)
 		return nil
 	}
 	return err
