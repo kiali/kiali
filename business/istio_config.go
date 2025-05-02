@@ -1122,10 +1122,6 @@ func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, clust
 	return istioConfigDetail, nil
 }
 
-func (in *IstioConfigService) GatewayAPIClasses(cluster string) []config.GatewayAPIClass {
-	return kubernetes.GatewayAPIClasses(in.kialiCache.IsAmbientEnabled(cluster), in.conf)
-}
-
 func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, namespaces []string, cluster string) models.IstioConfigPermissions {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetIstioConfigPermissions",

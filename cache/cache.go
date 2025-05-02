@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -47,6 +48,8 @@ type KialiCache interface {
 
 	GetGateways() (models.Workloads, bool)
 	SetGateways(models.Workloads)
+
+	GatewayAPIClasses(cluster string) []config.GatewayAPIClass
 
 	GetIstioStatus() (kubernetes.IstioComponentStatus, bool)
 	SetIstioStatus(kubernetes.IstioComponentStatus)
@@ -354,6 +357,52 @@ func (c *kialiCacheImpl) GetGateways() (models.Workloads, bool) {
 // SetGateways Sets a list of all gateway workloads by cluster and namespace
 func (c *kialiCacheImpl) SetGateways(gateways models.Workloads) {
 	c.gatewayStore.Set(kialiCacheGatewaysKey, gateways)
+}
+
+// GatewayAPIClasses returns list of K8s GatewayAPIClass objects
+// K8s Gateway API classes can come from three different places depending on the configuration:
+// 1. From explicitly listed classes in the configuration
+// 2a. From classes matching a label selector in the configuration
+// 2b. If neither are configured, all classes that use Istio as a controller
+func (c *kialiCacheImpl) GatewayAPIClasses(cluster string) []config.GatewayAPIClass {
+	k8sCache, err := c.GetKubeCache(cluster)
+	if err != nil {
+		log.Debugf("Unable to get kube cache when checking for GatewayAPIClasses: %s", err)
+		return nil
+	}
+
+	// First case: defined classes in config
+	result := []config.GatewayAPIClass{}
+	definedClasses := c.conf.ExternalServices.Istio.GatewayAPIClasses
+	for i, gwClass := range definedClasses {
+		if gwClass.ClassName != "" && gwClass.Name != "" {
+			result = append(result, gwClass)
+			continue
+		}
+
+		log.Warningf("Gateway API class %d is missing a name or class name field. Currently set name %q, class name %q.",
+			i, gwClass.Name, gwClass.ClassName)
+	}
+
+	labelSelector := strings.TrimSpace(config.Get().ExternalServices.Istio.GatewayAPIClassesLabelSelector)
+
+	// If label selector is defined (case 2a) or there are no configured classes (case 2b), get classes
+	// using the Istio controller
+	if labelSelector != "" || len(definedClasses) == 0 {
+		classes, err := k8sCache.GetK8sGatewayClasses(labelSelector)
+		if err != nil {
+			return nil
+		}
+
+		for _, class := range classes {
+			// Filter out classes that don't use Istio as a controller
+			if strings.HasPrefix(string(class.Spec.ControllerName), "istio.io") {
+				result = append(result, config.GatewayAPIClass{Name: class.Name, ClassName: class.Name})
+			}
+		}
+	}
+
+	return result
 }
 
 // GetWaypoints Returns a list of waypoint proxies by cluster and namespace

@@ -113,7 +113,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			publicConfig.GatewayAPIEnabled = client.IsGatewayAPI()
 		}
 		publicConfig.AmbientEnabled = cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName)
-		publicConfig.GatewayAPIClasses = kubernetes.GatewayAPIClasses(publicConfig.AmbientEnabled, conf)
+		publicConfig.GatewayAPIClasses = cache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
 
 		// Fetch the list of all clusters in the mesh
 		// One usage of this data is to cross-link Kiali instances, when possible.
