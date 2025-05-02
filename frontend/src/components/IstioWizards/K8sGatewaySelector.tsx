@@ -58,7 +58,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
       newGateway: props.k8sGateways.length === 0,
       selectedGateway:
         props.k8sGateways.length > 0 ? (props.gateway !== '' ? props.gateway : props.k8sGateways[0]) : '',
-      gatewayClass: serverConfig?.gatewayAPIClasses[0]?.className,
+      gatewayClass: serverConfig?.gatewayAPIClasses?.length > 0 ? serverConfig.gatewayAPIClasses[0].className : '',
       addMesh: false,
       port: 80,
       isOpen: false

@@ -23,7 +23,7 @@ export type K8sGatewayState = {
 
 export const initK8sGateway = (): K8sGatewayState => ({
   addresses: [],
-  gatewayClass: serverConfig.gatewayAPIClasses[0].className,
+  gatewayClass: serverConfig.gatewayAPIClasses.length > 0 ? serverConfig.gatewayAPIClasses[0].className : '',
   listeners: [],
   listenersForm: [],
   validHosts: false
