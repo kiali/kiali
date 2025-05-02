@@ -402,7 +402,7 @@ func (c *kialiCacheImpl) GatewayAPIClasses(cluster string) []config.GatewayAPICl
 		}
 	}
 
-	if len(result) == 0 {
+	if len(result) == 0 && k8sCache.Client().IsGatewayAPI() {
 		klog.Errorf("No GatewayAPIClasses configured or found in cluster '%s' by label selector '%s'", cluster, labelSelector)
 	}
 
