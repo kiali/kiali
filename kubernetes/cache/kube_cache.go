@@ -98,6 +98,7 @@ type KubeCache interface {
 
 	GetK8sGateway(namespace, name string) (*gatewayapi_v1.Gateway, error)
 	GetK8sGateways(namespace, labelSelector string) ([]*gatewayapi_v1.Gateway, error)
+	GetK8sGatewayClasses(labelSelector string) ([]*gatewayapi_v1.GatewayClass, error)
 	GetK8sGRPCRoute(namespace, name string) (*gatewayapi_v1.GRPCRoute, error)
 	GetK8sGRPCRoutes(namespace, labelSelector string) ([]*gatewayapi_v1.GRPCRoute, error)
 	GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1.HTTPRoute, error)
@@ -139,6 +140,7 @@ type cacheLister struct {
 	envoyFilterLister       istionet_v1alpha3_listers.EnvoyFilterLister
 	gatewayLister           istionet_v1_listers.GatewayLister
 	k8sgatewayLister        k8s_v1_listers.GatewayLister
+	k8sgatewayClassLister   k8s_v1_listers.GatewayClassLister
 	k8sgrpcrouteLister      k8s_v1_listers.GRPCRouteLister
 	k8shttprouteLister      k8s_v1_listers.HTTPRouteLister
 	k8sreferencegrantLister k8s_v1beta1_listers.ReferenceGrantLister
@@ -463,6 +465,9 @@ func (c *kubeCache) createGatewayInformers(namespace string) gateway.SharedInfor
 		lister.k8sgatewayLister = sharedInformers.Gateway().V1().Gateways().Lister()
 		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1().Gateways().Informer().HasSynced)
 
+		lister.k8sgatewayClassLister = sharedInformers.Gateway().V1().GatewayClasses().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1().GatewayClasses().Informer().HasSynced)
+
 		lister.k8shttprouteLister = sharedInformers.Gateway().V1().HTTPRoutes().Lister()
 		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1().HTTPRoutes().Informer().HasSynced)
 
@@ -617,6 +622,9 @@ func (c *kubeCache) createKubernetesInformers(namespace string) informers.Shared
 	return sharedInformers
 }
 
+// Namespace "" is a special case for cluster-wide resources, such as gateway classes.
+// This needs to be available even when the lister is limited to specific
+// namespaces.
 func (c *kubeCache) getCacheLister(namespace string) *cacheLister {
 	if c.clusterScoped {
 		return c.clusterCacheLister
@@ -624,8 +632,14 @@ func (c *kubeCache) getCacheLister(namespace string) *cacheLister {
 
 	lister, ok := c.nsCacheLister[namespace]
 	if !ok {
-		logPrefix := fmt.Sprintf("Kiali Cache for namespace [%v] in cluster [%v]", namespace, c.client.ClusterInfo().Name)
+		var logPrefix string
+		if namespace == "" {
+			logPrefix = fmt.Sprintf("Kiali Cache for cluster [%v]", c.client.ClusterInfo().Name)
+		} else {
+			logPrefix = fmt.Sprintf("Kiali Cache for namespace [%v] in cluster [%v]", namespace, c.client.ClusterInfo().Name)
+		}
 		klog.Debugf("%v: attempting to restart informers", logPrefix)
+
 		if err := c.refresh(namespace); err != nil {
 			klog.Errorf("%v: restarting informers failed with error: %v", logPrefix, err)
 		}
@@ -1872,6 +1886,42 @@ func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewaya
 
 	var retK8sGateways []*gatewayapi_v1.Gateway
 	for _, gw := range k8sGateways {
+		ggw := gw.DeepCopy()
+		ggw.Kind = kubernetes.K8sGateways.Kind
+		ggw.APIVersion = kubernetes.K8sGateways.GroupVersion().String()
+		retK8sGateways = append(retK8sGateways, ggw)
+	}
+	return retK8sGateways, nil
+}
+
+func (c *kubeCache) GetK8sGatewayClasses(labelSelector string) ([]*gatewayapi_v1.GatewayClass, error) {
+	const namespace = "" // GatewayClass is a cluster-scoped resource
+
+	if err := c.checkIstioAPISExist(c.client); err != nil {
+		return nil, err
+	}
+
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
+	}
+
+	k8sGatewayClasses := []*gatewayapi_v1.GatewayClass{}
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
+	if !c.isK8sGatewayListerInit(namespace) {
+		return k8sGatewayClasses, nil
+	}
+
+	k8sGatewayClasses, err = c.getCacheLister(namespace).k8sgatewayClassLister.List(selector)
+	if err != nil {
+		return nil, err
+	}
+
+	var retK8sGateways []*gatewayapi_v1.GatewayClass
+	for _, gw := range k8sGatewayClasses {
 		ggw := gw.DeepCopy()
 		ggw.Kind = kubernetes.K8sGateways.Kind
 		ggw.APIVersion = kubernetes.K8sGateways.GroupVersion().String()
