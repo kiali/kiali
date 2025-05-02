@@ -91,27 +91,19 @@ type NameServer struct {
 }
 
 // Workaround to handle different data types from Istio 1.25 -> Istio 1.26
-type BoolOrString struct {
-	IsBool  bool
-	BoolVal bool
-	StrVal  string
-}
+type BoolOrString string
 
 func (s *BoolOrString) UnmarshalJSON(data []byte) (err error) {
 	var boolVal bool
 	if err := json.Unmarshal(data, &boolVal); err == nil {
-		s.IsBool = true
-		s.BoolVal = boolVal
 		return nil
 	}
 
 	var strVal string
 	if err := json.Unmarshal(data, &strVal); err == nil {
-		s.IsBool = false
-		s.StrVal = strVal
 		return nil
 	}
-	return
+	return err
 }
 
 type DNSResolverOptions struct {
