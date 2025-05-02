@@ -42,6 +42,7 @@ import { t } from 'utils/I18nUtils';
 import { connect } from 'react-redux';
 import { KialiAppState } from 'store/Store';
 import { languageSelector } from 'store/Selectors';
+import { classes } from 'typestyle';
 
 const toolbarStyle = kialiStyle({
   padding: 0,
@@ -76,11 +77,13 @@ type ReduxProps = {
 type StatefulFiltersProps = ReduxProps & {
   children?: React.ReactNode;
   childrenFirst?: boolean;
+  cleanState?: boolean; // For shared components, state is not saved in the URL
   initialFilters: FilterType[];
   initialToggles?: ToggleType[];
   onFilterChange: (active: ActiveFiltersInfo) => void;
   onToggleChange?: (active: ActiveTogglesInfo) => void;
   ref?: React.RefObject<StatefulFiltersComponent>;
+  toolbarClass?: string;
 };
 
 interface StatefulFiltersState {
@@ -186,11 +189,9 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
 
   constructor(props: StatefulFiltersProps) {
     super(props);
-
     this.textInputRef = React.createRef<HTMLInputElement>();
-
     this.state = {
-      activeFilters: FilterSelected.init(this.props.initialFilters),
+      activeFilters: this.props.cleanState ? { filters: [], op: 'or' } : FilterSelected.init(this.props.initialFilters),
       activeToggles: Toggles.init(this.props.initialToggles ?? []),
       currentFilterType: this.props.initialFilters[0],
       filterTypes: this.props.initialFilters,
@@ -265,7 +266,10 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
       });
 
       this.loadDynamicFilters();
-    } else if (!FilterHelper.filtersMatchURL(this.state.filterTypes, this.state.activeFilters)) {
+    } else if (
+      !this.props.cleanState &&
+      !FilterHelper.filtersMatchURL(this.state.filterTypes, this.state.activeFilters)
+    ) {
       FilterHelper.setFiltersToURL(this.state.filterTypes, this.state.activeFilters);
     }
 
@@ -628,7 +632,11 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
 
     return (
       <>
-        <Toolbar id="filter-selection" className={toolbarStyle} clearAllFilters={this.clearFilters}>
+        <Toolbar
+          id="filter-selection"
+          className={this.props.toolbarClass ? classes(toolbarStyle, this.props.toolbarClass) : toolbarStyle}
+          clearAllFilters={this.clearFilters}
+        >
           {this.props.childrenFirst && this.renderChildren()}
           <ToolbarContent>
             <ToolbarGroup variant="filter-group">

@@ -1568,12 +1568,15 @@ export type SocketAddress = {
   SocketAddr: string;
 };
 
-export type ZtunnelService = {
+export interface ZtunnelItem {
+  name: string;
+  namespace: string;
+}
+
+export type ZtunnelService = ZtunnelItem & {
   endpoints: Record<string, ZtunnelEndpoint>;
   hostname: string;
   ipFamilies: string;
-  name: string;
-  namespace: string;
   ports: Record<string, number>;
   subjectAltNames: string[];
   vips: string[];
@@ -1591,12 +1594,10 @@ export type ZtunnelWaypoint = {
   hboneMtlsPort: number;
 };
 
-export type ZtunnelWorkload = {
+export type ZtunnelWorkload = ZtunnelItem & {
   canonicalName: string;
   canonicalRevision: string;
   clusterId: string;
-  name: string;
-  namespace: string;
   networkMode: string;
   node: string;
   protocol: string;

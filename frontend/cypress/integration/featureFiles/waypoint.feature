@@ -56,7 +56,7 @@ Feature: Kiali Waypoint related features
     Given user is at the details page for the "workload" "istio-system/ztunnel" located in the "" cluster
     Then the user cannot see the "missing-sidecar" badge for "ztunnel" workload in "istio-system" namespace
     And the proxy status is "healthy"
-    And the user validates the Ztunnel tab
+    And the user validates the Ztunnel tab for the "bookinfo" namespace
 
   Scenario: [Traffic Graph] User sees ztunnel traffic
     Given user is at the "graph" page
