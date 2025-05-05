@@ -60,6 +60,8 @@ jobs:
       id: determine-istio-version-to-use
       run: |
         OFFSET="${{ inputs.istio_minor_version_offset }}"
+        # Convert to absolute value - we want a positive offset, though some people might find it more intuitive to say "-1" offset for the previous version
+        OFFSET=$(( OFFSET < 0 ? -OFFSET : OFFSET ))
 
         if [[ -z "${OFFSET}" ]]; then
           case "${{ github.event.schedule }}" in
