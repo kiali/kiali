@@ -92,7 +92,7 @@ func (m MultiMatchChecker) findMatch(listener k8s_networking_v1.Listener, gwName
 }
 
 // Check duplicates IP
-func (m MultiMatchChecker) findMatchIP(address k8s_networking_v1.GatewayAddress, gwName string) (bool, []models.IstioValidationKey) {
+func (m MultiMatchChecker) findMatchIP(address k8s_networking_v1.GatewaySpecAddress, gwName string) (bool, []models.IstioValidationKey) {
 	collidingGateways := make([]models.IstioValidationKey, 0)
 
 	for _, aa := range m.K8sGateways {
@@ -101,7 +101,7 @@ func (m MultiMatchChecker) findMatchIP(address k8s_networking_v1.GatewayAddress,
 		}
 
 		for _, a := range aa.Spec.Addresses {
-			if a.Type != nil && address.Type != nil && *a.Type == *address.Type && a.Value == address.Value {
+			if a.Type != nil && address.Type != nil && a.Value != "" && address.Value != "" && *a.Type == *address.Type && a.Value == address.Value {
 				key := models.IstioValidationKey{Name: aa.Name, Namespace: aa.Namespace, ObjectGVK: kubernetes.K8sGateways}
 				collidingGateways = append(collidingGateways, key)
 			}
