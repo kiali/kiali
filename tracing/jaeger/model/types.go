@@ -36,7 +36,7 @@ type Services struct {
 }
 
 type TracingDiagnose struct {
-	Conf   config.TracingConfig `json:"config"`
-	Reason string               `json:"reason"`
-	Status string               `json:"status"`
+	Code          int                  `json:"code"`
+	Message       string               `json:"message"`
+	TracingConfig config.TracingConfig `json:"tracingConfig"`
 }
