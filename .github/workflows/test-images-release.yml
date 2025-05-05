@@ -7,7 +7,7 @@ on:
 jobs:
   initialize:
     name: Initialize
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     outputs:
       quay_org: 'kiali'
       images_tag: ${{ steps.images_tag.outputs.images_tag }}
@@ -39,7 +39,7 @@ jobs:
 
   update_latest_test_images:
     name: Update images under major.minor version tag
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs: [initialize, push_test_images]
     steps:
     - name: Login to Quay.io

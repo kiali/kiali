@@ -20,7 +20,7 @@ on:
 jobs:
   initialize:
     name: Initialize
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     outputs:
       target_branch: ${{ github.ref_name }}
       quay_tag: ${{ env.quay_tag }}
@@ -69,7 +69,7 @@ jobs:
     name: Push latest
     # Avoid schedule workflows from forks to push images
     if: ${{ (github.event_name == 'schedule' && github.repository == 'kiali/kiali') || github.event_name != 'schedule' }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs: [initialize, build_backend, build_frontend]
     env:
       QUAY_TAG: ${{ needs.initialize.outputs.quay_tag }}

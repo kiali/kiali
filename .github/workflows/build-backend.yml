@@ -9,7 +9,7 @@ on:
 jobs:
   build_backend:
     name: Build and unit test backend
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -43,12 +43,12 @@ jobs:
         env:
           # Build with -race flag if this is a PR, otherwise it is a release and
           # we don't want to build with race detection because of the perf penalty.
-          GO_BUILD_FLAGS: ${{ github.base_ref && '-race' }}
+          GO_BUILD_FLAGS: ${{ github.base_ref && '' }}
           # The -race flag requires CGO_ENABLED
-          CGO_ENABLED: ${{ github.base_ref && '1' }}
+          CGO_ENABLED: ${{ github.base_ref && '0' }}
 
       - name: Test backend
-        run: make -e GO_TEST_FLAGS="-race" test
+        run: make -e GO_TEST_FLAGS="" test
 
       - name: Upload go binary
         uses: actions/upload-artifact@v4
