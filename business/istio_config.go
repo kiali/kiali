@@ -772,14 +772,14 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(ctx context.Context, clust
 func (in *IstioConfigService) waitForObjectDeletion(ctx context.Context, cluster string, obj client.Object) {
 	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
 	if err != nil {
-		log.Errorf("Failed waiting for object to be deleted in cache. You may see stale data but the delete was processed correctly. Error: %s", err)
+		log.Errorf("Cannot get cache so cannot wait for object to be deleted in cache. You may see stale data but the delete was processed correctly. Error: %s", err)
 		return
 	}
 
 	if err := kubernetes.WaitForObjectDeleteInCache(ctx, kubeCache, obj); err != nil {
 		// It won't break anything if we return the object before it is updated in the cache.
 		// We will just show stale data so just log an error here instead of failing.
-		log.Errorf("Failed waiting for object to deleted in cache. You may see stale data but the delete was processed correctly. Error: %s", err)
+		log.Errorf("Failed waiting for object to be deleted in cache. You may see stale data but the delete was processed correctly. Error: %s", err)
 		return
 	}
 }
@@ -787,7 +787,7 @@ func (in *IstioConfigService) waitForObjectDeletion(ctx context.Context, cluster
 func (in *IstioConfigService) waitForCacheUpdate(ctx context.Context, cluster string, obj client.Object) {
 	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
 	if err != nil {
-		log.Errorf("Failed waiting for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
+		log.Errorf("Cannot get cache so cannot wait for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
 		return
 	}
 
@@ -802,7 +802,7 @@ func (in *IstioConfigService) waitForCacheUpdate(ctx context.Context, cluster st
 func (in *IstioConfigService) waitForCacheCreate(ctx context.Context, cluster string, obj client.Object) {
 	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
 	if err != nil {
-		log.Errorf("Failed waiting for object to exist in cache. You may see stale data but the create was processed correctly. Error: %s", err)
+		log.Errorf("Cannot get cache so cannot wait for object to exist in cache. You may see stale data but the create was processed correctly. Error: %s", err)
 		return
 	}
 

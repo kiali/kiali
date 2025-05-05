@@ -2426,7 +2426,7 @@ func (in *WorkloadService) updateWorkload(ctx context.Context, cluster string, n
 				if err := kubernetes.WaitForObjectUpdateInCache(ctx, kubeCache, obj); err != nil {
 					// It won't break anything if we return the object before it is updated in the cache.
 					// We will just show stale data so just log an error here instead of failing.
-					log.Errorf("Failed waiting for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
+					log.Errorf("Failed to wait for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
 				}
 			}
 		}(workloadGVK, workloadObj)

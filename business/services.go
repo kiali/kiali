@@ -817,14 +817,14 @@ func (in *SvcService) UpdateService(ctx context.Context, cluster, namespace, ser
 func (in *SvcService) waitForCacheUpdate(ctx context.Context, cluster string, updatedService *core_v1.Service) {
 	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
 	if err != nil {
-		log.Errorf("Failed waiting for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
+		log.Errorf("Svc Service cannot get cache so cannot wait for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
 		return
 	}
 
 	if err := kubernetes.WaitForObjectUpdateInCache(ctx, kubeCache, updatedService); err != nil {
 		// It won't break anything if we return the object before it is updated in the cache.
 		// We will just show stale data so just log an error here instead of failing.
-		log.Errorf("Failed waiting for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
+		log.Errorf("Svc Service failed waiting for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
 		return
 	}
 }
