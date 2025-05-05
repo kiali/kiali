@@ -120,7 +120,7 @@ NAD
 # Use waypoint?
 if [ "${WAYPOINT}" == "true" ]; then
   $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-          { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=v1.2.0" | $CLIENT_EXE apply -f -; }
+          { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=v1.3.0" | $CLIENT_EXE apply -f -; }
   ${ISTIOCTL} waypoint apply -n ${AMBIENT_NS} --enroll-namespace
 fi
 
