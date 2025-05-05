@@ -6,26 +6,29 @@ package istio
 // level kubernetes package.
 
 import (
+	"context"
+
 	"golang.org/x/exp/maps"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/labels"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/models"
 )
 
-func GetHealthyIstiodPods(kubeCache cache.KubeCache, revision string, namespace string) ([]*corev1.Pod, error) {
+func GetHealthyIstiodPods(kubeCache ctrlclient.Reader, revision string, namespace string) ([]*corev1.Pod, error) {
 	podLabels := map[string]string{
 		config.IstioAppLabel:      istiodAppLabelValue,
 		config.IstioRevisionLabel: revision,
 	}
 
-	istiods, err := kubeCache.GetPods(namespace, labels.Set(podLabels).String())
+	podList := &corev1.PodList{}
+	err := kubeCache.List(context.Background(), podList, ctrlclient.InNamespace(namespace), ctrlclient.MatchingLabels(podLabels))
 	if err != nil {
 		return nil, err
 	}
+	istiods := podList.Items
 
 	healthyIstiods := make([]*corev1.Pod, 0, len(istiods))
 	for i, istiod := range istiods {
@@ -37,15 +40,17 @@ func GetHealthyIstiodPods(kubeCache cache.KubeCache, revision string, namespace 
 	return healthyIstiods, nil
 }
 
-func GetHealthyIstiodRevisions(kubeCache cache.KubeCache, namespace string) ([]string, error) {
+func GetHealthyIstiodRevisions(kubeCache ctrlclient.Reader, namespace string) ([]string, error) {
 	podLabels := map[string]string{
 		config.IstioAppLabel: istiodAppLabelValue,
 	}
 
-	istiods, err := kubeCache.GetPods(namespace, labels.Set(podLabels).String())
+	podList := &corev1.PodList{}
+	err := kubeCache.List(context.Background(), podList, ctrlclient.InNamespace(namespace), ctrlclient.MatchingLabels(podLabels))
 	if err != nil {
 		return nil, err
 	}
+	istiods := podList.Items
 
 	healthyRevisions := make(map[string]bool)
 	for i, istiod := range istiods {

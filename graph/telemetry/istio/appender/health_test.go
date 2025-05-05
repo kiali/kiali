@@ -9,10 +9,12 @@ import (
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -451,24 +453,25 @@ func TestIdleNodesHaveHealthData(t *testing.T) {
 
 type cacheWithServicesError struct {
 	cache.KialiCache
-	kubeCache cache.KubeCache
+	kubeCache ctrlclient.Reader
 }
 
-func (c *cacheWithServicesError) GetKubeCache(cluster string) (cache.KubeCache, error) {
+func (c *cacheWithServicesError) GetKubeCache(cluster string) (ctrlclient.Reader, error) {
 	return c.kubeCache, nil
 }
 
 type servicesError struct {
-	cache.KubeCache
+	ctrlclient.Reader
 	errorMsg string
 }
 
-func (s *servicesError) GetServicesBySelectorLabels(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
-	return nil, fmt.Errorf("%s", s.errorMsg)
+func (s *servicesError) List(ctx context.Context, l ctrlclient.ObjectList, opts ...ctrlclient.ListOption) error {
+	return fmt.Errorf("%s", s.errorMsg)
 }
 
 func TestErrorCausesPanic(t *testing.T) {
 	assert := assert.New(t)
+	require := require.New(t)
 
 	trafficMap := buildAppTrafficMap()
 	objects := []runtime.Object{
@@ -492,7 +495,9 @@ func TestErrorCausesPanic(t *testing.T) {
 	config.Set(conf)
 	cache := cache.NewTestingCache(t, k8s, *conf)
 	const panicErrMsg = "test error! This should cause a panic"
-	cache = &cacheWithServicesError{KialiCache: cache, kubeCache: &servicesError{KubeCache: cache.GetKubeCaches()[conf.KubernetesConfig.ClusterName], errorMsg: panicErrMsg}}
+	kubeCache, err := cache.GetKubeCache(conf.KubernetesConfig.ClusterName)
+	require.NoError(err)
+	cache = &cacheWithServicesError{KialiCache: cache, kubeCache: &servicesError{Reader: kubeCache, errorMsg: panicErrMsg}}
 	business.WithKialiCache(cache)
 	discovery := istio.NewDiscovery(map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s}, cache, conf)
 	business.WithDiscovery(discovery)
@@ -509,7 +514,7 @@ func TestErrorCausesPanic(t *testing.T) {
 
 	a := HealthAppender{}
 
-	assert.PanicsWithValue(panicErrMsg, func() { a.AppendGraph(trafficMap, globalInfo, namespaceInfo) })
+	assert.Panics(func() { a.AppendGraph(trafficMap, globalInfo, namespaceInfo) })
 }
 
 func TestMultiClusterHealthConfig(t *testing.T) {

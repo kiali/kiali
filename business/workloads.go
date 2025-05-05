@@ -26,6 +26,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/config"
@@ -517,15 +518,6 @@ func (in *WorkloadService) UpdateWorkload(ctx context.Context, cluster string, n
 		return nil, err
 	}
 
-	// Cache is stopped after a Create/Update/Delete operation to force a refresh.
-	// Refresh once after all the updates have gone through since Update Workload will update
-	// every single workload type of that matches name/namespace and we only want to refresh once.
-	cache, err := in.cache.GetKubeCache(cluster)
-	if err != nil {
-		return nil, err
-	}
-	cache.Refresh(namespace)
-
 	// After the update we fetch the whole workload
 	return in.GetWorkload(ctx, WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: workloadName, WorkloadGVK: workloadGVK, IncludeServices: includeServices})
 }
@@ -832,49 +824,40 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
 	}
 
-	kubeCache := in.cache.GetKubeCaches()[cluster]
-	if kubeCache == nil {
+	kubeCache, err := in.cache.GetKubeCache(cluster)
+	if err != nil {
 		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
 	}
 
 	wg := sync.WaitGroup{}
-	wg.Add(12)
 	errChan := make(chan error, 12)
+	sel, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, fmt.Errorf("bad selector: %s", err)
+	}
+	selectorOpt := ctrlclient.MatchingLabelsSelector{Selector: sel}
+	inNamespaceOpt := ctrlclient.InNamespace(namespace)
 
-	// Pods are always fetched
-	go func() {
-		defer wg.Done()
-		var err error
-		pods, err = kubeCache.GetPods(namespace, labelSelector)
-		if err != nil {
-			log.Errorf("Error fetching Pods per namespace %s: %s", namespace, err)
-			errChan <- err
-		}
-	}()
+	podList := &core_v1.PodList{}
+	if err := kubeCache.List(ctx, podList, inNamespaceOpt, selectorOpt); err != nil {
+		return nil, fmt.Errorf("Error fetching Pods per namespace %s: %s", namespace, err)
+	}
+	pods = podList.Items
 
-	// Deployments are always fetched
-	go func() {
-		defer wg.Done()
-		var err error
-		dep, err = kubeCache.GetDeployments(namespace)
-		if err != nil {
-			log.Errorf("Error fetching Deployments per namespace %s: %s", namespace, err)
-			errChan <- err
-		}
-	}()
+	depList := &apps_v1.DeploymentList{}
+	if err := kubeCache.List(ctx, depList, inNamespaceOpt); err != nil {
+		return nil, fmt.Errorf("Error fetching Deployments per namespace %s: %s", namespace, err)
+	}
+	dep = depList.Items
 
-	// ReplicaSets are always fetched
-	go func() {
-		defer wg.Done()
-		var err error
-		repset, err = kubeCache.GetReplicaSets(namespace)
-		if err != nil {
-			log.Errorf("Error fetching ReplicaSets per namespace %s: %s", namespace, err)
-			errChan <- err
-		}
-	}()
+	repList := &apps_v1.ReplicaSetList{}
+	if err := kubeCache.List(ctx, repList, inNamespaceOpt); err != nil {
+		return nil, fmt.Errorf("Error fetching ReplicaSets per namespace %s: %s", namespace, err)
+	}
+	repset = repList.Items
 
 	// ReplicaControllers are fetched only when included
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
@@ -890,6 +873,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	}()
 
 	// DeploymentConfigs are fetched only when included
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
@@ -905,20 +889,16 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	}()
 
 	// StatefulSets are fetched only when included
-	go func() {
-		defer wg.Done()
-
-		var err error
-		if in.isWorkloadIncluded(kubernetes.StatefulSetType) {
-			fulset, err = kubeCache.GetStatefulSets(namespace)
-			if err != nil {
-				log.Errorf("Error fetching StatefulSets per namespace %s: %s", namespace, err)
-				errChan <- err
-			}
+	if in.isWorkloadIncluded(kubernetes.StatefulSetType) {
+		setList := &apps_v1.StatefulSetList{}
+		if err := kubeCache.List(ctx, setList, inNamespaceOpt); err != nil {
+			return nil, fmt.Errorf("Error fetching StatefulSets per namespace %s: %s", namespace, err)
 		}
-	}()
+		fulset = setList.Items
+	}
 
 	// CronJobs are fetched only when included
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
@@ -934,6 +914,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	}()
 
 	// Jobs are fetched only when included
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
@@ -949,56 +930,40 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	}()
 
 	// DaemonSets are fetched only when included
-	go func() {
-		defer wg.Done()
-
-		var err error
-		if in.isWorkloadIncluded(kubernetes.DaemonSetType) {
-			daeset, err = kubeCache.GetDaemonSets(namespace)
-			if err != nil {
-				log.Errorf("Error fetching DaemonSets per namespace %s: %s", namespace, err)
-			}
+	if in.isWorkloadIncluded(kubernetes.DaemonSetType) {
+		daeList := &apps_v1.DaemonSetList{}
+		if err := kubeCache.List(ctx, daeList, inNamespaceOpt); err != nil {
+			return nil, fmt.Errorf("Error fetching DaemonSets per namespace %s: %s", namespace, err)
 		}
-	}()
+		daeset = daeList.Items
+	}
 
 	// WorkloadGroups are fetched only when included
-	go func() {
-		defer wg.Done()
-		var err error
-		if in.isWorkloadIncluded(kubernetes.WorkloadGroupType) {
-			wgroups, err = kubeCache.GetWorkloadGroups(namespace, labelSelector)
-			if err != nil {
-				log.Errorf("Error fetching WorkloadGroups per namespace %s: %s", namespace, err)
-				errChan <- err
-			}
+	if in.isWorkloadIncluded(kubernetes.WorkloadGroupType) {
+		wgroupList := &networking_v1.WorkloadGroupList{}
+		if err := kubeCache.List(ctx, wgroupList, inNamespaceOpt); err != nil {
+			return nil, fmt.Errorf("Error fetching WorkloadGroups per namespace %s: %s", namespace, err)
 		}
-	}()
+		wgroups = wgroupList.Items
+	}
 
 	// WorkloadEntries are fetched only when included
-	go func() {
-		defer wg.Done()
-		var err error
-		if in.isWorkloadIncluded(kubernetes.WorkloadEntryType) {
-			wentries, err = kubeCache.GetWorkloadEntries(namespace, labelSelector)
-			if err != nil {
-				log.Errorf("Error fetching WorkloadEntries per namespace %s: %s", namespace, err)
-				errChan <- err
-			}
+	if in.isWorkloadIncluded(kubernetes.WorkloadEntryType) {
+		wentryList := &networking_v1.WorkloadEntryList{}
+		if err := kubeCache.List(ctx, wentryList, inNamespaceOpt); err != nil {
+			return nil, fmt.Errorf("Error fetching WorkloadEntries per namespace %s: %s", namespace, err)
 		}
-	}()
+		wentries = wentryList.Items
+	}
 
 	// Sidecars are fetched only when included
-	go func() {
-		defer wg.Done()
-		var err error
-		if in.isWorkloadIncluded(kubernetes.SidecarType) {
-			sidecars, err = kubeCache.GetSidecars(namespace, "")
-			if err != nil {
-				log.Errorf("Error fetching Sidecars per namespace %s: %s", namespace, err)
-				errChan <- err
-			}
+	if in.isWorkloadIncluded(kubernetes.SidecarType) {
+		sidecarList := &networking_v1.SidecarList{}
+		if err := kubeCache.List(ctx, sidecarList, inNamespaceOpt); err != nil {
+			return nil, fmt.Errorf("Error fetching Sidecars per namespace %s: %s", namespace, err)
 		}
-	}()
+		sidecars = sidecarList.Items
+	}
 
 	wg.Wait()
 	if len(errChan) != 0 {
@@ -1513,10 +1478,9 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	_, knownWorkloadType := controllerOrder[criteria.WorkloadGVK.Kind]
 
 	wg := sync.WaitGroup{}
-	wg.Add(12)
-	errChan := make(chan error, 12)
+	errChan := make(chan error)
 
-	kialiCache, err := in.cache.GetKubeCache(criteria.Cluster)
+	kubeCache, err := in.cache.GetKubeCache(criteria.Cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -1527,109 +1491,81 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		return nil, fmt.Errorf("no SA client for cluster [%s]", criteria.Cluster)
 	}
 
-	// Pods are always fetched for all workload types
-	go func() {
-		defer wg.Done()
-		var err error
-		pods, err = kialiCache.GetPods(criteria.Namespace, "")
-		if err != nil {
-			log.Errorf("Error fetching Pods per namespace %s: %s", criteria.Namespace, err)
-			errChan <- err
-		}
-	}()
+	podList := &core_v1.PodList{}
+	if err := kubeCache.List(ctx, podList, ctrlclient.InNamespace(criteria.Namespace)); err != nil {
+		return nil, fmt.Errorf("Error fetching Pods per namespace %s: %s", criteria.Namespace, err)
+	}
+	pods = podList.Items
 
-	// fetch as WorkloadGroup when workloadType is WorkloadGroups or unspecified
-	go func() {
-		defer wg.Done()
-		var err error
-
-		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.WorkloadGroups {
-			return
-		}
-		wgroup, err = kialiCache.GetWorkloadGroup(criteria.Namespace, criteria.WorkloadName)
+	if criteria.WorkloadGVK.Kind == "" || criteria.WorkloadGVK == kubernetes.WorkloadGroups {
+		wgroup = &networking_v1.WorkloadGroup{}
+		err := kubeCache.Get(ctx, ctrlclient.ObjectKey{Name: criteria.WorkloadName, Namespace: criteria.Namespace}, wgroup)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				wgroup = nil
 			} else {
-				log.Errorf("Error fetching WorkloadGroup per namespace %s and name %s: %s", criteria.Namespace, criteria.WorkloadName, err)
-				errChan <- err
+				return nil, fmt.Errorf("Error fetching WorkloadGroup per namespace %s and name %s: %s", criteria.Namespace, criteria.WorkloadName, err)
 			}
 		}
-	}()
+	}
 
-	// fetch as WorkloadEntries when workloadType is WorkloadGroups or unspecified
-	go func() {
-		defer wg.Done()
-		var err error
-
-		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.WorkloadGroups {
-			return
-		}
-		wentries, err = kialiCache.GetWorkloadEntries(criteria.Namespace, "")
+	if criteria.WorkloadGVK.Kind == "" || criteria.WorkloadGVK == kubernetes.WorkloadGroups {
+		wentryList := &networking_v1.WorkloadEntryList{}
+		err := kubeCache.List(ctx, wentryList, ctrlclient.InNamespace(criteria.Namespace))
 		if err != nil {
 			if errors.IsNotFound(err) {
 				wentries = nil
 			} else {
-				log.Errorf("Error fetching WorkloadEntry per namespace %s: %s", criteria.Namespace, err)
-				errChan <- err
+				return nil, fmt.Errorf("Error fetching WorkloadEntry per namespace %s: %s", criteria.Namespace, err)
 			}
+		} else {
+			wentries = wentryList.Items
 		}
-	}()
+	}
 
-	// fetch as Sidecars when workloadType is WorkloadGroups or unspecified
-	go func() {
-		defer wg.Done()
-		var err error
-
-		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.WorkloadGroups {
-			return
-		}
-		sidecars, err = kialiCache.GetSidecars(criteria.Namespace, "")
+	if criteria.WorkloadGVK.Kind == "" || criteria.WorkloadGVK == kubernetes.WorkloadGroups {
+		sidecarList := &networking_v1.SidecarList{}
+		err := kubeCache.List(ctx, sidecarList, ctrlclient.InNamespace(criteria.Namespace))
 		if err != nil {
 			if errors.IsNotFound(err) {
 				sidecars = nil
 			} else {
-				log.Errorf("Error fetching Sidecars per namespace %s: %s", criteria.Namespace, err)
-				errChan <- err
+				return nil, fmt.Errorf("Error fetching Sidecars per namespace %s: %s", criteria.Namespace, err)
 			}
+		} else {
+			sidecars = sidecarList.Items
 		}
-	}()
+	}
 
 	// fetch as Deployment when workloadType is Deployment or unspecified
-	go func() {
-		defer wg.Done()
-		var err error
-
-		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.Deployments {
-			return
-		}
-		dep, err = kialiCache.GetDeployment(criteria.Namespace, criteria.WorkloadName)
+	if criteria.WorkloadGVK.Kind == "" || criteria.WorkloadGVK == kubernetes.Deployments {
+		dep = &apps_v1.Deployment{}
+		err := kubeCache.Get(ctx, ctrlclient.ObjectKey{Name: criteria.WorkloadName, Namespace: criteria.Namespace}, dep)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				dep = nil
 			} else {
-				log.Errorf("Error fetching Deployment per namespace %s and name %s: %s", criteria.Namespace, criteria.WorkloadName, err)
-				errChan <- err
+				return nil, fmt.Errorf("Error fetching Deployment per namespace %s and name %s: %s", criteria.Namespace, criteria.WorkloadName, err)
 			}
 		}
-	}()
+	}
 
 	// fetch as ReplicaSet(s) when workloadType is ReplicaSet, unspecified, *or custom*
-	go func() {
-		defer wg.Done()
-
-		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.ReplicaSets && knownWorkloadType {
-			return
-		}
-		var err error
-		repset, err = kialiCache.GetReplicaSets(criteria.Namespace)
+	if criteria.WorkloadGVK.Kind == "" || criteria.WorkloadGVK == kubernetes.ReplicaSets || !knownWorkloadType {
+		repList := &apps_v1.ReplicaSetList{}
+		err := kubeCache.List(ctx, repList, ctrlclient.InNamespace(criteria.Namespace))
 		if err != nil {
-			log.Errorf("Error fetching ReplicaSets per namespace %s: %s", criteria.Namespace, err)
-			errChan <- err
+			if errors.IsNotFound(err) {
+				repList = nil
+			} else {
+				return nil, fmt.Errorf("Error fetching ReplicaSets per namespace %s: %s", criteria.Namespace, err)
+			}
 		}
-	}()
+		repset = repList.Items
+	}
 
 	// fetch as ReplicationControllerType when included, and workloadType is ReplicationControllerType or unspecified
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
@@ -1649,6 +1585,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	}()
 
 	// fetch as DeploymentConfigType when included, and workloadType is DeploymentConfigType or unspecified
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
@@ -1667,23 +1604,20 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	}()
 
 	// fetch as StatefulSetType when included, and workloadType is StatefulSetType or unspecified
-	go func() {
-		defer wg.Done()
-
-		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.StatefulSets {
-			return
-		}
-
-		var err error
-		if in.isWorkloadIncluded(kubernetes.StatefulSetType) {
-			fulset, err = kialiCache.GetStatefulSet(criteria.Namespace, criteria.WorkloadName)
-			if err != nil {
+	if criteria.WorkloadGVK.Kind == "" || (criteria.WorkloadGVK == kubernetes.StatefulSets && in.isWorkloadIncluded(kubernetes.StatefulSetType)) {
+		fulset = &apps_v1.StatefulSet{}
+		err := kubeCache.Get(ctx, ctrlclient.ObjectKey{Name: criteria.WorkloadName, Namespace: criteria.Namespace}, fulset)
+		if err != nil {
+			if errors.IsNotFound(err) {
 				fulset = nil
+			} else {
+				return nil, fmt.Errorf("Error fetching Deployment per namespace %s and name %s: %s", criteria.Namespace, criteria.WorkloadName, err)
 			}
 		}
-	}()
+	}
 
 	// fetch as CronJobType when included, and workloadType is CronJobType or unspecified
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
@@ -1703,6 +1637,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	}()
 
 	// fetch as JobType when included, and workloadType is JobType or unspecified
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
@@ -1722,21 +1657,16 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	}()
 
 	// fetch as DaemonSetType when included, and workloadType is DaemonSetType or unspecified
-	go func() {
-		defer wg.Done()
-
-		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.DaemonSets {
-			return
-		}
-
-		var err error
-		if in.isWorkloadIncluded(kubernetes.DaemonSetType) {
-			ds, err = kialiCache.GetDaemonSet(criteria.Namespace, criteria.WorkloadName)
-			if err != nil {
+	if criteria.WorkloadGVK.Kind == "" || (criteria.WorkloadGVK == kubernetes.DaemonSets && in.isWorkloadIncluded(kubernetes.DaemonSetType)) {
+		ds = &apps_v1.DaemonSet{}
+		if err := kubeCache.Get(ctx, ctrlclient.ObjectKey{Name: criteria.WorkloadName, Namespace: criteria.Namespace}, ds); err != nil {
+			if errors.IsNotFound(err) {
 				ds = nil
+			} else {
+				return nil, fmt.Errorf("Error fetching DaemonSetType per namespace %s and name %s: %s", criteria.Namespace, criteria.WorkloadName, err)
 			}
 		}
-	}()
+	}
 
 	wg.Wait()
 	if len(errChan) != 0 {
@@ -2451,30 +2381,24 @@ func (in *WorkloadService) updateWorkload(ctx context.Context, cluster string, n
 		return fmt.Errorf("user client for cluster [%s] not found", cluster)
 	}
 
-	workloadGVKs := []schema.GroupVersionKind{
-		kubernetes.Deployments,
-		kubernetes.ReplicaSets,
-		kubernetes.ReplicationControllers,
-		kubernetes.DeploymentConfigs,
-		kubernetes.StatefulSets,
-		kubernetes.Jobs,
-		kubernetes.CronJobs,
-		kubernetes.Pods,
-		kubernetes.DaemonSets,
+	workloadGVKs := map[schema.GroupVersionKind]ctrlclient.Object{
+		kubernetes.Deployments:            &apps_v1.Deployment{},
+		kubernetes.ReplicaSets:            &apps_v1.ReplicaSet{},
+		kubernetes.ReplicationControllers: &core_v1.ReplicationController{},
+		kubernetes.DeploymentConfigs:      &osapps_v1.DeploymentConfig{},
+		kubernetes.StatefulSets:           &apps_v1.StatefulSet{},
+		kubernetes.Jobs:                   &batch_v1.Job{},
+		kubernetes.CronJobs:               &batch_v1.CronJob{},
+		kubernetes.Pods:                   &core_v1.Pod{},
+		kubernetes.DaemonSets:             &apps_v1.DaemonSet{},
 	}
 
 	// workloadGVK is an optional parameter used to optimize the workload type fetch
 	// By default workloads use only the "name" but not the pair "name,type".
 	if workloadGVK.Kind != "" {
-		found := false
-		for _, wt := range workloadGVKs {
-			if workloadGVK.Kind == wt.Kind {
-				found = true
-				break
-			}
-		}
+		v, found := workloadGVKs[workloadGVK]
 		if found {
-			workloadGVKs = []schema.GroupVersionKind{workloadGVK}
+			workloadGVKs = map[schema.GroupVersionKind]ctrlclient.Object{workloadGVK: v}
 		}
 	}
 
@@ -2482,20 +2406,30 @@ func (in *WorkloadService) updateWorkload(ctx context.Context, cluster string, n
 	wg.Add(len(workloadGVKs))
 	errChan := make(chan error, len(workloadGVKs))
 
-	for _, workloadGVK := range workloadGVKs {
-		go func(wkGVK schema.GroupVersionKind) {
+	// TODO: We should always pass the GVK. We should NOT be patching every kind with the same name/namespace.
+	for workloadGVK, workloadObj := range workloadGVKs {
+		go func(wkGVK schema.GroupVersionKind, obj ctrlclient.Object) {
 			defer wg.Done()
-			var err error
 			if in.isWorkloadIncluded(wkGVK.Kind) {
-				err = userClient.UpdateWorkload(namespace, workloadName, wkGVK, jsonPatch, patchType)
-			}
-			if err != nil {
-				if !errors.IsNotFound(err) {
+				if err := userClient.UpdateWorkload(namespace, workloadName, workloadObj, jsonPatch, patchType); err != nil && !errors.IsNotFound(err) {
 					log.Errorf("Error fetching %s per namespace %s and name %s: %s", wkGVK, namespace, workloadName, err)
 					errChan <- err
+					return
+				}
+
+				kubeCache, err := in.cache.GetKubeCache(cluster)
+				if err != nil {
+					log.Errorf("Unable to find kube cache for cluster: %s. You may see stale data but the update was processed correctly.", cluster)
+					return
+				}
+
+				if err := kubernetes.WaitForObjectUpdateInCache(ctx, kubeCache, obj); err != nil {
+					// It won't break anything if we return the object before it is updated in the cache.
+					// We will just show stale data so just log an error here instead of failing.
+					log.Errorf("Failed to wait for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
 				}
 			}
-		}(workloadGVK)
+		}(workloadGVK, workloadObj)
 	}
 
 	wg.Wait()

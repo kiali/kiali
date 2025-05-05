@@ -2,6 +2,7 @@ package kubetest
 
 import (
 	"context"
+	"fmt"
 
 	osappsfake "github.com/openshift/client-go/apps/clientset/versioned/fake"
 	osappsscheme "github.com/openshift/client-go/apps/clientset/versioned/scheme"
@@ -22,6 +23,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	kubescheme "k8s.io/client-go/kubernetes/scheme"
+	ctrlfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	gatewayapi "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 	gatewayapifake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
 	gatewayapischeme "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/scheme"
@@ -88,6 +90,13 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 		istioGateways     []*networking_v1.Gateway
 	)
 
+	scheme, err := kialikube.NewScheme()
+	if err != nil {
+		panic(fmt.Errorf("unable to create kubescheme in FakeK8sClient: %s", err))
+	}
+
+	ctrlclient := ctrlfake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).Build()
+
 	for _, obj := range objects {
 		o := obj
 		switch {
@@ -131,7 +140,7 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 	}
 
 	return &FakeK8sClient{
-		UserClientInterface: kialikube.NewClient(kubeClient, istioClient, gatewayAPIClient, osAppsClient, projectClient, routeClient, userClient, oAuthClient),
+		UserClientInterface: kialikube.NewClient(kubeClient, istioClient, gatewayAPIClient, osAppsClient, projectClient, routeClient, userClient, oAuthClient, ctrlclient),
 		KubeClientset:       kubeClient,
 		IstioClientset:      istioClient,
 		ProjectFake:         projectClient,

@@ -9,7 +9,7 @@ import (
 	batch_v1 "k8s.io/api/batch/v1"
 	core_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -157,12 +157,12 @@ func (o *K8SClientMock) UpdateNamespace(namespace string, jsonPatch string) (*co
 	return args.Get(0).(*core_v1.Namespace), args.Error(1)
 }
 
-func (o *K8SClientMock) UpdateWorkload(namespace string, name string, workloadGVK schema.GroupVersionKind, jsonPatch string, patchType string) error {
-	args := o.Called(namespace, name, workloadGVK, jsonPatch, patchType)
+func (o *K8SClientMock) UpdateWorkload(namespace string, name string, workloadObj runtime.Object, jsonPatch string, patchType string) error {
+	args := o.Called(namespace, name, workloadObj, jsonPatch, patchType)
 	return args.Error(1)
 }
 
-func (o *K8SClientMock) UpdateService(namespace string, name string, jsonPatch string, patchType string) error {
+func (o *K8SClientMock) UpdateService(namespace string, name string, jsonPatch string, patchType string) (*core_v1.Service, error) {
 	args := o.Called(namespace, name, jsonPatch, patchType)
-	return args.Error(1)
+	return args.Get(0).(*core_v1.Service), args.Error(1)
 }

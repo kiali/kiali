@@ -10,11 +10,10 @@ import (
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/labels"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
@@ -139,7 +138,7 @@ func parseRawIstioVersion(rawVersion string) *models.ExternalServiceInfo {
 // GetVersion returns the latest version of the Istio control plane.
 // If there are multiple healthy istiod pods, the latest one by
 // creation timestamp is returned.
-func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.ClientInterface, kubeCache cache.KubeCache, revision string, namespace string) (*models.ExternalServiceInfo, error) {
+func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.ClientInterface, kubeCache ctrlclient.Reader, revision string, namespace string) (*models.ExternalServiceInfo, error) {
 	istioConfig := conf.ExternalServices.Istio
 	// If kiali is running on the same cluster as the istio control plane, use the URL instead
 	// of port forwarding. For remote clusters we need to port forward to get the version since the
@@ -151,17 +150,17 @@ func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.Clie
 			url = istioConfig.UrlServiceVersion
 		} else {
 			// Look for an istio service with the rev label in the control plane namespace.
-			revLabelSelector := labels.Set(
-				map[string]string{
-					config.IstioAppLabel:      istiodAppLabelValue,
-					config.IstioRevisionLabel: revision,
-				},
-			).AsSelector().String()
-			services, err := kubeCache.GetServices(namespace, revLabelSelector)
+			revLabelSelector := map[string]string{
+				config.IstioAppLabel:      istiodAppLabelValue,
+				config.IstioRevisionLabel: revision,
+			}
+
+			serviceList := &corev1.ServiceList{}
+			err := kubeCache.List(ctx, serviceList, ctrlclient.InNamespace(namespace), ctrlclient.MatchingLabels(revLabelSelector))
 			if err != nil {
 				return nil, err
 			}
-
+			services := serviceList.Items
 			if len(services) == 0 {
 				return nil, fmt.Errorf("no istio service found for revision [%s]", revision)
 			}

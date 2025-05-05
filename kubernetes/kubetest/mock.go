@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/tools/clientcmd/api"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayapifake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
 
 	"github.com/kiali/kiali/config"
@@ -103,13 +104,14 @@ type K8SClientMock struct {
 	mock.Mock
 	istioClientset      *istio_fake.Clientset
 	gatewayapiClientSet *gatewayapifake.Clientset
+	client.Reader
 }
 
 // Interface guard to ensure K8SClientMock implements ClientInterface.
 var _ kubernetes.ClientInterface = &K8SClientMock{}
 
 // Constructor
-
+// TODO: Remove this.
 func NewK8SClientMock() *K8SClientMock {
 	k8s := new(K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)

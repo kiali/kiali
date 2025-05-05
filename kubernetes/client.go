@@ -15,6 +15,8 @@ import (
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 
 	kialiconfig "github.com/kiali/kiali/config"
@@ -57,6 +59,8 @@ type ClientInterface interface {
 	K8SClientInterface
 	IstioClientInterface
 	OSClientInterface
+
+	ctrlclient.Reader
 }
 
 // UserClientInterface adds to ClientInterface all write APIs (mocked functions are necessary here)
@@ -83,6 +87,9 @@ func ConvertFromUserClients(in map[string]UserClientInterface) map[string]Client
 type K8SClient struct {
 	token string
 	k8s   kube.Interface
+
+	// controller runtime client. This is only embedded to make the transition to controller-runtime easier.
+	client.Reader
 
 	projectClient projectclient.Interface
 	routeClient   routeclient.Interface
@@ -245,6 +252,7 @@ func NewClient(
 	routeClient routeclient.Interface,
 	userClient userclient.Interface,
 	oAuthClient oauthclient.Interface,
+	reader client.Reader,
 ) *K8SClient {
 	return &K8SClient{
 		istioClientset: istioClient,
@@ -255,5 +263,6 @@ func NewClient(
 		routeClient:    routeClient,
 		userClient:     userClient,
 		oAuthClient:    oAuthClient,
+		Reader:         reader,
 	}
 }

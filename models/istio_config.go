@@ -9,6 +9,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	telemetry_v1 "istio.io/client-go/pkg/apis/telemetry/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
@@ -254,6 +255,8 @@ type IstioConfigMap map[string]IstioConfigList
 type IstioConfigDetails struct {
 	Namespace Namespace               `json:"-"`
 	ObjectGVK schema.GroupVersionKind `json:"-"`
+
+	Object client.Object `json:"-"`
 
 	AuthorizationPolicy   *security_v1.AuthorizationPolicy   `json:"-"`
 	DestinationRule       *networking_v1.DestinationRule     `json:"-"`

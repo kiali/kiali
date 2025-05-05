@@ -40,7 +40,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	"github.com/kiali/kiali/controller"
+	"github.com/kiali/kiali/kubernetes"
 	kialicmd "github.com/kiali/kiali/tools/cmd"
 )
 
@@ -136,7 +136,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	scheme, err := controller.NewScheme()
+	scheme, err := kubernetes.NewScheme()
 	Expect(err).NotTo(HaveOccurred())
 
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})

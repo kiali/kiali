@@ -7,7 +7,7 @@ package cache
 import (
 	"testing"
 
-	"k8s.io/client-go/tools/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -18,8 +18,12 @@ func newTestingCache(t testing.TB, clients map[string]kubernetes.ClientInterface
 	// Disabling Istio API for tests. Otherwise the cache will try and poll the Istio endpoint
 	// when the cache is created.
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	readers := map[string]client.Reader{}
+	for cluster, client := range clients {
+		readers[cluster] = client
+	}
 
-	cache, err := newKialiCache(clients, conf, ConstantWaitForSync)
+	cache, err := NewKialiCache(clients, readers, conf)
 	if err != nil {
 		t.Fatalf("Error creating KialiCache: %v", err)
 	}
@@ -46,27 +50,4 @@ func NewTestingCacheWithFactory(t testing.TB, cf kubernetes.ClientFactory, conf 
 func NewTestingCacheWithClients(t *testing.T, clients map[string]kubernetes.ClientInterface, conf config.Config) KialiCache {
 	t.Helper()
 	return newTestingCache(t, clients, conf)
-}
-
-// ConstantWaitForSync waits continuously with zero interval. Only use this for testing.
-func ConstantWaitForSync(stopCh <-chan struct{}, cacheSyncs ...cache.InformerSynced) bool {
-	for {
-		select {
-		case <-stopCh:
-			return false
-		default:
-			if allCachesSynced(cacheSyncs...) {
-				return true
-			}
-		}
-	}
-}
-
-func allCachesSynced(cacheSyncs ...cache.InformerSynced) bool {
-	for _, syncFunc := range cacheSyncs {
-		if !syncFunc() {
-			return false
-		}
-	}
-	return true
 }
