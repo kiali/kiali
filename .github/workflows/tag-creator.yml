@@ -12,7 +12,7 @@ on:
 jobs:
   initialize:
     name: Initialize
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     outputs:
       branches: ${{ env.branches }}
     steps:
@@ -37,7 +37,7 @@ jobs:
         echo "branches=$BRANCHES" >> $GITHUB_ENV
   create_tag:
     needs: [initialize]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         branch: ${{fromJson(needs.initialize.outputs.branches)}}
