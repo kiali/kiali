@@ -85,12 +85,12 @@ ISTIO_INGRESS_IP=$(${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" get service -n 
 
 helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
 # Disable everything except zipkin. We can't rename the service so disable that too and create one ourselves.
-helm --kube-context "${CLUSTER2_CONTEXT}" upgrade --install --namespace istio-system my-opentelemetry-collector open-telemetry/opentelemetry-collector -f - <<EOF
+helm --kube-context "${CLUSTER2_CONTEXT}" upgrade --wait --install --namespace istio-system my-opentelemetry-collector open-telemetry/opentelemetry-collector -f - <<EOF
 mode: deployment
 service:
   enabled: false
 image:
-  repository: "otel/opentelemetry-collector-contrib"
+  repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib
 config:
   exporters:
     debug: {}
@@ -116,8 +116,6 @@ config:
           - zipkin
       metrics: null
       logs: null
-image:
-  repository: "otel/opentelemetry-collector-contrib"
 ports:
   jaeger-compact:
     enabled: false

@@ -194,7 +194,7 @@ ensureKialiServerReady() {
 ensureKialiTracesReady() {
   infomsg "Waiting for Kiali to have traces"
   local start_time=$(date +%s)
-  local end_time=$((start_time + 60))
+  local end_time=$((start_time + 120))
   local multicluster=$1
 
   # Get traces from the last 5m
@@ -214,8 +214,9 @@ ensureKialiTracesReady() {
     if [ "$result" == "[]" ]; then
       local now=$(date +%s)
       if [ "${now}" -gt "${end_time}" ]; then
-        echo "Timed out waiting for Kiali to get any trace"
-        break
+        echo "Timed out waiting for Kiali to get any trace. Examine open telemetry collector logs below:"
+        kubectl logs -l app.kubernetes.io/name=opentelemetry-collector --tail=-1 --context kind-west -n istio-system
+        exit 1
       fi
       sleep 10
     else
@@ -224,13 +225,6 @@ ensureKialiTracesReady() {
     fi
 
   done
-
-  # When there are no traces from the remote cluster, check collector pod logs
-  # Uncomment for debugging purposes
-  #POD_NAME=$(kubectl --context kind-west get pods -l app.kubernetes.io/name=opentelemetry-collector -n istio-system -o custom-columns=":metadata.name" | head -n 2)
-  #echo $POD_NAME
-  #kubectl logs $POD_NAME --context kind-west -n istio-system
-
 }
 
 ensureBookinfoGraphReady() {
