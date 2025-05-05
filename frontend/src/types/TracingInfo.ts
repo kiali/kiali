@@ -130,3 +130,9 @@ export type TracingSingleResponse = {
   data: JaegerTrace | null;
   errors: TracingError[];
 };
+
+export type StatusError = {
+  code?: number;
+  msg: string;
+  tracingConfig?: TracingInfo;
+};

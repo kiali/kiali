@@ -260,19 +260,6 @@ func (in *TracingService) GetStatus(ctx context.Context) (accessible bool, err e
 	return client.GetServiceStatus(ctx)
 }
 
-func (in *TracingService) TracingDiagnose() (trace *model.TracingDiagnose, err error) {
-	client, err := in.client()
-	diagnose := model.TracingDiagnose{}
-	if err != nil {
-		return nil, err
-	}
-	if client == nil {
-		diagnose.Status = "Failure"
-		diagnose.Reason = err.Error()
-	}
-	return &diagnose, nil
-}
-
 func matchesWorkload(ctx context.Context, trace *jaegerModels.Trace, namespace string, tracingName models.TracingName) bool {
 	for _, span := range trace.Spans {
 		if process, ok := trace.Processes[span.ProcessID]; ok {
@@ -390,4 +377,8 @@ func tracesToSpans(ctx context.Context, app models.TracingName, r *model.Tracing
 	}
 	log.FromContext(ctx).Trace().Msgf("Found [%d] spans in the [%d] traces for app [%s]", len(spans), len(r.Data), app)
 	return spans
+}
+
+func (in *TracingService) TracingDiagnose(ctx context.Context, token string) (trace *model.TracingDiagnose, err error) {
+	return tracing.TestNewClient(ctx, in.conf, token)
 }
