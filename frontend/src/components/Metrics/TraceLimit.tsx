@@ -75,6 +75,7 @@ export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) =>
             <label key={`limit-${lim}`} className={itemStyleWithoutInfo}>
               <Radio
                 id={`limit-${lim}`}
+                data-test={`limit-${lim}`}
                 name={`limit-${lim}`}
                 isChecked={lim === limit}
                 label={lim}
