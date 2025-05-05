@@ -223,6 +223,46 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 	}
 }
 
+func TestNewClient(ctx context.Context, conf *config.Config, token string) (*model.TracingDiagnose, error) {
+	cfgTracing := conf.ExternalServices.Tracing
+	test := model.TracingDiagnose{}
+	if !cfgTracing.Enabled {
+		test.Message = "tracing is not enabled"
+		return &test, nil
+	}
+
+	parsedURL, err := url.Parse(cfgTracing.InternalURL)
+	if err != nil {
+		return &test, errors.New("external_services.tracing.internal_url is required and must be a valid URL")
+	}
+
+	host, port, err := net.SplitHostPort(parsedURL.Host)
+	if err != nil {
+		host = parsedURL.Host
+		port = ""
+	}
+
+	// Base URL: scheme + host (and port if exists)
+	baseURL := fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host)
+
+	// The rest (path + query)
+	rest := parsedURL.RequestURI()
+
+	// TODO Then
+	log.Infof("Parsed URL: host %s - port %s - baseURL %s - rest %s - prot: %s", host, port, baseURL, rest, parsedURL.Scheme)
+	switch port {
+	case "16686", "80", "":
+		// Validate Jaeger and http/https
+
+	case "16685":
+		// Validate Jaeger GRPC
+	case "3200", "8080":
+		// Validate Tempo http (Or Jaeger with 8080)
+	}
+	return &test, nil
+
+}
+
 // GetAppTraces fetches traces of an app
 func (in *Client) GetAppTraces(ctx context.Context, namespace, app string, q models.TracingQuery) (*model.TracingResponse, error) {
 	ctx = in.prepareContextForClient(ctx)

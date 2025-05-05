@@ -417,21 +417,12 @@ func TracingDiagnose(
 			return
 		}
 
-		params := mux.Vars(r)
-		namespace := params["namespace"]
-		app := params["app"]
-		q, err := readQuery(conf, r.URL.Query())
-		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
-		spans, err := business.Tracing.GetAppSpans(r.Context(), cluster, namespace, app, q)
+		status, err := business.Tracing.TracingDiagnose(r.Context(), clientFactory.GetSAHomeClusterClient().GetToken())
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
 		}
 
-		RespondWithJSON(w, http.StatusOK, spans)
+		RespondWithJSON(w, http.StatusOK, status)
 	}
 }
