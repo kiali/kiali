@@ -196,11 +196,21 @@ jobs:
       target_branch: ${{needs.initialize.outputs.target_branch}}
       build_branch: ${{ github.ref_name }}
 
+  run_molecule_tests:
+    name: Molecule tests
+    if: ${{ needs.initialize.outputs.release_type != 'skip' }}
+    uses: ./.github/workflows/molecules.yml
+    needs: [initialize]
+    with:
+      all_tests: ""
+      olm_version: "latest"
+      istio_minor_version_offset: 0
+
   release:
     name: Release
     if: ${{ needs.initialize.outputs.release_type != 'skip' && ((github.event_name == 'schedule' && github.repository == 'kiali/kiali') || github.event_name != 'schedule') }}
     runs-on: ubuntu-latest
-    needs: [initialize, build_backend, build_frontend]
+    needs: [initialize, build_backend, build_frontend, run_molecule_tests]
     env:
       RELEASE_VERSION: ${{ needs.initialize.outputs.release_version }}
       BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}

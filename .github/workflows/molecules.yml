@@ -24,6 +24,19 @@ on:
         required: false
         default: 0
         type: number
+  workflow_call:
+    inputs:
+      all_tests:
+        required: false
+        type: string
+      olm_version:
+        required: false
+        type: string
+        default: "latest"
+      istio_minor_version_offset:
+        required: false
+        type: number
+        default: 0
 jobs:
   molecules:
     name: Molecule tests
@@ -46,11 +59,11 @@ jobs:
     - name: Determine Istio version to use
       id: determine-istio-version-to-use
       run: |
-        if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.istio_minor_version_offset }}" ]]; then
-          OFFSET="${{ github.event.inputs.istio_minor_version_offset }}"
-          # Convert to absolute value - we want a positive offset, though some people might find it more intuitive to say "-1" offset for the previous version
-          OFFSET=$(( OFFSET < 0 ? -OFFSET : OFFSET ))
-        else
+        OFFSET="${{ inputs.istio_minor_version_offset }}"
+        # Convert to absolute value - we want a positive offset, though some people might find it more intuitive to say "-1" offset for the previous version
+        OFFSET=$(( OFFSET < 0 ? -OFFSET : OFFSET ))
+
+        if [[ -z "${OFFSET}" ]]; then
           case "${{ github.event.schedule }}" in
             "0 2 * * *") OFFSET=0 ;;
             "0 4 * * *") OFFSET=1 ;;
@@ -58,6 +71,7 @@ jobs:
             *) echo "Invalid schedule or unknown trigger! Cannot determine Istio version." && exit 1 ;;
           esac
         fi
+
         LATEST_ISTIO_VERSIONS="$(curl -s https://api.github.com/repos/istio/istio/releases | jq -r '.[].tag_name' | sort -rV | awk -F'[-.]' '
           {
             minor = $1"."$2
@@ -86,6 +100,7 @@ jobs:
             for (m in minor_ga) { print minor_ga[m] }
             for (m in minor_rc) { print minor_rc[m] }
           }' | sort -Vr | grep -v '^$' | head -n $((OFFSET + 1)))"
+
         ISTIO_VERSION=$(echo "${LATEST_ISTIO_VERSIONS}" | tail -n 1)
         echo "The latest Istio versions are:"
         echo "${LATEST_ISTIO_VERSIONS}"
