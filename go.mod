@@ -1,6 +1,6 @@
 module github.com/kiali/kiali
 
-go 1.24.0
+go 1.24.2
 
 require (
 	github.com/Masterminds/semver/v3 v3.3.1
