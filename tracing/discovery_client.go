@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	otel "github.com/kiali/kiali/tracing/otel/model"
 	"net"
 	"net/http"
 	"net/url"
@@ -15,6 +14,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tracing/jaeger/model"
+	otel "github.com/kiali/kiali/tracing/otel/model"
 	"github.com/kiali/kiali/util/httputil"
 )
 
