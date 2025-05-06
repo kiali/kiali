@@ -1,7 +1,8 @@
 package model
 
 import (
-	"github.com/kiali/kiali/config"
+	"net/url"
+
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 )
 
@@ -35,8 +36,32 @@ type Services struct {
 	Data []string `json:"data"`
 }
 
+type ParsedUrl struct {
+	BaseUrl string   `json:"baseUrl"`
+	Host    string   `json:"host"`
+	Path    string   `json:"path"`
+	Port    string   `json:"port"`
+	Scheme  string   `json:"scheme"`
+	Url     *url.URL `json:"url,omitempty"`
+}
+
+type ValidConfig struct {
+	NamespaceSelector bool   `json:"namespaceSelector"`
+	Provider          string `json:"provider"`
+	Url               string `json:"url"`
+	UseGRPC           bool   `json:"useGRPC"`
+}
+
 type TracingDiagnose struct {
-	Code          int                  `json:"code"`
-	Message       string               `json:"message"`
-	TracingConfig config.TracingConfig `json:"tracingConfig"`
+	Code        int           `json:"code"`
+	Message     string        `json:"message"`
+	ValidConfig []ValidConfig `json:"validConfig"`
+}
+
+type TracingService struct {
+	Data   []string          `json:"data"`
+	Total  int               `json:"total"`
+	Limit  int               `json:"limit"`
+	Offset int               `json:"offset"`
+	Errors []StructuredError `json:"errors"`
 }
