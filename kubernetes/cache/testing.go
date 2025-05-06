@@ -34,7 +34,7 @@ func newTestingCache(t testing.TB, clients map[string]kubernetes.ClientInterface
 
 // NewTestingCache will create a cache for you from the kube client and will cleanup the cache
 // when the test ends.
-func NewTestingCache(t *testing.T, k8s kubernetes.ClientInterface, conf config.Config) KialiCache {
+func NewTestingCache(t testing.TB, k8s kubernetes.ClientInterface, conf config.Config) KialiCache {
 	t.Helper()
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
 	return newTestingCache(t, clients, conf)
