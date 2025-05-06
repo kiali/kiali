@@ -81,7 +81,7 @@ func SidecarSelectorMultiMatchChecker(cluster string, objectGVK schema.GroupVers
 	selectors := make(map[int]map[string]string, len(sc))
 	i := 0
 	for _, s := range sc {
-		for ns, _ := range workloadsPerNamespace {
+		for ns := range workloadsPerNamespace {
 			if s.Namespace != ns {
 				// Workloads from Sidecar's own Namespaces only are considered in Selector
 				continue

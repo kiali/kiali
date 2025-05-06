@@ -232,7 +232,7 @@ func convertSampleStream(from *pmod.SampleStream, name, stat string, conversionP
 		}
 		labelSet[string(k)] = string(v)
 		if conversionParams.LabelPrefix != "" {
-			for i, _ := range labelSet {
+			for i := range labelSet {
 				labelSet[i] = fmt.Sprintf("%s (%s)", conversionParams.LabelPrefix, v)
 			}
 		}
