@@ -14,7 +14,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/controller"
+	"github.com/kiali/kiali/controller/validation"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
@@ -58,7 +58,7 @@ var _ = Describe("Validations controller", Ordered, func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			conf.ExternalServices.Istio.ValidationReconcileInterval = util.AsPtr(time.Millisecond * 100)
-			err = controller.NewValidationsController(ctx, []string{conf.KubernetesConfig.ClusterName}, conf, kialiCache, &layer.Validations, k8sManager)
+			err = validation.NewValidationsController(ctx, []string{conf.KubernetesConfig.ClusterName}, conf, kialiCache, &layer.Validations, k8sManager)
 			Expect(err).ToNot(HaveOccurred())
 		})
 

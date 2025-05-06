@@ -295,7 +295,6 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 		IncludeK8sGateways:            true,
 		IncludeK8sGRPCRoutes:          true,
 		IncludeK8sHTTPRoutes:          true,
-		IncludeK8sReferenceGrants:     true,
 		IncludePeerAuthentications:    true,
 		IncludeRequestAuthentications: true,
 		IncludeServiceEntries:         true,
@@ -310,7 +309,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 	}
 	vInfo.clusterInfo.istioConfig = istioConfigList
 
-	//if change detection is enabled then decide if we need to run the checkers
+	// if change detection is enabled then decide if we need to run the checkers
 	if vInfo.changeDetectionEnabled() {
 		changeDetected := detectClusterConfigChange(vInfo)
 		if !changeDetected && !vInfo.forceCheckers() {
@@ -390,9 +389,6 @@ func detectClusterConfigChange(vInfo *validationInfo) bool {
 	for _, c := range config.K8sHTTPRoutes {
 		change = vInfo.update("KHTTP", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
-	for _, c := range config.K8sReferenceGrants {
-		change = vInfo.update("KRG", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
-	}
 	for _, c := range config.K8sTCPRoutes {
 		change = vInfo.update("KTCP", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
@@ -434,7 +430,6 @@ func detectClusterConfigChange(vInfo *validationInfo) bool {
 		len(config.K8sGateways) +
 		len(config.K8sGRPCRoutes) +
 		len(config.K8sHTTPRoutes) +
-		len(config.K8sReferenceGrants) +
 		len(config.K8sTCPRoutes) +
 		len(config.K8sTLSRoutes) +
 		len(config.PeerAuthentications) +
@@ -471,7 +466,6 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) [
 		checkers.K8sGatewayChecker{K8sGateways: istioConfigList.K8sGateways, Cluster: cluster, GatewayClasses: in.istioConfig.GatewayAPIClasses(cluster)},
 		checkers.K8sGRPCRouteChecker{Conf: conf, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices, Cluster: cluster},
 		checkers.K8sHTTPRouteChecker{Conf: conf, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices, Cluster: cluster},
-		checkers.K8sReferenceGrantChecker{K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Cluster: cluster},
 		checkers.NoServiceChecker{Conf: conf, Namespaces: namespaces, IstioConfigList: istioConfigList, WorkloadsPerNamespace: workloadsPerNamespace, AuthorizationDetails: rbacDetails, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh), Cluster: cluster},
 		checkers.PeerAuthenticationChecker{Conf: conf, PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: *mtlsDetails, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster},
 		checkers.RequestAuthenticationChecker{RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster},
@@ -591,7 +585,8 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		objectCheckers = []checkers.ObjectChecker{serviceEntryChecker}
 		referenceChecker = references.ServiceEntryReferences{Conf: conf, AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: nsNames, DestinationRules: istioConfigList.DestinationRules, ServiceEntries: istioConfigList.ServiceEntries, Sidecars: istioConfigList.Sidecars, RegistryServices: registryServices}
 	case kubernetes.Sidecars:
-		sidecarsChecker := checkers.SidecarChecker{Conf: conf,
+		sidecarsChecker := checkers.SidecarChecker{
+			Conf:    conf,
 			Cluster: cluster, Sidecars: istioConfigList.Sidecars, Namespaces: namespaces,
 			WorkloadsPerNamespace: workloadsPerNamespace, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices,
 		}

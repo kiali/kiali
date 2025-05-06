@@ -63,7 +63,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/controller"
+	"github.com/kiali/kiali/controller/validation"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
@@ -201,7 +201,11 @@ func main() {
 		log.Fatalf("Error creating business layer: %s", err)
 	}
 
-	if err := controller.NewValidationsController(ctx, slices.Collect(maps.Keys(kubeCaches)), conf, cache, &layer.Validations, mgr); err != nil {
+	if err := validation.NewValidationsController(ctx, slices.Collect(maps.Keys(kubeCaches)), conf, cache, &layer.Validations, mgr); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := validation.NewReferenceGrantReconciler(kubeCaches, conf, cache).SetupWithManager(mgr); err != nil {
 		log.Fatal(err)
 	}
 
@@ -415,6 +419,10 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 				},
 			},
 		},
+		// We don't want leader election because Kiali controllers work independently of one another
+		// to populate in-memory objects rather than writing back to the kube API.
+		LeaderElection: false,
+		// Kiali uses its own metrics server. Disable the controller-runtime one.
 		Metrics: metricsserver.Options{BindAddress: "0"},
 		Scheme:  scheme,
 	})
