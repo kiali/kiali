@@ -22,7 +22,7 @@ func TestOutsider(t *testing.T) {
 	accessible, _ := graph.NewNode(config.DefaultClusterID, "accessibleNamespace", "test", "accessibleNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
 	trafficMap[accessible.ID] = accessible
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), nil, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(nil, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := OutsiderAppender{
@@ -33,7 +33,7 @@ func TestOutsider(t *testing.T) {
 			},
 		},
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	require.Equal(true, trafficMap[inaccessible.ID].Metadata[graph.IsInaccessible])
 	require.Equal(nil, trafficMap[accessible.ID].Metadata[graph.IsInaccessible])

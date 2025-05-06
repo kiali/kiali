@@ -5,7 +5,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
-	klog "github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/log"
 )
 
 const WorkloadEntryAppenderName = "workloadEntry"
@@ -17,7 +17,6 @@ const WorkloadEntryAppenderName = "workloadEntry"
 // A workload can have multiple matches.
 type WorkloadEntryAppender struct {
 	AccessibleNamespaces graph.AccessibleNamespaces
-	log                  klog.ContextLogger
 }
 
 // Name implements Appender
@@ -31,17 +30,21 @@ func (a WorkloadEntryAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a WorkloadEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a WorkloadEntryAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+	zl := log.FromContext(ctx)
+
 	if len(trafficMap) == 0 {
 		return
 	}
 
-	a.log.Trace("Running workload entry appender")
+	zl.Trace().Msg("Running workload entry appender")
 
-	a.applyWorkloadEntries(trafficMap, globalInfo, namespaceInfo)
+	a.applyWorkloadEntries(ctx, trafficMap, globalInfo, namespaceInfo)
 }
 
-func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap, gi *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a WorkloadEntryAppender) applyWorkloadEntries(ctx context.Context, trafficMap graph.TrafficMap, gi *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+	zl := log.FromContext(ctx)
+
 	for _, n := range trafficMap {
 		// Skip the check if this node is outside the requested namespace, we limit badging to the requested namespaces
 		if n.Namespace != namespaceInfo.Namespace {
@@ -58,12 +61,12 @@ func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap,
 			continue
 		}
 
-		istioCfg, err := gi.Business.IstioConfig.GetIstioConfigListForNamespace(context.TODO(), n.Cluster, n.Namespace, business.IstioConfigCriteria{
+		istioCfg, err := gi.Business.IstioConfig.GetIstioConfigListForNamespace(ctx, n.Cluster, n.Namespace, business.IstioConfigCriteria{
 			IncludeWorkloadEntries: true,
 		})
 		graph.CheckError(err)
 
-		a.log.Tracef("WorkloadEntries found: %d", len(istioCfg.WorkloadEntries))
+		zl.Trace().Msgf("WorkloadEntries found: %d", len(istioCfg.WorkloadEntries))
 
 		for _, entry := range istioCfg.WorkloadEntries {
 			appLabelName, appLabelNameFound := gi.Conf.GetAppLabelName(entry.Spec.Labels)
@@ -77,7 +80,7 @@ func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap,
 				weMetadata := n.Metadata[graph.HasWorkloadEntry].([]graph.WEInfo)
 				weMetadata = append(weMetadata, we)
 				n.Metadata[graph.HasWorkloadEntry] = weMetadata
-				a.log.Trace("Found matching WorkloadEntry")
+				zl.Trace().Msg("Found matching WorkloadEntry")
 			}
 		}
 	}

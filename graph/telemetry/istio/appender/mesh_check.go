@@ -1,9 +1,10 @@
 package appender
 
 import (
+	"context"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	klog "github.com/kiali/kiali/log"
 )
 
 const MeshCheckAppenderName = "meshCheck"
@@ -14,7 +15,6 @@ const SidecarsCheckAppenderName = "sidecarsCheck"
 // Name: meshCheck
 type MeshCheckAppender struct {
 	AccessibleNamespaces graph.AccessibleNamespaces
-	log                  klog.ContextLogger
 }
 
 // Name implements Appender
@@ -28,7 +28,7 @@ func (a MeshCheckAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a MeshCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a MeshCheckAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}

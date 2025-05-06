@@ -23,7 +23,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
-	klog "github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/log"
 )
 
 func NewScheme() (*runtime.Scheme, error) {
@@ -44,12 +44,12 @@ func NewScheme() (*runtime.Scheme, error) {
 
 // Start creates and starts all the controllers. They'll get cancelled when the context is cancelled.
 func Start(ctx context.Context, conf *config.Config, cf kubernetes.ClientFactory, kialiCache cache.KialiCache, validationsService *business.IstioValidationsService) error {
-	log := klog.WithGroup("validationsController")
-	ctx = context.WithValue(ctx, ctxKeyLogger{}, log)
-	ctrl.SetLogger(zerologr.New(&log.Z))
+	zl := log.WithGroup("validationsController")
+	ctx = log.ToContext(ctx, zl)
+	ctrl.SetLogger(zerologr.New(zl))
 
 	// Combine the istio scheme and the kube scheme.
-	log.Debug("Setting up Validations Contoller")
+	zl.Debug().Msg("Setting up Validations Contoller")
 	scheme, err := NewScheme()
 	if err != nil {
 		return fmt.Errorf("error setting up ValidationsController when creating scheme: %s", err)
@@ -80,22 +80,10 @@ func Start(ctx context.Context, conf *config.Config, cf kubernetes.ClientFactory
 
 	go func() {
 		if err := mgr.Start(ctx); err != nil {
-			log.Errorf("error starting Validations Controller: %s", err)
+			zl.Error().Msgf("error starting Validations Controller: %s", err)
 		}
-		log.Debug("Stopped Validations Controller")
+		zl.Debug().Msgf("Stopped Validations Controller")
 	}()
 
 	return nil
-}
-
-// ctxKeyLogger identifies the logger value in the context
-type ctxKeyLogger struct{}
-
-// getLogger returns the Kiali logger from the given context
-func getLogger(ctx context.Context) klog.ContextLogger {
-	if l, ok := ctx.Value(ctxKeyLogger{}).(klog.ContextLogger); ok {
-		return l
-	} else {
-		return klog.WithGroup("unknown") // paranoia - if for some reason the context doesn't have it, just give it something
-	}
 }

@@ -2,6 +2,7 @@ package cache
 
 import (
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 )
 
 type (
@@ -16,7 +17,7 @@ func (c *kialiCacheImpl) GetRegistryStatus(cluster string) *kubernetes.RegistryS
 	if !found {
 		// Ignoring any errors here because registry services are optional. Most likely any errors
 		// here are due to cache misses since populating the cache is handled asynchronously.
-		log.Tracef("Unable to get registry status for cluster [%s]. Registry status not found in cache.", cluster)
+		log.FromContext(c.ctx).Trace().Msgf("Unable to get registry status for cluster [%s]. Registry status not found in cache.", cluster)
 		return nil
 	}
 

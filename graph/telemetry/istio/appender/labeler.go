@@ -1,8 +1,10 @@
 package appender
 
 import (
+	"context"
+
 	"github.com/kiali/kiali/graph"
-	klog "github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/log"
 )
 
 const LabelerAppenderName = "labeler"
@@ -10,7 +12,6 @@ const LabelerAppenderName = "labeler"
 // LabelerAppender is responsible for obtaining and attaching all k8s labels to all nodes in the graph.
 // Name: labeler
 type LabelerAppender struct {
-	log klog.ContextLogger
 }
 
 // Name implements Appender
@@ -24,16 +25,18 @@ func (a LabelerAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (f *LabelerAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, _namespaceInfo *graph.AppenderNamespaceInfo) {
+func (f *LabelerAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, _namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
 
-	labelNodes(trafficMap, globalInfo, f.log)
+	labelNodes(trafficMap, globalInfo, ctx)
 }
 
 // labelNodes puts all k8s labels in the metadata for all nodes.
-func labelNodes(trafficMap graph.TrafficMap, gi *graph.GlobalInfo, log klog.ContextLogger) {
+func labelNodes(trafficMap graph.TrafficMap, gi *graph.GlobalInfo, ctx context.Context) {
+	zl := log.FromContext(ctx)
+
 	for _, n := range trafficMap {
 		// can't get labels for nodes on the outside or inaccessible nodes, so just go to the next and ignore this one.
 		if b, ok := n.Metadata[graph.IsOutside]; ok && b.(bool) {
@@ -52,26 +55,26 @@ func labelNodes(trafficMap graph.TrafficMap, gi *graph.GlobalInfo, log klog.Cont
 				if wl, ok := getWorkload(n.Cluster, n.Namespace, n.Workload, gi); ok {
 					labelsMetadata = copyMap(wl.Labels)
 				} else {
-					log.Debugf("Failed to obtain versioned-app details for [%+v]", n)
+					zl.Debug().Msgf("Failed to obtain versioned-app details for [%+v]", n)
 				}
 			} else {
 				if app, ok := getApp(n.Namespace, n.App, gi); ok {
 					labelsMetadata = copyMap(app.Labels)
 				} else {
-					log.Debugf("Failed to obtain app details for [%+v]", n)
+					zl.Debug().Msgf("Failed to obtain app details for [%+v]", n)
 				}
 			}
 		case graph.NodeTypeService:
 			if svc, ok := getServiceDefinition(n.Cluster, n.Namespace, n.Service, gi); ok {
 				labelsMetadata = copyMap(svc.Labels)
 			} else {
-				log.Debugf("Failed to obtain service details for [%+v]", n)
+				zl.Debug().Msgf("Failed to obtain service details for [%+v]", n)
 			}
 		case graph.NodeTypeWorkload:
 			if wl, ok := getWorkload(n.Cluster, n.Namespace, n.Workload, gi); ok {
 				labelsMetadata = copyMap(wl.Labels)
 			} else {
-				log.Debugf("Failed to obtain workload details for [%+v].", n)
+				zl.Debug().Msgf("Failed to obtain workload details for [%+v].", n)
 			}
 		default:
 			// skip any other nodes

@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -227,7 +228,7 @@ func TestResponseTimeP95(t *testing.T) {
 	}
 
 	gi := &graph.GlobalInfo{Conf: config.Get(), PromClient: client}
-	appender.appendGraph(trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: true}, gi)
+	appender.appendGraph(context.Background(), trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: true}, gi)
 
 	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)
@@ -502,7 +503,7 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 	}
 
 	gi := &graph.GlobalInfo{Conf: config.Get(), PromClient: client}
-	appender.appendGraph(trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: false}, gi)
+	appender.appendGraph(context.Background(), trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: false}, gi)
 
 	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)
@@ -777,7 +778,7 @@ func TestResponseTimeAvg(t *testing.T) {
 	}
 
 	gi := &graph.GlobalInfo{Conf: config.Get(), PromClient: client}
-	appender.appendGraph(trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: false}, gi)
+	appender.appendGraph(context.Background(), trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: false}, gi)
 
 	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)

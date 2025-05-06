@@ -8,7 +8,6 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
-	klog "github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/sliceutil"
 )
@@ -82,21 +81,18 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		a := ServiceEntryAppender{
 			AccessibleNamespaces: o.AccessibleNamespaces,
 			GraphType:            o.GraphType,
-			log:                  buildAppenderLogger("serviceEntry"),
 		}
 		appenders = append(appenders, a)
 	}
 	if _, ok := requestedAppenders[DeadNodeAppenderName]; ok || o.Appenders.All {
 		a := DeadNodeAppender{
 			AccessibleNamespaces: o.AccessibleNamespaces,
-			log:                  buildAppenderLogger("deadNode"),
 		}
 		appenders = append(appenders, a)
 	}
 	if _, ok := requestedAppenders[WorkloadEntryAppenderName]; ok || o.Appenders.All {
 		a := WorkloadEntryAppender{
 			AccessibleNamespaces: o.AccessibleNamespaces,
-			log:                  buildAppenderLogger("workloadEntry"),
 		}
 		appenders = append(appenders, a)
 	}
@@ -124,7 +120,6 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 			Namespaces:         o.Namespaces,
 			QueryTime:          o.QueryTime,
 			Rates:              o.Rates,
-			log:                buildAppenderLogger("responseTime"),
 		}
 		appenders = append(appenders, a)
 	}
@@ -135,7 +130,6 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 			Namespaces:         o.Namespaces,
 			QueryTime:          o.QueryTime,
 			Rates:              o.Rates,
-			log:                buildAppenderLogger("securityPolicy"),
 		}
 		appenders = append(appenders, a)
 	}
@@ -155,7 +149,6 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 			QueryTime:          o.QueryTime,
 			Rates:              o.Rates,
 			ThroughputType:     throughputType,
-			log:                buildAppenderLogger("throughput"),
 		}
 		appenders = append(appenders, a)
 	}
@@ -175,7 +168,6 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 			QueryTime:          o.QueryTime,
 			Rates:              o.Rates,
 			Service:            o.NodeOptions.Service,
-			log:                buildAppenderLogger("aggregateNode"),
 		}
 		appenders = append(appenders, a)
 	}
@@ -185,21 +177,18 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 			GraphType:          o.GraphType,
 			InjectServiceNodes: o.InjectServiceNodes,
 			IsNodeGraph:        hasNodeOptions,
-			log:                buildAppenderLogger("idleNode"),
 		}
 		appenders = append(appenders, a)
 	}
 	if _, ok := requestedAppenders[IstioAppenderName]; ok || o.Appenders.All {
 		a := IstioAppender{
 			AccessibleNamespaces: o.AccessibleNamespaces,
-			log:                  buildAppenderLogger("istio"),
 		}
 		appenders = append(appenders, a)
 	}
 	if _, ok := requestedAppenders[MeshCheckAppenderName]; ok || o.Appenders.All {
 		a := MeshCheckAppender{
 			AccessibleNamespaces: o.AccessibleNamespaces,
-			log:                  buildAppenderLogger("meshCheck"),
 		}
 		appenders = append(appenders, a)
 	}
@@ -214,7 +203,6 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		QueryTime:        o.QueryTime,
 		Rates:            o.Rates,
 		ShowUnrooted:     true, // ToDo possibly make this an option
-		log:              buildAppenderLogger("extensions"),
 	})
 
 	// always run the outsider finalizer next, this allows other finalizers to
@@ -222,7 +210,6 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 	finalizers = append(finalizers, &OutsiderAppender{
 		AccessibleNamespaces: o.AccessibleNamespaces,
 		Namespaces:           o.Namespaces,
-		log:                  buildAppenderLogger("outsider"),
 	})
 
 	if _, ok := requestedFinalizers[AmbientAppenderName]; ok || o.Appenders.All {
@@ -238,7 +225,6 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		finalizers = append(finalizers, &AmbientAppender{
 			AccessibleNamespaces: o.AccessibleNamespaces,
 			ShowWaypoints:        waypoints,
-			log:                  buildAppenderLogger("ambient"),
 		})
 	}
 
@@ -248,21 +234,16 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 			Namespaces:        o.Namespaces,
 			QueryTime:         o.QueryTime,
 			RequestedDuration: o.Duration,
-			log:               buildAppenderLogger("health"),
 		})
 	}
 
 	// if labeler finalizer is to be run, do it after the outsider finalizer
 	if _, ok := requestedFinalizers[LabelerAppenderName]; ok {
-		finalizers = append(finalizers, &LabelerAppender{
-			log: buildAppenderLogger("labeler"),
-		})
+		finalizers = append(finalizers, &LabelerAppender{})
 	}
 
 	// always run the traffic generator finalizer
-	finalizers = append(finalizers, &TrafficGeneratorAppender{
-		log: buildAppenderLogger("trafficGenerator"),
-	})
+	finalizers = append(finalizers, &TrafficGeneratorAppender{})
 
 	return appenders, finalizers
 }
@@ -504,8 +485,4 @@ func getTrafficClusters(trafficMap graph.TrafficMap, namespace string, gi *graph
 	})
 
 	return filteredClusterNames
-}
-
-func buildAppenderLogger(appenderName string) klog.ContextLogger {
-	return klog.WithContext(map[string]string{"group": "graph", "appender": appenderName})
 }

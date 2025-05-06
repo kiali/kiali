@@ -1,8 +1,9 @@
 package appender
 
 import (
+	"context"
+
 	"github.com/kiali/kiali/graph"
-	klog "github.com/kiali/kiali/log"
 )
 
 const OutsiderAppenderName = "outsider"
@@ -12,7 +13,6 @@ const OutsiderAppenderName = "outsider"
 type OutsiderAppender struct {
 	AccessibleNamespaces graph.AccessibleNamespaces
 	Namespaces           graph.NamespaceInfoMap
-	log                  klog.ContextLogger
 }
 
 // Name implements Appender
@@ -26,7 +26,7 @@ func (a OutsiderAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a *OutsiderAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, _namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a *OutsiderAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, _namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}

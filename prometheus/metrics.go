@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/common/model"
 	"k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/util/sliceutil"
 )
@@ -36,7 +37,7 @@ func fetchRateRange(ctx context.Context, api prom_v1.API, metricName string, lab
 func fetchHistogramRange(ctx context.Context, api prom_v1.API, metricName, labels, grouping string, q *RangeQuery) Histogram {
 	// Note: the p8s queries are not run in parallel here, but they are at the caller's place.
 	//	This is because we may not want to create too many threads in the lowest layer
-	queries := buildHistogramQueries(metricName, labels, grouping, q.RateInterval, q.Avg, q.Quantiles)
+	queries := buildHistogramQueries(ctx, metricName, labels, grouping, q.RateInterval, q.Avg, q.Quantiles)
 	histogram := make(Histogram, len(queries))
 	for k, query := range queries {
 		histogram[k] = fetchRange(ctx, api, query, q.Range)
@@ -45,15 +46,17 @@ func fetchHistogramRange(ctx context.Context, api prom_v1.API, metricName, label
 }
 
 func fetchHistogramValues(ctx context.Context, api prom_v1.API, metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error) {
+	zl := log.FromContext(ctx)
+
 	// Note: the p8s queries are not run in parallel here, but they are at the caller's place.
 	//	This is because we may not want to create too many threads in the lowest layer
-	queries := buildHistogramQueries(metricName, labels, grouping, rateInterval, avg, quantiles)
+	queries := buildHistogramQueries(ctx, metricName, labels, grouping, rateInterval, avg, quantiles)
 	histogram := make(map[string]model.Vector, len(queries))
 	for k, query := range queries {
-		log.Tracef("fetchHistogramValues: %s", query)
+		zl.Trace().Msgf("fetchHistogramValues: %s", query)
 		result, warnings, err := api.Query(ctx, query, queryTime)
 		if len(warnings) > 0 {
-			log.Warningf("fetchHistogramValues. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+			zl.Warn().Msgf("fetchHistogramValues. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 		}
 		if err != nil {
 			return nil, errors.NewServiceUnavailable(err.Error())
@@ -63,7 +66,7 @@ func fetchHistogramValues(ctx context.Context, api prom_v1.API, metricName, labe
 	return histogram, nil
 }
 
-func buildHistogramQueries(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string) map[string]string {
+func buildHistogramQueries(ctx context.Context, metricName, labels, grouping, rateInterval string, avg bool, quantiles []string) map[string]string {
 	queries := make(map[string]string)
 	if avg {
 		groupingAvg := ""
@@ -94,21 +97,22 @@ func buildHistogramQueries(metricName, labels, grouping, rateInterval string, av
 func fetchQuery(ctx context.Context, api prom_v1.API, query string, queryTime time.Time) Metric {
 	result, warnings, err := api.Query(ctx, query, queryTime)
 	if len(warnings) > 0 {
-		log.Warningf("fetchQuery. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+		zl := log.FromContext(ctx)
+		zl.Warn().Msgf("fetchQuery. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	if err != nil {
 		return Metric{Err: err}
 	}
 	switch result.Type() {
 	case model.ValVector:
-		return Metric{Matrix: vectorToMatrix(result.(model.Vector), model.Time(queryTime.Unix()))}
+		return Metric{Matrix: vectorToMatrix(ctx, result.(model.Vector), model.Time(queryTime.Unix()))}
 	case model.ValMatrix:
 		return Metric{Matrix: result.(model.Matrix)}
 	}
 	return Metric{Err: fmt.Errorf("invalid query, unexpected result type [%s]: [%s]", result.Type(), query)}
 }
 
-func vectorToMatrix(vector []*model.Sample, t model.Time) model.Matrix {
+func vectorToMatrix(ctx context.Context, vector []*model.Sample, t model.Time) model.Matrix {
 	matrix := sliceutil.Map(vector, func(sample *model.Sample) *model.SampleStream {
 		return &model.SampleStream{
 			Metric: sample.Metric,
@@ -126,7 +130,8 @@ func vectorToMatrix(vector []*model.Sample, t model.Time) model.Matrix {
 func fetchRange(ctx context.Context, api prom_v1.API, query string, bounds prom_v1.Range) Metric {
 	result, warnings, err := api.QueryRange(ctx, query, bounds)
 	if len(warnings) > 0 {
-		log.Warningf("fetchRange. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+		zl := log.FromContext(ctx)
+		zl.Warn().Msgf("fetchRange. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	if err != nil {
 		return Metric{Err: err}
@@ -206,12 +211,13 @@ func getItemRequestRates(ctx context.Context, api prom_v1.API, namespace, cluste
 }
 
 func getRequestRatesForLabel(ctx context.Context, api prom_v1.API, time time.Time, labels, ratesInterval string) (model.Vector, error) {
+	zl := log.FromContext(ctx)
 	query := fmt.Sprintf("rate(istio_requests_total{%s}[%s]) > 0", labels, ratesInterval)
-	log.Tracef("getRequestRatesForLabel: %s", query)
+	zl.Trace().Msgf("getRequestRatesForLabel: %s", query)
 	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Metrics-GetRequestRates")
 	result, warnings, err := api.Query(ctx, query, time)
 	if len(warnings) > 0 {
-		log.Warningf("getRequestRatesForLabel. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+		zl.Warn().Msgf("getRequestRatesForLabel. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	if err != nil {
 		return model.Vector{}, errors.NewServiceUnavailable(err.Error())

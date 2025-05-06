@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"time"
@@ -10,7 +11,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry/istio/util"
-	klog "github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -31,7 +32,6 @@ type ThroughputAppender struct {
 	QueryTime          int64 // unix time in seconds
 	Rates              graph.RequestedRates
 	ThroughputType     string
-	log                klog.ContextLogger
 }
 
 // Name implements Appender
@@ -45,7 +45,7 @@ func (a ThroughputAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a ThroughputAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a ThroughputAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -61,11 +61,13 @@ func (a ThroughputAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo 
 		graph.CheckError(err)
 	}
 
-	a.appendGraph(trafficMap, namespaceInfo.Namespace, globalInfo)
+	a.appendGraph(ctx, trafficMap, namespaceInfo.Namespace, globalInfo)
 }
 
-func (a ThroughputAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, gi *graph.GlobalInfo) {
-	a.log.Tracef("Generating [%s] throughput; namespace = %v", a.ThroughputType, namespace)
+func (a ThroughputAppender) appendGraph(ctx context.Context, trafficMap graph.TrafficMap, namespace string, gi *graph.GlobalInfo) {
+	zl := log.FromContext(ctx)
+
+	zl.Trace().Msgf("Generating [%s] throughput; namespace = %v", a.ThroughputType, namespace)
 
 	client := gi.PromClient
 	// create map to quickly look up throughput
@@ -89,8 +91,8 @@ func (a ThroughputAppender) appendGraph(trafficMap graph.TrafficMap, namespace s
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), gi.Conf, a)
-	a.populateThroughputMap(throughputMap, &vector, gi.Conf)
+	vector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+	a.populateThroughputMap(ctx, throughputMap, &vector, gi.Conf)
 
 	// 2) query for requests originating from a workload inside of the namespace
 	query = fmt.Sprintf(`sum(rate(%s{%s,source_workload_namespace="%s"}[%vs])) by (%s) > 0`,
@@ -99,8 +101,8 @@ func (a ThroughputAppender) appendGraph(trafficMap graph.TrafficMap, namespace s
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	vector = promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), gi.Conf, a)
-	a.populateThroughputMap(throughputMap, &vector, gi.Conf)
+	vector = promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+	a.populateThroughputMap(ctx, throughputMap, &vector, gi.Conf)
 
 	applyThroughput(trafficMap, throughputMap)
 }
@@ -116,7 +118,9 @@ func applyThroughput(trafficMap graph.TrafficMap, throughputMap map[string]float
 	}
 }
 
-func (a ThroughputAppender) populateThroughputMap(throughputMap map[string]float64, vector *model.Vector, conf *config.Config) {
+func (a ThroughputAppender) populateThroughputMap(ctx context.Context, throughputMap map[string]float64, vector *model.Vector, conf *config.Config) {
+	zl := log.FromContext(ctx)
+
 	for _, s := range *vector {
 		m := s.Metric
 		lSourceCluster, sourceClusterOk := m["source_cluster"]
@@ -134,7 +138,7 @@ func (a ThroughputAppender) populateThroughputMap(throughputMap map[string]float
 		lDestVer, destVerOk := m["destination_canonical_revision"]
 
 		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destSvcOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk {
-			a.log.Warningf("populateThroughputMap: Skipping %s, missing expected labels", m.String())
+			zl.Warn().Msgf("populateThroughputMap: Skipping %s, missing expected labels", m.String())
 			continue
 		}
 
@@ -175,7 +179,7 @@ func (a ThroughputAppender) populateThroughputMap(throughputMap map[string]float
 		if a.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
 			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
 			if err != nil {
-				a.log.Warningf("Skipping (t) %s, %s", m.String(), err)
+				zl.Warn().Msgf("Skipping (t) %s, %s", m.String(), err)
 				continue
 			}
 			inject = (graph.NodeTypeService != destNodeType)
@@ -184,22 +188,24 @@ func (a ThroughputAppender) populateThroughputMap(throughputMap map[string]float
 		if inject {
 			// Only set throughput on the outgoing edge. On the incoming edge, we can't validly aggregate thoughputs of the outgoing edges
 			// - analogous to https://issues.redhat.com/browse/KIALI-2297, we can't assume even distribution
-			a.addThroughput(throughputMap, val, destCluster, destSvcNs, destSvcName, "", "", "", destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
+			a.addThroughput(ctx, throughputMap, val, destCluster, destSvcNs, destSvcName, "", "", "", destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
 		} else {
-			a.addThroughput(throughputMap, val, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
+			a.addThroughput(ctx, throughputMap, val, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
 		}
 	}
 }
 
-func (a ThroughputAppender) addThroughput(throughputMap map[string]float64, val float64, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string) {
+func (a ThroughputAppender) addThroughput(ctx context.Context, throughputMap map[string]float64, val float64, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string) {
+	zl := log.FromContext(ctx)
+
 	sourceID, _, err := graph.Id(sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
 	if err != nil {
-		a.log.Warningf("Skipping addThroughput (source), %s", err)
+		zl.Warn().Msgf("Skipping addThroughput (source), %s", err)
 		return
 	}
 	destID, _, err := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
 	if err != nil {
-		a.log.Warningf("Skipping addThroughput (dest), %s", err)
+		zl.Warn().Msgf("Skipping addThroughput (dest), %s", err)
 		return
 	}
 	key := fmt.Sprintf("%s %s http", sourceID, destID)

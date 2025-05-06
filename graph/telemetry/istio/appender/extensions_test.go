@@ -61,7 +61,7 @@ func TestExtension(t *testing.T) {
 	}
 
 	duration, _ := time.ParseDuration("60s")
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, client, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, client, config.Get())
 
 	appender := ExtensionsAppender{
 		Duration:         duration,
@@ -79,7 +79,7 @@ func TestExtension(t *testing.T) {
 	}
 
 	// run appender
-	appender.appendGraph(extConfig, trafficMap)
+	appender.appendGraph(context.Background(), extConfig, trafficMap)
 
 	root, ok = trafficMap[root.ID]
 	assert.Equal(true, ok)

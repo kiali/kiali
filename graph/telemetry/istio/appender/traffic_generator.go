@@ -1,8 +1,9 @@
 package appender
 
 import (
+	"context"
+
 	"github.com/kiali/kiali/graph"
-	klog "github.com/kiali/kiali/log"
 )
 
 const TrafficGeneratorAppenderName = "trafficGenerator"
@@ -10,7 +11,6 @@ const TrafficGeneratorAppenderName = "trafficGenerator"
 // TrafficGeneratorAppender is responsible for marking the insider traffic generator nodes (i.e. inside the namespace and only having outgoing edges)
 // Name: trafficGenerator
 type TrafficGeneratorAppender struct {
-	log klog.ContextLogger
 }
 
 // Name implements Appender
@@ -24,7 +24,7 @@ func (a TrafficGeneratorAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (f *TrafficGeneratorAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, _namespaceInfo *graph.AppenderNamespaceInfo) {
+func (f *TrafficGeneratorAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, _namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}

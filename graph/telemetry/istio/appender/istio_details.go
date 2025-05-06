@@ -12,7 +12,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes"
-	klog "github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -25,7 +25,6 @@ const IstioAppenderName = "istio"
 // Name: istio
 type IstioAppender struct {
 	AccessibleNamespaces graph.AccessibleNamespaces
-	log                  klog.ContextLogger
 }
 
 // Name implements Appender
@@ -39,32 +38,32 @@ func (a IstioAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
 
 	serviceLists := getServiceLists(trafficMap, namespaceInfo.Namespace, globalInfo)
 
-	addBadging(trafficMap, globalInfo, namespaceInfo)
-	addLabels(trafficMap, globalInfo, serviceLists, a.log)
-	a.decorateGateways(trafficMap, globalInfo, namespaceInfo)
+	addBadging(ctx, trafficMap, globalInfo, namespaceInfo)
+	addLabels(ctx, trafficMap, globalInfo, serviceLists)
+	a.decorateGateways(ctx, trafficMap, globalInfo, namespaceInfo)
 }
 
-func addBadging(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func addBadging(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	clusters := getTrafficClusters(trafficMap, namespaceInfo.Namespace, globalInfo)
 	destinationRuleLists := map[string]models.IstioConfigList{}
 	virtualServiceLists := map[string]models.IstioConfigList{}
 
 	for _, cluster := range clusters {
 		// Currently no other appenders use DestinationRules or VirtualServices, so they are not cached in AppenderNamespaceInfo
-		destinationRuleList, err := globalInfo.Business.IstioConfig.GetIstioConfigListForNamespace(context.TODO(), cluster, namespaceInfo.Namespace, business.IstioConfigCriteria{
+		destinationRuleList, err := globalInfo.Business.IstioConfig.GetIstioConfigListForNamespace(ctx, cluster, namespaceInfo.Namespace, business.IstioConfigCriteria{
 			IncludeDestinationRules: true,
 		})
 		graph.CheckError(err)
 		destinationRuleLists[cluster] = *destinationRuleList
 
-		virtualServiceList, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), cluster, business.IstioConfigCriteria{
+		virtualServiceList, err := globalInfo.Business.IstioConfig.GetIstioConfigList(ctx, cluster, business.IstioConfigCriteria{
 			IncludeVirtualServices: true,
 		})
 		graph.CheckError(err)
@@ -177,7 +176,7 @@ NODES:
 
 // addLabels is a chance to add any missing label info to nodes when the telemetry does not provide enough information.
 // For example, service injection has this problem.
-func addLabels(trafficMap graph.TrafficMap, gi *graph.GlobalInfo, serviceLists map[string]*models.ServiceList, log klog.ContextLogger) {
+func addLabels(ctx context.Context, trafficMap graph.TrafficMap, gi *graph.GlobalInfo, serviceLists map[string]*models.ServiceList) {
 	// build map for quick lookup
 	svcMap := map[graph.ClusterSensitiveKey]models.ServiceOverview{}
 	for cluster, serviceList := range serviceLists {
@@ -220,7 +219,7 @@ func addLabels(trafficMap graph.TrafficMap, gi *graph.GlobalInfo, serviceLists m
 				}
 
 				if svc, found := svcMap[graph.GetClusterSensitiveKey(n.Cluster, n.Service)]; !found {
-					log.Debugf("Service not found, may not apply app label correctly for [%s:%s]", n.Namespace, n.Service)
+					log.FromContext(ctx).Debug().Msgf("Service not found, may not apply app label correctly for [%s:%s]", n.Namespace, n.Service)
 					continue
 				} else {
 					appLabelName, _ := gi.Conf.GetAppLabelName(svc.Labels)
@@ -314,23 +313,23 @@ func resolveGatewayNodeMapping(gatewayWorkloads map[string][]models.WorkloadList
 	return gatewayNodeMapping
 }
 
-func (a IstioAppender) decorateGateways(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a IstioAppender) decorateGateways(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	// Get ingress-gateways deployments in the namespace. Then, find if the graph is showing any of them. If so, flag the GW nodes.
-	ingressWorkloads := a.getIngressGatewayWorkloads(globalInfo)
+	ingressWorkloads := a.getIngressGatewayWorkloads(ctx, globalInfo)
 	ingressNodeMapping := resolveGatewayNodeMapping(ingressWorkloads, graph.IsIngressGateway, trafficMap, globalInfo)
 
 	// Get egress-gateways deployments in the namespace. (Same logic as in the previous chunk of code)
-	egressWorkloads := a.getEgressGatewayWorkloads(globalInfo)
+	egressWorkloads := a.getEgressGatewayWorkloads(ctx, globalInfo)
 	egressNodeMapping := resolveGatewayNodeMapping(egressWorkloads, graph.IsEgressGateway, trafficMap, globalInfo)
 
 	// Get Gateway API workloads (ingress)
-	gatewayAPIWorkloads := a.getGatewayAPIWorkloads(globalInfo)
+	gatewayAPIWorkloads := a.getGatewayAPIWorkloads(ctx, globalInfo)
 	gatewayAPINodeMapping := resolveGatewayNodeMapping(gatewayAPIWorkloads, graph.IsGatewayAPI, trafficMap, globalInfo)
 
 	// If there is any ingress or egress gateway node in the processing namespace, find Gateway CRDs and
 	// match them against gateways in the graph.
 	if len(ingressNodeMapping) != 0 || len(egressNodeMapping) != 0 {
-		gatewaysCrds := a.getIstioGatewayResources(globalInfo)
+		gatewaysCrds := a.getIstioGatewayResources(ctx, globalInfo)
 
 		for accessibleNamespaceKey, gwCrds := range gatewaysCrds {
 			cluster := strings.Split(accessibleNamespaceKey, ":")[0]
@@ -343,7 +342,7 @@ func (a IstioAppender) decorateGateways(trafficMap graph.TrafficMap, globalInfo 
 	// If there is any GatewayAPI node in the processing namespace, find GatewayAPI CRDs and
 	// match them against gateways in the graph.
 	if len(gatewayAPINodeMapping) != 0 {
-		gatewaysCrds := a.getGatewayAPIResources(globalInfo)
+		gatewaysCrds := a.getGatewayAPIResources(ctx, globalInfo)
 
 		for accessibleNamespaceKey, gwCrds := range gatewaysCrds {
 			cluster := strings.Split(accessibleNamespaceKey, ":")[0]
@@ -354,19 +353,19 @@ func (a IstioAppender) decorateGateways(trafficMap graph.TrafficMap, globalInfo 
 	}
 }
 
-func (a IstioAppender) getEgressGatewayWorkloads(globalInfo *graph.GlobalInfo) map[string][]models.WorkloadListItem {
-	return a.getIstioComponentWorkloads("EgressGateways", globalInfo)
+func (a IstioAppender) getEgressGatewayWorkloads(ctx context.Context, globalInfo *graph.GlobalInfo) map[string][]models.WorkloadListItem {
+	return a.getIstioComponentWorkloads(ctx, "EgressGateways", globalInfo)
 }
 
-func (a IstioAppender) getIngressGatewayWorkloads(globalInfo *graph.GlobalInfo) map[string][]models.WorkloadListItem {
-	return a.getIstioComponentWorkloads("IngressGateways", globalInfo)
+func (a IstioAppender) getIngressGatewayWorkloads(ctx context.Context, globalInfo *graph.GlobalInfo) map[string][]models.WorkloadListItem {
+	return a.getIstioComponentWorkloads(ctx, "IngressGateways", globalInfo)
 }
 
-func (a IstioAppender) getIstioComponentWorkloads(component string, globalInfo *graph.GlobalInfo) map[string][]models.WorkloadListItem {
+func (a IstioAppender) getIstioComponentWorkloads(ctx context.Context, component string, globalInfo *graph.GlobalInfo) map[string][]models.WorkloadListItem {
 	componentWorkloads := make(map[string][]models.WorkloadListItem)
 	for key, an := range a.AccessibleNamespaces {
 		criteria := business.WorkloadCriteria{Cluster: an.Cluster, Namespace: an.Name, IncludeIstioResources: false, IncludeHealth: false}
-		wList, err := globalInfo.Business.Workload.GetWorkloadList(context.TODO(), criteria)
+		wList, err := globalInfo.Business.Workload.GetWorkloadList(ctx, criteria)
 		graph.CheckError(err)
 
 		// Find Istio component deployments
@@ -382,11 +381,11 @@ func (a IstioAppender) getIstioComponentWorkloads(component string, globalInfo *
 	return componentWorkloads
 }
 
-func (a IstioAppender) getGatewayAPIWorkloads(globalInfo *graph.GlobalInfo) map[string][]models.WorkloadListItem {
+func (a IstioAppender) getGatewayAPIWorkloads(ctx context.Context, globalInfo *graph.GlobalInfo) map[string][]models.WorkloadListItem {
 	managedWorkloads := make(map[string][]models.WorkloadListItem)
 	for key, an := range a.AccessibleNamespaces {
 		criteria := business.WorkloadCriteria{Cluster: an.Cluster, Namespace: an.Name, IncludeIstioResources: false, IncludeHealth: false}
-		wList, err := globalInfo.Business.Workload.GetWorkloadList(context.TODO(), criteria)
+		wList, err := globalInfo.Business.Workload.GetWorkloadList(ctx, criteria)
 		graph.CheckError(err)
 
 		// Find Istio managed Gateway API deployments
@@ -402,10 +401,10 @@ func (a IstioAppender) getGatewayAPIWorkloads(globalInfo *graph.GlobalInfo) map[
 	return managedWorkloads
 }
 
-func (a IstioAppender) getIstioGatewayResources(globalInfo *graph.GlobalInfo) map[string][]*networking_v1.Gateway {
+func (a IstioAppender) getIstioGatewayResources(ctx context.Context, globalInfo *graph.GlobalInfo) map[string][]*networking_v1.Gateway {
 	retVal := map[string][]*networking_v1.Gateway{}
 	for key, an := range a.AccessibleNamespaces {
-		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigListForNamespace(context.TODO(), an.Cluster, an.Name, business.IstioConfigCriteria{
+		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigListForNamespace(ctx, an.Cluster, an.Name, business.IstioConfigCriteria{
 			IncludeGateways: true,
 		})
 		graph.CheckError(err)
@@ -416,10 +415,10 @@ func (a IstioAppender) getIstioGatewayResources(globalInfo *graph.GlobalInfo) ma
 	return retVal
 }
 
-func (a IstioAppender) getGatewayAPIResources(globalInfo *graph.GlobalInfo) map[string][]*k8s_networking_v1.Gateway {
+func (a IstioAppender) getGatewayAPIResources(ctx context.Context, globalInfo *graph.GlobalInfo) map[string][]*k8s_networking_v1.Gateway {
 	retVal := map[string][]*k8s_networking_v1.Gateway{}
 	for key, an := range a.AccessibleNamespaces {
-		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigListForNamespace(context.TODO(), an.Cluster, an.Name, business.IstioConfigCriteria{
+		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigListForNamespace(ctx, an.Cluster, an.Name, business.IstioConfigCriteria{
 			IncludeK8sGateways: true,
 		})
 		graph.CheckError(err)

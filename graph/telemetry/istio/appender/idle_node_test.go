@@ -1,13 +1,13 @@
 package appender
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -20,7 +20,6 @@ func TestNonTrafficScenario(t *testing.T) {
 		graph.GraphTypeVersionedApp,
 		true,
 		false,
-		log.WithContext(map[string]string{"group": "graph", "appender": "idleNode"}),
 	}
 
 	// Empty trafficMap
@@ -28,7 +27,7 @@ func TestNonTrafficScenario(t *testing.T) {
 	serviceLists := mockServiceLists(a)
 	workloadLists := mockWorkloadLists(a)
 
-	a.addIdleNodes(trafficMap, "testNamespace", serviceLists, workloadLists, &graph.GlobalInfo{Conf: config.Get()})
+	a.addIdleNodes(context.Background(), trafficMap, "testNamespace", serviceLists, workloadLists, &graph.GlobalInfo{Conf: config.Get()})
 	assert.Equal(7, len(trafficMap))
 
 	id, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "customer", "testNamespace", "customer-v1", "customer", "v1", a.GraphType)
@@ -94,14 +93,13 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 		graph.GraphTypeVersionedApp,
 		false,
 		false,
-		log.WithContext(map[string]string{"group": "graph", "appender": "idleNode"}),
 	}
 
 	trafficMap := a.oneNodeTraffic()
 	serviceLists := mockServiceLists(a)
 	workloadLists := mockWorkloadLists(a)
 
-	a.addIdleNodes(trafficMap, "testNamespace", serviceLists, workloadLists, &graph.GlobalInfo{Conf: config.Get()})
+	a.addIdleNodes(context.Background(), trafficMap, "testNamespace", serviceLists, workloadLists, &graph.GlobalInfo{Conf: config.Get()})
 
 	assert.Equal(5, len(trafficMap))
 	id, _, _ := graph.Id(graph.Unknown, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, a.GraphType)
@@ -152,7 +150,6 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 		graph.GraphTypeVersionedApp,
 		false,
 		false,
-		log.WithContext(map[string]string{"group": "graph", "appender": "idleNode"}),
 	}
 
 	const cluster = config.DefaultClusterID
@@ -161,7 +158,7 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	serviceLists := mockServiceLists(a)
 	workloadLists := mockWorkloadLists(a)
 
-	a.addIdleNodes(trafficMap, "testNamespace", serviceLists, workloadLists, &graph.GlobalInfo{Conf: config.Get()})
+	a.addIdleNodes(context.Background(), trafficMap, "testNamespace", serviceLists, workloadLists, &graph.GlobalInfo{Conf: config.Get()})
 
 	assert.Equal(5, len(trafficMap))
 	id, _, _ := graph.Id(graph.Unknown, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, a.GraphType)

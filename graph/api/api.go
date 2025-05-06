@@ -19,7 +19,9 @@ import (
 // GraphNamespaces generates a namespaces graph using the provided options
 func GraphNamespaces(ctx context.Context, business *business.Layer, o graph.Options) (code int, graphConfig interface{}) {
 	var end observability.EndFunc
-	ctx, end = observability.StartSpan(ctx, "GraphNamespaces",
+	ctx, end = observability.StartSpan(
+		ctx,
+		"GraphNamespaces",
 		observability.Attribute("package", "api"),
 	)
 	defer end()
@@ -46,9 +48,9 @@ func GraphNamespaces(ctx context.Context, business *business.Layer, o graph.Opti
 func graphNamespacesIstio(ctx context.Context, business *business.Layer, prom *prometheus.Client, o graph.Options) (code int, graphConfig interface{}) {
 
 	// Create a 'global' object to store the business. Global only to the request.
-	globalInfo := graph.NewGlobalInfo(ctx, business, prom, config.Get())
+	globalInfo := graph.NewGlobalInfo(business, prom, config.Get())
 
-	trafficMap := istio.BuildNamespacesTrafficMap(o.TelemetryOptions, globalInfo)
+	trafficMap := istio.BuildNamespacesTrafficMap(ctx, o.TelemetryOptions, globalInfo)
 	code, graphConfig = generateGraph(trafficMap, o)
 
 	return code, graphConfig
@@ -82,12 +84,11 @@ func GraphNode(ctx context.Context, business *business.Layer, o graph.Options) (
 func graphNodeIstio(ctx context.Context, business *business.Layer, prom *prometheus.Client, o graph.Options) (code int, graphConfig interface{}) {
 
 	// Create a 'global' object to store the business. Global only to the request.
-	globalInfo := graph.NewGlobalInfo(ctx, business, prom, config.Get())
+	globalInfo := graph.NewGlobalInfo(business, prom, config.Get())
 	globalInfo.Business = business
-	globalInfo.Context = ctx
 	globalInfo.PromClient = prom
 
-	trafficMap, _ := istio.BuildNodeTrafficMap(o.TelemetryOptions, globalInfo)
+	trafficMap, _ := istio.BuildNodeTrafficMap(ctx, o.TelemetryOptions, globalInfo)
 	code, graphConfig = generateGraph(trafficMap, o)
 
 	return code, graphConfig

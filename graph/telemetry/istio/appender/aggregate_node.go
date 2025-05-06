@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry/istio/util"
-	klog "github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -29,7 +30,6 @@ type AggregateNodeAppender struct {
 	QueryTime          int64 // unix time in seconds
 	Rates              graph.RequestedRates
 	Service            string
-	log                klog.ContextLogger
 }
 
 // Name implements Appender
@@ -43,7 +43,7 @@ func (a AggregateNodeAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a AggregateNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a AggregateNodeAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -65,14 +65,14 @@ func (a AggregateNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalIn
 	}
 
 	if a.AggregateValue == "" {
-		a.appendGraph(trafficMap, namespaceInfo.Namespace, globalInfo.PromClient, globalInfo.Conf)
+		a.appendGraph(ctx, trafficMap, namespaceInfo.Namespace, globalInfo.PromClient, globalInfo.Conf)
 	} else {
-		a.appendNodeGraph(trafficMap, namespaceInfo.Namespace, globalInfo.PromClient, globalInfo.Conf)
+		a.appendNodeGraph(ctx, trafficMap, namespaceInfo.Namespace, globalInfo.PromClient, globalInfo.Conf)
 	}
 }
 
-func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client, conf *config.Config) {
-	a.log.Tracef("Resolving request aggregates for namespace=[%s], aggregate=[%s]", namespace, a.Aggregate)
+func (a AggregateNodeAppender) appendGraph(ctx context.Context, trafficMap graph.TrafficMap, namespace string, client *prometheus.Client, conf *config.Config) {
+	log.FromContext(ctx).Trace().Msgf("Resolving request aggregates for namespace=[%s], aggregate=[%s]", namespace, a.Aggregate)
 	duration := a.Namespaces[namespace].Duration
 
 	// query prometheus for aggregate info in two queries (assume aggregation is typically request classification, so use dest telemetry):
@@ -95,8 +95,8 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	query := httpQuery
-	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), conf, a)
-	a.injectAggregates(trafficMap, &vector, conf)
+	vector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a)
+	a.injectAggregates(ctx, trafficMap, &vector, conf)
 
 	// 2) query for requests originating from a workload inside of the namespace
 	httpQuery = fmt.Sprintf(`sum(rate(%s{%s,source_workload_namespace="%s",%s!="unknown"}[%vs])) by (%s) > 0`,
@@ -107,12 +107,12 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	query = httpQuery
-	vector = promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), conf, a)
-	a.injectAggregates(trafficMap, &vector, conf)
+	vector = promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a)
+	a.injectAggregates(ctx, trafficMap, &vector, conf)
 }
 
-func (a AggregateNodeAppender) appendNodeGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client, conf *config.Config) {
-	a.log.Tracef("Resolving node request aggregates for namespace=[%s], aggregate=[%s=%s]", namespace, a.Aggregate, a.AggregateValue)
+func (a AggregateNodeAppender) appendNodeGraph(ctx context.Context, trafficMap graph.TrafficMap, namespace string, client *prometheus.Client, conf *config.Config) {
+	log.FromContext(ctx).Trace().Msgf("Resolving node request aggregates for namespace=[%s], aggregate=[%s=%s]", namespace, a.Aggregate, a.AggregateValue)
 	duration := a.Namespaces[namespace].Duration
 
 	// query prometheus for aggregate info in a single query (assume aggregation is typically request classification, so use dest telemetry):
@@ -133,11 +133,11 @@ func (a AggregateNodeAppender) appendNodeGraph(trafficMap graph.TrafficMap, name
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	query := httpQuery
-	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), conf, a)
-	a.injectAggregates(trafficMap, &vector, conf)
+	vector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a)
+	a.injectAggregates(ctx, trafficMap, &vector, conf)
 }
 
-func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vector *model.Vector, conf *config.Config) {
+func (a AggregateNodeAppender) injectAggregates(ctx context.Context, trafficMap graph.TrafficMap, vector *model.Vector, conf *config.Config) {
 	skipRequestsGrpc := a.Rates.Grpc != graph.RateRequests
 	skipRequestsHttp := a.Rates.Http != graph.RateRequests
 
@@ -167,7 +167,7 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 		}
 
 		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !flagsOk || !protocolOk {
-			a.log.Warningf("Skipping %v, missing expected labels", m.String())
+			log.FromContext(ctx).Warn().Msgf("Skipping [%v], missing expected labels", m.String())
 			continue
 		}
 
@@ -197,7 +197,7 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 			code = util.HandleResponseCode(protocol, code, grpcOk, string(lGrpc))
 		} else {
 			// because currently we only support requests traffic the protocol should be set
-			a.log.Warningf("Skipping %v, missing expected protocol label", m.String())
+			log.FromContext(ctx).Warn().Msgf("Skipping [%v], missing expected protocol label", m.String())
 			continue
 			// protocol = "tcp"
 		}
@@ -218,7 +218,7 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 		sourceID, _, _ := graph.Id(sourceCluster, sourceWlNs, "", sourceWlNs, sourceWl, sourceApp, sourceVer, a.GraphType)
 		sourceNode, sourceFound := trafficMap[sourceID]
 		if !sourceFound {
-			a.log.Debugf("Expected source [%s] node not found in traffic map. Skipping aggregate injection [%s]", sourceID, aggregate)
+			log.FromContext(ctx).Debug().Msgf("Expected source [%s] node not found in traffic map. Skipping aggregate injection [%s]", sourceID, aggregate)
 			continue
 		}
 
@@ -234,7 +234,7 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 		}
 		destNode, destFound := trafficMap[destID]
 		if !destFound {
-			a.log.Debugf("Expected dest [%s] node not found in traffic map. Skipping aggregate injection [%s]", destID, aggregate)
+			log.FromContext(ctx).Debug().Msgf("Expected dest [%s] node not found in traffic map. Skipping aggregate injection [%s]", destID, aggregate)
 			continue
 		}
 

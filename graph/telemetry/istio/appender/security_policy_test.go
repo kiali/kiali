@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -122,7 +123,7 @@ func TestSecurityPolicyDefaultRates(t *testing.T) {
 		},
 	}
 
-	appender.appendGraph(trafficMap, "bookinfo", client, config.Get())
+	appender.appendGraph(context.Background(), trafficMap, "bookinfo", client, config.Get())
 
 	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)
@@ -246,7 +247,7 @@ func TestSecurityPolicyAmbientDefaultRates(t *testing.T) {
 		},
 	}
 
-	appender.appendGraph(trafficMap, "bookinfo", client, config.Get())
+	appender.appendGraph(context.Background(), trafficMap, "bookinfo", client, config.Get())
 
 	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)
@@ -352,7 +353,7 @@ func TestSecurityPolicyTotalRates(t *testing.T) {
 		},
 	}
 
-	appender.appendGraph(trafficMap, "bookinfo", client, config.Get())
+	appender.appendGraph(context.Background(), trafficMap, "bookinfo", client, config.Get())
 
 	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)
@@ -432,7 +433,7 @@ func TestSecurityPolicyWithServiceNodesAndNoZtunnel(t *testing.T) {
 		},
 	}
 
-	appender.appendGraph(trafficMap, "bookinfo", client, config.Get())
+	appender.appendGraph(context.Background(), trafficMap, "bookinfo", client, config.Get())
 
 	ingress, ok = trafficMap[ingressId]
 	assert.Equal(true, ok)

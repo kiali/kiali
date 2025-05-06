@@ -110,7 +110,7 @@ func TestRemoveWaypoint(t *testing.T) {
 	businessLayer := setupMocks(t)
 	trafficMap := workloadEntriesTrafficMap()
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 
 	assert.Equal(5, len(trafficMap))
@@ -125,7 +125,7 @@ func TestRemoveWaypoint(t *testing.T) {
 			},
 		},
 		ShowWaypoints: false}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(4, len(trafficMap))
 
@@ -140,7 +140,7 @@ func TestIsWaypointExcludedNs(t *testing.T) {
 	businessLayer := setupMocks(t)
 	trafficMap := workloadEntriesTrafficMapExcludedNs()
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 
 	assert.Equal(9, len(trafficMap))
@@ -156,7 +156,7 @@ func TestIsWaypointExcludedNs(t *testing.T) {
 		},
 		ShowWaypoints: true}
 
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(9, len(trafficMap))
 
