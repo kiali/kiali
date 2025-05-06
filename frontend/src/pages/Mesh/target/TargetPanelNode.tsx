@@ -14,6 +14,8 @@ import { UNKNOWN } from 'types/Graph';
 import { TargetPanelEditor } from './TargetPanelEditor';
 import * as API from '../../../services/Api';
 import { StatusError } from '../../../types/TracingInfo';
+import { Validation } from '../../../components/Validations/Validation';
+import { ValidationTypes } from '../../../types/IstioObjects';
 
 type TargetPanelNodeProps<T extends MeshNodeData> = TargetPanelCommonProps & {
   target: NodeTarget<T>;
@@ -71,8 +73,25 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
               <button onClick={handleCheckService} disabled={loading}>
                 {loading ? 'Verifying...' : 'Diagnose'}
               </button>
+              {diagnostic && !error && (
+                <span style={{ marginLeft: '0.5rem' }}>
+                  <Validation severity={ValidationTypes.Correct} />
+                </span>
+              )}
               {diagnostic && <p style={{ color: 'green' }}>{diagnostic.msg}</p>}
               {error && <p style={{ color: 'red' }}>{error}</p>}
+              {diagnostic?.validConfig && (
+                <ul>
+                  {diagnostic?.validConfig?.map(item => (
+                    <span>
+                      <li>Namespace selector: {item.namespaceSelector.toString()}</li>
+                      <li>Provider: {item.provider}</li>
+                      <li>Internal URL: {item.url}</li>
+                      <li>Use gRPC: {item.useGRPC.toString()}</li>
+                    </span>
+                  ))}
+                </ul>
+              )}
             </div>
           </>
         )}
