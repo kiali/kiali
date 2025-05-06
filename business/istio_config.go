@@ -918,8 +918,7 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, clust
 	in.waitForCacheUpdate(ctx, cluster, istioConfigDetail.Object)
 
 	// Re-run validations for that object to refresh the validation cache.
-	c := config.Get()
-	if c.IsValidationsEnabled() {
+	if in.conf.IsValidationsEnabled() {
 		if _, _, err := in.businessLayer.Validations.ValidateIstioObject(ctx, cluster, namespace, resourceType, name); err != nil {
 			// Logging the error and swallowing it since the object was updated successfully.
 			log.Errorf("Error while validating Istio object: %s", err)

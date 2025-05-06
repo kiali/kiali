@@ -1378,10 +1378,7 @@ func GetSafeClusterName(cluster string) string {
 // IsValidationsEnabled checks the value of ValidationReconcileInternal
 // Validations are enabled for values higher than 0, otherwise validations will be disabled
 func (conf Config) IsValidationsEnabled() bool {
-	if conf.ExternalServices.Istio.ValidationReconcileInterval != nil && *conf.ExternalServices.Istio.ValidationReconcileInterval > 0 {
-		return true
-	}
-	return false
+	return conf.ExternalServices.Istio.ValidationReconcileInterval != nil && *conf.ExternalServices.Istio.ValidationReconcileInterval > 0
 }
 
 // Validate will ensure the config is valid. This should be called after the config
