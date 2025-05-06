@@ -131,8 +131,15 @@ export type TracingSingleResponse = {
   errors: TracingError[];
 };
 
+export type ValidConfig = {
+  namespaceSelector: boolean;
+  provider: string;
+  url: string;
+  useGRPC: boolean;
+};
+
 export type StatusError = {
   code?: number;
   msg: string;
-  tracingConfig?: TracingInfo;
+  validConfig?: ValidConfig[];
 };

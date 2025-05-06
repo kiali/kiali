@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -218,46 +219,6 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 	}
 }
 
-func TestNewClient(ctx context.Context, conf *config.Config, token string) (*model.TracingDiagnose, error) {
-	cfgTracing := conf.ExternalServices.Tracing
-	test := model.TracingDiagnose{}
-	if !cfgTracing.Enabled {
-		test.Message = "tracing is not enabled"
-		return &test, nil
-	}
-
-	parsedURL, err := url.Parse(cfgTracing.InternalURL)
-	if err != nil {
-		return &test, errors.New("external_services.tracing.internal_url is required and must be a valid URL")
-	}
-
-	host, port, err := net.SplitHostPort(parsedURL.Host)
-	if err != nil {
-		host = parsedURL.Host
-		port = ""
-	}
-
-	// Base URL: scheme + host (and port if exists)
-	baseURL := fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host)
-
-	// The rest (path + query)
-	rest := parsedURL.RequestURI()
-
-	// TODO Then
-	log.Infof("Parsed URL: host %s - port %s - baseURL %s - rest %s - prot: %s", host, port, baseURL, rest, parsedURL.Scheme)
-	switch port {
-	case "16686", "80", "":
-		// Validate Jaeger and http/https
-
-	case "16685":
-		// Validate Jaeger GRPC
-	case "3200", "8080":
-		// Validate Tempo http (Or Jaeger with 8080)
-	}
-	return &test, nil
-
-}
-
 // GetAppTraces fetches traces of an app
 func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*model.TracingResponse, error) {
 	serviceName := BuildTracingServiceName(namespace, app)
@@ -300,6 +261,7 @@ func (in *Client) GetErrorTraces(ns, app string, duration time.Duration) (int, e
 	return len(traces.Data), nil
 }
 
+// GetServiceStatus
 func (in *Client) GetServiceStatus() (bool, error) {
 	// Check Service Status using HTTP when gRPC is not enabled
 	if in.grpcClient == nil {
@@ -309,10 +271,31 @@ func (in *Client) GetServiceStatus() (bool, error) {
 	return in.grpcClient.GetServices(in.ctx)
 }
 
+// BuildTracingServiceName
 func BuildTracingServiceName(namespace, app string) string {
 	conf := config.Get()
 	if conf.ExternalServices.Tracing.NamespaceSelector {
 		return util.BuildNameNSKey(app, namespace)
 	}
 	return app
+}
+
+func MakeRequest(client http.Client, endpoint string, body io.Reader) (response []byte, status int, err error) {
+	response = nil
+	status = 0
+
+	req, err := http.NewRequest(http.MethodGet, endpoint, body)
+	if err != nil {
+		return
+	}
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	response, err = io.ReadAll(resp.Body)
+	status = resp.StatusCode
+	return
 }

@@ -376,5 +376,6 @@ func tracesToSpans(app models.TracingName, r *model.TracingResponse, filter Span
 }
 
 func (in *TracingService) TracingDiagnose(ctx context.Context, token string) (trace *model.TracingDiagnose, err error) {
-	return tracing.TestNewClient(ctx, in.conf, token)
+	cl, err := in.client()
+	return tracing.TestNewClient(ctx, in.conf, token, cl)
 }
