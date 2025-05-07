@@ -266,13 +266,13 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 				} else {
 					dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
 				}
-				grpcAddress := fmt.Sprintf("%s:%d", parsedUrl.Host, port)
+				grpcAddress := fmt.Sprintf("%s:%s", parsedUrl.Host, port)
 				clientConn, _ := grpc.NewClient(grpcAddress, dialOps...)
 				streamClient, err := tempo.NewgRPCClient(clientConn)
 				if err != nil {
 					msg := fmt.Sprintf("Error creating gRPC Client %s", err.Error())
 					logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Client 9095 error", Result: msg})
-					log.Errorf(msg)
+					log.Error(msg)
 				} else {
 					ok, err := streamClient.GetServices(ctx)
 					if ok {
@@ -332,7 +332,7 @@ func validateEndpoint(client http.Client, endpoint, validEndpoint string, provid
 		msg := fmt.Sprintf("[Discovery client] Error unmarshalling Tempo response: %s [URL: %v]", errMarshal, endpoint)
 		logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
 		log.Trace(msg)
-		return nil, logs, fmt.Errorf(msg)
+		return nil, logs, errors.New(msg)
 	}
 	vc := model.ValidConfig{Url: validEndpoint, Provider: "tempo", UseGRPC: false, NamespaceSelector: false}
 	for _, rd := range response.Traces {
