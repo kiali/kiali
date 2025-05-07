@@ -49,6 +49,9 @@ func InitializeLogger() zerolog.Logger {
 	logLevel := resolveLogLevelFromEnv()
 	zerolog.SetGlobalLevel(logLevel)
 
+	// set this logger as the default for when loggers are not found in a context
+	zerolog.DefaultContextLogger = &log.Logger
+
 	return log.Logger
 }
 
@@ -94,25 +97,14 @@ func FromRequest(r *http.Request) *zerolog.Logger {
 	return hlog.FromRequest(r)
 }
 
-// ctxKeyLogger identifies the logger value in the context
-type ctxKeyLogger struct{}
-
 // FromContext returns the logger from the given context. A base logger is returned if no logger exists in the context.
 func FromContext(ctx context.Context) *zerolog.Logger {
-	if zl, ok := ctx.Value(ctxKeyLogger{}).(*zerolog.Logger); ok {
-		return zl
-	} else {
-		return &log.Logger // if for some reason the context doesn't have it, just return a base logger
-	}
+	return zerolog.Ctx(ctx)
 }
 
 // ToContext stores the logger to the given context. If ctx is nil, an empty one is used.
 func ToContext(ctx context.Context, zl *zerolog.Logger) context.Context {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	ctx = context.WithValue(ctx, ctxKeyLogger{}, zl)
-	return ctx
+	return zl.WithContext(ctx)
 }
 
 // Info logs a message via the global logger

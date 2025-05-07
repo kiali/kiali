@@ -62,6 +62,7 @@ func GraphNamespaces(
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer handlePanic(w)
 
+		// TODO: getLayer needs to extract the logger from r - and probably put it into a Context ??
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		graph.CheckError(err)
 
