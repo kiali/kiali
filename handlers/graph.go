@@ -30,6 +30,7 @@ package handlers
 //  Note: vendors may support additional, vendor-specific query parameters.
 //
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"runtime/debug"
@@ -60,7 +61,7 @@ func GraphNamespaces(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer handlePanic(w)
+		defer handlePanic(r.Context(), w)
 
 		// TODO: getLayer needs to extract the logger from r - and probably put it into a Context ??
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
@@ -85,7 +86,7 @@ func GraphNode(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer handlePanic(w)
+		defer handlePanic(r.Context(), w)
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		graph.CheckError(err)
@@ -97,7 +98,7 @@ func GraphNode(
 	}
 }
 
-func handlePanic(w http.ResponseWriter) {
+func handlePanic(ctx context.Context, w http.ResponseWriter) {
 	code := http.StatusInternalServerError
 	if r := recover(); r != nil {
 		var message string
@@ -116,7 +117,7 @@ func handlePanic(w http.ResponseWriter) {
 		}
 		if code == http.StatusInternalServerError {
 			stack := debug.Stack()
-			log.Errorf("%s: %s", message, stack)
+			log.FromContext(ctx).Error().Msgf("%s: %s", message, stack)
 			RespondWithDetailedError(w, code, message, "Stack trace available in Kiali logs")
 			return
 		}

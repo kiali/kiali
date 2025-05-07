@@ -67,7 +67,7 @@ type PublicConfig struct {
 // Config is a REST http.HandlerFunc serving up the Kiali configuration made public to clients.
 func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDiscovery, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer handlePanic(w)
+		defer handlePanic(r.Context(), w)
 
 		logger := log.FromRequest(r)
 		logger.Debug().Msg("Kiali configuration has been requested")
@@ -208,7 +208,7 @@ func CrippledFeatures(client prometheus.ClientInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger := log.FromRequest(r)
 
-		defer handlePanic(w)
+		defer handlePanic(r.Context(), w)
 
 		requiredMetrics := []string{
 			"istio_request_bytes_bucket",
