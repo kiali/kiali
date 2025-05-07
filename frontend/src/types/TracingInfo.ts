@@ -138,8 +138,15 @@ export type ValidConfig = {
   useGRPC: boolean;
 };
 
+export type LogLine = {
+  result: string;
+  test: string;
+  time: string;
+};
+
 export type StatusError = {
   code?: number;
-  msg: string;
+  logLine: LogLine[];
+  message: string;
   validConfig?: ValidConfig[];
 };
