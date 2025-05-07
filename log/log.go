@@ -104,6 +104,9 @@ func FromContext(ctx context.Context) *zerolog.Logger {
 
 // ToContext stores the logger to the given context. If ctx is nil, an empty one is used.
 func ToContext(ctx context.Context, zl *zerolog.Logger) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	return zl.WithContext(ctx)
 }
 
