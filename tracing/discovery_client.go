@@ -105,193 +105,87 @@ func discoverPorts(host string) []string {
 // discoverUrl try to discover valid URLs
 func discoverUrl(parsedUrl model.ParsedUrl, ports []string, auth *config.Auth, cfgTracing config.TracingConfig) []model.ValidConfig {
 	validConfigs := []model.ValidConfig{}
+	var client http.Client
+	logs := []model.LogLine{}
+
+	// Create client
+	timeout := time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout) * time.Second
+	transport, err := httputil.CreateTransport(auth, &http.Transport{}, timeout, cfgTracing.CustomHeaders)
+	if err != nil {
+		log.Infof("[Discovery client] Cannot create transport: %s", err.Error())
+		// TODO: Validate auth?
+		return validConfigs
+	} else {
+		client = http.Client{Transport: transport, Timeout: timeout}
+	}
+
 	for _, port := range ports {
 		switch port {
 		case "16686", "80":
 			{
-				// We assume it is Jaeger
-				timeout := time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout) * time.Second
-				transport, err := httputil.CreateTransport(auth, &http.Transport{}, timeout, cfgTracing.CustomHeaders)
-				if err != nil {
-					log.Infof("[Discovery client] Cannot create transport: %s", err.Error())
-				} else {
-					client := http.Client{Transport: transport, Timeout: timeout}
-					// Try Jaeger URL
-					endpointJ := fmt.Sprintf("%s://%s:%s/jaeger/api/services", parsedUrl.Scheme, parsedUrl.Host, port)
-					resp, code, reqError := MakeRequest(client, endpointJ, nil)
-					if code != 200 {
-						if reqError != nil {
-							log.Errorf("[Discovery client] Cannot query endpoint: %s. Code [%d]. Error: %s", endpointJ, code, reqError.Error())
-						} else {
-							log.Errorf("[Discovery client] Cannot query endpoint: %s. Code [%d].", endpointJ, code)
-						}
-					} else {
-						var response model.TracingServices
-						if errMarshal := json.Unmarshal(resp, &response); errMarshal != nil {
-							log.Errorf("[Discovery client] Error unmarshalling Jaeger response: %s [URL: %v]", errMarshal, endpointJ)
-						} else {
-							vc := model.ValidConfig{Url: fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port), Provider: "jaeger", UseGRPC: false, NamespaceSelector: false}
-							for _, rd := range response.Data {
-								parts := strings.Split(rd, ".")
-								if len(parts) > 1 {
-									vc.NamespaceSelector = true
-									break
-								}
-							}
-							log.Infof("[Discovery client] Found valid Config %v", vc)
-							validConfigs = append(validConfigs, vc)
-						}
-					}
-					// Try Tempo URL
-					endpointJ = fmt.Sprintf("%s://%s:%s/api/services", parsedUrl.Scheme, parsedUrl.Host, port)
-					resp, code, reqError = MakeRequest(client, endpointJ, nil)
-					if code != 200 {
-						if reqError != nil {
-							log.Errorf("[Discovery client] Cannot query endpoint: %s. Code [%d]. Error: %s", endpointJ, code, reqError.Error())
-						} else {
-							log.Errorf("[Discovery client] Cannot query endpoint: %s. Code [%d].", endpointJ, code)
-						}
-					} else {
-						var response model.TracingServices
-						if errMarshal := json.Unmarshal(resp, &response); errMarshal != nil {
-							log.Errorf("[Discovery client] Error unmarshalling Jaeger response: %s [URL: %v]", errMarshal, endpointJ)
-						} else {
-							vc := model.ValidConfig{Url: fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port), Provider: "jaeger", UseGRPC: false, NamespaceSelector: false}
-							for _, rd := range response.Data {
-								parts := strings.Split(rd, ".")
-								if len(parts) > 1 {
-									vc.NamespaceSelector = true
-									break
-								}
-							}
-							log.Infof("[Discovery client] Found valid Config %v", vc)
-							validConfigs = append(validConfigs, vc)
-						}
-					}
+				// We assume it is Jaeger. Try Jaeger URL
+				validEndpoint := fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port)
+				endpointJ := fmt.Sprintf("%s/jaeger/api/services", validEndpoint)
+				vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
+				if err == nil {
+					validConfigs = append(validConfigs, *vc)
+					logs = append(logs, ll...)
+				}
+
+				// Try Tempo URL
+				validEndpoint = fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port)
+				endpointJ = fmt.Sprintf("%s/api/services", validEndpoint)
+				vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
+				if err == nil {
+					validConfigs = append(validConfigs, *vc)
+					logs = append(logs, ll...)
 				}
 			}
 		case "8080":
 			{
-				timeout := time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout) * time.Second
-				transport, err := httputil.CreateTransport(auth, &http.Transport{}, timeout, cfgTracing.CustomHeaders)
-				if err != nil {
-					log.Infof("[Discovery client] Cannot create transport: %s", err.Error())
-				} else {
-					client := http.Client{Transport: transport, Timeout: timeout}
-					// Tempo from GW, Tempo multi tenant uses security and the gateway
-					if strings.Contains(parsedUrl.Host, "gateway") {
-						splitUrl := strings.Split(parsedUrl.Path, "/")
-						tenant := ""
-						if len(splitUrl) > 3 {
-							tenant = splitUrl[3]
-						} else {
-							log.Infof("[Discovery client] Tenant name not found: %s. Tempo URL includes gateway but not the Tenant name", parsedUrl.Path)
-						}
-
-						endpointJ := fmt.Sprintf("%s://%s:%s/api/traces/v1/%s/tempo/api/search?q={}", parsedUrl.Scheme, parsedUrl.Host, port, tenant)
-						resp, code, reqError := MakeRequest(client, endpointJ, nil)
-						if code != 200 {
-							if reqError != nil {
-								log.Errorf("[Discovery client] Cannot query endpoint: %s. Code [%d]. Error: %s", endpointJ, code, reqError.Error())
-							} else {
-								log.Errorf("[Discovery client] Cannot query endpoint: %s. Code [%d].", endpointJ, code)
-							}
-						} else {
-							var response otel.Traces
-							if errMarshal := json.Unmarshal(resp, &response); errMarshal != nil {
-								log.Errorf("[Discovery client] Error unmarshalling Tempo response: %s [URL: %v]", errMarshal, endpointJ)
-							} else {
-								vc := model.ValidConfig{Url: fmt.Sprintf("%s://%s:%s/api/traces/v1/%s/tempo", parsedUrl.Scheme, parsedUrl.Host, port, tenant), Provider: "tempo", UseGRPC: false, NamespaceSelector: false}
-								for _, rd := range response.Traces {
-									parts := strings.Split(rd.RootServiceName, ".")
-									if len(parts) > 1 {
-										vc.NamespaceSelector = true
-										break
-									}
-								}
-								log.Infof("[Discovery client] Found valid Config %v", vc)
-								validConfigs = append(validConfigs, vc)
-							}
-						}
-						// Try GW Jaeger Endpoint
-						endpointJ = fmt.Sprintf("%s://%s:%s/api/traces/v1/%s/api/services", parsedUrl.Scheme, parsedUrl.Host, port, tenant)
-						resp, code, reqError = MakeRequest(client, endpointJ, nil)
-						if code != 200 {
-							if reqError != nil {
-								log.Errorf("[Discovery client] Cannot query endpoint: %s. Code [%d]. Error: %s", endpointJ, code, reqError.Error())
-							} else {
-								log.Errorf("[Discovery client] Cannot query endpoint: %s. Code [%d].", endpointJ, code)
-							}
-						} else {
-							var response model.TracingServices
-							if errMarshal := json.Unmarshal(resp, &response); errMarshal != nil {
-								log.Errorf("[Discovery client] Error unmarshalling Jaeger response: %s [URL: %v]", errMarshal, endpointJ)
-							} else {
-								vc := model.ValidConfig{Url: fmt.Sprintf("%s://%s:%s/api/traces/v1/%s", parsedUrl.Scheme, parsedUrl.Host, port, tenant), Provider: "jaeger", UseGRPC: false, NamespaceSelector: false}
-								for _, rd := range response.Data {
-									parts := strings.Split(rd, ".")
-									if len(parts) > 1 {
-										vc.NamespaceSelector = true
-										break
-									}
-								}
-								log.Infof("[Discovery client] Found valid Config %v", vc)
-								validConfigs = append(validConfigs, vc)
-							}
-						}
+				// Tempo from GW, Tempo multi tenant uses security and the gateway
+				if strings.Contains(parsedUrl.Host, "gateway") {
+					splitUrl := strings.Split(parsedUrl.Path, "/")
+					tenant := ""
+					if len(splitUrl) > 3 {
+						tenant = splitUrl[3]
 					} else {
-						// Tempo service (No GW)
-						endpointJ := fmt.Sprintf("%s://%s:%s/api/traces/v1/tempo/api/search?q={}", parsedUrl.Scheme, parsedUrl.Host, port)
-						resp, code, reqError := MakeRequest(client, endpointJ, nil)
-						if code != 200 {
-							if reqError != nil {
-								log.Errorf("[Discovery client] Cannot query endpoint: %s. Code [%d]. Error: %s", endpointJ, code, reqError.Error())
-							} else {
-								log.Errorf("[Discovery client] Cannot query endpoint: %s. Code [%d].", endpointJ, code)
-							}
-						} else {
-							var response otel.Traces
-							if errMarshal := json.Unmarshal(resp, &response); errMarshal != nil {
-								log.Errorf("[Discovery client] Error unmarshalling Tempo response: %s [URL: %v]", errMarshal, endpointJ)
-							} else {
-								vc := model.ValidConfig{Url: fmt.Sprintf("%s://%s:%s/api/traces/v1/tempo", parsedUrl.Scheme, parsedUrl.Host, port), Provider: "tempo", UseGRPC: false, NamespaceSelector: false}
-								for _, rd := range response.Traces {
-									parts := strings.Split(rd.RootServiceName, ".")
-									if len(parts) > 1 {
-										vc.NamespaceSelector = true
-										break
-									}
-								}
-								log.Infof("[Discovery client] Found valid Config %v", vc)
-								validConfigs = append(validConfigs, vc)
-							}
-						}
-						// Try GW Jaeger Endpoint
-						endpointJ = fmt.Sprintf("%s://%s:%s/api/traces/v1/api/services", parsedUrl.Scheme, parsedUrl.Host, port)
-						resp, code, reqError = MakeRequest(client, endpointJ, nil)
-						if code != 200 {
-							if reqError != nil {
-								log.Errorf("[Discovery client] Cannot query endpoint: %s. Code [%d]. Error: %s", endpointJ, code, reqError.Error())
-							} else {
-								log.Errorf("[Discovery client] Cannot query endpoint: %s. Code [%d].", endpointJ, code)
-							}
-						} else {
-							var response model.TracingServices
-							if errMarshal := json.Unmarshal(resp, &response); errMarshal != nil {
-								log.Errorf("[Discovery client] Error unmarshalling Jaeger response: %s [URL: %v]", errMarshal, endpointJ)
-							} else {
-								vc := model.ValidConfig{Url: fmt.Sprintf("%s://%s:%s/api/traces/v1", parsedUrl.Scheme, parsedUrl.Host, port), Provider: "jaeger", UseGRPC: false, NamespaceSelector: false}
-								for _, rd := range response.Data {
-									parts := strings.Split(rd, ".")
-									if len(parts) > 1 {
-										vc.NamespaceSelector = true
-										break
-									}
-								}
-								log.Infof("[Discovery client] Found valid Config %v", vc)
-								validConfigs = append(validConfigs, vc)
-							}
-						}
+						log.Infof("[Discovery client] Tenant name not found: %s. Tempo URL includes gateway but not the Tenant name", parsedUrl.Path)
+					}
+					validEndpoint := fmt.Sprintf("%s://%s:%s/api/traces/v1/%s/tempo", parsedUrl.Scheme, parsedUrl.Host, port, tenant)
+					endpointJ := fmt.Sprintf("%s/api/search?q={}", validEndpoint)
+					vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "tempo")
+					if err == nil {
+						validConfigs = append(validConfigs, *vc)
+						logs = append(logs, ll...)
+					}
+
+					// Try GW Jaeger Endpoint
+					validEndpoint = fmt.Sprintf("%s://%s:%s/api/traces/v1/%s", parsedUrl.Scheme, parsedUrl.Host, port, tenant)
+					endpointJ = fmt.Sprintf("%s/api/services", validEndpoint)
+					vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
+					if err == nil {
+						validConfigs = append(validConfigs, *vc)
+						logs = append(logs, ll...)
+					}
+
+				} else {
+					// Tempo service (No GW)
+					validEndpoint := fmt.Sprintf("%s://%s:%s/api/traces/v1/tempo", parsedUrl.Scheme, parsedUrl.Host, port)
+					endpointJ := fmt.Sprintf("%s/api/search?q={}", validEndpoint)
+					vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "tempo")
+					if err == nil {
+						validConfigs = append(validConfigs, *vc)
+						logs = append(logs, ll...)
+					}
+
+					// Try GW Jaeger Endpoint
+					validEndpoint = fmt.Sprintf("%s://%s:%s/api/traces/v1", parsedUrl.Scheme, parsedUrl.Host, port)
+					endpointJ = fmt.Sprintf("%s/api/traces/v1/api/services", validEndpoint)
+					vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
+					if err == nil {
+						validConfigs = append(validConfigs, *vc)
+						logs = append(logs, ll...)
 					}
 				}
 			}
@@ -303,35 +197,20 @@ func discoverUrl(parsedUrl model.ParsedUrl, ports []string, auth *config.Auth, c
 		case "3200":
 			{
 				// Try Tempo HTTP client
-				timeout := time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout) * time.Second
-				transport, err := httputil.CreateTransport(auth, &http.Transport{}, timeout, cfgTracing.CustomHeaders)
-				if err != nil {
-					log.Infof("[Discovery client] Cannot create transport: %s", err.Error())
-				} else {
-					client := http.Client{Transport: transport, Timeout: timeout}
-					// Try Tempo upstream URL
-					endpoint := fmt.Sprintf("%s://%s:%s/api/search?q={}", parsedUrl.Scheme, parsedUrl.Host, port)
-					resp, code, reqError := MakeRequest(client, endpoint, nil)
-					if code != 200 {
-						log.Errorf("[Discovery client] Cannot query endpoint: %s. Code [%d]. Error: %s", endpoint, code, reqError.Error())
-					} else {
-						var response otel.Traces
-						if errMarshal := json.Unmarshal(resp, &response); errMarshal != nil {
-							log.Errorf("[Discovery client] Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, endpoint)
-						} else {
-							vc := model.ValidConfig{Url: fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port), Provider: "tempo", UseGRPC: false, NamespaceSelector: false}
-							for _, rd := range response.Traces {
-								parts := strings.Split(rd.RootServiceName, ".")
-								if len(parts) > 1 {
-									vc.NamespaceSelector = true
-									break
-								}
-							}
-							log.Infof("[Discovery client] Found valid Config %v", vc)
-							validConfigs = append(validConfigs, vc)
-						}
-					}
-					// Try Jaeger? (Upstream and Jaeger UI)
+				validEndpoint := fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port)
+				endpointJ := fmt.Sprintf("%s/api/search?q={}", validEndpoint)
+				vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "tempo")
+				if err == nil {
+					validConfigs = append(validConfigs, *vc)
+					logs = append(logs, ll...)
+				}
+				// Try Jaeger?
+				validEndpoint = fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port)
+				endpointJ = fmt.Sprintf("%s/api/services", validEndpoint)
+				vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
+				if err == nil {
+					validConfigs = append(validConfigs, *vc)
+					logs = append(logs, ll...)
 				}
 			}
 		case "9095":
@@ -342,4 +221,62 @@ func discoverUrl(parsedUrl model.ParsedUrl, ports []string, auth *config.Auth, c
 		}
 	}
 	return validConfigs
+}
+
+func validateEndpoint(client http.Client, endpoint, validEndpoint string, provider string) (*model.ValidConfig, []model.LogLine, error) {
+
+	logs := []model.LogLine{}
+	resp, code, reqError := MakeRequest(client, endpoint, nil)
+
+	if code != 200 {
+		msg := fmt.Sprintf("[Discovery client] Cannot query endpoint: %s. Code [%d].", endpoint, code)
+		if reqError != nil {
+			msg = fmt.Sprintf("[Discovery client] Cannot query endpoint: %s. Code [%d]. Error: %s", endpoint, code, reqError.Error())
+		}
+		logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
+		log.Tracef(msg)
+		return nil, logs, fmt.Errorf(msg)
+	}
+
+	if provider == "jaeger" {
+		var response model.TracingServices
+		if errMarshal := json.Unmarshal(resp, &response); errMarshal != nil {
+			msg := fmt.Sprintf("[Discovery client] Error unmarshalling Jaeger response: %s [URL: %v]", errMarshal, endpoint)
+			logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
+			log.Tracef(msg)
+			return nil, logs, fmt.Errorf(msg)
+		}
+		vc := model.ValidConfig{Url: validEndpoint, Provider: provider, UseGRPC: false, NamespaceSelector: false}
+		for _, rd := range response.Data {
+			parts := strings.Split(rd, ".")
+			if len(parts) > 1 {
+				vc.NamespaceSelector = true
+				break
+			}
+		}
+		msg := fmt.Sprintf("[Discovery client] Found valid Config %v", vc)
+		logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
+		log.Tracef(msg)
+		return &vc, logs, nil
+	}
+	// Try Tempo
+	var response otel.Traces
+	if errMarshal := json.Unmarshal(resp, &response); errMarshal != nil {
+		msg := fmt.Sprintf("[Discovery client] Error unmarshalling Tempo response: %s [URL: %v]", errMarshal, endpoint)
+		logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
+		log.Tracef(msg)
+		return nil, logs, fmt.Errorf(msg)
+	}
+	vc := model.ValidConfig{Url: validEndpoint, Provider: "tempo", UseGRPC: false, NamespaceSelector: false}
+	for _, rd := range response.Traces {
+		parts := strings.Split(rd.RootServiceName, ".")
+		if len(parts) > 1 {
+			vc.NamespaceSelector = true
+			break
+		}
+	}
+	msg := fmt.Sprintf("[Discovery client] Found valid Config %v", vc)
+	logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
+	log.Tracef(msg)
+	return &vc, logs, nil
 }
