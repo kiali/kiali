@@ -2,6 +2,7 @@ package model
 
 import (
 	"net/url"
+	"time"
 
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 )
@@ -54,6 +55,7 @@ type ValidConfig struct {
 
 type TracingDiagnose struct {
 	Code        int           `json:"code"`
+	LogLine     []LogLine     `json:"logLine"`
 	Message     string        `json:"message"`
 	ValidConfig []ValidConfig `json:"validConfig"`
 }
@@ -64,4 +66,10 @@ type TracingService struct {
 	Limit  int               `json:"limit"`
 	Offset int               `json:"offset"`
 	Errors []StructuredError `json:"errors"`
+}
+
+type LogLine struct {
+	Result string    `json:"result"`
+	Test   string    `json:"test"`
+	Time   time.Time `json:"time"`
 }
