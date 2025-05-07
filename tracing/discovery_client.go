@@ -2,6 +2,8 @@ package tracing
 
 import (
 	"context"
+	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,16 +13,25 @@ import (
 	"strings"
 	"time"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/tracing/jaeger"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	otel "github.com/kiali/kiali/tracing/otel/model"
+	"github.com/kiali/kiali/tracing/tempo"
+	"github.com/kiali/kiali/util/grpcutil"
 	"github.com/kiali/kiali/util/httputil"
 )
 
 func TestNewClient(ctx context.Context, conf *config.Config, token string, client ClientInterface) (*model.TracingDiagnose, error) {
 	cfgTracing := conf.ExternalServices.Tracing
 	test := model.TracingDiagnose{}
+	logs := []model.LogLine{}
 
 	// Tracing not enabled
 	if !cfgTracing.Enabled {
@@ -29,9 +40,15 @@ func TestNewClient(ctx context.Context, conf *config.Config, token string, clien
 	}
 
 	// Internal URL not set
-	parsedURL, err := parseUrl(cfgTracing.InternalURL)
+	url := cfgTracing.InternalURL
+	if !conf.InCluster {
+		url = cfgTracing.ExternalURL
+		logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Using external url %s because not in cluster", url)})
+	}
+
+	parsedURL, err := parseUrl(url)
 	if err != nil {
-		return &test, errors.New("external_services.tracing.internal_url is required and must be a valid URL")
+		return &test, fmt.Errorf("external_services.tracing.internal_url is required and must be a valid URL")
 	}
 
 	// Get Auth
@@ -40,28 +57,14 @@ func TestNewClient(ctx context.Context, conf *config.Config, token string, clien
 		auth.Token = token
 	}
 
-	// If the client is valid try to figure out the problem
-	/*
-		if client != nil {
-			ts, err := client.GetAppTraces("", "", models.TracingQuery{})
-			if err != nil {
-				test.Message = err.Error()
-				if strings.Contains(test.Message, "connection refused") {
-					ports := discoverPorts(parsedURL.Host)
-					validConfig := discoverUrl(parsedURL.Scheme, parsedURL.Host, ports, &auth, cfgTracing)
-					test.ValidConfig = validConfig
-				}
-				return &test, err
-			}
-			if ts.Errors != nil {
-				test.Message = err.Error()
-				return &test, err
-			}
-		}
-	*/
-	ports := discoverPorts(parsedURL.Host)
-	validConfig := discoverUrl(*parsedURL, ports, &auth, cfgTracing)
+	ports, ll := discoverPorts(parsedURL.Host)
+	test.LogLine = append(logs, ll...)
+
+	validConfig, ll := discoverUrl(ctx, *parsedURL, ports, &auth, cfgTracing)
 	test.ValidConfig = validConfig
+	test.LogLine = append(logs, ll...)
+
+	// TODO: Compare with client
 
 	return &test, nil
 
@@ -86,24 +89,26 @@ func parseUrl(urlToParse string) (*model.ParsedUrl, error) {
 }
 
 // discoverPorts try to discover open ports
-func discoverPorts(host string) []string {
+func discoverPorts(host string) ([]string, []model.LogLine) {
 	portsToScan := []string{"16686", "16685", "80", "3200", "8080", "9095"}
 	openPorts := []string{}
+	logLines := []model.LogLine{}
+
 	for _, port := range portsToScan {
 		address := fmt.Sprintf("%s:%s", host, port)
 		conn, err := net.DialTimeout("tcp", address, 500*time.Millisecond)
 		if err == nil {
-			log.Debugf("[Discovery client] Port %s is open", port)
+			logLines = append(logLines, model.LogLine{Time: time.Now(), Test: "[Discovery client] Checking open ports", Result: fmt.Sprintf("[Ok] Port %s is open", port)})
 			openPorts = append(openPorts, port)
 			conn.Close()
 		}
 	}
-	log.Infof("[Discovery client] Open ports: %v", openPorts)
-	return openPorts
+	log.Tracef("[Discovery client] Open ports: %v", openPorts)
+	return openPorts, logLines
 }
 
 // discoverUrl try to discover valid URLs
-func discoverUrl(parsedUrl model.ParsedUrl, ports []string, auth *config.Auth, cfgTracing config.TracingConfig) []model.ValidConfig {
+func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string, auth *config.Auth, cfgTracing config.TracingConfig) ([]model.ValidConfig, []model.LogLine) {
 	validConfigs := []model.ValidConfig{}
 	var client http.Client
 	logs := []model.LogLine{}
@@ -112,9 +117,9 @@ func discoverUrl(parsedUrl model.ParsedUrl, ports []string, auth *config.Auth, c
 	timeout := time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout) * time.Second
 	transport, err := httputil.CreateTransport(auth, &http.Transport{}, timeout, cfgTracing.CustomHeaders)
 	if err != nil {
-		log.Infof("[Discovery client] Cannot create transport: %s", err.Error())
+		logs = append(logs, model.LogLine{Time: time.Now(), Test: "[Discovery client] Create client", Result: fmt.Sprintf("[ERROR] Cannot create transport: %s", err.Error())})
 		// TODO: Validate auth?
-		return validConfigs
+		return validConfigs, logs
 	} else {
 		client = http.Client{Transport: transport, Timeout: timeout}
 	}
@@ -192,7 +197,39 @@ func discoverUrl(parsedUrl model.ParsedUrl, ports []string, auth *config.Auth, c
 		case "16685":
 			{
 				// Try gRPC Jaeger client
+				opts, err := grpcutil.GetAuthDialOptions(parsedUrl.Scheme == "https", auth)
+				if err == nil {
+					address := parsedUrl.Host + ":" + port
+					logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC Client 16685", Result: fmt.Sprintf("%s GRPC client info: address=%s, auth.type=%s", cfgTracing.Provider, address, auth.Type)})
 
+					if len(cfgTracing.CustomHeaders) > 0 {
+						logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC Client 16685", Result: fmt.Sprintf("Adding [%v] custom headers to Tracing client", len(cfgTracing.CustomHeaders))})
+						ctx = metadata.NewOutgoingContext(ctx, metadata.New(cfgTracing.CustomHeaders))
+					}
+					conn, err := grpc.NewClient(address, opts...)
+					if err == nil {
+						cc := model.NewQueryServiceClient(conn)
+						clientgRPC, err := jaeger.NewGRPCJaegerClient(cc)
+						if err != nil {
+							logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Client 16685", Result: fmt.Sprintf("Error creating gRPC Client: [%s]", err.Error())})
+						} else {
+							ok, err := clientgRPC.GetServices(ctx)
+							if ok {
+								vc := model.ValidConfig{Url: address, Provider: "jaeger", UseGRPC: true}
+								validConfigs = append(validConfigs, vc)
+								logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Client 16685 Ok", Result: fmt.Sprintf("Valid gRPC Client found")})
+							} else {
+								logs = append(logs, model.LogLine{Time: time.Now(), Test: "GetServices gRPC Client 16685", Result: fmt.Sprintf("Error getting gRPC Services: [%s]", err.Error())})
+							}
+						}
+					} else {
+						log.Errorf("Error creating client %s", err.Error())
+						return nil, nil
+					}
+				}
+				if err != nil {
+					logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC Client 16685", Result: fmt.Sprintf("Error while building GRPC dial options: %v", err)})
+				}
 			}
 		case "3200":
 			{
@@ -217,10 +254,36 @@ func discoverUrl(parsedUrl model.ParsedUrl, ports []string, auth *config.Auth, c
 			{
 				// Try GRPC Tempo Client
 				// And this also requires HTTP Client
+				var dialOps []grpc.DialOption
+				if cfgTracing.Auth.Type == "basic" {
+					dialOps = append(dialOps, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
+					dialOps = append(dialOps, grpc.WithPerRPCCredentials(&basicAuth{
+						Header: fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(strings.Join([]string{cfgTracing.Auth.Username, cfgTracing.Auth.Password}, ":")))),
+					}))
+				} else {
+					dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
+				}
+				grpcAddress := fmt.Sprintf("%s:%d", parsedUrl.Host, port)
+				clientConn, _ := grpc.NewClient(grpcAddress, dialOps...)
+				streamClient, err := tempo.NewgRPCClient(clientConn)
+				if err != nil {
+					logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Client 9095 error", Result: fmt.Sprintf("Error creating gRPC Client %s", err.Error())})
+					log.Errorf("Error creating gRPC Tempo Client %s", err.Error())
+				} else {
+					ok, err := streamClient.GetServices(ctx)
+					if ok {
+						// TODO: Different config gRPC Port!!!
+						vc := model.ValidConfig{Url: grpcAddress, Provider: "tempo", UseGRPC: true}
+						validConfigs = append(validConfigs, vc)
+						logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Tempo Client 9095 Ok", Result: fmt.Sprintf("Valid gRPC Client found. Notice this config also requires any valid HTTP configuration. ")})
+					} else {
+						logs = append(logs, model.LogLine{Time: time.Now(), Test: "GetServices gRPC Tempo Client 9095", Result: fmt.Sprintf("Error getting gRPC Services: [%s]", err.Error())})
+					}
+				}
 			}
 		}
 	}
-	return validConfigs
+	return validConfigs, logs
 }
 
 func validateEndpoint(client http.Client, endpoint, validEndpoint string, provider string) (*model.ValidConfig, []model.LogLine, error) {
