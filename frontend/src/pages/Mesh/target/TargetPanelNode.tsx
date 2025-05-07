@@ -81,13 +81,23 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
               {diagnostic && <p style={{ color: 'green' }}>{diagnostic.msg}</p>}
               {error && <p style={{ color: 'red' }}>{error}</p>}
               {diagnostic?.validConfig && (
-                <ul>
+                <ul style={{ listStyle: 'inside' }}>
+                  <span style={{ margin: '1.5em 0' }}>Recommended configurations found:</span>
                   {diagnostic?.validConfig?.map(item => (
                     <span>
-                      <li>Namespace selector: {item.namespaceSelector.toString()}</li>
-                      <li>Provider: {item.provider}</li>
-                      <li>Internal URL: {item.url}</li>
-                      <li>Use gRPC: {item.useGRPC.toString()}</li>
+                      <li>
+                        <b>Namespace selector:</b> {item.namespaceSelector.toString()}
+                      </li>
+                      <li>
+                        <b>Provider:</b> {item.provider}
+                      </li>
+                      <li>
+                        <b>Internal URL:</b> {item.url}
+                      </li>
+                      <li>
+                        <b>Use gRPC:</b> {item.useGRPC.toString()}
+                      </li>
+                      <hr />
                     </span>
                   ))}
                 </ul>
