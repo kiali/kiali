@@ -51,7 +51,7 @@ func graphNamespacesIstio(ctx context.Context, business *business.Layer, prom *p
 	globalInfo := graph.NewGlobalInfo(business, prom, config.Get())
 
 	trafficMap := istio.BuildNamespacesTrafficMap(ctx, o.TelemetryOptions, globalInfo)
-	code, graphConfig = generateGraph(trafficMap, o)
+	code, graphConfig = generateGraph(ctx, trafficMap, o)
 
 	return code, graphConfig
 }
@@ -89,13 +89,15 @@ func graphNodeIstio(ctx context.Context, business *business.Layer, prom *prometh
 	globalInfo.PromClient = prom
 
 	trafficMap, _ := istio.BuildNodeTrafficMap(ctx, o.TelemetryOptions, globalInfo)
-	code, graphConfig = generateGraph(trafficMap, o)
+	code, graphConfig = generateGraph(ctx, trafficMap, o)
 
 	return code, graphConfig
 }
 
-func generateGraph(trafficMap graph.TrafficMap, o graph.Options) (int, interface{}) {
-	log.Tracef("Generating config for [%s] graph...", o.ConfigVendor)
+func generateGraph(ctx context.Context, trafficMap graph.TrafficMap, o graph.Options) (int, interface{}) {
+	zl := log.FromContext(ctx)
+
+	zl.Trace().Msgf("Generating config for [%s] graph...", o.ConfigVendor)
 
 	promtimer := internalmetrics.GetGraphMarshalTimePrometheusTimer(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes)
 	defer promtimer.ObserveDuration()
@@ -106,9 +108,9 @@ func generateGraph(trafficMap graph.TrafficMap, o graph.Options) (int, interface
 		vendorConfig = config_common.NewConfig(trafficMap, o.ConfigOptions)
 	default:
 		vendorConfig = config_common.NewConfig(trafficMap, o.ConfigOptions)
-		log.Debugf("ConfigVendor [%s] not supported, defaulting to [Common]", o.ConfigVendor)
+		zl.Debug().Msgf("ConfigVendor [%s] not supported, defaulting to [Common]", o.ConfigVendor)
 	}
 
-	log.Tracef("Done generating config for [%s] graph", o.ConfigVendor)
+	zl.Trace().Msgf("Done generating config for [%s] graph", o.ConfigVendor)
 	return http.StatusOK, vendorConfig
 }
