@@ -12,10 +12,7 @@ import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
 import { TargetPanelEditor } from './TargetPanelEditor';
-import * as API from '../../../services/Api';
-import { StatusError } from '../../../types/TracingInfo';
-import { Validation } from '../../../components/Validations/Validation';
-import { ValidationTypes } from '../../../types/IstioObjects';
+import { TracingDiagnose } from '../../../components/Mesh/TraceDiagnose';
 
 type TargetPanelNodeProps<T extends MeshNodeData> = TargetPanelCommonProps & {
   target: NodeTarget<T>;
@@ -25,29 +22,6 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
   props: TargetPanelNodeProps<MeshNodeData>
 ) => {
   const { t } = useKialiTranslation();
-  const [loading, setLoading] = React.useState(false);
-  const [diagnostic, setDiagnostic] = React.useState<StatusError | null>(null);
-  const [error, setError] = React.useState<string | null>(null);
-
-  const fetchCheckService = async (): Promise<void> => {
-    setLoading(true);
-    setDiagnostic(null);
-    setError(null);
-
-    return API.getDiagnoseStatus(data.cluster)
-      .then(response => {
-        setDiagnostic(response.data);
-        setLoading(false);
-      })
-      .catch(err => {
-        setLoading(false);
-        setError(`Could not fetch diagnose info ${err}`);
-      });
-  };
-
-  const handleCheckService = async (): Promise<void> => {
-    fetchCheckService();
-  };
 
   const node = props.target;
 
@@ -66,45 +40,7 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
         {targetPanelHR}
 
         <TargetPanelEditor configData={data.infraData} targetName={data.infraName}></TargetPanelEditor>
-        {data.infraType === MeshInfraType.TRACE_STORE && (
-          <>
-            {targetPanelHR}
-            <div>
-              <button onClick={handleCheckService} disabled={loading}>
-                {loading ? 'Verifying...' : 'Diagnose'}
-              </button>
-              {diagnostic && !error && (
-                <span style={{ marginLeft: '0.5rem' }}>
-                  <Validation severity={ValidationTypes.Correct} />
-                </span>
-              )}
-              {diagnostic && <p style={{ color: 'green' }}>{diagnostic.msg}</p>}
-              {error && <p style={{ color: 'red' }}>{error}</p>}
-              {diagnostic?.validConfig && (
-                <ul style={{ listStyle: 'inside' }}>
-                  <span style={{ margin: '1.5em 0' }}>Recommended configurations found:</span>
-                  {diagnostic?.validConfig?.map(item => (
-                    <span>
-                      <li>
-                        <b>Namespace selector:</b> {item.namespaceSelector.toString()}
-                      </li>
-                      <li>
-                        <b>Provider:</b> {item.provider}
-                      </li>
-                      <li>
-                        <b>Internal URL:</b> {item.url}
-                      </li>
-                      <li>
-                        <b>Use gRPC:</b> {item.useGRPC.toString()}
-                      </li>
-                      <hr />
-                    </span>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </>
-        )}
+        {data.infraType === MeshInfraType.TRACE_STORE && <TracingDiagnose cluster={data.cluster} />}
       </div>
     </div>
   );
