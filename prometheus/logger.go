@@ -2,5 +2,5 @@ package prometheus
 
 var (
 	logGroupName          = "prometheus"
-	promCachelogGroupName = "promCache"
+	promCacheLogGroupName = "promCache"
 )
