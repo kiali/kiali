@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
 	osproject_v1 "github.com/openshift/api/project/v1"
@@ -692,4 +693,47 @@ deployment:
 	require.NoError(err)
 
 	assert.Len(istioConfigList.Gateways, 4)
+}
+
+func TestUpdateIstioObjectWithoutValidations(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.Get()
+	istioConfigList := fakeIstioConfigList()
+
+	// Using a mocked configuration from the validations testing
+	// This configuration will result in some validations errors
+	validationService := mockCombinedValidationService(t, conf, istioConfigList,
+		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"})
+
+	// Setting the resources to the k8s client too
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("test"),
+		istioConfigList.VirtualServices[0],
+		istioConfigList.DestinationRules[0],
+		istioConfigList.Gateways[0],
+	)
+
+	// Disabling validations
+	duration, err := time.ParseDuration("1s")
+	if err != nil {
+		println("Error parsing duration:", err.Error())
+		return
+	}
+	conf.ExternalServices.Istio.ValidationReconcileInterval = &duration
+
+	cache := SetupBusinessLayer(t, k8s, *conf)
+
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
+	layer := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
+	layer.Validations = validationService
+
+	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller, businessLayer: layer, conf: conf}
+
+	updatedVirtualService, err := configService.UpdateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "product-vs", "{}")
+
+	require.NoError(err)
+	assert.Equal("product-vs", updatedVirtualService.VirtualService.Name)
+	assert.Equal(0, len(configService.kialiCache.Validations().Items()))
 }
