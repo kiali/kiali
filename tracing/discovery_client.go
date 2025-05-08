@@ -303,7 +303,7 @@ func validateEndpoint(client http.Client, endpoint, validEndpoint string, provid
 		}
 		if resp != nil {
 			msg = fmt.Sprintf("%s. Response: %s", msg, resp)
-			response := fmt.Sprintf("%s", resp)
+			response := string(resp)
 			// HTTPS required. Try HTTPS URL
 			if strings.Contains(response, "Client sent an HTTP request to an HTTPS") && !strings.Contains(endpoint, "https") {
 				endpoint = strings.Replace(endpoint, "http", "https", 1)
