@@ -136,6 +136,7 @@ export type ValidConfig = {
   provider: string;
   url: string;
   useGRPC: boolean;
+  warning?: string;
 };
 
 export type LogLine = {

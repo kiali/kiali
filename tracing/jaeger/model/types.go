@@ -51,6 +51,7 @@ type ValidConfig struct {
 	Provider          string `json:"provider"`
 	Url               string `json:"url"`
 	UseGRPC           bool   `json:"useGRPC"`
+	Warning           string `json:"warning"`
 }
 
 type TracingDiagnose struct {
