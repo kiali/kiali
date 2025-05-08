@@ -715,7 +715,7 @@ func TestUpdateIstioObjectWithoutValidations(t *testing.T) {
 	)
 
 	// Disabling validations
-	duration, err := time.ParseDuration("1s")
+	duration, err := time.ParseDuration("0s")
 	if err != nil {
 		println("Error parsing duration:", err.Error())
 		return
