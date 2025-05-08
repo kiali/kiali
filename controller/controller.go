@@ -10,79 +10,75 @@ package controller
 
 import (
 	"context"
-	"fmt"
 
-	networkingv1 "istio.io/client-go/pkg/apis/networking/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/workqueue"
 
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/cache"
-	"github.com/kiali/kiali/log"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
-func NewScheme() (*runtime.Scheme, error) {
-	scheme := runtime.NewScheme()
-	addSchemeFuncs := []func(s *runtime.Scheme) error{
-		clientgoscheme.AddToScheme,
-		networkingv1.AddToScheme,
-	}
-
-	for _, addToScheme := range addSchemeFuncs {
-		if err := addToScheme(scheme); err != nil {
-			return nil, err
-		}
-	}
-
-	return scheme, nil
+type Request struct {
+	types.NamespacedName
+	Cluster string
 }
 
-// Start creates and starts all the controllers. They'll get cancelled when the context is cancelled.
-func Start(ctx context.Context, conf *config.Config, cf kubernetes.ClientFactory, kialiCache cache.KialiCache, validationsService *business.IstioValidationsService) error {
-	// TODO: Replace with kiali logging but if this isn't set some errors are thrown.
-	ctrl.SetLogger(zap.New())
+type EventHandler[T client.Object] struct {
+	Cluster string
+}
 
-	// Combine the istio scheme and the kube scheme.
-	log.Debug("Setting up Validations Contoller")
-	scheme, err := NewScheme()
-	if err != nil {
-		return fmt.Errorf("error setting up ValidationsController when creating scheme: %s", err)
-	}
-
-	// In the future this could be any cluster and not just home cluster.
-	homeClusterInfo := cf.GetSAHomeClusterClient().ClusterInfo()
-
-	// Create a new controller manager
-	mgr, err := ctrl.NewManager(homeClusterInfo.ClientConfig, ctrl.Options{
-		// Disable metrics server since Kiali has its own metrics server.
-		Metrics: metricsserver.Options{BindAddress: "0"},
-		Scheme:  scheme,
+func (h EventHandler[T]) Create(ctx context.Context, e event.TypedCreateEvent[T], q workqueue.TypedRateLimitingInterface[Request]) {
+	q.Add(Request{
+		NamespacedName: types.NamespacedName{
+			Name:      e.Object.GetName(),
+			Namespace: e.Object.GetNamespace(),
+		},
+		Cluster: h.Cluster,
 	})
+}
+
+func (h EventHandler[T]) Update(ctx context.Context, e event.TypedUpdateEvent[T], q workqueue.TypedRateLimitingInterface[Request]) {
+	q.Add(Request{
+		NamespacedName: types.NamespacedName{
+			Name:      e.ObjectNew.GetName(),
+			Namespace: e.ObjectNew.GetNamespace(),
+		},
+		Cluster: h.Cluster,
+	})
+}
+
+func (h EventHandler[T]) Delete(ctx context.Context, e event.TypedDeleteEvent[T], q workqueue.TypedRateLimitingInterface[Request]) {
+	q.Add(Request{
+		NamespacedName: types.NamespacedName{
+			Name:      e.Object.GetName(),
+			Namespace: e.Object.GetNamespace(),
+		},
+		Cluster: h.Cluster,
+	})
+}
+
+func (h EventHandler[T]) Generic(ctx context.Context, e event.TypedGenericEvent[T], q workqueue.TypedRateLimitingInterface[Request]) {
+	q.Add(Request{
+		NamespacedName: types.NamespacedName{
+			Name:      e.Object.GetName(),
+			Namespace: e.Object.GetNamespace(),
+		},
+		Cluster: h.Cluster,
+	})
+}
+
+// TypedLabelSelectorPredicate constructs a Predicate from a LabelSelector.
+// Only objects matching the LabelSelector will be admitted.
+func TypedLabelSelectorPredicate[T client.Object](s metav1.LabelSelector) (predicate.TypedPredicate[T], error) {
+	selector, err := metav1.LabelSelectorAsSelector(&s)
 	if err != nil {
-		return fmt.Errorf("error setting up ValidationsController when creating manager: %s", err)
+		return predicate.TypedFuncs[T]{}, err
 	}
 
-	var clusters []string
-	// We want one manager/reconciler for all clusters.
-	for _, client := range cf.GetSAClients() {
-		clusters = append(clusters, client.ClusterInfo().Name)
-	}
-
-	if err := NewValidationsController(ctx, clusters, conf, kialiCache, validationsService, mgr); err != nil {
-		return fmt.Errorf("error setting up ValidationsController: %s", err)
-	}
-
-	go func() {
-		if err := mgr.Start(ctx); err != nil {
-			log.Errorf("error starting Validations Controller: %s", err)
-		}
-		log.Debug("Stopped Validations Controller")
-	}()
-
-	return nil
+	return predicate.NewTypedPredicateFuncs(func(o T) bool {
+		return selector.Matches(labels.Set(o.GetLabels()))
+	}), nil
 }
