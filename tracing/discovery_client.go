@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -136,8 +137,8 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 				vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
 				if err == nil {
 					validConfigs = append(validConfigs, *vc)
-					logs = append(logs, ll...)
 				}
+				logs = append(logs, ll...)
 
 				// Try Tempo URL
 				validEndpoint = fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port)
@@ -145,8 +146,8 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 				vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
 				if err == nil {
 					validConfigs = append(validConfigs, *vc)
-					logs = append(logs, ll...)
 				}
+				logs = append(logs, ll...)
 			}
 		case "8080":
 			{
@@ -155,7 +156,7 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 					splitUrl := strings.Split(parsedUrl.Path, "/")
 					tenant := ""
 					if len(splitUrl) > 3 {
-						tenant = splitUrl[3]
+						tenant = splitUrl[4]
 					} else {
 						logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create http client in port 8080", Result: "tenant name not found"})
 						log.Infof("[Discovery client] Tenant name not found: %s. Tempo URL includes gateway but not the Tenant name", parsedUrl.Path)
@@ -165,8 +166,8 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 					vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "tempo")
 					if err == nil {
 						validConfigs = append(validConfigs, *vc)
-						logs = append(logs, ll...)
 					}
+					logs = append(logs, ll...)
 
 					// Try GW Jaeger Endpoint
 					validEndpoint = fmt.Sprintf("%s://%s:%s/api/traces/v1/%s", parsedUrl.Scheme, parsedUrl.Host, port, tenant)
@@ -174,8 +175,8 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 					vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
 					if err == nil {
 						validConfigs = append(validConfigs, *vc)
-						logs = append(logs, ll...)
 					}
+					logs = append(logs, ll...)
 
 				} else {
 					// Tempo service (No GW)
@@ -184,8 +185,8 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 					vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "tempo")
 					if err == nil {
 						validConfigs = append(validConfigs, *vc)
-						logs = append(logs, ll...)
 					}
+					logs = append(logs, ll...)
 
 					// Try GW Jaeger Endpoint
 					validEndpoint = fmt.Sprintf("%s://%s:%s/api/traces/v1", parsedUrl.Scheme, parsedUrl.Host, port)
@@ -193,8 +194,8 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 					vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
 					if err == nil {
 						validConfigs = append(validConfigs, *vc)
-						logs = append(logs, ll...)
 					}
+					logs = append(logs, ll...)
 				}
 			}
 		case "16685":
@@ -242,16 +243,17 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 				vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "tempo")
 				if err == nil {
 					validConfigs = append(validConfigs, *vc)
-					logs = append(logs, ll...)
 				}
+				logs = append(logs, ll...)
+
 				// Try Jaeger?
 				validEndpoint = fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port)
 				endpointJ = fmt.Sprintf("%s/api/services", validEndpoint)
 				vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
 				if err == nil {
 					validConfigs = append(validConfigs, *vc)
-					logs = append(logs, ll...)
 				}
+				logs = append(logs, ll...)
 			}
 		case "9095":
 			{
@@ -294,11 +296,39 @@ func validateEndpoint(client http.Client, endpoint, validEndpoint string, provid
 
 	logs := []model.LogLine{}
 	resp, code, reqError := MakeRequest(client, endpoint, nil)
-
 	if code != 200 {
 		msg := fmt.Sprintf("[Discovery client] Cannot query endpoint: %s. Code [%d].", endpoint, code)
 		if reqError != nil {
-			msg = fmt.Sprintf("[Discovery client] Cannot query endpoint: %s. Code [%d]. Error: %s", endpoint, code, reqError.Error())
+			msg = fmt.Sprintf("%s. Error: %s", msg, reqError.Error())
+		}
+		if resp != nil {
+			msg = fmt.Sprintf("%s. Response: %s", msg, resp)
+			response := fmt.Sprintf("%s", resp)
+			// HTTPS required. Try HTTPS URL
+			if strings.Contains(response, "Client sent an HTTP request to an HTTPS") && !strings.Contains(endpoint, "https") {
+				endpoint = strings.Replace(endpoint, "http", "https", 1)
+				validEndpoint = strings.Replace(validEndpoint, "http", "https", 1)
+				return validateEndpoint(client, endpoint, validEndpoint, provider)
+			}
+		}
+		// Certificate error: Try valid host
+		if reqError != nil && strings.Contains(reqError.Error(), "certificate is valid for") {
+			validRe := regexp.MustCompile(`certificate is valid for ([^,]+)`)
+			notRe := regexp.MustCompile(`not ([^\s]+)`)
+			validMatch := validRe.FindStringSubmatch(reqError.Error())
+			notMatch := notRe.FindStringSubmatch(reqError.Error())
+			if len(validMatch) > 1 && len(notMatch) > 1 {
+				replacedEndpoint := strings.Replace(endpoint, notMatch[1], validMatch[1], 1)
+				replacedValidEndpoint := strings.Replace(validEndpoint, notMatch[1], validMatch[1], 1)
+				if replacedEndpoint != endpoint {
+					return validateEndpoint(client, replacedEndpoint, replacedValidEndpoint, provider)
+				}
+			}
+		}
+		// Auth issue
+		if reqError != nil && strings.Contains(reqError.Error(), "certificate signed by unknown authority") {
+			vc := model.ValidConfig{Url: validEndpoint, Provider: provider, UseGRPC: false, Warning: "Auth section must be configured properly"}
+			return &vc, logs, nil
 		}
 		logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
 		log.Trace(msg)
