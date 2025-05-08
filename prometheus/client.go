@@ -297,10 +297,6 @@ func (in *Client) GetConfiguration() (prom_v1.ConfigResult, error) {
 	return config, nil
 }
 
-// func (in *Client) GetContext() context.Context {
-// 	return in.ctx
-// }
-
 func (in *Client) GetRuntimeinfo() (prom_v1.RuntimeinfoResult, error) {
 	ri, err := in.API().Runtimeinfo(in.ctx)
 	if err != nil {
