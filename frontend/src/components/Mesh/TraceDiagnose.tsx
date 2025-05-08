@@ -69,7 +69,11 @@ export const TracingDiagnose: React.FC<TracingDiagnoseProps> = (props: TracingDi
           </span>
         )}
         {diagnostic && <span style={{ color: 'green' }}>{diagnostic.message}</span>}
-        {error && <span style={{ color: 'red' }}>{error}</span>}
+        {error && (
+          <div>
+            <span style={{ color: 'red' }}>{error}</span>
+          </div>
+        )}
         {diagnostic?.validConfig && (
           <>
             <div style={{ margin: '1em 0' }}>
@@ -93,6 +97,7 @@ export const TracingDiagnose: React.FC<TracingDiagnoseProps> = (props: TracingDi
                     <span className={blockDisplay}>
                       <span className={blueDisplay}>use_grpc:</span> {item.useGRPC.toString()}
                     </span>
+                    {item.warning && <span style={{ color: 'red' }}>{item.warning}</span>}
                   </div>
                   {diagnostic?.validConfig && i < diagnostic?.validConfig?.length - 1 && <hr />}
                 </>
