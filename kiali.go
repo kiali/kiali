@@ -201,8 +201,12 @@ func main() {
 		log.Fatalf("Error creating business layer: %s", err)
 	}
 
-	if err := controller.NewValidationsController(ctx, slices.Collect(maps.Keys(kubeCaches)), conf, cache, &layer.Validations, mgr); err != nil {
-		log.Fatal(err)
+	if conf.IsValidationsEnabled() {
+		if err := controller.NewValidationsController(ctx, slices.Collect(maps.Keys(kubeCaches)), conf, cache, &layer.Validations, mgr); err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		log.Info("Validation reconcile interval is 0 or less; skipping periodic validations.")
 	}
 
 	go func() {

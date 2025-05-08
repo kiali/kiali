@@ -327,7 +327,7 @@ type IstioConfig struct {
 	UrlServiceVersion                string          `yaml:"url_service_version"`
 	ValidationChangeDetectionEnabled bool            `yaml:"validation_change_detection_enabled,omitempty"`
 	// ValidationReconcileInterval sets how often Kiali will validate Istio configuration.
-	// Validations cannot be disabled at the moment but you can set this to a long period of time.
+	// Validations can be disabled setting the interval to 0
 	ValidationReconcileInterval *time.Duration `yaml:"validation_reconcile_interval,omitempty"`
 }
 
@@ -1373,6 +1373,12 @@ func GetSafeClusterName(cluster string) string {
 		return Get().KubernetesConfig.ClusterName
 	}
 	return cluster
+}
+
+// IsValidationsEnabled checks the value of ValidationReconcileInternal
+// Validations are enabled for values higher than 0, otherwise validations will be disabled
+func (conf Config) IsValidationsEnabled() bool {
+	return conf.ExternalServices.Istio.ValidationReconcileInterval != nil && *conf.ExternalServices.Istio.ValidationReconcileInterval > 0
 }
 
 // Validate will ensure the config is valid. This should be called after the config
