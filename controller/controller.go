@@ -12,11 +12,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-logr/zerologr"
 	networkingv1 "istio.io/client-go/pkg/apis/networking/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/kiali/kiali/business"
@@ -44,12 +44,11 @@ func NewScheme() (*runtime.Scheme, error) {
 
 // Start creates and starts all the controllers. They'll get cancelled when the context is cancelled.
 func Start(ctx context.Context, conf *config.Config, cf kubernetes.ClientFactory, kialiCache cache.KialiCache, validationsService *business.IstioValidationsService) error {
-	zl := log.WithGroup("validationsController")
-	ctx = log.ToContext(ctx, zl)
-	ctrl.SetLogger(zerologr.New(zl))
+	// TODO: Replace with kiali logging but if this isn't set some errors are thrown.
+	ctrl.SetLogger(zap.New())
 
 	// Combine the istio scheme and the kube scheme.
-	zl.Debug().Msg("Setting up Validations Contoller")
+	log.Debug("Setting up Validations Contoller")
 	scheme, err := NewScheme()
 	if err != nil {
 		return fmt.Errorf("error setting up ValidationsController when creating scheme: %s", err)
@@ -80,9 +79,9 @@ func Start(ctx context.Context, conf *config.Config, cf kubernetes.ClientFactory
 
 	go func() {
 		if err := mgr.Start(ctx); err != nil {
-			zl.Error().Msgf("error starting Validations Controller: %s", err)
+			log.Errorf("error starting Validations Controller: %s", err)
 		}
-		zl.Debug().Msgf("Stopped Validations Controller")
+		log.Debug("Stopped Validations Controller")
 	}()
 
 	return nil
