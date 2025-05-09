@@ -3,6 +3,7 @@ import { LogLine } from '../../types/TracingInfo';
 import { Button, Modal, ModalVariant } from '@patternfly/react-core';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { useKialiTranslation } from '../../utils/I18nUtils';
+import { PFColors } from '../Pf/PfColors';
 
 type LogsModalProps = {
   isOpen: boolean;
@@ -21,9 +22,11 @@ const modalStyle = kialiStyle({
 });
 
 const containerStyle = kialiStyle({
+  backgroundColor: PFColors.Black1000,
+  color: PFColors.Blue100,
   fontFamily: 'Courier New, Courier, monospace',
   margin: 0,
-  padding: '0',
+  padding: '0.5em',
   resize: 'none',
   whiteSpace: 'pre',
   width: '100%',
@@ -31,11 +34,11 @@ const containerStyle = kialiStyle({
 });
 
 const blueDisplay = kialiStyle({
-  color: 'rgb(25 116 116);'
+  color: PFColors.Blue400
 });
 
 const blueDarkDisplay = kialiStyle({
-  color: 'rgb(1 53 98);',
+  color: PFColors.Blue200,
   padding: '0 0.5em'
 });
 

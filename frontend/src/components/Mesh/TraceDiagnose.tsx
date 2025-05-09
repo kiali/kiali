@@ -109,6 +109,12 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
   const [error, setError] = React.useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
   const externalUrl = validateExternalUrl(props.externalServices, props.kiosk, props.tracingInfo);
+  const labels = {
+    namespaceSelector: 'namespace_selector',
+    provider: 'provider',
+    url: 'url',
+    useGRPC: 'use_grpc'
+  };
 
   return (
     <>
@@ -139,18 +145,16 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
               {diagnostic?.validConfig?.map((item, i) => (
                 <>
                   <div className={configStyle}>
-                    <span className={blockDisplay}>
-                      <span className={blueDisplay}>namespace_selector:</span> {item.namespaceSelector.toString()}
-                    </span>
-                    <span className={blockDisplay}>
-                      <span className={blueDisplay}>provider:</span> {item.provider}
-                    </span>
-                    <span className={blockDisplay}>
-                      <span className={blueDisplay}>internal_url:</span> {item.url}
-                    </span>
-                    <span className={blockDisplay}>
-                      <span className={blueDisplay}>use_grpc:</span> {item.useGRPC.toString()}
-                    </span>
+                    {Object.keys(item).map(key => {
+                      if (labels[key] !== undefined) {
+                        return (
+                          <span className={blockDisplay}>
+                            <span className={blueDisplay}>{labels[key]}:</span> {item[key].toString()}
+                          </span>
+                        );
+                      }
+                      return;
+                    })}
                     {item.warning && <span style={{ color: 'red' }}>{item.warning}</span>}
                   </div>
                   {diagnostic?.validConfig && i < diagnostic?.validConfig?.length - 1 && <hr />}
