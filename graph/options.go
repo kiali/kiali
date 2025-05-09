@@ -286,7 +286,7 @@ func NewOptions(r *net_http.Request, namespacesService *business.NamespaceServic
 		} else {
 			namespaceMap[namespaceName] = NamespaceInfo{
 				Name:      namespaceName,
-				Duration:  getSafeNamespaceDuration(r, namespaceName, *earliestCreationTimestamp, time.Duration(duration), queryTime),
+				Duration:  getSafeNamespaceDuration(r.Context(), namespaceName, *earliestCreationTimestamp, time.Duration(duration), queryTime),
 				IsAmbient: isAmbient,
 				IsIstio:   config.IsIstioNamespace(namespaceName),
 			}
@@ -443,7 +443,7 @@ func getAccessibleNamespaces(ctx context.Context, namespacesService *business.Na
 // creation time just return the requestedDuration.  Otherwise reduce the duration as needed to ensure the
 // namespace existed for the entire time range.  An error is generated if no safe duration exists (i.e. the
 // queryTime precedes the namespace).
-func getSafeNamespaceDuration(r *net_http.Request, ns string, nsCreationTime time.Time, requestedDuration time.Duration, queryTime int64) time.Duration {
+func getSafeNamespaceDuration(ctx context.Context, ns string, nsCreationTime time.Time, requestedDuration time.Duration, queryTime int64) time.Duration {
 	var endTime time.Time
 	safeDuration := requestedDuration
 
@@ -461,7 +461,7 @@ func getSafeNamespaceDuration(r *net_http.Request, ns string, nsCreationTime tim
 
 		if nsLifetime < safeDuration {
 			safeDuration = nsLifetime
-			log.FromRequest(r).Debug().Msgf("Reducing requestedDuration [%v] to safeDuration [%v]", requestedDuration, safeDuration)
+			log.FromContext(ctx).Debug().Msgf("Reducing requestedDuration [%v] to safeDuration [%v]", requestedDuration, safeDuration)
 		}
 	}
 
