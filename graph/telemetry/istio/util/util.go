@@ -1,16 +1,21 @@
 package util
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
+	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	prom_client "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // badServiceMatcher looks for a physical IP address with optional port (e.g. 10.11.12.13:80)
@@ -156,4 +161,57 @@ func GetApp(rates graph.RequestedRates) string {
 		return "app!=\"ztunnel\","
 	}
 	return ""
+}
+
+// PromQuery queries Prometheus for metric data
+func PromQuery(ctx context.Context, query string, queryTime time.Time, api prom_v1.API, conf *config.Config) model.Vector {
+	return PromQueryAppender(ctx, query, queryTime, api, conf, nil)
+}
+
+// PromQueryAppender is for appenders to query Prometheus for metric data
+func PromQueryAppender(ctx context.Context, query string, queryTime time.Time, api prom_v1.API, conf *config.Config, a graph.Appender) model.Vector {
+	if query == "" {
+		return model.Vector{}
+	}
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	// get logger from context
+	zl := log.FromContext(ctx)
+
+	// add scope if necessary
+	query = AddQueryScope(query, conf)
+
+	// wrap with a round() to be in line with metrics api
+	query = fmt.Sprintf("round(%s,0.001)", query)
+	zl.Trace().Str("query", query).Msgf("PromQuery: queryTime=[%v], now=[%v], queryTime.Unix=[%v])",
+		queryTime.Format(graph.TF),
+		time.Now().Format(graph.TF),
+		queryTime.Unix())
+
+	var promtimer *prom_client.Timer
+	if a == nil {
+		promtimer = internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Graph-Generation")
+	} else {
+		promtimer = internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Graph-Appender-" + a.Name())
+	}
+
+	// perform the Prometheus query now
+	value, warnings, err := api.Query(ctx, query, queryTime)
+
+	if len(warnings) > 0 {
+		zl.Warn().Msgf("PromQuery: Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+	}
+	graph.CheckUnavailable(err)
+	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
+
+	switch t := value.Type(); t {
+	case model.ValVector: // Instant Vector
+		return value.(model.Vector)
+	default:
+		graph.Error(fmt.Sprintf("No handling for type %v!\n", t))
+	}
+
+	return nil
 }

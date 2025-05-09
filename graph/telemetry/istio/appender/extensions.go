@@ -12,6 +12,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util/sliceutil"
@@ -99,7 +100,7 @@ func (a ExtensionsAppender) appendGraph(ctx context.Context, ext config.Extensio
 			groupBy,
 			idleCondition)
 		zl.Trace().Msgf("Extension [%s] requests query [%s]", ext.Name, query)
-		vector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), a.globalInfo.Conf, a)
+		vector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), a.globalInfo.Conf, a)
 		a.appendTrafficMap(ctx, ext, trafficMap, &vector, metric)
 	}
 
@@ -133,7 +134,7 @@ func (a ExtensionsAppender) appendGraph(ctx context.Context, ext config.Extensio
 				groupBy,
 				idleCondition)
 			zl.Trace().Msgf("Extension [%s] tcp query [%s]", ext.Name, query)
-			vector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), a.globalInfo.Conf, a)
+			vector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), a.globalInfo.Conf, a)
 			a.appendTrafficMap(ctx, ext, trafficMap, &vector, metric)
 		}
 	}
