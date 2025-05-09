@@ -3,6 +3,7 @@
 package telemetry
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/kiali/kiali/graph"
@@ -50,7 +51,9 @@ func MergeTrafficMaps(trafficMap graph.TrafficMap, ns string, nsTrafficMap graph
 // the workload nodes such that, with exception of non-service root nodes, the resulting
 // graph has edges only from and to service nodes.  It is typically the last thing called
 // prior to returning the service graph.
-func ReduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
+func ReduceToServiceGraph(ctx context.Context, trafficMap graph.TrafficMap) graph.TrafficMap {
+	zl := log.FromContext(ctx)
+
 	reducedTrafficMap := graph.NewTrafficMap()
 
 	for id, n := range trafficMap {
@@ -66,12 +69,12 @@ func ReduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 					if e.Dest.NodeType == graph.NodeTypeService {
 						serviceEdges = append(serviceEdges, e)
 					} else {
-						log.Tracef("Service graph ignoring non-service root destination [%s]", e.Dest.Workload)
+						zl.Trace().Msgf("Service graph ignoring non-service root destination [%s]", e.Dest.Workload)
 					}
 				}
 				// if there are no outgoing edges to a service then ignore the node
 				if len(serviceEdges) == 0 {
-					log.Tracef("Service graph ignoring non-service root [%s]", n.Workload)
+					zl.Trace().Msgf("Service graph ignoring non-service root [%s]", n.Workload)
 					continue
 				}
 				// reset the outgoing traffic and add the surviving edge metadata
@@ -102,7 +105,7 @@ func ReduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 			for _, edgeToService := range destWorkload.Edges {
 				// As above, ignore edges to non-service destinations
 				if edgeToService.Dest.NodeType != graph.NodeTypeService {
-					log.Tracef("Service graph ignoring non-service destination [%s:%s]", edgeToService.Dest.NodeType, edgeToService.Dest.Workload)
+					zl.Trace().Msgf("Service graph ignoring non-service destination [%s:%s]", edgeToService.Dest.NodeType, edgeToService.Dest.Workload)
 					continue
 				}
 				destService := edgeToService.Dest

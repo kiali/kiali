@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,7 +27,7 @@ func TestNonTrafficScenario(t *testing.T) {
 	serviceLists := mockServiceLists(a)
 	workloadLists := mockWorkloadLists(a)
 
-	a.addIdleNodes(trafficMap, "testNamespace", serviceLists, workloadLists, &graph.GlobalInfo{Conf: config.Get()})
+	a.addIdleNodes(context.Background(), trafficMap, "testNamespace", serviceLists, workloadLists, &graph.GlobalInfo{Conf: config.Get()})
 	assert.Equal(7, len(trafficMap))
 
 	id, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "customer", "testNamespace", "customer-v1", "customer", "v1", a.GraphType)
@@ -98,7 +99,7 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	serviceLists := mockServiceLists(a)
 	workloadLists := mockWorkloadLists(a)
 
-	a.addIdleNodes(trafficMap, "testNamespace", serviceLists, workloadLists, &graph.GlobalInfo{Conf: config.Get()})
+	a.addIdleNodes(context.Background(), trafficMap, "testNamespace", serviceLists, workloadLists, &graph.GlobalInfo{Conf: config.Get()})
 
 	assert.Equal(5, len(trafficMap))
 	id, _, _ := graph.Id(graph.Unknown, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, a.GraphType)
@@ -157,7 +158,7 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	serviceLists := mockServiceLists(a)
 	workloadLists := mockWorkloadLists(a)
 
-	a.addIdleNodes(trafficMap, "testNamespace", serviceLists, workloadLists, &graph.GlobalInfo{Conf: config.Get()})
+	a.addIdleNodes(context.Background(), trafficMap, "testNamespace", serviceLists, workloadLists, &graph.GlobalInfo{Conf: config.Get()})
 
 	assert.Equal(5, len(trafficMap))
 	id, _, _ := graph.Id(graph.Unknown, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, a.GraphType)

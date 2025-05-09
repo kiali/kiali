@@ -126,7 +126,7 @@ func TestWorkloadEntry(t *testing.T) {
 	assert.True(found)
 	assert.NotContains(v4Node.Metadata, graph.HasWorkloadEntry)
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
@@ -139,7 +139,7 @@ func TestWorkloadEntry(t *testing.T) {
 				Name:              appNamespace,
 			}},
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(5, len(trafficMap))
 
@@ -204,7 +204,7 @@ func TestWorkloadEntryAppLabelNotMatching(t *testing.T) {
 	assert.True(found)
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
@@ -217,7 +217,7 @@ func TestWorkloadEntryAppLabelNotMatching(t *testing.T) {
 				Name:              appNamespace,
 			}},
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(5, len(trafficMap))
 
@@ -290,7 +290,7 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 	assert.True(found)
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
@@ -303,7 +303,7 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 				Name:              appNamespace,
 			}},
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(5, len(trafficMap))
 
@@ -358,7 +358,7 @@ func TestWorkloadWithoutWorkloadEntries(t *testing.T) {
 	assert.True(found)
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
@@ -371,7 +371,7 @@ func TestWorkloadWithoutWorkloadEntries(t *testing.T) {
 				Name:              appNamespace,
 			}},
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(5, len(trafficMap))
 
@@ -406,7 +406,7 @@ func TestWEKiali7305(t *testing.T) {
 
 	assert.Equal(1, len(trafficMap))
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
@@ -419,7 +419,7 @@ func TestWEKiali7305(t *testing.T) {
 				Name:              appNamespace,
 			}},
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	// No changes, just validating an accessibility check
 	assert.Equal(1, len(trafficMap))

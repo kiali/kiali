@@ -1,6 +1,8 @@
 package appender
 
 import (
+	"context"
+
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 )
@@ -30,7 +32,7 @@ func (a DeadNodeAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a DeadNodeAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -47,7 +49,7 @@ func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 		maxTries--
 	}
 	if applyDeadNodes {
-		log.Warningf("DeadNodeAppender infinite loop detection! MaxTries=[%v]", maxTries)
+		log.FromContext(ctx).Warn().Msgf("infinite loop detection! MaxTries=[%v]", maxTries)
 	}
 }
 

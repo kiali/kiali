@@ -17,7 +17,6 @@ type VendorInfo map[string]interface{}
 type GlobalInfo struct {
 	Business   *business.Layer
 	Conf       *config.Config
-	Context    context.Context
 	PromClient *prometheus.Client
 	Vendor     VendorInfo // telemetry vendor's global info
 }
@@ -35,11 +34,10 @@ func NewVendorInfo() VendorInfo {
 	return make(map[string]interface{})
 }
 
-func NewGlobalInfo(ctx context.Context, business *business.Layer, prom *prometheus.Client, conf *config.Config) *GlobalInfo {
+func NewGlobalInfo(business *business.Layer, prom *prometheus.Client, conf *config.Config) *GlobalInfo {
 	return &GlobalInfo{
 		Business:   business,
 		Conf:       conf,
-		Context:    ctx,
 		PromClient: prom,
 		Vendor:     NewVendorInfo()}
 }
@@ -54,7 +52,7 @@ func NewAppenderNamespaceInfo(namespace string) *AppenderNamespaceInfo {
 type Appender interface {
 	// AppendGraph performs the appender work on the provided traffic map. The map may be initially empty.
 	// An appender is allowed to add or remove map entries. namespaceInfo will be nil for Finalizer appenders.
-	AppendGraph(trafficMap TrafficMap, globalInfo *GlobalInfo, namespaceInfo *AppenderNamespaceInfo)
+	AppendGraph(ctx context.Context, trafficMap TrafficMap, globalInfo *GlobalInfo, namespaceInfo *AppenderNamespaceInfo)
 
 	// IsFinalizer returns true if the appender should run only on the final TrafficMap, or false if the appender should
 	// run against every requested namespace.

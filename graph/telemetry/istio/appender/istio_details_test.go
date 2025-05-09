@@ -88,11 +88,11 @@ func TestCBAll(t *testing.T) {
 	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := IstioAppender{}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(7, len(trafficMap))
 	assert.Equal(true, trafficMap[appNodeId].Metadata[graph.HasCB])
@@ -154,11 +154,11 @@ func TestCBSubset(t *testing.T) {
 	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := IstioAppender{}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(7, len(trafficMap))
 	assert.Equal(true, trafficMap[appNodeId].Metadata[graph.HasCB])
@@ -327,11 +327,11 @@ func TestSEInAppBox(t *testing.T) {
 	}
 	trafficMap[serviceEntryNode.ID] = serviceEntryNode
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := IstioAppender{}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	check.Equal("fooApp", trafficMap[serviceEntryNode.ID].App)
 }

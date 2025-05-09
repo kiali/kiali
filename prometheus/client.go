@@ -56,12 +56,12 @@ var (
 	promCache PromCache
 )
 
-func initPromCache() {
+func initPromCache(ctx context.Context) {
 	if config.Get().ExternalServices.Prometheus.CacheEnabled {
-		log.Infof("[Prom Cache] Enabled")
-		promCache = NewPromCache()
+		log.FromContext(ctx).Info().Msgf("PromCache Enabled")
+		promCache = NewPromCache(ctx)
 	} else {
-		log.Infof("[Prom Cache] Disabled")
+		log.FromContext(ctx).Info().Msgf("PromCache Disabled")
 	}
 }
 
@@ -77,7 +77,16 @@ func NewClientForConfig(cfg config.PrometheusConfig) (*Client, error) {
 	clientConfig := api.Config{Address: cfg.URL}
 
 	// Prom Cache will be initialized once at first use of Prometheus Client
-	once.Do(initPromCache)
+	once.Do(func() {
+		// create the cache with its own context/logger
+		zl := log.WithGroup(log.PromCacheLogName)
+		ctx := log.ToContext(context.Background(), zl)
+		initPromCache(ctx)
+	})
+
+	// prepare the client logger and put it in a context
+	zl := log.WithGroup(log.PrometheusLogName)
+	ctx := log.ToContext(context.Background(), zl)
 
 	// Be sure to copy config.Auth and not modify the existing
 	auth := cfg.Auth
@@ -87,7 +96,7 @@ func NewClientForConfig(cfg config.PrometheusConfig) (*Client, error) {
 		// on the user's token and prevents people who shouldn't have access to particular metrics.
 		token, _, err := kubernetes.GetKialiTokenForHomeCluster()
 		if err != nil {
-			log.Errorf("Could not read the Kiali Service Account token: %v", err)
+			zl.Error().Msgf("Could not read the Kiali Service Account token: %v", err)
 			return nil, err
 		}
 		auth.Token = token
@@ -114,7 +123,11 @@ func NewClientForConfig(cfg config.PrometheusConfig) (*Client, error) {
 	if err != nil {
 		return nil, errors.NewServiceUnavailable(err.Error())
 	}
-	client := Client{p8s: p8s, api: prom_v1.NewAPI(p8s), ctx: context.Background()}
+	client := Client{
+		p8s: p8s,
+		api: prom_v1.NewAPI(p8s),
+		ctx: ctx,
+	}
 	return &client, nil
 }
 
@@ -129,7 +142,7 @@ func (in *Client) Inject(api prom_v1.API) {
 // (e.g total rates / error rates).
 // Returns (rates, error)
 func (in *Client) GetAllRequestRates(namespace, cluster string, ratesInterval string, queryTime time.Time) (model.Vector, error) {
-	log.Tracef("GetAllRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
+	log.FromContext(in.ctx).Trace().Msgf("GetAllRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
 	if promCache != nil {
 		if isCached, result := promCache.GetAllRequestRates(namespace, cluster, ratesInterval, queryTime); isCached {
 			return result, nil
@@ -151,7 +164,7 @@ func (in *Client) GetAllRequestRates(namespace, cluster string, ratesInterval st
 // (e.g total rates / error rates).
 // Returns (rates, error)
 func (in *Client) GetNamespaceServicesRequestRates(namespace, cluster string, ratesInterval string, queryTime time.Time) (model.Vector, error) {
-	log.Tracef("GetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
+	log.FromContext(in.ctx).Trace().Msgf("GetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
 	if promCache != nil {
 		if isCached, result := promCache.GetNamespaceServicesRequestRates(namespace, cluster, ratesInterval, queryTime); isCached {
 			return result, nil
@@ -173,7 +186,7 @@ func (in *Client) GetNamespaceServicesRequestRates(namespace, cluster string, ra
 // (e.g total rates / error rates).
 // Returns (in, error)
 func (in *Client) GetServiceRequestRates(namespace, cluster, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
-	log.Tracef("GetServiceRequestRates [namespace: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, service, ratesInterval, queryTime.String())
+	log.FromContext(in.ctx).Trace().Msgf("GetServiceRequestRates [namespace: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, service, ratesInterval, queryTime.String())
 	if promCache != nil {
 		if isCached, result := promCache.GetServiceRequestRates(namespace, cluster, service, ratesInterval, queryTime); isCached {
 			return result, nil
@@ -195,7 +208,7 @@ func (in *Client) GetServiceRequestRates(namespace, cluster, service, ratesInter
 // (e.g total rates / error rates).
 // Returns (in, out, error)
 func (in *Client) GetAppRequestRates(namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
-	log.Tracef("GetAppRequestRates [namespace: %s] [cluster: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, app, ratesInterval, queryTime.String())
+	log.FromContext(in.ctx).Trace().Msgf("GetAppRequestRates [namespace: %s] [cluster: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, app, ratesInterval, queryTime.String())
 	if promCache != nil {
 		if isCached, inResult, outResult := promCache.GetAppRequestRates(namespace, cluster, app, ratesInterval, queryTime); isCached {
 			return inResult, outResult, nil
@@ -217,7 +230,7 @@ func (in *Client) GetAppRequestRates(namespace, cluster, app, ratesInterval stri
 // (e.g total rates / error rates).
 // Returns (in, out, error)
 func (in *Client) GetWorkloadRequestRates(namespace, cluster, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
-	log.Tracef("GetWorkloadRequestRates [namespace: %s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, workload, ratesInterval, queryTime.String())
+	log.FromContext(in.ctx).Trace().Msgf("GetWorkloadRequestRates [namespace: %s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, workload, ratesInterval, queryTime.String())
 	if promCache != nil {
 		if isCached, inResult, outResult := promCache.GetWorkloadRequestRates(namespace, cluster, workload, ratesInterval, queryTime); isCached {
 			return inResult, outResult, nil
@@ -284,10 +297,6 @@ func (in *Client) GetConfiguration() (prom_v1.ConfigResult, error) {
 	return config, nil
 }
 
-func (in *Client) GetContext() context.Context {
-	return in.ctx
-}
-
 func (in *Client) GetRuntimeinfo() (prom_v1.RuntimeinfoResult, error) {
 	ri, err := in.API().Runtimeinfo(in.ctx)
 	if err != nil {
@@ -303,12 +312,14 @@ func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString str
 		return []string{}, nil
 	}
 
-	log.Tracef("[Prom] GetMetricsForLabels: labels=[%v] metricNames=[%v]", labelQueryString, metricNames)
+	zl := log.FromContext(in.ctx)
+
+	zl.Trace().Msgf("GetMetricsForLabels: labels=[%v] metricNames=[%v]", labelQueryString, metricNames)
 	startT := time.Now()
 	queryString := fmt.Sprintf("count(%v) by (__name__)", labelQueryString)
 	results, warnings, err := in.api.Query(in.ctx, queryString, time.Now())
 	if len(warnings) > 0 {
-		log.Warningf("GetMetricsForLabels. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+		zl.Warn().Msgf("GetMetricsForLabels. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	if err != nil {
 		return nil, errors.NewServiceUnavailable(err.Error())
@@ -327,7 +338,7 @@ func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString str
 		}
 	}
 
-	log.Tracef("[Prom] GetMetricsForLabels: exec time=[%v], results count=[%v], looking for count=[%v], found count=[%v]", time.Since(startT), len(results.(model.Vector)), len(metricsWeAreLookingFor), len(metricsWeFound))
+	zl.Trace().Msgf("GetMetricsForLabels: exec time=[%v], results count=[%v], looking for count=[%v], found count=[%v]", time.Since(startT), len(results.(model.Vector)), len(metricsWeAreLookingFor), len(metricsWeFound))
 	return metricsWeFound, nil
 }
 
@@ -337,11 +348,13 @@ func (in *Client) GetExistingMetricNames(metricNames []string) ([]string, error)
 		return []string{}, nil
 	}
 
-	log.Tracef("[Prom] GetExistingMetricNames: metricNames=[%v]", metricNames)
+	zl := log.FromContext(in.ctx)
+
+	zl.Trace().Msgf("GetExistingMetricNames: metricNames=[%v]", metricNames)
 	startT := time.Now()
 	results, warnings, err := in.api.LabelValues(in.ctx, "__name__", []string{}, time.Unix(0, 0), time.Now())
 	if len(warnings) > 0 {
-		log.Warningf("GetExistingMetricNames. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+		zl.Warn().Msgf("GetExistingMetricNames. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	if err != nil {
 		return nil, errors.NewServiceUnavailable(err.Error())
@@ -360,7 +373,7 @@ func (in *Client) GetExistingMetricNames(metricNames []string) ([]string, error)
 		}
 	}
 
-	log.Tracef("[Prom] GetExistingMetricNames: exec time=[%v], results count=[%v], looking for count=[%v], found count=[%v]", time.Since(startT), len(results), len(metricsWeAreLookingFor), len(metricsWeFound))
+	zl.Trace().Msgf("GetExistingMetricNames: exec time=[%v], results count=[%v], looking for count=[%v], found count=[%v]", time.Since(startT), len(results), len(metricsWeAreLookingFor), len(metricsWeFound))
 	return metricsWeFound, nil
 }
 

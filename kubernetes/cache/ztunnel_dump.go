@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 )
 
 func ztunnelDumpKey(cluster, namespace, pod string) string {
@@ -37,9 +36,10 @@ func (c *kialiCacheImpl) GetZtunnelDump(cluster, namespace, pod string) *kuberne
 		return nil
 	}
 
+	zl := c.zl
 	client, found := c.clients[cluster]
 	if !found {
-		log.Errorf("[GetZtunnelDump] Kiali Service Account client not found for cluster %s", cluster)
+		zl.Error().Msgf("[GetZtunnelDump] Kiali Service Account client not found for cluster %s", cluster)
 		return nil
 	}
 
@@ -47,12 +47,12 @@ func (c *kialiCacheImpl) GetZtunnelDump(cluster, namespace, pod string) *kuberne
 		if zPod.Name == pod {
 			resp, err := client.ForwardGetRequest(zPod.Namespace, zPod.Name, 15000, "/config_dump")
 			if err != nil {
-				log.Errorf("[GetZtunnelDump] Error forwarding the /config_dump request: %v", err)
+				zl.Error().Msgf("[GetZtunnelDump] Error forwarding the /config_dump request: %v", err)
 				return nil
 			}
 			var configDump *kubernetes.ZtunnelConfigDump
 			if err := json.Unmarshal(resp, &configDump); err != nil {
-				log.Errorf("[GetZtunnelDump] Error Unmarshalling the config_dump: %v", err)
+				zl.Error().Msgf("[GetZtunnelDump] Error Unmarshalling the config_dump: %v", err)
 				return nil
 			}
 

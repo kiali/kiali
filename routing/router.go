@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog/hlog"
+	zerolog "github.com/rs/zerolog/log"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -89,6 +90,8 @@ func NewRouter(
 
 	strategy := conf.Auth.Strategy
 
+	zl := log.WithGroup("router")
+
 	// Routes that are specific to different auth stragies like auth callbacks.
 	var authRoutes []Route
 	var authController authentication.AuthController
@@ -96,21 +99,21 @@ func NewRouter(
 	if strategy == config.AuthStrategyToken {
 		tokenAuth, err := authentication.NewTokenAuthController(clientFactory, kialiCache, conf, discovery)
 		if err != nil {
-			log.Errorf("Error creating TokenAuthController: %v", err)
+			zl.Error().Msgf("Error creating TokenAuthController: %v", err)
 			return nil, err
 		}
 		authController = tokenAuth
 	} else if strategy == config.AuthStrategyOpenId {
 		openIDAuth, err := authentication.NewOpenIdAuthController(kialiCache, clientFactory, conf, discovery)
 		if err != nil {
-			log.Errorf("Error creating OpenIdAuthController: %v", err)
+			zl.Error().Msgf("Error creating OpenIdAuthController: %v", err)
 			return nil, err
 		}
 		authController = openIDAuth
 	} else if strategy == config.AuthStrategyOpenshift {
 		openshiftAuth, err := authentication.NewOpenshiftAuthController(conf, clientFactory)
 		if err != nil {
-			log.Errorf("Error creating OpenshiftAuthController: %v", err)
+			zl.Error().Msgf("Error creating OpenshiftAuthController: %v", err)
 			return nil, err
 		}
 
@@ -151,7 +154,7 @@ func NewRouter(
 	} else if strategy == config.AuthStrategyHeader {
 		headerAuth, err := authentication.NewHeaderAuthController(conf, clientFactory.GetSAHomeClusterClient())
 		if err != nil {
-			log.Errorf("Error creating HeaderAuthController: %v", err)
+			zl.Error().Msgf("Error creating HeaderAuthController: %v", err)
 			return nil, err
 		}
 		authController = headerAuth
@@ -168,7 +171,7 @@ func NewRouter(
 
 	// Add the Profiler handlers if enabled
 	if conf.Server.Profiler.Enabled {
-		log.Infof("Profiler is enabled")
+		zl.Info().Msgf("Profiler is enabled")
 		allRoutes = append(allRoutes,
 			Route{
 				Method:        "GET",
@@ -362,7 +365,7 @@ func (a alice) then(h http.Handler) http.Handler {
 }
 func buildHttpHandlerLogger(route Route, handlerFunction http.Handler) http.Handler {
 	c := alice{}
-	c = c.append(hlog.NewHandler(log.WithGroup(route.Name).Z))
+	c = c.append(hlog.NewHandler(zerolog.With().Str("route", route.Name).Logger()))
 	c = c.append(hlog.HostHandler("Host", true))
 	c = c.append(hlog.RequestIDHandler("RequestID", "Request-Id"))
 

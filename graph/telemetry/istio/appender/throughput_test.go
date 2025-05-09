@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -143,7 +144,7 @@ func TestResponseThroughput(t *testing.T) {
 	}
 
 	gi := &graph.GlobalInfo{Conf: config.Get(), PromClient: client}
-	appender.appendGraph(trafficMap, "bookinfo", gi)
+	appender.appendGraph(context.Background(), trafficMap, "bookinfo", gi)
 
 	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)
@@ -320,7 +321,7 @@ func TestRequestThroughput(t *testing.T) {
 	}
 
 	gi := &graph.GlobalInfo{Conf: config.Get(), PromClient: client}
-	appender.appendGraph(trafficMap, "bookinfo", gi)
+	appender.appendGraph(context.Background(), trafficMap, "bookinfo", gi)
 
 	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)
@@ -430,7 +431,7 @@ func TestRequestThroughputSkipRates(t *testing.T) {
 		ThroughputType: "request",
 	}
 
-	appender.AppendGraph(trafficMap, nil, nil)
+	appender.AppendGraph(context.Background(), trafficMap, nil, nil)
 
 	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)

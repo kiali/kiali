@@ -205,7 +205,7 @@ func TestServiceEntry(t *testing.T) {
 	assert.Equal(0, len(internalSEHost2ServiceNode.Edges))
 	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
@@ -220,7 +220,7 @@ func TestServiceEntry(t *testing.T) {
 		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
 
@@ -325,7 +325,7 @@ func TestServiceEntryExportAll(t *testing.T) {
 	assert.Equal(0, len(internalSEHost2ServiceNode.Edges))
 	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
@@ -340,7 +340,7 @@ func TestServiceEntryExportAll(t *testing.T) {
 		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
 
@@ -439,7 +439,7 @@ func TestServiceEntryExportNamespaceFound(t *testing.T) {
 	assert.Equal(0, len(internalSEHost2ServiceNode.Edges))
 	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
@@ -454,7 +454,7 @@ func TestServiceEntryExportNamespaceFound(t *testing.T) {
 		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
 
@@ -553,7 +553,7 @@ func TestServiceEntryExportDefinitionNamespace(t *testing.T) {
 	assert.Equal(0, len(internalSEHost2ServiceNode.Edges))
 	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
@@ -568,7 +568,7 @@ func TestServiceEntryExportDefinitionNamespace(t *testing.T) {
 		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
 
@@ -667,7 +667,7 @@ func TestServiceEntryMeshExportDefinitionNamespace(t *testing.T) {
 	assert.Equal(0, len(internalSEHost2ServiceNode.Edges))
 	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
@@ -682,7 +682,7 @@ func TestServiceEntryMeshExportDefinitionNamespace(t *testing.T) {
 		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
 
@@ -781,7 +781,7 @@ func TestServiceEntryMeshExportAll(t *testing.T) {
 	assert.Equal(0, len(internalSEHost2ServiceNode.Edges))
 	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
@@ -796,7 +796,7 @@ func TestServiceEntryMeshExportAll(t *testing.T) {
 		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
 
@@ -895,7 +895,7 @@ func TestServiceEntryExportNamespaceNotFound(t *testing.T) {
 	assert.Equal(0, len(internalSEHost2ServiceNode.Edges))
 	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
@@ -910,7 +910,7 @@ func TestServiceEntryExportNamespaceNotFound(t *testing.T) {
 		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(7, len(trafficMap))
 
@@ -1007,7 +1007,7 @@ func TestKiali7153_1(t *testing.T) {
 	assert.Equal(0, len(internalSEHost2ServiceNode.Edges))
 	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 
 	testNamespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
@@ -1030,7 +1030,7 @@ func TestKiali7153_1(t *testing.T) {
 		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
-	a.AppendGraph(trafficMap, globalInfo, testNamespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, testNamespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
 
@@ -1122,7 +1122,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 	n0.AddEdge(n2).Metadata[graph.ProtocolKey] = graph.HTTP.Name
 
 	// Run the appender
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("namespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "namespace")
 
@@ -1136,7 +1136,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	// Assertions
 	assert.Len(n0.Edges, 2)   // Check that source node still has two edges
@@ -1265,7 +1265,7 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 	assert.Equal(0, len(SE2Host2ServiceNode.Edges))
 	assert.Equal(nil, SE2Host2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
@@ -1280,7 +1280,7 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(3, len(trafficMap))
 
@@ -1396,7 +1396,7 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 	assert.Equal(0, len(notSEHost2ServiceNode.Edges))
 	assert.Equal(nil, notSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("otherNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "otherNamespace")
 
@@ -1411,7 +1411,7 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(4, len(trafficMap))
 
@@ -1508,7 +1508,7 @@ func TestServiceEntryMultipleEdges(t *testing.T) {
 	assert.Equal(0, len(v2Node.Edges))
 	assert.Equal(nil, v2Node.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
@@ -1523,7 +1523,7 @@ func TestServiceEntryMultipleEdges(t *testing.T) {
 		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(3, len(trafficMap))
 
@@ -1571,7 +1571,7 @@ func TestSEKiali7305(t *testing.T) {
 
 	assert.Equal(2, len(trafficMap))
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
@@ -1586,7 +1586,7 @@ func TestSEKiali7305(t *testing.T) {
 		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	// unchanged, we were just testing access checking during appender processing
 	assert.Equal(2, len(trafficMap))
@@ -1663,7 +1663,7 @@ func TestSEKiali7589(t *testing.T) {
 	_, ok := trafficMap[n3.ID].Metadata[graph.IsServiceEntry]
 	assert.False(ok)
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo(namespace)
 	key1 := graph.GetClusterSensitiveKey("cluster1", namespace)
 	key2 := graph.GetClusterSensitiveKey("cluster2", namespace)
@@ -1684,7 +1684,7 @@ func TestSEKiali7589(t *testing.T) {
 		},
 		GraphType: graph.GraphTypeVersionedApp,
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	// the original service node should no longer exist
 	_, ok = trafficMap[n3.ID]

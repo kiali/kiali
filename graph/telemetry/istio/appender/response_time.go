@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"time"
@@ -47,7 +48,7 @@ func (a ResponseTimeAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a ResponseTimeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a ResponseTimeAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -63,10 +64,12 @@ func (a ResponseTimeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 		graph.CheckError(err)
 	}
 
-	a.appendGraph(trafficMap, a.Namespaces[namespaceInfo.Namespace], globalInfo)
+	a.appendGraph(ctx, trafficMap, a.Namespaces[namespaceInfo.Namespace], globalInfo)
 }
 
-func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespaceInfo graph.NamespaceInfo, gi *graph.GlobalInfo) {
+func (a ResponseTimeAppender) appendGraph(ctx context.Context, trafficMap graph.TrafficMap, namespaceInfo graph.NamespaceInfo, gi *graph.GlobalInfo) {
+	zl := log.FromContext(ctx)
+
 	namespace := namespaceInfo.Name
 	client := gi.PromClient
 	// create map to quickly look up responseTime
@@ -75,7 +78,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 
 	quantile := a.Quantile
 	if a.Quantile == 0.0 {
-		log.Tracef("Generating average responseTime; namespace = %v", namespace)
+		zl.Trace().Msgf("Generating average responseTime; namespace = %v", namespace)
 
 		// query prometheus for the responseTime info in two queries:
 		groupBy := "source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol"
@@ -93,8 +96,8 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 				namespace,
 				int(duration.Seconds()), // range duration for the query
 				groupBy)
-			incomingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), gi.Conf, a)
-			a.populateResponseTimeMap(responseTimeMap, &incomingVector, gi.Conf)
+			incomingVector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+			a.populateResponseTimeMap(ctx, responseTimeMap, &incomingVector, gi.Conf)
 		}
 
 		// 1) Incoming: query destination telemetry to capture namespace services' incoming traffic
@@ -111,8 +114,8 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
-		incomingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), gi.Conf, a)
-		a.populateResponseTimeMap(responseTimeMap, &incomingVector, gi.Conf)
+		incomingVector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+		a.populateResponseTimeMap(ctx, responseTimeMap, &incomingVector, gi.Conf)
 
 		// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
 		query = fmt.Sprintf(`sum(rate(%s{%s,source_workload_namespace="%s"}[%vs])) by (%s) / sum(rate(%s{%s,source_workload_namespace="%s"}[%vs])) by (%s) > 0`,
@@ -126,11 +129,11 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
-		outgoingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), gi.Conf, a)
-		a.populateResponseTimeMap(responseTimeMap, &outgoingVector, gi.Conf)
+		outgoingVector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+		a.populateResponseTimeMap(ctx, responseTimeMap, &outgoingVector, gi.Conf)
 
 	} else {
-		log.Tracef("Generating responseTime for quantile [%.2f]; namespace = %v", quantile, namespace)
+		zl.Trace().Msgf("Generating responseTime for quantile [%.2f]; namespace = %v", quantile, namespace)
 
 		// query prometheus for the responseTime info in two queries:
 		groupBy := "le,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol"
@@ -144,8 +147,8 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 				namespace,
 				int(duration.Seconds()), // range duration for the query
 				groupBy)
-			incomingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), gi.Conf, a)
-			a.populateResponseTimeMap(responseTimeMap, &incomingVector, gi.Conf)
+			incomingVector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+			a.populateResponseTimeMap(ctx, responseTimeMap, &incomingVector, gi.Conf)
 		}
 
 		// 1) Incoming: query destination telemetry to capture namespace services' incoming traffic
@@ -158,8 +161,8 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
-		incomingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), gi.Conf, a)
-		a.populateResponseTimeMap(responseTimeMap, &incomingVector, gi.Conf)
+		incomingVector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+		a.populateResponseTimeMap(ctx, responseTimeMap, &incomingVector, gi.Conf)
 
 		// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
 		query = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{%s,source_workload_namespace="%s"}[%vs])) by (%s)) > 0`,
@@ -169,8 +172,8 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
-		outgoingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), gi.Conf, a)
-		a.populateResponseTimeMap(responseTimeMap, &outgoingVector, gi.Conf)
+		outgoingVector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+		a.populateResponseTimeMap(ctx, responseTimeMap, &outgoingVector, gi.Conf)
 	}
 
 	applyResponseTime(trafficMap, responseTimeMap)
@@ -187,7 +190,9 @@ func applyResponseTime(trafficMap graph.TrafficMap, responseTimeMap map[string]f
 	}
 }
 
-func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string]float64, vector *model.Vector, conf *config.Config) {
+func (a ResponseTimeAppender) populateResponseTimeMap(ctx context.Context, responseTimeMap map[string]float64, vector *model.Vector, conf *config.Config) {
+	zl := log.FromContext(ctx)
+
 	skipRequestsGrpc := a.Rates.Grpc != graph.RateRequests
 	skipRequestsHttp := a.Rates.Http != graph.RateRequests
 
@@ -209,7 +214,7 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		lProtocol, protocolOk := m["request_protocol"]
 
 		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destSvcOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !protocolOk {
-			log.Warningf("populateResponseTimeMap: Skipping %s, missing expected labels", m.String())
+			zl.Warn().Msgf("populateResponseTimeMap: Skipping %s, missing expected labels", m.String())
 			continue
 		}
 
@@ -255,7 +260,7 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		if a.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
 			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
 			if err != nil {
-				log.Warningf("Skipping (rt) %s, %s", m.String(), err)
+				zl.Warn().Msgf("Skipping (rt) %s, %s", m.String(), err)
 				continue
 			}
 			inject = (graph.NodeTypeService != destNodeType)
@@ -263,22 +268,24 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 
 		if inject {
 			// Only set response time on the outgoing edge. On the incoming edge, we can't validly aggregate response times of the outgoing edges (kiali-2297)
-			a.addResponseTime(responseTimeMap, val, protocol, destCluster, destSvcNs, destSvcName, "", "", "", destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
+			a.addResponseTime(ctx, responseTimeMap, val, protocol, destCluster, destSvcNs, destSvcName, "", "", "", destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
 		} else {
-			a.addResponseTime(responseTimeMap, val, protocol, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
+			a.addResponseTime(ctx, responseTimeMap, val, protocol, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
 		}
 	}
 }
 
-func (a ResponseTimeAppender) addResponseTime(responseTimeMap map[string]float64, val float64, protocol, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string) {
+func (a ResponseTimeAppender) addResponseTime(ctx context.Context, responseTimeMap map[string]float64, val float64, protocol, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string) {
+	zl := log.FromContext(ctx)
+
 	sourceID, _, err := graph.Id(sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
 	if err != nil {
-		log.Warningf("Skipping addResponseTime (source), %s", err)
+		zl.Warn().Msgf("Skipping addResponseTime (source), %s", err)
 		return
 	}
 	destID, _, err := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
 	if err != nil {
-		log.Warningf("Skipping addResponseTime (dest), %s", err)
+		zl.Warn().Msgf("Skipping addResponseTime (dest), %s", err)
 		return
 	}
 

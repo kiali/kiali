@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -42,7 +43,7 @@ func (a SecurityPolicyAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a SecurityPolicyAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a SecurityPolicyAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -53,11 +54,13 @@ func (a SecurityPolicyAppender) AppendGraph(trafficMap graph.TrafficMap, globalI
 		graph.CheckError(err)
 	}
 
-	a.appendGraph(trafficMap, namespaceInfo.Namespace, globalInfo.PromClient, globalInfo.Conf)
+	a.appendGraph(ctx, trafficMap, namespaceInfo.Namespace, globalInfo.PromClient, globalInfo.Conf)
 }
 
-func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client, conf *config.Config) {
-	log.Tracef("Resolving security policy for namespace [%v], rates [%+v]", namespace, a.Rates)
+func (a SecurityPolicyAppender) appendGraph(ctx context.Context, trafficMap graph.TrafficMap, namespace string, client *prometheus.Client, conf *config.Config) {
+	zl := log.FromContext(ctx)
+
+	zl.Trace().Msgf("Resolving security policy for namespace [%v], rates [%+v]", namespace, a.Rates)
 	duration := a.Namespaces[namespace].Duration
 
 	// query prometheus for mutual_tls info in two queries (use dest telemetry because it reports the security policy):
@@ -133,7 +136,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		}
 	}
 
-	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), conf, a)
+	outVector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a)
 
 	// 2) query for requests originating from a workload inside of the namespace
 	query = ""
@@ -230,18 +233,20 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		}
 	}
 
-	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), conf, a)
+	inVector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a)
 
 	// create map to quickly look up securityPolicy
 	securityPolicyMap := make(map[string]PolicyRates)
 	principalMap := make(map[string]map[graph.MetadataKey]string)
-	a.populateSecurityPolicyMap(securityPolicyMap, principalMap, &outVector)
-	a.populateSecurityPolicyMap(securityPolicyMap, principalMap, &inVector)
+	a.populateSecurityPolicyMap(ctx, securityPolicyMap, principalMap, &outVector)
+	a.populateSecurityPolicyMap(ctx, securityPolicyMap, principalMap, &inVector)
 
 	applySecurityPolicy(trafficMap, securityPolicyMap, principalMap)
 }
 
-func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[string]PolicyRates, principalMap map[string]map[graph.MetadataKey]string, vector *model.Vector) {
+func (a SecurityPolicyAppender) populateSecurityPolicyMap(ctx context.Context, securityPolicyMap map[string]PolicyRates, principalMap map[string]map[graph.MetadataKey]string, vector *model.Vector) {
+	zl := log.FromContext(ctx)
+
 	for _, s := range *vector {
 		m := s.Metric
 		lSourceCluster, sourceClusterOk := m["source_cluster"]
@@ -261,7 +266,7 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		lCsp, cspOk := m["connection_security_policy"]
 
 		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !sourcePrincipalOk || !destPrincipalOk {
-			log.Warningf("populateSecurityPolicyMap: Skipping %s, missing expected labels", m.String())
+			zl.Warn().Msgf("populateSecurityPolicyMap: Skipping %s, missing expected labels", m.String())
 			continue
 		}
 
@@ -299,32 +304,34 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		if a.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
 			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
 			if err != nil {
-				log.Warningf("Skipping (sp) %s, %s", m.String(), err)
+				zl.Warn().Msgf("Skipping (sp) %s, %s", m.String(), err)
 				continue
 			}
 			inject = (graph.NodeTypeService != destNodeType)
 		}
 		if inject {
-			a.addSecurityPolicy(securityPolicyMap, csp, val, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, "", "", "", "")
-			a.addSecurityPolicy(securityPolicyMap, csp, val, destCluster, destSvcNs, destSvcName, "", "", "", destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
-			a.addPrincipal(principalMap, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, sourcePrincipal, destCluster, destSvcNs, destSvcName, "", "", "", "", destPrincipal)
-			a.addPrincipal(principalMap, destCluster, destSvcNs, destSvcName, "", "", "", sourcePrincipal, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, destPrincipal)
+			a.addSecurityPolicy(ctx, securityPolicyMap, csp, val, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, "", "", "", "")
+			a.addSecurityPolicy(ctx, securityPolicyMap, csp, val, destCluster, destSvcNs, destSvcName, "", "", "", destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
+			a.addPrincipal(ctx, principalMap, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, sourcePrincipal, destCluster, destSvcNs, destSvcName, "", "", "", "", destPrincipal)
+			a.addPrincipal(ctx, principalMap, destCluster, destSvcNs, destSvcName, "", "", "", sourcePrincipal, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, destPrincipal)
 		} else {
-			a.addSecurityPolicy(securityPolicyMap, csp, val, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
-			a.addPrincipal(principalMap, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, sourcePrincipal, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, destPrincipal)
+			a.addSecurityPolicy(ctx, securityPolicyMap, csp, val, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
+			a.addPrincipal(ctx, principalMap, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, sourcePrincipal, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, destPrincipal)
 		}
 	}
 }
 
-func (a SecurityPolicyAppender) addSecurityPolicy(securityPolicyMap map[string]PolicyRates, csp string, val float64, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string) {
+func (a SecurityPolicyAppender) addSecurityPolicy(ctx context.Context, securityPolicyMap map[string]PolicyRates, csp string, val float64, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string) {
+	zl := log.FromContext(ctx)
+
 	sourceId, _, err := graph.Id(sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
 	if err != nil {
-		log.Warningf("Skipping addSecurityPolicy (source), %s", err)
+		zl.Warn().Msgf("Skipping addSecurityPolicy (source), %s", err)
 		return
 	}
 	destId, _, err := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
 	if err != nil {
-		log.Warningf("Skipping addSecurityPolicy (dest), %s", err)
+		zl.Warn().Msgf("Skipping addSecurityPolicy (dest), %s", err)
 		return
 	}
 	key := fmt.Sprintf("%s %s", sourceId, destId)
@@ -372,15 +379,17 @@ func applySecurityPolicy(trafficMap graph.TrafficMap, securityPolicyMap map[stri
 	}
 }
 
-func (a SecurityPolicyAppender) addPrincipal(principalMap map[string]map[graph.MetadataKey]string, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, sourcePrincipal, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, destPrincipal string) {
+func (a SecurityPolicyAppender) addPrincipal(ctx context.Context, principalMap map[string]map[graph.MetadataKey]string, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, sourcePrincipal, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, destPrincipal string) {
+	zl := log.FromContext(ctx)
+
 	sourceID, _, err := graph.Id(sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
 	if err != nil {
-		log.Warningf("Skipping addPrincipal (source), %s", err)
+		zl.Warn().Msgf("Skipping addPrincipal (source), %s", err)
 		return
 	}
 	destID, _, err := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
 	if err != nil {
-		log.Warningf("Skipping addPrincipal (dest), %s", err)
+		zl.Warn().Msgf("Skipping addPrincipal (dest), %s", err)
 		return
 	}
 	key := fmt.Sprintf("%s %s", sourceID, destID)

@@ -75,7 +75,7 @@ func (s *Service) discover(ctx context.Context) string {
 			if len(parts) >= 2 {
 				routeURL, err = s.discoverServiceURL(ctx, parts[1], parts[0])
 				if err != nil {
-					log.Debugf("[GRAFANA] URL discovery failed: %v", err)
+					log.FromContext(ctx).Debug().Msgf("URL discovery failed: %v", err)
 				}
 				s.routeURL = &routeURL
 			}
@@ -85,18 +85,19 @@ func (s *Service) discover(ctx context.Context) string {
 }
 
 func (s *Service) discoverServiceURL(ctx context.Context, ns, service string) (url string, err error) {
-	log.Debugf("[%s] URL discovery for service '%s', namespace '%s'...", strings.ToUpper(service), service, ns)
+	zl := log.FromContext(ctx)
+	zl.Debug().Msgf("URL discovery for service [%s], namespace '%s'...", service, ns)
 	url = ""
 	// If the client is not openshift return and avoid discover
 	if !s.homeClusterSAClient.IsOpenShift() {
-		log.Debugf("[%s] Client is not Openshift, discovery url is only supported in Openshift", strings.ToUpper(service))
+		zl.Debug().Msgf("Client for service [%s] is not Openshift, discovery url is only supported in Openshift", service)
 		return
 	}
 
 	// Assuming service name == route name
 	route, err := s.homeClusterSAClient.GetRoute(ctx, ns, service)
 	if err != nil {
-		log.Debugf("[%s] Discovery failed: %v", strings.ToUpper(service), err)
+		zl.Debug().Msgf("Discovery for service [%s] failed: %v", service, err)
 		return
 	}
 
@@ -106,7 +107,7 @@ func (s *Service) discoverServiceURL(ctx context.Context, ns, service string) (u
 	} else {
 		url = "http://" + host
 	}
-	log.Infof("[%s] URL discovered for %s: %s", strings.ToUpper(service), service, url)
+	zl.Info().Msgf("URL discovered for service [%s]: %s", service, url)
 	return
 }
 
@@ -129,7 +130,7 @@ func (s *Service) Info(ctx context.Context, dashboardSupplier DashboardSupplierF
 	// Call Grafana REST API to get dashboard urls
 	links := []models.ExternalLink{}
 	for _, dashboardConfig := range grafanaConfig.Dashboards {
-		dashboardPath, err := getDashboardPath(dashboardConfig.Name, conn, dashboardSupplier)
+		dashboardPath, err := getDashboardPath(ctx, dashboardConfig.Name, conn, dashboardSupplier)
 		if err != nil {
 			return nil, http.StatusServiceUnavailable, err
 		}
@@ -167,11 +168,14 @@ func (s *Service) Links(ctx context.Context, linksSpec []dashboards.MonitoringDa
 	if err != nil {
 		return nil, code, err
 	}
+
+	zl := log.FromContext(ctx)
+
 	if connectionInfo.baseExternalURL == "" {
-		log.Tracef("Skip checking Grafana links as Grafana is not configured")
+		zl.Trace().Msgf("Skip checking Grafana links as Grafana is not configured")
 		return nil, 0, nil
 	}
-	return getGrafanaLinks(connectionInfo, linksSpec, DashboardSupplier)
+	return getGrafanaLinks(ctx, connectionInfo, linksSpec, DashboardSupplier)
 }
 
 // VersionURL returns the Grafana URL that can be used to obtain the Grafana build information that includes its version.
@@ -182,9 +186,11 @@ func (s *Service) VersionURL(ctx context.Context) string {
 		return ""
 	}
 
+	zl := log.FromContext(ctx)
+
 	connectionInfo, code, err := s.getGrafanaConnectionInfo(ctx)
 	if err != nil {
-		log.Warningf("Cannot get Grafana connection info. Will try a different way to obtain Grafana version. code=[%v]: %v", code, err)
+		zl.Warn().Msgf("Cannot get Grafana connection info. Will try a different way to obtain Grafana version. code=[%v]: %v", code, err)
 		connectionInfo = grafanaConnectionInfo{
 			baseExternalURL: grafanaConfig.ExternalURL,
 			internalURL:     grafanaConfig.InternalURL,
@@ -197,19 +203,19 @@ func (s *Service) VersionURL(ctx context.Context) string {
 	}
 
 	if baseUrl == "" {
-		log.Warningf("Failed to obtain Grafana version URL: Grafana is not configured properly")
+		zl.Warn().Msgf("Failed to obtain Grafana version URL: Grafana is not configured properly")
 		return ""
 	}
 
 	return fmt.Sprintf("%s/api/frontend/settings", baseUrl)
 }
 
-func getGrafanaLinks(conn grafanaConnectionInfo, linksSpec []dashboards.MonitoringDashboardExternalLink, dashboardSupplier DashboardSupplierFunc) ([]models.ExternalLink, int, error) {
+func getGrafanaLinks(ctx context.Context, conn grafanaConnectionInfo, linksSpec []dashboards.MonitoringDashboardExternalLink, dashboardSupplier DashboardSupplierFunc) ([]models.ExternalLink, int, error) {
 	// Call Grafana REST API to get dashboard urls
 	linksOut := []models.ExternalLink{}
 	for _, linkSpec := range linksSpec {
 		if linkSpec.Type == "grafana" {
-			dashboardPath, err := getDashboardPath(linkSpec.Name, conn, dashboardSupplier)
+			dashboardPath, err := getDashboardPath(ctx, linkSpec.Name, conn, dashboardSupplier)
 			if err != nil {
 				return nil, http.StatusServiceUnavailable, err
 			}
@@ -270,7 +276,7 @@ func (s *Service) getGrafanaConnectionInfo(ctx context.Context) (grafanaConnecti
 	}, 0, nil
 }
 
-func getDashboardPath(name string, conn grafanaConnectionInfo, dashboardSupplier DashboardSupplierFunc) (string, error) {
+func getDashboardPath(ctx context.Context, name string, conn grafanaConnectionInfo, dashboardSupplier DashboardSupplierFunc) (string, error) {
 	body, code, err := dashboardSupplier(conn.internalURL, url.PathEscape(name), conn.auth)
 	if err != nil {
 		return "", err
@@ -295,16 +301,19 @@ func getDashboardPath(name string, conn grafanaConnectionInfo, dashboardSupplier
 	if err != nil {
 		return "", err
 	}
+
+	zl := log.FromContext(ctx)
+
 	if len(dashboards) == 0 {
-		log.Warningf("No Grafana dashboard found for pattern '%s'", name)
+		zl.Warn().Msgf("No Grafana dashboard found for pattern '%s'", name)
 		return "", nil
 	}
 	if len(dashboards) > 1 {
-		log.Infof("Several Grafana dashboards found for pattern '%s', picking the first one", name)
+		zl.Info().Msgf("Several Grafana dashboards found for pattern '%s', picking the first one", name)
 	}
 	dashPath, ok := dashboards[0]["url"]
 	if !ok {
-		log.Warningf("URL field not found in Grafana dashboard for search pattern '%s'", name)
+		zl.Warn().Msgf("URL field not found in Grafana dashboard for search pattern '%s'", name)
 		return "", nil
 	}
 

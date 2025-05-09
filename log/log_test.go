@@ -299,20 +299,25 @@ func TestContextLoggerJson(t *testing.T) {
 			buf := &bytes.Buffer{}
 			log.Logger = InitializeLogger().Output(buf)
 
-			testlogger := WithContext(test.expectedContext)
+			ctx := log.Logger.With()
+			for k, v := range test.expectedContext {
+				ctx = ctx.Str(k, v)
+			}
+			testlogger := ctx.Logger()
+
 			switch test.expectedLevel {
 			case "error":
-				testlogger.Error(test.expectedMessage)
+				testlogger.Error().Msg(test.expectedMessage)
 			case "warn":
-				testlogger.Warning(test.expectedMessage)
+				testlogger.Warn().Msg(test.expectedMessage)
 			case "info":
-				testlogger.Info(test.expectedMessage)
+				testlogger.Info().Msg(test.expectedMessage)
 			case "debug":
-				testlogger.Debug(test.expectedMessage)
+				testlogger.Debug().Msg(test.expectedMessage)
 			case "trace":
-				testlogger.Trace(test.expectedMessage)
+				testlogger.Trace().Msg(test.expectedMessage)
 			default:
-				testlogger.Error("Test provided a bad log level")
+				testlogger.Error().Msg("Test provided a bad log level")
 			}
 
 			loggedMessage := buf.String()
@@ -343,9 +348,8 @@ func TestContextLoggerJson(t *testing.T) {
 	// Do a quick test of the WithGroup logger just for a sanity check.
 	// WithGroup is simply WithContext under the covers so it should pass if the above tests pass.
 	buf := &bytes.Buffer{}
-	testlogger := WithGroup("testgroup")
-	testlogger.Z = testlogger.Z.Output(buf)
-	testlogger.Info("test group message")
+	testlogger := WithGroup("testgroup").Output(buf)
+	testlogger.Info().Msg("test group message")
 	loggedMessage := buf.String()
 	assert.True(t, isJSON(loggedMessage))
 	var loggedMessageAsJson loggedMessageAsJsonStruct
@@ -435,28 +439,31 @@ func TestContextLoggerText(t *testing.T) {
 
 			buf := &bytes.Buffer{}
 			log.Logger = InitializeLogger()
+			ctx := log.Logger.With()
+			for k, v := range test.expectedContext {
+				ctx = ctx.Str(k, v)
+			}
+			testlogger := ctx.Logger()
 
-			testlogger := WithContext(test.expectedContext)
-
-			// we know this test should not use json - this should be false always for this test
+			// we know this test should not use json
 			if !isJsonLogFormat() {
 				t.Logf("Overwrite logger for test %d", index)
-				testlogger.Z = testlogger.Z.Output(zerolog.ConsoleWriter{Out: buf, TimeFormat: zerolog.TimeFieldFormat, NoColor: true})
+				testlogger = testlogger.Output(zerolog.ConsoleWriter{Out: buf, TimeFormat: zerolog.TimeFieldFormat, NoColor: true})
 			}
 
 			switch test.expectedLevel {
 			case "error":
-				testlogger.Error(test.expectedMessage)
+				testlogger.Error().Msg(test.expectedMessage)
 			case "warn":
-				testlogger.Warning(test.expectedMessage)
+				testlogger.Warn().Msg(test.expectedMessage)
 			case "info":
-				testlogger.Info(test.expectedMessage)
+				testlogger.Info().Msg(test.expectedMessage)
 			case "debug":
-				testlogger.Debug(test.expectedMessage)
+				testlogger.Debug().Msg(test.expectedMessage)
 			case "trace":
-				testlogger.Trace(test.expectedMessage)
+				testlogger.Trace().Msg(test.expectedMessage)
 			default:
-				testlogger.Error("Test provided a bad log level")
+				testlogger.Error().Msg("Test provided a bad log level")
 			}
 
 			loggedMessage := buf.String()
@@ -478,9 +485,8 @@ func TestContextLoggerText(t *testing.T) {
 	// Do a quick test of the WithGroup logger just for a sanity check.
 	// WithGroup is simply WithContext under the covers so it should pass if the above tests pass.
 	buf := &bytes.Buffer{}
-	testlogger := WithGroup("testgroup")
-	testlogger.Z = testlogger.Z.Output(zerolog.ConsoleWriter{Out: buf, TimeFormat: zerolog.TimeFieldFormat, NoColor: true})
-	testlogger.Info("test group message")
+	testlogger := WithGroup("testgroup").Output(zerolog.ConsoleWriter{Out: buf, TimeFormat: zerolog.TimeFieldFormat, NoColor: true})
+	testlogger.Info().Msg("test group message")
 	loggedMessage := buf.String()
 	assert.False(t, isJSON(loggedMessage))
 	level, message, ctx := parseTextLogLineWithContext(loggedMessage)

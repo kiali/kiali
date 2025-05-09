@@ -19,7 +19,9 @@ import (
 // GraphNamespaces generates a namespaces graph using the provided options
 func GraphNamespaces(ctx context.Context, business *business.Layer, o graph.Options) (code int, graphConfig interface{}) {
 	var end observability.EndFunc
-	ctx, end = observability.StartSpan(ctx, "GraphNamespaces",
+	ctx, end = observability.StartSpan(
+		ctx,
+		"GraphNamespaces",
 		observability.Attribute("package", "api"),
 	)
 	defer end()
@@ -46,10 +48,10 @@ func GraphNamespaces(ctx context.Context, business *business.Layer, o graph.Opti
 func graphNamespacesIstio(ctx context.Context, business *business.Layer, prom *prometheus.Client, o graph.Options) (code int, graphConfig interface{}) {
 
 	// Create a 'global' object to store the business. Global only to the request.
-	globalInfo := graph.NewGlobalInfo(ctx, business, prom, config.Get())
+	globalInfo := graph.NewGlobalInfo(business, prom, config.Get())
 
-	trafficMap := istio.BuildNamespacesTrafficMap(o.TelemetryOptions, globalInfo)
-	code, graphConfig = generateGraph(trafficMap, o)
+	trafficMap := istio.BuildNamespacesTrafficMap(ctx, o.TelemetryOptions, globalInfo)
+	code, graphConfig = generateGraph(ctx, trafficMap, o)
 
 	return code, graphConfig
 }
@@ -82,19 +84,20 @@ func GraphNode(ctx context.Context, business *business.Layer, o graph.Options) (
 func graphNodeIstio(ctx context.Context, business *business.Layer, prom *prometheus.Client, o graph.Options) (code int, graphConfig interface{}) {
 
 	// Create a 'global' object to store the business. Global only to the request.
-	globalInfo := graph.NewGlobalInfo(ctx, business, prom, config.Get())
+	globalInfo := graph.NewGlobalInfo(business, prom, config.Get())
 	globalInfo.Business = business
-	globalInfo.Context = ctx
 	globalInfo.PromClient = prom
 
-	trafficMap, _ := istio.BuildNodeTrafficMap(o.TelemetryOptions, globalInfo)
-	code, graphConfig = generateGraph(trafficMap, o)
+	trafficMap, _ := istio.BuildNodeTrafficMap(ctx, o.TelemetryOptions, globalInfo)
+	code, graphConfig = generateGraph(ctx, trafficMap, o)
 
 	return code, graphConfig
 }
 
-func generateGraph(trafficMap graph.TrafficMap, o graph.Options) (int, interface{}) {
-	log.Tracef("Generating config for [%s] graph...", o.ConfigVendor)
+func generateGraph(ctx context.Context, trafficMap graph.TrafficMap, o graph.Options) (int, interface{}) {
+	zl := log.FromContext(ctx)
+
+	zl.Trace().Msgf("Generating config for [%s] graph...", o.ConfigVendor)
 
 	promtimer := internalmetrics.GetGraphMarshalTimePrometheusTimer(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes)
 	defer promtimer.ObserveDuration()
@@ -105,9 +108,9 @@ func generateGraph(trafficMap graph.TrafficMap, o graph.Options) (int, interface
 		vendorConfig = config_common.NewConfig(trafficMap, o.ConfigOptions)
 	default:
 		vendorConfig = config_common.NewConfig(trafficMap, o.ConfigOptions)
-		log.Debugf("ConfigVendor [%s] not supported, defaulting to [Common]", o.ConfigVendor)
+		zl.Debug().Msgf("ConfigVendor [%s] not supported, defaulting to [Common]", o.ConfigVendor)
 	}
 
-	log.Tracef("Done generating config for [%s] graph", o.ConfigVendor)
+	zl.Trace().Msgf("Done generating config for [%s] graph", o.ConfigVendor)
 	return http.StatusOK, vendorConfig
 }

@@ -1,6 +1,8 @@
 package appender
 
 import (
+	"context"
+
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util/sliceutil"
@@ -25,8 +27,8 @@ func (a AmbientAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a AmbientAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
-	log.Trace("Running ambient appender")
+func (a AmbientAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+	log.FromContext(ctx).Trace().Msg("Running ambient appender")
 
 	if len(trafficMap) == 0 {
 		return

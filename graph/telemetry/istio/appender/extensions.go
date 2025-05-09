@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"strings"
@@ -49,7 +50,7 @@ func (a ExtensionsAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a ExtensionsAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a ExtensionsAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(globalInfo.Conf.Extensions) == 0 {
 		return
 	}
@@ -68,11 +69,13 @@ func (a ExtensionsAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo 
 		if !extension.Enabled {
 			continue
 		}
-		a.appendGraph(extension, trafficMap)
+		a.appendGraph(ctx, extension, trafficMap)
 	}
 }
 
-func (a ExtensionsAppender) appendGraph(ext config.ExtensionConfig, trafficMap graph.TrafficMap) {
+func (a ExtensionsAppender) appendGraph(ctx context.Context, ext config.ExtensionConfig, trafficMap graph.TrafficMap) {
+	zl := log.FromContext(ctx)
+
 	client := a.globalInfo.PromClient
 
 	idleCondition := "> 0"
@@ -95,9 +98,9 @@ func (a ExtensionsAppender) appendGraph(ext config.ExtensionConfig, trafficMap g
 			int(a.Duration.Seconds()), // range duration for the query
 			groupBy,
 			idleCondition)
-		log.Tracef("Extension [%s] requests query [%s]", ext.Name, query)
-		vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a.globalInfo.Conf, a)
-		a.appendTrafficMap(ext, trafficMap, &vector, metric)
+		zl.Trace().Msgf("Extension [%s] requests query [%s]", ext.Name, query)
+		vector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), a.globalInfo.Conf, a)
+		a.appendTrafficMap(ctx, ext, trafficMap, &vector, metric)
 	}
 
 	//
@@ -129,14 +132,16 @@ func (a ExtensionsAppender) appendGraph(ext config.ExtensionConfig, trafficMap g
 				int(a.Duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			log.Tracef("Extension [%s] tcp query [%s]", ext.Name, query)
-			vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a.globalInfo.Conf, a)
-			a.appendTrafficMap(ext, trafficMap, &vector, metric)
+			zl.Trace().Msgf("Extension [%s] tcp query [%s]", ext.Name, query)
+			vector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), a.globalInfo.Conf, a)
+			a.appendTrafficMap(ctx, ext, trafficMap, &vector, metric)
 		}
 	}
 }
 
-func (a ExtensionsAppender) appendTrafficMap(ext config.ExtensionConfig, trafficMap graph.TrafficMap, vector *model.Vector, metric string) {
+func (a ExtensionsAppender) appendTrafficMap(ctx context.Context, ext config.ExtensionConfig, trafficMap graph.TrafficMap, vector *model.Vector, metric string) {
+	zl := log.FromContext(ctx)
+
 	isRequests := true
 	protocol := ""
 	if strings.HasPrefix(metric, "kiali_ext_tcp") {
@@ -160,7 +165,7 @@ func (a ExtensionsAppender) appendTrafficMap(ext config.ExtensionConfig, traffic
 		lDestName, destNameOk := m["dest_name"]
 
 		if !sourceClusterOk || !sourceIsRootOk || !sourceNsOk || !sourceNameOk || !destClusterOk || !destNsOk || !destNameOk {
-			log.Warningf("Extension [%s] skipping %s, missing expected source TS labels", ext.Name, m.String())
+			zl.Warn().Msgf("Extension [%s] skipping %s, missing expected source TS labels", ext.Name, m.String())
 			continue
 		}
 
@@ -194,7 +199,7 @@ func (a ExtensionsAppender) appendTrafficMap(ext config.ExtensionConfig, traffic
 			lCode, codeOk := m["status_code"]
 
 			if !protocolOk || !codeOk {
-				log.Warningf("Extension [%s] skipping %s, missing expected request TS labels", ext.Name, m.String())
+				zl.Warn().Msgf("Extension [%s] skipping %s, missing expected request TS labels", ext.Name, m.String())
 				continue
 			}
 
@@ -206,25 +211,27 @@ func (a ExtensionsAppender) appendTrafficMap(ext config.ExtensionConfig, traffic
 			}
 		}
 
-		a.addTraffic(ext, trafficMap, metric, val, protocol, code, flags, secure, sourceCluster, sourceIsRoot, sourceNs, sourceName, destCluster, destNs, destName)
+		a.addTraffic(ctx, ext, trafficMap, metric, val, protocol, code, flags, secure, sourceCluster, sourceIsRoot, sourceNs, sourceName, destCluster, destNs, destName)
 	}
 }
 
-func (a ExtensionsAppender) addTraffic(ext config.ExtensionConfig, trafficMap graph.TrafficMap, metric string, val float64, protocol, code, flags, secure, sourceCluster, sourceIsRoot, sourceNs, sourceName, destCluster, destNs, destName string) {
+func (a ExtensionsAppender) addTraffic(ctx context.Context, ext config.ExtensionConfig, trafficMap graph.TrafficMap, metric string, val float64, protocol, code, flags, secure, sourceCluster, sourceIsRoot, sourceNs, sourceName, destCluster, destNs, destName string) {
+	zl := log.FromContext(ctx)
+
 	isRoot := sourceIsRoot == "true"
 	source, _, err := a.addNode(ext, trafficMap, isRoot, sourceCluster, sourceNs, sourceName, a.GraphType)
 	if err != nil {
-		log.Warningf("Extension [%s] skipping extension addTraffic (source) in extension, %s", ext.Name, err)
+		zl.Warn().Msgf("Extension [%s] skipping extension addTraffic (source) in extension, %s", ext.Name, err)
 		return
 	}
 	dest, _, err := a.addNode(ext, trafficMap, false, destCluster, destNs, destName, a.GraphType)
 	if err != nil {
-		log.Warningf("Extension [%s] skipping extension addTraffic (dest), %s", ext.Name, err)
+		zl.Warn().Msgf("Extension [%s] skipping extension addTraffic (dest), %s", ext.Name, err)
 		return
 	}
 
 	if isRoot {
-		url := a.getUrl(ext, source)
+		url := a.getUrl(ctx, ext, source)
 		if url != urlNotFound {
 			source.Metadata[graph.IsExtension] = &graph.ExtInfo{
 				URL:  url,
@@ -294,7 +301,9 @@ func (a ExtensionsAppender) findRootNode(trafficMap graph.TrafficMap, cluster, n
 	return nil, false
 }
 
-func (a ExtensionsAppender) getUrl(ext config.ExtensionConfig, source *graph.Node) string {
+func (a ExtensionsAppender) getUrl(ctx context.Context, ext config.ExtensionConfig, source *graph.Node) string {
+	zl := log.FromContext(ctx)
+
 	name := source.Service
 	if name == "" {
 		name = source.App
@@ -302,24 +311,24 @@ func (a ExtensionsAppender) getUrl(ext config.ExtensionConfig, source *graph.Nod
 
 	// first, try and autodiscover an existing route on the root service, or if that fails a service named the same as the extension itself
 	for _, svcName := range []string{name, ext.Name} {
-		routeUrl := a.globalInfo.Business.Svc.GetServiceRouteURL(a.globalInfo.Context, source.Cluster, source.Namespace, svcName)
+		routeUrl := a.globalInfo.Business.Svc.GetServiceRouteURL(ctx, source.Cluster, source.Namespace, svcName)
 		if routeUrl != "" {
 			return routeUrl
 		}
-		log.Debugf("Extension [%s] no route found for extension service [%s][%s][%s]", ext.Name, source.Cluster, source.Namespace, svcName)
+		zl.Debug().Msgf("Extension [%s] no route found for extension service [%s][%s][%s]", ext.Name, source.Cluster, source.Namespace, svcName)
 	}
 
 	// otherwise, look for the annotation on the source service, or if that fails, a service named after the extension
 	for _, svcName := range []string{name, ext.Name} {
-		svc, err := a.globalInfo.Business.Svc.GetService(a.globalInfo.Context, source.Cluster, source.Namespace, svcName)
+		svc, err := a.globalInfo.Business.Svc.GetService(ctx, source.Cluster, source.Namespace, svcName)
 		if err != nil {
-			log.Debugf("Extension [%s] no extension root node service found [%s][%s][%s]", ext.Name, source.Cluster, source.Namespace, svcName)
+			zl.Debug().Msgf("Extension [%s] no extension root node service found [%s][%s][%s]", ext.Name, source.Cluster, source.Namespace, svcName)
 			continue
 		}
 		if url, found := svc.Annotations[urlAnnotation]; found {
 			return url
 		}
-		log.Debugf("Extension [%s] no url annotation found for extension root node service [%s][%s][%s]", ext.Name, source.Cluster, source.Namespace, svcName)
+		zl.Debug().Msgf("Extension [%s] no url annotation found for extension root node service [%s][%s][%s]", ext.Name, source.Cluster, source.Namespace, svcName)
 	}
 
 	return urlNotFound

@@ -125,7 +125,7 @@ func TestDeadNode(t *testing.T) {
 	assert.Equal("istio-ingressgateway", ingressNode.Workload)
 	assert.Equal(10, len(ingressNode.Edges))
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := DeadNodeAppender{
@@ -140,7 +140,7 @@ func TestDeadNode(t *testing.T) {
 			},
 		},
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(10, len(trafficMap))
 
@@ -288,7 +288,7 @@ func TestDeadNodeIssue2783(t *testing.T) {
 	assert.Equal(true, found)
 	assert.Equal(0, len(bNode.Edges))
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := DeadNodeAppender{
@@ -299,7 +299,7 @@ func TestDeadNodeIssue2783(t *testing.T) {
 			},
 		},
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(0, len(trafficMap))
 }
@@ -346,7 +346,7 @@ func TestDeadNodeIssue2982(t *testing.T) {
 	assert.Equal(true, found)
 	assert.Equal(0, len(bNode.Edges))
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := DeadNodeAppender{
@@ -357,7 +357,7 @@ func TestDeadNodeIssue2982(t *testing.T) {
 			},
 		},
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(1, len(trafficMap))
 	_, found = trafficMap[aID]
@@ -402,7 +402,7 @@ func TestDeadNodeIssue7179(t *testing.T) {
 	assert.Equal(true, found)
 	assert.Equal(0, len(bNode.Edges))
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := DeadNodeAppender{
@@ -413,7 +413,7 @@ func TestDeadNodeIssue7179(t *testing.T) {
 			},
 		},
 	}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(2, len(trafficMap))
 	_, found = trafficMap[aID]

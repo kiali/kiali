@@ -7,6 +7,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -33,13 +34,13 @@ func (a HealthAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a HealthAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, _ *graph.AppenderNamespaceInfo) {
+func (a HealthAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, _ *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
 
 	a.attachHealthConfig(trafficMap, globalInfo)
-	a.attachHealth(trafficMap, globalInfo)
+	a.attachHealth(ctx, trafficMap, globalInfo)
 }
 
 func addValueToRequests(requests map[string]map[string]float64, protocol, code string, val float64) {
@@ -153,7 +154,7 @@ func (a *HealthAppender) attachHealthConfig(trafficMap graph.TrafficMap, globalI
 	}
 }
 
-func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo) {
+func (a *HealthAppender) attachHealth(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo) {
 	var nodesWithHealth []*graph.Node
 	type healthRequest struct {
 		app       bool
@@ -210,12 +211,9 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 	}
 
 	bs := globalInfo.Business
-	ctx := globalInfo.Context
 
 	var cancel context.CancelFunc
-	if ctx == nil {
-		ctx = context.Background()
-	}
+
 	// TODO: Decide if this should be the request duration. If so,
 	// then the user should be informed why the graph request failed
 	// so that they can increase the refresh interval.
@@ -298,6 +296,7 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 	}
 	if len(errors) > 0 {
 		// This just panics with the first error.
+		log.FromContext(ctx).Error().Msgf("all errors: %v", errors)
 		graph.CheckError(errors[0])
 	}
 

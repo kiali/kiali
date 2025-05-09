@@ -123,10 +123,10 @@ func TestLabeler(t *testing.T) {
 	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.Labels])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.Labels])
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 
 	a := LabelerAppender{}
-	a.AppendGraph(trafficMap, globalInfo, nil)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, nil)
 
 	assert.Equal(5, len(trafficMap))
 	assert.Equal(1, len(trafficMap[appNodeId].Metadata[graph.Labels].(graph.LabelsMetadata)))

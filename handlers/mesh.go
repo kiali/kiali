@@ -54,7 +54,7 @@ func MeshGraph(
 	cpm business.ControlPlaneMonitor,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer handlePanic(w)
+		defer handlePanic(r.Context(), w)
 
 		business, err := getLayer(r, conf, cache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		mesh.CheckError(err)

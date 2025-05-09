@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
+	"github.com/rs/zerolog"
 	"gopkg.in/yaml.v2"
 
 	"github.com/kiali/kiali/config"
@@ -66,13 +67,14 @@ type PublicConfig struct {
 // Config is a REST http.HandlerFunc serving up the Kiali configuration made public to clients.
 func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDiscovery, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer handlePanic(w)
+		defer handlePanic(r.Context(), w)
 
-		log.FromRequest(r).Debug().Msg("Kiali configuration has been requested")
+		logger := log.FromRequest(r)
+		logger.Debug().Msg("Kiali configuration has been requested")
 
 		// Note that we determine the Prometheus config at request time because it is not
 		// guaranteed to remain the same during the Kiali lifespan.
-		promConfig := getPrometheusConfig(conf, prom)
+		promConfig := getPrometheusConfig(conf, prom, logger)
 		publicConfig := PublicConfig{
 			AuthStrategy:      conf.Auth.Strategy,
 			Clusters:          make(map[string]models.KubeCluster),
@@ -135,7 +137,7 @@ type PrometheusPartialConfig struct {
 	}
 }
 
-func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface) PrometheusConfig {
+func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface, logger *zerolog.Logger) PrometheusConfig {
 	promConfig := PrometheusConfig{
 		GlobalScrapeInterval: defaultPrometheusGlobalScrapeInterval,
 		StorageTsdbRetention: defaultPrometheusGlobalStorageTSDBRetention,
@@ -144,28 +146,28 @@ func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface)
 	thanosConf := conf.ExternalServices.Prometheus.ThanosProxy
 	if thanosConf.Enabled {
 		scrapeInterval, err := model.ParseDuration(thanosConf.ScrapeInterval)
-		if checkErr(err, fmt.Sprintf("Invalid scrape interval in ThanosProxy configuration [%s]", scrapeInterval)) {
+		if checkErr(err, fmt.Sprintf("Invalid scrape interval in ThanosProxy configuration [%s]", scrapeInterval), logger) {
 			promConfig.GlobalScrapeInterval = int64(time.Duration(scrapeInterval).Seconds())
 		}
 		retention, err := model.ParseDuration(thanosConf.RetentionPeriod)
-		if checkErr(err, fmt.Sprintf("Invalid retention period in ThanosProxy configuration [%s]", retention)) {
+		if checkErr(err, fmt.Sprintf("Invalid retention period in ThanosProxy configuration [%s]", retention), logger) {
 			promConfig.StorageTsdbRetention = int64(time.Duration(retention).Seconds())
 		}
 	} else {
 		configResult, err := client.GetConfiguration()
-		if checkErr(err, "Failed to fetch Prometheus configuration") {
+		if checkErr(err, "Failed to fetch Prometheus configuration", logger) {
 			var config PrometheusPartialConfig
-			if checkErr(yaml.Unmarshal([]byte(configResult.YAML), &config), "Failed to unmarshal Prometheus configuration") {
+			if checkErr(yaml.Unmarshal([]byte(configResult.YAML), &config), "Failed to unmarshal Prometheus configuration", logger) {
 				scrapeIntervalString := config.Global.Scrape_interval
 				scrapeInterval, err := model.ParseDuration(scrapeIntervalString)
-				if checkErr(err, fmt.Sprintf("Invalid global scrape interval [%s]", scrapeIntervalString)) {
+				if checkErr(err, fmt.Sprintf("Invalid global scrape interval [%s]", scrapeIntervalString), logger) {
 					promConfig.GlobalScrapeInterval = int64(time.Duration(scrapeInterval).Seconds())
 				}
 			}
 		}
 
 		promRuntimeinfoResults, err := client.GetRuntimeinfo()
-		if checkErr(err, "Failed to fetch Prometheus runtime info") {
+		if checkErr(err, "Failed to fetch Prometheus runtime info", logger) {
 			// the storage retention as reported by Prometheus endpoint /api/v1/status/runtimeinfo
 			// It will either be time-based (e.g. "1d") or size-based (e.g "10GB") or both (e.g "1d or 10GB").
 			// see: https://prometheus.io/docs/prometheus/latest/command-line/prometheus/
@@ -178,12 +180,12 @@ func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface)
 			// if retention is only size-based (defined in bytes), then we will fallback to the Prometheus default
 			if !strings.Contains(strings.ToLower(retentionStr), "b") {
 				retentionPeriod, err := model.ParseDuration(retentionStr)
-				if checkErr(err, "Cannot parse Promtheus retention period: "+retentionStr) {
+				if checkErr(err, "Cannot parse Promtheus retention period: "+retentionStr, logger) {
 					promConfig.StorageTsdbRetention = int64(time.Duration(retentionPeriod).Seconds())
 				}
 			}
 		} else {
-			log.Warning("Cannot determine Prometheus retention period; ignoring...")
+			logger.Warn().Msg("Cannot determine Prometheus retention period; ignoring...")
 		}
 	}
 
@@ -204,7 +206,9 @@ type KialiCrippledFeatures struct {
 
 func CrippledFeatures(client prometheus.ClientInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer handlePanic(w)
+		logger := log.FromRequest(r)
+
+		defer handlePanic(r.Context(), w)
 
 		requiredMetrics := []string{
 			"istio_request_bytes_bucket",
@@ -223,7 +227,7 @@ func CrippledFeatures(client prometheus.ClientInterface) http.HandlerFunc {
 		crippledFeatures := KialiCrippledFeatures{}
 
 		existingMetrics, err := client.GetExistingMetricNames(requiredMetrics)
-		if !checkErr(err, "") {
+		if !checkErr(err, "", logger) {
 			log.Error(err)
 			RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
 		}
@@ -255,9 +259,9 @@ func CrippledFeatures(client prometheus.ClientInterface) http.HandlerFunc {
 	}
 }
 
-func checkErr(err error, message string) bool {
+func checkErr(err error, message string, logger *zerolog.Logger) bool {
 	if err != nil {
-		log.Errorf("%s: %v", message, err)
+		logger.Error().Msgf("%s: %v", message, err)
 		return false
 	}
 	return true

@@ -22,7 +22,7 @@ func TestWorkloadSidecarsPasses(t *testing.T) {
 	trafficMap := buildWorkloadTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, buildFakeWorkloadDeployments(), buildFakeWorkloadPods())
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
@@ -33,7 +33,7 @@ func TestWorkloadSidecarsPasses(t *testing.T) {
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
 			}}}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
 		_, ok := node.Metadata[graph.IsOutOfMesh].(bool)
@@ -45,7 +45,7 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 	trafficMap := buildWorkloadTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, buildFakeWorkloadDeployments(), buildFakeWorkloadPodsNoSidecar())
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
@@ -56,7 +56,7 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
 			}}}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
 		flag, ok := node.Metadata[graph.IsOutOfMesh].(bool)
@@ -69,7 +69,7 @@ func TestInaccessibleWorkload(t *testing.T) {
 	trafficMap := buildInaccessibleWorkloadTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, buildFakeWorkloadDeployments(), buildFakeWorkloadPodsNoSidecar())
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
@@ -80,7 +80,7 @@ func TestInaccessibleWorkload(t *testing.T) {
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
 			}}}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
 		_, ok := node.Metadata[graph.IsOutOfMesh].(bool)
@@ -92,7 +92,7 @@ func TestAppNoPodsPasses(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, []core_v1.Pod{})
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
@@ -103,7 +103,7 @@ func TestAppNoPodsPasses(t *testing.T) {
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
 			}}}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
 		_, ok := node.Metadata[graph.IsOutOfMesh].(bool)
@@ -115,7 +115,7 @@ func TestAppSidecarsPasses(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, buildFakeWorkloadPods())
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
@@ -126,7 +126,7 @@ func TestAppSidecarsPasses(t *testing.T) {
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
 			}}}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
 		_, ok := node.Metadata[graph.IsOutOfMesh].(bool)
@@ -138,7 +138,7 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, buildFakeWorkloadPodsNoSidecar())
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
@@ -149,7 +149,7 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
 			}}}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
 		flag, ok := node.Metadata[graph.IsOutOfMesh].(bool)
@@ -162,7 +162,7 @@ func TestAppWithAmbientIsFlagged(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, buildFakeWorkloadPodsAmbient())
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
@@ -173,7 +173,7 @@ func TestAppWithAmbientIsFlagged(t *testing.T) {
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
 			}}}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
 		flag, ok := node.Metadata[graph.IsOutOfMesh].(bool)
@@ -186,7 +186,7 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 	trafficMap := buildServiceTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, []core_v1.Pod{})
 
-	globalInfo := graph.NewGlobalInfo(context.TODO(), businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
@@ -197,7 +197,7 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
 			}}}
-	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
 		_, ok := node.Metadata[graph.IsOutOfMesh].(bool)

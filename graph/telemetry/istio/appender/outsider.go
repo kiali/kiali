@@ -1,6 +1,8 @@
 package appender
 
 import (
+	"context"
+
 	"github.com/kiali/kiali/graph"
 )
 
@@ -24,7 +26,7 @@ func (a OutsiderAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a *OutsiderAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, _namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a *OutsiderAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, _namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}

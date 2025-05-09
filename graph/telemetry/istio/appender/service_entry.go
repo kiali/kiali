@@ -57,7 +57,7 @@ func (a ServiceEntryAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a ServiceEntryAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -101,7 +101,7 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 	}
 
 	if len(finalCandidates) > 0 {
-		a.applyServiceEntries(trafficMap, finalCandidates, globalInfo, namespaceInfo)
+		a.applyServiceEntries(ctx, trafficMap, finalCandidates, globalInfo, namespaceInfo)
 	}
 }
 
@@ -143,7 +143,9 @@ func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, g
 	return len(serviceEntryHosts) > 0
 }
 
-func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, candidates []*graph.Node, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a ServiceEntryAppender) applyServiceEntries(ctx context.Context, trafficMap graph.TrafficMap, candidates []*graph.Node, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+	zl := log.FromContext(ctx)
+
 	// a map from "service-entry" information to matching "se-service" nodes
 	seMap := make(map[*serviceEntry][]*graph.Node)
 
@@ -189,7 +191,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, c
 	for se, seServiceNodes := range seMap {
 		serviceEntryNode, err := graph.NewNode(se.cluster, namespaceInfo.Namespace, se.name, "", "", "", "", a.GraphType)
 		if err != nil {
-			log.Warningf("Skipping serviceEntryNode, %s", err)
+			zl.Warn().Msgf("Skipping serviceEntryNode, %s", err)
 			continue
 		}
 		serviceEntryNode.Metadata[graph.IsServiceEntry] = &graph.SEInfo{

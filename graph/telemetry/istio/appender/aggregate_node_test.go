@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -97,7 +98,7 @@ func TestNamespacesGraphWithServiceInjection(t *testing.T) {
 		},
 	}
 
-	appender.appendGraph(trafficMap, "bookinfo", client, config.Get())
+	appender.appendGraph(context.Background(), trafficMap, "bookinfo", client, config.Get())
 
 	pp, ok = trafficMap[ppID]
 	assert.Equal(true, ok)
@@ -224,7 +225,7 @@ func TestNamespacesGraphNoServiceInjection(t *testing.T) {
 			Tcp:     graph.RateTotal,
 		}}
 
-	appender.appendGraph(trafficMap, "bookinfo", client, config.Get())
+	appender.appendGraph(context.Background(), trafficMap, "bookinfo", client, config.Get())
 
 	pp, ok = trafficMap[ppID]
 	assert.Equal(true, ok)
@@ -323,7 +324,7 @@ func TestNodeGraphWithServiceInjection(t *testing.T) {
 		Service: "reviews",
 	}
 
-	appender.appendNodeGraph(trafficMap, "bookinfo", client, config.Get())
+	appender.appendNodeGraph(context.Background(), trafficMap, "bookinfo", client, config.Get())
 
 	pp, ok = trafficMap[ppID]
 	assert.Equal(true, ok)
@@ -434,7 +435,7 @@ func TestNamespacesGraphWithServiceInjectionSkipRates(t *testing.T) {
 		},
 	}
 
-	appender.appendGraph(trafficMap, "bookinfo", client, config.Get())
+	appender.appendGraph(context.Background(), trafficMap, "bookinfo", client, config.Get())
 
 	pp, ok = trafficMap[ppID]
 	assert.Equal(true, ok)
@@ -513,7 +514,7 @@ func TestNodeGraphNoServiceInjection(t *testing.T) {
 		},
 	}
 
-	appender.appendNodeGraph(trafficMap, "bookinfo", client, config.Get())
+	appender.appendNodeGraph(context.Background(), trafficMap, "bookinfo", client, config.Get())
 
 	pp, ok = trafficMap[ppID]
 	assert.Equal(true, ok)
@@ -596,7 +597,7 @@ func TestNodeGraphWithServiceInjectionSkipRates(t *testing.T) {
 		Service: "reviews",
 	}
 
-	appender.appendNodeGraph(trafficMap, "bookinfo", client, config.Get())
+	appender.appendNodeGraph(context.Background(), trafficMap, "bookinfo", client, config.Get())
 
 	pp, ok = trafficMap[ppID]
 	assert.Equal(true, ok)

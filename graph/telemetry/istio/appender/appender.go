@@ -85,7 +85,9 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		appenders = append(appenders, a)
 	}
 	if _, ok := requestedAppenders[DeadNodeAppenderName]; ok || o.Appenders.All {
-		a := DeadNodeAppender{}
+		a := DeadNodeAppender{
+			AccessibleNamespaces: o.AccessibleNamespaces,
+		}
 		appenders = append(appenders, a)
 	}
 	if _, ok := requestedAppenders[WorkloadEntryAppenderName]; ok || o.Appenders.All {

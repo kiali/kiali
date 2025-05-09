@@ -1,6 +1,8 @@
 package appender
 
 import (
+	"context"
+
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -28,7 +30,7 @@ func (a IdleNodeAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a IdleNodeAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if a.IsNodeGraph {
 		return
 	}
@@ -44,11 +46,11 @@ func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 		serviceLists = getServiceLists(nil, namespaceInfo.Namespace, globalInfo)
 	}
 
-	a.addIdleNodes(trafficMap, namespaceInfo.Namespace, serviceLists, workloadLists, globalInfo)
+	a.addIdleNodes(ctx, trafficMap, namespaceInfo.Namespace, serviceLists, workloadLists, globalInfo)
 }
 
-func (a IdleNodeAppender) addIdleNodes(trafficMap graph.TrafficMap, namespace string, serviceLists map[string]*models.ServiceList, workloadLists map[string]*models.WorkloadList, gi *graph.GlobalInfo) {
-	idleNodeTrafficMap := a.buildIdleNodeTrafficMap(trafficMap, namespace, serviceLists, workloadLists, gi)
+func (a IdleNodeAppender) addIdleNodes(ctx context.Context, trafficMap graph.TrafficMap, namespace string, serviceLists map[string]*models.ServiceList, workloadLists map[string]*models.WorkloadList, gi *graph.GlobalInfo) {
+	idleNodeTrafficMap := a.buildIdleNodeTrafficMap(ctx, trafficMap, namespace, serviceLists, workloadLists, gi)
 
 	// Integrate the idle nodes into the existing traffic map
 	for id, idleNode := range idleNodeTrafficMap {
@@ -56,7 +58,9 @@ func (a IdleNodeAppender) addIdleNodes(trafficMap graph.TrafficMap, namespace st
 	}
 }
 
-func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, namespace string, serviceLists map[string]*models.ServiceList, workloadLists map[string]*models.WorkloadList, gi *graph.GlobalInfo) graph.TrafficMap {
+func (a IdleNodeAppender) buildIdleNodeTrafficMap(ctx context.Context, trafficMap graph.TrafficMap, namespace string, serviceLists map[string]*models.ServiceList, workloadLists map[string]*models.WorkloadList, gi *graph.GlobalInfo) graph.TrafficMap {
+	zl := log.FromContext(ctx)
+
 	idleNodeTrafficMap := graph.NewTrafficMap()
 
 	for cluster, serviceList := range serviceLists {
@@ -64,7 +68,7 @@ func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, n
 			id, nodeType, _ := graph.Id(cluster, namespace, s.Name, "", "", "", "", a.GraphType)
 			if _, found := trafficMap[id]; !found {
 				if _, found = idleNodeTrafficMap[id]; !found {
-					log.Tracef("Adding idle node for service [%s]", s.Name)
+					zl.Trace().Msgf("Adding idle node for service [%s]", s.Name)
 					node := graph.NewNodeExplicit(id, cluster, namespace, "", "", "", s.Name, nodeType, a.GraphType)
 					// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
 					node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, graph.IsIdle: true}
@@ -87,7 +91,7 @@ func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, n
 				id, nodeType, _ := graph.Id(cluster, "", "", namespace, w.Name, app, version, a.GraphType)
 				if _, found := trafficMap[id]; !found {
 					if _, found = idleNodeTrafficMap[id]; !found {
-						log.Tracef("Adding idle node for workload [%s] with labels [%v]", w.Name, labels)
+						zl.Trace().Msgf("Adding idle node for workload [%s] with labels [%v]", w.Name, labels)
 						node := graph.NewNodeExplicit(id, cluster, namespace, w.Name, app, version, "", nodeType, a.GraphType)
 						// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
 						node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, graph.IsIdle: true}
