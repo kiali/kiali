@@ -110,6 +110,13 @@ func ToContext(ctx context.Context, zl *zerolog.Logger) context.Context {
 	return zl.WithContext(ctx)
 }
 
+// AddGroupToLoggerInRequestContext will add a group log name to the logger found in the given request.
+// That logger will be added back into the request's context. The caller must use the returned request in lieu
+// of the given request in order to be able to use the new logger.
+func AddGroupToLoggerInRequestContext(r *http.Request, group string) *http.Request {
+	return r.WithContext(ToContext(r.Context(), AddGroup(FromContext(r.Context()), group)))
+}
+
 // Info logs a message via the global logger
 func Info(args ...interface{}) {
 	log.Info().Msgf("%s", args...)
