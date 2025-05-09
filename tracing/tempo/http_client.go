@@ -264,7 +264,12 @@ func (oc *OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, 
 
 	if len(query.Tags) > 0 {
 		for k, v := range query.Tags {
-			tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
+			var tag TraceQL
+			if k == "error" {
+				tag = TraceQL{operator1: ".http.status_code", operand: NOTEQUAL, operator2: "200"}
+			} else {
+				tag = TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
+			}
 			queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
 		}
 	}
