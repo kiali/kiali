@@ -158,7 +158,7 @@ type kialiCacheImpl struct {
 }
 
 func NewKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, kubeCache map[string]client.Reader, conf config.Config) (KialiCache, error) {
-	zl := log.WithGroup(logGroupName)
+	zl := log.WithGroup(log.KialiCacheLogName)
 	ctx := log.ToContext(context.Background(), zl)
 	ctx, cancel := context.WithCancel(ctx)
 	namespaceKeyTTL := time.Duration(conf.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second

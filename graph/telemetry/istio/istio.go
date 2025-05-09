@@ -1160,8 +1160,8 @@ func isWaypoint(wpMap waypointMap, wpKey *waypointKey) bool {
 
 // buildAppenderContext builds the logger to be used for the appender and puts it in the given context.
 func buildAppenderContext(ctx context.Context, appenderName string) context.Context {
-	zlFromContext := log.FromContext(ctx)
-	zl := log.AddGroup(zlFromContext, "graph").With().Str("appender", appenderName).Logger()
-	ctx = log.ToContext(ctx, &zl)
+	zl := log.FromContext(ctx)
+	zlWithAppender := zl.With().Str(log.GraphAppenderLogName, appenderName).Logger()
+	ctx = log.ToContext(ctx, &zlWithAppender)
 	return ctx
 }

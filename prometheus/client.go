@@ -79,13 +79,13 @@ func NewClientForConfig(cfg config.PrometheusConfig) (*Client, error) {
 	// Prom Cache will be initialized once at first use of Prometheus Client
 	once.Do(func() {
 		// create the cache with its own context/logger
-		zl := log.WithGroup(promCacheLogGroupName)
+		zl := log.WithGroup(log.PromCacheLogName)
 		ctx := log.ToContext(context.Background(), zl)
 		initPromCache(ctx)
 	})
 
 	// prepare the client logger and put it in a context
-	zl := log.WithGroup(logGroupName)
+	zl := log.WithGroup(log.PrometheusLogName)
 	ctx := log.ToContext(context.Background(), zl)
 
 	// Be sure to copy config.Auth and not modify the existing
