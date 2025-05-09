@@ -32,8 +32,8 @@ func NewValidationsController(
 	mgr ctrl.Manager,
 ) error {
 	reconcileInterval := conf.ExternalServices.Istio.ValidationReconcileInterval
-	reconciler := NewValidationsReconciler(ctx, clusters, conf, kialiCache, validationsService, *reconcileInterval)
-	log.FromContext(ctx).Info().Msgf("Kiali will validate Istio configuration every: %s", *reconcileInterval)
+	log.Infof("Kiali will validate Istio configuration every: %s", *reconcileInterval)
+	reconciler := NewValidationsReconciler(clusters, conf, kialiCache, validationsService, *reconcileInterval)
 
 	validationsController, err := controller.New("validations-controller", mgr, controller.Options{
 		Reconciler: reconciler,
@@ -77,7 +77,6 @@ func NewValidationsController(
 }
 
 func NewValidationsReconciler(
-	ctx context.Context,
 	clusters []string,
 	conf *config.Config,
 	kialiCache cache.KialiCache,
@@ -85,7 +84,6 @@ func NewValidationsReconciler(
 	reconcileInterval time.Duration,
 ) *ValidationsReconciler {
 	return &ValidationsReconciler{
-		ctx:                ctx,
 		clusters:           clusters,
 		conf:               conf,
 		kialiCache:         kialiCache,
@@ -96,7 +94,6 @@ func NewValidationsReconciler(
 
 // validationsReconciler fetches Istio VirtualService objects and prints their names
 type ValidationsReconciler struct {
-	ctx                context.Context
 	clusters           []string
 	conf               *config.Config
 	kialiCache         cache.KialiCache
@@ -106,18 +103,17 @@ type ValidationsReconciler struct {
 
 // Reconcile fetches the VirtualService and prints its name
 func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	zl := log.FromContext(ctx)
-	zl.Debug().Msg("Started reconciling")
+	log.Debug("[ValidationsReconciler] Started reconciling ")
 	startTime := time.Now()
 	defer func() {
 		totalReconcileTime := time.Since(startTime)
-		zl.Debug().Msgf("Finished reconciling in %.2fs", totalReconcileTime.Seconds())
+		log.Debugf("[ValidationsReconciler] Finished reconciling in %.2fs", totalReconcileTime.Seconds())
 		if totalReconcileTime > r.reconcileInterval {
-			const warningLog = "Reconcile took longer than the reconcile interval of [%s]. " +
+			const warningLog = "[ValidationsReconciler] Reconcile took longer than the reconcile interval of [%s]. " +
 				"If this continues, validations will be increasingly stale. You can configure how often Kiali validates " +
 				"istio configuration by setting the 'external_services.istio.validation_reconcile_interval' config option. " +
 				"If the issue still persists, please open an issue at www.github.com/kiali/kiali"
-			zl.Warn().Msgf(warningLog, r.reconcileInterval)
+			log.Warningf(warningLog, r.reconcileInterval)
 		}
 	}()
 
@@ -137,23 +133,23 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// validation requires cross-cluster service account information.
 	vInfo, err := r.validationsService.NewValidationInfo(ctx, r.clusters, changeMap)
 	if err != nil {
-		zl.Error().Msgf("Error creating validation info: %s", err)
+		log.Errorf("[ValidationsReconciler] Error creating validation info: %s", err)
 		return ctrl.Result{}, err
 	}
 
 	for _, cluster := range r.clusters {
 		validationPerformed, clusterValidations, err := r.validationsService.Validate(ctx, cluster, vInfo)
 		if err != nil {
-			zl.Error().Msgf("Error performing validation for cluster %s: %s", cluster, err)
+			log.Errorf("[ValidationsReconciler] Error performing validation for cluster %s: %s", cluster, err)
 			return ctrl.Result{}, err
 		}
 
 		// if there have been no config changes for the cluster, just re-use the prior validations
 		if !validationPerformed {
-			zl.Trace().Msgf("no changes for cluster [%s], re-using", cluster)
+			log.Tracef("validations: no changes for cluster [%s], re-using", cluster)
 			clusterValidations = models.IstioValidations(prevValidations).FilterByCluster(cluster)
 		} else {
-			zl.Trace().Msgf("config changes found for cluster [%s], updating", cluster)
+			log.Tracef("validations: config changes found for cluster [%s], updating", cluster)
 		}
 
 		newValidations = newValidations.MergeValidations(clusterValidations)

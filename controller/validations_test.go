@@ -25,7 +25,6 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/store"
 )
@@ -72,7 +71,7 @@ func TestValidationsFailsToUpdateWithOldCache(t *testing.T) {
 	mesh := business.NewMeshService(conf, discovery, kubernetes.ConvertFromUserClients(k8sclients))
 	layer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
 	validations := business.NewValidationsService(conf, &layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
-	reconciler := controller.NewValidationsReconciler(log.ToContext(context.Background(), log.WithGroup("test")), []string{conf.KubernetesConfig.ClusterName}, conf, cache, &validations, 0)
+	reconciler := controller.NewValidationsReconciler([]string{conf.KubernetesConfig.ClusterName}, conf, cache, &validations, 0)
 
 	// We want to test that the reconciler won't update the cache if the version has changed.
 	// Going to test this by having an implementation of the store which increments the version
