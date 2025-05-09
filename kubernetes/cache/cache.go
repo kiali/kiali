@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rs/zerolog"
 	"golang.org/x/exp/maps"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -111,8 +112,8 @@ type kialiCacheImpl struct {
 	clusters    []models.KubeCluster
 	clusterLock sync.RWMutex
 
-	// a context to store some internal things like the logger
-	ctx context.Context
+	// TODO: do we want to remove this and pass the logger via a context to the cache interface functions?
+	zl *zerolog.Logger
 
 	// Cache gateways to speed up access for these specific workloads. The only key is kialiCacheGatewaysKey
 	gatewayStore store.Store[string, models.Workloads]
@@ -168,7 +169,7 @@ func NewKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, kubeCac
 		cleanup:                 cancel,
 		clients:                 kialiSAClients,
 		conf:                    conf,
-		ctx:                     ctx,
+		zl:                      zl,
 		gatewayStore:            store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(conf.KialiInternal.CacheExpiration.Gateway), nil),
 		istioStatusStore:        store.NewExpirationStore(ctx, store.New[string, kubernetes.IstioComponentStatus](), util.AsPtr(conf.KialiInternal.CacheExpiration.IstioStatus), nil),
 		kubeCache:               kubeCache,
@@ -227,7 +228,7 @@ func (c *kialiCacheImpl) GetKubeCache(cluster string) (client.Reader, error) {
 
 // Stops all caches across all clusters.
 func (c *kialiCacheImpl) Stop() {
-	log.FromContext(c.ctx).Info().Msgf("Stopping Kiali Cache")
+	c.zl.Info().Msgf("Stopping Kiali Cache")
 	c.cleanup()
 }
 
@@ -272,17 +273,16 @@ func (c *kialiCacheImpl) ValidationConfig() store.Store[string, string] {
 func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 	check, found := in.ambientChecksPerCluster.Get(cluster)
 	if !found {
-		zl := log.FromContext(in.ctx)
 		kubeCache, err := in.GetKubeCache(cluster)
 		if err != nil {
-			zl.Debug().Msgf("Unable to get kube cache when checking for ambient profile: %s", err)
+			in.zl.Debug().Msgf("Unable to get kube cache when checking for ambient profile: %s", err)
 			return false
 		}
 
 		daemonSetList := &appsv1.DaemonSetList{}
 		if err := kubeCache.List(context.TODO(), daemonSetList); err != nil {
 			// Don't set the check so we will check again the next time since this error may be transient.
-			zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
+			in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 			return false
 		}
 		selector := map[string]string{
@@ -291,12 +291,12 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 		daemonsets, err := kubernetes.FilterDaemonSetsBySelector(daemonSetList.Items, selector)
 		if err != nil {
 			// Don't set the check so we will check again the next time since this error may be transient.
-			zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
+			in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 			return false
 		}
 
 		if len(daemonsets) == 0 {
-			zl.Debug().Msgf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
+			in.zl.Debug().Msgf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
 			in.ambientChecksPerCluster.Set(cluster, false)
 			return false
 		}
@@ -310,17 +310,16 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 
 // GetZtunnelPods returns the pods list from ztunnel daemonset
 func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
-	zl := log.FromContext(in.ctx)
 	kubeCache, err := in.GetKubeCache(cluster)
 	if err != nil {
-		zl.Debug().Msgf("Unable to get kube cache when checking for ambient profile: %s", err)
+		in.zl.Debug().Msgf("Unable to get kube cache when checking for ambient profile: %s", err)
 		return nil
 	}
 
 	daemonSetList := &appsv1.DaemonSetList{}
 	if err := kubeCache.List(context.TODO(), daemonSetList); err != nil {
 		// Don't set the check so we will check again the next time since this error may be transient.
-		zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
+		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 		return nil
 	}
 
@@ -329,18 +328,18 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 	}
 	daemonsets, err := kubernetes.FilterDaemonSetsBySelector(daemonSetList.Items, selector)
 	if err != nil {
-		zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
+		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 		return nil
 	}
 
 	if len(daemonsets) == 0 {
-		zl.Debug().Msgf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
+		in.zl.Debug().Msgf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
 		return nil
 	}
 
 	podList := &v1.PodList{}
 	if err := kubeCache.List(context.TODO(), podList, client.InNamespace(daemonsets[0].Namespace), client.MatchingLabels{"app": config.Ztunnel}); err != nil {
-		zl.Error().Msgf("Unable to get ztunnel pods: %s", err)
+		in.zl.Error().Msgf("Unable to get ztunnel pods: %s", err)
 		return nil
 	}
 

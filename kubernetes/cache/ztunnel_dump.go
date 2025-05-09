@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 )
 
 func ztunnelDumpKey(cluster, namespace, pod string) string {
@@ -37,7 +36,7 @@ func (c *kialiCacheImpl) GetZtunnelDump(cluster, namespace, pod string) *kuberne
 		return nil
 	}
 
-	zl := log.FromContext(c.ctx)
+	zl := c.zl
 	client, found := c.clients[cluster]
 	if !found {
 		zl.Error().Msgf("[GetZtunnelDump] Kiali Service Account client not found for cluster %s", cluster)

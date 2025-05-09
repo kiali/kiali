@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
+	"github.com/rs/zerolog"
 
 	kialiConfig "github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -37,8 +38,8 @@ type (
 	}
 
 	promCacheImpl struct {
-		// to hold internal data such as the logger
-		ctx context.Context
+		// TODO: eventually to be removed - we'll want to pass the logger around in context objects passed to the interface functions
+		zl *zerolog.Logger
 
 		cacheDuration   time.Duration
 		cacheExpiration time.Duration
@@ -63,7 +64,7 @@ func NewPromCache(ctx context.Context) PromCache {
 	cacheDuration := time.Duration(kConfig.ExternalServices.Prometheus.CacheDuration) * time.Second
 	cacheExpiration := time.Duration(kConfig.ExternalServices.Prometheus.CacheExpiration) * time.Second
 	promCacheImpl := promCacheImpl{
-		ctx:                    ctx,
+		zl:                     log.FromContext(ctx),
 		cacheDuration:          cacheDuration,
 		cacheExpiration:        cacheExpiration,
 		cacheAllRequestRates:   make(map[string]map[string]map[string]timeInResult),
@@ -82,10 +83,13 @@ func (c *promCacheImpl) GetAllRequestRates(namespace, cluster string, ratesInter
 	defer c.allRequestRatesLock.RUnlock()
 	c.allRequestRatesLock.RLock()
 
+	// TODO: eventually want to get this from a context we pass into this function
+	zl := c.zl
+
 	if nsRates, okNs := c.cacheAllRequestRates[namespace][cluster]; okNs {
 		if rtInterval, okRt := nsRates[ratesInterval]; okRt {
 			if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
-				log.FromContext(c.ctx).Trace().Msgf("GetAllRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
+				zl.Trace().Msgf("GetAllRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
 				return true, rtInterval.inResult
 			}
 		}
@@ -109,18 +113,23 @@ func (c *promCacheImpl) SetAllRequestRates(namespace, cluster string, ratesInter
 		queryTime: queryTime,
 		inResult:  inResult,
 	}
-	log.FromContext(c.ctx).Trace().Msgf("SetAllRequestRates [namespace: %s] [cluster: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, ratesInterval, queryTime.String())
+	// TODO: eventually want to get this from a context we pass into this function
+	zl := c.zl
+	zl.Trace().Msgf("SetAllRequestRates [namespace: %s] [cluster: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, ratesInterval, queryTime.String())
 }
 
 func (c *promCacheImpl) GetAppRequestRates(namespace, cluster, app, ratesInterval string, queryTime time.Time) (bool, model.Vector, model.Vector) {
 	defer c.appRequestRatesLock.RUnlock()
 	c.appRequestRatesLock.RLock()
 
+	// TODO: eventually want to get this from a context we pass into this function
+	zl := c.zl
+
 	if nsRates, okNs := c.cacheAppRequestRates[namespace]; okNs {
 		if appInterval, okApp := nsRates[app][cluster]; okApp {
 			if rtInterval, okRt := appInterval[ratesInterval]; okRt {
 				if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
-					log.FromContext(c.ctx).Trace().Msgf("GetAppRequestRates [namespace: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, app, ratesInterval, queryTime.String())
+					zl.Trace().Msgf("GetAppRequestRates [namespace: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, app, ratesInterval, queryTime.String())
 					return true, rtInterval.inResult, rtInterval.outResult
 				}
 			}
@@ -148,17 +157,22 @@ func (c *promCacheImpl) SetAppRequestRates(namespace, cluster, app, ratesInterva
 		inResult:  inResult,
 		outResult: outResult,
 	}
-	log.FromContext(c.ctx).Trace().Msgf("SetAppRequestRates [namespace: %s] [cluster: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, app, ratesInterval, queryTime.String())
+	// TODO: eventually want to get this from a context we pass into this function
+	zl := c.zl
+	zl.Trace().Msgf("SetAppRequestRates [namespace: %s] [cluster: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, app, ratesInterval, queryTime.String())
 }
 
 func (c *promCacheImpl) GetNamespaceServicesRequestRates(namespace, cluster string, ratesInterval string, queryTime time.Time) (bool, model.Vector) {
 	defer c.nsSvcRequestRatesLock.RUnlock()
 	c.nsSvcRequestRatesLock.RLock()
 
+	// TODO: eventually want to get this from a context we pass into this function
+	zl := c.zl
+
 	if nsRates, okNs := c.cacheNsSvcRequestRates[namespace][cluster]; okNs {
 		if rtInterval, okRt := nsRates[ratesInterval]; okRt {
 			if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
-				log.FromContext(c.ctx).Trace().Msgf("GetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
+				zl.Trace().Msgf("GetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
 				return true, rtInterval.inResult
 			}
 		}
@@ -182,16 +196,21 @@ func (c *promCacheImpl) SetNamespaceServicesRequestRates(namespace, cluster stri
 		queryTime: queryTime,
 		inResult:  inResult,
 	}
-	log.FromContext(c.ctx).Trace().Msgf("SetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
+	// TODO: eventually want to get this from a context we pass into this function
+	zl := c.zl
+	zl.Trace().Msgf("SetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
 }
 
 func (c *promCacheImpl) GetServiceRequestRates(namespace, cluster, service, ratesInterval string, queryTime time.Time) (bool, model.Vector) {
 	defer c.svcRequestRatesLock.RUnlock()
 	c.svcRequestRatesLock.RLock()
 
+	// TODO: eventually want to get this from a context we pass into this function
+	zl := c.zl
+
 	if rtInterval, okRt := c.cacheSvcRequestRates[namespace][cluster][service][ratesInterval]; okRt {
 		if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
-			log.FromContext(c.ctx).Trace().Msgf("GetServiceRequestRates [namespace: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, service, ratesInterval, queryTime.String())
+			zl.Trace().Msgf("GetServiceRequestRates [namespace: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, service, ratesInterval, queryTime.String())
 			return true, rtInterval.inResult
 		}
 	}
@@ -216,18 +235,23 @@ func (c *promCacheImpl) SetServiceRequestRates(namespace, cluster, service, rate
 		queryTime: queryTime,
 		inResult:  inResult,
 	}
-	log.FromContext(c.ctx).Trace().Msgf("SetServiceRequestRates [namespace: %s] [cluster: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, service, ratesInterval, queryTime.String())
+	// TODO: eventually want to get this from a context we pass into this function
+	zl := c.zl
+	zl.Trace().Msgf("SetServiceRequestRates [namespace: %s] [cluster: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, service, ratesInterval, queryTime.String())
 }
 
 func (c *promCacheImpl) GetWorkloadRequestRates(namespace, cluster, workload, ratesInterval string, queryTime time.Time) (bool, model.Vector, model.Vector) {
 	defer c.wkRequestRatesLock.RUnlock()
 	c.wkRequestRatesLock.RLock()
 
+	// TODO: eventually want to get this from a context we pass into this function
+	zl := c.zl
+
 	if nsRates, okNs := c.cacheWkRequestRates[namespace][cluster]; okNs {
 		if wkInterval, okWk := nsRates[workload]; okWk {
 			if rtInterval, okRt := wkInterval[ratesInterval]; okRt {
 				if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
-					log.FromContext(c.ctx).Trace().Msgf("GetWorkloadRequestRates [namespace: %s] [cluster :%s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, workload, ratesInterval, queryTime.String())
+					zl.Trace().Msgf("GetWorkloadRequestRates [namespace: %s] [cluster :%s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, workload, ratesInterval, queryTime.String())
 					return true, rtInterval.inResult, rtInterval.outResult
 				}
 			}
@@ -255,7 +279,9 @@ func (c *promCacheImpl) SetWorkloadRequestRates(namespace, cluster, workload, ra
 		inResult:  inResult,
 		outResult: outResult,
 	}
-	log.FromContext(c.ctx).Trace().Msgf("SetAppRequestRates [namespace: %s] [cluster: %s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, workload, ratesInterval, queryTime.String())
+	// TODO: eventually want to get this from a context we pass into this function
+	zl := c.zl
+	zl.Trace().Msgf("SetAppRequestRates [namespace: %s] [cluster: %s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, workload, ratesInterval, queryTime.String())
 }
 
 // Expiration is done globally, this cache is designed as short term, so in the worst case it would populated the queries
@@ -282,6 +308,8 @@ func (c *promCacheImpl) watchExpiration() {
 		c.wkRequestRatesLock.Lock()
 		c.cacheWkRequestRates = make(map[string]map[string]map[string]map[string]timeInOutResult)
 		c.wkRequestRatesLock.Unlock()
-		log.FromContext(c.ctx).Trace().Msgf("Expired")
+		// TODO: eventually want to get this from a context we pass into this function
+		zl := c.zl
+		zl.Trace().Msgf("Expired")
 	}
 }
