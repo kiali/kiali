@@ -374,3 +374,12 @@ func tracesToSpans(app models.TracingName, r *model.TracingResponse, filter Span
 	log.Tracef("[Tracing] Found %d spans in the %d traces for app %s", len(spans), len(r.Data), app)
 	return spans
 }
+
+func (in *TracingService) TracingDiagnose(ctx context.Context, token string) (trace *model.TracingDiagnose, err error) {
+	cl, err := in.client()
+	if err != nil {
+		log.Errorf("Error getting client: %s", err.Error())
+		return nil, err
+	}
+	return tracing.TestNewClient(ctx, in.conf, token, cl)
+}
