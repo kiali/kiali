@@ -153,7 +153,7 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
                           </span>
                         );
                       }
-                      return;
+                      return null;
                     })}
                     {item.warning && <span style={{ color: 'red' }}>{item.warning}</span>}
                   </div>
