@@ -13,6 +13,7 @@ import { ExternalServiceInfo, TempoUrlFormat } from '../../types/StatusState';
 import { isJaegerService, JaegerUrlProvider } from '../../utils/tracing/UrlProviders/Jaeger';
 import { isTempoService, TempoUrlProvider } from '../../utils/tracing/UrlProviders/Tempo';
 import { isParentKiosk } from '../Kiosk/KioskActions';
+import { MeshNodeData } from '../../types/Mesh';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -22,6 +23,7 @@ type ReduxProps = {
 
 type TracingDiagnoseProps = ReduxProps & {
   cluster: string;
+  config: MeshNodeData;
 };
 
 const codeStyle = kialiStyle({
@@ -47,38 +49,33 @@ const validateExternalUrl = (
   info?: TracingInfo
 ): string | undefined => {
   const svc = externalServices.find(s => s.name === info?.provider);
-  if (!svc) return `Url not defined for ${info?.provider}`;
+  if (!svc) return `"View in Tracing" link is hidden because external_url is not defined (No service found)`;
+
   if (isParentKiosk(kiosk)) {
-    return 'kios mode detected. kiosk will try to use the Distributed Tracing UI link. In case the configuration is not found, it will use the external_url.';
+    return 'kiosk mode detected. kiosk will try to use the Distributed Tracing UI link. In case the configuration is not found, it will use the external_url.';
   }
-  switch (info?.provider) {
-    case 'tempo':
-      if (svc.tempoConfig?.url_format === TempoUrlFormat.JAEGER && isTempoService(svc)) {
-        const urlProvider = new JaegerUrlProvider(svc);
-        if (!urlProvider || !urlProvider.valid) {
-          return 'Must be defined';
-        }
-      } else {
-        if (isTempoService(svc)) {
-          const urlProvider = new TempoUrlProvider(svc, externalServices);
-          if (!urlProvider || !urlProvider.valid) {
-            return "Grafana must be enabled. To use external_url as 'View in tracing' link, tempo_config.url_format must be set to 'Jaeger'";
-          }
-        }
-        return 'No valid service Tempo defined found';
+
+  if (isTempoService(svc)) {
+    if (svc.tempoConfig?.url_format === TempoUrlFormat.JAEGER) {
+      const urlProvider = new JaegerUrlProvider(svc);
+      if (!urlProvider.HomeUrl() || !urlProvider.valid) {
+        return '"View in Tracing" link is hidden because external_url is empty';
       }
-      break;
-    case 'jaeger':
-      if (isJaegerService(svc)) {
-        const urlProvider = new JaegerUrlProvider(svc);
-        if (!urlProvider || !urlProvider.valid) {
-          return 'Must be defined';
-        }
+    } else {
+      const urlProvider = new TempoUrlProvider(svc, externalServices);
+      if (!urlProvider.HomeUrl() || !urlProvider.valid) {
+        return "\"View in Tracing\" link is hidden because Grafana is not enabled. To use external_url as 'View in tracing' link, tempo_config.url_format must be set to 'jaeger'";
       }
-      return 'No valid service Jaeger defined found';
-    default:
-      return undefined;
+    }
   }
+  if (isJaegerService(svc)) {
+    const urlProvider = new JaegerUrlProvider(svc);
+    console.log(urlProvider);
+    if (!urlProvider.HomeUrl() || !urlProvider.valid) {
+      return '"View in Tracing" link is hidden because external_url is empty';
+    }
+  }
+
   return undefined;
 };
 
@@ -163,9 +160,9 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
             </div>
           </>
         )}
-        {externalUrl && (
+        {diagnostic?.logLine && externalUrl && (
           <div>
-            <span style={{ color: 'red' }}>external_url: {externalUrl}</span>
+            <span style={{ color: 'red' }}>{externalUrl}</span>
           </div>
         )}
         {diagnostic?.logLine && (

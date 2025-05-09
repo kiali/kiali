@@ -40,7 +40,9 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
         {targetPanelHR}
 
         <TargetPanelEditor configData={data.infraData} targetName={data.infraName}></TargetPanelEditor>
-        {data.infraType === MeshInfraType.TRACE_STORE && <TracingDiagnose cluster={data.cluster} />}
+        {data.infraType === MeshInfraType.TRACE_STORE && (
+          <TracingDiagnose cluster={data.cluster} config={data.infraData} />
+        )}
       </div>
     </div>
   );
