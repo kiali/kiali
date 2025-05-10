@@ -95,7 +95,7 @@ func (a AggregateNodeAppender) appendGraph(ctx context.Context, trafficMap graph
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	query := httpQuery
-	vector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a)
+	vector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a)
 	a.injectAggregates(ctx, trafficMap, &vector, conf)
 
 	// 2) query for requests originating from a workload inside of the namespace
@@ -107,7 +107,7 @@ func (a AggregateNodeAppender) appendGraph(ctx context.Context, trafficMap graph
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	query = httpQuery
-	vector = promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a)
+	vector = util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a)
 	a.injectAggregates(ctx, trafficMap, &vector, conf)
 }
 
@@ -133,7 +133,7 @@ func (a AggregateNodeAppender) appendNodeGraph(ctx context.Context, trafficMap g
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	query := httpQuery
-	vector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a)
+	vector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a)
 	a.injectAggregates(ctx, trafficMap, &vector, conf)
 }
 

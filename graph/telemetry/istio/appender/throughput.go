@@ -91,7 +91,7 @@ func (a ThroughputAppender) appendGraph(ctx context.Context, trafficMap graph.Tr
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	vector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+	vector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
 	a.populateThroughputMap(ctx, throughputMap, &vector, gi.Conf)
 
 	// 2) query for requests originating from a workload inside of the namespace
@@ -101,7 +101,7 @@ func (a ThroughputAppender) appendGraph(ctx context.Context, trafficMap graph.Tr
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	vector = promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+	vector = util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
 	a.populateThroughputMap(ctx, throughputMap, &vector, gi.Conf)
 
 	applyThroughput(trafficMap, throughputMap)

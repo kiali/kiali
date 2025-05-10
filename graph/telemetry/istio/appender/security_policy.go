@@ -136,7 +136,7 @@ func (a SecurityPolicyAppender) appendGraph(ctx context.Context, trafficMap grap
 		}
 	}
 
-	outVector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a)
+	outVector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a)
 
 	// 2) query for requests originating from a workload inside of the namespace
 	query = ""
@@ -233,7 +233,7 @@ func (a SecurityPolicyAppender) appendGraph(ctx context.Context, trafficMap grap
 		}
 	}
 
-	inVector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a)
+	inVector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a)
 
 	// create map to quickly look up securityPolicy
 	securityPolicyMap := make(map[string]PolicyRates)

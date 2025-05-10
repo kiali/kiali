@@ -96,7 +96,7 @@ func (a ResponseTimeAppender) appendGraph(ctx context.Context, trafficMap graph.
 				namespace,
 				int(duration.Seconds()), // range duration for the query
 				groupBy)
-			incomingVector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+			incomingVector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
 			a.populateResponseTimeMap(ctx, responseTimeMap, &incomingVector, gi.Conf)
 		}
 
@@ -114,7 +114,7 @@ func (a ResponseTimeAppender) appendGraph(ctx context.Context, trafficMap graph.
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
-		incomingVector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+		incomingVector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
 		a.populateResponseTimeMap(ctx, responseTimeMap, &incomingVector, gi.Conf)
 
 		// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
@@ -129,7 +129,7 @@ func (a ResponseTimeAppender) appendGraph(ctx context.Context, trafficMap graph.
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
-		outgoingVector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+		outgoingVector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
 		a.populateResponseTimeMap(ctx, responseTimeMap, &outgoingVector, gi.Conf)
 
 	} else {
@@ -147,7 +147,7 @@ func (a ResponseTimeAppender) appendGraph(ctx context.Context, trafficMap graph.
 				namespace,
 				int(duration.Seconds()), // range duration for the query
 				groupBy)
-			incomingVector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+			incomingVector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
 			a.populateResponseTimeMap(ctx, responseTimeMap, &incomingVector, gi.Conf)
 		}
 
@@ -161,7 +161,7 @@ func (a ResponseTimeAppender) appendGraph(ctx context.Context, trafficMap graph.
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
-		incomingVector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+		incomingVector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
 		a.populateResponseTimeMap(ctx, responseTimeMap, &incomingVector, gi.Conf)
 
 		// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
@@ -172,7 +172,7 @@ func (a ResponseTimeAppender) appendGraph(ctx context.Context, trafficMap graph.
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
-		outgoingVector := promQuery(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+		outgoingVector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
 		a.populateResponseTimeMap(ctx, responseTimeMap, &outgoingVector, gi.Conf)
 	}
 
