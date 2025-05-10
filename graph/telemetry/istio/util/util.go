@@ -199,7 +199,10 @@ func PromQueryAppender(ctx context.Context, query string, queryTime time.Time, a
 
 	// log warnings and abort immediately on errors
 	if len(warnings) > 0 {
-		zl.Warn().Msgf("PromQuery: Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+		zl.Warn().Str("problemQuery", query).Msgf("PromQuery: Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+	}
+	if err != nil {
+		zl.Trace().Str("failedQuery", query).Msgf("PromQuery: Prometheus Error: [%v]", err)
 	}
 	graph.CheckUnavailable(err)
 
