@@ -185,11 +185,8 @@ func PromQueryAppender(ctx context.Context, query string, queryTime time.Time, a
 
 	// wrap with a round() to be in line with metrics api
 	query = fmt.Sprintf("round(%s,0.001)", query)
-	zl.Trace().Str("query", query).Msgf("PromQuery: queryTime=[%v], now=[%v], queryTime.Unix=[%v])",
-		queryTime.Format(graph.TF),
-		time.Now().Format(graph.TF),
-		queryTime.Unix())
 
+	// start our timer
 	var promtimer *prom_client.Timer
 	if a == nil {
 		promtimer = internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Graph-Generation")
@@ -200,11 +197,17 @@ func PromQueryAppender(ctx context.Context, query string, queryTime time.Time, a
 	// perform the Prometheus query now
 	value, warnings, err := api.Query(ctx, query, queryTime)
 
+	// log warnings and abort immediately on errors
 	if len(warnings) > 0 {
 		zl.Warn().Msgf("PromQuery: Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	graph.CheckUnavailable(err)
-	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
+
+	// notice we only collect metrics and log a message for successful prom queries
+	duration := promtimer.ObserveDuration()
+	zl.Trace().Str("query", query).Str("duration", duration.String()).Msgf("PromQuery: queryTime=[%v], queryTime.Unix=[%v])",
+		queryTime.Format(graph.TF),
+		queryTime.Unix())
 
 	switch t := value.Type(); t {
 	case model.ValVector: // Instant Vector
