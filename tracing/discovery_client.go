@@ -29,7 +29,7 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
-func TestNewClient(ctx context.Context, conf *config.Config, token string, client ClientInterface) (*model.TracingDiagnose, error) {
+func TestNewClient(ctx context.Context, conf *config.Config, token string) (*model.TracingDiagnose, error) {
 	cfgTracing := conf.ExternalServices.Tracing
 	test := model.TracingDiagnose{}
 	logs := []model.LogLine{}
