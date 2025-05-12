@@ -372,14 +372,14 @@ func buildHttpHandlerLogger(route Route, handlerFunction http.Handler) http.Hand
 	// extract and log the request ID - if we have a X-Request-Id header we use it; otherwise, we generate our own
 	xRequestIdHeader := "X-Request-Id"
 	xRequestFieldKey := "xRequestId"
-	c = c.append(hlog.CustomHeaderHandler(xRequestFieldKey, xRequestIdHeader))
 	c = c.append(func(next http.Handler) http.Handler {
 		requestIDGeneratorHandler := hlog.RequestIDHandler(xRequestFieldKey, "")
+		customHeaderHandler := hlog.CustomHeaderHandler(xRequestFieldKey, xRequestIdHeader)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Header.Get(xRequestIdHeader) == "" {
 				requestIDGeneratorHandler(next).ServeHTTP(w, r)
 			} else {
-				next.ServeHTTP(w, r)
+				customHeaderHandler(next).ServeHTTP(w, r)
 			}
 		})
 	})
