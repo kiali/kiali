@@ -380,10 +380,5 @@ func tracesToSpans(ctx context.Context, app models.TracingName, r *model.Tracing
 }
 
 func (in *TracingService) TracingDiagnose(ctx context.Context, token string) (trace *model.TracingDiagnose, err error) {
-	cl, err := in.client()
-	if err != nil {
-		log.Errorf("Error getting client: %s", err.Error())
-		return nil, err
-	}
-	return tracing.TestNewClient(ctx, in.conf, token, cl)
+	return tracing.TestNewClient(ctx, in.conf, token)
 }
