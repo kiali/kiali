@@ -271,6 +271,7 @@ func TestZtunnelDump(t *testing.T) {
 	initData := cache.GetZtunnelDump("cluster-default", "istio-system", "ztunnel-7hml8")
 	require.Nil(initData)
 
+	zTunnel := make(map[string]*kubernetes.ZtunnelConfigDump)
 	zTunnelData, err := os.Open("../testdata/ztunnel-config.json")
 	require.NoError(err)
 	defer zTunnelData.Close()
@@ -279,7 +280,8 @@ func TestZtunnelDump(t *testing.T) {
 	errD := json.NewDecoder(zTunnelData).Decode(&configD)
 	require.NoError(errD)
 
-	cache.SetZtunnelDump("cluster-defaultistio-systemztunnel-7hml8", configD)
+	zTunnel["cluster-defaultistio-systemztunnel-7hml8"] = configD
+	cache.SetZtunnelDump(zTunnel)
 
 	cacheData := cache.GetZtunnelDump("cluster-default", "istio-system", "ztunnel-7hml8")
 	require.NotNil(cacheData)
