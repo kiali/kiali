@@ -366,8 +366,10 @@ func (a alice) then(h http.Handler) http.Handler {
 func buildHttpHandlerLogger(route Route, handlerFunction http.Handler) http.Handler {
 	c := alice{}
 	c = c.append(hlog.NewHandler(zerolog.With().Str("route", route.Name).Logger()))
-	c = c.append(hlog.HostHandler("Host", true))
-	c = c.append(hlog.RequestIDHandler("RequestID", "Request-Id"))
+	c = c.append(hlog.HostHandler("host", true))
+	c = c.append(hlog.RemoteAddrHandler("remoteAddr"))
+	c = c.append(hlog.CustomHeaderHandler("xRequestId", "X-Request-Id"))
+	c = c.append(hlog.RequestIDHandler("kialiRequestId", ""))
 
 	return c.then(handlerFunction)
 }
