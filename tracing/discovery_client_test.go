@@ -2,12 +2,14 @@ package tracing
 
 import (
 	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/runtime"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
-	"github.com/stretchr/testify/assert"
-	"k8s.io/apimachinery/pkg/runtime"
-	"testing"
 )
 
 func fakeK8sNs() kubernetes.UserClientInterface {
