@@ -368,8 +368,21 @@ func buildHttpHandlerLogger(route Route, handlerFunction http.Handler) http.Hand
 	c = c.append(hlog.NewHandler(zerolog.With().Str("route", route.Name).Logger()))
 	c = c.append(hlog.HostHandler("host", true))
 	c = c.append(hlog.RemoteAddrHandler("remoteAddr"))
-	c = c.append(hlog.CustomHeaderHandler("xRequestId", "X-Request-Id"))
-	c = c.append(hlog.RequestIDHandler("kialiRequestId", ""))
+
+	// extract and log the request ID - if we have a X-Request-Id header we use it; otherwise, we generate our own
+	xRequestIdHeader := "X-Request-Id"
+	xRequestFieldKey := "xRequestId"
+	c = c.append(hlog.CustomHeaderHandler(xRequestFieldKey, xRequestIdHeader))
+	c = c.append(func(next http.Handler) http.Handler {
+		requestIDGeneratorHandler := hlog.RequestIDHandler(xRequestFieldKey, "")
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Header.Get(xRequestIdHeader) == "" {
+				requestIDGeneratorHandler(next).ServeHTTP(w, r)
+			} else {
+				next.ServeHTTP(w, r)
+			}
+		})
+	})
 
 	return c.then(handlerFunction)
 }
