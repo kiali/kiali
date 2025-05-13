@@ -129,74 +129,35 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 
 	for _, port := range ports {
 		switch port {
-		case "16686", "80":
+		case "16686":
 			{
-				// We assume it is Jaeger. Try Jaeger URL
-				validEndpoint := fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port)
-				endpointJ := fmt.Sprintf("%s/jaeger/api/services", validEndpoint)
-				vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
-				if err == nil {
-					validConfigs = append(validConfigs, *vc)
-				}
-				logs = append(logs, ll...)
-
-				// Try Tempo URL
-				validEndpoint = fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port)
-				endpointJ = fmt.Sprintf("%s/api/services", validEndpoint)
-				vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
-				if err == nil {
-					validConfigs = append(validConfigs, *vc)
-				}
+				vc, ll := validateJaegerHTTP(client, parsedUrl, port)
+				validConfigs = append(validConfigs, vc...)
 				logs = append(logs, ll...)
 			}
 		case "8080":
 			{
-				// Tempo from GW, Tempo multi tenant uses security and the gateway
-				if strings.Contains(parsedUrl.Host, "gateway") {
-					splitUrl := strings.Split(parsedUrl.Path, "/")
-					tenant := ""
-					if len(splitUrl) > 3 {
-						tenant = splitUrl[4]
-					} else {
-						logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create http client in port 8080", Result: "tenant name not found"})
-						log.Infof("[Discovery client] Tenant name not found: %s. Tempo URL includes gateway but not the Tenant name", parsedUrl.Path)
-					}
-					validEndpoint := fmt.Sprintf("%s://%s:%s/api/traces/v1/%s/tempo", parsedUrl.Scheme, parsedUrl.Host, port, tenant)
-					endpointJ := fmt.Sprintf("%s/api/search?q={}", validEndpoint)
-					vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "tempo")
-					if err == nil {
-						validConfigs = append(validConfigs, *vc)
-					}
-					logs = append(logs, ll...)
-
-					// Try GW Jaeger Endpoint
-					validEndpoint = fmt.Sprintf("%s://%s:%s/api/traces/v1/%s", parsedUrl.Scheme, parsedUrl.Host, port, tenant)
-					endpointJ = fmt.Sprintf("%s/api/services", validEndpoint)
-					vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
-					if err == nil {
-						validConfigs = append(validConfigs, *vc)
-					}
-					logs = append(logs, ll...)
-
-				} else {
-					// Tempo service (No GW)
-					validEndpoint := fmt.Sprintf("%s://%s:%s/api/traces/v1/tempo", parsedUrl.Scheme, parsedUrl.Host, port)
-					endpointJ := fmt.Sprintf("%s/api/search?q={}", validEndpoint)
-					vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "tempo")
-					if err == nil {
-						validConfigs = append(validConfigs, *vc)
-					}
-					logs = append(logs, ll...)
-
-					// Try GW Jaeger Endpoint
-					validEndpoint = fmt.Sprintf("%s://%s:%s/api/traces/v1", parsedUrl.Scheme, parsedUrl.Host, port)
-					endpointJ = fmt.Sprintf("%s/api/traces/v1/api/services", validEndpoint)
-					vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
-					if err == nil {
-						validConfigs = append(validConfigs, *vc)
-					}
-					logs = append(logs, ll...)
-				}
+				vc, ll := validateTempoHTTP(client, parsedUrl, port)
+				validConfigs = append(validConfigs, vc...)
+				logs = append(logs, ll...)
+			}
+		case "80", "":
+			{
+				vc, ll := validateJaegerHTTP(client, parsedUrl, port)
+				validConfigs = append(validConfigs, vc...)
+				logs = append(logs, ll...)
+				vc, ll = validateTempoHTTP(client, parsedUrl, port)
+				validConfigs = append(validConfigs, vc...)
+				logs = append(logs, ll...)
+				vc, ll = validateSimpleTempoHTTP(client, parsedUrl, port)
+				validConfigs = append(validConfigs, vc...)
+				logs = append(logs, ll...)
+			}
+		case "3200":
+			{
+				vc, ll := validateSimpleTempoHTTP(client, parsedUrl, port)
+				validConfigs = append(validConfigs, vc...)
+				logs = append(logs, ll...)
 			}
 		case "16685":
 			{
@@ -235,26 +196,6 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 					logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC Client 16685", Result: fmt.Sprintf("Error while building GRPC dial options: %v", err)})
 				}
 			}
-		case "3200":
-			{
-				// Try Tempo HTTP client
-				validEndpoint := fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port)
-				endpointJ := fmt.Sprintf("%s/api/search?q={}", validEndpoint)
-				vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "tempo")
-				if err == nil {
-					validConfigs = append(validConfigs, *vc)
-				}
-				logs = append(logs, ll...)
-
-				// Try Jaeger?
-				validEndpoint = fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port)
-				endpointJ = fmt.Sprintf("%s/api/services", validEndpoint)
-				vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
-				if err == nil {
-					validConfigs = append(validConfigs, *vc)
-				}
-				logs = append(logs, ll...)
-			}
 		case "9095":
 			{
 				// Try GRPC Tempo Client
@@ -292,8 +233,114 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 	return validConfigs, logs
 }
 
-func validateEndpoint(client http.Client, endpoint, validEndpoint string, provider string) (*model.ValidConfig, []model.LogLine, error) {
+// validateJaegerHTTP validate specific path for Jaeger and HTTP endpoint
+func validateJaegerHTTP(client http.Client, parsedUrl model.ParsedUrl, port string) ([]model.ValidConfig, []model.LogLine) {
+	logs := []model.LogLine{}
+	validConfigs := []model.ValidConfig{}
 
+	// We assume it is Jaeger. Try Jaeger URL
+	validEndpoint := fmt.Sprintf("%s://%s:%s/jaeger", parsedUrl.Scheme, parsedUrl.Host, port)
+	endpointJ := fmt.Sprintf("%s/api/services", validEndpoint)
+	vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
+	if err == nil {
+		validConfigs = append(validConfigs, *vc)
+	}
+	logs = append(logs, ll...)
+
+	// Try Tempo URL
+	validEndpoint = fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port)
+	endpointJ = fmt.Sprintf("%s/api/services", validEndpoint)
+	vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
+	if err == nil {
+		validConfigs = append(validConfigs, *vc)
+	}
+	logs = append(logs, ll...)
+	return validConfigs, logs
+}
+
+// validateTempoHTTP validate specific path for Tempo and HTTP endpoint
+func validateTempoHTTP(client http.Client, parsedUrl model.ParsedUrl, port string) ([]model.ValidConfig, []model.LogLine) {
+	logs := []model.LogLine{}
+	validConfigs := []model.ValidConfig{}
+
+	// Tempo from GW, Tempo multi tenant uses security and the gateway
+	if strings.Contains(parsedUrl.Host, "gateway") {
+		splitUrl := strings.Split(parsedUrl.Path, "/")
+		tenant := ""
+		if len(splitUrl) > 3 {
+			tenant = splitUrl[4]
+		} else {
+			logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create http client in port 8080", Result: "tenant name not found"})
+			log.Infof("[Discovery client] Tenant name not found: %s. Tempo URL includes gateway but not the Tenant name", parsedUrl.Path)
+		}
+		validEndpoint := fmt.Sprintf("%s://%s:%s/api/traces/v1/%s/tempo", parsedUrl.Scheme, parsedUrl.Host, port, tenant)
+		endpointJ := fmt.Sprintf("%s/api/search?q={}", validEndpoint)
+		vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "tempo")
+		if err == nil {
+			validConfigs = append(validConfigs, *vc)
+		}
+		logs = append(logs, ll...)
+
+		// Try GW Jaeger Endpoint
+		validEndpoint = fmt.Sprintf("%s://%s:%s/api/traces/v1/%s", parsedUrl.Scheme, parsedUrl.Host, port, tenant)
+		endpointJ = fmt.Sprintf("%s/api/services", validEndpoint)
+		vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
+		if err == nil {
+			validConfigs = append(validConfigs, *vc)
+		}
+		logs = append(logs, ll...)
+
+	} else {
+		// Tempo service (No GW)
+		validEndpoint := fmt.Sprintf("%s://%s:%s/api/traces/v1/tempo", parsedUrl.Scheme, parsedUrl.Host, port)
+		endpointJ := fmt.Sprintf("%s/api/search?q={}", validEndpoint)
+		vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "tempo")
+		if err == nil {
+			validConfigs = append(validConfigs, *vc)
+		}
+		logs = append(logs, ll...)
+
+		// Try GW Jaeger Endpoint
+		validEndpoint = fmt.Sprintf("%s://%s:%s/api/traces/v1", parsedUrl.Scheme, parsedUrl.Host, port)
+		endpointJ = fmt.Sprintf("%s/api/traces/v1/api/services", validEndpoint)
+		vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
+		if err == nil {
+			validConfigs = append(validConfigs, *vc)
+		}
+		logs = append(logs, ll...)
+	}
+
+	return validConfigs, logs
+}
+
+// validateSimpleTempoHTTP validate specific path for Tempo and HTTP endpoint
+func validateSimpleTempoHTTP(client http.Client, parsedUrl model.ParsedUrl, port string) ([]model.ValidConfig, []model.LogLine) {
+	logs := []model.LogLine{}
+	validConfigs := []model.ValidConfig{}
+
+	// Try Tempo HTTP client
+	validEndpoint := fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port)
+	endpointJ := fmt.Sprintf("%s/api/search?q={}", validEndpoint)
+	vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "tempo")
+	if err == nil {
+		validConfigs = append(validConfigs, *vc)
+	}
+	logs = append(logs, ll...)
+
+	// Try Jaeger?
+	validEndpoint = fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port)
+	endpointJ = fmt.Sprintf("%s/api/services", validEndpoint)
+	vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
+	if err == nil {
+		validConfigs = append(validConfigs, *vc)
+	}
+	logs = append(logs, ll...)
+
+	return validConfigs, logs
+}
+
+// validateEndpoint Given an endpoint, validates it is valid, otherwise returns an error or logLines
+func validateEndpoint(client http.Client, endpoint, validEndpoint string, provider string) (*model.ValidConfig, []model.LogLine, error) {
 	logs := []model.LogLine{}
 	resp, code, reqError := MakeRequest(client, endpoint, nil)
 	if code != 200 {
