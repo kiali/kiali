@@ -8,4 +8,5 @@ var (
 	KialiCacheLogName    = "kialiCache"
 	PromCacheLogName     = "promCache"
 	PrometheusLogName    = "prometheus"
+	TracingLogName       = "tracing"
 )
