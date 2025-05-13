@@ -223,6 +223,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     const conStyle = isKioskMode() ? kioskContainerStyle : containerStyle;
     const isEmpty = !(this.state.meshData.elements.nodes && Object.keys(this.state.meshData.elements.nodes).length > 0);
     const isReady = !(isEmpty || this.state.meshData.isError);
+    const refreshInterval = HistoryManager.getRefresh() ?? this.props.refreshInterval;
 
     return (
       <>
@@ -256,7 +257,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
                   isLoading={this.state.meshData.isLoading}
                   isMiniMesh={false}
                   loaded={this.state.meshData.loaded}
-                  refreshInterval={this.props.refreshInterval}
+                  refreshInterval={refreshInterval}
                 >
                   <Mesh {...this.props} isMiniMesh={false} meshData={this.state.meshData} onReady={this.handleReady} />
                 </EmptyMeshLayout>

@@ -461,6 +461,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     );
     const isReady = !(isEmpty || this.state.graphData.isError);
     const isReplayReady = this.props.replayActive && !!this.props.replayQueryTime;
+    const refreshInterval = HistoryManager.getRefresh() ?? this.props.refreshInterval;
 
     return (
       <>
@@ -502,7 +503,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
                     isMiniGraph={false}
                     loaded={this.state.graphData.loaded}
                     namespaces={this.props.activeNamespaces}
-                    refreshInterval={this.props.refreshInterval}
+                    refreshInterval={refreshInterval}
                     showIdleNodes={this.props.showIdleNodes}
                     toggleIdleNodes={this.props.toggleIdleNodes}
                   >
