@@ -1,5 +1,10 @@
 package kubernetes
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 type ZtunnelConfigDump struct {
 	Certificates []Certificate `json:"certificates"`
 	Config       Config        `json:"config"`
@@ -88,6 +93,24 @@ type NameServer struct {
 	TrustNegativeResponses bool    `json:"trust_negative_responses"`
 }
 
+// Workaround to handle different data types from Istio 1.25 -> Istio 1.26
+type BoolOrString string
+
+func (s *BoolOrString) UnmarshalJSON(data []byte) (err error) {
+	var boolVal bool
+	if err := json.Unmarshal(data, &boolVal); err == nil {
+		*s = BoolOrString(fmt.Sprintf("%t", boolVal))
+		return nil
+	}
+
+	var strVal string
+	if err := json.Unmarshal(data, &strVal); err == nil {
+		*s = BoolOrString(strVal)
+		return nil
+	}
+	return err
+}
+
 type DNSResolverOptions struct {
 	Attempts               int          `json:"attempts"`
 	AuthenticData          bool         `json:"authentic_data"`
@@ -108,7 +131,7 @@ type DNSResolverOptions struct {
 	ShuffleDnsServers      bool         `json:"shuffle_dns_servers"`
 	Timeout                TimeDuration `json:"timeout"`
 	TryTcpOnError          bool         `json:"try_tcp_on_error"`
-	UseHostsFile           bool         `json:"use_hosts_file"`
+	UseHostsFile           BoolOrString `json:"use_hosts_file"`
 	Validate               bool         `json:"validate"`
 }
 

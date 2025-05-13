@@ -292,4 +292,6 @@ func TestZtunnelDump(t *testing.T) {
 	require.Equal(cacheData.Services[36].Hostname, "waypoint.bookinfo.svc.cluster.local")
 	require.Equal(cacheData.Services[36].Name, "waypoint")
 	require.Equal(cacheData.Services[36].Namespace, "bookinfo")
+
+	require.Equal(cacheData.Config.DNSResolverOpts.UseHostsFile, kubernetes.BoolOrString("Auto"))
 }
