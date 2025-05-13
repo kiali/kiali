@@ -14,8 +14,8 @@ import (
 	ctrlsource "sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )

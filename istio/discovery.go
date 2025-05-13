@@ -17,9 +17,9 @@ import (
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"

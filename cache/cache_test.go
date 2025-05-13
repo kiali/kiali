@@ -14,9 +14,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 )
@@ -303,7 +303,7 @@ func TestZtunnelDump(t *testing.T) {
 	initData := cache.GetZtunnelDump("cluster-default", "istio-system", "ztunnel-7hml8")
 	require.Nil(initData)
 
-	zTunnelData, err := os.Open("../testdata/ztunnel-config.json")
+	zTunnelData, err := os.Open("../kubernetes/testdata/ztunnel-config.json")
 	require.NoError(err)
 	defer zTunnelData.Close()
 

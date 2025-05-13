@@ -11,10 +11,10 @@ import (
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/require"
 
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/istio/istiotest"
-	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )

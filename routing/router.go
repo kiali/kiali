@@ -16,13 +16,13 @@ import (
 	zerolog "github.com/rs/zerolog/log"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	kialiprometheus "github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -357,12 +357,14 @@ func (a alice) append(m func(http.Handler) http.Handler) alice {
 	a.m = append(a.m, m)
 	return a
 }
+
 func (a alice) then(h http.Handler) http.Handler {
 	for i := range a.m {
 		h = a.m[len(a.m)-1-i](h)
 	}
 	return h
 }
+
 func buildHttpHandlerLogger(route Route, handlerFunction http.Handler) http.Handler {
 	c := alice{}
 	c = c.append(hlog.NewHandler(zerolog.With().Str("route", route.Name).Logger()))

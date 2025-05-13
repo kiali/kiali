@@ -10,10 +10,10 @@ import (
 	"github.com/rs/zerolog"
 	"gopkg.in/yaml.v2"
 
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"

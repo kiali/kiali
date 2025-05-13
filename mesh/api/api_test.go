@@ -23,11 +23,11 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/mesh"
 	"github.com/kiali/kiali/models"
@@ -163,7 +163,6 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 	}
 
 	ztunnelObject := &apps_v1.DaemonSet{
-
 		TypeMeta: v1.TypeMeta{
 			APIVersion: kubernetes.DaemonSets.GroupVersion().String(),
 			Kind:       kubernetes.DaemonSets.Kind,
@@ -358,7 +357,7 @@ func TestMeshGraph(t *testing.T) {
 		// The diff is more readable using cmp
 		t.Logf("%s", cmp.Diff(string(expected), string(actual)))
 		// The dump is more useful for updating the .expected file
-		//t.Logf("%s", string(actual))
+		// t.Logf("%s", string(actual))
 	}
 	assert.Equal(t, 200, resp.StatusCode)
 }

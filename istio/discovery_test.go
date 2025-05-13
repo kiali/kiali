@@ -24,10 +24,10 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/testutils"

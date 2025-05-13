@@ -16,9 +16,9 @@ import (
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/business/references"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
@@ -310,7 +310,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 	}
 	vInfo.clusterInfo.istioConfig = istioConfigList
 
-	//if change detection is enabled then decide if we need to run the checkers
+	// if change detection is enabled then decide if we need to run the checkers
 	if vInfo.changeDetectionEnabled() {
 		changeDetected := detectClusterConfigChange(vInfo)
 		if !changeDetected && !vInfo.forceCheckers() {
@@ -591,7 +591,8 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		objectCheckers = []checkers.ObjectChecker{serviceEntryChecker}
 		referenceChecker = references.ServiceEntryReferences{Conf: conf, AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: nsNames, DestinationRules: istioConfigList.DestinationRules, ServiceEntries: istioConfigList.ServiceEntries, Sidecars: istioConfigList.Sidecars, RegistryServices: registryServices}
 	case kubernetes.Sidecars:
-		sidecarsChecker := checkers.SidecarChecker{Conf: conf,
+		sidecarsChecker := checkers.SidecarChecker{
+			Conf:    conf,
 			Cluster: cluster, Sidecars: istioConfigList.Sidecars, Namespaces: namespaces,
 			WorkloadsPerNamespace: workloadsPerNamespace, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices,
 		}
