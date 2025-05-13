@@ -366,8 +366,27 @@ func (a alice) then(h http.Handler) http.Handler {
 func buildHttpHandlerLogger(route Route, handlerFunction http.Handler) http.Handler {
 	c := alice{}
 	c = c.append(hlog.NewHandler(zerolog.With().Str("route", route.Name).Logger()))
-	c = c.append(hlog.HostHandler("Host", true))
-	c = c.append(hlog.RequestIDHandler("RequestID", "Request-Id"))
+
+	// TODO: commenting out but leaving these here in case we want to look into including them at a future date
+	// c = c.append(hlog.HostHandler("host", true))
+	// if log.IsTrace() {
+	// 	c = c.append(hlog.RemoteAddrHandler("remote-addr"))
+	// }
+
+	// extract and log the request ID - if we have a X-Request-Id header we use it; otherwise, we generate our own
+	xRequestIdHeader := "X-Request-Id"
+	xRequestFieldKey := "request-id"
+	c = c.append(func(next http.Handler) http.Handler {
+		requestIDGeneratorHandler := hlog.RequestIDHandler(xRequestFieldKey, "")
+		customHeaderHandler := hlog.CustomHeaderHandler(xRequestFieldKey, xRequestIdHeader)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Header.Get(xRequestIdHeader) == "" {
+				requestIDGeneratorHandler(next).ServeHTTP(w, r)
+			} else {
+				customHeaderHandler(next).ServeHTTP(w, r)
+			}
+		})
+	})
 
 	return c.then(handlerFunction)
 }
