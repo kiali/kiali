@@ -409,7 +409,7 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 	if criteria.IncludeHealth {
 		appInstance.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, criteria.Cluster, criteria.AppName, criteria.RateInterval, criteria.QueryTime, appDetails)
 		if err != nil {
-			log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, criteria.AppName, err)
+			log.FromContext(ctx).Error().Msgf("Error fetching Health in namespace [%s] for app [%s]: %v", criteria.Namespace, criteria.AppName, err)
 		}
 	}
 	appInstance.IsAmbient = isAmbient
@@ -528,7 +528,7 @@ func (in *AppService) GetAppTracingName(ctx context.Context, cluster, namespace,
 	// Fetch and build app
 	appDetails, err := in.GetAppDetails(ctx, criteria)
 	if err != nil {
-		log.Errorf("Error for getting tracing name for app %s: %s", app, err)
+		log.FromContext(ctx).Error().Msgf("Error for getting tracing name for app [%s]: %v", app, err)
 		return tracingName
 	}
 	for _, wk := range appDetails.Workloads {

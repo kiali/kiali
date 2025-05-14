@@ -65,7 +65,7 @@ func TestGetTraces(t *testing.T) {
 		Limit:       0,
 		Cluster:     "",
 	}
-	response, err := tempoClient.GetAppTracesHTTP(httpClient, baseUrl, serviceName, q)
+	response, err := tempoClient.GetAppTracesHTTP(context.Background(), httpClient, baseUrl, serviceName, q)
 	assert.Nil(t, err)
 	assert.NotNil(t, response)
 	assert.Equal(t, response.TracingServiceName, serviceName)
@@ -106,7 +106,7 @@ func TestGetAmbientTraces(t *testing.T) {
 		Limit:       0,
 		Cluster:     "",
 	}
-	response, err := tempoClient.GetAppTracesHTTP(httpClient, baseUrl, ambientServiceName, q)
+	response, err := tempoClient.GetAppTracesHTTP(context.Background(), httpClient, baseUrl, ambientServiceName, q)
 	assert.Nil(t, err)
 	assert.NotNil(t, response)
 	assert.Equal(t, response.TracingServiceName, ambientServiceName)
@@ -139,7 +139,7 @@ func TestGetTrace(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, tempoClient)
 
-	response, err := tempoClient.GetTraceDetailHTTP(httpClient, baseUrl, "3ba55609c3cde49649cd77d1f9dcd936")
+	response, err := tempoClient.GetTraceDetailHTTP(context.Background(), httpClient, baseUrl, "3ba55609c3cde49649cd77d1f9dcd936")
 	assert.Nil(t, err)
 	assert.NotNil(t, response)
 	assert.Equal(t, response.Data.TraceID, json.TraceID("3ba55609c3cde49649cd77d1f9dcd936"))
@@ -171,7 +171,7 @@ func TestErrorResponse(t *testing.T) {
 		Limit:       0,
 		Cluster:     "",
 	}
-	response, err := tempoClient.GetAppTracesHTTP(httpClient, baseUrl, serviceName, q)
+	response, err := tempoClient.GetAppTracesHTTP(context.Background(), httpClient, baseUrl, serviceName, q)
 	assert.NotNil(t, err)
 	assert.NotNil(t, response)
 	assert.Nil(t, response.Data)
@@ -194,7 +194,7 @@ func TestQuery(t *testing.T) {
 		Limit:       0,
 		Cluster:     "",
 	}
-	query := tempoClient.GetTraceQLQuery(baseUrl, serviceName, q)
+	query := tempoClient.GetTraceQLQuery(context.Background(), baseUrl, serviceName, q)
 	assert.NotNil(t, query)
 	rawQuery, err := url.QueryUnescape(query)
 	assert.Nil(t, err)
@@ -223,7 +223,7 @@ func TestQuery(t *testing.T) {
 		Limit:       0,
 		Cluster:     "",
 	}
-	query2 := tempoClient.GetTraceQLQuery(baseUrl, serviceName, q2)
+	query2 := tempoClient.GetTraceQLQuery(context.Background(), baseUrl, serviceName, q2)
 	assert.NotNil(t, query2)
 	rawQuery2, err2 := url.QueryUnescape(query2)
 	assert.Nil(t, err2)
@@ -233,7 +233,7 @@ func TestQuery(t *testing.T) {
 	// Should contain Cluster tag
 	assert.Contains(t, rawQuery2, ".istio.cluster_id = \"east\"")
 
-	query3 := tempoClient.GetTraceQLQuery(baseUrl, serviceName, q2)
+	query3 := tempoClient.GetTraceQLQuery(context.Background(), baseUrl, serviceName, q2)
 	assert.NotNil(t, query3)
 	rawQuery3, err3 := url.QueryUnescape(query3)
 	assert.Nil(t, err3)

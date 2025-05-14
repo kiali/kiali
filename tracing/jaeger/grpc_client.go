@@ -13,7 +13,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jsonConv "github.com/kiali/kiali/tracing/jaeger/model/converter/json"
@@ -51,7 +50,9 @@ func (jc JaegerGRPCClient) FindTraces(ctx context.Context, serviceName string, q
 		},
 	}
 
-	log.Debugf("Jaeger gRPC FindTraces request: %v", findTracesRQ)
+	zl := getLoggerFromContextGRPCJaeger(ctx)
+
+	zl.Debug().Msgf("Jaeger gRPC FindTraces request: %v", findTracesRQ)
 	tracesMap, err := jc.queryTraces(ctx, findTracesRQ)
 
 	if err != nil {
@@ -86,7 +87,7 @@ func (jc JaegerGRPCClient) GetTrace(ctx context.Context, strTraceID string) (*mo
 	if err != nil {
 		return nil, fmt.Errorf("GetTraceDetail, Tracing GRPC client error: %v", err)
 	}
-	tracesMap, err := readSpansStream(stream)
+	tracesMap, err := readSpansStream(ctx, stream)
 	if err != nil {
 		return nil, err
 	}
@@ -99,8 +100,8 @@ func (jc JaegerGRPCClient) GetTrace(ctx context.Context, strTraceID string) (*mo
 }
 
 // GetServices
-func (jc JaegerGRPCClient) GetServices(ctxSrv context.Context) (bool, error) {
-	ctx, cancel := context.WithTimeout(ctxSrv, 4*time.Second)
+func (jc JaegerGRPCClient) GetServices(ctx context.Context) (bool, error) {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
 
 	_, err := jc.JaegergRPCClient.GetServices(ctx, &model.GetServicesRequest{})
@@ -112,14 +113,16 @@ func (jc JaegerGRPCClient) queryTraces(ctx context.Context, findTracesRQ *model.
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout)*time.Second)
 	defer cancel()
 
+	zl := getLoggerFromContextGRPCJaeger(ctx)
+
 	stream, err := jc.JaegergRPCClient.FindTraces(ctx, findTracesRQ)
 	if err != nil {
 		err = fmt.Errorf("GetAppTraces, Tracing GRPC client error: %v", err)
-		log.Error(err.Error())
+		zl.Error().Msg(err.Error())
 		return nil, err
 	}
 
-	tracesMap, err := readSpansStream(stream)
+	tracesMap, err := readSpansStream(ctx, stream)
 
 	return tracesMap, err
 }
@@ -129,22 +132,24 @@ type SpansStreamer interface {
 	grpc.ClientStream
 }
 
-func readSpansStream(stream SpansStreamer) (map[model.TraceID]*model.Trace, error) {
+func readSpansStream(ctx context.Context, stream SpansStreamer) (map[model.TraceID]*model.Trace, error) {
+	zl := getLoggerFromContextGRPCJaeger(ctx)
+
 	tracesMap := make(map[model.TraceID]*model.Trace)
 	for received, err := stream.Recv(); err != io.EOF; received, err = stream.Recv() {
 		if err != nil {
 			if status.Code(err) == codes.DeadlineExceeded {
-				log.Trace("Tracing GRPC client timeout")
+				zl.Trace().Msgf("Tracing GRPC client timeout")
 				break
 			}
-			log.Errorf("jaeger GRPC client, stream error: %v", err)
+			zl.Error().Msgf("jaeger GRPC client, stream error: %v", err)
 			return nil, fmt.Errorf("Tracing GRPC client, stream error: %v", err)
 		}
 		for i, span := range received.Spans {
 			traceId := model.TraceID{}
 			err := traceId.Unmarshal(span.TraceId)
 			if err != nil {
-				log.Errorf("Tracing TraceId unmarshall error: %v", err)
+				zl.Error().Msgf("Tracing TraceId unmarshall error: %v", err)
 				continue
 			}
 			if trace, ok := tracesMap[traceId]; ok {

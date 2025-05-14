@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
@@ -53,7 +52,9 @@ func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q 
 	selects := []string{"status", ".service_name", ".node_id", ".component", ".upstream_cluster", ".http.method", ".response_flags", "resource.hostname", "name"}
 	trace := TraceQL{operator1: Subquery{queryPart}, operand: AND, operator2: Subquery{}}
 	queryQL := fmt.Sprintf("%s| %s", printOperator(trace), printSelect(selects))
-	log.Debugf("QueryQL %s", queryQL)
+
+	zl := getLoggerFromContextGRPCTempo(ctx)
+	zl.Debug().Msgf("[gRPC Tempo] QueryQL: %s", queryQL)
 
 	sr.Query = queryQL
 	sr.SpansPerSpanSet = 10
@@ -64,11 +65,11 @@ func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q 
 
 	if err != nil {
 		err = fmt.Errorf("[gRPC Tempo] GetAppTraces, Tracing gRPC client error: %v", err)
-		log.Error(err.Error())
+		zl.Error().Msg(err.Error())
 		return nil, err
 	}
 
-	traces, err := processStream(stream, serviceName)
+	traces, err := processStream(ctx, stream, serviceName)
 
 	if err != nil {
 		return nil, err
@@ -83,8 +84,7 @@ func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q 
 
 // GetTrace is not implemented by the streaming client
 func (jc TempoGRPCClient) GetTrace(ctx context.Context, strTraceID string) (*model.TracingSingleTrace, error) {
-
-	log.Errorf("[gRPC Tempo] GetTrace is not implemented by the Tempo streaming client")
+	getLoggerFromContextGRPCTempo(ctx).Error().Msgf("[gRPC Tempo] GetTrace is not implemented by the Tempo streaming client")
 	return nil, nil
 
 }
@@ -100,23 +100,24 @@ func (jc TempoGRPCClient) GetServices(ctx context.Context) (bool, error) {
 }
 
 // processStream
-func processStream(stream tempopb.StreamingQuerier_SearchClient, serviceName string) ([]jaegerModels.Trace, error) {
+func processStream(ctx context.Context, stream tempopb.StreamingQuerier_SearchClient, serviceName string) ([]jaegerModels.Trace, error) {
+	zl := getLoggerFromContextGRPCTempo(ctx)
 
 	tracesMap := []jaegerModels.Trace{}
 
 	for received, err := stream.Recv(); err != io.EOF; received, err = stream.Recv() {
 		if err != nil {
 			if status.Code(err) == codes.DeadlineExceeded {
-				log.Trace("Tracing GRPC client timeout")
+				zl.Trace().Msg("[gRPC Tempo] client timeout")
 				break
 			}
-			log.Errorf("[gRPC Tempo] stream error: %v", err)
+			zl.Error().Msgf("[gRPC Tempo] stream error: %v", err)
 			return nil, fmt.Errorf("[gRPC Tempo] Tracing gRPC client, stream error: %v", err)
 		}
 		for _, trace := range received.Traces {
 			batchTrace, err := converter.ConvertTraceMetadata(*trace, serviceName)
 			if err != nil {
-				log.Errorf("[gRPC Tempo] Error getting trace detail for %s: %s", trace.TraceID, err.Error())
+				zl.Error().Msgf("[gRPC Tempo] Error getting trace detail for %s: %s", trace.TraceID, err.Error())
 			} else {
 				tracesMap = append(tracesMap, *batchTrace)
 			}

@@ -392,7 +392,7 @@ func (iss *IstioStatusService) getTracingStatus(cluster string, name string, ena
 
 	status := kubernetes.ComponentHealthy
 
-	accessible, err := iss.tracing.GetStatus()
+	accessible, err := iss.tracing.GetStatus(context.TODO())
 	if !accessible {
 		log.Errorf("Error fetching availability of the tracing service: %v", err)
 		status = kubernetes.ComponentUnreachable

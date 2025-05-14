@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/store"
 	"github.com/kiali/kiali/tracing/jaeger/model"
@@ -49,15 +48,15 @@ func NewOtelClient(ctx context.Context) (otelClient *OtelHTTPClient, err error) 
 }
 
 // GetAppTracesHTTP search traces
-func (oc *OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error) {
+func (oc *OtelHTTPClient) GetAppTracesHTTP(ctx context.Context, client http.Client, baseURL *url.URL, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error) {
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/search")
 	if q.End.Before(q.Start) {
 		return nil, fmt.Errorf("end time must be greater than start time")
 	}
-	oc.prepareTraceQL(&url, serviceName, q)
+	oc.prepareTraceQL(ctx, &url, serviceName, q)
 
-	r, err := oc.queryTracesHTTP(client, &url, q.Tags["error"])
+	r, err := oc.queryTracesHTTP(ctx, client, &url, q.Tags["error"])
 
 	if r != nil {
 		r.TracingServiceName = serviceName
@@ -66,22 +65,25 @@ func (oc *OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL,
 }
 
 // GetTraceDetailHTTP get one trace by trace ID
-func (oc *OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*model.TracingSingleTrace, error) {
+func (oc *OtelHTTPClient) GetTraceDetailHTTP(ctx context.Context, client http.Client, endpoint *url.URL, traceID string) (*model.TracingSingleTrace, error) {
 	u := *endpoint
 	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
 		if result, isCached := oc.TempoCache.Get(traceID); isCached {
 			return result, nil
 		}
 	}
+
+	zl := getLoggerFromContextHTTPTempo(ctx)
+
 	u.Path = path.Join(u.Path, "/api/traces/", traceID)
 	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
-		log.Errorf("[HTTP Tempo] API Tempo query error: %s [code: %d, URL: %v]", reqError, code, u)
+		zl.Error().Msgf("[HTTP Tempo] API Tempo query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return nil, reqError
 	}
 	if code != 200 {
 		errorMsg := fmt.Sprintf("[HTTP Tempo] Error returning traces: %s", resp)
-		log.Errorf("%s", errorMsg)
+		zl.Error().Msg(errorMsg)
 		var errorTrace []model.StructuredError
 		errorTrace = append(errorTrace, model.StructuredError{TraceID: traceID, Code: code, Msg: errorMsg})
 		return &model.TracingSingleTrace{Errors: errorTrace}, errors.New(errorMsg)
@@ -91,7 +93,7 @@ func (oc *OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.U
 		return nil, errors.New("[HTTP Tempo] empty body response")
 	}
 
-	responseOtel, _ := unmarshalSingleTrace(resp, &u)
+	responseOtel, _ := unmarshalSingleTrace(ctx, resp, &u)
 
 	response, err := convertSingleTrace(responseOtel, traceID)
 	if err != nil {
@@ -113,7 +115,7 @@ func (oc *OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.U
 }
 
 // GetServiceStatusHTTP get service status
-func (oc *OtelHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url.URL) (bool, error) {
+func (oc *OtelHTTPClient) GetServiceStatusHTTP(ctx context.Context, client http.Client, baseURL *url.URL) (bool, error) {
 	var u url.URL
 	healthCheckUrl := config.Get().ExternalServices.Tracing.HealthCheckUrl
 	if healthCheckUrl != "" {
@@ -135,7 +137,10 @@ func (oc *OtelHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url.
 }
 
 // queryTracesHTTP
-func (oc *OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL, error string) (*model.TracingResponse, error) {
+func (oc *OtelHTTPClient) queryTracesHTTP(ctx context.Context, client http.Client, u *url.URL, error string) (*model.TracingResponse, error) {
+
+	zl := getLoggerFromContextHTTPTempo(ctx)
+
 	// HTTP and GRPC requests co-exist, but when minDuration is present, for HTTP it requires a unit (ms)
 	// https://github.com/kiali/kiali/issues/3939
 	minDuration := u.Query().Get("minDuration")
@@ -146,25 +151,25 @@ func (oc *OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL, error 
 	}
 	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
-		log.Errorf("Tempo API query error: %s [code: %d, URL: %v]", reqError, code, u)
+		zl.Error().Msgf("Tempo API query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return &model.TracingResponse{}, reqError
 	}
 	if code != 200 {
 		errorMsg := fmt.Sprintf("[HTTP Tempo] Tempo API query error: %s [code: %d, URL: %v]", resp, code, u)
-		log.Errorf("%s", errorMsg)
+		zl.Error().Msg(errorMsg)
 		return &model.TracingResponse{}, errors.New(errorMsg)
 	}
 	limit, err := strconv.Atoi(u.Query().Get("limit"))
 	if err != nil {
 		limit = 0
 	}
-	response, _ := unmarshal(resp, u)
+	response, _ := unmarshal(ctx, resp, u)
 
-	return oc.transformTrace(response, error, limit)
+	return oc.transformTrace(ctx, response, error, limit)
 }
 
 // transformTrace processes every trace ID and make a request to get all the spans for that trace
-func (oc *OtelHTTPClient) transformTrace(traces *otel.Traces, error string, limit int) (*model.TracingResponse, error) {
+func (oc *OtelHTTPClient) transformTrace(ctx context.Context, traces *otel.Traces, error string, limit int) (*model.TracingResponse, error) {
 	var response model.TracingResponse
 	serviceName := ""
 
@@ -181,7 +186,8 @@ func (oc *OtelHTTPClient) transformTrace(traces *otel.Traces, error string, limi
 			}
 			batchTrace, err := convertBatchTrace(trace, serviceName)
 			if err != nil {
-				log.Errorf("[HTTP Tempo] Error getting trace detail for %s: %s", trace.TraceID, err.Error())
+				zl := getLoggerFromContextHTTPTempo(ctx)
+				zl.Error().Msgf("[HTTP Tempo] Error getting trace detail for %s: %v", trace.TraceID, err)
 			} else {
 				response.Data = append(response.Data, batchTrace)
 			}
@@ -192,20 +198,20 @@ func (oc *OtelHTTPClient) transformTrace(traces *otel.Traces, error string, limi
 	return &response, nil
 }
 
-func unmarshal(r []byte, u *url.URL) (*otel.Traces, error) {
+func unmarshal(ctx context.Context, r []byte, u *url.URL) (*otel.Traces, error) {
 	var response otel.Traces
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
-		log.Errorf("[HTTP Tempo] Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, u)
+		getLoggerFromContextHTTPTempo(ctx).Error().Msgf("[HTTP Tempo] Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
 	}
 
 	return &response, nil
 }
 
-func unmarshalSingleTrace(r []byte, u *url.URL) (*otelModels.Data, error) {
+func unmarshalSingleTrace(ctx context.Context, r []byte, u *url.URL) (*otelModels.Data, error) {
 	var response otelModels.Data
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
-		log.Errorf("[HTTP Tempo] Error unmarshalling Tempo API Single trace response: %s [URL: %v]", errMarshal, u)
+		getLoggerFromContextHTTPTempo(ctx).Error().Msgf("[HTTP Tempo] Error unmarshalling Tempo API Single trace response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
 	}
 
@@ -254,7 +260,7 @@ func convertSingleTrace(traces *otelModels.Data, id string) (*model.TracingRespo
 }
 
 // prepareTraceQL set the query in TraceQL format
-func (oc *OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, query models.TracingQuery) {
+func (oc *OtelHTTPClient) prepareTraceQL(ctx context.Context, u *url.URL, tracingServiceName string, query models.TracingQuery) {
 	q := url.Values{}
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
 	q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
@@ -288,12 +294,13 @@ func (oc *OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, 
 		q.Set("limit", strconv.Itoa(query.Limit))
 	}
 	u.RawQuery = q.Encode()
-	log.Debugf("[HTTP Tempo] Prepared Tempo API query: %v", u)
+
+	getLoggerFromContextHTTPTempo(ctx).Debug().Msgf("[HTTP Tempo] Prepared Tempo API query: %v", u)
 }
 
 // GetTraceQLQuery returns the raw query in TraceQL format
-func (oc *OtelHTTPClient) GetTraceQLQuery(u *url.URL, tracingServiceName string, query models.TracingQuery) string {
-	oc.prepareTraceQL(u, tracingServiceName, query)
+func (oc *OtelHTTPClient) GetTraceQLQuery(ctx context.Context, u *url.URL, tracingServiceName string, query models.TracingQuery) string {
+	oc.prepareTraceQL(ctx, u, tracingServiceName, query)
 	return u.RawQuery
 }
 

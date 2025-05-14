@@ -296,7 +296,7 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 
 	// Refresh namespace in cache since we've just fetched it from the API.
 	if _, err := in.GetClusterNamespaces(ctx, cluster); err != nil {
-		log.Errorf("Unable to refresh cache for cluster [%s]: %s", cluster, err)
+		log.FromContext(ctx).Error().Msgf("Unable to refresh cache for cluster [%s]: %s", cluster, err)
 	}
 
 	return &result, nil

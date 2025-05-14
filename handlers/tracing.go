@@ -16,6 +16,7 @@ import (
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
@@ -60,6 +61,9 @@ func AppTraces(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// prepare the logger in a context, and replace the request context with ours that has our logger in it
+		r = log.AddGroupToLoggerInRequestContext(r, log.TracingLogName)
+
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
@@ -77,7 +81,7 @@ func AppTraces(
 		}
 		cluster := clusterNameFromQuery(conf, r.URL.Query())
 		tracingName := business.App.GetAppTracingName(r.Context(), cluster, namespace, app)
-		traces, err := business.Tracing.GetAppTraces(namespace, tracingName.Lookup, app, q)
+		traces, err := business.Tracing.GetAppTraces(r.Context(), namespace, tracingName.Lookup, app, q)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
@@ -97,6 +101,9 @@ func ServiceTraces(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// prepare the logger in a context, and replace the request context with ours that has our logger in it
+		r = log.AddGroupToLoggerInRequestContext(r, log.TracingLogName)
+
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
@@ -130,6 +137,9 @@ func WorkloadTraces(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// prepare the logger in a context, and replace the request context with ours that has our logger in it
+		r = log.AddGroupToLoggerInRequestContext(r, log.TracingLogName)
+
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
@@ -164,6 +174,9 @@ func ErrorTraces(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// prepare the logger in a context, and replace the request context with ours that has our logger in it
+		r = log.AddGroupToLoggerInRequestContext(r, log.TracingLogName)
+
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
@@ -179,7 +192,7 @@ func ErrorTraces(
 			RespondWithError(w, http.StatusBadRequest, "Cannot parse parameter 'duration': "+err.Error())
 			return
 		}
-		traces, err := business.Tracing.GetErrorTraces(namespace, app, time.Second*time.Duration(conv))
+		traces, err := business.Tracing.GetErrorTraces(r.Context(), namespace, app, time.Second*time.Duration(conv))
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
@@ -199,6 +212,9 @@ func TraceDetails(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// prepare the logger in a context, and replace the request context with ours that has our logger in it
+		r = log.AddGroupToLoggerInRequestContext(r, log.TracingLogName)
+
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
@@ -206,7 +222,7 @@ func TraceDetails(
 		}
 		params := mux.Vars(r)
 		traceID := params["traceID"]
-		trace, err := business.Tracing.GetTraceDetail(traceID)
+		trace, err := business.Tracing.GetTraceDetail(r.Context(), traceID)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
@@ -232,6 +248,9 @@ func AppSpans(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// prepare the logger in a context, and replace the request context with ours that has our logger in it
+		r = log.AddGroupToLoggerInRequestContext(r, log.TracingLogName)
+
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
@@ -269,6 +288,9 @@ func ServiceSpans(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// prepare the logger in a context, and replace the request context with ours that has our logger in it
+		r = log.AddGroupToLoggerInRequestContext(r, log.TracingLogName)
+
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
@@ -306,6 +328,9 @@ func WorkloadSpans(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// prepare the logger in a context, and replace the request context with ours that has our logger in it
+		r = log.AddGroupToLoggerInRequestContext(r, log.TracingLogName)
+
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())

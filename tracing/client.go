@@ -36,24 +36,24 @@ const (
 
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
-	GetAppTraces(ns, app string, query models.TracingQuery) (traces *model.TracingResponse, err error)
-	GetTraceDetail(traceId string) (*model.TracingSingleTrace, error)
-	GetErrorTraces(ns, app string, duration time.Duration) (errorTraces int, err error)
-	GetServiceStatus() (available bool, err error)
+	GetAppTraces(ctx context.Context, ns, app string, query models.TracingQuery) (traces *model.TracingResponse, err error)
+	GetTraceDetail(ctx context.Context, traceId string) (*model.TracingSingleTrace, error)
+	GetErrorTraces(ctx context.Context, ns, app string, duration time.Duration) (errorTraces int, err error)
+	GetServiceStatus(ctx context.Context) (available bool, err error)
 }
 
 // HTTPClientInterface for Mocks, also for Tempo or Jaeger
 type HTTPClientInterface interface {
-	GetAppTracesHTTP(client http.Client, baseURL *url.URL, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error)
-	GetTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*model.TracingSingleTrace, error)
-	GetServiceStatusHTTP(client http.Client, baseURL *url.URL) (bool, error)
+	GetAppTracesHTTP(ctx context.Context, client http.Client, baseURL *url.URL, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error)
+	GetTraceDetailHTTP(ctx context.Context, client http.Client, endpoint *url.URL, traceID string) (*model.TracingSingleTrace, error)
+	GetServiceStatusHTTP(ctx context.Context, client http.Client, baseURL *url.URL) (bool, error)
 }
 
 // GRPCClientInterface for Mocks, also for Tempo or Jaeger
 type GRPCClientInterface interface {
-	FindTraces(context context.Context, app string, q models.TracingQuery) (response *model.TracingResponse, err error)
-	GetTrace(context context.Context, traceID string) (*model.TracingSingleTrace, error)
-	GetServices(context context.Context) (bool, error)
+	FindTraces(ctx context.Context, app string, q models.TracingQuery) (response *model.TracingResponse, err error)
+	GetTrace(ctx context.Context, traceID string) (*model.TracingSingleTrace, error)
+	GetServices(ctx context.Context) (bool, error)
 }
 
 // Client for Tracing API.
@@ -63,7 +63,7 @@ type Client struct {
 	grpcClient        GRPCClientInterface
 	httpClient        http.Client
 	baseURL           *url.URL
-	ctx               context.Context
+	customHeaders     map[string]string
 }
 
 type basicAuth struct {
@@ -87,17 +87,23 @@ func NewClient(ctx context.Context, conf *config.Config, token string) (*Client,
 		client *Client
 		err    error
 	)
+
+	// prepare the client logger and put it in the context
+	// this context and logger is only used during the instantiation process
+	zl := log.WithGroup(log.TracingLogName)
+	ctx = log.ToContext(ctx, zl)
+
 	retryErr := wait.PollUntilContextCancel(ctx, newClientRetryInterval, true, func(ctx context.Context) (bool, error) {
 		client, err = newClient(ctx, conf, token)
 		if err != nil {
-			log.Errorf("Error creating tracing client: %v. Retrying in %s", err, newClientRetryInterval)
+			zl.Error().Msgf("Error creating tracing client: [%v]. Retrying in [%s]", err, newClientRetryInterval)
 			return false, nil
 		}
 
 		return true, nil
 	})
 	if retryErr != nil {
-		log.Errorf("Error creating tracing client: %v. Will not retry.", err)
+		zl.Error().Msgf("Error creating tracing client: [%v]. Will not retry.", err)
 		return nil, err
 	}
 
@@ -109,6 +115,9 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 	if !cfgTracing.Enabled {
 		return nil, errors.New("tracing is not enabled")
 	}
+
+	zl := log.FromContext(ctx)
+
 	var httpTracingClient HTTPClientInterface
 	auth := cfgTracing.Auth
 	if auth.UseKialiToken {
@@ -120,7 +129,7 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 		u, errParse = url.Parse(cfgTracing.ExternalURL)
 	}
 	if errParse != nil {
-		log.Errorf("Error parsing Tracing URL: %s", errParse)
+		zl.Error().Msgf("Error parsing Tracing URL: %s", errParse)
 		return nil, errParse
 	}
 
@@ -131,16 +140,11 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 	}
 	opts, err := grpcutil.GetAuthDialOptions(conf, u.Scheme == "https", &auth)
 	if err != nil {
-		log.Errorf("Error while building GRPC dial options: %v", err)
+		zl.Error().Msgf("Error while building GRPC dial options: %v", err)
 		return nil, err
 	}
 	address := u.Hostname() + ":" + port
-	log.Tracef("%s GRPC client info: address=%s, auth.type=%s", cfgTracing.Provider, address, auth.Type)
-
-	if len(cfgTracing.CustomHeaders) > 0 {
-		log.Tracef("Adding [%v] custom headers to Tracing client", len(cfgTracing.CustomHeaders))
-		ctx = metadata.NewOutgoingContext(ctx, metadata.New(cfgTracing.CustomHeaders))
-	}
+	zl.Trace().Msgf("[%s] GRPC client info: address=[%s], auth.type=[%s]", cfgTracing.Provider, address, auth.Type)
 
 	if cfgTracing.UseGRPC && cfgTracing.Provider != config.TempoProvider {
 
@@ -162,28 +166,28 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 			if err != nil {
 				return nil, err
 			}
-			log.Infof("Create %s GRPC client %s", cfgTracing.Provider, address)
-			return &Client{httpTracingClient: httpTracingClient, grpcClient: client, ctx: ctx}, nil
+			zl.Info().Msgf("Create [%s] GRPC client. address=[%s]", cfgTracing.Provider, address)
+			return &Client{httpTracingClient: httpTracingClient, grpcClient: client, customHeaders: cfgTracing.CustomHeaders}, nil
 		} else {
-			log.Errorf("Error creating client %s", err.Error())
+			zl.Error().Msgf("Error creating client: %v", err)
 			return nil, nil
 		}
 
 	} else {
 		// Legacy HTTP client
-		log.Tracef("Using legacy HTTP client for Tracing: url=%v, auth.type=%s", u, auth.Type)
+		zl.Trace().Msgf("Using legacy HTTP client for Tracing: url=[%v], auth.type=[%s]", u, auth.Type)
 		timeout := time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout) * time.Second
 		transport, err := httputil.CreateTransport(conf, &auth, &http.Transport{}, timeout, cfgTracing.CustomHeaders)
 		if err != nil {
 			return nil, err
 		}
 		client := http.Client{Transport: transport, Timeout: timeout}
-		log.Infof("Create Tracing HTTP client %s", u)
+		zl.Info().Msgf("Create Tracing HTTP client [%s]", u)
 
 		if cfgTracing.Provider == config.TempoProvider {
 			httpTracingClient, err = tempo.NewOtelClient(ctx)
 			if err != nil {
-				log.Errorf("Error creating HTTP client %s", err.Error())
+				zl.Error().Msgf("Error creating HTTP client: %v", err)
 				return nil, err
 			}
 
@@ -203,10 +207,10 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 				clientConn, _ := grpc.NewClient(grpcAddress, dialOps...)
 				streamClient, err := tempo.NewgRPCClient(clientConn)
 				if err != nil {
-					log.Errorf("Error creating gRPC Tempo Client %s", err.Error())
+					zl.Error().Msgf("Error creating gRPC Tempo Client: %v", err)
 					return nil, nil
 				}
-				return &Client{httpTracingClient: httpTracingClient, grpcClient: streamClient, httpClient: client, baseURL: u, ctx: ctx}, nil
+				return &Client{httpTracingClient: httpTracingClient, grpcClient: streamClient, httpClient: client, baseURL: u, customHeaders: cfgTracing.CustomHeaders}, nil
 			}
 		} else {
 			httpTracingClient, err = jaeger.NewJaegerClient(client, u)
@@ -214,34 +218,38 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 				return nil, err
 			}
 		}
-		return &Client{httpTracingClient: httpTracingClient, httpClient: client, baseURL: u, ctx: ctx}, nil
+		return &Client{httpTracingClient: httpTracingClient, httpClient: client, baseURL: u, customHeaders: cfgTracing.CustomHeaders}, nil
 	}
 }
 
 // GetAppTraces fetches traces of an app
-func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*model.TracingResponse, error) {
+func (in *Client) GetAppTraces(ctx context.Context, namespace, app string, q models.TracingQuery) (*model.TracingResponse, error) {
+	ctx = in.prepareContextForClient(ctx)
+
 	serviceName := BuildTracingServiceName(namespace, app)
 	if in.grpcClient == nil {
-		return in.httpTracingClient.GetAppTracesHTTP(in.httpClient, in.baseURL, serviceName, q)
+		return in.httpTracingClient.GetAppTracesHTTP(ctx, in.httpClient, in.baseURL, serviceName, q)
 	}
-	return in.grpcClient.FindTraces(in.ctx, serviceName, q)
+	return in.grpcClient.FindTraces(ctx, serviceName, q)
 }
 
 // GetTraceDetail fetches a specific trace from its ID
-func (in *Client) GetTraceDetail(strTraceID string) (*model.TracingSingleTrace, error) {
+func (in *Client) GetTraceDetail(ctx context.Context, strTraceID string) (*model.TracingSingleTrace, error) {
+	ctx = in.prepareContextForClient(ctx)
+
 	cfg := config.Get()
 	if in.grpcClient == nil || cfg.ExternalServices.Tracing.Provider == config.TempoProvider {
 		if in.httpTracingClient != nil {
-			return in.httpTracingClient.GetTraceDetailHTTP(in.httpClient, in.baseURL, strTraceID)
+			return in.httpTracingClient.GetTraceDetailHTTP(ctx, in.httpClient, in.baseURL, strTraceID)
 		} else {
 			return nil, fmt.Errorf("error getting trace details")
 		}
 	}
-	return in.grpcClient.GetTrace(in.ctx, strTraceID)
+	return in.grpcClient.GetTrace(ctx, strTraceID)
 }
 
 // GetErrorTraces fetches number of traces in error for the given app
-func (in *Client) GetErrorTraces(ns, app string, duration time.Duration) (int, error) {
+func (in *Client) GetErrorTraces(ctx context.Context, ns, app string, duration time.Duration) (int, error) {
 	// Note: grpc vs http switch is performed in subsequent call 'GetAppTraces'
 	now := time.Now()
 	query := models.TracingQuery{
@@ -253,20 +261,22 @@ func (in *Client) GetErrorTraces(ns, app string, duration time.Duration) (int, e
 		query.Tags[key] = value
 	}
 
-	traces, err := in.GetAppTraces(ns, app, query)
+	traces, err := in.GetAppTraces(ctx, ns, app, query)
 	if err != nil {
 		return 0, err
 	}
 	return len(traces.Data), nil
 }
 
-func (in *Client) GetServiceStatus() (bool, error) {
+func (in *Client) GetServiceStatus(ctx context.Context) (bool, error) {
+	ctx = in.prepareContextForClient(ctx)
+
 	// Check Service Status using HTTP when gRPC is not enabled
 	if in.grpcClient == nil {
-		return in.httpTracingClient.GetServiceStatusHTTP(in.httpClient, in.baseURL)
+		return in.httpTracingClient.GetServiceStatusHTTP(ctx, in.httpClient, in.baseURL)
 	}
 
-	return in.grpcClient.GetServices(in.ctx)
+	return in.grpcClient.GetServices(ctx)
 }
 
 func BuildTracingServiceName(namespace, app string) string {
@@ -275,4 +285,14 @@ func BuildTracingServiceName(namespace, app string) string {
 		return util.BuildNameNSKey(app, namespace)
 	}
 	return app
+}
+
+// prepareContextForClient puts things in the given context that will be needed by the client to do its job.
+// For example, the custom headers are added to the context so the clients pass them on to the server when making requests.
+func (in *Client) prepareContextForClient(ctx context.Context) context.Context {
+	if len(in.customHeaders) > 0 {
+		log.FromContext(ctx).Trace().Msgf("Adding [%v] custom headers to Tracing client", len(in.customHeaders))
+		ctx = metadata.NewOutgoingContext(ctx, metadata.New(in.customHeaders))
+	}
+	return ctx
 }

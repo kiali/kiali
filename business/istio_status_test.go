@@ -761,13 +761,13 @@ func assertNotPresent(assert *assert.Assertions, icsl kubernetes.IstioComponentS
 
 func mockJaeger() tracing.ClientInterface {
 	j := new(tracingtest.TracingClientMock)
-	j.On("GetServiceStatus").Return(true, nil)
+	j.On("GetServiceStatus", context.TODO()).Return(true, nil)
 	return j
 }
 
 func mockFailingJaeger() tracing.ClientInterface {
 	j := new(tracingtest.TracingClientMock)
-	j.On("GetServiceStatus").Return(false, errors.New("error connecting with tracing service"))
+	j.On("GetServiceStatus", context.TODO()).Return(false, errors.New("error connecting with tracing service"))
 	return j
 }
 
