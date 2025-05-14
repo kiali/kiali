@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -22,6 +23,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/tracing/jaeger"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	"github.com/kiali/kiali/tracing/tempo"
@@ -227,6 +229,11 @@ func (in *Client) GetAppTraces(ctx context.Context, namespace, app string, q mod
 	ctx = in.prepareContextForClient(ctx)
 
 	serviceName := BuildTracingServiceName(namespace, app)
+
+	// create a timer to time the tracing query. Note that we will always take the measurement even on failure
+	promtimer := internalmetrics.GetTracingProcessingTimePrometheusTimer("AppTraces")
+	defer observeDurationAndLogResults(ctx, promtimer, "AppTraces")
+
 	if in.grpcClient == nil {
 		return in.httpTracingClient.GetAppTracesHTTP(ctx, in.httpClient, in.baseURL, serviceName, q)
 	}
@@ -238,6 +245,11 @@ func (in *Client) GetTraceDetail(ctx context.Context, strTraceID string) (*model
 	ctx = in.prepareContextForClient(ctx)
 
 	cfg := config.Get()
+
+	// create a timer to time the tracing query. Note that we will always take the measurement even on failure
+	promtimer := internalmetrics.GetTracingProcessingTimePrometheusTimer("TraceDetail")
+	defer observeDurationAndLogResults(ctx, promtimer, "TraceDetail")
+
 	if in.grpcClient == nil || cfg.ExternalServices.Tracing.Provider == config.TempoProvider {
 		if in.httpTracingClient != nil {
 			return in.httpTracingClient.GetTraceDetailHTTP(ctx, in.httpClient, in.baseURL, strTraceID)
@@ -261,6 +273,10 @@ func (in *Client) GetErrorTraces(ctx context.Context, ns, app string, duration t
 		query.Tags[key] = value
 	}
 
+	// create a timer to time the tracing query. Note that we will always take the measurement even on failure
+	promtimer := internalmetrics.GetTracingProcessingTimePrometheusTimer("ErrorTraces")
+	defer observeDurationAndLogResults(ctx, promtimer, "ErrorTraces")
+
 	traces, err := in.GetAppTraces(ctx, ns, app, query)
 	if err != nil {
 		return 0, err
@@ -270,6 +286,10 @@ func (in *Client) GetErrorTraces(ctx context.Context, ns, app string, duration t
 
 func (in *Client) GetServiceStatus(ctx context.Context) (bool, error) {
 	ctx = in.prepareContextForClient(ctx)
+
+	// create a timer to time the tracing query. Note that we will always take the measurement even on failure
+	promtimer := internalmetrics.GetTracingProcessingTimePrometheusTimer("ServiceStatus")
+	defer observeDurationAndLogResults(ctx, promtimer, "ServiceStatus")
 
 	// Check Service Status using HTTP when gRPC is not enabled
 	if in.grpcClient == nil {
@@ -295,4 +315,9 @@ func (in *Client) prepareContextForClient(ctx context.Context) context.Context {
 		ctx = metadata.NewOutgoingContext(ctx, metadata.New(in.customHeaders))
 	}
 	return ctx
+}
+
+func observeDurationAndLogResults(ctx context.Context, timer *prometheus.Timer, msg string) {
+	duration := timer.ObserveDuration()
+	log.FromContext(ctx).Trace().Msgf("Duration for [%s]: %v", msg, duration)
 }
