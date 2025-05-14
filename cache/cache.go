@@ -3,7 +3,6 @@ package cache
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/labels"
 	"strings"
 	"sync"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"golang.org/x/exp/maps"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
