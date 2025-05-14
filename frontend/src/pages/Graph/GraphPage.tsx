@@ -344,12 +344,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
   }
 
   componentDidMount(): void {
-    console.log(
-      `mount: HistoryManager.getRefresh=${HistoryManager.getRefresh()}, props.refreshInterval=${
-        this.props.refreshInterval
-      }`
-    );
-
     // Connect to graph data source updates
     this.graphDataSource.on('loadStart', this.handleGraphDataSourceStart);
     this.graphDataSource.on('fetchError', this.handleGraphDataSourceError);
@@ -396,12 +390,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
   }
 
   componentDidUpdate(prev: GraphPageProps): void {
-    console.log(
-      `update: HistoryManager.getRefresh=${HistoryManager.getRefresh()}, props.refreshInterval=${
-        this.props.refreshInterval
-      }`
-    );
-
     const curr = this.props;
 
     const activeNamespacesChanged = !arrayEquals(
@@ -473,11 +461,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     );
     const isReady = !(isEmpty || this.state.graphData.isError);
     const isReplayReady = this.props.replayActive && !!this.props.replayQueryTime;
-    console.log(
-      `render: HistoryManager.getRefresh=${HistoryManager.getRefresh()}, props.refreshInterval=${
-        this.props.refreshInterval
-      }`
-    );
     const refreshInterval = HistoryManager.getRefresh() ?? this.props.refreshInterval;
 
     return (
