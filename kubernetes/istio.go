@@ -136,7 +136,7 @@ func (in *K8SClient) SetProxyLogLevel(namespace, pod, level string) error {
 
 	// Ready to create a request
 	url := fmt.Sprintf("http://localhost:%d%s", localPort, path)
-	body, code, _, err := httputil.HttpPost(url, nil, nil, time.Second*10, nil)
+	body, code, _, err := httputil.HttpPost(url, nil, nil, time.Second*10, nil, in.conf)
 	if code >= 400 {
 		log.Errorf("Error whilst posting. Error: %s. Body: %s", err, string(body))
 		return fmt.Errorf("error sending post request %s from %s/%s. Response code: %d", path, namespace, pod, code)

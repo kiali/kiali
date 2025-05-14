@@ -22,12 +22,12 @@ func withRetry(f func() error, retries int) error {
 }
 
 // httpGETWithRetry wraps the httpGET function with retries.
-func httpGETWithRetry(url string, auth *config.Auth, timeout time.Duration, customHeaders map[string]string, cookies []*http.Cookie) ([]byte, int, []*http.Cookie, error) {
+func httpGETWithRetry(url string, auth *config.Auth, timeout time.Duration, customHeaders map[string]string, cookies []*http.Cookie, conf *config.Config) ([]byte, int, []*http.Cookie, error) {
 	var body []byte
 	var code int
 	var err error
 	err = withRetry(func() error {
-		body, code, cookies, err = httputil.HttpGet(url, auth, timeout, customHeaders, cookies)
+		body, code, cookies, err = httputil.HttpGet(url, auth, timeout, customHeaders, cookies, conf)
 		return err
 	}, 3)
 	return body, code, cookies, err

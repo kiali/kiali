@@ -122,16 +122,8 @@ func httpClientWithPool(conf *config.Config, restConfig rest.Config, systemPool 
 
 // Returns a new cert Pool with the system certs appended as well as
 // any custom CA if it exists.
-func newCertPool(oAuthServerCAFilePath string) *x509.CertPool {
-	// Adding system certs in case the idp does not use the same cert as the oAuth server.
-	pool, err := x509.SystemCertPool()
-	if err != nil {
-		log.Errorf("While initializing openshift auth, unable to read system certs: %s", err)
-	}
-
-	if pool == nil {
-		pool = x509.NewCertPool()
-	}
+func newCertPool(conf *config.Config, oAuthServerCAFilePath string) *x509.CertPool {
+	pool := conf.CertPool()
 
 	if b, err := os.ReadFile(oAuthServerCAFilePath); err == nil {
 		if ok := pool.AppendCertsFromPEM(b); !ok {
@@ -158,7 +150,7 @@ func NewOpenshiftOAuthService(ctx context.Context, conf *config.Config, kialiSAC
 	ctx, cancel = context.WithDeadline(ctx, oneMinuteFromNow)
 	defer cancel()
 
-	pool := newCertPool(oAuthServerCustomCAFilePath)
+	pool := newCertPool(conf, oAuthServerCustomCAFilePath)
 
 	// TODO: We could parallelize this to potentially speed up the process.
 	for cluster, client := range kialiSAClients {

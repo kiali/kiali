@@ -26,13 +26,13 @@ func (c perRPCCredentials) RequireTransportSecurity() bool {
 	return c.requireSecurity
 }
 
-func GetAuthDialOptions(tls bool, auth *config.Auth) ([]grpc.DialOption, error) {
+func GetAuthDialOptions(conf *config.Config, tls bool, auth *config.Auth) ([]grpc.DialOption, error) {
 	if auth == nil {
 		return []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}, nil
 	}
 	var opts []grpc.DialOption
 	if tls {
-		tlscfg, err := httputil.GetTLSConfig(auth)
+		tlscfg, err := httputil.GetTLSConfig(conf, auth)
 		if err != nil {
 			return nil, err
 		}

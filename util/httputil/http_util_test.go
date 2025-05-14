@@ -143,6 +143,6 @@ func TestHTTPPostSendsPostRequest(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	_, _, _, err := httputil.HttpPost(server.URL, nil, nil, time.Second, nil)
+	_, _, _, err := httputil.HttpPost(server.URL, nil, nil, time.Second, nil, config.NewConfig())
 	assert.NoError(err)
 }

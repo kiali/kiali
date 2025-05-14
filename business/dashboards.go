@@ -67,7 +67,7 @@ func NewDashboardsService(conf *config.Config, grafana *grafana.Service, namespa
 func (in *DashboardsService) prom() (prometheus.ClientInterface, error) {
 	// Lazy init
 	if in.promClient == nil {
-		client, err := prometheus.NewClientForConfig(in.promConfig)
+		client, err := prometheus.NewClientForConfig(*in.conf)
 		if err != nil {
 			return nil, fmt.Errorf("cannot initialize Prometheus Client: %v", err)
 		}

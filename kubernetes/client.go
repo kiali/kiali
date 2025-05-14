@@ -15,7 +15,6 @@ import (
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 
@@ -89,7 +88,7 @@ type K8SClient struct {
 	k8s   kube.Interface
 
 	// controller runtime client. This is only embedded to make the transition to controller-runtime easier.
-	client.Reader
+	ctrlclient.Reader
 
 	projectClient projectclient.Interface
 	routeClient   routeclient.Interface
@@ -119,6 +118,8 @@ type K8SClient struct {
 
 	// Separated out for testing purposes
 	getPodPortForwarderFunc func(namespace, name, portMap string) (httputil.PortForwarder, error)
+
+	conf *kialiconfig.Config
 }
 
 // Ensure the K8SClient implements the full read-write UserClientInterface
@@ -191,6 +192,7 @@ func getConfigForLocalCluster() (*rest.Config, error) {
 func newClientFromConfig(config *rest.Config) (*K8SClient, error) {
 	client := K8SClient{
 		token: config.BearerToken,
+		conf:  kialiconfig.Get(),
 	}
 
 	log.Debugf("Rest perf config QPS: %f Burst: %d", config.QPS, config.Burst)
@@ -252,7 +254,7 @@ func NewClient(
 	routeClient routeclient.Interface,
 	userClient userclient.Interface,
 	oAuthClient oauthclient.Interface,
-	reader client.Reader,
+	reader ctrlclient.Reader,
 ) *K8SClient {
 	return &K8SClient{
 		istioClientset: istioClient,

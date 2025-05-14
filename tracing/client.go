@@ -129,7 +129,7 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 		p, _ := net.LookupPort("tcp", u.Scheme)
 		port = strconv.Itoa(p)
 	}
-	opts, err := grpcutil.GetAuthDialOptions(u.Scheme == "https", &auth)
+	opts, err := grpcutil.GetAuthDialOptions(conf, u.Scheme == "https", &auth)
 	if err != nil {
 		log.Errorf("Error while building GRPC dial options: %v", err)
 		return nil, err
@@ -173,7 +173,7 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 		// Legacy HTTP client
 		log.Tracef("Using legacy HTTP client for Tracing: url=%v, auth.type=%s", u, auth.Type)
 		timeout := time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout) * time.Second
-		transport, err := httputil.CreateTransport(&auth, &http.Transport{}, timeout, cfgTracing.CustomHeaders)
+		transport, err := httputil.CreateTransport(conf, &auth, &http.Transport{}, timeout, cfgTracing.CustomHeaders)
 		if err != nil {
 			return nil, err
 		}
