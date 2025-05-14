@@ -91,11 +91,29 @@ if [ "${DELETE_DEMO}" == "false" ]; then
   fi
 
   echo "Deploying logger for Bookinfo"
-  $CLIENT_EXE run custom-logger \
-  --image=busybox \
-  --namespace=$NAMESPACE \
-  --restart=Never \
-  --command -- /bin/sh -c "while true; do echo 'GET'; echo 'DEBUG'; sleep 1; done"
+  cat <<EOF | $CLIENT_EXE apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: custom-logger
+  namespace: $NAMESPACE
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: custom-logger
+  template:
+    metadata:
+      labels:
+        app: custom-logger
+    spec:
+      containers:
+      - name: logger
+        image: busybox
+        command: ["/bin/sh", "-c"]
+        args:
+          - while true; do echo 'GET'; echo 'DEBUG'; sleep 1; done
+EOF
   
   sleep 5
 else
