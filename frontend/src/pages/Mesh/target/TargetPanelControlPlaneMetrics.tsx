@@ -4,9 +4,11 @@ import { VCLine, RichDataPoint } from 'types/VictoryChartInfo';
 import { PFColors } from 'components/Pf/PfColors';
 import { toVCLine } from 'utils/VictoryChartsUtils';
 import { Card, CardBody, Flex, FlexItem, Grid, GridItem, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { KialiIcon } from 'config/KialiIcon';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { Datapoint, Metric } from 'types/Metrics';
+import { infoStyle } from 'styles/IconStyle';
 import { summaryTitle } from './TargetPanelCommon';
 
 type ControlPlaneProps = {
@@ -131,6 +133,7 @@ export const TargetPanelControlPlaneMetrics: React.FC<ControlPlaneProps> = (prop
                     style={{ textAlign: 'right', paddingRight: '2rem' }}
                   >
                     <FlexItem>
+                      <b>{t('Memory')}</b>
                       <Tooltip
                         position={TooltipPosition.right}
                         content={
@@ -142,7 +145,7 @@ export const TargetPanelControlPlaneMetrics: React.FC<ControlPlaneProps> = (prop
                           </div>
                         }
                       >
-                        <b>{t('Memory')}</b>
+                        <KialiIcon.Info className={infoStyle} />
                       </Tooltip>
                     </FlexItem>
                   </Flex>
@@ -178,6 +181,7 @@ export const TargetPanelControlPlaneMetrics: React.FC<ControlPlaneProps> = (prop
                     style={{ textAlign: 'right', paddingRight: '2rem' }}
                   >
                     <FlexItem>
+                      <b>{t('CPU')}</b>
                       <Tooltip
                         position={TooltipPosition.right}
                         content={
@@ -189,7 +193,7 @@ export const TargetPanelControlPlaneMetrics: React.FC<ControlPlaneProps> = (prop
                           </div>
                         }
                       >
-                        <b>{t('CPU')}</b>
+                        <KialiIcon.Info className={infoStyle} />
                       </Tooltip>
                     </FlexItem>
                   </Flex>
