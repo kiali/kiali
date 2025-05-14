@@ -22,11 +22,11 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -1200,7 +1200,7 @@ func respond(w http.ResponseWriter, code int, payload interface{}) {
 func assertObjectsEqual(t *testing.T, expected, actual []byte, expectedFileName string) {
 	if !assert.ObjectsAreEqual(expected, actual) {
 		// uncomment this if you are trying to create new versions of the expected files, in case of an impl change
-		//os.WriteFile(expectedFileName, actual, 0o644)
+		// os.WriteFile(expectedFileName, actual, 0o644)
 
 		t.Logf("Actual response does not equal expected golden copy [%s]. If you've updated the golden copy, ensure it ends with a newline.", expectedFileName)
 		t.Fail()
@@ -3871,45 +3871,53 @@ func ambientWorkloads(t *testing.T) *business.Layer {
 			Name:        "productpage-v1",
 			Namespace:   "bookinfo",
 			Labels:      map[string]string{"app": "productpage", "version": "v1"},
-			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"},
+		},
 		Spec: core_v1.PodSpec{
 			Containers: []core_v1.Container{
 				{Name: "productpage-v1", Image: "whatever"},
 			},
-		}}
+		},
+	}
 	k8spod2 := &core_v1.Pod{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:        "ratings-v1",
 			Namespace:   "bookinfo",
 			Labels:      map[string]string{"app": "ratings", "version": "v1"},
-			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"},
+		},
 		Spec: core_v1.PodSpec{
 			Containers: []core_v1.Container{
 				{Name: "ratings-v1", Image: "whatever"},
 			},
-		}}
+		},
+	}
 	k8spod3 := &core_v1.Pod{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:        "reviews-v1",
 			Namespace:   "bookinfo",
 			Labels:      map[string]string{"app": "reviews", "version": "v1"},
-			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"},
+		},
 		Spec: core_v1.PodSpec{
 			Containers: []core_v1.Container{
 				{Name: "reviews-v1", Image: "whatever"},
 			},
-		}}
+		},
+	}
 	k8spod4 := &core_v1.Pod{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:        "waypoint",
 			Namespace:   "bookinfo",
 			Labels:      map[string]string{"app": "waypoint", "version": "v1", config.WaypointLabel: config.WaypointLabelValue, config.GatewayLabel: "waypoint"},
-			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"},
+		},
 		Spec: core_v1.PodSpec{
 			Containers: []core_v1.Container{
 				{Name: "istio-waypoint", Image: "whatever"},
 			},
-		}}
+		},
+	}
 
 	ns := kubetest.FakeNamespaceWithLabels("bookinfo", map[string]string{"istio.io/dataplane-mode": "ambient"})
 	k8s := kubetest.NewFakeK8sClient(k8spod1, k8spod2, k8spod3, k8spod4, ns)
@@ -3926,7 +3934,6 @@ func ambientWorkloads(t *testing.T) *business.Layer {
 }
 
 func ambientMockGraph(api *prometheustest.PromAPIMock) {
-
 	q0 := `round(sum(rate(istio_requests_total{reporter=~"waypoint|source",source_workload_namespace!="bookinfo",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.bookinfo\\..+$"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags) > 0,0.001)`
 	v0 := model.Vector{}
 
