@@ -769,25 +769,30 @@ func TestLoadingCertPool(t *testing.T) {
 	invalidCA := filetest.TempFile(t, []byte("notarealCA")).Name()
 
 	cases := map[string]struct {
-		addtionalBundle string
-		expected        *x509.CertPool
-		expectedErr     bool
+		addtionalBundles []string
+		expected         *x509.CertPool
+		expectedErr      bool
 	}{
 		"No addtional CAs loads system Pool": {
 			expected: systemPool.Clone(),
 		},
 		"Addtional CAs loads system Pool": {
-			addtionalBundle: "testdata/test-ca.pem",
-			expected:        addtionalCAPool,
+			addtionalBundles: []string{"testdata/test-ca.pem"},
+			expected:         addtionalCAPool,
 		},
 		"Non-existant CA file does not return err and still loads system pool": {
-			addtionalBundle: "non-existant",
-			expected:        systemPool.Clone(),
+			addtionalBundles: []string{"non-existant"},
+			expected:         systemPool.Clone(),
 		},
 		"CA file with bogus contents returns err and still loads system pool": {
-			addtionalBundle: invalidCA,
-			expected:        systemPool.Clone(),
-			expectedErr:     true,
+			addtionalBundles: []string{invalidCA},
+			expected:         systemPool.Clone(),
+			expectedErr:      true,
+		},
+		// Need to test this for OpenShift serving cert that may come from multiple places.
+		"Loading the same CA multiple times": {
+			addtionalBundles: []string{"testdata/test-ca.pem", "testdata/test-ca.pem"},
+			expected:         addtionalCAPool,
 		},
 	}
 	for name, tc := range cases {
@@ -796,7 +801,7 @@ func TestLoadingCertPool(t *testing.T) {
 
 			conf := NewConfig()
 
-			err = conf.loadCertPool(tc.addtionalBundle)
+			err = conf.loadCertPool(tc.addtionalBundles...)
 			if tc.expectedErr {
 				require.Error(err)
 			} else {

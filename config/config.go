@@ -96,7 +96,10 @@ const (
 
 const (
 	additionalCABundle = "/kiali-cabundle/additional-ca-bundle.pem"
-	openshiftServingCA = "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt"
+	openshiftServingCA = "/kiali-cabundle/service-ca.crt"
+	// This is an alternate location for the openshift serving cert. It's unclear which
+	// one to prefer so we try reading both.
+	openshiftServingCAFromSA = "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt"
 )
 
 // TracingProvider is the type of tracing provider that Kiali will connect to.
@@ -1168,7 +1171,7 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	// Auth strategy isn't a great proxy for whether the cluster is running on openshift or not
 	// but the config is the very first thing loaded so we don't have access to a client.
 	if conf.Auth.Strategy == AuthStrategyOpenshift {
-		additionalCABundles = append(additionalCABundles, openshiftServingCA)
+		additionalCABundles = append(additionalCABundles, openshiftServingCAFromSA, openshiftServingCA)
 	}
 	if err := conf.loadCertPool(additionalCABundles...); err != nil {
 		return nil, fmt.Errorf("unable to load cert pool. Check additional CAs specified at %s and ensure the file is properly formatted: %s",
