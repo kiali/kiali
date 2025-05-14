@@ -29,6 +29,11 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
+type DialFunc func(network, address string, timeout time.Duration) (net.Conn, error)
+
+// For mock in testing
+var MakeRequestI = MakeRequest
+
 func TestNewClient(ctx context.Context, conf *config.Config, token string) (*model.TracingDiagnose, error) {
 	cfgTracing := conf.ExternalServices.Tracing
 	test := model.TracingDiagnose{}
@@ -59,7 +64,7 @@ func TestNewClient(ctx context.Context, conf *config.Config, token string) (*mod
 		auth.Token = token
 	}
 
-	ports, ll := discoverPorts(parsedURL.Host)
+	ports, ll := discoverPortsWithDial(parsedURL.Host, net.DialTimeout)
 	logs = append(logs, ll...)
 
 	validConfig, ll := discoverUrl(ctx, *parsedURL, ports, &auth, cfgTracing)
@@ -92,14 +97,15 @@ func parseUrl(urlToParse string) (*model.ParsedUrl, []model.LogLine, error) {
 }
 
 // discoverPorts try to discover open ports
-func discoverPorts(host string) ([]string, []model.LogLine) {
-	portsToScan := []string{"16686", "16685", "80", "3200", "8080", "9095", "443"}
+// dial is just to make it testable
+func discoverPortsWithDial(host string, dial DialFunc) ([]string, []model.LogLine) {
+	portsToScan := []string{"16686", "16685", "80", "3200", "3100", "8080", "9095", "443"}
 	openPorts := []string{}
 	logLines := []model.LogLine{}
 
 	for _, port := range portsToScan {
 		address := fmt.Sprintf("%s:%s", host, port)
-		conn, err := net.DialTimeout("tcp", address, 500*time.Millisecond)
+		conn, err := dial("tcp", address, 500*time.Millisecond)
 		if err == nil {
 			logLines = append(logLines, model.LogLine{Time: time.Now(), Test: "Checking open ports", Result: fmt.Sprintf("[Ok] Port %s is open", port)})
 			openPorts = append(openPorts, port)
@@ -156,7 +162,7 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 				validConfigs = append(validConfigs, vc...)
 				logs = append(logs, ll...)
 			}
-		case "3200":
+		case "3200", "3100":
 			{
 				vc, ll := validateSimpleTempoHTTP(client, parsedUrl, port)
 				validConfigs = append(validConfigs, vc...)
@@ -270,7 +276,7 @@ func validateTempoHTTP(client http.Client, parsedUrl model.ParsedUrl, port strin
 	if strings.Contains(parsedUrl.Host, "gateway") {
 		splitUrl := strings.Split(parsedUrl.Path, "/")
 		tenant := ""
-		if len(splitUrl) > 3 {
+		if len(splitUrl) > 4 {
 			tenant = splitUrl[4]
 		} else {
 			logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create http client in port 8080", Result: "tenant name not found"})
@@ -345,7 +351,7 @@ func validateSimpleTempoHTTP(client http.Client, parsedUrl model.ParsedUrl, port
 // validateEndpoint Given an endpoint, validates it is valid, otherwise returns an error or logLines
 func validateEndpoint(client http.Client, endpoint, validEndpoint string, provider string) (*model.ValidConfig, []model.LogLine, error) {
 	logs := []model.LogLine{}
-	resp, code, reqError := MakeRequest(client, endpoint, nil)
+	resp, code, reqError := MakeRequestI(client, endpoint, nil)
 	if code != 200 {
 		// Try to handle possible known errors
 		// http to https
