@@ -10,12 +10,12 @@ import (
 
 // getLoggerFromContextGRPCJaeger returns the logger found in the context and adds the type key to refer to this as the gRPC Jaeger logger
 func getLoggerFromContextGRPCJaeger(ctx context.Context) *zerolog.Logger {
-	zl := log.FromContext(ctx).With().Str("impl", "gRPC Jaeger").Logger()
+	zl := log.FromContext(ctx).With().Str("client-type", "gRPC Jaeger").Logger()
 	return &zl
 }
 
 // getLoggerFromContextHTTPJaeger returns the logger found in the context and adds the type key to refer to this as the HTTP Jaeger logger
 func getLoggerFromContextHTTPJaeger(ctx context.Context) *zerolog.Logger {
-	zl := log.FromContext(ctx).With().Str("impl", "HTTP Jaeger").Logger()
+	zl := log.FromContext(ctx).With().Str("client-type", "HTTP Jaeger").Logger()
 	return &zl
 }
