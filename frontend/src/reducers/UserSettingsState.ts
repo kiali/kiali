@@ -28,6 +28,7 @@ export const UserSettingsStateReducer = (
         duration: action.payload
       });
     case getType(UserSettingsActions.setRefreshInterval): {
+      console.log(`set refreshInterval from ${state.refreshInterval} to ${action.payload}`);
       return updateState(state, {
         refreshInterval: action.payload
       });
