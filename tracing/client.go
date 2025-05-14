@@ -63,7 +63,7 @@ type Client struct {
 	grpcClient        GRPCClientInterface
 	httpClient        http.Client
 	baseURL           *url.URL
-	clientCtx         context.Context
+	customHeaders     map[string]string
 }
 
 type basicAuth struct {
@@ -89,7 +89,7 @@ func NewClient(ctx context.Context, conf *config.Config, token string) (*Client,
 	)
 
 	// prepare the client logger and put it in the context
-	// this logger is only used when a request context is not available and we can't get a logger from a request
+	// this context and logger is only used during the instantiation process
 	zl := log.WithGroup(log.TracingLogName)
 	ctx = log.ToContext(ctx, zl)
 
@@ -110,13 +110,13 @@ func NewClient(ctx context.Context, conf *config.Config, token string) (*Client,
 	return client, nil
 }
 
-func newClient(clientCtx context.Context, conf *config.Config, token string) (*Client, error) {
+func newClient(ctx context.Context, conf *config.Config, token string) (*Client, error) {
 	cfgTracing := conf.ExternalServices.Tracing
 	if !cfgTracing.Enabled {
 		return nil, errors.New("tracing is not enabled")
 	}
 
-	zl := log.FromContext(clientCtx)
+	zl := log.FromContext(ctx)
 
 	var httpTracingClient HTTPClientInterface
 	auth := cfgTracing.Auth
@@ -146,11 +146,6 @@ func newClient(clientCtx context.Context, conf *config.Config, token string) (*C
 	address := u.Hostname() + ":" + port
 	zl.Trace().Msgf("[%s] GRPC client info: address=[%s], auth.type=[%s]", cfgTracing.Provider, address, auth.Type)
 
-	if len(cfgTracing.CustomHeaders) > 0 {
-		zl.Trace().Msgf("Adding [%v] custom headers to Tracing client", len(cfgTracing.CustomHeaders))
-		clientCtx = metadata.NewOutgoingContext(clientCtx, metadata.New(cfgTracing.CustomHeaders))
-	}
-
 	if cfgTracing.UseGRPC && cfgTracing.Provider != config.TempoProvider {
 
 		var client GRPCClientInterface
@@ -172,7 +167,7 @@ func newClient(clientCtx context.Context, conf *config.Config, token string) (*C
 				return nil, err
 			}
 			zl.Info().Msgf("Create [%s] GRPC client. address=[%s]", cfgTracing.Provider, address)
-			return &Client{httpTracingClient: httpTracingClient, grpcClient: client, clientCtx: clientCtx}, nil
+			return &Client{httpTracingClient: httpTracingClient, grpcClient: client, customHeaders: cfgTracing.CustomHeaders}, nil
 		} else {
 			zl.Error().Msgf("Error creating client: %v", err)
 			return nil, nil
@@ -190,7 +185,7 @@ func newClient(clientCtx context.Context, conf *config.Config, token string) (*C
 		zl.Info().Msgf("Create Tracing HTTP client [%s]", u)
 
 		if cfgTracing.Provider == config.TempoProvider {
-			httpTracingClient, err = tempo.NewOtelClient(clientCtx)
+			httpTracingClient, err = tempo.NewOtelClient(ctx)
 			if err != nil {
 				zl.Error().Msgf("Error creating HTTP client: %v", err)
 				return nil, err
@@ -215,7 +210,7 @@ func newClient(clientCtx context.Context, conf *config.Config, token string) (*C
 					zl.Error().Msgf("Error creating gRPC Tempo Client: %v", err)
 					return nil, nil
 				}
-				return &Client{httpTracingClient: httpTracingClient, grpcClient: streamClient, httpClient: client, baseURL: u, clientCtx: clientCtx}, nil
+				return &Client{httpTracingClient: httpTracingClient, grpcClient: streamClient, httpClient: client, baseURL: u, customHeaders: cfgTracing.CustomHeaders}, nil
 			}
 		} else {
 			httpTracingClient, err = jaeger.NewJaegerClient(client, u)
@@ -223,18 +218,13 @@ func newClient(clientCtx context.Context, conf *config.Config, token string) (*C
 				return nil, err
 			}
 		}
-		return &Client{httpTracingClient: httpTracingClient, httpClient: client, baseURL: u, clientCtx: clientCtx}, nil
+		return &Client{httpTracingClient: httpTracingClient, httpClient: client, baseURL: u, customHeaders: cfgTracing.CustomHeaders}, nil
 	}
 }
 
 // GetAppTraces fetches traces of an app
 func (in *Client) GetAppTraces(ctx context.Context, namespace, app string, q models.TracingQuery) (*model.TracingResponse, error) {
-	// There are two separate and independent contexts we have to work with.
-	// The first is in the client itself, the second is the request context passed into this function.
-	// We only care about the logger in the request context. Extract the logger, put it in the client context,
-	// and we pass that client context to the GRPC client.
-	zl := log.FromContext(ctx)
-	ctx = log.ToContext(in.clientCtx, zl)
+	ctx = in.prepareContextForClient(ctx)
 
 	serviceName := BuildTracingServiceName(namespace, app)
 	if in.grpcClient == nil {
@@ -245,12 +235,7 @@ func (in *Client) GetAppTraces(ctx context.Context, namespace, app string, q mod
 
 // GetTraceDetail fetches a specific trace from its ID
 func (in *Client) GetTraceDetail(ctx context.Context, strTraceID string) (*model.TracingSingleTrace, error) {
-	// There are two separate and independent contexts we have to work with.
-	// The first is in the client itself, the second is the request context passed into this function.
-	// We only care about the logger in the request context. Extract the logger, put it in the client context,
-	// and we pass that client context to the GRPC client.
-	zl := log.FromContext(ctx)
-	ctx = log.ToContext(in.clientCtx, zl)
+	ctx = in.prepareContextForClient(ctx)
 
 	cfg := config.Get()
 	if in.grpcClient == nil || cfg.ExternalServices.Tracing.Provider == config.TempoProvider {
@@ -284,12 +269,7 @@ func (in *Client) GetErrorTraces(ctx context.Context, ns, app string, duration t
 }
 
 func (in *Client) GetServiceStatus(ctx context.Context) (bool, error) {
-	// There are two separate and independent contexts we have to work with.
-	// The first is in the client itself, the second is the request context passed into this function.
-	// We only care about the logger in the request context. Extract the logger, put it in the client context,
-	// and we pass that client context to the GRPC client.
-	zl := log.FromContext(ctx)
-	ctx = log.ToContext(in.clientCtx, zl)
+	ctx = in.prepareContextForClient(ctx)
 
 	// Check Service Status using HTTP when gRPC is not enabled
 	if in.grpcClient == nil {
@@ -305,4 +285,14 @@ func BuildTracingServiceName(namespace, app string) string {
 		return util.BuildNameNSKey(app, namespace)
 	}
 	return app
+}
+
+// prepareContextForClient puts things in the given context that will be needed by the client to do its job.
+// For example, the custom headers are added to the context so the clients pass them on to the server when making requests.
+func (in *Client) prepareContextForClient(ctx context.Context) context.Context {
+	if len(in.customHeaders) > 0 {
+		log.FromContext(ctx).Trace().Msgf("Adding [%v] custom headers to Tracing client", len(in.customHeaders))
+		ctx = metadata.NewOutgoingContext(ctx, metadata.New(in.customHeaders))
+	}
+	return ctx
 }
