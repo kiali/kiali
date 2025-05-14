@@ -135,7 +135,12 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
           <>
             <div style={{ margin: '1em 0' }}>
               <span>
-                Possible configuration(s) found for <span className={codeStyle}>external_services.tracing</span>:
+                {diagnostic?.validConfig.length > 0 && (
+                  <>
+                    Possible configuration(s) found for <span className={codeStyle}>external_services.tracing</span>:
+                  </>
+                )}
+                {diagnostic?.validConfig.length === 0 && <>No configurations found. See logs for details</>}
               </span>
             </div>
             <div>

@@ -93,7 +93,7 @@ func parseUrl(urlToParse string) (*model.ParsedUrl, []model.LogLine, error) {
 
 // discoverPorts try to discover open ports
 func discoverPorts(host string) ([]string, []model.LogLine) {
-	portsToScan := []string{"16686", "16685", "80", "3200", "8080", "9095"}
+	portsToScan := []string{"16686", "16685", "80", "3200", "8080", "9095", "443"}
 	openPorts := []string{}
 	logLines := []model.LogLine{}
 
@@ -141,8 +141,11 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 				validConfigs = append(validConfigs, vc...)
 				logs = append(logs, ll...)
 			}
-		case "80", "":
+		case "80", "443":
 			{
+				if port == "443" {
+					parsedUrl.Scheme = "https"
+				}
 				vc, ll := validateJaegerHTTP(client, parsedUrl, port)
 				validConfigs = append(validConfigs, vc...)
 				logs = append(logs, ll...)
@@ -344,6 +347,8 @@ func validateEndpoint(client http.Client, endpoint, validEndpoint string, provid
 	logs := []model.LogLine{}
 	resp, code, reqError := MakeRequest(client, endpoint, nil)
 	if code != 200 {
+		// Try to handle possible known errors
+		// http to https
 		msg := fmt.Sprintf("[Discovery client] Cannot query endpoint: %s. Code [%d].", endpoint, code)
 		if reqError != nil {
 			msg = fmt.Sprintf("%s. Error: %s", msg, reqError.Error())
@@ -356,6 +361,11 @@ func validateEndpoint(client http.Client, endpoint, validEndpoint string, provid
 				endpoint = strings.Replace(endpoint, "http", "https", 1)
 				validEndpoint = strings.Replace(validEndpoint, "http", "https", 1)
 				return validateEndpoint(client, endpoint, validEndpoint, provider)
+			}
+			// No tenants found
+			if strings.Contains(response, "tenant not found") {
+				vc := model.ValidConfig{Url: validEndpoint, Provider: provider, UseGRPC: false, Warning: "Tenant must be specified."}
+				return &vc, logs, nil
 			}
 		}
 		// Certificate error: Try valid host
