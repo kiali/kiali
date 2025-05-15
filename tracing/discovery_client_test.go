@@ -16,6 +16,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 )
 
@@ -90,8 +91,8 @@ func TestDiscoverPortsWithDial(t *testing.T) {
 		}
 		return nil, errors.New("connection refused")
 	}
-
-	openPorts, logs := discoverPortsWithDial("localhost", mockDial)
+	zl := log.WithGroup(log.TracingLogName)
+	openPorts, logs := discoverPortsWithDial(zl, "localhost", mockDial)
 
 	expectedPorts := map[string]bool{
 		"80":  true,
@@ -127,13 +128,14 @@ func TestValidateSimpleTempoHTTP(t *testing.T) {
 	defer func() { MakeRequestI = MakeRequest }() // restore after test
 
 	client := http.Client{}
+	zl := log.WithGroup(log.TracingLogName)
 	parsedUrl := model.ParsedUrl{
 		Scheme: "http",
 		Host:   "tempo-host",
 	}
 	port := "3100"
 
-	validConfigs, logs := validateSimpleTempoHTTP(client, parsedUrl, port)
+	validConfigs, logs := validateSimpleTempoHTTP(client, zl, parsedUrl, port)
 
 	assert.Len(t, validConfigs, 2, "Should detect two valid configs")
 	assert.Equal(t, "tempo", validConfigs[0].Provider)
@@ -168,6 +170,7 @@ func TestValidateTempoHTTP_WithGateway(t *testing.T) {
 	defer func() { MakeRequestI = MakeRequest }()
 
 	client := http.Client{}
+	zl := log.WithGroup(log.TracingLogName)
 	parsedUrl := model.ParsedUrl{
 		Scheme: "http",
 		Host:   "gateway-host",
@@ -175,7 +178,7 @@ func TestValidateTempoHTTP_WithGateway(t *testing.T) {
 	}
 	port := "3100"
 
-	validConfigs, logs := validateTempoHTTP(client, parsedUrl, port)
+	validConfigs, logs := validateTempoHTTP(client, zl, parsedUrl, port)
 
 	assert.Len(t, validConfigs, 2)
 	assert.Equal(t, "tempo", validConfigs[0].Provider)
@@ -188,6 +191,7 @@ func TestValidateTempoHTTP_WithoutGateway(t *testing.T) {
 	defer func() { MakeRequestI = MakeRequest }()
 
 	client := http.Client{}
+	zl := log.WithGroup(log.TracingLogName)
 	parsedUrl := model.ParsedUrl{
 		Scheme: "http",
 		Host:   "tempo-host",
@@ -195,7 +199,7 @@ func TestValidateTempoHTTP_WithoutGateway(t *testing.T) {
 	}
 	port := "3100"
 
-	validConfigs, logs := validateTempoHTTP(client, parsedUrl, port)
+	validConfigs, logs := validateTempoHTTP(client, zl, parsedUrl, port)
 
 	assert.Len(t, validConfigs, 2)
 	assert.Equal(t, "tempo", validConfigs[0].Provider)
@@ -208,6 +212,7 @@ func TestValidateTempoHTTP_GatewayMissingTenant(t *testing.T) {
 	defer func() { MakeRequestI = MakeRequest }()
 
 	client := http.Client{}
+	zl := log.WithGroup(log.TracingLogName)
 	parsedUrl := model.ParsedUrl{
 		Scheme: "http",
 		Host:   "gateway-host",
@@ -215,7 +220,7 @@ func TestValidateTempoHTTP_GatewayMissingTenant(t *testing.T) {
 	}
 	port := "3100"
 
-	validConfigs, logs := validateTempoHTTP(client, parsedUrl, port)
+	validConfigs, logs := validateTempoHTTP(client, zl, parsedUrl, port)
 
 	// Should fail due to missing tenant
 	assert.Len(t, validConfigs, 0)
@@ -249,13 +254,14 @@ func TestValidateJaegerHTTP_SuccessfulBothEndpoints(t *testing.T) {
 	defer func() { MakeRequestI = MakeRequest }()
 
 	client := http.Client{}
+	zl := log.WithGroup(log.TracingLogName)
 	parsedUrl := model.ParsedUrl{
 		Scheme: "http",
 		Host:   "jaeger-host",
 	}
 	port := "16686"
 
-	validConfigs, logs := validateJaegerHTTP(client, parsedUrl, port)
+	validConfigs, logs := validateJaegerHTTP(client, zl, parsedUrl, port)
 
 	assert.Len(t, validConfigs, 2)
 	assert.Equal(t, "jaeger", validConfigs[0].Provider)
@@ -278,13 +284,14 @@ func TestValidateJaegerHTTP_OnlyOneSuccess(t *testing.T) {
 	defer func() { MakeRequestI = MakeRequest }()
 
 	client := http.Client{}
+	zl := log.WithGroup(log.TracingLogName)
 	parsedUrl := model.ParsedUrl{
 		Scheme: "http",
 		Host:   "jaeger-host",
 	}
 	port := "16686"
 
-	validConfigs, logs := validateJaegerHTTP(client, parsedUrl, port)
+	validConfigs, logs := validateJaegerHTTP(client, zl, parsedUrl, port)
 
 	assert.Len(t, validConfigs, 1)
 	assert.Equal(t, "jaeger", validConfigs[0].Provider)
@@ -298,13 +305,14 @@ func TestValidateJaegerHTTP_NoSuccess(t *testing.T) {
 	defer func() { MakeRequestI = MakeRequest }()
 
 	client := http.Client{}
+	zl := log.WithGroup(log.TracingLogName)
 	parsedUrl := model.ParsedUrl{
 		Scheme: "http",
 		Host:   "jaeger-host",
 	}
 	port := "16686"
 
-	validConfigs, logs := validateJaegerHTTP(client, parsedUrl, port)
+	validConfigs, logs := validateJaegerHTTP(client, zl, parsedUrl, port)
 
 	assert.Len(t, validConfigs, 0)
 	assert.GreaterOrEqual(t, len(logs), 2)
