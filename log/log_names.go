@@ -5,8 +5,10 @@ package log
 var (
 	GraphAppenderLogName = "appender"
 	GraphLogName         = "graph"
+	IstioConfigLogName   = "istioConfig"
 	KialiCacheLogName    = "kialiCache"
 	PromCacheLogName     = "promCache"
 	PrometheusLogName    = "prometheus"
 	TracingLogName       = "tracing"
+	ValidationLogName    = "validation"
 )
