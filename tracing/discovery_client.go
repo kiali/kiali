@@ -225,7 +225,7 @@ func discoverUrl(ctx context.Context, zl *zerolog.Logger, parsedUrl model.Parsed
 				if err != nil {
 					msg := fmt.Sprintf("Error creating gRPC Client %s", err.Error())
 					logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Client 9095 error", Result: msg})
-					zl.Error().Msgf(msg)
+					zl.Error().Msg(msg)
 				} else {
 					ok, err := streamClient.GetServices(ctx)
 					if ok {
@@ -394,7 +394,7 @@ func validateEndpoint(client http.Client, zl *zerolog.Logger, endpoint, validEnd
 			return &vc, logs, nil
 		}
 		logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
-		zl.Trace().Msgf(msg)
+		zl.Trace().Msg(msg)
 		return nil, logs, errors.New(msg)
 	}
 
@@ -403,7 +403,7 @@ func validateEndpoint(client http.Client, zl *zerolog.Logger, endpoint, validEnd
 		if errMarshal := json.Unmarshal(resp, &response); errMarshal != nil {
 			msg := fmt.Sprintf("[Discovery client] Error unmarshalling Jaeger response: %s [URL: %v]", errMarshal, endpoint)
 			logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
-			zl.Trace().Msgf(msg)
+			zl.Trace().Msg(msg)
 			return nil, logs, errors.New(msg)
 		}
 		vc := model.ValidConfig{Url: validEndpoint, Provider: provider, UseGRPC: false, NamespaceSelector: false}
@@ -416,7 +416,7 @@ func validateEndpoint(client http.Client, zl *zerolog.Logger, endpoint, validEnd
 		}
 		msg := fmt.Sprintf("[Discovery client] Found valid Config %v", vc)
 		logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
-		zl.Trace().Msgf(msg)
+		zl.Trace().Msg(msg)
 		return &vc, logs, nil
 	}
 	// Try Tempo
@@ -424,7 +424,7 @@ func validateEndpoint(client http.Client, zl *zerolog.Logger, endpoint, validEnd
 	if errMarshal := json.Unmarshal(resp, &response); errMarshal != nil {
 		msg := fmt.Sprintf("[Discovery client] Error unmarshalling Tempo response: %s [URL: %v]", errMarshal, endpoint)
 		logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
-		zl.Trace().Msgf(msg)
+		zl.Trace().Msg(msg)
 		return nil, logs, errors.New(msg)
 	}
 	vc := model.ValidConfig{Url: validEndpoint, Provider: "tempo", UseGRPC: false, NamespaceSelector: false}
@@ -437,6 +437,6 @@ func validateEndpoint(client http.Client, zl *zerolog.Logger, endpoint, validEnd
 	}
 	msg := fmt.Sprintf("[Discovery client] Found valid Config %v", vc)
 	logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
-	zl.Trace().Msgf(msg)
+	zl.Trace().Msg(msg)
 	return &vc, logs, nil
 }
