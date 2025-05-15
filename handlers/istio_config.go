@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"io"
 	"net/http"
 	"strings"
@@ -33,6 +32,9 @@ func IstioConfigList(
 	grafana *grafana.Service,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// prepare the logger in a context, and replace the request context with ours that has our logger in it
+		r = log.AddGroupToLoggerInRequestContext(r, log.IstioConfigLogName)
+
 		params := mux.Vars(r)
 		namespace := params["namespace"]
 		query := r.URL.Query()
@@ -116,6 +118,9 @@ func IstioConfigDetails(
 	grafana *grafana.Service,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// prepare the logger in a context, and replace the request context with ours that has our logger in it
+		r = log.AddGroupToLoggerInRequestContext(r, log.IstioConfigLogName)
+
 		params := mux.Vars(r)
 		namespace := params["namespace"]
 		objectGroup := params["group"]
@@ -156,7 +161,7 @@ func IstioConfigDetails(
 			return
 		}
 
-		istioConfigDetails, err := business.IstioConfig.GetIstioConfigDetails(context.TODO(), cluster, namespace, gvk, object)
+		istioConfigDetails, err := business.IstioConfig.GetIstioConfigDetails(r.Context(), cluster, namespace, gvk, object)
 		if err != nil {
 			handleErrorResponse(w, err)
 			return
@@ -230,6 +235,9 @@ func IstioConfigDelete(
 	grafana *grafana.Service,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// prepare the logger in a context, and replace the request context with ours that has our logger in it
+		r = log.AddGroupToLoggerInRequestContext(r, log.IstioConfigLogName)
+
 		params := mux.Vars(r)
 		namespace := params["namespace"]
 		objectGroup := params["group"]
@@ -261,7 +269,7 @@ func IstioConfigDelete(
 			handleErrorResponse(w, err)
 			return
 		} else {
-			audit(r, "DELETE on Namespace: "+namespace+" Type: "+gvk.String()+" Name: "+object)
+			audit(r, "DELETE", namespace, gvk.String(), "Name: ["+object+"]")
 			RespondWithCode(w, http.StatusOK)
 		}
 	}
@@ -278,6 +286,9 @@ func IstioConfigUpdate(
 	grafana *grafana.Service,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// prepare the logger in a context, and replace the request context with ours that has our logger in it
+		r = log.AddGroupToLoggerInRequestContext(r, log.IstioConfigLogName)
+
 		params := mux.Vars(r)
 		namespace := params["namespace"]
 		objectGroup := params["group"]
@@ -316,7 +327,7 @@ func IstioConfigUpdate(
 			return
 		}
 
-		audit(r, "UPDATE on Namespace: "+namespace+" Type: "+gvk.String()+" Name: "+object+" Patch: "+jsonPatch)
+		audit(r, "UPDATE", namespace, gvk.String(), "Name: ["+object+"], Patch: "+jsonPatch)
 		RespondWithJSON(w, http.StatusOK, updatedConfigDetails)
 	}
 }
@@ -332,6 +343,9 @@ func IstioConfigCreate(
 	grafana *grafana.Service,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// prepare the logger in a context, and replace the request context with ours that has our logger in it
+		r = log.AddGroupToLoggerInRequestContext(r, log.IstioConfigLogName)
+
 		// Feels kinda replicated for multiple functions..
 		params := mux.Vars(r)
 		namespace := params["namespace"]
@@ -370,7 +384,7 @@ func IstioConfigCreate(
 			return
 		}
 
-		audit(r, "CREATE on Namespace: "+namespace+" Type: "+gvk.String()+" Object: "+string(body))
+		audit(r, "CREATE", namespace, gvk.String(), "Object: "+string(body))
 		RespondWithJSON(w, http.StatusOK, createdConfigDetails)
 	}
 }
@@ -379,10 +393,16 @@ func checkObjectType(gvk schema.GroupVersionKind) bool {
 	return business.GetIstioAPI(gvk)
 }
 
-func audit(r *http.Request, message string) {
+func audit(r *http.Request, operation, namespace, gvk, message string) {
 	if config.Get().Server.AuditLog {
 		user := r.Header.Get("Kiali-User")
-		log.Infof("AUDIT User [%s] Msg [%s]", user, message)
+		log.FromRequest(r).
+			Info().
+			Str("operation", operation).
+			Str("namespace", namespace).
+			Str("gvk", gvk).
+			Str("user", user).
+			Msgf("AUDIT: %s", message)
 	}
 }
 
@@ -397,6 +417,9 @@ func IstioConfigPermissions(
 	grafana *grafana.Service,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// prepare the logger in a context, and replace the request context with ours that has our logger in it
+		r = log.AddGroupToLoggerInRequestContext(r, log.IstioConfigLogName)
+
 		// query params
 		params := r.URL.Query()
 		namespaces := params.Get("namespaces") // csl of namespaces
@@ -435,6 +458,10 @@ func IstioConfigValidationSummary(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// prepare the logger in a context, and replace the request context with ours that has our logger in it
+		// note we put this in the "validations" group log name since it is more about validations that just istio config
+		r = log.AddGroupToLoggerInRequestContext(r, log.ValidationLogName)
+
 		params := r.URL.Query()
 		namespaces := params.Get("namespaces") // csl of namespaces
 		nss := []string{}
@@ -460,7 +487,7 @@ func IstioConfigValidationSummary(
 		for _, ns := range nss {
 			istioConfigValidationResults, errValidations := business.Validations.GetValidationsForNamespace(r.Context(), cluster, ns)
 			if errValidations != nil {
-				log.Error(errValidations)
+				log.FromRequest(r).Error().Msg(errValidations.Error())
 				RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
 				return
 			}

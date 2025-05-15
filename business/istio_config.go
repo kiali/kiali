@@ -235,7 +235,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 	}
 
 	if !saClient.IsIstioAPI() {
-		log.Infof("Cluster [%s] does not have Istio API installed", cluster)
+		log.FromContext(ctx).Info().Msgf("Cluster [%s] does not have Istio API installed", cluster)
 		// Return empty object here since there are no istio config objects in the cluster
 		// and returning nil would cause nil pointer dereference in the caller.
 		return istioConfigList, nil
@@ -757,7 +757,7 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(ctx context.Context, clust
 	if in.conf.ExternalServices.Istio.IstioAPIEnabled {
 		// Refreshing the istio cache in case something has changed with the registry services. Not sure if this is really needed.
 		if err := in.controlPlaneMonitor.RefreshIstioCache(ctx); err != nil {
-			log.Errorf("Error while refreshing Istio cache: %s", err)
+			log.FromContext(ctx).Error().Msgf("Error while refreshing Istio cache: %s", err)
 		}
 	}
 
@@ -772,14 +772,14 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(ctx context.Context, clust
 func (in *IstioConfigService) waitForObjectDeletion(ctx context.Context, cluster string, obj client.Object) {
 	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
 	if err != nil {
-		log.Errorf("Cannot get cache so cannot wait for object to be deleted in cache. You may see stale data but the delete was processed correctly. Error: %s", err)
+		log.FromContext(ctx).Error().Msgf("Cannot get cache so cannot wait for object to be deleted in cache. You may see stale data but the delete was processed correctly. Error: %s", err)
 		return
 	}
 
 	if err := kubernetes.WaitForObjectDeleteInCache(ctx, kubeCache, obj); err != nil {
 		// It won't break anything if we return the object before it is updated in the cache.
 		// We will just show stale data so just log an error here instead of failing.
-		log.Errorf("Failed waiting for object to be deleted in cache. You may see stale data but the delete was processed correctly. Error: %s", err)
+		log.FromContext(ctx).Error().Msgf("Failed waiting for object to be deleted in cache. You may see stale data but the delete was processed correctly. Error: %s", err)
 		return
 	}
 }
@@ -787,14 +787,14 @@ func (in *IstioConfigService) waitForObjectDeletion(ctx context.Context, cluster
 func (in *IstioConfigService) waitForCacheUpdate(ctx context.Context, cluster string, obj client.Object) {
 	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
 	if err != nil {
-		log.Errorf("Cannot get cache so cannot wait for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
+		log.FromContext(ctx).Error().Msgf("Cannot get cache so cannot wait for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
 		return
 	}
 
 	if err := kubernetes.WaitForObjectUpdateInCache(ctx, kubeCache, obj); err != nil {
 		// It won't break anything if we return the object before it is updated in the cache.
 		// We will just show stale data so just log an error here instead of failing.
-		log.Errorf("Failed waiting for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
+		log.FromContext(ctx).Error().Msgf("Failed waiting for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
 		return
 	}
 }
@@ -802,14 +802,14 @@ func (in *IstioConfigService) waitForCacheUpdate(ctx context.Context, cluster st
 func (in *IstioConfigService) waitForCacheCreate(ctx context.Context, cluster string, obj client.Object) {
 	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
 	if err != nil {
-		log.Errorf("Cannot get cache so cannot wait for object to exist in cache. You may see stale data but the create was processed correctly. Error: %s", err)
+		log.FromContext(ctx).Error().Msgf("Cannot get cache so cannot wait for object to exist in cache. You may see stale data but the create was processed correctly. Error: %s", err)
 		return
 	}
 
 	if err := kubernetes.WaitForObjectCreateInCache(ctx, kubeCache, obj); err != nil {
 		// It won't break anything if we return the object before it is updated in the cache.
 		// We will just show stale data so just log an error here instead of failing.
-		log.Errorf("Failed waiting for object to exist in cache. You may see stale data but the create was processed correctly. Error: %s", err)
+		log.FromContext(ctx).Error().Msgf("Failed waiting for object to exist in cache. You may see stale data but the create was processed correctly. Error: %s", err)
 		return
 	}
 }
@@ -921,7 +921,7 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, clust
 	if in.conf.IsValidationsEnabled() {
 		if _, _, err := in.businessLayer.Validations.ValidateIstioObject(ctx, cluster, namespace, resourceType, name); err != nil {
 			// Logging the error and swallowing it since the object was updated successfully.
-			log.Errorf("Error while validating Istio object: %s", err)
+			log.FromContext(ctx).Error().Msgf("Error while validating Istio object: %s", err)
 		}
 	}
 
@@ -1107,7 +1107,7 @@ func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, clust
 	if in.conf.ExternalServices.Istio.IstioAPIEnabled {
 		// Refreshing the istio cache in case something has changed with the registry services. Not sure if this is really needed.
 		if err := in.controlPlaneMonitor.RefreshIstioCache(ctx); err != nil {
-			log.Errorf("Error while refreshing Istio cache: %s", err)
+			log.FromContext(ctx).Error().Msgf("Error while refreshing Istio cache: %s", err)
 		}
 	}
 
@@ -1116,7 +1116,7 @@ func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, clust
 	// Re-run validations for that object to refresh the validation cache.
 	if _, _, err := in.businessLayer.Validations.ValidateIstioObject(ctx, cluster, namespace, resourceType, name); err != nil {
 		// Logging the error and swallowing it since the object was created successfully.
-		log.Errorf("Error while validating Istio object: %s", err)
+		log.FromContext(ctx).Error().Msgf("Error while validating Istio object: %s", err)
 	}
 
 	return istioConfigDetail, nil
@@ -1134,7 +1134,7 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 
 	k8s, ok := in.userClients[cluster]
 	if !ok {
-		log.Errorf("Cluster %s doesn't exist ", cluster)
+		log.FromContext(ctx).Error().Msgf("Cluster [%s] doesn't exist ", cluster)
 		return nil
 	}
 
@@ -1231,7 +1231,7 @@ func getPermissionsApi(ctx context.Context, k8s kubernetes.ClientInterface, clus
 
 	// In view only mode, there is not need to check RBAC permissions, return false early
 	if conf.Deployment.ViewOnlyMode {
-		log.Debug("View only mode configured, skipping RBAC checks")
+		log.FromContext(ctx).Debug().Msg("View only mode configured, skipping RBAC checks")
 		return canCreate, canPatch, canDelete
 	}
 
@@ -1258,7 +1258,7 @@ func getPermissionsApi(ctx context.Context, k8s kubernetes.ClientInterface, clus
 			}
 		}
 	} else {
-		log.Errorf("Error getting permissions [namespace: %s, api: %s, resourceType: %s]: %v", namespace, api, "*", permErr)
+		log.FromContext(ctx).Error().Msgf("Error getting permissions [namespace: %s, api: %s, resourceType: %s]: %v", namespace, api, "*", permErr)
 	}
 	return canCreate, canPatch, canDelete
 }
