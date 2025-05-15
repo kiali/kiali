@@ -55,7 +55,7 @@ export const LogsModal: React.FC<LogsModalProps> = (props: LogsModalProps) => {
       variant={ModalVariant.medium}
       isOpen={props.isOpen}
       onClose={props.onClose}
-      title={t('Tracing diagnostic logs')}
+      title={t('Tracing Services Check Logs')}
       actions={[
         <Button key="close" onClick={props.onClose}>
           {t('Close')}

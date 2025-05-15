@@ -1,8 +1,5 @@
 import * as React from 'react';
 import { useKialiTranslation } from '../../utils/I18nUtils';
-import { targetPanelHR } from '../../pages/Mesh/target/TargetPanelCommon';
-import { Validation } from '../Validations/Validation';
-import { ValidationTypes } from '../../types/IstioObjects';
 import { StatusError, TracingInfo } from '../../types/TracingInfo';
 import * as API from '../../services/Api';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -14,6 +11,9 @@ import { isJaegerService, JaegerUrlProvider } from '../../utils/tracing/UrlProvi
 import { isTempoService, TempoUrlProvider } from '../../utils/tracing/UrlProviders/Tempo';
 import { isParentKiosk } from '../Kiosk/KioskActions';
 import { MeshNodeData } from '../../types/Mesh';
+import { KialiIcon } from 'config/KialiIcon';
+import { infoStyle } from '../../styles/IconStyle';
+import { Tooltip } from '@patternfly/react-core';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -32,7 +32,7 @@ const codeStyle = kialiStyle({
 
 const configStyle = kialiStyle({
   fontFamily: 'Courier New, Courier, monospace',
-  margin: '2em'
+  margin: '1.25em'
 });
 
 const blockDisplay = kialiStyle({
@@ -109,22 +109,33 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
   const labels = {
     namespaceSelector: 'namespace_selector',
     provider: 'provider',
-    url: 'url',
+    url: 'internal_url',
     useGRPC: 'use_grpc'
   };
 
   return (
     <>
-      {targetPanelHR}
-      <div>
+      <div style={{ paddingTop: '0.75em' }}>
         <button onClick={handleCheckService} disabled={loading}>
-          {loading ? t('Verifying...') : t('Diagnose')}
+          {loading ? t('Verifying...') : t('Services Check')}
         </button>
-        {diagnostic && !error && (
-          <span style={{ marginLeft: '0.5rem' }}>
-            <Validation severity={ValidationTypes.Correct} />
-          </span>
-        )}
+        <Tooltip
+          key={'tooltip_'} // Considera si esta clave es necesaria o si debería ser más específica si el tooltip está en una lista.
+          position={'bottom'}
+          content={
+            <>
+              {t(
+                'Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found.'
+              )}
+              <br />
+              {t(
+                'While the health check is based on whether the URL response returns an HTTP 200, the services check performs a more exhaustive verification by attempting to analyze if the traces response is correct. It is important that internal_url is defined, as it relies on this host to perform the checks.'
+              )}
+            </>
+          }
+        >
+          <KialiIcon.Info className={infoStyle} />
+        </Tooltip>
         {diagnostic && <span style={{ color: 'green' }}>{diagnostic.message}</span>}
         {error && (
           <div>
@@ -133,7 +144,7 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
         )}
         {diagnostic?.validConfig && (
           <>
-            <div style={{ margin: '1em 0' }}>
+            <div style={{ margin: '0.5em 0' }}>
               <span>
                 {diagnostic?.validConfig.length > 0 && (
                   <>
@@ -179,7 +190,7 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
                 setIsModalOpen(true);
               }}
             >
-              {t('More info...')}
+              {t('View logs...')}
             </a>
             <LogsModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} logs={diagnostic?.logLine} />
           </>
