@@ -408,8 +408,8 @@ func (c *kialiCacheImpl) GatewayAPIClasses(cluster string) []config.GatewayAPICl
 		}
 
 		for _, class := range classList.Items {
-			// Filter out classes that don't use Istio as a controller
-			if strings.HasPrefix(string(class.Spec.ControllerName), "istio.io") {
+			// Filter out classes that don't use Istio as a controller when the label filter is set
+			if strings.HasPrefix(string(class.Spec.ControllerName), "istio.io") || len(labelSelector) > 0 {
 				result = append(result, config.GatewayAPIClass{Name: class.Name, ClassName: class.Name})
 			}
 		}
