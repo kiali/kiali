@@ -124,7 +124,8 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 
 	// Create client
 	timeout := time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout) * time.Second
-	transport, err := httputil.CreateTransport(auth, &http.Transport{}, timeout, cfgTracing.CustomHeaders)
+	conf := config.Get()
+	transport, err := httputil.CreateTransport(conf, auth, &http.Transport{}, timeout, cfgTracing.CustomHeaders)
 	if err != nil {
 		logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create HTTP client", Result: fmt.Sprintf("[ERROR] Cannot create transport: %s", err.Error())})
 		// TODO: Validate auth?
@@ -171,7 +172,7 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 		case "16685":
 			{
 				// Try gRPC Jaeger client
-				opts, err := grpcutil.GetAuthDialOptions(parsedUrl.Scheme == "https", auth)
+				opts, err := grpcutil.GetAuthDialOptions(conf, parsedUrl.Scheme == "https", auth)
 				if err == nil {
 					address := parsedUrl.Host + ":" + port
 					logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC Client 16685", Result: fmt.Sprintf("%s GRPC client info: address=%s, auth.type=%s", cfgTracing.Provider, address, auth.Type)})
@@ -189,7 +190,7 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 						} else {
 							ok, err := clientgRPC.GetServices(ctx)
 							if ok {
-								vc := model.ValidConfig{Url: address, Provider: "jaeger", UseGRPC: true}
+								vc := model.ValidConfig{Url: fmt.Sprintf("%s://%s", parsedUrl.Scheme, address), Provider: "jaeger", UseGRPC: true}
 								validConfigs = append(validConfigs, vc)
 								logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Client 16685 Ok", Result: "Valid gRPC Client found"})
 							} else {
