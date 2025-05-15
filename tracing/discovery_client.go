@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -38,6 +39,7 @@ func TestNewClient(ctx context.Context, conf *config.Config, token string) (*mod
 	cfgTracing := conf.ExternalServices.Tracing
 	test := model.TracingDiagnose{}
 	logs := []model.LogLine{}
+	zl := log.WithGroup(log.TracingLogName)
 
 	// Tracing not enabled
 	if !cfgTracing.Enabled {
@@ -64,14 +66,12 @@ func TestNewClient(ctx context.Context, conf *config.Config, token string) (*mod
 		auth.Token = token
 	}
 
-	ports, ll := discoverPortsWithDial(parsedURL.Host, net.DialTimeout)
+	ports, ll := discoverPortsWithDial(zl, parsedURL.Host, net.DialTimeout)
 	logs = append(logs, ll...)
 
-	validConfig, ll := discoverUrl(ctx, *parsedURL, ports, &auth, cfgTracing)
+	validConfig, ll := discoverUrl(ctx, zl, *parsedURL, ports, &auth, cfgTracing)
 	test.ValidConfig = validConfig
 	test.LogLine = append(logs, ll...)
-
-	// TODO: Compare with client
 
 	return &test, nil
 
@@ -98,7 +98,7 @@ func parseUrl(urlToParse string) (*model.ParsedUrl, []model.LogLine, error) {
 
 // discoverPorts try to discover open ports
 // dial is just to make it testable
-func discoverPortsWithDial(host string, dial DialFunc) ([]string, []model.LogLine) {
+func discoverPortsWithDial(zl *zerolog.Logger, host string, dial DialFunc) ([]string, []model.LogLine) {
 	portsToScan := []string{"16686", "16685", "80", "3200", "3100", "8080", "9095", "443"}
 	openPorts := []string{}
 	logLines := []model.LogLine{}
@@ -112,12 +112,12 @@ func discoverPortsWithDial(host string, dial DialFunc) ([]string, []model.LogLin
 			conn.Close()
 		}
 	}
-	log.Tracef("[Discovery client] Open ports: %v", openPorts)
+	zl.Trace().Msgf("[Discovery client] Open ports: %v", openPorts)
 	return openPorts, logLines
 }
 
 // discoverUrl try to discover valid URLs
-func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string, auth *config.Auth, cfgTracing config.TracingConfig) ([]model.ValidConfig, []model.LogLine) {
+func discoverUrl(ctx context.Context, zl *zerolog.Logger, parsedUrl model.ParsedUrl, ports []string, auth *config.Auth, cfgTracing config.TracingConfig) ([]model.ValidConfig, []model.LogLine) {
 	validConfigs := []model.ValidConfig{}
 	var client http.Client
 	logs := []model.LogLine{}
@@ -138,13 +138,13 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 		switch port {
 		case "16686":
 			{
-				vc, ll := validateJaegerHTTP(client, parsedUrl, port)
+				vc, ll := validateJaegerHTTP(client, zl, parsedUrl, port)
 				validConfigs = append(validConfigs, vc...)
 				logs = append(logs, ll...)
 			}
 		case "8080":
 			{
-				vc, ll := validateTempoHTTP(client, parsedUrl, port)
+				vc, ll := validateTempoHTTP(client, zl, parsedUrl, port)
 				validConfigs = append(validConfigs, vc...)
 				logs = append(logs, ll...)
 			}
@@ -153,19 +153,19 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 				if port == "443" {
 					parsedUrl.Scheme = "https"
 				}
-				vc, ll := validateJaegerHTTP(client, parsedUrl, port)
+				vc, ll := validateJaegerHTTP(client, zl, parsedUrl, port)
 				validConfigs = append(validConfigs, vc...)
 				logs = append(logs, ll...)
-				vc, ll = validateTempoHTTP(client, parsedUrl, port)
+				vc, ll = validateTempoHTTP(client, zl, parsedUrl, port)
 				validConfigs = append(validConfigs, vc...)
 				logs = append(logs, ll...)
-				vc, ll = validateSimpleTempoHTTP(client, parsedUrl, port)
+				vc, ll = validateSimpleTempoHTTP(client, zl, parsedUrl, port)
 				validConfigs = append(validConfigs, vc...)
 				logs = append(logs, ll...)
 			}
 		case "3200", "3100":
 			{
-				vc, ll := validateSimpleTempoHTTP(client, parsedUrl, port)
+				vc, ll := validateSimpleTempoHTTP(client, zl, parsedUrl, port)
 				validConfigs = append(validConfigs, vc...)
 				logs = append(logs, ll...)
 			}
@@ -225,7 +225,7 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 				if err != nil {
 					msg := fmt.Sprintf("Error creating gRPC Client %s", err.Error())
 					logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Client 9095 error", Result: msg})
-					log.Error(msg)
+					zl.Error().Msgf(msg)
 				} else {
 					ok, err := streamClient.GetServices(ctx)
 					if ok {
@@ -244,14 +244,14 @@ func discoverUrl(ctx context.Context, parsedUrl model.ParsedUrl, ports []string,
 }
 
 // validateJaegerHTTP validate specific path for Jaeger and HTTP endpoint
-func validateJaegerHTTP(client http.Client, parsedUrl model.ParsedUrl, port string) ([]model.ValidConfig, []model.LogLine) {
+func validateJaegerHTTP(client http.Client, zl *zerolog.Logger, parsedUrl model.ParsedUrl, port string) ([]model.ValidConfig, []model.LogLine) {
 	logs := []model.LogLine{}
 	validConfigs := []model.ValidConfig{}
 
 	// We assume it is Jaeger. Try Jaeger URL
 	validEndpoint := fmt.Sprintf("%s://%s:%s/jaeger", parsedUrl.Scheme, parsedUrl.Host, port)
 	endpointJ := fmt.Sprintf("%s/api/services", validEndpoint)
-	vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
+	vc, ll, err := validateEndpoint(client, zl, endpointJ, validEndpoint, "jaeger")
 	if err == nil {
 		validConfigs = append(validConfigs, *vc)
 	}
@@ -260,7 +260,7 @@ func validateJaegerHTTP(client http.Client, parsedUrl model.ParsedUrl, port stri
 	// Try Tempo URL
 	validEndpoint = fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port)
 	endpointJ = fmt.Sprintf("%s/api/services", validEndpoint)
-	vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
+	vc, ll, err = validateEndpoint(client, zl, endpointJ, validEndpoint, "jaeger")
 	if err == nil {
 		validConfigs = append(validConfigs, *vc)
 	}
@@ -269,7 +269,7 @@ func validateJaegerHTTP(client http.Client, parsedUrl model.ParsedUrl, port stri
 }
 
 // validateTempoHTTP validate specific path for Tempo and HTTP endpoint
-func validateTempoHTTP(client http.Client, parsedUrl model.ParsedUrl, port string) ([]model.ValidConfig, []model.LogLine) {
+func validateTempoHTTP(client http.Client, zl *zerolog.Logger, parsedUrl model.ParsedUrl, port string) ([]model.ValidConfig, []model.LogLine) {
 	logs := []model.LogLine{}
 	validConfigs := []model.ValidConfig{}
 
@@ -277,15 +277,14 @@ func validateTempoHTTP(client http.Client, parsedUrl model.ParsedUrl, port strin
 	if strings.Contains(parsedUrl.Host, "gateway") {
 		splitUrl := strings.Split(parsedUrl.Path, "/")
 		tenant := ""
-		if len(splitUrl) > 4 {
-			tenant = splitUrl[4]
+		if len(splitUrl) > 3 {
+			tenant = splitUrl[3]
 		} else {
-			logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create http client in port 8080", Result: "tenant name not found"})
-			log.Infof("[Discovery client] Tenant name not found: %s. Tempo URL includes gateway but not the Tenant name", parsedUrl.Path)
+			logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create http client in port 8080", Result: fmt.Sprintf("tenant name not found: %s", parsedUrl.Path)})
 		}
 		validEndpoint := fmt.Sprintf("%s://%s:%s/api/traces/v1/%s/tempo", parsedUrl.Scheme, parsedUrl.Host, port, tenant)
 		endpointJ := fmt.Sprintf("%s/api/search?q={}", validEndpoint)
-		vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "tempo")
+		vc, ll, err := validateEndpoint(client, zl, endpointJ, validEndpoint, "tempo")
 		if err == nil {
 			validConfigs = append(validConfigs, *vc)
 		}
@@ -294,7 +293,7 @@ func validateTempoHTTP(client http.Client, parsedUrl model.ParsedUrl, port strin
 		// Try GW Jaeger Endpoint
 		validEndpoint = fmt.Sprintf("%s://%s:%s/api/traces/v1/%s", parsedUrl.Scheme, parsedUrl.Host, port, tenant)
 		endpointJ = fmt.Sprintf("%s/api/services", validEndpoint)
-		vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
+		vc, ll, err = validateEndpoint(client, zl, endpointJ, validEndpoint, "jaeger")
 		if err == nil {
 			validConfigs = append(validConfigs, *vc)
 		}
@@ -304,7 +303,7 @@ func validateTempoHTTP(client http.Client, parsedUrl model.ParsedUrl, port strin
 		// Tempo service (No GW)
 		validEndpoint := fmt.Sprintf("%s://%s:%s/api/traces/v1/tempo", parsedUrl.Scheme, parsedUrl.Host, port)
 		endpointJ := fmt.Sprintf("%s/api/search?q={}", validEndpoint)
-		vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "tempo")
+		vc, ll, err := validateEndpoint(client, zl, endpointJ, validEndpoint, "tempo")
 		if err == nil {
 			validConfigs = append(validConfigs, *vc)
 		}
@@ -313,7 +312,7 @@ func validateTempoHTTP(client http.Client, parsedUrl model.ParsedUrl, port strin
 		// Try GW Jaeger Endpoint
 		validEndpoint = fmt.Sprintf("%s://%s:%s/api/traces/v1", parsedUrl.Scheme, parsedUrl.Host, port)
 		endpointJ = fmt.Sprintf("%s/api/traces/v1/api/services", validEndpoint)
-		vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
+		vc, ll, err = validateEndpoint(client, zl, endpointJ, validEndpoint, "jaeger")
 		if err == nil {
 			validConfigs = append(validConfigs, *vc)
 		}
@@ -324,14 +323,14 @@ func validateTempoHTTP(client http.Client, parsedUrl model.ParsedUrl, port strin
 }
 
 // validateSimpleTempoHTTP validate specific path for Tempo and HTTP endpoint
-func validateSimpleTempoHTTP(client http.Client, parsedUrl model.ParsedUrl, port string) ([]model.ValidConfig, []model.LogLine) {
+func validateSimpleTempoHTTP(client http.Client, zl *zerolog.Logger, parsedUrl model.ParsedUrl, port string) ([]model.ValidConfig, []model.LogLine) {
 	logs := []model.LogLine{}
 	validConfigs := []model.ValidConfig{}
 
 	// Try Tempo HTTP client
 	validEndpoint := fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port)
 	endpointJ := fmt.Sprintf("%s/api/search?q={}", validEndpoint)
-	vc, ll, err := validateEndpoint(client, endpointJ, validEndpoint, "tempo")
+	vc, ll, err := validateEndpoint(client, zl, endpointJ, validEndpoint, "tempo")
 	if err == nil {
 		validConfigs = append(validConfigs, *vc)
 	}
@@ -340,7 +339,7 @@ func validateSimpleTempoHTTP(client http.Client, parsedUrl model.ParsedUrl, port
 	// Try Jaeger?
 	validEndpoint = fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Host, port)
 	endpointJ = fmt.Sprintf("%s/api/services", validEndpoint)
-	vc, ll, err = validateEndpoint(client, endpointJ, validEndpoint, "jaeger")
+	vc, ll, err = validateEndpoint(client, zl, endpointJ, validEndpoint, "jaeger")
 	if err == nil {
 		validConfigs = append(validConfigs, *vc)
 	}
@@ -350,7 +349,7 @@ func validateSimpleTempoHTTP(client http.Client, parsedUrl model.ParsedUrl, port
 }
 
 // validateEndpoint Given an endpoint, validates it is valid, otherwise returns an error or logLines
-func validateEndpoint(client http.Client, endpoint, validEndpoint string, provider string) (*model.ValidConfig, []model.LogLine, error) {
+func validateEndpoint(client http.Client, zl *zerolog.Logger, endpoint, validEndpoint string, provider string) (*model.ValidConfig, []model.LogLine, error) {
 	logs := []model.LogLine{}
 	resp, code, reqError := MakeRequestI(client, endpoint, nil)
 	if code != 200 {
@@ -367,7 +366,7 @@ func validateEndpoint(client http.Client, endpoint, validEndpoint string, provid
 			if strings.Contains(response, "Client sent an HTTP request to an HTTPS") && !strings.Contains(endpoint, "https") {
 				endpoint = strings.Replace(endpoint, "http", "https", 1)
 				validEndpoint = strings.Replace(validEndpoint, "http", "https", 1)
-				return validateEndpoint(client, endpoint, validEndpoint, provider)
+				return validateEndpoint(client, zl, endpoint, validEndpoint, provider)
 			}
 			// No tenants found
 			if strings.Contains(response, "tenant not found") {
@@ -385,7 +384,7 @@ func validateEndpoint(client http.Client, endpoint, validEndpoint string, provid
 				replacedEndpoint := strings.Replace(endpoint, notMatch[1], validMatch[1], 1)
 				replacedValidEndpoint := strings.Replace(validEndpoint, notMatch[1], validMatch[1], 1)
 				if replacedEndpoint != endpoint {
-					return validateEndpoint(client, replacedEndpoint, replacedValidEndpoint, provider)
+					return validateEndpoint(client, zl, replacedEndpoint, replacedValidEndpoint, provider)
 				}
 			}
 		}
@@ -395,7 +394,7 @@ func validateEndpoint(client http.Client, endpoint, validEndpoint string, provid
 			return &vc, logs, nil
 		}
 		logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
-		log.Trace(msg)
+		zl.Trace().Msgf(msg)
 		return nil, logs, errors.New(msg)
 	}
 
@@ -404,7 +403,7 @@ func validateEndpoint(client http.Client, endpoint, validEndpoint string, provid
 		if errMarshal := json.Unmarshal(resp, &response); errMarshal != nil {
 			msg := fmt.Sprintf("[Discovery client] Error unmarshalling Jaeger response: %s [URL: %v]", errMarshal, endpoint)
 			logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
-			log.Trace(msg)
+			zl.Trace().Msgf(msg)
 			return nil, logs, errors.New(msg)
 		}
 		vc := model.ValidConfig{Url: validEndpoint, Provider: provider, UseGRPC: false, NamespaceSelector: false}
@@ -417,7 +416,7 @@ func validateEndpoint(client http.Client, endpoint, validEndpoint string, provid
 		}
 		msg := fmt.Sprintf("[Discovery client] Found valid Config %v", vc)
 		logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
-		log.Trace(msg)
+		zl.Trace().Msgf(msg)
 		return &vc, logs, nil
 	}
 	// Try Tempo
@@ -425,7 +424,7 @@ func validateEndpoint(client http.Client, endpoint, validEndpoint string, provid
 	if errMarshal := json.Unmarshal(resp, &response); errMarshal != nil {
 		msg := fmt.Sprintf("[Discovery client] Error unmarshalling Tempo response: %s [URL: %v]", errMarshal, endpoint)
 		logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
-		log.Trace(msg)
+		zl.Trace().Msgf(msg)
 		return nil, logs, errors.New(msg)
 	}
 	vc := model.ValidConfig{Url: validEndpoint, Provider: "tempo", UseGRPC: false, NamespaceSelector: false}
@@ -438,6 +437,6 @@ func validateEndpoint(client http.Client, endpoint, validEndpoint string, provid
 	}
 	msg := fmt.Sprintf("[Discovery client] Found valid Config %v", vc)
 	logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
-	log.Trace(msg)
+	zl.Trace().Msgf(msg)
 	return &vc, logs, nil
 }
