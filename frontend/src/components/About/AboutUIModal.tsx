@@ -1,9 +1,8 @@
 import * as React from 'react';
 import {
   AboutModal,
-  TextContent,
-  TextList,
-  TextListItem,
+  Content,
+  ContentVariants,
   Title,
   Button,
   TitleSizes,
@@ -59,7 +58,7 @@ const websiteStyle = kialiStyle({
 const alertStyle = kialiStyle({
   marginTop: '1rem',
   $nest: {
-    '& .pf-v5-c-alert__title': {
+    '& .pf-v6-c-alert__title': {
       marginTop: 0
     }
   }
@@ -130,28 +129,28 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
       onClose={props.onClose}
       productName="Kiali"
     >
-      <TextContent className={textContentStyle}>
-        <TextList component="dl">
-          <TextListItem key="kiali-name" component="dt">
+      <Content className={textContentStyle}>
+        <Content component={ContentVariants.dl}>
+          <Content key="kiali-name" component={ContentVariants.dt}>
             Kiali
-          </TextListItem>
-          <TextListItem key="kiali-version" component="dd">
+          </Content>
+          <Content key="kiali-version" component={ContentVariants.dd}>
             {coreVersion!}
-          </TextListItem>
-          <TextListItem key="kiali-container-name" component="dt">
+          </Content>
+          <Content key="kiali-container-name" component={ContentVariants.dt}>
             Kiali Container
-          </TextListItem>
-          <TextListItem key="kiali-container-version" component="dd">
+          </Content>
+          <Content key="kiali-container-version" component={ContentVariants.dd}>
             {containerVersion!}
-          </TextListItem>
-        </TextList>
-      </TextContent>
+          </Content>
+        </Content>
+      </Content>
 
       {props.warningMessages.length > 0 && (
         <Alert variant="warning" isInline={true} title={props.warningMessages[0]} className={alertStyle} />
       )}
 
-      <TextContent className={textContentStyle}>
+      <Content className={textContentStyle}>
         {isControlPlaneAccessible() && (
           <>
             <Title headingLevel="h3" size={TitleSizes.xl} style={{ padding: '2.5rem 0 0 0', marginBottom: '0' }}>
@@ -165,7 +164,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
         </Title>
         {renderWebsiteLink()}
         {renderProjectLink()}
-      </TextContent>
+      </Content>
     </AboutModal>
   );
 };

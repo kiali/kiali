@@ -1,14 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { KialiDispatch } from 'types/Redux';
-import {
-  Button,
-  ButtonVariant,
-  EmptyState,
-  EmptyStateBody,
-  EmptyStateVariant,
-  EmptyStateHeader
-} from '@patternfly/react-core';
+import { Button, ButtonVariant, EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { SortByDirection, IRow, IRowData, IAction, TableVariant, ISortBy, OnSort } from '@patternfly/react-table';
 import { compareNullable } from 'components/FilterList/FilterHelper';
 import { MetricsStats } from 'types/Metrics';
@@ -65,16 +58,20 @@ interface SortableCompareTh<T> extends SortableTh {
 }
 
 const dangerErrorStyle = kialiStyle({
-  borderLeft: '3px solid var(--pf-v5-global--danger-color--100)'
+  borderLeft:
+    'var(--pf-t--global--dark--color--status--danger--100)' /* CODEMODS: original v5 color was --pf-v6-global--danger-color--100 */
 });
 
 const selectedErrorStyle = kialiStyle({
-  borderRight: '3px solid var(--pf-v5-global--info-color--100)',
-  borderLeft: '3px solid var(--pf-v5-global--danger-color--100)'
+  borderRight:
+    'var(--pf-t--global--dark--color--status--info--100)' /* CODEMODS: original v5 color was --pf-v6-global--info-color--100 */,
+  borderLeft:
+    'var(--pf-t--global--dark--color--status--danger--100)' /* CODEMODS: original v5 color was --pf-v6-global--danger-color--100 */
 });
 
 const selectedStyle = kialiStyle({
-  borderRight: '3px solid var(--pf-v5-global--info-color--100)'
+  borderRight:
+    'var(--pf-t--global--dark--color--status--info--100)' /* CODEMODS: original v5 color was --pf-v6-global--info-color--100 */
 });
 
 const tableStyle = kialiStyle({
@@ -83,7 +80,7 @@ const tableStyle = kialiStyle({
       paddingTop: '0.25rem',
       paddingBottom: '0.75rem',
       $nest: {
-        '& .pf-v5-c-menu-toggle': {
+        '& .pf-v6-c-menu-toggle': {
           verticalAlign: '-0.25rem'
         }
       }
@@ -113,14 +110,17 @@ const getClassName = (
 ): string | undefined => {
   const highlight = operationName.toLowerCase().includes(item);
 
-  const blueColor = darkTheme ? 'var(--pf-v5-global--palette--blue-600)' : 'var(--pf-v5-global--palette--blue-50)';
+  const blueColor = darkTheme
+    ? 'var(--pf-t--global--dark--color--nonstatus--blue--300)' /* CODEMODS: original v5 color was --pf-v6-global--palette--blue-600 */
+    : 'var(--pf-t--global--dark--color--nonstatus--blue--100)'; /* CODEMODS: original v5 color was --pf-v6-global--palette--blue-50 */
   const highlightStyle = kialiStyle({
     background: blueColor
   });
 
   const highlightErrorStyle = kialiStyle({
     background: blueColor,
-    borderLeft: '3px solid var(--pf-v5-global--danger-color--100)'
+    borderLeft:
+      'var(--pf-t--global--dark--color--status--danger--100)' /* CODEMODS: original v5 color was --pf-v6-global--danger-color--100 */
   });
   return isSpan
     ? isError
@@ -186,8 +186,7 @@ class SpanTableComponent extends React.Component<Props, State> {
       this.setState({ sortIndex: index, sortDirection: sortDirection });
 
     const noSpans: React.ReactNode = (
-      <EmptyState variant={EmptyStateVariant.full}>
-        <EmptyStateHeader titleText="No spans found" headingLevel="h5" />
+      <EmptyState headingLevel="h5" titleText="No spans found" variant={EmptyStateVariant.full}>
         <EmptyStateBody>No spans match the current filters</EmptyStateBody>
       </EmptyState>
     );

@@ -49,7 +49,7 @@ Then('user sees trace details', () => {
 
 When('user selects a trace', () => {
   const tracingDotQuery =
-    '[style*="fill: var(--pf-v5-global--palette--blue-200)"][style*="stroke: var(--pf-v5-chart-scatter--data--stroke--Color, transparent)"]';
+    'var(--pf-t--temp--dev--tbd)'; /* CODEMODS: original v5 color was --pf-v6-global--palette--blue-200 */
 
   cy.getBySel('tracing-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
 });
@@ -107,7 +107,7 @@ When('user opens the namespace dropdown', () => {
 Then('user sees Health information for Apps', () => {
   getColWithRowText(APP, 'Health')
     .find('span')
-    .filter('.pf-v5-c-icon')
+    .filter('.pf-v6-c-icon')
     .should('satisfy', hasAtLeastOneClass(['icon-healthy', 'icon-unhealthy', 'icon-degraded', 'icon-na']));
 });
 
@@ -161,7 +161,7 @@ Then('user only sees healthy apps', () => {
   cy.get('tbody').within(() => {
     cy.get('tr')
       .find('span')
-      .filter('.pf-v5-c-icon')
+      .filter('.pf-v6-c-icon')
       .should('satisfy', hasAtLeastOneClass(['icon-healthy']));
   });
 });

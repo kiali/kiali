@@ -184,7 +184,7 @@ Then('the user can see the {string} span link', (link: string) => {
 
 Then('user sees {string} badge', (badge: string) => {
   cy.getBySel('workload-description-card').within(() => {
-    cy.get('.pf-v5-c-label__content').contains(badge);
+    cy.get('.pf-v6-c-label__content').contains(badge);
   });
 });
 

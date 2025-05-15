@@ -89,7 +89,8 @@ const nodeStyle = kialiStyle({
 const labelStyle = kialiStyle({
   $nest: {
     '& .pf-topology__node__label__icon__background': {
-      fill: 'var(--pf-v5-global--palette--purple-500)'
+      fill:
+        'var(pf-t--global--color--nonstatus--purple--300)' /* CODEMODS: original v5 color was --pf-v6-global--palette--purple-500 */
     }
   }
 });

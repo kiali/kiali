@@ -215,9 +215,9 @@ Then('user sees the istiod node connected to the dataplane nodes', () => {
 Then('user {string} mesh tour', (action: string) => {
   cy.waitForReact();
   if (action === 'sees') {
-    cy.get('.pf-v5-c-popover').find('span').contains('Shortcuts').should('exist');
+    cy.get('.pf-v6-c-popover').find('span').contains('Shortcuts').should('exist');
   } else {
-    cy.get('.pf-v5-c-popover').should('not.exist');
+    cy.get('.pf-v6-c-popover').should('not.exist');
   }
 });
 

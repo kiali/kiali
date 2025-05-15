@@ -7,7 +7,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
       <TextContent
         style={
           Object {
-            "color": "var(--pf-v5-global--palette--white)",
+            "color": "var(--pf-v6-global--palette--white)",
           }
         }
       >
@@ -25,7 +25,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
                 Object {
                   "badge": "C",
                   "style": Object {
-                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                    "backgroundColor": "var(--pf-v6-global--palette--blue-300)",
                   },
                   "tt": "Cluster",
                 }
@@ -107,7 +107,7 @@ exports[`When both core and addon component have problems any component is in no
       <TextContent
         style={
           Object {
-            "color": "var(--pf-v5-global--palette--white)",
+            "color": "var(--pf-v6-global--palette--white)",
           }
         }
       >
@@ -125,7 +125,7 @@ exports[`When both core and addon component have problems any component is in no
                 Object {
                   "badge": "C",
                   "style": Object {
-                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                    "backgroundColor": "var(--pf-v6-global--palette--blue-300)",
                   },
                   "tt": "Cluster",
                 }
@@ -207,7 +207,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
       <TextContent
         style={
           Object {
-            "color": "var(--pf-v5-global--palette--white)",
+            "color": "var(--pf-v6-global--palette--white)",
           }
         }
       >
@@ -225,7 +225,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
                 Object {
                   "badge": "C",
                   "style": Object {
-                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                    "backgroundColor": "var(--pf-v6-global--palette--blue-300)",
                   },
                   "tt": "Cluster",
                 }
@@ -307,7 +307,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
       <TextContent
         style={
           Object {
-            "color": "var(--pf-v5-global--palette--white)",
+            "color": "var(--pf-v6-global--palette--white)",
           }
         }
       >
@@ -325,7 +325,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 Object {
                   "badge": "C",
                   "style": Object {
-                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                    "backgroundColor": "var(--pf-v6-global--palette--blue-300)",
                   },
                   "tt": "Cluster",
                 }
@@ -407,7 +407,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
       <TextContent
         style={
           Object {
-            "color": "var(--pf-v5-global--palette--white)",
+            "color": "var(--pf-v6-global--palette--white)",
           }
         }
       >
@@ -425,7 +425,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 Object {
                   "badge": "C",
                   "style": Object {
-                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                    "backgroundColor": "var(--pf-v6-global--palette--blue-300)",
                   },
                   "tt": "Cluster",
                 }
@@ -519,7 +519,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
       <TextContent
         style={
           Object {
-            "color": "var(--pf-v5-global--palette--white)",
+            "color": "var(--pf-v6-global--palette--white)",
           }
         }
       >
@@ -537,7 +537,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 Object {
                   "badge": "C",
                   "style": Object {
-                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                    "backgroundColor": "var(--pf-v6-global--palette--blue-300)",
                   },
                   "tt": "Cluster",
                 }
@@ -619,7 +619,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
       <TextContent
         style={
           Object {
-            "color": "var(--pf-v5-global--palette--white)",
+            "color": "var(--pf-v6-global--palette--white)",
           }
         }
       >
@@ -637,7 +637,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                 Object {
                   "badge": "C",
                   "style": Object {
-                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                    "backgroundColor": "var(--pf-v6-global--palette--blue-300)",
                   },
                   "tt": "Cluster",
                 }
@@ -713,7 +713,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
       <TextContent
         style={
           Object {
-            "color": "var(--pf-v5-global--palette--white)",
+            "color": "var(--pf-v6-global--palette--white)",
           }
         }
       >
@@ -731,7 +731,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                 Object {
                   "badge": "C",
                   "style": Object {
-                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                    "backgroundColor": "var(--pf-v6-global--palette--blue-300)",
                   },
                   "tt": "Cluster",
                 }

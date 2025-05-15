@@ -75,11 +75,11 @@
     "test": "tsc -p . && TEST_RUNNER=1 react-scripts test --env=jsdom __tests__ --transformIgnorePatterns='node_modules/(?!my-library-dir)/'"
   },
   "dependencies": {
-    "@patternfly/patternfly": "^5.4.0",
-    "@patternfly/react-charts": "^7.4.0",
-    "@patternfly/react-core": "^5.4.0",
-    "@patternfly/react-table": "^5.4.0",
-    "@patternfly/react-topology": "^5.4.1",
+    "@patternfly/patternfly": "^6.2.3",
+    "@patternfly/react-charts": "^8.2.2",
+    "@patternfly/react-core": "^6.2.2",
+    "@patternfly/react-table": "^6.2.2",
+    "@patternfly/react-topology": "^6.2.0",
     "axios": "^1.8.4",
     "bootstrap-slider-without-jquery": "10.0.0",
     "deep-freeze": "0.0.1",
@@ -112,6 +112,7 @@
     "screenfull": "5.0.2",
     "typesafe-actions": "^4.2.1",
     "typestyle": "^2.4.0",
+    "victory": "^37.3.6",
     "visibilityjs": "2.0.2"
   },
   "devDependencies": {
@@ -157,7 +158,9 @@
     "esbuild": "^0.25.2",
     "nth-check": "^2.0.1",
     "postcss": "^8.4.31",
-    "workbox-webpack-plugin": "^7.1.0"
+    "workbox-webpack-plugin": "^7.1.0",
+    "@types/react": "^17",
+    "@types/react-dom": "^17"
   },
   "engines": {
     "node": ">=20.0.0",

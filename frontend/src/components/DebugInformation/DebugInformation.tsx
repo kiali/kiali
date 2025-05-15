@@ -5,15 +5,17 @@ import { serverConfig } from '../../config';
 import { ComputedServerConfig } from '../../config/ServerConfig';
 import { KialiAppState } from '../../store/Store';
 import {
-  Alert,
-  AlertActionCloseButton,
-  AlertVariant,
-  Button,
-  ButtonVariant,
-  Modal,
-  ModalVariant,
-  Tab
+	Alert,
+	AlertActionCloseButton,
+	AlertVariant,
+	Button,
+	ButtonVariant,
+	Tab
 } from '@patternfly/react-core';
+import {
+	Modal,
+	ModalVariant
+} from '@patternfly/react-core/deprecated';
 import { aceOptions, yamlDumpOptions } from '../../types/IstioConfigDetails';
 import AceEditor from 'react-ace';
 import { ParameterizedTabs } from '../Tab/Tabs';
@@ -84,7 +86,7 @@ const tabIndex: { [tab: string]: number } = {
 const modalStyle = kialiStyle({
   overflowY: 'hidden',
   $nest: {
-    '& .pf-v5-c-tab-content': {
+    '& .pf-v6-c-tab-content': {
       height: '525px',
       overflowY: 'auto'
     }
@@ -93,7 +95,7 @@ const modalStyle = kialiStyle({
 
 const tabStyle = kialiStyle({
   $nest: {
-    '&& .pf-v5-c-tabs__list': {
+    '&& .pf-v6-c-tabs__list': {
       marginLeft: 0
     }
   }

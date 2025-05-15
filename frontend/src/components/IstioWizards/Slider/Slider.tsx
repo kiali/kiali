@@ -173,26 +173,26 @@ export class Slider extends React.Component<SliderProps, SliderState> {
         position={TooltipPosition.top}
         content={<>{this.props.locked ? 'Unlock' : 'Lock'} Weight for this Workload</>}
       >
-        <Button
+        <Button icon={<ThumbTackIcon />}
           className={pinButtonStyle}
           isDisabled={this.props.mirrored}
           variant={this.props.locked ? ButtonVariant.primary : ButtonVariant.secondary}
           onClick={() => this.props.onLock(!this.props.locked)}
         >
-          <ThumbTackIcon />
+          
         </Button>
       </Tooltip>
     );
 
     const MirrorIcon = (
       <Tooltip position={TooltipPosition.top} content={<>Mirror % traffic to this Workload</>}>
-        <Button
+        <Button icon={<MigrationIcon />}
           className={pinButtonStyle}
           variant={this.props.mirrored ? ButtonVariant.primary : ButtonVariant.secondary}
           onClick={() => this.props.onMirror(!this.props.mirrored)}
           style={{ marginLeft: '10px', marginRight: '10px' }}
         >
-          <MigrationIcon />
+          
         </Button>
       </Tooltip>
     );
@@ -202,13 +202,13 @@ export class Slider extends React.Component<SliderProps, SliderState> {
         <Boundaries slider={BSSlider} {...this.props}>
           {this.props.input && (
             <>
-              <Button
+              <Button icon={<MinusIcon />}
                 className={leftButtonStyle}
                 variant={ButtonVariant.link}
                 isDisabled={this.props.locked}
                 onClick={() => this.onMinus()}
               >
-                <MinusIcon />
+                
               </Button>
               <TextInput
                 className={inputStyle}
@@ -219,13 +219,13 @@ export class Slider extends React.Component<SliderProps, SliderState> {
                 isDisabled={this.props.locked}
                 data-test={`input-${this.props.id}`}
               />
-              <Button
+              <Button icon={<PlusIcon />}
                 className={rightButtonStyle}
                 variant={ButtonVariant.link}
                 isDisabled={this.props.locked}
                 onClick={() => this.onPlus()}
               >
-                <PlusIcon />
+                
               </Button>
               <InputGroupText>{this.props.inputFormat}</InputGroupText>
             </>

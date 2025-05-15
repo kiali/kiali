@@ -7,7 +7,7 @@ import {
   EmptyStateBody,
   EmptyStateVariant,
   TooltipPosition,
-  EmptyStateHeader
+  
 } from '@patternfly/react-core';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ROUTE_RULES_TOOLTIP, wizardTooltip } from '../WizardHelp';
@@ -113,8 +113,7 @@ export const K8sRules: React.FC<K8sRuleProps> = (props: K8sRuleProps) => {
   const matchAll: number = matchAllIndex(props.k8sRules);
 
   const noK8sRules: React.ReactNode = (
-    <EmptyState variant={EmptyStateVariant.full}>
-      <EmptyStateHeader titleText="No K8s Route Rules defined" headingLevel="h5" />
+    <EmptyState  headingLevel="h5"   titleText="No K8s Route Rules defined" variant={EmptyStateVariant.full}>
       <EmptyStateBody className={noRulesStyle}>A Request Routing scenario needs at least a Route Rule</EmptyStateBody>
     </EmptyState>
   );

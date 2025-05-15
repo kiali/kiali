@@ -77,11 +77,11 @@ export const measureGraphLoadTime = (name: string, baseline: number, listUrl: st
 };
 
 export const measureListsLoadTime = (name: string, baseline: number, listUrl: string): void => {
-  measureLoadTime(name, baseline, listUrl, '.pf-v5-c-toolbar', false);
+  measureLoadTime(name, baseline, listUrl, '.pf-v6-c-toolbar', false);
 };
 
 export const measureDetailsLoadTime = (name: string, baseline: number, detailsUrl: string): void => {
-  measureLoadTime(name, baseline, detailsUrl, '.pf-v5-c-tabs', false);
+  measureLoadTime(name, baseline, detailsUrl, '.pf-v6-c-tabs', false);
 };
 
 export const compareToBaseline = (resultMS: number, baseline: number): string => {

@@ -59,7 +59,7 @@ exports[`when Icon is LOCK_FULL MTLSIcon renders properly 1`] = `
           <div
             aria-label="mTLS status"
             aria-live="off"
-            className="pf-v5-c-tooltip"
+            className="pf-v6-c-tooltip"
             id="pf-tooltip-2"
             role="tooltip"
             style={

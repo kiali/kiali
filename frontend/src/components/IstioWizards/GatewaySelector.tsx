@@ -189,7 +189,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
           <Switch
             id="advanced-gwSwitch"
             label={' '}
-            labelOff={' '}
+            
             isChecked={this.state.addGateway}
             onChange={() => this.onFormChange(GatewayForm.SWITCH, '')}
           />

@@ -100,7 +100,7 @@ const cardGridStyle = kialiStyle({
 
 const namespaceHeaderStyle = kialiStyle({
   $nest: {
-    '& .pf-v5-c-card__header-main': {
+    '& .pf-v6-c-card__header-main': {
       width: '85%'
     }
   }

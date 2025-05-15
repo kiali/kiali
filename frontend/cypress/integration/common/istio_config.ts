@@ -641,10 +641,10 @@ function waitUntilConfigIsVisible(
       if (dataTestAttr !== null) {
         if (dataTestAttr.value === `VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}` && !hasNA) {
           // Check if the health status icon is correct
-          cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}] span.pf-v5-c-icon`)
+          cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}] span.pf-v6-c-icon`)
             .should('be.visible')
             .then(icon => {
-              const colorVar = `--pf-v5-global--${healthStatus}-color--100`;
+              const colorVar = `--pf-v6-global--${healthStatus}-color--100`;
               const statusColor = getComputedStyle(icon[0]).getPropertyValue(colorVar).replace('#', '');
 
               cy.wrap(icon[0])

@@ -1,13 +1,6 @@
 import * as React from 'react';
-import {
-  Button,
-  EmptyState,
-  EmptyStateIcon,
-  EmptyStateBody,
-  ButtonVariant,
-  EmptyStateVariant
-} from '@patternfly/react-core';
-import { ChartArea, ChartBar, ChartScatter, ChartLine } from '@patternfly/react-charts';
+import { Button, EmptyState, EmptyStateBody, ButtonVariant, EmptyStateVariant } from '@patternfly/react-core';
+import { ChartArea, ChartBar, ChartScatter, ChartLine } from '@patternfly/react-charts/victory';
 import { CubesIcon, ErrorCircleOIcon } from '@patternfly/react-icons';
 
 import { ChartModel } from 'types/Dashboards';
@@ -215,6 +208,7 @@ export class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, 
 
   private renderEmpty() {
     const chartHeight = this.getInnerChartHeight();
+    const conditionalIcon = this.props.isMaximized ? { icon: CubesIcon } : {};
     return chartHeight > MIN_HEIGHT ? (
       <div
         style={{
@@ -228,8 +222,7 @@ export class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, 
           borderBottom: `2px solid ${PFColors.ColorLight200}`
         }}
       >
-        <EmptyState variant={EmptyStateVariant.sm} className={emptyStyle}>
-          {this.props.isMaximized && <EmptyStateIcon icon={CubesIcon} />}
+        <EmptyState variant={EmptyStateVariant.sm} className={emptyStyle} {...conditionalIcon}>
           <EmptyStateBody className={emptyStyle}>No data available</EmptyStateBody>
         </EmptyState>
       </div>
@@ -237,6 +230,9 @@ export class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, 
   }
 
   private renderError() {
+    const conditionalIcon = this.props.isMaximized
+      ? { icon: () => <ErrorCircleOIcon style={{ color: PFColors.Danger }} width={32} height={32} /> }
+      : {};
     return (
       <div
         style={{
@@ -248,12 +244,7 @@ export class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, 
           textAlign: 'center'
         }}
       >
-        <EmptyState variant={EmptyStateVariant.sm} className={emptyStyle}>
-          {this.props.isMaximized && (
-            <EmptyStateIcon
-              icon={() => <ErrorCircleOIcon style={{ color: PFColors.Danger }} width={32} height={32} />}
-            />
-          )}
+        <EmptyState variant={EmptyStateVariant.sm} className={emptyStyle} {...conditionalIcon}>
           <EmptyStateBody className={emptyStyle}>
             An error occured while fetching this metric:
             <p>

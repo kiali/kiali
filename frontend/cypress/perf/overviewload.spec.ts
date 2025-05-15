@@ -29,7 +29,7 @@ describe('Overview performance tests', () => {
           })
             .its('performance')
             .then(performance => {
-              cy.get('.pf-v5-l-grid').should('be.visible');
+              cy.get('.pf-v6-l-grid').should('be.visible');
 
               cy.get('#loading_kiali_spinner', { timeout: 300000 })
                 .should('not.exist')

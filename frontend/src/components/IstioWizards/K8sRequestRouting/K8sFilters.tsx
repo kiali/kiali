@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Chip } from '@patternfly/react-core';
+import { Label } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { FILTERING_SELECTED_TOOLTIP, wizardTooltip } from '../WizardHelp';
 
@@ -18,12 +18,12 @@ const remove = kialiStyle({
 });
 
 export class K8sFilters extends React.Component<Props> {
-  render() {
+  return() {
     const filters: any[] = this.props.filters.map((filter, index) => (
       <span key={filter + '-' + index} data-test={filter} className={remove}>
-        <Chip onClick={() => this.props.onRemoveFilter(filter)} isOverflowChip={true}>
+        <Label onClick={() => this.props.onRemoveFilter(filter)} variant={'overflow'}>
           {filter}
-        </Chip>{' '}
+        </Label>{' '}
       </span>
     ));
     return (

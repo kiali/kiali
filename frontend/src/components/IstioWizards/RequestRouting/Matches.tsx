@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Chip } from '@patternfly/react-core';
+import { Label } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { MATCHING_SELECTED_TOOLTIP, wizardTooltip } from '../WizardHelp';
 import { t } from 'utils/I18nUtils';
@@ -22,9 +22,9 @@ export class Matches extends React.Component<Props> {
   render() {
     const matches: any[] = this.props.matches.map((match, index) => (
       <span key={match + '-' + index} data-test={match} className={remove}>
-        <Chip onClick={() => this.props.onRemoveMatch(match)} isOverflowChip={true}>
+        <Label onClick={() => this.props.onRemoveMatch(match)} variant={'overflow'}>
           {match}
-        </Chip>{' '}
+        </Label>{' '}
       </span>
     ));
     return (
