@@ -145,7 +145,7 @@ const DEFAULT_DASHBOARDS_YAML = `
   - chart:
       name: "API hit rate"
       unit: "ops"
-      spans: 6
+      spans: 4
       metricName: "kiali_api_processing_duration_seconds_count"
       dataType: "rate"
       aggregations:
@@ -154,7 +154,7 @@ const DEFAULT_DASHBOARDS_YAML = `
   - chart:
       name: "API processing duration"
       unit: "seconds"
-      spans: 6
+      spans: 4
       metricName: "kiali_api_processing_duration_seconds"
       dataType: "histogram"
       aggregations:
@@ -162,7 +162,7 @@ const DEFAULT_DASHBOARDS_YAML = `
         displayName: "API route"
   - chart:
       name: "API Failures"
-      spans: 6
+      spans: 4
       metricName: "kiali_api_failures_total"
       dataType: "raw"
       aggregations:
@@ -171,7 +171,7 @@ const DEFAULT_DASHBOARDS_YAML = `
   - chart:
       name: "Graph generation duration"
       unit: "seconds"
-      spans: 6
+      spans: 4
       metricName: "kiali_graph_generation_duration_seconds"
       dataType: "histogram"
       aggregations:
@@ -179,6 +179,15 @@ const DEFAULT_DASHBOARDS_YAML = `
         displayName: "Graph kind"
       - label: "graph_type"
         displayName: "Graph type"
+  - chart:
+      name: "Tracing processing duration"
+      unit: "seconds"
+      spans: 4
+      metricName: "kiali_tracing_processing_duration_seconds"
+      dataType: "histogram"
+      aggregations:
+      - label: "query_group"
+        displayName: "Query Group"
 - name: micrometer-1.0.6-jvm-pool
   title: JVM Pool Metrics
   runtime: JVM
