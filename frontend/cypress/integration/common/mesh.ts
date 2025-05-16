@@ -119,12 +119,11 @@ Then('user sees control plane side panel', () => {
     .should('be.visible')
     .within(() => {
       cy.contains('istiod');
-      cy.contains('Control plane').should('be.visible');
       cy.contains('Outbound policy').should('be.visible');
       cy.get('div[data-test="memory-chart"]').should('exist');
       cy.get('div[data-test="cpu-chart"]').should('exist');
       cy.get('div[data-test="control-plane-certificate"]').should('exist');
-      cy.get('[data-test="label-TLS"]').contains('N/A');
+      cy.get('[data-test="label-TLS"]').contains('TLSV1_2');
     });
 });
 
@@ -259,4 +258,22 @@ Then('user sees {string} icon side panel', (iconType: string) => {
 Then('user does not see {string} icon side panel', (iconType: string) => {
   cy.waitForReact();
   cy.get('#target-panel-node').get(`[data-test="icon-${iconType}-validation"]`).should('not.exist');
+});
+
+Then('user sees {string} configuration tabs', (configTabs: string) => {
+  const tabs = configTabs.split(',');
+
+  cy.wrap(tabs).each(tab => {
+    cy.getBySel(`config-tab-${tab}`);
+  });
+});
+
+Then('user sees {string} in the {string} configuration tab', (configOpt: string, tab: string) => {
+  cy.getBySel(`config-tab-${tab}`).click();
+  cy.getBySel(`${tab}-config-editor`).contains(configOpt);
+});
+
+Then('user does not see {string} in the {string} configuration tab', (configOpt: string, tab: string) => {
+  cy.getBySel(`config-tab-${tab}`).click();
+  cy.getBySel(`${tab}-config-editor`).should('not.contain', configOpt);
 });

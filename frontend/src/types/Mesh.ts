@@ -1,4 +1,5 @@
 import { Controller, NodeModel, Node } from '@patternfly/react-topology';
+// import { OutboundTrafficPolicy } from 'types/IstioObjects';
 import { AppenderString } from './Common';
 import { NamespaceInfo } from './NamespaceInfo';
 import { BoxByType } from './Graph';
@@ -181,10 +182,18 @@ export interface Tag {
   name: string;
 }
 
+export interface ConfigSource {
+  cluster?: string;
+  configMap: any;
+  name?: string;
+  namespace?: string;
+}
+
 export interface ControlPlaneConfig {
   certificates?: CertsInfo[];
-  configMap?: any;
-  outboundTrafficPolicy?: any;
+  effectiveConfig?: ConfigSource;
+  sharedConfig?: ConfigSource;
+  standardConfig?: ConfigSource;
 }
 
 export interface ControlPlane {

@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
+	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
-
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -889,7 +889,7 @@ func (in *IstioValidationsService) setNonLocalMTLSConfig(vInfo *validationInfo) 
 	// TODO: Multi-primary support
 	for _, controlPlane := range vInfo.mesh.ControlPlanes {
 		if controlPlane.Cluster.IsKialiHome {
-			vInfo.nsInfo.mtlsDetails.EnabledAutoMtls = controlPlane.Config.GetEnableAutoMtls()
+			vInfo.nsInfo.mtlsDetails.EnabledAutoMtls = controlPlane.MeshConfig.EnableAutoMtls.Value
 		}
 	}
 
@@ -900,7 +900,7 @@ func (in *IstioValidationsService) isGatewayToNamespace(mesh *models.Mesh) bool 
 	// TODO: Multi-primary support
 	for _, controlPlane := range mesh.ControlPlanes {
 		if controlPlane.Cluster.IsKialiHome {
-			return controlPlane.Config.IsGatewayToNamespace
+			return controlPlane.IsGatewayToNamespace
 		}
 	}
 
@@ -911,7 +911,7 @@ func (in *IstioValidationsService) isPolicyAllowAny(mesh *models.Mesh) bool {
 	// TODO: Multi-primary support
 	for _, controlPlane := range mesh.ControlPlanes {
 		if controlPlane.Cluster.IsKialiHome {
-			return controlPlane.Config.OutboundTrafficPolicy.Mode == AllowAny || controlPlane.Config.OutboundTrafficPolicy.Mode == ""
+			return controlPlane.MeshConfig.OutboundTrafficPolicy.Mode == istiov1alpha1.MeshConfig_OutboundTrafficPolicy_ALLOW_ANY
 		}
 	}
 

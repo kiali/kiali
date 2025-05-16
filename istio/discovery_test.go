@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/maps"
@@ -417,7 +418,7 @@ trustDomain: cluster.local
 	mesh, err := discovery.Mesh(context.TODO())
 	require.NoError(err)
 	require.Len(mesh.ControlPlanes, 1)
-	require.True(*mesh.ControlPlanes[0].Config.EnableAutoMtls)
+	require.True(mesh.ControlPlanes[0].MeshConfig.EnableAutoMtls.Value)
 	require.Len(mesh.ControlPlanes[0].ManagedClusters, 1)
 	require.Equal("kialiNetwork", mesh.ControlPlanes[0].Config.Network)
 }
@@ -690,13 +691,13 @@ trustDomain: cluster.local
 	controlPlane_1_18 := slicetest.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
 		return c.Revision == "1-18-0"
 	})
-	require.False(*controlPlane_1_18.Config.EnableAutoMtls)
+	require.False(controlPlane_1_18.MeshConfig.EnableAutoMtls.Value)
 	require.Len(controlPlane_1_18.ManagedClusters, 1)
 
 	controlPlane_1_19 := slicetest.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
 		return c.Revision == "1-19-0"
 	})
-	require.True(*controlPlane_1_19.Config.EnableAutoMtls)
+	require.True(controlPlane_1_19.MeshConfig.EnableAutoMtls.Value)
 	require.Len(controlPlane_1_19.ManagedClusters, 1)
 
 	// Neeed to call Setup again to clear the cached mesh object.
@@ -712,8 +713,8 @@ trustDomain: cluster.local
 
 	require.Len(mesh.ControlPlanes, 2)
 	// Both controlplanes should set this to true since both will use the 1.19 configmap.
-	require.True(*mesh.ControlPlanes[0].Config.EnableAutoMtls)
-	require.True(*mesh.ControlPlanes[1].Config.EnableAutoMtls)
+	require.True(mesh.ControlPlanes[0].MeshConfig.EnableAutoMtls.Value)
+	require.True(mesh.ControlPlanes[1].MeshConfig.EnableAutoMtls.Value)
 }
 
 func TestGetMeshRemoteClusters(t *testing.T) {
@@ -1255,7 +1256,6 @@ func TestIstiodResourceThresholds(t *testing.T) {
 		istiodConatiner core_v1.Container
 		istiodMeta      v1.ObjectMeta
 		expected        *models.IstiodThresholds
-		expectedErr     error
 	}{
 		"istiod with no limits": {
 			istiodMeta: v1.ObjectMeta{
@@ -1380,7 +1380,9 @@ func TestIstiodResourceThresholds(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: fmt.Errorf("istiod deployment not found"),
+			expected: &models.IstiodThresholds{
+				Memory: 1000,
+			},
 		},
 		"Missing limits": {
 			istiodMeta: v1.ObjectMeta{
@@ -1441,11 +1443,6 @@ func TestIstiodResourceThresholds(t *testing.T) {
 			discovery := istio.NewDiscovery(clients, cache, conf)
 
 			mesh, err := discovery.Mesh(context.Background())
-			if testCase.expectedErr != nil {
-				require.Error(err)
-				// End the test early if we expect an error.
-				return
-			}
 			require.NoError(err)
 			require.Len(mesh.ControlPlanes, 1)
 			require.Equal(testCase.expected, mesh.ControlPlanes[0].Thresholds)
@@ -1894,7 +1891,7 @@ func TestDiscoverWithTags(t *testing.T) {
 				istioConfigMap := fakeIstioConfigMap("default")
 				istioConfigMap.Data["mesh"] = `discoverySelectors:
   - matchLabels:
-      include: true
+      include: "true"
 `
 				return map[string][]runtime.Object{
 					conf.KubernetesConfig.ClusterName: {
@@ -1916,7 +1913,7 @@ func TestDiscoverWithTags(t *testing.T) {
 				istioConfigMap := fakeIstioConfigMap("default")
 				istioConfigMap.Data["mesh"] = `discoverySelectors:
   - matchLabels:
-      include: true
+      include: "true"
 `
 				return map[string][]runtime.Object{
 					conf.KubernetesConfig.ClusterName: {
@@ -2428,6 +2425,164 @@ func TestDiscoverWithMaistra(t *testing.T) {
 				require.Equal("bookinfo", istiod.ManagedNamespaces[0].Name)
 			} else if len(tc.ExpectedMaistraNamespaces) > 0 {
 				require.Equal("bookinfo", maistra.ManagedNamespaces[0].Name)
+			}
+		})
+	}
+}
+
+func TestSharedMeshConfig(t *testing.T) {
+	conf := config.NewConfig()
+
+	cases := map[string]struct {
+		IstiodPodSpec      *core_v1.PodSpec
+		SharedMeshConfig   *core_v1.ConfigMap
+		StandardMeshConfig *core_v1.ConfigMap
+		ExpectedMeshConfig *models.MeshConfig
+	}{
+		"outbound traffic policy added by default": {
+			StandardMeshConfig: &core_v1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "istio",
+					Namespace: "istio-system",
+				},
+				Data: map[string]string{
+					"mesh": ``,
+				},
+			},
+			ExpectedMeshConfig: models.NewMeshConfig(),
+		},
+		"standard mesh config": {
+			StandardMeshConfig: &core_v1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "istio",
+					Namespace: "istio-system",
+				},
+				Data: map[string]string{
+					"mesh": `trustDomain: cluster.local`,
+				},
+			},
+			ExpectedMeshConfig: func() *models.MeshConfig {
+				mesh := models.NewMeshConfig()
+				mesh.TrustDomain = "cluster.local"
+				return mesh
+			}(),
+		},
+		"shared mesh config sets trust domain. standard mesh config does not.": {
+			IstiodPodSpec: &core_v1.PodSpec{
+				Containers: []core_v1.Container{
+					{
+						Name: "discovery",
+						Env: []core_v1.EnvVar{
+							{
+								Name:  "SHARED_MESH_CONFIG",
+								Value: "istio-user-shared",
+							},
+						},
+					},
+				},
+			},
+			SharedMeshConfig: &core_v1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "istio-user-shared",
+					Namespace: "istio-system",
+				},
+				Data: map[string]string{
+					"mesh": `trustDomain: cluster.shared`,
+				},
+			},
+			StandardMeshConfig: &core_v1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "istio",
+					Namespace: "istio-system",
+				},
+				Data: map[string]string{
+					"mesh": ``,
+				},
+			},
+			ExpectedMeshConfig: func() *models.MeshConfig {
+				mesh := models.NewMeshConfig()
+				mesh.TrustDomain = "cluster.shared"
+				return mesh
+			}(),
+		},
+		"both standard and shared mesh config set trust domain. standard wins.": {
+			IstiodPodSpec: &core_v1.PodSpec{
+				Containers: []core_v1.Container{
+					{
+						Name: "discovery",
+						Env: []core_v1.EnvVar{
+							{
+								Name:  "SHARED_MESH_CONFIG",
+								Value: "istio-user-shared",
+							},
+						},
+					},
+				},
+			},
+			SharedMeshConfig: &core_v1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "istio-user-shared",
+					Namespace: "istio-system",
+				},
+				Data: map[string]string{
+					"mesh": `trustDomain: cluster.shared`,
+				},
+			},
+			StandardMeshConfig: &core_v1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "istio",
+					Namespace: "istio-system",
+				},
+				Data: map[string]string{
+					"mesh": `trustDomain: cluster.local`,
+				},
+			},
+			ExpectedMeshConfig: func() *models.MeshConfig {
+				mesh := models.NewMeshConfig()
+				mesh.TrustDomain = "cluster.local"
+				return mesh
+			}(),
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+
+			istiod := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
+			if tc.IstiodPodSpec != nil {
+				istiod.Spec.Template.Spec = *tc.IstiodPodSpec
+			}
+
+			objs := []runtime.Object{istiod}
+			if tc.SharedMeshConfig != nil {
+				objs = append(objs, tc.SharedMeshConfig)
+			}
+			if tc.StandardMeshConfig != nil {
+				objs = append(objs, tc.StandardMeshConfig)
+			}
+
+			client := kubetest.NewFakeK8sClient(objs...)
+			cache := cache.NewTestingCache(t, client, *conf)
+			discovery := istio.NewDiscovery(map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client}, cache, conf)
+
+			mesh, err := discovery.Mesh(context.Background())
+			require.NoError(err)
+			require.Len(mesh.ControlPlanes, 1)
+
+			controlPlane := mesh.ControlPlanes[0]
+			var sharedMesh string
+			if slices.ContainsFunc(istiod.Spec.Template.Spec.Containers[0].Env, func(e core_v1.EnvVar) bool {
+				if e.Name == "SHARED_MESH_CONFIG" {
+					sharedMesh = e.Value
+					return true
+				}
+				return false
+			}) {
+				require.Equal(sharedMesh, controlPlane.SharedMeshConfig)
+			}
+
+			if diff := cmp.Diff(tc.ExpectedMeshConfig.String(), controlPlane.MeshConfig.String()); diff != "" {
+				t.Fatal(diff)
 			}
 		})
 	}

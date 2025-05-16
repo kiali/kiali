@@ -2,12 +2,13 @@ package models
 
 import (
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"time"
 
+	"google.golang.org/protobuf/types/known/wrapperspb"
+	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-
-	"github.com/kiali/kiali/config"
 )
 
 const (
@@ -56,6 +57,8 @@ type Tag struct {
 // ControlPlane manages the dataPlane for one or more kube clusters.
 // It's expected to manage the cluster that it is deployed in.
 // It has configuration for all the clusters/namespaces associated with it.
+// TODO: Should maybe consolidate the pilot discovery env vars under its
+// own section/struct: https://istio.io/latest/docs/reference/commands/pilot-discovery/#envvars.
 type ControlPlane struct {
 	// Cluster the kube cluster that the controlplane is running on.
 	Cluster *KubeCluster `json:"cluster"`
@@ -68,6 +71,10 @@ type ControlPlane struct {
 
 	// ID is the control plane ID as known by istiod.
 	ID string `json:"id"`
+
+	// IsGatewayToNamespace specifies the PILOT_SCOPE_GATEWAY_TO_NAMESPACE environment variable in Control Plane
+	// This is not currently used by the frontend so excluding it from the API response.
+	IsGatewayToNamespace bool `json:"-"`
 
 	// IstiodName is the control plane name
 	IstiodName string `json:"istiodName"`
@@ -93,12 +100,21 @@ type ControlPlane struct {
 	// directly or through a tag.
 	ManagedNamespaces []Namespace `json:"managedNamespaces"`
 
+	// MeshConfig is the mesh configuration for this controlplane. This value is the "final" mesh
+	// config that is the result of merging the various config sources together, e.g. standard configmap
+	// and user configmap. This field is just for the backend to use. The frontend should use the Config field.
+	MeshConfig *MeshConfig `json:"-"`
+
 	// Resources are the resources that the controlplane is using.
 	Resources corev1.ResourceRequirements `json:"resources"`
 
 	// Revision is the revision of the controlplane.
 	// Can be empty when it's the default revision.
 	Revision string `json:"revision"`
+
+	// SharedMeshConfig is the name of a second configmap that will be merged
+	// with the standard mesh config if it's present.
+	SharedMeshConfig string `json:"-"`
 
 	// Status is the status of the controlplane as reported by kiali.
 	// It includes the deployment status and whether kiali can connect
@@ -126,20 +142,99 @@ func (c ControlPlane) IsMaistra() bool {
 	return false
 }
 
-// ControlPlaneConfiguration is the configuration for the controlPlane and any associated dataPlane.
-type ControlPlaneConfiguration struct {
-	// Config Map
-	ConfigMap map[string]string `json:"configMap,omitempty" yaml:"configMap,omitempty"`
+// NewMeshConfig applies some defaults that Kiali cares about that are hard coded in istio/istio.
+// We don't want to import istio/istio just for that but if the defaults change they
+// will need to be updated here as well.
+func NewMeshConfig() *MeshConfig {
+	return &MeshConfig{
+		MeshConfig: &istiov1alpha1.MeshConfig{
+			DefaultConfig:  &istiov1alpha1.ProxyConfig{},
+			EnableAutoMtls: &wrapperspb.BoolValue{Value: true},
+			MeshMTLS:       &istiov1alpha1.MeshConfig_TLSConfig{},
+			OutboundTrafficPolicy: &istiov1alpha1.MeshConfig_OutboundTrafficPolicy{
+				Mode: istiov1alpha1.MeshConfig_OutboundTrafficPolicy_ALLOW_ANY,
+			},
+		},
+	}
+}
 
-	// IsGatewayToNamespace specifies the PILOT_SCOPE_GATEWAY_TO_NAMESPACE environment variable in Control Plane
-	// This is not currently used by the frontend so excluding it from the API response.
-	IsGatewayToNamespace bool `json:"-"`
+// MeshConfig wraps the istio.MeshConfig solely to override json Marshaling
+// for some fields. See MarshalJSON for more details.
+type MeshConfig struct {
+	*istiov1alpha1.MeshConfig
+}
+
+// MarshalJSON we're overriding the default Marshaling because of this issue:
+// https://github.com/istio/istio/issues/43657.
+func (m MeshConfig) MarshalJSON() ([]byte, error) {
+	// Don't do custom unmarhsaling if OutboundTrafficPolicy is not set.
+	// There are probably other fields like this but only handling this one for now.
+	if m.MeshConfig.OutboundTrafficPolicy == nil {
+		return m.MeshConfig.MarshalJSON()
+	}
+
+	// This is convoluted but we:
+	// 1. Marshal with the proto definitions (missing outboundPolicyMode).
+	// 2. Unmarshal into an unstructured object that we can then edit and add the policy.
+	// 3. Marshal that unstructured object with the outboundPolicyMode.
+	// Probably not efficient but it gets the job done.
+	originalJSON, err := m.MeshConfig.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	var meshUnstructured map[string]any
+	if err := json.Unmarshal(originalJSON, &meshUnstructured); err != nil {
+		return nil, err
+	}
+
+	if _, ok := meshUnstructured["outboundTrafficPolicy"]; ok {
+		meshUnstructured["outboundTrafficPolicy"] = struct {
+			Mode string `json:"mode"`
+		}{
+			Mode: istiov1alpha1.MeshConfig_OutboundTrafficPolicy_Mode_name[int32(m.MeshConfig.OutboundTrafficPolicy.Mode)],
+		}
+	}
+
+	return json.Marshal(meshUnstructured)
+}
+
+// MeshConfigMap is all the data you'll find in the mesh configmap.
+type MeshConfigMap struct {
+	Mesh         *MeshConfig                 `json:"mesh,omitempty"`
+	MeshNetworks *istiov1alpha1.MeshNetworks `json:"meshNetworks,omitempty"`
+}
+
+// MeshConfigSource includes some information about the configuration source.
+type MeshConfigSource struct {
+	// Cluster of the configmap.
+	Cluster   string         `json:"cluster,omitempty"`
+	ConfigMap *MeshConfigMap `json:"configMap,omitempty"`
+	// Name of the configmap.
+	Name string `json:"name,omitempty"`
+	// Namespace of the configmap.
+	Namespace string `json:"namespace,omitempty"`
+}
+
+// ControlPlaneConfiguration is the configuration for the controlPlane and any associated dataPlane.
+// This is used primarly consumed by the frontend. If you just want the mesh config for the controlplane
+// then use controlPlane.MeshConfig.
+type ControlPlaneConfiguration struct {
+	// Certificates are the certificates in use by the controlplane.
+	Certificates []Certificate `json:"certificates,omitempty"`
+
+	// EffectiveConfig is the effective configuration from combining the various configmaps.
+	// TODO: Support config file.
+	EffectiveConfig *MeshConfigSource `json:"effectiveConfig,omitempty"`
 
 	// Network is the name of the network that the controlplane is using.
 	Network string `json:"network,omitempty"`
 
-	// IstioMeshConfig comes from the istio configmap.
-	IstioMeshConfig
+	// StandardConfigMap raw data from the standard configmap
+	StandardConfig *MeshConfigSource `json:"standardConfig,omitempty"`
+
+	// SharedConfig raw data from the shared configmap.
+	SharedConfig *MeshConfigSource `json:"sharedConfig,omitempty"`
 }
 
 type Certificate struct {
@@ -171,35 +266,6 @@ func (ci *Certificate) Parse(certificate []byte) {
 	ci.NotBefore = cert.NotBefore
 	ci.NotAfter = cert.NotAfter
 	ci.Accessible = true
-}
-
-// TODO: Lowercase these as they are used on the frontend.
-// Better yet, change YAML parsing to first convert the
-// YAML to JSON so that we don't need to use yaml tags at all.
-type IstioMeshConfig struct {
-	Certificates  []Certificate `yaml:"certificates,omitempty" json:"certificates,omitempty"`
-	DefaultConfig struct {
-		MeshId string `yaml:"meshId"`
-	} `yaml:"defaultConfig" json:"defaultConfig"`
-	// Default Export To fields, used when objects do not have ExportTo
-	DefaultDestinationRuleExportTo []string                      `yaml:"defaultDestinationRuleExportTo,omitempty"`
-	DefaultServiceExportTo         []string                      `yaml:"defaultServiceExportTo,omitempty"`
-	DefaultVirtualServiceExportTo  []string                      `yaml:"defaultVirtualServiceExportTo,omitempty"`
-	DisableMixerHttpReports        bool                          `yaml:"disableMixerHttpReports,omitempty"`
-	DiscoverySelectors             config.DiscoverySelectorsType `yaml:"discoverySelectors,omitempty"`
-	EnableAutoMtls                 *bool                         `yaml:"enableAutoMtls,omitempty"`
-	MeshMTLS                       struct {
-		MinProtocolVersion string `yaml:"minProtocolVersion"`
-	} `yaml:"meshMtls"`
-	OutboundTrafficPolicy OutboundPolicy `yaml:"outboundTrafficPolicy,omitempty" json:"outboundTrafficPolicy,omitempty"`
-	TrustDomain           string         `yaml:"trustDomain,omitempty"`
-}
-
-func (imc IstioMeshConfig) GetEnableAutoMtls() bool {
-	if imc.EnableAutoMtls == nil {
-		return true
-	}
-	return *imc.EnableAutoMtls
 }
 
 // Cluster holds some metadata about a Kubernetes cluster that is

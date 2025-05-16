@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -16,12 +17,10 @@ import (
 func TestGetMeshConfig(t *testing.T) {
 	check := assert.New(t)
 
-	k8s := new(kubetest.K8SClientMock)
+	k8s := kubetest.NewFakeK8sClient()
 	conf := config.NewConfig()
 
 	config.Set(conf)
-	k8s.On("IsOpenShift").Return(false)
-	k8s.On("IsGatewayAPI").Return(false)
 
 	// Create a MeshService and invoke IsMeshConfigured
 	k8sclients := make(map[string]kubernetes.UserClientInterface)
@@ -30,8 +29,8 @@ func TestGetMeshConfig(t *testing.T) {
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
 				Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName, IsKialiHome: true},
-				Config: models.ControlPlaneConfiguration{
-					IstioMeshConfig: models.IstioMeshConfig{
+				MeshConfig: &models.MeshConfig{
+					MeshConfig: &istiov1alpha1.MeshConfig{
 						DefaultServiceExportTo:         []string{"*"},
 						DefaultDestinationRuleExportTo: []string{"."},
 						DefaultVirtualServiceExportTo:  []string{"."},

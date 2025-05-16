@@ -115,3 +115,12 @@ Feature: Kiali Mesh page
     Then user sees "correct" icon side panel
     Then user does not see "error" icon side panel
     Then user does not see "warning" icon side panel
+
+  @shared-mesh-config
+  Scenario: Shared mesh config is seen on istiod panel
+    When user selects mesh node with label "istiod"
+    Then user sees control plane side panel
+    And user sees "effective,standard,shared" configuration tabs
+    And user sees "mode: REGISTRY_ONLY" in the "effective" configuration tab
+    And user sees "mode: REGISTRY_ONLY" in the "shared" configuration tab
+    And user does not see "mode: REGISTRY_ONLY" in the "standard" configuration tab

@@ -9,6 +9,7 @@ import { IstiodResourceThresholds } from 'types/IstioStatus';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { Datapoint, Metric } from 'types/Metrics';
 import { infoStyle } from 'styles/IconStyle';
+import { summaryTitle } from './TargetPanelCommon';
 
 type ControlPlaneProps = {
   istiodContainerCpu?: Metric[];
@@ -105,12 +106,13 @@ export const TargetPanelControlPlaneMetrics: React.FC<ControlPlaneProps> = (prop
     }
   }
 
+  // This centers the legend text within its grid box.
+  const legendStyle: React.CSSProperties = { placeContent: 'center' };
+
   return (
     <div style={{ textAlign: 'center' }}>
       <div>
-        <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>
-          {props.type ? `${component} ${t(' metrics')}` : t('Control plane metrics')}
-        </div>
+        <div className={summaryTitle}>{props.type ? `${component} ${t('Metrics')}` : t('Metrics')}</div>
       </div>
       <div
         style={{
@@ -122,7 +124,7 @@ export const TargetPanelControlPlaneMetrics: React.FC<ControlPlaneProps> = (prop
           <CardBody>
             {showMetrics(memory) && (
               <Grid data-test="memory-chart" style={{ marginBottom: '1.25rem' }} hasGutter>
-                <GridItem md={2}>
+                <GridItem md={2} style={legendStyle}>
                   <Flex
                     className="pf-u-h-100-on-md"
                     direction={{ md: 'column' }}
@@ -170,7 +172,7 @@ export const TargetPanelControlPlaneMetrics: React.FC<ControlPlaneProps> = (prop
 
             {showMetrics(cpu) && (
               <Grid data-test="cpu-chart" hasGutter>
-                <GridItem md={2}>
+                <GridItem md={2} style={legendStyle}>
                   <Flex
                     className="pf-u-h-100-on-md"
                     direction={{ md: 'column' }}

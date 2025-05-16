@@ -17,18 +17,22 @@ import { Namespace } from '../../types/Namespace';
 import { connectRefresh } from '../Refresh/connectRefresh';
 import { MTLSIconTypes } from './NamespaceMTLSStatus';
 
-type ReduxProps = {
+type ReduxStateProps = {
   autoMTLSEnabled: boolean;
   namespaces: Namespace[] | undefined;
-  setMeshTlsStatus: (meshStatus: TLSStatus) => void;
   status: string;
 };
 
-type Props = ReduxProps & {
-  cluster: string;
-  lastRefreshAt: TimeInMilliseconds;
-  revision: string;
+type ReduxDispatchProps = {
+  setMeshTlsStatus: (meshStatus: TLSStatus) => void;
 };
+
+type Props = ReduxStateProps &
+  ReduxDispatchProps & {
+    cluster: string;
+    lastRefreshAt: TimeInMilliseconds;
+    revision: string;
+  };
 
 const statusDescriptors = new Map<string, StatusDescriptor>([
   [
@@ -80,11 +84,11 @@ const iconStyle = kialiStyle({
 });
 
 class MeshMTLSStatusComponent extends React.Component<Props> {
-  componentDidMount() {
+  componentDidMount(): void {
     this.fetchStatus();
   }
 
-  componentDidUpdate(prevProps: Props) {
+  componentDidUpdate(prevProps: Props): void {
     if (this.props.lastRefreshAt !== prevProps.lastRefreshAt) {
       this.fetchStatus();
     }
@@ -94,6 +98,7 @@ class MeshMTLSStatusComponent extends React.Component<Props> {
     // leaving empty cluster param here, home cluster will be used by default
     API.getMeshTls(this.props.cluster, this.props.revision)
       .then(response => {
+        console.log(response);
         return this.props.setMeshTlsStatus(response.data);
       })
       .catch(error => {
@@ -123,18 +128,18 @@ class MeshMTLSStatusComponent extends React.Component<Props> {
     return this.props.status;
   };
 
-  render() {
+  render(): JSX.Element {
     return <MTLSStatus className={iconStyle} status={this.finalStatus()} statusDescriptors={statusDescriptors} />;
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   status: meshWideMTLSStatusSelector(state),
   autoMTLSEnabled: meshWideMTLSEnabledSelector(state),
   namespaces: namespaceItemsSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setMeshTlsStatus: bindActionCreators(MeshTlsActions.setinfo, dispatch)
 });
 

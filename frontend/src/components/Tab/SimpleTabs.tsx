@@ -6,6 +6,7 @@ import { Tabs } from '@patternfly/react-core';
 
 type SimpleTabsProps = {
   children: React.ReactNode;
+  className?: string;
   defaultTab: number;
   id: string;
   isFilled?: boolean;
@@ -23,6 +24,7 @@ export const SimpleTabs: React.FC<SimpleTabsProps> = (props: SimpleTabsProps) =>
 
   return (
     <Tabs
+      className={props.className}
       id={props.id}
       style={props.style ? props.style : {}}
       isFilled={props.isFilled ? props.isFilled : true}
