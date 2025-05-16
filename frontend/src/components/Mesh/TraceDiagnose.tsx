@@ -12,8 +12,7 @@ import { isTempoService, TempoUrlProvider } from '../../utils/tracing/UrlProvide
 import { isParentKiosk } from '../Kiosk/KioskActions';
 import { MeshNodeData } from '../../types/Mesh';
 import { KialiIcon } from 'config/KialiIcon';
-import { infoStyle } from '../../styles/IconStyle';
-import { Tooltip } from '@patternfly/react-core';
+import { Button, ButtonVariant, Popover, PopoverPosition } from '@patternfly/react-core';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -41,6 +40,11 @@ const blockDisplay = kialiStyle({
 
 const blueDisplay = kialiStyle({
   color: 'rgb(25 116 116);'
+});
+
+const helpStyle = kialiStyle({
+  marginBottom: '0.5em',
+  marginLeft: '0.375rem'
 });
 
 const validateExternalUrl = (
@@ -115,27 +119,35 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
 
   return (
     <>
-      <div style={{ paddingTop: '0.75em' }}>
-        <button onClick={handleCheckService} disabled={loading}>
-          {loading ? t('Verifying...') : t('Services Check')}
-        </button>
-        <Tooltip
-          key={'tooltip_'} // Considera si esta clave es necesaria o si debería ser más específica si el tooltip está en una lista.
-          position={'bottom'}
-          content={
-            <>
-              {t(
-                'Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found.'
-              )}
-              <br />
-              {t(
-                'While the health check is based on whether the URL response returns an HTTP 200, the services check performs a more exhaustive verification by attempting to analyze if the traces response is correct. It is important that internal_url is defined, as it relies on this host to perform the checks.'
-              )}
-            </>
-          }
-        >
-          <KialiIcon.Info className={infoStyle} />
-        </Tooltip>
+      <div style={{ paddingTop: '0.25em' }}>
+        <div>
+          <span style={{ paddingTop: '0.25em' }}>Status</span>
+          <Popover
+            data-test="check-status-help"
+            position={PopoverPosition.auto}
+            headerContent={
+              <div>
+                <span>Check Status</span>
+              </div>
+            }
+            bodyContent={
+              <>
+                {t(
+                  'Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found.'
+                )}
+                <br />
+                {t(
+                  'While the health check is based on whether the URL response returns an HTTP 200, the services check performs a more exhaustive verification by attempting to analyze if the traces response is correct. It is important that internal_url is defined, as it relies on this host to perform the checks.'
+                )}
+              </>
+            }
+          >
+            <KialiIcon.Help className={helpStyle} />
+          </Popover>
+        </div>
+        <Button onClick={handleCheckService} disabled={loading} variant={ButtonVariant.secondary}>
+          {loading ? t('Verifying...') : t('Check Status')}
+        </Button>
         {diagnostic && <span style={{ color: 'green' }}>{diagnostic.message}</span>}
         {error && (
           <div>
@@ -190,7 +202,7 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
                 setIsModalOpen(true);
               }}
             >
-              {t('View logs...')}
+              {t('View logs')}
             </a>
             <LogsModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} logs={diagnostic?.logLine} />
           </>
