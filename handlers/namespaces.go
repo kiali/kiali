@@ -77,6 +77,9 @@ func NamespaceValidationSummary(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// prepare the logger in a context, and replace the request context with ours that has our logger in it
+		r = log.AddGroupToLoggerInRequestContext(r, log.ValidationLogName)
+
 		query := r.URL.Query()
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
@@ -108,7 +111,7 @@ func NamespaceValidationSummary(
 		}
 
 		if errValidations != nil {
-			log.Error(errValidations)
+			log.FromRequest(r).Error().Msg(errValidations.Error())
 			RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
 		} else {
 			validationSummary = *istioConfigValidationResults.SummarizeValidation(namespace, cluster)
@@ -147,7 +150,7 @@ func NamespaceUpdate(conf *config.Config, kialiCache cache.KialiCache, clientFac
 			handleErrorResponse(w, err)
 			return
 		}
-		audit(r, "UPDATE on Namespace: "+namespace+" Patch: "+jsonPatch)
+		audit(r, "UPDATE", namespace, "n/a", "Namespace Update. Patch: "+jsonPatch)
 		RespondWithJSON(w, http.StatusOK, ns)
 	}
 }
