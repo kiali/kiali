@@ -375,6 +375,21 @@ Then('{string} option {string} in the graph', (option: string, action: string) =
   }
 
   validateInput(option, action);
+
+  // this is just a sanity check to ensure the graph is still rendered after the option change, and there was no crash
+  cy.waitForReact();
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
+    .should('have.length', '1')
+    .then($graph => {
+      const { state } = $graph[0];
+
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { edges, nodes } = elems(controller);
+
+      assert.isAbove(edges.length, 0);
+      assert.isAbove(nodes.length, 0);
+    });
 });
 
 Then('the {string} option should {string} and {string}', (option: string, optionState: string, checkState: string) => {
