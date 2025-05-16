@@ -222,6 +222,7 @@ func getRequestRatesForLabel(ctx context.Context, api prom_v1.API, time time.Tim
 	if err != nil {
 		return model.Vector{}, errors.NewServiceUnavailable(err.Error())
 	}
-	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
+	// notice we only collect metrics for successful prom queries
+	internalmetrics.ObserveDurationAndLogResults(ctx, promtimer, "PrometheusProcessingTime", nil, "Metrics-GetRequestRates")
 	return result.(model.Vector), nil
 }

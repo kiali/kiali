@@ -207,10 +207,12 @@ func PromQueryAppender(ctx context.Context, query string, queryTime time.Time, a
 	graph.CheckUnavailable(err)
 
 	// notice we only collect metrics and log a message for successful prom queries
-	duration := promtimer.ObserveDuration()
-	zl.Trace().Str("query", query).Str("duration", duration.String()).Msgf("PromQuery: queryTime=[%v], queryTime.Unix=[%v])",
-		queryTime.Format(graph.TF),
-		queryTime.Unix())
+	internalmetrics.ObserveDurationAndLogResults(
+		ctx,
+		promtimer,
+		"PrometheusProcessingTime",
+		map[string]string{"query": query},
+		fmt.Sprintf("PromQuery: queryTime=[%v], queryTime.Unix=[%v])", queryTime.Format(graph.TF), queryTime.Unix()))
 
 	switch t := value.Type(); t {
 	case model.ValVector: // Instant Vector

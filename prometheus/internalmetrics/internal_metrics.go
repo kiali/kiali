@@ -2,12 +2,15 @@
 package internalmetrics
 
 import (
-	"strconv"
-
-	"github.com/prometheus/client_golang/prometheus"
 	// Because this package is used all throughout the codebase, be VERY careful adding new
 	// kiali imports here. Most likely you will encounter an import cycle error that will
 	// cause a compilation failure.
+	"context"
+	"strconv"
+
+	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/kiali/kiali/log"
 )
 
 // These constants define the different label names for the different metric timeseries
@@ -145,6 +148,33 @@ var Metrics = MetricsType{
 		},
 		[]string{labelQueryGroup},
 	),
+}
+
+// ObserveDurationAndLogResults will observe the duration time and then log it.
+// The logger is to be found in the given context.
+// The timerName can be anything, but convention is that you pass in the name of the
+// function defined in this file which was used to obtain the timer. For example, if you
+// obtained the timer via "GetGraphGenerationTimePrometheusTimer" the timerName you pass
+// into this function should best be set to "GraphGenerationTime".
+// data is a map of key/value pairs that will be logged in the structured data along with the given log message.
+func ObserveDurationAndLogResults(ctx context.Context, timer *prometheus.Timer, timerName string, data map[string]string, msg string) {
+	duration := timer.ObserveDuration()
+
+	// get the logger from context and start a trace message
+	zl := log.FromContext(ctx).Trace()
+
+	// add the given structured data if there is any
+	if len(data) > 0 {
+		for k, v := range data {
+			zl = zl.Str(k, v)
+		}
+	}
+
+	// log the message
+	zl.
+		Str("timer", timerName).
+		Str("duration", duration.String()).
+		Msg(msg)
 }
 
 // SuccessOrFailureMetricType let's you capture metrics for both successes and failures,
