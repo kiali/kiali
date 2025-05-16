@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -10,7 +11,9 @@ import (
 	"golang.org/x/exp/maps"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -47,6 +50,8 @@ type KialiCache interface {
 
 	GetGateways() (models.Workloads, bool)
 	SetGateways(models.Workloads)
+
+	GatewayAPIClasses(cluster string) []config.GatewayAPIClass
 
 	GetIstioStatus() (kubernetes.IstioComponentStatus, bool)
 	SetIstioStatus(kubernetes.IstioComponentStatus)
@@ -354,6 +359,67 @@ func (c *kialiCacheImpl) GetGateways() (models.Workloads, bool) {
 // SetGateways Sets a list of all gateway workloads by cluster and namespace
 func (c *kialiCacheImpl) SetGateways(gateways models.Workloads) {
 	c.gatewayStore.Set(kialiCacheGatewaysKey, gateways)
+}
+
+// GatewayAPIClasses returns list of K8s GatewayAPIClass objects
+// K8s Gateway API classes can come from  different places depending on the configuration:
+// 1. From explicitly listed classes in the configuration if set
+// 2. Auto-discovered classes that use Istio as a controller and matching a label selector in the configuration (if set)
+func (c *kialiCacheImpl) GatewayAPIClasses(cluster string) []config.GatewayAPIClass {
+	result := []config.GatewayAPIClass{}
+	userClient := c.clients[cluster]
+	if userClient == nil {
+		c.zl.Error().Msgf("K8s Client [%s] is not found or is not accessible for Kiali", cluster)
+		return result
+	}
+	// do not continue if Gateway API is not configured on cluster
+	if !userClient.IsGatewayAPI() {
+		return result
+	}
+	kubeCache, err := c.GetKubeCache(cluster)
+	if err != nil {
+		c.zl.Debug().Msgf("Unable to get kube cache when checking for GatewayAPIClasses: %s", err)
+		return result
+	}
+
+	// First case: defined classes in config
+	definedClasses := c.conf.ExternalServices.Istio.GatewayAPIClasses
+	for i, gwClass := range definedClasses {
+		if gwClass.ClassName != "" && gwClass.Name != "" {
+			result = append(result, gwClass)
+			continue
+		}
+
+		c.zl.Warn().Msgf("Gateway API class %d is missing a name or class name field. Currently set name %q, class name %q.",
+			i, gwClass.Name, gwClass.ClassName)
+	}
+
+	labelSelector, err := labels.ConvertSelectorToLabelsMap(config.Get().ExternalServices.Istio.GatewayAPIClassesLabelSelector)
+	if err != nil {
+		c.zl.Error().Msgf("bad gateway_api_classes_label_selector: %s", err)
+	}
+	// If there are no configured classes, get classes using the Istio controller
+	listOpts := []client.ListOption{client.MatchingLabels(labelSelector)}
+	classList := &k8s_networking_v1.GatewayClassList{}
+	if len(result) == 0 {
+		err := kubeCache.List(context.TODO(), classList, listOpts...)
+		if err != nil {
+			return result
+		}
+
+		for _, class := range classList.Items {
+			// Filter out classes that don't use Istio as a controller when the label filter is set
+			if strings.HasPrefix(string(class.Spec.ControllerName), "istio.io") || len(labelSelector) > 0 {
+				result = append(result, config.GatewayAPIClass{Name: class.Name, ClassName: class.Name})
+			}
+		}
+	}
+
+	if len(result) == 0 {
+		c.zl.Error().Msgf("No GatewayAPIClasses configured or found in cluster '%s' by label selector '%s'", cluster, labelSelector)
+	}
+
+	return result
 }
 
 // GetWaypoints Returns a list of waypoint proxies by cluster and namespace
