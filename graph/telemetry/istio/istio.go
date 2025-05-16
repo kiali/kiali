@@ -95,9 +95,17 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 				observability.Attribute("package", "istio"),
 				observability.Attribute("namespace", namespaceInfo.Name),
 			)
+			appenderCtx := buildAppenderContext(ctx, a.Name())
 			appenderTimer := internalmetrics.GetGraphAppenderTimePrometheusTimer(a.Name())
-			a.AppendGraph(buildAppenderContext(ctx, a.Name()), namespaceTrafficMap, globalInfo, appenderNamespaceInfo)
-			appenderTimer.ObserveDuration()
+			a.AppendGraph(appenderCtx, namespaceTrafficMap, globalInfo, appenderNamespaceInfo)
+			internalmetrics.ObserveDurationAndLogResults(
+				appenderCtx,
+				appenderTimer,
+				"GraphAppenderTime",
+				map[string]string{
+					"namespace": namespaceInfo.Name,
+				},
+				"Namespace graph appender time")
 			appenderEnd()
 		}
 
@@ -585,9 +593,17 @@ func BuildNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalIn
 	namespaceInfo := graph.NewAppenderNamespaceInfo(o.NodeOptions.Namespace.Name)
 
 	for _, a := range appenders {
+		appenderCtx := buildAppenderContext(ctx, a.Name())
 		appenderTimer := internalmetrics.GetGraphAppenderTimePrometheusTimer(a.Name())
-		a.AppendGraph(buildAppenderContext(ctx, a.Name()), trafficMap, globalInfo, namespaceInfo)
-		appenderTimer.ObserveDuration()
+		a.AppendGraph(appenderCtx, trafficMap, globalInfo, namespaceInfo)
+		internalmetrics.ObserveDurationAndLogResults(
+			appenderCtx,
+			appenderTimer,
+			"GraphAppenderTime",
+			map[string]string{
+				"namespace": namespaceInfo.Namespace,
+			},
+			"Node graph appender time")
 	}
 
 	// The finalizers can perform final manipulations on the complete graph
@@ -1012,9 +1028,17 @@ func handleAggregateNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions
 	namespaceInfo := graph.NewAppenderNamespaceInfo(o.NodeOptions.Namespace.Name)
 
 	for _, a := range appenders {
+		appenderCtx := buildAppenderContext(ctx, a.Name())
 		appenderTimer := internalmetrics.GetGraphAppenderTimePrometheusTimer(a.Name())
-		a.AppendGraph(buildAppenderContext(ctx, a.Name()), trafficMap, globalInfo, namespaceInfo)
-		appenderTimer.ObserveDuration()
+		a.AppendGraph(appenderCtx, trafficMap, globalInfo, namespaceInfo)
+		internalmetrics.ObserveDurationAndLogResults(
+			appenderCtx,
+			appenderTimer,
+			"GraphAppenderTime",
+			map[string]string{
+				"namespace": namespaceInfo.Namespace,
+			},
+			"Aggregate node graph appender time")
 	}
 
 	// The finalizers can perform final manipulations on the complete graph
