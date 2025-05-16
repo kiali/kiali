@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -270,7 +271,6 @@ func (in *Client) GetErrorTraces(ctx context.Context, ns, app string, duration t
 
 func (in *Client) GetServiceStatus(ctx context.Context) (bool, error) {
 	ctx = in.prepareContextForClient(ctx)
-
 	// Check Service Status using HTTP when gRPC is not enabled
 	if in.grpcClient == nil {
 		return in.httpTracingClient.GetServiceStatusHTTP(ctx, in.httpClient, in.baseURL)
@@ -279,6 +279,7 @@ func (in *Client) GetServiceStatus(ctx context.Context) (bool, error) {
 	return in.grpcClient.GetServices(ctx)
 }
 
+// BuildTracingServiceName
 func BuildTracingServiceName(namespace, app string) string {
 	conf := config.Get()
 	if conf.ExternalServices.Tracing.NamespaceSelector {
@@ -295,4 +296,24 @@ func (in *Client) prepareContextForClient(ctx context.Context) context.Context {
 		ctx = metadata.NewOutgoingContext(ctx, metadata.New(in.customHeaders))
 	}
 	return ctx
+}
+
+func MakeRequest(client http.Client, endpoint string, body io.Reader) (response []byte, status int, err error) {
+	response = nil
+	status = 0
+
+	req, err := http.NewRequest(http.MethodGet, endpoint, body)
+	if err != nil {
+		return
+	}
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	response, err = io.ReadAll(resp.Body)
+	status = resp.StatusCode
+	return
 }

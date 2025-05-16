@@ -47,7 +47,7 @@ import {
   ZtunnelConfigDump
 } from '../types/IstioObjects';
 import { ComponentStatus, IstiodResourceThresholds } from '../types/IstioStatus';
-import { TracingInfo, TracingResponse, TracingSingleResponse } from '../types/TracingInfo';
+import { StatusError, TracingInfo, TracingResponse, TracingSingleResponse } from '../types/TracingInfo';
 import { ControlPlane, MeshDefinition, MeshQuery } from '../types/Mesh';
 import { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
 import { IstioMetricsMap, MetricsPerNamespace, MetricsStatsResult, ResourceUsageMetricsMap } from '../types/Metrics';
@@ -1398,4 +1398,14 @@ export const getControlPlanes = (): Promise<ApiResponse<ControlPlane[]>> => {
 
 export const getMeshGraph = (params: MeshQuery): Promise<ApiResponse<MeshDefinition>> => {
   return newRequest<MeshDefinition>(HTTP_VERBS.GET, urls.meshGraph, params, {});
+};
+
+export const getDiagnoseStatus = (cluster?: string): Promise<ApiResponse<StatusError>> => {
+  const queryParams: ClusterParam = {};
+
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+
+  return newRequest<StatusError>(HTTP_VERBS.GET, urls.tracingDiagnose, queryParams, {});
 };
