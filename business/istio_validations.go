@@ -947,5 +947,5 @@ func getNsNames(nss []models.Namespace) []string {
 
 func observeDurationAndLogResults(ctx context.Context, timer *prometheus.Timer, msg string) {
 	duration := timer.ObserveDuration()
-	log.FromContext(ctx).Trace().Msgf("Duration for [%s]: %v", msg, duration)
+	log.FromContext(ctx).Trace().Str("duration", duration.String()).Msgf("Duration for [%s]", msg)
 }
