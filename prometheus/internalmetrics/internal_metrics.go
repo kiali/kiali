@@ -43,6 +43,7 @@ type MetricsType struct {
 	CacheTotalRequests             *prometheus.CounterVec
 	CacheHitsTotal                 *prometheus.CounterVec
 	ValidationProcessingTime       *prometheus.HistogramVec
+	TracingProcessingTime          *prometheus.HistogramVec
 }
 
 // Metrics contains all of Kiali's own internal metrics.
@@ -140,6 +141,13 @@ var Metrics = MetricsType{
 		},
 		[]string{labelName},
 	),
+	TracingProcessingTime: prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name: "kiali_tracing_processing_duration_seconds",
+			Help: "The time required to execute a Tracing query.",
+		},
+		[]string{labelQueryGroup},
+	),
 }
 
 // SuccessOrFailureMetricType let's you capture metrics for both successes and failures,
@@ -203,6 +211,7 @@ func RegisterInternalMetrics() {
 		Metrics.SingleValidationProcessingTime,
 		Metrics.CacheTotalRequests,
 		Metrics.CacheHitsTotal,
+		Metrics.TracingProcessingTime,
 	)
 }
 
@@ -421,4 +430,25 @@ func GetCacheHitsTotalMetric(cache string) prometheus.Counter {
 	return Metrics.CacheHitsTotal.With(prometheus.Labels{
 		labelName: cache,
 	})
+}
+
+// GetTracingProcessingTimePrometheusTimer returns a timer that can be used to store
+// a value for the Tracing query processing time metric. The timer is ticking immediately
+// when this function returns.
+//
+// Note that the queryGroup parameter is simply some string that can be used to
+// identify a particular set of Tracing queries. This queryGroup does not necessarily have to
+// identify a unique query (indeed, if you do that, that might cause too many timeseries to
+// be collected), but it only needs to identify a set of queries.
+//
+// Typical usage is as follows:
+//
+//	promtimer := GetTracingProcessingTimePrometheusTimer(...)
+//	... execute the query ...
+//	promtimer.ObserveDuration()
+func GetTracingProcessingTimePrometheusTimer(queryGroup string) *prometheus.Timer {
+	timer := prometheus.NewTimer(Metrics.TracingProcessingTime.With(prometheus.Labels{
+		labelQueryGroup: queryGroup,
+	}))
+	return timer
 }
