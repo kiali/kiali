@@ -277,8 +277,8 @@ func validateTempoHTTP(client http.Client, zl *zerolog.Logger, parsedUrl model.P
 	if strings.Contains(parsedUrl.Host, "gateway") {
 		splitUrl := strings.Split(parsedUrl.Path, "/")
 		tenant := ""
-		if len(splitUrl) > 3 {
-			tenant = splitUrl[3]
+		if len(splitUrl) > 4 {
+			tenant = splitUrl[4]
 		} else {
 			logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create http client in port 8080", Result: fmt.Sprintf("tenant name not found: %s", parsedUrl.Path)})
 		}
