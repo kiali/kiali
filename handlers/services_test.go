@@ -15,10 +15,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/tools/clientcmd/api"
 
-	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -308,11 +309,9 @@ func TestServiceMetricsBadRateFunc(t *testing.T) {
 }
 
 func TestServiceMetricsInaccessibleNamespace(t *testing.T) {
-	ts, _ := setupServiceMetricsEndpoint(t)
 	k := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
 	k.OpenShift = true
-
-	business.SetupBusinessLayer(t, &noPrivClient{UserClientInterface: k}, *config.Get())
+	ts, _ := setupServiceMetricsEndpointWithClient(t, &noPrivClient{UserClientInterface: k})
 
 	url := ts.URL + "/api/namespaces/my_namespace/services/svc/metrics"
 
@@ -326,11 +325,14 @@ func TestServiceMetricsInaccessibleNamespace(t *testing.T) {
 
 func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
 	conf := config.NewConfig()
-	config.Set(conf)
 	k := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
 		kubetest.FakeNamespace("my_namespace"),
 		kubetest.FakeNamespace("ns"))
 	k.OpenShift = true
+
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
 
 	xapi := new(prometheustest.PromAPIMock)
 	prom, err := prometheus.NewClient()
@@ -339,20 +341,36 @@ func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustes
 	}
 	prom.Inject(xapi)
 
+	handler := WithFakeAuthInfo(conf, ServiceMetrics(conf, cache, discovery, cf, prom))
 	mr := mux.NewRouter()
-	authInfo := map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}}
-	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/metrics", http.HandlerFunc(
-		WithAuthInfo(authInfo, func(w http.ResponseWriter, r *http.Request) {
-			getServiceMetrics(w, r, func() (*prometheus.Client, error) {
-				return prom, nil
-			})
-		})),
-	)
+	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/metrics", handler)
 
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)
 
-	business.SetupBusinessLayer(t, k, *conf)
+	return ts, xapi
+}
+
+func setupServiceMetricsEndpointWithClient(t *testing.T, client kubernetes.ClientInterface) (*httptest.Server, *prometheustest.PromAPIMock) {
+	conf := config.NewConfig()
+
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, client.(kubernetes.UserClientInterface))
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
+
+	xapi := new(prometheustest.PromAPIMock)
+	prom, err := prometheus.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	prom.Inject(xapi)
+
+	handler := WithFakeAuthInfo(conf, ServiceMetrics(conf, cache, discovery, cf, prom))
+	mr := mux.NewRouter()
+	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/metrics", handler)
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
 
 	return ts, xapi
 }

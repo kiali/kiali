@@ -25,7 +25,7 @@ type RegistryCriteria struct {
 }
 
 func (in *RegistryStatusService) GetRegistryServices(criteria RegistryCriteria) []*kubernetes.RegistryService {
-	registryStatus := kialiCache.GetRegistryStatus(criteria.Cluster)
+	registryStatus := in.kialiCache.GetRegistryStatus(criteria.Cluster)
 	registryServices := filterRegistryServices(registryStatus, criteria)
 	return registryServices
 }
