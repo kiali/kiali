@@ -39,7 +39,10 @@ func GraphNamespaces(ctx context.Context, business *business.Layer, o graph.Opti
 	}
 
 	// update metrics
-	internalmetrics.SetGraphNodes(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes, 0)
+	if _, ok := graphConfig.(config_common.Config); ok {
+		numNodes := len(graphConfig.(config_common.Config).Elements.Nodes)
+		internalmetrics.SetGraphNodes(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes, numNodes)
+	}
 
 	return code, graphConfig
 }
@@ -74,8 +77,12 @@ func GraphNode(ctx context.Context, business *business.Layer, o graph.Options) (
 	default:
 		graph.Error(fmt.Sprintf("TelemetryVendor [%s] not supported", o.TelemetryVendor))
 	}
+
 	// update metrics
-	internalmetrics.SetGraphNodes(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes, 0)
+	if _, ok := graphConfig.(config_common.Config); ok {
+		numNodes := len(graphConfig.(config_common.Config).Elements.Nodes)
+		internalmetrics.SetGraphNodes(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes, numNodes)
+	}
 
 	return code, graphConfig
 }
