@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { Point, clamp, distance } from '../../../utils/MathUtils';
 import {
   TrafficPointCircleRenderer,
@@ -110,12 +111,12 @@ type TrafficPoint = {
  * speed      - defines the speed of the next point (see TrafficPoint.speed)
  */
 export class TrafficPointGenerator {
-  private errorRate: number = 0; // integer [0..100]
-  private launchTime: number = 0;
-  private speed: number = 0;
+  private errorRate = 0; // integer [0..100]
+  private launchTime = 0;
+  private speed = 0;
   private type: TrafficEdgeType = TrafficEdgeType.NONE;
 
-  render(edge: Edge): React.ReactFragment {
+  render(edge: Edge): React.ReactNode {
     if (!this.launchTime || !this.speed) {
       return <></>;
     }
@@ -155,6 +156,7 @@ export class TrafficPointGenerator {
           : getTrafficPointRendererForRpsSuccess(edge, animationDurationSeconds, percentVisible);
 
       const delayInterval = animationDuration / renderedPointsOnEdge;
+
       for (let i = 0; i < pointsOnEdge; ++i) {
         const animationDelay = `${i * delayInterval + initialDelay}ms`;
         const point = renderer.render(edge, animationDelay, undefined);
@@ -183,14 +185,17 @@ export class TrafficPointGenerator {
       const errorRenderer = getTrafficPointRendererForRpsError(edge, animationDurationSeconds, percentVisible);
 
       const delayInterval = animationDuration / renderedPointsOnEdge;
+
       for (let i = 0, injectedError = false; i < renderedPointsOnEdge; ++i) {
         const animationDelay = `${i * delayInterval + initialDelay}ms`;
         let isErrorPoint = Math.random() * 100 <= this.errorRate;
         isErrorPoint = isErrorPoint || (!injectedError && i + 1 === renderedPointsOnEdge);
         injectedError = injectedError || isErrorPoint;
+
         const point = isErrorPoint
           ? errorRenderer.render(edge, animationDelay, undefined)
           : renderer.render(edge, animationDelay, undefined);
+
         points.unshift(point);
       }
     }
@@ -198,22 +203,22 @@ export class TrafficPointGenerator {
     return <>{points.map(p => p)}</>;
   }
 
-  setTimer(timer: number | undefined) {
+  setTimer(timer: number | undefined): void {
     this.launchTime = timer ?? 0;
   }
 
-  setSpeed(speed: number) {
+  setSpeed(speed: number): void {
     this.speed = speed;
   }
 
   // setErrorRate, where errorRate is in the range [0..1], reflecting
   // an error rate between 0 and 100%. The error rate will be rounded
   // to the nearest integer percentage.
-  setErrorRate(errorRate: number) {
+  setErrorRate(errorRate: number): void {
     this.errorRate = clamp(Math.round(errorRate * 100), 0, 100);
   }
 
-  setType(type: TrafficEdgeType) {
+  setType(type: TrafficEdgeType): void {
     this.type = type;
   }
 
@@ -226,7 +231,7 @@ export class TrafficPointGenerator {
   //   1) categorize an edge into a PFT EdgeAnimationSpeed bucket
   //   2) look for a sizeable change in error rate
   // and combine the values.
-  getHash(edgeData: EdgeData) {
+  getHash(edgeData: EdgeData): string {
     let animationSpeedPF = EdgeAnimationSpeed.none;
     switch (edgeData.protocol) {
       case Protocol.GRPC:
@@ -261,11 +266,11 @@ class TrafficEdge {
     this.generator = new TrafficPointGenerator();
   }
 
-  getPoints() {
+  getPoints(): TrafficPoint[] {
     return this.points;
   }
 
-  getEdge() {
+  getEdge(): Edge {
     return this.edge;
   }
 
@@ -273,34 +278,34 @@ class TrafficEdge {
     return this.generator;
   }
 
-  getType() {
+  getType(): TrafficEdgeType {
     return this.type;
   }
 
-  setTimer(timer: number | undefined) {
+  setTimer(timer: number | undefined): void {
     this.generator.setTimer(timer);
   }
 
   /**
    * When a point is 1 or over it, is time to discard it.
    */
-  removeFinishedPoints() {
+  removeFinishedPoints(): void {
     this.points = this.points.filter(p => p.delta <= 1);
   }
 
-  setSpeed(speed: number) {
+  setSpeed(speed: number): void {
     this.generator.setSpeed(speed);
   }
 
-  setErrorRate(errorRate: number) {
+  setErrorRate(errorRate: number): void {
     this.generator.setErrorRate(errorRate);
   }
 
-  setEdge(edge: Edge) {
+  setEdge(edge: Edge): void {
     this.edge = edge;
   }
 
-  setType(type: TrafficEdgeType) {
+  setType(type: TrafficEdgeType): void {
     this.type = type;
     this.generator.setType(type);
   }
@@ -327,7 +332,7 @@ export class TrafficAnimation {
   /**
    * Starts an animation, discarding any prior animation
    */
-  start() {
+  start(): void {
     const settings = serverConfig.kialiFeatureFlags.uiDefaults.graph.settings;
     const edges = this.controller.getGraph().getEdges();
 
@@ -339,9 +344,11 @@ export class TrafficAnimation {
 
     // start default pft traffic animation
     tcpTimerConfig.resetCalibration();
+
     // Calibrate animation amplitude
     edges.forEach(e => {
       const edgeData = e.getData() as EdgeData;
+
       switch (edgeData.protocol) {
         case Protocol.GRPC:
           timerConfig.calibrate(edgeData.grpc);
@@ -354,9 +361,11 @@ export class TrafficAnimation {
           break;
       }
     });
+
     setObserved(() => {
       edges.forEach(e => {
         const edgeData = e.getData() as EdgeData;
+
         switch (edgeData.protocol) {
           case Protocol.GRPC:
             e.setEdgeAnimationSpeed(timerConfig.computeAnimationSpeedPF(edgeData.grpc));
@@ -368,6 +377,7 @@ export class TrafficAnimation {
             e.setEdgeAnimationSpeed(tcpTimerConfig.computeAnimationSpeedPF(edgeData.tcp));
             break;
         }
+
         if (e.getEdgeAnimationSpeed() !== EdgeAnimationSpeed.none) {
           e.setEdgeStyle(EdgeStyle.dashedMd);
         }
@@ -378,7 +388,7 @@ export class TrafficAnimation {
   /**
    * Stops the animation
    */
-  stop() {
+  stop(): void {
     const settings = serverConfig.kialiFeatureFlags.uiDefaults.graph.settings;
     const edges = this.controller.getGraph().getEdges();
 
@@ -387,6 +397,7 @@ export class TrafficAnimation {
       setObserved(() => {
         edges.forEach(e => e.setData({ ...e.getData(), animation: undefined }));
       });
+
       return;
     }
 
@@ -401,7 +412,7 @@ export class TrafficAnimation {
     });
   }
 
-  private processEdges(edges: Edge[]) {
+  private processEdges(edges: Edge[]): void {
     const visibleEdges = edges.filter(e => e.isVisible());
 
     timerConfig.resetCalibration();
@@ -427,12 +438,14 @@ export class TrafficAnimation {
     const trafficAnimation = visibleEdges.reduce((trafficEdges: TrafficEdgeHash, edge: Edge) => {
       const edgeData = edge.getData() as EdgeData;
       const type = this.getTrafficEdgeType(edgeData);
+
       if (type !== TrafficEdgeType.NONE) {
         const edgeId = edge.getId();
         trafficEdges[edgeId] = new TrafficEdge(edge);
         trafficEdges[edgeId].setType(type);
         this.fillTrafficEdge(edge, trafficEdges[edgeId]);
       }
+
       return trafficEdges;
     }, {});
 
@@ -444,7 +457,7 @@ export class TrafficAnimation {
     });
   }
 
-  private getTrafficEdgeType(edgeData: EdgeData) {
+  private getTrafficEdgeType(edgeData: EdgeData): number {
     switch (edgeData.protocol) {
       case Protocol.GRPC:
       case Protocol.HTTP:
@@ -456,11 +469,11 @@ export class TrafficAnimation {
     }
   }
 
-  private fillTrafficEdge(edge: Edge, trafficEdge: TrafficEdge) {
+  private fillTrafficEdge(edge: Edge, trafficEdge: TrafficEdge): void {
     // Need to identify if we are going to fill an RPS or TCP traffic edge
     // RPS traffic has rate, responseTime, percentErr (among others) where TCP traffic only has: tcpSentRate
-
     let edgeLengthFactor = 1;
+
     try {
       const edgeLength = this.edgeLength(edge);
       edgeLengthFactor = BASE_LENGTH / Math.max(edgeLength, 1);
@@ -473,12 +486,14 @@ export class TrafficAnimation {
     }
 
     const edgeData = edge.getData() as EdgeData;
+
     switch (trafficEdge.getType()) {
       case TrafficEdgeType.RPS: {
         const isHttp = edgeData.protocol === Protocol.HTTP;
         const rate = isHttp ? edgeData.http : edgeData.grpc;
         const pErr = isHttp ? edgeData.httpPercentErr : edgeData.grpcPercentErr;
         const timer = timerConfig.computeDelay(rate);
+
         // The edge length affects the speed, include a factor in the speed to even visual speed for long and short edges.
         const speed = this.speedFromResponseTime(edgeData.responseTime) * edgeLengthFactor;
         const errorRate = isNaN(pErr) ? 0 : pErr / 100;
@@ -501,13 +516,15 @@ export class TrafficAnimation {
     }
   }
 
-  private speedFromResponseTime(responseTime: number) {
+  private speedFromResponseTime(responseTime: number): number {
     // Consider NaN response time as "everything is going as fast as possible"
     if (isNaN(responseTime)) {
       return SPEED_RATE_MAX;
     }
+
     // Normalize
     const delta = clamp(responseTime, SPEED_RESPONSE_TIME_MIN, SPEED_RESPONSE_TIME_MAX) / SPEED_RESPONSE_TIME_MAX;
+
     // Scale
     return SPEED_RATE_MIN + (1 - delta) * (SPEED_RATE_MAX - SPEED_RATE_MIN);
   }
@@ -515,9 +532,11 @@ export class TrafficAnimation {
   private edgeLength(edge: Edge): number {
     let len = 0;
     const points = this.edgePoints(edge);
+
     for (let i = 0; i < points.length - 1; ++i) {
       len += distance(points[i], points[i + 1]);
     }
+
     return len;
   }
 
@@ -525,6 +544,7 @@ export class TrafficAnimation {
     const controlPoints: Array<Point> = [edge.getStartPoint()];
     controlPoints.push(...edge.getBendpoints());
     controlPoints.push(edge.getEndPoint());
+
     return controlPoints;
   }
 }
