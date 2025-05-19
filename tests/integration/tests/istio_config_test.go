@@ -97,16 +97,6 @@ func assertConfigs(configList models.IstioConfigList, namespace string, require 
 		require.True(rg.Namespace == namespace)
 		require.NotNil(rg.Name)
 	}
-	require.NotNil(configList.K8sTCPRoutes)
-	for _, route := range configList.K8sTCPRoutes {
-		require.True(route.Namespace == namespace)
-		require.NotNil(route.Name)
-	}
-	require.NotNil(configList.K8sTLSRoutes)
-	for _, route := range configList.K8sTLSRoutes {
-		require.True(route.Namespace == namespace)
-		require.NotNil(route.Name)
-	}
 	require.NotNil(configList.RequestAuthentications)
 	for _, ra := range configList.RequestAuthentications {
 		require.True(ra.Namespace == namespace)

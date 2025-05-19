@@ -107,8 +107,9 @@ helm upgrade sail-operator sail-operator \
   --repo https://istio-ecosystem.github.io/sail-operator
 
 K8S_GATEWAY_API_VERSION=$(curl --head --silent "https://github.com/kubernetes-sigs/gateway-api/releases/latest" | grep "location: " | awk '{print $2}' | sed "s/.*tag\///g" | cat -v | sed "s/\^M//g")
-echo "Installing Gateway API version ${K8S_GATEWAY_API_VERSION}"
-kubectl apply -k "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=${K8S_GATEWAY_API_VERSION}"
+echo "Verifying that Gateway API is installed; if it is not then Gateway API version ${K8S_GATEWAY_API_VERSION} will be installed now."
+kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+  { kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=${K8S_GATEWAY_API_VERSION}" | kubectl apply -f -; }
 
 SERVICE="jaeger-collector.istio-system.svc.cluster.local"
 if is_in_array "tempo" "tempo" "${ADDONS}"; then
