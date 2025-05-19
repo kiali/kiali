@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/zerolog"
 
 	"github.com/kiali/kiali/log"
 )
@@ -160,19 +161,30 @@ var Metrics = MetricsType{
 func ObserveDurationAndLogResults(ctx context.Context, timer *prometheus.Timer, timerName string, data map[string]string, msg string) {
 	duration := timer.ObserveDuration()
 
-	// get the logger from context and start a trace message
-	zl := log.FromContext(ctx).Trace()
+	// TODO: We might want to skip logging anything if the duration is something like "less than 1 second"
+	// since there is probably no need for the logs to get noisy for very fast operations.
+	// Normally we only care about things that are slow.
+	// if duration < time.Second {
+	//   return
+	// }
+
+	zl := log.FromContext(ctx)
+
+	if zl.GetLevel() > zerolog.TraceLevel {
+		return // Trace level is not enabled, nothing left for us to do so return immediately
+	}
+
+	zle := zl.Trace()
 
 	// add the given structured data if there is any
 	if len(data) > 0 {
 		for k, v := range data {
-			zl = zl.Str(k, v)
+			zle = zle.Str(k, v)
 		}
 	}
 
 	// log the message
-	zl.
-		Str("timer", timerName).
+	zle.Str("timer", timerName).
 		Str("duration", duration.String()).
 		Msg(msg)
 }
