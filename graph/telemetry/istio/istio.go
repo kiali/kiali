@@ -128,7 +128,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 		observability.Attribute("namespace", namespace),
 	)
 	defer end()
-
+	zl := log.FromContext(ctx)
 	// create map to aggregate traffic by protocol and response code
 	trafficMap := graph.NewTrafficMap()
 	duration := o.Namespaces[namespace].Duration
@@ -146,6 +146,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 		groupBy := "source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags"
 
 		// 0) Incoming: query source telemetry to capture unserviced namespace services' incoming traffic (failed requests that never reach a dest)
+		zl.Debug().Msg("QUERY 1")
 		query = fmt.Sprintf(`sum(rate(%s{%s,source_workload_namespace!="%s",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.%s\\..+$"} [%vs])) by (%s) %s`,
 			metric,
 			util.GetReporter("source", o.Rates),
@@ -159,6 +160,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 
 		// 1) Incoming: Ambient only: query source telemetry, typically from a non-waypoint ingress gateway, that will likely not have overlapping dest or waypoint telem for the traffic (that traffic will be picked up in query #2)
 		if namespaceInfo.IsAmbient {
+			zl.Debug().Msg("QUERY 2")
 			query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace!="%s",destination_workload_namespace="%s"} [%vs])) by (%s) %s`,
 				metric,
 				namespace,
@@ -171,6 +173,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 		}
 
 		// 2) Incoming: query destination telemetry to capture namespace services' incoming traffic
+		zl.Debug().Msg("QUERY 3")
 		query = fmt.Sprintf(`sum(rate(%s{%s,destination_workload_namespace="%s"} [%vs])) by (%s) %s`,
 			metric,
 			util.GetReporter("destination", o.Rates),
@@ -182,6 +185,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 		populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 
 		// 3) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
+		zl.Debug().Msg("QUERY 4")
 		query = fmt.Sprintf(`sum(rate(%s{%s,source_workload_namespace="%s"} [%vs])) by (%s) %s`,
 			metric,
 			util.GetReporter("source", o.Rates),
@@ -211,6 +215,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 
 		for _, metric := range metrics {
 			// 0) Incoming: query source telemetry to capture unserviced namespace services' incoming traffic
+			zl.Debug().Msg("QUERY 5")
 			query = fmt.Sprintf(`sum(rate(%s{%s,source_workload_namespace!="%s",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.%s\\..+$"} [%vs])) by (%s) %s`,
 				metric,
 				util.GetReporter("source", o.Rates),
@@ -224,6 +229,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 
 			// 1) Incoming: Ambient only: query source telemetry, typically from a non-waypoint ingress gateway, that will likely not have overlapping dest or waypoint telem for the traffic (that traffic will be picked up in query #2)
 			if namespaceInfo.IsAmbient {
+				zl.Debug().Msg("QUERY 6")
 				query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace!="%s",destination_workload_namespace="%s"} [%vs])) by (%s) %s`,
 					metric,
 					namespace,
@@ -236,6 +242,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 			}
 
 			// 2) Incoming: query destination telemetry to capture namespace services' incoming traffic	query = fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s"} [%vs])) by (%s) %s`,
+			zl.Debug().Msg("QUERY 7")
 			query = fmt.Sprintf(`sum(rate(%s{%s,destination_workload_namespace="%s"} [%vs])) by (%s) %s`,
 				metric,
 				util.GetReporter("destination", o.Rates),
@@ -247,6 +254,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 3) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
+			zl.Debug().Msg("QUERY 8")
 			query = fmt.Sprintf(`sum(rate(%s{%s,source_workload_namespace="%s"} [%vs])) by (%s) %s`,
 				metric,
 				util.GetReporter("source", o.Rates),
@@ -278,6 +286,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 
 		for _, metric := range metrics {
 			// 0) Incoming: query source telemetry to capture unserviced namespace services' incoming traffic
+			zl.Debug().Msg("QUERY 9")
 			query = fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace!="%s",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.%s\\..+$"} [%vs])) by (%s) %s`,
 				metric,
 				util.GetApp(o.Rates),
@@ -291,6 +300,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 1) Incoming: query destination telemetry to capture namespace services' incoming traffic	query = fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s"} [%vs])) by (%s) %s`,
+			zl.Debug().Msg("QUERY 10")
 			query = fmt.Sprintf(`sum(rate(%s{%s%s,destination_workload_namespace="%s"} [%vs])) by (%s) %s`,
 				metric,
 				util.GetApp(o.Rates),
@@ -303,6 +313,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
+			zl.Debug().Msg("QUERY 11")
 			query = fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace="%s"} [%vs])) by (%s) %s`,
 				metric,
 				util.GetApp(o.Rates),
@@ -472,6 +483,7 @@ func addTraffic(ctx context.Context, trafficMap graph.TrafficMap, metric string,
 	// processing the same information twice we keep track of the time series applied to a particular edge. The
 	// edgeTSHash incorporates information about the time series' source, destination and metric information,
 	// and uses that unique TS has to protect against applying the same intomation twice.
+	zl.Debug().Msg("QUERY 12")
 	edgeTSHash := fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join([]string{metric, source.Metadata[tsHash].(string), dest.Metadata[tsHash].(string), code, flags, host}, ":"))))
 
 	if inject {
@@ -634,7 +646,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 	promApi := globalInfo.PromClient.API()
 	var query string
 	var trafficVector model.Vector
-
+	zl := log.FromContext(ctx)
 	// only narrow by cluster if it is set on the target node
 	var sourceCluster, destCluster string
 	if cluster != graph.Unknown {
@@ -658,6 +670,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 		}
 		switch n.NodeType {
 		case graph.NodeTypeWorkload:
+			zl.Debug().Msg("QUERY 13")
 			query = fmt.Sprintf(`sum(rate(%s{%s%s,destination_workload_namespace="%s",destination_workload="%s"} [%vs])) by (%s) %s`,
 				metric,
 				reporter,
@@ -669,6 +682,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 				idleCondition)
 		case graph.NodeTypeApp:
 			if graph.IsOK(n.Version) {
+				zl.Debug().Msg("QUERY 14")
 				query = fmt.Sprintf(`sum(rate(%s{%s%s,destination_service_namespace="%s",destination_canonical_service="%s",destination_canonical_revision="%s"} [%vs])) by (%s) %s`,
 					metric,
 					reporter,
@@ -680,6 +694,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 					groupBy,
 					idleCondition)
 			} else {
+				zl.Debug().Msg("QUERY 15")
 				query = fmt.Sprintf(`sum(rate(%s{%s%s,destination_service_namespace="%s",destination_canonical_service="%s"} [%vs])) by (%s) %s`,
 					metric,
 					reporter,
@@ -693,6 +708,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 		case graph.NodeTypeService:
 			// Service nodes require two queries for incoming
 			// 1.a) query source telemetry for requests to the service that could not be serviced
+			zl.Debug().Msg("QUERY 16")
 			query = fmt.Sprintf(`sum(rate(%s{%s%s,destination_workload="unknown",destination_service=~"^%s\\.%s\\..*$"} [%vs])) by (%s) %s`,
 				metric,
 				util.GetReporter("source", o.Rates),
@@ -706,6 +722,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 1.b) query dest telemetry for requests to the service, serviced by service workloads
+			zl.Debug().Msg("QUERY 17")
 			query = fmt.Sprintf(`sum(rate(%s{%s%s,destination_service_namespace="%s",destination_service=~"^%s\\.%s\\..*$"} [%vs])) by (%s) %s`,
 				metric,
 				util.GetReporter("destination", o.Rates),
@@ -717,6 +734,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 				groupBy,
 				idleCondition)
 		default:
+			zl.Debug().Msg("QUERY 18")
 			graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 		}
 		trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
@@ -725,6 +743,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 		// 2) query for outbound traffic
 		switch n.NodeType {
 		case graph.NodeTypeWorkload:
+			zl.Debug().Msg("QUERY 19")
 			query = fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace="%s",source_workload="%s"} [%vs])) by (%s) %s`,
 				metric,
 				util.GetReporter("source", o.Rates),
@@ -736,6 +755,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 				idleCondition)
 		case graph.NodeTypeApp:
 			if graph.IsOK(n.Version) {
+				zl.Debug().Msg("QUERY 20")
 				query = fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace="%s",source_canonical_service="%s",source_canonical_revision="%s"} [%vs])) by (%s) %s`,
 					metric,
 					util.GetReporter("source", o.Rates),
@@ -747,6 +767,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 					groupBy,
 					idleCondition)
 			} else {
+				zl.Debug().Msg("QUERY 21")
 				query = fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace="%s",source_canonical_service="%s"} [%vs])) by (%s) %s`,
 					metric,
 					util.GetReporter("source", o.Rates),
@@ -760,6 +781,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 		case graph.NodeTypeService:
 			query = ""
 		default:
+			zl.Debug().Msg("QUERY 22")
 			graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 		}
 		trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
@@ -785,6 +807,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 		for _, metric := range metrics {
 			switch n.NodeType {
 			case graph.NodeTypeWorkload:
+				zl.Debug().Msg("QUERY 23")
 				query = fmt.Sprintf(`sum(rate(%s{%s%s,destination_workload_namespace="%s",destination_workload="%s"} [%vs])) by (%s) %s`,
 					metric,
 					util.GetReporter("destination", o.Rates),
@@ -796,6 +819,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 					idleCondition)
 			case graph.NodeTypeApp:
 				if graph.IsOK(n.Version) {
+					zl.Debug().Msg("QUERY 24")
 					query = fmt.Sprintf(`sum(rate(%s{%s%s,destination_service_namespace="%s",destination_canonical_service="%s",destination_canonical_revision="%s"} [%vs])) by (%s) %s`,
 						metric,
 						util.GetReporter("destination", o.Rates),
@@ -807,6 +831,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 						groupBy,
 						idleCondition)
 				} else {
+					zl.Debug().Msg("QUERY 25")
 					query = fmt.Sprintf(`sum(rate(%s{%s%s,destination_service_namespace="%s",destination_canonical_service="%s"} [%vs])) by (%s) %s`,
 						metric,
 						util.GetReporter("destination", o.Rates),
@@ -818,6 +843,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 						idleCondition)
 				}
 			case graph.NodeTypeService:
+				zl.Debug().Msg("QUERY 26")
 				// TODO: Do we need to handle requests from unknown in a special way (like in HTTP above)? Not sure how gRPC-messages is reported from unknown.
 				query = fmt.Sprintf(`sum(rate(%s{%s%s,destination_service_namespace="%s",destination_service=~"^%s\\.%s\\..*$"} [%vs])) by (%s) %s`,
 					metric,
@@ -830,6 +856,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 					groupBy,
 					idleCondition)
 			default:
+				zl.Debug().Msg("QUERY 27")
 				graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 			}
 			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
@@ -838,6 +865,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 			// 2) query for outbound traffic
 			switch n.NodeType {
 			case graph.NodeTypeWorkload:
+				zl.Debug().Msg("QUERY 28")
 				query = fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace="%s",source_workload="%s"} [%vs])) by (%s) %s`,
 					metric,
 					util.GetReporter("source", o.Rates),
@@ -849,6 +877,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 					idleCondition)
 			case graph.NodeTypeApp:
 				if graph.IsOK(n.Version) {
+					zl.Debug().Msg("QUERY 29")
 					query = fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace="%s",source_canonical_service="%s",source_canonical_revision="%s"} [%vs])) by (%s) %s`,
 						metric,
 						util.GetReporter("source", o.Rates),
@@ -860,6 +889,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 						groupBy,
 						idleCondition)
 				} else {
+					zl.Debug().Msg("QUERY 30")
 					query = fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace="%s",source_canonical_service="%s"} [%vs])) by (%s) %s`,
 						metric,
 						util.GetReporter("source", o.Rates),
@@ -873,6 +903,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 			case graph.NodeTypeService:
 				query = ""
 			default:
+				zl.Debug().Msg("QUERY 31")
 				graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 			}
 			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
@@ -908,6 +939,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 		for _, metric := range metrics {
 			switch n.NodeType {
 			case graph.NodeTypeWorkload:
+				zl.Debug().Msg("QUERY 32")
 				query = fmt.Sprintf(`sum(rate(%s{%s%s%s,destination_workload_namespace="%s",destination_workload="%s"} [%vs])) by (%s) %s`,
 					metric,
 					util.GetApp(o.Rates),
@@ -920,6 +952,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 					idleCondition)
 			case graph.NodeTypeApp:
 				if graph.IsOK(n.Version) {
+					zl.Debug().Msg("QUERY 33")
 					query = fmt.Sprintf(`sum(rate(%s{%s%s%s,destination_service_namespace="%s",destination_canonical_service="%s",destination_canonical_revision="%s"} [%vs])) by (%s) %s`,
 						metric,
 						util.GetApp(o.Rates),
@@ -932,6 +965,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 						groupBy,
 						idleCondition)
 				} else {
+					zl.Debug().Msg("QUERY 34")
 					query = fmt.Sprintf(`sum(rate(%s{%s%s%s,destination_service_namespace="%s",destination_canonical_service="%s"} [%vs])) by (%s) %s`,
 						metric,
 						util.GetApp(o.Rates),
@@ -944,6 +978,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 						idleCondition)
 				}
 			case graph.NodeTypeService:
+				zl.Debug().Msg("QUERY 35")
 				// TODO: Do we need to handle requests from unknown in a special way (like in HTTP above)? Not sure how tcp is reported from unknown.
 				query = fmt.Sprintf(`sum(rate(%s{%s%s%s,destination_service_namespace="%s",destination_service=~"^%s\\.%s\\..*$"} [%vs])) by (%s) %s`,
 					metric,
@@ -957,6 +992,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 					groupBy,
 					idleCondition)
 			default:
+				zl.Debug().Msg("QUERY 36")
 				graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 			}
 			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
@@ -965,6 +1001,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 			// 2) query for outbound traffic
 			switch n.NodeType {
 			case graph.NodeTypeWorkload:
+				zl.Debug().Msg("QUERY 37")
 				query = fmt.Sprintf(`sum(rate(%s{%s%s%s,source_workload_namespace="%s",source_workload="%s"} [%vs])) by (%s) %s`,
 					metric,
 					util.GetApp(o.Rates),
@@ -977,6 +1014,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 					idleCondition)
 			case graph.NodeTypeApp:
 				if graph.IsOK(n.Version) {
+					zl.Debug().Msg("QUERY 38")
 					query = fmt.Sprintf(`sum(rate(%s{%s%s%s,source_workload_namespace="%s",source_canonical_service="%s",source_canonical_revision="%s"} [%vs])) by (%s) %s`,
 						metric,
 						util.GetApp(o.Rates),
@@ -989,6 +1027,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 						groupBy,
 						idleCondition)
 				} else {
+					zl.Debug().Msg("QUERY 39")
 					query = fmt.Sprintf(`sum(rate(%s{%s%s%s,source_workload_namespace="%s",source_canonical_service="%s"} [%vs])) by (%s) %s`,
 						metric,
 						util.GetApp(o.Rates),
@@ -1003,6 +1042,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 			case graph.NodeTypeService:
 				query = ""
 			default:
+				zl.Debug().Msg("QUERY 40")
 				graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 			}
 			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
@@ -1054,14 +1094,16 @@ func buildAggregateNodeTrafficMap(ctx context.Context, namespace string, n graph
 	// create map to aggregate traffic by response code
 	trafficMap := graph.NewTrafficMap()
 	promApi := globalInfo.PromClient.API()
-
+	zl := log.FromContext(ctx)
 	// It takes only one prometheus query to get everything involving the target operation
 	serviceFragment := ""
 	if n.Service != "" {
+		zl.Debug().Msg("QUERY 41")
 		serviceFragment = fmt.Sprintf(`,destination_service_name="%s"`, n.Service)
 	}
 	metric := "istio_requests_total"
 	groupBy := "source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags"
+	zl.Debug().Msg("QUERY 42")
 	httpQuery := fmt.Sprintf(`sum(rate(%s{%s,destination_service_namespace="%s",%s="%s"%s}[%vs])) by (%s) > 0`,
 		metric,
 		util.GetReporter("destination", o.Rates),
