@@ -26,6 +26,7 @@ package istio
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"regexp"
 	"strings"
@@ -551,7 +552,23 @@ func addNode(trafficMap graph.TrafficMap, cluster, serviceNs, service, workloadN
 }
 
 func timeSeriesHash(cluster, serviceNs, service, workloadNs, workload, app, version string) string {
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join([]string{cluster, serviceNs, service, workloadNs, workload, app, version}, ":"))))
+	var b strings.Builder
+	b.WriteString(cluster)
+	b.WriteByte(':')
+	b.WriteString(serviceNs)
+	b.WriteByte(':')
+	b.WriteString(service)
+	b.WriteByte(':')
+	b.WriteString(workloadNs)
+	b.WriteByte(':')
+	b.WriteString(workload)
+	b.WriteByte(':')
+	b.WriteString(app)
+	b.WriteByte(':')
+	b.WriteString(version)
+
+	sum := sha256.Sum256([]byte(b.String()))
+	return hex.EncodeToString(sum[:])
 }
 
 // BuildNodeTrafficMap is required by the graph/TelemtryVendor interface
