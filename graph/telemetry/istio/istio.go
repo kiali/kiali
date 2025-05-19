@@ -33,7 +33,6 @@ import (
 
 	"github.com/prometheus/common/model"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry"
 	"github.com/kiali/kiali/graph/telemetry/istio/appender"
@@ -383,12 +382,6 @@ func populateTrafficMap(ctx context.Context, trafficMap graph.TrafficMap, vector
 			}
 			flags = string(lFlags)
 		}
-		ztunnel := false
-		if protocol == graph.TCP.Name {
-			if lApp, appOk := m["app"]; appOk {
-				ztunnel = string(lApp) == config.Ztunnel
-			}
-		}
 
 		// handle clusters
 		sourceCluster, destCluster := util.HandleClusters(lSourceCluster, sourceClusterOk, lDestCluster, destClusterOk)
@@ -433,9 +426,8 @@ func populateTrafficMap(ctx context.Context, trafficMap graph.TrafficMap, vector
 		// - dest node is already a service node
 		// - source or dest workload is an ambient waypoint
 		var inject, sourceIsWaypoint, destIsWaypoint bool
-		if ztunnel {
-			sourceIsWaypoint, destIsWaypoint = hasWaypoint(setWaypointKey(wpKeySource, sourceCluster, sourceWlNs, sourceWl), setWaypointKey(wpKeyDest, destCluster, destWlNs, destWl), globalInfo)
-		}
+		sourceIsWaypoint, destIsWaypoint = hasWaypoint(setWaypointKey(wpKeySource, sourceCluster, sourceWlNs, sourceWl), setWaypointKey(wpKeyDest, destCluster, destWlNs, destWl), globalInfo)
+
 		if o.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
 			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o.GraphType)
 			if err != nil {
