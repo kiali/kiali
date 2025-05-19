@@ -203,7 +203,7 @@ jobs:
     needs: [initialize]
     with:
       all_tests: ""
-      olm_version: "latest"
+      olm_version: "skip"
       istio_minor_version_offset: 0
 
   release:
