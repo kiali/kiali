@@ -15,7 +15,7 @@ on:
         default: ""
         type: string
       olm_version:
-        description: "Version of OLM to install or 'latest'. e.g. v0.28.0"
+        description: "Version of OLM to install or 'latest'. e.g. v0.28.0. Can be 'skip' if you want to skip the OLM tests."
         required: false
         default: "latest"
         type: string
@@ -122,6 +122,10 @@ jobs:
     - name: Run molecule tests OLM
       id: run-molecule-tests-olm
       run: |
+        if [ "${{ inputs.olm_version }}" == "skip" ]; then
+          echo "OLM version is [skip] - will skip OLM tests." && exit 0
+        fi
+
         ISTIO_VERSION="${{ env.ISTIO_VERSION }}"
         if [ -z "${ISTIO_VERSION}" ]; then
           echo "Could not determine the Istio version to use." && exit 1
