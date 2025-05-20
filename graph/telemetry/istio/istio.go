@@ -100,6 +100,7 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 			a.AppendGraph(appenderCtx, namespaceTrafficMap, globalInfo, appenderNamespaceInfo)
 			internalmetrics.ObserveDurationAndLogResults(
 				appenderCtx,
+				globalInfo.Conf,
 				appenderTimer,
 				"GraphAppenderTime",
 				map[string]string{
@@ -598,6 +599,7 @@ func BuildNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalIn
 		a.AppendGraph(appenderCtx, trafficMap, globalInfo, namespaceInfo)
 		internalmetrics.ObserveDurationAndLogResults(
 			appenderCtx,
+			globalInfo.Conf,
 			appenderTimer,
 			"GraphAppenderTime",
 			map[string]string{
@@ -1033,6 +1035,7 @@ func handleAggregateNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions
 		a.AppendGraph(appenderCtx, trafficMap, globalInfo, namespaceInfo)
 		internalmetrics.ObserveDurationAndLogResults(
 			appenderCtx,
+			globalInfo.Conf,
 			appenderTimer,
 			"GraphAppenderTime",
 			map[string]string{

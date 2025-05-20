@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 )
 
@@ -158,15 +159,14 @@ var Metrics = MetricsType{
 // obtained the timer via "GetGraphGenerationTimePrometheusTimer" the timerName you pass
 // into this function should best be set to "GraphGenerationTime".
 // data is a map of key/value pairs that will be logged in the structured data along with the given log message.
-func ObserveDurationAndLogResults(ctx context.Context, timer *prometheus.Timer, timerName string, data map[string]string, msg string) {
+func ObserveDurationAndLogResults(ctx context.Context, cfg *config.Config, timer *prometheus.Timer, timerName string, data map[string]string, msg string) {
 	duration := timer.ObserveDuration()
 
-	// TODO: We might want to skip logging anything if the duration is something like "less than 1 second"
-	// since there is probably no need for the logs to get noisy for very fast operations.
-	// Normally we only care about things that are slow.
-	// if duration < time.Second {
-	//   return
-	// }
+	// Skip logging anything if the duration is "fast" ("fast" being configurable).
+	// Fast operations are typically uninteresting when troubleshooting - normally we only care about things that are slow.
+	if duration < cfg.KialiInternal.MetricLogDurationLimit {
+		return
+	}
 
 	zl := log.FromContext(ctx)
 

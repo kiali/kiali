@@ -209,6 +209,7 @@ func PromQueryAppender(ctx context.Context, query string, queryTime time.Time, a
 	// notice we only collect metrics and log a message for successful prom queries
 	internalmetrics.ObserveDurationAndLogResults(
 		ctx,
+		conf,
 		promtimer,
 		"PrometheusProcessingTime",
 		map[string]string{"query": query},

@@ -30,6 +30,7 @@ func GraphNamespaces(ctx context.Context, business *business.Layer, o graph.Opti
 	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes)
 	defer internalmetrics.ObserveDurationAndLogResults(
 		ctx,
+		config.Get(),
 		promtimer,
 		"GraphGenerationTime",
 		map[string]string{
@@ -79,6 +80,7 @@ func GraphNode(ctx context.Context, business *business.Layer, o graph.Options) (
 	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes)
 	defer internalmetrics.ObserveDurationAndLogResults(
 		ctx,
+		config.Get(),
 		promtimer,
 		"GraphGenerationTime",
 		map[string]string{
@@ -128,6 +130,7 @@ func generateGraph(ctx context.Context, trafficMap graph.TrafficMap, o graph.Opt
 	promtimer := internalmetrics.GetGraphMarshalTimePrometheusTimer(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes)
 	defer internalmetrics.ObserveDurationAndLogResults(
 		ctx,
+		config.Get(),
 		promtimer,
 		"GraphMarshalTime",
 		map[string]string{

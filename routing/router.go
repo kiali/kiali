@@ -283,6 +283,7 @@ func updateMetric(ctx context.Context, route string, srw *statusResponseWriter, 
 	// Always measure the duration even if the API call ended in an error
 	internalmetrics.ObserveDurationAndLogResults(
 		ctx,
+		config.Get(),
 		timer,
 		"APIProcessingTime",
 		map[string]string{

@@ -275,7 +275,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 	defer end()
 
 	timer := internalmetrics.GetValidationProcessingTimePrometheusTimer("", "")
-	defer internalmetrics.ObserveDurationAndLogResults(ctx, timer, "ValidationProcessingTime", nil, "Total validation time")
+	defer internalmetrics.ObserveDurationAndLogResults(ctx, in.conf, timer, "ValidationProcessingTime", nil, "Total validation time")
 
 	validations := models.IstioValidations{}
 	vInfo.clusterInfo = &validationClusterInfo{
@@ -511,6 +511,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	timer := internalmetrics.GetSingleValidationProcessingTimePrometheusTimer(namespace, objectGVK.String(), object)
 	defer internalmetrics.ObserveDurationAndLogResults(
 		ctx,
+		in.conf,
 		timer,
 		"SingleValidationProcessingTime",
 		map[string]string{
@@ -665,7 +666,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	}
 
 	if referenceChecker != nil {
-		istioReferences = runObjectReferenceChecker(ctx, referenceChecker)
+		istioReferences = runObjectReferenceChecker(ctx, in.conf, referenceChecker)
 	}
 
 	if objectCheckers == nil {
@@ -685,7 +686,7 @@ func runObjectCheckers(ctx context.Context, objectCheckers []checkers.ObjectChec
 
 	// Run checks for each IstioObject type
 	for _, objectChecker := range objectCheckers {
-		objectTypeValidations.MergeValidations(runObjectChecker(ctx, objectChecker))
+		objectTypeValidations.MergeValidations(runObjectChecker(ctx, conf, objectChecker))
 	}
 
 	objectTypeValidations.StripIgnoredChecks(conf)
@@ -693,12 +694,13 @@ func runObjectCheckers(ctx context.Context, objectCheckers []checkers.ObjectChec
 	return objectTypeValidations
 }
 
-func runObjectChecker(ctx context.Context, objectChecker checkers.ObjectChecker) models.IstioValidations {
+func runObjectChecker(ctx context.Context, conf *config.Config, objectChecker checkers.ObjectChecker) models.IstioValidations {
 	// tracking the time it takes to execute the Check
 	theType := fmt.Sprintf("%T", objectChecker)
 	promtimer := internalmetrics.GetCheckerProcessingTimePrometheusTimer(theType)
 	defer internalmetrics.ObserveDurationAndLogResults(
 		ctx,
+		conf,
 		promtimer,
 		"CheckerProcessingTime",
 		map[string]string{"obj": theType},
@@ -706,12 +708,13 @@ func runObjectChecker(ctx context.Context, objectChecker checkers.ObjectChecker)
 	return objectChecker.Check()
 }
 
-func runObjectReferenceChecker(ctx context.Context, referenceChecker ReferenceChecker) models.IstioReferencesMap {
+func runObjectReferenceChecker(ctx context.Context, conf *config.Config, referenceChecker ReferenceChecker) models.IstioReferencesMap {
 	// tracking the time it takes to execute the Check
 	theRef := fmt.Sprintf("%T", referenceChecker)
 	promtimer := internalmetrics.GetCheckerProcessingTimePrometheusTimer(theRef)
 	defer internalmetrics.ObserveDurationAndLogResults(
 		ctx,
+		conf,
 		promtimer,
 		"CheckerProcessingTime",
 		map[string]string{"ref": theRef},

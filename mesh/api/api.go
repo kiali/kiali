@@ -52,6 +52,7 @@ func GraphMesh(
 	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer("mesh", "mesh", false)
 	defer internalmetrics.ObserveDurationAndLogResults(
 		ctx,
+		globalInfo.Conf,
 		promtimer,
 		"GraphGenerationTime",
 		map[string]string{
@@ -85,6 +86,7 @@ func generateGraph(ctx context.Context, meshMap mesh.MeshMap, o mesh.Options) (i
 	promtimer := internalmetrics.GetGraphMarshalTimePrometheusTimer("mesh", "mesh", false)
 	defer internalmetrics.ObserveDurationAndLogResults(
 		ctx,
+		config.Get(),
 		promtimer,
 		"GraphMarshalTime",
 		map[string]string{

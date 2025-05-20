@@ -231,7 +231,7 @@ func (in *Client) GetAppTraces(ctx context.Context, namespace, app string, q mod
 
 	// create a timer to time the tracing query. Note that we will always take the measurement even on failure
 	promtimer := internalmetrics.GetTracingProcessingTimePrometheusTimer("AppTraces")
-	defer internalmetrics.ObserveDurationAndLogResults(ctx, promtimer, "TracingProcessingTime", nil, "AppTraces")
+	defer internalmetrics.ObserveDurationAndLogResults(ctx, config.Get(), promtimer, "TracingProcessingTime", nil, "AppTraces")
 
 	if in.grpcClient == nil {
 		return in.httpTracingClient.GetAppTracesHTTP(ctx, in.httpClient, in.baseURL, serviceName, q)
@@ -247,7 +247,7 @@ func (in *Client) GetTraceDetail(ctx context.Context, strTraceID string) (*model
 
 	// create a timer to time the tracing query. Note that we will always take the measurement even on failure
 	promtimer := internalmetrics.GetTracingProcessingTimePrometheusTimer("TraceDetail")
-	defer internalmetrics.ObserveDurationAndLogResults(ctx, promtimer, "TracingProcessingTime", nil, "TraceDetail")
+	defer internalmetrics.ObserveDurationAndLogResults(ctx, cfg, promtimer, "TracingProcessingTime", nil, "TraceDetail")
 
 	if in.grpcClient == nil || cfg.ExternalServices.Tracing.Provider == config.TempoProvider {
 		if in.httpTracingClient != nil {
@@ -274,7 +274,7 @@ func (in *Client) GetErrorTraces(ctx context.Context, ns, app string, duration t
 
 	// create a timer to time the tracing query. Note that we will always take the measurement even on failure
 	promtimer := internalmetrics.GetTracingProcessingTimePrometheusTimer("ErrorTraces")
-	defer internalmetrics.ObserveDurationAndLogResults(ctx, promtimer, "TracingProcessingTime", nil, "ErrorTraces")
+	defer internalmetrics.ObserveDurationAndLogResults(ctx, config.Get(), promtimer, "TracingProcessingTime", nil, "ErrorTraces")
 
 	traces, err := in.GetAppTraces(ctx, ns, app, query)
 	if err != nil {
@@ -288,7 +288,7 @@ func (in *Client) GetServiceStatus(ctx context.Context) (bool, error) {
 
 	// create a timer to time the tracing query. Note that we will always take the measurement even on failure
 	promtimer := internalmetrics.GetTracingProcessingTimePrometheusTimer("ServiceStatus")
-	defer internalmetrics.ObserveDurationAndLogResults(ctx, promtimer, "TracingProcessingTime", nil, "ServiceStatus")
+	defer internalmetrics.ObserveDurationAndLogResults(ctx, config.Get(), promtimer, "TracingProcessingTime", nil, "ServiceStatus")
 
 	// Check Service Status using HTTP when gRPC is not enabled
 	if in.grpcClient == nil {

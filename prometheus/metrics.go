@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/common/model"
 	"k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/util/sliceutil"
@@ -223,6 +224,6 @@ func getRequestRatesForLabel(ctx context.Context, api prom_v1.API, time time.Tim
 		return model.Vector{}, errors.NewServiceUnavailable(err.Error())
 	}
 	// notice we only collect metrics for successful prom queries
-	internalmetrics.ObserveDurationAndLogResults(ctx, promtimer, "PrometheusProcessingTime", nil, "Metrics-GetRequestRates")
+	internalmetrics.ObserveDurationAndLogResults(ctx, config.Get(), promtimer, "PrometheusProcessingTime", nil, "Metrics-GetRequestRates")
 	return result.(model.Vector), nil
 }
