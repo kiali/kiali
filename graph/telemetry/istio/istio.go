@@ -309,9 +309,12 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 			sb.WriteString(reporterLabelPart)
 			sb.WriteString(`,source_workload_namespace!="`)
 			sb.WriteString(namespace)
-			sb.WriteString(`",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\.`)
+			sb.WriteString(`",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"`)
+			sb.WriteString(`^.+\\.`)
 			sb.WriteString(namespace)
-			sb.WriteString(`\..+$"} [`)
+			sb.WriteString(`\\..+$`)
+			sb.WriteString(`"`)
+			sb.WriteString(`} [`)
 			sb.WriteString(durationSecondsStr)
 			sb.WriteString(`s])) by (`)
 			sb.WriteString(groupBy)
@@ -363,6 +366,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 			sb1.WriteString(idleCondition)
 
 			query = sb1.String()
+
 			//query = fmt.Sprintf(`sum(rate(%s{%s%s,destination_workload_namespace="%s"} [%vs])) by (%s) %s`,
 			//	metric,
 			//	util.GetApp(o.Rates),
