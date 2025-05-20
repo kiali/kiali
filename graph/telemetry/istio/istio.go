@@ -1130,7 +1130,7 @@ func setWaypointKey(wpKey *waypointKey, cluster, namespace, name string) *waypoi
 // hasWaypoint returns true if the source or dest workload is determined to be a waypoint workload.
 func hasWaypoint(wpKeySource, wpKeyDest *waypointKey, globalInfo *graph.GlobalInfo) (sourceIsWaypoint bool, destIsWaypoint bool) {
 
-	if globalInfo.Vendor != nil && len(globalInfo.Vendor) > 0 && globalInfo.Vendor[appender.AmbientWaypoints] != nil {
+	if len(globalInfo.Vendor) > 0 && globalInfo.Vendor[appender.AmbientWaypoints] != nil {
 		wpMap := globalInfo.Vendor[appender.AmbientWaypoints].(waypointMap)
 		sourceIsWaypoint = wpMap[*wpKeySource]
 		destIsWaypoint = wpMap[*wpKeyDest]
