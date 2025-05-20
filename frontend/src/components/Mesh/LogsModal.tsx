@@ -12,13 +12,7 @@ type LogsModalProps = {
 };
 
 const modalStyle = kialiStyle({
-  overflowY: 'hidden',
-  $nest: {
-    '& .pf-v5-c-tab-content': {
-      height: '1525px',
-      overflowY: 'auto'
-    }
-  }
+  overflowY: 'hidden'
 });
 
 const containerStyle = kialiStyle({

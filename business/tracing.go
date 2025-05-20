@@ -135,21 +135,19 @@ func (in *TracingService) GetAppTraces(ctx context.Context, ns, tracingName, app
 		return nil, err
 	}
 	r, err := client.GetAppTraces(ctx, ns, tracingName, query)
-	if tracingName != app {
+	if tracingName != app && r != nil {
 		// Filter by app
 		filter := operationSpanFilter(ctx, ns, app)
 		traces := []jaegerModels.Trace{}
-		if r != nil {
-			for _, trace := range r.Data {
-				for _, span := range trace.Spans {
-					if filter(&span) {
-						traces = append(traces, trace)
-						break
-					}
+		for _, trace := range r.Data {
+			for _, span := range trace.Spans {
+				if filter(&span) {
+					traces = append(traces, trace)
+					break
 				}
 			}
-			r.Data = traces
 		}
+		r.Data = traces
 	}
 	if err != nil {
 		return nil, err
