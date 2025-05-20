@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
