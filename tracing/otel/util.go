@@ -10,21 +10,22 @@ func MakeRequest(ctx context.Context, client http.Client, endpoint string, body 
 	ctxCancel, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	responseBody = nil
-	status = 0
+	var req *http.Request
 
-	req, err := http.NewRequestWithContext(ctxCancel, http.MethodGet, endpoint, body)
+	req, err = http.NewRequestWithContext(ctxCancel, http.MethodGet, endpoint, body)
 	if err != nil {
 		return
 	}
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
-	resp, err := client.Do(req)
+
+	var resp *http.Response
+	resp, err = client.Do(req)
 	if err != nil {
 		return
 	}
 	defer resp.Body.Close()
 	responseBody, err = io.ReadAll(resp.Body)
 	status = resp.StatusCode
-	return
+	return responseBody, resp.StatusCode, err
 }
