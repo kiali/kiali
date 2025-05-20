@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kiali/kiali/tracing/otel"
 	"net/http"
 	"net/url"
 	"path"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
+	"github.com/kiali/kiali/tracing/otel"
 	"github.com/kiali/kiali/util"
 )
 
