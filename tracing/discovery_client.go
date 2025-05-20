@@ -3,6 +3,7 @@ package tracing
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -389,7 +390,8 @@ func validateEndpoint(client http.Client, zl *zerolog.Logger, endpoint, validEnd
 			}
 		}
 		// Auth issue
-		if reqError != nil && strings.Contains(reqError.Error(), "certificate signed by unknown authority") {
+		var unknownAuthErr x509.UnknownAuthorityError
+		if errors.As(reqError, &unknownAuthErr) {
 			vc := model.ValidConfig{Url: validEndpoint, Provider: provider, UseGRPC: false, Warning: "Auth section must be configured properly"}
 			return &vc, logs, nil
 		}

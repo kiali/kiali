@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
+	"github.com/kiali/kiali/tracing/otel"
 	"net/http"
 	"net/url"
 	"path"
@@ -45,7 +45,7 @@ func (jc JaegerHTTPClient) GetTraceDetailHTTP(ctx context.Context, client http.C
 	u := *endpoint
 	// /querier/api/traces/<traceid>?mode=xxxx&blockStart=0000&blockEnd=FFFF&start=<start>&end=<end>
 	u.Path = path.Join(u.Path, "/api/traces/"+traceID)
-	resp, code, reqError := makeRequest(client, u.String(), nil)
+	resp, code, reqError := otel.MakeRequest(ctx, client, u.String(), nil)
 	if reqError != nil {
 		getLoggerFromContextHTTPJaeger(ctx).Error().Msgf("Jaeger query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return nil, reqError
@@ -70,7 +70,7 @@ func (jc JaegerHTTPClient) GetTraceDetailHTTP(ctx context.Context, client http.C
 func (jc JaegerHTTPClient) GetServiceStatusHTTP(ctx context.Context, client http.Client, baseURL *url.URL) (bool, error) {
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/services")
-	_, _, reqError := makeRequest(client, url.String(), nil)
+	_, _, reqError := otel.MakeRequest(ctx, client, url.String(), nil)
 	return reqError == nil, reqError
 }
 
@@ -83,7 +83,7 @@ func queryTracesHTTP(ctx context.Context, client http.Client, u *url.URL) (*mode
 		query.Set("minDuration", minDuration+"us")
 		u.RawQuery = query.Encode()
 	}
-	resp, code, reqError := makeRequest(client, u.String(), nil)
+	resp, code, reqError := otel.MakeRequest(ctx, client, u.String(), nil)
 	if reqError != nil {
 		getLoggerFromContextHTTPJaeger(ctx).Error().Msgf("Jaeger query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return &model.TracingResponse{}, reqError
@@ -125,24 +125,4 @@ func prepareQuery(ctx context.Context, u *url.URL, jaegerServiceName string, que
 	}
 	u.RawQuery = q.Encode()
 	zl.Debug().Msgf("Prepared Jaeger query: %v", u)
-}
-
-func makeRequest(client http.Client, endpoint string, body io.Reader) (response []byte, status int, err error) {
-	response = nil
-	status = 0
-
-	req, err := http.NewRequest(http.MethodGet, endpoint, body)
-	if err != nil {
-		return
-	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-	resp, err := client.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	response, err = io.ReadAll(resp.Body)
-	status = resp.StatusCode
-	return
 }

@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -419,6 +421,10 @@ func TracingDiagnose(
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 			return
 		}
+		if !isHomeCPAccessible(r.Context(), business.Namespace, clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			return
+		}
 
 		status, err := business.Tracing.TracingDiagnose(r.Context(), clientFactory.GetSAHomeClusterClient().GetToken())
 		if err != nil {
@@ -428,4 +434,14 @@ func TracingDiagnose(
 
 		RespondWithJSON(w, http.StatusOK, status)
 	}
+}
+
+// Check access to the home istio namespace
+func isHomeCPAccessible(ctx context.Context, namespaceService business.NamespaceService, cluster string) bool {
+	conf := config.Get()
+	_, err := namespaceService.GetClusterNamespace(ctx, conf.IstioNamespace, cluster)
+	if err == nil || !errors.IsForbidden(err) {
+		return true
+	}
+	return false
 }

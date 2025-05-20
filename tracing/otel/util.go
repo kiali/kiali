@@ -1,15 +1,19 @@
 package otel
 
 import (
+	"context"
 	"io"
 	"net/http"
 )
 
-func MakeRequest(client http.Client, endpoint string, body io.Reader) (response []byte, status int, err error) {
-	response = nil
+func MakeRequest(ctx context.Context, client http.Client, endpoint string, body io.Reader) (responseBody []byte, status int, err error) {
+	ctxCancel, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	responseBody = nil
 	status = 0
 
-	req, err := http.NewRequest(http.MethodGet, endpoint, body)
+	req, err := http.NewRequestWithContext(ctxCancel, http.MethodGet, endpoint, body)
 	if err != nil {
 		return
 	}
@@ -20,7 +24,7 @@ func MakeRequest(client http.Client, endpoint string, body io.Reader) (response 
 		return
 	}
 	defer resp.Body.Close()
-	response, err = io.ReadAll(resp.Body)
+	responseBody, err = io.ReadAll(resp.Body)
 	status = resp.StatusCode
 	return
 }
