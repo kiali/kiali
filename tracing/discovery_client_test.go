@@ -18,6 +18,7 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tracing/jaeger/model"
+	"github.com/kiali/kiali/tracing/otel"
 )
 
 func fakeK8sNs() kubernetes.UserClientInterface {
@@ -109,7 +110,7 @@ func TestDiscoverPortsWithDial(t *testing.T) {
 	assert.Equal(t, len(logs), 2)
 }
 
-func mockMakeRequest(client http.Client, endpoint string, body io.Reader) ([]byte, int, error) {
+func mockMakeRequest(ctx context.Context, client http.Client, endpoint string, body io.Reader) ([]byte, int, error) {
 	switch endpoint {
 	case "http://tempo-host:3100/api/search?q={}":
 		resp := []byte(`{"traces":[{"rootServiceName":"service.namespace"}]}`)
@@ -124,8 +125,8 @@ func mockMakeRequest(client http.Client, endpoint string, body io.Reader) ([]byt
 
 func TestValidateSimpleTempoHTTP(t *testing.T) {
 	// Override the global MakeRequest with the mock version
-	MakeRequestI = mockMakeRequest
-	defer func() { MakeRequestI = MakeRequest }() // restore after test
+	MakeRequestFunc = mockMakeRequest
+	defer func() { MakeRequestFunc = otel.MakeRequest }() // restore after test
 
 	client := http.Client{}
 	zl := log.WithGroup(log.TracingLogName)
@@ -135,7 +136,7 @@ func TestValidateSimpleTempoHTTP(t *testing.T) {
 	}
 	port := "3100"
 
-	validConfigs, logs := validateSimpleTempoHTTP(client, zl, parsedUrl, port)
+	validConfigs, logs := validateSimpleTempoHTTP(context.TODO(), client, zl, parsedUrl, port)
 
 	assert.Len(t, validConfigs, 2, "Should detect two valid configs")
 	assert.Equal(t, "tempo", validConfigs[0].Provider)
@@ -150,7 +151,7 @@ func TestValidateSimpleTempoHTTP(t *testing.T) {
 }
 
 // Mock for MakeRequest that simulates HTTP responses
-func mockMakeRequestTempo(client http.Client, endpoint string, body io.Reader) ([]byte, int, error) {
+func mockMakeRequestTempo(ctx context.Context, client http.Client, endpoint string, body io.Reader) ([]byte, int, error) {
 	switch endpoint {
 	case "http://gateway-host:3100/api/traces/v1/tenantA/tempo/api/search?q={}":
 		return []byte(`{"traces":[{"rootServiceName":"svc.namespace"}]}`), 200, nil
@@ -166,8 +167,8 @@ func mockMakeRequestTempo(client http.Client, endpoint string, body io.Reader) (
 }
 
 func TestValidateTempoHTTP_WithGateway(t *testing.T) {
-	MakeRequestI = mockMakeRequestTempo
-	defer func() { MakeRequestI = MakeRequest }()
+	MakeRequestFunc = mockMakeRequestTempo
+	defer func() { MakeRequestFunc = otel.MakeRequest }()
 
 	client := http.Client{}
 	zl := log.WithGroup(log.TracingLogName)
@@ -178,7 +179,7 @@ func TestValidateTempoHTTP_WithGateway(t *testing.T) {
 	}
 	port := "3100"
 
-	validConfigs, logs := validateTempoHTTP(client, zl, parsedUrl, port)
+	validConfigs, logs := validateTempoHTTP(context.TODO(), client, zl, parsedUrl, port)
 
 	assert.Len(t, validConfigs, 2)
 	assert.Equal(t, "tempo", validConfigs[0].Provider)
@@ -187,8 +188,8 @@ func TestValidateTempoHTTP_WithGateway(t *testing.T) {
 }
 
 func TestValidateTempoHTTP_WithoutGateway(t *testing.T) {
-	MakeRequestI = mockMakeRequestTempo
-	defer func() { MakeRequestI = MakeRequest }()
+	MakeRequestFunc = mockMakeRequestTempo
+	defer func() { MakeRequestFunc = otel.MakeRequest }()
 
 	client := http.Client{}
 	zl := log.WithGroup(log.TracingLogName)
@@ -199,7 +200,7 @@ func TestValidateTempoHTTP_WithoutGateway(t *testing.T) {
 	}
 	port := "3100"
 
-	validConfigs, logs := validateTempoHTTP(client, zl, parsedUrl, port)
+	validConfigs, logs := validateTempoHTTP(context.TODO(), client, zl, parsedUrl, port)
 
 	assert.Len(t, validConfigs, 2)
 	assert.Equal(t, "tempo", validConfigs[0].Provider)
@@ -208,8 +209,8 @@ func TestValidateTempoHTTP_WithoutGateway(t *testing.T) {
 }
 
 func TestValidateTempoHTTP_GatewayMissingTenant(t *testing.T) {
-	MakeRequestI = mockMakeRequestTempo
-	defer func() { MakeRequestI = MakeRequest }()
+	MakeRequestFunc = mockMakeRequestTempo
+	defer func() { MakeRequestFunc = otel.MakeRequest }()
 
 	client := http.Client{}
 	zl := log.WithGroup(log.TracingLogName)
@@ -220,7 +221,7 @@ func TestValidateTempoHTTP_GatewayMissingTenant(t *testing.T) {
 	}
 	port := "3100"
 
-	validConfigs, logs := validateTempoHTTP(client, zl, parsedUrl, port)
+	validConfigs, logs := validateTempoHTTP(context.TODO(), client, zl, parsedUrl, port)
 
 	// Should fail due to missing tenant
 	assert.Len(t, validConfigs, 0)
@@ -238,7 +239,7 @@ func anyLogContains(logs []model.LogLine, substr string) bool {
 }
 
 // Mock MakeRequest for Jaeger scenarios
-func mockMakeRequestJaeger(client http.Client, endpoint string, body io.Reader) ([]byte, int, error) {
+func mockMakeRequestJaeger(ctx context.Context, client http.Client, endpoint string, body io.Reader) ([]byte, int, error) {
 	switch endpoint {
 	case "http://jaeger-host:16686/jaeger/api/services":
 		return []byte(`{"data":["svc.namespace"]}`), 200, nil
@@ -250,8 +251,8 @@ func mockMakeRequestJaeger(client http.Client, endpoint string, body io.Reader) 
 }
 
 func TestValidateJaegerHTTP_SuccessfulBothEndpoints(t *testing.T) {
-	MakeRequestI = mockMakeRequestJaeger
-	defer func() { MakeRequestI = MakeRequest }()
+	MakeRequestFunc = mockMakeRequestJaeger
+	defer func() { MakeRequestFunc = otel.MakeRequest }()
 
 	client := http.Client{}
 	zl := log.WithGroup(log.TracingLogName)
@@ -261,7 +262,7 @@ func TestValidateJaegerHTTP_SuccessfulBothEndpoints(t *testing.T) {
 	}
 	port := "16686"
 
-	validConfigs, logs := validateJaegerHTTP(client, zl, parsedUrl, port)
+	validConfigs, logs := validateJaegerHTTP(context.TODO(), client, zl, parsedUrl, port)
 
 	assert.Len(t, validConfigs, 2)
 	assert.Equal(t, "jaeger", validConfigs[0].Provider)
@@ -272,7 +273,7 @@ func TestValidateJaegerHTTP_SuccessfulBothEndpoints(t *testing.T) {
 }
 
 func TestValidateJaegerHTTP_OnlyOneSuccess(t *testing.T) {
-	MakeRequestI = func(client http.Client, endpoint string, body io.Reader) ([]byte, int, error) {
+	MakeRequestFunc = func(ctx context.Context, client http.Client, endpoint string, body io.Reader) ([]byte, int, error) {
 		if endpoint == "http://jaeger-host:16686/jaeger/api/services" {
 			return nil, 500, errors.New("fail")
 		}
@@ -281,7 +282,7 @@ func TestValidateJaegerHTTP_OnlyOneSuccess(t *testing.T) {
 		}
 		return nil, 404, errors.New("not found")
 	}
-	defer func() { MakeRequestI = MakeRequest }()
+	defer func() { MakeRequestFunc = otel.MakeRequest }()
 
 	client := http.Client{}
 	zl := log.WithGroup(log.TracingLogName)
@@ -291,7 +292,7 @@ func TestValidateJaegerHTTP_OnlyOneSuccess(t *testing.T) {
 	}
 	port := "16686"
 
-	validConfigs, logs := validateJaegerHTTP(client, zl, parsedUrl, port)
+	validConfigs, logs := validateJaegerHTTP(context.TODO(), client, zl, parsedUrl, port)
 
 	assert.Len(t, validConfigs, 1)
 	assert.Equal(t, "jaeger", validConfigs[0].Provider)
@@ -299,10 +300,10 @@ func TestValidateJaegerHTTP_OnlyOneSuccess(t *testing.T) {
 }
 
 func TestValidateJaegerHTTP_NoSuccess(t *testing.T) {
-	MakeRequestI = func(client http.Client, endpoint string, body io.Reader) ([]byte, int, error) {
+	MakeRequestFunc = func(ctx context.Context, client http.Client, endpoint string, body io.Reader) ([]byte, int, error) {
 		return nil, 500, errors.New("mock failure")
 	}
-	defer func() { MakeRequestI = MakeRequest }()
+	defer func() { MakeRequestFunc = otel.MakeRequest }()
 
 	client := http.Client{}
 	zl := log.WithGroup(log.TracingLogName)
@@ -312,7 +313,7 @@ func TestValidateJaegerHTTP_NoSuccess(t *testing.T) {
 	}
 	port := "16686"
 
-	validConfigs, logs := validateJaegerHTTP(client, zl, parsedUrl, port)
+	validConfigs, logs := validateJaegerHTTP(context.TODO(), client, zl, parsedUrl, port)
 
 	assert.Len(t, validConfigs, 0)
 	assert.GreaterOrEqual(t, len(logs), 2)
