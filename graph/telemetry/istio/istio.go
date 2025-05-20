@@ -426,7 +426,9 @@ func populateTrafficMap(ctx context.Context, trafficMap graph.TrafficMap, vector
 		// - dest node is already a service node
 		// - source or dest workload is an ambient waypoint
 		var inject, sourceIsWaypoint, destIsWaypoint bool
-		sourceIsWaypoint, destIsWaypoint = hasWaypoint(setWaypointKey(wpKeySource, sourceCluster, sourceWlNs, sourceWl), setWaypointKey(wpKeyDest, destCluster, destWlNs, destWl), globalInfo)
+		if o.Rates.Ambient != "none" {
+			sourceIsWaypoint, destIsWaypoint = hasWaypoint(setWaypointKey(wpKeySource, sourceCluster, sourceWlNs, sourceWl), setWaypointKey(wpKeyDest, destCluster, destWlNs, destWl), globalInfo)
+		}
 
 		if o.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
 			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o.GraphType)
@@ -1127,9 +1129,12 @@ func setWaypointKey(wpKey *waypointKey, cluster, namespace, name string) *waypoi
 
 // hasWaypoint returns true if the source or dest workload is determined to be a waypoint workload.
 func hasWaypoint(wpKeySource, wpKeyDest *waypointKey, globalInfo *graph.GlobalInfo) (sourceIsWaypoint bool, destIsWaypoint bool) {
-	wpMap := globalInfo.Vendor[appender.AmbientWaypoints].(waypointMap)
-	sourceIsWaypoint = wpMap[*wpKeySource]
-	destIsWaypoint = wpMap[*wpKeyDest]
+
+	if globalInfo.Vendor != nil && len(globalInfo.Vendor) > 0 && globalInfo.Vendor[appender.AmbientWaypoints] != nil {
+		wpMap := globalInfo.Vendor[appender.AmbientWaypoints].(waypointMap)
+		sourceIsWaypoint = wpMap[*wpKeySource]
+		destIsWaypoint = wpMap[*wpKeyDest]
+	}
 	return sourceIsWaypoint, destIsWaypoint
 }
 
