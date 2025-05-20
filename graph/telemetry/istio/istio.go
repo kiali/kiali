@@ -26,9 +26,9 @@ package istio
 import (
 	"context"
 	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -287,41 +287,134 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 		for _, metric := range metrics {
 			// 0) Incoming: query source telemetry to capture unserviced namespace services' incoming traffic
 			zl.Debug().Msg("QUERY 9")
-			query = fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace!="%s",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.%s\\..+$"} [%vs])) by (%s) %s`,
-				metric,
-				util.GetApp(o.Rates),
-				util.GetReporter("source", o.Rates),
-				namespace,
-				namespace,
-				int(duration.Seconds()), // range duration for the query
-				groupBy,
-				idleCondition)
+			var sb strings.Builder
+			appLabelPart := util.GetApp(o.Rates)
+			reporterLabelPart := util.GetReporter("source", o.Rates)
+			durationSecondsStr := strconv.Itoa(int(duration.Seconds()))
+
+			estimatedLength := len(`sum(rate({ ,,source_workload_namespace!="",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\..\..+$"} [s])) by () `) +
+				len(metric) +
+				len(appLabelPart) +
+				len(reporterLabelPart) +
+				(2 * len(namespace)) + // namespace is used twice
+				len(durationSecondsStr) +
+				len(groupBy) +
+				len(idleCondition)
+			sb.Grow(estimatedLength)
+
+			sb.WriteString(`sum(rate(`)
+			sb.WriteString(metric)
+			sb.WriteString(`{`)
+			sb.WriteString(appLabelPart)
+			sb.WriteString(reporterLabelPart)
+			sb.WriteString(`,source_workload_namespace!="`)
+			sb.WriteString(namespace)
+			sb.WriteString(`",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\.`)
+			sb.WriteString(namespace)
+			sb.WriteString(`\..+$"} [`)
+			sb.WriteString(durationSecondsStr)
+			sb.WriteString(`s])) by (`)
+			sb.WriteString(groupBy)
+			sb.WriteString(`) `)
+			sb.WriteString(idleCondition)
+
+			query = sb.String()
+
+			//query = fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace!="%s",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.%s\\..+$"} [%vs])) by (%s) %s`,
+			//	metric,
+			//	util.GetApp(o.Rates),
+			//	util.GetReporter("source", o.Rates),
+			//	namespace,
+			//	namespace,
+			//	int(duration.Seconds()), // range duration for the query
+			//	groupBy,
+			//	idleCondition)
 			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 1) Incoming: query destination telemetry to capture namespace services' incoming traffic	query = fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s"} [%vs])) by (%s) %s`,
 			zl.Debug().Msg("QUERY 10")
-			query = fmt.Sprintf(`sum(rate(%s{%s%s,destination_workload_namespace="%s"} [%vs])) by (%s) %s`,
-				metric,
-				util.GetApp(o.Rates),
-				util.GetReporter("destination", o.Rates),
-				namespace,
-				int(duration.Seconds()), // range duration for the query
-				groupBy,
-				idleCondition)
+			appLabelPart = util.GetApp(o.Rates)
+			reporterLabelPart = util.GetReporter("destination", o.Rates)
+			durationSecondsStr = strconv.Itoa(int(duration.Seconds()))
+			var sb1 strings.Builder
+			estimatedLength = len(`sum(rate({ ,,destination_workload_namespace=""} [s])) by () `) +
+				len(metric) +
+				len(appLabelPart) +
+				len(reporterLabelPart) +
+				len(namespace) +
+				len(durationSecondsStr) +
+				len(groupBy) +
+				len(idleCondition)
+			sb1.Grow(estimatedLength)
+
+			sb1.WriteString(`sum(rate(`)
+			sb1.WriteString(metric)
+			sb1.WriteString(`{`)
+			sb1.WriteString(appLabelPart)
+			sb1.WriteString(reporterLabelPart)
+			sb1.WriteString(`,destination_workload_namespace="`)
+			sb1.WriteString(namespace)
+			sb1.WriteString(`"} [`)
+			sb1.WriteString(durationSecondsStr)
+			sb1.WriteString(`s])) by (`)
+			sb1.WriteString(groupBy)
+			sb1.WriteString(`) `)
+			sb1.WriteString(idleCondition)
+
+			query = sb1.String()
+			//query = fmt.Sprintf(`sum(rate(%s{%s%s,destination_workload_namespace="%s"} [%vs])) by (%s) %s`,
+			//	metric,
+			//	util.GetApp(o.Rates),
+			//	util.GetReporter("destination", o.Rates),
+			//	namespace,
+			//	int(duration.Seconds()), // range duration for the query
+			//	groupBy,
+			//	idleCondition)
 			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
 			zl.Debug().Msg("QUERY 11")
-			query = fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace="%s"} [%vs])) by (%s) %s`,
-				metric,
-				util.GetApp(o.Rates),
-				util.GetReporter("source", o.Rates),
-				namespace,
-				int(duration.Seconds()), // range duration for the query
-				groupBy,
-				idleCondition)
+			appLabelPart = util.GetApp(o.Rates)
+			reporterLabelPart = util.GetReporter("source", o.Rates) // Using "source" as per this query
+			durationSecondsStr = strconv.Itoa(int(duration.Seconds()))
+
+			var sb2 strings.Builder
+
+			estimatedLength = len(`sum(rate({ ,,source_workload_namespace=""} [s])) by () `) +
+				len(metric) +
+				len(appLabelPart) +
+				len(reporterLabelPart) +
+				len(namespace) +
+				len(durationSecondsStr) +
+				len(groupBy) +
+				len(idleCondition)
+			sb2.Grow(estimatedLength)
+
+			sb2.WriteString(`sum(rate(`)
+			sb2.WriteString(metric)
+			sb2.WriteString(`{`)
+			sb2.WriteString(appLabelPart)
+			sb2.WriteString(reporterLabelPart)
+			sb2.WriteString(`,source_workload_namespace="`)
+			sb2.WriteString(namespace)
+			sb2.WriteString(`"} [`)
+			sb2.WriteString(durationSecondsStr)
+			sb2.WriteString(`s])) by (`)
+			sb2.WriteString(groupBy)
+			sb2.WriteString(`) `)
+			sb2.WriteString(idleCondition)
+
+			query = sb2.String()
+			//query = fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace="%s"} [%vs])) by (%s) %s`,
+			//	metric,
+			//	util.GetApp(o.Rates),
+			//	util.GetReporter("source", o.Rates),
+			//	namespace,
+			//	int(duration.Seconds()), // range duration for the query
+			//	groupBy,
+			//	idleCondition)
 			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 		}
@@ -564,23 +657,7 @@ func addNode(trafficMap graph.TrafficMap, cluster, serviceNs, service, workloadN
 }
 
 func timeSeriesHash(cluster, serviceNs, service, workloadNs, workload, app, version string) string {
-	var b strings.Builder
-	b.WriteString(cluster)
-	b.WriteByte(':')
-	b.WriteString(serviceNs)
-	b.WriteByte(':')
-	b.WriteString(service)
-	b.WriteByte(':')
-	b.WriteString(workloadNs)
-	b.WriteByte(':')
-	b.WriteString(workload)
-	b.WriteByte(':')
-	b.WriteString(app)
-	b.WriteByte(':')
-	b.WriteString(version)
-
-	sum := sha256.Sum256([]byte(b.String()))
-	return hex.EncodeToString(sum[:])
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join([]string{cluster, serviceNs, service, workloadNs, workload, app, version}, ":"))))
 }
 
 // BuildNodeTrafficMap is required by the graph/TelemtryVendor interface
