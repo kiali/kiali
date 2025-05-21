@@ -456,7 +456,6 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		return nil, err
 	}
 
-	var eps *core_v1.Endpoints
 	var pods []core_v1.Pod
 	var hth models.ServiceHealth
 	var istioConfigList *models.IstioConfigList
@@ -495,15 +494,6 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 				Cluster:   cluster,
 			}
 			rSvcs = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
-		}
-	}
-
-	eps = &core_v1.Endpoints{}
-	if err := kubeCache.Get(ctx, client.ObjectKey{Name: service, Namespace: namespace}, eps); err != nil {
-		if errors.IsNotFound(err) {
-			eps = nil
-		} else {
-			return nil, fmt.Errorf("Error fetching Endpoints namespace %s: and service %s: %s", namespace, service, err)
 		}
 	}
 
@@ -622,14 +612,14 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 
 	s := models.ServiceDetails{Workloads: wo, Health: hth, NamespaceMTLS: nsmtls, SubServices: serviceOverviews}
 	s.Service = svc
-	s.SetPods(kubernetes.FilterPodsByEndpoints(eps, pods))
+	s.SetPods(pods)
+	s.Endpoints = *models.GetEndpointsFromPods(pods)
 	// ServiceDetail will consider if the Service is a External/Federation entry
 	if s.Service.Type == "External" || s.Service.Type == "Federation" {
 		s.IstioSidecar = true
 	} else {
 		s.SetIstioSidecar(wo)
 	}
-	s.SetEndpoints(eps)
 	s.IstioPermissions = models.ResourcePermissions{
 		Create: vsCreate,
 		Update: vsUpdate,

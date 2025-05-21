@@ -379,7 +379,6 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 						&batchv1.CronJob{},
 						&batchv1.Job{},
 						&appsv1.Deployment{},
-						&corev1.Endpoints{},
 						&appsv1.ReplicaSet{},
 						&networkingv1.Gateway{},
 						&networkingv1.DestinationRule{},
