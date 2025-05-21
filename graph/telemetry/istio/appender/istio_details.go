@@ -293,6 +293,7 @@ func decorateMatchingAPIGateways(cluster string, gwCrd *k8s_networking_v1.Gatewa
 
 func resolveGatewayNodeMapping(gatewayWorkloads map[string][]models.WorkloadListItem, nodeMetadataKey graph.MetadataKey, trafficMap graph.TrafficMap, gi *graph.GlobalInfo) map[*models.WorkloadListItem][]*graph.Node {
 	gatewayNodeMapping := make(map[*models.WorkloadListItem][]*graph.Node)
+	conf := config.Get()
 	for key, gwWorkloadsList := range gatewayWorkloads {
 		split := strings.Split(key, ":")
 		gwCluster := split[0]
@@ -301,7 +302,8 @@ func resolveGatewayNodeMapping(gatewayWorkloads map[string][]models.WorkloadList
 			for _, node := range trafficMap {
 				if _, ok := node.Metadata[nodeMetadataKey]; !ok {
 					appLabelName, _ := gi.Conf.GetAppLabelName(gw.Labels)
-					if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && node.App == gw.Labels[appLabelName] && node.Cluster == gwCluster && node.Namespace == gwNs {
+					svcLabelName := conf.IstioLabels.ServiceCanonicalName
+					if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && (node.App == gw.Labels[appLabelName] || node.App == gw.Labels[svcLabelName]) && node.Cluster == gwCluster && node.Namespace == gwNs {
 						node.Metadata[nodeMetadataKey] = graph.GatewaysMetadata{}
 						gatewayNodeMapping[&gw] = append(gatewayNodeMapping[&gw], node)
 					}
@@ -391,7 +393,7 @@ func (a IstioAppender) getGatewayAPIWorkloads(ctx context.Context, globalInfo *g
 		// Find Istio managed Gateway API deployments
 		for _, workload := range wList.Workloads {
 			if workload.WorkloadGVK == kubernetes.Deployments {
-				if _, ok := workload.Labels["istio.io/gateway-name"]; ok {
+				if workload.IsGateway {
 					managedWorkloads[key] = append(managedWorkloads[key], workload)
 				}
 			}
