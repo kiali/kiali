@@ -267,8 +267,7 @@ func decorateMatchingAPIGateways(cluster string, gwCrd *k8s_networking_v1.Gatewa
 		if gw.Cluster != cluster {
 			continue
 		}
-
-		if gwSelector.Matches(labels.Set(gw.Labels)) {
+		if (!gwSelector.Empty() && gwSelector.Matches(labels.Set(gw.Labels))) || (gwSelector.Empty() && gwCrd.Name == gw.Labels[config.GatewayLabel]) {
 			// If we are here, the GatewayCrd selects the GatewayAPI workload.
 			// So, all node graphs associated with the GW API workload should be listening
 			// requests for the hostnames listed in the GatewayAPI CRD.
@@ -283,7 +282,9 @@ func decorateMatchingAPIGateways(cluster string, gwCrd *k8s_networking_v1.Gatewa
 						hostnames = append(hostnames, string(*gwListener.Hostname))
 					}
 				}
-
+				if len(hostnames) == 0 {
+					hostnames = append(hostnames, "*")
+				}
 				// Metadata format: { gatewayName => array of hostnames }
 				node.Metadata[nodeMetadataKey].(graph.GatewaysMetadata)[gwCrd.Name] = hostnames
 			}
