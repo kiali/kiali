@@ -185,5 +185,63 @@ ifeq ($(DORP),docker)
 	@echo "Docker is not supported for running the molecule tests. Ignoring 'dorp=docker' and using podman."
 endif
 
-	for msn in ${MOLECULE_SCENARIO}; do podman run --rm ${MOLECULE_DOCKER_TERM_ARGS} --env KUBECONFIG="/tmp/molecule/kubeconfig" --env K8S_AUTH_KUBECONFIG="/tmp/molecule/kubeconfig" --env MOLECULE_CLUSTER_TYPE="${CLUSTER_TYPE}" --env MOLECULE_HELM_CHARTS_REPO=/tmp/molecule/helm-charts-repo -v molecule-tests-volume:/tmp/molecule ${MOLECULE_MINIKUBE_VOL_ARG} ${MOLECULE_MINIKUBE_ENV_ARGS} ${MOLECULE_KIND_ENV_ARGS} -w /tmp/molecule/operator --network="host" ${MOLECULE_ADD_HOST_ARGS} --env DORP=podman --env OPERATOR_IMAGE_PULL_SECRET_NAME=${OPERATOR_IMAGE_PULL_SECRET_NAME} --env MOLECULE_KIALI_CR_SPEC_VERSION=${MOLECULE_KIALI_CR_SPEC_VERSION} --env PLUGIN_IMAGE_PULL_SECRET_JSON="${PLUGIN_IMAGE_PULL_SECRET_JSON}" --env MOLECULE_OSSMCONSOLE_CR_SPEC_VERSION="${MOLECULE_OSSMCONSOLE_CR_SPEC_VERSION}" ${MOLECULE_IMAGE_ENV_ARGS} ${MOLECULE_OPERATOR_PROFILER_ENABLED_ENV_VAR} ${MOLECULE_OPERATOR_INSTALLER_ENV_VAR} ${MOLECULE_DUMP_LOGS_ON_ERROR_ENV_VAR} ${MOLECULE_IMAGE_PULL_POLICY_ENV_ARGS} ${MOLECULE_WAIT_RETRIES_ARG} localhost/kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test ${MOLECULE_DESTROY_NEVER_ARG} --scenario-name $${msn}; if [ "$$?" != "0" ]; then echo "Molecule test failed: $${msn}"; podman volume rm molecule-tests-volume; exit 1; fi; done
-	podman volume rm molecule-tests-volume
+	@for msn in ${MOLECULE_SCENARIO}; do \
+	  attempt=1; \
+	  theCmd="podman run \
+	      --rm \
+	      ${MOLECULE_DOCKER_TERM_ARGS} \
+	      --env KUBECONFIG="/tmp/molecule/kubeconfig" \
+	      --env K8S_AUTH_KUBECONFIG="/tmp/molecule/kubeconfig" \
+	      --env MOLECULE_CLUSTER_TYPE="${CLUSTER_TYPE}" \
+	      --env MOLECULE_HELM_CHARTS_REPO=/tmp/molecule/helm-charts-repo \
+	      -v molecule-tests-volume:/tmp/molecule \
+	      ${MOLECULE_MINIKUBE_VOL_ARG} \
+	      ${MOLECULE_MINIKUBE_ENV_ARGS} \
+	      ${MOLECULE_KIND_ENV_ARGS} \
+	      -w /tmp/molecule/operator \
+	      --network="host" \
+	      ${MOLECULE_ADD_HOST_ARGS} \
+	      --env DORP=podman \
+	      --env OPERATOR_IMAGE_PULL_SECRET_NAME=${OPERATOR_IMAGE_PULL_SECRET_NAME} \
+	      --env MOLECULE_KIALI_CR_SPEC_VERSION=${MOLECULE_KIALI_CR_SPEC_VERSION} \
+	      --env PLUGIN_IMAGE_PULL_SECRET_JSON="${PLUGIN_IMAGE_PULL_SECRET_JSON}" \
+	      --env MOLECULE_OSSMCONSOLE_CR_SPEC_VERSION="${MOLECULE_OSSMCONSOLE_CR_SPEC_VERSION}" \
+	      ${MOLECULE_IMAGE_ENV_ARGS} \
+	      ${MOLECULE_OPERATOR_PROFILER_ENABLED_ENV_VAR} \
+	      ${MOLECULE_OPERATOR_INSTALLER_ENV_VAR} \
+	      ${MOLECULE_DUMP_LOGS_ON_ERROR_ENV_VAR} \
+	      ${MOLECULE_IMAGE_PULL_POLICY_ENV_ARGS} \
+	      ${MOLECULE_WAIT_RETRIES_ARG} \
+	      localhost/kiali-molecule:latest molecule \
+	      ${MOLECULE_DEBUG_ARG} \
+	      test \
+	      ${MOLECULE_DESTROY_NEVER_ARG} \
+	      --scenario-name $${msn}"; \
+	  echo "$$theCmd"; \
+	  while [ $$attempt -le 60 ]; do \
+	    echo "Running molecule test: scenario=$$msn (attempt=$$attempt)"; \
+	    tmpfile=$$(mktemp); \
+	    $$theCmd 2>&1 | tee "$$tmpfile"; \
+	    exitcode="$${PIPESTATUS[0]}"; \
+	    if [ "$$exitcode" -eq 0 ]; then \
+	      echo "Molecule test passed: $$msn"; \
+	      success="true"; \
+	      rm -f $$tmpfile; \
+	      break; \
+	    elif grep -iq "Skipping Galaxy server" "$$tmpfile"; then \
+	      echo "Molecule test failed but will retry after 60s: $$msn"; \
+	      attempt=$$((attempt + 1)); \
+	      sleep 60; \
+	    else \
+	      echo "Molecule test failed, will not retry: $$msn"; \
+	      rm -f $$tmpfile; \
+	      break; \
+	    fi; \
+	  done; \
+	  echo "$$output"; \
+	  podman volume rm molecule-tests-volume; \
+	  if [ "$$success" != "true" ]; then \
+	    echo "MOLECULE TEST HAS FAILED! test=$$msn"; \
+	    exit 1; \
+	  fi; \
+	done
