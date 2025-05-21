@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -27,7 +28,17 @@ func GraphNamespaces(ctx context.Context, business *business.Layer, o graph.Opti
 	defer end()
 	// time how long it takes to generate this graph
 	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes)
-	defer promtimer.ObserveDuration()
+	defer internalmetrics.ObserveDurationAndLogResults(
+		ctx,
+		config.Get(),
+		promtimer,
+		"GraphGenerationTime",
+		map[string]string{
+			"graph-kind":           o.GetGraphKind(),
+			"graph-type":           o.TelemetryOptions.GraphType,
+			"inject-service-nodes": strconv.FormatBool(o.InjectServiceNodes),
+		},
+		"Namespace graph generation time")
 
 	switch o.TelemetryVendor {
 	case graph.VendorIstio:
@@ -67,7 +78,17 @@ func GraphNode(ctx context.Context, business *business.Layer, o graph.Options) (
 
 	// time how long it takes to generate this graph
 	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes)
-	defer promtimer.ObserveDuration()
+	defer internalmetrics.ObserveDurationAndLogResults(
+		ctx,
+		config.Get(),
+		promtimer,
+		"GraphGenerationTime",
+		map[string]string{
+			"graph-kind":           o.GetGraphKind(),
+			"graph-type":           o.TelemetryOptions.GraphType,
+			"inject-service-nodes": strconv.FormatBool(o.InjectServiceNodes),
+		},
+		"Node graph generation time")
 
 	switch o.TelemetryVendor {
 	case graph.VendorIstio:
@@ -107,7 +128,17 @@ func generateGraph(ctx context.Context, trafficMap graph.TrafficMap, o graph.Opt
 	zl.Trace().Msgf("Generating config for [%s] graph...", o.ConfigVendor)
 
 	promtimer := internalmetrics.GetGraphMarshalTimePrometheusTimer(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes)
-	defer promtimer.ObserveDuration()
+	defer internalmetrics.ObserveDurationAndLogResults(
+		ctx,
+		config.Get(),
+		promtimer,
+		"GraphMarshalTime",
+		map[string]string{
+			"graph-kind":           o.GetGraphKind(),
+			"graph-type":           o.TelemetryOptions.GraphType,
+			"inject-service-nodes": strconv.FormatBool(o.InjectServiceNodes),
+		},
+		"Graph marshal time")
 
 	var vendorConfig interface{}
 	switch o.ConfigVendor {

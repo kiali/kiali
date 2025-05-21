@@ -1,6 +1,7 @@
 package routing
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	rpprof "runtime/pprof"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -277,9 +279,18 @@ func (srw *statusResponseWriter) WriteHeader(code int) {
 }
 
 // updateMetric evaluates the StatusCode, if there is an error, increase the API failure counter, otherwise save the duration
-func updateMetric(route string, srw *statusResponseWriter, timer *prometheus.Timer) {
+func updateMetric(ctx context.Context, route string, srw *statusResponseWriter, timer *prometheus.Timer) {
 	// Always measure the duration even if the API call ended in an error
-	timer.ObserveDuration()
+	internalmetrics.ObserveDurationAndLogResults(
+		ctx,
+		config.Get(),
+		timer,
+		"APIProcessingTime",
+		map[string]string{
+			"status-code": strconv.Itoa(srw.StatusCode),
+		},
+		"API processing time")
+
 	// Increase the error counter on 500 and 503 errors
 	if srw.StatusCode == http.StatusInternalServerError || srw.StatusCode == http.StatusServiceUnavailable {
 		internalmetrics.GetAPIFailureMetric(route).Inc()
@@ -288,13 +299,13 @@ func updateMetric(route string, srw *statusResponseWriter, timer *prometheus.Tim
 
 func metricHandler(next http.Handler, route Route) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// By default, if there is no call to WriteHeader, an 200 will be
+		// By default, if there is no call to WriteHeader, a 200 will be returned
 		srw := &statusResponseWriter{
 			ResponseWriter: w,
 			StatusCode:     http.StatusOK,
 		}
 		promtimer := internalmetrics.GetAPIProcessingTimePrometheusTimer(route.Name)
-		defer updateMetric(route.Name, srw, promtimer)
+		defer updateMetric(r.Context(), route.Name, srw, promtimer)
 		next.ServeHTTP(srw, r)
 	})
 }

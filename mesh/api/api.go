@@ -50,8 +50,17 @@ func GraphMesh(
 	globalInfo.IstioStatusGetter = &business.IstioStatus
 
 	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer("mesh", "mesh", false)
-	promtimer.ObserveDuration()
-
+	defer internalmetrics.ObserveDurationAndLogResults(
+		ctx,
+		globalInfo.Conf,
+		promtimer,
+		"GraphGenerationTime",
+		map[string]string{
+			"graph-kind":           "mesh",
+			"graph-type":           "mesh",
+			"inject-service-nodes": "false",
+		},
+		"Mesh graph generation time")
 	code, config = graphMesh(ctx, globalInfo, o)
 
 	return code, config
@@ -66,16 +75,26 @@ func graphMesh(ctx context.Context, globalInfo *mesh.GlobalInfo, o mesh.Options)
 		}
 		return http.StatusInternalServerError, nil
 	}
-	code, config = generateGraph(meshMap, o)
+	code, config = generateGraph(ctx, meshMap, o)
 
 	return code, config
 }
 
-func generateGraph(meshMap mesh.MeshMap, o mesh.Options) (int, interface{}) {
+func generateGraph(ctx context.Context, meshMap mesh.MeshMap, o mesh.Options) (int, interface{}) {
 	log.Tracef("Generating config for [%s] graph...", o.ConfigVendor)
 
 	promtimer := internalmetrics.GetGraphMarshalTimePrometheusTimer("mesh", "mesh", false)
-	defer promtimer.ObserveDuration()
+	defer internalmetrics.ObserveDurationAndLogResults(
+		ctx,
+		config.Get(),
+		promtimer,
+		"GraphMarshalTime",
+		map[string]string{
+			"graph-kind":           "mesh",
+			"graph-type":           "mesh",
+			"inject-service-nodes": "false",
+		},
+		"Mesh graph marshal time")
 
 	var vendorConfig interface{}
 	switch o.ConfigVendor {

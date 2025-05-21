@@ -434,7 +434,8 @@ type CacheExpirationConfig struct {
 // KialiInternalConfig holds configuration that is not typically touched by users, but could be in the event of
 // unusual circumstances. It may be undocumented and is subject to change. It is unstructured in the CRD schema.
 type KialiInternalConfig struct {
-	CacheExpiration CacheExpirationConfig `yaml:"cache_expiration,omitempty"`
+	CacheExpiration        CacheExpirationConfig `yaml:"cache_expiration,omitempty"`
+	MetricLogDurationLimit time.Duration         `yaml:"metric_log_duration_limit,omitempty"`
 }
 
 // AuthConfig provides details on how users are to authenticate
@@ -933,6 +934,7 @@ func NewConfig() (c *Config) {
 				Waypoint:      4 * time.Minute,
 				ZtunnelConfig: 2 * time.Minute,
 			},
+			MetricLogDurationLimit: 3 * time.Second, // set to 0 to log everything
 		},
 		KubernetesConfig: KubernetesConfig{
 			Burst:                       200,
