@@ -1,0 +1,3 @@
+# Ignore all build artifacts. These are generated automatically and if prettier
+# touches these up then it will change the build commit hash.
+frontend/build

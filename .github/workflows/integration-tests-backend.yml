@@ -45,12 +45,6 @@ jobs:
     - name: Ensure kiali binary is executable
       run: chmod +x ~/go/bin/kiali
 
-    - name: Download frontend build
-      uses: actions/download-artifact@v4
-      with:
-        name: build
-        path: frontend/build
-
     - name: Run backend integration tests
       id: intTests
       run: hack/run-integration-tests.sh --test-suite backend $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)

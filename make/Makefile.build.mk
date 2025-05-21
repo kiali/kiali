@@ -2,6 +2,11 @@
 # Targets for building of Kiali from source.
 #
 
+## check-ui-build: Checks if there were any changes to the build folder.
+check-ui-build:
+	@echo Checking for changes to the UI builder folder...
+	@git diff --exit-code -- frontend/build || (echo "Build folder is different from what is checked-in. Run 'make build-ui' and check-in the diff."; exit 1)
+
 ## clean: Clean ${GOPATH}/bin/kiali, ${GOPATH}/pkg/*, ${OUTDIR}/docker and the kiali binary
 clean:
 	@echo Cleaning...
