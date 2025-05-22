@@ -267,6 +267,7 @@ func decorateMatchingAPIGateways(cluster string, gwCrd *k8s_networking_v1.Gatewa
 		if gw.Cluster != cluster {
 			continue
 		}
+		// If the selector is empty, try to match with the crd name and the GW label
 		if (!gwSelector.Empty() && gwSelector.Matches(labels.Set(gw.Labels))) || (gwSelector.Empty() && gwCrd.Name == gw.Labels[config.GatewayLabel]) {
 			// If we are here, the GatewayCrd selects the GatewayAPI workload.
 			// So, all node graphs associated with the GW API workload should be listening
@@ -282,6 +283,7 @@ func decorateMatchingAPIGateways(cluster string, gwCrd *k8s_networking_v1.Gatewa
 						hostnames = append(hostnames, string(*gwListener.Hostname))
 					}
 				}
+				// Hostnames are not required. Adding * to be processed by the frontend (Indicates the kind of GW).
 				if len(hostnames) == 0 {
 					hostnames = append(hostnames, "*")
 				}
@@ -303,8 +305,9 @@ func resolveGatewayNodeMapping(gatewayWorkloads map[string][]models.WorkloadList
 			for _, node := range trafficMap {
 				if _, ok := node.Metadata[nodeMetadataKey]; !ok {
 					appLabelName, _ := gi.Conf.GetAppLabelName(gw.Labels)
+					// gw app label is not required? In that case use the service canonical name
 					svcLabelName := conf.IstioLabels.ServiceCanonicalName
-					if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && (node.App == gw.Labels[appLabelName] || node.App == gw.Labels[svcLabelName]) && node.Cluster == gwCluster && node.Namespace == gwNs {
+					if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && (node.App != "" && (node.App == gw.Labels[appLabelName] || node.App == gw.Labels[svcLabelName])) && node.Cluster == gwCluster && node.Namespace == gwNs {
 						node.Metadata[nodeMetadataKey] = graph.GatewaysMetadata{}
 						gatewayNodeMapping[&gw] = append(gatewayNodeMapping[&gw], node)
 					}
