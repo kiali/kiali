@@ -273,7 +273,10 @@ export const setNodeLabel = (
       data.labelIcon = <span className={`${badgeMap.get('RO')?.className} ${rootIconStyle}`}></span>;
     }
   } else {
-    if (data.isGateway?.egressInfo?.hostnames?.length !== undefined) {
+    if (
+      data.isGateway?.egressInfo?.hostnames?.length !== undefined ||
+      data.isGateway?.gatewayAPIInfo?.hostnames?.length !== undefined
+    ) {
       data.labelIcon = <span className={`${badgeMap.get('GW')?.className} ${gatewayIconStyle}`}></span>;
     }
     // A Waypoint should be mutually exclusive with being a traffic source
