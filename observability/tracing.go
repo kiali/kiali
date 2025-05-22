@@ -7,7 +7,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/kiali/kiali/models"
 	"time"
 
 	"go.opentelemetry.io/otel"
@@ -92,7 +91,7 @@ func Attribute(key string, val interface{}) attribute.KeyValue {
 	case string:
 		// unify the cluster tag name with the Istio tag, so the query doesn't have to be customized for the Kiali workload
 		if key == "cluster" {
-			kv = attribute.String(models.IstioClusterTag, v)
+			kv = attribute.String("istio.cluster_id", v)
 		} else {
 			kv = attribute.String(key, v)
 		}
