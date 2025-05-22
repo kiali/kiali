@@ -97,7 +97,7 @@ const gridStyle = kialiStyle({
 const meshFindStyle = kialiStyle({
   marginRight: '0.75rem',
   $nest: {
-    '& > .pf-v5-c-form__group-control': {
+    '& > .pf-v6-c-form__group-control': {
       display: 'flex'
     }
   }
@@ -105,7 +105,7 @@ const meshFindStyle = kialiStyle({
 
 const meshHideStyle = kialiStyle({
   $nest: {
-    '& > .pf-v5-c-form__group-control': {
+    '& > .pf-v6-c-form__group-control': {
       display: 'flex'
     }
   }

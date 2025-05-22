@@ -10,7 +10,7 @@ import { KialiAppState } from '../../store/Store';
 import { istioStatusSelector, namespaceItemsSelector } from '../../store/Selectors';
 import { IstioStatusActions } from '../../actions/IstioStatusActions';
 import { connect } from 'react-redux';
-import { Text, TextVariants, TextContent, Tooltip, TooltipPosition, Label } from '@patternfly/react-core';
+import { Content, ContentVariants, Tooltip, TooltipPosition, Label } from '@patternfly/react-core';
 import { IstioStatusList } from './IstioStatusList';
 import { PFColors } from '../Pf/PfColors';
 import {
@@ -88,7 +88,7 @@ const clusterStyle = kialiStyle({
 
 const labelStyle = kialiStyle({
   $nest: {
-    '& .pf-v5-c-label__icon': {
+    '& .pf-v6-c-label__icon': {
       marginRight: '0.5rem'
     }
   }
@@ -163,8 +163,8 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   const tooltipContent = (): React.ReactNode => {
     return (
       <>
-        <TextContent style={{ color: PFColors.White }}>
-          <Text component={TextVariants.h4}>{t('Cluster Status')}</Text>
+        <Content style={{ color: PFColors.White }}>
+          <Content component={ContentVariants.h4}>{t('Cluster Status')}</Content>
           {sortedClusters.map(cl => (
             <>
               <div className={clusterStyle}>
@@ -185,7 +185,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
               <Link to="/mesh">{t('Mesh page')}</Link>
             </div>
           )}
-        </TextContent>
+        </Content>
       </>
     );
   };

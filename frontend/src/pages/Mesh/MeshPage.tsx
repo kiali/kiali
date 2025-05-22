@@ -18,7 +18,7 @@ import { KialiAppState } from '../../store/Store';
 import { PFColors } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
 import { isKioskMode } from 'utils/SearchParamUtils';
-import { Chip } from '@patternfly/react-core';
+import { Label } from '@patternfly/react-core';
 import { EMPTY_MESH_DATA, MeshDataSource, MeshFetchParams } from '../../services/MeshDataSource';
 import { KialiDispatch } from 'types/Redux';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
@@ -242,9 +242,9 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
               {this.props.showLegend && <MeshLegend closeLegend={this.props.toggleLegend} />}
 
               {isReady && (
-                <Chip className={`${meshChip} ${meshBackground}`} isReadOnly={true}>
+                <Label variant="outline" className={`${meshChip} ${meshBackground}`} >
                   {this.displayTimeRange()}
-                </Chip>
+                </Label>
               )}
 
               <div id="mesh-container" className={meshContainerStyle}>

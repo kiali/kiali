@@ -155,7 +155,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
           <Switch
             id="advanced-gwSwitch"
             label={' '}
-            labelOff={' '}
+            
             isChecked={this.state.addGateway}
             onChange={() => this.onFormChange(K8sGatewayForm.SWITCH, '')}
           />

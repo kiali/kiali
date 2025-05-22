@@ -22,7 +22,7 @@ export class DelayFault extends React.Component<DelayFaultProps> {
           <Switch
             id="delaySwitch"
             label={' '}
-            labelOff={' '}
+            
             isChecked={this.props.delayed}
             onChange={() => this.props.onDelay(!this.props.delayed, this.props.delay)}
           />

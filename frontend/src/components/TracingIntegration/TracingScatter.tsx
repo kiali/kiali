@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { KialiDispatch } from 'types/Redux';
-import { ChartScatter } from '@patternfly/react-charts';
-import { EmptyState, EmptyStateVariant, EmptyStateBody, EmptyStateHeader } from '@patternfly/react-core';
+import { ChartScatter } from '@patternfly/react-charts/victory';
+import { EmptyState, EmptyStateVariant, EmptyStateBody } from '@patternfly/react-core';
 import { TracingError, JaegerTrace } from '../../types/TracingInfo';
 import { PFColors } from '../Pf/PfColors';
 import { DurationInSeconds, evalTimeRange } from 'types/Common';
@@ -84,8 +84,7 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
   renderFetchEmpty = (title, msg): JSX.Element => {
     return (
       <div className={emptyStyle}>
-        <EmptyState variant={EmptyStateVariant.sm} data-test="empty-traces">
-          <EmptyStateHeader titleText={<>{title}</>} headingLevel="h5" />
+        <EmptyState headingLevel="h5" titleText={<>{title}</>} variant={EmptyStateVariant.sm} data-test="empty-traces">
           <EmptyStateBody>{msg}</EmptyStateBody>
         </EmptyState>
       </div>

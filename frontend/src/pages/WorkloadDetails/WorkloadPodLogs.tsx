@@ -683,16 +683,14 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             entryDelay={1000}
             content="Click to navigate to span detail"
           >
-            <Button
+            <Button icon={<KialiIcon.Info key={`al-i-${index}`} className={alInfoIcon} color={spanColor} />}
               key={`s-b-${index}`}
               variant={ButtonVariant.plain}
               className={logInfoStyle}
               onClick={() => {
                 this.gotoSpan(e.span!);
               }}
-            >
-              <KialiIcon.Info key={`al-i-${index}`} className={alInfoIcon} color={spanColor} />
-            </Button>
+             />
           </Tooltip>
           <p key={`al-p-${index}`} className={logMessageStyle} style={{ color: spanColor }}>
             {this.entryToString(e)}
@@ -724,16 +722,14 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           entryDelay={1000}
           content="Click for Envoy Access Log details"
         >
-          <Button
+          <Button icon={<KialiIcon.Info key={`al-i-${index}`} className={alInfoIcon} color={messageColor} />}
             key={`al-b-${index}`}
             variant={ButtonVariant.plain}
             className={logInfoStyle}
             onClick={() => {
               this.addAccessLogModal(le.message, le.accessLog!);
             }}
-          >
-            <KialiIcon.Info key={`al-i-${index}`} className={alInfoIcon} color={messageColor} />
-          </Button>
+           />
         </Tooltip>
 
         <p key={`al-p-${index}`} className={logMessageStyle} style={{ color: messageColor }}>
@@ -761,7 +757,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     });
 
     const dropdownGroupLabel = (
-      <h1 className="pf-v5-c-menu__group-title">
+      <h1 className="pf-v6-c-menu__group-title">
         Set Proxy Log Level
         <Tooltip
           position={TooltipPosition.right}

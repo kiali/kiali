@@ -35,7 +35,7 @@ Then('the {string} row is visible', (row: string) => {
 Then('the health column on the {string} row has a health icon', (row: string) => {
   getColWithRowText(row, 'Health')
     .find('span')
-    .filter('.pf-v5-c-icon')
+    .filter('.pf-v6-c-icon')
     .should('satisfy', hasAtLeastOneClass(['icon-healthy', 'icon-unhealthy', 'icon-degraded', 'icon-na']));
 });
 

@@ -19,7 +19,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                     Object {
                       "status": Object {
                         "className": "icon-degraded",
-                        "color": "var(--pf-v5-global--warning-color--100)",
+                        "color": "var(--pf-v6-global--warning-color--100)",
                         "icon": [Function],
                         "name": "Degraded",
                         "priority": 3,
@@ -29,7 +29,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                   ],
                   "status": Object {
                     "className": "icon-degraded",
-                    "color": "var(--pf-v5-global--warning-color--100)",
+                    "color": "var(--pf-v6-global--warning-color--100)",
                     "icon": [Function],
                     "name": "Degraded",
                     "priority": 3,
@@ -42,7 +42,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                     Object {
                       "status": Object {
                         "className": "icon-na",
-                        "color": "var(--pf-v5-global--Color--200)",
+                        "color": "var(--pf-v6-global--Color--200)",
                         "icon": [Function],
                         "name": "No health information",
                         "priority": 0,
@@ -53,7 +53,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                     Object {
                       "status": Object {
                         "className": "icon-na",
-                        "color": "var(--pf-v5-global--Color--200)",
+                        "color": "var(--pf-v6-global--Color--200)",
                         "icon": [Function],
                         "name": "No health information",
                         "priority": 0,
@@ -64,7 +64,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                   ],
                   "status": Object {
                     "className": "icon-na",
-                    "color": "var(--pf-v5-global--Color--200)",
+                    "color": "var(--pf-v6-global--Color--200)",
                     "icon": [Function],
                     "name": "No health information",
                     "priority": 0,
@@ -76,7 +76,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
               "statusConfig": Object {
                 "status": Object {
                   "className": "icon-na",
-                  "color": "var(--pf-v5-global--Color--200)",
+                  "color": "var(--pf-v6-global--Color--200)",
                   "icon": [Function],
                   "name": "No health information",
                   "priority": 0,
@@ -127,7 +127,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                     Object {
                       "status": Object {
                         "className": "icon-healthy",
-                        "color": "var(--pf-v5-global--success-color--100)",
+                        "color": "var(--pf-v6-global--success-color--100)",
                         "icon": [Function],
                         "name": "Healthy",
                         "priority": 1,
@@ -137,7 +137,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                     Object {
                       "status": Object {
                         "className": "icon-healthy",
-                        "color": "var(--pf-v5-global--success-color--100)",
+                        "color": "var(--pf-v6-global--success-color--100)",
                         "icon": [Function],
                         "name": "Healthy",
                         "priority": 1,
@@ -147,7 +147,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                   ],
                   "status": Object {
                     "className": "icon-healthy",
-                    "color": "var(--pf-v5-global--success-color--100)",
+                    "color": "var(--pf-v6-global--success-color--100)",
                     "icon": [Function],
                     "name": "Healthy",
                     "priority": 1,
@@ -160,7 +160,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                     Object {
                       "status": Object {
                         "className": "icon-na",
-                        "color": "var(--pf-v5-global--Color--200)",
+                        "color": "var(--pf-v6-global--Color--200)",
                         "icon": [Function],
                         "name": "No health information",
                         "priority": 0,
@@ -171,7 +171,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                     Object {
                       "status": Object {
                         "className": "icon-na",
-                        "color": "var(--pf-v5-global--Color--200)",
+                        "color": "var(--pf-v6-global--Color--200)",
                         "icon": [Function],
                         "name": "No health information",
                         "priority": 0,
@@ -182,7 +182,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                   ],
                   "status": Object {
                     "className": "icon-na",
-                    "color": "var(--pf-v5-global--Color--200)",
+                    "color": "var(--pf-v6-global--Color--200)",
                     "icon": [Function],
                     "name": "No health information",
                     "priority": 0,
@@ -194,7 +194,7 @@ exports[`HealthIndicator renders healthy 1`] = `
               "statusConfig": Object {
                 "status": Object {
                   "className": "icon-na",
-                  "color": "var(--pf-v5-global--Color--200)",
+                  "color": "var(--pf-v6-global--Color--200)",
                   "icon": [Function],
                   "name": "No health information",
                   "priority": 0,

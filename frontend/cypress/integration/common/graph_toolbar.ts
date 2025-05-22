@@ -76,9 +76,9 @@ When('user selects {string} graph type', (graphType: string) => {
 
 Then('user {string} graph tour', (action: string) => {
   if (action === 'sees') {
-    cy.get('.pf-v5-c-popover').find('span').contains('Shortcuts').should('exist');
+    cy.get('.pf-v6-c-popover').find('span').contains('Shortcuts').should('exist');
   } else {
-    cy.get('.pf-v5-c-popover').should('not.exist');
+    cy.get('.pf-v6-c-popover').should('not.exist');
   }
 });
 
@@ -186,7 +186,7 @@ Then('user does not see graph duration menu', () => {
 
 Then('user sees selected graph duration {string}', (duration: string) => {
   cy.get('button#time_range_duration-toggle')
-    .find('span[class="pf-v5-c-menu-toggle__text"]')
+    .find('span[class="pf-v6-c-menu-toggle__text"]')
     .contains(duration)
     .should('exist');
 });
@@ -212,7 +212,7 @@ Then('user does not see graph refresh menu', () => {
 
 Then('user sees selected graph refresh {string}', (refresh: string) => {
   cy.get('button#time_range_refresh-toggle')
-    .find('span[class="pf-v5-c-menu-toggle__text"]')
+    .find('span[class="pf-v6-c-menu-toggle__text"]')
     .contains(refresh)
     .should('exist');
 });
