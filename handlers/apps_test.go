@@ -19,25 +19,20 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
-	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 	"github.com/kiali/kiali/tracing"
 )
 
 func TestAppMetricsDefault(t *testing.T) {
-	ts, api, k8s := setupAppMetricsEndpoint(t)
-	cache := cache.NewTestingCache(t, k8s, *config.NewConfig())
-	business.WithKialiCache(cache)
+	ts, api, _ := setupAppMetricsEndpoint(t, config.NewConfig())
 
 	url := ts.URL + "/api/namespaces/ns/apps/my_app/metrics"
 	now := time.Now()
@@ -72,10 +67,7 @@ func TestAppMetricsDefault(t *testing.T) {
 }
 
 func TestAppMetricsWithParams(t *testing.T) {
-	ts, api, k8s := setupAppMetricsEndpoint(t)
-
-	cache := cache.NewTestingCache(t, k8s, *config.NewConfig())
-	business.WithKialiCache(cache)
+	ts, api, _ := setupAppMetricsEndpoint(t, config.NewConfig())
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/apps/my-app/metrics", nil)
 	if err != nil {
@@ -132,14 +124,6 @@ func TestAppMetricsWithParams(t *testing.T) {
 	assert.NotZero(t, gaugeSentinel)
 }
 
-type cacheNoPrivileges struct {
-	cache.KialiCache
-}
-
-func (c *cacheNoPrivileges) GetNamespace(token string, namespace string, cluster string) (models.Namespace, bool) {
-	return models.Namespace{}, false
-}
-
 type clientNoPrivileges struct {
 	kubernetes.UserClientInterface
 }
@@ -152,9 +136,8 @@ func (c *clientNoPrivileges) GetNamespace(namespace string) (*core_v1.Namespace,
 }
 
 func TestAppMetricsInaccessibleNamespace(t *testing.T) {
-	ts, _, k8s := setupAppMetricsEndpoint(t)
-	cache := &cacheNoPrivileges{cache.NewTestingCache(t, k8s, *config.NewConfig())}
-	business.WithKialiCache(cache)
+	conf := config.NewConfig()
+	ts, _, _ := setupAppMetricsEndpoint(t, conf)
 
 	url := ts.URL + "/api/namespaces/my_namespace/apps/my_app/metrics"
 
@@ -166,12 +149,7 @@ func TestAppMetricsInaccessibleNamespace(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 }
 
-func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock, kubernetes.UserClientInterface) {
-	old := config.Get()
-	t.Cleanup(func() {
-		config.Set(old)
-	})
-	config.Set(config.NewConfig())
+func setupAppMetricsEndpoint(t *testing.T, conf *config.Config) (*httptest.Server, *prometheustest.PromAPIMock, kubernetes.ClientInterface) {
 	xapi := new(prometheustest.PromAPIMock)
 	prom, err := prometheus.NewClient()
 	if err != nil {
@@ -181,21 +159,16 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 	k8s := &clientNoPrivileges{kubetest.NewFakeK8sClient(kubetest.FakeNamespace("ns"))}
 	mr := mux.NewRouter()
 
-	authInfo := map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}}
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
 
-	mr.HandleFunc("/api/namespaces/{namespace}/apps/{app}/metrics", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), authInfo)
-			getAppMetrics(w, r.WithContext(context), func() (*prometheus.Client, error) {
-				return prom, nil
-			})
-		}))
+	handler := WithFakeAuthInfo(conf, AppMetrics(conf, cache, discovery, cf, prom))
+
+	mr.HandleFunc("/api/namespaces/{namespace}/apps/{app}/metrics", handler)
 
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)
-
-	business.SetupBusinessLayer(t, k8s, *config.Get())
-	business.WithProm(prom)
 
 	return ts, xapi, k8s
 }
