@@ -168,8 +168,14 @@ endif
 ifeq ($(DORP),docker)
 	@echo "Docker is not supported for running the molecule tests. Ignoring 'dorp=docker' and using podman."
 endif
-
-	podman volume exists molecule-tests-volume && echo "Podman volume already exists; deleting it" && podman volume rm molecule-tests-volume || true
+	@echo "Cleaning up previous molecule resources and prepare volumes for a new run"
+	podman volume rm molecule-tests-volume 2>/dev/null || ( \
+		for c in $(podman ps -a --filter volume=molecule-tests-volume --format '{{.ID}}'); do \
+			podman kill "$c"; \
+			podman rm "$c"; \
+		done && \
+		podman volume exists molecule-tests-volume && echo "Podman volume already exists; deleting it" && podman volume rm molecule-tests-volume || true \
+		)
 	podman volume create molecule-tests-volume
 	podman create -v molecule-tests-volume:/data --name molecule-volume-helper quay.io/fedora/fedora-minimal:latest sleep infinity
 	podman start molecule-volume-helper
