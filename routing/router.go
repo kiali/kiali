@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	hpprof "net/http/pprof"
 	"os"
@@ -41,14 +42,22 @@ func NewRouter(
 	cpm business.ControlPlaneMonitor,
 	grafana *grafana.Service,
 	discovery *istio.Discovery,
+	staticAssetFS fs.FS,
 ) (*mux.Router, error) {
 	webRoot := conf.Server.WebRoot
 	webRootWithSlash := webRoot + "/"
 
 	rootRouter := mux.NewRouter().StrictSlash(false)
 	appRouter := rootRouter
-
-	staticFileServer := http.FileServer(http.Dir(conf.Server.StaticContentRootDirectory))
+	var staticFileServer http.Handler
+	if conf.RunMode == config.RunModeLocal {
+		log.Info("Serving from embedded assets content root dir")
+		staticFileServer = http.FileServerFS(staticAssetFS)
+	} else {
+		log.Info("Serving from static content root dir")
+		staticFileServer = http.FileServer(http.Dir(conf.Server.StaticContentRootDirectory))
+	}
+	log.Infof("Webroot: %s", webRootWithSlash)
 
 	if webRoot != "/" {
 		// help the user out - if a request comes in for "/", redirect to our true webroot
@@ -80,9 +89,9 @@ func NewRouter(
 		}
 
 		if urlPath == webRootWithSlash || urlPath == webRoot || urlPath == webRootWithSlash+"index.html" {
-			serveIndexFile(w)
+			serveIndexFile(conf, w, staticAssetFS)
 		} else if urlPath == webRootWithSlash+"env.js" {
-			serveEnvJsFile(w)
+			serveEnvJsFile(conf, w)
 		} else {
 			staticFileServer.ServeHTTP(w, r)
 		}
@@ -248,11 +257,15 @@ func NewRouter(
 		}
 	}
 
-	// All client-side routes are prefixed with /console.
-	// They are forwarded to index.html and will be handled by react-router.
-	appRouter.PathPrefix("/console").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		serveIndexFile(w)
-	})
+	if conf.RunMode == config.RunModeLocal {
+		appRouter.PathPrefix("/console").Handler(staticFileServer)
+	} else {
+		// All client-side routes are prefixed with /console.
+		// They are forwarded to index.html and will be handled by react-router.
+		appRouter.PathPrefix("/console").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			serveIndexFile(conf, w, staticAssetFS)
+		})
+	}
 
 	if authController != nil {
 		if ac, ok := authController.(*authentication.OpenIdAuthController); ok {
@@ -312,8 +325,7 @@ func metricHandler(next http.Handler, route Route) http.Handler {
 
 // serveEnvJsFile generates the env.js file needed by the UI from Kiali configs. The
 // generated file is sent to the HTTP response.
-func serveEnvJsFile(w http.ResponseWriter) {
-	conf := config.Get()
+func serveEnvJsFile(conf *config.Config, w http.ResponseWriter) {
 	var body string
 	if len(conf.Server.WebHistoryMode) > 0 {
 		body += fmt.Sprintf("window.HISTORY_MODE='%s';", conf.Server.WebHistoryMode)
@@ -330,19 +342,32 @@ func serveEnvJsFile(w http.ResponseWriter) {
 
 // serveIndexFile takes UI's index.html as a template to generate a modified index file that takes
 // into account the web_root path configured in the Kiali CR. The result is sent to the HTTP response.
-func serveIndexFile(w http.ResponseWriter) {
-	webRootPath := config.Get().Server.WebRoot
+func serveIndexFile(conf *config.Config, w http.ResponseWriter, staticAssetFS fs.FS) {
+	webRootPath := conf.Server.WebRoot
 	webRootPath = strings.TrimSuffix(webRootPath, "/")
 
-	path, _ := filepath.Abs("./console/index.html")
-	b, err := os.ReadFile(path)
-	if err != nil {
-		log.Errorf("File I/O error [%v]", err.Error())
-		handlers.RespondWithDetailedError(w, http.StatusInternalServerError, "Unable to read index.html template file", err.Error())
-		return
+	var (
+		contents []byte
+		err      error
+	)
+	if conf.RunMode == config.RunModeLocal {
+		contents, err = fs.ReadFile(staticAssetFS, "index.html")
+		if err != nil {
+			log.Errorf("File I/O error: %s", err)
+			handlers.RespondWithDetailedError(w, http.StatusInternalServerError, "Unable to read index.html template file", err.Error())
+			return
+		}
+	} else {
+		path, _ := filepath.Abs("./console/index.html")
+		contents, err = os.ReadFile(path)
+		if err != nil {
+			log.Errorf("File I/O error [%v]", err.Error())
+			handlers.RespondWithDetailedError(w, http.StatusInternalServerError, "Unable to read index.html template file", err.Error())
+			return
+		}
 	}
 
-	html := string(b)
+	html := string(contents)
 	newHTML := html
 
 	if len(webRootPath) != 0 {

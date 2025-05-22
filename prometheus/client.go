@@ -95,7 +95,7 @@ func NewClientForConfig(conf config.Config) (*Client, error) {
 		// Note: if we are using the 'bearer' authentication method then we want to use the Kiali
 		// service account token and not the user's token. This is because Kiali does filtering based
 		// on the user's token and prevents people who shouldn't have access to particular metrics.
-		token, _, err := kubernetes.GetKialiTokenForHomeCluster()
+		token, _, err := kubernetes.GetKialiTokenForHomeCluster(config.Get())
 		if err != nil {
 			zl.Error().Msgf("Could not read the Kiali Service Account token: %v", err)
 			return nil, err

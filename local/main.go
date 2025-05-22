@@ -1,43 +1,15 @@
-// Kiali
-//
-// # Kiali Project, The Console for Istio Service Mesh
-//
-// NOTE! The Kiali API is not for public use and is not supported for any use outside of the Kiali UI itself.
-// The API can and will change from version to version with no guarantee of backwards compatibility.
-//
-// To generate this API document:
-// ```
-//
-//	> alias swagger='docker run --rm -it  --user $(id -u):$(id -g) -e GOCACHE=/tmp -e GOPATH=$(go env GOPATH):/go -v $HOME:$HOME -w $(pwd) quay.io/goswagger/swagger'
-//	> swagger generate spec -o ./swagger.json
-//	> swagger generate markdown --quiet --spec ./swagger.json --output ./kiali_internal_api.md
-//
-// ```
-//
-//	Schemes: http, https
-//	BasePath: /api
-//	Version: _
-//
-//	Consumes:
-//	- application/json
-//
-//	Produces:
-//	- application/json
-//
-// swagger:meta
 package main
 
 import (
 	"context"
 	"flag"
 	"os"
+	"strings"
 
-	_ "go.uber.org/automaxprocs"
-
-	server "github.com/kiali/kiali/cmd"
+	servercmd "github.com/kiali/kiali/cmd"
 	"github.com/kiali/kiali/config"
-	istioconfig "github.com/kiali/kiali/config/istio"
 	"github.com/kiali/kiali/kubernetes"
+	local "github.com/kiali/kiali/local/cmd"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
 )
@@ -51,7 +23,11 @@ var (
 
 // Command line arguments
 var (
-	argConfigFile string
+	argConfigFile         string
+	homeClusterContext    string
+	kubeConfig            string
+	remoteClusterContexts []string
+	openBrowser           bool
 )
 
 func init() {
@@ -60,6 +36,19 @@ func init() {
 	// See this bug: https://github.com/kubernetes-sigs/controller-runtime/issues/878.
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	flag.StringVar(&argConfigFile, "config", "", "Path to the YAML configuration file. If not specified, environment variables will be used for configuration.")
+	flag.StringVar(&homeClusterContext, "home-cluster-context", "", "Sets Kiali's home cluster context in local mode.")
+	flag.StringVar(&kubeConfig, "kubeconfig", kubernetes.KubeConfigDir(), "Path to the kubeconfig file for Kiali to use.")
+	flag.Func("remote-cluster-contexts", "Comma separated list of remote cluster contexts.", func(flagValue string) error {
+		// Need to check for empty string because strings.Split on "" returns [""]
+		if flagValue != "" {
+			remoteClusterContexts = strings.Split(flagValue, ",")
+		}
+		return nil
+	})
+	flag.BoolVar(&openBrowser, "open-browser", true, "If true, will open the default browser after startup.")
+
+	// log everything to stderr so that it can be easily gathered by logs, separate log files are problematic with containers
+	_ = flag.Set("logtostderr", "true")
 }
 
 func main() {
@@ -77,19 +66,21 @@ func main() {
 
 	var serverStopped <-chan struct{}
 
+	// Override some settings in local mode.
+	conf.RunMode = config.RunModeLocal
+	conf.Auth.Strategy = config.AuthStrategyAnonymous
+	conf.Deployment.RemoteSecretPath = kubeConfig
+	config.Set(conf)
 	if err := config.Validate(*conf); err != nil {
 		log.Fatal(err)
 	}
-	log.Tracef("Kiali Configuration:\n%s", conf)
-	istioconfig.UpdateConfigWithIstioInfo()
 
-	clientFactory, err := kubernetes.GetClientFactory()
+	serverStopped, err := local.Run(ctx, conf, version, commitHash, goVersion, homeClusterContext, remoteClusterContexts, openBrowser, &zl)
 	if err != nil {
-		log.Fatalf("Failed to create client factory. Err: %s", err)
+		log.Fatalf("Unable to run kiali locally: %s", err)
 	}
 
-	serverStopped = server.Run(ctx, conf, version, commitHash, goVersion, nil, clientFactory, &zl)
-	server.WaitForTermination(cancel)
+	servercmd.WaitForTermination(cancel)
 	// This ensures that the Run process has fully cleaned itself up.
 	<-serverStopped
 }

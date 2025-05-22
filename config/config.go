@@ -236,6 +236,7 @@ type PrometheusConfig struct {
 	CacheEnabled    bool              `yaml:"cache_enabled,omitempty"`    // Enable cache for Prometheus queries
 	CacheExpiration int               `yaml:"cache_expiration,omitempty"` // Global cache expiration expressed in seconds
 	CustomHeaders   map[string]string `yaml:"custom_headers,omitempty"`
+	Enabled         bool              `yaml:"enabled,omitempty"`
 	HealthCheckUrl  string            `yaml:"health_check_url,omitempty"`
 	IsCore          bool              `yaml:"is_core,omitempty"`
 	QueryScope      map[string]string `yaml:"query_scope,omitempty"`
@@ -484,7 +485,8 @@ type DeploymentConfig struct {
 	// RemoteSecretPath is used to identify the remote cluster Kiali will connect to as its "local cluster".
 	// This is to support installing Kiali in the control plane, but observing only the data plane in the remote cluster.
 	// Experimental feature. See: https://github.com/kiali/kiali/issues/3002
-	RemoteSecretPath string `yaml:"remote_secret_path,omitempty"`
+	RemoteSecretPath     string            `yaml:"remote_secret_path,omitempty"`
+	ClusterNameOverrides map[string]string `yaml:"cluster_name_overrides,omitempty"`
 }
 
 // we need to play games with a custom unmarshaller/marshaller for metav1.LabelSelector because it has no yaml struct tags so
@@ -684,6 +686,13 @@ type Profiler struct {
 	Enabled bool `yaml:"enabled,omitempty"`
 }
 
+type RunMode string
+
+const (
+	RunModeLocal RunMode = "local"
+	RunModeApp   RunMode = "app"
+)
+
 // Config defines full YAML configuration.
 type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
@@ -704,6 +713,7 @@ type Config struct {
 	KubernetesConfig         KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
 	LoginToken               LoginToken                          `yaml:"login_token,omitempty"`
 	Server                   Server                              `yaml:",omitempty"`
+	RunMode                  RunMode                             `yaml:"runMode,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -798,6 +808,7 @@ func NewConfig() (c *Config) {
 				// Prom Cache expires and it forces to repopulate cache
 				CacheExpiration: 300,
 				CustomHeaders:   map[string]string{},
+				Enabled:         true,
 				QueryScope:      map[string]string{},
 				ThanosProxy: ThanosProxy{
 					Enabled:         false,
@@ -979,6 +990,7 @@ func NewConfig() (c *Config) {
 			WebSchema:                  "",
 			WriteTimeout:               30,
 		},
+		RunMode: RunModeApp,
 	}
 
 	return
@@ -1447,12 +1459,12 @@ func Validate(conf Config) error {
 		return fmt.Errorf("server port is negative: %v", conf.Server.Port)
 	}
 
-	if strings.Contains(conf.Server.StaticContentRootDirectory, "..") {
-		return fmt.Errorf("server static content root directory must not contain '..': %v", conf.Server.StaticContentRootDirectory)
-	}
-	if _, err := os.Stat(conf.Server.StaticContentRootDirectory); os.IsNotExist(err) {
-		return fmt.Errorf("server static content root directory does not exist: %v", conf.Server.StaticContentRootDirectory)
-	}
+	// if strings.Contains(conf.Server.StaticContentRootDirectory, "..") {
+	// 	return fmt.Errorf("server static content root directory must not contain '..': %v", conf.Server.StaticContentRootDirectory)
+	// }
+	// if _, err := os.Stat(conf.Server.StaticContentRootDirectory); os.IsNotExist(err) {
+	// 	return fmt.Errorf("server static content root directory does not exist: %v", conf.Server.StaticContentRootDirectory)
+	// }
 
 	webRoot := conf.Server.WebRoot
 	if !validPathRegEx.MatchString(webRoot) {
@@ -1673,4 +1685,25 @@ func (c *Config) CertPool() *x509.CertPool {
 		return pool.Clone()
 	}
 	return nil
+}
+
+// MustLoadConfig loads config file if specified, otherwise, relies on environment variables to configure.
+// If loading from the file fails then log.Fatal is called.
+func MustLoadConfig(configFilePath string) *Config {
+	var conf *Config
+
+	if configFilePath != "" {
+		var err error
+		conf, err = LoadFromFile(configFilePath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		Set(conf)
+	} else {
+		log.Infof("No configuration file specified. Will rely on environment for configuration.")
+		conf = NewConfig()
+		Set(conf)
+	}
+
+	return conf
 }

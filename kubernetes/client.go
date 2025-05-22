@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	osappsclient "github.com/openshift/client-go/apps/clientset/versioned"
@@ -15,6 +16,7 @@ import (
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 
@@ -146,9 +148,35 @@ func NewClientWithRemoteClusterInfo(config *rest.Config, remoteClusterInfo *Remo
 			return nil, err
 		}
 
+		// TODO: This ain't right.
+		// TODO: We need to be able to read multiple clusters/contexts from the kubeconfig file.
 		clusterName := getClusterName(&cfg)
 		client.clusterInfo = ClusterInfo{
 			Name:       clusterName,
+			SecretName: remoteClusterInfo.SecretName,
+		}
+	} else {
+		client.clusterInfo = ClusterInfo{
+			Name: kialiconfig.Get().KubernetesConfig.ClusterName,
+		}
+	}
+	// Copy config
+	clientConfig := *config
+	client.clusterInfo.ClientConfig = &clientConfig
+
+	return client, nil
+}
+
+// TODO: Combine this with newClientWithRemoteClusterInfo
+func NewClientWithRemoteClusterInfoWithClusterName(config *rest.Config, remoteClusterInfo *RemoteClusterInfo) (*K8SClient, error) {
+	client, err := newClientFromConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	if remoteClusterInfo != nil {
+		client.clusterInfo = ClusterInfo{
+			Name:       remoteClusterInfo.ClusterName,
 			SecretName: remoteClusterInfo.SecretName,
 		}
 	} else {
@@ -167,8 +195,8 @@ func NewClientWithRemoteClusterInfo(config *rest.Config, remoteClusterInfo *Remo
 // Returns configuration if Kiali is in Cluster when InCluster is true
 // Returns configuration if Kiali is not in Cluster when InCluster is false
 // It returns an error on any problem
-func getConfigForLocalCluster() (*rest.Config, error) {
-	remoteSecretPath := kialiconfig.Get().Deployment.RemoteSecretPath
+func getConfigForLocalCluster(conf *kialiconfig.Config) (*rest.Config, error) {
+	remoteSecretPath := conf.Deployment.RemoteSecretPath
 	if remoteSecret, readErr := GetRemoteSecret(remoteSecretPath); readErr == nil {
 		log.Debugf("Using remote secret for local cluster config found at: [%s]. Kiali must be running outside the kube cluster.", remoteSecretPath)
 		return clientcmd.NewDefaultClientConfig(*remoteSecret, nil).ClientConfig()
@@ -267,4 +295,44 @@ func NewClient(
 		oAuthClient:    oAuthClient,
 		Reader:         reader,
 	}
+}
+
+func NewClientsFromRemotePath(ctx context.Context, conf kialiconfig.Config) (map[string]ClientInterface, error) {
+	kubeConfig, err := clientcmd.LoadFromFile(conf.Deployment.RemoteSecretPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read kubeconfig from file: %s", conf.Deployment.RemoteSecretPath)
+	}
+
+	// TODO: Just current context for now but expand this out with args from cmdline.
+	currentContext := kubeConfig.Contexts[kubeConfig.CurrentContext]
+	if currentContext == nil {
+		return nil, fmt.Errorf("current context not set in kubeconfig file: %s", conf.Deployment.RemoteSecretPath)
+	}
+
+	// TODO: Figure out best place to put this.
+	// Current context is home cluster. This is a hack.
+	conf.KubernetesConfig.ClusterName = currentContext.Cluster
+	kialiconfig.Set(&conf)
+
+	contexts := map[string]*api.Context{kubeConfig.CurrentContext: currentContext}
+	clients := map[string]ClientInterface{}
+	for context, clusterInfo := range contexts {
+		remoteClusterInfo := &RemoteClusterInfo{
+			ClusterName: clusterInfo.Cluster,
+			Config:      clientcmd.NewDefaultClientConfig(*kubeConfig, &clientcmd.ConfigOverrides{CurrentContext: context}),
+		}
+		clientConfig, err := remoteClusterInfo.Config.ClientConfig()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get client config for remote cluster [%s]. Err: %s", context, err)
+		}
+
+		client, err := NewClientWithRemoteClusterInfoWithClusterName(clientConfig, remoteClusterInfo)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create remote Kiali Service Account client. Err: %s", err)
+		}
+
+		clients[clusterInfo.Cluster] = client
+	}
+
+	return clients, nil
 }

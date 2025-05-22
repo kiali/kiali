@@ -31,7 +31,12 @@ go-check:
 build: go-check
 	@echo Building...
 	${GO_BUILD_ENVVARS} ${GO} build \
-		-o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH} -X main.goVersion=${GO_ACTUAL_VERSION}" ${GO_BUILD_FLAGS}
+		-o ${GO_BUILD_OUTPUT} -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH} -X main.goVersion=${GO_ACTUAL_VERSION}" ${GO_BUILD_FLAGS}
+
+## build-local: Runs `make go-check` internally and builds Kiali local binary
+build-local: 
+	@echo Building local...
+	$(MAKE) GO_BUILD_OUTPUT=${GOPATH}/bin/kiali-local build
 
 ## build-ui: Runs the yarn commands to build the frontend UI
 build-ui:
@@ -114,6 +119,12 @@ lint-install:
 ## lint: Runs golangci-lint
 # doc.go is ommited for linting, because it generates lots of warnings.
 lint:
+# The linter complains if it can't compile everything despite the fact that you tell it to ignore those files:
+# https://github.com/golangci/golangci-lint/issues/2912
+# To get around this we create an empty file for the frontend assets if they don't exist
+	@if [ ! -d "frontend/build" ]; then \
+		mkdir frontend/build && touch frontend/build/noop; \
+	fi
 	golangci-lint run -c ./.github/workflows/config/.golangci.yml
 
 # Assuming here that if the bin dir exists then the tools also exist inside of it.
