@@ -33,16 +33,6 @@ Given('user is at the {string} page for the {string} namespace', (page: string, 
 });
 
 Given('user is at the {string} page with manual refresh', (page: string) => {
-  // Set the default refresh to 'manual' to mimic what users would typically have set. This also
-  // works better for OSSMC, where HistoryManager.getRefresh() does not reflect the URL value in a
-  // timely manner.
-  cy.intercept(`${Cypress.config('baseUrl')}/api/config`, request => {
-    request.reply(response => {
-      response.body['kialiFeatureFlags']['uiDefaults']['refreshInterval'] = 'manual';
-      return response;
-    });
-  }).as('config');
-
   // Forcing "Manual" to prevent any page load
   if (page === 'graph') {
     cy.visit({ url: `${Cypress.config('baseUrl')}/console/graph/namespaces?namespaces=default&refresh=1` });
