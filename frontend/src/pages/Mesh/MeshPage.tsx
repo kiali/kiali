@@ -180,9 +180,9 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     this.meshDataSource.on('fetchSuccess', this.handleMeshDataSourceSuccess);
 
     // Unless we are waiting for Manual refresh, ensure we initialize the mesh.
-    // Using setTimeout() ensures we wait for the toolbar to render and ensure all redux props are updated
-    // with URL settings. That in turn ensures the initial fetchParams are correct.
     if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
+      // Using setTimeout() ensures we wait for the toolbar to render and ensure all redux props are updated
+      // with URL settings. That in turn ensures the initial fetchParams are correct.
       setTimeout(() => this.loadMeshFromBackend(), 0);
     }
   }
@@ -190,9 +190,14 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   componentDidUpdate(prev: MeshPageProps): void {
     const curr = this.props;
 
+    // we need to consider URL prop here because redux may not yet reflect any change applied in the Refresh component, and
+    // the initial update needs to know whether to wait on fetching the mesh data.
+    const manualRefresh =
+      curr.refreshInterval === RefreshIntervalManual || HistoryManager.getRefresh() === RefreshIntervalManual;
+
     if (
       prev.lastRefreshAt !== curr.lastRefreshAt ||
-      (curr.refreshInterval !== RefreshIntervalManual &&
+      (!manualRefresh &&
         ((prev.refreshInterval !== curr.refreshInterval && curr.refreshInterval !== RefreshIntervalPause) ||
           prev.duration !== curr.duration ||
           (prev.findValue !== curr.findValue && curr.findValue.includes('label:')) ||
@@ -223,6 +228,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     const conStyle = isKioskMode() ? kioskContainerStyle : containerStyle;
     const isEmpty = !(this.state.meshData.elements.nodes && Object.keys(this.state.meshData.elements.nodes).length > 0);
     const isReady = !(isEmpty || this.state.meshData.isError);
+    const refreshInterval = HistoryManager.getRefresh() ?? this.props.refreshInterval;
 
     return (
       <>
@@ -256,7 +262,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
                   isLoading={this.state.meshData.isLoading}
                   isMiniMesh={false}
                   loaded={this.state.meshData.loaded}
-                  refreshInterval={this.props.refreshInterval}
+                  refreshInterval={refreshInterval}
                 >
                   <Mesh {...this.props} isMiniMesh={false} meshData={this.state.meshData} onReady={this.handleReady} />
                 </EmptyMeshLayout>

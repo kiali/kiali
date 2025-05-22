@@ -382,9 +382,9 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     }
 
     // Unless we are waiting for Manual refresh, ensure we initialize the graph.
-    // Using setTimeout() ensures we wait for the toolbar to render and ensure all redux props are updated
-    // with URL settings. That in turn ensures the initial fetchParams are correct.
     if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
+      // Using setTimeout() ensures we wait for the toolbar to render and ensure all redux props are updated
+      // with URL settings. That in turn ensures the initial fetchParams are correct.
       setTimeout(() => this.loadGraphDataFromBackend(), 0);
     }
   }
@@ -398,10 +398,15 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       (n1, n2) => n1.name === n2.name
     );
 
+    // we need to consider URL prop here because redux may not yet reflect any change applied in the Refresh component, and
+    // the initial update needs to know whether to wait on fetching the graph data.
+    const manualRefresh =
+      curr.refreshInterval === RefreshIntervalManual || HistoryManager.getRefresh() === RefreshIntervalManual;
+
     if (
       // refresh the graph but keep the side-panel
       (prev.lastRefreshAt !== curr.lastRefreshAt && curr.replayQueryTime === 0) ||
-      (curr.refreshInterval !== RefreshIntervalManual &&
+      (!manualRefresh &&
         (prev.duration !== curr.duration ||
           (prev.edgeLabels !== curr.edgeLabels && // test for edge labels that invoke graph gen appenders
             (curr.edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP) ||
@@ -416,7 +421,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       this.loadGraphDataFromBackend();
     } else if (
       // refresh the graph and init the side-panel
-      curr.refreshInterval !== RefreshIntervalManual &&
+      !manualRefresh &&
       (activeNamespacesChanged ||
         prev.boxByCluster !== curr.boxByCluster ||
         prev.boxByNamespace !== curr.boxByNamespace ||
@@ -461,6 +466,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     );
     const isReady = !(isEmpty || this.state.graphData.isError);
     const isReplayReady = this.props.replayActive && !!this.props.replayQueryTime;
+    const refreshInterval = HistoryManager.getRefresh() ?? this.props.refreshInterval;
 
     return (
       <>
@@ -502,7 +508,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
                     isMiniGraph={false}
                     loaded={this.state.graphData.loaded}
                     namespaces={this.props.activeNamespaces}
-                    refreshInterval={this.props.refreshInterval}
+                    refreshInterval={refreshInterval}
                     showIdleNodes={this.props.showIdleNodes}
                     toggleIdleNodes={this.props.toggleIdleNodes}
                   >
