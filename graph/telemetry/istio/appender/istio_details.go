@@ -294,7 +294,7 @@ func decorateMatchingAPIGateways(cluster string, gwCrd *k8s_networking_v1.Gatewa
 
 func resolveGatewayNodeMapping(gatewayWorkloads map[string][]models.WorkloadListItem, nodeMetadataKey graph.MetadataKey, trafficMap graph.TrafficMap, gi *graph.GlobalInfo) map[*models.WorkloadListItem][]*graph.Node {
 	gatewayNodeMapping := make(map[*models.WorkloadListItem][]*graph.Node)
-	conf := config.Get()
+	conf := gi.Conf
 	for key, gwWorkloadsList := range gatewayWorkloads {
 		split := strings.Split(key, ":")
 		gwCluster := split[0]
