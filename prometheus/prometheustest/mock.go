@@ -319,11 +319,6 @@ func (o *PromClientMock) GetExistingMetricNames(metricNames []string) ([]string,
 	return args.Get(0).([]string), args.Error(1)
 }
 
-func (o *PromClientMock) GetFlags() (prom_v1.FlagsResult, error) {
-	args := o.Called()
-	return args.Get(0).(prom_v1.FlagsResult), args.Error(1)
-}
-
 func (o *PromClientMock) GetNamespaceServicesRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	args := o.Called(namespace, cluster, ratesInterval, queryTime)
 	return args.Get(0).(model.Vector), args.Error(1)
