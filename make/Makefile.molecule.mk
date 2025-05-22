@@ -170,9 +170,9 @@ ifeq ($(DORP),docker)
 endif
 	@echo "Cleaning up previous molecule resources and prepare volumes for a new run"
 	podman volume rm molecule-tests-volume 2>/dev/null || ( \
-		for c in $(podman ps -a --filter volume=molecule-tests-volume --format '{{.ID}}'); do \
-			podman kill "$c"; \
-			podman rm "$c"; \
+		for c in $$(podman ps -a --filter volume=molecule-tests-volume --format '{{.ID}}'); do \
+			podman kill "$$c"; \
+			podman rm "$$c"; \
 		done && \
 		podman volume exists molecule-tests-volume && echo "Podman volume already exists; deleting it" && podman volume rm molecule-tests-volume || true \
 		)
