@@ -378,7 +378,7 @@ func (a alice) then(h http.Handler) http.Handler {
 
 func buildHttpHandlerLogger(route Route, handlerFunction http.Handler) http.Handler {
 	c := alice{}
-	c = c.append(hlog.NewHandler(zerolog.With().Str("route", route.Name).Logger()))
+	c = c.append(hlog.NewHandler(zerolog.With().Str("route", route.Name).Str("route-pattern", route.Pattern).Logger()))
 
 	// TODO: commenting out but leaving these here in case we want to look into including them at a future date
 	// c = c.append(hlog.HostHandler("host", true))
