@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -414,4 +416,49 @@ func readQuery(conf *config.Config, values url.Values) (models.TracingQuery, err
 	}
 
 	return q, nil
+}
+
+// TracingDiagnose is the API handler to diagnose Tracing configuration
+func TracingDiagnose(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery *istio.Discovery,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// prepare the logger in a context, and replace the request context with ours that has our logger in it
+		r = log.AddGroupToLoggerInRequestContext(r, log.TracingLogName)
+
+		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			return
+		}
+		if !isHomeCPAccessible(r.Context(), business.Namespace, clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			return
+		}
+
+		status, err := business.Tracing.TracingDiagnose(r.Context(), clientFactory.GetSAHomeClusterClient().GetToken())
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+
+		RespondWithJSON(w, http.StatusOK, status)
+	}
+}
+
+// Check access to the home istio namespace
+func isHomeCPAccessible(ctx context.Context, namespaceService business.NamespaceService, cluster string) bool {
+	conf := config.Get()
+	_, err := namespaceService.GetClusterNamespace(ctx, conf.IstioNamespace, cluster)
+	if err == nil || !errors.IsForbidden(err) {
+		return true
+	}
+	return false
 }
