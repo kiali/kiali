@@ -89,7 +89,12 @@ func Attribute(key string, val interface{}) attribute.KeyValue {
 	var kv attribute.KeyValue
 	switch v := val.(type) {
 	case string:
-		kv = attribute.String(key, v)
+		// unify the cluster tag name with the Istio tag, so the query doesn't have to be customized for the Kiali workload
+		if key == "cluster" {
+			kv = attribute.String("istio.cluster_id", v)
+		} else {
+			kv = attribute.String(key, v)
+		}
 	case bool:
 		kv = attribute.Bool(key, v)
 	case int:
