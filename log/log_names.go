@@ -1,14 +1,28 @@
 package log
 
-// these are variables used to define logger group names or other names of structured data fields used when logging messages
+// these are variables used to define logger group names
 // see log.WithGroup for when these are typically used
 var (
+	AuthenticateLogName = "authenticate"
+	ClustersLogName     = "clusters"
+	ConfigLogName       = "config"
+	GraphLogName        = "graph"
+	IstioConfigLogName  = "istioConfig"
+	KialiCacheLogName   = "kialiCache"
+	MeshLogName         = "mesh"
+	MetricsLogName      = "metrics"
+	PromCacheLogName    = "promCache"
+	PrometheusLogName   = "prometheus"
+	ResourcesLogName    = "resources"
+	StatusLogName       = "status"
+	TracingLogName      = "tracing"
+	ValidationLogName   = "validation"
+)
+
+// these are structured attribute key names for log messages
+var (
 	GraphAppenderLogName = "appender"
-	GraphLogName         = "graph"
-	IstioConfigLogName   = "istioConfig"
-	KialiCacheLogName    = "kialiCache"
-	PromCacheLogName     = "promCache"
-	PrometheusLogName    = "prometheus"
-	TracingLogName       = "tracing"
-	ValidationLogName    = "validation"
+	GroupLogName         = "group"
+	RouteLogName         = "route"
+	RoutePatternLogName  = "route-pattern"
 )

@@ -16,7 +16,6 @@ import (
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
@@ -61,8 +60,6 @@ func AppTraces(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// prepare the logger in a context, and replace the request context with ours that has our logger in it
-		r = log.AddGroupToLoggerInRequestContext(r, log.TracingLogName)
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -101,8 +98,6 @@ func ServiceTraces(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// prepare the logger in a context, and replace the request context with ours that has our logger in it
-		r = log.AddGroupToLoggerInRequestContext(r, log.TracingLogName)
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -137,8 +132,6 @@ func WorkloadTraces(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// prepare the logger in a context, and replace the request context with ours that has our logger in it
-		r = log.AddGroupToLoggerInRequestContext(r, log.TracingLogName)
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -174,8 +167,6 @@ func ErrorTraces(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// prepare the logger in a context, and replace the request context with ours that has our logger in it
-		r = log.AddGroupToLoggerInRequestContext(r, log.TracingLogName)
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -212,8 +203,6 @@ func TraceDetails(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// prepare the logger in a context, and replace the request context with ours that has our logger in it
-		r = log.AddGroupToLoggerInRequestContext(r, log.TracingLogName)
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -248,8 +237,6 @@ func AppSpans(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// prepare the logger in a context, and replace the request context with ours that has our logger in it
-		r = log.AddGroupToLoggerInRequestContext(r, log.TracingLogName)
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -288,8 +275,6 @@ func ServiceSpans(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// prepare the logger in a context, and replace the request context with ours that has our logger in it
-		r = log.AddGroupToLoggerInRequestContext(r, log.TracingLogName)
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -328,8 +313,6 @@ func WorkloadSpans(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// prepare the logger in a context, and replace the request context with ours that has our logger in it
-		r = log.AddGroupToLoggerInRequestContext(r, log.TracingLogName)
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {

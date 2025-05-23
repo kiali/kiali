@@ -63,9 +63,6 @@ func GraphNamespaces(
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer handlePanic(r.Context(), w)
 
-		// prepare the logger in a context, and replace the request context with ours that has our logger in it
-		r = log.AddGroupToLoggerInRequestContext(r, log.GraphLogName)
-
 		// TODO: getLayer and its downstream call chain has our logger in the request context now; it just needs to extract and use it (which it does not today)
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		graph.CheckError(err)
@@ -90,9 +87,6 @@ func GraphNode(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer handlePanic(r.Context(), w)
-
-		// prepare the logger in a context, and replace the request context with ours that has our logger in it
-		r = log.AddGroupToLoggerInRequestContext(r, log.GraphLogName)
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		graph.CheckError(err)
