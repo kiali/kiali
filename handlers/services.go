@@ -245,6 +245,6 @@ func ServiceUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	audit(r, "UPDATE on Namespace: "+namespace+" Service name: "+service+" Patch: "+jsonPatch)
+	audit(r, "UPDATE", namespace, "n/a", "Service Update. Name: ["+service+"], Patch: "+jsonPatch)
 	RespondWithJSON(w, http.StatusOK, serviceDetails)
 }

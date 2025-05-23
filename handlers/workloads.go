@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"slices"
@@ -289,8 +288,7 @@ func WorkloadUpdate(
 			handleErrorResponse(w, err)
 			return
 		}
-		auditMsg := fmt.Sprintf("UPDATE on Cluster: [%s] Namespace: [%s] Workload name: [%s] Type: [%s] Patch: [%s]", cluster, namespace, workload, workloadGVK, jsonPatch)
-		audit(r, auditMsg)
+		audit(r, "UPDATE", namespace, workloadGVK.String(), "Workload Update. Cluster: ["+cluster+"], Workload Name: ["+workload+"], Patch: "+jsonPatch)
 		RespondWithJSON(w, http.StatusOK, workloadDetails)
 	}
 }

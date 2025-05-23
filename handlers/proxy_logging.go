@@ -61,7 +61,7 @@ func LoggingUpdate(
 			handleErrorResponse(w, err)
 			return
 		}
-		audit(r, "UPDATE Envoy log. Cluster: "+cluster+" Namespace: "+namespace+" Pod: "+pod+" Log level:"+level)
+		audit(r, "UPDATE", namespace, "n/a", "Envoy Log Level. Cluster: ["+cluster+"], Pod: ["+pod+"], Log Level: ["+level+"]")
 		RespondWithCode(w, 200)
 	}
 }
