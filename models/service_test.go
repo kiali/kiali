@@ -18,7 +18,6 @@ func TestServiceDetailParsing(t *testing.T) {
 
 	service := ServiceDetails{}
 	service.SetService(config.DefaultClusterID, fakeService(), config.Get())
-	service.SetEndpoints(fakeEndpoints())
 	service.SetPods(fakePods())
 	service.SetIstioSidecar(fakeWorkloads())
 
@@ -36,16 +35,6 @@ func TestServiceDetailParsing(t *testing.T) {
 	assert.Equal(service.Service.Ports, Ports{
 		Port{Name: "http", Protocol: "TCP", Port: 3001},
 		Port{Name: "http", Protocol: "TCP", Port: 3000}})
-	assert.Equal(service.Endpoints, Endpoints{
-		Endpoint{
-			Addresses: Addresses{
-				Address{Kind: "Pod", Name: "recommendation-v1", IP: "172.17.0.9"},
-				Address{Kind: "Pod", Name: "recommendation-v2", IP: "172.17.0.8"},
-			},
-			Ports: Ports{
-				Port{Name: "http", Protocol: "TCP", Port: 3001},
-				Port{Name: "http", Protocol: "TCP", Port: 3000},
-			}}})
 }
 
 func TestServiceParse(t *testing.T) {
@@ -97,28 +86,6 @@ func fakeService() *core_v1.Service {
 					Name:     "http",
 					Protocol: "TCP",
 					Port:     3000}}}}
-}
-
-func fakeEndpoints() *core_v1.Endpoints {
-	return &core_v1.Endpoints{
-		Subsets: []core_v1.EndpointSubset{
-			{
-				Addresses: []core_v1.EndpointAddress{
-					{
-						IP: "172.17.0.9",
-						TargetRef: &core_v1.ObjectReference{
-							Kind: "Pod",
-							Name: "recommendation-v1"}},
-					{
-						IP: "172.17.0.8",
-						TargetRef: &core_v1.ObjectReference{
-							Kind: "Pod",
-							Name: "recommendation-v2"}},
-				},
-				Ports: []core_v1.EndpointPort{
-					{Name: "http", Protocol: "TCP", Port: 3001},
-					{Name: "http", Protocol: "TCP", Port: 3000},
-				}}}}
 }
 
 func fakePods() []core_v1.Pod {

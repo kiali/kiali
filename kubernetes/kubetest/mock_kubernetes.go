@@ -57,11 +57,6 @@ func (o *K8SClientMock) GetDeploymentsByLabel(namespace string, labelSelector st
 	return args.Get(0).([]apps_v1.Deployment), args.Error(1)
 }
 
-func (o *K8SClientMock) GetEndpoints(namespace string, name string) (*core_v1.Endpoints, error) {
-	args := o.Called(namespace, name)
-	return args.Get(0).(*core_v1.Endpoints), args.Error(1)
-}
-
 func (o *K8SClientMock) GetJobs(namespace string) ([]batch_v1.Job, error) {
 	args := o.Called(namespace)
 	return args.Get(0).([]batch_v1.Job), args.Error(1)

@@ -28,11 +28,12 @@ func TransformPod(pod any) (any, error) {
 			Hostname:           obj.Spec.Hostname,
 		},
 		Status: corev1.PodStatus{
-			Phase:                 obj.Status.Phase,
-			Message:               obj.Status.Message,
-			Reason:                obj.Status.Reason,
-			InitContainerStatuses: obj.Status.InitContainerStatuses,
 			ContainerStatuses:     obj.Status.ContainerStatuses,
+			InitContainerStatuses: obj.Status.InitContainerStatuses,
+			Message:               obj.Status.Message,
+			Phase:                 obj.Status.Phase,
+			PodIP:                 obj.Status.PodIP,
+			Reason:                obj.Status.Reason,
 		},
 	}
 

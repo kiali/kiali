@@ -1,8 +1,6 @@
 package models
 
-import (
-	core_v1 "k8s.io/api/core/v1"
-)
+import core_v1 "k8s.io/api/core/v1"
 
 type Endpoints []Endpoint
 type Endpoint struct {
@@ -10,19 +8,23 @@ type Endpoint struct {
 	Ports     Ports     `json:"ports"`
 }
 
-func (endpoints *Endpoints) Parse(es *core_v1.Endpoints) {
-	if es == nil {
-		return
+// GetEndpointsFromPods gets IP addresses from Pods
+func GetEndpointsFromPods(pods []core_v1.Pod) *Endpoints {
+	endpointPodAddresses := Endpoints{}
+	for _, pod := range pods {
+		if pod.Status.PodIP != "" { // make sure Pod's IP address is not empty
+			ep := Endpoint{
+				Addresses: make(Addresses, 0),
+				Ports:     make(Ports, 0),
+			}
+			ep.Addresses = append(ep.Addresses, Address{
+				Kind: pod.Kind,
+				Name: pod.Name,
+				IP:   pod.Status.PodIP,
+			})
+			endpointPodAddresses = append(endpointPodAddresses, ep)
+		}
 	}
 
-	for _, subset := range es.Subsets {
-		endpoint := Endpoint{}
-		endpoint.Parse(subset)
-		*endpoints = append(*endpoints, endpoint)
-	}
-}
-
-func (endpoint *Endpoint) Parse(s core_v1.EndpointSubset) {
-	(&endpoint.Ports).ParseEndpointPorts(s.Ports)
-	(&endpoint.Addresses).Parse(s.Addresses)
+	return &endpointPodAddresses
 }

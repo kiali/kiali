@@ -8,10 +8,9 @@ import (
 
 type Ports []Port
 type Port struct {
-	Name        string  `json:"name"`
-	Protocol    string  `json:"protocol"`
-	AppProtocol *string `json:"appProtocol,omitempty"`
-	Port        int32   `json:"port"`
+	Name     string `json:"name"`
+	Protocol string `json:"protocol"`
+	Port     int32  `json:"port"`
 }
 
 func (ports *Ports) Parse(ps []core_v1.ServicePort) {
@@ -25,7 +24,6 @@ func (ports *Ports) Parse(ps []core_v1.ServicePort) {
 func (port *Port) Parse(p core_v1.ServicePort) {
 	port.Name = p.Name
 	port.Protocol = string(p.Protocol)
-	port.AppProtocol = p.AppProtocol
 	port.Port = p.Port
 }
 

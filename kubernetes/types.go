@@ -44,7 +44,6 @@ const (
 	DaemonSetType             = "DaemonSet"
 	DeploymentType            = "Deployment"
 	DeploymentConfigType      = "DeploymentConfig"
-	EndpointsType             = "Endpoints"
 	JobType                   = "Job"
 	PodType                   = "Pod"
 	ReplicationControllerType = "ReplicationController"
@@ -90,7 +89,6 @@ var (
 	DaemonSets             = AppsGroupVersionV1.WithKind(DaemonSetType)
 	Deployments            = AppsGroupVersionV1.WithKind(DeploymentType)
 	DeploymentConfigs      = AppsOpenShiftGroupVersionV1.WithKind(DeploymentConfigType)
-	Endpoints              = CoreGroupVersionV1.WithKind(EndpointsType)
 	Jobs                   = BatchGroupVersionV1.WithKind(JobType)
 	Pods                   = CoreGroupVersionV1.WithKind(PodType)
 	ReplicationControllers = CoreGroupVersionV1.WithKind(ReplicationControllerType)
