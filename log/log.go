@@ -81,15 +81,8 @@ func setLogFormat(l zerolog.Logger) zerolog.Logger {
 // WithGroup is a simple convienence function that provides a zerolog logger that will log messages associated with a group name in the log context
 // Use this to obtain a logger that has only group name associated with it - there will be no associated data.
 func WithGroup(group string) *zerolog.Logger {
-	zl := log.With().Str("group", group).Logger()
+	zl := log.With().Str(GroupLogName, group).Logger()
 	return &zl
-}
-
-// AddGroup is a convienence function that adds to the logger context a group name.
-// Use this to retain the original logger context (and all its data) - you are simply adding a group to it.
-func AddGroup(zl *zerolog.Logger, group string) *zerolog.Logger {
-	newLogger := zl.With().Str("group", group).Logger()
-	return &newLogger
 }
 
 // FromRequest is a convienence wrapper around zerolog's FromRequest thus helping callers avoid having to explicitly import hlog
@@ -108,13 +101,6 @@ func ToContext(ctx context.Context, zl *zerolog.Logger) context.Context {
 		ctx = context.Background()
 	}
 	return zl.WithContext(ctx)
-}
-
-// AddGroupToLoggerInRequestContext will add a group log name to the logger found in the given request.
-// That logger will be added back into the request's context. The caller must use the returned request in lieu
-// of the given request in order to be able to use the new logger.
-func AddGroupToLoggerInRequestContext(r *http.Request, group string) *http.Request {
-	return r.WithContext(ToContext(r.Context(), AddGroup(FromContext(r.Context()), group)))
 }
 
 // Info logs a message via the global logger

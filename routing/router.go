@@ -378,13 +378,18 @@ func (a alice) then(h http.Handler) http.Handler {
 
 func buildHttpHandlerLogger(route Route, handlerFunction http.Handler) http.Handler {
 
-	zlc := zerolog.With().Str("route", route.Name)
+	// prepare the request's logger
+	zlc := zerolog.With().Str(log.RouteLogName, route.Name)
 	if log.IsTrace() {
-		zlc = zlc.Str("route-pattern", route.Pattern)
+		zlc = zlc.Str(log.RoutePatternLogName, route.Pattern)
 	}
+	if route.LogGroupName != "" {
+		zlc = zlc.Str(log.GroupLogName, route.LogGroupName)
+	}
+	zl := zlc.Logger()
 
 	c := alice{}
-	c = c.append(hlog.NewHandler(zlc.Logger()))
+	c = c.append(hlog.NewHandler(zl))
 
 	// TODO: commenting out but leaving these here in case we want to look into including them at a future date
 	// c = c.append(hlog.HostHandler("host", true))
