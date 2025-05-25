@@ -49,12 +49,6 @@ jobs:
     - name: Ensure kiali binary is executable
       run: chmod +x ~/go/bin/kiali
 
-    - name: Download frontend build
-      uses: actions/download-artifact@v4
-      with:
-        name: build
-        path: frontend/build
-
     # Need to install frontend dependencies to run cypress tests.
     - name: Install frontend dependencies
       working-directory: ./frontend

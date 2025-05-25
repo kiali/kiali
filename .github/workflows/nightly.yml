@@ -58,8 +58,8 @@ jobs:
       build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
 
   build_frontend:
-    name: Build frontend
-    uses: ./.github/workflows/build-frontend.yml
+    name: Check frontend
+    uses: ./.github/workflows/check-frontend.yml
     needs: [initialize]
     with:
       target_branch: ${{needs.initialize.outputs.target_branch}}

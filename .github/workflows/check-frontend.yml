@@ -1,4 +1,4 @@
-name: Build Frontend
+name: Check Frontend
 
 on:
   workflow_call:
@@ -11,8 +11,8 @@ on:
         type: string
 
 jobs:
-  build_frontend:
-    name: Build and unit test frontend
+  check_frontend:
+    name: Check and unit test frontend
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -28,16 +28,10 @@ jobs:
         cache-dependency-path: frontend/yarn.lock
 
     - name: Build
-      run: make clean-all build-ui
+      run: make clean-all build-ui check-ui-build
 
     - name: Test frontend
       run: |
         cd frontend
         yarn pretty-quick --check --verbose --branch ${{ inputs.target_branch }}
         yarn test
-
-    - name: Upload frontend build
-      uses: actions/upload-artifact@v4
-      with:
-        name: build
-        path: frontend/build/
