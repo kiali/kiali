@@ -421,7 +421,7 @@ func TracingDiagnose(
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 			return
 		}
-		if !isHomeCPAccessible(r.Context(), business.Namespace, clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
+		if !isHomeCPAccessible(r.Context(), conf, business.Namespace, clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 			return
 		}
@@ -437,8 +437,7 @@ func TracingDiagnose(
 }
 
 // Check access to the home istio namespace
-func isHomeCPAccessible(ctx context.Context, namespaceService business.NamespaceService, cluster string) bool {
-	conf := config.Get()
+func isHomeCPAccessible(ctx context.Context, conf *config.Config, namespaceService business.NamespaceService, cluster string) bool {
 	_, err := namespaceService.GetClusterNamespace(ctx, conf.IstioNamespace, cluster)
 	if err == nil || !errors.IsForbidden(err) {
 		return true
