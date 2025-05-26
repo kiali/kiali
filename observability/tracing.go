@@ -28,8 +28,8 @@ import (
 
 const (
 	// TracingService is the name of the kiali tracer service.
-	TracingService    = "kiali"
 	TracingClusterTag = "istio.cluster_id"
+	TracingService    = "kiali"
 )
 
 const (
