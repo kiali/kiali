@@ -41,6 +41,7 @@ const codeStyle = kialiStyle({
 
 const configStyle = kialiStyle({
   fontFamily: 'Courier New, Courier, monospace',
+  fontSize: 'small',
   margin: '1.25em'
 });
 
@@ -79,7 +80,7 @@ const validateExternalUrl = (
     if (svc.tempoConfig?.url_format === TempoUrlFormat.JAEGER) {
       const urlProvider = new JaegerUrlProvider(svc);
       if (!urlProvider.HomeUrl() || !urlProvider.valid) {
-        return '"View in Tracing" link is hidden because external_url is empty';
+        return '"View in Tracing" is hidden because external_url is empty';
       }
     } else {
       const urlProvider = new TempoUrlProvider(svc, externalServices);
@@ -90,9 +91,8 @@ const validateExternalUrl = (
   }
   if (isJaegerService(svc)) {
     const urlProvider = new JaegerUrlProvider(svc);
-    console.log(urlProvider);
     if (!urlProvider.HomeUrl() || !urlProvider.valid) {
-      return '"View in Tracing" link is hidden because external_url is empty';
+      return '"View in Tracing" is hidden because external_url is empty';
     }
   }
 
@@ -161,9 +161,24 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
             <KialiIcon.Help className={helpStyle} />
           </Popover>
         </div>
-        <Button onClick={handleCheckService} disabled={loading} variant={ButtonVariant.secondary}>
-          {loading ? t('Verifying...') : t('Check Status')}
-        </Button>
+        <div style={{ display: 'flex' }}>
+          <Button onClick={handleCheckService} disabled={loading} variant={ButtonVariant.secondary}>
+            {loading ? t('Verifying...') : t('Check Status')}
+          </Button>
+          {props.tracingDiagnose && (
+            <span style={{ position: 'absolute', right: '1em' }}>
+              <Button
+                variant={ButtonVariant.link}
+                aria-label={t('Close')}
+                isInline
+                onClick={() => props.setTracingDiagnose()}
+              >
+                <KialiIcon.Close />
+                <span>{t('Close')}</span>
+              </Button>
+            </span>
+          )}
+        </div>
         {props.tracingDiagnose && <span style={{ color: 'green' }}>{props.tracingDiagnose.message}</span>}
         {error && (
           <div>
@@ -172,7 +187,7 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
         )}
         {props.tracingDiagnose?.validConfig && (
           <>
-            <div style={{ margin: '0.5em 0' }}>
+            <div style={{ margin: '0.5em 0', display: 'flex' }}>
               <span>
                 {props.tracingDiagnose?.validConfig.length > 0 && (
                   <>
@@ -206,11 +221,11 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
         )}
         {props.tracingDiagnose?.logLine && externalUrl && (
           <div>
-            <span style={{ color: 'red' }}>{externalUrl}</span>
+            <span className={configStyle}>{externalUrl}</span>
           </div>
         )}
         {props.tracingDiagnose?.logLine && (
-          <>
+          <div style={{ paddingTop: '1em' }}>
             <a
               href="#"
               onClick={e => {
@@ -225,7 +240,7 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
               onClose={() => setIsModalOpen(false)}
               logs={props.tracingDiagnose?.logLine}
             />
-          </>
+          </div>
         )}
       </div>
     </>
