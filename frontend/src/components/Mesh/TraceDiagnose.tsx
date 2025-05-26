@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useKialiTranslation } from '../../utils/I18nUtils';
-import { StatusError, TracingInfo } from '../../types/TracingInfo';
+import { TracingCheck, TracingInfo } from '../../types/TracingInfo';
 import * as API from '../../services/Api';
 import { kialiStyle } from 'styles/StyleUtils';
 import { LogsModal } from './LogsModal';
@@ -14,17 +14,26 @@ import { MeshNodeData } from '../../types/Mesh';
 import { KialiIcon } from 'config/KialiIcon';
 import { Button, ButtonVariant, Popover, PopoverPosition } from '@patternfly/react-core';
 import { PFColors } from '../Pf/PfColors';
+import { KialiDispatch } from '../../types/Redux';
+import { bindActionCreators } from 'redux';
+import { TracingActions } from '../../actions/TracingActions';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
   kiosk: string;
+  tracingDiagnose?: TracingCheck;
   tracingInfo?: TracingInfo;
 };
 
-type TracingDiagnoseProps = ReduxProps & {
-  cluster: string;
-  config: MeshNodeData;
+type ReduxDispatchProps = {
+  setTracingDiagnose: (err?: TracingCheck) => void;
 };
+
+type TracingDiagnoseProps = ReduxProps &
+  ReduxDispatchProps & {
+    cluster: string;
+    config: MeshNodeData;
+  };
 
 const codeStyle = kialiStyle({
   fontFamily: 'Courier New, Courier, monospace'
@@ -93,12 +102,12 @@ const validateExternalUrl = (
 export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: TracingDiagnoseProps) => {
   const fetchCheckService = async (): Promise<void> => {
     setLoading(true);
-    setDiagnostic(null);
+    props.setTracingDiagnose();
     setError(null);
 
     return API.getDiagnoseStatus(props.cluster)
       .then(response => {
-        setDiagnostic(response.data);
+        props.setTracingDiagnose(response.data);
         setLoading(false);
       })
       .catch(err => {
@@ -113,7 +122,7 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
 
   const { t } = useKialiTranslation();
   const [loading, setLoading] = React.useState(false);
-  const [diagnostic, setDiagnostic] = React.useState<StatusError | null>(null);
+  //const [diagnostic, setDiagnostic] = React.useState<StatusError | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
   const externalUrl = validateExternalUrl(props.externalServices, props.kiosk, props.tracingInfo);
@@ -155,26 +164,26 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
         <Button onClick={handleCheckService} disabled={loading} variant={ButtonVariant.secondary}>
           {loading ? t('Verifying...') : t('Check Status')}
         </Button>
-        {diagnostic && <span style={{ color: 'green' }}>{diagnostic.message}</span>}
+        {props.tracingDiagnose && <span style={{ color: 'green' }}>{props.tracingDiagnose.message}</span>}
         {error && (
           <div>
             <span style={{ color: 'red' }}>{error}</span>
           </div>
         )}
-        {diagnostic?.validConfig && (
+        {props.tracingDiagnose?.validConfig && (
           <>
             <div style={{ margin: '0.5em 0' }}>
               <span>
-                {diagnostic?.validConfig.length > 0 && (
+                {props.tracingDiagnose?.validConfig.length > 0 && (
                   <>
                     Possible configuration(s) found for <span className={codeStyle}>external_services.tracing</span>:
                   </>
                 )}
-                {diagnostic?.validConfig.length === 0 && <>No configurations found. See logs for details</>}
+                {props.tracingDiagnose?.validConfig.length === 0 && <>No configurations found. See logs for details</>}
               </span>
             </div>
             <div>
-              {diagnostic?.validConfig?.map((item, i) => (
+              {props.tracingDiagnose?.validConfig?.map((item, i) => (
                 <>
                   <div className={configStyle}>
                     {Object.keys(item).map(key => {
@@ -189,18 +198,18 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
                     })}
                     {item.warning && <span style={{ color: 'red' }}>{item.warning}</span>}
                   </div>
-                  {diagnostic?.validConfig && i < diagnostic?.validConfig?.length - 1 && <hr />}
+                  {props.tracingDiagnose?.validConfig && i < props.tracingDiagnose?.validConfig?.length - 1 && <hr />}
                 </>
               ))}
             </div>
           </>
         )}
-        {diagnostic?.logLine && externalUrl && (
+        {props.tracingDiagnose?.logLine && externalUrl && (
           <div>
             <span style={{ color: 'red' }}>{externalUrl}</span>
           </div>
         )}
-        {diagnostic?.logLine && (
+        {props.tracingDiagnose?.logLine && (
           <>
             <a
               href="#"
@@ -211,7 +220,11 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
             >
               {t('View logs')}
             </a>
-            <LogsModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} logs={diagnostic?.logLine} />
+            <LogsModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              logs={props.tracingDiagnose?.logLine}
+            />
           </>
         )}
       </div>
@@ -223,8 +236,13 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
     externalServices: state.statusState.externalServices,
     kiosk: state.globalState.kiosk,
+    tracingDiagnose: state.tracingState.diagnose,
     tracingInfo: state.tracingState.info
   };
 };
 
-export const TracingDiagnose = connect(mapStateToProps)(TracingDiagnoseComp);
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
+  setTracingDiagnose: bindActionCreators(TracingActions.setDiagnose, dispatch)
+});
+
+export const TracingDiagnose = connect(mapStateToProps, mapDispatchToProps)(TracingDiagnoseComp);

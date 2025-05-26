@@ -145,7 +145,7 @@ export type LogLine = {
   time: string;
 };
 
-export type StatusError = {
+export type TracingCheck = {
   code?: number;
   logLine: LogLine[];
   message: string;
