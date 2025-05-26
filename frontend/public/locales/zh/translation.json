@@ -59,7 +59,7 @@
   "CA Certificates": "CA证书",
   "Cancel": "取消",
   "Check Status": "Check Status",
-  "Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found.": "Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found.",
+  "Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found for external_services.tracing.": "Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found for external_services.tracing.",
   "Choose the traffic rates used to generate the graph. Each supported protocol offers one or more options. Unused protocols can be omitted.": "选择用于生成图表的流量速率。每个支持的协议都提供一个或多个选项。未使用的协议可以省略。",
   "Circuit Breaker": "熔断",
   "Clear": "清除",

@@ -35,10 +35,6 @@ type TracingDiagnoseProps = ReduxProps &
     config: MeshNodeData;
   };
 
-const codeStyle = kialiStyle({
-  fontFamily: 'Courier New, Courier, monospace'
-});
-
 const configStyle = kialiStyle({
   fontFamily: 'Courier New, Courier, monospace',
   fontSize: 'small',
@@ -149,7 +145,7 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
             bodyContent={
               <>
                 {t(
-                  'Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found.'
+                  'Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found for external_services.tracing.'
                 )}
                 <br />
                 {t(
@@ -189,11 +185,6 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
           <>
             <div style={{ margin: '0.5em 0', display: 'flex' }}>
               <span>
-                {props.tracingDiagnose?.validConfig.length > 0 && (
-                  <>
-                    Possible configuration(s) found for <span className={codeStyle}>external_services.tracing</span>:
-                  </>
-                )}
                 {props.tracingDiagnose?.validConfig.length === 0 && <>No configurations found. See logs for details</>}
               </span>
             </div>

@@ -69,7 +69,7 @@
   "CA Certificates": "CA Certificates",
   "Cancel": "Cancel",
   "Check Status": "Check Status",
-  "Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found.": "Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found.",
+  "Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found for external_services.tracing.": "Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found for external_services.tracing.",
   "Choose the traffic rates used to generate the graph. Each supported protocol offers one or more options. Unused protocols can be omitted.": "Choose the traffic rates used to generate the graph. Each supported protocol offers one or more options. Unused protocols can be omitted.",
   "Circuit Breaker": "Circuit Breaker",
   "Clear": "Clear",
