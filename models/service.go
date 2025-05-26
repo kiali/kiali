@@ -212,10 +212,6 @@ func (s *ServiceDetails) SetService(cluster string, svc *core_v1.Service, conf *
 	s.Service.Parse(cluster, svc, conf)
 }
 
-func (s *ServiceDetails) SetEndpoints(eps *core_v1.Endpoints) {
-	(&s.Endpoints).Parse(eps)
-}
-
 func (s *ServiceDetails) SetPods(pods []core_v1.Pod) {
 	mPods := Pods{}
 	mPods.Parse(pods)

@@ -269,30 +269,6 @@ func FilterPeerAuthenticationsBySelector(workloadSelector string, peerauthentica
 	return filtered
 }
 
-// FilterPodsByEndpoints performs a second pass was selector may return too many data
-// This case happens when a "nil" selector (such as one of default/kubernetes service) is used
-func FilterPodsByEndpoints(endpoints *core_v1.Endpoints, unfiltered []core_v1.Pod) []core_v1.Pod {
-	var pods []core_v1.Pod
-	if endpoints == nil {
-		return pods
-	}
-	endpointPods := make(map[string]bool)
-	for _, subset := range endpoints.Subsets {
-		for _, address := range subset.Addresses {
-			if address.TargetRef != nil && address.TargetRef.Kind == "Pod" {
-				endpointPods[address.TargetRef.Name] = true
-			}
-		}
-	}
-
-	for _, pod := range unfiltered {
-		if _, ok := endpointPods[pod.Name]; ok {
-			pods = append(pods, pod)
-		}
-	}
-	return pods
-}
-
 func FilterPodsBySelector(selector labels.Selector, allPods []core_v1.Pod) []core_v1.Pod {
 	var pods []core_v1.Pod
 	for _, pod := range allPods {
