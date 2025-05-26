@@ -488,7 +488,7 @@
   "When enabled in an Ambient environment, include waypoints in the mesh topology.": "When enabled in an Ambient environment, include waypoints in the mesh topology.",
   "When enabled, include gateways in the mesh topology.": "When enabled, include gateways in the mesh topology.",
   "When List": "When List",
-  "While the health check is based on whether the URL response returns an HTTP 200, the services check performs a more exhaustive verification by attempting to analyze if the traces response is correct. It is important that internal_url is defined, as it relies on this host to perform the checks.": "While the health check is based on whether the URL response returns an HTTP 200, the services check performs a more exhaustive verification by attempting to analyze if the traces response is correct. It is important that internal_url is defined, as it relies on this host to perform the checks.",
+  "While the health check is based on whether the URL response returns an HTTP 200, the services check performs a more exhaustive verification by attempting to analyze if the traces response is correct. It is important that internal_url is defined, as it relies on this host to perform the checks. When in_cluster config is false, it will use the external_url": "While the health check is based on whether the URL response returns an HTTP 200, the services check performs a more exhaustive verification by attempting to analyze if the traces response is correct. It is important that internal_url is defined, as it relies on this host to perform the checks. When in_cluster config is false, it will use the external_url",
   "Workload": "Workload",
   "Workload Entry": "Workload Entry",
   "Workload Selector": "Workload Selector",

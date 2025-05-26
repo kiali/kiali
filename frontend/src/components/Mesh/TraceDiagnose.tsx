@@ -13,6 +13,7 @@ import { isParentKiosk } from '../Kiosk/KioskActions';
 import { MeshNodeData } from '../../types/Mesh';
 import { KialiIcon } from 'config/KialiIcon';
 import { Button, ButtonVariant, Popover, PopoverPosition } from '@patternfly/react-core';
+import { PFColors } from '../Pf/PfColors';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -43,8 +44,14 @@ const blueDisplay = kialiStyle({
 });
 
 const helpStyle = kialiStyle({
-  marginBottom: '0.5em',
-  marginLeft: '0.375rem'
+  marginBottom: '0.6em',
+  marginLeft: '0.375rem',
+  $nest: {
+    '&:hover': {
+      color: PFColors.Color200,
+      cursor: 'pointer'
+    }
+  }
 });
 
 const validateExternalUrl = (
@@ -137,7 +144,7 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
                 )}
                 <br />
                 {t(
-                  'While the health check is based on whether the URL response returns an HTTP 200, the services check performs a more exhaustive verification by attempting to analyze if the traces response is correct. It is important that internal_url is defined, as it relies on this host to perform the checks.'
+                  'While the health check is based on whether the URL response returns an HTTP 200, the services check performs a more exhaustive verification by attempting to analyze if the traces response is correct. It is important that internal_url is defined, as it relies on this host to perform the checks. When in_cluster config is false, it will use the external_url'
                 )}
               </>
             }
