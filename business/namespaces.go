@@ -261,7 +261,7 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 	_, end = observability.StartSpan(ctx, "GetClusterNamespace",
 		observability.Attribute("package", "business"),
 		observability.Attribute("namespace", namespace),
-		observability.Attribute("cluster", cluster),
+		observability.Attribute(observability.TracingClusterTag, cluster),
 	)
 	defer end()
 

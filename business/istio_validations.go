@@ -270,7 +270,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "getValidations",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", cluster),
+		observability.Attribute(observability.TracingClusterTag, cluster),
 	)
 	defer end()
 
@@ -491,7 +491,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetIstioObjectValidations",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", "cluster"),
+		observability.Attribute(observability.TracingClusterTag, cluster),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("objectGVK", objectGVK.String()),
 		observability.Attribute("object", object),

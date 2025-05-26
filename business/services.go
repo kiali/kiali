@@ -50,7 +50,7 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 
 	ctx, end = observability.StartSpan(ctx, "GetServiceList",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", criteria.Cluster),
+		observability.Attribute(observability.TracingClusterTag, criteria.Cluster),
 		observability.Attribute("namespace", criteria.Namespace),
 		observability.Attribute("includeHealth", criteria.IncludeHealth),
 		observability.Attribute("includeIstioResources", criteria.IncludeIstioResources),
@@ -432,7 +432,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetServiceDetails",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", cluster),
+		observability.Attribute(observability.TracingClusterTag, cluster),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("service", service),
 		observability.Attribute("interval", interval),
@@ -781,7 +781,7 @@ func (in *SvcService) UpdateService(ctx context.Context, cluster, namespace, ser
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "UpdateService",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", cluster),
+		observability.Attribute(observability.TracingClusterTag, cluster),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("service", service),
 		observability.Attribute("interval", interval),
@@ -833,7 +833,7 @@ func (in *SvcService) GetService(ctx context.Context, cluster, namespace, servic
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetService",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", cluster),
+		observability.Attribute(observability.TracingClusterTag, cluster),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("service", service),
 	)
@@ -896,7 +896,7 @@ func (in *SvcService) GetServiceTracingName(ctx context.Context, cluster, namesp
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetServiceTracingName",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", cluster),
+		observability.Attribute(observability.TracingClusterTag, cluster),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("service", service),
 	)

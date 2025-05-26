@@ -74,7 +74,7 @@ func (in *TracingService) GetServiceSpans(ctx context.Context, ns, service strin
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetServiceSpans",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", query.Cluster),
+		observability.Attribute(observability.TracingClusterTag, query.Cluster),
 		observability.Attribute("namespace", ns),
 		observability.Attribute("service", service),
 	)
@@ -106,7 +106,7 @@ func (in *TracingService) GetWorkloadSpans(ctx context.Context, ns, workload str
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkloadSpans",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", query.Cluster),
+		observability.Attribute(observability.TracingClusterTag, query.Cluster),
 		observability.Attribute("namespace", ns),
 		observability.Attribute("workload", workload),
 	)
@@ -165,7 +165,7 @@ func (in *TracingService) GetServiceTraces(ctx context.Context, ns, service stri
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetServiceTraces",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", query.Cluster),
+		observability.Attribute(observability.TracingClusterTag, query.Cluster),
 		observability.Attribute("namespace", ns),
 		observability.Attribute("service", service),
 	)
@@ -211,7 +211,7 @@ func (in *TracingService) GetWorkloadTraces(ctx context.Context, ns, workload st
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkloadTraces",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", query.Cluster),
+		observability.Attribute(observability.TracingClusterTag, query.Cluster),
 		observability.Attribute("namespace", ns),
 		observability.Attribute("workload", workload),
 	)

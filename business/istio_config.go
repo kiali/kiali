@@ -501,7 +501,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetIstioConfigDetails",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", cluster),
+		observability.Attribute(observability.TracingClusterTag, cluster),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("objectGVK", objectGVK.String()),
 		observability.Attribute("object", object),
