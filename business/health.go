@@ -56,7 +56,7 @@ func (in *HealthService) GetAppHealth(ctx context.Context, namespace, cluster, a
 	_, end = observability.StartSpan(ctx, "GetAppHealth",
 		observability.Attribute("package", "business"),
 		observability.Attribute("namespace", namespace),
-		observability.Attribute("cluster", cluster),
+		observability.Attribute(observability.TracingClusterTag, cluster),
 		observability.Attribute("app", app),
 		observability.Attribute("rateInterval", rateInterval),
 		observability.Attribute("queryTime", queryTime),
@@ -125,7 +125,7 @@ func (in *HealthService) GetNamespaceAppHealth(ctx context.Context, criteria Nam
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetNamespaceAppHealth",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", criteria.Cluster),
+		observability.Attribute(observability.TracingClusterTag, criteria.Cluster),
 		observability.Attribute("namespace", criteria.Namespace),
 		observability.Attribute("rateInterval", criteria.RateInterval),
 		observability.Attribute("queryTime", criteria.QueryTime),
@@ -194,7 +194,7 @@ func (in *HealthService) GetNamespaceServiceHealth(ctx context.Context, criteria
 	ctx, end = observability.StartSpan(ctx, "GetNamespaceServiceHealth",
 		observability.Attribute("package", "business"),
 		observability.Attribute("namespace", criteria.Namespace),
-		observability.Attribute("cluster", criteria.Cluster),
+		observability.Attribute(observability.TracingClusterTag, criteria.Cluster),
 		observability.Attribute("rateInterval", criteria.RateInterval),
 		observability.Attribute("queryTime", criteria.QueryTime),
 	)
@@ -273,7 +273,7 @@ func (in *HealthService) GetNamespaceWorkloadHealth(ctx context.Context, criteri
 	ctx, end = observability.StartSpan(ctx, "GetNamespaceWorkloadHealth",
 		observability.Attribute("package", "business"),
 		observability.Attribute("namespace", namespace),
-		observability.Attribute("cluster", cluster),
+		observability.Attribute(observability.TracingClusterTag, cluster),
 		observability.Attribute("rateInterval", rateInterval),
 		observability.Attribute("queryTime", queryTime),
 	)

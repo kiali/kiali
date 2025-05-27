@@ -158,7 +158,7 @@ func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string, 
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetAllWorkloads",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", cluster),
+		observability.Attribute(observability.TracingClusterTag, cluster),
 	)
 	defer end()
 
@@ -212,7 +212,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		observability.Attribute("package", "business"),
 		observability.Attribute("includeHealth", criteria.IncludeHealth),
 		observability.Attribute("includeIstioResources", criteria.IncludeIstioResources),
-		observability.Attribute("cluster", criteria.Cluster),
+		observability.Attribute(observability.TracingClusterTag, criteria.Cluster),
 		observability.Attribute("namespace", criteria.Namespace),
 		observability.Attribute("rateInterval", criteria.RateInterval),
 		observability.Attribute("queryTime", criteria.QueryTime),
@@ -438,7 +438,7 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkload",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", criteria.Cluster),
+		observability.Attribute(observability.TracingClusterTag, criteria.Cluster),
 		observability.Attribute("namespace", criteria.Namespace),
 		observability.Attribute("workloadName", criteria.WorkloadName),
 		observability.Attribute("workloadType", criteria.WorkloadGVK.String()),
@@ -501,7 +501,7 @@ func (in *WorkloadService) UpdateWorkload(ctx context.Context, cluster string, n
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "UpdateWorkload",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", cluster),
+		observability.Attribute(observability.TracingClusterTag, cluster),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("workloadName", workloadName),
 		observability.Attribute("workloadKind", workloadGVK.Kind),
@@ -2481,7 +2481,7 @@ func (in *WorkloadService) GetWorkloadTracingName(ctx context.Context, cluster, 
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkloadTracingName",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", cluster),
+		observability.Attribute(observability.TracingClusterTag, cluster),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("workload", workload),
 	)

@@ -37,7 +37,7 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, cluster string, re
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "MeshWidemTLSStatus",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", cluster),
+		observability.Attribute(observability.TracingClusterTag, cluster),
 		observability.Attribute("revision", revision),
 	)
 	defer end()
@@ -109,7 +109,7 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "NamespaceWidemTLSStatus",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", cluster),
+		observability.Attribute(observability.TracingClusterTag, cluster),
 		observability.Attribute("namespace", namespace),
 	)
 	defer end()
@@ -159,7 +159,7 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "ClusterWideNSmTLSStatus",
 		observability.Attribute("package", "business"),
-		observability.Attribute("cluster", cluster),
+		observability.Attribute(observability.TracingClusterTag, cluster),
 	)
 	defer end()
 
