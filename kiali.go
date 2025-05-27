@@ -227,6 +227,41 @@ func main() {
 		if !cache.WaitForCacheSync(ctx) {
 			log.Fatal("Timed out waiting for cache to sync")
 		}
+
+		// Controller-runtime lazily adds informers when they are first accessed.
+		// Normally you'd have controllers that do this but we don't have any controllers
+		// that setup watches for workloads or Istio config yet so we need to manually
+		// fetch these resources in order to ensure that the informers are created
+		// before the server starts serving requests. Otherwise, the first request
+		// that tries to access these resources will block until the informer is synced
+		// which can take a long time.
+		if _, err := layer.Workload.GetAllWorkloads(ctx, cluster, ""); err != nil {
+			log.Warningf("Unable to get workloads to sync cache for cluster %s. First request that accesses workloads may take awhile: %v", cluster, err)
+		}
+
+		if _, err := layer.IstioConfig.GetIstioConfigList(ctx, cluster, business.IstioConfigCriteria{
+			IncludeGateways:               true,
+			IncludeK8sGateways:            true,
+			IncludeK8sGRPCRoutes:          true,
+			IncludeK8sHTTPRoutes:          true,
+			IncludeK8sTCPRoutes:           true,
+			IncludeK8sTLSRoutes:           true,
+			IncludeVirtualServices:        true,
+			IncludeDestinationRules:       true,
+			IncludeSidecars:               true,
+			IncludeServiceEntries:         true,
+			IncludeWorkloadEntries:        true,
+			IncludeWorkloadGroups:         true,
+			IncludeEnvoyFilters:           true,
+			IncludeWasmPlugins:            true,
+			IncludeAuthorizationPolicies:  true,
+			IncludePeerAuthentications:    true,
+			IncludeRequestAuthentications: true,
+			IncludeTelemetry:              true,
+			IncludeK8sReferenceGrants:     true,
+		}); err != nil {
+			log.Warningf("Unable to get Istio config to sync cache for cluster %s. First request that accesses Istio config may take awhile: %v", cluster, err)
+		}
 	}
 	log.Info("All caches synced")
 
