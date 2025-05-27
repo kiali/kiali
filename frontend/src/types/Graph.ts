@@ -420,6 +420,7 @@ export interface GraphNodeData {
   };
   isIdle?: boolean;
   isInaccessible?: boolean;
+  isIngressWaypoint?: boolean;
   isK8sGatewayAPI?: boolean;
   isMisconfigured?: string;
   isOutOfMesh?: boolean;
