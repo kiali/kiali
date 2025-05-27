@@ -78,8 +78,9 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 			if len(n.Edges) == 0 {
 				potentialOrphans[n.ID] = true
 			}
+
 			// If is a gateway and redirects traffic to a waypoint, it acts as an ingress
-			if n.Metadata[graph.IsGatewayAPI] == true && numEdges > len(n.Edges) {
+			if n.Metadata[graph.IsGatewayAPI] != nil && numEdges > len(n.Edges) {
 				n.Metadata[graph.IsIngressWaypoint] = true
 			}
 			continue
