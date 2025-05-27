@@ -71,11 +71,16 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 	for _, n := range trafficMap {
 		// If not showing waypoints then delete edges going to a waypoint
 		if !a.ShowWaypoints {
+			numEdges := len(n.Edges)
 			n.Edges = sliceutil.Filter(n.Edges, func(edge *graph.Edge) bool {
 				return waypointNodes[edge.Dest.ID] == nil
 			})
 			if len(n.Edges) == 0 {
 				potentialOrphans[n.ID] = true
+			}
+			// If is a gateway and redirects traffic to a waypoint, it acts as an ingress
+			if n.Metadata[graph.IsGatewayAPI] == true && numEdges > len(n.Edges) {
+				n.Metadata[graph.IsIngressWaypoint] = true
 			}
 			continue
 		}

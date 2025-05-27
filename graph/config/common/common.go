@@ -111,12 +111,13 @@ type NodeData struct {
 	IsGateway             *GWInfo             `json:"isGateway,omitempty"`             // Istio ingress/egress gateway information
 	IsIdle                bool                `json:"isIdle,omitempty"`                // true | false
 	IsInaccessible        bool                `json:"isInaccessible,omitempty"`        // true if the node exists in an inaccessible namespace
-	IsK8sGatewayAPI       bool                `json:"isK8sGatewayAPI,omitempty"`       // true (object is auto-generated from K8s API Gateway) | false
-	IsOutOfMesh           bool                `json:"isOutOfMesh,omitempty"`           // true (has missing sidecar) | false
-	IsOutside             bool                `json:"isOutside,omitempty"`             // true | false
-	IsRoot                bool                `json:"isRoot,omitempty"`                // true | false
-	IsServiceEntry        *graph.SEInfo       `json:"isServiceEntry,omitempty"`        // set static service entry information
-	IsWaypoint            bool                `json:"isWaypoint,omitempty"`            // true | false
+	IsIngressWaypoint     bool                `json:"isIngressWaypoint,omitempty"`
+	IsK8sGatewayAPI       bool                `json:"isK8sGatewayAPI,omitempty"` // true (object is auto-generated from K8s API Gateway) | false
+	IsOutOfMesh           bool                `json:"isOutOfMesh,omitempty"`     // true (has missing sidecar) | false
+	IsOutside             bool                `json:"isOutside,omitempty"`       // true | false
+	IsRoot                bool                `json:"isRoot,omitempty"`          // true | false
+	IsServiceEntry        *graph.SEInfo       `json:"isServiceEntry,omitempty"`  // set static service entry information
+	IsWaypoint            bool                `json:"isWaypoint,omitempty"`      // true | false
 }
 
 type WaypointEdge struct {
@@ -364,6 +365,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// check if node is a waypoint proxy
 		if val, ok := n.Metadata[graph.IsWaypoint]; ok {
 			nd.IsWaypoint = val.(bool)
+		}
+
+		// check if node redirects traffic to waypoint proxy
+		if val, ok := n.Metadata[graph.IsIngressWaypoint]; ok {
+			nd.IsIngressWaypoint = val.(bool)
 		}
 
 		if val, ok := n.Metadata[graph.HasMirroring]; ok {
