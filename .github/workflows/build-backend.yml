@@ -8,7 +8,7 @@ on:
         type: string
 jobs:
   build_backend:
-    name: Build and unit test backend
+    name: Build backend binary
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -22,23 +22,21 @@ jobs:
         go-version-file: go.mod
         cache: true
         cache-dependency-path: go.sum
-    - name: Lint Install
-      run: make lint-install
 
-    - name: Verify code linting
-      run: make lint
+    - name: Download frontend build
+      uses: actions/download-artifact@v4
+      with:
+        name: build
+        path: frontend/build
 
     - name: Build
-      run: make -e GO_BUILD_FLAGS=${{ env.GO_BUILD_FLAGS }} -e CGO_ENABLED=${{ env.CGO_ENABLED }} clean-all build
+      run: make -e GO_BUILD_FLAGS=${{ env.GO_BUILD_FLAGS }} -e CGO_ENABLED=${{ env.CGO_ENABLED }} clean build
       env:
         # Build with -race flag if this is a PR, otherwise it is a release and
         # we don't want to build with race detection because of the perf penalty.
         GO_BUILD_FLAGS: ${{ github.base_ref && '-race' }}
         # The -race flag requires CGO_ENABLED
         CGO_ENABLED: ${{ github.base_ref && '1' }}
-
-    - name: Run backend unit tests
-      run: make -e GO_TEST_FLAGS="-race" test
 
     - name: Upload go binary
       uses: actions/upload-artifact@v4

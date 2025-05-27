@@ -47,8 +47,5 @@ external_services:
 login_token:
   signing_key: "notsecure"
 
-server:
-  static_content_root_directory: "${UI_CONSOLE_DIR}"
-
 # in_cluster must be false - do not change
 in_cluster: false

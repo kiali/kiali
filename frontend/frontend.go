@@ -1,8 +1,10 @@
+//go:build !exclude_frontend
+
 package frontend
 
 import (
 	"embed"
 )
 
-//go:embed build/*
+//go:embed all:build
 var FrontendBuildAssets embed.FS

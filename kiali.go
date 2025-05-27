@@ -1,3 +1,5 @@
+//go:build !exclude_frontend
+
 // Kiali
 //
 // # Kiali Project, The Console for Istio Service Mesh
