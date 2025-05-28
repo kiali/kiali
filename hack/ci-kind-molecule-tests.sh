@@ -403,7 +403,8 @@ fi
 # if requested, install OLM and the Kiali Operator via OLM
 if [ "${OLM_ENABLED}" == "true" ]; then
   if [ "${OLM_VERSION}" == "latest" ]; then
-    OLM_VERSION="$(curl -s https://api.github.com/repos/operator-framework/operator-lifecycle-manager/releases 2> /dev/null | grep "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | grep -v "snapshot" | sort -t "." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)"
+    for i in {1..60}; do curl_output=$(curl -s https://api.github.com/repos/operator-framework/operator-lifecycle-manager/releases 2> /dev/null) && [ -n "$curl_output" ] && break || { echo "Retry $i/60: Attempting to get the latest OLM version from GitHub, retrying in 60 seconds..."; sleep 60; }; done; if [ -z "$curl_output" ]; then echo "Failed to obtain the latest OLM version from GitHub - curl failed"; exit 1; fi
+    OLM_VERSION="$(echo "$curl_output" | grep "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | grep -v "snapshot" | sort -t "." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)"
     if [ -z "${OLM_VERSION}" ]; then
       infomsg "Failed to obtain the latest OLM version from Github."
       exit 1
@@ -421,13 +422,13 @@ if [ "${OLM_ENABLED}" == "true" ]; then
   export CLIENT_EXE
   export -f kubectl
   curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}/install.sh | bash -s ${OLM_VERSION}
-  [ "$?" != "0" ] && echo "ERROR: Failed to install OLM" && exit 1
+  [ "$?" != "0" ] && infomsg "ERROR: Failed to install OLM" && exit 1
   unset -f kubectl
 
   infomsg "OLM ${OLM_VERSION} is installed."
 
   infomsg "Installing Kiali Operator via OLM"
-  ${CLIENT_EXE} create -f https://operatorhub.io/install/stable/kiali.yaml
+  for i in {1..60}; do ${CLIENT_EXE} create -f https://operatorhub.io/install/stable/kiali.yaml && break || { [ "$i" -lt 60 ] && infomsg "Retry $i/60: Attempting to install Kiali Operator subscription, retrying in 60 seconds..." && sleep 60; }; done || { infomsg "Error: Cannot install Kiali Operator subscription."; exit 1; }
 
   infomsg -n "Waiting for Kiali CRD to be created."
   timeout 1h bash -c "until ${CLIENT_EXE} get crd kialis.kiali.io >& /dev/null; do echo -n '.' ; sleep 3; done"
