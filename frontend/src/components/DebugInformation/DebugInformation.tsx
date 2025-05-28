@@ -30,6 +30,7 @@ import { ConfigTable } from 'components/Table/ConfigTable';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { download } from 'utils/Common';
 import { dump } from 'js-yaml';
+import { getActivePerfTimers } from '../../utils/PerformanceUtils';
 
 enum CopyStatus {
   NOT_COPIED, // We haven't copied the current output
@@ -78,7 +79,8 @@ const defaultTab = 'kialiConfig';
 
 const tabIndex: { [tab: string]: number } = {
   kialiConfig: 0,
-  additionalState: 1
+  additionalState: 1,
+  perfData: 2
 };
 
 const modalStyle = kialiStyle({
@@ -148,8 +150,14 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
     setCopyStatus(result ? CopyStatus.COPIED : CopyStatus.NOT_COPIED);
   };
 
+  const downloadsMap: { [key: string]: string } = {
+    kialiConfig: 'kiali_config.yaml',
+    additionalState: 'additional_state.yaml',
+    perfData: 'perf_data.yaml'
+  };
+
   const downloadFile = (): void => {
-    const fileName = `debug_${currentTab === 'kialiConfig' ? 'kiali_config' : 'additional_state'}.yaml`;
+    const fileName = `debug_${downloadsMap[currentTab]}`;
 
     download(copyText, fileName);
   };
@@ -204,7 +212,15 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
     ...yamlDumpOptions
   });
 
-  const copyText = currentTab === 'kialiConfig' ? dump(config, yamlDumpOptions) : debugInformationText;
+  const perfMeasurements = JSON.stringify(getActivePerfTimers());
+
+  const copyTextMap: { [key: string]: string } = {
+    kialiConfig: dump(config, yamlDumpOptions),
+    additionalState: debugInformationText,
+    perfData: perfMeasurements
+  };
+
+  const copyText = copyTextMap[currentTab];
 
   const renderTabs = (): React.ReactNode[] => {
     const kialiConfig = (
@@ -232,7 +248,23 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
       </Tab>
     );
 
-    return [kialiConfig, additionalState];
+    const perfData = (
+      <Tab eventKey={2} title={t('Performance Measurements')} key="perfData">
+        <span>{t('For Performance issues troubleshooting, remove sensitive data before posting:')}</span>
+        <AceEditor
+          ref={aceEditorRef}
+          mode="yaml"
+          theme={theme === Theme.DARK ? 'twilight' : 'eclipse'}
+          width="100%"
+          className={istioAceEditorStyle}
+          wrapEnabled={true}
+          readOnly={true}
+          setOptions={aceOptions ?? { foldStyle: 'markbegin' }}
+          value={perfMeasurements}
+        />
+      </Tab>
+    );
+    return [kialiConfig, additionalState, perfData];
   };
 
   return (

@@ -20,6 +20,7 @@ import { decorateGraphData } from '../store/Selectors/GraphData';
 import EventEmitter from 'eventemitter3';
 import { createSelector } from 'reselect';
 import { isMultiCluster, serverConfig } from '../config';
+import { startPerfTimer, endPerfTimer } from '../utils/PerformanceUtils';
 
 export const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
 const PROMISE_KEY = 'CURRENT_REQUEST';
@@ -530,9 +531,11 @@ export class GraphDataSource {
 
   private fetchDataForNamespaces = (restParams: GraphElementsQuery): void => {
     restParams.namespaces = this.fetchParameters.namespaces.map(namespace => namespace.name).join(',');
-
+    const perfKey: any = `NamespacesGraphElements-${JSON.stringify(restParams)}-${Date.now()}`;
+    startPerfTimer(perfKey);
     this.promiseRegistry.register(PROMISE_KEY, API.getGraphElements(restParams)).then(
       response => {
+        endPerfTimer(perfKey);
         const responseData: any = response.data;
         this.graphElements = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
         this.graphTimestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
@@ -549,6 +552,7 @@ export class GraphDataSource {
         );
       },
       error => {
+        endPerfTimer(perfKey);
         this._isLoading = false;
 
         if (error.isCanceled) {
@@ -564,10 +568,13 @@ export class GraphDataSource {
   };
 
   private fetchDataForNode = (restParams: GraphElementsQuery, cluster?: string): void => {
+    const perfKey: any = `NodeGraphElements-${JSON.stringify(restParams)}-${Date.now()}`;
+    startPerfTimer(perfKey);
     this.promiseRegistry
       .register(PROMISE_KEY, API.getNodeGraphElements(this.fetchParameters.node!, restParams, cluster))
       .then(
         response => {
+          endPerfTimer(perfKey);
           const responseData: any = response.data;
           this.graphElements = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
           this.graphTimestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
@@ -584,6 +591,7 @@ export class GraphDataSource {
           );
         },
         error => {
+          endPerfTimer(perfKey);
           this._isLoading = false;
 
           if (error.isCanceled) {
