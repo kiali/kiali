@@ -13,6 +13,7 @@ import (
 	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
 )
@@ -20,6 +21,7 @@ import (
 // Route describes a single route
 type Route struct {
 	Name          string
+	LogGroupName  string
 	Method        string
 	Pattern       string
 	HandlerFunc   http.HandlerFunc
@@ -60,6 +62,7 @@ func NewRoutes(
 		//		200
 		{
 			"Healthz",
+			log.StatusLogName,
 			"GET",
 			"/healthz",
 			handlers.Healthz,
@@ -78,6 +81,7 @@ func NewRoutes(
 		//      200: statusInfo
 		{
 			"Root",
+			log.StatusLogName,
 			"GET",
 			"/api",
 			handlers.Root(conf, clientFactory, kialiCache, grafana),
@@ -100,6 +104,7 @@ func NewRoutes(
 		//      200: userSessionData
 		{
 			"Authenticate",
+			log.AuthenticateLogName,
 			"GET",
 			"/api/authenticate",
 			handlers.Authenticate(conf, authController),
@@ -119,6 +124,7 @@ func NewRoutes(
 		//      200: userSessionData
 		{
 			"OpenshiftCheckToken",
+			log.AuthenticateLogName,
 			"POST",
 			"/api/authenticate",
 			handlers.Authenticate(conf, authController),
@@ -134,6 +140,7 @@ func NewRoutes(
 		//      204: noContent
 		{
 			"Logout",
+			log.AuthenticateLogName,
 			"GET",
 			"/api/logout",
 			handlers.Logout(conf, authController),
@@ -157,6 +164,7 @@ func NewRoutes(
 		//      200: authenticationInfo
 		{
 			"AuthenticationInfo",
+			log.AuthenticateLogName,
 			"GET",
 			"/api/auth/info",
 			handlers.AuthenticationInfo(conf, authController, maps.Keys(clientFactory.GetSAClients())),
@@ -176,6 +184,7 @@ func NewRoutes(
 		//      200: statusInfo
 		{
 			"Status",
+			log.StatusLogName,
 			"GET",
 			"/api/status",
 			handlers.Root(conf, clientFactory, kialiCache, grafana),
@@ -195,6 +204,7 @@ func NewRoutes(
 		//      200: statusInfo
 		{
 			"Config",
+			log.ConfigLogName,
 			"GET",
 			"/api/config",
 			handlers.Config(conf, kialiCache, discovery, clientFactory, prom),
@@ -214,6 +224,7 @@ func NewRoutes(
 		//      200: statusInfo
 		{
 			"Crippled",
+			log.ConfigLogName,
 			"GET",
 			"/api/crippled",
 			handlers.CrippledFeatures(prom),
@@ -233,6 +244,7 @@ func NewRoutes(
 		//      200: istioConfigPermissions
 		{
 			"IstioConfigPermissions",
+			log.IstioConfigLogName,
 			"GET",
 			"/api/istio/permissions",
 			handlers.IstioConfigPermissions(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
@@ -253,6 +265,7 @@ func NewRoutes(
 		//
 		{
 			"IstioConfigList",
+			log.IstioConfigLogName,
 			"GET",
 			"/api/namespaces/{namespace}/istio",
 			handlers.IstioConfigList(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
@@ -273,6 +286,7 @@ func NewRoutes(
 		//
 		{
 			"IstioConfigListAll",
+			log.IstioConfigLogName,
 			"GET",
 			"/api/istio/config",
 			handlers.IstioConfigList(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
@@ -295,6 +309,7 @@ func NewRoutes(
 		//
 		{
 			"IstioConfigDetails",
+			log.IstioConfigLogName,
 			"GET",
 			"/api/namespaces/{namespace}/istio/{group}/{version}/{kind}/{object}",
 			handlers.IstioConfigDetails(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
@@ -316,6 +331,7 @@ func NewRoutes(
 		//
 		{
 			"IstioConfigDelete",
+			log.IstioConfigLogName,
 			"DELETE",
 			"/api/namespaces/{namespace}/istio/{group}/{version}/{kind}/{object}",
 			handlers.IstioConfigDelete(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
@@ -341,6 +357,7 @@ func NewRoutes(
 		//
 		{
 			"IstioConfigUpdate",
+			log.IstioConfigLogName,
 			"PATCH",
 			"/api/namespaces/{namespace}/istio/{group}/{version}/{kind}/{object}",
 			handlers.IstioConfigUpdate(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
@@ -364,6 +381,7 @@ func NewRoutes(
 		//
 		{
 			"IstioConfigCreate",
+			log.IstioConfigLogName,
 			"POST",
 			"/api/namespaces/{namespace}/istio/{group}/{version}/{kind}",
 			handlers.IstioConfigCreate(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
@@ -384,6 +402,7 @@ func NewRoutes(
 		//
 		{
 			"ClustersServices",
+			log.ClustersLogName,
 			"GET",
 			"/api/clusters/services",
 			handlers.ClustersServices,
@@ -405,6 +424,7 @@ func NewRoutes(
 		//
 		{
 			"ServiceDetails",
+			log.ResourcesLogName,
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}",
 			handlers.ServiceDetails,
@@ -430,6 +450,7 @@ func NewRoutes(
 		//
 		{
 			"ServiceUpdate",
+			log.ResourcesLogName,
 			"PATCH",
 			"/api/namespaces/{namespace}/services/{service}",
 			handlers.ServiceUpdate,
@@ -449,6 +470,7 @@ func NewRoutes(
 		//		200: spansResponse
 		{
 			"AppSpans",
+			log.TracingLogName,
 			"GET",
 			"/api/namespaces/{namespace}/apps/{app}/spans",
 			handlers.AppSpans(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -468,6 +490,7 @@ func NewRoutes(
 		//		200: spansResponse
 		{
 			"WorkloadSpans",
+			log.TracingLogName,
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}/spans",
 			handlers.WorkloadSpans(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -487,6 +510,7 @@ func NewRoutes(
 		//		200: spansResponse
 		{
 			"ServiceSpans",
+			log.TracingLogName,
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/spans",
 			handlers.ServiceSpans(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -508,6 +532,7 @@ func NewRoutes(
 		//
 		{
 			"AppTraces",
+			log.TracingLogName,
 			"GET",
 			"/api/namespaces/{namespace}/apps/{app}/traces",
 			handlers.AppTraces(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -529,6 +554,7 @@ func NewRoutes(
 		//
 		{
 			"ServiceTraces",
+			log.TracingLogName,
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/traces",
 			handlers.ServiceTraces(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -550,6 +576,7 @@ func NewRoutes(
 		//
 		{
 			"WorkloadTraces",
+			log.TracingLogName,
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}/traces",
 			handlers.WorkloadTraces(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -571,6 +598,7 @@ func NewRoutes(
 		//
 		{
 			"ErrorTraces",
+			log.TracingLogName,
 			"GET",
 			"/api/namespaces/{namespace}/apps/{app}/errortraces",
 			handlers.ErrorTraces(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -592,6 +620,7 @@ func NewRoutes(
 		//
 		{
 			"TracesDetails",
+			log.TracingLogName,
 			"GET",
 			"/api/traces/{traceID}",
 			handlers.TraceDetails(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -612,6 +641,7 @@ func NewRoutes(
 		//
 		{
 			"ClusterWorkloads",
+			log.ClustersLogName,
 			"GET",
 			"/api/clusters/workloads",
 			handlers.ClusterWorkloads(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
@@ -633,6 +663,7 @@ func NewRoutes(
 		//
 		{
 			"WorkloadDetails",
+			log.ResourcesLogName,
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}",
 			handlers.WorkloadDetails(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
@@ -658,6 +689,7 @@ func NewRoutes(
 		//
 		{
 			"WorkloadUpdate",
+			log.ResourcesLogName,
 			"PATCH",
 			"/api/namespaces/{namespace}/workloads/{workload}",
 			handlers.WorkloadUpdate(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
@@ -678,6 +710,7 @@ func NewRoutes(
 		//
 		{
 			"ClustersApps",
+			log.ClustersLogName,
 			"GET",
 			"/api/clusters/apps",
 			handlers.ClusterApps(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -699,6 +732,7 @@ func NewRoutes(
 		//
 		{
 			"AppDetails",
+			log.ResourcesLogName,
 			"GET",
 			"/api/namespaces/{namespace}/apps/{app}",
 			handlers.AppDetails(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -719,6 +753,7 @@ func NewRoutes(
 		//
 		{
 			"NamespaceList",
+			log.ResourcesLogName,
 			"GET",
 			"/api/namespaces",
 			handlers.NamespaceList(conf, kialiCache, clientFactory, discovery),
@@ -744,6 +779,7 @@ func NewRoutes(
 		//
 		{
 			"NamespaceUpdate",
+			log.ResourcesLogName,
 			"PATCH",
 			"/api/namespaces/{namespace}",
 			handlers.NamespaceUpdate(conf, kialiCache, clientFactory, discovery),
@@ -764,6 +800,7 @@ func NewRoutes(
 		//
 		{
 			"NamespaceInfo",
+			log.ResourcesLogName,
 			"GET",
 			"/api/namespaces/{namespace}/info",
 			handlers.NamespaceInfo(conf, kialiCache, clientFactory, discovery),
@@ -785,6 +822,7 @@ func NewRoutes(
 		//
 		{
 			"ServiceMetrics",
+			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/metrics",
 			handlers.ServiceMetrics,
@@ -806,6 +844,7 @@ func NewRoutes(
 		//
 		{
 			"AggregateMetrics",
+			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/metrics",
 			handlers.AggregateMetrics,
@@ -827,6 +866,7 @@ func NewRoutes(
 		//
 		{
 			"AppMetrics",
+			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/apps/{app}/metrics",
 			handlers.AppMetrics,
@@ -848,6 +888,7 @@ func NewRoutes(
 		//
 		{
 			"WorkloadMetrics",
+			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}/metrics",
 			handlers.WorkloadMetrics,
@@ -869,6 +910,7 @@ func NewRoutes(
 		//
 		{
 			"ControlPlaneMetrics",
+			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/controlplanes/{controlplane}/metrics",
 			handlers.ControlPlaneMetrics(handlers.DefaultPromClientSupplier),
@@ -890,6 +932,7 @@ func NewRoutes(
 		//
 		{
 			"UsageMetrics",
+			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/{app}/usage_metrics",
 			handlers.ResourceUsageMetrics(handlers.DefaultPromClientSupplier),
@@ -911,6 +954,7 @@ func NewRoutes(
 		//
 		{
 			"ServiceDashboard",
+			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/dashboard",
 			handlers.ServiceDashboard(conf, grafana),
@@ -932,6 +976,7 @@ func NewRoutes(
 		//
 		{
 			"AppDashboard",
+			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/apps/{app}/dashboard",
 			handlers.AppDashboard(conf, grafana),
@@ -953,6 +998,7 @@ func NewRoutes(
 		//
 		{
 			"WorkloadDashboard",
+			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}/dashboard",
 			handlers.WorkloadDashboard(conf, grafana),
@@ -974,6 +1020,7 @@ func NewRoutes(
 		//
 		{
 			"ZtunnelDashboard",
+			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/ztunnel/{workload}/dashboard",
 			handlers.ZtunnelDashboard(handlers.DefaultPromClientSupplier, conf, grafana),
@@ -995,6 +1042,7 @@ func NewRoutes(
 		//
 		{
 			"CustomDashboard",
+			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/customdashboard/{dashboard}",
 			handlers.CustomDashboard(conf, grafana),
@@ -1016,6 +1064,7 @@ func NewRoutes(
 		//
 		{
 			"NamespaceMetrics",
+			log.MetricsLogName,
 			"GET",
 			"/api/namespaces/{namespace}/metrics",
 			handlers.NamespaceMetrics(handlers.DefaultPromClientSupplier),
@@ -1037,6 +1086,7 @@ func NewRoutes(
 		//
 		{
 			"ClustersHealth",
+			log.ClustersLogName,
 			"GET",
 			"/api/clusters/health",
 			handlers.ClustersHealth,
@@ -1058,6 +1108,7 @@ func NewRoutes(
 		//
 		{
 			"NamespaceValidationSummary",
+			log.ValidationLogName,
 			"GET",
 			"/api/namespaces/{namespace}/validations",
 			handlers.NamespaceValidationSummary(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -1079,6 +1130,7 @@ func NewRoutes(
 		//
 		{
 			"ConfigValidationSummary",
+			log.ValidationLogName,
 			"GET",
 			"/api/istio/validations",
 			handlers.IstioConfigValidationSummary(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -1100,6 +1152,7 @@ func NewRoutes(
 		//
 		{
 			"MeshTls",
+			log.StatusLogName,
 			"GET",
 			"/api/mesh/tls",
 			handlers.MeshTls(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -1121,6 +1174,7 @@ func NewRoutes(
 		//
 		{
 			"NamespaceTls",
+			log.StatusLogName,
 			"GET",
 			"/api/namespaces/{namespace}/tls",
 			handlers.NamespaceTls(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -1142,6 +1196,7 @@ func NewRoutes(
 		//
 		{
 			"ClusterTls",
+			log.ClustersLogName,
 			"GET",
 			"/api/clusters/tls",
 			handlers.ClustersTls(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -1163,6 +1218,7 @@ func NewRoutes(
 		//
 		{
 			"IstioStatus",
+			log.StatusLogName,
 			"GET",
 			"/api/istio/status",
 			handlers.IstioStatus(conf, kialiCache, clientFactory, prom, traceClientLoader, discovery, cpm, grafana),
@@ -1184,6 +1240,7 @@ func NewRoutes(
 		//
 		{
 			"GraphNamespaces",
+			log.GraphLogName,
 			"GET",
 			"/api/namespaces/graph",
 			handlers.GraphNamespaces(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -1205,6 +1262,7 @@ func NewRoutes(
 		//
 		{
 			"GraphAggregate",
+			log.GraphLogName,
 			"GET",
 			"/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/graph",
 			handlers.GraphNode(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -1226,6 +1284,7 @@ func NewRoutes(
 		//
 		{
 			"GraphAggregateByService",
+			log.GraphLogName,
 			"GET",
 			"/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/{service}/graph",
 			handlers.GraphNode(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -1247,6 +1306,7 @@ func NewRoutes(
 		//
 		{
 			"GraphAppVersion",
+			log.GraphLogName,
 			"GET",
 			"/api/namespaces/{namespace}/applications/{app}/versions/{version}/graph",
 			handlers.GraphNode(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -1268,6 +1328,7 @@ func NewRoutes(
 		//
 		{
 			"GraphApp",
+			log.GraphLogName,
 			"GET",
 			"/api/namespaces/{namespace}/applications/{app}/graph",
 			handlers.GraphNode(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -1289,6 +1350,7 @@ func NewRoutes(
 		//
 		{
 			"GraphService",
+			log.GraphLogName,
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/graph",
 			handlers.GraphNode(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -1310,6 +1372,7 @@ func NewRoutes(
 		//
 		{
 			"GraphWorkload",
+			log.GraphLogName,
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}/graph",
 			handlers.GraphNode(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
@@ -1331,6 +1394,7 @@ func NewRoutes(
 		//
 		{
 			"MeshGraph",
+			log.GraphLogName,
 			"GET",
 			"/api/mesh/graph",
 			handlers.MeshGraph(conf, clientFactory, kialiCache, grafana, prom, traceClientLoader, discovery, cpm),
@@ -1352,6 +1416,7 @@ func NewRoutes(
 		//
 		{
 			"MeshControlPlanes",
+			log.MeshLogName,
 			"GET",
 			"/api/mesh/controlplanes",
 			handlers.ControlPlanes(kialiCache, clientFactory, conf, discovery),
@@ -1374,6 +1439,7 @@ func NewRoutes(
 		//
 		{
 			"GrafanaURL",
+			log.ConfigLogName,
 			"GET",
 			"/api/grafana",
 			handlers.GetGrafanaInfo(conf, grafana),
@@ -1395,6 +1461,7 @@ func NewRoutes(
 		//
 		{
 			"TracingURL",
+			log.ConfigLogName,
 			"GET",
 			"/api/tracing",
 			handlers.GetTracingInfo(conf),
@@ -1416,6 +1483,7 @@ func NewRoutes(
 		//
 		{
 			"PodDetails",
+			log.ResourcesLogName,
 			"GET",
 			"/api/namespaces/{namespace}/pods/{pod}",
 			handlers.PodDetails(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
@@ -1437,6 +1505,7 @@ func NewRoutes(
 		//
 		{
 			"PodLogs",
+			log.ResourcesLogName,
 			"GET",
 			"/api/namespaces/{namespace}/pods/{pod}/logs",
 			handlers.PodLogs(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
@@ -1458,6 +1527,7 @@ func NewRoutes(
 		//
 		{
 			"PodConfigDump",
+			log.ResourcesLogName,
 			"GET",
 			"/api/namespaces/{namespace}/pods/{pod}/config_dump",
 			handlers.ConfigDump(conf, kialiCache, clientFactory, discovery),
@@ -1479,6 +1549,7 @@ func NewRoutes(
 		//
 		{
 			"PodProxyResource",
+			log.ResourcesLogName,
 			"GET",
 			"/api/namespaces/{namespace}/pods/{pod}/config_dump/{resource}",
 			handlers.ConfigDumpResourceEntries(conf, kialiCache, clientFactory, discovery),
@@ -1500,6 +1571,7 @@ func NewRoutes(
 		//
 		{
 			"ZtunnelConfigDump",
+			log.ResourcesLogName,
 			"GET",
 			"/api/namespaces/{namespace}/pods/{pod}/config_dump_ztunnel",
 			handlers.ConfigDumpZtunnel(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
@@ -1522,6 +1594,7 @@ func NewRoutes(
 		//
 		{
 			"PodProxyLogging",
+			log.ResourcesLogName,
 			"POST",
 			"/api/namespaces/{namespace}/pods/{pod}/logging",
 			handlers.LoggingUpdate(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
@@ -1543,6 +1616,7 @@ func NewRoutes(
 		//
 		{
 			"ClustersMetrics",
+			log.ClustersLogName,
 			"GET",
 			"/api/clusters/metrics",
 			handlers.ClustersMetrics(handlers.DefaultPromClientSupplier),
@@ -1564,6 +1638,7 @@ func NewRoutes(
 		//		200: metricsStatsResponse
 		{
 			Name:          "MetricsStats",
+			LogGroupName:  log.MetricsLogName,
 			Method:        "POST",
 			Pattern:       "/api/stats/metrics",
 			HandlerFunc:   handlers.MetricsStats,

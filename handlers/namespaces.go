@@ -77,8 +77,6 @@ func NamespaceValidationSummary(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// prepare the logger in a context, and replace the request context with ours that has our logger in it
-		r = log.AddGroupToLoggerInRequestContext(r, log.ValidationLogName)
 
 		query := r.URL.Query()
 		vars := mux.Vars(r)
