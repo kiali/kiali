@@ -293,7 +293,7 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 		selector := map[string]string{
 			config.IstioAppLabel: config.Ztunnel,
 		}
-		daemonsets, err := kubernetes.FilterDaemonSetsBySelector(daemonSetList.Items, selector)
+		daemonsets, err := kubernetes.FilterDaemonSetsBySelector(daemonSetList.Items, selector, true)
 		if err != nil {
 			// Don't set the check so we will check again the next time since this error may be transient.
 			in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
@@ -331,7 +331,7 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 	selector := map[string]string{
 		config.IstioAppLabel: config.Ztunnel,
 	}
-	daemonsets, err := kubernetes.FilterDaemonSetsBySelector(daemonSetList.Items, selector)
+	daemonsets, err := kubernetes.FilterDaemonSetsBySelector(daemonSetList.Items, selector, true)
 	if err != nil {
 		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 		return nil

@@ -712,7 +712,7 @@ func FilterByNamespace[T runtime.Object](objects []T, namespace string) []T {
 	return filtered
 }
 
-func FilterDaemonSetsBySelector(daemonSets []appsv1.DaemonSet, l map[string]string) ([]appsv1.DaemonSet, error) {
+func FilterDaemonSetsBySelector(daemonSets []appsv1.DaemonSet, l map[string]string, partialMatch bool) ([]appsv1.DaemonSet, error) {
 	selector := labels.Set(l)
 	retDS := []appsv1.DaemonSet{}
 	for _, ds := range daemonSets {
@@ -724,10 +724,17 @@ func FilterDaemonSetsBySelector(daemonSets []appsv1.DaemonSet, l map[string]stri
 		labelSet := labels.Set(labelMap)
 
 		svcSelector := labelSet.AsSelector()
-		// selector match is done after listing all daemonSets, similar to registry reading
-		if selector.AsSelector().Empty() || (!svcSelector.Empty() && svcSelector.Matches(selector)) {
-			retDS = append(retDS, ds)
+		if partialMatch {
+			if selectorIncludes(ds.Spec.Selector, selector) {
+				retDS = append(retDS, ds)
+			}
+		} else {
+			// selector match is done after listing all daemonSets, similar to registry reading
+			if selector.AsSelector().Empty() || (!svcSelector.Empty() && svcSelector.Matches(selector)) {
+				retDS = append(retDS, ds)
+			}
 		}
+
 	}
 	return retDS, nil
 }
@@ -765,4 +772,18 @@ func FilterDeploymentsBySelector(deployments []appsv1.Deployment, l map[string]s
 		}
 	}
 	return retDep, nil
+}
+
+func selectorIncludes(dsSelector *metav1.LabelSelector, filter labels.Set) bool {
+	dsLabels, err := metav1.LabelSelectorAsMap(dsSelector)
+	if err != nil {
+		return false
+	}
+
+	for key, val := range filter {
+		if dsVal, ok := dsLabels[key]; !ok || dsVal != val {
+			return false
+		}
+	}
+	return true
 }
