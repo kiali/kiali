@@ -152,6 +152,11 @@ if [[ "$KIALI_VERSION" != v* ]]; then
   KIALI_VERSION="v$KIALI_VERSION"
 fi
 
+if [ ! -f "$KUBECONFIG_FILE" ]; then
+  echo "Kubeconfig file [$KUBECONFIG_FILE] does not exist."
+  exit 1
+fi
+
 echo "=== SETTINGS ==="
 echo "KUBECONFIG_FILE=$KUBECONFIG_FILE"
 echo "KUBECONFIG_SECRET_SPEC=${KUBECONFIG_SECRET_SPEC:-<not set>}"
