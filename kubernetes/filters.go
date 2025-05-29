@@ -746,17 +746,3 @@ func FilterDeploymentsBySelector(deployments []appsv1.Deployment, l map[string]s
 	}
 	return retDep, nil
 }
-
-func selectorIncludes(dsSelector *metav1.LabelSelector, filter labels.Set) bool {
-	dsLabels, err := metav1.LabelSelectorAsMap(dsSelector)
-	if err != nil {
-		return false
-	}
-
-	for key, val := range filter {
-		if dsVal, ok := dsLabels[key]; !ok || dsVal != val {
-			return false
-		}
-	}
-	return true
-}
