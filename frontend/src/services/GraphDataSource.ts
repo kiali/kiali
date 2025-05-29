@@ -531,7 +531,7 @@ export class GraphDataSource {
 
   private fetchDataForNamespaces = (restParams: GraphElementsQuery): void => {
     restParams.namespaces = this.fetchParameters.namespaces.map(namespace => namespace.name).join(',');
-    const perfKey: any = `NamespacesGraphElements-${JSON.stringify(restParams)}-${Date.now()}`;
+    const perfKey: any = `NamespacesGraphElements`;
     startPerfTimer(perfKey);
     this.promiseRegistry.register(PROMISE_KEY, API.getGraphElements(restParams)).then(
       response => {
@@ -568,7 +568,7 @@ export class GraphDataSource {
   };
 
   private fetchDataForNode = (restParams: GraphElementsQuery, cluster?: string): void => {
-    const perfKey: any = `NodeGraphElements-${JSON.stringify(restParams)}-${Date.now()}`;
+    const perfKey: any = `NodeGraphElements`;
     startPerfTimer(perfKey);
     this.promiseRegistry
       .register(PROMISE_KEY, API.getNodeGraphElements(this.fetchParameters.node!, restParams, cluster))
