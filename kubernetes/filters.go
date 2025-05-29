@@ -712,33 +712,6 @@ func FilterByNamespace[T runtime.Object](objects []T, namespace string) []T {
 	return filtered
 }
 
-func FilterDaemonSetsBySelector(daemonSets []appsv1.DaemonSet, l map[string]string, partialMatch bool) ([]appsv1.DaemonSet, error) {
-	selector := labels.Set(l)
-	retDS := []appsv1.DaemonSet{}
-	for _, ds := range daemonSets {
-		// TODO: Can we eliminate error?
-		labelMap, err := metav1.LabelSelectorAsMap(ds.Spec.Selector)
-		if err != nil {
-			return nil, err
-		}
-		labelSet := labels.Set(labelMap)
-
-		svcSelector := labelSet.AsSelector()
-		if partialMatch {
-			if selectorIncludes(ds.Spec.Selector, selector) {
-				retDS = append(retDS, ds)
-			}
-		} else {
-			// selector match is done after listing all daemonSets, similar to registry reading
-			if selector.AsSelector().Empty() || (!svcSelector.Empty() && svcSelector.Matches(selector)) {
-				retDS = append(retDS, ds)
-			}
-		}
-
-	}
-	return retDS, nil
-}
-
 func FilterServicesBySelector(services []core_v1.Service, l map[string]string) []core_v1.Service {
 	selector := labels.Set(l)
 	retSvc := []core_v1.Service{}

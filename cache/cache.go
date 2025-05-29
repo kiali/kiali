@@ -285,22 +285,17 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 		}
 
 		daemonSetList := &appsv1.DaemonSetList{}
-		if err := kubeCache.List(context.TODO(), daemonSetList); err != nil {
-			// Don't set the check so we will check again the next time since this error may be transient.
-			in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
-			return false
-		}
 		selector := map[string]string{
-			config.IstioAppLabel: config.Ztunnel,
+			config.KubernetesIstioLabel: config.Ztunnel,
 		}
-		daemonsets, err := kubernetes.FilterDaemonSetsBySelector(daemonSetList.Items, selector, true)
-		if err != nil {
+		listOpts := []client.ListOption{client.MatchingLabels(selector)}
+		if err := kubeCache.List(context.TODO(), daemonSetList, listOpts...); err != nil {
 			// Don't set the check so we will check again the next time since this error may be transient.
 			in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 			return false
 		}
 
-		if len(daemonsets) == 0 {
+		if len(daemonSetList.Items) == 0 {
 			in.zl.Debug().Msgf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
 			in.ambientChecksPerCluster.Set(cluster, false)
 			return false
@@ -322,28 +317,23 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 	}
 
 	daemonSetList := &appsv1.DaemonSetList{}
-	if err := kubeCache.List(context.TODO(), daemonSetList); err != nil {
+	selector := map[string]string{
+		config.KubernetesIstioLabel: config.Ztunnel,
+	}
+	listOpts := []client.ListOption{client.MatchingLabels(selector)}
+	if err := kubeCache.List(context.TODO(), daemonSetList, listOpts...); err != nil {
 		// Don't set the check so we will check again the next time since this error may be transient.
 		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 		return nil
 	}
 
-	selector := map[string]string{
-		config.IstioAppLabel: config.Ztunnel,
-	}
-	daemonsets, err := kubernetes.FilterDaemonSetsBySelector(daemonSetList.Items, selector, true)
-	if err != nil {
-		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
-		return nil
-	}
-
-	if len(daemonsets) == 0 {
+	if len(daemonSetList.Items) == 0 {
 		in.zl.Debug().Msgf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
 		return nil
 	}
 
 	podList := &v1.PodList{}
-	if err := kubeCache.List(context.TODO(), podList, client.InNamespace(daemonsets[0].Namespace), client.MatchingLabels{"app": config.Ztunnel}); err != nil {
+	if err := kubeCache.List(context.TODO(), podList, client.InNamespace(daemonSetList.Items[0].Namespace), client.MatchingLabels{"app": config.Ztunnel}); err != nil {
 		in.zl.Error().Msgf("Unable to get ztunnel pods: %s", err)
 		return nil
 	}
