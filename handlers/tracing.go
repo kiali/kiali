@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"k8s.io/apimachinery/pkg/api/errors"
-
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -439,7 +437,7 @@ func TracingDiagnose(
 // Check access to the home istio namespace
 func isHomeCPAccessible(ctx context.Context, conf *config.Config, namespaceService business.NamespaceService, cluster string) bool {
 	_, err := namespaceService.GetClusterNamespace(ctx, conf.IstioNamespace, cluster)
-	if err == nil || !errors.IsForbidden(err) {
+	if err == nil {
 		return true
 	}
 	return false
