@@ -13,9 +13,10 @@
 # You must tell the script what version of Kiali you want to test with.
 # See the option --kiali-version.
 #
-# By default, this script will perform auth can-i checks on resources
-# that the kubeconfig should provide permissions for. You can ask for
-# additional "get" checks to do more testing. See the option --do-get-check.
+# This script will perform auth can-i checks on resources
+# that the kubeconfig should provide permissions for.
+#
+# `helm` and `yq` command line utilities are required to use this script.
 #
 # If you are connected to a cluster with a kubeconfig that you think can be
 # used as a Kiali remote cluster config, you can store it as a secret and
@@ -47,15 +48,13 @@ Usage: $0 [OPTIONS]
 
 Options:
   --kubeconfig-file FILE
-        Path to a kubeconfig file (mutually exclusive with --kubeconfig-secret).
+        Path to a kubeconfig file.
   --kubeconfig-secret NS:NAME:KEY
         Specify kubeconfig as a Kubernetes secret with namespace, secret name, and secret key.
         Format: --kubeconfig-secret <namespace>:<secretName>:<secretKey>
   --kiali-version vX.Y.Z
         Kiali version whose needed permissions will be checked (e.g. v2.9.0).
         Required.
-  --do-get-check true|false
-        Whether to run 'kubectl get' checks on resources (default: false).
   --help
         Show this help message and exit.
 
@@ -67,7 +66,6 @@ EOF
 KUBECONFIG_FILE=""
 KUBECONFIG_SECRET_SPEC=""
 KIALI_VERSION=""
-DO_GET_CHECK="false"
 
 if [[ $# -eq 0 ]]; then
   print_help
@@ -103,19 +101,6 @@ while [[ $# -gt 0 ]]; do
         echo "Error: --kiali-version must be in the form X.Y.Z (optionally prefixed with 'v')"
         exit 1
       fi
-      shift 2
-      ;;
-    --do-get-check)
-      if [[ $# -lt 2 ]]; then
-        echo "Error: --do-get-check requires a value (true|false)"
-        exit 1
-      fi
-      val="$2"
-      if [[ "$val" != "true" && "$val" != "false" ]]; then
-        echo "Error: --do-get-check must be 'true' or 'false'"
-        exit 1
-      fi
-      DO_GET_CHECK="$val"
       shift 2
       ;;
     --help)
@@ -171,7 +156,6 @@ echo "=== SETTINGS ==="
 echo "KUBECONFIG_FILE=$KUBECONFIG_FILE"
 echo "KUBECONFIG_SECRET_SPEC=${KUBECONFIG_SECRET_SPEC:-<not set>}"
 echo "KIALI_VERSION=$KIALI_VERSION"
-echo "DO_GET_CHECK=$DO_GET_CHECK"
 echo "================"
 
 if ! command -v helm &>/dev/null; then
@@ -232,20 +216,3 @@ for verb in get list watch; do
     fi
   done
 done
-
-if [[ "$DO_GET_CHECK" == "true" ]]; then
-  echo
-  echo "📡 Testing 'kubectl get --all-namespaces' on each resource:"
-  for res in "${RESOURCES[@]}"; do
-    echo -n "  kubectl get $res --all-namespaces: "
-    if kubectl --kubeconfig="$KUBECONFIG_FILE" get "$res" --all-namespaces >/dev/null 2>&1; then
-      echo "✅"
-    else
-      echo "❌"
-    fi
-  done
-else
-  echo
-  echo "Skipping 'kubectl get' resource checks (pass --do-get-check true to enable)"
-fi
-
