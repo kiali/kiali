@@ -30,7 +30,7 @@ import { ConfigTable } from 'components/Table/ConfigTable';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { download } from 'utils/Common';
 import { dump } from 'js-yaml';
-import { getActivePerfTimers } from '../../utils/PerformanceUtils';
+import { getAllPerfStats } from '../../utils/PerformanceUtils';
 
 enum CopyStatus {
   NOT_COPIED, // We haven't copied the current output
@@ -212,7 +212,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
     ...yamlDumpOptions
   });
 
-  const perfMeasurements = JSON.stringify(getActivePerfTimers());
+  const perfMeasurements = JSON.stringify(getAllPerfStats());
 
   const copyTextMap: { [key: string]: string } = {
     kialiConfig: dump(config, yamlDumpOptions),
