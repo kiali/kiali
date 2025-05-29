@@ -16,7 +16,7 @@
 # This script will perform auth can-i checks on resources
 # that the kubeconfig should provide permissions for.
 #
-# `helm` and `yq` command line utilities are required to use this script.
+# You must have `helm` and `yq` installed in order to use this script.
 #
 # If you are connected to a cluster with a kubeconfig that you think can be
 # used as a Kiali remote cluster config, you can store it as a secret and
