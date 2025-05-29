@@ -208,8 +208,7 @@ for verb in get list watch; do
   echo "🔍 Checking permission: $verb"
   for res in "${RESOURCES[@]}"; do
     echo -n "  Can $verb $res: "
-    output="$(kubectl --kubeconfig="$KUBECONFIG_FILE" auth can-i "$verb" "$res" --all-namespaces 2>&1 | tr '\n' ' ')"
-    if [[ $? -eq 0 ]]; then
+    if output="$(kubectl --kubeconfig="$KUBECONFIG_FILE" auth can-i "$verb" "$res" --all-namespaces 2>&1 | tr '\n' ' ')"; then
       echo "$output ✅"
     else
       echo "$output ❌"
