@@ -98,7 +98,6 @@ class MeshMTLSStatusComponent extends React.Component<Props> {
     // leaving empty cluster param here, home cluster will be used by default
     API.getMeshTls(this.props.cluster, this.props.revision)
       .then(response => {
-        console.log(response);
         return this.props.setMeshTlsStatus(response.data);
       })
       .catch(error => {
