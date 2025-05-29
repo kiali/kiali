@@ -296,7 +296,6 @@ func decorateMatchingAPIGateways(cluster string, gwCrd *k8s_networking_v1.Gatewa
 
 func resolveGatewayNodeMapping(gatewayWorkloads map[string][]models.WorkloadListItem, nodeMetadataKey graph.MetadataKey, trafficMap graph.TrafficMap, gi *graph.GlobalInfo) map[*models.WorkloadListItem][]*graph.Node {
 	gatewayNodeMapping := make(map[*models.WorkloadListItem][]*graph.Node)
-	conf := gi.Conf
 	for key, gwWorkloadsList := range gatewayWorkloads {
 		split := strings.Split(key, ":")
 		gwCluster := split[0]
@@ -305,9 +304,7 @@ func resolveGatewayNodeMapping(gatewayWorkloads map[string][]models.WorkloadList
 			for _, node := range trafficMap {
 				if _, ok := node.Metadata[nodeMetadataKey]; !ok {
 					appLabelName, _ := gi.Conf.GetAppLabelName(gw.Labels)
-					// gw app label is not required? In that case use the service canonical name
-					svcLabelName := conf.IstioLabels.ServiceCanonicalName
-					if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && (node.App != "" && (node.App == gw.Labels[appLabelName] || node.App == gw.Labels[svcLabelName])) && node.Cluster == gwCluster && node.Namespace == gwNs {
+					if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && node.App != "" && node.App == gw.Labels[appLabelName] && node.Cluster == gwCluster && node.Namespace == gwNs {
 						node.Metadata[nodeMetadataKey] = graph.GatewaysMetadata{}
 						gatewayNodeMapping[&gw] = append(gatewayNodeMapping[&gw], node)
 					}
