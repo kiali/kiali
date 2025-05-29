@@ -339,6 +339,7 @@
   "Pod Status": "Pod Status",
   "Policy": "Policy",
   "Port": "端口",
+  "Possible configuration(s) found for external_services.tracing": "Possible configuration(s) found for external_services.tracing",
   "Present": "Present",
   "Preview": "预览",
   "Preview new istio objects": "Preview new istio objects",
