@@ -139,11 +139,12 @@ func (s *Service) Info(ctx context.Context, dashboardSupplier DashboardSupplierF
 				URL:  dashboardPath,
 				Name: dashboardConfig.Name,
 				Variables: dashboards.MonitoringDashboardExternalLinkVariables{
-					App:       dashboardConfig.Variables.App,
-					Namespace: dashboardConfig.Variables.Namespace,
-					Service:   dashboardConfig.Variables.Service,
-					Version:   dashboardConfig.Variables.Version,
-					Workload:  dashboardConfig.Variables.Workload,
+					App:        dashboardConfig.Variables.App,
+					Datasource: dashboardConfig.Variables.Datasource,
+					Namespace:  dashboardConfig.Variables.Namespace,
+					Service:    dashboardConfig.Variables.Service,
+					Version:    dashboardConfig.Variables.Version,
+					Workload:   dashboardConfig.Variables.Workload,
 				},
 			}
 			links = append(links, externalLink)

@@ -33,6 +33,7 @@ import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { ApiResponse } from 'types/Api';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 import { TraceSpansLimit } from './TraceSpansLimit';
+import { serverConfig } from '../../config';
 
 type MetricsState = {
   crippledFeatures?: KialiCrippledFeatures;
@@ -431,6 +432,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
                 namespace={this.props.namespace}
                 object={this.props.object}
                 objectType={this.props.objectType}
+                datasourceUID={serverConfig.grafana.datasourceUID}
               />
             </ToolbarItem>
 
