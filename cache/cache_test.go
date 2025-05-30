@@ -78,6 +78,7 @@ func ztunnelDaemonSet() *apps_v1.DaemonSet {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "ztunnel",
 			Namespace: "istio-system",
+			Labels:    map[string]string{"app.kubernetes.io/name": "ztunnel"},
 		},
 		Spec: apps_v1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{

@@ -2713,8 +2713,10 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 		for _, pod := range pods {
 			names = append(names, pod.Name)
 		}
-		// They should be all in the same ns
-		return in.streamParsedLogs(cluster, pods[0].Namespace, names, opts, w)
+		if len(pods) > 0 {
+			// They should be all in the same ns
+			return in.streamParsedLogs(cluster, pods[0].Namespace, names, opts, w)
+		}
 	}
 	if opts.LogType == models.LogTypeWaypoint {
 		wk, err := in.GetWorkload(ctx, WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: workload, IncludeServices: false})
