@@ -298,6 +298,7 @@ func (in *Client) GetServiceStatus(ctx context.Context) (bool, error) {
 	return in.grpcClient.GetServices(ctx)
 }
 
+// BuildTracingServiceName
 func BuildTracingServiceName(namespace, app string) string {
 	conf := config.Get()
 	if conf.ExternalServices.Tracing.NamespaceSelector {
