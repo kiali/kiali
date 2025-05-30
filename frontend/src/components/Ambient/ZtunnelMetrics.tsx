@@ -110,6 +110,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
                   namespace={props.namespace}
                   object="ztunnel"
                   objectType={MetricsObjectTypes.ZTUNNEL}
+                  datasourceUID={serverConfig.grafana.datasourceUID}
                 />
               </ToolbarItem>
             </ToolbarGroup>

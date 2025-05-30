@@ -38,6 +38,7 @@ import { timeRangeSelector } from '../../store/Selectors';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 import { TraceSpansLimit } from './TraceSpansLimit';
+import { serverConfig } from '../../config';
 
 type MetricsState = {
   cluster?: string;
@@ -370,6 +371,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
               namespace={this.props.namespace}
               object={this.props.workload ? this.props.workload : this.props.app}
               objectType={this.props.workload ? MetricsObjectTypes.WORKLOAD : MetricsObjectTypes.APP}
+              datasourceUID={serverConfig.grafana.datasourceUID}
               version={this.props.version}
             />
           </ToolbarGroup>

@@ -42,6 +42,7 @@ export interface ExternalLink {
 
 export interface ExternalLinkVariables {
   app?: string;
+  datasource?: string;
   namespace?: string;
   service?: string;
   version?: string;

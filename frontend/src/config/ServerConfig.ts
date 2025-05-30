@@ -62,6 +62,7 @@ const defaultServerConfig: ComputedServerConfig = {
   durations: {},
   gatewayAPIClasses: [],
   gatewayAPIEnabled: false,
+  grafana: {},
   logLevel: '',
   healthConfig: {
     rate: []

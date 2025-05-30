@@ -37,6 +37,10 @@ type PrometheusConfig struct {
 	StorageTsdbRetention int64 `json:"storageTsdbRetention,omitempty"`
 }
 
+type GrafanaConfig struct {
+	DatasourceUID string `json:"datasourceUID,omitempty"`
+}
+
 type DeploymentConfig struct {
 	ViewOnlyMode bool `json:"viewOnlyMode,omitempty"`
 }
@@ -51,6 +55,7 @@ type PublicConfig struct {
 	Deployment          DeploymentConfig              `json:"deployment,omitempty"`
 	GatewayAPIClasses   []config.GatewayAPIClass      `json:"gatewayAPIClasses,omitempty"`
 	GatewayAPIEnabled   bool                          `json:"gatewayAPIEnabled,omitempty"`
+	Grafana             GrafanaConfig                 `json:"grafana,omitempty"`
 	HealthConfig        config.HealthConfig           `json:"healthConfig,omitempty"`
 	InstallationTag     string                        `json:"installationTag,omitempty"`
 	IstioAnnotations    IstioAnnotations              `json:"istioAnnotations,omitempty"`
@@ -99,6 +104,9 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			Prometheus: PrometheusConfig{
 				GlobalScrapeInterval: promConfig.GlobalScrapeInterval,
 				StorageTsdbRetention: promConfig.StorageTsdbRetention,
+			},
+			Grafana: GrafanaConfig{
+				DatasourceUID: conf.ExternalServices.Grafana.DatasourceUID,
 			},
 		}
 

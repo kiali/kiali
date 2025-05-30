@@ -138,6 +138,9 @@ export interface ServerConfig {
   deployment: DeploymentConfig;
   gatewayAPIClasses: GatewayAPIClass[];
   gatewayAPIEnabled: boolean;
+  grafana: {
+    datasourceUID?: string;
+  };
   healthConfig: HealthConfig;
   installationTag?: string;
   istioAnnotations: IstioAnnotations;

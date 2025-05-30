@@ -9,6 +9,7 @@ export const healthConfig = {
   controlPlaneClusters: [],
   gatewayAPIClasses: [],
   gatewayAPIEnabled: false,
+  grafana: {},
   logLevel: '',
   kialiFeatureFlags: {
     disabledFeatures: [],
