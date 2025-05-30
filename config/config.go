@@ -257,6 +257,7 @@ type CustomDashboardsConfig struct {
 type GrafanaConfig struct {
 	Auth           Auth                     `yaml:"auth"`
 	Dashboards     []GrafanaDashboardConfig `yaml:"dashboards"`
+	DatasourceUID  string                   `yaml:"datasource_uid,omitempty"`
 	Enabled        bool                     `yaml:"enabled"`      // Enable or disable Grafana support in Kiali
 	ExternalURL    string                   `yaml:"external_url"` // replaces the old url
 	HealthCheckUrl string                   `yaml:"health_check_url,omitempty"`
@@ -272,11 +273,12 @@ type GrafanaDashboardConfig struct {
 }
 
 type GrafanaVariablesConfig struct {
-	App       string `yaml:"app" json:"app,omitempty"`
-	Namespace string `yaml:"namespace" json:"namespace,omitempty"`
-	Service   string `yaml:"service" json:"service,omitempty"`
-	Version   string `yaml:"version" json:"version,omitempty"`
-	Workload  string `yaml:"workload" json:"workload,omitempty"`
+	App        string `yaml:"app" json:"app,omitempty"`
+	Datasource string `yaml:"datasource" json:"datasource,omitempty"`
+	Namespace  string `yaml:"namespace" json:"namespace,omitempty"`
+	Service    string `yaml:"service" json:"service,omitempty"`
+	Version    string `yaml:"version" json:"version,omitempty"`
+	Workload   string `yaml:"workload" json:"workload,omitempty"`
 }
 
 type TempoConfig struct {

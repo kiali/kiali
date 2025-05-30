@@ -75,6 +75,7 @@ export const serverRateConfig = {
   controlPlaneClusters: [],
   gatewayAPIClasses: [],
   gatewayAPIEnabled: false,
+  grafana: {},
   logLevel: '',
   kialiFeatureFlags: {
     disabledFeatures: [],

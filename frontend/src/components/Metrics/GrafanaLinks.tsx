@@ -6,6 +6,7 @@ import { MetricsObjectTypes } from 'types/Metrics';
 import { ExternalLink, ISTIO_ZTUNNEL_DASHBOARD } from 'types/Dashboards';
 
 type Props = {
+  datasourceUID?: string;
   links: ExternalLink[];
   namespace: string;
   object: string;
@@ -20,24 +21,26 @@ export class GrafanaLinks extends React.PureComponent<Props, {}> {
       if (MetricsObjectTypes.ZTUNNEL !== props.objectType || d.name !== ISTIO_ZTUNNEL_DASHBOARD) {
         const first = d.url.includes('?') ? '&' : '?';
         const nsvar = d.variables.namespace ? `&${d.variables.namespace}=${props.namespace}` : '';
+        const dsvar =
+          d.variables.datasource && props.datasourceUID ? `&${d.variables.datasource}=${props.datasourceUID}` : '';
         const vervar = d.variables.version && props.version ? `&${d.variables.version}=${props.version}` : '';
         switch (props.objectType) {
           case MetricsObjectTypes.SERVICE:
             const fullServiceName = `${props.object}.${props.namespace}.svc.cluster.local`;
             if (d.variables.service) {
-              const url = `${d.url}${first}${d.variables.service}=${fullServiceName}${nsvar}${vervar}`;
+              const url = `${d.url}${first}${d.variables.service}=${fullServiceName}${nsvar}${dsvar}${vervar}`;
               links.push([d.name, url]);
             }
             break;
           case MetricsObjectTypes.WORKLOAD:
             if (d.variables.workload) {
-              const url = `${d.url}${first}${d.variables.workload}=${props.object}${nsvar}${vervar}`;
+              const url = `${d.url}${first}${d.variables.workload}=${props.object}${nsvar}${dsvar}${vervar}`;
               links.push([d.name, url]);
             }
             break;
           case MetricsObjectTypes.APP:
             if (d.variables.app) {
-              const url = `${d.url}${first}${d.variables.app}=${props.object}${nsvar}${vervar}`;
+              const url = `${d.url}${first}${d.variables.app}=${props.object}${nsvar}${dsvar}${vervar}`;
               links.push([d.name, url]);
             }
             break;
