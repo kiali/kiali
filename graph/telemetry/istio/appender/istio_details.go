@@ -267,8 +267,8 @@ func decorateMatchingAPIGateways(cluster string, gwCrd *k8s_networking_v1.Gatewa
 		if gw.Cluster != cluster {
 			continue
 		}
-
-		if gwSelector.Matches(labels.Set(gw.Labels)) {
+		// If the selector is empty, try to match with the crd name and the GW label
+		if (!gwSelector.Empty() && gwSelector.Matches(labels.Set(gw.Labels))) || (gwSelector.Empty() && gwCrd.Name == gw.Labels[config.GatewayLabel]) {
 			// If we are here, the GatewayCrd selects the GatewayAPI workload.
 			// So, all node graphs associated with the GW API workload should be listening
 			// requests for the hostnames listed in the GatewayAPI CRD.
@@ -283,7 +283,10 @@ func decorateMatchingAPIGateways(cluster string, gwCrd *k8s_networking_v1.Gatewa
 						hostnames = append(hostnames, string(*gwListener.Hostname))
 					}
 				}
-
+				// Hostnames are not required. Adding * to be processed by the frontend (Indicates the kind of GW).
+				if len(hostnames) == 0 {
+					hostnames = append(hostnames, "*")
+				}
 				// Metadata format: { gatewayName => array of hostnames }
 				node.Metadata[nodeMetadataKey].(graph.GatewaysMetadata)[gwCrd.Name] = hostnames
 			}
@@ -301,7 +304,7 @@ func resolveGatewayNodeMapping(gatewayWorkloads map[string][]models.WorkloadList
 			for _, node := range trafficMap {
 				if _, ok := node.Metadata[nodeMetadataKey]; !ok {
 					appLabelName, _ := gi.Conf.GetAppLabelName(gw.Labels)
-					if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && node.App == gw.Labels[appLabelName] && node.Cluster == gwCluster && node.Namespace == gwNs {
+					if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && node.App != "" && node.App == gw.Labels[appLabelName] && node.Cluster == gwCluster && node.Namespace == gwNs {
 						node.Metadata[nodeMetadataKey] = graph.GatewaysMetadata{}
 						gatewayNodeMapping[&gw] = append(gatewayNodeMapping[&gw], node)
 					}
@@ -391,7 +394,7 @@ func (a IstioAppender) getGatewayAPIWorkloads(ctx context.Context, globalInfo *g
 		// Find Istio managed Gateway API deployments
 		for _, workload := range wList.Workloads {
 			if workload.WorkloadGVK == kubernetes.Deployments {
-				if _, ok := workload.Labels["istio.io/gateway-name"]; ok {
+				if workload.IsGateway {
 					managedWorkloads[key] = append(managedWorkloads[key], workload)
 				}
 			}
