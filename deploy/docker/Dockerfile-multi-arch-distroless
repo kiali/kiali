@@ -28,8 +28,6 @@ WORKDIR $KIALI_HOME
 ARG TARGETARCH
 COPY --chown=1000:1000 kiali-${TARGETARCH} $KIALI_HOME/kiali
 
-COPY --chown=1000:1000 console/ $KIALI_HOME/console/
-
 USER 1000
 
 ENTRYPOINT ["/opt/kiali/kiali"]

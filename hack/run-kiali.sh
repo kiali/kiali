@@ -121,7 +121,6 @@ while [[ $# -gt 0 ]]; do
     -ts|--tracing-service)       TRACING_SERVICE="$2";               shift;shift ;;
     -tn|--tracing-namespace)     TRACING_NAMESPACE="$2";             shift;shift ;;
     -tu|--tracing-url)           TRACING_URL="$2";                   shift;shift ;;
-    -ucd|--ui-console-dir)       UI_CONSOLE_DIR="$2";                shift;shift ;;
     -h|--help )
       cat <<HELPMSG
 $0 [option...]
@@ -247,14 +246,6 @@ Valid options:
       to external clients outside of the cluster - that external URL is what this value should be.
       For example, for OpenShift clusters, this should be the Tracing (e.g. Jaeger) Route URL.
       Default: <will be auto-discovered>
-  -ucd|--ui-console-dir
-      A directory on the local machine containing the UI console code.
-      If not specified, an attempt to find it on the local machine will be made. A search up the
-      directory tree is made, looking for any directory called "kiali-ui" or "frontend" that has a "build" directory under it.
-      The "build" directory of the UI is generated after you run "yarn build" to
-      generate the distributable package. So, make sure that you build the UI before
-      using this script and then set this option to the generated build directory.
-      Default: <a local build that is auto-discovered>
 HELPMSG
       exit 1
       ;;
@@ -495,38 +486,6 @@ if [ -z "${KUBERNETES_API_HOST:-}" -o -z "${KUBERNETES_API_PORT:-}" ]; then
   fi
 fi
 
-# If the user didn't tell us what ui console directory to use, try to determine it
-
-if [ -z "${UI_CONSOLE_DIR:-}" ]; then
-  infomsg "Attempting to find the UI Console directory..."
-
-  # See if the user has the typical dev environment. Go up the dir tree to find a 'frontend' or 'kiali-ui' directory with a 'build' directory under it.
-  cur_path="${SCRIPT_DIR}"
-  while [[ ${cur_path} != / ]];
-  do
-    find_results="$(find "${cur_path}" -maxdepth 1 -mindepth 1 -name "frontend" | head -n 1)"
-    if [ -z "${find_results}" ]; then
-      # do this in case you are running an older Kiali that had its kiali-ui split out into a separate repo
-      find_results="$(find "${cur_path}" -maxdepth 1 -mindepth 1 -name "kiali-ui" | head -n 1)"
-    fi
-    if [ ! -z "${find_results}" ]; then
-      if [ -d "${find_results}/build" ]; then
-        UI_CONSOLE_DIR="${find_results}/build"
-        break;
-      else
-        warnmsg "Directory 'kiali-ui' was found without a 'build' directory - did you forget to build the UI?: ${find_results}"
-      fi
-    fi
-    cur_path="$(readlink -f "${cur_path}"/..)"
-  done
-  if [ -z "${UI_CONSOLE_DIR:-}" ]; then
-    errormsg "Could not find a local directory containing the UI Console."
-    errormsg "You need to specify the UI Console directory via --ui-console-dir."
-    errormsg "Aborting."
-    exit 1
-  fi
-fi
-
 infomsg "===== SETTINGS ====="
 echo "API_PROXY_HOST=$API_PROXY_HOST"
 echo "API_PROXY_PORT=$API_PROXY_PORT"
@@ -555,13 +514,11 @@ echo "TRACING_APP=$TRACING_APP"
 echo "TRACING_SERVICE=$TRACING_SERVICE"
 echo "TRACING_NAMESPACE=$TRACING_NAMESPACE"
 echo "TRACING_URL=$TRACING_URL"
-echo "UI_CONSOLE_DIR=$UI_CONSOLE_DIR"
 
 # Validate the settings
 
 [ ! -f "${KIALI_CONFIG_TEMPLATE_FILE}" ] && errormsg "Missing the Kiali config file. Make sure --config is correctly specified" && exit 1
 [ ! -x "${KIALI_EXE}" ] && errormsg "Missing the Kiali executable. You must build it and make sure --kiali-exe is correctly specified" && exit 1
-[ ! -d "${UI_CONSOLE_DIR}" ] && errormsg "Missing the UI Console directory. Make sure --ui-console-dir is correctly specified" && exit 1
 if ! echo "${LOCAL_REMOTE_PORTS_GRAFANA}" | grep -qiE "^[0-9]+:[0-9]+$"; then errormsg "Invalid Grafana local-remote ports specifer: ${LOCAL_REMOTE_PORTS_GRAFANA}"; exit 1; fi
 if ! echo "${LOCAL_REMOTE_PORTS_PROMETHEUS}" | grep -qiE "^[0-9]+:[0-9]+$"; then errormsg "Invalid Prometheus local-remote ports specifer: ${LOCAL_REMOTE_PORTS_PROMETHEUS}"; exit 1; fi
 if ! echo "${LOCAL_REMOTE_PORTS_TRACING}" | grep -qiE "^[0-9]+:[0-9]+$"; then errormsg "Invalid Tracing local-remote ports specifer: ${LOCAL_REMOTE_PORTS_TRACING}"; exit 1; fi
@@ -590,7 +547,6 @@ cat ${KIALI_CONFIG_TEMPLATE_FILE} | \
   GRAFANA_URL=${GRAFANA_URL} \
   TRACING_APP=${TRACING_APP} \
   TRACING_URL=${TRACING_URL} \
-  UI_CONSOLE_DIR=${UI_CONSOLE_DIR}   \
   REMOTE_SECRET_PATH=${REMOTE_SECRET_PATH} \
   envsubst > ${KIALI_CONFIG_FILE}
 
@@ -605,9 +561,6 @@ fi
 
 # Kiali wants the UI Console in a directory called "console" under its cwd
 
-if [ ! -d "${TMP_DIR}/console" ]; then
-  ln -s ${UI_CONSOLE_DIR} ${TMP_DIR}/console
-fi
 cd ${TMP_DIR}
 
 # If we are told to copy the remote cluster secrets, prepare the local directory

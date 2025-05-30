@@ -50,9 +50,9 @@ jobs:
 
         echo "Quay tag": ${{ env.quay_tag }}
 
-  build_backend:
-    name: Build backend
-    uses: ./.github/workflows/build-backend.yml
+  test_backend:
+    name: Run backend linters and unit tests
+    uses: ./.github/workflows/test-lint-backend.yml
     needs: [initialize]
     with:
       build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
@@ -65,12 +65,19 @@ jobs:
       target_branch: ${{needs.initialize.outputs.target_branch}}
       build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
 
+  build_backend:
+    name: Build backend
+    uses: ./.github/workflows/build-backend.yml
+    needs: [initialize, build_frontend, test_backend]
+    with:
+      build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
+
   push:
     name: Push latest
     # Avoid schedule workflows from forks to push images
     if: ${{ (github.event_name == 'schedule' && github.repository == 'kiali/kiali') || github.event_name != 'schedule' }}
     runs-on: ubuntu-latest
-    needs: [initialize, build_backend, build_frontend]
+    needs: [initialize, build_backend]
     env:
       QUAY_TAG: ${{ needs.initialize.outputs.quay_tag }}
     steps:

@@ -4,7 +4,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	rpprof "runtime/pprof"
 	"testing"
 
@@ -15,12 +14,13 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"github.com/kiali/kiali/util/filetest"
 )
 
 func TestDrawPathProperly(t *testing.T) {
 	conf := new(config.Config)
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
-	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil, nil, nil)
+	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil, nil, nil, filetest.StaticAssetDir(t))
 	testRoute(router, "Root", "GET", t)
 }
 
@@ -46,7 +46,7 @@ func TestWebRootRedirect(t *testing.T) {
 	conf.Server.WebRoot = "/test"
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
-	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil, nil, nil)
+	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil, nil, nil, filetest.StaticAssetDir(t))
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -69,7 +69,7 @@ func TestSimpleRoute(t *testing.T) {
 	conf := new(config.Config)
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
-	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil, nil, nil)
+	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil, nil, nil, filetest.StaticAssetDir(t))
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -88,7 +88,7 @@ func TestProfilerRoute(t *testing.T) {
 	conf.Server.Profiler.Enabled = true
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
-	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil, nil, nil)
+	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil, nil, nil, filetest.StaticAssetDir(t))
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -120,7 +120,7 @@ func TestDisabledProfilerRoute(t *testing.T) {
 	conf.Server.Profiler.Enabled = false
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
-	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil, nil, nil)
+	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil, nil, nil, filetest.StaticAssetDir(t))
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -147,17 +147,11 @@ func TestDisabledProfilerRoute(t *testing.T) {
 }
 
 func TestRedirectWithSetWebRootKeepsParams(t *testing.T) {
-	oldWd, _ := os.Getwd()
-	defer func() { _ = os.Chdir(oldWd) }()
-	_ = os.Chdir(os.TempDir())
-	_ = os.MkdirAll("./console", 0o777)
-	_, _ = os.Create("./console/index.html")
-
 	conf := new(config.Config)
 	conf.Server.WebRoot = "/test"
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
-	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil, nil, nil)
+	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil, nil, nil, filetest.StaticAssetDir(t))
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 

@@ -4,8 +4,8 @@ on:
   schedule:
   # These are in UTC time.
   # If you change any of these, you must also change the case statment in the determine-istio-version-to-use task.
-  - cron: '0 2 * * *'
-  - cron: '0 4 * * *'
+  - cron: "0 2 * * *"
+  - cron: "0 4 * * *"
   workflow_dispatch:
     inputs:
       istio_version:
@@ -89,9 +89,9 @@ jobs:
     - run: echo "target-branch -> ${{ inputs.branch_to_test }}"
     - run: echo "build-branch -> ${{ inputs.branch_to_test }}"
 
-  build_backend:
-    name: Build backend
-    uses: ./.github/workflows/build-backend.yml
+  test_backend:
+    name: Run backend linters and unit tests
+    uses: ./.github/workflows/test-lint-backend.yml
     needs: [initialize]
     with:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -104,10 +104,17 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
+  build_backend:
+    name: Build backend
+    uses: ./.github/workflows/build-backend.yml
+    needs: [initialize, test_backend, build_frontend]
+    with:
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
   integration_tests_backend:
     name: Run backend integration tests
     uses: ./.github/workflows/integration-tests-backend.yml
-    needs: [initialize, build_backend, build_frontend]
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -116,7 +123,7 @@ jobs:
   integration_tests_backend_multicluster_external_controlplane:
     name: Run backend multicluster external-controlplane integration tests
     uses: ./.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml
-    needs: [initialize, build_backend, build_frontend]
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -125,7 +132,7 @@ jobs:
   integration_tests_frontend:
     name: Run frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend.yml
-    needs: [initialize, build_backend, build_frontend]
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -134,7 +141,7 @@ jobs:
   integration_tests_frontend_multicluster_primary_remote:
     name: Run frontend multicluster primary-remote integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-primary-remote.yml
-    needs: [initialize, build_backend, build_frontend]
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -143,7 +150,7 @@ jobs:
   integration_tests_frontend_multicluster_multi_primary:
     name: Run frontend multicluster multi-primary integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-multi-primary.yml
-    needs: [initialize, build_backend, build_frontend]
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -152,7 +159,7 @@ jobs:
   integration_tests_frontend_ambient:
     name: Run Ambient frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-ambient.yml
-    needs: [initialize, build_backend, build_frontend]
+    needs: [initialize, build_backend]
     if: ${{ needs.initialize.outputs.istio-version >= '1.23' }}
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
@@ -162,7 +169,7 @@ jobs:
   integration_tests_frontend_tempo:
     name: Run tracing frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-tempo.yml
-    needs: [initialize, build_backend, build_frontend]
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}

@@ -1,3 +1,5 @@
+//go:build !exclude_frontend
+
 package main
 
 // This file is mandatory as otherwise the kiali binary for system tests is not generated correctly.

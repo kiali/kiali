@@ -2,6 +2,13 @@
 # Targets for building of Kiali from source.
 #
 
+## check-ui: Check if the frontend UI is built
+check-ui:
+	@if [ ! -d ${ROOTDIR}/frontend/build ]; then \
+		echo "The frontend UI is not built. Please run 'make build-ui' first."; \
+		exit 1; \
+	fi
+
 ## clean: Clean ${GOPATH}/bin/kiali, ${GOPATH}/pkg/*, ${OUTDIR}/docker and the kiali binary
 clean:
 	@echo Cleaning...
@@ -28,7 +35,7 @@ go-check:
 	@echo "Using actual Go version of: ${GO_ACTUAL_VERSION}"
 
 ## build: Runs `make go-check` internally and build Kiali binary
-build: go-check
+build: go-check check-ui
 	@echo Building...
 	${GO_BUILD_ENVVARS} ${GO} build \
 		-o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH} -X main.goVersion=${GO_ACTUAL_VERSION}" ${GO_BUILD_FLAGS}
@@ -72,7 +79,7 @@ build-system-test: go-check
 ## test: Run tests, excluding third party tests under vendor and frontend. Runs `go test` internally
 test: .ensure-envtest-bin-dir-exists
 	@echo Running tests, excluding third party tests under vendor
-	${GO} test ${GO_TEST_FLAGS} $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/ -e /tests/integration/)
+	${GO} test -tags exclude_frontend ${GO_TEST_FLAGS} $(shell ${GO} list -tags exclude_frontend ./... | grep -v -e /vendor/ -e /frontend/ -e /tests/integration/)
 
 ## test-integration-setup: Setup go library for converting test result into junit xml
 test-integration-setup:
@@ -114,7 +121,7 @@ lint-install:
 ## lint: Runs golangci-lint
 # doc.go is ommited for linting, because it generates lots of warnings.
 lint:
-	golangci-lint run -c ./.github/workflows/config/.golangci.yml
+	golangci-lint run --build-tags exclude_frontend -c ./.github/workflows/config/.golangci.yml
 
 # Assuming here that if the bin dir exists then the tools also exist inside of it.
 .ensure-envtest-bin-dir-exists: .ensure-envtest-exists

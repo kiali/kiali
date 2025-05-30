@@ -187,21 +187,20 @@ type Observability struct {
 
 // Server configuration
 type Server struct {
-	Address                    string        `yaml:",omitempty"`
-	AuditLog                   bool          `yaml:"audit_log,omitempty"` // When true, allows additional audit logging on Write operations
-	CORSAllowAll               bool          `yaml:"cors_allow_all,omitempty"`
-	GzipEnabled                bool          `yaml:"gzip_enabled,omitempty"`
-	Observability              Observability `yaml:"observability,omitempty"`
-	Port                       int           `yaml:",omitempty"`
-	Profiler                   Profiler      `yaml:"profiler,omitempty"`
-	StaticContentRootDirectory string        `yaml:"static_content_root_directory,omitempty"`
-	RequireAuth                bool          `yaml:"require_auth,omitempty"` // when true, unauthenticated access to api/ endpoint is not allowed
-	WebFQDN                    string        `yaml:"web_fqdn,omitempty"`
-	WebPort                    string        `yaml:"web_port,omitempty"`
-	WebRoot                    string        `yaml:"web_root,omitempty"`
-	WebHistoryMode             string        `yaml:"web_history_mode,omitempty"`
-	WebSchema                  string        `yaml:"web_schema,omitempty"`
-	WriteTimeout               time.Duration `yaml:"write_timeout,omitempty"`
+	Address        string        `yaml:",omitempty"`
+	AuditLog       bool          `yaml:"audit_log,omitempty"` // When true, allows additional audit logging on Write operations
+	CORSAllowAll   bool          `yaml:"cors_allow_all,omitempty"`
+	GzipEnabled    bool          `yaml:"gzip_enabled,omitempty"`
+	Observability  Observability `yaml:"observability,omitempty"`
+	Port           int           `yaml:",omitempty"`
+	Profiler       Profiler      `yaml:"profiler,omitempty"`
+	RequireAuth    bool          `yaml:"require_auth,omitempty"` // when true, unauthenticated access to api/ endpoint is not allowed
+	WebFQDN        string        `yaml:"web_fqdn,omitempty"`
+	WebPort        string        `yaml:"web_port,omitempty"`
+	WebRoot        string        `yaml:"web_root,omitempty"`
+	WebHistoryMode string        `yaml:"web_history_mode,omitempty"`
+	WebSchema      string        `yaml:"web_schema,omitempty"`
+	WriteTimeout   time.Duration `yaml:"write_timeout,omitempty"`
 }
 
 // Auth provides authentication data for external services
@@ -712,7 +711,7 @@ func NewConfig() (c *Config) {
 		InCluster:      true,
 		IstioNamespace: "istio-system",
 		Auth: AuthConfig{
-			Strategy: "token",
+			Strategy: AuthStrategyToken,
 			OpenId: OpenIdConfig{
 				AdditionalRequestParams: map[string]string{},
 				AllowedDomains:          []string{},
@@ -970,14 +969,13 @@ func NewConfig() (c *Config) {
 					SamplingRate: 0.5,
 				},
 			},
-			Port:                       20001,
-			RequireAuth:                false,
-			StaticContentRootDirectory: "/opt/kiali/console",
-			WebFQDN:                    "",
-			WebRoot:                    "/",
-			WebHistoryMode:             "browser",
-			WebSchema:                  "",
-			WriteTimeout:               30,
+			Port:           20001,
+			RequireAuth:    false,
+			WebFQDN:        "",
+			WebRoot:        "/",
+			WebHistoryMode: "browser",
+			WebSchema:      "",
+			WriteTimeout:   30,
 		},
 	}
 
@@ -1445,13 +1443,6 @@ func (conf Config) IsValidationsEnabled() bool {
 func Validate(conf Config) error {
 	if conf.Server.Port < 0 {
 		return fmt.Errorf("server port is negative: %v", conf.Server.Port)
-	}
-
-	if strings.Contains(conf.Server.StaticContentRootDirectory, "..") {
-		return fmt.Errorf("server static content root directory must not contain '..': %v", conf.Server.StaticContentRootDirectory)
-	}
-	if _, err := os.Stat(conf.Server.StaticContentRootDirectory); os.IsNotExist(err) {
-		return fmt.Errorf("server static content root directory does not exist: %v", conf.Server.StaticContentRootDirectory)
 	}
 
 	webRoot := conf.Server.WebRoot

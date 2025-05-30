@@ -1,3 +1,5 @@
+//go:build !exclude_frontend
+
 // Kiali
 //
 // # Kiali Project, The Console for Istio Service Mesh
@@ -31,6 +33,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io/fs"
 	"maps"
 	"os"
 	"os/signal"
@@ -65,6 +68,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/controller"
+	"github.com/kiali/kiali/frontend"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
@@ -230,8 +234,13 @@ func main() {
 		cpm.PollIstiodForProxyStatus(ctx)
 	}
 
+	staticAssetFS, err := fs.Sub(frontend.FrontendBuildAssets, "build")
+	if err != nil {
+		log.Fatalf("Error getting subfolder: %v", err)
+	}
+
 	// Start listening to requests
-	server, err := server.NewServer(cpm, clientFactory, cache, conf, prom, tracingLoader, discovery)
+	server, err := server.NewServer(cpm, clientFactory, cache, conf, prom, tracingLoader, discovery, staticAssetFS)
 	if err != nil {
 		log.Fatal(err)
 	}

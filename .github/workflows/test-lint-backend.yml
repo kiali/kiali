@@ -1,0 +1,33 @@
+name: Backend Unit Tests and Linters
+
+on:
+  workflow_call:
+    inputs:
+      build_branch:
+        required: true
+        type: string
+jobs:
+  build_backend:
+    name: Run backend unit tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.build_branch }}
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+        cache: true
+        cache-dependency-path: go.sum
+
+    - name: Lint Install
+      run: make lint-install
+
+    - name: Verify code linting
+      run: make lint
+
+    - name: Run backend unit tests
+      run: make -e GO_TEST_FLAGS="-race" test
