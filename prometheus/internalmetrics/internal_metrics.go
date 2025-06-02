@@ -42,7 +42,7 @@ type MetricsType struct {
 	KubernetesClients              *prometheus.GaugeVec
 	PrometheusProcessingTime       *prometheus.HistogramVec
 	SingleValidationProcessingTime *prometheus.HistogramVec
-	CacheTotalRequests             *prometheus.CounterVec
+	CacheRequestsTotal             *prometheus.CounterVec
 	CacheHitsTotal                 *prometheus.CounterVec
 	ValidationProcessingTime       *prometheus.HistogramVec
 	TracingProcessingTime          *prometheus.HistogramVec
@@ -129,7 +129,7 @@ var Metrics = MetricsType{
 		},
 		[]string{labelNamespace, labelType, labelName},
 	),
-	CacheTotalRequests: prometheus.NewCounterVec(
+	CacheRequestsTotal: prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "kiali_cache_requests_total",
 			Help: "The number of total requests for the cache.",
@@ -248,7 +248,7 @@ func RegisterInternalMetrics() {
 		Metrics.CheckerProcessingTime,
 		Metrics.ValidationProcessingTime,
 		Metrics.SingleValidationProcessingTime,
-		Metrics.CacheTotalRequests,
+		Metrics.CacheRequestsTotal,
 		Metrics.CacheHitsTotal,
 		Metrics.TracingProcessingTime,
 	)
@@ -432,7 +432,7 @@ func SetKubernetesClients(clientCount int) {
 }
 
 func GetCacheRequestsTotalMetric(cache string) prometheus.Counter {
-	return Metrics.CacheTotalRequests.With(prometheus.Labels{
+	return Metrics.CacheRequestsTotal.With(prometheus.Labels{
 		labelName: cache,
 	})
 }

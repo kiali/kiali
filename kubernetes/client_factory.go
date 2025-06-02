@@ -338,7 +338,7 @@ func (cf *clientFactory) getRecycleClient(authInfo *api.AuthInfo, expirationTime
 			cf.clientEntries[tokenHash] = make(map[string]UserClientInterface)
 		}
 		cf.clientEntries[tokenHash][cluster] = client
-		internalmetrics.SetKubernetesClients(len(cf.clientEntries))
+		internalmetrics.SetKubernetesClients(cf.getClientsLengthNoLock())
 		return client, nil
 	}
 }
@@ -360,7 +360,17 @@ func (cf *clientFactory) hasClient(authInfo *api.AuthInfo) (map[string]UserClien
 func (cf *clientFactory) getClientsLength() int {
 	cf.mutex.RLock()
 	defer cf.mutex.RUnlock()
-	return len(cf.clientEntries)
+	return cf.getClientsLengthNoLock()
+}
+
+// getClientsLengthNoLock returns the number of known clients without locking the shared lock,
+// so only use this function if you know you are already safe.
+func (cf *clientFactory) getClientsLengthNoLock() int {
+	count := 0
+	for _, innerMap := range cf.clientEntries {
+		count += len(innerMap)
+	}
+	return count
 }
 
 // watchClients listen signal from recycleChan and clean the expired clients
@@ -381,7 +391,7 @@ func (cf *clientFactory) deleteClient(token string) {
 	cf.mutex.Lock()
 	defer cf.mutex.Unlock()
 	delete(cf.clientEntries, token)
-	internalmetrics.SetKubernetesClients(len(cf.clientEntries)) // TODO: + 2 dimmension map?
+	internalmetrics.SetKubernetesClients(cf.getClientsLengthNoLock())
 }
 
 // getTokenHash get the token hash of a client
