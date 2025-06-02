@@ -390,6 +390,8 @@ type IstioLabels struct {
 	AppLabelName                string `yaml:"app_label_name,omitempty" json:"appLabelName"`
 	InjectionLabelName          string `yaml:"injection_label_name,omitempty" json:"injectionLabelName"`
 	InjectionLabelRev           string `yaml:"injection_label_rev,omitempty" json:"injectionLabelRev"`
+	ServiceCanonicalName        string `yaml:"service_canonical_name,omitempty" json:"serviceCanonicalName"`
+	ServiceCanonicalRevision    string `yaml:"service_canonical_revision,omitempty" json:"serviceCanonicalRevision"`
 	VersionLabelName            string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
@@ -837,6 +839,8 @@ func NewConfig() (c *Config) {
 			AppLabelName:                "",
 			InjectionLabelName:          "istio-injection",
 			InjectionLabelRev:           IstioRevisionLabel,
+			ServiceCanonicalName:        "service.istio.io/canonical-name",
+			ServiceCanonicalRevision:    "service.istio.io/canonical-revision",
 			VersionLabelName:            "",
 		},
 		KialiFeatureFlags: KialiFeatureFlags{
@@ -1061,8 +1065,8 @@ func Set(conf *Config) {
 			appLabelNames = []string{conf.IstioLabels.AppLabelName}
 			versionLabelNames = []string{conf.IstioLabels.VersionLabelName}
 		} else {
-			appLabelNames = []string{"service.istio.io/canonical-name", "app.kubernetes.io/name", "app"}
-			versionLabelNames = []string{"service.istio.io/canonical-revision", "app.kubernetes.io/version", "version"}
+			appLabelNames = []string{conf.IstioLabels.ServiceCanonicalName, "app.kubernetes.io/name", "app"}
+			versionLabelNames = []string{conf.IstioLabels.ServiceCanonicalRevision, "app.kubernetes.io/version", "version"}
 		}
 	}
 }
