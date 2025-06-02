@@ -80,7 +80,7 @@ const (
 	IstioAppLabel             = "app"                                    // we can assume istio components are labeled with "app"
 	IstioRevisionLabel        = "istio.io/rev"                           // the standard label key used to identify the istio revision.
 	IstioVersionLabel         = "version"                                // we can assume istio components are labeled with "version", if versioned
-	KubernetesIstioLabel      = "app.kubernetes.io/name"
+	KubernetesAppLabel      = "app.kubernetes.io/name"
 	Waypoint                  = "waypoint"
 	WaypointFor               = "istio.io/waypoint-for"
 	WaypointForAll            = "all"
