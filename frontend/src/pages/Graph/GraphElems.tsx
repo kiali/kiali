@@ -168,6 +168,7 @@ export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphSetting
   if (settings.showOutOfMesh && data.isOutOfMesh) {
     attachments.push(getDecorator(node, TopologyQuadrant.lowerRight, badgeMap.get('MS')!));
   }
+  // It is OK to use the same location for mutually exclusive options.
   if (data.hasWorkloadEntry) {
     attachments.push(getDecorator(node, TopologyQuadrant.upperRight, badgeMap.get('WE')!));
   }
