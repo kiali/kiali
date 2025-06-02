@@ -40,7 +40,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
-	"github.com/kiali/kiali/util/sliceutil"
 )
 
 const (
@@ -73,10 +72,7 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 	appenders, finalizers := appender.ParseAppenders(o)
 	trafficMap := graph.NewTrafficMap()
 
-	handleAmbient := sliceutil.Some(finalizers, func(f graph.Appender) bool {
-		return f.Name() == appender.AmbientAppenderName
-	})
-	if handleAmbient {
+	if o.Rates.Ambient != "none" {
 		globalInfo.Vendor[appender.AmbientWaypoints] = GetWaypointMap(ctx, globalInfo)
 	}
 
@@ -576,10 +572,7 @@ func BuildNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalIn
 
 	appenders, finalizers := appender.ParseAppenders(o)
 
-	handleAmbient := sliceutil.Some(finalizers, func(f graph.Appender) bool {
-		return f.Name() == appender.AmbientAppenderName
-	})
-	if handleAmbient {
+	if o.Rates.Ambient != "none" {
 		globalInfo.Vendor[appender.AmbientWaypoints] = GetWaypointMap(ctx, globalInfo)
 	}
 
@@ -1130,11 +1123,10 @@ func setWaypointKey(wpKey *waypointKey, cluster, namespace, name string) *waypoi
 // hasWaypoint returns true if the source or dest workload is determined to be a waypoint workload.
 func hasWaypoint(wpKeySource, wpKeyDest *waypointKey, globalInfo *graph.GlobalInfo) (sourceIsWaypoint bool, destIsWaypoint bool) {
 
-	if len(globalInfo.Vendor) > 0 && globalInfo.Vendor[appender.AmbientWaypoints] != nil {
-		wpMap := globalInfo.Vendor[appender.AmbientWaypoints].(waypointMap)
-		sourceIsWaypoint = wpMap[*wpKeySource]
-		destIsWaypoint = wpMap[*wpKeyDest]
-	}
+	wpMap := globalInfo.Vendor[appender.AmbientWaypoints].(waypointMap)
+	sourceIsWaypoint = wpMap[*wpKeySource]
+	destIsWaypoint = wpMap[*wpKeyDest]
+
 	return sourceIsWaypoint, destIsWaypoint
 }
 
