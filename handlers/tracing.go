@@ -411,8 +411,6 @@ func TracingDiagnose(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// prepare the logger in a context, and replace the request context with ours that has our logger in it
-		r = log.AddGroupToLoggerInRequestContext(r, log.TracingLogName)
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {

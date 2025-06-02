@@ -316,8 +316,3 @@ func (in *Client) prepareContextForClient(ctx context.Context) context.Context {
 	}
 	return ctx
 }
-
-func observeDurationAndLogResults(ctx context.Context, timer *prometheus.Timer, msg string) {
-	duration := timer.ObserveDuration()
-	log.FromContext(ctx).Trace().Msgf("Duration for [%s]: %v", msg, duration)
-}

@@ -204,6 +204,7 @@ func NewRoutes(
 		//      200: tracingDiagnose
 		{
 			"Diagnose",
+			log.TracingLogName,
 			"GET",
 			"/api/tracing/diagnose",
 			handlers.TracingDiagnose(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
