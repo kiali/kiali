@@ -55,15 +55,15 @@ git clone https://github.com/kiali/helm-charts.git
 
 ln -s $KIALI_SOURCES/kiali-operator kiali/operator
 
+# Build the front-end and run the tests
+make build-ui-test
+
 # Build the back-end and run the tests
 cd $KIALI_SOURCES/kiali
 make build test
 
 # Go test flags can be passed via the GO_TEST_FLAGS environment variable.
 # make -e GO_TEST_FLAGS="-race -v -run=\"TestCanConnectToIstiodReachable\"" test
-
-# Build the front-end and run the tests
-make build-ui-test
 ----
 
 [NOTE]
@@ -100,7 +100,7 @@ When using `docker` with Minikube's registry add-on or any custom non-secure reg
 
 Assuming the following conditions:
 
-* The back-end and front-end have been successfully built
+* The back-end and front-end have been successfully built. Note that the front-end assets need to be built before the back-end, as the back-end will embed the front-end assets during its build process.
 * A Kubernetes cluster with an Istio-based Service Mesh has been created
 * The `CLUSTER_TYPE=local` environment variable is not being used
 
