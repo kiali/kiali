@@ -172,7 +172,7 @@ export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphSetting
   if (data.hasWorkloadEntry) {
     attachments.push(getDecorator(node, TopologyQuadrant.upperRight, badgeMap.get('WE')!));
   }
-  if (data.isIngressWaypoint) {
+  if (data.hasIngressWaypoint) {
     attachments.push(getDecorator(node, TopologyQuadrant.upperRight, badgeMap.get('WA')!));
   }
   if (settings.showVirtualServices) {

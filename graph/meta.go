@@ -22,6 +22,7 @@ const (
 	HasCB                 MetadataKey = "hasCB"
 	HasFaultInjection     MetadataKey = "hasFaultInjection"
 	HasHealthConfig       MetadataKey = "hasHealthConfig"
+	HasIngressWaypoint    MetadataKey = "hasIngressWaypoint"
 	HasMirroring          MetadataKey = "hasMirroring"
 	HasTCPTrafficShifting MetadataKey = "hasTCPTrafficShifting"
 	HasTrafficShifting    MetadataKey = "hasTrafficShifting"
@@ -36,7 +37,6 @@ const (
 	IsExtension           MetadataKey = "isExtension"      // Identifies a node from an configured extension
 	IsGatewayAPI          MetadataKey = "isGatewayAPI"     // Identifies a node that is a Gateway API gateway (ingress)
 	IsIngressGateway      MetadataKey = "isIngressGateway" // Identifies a node that is an Istio ingress gateway
-	IsIngressWaypoint     MetadataKey = "isIngressWaypoint"
 	IsIdle                MetadataKey = "isIdle"
 	IsInaccessible        MetadataKey = "isInaccessible"
 	IsInjected            MetadataKey = "isInjected"      // Identifies an injected service node (server-side use only)

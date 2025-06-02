@@ -76,7 +76,7 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 				return waypointNodes[edge.Dest.ID] != nil
 			})
 			if hasWaypointEdges {
-				n.Metadata[graph.IsIngressWaypoint] = true
+				n.Metadata[graph.HasIngressWaypoint] = true
 			}
 		}
 
