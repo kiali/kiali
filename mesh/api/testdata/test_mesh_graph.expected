@@ -103,6 +103,7 @@
             "Username" : "xxx"
           },
           "Dashboards" : null,
+          "DatasourceUID" : "",
           "Enabled" : true,
           "ExternalURL" : "",
           "HealthCheckUrl" : "",
