@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -18,9 +17,10 @@ import (
 	"github.com/kiali/kiali/store"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
-	otel "github.com/kiali/kiali/tracing/otel/model"
+	"github.com/kiali/kiali/tracing/otel"
+	otelModel "github.com/kiali/kiali/tracing/otel/model"
 	"github.com/kiali/kiali/tracing/otel/model/converter"
-	otelModels "github.com/kiali/kiali/tracing/otel/model/json"
+	otelJson "github.com/kiali/kiali/tracing/otel/model/json"
 	"github.com/kiali/kiali/util"
 )
 
@@ -76,7 +76,7 @@ func (oc *OtelHTTPClient) GetTraceDetailHTTP(ctx context.Context, client http.Cl
 	zl := getLoggerFromContextHTTPTempo(ctx)
 
 	u.Path = path.Join(u.Path, "/api/traces/", traceID)
-	resp, code, reqError := makeRequest(client, u.String(), nil)
+	resp, code, reqError := otel.MakeRequest(ctx, client, u.String(), nil)
 	if reqError != nil {
 		zl.Error().Msgf("[HTTP Tempo] API Tempo query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return nil, reqError
@@ -129,7 +129,7 @@ func (oc *OtelHTTPClient) GetServiceStatusHTTP(ctx context.Context, client http.
 		u.Path = path.Join(u.Path, "/status/services")
 	}
 
-	_, status, reqError := makeRequest(client, u.String(), nil)
+	_, status, reqError := otel.MakeRequest(ctx, client, u.String(), nil)
 	if status != 200 {
 		return false, fmt.Errorf("[HTTP Tempo] Error %d getting status services", status)
 	}
@@ -149,7 +149,7 @@ func (oc *OtelHTTPClient) queryTracesHTTP(ctx context.Context, client http.Clien
 		query.Set("minDuration", minDuration)
 		u.RawQuery = query.Encode()
 	}
-	resp, code, reqError := makeRequest(client, u.String(), nil)
+	resp, code, reqError := otel.MakeRequest(ctx, client, u.String(), nil)
 	if reqError != nil {
 		zl.Error().Msgf("Tempo API query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return &model.TracingResponse{}, reqError
@@ -169,7 +169,7 @@ func (oc *OtelHTTPClient) queryTracesHTTP(ctx context.Context, client http.Clien
 }
 
 // transformTrace processes every trace ID and make a request to get all the spans for that trace
-func (oc *OtelHTTPClient) transformTrace(ctx context.Context, traces *otel.Traces, error string, limit int) (*model.TracingResponse, error) {
+func (oc *OtelHTTPClient) transformTrace(ctx context.Context, traces *otelModel.Traces, error string, limit int) (*model.TracingResponse, error) {
 	var response model.TracingResponse
 	serviceName := ""
 
@@ -198,8 +198,8 @@ func (oc *OtelHTTPClient) transformTrace(ctx context.Context, traces *otel.Trace
 	return &response, nil
 }
 
-func unmarshal(ctx context.Context, r []byte, u *url.URL) (*otel.Traces, error) {
-	var response otel.Traces
+func unmarshal(ctx context.Context, r []byte, u *url.URL) (*otelModel.Traces, error) {
+	var response otelModel.Traces
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
 		getLoggerFromContextHTTPTempo(ctx).Error().Msgf("[HTTP Tempo] Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
@@ -208,8 +208,8 @@ func unmarshal(ctx context.Context, r []byte, u *url.URL) (*otel.Traces, error) 
 	return &response, nil
 }
 
-func unmarshalSingleTrace(ctx context.Context, r []byte, u *url.URL) (*otelModels.Data, error) {
-	var response otelModels.Data
+func unmarshalSingleTrace(ctx context.Context, r []byte, u *url.URL) (*otelJson.Data, error) {
+	var response otelJson.Data
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
 		getLoggerFromContextHTTPTempo(ctx).Error().Msgf("[HTTP Tempo] Error unmarshalling Tempo API Single trace response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
@@ -219,7 +219,7 @@ func unmarshalSingleTrace(ctx context.Context, r []byte, u *url.URL) (*otelModel
 }
 
 // convertBatchTrace Convert a trace returned by TraceQL query into a jaeger Trace
-func convertBatchTrace(trace otel.Trace, serviceName string) (jaegerModels.Trace, error) {
+func convertBatchTrace(trace otelModel.Trace, serviceName string) (jaegerModels.Trace, error) {
 
 	var jaegerModel jaegerModels.Trace
 
@@ -235,7 +235,7 @@ func convertBatchTrace(trace otel.Trace, serviceName string) (jaegerModels.Trace
 }
 
 // convertSingleTrace Convert a single trace returned by the TraceQL search endpoint
-func convertSingleTrace(traces *otelModels.Data, id string) (*model.TracingResponse, error) {
+func convertSingleTrace(traces *otelJson.Data, id string) (*model.TracingResponse, error) {
 	var response model.TracingResponse
 	var jaegerModel jaegerModels.Trace
 	tracingServiceName := ""
@@ -304,27 +304,7 @@ func (oc *OtelHTTPClient) GetTraceQLQuery(ctx context.Context, u *url.URL, traci
 	return u.RawQuery
 }
 
-func makeRequest(client http.Client, endpoint string, body io.Reader) (response []byte, status int, err error) {
-	response = nil
-	status = 0
-
-	req, err := http.NewRequest(http.MethodGet, endpoint, body)
-	if err != nil {
-		return
-	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-	resp, err := client.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	response, err = io.ReadAll(resp.Body)
-	status = resp.StatusCode
-	return
-}
-
-func hasErrors(trace otel.Trace) bool {
+func hasErrors(trace otelModel.Trace) bool {
 	for _, span := range trace.SpanSet.Spans {
 		for _, atb := range span.Attributes {
 			if atb.Key == "status" && atb.Value.StringValue == "error" {
@@ -338,7 +318,7 @@ func hasErrors(trace otel.Trace) bool {
 	return false
 }
 
-func getServiceName(attributes []otelModels.Attribute) string {
+func getServiceName(attributes []otelJson.Attribute) string {
 	for _, attb := range attributes {
 		if attb.Key == "service.name" {
 			return attb.Value.StringValue

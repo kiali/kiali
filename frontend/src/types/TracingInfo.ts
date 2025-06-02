@@ -130,3 +130,24 @@ export type TracingSingleResponse = {
   data: JaegerTrace | null;
   errors: TracingError[];
 };
+
+export type ValidConfig = {
+  namespaceSelector: boolean;
+  provider: string;
+  url: string;
+  useGRPC: boolean;
+  warning?: string;
+};
+
+export type LogLine = {
+  result: string;
+  test: string;
+  time: string;
+};
+
+export type TracingCheck = {
+  code?: number;
+  logLine: LogLine[];
+  message: string;
+  validConfig?: ValidConfig[];
+};

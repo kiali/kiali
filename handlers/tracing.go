@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -397,4 +398,43 @@ func readQuery(conf *config.Config, values url.Values) (models.TracingQuery, err
 	}
 
 	return q, nil
+}
+
+// TracingDiagnose is the API handler to diagnose Tracing configuration
+func TracingDiagnose(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery *istio.Discovery,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			return
+		}
+		if !isHomeCPAccessible(r.Context(), conf, business.Namespace, clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			return
+		}
+
+		status, err := business.Tracing.TracingDiagnose(r.Context(), clientFactory.GetSAHomeClusterClient().GetToken())
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+
+		RespondWithJSON(w, http.StatusOK, status)
+	}
+}
+
+// isHomeCPAccessible Check access to the home istio namespace
+func isHomeCPAccessible(ctx context.Context, conf *config.Config, namespaceService business.NamespaceService, cluster string) bool {
+	_, err := namespaceService.GetClusterNamespace(ctx, conf.IstioNamespace, cluster)
+	return err == nil
 }
