@@ -27,21 +27,14 @@ import (
 	"github.com/kiali/kiali/config/security"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/util"
+	"github.com/kiali/kiali/util/filetest"
 )
 
 const (
 	testHostname = "127.0.0.1"
 )
 
-var tmpDir = os.TempDir()
-
 func TestRootContextPath(t *testing.T) {
-	oldWd, _ := os.Getwd()
-	defer func() { _ = os.Chdir(oldWd) }()
-	_ = os.Chdir(os.TempDir())
-	_ = os.MkdirAll("./console", 0o777)
-	_, _ = os.Create("./console/index.html")
-
 	testPort, err := getFreePort(testHostname)
 	if err != nil {
 		t.Fatalf("Cannot get a free port to run tests on host [%v], err [%s]", testHostname, err)
@@ -58,7 +51,6 @@ func TestRootContextPath(t *testing.T) {
 	conf.Server.WebRoot = testCustomRoot
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
-	conf.Server.StaticContentRootDirectory = tmpDir
 	conf.Auth.Strategy = "anonymous"
 
 	serverURL := fmt.Sprintf("http://%v", testServerHostPort)
@@ -68,7 +60,7 @@ func TestRootContextPath(t *testing.T) {
 	cf := kubernetes.NewTestingClientFactory(t)
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	server, _ := NewServer(cpm, cf, cache, conf, nil, nil, nil)
+	server, _ := NewServer(cpm, cf, cache, conf, nil, nil, nil, filetest.StaticAssetDir(t))
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -118,7 +110,6 @@ func TestAnonymousMode(t *testing.T) {
 	conf := new(config.Config)
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
-	conf.Server.StaticContentRootDirectory = tmpDir
 	conf.Auth.Strategy = "anonymous"
 
 	serverURL := fmt.Sprintf("http://%v", testServerHostPort)
@@ -132,7 +123,7 @@ func TestAnonymousMode(t *testing.T) {
 	cf := kubernetes.NewTestingClientFactory(t)
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	server, _ := NewServer(cpm, cf, cache, conf, nil, nil, nil)
+	server, _ := NewServer(cpm, cf, cache, conf, nil, nil, nil, filetest.StaticAssetDir(t))
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -178,6 +169,7 @@ func TestSecureComm(t *testing.T) {
 		t.Logf("Will use free metrics port [%v] on host [%v] for tests", testMetricsPort, testHostname)
 	}
 
+	tmpDir := t.TempDir()
 	testServerCertFile := tmpDir + "/server-test-server.cert"
 	testServerKeyFile := tmpDir + "/server-test-server.key"
 	testServerHostPort := fmt.Sprintf("%v:%v", testHostname, testPort)
@@ -205,7 +197,6 @@ func TestSecureComm(t *testing.T) {
 	conf.LoginToken.SigningKey = util.RandomString(10)
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
-	conf.Server.StaticContentRootDirectory = tmpDir
 	conf.Server.Observability.Metrics.Enabled = true
 	conf.Server.Observability.Metrics.Port = testMetricsPort
 	conf.Server.Profiler.Enabled = true
@@ -224,7 +215,7 @@ func TestSecureComm(t *testing.T) {
 	cf := kubernetes.NewTestingClientFactory(t)
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	server, _ := NewServer(cpm, cf, cache, conf, nil, nil, nil)
+	server, _ := NewServer(cpm, cf, cache, conf, nil, nil, nil, filetest.StaticAssetDir(t))
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -325,7 +316,6 @@ func TestTracingConfigured(t *testing.T) {
 	conf := new(config.Config)
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
-	conf.Server.StaticContentRootDirectory = tmpDir
 	conf.Server.Observability.Tracing.Enabled = true
 	conf.Server.Observability.Tracing.CollectorType = "otel"
 	conf.Auth.Strategy = "anonymous"
@@ -338,7 +328,7 @@ func TestTracingConfigured(t *testing.T) {
 
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	server, _ := NewServer(cpm, cf, cache, conf, nil, nil, nil)
+	server, _ := NewServer(cpm, cf, cache, conf, nil, nil, nil, filetest.StaticAssetDir(t))
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -388,6 +378,7 @@ func getRequestResults(t *testing.T, httpClient *http.Client, url string, creden
 }
 
 func generateCertificate(t *testing.T, certPath string, keyPath string, host string) error {
+	t.Helper()
 	priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return err

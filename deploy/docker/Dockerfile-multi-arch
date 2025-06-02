@@ -20,11 +20,6 @@ RUN microdnf install -y shadow-utils && \
 ARG TARGETARCH
 COPY kiali-${TARGETARCH} $KIALI_HOME/kiali
 
-ADD console $KIALI_HOME/console/
-
-RUN chown -R kiali:kiali $KIALI_HOME/console && \
-    chmod -R g=u $KIALI_HOME/console
-
 USER 1000
 
 ENTRYPOINT ["/opt/kiali/kiali"]

@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/tls"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"time"
 
@@ -47,10 +48,11 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 	prom prometheus.ClientInterface,
 	traceClientLoader func() tracing.ClientInterface,
 	discovery *istio.Discovery,
+	staticAssetFS fs.FS,
 ) (*Server, error) {
 	grafana := grafana.NewService(conf, clientFactory.GetSAHomeClusterClient())
 	// create a router that will route all incoming API server requests to different handlers
-	router, err := routing.NewRouter(conf, cache, clientFactory, prom, traceClientLoader, controlPlaneMonitor, grafana, discovery)
+	router, err := routing.NewRouter(conf, cache, clientFactory, prom, traceClientLoader, controlPlaneMonitor, grafana, discovery, staticAssetFS)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +131,6 @@ func (s *Server) Start() {
 	business.Start(s.clientFactory, s.controlPlaneMonitor, s.kialiCache, s.discovery, s.prom, s.traceClientLoader, s.grafana)
 
 	log.Infof("Server endpoint will start at [%v%v]", s.httpServer.Addr, s.conf.Server.WebRoot)
-	log.Infof("Server endpoint will serve static content from [%v]", s.conf.Server.StaticContentRootDirectory)
 
 	go func() {
 		var err error

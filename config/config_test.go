@@ -153,29 +153,6 @@ func TestSensitiveDataObfuscation(t *testing.T) {
 	assert.Equal(t, "my-token", conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token)
 }
 
-func TestMarshalUnmarshalStaticContentRootDirectory(t *testing.T) {
-	testConf := Config{
-		Server: Server{
-			StaticContentRootDirectory: "/tmp",
-		},
-	}
-
-	yamlString, err := Marshal(&testConf)
-	if err != nil {
-		t.Errorf("Failed to marshal: %v", err)
-	}
-	if yamlString != "server:\n  static_content_root_directory: /tmp\n" {
-		t.Errorf("Failed to marshal - StaticContentRootDirectory to static_content_root_directory: [%v]", yamlString)
-	}
-	conf, err := Unmarshal(yamlString)
-	if err != nil {
-		t.Errorf("Failed to unmarshal: %v", err)
-	}
-	if conf.Server.StaticContentRootDirectory != "/tmp" {
-		t.Errorf("Failed to unmarshal static content root directory:\n%v", conf)
-	}
-}
-
 func TestMarshalUnmarshal(t *testing.T) {
 	testConf := Config{
 		Deployment: DeploymentConfig{
@@ -208,8 +185,6 @@ func TestMarshalUnmarshal(t *testing.T) {
 		Server: Server{
 			Address: "foo-test",
 			Port:    321,
-
-			StaticContentRootDirectory: "/tmp",
 		},
 	}
 
@@ -237,9 +212,6 @@ func TestMarshalUnmarshal(t *testing.T) {
 	}
 	if conf.Server.Port != 321 {
 		t.Errorf("Failed to unmarshal server port:\n%v", conf)
-	}
-	if conf.Server.StaticContentRootDirectory != "/tmp" {
-		t.Errorf("Failed to unmarshal static content root directory:\n%v", conf)
 	}
 	if conf.Deployment.DiscoverySelectors.Default[0].MatchLabels["kubernetes.io/metadata.name"] != "foo" {
 		t.Errorf("Failed to unmarshal default discovery selector:\n%v", conf)
@@ -357,7 +329,6 @@ func TestValidateWebRoot(t *testing.T) {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 	conf := NewConfig()
 	conf.LoginToken.SigningKey = util.RandomString(16)
-	conf.Server.StaticContentRootDirectory = "."
 	conf.Auth.Strategy = "anonymous"
 
 	// now test some web roots, both valid ones and invalid ones
@@ -397,7 +368,6 @@ func TestValidateAuthStrategy(t *testing.T) {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 	conf := NewConfig()
 	conf.LoginToken.SigningKey = util.RandomString(16)
-	conf.Server.StaticContentRootDirectory = "."
 
 	// now test some auth strategies, both valid ones and invalid ones
 	validStrategies := []string{
