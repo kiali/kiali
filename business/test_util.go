@@ -1076,6 +1076,7 @@ func FakeZtunnelDaemonSet(conf *config.Config) []apps_v1.DaemonSet {
 	conf.KubernetesConfig.ExcludeWorkloads = []string{}
 
 	appLabel := conf.IstioLabels.AppLabelName
+	kubernetesLabel := config.KubernetesAppLabel
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	return []apps_v1.DaemonSet{
 		{
@@ -1087,6 +1088,7 @@ func FakeZtunnelDaemonSet(conf *config.Config) []apps_v1.DaemonSet {
 				Name:              "ztunnel",
 				Namespace:         "istio-system",
 				CreationTimestamp: meta_v1.NewTime(t1),
+				Labels:            map[string]string{kubernetesLabel: "ztunnel"},
 			},
 			Spec: apps_v1.DaemonSetSpec{
 				Template: core_v1.PodTemplateSpec{
