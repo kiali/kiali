@@ -318,7 +318,7 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 
 	daemonSetList := &appsv1.DaemonSetList{}
 	selector := map[string]string{
-		config.KubernetesIstioLabel: config.Ztunnel,
+		config.KubernetesAppLabel: config.Ztunnel,
 	}
 	listOpts := []client.ListOption{client.MatchingLabels(selector)}
 	if err := kubeCache.List(context.TODO(), daemonSetList, listOpts...); err != nil {
