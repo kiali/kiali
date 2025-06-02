@@ -434,7 +434,7 @@ func TracingDiagnose(
 	}
 }
 
-// Check access to the home istio namespace
+// isHomeCPAccessible Check access to the home istio namespace
 func isHomeCPAccessible(ctx context.Context, conf *config.Config, namespaceService business.NamespaceService, cluster string) bool {
 	_, err := namespaceService.GetClusterNamespace(ctx, conf.IstioNamespace, cluster)
 	if err == nil {
