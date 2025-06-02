@@ -1076,7 +1076,7 @@ func FakeZtunnelDaemonSet(conf *config.Config) []apps_v1.DaemonSet {
 	conf.KubernetesConfig.ExcludeWorkloads = []string{}
 
 	appLabel := conf.IstioLabels.AppLabelName
-	kubernetesLabel := config.KubernetesIstioLabel
+	kubernetesLabel := config.KubernetesAppLabel
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	return []apps_v1.DaemonSet{
 		{
