@@ -17,6 +17,8 @@ import {
   MenuGroup,
   MenuToggle,
   MenuToggleElement,
+  Modal,
+  Tab,
   TextInput,
   Toolbar,
   ToolbarGroup,
@@ -32,7 +34,14 @@ import { AccessLog, LogEntry, LogType, Pod, PodLogs } from '../../types/IstioObj
 import { getPodLogs, getWorkloadSpans, setPodEnvoyProxyLogLevel } from '../../services/Api';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ToolbarDropdown } from '../../components/Dropdown/ToolbarDropdown';
-import { evalTimeRange, isEqualTimeRange, TimeInMilliseconds, TimeInSeconds, TimeRange } from '../../types/Common';
+import {
+  evalTimeRange,
+  isEqualTimeRange,
+  Theme,
+  TimeInMilliseconds,
+  TimeInSeconds,
+  TimeRange
+} from '../../types/Common';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { KialiIcon } from '../../config/KialiIcon';
@@ -60,6 +69,12 @@ import { TraceSpansLimit } from 'components/Metrics/TraceSpansLimit';
 import { infoStyle } from 'styles/IconStyle';
 import { WaypointInfo } from '../../types/Workload';
 import { istioProxyName } from './WorkloadDetailsPage';
+import AceEditor from 'react-ace';
+import { istioAceEditorStyle } from 'styles/AceEditorStyle';
+import { t } from 'i18next';
+import { ParameterizedTabs } from 'components/Tab/Tabs';
+import { basicTabStyle } from 'styles/TabStyles';
+import { classes } from 'typestyle';
 
 const appContainerColors = [PFColors.Blue200, PFColors.Blue300, PFColors.Blue400, PFColors.Blue100];
 const proxyContainerColor = PFColors.Gold300;
@@ -67,9 +82,17 @@ const waypointContainerColor = PFColors.Gold500;
 const spanColor = PFColors.Cyan300;
 
 type ReduxProps = {
+  appState: KialiAppState;
   kiosk: string;
   timeRange: TimeRange;
   tracingIntegration: boolean;
+};
+
+const defaultTab = 'json';
+
+const tabIndex: { [tab: string]: number } = {
+  json: 0,
+  table: 1
 };
 
 export type WorkloadPodLogsProps = ReduxProps & {
@@ -101,11 +124,14 @@ type Entry = {
 interface WorkloadPodLogsState {
   accessLogModals: Map<string, AccessLog>;
   containerOptions?: ContainerOption[];
+  currentTab: string;
   entries: Entry[];
   fullscreen: boolean;
   hideError?: string;
   hideLogValue: string;
+  isJSONModalOpen: boolean;
   isTimeOptionsOpen: boolean;
+  jsonModalContent: string | undefined;
   kebabOpen: boolean;
   linesTruncatedContainers: string[];
   loadingLogs: boolean;
@@ -137,6 +163,8 @@ enum LogLevel {
   Critical = 'critical'
 }
 
+const defaultJSONIndentation = 2;
+
 const NoLogsFoundMessage = 'No container logs found for the time period.';
 
 const MaxLinesDefault = 3000;
@@ -150,6 +178,26 @@ const MaxLinesOptions = {
   '10000': '10000 lines',
   '25000': '25000 lines'
 };
+
+const modalStyle = kialiStyle({
+  height: '70%',
+  width: '50%',
+  overflow: 'auto',
+  overflowY: 'hidden'
+});
+
+const previewLogLineStyle = kialiStyle({
+  fontFamily: 'monospace',
+  fontSize: 'var(--kiali-global--font-size)',
+  backgroundColor: PFColors.Black1000,
+  color: PFColors.Blue200,
+  marginBottom: '1rem',
+  overflowX: 'auto',
+  overflowY: 'hidden',
+  whiteSpace: 'nowrap',
+  resize: 'none',
+  padding: '0.75rem'
+});
 
 const alInfoIcon = kialiStyle({
   display: 'flex',
@@ -239,6 +287,12 @@ const spansLabelStyle = kialiStyle({
   fontWeight: 'bold'
 });
 
+const jsonTableStyle = kialiStyle({
+  padding: '0.5rem',
+  verticalAlign: 'top',
+  borderBottom: '1px solid #eee'
+});
+
 const colorCheck = (color: string): string =>
   kialiStyle({
     accentColor: color
@@ -259,6 +313,14 @@ const logsHeight = (showToolbar: boolean, fullscreen: boolean, showMaxLinesWarni
   };
 };
 
+const tabStyle = kialiStyle({
+  $nest: {
+    '&& .pf-v5-c-tabs__list': {
+      marginLeft: 0
+    }
+  }
+});
+
 export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsProps, WorkloadPodLogsState> {
   private promises: PromisesRegistry = new PromisesRegistry();
   private podOptions: string[] = [];
@@ -276,10 +338,13 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 
     const defaultState = {
       accessLogModals: new Map<string, AccessLog>(),
+      currentTab: defaultTab,
       entries: [],
       fullscreen: false,
       hideLogValue: '',
+      isJSONModalOpen: false,
       isTimeOptionsOpen: false,
+      jsonModalContent: undefined,
       kebabOpen: false,
       linesTruncatedContainers: [],
       loadingLogs: false,
@@ -506,6 +571,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                     )}
                     {this.getLogsDiv()}
                     {this.getAccessLogModals()}
+                    {this.getJSONLogModal()}
                   </CardBody>
                 </Card>
               </GridItem>
@@ -706,6 +772,23 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 
     return !le.accessLog ? (
       <div key={`le-d-${index}`} className={logLineStyle} style={{ ...style }}>
+        {this.isJSON(e) && (
+          <Tooltip
+            key={`jod-tt-${index}`}
+            position={TooltipPosition.auto}
+            entryDelay={1000}
+            content="Click for JSON object details"
+          >
+            <Button
+              key={`jod-b-${index}`}
+              variant={ButtonVariant.plain}
+              className={logInfoStyle}
+              onClick={() => this.openJSONModal(e)}
+            >
+              <KialiIcon.Info key={`jod-i-${index}`} className={alInfoIcon} color={messageColor} />
+            </Button>
+          </Tooltip>
+        )}
         <p key={`le-${index}`} className={logMessageStyle} style={{ color: messageColor }}>
           {this.entryToString(e)}
         </p>
@@ -909,6 +992,66 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           </AutoSizer>
         </div>
       </div>
+    );
+  };
+
+  private renderTabs = (): React.ReactNode[] => {
+    const theme = this.props.appState.globalState.theme;
+    const jsonTab = (
+      <Tab eventKey={0} title={t('JSON (Raw object)')} key="json">
+        <AceEditor
+          mode="json"
+          theme={theme === Theme.DARK ? 'twilight' : 'eclipse'}
+          value={this.state.jsonModalContent}
+          className={istioAceEditorStyle}
+          name="json-details-viewer"
+          readOnly={true}
+          width="100%"
+          setOptions={{
+            useWorker: false,
+            showLineNumbers: true,
+            tabSize: 2,
+            showFoldWidgets: true
+          }}
+          editorProps={{ $blockScrolling: true }}
+        />
+      </Tab>
+    );
+
+    const tableTab = (
+      <Tab eventKey={1} title={t('Parsed JSON')} key="table">
+        {this.state.jsonModalContent && this.renderTableFromJson(JSON.parse(this.state.jsonModalContent))}
+      </Tab>
+    );
+
+    return [jsonTab, tableTab];
+  };
+
+  private getJSONLogModal = (): React.ReactNode => {
+    return (
+      <Modal
+        className={modalStyle}
+        disableFocusTrap={true}
+        title={t('JSON Log Details')}
+        isOpen={this.state.isJSONModalOpen}
+        onClose={this.closeJSONModal}
+      >
+        <p className={previewLogLineStyle}>{this.state.jsonModalContent}</p>
+        <ParameterizedTabs
+          id="json-log-details-tabs"
+          className={classes(basicTabStyle, tabStyle)}
+          onSelect={tabValue => {
+            this.setState({ currentTab: tabValue });
+          }}
+          tabMap={tabIndex}
+          defaultTab={defaultTab}
+          activeTab={this.state.currentTab}
+          mountOnEnter={true}
+          unmountOnExit={true}
+        >
+          {this.renderTabs()}
+        </ParameterizedTabs>
+      </Modal>
     );
   };
 
@@ -1362,6 +1505,55 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     return `duration: ${formatDuration(duration)}, operationName: ${operationName}`;
   };
 
+  private entryToJSON = (entry: Entry): string | undefined => {
+    if (entry.logEntry) {
+      return JSON.stringify(JSON.parse(entry.logEntry.message), null, defaultJSONIndentation);
+    }
+    return undefined;
+  };
+
+  private isJSON = (entry: Entry): boolean => {
+    try {
+      if (entry.logEntry) {
+        const parsed = JSON.parse(entry.logEntry.message);
+        return typeof parsed === 'object' && parsed !== null;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  private renderTableFromJson = (data: unknown): JSX.Element | null => {
+    // Limited to objects, not arrays of objects
+    if (typeof data === 'object' && data !== null) {
+      return (
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
+          <tbody>
+            {Object.entries(data as Record<string, unknown>).map(([key, value]) => (
+              <tr key={key}>
+                <td className={jsonTableStyle} style={{ fontWeight: 'bold' }}>
+                  {key}
+                </td>
+                <td className={jsonTableStyle}>{typeof value === 'object' ? JSON.stringify(value) : String(value)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    }
+
+    return null;
+  };
+
+  openJSONModal = (jsonEntry: Entry): void => {
+    this.setState({ isJSONModalOpen: true, jsonModalContent: this.entryToJSON(jsonEntry) });
+  };
+
+  closeJSONModal = (): void => {
+    this.setState({ isJSONModalOpen: false, jsonModalContent: undefined });
+  };
+
   private hasEntries = (entries: Entry[]): boolean => !!entries && entries.length > 0;
 }
 
@@ -1375,7 +1567,8 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
     kiosk: state.globalState.kiosk,
     timeRange: timeRangeSelector(state),
-    tracingIntegration: state.tracingState.info?.integration ?? false
+    tracingIntegration: state.tracingState.info?.integration ?? false,
+    appState: state
   };
 };
 
