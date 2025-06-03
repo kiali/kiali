@@ -87,16 +87,17 @@ type NodeData struct {
 	Workload              string              `json:"workload,omitempty"`
 	App                   string              `json:"app,omitempty"`
 	Version               string              `json:"version,omitempty"`
-	Service               string              `json:"service,omitempty"`               // requested service for NodeTypeService
-	Aggregate             string              `json:"aggregate,omitempty"`             // set like "<aggregate>=<aggregateVal>"
-	DestServices          []graph.ServiceName `json:"destServices,omitempty"`          // requested services for [dest] node
-	Labels                map[string]string   `json:"labels,omitempty"`                // k8s labels associated with the node
-	Traffic               []ProtocolTraffic   `json:"traffic,omitempty"`               // traffic rates for all detected protocols
-	HealthData            interface{}         `json:"healthData"`                      // data to calculate health status from configurations
-	HealthDataApp         interface{}         `json:"-"`                               // for local use to generate appBox health
-	HasCB                 bool                `json:"hasCB,omitempty"`                 // true (has circuit breaker) | false
-	HasFaultInjection     bool                `json:"hasFaultInjection,omitempty"`     // true (vs has fault injection) | false
-	HasHealthConfig       HealthConfig        `json:"hasHealthConfig,omitempty"`       // set to the health config override
+	Service               string              `json:"service,omitempty"`           // requested service for NodeTypeService
+	Aggregate             string              `json:"aggregate,omitempty"`         // set like "<aggregate>=<aggregateVal>"
+	DestServices          []graph.ServiceName `json:"destServices,omitempty"`      // requested services for [dest] node
+	Labels                map[string]string   `json:"labels,omitempty"`            // k8s labels associated with the node
+	Traffic               []ProtocolTraffic   `json:"traffic,omitempty"`           // traffic rates for all detected protocols
+	HealthData            interface{}         `json:"healthData"`                  // data to calculate health status from configurations
+	HealthDataApp         interface{}         `json:"-"`                           // for local use to generate appBox health
+	HasCB                 bool                `json:"hasCB,omitempty"`             // true (has circuit breaker) | false
+	HasFaultInjection     bool                `json:"hasFaultInjection,omitempty"` // true (vs has fault injection) | false
+	HasHealthConfig       HealthConfig        `json:"hasHealthConfig,omitempty"`   // set to the health config override
+	HasIngressWaypoint    bool                `json:"hasIngressWaypoint,omitempty"`
 	HasMirroring          bool                `json:"hasMirroring,omitempty"`          // true (has mirroring) | false
 	HasRequestRouting     bool                `json:"hasRequestRouting,omitempty"`     // true (vs has request routing) | false
 	HasRequestTimeout     bool                `json:"hasRequestTimeout,omitempty"`     // true (vs has request timeout) | false
@@ -364,6 +365,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// check if node is a waypoint proxy
 		if val, ok := n.Metadata[graph.IsWaypoint]; ok {
 			nd.IsWaypoint = val.(bool)
+		}
+
+		// check if node redirects traffic to waypoint proxy
+		if val, ok := n.Metadata[graph.HasIngressWaypoint]; ok {
+			nd.HasIngressWaypoint = val.(bool)
 		}
 
 		if val, ok := n.Metadata[graph.HasMirroring]; ok {

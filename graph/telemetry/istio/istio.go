@@ -33,7 +33,6 @@ import (
 
 	"github.com/prometheus/common/model"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry"
 	"github.com/kiali/kiali/graph/telemetry/istio/appender"
@@ -41,7 +40,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
-	"github.com/kiali/kiali/util/sliceutil"
 )
 
 const (
@@ -74,10 +72,7 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 	appenders, finalizers := appender.ParseAppenders(o)
 	trafficMap := graph.NewTrafficMap()
 
-	handleAmbient := sliceutil.Some(finalizers, func(f graph.Appender) bool {
-		return f.Name() == appender.AmbientAppenderName
-	})
-	if handleAmbient {
+	if o.Rates.Ambient != "none" {
 		globalInfo.Vendor[appender.AmbientWaypoints] = GetWaypointMap(ctx, globalInfo)
 	}
 
@@ -383,12 +378,6 @@ func populateTrafficMap(ctx context.Context, trafficMap graph.TrafficMap, vector
 			}
 			flags = string(lFlags)
 		}
-		ztunnel := false
-		if protocol == graph.TCP.Name {
-			if lApp, appOk := m["app"]; appOk {
-				ztunnel = string(lApp) == config.Ztunnel
-			}
-		}
 
 		// handle clusters
 		sourceCluster, destCluster := util.HandleClusters(lSourceCluster, sourceClusterOk, lDestCluster, destClusterOk)
@@ -433,9 +422,10 @@ func populateTrafficMap(ctx context.Context, trafficMap graph.TrafficMap, vector
 		// - dest node is already a service node
 		// - source or dest workload is an ambient waypoint
 		var inject, sourceIsWaypoint, destIsWaypoint bool
-		if ztunnel {
+		if o.Rates.Ambient != "none" {
 			sourceIsWaypoint, destIsWaypoint = hasWaypoint(setWaypointKey(wpKeySource, sourceCluster, sourceWlNs, sourceWl), setWaypointKey(wpKeyDest, destCluster, destWlNs, destWl), globalInfo)
 		}
+
 		if o.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
 			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o.GraphType)
 			if err != nil {
@@ -582,10 +572,7 @@ func BuildNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalIn
 
 	appenders, finalizers := appender.ParseAppenders(o)
 
-	handleAmbient := sliceutil.Some(finalizers, func(f graph.Appender) bool {
-		return f.Name() == appender.AmbientAppenderName
-	})
-	if handleAmbient {
+	if o.Rates.Ambient != "none" {
 		globalInfo.Vendor[appender.AmbientWaypoints] = GetWaypointMap(ctx, globalInfo)
 	}
 
@@ -1135,9 +1122,11 @@ func setWaypointKey(wpKey *waypointKey, cluster, namespace, name string) *waypoi
 
 // hasWaypoint returns true if the source or dest workload is determined to be a waypoint workload.
 func hasWaypoint(wpKeySource, wpKeyDest *waypointKey, globalInfo *graph.GlobalInfo) (sourceIsWaypoint bool, destIsWaypoint bool) {
+
 	wpMap := globalInfo.Vendor[appender.AmbientWaypoints].(waypointMap)
 	sourceIsWaypoint = wpMap[*wpKeySource]
 	destIsWaypoint = wpMap[*wpKeyDest]
+
 	return sourceIsWaypoint, destIsWaypoint
 }
 
