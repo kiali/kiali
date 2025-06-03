@@ -79,11 +79,12 @@ type MonitoringDashboardExternalLink struct {
 }
 
 type MonitoringDashboardExternalLinkVariables struct {
-	Namespace string `json:"namespace,omitempty" yaml:"namespace,omitempty"`
-	App       string `json:"app,omitempty" yaml:"app,omitempty"`
-	Service   string `json:"service,omitempty" yaml:"service,omitempty"`
-	Version   string `json:"version,omitempty" yaml:"version,omitempty"`
-	Workload  string `json:"workload,omitempty" yaml:"workload,omitempty"`
+	App        string `json:"app,omitempty" yaml:"app,omitempty"`
+	Datasource string `json:"datasource,omitempty" yaml:"datasource,omitempty"`
+	Namespace  string `json:"namespace,omitempty" yaml:"namespace,omitempty"`
+	Service    string `json:"service,omitempty" yaml:"service,omitempty"`
+	Version    string `json:"version,omitempty" yaml:"version,omitempty"`
+	Workload   string `json:"workload,omitempty" yaml:"workload,omitempty"`
 }
 
 // GetMetrics provides consistent MonitoringDashboardMetric slice in a backward-compatible way, if deprecated field MetricName is used instead of Metrics in Spec.

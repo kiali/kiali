@@ -63,6 +63,7 @@ func TestGetGrafanaInfoExternal(t *testing.T) {
 	assert.Equal(t, http.StatusOK, code)
 	assert.Len(t, info.ExternalLinks, 1)
 	assert.Equal(t, "http://grafana-external:3001/some_path", info.ExternalLinks[0].URL)
+	assert.Equal(t, "", info.DatasourceUID)
 }
 
 func TestGetGrafanaInfoInCluster(t *testing.T) {
@@ -70,6 +71,7 @@ func TestGetGrafanaInfoInCluster(t *testing.T) {
 	conf.ExternalServices.Grafana.ExternalURL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	conf.ExternalServices.Grafana.InternalURL = "http://grafana.istio-system:3001"
+	conf.ExternalServices.Grafana.DatasourceUID = "PROMETHEUS"
 
 	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
 
@@ -82,6 +84,7 @@ func TestGetGrafanaInfoInCluster(t *testing.T) {
 	assert.Equal(t, http.StatusOK, code)
 	assert.Len(t, info.ExternalLinks, 1)
 	assert.Equal(t, "http://grafana-external:3001/some_path", info.ExternalLinks[0].URL)
+	assert.Equal(t, "PROMETHEUS", info.DatasourceUID)
 }
 
 func TestGetGrafanaInfoGetError(t *testing.T) {

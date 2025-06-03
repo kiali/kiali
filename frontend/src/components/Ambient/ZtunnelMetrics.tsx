@@ -29,7 +29,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
   const expandedChart = urlParams.get('expand') ?? undefined;
   const toolbarRef = React.createRef<HTMLDivElement>();
   const [metrics, setMetrics] = React.useState<DashboardModel>();
-  const [grafanaLinks, setGrafanaLinks] = React.useState<GrafanaInfo>();
+  const [grafanaInfo, setGrafanaInfo] = React.useState<GrafanaInfo>();
   const rateParams = computePrometheusRateParams(
     props.rangeDuration.rangeDuration ? props.rangeDuration.rangeDuration : 60,
     10
@@ -63,7 +63,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
     API.getGrafanaInfo()
       .then(grafanaInfo => {
         if (grafanaInfo) {
-          setGrafanaLinks(grafanaInfo.data);
+          setGrafanaInfo(grafanaInfo.data);
         }
       })
       .catch(err => {
@@ -100,16 +100,17 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
 
   return (
     <div>
-      {grafanaLinks && (
+      {grafanaInfo && (
         <div ref={toolbarRef}>
           <Toolbar style={{ padding: 0, marginBottom: '1.25rem' }}>
             <ToolbarGroup>
               <ToolbarItem style={{ marginLeft: 'auto', paddingRight: '1.25rem' }}>
                 <GrafanaLinks
-                  links={grafanaLinks?.externalLinks}
+                  links={grafanaInfo.externalLinks}
                   namespace={props.namespace}
                   object="ztunnel"
                   objectType={MetricsObjectTypes.ZTUNNEL}
+                  datasourceUID={grafanaInfo.datasourceUID}
                 />
               </ToolbarItem>
             </ToolbarGroup>
