@@ -142,8 +142,8 @@ func TestValidateSimpleTempoHTTP(t *testing.T) {
 	assert.Equal(t, "tempo", validConfigs[0].Provider)
 	assert.Equal(t, "jaeger", validConfigs[1].Provider)
 
-	assert.True(t, validConfigs[0].NamespaceSelector)
-	assert.True(t, validConfigs[1].NamespaceSelector)
+	assert.True(t, *validConfigs[0].NamespaceSelector)
+	assert.True(t, *validConfigs[1].NamespaceSelector)
 
 	assert.Equal(t, "http://tempo-host:3100", validConfigs[0].Url)
 	assert.Equal(t, "http://tempo-host:3100", validConfigs[1].Url)
@@ -268,8 +268,8 @@ func TestValidateJaegerHTTP_SuccessfulBothEndpoints(t *testing.T) {
 	assert.Equal(t, "jaeger", validConfigs[0].Provider)
 	assert.Equal(t, "jaeger", validConfigs[1].Provider)
 	assert.GreaterOrEqual(t, len(logs), 2)
-	assert.True(t, validConfigs[0].NamespaceSelector)
-	assert.True(t, validConfigs[1].NamespaceSelector)
+	assert.True(t, *validConfigs[0].NamespaceSelector)
+	assert.True(t, *validConfigs[1].NamespaceSelector)
 }
 
 func TestValidateJaegerHTTP_OnlyOneSuccess(t *testing.T) {
