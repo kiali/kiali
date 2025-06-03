@@ -196,7 +196,7 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
                 <>
                   <div className={configStyle}>
                     {Object.keys(item).map(key => {
-                      if (labels[key] !== undefined) {
+                      if (labels[key] !== undefined && item[key] !== null) {
                         return (
                           <span className={blockDisplay}>
                             <span className={blueDisplay}>{labels[key]}:</span> {item[key].toString()}
