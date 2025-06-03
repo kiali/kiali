@@ -569,7 +569,7 @@ export class GraphDataSource {
   };
 
   private fetchDataForNode = (restParams: GraphElementsQuery, cluster?: string): void => {
-    const perfKey: string = `Graph${capitalize(this.fetchParameters.node!.nodeType)}`;
+    const perfKey = `Graph${capitalize(this.fetchParameters.node!.nodeType)}`;
     startPerfTimer(perfKey);
     this.promiseRegistry
       .register(PROMISE_KEY, API.getNodeGraphElements(this.fetchParameters.node!, restParams, cluster))
