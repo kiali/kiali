@@ -152,8 +152,8 @@ func (s *Service) Info(ctx context.Context, dashboardSupplier DashboardSupplierF
 	}
 
 	grafanaInfo := models.GrafanaInfo{
-		ExternalLinks: links,
 		DatasourceUID: grafanaConfig.DatasourceUID,
+		ExternalLinks: links,
 	}
 
 	return &grafanaInfo, http.StatusOK, nil
