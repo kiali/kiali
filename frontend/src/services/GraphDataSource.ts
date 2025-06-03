@@ -21,6 +21,7 @@ import EventEmitter from 'eventemitter3';
 import { createSelector } from 'reselect';
 import { isMultiCluster, serverConfig } from '../config';
 import { startPerfTimer, endPerfTimer } from '../utils/PerformanceUtils';
+import { capitalize } from '../utils/Common';
 
 export const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
 const PROMISE_KEY = 'CURRENT_REQUEST';
@@ -531,7 +532,7 @@ export class GraphDataSource {
 
   private fetchDataForNamespaces = (restParams: GraphElementsQuery): void => {
     restParams.namespaces = this.fetchParameters.namespaces.map(namespace => namespace.name).join(',');
-    const perfKey: any = `NamespacesGraphElements`;
+    const perfKey = 'GraphNamespaces';
     startPerfTimer(perfKey);
     this.promiseRegistry.register(PROMISE_KEY, API.getGraphElements(restParams)).then(
       response => {
@@ -568,7 +569,7 @@ export class GraphDataSource {
   };
 
   private fetchDataForNode = (restParams: GraphElementsQuery, cluster?: string): void => {
-    const perfKey: any = `NodeGraphElements`;
+    const perfKey: string = `Graph${capitalize(this.fetchParameters.node!.nodeType)}`;
     startPerfTimer(perfKey);
     this.promiseRegistry
       .register(PROMISE_KEY, API.getNodeGraphElements(this.fetchParameters.node!, restParams, cluster))

@@ -21,6 +21,7 @@ import { KialiDispatch } from '../../types/Redux';
 import { isMultiCluster } from '../../config';
 import { KialiIcon } from 'config/KialiIcon';
 import { TraceLimit, TraceLimitOption } from 'components/Metrics/TraceLimit';
+import { endPerfTimer, startPerfTimer } from '../../utils/PerformanceUtils';
 
 type ReduxStateProps = {
   kiosk: string;
@@ -174,7 +175,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
     };
 
     const d = this.props.nodeData;
-
+    const perfKey: string = d.workload ? 'WorkloadTraces' : d.service ? 'ServiceTraces' : 'AppTraces';
     const promise = d.workload
       ? API.getWorkloadTraces(d.namespace, d.workload, params, d.cluster)
       : d.service
@@ -182,10 +183,11 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
       : API.getAppTraces(d.namespace, d.app!, params, d.cluster);
 
     this.promises.cancelAll();
-
+    startPerfTimer(perfKey);
     this.promises
       .register('traces', promise)
       .then(response => {
+        endPerfTimer(perfKey);
         const traces = response.data.data
           ? (response.data.data
               .map(trace => transformTraceData(trace, this.props.nodeData.cluster))

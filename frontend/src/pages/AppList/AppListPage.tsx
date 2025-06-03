@@ -24,6 +24,7 @@ import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { EmptyVirtualList } from 'components/VirtualList/EmptyVirtualList';
 import { HistoryManager } from 'app/History';
+import { startPerfTimer, endPerfTimer } from '../../utils/PerformanceUtils';
 
 type AppListPageState = FilterComponent.State<AppListItem> & {
   loaded: boolean;
@@ -118,10 +119,11 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
   }
 
   fetchApps(clusters: string[], filters: ActiveFiltersInfo, toggles: ActiveTogglesInfo, rateInterval: number): void {
+    const perfKey = 'ClustersApps';
     const appsPromises = clusters.map(cluster => {
       const health = toggles.get('health') ? 'true' : 'false';
       const istioResources = toggles.get('istioResources') ? 'true' : 'false';
-
+      startPerfTimer(perfKey);
       return API.getClustersApps(
         this.props.activeNamespaces.map(ns => ns.name).join(','),
         {
@@ -139,6 +141,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
         let appListItems: AppListItem[] = [];
 
         responses.forEach(response => {
+          endPerfTimer(perfKey);
           appListItems = appListItems.concat(AppListClass.getAppItems(response.data, rateInterval));
         });
 

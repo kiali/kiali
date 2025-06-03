@@ -71,3 +71,7 @@ export const download = (text: string, fileName: string): void => {
   document.body.appendChild(element); // Required for this to work in FireFox
   element.click();
 };
+
+export const capitalize = (str: string): string => {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};

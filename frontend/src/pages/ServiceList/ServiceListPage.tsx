@@ -27,6 +27,7 @@ import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { EmptyVirtualList } from 'components/VirtualList/EmptyVirtualList';
 import { HistoryManager } from 'app/History';
+import { endPerfTimer, startPerfTimer } from '../../utils/PerformanceUtils';
 
 type ServiceListPageState = FilterComponent.State<ServiceListItem> & {
   loaded: boolean;
@@ -163,8 +164,10 @@ class ServiceListPageComponent extends FilterComponent.Component<
     toggles: ActiveTogglesInfo,
     rateInterval: number
   ): void {
-    const servicesPromises = clusters.map(cluster =>
-      API.getClustersServices(
+    const perfKey = 'ClustersServices';
+    const servicesPromises = clusters.map(cluster => {
+      startPerfTimer(perfKey);
+      return API.getClustersServices(
         this.props.activeNamespaces.map(ns => ns.name).join(','),
         {
           health: toggles.get('health') ?? true,
@@ -173,8 +176,8 @@ class ServiceListPageComponent extends FilterComponent.Component<
           onlyDefinitions: toggles.get('configuration') !== undefined ? !toggles.get('configuration') : false // !configuration => onlyDefinitions
         },
         cluster
-      )
-    );
+      );
+    });
 
     this.promises
       .registerAll('services', servicesPromises)
@@ -182,6 +185,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
         let serviceListItems: ServiceListItem[] = [];
 
         responses.forEach(response => {
+          endPerfTimer(perfKey);
           serviceListItems = serviceListItems.concat(this.getServiceItem(response.data, rateInterval));
         });
 
