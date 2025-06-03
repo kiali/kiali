@@ -37,10 +37,6 @@ type PrometheusConfig struct {
 	StorageTsdbRetention int64 `json:"storageTsdbRetention,omitempty"`
 }
 
-type GrafanaConfig struct {
-	DatasourceUID string `json:"datasourceUID,omitempty"`
-}
-
 type DeploymentConfig struct {
 	ViewOnlyMode bool `json:"viewOnlyMode,omitempty"`
 }
