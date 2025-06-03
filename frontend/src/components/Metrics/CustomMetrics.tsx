@@ -26,7 +26,7 @@ import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { GrafanaLinks } from './GrafanaLinks';
 import { MetricsObjectTypes } from 'types/Metrics';
 import { SpanOverlay, JaegerLineInfo } from './SpanOverlay';
-import { DashboardModel, ExternalLink } from 'types/Dashboards';
+import { DashboardModel } from 'types/Dashboards';
 import { Overlay } from 'types/Overlay';
 import { Aggregator, DashboardQuery } from 'types/MetricsOptions';
 import { RawOrBucket } from 'types/VictoryChartInfo';
@@ -38,12 +38,12 @@ import { timeRangeSelector } from '../../store/Selectors';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 import { TraceSpansLimit } from './TraceSpansLimit';
-import { serverConfig } from '../../config';
+import { GrafanaInfo } from '../../types/GrafanaInfo';
 
 type MetricsState = {
   cluster?: string;
   dashboard?: DashboardModel;
-  grafanaLinks: ExternalLink[];
+  grafanaInfo: GrafanaInfo;
   isTimeOptionsOpen: boolean;
   labelsSettings: LabelsSettings;
   showSpans: boolean;
@@ -110,7 +110,9 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     const cluster = HistoryManager.getClusterName();
     this.state = {
       cluster: cluster,
-      grafanaLinks: [],
+      grafanaInfo: {
+        externalLinks: []
+      },
       isTimeOptionsOpen: false,
       labelsSettings: settings.labelsSettings,
       showSpans: settings.showSpans,
@@ -191,7 +193,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
         this.setState({
           dashboard: response.data,
           labelsSettings: labelsSettings,
-          grafanaLinks: response.data.externalLinks
+          grafanaInfo: response.data
         });
       })
       .catch(error => {
@@ -367,11 +369,11 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
 
           <ToolbarGroup style={{ marginLeft: 'auto', paddingRight: '20px' }}>
             <GrafanaLinks
-              links={this.state.grafanaLinks}
+              links={this.state.grafanaInfo.externalLinks}
               namespace={this.props.namespace}
               object={this.props.workload ? this.props.workload : this.props.app}
               objectType={this.props.workload ? MetricsObjectTypes.WORKLOAD : MetricsObjectTypes.APP}
-              datasourceUID={serverConfig.grafana.datasourceUID}
+              datasourceUID={this.state.grafanaInfo.datasourceUID}
               version={this.props.version}
             />
           </ToolbarGroup>

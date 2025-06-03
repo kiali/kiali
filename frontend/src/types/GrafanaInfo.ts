@@ -13,5 +13,6 @@ export const ISTIO_DASHBOARDS: string[] = [
 ];
 
 export interface GrafanaInfo {
+  datasourceUID?: string;
   externalLinks: ExternalLink[];
 }

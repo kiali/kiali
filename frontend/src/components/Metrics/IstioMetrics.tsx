@@ -20,9 +20,8 @@ import { location, router, URLParam } from 'app/History';
 import { MetricsObjectTypes } from 'types/Metrics';
 import { GrafanaInfo } from 'types/GrafanaInfo';
 import { MessageType } from 'types/MessageCenter';
-import { GrafanaLinks } from './GrafanaLinks';
 import { SpanOverlay, JaegerLineInfo } from './SpanOverlay';
-import { ChartModel, DashboardModel, ExternalLink } from 'types/Dashboards';
+import { ChartModel, DashboardModel } from 'types/Dashboards';
 import { Overlay } from 'types/Overlay';
 import { RawOrBucket } from 'types/VictoryChartInfo';
 import { Dashboard } from 'components/Charts/Dashboard';
@@ -33,12 +32,12 @@ import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { ApiResponse } from 'types/Api';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 import { TraceSpansLimit } from './TraceSpansLimit';
-import { serverConfig } from '../../config';
+import { GrafanaLinks } from './GrafanaLinks';
 
 type MetricsState = {
   crippledFeatures?: KialiCrippledFeatures;
   dashboard?: DashboardModel;
-  grafanaLinks: ExternalLink[];
+  grafanaInfo: GrafanaInfo;
   isTimeOptionsOpen: boolean;
   labelsSettings: LabelsSettings;
   showSpans: boolean;
@@ -97,7 +96,9 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
     // Initialize active filters from URL
     this.state = {
       labelsSettings: settings.labelsSettings,
-      grafanaLinks: [],
+      grafanaInfo: {
+        externalLinks: []
+      },
       isTimeOptionsOpen: false,
       tabHeight: 300,
       showSpans: settings.showSpans,
@@ -232,9 +233,9 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
     IstioMetricsComponent.grafanaInfoPromise
       .then(grafanaInfo => {
         if (grafanaInfo) {
-          this.setState({ grafanaLinks: grafanaInfo.externalLinks });
+          this.setState({ grafanaInfo: grafanaInfo });
         } else {
-          this.setState({ grafanaLinks: [] });
+          this.setState({ grafanaInfo: { externalLinks: [] } });
         }
       })
       .catch(err => {
@@ -428,11 +429,11 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
 
             <ToolbarItem style={{ marginLeft: 'auto', paddingRight: '20px' }}>
               <GrafanaLinks
-                links={this.state.grafanaLinks}
+                links={this.state.grafanaInfo.externalLinks}
                 namespace={this.props.namespace}
                 object={this.props.object}
                 objectType={this.props.objectType}
-                datasourceUID={serverConfig.grafana.datasourceUID}
+                datasourceUID={this.state.grafanaInfo.datasourceUID}
               />
             </ToolbarItem>
 
