@@ -6,7 +6,6 @@ import (
 	goerrors "errors"
 	"fmt"
 	"io"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -474,37 +473,29 @@ func (in *K8SClient) UpdateWorkload(namespace string, workloadName string, workl
 	emptyPatchOptions := meta_v1.PatchOptions{}
 	bytePatch := []byte(jsonPatch)
 
-	elem := reflect.ValueOf(&workloadObj).Elem()
-	// Make sure workloadObj is a pointer we can set.
-	if !elem.CanSet() {
-		return fmt.Errorf("workloadObj is invalid. Should be a pointer. Got: %T", workloadObj)
-	}
-
 	var err error
-	var obj runtime.Object
 	switch workloadObj.(type) {
 	case *apps_v1.Deployment:
-		obj, err = in.k8s.AppsV1().Deployments(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
+		_, err = in.k8s.AppsV1().Deployments(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
 	case *apps_v1.ReplicaSet:
-		obj, err = in.k8s.AppsV1().ReplicaSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
+		_, err = in.k8s.AppsV1().ReplicaSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
 	case *core_v1.ReplicationController:
-		obj, err = in.k8s.CoreV1().ReplicationControllers(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
+		_, err = in.k8s.CoreV1().ReplicationControllers(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
 	case *osapps_v1.DeploymentConfig:
 		if in.IsOpenShift() {
 			result := &osapps_v1.DeploymentConfig{}
 			err = in.k8s.Discovery().RESTClient().Patch(GetPatchType(patchType)).Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").SubResource(workloadName).Body(bytePatch).Do(in.ctx).Into(result)
-			obj = result
 		}
 	case *apps_v1.StatefulSet:
-		obj, err = in.k8s.AppsV1().StatefulSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
+		_, err = in.k8s.AppsV1().StatefulSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
 	case *batch_v1.Job:
-		obj, err = in.k8s.BatchV1().Jobs(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
+		_, err = in.k8s.BatchV1().Jobs(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
 	case *batch_v1.CronJob:
-		obj, err = in.k8s.BatchV1().CronJobs(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
+		_, err = in.k8s.BatchV1().CronJobs(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
 	case *core_v1.Pod:
-		obj, err = in.k8s.CoreV1().Pods(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
+		_, err = in.k8s.CoreV1().Pods(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
 	case *apps_v1.DaemonSet:
-		obj, err = in.k8s.AppsV1().DaemonSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
+		_, err = in.k8s.AppsV1().DaemonSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
 	default:
 		err = fmt.Errorf("Workload type %T not found", workloadObj)
 	}
@@ -512,7 +503,6 @@ func (in *K8SClient) UpdateWorkload(namespace string, workloadName string, workl
 		return err
 	}
 
-	elem.Set(reflect.ValueOf(obj))
 	return nil
 }
 

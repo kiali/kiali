@@ -2416,18 +2416,6 @@ func (in *WorkloadService) updateWorkload(ctx context.Context, cluster string, n
 					errChan <- err
 					return
 				}
-
-				kubeCache, err := in.cache.GetKubeCache(cluster)
-				if err != nil {
-					log.Errorf("Unable to find kube cache for cluster: %s. You may see stale data but the update was processed correctly.", cluster)
-					return
-				}
-
-				if err := kubernetes.WaitForObjectUpdateInCache(ctx, kubeCache, obj); err != nil {
-					// It won't break anything if we return the object before it is updated in the cache.
-					// We will just show stale data so just log an error here instead of failing.
-					log.Errorf("Failed to wait for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
-				}
 			}
 		}(workloadGVK, workloadObj)
 	}
