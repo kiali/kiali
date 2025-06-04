@@ -1,4 +1,5 @@
 {
+  "proxy": "http://localhost:20001/kiali",
   "name": "@kiali/kiali-ui",
   "version": "2.14.0",
   "description": "React UI for [Kiali](https://github.com/kiali/kiali).",

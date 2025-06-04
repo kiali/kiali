@@ -431,7 +431,6 @@ func TestClientCreatedWithProxyInfo(t *testing.T) {
 			require := require.New(t)
 
 			cfg := config.NewConfig()
-			cfg.Deployment.RemoteSecretPath = t.TempDir() // Random dir so that the remote secret isn't read if it exists.
 			cfg.Auth = tc.auth
 			SetConfig(t, *cfg)
 
@@ -460,13 +459,8 @@ func TestClientCreatedWithProxyInfo(t *testing.T) {
 func TestNewClientFactoryClosesRecycleWhenCTXCancelled(t *testing.T) {
 	require := require.New(t)
 
-	// Create the remote secret so that the "in cluster" config is not used.
-	// Otherwise the "in cluster" config looks for some env vars that are not present.
-	const testClusterName = "TestRemoteCluster"
-	filename := createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
-
 	cfg := config.NewConfig()
-	cfg.Deployment.RemoteSecretPath = filename
+	cfg.IstioNamespace = config.IstioNamespaceNone
 	SetConfig(t, *cfg)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -496,13 +490,8 @@ func TestNewClientFactoryDoesNotSetGlobalClientFactory(t *testing.T) {
 		factory = nil
 	}
 
-	// Create the remote secret so that the "in cluster" config is not used.
-	// Otherwise the "in cluster" config looks for some env vars that are not present.
-	const testClusterName = "TestRemoteCluster"
-	filename := createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
-
 	cfg := config.NewConfig()
-	cfg.Deployment.RemoteSecretPath = filename
+	cfg.IstioNamespace = config.IstioNamespaceNone
 	SetConfig(t, *cfg)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -520,13 +509,8 @@ func TestNewClientFactoryDoesNotSetGlobalClientFactory(t *testing.T) {
 func TestClientFactoryReturnsSAClientWhenConfigClusterNameIsEmpty(t *testing.T) {
 	require := require.New(t)
 
-	// Create the remote secret so that the "in cluster" config is not used.
-	// Otherwise the "in cluster" config looks for some env vars that are not present.
-	const testClusterName = "TestRemoteCluster"
-	filename := createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
-
 	cfg := config.NewConfig()
-	cfg.Deployment.RemoteSecretPath = filename
+	cfg.IstioNamespace = config.IstioNamespaceNone
 	cfg.KubernetesConfig.ClusterName = ""
 	SetConfig(t, *cfg)
 

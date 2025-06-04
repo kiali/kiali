@@ -106,7 +106,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
-	conf.InCluster = false
+	conf.IstioNamespace = config.IstioNamespaceNone
 	conf.KubernetesConfig.ClusterName = "KialiCluster"
 
 	istioDeploymentMock := apps_v1.Deployment{
@@ -214,7 +214,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	check := require.New(t)
 
 	conf := config.NewConfig()
-	conf.InCluster = false
+	conf.IstioNamespace = config.IstioNamespaceNone
 
 	remoteNs := kubetest.FakeNamespaceWithLabels(conf.IstioNamespace, map[string]string{"topology.istio.io/network": "TheRemoteNetwork"})
 
@@ -228,7 +228,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 				"app.kubernetes.io/part-of": "kiali",
 			},
 			Name:      "kiali-service",
-			Namespace: conf.IstioNamespace,
+			Namespace: config.IstioNamespaceDefault,
 		},
 		Spec: core_v1.ServiceSpec{
 			Selector: map[string]string{
