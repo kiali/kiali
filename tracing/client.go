@@ -131,13 +131,20 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 		auth.Token = token
 	}
 
-	u, errParse := url.Parse(cfgTracing.InternalURL)
-	if !conf.InCluster {
+	var u *url.URL
+	var errParse error
+	if cfgTracing.InternalURL != "" {
+		u, errParse = url.Parse(cfgTracing.InternalURL)
+		if errParse != nil {
+			zl.Error().Msgf("Error parsing tracing InternalURL: %s", errParse)
+			return nil, errParse
+		}
+	} else {
 		u, errParse = url.Parse(cfgTracing.ExternalURL)
-	}
-	if errParse != nil {
-		zl.Error().Msgf("Error parsing Tracing URL: %s", errParse)
-		return nil, errParse
+		if errParse != nil {
+			zl.Error().Msgf("Error parsing tracing ExternalURL: %s", errParse)
+			return nil, errParse
+		}
 	}
 
 	port := u.Port()
