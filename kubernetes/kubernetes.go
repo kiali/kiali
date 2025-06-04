@@ -66,7 +66,7 @@ type K8SUserClientInterface interface {
 	K8SClientInterface
 	UpdateNamespace(namespace string, jsonPatch string) (*core_v1.Namespace, error)
 	UpdateService(namespace string, name string, jsonPatch string, patchType string) (*core_v1.Service, error)
-	UpdateWorkload(namespace string, workloadName string, workloadObj runtime.Object, jsonPatch string, patchType string) error
+	UpdateWorkload(namespace string, workloadName string, workloadObj runtime.Object, jsonPatch string, patchType string) (runtime.Object, error)
 }
 
 type OSClientInterface interface {
@@ -470,14 +470,14 @@ func (in *K8SClient) GetSelfSubjectAccessReview(ctx context.Context, namespace, 
 	return result, err
 }
 
-func (in *K8SClient) UpdateWorkload(namespace string, workloadName string, workloadObj runtime.Object, jsonPatch string, patchType string) error {
+func (in *K8SClient) UpdateWorkload(namespace string, workloadName string, workloadObj runtime.Object, jsonPatch string, patchType string) (runtime.Object, error) {
 	emptyPatchOptions := meta_v1.PatchOptions{}
 	bytePatch := []byte(jsonPatch)
 
 	elem := reflect.ValueOf(&workloadObj).Elem()
 	// Make sure workloadObj is a pointer we can set.
 	if !elem.CanSet() {
-		return fmt.Errorf("workloadObj is invalid. Should be a pointer. Got: %T", workloadObj)
+		return nil, fmt.Errorf("workloadObj is invalid. Should be a pointer. Got: %T", workloadObj)
 	}
 
 	var err error
@@ -509,11 +509,11 @@ func (in *K8SClient) UpdateWorkload(namespace string, workloadName string, workl
 		err = fmt.Errorf("Workload type %T not found", workloadObj)
 	}
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	elem.Set(reflect.ValueOf(obj))
-	return nil
+	return obj, nil
 }
 
 func (in *K8SClient) UpdateService(namespace string, name string, jsonPatch string, patchType string) (*core_v1.Service, error) {
@@ -560,13 +560,13 @@ func EnvVarIsTrue(key string, env core_v1.EnvVar) bool {
 	return env.Name == key && env.Value == "true"
 }
 
-// WaitForObjectUpdateInCache waits for the update to propgate to the cached object. Modifies obj passed
+// WaitForObjectUpdateInCache waits for the update to propagate to the cached object. Modifies obj passed
 // so don't use it afterward.
 func WaitForObjectUpdateInCache(ctx context.Context, kubeCache client.Reader, obj client.Object) error {
 	// Copy the resource version then reuse the obj so we have something to copy into.
 	currentResourceVersion, err := strconv.Atoi(obj.GetResourceVersion())
 	if err != nil {
-		return fmt.Errorf("unable to convert ResourceVersion for obj: %s/%s", obj.GetName(), obj.GetNamespace())
+		return fmt.Errorf("unable to convert currentResourceVersion for obj: %s/%s", obj.GetName(), obj.GetNamespace())
 	}
 
 	return wait.PollUntilContextTimeout(ctx, 100*time.Millisecond, time.Second*5, true, func(ctx context.Context) (bool, error) {
@@ -582,7 +582,7 @@ func WaitForObjectUpdateInCache(ctx context.Context, kubeCache client.Reader, ob
 		// Generation only gets incremented when modifying the spec so that won't work either.
 		cachedResourceVersion, err := strconv.Atoi(obj.GetResourceVersion())
 		if err != nil {
-			return false, fmt.Errorf("unable to convert ResourceVersion for obj: %s/%s", obj.GetName(), obj.GetNamespace())
+			return false, fmt.Errorf("unable to convert cachedResourceVersion for obj: %s/%s", obj.GetName(), obj.GetNamespace())
 		}
 
 		// Our change has been propagated to the cache if the newRV from the object in the cache is >= the RV

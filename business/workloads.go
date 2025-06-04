@@ -2411,9 +2411,12 @@ func (in *WorkloadService) updateWorkload(ctx context.Context, cluster string, n
 		go func(wkGVK schema.GroupVersionKind, obj ctrlclient.Object) {
 			defer wg.Done()
 			if in.isWorkloadIncluded(wkGVK.Kind) {
-				if err := userClient.UpdateWorkload(namespace, workloadName, workloadObj, jsonPatch, patchType); err != nil && !errors.IsNotFound(err) {
-					log.Errorf("Error fetching %s per namespace %s and name %s: %s", wkGVK, namespace, workloadName, err)
-					errChan <- err
+				obj, err := userClient.UpdateWorkload(namespace, workloadName, obj, jsonPatch, patchType)
+				if err != nil {
+					if !errors.IsNotFound(err) {
+						log.Errorf("Error fetching %s per namespace %s and name %s: %s", wkGVK, namespace, workloadName, err)
+						errChan <- err
+					}
 					return
 				}
 
@@ -2423,7 +2426,7 @@ func (in *WorkloadService) updateWorkload(ctx context.Context, cluster string, n
 					return
 				}
 
-				if err := kubernetes.WaitForObjectUpdateInCache(ctx, kubeCache, obj); err != nil {
+				if err := kubernetes.WaitForObjectUpdateInCache(ctx, kubeCache, obj.(ctrlclient.Object)); err != nil {
 					// It won't break anything if we return the object before it is updated in the cache.
 					// We will just show stale data so just log an error here instead of failing.
 					log.Errorf("Failed to wait for object to update in cache. You may see stale data but the update was processed correctly. Error: %s", err)
