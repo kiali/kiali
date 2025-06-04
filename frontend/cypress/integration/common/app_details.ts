@@ -30,7 +30,7 @@ Then('user sees inbound metrics information', () => {
 
   openTab('Inbound Metrics');
   cy.wait('@fetchMetrics');
-  cy.waitForReact(1000, '#root');
+  cy.waitForReact();
 
   cy.getReact('IstioMetricsComponent', { props: { 'data-test': 'inbound-metrics-component' } })
     // HOCs can match the component name. This filters the HOCs for just the bare component.
@@ -49,7 +49,7 @@ Then('user sees outbound metrics information', () => {
 
   openTab('Outbound Metrics');
   cy.wait('@fetchMetrics');
-  cy.waitForReact(1000, '#root');
+  cy.waitForReact();
 
   cy.getReact('IstioMetricsComponent', { props: { 'data-test': 'outbound-metrics-component' } })
     // HOCs can match the component name. This filters the HOCs for just the bare component.

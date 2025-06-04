@@ -613,16 +613,21 @@ Then('the AuthorizationPolicy should have a {string}', function (healthStatus: s
   );
 });
 
+const hexToRgb = (hex: string): string => {
+  const rValue = parseInt(hex.substring(0, 2), 16);
+  const gValue = parseInt(hex.substring(2, 4), 16);
+  const bValue = parseInt(hex.substring(4), 16);
+
+  return `rgb(${rValue}, ${gValue}, ${bValue})`;
+};
+
 function waitUntilConfigIsVisible(
-  attempt: number,
+  retries: number,
   crdInstanceName: string,
   crdName: string,
   namespace: string,
   healthStatus: string
 ): void {
-  if (attempt === 0) {
-    throw new Error(`Condition not met after retries`);
-  }
   cy.request({ method: 'GET', url: `${Cypress.config('baseUrl')}/api/istio/config?refresh=0` });
   cy.get('[data-test="refresh-button"]').click();
   ensureKialiFinishedLoading();
@@ -638,18 +643,28 @@ function waitUntilConfigIsVisible(
             .should('be.visible')
             .then(icon => {
               const colorVar = `--pf-v5-global--${healthStatus}-color--100`;
-              const color = getComputedStyle(icon[0]).getPropertyValue(colorVar);
-              if (color) {
-                found = true;
-              }
+              const statusColor = getComputedStyle(icon[0]).getPropertyValue(colorVar).replace('#', '');
+
+              cy.wrap(icon[0])
+                .invoke('css', 'color')
+                .then(iconColor => {
+                  // Convert the status color to RGB format to compare it with the icon color
+                  if (iconColor?.toString() === hexToRgb(statusColor)) {
+                    found = true;
+                  }
+                });
             });
         }
       }
     })
     .then(() => {
       if (!found) {
-        cy.wait(10000);
-        waitUntilConfigIsVisible(attempt - 1, crdInstanceName, crdName, namespace, healthStatus);
+        if (retries === 0) {
+          throw new Error(`Condition not met after retries`);
+        } else {
+          cy.wait(20000);
+          waitUntilConfigIsVisible(retries - 1, crdInstanceName, crdName, namespace, healthStatus);
+        }
       }
     });
 }

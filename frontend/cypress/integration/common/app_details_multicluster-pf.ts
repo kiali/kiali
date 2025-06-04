@@ -23,7 +23,7 @@ Then(
 
     openTab(`${metrics} Metrics`);
     cy.wait('@fetchMetrics');
-    cy.waitForReact(1000, '#root');
+    cy.waitForReact();
 
     cy.getReact('IstioMetricsComponent', { props: { 'data-test': `${metrics.toLowerCase()}-metrics-component` } })
       // HOCs can match the component name. This filters the HOCs for just the bare component.
