@@ -408,14 +408,16 @@ func validateEndpoint(ctx context.Context, client http.Client, zl *zerolog.Logge
 			zl.Trace().Msg(msg)
 			return nil, logs, errors.New(msg)
 		}
-		vc := model.ValidConfig{Url: validEndpoint, Provider: provider, UseGRPC: false, NamespaceSelector: false}
+		ns := false
+		vc := model.ValidConfig{Url: validEndpoint, Provider: provider, UseGRPC: false}
 		for _, rd := range response.Data {
 			parts := strings.Split(rd, ".")
 			if len(parts) > 1 {
-				vc.NamespaceSelector = true
+				ns = true
 				break
 			}
 		}
+		vc.NamespaceSelector = &ns
 		msg := fmt.Sprintf("[Discovery client] Found valid Config %v", vc)
 		logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
 		zl.Trace().Msg(msg)
@@ -429,14 +431,16 @@ func validateEndpoint(ctx context.Context, client http.Client, zl *zerolog.Logge
 		zl.Trace().Msg(msg)
 		return nil, logs, errors.New(msg)
 	}
-	vc := model.ValidConfig{Url: validEndpoint, Provider: "tempo", UseGRPC: false, NamespaceSelector: false}
+	ns := false
+	vc := model.ValidConfig{Url: validEndpoint, Provider: "tempo", UseGRPC: false}
 	for _, rd := range response.Traces {
 		parts := strings.Split(rd.RootServiceName, ".")
 		if len(parts) > 1 {
-			vc.NamespaceSelector = true
+			ns = true
 			break
 		}
 	}
+	vc.NamespaceSelector = &ns
 	msg := fmt.Sprintf("[Discovery client] Found valid Config %v", vc)
 	logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
 	zl.Trace().Msg(msg)

@@ -132,7 +132,7 @@ export type TracingSingleResponse = {
 };
 
 export type ValidConfig = {
-  namespaceSelector: boolean;
+  namespaceSelector?: boolean;
   provider: string;
   url: string;
   useGRPC: boolean;

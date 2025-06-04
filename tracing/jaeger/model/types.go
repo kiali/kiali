@@ -47,7 +47,7 @@ type ParsedUrl struct {
 }
 
 type ValidConfig struct {
-	NamespaceSelector bool   `json:"namespaceSelector"`
+	NamespaceSelector *bool  `json:"namespaceSelector"`
 	Provider          string `json:"provider"`
 	Url               string `json:"url"`
 	UseGRPC           bool   `json:"useGRPC"`
