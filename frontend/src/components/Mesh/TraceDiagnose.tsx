@@ -17,6 +17,7 @@ import { PFColors } from '../Pf/PfColors';
 import { KialiDispatch } from '../../types/Redux';
 import { bindActionCreators } from 'redux';
 import { TracingActions } from '../../actions/TracingActions';
+import { TestConfig } from './TestConfig';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -122,6 +123,7 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
   //const [diagnostic, setDiagnostic] = React.useState<StatusError | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
+  const [isTestModalOpen, setIsTestModalOpen] = React.useState<boolean>(false);
   const externalUrl = validateExternalUrl(props.externalServices, props.kiosk, props.tracingInfo);
   const labels = {
     authType: 'auth.type',
@@ -162,6 +164,14 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
           <Button onClick={handleCheckService} disabled={loading} variant={ButtonVariant.secondary}>
             {loading ? t('Verifying...') : t('Check Status')}
           </Button>
+          <Button
+            style={{ marginLeft: '5px' }}
+            onClick={() => setIsTestModalOpen(true)}
+            variant={ButtonVariant.secondary}
+          >
+            Test Config
+          </Button>
+          <TestConfig isOpen={isTestModalOpen} onClose={() => setIsTestModalOpen(false)} />
           {props.tracingDiagnose && (
             <span style={{ position: 'absolute', right: '1em' }}>
               <Button
