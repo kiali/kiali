@@ -247,7 +247,7 @@ func WorkloadUpdate(
 
 		namespace := params["namespace"]
 		workload := params["workload"]
-		workloadGVK, errGVK := util.StringToGVK(query.Get("workloadGVK"))
+		workloadGVK, errGVK := util.StringToGVK(query.Get("gvk"))
 		if errGVK != nil {
 			RespondWithError(w, http.StatusBadRequest, "Update request with bad workloadGVK param: "+errGVK.Error())
 		}
