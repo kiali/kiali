@@ -390,7 +390,7 @@ function switchWorkloadSidecarInjection(enableOrDisable: string): void {
     .click()
     .then(() => {
       // Check the success notification message is visible
-      cy.get('div[class="pf-v5-c-alert pf-m-success"]').should('be.visible');
+      cy.get('div[class="pf-v6-c-alert pf-m-success"]').should('be.visible');
     });
 
   // Restart the workload to ensure the changes are applied.

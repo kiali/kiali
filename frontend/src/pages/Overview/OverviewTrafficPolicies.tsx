@@ -1,5 +1,12 @@
 import * as React from 'react';
-import { Button, ButtonVariant, Modal, ModalVariant } from '@patternfly/react-core';
+import {
+	Button,
+	ButtonVariant
+} from '@patternfly/react-core';
+import {
+	Modal,
+	ModalVariant
+} from '@patternfly/react-core/deprecated';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { ControlPlane } from '../../types/Mesh';
 import { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';

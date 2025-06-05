@@ -1,5 +1,15 @@
 import * as React from 'react';
-import { Button, ButtonVariant, ExpandableSection, Modal, ModalVariant, Tab, Tabs } from '@patternfly/react-core';
+import {
+	Button,
+	ButtonVariant,
+	ExpandableSection,
+	Tab,
+	Tabs
+} from '@patternfly/react-core';
+import {
+	Modal,
+	ModalVariant
+} from '@patternfly/react-core/deprecated';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';

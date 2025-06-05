@@ -1,7 +1,7 @@
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
 
 const openTab = (tab: string): void => {
-  cy.get('.pf-v5-c-tabs__list').should('be.visible').contains(tab).click();
+  cy.get('.pf-v6-c-tabs__list').should('be.visible').contains(tab).click();
 };
 
 Then('sd::user sees {string} details information for the remote service {string}', (name: string, version: string) => {
@@ -15,12 +15,12 @@ Then('sd::user sees {string} details information for the remote service {string}
 Then('sd::user sees inbound and outbound traffic information for the remote service', () => {
   openTab('Traffic');
 
-  cy.get('.pf-v5-c-card__body').within(() => {
+  cy.get('.pf-v6-c-card__body').within(() => {
     cy.contains('Inbound Traffic');
     cy.contains('No Inbound Traffic').should('not.exist');
     cy.contains('Outbound Traffic');
     cy.contains('No Inbound Traffic').should('not.exist');
-    cy.get('table.pf-v5-c-table.pf-m-grid-md').should('exist');
+    cy.get('table.pf-v6-c-table.pf-m-grid-md').should('exist');
   });
 });
 

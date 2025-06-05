@@ -254,7 +254,7 @@ export const checkHealthStatusInTable = (
     const cluster = clusterNames[0];
 
     cy.get(
-      `[data-test=VirtualItem_Cluster${cluster}_Ns${selector}] td:first-child span[class=pf-v5-c-icon__content]`
+      `[data-test=VirtualItem_Cluster${cluster}_Ns${selector}] td:first-child span[class=pf-v6-c-icon__content]`
     ).trigger('mouseenter');
 
     cy.get(`[aria-label='Health indicator'] strong`).should('contain.text', healthStatus);

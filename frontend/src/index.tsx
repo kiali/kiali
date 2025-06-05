@@ -8,7 +8,7 @@ import { App } from 'app/App';
 import cssVariables from './styles/variables.module.scss';
 import '@patternfly/patternfly/patternfly.css';
 import '@patternfly/patternfly/patternfly-charts.css';
-import '@patternfly/patternfly/patternfly-charts-theme-dark.css';
+// import '@patternfly/patternfly/patternfly-charts-theme-dark.css';
 import '@patternfly/patternfly/patternfly-addons.css';
 
 // Enables ACE editor YAML themes

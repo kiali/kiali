@@ -1,7 +1,7 @@
 import * as React from 'react';
+import { ChartProps } from '@patternfly/react-charts/victory';
 import {
   Chart,
-  ChartProps,
   ChartVoronoiContainer,
   ChartAxis,
   ChartScatter,
@@ -9,7 +9,7 @@ import {
   ChartLabel,
   ChartLegend,
   ChartThreshold
-} from '@patternfly/react-charts';
+} from '@patternfly/react-charts/victory';
 
 import { VCLines, VCDataPoint, RichDataPoint } from 'types/VictoryChartInfo';
 import { CustomTooltip } from './CustomTooltip';
@@ -180,6 +180,7 @@ export class SparklineChart extends React.Component<Props, State> {
           if (this.state.hiddenSeries.has(idx)) {
             return undefined;
           }
+          console.log(serie);
           return (
             <ChartArea
               name={this.props.name + '-area-' + idx}
