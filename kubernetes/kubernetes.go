@@ -494,6 +494,8 @@ func (in *K8SClient) UpdateWorkload(namespace string, workloadName string, workl
 			result := &osapps_v1.DeploymentConfig{}
 			err = in.k8s.Discovery().RESTClient().Patch(GetPatchType(patchType)).Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").SubResource(workloadName).Body(bytePatch).Do(in.ctx).Into(result)
 			obj = result
+		} else {
+			err = NewNotFound(workloadName, "kubernetes", "DeploymentConfig")
 		}
 	case *apps_v1.StatefulSet:
 		obj, err = in.k8s.AppsV1().StatefulSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
