@@ -14,12 +14,16 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/prometheustest"
+	"github.com/kiali/kiali/tracing"
 	"github.com/kiali/kiali/util"
 )
 
@@ -67,7 +71,6 @@ func TestClustersHealth(t *testing.T) {
 	mockClock()
 
 	conf := config.NewConfig()
-	config.Set(conf)
 
 	// Test 17s on rate interval to check that rate interval is adjusted correctly.
 	prom.On("GetAllRequestRates", "ns", conf.KubernetesConfig.ClusterName, "17s", util.Clock.Now()).Return(model.Vector{}, nil)
@@ -85,21 +88,18 @@ func TestClustersHealth(t *testing.T) {
 
 func setupClustersHealthEndpoint(t *testing.T, k8s *kubetest.FakeK8sClient) (*httptest.Server, *prometheustest.PromClientMock) {
 	conf := config.NewConfig()
-	conf.ExternalServices.Istio.IstioAPIEnabled = false
-	config.Set(conf)
 	prom := new(prometheustest.PromClientMock)
 
-	business.SetupBusinessLayer(t, k8s, *conf)
-	business.WithProm(prom)
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	cpm := &business.FakeControlPlaneMonitor{}
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
+	traceLoader := func() tracing.ClientInterface { return nil }
+	grafana := grafana.NewService(conf, cf.GetSAHomeClusterClient())
 
+	handler := ClusterHealth(conf, cache, cf, prom, traceLoader, discovery, cpm, grafana)
 	mr := mux.NewRouter()
-
-	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
-	mr.HandleFunc("/api/clusters/health", http.HandlerFunc(
-		WithAuthInfo(authInfo, func(w http.ResponseWriter, r *http.Request) {
-			ClustersHealth(w, r)
-		})),
-	)
+	mr.HandleFunc("/api/clusters/health", WithFakeAuthInfo(conf, handler))
 
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)
