@@ -1,11 +1,9 @@
 import * as React from 'react';
-import { MeshNodeData } from '../../types/Mesh';
 import { TestModal } from './TestModal';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 
 type TracingDiagnoseProps = {
   cluster: string;
-  config: MeshNodeData;
 };
 
 export const TracingDiagnose: React.FC<TracingDiagnoseProps> = (props: TracingDiagnoseProps) => {

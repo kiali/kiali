@@ -36,9 +36,7 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
       <div className={panelHeadingStyle}>{renderNodeHeader(data, { nameOnly: isExternal(data.cluster) })}</div>
       <div className={targetBodyStyle}>
         <span>{t('Version: {{version}}', { version: data.version || t(UNKNOWN) })}</span>
-        {data.infraType === MeshInfraType.TRACE_STORE && (
-          <TracingDiagnose cluster={data.cluster} config={data.infraData} />
-        )}
+        {data.infraType === MeshInfraType.TRACE_STORE && <TracingDiagnose cluster={data.cluster} />}
         {targetPanelHR}
 
         <TargetPanelEditor configData={data.infraData} targetName={data.infraName}></TargetPanelEditor>
