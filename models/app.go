@@ -76,7 +76,7 @@ type WorkloadItem struct {
 	// Group Version Kind of the workload
 	// required: true
 	// example: 'apps/v1, Kind=Deployment'
-	WorkloadGVK schema.GroupVersionKind `json:"workloadGVK"`
+	WorkloadGVK schema.GroupVersionKind `json:"gvk"`
 
 	// Define if all Pods related to the Workload has an IstioSidecar deployed
 	// required: true

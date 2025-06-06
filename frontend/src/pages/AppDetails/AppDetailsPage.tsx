@@ -110,7 +110,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
             hasSidecar: details.data.workloads.some(w => w.istioSidecar),
             hasAmbient: details.data.workloads.some(w => w.isAmbient)
           }),
-          isSupported: details.data.workloads.some(w => isGVKSupported(w.workloadGVK))
+          isSupported: details.data.workloads.some(w => isGVKSupported(w.gvk))
         });
       })
       .catch(error => {

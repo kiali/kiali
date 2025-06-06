@@ -75,7 +75,7 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
           workloads.push({
             namespace: wk.namespace,
             workloadName: wk.name,
-            workloadGVK: getIstioObjectGVK(wk.resourceVersion, wk.type),
+            gvk: getIstioObjectGVK(wk.resourceVersion, wk.type),
             istioSidecar: wk.istioSidecar,
             isAmbient: wk.isAmbient,
             isGateway: wk.isGateway,

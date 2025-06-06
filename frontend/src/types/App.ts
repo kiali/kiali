@@ -11,6 +11,7 @@ export type AppId = {
 };
 
 export interface AppWorkload {
+  gvk: GroupVersionKind;
   isAmbient: boolean;
   isGateway: boolean;
   isWaypoint: boolean;
@@ -20,7 +21,6 @@ export interface AppWorkload {
   namespace: string;
   serviceAccountNames: string[];
   waypointWorkloads?: WaypointInfo[];
-  workloadGVK: GroupVersionKind;
   workloadName: string;
 }
 

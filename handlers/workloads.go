@@ -38,7 +38,7 @@ type workloadParams struct {
 	Namespace    string `json:"namespace"`
 	WorkloadName string `json:"workload"`
 	// in: query
-	WorkloadGVK schema.GroupVersionKind `json:"workloadGVK"`
+	WorkloadGVK schema.GroupVersionKind `json:"gvk"`
 	// Optional
 	ClusterName           string `json:"clusterName,omitempty"`
 	IncludeHealth         bool   `json:"health"`
@@ -63,7 +63,7 @@ func (p *workloadParams) extract(r *http.Request) error {
 		p.IncludeIstioResources = true
 	}
 
-	p.WorkloadGVK, err = util.StringToGVK(query.Get("workloadGVK"))
+	p.WorkloadGVK, err = util.StringToGVK(query.Get("gvk"))
 	if err != nil {
 		return err
 	}
