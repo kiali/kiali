@@ -63,7 +63,7 @@ Feature: Kiali Waypoint related features
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
     And user "enables" "ambientZtunnel" traffic option
-    Then 7 edges appear in the graph
+    Then 5 edges appear in the graph
 
   @waypoint
   Scenario: [Traffic Graph] User sees no Ambient traffic
@@ -82,7 +82,7 @@ Feature: Kiali Waypoint related features
     Then user opens traffic menu
     And user "enables" "ambientTotal" traffic option
     And user "enables" "ambient" traffic option
-    Then 16 edges appear in the graph
+    Then 14 edges appear in the graph
 
   @waypoint
   Scenario: [Traffic Graph] User doesn't see waypoint proxy
