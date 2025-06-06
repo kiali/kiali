@@ -11,7 +11,6 @@ const authorizationPolicies: string[] = [
   'reviews-v3'
 ];
 const sidecars: string[] = [
-  'kiali-traffic-generator',
   'details-v1',
   'productpage-v1',
   'ratings-v1',

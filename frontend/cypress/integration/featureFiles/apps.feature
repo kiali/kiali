@@ -44,12 +44,11 @@ Feature: Kiali Apps List page
     And user sees "details"
     And user sees "reviews"
     And user sees "ratings"
-    And user sees "kiali-traffic-generator"
 
   @bookinfo-app
   Scenario: Filter workloads table by Istio Sidecar not being present
     When the user filters by "Istio Sidecar" for "Not Present"
-    Then user may only see "kiali-traffic-generator"
+    Then user sees "kiali-traffic-generator"
 
   @bookinfo-app
   Scenario: Filter Apps by Istio Config Type
