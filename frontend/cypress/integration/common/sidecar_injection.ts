@@ -90,7 +90,7 @@ Given('a workload without a sidecar', function () {
   // Make sure that the workload does not have override configuration
   cy.request({
     request: 'PATCH',
-    url: `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`,
+    url: `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?gvk="apps/v1, Kind=Deployment"`,
     body: {
       spec: {
         template: {
@@ -142,7 +142,7 @@ Given('a workload with a sidecar', function () {
   // present here for istio.
   cy.request({
     method: 'PATCH',
-    url: `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`,
+    url: `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?gvk="apps/v1, Kind=Deployment"`,
     body: {
       spec: {
         template: {
@@ -206,7 +206,7 @@ Given('the workload does not have override configuration for automatic sidecar i
 
     cy.request({
       method: 'PATCH',
-      url: `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`,
+      url: `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?gvk="apps/v1, Kind=Deployment"`,
       body: {
         spec: {
           template: {
@@ -235,7 +235,7 @@ Given('the workload has override configuration for automatic sidecar injection',
 
     cy.request({
       method: 'PATCH',
-      url: `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`,
+      url: `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?gvk="apps/v1, Kind=Deployment"`,
       body: {
         spec: {
           template: {
@@ -262,7 +262,7 @@ Given('a workload with override configuration for automatic sidecar injection', 
   // the override annotation on it.
   cy.request({
     method: 'PATCH',
-    url: `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`,
+    url: `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?gvk="apps/v1, Kind=Deployment"`,
     body: {
       spec: {
         template: {
