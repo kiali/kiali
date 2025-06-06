@@ -144,7 +144,7 @@ func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlP
 	}
 
 	// When using the SHARED_MESH_CONFIG env var, istio merges the ProxyConfig unlike the other settings that are overridden
-	if controlPlaneConf.SharedConfig != nil {
+	if controlPlaneConf.SharedConfig != nil && controlPlane.SharedMeshConfig != "" {
 		if err := fusionMeshConfigs(controlPlaneConf.SharedConfig.ConfigMap.Mesh, controlPlaneConf.EffectiveConfig.ConfigMap.Mesh); err != nil {
 			return err
 		}
@@ -213,7 +213,9 @@ func deepMerge(dst, src map[string]interface{}) {
 				continue
 			}
 		}
-		dst[k] = v
+		if dst[k] == nil {
+			dst[k] = v
+		}
 	}
 }
 
