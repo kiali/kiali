@@ -27,6 +27,7 @@ import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { EmptyVirtualList } from 'components/VirtualList/EmptyVirtualList';
 import { HistoryManager } from 'app/History';
+import { endPerfTimer, startPerfTimer } from '../../utils/PerformanceUtils';
 
 type WorkloadListPageState = FilterComponent.State<WorkloadListItem> & {
   loaded: boolean;
@@ -167,10 +168,11 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     toggles: ActiveTogglesInfo,
     rateInterval: number
   ): void {
+    const perfKey = 'ClustersWorkloads';
     const workloadsConfigPromises = clusters.map(cluster => {
       const health = toggles.get('health') ? 'true' : 'false';
       const istioResources = toggles.get('istioResources') ? 'true' : 'false';
-
+      startPerfTimer(perfKey);
       return API.getClustersWorkloads(
         this.props.activeNamespaces.map(ns => ns.name).join(','),
         {
@@ -188,6 +190,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         let workloadsItems: WorkloadListItem[] = [];
 
         responses.forEach(response => {
+          endPerfTimer(perfKey);
           workloadsItems = workloadsItems.concat(this.getDeploymentItems(response.data));
         });
 
