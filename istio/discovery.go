@@ -143,6 +143,13 @@ func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlP
 		return err
 	}
 
+	// When using the SHARED_MESH_CONFIG env var, istio merges the ProxyConfig unlike the other settings that are overridden
+	if controlPlaneConf.SharedConfig != nil {
+		if err := fusionMeshConfigs(controlPlaneConf.SharedConfig.ConfigMap.Mesh, controlPlaneConf.EffectiveConfig.ConfigMap.Mesh); err != nil {
+			return err
+		}
+	}
+
 	// The rest of the configs are all shown to the user and don't have defaults applied. Internally
 	// in the Kiali backend we want the defaults applied and we don't care about MeshNetworks so we
 	// use a separate controlPlane.MeshConfig field rather than using EffectiveConfig. It's a lot of
@@ -196,6 +203,43 @@ func setSharedConfig(controlPlane *models.ControlPlane, controlPlaneConf *models
 
 	controlPlaneConf.SharedConfig = sharedConfig
 	return nil
+}
+
+func deepMerge(dst, src map[string]interface{}) {
+	for k, v := range src {
+		if vMap, ok := v.(map[string]interface{}); ok {
+			if dstMap, found := dst[k].(map[string]interface{}); found {
+				deepMerge(dstMap, vMap)
+				continue
+			}
+		}
+		dst[k] = v
+	}
+}
+
+func fusionMeshConfigs(mesh *models.MeshConfig, into *models.MeshConfig) error {
+	a, err := into.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	b, err := mesh.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	var baseMap, overlayMap map[string]interface{}
+	if err := json.Unmarshal(a, &baseMap); err != nil {
+		return err
+	}
+	if err := json.Unmarshal(b, &overlayMap); err != nil {
+		return err
+	}
+	deepMerge(baseMap, overlayMap)
+
+	mergedJSON, err := json.Marshal(baseMap)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(mergedJSON, &into)
 }
 
 func mergeMeshConfigs(mesh *models.MeshConfig, into *models.MeshConfig) error {
