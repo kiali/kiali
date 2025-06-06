@@ -212,7 +212,12 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
     ...yamlDumpOptions
   });
 
-  const perfMeasurements = JSON.stringify(getAllPerfStats());
+  const perfMeasurements = dump(getAllPerfStats(), {
+    noRefs: true,
+    replacer: parseConfig,
+    skipInvalid: true,
+    ...yamlDumpOptions
+  });
 
   const copyTextMap: { [key: string]: string } = {
     kialiConfig: dump(config, yamlDumpOptions),
