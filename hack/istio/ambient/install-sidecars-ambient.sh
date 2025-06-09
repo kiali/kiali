@@ -121,7 +121,7 @@ NAD
 if [ "${WAYPOINT}" == "true" ]; then
   echo "Verifying that Gateway API is installed; if it is not then it will be installed now."
   $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-    { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.2.0" | $CLIENT_EXE apply -f -; }
+    { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.3.0" | $CLIENT_EXE apply -f -; }
   ${ISTIOCTL} waypoint apply -n ${AMBIENT_NS} --enroll-namespace
 fi
 
