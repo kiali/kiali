@@ -19,11 +19,12 @@ import AceEditor from 'react-ace';
 import { getKialiTheme } from 'utils/ThemeUtils';
 import { Theme } from '../../types/Common';
 import { istioAceEditorStyle } from '../../styles/AceEditorStyle';
-import { aceOptions } from '../../types/IstioConfigDetails';
+import { aceOptions, yamlDumpOptions } from '../../types/IstioConfigDetails';
 import ReactAce from 'react-ace/lib/ace';
 import { classes } from 'typestyle';
 import { basicTabStyle } from '../../styles/TabStyles';
 import { ParameterizedTabs } from '../Tab/Tabs';
+import { dump } from 'js-yaml';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -264,6 +265,12 @@ export const TestModalComp: React.FC<TestModalProps> = (props: TestModalProps) =
 
     const theme = getKialiTheme();
 
+    const getConfigToString = dump(props.tracingInfo, {
+      noRefs: true,
+      skipInvalid: true,
+      ...yamlDumpOptions
+    });
+
     const testConfig = (
       <Tab eventKey={1} title={t('Test Configuration')} key="testConfig">
         <div style={{ paddingTop: '10px' }}>
@@ -301,7 +308,7 @@ export const TestModalComp: React.FC<TestModalProps> = (props: TestModalProps) =
             wrapEnabled={true}
             readOnly={false}
             setOptions={aceOptions ?? { foldStyle: 'markbegin' }}
-            value={props.tracingInfo?.provider}
+            value={getConfigToString}
           />
           <Button style={{ marginTop: '10px' }} variant={ButtonVariant.secondary}>
             Test Config
