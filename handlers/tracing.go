@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -416,13 +415,17 @@ func TracingDiagnose(
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			RespondWithError(w, http.StatusInternalServerError, "Services initialization getLayer error: "+err.Error())
 			return
 		}
+		/* I'm not sure this is necessary or really makes sense. The Kiali home cluster may not be the same as istio, or there
+		   may not be an control plane on the cluster.
+
 		if !isHomeCPAccessible(r.Context(), conf, business.Namespace, clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 			return
 		}
+		*/
 
 		status, err := business.Tracing.TracingDiagnose(r.Context(), clientFactory.GetSAHomeClusterClient().GetToken())
 		if err != nil {
@@ -474,8 +477,10 @@ func TracingConfigurationCheck(
 	}
 }
 
+/*
 // isHomeCPAccessible Check access to the home istio namespace
 func isHomeCPAccessible(ctx context.Context, conf *config.Config, namespaceService business.NamespaceService, cluster string) bool {
 	_, err := namespaceService.GetClusterNamespace(ctx, conf.IstioNamespace, cluster)
 	return err == nil
 }
+*/
