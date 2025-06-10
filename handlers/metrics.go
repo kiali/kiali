@@ -220,6 +220,11 @@ func ControlPlaneMetrics(
 			return
 		}
 
+		if !layer.Mesh.HasControlPlane(r.Context(), cluster, namespace, controlPlane) {
+			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
+			return
+		}
+
 		cpWorkload, err := layer.Workload.GetWorkload(r.Context(), business.WorkloadCriteria{
 			Cluster:               cluster,
 			Namespace:             namespace,
