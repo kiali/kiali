@@ -332,11 +332,12 @@ func determineContainerVersion(defaultVersion string) string {
 // This is used to update the config with information about istio that
 // comes from the environment such as the cluster name.
 func updateConfigWithIstioInfo() {
-	conf := *config.Get()
+	conf := config.Get()
 
 	homeCluster := conf.KubernetesConfig.ClusterName
-	if homeCluster != "" {
-		// If the cluster name is already set, we don't need to do anything
+	// If the cluster name is already set, we don't need to do anything
+	// If the homeCluster is being ignored, we don't need to do anything
+	if homeCluster != "" || conf.Clustering.IgnoreLocalCluster {
 		return
 	}
 
@@ -373,7 +374,7 @@ func updateConfigWithIstioInfo() {
 
 	log.Debugf("Auto-detected the istio cluster name to be [%s]. Updating the kiali config", homeCluster)
 	conf.KubernetesConfig.ClusterName = homeCluster
-	config.Set(&conf)
+	config.Set(conf)
 }
 
 func asReaders(caches map[string]ctrlcache.Cache) map[string]client.Reader {

@@ -214,9 +214,9 @@ func (s *ServiceDetails) SetService(cluster string, svc *core_v1.Service, conf *
 	s.Service.Parse(cluster, svc, conf)
 }
 
-func (s *ServiceDetails) SetPods(pods []core_v1.Pod) {
+func (s *ServiceDetails) SetPods(pods []core_v1.Pod, isControlPlane func(cluster, namespace string) bool) {
 	mPods := Pods{}
-	mPods.Parse(pods)
+	mPods.Parse(pods, isControlPlane)
 }
 
 func (s *ServiceDetails) SetIstioSidecar(workloads WorkloadOverviews) {
