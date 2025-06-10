@@ -101,9 +101,7 @@ Before({ tags: '@gateway-api' }, () => {
     if (result.code !== 0) {
       cy.log('Gateway API not found. Enabling it now.');
 
-      cy.exec(
-        'kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.2.0" | kubectl apply -f -;'
-      )
+      cy.exec('kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.2.0" | kubectl apply -f -;')
         .its('code')
         .should('eq', 0);
     }
@@ -170,7 +168,7 @@ Before({ tags: '@shared-mesh-config' }, () => {
       }
 
       tries++;
-      cy.request('GET', '/api/mesh/graph').then(response => {
+      cy.request({ method: 'GET', url: '/api/mesh/graph' }).then(response => {
         expect(response.status).to.equal(200);
         console.log(response.body.elements.nodes.find(node => node.data.infraType === 'istiod'));
         if (
