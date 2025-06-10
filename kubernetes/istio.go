@@ -12,6 +12,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	inferenceapiclient "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -324,31 +325,46 @@ func DestinationRuleHasMTLSEnabled(destinationRule *networking_v1.DestinationRul
 	return false, ""
 }
 
-// ClusterNameFromIstiod attempts to resolve the cluster info of the "home" cluster where kiali is running
-// by inspecting the istiod deployment. Assumes that the istiod deployment is in the same cluster as the kiali pod.
-func ClusterNameFromIstiod(conf config.Config, k8s ClientInterface) (string, error) {
-	// The "cluster_id" is set in an environment variable of
-	// the "istiod" deployment. Let's try to fetch it.
+// ClusterNameFromIstiod checks for an istio control plane deployment (istiod) and if found returns the Istio
+// clusterID. Returns "" if no control plane is found or the cluster name can not be determined. Note that
+// this code is limited to the k8s API, the Kiali cache may not yet exist.
+func ClusterNameFromIstiod(conf *config.Config, k8s ClientInterface) (string, error) {
+	// There can be multiple istios on various namespaces, loop through them
+	namespaces, err := k8s.GetNamespaces("")
+	if err != nil {
+		return "", err
+	}
+
+	// The "cluster_id" is set in an environment variable of the "istiod" deployment. Let's try to fetch it.
+	// TODO: Is the "If" necessary, I think every Istio control plane is labeled with "app=istiod". Can we get rid
+	//       of conf.ExternalServices.Istio?
 	var istiodDeployment *appsv1.Deployment
 	if istiodDeploymentName := conf.ExternalServices.Istio.IstiodDeploymentName; istiodDeploymentName != "" {
-		deployment, err := k8s.GetDeployment(conf.IstioNamespace, istiodDeploymentName)
-		if err != nil {
-			return "", err
+		for _, ns := range namespaces {
+			deployment, err := k8s.GetDeployment(ns.Name, istiodDeploymentName)
+			if errors.IsNotFound(err) {
+				continue
+			}
+			if err != nil {
+				return "", err
+			}
+			istiodDeployment = deployment
 		}
-
-		istiodDeployment = deployment
 	} else {
-		istiodDeployments, err := k8s.GetDeployments(conf.IstioNamespace, metav1.ListOptions{LabelSelector: "app=istiod"})
-		if err != nil {
-			return "", err
+		for _, ns := range namespaces {
+			istiodDeployments, err := k8s.GetDeployments(ns.Name, metav1.ListOptions{LabelSelector: "app=istiod"})
+			if len(istiodDeployments) == 0 {
+				continue
+			}
+			if err != nil {
+				return "", err
+			}
+			// Just take the first one since they should all have the same cluster id.
+			istiodDeployment = &istiodDeployments[0]
 		}
-
-		if len(istiodDeployments) == 0 {
-			return "", fmt.Errorf("istiod deployment not found in namespace [%s]", conf.IstioNamespace)
-		}
-
-		// Just take the first one since they should all have the same cluster id.
-		istiodDeployment = &istiodDeployments[0]
+	}
+	if istiodDeployment == nil {
+		return "", fmt.Errorf("istiod deployment not found in any namespaces")
 	}
 
 	istiodContainers := istiodDeployment.Spec.Template.Spec.Containers

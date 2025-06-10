@@ -320,20 +320,27 @@ type RegistryConfig struct {
 	// TODO: Support auth options
 }
 
-// IstioConfig describes configuration used for istio links
+// IstioConfig describes configuration used for istio links.
+// IMPORTANT: Values set here MUST apply to ALL Istio control planes being monitored by the Kiali
+//
+//	instance. Otherwise Kiali will do it's best to auto-detect differences.
+//
+// TODO: Go through this list and remove anything that requires auto-detection or does not make sense for
+//
+//	a multi-control-plane deployment.
 type IstioConfig struct {
-	ComponentStatuses                 ComponentStatuses `yaml:"component_status,omitempty" json:"componentStatuses,omitempty"`
-	ConfigMapName                     string            `yaml:"config_map_name,omitempty" json:"configMapName,omitempty"`
-	EnvoyAdminLocalPort               int               `yaml:"envoy_admin_local_port,omitempty" json:"envoyAdminLocalPort,omitempty"`
-	GatewayAPIClasses                 []GatewayAPIClass `yaml:"gateway_api_classes,omitempty" json:"gatewayApiClasses,omitempty"`
-	GatewayAPIClassesLabelSelector    string            `yaml:"gateway_api_classes_label_selector,omitempty" json:"gatewayApiClassesLabelSelector,omitempty"`
-	IstioAPIEnabled                   bool              `yaml:"istio_api_enabled" json:"istioApiEnabled"`
-	IstioIdentityDomain               string            `yaml:"istio_identity_domain,omitempty" json:"istioIdentityDomain,omitempty"`
-	IstioInjectionAnnotation          string            `yaml:"istio_injection_annotation,omitempty" json:"istioInjectionAnnotation,omitempty"`
-	IstioSidecarInjectorConfigMapName string            `yaml:"istio_sidecar_injector_config_map_name,omitempty" json:"istioSidecarInjectorConfigMapName,omitempty"`
-	IstioSidecarAnnotation            string            `yaml:"istio_sidecar_annotation,omitempty" json:"istioSidecarAnnotation,omitempty"`
-	IstiodDeploymentName              string            `yaml:"istiod_deployment_name,omitempty" json:"istiodDeploymentName,omitempty"`
-	IstiodPodMonitoringPort           int               `yaml:"istiod_pod_monitoring_port,omitempty" json:"istiodPodMonitoringPort,omitempty"`
+	ComponentStatuses                 ComponentStatuses `yaml:"component_status,omitempty"`
+	ConfigMapName                     string            `yaml:"config_map_name,omitempty"`
+	EnvoyAdminLocalPort               int               `yaml:"envoy_admin_local_port,omitempty"`
+	GatewayAPIClasses                 []GatewayAPIClass `yaml:"gateway_api_classes,omitempty"`
+	GatewayAPIClassesLabelSelector    string            `yaml:"gateway_api_classes_label_selector,omitempty"`
+	IstioAPIEnabled                   bool              `yaml:"istio_api_enabled"`
+	IstioIdentityDomain               string            `yaml:"istio_identity_domain,omitempty"`
+	IstioInjectionAnnotation          string            `yaml:"istio_injection_annotation,omitempty"`
+	IstioSidecarInjectorConfigMapName string            `yaml:"istio_sidecar_injector_config_map_name,omitempty"`
+	IstioSidecarAnnotation            string            `yaml:"istio_sidecar_annotation,omitempty"`
+	IstiodDeploymentName              string            `yaml:"istiod_deployment_name,omitempty"`
+	IstiodPodMonitoringPort           int               `yaml:"istiod_pod_monitoring_port,omitempty"`
 	// IstiodPollingIntervalSeconds is how often in seconds Kiali will poll istiod(s) for
 	// proxy status and registry services. Polling is not performed if IstioAPIEnabled is false.
 	IstiodPollingIntervalSeconds     int             `yaml:"istiod_polling_interval_seconds,omitempty" json:"istiodPollingIntervalSeconds,omitempty"`
@@ -633,8 +640,9 @@ type Clustering struct {
 	// Clusters is a list of clusters that cannot be autodetected by the Kiali Server.
 	// Remote clusters are specified here if ‘autodetect_secrets.enabled’ is false or
 	// if the Kiali Server does not have access to the remote cluster’s secret.
-	Clusters  []Cluster  `yaml:"clusters" json:"clusters"`
-	KialiURLs []KialiURL `yaml:"kiali_urls" json:"kiali_urls"`
+	Clusters           []Cluster  `yaml:"clusters" json:"clusters"`
+	IgnoreLocalCluster bool       `yaml:"ignore_local_cluster" json:"ignoreLocalCluster"`
+	KialiURLs          []KialiURL `yaml:"kiali_urls" json:"kiali_urls"`
 }
 
 // IsZero implements: https://pkg.go.dev/gopkg.in/yaml.v2#IsZeroer so that
@@ -740,6 +748,9 @@ func NewConfig() (c *Config) {
 			OpenShift: OpenShiftConfig{
 				InsecureSkipVerifyTLS: false,
 			},
+		},
+		Clustering: Clustering{
+			IgnoreLocalCluster: false,
 		},
 		CustomDashboards: dashboards.GetBuiltInMonitoringDashboards(),
 		Deployment: DeploymentConfig{
@@ -1344,11 +1355,6 @@ func SaveToFile(filename string, conf *Config) (err error) {
 	err = os.WriteFile(filename, []byte(fileContent), 0o640)
 	return
 }
-
-// IsIstioNamespace returns true if the namespace is the default istio namespace
-//func IsIstioNamespace(namespace string) bool {
-//	return namespace == configuration.IstioNamespace
-//}
 
 // IsRootNamespace returns true if the namespace is the root namespace
 func IsRootNamespace(namespace string) bool {
