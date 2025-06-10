@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { TracingCheck, TracingInfo } from '../../types/TracingInfo';
-import { Button, Modal, ModalVariant, Tab } from '@patternfly/react-core';
+import { Button, Modal, ModalVariant, Tab, TabAction } from '@patternfly/react-core';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { useKialiTranslation } from '../../utils/I18nUtils';
 import { PFColors } from '../Pf/PfColors';
@@ -18,6 +18,8 @@ import { basicTabStyle } from '../../styles/TabStyles';
 import { ParameterizedTabs } from '../Tab/Tabs';
 import { CheckConfig } from './CheckConfig';
 import { TestConfig } from './TestConfig';
+import { HelpIcon } from '@patternfly/react-icons';
+import { helpPopover } from '../../pages/Mesh/target/TargetPanelControlPlane';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -38,7 +40,8 @@ type TestModalProps = ReduxProps &
   };
 
 const modalStyle = kialiStyle({
-  overflowY: 'hidden'
+  overflowY: 'hidden',
+  minHeight: '300px'
 });
 
 const tabStyle = kialiStyle({
@@ -107,15 +110,61 @@ export const TestModalComp: React.FC<TestModalProps> = (props: TestModalProps) =
 
   const [currentTab, setCurrentTab] = React.useState(defaultTab);
 
+  const checkConfigHelp = (
+    <>
+      {t(
+        'Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found for external_services.tracing.'
+      )}
+      <br />
+      {t(
+        'While the health check is based on whether the URL response returns an HTTP 200, the services check performs a more exhaustive verification by attempting to analyze if the traces response is correct. It is important that internal_url is defined, as it relies on this host to perform the checks. When in_cluster config is false, it will use the external_url'
+      )}
+    </>
+  );
+
+  const testConfigHelp = (
+    <>
+      {t('Test the configuration without having to modify the CR.')}
+      <br />
+      {t("Changes done in this section won't be saved")}
+    </>
+  );
+
   const renderTabs = (): React.ReactNode[] => {
+    const ref = React.createRef<HTMLElement>();
+    const refTest = React.createRef<HTMLElement>();
     const checkConfig = (
-      <Tab eventKey={0} title={t('Check Config')} key="checkConfig">
+      <Tab
+        eventKey={0}
+        title={t('Check Config')}
+        key="checkConfig"
+        actions={
+          <>
+            <TabAction aria-label={`Help action for Check config`} ref={ref}>
+              <HelpIcon />
+            </TabAction>
+            {helpPopover(t('Check Status'), checkConfigHelp, ref)}
+          </>
+        }
+      >
         <CheckConfig cluster={props.cluster} />
       </Tab>
     );
 
     const testConfig = (
-      <Tab eventKey={1} title={t('Test Configuration')} key="testConfig">
+      <Tab
+        eventKey={1}
+        title={t('Test Configuration')}
+        key="testConfig"
+        actions={
+          <>
+            <TabAction aria-label={`Help action for Test config`} ref={refTest}>
+              <HelpIcon />
+            </TabAction>
+            {helpPopover(t('Test Status'), testConfigHelp, refTest)}
+          </>
+        }
+      >
         <TestConfig tracingInfo={props.tracingInfo} />
       </Tab>
     );

@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useKialiTranslation } from '../../utils/I18nUtils';
-import { Button, ButtonVariant, Popover, PopoverPosition } from '@patternfly/react-core';
+import { Button, ButtonVariant, ExpandableSection } from '@patternfly/react-core';
 import { KialiIcon } from '../../config/KialiIcon';
-import { helpStyle, validateExternalUrl } from './TestModal';
+import { validateExternalUrl } from './TestModal';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { TracingCheck, TracingInfo } from '../../types/TracingInfo';
 import { PFColors } from '../Pf/PfColors';
@@ -33,10 +33,11 @@ type CheckModalProps = ReduxDispatchProps &
     tracingDiagnose?: TracingCheck;
     tracingInfo?: TracingInfo;
   };
+
 const configStyle = kialiStyle({
   fontFamily: 'Courier New, Courier, monospace',
   fontSize: 'small',
-  margin: '1.25em'
+  marginBottom: '1.25em'
 });
 
 const blockDisplay = kialiStyle({
@@ -44,11 +45,8 @@ const blockDisplay = kialiStyle({
 });
 
 const containerStyle = kialiStyle({
-  backgroundColor: PFColors.Black1000,
-  color: PFColors.Blue100,
   fontFamily: 'Courier New, Courier, monospace',
-  margin: 0,
-  padding: '0.5em',
+  fontSize: 'small',
   resize: 'none',
   whiteSpace: 'pre',
   width: '100%',
@@ -68,13 +66,20 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
   const { t } = useKialiTranslation();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = React.useState(false);
   const externalUrl = validateExternalUrl(props.externalServices, props.kiosk, props.tracingInfo);
+
   const labels = {
     namespaceSelector: 'namespace_selector',
     provider: 'provider',
     url: 'internal_url',
     useGRPC: 'use_grpc'
   };
+
+  const onToggle = (_event: React.MouseEvent, isExpanded: boolean): void => {
+    setIsExpanded(isExpanded);
+  };
+
   const fetchCheckService = async (): Promise<void> => {
     setLoading(true);
     props.setTracingDiagnose();
@@ -96,34 +101,7 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
   };
 
   return (
-    <div style={{ paddingTop: '0.5em' }}>
-      <div>
-        <span style={{ paddingTop: '0.25em' }}>
-          {t('Check for possible configuration(s) of external_services.tracing')}
-        </span>
-        <Popover
-          data-test="check-status-help"
-          position={PopoverPosition.auto}
-          headerContent={
-            <div>
-              <span>{t('Check Status')}</span>
-            </div>
-          }
-          bodyContent={
-            <>
-              {t(
-                'Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found for external_services.tracing.'
-              )}
-              <br />
-              {t(
-                'While the health check is based on whether the URL response returns an HTTP 200, the services check performs a more exhaustive verification by attempting to analyze if the traces response is correct. It is important that internal_url is defined, as it relies on this host to perform the checks. When in_cluster config is false, it will use the external_url'
-              )}
-            </>
-          }
-        >
-          <KialiIcon.Help className={helpStyle} />
-        </Popover>
-      </div>
+    <div style={{ padding: '1em' }}>
       <div style={{ display: 'flex' }}>
         <Button onClick={handleCheckService} disabled={loading} variant={ButtonVariant.secondary}>
           {loading ? t('Verifying...') : t('Check Status')}
@@ -141,7 +119,14 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
           </span>
         )}
       </div>
-      {props.tracingDiagnose && <span style={{ color: 'green' }}>{props.tracingDiagnose.message}</span>}
+      {props.tracingDiagnose && (
+        <>
+          <span style={{ color: 'green' }}>{props.tracingDiagnose.message}</span>
+          <div style={{ marginTop: '1em' }}>
+            <span>{t('Possible configuration(s) found for external_services.tracing')}:</span>
+          </div>
+        </>
+      )}
       {error && (
         <div>
           <span style={{ color: 'red' }}>{error}</span>
@@ -176,25 +161,35 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
           </div>
         </>
       )}
-      {props.tracingDiagnose?.logLine && externalUrl && (
+      {props.tracingDiagnose?.validConfig && externalUrl && (
         <div>
           <span className={configStyle}>{externalUrl}</span>
         </div>
       )}
       {props.tracingDiagnose?.logLine && (
-        <div className={containerStyle}>
-          {props.tracingDiagnose.logLine.map(log => (
-            <>
-              <div>
-                <span>
-                  <span className={blueDisplay}>{log.time.substring(0, 19)}</span>
-                  <span className={blueDarkDisplay}>[{log.test}]</span>
-                  {log.result}
-                </span>
+        <>
+          <div style={{ margin: '1em 0' }}>
+            <ExpandableSection
+              toggleText={isExpanded ? t('Hide logs') : t('Show logs')}
+              onToggle={onToggle}
+              isExpanded={isExpanded}
+            >
+              <div className={containerStyle}>
+                {props.tracingDiagnose.logLine.map(log => (
+                  <>
+                    <div>
+                      <span>
+                        <span className={blueDisplay}>{log.time.substring(0, 19)}</span>
+                        <span className={blueDarkDisplay}>[{log.test}]</span>
+                        {log.result}
+                      </span>
+                    </div>
+                  </>
+                ))}
               </div>
-            </>
-          ))}
-        </div>
+            </ExpandableSection>
+          </div>
+        </>
       )}
     </div>
   );
