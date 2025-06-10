@@ -156,8 +156,20 @@ After({ tags: '@clean-istio-namespace-resources-after' }, () => {
   cy.exec('kubectl -n istio-system delete Sidecar default', { failOnNonZeroExit: false });
 });
 
+const istioSharedMeshConfigMap = `
+apiVersion: v1
+data:
+  mesh: |-
+    outboundTrafficPolicy:
+      mode: REGISTRY_ONLY
+kind: ConfigMap
+metadata:
+  name: istio-user
+  namespace: istio-system
+`;
+
 Before({ tags: '@shared-mesh-config' }, () => {
-  cy.exec('kubectl apply -f cypress/integration/common/data/istio-shared-mesh-configmap.yaml');
+  cy.exec(`echo "${istioSharedMeshConfigMap}" | kubectl apply -f -`);
   const patch = '{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": "istio-user"}}}}}';
   cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`).then(() => {
     const maxTries = 10;
@@ -187,7 +199,7 @@ Before({ tags: '@shared-mesh-config' }, () => {
 });
 
 After({ tags: '@shared-mesh-config' }, () => {
-  cy.exec('kubectl delete -f cypress/integration/common/data/istio-shared-mesh-configmap.yaml');
+  cy.exec(`echo "${istioSharedMeshConfigMap}" | kubectl delete -f -`);
   const patch = '{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": null}}}}}';
   cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`);
 });
