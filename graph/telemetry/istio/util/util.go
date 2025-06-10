@@ -43,13 +43,13 @@ func HandleClusters(lSourceCluster model.LabelValue, sourceClusterOk bool, lDest
 // cases.  It should be called after source validation and before destination processing.
 // Returns destSvcNs, destSvcName, destWlNs, destWl, destApp, destVersion, isupdated
 func HandleDestination(sourceCluster, sourceWlNs, sourceWl, destCluster, destSvcNs, destSvc, destSvcName, destWlNs, destWl, destApp, destVer string, conf *config.Config) (string, string, string, string, string, string, string, bool) {
-	// Handle egressgateway (kiali#2999)
+	// Handle egressgateway (kiali#2999), this is pretty weak and only works well using the default control plane namespace, hopefully it's been resolved since it was reported
 	if egressHost == "" {
-		egressHost = fmt.Sprintf("istio-egressgateway.%s.svc.cluster.local", conf.IstioNamespace)
+		egressHost = fmt.Sprintf("istio-egressgateway.%s.svc.cluster.local", config.IstioNamespaceDefault)
 	}
 
 	if destSvc == egressHost && destSvc == destSvcName {
-		istioNs := conf.IstioNamespace
+		istioNs := config.IstioNamespaceDefault
 		log.Debugf("HandleDestination: destCluster=%s, destSvcNs=%s", sourceCluster, istioNs)
 		return sourceCluster, istioNs, "istio-egressgateway", istioNs, "istio-egressgateway", "istio-egressgateway", "latest", true
 	}

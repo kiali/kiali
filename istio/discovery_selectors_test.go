@@ -306,7 +306,6 @@ func TestGetDiscoverySelectorsForCluster(t *testing.T) {
 
 	// config with only "cluster1" override selectors
 	overrideSelectors := config.Config{
-		IstioNamespace: "istio-system",
 		Deployment: config.DeploymentConfig{
 			DiscoverySelectors: config.DiscoverySelectorsConfig{
 				Default: nil,

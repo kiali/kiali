@@ -39,7 +39,6 @@ func TestMeshStatusEnabled(t *testing.T) {
 
 	conf := config.NewConfig()
 	conf.Deployment.ClusterWideAccess = true
-	conf.IstioNamespace = "istio-system"
 	kubernetes.SetConfig(t, *conf)
 
 	pa := fakeStrictMeshPeerAuthentication("default")
@@ -49,7 +48,7 @@ func TestMeshStatusEnabled(t *testing.T) {
 	}
 	objs := []runtime.Object{
 		kubetest.FakeNamespaceWithLabels("test", injectionEnabledLabel),
-		kubetest.FakeNamespace("istio-system"),
+		kubetest.FakeNamespace(config.IstioNamespaceDefault),
 		kubetest.FakeNamespaceWithLabels("default", injectionEnabledLabel),
 	}
 	objs = append(objs, kubernetes.ToRuntimeObjects(pa)...)
@@ -59,7 +58,7 @@ func TestMeshStatusEnabled(t *testing.T) {
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
-				IstiodNamespace: conf.IstioNamespace,
+				IstiodNamespace: config.IstioNamespaceDefault,
 				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
 				MeshConfig:      meshConfigWithAutomTLSDisabled,
@@ -95,7 +94,7 @@ func TestMeshStatusEnabledAutoMtls(t *testing.T) {
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
-				IstiodNamespace: conf.IstioNamespace,
+				IstiodNamespace: config.IstioNamespaceDefault,
 				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
 				MeshConfig:      meshConfigWithAutomTLSEnabled,
@@ -134,7 +133,7 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
-				IstiodNamespace: conf.IstioNamespace,
+				IstiodNamespace: config.IstioNamespaceDefault,
 				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
 				MeshConfig:      meshConfigWithAutomTLSDisabled,
@@ -169,7 +168,7 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
-				IstiodNamespace: conf.IstioNamespace,
+				IstiodNamespace: config.IstioNamespaceDefault,
 				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
 				MeshConfig:      meshConfigWithAutomTLSDisabled,
@@ -207,7 +206,7 @@ func TestMeshStatusDisabled(t *testing.T) {
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
-				IstiodNamespace: conf.IstioNamespace,
+				IstiodNamespace: config.IstioNamespaceDefault,
 				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
 				MeshConfig:      meshConfigWithAutomTLSDisabled,
@@ -232,7 +231,7 @@ func TestMeshStatusNotEnabledAutoMtls(t *testing.T) {
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
-				IstiodNamespace: conf.IstioNamespace,
+				IstiodNamespace: config.IstioNamespaceDefault,
 				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
 				MeshConfig:      meshConfigWithAutomTLSEnabled,
@@ -366,7 +365,7 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
-				IstiodNamespace: conf.IstioNamespace,
+				IstiodNamespace: config.IstioNamespaceDefault,
 				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
 				MeshConfig:      meshConfigWithAutomTLSDisabled,
@@ -408,7 +407,7 @@ func testNamespaceScenario(exStatus string, drs []*networking_v1.DestinationRule
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
-				IstiodNamespace: conf.IstioNamespace,
+				IstiodNamespace: config.IstioNamespaceDefault,
 				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
 				MeshConfig:      meshConfig(autoMtls),

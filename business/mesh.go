@@ -52,6 +52,11 @@ func (in *MeshService) IsValidCluster(cluster string) bool {
 	return exists
 }
 
+// IsControlPlane is just a convenience method that calls MeshDiscovery.IsControlPlane()
+func (in *MeshService) IsControlPlane(cluster, namespace string) bool {
+	return in.discovery.IsControlPlane(cluster, namespace)
+}
+
 // GetMeshConfig returns the home cluster's mesh config.
 // TODO: Remove when validations can read from a specific controlplane.
 func (in *MeshService) GetMeshConfig() *models.MeshConfig {

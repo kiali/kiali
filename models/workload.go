@@ -603,8 +603,8 @@ func (workload *Workload) ParsePods(controllerName string, controllerGVK schema.
 	}
 }
 
-func (workload *Workload) SetPods(pods []core_v1.Pod) {
-	workload.Pods.Parse(pods)
+func (workload *Workload) SetPods(pods []core_v1.Pod, isControlPlane func(cluster, namespace string) bool) {
+	workload.Pods.Parse(pods, isControlPlane)
 	workload.IstioSidecar = workload.HasIstioSidecar()
 	workload.IsAmbient = workload.HasIstioAmbient()
 }

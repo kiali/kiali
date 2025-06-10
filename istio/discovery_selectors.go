@@ -40,7 +40,7 @@ func GetKialiDiscoverySelectors(cluster string, conf *config.Config) config.Disc
 	cpNamespaceSelector := config.DiscoverySelectorsType{
 		&config.DiscoverySelectorType{
 			MatchLabels: map[string]string{
-				"kubernetes.io/metadata.name": conf.IstioNamespace,
+				"kubernetes.io/metadata.name": config.IstioNamespaceDefault,
 			},
 		},
 	}

@@ -106,7 +106,6 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
-	conf.IstioNamespace = config.IstioNamespaceNone
 	conf.KubernetesConfig.ClusterName = "KialiCluster"
 
 	istioDeploymentMock := apps_v1.Deployment{
@@ -214,9 +213,8 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	check := require.New(t)
 
 	conf := config.NewConfig()
-	conf.IstioNamespace = config.IstioNamespaceNone
 
-	remoteNs := kubetest.FakeNamespaceWithLabels(conf.IstioNamespace, map[string]string{"topology.istio.io/network": "TheRemoteNetwork"})
+	remoteNs := kubetest.FakeNamespaceWithLabels(config.IstioNamespaceDefault, map[string]string{"topology.istio.io/network": "TheRemoteNetwork"})
 
 	kialiSvc := &core_v1.Service{
 		ObjectMeta: v1.ObjectMeta{
@@ -266,7 +264,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	check.Equal("https://192.168.144.17:123", remoteCluster.ApiEndpoint)
 
 	check.Len(remoteCluster.KialiInstances, 1, "GetClusters didn't resolve the remote Kiali instance")
-	check.Equal(conf.IstioNamespace, remoteCluster.KialiInstances[0].Namespace, "GetClusters didn't set the right namespace of the Kiali instance")
+	check.Equal(config.IstioNamespaceDefault, remoteCluster.KialiInstances[0].Namespace, "GetClusters didn't set the right namespace of the Kiali instance")
 	check.Equal("kiali-operator/myKialiCR", remoteCluster.KialiInstances[0].OperatorResource, "GetClusters didn't set the right operator resource of the Kiali instance")
 	check.Equal("", remoteCluster.KialiInstances[0].Url, "GetClusters didn't set the right URL of the Kiali instance")
 	check.Equal("v1.25", remoteCluster.KialiInstances[0].Version, "GetClusters didn't set the right version of the Kiali instance")
@@ -293,7 +291,6 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 
 	// Prepare mocks for first time call.
 	conf := config.NewConfig()
-	conf.IstioNamespace = "foo"
 	conf.ExternalServices.Istio.IstiodDeploymentName = "bar"
 	conf.KubernetesConfig.ClusterName = "KialiCluster"
 

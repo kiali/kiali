@@ -6,19 +6,31 @@ import (
 
 	apps_v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
 type PortMappingChecker struct {
-	Service     corev1.Service
-	Deployments []apps_v1.Deployment
-	Pods        []corev1.Pod
+	Deployments   []apps_v1.Deployment
+	MeshDiscovery istio.MeshDiscovery
+	Pods          []core_v1.Pod
+	Service       v1.Service
+}
+
+func NewPortMappingChecker(deployments []apps_v1.Deployment, meshDiscovery istio.MeshDiscovery, pods []core_v1.Pod, service v1.Service) PortMappingChecker {
+	return PortMappingChecker{
+		Deployments:   deployments,
+		MeshDiscovery: meshDiscovery,
+		Pods:          pods,
+		Service:       service,
+	}
 }
 
 func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
@@ -42,7 +54,7 @@ func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
 	}
 
 	// Ignoring istio-system Services as some ports are used for debug purposes and not exposed in deployments
-	if config.IsIstioNamespace(p.Service.Namespace) {
+	if p.MeshDiscovery.IsControlPlane("", p.Service.Namespace) {
 		log.Tracef("Skipping Port matching check for Service %s from Istio Namespace %s", p.Service.Name, p.Service.Namespace)
 		return validations, len(validations) == 0
 	}
@@ -60,7 +72,7 @@ func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
 
 func (p PortMappingChecker) hasMatchingPodsWithSidecar(service corev1.Service) bool {
 	sPods := models.Pods{}
-	sPods.Parse(kubernetes.FilterPodsByService(&service, p.Pods))
+	sPods.Parse(kubernetes.FilterPodsByService(&service, p.Pods), p.MeshDiscovery.IsControlPlane)
 	return sPods.HasIstioSidecar()
 }
 

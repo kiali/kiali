@@ -1,11 +1,8 @@
 package kubernetes
 
 import (
-	"fmt"
 	"os"
 	"time"
-
-	"github.com/kiali/kiali/config"
 )
 
 // Be careful with how you use this token. This is the Kiali Service Account token, not the user token.
@@ -23,23 +20,12 @@ var (
 func GetKialiTokenForHomeCluster() (string, string, error) {
 	// TODO: refresh the token when it changes rather than after it expires
 	if KialiTokenForHomeCluster == "" || shouldRefreshToken() {
-		if remoteSecret, err := GetRemoteSecret(config.Get().Deployment.RemoteSecretPath); err == nil { // for experimental feature - for when data plane is in a remote cluster
-			currentContextAuthInfo := remoteSecret.Contexts[remoteSecret.CurrentContext].AuthInfo
-			if authInfo, ok := remoteSecret.AuthInfos[currentContextAuthInfo]; ok {
-				KialiTokenForHomeCluster = authInfo.Token
-				KialiTokenFileForHomeCluster = authInfo.TokenFile
-			} else {
-				return "", "", fmt.Errorf("auth info not found for current context: [%s]. Current context must be set for kiali remote secret", remoteSecret.CurrentContext)
-			}
-		} else {
-			token, err := os.ReadFile(DefaultServiceAccountPath)
-			if err != nil {
-				return "", "", err
-			}
-			KialiTokenForHomeCluster = string(token)
-			KialiTokenFileForHomeCluster = DefaultServiceAccountPath
+		token, err := os.ReadFile(DefaultServiceAccountPath)
+		if err != nil {
+			return "", "", err
 		}
-		tokenRead = time.Now()
+		KialiTokenForHomeCluster = string(token)
+		KialiTokenFileForHomeCluster = DefaultServiceAccountPath
 	}
 	return KialiTokenForHomeCluster, KialiTokenFileForHomeCluster, nil
 }

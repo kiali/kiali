@@ -547,7 +547,7 @@ func (in *WorkloadService) GetPod(cluster, namespace, name string) (*models.Pod,
 	}
 
 	pod := models.Pod{}
-	pod.Parse(p)
+	pod.Parse(p, in.businessLayer.Mesh.discovery.IsControlPlane)
 	return &pod, nil
 }
 
@@ -1223,7 +1223,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			}
 			if found {
 				selector := labels.Set(dep[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
 				w.ParseDeployment(&dep[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as Deployment", controllerName)
@@ -1241,7 +1241,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			}
 			if found {
 				selector := labels.Set(repset[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
 				w.ParseReplicaSet(&repset[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as ReplicaSet", controllerName)
@@ -1259,7 +1259,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			}
 			if found {
 				selector := labels.Set(repcon[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
 				w.ParseReplicationController(&repcon[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as ReplicationController", controllerName)
@@ -1277,7 +1277,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			}
 			if found {
 				selector := labels.Set(depcon[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
 				w.ParseDeploymentConfig(&depcon[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as DeploymentConfig", controllerName)
@@ -1295,7 +1295,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			}
 			if found {
 				selector := labels.Set(fulset[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
 				w.ParseStatefulSet(&fulset[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as StatefulSet", controllerName)
@@ -1312,7 +1312,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				}
 			}
 			if found {
-				w.SetPods([]core_v1.Pod{pods[iFound]})
+				w.SetPods([]core_v1.Pod{pods[iFound]}, in.businessLayer.Mesh.IsControlPlane)
 				w.ParsePod(&pods[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as Pod", controllerName)
@@ -1330,7 +1330,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			}
 			if found {
 				selector := labels.Set(jbs[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
 				w.ParseJob(&jbs[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as Job", controllerName)
@@ -1348,7 +1348,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			}
 			if found {
 				selector := labels.Set(conjbs[iFound].Spec.JobTemplate.Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
 				w.ParseCronJob(&conjbs[iFound])
 			} else {
 				log.Warningf("Workload %s is not found as CronJob (CronJob could be deleted but children are still in the namespace)", controllerName)
@@ -1366,7 +1366,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			}
 			if found {
 				selector := labels.Set(daeset[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
 				w.ParseDaemonSet(&daeset[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as DaemonSet", controllerName)
@@ -1423,7 +1423,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 					log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", controllerName, controllerGVK.Kind)
 				}
 			}
-			w.SetPods(cPods)
+			w.SetPods(cPods, in.businessLayer.Mesh.IsControlPlane)
 		}
 
 		if cnFound {
@@ -1898,7 +1898,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		case kubernetes.Deployments:
 			if dep != nil && dep.Name == criteria.WorkloadName {
 				selector := labels.Set(dep.Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
 				w.ParseDeployment(dep)
 			} else {
 				log.Errorf("Workload %s is not found as Deployment", criteria.WorkloadName)
@@ -1916,7 +1916,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			}
 			if found {
 				selector := labels.Set(repset[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
 				w.ParseReplicaSet(&repset[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as ReplicaSet", criteria.WorkloadName)
@@ -1934,7 +1934,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			}
 			if found {
 				selector := labels.Set(repcon[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
 				w.ParseReplicationController(&repcon[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as ReplicationController", criteria.WorkloadName)
@@ -1943,7 +1943,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		case kubernetes.DeploymentConfigs:
 			if depcon != nil && depcon.Name == criteria.WorkloadName {
 				selector := labels.Set(depcon.Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
 				w.ParseDeploymentConfig(depcon)
 			} else {
 				log.Errorf("Workload %s is not found as DeploymentConfig", criteria.WorkloadName)
@@ -1952,7 +1952,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		case kubernetes.StatefulSets:
 			if fulset != nil && fulset.Name == criteria.WorkloadName {
 				selector := labels.Set(fulset.Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
 				w.ParseStatefulSet(fulset)
 			} else {
 				log.Errorf("Workload %s is not found as StatefulSet", criteria.WorkloadName)
@@ -1969,7 +1969,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				}
 			}
 			if found {
-				w.SetPods([]core_v1.Pod{pods[iFound]})
+				w.SetPods([]core_v1.Pod{pods[iFound]}, in.businessLayer.Mesh.IsControlPlane)
 				w.ParsePod(&pods[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as Pod", criteria.WorkloadName)
@@ -1987,7 +1987,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			}
 			if found {
 				selector := labels.Set(jbs[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
 				w.ParseJob(&jbs[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as Job", criteria.WorkloadName)
@@ -2005,7 +2005,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			}
 			if found {
 				selector := labels.Set(conjbs[iFound].Spec.JobTemplate.Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
 				w.ParseCronJob(&conjbs[iFound])
 			} else {
 				log.Warningf("Workload %s is not found as CronJob (CronJob could be deleted but children are still in the namespace)", criteria.WorkloadName)
@@ -2014,7 +2014,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		case kubernetes.DaemonSets:
 			if ds != nil && ds.Name == criteria.WorkloadName {
 				selector := labels.Set(ds.Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
 				w.ParseDaemonSet(ds)
 			} else {
 				log.Errorf("Workload %s is not found as DaemonSet", criteria.WorkloadName)
@@ -2062,7 +2062,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				}
 			}
 
-			w.SetPods(cPods)
+			w.SetPods(cPods, in.businessLayer.Mesh.IsControlPlane)
 		}
 
 		w.WorkloadListItem.IsGateway = w.IsGateway()

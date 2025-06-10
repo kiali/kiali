@@ -273,6 +273,7 @@ func sidecarInjectorConfigMapName(revision string) string {
 
 type MeshDiscovery interface {
 	Clusters() ([]models.KubeCluster, error)
+	IsControlPlane(cluster, namespace string) bool
 	Mesh(ctx context.Context) (*models.Mesh, error)
 }
 
@@ -290,6 +291,25 @@ func NewDiscovery(clients map[string]kubernetes.ClientInterface, cache cache.Kia
 		kialiCache:     cache,
 		kialiSAClients: clients,
 	}
+}
+
+// IsControlPlane returns true if the cluster-namespace is an istio control plane. If cluster == "" it
+// is ignored, and only the namespace is considered. Otherwise false.
+func (in *Discovery) IsControlPlane(cluster, namespace string) bool {
+	if in.conf.ExternalServices.Istio.IstioNamespace != "" {
+		return in.conf.ExternalServices.Istio.IstioNamespace == namespace
+	}
+
+	if mesh, ok := in.kialiCache.GetMesh(); ok {
+		for _, cp := range mesh.ControlPlanes {
+			if (cluster == "" || cluster == cp.Cluster.Name) && namespace == cp.IstiodNamespace {
+				return true
+			}
+		}
+	} else {
+		log.Warning("IsControlPlane(): Mesh not found in cache, returning false")
+	}
+	return false
 }
 
 // IsRemoteCluster determines if the cluster has a controlplane or if it's a remote cluster without one.
@@ -319,8 +339,8 @@ func (in *Discovery) Clusters() ([]models.KubeCluster, error) {
 		return clusters, nil
 	}
 
-	// Even if somehow there are no clusters found, which there should always be at least the homecluster,
-	// setting this to an empty slice will prevent us from trying to resolve again.
+	// Even if somehow there are no clusters found, setting this to an empty slice will prevent us
+	// from trying to resolve again.
 	clustersByName := map[string]models.KubeCluster{}
 	for cluster, client := range in.kialiSAClients {
 		info := client.ClusterInfo()
@@ -359,9 +379,8 @@ func (in *Discovery) Clusters() ([]models.KubeCluster, error) {
 	}
 
 	// TODO: Separate KialiInstance from Cluster model.
-	for idx := range clusters {
-		cluster := &clusters[idx]
-		instances, err := in.getKialiInstances(*cluster)
+	for _, cluster := range clusters {
+		instances, err := in.getKialiInstances(cluster)
 		if err != nil {
 			log.Warningf("Unable to get Kiali instances for cluster [%s]: %v", cluster.Name, err)
 			continue
