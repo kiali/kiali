@@ -194,7 +194,7 @@ func ControlPlaneMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 			return
 		}
 
-		if namespace != config.Get().IstioNamespace {
+		if !layer.Mesh.IsMeshNamespace(namespace) {
 			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
 			return
 		}
