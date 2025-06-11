@@ -101,9 +101,7 @@ Before({ tags: '@gateway-api' }, () => {
     if (result.code !== 0) {
       cy.log('Gateway API not found. Enabling it now.');
 
-      cy.exec(
-        'kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.2.0" | kubectl apply -f -;'
-      )
+      cy.exec('kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.2.0" | kubectl apply -f -;')
         .its('code')
         .should('eq', 0);
     }
@@ -158,8 +156,20 @@ After({ tags: '@clean-istio-namespace-resources-after' }, () => {
   cy.exec('kubectl -n istio-system delete Sidecar default', { failOnNonZeroExit: false });
 });
 
+const istioSharedMeshConfigMap = `
+apiVersion: v1
+data:
+  mesh: |-
+    outboundTrafficPolicy:
+      mode: REGISTRY_ONLY
+kind: ConfigMap
+metadata:
+  name: istio-user
+  namespace: istio-system
+`;
+
 Before({ tags: '@shared-mesh-config' }, () => {
-  cy.exec('kubectl apply -f cypress/integration/common/data/istio-shared-mesh-configmap.yaml');
+  cy.exec(`echo "${istioSharedMeshConfigMap}" | kubectl apply -f -`);
   const patch = '{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": "istio-user"}}}}}';
   cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`).then(() => {
     const maxTries = 10;
@@ -170,7 +180,7 @@ Before({ tags: '@shared-mesh-config' }, () => {
       }
 
       tries++;
-      cy.request('GET', '/api/mesh/graph').then(response => {
+      cy.request({ method: 'GET', url: '/api/mesh/graph' }).then(response => {
         expect(response.status).to.equal(200);
         console.log(response.body.elements.nodes.find(node => node.data.infraType === 'istiod'));
         if (
@@ -189,7 +199,7 @@ Before({ tags: '@shared-mesh-config' }, () => {
 });
 
 After({ tags: '@shared-mesh-config' }, () => {
-  cy.exec('kubectl delete -f cypress/integration/common/data/istio-shared-mesh-configmap.yaml');
+  cy.exec(`echo "${istioSharedMeshConfigMap}" | kubectl delete -f -`);
   const patch = '{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": null}}}}}';
   cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`);
 });

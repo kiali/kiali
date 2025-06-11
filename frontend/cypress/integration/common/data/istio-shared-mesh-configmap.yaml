@@ -1,9 +1,0 @@
-apiVersion: v1
-data:
-  mesh: |-
-    outboundTrafficPolicy:
-      mode: REGISTRY_ONLY
-kind: ConfigMap
-metadata:
-  name: istio-user
-  namespace: istio-system
