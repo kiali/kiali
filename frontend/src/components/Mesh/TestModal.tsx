@@ -42,7 +42,7 @@ type TestModalProps = ReduxProps &
 
 const modalStyle = kialiStyle({
   overflowY: 'hidden',
-  minHeight: '300px'
+  height: '800px'
 });
 
 const tabStyle = kialiStyle({
