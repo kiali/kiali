@@ -53,6 +53,12 @@ func TestNewClient(ctx context.Context, conf *config.Config, token string) (*mod
 	if !conf.InCluster {
 		url = cfgTracing.ExternalURL
 		logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Using external url %s because not in cluster", url)})
+		if url == "" {
+			return nil, fmt.Errorf("external_url should't be empty (Not in cluster)")
+		}
+	}
+	if url == "" {
+		return nil, fmt.Errorf("internal_url should't be empty")
 	}
 
 	parsedURL, ll, err := parseUrl(url)
