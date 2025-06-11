@@ -173,39 +173,9 @@ func discoverUrl(ctx context.Context, zl *zerolog.Logger, parsedUrl model.Parsed
 		case "16685":
 			{
 				// Try gRPC Jaeger client
-				opts, err := grpcutil.GetAuthDialOptions(conf, parsedUrl.Scheme == "https", auth)
-				if err == nil {
-					address := parsedUrl.Host + ":" + port
-					logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC Client 16685", Result: fmt.Sprintf("%s GRPC client info: address=%s, auth.type=%s", cfgTracing.Provider, address, auth.Type)})
-
-					if len(cfgTracing.CustomHeaders) > 0 {
-						logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC Client 16685", Result: fmt.Sprintf("Adding [%v] custom headers to Tracing client", len(cfgTracing.CustomHeaders))})
-						ctx = metadata.NewOutgoingContext(ctx, metadata.New(cfgTracing.CustomHeaders))
-					}
-					conn, err := grpc.NewClient(address, opts...)
-					if err == nil {
-						cc := model.NewQueryServiceClient(conn)
-						clientgRPC, err := jaeger.NewGRPCJaegerClient(cc)
-						if err != nil {
-							logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Client 16685", Result: fmt.Sprintf("Error creating gRPC Client: [%s]", err.Error())})
-						} else {
-							ok, err := clientgRPC.GetServices(ctx)
-							if ok {
-								vc := model.ValidConfig{Url: fmt.Sprintf("%s://%s", parsedUrl.Scheme, address), Provider: "jaeger", UseGRPC: true}
-								validConfigs = append(validConfigs, vc)
-								logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Client 16685 Ok", Result: "Valid gRPC Client found"})
-							} else {
-								logs = append(logs, model.LogLine{Time: time.Now(), Test: "GetServices gRPC Client 16685", Result: fmt.Sprintf("Error getting gRPC Services: [%s]", err.Error())})
-							}
-						}
-					} else {
-						log.Errorf("Error creating client %s", err.Error())
-						return nil, nil
-					}
-				}
-				if err != nil {
-					logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC Client 16685", Result: fmt.Sprintf("Error while building GRPC dial options: %v", err)})
-				}
+				vc, ll := validateJaegerGRPC(ctx, conf, auth, parsedUrl, port)
+				validConfigs = append(validConfigs, vc...)
+				logs = append(logs, ll...)
 			}
 		case "9095":
 			{
@@ -242,6 +212,73 @@ func discoverUrl(ctx context.Context, zl *zerolog.Logger, parsedUrl model.Parsed
 		}
 	}
 	return validConfigs, logs
+}
+
+func validateJaegerGRPC(ctx context.Context, conf *config.Config, auth *config.Auth, parsedUrl model.ParsedUrl, port string) ([]model.ValidConfig, []model.LogLine) {
+	logs := []model.LogLine{}
+	validConfigs := []model.ValidConfig{}
+
+	vc, log, err := validateGRPCClient(ctx, conf, auth, parsedUrl, port)
+	if vc != nil {
+		validConfigs = append(validConfigs, *vc)
+	}
+	logs = append(logs, log...)
+
+	if strings.Contains(err.Error(), "no transport security set") {
+		noAuth := &config.Auth{}
+		vc, log, err = validateGRPCClient(ctx, conf, noAuth, parsedUrl, port)
+		if vc != nil {
+			validConfigs = append(validConfigs, *vc)
+		}
+		logs = append(logs, log...)
+	}
+
+	return validConfigs, logs
+}
+
+// validateGRPCClient
+func validateGRPCClient(ctx context.Context, conf *config.Config, auth *config.Auth, parsedUrl model.ParsedUrl, port string) (*model.ValidConfig, []model.LogLine, error) {
+	logs := []model.LogLine{}
+	cfgTracing := conf.ExternalServices.Tracing
+	opts, err := grpcutil.GetAuthDialOptions(conf, parsedUrl.Scheme == "https", auth)
+	if err == nil {
+		address := parsedUrl.Host + ":" + port
+		logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC Client 16685", Result: fmt.Sprintf("%s GRPC client info: address=%s, auth.type=%s", cfgTracing.Provider, address, auth.Type)})
+
+		if len(cfgTracing.CustomHeaders) > 0 {
+			logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC Client 16685", Result: fmt.Sprintf("Adding [%v] custom headers to Tracing client", len(cfgTracing.CustomHeaders))})
+			ctx = metadata.NewOutgoingContext(ctx, metadata.New(cfgTracing.CustomHeaders))
+		}
+		conn, err := grpc.NewClient(address, opts...)
+		if err == nil {
+			cc := model.NewQueryServiceClient(conn)
+			clientgRPC, err := jaeger.NewGRPCJaegerClient(cc)
+			if err != nil {
+				logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Client 16685", Result: fmt.Sprintf("Error creating gRPC Client: [%s]", err.Error())})
+			} else {
+				ok, err := clientgRPC.GetServices(ctx)
+				if ok {
+					authType := auth.Type
+					if authType == "" {
+						authType = "none"
+					}
+					validConfig := model.ValidConfig{AuthType: authType, Url: fmt.Sprintf("%s://%s", parsedUrl.Scheme, address), Provider: "jaeger", UseGRPC: true}
+					logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Client 16685 Ok", Result: "Valid gRPC Client found"})
+					return &validConfig, logs, nil
+				} else {
+					logs = append(logs, model.LogLine{Time: time.Now(), Test: "GetServices gRPC Client 16685", Result: fmt.Sprintf("Error getting gRPC Services: [%s]", err.Error())})
+					return nil, logs, fmt.Errorf("Error getting gRPC Services: [%s]", err.Error())
+				}
+			}
+		} else {
+			logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC client 16685", Result: fmt.Sprintf("Error creating client: %s", err.Error())})
+			return nil, logs, fmt.Errorf("Error creating client %s", err.Error())
+		}
+	} else {
+		logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC client 16685", Result: fmt.Sprintf("Error creating dial options: %s", err.Error())})
+		return nil, logs, fmt.Errorf("Error creating client %s", err.Error())
+	}
+	return nil, logs, nil
 }
 
 // validateJaegerHTTP validate specific path for Jaeger and HTTP endpoint

@@ -123,6 +123,7 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
   const externalUrl = validateExternalUrl(props.externalServices, props.kiosk, props.tracingInfo);
   const labels = {
+    authType: 'auth.type',
     namespaceSelector: 'namespace_selector',
     provider: 'provider',
     url: 'internal_url',

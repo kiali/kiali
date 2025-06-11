@@ -132,6 +132,7 @@ export type TracingSingleResponse = {
 };
 
 export type ValidConfig = {
+  authType?: string;
   namespaceSelector?: boolean;
   provider: string;
   url: string;
