@@ -8,13 +8,12 @@ import { aceOptions, yamlDumpOptions } from '../../types/IstioConfigDetails';
 import { getKialiTheme } from '../../utils/ThemeUtils';
 import { dump } from 'js-yaml';
 import ReactAce from 'react-ace/lib/ace';
-import { TracingInfo } from '../../types/TracingInfo';
 import { ValidationTypes } from 'types/IstioObjects';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { Validation } from '../Validations/Validation';
 
 type CheckModalProps = {
-  tracingInfo?: TracingInfo;
+  configData?: unknown;
 };
 
 const healthStatusStyle = kialiStyle({
@@ -28,7 +27,7 @@ export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) =>
   const theme = getKialiTheme();
   const [configResult, setConfigResult] = React.useState<string | null>(null);
 
-  const getConfigToString = dump(props.tracingInfo, {
+  const getConfigToString = dump(props.configData, {
     noRefs: true,
     skipInvalid: true,
     ...yamlDumpOptions
@@ -62,6 +61,7 @@ export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) =>
   };
 
   const handleTestConfig = (): void => {
+    // TODO
     setConfigResult('Ok');
   };
 

@@ -35,6 +35,7 @@ type ReduxDispatchProps = {
 type TestModalProps = ReduxProps &
   ReduxDispatchProps & {
     cluster: string;
+    configData: unknown;
     isOpen: boolean;
     onClose: () => void;
   };
@@ -165,7 +166,7 @@ export const TestModalComp: React.FC<TestModalProps> = (props: TestModalProps) =
           </>
         }
       >
-        <TestConfig tracingInfo={props.tracingInfo} />
+        <TestConfig configData={props.configData} />
       </Tab>
     );
 
