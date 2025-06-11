@@ -224,7 +224,7 @@ func validateJaegerGRPC(ctx context.Context, conf *config.Config, auth *config.A
 	}
 	logs = append(logs, log...)
 
-	if strings.Contains(err.Error(), "no transport security set") {
+	if err != nil && strings.Contains(err.Error(), "no transport security set") {
 		noAuth := &config.Auth{}
 		vc, log, _ = validateGRPCClient(ctx, conf, noAuth, parsedUrl, port)
 		if vc != nil {
