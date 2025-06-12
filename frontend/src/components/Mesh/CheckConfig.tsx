@@ -92,7 +92,8 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
       })
       .catch(err => {
         setLoading(false);
-        setError(`Could not fetch diagnose info ${err}`);
+        const errString = err.response.data.error ? err.response.data.error : err;
+        setError(`${errString}`);
       });
   };
 

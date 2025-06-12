@@ -6,7 +6,7 @@ import { Theme } from '../../types/Common';
 import { istioAceEditorStyle } from '../../styles/AceEditorStyle';
 import { aceOptions, yamlDumpOptions } from '../../types/IstioConfigDetails';
 import { getKialiTheme } from '../../utils/ThemeUtils';
-import { dump } from 'js-yaml';
+import { dump, loadAll } from 'js-yaml';
 import ReactAce from 'react-ace/lib/ace';
 import { ValidationTypes } from 'types/IstioObjects';
 import { kialiStyle } from '../../styles/StyleUtils';
@@ -24,43 +24,48 @@ const healthStatusStyle = kialiStyle({
 export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) => {
   const { t } = useKialiTranslation();
   const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [isModified, setIsModified] = React.useState(false);
+  const [modifiedConfig, setModifiedConfig] = React.useState<string>('');
   const aceEditorRef = React.useRef<ReactAce | null>(null);
+  const [source, setSource] = React.useState<string>('');
 
   const theme = getKialiTheme();
-  const [configResult, setConfigResult] = React.useState<string | null>(null);
+  const [configResult] = React.useState<string | null>(null);
 
-  const getConfigToString = dump(props.configData, {
-    noRefs: true,
-    skipInvalid: true,
-    ...yamlDumpOptions
-  });
+  const testConfig = (): void => {
+    loadAll(modifiedConfig, objectModified => {
+      setLoading(true);
+      const jsonPatch = JSON.stringify(objectModified).replace(new RegExp('(,null)+]', 'g'), ']');
 
-  const testConfig = async (): Promise<void> => {
-    setLoading(true);
-    setConfigResult(null);
-
-    return API.testTracingConfig('')
-      .then(response => {
-        setConfigResult(response.data);
-        setLoading(false);
-      })
-      .catch(err => {
-        setLoading(false);
-        console.log(err);
-      });
+      return API.testTracingConfig(jsonPatch)
+        .then(response => {
+          setModifiedConfig(response.data);
+          setSource(dump(props.configData, yamlDumpOptions));
+          setLoading(false);
+        })
+        .catch(err => {
+          setLoading(false);
+          setError(err);
+        });
+    });
   };
 
   const showResult = (): React.ReactElement => {
     let healthSeverity: ValidationTypes;
-    switch (configResult) {
-      case 'Ok':
-        healthSeverity = ValidationTypes.Correct;
-        break;
-      case 'Error':
-        healthSeverity = ValidationTypes.Warning;
-        break;
-      default:
-        healthSeverity = ValidationTypes.Error;
+    if (error) {
+      healthSeverity = ValidationTypes.Error;
+    } else {
+      switch (configResult) {
+        case 'Ok':
+          healthSeverity = ValidationTypes.Correct;
+          break;
+        case 'Error':
+          healthSeverity = ValidationTypes.Warning;
+          break;
+        default:
+          healthSeverity = ValidationTypes.Error;
+      }
     }
 
     return (
@@ -81,6 +86,11 @@ export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) =>
     testConfig();
   };
 
+  const onEditorChange = (value: string): void => {
+    setSource(value);
+    setIsModified(true);
+  };
+
   return (
     <div style={{ paddingTop: '10px' }}>
       <span>{t('external_services.tracing configuration:')}</span>
@@ -88,23 +98,24 @@ export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) =>
         ref={aceEditorRef}
         mode="yaml"
         theme={theme === Theme.DARK ? 'twilight' : 'eclipse'}
+        onChange={onEditorChange}
         width="100%"
         className={istioAceEditorStyle}
         wrapEnabled={true}
         readOnly={false}
         setOptions={aceOptions ?? { foldStyle: 'markbegin' }}
-        value={getConfigToString}
+        value={source}
       />
       <Button
         style={{ marginTop: '10px' }}
         variant={ButtonVariant.secondary}
         onClick={handleTestConfig}
-        disabled={loading}
+        isDisabled={loading || !isModified}
       >
         {t('Test Config')}
       </Button>{' '}
       {loading && <Spinner size="sm" />}
-      {configResult ? showResult() : ''}
+      {configResult && !isModified ? showResult() : ''}
     </div>
   );
 };
