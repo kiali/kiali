@@ -203,3 +203,17 @@ After({ tags: '@shared-mesh-config' }, () => {
   const patch = '{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": null}}}}}';
   cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`);
 });
+
+
+
+beforeEach(() => {
+  cy.log(`Current test file: ${Cypress.spec.name}`);
+  cy.exec(`touch ${Cypress.spec.name}.log`);
+
+
+  // kubectl logs kiali-6df86bf865-42nkm  -n istio-system -f --tail=1
+});
+
+// Before(function () {
+//   cy.log(`Scenario name: ${this.pickle}`);
+// });
