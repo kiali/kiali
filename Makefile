@@ -11,7 +11,7 @@ TARGET_ARCHS ?= amd64 arm64 s390x ppc64le
 
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
-VERSION ?= v2.4.5
+VERSION ?= v2.4.6
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
 # The path where the UI project has been git cloned. The UI should
