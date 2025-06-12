@@ -132,6 +132,7 @@ export type TracingSingleResponse = {
 };
 
 export type ValidConfig = {
+  authType?: string;
   namespaceSelector?: boolean;
   provider: string;
   url: string;
@@ -147,6 +148,7 @@ export type LogLine = {
 
 export type TracingCheck = {
   code?: number;
+  error?: string;
   logLine: LogLine[];
   message: string;
   validConfig?: ValidConfig[];

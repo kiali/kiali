@@ -47,6 +47,7 @@ type ParsedUrl struct {
 }
 
 type ValidConfig struct {
+	AuthType          string `json:"authType,omitempty"`
 	NamespaceSelector *bool  `json:"namespaceSelector"`
 	Provider          string `json:"provider"`
 	Url               string `json:"url"`

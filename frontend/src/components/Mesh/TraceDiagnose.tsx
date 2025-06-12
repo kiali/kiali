@@ -108,7 +108,8 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
       })
       .catch(err => {
         setLoading(false);
-        setError(`Could not fetch diagnose info ${err}`);
+        const errString = err.response.data.error ? err.response.data.error : err;
+        setError(`Could not fetch diagnose info ${errString}`);
       });
   };
 
@@ -123,12 +124,12 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
   const externalUrl = validateExternalUrl(props.externalServices, props.kiosk, props.tracingInfo);
   const labels = {
+    authType: 'auth.type',
     namespaceSelector: 'namespace_selector',
     provider: 'provider',
     url: 'internal_url',
     useGRPC: 'use_grpc'
   };
-
   return (
     <>
       <div style={{ paddingTop: '0.25em' }}>
@@ -178,7 +179,7 @@ export const TracingDiagnoseComp: React.FC<TracingDiagnoseProps> = (props: Traci
         {props.tracingDiagnose && <span style={{ color: 'green' }}>{props.tracingDiagnose.message}</span>}
         {error && (
           <div>
-            <span style={{ color: 'red' }}>{error}</span>
+            <span style={{ color: 'red' }}>{props.tracingDiagnose?.error ? props.tracingDiagnose?.error : error}</span>
           </div>
         )}
         {props.tracingDiagnose?.validConfig && (
