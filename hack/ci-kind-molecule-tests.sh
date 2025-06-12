@@ -392,7 +392,7 @@ if [ "${USE_DEV_IMAGES}" == "true" ]; then
   infomsg "Dev images are to be tested. Will prepare them now."
 
   infomsg "Building dev image (backend and frontend)..."
-  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" clean build test build-ui
+  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" clean build-ui build test
 
   infomsg "Pushing the images into the cluster..."
   make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND="${KIND_EXE}" -e KIND_NAME="${KIND_NAME}" cluster-push

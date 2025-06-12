@@ -87,7 +87,7 @@ deploy_kiali() {
   if [ "${KIALI_USE_DEV_IMAGE}" == "true" ]; then
     if [ "${KIALI_BUILD_DEV_IMAGE}" == "true" ]; then
       echo "Building the dev image..."
-      make -e -C "${KIALI_REPO_ROOT}" build build-ui
+      make -e -C "${KIALI_REPO_ROOT}" build-ui build
     fi
 
     if [ "${MANAGE_KIND}" == "true" ]; then

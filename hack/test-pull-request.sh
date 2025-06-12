@@ -230,7 +230,7 @@ cd kiali
 # Build and push the images to the cluster
 
 echo "Building backend server and frontend UI using GOPATH=${GOPATH}..."
-make clean build test build-ui
+make clean build-ui build test
 
 if [ "${IS_OPENSHIFT}" == "true" ]; then
   echo "Logging into the image registry..."
