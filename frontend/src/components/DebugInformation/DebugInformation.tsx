@@ -101,6 +101,12 @@ const tabStyle = kialiStyle({
   }
 });
 
+const spanStyle = kialiStyle({
+  display: 'inline-block',
+  marginBottom: '0.25rem',
+  marginTop: '0.25rem'
+});
+
 const DebugInformationComponent: React.FC<DebugInformationProps> = (props: DebugInformationProps) => {
   const [config, setConfig] = React.useState({});
   const [copyStatus, setCopyStatus] = React.useState(CopyStatus.NOT_COPIED);
@@ -238,7 +244,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
 
     const additionalState = (
       <Tab eventKey={1} title={t('Additional State')} key="additionalState">
-        <span>{t('Please include this information when opening a bug:')}</span>
+        <span className={spanStyle}>{t('Please include this information when opening a bug:')}</span>
         <AceEditor
           ref={aceEditorRef}
           mode="yaml"
@@ -255,7 +261,9 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
 
     const perfData = (
       <Tab eventKey={2} title={t('Performance Measurements')} key="perfData">
-        <span>{t('For Performance issues troubleshooting, remove sensitive data before posting:')}</span>
+        <span className={spanStyle}>
+          {t('For Performance issues troubleshooting, remove sensitive data before posting:')}
+        </span>
         <AceEditor
           ref={aceEditorRef}
           mode="yaml"
