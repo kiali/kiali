@@ -33,14 +33,12 @@ Feature: Workload logs tab
     When I type "GET" on the Hide text field
     Then the log pane should only show log lines not containing "GET"
 
-  @selected
   @loggers-app
   Scenario: The log pane of the logs tab should show json log lines with a json log indicator
     Given I am on the logs tab of the "json-logger" workload detail page of the "loggers" namespace
     When I type "text log format" on the Hide text field
     Then the log pane should only show json log lines
   
-  @selected
   @loggers-app
   Scenario: The json log should contain certain values on the parsed object
     Given I am on the logs tab of the "json-logger" workload detail page of the "loggers" namespace
