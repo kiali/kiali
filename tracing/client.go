@@ -171,7 +171,7 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 			return &Client{httpTracingClient: httpTracingClient, grpcClient: client, customHeaders: cfgTracing.CustomHeaders}, nil
 		} else {
 			zl.Error().Msgf("Error creating client: %v", err)
-			return nil, nil
+			return nil, err
 		}
 
 	} else {
@@ -209,7 +209,7 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 				streamClient, err := tempo.NewgRPCClient(clientConn)
 				if err != nil {
 					zl.Error().Msgf("Error creating gRPC Tempo Client: %v", err)
-					return nil, nil
+					return nil, err
 				}
 				return &Client{httpTracingClient: httpTracingClient, grpcClient: streamClient, httpClient: client, baseURL: u, customHeaders: cfgTracing.CustomHeaders}, nil
 			}
