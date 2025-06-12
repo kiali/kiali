@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useKialiTranslation } from '../../utils/I18nUtils';
-import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Button, ButtonVariant, Spinner, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import AceEditor from 'react-ace';
 import { Theme } from '../../types/Common';
 import { istioAceEditorStyle } from '../../styles/AceEditorStyle';
@@ -11,6 +11,7 @@ import ReactAce from 'react-ace/lib/ace';
 import { ValidationTypes } from 'types/IstioObjects';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { Validation } from '../Validations/Validation';
+import * as API from '../../services/Api';
 
 type CheckModalProps = {
   configData?: unknown;
@@ -22,6 +23,7 @@ const healthStatusStyle = kialiStyle({
 
 export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) => {
   const { t } = useKialiTranslation();
+  const [loading, setLoading] = React.useState(false);
   const aceEditorRef = React.useRef<ReactAce | null>(null);
 
   const theme = getKialiTheme();
@@ -32,6 +34,21 @@ export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) =>
     skipInvalid: true,
     ...yamlDumpOptions
   });
+
+  const testConfig = async (): Promise<void> => {
+    setLoading(true);
+    setConfigResult(null);
+
+    return API.testTracingConfig('')
+      .then(response => {
+        setConfigResult(response.data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setLoading(false);
+        console.log(err);
+      });
+  };
 
   const showResult = (): React.ReactElement => {
     let healthSeverity: ValidationTypes;
@@ -61,8 +78,7 @@ export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) =>
   };
 
   const handleTestConfig = (): void => {
-    // TODO
-    setConfigResult('Ok');
+    testConfig();
   };
 
   return (
@@ -79,9 +95,15 @@ export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) =>
         setOptions={aceOptions ?? { foldStyle: 'markbegin' }}
         value={getConfigToString}
       />
-      <Button style={{ marginTop: '10px' }} variant={ButtonVariant.secondary} onClick={handleTestConfig}>
+      <Button
+        style={{ marginTop: '10px' }}
+        variant={ButtonVariant.secondary}
+        onClick={handleTestConfig}
+        disabled={loading}
+      >
         {t('Test Config')}
-      </Button>
+      </Button>{' '}
+      {loading && <Spinner size="sm" />}
       {configResult ? showResult() : ''}
     </div>
   );

@@ -1409,3 +1409,9 @@ export const getDiagnoseStatus = (cluster?: string): Promise<ApiResponse<Tracing
 
   return newRequest<TracingCheck>(HTTP_VERBS.GET, urls.tracingDiagnose, queryParams, {});
 };
+
+export const testTracingConfig = (config: string): Promise<ApiResponse<string>> => {
+  const queryParams: ClusterParam = {};
+
+  return newRequest<string>(HTTP_VERBS.POST, urls.tracingTestConfig, queryParams, config);
+};
