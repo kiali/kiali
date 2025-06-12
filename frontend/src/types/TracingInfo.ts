@@ -148,6 +148,7 @@ export type LogLine = {
 
 export type TracingCheck = {
   code?: number;
+  error?: string;
   logLine: LogLine[];
   message: string;
   validConfig?: ValidConfig[];
