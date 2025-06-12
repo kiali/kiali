@@ -206,12 +206,14 @@ After({ tags: '@shared-mesh-config' }, () => {
 
 beforeEach(() => {
   cy.log(`Current test file: ${Cypress.spec.name}`);
-  cy.exec(`touch ${Cypress.spec.name}.log`);
-  // bash -c 'exec -a kubectl-logs kubectl logs -f kiali-58b649d6fd-h5n7d -n istio-system' &
-
-  // kubectl logs kiali-6df86bf865-42nkm  -n istio-system -f --tail=1
+  cy.exec(`bash -c 'exec -a kubectl-logs kubectl logs -f kiali-6df86bf865-42nkm -n istio-system --since=2s >> ${Cypress.spec.name}.log 2>&1' &`);
+  cy.exec(`bash -c 'exec -a kubectl-logs kubectl logs -f istio-ingressgateway-86cdf57597-6k55p -n istio-system --since=2s >> ${Cypress.spec.name}.log 2>&1' &`);
+  cy.exec(`bash -c 'exec -a kubectl-logs kubectl logs -f istiod-54766b954f-dnlnt -n istio-system --since=2s >> ${Cypress.spec.name}.log 2>&1' &`);
+ 
 });
 
-// Before(function () {
-//   cy.log(`Scenario name: ${this.pickle}`);
-// });
+afterEach(() => {
+  cy.exec(`kill $(ps aux | grep 'kubectl-logs' | grep -v grep | awk '{print $2}')`)
+  cy.exec(` echo "---------------------end of testcase ----------------" >> ${Cypress.spec.name}.log`)
+})
+
