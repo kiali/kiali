@@ -204,12 +204,10 @@ After({ tags: '@shared-mesh-config' }, () => {
   cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`);
 });
 
-
-
 beforeEach(() => {
   cy.log(`Current test file: ${Cypress.spec.name}`);
   cy.exec(`touch ${Cypress.spec.name}.log`);
-
+  // bash -c 'exec -a kubectl-logs kubectl logs -f kiali-58b649d6fd-h5n7d -n istio-system' &
 
   // kubectl logs kiali-6df86bf865-42nkm  -n istio-system -f --tail=1
 });
