@@ -82,8 +82,8 @@ const waypointContainerColor = PFColors.Gold500;
 const spanColor = PFColors.Cyan300;
 
 type ReduxProps = {
-  appState: KialiAppState;
   kiosk: string;
+  theme: string;
   timeRange: TimeRange;
   tracingIntegration: boolean;
 };
@@ -996,7 +996,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   };
 
   private renderTabs = (): React.ReactNode[] => {
-    const theme = this.props.appState.globalState.theme;
+    const theme = this.props.theme;
     const jsonTab = (
       <Tab eventKey={0} title={t('JSON (Raw object)')} key="json">
         <AceEditor
@@ -1568,7 +1568,7 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => {
     kiosk: state.globalState.kiosk,
     timeRange: timeRangeSelector(state),
     tracingIntegration: state.tracingState.info?.integration ?? false,
-    appState: state
+    theme: state.globalState.theme
   };
 };
 
