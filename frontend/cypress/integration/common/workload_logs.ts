@@ -154,7 +154,7 @@ Then('the log pane should show spans', () => {
 Then('I click a json log line', () => {
   cy.get('#logsText').within(() => {
     cy.get('button').find('svg.pf-v5-svg').should('exist');
-    cy.get('button').first().click(); // clickea el primer botón
+    cy.get('button').first().click();
   });
 });
 
