@@ -251,7 +251,7 @@ minikube_install_basic_demo() {
   if [ "${KIALI_VERSION}" == "dev" ]; then
     infomsg "Installing Kiali ..."
     if [ "${KIALI_DEV_BUILD}" == "true" ]; then
-      local make_build_targets="build build-ui"
+      local make_build_targets="build-ui build"
     fi
     make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" CLUSTER_TYPE=minikube MINIKUBE_PROFILE=${CLUSTER1_ISTIO} SERVICE_TYPE=LoadBalancer ${make_build_targets:-} cluster-push operator-create kiali-create
     ${CLIENT_EXE} patch kiali kiali -n kiali-operator --type merge -p '{"spec":{"extensions":[{"enabled":true,"name":"skupper"}]}}'
@@ -370,7 +370,7 @@ openshift_install_basic_demo() {
   if [ "${KIALI_VERSION}" == "dev" ]; then
     infomsg "Installing Kiali ..."
     if [ "${KIALI_DEV_BUILD}" == "true" ]; then
-      local make_build_targets="build build-ui"
+      local make_build_targets="build-ui build"
     fi
     make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" CLUSTER_TYPE=openshift ${make_build_targets:-} cluster-push operator-create kiali-create
     ${CLIENT_EXE} patch kiali kiali -n kiali-operator --type merge -p '{"spec":{"extensions":[{"enabled":true,"name":"skupper"}]}}'

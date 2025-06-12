@@ -245,7 +245,7 @@ install_kiali() {
     local kiali_dir=""
     kiali_dir="${SCRIPT_DIR}/.."
     make -C "${kiali_dir}" -e HELM_CHARTS_REPO="${HELM_CHARTS_REPO}" .ensure-operator-helm-chart-exists
-    make -C "${kiali_dir}" -e DORP=podman build build-ui cluster-push
+    make -C "${kiali_dir}" -e DORP=podman build-ui build cluster-push
     # Dev images need to be built and pushed to the registry.
     additional_set='--set allowAdHocKialiNamespace=true --set allowAdHocKialiImage=true --set image.pullSecrets={kiali-pull-creds}'
     # Need to provide a image pull secret for the kiali and operator pods.
