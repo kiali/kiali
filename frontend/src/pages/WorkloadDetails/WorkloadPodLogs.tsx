@@ -1528,7 +1528,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     // Limited to objects, not arrays of objects
     if (typeof data === 'object' && data !== null) {
       return (
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
+        <table data-test="parsed-json-table" style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
           <tbody>
             {Object.entries(data as Record<string, unknown>).map(([key, value]) => (
               <tr key={key}>
