@@ -492,6 +492,7 @@ fi
 
 if [ "${REVISION}" != "" ]; then
   REVISION_OPTION="--set revision=${REVISION}"
+  REVISION_CM="-${REVISION}"
 fi
 
 DEFAULT_ZIPKIN_SERVICE_OPTION="--set values.meshConfig.defaultConfig.tracing.zipkin.address=zipkin.${NAMESPACE}:9411"
@@ -614,7 +615,7 @@ NAD
     echo "===== IMPORTANT ====="
 
     # Since we are on OpenShift, make sure CNI is enabled
-    if [ "$($CLIENT_EXE -n ${NAMESPACE} get cm istio-sidecar-injector -ojsonpath='{.data.values}' | jq '.istio_cni.enabled')" != "true" ]; then
+    if [ "$($CLIENT_EXE -n ${NAMESPACE} get cm istio-sidecar-injector${REVISION_CM} -ojsonpath='{.data.values}' | jq '.istio_cni.enabled')" != "true" ]; then
       echo "===== WARNING ====="
       echo "CNI IS NOT ENABLED BUT SHOULD HAVE BEEN"
       echo "===== WARNING ====="
