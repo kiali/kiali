@@ -60,7 +60,7 @@ type controlPlaneMonitor struct {
 // and update the kialiCache. The proxy status and the registry services are
 // scraped from the debug endpoint.
 func (p *controlPlaneMonitor) RefreshIstioCache(ctx context.Context) error {
-	log.Debug("Scraping istiod for debug info")
+	log.Trace("Scraping istiod for debug info")
 	ctx, cancel := context.WithTimeout(ctx, p.pollingInterval)
 	defer cancel()
 
