@@ -13,7 +13,6 @@ Feature: Kiali Istio Config page
     And user selects the "bookinfo" namespace
 
   @bookinfo-app
-  @selected
   Scenario: See all Istio Config objects in the bookinfo namespace.
     Then user sees all the Istio Config objects in the bookinfo namespace
     And the "Cluster" column "disappears"
@@ -44,7 +43,6 @@ Feature: Kiali Istio Config page
     Then only "Gateway" objects are visible in the "bookinfo" namespace
 
   @bookinfo-app
-  @selected
   Scenario: Filter Istio Config objects by Valid configuration
     When the user filters by "Config" for "Valid"
     Then user sees "bookinfo-gateway"

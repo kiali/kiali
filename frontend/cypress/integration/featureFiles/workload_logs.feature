@@ -33,6 +33,20 @@ Feature: Workload logs tab
     When I type "GET" on the Hide text field
     Then the log pane should only show log lines not containing "GET"
 
+  @loggers-app
+  Scenario: The log pane of the logs tab should show json log lines with a json log indicator
+    Given I am on the logs tab of the "json-logger" workload detail page of the "loggers" namespace
+    When I type "text log format" on the Hide text field
+    Then the log pane should only show json log lines
+  
+  @loggers-app
+  Scenario: The json log should contain certain values on the parsed object
+    Given I am on the logs tab of the "json-logger" workload detail page of the "loggers" namespace
+    When I type "text log format" on the Hide text field
+    Then I click a json log line
+    And I click on the parsed json tab
+    And I should see certain values on the parsed object
+
   @bookinfo-app
   Scenario: The log pane of the logs tab should limit the number of log lines that are fetched
     Given I am on the logs tab of the "ratings-v1" workload detail page of the "bookinfo" namespace
