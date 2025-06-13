@@ -6,12 +6,9 @@ import { FilterSelected } from '../Filters/StatefulFilters';
 import { HistoryManager } from '../../app/History';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
+import { capitalize } from '../../utils/Common';
 
 const istioName = 'Istio Config';
-
-const capitalize = (str: string): string => {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-};
 
 const cleanFilters = (): void => {
   FilterSelected.resetFilters();
