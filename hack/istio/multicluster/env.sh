@@ -442,7 +442,7 @@ Valid command line arguments:
                               (Default: true)
   -kni|--kind-node-image: Image of the kind cluster. Defaults to latest kind image if not specified.
   -kshc|--kiali-server-helm-charts <path>: If specified, must be the path to a Kiali server helm charts tarball. If not
-                                           specified, the latest published helm charts is used. (Default: kiali-server)
+                                           specified, the latest published helm charts is used.
   -kudi|--kiali-use-dev-image: If "true" the local dev image of Kiali will be pushed and used in the Kiali deployment.
                                The local dev image must be tagged as "quay.io/kiali/kiali:dev" prior to running this script;
                                that will be the image pushed to the clusters. You can "make container-build-kiali" to build it.
@@ -605,6 +605,10 @@ if [ "${KIALI_USE_DEV_IMAGE}" == "true" ]; then
     # The user should set this to a tarball if a different helm chart should be used.
     # e.g. /source/helm-charts/_output/charts/kiali-server-1.64.0-SNAPSHOT.tgz
     KIALI_SERVER_HELM_CHARTS="${KIALI_SERVER_HELM_CHARTS:-kiali-server}"
+  fi
+else
+  if [ -z "${KIALI_SERVER_HELM_CHARTS:-}" ]; then
+    KIALI_SERVER_HELM_CHARTS="kiali/kiali-server"
   fi
 fi
 
