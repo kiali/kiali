@@ -180,10 +180,9 @@ const MaxLinesOptions = {
 };
 
 const modalStyle = kialiStyle({
-  height: '70%',
-  width: '50%',
-  overflow: 'auto',
-  overflowY: 'hidden'
+  display: 'flex',
+  flexDirection: 'column',
+  width: '50%'
 });
 
 const previewLogLineStyle = kialiStyle({
@@ -1007,6 +1006,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           name="json-details-viewer"
           readOnly={true}
           width="100%"
+          height="100%"
           setOptions={{
             useWorker: false,
             showLineNumbers: true,
@@ -1528,7 +1528,11 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     // Limited to objects, not arrays of objects
     if (typeof data === 'object' && data !== null) {
       return (
-        <table data-test="parsed-json-table" style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
+        <table data-test="parsed-json-table" style={{ width: '100%', tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '30%' }} />
+            <col style={{ width: '70%' }} />
+          </colgroup>
           <tbody>
             {Object.entries(data as Record<string, unknown>).map(([key, value]) => (
               <tr key={key}>
