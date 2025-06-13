@@ -42,14 +42,23 @@ export class TracesFetcher {
       limit: o.spanLimit,
       minDuration: o.minDuration ? Math.floor(1000 * o.minDuration) : undefined
     };
-    const perfKey: string =
-      o.targetKind === 'app' ? 'AppTraces' : o.targetKind === 'service' ? 'ServiceTraces' : 'WorkloadTraces';
-    const apiCall =
-      o.targetKind === 'app'
-        ? API.getAppTraces
-        : o.targetKind === 'service'
-        ? API.getServiceTraces
-        : API.getWorkloadTraces;
+    let perfKey: string;
+    let apiCall: typeof API.getAppTraces | typeof API.getServiceTraces | typeof API.getWorkloadTraces;
+    switch (o.targetKind) {
+      case 'app':
+        perfKey = 'AppTraces';
+        apiCall = API.getAppTraces;
+        break;
+      case 'service':
+        perfKey = 'ServiceTraces';
+        apiCall = API.getServiceTraces;
+        break;
+      default:
+        perfKey = 'WorkloadTraces';
+        apiCall = API.getWorkloadTraces;
+        break;
+    }
+
     startPerfTimer(perfKey);
     apiCall(o.namespace, o.target, q, o.cluster)
       .then(response => {

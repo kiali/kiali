@@ -175,12 +175,22 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
     };
 
     const d = this.props.nodeData;
-    const perfKey: string = d.workload ? 'WorkloadTraces' : d.service ? 'ServiceTraces' : 'AppTraces';
-    const promise = d.workload
-      ? API.getWorkloadTraces(d.namespace, d.workload, params, d.cluster)
-      : d.service
-      ? API.getServiceTraces(d.namespace, d.service, params, d.cluster)
-      : API.getAppTraces(d.namespace, d.app!, params, d.cluster);
+    let perfKey: string;
+    let promise: Promise<any>;
+    switch (true) {
+      case !!d.workload:
+        perfKey = 'WorkloadTraces';
+        promise = API.getWorkloadTraces(d.namespace, d.workload!, params, d.cluster);
+        break;
+      case !!d.service:
+        perfKey = 'ServiceTraces';
+        promise = API.getServiceTraces(d.namespace, d.service!, params, d.cluster);
+        break;
+      default:
+        perfKey = 'AppTraces';
+        promise = API.getAppTraces(d.namespace, d.app!, params, d.cluster);
+        break;
+    }
 
     this.promises.cancelAll();
     startPerfTimer(perfKey);
