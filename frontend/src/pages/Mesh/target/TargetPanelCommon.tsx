@@ -389,7 +389,7 @@ export const renderInfraSummary = (
         {controlPlaneNodes.map(infra => {
           const cpRev = infra.getData().infraData.revision ?? 'default';
           const dataPlaneNode = dataPlaneNodes.find(dpn => {
-            const dpRev = dpn.getData().infraData.revision ?? 'default';
+            const dpRev = dpn.getData().infraData[0]?.revision ?? 'default';
             return cpRev === dpRev;
           });
           const dataPlaneNamespaceCount = dataPlaneNode?.getData().infraData?.length ?? 0;
