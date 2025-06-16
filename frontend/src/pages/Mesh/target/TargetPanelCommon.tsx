@@ -359,9 +359,8 @@ export const renderInfraSummary = (
     controlPlaneNodes = controlPlaneNodes.filter(
       n => n.getData().cluster === forCluster && (!forNamespace || n.getData().namespace === forNamespace)
     );
-    dataPlaneNodes = dataPlaneNodes.filter(
-      n => n.getData().cluster === forCluster && (!forNamespace || n.getData().namespace === forNamespace)
-    );
+    // 'infraType: dataplane' does not have a value for 'namespace', a filtering by 'revision' is used when displaying
+    dataPlaneNodes = dataPlaneNodes.filter(n => n.getData().cluster === forCluster);
     gatewayNodes = gatewayNodes.filter(
       n => n.getData().cluster === forCluster && (!forNamespace || n.getData().namespace === forNamespace)
     );
