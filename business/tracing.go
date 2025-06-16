@@ -407,19 +407,20 @@ func (in *TracingService) ValidateConfiguration(ctx context.Context, conf *confi
 	client, err := tracing.NewClient(ctx, newConfig, token)
 	if err != nil {
 		msg := fmt.Sprintf("ValidateConfiguration: Error creating tracing client: [%v]. ", err)
-		log.FromContext(ctx).Trace().Msgf(msg)
+		log.FromContext(ctx).Trace().Msg(msg)
 		validation.Error = msg
 		return &validation
 	}
 
 	// Validate endpoint
 	status, err := client.GetServiceStatus(ctx)
-	log.Infof("Status: %s", status)
+	log.FromContext(ctx).Trace().Msgf("GetServiceStatus %v", status)
+
 	if err != nil {
 		validation.Error = fmt.Sprintf("Error getting service status: [%v]. ", err)
 		return &validation
 	}
 
-	validation.Message = fmt.Sprintf("Ok")
+	validation.Message = fmt.Sprint("Ok")
 	return &validation
 }
