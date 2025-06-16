@@ -8,7 +8,7 @@ import { TracingThunkActions } from 'actions/TracingThunkActions';
 import { router, URLParam } from '../../app/History';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { JaegerTrace } from 'types/TracingInfo';
+import { JaegerTrace, TracingResponse } from 'types/TracingInfo';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { TracingQuery } from 'types/Tracing';
 import { TimeInSeconds } from 'types/Common';
@@ -21,6 +21,8 @@ import { KialiDispatch } from '../../types/Redux';
 import { isMultiCluster } from '../../config';
 import { KialiIcon } from 'config/KialiIcon';
 import { TraceLimit, TraceLimitOption } from 'components/Metrics/TraceLimit';
+import { endPerfTimer, startPerfTimer } from '../../utils/PerformanceUtils';
+import { ApiResponse } from '../../types/Api';
 
 type ReduxStateProps = {
   kiosk: string;
@@ -174,18 +176,25 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
     };
 
     const d = this.props.nodeData;
-
-    const promise = d.workload
-      ? API.getWorkloadTraces(d.namespace, d.workload, params, d.cluster)
-      : d.service
-      ? API.getServiceTraces(d.namespace, d.service, params, d.cluster)
-      : API.getAppTraces(d.namespace, d.app!, params, d.cluster);
+    let perfKey: string;
+    let promise: Promise<ApiResponse<TracingResponse>>;
+    if (d.workload) {
+      perfKey = 'WorkloadTraces';
+      promise = API.getWorkloadTraces(d.namespace, d.workload, params, d.cluster);
+    } else if (d.service) {
+      perfKey = 'ServiceTraces';
+      promise = API.getServiceTraces(d.namespace, d.service, params, d.cluster);
+    } else {
+      perfKey = 'AppTraces';
+      promise = API.getAppTraces(d.namespace, d.app!, params, d.cluster);
+    }
 
     this.promises.cancelAll();
-
+    startPerfTimer(perfKey);
     this.promises
       .register('traces', promise)
       .then(response => {
+        endPerfTimer(perfKey);
         const traces = response.data.data
           ? (response.data.data
               .map(trace => transformTraceData(trace, this.props.nodeData.cluster))

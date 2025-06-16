@@ -5,6 +5,7 @@ import { TracingQuery } from 'types/Tracing';
 import { TargetKind } from 'types/Common';
 import { getTimeRangeMicros } from 'utils/tracing/TracingHelper';
 import { transformTraceData } from 'utils/tracing/TraceTransform';
+import { endPerfTimer, startPerfTimer } from '../../utils/PerformanceUtils';
 
 export type FetchOptions = {
   cluster?: string;
@@ -41,14 +42,27 @@ export class TracesFetcher {
       limit: o.spanLimit,
       minDuration: o.minDuration ? Math.floor(1000 * o.minDuration) : undefined
     };
-    const apiCall =
-      o.targetKind === 'app'
-        ? API.getAppTraces
-        : o.targetKind === 'service'
-        ? API.getServiceTraces
-        : API.getWorkloadTraces;
+    let perfKey: string;
+    let apiCall: typeof API.getAppTraces | typeof API.getServiceTraces | typeof API.getWorkloadTraces;
+    switch (o.targetKind) {
+      case 'app':
+        perfKey = 'AppTraces';
+        apiCall = API.getAppTraces;
+        break;
+      case 'service':
+        perfKey = 'ServiceTraces';
+        apiCall = API.getServiceTraces;
+        break;
+      default:
+        perfKey = 'WorkloadTraces';
+        apiCall = API.getWorkloadTraces;
+        break;
+    }
+
+    startPerfTimer(perfKey);
     apiCall(o.namespace, o.target, q, o.cluster)
       .then(response => {
+        endPerfTimer(perfKey);
         const newTraces = response.data.data
           ? (response.data.data
               .map(trace => transformTraceData(trace, o.cluster ? o.cluster : ''))
