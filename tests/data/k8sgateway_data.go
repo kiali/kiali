@@ -143,7 +143,7 @@ func AddListenerToK8sGateway(listener k8s_networking_v1.Listener, gw *k8s_networ
 	return gw
 }
 
-func AddGwAddressToK8sGateway(address k8s_networking_v1.GatewayAddress, gw *k8s_networking_v1.Gateway) *k8s_networking_v1.Gateway {
+func AddGwAddressToK8sGateway(address k8s_networking_v1.GatewaySpecAddress, gw *k8s_networking_v1.Gateway) *k8s_networking_v1.Gateway {
 	gw.Spec.Addresses = append(gw.Spec.Addresses, address)
 	return gw
 }
@@ -196,8 +196,8 @@ func CreateSharedToAllListener(name string, hostname string, port int, protocol 
 	return listener
 }
 
-func CreateGWAddress(addrType k8s_networking_v1.AddressType, value string) k8s_networking_v1.GatewayAddress {
-	address := k8s_networking_v1.GatewayAddress{
+func CreateGWAddress(addrType k8s_networking_v1.AddressType, value string) k8s_networking_v1.GatewaySpecAddress {
+	address := k8s_networking_v1.GatewaySpecAddress{
 		Type:  &addrType,
 		Value: value,
 	}
