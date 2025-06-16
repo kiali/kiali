@@ -87,7 +87,7 @@ const modalStyle = kialiStyle({
   overflowY: 'hidden',
   $nest: {
     '& .pf-v5-c-tab-content': {
-      height: '525px',
+      height: '530px',
       overflowY: 'auto'
     }
   }
