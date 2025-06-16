@@ -103,11 +103,11 @@ type ValidationsReconciler struct {
 
 // Reconcile fetches the VirtualService and prints its name
 func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log.Debug("[ValidationsReconciler] Started reconciling ")
+	log.Trace("[ValidationsReconciler] Started reconciling ")
 	startTime := time.Now()
 	defer func() {
 		totalReconcileTime := time.Since(startTime)
-		log.Debugf("[ValidationsReconciler] Finished reconciling in %.2fs", totalReconcileTime.Seconds())
+		log.Tracef("[ValidationsReconciler] Finished reconciling in %.2fs", totalReconcileTime.Seconds())
 		if totalReconcileTime > r.reconcileInterval {
 			const warningLog = "[ValidationsReconciler] Reconcile took longer than the reconcile interval of [%s]. " +
 				"If this continues, validations will be increasingly stale. You can configure how often Kiali validates " +
