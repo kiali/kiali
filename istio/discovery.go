@@ -423,13 +423,13 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		istiods := depList.Items
 
 		if len(istiods) == 0 {
-			log.Debugf("Cluster [%s] is a remote cluster. Skipping adding a controlplane.", cluster.Name)
+			log.Tracef("Cluster [%s] is a remote cluster. Skipping adding a controlplane.", cluster.Name)
 			remoteClusters = append(remoteClusters, &cluster)
 			continue
 		}
 
 		for _, istiod := range istiods {
-			log.Debugf("Found controlplane [%s/%s] on cluster [%s].", istiod.Name, istiod.Namespace, cluster.Name)
+			log.Tracef("Found controlplane [%s/%s] on cluster [%s].", istiod.Name, istiod.Namespace, cluster.Name)
 			controlPlane := newControlPlane(istiod, &cluster)
 
 			if containers := istiod.Spec.Template.Spec.Containers; len(containers) > 0 {
@@ -758,7 +758,7 @@ func (in *Discovery) setTags(ctx context.Context, controlPlanes []models.Control
 		}
 
 		for _, webhook := range webhooks.Items {
-			log.Debugf("Found webhook [%s/%s] on cluster: [%s].", webhook.Namespace, webhook.Name, cluster)
+			log.Tracef("Found webhook [%s/%s] on cluster: [%s].", webhook.Namespace, webhook.Name, cluster)
 			tag := models.Tag{
 				Cluster:  cluster,
 				Name:     webhook.Labels[models.IstioTagLabel],

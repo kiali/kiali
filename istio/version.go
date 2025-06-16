@@ -119,7 +119,7 @@ func parseRawIstioVersion(rawVersion string) *models.ExternalServiceInfo {
 	// see if it is a released version of Istio
 	istioVersionStringArr = istioVersionExpr.FindStringSubmatch(rawVersion)
 	if istioVersionStringArr != nil {
-		log.Debugf("Detected Istio version [%v]", rawVersion)
+		log.Tracef("Detected Istio version [%v]", rawVersion)
 		if len(istioVersionStringArr) > 1 {
 			product.Name = istioProductNameUpstream
 			product.Version = istioVersionStringArr[1] // get regex group #1 ,which is the "#.#.#" version string
