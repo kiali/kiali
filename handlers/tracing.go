@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -17,7 +18,6 @@ import (
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
@@ -447,9 +447,17 @@ func TracingTest(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		params := mux.Vars(r)
-		testConfig := params["config"]
-		log.Infof("Test config %v", testConfig)
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
+		}
+		testConfig := string(body)
+		var tracingConfig config.TracingConfig
+		err = json.Unmarshal([]byte(testConfig), &tracingConfig)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Tracing configuration is not valid: "+err.Error())
+			return
+		}
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -461,12 +469,7 @@ func TracingTest(
 			return
 		}
 
-		status, err := business.Tracing.TracingDiagnose(r.Context(), clientFactory.GetSAHomeClusterClient().GetToken())
-		if err != nil {
-			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-			return
-		}
-
+		status := business.Tracing.ValidateConfiguration(r.Context(), conf, &tracingConfig, clientFactory.GetSAHomeClusterClient().GetToken())
 		RespondWithJSON(w, http.StatusOK, status)
 	}
 }

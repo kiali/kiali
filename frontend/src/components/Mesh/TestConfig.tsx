@@ -24,7 +24,7 @@ const healthStatusStyle = kialiStyle({
 export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) => {
   const { t } = useKialiTranslation();
   const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState('');
+  const [error, setError] = React.useState<string | null>(null);
   const [isModified, setIsModified] = React.useState(false);
   const aceEditorRef = React.useRef<ReactAce | null>(null);
   const [source, setSource] = React.useState<string>(dump(props.configData, yamlDumpOptions));
@@ -33,11 +33,11 @@ export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) =>
   const [configResult, setConfigResult] = React.useState<string | null>(null);
 
   const parseYamlDocumentsSync = (yamlText: string): any[] => {
-    const documents: any[] = [];
+    let document: any;
     loadAll(yamlText, doc => {
-      documents.push(doc);
+      document = doc;
     });
-    return documents;
+    return document;
   };
 
   const testConfig = (): void => {
@@ -46,32 +46,28 @@ export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) =>
     const jsonPatch = JSON.stringify(objectModified).replace(new RegExp('(,null)+]', 'g'), ']');
     API.testTracingConfig(jsonPatch)
       .then(response => {
-        setSource(dump(props.configData, yamlDumpOptions));
         setLoading(false);
         setIsModified(false);
-        setConfigResult(response.data);
+        if (response.data.error) {
+          setError(response.data.error);
+        } else {
+          setConfigResult(response.data.message);
+          setError(null);
+        }
       })
       .catch(err => {
         setLoading(false);
-        setError(err.response.data.error);
+        setError(err.response?.data?.error);
       });
   };
 
   const showResult = (): React.ReactElement => {
     let healthSeverity: ValidationTypes;
+
     if (error) {
       healthSeverity = ValidationTypes.Error;
     } else {
-      switch (configResult) {
-        case 'Ok':
-          healthSeverity = ValidationTypes.Correct;
-          break;
-        case 'Error':
-          healthSeverity = ValidationTypes.Warning;
-          break;
-        default:
-          healthSeverity = ValidationTypes.Error;
-      }
+      healthSeverity = ValidationTypes.Correct;
     }
 
     return (
@@ -95,7 +91,7 @@ export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) =>
   const onEditorChange = (value: string): void => {
     setSource(value);
     setIsModified(true);
-    setError('');
+    setError(null);
   };
 
   return (
@@ -119,7 +115,7 @@ export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) =>
         onClick={handleTestConfig}
         isDisabled={loading || !isModified}
       >
-        {t('Test Config')}
+        {t('Test Configuration')}
       </Button>
       {loading && <Spinner size="sm" />}
       {(configResult && !isModified) || error ? showResult() : ''}
