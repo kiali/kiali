@@ -8,7 +8,7 @@ import { TracingThunkActions } from 'actions/TracingThunkActions';
 import { router, URLParam } from '../../app/History';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { JaegerTrace } from 'types/TracingInfo';
+import { JaegerTrace, TracingResponse } from 'types/TracingInfo';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { TracingQuery } from 'types/Tracing';
 import { TimeInSeconds } from 'types/Common';
@@ -22,6 +22,7 @@ import { isMultiCluster } from '../../config';
 import { KialiIcon } from 'config/KialiIcon';
 import { TraceLimit, TraceLimitOption } from 'components/Metrics/TraceLimit';
 import { endPerfTimer, startPerfTimer } from '../../utils/PerformanceUtils';
+import { ApiResponse } from '../../types/Api';
 
 type ReduxStateProps = {
   kiosk: string;
