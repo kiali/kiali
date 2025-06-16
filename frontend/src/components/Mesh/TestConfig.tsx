@@ -30,7 +30,7 @@ export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) =>
   const [source, setSource] = React.useState<string>(dump(props.configData, yamlDumpOptions));
 
   const theme = getKialiTheme();
-  const [configResult] = React.useState<string | null>(null);
+  const [configResult, setConfigResult] = React.useState<string | null>(null);
 
   const parseYamlDocumentsSync = (yamlText: string): any[] => {
     const documents: any[] = [];
@@ -48,7 +48,8 @@ export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) =>
       .then(response => {
         setSource(dump(props.configData, yamlDumpOptions));
         setLoading(false);
-        console.log(response);
+        setIsModified(false);
+        setConfigResult(response.data);
       })
       .catch(err => {
         setLoading(false);
@@ -94,6 +95,7 @@ export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) =>
   const onEditorChange = (value: string): void => {
     setSource(value);
     setIsModified(true);
+    setError('');
   };
 
   return (
