@@ -26,29 +26,34 @@ export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) =>
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
   const [isModified, setIsModified] = React.useState(false);
-  const [modifiedConfig, setModifiedConfig] = React.useState<string>('');
   const aceEditorRef = React.useRef<ReactAce | null>(null);
-  const [source, setSource] = React.useState<string>('');
+  const [source, setSource] = React.useState<string>(dump(props.configData, yamlDumpOptions));
 
   const theme = getKialiTheme();
   const [configResult] = React.useState<string | null>(null);
 
-  const testConfig = (): void => {
-    loadAll(modifiedConfig, objectModified => {
-      setLoading(true);
-      const jsonPatch = JSON.stringify(objectModified).replace(new RegExp('(,null)+]', 'g'), ']');
-
-      return API.testTracingConfig(jsonPatch)
-        .then(response => {
-          setModifiedConfig(response.data);
-          setSource(dump(props.configData, yamlDumpOptions));
-          setLoading(false);
-        })
-        .catch(err => {
-          setLoading(false);
-          setError(err);
-        });
+  const parseYamlDocumentsSync = (yamlText: string): any[] => {
+    const documents: any[] = [];
+    loadAll(yamlText, doc => {
+      documents.push(doc);
     });
+    return documents;
+  };
+
+  const testConfig = (): void => {
+    const objectModified = parseYamlDocumentsSync(source);
+    setLoading(true);
+    const jsonPatch = JSON.stringify(objectModified).replace(new RegExp('(,null)+]', 'g'), ']');
+    API.testTracingConfig(jsonPatch)
+      .then(response => {
+        setSource(dump(props.configData, yamlDumpOptions));
+        setLoading(false);
+        console.log(response);
+      })
+      .catch(err => {
+        setLoading(false);
+        setError(err.response.data.error);
+      });
   };
 
   const showResult = (): React.ReactElement => {
@@ -73,7 +78,7 @@ export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) =>
         aria-label={t('Health status')}
         position={TooltipPosition.right}
         enableFlip={true}
-        content={<>{t('Configuration returned valid results')}</>}
+        content={<>{error ? error : t('Configuration returned valid results')}</>}
       >
         <span className={healthStatusStyle}>
           <Validation severity={healthSeverity} />
@@ -103,19 +108,19 @@ export const TestConfig: React.FC<CheckModalProps> = (props: CheckModalProps) =>
         className={istioAceEditorStyle}
         wrapEnabled={true}
         readOnly={false}
-        setOptions={aceOptions ?? { foldStyle: 'markbegin' }}
+        setOptions={aceOptions}
         value={source}
       />
       <Button
-        style={{ marginTop: '10px' }}
+        style={{ marginTop: '10px', marginRight: '5px' }}
         variant={ButtonVariant.secondary}
         onClick={handleTestConfig}
         isDisabled={loading || !isModified}
       >
         {t('Test Config')}
-      </Button>{' '}
+      </Button>
       {loading && <Spinner size="sm" />}
-      {configResult && !isModified ? showResult() : ''}
+      {(configResult && !isModified) || error ? showResult() : ''}
     </div>
   );
 };

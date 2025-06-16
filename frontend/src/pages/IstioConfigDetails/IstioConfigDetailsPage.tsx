@@ -301,12 +301,10 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
   onUpdate = (): void => {
     loadAll(this.state.yamlModified, objectModified => {
-      console.log(this.state.yamlModified);
-      console.log(objectModified);
-      console.log(getIstioObject(this.state.istioObjectDetails));
       const jsonPatch = JSON.stringify(
         mergeJsonPatch(objectModified as object, getIstioObject(this.state.istioObjectDetails))
       ).replace(new RegExp('(,null)+]', 'g'), ']');
+
       API.updateIstioConfigDetail(
         this.props.istioConfigId.namespace,
         {
