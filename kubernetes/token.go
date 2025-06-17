@@ -26,6 +26,7 @@ func GetKialiTokenForHomeCluster() (string, string, error) {
 		}
 		KialiTokenForHomeCluster = string(token)
 		KialiTokenFileForHomeCluster = DefaultServiceAccountPath
+		tokenRead = time.Now()
 	}
 	return KialiTokenForHomeCluster, KialiTokenFileForHomeCluster, nil
 }
