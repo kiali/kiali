@@ -379,8 +379,10 @@ func (in *Discovery) Clusters() ([]models.KubeCluster, error) {
 	}
 
 	// TODO: Separate KialiInstance from Cluster model.
-	for _, cluster := range clusters {
-		instances, err := in.getKialiInstances(cluster)
+	for i := range clusters {
+		// need the actual object for update, so use the index, not the copy
+		cluster := &clusters[i]
+		instances, err := in.getKialiInstances(*cluster)
 		if err != nil {
 			log.Warningf("Unable to get Kiali instances for cluster [%s]: %v", cluster.Name, err)
 			continue
