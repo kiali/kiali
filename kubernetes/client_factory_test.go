@@ -460,6 +460,7 @@ func TestNewClientFactoryClosesRecycleWhenCTXCancelled(t *testing.T) {
 	require := require.New(t)
 
 	cfg := config.NewConfig()
+	cfg.Clustering.IgnoreLocalCluster = true
 	SetConfig(t, *cfg)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -490,6 +491,7 @@ func TestNewClientFactoryDoesNotSetGlobalClientFactory(t *testing.T) {
 	}
 
 	cfg := config.NewConfig()
+	cfg.Clustering.IgnoreLocalCluster = true
 	SetConfig(t, *cfg)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -504,11 +506,13 @@ func TestNewClientFactoryDoesNotSetGlobalClientFactory(t *testing.T) {
 	require.Nil(factory)
 }
 
-func TestClientFactoryReturnsSAClientWhenConfigClusterNameIsEmpty(t *testing.T) {
+func TestClientFactoryReturnsNilWhenLocalClusterIsIgnored(t *testing.T) {
 	require := require.New(t)
 
 	cfg := config.NewConfig()
 	cfg.KubernetesConfig.ClusterName = ""
+	// Ignore the local cluster, otherwise the "in cluster" config looks for some env vars that are not present.
+	cfg.Clustering.IgnoreLocalCluster = true
 	SetConfig(t, *cfg)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -520,7 +524,7 @@ func TestClientFactoryReturnsSAClientWhenConfigClusterNameIsEmpty(t *testing.T) 
 	})
 	require.NoError(err)
 
-	require.NotNil(clientFactory.GetSAHomeClusterClient())
+	require.Nil(clientFactory.GetSAHomeClusterClient())
 }
 
 func TestClientFactoryGetClients(t *testing.T) {
