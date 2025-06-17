@@ -123,14 +123,12 @@ func main() {
 		config.Set(config.NewConfig())
 	}
 
-	updateConfigWithIstioInfo()
-
-	conf := config.Get()
-	log.Tracef("Kiali Configuration:\n%s", conf)
-
-	if err := config.Validate(*conf); err != nil {
+	log.Tracef("Kiali Configuration before auto-discovery:\n%s", config.Get())
+	if err := config.Validate(config.Get()); err != nil {
 		log.Fatal(err)
 	}
+
+	updateConfigWithIstioInfo()
 
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()
@@ -144,6 +142,11 @@ func main() {
 	// This context is used for polling and for creating some high level clients like tracing.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	// fetch a fresh config here, it could have been updated during auto-discovery
+	conf := config.Get()
+
+	log.Tracef("Kiali Configuration after auto-discovery:\n%s", conf)
 
 	mgr, kubeCaches, err := newManager(ctx, conf, &zl, clientFactory)
 	if err != nil {
