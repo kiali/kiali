@@ -460,12 +460,11 @@ func TestNewClientFactoryClosesRecycleWhenCTXCancelled(t *testing.T) {
 	require := require.New(t)
 
 	cfg := config.NewConfig()
-	cfg.IstioNamespace = config.IstioNamespaceNone
 	SetConfig(t, *cfg)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
-	f, err := NewClientFactory(ctx, *cfg)
+	f, err := NewClientFactory(ctx, cfg)
 	t.Cleanup(func() {
 		KialiTokenForHomeCluster = ""     // Need to reset this global because other tests depend on it being empty.
 		KialiTokenFileForHomeCluster = "" // Need to reset this global because other tests depend on it being empty.
@@ -491,12 +490,11 @@ func TestNewClientFactoryDoesNotSetGlobalClientFactory(t *testing.T) {
 	}
 
 	cfg := config.NewConfig()
-	cfg.IstioNamespace = config.IstioNamespaceNone
 	SetConfig(t, *cfg)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
-	_, err := NewClientFactory(ctx, *cfg)
+	_, err := NewClientFactory(ctx, cfg)
 	t.Cleanup(func() {
 		KialiTokenForHomeCluster = ""     // Need to reset this global because other tests depend on it being empty.
 		KialiTokenFileForHomeCluster = "" // Need to reset this global because other tests depend on it being empty.
@@ -510,13 +508,12 @@ func TestClientFactoryReturnsSAClientWhenConfigClusterNameIsEmpty(t *testing.T) 
 	require := require.New(t)
 
 	cfg := config.NewConfig()
-	cfg.IstioNamespace = config.IstioNamespaceNone
 	cfg.KubernetesConfig.ClusterName = ""
 	SetConfig(t, *cfg)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
-	clientFactory, err := NewClientFactory(ctx, *cfg)
+	clientFactory, err := NewClientFactory(ctx, cfg)
 	t.Cleanup(func() {
 		KialiTokenForHomeCluster = ""     // Need to reset this global because other tests depend on it being empty.
 		KialiTokenFileForHomeCluster = "" // Need to reset this global because other tests depend on it being empty.
