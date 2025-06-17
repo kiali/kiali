@@ -269,7 +269,7 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 
 // newSAClient returns a new client for the given cluster. If clusterInfo is nil then a client for the local cluster is returned.
 func (cf *clientFactory) newSAClient(remoteClusterInfo *RemoteClusterInfo) (*K8SClient, error) {
-	log.Debug("Creating new Kiali Service Account client")
+	log.Debugf("Creating new Kiali Service Account client [%v]", remoteClusterInfo)
 	// if no cluster info is provided, we are being asked to create a new client for the home cluster
 	config, err := cf.getConfig(remoteClusterInfo)
 	if err != nil {
