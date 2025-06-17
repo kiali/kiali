@@ -199,7 +199,7 @@ export const TestModalComp: React.FC<TestModalProps> = (props: TestModalProps) =
         tabMap={tabIndex}
         defaultTab={defaultTab}
         activeTab={currentTab}
-        mountOnEnter={true}
+        mountOnEnter={false}
         unmountOnExit={true}
       >
         {renderTabs()}

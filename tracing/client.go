@@ -83,7 +83,8 @@ func (c *basicAuth) RequireTransportSecurity() bool {
 
 // NewClient creates a tracing Client. If it fails to create the client for any reason,
 // it will retry indefinitely until the context is cancelled.
-func NewClient(ctx context.Context, conf *config.Config, token string) (*Client, error) {
+// Unless retry is false
+func NewClient(ctx context.Context, conf *config.Config, token string, retry bool) (*Client, error) {
 	var (
 		client *Client
 		err    error
@@ -98,7 +99,9 @@ func NewClient(ctx context.Context, conf *config.Config, token string) (*Client,
 		client, err = newClient(ctx, conf, token)
 		if err != nil {
 			zl.Error().Msgf("Error creating tracing client: [%v]. Retrying in [%s]", err, newClientRetryInterval)
-			return false, nil
+			if retry {
+				return false, nil
+			}
 		}
 
 		return true, nil
@@ -310,7 +313,7 @@ func BuildTracingServiceName(namespace, app string) string {
 // prepareContextForClient puts things in the given context that will be needed by the client to do its job.
 // For example, the custom headers are added to the context so the clients pass them on to the server when making requests.
 func (in *Client) prepareContextForClient(ctx context.Context) context.Context {
-	if len(in.customHeaders) > 0 {
+	if in != nil && len(in.customHeaders) > 0 {
 		log.FromContext(ctx).Trace().Msgf("Adding [%v] custom headers to Tracing client", len(in.customHeaders))
 		ctx = metadata.NewOutgoingContext(ctx, metadata.New(in.customHeaders))
 	}

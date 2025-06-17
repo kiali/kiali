@@ -185,7 +185,7 @@ func main() {
 
 	if conf.ExternalServices.Tracing.Enabled {
 		go func() {
-			client, err := tracing.NewClient(ctx, conf, clientFactory.GetSAHomeClusterClient().GetToken())
+			client, err := tracing.NewClient(ctx, conf, clientFactory.GetSAHomeClusterClient().GetToken(), true)
 			if err != nil {
 				log.Fatalf("Error creating tracing client: %s", err)
 				return
