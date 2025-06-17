@@ -12,7 +12,7 @@ import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
 import { TargetPanelEditor } from './TargetPanelEditor';
-import { TracingDiagnose } from '../../../components/Mesh/TraceDiagnose';
+import { TracingDiagnose } from '../../../components/Mesh/TracingDiagnose';
 
 type TargetPanelNodeProps<T extends MeshNodeData> = TargetPanelCommonProps & {
   target: NodeTarget<T>;

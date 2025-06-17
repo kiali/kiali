@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useKialiTranslation } from '../../utils/I18nUtils';
 import { Button, ButtonVariant, ExpandableSection } from '@patternfly/react-core';
 import { KialiIcon } from '../../config/KialiIcon';
-import { validateExternalUrl } from './TestModal';
+import { validateExternalUrl } from './TestTracingModal';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { TracingCheck, TracingInfo } from '../../types/TracingInfo';
 import { PFColors } from '../Pf/PfColors';
@@ -209,4 +209,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setTracingDiagnose: bindActionCreators(TracingActions.setDiagnose, dispatch)
 });
 
-export const CheckConfig = connect(mapStateToProps, mapDispatchToProps)(CheckConfigComp);
+export const CheckTracingConfig = connect(mapStateToProps, mapDispatchToProps)(CheckConfigComp);

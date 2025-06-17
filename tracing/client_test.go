@@ -16,7 +16,7 @@ func TestCreateJaegerClient(t *testing.T) {
 	conf.ExternalServices.Tracing.Enabled = true
 	conf.ExternalServices.Tracing.UseGRPC = false
 
-	tracingClient, err := NewClient(context.Background(), conf, token)
+	tracingClient, err := NewClient(context.Background(), conf, token, true)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, tracingClient)
@@ -28,7 +28,7 @@ func TestCreateTempogGRPCClient(t *testing.T) {
 	conf.ExternalServices.Tracing.Provider = "tempo"
 	conf.ExternalServices.Tracing.UseGRPC = true
 
-	tracingClient, err := NewClient(context.Background(), conf, token)
+	tracingClient, err := NewClient(context.Background(), conf, token, true)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, tracingClient)
@@ -40,7 +40,7 @@ func TestCreateTempoHTTPClient(t *testing.T) {
 	conf.ExternalServices.Tracing.Provider = "tempo"
 	conf.ExternalServices.Tracing.UseGRPC = false
 
-	tracingClient, err := NewClient(context.Background(), conf, token)
+	tracingClient, err := NewClient(context.Background(), conf, token, true)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, tracingClient)
