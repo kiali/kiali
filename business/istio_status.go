@@ -208,9 +208,6 @@ func (iss *IstioStatusService) getComponentNamespacesWorkloads(ctx context.Conte
 func getComponentNamespaces(conf *config.Config) []string {
 	nss := make([]string, 0)
 
-	// By default, add the istio control plane namespace
-	nss = append(nss, "")
-
 	// Adding Istio Components namespaces
 	externalServices := conf.ExternalServices
 	for _, cmp := range externalServices.Istio.ComponentStatuses.Components {
