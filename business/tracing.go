@@ -406,8 +406,11 @@ func (in *TracingService) ValidateConfiguration(ctx context.Context, conf *confi
 
 	// Try to create client
 	client, err := tracing.NewClient(ctx, &newConfig, token, false)
-	if err != nil {
-		msg := fmt.Sprintf("ValidateConfiguration: Error creating tracing client: [%v]. ", err)
+	if client == nil {
+		msg := "ValidateConfiguration: Error creating tracing client"
+		if err != nil {
+			msg = fmt.Sprintf("%s: [%v]. ", msg, err)
+		}
 		log.FromContext(ctx).Trace().Msg(msg)
 		validation.Error = msg
 		return &validation
