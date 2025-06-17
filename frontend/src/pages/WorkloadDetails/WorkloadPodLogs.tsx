@@ -70,11 +70,11 @@ import { infoStyle } from 'styles/IconStyle';
 import { WaypointInfo } from '../../types/Workload';
 import { istioProxyName } from './WorkloadDetailsPage';
 import AceEditor from 'react-ace';
-import { istioAceEditorStyle } from 'styles/AceEditorStyle';
 import { t } from 'i18next';
 import { ParameterizedTabs } from 'components/Tab/Tabs';
 import { basicTabStyle } from 'styles/TabStyles';
 import { classes } from 'typestyle';
+import { istioAceEditorStyle } from 'styles/AceEditorStyle';
 
 const appContainerColors = [PFColors.Blue200, PFColors.Blue300, PFColors.Blue400, PFColors.Blue100];
 const proxyContainerColor = PFColors.Gold300;
@@ -182,7 +182,14 @@ const MaxLinesOptions = {
 const modalStyle = kialiStyle({
   display: 'flex',
   flexDirection: 'column',
-  width: '50%'
+  width: '50%',
+  height: '70%',
+  $nest: {
+    '& .pf-v5-c-tab-content': {
+      height: '100%',
+      overflowY: 'auto'
+    }
+  }
 });
 
 const previewLogLineStyle = kialiStyle({
@@ -997,7 +1004,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   private renderTabs = (): React.ReactNode[] => {
     const theme = this.props.theme;
     const jsonTab = (
-      <Tab eventKey={0} title={t('JSON (Raw object)')} key="json">
+      <Tab eventKey={0} title={t('JSON')} key="json">
         <AceEditor
           mode="json"
           theme={theme === Theme.DARK ? 'twilight' : 'eclipse'}
@@ -1019,7 +1026,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     );
 
     const tableTab = (
-      <Tab eventKey={1} title={t('Parsed JSON')} key="table">
+      <Tab eventKey={1} title={t('Table')} key="table">
         {this.state.jsonModalContent && this.renderTableFromJson(JSON.parse(this.state.jsonModalContent))}
       </Tab>
     );
@@ -1032,25 +1039,27 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       <Modal
         className={modalStyle}
         disableFocusTrap={true}
-        title={t('JSON Log Details')}
+        title={t('JSON Log Entry')}
         isOpen={this.state.isJSONModalOpen}
         onClose={this.closeJSONModal}
       >
         <p className={previewLogLineStyle}>{this.state.jsonModalContent}</p>
-        <ParameterizedTabs
-          id="json-log-details-tabs"
-          className={classes(basicTabStyle, tabStyle)}
-          onSelect={tabValue => {
-            this.setState({ currentTab: tabValue });
-          }}
-          tabMap={tabIndex}
-          defaultTab={defaultTab}
-          activeTab={this.state.currentTab}
-          mountOnEnter={true}
-          unmountOnExit={true}
-        >
-          {this.renderTabs()}
-        </ParameterizedTabs>
+        <div style={{ height: 'calc(100% - 120px)' }}>
+          <ParameterizedTabs
+            id="json-log-details-tabs"
+            className={classes(basicTabStyle, tabStyle)}
+            onSelect={tabValue => {
+              this.setState({ currentTab: tabValue });
+            }}
+            tabMap={tabIndex}
+            defaultTab={defaultTab}
+            activeTab={this.state.currentTab}
+            mountOnEnter={true}
+            unmountOnExit={true}
+          >
+            {this.renderTabs()}
+          </ParameterizedTabs>
+        </div>
       </Modal>
     );
   };
