@@ -87,20 +87,19 @@ func GetClientFactory() (ClientFactory, error) {
 		if factory != nil {
 			return
 		}
-
 		factory, err = getClientFactory(kialiConfig.Get())
 	})
 	return factory, err
 }
 
-func getClientFactory(kialiConfig *kialiConfig.Config) (*clientFactory, error) {
+func getClientFactory(kialiConf *kialiConfig.Config) (*clientFactory, error) {
 	// Create a new config but don't specify the bearer token to use
 	baseConfig := rest.Config{
-		QPS:   kialiConfig.KubernetesConfig.QPS,
-		Burst: kialiConfig.KubernetesConfig.Burst,
+		QPS:   kialiConf.KubernetesConfig.QPS,
+		Burst: kialiConf.KubernetesConfig.Burst,
 	}
 
-	if !kialiConfig.Clustering.IgnoreLocalCluster {
+	if !kialiConf.Clustering.IgnoreLocalCluster {
 		restConfig, err := getConfigForLocalCluster()
 		if err != nil {
 			return nil, err
@@ -109,7 +108,7 @@ func getClientFactory(kialiConfig *kialiConfig.Config) (*clientFactory, error) {
 		baseConfig.TLSClientConfig = restConfig.TLSClientConfig
 	}
 
-	return newClientFactory(kialiConfig, &baseConfig)
+	return newClientFactory(kialiConf, &baseConfig)
 }
 
 // NewClientFactory creates a new client factory that can be transitory.
@@ -135,12 +134,12 @@ func NewClientFactory(ctx context.Context, conf *kialiConfig.Config) (ClientFact
 
 // newClientFactory allows for specifying the config and expiry duration
 // Mock friendly for testing purposes
-func newClientFactory(kialiConfig *kialiConfig.Config, restConfig *rest.Config) (*clientFactory, error) {
+func newClientFactory(kialiConf *kialiConfig.Config, restConf *rest.Config) (*clientFactory, error) {
 	f := &clientFactory{
-		kialiConfig:     kialiConfig,
-		baseRestConfig:  restConfig,
+		kialiConfig:     kialiConf,
+		baseRestConfig:  restConf,
 		clientEntries:   make(map[string]map[string]UserClientInterface),
-		homeCluster:     kialiConfig.KubernetesConfig.ClusterName,
+		homeCluster:     kialiConf.KubernetesConfig.ClusterName,
 		recycleChan:     make(chan string),
 		saClientEntries: make(map[string]UserClientInterface),
 	}
@@ -159,8 +158,7 @@ func newClientFactory(kialiConfig *kialiConfig.Config, restConfig *rest.Config) 
 		return nil, err
 	}
 	f.remoteClusterInfos = remoteClusterInfos
-
-	if !kialiConfig.Clustering.IgnoreLocalCluster {
+	if !kialiConf.Clustering.IgnoreLocalCluster {
 		// Create service account clients for the local cluster and each remote cluster.
 		// Note that this means each remote cluster secret token must be given the proper permissions
 		// in that remote cluster for Kiali to do its work. i.e. logging into a remote cluster with the
@@ -169,7 +167,6 @@ func newClientFactory(kialiConfig *kialiConfig.Config, restConfig *rest.Config) 
 		if err != nil {
 			return nil, fmt.Errorf("unable to create home cluster Kiali Service Account client. Err: %s", err)
 		}
-
 		f.saClientEntries[f.homeCluster] = homeClient
 	}
 
@@ -180,7 +177,6 @@ func newClientFactory(kialiConfig *kialiConfig.Config, restConfig *rest.Config) 
 		}
 		f.saClientEntries[cluster] = client
 	}
-
 	return f, nil
 }
 
@@ -439,6 +435,7 @@ func getTokenHash(authInfo *api.AuthInfo) string {
 func (cf *clientFactory) GetSAClient(cluster string) ClientInterface {
 	cf.mutex.RLock()
 	defer cf.mutex.RUnlock()
+
 	return cf.saClientEntries[cluster]
 }
 
@@ -467,11 +464,11 @@ func (cf *clientFactory) GetSAClientsAsUserClientInterfaces() map[string]UserCli
 
 // KialiSAHomeClusterClient returns the read-only Kiali SA client for the cluster where Kiali is running.
 func (cf *clientFactory) GetSAHomeClusterClient() ClientInterface {
-	return cf.GetSAClient(cf.baseRestConfig.Host)
+	return cf.GetSAClient(cf.homeCluster)
 }
 
 func (cf *clientFactory) getConfig(clusterInfo *RemoteClusterInfo) (*rest.Config, error) {
-	kialiConfig := kialiConfig.Get()
+	kialiConf := kialiConfig.Get()
 	clientConfig := *cf.baseRestConfig
 
 	// Remote Cluster
@@ -496,13 +493,13 @@ func (cf *clientFactory) getConfig(clusterInfo *RemoteClusterInfo) (*rest.Config
 		clientConfig.BearerTokenFile = kialiTokenFile
 	}
 
-	if !kialiConfig.KialiFeatureFlags.Clustering.EnableExecProvider {
+	if !kialiConf.KialiFeatureFlags.Clustering.EnableExecProvider {
 		clientConfig.ExecProvider = nil
 	}
 
 	// Override some settings with what's in kiali config
-	clientConfig.QPS = kialiConfig.KubernetesConfig.QPS
-	clientConfig.Burst = kialiConfig.KubernetesConfig.Burst
+	clientConfig.QPS = kialiConf.KubernetesConfig.QPS
+	clientConfig.Burst = kialiConf.KubernetesConfig.Burst
 
 	return &clientConfig, nil
 }

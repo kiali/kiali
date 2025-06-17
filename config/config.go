@@ -1462,7 +1462,7 @@ func (conf Config) IsValidationsEnabled() bool {
 
 // Validate will ensure the config is valid. This should be called after the config
 // is initialized and before the config is used.
-func Validate(conf Config) error {
+func Validate(conf *Config) error {
 	if conf.Server.Port < 0 {
 		return fmt.Errorf("server port is negative: %v", conf.Server.Port)
 	}
