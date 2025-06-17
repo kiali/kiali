@@ -421,6 +421,6 @@ func (in *TracingService) ValidateConfiguration(ctx context.Context, conf *confi
 		return &validation
 	}
 
-	validation.Message = fmt.Sprint("Ok")
+	validation.Message = "Ok"
 	return &validation
 }
