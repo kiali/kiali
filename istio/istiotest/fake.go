@@ -10,14 +10,20 @@ import (
 type FakeDiscovery struct {
 	// ClustersReturn is the return value of Clusters().
 	ClustersReturn []models.KubeCluster
+	// IsControlPlaneReturn is the return value of IsControlPlane().
+	IsControlPlaneReturn bool
 	// MeshReturn is the return value of Mesh().
 	MeshReturn models.Mesh
 }
 
-func (fmd *FakeDiscovery) Mesh(ctx context.Context) (*models.Mesh, error) {
-	return &fmd.MeshReturn, nil
-}
-
 func (fmd *FakeDiscovery) Clusters() ([]models.KubeCluster, error) {
 	return fmd.ClustersReturn, nil
+}
+
+func (fmd *FakeDiscovery) IsControlPlane(cluster, namespace string) bool {
+	return fmd.IsControlPlaneReturn
+}
+
+func (fmd *FakeDiscovery) Mesh(ctx context.Context) (*models.Mesh, error) {
+	return &fmd.MeshReturn, nil
 }

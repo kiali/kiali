@@ -78,13 +78,13 @@ func TestGetMeshGraph(t *testing.T) {
 
 	clients := map[string]kubernetes.UserClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
-			kubetest.FakeNamespace(conf.IstioNamespace),
+			kubetest.FakeNamespace(config.IstioNamespaceDefault),
 			// Ideally we wouldn't need to set all this stuff up here but there's not a good way
 			// mock out the business.IstioStatus service since it's a struct.
 			&appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "istiod",
-					Namespace: conf.IstioNamespace,
+					Namespace: config.IstioNamespaceDefault,
 					Labels: map[string]string{
 						"app":          "istiod",
 						"istio.io/rev": "default",
@@ -101,12 +101,12 @@ func TestGetMeshGraph(t *testing.T) {
 			&corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "istio",
-					Namespace: conf.IstioNamespace,
+					Namespace: config.IstioNamespaceDefault,
 					Labels:    map[string]string{"istio.io/rev": "default"},
 				},
 				Data: map[string]string{"mesh": ""},
 			},
-			FakeCertificateConfigMap(conf.IstioNamespace),
+			FakeCertificateConfigMap(config.IstioNamespaceDefault),
 		),
 	}
 	cf := kubetest.NewFakeClientFactory(conf, clients)

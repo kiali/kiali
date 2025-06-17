@@ -21,7 +21,7 @@ func TestIsTokenExpired(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
 	config := config.NewConfig()
-	config.Deployment.RemoteSecretPath = t.TempDir()
+	//config.Deployment.RemoteSecretPath = t.TempDir()
 	SetConfig(t, *config)
 
 	DefaultServiceAccountPath = tmpFileTokenExpired
@@ -39,7 +39,7 @@ func TestGetKialiToken(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
 	config := config.NewConfig()
-	config.Deployment.RemoteSecretPath = t.TempDir()
+	//config.Deployment.RemoteSecretPath = t.TempDir()
 	SetConfig(t, *config)
 
 	DefaultServiceAccountPath = tmpFileGetToken
@@ -57,7 +57,7 @@ func TestGetKialiTokenRemoteCluster(t *testing.T) {
 	require := require.New(t)
 
 	config := config.NewConfig()
-	config.Deployment.RemoteSecretPath = "testdata/remote-cluster-multiple-users.yaml"
+	//config.Deployment.RemoteSecretPath = "testdata/remote-cluster-multiple-users.yaml"
 	SetConfig(t, *config)
 	tokenRead = time.Time{}
 

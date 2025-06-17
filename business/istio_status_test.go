@@ -756,7 +756,7 @@ func confWithComponentNamespaces() *config.Config {
 	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
 		Components: []config.ComponentStatus{
-			{AppLabel: "pilot", IsCore: true},
+			{AppLabel: "pilot", IsCore: true, Namespace: "istio-system"},
 			{AppLabel: "ingress", IsCore: true, Namespace: "ingress-egress"},
 			{AppLabel: "egress", IsCore: false, Namespace: "ingress-egress"},
 			{AppLabel: "sds", IsCore: false, Namespace: "istio-admin"},
