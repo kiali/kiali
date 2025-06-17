@@ -210,9 +210,9 @@ func NewRoutes(
 			handlers.TracingDiagnose(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
 			true,
 		},
-		// swagger:route GET /tracing/test status getStatus
+		// swagger:route GET /tracing/test tracing testConfig
 		// ---
-		// Endpoint to get a diagnose for the tracing endpoint
+		// Endpoint to test a specific configuration for tracing
 		//
 		//     Produces:
 		//     - application/json
@@ -221,7 +221,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      500: internalError
-		//      200: tracingDiagnose
+		//      200: configurationValidation
 		{
 			"Test",
 			log.TracingLogName,

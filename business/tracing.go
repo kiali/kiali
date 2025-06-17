@@ -386,6 +386,7 @@ func (in *TracingService) TracingDiagnose(ctx context.Context, token string) (tr
 func (in *TracingService) ValidateConfiguration(ctx context.Context, conf *config.Config, tracingConfig *config.TracingConfig, token string) *model.ConfigurationValidation {
 
 	validation := model.ConfigurationValidation{}
+
 	// Merge config
 	if tracingConfig.Auth.Password == "xxx" {
 		tracingConfig.Auth.Password = conf.ExternalServices.Tracing.Auth.Password
@@ -400,11 +401,11 @@ func (in *TracingService) ValidateConfiguration(ctx context.Context, conf *confi
 		tracingConfig.Auth.Username = conf.ExternalServices.Tracing.Auth.Username
 	}
 
-	newConfig := conf
+	newConfig := *conf
 	newConfig.ExternalServices.Tracing = *tracingConfig
 
 	// Try to create client
-	client, err := tracing.NewClient(ctx, newConfig, token, false)
+	client, err := tracing.NewClient(ctx, &newConfig, token, false)
 	if err != nil {
 		msg := fmt.Sprintf("ValidateConfiguration: Error creating tracing client: [%v]. ", err)
 		log.FromContext(ctx).Trace().Msg(msg)
@@ -421,6 +422,6 @@ func (in *TracingService) ValidateConfiguration(ctx context.Context, conf *confi
 		return &validation
 	}
 
-	validation.Message = "Ok"
+	validation.Message = "Success getting service status"
 	return &validation
 }
