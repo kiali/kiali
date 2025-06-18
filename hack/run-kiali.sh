@@ -654,11 +654,19 @@ EOM
   ${CLIENT_EXE} config set-credentials ${KUBE_CONTEXT} --kubeconfig="${REMOTE_SECRET_PATH}" --token="$(cat ${TOKEN_FILE})"
   ${CLIENT_EXE} config set-context ${KUBE_CONTEXT} --kubeconfig="${REMOTE_SECRET_PATH}" --user=${KUBE_CONTEXT} --cluster=${KUBE_CONTEXT} --namespace=${ISTIO_NAMESPACE}
   ${CLIENT_EXE} config use-context --kubeconfig="${REMOTE_SECRET_PATH}" ${KUBE_CONTEXT}
+else
+  # we are using the current context - get the cluster name from that if we were not told what cluster name to use
+  if [ -z "${CLUSTER_NAME}" ]; then
+    CLUSTER_NAME_FOR_SECRET=$(kubectl config view -o jsonpath='{.contexts[?(@.name=="'"$(kubectl config current-context)"'")].context.cluster}')
+  else
+    CLUSTER_NAME_FOR_SECRET="${CLUSTER_NAME}"
+  fi
 fi
 
 # Set up the local cluster with the local kubeconfig
-mkdir ${REMOTE_CLUSTER_SECRETS_DIR}/${CLUSTER_NAME:-run-kiali-cluster}
-cp ${REMOTE_SECRET_PATH} ${REMOTE_CLUSTER_SECRETS_DIR}/${CLUSTER_NAME:-run-kiali-cluster}/${CLUSTER_NAME:-run-kiali-cluster}
+CLUSTER_NAME_FOR_SECRET="${CLUSTER_NAME_FOR_SECRET:-run-kiali-cluster}"
+mkdir ${REMOTE_CLUSTER_SECRETS_DIR}/${CLUSTER_NAME_FOR_SECRET}
+cp ${REMOTE_SECRET_PATH} ${REMOTE_CLUSTER_SECRETS_DIR}/${CLUSTER_NAME_FOR_SECRET}/${CLUSTER_NAME_FOR_SECRET}
 
 # Functions that port-forward to components we need
 
