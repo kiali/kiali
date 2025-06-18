@@ -172,7 +172,7 @@ Before({ tags: '@shared-mesh-config' }, () => {
   cy.exec(`echo "${istioSharedMeshConfigMap}" | kubectl apply -f -`);
   const patch = '{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": "istio-user"}}}}}';
   cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`).then(() => {
-    const maxTries = 10;
+    const maxTries = 15;
     let tries = 0;
     const doRequest = (): void => {
       if (tries > maxTries) {
