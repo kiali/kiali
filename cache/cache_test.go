@@ -21,14 +21,15 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-func TestNoHomeClusterReturnsError(t *testing.T) {
+func TestNoAccessibleClustersReturnsError(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
 
-	clients := map[string]kubernetes.ClientInterface{"nothomecluster": kubetest.NewFakeK8sClient()}
-	readers := map[string]ctrlclient.Reader{"nothomecluster": kubetest.NewFakeK8sClient()}
+	// No clusters provided - should return error
+	clients := map[string]kubernetes.ClientInterface{}
+	readers := map[string]ctrlclient.Reader{}
 	_, err := cache.NewKialiCache(clients, readers, *conf)
-	require.Error(err, "no home cluster should return an error")
+	require.Error(err, "no accessible clusters should return an error")
 }
 
 func TestKubeCacheCreatedPerClient(t *testing.T) {

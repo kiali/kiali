@@ -21,17 +21,17 @@ import (
 
 // Service provides discovery and info about Grafana.
 type Service struct {
-	conf                *config.Config
-	homeClusterSAClient kubernetes.ClientInterface
-	routeLock           sync.RWMutex
-	routeURL            *string
+	conf                 *config.Config
+	localClusterSAClient kubernetes.ClientInterface
+	routeLock            sync.RWMutex
+	routeURL             *string
 }
 
 // NewService creates a new Grafana service.
-func NewService(conf *config.Config, homeClusterSAClient kubernetes.ClientInterface) *Service {
+func NewService(conf *config.Config, localClusterSAClient kubernetes.ClientInterface) *Service {
 	s := &Service{
-		conf:                conf,
-		homeClusterSAClient: homeClusterSAClient,
+		conf:                 conf,
+		localClusterSAClient: localClusterSAClient,
 	}
 
 	routeURL := s.discover(context.TODO())
@@ -89,13 +89,13 @@ func (s *Service) discoverServiceURL(ctx context.Context, ns, service string) (u
 	zl.Debug().Msgf("URL discovery for service [%s], namespace '%s'...", service, ns)
 	url = ""
 	// If the client is not openshift return and avoid discover
-	if !s.homeClusterSAClient.IsOpenShift() {
+	if !s.localClusterSAClient.IsOpenShift() {
 		zl.Debug().Msgf("Client for service [%s] is not Openshift, discovery url is only supported in Openshift", service)
 		return
 	}
 
 	// Assuming service name == route name
-	route, err := s.homeClusterSAClient.GetRoute(ctx, ns, service)
+	route, err := s.localClusterSAClient.GetRoute(ctx, ns, service)
 	if err != nil {
 		zl.Debug().Msgf("Discovery for service [%s] failed: %v", service, err)
 		return

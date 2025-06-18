@@ -247,7 +247,9 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 		// If RBAC is off, it's assumed that the kubernetes cluster will reject the OpenId token.
 		// Instead, we use the Kiali token and this has the side effect that all users will share the
 		// same privileges.
-		token := c.clientFactory.GetSAHomeClusterClient().GetToken()
+		// Get local cluster client for token
+		localClusterClient := c.clientFactory.GetSAClient(c.conf.KubernetesConfig.ClusterName)
+		token := localClusterClient.GetToken()
 		for cluster := range c.clientFactory.GetSAClients() {
 			userSessions[cluster] = &UserSessionData{
 				ExpiresOn: sData.ExpiresOn,

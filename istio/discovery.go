@@ -320,7 +320,7 @@ func (in *Discovery) Clusters() ([]models.KubeCluster, error) {
 		return clusters, nil
 	}
 
-	// Even if somehow there are no clusters found, which there should always be at least the homecluster,
+	// Even if somehow there are no clusters found, which there should always be at least the local cluster,
 	// setting this to an empty slice will prevent us from trying to resolve again.
 	clustersByName := map[string]models.KubeCluster{}
 	for cluster, client := range in.kialiSAClients {
@@ -335,9 +335,6 @@ func (in *Discovery) Clusters() ([]models.KubeCluster, error) {
 			meshCluster.ApiEndpoint = info.ClientConfig.Host
 		}
 
-		if cluster == in.conf.KubernetesConfig.ClusterName {
-			meshCluster.IsKialiHome = true
-		}
 		clustersByName[cluster] = meshCluster
 	}
 
@@ -612,13 +609,13 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		// TODO: Namespace list / caching is probably something that other parts of Kiali need.
 		// This probably should moved outside of discovery.
 		for _, name := range in.conf.Deployment.AccessibleNamespaces {
-			homeClusterClient, ok := in.kialiSAClients[in.conf.KubernetesConfig.ClusterName]
+			localClusterClient, ok := in.kialiSAClients[in.conf.KubernetesConfig.ClusterName]
 			if !ok {
 				log.Errorf("unable to get client for cluster [%s].", in.conf.KubernetesConfig.ClusterName)
 				continue
 			}
 
-			ns, err := homeClusterClient.GetNamespace(name)
+			ns, err := localClusterClient.GetNamespace(name)
 			if err != nil {
 				log.Errorf("unable to get namespace [%s] for cluster [%s]. Err: %s", name, in.conf.KubernetesConfig.ClusterName, err)
 				continue

@@ -37,7 +37,6 @@ type ClientFactory interface {
 	GetClients(authInfos map[string]*api.AuthInfo) (map[string]UserClientInterface, error)
 	GetSAClient(cluster string) ClientInterface
 	GetSAClients() map[string]ClientInterface
-	GetSAHomeClusterClient() ClientInterface
 	// we really don't want to expose this, but we need to give this to kiali main.
 	// There is a TODO to remove this. See comments at NewLayerWithSAClients
 	GetSAClientsAsUserClientInterfaces() map[string]UserClientInterface
@@ -52,10 +51,6 @@ type clientFactory struct {
 	// clientEntries contain user clients that are used to authenticate as logged in users.
 	// Keyed by hash code generated from auth data.
 	clientEntries map[string]map[string]UserClientInterface // By token by cluster
-
-	// Name of the home cluster. This is the cluster where Kiali is deployed which is usually the
-	// "in cluster" config. This name comes from the istio cluster id.
-	homeCluster string
 
 	kialiConfig *kialiConfig.Config
 
@@ -142,7 +137,6 @@ func newClientFactory(conf *kialiConfig.Config, restConfig *rest.Config) (*clien
 		clientEntries:   make(map[string]map[string]UserClientInterface),
 		recycleChan:     make(chan string),
 		saClientEntries: make(map[string]UserClientInterface),
-		homeCluster:     kialiConfig.Get().KubernetesConfig.ClusterName,
 	}
 	// after creating a client factory
 	// background goroutines will be watching the clients` expiration
@@ -165,7 +159,7 @@ func newClientFactory(conf *kialiConfig.Config, restConfig *rest.Config) (*clien
 		return nil, fmt.Errorf("unable to create home cluster Kiali Service Account client. Err: %s", err)
 	}
 
-	f.saClientEntries[f.homeCluster] = homeClient
+	f.saClientEntries[kialiConfig.Get().KubernetesConfig.ClusterName] = homeClient
 
 	for cluster, clusterInfo := range remoteClusterInfos {
 		client, err := f.newSAClient(&clusterInfo)
@@ -219,7 +213,7 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 	}
 
 	var newClient UserClientInterface
-	if cluster == cf.homeCluster {
+	if cluster == kialiConfig.Get().KubernetesConfig.ClusterName {
 		client, err := NewClientWithRemoteClusterInfo(&config, nil)
 		if err != nil {
 			log.Errorf("Error creating client for cluster %s: %s", cluster, err.Error())
@@ -457,11 +451,6 @@ func (cf *clientFactory) GetSAClientsAsUserClientInterfaces() map[string]UserCli
 	cf.mutex.RLock()
 	defer cf.mutex.RUnlock()
 	return cf.saClientEntries
-}
-
-// KialiSAHomeClusterClient returns the read-only Kiali SA client for the cluster where Kiali is running.
-func (cf *clientFactory) GetSAHomeClusterClient() ClientInterface {
-	return cf.GetSAClient(cf.homeCluster)
 }
 
 func (cf *clientFactory) getConfig(clusterInfo *RemoteClusterInfo) (*rest.Config, error) {

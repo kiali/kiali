@@ -906,11 +906,13 @@ func (in *IstioValidationsService) isExportedObjectIncluded(exportTo []string, m
 	return false
 }
 
-// setNonLocalMTLSConfig updates vInfo.nsInfo.mtlsDetails.EnabledAutoMtls based on the kiali home control plane
+// setNonLocalMTLSConfig updates vInfo.nsInfo.mtlsDetails.EnabledAutoMtls based on the local cluster control plane
 func (in *IstioValidationsService) setNonLocalMTLSConfig(vInfo *validationInfo) error {
+	localClusterName := in.conf.KubernetesConfig.ClusterName
+
 	// TODO: Multi-primary support
 	for _, controlPlane := range vInfo.mesh.ControlPlanes {
-		if controlPlane.Cluster.IsKialiHome {
+		if controlPlane.Cluster.Name == localClusterName {
 			vInfo.nsInfo.mtlsDetails.EnabledAutoMtls = controlPlane.MeshConfig.EnableAutoMtls.Value
 		}
 	}
@@ -919,9 +921,11 @@ func (in *IstioValidationsService) setNonLocalMTLSConfig(vInfo *validationInfo) 
 }
 
 func (in *IstioValidationsService) isGatewayToNamespace(mesh *models.Mesh) bool {
+	localClusterName := in.conf.KubernetesConfig.ClusterName
+
 	// TODO: Multi-primary support
 	for _, controlPlane := range mesh.ControlPlanes {
-		if controlPlane.Cluster.IsKialiHome {
+		if controlPlane.Cluster.Name == localClusterName {
 			return controlPlane.IsGatewayToNamespace
 		}
 	}
@@ -930,9 +934,11 @@ func (in *IstioValidationsService) isGatewayToNamespace(mesh *models.Mesh) bool 
 }
 
 func (in *IstioValidationsService) isPolicyAllowAny(mesh *models.Mesh) bool {
+	localClusterName := in.conf.KubernetesConfig.ClusterName
+
 	// TODO: Multi-primary support
 	for _, controlPlane := range mesh.ControlPlanes {
-		if controlPlane.Cluster.IsKialiHome {
+		if controlPlane.Cluster.Name == localClusterName {
 			return controlPlane.MeshConfig.OutboundTrafficPolicy.Mode == istiov1alpha1.MeshConfig_OutboundTrafficPolicy_ALLOW_ANY
 		}
 	}

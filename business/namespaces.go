@@ -19,13 +19,13 @@ import (
 
 // NamespaceService deals with fetching k8sClients namespaces / OpenShift projects and convert to kiali model
 type NamespaceService struct {
-	conf                  *config.Config
-	discovery             istio.MeshDiscovery
-	hasProjects           map[string]bool
-	homeClusterUserClient kubernetes.UserClientInterface
-	kialiCache            cache.KialiCache
-	kialiSAClients        map[string]kubernetes.ClientInterface
-	userClients           map[string]kubernetes.UserClientInterface
+	conf                   *config.Config
+	discovery              istio.MeshDiscovery
+	hasProjects            map[string]bool
+	localClusterUserClient kubernetes.UserClientInterface
+	kialiCache             cache.KialiCache
+	kialiSAClients         map[string]kubernetes.ClientInterface
+	userClients            map[string]kubernetes.UserClientInterface
 }
 
 type AccessibleNamespaceError struct {
@@ -48,20 +48,20 @@ func NewNamespaceService(
 	kialiSAClients map[string]kubernetes.ClientInterface,
 	userClients map[string]kubernetes.UserClientInterface,
 ) NamespaceService {
-	homeClusterName := conf.KubernetesConfig.ClusterName
+	localClusterName := conf.KubernetesConfig.ClusterName
 	hasProjects := make(map[string]bool)
 	for cluster, client := range kialiSAClients {
 		hasProjects[cluster] = client.IsOpenShift()
 	}
 
 	return NamespaceService{
-		conf:                  conf,
-		discovery:             discovery,
-		hasProjects:           hasProjects,
-		homeClusterUserClient: userClients[homeClusterName],
-		kialiCache:            cache,
-		kialiSAClients:        kialiSAClients,
-		userClients:           userClients,
+		conf:                   conf,
+		discovery:              discovery,
+		hasProjects:            hasProjects,
+		localClusterUserClient: userClients[localClusterName],
+		kialiCache:             cache,
+		kialiSAClients:         kialiSAClients,
+		userClients:            userClients,
 	}
 }
 

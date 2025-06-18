@@ -35,7 +35,9 @@ func setupTestLoggingServer(t *testing.T, namespace, pod string) *httptest.Serve
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
 	cpm := &business.FakeControlPlaneMonitor{}
 	traceLoader := func() tracing.ClientInterface { return nil }
-	grafana := grafana.NewService(conf, cf.GetSAHomeClusterClient())
+	// Get local cluster client for grafana
+	localClusterClient := cf.GetSAClient(conf.KubernetesConfig.ClusterName)
+	grafana := grafana.NewService(conf, localClusterClient)
 
 	handler := handlers.WithFakeAuthInfo(conf, handlers.LoggingUpdate(conf, cache, cf, cpm, prom, traceLoader, grafana, discovery))
 	mr := mux.NewRouter()

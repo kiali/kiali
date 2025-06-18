@@ -42,7 +42,7 @@ func setupBusinessLayer(t *testing.T, meshExportTo []string, istioObjects ...run
 		discovery := &istiotest.FakeDiscovery{
 			MeshReturn: models.Mesh{
 				ControlPlanes: []models.ControlPlane{{
-					Cluster: &models.KubeCluster{Name: config.DefaultClusterID, IsKialiHome: true},
+					Cluster: &models.KubeCluster{Name: config.DefaultClusterID},
 					MeshConfig: &models.MeshConfig{
 						MeshConfig: &istiov1alpha1.MeshConfig{
 							DefaultServiceExportTo:         []string{meshExportTo[0]},

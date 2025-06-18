@@ -197,9 +197,10 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	require.Nil(err, "GetClusters returned error: %v", err)
 
 	require.NotNil(a, "GetClusters returned nil")
-	require.Len(a, 1, "GetClusters didn't resolve the Kiali cluster")
+	require.Len(a, 1, "GetClusters didn't resolve the local cluster")
 	assert.Equal("KialiCluster", a[0].Name, "Unexpected cluster name")
-	assert.True(a[0].IsKialiHome, "Kiali cluster not properly marked as such")
+	// Verify that the cluster was found and accessible (no need for IsKialiHome anymore)
+	assert.True(a[0].Accessible, "Local cluster should be accessible")
 	assert.Equal("http://127.0.0.2:9443", a[0].ApiEndpoint)
 
 	require.Len(a[0].KialiInstances, 1, "GetClusters didn't resolve the local Kiali instance")
@@ -262,7 +263,8 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	check.NotNil(a, "GetClusters returned nil")
 	check.Len(a, 2, "GetClusters didn't resolve the remote clusters")
 	check.Equal("KialiCluster", remoteCluster.Name, "Unexpected cluster name")
-	check.False(remoteCluster.IsKialiHome, "Remote cluster mistakenly marked as the Kiali home")
+	// Verify that this is a different cluster than the local one (all clusters are treated equally now)
+	check.NotEqual(conf.KubernetesConfig.ClusterName, remoteCluster.Name, "Remote cluster should be different from local cluster")
 	check.Equal("https://192.168.144.17:123", remoteCluster.ApiEndpoint)
 
 	check.Len(remoteCluster.KialiInstances, 1, "GetClusters didn't resolve the remote Kiali instance")
@@ -1138,9 +1140,9 @@ func TestGetClustersShowsConfiguredKialiInstances(t *testing.T) {
 	assert.Equal("istio-system", kialiInstance.Namespace)
 	assert.Equal("kiali.istio-system.west", kialiInstance.Url)
 
-	homeCluster := clusters[homeIndex]
-	require.Len(homeCluster.KialiInstances, 0)
-	assert.True(homeCluster.Accessible)
+	localCluster := clusters[homeIndex]
+	require.Len(localCluster.KialiInstances, 0)
+	assert.True(localCluster.Accessible)
 }
 
 func TestGetClustersWorksWithNamespacedScope(t *testing.T) {

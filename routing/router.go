@@ -155,7 +155,9 @@ func NewRouter(
 		authRoutes = append(authRoutes, authCallbacks...)
 		authRedirectHandler = http.HandlerFunc(openshiftAuth.OpenshiftAuthRedirect)
 	} else if strategy == config.AuthStrategyHeader {
-		headerAuth, err := authentication.NewHeaderAuthController(conf, clientFactory.GetSAHomeClusterClient())
+		// Get local cluster client for authentication
+		localClusterClient := clientFactory.GetSAClient(conf.KubernetesConfig.ClusterName)
+		headerAuth, err := authentication.NewHeaderAuthController(conf, localClusterClient)
 		if err != nil {
 			zl.Error().Msgf("Error creating HeaderAuthController: %v", err)
 			return nil, err
@@ -168,7 +170,9 @@ func NewRouter(
 	// Add any auth routes to the app router.
 	apiRoutes.Routes = append(apiRoutes.Routes, authRoutes...)
 
-	authenticationHandler := handlers.NewAuthenticationHandler(conf, authController, clientFactory.GetSAHomeClusterClient(), authRedirectHandler, clientFactory.GetSAClients())
+	// Get local cluster client for authentication handler
+	localClusterClient := clientFactory.GetSAClient(conf.KubernetesConfig.ClusterName)
+	authenticationHandler := handlers.NewAuthenticationHandler(conf, authController, localClusterClient, authRedirectHandler, clientFactory.GetSAClients())
 
 	allRoutes := apiRoutes.Routes
 

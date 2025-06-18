@@ -539,7 +539,9 @@ func TestClientFactoryReturnsSAClientWhenConfigClusterNameIsEmpty(t *testing.T) 
 	})
 	require.NoError(err)
 
-	require.NotNil(clientFactory.GetSAHomeClusterClient())
+	// Verify we can get the local cluster client
+	localClusterClient := clientFactory.GetSAClient(cfg.KubernetesConfig.ClusterName)
+	require.NotNil(localClusterClient)
 }
 
 func TestClientFactoryGetClients(t *testing.T) {

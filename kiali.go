@@ -185,7 +185,9 @@ func main() {
 
 	if conf.ExternalServices.Tracing.Enabled {
 		go func() {
-			client, err := tracing.NewClient(ctx, conf, clientFactory.GetSAHomeClusterClient().GetToken())
+			// Get local cluster client for tracing
+			localClusterClient := clientFactory.GetSAClient(conf.KubernetesConfig.ClusterName)
+			client, err := tracing.NewClient(ctx, conf, localClusterClient.GetToken())
 			if err != nil {
 				log.Fatalf("Error creating tracing client: %s", err)
 				return
@@ -196,7 +198,9 @@ func main() {
 		log.Debug("Tracing is disabled")
 	}
 
-	grafana := grafana.NewService(conf, clientFactory.GetSAHomeClusterClient())
+	// Get local cluster client for grafana
+	localClusterClient := clientFactory.GetSAClient(conf.KubernetesConfig.ClusterName)
+	grafana := grafana.NewService(conf, localClusterClient)
 
 	// Passing nil here because the tracing client is not used for validations and that is all this layer is used for.
 	// Passing the `tracingClient` above would be a race condition since it gets set in a goroutine.
@@ -332,8 +336,8 @@ func determineContainerVersion(defaultVersion string) string {
 func updateConfigWithIstioInfo() {
 	conf := *config.Get()
 
-	homeCluster := conf.KubernetesConfig.ClusterName
-	if homeCluster != "" {
+	localClusterName := conf.KubernetesConfig.ClusterName
+	if localClusterName != "" {
 		// If the cluster name is already set, we don't need to do anything
 		return
 	}
@@ -357,7 +361,8 @@ func updateConfigWithIstioInfo() {
 		}
 
 		// Try to auto-detect the cluster name
-		homeCluster, err = kubernetes.ClusterNameFromIstiod(conf, cf.GetSAHomeClusterClient())
+		localClusterClient := cf.GetSAClient(conf.KubernetesConfig.ClusterName)
+		localClusterName, err = kubernetes.ClusterNameFromIstiod(conf, localClusterClient)
 		if err != nil {
 			return err
 		}
@@ -366,11 +371,11 @@ func updateConfigWithIstioInfo() {
 	}()
 	if err != nil {
 		log.Warningf("Cannot resolve local cluster name. Err: %s. Falling back to [%s]", err, config.DefaultClusterID)
-		homeCluster = config.DefaultClusterID
+		localClusterName = config.DefaultClusterID
 	}
 
-	log.Debugf("Auto-detected the istio cluster name to be [%s]. Updating the kiali config", homeCluster)
-	conf.KubernetesConfig.ClusterName = homeCluster
+	log.Debugf("Auto-detected the istio cluster name to be [%s]. Updating the kiali config", localClusterName)
+	conf.KubernetesConfig.ClusterName = localClusterName
 	config.Set(&conf)
 }
 
@@ -395,8 +400,9 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 		return nil, nil, fmt.Errorf("error setting up manager when creating scheme: %s", err)
 	}
 
-	// In the future this could be any cluster and not just home cluster.
-	homeClusterInfo := clientFactory.GetSAHomeClusterClient().ClusterInfo()
+	// Use the local cluster where Kiali is deployed for the controller manager
+	localClusterClient := clientFactory.GetSAClient(conf.KubernetesConfig.ClusterName)
+	localClusterInfo := localClusterClient.ClusterInfo()
 	var defaultNamespaces map[string]ctrlcache.Config
 	if !conf.AllNamespacesAccessible() {
 		defaultNamespaces = make(map[string]ctrlcache.Config)
@@ -406,7 +412,7 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 	}
 
 	var mgr manager.Manager
-	mgr, err = ctrl.NewManager(homeClusterInfo.ClientConfig, ctrl.Options{
+	mgr, err = ctrl.NewManager(localClusterInfo.ClientConfig, ctrl.Options{
 		// Disable metrics server since Kiali has its own metrics server.
 		Cache: ctrlcache.Options{
 			DefaultNamespaces: defaultNamespaces,
@@ -472,7 +478,7 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 	kubeCaches := map[string]ctrlcache.Cache{}
 	// We want one manager/reconciler for all clusters.
 	for _, client := range clientFactory.GetSAClients() {
-		if client.ClusterInfo().Name == homeClusterInfo.Name {
+		if client.ClusterInfo().Name == localClusterInfo.Name {
 			kubeCaches[client.ClusterInfo().Name] = mgr.GetCache()
 		} else {
 			cluster, err := cluster.New(client.ClusterInfo().ClientConfig, func(o *cluster.Options) {

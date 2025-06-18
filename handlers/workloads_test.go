@@ -28,7 +28,9 @@ func setupWorkloadList(t *testing.T, k8s *kubetest.FakeK8sClient, conf *config.C
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
 	cpm := &business.FakeControlPlaneMonitor{}
 	traceLoader := func() tracing.ClientInterface { return nil }
-	grafana := grafana.NewService(conf, cf.GetSAHomeClusterClient())
+	// Get local cluster client for grafana
+	localClusterClient := cf.GetSAClient(conf.KubernetesConfig.ClusterName)
+	grafana := grafana.NewService(conf, localClusterClient)
 
 	handler := WithFakeAuthInfo(conf, ClusterWorkloads(conf, cache, cf, cpm, prom, traceLoader, grafana, discovery))
 	mr := mux.NewRouter()

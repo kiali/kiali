@@ -86,7 +86,9 @@ func (o *K8SClientFactoryMock) GetSAClients() map[string]kubernetes.ClientInterf
 	return kubernetes.ConvertFromUserClients(o.Clients)
 }
 
-func (o *K8SClientFactoryMock) GetSAHomeClusterClient() kubernetes.ClientInterface {
+// GetSAHomeClusterClient method removed - use GetSAClient with local cluster name instead
+// This is a deprecated method that has been replaced with GetSAClient(localClusterName)
+func (o *K8SClientFactoryMock) GetSAHomeClusterClient_DEPRECATED() kubernetes.ClientInterface {
 	o.lock.RLock()
 	defer o.lock.RUnlock()
 	return o.Clients[o.conf.KubernetesConfig.ClusterName]

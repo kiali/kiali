@@ -52,7 +52,7 @@ func (in *MeshService) IsValidCluster(cluster string) bool {
 	return exists
 }
 
-// GetMeshConfig returns the home cluster's mesh config.
+// GetMeshConfig returns the local cluster's mesh config.
 // TODO: Remove when validations can read from a specific controlplane.
 func (in *MeshService) GetMeshConfig() *models.MeshConfig {
 	mesh, err := in.discovery.Mesh(context.TODO())
@@ -61,14 +61,24 @@ func (in *MeshService) GetMeshConfig() *models.MeshConfig {
 		return &models.MeshConfig{MeshConfig: &istiov1alpha1.MeshConfig{}}
 	}
 
+	localClusterName := in.conf.KubernetesConfig.ClusterName
+
 	// TODO: Multi-primary support
 	for _, controlPlane := range mesh.ControlPlanes {
-		if controlPlane.Cluster.IsKialiHome {
+		if controlPlane.Cluster.Name == localClusterName {
 			return controlPlane.MeshConfig
 		}
 	}
 
+	// If no controlplane found for local cluster, try to return any controlplane's mesh config
+	// This is a fallback for cases where the local cluster might not have a controlplane
+	if len(mesh.ControlPlanes) > 0 {
+		log.Warningf("No controlplane found for local cluster [%s], using mesh config from cluster [%s]",
+			localClusterName, mesh.ControlPlanes[0].Cluster.Name)
+		return mesh.ControlPlanes[0].MeshConfig
+	}
+
 	// This should not happen
-	log.Warningf("No Kiali Home cluster found while getting mesh config")
+	log.Warningf("No controlplanes found while getting mesh config")
 	return &models.MeshConfig{MeshConfig: &istiov1alpha1.MeshConfig{}}
 }

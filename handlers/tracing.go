@@ -418,12 +418,14 @@ func TracingDiagnose(
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 			return
 		}
-		if !isHomeCPAccessible(r.Context(), conf, business.Namespace, clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
+		// Get local cluster client for tracing diagnosis
+		localClusterClient := clientFactory.GetSAClient(conf.KubernetesConfig.ClusterName)
+		if !isHomeCPAccessible(r.Context(), conf, business.Namespace, localClusterClient.ClusterInfo().Name) {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 			return
 		}
 
-		status, err := business.Tracing.TracingDiagnose(r.Context(), clientFactory.GetSAHomeClusterClient().GetToken())
+		status, err := business.Tracing.TracingDiagnose(r.Context(), localClusterClient.GetToken())
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return

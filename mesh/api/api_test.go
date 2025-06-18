@@ -247,7 +247,8 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 	require.Len(a, 2, "GetClusters didn't resolve the Primnary and Remote clusters")
 	assert.Equal("cluster-primary", a[0].Name, "Unexpected primary cluster name")
 	assert.Equal("cluster-remote", a[1].Name, "Unexpected remote cluster name")
-	assert.True(a[0].IsKialiHome, "Kiali cluster not properly marked as such")
+	// Verify that the local cluster is the one where Kiali is deployed (cluster-primary)
+	assert.Equal(conf.KubernetesConfig.ClusterName, a[0].Name, "Local cluster should match config cluster name")
 	assert.Equal("http://127.0.0.2:9443", a[0].ApiEndpoint)
 	// assert.Equal("kialiNetwork", a[0].Network)
 

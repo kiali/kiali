@@ -19,7 +19,9 @@ import (
 func getVersions(ctx context.Context, conf *config.Config, clientFactory kubernetes.ClientFactory, grafana *grafana.Service) []models.ExternalServiceInfo {
 	components := getKubernetesVersions(clientFactory)
 
-	pv, err := prometheusVersion(conf, clientFactory.GetSAHomeClusterClient())
+	// Get local cluster client for prometheus version check
+	localClusterClient := clientFactory.GetSAClient(conf.KubernetesConfig.ClusterName)
+	pv, err := prometheusVersion(conf, localClusterClient)
 	if err != nil {
 		log.Infof("Error getting Prometheus version: %v", err)
 	} else {
@@ -27,7 +29,7 @@ func getVersions(ctx context.Context, conf *config.Config, clientFactory kuberne
 	}
 
 	if conf.ExternalServices.Grafana.Enabled && grafana != nil {
-		gv, err := grafanaVersion(ctx, grafana, conf, clientFactory.GetSAHomeClusterClient())
+		gv, err := grafanaVersion(ctx, grafana, conf, localClusterClient)
 		if err != nil {
 			log.Infof("Error getting Grafana version: %v", err)
 		} else {
@@ -38,7 +40,7 @@ func getVersions(ctx context.Context, conf *config.Config, clientFactory kuberne
 	}
 
 	if conf.ExternalServices.Tracing.Enabled {
-		tv, err := tracingVersion(conf, clientFactory.GetSAHomeClusterClient())
+		tv, err := tracingVersion(conf, localClusterClient)
 		if err != nil {
 			log.Infof("Error getting Tracing version: %v", err)
 		} else {
@@ -70,7 +72,7 @@ type tempoResponseVersion struct {
 	GoVersion string `json:"goVersion"`
 }
 
-func tracingVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientInterface) (*models.ExternalServiceInfo, error) {
+func tracingVersion(conf *config.Config, localClusterSAClient kubernetes.ClientInterface) (*models.ExternalServiceInfo, error) {
 	tracingConfig := conf.ExternalServices.Tracing
 
 	if !tracingConfig.Enabled {
@@ -92,7 +94,7 @@ func tracingVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientIn
 		if tracingConfig.Provider == config.JaegerProvider {
 			auth := tracingConfig.Auth
 			if auth.UseKialiToken {
-				auth.Token = homeClusterSAClient.GetToken()
+				auth.Token = localClusterSAClient.GetToken()
 			}
 
 			// there is no known way to get the version from GRPC. So we'll try to change the URL to go over HTTP,
@@ -157,7 +159,7 @@ type grafanaResponseVersion struct {
 	BuildInfo grafanaBuildInfo `json:"buildInfo"`
 }
 
-func grafanaVersion(ctx context.Context, grafana *grafana.Service, conf *config.Config, homeClusterSAClient kubernetes.ClientInterface) (*models.ExternalServiceInfo, error) {
+func grafanaVersion(ctx context.Context, grafana *grafana.Service, conf *config.Config, localClusterSAClient kubernetes.ClientInterface) (*models.ExternalServiceInfo, error) {
 	product := models.ExternalServiceInfo{}
 	product.Name = "Grafana"
 	product.Url = grafana.URL(ctx)
@@ -167,7 +169,7 @@ func grafanaVersion(ctx context.Context, grafana *grafana.Service, conf *config.
 		// Be sure to copy config.Auth and not modify the existing
 		auth := conf.ExternalServices.Grafana.Auth
 		if auth.UseKialiToken {
-			auth.Token = homeClusterSAClient.GetToken()
+			auth.Token = localClusterSAClient.GetToken()
 		}
 		body, statusCode, _, err := httputil.HttpGet(versionUrl, &auth, 10*time.Second, nil, nil, conf)
 
@@ -185,7 +187,7 @@ func grafanaVersion(ctx context.Context, grafana *grafana.Service, conf *config.
 	return &product, nil
 }
 
-func prometheusVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientInterface) (*models.ExternalServiceInfo, error) {
+func prometheusVersion(conf *config.Config, localClusterSAClient kubernetes.ClientInterface) (*models.ExternalServiceInfo, error) {
 	product := models.ExternalServiceInfo{}
 	prometheusV := new(p8sResponseVersion)
 	cfg := conf.ExternalServices.Prometheus
@@ -193,7 +195,7 @@ func prometheusVersion(conf *config.Config, homeClusterSAClient kubernetes.Clien
 	// Be sure to copy config.Auth and not modify the existing
 	auth := cfg.Auth
 	if auth.UseKialiToken {
-		auth.Token = homeClusterSAClient.GetToken()
+		auth.Token = localClusterSAClient.GetToken()
 	}
 
 	// see https://prometheus.io/docs/prometheus/latest/querying/api/#build-information

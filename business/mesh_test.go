@@ -28,7 +28,7 @@ func TestGetMeshConfig(t *testing.T) {
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
-				Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName, IsKialiHome: true},
+				Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
 				MeshConfig: &models.MeshConfig{
 					MeshConfig: &istiov1alpha1.MeshConfig{
 						DefaultServiceExportTo:         []string{"*"},

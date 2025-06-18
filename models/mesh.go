@@ -274,9 +274,6 @@ type KubeCluster struct {
 	// ApiEndpoint is the URL where the Kubernetes/Cluster API Server can be contacted
 	ApiEndpoint string `json:"apiEndpoint"`
 
-	// IsKialiHome specifies if this cluster is hosting this Kiali instance (and the observed Mesh Control Plane)
-	IsKialiHome bool `json:"isKialiHome"`
-
 	// KialiInstances is the list of Kialis discovered in the cluster.
 	KialiInstances []KialiInstance `json:"kialiInstances"`
 
@@ -284,6 +281,7 @@ type KubeCluster struct {
 	Name string `json:"name"`
 
 	// SecretName is the name of the kubernetes "remote cluster secret" that was mounted to the file system and where data of this cluster was resolved
+	// For the local cluster where Kiali is deployed, this will be empty
 	SecretName string `json:"secretName"`
 
 	// Accessible specifies if the cluster is accessible or not. Clusters that are manually specified in the Kiali config

@@ -50,7 +50,9 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 	discovery *istio.Discovery,
 	staticAssetFS fs.FS,
 ) (*Server, error) {
-	grafana := grafana.NewService(conf, clientFactory.GetSAHomeClusterClient())
+	// Get local cluster client for grafana
+	localClusterClient := clientFactory.GetSAClient(conf.KubernetesConfig.ClusterName)
+	grafana := grafana.NewService(conf, localClusterClient)
 	// create a router that will route all incoming API server requests to different handlers
 	router, err := routing.NewRouter(conf, cache, clientFactory, prom, traceClientLoader, controlPlaneMonitor, grafana, discovery, staticAssetFS)
 	if err != nil {

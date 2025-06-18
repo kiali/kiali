@@ -51,7 +51,7 @@ var _ = Describe("Validations controller", Ordered, func() {
 				&models.Mesh{
 					ControlPlanes: []models.ControlPlane{{
 						MeshConfig: models.NewMeshConfig(),
-						Cluster:    &models.KubeCluster{IsKialiHome: true},
+						Cluster:    &models.KubeCluster{Name: config.DefaultClusterID},
 					}},
 				},
 			)

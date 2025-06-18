@@ -788,7 +788,7 @@ func fakeValidationMeshServiceWithRegistryStatus(t *testing.T, cfg config.Config
 	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[cfg.KubernetesConfig.ClusterName] = k8s
 	discovery := &istiotest.FakeDiscovery{
-		MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}, MeshConfig: models.NewMeshConfig()}}},
+		MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: config.DefaultClusterID}, MeshConfig: models.NewMeshConfig()}}},
 	}
 	namespace := NewNamespaceService(cache, conf, discovery, kubernetes.ConvertFromUserClients(k8sclients), k8sclients)
 	mesh := NewMeshService(conf, discovery, kubernetes.ConvertFromUserClients(k8sclients))
