@@ -124,7 +124,7 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 // buildAppenderTrafficMap is called per namespace and calls buildNamespaceTrafficMap per appender
 func buildAppenderTrafficMap(ctx context.Context, namespaceInfo graph.NamespaceInfo, o graph.TelemetryOptions, globalInfo *graph.GlobalInfo, a graph.Appender) graph.TrafficMap {
 	zl := log.FromContext(ctx)
-	zl.Trace().Msgf("Build traffic map for namespace [%v] using %s", namespaceInfo, a.Name())
+	zl.Trace().Msgf("Build traffic map for namespace [%s] using appender [%s]", namespaceInfo.Name, a.Name())
 
 	namespaceTrafficMap := buildNamespaceTrafficMap(ctx, namespaceInfo, o, globalInfo)
 
