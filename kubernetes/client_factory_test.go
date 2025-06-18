@@ -593,6 +593,13 @@ func TestClientFactoryGetClients(t *testing.T) {
 			conf.KubernetesConfig.ClusterName = "cluster1"
 			SetConfig(t, *conf)
 
+			// Override RemoteClusterSecretsDir to prevent picking up existing remote cluster secrets
+			originalSecretsDir := RemoteClusterSecretsDir
+			t.Cleanup(func() {
+				RemoteClusterSecretsDir = originalSecretsDir
+			})
+			RemoteClusterSecretsDir = t.TempDir()
+
 			clientFactory := NewTestingClientFactory(t)
 			clients, err := clientFactory.GetClients(tc.authInfo)
 			require.NoError(err)
