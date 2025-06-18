@@ -602,6 +602,9 @@ type Aggregation struct {
 type MetricsDefaults struct {
 	Aggregations []Aggregation `yaml:"aggregations,omitempty" json:"aggregations,omitempty"`
 }
+type TracingDefaults struct {
+	Limit int `yaml:"limit,omitempty" json:"limit,omitempty"`
+}
 
 // UIDefaults defines default settings configured for the UI
 type UIDefaults struct {
@@ -614,6 +617,7 @@ type UIDefaults struct {
 	MetricsOutbound   MetricsDefaults `yaml:"metrics_outbound,omitempty" json:"metricsOutbound,omitempty"`
 	Namespaces        []string        `yaml:"namespaces,omitempty" json:"namespaces,omitempty"`
 	RefreshInterval   string          `yaml:"refresh_interval,omitempty" json:"refreshInterval,omitempty"`
+	Tracing           TracingDefaults `yaml:"tracing,omitempty" json:"tracing,omitempty"`
 }
 
 // Validations defines default settings configured for the Validations subsystem
@@ -926,6 +930,7 @@ func NewConfig() (c *Config) {
 				MetricsPerRefresh: "1m",
 				Namespaces:        make([]string, 0),
 				RefreshInterval:   "60s",
+				Tracing:           TracingDefaults{Limit: 100},
 			},
 			Validations: Validations{
 				Ignore: make([]string, 0),

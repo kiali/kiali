@@ -14,6 +14,7 @@ import { HistoryManager, URLParam } from 'app/History';
 import { KialiIcon } from 'config/KialiIcon';
 import { TraceLimit } from 'components/Metrics/TraceLimit';
 import { infoStyle } from 'styles/IconStyle';
+import { serverConfig } from '../../config';
 
 export interface QuerySettings {
   errorsOnly: boolean;
@@ -76,7 +77,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
     const limit =
       HistoryManager.getParam(URLParam.TRACING_LIMIT_TRACES) ||
       sessionStorage.getItem(URLParam.TRACING_LIMIT_TRACES) ||
-      '100';
+      serverConfig.kialiFeatureFlags.uiDefaults.tracing.limit;
 
     const errorsOnly =
       HistoryManager.getParam(URLParam.TRACING_ERRORS_ONLY) ||
