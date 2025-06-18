@@ -6,7 +6,7 @@ import { Theme } from '../../types/Common';
 import { istioAceEditorStyle } from '../../styles/AceEditorStyle';
 import { aceOptions, yamlDumpOptions } from '../../types/IstioConfigDetails';
 import { getKialiTheme } from '../../utils/ThemeUtils';
-import { dump, loadAll } from 'js-yaml';
+import { dump, loadAll, YAMLException } from 'js-yaml';
 import ReactAce from 'react-ace/lib/ace';
 import { ValidationTypes } from 'types/IstioObjects';
 import { kialiStyle } from '../../styles/StyleUtils';
@@ -32,16 +32,26 @@ export const TestTracingConfig: React.FC<CheckModalProps> = (props: CheckModalPr
   const theme = getKialiTheme();
   const [configResult, setConfigResult] = React.useState<string | null>(null);
 
-  const parseYamlDocumentsSync = (yamlText: string): any[] => {
+  const parseYamlDocumentsSync = (yamlText: string): any => {
     let document: any;
-    loadAll(yamlText, doc => {
-      document = doc;
-    });
+    try {
+      loadAll(yamlText, doc => {
+        document = doc;
+      });
+    } catch (e) {
+      if (e instanceof YAMLException) {
+        setLoading(false);
+        setError(e.message);
+      }
+    }
     return document;
   };
 
   const testConfig = (): void => {
     const objectModified = parseYamlDocumentsSync(source);
+    if (!objectModified) {
+      return;
+    }
     setLoading(true);
     const jsonPatch = JSON.stringify(objectModified).replace(new RegExp('(,null)+]', 'g'), ']');
     API.testTracingConfig(jsonPatch)
