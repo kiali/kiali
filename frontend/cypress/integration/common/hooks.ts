@@ -207,7 +207,7 @@ Before({ tags: '@shared-mesh-config' }, () => {
       });
     };
     doRequest();
-    cy.wait(3000);
+    cy.wait(6000);
   });
 });
 
