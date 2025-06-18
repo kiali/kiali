@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# Define variables
+REPO="stern/stern"
+ARCH="$(uname -m)"
+OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+
+# Normalize ARCH for stern naming
+if [[ "$ARCH" == "x86_64" ]]; then
+    ARCH="amd64"
+elif [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+    ARCH="arm64"
+fi
+
+# Normalize OS for stern naming
+if [[ "$OS" == "darwin" ]]; then
+    OS="darwin"
+elif [[ "$OS" == "linux" ]]; then
+    OS="linux"
+fi
+
+# Get latest version tag from GitHub API
+if [[ "$OS" == "darwin" ]]; then
+    GREP_CMD="ggrep"
+else
+    GREP_CMD="grep"
+fi
+VERSION=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | $GREP_CMD -oP '"tag_name": "\K(.*)(?=")' | sed 's/^v//')
+
+# Define the filename and URL
+FILENAME="stern_${VERSION}_${OS}_${ARCH}.tar.gz"
+URL="https://github.com/${REPO}/releases/download/v${VERSION}/${FILENAME}"
+
+echo $URL
+echo $FILENAME
+
+# Download and extract
+echo "Downloading Stern ${LATEST}..."
+curl -LO "$URL"
+tar -xzf "$FILENAME"
+
+mv stern /usr/local/bin/
+rm "$FILENAME" LICENSE
+
+stern --version
+echo "Stern ${VERSION} installed successfully!"
