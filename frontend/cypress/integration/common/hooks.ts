@@ -204,10 +204,10 @@ Before({ tags: '@shared-mesh-config' }, () => {
             }
           );
         }
+        cy.wait(5000);
       });
     };
     doRequest();
-    cy.wait(6000);
   });
 });
 
