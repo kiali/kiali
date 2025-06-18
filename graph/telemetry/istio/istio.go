@@ -29,6 +29,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -76,38 +77,37 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 		globalInfo.Vendor[appender.AmbientWaypoints] = GetWaypointMap(ctx, globalInfo)
 	}
 
-	for _, namespaceInfo := range o.Namespaces {
-		zl.Trace().Msgf("Build traffic map for namespace [%v]", namespaceInfo)
-		namespaceTrafficMap := buildNamespaceTrafficMap(ctx, namespaceInfo, o, globalInfo)
-
-		// The appenders can add/remove/alter nodes for the namespace
-		appenderNamespaceInfo := graph.NewAppenderNamespaceInfo(namespaceInfo.Name)
-		for _, a := range appenders {
-			var appenderEnd observability.EndFunc
-			ctx, appenderEnd = observability.StartSpan(
-				ctx,
-				"Appender "+a.Name(),
-				observability.Attribute("package", "istio"),
-				observability.Attribute("namespace", namespaceInfo.Name),
-			)
-			appenderCtx := buildAppenderContext(ctx, a.Name())
-			appenderTimer := internalmetrics.GetGraphAppenderTimePrometheusTimer(a.Name())
-			a.AppendGraph(appenderCtx, namespaceTrafficMap, globalInfo, appenderNamespaceInfo)
-			internalmetrics.ObserveDurationAndLogResults(
-				appenderCtx,
-				globalInfo.Conf,
-				appenderTimer,
-				"GraphAppenderTime",
-				map[string]string{
-					"namespace": namespaceInfo.Name,
-				},
-				"Namespace graph appender time")
-			appenderEnd()
+	for _, a := range appenders {
+		// first run those appenders which can not be run in parallel
+		if !isParallelSafeAppender(a) {
+			for _, namespaceInfo := range o.Namespaces {
+				namespaceTrafficMap := buildAppenderTrafficMap(ctx, namespaceInfo, o, globalInfo, a)
+				telemetry.MergeTrafficMaps(trafficMap, namespaceInfo.Name, namespaceTrafficMap)
+			}
 		}
-
-		// Merge this namespace into the final TrafficMap
-		telemetry.MergeTrafficMaps(trafficMap, namespaceInfo.Name, namespaceTrafficMap)
 	}
+
+	var wg sync.WaitGroup
+	var mapMutex sync.Mutex
+
+	for _, a := range appenders {
+		// the appenders which are not dependent, can be run in parallel
+		if isParallelSafeAppender(a) {
+			for _, namespaceInfo := range o.Namespaces {
+				wg.Add(1)
+				go func(ns graph.NamespaceInfo) {
+					defer wg.Done()
+					namespaceTrafficMap := buildAppenderTrafficMap(ctx, ns, o, globalInfo, a)
+
+					mapMutex.Lock()
+					telemetry.MergeTrafficMaps(trafficMap, ns.Name, namespaceTrafficMap)
+					mapMutex.Unlock()
+				}(namespaceInfo)
+			}
+		}
+	}
+
+	wg.Wait()
 
 	// The finalizers can perform final manipulations on the complete graph
 	for _, f := range finalizers {
@@ -119,6 +119,43 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 	}
 
 	return trafficMap
+}
+
+// buildAppenderTrafficMap is called per namespace and calls buildNamespaceTrafficMap per appender
+func buildAppenderTrafficMap(ctx context.Context, namespaceInfo graph.NamespaceInfo, o graph.TelemetryOptions, globalInfo *graph.GlobalInfo, a graph.Appender) graph.TrafficMap {
+	zl := log.FromContext(ctx)
+	zl.Trace().Msgf("Build traffic map for namespace [%v] using %s", namespaceInfo, a.Name())
+
+	namespaceTrafficMap := buildNamespaceTrafficMap(ctx, namespaceInfo, o, globalInfo)
+
+	appenderNamespaceInfo := graph.NewAppenderNamespaceInfo(namespaceInfo.Name)
+
+	apdCtx, apdEnd := observability.StartSpan(
+		ctx,
+		"Appender "+a.Name(),
+		observability.Attribute("package", "istio"),
+		observability.Attribute("namespace", namespaceInfo.Name),
+	)
+
+	appenderCtx := buildAppenderContext(apdCtx, a.Name())
+	timer := internalmetrics.GetGraphAppenderTimePrometheusTimer(a.Name())
+
+	a.AppendGraph(appenderCtx, namespaceTrafficMap, globalInfo, appenderNamespaceInfo)
+
+	internalmetrics.ObserveDurationAndLogResults(
+		appenderCtx,
+		globalInfo.Conf,
+		timer,
+		"GraphAppenderTime",
+		map[string]string{
+			"namespace": namespaceInfo.Name,
+		},
+		"Namespace graph appender time",
+	)
+
+	apdEnd()
+
+	return namespaceTrafficMap
 }
 
 // buildNamespaceTrafficMap returns a map of all namespace nodes (key=id).  All
@@ -1141,4 +1178,13 @@ func buildAppenderContext(ctx context.Context, appenderName string) context.Cont
 	zlWithAppender := zl.With().Str(log.GraphAppenderLogName, appenderName).Logger()
 	ctx = log.ToContext(ctx, &zlWithAppender)
 	return ctx
+}
+
+func isParallelSafeAppender(a graph.Appender) bool {
+	switch a.(type) {
+	case appender.ThroughputAppender, appender.SecurityPolicyAppender, appender.ResponseTimeAppender:
+		return true
+	default:
+		return false
+	}
 }
