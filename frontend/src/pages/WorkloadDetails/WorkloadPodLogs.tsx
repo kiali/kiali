@@ -75,6 +75,7 @@ import { ParameterizedTabs } from 'components/Tab/Tabs';
 import { basicTabStyle } from 'styles/TabStyles';
 import { classes } from 'typestyle';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
+import 'ace-builds/src-noconflict/mode-json';
 
 const appContainerColors = [PFColors.Blue200, PFColors.Blue300, PFColors.Blue400, PFColors.Blue100];
 const proxyContainerColor = PFColors.Gold300;
