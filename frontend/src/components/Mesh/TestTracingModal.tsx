@@ -137,14 +137,14 @@ export const TestModalComp: React.FC<TestModalProps> = (props: TestModalProps) =
     const checkConfig = (
       <Tab
         eventKey={0}
-        title={t('Check Config')}
+        title={t('Discovery')}
         key="checkConfig"
         actions={
           <>
             <TabAction aria-label={`Help action for Check config`} ref={ref}>
               <HelpIcon />
             </TabAction>
-            {helpPopover(t('Check Status'), checkConfigHelp, ref)}
+            {helpPopover(t('Configuration Discovery'), checkConfigHelp, ref)}
           </>
         }
       >
@@ -155,14 +155,14 @@ export const TestModalComp: React.FC<TestModalProps> = (props: TestModalProps) =
     const testConfig = (
       <Tab
         eventKey={1}
-        title={t('Test Configuration')}
+        title={t('Tester')}
         key="testConfig"
         actions={
           <>
-            <TabAction aria-label={`Help action for Test config`} ref={refTest}>
+            <TabAction aria-label={`Help action for configuration test`} ref={refTest}>
               <HelpIcon />
             </TabAction>
-            {helpPopover(t('Test Status'), testConfigHelp, refTest)}
+            {helpPopover(t('Configuration Tester'), testConfigHelp, refTest)}
           </>
         }
       >
@@ -183,7 +183,7 @@ export const TestModalComp: React.FC<TestModalProps> = (props: TestModalProps) =
       variant={ModalVariant.medium}
       isOpen={props.isOpen}
       onClose={props.onClose}
-      title={t('Tracing configuration')}
+      title={t('Configuration Tester')}
       actions={[
         <Button key="close" onClick={props.onClose}>
           {t('Close')}
