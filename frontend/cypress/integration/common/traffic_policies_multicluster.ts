@@ -10,15 +10,7 @@ const authorizationPolicies: string[] = [
   'reviews-v2',
   'reviews-v3'
 ];
-const sidecars: string[] = [
-  'kiali-traffic-generator',
-  'details-v1',
-  'productpage-v1',
-  'ratings-v1',
-  'reviews-v1',
-  'reviews-v2',
-  'reviews-v3'
-];
+const sidecars: string[] = ['details-v1', 'productpage-v1', 'ratings-v1', 'reviews-v1', 'reviews-v2', 'reviews-v3'];
 
 When('user deletes a Traffic Policy and the resource is no longer available in any cluster', () => {
   authorizationPolicies.forEach(policy => {
