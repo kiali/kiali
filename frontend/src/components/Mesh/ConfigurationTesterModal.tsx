@@ -16,8 +16,8 @@ import { connect } from 'react-redux';
 import { classes } from 'typestyle';
 import { basicTabStyle } from '../../styles/TabStyles';
 import { ParameterizedTabs } from '../Tab/Tabs';
-import { CheckTracingConfig } from './CheckTracingConfig';
-import { TestTracingConfig } from './TestTracingConfig';
+import { DiscoveryTracingConfig } from './DiscoveryTracingConfig';
+import { TesterTracingConfig } from './TesterTracingConfig';
 import { HelpIcon } from '@patternfly/react-icons';
 import { helpPopover } from '../../pages/Mesh/target/TargetPanelControlPlane';
 
@@ -148,7 +148,7 @@ export const TestModalComp: React.FC<TestModalProps> = (props: TestModalProps) =
           </>
         }
       >
-        <CheckTracingConfig cluster={props.cluster} />
+        <DiscoveryTracingConfig cluster={props.cluster} />
       </Tab>
     );
 
@@ -166,7 +166,7 @@ export const TestModalComp: React.FC<TestModalProps> = (props: TestModalProps) =
           </>
         }
       >
-        <TestTracingConfig configData={props.configData} />
+        <TesterTracingConfig configData={props.configData} />
       </Tab>
     );
 
@@ -221,4 +221,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setTracingDiagnose: bindActionCreators(TracingActions.setDiagnose, dispatch)
 });
 
-export const TestTracingModal = connect(mapStateToProps, mapDispatchToProps)(TestModalComp);
+export const ConfigurationTesterModal = connect(mapStateToProps, mapDispatchToProps)(TestModalComp);

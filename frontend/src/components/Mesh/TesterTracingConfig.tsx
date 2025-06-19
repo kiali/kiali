@@ -21,7 +21,7 @@ const healthStatusStyle = kialiStyle({
   marginLeft: '0.5rem'
 });
 
-export const TestTracingConfig: React.FC<CheckModalProps> = (props: CheckModalProps) => {
+export const TesterTracingConfig: React.FC<CheckModalProps> = (props: CheckModalProps) => {
   const { t } = useKialiTranslation();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useKialiTranslation } from '../../utils/I18nUtils';
-import { Button, ButtonVariant, ExpandableSection } from '@patternfly/react-core';
-import { validateExternalUrl } from './TestTracingModal';
+import { Button, ButtonVariant, Spinner, Title } from '@patternfly/react-core';
+import { validateExternalUrl } from './ConfigurationTesterModal';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { TracingCheck, TracingInfo } from '../../types/TracingInfo';
 import { PFColors } from '../Pf/PfColors';
@@ -36,7 +36,7 @@ type CheckModalProps = ReduxDispatchProps &
 const configStyle = kialiStyle({
   fontFamily: 'Courier New, Courier, monospace',
   fontSize: 'small',
-  marginBottom: '1.25em'
+  marginBottom: '0.75em'
 });
 
 const blockDisplay = kialiStyle({
@@ -49,15 +49,20 @@ const containerStyle = kialiStyle({
   resize: 'none',
   whiteSpace: 'pre',
   width: '100%',
-  overflowX: 'scroll'
+  overflowX: 'scroll',
+  backgroundColor: '#f8f9fa',
+  border: '1px solid #ddd',
+  borderRadius: '6px',
+  padding: '1rem',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
 });
 
 const blueDisplay = kialiStyle({
-  color: PFColors.Blue400
+  color: '#2A9292'
 });
 
-const blueDarkDisplay = kialiStyle({
-  color: PFColors.Blue200,
+const greyDisplay = kialiStyle({
+  color: PFColors.Black600,
   padding: '0 0.5em'
 });
 
@@ -65,14 +70,13 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
   const { t } = useKialiTranslation();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [isExpanded, setIsExpanded] = React.useState(false);
   const externalUrl = validateExternalUrl(props.externalServices, props.kiosk, props.tracingInfo);
 
   const labels = {
-    namespaceSelector: 'namespace_selector',
-    provider: 'provider',
-    url: 'internal_url',
-    useGRPC: 'use_grpc'
+    namespaceSelector: 'NamespaceSelector',
+    provider: 'Provider',
+    url: 'InternalUrl',
+    useGRPC: 'UseGRPC'
   };
 
   React.useEffect(() => {
@@ -82,10 +86,6 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const onToggle = (_event: React.MouseEvent, isExpanded: boolean): void => {
-    setIsExpanded(isExpanded);
-  };
 
   const fetchCheckService = async (): Promise<void> => {
     setLoading(true);
@@ -109,12 +109,7 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
   };
 
   return (
-    <div style={{ padding: '1em' }}>
-      <div style={{ display: 'flex' }}>
-        <Button onClick={handleCheckService} disabled={loading} variant={ButtonVariant.secondary}>
-          {loading ? t('Verifying...') : t('Check Status')}
-        </Button>
-      </div>
+    <div style={{ paddingTop: '1em', display: 'flex', flexDirection: 'column', height: '100%' }}>
       {props.tracingDiagnose && (
         <>
           <span style={{ color: 'green' }}>{props.tracingDiagnose.message}</span>
@@ -151,7 +146,9 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
                   })}
                   {item.warning && <span style={{ color: 'red' }}>{item.warning}</span>}
                 </div>
-                {props.tracingDiagnose?.validConfig && i < props.tracingDiagnose?.validConfig?.length - 1 && <hr />}
+                {props.tracingDiagnose?.validConfig && i < props.tracingDiagnose?.validConfig?.length - 1 && (
+                  <div style={{ padding: '0 0 10px 5px' }}>---</div>
+                )}
               </>
             ))}
           </div>
@@ -165,28 +162,31 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
       {props.tracingDiagnose?.logLine && (
         <>
           <div style={{ margin: '1em 0' }}>
-            <ExpandableSection
-              toggleText={isExpanded ? t('Hide logs') : t('Show logs')}
-              onToggle={onToggle}
-              isExpanded={isExpanded}
-            >
-              <div className={containerStyle}>
-                {props.tracingDiagnose.logLine.map(log => (
-                  <>
-                    <div>
-                      <span>
-                        <span className={blueDisplay}>{log.time.substring(0, 19)}</span>
-                        <span className={blueDarkDisplay}>[{log.test}]</span>
-                        {log.result}
-                      </span>
-                    </div>
-                  </>
-                ))}
-              </div>
-            </ExpandableSection>
+            <Title headingLevel="h4" size="lg" style={{ paddingBottom: '10px' }}>
+              {t('Logs')}:
+            </Title>
+            <div className={containerStyle}>
+              {props.tracingDiagnose.logLine.map(log => (
+                <>
+                  <div>
+                    <span>
+                      <span className={blueDisplay}>{log.time.substring(0, 19)}</span>
+                      <span className={greyDisplay}>[{log.test}]</span>
+                      {log.result}
+                    </span>
+                  </div>
+                </>
+              ))}
+            </div>
           </div>
         </>
       )}
+      <div style={{ marginTop: 'auto' }}>
+        <Button onClick={handleCheckService} disabled={loading} variant={ButtonVariant.secondary}>
+          {t('Rediscover')}
+        </Button>
+        {loading && <Spinner size="sm" />}
+      </div>
     </div>
   );
 };
@@ -204,4 +204,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setTracingDiagnose: bindActionCreators(TracingActions.setDiagnose, dispatch)
 });
 
-export const CheckTracingConfig = connect(mapStateToProps, mapDispatchToProps)(CheckConfigComp);
+export const DiscoveryTracingConfig = connect(mapStateToProps, mapDispatchToProps)(CheckConfigComp);

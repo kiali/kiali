@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { TestTracingModal } from './TestTracingModal';
+import { ConfigurationTesterModal } from './ConfigurationTesterModal';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { useKialiTranslation } from '../../utils/I18nUtils';
 
@@ -18,7 +18,7 @@ export const TracingDiagnose: React.FC<TracingDiagnoseProps> = (props: TracingDi
         <Button style={{ marginLeft: '5px' }} onClick={() => setIsModalOpen(true)} variant={ButtonVariant.secondary}>
           {t('Configuration Tester')}
         </Button>
-        <TestTracingModal
+        <ConfigurationTesterModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           cluster={props.cluster}
