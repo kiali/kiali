@@ -123,17 +123,18 @@ func main() {
 		config.Set(config.NewConfig())
 	}
 
-	log.Tracef("Kiali Configuration before auto-discovery:\n%s", config.Get())
 	if err := config.Validate(config.Get()); err != nil {
+		log.Debugf("Kiali Configuration before auto-discovery:\n%s", config.Get())
 		log.Fatal(err)
 	}
-
-	updateConfigWithIstioInfo()
 
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()
 
-	// Create the business package dependencies.
+	// if necessary, look for a local control plane to determine the local cluster name
+	autodiscoverIstioClusterName()
+
+	// create the business package dependencies.
 	clientFactory, err := kubernetes.GetClientFactory()
 	if err != nil {
 		log.Fatalf("Failed to create client factory. Err: %s", err)
@@ -145,6 +146,12 @@ func main() {
 
 	// fetch a fresh config here, it could have been updated during auto-discovery
 	conf := config.Get()
+
+	// ensure the config is set to Kiali's home cluster name. Note that this may not be accessed via a remote secret
+	if clientFactory.GetSAHomeClusterClient().ClusterInfo().Name != conf.KubernetesConfig.ClusterName {
+		conf.KubernetesConfig.ClusterName = clientFactory.GetSAHomeClusterClient().ClusterInfo().Name
+		config.Set(conf)
+	}
 
 	log.Tracef("Kiali Configuration after auto-discovery:\n%s", conf)
 
@@ -334,12 +341,12 @@ func determineContainerVersion(defaultVersion string) string {
 
 // This is used to update the config with information about istio that
 // comes from the environment such as the cluster name.
-func updateConfigWithIstioInfo() {
+func autodiscoverIstioClusterName() {
 	conf := config.Get()
 
 	homeCluster := conf.KubernetesConfig.ClusterName
 	// If the cluster name is already set, we don't need to do anything
-	// If the homeCluster is being ignored, we don't need to do anything
+	// If ignoring the local cluster, we don't need to do anything
 	if homeCluster != "" || conf.Clustering.IgnoreLocalCluster {
 		return
 	}
@@ -401,8 +408,9 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 		return nil, nil, fmt.Errorf("error setting up manager when creating scheme: %s", err)
 	}
 
-	// In the future this could be any cluster and not just home cluster.
+	// This could be any cluster and not just the local cluster.
 	homeClusterInfo := clientFactory.GetSAHomeClusterClient().ClusterInfo()
+
 	var defaultNamespaces map[string]ctrlcache.Config
 	if !conf.AllNamespacesAccessible() {
 		defaultNamespaces = make(map[string]ctrlcache.Config)
