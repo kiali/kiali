@@ -136,6 +136,22 @@ func (oc *OtelHTTPClient) GetServiceStatusHTTP(ctx context.Context, client http.
 	return reqError == nil, reqError
 }
 
+// GetServiceStatusHTTP get service status
+func (oc *OtelHTTPClient) GetServices(ctx context.Context, client http.Client, baseURL *url.URL) (serviceList []string, err error) {
+	var u url.URL
+	servicesList := []string{}
+
+	u = *baseURL
+	u.Path = path.Join(u.Path, "/status/services")
+
+	r, _, reqError := otel.MakeRequest(ctx, client, u.String(), nil)
+	if errMarshal := json.Unmarshal(r, &servicesList); errMarshal != nil {
+		getLoggerFromContextHTTPTempo(ctx).Error().Msgf("Error unmarshalling Jaeger response: %s", errMarshal)
+		return nil, errMarshal
+	}
+	return servicesList, reqError
+}
+
 // queryTracesHTTP
 func (oc *OtelHTTPClient) queryTracesHTTP(ctx context.Context, client http.Client, u *url.URL, error string) (*model.TracingResponse, error) {
 

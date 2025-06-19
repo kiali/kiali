@@ -200,7 +200,7 @@ export const TestModalComp: React.FC<TestModalProps> = (props: TestModalProps) =
         defaultTab={defaultTab}
         activeTab={currentTab}
         mountOnEnter={false}
-        unmountOnExit={true}
+        unmountOnExit={false}
       >
         {renderTabs()}
       </ParameterizedTabs>

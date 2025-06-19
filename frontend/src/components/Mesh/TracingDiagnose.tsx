@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { TestTracingModal } from './TestTracingModal';
 import { Button, ButtonVariant } from '@patternfly/react-core';
+import { useKialiTranslation } from '../../utils/I18nUtils';
 
 type TracingDiagnoseProps = {
   cluster: string;
@@ -9,12 +10,13 @@ type TracingDiagnoseProps = {
 
 export const TracingDiagnose: React.FC<TracingDiagnoseProps> = (props: TracingDiagnoseProps) => {
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
+  const { t } = useKialiTranslation();
 
   return (
     <>
-      <div style={{ paddingTop: '0.25em' }}>
+      <div style={{ marginLeft: 'auto' }}>
         <Button style={{ marginLeft: '5px' }} onClick={() => setIsModalOpen(true)} variant={ButtonVariant.secondary}>
-          Test Config
+          {t('Configuration Tester')}
         </Button>
         <TestTracingModal
           isOpen={isModalOpen}

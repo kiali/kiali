@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useKialiTranslation } from '../../utils/I18nUtils';
 import { Button, ButtonVariant, ExpandableSection } from '@patternfly/react-core';
-import { KialiIcon } from '../../config/KialiIcon';
 import { validateExternalUrl } from './TestTracingModal';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { TracingCheck, TracingInfo } from '../../types/TracingInfo';
@@ -76,6 +75,14 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
     useGRPC: 'use_grpc'
   };
 
+  React.useEffect(() => {
+    if (!props.tracingDiagnose) {
+      console.log('Fetch service');
+      fetchCheckService();
+    }
+    // tslint:disable-next-line
+  }, []);
+
   const onToggle = (_event: React.MouseEvent, isExpanded: boolean): void => {
     setIsExpanded(isExpanded);
   };
@@ -107,18 +114,6 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
         <Button onClick={handleCheckService} disabled={loading} variant={ButtonVariant.secondary}>
           {loading ? t('Verifying...') : t('Check Status')}
         </Button>
-        {props.tracingDiagnose && (
-          <span style={{ position: 'absolute', right: '2.4em' }}>
-            <Button
-              variant={ButtonVariant.link}
-              aria-label={t('Close')}
-              isInline
-              onClick={() => props.setTracingDiagnose()}
-            >
-              <KialiIcon.Close />
-            </Button>
-          </span>
-        )}
       </div>
       {props.tracingDiagnose && (
         <>

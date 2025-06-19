@@ -41,6 +41,7 @@ type ClientInterface interface {
 	GetTraceDetail(ctx context.Context, traceId string) (*model.TracingSingleTrace, error)
 	GetErrorTraces(ctx context.Context, ns, app string, duration time.Duration) (errorTraces int, err error)
 	GetServiceStatus(ctx context.Context) (available bool, err error)
+	GetServices(ctx context.Context) ([]string, error)
 }
 
 // HTTPClientInterface for Mocks, also for Tempo or Jaeger
@@ -48,6 +49,7 @@ type HTTPClientInterface interface {
 	GetAppTracesHTTP(ctx context.Context, client http.Client, baseURL *url.URL, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error)
 	GetTraceDetailHTTP(ctx context.Context, client http.Client, endpoint *url.URL, traceID string) (*model.TracingSingleTrace, error)
 	GetServiceStatusHTTP(ctx context.Context, client http.Client, baseURL *url.URL) (bool, error)
+	GetServices(ctx context.Context, client http.Client, baseURL *url.URL) ([]string, error)
 }
 
 // GRPCClientInterface for Mocks, also for Tempo or Jaeger
@@ -55,6 +57,7 @@ type GRPCClientInterface interface {
 	FindTraces(ctx context.Context, app string, q models.TracingQuery) (response *model.TracingResponse, err error)
 	GetTrace(ctx context.Context, traceID string) (*model.TracingSingleTrace, error)
 	GetServices(ctx context.Context) (bool, error)
+	GetServicesList(ctx context.Context) ([]string, error)
 }
 
 // Client for Tracing API.
@@ -299,6 +302,21 @@ func (in *Client) GetServiceStatus(ctx context.Context) (bool, error) {
 	}
 
 	return in.grpcClient.GetServices(ctx)
+}
+
+func (in *Client) GetServices(ctx context.Context) ([]string, error) {
+	ctx = in.prepareContextForClient(ctx)
+
+	// create a timer to time the tracing query. Note that we will always take the measurement even on failure
+	promtimer := internalmetrics.GetTracingProcessingTimePrometheusTimer("ServiceStatus")
+	defer internalmetrics.ObserveDurationAndLogResults(ctx, config.Get(), promtimer, "TracingProcessingTime", nil, "ServiceStatus")
+
+	// Check Service Status using HTTP when gRPC is not enabled
+	if in.grpcClient == nil {
+		return in.httpTracingClient.GetServices(ctx, in.httpClient, in.baseURL)
+	}
+
+	return in.grpcClient.GetServicesList(ctx)
 }
 
 // BuildTracingServiceName
