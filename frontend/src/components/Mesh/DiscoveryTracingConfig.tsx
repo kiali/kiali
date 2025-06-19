@@ -12,6 +12,7 @@ import { bindActionCreators } from 'redux';
 import { TracingActions } from '../../actions/TracingActions';
 import { connect } from 'react-redux';
 import { KialiAppState } from '../../store/Store';
+import { classes } from 'typestyle';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -50,7 +51,7 @@ const containerStyle = kialiStyle({
   whiteSpace: 'pre',
   width: '100%',
   overflowX: 'scroll',
-  backgroundColor: '#f8f9fa',
+  backgroundColor: PFColors.BackgroundColor100,
   border: '1px solid #ddd',
   borderRadius: '6px',
   padding: '1rem',
@@ -58,11 +59,14 @@ const containerStyle = kialiStyle({
 });
 
 const blueDisplay = kialiStyle({
-  color: '#2A9292'
+  color: PFColors.LightBlue500
+});
+
+const padding = kialiStyle({
+  padding: '0 0.5em'
 });
 
 const greyDisplay = kialiStyle({
-  color: PFColors.Black600,
   padding: '0 0.5em'
 });
 
@@ -89,7 +93,6 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
 
   const fetchCheckService = async (): Promise<void> => {
     setLoading(true);
-    props.setTracingDiagnose();
     setError(null);
 
     return API.getDiagnoseStatus(props.cluster)
@@ -170,8 +173,8 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
                 <>
                   <div>
                     <span>
-                      <span className={blueDisplay}>{log.time.substring(0, 19)}</span>
-                      <span className={greyDisplay}>[{log.test}]</span>
+                      <span className={greyDisplay}>{log.time.substring(0, 19)}</span>
+                      <span className={classes(blueDisplay, padding)}>[{log.test}]</span>
                       {log.result}
                     </span>
                   </div>
