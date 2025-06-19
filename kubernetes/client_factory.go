@@ -143,9 +143,6 @@ func newClientFactory(kialiConf *kialiConfig.Config, restConf *rest.Config) (*cl
 		recycleChan:     make(chan string),
 		saClientEntries: make(map[string]UserClientInterface),
 	}
-	if f.homeCluster == "" {
-		f.homeCluster = f.baseRestConfig.Host
-	}
 
 	// after creating a client factory
 	// background goroutines will be watching the clients` expiration
@@ -158,7 +155,29 @@ func newClientFactory(kialiConf *kialiConfig.Config, restConf *rest.Config) (*cl
 		return nil, err
 	}
 	f.remoteClusterInfos = remoteClusterInfos
-	if !kialiConf.Clustering.IgnoreLocalCluster {
+
+	for cluster, clusterInfo := range remoteClusterInfos {
+		client, err := f.newSAClient(&clusterInfo)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create remote Kiali Service Account client. Err: %s", err)
+		}
+		f.saClientEntries[cluster] = client
+	}
+
+	if kialiConf.Clustering.IgnoreLocalCluster {
+		if len(f.saClientEntries) == 0 {
+			return nil, fmt.Errorf("kiali will exit because it has no local or remote cluster to manage. Currenly clustering.IgnoreLocalClient=true but no cluster secrets have been discovered")
+		}
+
+		// use a cluster secret to assign a home cluster
+		for _, v := range f.saClientEntries {
+			f.homeCluster = v.ClusterInfo().Name
+			break
+		}
+	} else {
+		if f.homeCluster == "" {
+			f.homeCluster = f.baseRestConfig.Host
+		}
 		// Create service account clients for the local cluster and each remote cluster.
 		// Note that this means each remote cluster secret token must be given the proper permissions
 		// in that remote cluster for Kiali to do its work. i.e. logging into a remote cluster with the
@@ -170,13 +189,6 @@ func newClientFactory(kialiConf *kialiConfig.Config, restConf *rest.Config) (*cl
 		f.saClientEntries[f.homeCluster] = homeClient
 	}
 
-	for cluster, clusterInfo := range remoteClusterInfos {
-		client, err := f.newSAClient(&clusterInfo)
-		if err != nil {
-			return nil, fmt.Errorf("unable to create remote Kiali Service Account client. Err: %s", err)
-		}
-		f.saClientEntries[cluster] = client
-	}
 	return f, nil
 }
 
