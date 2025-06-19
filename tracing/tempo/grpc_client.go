@@ -106,6 +106,9 @@ func (jc TempoGRPCClient) GetServicesList(ctx context.Context) ([]string, error)
 
 	sr := &tempopb.SearchRequest{}
 	result, err := jc.StreamingClient.Search(ctx, sr)
+	if err != nil {
+		return nil, err
+	}
 	services, err := processServices(ctx, result)
 	return services, err
 }
