@@ -80,7 +80,7 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
       console.log('Fetch service');
       fetchCheckService();
     }
-    // tslint:disable-next-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onToggle = (_event: React.MouseEvent, isExpanded: boolean): void => {
