@@ -1,0 +1,1 @@
+# this file will run stern on istio (upstream) or service mesh (downstream) containers + demo apps 

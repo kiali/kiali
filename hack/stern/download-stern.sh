@@ -34,13 +34,12 @@ URL="https://github.com/${REPO}/releases/download/v${VERSION}/${FILENAME}"
 echo $URL
 echo $FILENAME
 
-# Download and extract
+# Download and extract, clean archive
 echo "Downloading Stern ${LATEST}..."
 curl -LO "$URL"
 tar -xzf "$FILENAME"
+rm LICENSE "$FILENAME"
 
-mv stern /usr/local/bin/
-rm "$FILENAME" LICENSE
+chmod +x ./stern
 
-stern --version
-echo "Stern ${VERSION} installed successfully!"
+echo "Stern $(./stern --version | $GREP_CMD version ) installed successfully!"
