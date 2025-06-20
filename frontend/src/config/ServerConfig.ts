@@ -120,7 +120,8 @@ const defaultServerConfig: ComputedServerConfig = {
       mesh: {
         findOptions: [],
         hideOptions: []
-      }
+      },
+      tracing: { limit: 100 }
     }
   },
   prometheus: {

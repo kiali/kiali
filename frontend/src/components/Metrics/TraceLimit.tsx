@@ -1,7 +1,6 @@
 import * as React from 'react';
-import { Radio, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Slider, SliderOnChangeEvent, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
-import { itemStyleWithoutInfo } from 'styles/DropdownStyles';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { infoStyle } from 'styles/IconStyle';
 
@@ -19,13 +18,7 @@ export type TraceLimitOption = 20 | 100 | 500 | 1000;
 export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) => {
   const initialLimit = props.initialLimit ?? TRACE_LIMIT_DEFAULT;
   const [limit, setLimit] = React.useState<number>(initialLimit);
-
-  const onLimitChangeRadio = (limit: number, checked: boolean): void => {
-    if (checked) {
-      setLimit(limit);
-      props.onLimitChange(limit);
-    }
-  };
+  const [value, setValue] = React.useState<number>(initialLimit);
 
   const onLimitChange = (limitStr: string): void => {
     const limit = parseInt(limitStr);
@@ -59,34 +52,33 @@ export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) =>
     1000: '1000 traces'
   };
 
+  const handleRelease = (): void => {
+    if (value !== limit) {
+      props.onLimitChange(value);
+      setLimit(value);
+    }
+  };
+
   const traceLimitComponent = (
-    <span id="trace-limit">
+    <div>
       <div style={{ marginTop: '0.5rem' }}>
         <span className={props.titleClassName} style={{ paddingRight: 0 }}>
-          {props.title}
+          {props.title} ({value})
         </span>
         {tooltip}
       </div>
-
-      {Object.keys(traceLimits).map(key => {
-        const lim = parseInt(key);
-        return (
-          <div key={`limit-${lim}`}>
-            <label key={`limit-${lim}`} className={itemStyleWithoutInfo}>
-              <Radio
-                id={`limit-${lim}`}
-                data-test={`limit-${lim}`}
-                name={`limit-${lim}`}
-                isChecked={lim === limit}
-                label={lim}
-                onChange={(_event, checked) => onLimitChangeRadio(lim, checked)}
-                value={lim}
-              />
-            </label>
-          </div>
-        );
-      })}
-    </span>
+      <div id="trace-limit" onMouseUp={handleRelease} style={{ padding: '0 10px' }}>
+        <Slider
+          value={value}
+          onChange={(_event: SliderOnChangeEvent, value: number) => {
+            setValue(value);
+          }}
+          min={10}
+          max={1000}
+          step={10}
+        />
+      </div>
+    </div>
   );
 
   const traceLimitDropdownComponent = (

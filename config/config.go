@@ -602,6 +602,9 @@ type Aggregation struct {
 type MetricsDefaults struct {
 	Aggregations []Aggregation `yaml:"aggregations,omitempty" json:"aggregations,omitempty"`
 }
+type TracingDefaults struct {
+	Limit int `yaml:"limit,omitempty" json:"limit,omitempty"`
+}
 
 // UIDefaults defines default settings configured for the UI
 type UIDefaults struct {
@@ -614,6 +617,7 @@ type UIDefaults struct {
 	MetricsOutbound   MetricsDefaults `yaml:"metrics_outbound,omitempty" json:"metricsOutbound,omitempty"`
 	Namespaces        []string        `yaml:"namespaces,omitempty" json:"namespaces,omitempty"`
 	RefreshInterval   string          `yaml:"refresh_interval,omitempty" json:"refreshInterval,omitempty"`
+	Tracing           TracingDefaults `yaml:"tracing,omitempty" json:"tracing,omitempty"`
 }
 
 // Validations defines default settings configured for the Validations subsystem
@@ -926,6 +930,7 @@ func NewConfig() (c *Config) {
 				MetricsPerRefresh: "1m",
 				Namespaces:        make([]string, 0),
 				RefreshInterval:   "60s",
+				Tracing:           TracingDefaults{Limit: 100},
 			},
 			Validations: Validations{
 				Ignore: make([]string, 0),
@@ -1202,6 +1207,11 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	if conf.ExternalServices.Tracing.XURL != "" {
 		conf.ExternalServices.Tracing.ExternalURL = conf.ExternalServices.Tracing.XURL
 		log.Info("DEPRECATION NOTICE: 'external_services.tracing.url' has been deprecated - switch to 'external_services.tracing.external_url'")
+	}
+
+	// Validate tracing min and max values
+	if conf.KialiFeatureFlags.UIDefaults.Tracing.Limit < 10 || conf.KialiFeatureFlags.UIDefaults.Tracing.Limit > 1000 {
+		return nil, fmt.Errorf("KialiFeatureFlags.UIDefaults.Tracing.Limit should be between 10 and 1000")
 	}
 
 	// Some config settings (such as sensitive settings like passwords) are overrideable
