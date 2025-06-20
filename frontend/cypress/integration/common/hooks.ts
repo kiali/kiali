@@ -194,17 +194,7 @@ Before({ tags: '@shared-mesh-config' }, () => {
             cy.wait(3000);
             doRequest();
           } else {
-            const waitForPodDeletion = (): void => {
-              cy.exec(`kubectl get pod ${podName} -n istio-system`, { failOnNonZeroExit: false }).then(res => {
-                if (res.code === 0) {
-                  cy.wait(2000).then(waitForPodDeletion);
-                } else {
-                  cy.log(`Pod ${podName} is deleted.`);
-                }
-              });
-            };
-
-            waitForPodDeletion();
+            cy.exec(`kubectl wait --for=delete pod/${podName} -n istio-system --timeout=60s`);
           }
           cy.wait(5000);
         });
