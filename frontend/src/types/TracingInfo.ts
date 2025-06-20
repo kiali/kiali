@@ -153,3 +153,8 @@ export type TracingCheck = {
   message: string;
   validConfig?: ValidConfig[];
 };
+
+export type ConfigurationValidation = {
+  error?: string;
+  message: string;
+};

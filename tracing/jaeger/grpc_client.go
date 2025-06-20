@@ -100,6 +100,15 @@ func (jc JaegerGRPCClient) GetTrace(ctx context.Context, strTraceID string) (*mo
 }
 
 // GetServices
+func (jc JaegerGRPCClient) GetServicesList(ctx context.Context) ([]string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+
+	services, err := jc.JaegergRPCClient.GetServices(ctx, &model.GetServicesRequest{})
+
+	return services.GetServices(), err
+}
+
 func (jc JaegerGRPCClient) GetServices(ctx context.Context) (bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()

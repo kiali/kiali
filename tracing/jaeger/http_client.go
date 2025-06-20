@@ -74,6 +74,18 @@ func (jc JaegerHTTPClient) GetServiceStatusHTTP(ctx context.Context, client http
 	return reqError == nil, reqError
 }
 
+func (jc JaegerHTTPClient) GetServices(ctx context.Context, client http.Client, baseURL *url.URL) ([]string, error) {
+	url := *baseURL
+	serviceList := model.TracingServices{}
+	url.Path = path.Join(url.Path, "/api/services")
+	r, _, reqError := otel.MakeRequest(ctx, client, url.String(), nil)
+	if errMarshal := json.Unmarshal(r, &serviceList); errMarshal != nil {
+		getLoggerFromContextHTTPJaeger(ctx).Error().Msgf("Error unmarshalling Jaeger response: %s", errMarshal)
+		return nil, errMarshal
+	}
+	return serviceList.Data, reqError
+}
+
 func queryTracesHTTP(ctx context.Context, client http.Client, u *url.URL) (*model.TracingResponse, error) {
 	// HTTP and GRPC requests co-exist, but when minDuration is present, for HTTP it requires a unit (us)
 	// https://github.com/kiali/kiali/issues/3939

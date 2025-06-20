@@ -5,12 +5,33 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 )
+
+func getLayer(t *testing.T, conf *config.Config) *Layer {
+
+	config.Set(conf)
+	s1 := kubetest.FakeService("Namespace", "reviews")
+	s2 := kubetest.FakeService("Namespace", "httpbin")
+	objects := []runtime.Object{
+		kubetest.FakeNamespace("Namespace"),
+		&s1,
+		&s2,
+	}
+
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	SetupBusinessLayer(t, k8s, *conf)
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
+	return NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
+}
 
 var trace1 = jaegerModels.Trace{
 	Spans: []jaegerModels.Span{{
@@ -214,4 +235,28 @@ func TestTracesToSpanWaypointWithWorkloadFilter(t *testing.T) {
 	spans := tracesToSpans(context.Background(), tracingName, &r, wkdSpanFilter(context.Background(), "default", tracingName), config.NewConfig())
 	assert.Len(spans, 1)
 	// Process is empty here, because the span we are looking for is the service and the process is the waypoint
+}
+
+func TestValidateConfiguration(t *testing.T) {
+
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	conf.ExternalServices.Tracing.Enabled = true
+	layer := getLayer(t, conf)
+
+	tracingConfig := config.TracingConfig{Enabled: true, InternalURL: "http://localhost", UseGRPC: false}
+
+	validConfig := layer.Tracing.ValidateConfiguration(context.TODO(), config.NewConfig(), &tracingConfig, "")
+
+	assert.NotNil(validConfig)
+	assert.NotNil(validConfig.Error)
+	assert.Contains(validConfig.Error, "connection refused")
+
+	tracingConfig = config.TracingConfig{Enabled: false, InternalURL: "http://localhost", UseGRPC: false}
+	validConfig = layer.Tracing.ValidateConfiguration(context.TODO(), config.NewConfig(), &tracingConfig, "")
+
+	assert.NotNil(validConfig)
+	assert.NotNil(validConfig.Error)
+	assert.Contains(validConfig.Error, "Error creating tracing client")
+
 }

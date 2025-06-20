@@ -33,6 +33,7 @@ export enum PFColors {
   Green500 = 'var(--pf-v5-global--palette--green-500)',
   Green600 = 'var(--pf-v5-global--palette--green-600)',
   LightBlue400 = 'var(--pf-v5-global--palette--light-blue-400)',
+  LightBlue500 = 'var(--pf-v5-global--palette--light-blue-500)',
   LightGreen400 = 'var(--pf-v5-global--palette--light-green-400)',
   LightGreen500 = 'var(--pf-v5-global--palette--light-green-500)',
   Orange50 = 'var(--pf-v5-global--palette--orange-50)',
