@@ -90,7 +90,7 @@ if [ "${DELETE_DEMO}" == "false" ]; then
       $CLIENT_EXE label namespace ${NAMESPACE} istio.io/dataplane-mode=ambient --overwrite
   fi
 
-  echo "Deploying logger for Bookinfo"
+  echo "Deploying custom logger"
   cat <<EOF | $CLIENT_EXE apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -113,6 +113,31 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - while true; do echo 'GET'; echo 'DEBUG'; sleep 1; done
+EOF
+
+  echo "Deploying json logger demo"
+  cat <<EOF | $CLIENT_EXE apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: json-logger
+  namespace: $NAMESPACE
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: json-logger
+  template:
+    metadata:
+      labels:
+        app: json-logger
+    spec:
+      containers:
+      - name: logger
+        image: busybox
+        command: ["/bin/sh", "-c"]
+        args:
+          - while true; do echo "{\"a\":\"b\", \"c\":{\"d\":\"e\"}}"; sleep 1; echo "text format log"; done
 EOF
   
   sleep 5

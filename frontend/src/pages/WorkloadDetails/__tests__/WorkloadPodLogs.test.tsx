@@ -11,6 +11,7 @@ import { Dropdown, DropdownItem } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 
 const defaultProps = (): WorkloadPodLogsProps => ({
+  theme: '',
   kiosk: '',
   lastRefreshAt: 200,
   timeRange: {},
