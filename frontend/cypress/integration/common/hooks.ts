@@ -205,3 +205,12 @@ After({ tags: '@shared-mesh-config' }, () => {
   const patch = '{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": null}}}}}';
   cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`);
 });
+
+beforeEach(() => {
+  cy.exec('../hack/stern/run-stern.sh');
+});
+
+afterEach(() => {
+  cy.exec(`kill $(ps aux | grep 'stern' | grep -v grep | awk '{print $2}')`);
+  // cy.exec(` echo "---------------------end of testcase ----------------" >> ${Cypress.spec.name}.log`)
+});
