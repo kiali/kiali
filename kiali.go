@@ -122,19 +122,18 @@ func main() {
 		config.Set(config.NewConfig())
 	}
 
-	updateConfigWithIstioInfo()
-
-	conf := config.Get()
-	log.Tracef("Kiali Configuration:\n%s", conf)
-
-	if err := config.Validate(*conf); err != nil {
+	if err := config.Validate(config.Get()); err != nil {
+		log.Debugf("Kiali Configuration before auto-discovery:\n%s", config.Get())
 		log.Fatal(err)
 	}
 
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()
 
-	// Create the business package dependencies.
+	// if necessary, look for a local control plane to determine the local cluster name
+	autodiscoverIstioClusterName()
+
+	// create the business package dependencies.
 	clientFactory, err := kubernetes.GetClientFactory()
 	if err != nil {
 		log.Fatalf("Failed to create client factory. Err: %s", err)
@@ -143,6 +142,17 @@ func main() {
 	// This context is used for polling and for creating some high level clients like tracing.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	// fetch a fresh config here, it could have been updated during auto-discovery
+	conf := config.Get()
+
+	// ensure the config is set to Kiali's home cluster name. Note that this may not be accessed via a remote secret
+	if clientFactory.GetSAHomeClusterClient().ClusterInfo().Name != conf.KubernetesConfig.ClusterName {
+		conf.KubernetesConfig.ClusterName = clientFactory.GetSAHomeClusterClient().ClusterInfo().Name
+		config.Set(conf)
+	}
+
+	log.Tracef("Kiali Configuration after auto-discovery:\n%s", conf)
 
 	mgr, kubeCaches, err := newManager(ctx, conf, &zl, clientFactory)
 	if err != nil {
@@ -329,12 +339,13 @@ func determineContainerVersion(defaultVersion string) string {
 
 // This is used to update the config with information about istio that
 // comes from the environment such as the cluster name.
-func updateConfigWithIstioInfo() {
-	conf := *config.Get()
+func autodiscoverIstioClusterName() {
+	conf := config.Get()
 
 	homeCluster := conf.KubernetesConfig.ClusterName
-	if homeCluster != "" {
-		// If the cluster name is already set, we don't need to do anything
+	// If the cluster name is already set, we don't need to do anything
+	// If ignoring the local cluster, we don't need to do anything
+	if homeCluster != "" || conf.Clustering.IgnoreLocalCluster {
 		return
 	}
 
@@ -371,7 +382,7 @@ func updateConfigWithIstioInfo() {
 
 	log.Debugf("Auto-detected the istio cluster name to be [%s]. Updating the kiali config", homeCluster)
 	conf.KubernetesConfig.ClusterName = homeCluster
-	config.Set(&conf)
+	config.Set(conf)
 }
 
 func asReaders(caches map[string]ctrlcache.Cache) map[string]client.Reader {
@@ -395,8 +406,9 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 		return nil, nil, fmt.Errorf("error setting up manager when creating scheme: %s", err)
 	}
 
-	// In the future this could be any cluster and not just home cluster.
+	// This could be any cluster and not just the local cluster.
 	homeClusterInfo := clientFactory.GetSAHomeClusterClient().ClusterInfo()
+
 	var defaultNamespaces map[string]ctrlcache.Config
 	if !conf.AllNamespacesAccessible() {
 		defaultNamespaces = make(map[string]ctrlcache.Config)
