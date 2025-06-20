@@ -1209,6 +1209,11 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		log.Info("DEPRECATION NOTICE: 'external_services.tracing.url' has been deprecated - switch to 'external_services.tracing.external_url'")
 	}
 
+	// Validate tracing min and max values
+	if conf.KialiFeatureFlags.UIDefaults.Tracing.Limit < 10 || conf.KialiFeatureFlags.UIDefaults.Tracing.Limit > 1000 {
+		return nil, fmt.Errorf("KialiFeatureFlags.UIDefaults.Tracing.Limit should be between 10 and 1000")
+	}
+
 	// Some config settings (such as sensitive settings like passwords) are overrideable
 	// via secrets mounted on the file system rather than storing them directly in the config map itself.
 	// The names of the files in /kiali-override-secrets denote which credentials they are.
