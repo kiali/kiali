@@ -85,7 +85,6 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
 
   React.useEffect(() => {
     if (!props.tracingDiagnose) {
-      console.log('Fetch service');
       fetchCheckService();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -112,79 +111,81 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
   };
 
   return (
-    <div style={{ paddingTop: '1em', display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {props.tracingDiagnose && (
-        <>
-          <span style={{ color: 'green' }}>{props.tracingDiagnose.message}</span>
-          <div style={{ marginTop: '1em' }}>
-            <span>{t('Possible configuration(s) found for external_services.tracing')}:</span>
-          </div>
-        </>
-      )}
-      {error && (
-        <div>
-          <span style={{ color: 'red' }}>{error}</span>
-        </div>
-      )}
-      {props.tracingDiagnose?.validConfig && (
-        <>
-          <div style={{ margin: '0.5em 0', display: 'flex' }}>
-            <span>
-              {props.tracingDiagnose?.validConfig.length === 0 && <>No configurations found. See logs for details</>}
-            </span>
-          </div>
+    <div style={{ paddingTop: '1em', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: '1 1 auto', overflowY: 'auto', marginBottom: '1em' }}>
+        {props.tracingDiagnose && (
+          <>
+            <span style={{ color: 'green' }}>{props.tracingDiagnose.message}</span>
+            <div style={{ marginTop: '1em' }}>
+              <span>{t('Possible configuration(s) found for external_services.tracing')}:</span>
+            </div>
+          </>
+        )}
+        {error && (
           <div>
-            {props.tracingDiagnose?.validConfig?.map((item, i) => (
-              <>
-                <div className={configStyle}>
-                  {Object.keys(item).map(key => {
-                    if (labels[key] !== undefined && item[key] != null) {
-                      return (
-                        <span className={blockDisplay}>
-                          <span className={blueDisplay}>{labels[key]}:</span> {item[key].toString()}
-                        </span>
-                      );
-                    }
-                    return null;
-                  })}
-                  {item.warning && <span style={{ color: 'red' }}>{item.warning}</span>}
-                </div>
-                {props.tracingDiagnose?.validConfig && i < props.tracingDiagnose?.validConfig?.length - 1 && (
-                  <div style={{ padding: '0 0 10px 5px' }}>---</div>
-                )}
-              </>
-            ))}
+            <span style={{ color: 'red' }}>{error}</span>
           </div>
-        </>
-      )}
-      {props.tracingDiagnose?.validConfig && externalUrl && (
-        <div>
-          <span className={configStyle}>{externalUrl}</span>
-        </div>
-      )}
-      {props.tracingDiagnose?.logLine && (
-        <>
-          <div style={{ margin: '1em 0' }}>
-            <Title headingLevel="h4" size="lg" style={{ paddingBottom: '10px' }}>
-              {t('Logs')}:
-            </Title>
-            <div className={containerStyle}>
-              {props.tracingDiagnose.logLine.map(log => (
+        )}
+        {props.tracingDiagnose?.validConfig && (
+          <>
+            <div style={{ margin: '0.5em 0', display: 'flex' }}>
+              <span>
+                {props.tracingDiagnose?.validConfig.length === 0 && <>No configurations found. See logs for details</>}
+              </span>
+            </div>
+            <div>
+              {props.tracingDiagnose?.validConfig?.map((item, i) => (
                 <>
-                  <div>
-                    <span>
-                      <span className={greyDisplay}>{log.time.substring(0, 19)}</span>
-                      <span className={classes(blueDisplay, padding)}>[{log.test}]</span>
-                      {log.result}
-                    </span>
+                  <div className={configStyle}>
+                    {Object.keys(item).map(key => {
+                      if (labels[key] !== undefined && item[key] != null) {
+                        return (
+                          <span className={blockDisplay}>
+                            <span className={blueDisplay}>{labels[key]}:</span> {item[key].toString()}
+                          </span>
+                        );
+                      }
+                      return null;
+                    })}
+                    {item.warning && <span style={{ color: 'red' }}>{item.warning}</span>}
                   </div>
+                  {props.tracingDiagnose?.validConfig && i < props.tracingDiagnose?.validConfig?.length - 1 && (
+                    <div style={{ padding: '0 0 10px 5px' }}>---</div>
+                  )}
                 </>
               ))}
             </div>
+          </>
+        )}
+        {props.tracingDiagnose?.validConfig && externalUrl && (
+          <div>
+            <span className={configStyle}>{externalUrl}</span>
           </div>
-        </>
-      )}
-      <div style={{ marginTop: 'auto' }}>
+        )}
+        {props.tracingDiagnose?.logLine && (
+          <>
+            <div style={{ margin: '1em 0' }}>
+              <Title headingLevel="h4" size="lg" style={{ paddingBottom: '10px' }}>
+                {t('Logs')}:
+              </Title>
+              <div className={containerStyle}>
+                {props.tracingDiagnose.logLine.map(log => (
+                  <>
+                    <div>
+                      <span>
+                        <span className={greyDisplay}>{log.time.substring(0, 19)}</span>
+                        <span className={classes(blueDisplay, padding)}>[{log.test}]</span>
+                        {log.result}
+                      </span>
+                    </div>
+                  </>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+      <div style={{ flexShrink: '0' }}>
         <Button onClick={handleCheckService} disabled={loading} variant={ButtonVariant.secondary}>
           {t('Rediscover')}
         </Button>

@@ -114,6 +114,7 @@ export const TesterTracingConfig: React.FC<CheckModalProps> = (props: CheckModal
         onChange={onEditorChange}
         width="100%"
         className={istioAceEditorStyle}
+        height="420px"
         wrapEnabled={true}
         readOnly={false}
         setOptions={aceOptions}

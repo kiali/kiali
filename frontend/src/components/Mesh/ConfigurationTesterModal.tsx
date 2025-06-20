@@ -3,7 +3,6 @@ import { TracingCheck, TracingInfo } from '../../types/TracingInfo';
 import { Button, Modal, ModalVariant, Tab, TabAction } from '@patternfly/react-core';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { useKialiTranslation } from '../../utils/I18nUtils';
-import { PFColors } from '../Pf/PfColors';
 import { ExternalServiceInfo, TempoUrlFormat } from '../../types/StatusState';
 import { isParentKiosk } from '../Kiosk/KioskActions';
 import { isTempoService, TempoUrlProvider } from '../../utils/tracing/UrlProviders/Tempo';
@@ -13,8 +12,6 @@ import { KialiDispatch } from '../../types/Redux';
 import { bindActionCreators } from 'redux';
 import { TracingActions } from '../../actions/TracingActions';
 import { connect } from 'react-redux';
-import { classes } from 'typestyle';
-import { basicTabStyle } from '../../styles/TabStyles';
 import { ParameterizedTabs } from '../Tab/Tabs';
 import { DiscoveryTracingConfig } from './DiscoveryTracingConfig';
 import { TesterTracingConfig } from './TesterTracingConfig';
@@ -41,25 +38,13 @@ type TestModalProps = ReduxProps &
   };
 
 const modalStyle = kialiStyle({
-  overflowY: 'hidden',
-  height: '800px'
-});
-
-const tabStyle = kialiStyle({
+  display: 'flex',
+  flexDirection: 'column',
+  width: '50%',
+  height: '70%',
   $nest: {
-    '&& .pf-v5-c-tabs__list': {
-      marginLeft: 0
-    }
-  }
-});
-
-export const helpStyle = kialiStyle({
-  marginBottom: '0.6em',
-  marginLeft: '0.375rem',
-  $nest: {
-    '&:hover': {
-      color: PFColors.Color200,
-      cursor: 'pointer'
+    '& .pf-v5-c-tab-content': {
+      height: '90%'
     }
   }
 });
@@ -192,7 +177,6 @@ export const TestModalComp: React.FC<TestModalProps> = (props: TestModalProps) =
     >
       <ParameterizedTabs
         id="basic-tabs"
-        className={classes(basicTabStyle, tabStyle)}
         onSelect={tabValue => {
           setCurrentTab(tabValue);
         }}
