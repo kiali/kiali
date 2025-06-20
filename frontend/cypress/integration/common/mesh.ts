@@ -115,6 +115,30 @@ Then('user sees cluster side panel', () => {
 Then('user sees control plane side panel', () => {
   cy.waitForReact();
   cy.get('#loading_kiali_spinner').should('not.exist');
+
+  // Wait for metrics
+  const maxTries = 15;
+  let tries = 0;
+  const waitForMemoryMetrics = (): void => {
+    if (tries > maxTries) {
+      throw new Error('Timed out waiting for Kiali to see the Shared Mesh Config');
+    }
+    tries++;
+    cy.request({ method: 'GET', url: '/api/namespaces/istio-system/controlplanes/istiod/metrics' }).then(
+      metricsResponse => {
+        expect(metricsResponse.status).to.equal(200);
+        console.log(metricsResponse.body);
+        if (metricsResponse.body.process_resident_memory_bytes == null) {
+          cy.log(`Istiod hasn't load the Memory metrics yet. Tries: ${tries}. Waiting 3s...`);
+          cy.wait(3000);
+          waitForMemoryMetrics();
+        }
+        cy.wait(5000);
+      }
+    );
+  };
+  waitForMemoryMetrics();
+
   cy.get('#target-panel-control-plane')
     .should('be.visible')
     .within(() => {
