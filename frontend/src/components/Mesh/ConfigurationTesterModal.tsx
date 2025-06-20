@@ -40,7 +40,6 @@ type TestModalProps = ReduxProps &
 const modalStyle = kialiStyle({
   display: 'flex',
   flexDirection: 'column',
-  width: '50%',
   height: '70%',
   $nest: {
     '& .pf-v5-c-tab-content': {
