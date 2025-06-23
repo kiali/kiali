@@ -224,6 +224,7 @@ endif
 	      ${MOLECULE_DESTROY_NEVER_ARG} \
 	      --scenario-name $${msn}"; \
 	  echo "$$theCmd"; \
+	  success=""; \
 	  while [ $$attempt -le 60 ]; do \
 	    echo "Running molecule test: scenario=$$msn (attempt=$$attempt)"; \
 	    tmpfile=$$(mktemp); \
@@ -235,7 +236,11 @@ endif
 	      rm -f $$tmpfile; \
 	      break; \
 	    elif grep -iq "Skipping Galaxy server" "$$tmpfile"; then \
-	      echo "Molecule test failed but will retry after 60s: $$msn"; \
+	      echo "Molecule test failed! due to galaxy down but will retry after 60s: $$msn"; \
+	      attempt=$$((attempt + 1)); \
+	      sleep 60; \
+	    elif grep -Eiq 'ERROR\s+Starting galaxy' "$$tmpfile"; then \
+	      echo "Molecule test failed due to galaxy down but will retry after 60s: $$msn"; \
 	      attempt=$$((attempt + 1)); \
 	      sleep 60; \
 	    else \
