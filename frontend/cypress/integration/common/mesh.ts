@@ -127,7 +127,7 @@ Then('user sees control plane side panel', () => {
     cy.request({ method: 'GET', url: '/api/namespaces/istio-system/controlplanes/istiod/metrics' }).then(
       metricsResponse => {
         expect(metricsResponse.status).to.equal(200);
-        console.log(metricsResponse.body);
+        cy.log(metricsResponse.body);
         if (metricsResponse.body.process_resident_memory_bytes == null) {
           cy.log(`Istiod hasn't load the Memory metrics yet. Tries: ${tries}. Waiting 3s...`);
           cy.wait(3000);

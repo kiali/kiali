@@ -196,7 +196,6 @@ Before({ tags: '@shared-mesh-config' }, () => {
           } else {
             cy.exec(`kubectl wait --for=delete pod/${podName} -n istio-system --timeout=60s`);
           }
-          cy.wait(5000);
         });
       };
       doRequest();
