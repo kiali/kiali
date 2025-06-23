@@ -133,11 +133,11 @@ Then('user sees control plane side panel', () => {
           cy.wait(3000);
           waitForMemoryMetrics();
         }
-        cy.wait(5000);
       }
     );
   };
   waitForMemoryMetrics();
+  cy.wait(5000);
 
   cy.get('#target-panel-control-plane')
     .should('be.visible')
