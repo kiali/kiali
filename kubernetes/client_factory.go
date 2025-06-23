@@ -166,7 +166,7 @@ func newClientFactory(kialiConf *kialiConfig.Config, restConf *rest.Config) (*cl
 
 	if kialiConf.Clustering.IgnoreLocalCluster {
 		if len(f.saClientEntries) == 0 {
-			return nil, fmt.Errorf("kiali will exit because it has no local or remote cluster to manage. Currenly clustering.IgnoreLocalClient=true but no cluster secrets have been discovered")
+			return nil, fmt.Errorf("kiali will exit because it has no local or remote cluster to manage. Currently clustering.IgnoreLocalClient=true but no cluster secrets have been discovered")
 		}
 
 		// use a cluster secret to assign a home cluster
