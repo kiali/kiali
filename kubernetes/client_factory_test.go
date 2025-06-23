@@ -459,6 +459,11 @@ func TestClientCreatedWithProxyInfo(t *testing.T) {
 func TestNewClientFactoryClosesRecycleWhenCTXCancelled(t *testing.T) {
 	require := require.New(t)
 
+	// Create the remote secret so that the "in cluster" config is not used.
+	// Otherwise the "in cluster" config looks for some env vars that are not present.
+	const testClusterName = "TestRemoteCluster"
+	createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
+
 	cfg := config.NewConfig()
 	cfg.Clustering.IgnoreLocalCluster = true
 	SetConfig(t, *cfg)
@@ -489,6 +494,11 @@ func TestNewClientFactoryDoesNotSetGlobalClientFactory(t *testing.T) {
 	if factory != nil {
 		factory = nil
 	}
+
+	// Create the remote secret so that the "in cluster" config is not used.
+	// Otherwise the "in cluster" config looks for some env vars that are not present.
+	const testClusterName = "TestRemoteCluster"
+	createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
 
 	cfg := config.NewConfig()
 	cfg.Clustering.IgnoreLocalCluster = true
@@ -522,9 +532,8 @@ func TestClientFactoryReturnsNilWhenLocalClusterIsIgnored(t *testing.T) {
 		KialiTokenForHomeCluster = ""     // Need to reset this global because other tests depend on it being empty.
 		KialiTokenFileForHomeCluster = "" // Need to reset this global because other tests depend on it being empty.
 	})
-	require.NoError(err)
-
-	require.Nil(clientFactory.GetSAHomeClusterClient())
+	require.Error(err)
+	require.Nil(clientFactory)
 }
 
 func TestClientFactoryGetClients(t *testing.T) {
