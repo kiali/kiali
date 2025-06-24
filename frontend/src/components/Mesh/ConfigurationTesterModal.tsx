@@ -111,7 +111,7 @@ export const TestModalComp: React.FC<TestModalProps> = (props: TestModalProps) =
     <>
       {t('Edit and test configuration changes without having to modify the CR.')}
       <br />
-      {t("Changes done in this section won't be saved")}
+      {t("Changes here are not saved to the Kiali CR. If happy with changes, update the Kiali CR using your standard change workflow.")}
     </>
   );
 
