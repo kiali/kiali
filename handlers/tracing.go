@@ -434,8 +434,8 @@ func TracingDiagnose(
 	}
 }
 
-// TracingTest is the API handler to test a Tracing configuration
-func TracingTest(
+// TracingConfigurationCheck is the API handler to test a Tracing configuration
+func TracingConfigurationCheck(
 	conf *config.Config,
 	kialiCache cache.KialiCache,
 	clientFactory kubernetes.ClientFactory,

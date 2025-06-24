@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useKialiTranslation } from '../../utils/I18nUtils';
 import { Button, ButtonVariant, Spinner, Title } from '@patternfly/react-core';
-import { validateExternalUrl } from './ConfigurationTesterModal';
+import { validateExternalUrl } from './TraceConfigurationModal';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { TracingCheck, TracingInfo } from '../../types/TracingInfo';
 import { PFColors } from '../Pf/PfColors';

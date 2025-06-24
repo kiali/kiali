@@ -21,7 +21,7 @@ import { helpPopover } from '../../pages/Mesh/target/TargetPanelControlPlane';
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
   kiosk: string;
-  tracingDiagnose?: TracingCheck;
+  tracingCheck?: TracingCheck;
   tracingInfo?: TracingInfo;
 };
 
@@ -29,7 +29,7 @@ type ReduxDispatchProps = {
   setTracingDiagnose: (err?: TracingCheck) => void;
 };
 
-type TestModalProps = ReduxProps &
+type TraceConfigurationModalProps = ReduxProps &
   ReduxDispatchProps & {
     cluster: string;
     configData: unknown;
@@ -90,7 +90,9 @@ export const validateExternalUrl = (
   return undefined;
 };
 
-export const TestModalComp: React.FC<TestModalProps> = (props: TestModalProps) => {
+export const TraceConfigurationModalComp: React.FC<TraceConfigurationModalProps> = (
+  props: TraceConfigurationModalProps
+) => {
   const { t } = useKialiTranslation();
 
   const [currentTab, setCurrentTab] = React.useState(defaultTab);
@@ -195,7 +197,7 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
     externalServices: state.statusState.externalServices,
     kiosk: state.globalState.kiosk,
-    tracingDiagnose: state.tracingState.diagnose,
+    tracingCheck: state.tracingState.diagnose,
     tracingInfo: state.tracingState.info
   };
 };
@@ -204,4 +206,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setTracingDiagnose: bindActionCreators(TracingActions.setDiagnose, dispatch)
 });
 
-export const ConfigurationTesterModal = connect(mapStateToProps, mapDispatchToProps)(TestModalComp);
+export const TraceConfigurationModal = connect(mapStateToProps, mapDispatchToProps)(TraceConfigurationModalComp);
