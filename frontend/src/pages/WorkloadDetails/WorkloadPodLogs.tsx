@@ -1,6 +1,8 @@
 import * as React from 'react';
 import {
   Alert,
+  AlertActionCloseButton,
+  AlertVariant,
   Button,
   ButtonVariant,
   Card,
@@ -57,7 +59,7 @@ import { Span, TracingQuery } from 'types/Tracing';
 import moment from 'moment';
 import { formatDuration } from 'utils/tracing/TracingHelper';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
-import { isValid } from 'utils/Common';
+import { download, isValid } from 'utils/Common';
 import { KioskElement } from '../../components/Kiosk/KioskElement';
 import { TimeDurationModal } from '../../components/Time/TimeDurationModal';
 import { TimeDurationIndicator } from '../../components/Time/TimeDurationIndicator';
@@ -142,6 +144,7 @@ interface WorkloadPodLogsState {
   podValue?: number;
   showClearHideLogButton: boolean;
   showClearShowLogButton: boolean;
+  showCopyMessage?: boolean;
   showError?: string;
   showLogValue: string;
   showSpans: boolean;
@@ -709,6 +712,12 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     );
   };
 
+  private downloadFile = (): void => {
+    if (this.state.jsonModalContent) {
+      download(this.state.jsonModalContent, `${this.props.workload}.json`);
+    }
+  };
+
   private toggleSelected = (c: ContainerOption): void => {
     c.isSelected = !c.isSelected;
     this.setState({ containerOptions: [...this.state.containerOptions!] });
@@ -1043,7 +1052,35 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         title={t('JSON Log Entry')}
         isOpen={this.state.isJSONModalOpen}
         onClose={this.closeJSONModal}
+        actions={[
+          <Button key="close" onClick={this.closeJSONModal}>
+            {t('Close')}
+          </Button>,
+          this.state.jsonModalContent && (
+            <CopyToClipboard
+              key="copy"
+              onCopy={() => this.setState({ showCopyMessage: !this.state.showCopyMessage })}
+              text={this.state.jsonModalContent}
+            >
+              <Button variant={ButtonVariant.secondary}>{t('Copy')}</Button>
+            </CopyToClipboard>
+          ),
+          <Button key="download" variant={ButtonVariant.secondary} onClick={this.downloadFile}>
+            {t('Download')}
+          </Button>
+        ]}
       >
+        {this.state.showCopyMessage && (
+          <Alert
+            style={{ marginBottom: '20px' }}
+            title={t('The JSON Log entry has been copied to your clipboard.')}
+            variant={AlertVariant.success}
+            isInline={true}
+            actionClose={
+              <AlertActionCloseButton onClose={() => this.setState({ showCopyMessage: !this.state.showCopyMessage })} />
+            }
+          />
+        )}
         <p className={previewLogLineStyle}>{this.state.jsonModalContent}</p>
         <div style={{ height: 'calc(100% - 120px)' }}>
           <ParameterizedTabs
