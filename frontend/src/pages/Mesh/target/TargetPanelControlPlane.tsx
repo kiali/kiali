@@ -78,7 +78,7 @@ export const isRemoteCluster = (annotations?: { [key: string]: string }): boolea
 // TODO: Should these remain fixed values?
 const direction: DirectionType = 'outbound';
 
-const helpPopover = (
+export const helpPopover = (
   header: string,
   configDescription: React.ReactNode,
   popoverRef: React.RefObject<any>

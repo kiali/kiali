@@ -382,3 +382,56 @@ func tracesToSpans(ctx context.Context, app models.TracingName, r *model.Tracing
 func (in *TracingService) TracingDiagnose(ctx context.Context, token string) (trace *model.TracingDiagnose, err error) {
 	return tracing.TestNewClient(ctx, in.conf, token)
 }
+
+func (in *TracingService) ValidateConfiguration(ctx context.Context, conf *config.Config, tracingConfig *config.TracingConfig, token string) *model.ConfigurationValidation {
+
+	validation := model.ConfigurationValidation{}
+
+	// Merge config
+	if tracingConfig.Auth.Password == "xxx" {
+		tracingConfig.Auth.Password = conf.ExternalServices.Tracing.Auth.Password
+	}
+	if tracingConfig.Auth.Token == "xxx" {
+		tracingConfig.Auth.Token = conf.ExternalServices.Tracing.Auth.Token
+	}
+	if tracingConfig.Auth.CAFile == "xxx" {
+		tracingConfig.Auth.CAFile = conf.ExternalServices.Tracing.Auth.CAFile
+	}
+	if tracingConfig.Auth.Username == "xxx" {
+		tracingConfig.Auth.Username = conf.ExternalServices.Tracing.Auth.Username
+	}
+
+	newConfig := *conf
+	newConfig.ExternalServices.Tracing = *tracingConfig
+
+	// Try to create client
+	client, err := tracing.NewClient(ctx, &newConfig, token, false)
+	if client == nil {
+		msg := "ValidateConfiguration: Error creating tracing client"
+		if err != nil {
+			msg = fmt.Sprintf("%s: [%v]. ", msg, err)
+		}
+		log.FromContext(ctx).Trace().Msg(msg)
+		validation.Error = msg
+		return &validation
+	}
+
+	// Validate endpoint
+	status, err := client.GetServiceStatus(ctx)
+	log.FromContext(ctx).Trace().Msgf("GetServiceStatus %v", status)
+
+	if err != nil {
+		validation.Error = fmt.Sprintf("Error getting service status: [%v]. ", err)
+		return &validation
+	}
+
+	// Test any service
+	_, err = client.GetServices(ctx)
+	if err != nil {
+		validation.Error = fmt.Sprintf("Error getting services list: [%v]. ", err)
+		return &validation
+	}
+
+	validation.Message = "Success getting service status"
+	return &validation
+}

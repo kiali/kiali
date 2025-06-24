@@ -47,7 +47,13 @@ import {
   ZtunnelConfigDump
 } from '../types/IstioObjects';
 import { ComponentStatus, IstiodResourceThresholds } from '../types/IstioStatus';
-import { TracingCheck, TracingInfo, TracingResponse, TracingSingleResponse } from '../types/TracingInfo';
+import {
+  ConfigurationValidation,
+  TracingCheck,
+  TracingInfo,
+  TracingResponse,
+  TracingSingleResponse
+} from '../types/TracingInfo';
 import { ControlPlane, MeshDefinition, MeshQuery } from '../types/Mesh';
 import { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
 import { IstioMetricsMap, MetricsPerNamespace, MetricsStatsResult, ResourceUsageMetricsMap } from '../types/Metrics';
@@ -1408,4 +1414,12 @@ export const getDiagnoseStatus = (cluster?: string): Promise<ApiResponse<Tracing
   }
 
   return newRequest<TracingCheck>(HTTP_VERBS.GET, urls.tracingDiagnose, queryParams, {});
+};
+
+export const checkTracingConfig = (config: string, cluster?: string): Promise<ApiResponse<ConfigurationValidation>> => {
+  const queryParams: ClusterParam = {};
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+  return newRequest<ConfigurationValidation>(HTTP_VERBS.POST, urls.tracingTestConfig, queryParams, config);
 };
