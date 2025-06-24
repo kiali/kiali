@@ -62,6 +62,11 @@ type TracingDiagnose struct {
 	ValidConfig []ValidConfig `json:"validConfig"`
 }
 
+type ConfigurationValidation struct {
+	Error   string `json:"error"`
+	Message string `json:"message"`
+}
+
 type TracingService struct {
 	Data   []string          `json:"data"`
 	Total  int               `json:"total"`

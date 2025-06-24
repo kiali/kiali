@@ -187,6 +187,7 @@ const conf = {
       tracing: 'api/tracing',
       tracingDiagnose: 'api/tracing/diagnose',
       tracingErrorTraces: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/errortraces`,
+      tracingTestConfig: 'api/tracing/check',
       tracingTrace: (idTrace: string) => `api/traces/${idTrace}`,
       workloadSpans: (namespace: string, workload: string) => `api/namespaces/${namespace}/workloads/${workload}/spans`,
       workloadTraces: (namespace: string, wkd: string) => `api/namespaces/${namespace}/workloads/${wkd}/traces`,

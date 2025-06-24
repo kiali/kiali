@@ -33,3 +33,8 @@ func (j *TracingClientMock) GetServiceStatus(ctx context.Context) (available boo
 	args := j.Called(ctx)
 	return args.Get(0).(bool), args.Error(1)
 }
+
+func (j *TracingClientMock) GetServices(ctx context.Context) (list []string, err error) {
+	args := j.Called(ctx)
+	return args.Get(0).([]string), args.Error(1)
+}
