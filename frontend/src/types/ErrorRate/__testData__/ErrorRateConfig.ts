@@ -116,7 +116,8 @@ export const serverRateConfig = {
       },
       metricsPerRefresh: '1m',
       namespaces: [],
-      refreshInterval: '15s'
+      refreshInterval: '15s',
+      tracing: { limit: 100 }
     }
   },
   healthConfig: {

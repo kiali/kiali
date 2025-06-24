@@ -64,6 +64,10 @@ interface MeshUIDefaults {
   hideOptions: GraphFindOption[];
 }
 
+interface TracingDefaults {
+  limit: number;
+}
+
 interface UIDefaults {
   graph: GraphUIDefaults;
   i18n: I18nUIDefaults;
@@ -72,6 +76,7 @@ interface UIDefaults {
   metricsPerRefresh?: string;
   namespaces?: string[];
   refreshInterval?: string;
+  tracing: TracingDefaults;
 }
 
 interface KialiFeatureFlags {
