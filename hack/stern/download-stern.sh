@@ -1,4 +1,6 @@
 #!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+cd "$SCRIPT_DIR/"
 
 # specify grep executable
 if [[ "$OS" == "darwin" ]]; then
@@ -7,7 +9,7 @@ else
   GREP_CMD="grep"
 fi
 
-# Check if file.txt exists
+# Check if stern binary exists
 if [ -f "stern" ]; then
   echo "Stern executable found."
 else
@@ -24,7 +26,7 @@ else
     ARCH="arm64"
   fi
 
-  # Normalize OS for stern naming
+  # Normalize OS string for stern naming
   if [[ "$OS" == "darwin" ]]; then
     OS="darwin"
   elif [[ "$OS" == "linux" ]]; then

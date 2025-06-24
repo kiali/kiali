@@ -205,6 +205,7 @@ After({ tags: '@shared-mesh-config' }, () => {
 });
 
 beforeEach(() => {
+  cy.exec('../hack/stern/download-stern.sh');
   cy.exec('../hack/stern/run-stern.sh');
 });
 
