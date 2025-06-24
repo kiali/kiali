@@ -109,7 +109,7 @@ export const TestModalComp: React.FC<TestModalProps> = (props: TestModalProps) =
 
   const testConfigHelp = (
     <>
-      {t('Test the configuration without having to modify the CR.')}
+      {t('Edit and test configuration changes without having to modify the CR.')}
       <br />
       {t("Changes done in this section won't be saved")}
     </>
