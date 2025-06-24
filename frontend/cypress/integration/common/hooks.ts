@@ -205,11 +205,10 @@ After({ tags: '@shared-mesh-config' }, () => {
 });
 
 beforeEach(() => {
-  cy.exec('../hack/stern/download-stern.sh');
-  cy.exec('../hack/stern/run-stern.sh');
+  cy.exec(`../hack/stern/download-stern.sh`);
+  cy.exec(`../hack/stern/run-stern.sh --logfile ${Cypress.spec.baseName}.json`);
 });
 
 afterEach(() => {
-  cy.exec(`kill $(ps aux | grep 'stern' | grep -v grep | awk '{print $2}')`);
-  // cy.exec(` echo "---------------------end of testcase ----------------" >> ${Cypress.spec.name}.log`)
+  cy.exec(`../hack/stern/run-stern.sh --stop true`);
 });
