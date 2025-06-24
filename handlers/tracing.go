@@ -457,10 +457,14 @@ func TracingConfigurationCheck(
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 			return
 		}
-		if !isHomeCPAccessible(r.Context(), conf, business.Namespace, clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
+		/* I'm not sure this is necessary or really makes sense. The Kiali home cluster may not be the same as istio, or there
+		   may not be an control plane on the cluster.
+
+		   if !isHomeCPAccessible(r.Context(), conf, business.Namespace, clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 			return
 		}
+		*/
 
 		status := business.Tracing.ValidateConfiguration(r.Context(), conf, &tracingConfig, clientFactory.GetSAHomeClusterClient().GetToken())
 		RespondWithJSON(w, http.StatusOK, status)
