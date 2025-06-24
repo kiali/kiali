@@ -13,7 +13,7 @@ import { kialiStyle } from '../../styles/StyleUtils';
 import { Validation } from '../Validations/Validation';
 import * as API from '../../services/Api';
 
-type CheckModalProps = {
+type CheckerTracingConfigProps = {
   configData?: unknown;
 };
 
@@ -21,7 +21,7 @@ const healthStatusStyle = kialiStyle({
   marginLeft: '0.5rem'
 });
 
-export const TesterTracingConfig: React.FC<CheckModalProps> = (props: CheckModalProps) => {
+export const CheckerTracingConfig: React.FC<CheckerTracingConfigProps> = (props: CheckerTracingConfigProps) => {
   const { t } = useKialiTranslation();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -47,14 +47,14 @@ export const TesterTracingConfig: React.FC<CheckModalProps> = (props: CheckModal
     return document;
   };
 
-  const testConfig = (): void => {
+  const checkConfig = (): void => {
     const objectModified = parseYamlDocumentsSync(source);
     if (!objectModified) {
       return;
     }
     setLoading(true);
     const jsonPatch = JSON.stringify(objectModified).replace(new RegExp('(,null)+]', 'g'), ']');
-    API.testTracingConfig(jsonPatch)
+    API.checkTracingConfig(jsonPatch)
       .then(response => {
         setLoading(false);
         setIsModified(false);
@@ -94,8 +94,8 @@ export const TesterTracingConfig: React.FC<CheckModalProps> = (props: CheckModal
     );
   };
 
-  const handleTestConfig = (): void => {
-    testConfig();
+  const handleCheckConfig = (): void => {
+    checkConfig();
   };
 
   const onEditorChange = (value: string): void => {
@@ -115,7 +115,7 @@ export const TesterTracingConfig: React.FC<CheckModalProps> = (props: CheckModal
           onChange={onEditorChange}
           width="100%"
           className={istioAceEditorStyle}
-          height="80%"
+          height="95%"
           wrapEnabled={true}
           readOnly={false}
           setOptions={aceOptions}
@@ -126,7 +126,7 @@ export const TesterTracingConfig: React.FC<CheckModalProps> = (props: CheckModal
         <Button
           style={{ marginTop: '10px', marginRight: '5px' }}
           variant={ButtonVariant.secondary}
-          onClick={handleTestConfig}
+          onClick={handleCheckConfig}
           isDisabled={loading || !isModified}
         >
           {t('Test Configuration')}

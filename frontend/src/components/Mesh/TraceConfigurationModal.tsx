@@ -13,7 +13,7 @@ import { TracingActions } from '../../actions/TracingActions';
 import { connect } from 'react-redux';
 import { ParameterizedTabs } from '../Tab/Tabs';
 import { DiscoveryTracingConfig } from './DiscoveryTracingConfig';
-import { TesterTracingConfig } from './TesterTracingConfig';
+import { CheckerTracingConfig } from './CheckerTracingConfig';
 import { HelpIcon } from '@patternfly/react-icons';
 import { helpPopover } from '../../pages/Mesh/target/TargetPanelControlPlane';
 
@@ -142,7 +142,7 @@ export const TraceConfigurationModalComp: React.FC<TraceConfigurationModalProps>
           </>
         }
       >
-        <TesterTracingConfig configData={props.configData} />
+        <CheckerTracingConfig configData={props.configData} />
       </Tab>
     );
 

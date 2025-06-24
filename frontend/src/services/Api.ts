@@ -1416,7 +1416,7 @@ export const getDiagnoseStatus = (cluster?: string): Promise<ApiResponse<Tracing
   return newRequest<TracingCheck>(HTTP_VERBS.GET, urls.tracingDiagnose, queryParams, {});
 };
 
-export const testTracingConfig = (config: string, cluster?: string): Promise<ApiResponse<ConfigurationValidation>> => {
+export const checkTracingConfig = (config: string, cluster?: string): Promise<ApiResponse<ConfigurationValidation>> => {
   const queryParams: ClusterParam = {};
   if (cluster) {
     queryParams.clusterName = cluster;
