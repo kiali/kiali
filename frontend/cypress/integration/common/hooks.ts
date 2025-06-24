@@ -171,32 +171,37 @@ metadata:
 `;
 
 Before({ tags: '@shared-mesh-config' }, () => {
-  cy.exec(`echo "${istioSharedMeshConfigMap}" | kubectl apply -f -`);
-  const patch = '{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": "istio-user"}}}}}';
-  cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`).then(() => {
-    const maxTries = 10;
-    let tries = 0;
-    const doRequest = (): void => {
-      if (tries > maxTries) {
-        throw new Error('Timed out waiting for Kiali to see the Shared Mesh Config');
-      }
+  cy.exec(`kubectl get pods -l app=istiod -n istio-system -o jsonpath="{.items[0].metadata.name}"`).then(result => {
+    const podName = result.stdout;
 
-      tries++;
-      cy.request({ method: 'GET', url: '/api/mesh/graph' }).then(response => {
-        expect(response.status).to.equal(200);
-        console.log(response.body.elements.nodes.find(node => node.data.infraType === 'istiod'));
-        if (
-          response.body.elements.nodes.find(node => node.data.infraType === 'istiod')?.data?.infraData?.config
-            ?.sharedConfig === undefined
-        ) {
-          cy.log(`Kiali has not seen the Shared Mesh Config yet. Tries: ${tries}. Waiting 3s...`);
-          cy.wait(3000);
-          doRequest();
+    cy.exec(`echo "${istioSharedMeshConfigMap}" | kubectl apply -f -`);
+    const patch = '{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": "istio-user"}}}}}';
+    cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`).then(() => {
+      const maxTries = 15;
+      let tries = 0;
+      const doRequest = (): void => {
+        if (tries > maxTries) {
+          throw new Error('Timed out waiting for Kiali to see the Shared Mesh Config');
         }
-      });
-    };
 
-    doRequest();
+        tries++;
+        cy.request({ method: 'GET', url: '/api/mesh/graph' }).then(response => {
+          expect(response.status).to.equal(200);
+          console.log(response.body.elements.nodes.find(node => node.data.infraType === 'istiod'));
+          if (
+            response.body.elements.nodes.find(node => node.data.infraType === 'istiod')?.data?.infraData?.config
+              ?.sharedConfig === undefined
+          ) {
+            cy.log(`Kiali has not seen the Shared Mesh Config yet. Tries: ${tries}. Waiting 3s...`);
+            cy.wait(3000);
+            doRequest();
+          } else {
+            cy.exec(`kubectl wait --for=delete pod/${podName} -n istio-system --timeout=60s`);
+          }
+        });
+      };
+      doRequest();
+    });
   });
 });
 
