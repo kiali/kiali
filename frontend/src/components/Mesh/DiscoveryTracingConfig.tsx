@@ -111,8 +111,8 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
   };
 
   return (
-    <div style={{ paddingTop: '1em', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ flex: '1 1 auto', overflowY: 'auto', marginBottom: '1em' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '600px', paddingTop: '1em' }}>
+      <div style={{ flexGrow: 1, overflowY: 'auto' }}>
         {props.tracingDiagnose && (
           <>
             <span style={{ color: 'green' }}>{props.tracingDiagnose.message}</span>
@@ -185,7 +185,7 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
           </>
         )}
       </div>
-      <div style={{ flexShrink: '0' }}>
+      <div>
         <Button onClick={handleCheckService} disabled={loading} variant={ButtonVariant.secondary}>
           {t('Rediscover')}
         </Button>

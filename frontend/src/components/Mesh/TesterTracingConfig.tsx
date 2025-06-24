@@ -105,31 +105,35 @@ export const TesterTracingConfig: React.FC<CheckModalProps> = (props: CheckModal
   };
 
   return (
-    <div style={{ paddingTop: '10px' }}>
-      <span>{t('external_services.tracing configuration:')}</span>
-      <AceEditor
-        ref={aceEditorRef}
-        mode="yaml"
-        theme={theme === Theme.DARK ? 'twilight' : 'eclipse'}
-        onChange={onEditorChange}
-        width="100%"
-        className={istioAceEditorStyle}
-        height="420px"
-        wrapEnabled={true}
-        readOnly={false}
-        setOptions={aceOptions}
-        value={source}
-      />
-      <Button
-        style={{ marginTop: '10px', marginRight: '5px' }}
-        variant={ButtonVariant.secondary}
-        onClick={handleTestConfig}
-        isDisabled={loading || !isModified}
-      >
-        {t('Test Configuration')}
-      </Button>
-      {loading && <Spinner size="sm" />}
-      {(configResult && !isModified) || error ? showResult() : ''}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '600px', paddingTop: '1em' }}>
+      <div style={{ flexGrow: 1, overflowY: 'auto' }}>
+        <span>{t('external_services.tracing configuration:')}</span>
+        <AceEditor
+          ref={aceEditorRef}
+          mode="yaml"
+          theme={theme === Theme.DARK ? 'twilight' : 'eclipse'}
+          onChange={onEditorChange}
+          width="100%"
+          className={istioAceEditorStyle}
+          height="80%"
+          wrapEnabled={true}
+          readOnly={false}
+          setOptions={aceOptions}
+          value={source}
+        />
+      </div>
+      <div>
+        <Button
+          style={{ marginTop: '10px', marginRight: '5px' }}
+          variant={ButtonVariant.secondary}
+          onClick={handleTestConfig}
+          isDisabled={loading || !isModified}
+        >
+          {t('Test Configuration')}
+        </Button>
+        {loading && <Spinner size="sm" />}
+        {(configResult && !isModified) || error ? showResult() : ''}
+      </div>
     </div>
   );
 };

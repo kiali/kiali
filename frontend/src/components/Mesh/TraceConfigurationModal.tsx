@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { TracingCheck, TracingInfo } from '../../types/TracingInfo';
 import { Button, Modal, ModalVariant, Tab, TabAction } from '@patternfly/react-core';
-import { kialiStyle } from '../../styles/StyleUtils';
 import { useKialiTranslation } from '../../utils/I18nUtils';
 import { ExternalServiceInfo, TempoUrlFormat } from '../../types/StatusState';
 import { isParentKiosk } from '../Kiosk/KioskActions';
@@ -36,17 +35,6 @@ type TraceConfigurationModalProps = ReduxProps &
     isOpen: boolean;
     onClose: () => void;
   };
-
-const modalStyle = kialiStyle({
-  display: 'flex',
-  flexDirection: 'column',
-  height: '70%',
-  $nest: {
-    '& .pf-v5-c-tab-content': {
-      height: '90%'
-    }
-  }
-});
 
 const defaultTab = 'checkConfig';
 
@@ -167,7 +155,6 @@ export const TraceConfigurationModalComp: React.FC<TraceConfigurationModalProps>
 
   return (
     <Modal
-      className={modalStyle}
       variant={ModalVariant.medium}
       isOpen={props.isOpen}
       onClose={props.onClose}
