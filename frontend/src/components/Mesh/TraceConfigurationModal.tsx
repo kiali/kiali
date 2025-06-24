@@ -104,7 +104,7 @@ export const TraceConfigurationModalComp: React.FC<TraceConfigurationModalProps>
       )}
       <br />
       {t(
-        'While the health check is based on whether the URL response returns an HTTP 200, the services check performs a more exhaustive verification by attempting to analyze if the traces response is correct. It is important that internal_url is defined, as it relies on this host to perform the checks. When in_cluster config is false, it will use the external_url'
+        'While the health check is simple and checks only for an HTTP 200 response for the URL, this check is more comprehensive and attempts to validate the returned trace data. It will typically use the internal_url to perform the checks. If Kiali is running outside of the cluster, the external_url will be used.'
       )}
     </>
   );
@@ -113,7 +113,9 @@ export const TraceConfigurationModalComp: React.FC<TraceConfigurationModalProps>
     <>
       {t('Edit and test configuration changes without having to modify the CR.')}
       <br />
-      {t("Changes here are not saved to the Kiali CR. If happy with changes, update the Kiali CR using your standard change workflow.")}
+      {t(
+        'Changes here are not saved to the Kiali CR. If happy with changes, update the Kiali CR using your standard change workflow.'
+      )}
     </>
   );
 
