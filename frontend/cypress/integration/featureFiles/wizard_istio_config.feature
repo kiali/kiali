@@ -300,7 +300,6 @@ Feature: Kiali Istio Config wizard
 
   @gateway-api
   @bookinfo-app
-  @selected
   Scenario: Create multiple K8s Gateways with colliding hostnames and port combinations and check for a reference. Then delete one of them and the reference should be gone.
     When user deletes k8sgateway named "gatewayapi-1" and the resource is no longer available
     And user deletes k8sgateway named "gatewayapi-2" and the resource is no longer available

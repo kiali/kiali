@@ -96,6 +96,12 @@ Then('the log pane should only show log lines not containing {string}', (filterT
     });
 });
 
+Then('the log pane should only show json log lines', () => {
+  cy.get('#logsText').within(() => {
+    cy.get('button').find('svg.pf-v5-svg').should('exist');
+  });
+});
+
 Then('the log pane should show log lines containing {string}', (filterText: string) => {
   cy.get('#logsText')
     .find('p')
@@ -143,4 +149,30 @@ Then('the log pane should show spans', () => {
     .then(spansColor => {
       cy.get('#logsText').find('p').should('have.css', 'color', spansColor);
     });
+});
+
+Then('I click a json log line', () => {
+  cy.get('#logsText').within(() => {
+    cy.get('button').find('svg.pf-v5-svg').should('exist');
+    cy.get('button').first().click();
+  });
+});
+
+Then('I click on the parsed json tab', () => {
+  cy.get('[role="dialog"]')
+    .should('be.visible')
+    .within(() => {
+      cy.get('[role="tab"]').eq(1).click();
+    });
+});
+
+Then('I should see certain values on the parsed object', () => {
+  cy.get('[data-test="parsed-json-table"]').within(() => {
+    cy.get('tr')
+      .first()
+      .within(() => {
+        cy.get('td').eq(0).should('contain.text', 'a');
+        cy.get('td').eq(1).should('contain.text', 'b');
+      });
+  });
 });
