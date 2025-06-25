@@ -305,3 +305,90 @@ Then('user does not see {string} in the {string} configuration tab', (configOpt:
   cy.getBySel(`config-tab-${tab}`).click();
   cy.getBySel(`${tab}-config-editor`).should('not.contain', configOpt);
 });
+
+When('user opens the Trace Configuration modal', () => {
+  cy.waitForReact();
+  cy.contains('Configuration Tester').click();
+});
+
+Then('user sees the Trace Configuration modal', () => {
+  cy.get('.pf-v5-c-modal-box').should('be.visible');
+  cy.contains('Configuration Tester').should('be.visible');
+});
+
+Then('user sees the Discovery and Tester tabs', () => {
+  cy.get('.pf-v5-c-tabs__item').contains('Discovery').should('exist');
+  cy.get('.pf-v5-c-tabs__item').contains('Tester').should('exist');
+});
+
+Then('user sees the action buttons fixed at the bottom', () => {
+  cy.get('.pf-v5-c-modal-box__footer').should('be.visible');
+  cy.get('.pf-v5-c-modal-box__footer').within(() => {
+    cy.contains('Close').should('exist');
+  });
+});
+
+// Note: This is not checking values to be valid in jaeger/tempo setups
+Then('user verifies the Discovery information is correct', () => {
+  cy.get('#discover-spinner').should('not.exist');
+  cy.get('#discovery-tab-content').contains('Possible configuration(s) found');
+  cy.get('#discovery-tab-content').get('#valid-configurations').contains('Provider:');
+  cy.get('#discovery-tab-content').contains('Logs');
+  cy.get('#discovery-tab-content').get('#configuration-logs').contains('Parsed url');
+  cy.get('#discovery-tab-content').get('#configuration-logs').contains('Checking open ports');
+});
+
+When('user clicks the Rediscover button in the Discovery tab', () => {
+  cy.get('.pf-v5-c-modal-box').within(() => {
+    cy.contains('button', 'Rediscover').click();
+  });
+});
+
+When('user switches to the Tester tab', () => {
+  cy.get('div[data-test="modal-configuration-tester"]').within(() => {
+    cy.contains('button', 'Tester').click();
+  });
+});
+
+When('user sets the provider in the Tester tab', () => {
+  cy.get('div[data-test="modal-configuration-tester"]').within(() => {
+    cy.window().then((win: any) => {
+      const editor = win.ace.edit('ace-editor');
+      const session = editor.getSession();
+      const linesCount = session.getLength();
+      const searchText = 'provider';
+      let replacer = 'tempo';
+
+      let lineNumber = -1;
+      for (let i = 0; i < linesCount; i++) {
+        const line = session.getLine(i);
+        if (line.includes(searchText)) {
+          lineNumber = i;
+          if (line.includes('tempo')) {
+            replacer = 'jaeger';
+          }
+          break;
+        }
+      }
+      console.log(editor.session);
+      const range = editor.session.getLineRange(lineNumber);
+      editor.session.replace(range, `Provider: ${replacer}`);
+    });
+  });
+});
+
+When('user clicks the Test Configuration button', () => {
+  cy.get('div[data-test="modal-configuration-tester"]').within(() => {
+    cy.contains('Test Configuration').click();
+  });
+});
+
+Then('user sees the Tester result {string}', (result: string) => {
+  cy.get('#modal-configuration.tester').within(() => {
+    if (result === 'incorrect') {
+      cy.get('div[data-test="icon-error-validation"]').should('exist');
+    } else {
+      cy.get('div[data-test="icon-correct-validation"]').should('exist');
+    }
+  });
+});
