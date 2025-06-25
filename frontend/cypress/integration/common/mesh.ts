@@ -124,8 +124,6 @@ Then('user sees control plane side panel', () => {
       throw new Error('Timed out waiting for Kiali to see the Shared Mesh Config');
     }
     tries++;
-    cy.get('#refresh_button').click();
-    cy.get('#loading_kiali_spinner').should('not.exist');
     cy.request({ method: 'GET', url: '/api/namespaces/istio-system/controlplanes/istiod/metrics' }).then(
       metricsResponse => {
         expect(metricsResponse.status).to.equal(200);
@@ -138,8 +136,9 @@ Then('user sees control plane side panel', () => {
       }
     );
   };
+  cy.get('#refresh_button').click();
+  cy.get('#loading_kiali_spinner').should('not.exist');
   waitForMemoryMetrics();
-  cy.wait(5000);
 
   cy.get('#target-panel-control-plane')
     .should('be.visible')
