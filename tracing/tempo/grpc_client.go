@@ -99,6 +99,20 @@ func (jc TempoGRPCClient) GetServices(ctx context.Context) (bool, error) {
 	return err == nil, err
 }
 
+// GetServices Test an empty search to check if the service is available
+func (jc TempoGRPCClient) GetServicesList(ctx context.Context) ([]string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+
+	sr := &tempopb.SearchRequest{}
+	result, err := jc.StreamingClient.Search(ctx, sr)
+	if err != nil {
+		return nil, err
+	}
+	services, err := processServices(ctx, result)
+	return services, err
+}
+
 // processStream
 func processStream(ctx context.Context, stream tempopb.StreamingQuerier_SearchClient, serviceName string) ([]jaegerModels.Trace, error) {
 	zl := getLoggerFromContextGRPCTempo(ctx)
@@ -124,4 +138,25 @@ func processStream(ctx context.Context, stream tempopb.StreamingQuerier_SearchCl
 		}
 	}
 	return tracesMap, nil
+}
+
+// processServices
+func processServices(ctx context.Context, stream tempopb.StreamingQuerier_SearchClient) ([]string, error) {
+	zl := getLoggerFromContextGRPCTempo(ctx)
+	services := []string{}
+
+	for received, err := stream.Recv(); err != io.EOF; received, err = stream.Recv() {
+		if err != nil {
+			if status.Code(err) == codes.DeadlineExceeded {
+				zl.Trace().Msg("[gRPC Tempo] client timeout")
+				break
+			}
+			zl.Error().Msgf("[gRPC Tempo] stream error: %v", err)
+			return nil, fmt.Errorf("[gRPC Tempo] Tracing gRPC client, stream error: %v", err)
+		}
+		for _, trace := range received.Traces {
+			services = append(services, trace.RootTraceName)
+		}
+	}
+	return services, nil
 }
