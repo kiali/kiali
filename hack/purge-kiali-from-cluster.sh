@@ -66,7 +66,7 @@ msg "Deleting any and all Kiali and OSSMC resources that are found in the cluste
 delete_namespace_resources() {
   local selector_expression="$1"
   msg "Deleting namespace-scoped resources with selector [${selector_expression}]..."
-  for r in $(${CLIENT_EXE} get --ignore-not-found=true all,secrets,sa,configmaps,deployments,roles,rolebindings,ingresses,horizontalpodautoscalers --selector="${selector_expression}" --all-namespaces -o custom-columns=NS:.metadata.namespace,K:.kind,N:.metadata.name --no-headers | sed 's/  */:/g')
+  for r in $(${CLIENT_EXE} get --ignore-not-found=true all,secrets,sa,configmaps,deployments,roles,rolebindings,ingresses,horizontalpodautoscalers,networkpolicies --selector="${selector_expression}" --all-namespaces -o custom-columns=NS:.metadata.namespace,K:.kind,N:.metadata.name --no-headers | sed 's/  */:/g')
   do
     local res_namespace=$(echo $r | cut -d: -f1)
     local res_kind=$(echo $r | cut -d: -f2)
@@ -129,12 +129,6 @@ delete_namespace_resources "app.kubernetes.io/name=kiali-operator"
 delete_cluster_resources "app.kubernetes.io/name=kiali-operator"
 delete_namespace_resources "app.kubernetes.io/name=ossmconsole"
 delete_cluster_resources "app.kubernetes.io/name=ossmconsole"
-
-# purge anything using the old labels
-delete_namespace_resources "app=kiali"
-delete_cluster_resources "app=kiali"
-delete_namespace_resources "app=kiali-operator"
-delete_cluster_resources "app=kiali-operator"
 
 msg "Deleting Kiali and OSSMC CRDs..."
 for c in $(${CLIENT_EXE} get crds --ignore-not-found=true kialis.kiali.io ossmconsoles.kiali.io -o custom-columns=N:.metadata.name --no-headers)
