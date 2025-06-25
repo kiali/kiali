@@ -45,10 +45,13 @@ func NewTestingClientFactory(t *testing.T) *clientFactory {
 	// Reset global vars after test
 	originalToken := KialiTokenForHomeCluster
 	originalPath := DefaultServiceAccountPath
+	originalRemoteSecrets := RemoteClusterSecretsDir
 	t.Cleanup(func() {
 		KialiTokenForHomeCluster = originalToken
 		DefaultServiceAccountPath = originalPath
+		RemoteClusterSecretsDir = originalRemoteSecrets
 	})
+	RemoteClusterSecretsDir = t.TempDir()
 
 	DefaultServiceAccountPath = fmt.Sprintf("%s/kiali-testing-token-%s", t.TempDir(), time.Now())
 	if err := os.WriteFile(DefaultServiceAccountPath, []byte("test-token"), 0o644); err != nil {
