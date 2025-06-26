@@ -159,10 +159,10 @@ Then('I click a json log line', () => {
 });
 
 Then('I click on the parsed json tab', () => {
-  cy.get('[role="dialog"]')
+  cy.get('[data-test="json-modal"]')
     .should('be.visible')
     .within(() => {
-      cy.get('[role="tab"]').eq(1).click();
+      cy.get('[data-test="json-table-tab"]').click();
     });
 });
 

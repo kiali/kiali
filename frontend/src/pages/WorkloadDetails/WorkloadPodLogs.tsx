@@ -1036,7 +1036,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     );
 
     const tableTab = (
-      <Tab eventKey={1} title={t('Table')} key="table">
+      <Tab eventKey={1} title={t('Table')} key="table" data-test="json-table-tab">
         {this.state.jsonModalContent && this.renderTableFromJson(JSON.parse(this.state.jsonModalContent))}
       </Tab>
     );
@@ -1047,6 +1047,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   private getJSONLogModal = (): React.ReactNode => {
     return (
       <Modal
+        data-test="json-modal"
         className={modalStyle}
         disableFocusTrap={true}
         title={t('JSON Log Entry')}
