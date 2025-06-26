@@ -1,11 +1,9 @@
 #!/bin/bash
 
 ##############################################################################
-# install-multi-primary.sh
+# install-external-kiali.sh
 #
-# Installs Istio across two clusters using the "multi-primary" model.
-#
-# See: https://istio.io/latest/docs/setup/install/multicluster/multi-primary/
+# Installs two clusters, one with only Kiali (cluster-1 = "mgmt") amd one with only istio (cluster-2 = "mesh").
 #
 # See --help for more details on options to this script.
 #
@@ -13,6 +11,23 @@
 
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 source ${SCRIPT_DIR}/env.sh $*
+
+# The names of each cluster
+if [ "${CLUSTER1_NAME}" == "east" ]; then
+  CLUSTER1_NAME="mgmt"
+fi
+if [ "${CLUSTER2_NAME}" == "west" ]; then
+  CLUSTER2_NAME="mesh"
+fi
+
+# Only install Kiali on cluster-1
+CLUSTER1_CONTEXT="${CLUSTER1_NAME}"
+CLUSTER2_CONTEXT="${CLUSTER2_NAME}"
+IGNORE_LOCAL_CLUSTER="true"
+SINGLE_KIALI="true"
+
+# TODO: just use anonymous auth until we have this working...
+KIALI_AUTH_STRATEGY="anonymous"
 
 create_crossnetwork_gateway() {
   local clustername="${1}"
@@ -77,19 +92,8 @@ create_remote_secret() {
   fi
 }
 
-MC_EAST_YAML=$(mktemp)
-cat <<EOF > "$MC_EAST_YAML"
-spec:
-  values:
-    global:
-      meshID: ${MESH_ID}
-      multiCluster:
-        clusterName: ${CLUSTER1_NAME}
-      network: ${NETWORK1_ID}
-EOF
-
-MC_WEST_YAML=$(mktemp)
-cat <<EOF > "$MC_WEST_YAML"
+MC_MESH_YAML=$(mktemp)
+cat <<EOF > "$MC_MESH_YAML"
 spec:
   values:
     global:
@@ -99,23 +103,34 @@ spec:
       network: ${NETWORK2_ID}
 EOF
 
+#MC_MGMT_YAML=$(mktemp)
+#cat <<EOF > "$MC_MGMT_YAML"
+#spec:
+#  values:
+#    global:
+#      meshID: ${MESH_ID}
+#      multiCluster:
+#        clusterName: ${CLUSTER2_NAME}
+#      network: ${NETWORK2_ID}
+#EOF
+
 # Find the files necessary to create the crossnetwork gateway, if required
-if [ "${CROSSNETWORK_GATEWAY_REQUIRED}" == "true" ]; then
-  GEN_GATEWAY_SCRIPT="${ISTIO_DIR}/samples/multicluster/gen-eastwest-gateway.sh"
-  EXPOSE_SERVICES_YAML="${ISTIO_DIR}/samples/multicluster/expose-services.yaml"
-  if [ -x "${GEN_GATEWAY_SCRIPT}" ]; then
-    echo "Generate-gateway script: ${GEN_GATEWAY_SCRIPT}"
-  else
-    echo "Cannot find the generate-gateway script at: ${GEN_GATEWAY_SCRIPT}"
-    exit 1
-  fi
-  if [ -f "${EXPOSE_SERVICES_YAML}" ]; then
-    echo "Expose-services yaml: ${EXPOSE_SERVICES_YAML}"
-  else
-    echo "Cannot find the expose-services yaml at: ${EXPOSE_SERVICES_YAML}"
-    exit 1
-  fi
-fi
+#if [ "${CROSSNETWORK_GATEWAY_REQUIRED}" == "true" ]; then
+#  GEN_GATEWAY_SCRIPT="${ISTIO_DIR}/samples/multicluster/gen-eastwest-gateway.sh"
+#  EXPOSE_SERVICES_YAML="${ISTIO_DIR}/samples/multicluster/expose-services.yaml"
+#  if [ -x "${GEN_GATEWAY_SCRIPT}" ]; then
+#    echo "Generate-gateway script: ${GEN_GATEWAY_SCRIPT}"
+#  else
+#    echo "Cannot find the generate-gateway script at: ${GEN_GATEWAY_SCRIPT}"
+#    exit 1
+#  fi
+#  if [ -f "${EXPOSE_SERVICES_YAML}" ]; then
+#    echo "Expose-services yaml: ${EXPOSE_SERVICES_YAML}"
+#  else
+#    echo "Cannot find the expose-services yaml at: ${EXPOSE_SERVICES_YAML}"
+#    exit 1
+#  fi
+#fi
 
 # Start up two minikube instances if requested
 if [ "${MANAGE_MINIKUBE}" == "true" ]; then
@@ -206,32 +221,32 @@ fi
 # Setup the certificates
 source ${SCRIPT_DIR}/setup-ca.sh
 
-echo "==== INSTALL ISTIO ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-install_istio --patch-file "${MC_EAST_YAML}"
+#echo "==== INSTALL ISTIO ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+#switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
+#install_istio --patch-file "${MC_MESH_YAML}"
 
 echo "==== INSTALL ISTIO ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
 switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
-install_istio --patch-file "${MC_WEST_YAML}"
+install_istio --patch-file "${MC_MESH_YAML}"
 
-echo "==== DEPLOY ISTIO INGRESS GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-kubectl apply -n istio-system -f "${SCRIPT_DIR}/../istio-gateway.yaml"
+#echo "==== DEPLOY ISTIO INGRESS GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+#switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
+#kubectl apply -n istio-system -f "${SCRIPT_DIR}/../istio-gateway.yaml"
+#
+#if [ "${CROSSNETWORK_GATEWAY_REQUIRED}" == "true" ]; then
+#  echo "==== CREATE CROSSNETWORK GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+#  switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
+#  create_crossnetwork_gateway "${CLUSTER1_NAME}" "${NETWORK1_ID}"
+#
+#  echo "==== CREATE CROSSNETWORK GATEWAY ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
+#  switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
+#  create_crossnetwork_gateway "${CLUSTER2_NAME}" "${NETWORK2_ID}"
 
-if [ "${CROSSNETWORK_GATEWAY_REQUIRED}" == "true" ]; then
-  echo "==== CREATE CROSSNETWORK GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-  switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-  create_crossnetwork_gateway "${CLUSTER1_NAME}" "${NETWORK1_ID}"
-
-  echo "==== CREATE CROSSNETWORK GATEWAY ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
-  switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
-  create_crossnetwork_gateway "${CLUSTER2_NAME}" "${NETWORK2_ID}"
-
-  echo "==== SETTING UP THE MESH NETWORK CONFIGURATION MANUALLY"
-  source ${SCRIPT_DIR}/config-mesh-networks.sh
-else
-  echo "Crossnetwork gateway is not required - will not create one"
-fi
+#  echo "==== SETTING UP THE MESH NETWORK CONFIGURATION MANUALLY"
+#  source ${SCRIPT_DIR}/config-mesh-networks.sh
+#else
+#  echo "Crossnetwork gateway is not required - will not create one"
+#fi
 
 echo "==== ENABLE ENDPOINT DISCOVERY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
 switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
@@ -246,21 +261,21 @@ switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
 printf "%s" "${REMOTE_SECRET}" | ${CLIENT_EXE} apply -f -
 
 # Configure Prometheus federation
-${CLIENT_EXE} patch svc prometheus -n ${ISTIO_NAMESPACE} --context ${CLUSTER2_CONTEXT} -p "{\"spec\": {\"type\": \"LoadBalancer\"}}"
+#${CLIENT_EXE} patch svc prometheus -n ${ISTIO_NAMESPACE} --context ${CLUSTER2_CONTEXT} -p "{\"spec\": {\"type\": \"LoadBalancer\"}}"
 
-WEST_PROMETHEUS_ADDRESS=$(${CLIENT_EXE} --context=${CLUSTER2_CONTEXT} -n ${ISTIO_NAMESPACE} get svc prometheus -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-if [ -z "${WEST_PROMETHEUS_ADDRESS}" ]; then
-  echo "WARNING! Prometheus not updated - cannot determine the west prometheus load balancer ingress IP"
-else
-  ## TODO: prometheus.yaml has CLUSTER_NAME in it that should also be searched-replaced, but that is not done here
-  cat ${SCRIPT_DIR}/prometheus.yaml | sed -e "s/WEST_PROMETHEUS_ADDRESS/$WEST_PROMETHEUS_ADDRESS/g" | ${CLIENT_EXE} apply -n ${ISTIO_NAMESPACE} --context ${CLUSTER1_CONTEXT} -f -
-fi
+#MGMT_PROMETHEUS_ADDRESS=$(${CLIENT_EXE} --context=${CLUSTER2_CONTEXT} -n ${ISTIO_NAMESPACE} get svc prometheus -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+#if [ -z "${MGMT_PROMETHEUS_ADDRESS}" ]; then
+#  echo "WARNING! Prometheus not updated - cannot determine the west prometheus load balancer ingress IP"
+#else
+#  ## TODO: prometheus.yaml has CLUSTER_NAME in it that should also be searched-replaced, but that is not done here
+#  cat ${SCRIPT_DIR}/prometheus.yaml | sed -e "s/MGMT_PROMETHEUS_ADDRESS/$MGMT_PROMETHEUS_ADDRESS/g" | ${CLIENT_EXE} apply -n ${ISTIO_NAMESPACE} --context ${CLUSTER1_CONTEXT} -f -
+#fi
 
 # Configure Tracing "federation"
-source ${SCRIPT_DIR}/setup-tracing.sh
+#source ${SCRIPT_DIR}/setup-tracing.sh
 
 # Install bookinfo across cluster if enabled
-source ${SCRIPT_DIR}/split-bookinfo.sh
+#source ${SCRIPT_DIR}/split-bookinfo.sh
 
 # Install Kiali if enabled
 if [ "${KIALI_ENABLED}" == "true" ]; then
