@@ -109,6 +109,7 @@ export const CheckerTracingConfig: React.FC<CheckerTracingConfigProps> = (props:
       <div style={{ flexGrow: 1, overflowY: 'auto' }}>
         <span>{t('external_services.tracing configuration:')}</span>
         <AceEditor
+          name="ace-editor-tester"
           ref={aceEditorRef}
           mode="yaml"
           theme={theme === Theme.DARK ? 'twilight' : 'eclipse'}

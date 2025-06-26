@@ -350,29 +350,29 @@ When('user switches to the Tester tab', () => {
   });
 });
 
-When('user sets the provider in the Tester tab', () => {
+When('user changes the provider in the Tester tab', () => {
   cy.get('div[data-test="modal-configuration-tester"]').within(() => {
     cy.window().then((win: any) => {
-      const editor = win.ace.edit('ace-editor');
+      const editor = win.ace.edit('ace-editor-tester');
       const session = editor.getSession();
       const linesCount = session.getLength();
       const searchText = 'provider';
       let replacer = 'tempo';
+      let provider = 'jaeger';
 
-      let lineNumber = -1;
       for (let i = 0; i < linesCount; i++) {
         const line = session.getLine(i);
-        if (line.includes(searchText)) {
-          lineNumber = i;
+        if (line.toString().toLowerCase().includes(searchText)) {
           if (line.includes('tempo')) {
             replacer = 'jaeger';
+            provider = 'tempo';
           }
           break;
         }
       }
-      console.log(editor.session);
-      const range = editor.session.getLineRange(lineNumber);
-      editor.session.replace(range, `Provider: ${replacer}`);
+      let val: string = editor.getValue();
+      val = val.replace(`Provider: ${provider}`, `Provider: ${replacer}`);
+      editor.setValue(val);
     });
   });
 });
@@ -384,11 +384,11 @@ When('user clicks the Test Configuration button', () => {
 });
 
 Then('user sees the Tester result {string}', (result: string) => {
-  cy.get('#modal-configuration.tester').within(() => {
+  cy.get('div[data-test="modal-configuration-tester"]').within(() => {
     if (result === 'incorrect') {
-      cy.get('div[data-test="icon-error-validation"]').should('exist');
+      cy.get('span[data-test="icon-error-validation"]').should('exist');
     } else {
-      cy.get('div[data-test="icon-correct-validation"]').should('exist');
+      cy.get('span[data-test="icon-correct-validation"]').should('exist');
     }
   });
 });
