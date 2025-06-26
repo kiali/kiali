@@ -72,6 +72,9 @@ ISTIO_DIR=""
 # If the scripts need image registry client, this is it (docker or podman)
 DORP="${DORP:-podman}"
 
+# Set true if the kiali home cluster is out of the mesh (not co-located with an istio control plane)
+IGNORE_LOCAL_CLUSTER="${IGNORE_LOCAL_CLUSTER:-false}"
+
 # The namespace where Istio will be found - this namespace must be the same on both clusters
 ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-istio-system}"
 
@@ -260,6 +263,11 @@ while [[ $# -gt 0 ]]; do
       ISTIO_DIR="$2"
       shift;shift
       ;;
+    -ilc|--ignore-local-cluster)
+      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--ignore-local-cluster must be 'true' or 'false'" && exit 1
+      IGNORE_LOCAL_CLUSTER="$2"
+      shift;shift
+      ;;
     -in|--istio-namespace)
       ISTIO_NAMESPACE="$2"
       shift;shift
@@ -419,6 +427,7 @@ Valid command line arguments:
   -ag|--auth-groups <string>: If using Group for authentication, a comma separated groups list. Just for OpenID.
   -gr|--gateway-required <bool>: If a gateway is required to cross between networks, set this to true
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
+  -ilc|--ignore-local-cluster <bool>: True id the kiali home cluster is not in the mesh (not co-located with an Istio control plane)
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -ih|--istio-hub <hub>: If you want to override the image hub used by istioctl (where the images are found),
                          set this to the hub name, or "default" to use the default image locations.
