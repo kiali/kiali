@@ -260,22 +260,20 @@ create_remote_secret "${CLUSTER2_NAME}"
 switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
 printf "%s" "${REMOTE_SECRET}" | ${CLIENT_EXE} apply -f -
 
-# Configure Prometheus federation
-#${CLIENT_EXE} patch svc prometheus -n ${ISTIO_NAMESPACE} --context ${CLUSTER2_CONTEXT} -p "{\"spec\": {\"type\": \"LoadBalancer\"}}"
+# Expose Prometheus to the outside world
+${CLIENT_EXE} patch svc prometheus -n ${ISTIO_NAMESPACE} --context ${CLUSTER2_CONTEXT} -p "{\"spec\": {\"type\": \"LoadBalancer\"}}"
 
-#MGMT_PROMETHEUS_ADDRESS=$(${CLIENT_EXE} --context=${CLUSTER2_CONTEXT} -n ${ISTIO_NAMESPACE} get svc prometheus -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-#if [ -z "${MGMT_PROMETHEUS_ADDRESS}" ]; then
-#  echo "WARNING! Prometheus not updated - cannot determine the west prometheus load balancer ingress IP"
-#else
+MGMT_PROMETHEUS_ADDRESS=$(${CLIENT_EXE} --context=${CLUSTER2_CONTEXT} -n ${ISTIO_NAMESPACE} get svc prometheus -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+if [ -z "${MGMT_PROMETHEUS_ADDRESS}" ]; then
+  echo "WARNING! Prometheus not updated - cannot determine the west prometheus load balancer ingress IP"
+else
 #  ## TODO: prometheus.yaml has CLUSTER_NAME in it that should also be searched-replaced, but that is not done here
 #  cat ${SCRIPT_DIR}/prometheus.yaml | sed -e "s/MGMT_PROMETHEUS_ADDRESS/$MGMT_PROMETHEUS_ADDRESS/g" | ${CLIENT_EXE} apply -n ${ISTIO_NAMESPACE} --context ${CLUSTER1_CONTEXT} -f -
-#fi
+  echo "Prometheus external IP: ${MGMT_PROMETHEUS_ADDRESS}"
+fi
 
-# Configure Tracing "federation"
+# TODO Anything to do for this? Configure Tracing "federation"
 #source ${SCRIPT_DIR}/setup-tracing.sh
-
-# Install bookinfo across cluster if enabled
-#source ${SCRIPT_DIR}/split-bookinfo.sh
 
 # Install Kiali if enabled
 if [ "${KIALI_ENABLED}" == "true" ]; then
