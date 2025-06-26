@@ -137,7 +137,8 @@ Then('user sees control plane side panel', () => {
     );
   };
   waitForMemoryMetrics();
-  cy.wait(5000);
+  cy.get('#refresh_button').click();
+  cy.get('#loading_kiali_spinner').should('not.exist');
 
   cy.get('#target-panel-control-plane')
     .should('be.visible')
