@@ -135,9 +135,8 @@ deploy_kiali() {
       if [ "${MANAGE_KIND}" == "true" ]; then
         remote_url_flag="--remote-cluster-url https://$(${CLIENT_EXE} get nodes ${CLUSTER2_NAME}-control-plane --context ${CLUSTER2_CONTEXT} -o jsonpath='{.status.addresses[?(@.type == "InternalIP")].address}'):6443"
       fi
-      echo "Preparing remote cluster secret for single Kiali install in multicluster mode."
-
-      ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} --remote-cluster-name ${CLUSTER2_NAME} -kcc ${CLUSTER1_CONTEXT} -rcc ${CLUSTER2_CONTEXT} ${remote_url_flag} -vo false ${openshift_flags} -rcns ${ISTIO_NAMESPACE} -kshc ${KIALI_SERVER_HELM_CHARTS}
+      echo "Preparing remote cluster secret for single Kiali install in multicluster or external mode."
+      ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} --remote-cluster-name ${CLUSTER2_NAME} -kcc ${CLUSTER1_CONTEXT} -rcc ${CLUSTER2_CONTEXT} ${remote_url_flag} -vo false ${openshift_flags} -rcns ${ISTIO_NAMESPACE}
     else
       echo "Preparing remote cluster secrets for both Kiali installs."
       local remote_url_flag1=""
@@ -192,6 +191,12 @@ deploy_kiali() {
           --set kiali_internal.cache_expiration.istio_status="0"
           --set kiali_internal.cache_expiration.mesh="10s"
           --set kiali_internal.cache_expiration.waypoint="2m"
+        )
+  fi
+
+  if [ "${IGNORE_LOCAL_CLUSTER}" == "true" ]; then
+    helm_args+=(
+          --set clustering.ignore_local_cluster="true"
         )
   fi
 
