@@ -68,13 +68,13 @@ describe('When core component has a problem', () => {
         cluster: CLUSTER_DEFAULT,
         name: 'grafana',
         status: Status.Healthy,
-        is_core: false
+        isCore: false
       },
       {
         cluster: CLUSTER_DEFAULT,
         name: 'istio-egressgateway',
         status: Status.Unhealthy,
-        is_core: true
+        isCore: true
       }
     ]);
 
@@ -91,13 +91,13 @@ describe('When addon component has a problem', () => {
         cluster: CLUSTER_DEFAULT,
         name: 'grafana',
         status: Status.Unhealthy,
-        is_core: false
+        isCore: false
       },
       {
         cluster: CLUSTER_DEFAULT,
         name: 'istio-egressgateway',
         status: Status.Healthy,
-        is_core: true
+        isCore: true
       }
     ]);
 
@@ -115,13 +115,13 @@ describe('When both core and addon component have problems', () => {
           cluster: CLUSTER_DEFAULT,
           name: 'grafana',
           status: Status.Unhealthy,
-          is_core: false
+          isCore: false
         },
         {
           cluster: CLUSTER_DEFAULT,
           name: 'istio-egressgateway',
           status: Status.Unhealthy,
-          is_core: true
+          isCore: true
         }
       ]);
 
@@ -141,13 +141,13 @@ describe('When there are not-ready components', () => {
             cluster: CLUSTER_DEFAULT,
             name: 'istio-egressgateway',
             status: Status.Unhealthy,
-            is_core: true
+            isCore: true
           },
           {
             cluster: CLUSTER_DEFAULT,
             name: 'istio-ingressgateway',
             status: Status.NotReady,
-            is_core: true
+            isCore: true
           }
         ]);
 
@@ -164,13 +164,13 @@ describe('When there are not-ready components', () => {
             cluster: CLUSTER_DEFAULT,
             name: 'grafana',
             status: Status.Unhealthy,
-            is_core: false
+            isCore: false
           },
           {
             cluster: CLUSTER_DEFAULT,
             name: 'jaeger',
             status: Status.NotReady,
-            is_core: false
+            isCore: false
           }
         ]);
 
@@ -187,25 +187,25 @@ describe('When there are not-ready components', () => {
             cluster: CLUSTER_DEFAULT,
             name: 'grafana',
             status: Status.Unhealthy,
-            is_core: false
+            isCore: false
           },
           {
             cluster: CLUSTER_DEFAULT,
             name: 'jaeger',
             status: Status.NotReady,
-            is_core: false
+            isCore: false
           },
           {
             cluster: CLUSTER_DEFAULT,
             name: 'istio-egressgateway',
             status: Status.Unhealthy,
-            is_core: true
+            isCore: true
           },
           {
             cluster: CLUSTER_DEFAULT,
             name: 'istio-ingressgateway',
             status: Status.NotReady,
-            is_core: true
+            isCore: true
           }
         ]);
 
@@ -224,7 +224,7 @@ describe('When there are not-ready components', () => {
             cluster: CLUSTER_DEFAULT,
             name: 'jaeger',
             status: Status.NotReady,
-            is_core: false
+            isCore: false
           }
         ]);
 
@@ -241,7 +241,7 @@ describe('When there are not-ready components', () => {
             cluster: CLUSTER_DEFAULT,
             name: 'istiod',
             status: Status.NotReady,
-            is_core: true
+            isCore: true
           }
         ]);
 
@@ -260,13 +260,13 @@ describe('When all components are good', () => {
         cluster: CLUSTER_DEFAULT,
         name: 'grafana',
         status: Status.Healthy,
-        is_core: false
+        isCore: false
       },
       {
         cluster: CLUSTER_DEFAULT,
         name: 'istio-egressgateway',
         status: Status.Healthy,
-        is_core: true
+        isCore: true
       }
     ]);
 

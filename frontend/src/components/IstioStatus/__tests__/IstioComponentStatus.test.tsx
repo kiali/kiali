@@ -15,7 +15,7 @@ describe('IstioComponentStatus renders', () => {
       cluster: CLUSTER_DEFAULT,
       name: 'isito-ingress',
       status: Status.Healthy,
-      is_core: true
+      isCore: true
     });
 
     expect(shallowToJson(wrapper)).toBeDefined();
@@ -27,7 +27,7 @@ describe('IstioComponentStatus renders', () => {
       cluster: CLUSTER_DEFAULT,
       name: 'isito-ingress',
       status: Status.Unhealthy,
-      is_core: true
+      isCore: true
     });
 
     expect(shallowToJson(wrapper)).toBeDefined();
@@ -39,7 +39,7 @@ describe('IstioComponentStatus renders', () => {
       cluster: CLUSTER_DEFAULT,
       name: 'isito-ingress',
       status: Status.NotFound,
-      is_core: true
+      isCore: true
     });
 
     expect(shallowToJson(wrapper)).toBeDefined();
@@ -51,7 +51,7 @@ describe('IstioComponentStatus renders', () => {
       cluster: CLUSTER_DEFAULT,
       name: 'prometheus',
       status: Status.Healthy,
-      is_core: false
+      isCore: false
     });
 
     expect(shallowToJson(wrapper)).toBeDefined();
@@ -63,7 +63,7 @@ describe('IstioComponentStatus renders', () => {
       cluster: CLUSTER_DEFAULT,
       name: 'prometheus',
       status: Status.Unhealthy,
-      is_core: false
+      isCore: false
     });
 
     expect(shallowToJson(wrapper)).toBeDefined();
@@ -75,7 +75,7 @@ describe('IstioComponentStatus renders', () => {
       cluster: CLUSTER_DEFAULT,
       name: 'prometheus',
       status: Status.NotFound,
-      is_core: false
+      isCore: false
     });
 
     expect(shallowToJson(wrapper)).toBeDefined();
@@ -87,7 +87,7 @@ describe('IstioComponentStatus renders', () => {
       cluster: CLUSTER_DEFAULT,
       name: 'core',
       status: Status.NotReady,
-      is_core: true
+      isCore: true
     });
 
     expect(shallowToJson(wrapper)).toBeDefined();
@@ -99,7 +99,7 @@ describe('IstioComponentStatus renders', () => {
       cluster: CLUSTER_DEFAULT,
       name: 'addon',
       status: Status.NotReady,
-      is_core: false
+      isCore: false
     });
 
     expect(shallowToJson(wrapper)).toBeDefined();
