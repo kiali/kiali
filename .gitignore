@@ -90,6 +90,8 @@ frontend/yarn-error.log*
 
 frontend/package-lock.json
 
+# Logging and logging binaries
+hack/stern/stern
 frontend/logs
 
 # Cypress
