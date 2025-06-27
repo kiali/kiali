@@ -10,13 +10,27 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/tracing"
 )
 
 // CustomDashboard is the API handler to fetch runtime metrics to be displayed, related to a single app
-func CustomDashboard(conf *config.Config, grafana *grafana.Service) http.HandlerFunc {
+func CustomDashboard(
+	conf *config.Config,
+	cache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	discovery istio.MeshDiscovery,
+	grafana *grafana.Service,
+	prom prometheus.ClientInterface,
+	traceLoader func() tracing.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		queryParams := r.URL.Query()
 		pathParams := mux.Vars(r)
@@ -24,14 +38,13 @@ func CustomDashboard(conf *config.Config, grafana *grafana.Service) http.Handler
 		namespace := pathParams["namespace"]
 		dashboardName := pathParams["dashboard"]
 
-		layer, err := getBusiness(r)
+		layer, err := getLayer(r, conf, cache, clientFactory, cpm, prom, traceLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		// Check namespace access
-		info, err := layer.Namespace.GetClusterNamespace(r.Context(), namespace, cluster)
+		info, err := checkNamespaceAccessWithService(w, r, &layer.Namespace, namespace, cluster)
 		if err != nil {
 			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
 			return
@@ -112,26 +125,32 @@ func extractLabelsFilters(rawString string) map[string]string {
 }
 
 // AppDashboard is the API handler to fetch Istio dashboard, related to a single app
-func AppDashboard(conf *config.Config, grafana *grafana.Service) http.HandlerFunc {
+func AppDashboard(
+	conf *config.Config,
+	cache cache.KialiCache,
+	discovery istio.MeshDiscovery,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	grafana *grafana.Service,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		app := vars["app"]
 		cluster := clusterNameFromQuery(conf, r.URL.Query())
 
-		metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, DefaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
-		if metricsService == nil {
-			// any returned value nil means error & response already written
+		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
+		if err != nil {
 			return
 		}
 
 		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, App: app}
-		err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
-		if err != nil {
+		if err := extractIstioMetricsQueryParams(r, &params, namespaceInfo); err != nil {
 			RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
+		metricsService := business.NewMetricsService(prom, conf)
 		metrics, err := metricsService.GetMetrics(params, business.GetIstioScaler())
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
@@ -143,7 +162,16 @@ func AppDashboard(conf *config.Config, grafana *grafana.Service) http.HandlerFun
 }
 
 // ServiceDashboard is the API handler to fetch Istio dashboard, related to a single service
-func ServiceDashboard(conf *config.Config, grafana *grafana.Service) http.HandlerFunc {
+func ServiceDashboard(
+	conf *config.Config,
+	cache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	cpm business.ControlPlaneMonitor,
+	prom prometheus.ClientInterface,
+	traceLoader func() tracing.ClientInterface,
+	discovery istio.MeshDiscovery,
+	grafana *grafana.Service,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
@@ -152,27 +180,25 @@ func ServiceDashboard(conf *config.Config, grafana *grafana.Service) http.Handle
 		queryParams := r.URL.Query()
 		cluster := clusterNameFromQuery(conf, queryParams)
 
-		metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, DefaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
-		if metricsService == nil {
-			// any returned value nil means error & response already written
+		layer, err := getLayer(r, conf, cache, clientFactory, cpm, prom, traceLoader, grafana, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		namespaceInfo, err := checkNamespaceAccessWithService(w, r, &layer.Namespace, namespace, cluster)
+		if err != nil {
+			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
 			return
 		}
 
 		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, Service: service}
-		err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
-		if err != nil {
+		if err := extractIstioMetricsQueryParams(r, &params, namespaceInfo); err != nil {
 			RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		// ACcess to the service details to check
-		b, err := getBusiness(r)
-		if err != nil {
-			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-			return
-		}
-
-		svc, err := b.Svc.GetService(r.Context(), cluster, namespace, service)
+		svc, err := layer.Svc.GetService(r.Context(), cluster, namespace, service)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
@@ -184,6 +210,7 @@ func ServiceDashboard(conf *config.Config, grafana *grafana.Service) http.Handle
 			params.Namespace = "unknown"
 		}
 
+		metricsService := business.NewMetricsService(prom, conf)
 		metrics, err := metricsService.GetMetrics(params, business.GetIstioScaler())
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
@@ -195,26 +222,32 @@ func ServiceDashboard(conf *config.Config, grafana *grafana.Service) http.Handle
 }
 
 // WorkloadDashboard is the API handler to fetch Istio dashboard, related to a single workload
-func WorkloadDashboard(conf *config.Config, grafana *grafana.Service) http.HandlerFunc {
+func WorkloadDashboard(
+	conf *config.Config,
+	cache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	discovery istio.MeshDiscovery,
+	prom prometheus.ClientInterface,
+	grafana *grafana.Service,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		workload := vars["workload"]
 		cluster := clusterNameFromQuery(conf, r.URL.Query())
 
-		metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, DefaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
-		if metricsService == nil {
-			// any returned value nil means error & response already written
+		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
+		if err != nil {
 			return
 		}
 
 		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, Workload: workload}
-		err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
-		if err != nil {
+		if err := extractIstioMetricsQueryParams(r, &params, namespaceInfo); err != nil {
 			RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
+		metricsService := business.NewMetricsService(prom, conf)
 		metrics, err := metricsService.GetMetrics(params, business.GetIstioScaler())
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
@@ -226,24 +259,31 @@ func WorkloadDashboard(conf *config.Config, grafana *grafana.Service) http.Handl
 }
 
 // ZtunnelDashboard is the API handler to fetch metrics to be displayed, related to a single control plane revision
-func ZtunnelDashboard(promSupplier promClientSupplier, conf *config.Config, grafana *grafana.Service) http.HandlerFunc {
+func ZtunnelDashboard(
+	conf *config.Config,
+	cache cache.KialiCache,
+	discovery *istio.Discovery,
+	clientFactory kubernetes.ClientFactory,
+	grafana *grafana.Service,
+	prom prometheus.ClientInterface,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 
 		cluster := clusterNameFromQuery(conf, r.URL.Query())
 
-		metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
-		if metricsService == nil {
+		namespaceInfo, _ := checkNamespaceAccessMultiCluster(w, r, conf, cache, discovery, clientFactory, namespace)
+		if namespaceInfo == nil {
 			// any returned value nil means error & response already written
 			return
 		}
+
 		oldestNs := GetOldestNamespace(namespaceInfo)
 
 		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace}
 
-		err := extractIstioMetricsQueryParams(r, &params, oldestNs)
-		if err != nil {
+		if err := extractIstioMetricsQueryParams(r, &params, oldestNs); err != nil {
 			RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -253,6 +293,7 @@ func ZtunnelDashboard(promSupplier promClientSupplier, conf *config.Config, graf
 			return
 		}
 
+		metricsService := business.NewMetricsService(prom, conf)
 		ztunnelMetrics, err := metricsService.GetZtunnelMetrics(params)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
