@@ -282,11 +282,11 @@ type GrafanaVariablesConfig struct {
 }
 
 type TempoConfig struct {
-	CacheCapacity int    `yaml:"cache_capacity"`
-	CacheEnabled  bool   `yaml:"cache_enabled"`
-	DatasourceUID string `yaml:"datasource_uid"`
-	OrgID         string `yaml:"org_id"`
-	URLFormat     string `yaml:"url_format"`
+	CacheCapacity int    `yaml:"cache_capacity" json:"cacheCapacity,omitempty"`
+	CacheEnabled  bool   `yaml:"cache_enabled" json:"cacheEnabled,omitempty"`
+	DatasourceUID string `yaml:"datasource_uid" json:"datasourceUID,omitempty"`
+	OrgID         string `yaml:"org_id" json:"orgID,omitempty"`
+	URLFormat     string `yaml:"url_format" json:"urlFormat,omitempty"`
 }
 
 // TracingConfig describes configuration used for tracing links
