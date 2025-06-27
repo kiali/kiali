@@ -137,6 +137,7 @@
           "CacheEnabled" : true,
           "CacheExpiration" : 300,
           "CustomHeaders" : { },
+          "Enabled": true,
           "HealthCheckUrl" : "",
           "IsCore" : false,
           "QueryScope" : { },
