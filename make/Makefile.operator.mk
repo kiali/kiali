@@ -95,7 +95,6 @@ operator-create: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists
     --kiali-image-name              "${CLUSTER_KIALI_INTERNAL_NAME}" \
     --kiali-image-pull-policy       "${KIALI_IMAGE_PULL_POLICY}" \
     --kiali-image-version           "${CONTAINER_VERSION}" \
-    --istio-namespace               "${ISTIO_NAMESPACE}" \
     --namespace                     "${NAMESPACE}" \
     --version                       "${KIALI_CR_SPEC_VERSION}"
 

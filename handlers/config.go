@@ -91,7 +91,6 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			HealthConfig:        conf.HealthConfig,
 			IstioStatusEnabled:  conf.ExternalServices.Istio.ComponentStatuses.Enabled,
 			IstioIdentityDomain: conf.ExternalServices.Istio.IstioIdentityDomain,
-			IstioNamespace:      conf.IstioNamespace,
 			IstioLabels:         conf.IstioLabels,
 			IstioConfigMap:      conf.ExternalServices.Istio.ConfigMapName,
 			KialiFeatureFlags:   conf.KialiFeatureFlags,

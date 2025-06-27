@@ -566,7 +566,20 @@ cd ${TMP_DIR}
 # If we are told to copy the remote cluster secrets, prepare the local directory
 # and pull the files down from the Kiali pod. If there is no Kiali pod deployed,
 # then spit out a warning but keep going.
+# We always prepare the kiali-remote-cluster-secrets location because we will
+# at minimum put our local cluster kubeconfig there (we do that later in the script).
 
+# Unless this dir already exists, it will most likely fail to be created because
+# creating a directory under the root directory usually requires sudo access.
+REMOTE_CLUSTER_SECRETS_DIR="/kiali-remote-cluster-secrets"
+mkdir -p ${REMOTE_CLUSTER_SECRETS_DIR}
+if [ ! -d ${REMOTE_CLUSTER_SECRETS_DIR} ]; then
+  errormsg "You first must prepare the remote cluster secrets directory: sudo mkdir -p ${REMOTE_CLUSTER_SECRETS_DIR}; sudo chmod ugo+w ${REMOTE_CLUSTER_SECRETS_DIR}"
+  exit 1
+fi
+rm -rf ${REMOTE_CLUSTER_SECRETS_DIR}/*
+
+# remote clusters
 if [ "${COPY_CLUSTER_SECRETS}" == "true" ]; then
   infomsg "Attempting to copy the remote cluster secrets from a Kiali pod deployed in the cluster..."
   POD_NAME="$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get pod -l app.kubernetes.io/name=kiali -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)"
@@ -574,16 +587,6 @@ if [ "${COPY_CLUSTER_SECRETS}" == "true" ]; then
     warnmsg "Cannot get the Kiali pod name. Kiali must be deployed in [${ISTIO_NAMESPACE}]. If you do not want to deploy Kiali in the cluster, set '--copy-cluster-secrets' to 'false'."
   else
     infomsg "Will copy remote cluster secrets from the Kiali pod [${ISTIO_NAMESPACE}/${POD_NAME}]"
-
-    # Unless this dir already exists, it will most likely fail to be created because
-    # creating a directory under the root directory usually requires sudo access.
-    REMOTE_CLUSTER_SECRETS_DIR="/kiali-remote-cluster-secrets"
-    mkdir -p ${REMOTE_CLUSTER_SECRETS_DIR}
-    if [ ! -d ${REMOTE_CLUSTER_SECRETS_DIR} ]; then
-      errormsg "You first must prepare the remote cluster secrets directory: sudo mkdir -p ${REMOTE_CLUSTER_SECRETS_DIR}; sudo chmod ugo+w ${REMOTE_CLUSTER_SECRETS_DIR}"
-      exit 1
-    fi
-    rm -rf ${REMOTE_CLUSTER_SECRETS_DIR}/*
 
     # if the directory doesn't exist, then no remote secrets are available, so skip everything else
     ${CLIENT_EXE} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- ls -d ${REMOTE_CLUSTER_SECRETS_DIR} >&/dev/null
@@ -651,7 +654,19 @@ EOM
   ${CLIENT_EXE} config set-credentials ${KUBE_CONTEXT} --kubeconfig="${REMOTE_SECRET_PATH}" --token="$(cat ${TOKEN_FILE})"
   ${CLIENT_EXE} config set-context ${KUBE_CONTEXT} --kubeconfig="${REMOTE_SECRET_PATH}" --user=${KUBE_CONTEXT} --cluster=${KUBE_CONTEXT} --namespace=${ISTIO_NAMESPACE}
   ${CLIENT_EXE} config use-context --kubeconfig="${REMOTE_SECRET_PATH}" ${KUBE_CONTEXT}
+else
+  # we are using the current context - get the cluster name from that if we were not told what cluster name to use
+  if [ -z "${CLUSTER_NAME}" ]; then
+    CLUSTER_NAME_FOR_SECRET=$(kubectl config view -o jsonpath='{.contexts[?(@.name=="'"$(kubectl config current-context)"'")].context.cluster}')
+  else
+    CLUSTER_NAME_FOR_SECRET="${CLUSTER_NAME}"
+  fi
 fi
+
+# Set up the local cluster with the local kubeconfig
+CLUSTER_NAME_FOR_SECRET="${CLUSTER_NAME_FOR_SECRET:-run-kiali-cluster}"
+mkdir ${REMOTE_CLUSTER_SECRETS_DIR}/${CLUSTER_NAME_FOR_SECRET}
+cp ${REMOTE_SECRET_PATH} ${REMOTE_CLUSTER_SECRETS_DIR}/${CLUSTER_NAME_FOR_SECRET}/${CLUSTER_NAME_FOR_SECRET}
 
 # Functions that port-forward to components we need
 

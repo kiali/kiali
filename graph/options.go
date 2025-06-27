@@ -15,7 +15,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 )
 
@@ -133,7 +132,7 @@ type Options struct {
 	TelemetryOptions
 }
 
-func NewOptions(r *net_http.Request, namespacesService *business.NamespaceService) Options {
+func NewOptions(r *net_http.Request, businessLayer *business.Layer) Options {
 	// path variables (0 or more will be set)
 	vars := mux.Vars(r)
 	aggregate := vars["aggregate"]
@@ -256,7 +255,7 @@ func NewOptions(r *net_http.Request, namespacesService *business.NamespaceServic
 
 	// Process namespaces options:
 	namespaceMap := NewNamespaceInfoMap()
-	accessibleNamespaces := getAccessibleNamespaces(r.Context(), namespacesService)
+	accessibleNamespaces := getAccessibleNamespaces(r.Context(), &businessLayer.Namespace)
 
 	// If path variable is set then it is the only relevant namespace (it's a node graph)
 	// Else if namespaces query param is set it specifies the relevant namespaces
@@ -288,7 +287,7 @@ func NewOptions(r *net_http.Request, namespacesService *business.NamespaceServic
 				Name:      namespaceName,
 				Duration:  getSafeNamespaceDuration(r.Context(), namespaceName, *earliestCreationTimestamp, time.Duration(duration), queryTime),
 				IsAmbient: isAmbient,
-				IsIstio:   config.IsIstioNamespace(namespaceName),
+				IsIstio:   businessLayer.Mesh.IsControlPlane("", namespaceName),
 			}
 		}
 	}

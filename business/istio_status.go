@@ -129,7 +129,7 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 		istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
 			Cluster:   cluster,
 			Name:      "istiod",
-			Namespace: iss.conf.IstioNamespace,
+			Namespace: "",
 			Status:    kubernetes.ComponentNotFound,
 			IsCore:    true,
 		})
@@ -207,9 +207,6 @@ func (iss *IstioStatusService) getComponentNamespacesWorkloads(ctx context.Conte
 
 func getComponentNamespaces(conf *config.Config) []string {
 	nss := make([]string, 0)
-
-	// By default, add the istio control plane namespace
-	nss = append(nss, conf.IstioNamespace)
 
 	// Adding Istio Components namespaces
 	externalServices := conf.ExternalServices
@@ -289,7 +286,7 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster
 						if stat.Namespace != "" {
 							return stat.Namespace
 						}
-						return iss.conf.IstioNamespace
+						return ""
 					}(),
 					Name:   comp,
 					Status: kubernetes.ComponentNotFound,
