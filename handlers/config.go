@@ -75,7 +75,12 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 
 		// Note that we determine the Prometheus config at request time because it is not
 		// guaranteed to remain the same during the Kiali lifespan.
-		promConfig := getPrometheusConfig(conf, prom, logger)
+		var promConfig PrometheusConfig
+		if conf.ExternalServices.Prometheus.Enabled {
+			promConfig = getPrometheusConfig(conf, prom, logger)
+		} else {
+			promConfig = PrometheusConfig{}
+		}
 		publicConfig := PublicConfig{
 			AuthStrategy:      conf.Auth.Strategy,
 			Clusters:          make(map[string]models.KubeCluster),

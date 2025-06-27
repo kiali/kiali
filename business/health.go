@@ -155,7 +155,7 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 
 	// Perf: do not bother fetching request rate if no workloads or no workload has sidecar
 	sidecarPresent := false
-	var appSidecars = make(map[string]bool)
+	appSidecars := make(map[string]bool)
 
 	// Prepare all data
 	for app, entities := range appEntities {
@@ -302,7 +302,7 @@ func (in *HealthService) getNamespaceWorkloadHealth(ws models.Workloads, criteri
 	rateInterval := criteria.RateInterval
 	queryTime := criteria.QueryTime
 	cluster := criteria.Cluster
-	var wlSidecars = make(map[string]bool)
+	wlSidecars := make(map[string]bool)
 
 	allHealth := make(models.NamespaceWorkloadHealth)
 	for _, w := range ws {
@@ -375,6 +375,10 @@ func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates mo
 
 func (in *HealthService) getServiceRequestsHealth(namespace, cluster, service, rateInterval string, queryTime time.Time, svc *models.Service) (models.RequestHealth, error) {
 	rqHealth := models.NewEmptyRequestHealth()
+	if !in.conf.ExternalServices.Prometheus.Enabled {
+		return rqHealth, nil
+	}
+
 	if svc.Type == "External" {
 		// ServiceEntry from Istio Registry
 		// Telemetry doesn't collect a namespace
@@ -394,6 +398,9 @@ func (in *HealthService) getServiceRequestsHealth(namespace, cluster, service, r
 
 func (in *HealthService) getAppRequestsHealth(namespace, cluster, app, rateInterval string, queryTime time.Time) (models.RequestHealth, error) {
 	rqHealth := models.NewEmptyRequestHealth()
+	if !in.conf.ExternalServices.Prometheus.Enabled {
+		return rqHealth, nil
+	}
 
 	inbound, outbound, err := in.prom.GetAppRequestRates(namespace, cluster, app, rateInterval, queryTime)
 	if err != nil {
@@ -411,6 +418,10 @@ func (in *HealthService) getAppRequestsHealth(namespace, cluster, app, rateInter
 
 func (in *HealthService) getWorkloadRequestsHealth(namespace, cluster, workload, rateInterval string, queryTime time.Time, w *models.Workload) (models.RequestHealth, error) {
 	rqHealth := models.NewEmptyRequestHealth()
+	if !in.conf.ExternalServices.Prometheus.Enabled {
+		return rqHealth, nil
+	}
+
 	// @TODO include w.Cluster into query
 	inbound, outbound, err := in.prom.GetWorkloadRequestRates(namespace, cluster, workload, rateInterval, queryTime)
 	if err != nil {

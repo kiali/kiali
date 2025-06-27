@@ -495,17 +495,18 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 					return
 				}
 
+				// TODO: Probably need a separate GetVersion func for offline.
 				// If this call hangs it can cause the rest of the mesh discovery to timeout.
 				// Getting the version shouldn't block discovery.
-				var cancel context.CancelFunc
-				ctx, cancel = context.WithTimeout(ctx, getVersionTimeout)
-				defer cancel()
-				versionInfo, err := GetVersion(ctx, in.conf, saClient, kubeCache, controlPlane.Revision, controlPlane.IstiodNamespace)
-				if err != nil {
-					log.Warningf("Unable to get version info for controlplane [%s/%s] on cluster [%s]. Err: %s", controlPlane.IstiodName, controlPlane.IstiodNamespace, cluster.Name, err)
-					return
-				}
-				controlPlane.Version = versionInfo
+				// var cancel context.CancelFunc
+				// ctx, cancel = context.WithTimeout(ctx, getVersionTimeout)
+				// defer cancel()
+				// versionInfo, err := GetVersion(ctx, in.conf, saClient, kubeCache, controlPlane.Revision, controlPlane.IstiodNamespace)
+				// if err != nil {
+				// 	log.Warningf("Unable to get version info for controlplane [%s/%s] on cluster [%s]. Err: %s", controlPlane.IstiodName, controlPlane.IstiodNamespace, cluster.Name, err)
+				// 	return
+				// }
+				// controlPlane.Version = versionInfo
 			}(ctx)
 
 			// Get the status for the control plane.

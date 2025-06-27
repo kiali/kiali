@@ -97,6 +97,7 @@ func newRootCmd() *cobra.Command {
 		return nil
 	})
 	cmd.AddCommand(newLocalCmd())
+	cmd.AddCommand(newOfflineCmd())
 	return cmd
 }
 
