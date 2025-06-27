@@ -158,6 +158,7 @@ export const TraceConfigurationModalComp: React.FC<TraceConfigurationModalProps>
       variant={ModalVariant.medium}
       isOpen={props.isOpen}
       onClose={props.onClose}
+      data-test="modal-configuration-tester"
       title={t('Configuration Tester')}
       actions={[
         <Button key="close" onClick={props.onClose}>

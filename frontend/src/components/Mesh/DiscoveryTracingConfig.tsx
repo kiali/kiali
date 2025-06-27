@@ -111,7 +111,10 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '600px', paddingTop: '1em' }}>
+    <div
+      id="discovery-tab-content"
+      style={{ display: 'flex', flexDirection: 'column', height: '600px', paddingTop: '1em' }}
+    >
       <div style={{ flexGrow: 1, overflowY: 'auto' }}>
         {props.tracingDiagnose && (
           <>
@@ -133,7 +136,7 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
                 {props.tracingDiagnose?.validConfig.length === 0 && <>No configurations found. See logs for details</>}
               </span>
             </div>
-            <div>
+            <div id="valid-configurations">
               {props.tracingDiagnose?.validConfig?.map((item, i) => (
                 <>
                   <div className={configStyle}>
@@ -168,7 +171,7 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
               <Title headingLevel="h4" size="lg" style={{ paddingBottom: '10px' }}>
                 {t('Logs')}:
               </Title>
-              <div className={containerStyle}>
+              <div className={containerStyle} id={'configuration-logs'}>
                 {props.tracingDiagnose.logLine.map(log => (
                   <>
                     <div>
@@ -186,10 +189,15 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
         )}
       </div>
       <div>
-        <Button onClick={handleCheckService} disabled={loading} variant={ButtonVariant.secondary}>
+        <Button
+          onClick={handleCheckService}
+          disabled={loading}
+          variant={ButtonVariant.secondary}
+          style={{ marginRight: '5px' }}
+        >
           {t('Rediscover')}
         </Button>
-        {loading && <Spinner size="sm" />}
+        {loading && <Spinner id="discover-spinner" size="sm" />}
       </div>
     </div>
   );
