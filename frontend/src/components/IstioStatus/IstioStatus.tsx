@@ -150,7 +150,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
       ...components.map(
         cs =>
           statusSeverity[cs.status] +
-          (cs.is_core && statusSeverity[cs.status] !== statusSeverity[Status.Healthy] ? 10 : 0)
+          (cs.isCore && statusSeverity[cs.status] !== statusSeverity[Status.Healthy] ? 10 : 0)
       )
     ); // non health core component has much higher severity
 
@@ -197,11 +197,11 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     const values = Object.values(props.statusMap).flat();
 
     Object.keys(values ?? {}).forEach((compKey: string) => {
-      const { status, is_core } = values[compKey];
+      const { status, isCore } = values[compKey];
       const isNotReady: boolean = status === Status.NotReady;
       const isUnhealthy: boolean = status !== Status.Healthy && !isNotReady;
 
-      if (is_core) {
+      if (isCore) {
         coreUnhealthy = coreUnhealthy || isUnhealthy;
       } else {
         addonUnhealthy = addonUnhealthy || isUnhealthy;

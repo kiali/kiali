@@ -10,7 +10,7 @@ exports[`lists all the components grouped 1`] = `
     componentStatus={
       Object {
         "cluster": "Kubernetes",
-        "is_core": true,
+        "isCore": true,
         "name": "istiod",
         "status": "NotFound",
       }
@@ -21,7 +21,7 @@ exports[`lists all the components grouped 1`] = `
     componentStatus={
       Object {
         "cluster": "Kubernetes",
-        "is_core": true,
+        "isCore": true,
         "name": "istio-egressgateway",
         "status": "Unhealthy",
       }
@@ -32,7 +32,7 @@ exports[`lists all the components grouped 1`] = `
     componentStatus={
       Object {
         "cluster": "Kubernetes",
-        "is_core": false,
+        "isCore": false,
         "name": "grafana",
         "status": "NotFound",
       }
@@ -43,7 +43,7 @@ exports[`lists all the components grouped 1`] = `
     componentStatus={
       Object {
         "cluster": "Kubernetes",
-        "is_core": false,
+        "isCore": false,
         "name": "prometheus",
         "status": "Unhealthy",
       }

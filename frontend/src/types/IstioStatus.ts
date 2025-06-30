@@ -26,7 +26,7 @@ export const statusSeverity: Record<Status, number> = {
 
 export interface ComponentStatus {
   cluster: string;
-  is_core: boolean;
+  isCore: boolean;
   name: string;
   status: Status;
 }

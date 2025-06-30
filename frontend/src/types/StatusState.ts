@@ -14,9 +14,9 @@ export enum TempoUrlFormat {
 export type Status = { [K in StatusKey]?: string };
 
 export type TempoConfig = {
-  datasource_uid: string;
-  org_id: string;
-  url_format: TempoUrlFormat;
+  datasourceUID: string;
+  orgID: string;
+  urlFormat: TempoUrlFormat;
 };
 
 export interface ExternalServiceInfo {

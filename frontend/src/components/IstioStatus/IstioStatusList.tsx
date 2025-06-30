@@ -24,11 +24,11 @@ export const IstioStatusList: React.FC<Props> = (props: Props) => {
   };
 
   const coreComponentsStatus = (): ComponentStatus[] => {
-    return nonhealthyComponents().filter((s: ComponentStatus) => s.is_core);
+    return nonhealthyComponents().filter((s: ComponentStatus) => s.isCore);
   };
 
   const addonComponentsStatus = (): ComponentStatus[] => {
-    return nonhealthyComponents().filter((s: ComponentStatus) => !s.is_core);
+    return nonhealthyComponents().filter((s: ComponentStatus) => !s.isCore);
   };
 
   const renderComponentList = (): React.ReactNode => {
