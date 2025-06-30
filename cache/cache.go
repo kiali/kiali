@@ -212,7 +212,7 @@ func NewKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, kubeCac
 	// TODO: Treat all clusters the same way.
 	// Ensure home client got set.
 	if _, found := kialiCacheImpl.kubeCache[conf.KubernetesConfig.ClusterName]; !found {
-		return nil, fmt.Errorf("home cluster not configured in kiali cache")
+		return nil, fmt.Errorf("[Kiali Cache] home cluster: '%s' not configured in kiali cache", conf.KubernetesConfig.ClusterName)
 	}
 
 	return &kialiCacheImpl, nil
