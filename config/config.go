@@ -248,7 +248,7 @@ type CustomDashboardsConfig struct {
 	DiscoveryEnabled       string           `yaml:"discovery_enabled,omitempty"`
 	DiscoveryAutoThreshold int              `yaml:"discovery_auto_threshold,omitempty"`
 	Enabled                bool             `yaml:"enabled,omitempty"`
-	IsCore                 bool             `yaml:"is_core,omitempty"`
+	IsCore                 bool             `yaml:"is_core,omitempty" json:"isCore,omitempty"`
 	NamespaceLabel         string           `yaml:"namespace_label,omitempty"`
 	Prometheus             PrometheusConfig `yaml:"prometheus,omitempty"`
 }
@@ -351,7 +351,7 @@ type ComponentStatuses struct {
 
 type ComponentStatus struct {
 	AppLabel       string `yaml:"app_label,omitempty"`
-	IsCore         bool   `yaml:"is_core,omitempty"`
+	IsCore         bool   `yaml:"is_core,omitempty" json:"isCore,omitempty"`
 	IsProxy        bool   `yaml:"is_proxy,omitempty"`
 	IsMultiCluster bool   `yaml:"is_multicluster,omitempty"`
 	Namespace      string `yaml:"namespace,omitempty"`
