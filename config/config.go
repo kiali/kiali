@@ -245,12 +245,12 @@ type PrometheusConfig struct {
 
 // CustomDashboardsConfig describes configuration specific to Custom Dashboards
 type CustomDashboardsConfig struct {
-	DiscoveryEnabled       string           `yaml:"discovery_enabled,omitempty"`
-	DiscoveryAutoThreshold int              `yaml:"discovery_auto_threshold,omitempty"`
-	Enabled                bool             `yaml:"enabled,omitempty"`
+	DiscoveryEnabled       string           `yaml:"discovery_enabled,omitempty" json:"discoveryEnabled,omitempty"`
+	DiscoveryAutoThreshold int              `yaml:"discovery_auto_threshold,omitempty" json:"discoveryAutoThreshold,omitempty"`
+	Enabled                bool             `yaml:"enabled,omitempty" json:"enabled,omitempty"`
 	IsCore                 bool             `yaml:"is_core,omitempty" json:"isCore,omitempty"`
-	NamespaceLabel         string           `yaml:"namespace_label,omitempty"`
-	Prometheus             PrometheusConfig `yaml:"prometheus,omitempty"`
+	NamespaceLabel         string           `yaml:"namespace_label,omitempty" json:"namespaceLabel,omitempty"`
+	Prometheus             PrometheusConfig `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
 }
 
 // GrafanaConfig describes configuration used for Grafana links
@@ -350,11 +350,11 @@ type ComponentStatuses struct {
 }
 
 type ComponentStatus struct {
-	AppLabel       string `yaml:"app_label,omitempty"`
+	AppLabel       string `yaml:"app_label,omitempty" json:"appLabel,omitempty"`
 	IsCore         bool   `yaml:"is_core,omitempty" json:"isCore,omitempty"`
-	IsProxy        bool   `yaml:"is_proxy,omitempty"`
-	IsMultiCluster bool   `yaml:"is_multicluster,omitempty"`
-	Namespace      string `yaml:"namespace,omitempty"`
+	IsProxy        bool   `yaml:"is_proxy,omitempty" json:"isProxy,omitempty"`
+	IsMultiCluster bool   `yaml:"is_multicluster,omitempty" json:"isMulticluster,omitempty"`
+	Namespace      string `yaml:"namespace,omitempty" json:"namespace,omitempty"`
 }
 
 type GatewayAPIClass struct {
