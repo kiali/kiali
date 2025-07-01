@@ -372,7 +372,7 @@ When('user changes the provider in the Tester tab', () => {
         }
       }
       let val: string = editor.getValue();
-      val = val.replace(`Provider: ${provider}`, `Provider: ${replacer}`);
+      val = val.replace(`provider: ${provider}`, `provider: ${replacer}`);
       editor.setValue(val);
     });
   });

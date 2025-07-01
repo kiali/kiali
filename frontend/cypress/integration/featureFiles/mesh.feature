@@ -125,7 +125,6 @@ Feature: Kiali Mesh page
     And user sees "mode: REGISTRY_ONLY" in the "shared" configuration tab
     And user does not see "mode: REGISTRY_ONLY" in the "standard" configuration tab
 
-  @selected
   Scenario: User opens and interacts with the Trace Configuration modal
     When user selects tracing mesh node
     And user opens the Trace Configuration modal
