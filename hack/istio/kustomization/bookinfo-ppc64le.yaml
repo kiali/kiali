@@ -3,27 +3,27 @@ resources:
 images:
 - name: docker.io/istio/examples-bookinfo-details-v1
   newName: quay.io/maistra/examples-bookinfo-details-v1
-  newTag: 1.24.2-ibm
+  newTag: 1.26.2-ibm
 - name: docker.io/istio/examples-bookinfo-details-2
   newName: quay.io/maistra/examples-bookinfo-details-v2
-  newTag: 1.24.2-ibm
+  newTag: 1.26.2-ibm
 - name: docker.io/istio/examples-bookinfo-ratings-v1
   newName: quay.io/maistra/examples-bookinfo-ratings-v1
-  newTag: 1.24.2-ibm
+  newTag: 1.26.2-ibm
 - name: docker.io/istio/examples-bookinfo-ratings-v2
   newName: quay.io/maistra/examples-bookinfo-ratings-v2
-  newTag: 1.24.2-ibm
+  newTag: 1.26.2-ibm
 - name: docker.io/istio/examples-bookinfo-reviews-v1
   newName: quay.io/maistra/examples-bookinfo-reviews-v1
-  newTag: 1.24.2-ibm
+  newTag: 1.26.2-ibm
 - name: docker.io/istio/examples-bookinfo-reviews-v2
   newName: quay.io/maistra/examples-bookinfo-reviews-v2
-  newTag: 1.24.2-ibm
+  newTag: 1.26.2-ibm
 - name: docker.io/istio/examples-bookinfo-reviews-v3
   newName: quay.io/maistra/examples-bookinfo-reviews-v3
-  newTag: 1.24.2-ibm
+  newTag: 1.26.2-ibm
 - name: docker.io/istio/examples-bookinfo-productpage-v1
   newName: quay.io/maistra/examples-bookinfo-productpage-v1
-  newTag: 1.24.2-ibm
+  newTag: 1.26.2-ibm
 sortOptions:
   order: fifo
