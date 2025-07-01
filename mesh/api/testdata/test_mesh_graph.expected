@@ -247,7 +247,7 @@
         "nodeType" : "infra",
         "healthData" : "Healthy",
         "infraData" : {
-          "componentStatus" : {
+          "componentStatuses" : {
             "enabled" : true
           },
           "envoyAdminLocalPort" : 15000,
