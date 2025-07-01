@@ -204,11 +204,15 @@ After({ tags: '@shared-mesh-config' }, () => {
   cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`);
 });
 
-beforeEach(() => {
-  cy.exec(`../hack/stern/download-stern.sh`);
-  cy.exec(`../hack/stern/run-stern.sh --logfile ${Cypress.spec.baseName}.json`);
+Before(() => {
+  // if (Cypress.env('STERN') === "true") {
+  const specName = Cypress.spec && Cypress.spec.name ? Cypress.spec.name : 'unknown-spec';
+  cy.exec(`../hack/stern/run-stern.sh --logfile ${specName}.json`);
+  // }
 });
 
-afterEach(() => {
+After(() => {
+  // if (Cypress.env('STERN') === "true") {
   cy.exec(`../hack/stern/run-stern.sh --stop true`);
+  // }
 });

@@ -17,6 +17,7 @@ export CYPRESS_USERNAME=<value>                      # defaults to jenkins, opt.
 export CYPRESS_PASSWD=<value>                        # no defaults
 export CYPRESS_AUTH_PROVIDER=<value>                 # defaults to my_htpasswd_provider
 export CYPRESS_ALLOW_INSECURE_KIALI_API=<true|false> # Useful when running tests locally against an insecure endpoint like crc.
+export CYPRESS_STERN=<true|false>                    # defaults to false, set true for extended stern logging
 ```
 
 When running the Cypress tests for multi-cluster, both contexts for the kubectl/oc command must be specified. 
