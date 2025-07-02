@@ -93,22 +93,19 @@
         "nodeType" : "infra",
         "healthData" : "Healthy",
         "infraData" : {
-          "Auth" : {
-            "CAFile" : "xxx",
-            "InsecureSkipVerify" : false,
-            "Password" : "xxx",
-            "Token" : "xxx",
-            "Type" : "none",
-            "UseKialiToken" : false,
-            "Username" : "xxx"
+          "auth" : {
+            "caFile" : "xxx",
+            "insecureSkipVerify" : false,
+            "password" : "xxx",
+            "token" : "xxx",
+            "type" : "none",
+            "useKialiToken" : false,
+            "username" : "xxx"
           },
-          "Dashboards" : null,
-          "DatasourceUID" : "",
-          "Enabled" : true,
-          "ExternalURL" : "",
-          "HealthCheckUrl" : "",
-          "InternalURL" : "http://grafana.istio-system:3000",
-          "IsCore" : false
+          "dashboards" : null,
+          "enabled" : true,
+          "externalURL" : "",
+          "internalURL" : "http://grafana.istio-system:3000"
         },
         "isExternal" : true,
         "isInaccessible" : true
@@ -124,28 +121,23 @@
         "nodeType" : "infra",
         "healthData" : "Healthy",
         "infraData" : {
-          "Auth" : {
-            "CAFile" : "xxx",
-            "InsecureSkipVerify" : false,
-            "Password" : "xxx",
-            "Token" : "xxx",
-            "Type" : "none",
-            "UseKialiToken" : false,
-            "Username" : "xxx"
+          "auth" : {
+            "caFile" : "xxx",
+            "insecureSkipVerify" : false,
+            "password" : "xxx",
+            "token" : "xxx",
+            "type" : "none",
+            "useKialiToken" : false,
+            "username" : "xxx"
           },
-          "CacheDuration" : 7,
-          "CacheEnabled" : true,
-          "CacheExpiration" : 300,
-          "CustomHeaders" : { },
-          "HealthCheckUrl" : "",
-          "IsCore" : false,
-          "QueryScope" : { },
-          "ThanosProxy" : {
-            "Enabled" : false,
-            "RetentionPeriod" : "7d",
-            "ScrapeInterval" : "30s"
+          "cacheDuration" : 7,
+          "cacheEnabled" : true,
+          "cacheExpiration" : 300,
+          "thanosProxy" : {
+            "retentionPeriod" : "7d",
+            "scrapeInterval" : "30s"
           },
-          "URL" : "http://prometheus.istio-system:9090"
+          "url" : "http://prometheus.istio-system:9090"
         },
         "isExternal" : true,
         "isInaccessible" : true
@@ -161,33 +153,28 @@
         "nodeType" : "infra",
         "healthData" : "Healthy",
         "infraData" : {
-          "Auth" : {
-            "CAFile" : "xxx",
-            "InsecureSkipVerify" : false,
-            "Password" : "xxx",
-            "Token" : "xxx",
-            "Type" : "none",
-            "UseKialiToken" : false,
-            "Username" : "xxx"
+          "auth" : {
+            "caFile" : "xxx",
+            "insecureSkipVerify" : false,
+            "password" : "xxx",
+            "token" : "xxx",
+            "type" : "none",
+            "useKialiToken" : false,
+            "username" : "xxx"
           },
-          "CustomHeaders" : { },
-          "DisableVersionCheck" : false,
-          "Enabled" : true,
-          "ExternalURL" : "",
-          "HealthCheckUrl" : "",
-          "GrpcPort" : 9095,
-          "InternalURL" : "http://tracing.istio-system:16685/jaeger",
-          "IsCore" : false,
-          "Provider" : "jaeger",
-          "TempoConfig" : {
-            "cache_capacity" : 200,
-            "cache_enabled" : true
+          "enabled" : true,
+          "externalURL" : "",
+          "grpcPort" : 9095,
+          "internalURL" : "http://tracing.istio-system:16685/jaeger",
+          "provider" : "jaeger",
+          "tempoConfig" : {
+            "cacheCapacity" : 200,
+            "cacheEnabled" : true
           },
-          "NamespaceSelector" : true,
-          "QueryScope" : { },
-          "QueryTimeout" : 5,
-          "UseGRPC" : true,
-          "WhiteListIstioSystem" : [ "jaeger-query", "istio-ingressgateway" ]
+          "namespaceSelector" : true,
+          "queryTimeout" : 5,
+          "useGRPC" : true,
+          "whiteListIstioSystem" : [ "jaeger-query", "istio-ingressgateway" ]
         },
         "isExternal" : true,
         "isInaccessible" : true
@@ -260,27 +247,20 @@
         "nodeType" : "infra",
         "healthData" : "Healthy",
         "infraData" : {
-          "ComponentStatuses" : {
-            "Enabled" : true,
-            "Components" : [ ]
+          "componentStatuses" : {
+            "enabled" : true
           },
-          "ConfigMapName" : "",
-          "EnvoyAdminLocalPort" : 15000,
-          "GatewayAPIClasses" : [ ],
-          "GatewayAPIClassesLabelSelector" : "",
-          "IstioAPIEnabled" : true,
-          "IstioIdentityDomain" : "svc.cluster.local",
-          "IstioInjectionAnnotation" : "sidecar.istio.io/inject",
-          "IstioSidecarInjectorConfigMapName" : "",
-          "IstioSidecarAnnotation" : "sidecar.istio.io/status",
-          "IstiodDeploymentName" : "",
-          "IstiodPodMonitoringPort" : 15014,
-          "IstiodPollingIntervalSeconds" : 20,
-          "Registry" : null,
-          "RootNamespace" : "istio-system",
-          "UrlServiceVersion" : "",
-          "ValidationChangeDetectionEnabled" : true,
-          "ValidationReconcileInterval" : 60000000000
+          "envoyAdminLocalPort" : 15000,
+          "istioApiEnabled" : true,
+          "istioIdentityDomain" : "svc.cluster.local",
+          "istioInjectionAnnotation" : "sidecar.istio.io/inject",
+          "istioSidecarAnnotation" : "sidecar.istio.io/status",
+          "istiodPodMonitoringPort" : 15014,
+          "istiodPollingIntervalSeconds" : 20,
+          "rootNamespace" : "istio-system",
+          "urlServiceVersion" : "",
+          "validationChangeDetectionEnabled" : true,
+          "validationReconcileInterval" : 60000000000
         }
       }
     }, {

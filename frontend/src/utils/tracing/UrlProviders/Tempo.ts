@@ -41,11 +41,11 @@ export class TempoUrlProvider implements TracingUrlProvider {
     let frontendProvider: TracingUrlProvider | undefined = undefined;
     const svc = externalServices.find(s => [GRAFANA, JAEGER].includes(s.name.toLowerCase()));
     if (svc && svc.name.toLowerCase() === GRAFANA && svc.url !== undefined) {
-      if (service.tempoConfig?.datasource_uid !== undefined) {
+      if (service.tempoConfig?.datasourceUID !== undefined) {
         // Grafana 10+
         frontendProvider = new GrafanaUrlProvider(svc.url, {
-          datasource_uid: service.tempoConfig.datasource_uid,
-          orgID: service.tempoConfig.org_id
+          datasource_uid: service.tempoConfig.datasourceUID,
+          orgID: service.tempoConfig.orgID
         });
       } else {
         // Fallback to older Grafana URL schema

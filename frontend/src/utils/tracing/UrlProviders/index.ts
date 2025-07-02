@@ -22,7 +22,7 @@ export function GetTracingUrlProvider(
   // the wanted url provider
   let urlProvider: TracingUrlProvider | undefined = undefined;
   if (isTempoService(svc)) {
-    if (svc.tempoConfig?.url_format === TempoUrlFormat.JAEGER) {
+    if (svc.tempoConfig?.urlFormat === TempoUrlFormat.JAEGER) {
       urlProvider = new JaegerUrlProvider(svc);
     } else {
       urlProvider = new TempoUrlProvider(svc, externalServices);

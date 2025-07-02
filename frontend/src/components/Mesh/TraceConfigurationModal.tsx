@@ -56,7 +56,7 @@ export const validateExternalUrl = (
   }
 
   if (isTempoService(svc)) {
-    if (svc.tempoConfig?.url_format === TempoUrlFormat.JAEGER) {
+    if (svc.tempoConfig?.urlFormat === TempoUrlFormat.JAEGER) {
       const urlProvider = new JaegerUrlProvider(svc);
       if (!urlProvider.HomeUrl() || !urlProvider.valid) {
         return '"View in Tracing" is hidden because external_url is empty';

@@ -54,7 +54,7 @@ type ComponentStatus struct {
 	//
 	// example:  true
 	// required: true
-	IsCore bool `json:"is_core"`
+	IsCore bool `json:"isCore"`
 }
 
 type IstioComponentStatus []ComponentStatus

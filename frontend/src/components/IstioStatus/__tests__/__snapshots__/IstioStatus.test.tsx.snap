@@ -49,13 +49,13 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
               Array [
                 Object {
                   "cluster": "Kubernetes",
-                  "is_core": false,
+                  "isCore": false,
                   "name": "grafana",
                   "status": "Unhealthy",
                 },
                 Object {
                   "cluster": "Kubernetes",
-                  "is_core": true,
+                  "isCore": true,
                   "name": "istio-egressgateway",
                   "status": "Healthy",
                 },
@@ -149,13 +149,13 @@ exports[`When both core and addon component have problems any component is in no
               Array [
                 Object {
                   "cluster": "Kubernetes",
-                  "is_core": false,
+                  "isCore": false,
                   "name": "grafana",
                   "status": "Unhealthy",
                 },
                 Object {
                   "cluster": "Kubernetes",
-                  "is_core": true,
+                  "isCore": true,
                   "name": "istio-egressgateway",
                   "status": "Unhealthy",
                 },
@@ -249,13 +249,13 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
               Array [
                 Object {
                   "cluster": "Kubernetes",
-                  "is_core": false,
+                  "isCore": false,
                   "name": "grafana",
                   "status": "Healthy",
                 },
                 Object {
                   "cluster": "Kubernetes",
-                  "is_core": true,
+                  "isCore": true,
                   "name": "istio-egressgateway",
                   "status": "Unhealthy",
                 },
@@ -349,13 +349,13 @@ exports[`When there are not-ready components mixed with other not healthy compon
               Array [
                 Object {
                   "cluster": "Kubernetes",
-                  "is_core": false,
+                  "isCore": false,
                   "name": "grafana",
                   "status": "Unhealthy",
                 },
                 Object {
                   "cluster": "Kubernetes",
-                  "is_core": false,
+                  "isCore": false,
                   "name": "jaeger",
                   "status": "NotReady",
                 },
@@ -449,25 +449,25 @@ exports[`When there are not-ready components mixed with other not healthy compon
               Array [
                 Object {
                   "cluster": "Kubernetes",
-                  "is_core": false,
+                  "isCore": false,
                   "name": "grafana",
                   "status": "Unhealthy",
                 },
                 Object {
                   "cluster": "Kubernetes",
-                  "is_core": false,
+                  "isCore": false,
                   "name": "jaeger",
                   "status": "NotReady",
                 },
                 Object {
                   "cluster": "Kubernetes",
-                  "is_core": true,
+                  "isCore": true,
                   "name": "istio-egressgateway",
                   "status": "Unhealthy",
                 },
                 Object {
                   "cluster": "Kubernetes",
-                  "is_core": true,
+                  "isCore": true,
                   "name": "istio-ingressgateway",
                   "status": "NotReady",
                 },
@@ -561,13 +561,13 @@ exports[`When there are not-ready components mixed with other not healthy compon
               Array [
                 Object {
                   "cluster": "Kubernetes",
-                  "is_core": true,
+                  "isCore": true,
                   "name": "istio-egressgateway",
                   "status": "Unhealthy",
                 },
                 Object {
                   "cluster": "Kubernetes",
-                  "is_core": true,
+                  "isCore": true,
                   "name": "istio-ingressgateway",
                   "status": "NotReady",
                 },
@@ -661,7 +661,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
               Array [
                 Object {
                   "cluster": "Kubernetes",
-                  "is_core": true,
+                  "isCore": true,
                   "name": "istiod",
                   "status": "NotReady",
                 },
@@ -755,7 +755,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
               Array [
                 Object {
                   "cluster": "Kubernetes",
-                  "is_core": false,
+                  "isCore": false,
                   "name": "jaeger",
                   "status": "NotReady",
                 },

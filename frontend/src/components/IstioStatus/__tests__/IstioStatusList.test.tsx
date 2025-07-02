@@ -11,25 +11,25 @@ it('lists all the components grouped', () => {
       cluster: CLUSTER_DEFAULT,
       name: 'grafana',
       status: Status.NotFound,
-      is_core: false
+      isCore: false
     },
     {
       cluster: CLUSTER_DEFAULT,
       name: 'prometheus',
       status: Status.Unhealthy,
-      is_core: false
+      isCore: false
     },
     {
       cluster: CLUSTER_DEFAULT,
       name: 'istiod',
       status: Status.NotFound,
-      is_core: true
+      isCore: true
     },
     {
       cluster: CLUSTER_DEFAULT,
       name: 'istio-egressgateway',
       status: Status.Unhealthy,
-      is_core: true
+      isCore: true
     }
   ];
 

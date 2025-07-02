@@ -206,13 +206,13 @@ type Server struct {
 
 // Auth provides authentication data for external services
 type Auth struct {
-	CAFile             string `yaml:"ca_file"`
-	InsecureSkipVerify bool   `yaml:"insecure_skip_verify"`
-	Password           string `yaml:"password"`
-	Token              string `yaml:"token"`
-	Type               string `yaml:"type"`
-	UseKialiToken      bool   `yaml:"use_kiali_token"`
-	Username           string `yaml:"username"`
+	CAFile             string `yaml:"ca_file" json:"caFile"`
+	InsecureSkipVerify bool   `yaml:"insecure_skip_verify" json:"insecureSkipVerify"`
+	Password           string `yaml:"password" json:"password"`
+	Token              string `yaml:"token" json:"token"`
+	Type               string `yaml:"type" json:"type"`
+	UseKialiToken      bool   `yaml:"use_kiali_token" json:"useKialiToken"`
+	Username           string `yaml:"username" json:"username"`
 }
 
 func (a *Auth) Obfuscate() {
@@ -224,52 +224,52 @@ func (a *Auth) Obfuscate() {
 
 // ThanosProxy describes configuration of the Thanos proxy component
 type ThanosProxy struct {
-	Enabled         bool   `yaml:"enabled,omitempty"`
-	RetentionPeriod string `yaml:"retention_period,omitempty"`
-	ScrapeInterval  string `yaml:"scrape_interval,omitempty"`
+	Enabled         bool   `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	RetentionPeriod string `yaml:"retention_period,omitempty" json:"retentionPeriod,omitempty"`
+	ScrapeInterval  string `yaml:"scrape_interval,omitempty" json:"scrapeInterval,omitempty"`
 }
 
 // PrometheusConfig describes configuration of the Prometheus component
 type PrometheusConfig struct {
-	Auth            Auth              `yaml:"auth,omitempty"`
-	CacheDuration   int               `yaml:"cache_duration,omitempty"`   // Cache duration per query expressed in seconds
-	CacheEnabled    bool              `yaml:"cache_enabled,omitempty"`    // Enable cache for Prometheus queries
-	CacheExpiration int               `yaml:"cache_expiration,omitempty"` // Global cache expiration expressed in seconds
-	CustomHeaders   map[string]string `yaml:"custom_headers,omitempty"`
-	HealthCheckUrl  string            `yaml:"health_check_url,omitempty"`
-	IsCore          bool              `yaml:"is_core,omitempty"`
-	QueryScope      map[string]string `yaml:"query_scope,omitempty"`
-	ThanosProxy     ThanosProxy       `yaml:"thanos_proxy,omitempty"`
-	URL             string            `yaml:"url,omitempty"`
+	Auth            Auth              `yaml:"auth,omitempty" json:"auth,omitempty"`
+	CacheDuration   int               `yaml:"cache_duration,omitempty" json:"cacheDuration,omitempty"`     // Cache duration per query expressed in seconds
+	CacheEnabled    bool              `yaml:"cache_enabled,omitempty" json:"cacheEnabled,omitempty"`       // Enable cache for Prometheus queries
+	CacheExpiration int               `yaml:"cache_expiration,omitempty" json:"cacheExpiration,omitempty"` // Global cache expiration expressed in seconds
+	CustomHeaders   map[string]string `yaml:"custom_headers,omitempty" json:"customHeaders,omitempty"`
+	HealthCheckUrl  string            `yaml:"health_check_url,omitempty" json:"healthCheckUrl,omitempty"`
+	IsCore          bool              `yaml:"is_core,omitempty" json:"isCore,omitempty"`
+	QueryScope      map[string]string `yaml:"query_scope,omitempty" json:"queryScope,omitempty"`
+	ThanosProxy     ThanosProxy       `yaml:"thanos_proxy,omitempty" json:"thanosProxy,omitempty"`
+	URL             string            `yaml:"url,omitempty" json:"url,omitempty"`
 }
 
 // CustomDashboardsConfig describes configuration specific to Custom Dashboards
 type CustomDashboardsConfig struct {
-	DiscoveryEnabled       string           `yaml:"discovery_enabled,omitempty"`
-	DiscoveryAutoThreshold int              `yaml:"discovery_auto_threshold,omitempty"`
-	Enabled                bool             `yaml:"enabled,omitempty"`
-	IsCore                 bool             `yaml:"is_core,omitempty"`
-	NamespaceLabel         string           `yaml:"namespace_label,omitempty"`
-	Prometheus             PrometheusConfig `yaml:"prometheus,omitempty"`
+	DiscoveryEnabled       string           `yaml:"discovery_enabled,omitempty" json:"discoveryEnabled,omitempty"`
+	DiscoveryAutoThreshold int              `yaml:"discovery_auto_threshold,omitempty" json:"discoveryAutoThreshold,omitempty"`
+	Enabled                bool             `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	IsCore                 bool             `yaml:"is_core,omitempty" json:"isCore,omitempty"`
+	NamespaceLabel         string           `yaml:"namespace_label,omitempty" json:"namespaceLabel,omitempty"`
+	Prometheus             PrometheusConfig `yaml:"prometheus,omitempty" json:"prometheus,omitempty"`
 }
 
 // GrafanaConfig describes configuration used for Grafana links
 type GrafanaConfig struct {
-	Auth           Auth                     `yaml:"auth"`
-	Dashboards     []GrafanaDashboardConfig `yaml:"dashboards"`
-	DatasourceUID  string                   `yaml:"datasource_uid,omitempty"`
-	Enabled        bool                     `yaml:"enabled"`      // Enable or disable Grafana support in Kiali
-	ExternalURL    string                   `yaml:"external_url"` // replaces the old url
-	HealthCheckUrl string                   `yaml:"health_check_url,omitempty"`
-	InternalURL    string                   `yaml:"internal_url"` // replaces the old in_cluster_url
-	IsCore         bool                     `yaml:"is_core,omitempty"`
+	Auth           Auth                     `yaml:"auth" json:"auth"`
+	Dashboards     []GrafanaDashboardConfig `yaml:"dashboards" json:"dashboards"`
+	DatasourceUID  string                   `yaml:"datasource_uid,omitempty" json:"datasourceUID,omitempty"`
+	Enabled        bool                     `yaml:"enabled" json:"enabled"`          // Enable or disable Grafana support in Kiali
+	ExternalURL    string                   `yaml:"external_url" json:"externalURL"` // replaces the old url
+	HealthCheckUrl string                   `yaml:"health_check_url,omitempty" json:"healthCheckUrl,omitempty"`
+	InternalURL    string                   `yaml:"internal_url" json:"internalURL"` // replaces the old in_cluster_url
+	IsCore         bool                     `yaml:"is_core,omitempty" json:"isCore,omitempty"`
 	XInClusterURL  string                   `yaml:"in_cluster_url,omitempty" json:"InClusterURL,omitempty"` // DEPRECATED!
 	XURL           string                   `yaml:"url,omitempty" json:"URL,omitempty"`                     // DEPRECATED!
 }
 
 type GrafanaDashboardConfig struct {
-	Name      string                 `yaml:"name"`
-	Variables GrafanaVariablesConfig `yaml:"variables"`
+	Name      string                 `yaml:"name" json:"name"`
+	Variables GrafanaVariablesConfig `yaml:"variables" json:"variables"`
 }
 
 type GrafanaVariablesConfig struct {
@@ -282,31 +282,31 @@ type GrafanaVariablesConfig struct {
 }
 
 type TempoConfig struct {
-	CacheCapacity int    `yaml:"cache_capacity" json:"cache_capacity,omitempty"`
-	CacheEnabled  bool   `yaml:"cache_enabled" json:"cache_enabled,omitempty"`
-	DatasourceUID string `yaml:"datasource_uid" json:"datasource_uid,omitempty"`
-	OrgID         string `yaml:"org_id" json:"org_id,omitempty"`
-	URLFormat     string `yaml:"url_format" json:"url_format,omitempty"`
+	CacheCapacity int    `yaml:"cache_capacity" json:"cacheCapacity,omitempty"`
+	CacheEnabled  bool   `yaml:"cache_enabled" json:"cacheEnabled,omitempty"`
+	DatasourceUID string `yaml:"datasource_uid" json:"datasourceUID,omitempty"`
+	OrgID         string `yaml:"org_id" json:"orgID,omitempty"`
+	URLFormat     string `yaml:"url_format" json:"urlFormat,omitempty"`
 }
 
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
-	Auth                 Auth              `yaml:"auth"`
-	CustomHeaders        map[string]string `yaml:"custom_headers,omitempty"`
-	DisableVersionCheck  bool              `yaml:"disable_version_check,omitempty"`
-	Enabled              bool              `yaml:"enabled"`      // Enable Tracing in Kiali
-	ExternalURL          string            `yaml:"external_url"` // replaces the old url
-	HealthCheckUrl       string            `yaml:"health_check_url,omitempty"`
-	GrpcPort             int               `yaml:"grpc_port,omitempty"`
-	InternalURL          string            `yaml:"internal_url"` // replaces the old in_cluster_url
-	IsCore               bool              `yaml:"is_core,omitempty"`
-	Provider             TracingProvider   `yaml:"provider,omitempty"` // jaeger | tempo
-	TempoConfig          TempoConfig       `yaml:"tempo_config,omitempty"`
-	NamespaceSelector    bool              `yaml:"namespace_selector"`
-	QueryScope           map[string]string `yaml:"query_scope,omitempty"`
-	QueryTimeout         int               `yaml:"query_timeout,omitempty"`
-	UseGRPC              bool              `yaml:"use_grpc"`
-	WhiteListIstioSystem []string          `yaml:"whitelist_istio_system"`
+	Auth                 Auth              `yaml:"auth" json:"auth"`
+	CustomHeaders        map[string]string `yaml:"custom_headers,omitempty" json:"customHeaders,omitempty"`
+	DisableVersionCheck  bool              `yaml:"disable_version_check,omitempty" json:"disableVersionCheck,omitempty"`
+	Enabled              bool              `yaml:"enabled" json:"enabled"`
+	ExternalURL          string            `yaml:"external_url" json:"externalURL"`
+	HealthCheckUrl       string            `yaml:"health_check_url,omitempty" json:"healthCheckUrl,omitempty"`
+	GrpcPort             int               `yaml:"grpc_port,omitempty" json:"grpcPort,omitempty"`
+	InternalURL          string            `yaml:"internal_url" json:"internalURL"`
+	IsCore               bool              `yaml:"is_core,omitempty" json:"isCore,omitempty"`
+	Provider             TracingProvider   `yaml:"provider,omitempty" json:"provider,omitempty"`
+	TempoConfig          TempoConfig       `yaml:"tempo_config,omitempty" json:"tempoConfig,omitempty"`
+	NamespaceSelector    bool              `yaml:"namespace_selector" json:"namespaceSelector"`
+	QueryScope           map[string]string `yaml:"query_scope,omitempty" json:"queryScope,omitempty"`
+	QueryTimeout         int               `yaml:"query_timeout,omitempty" json:"queryTimeout,omitempty"`
+	UseGRPC              bool              `yaml:"use_grpc" json:"useGRPC"`
+	WhiteListIstioSystem []string          `yaml:"whitelist_istio_system" json:"whiteListIstioSystem"`
 	XInClusterURL        string            `yaml:"in_cluster_url,omitempty" json:"InClusterURL,omitempty"` // DEPRECATED!
 	XURL                 string            `yaml:"url,omitempty" json:"URL,omitempty"`                     // DEPRECATED!
 }
@@ -314,47 +314,47 @@ type TracingConfig struct {
 // RegistryConfig contains configuration for connecting to an external istiod.
 // This is used when Kiali should connect to the istiod via a url instead of port forwarding.
 type RegistryConfig struct {
-	IstiodURL string `yaml:"istiod_url"`
+	IstiodURL string `yaml:"istiod_url" json:"istiodUrl"`
 	// TODO: Support auth options
 }
 
 // IstioConfig describes configuration used for istio links
 type IstioConfig struct {
-	ComponentStatuses                 ComponentStatuses `yaml:"component_status,omitempty"`
-	ConfigMapName                     string            `yaml:"config_map_name,omitempty"`
-	EnvoyAdminLocalPort               int               `yaml:"envoy_admin_local_port,omitempty"`
-	GatewayAPIClasses                 []GatewayAPIClass `yaml:"gateway_api_classes,omitempty"`
-	GatewayAPIClassesLabelSelector    string            `yaml:"gateway_api_classes_label_selector,omitempty"`
-	IstioAPIEnabled                   bool              `yaml:"istio_api_enabled"`
-	IstioIdentityDomain               string            `yaml:"istio_identity_domain,omitempty"`
-	IstioInjectionAnnotation          string            `yaml:"istio_injection_annotation,omitempty"`
-	IstioSidecarInjectorConfigMapName string            `yaml:"istio_sidecar_injector_config_map_name,omitempty"`
-	IstioSidecarAnnotation            string            `yaml:"istio_sidecar_annotation,omitempty"`
-	IstiodDeploymentName              string            `yaml:"istiod_deployment_name,omitempty"`
-	IstiodPodMonitoringPort           int               `yaml:"istiod_pod_monitoring_port,omitempty"`
+	ComponentStatuses                 ComponentStatuses `yaml:"component_status,omitempty" json:"componentStatuses,omitempty"`
+	ConfigMapName                     string            `yaml:"config_map_name,omitempty" json:"configMapName,omitempty"`
+	EnvoyAdminLocalPort               int               `yaml:"envoy_admin_local_port,omitempty" json:"envoyAdminLocalPort,omitempty"`
+	GatewayAPIClasses                 []GatewayAPIClass `yaml:"gateway_api_classes,omitempty" json:"gatewayApiClasses,omitempty"`
+	GatewayAPIClassesLabelSelector    string            `yaml:"gateway_api_classes_label_selector,omitempty" json:"gatewayApiClassesLabelSelector,omitempty"`
+	IstioAPIEnabled                   bool              `yaml:"istio_api_enabled" json:"istioApiEnabled"`
+	IstioIdentityDomain               string            `yaml:"istio_identity_domain,omitempty" json:"istioIdentityDomain,omitempty"`
+	IstioInjectionAnnotation          string            `yaml:"istio_injection_annotation,omitempty" json:"istioInjectionAnnotation,omitempty"`
+	IstioSidecarInjectorConfigMapName string            `yaml:"istio_sidecar_injector_config_map_name,omitempty" json:"istioSidecarInjectorConfigMapName,omitempty"`
+	IstioSidecarAnnotation            string            `yaml:"istio_sidecar_annotation,omitempty" json:"istioSidecarAnnotation,omitempty"`
+	IstiodDeploymentName              string            `yaml:"istiod_deployment_name,omitempty" json:"istiodDeploymentName,omitempty"`
+	IstiodPodMonitoringPort           int               `yaml:"istiod_pod_monitoring_port,omitempty" json:"istiodPodMonitoringPort,omitempty"`
 	// IstiodPollingIntervalSeconds is how often in seconds Kiali will poll istiod(s) for
 	// proxy status and registry services. Polling is not performed if IstioAPIEnabled is false.
-	IstiodPollingIntervalSeconds     int             `yaml:"istiod_polling_interval_seconds,omitempty"`
-	Registry                         *RegistryConfig `yaml:"registry,omitempty"`
-	RootNamespace                    string          `yaml:"root_namespace,omitempty"`
-	UrlServiceVersion                string          `yaml:"url_service_version"`
-	ValidationChangeDetectionEnabled bool            `yaml:"validation_change_detection_enabled,omitempty"`
+	IstiodPollingIntervalSeconds     int             `yaml:"istiod_polling_interval_seconds,omitempty" json:"istiodPollingIntervalSeconds,omitempty"`
+	Registry                         *RegistryConfig `yaml:"registry,omitempty" json:"registry,omitempty"`
+	RootNamespace                    string          `yaml:"root_namespace,omitempty" json:"rootNamespace,omitempty"`
+	UrlServiceVersion                string          `yaml:"url_service_version" json:"urlServiceVersion"`
+	ValidationChangeDetectionEnabled bool            `yaml:"validation_change_detection_enabled,omitempty" json:"validationChangeDetectionEnabled,omitempty"`
 	// ValidationReconcileInterval sets how often Kiali will validate Istio configuration.
 	// Validations can be disabled setting the interval to 0
-	ValidationReconcileInterval *time.Duration `yaml:"validation_reconcile_interval,omitempty"`
+	ValidationReconcileInterval *time.Duration `yaml:"validation_reconcile_interval,omitempty" json:"validationReconcileInterval,omitempty"`
 }
 
 type ComponentStatuses struct {
-	Enabled    bool              `yaml:"enabled,omitempty"`
-	Components []ComponentStatus `yaml:"components,omitempty"`
+	Enabled    bool              `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	Components []ComponentStatus `yaml:"components,omitempty" json:"components,omitempty"`
 }
 
 type ComponentStatus struct {
-	AppLabel       string `yaml:"app_label,omitempty"`
-	IsCore         bool   `yaml:"is_core,omitempty"`
-	IsProxy        bool   `yaml:"is_proxy,omitempty"`
-	IsMultiCluster bool   `yaml:"is_multicluster,omitempty"`
-	Namespace      string `yaml:"namespace,omitempty"`
+	AppLabel       string `yaml:"app_label,omitempty" json:"appLabel,omitempty"`
+	IsCore         bool   `yaml:"is_core,omitempty" json:"isCore,omitempty"`
+	IsProxy        bool   `yaml:"is_proxy,omitempty" json:"isProxy,omitempty"`
+	IsMultiCluster bool   `yaml:"is_multicluster,omitempty" json:"isMulticluster,omitempty"`
+	Namespace      string `yaml:"namespace,omitempty" json:"namespace,omitempty"`
 }
 
 type GatewayAPIClass struct {
