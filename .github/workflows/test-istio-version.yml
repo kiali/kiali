@@ -49,35 +49,53 @@ jobs:
               *) echo "Invalid schedule or unknown trigger! Cannot determine Istio version." && exit 1 ;;
             esac
           fi
-          LATEST_ISTIO_VERSIONS="$(curl -s https://api.github.com/repos/istio/istio/releases | jq -r '.[].tag_name' | sort -rV | awk -F'[-.]' '
-            {
-              minor = $1"."$2
-              is_rc = ($4 == "rc")
-              z = is_rc ? $3 : $3
-              rc_ver = is_rc ? $5 : ""
+          # Retry fetching Istio versions every 60 seconds for 2 hours (120 retries)
+          echo "Fetching Istio versions from GitHub API (with retry logic)..."
+          for retry in {1..120}; do
+            echo "Attempt $retry/120: Fetching Istio release data..."
+            CURL_RESULT=$(curl -s https://api.github.com/repos/istio/istio/releases)
+            if [ $? -eq 0 ] && [ -n "$CURL_RESULT" ] && echo "$CURL_RESULT" | jq -e '.[].tag_name' >/dev/null 2>&1; then
+              echo "Successfully fetched Istio release data."
+              LATEST_ISTIO_VERSIONS="$(echo "$CURL_RESULT" | jq -r '.[].tag_name' | sort -rV | awk -F'[-.]' '
+                {
+                  minor = $1"."$2
+                  is_rc = ($4 == "rc")
+                  z = is_rc ? $3 : $3
+                  rc_ver = is_rc ? $5 : ""
 
-              if (!minor_ga[minor] && !minor_rc[minor]) {
-                if (is_rc) { minor_rc[minor] = $0; minor_rc_z[minor] = z; minor_rc_rc[minor] = rc_ver }
-                else { minor_ga[minor] = $0; minor_ga_z[minor] = z }
-              } else if (!is_rc && minor_ga[minor]) {
-                if (z > minor_ga_z[minor]) { minor_ga[minor] = $0; minor_ga_z[minor] = z }
-              } else if (!is_rc && !minor_ga[minor]) {
-                minor_ga[minor] = $0; minor_ga_z[minor] = z; delete minor_rc[minor]; delete minor_rc_z[minor]; delete minor_rc_rc[minor]
-              } else if (is_rc && !minor_ga[minor]) {
-                current_rc_stored = minor_rc[minor]
-                split(current_rc_stored, current_rc_parts, "[-.]")
-                current_rc_num_stored = current_rc_parts[5]
+                  if (!minor_ga[minor] && !minor_rc[minor]) {
+                    if (is_rc) { minor_rc[minor] = $0; minor_rc_z[minor] = z; minor_rc_rc[minor] = rc_ver }
+                    else { minor_ga[minor] = $0; minor_ga_z[minor] = z }
+                  } else if (!is_rc && minor_ga[minor]) {
+                    if (z > minor_ga_z[minor]) { minor_ga[minor] = $0; minor_ga_z[minor] = z }
+                  } else if (!is_rc && !minor_ga[minor]) {
+                    minor_ga[minor] = $0; minor_ga_z[minor] = z; delete minor_rc[minor]; delete minor_rc_z[minor]; delete minor_rc_rc[minor]
+                  } else if (is_rc && !minor_ga[minor]) {
+                    current_rc_stored = minor_rc[minor]
+                    split(current_rc_stored, current_rc_parts, "[-.]")
+                    current_rc_num_stored = current_rc_parts[5]
 
-                if (!minor_rc[minor] || z > minor_rc_z[minor] || (z == minor_rc_z[minor] && rc_ver > current_rc_num_stored)) {
-                  minor_rc[minor] = $0; minor_rc_z[minor] = z; minor_rc_rc[minor] = rc_ver
+                    if (!minor_rc[minor] || z > minor_rc_z[minor] || (z == minor_rc_z[minor] && rc_ver > current_rc_num_stored)) {
+                      minor_rc[minor] = $0; minor_rc_z[minor] = z; minor_rc_rc[minor] = rc_ver
+                    }
+                  }
                 }
-              }
-            }
-            END {
-              # The latest patch version is not always available in Sail. Use -latest as patch version
-              for (m in minor_ga) { split(minor_ga[m], version_parts, "."); minor_ga[m] = version_parts[1] "." version_parts[2] "-latest"; print minor_ga[m] }
-              for (m in minor_rc) { split(minor_rc[m], version_parts, "."); minor_rc[m] = version_parts[1] "." version_parts[2] "-latest"; print minor_rc[m] }
-            }' | sort -Vr | grep -v '^$' | head -n $((OFFSET + 1)))"
+                END {
+                  # The latest patch version is not always available in Sail. Use -latest as patch version
+                  for (m in minor_ga) { split(minor_ga[m], version_parts, "."); minor_ga[m] = version_parts[1] "." version_parts[2] "-latest"; print minor_ga[m] }
+                  for (m in minor_rc) { split(minor_rc[m], version_parts, "."); minor_rc[m] = version_parts[1] "." version_parts[2] "-latest"; print minor_rc[m] }
+                }' | sort -Vr | grep -v '^$' | head -n $((OFFSET + 1)))"
+              break
+            else
+              if [ $retry -eq 120 ]; then
+                echo "ERROR: Failed to fetch Istio release data after 2 hours (120 retries). Giving up."
+                exit 1
+              fi
+              echo "Failed to fetch valid Istio release data. Retrying in 60 seconds..."
+              sleep 60
+            fi
+          done
+
           ISTIO_VERSION=$(echo "${LATEST_ISTIO_VERSIONS}" | tail -n 1)
           echo "The latest Istio versions are:"
           echo "${LATEST_ISTIO_VERSIONS}"
