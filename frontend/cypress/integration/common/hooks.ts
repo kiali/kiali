@@ -211,7 +211,7 @@ Before(() => {
       if (result.code !== 0) {
         cy.log('Failed to start stern. Check if the stern binary is downloaded.');
       }
-    })
+    });
   }
 });
 
@@ -221,6 +221,6 @@ After(() => {
       if (result.code !== 0) {
         cy.log('Failed to stop stern. Check if the stern binary is downloaded.');
       }
-    })
+    });
   }
 });
