@@ -63,6 +63,8 @@ if [[ "${STOP}" == "false" && "${LOGFILE}" != "" ]]; then
     run_stern "productpage" "-n bookinfo"
     run_stern "ratings" "-n bookinfo"
     run_stern "reviews" "-n bookinfo"
+
+    # check if stern is running, otherwise return non zero exit code so cypress can evaluate it
 elif [[ "${STOP}" == "true" ]]; then
     pkill -x stern
 else
