@@ -12,13 +12,14 @@ FRONTEND_AMBIENT="frontend-ambient"
 FRONTEND_PRIMARY_REMOTE="frontend-primary-remote"
 FRONTEND_MULTI_PRIMARY="frontend-multi-primary"
 FRONTEND_TEMPO="frontend-tempo"
-ISTIO_VERSION=""
 HELM_CHARTS_DIR=""
-TEST_SUITE="${BACKEND}"
+ISTIO_VERSION=""
 SETUP_ONLY="false"
+STERN="false"
+TEMPO="false"
+TEST_SUITE="${BACKEND}"
 TESTS_ONLY="false"
 WITH_VIDEO="false"
-TEMPO="false"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -36,6 +37,14 @@ while [[ $# -gt 0 ]]; do
       SETUP_ONLY="${2}"
       if [ "${SETUP_ONLY}" != "true" -a "${SETUP_ONLY}" != "false" ]; then
         echo "--setup-only option must be one of 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
+    -st|--stern)
+      STERN="${2}"
+      if [ "${STERN}" != "true" -a "${STERN}" != "false" ]; then
+        echo "--stern option must be one of 'true' or 'false'"
         exit 1
       fi
       shift;shift
@@ -79,6 +88,9 @@ Valid command line arguments:
   -so|--setup-only <true|false>
     If true, only setup the test environment and exit without running the tests.
     Default: false
+  -st|--stern <true|false> 
+    If true, will setup stern logging binary. 
+    Default: false
   -t|--tempo <true|false>
     If true, Tempo will be installed instead of Jaeger. Just for primary-remote suite
     Default: false
@@ -121,6 +133,7 @@ cat <<EOM
 HELM_CHARTS_DIR=$HELM_CHARTS_DIR
 ISTIO_VERSION=$ISTIO_VERSION
 SETUP_ONLY=$SETUP_ONLY
+STERN=$STERN
 TESTS_ONLY=$TESTS_ONLY
 TEST_SUITE=$TEST_SUITE
 WITH_VIDEO=$WITH_VIDEO
@@ -296,6 +309,13 @@ ensureMulticlusterApplicationsAreHealthy() {
     sleep 10
   done
 }
+
+if [ "${STERN}" == "true" ]; then
+  infomsg "Downloading stern binary ..."
+  "${SCRIPT_DIR}"/stern/download-stern.sh
+  export CYPRESS_STERN="true"
+  infomsg "CYPRESS_STERN=${CYPRESS_STERN} exported."
+fi
 
 infomsg "Running ${TEST_SUITE} integration tests"
 if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
