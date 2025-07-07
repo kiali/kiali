@@ -44,27 +44,31 @@ while [[ $# -gt 0 ]]; do
 done
 
 run_stern() {
-    local resource="$1"
-    local namespace="$2"
-    bash -c "exec -a sternLogs \"$SCRIPT_DIR/stern\" $resource $namespace --tail 0 -o json --only-log-lines --max-log-requests 150 >> $LOGFILE 2>&1" &
+  local resource="$1"
+  local namespace="$2"
+  bash -c "exec -a sternLogs \"$SCRIPT_DIR/stern\" $resource $namespace --tail 0 -o json --only-log-lines --max-log-requests 150 >> $LOGFILE 2>&1" &
 }
 
 if [[ "${STOP}" == "false" && "${LOGFILE}" != "" ]]; then
-    echo "----------- next scenario ----------" >> $LOGFILE
-    # core mesh containers
-    run_stern "kiali" "-n istio-system"
-    run_stern "kiali" "-n kiali-operator"
-    run_stern "istiod" "-n istio-system"
-    run_stern "istio-ingressgateway" "-n istio-system"
+  echo '{"message":"---next scenario in the feature file---"}' >> $LOGFILE
+  # core mesh containers
+  run_stern "kiali" "-n istio-system"
+  run_stern "kiali" "-n kiali-operator"
+  run_stern "istiod" "-n istio-system"
+  run_stern "istio-ingressgateway" "-n istio-system"
 
-    # bookinfo application
-    run_stern "details" "-n bookinfo"
-    run_stern "kiali-traffic-generator" "-n bookinfo"
-    run_stern "productpage" "-n bookinfo"
-    run_stern "ratings" "-n bookinfo"
-    run_stern "reviews" "-n bookinfo"
+  # bookinfo application
+  run_stern "details" "-n bookinfo"
+  run_stern "kiali-traffic-generator" "-n bookinfo"
+  run_stern "productpage" "-n bookinfo"
+  run_stern "ratings" "-n bookinfo"
+  run_stern "reviews" "-n bookinfo"
 
-    # check if stern is running, otherwise return non zero exit code so cypress can evaluate it
+  # check if stern is running, otherwise return non zero exit code, so cypress will notice and 
+  if ! pgrep -f "sternLogs" > /dev/null; then
+    echo "stern is not running. Exiting with error."
+    exit 1
+  fi
 elif [[ "${STOP}" == "true" ]]; then
     pkill -x stern
 else
