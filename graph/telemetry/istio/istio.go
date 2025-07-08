@@ -1095,7 +1095,7 @@ func buildAggregateNodeTrafficMap(ctx context.Context, namespace string, n graph
 func GetWaypointMap(ctx context.Context, gi *graph.GlobalInfo) waypointMap {
 	waypoints := gi.Business.Workload.GetWaypoints(ctx)
 	wpMap := make(waypointMap, len(waypoints))
-	var wpKey = waypointKey{} // a re-usable key struct. This works because map keys are always copies
+	wpKey := waypointKey{} // a re-usable key struct. This works because map keys are always copies
 
 	for _, wp := range waypoints {
 		wpKey.Cluster = wp.Cluster
@@ -1122,7 +1122,6 @@ func setWaypointKey(wpKey *waypointKey, cluster, namespace, name string) *waypoi
 
 // hasWaypoint returns true if the source or dest workload is determined to be a waypoint workload.
 func hasWaypoint(wpKeySource, wpKeyDest *waypointKey, globalInfo *graph.GlobalInfo) (sourceIsWaypoint bool, destIsWaypoint bool) {
-
 	wpMap := globalInfo.Vendor[appender.AmbientWaypoints].(waypointMap)
 	sourceIsWaypoint = wpMap[*wpKeySource]
 	destIsWaypoint = wpMap[*wpKeyDest]

@@ -4,8 +4,10 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/fs"
+	"os"
 
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -18,12 +20,41 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/kubernetes/offline"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/server"
 	"github.com/kiali/kiali/tracing"
 )
 
 // Command line arguments for offline mode
 var offlineDataPath string
+
+// readOfflineManifest reads the manifest file and returns the cluster name
+func readOfflineManifest() config.OfflineManifest {
+	manifestPath := "/tmp/kiali-offline-manifest.json"
+
+	manifest := config.OfflineManifest{
+		Cluster: "offline",
+	}
+
+	data, err := os.ReadFile(manifestPath)
+	if err != nil {
+		log.Debugf("Could not read manifest file %s: %v, using default cluster name", manifestPath, err)
+		return manifest
+	}
+
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		log.Debugf("Could not unmarshal manifest file %s: %v, using default cluster name", manifestPath, err)
+		return manifest
+	}
+
+	if manifest.Cluster == "" {
+		log.Debug("Cluster name in manifest is empty, using default cluster name")
+		return manifest
+	}
+
+	log.Infof("Read cluster name from manifest: %s", manifest.Cluster)
+	return manifest
+}
 
 func newOfflineCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -37,18 +68,21 @@ This mode allows you to analyze pre-collected data without requiring a live clus
 
 			conf := config.NewConfig()
 
-			// Override settings for offline mode
-			conf.RunMode = config.RunModeLocal
-			conf.Auth.Strategy = config.AuthStrategyAnonymous
-			conf.KubernetesConfig.ClusterName = "offline"
+			// Read cluster name from manifest file
+			manifest := readOfflineManifest()
 
-			// Disable external services for offline mode.
-			// TODO: These should be added back later once
-			// prom state can be loaded in somehow.
-			conf.ExternalServices.Prometheus.Enabled = false
+			// Override settings for offline mode
+			conf.RunMode = config.RunModeOffline
+			conf.Auth.Strategy = config.AuthStrategyAnonymous
+			conf.KubernetesConfig.ClusterName = manifest.Cluster
+
+			// Configure external services for offline mode
+			conf.ExternalServices.Prometheus.Enabled = true
+			conf.ExternalServices.Prometheus.URL = "http://localhost:9090" // Dummy URL that won't be used
 			conf.ExternalServices.Tracing.Enabled = false
 			conf.ExternalServices.Istio.IstioAPIEnabled = false
 			conf.ExternalServices.Grafana.Enabled = false
+			conf.ExternalServices.CustomDashboards.Enabled = false
 
 			config.Set(conf)
 			if err := config.Validate(*conf); err != nil {
@@ -92,12 +126,14 @@ This mode allows you to analyze pre-collected data without requiring a live clus
 				return nil
 			}
 
+			promClient := prometheus.NewOfflineClient("/tmp/kiali-prom-gather", &manifest)
+
 			kialiServer, err := server.NewServer(
 				nil, // controlPlaneMonitor
 				clientFactory,
 				kialiCache,
 				conf,
-				nil,           // prom
+				promClient,    // prom
 				tracingLoader, // traceClientLoader
 				discovery,
 				staticAssetFS,

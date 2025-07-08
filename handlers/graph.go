@@ -69,7 +69,8 @@ func GraphNamespaces(
 
 		o := graph.NewOptions(r, &business.Namespace)
 
-		code, payload := api.GraphNamespaces(r.Context(), business, o)
+		// TODO: Fix type assertion
+		code, payload := api.GraphNamespaces(r.Context(), business, o, prom)
 		respond(w, code, payload)
 	}
 }

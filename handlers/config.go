@@ -149,6 +149,9 @@ func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface,
 		GlobalScrapeInterval: defaultPrometheusGlobalScrapeInterval,
 		StorageTsdbRetention: defaultPrometheusGlobalStorageTSDBRetention,
 	}
+	if conf.RunMode == config.RunModeOffline {
+		return promConfig
+	}
 	// Check if thanosProxy
 	thanosConf := conf.ExternalServices.Prometheus.ThanosProxy
 	if thanosConf.Enabled {
@@ -232,6 +235,11 @@ func CrippledFeatures(client prometheus.ClientInterface) http.HandlerFunc {
 
 		// assume nothing crippled on error
 		crippledFeatures := KialiCrippledFeatures{}
+		// TODO: Fix
+		if r != nil {
+			RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
+			return
+		}
 
 		existingMetrics, err := client.GetExistingMetricNames(requiredMetrics)
 		if !checkErr(err, "", logger) {

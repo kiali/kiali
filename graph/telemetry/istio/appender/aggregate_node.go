@@ -71,7 +71,7 @@ func (a AggregateNodeAppender) AppendGraph(ctx context.Context, trafficMap graph
 	}
 }
 
-func (a AggregateNodeAppender) appendGraph(ctx context.Context, trafficMap graph.TrafficMap, namespace string, client *prometheus.Client, conf *config.Config) {
+func (a AggregateNodeAppender) appendGraph(ctx context.Context, trafficMap graph.TrafficMap, namespace string, client prometheus.ClientInterface, conf *config.Config) {
 	log.FromContext(ctx).Trace().Msgf("Resolving request aggregates for namespace=[%s], aggregate=[%s]", namespace, a.Aggregate)
 	duration := a.Namespaces[namespace].Duration
 
@@ -111,7 +111,7 @@ func (a AggregateNodeAppender) appendGraph(ctx context.Context, trafficMap graph
 	a.injectAggregates(ctx, trafficMap, &vector, conf)
 }
 
-func (a AggregateNodeAppender) appendNodeGraph(ctx context.Context, trafficMap graph.TrafficMap, namespace string, client *prometheus.Client, conf *config.Config) {
+func (a AggregateNodeAppender) appendNodeGraph(ctx context.Context, trafficMap graph.TrafficMap, namespace string, client prometheus.ClientInterface, conf *config.Config) {
 	log.FromContext(ctx).Trace().Msgf("Resolving node request aggregates for namespace=[%s], aggregate=[%s=%s]", namespace, a.Aggregate, a.AggregateValue)
 	duration := a.Namespaces[namespace].Duration
 
