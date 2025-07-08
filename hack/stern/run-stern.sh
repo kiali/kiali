@@ -12,7 +12,7 @@ LOGFILE=""
 # Help
 helpmsg() {
 cat <<HELPMSG
-This script controls stern loggin binary for istio (upstream) and service mesh (downstream) containers + demo apps .
+This script controls stern logging binary for istio (upstream) and service mesh (downstream) containers + demo apps .
     Valid command line arguments:
     -l|--logfile <filename.json>: Required logfile name (default: Cypress uses current .feature file name, i.e. 'apps.feature.json')
     -s|--stop <true|false>: If true, will stop any instances of the stern spawned by this script (default: false).
