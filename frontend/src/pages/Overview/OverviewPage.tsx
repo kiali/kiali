@@ -857,6 +857,66 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         }
       }
 
+      // Ambient actions
+      if (serverConfig.ambientEnabled) {
+        namespaceActions.push({
+          isGroup: false,
+          isSeparator: true
+        });
+
+        const addAmbientAction = {
+          'data-test': `add-${nsInfo.name}-namespace-ambient`,
+          isGroup: false,
+          isSeparator: false,
+          title: 'Add to Ambient',
+          action: (ns: string) =>
+            this.setState({
+              showTrafficPoliciesModal: true,
+              nsTarget: ns,
+              opTarget: 'enable',
+              kind: 'ambient',
+              clusterTarget: nsInfo.cluster
+            })
+        };
+
+        const disableAmbientAction = {
+          'data-test': `disable-${nsInfo.name}-namespace-ambient`,
+          isGroup: false,
+          isSeparator: false,
+          title: 'Disable Ambient',
+          action: (ns: string) =>
+            this.setState({
+              showTrafficPoliciesModal: true,
+              nsTarget: ns,
+              opTarget: 'disable',
+              kind: 'ambient',
+              clusterTarget: nsInfo.cluster
+            })
+        };
+
+        const removeAmbientAction = {
+          'data-test': `remove-${nsInfo.name}-namespace-ambient`,
+          isGroup: false,
+          isSeparator: false,
+          title: 'Remove Ambient',
+          action: (ns: string) =>
+            this.setState({
+              showTrafficPoliciesModal: true,
+              nsTarget: ns,
+              opTarget: 'remove',
+              kind: 'ambient',
+              clusterTarget: nsInfo.cluster
+            })
+        };
+
+        if (nsInfo.isAmbient) {
+          namespaceActions.push(disableAmbientAction);
+          namespaceActions.push(removeAmbientAction);
+        } else {
+          namespaceActions.push(addAmbientAction);
+        }
+      }
+
       if (serverConfig.kialiFeatureFlags.istioUpgradeAction && this.hasCanaryUpgradeConfigured()) {
         const revisionActions = this.state.controlPlanes
           ?.filter(
