@@ -112,7 +112,7 @@ if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
     # Add retry logic for the second GitHub API call
     echo "Getting the latest patch version for [${VERSION_TO_MATCH}]..."
     for attempt in $(seq 1 120); do
-      LATEST=$(curl -s "https://api.github.com/repos/istio/istio/releases" 2>/dev/null \
+      LATEST=$(curl -L -s https://api.github.com/repos/istio/istio/releases 2>/dev/null \
        | jq -r --arg VERSION_TO_MATCH "$VERSION_TO_MATCH" '.[] | select(.tag_name | startswith($VERSION_TO_MATCH)) | .tag_name' \
        | sort -V \
        | tail -n 1)
