@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { Provider } from 'react-redux';
 import { shallowToJson } from 'enzyme-to-json';
@@ -15,7 +14,7 @@ import { nameFilter } from '../Filters';
 import { DEFAULT_LABEL_OPERATION } from '../../../types/Filters';
 import { CLUSTER_DEFAULT } from '../../../types/Graph';
 
-const mockAPIToPromise = (func: keyof typeof API, obj: any, encapsData: boolean): Promise<void> => {
+const mockAPIToPromise = (func: any, obj: any, encapsData: boolean): Promise<void> => {
   return new Promise((resolve, reject) => {
     jest.spyOn(API, func).mockImplementation(() => {
       return new Promise(r => {

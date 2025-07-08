@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { shallow } from 'enzyme';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
@@ -10,6 +9,8 @@ import { MetricsObjectTypes } from '../../../types/Metrics';
 import { MounterMocker } from 'services/__mocks__/MounterMocker';
 import { ChartModel, DashboardModel } from 'types/Dashboards';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
+import { ApiResponse } from 'types/Api';
+import { GrafanaInfo } from 'types/GrafanaInfo';
 
 const createMetricChart = (name: string): ChartModel => {
   return {
@@ -79,18 +80,20 @@ const createHistogramChart = (name: string): ChartModel => {
 
 describe('Metrics for a service', () => {
   beforeEach(() => {
-    jest.spyOn(API, 'getGrafanaInfo').mockResolvedValue({ externalLinks: [] });
+    jest.spyOn(API, 'getGrafanaInfo').mockResolvedValue({ data: { externalLinks: [] } } as ApiResponse<GrafanaInfo>);
     jest.spyOn(API, 'getCrippledFeatures').mockResolvedValue({
-      requestSize: false,
-      requestSizeAverage: false,
-      requestSizePercentiles: false,
-      responseSize: false,
-      responseSizeAverage: false,
-      responseSizePercentiles: false,
-      responseTime: false,
-      responseTimeAverage: false,
-      responseTimePercentiles: false
-    } as KialiCrippledFeatures);
+      data: {
+        requestSize: false,
+        requestSizeAverage: false,
+        requestSizePercentiles: false,
+        responseSize: false,
+        responseSizeAverage: false,
+        responseSizePercentiles: false,
+        responseTime: false,
+        responseTimeAverage: false,
+        responseTimePercentiles: false
+      }
+    } as ApiResponse<KialiCrippledFeatures>);
   });
 
   afterEach(() => {
@@ -168,16 +171,18 @@ describe('Metrics for a service', () => {
 describe('Inbound Metrics for a workload', () => {
   beforeEach(() => {
     jest.spyOn(API, 'getCrippledFeatures').mockResolvedValue({
-      requestSize: false,
-      requestSizeAverage: false,
-      requestSizePercentiles: false,
-      responseSize: false,
-      responseSizeAverage: false,
-      responseSizePercentiles: false,
-      responseTime: false,
-      responseTimeAverage: false,
-      responseTimePercentiles: false
-    } as KialiCrippledFeatures);
+      data: {
+        requestSize: false,
+        requestSizeAverage: false,
+        requestSizePercentiles: false,
+        responseSize: false,
+        responseSizeAverage: false,
+        responseSizePercentiles: false,
+        responseTime: false,
+        responseTimeAverage: false,
+        responseTimePercentiles: false
+      }
+    } as ApiResponse<KialiCrippledFeatures>);
   });
 
   afterEach(() => {
