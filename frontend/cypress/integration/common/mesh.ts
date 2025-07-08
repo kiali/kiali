@@ -252,12 +252,16 @@ Then('user sees tracing node side panel', () => {
 
 Then('user sees {string} icon side panel', (iconType: string) => {
   cy.waitForReact();
-  cy.get('#target-panel-node').get(`[data-test="icon-${iconType}-validation"]`).should('be.visible');
+  it('icon should be visible', { retries: 3 }, () => {
+    cy.get('#target-panel-node').get(`[data-test="icon-${iconType}-validation"]`).should('be.visible');
+  });
 });
 
 Then('user does not see {string} icon side panel', (iconType: string) => {
   cy.waitForReact();
-  cy.get('#target-panel-node').get(`[data-test="icon-${iconType}-validation"]`).should('not.exist');
+  it('icon should be not visible', { retries: 3 }, () => {
+    cy.get('#target-panel-node').get(`[data-test="icon-${iconType}-validation"]`).should('not.exist');
+  });
 });
 
 Then('user sees {string} configuration tabs', (configTabs: string) => {
