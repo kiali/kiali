@@ -44,7 +44,7 @@ else
   echo $FILENAME
 
   # Download and extract, clean archive
-  echo "Downloading Stern ${LATEST}..."
+  echo "Downloading Stern ${VERSION}..."
   curl -LO "$URL"
   tar -xzf "$FILENAME"
   rm LICENSE "$FILENAME"
