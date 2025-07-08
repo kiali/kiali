@@ -31,5 +31,5 @@ When(
 
 After({ tags: '@component-health-upscale' }, () => {
   cy.exec(`kubectl scale -n istio-system --replicas=1 deployment/grafana`);
-  cy.exec(`kubectl rollout status deployment prometheus -n istio-system`);
+  cy.exec(`kubectl rollout status deployment grafana -n istio-system`);
 });
