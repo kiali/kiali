@@ -55,13 +55,14 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
   }
 
   confirmationModalStatus = (): boolean => {
-    return this.props.kind === 'canary' || this.props.kind === 'injection';
+    return this.props.kind === 'canary' || this.props.kind === 'injection' || this.props.kind === 'ambient';
   };
 
   componentDidUpdate(prevProps: OverviewTrafficPoliciesProps): void {
     if (prevProps.nsTarget !== this.props.nsTarget || prevProps.opTarget !== this.props.opTarget) {
       switch (this.props.kind) {
         case 'injection':
+        case 'ambient':
           this.fetchPermission(true);
           break;
         case 'canary':
@@ -126,6 +127,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
   onConfirm = (): void => {
     switch (this.props.kind) {
       case 'injection':
+      case 'ambient':
         this.onAddRemoveAutoInjection();
         break;
       case 'canary':
