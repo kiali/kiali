@@ -40,9 +40,6 @@ else
   FILENAME="stern_${VERSION}_${OS}_${ARCH}.tar.gz"
   URL="https://github.com/${REPO}/releases/download/v${VERSION}/${FILENAME}"
 
-  echo $URL
-  echo $FILENAME
-
   # Download and extract, clean archive
   echo "Downloading Stern ${VERSION}..."
   curl -LO "$URL"
