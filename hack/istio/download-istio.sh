@@ -64,16 +64,21 @@ echo "Output Directory: ${OUTPUT_DIR}"
 
 if [ -z "${ISTIO_VERSION}" ]; then
   if [ -z "${DEV_ISTIO_VERSION}" ]; then
-    # get the latest released version
-    while [ -z "${VERSION_WE_WANT:-}" ]; do
-      VERSION_WE_WANT=$(curl -L -s https://api.github.com/repos/istio/istio/releases | \
+    # get the latest released version with retry logic
+    echo "Getting the latest Istio version from GitHub..."
+    for attempt in $(seq 1 120); do
+      VERSION_WE_WANT=$(curl -L -s https://api.github.com/repos/istio/istio/releases 2>/dev/null | \
             grep tag_name | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | \
             grep -v -E "(snapshot|alpha|beta|rc)\.[0-9]$" | sort -t"." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)
-      if [ -z "${VERSION_WE_WANT:-}" ]; then
-        echo "Cannot get the latest Istio version from github. Will try again"
-        sleep 2
+      if [ $? -eq 0 ] && [ -n "${VERSION_WE_WANT}" ] && [ "${VERSION_WE_WANT}" != "null" ]; then
+        echo "Successfully retrieved the latest Istio version: [$VERSION_WE_WANT]"
+        break
+      elif [ ${attempt} -eq 120 ]; then
+        echo "ERROR: Failed to get the latest Istio version from GitHub after 120 attempts (2 hours). Giving up."
+        exit 1
       else
-        echo "Will use the latest Istio version: [$VERSION_WE_WANT]"
+        echo "WARNING: Failed to get the latest Istio version from GitHub. Will retry in 60 seconds... (attempt ${attempt}/120)"
+        sleep 60
       fi
     done
     ISTIO_VERSION="${VERSION_WE_WANT}"
@@ -104,15 +109,29 @@ if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
        exit 1
     fi
     VERSION_TO_MATCH="${major}.${minor}"
-    LATEST=$(curl -s "https://api.github.com/repos/istio/istio/releases" \
-     | jq -r --arg VERSION_TO_MATCH "$VERSION_TO_MATCH" '.[] | select(.tag_name | startswith($VERSION_TO_MATCH)) | .tag_name' \
-     | sort -V \
-     | tail -n 1)
+    # Add retry logic for the second GitHub API call
+    echo "Getting the latest patch version for [${VERSION_TO_MATCH}]..."
+    for attempt in $(seq 1 120); do
+      LATEST=$(curl -L -s https://api.github.com/repos/istio/istio/releases 2>/dev/null \
+       | jq -r --arg VERSION_TO_MATCH "$VERSION_TO_MATCH" '.[] | select(.tag_name | startswith($VERSION_TO_MATCH)) | .tag_name' \
+       | sort -V \
+       | tail -n 1)
+      if [ $? -eq 0 ] && [ -n "${LATEST}" ] && [ "${LATEST}" != "null" ]; then
+        echo "Successfully retrieved the latest patch version [${LATEST}]"
+        break
+      elif [ ${attempt} -eq 120 ]; then
+        echo "ERROR: Failed to get the latest patch version for [${VERSION_TO_MATCH}] from GitHub after 120 attempts (2 hours). Giving up."
+        exit 1
+      else
+        echo "WARNING: Failed to get the latest patch version from GitHub. Will retry in 60 seconds... (attempt ${attempt}/120)"
+        sleep 60
+      fi
+    done
     if [[ -z ${LATEST} ]]; then
       echo "Couldn't find the latest version"
       exit 1
     fi
-    echo "Will use Istio ${LATEST}"
+    echo "Will use Istio [${LATEST}]"
     VERSION_WE_WANT=${LATEST}
     ISTIO_VERSION=${LATEST}
   fi
