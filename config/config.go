@@ -697,8 +697,9 @@ type Profiler struct {
 type RunMode string
 
 const (
-	RunModeLocal RunMode = "local"
-	RunModeApp   RunMode = "app"
+	RunModeLocal   RunMode = "local"
+	RunModeApp     RunMode = "app"
+	RunModeOffline RunMode = "offline"
 )
 
 // Config defines full YAML configuration.

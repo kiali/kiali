@@ -58,6 +58,10 @@ type (
 	}
 )
 
+// TODO: Optionally pass a file to load the cache from?
+// TODO: In offline mode, load the cache from a file and never expire?
+// TODO: Dump to file option for gather mode.
+// TODO: Might as well implement a separate PrometheusClient interface for the dumping to and reading from file parts.
 func NewPromCache(ctx context.Context) PromCache {
 	kConfig := kialiConfig.Get()
 
