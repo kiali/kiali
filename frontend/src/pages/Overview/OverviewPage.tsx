@@ -858,11 +858,6 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
       // Ambient actions
       if (serverConfig.ambientEnabled) {
-        namespaceActions.push({
-          isGroup: false,
-          isSeparator: true
-        });
-
         const addAmbientAction = {
           'data-test': `add-${nsInfo.name}-namespace-ambient`,
           isGroup: false,
@@ -908,11 +903,21 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             })
         };
 
-        if (nsInfo.isAmbient) {
-          namespaceActions.push(disableAmbientAction);
-          namespaceActions.push(removeAmbientAction);
-        } else {
-          namespaceActions.push(addAmbientAction);
+        if (
+          nsInfo.labels &&
+          !nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
+          !nsInfo.labels[serverConfig.istioLabels.injectionLabelRev]
+        ) {
+          if (nsInfo.isAmbient) {
+            namespaceActions.push({
+              isGroup: false,
+              isSeparator: true
+            });
+            namespaceActions.push(disableAmbientAction);
+            namespaceActions.push(removeAmbientAction);
+          } else {
+            namespaceActions.push(addAmbientAction);
+          }
         }
       }
 

@@ -13,7 +13,8 @@ import { GraphDataSource } from 'services/GraphDataSource';
 import {
   buildGraphAuthorizationPolicy,
   buildNamespaceInjectionPatch,
-  buildGraphSidecars
+  buildGraphSidecars,
+  buildNamespaceAmbientPatch
 } from 'components/IstioWizards/WizardActions';
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
@@ -127,8 +128,10 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
   onConfirm = (): void => {
     switch (this.props.kind) {
       case 'injection':
+        this.onAddRemoveAutoInjection(false);
+        break;
       case 'ambient':
-        this.onAddRemoveAutoInjection();
+        this.onAddRemoveAutoInjection(true);
         break;
       case 'canary':
         this.onUpgradeDowngradeIstio();
@@ -141,12 +144,17 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
     this.onHideConfirmModal();
   };
 
-  onAddRemoveAutoInjection = (): void => {
-    const jsonPatch = buildNamespaceInjectionPatch(
-      this.props.opTarget === 'enable',
-      this.props.opTarget === 'remove',
-      null
-    );
+  onAddRemoveAutoInjection = (ambient: boolean): void => {
+    let jsonPatch: string;
+    if (ambient) {
+      jsonPatch = buildNamespaceAmbientPatch(this.props.opTarget);
+    } else {
+      jsonPatch = buildNamespaceInjectionPatch(
+        this.props.opTarget === 'enable',
+        this.props.opTarget === 'remove',
+        null
+      );
+    }
 
     API.updateNamespace(this.props.nsTarget, jsonPatch, this.props.nsInfo.cluster)
       .then(_ => {
@@ -314,6 +322,8 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
         ? ' Traffic Policies'
         : this.props.kind === 'injection'
         ? ' Auto Injection'
+        : this.props.kind === 'ambient'
+        ? ' Ambient'
         : ` to ${canaryVersion}`
     }?`;
 
@@ -367,6 +377,10 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
             <>
               You're going to switch to {this.state.selectedRevision} revision in the namespace {this.props.nsTarget}.
               Are you sure?
+            </>
+          ) : this.props.kind === 'ambient' ? (
+            <>
+              You're going to {this.props.opTarget} Ambient in the namespace {this.props.nsTarget}. Are you sure?
             </>
           ) : (
             <>
