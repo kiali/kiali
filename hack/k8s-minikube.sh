@@ -380,13 +380,116 @@ install_olm() {
   echo 'Installing OLM...'
 
   if [ "${OLM_VERSION}" == "latest" ]; then
-    OLM_VERSION="$(curl -s https://api.github.com/repos/operator-framework/operator-lifecycle-manager/releases 2> /dev/null | grep "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | grep -v "snapshot" | sort -t "." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)"
-    if [ -z "${OLM_VERSION}" ]; then
-      echo "Failed to obtain the latest OLM version from Github. You will need to specify an explicit version via --olm-version."
+    # Try for 2 hours (120 attempts * 60 seconds)
+    local curl_output=""
+    OLM_VERSION=""
+    for i in {1..120}; do
+      echo "Attempt $i/120: Attempting to get the latest OLM version from GitHub..."
+
+      # Try to get the releases from GitHub
+      curl_output=$(curl -s https://api.github.com/repos/operator-framework/operator-lifecycle-manager/releases 2>/dev/null)
+      local curl_exit_code=$?
+
+      # Check if curl succeeded
+      if [ $curl_exit_code -ne 0 ]; then
+        if [ $i -lt 120 ]; then
+          echo "Retry $i/120: curl command failed with exit code [$curl_exit_code], retrying in 60 seconds..."
+          sleep 60
+        fi
+        continue
+      fi
+
+      # Check if we got a non-empty response
+      if [ -z "$curl_output" ]; then
+        if [ $i -lt 120 ]; then
+          echo "Retry $i/120: curl returned empty response, retrying in 60 seconds..."
+          sleep 60
+        fi
+        continue
+      fi
+
+      # Check if the response looks like valid JSON (basic check)
+      if ! echo "$curl_output" | grep -q '"tag_name"'; then
+        if [ $i -lt 120 ]; then
+          echo "Retry $i/120: curl response does not contain expected JSON structure, retrying in 60 seconds..."
+          sleep 60
+        fi
+        continue
+      fi
+
+      # Try to extract the OLM version
+      local OLM_VERSION_TEMP="$(echo "$curl_output" | grep "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | grep -v "snapshot" | sort -t "." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)"
+
+      # Check if version extraction succeeded
+      if [ -z "${OLM_VERSION_TEMP}" ]; then
+        if [ $i -lt 120 ]; then
+          echo "Retry $i/120: failed to extract latest OLM version from GitHub response, retrying in 60 seconds..."
+          sleep 60
+        fi
+        continue
+      fi
+
+      # If we got here, everything worked
+      OLM_VERSION="${OLM_VERSION_TEMP}"
+      echo "Successfully obtained latest OLM version from GitHub: ${OLM_VERSION}"
+      break
+    done
+
+    # Final check - if we still don't have a version after all retries, fail
+    if [ -z "${OLM_VERSION:-}" ]; then
+      echo "Failed to obtain the latest OLM version from GitHub after 120 attempts over 2 hours. You will need to specify an explicit version via --olm-version."
       exit 1
     else
       echo "Github reports the latest OLM version is: ${OLM_VERSION}"
     fi
+  fi
+
+  # Download the OLM install script with retry logic (2 hours, 60 seconds between retries)
+  echo "Downloading OLM install script..."
+  for i in {1..120}; do
+    local olm_install_script=""
+    echo "Attempt $i/120: Downloading OLM install script from GitHub..."
+
+    # Try to download the OLM install script
+    olm_install_script=$(curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}/install.sh 2>/dev/null)
+    local curl_exit_code=$?
+
+    # Check if curl succeeded
+    if [ $curl_exit_code -ne 0 ]; then
+      if [ $i -lt 120 ]; then
+        echo "Retry $i/120: curl command failed with exit code [$curl_exit_code], retrying in 60 seconds..."
+        sleep 60
+      fi
+      continue
+    fi
+
+    # Check if we got a non-empty response
+    if [ -z "$olm_install_script" ]; then
+      if [ $i -lt 120 ]; then
+        echo "Retry $i/120: curl returned empty response, retrying in 60 seconds..."
+        sleep 60
+      fi
+      continue
+    fi
+
+    # Check if the response looks like a valid shell script (basic check)
+    if ! echo "$olm_install_script" | grep -q '#!/bin/bash\|#!/bin/sh\|bash\|kubectl'; then
+      if [ $i -lt 120 ]; then
+        echo "Retry $i/120: downloaded content does not appear to be a valid shell script, retrying in 60 seconds..."
+        sleep 60
+      fi
+      continue
+    fi
+
+    # If we got here, everything worked
+    echo "Successfully downloaded OLM install script from GitHub"
+    break
+  done
+
+  # Final check - if we still don't have the script after all retries, fail
+  if [ -z "${olm_install_script:-}" ]; then
+    echo "Failed to download OLM install script from GitHub after 120 attempts over 2 hours."
+    exit 1
   fi
 
   # force the install.sh script to go through minikube kubectl when it executes kubectl commands
@@ -395,7 +498,10 @@ install_olm() {
   }
   export MINIKUBE_EXEC_WITH_PROFILE
   export -f kubectl
-  curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}/install.sh | bash -s ${OLM_VERSION}
+
+  # Run the downloaded script (no retry - fail immediately if it fails)
+  echo "Running OLM install script..."
+  echo "$olm_install_script" | bash -s ${OLM_VERSION}
   [ "$?" != "0" ] && echo "ERROR: Failed to install OLM" && exit 1
   unset -f kubectl
 
