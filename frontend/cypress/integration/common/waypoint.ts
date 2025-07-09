@@ -218,5 +218,5 @@ When('{string} badge {string}', (badge, option: string) => {
   if (option === 'exist') {
     selector = 'exist';
   }
-  cy.get('span').filter(`:contains("${badge}")`).should(selector);
+  cy.get(`[data-test="card_header"]`).get('span').filter(`:contains("${badge}")`).should(selector);
 });
