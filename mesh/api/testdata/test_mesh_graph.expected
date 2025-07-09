@@ -1,266 +1,18 @@
 {
-  "elements" : {
-    "nodes" : [ {
-      "data" : {
-        "id" : "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
-        "cluster" : "_external_",
-        "infraName" : "External Deployments",
-        "infraType" : "cluster",
-        "namespace" : "",
-        "nodeType" : "box",
-        "healthData" : "Healthy",
-        "isBox" : "cluster",
-        "isExternal" : true,
-        "isInaccessible" : true
-      }
-    }, {
-      "data" : {
-        "id" : "52e2139bb2622c3156273a148bb95c794e674e820ffcf433a3e530e31e5fcd36",
-        "cluster" : "cluster-primary",
-        "infraName" : "cluster-primary",
-        "infraType" : "cluster",
-        "namespace" : "",
-        "nodeType" : "box",
-        "healthData" : "Healthy",
-        "infraData" : {
-          "apiEndpoint" : "http://127.0.0.2:9443",
-          "isKialiHome" : true,
-          "kialiInstances" : [ {
-            "namespace" : "istio-system",
-            "operatorResource" : "",
-            "serviceName" : "kiali",
-            "url" : "",
-            "version" : ""
-          } ],
-          "name" : "cluster-primary",
-          "secretName" : "",
-          "accessible" : true
-        },
-        "isBox" : "cluster",
-        "version" : "Unknown"
-      }
-    }, {
-      "data" : {
-        "id" : "421c6926a61f0f21f1fe0babb48ea9fac6454c1d9a448dea2c559402723ec4da",
-        "cluster" : "cluster-remote",
-        "infraName" : "cluster-remote",
-        "infraType" : "cluster",
-        "namespace" : "",
-        "nodeType" : "box",
-        "healthData" : "Healthy",
-        "infraData" : {
-          "apiEndpoint" : "",
-          "isKialiHome" : false,
-          "kialiInstances" : null,
-          "name" : "cluster-remote",
-          "secretName" : "",
-          "accessible" : true
-        },
-        "isBox" : "cluster"
-      }
-    }, {
-      "data" : {
-        "id" : "5d47c4043773968316f9d71a07212a1c363d76a3d9ffe7c52198f864cde8c5f5",
-        "parent" : "52e2139bb2622c3156273a148bb95c794e674e820ffcf433a3e530e31e5fcd36",
-        "cluster" : "cluster-primary",
-        "infraName" : "data-plane-1",
-        "infraType" : "namespace",
-        "namespace" : "data-plane-1",
-        "nodeType" : "box",
-        "healthData" : null,
-        "isBox" : "namespace"
-      }
-    }, {
-      "data" : {
-        "id" : "d267c54a08bd79c4a07c88b2e0d93b5c93962da0703c7bfd70d1ead571b067f0",
-        "parent" : "52e2139bb2622c3156273a148bb95c794e674e820ffcf433a3e530e31e5fcd36",
-        "cluster" : "cluster-primary",
-        "infraName" : "istio-system",
-        "infraType" : "namespace",
-        "namespace" : "istio-system",
-        "nodeType" : "box",
-        "healthData" : null,
-        "isBox" : "namespace"
-      }
-    }, {
-      "data" : {
-        "id" : "33493098cdd63801f773396da680159d0bb57b482ef38a4b208899a2e477e1f0",
-        "parent" : "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
-        "cluster" : "_external_",
-        "infraName" : "Grafana",
-        "infraType" : "grafana",
-        "namespace" : "",
-        "nodeType" : "infra",
-        "healthData" : "Healthy",
-        "infraData" : {
-          "auth" : {
-            "caFile" : "xxx",
-            "insecureSkipVerify" : false,
-            "password" : "xxx",
-            "token" : "xxx",
-            "type" : "none",
-            "useKialiToken" : false,
-            "username" : "xxx"
-          },
-          "dashboards" : null,
-          "enabled" : true,
-          "externalURL" : "",
-          "internalURL" : "http://grafana.istio-system:3000"
-        },
-        "isExternal" : true,
-        "isInaccessible" : true
-      }
-    }, {
-      "data" : {
-        "id" : "41b50563edf837e2e828b50492b24356bf392be6e0a7a7f21d90eabe551dd686",
-        "parent" : "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
-        "cluster" : "_external_",
-        "infraName" : "Prometheus",
-        "infraType" : "metricStore",
-        "namespace" : "",
-        "nodeType" : "infra",
-        "healthData" : "Healthy",
-        "infraData" : {
-          "auth" : {
-            "caFile" : "xxx",
-            "insecureSkipVerify" : false,
-            "password" : "xxx",
-            "token" : "xxx",
-            "type" : "none",
-            "useKialiToken" : false,
-            "username" : "xxx"
-          },
-          "cacheDuration" : 7,
-          "cacheEnabled" : true,
-          "cacheExpiration" : 300,
-          "thanosProxy" : {
-            "retentionPeriod" : "7d",
-            "scrapeInterval" : "30s"
-          },
-          "url" : "http://prometheus.istio-system:9090"
-        },
-        "isExternal" : true,
-        "isInaccessible" : true
-      }
-    }, {
-      "data" : {
-        "id" : "e0733a58436c292ece7cbcf37db7b77510545c027d03c1798c3d6d8202b93f6f",
-        "parent" : "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
-        "cluster" : "_external_",
-        "infraName" : "jaeger",
-        "infraType" : "traceStore",
-        "namespace" : "",
-        "nodeType" : "infra",
-        "healthData" : "Healthy",
-        "infraData" : {
-          "auth" : {
-            "caFile" : "xxx",
-            "insecureSkipVerify" : false,
-            "password" : "xxx",
-            "token" : "xxx",
-            "type" : "none",
-            "useKialiToken" : false,
-            "username" : "xxx"
-          },
-          "enabled" : true,
-          "externalURL" : "",
-          "grpcPort" : 9095,
-          "internalURL" : "http://tracing.istio-system:16685/jaeger",
-          "provider" : "jaeger",
-          "tempoConfig" : {
-            "cacheCapacity" : 200,
-            "cacheEnabled" : true
-          },
-          "namespaceSelector" : true,
-          "queryTimeout" : 5,
-          "useGRPC" : true,
-          "whiteListIstioSystem" : [ "jaeger-query", "istio-ingressgateway" ]
-        },
-        "isExternal" : true,
-        "isInaccessible" : true
-      }
-    }, {
-      "data" : {
-        "id" : "0bb699228f65bc52ec82ed3c72726df27b56e7518b38b7e2021196ea0065233c",
-        "parent" : "52e2139bb2622c3156273a148bb95c794e674e820ffcf433a3e530e31e5fcd36",
-        "cluster" : "cluster-primary",
-        "infraName" : "Data Plane",
-        "infraType" : "dataplane",
-        "namespace" : "",
-        "nodeType" : "infra",
-        "healthData" : "Healthy",
-        "infraData" : [ {
-          "name" : "data-plane-1",
-          "cluster" : "cluster-primary",
-          "isAmbient" : false,
-          "labels" : {
-            "istio-injection" : "enabled",
-            "kubernetes.io/metadata.name" : "data-plane-1"
-          },
-          "annotations" : null,
-          "revision" : "default"
-        }, {
-          "name" : "data-plane-2",
-          "cluster" : "cluster-primary",
-          "isAmbient" : false,
-          "labels" : {
-            "istio.io/rev" : "default",
-            "kubernetes.io/metadata.name" : "data-plane-2"
-          },
-          "annotations" : null,
-          "revision" : "default"
-        } ],
-        "version" : "default"
-      }
-    }, {
-      "data" : {
-        "id" : "5d63e313a5acadb4bf9f5bcaa606b69bbaf81a4193a511719a878e9ad8729a5f",
-        "parent" : "5d47c4043773968316f9d71a07212a1c363d76a3d9ffe7c52198f864cde8c5f5",
-        "cluster" : "cluster-primary",
-        "infraName" : "waypoint",
-        "infraType" : "waypoint",
-        "namespace" : "data-plane-1",
-        "nodeType" : "infra",
-        "healthData" : "Healthy",
-        "infraData" : {
-          "Annotations" : { },
-          "Labels" : {
-            "gateway.istio.io/managed" : "istio.io-mesh-controller",
-            "gateway.networking.k8s.io/gateway-name" : "waypoint"
-          },
-          "TemplateAnnotations" : null,
-          "TemplateLabels" : {
-            "gateway.istio.io/managed" : "istio.io-mesh-controller",
-            "gateway.networking.k8s.io/gateway-name" : "waypoint"
-          }
-        },
-        "version" : "default"
-      }
-    }, {
-      "data" : {
-        "id" : "29c05b5dfa30d15d450e54f0651c03c68a25a78ae4dc8f292c6ceb5ce6be7e6d",
-        "parent" : "d267c54a08bd79c4a07c88b2e0d93b5c93962da0703c7bfd70d1ead571b067f0",
-        "cluster" : "cluster-primary",
-        "infraName" : "kiali",
-        "infraType" : "kiali",
-        "namespace" : "istio-system",
-        "nodeType" : "infra",
-        "healthData" : "Healthy",
-        "infraData" : {
-          "componentStatuses" : {
-            "enabled" : true
-          },
-          "envoyAdminLocalPort" : 15000,
-          "istioApiEnabled" : true,
-          "istioIdentityDomain" : "svc.cluster.local",
-          "istioInjectionAnnotation" : "sidecar.istio.io/inject",
-          "istioSidecarAnnotation" : "sidecar.istio.io/status",
-          "istiodPodMonitoringPort" : 15014,
-          "istiodPollingIntervalSeconds" : 20,
-          "rootNamespace" : "istio-system",
-          "urlServiceVersion" : "",
-          "validationChangeDetectionEnabled" : true,
-          "validationReconcileInterval" : 60000000000
+  "elements": {
+    "nodes": [
+      {
+        "data": {
+          "id": "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
+          "cluster": "_external_",
+          "infraName": "External Deployments",
+          "infraType": "cluster",
+          "namespace": "",
+          "nodeType": "box",
+          "healthData": "Healthy",
+          "isBox": "cluster",
+          "isExternal": true,
+          "isInaccessible": true
         }
       },
       {
@@ -349,22 +101,19 @@
           "nodeType": "infra",
           "healthData": "Healthy",
           "infraData": {
-            "Auth": {
-              "CAFile": "xxx",
-              "InsecureSkipVerify": false,
-              "Password": "xxx",
-              "Token": "xxx",
-              "Type": "none",
-              "UseKialiToken": false,
-              "Username": "xxx"
+            "auth": {
+              "caFile": "xxx",
+              "insecureSkipVerify": false,
+              "password": "xxx",
+              "token": "xxx",
+              "type": "none",
+              "useKialiToken": false,
+              "username": "xxx"
             },
-            "Dashboards": null,
-            "DatasourceUID": "",
-            "Enabled": true,
-            "ExternalURL": "",
-            "HealthCheckUrl": "",
-            "InternalURL": "http://grafana.istio-system:3000",
-            "IsCore": false
+            "dashboards": null,
+            "enabled": true,
+            "externalURL": "",
+            "internalURL": "http://grafana.istio-system:3000"
           },
           "isExternal": true,
           "isInaccessible": true
@@ -381,28 +130,23 @@
           "nodeType": "infra",
           "healthData": "Healthy",
           "infraData": {
-            "Auth": {
-              "CAFile": "xxx",
-              "InsecureSkipVerify": false,
-              "Password": "xxx",
-              "Token": "xxx",
-              "Type": "none",
-              "UseKialiToken": false,
-              "Username": "xxx"
+            "auth": {
+              "caFile": "xxx",
+              "insecureSkipVerify": false,
+              "password": "xxx",
+              "token": "xxx",
+              "type": "none",
+              "useKialiToken": false,
+              "username": "xxx"
             },
-            "CacheDuration": 7,
-            "CacheEnabled": true,
-            "CacheExpiration": 300,
-            "CustomHeaders": {},
-            "HealthCheckUrl": "",
-            "IsCore": false,
-            "QueryScope": {},
-            "ThanosProxy": {
-              "Enabled": false,
-              "RetentionPeriod": "7d",
-              "ScrapeInterval": "30s"
+            "cacheDuration": 7,
+            "cacheEnabled": true,
+            "cacheExpiration": 300,
+            "thanosProxy": {
+              "retentionPeriod": "7d",
+              "scrapeInterval": "30s"
             },
-            "URL": "http://prometheus.istio-system:9090"
+            "url": "http://prometheus.istio-system:9090"
           },
           "isExternal": true,
           "isInaccessible": true
@@ -419,33 +163,28 @@
           "nodeType": "infra",
           "healthData": "Healthy",
           "infraData": {
-            "Auth": {
-              "CAFile": "xxx",
-              "InsecureSkipVerify": false,
-              "Password": "xxx",
-              "Token": "xxx",
-              "Type": "none",
-              "UseKialiToken": false,
-              "Username": "xxx"
+            "auth": {
+              "caFile": "xxx",
+              "insecureSkipVerify": false,
+              "password": "xxx",
+              "token": "xxx",
+              "type": "none",
+              "useKialiToken": false,
+              "username": "xxx"
             },
-            "CustomHeaders": {},
-            "DisableVersionCheck": false,
-            "Enabled": true,
-            "ExternalURL": "",
-            "HealthCheckUrl": "",
-            "GrpcPort": 9095,
-            "InternalURL": "http://tracing.istio-system:16685/jaeger",
-            "IsCore": false,
-            "Provider": "jaeger",
-            "TempoConfig": {
-              "cache_capacity": 200,
-              "cache_enabled": true
+            "enabled": true,
+            "externalURL": "",
+            "grpcPort": 9095,
+            "internalURL": "http://tracing.istio-system:16685/jaeger",
+            "provider": "jaeger",
+            "tempoConfig": {
+              "cacheCapacity": 200,
+              "cacheEnabled": true
             },
-            "NamespaceSelector": true,
-            "QueryScope": {},
-            "QueryTimeout": 5,
-            "UseGRPC": true,
-            "WhiteListIstioSystem": [
+            "namespaceSelector": true,
+            "queryTimeout": 5,
+            "useGRPC": true,
+            "whiteListIstioSystem": [
               "jaeger-query",
               "istio-ingressgateway"
             ]
@@ -528,8 +267,7 @@
           "healthData": "Healthy",
           "infraData": {
             "ComponentStatuses": {
-              "Enabled": true,
-              "Components": []
+              "enabled": true
             },
             "ConfigMapName": "",
             "EnvoyAdminLocalPort": 15000,
@@ -543,12 +281,11 @@
             "IstioSidecarAnnotation": "sidecar.istio.io/status",
             "IstiodDeploymentName": "",
             "IstiodPodMonitoringPort": 15014,
-            "IstiodPollingIntervalSeconds": 20,
-            "Registry": null,
-            "RootNamespace": "istio-system",
-            "UrlServiceVersion": "",
-            "ValidationChangeDetectionEnabled": true,
-            "ValidationReconcileInterval": 60000000000
+            "istiodPollingIntervalSeconds": 20,
+            "rootNamespace": "istio-system",
+            "urlServiceVersion": "",
+            "validationChangeDetectionEnabled": true,
+            "validationReconcileInterval": 60000000000
           }
         }
       },
@@ -831,6 +568,6 @@
       }
     ]
   },
-  "meshName" : "",
-  "timestamp" : 1523364075
+  "meshName": "",
+  "timestamp": 1523364075
 }
