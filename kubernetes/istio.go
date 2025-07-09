@@ -13,6 +13,7 @@ import (
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	inferenceapiclient "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 
@@ -79,6 +80,9 @@ type IstioClientInterface interface {
 	// GatewayAPI returns the gateway-api kube client.
 	GatewayAPI() gatewayapiclient.Interface
 
+	// InferenceAPI returns the inference-extensions-api kube client.
+	InferenceAPI() inferenceapiclient.Interface
+
 	GetConfigDump(namespace, podName string) (*ConfigDump, error)
 }
 
@@ -93,6 +97,10 @@ func (in *K8SClient) Istio() istio.Interface {
 
 func (in *K8SClient) GatewayAPI() gatewayapiclient.Interface {
 	return in.gatewayapi
+}
+
+func (in *K8SClient) InferenceAPI() inferenceapiclient.Interface {
+	return in.inferenceapi
 }
 
 func (in *K8SClient) GetConfigDump(namespace, podName string) (*ConfigDump, error) {

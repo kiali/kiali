@@ -92,6 +92,11 @@ func assertConfigs(configList models.IstioConfigList, namespace string, require 
 		require.True(gw.Namespace == namespace)
 		require.NotNil(gw.Name)
 	}
+	require.NotNil(configList.K8sInferencePools)
+	for _, ipl := range configList.K8sInferencePools {
+		require.True(ipl.Namespace == namespace)
+		require.NotNil(ipl.Name)
+	}
 	require.NotNil(configList.K8sReferenceGrants)
 	for _, rg := range configList.K8sReferenceGrants {
 		require.True(rg.Namespace == namespace)

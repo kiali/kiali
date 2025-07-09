@@ -42,6 +42,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   K8sGateway: { badge: 'G', tt: 'Gateway (K8s)' } as PFBadgeType,
   K8sGRPCRoute: { badge: 'gRPC', tt: 'GRPCRoute (K8s)' } as PFBadgeType,
   K8sHTTPRoute: { badge: 'HTTP', tt: 'HTTPRoute (K8s)' } as PFBadgeType,
+  K8sInferencePool: { badge: 'IP', tt: 'InferencePool (K8s)' } as PFBadgeType,
   K8sReferenceGrant: { badge: 'RG', tt: 'ReferenceGrant (K8s)' } as PFBadgeType,
   K8sTCPRoute: { badge: 'TCP', tt: 'TCPRoute (K8s)' } as PFBadgeType,
   K8sTLSRoute: { badge: 'TLS', tt: 'TLSRoute (K8s)' } as PFBadgeType,
