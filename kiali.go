@@ -60,6 +60,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cluster"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	k8sinferencev1alpha2 "sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
 	k8snetworkingv1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8snetworkingv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	k8snetworkingv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
@@ -242,6 +243,7 @@ func main() {
 		if _, err := layer.IstioConfig.GetIstioConfigList(ctx, cluster, business.IstioConfigCriteria{
 			IncludeGateways:               true,
 			IncludeK8sGateways:            true,
+			IncludeK8sInferencePools:      true,
 			IncludeK8sGRPCRoutes:          true,
 			IncludeK8sHTTPRoutes:          true,
 			IncludeK8sTCPRoutes:           true,
@@ -410,7 +412,7 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 		// Disable metrics server since Kiali has its own metrics server.
 		Cache: ctrlcache.Options{
 			DefaultNamespaces: defaultNamespaces,
-			DefaultWatchErrorHandler: func(r *toolscache.Reflector, err error) {
+			DefaultWatchErrorHandler: func(ctx context.Context, r *toolscache.Reflector, err error) {
 				if apierrors.IsForbidden(err) {
 					log.Infof("A namespace appears to have been deleted or Kiali is forbidden from seeing it [err=%v]. Shutting down cache.", err)
 					// These are all the types that Kiali caches.
@@ -441,6 +443,7 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 						&k8snetworkingv1.GatewayClass{},
 						&k8snetworkingv1.HTTPRoute{},
 						&k8snetworkingv1.GRPCRoute{},
+						&k8sinferencev1alpha2.InferencePool{},
 						&k8snetworkingv1beta1.ReferenceGrant{},
 						&k8snetworkingv1alpha2.TCPRoute{},
 						&k8snetworkingv1alpha2.TLSRoute{},

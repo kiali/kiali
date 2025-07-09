@@ -84,6 +84,7 @@ describe('IstioConfigList#filterByName', () => {
     expect(filtered.resources[getGVKTypeString(gvkType.K8sGateway)].length).toBe(0);
     expect(filtered.resources[getGVKTypeString(gvkType.K8sGRPCRoute)].length).toBe(0);
     expect(filtered.resources[getGVKTypeString(gvkType.K8sHTTPRoute)].length).toBe(0);
+    expect(filtered.resources[getGVKTypeString(gvkType.K8sInferencePool)].length).toBe(0);
     expect(filtered.resources[getGVKTypeString(gvkType.K8sReferenceGrant)].length).toBe(0);
     expect(filtered.resources[getGVKTypeString(gvkType.K8sTCPRoute)].length).toBe(0);
     expect(filtered.resources[getGVKTypeString(gvkType.K8sTLSRoute)].length).toBe(0);

@@ -8,6 +8,8 @@ import (
 	istio_fake "istio.io/client-go/pkg/clientset/versioned/fake"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	inferenceapiclient "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned"
+	inferenceapifake "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned/fake"
 	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 	gatewayapifake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
 
@@ -34,12 +36,20 @@ func (o *K8SClientMock) MockGatewayApi(objects ...runtime.Object) {
 	o.gatewayapiClientSet = gatewayapifake.NewSimpleClientset(objects...)
 }
 
+func (o *K8SClientMock) MockInferenceApi(objects ...runtime.Object) {
+	o.inferenceapiClientSet = inferenceapifake.NewSimpleClientset(objects...)
+}
+
 func (o *K8SClientMock) Istio() istio.Interface {
 	return o.istioClientset
 }
 
 func (o *K8SClientMock) GatewayAPI() gatewayapiclient.Interface {
 	return o.gatewayapiClientSet
+}
+
+func (o *K8SClientMock) InferenceAPI() inferenceapiclient.Interface {
+	return o.inferenceapiClientSet
 }
 
 func (o *K8SClientMock) CanConnectToIstiod() (kubernetes.IstioComponentStatus, error) {

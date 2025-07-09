@@ -262,6 +262,22 @@ func (in *K8SClient) IsGatewayAPI() bool {
 	return *in.isGatewayAPI
 }
 
+func (in *K8SClient) IsInferenceAPI() bool {
+	in.rwMutex.Lock()
+	defer in.rwMutex.Unlock()
+	if in.InferenceAPI() == nil {
+		return false
+	}
+	if in.isInferenceAPI == nil {
+		v1alpha2Types := map[string]string{
+			K8sInferencePoolsType: "inferencepools",
+		}
+		isInferenceAPI := checkInferenceAPIs(in, K8sInferenceGroupVersionV1Alpha2.String(), v1alpha2Types)
+		in.isInferenceAPI = &isInferenceAPI
+	}
+	return *in.isInferenceAPI
+}
+
 func (in *K8SClient) IsExpGatewayAPI() bool {
 	in.rwMutex.Lock()
 	defer in.rwMutex.Unlock()
@@ -299,6 +315,28 @@ func checkGatewayAPIs(in *K8SClient, version string, types map[string]string, is
 			keys = append(keys, key)
 		}
 		log.Warningf("Not all required K8s Gateway API CRDs are installed for version: %s, expected: %s", version, strings.Join(keys, ", "))
+	}
+	return found == len(types)
+}
+
+func checkInferenceAPIs(in *K8SClient, version string, types map[string]string) bool {
+	found := 0
+	res, err := in.k8s.Discovery().ServerResourcesForGroupVersion(version)
+	if err != nil {
+		log.Debugf("K8s Gateway API Inference Extension CRDs are not installed. Required K8s Gateway API Inference Extension version: %s. Gateway API Inference Extension will not be used.", version)
+		return false
+	}
+	for _, r := range res.APIResources {
+		if name, foundKind := types[r.Kind]; foundKind && r.Name == name {
+			found++
+		}
+	}
+	if found > 0 && found < len(types) {
+		keys := make([]string, 0, len(types))
+		for key := range types {
+			keys = append(keys, key)
+		}
+		log.Warningf("Not all required K8s Gateway API Inference Extension CRDs are installed for version: %s, expected: %s", version, strings.Join(keys, ", "))
 	}
 	return found == len(types)
 }

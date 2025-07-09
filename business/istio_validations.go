@@ -653,6 +653,8 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		httpRouteChecker := checkers.K8sHTTPRouteChecker{Conf: conf, Cluster: cluster, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices}
 		objectCheckers = []checkers.ObjectChecker{noServiceChecker, httpRouteChecker}
 		referenceChecker = references.K8sHTTPRouteReferences{Conf: conf, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, Namespaces: nsNames, K8sReferenceGrants: istioConfigList.K8sReferenceGrants}
+	case kubernetes.K8sInferencePools:
+		// Validation on K8sInferencePools is not expected
 	case kubernetes.K8sReferenceGrants:
 		objectCheckers = []checkers.ObjectChecker{
 			checkers.K8sReferenceGrantChecker{Cluster: cluster, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces},
