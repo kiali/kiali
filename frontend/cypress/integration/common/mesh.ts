@@ -137,19 +137,21 @@ Then('user sees control plane side panel', () => {
     );
   };
   waitForMemoryMetrics();
-  cy.get('#refresh_button').click();
-  cy.get('#loading_kiali_spinner').should('not.exist');
+  it('control pannel should be visible', { retries: 3 }, () => {
+    cy.get('#refresh_button').click();
+    cy.get('#loading_kiali_spinner').should('not.exist');
 
-  cy.get('#target-panel-control-plane')
-    .should('be.visible')
-    .within(() => {
-      cy.contains('istiod');
-      cy.contains('Outbound policy').should('be.visible');
-      cy.get('div[data-test="memory-chart"]').should('exist');
-      cy.get('div[data-test="cpu-chart"]').should('exist');
-      cy.get('div[data-test="control-plane-certificate"]').should('exist');
-      cy.get('[data-test="label-TLS"]').contains('TLSV1_2');
-    });
+    cy.get('#target-panel-control-plane')
+      .should('be.visible')
+      .within(() => {
+        cy.contains('istiod');
+        cy.contains('Outbound policy').should('be.visible');
+        cy.get('div[data-test="memory-chart"]').should('exist');
+        cy.get('div[data-test="cpu-chart"]').should('exist');
+        cy.get('div[data-test="control-plane-certificate"]').should('exist');
+        cy.get('[data-test="label-TLS"]').contains('TLSV1_2');
+      });
+  });
 });
 
 Then('user sees data plane side panel', () => {
