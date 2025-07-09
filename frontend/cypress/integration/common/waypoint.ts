@@ -175,3 +175,43 @@ When('the user validates the Ztunnel tab for the {string} namespace', (namespace
     cy.wrap($cell).contains(namespace);
   });
 });
+
+When('user opens the menu', () => {
+  cy.get('[aria-label="Actions"]').click();
+});
+
+When('the option {string} does not exist for {string} namespace', (option, namespace: string) => {
+  let selector = '';
+  if (option == 'Add to Ambient') {
+    selector = `add-${namespace}-namespace-ambient`;
+  }
+  cy.get(selector).should('not.exist');
+});
+
+When('the user clicks on {string} for {string} namespace', (option, namespace: string) => {
+  let selector = '';
+  switch (option) {
+    case 'removes auto injection':
+      selector = `remove-${namespace}-namespace-sidecar-injection`;
+      break;
+    case 'Add to Ambient':
+      selector = `add-${namespace}-namespace-ambient`;
+      break;
+    case 'remove Ambient':
+      selector = `remove-${namespace}-namespace-ambient`;
+      break;
+    case 'enable sidecar':
+      selector = `enable-${namespace}-namespace-sidecar-injection`;
+      break;
+  }
+  cy.get(`[data-test=${selector}]`).click();
+  cy.get(`[data-test="confirm-create"]`).click();
+});
+
+When('{string} badge {string}', (badge, option: string) => {
+  let selector = 'not.exist';
+  if (option === 'exist') {
+    selector = 'exist';
+  }
+  cy.get('span').filter(`:contains("${badge}")`).should(selector);
+});
