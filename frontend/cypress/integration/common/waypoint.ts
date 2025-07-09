@@ -187,7 +187,7 @@ When('user opens the menu', () => {
 
 When('the option {string} does not exist for {string} namespace', (option, namespace: string) => {
   let selector = '';
-  if (option == 'Add to Ambient') {
+  if (option === 'Add to Ambient') {
     selector = `add-${namespace}-namespace-ambient`;
   }
   cy.get(selector).should('not.exist');
