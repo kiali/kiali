@@ -1101,6 +1101,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                       >
                         <CardHeader
                           className={namespaceHeaderStyle}
+                          data-test={'card_header'}
                           actions={{ actions: <>{namespaceActions[i]}</>, hasNoOffset: false, className: undefined }}
                         >
                           {
