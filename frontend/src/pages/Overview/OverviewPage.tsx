@@ -1397,7 +1397,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             Istio API disabled
           </Label>
         )}
-
+        
         {serverConfig.ambientEnabled && !isControlPlane && ns.labels && ns.isAmbient && (
           <AmbientBadge tooltip={tooltip ? 'labeled as part of Ambient Mesh' : undefined} data-test="ambient-badge"></AmbientBadge>
         )}
