@@ -106,6 +106,9 @@ Before({ tags: '@gateway-api' }, () => {
         .should('eq', 0);
     }
   });
+});
+
+Before({ tags: '@gateway-api-ie' }, () => {
   cy.exec('kubectl get crd inference.networking.x-k8s.io', { failOnNonZeroExit: false }).then(result => {
     if (result.code !== 0) {
       cy.log('Gateway API Inference Extension not found. Enabling it now.');
