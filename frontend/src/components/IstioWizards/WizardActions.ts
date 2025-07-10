@@ -2374,6 +2374,29 @@ export const buildNamespaceInjectionPatch = (enable: boolean, remove: boolean, r
   return JSON.stringify(patch);
 };
 
+export const buildNamespaceAmbientPatch = (opTarget: string): string => {
+  const labels = {};
+  switch (opTarget) {
+    case 'enable':
+      labels[serverConfig.istioLabels.ambientNamespaceLabel] = serverConfig.istioLabels.ambientNamespaceLabelValue;
+      break;
+    case 'remove':
+      labels[serverConfig.istioLabels.ambientNamespaceLabel] = null;
+      break;
+    case 'disable':
+      labels[serverConfig.istioLabels.ambientNamespaceLabel] = 'none';
+      break;
+  }
+
+  const patch = {
+    metadata: {
+      labels: labels
+    }
+  };
+
+  return JSON.stringify(patch);
+};
+
 export const buildWorkloadInjectionPatch = (gvk: GroupVersionKind, enable: boolean, remove: boolean): string => {
   const patch = {};
 
