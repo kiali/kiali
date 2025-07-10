@@ -41,7 +41,7 @@ func TestRemoteIstiod(t *testing.T) {
 	// Set this to something so that the patch isn't omitted for being empty.
 	originalConf.ExternalServices.Istio.Registry = &config.RegistryConfig{}
 
-	ipods, err := kubeClient.AppsV1().Deployments(originalConf.IstioNamespace).List(ctx, metav1.ListOptions{LabelSelector: "app=istiod"})
+	ipods, err := kubeClient.AppsV1().Deployments(config.IstioNamespaceDefault).List(ctx, metav1.ListOptions{LabelSelector: "app=istiod"})
 	istioDeploymentName := ipods.Items[0].Name
 
 	// Register clean up before creating resources in case of failure.
@@ -51,7 +51,7 @@ func TestRemoteIstiod(t *testing.T) {
 		require.NoError(instance.Restart(ctx))
 
 		// Remove service:
-		err = kubeClient.CoreV1().Services(originalConf.IstioNamespace).Delete(ctx, "istiod-debug", metav1.DeleteOptions{})
+		err = kubeClient.CoreV1().Services(config.IstioNamespaceDefault).Delete(ctx, "istiod-debug", metav1.DeleteOptions{})
 		if kubeerrors.IsNotFound(err) {
 			err = nil
 		}
@@ -59,7 +59,7 @@ func TestRemoteIstiod(t *testing.T) {
 
 		log.Debugf("Remove nginx container from istio deployment %s", istioDeploymentName)
 		// Remove nginx container
-		istiod, err := kubeClient.AppsV1().Deployments(originalConf.IstioNamespace).Get(ctx, istioDeploymentName, metav1.GetOptions{})
+		istiod, err := kubeClient.AppsV1().Deployments(config.IstioNamespaceDefault).Get(ctx, istioDeploymentName, metav1.GetOptions{})
 		require.NoError(err)
 
 		for i, container := range istiod.Spec.Template.Spec.Containers {
@@ -68,20 +68,20 @@ func TestRemoteIstiod(t *testing.T) {
 				break
 			}
 		}
-		_, err = kubeClient.AppsV1().Deployments(originalConf.IstioNamespace).Update(ctx, istiod, metav1.UpdateOptions{})
+		_, err = kubeClient.AppsV1().Deployments(config.IstioNamespaceDefault).Update(ctx, istiod, metav1.UpdateOptions{})
 		require.NoError(err)
 
-		require.NoError(kube.WaitForDeploymentReady(ctx, kubeClient, originalConf.IstioNamespace, istioDeploymentName))
+		require.NoError(kube.WaitForDeploymentReady(ctx, kubeClient, config.IstioNamespaceDefault, istioDeploymentName))
 	})
 
 	// Expose the istiod /debug endpoints by adding a proxy to the pod.
 	log.Debugf("Patching istiod %s deployment with proxy", istioDeploymentName)
-	_, err = kubeClient.AppsV1().Deployments(originalConf.IstioNamespace).Patch(ctx, istioDeploymentName, types.StrategicMergePatchType, proxyPatch, metav1.PatchOptions{})
+	_, err = kubeClient.AppsV1().Deployments(config.IstioNamespaceDefault).Patch(ctx, istioDeploymentName, types.StrategicMergePatchType, proxyPatch, metav1.PatchOptions{})
 	require.NoError(err)
 	log.Debug("Successfully patched istiod deployment with proxy")
 
 	// Then create a service for the proxy/debug endpoint.
-	require.True(utils.ApplyFile(assetsFolder+"/remote-istiod/istiod-debug-service.yaml", originalConf.IstioNamespace), "Could not create istiod debug service")
+	require.True(utils.ApplyFile(assetsFolder+"/remote-istiod/istiod-debug-service.yaml", config.IstioNamespaceDefault), "Could not create istiod debug service")
 
 	// Now patch kiali to use that remote endpoint.
 	log.Debug("Patching kiali to use remote istiod")

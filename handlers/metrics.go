@@ -177,7 +177,8 @@ func ControlPlaneMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		controlPlane := vars["controlplane"]
-		cluster := clusterNameFromQuery(config.Get(), r.URL.Query())
+		conf := config.Get()
+		cluster := clusterNameFromQuery(conf, r.URL.Query())
 
 		metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
 		if metricsService == nil {
@@ -194,7 +195,7 @@ func ControlPlaneMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 			return
 		}
 
-		if namespace != config.Get().IstioNamespace {
+		if conf.ExternalServices.Istio.IstioNamespace != "" && conf.ExternalServices.Istio.IstioNamespace != namespace {
 			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
 			return
 		}
@@ -234,7 +235,8 @@ func ResourceUsageMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		app := vars["app"]
-		cluster := clusterNameFromQuery(config.Get(), r.URL.Query())
+		conf := config.Get()
+		cluster := clusterNameFromQuery(conf, r.URL.Query())
 
 		metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
 		if metricsService == nil {
@@ -251,7 +253,7 @@ func ResourceUsageMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 			return
 		}
 
-		if namespace != config.Get().IstioNamespace {
+		if conf.ExternalServices.Istio.IstioNamespace != "" && conf.ExternalServices.Istio.IstioNamespace != namespace {
 			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
 			return
 		}
