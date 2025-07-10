@@ -62,7 +62,7 @@ Feature: Kiali Istio Config page
     Then the user can create a "gateway.networking.k8s.io" "v1" "Gateway" K8s Istio object
 
   @bookinfo-app
-  @gateway-api
+  @gateway-api-ie
   Scenario: K8s Inference Pool list
     Given user deletes k8sinferencepool named "foo" and the resource is no longer available
     When there is a "foo" K8sInferencePool in the "bookinfo" namespace with "details-v1" selector
