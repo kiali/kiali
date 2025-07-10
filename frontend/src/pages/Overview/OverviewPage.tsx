@@ -1101,7 +1101,6 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                       >
                         <CardHeader
                           className={namespaceHeaderStyle}
-                          data-test={'card_header'}
                           actions={{ actions: <>{namespaceActions[i]}</>, hasNoOffset: false, className: undefined }}
                         >
                           {
@@ -1392,13 +1391,16 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         {ns.name !== serverConfig.istioNamespace && ns.revision && <ControlPlaneVersionBadge version={ns.revision} />}
 
         {ns.name === serverConfig.istioNamespace && !this.props.istioAPIEnabled && (
-          <Label style={{ marginLeft: '0.5rem' }} color="orange" isCompact>
+          <Label data-test="istio-disabled-badge" style={{ marginLeft: '0.5rem' }} color="orange" isCompact>
             Istio API disabled
           </Label>
         )}
 
         {serverConfig.ambientEnabled && ns.name !== serverConfig.istioNamespace && ns.labels && ns.isAmbient && (
-          <AmbientBadge tooltip={tooltip ? 'labeled as part of Ambient Mesh' : undefined}></AmbientBadge>
+          <AmbientBadge
+            data-test="ambient-badge"
+            tooltip={tooltip ? 'labeled as part of Ambient Mesh' : undefined}
+          ></AmbientBadge>
         )}
       </>
     );
