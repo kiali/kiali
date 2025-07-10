@@ -200,6 +200,27 @@ const minimalK8sReferenceGrant = (name: string, namespace: string, fromNamespace
 }`;
 };
 
+const minimalK8sInferencePool = (name: string, namespace: string, selector: string): string => {
+  return `{
+  "kind": "InferencePool",
+  "apiVersion": "inference.networking.x-k8s.io/v1alpha2",
+  "metadata": {
+    "name": "${name}",
+    "namespace": "${namespace}"
+  },
+  "spec": {
+    "targetPortNumber": 8000,
+    "selector": {
+      "app": "${selector}"
+    },
+    "extensionRef": {
+      "name": "${selector}-epp",
+      "failureMode": "FailClose"
+    }
+  }
+}`;
+};
+
 Given('a {string} AuthorizationPolicy in the {string} namespace', function (name: string, namespace: string) {
   cy.exec(`kubectl delete AuthorizationPolicy ${name} -n ${namespace}`, { failOnNonZeroExit: false });
   cy.exec(`echo '${minimalAuthorizationPolicy(name, namespace)}' | kubectl apply -f -`);
@@ -424,6 +445,13 @@ When(
 );
 
 When(
+  'there is a {string} K8sInferencePool in the {string} namespace with {string} selector',
+  (name: string, ns: string, selector: string) => {
+    cy.exec(`echo '${minimalK8sInferencePool(name, ns, selector)}' | kubectl apply -f  -`);
+  }
+);
+
+When(
   'user adds a {string} listener with {string} host using {string} protocol on port {string} to the {string} K8sGateway in the {string} namespace',
   (listener: string, host: string, protocol: string, port: string, name: string, ns: string) => {
     cy.exec(
@@ -632,6 +660,7 @@ function waitUntilConfigIsVisible(
   cy.get('[data-test="refresh-button"]').click();
   ensureKialiFinishedLoading();
 
+  const shouldNA = healthStatus.includes('N/A');
   let found = false;
   cy.get('tr')
     .each($row => {
@@ -639,7 +668,16 @@ function waitUntilConfigIsVisible(
       const hasNA = $row[0].innerText.includes('N/A');
 
       if (dataTestAttr !== null) {
-        if (dataTestAttr.value === `VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}` && !hasNA) {
+        if (shouldNA) {
+          // Check if the row exists and contains healthStatus text (expected to be N/A)
+          cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}]`)
+            .should('be.visible')
+            .then(foundRow => {
+              if (foundRow.text().includes(healthStatus)) {
+                found = true;
+              }
+            });
+        } else if (dataTestAttr.value === `VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}` && !hasNA) {
           // Check if the health status icon is correct
           cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}] span.pf-v5-c-icon`)
             .should('be.visible')

@@ -393,6 +393,15 @@ Feature: Kiali Istio Config page
     And user selects the "bookinfo" namespace
     Then the "foo" "K8sReferenceGrant" of the "bookinfo" namespace should have a "danger"
 
+  @bookinfo-app
+  @gateway-api
+  Scenario: K8sInferencePool list
+    Given user deletes k8sinferencepool named "foo" and the resource is no longer available
+    When there is a "foo" K8sInferencePool in the "bookinfo" namespace with "details-v1" selector
+    When the user refreshes the page
+    And user selects the "bookinfo" namespace
+    Then the "foo" "K8sInferencePool" of the "bookinfo" namespace should have a "N/A"
+
 # TODO: KIA06xx and KIA07xx does not appear in Istio Config list page. They appear in Svc/workload lists.
 #   Thus, these validations do not belong to this feature file.
 

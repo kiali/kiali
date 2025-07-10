@@ -101,8 +101,17 @@ Before({ tags: '@gateway-api' }, () => {
     if (result.code !== 0) {
       cy.log('Gateway API not found. Enabling it now.');
 
+      cy.exec('kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.3.0" | kubectl apply -f -;')
+        .its('code')
+        .should('eq', 0);
+    }
+  });
+  cy.exec('kubectl get crd inference.networking.x-k8s.io', { failOnNonZeroExit: false }).then(result => {
+    if (result.code !== 0) {
+      cy.log('Gateway API Inference Extension not found. Enabling it now.');
+
       cy.exec(
-        'kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.3.0" | kubectl apply -f -;'
+        'kubectl kustomize "github.com/kubernetes-sigs/gateway-api-inference-extension/config/crd?ref=v0.4.0" | kubectl apply -f -;'
       )
         .its('code')
         .should('eq', 0);
