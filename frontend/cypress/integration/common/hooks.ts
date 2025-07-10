@@ -210,3 +210,24 @@ After({ tags: '@shared-mesh-config' }, () => {
   const patch = '{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": null}}}}}';
   cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`);
 });
+
+Before(() => {
+  if (Cypress.env('STERN') === true) {
+    const specName = Cypress.spec && Cypress.spec.name ? Cypress.spec.name : 'unknown-spec';
+    cy.exec(`../hack/stern/run-stern.sh --logfile ${specName}.json`, { failOnNonZeroExit: false }).then(result => {
+      if (result.code !== 0) {
+        cy.log('Failed to start stern. Check if the stern binary is downloaded.');
+      }
+    });
+  }
+});
+
+After(() => {
+  if (Cypress.env('STERN') === true) {
+    cy.exec(`../hack/stern/run-stern.sh --stop true`, { failOnNonZeroExit: false }).then(result => {
+      if (result.code !== 0) {
+        cy.log('Failed to stop stern. Check if the stern binary is downloaded.');
+      }
+    });
+  }
+});
