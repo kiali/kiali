@@ -27,7 +27,7 @@ export const ControlPlaneVersionBadge: React.FC<Props> = (props: Props) => {
       }
       maxWidth="25rem"
     >
-      <Label style={{ marginLeft: '0.5rem' }} color={'orange'} isCompact>
+      <Label style={{ marginLeft: '0.5rem' }} color={'orange'} isCompact data-test="control-plane-revision-badge">
         {props.version}
       </Label>
     </Tooltip>

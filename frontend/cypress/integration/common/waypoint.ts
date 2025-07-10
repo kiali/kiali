@@ -218,5 +218,10 @@ When('{string} badge {string}', (badge, option: string) => {
   if (option === 'exist') {
     selector = 'exist';
   }
-  cy.get(`[data-test="card_header"]`).get('span').filter(`:contains("${badge}")`).should(selector);
+  let badgeSelector = 'control-plane-revision-badge';
+  if (badgeSelector === 'ambient') {
+    badgeSelector = 'ambient-badge';
+  }
+
+  cy.get(`[data-test="${badgeSelector}"]`).should(selector);
 });
