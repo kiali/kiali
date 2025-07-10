@@ -219,7 +219,7 @@ When('{string} badge {string}', (badge, option: string) => {
     selector = 'exist';
   }
   let badgeSelector = 'control-plane-revision-badge';
-  if (badgeSelector === 'ambient') {
+  if (badge === 'Ambient') {
     badgeSelector = 'ambient-badge';
   }
 
