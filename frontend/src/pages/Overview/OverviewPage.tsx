@@ -1397,10 +1397,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         )}
 
         {serverConfig.ambientEnabled && ns.name !== serverConfig.istioNamespace && ns.labels && ns.isAmbient && (
-          <AmbientBadge
-            data-test="ambient-badge"
-            tooltip={tooltip ? 'labeled as part of Ambient Mesh' : undefined}
-          ></AmbientBadge>
+          <AmbientBadge tooltip={tooltip ? 'labeled as part of Ambient Mesh' : undefined}></AmbientBadge>
         )}
       </>
     );
