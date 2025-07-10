@@ -10,6 +10,7 @@ import (
 	telemetry_v1 "istio.io/client-go/pkg/apis/telemetry/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	k8s_inference_v1alpha2 "sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
@@ -35,6 +36,7 @@ type IstioConfigList struct {
 	K8sGateways        []*k8s_networking_v1.Gateway             `json:"-"`
 	K8sGRPCRoutes      []*k8s_networking_v1.GRPCRoute           `json:"-"`
 	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute           `json:"-"`
+	K8sInferencePools  []*k8s_inference_v1alpha2.InferencePool  `json:"-"`
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant `json:"-"`
 	K8sTCPRoutes       []*k8s_networking_v1alpha2.TCPRoute      `json:"-"`
 	K8sTLSRoutes       []*k8s_networking_v1alpha2.TLSRoute      `json:"-"`
@@ -64,6 +66,7 @@ func (i IstioConfigList) MarshalJSON() ([]byte, error) {
 	resources[kubernetes.K8sGateways.String()] = i.K8sGateways
 	resources[kubernetes.K8sGRPCRoutes.String()] = i.K8sGRPCRoutes
 	resources[kubernetes.K8sHTTPRoutes.String()] = i.K8sHTTPRoutes
+	resources[kubernetes.K8sInferencePools.String()] = i.K8sInferencePools
 	resources[kubernetes.K8sReferenceGrants.String()] = i.K8sReferenceGrants
 	resources[kubernetes.K8sTCPRoutes.String()] = i.K8sTCPRoutes
 	resources[kubernetes.K8sTLSRoutes.String()] = i.K8sTLSRoutes
@@ -149,6 +152,10 @@ func (i *IstioConfigList) UnmarshalJSON(data []byte) error {
 			if err := json.Unmarshal(rawMessage, &i.K8sHTTPRoutes); err != nil {
 				return err
 			}
+		case kubernetes.K8sInferencePools.String():
+			if err := json.Unmarshal(rawMessage, &i.K8sInferencePools); err != nil {
+				return err
+			}
 		case kubernetes.K8sReferenceGrants.String():
 			if err := json.Unmarshal(rawMessage, &i.K8sReferenceGrants); err != nil {
 				return err
@@ -228,6 +235,9 @@ func (i *IstioConfigList) ConvertToResponse() {
 	if i.K8sHTTPRoutes == nil {
 		i.K8sHTTPRoutes = []*k8s_networking_v1.HTTPRoute{}
 	}
+	if i.K8sInferencePools == nil {
+		i.K8sInferencePools = []*k8s_inference_v1alpha2.InferencePool{}
+	}
 	if i.K8sReferenceGrants == nil {
 		i.K8sReferenceGrants = []*k8s_networking_v1beta1.ReferenceGrant{}
 	}
@@ -275,6 +285,7 @@ type IstioConfigDetails struct {
 	K8sGateway        *k8s_networking_v1.Gateway             `json:"-"`
 	K8sGRPCRoute      *k8s_networking_v1.GRPCRoute           `json:"-"`
 	K8sHTTPRoute      *k8s_networking_v1.HTTPRoute           `json:"-"`
+	K8sInferencePool  *k8s_inference_v1alpha2.InferencePool  `json:"-"`
 	K8sReferenceGrant *k8s_networking_v1beta1.ReferenceGrant `json:"-"`
 	K8sTCPRoute       *k8s_networking_v1alpha2.TCPRoute      `json:"-"`
 	K8sTLSRoute       *k8s_networking_v1alpha2.TLSRoute      `json:"-"`
@@ -324,6 +335,8 @@ func (i IstioConfigDetails) MarshalJSON() ([]byte, error) {
 		resource = i.K8sGRPCRoute
 	} else if i.K8sHTTPRoute != nil {
 		resource = i.K8sHTTPRoute
+	} else if i.K8sInferencePool != nil {
+		resource = i.K8sInferencePool
 	} else if i.K8sReferenceGrant != nil {
 		resource = i.K8sReferenceGrant
 	} else if i.K8sTCPRoute != nil {
@@ -479,6 +492,13 @@ func (icd *IstioConfigDetails) UnmarshalJSON(data []byte) error {
 		}
 		icd.K8sHTTPRoute = &httpRoute
 
+	case kubernetes.K8sInferencePools:
+		var inferencePool k8s_inference_v1alpha2.InferencePool
+		if err := json.Unmarshal(temp.Resource, &inferencePool); err != nil {
+			return err
+		}
+		icd.K8sInferencePool = &inferencePool
+
 	case kubernetes.K8sReferenceGrants:
 		var refGrant k8s_networking_v1beta1.ReferenceGrant
 		if err := json.Unmarshal(temp.Resource, &refGrant); err != nil {
@@ -624,6 +644,9 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 	kubernetes.K8sHTTPRoutes.String(): { // TODO
 		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. HTTPRoute is for multiplexing HTTP or terminated HTTPS connections."},
 	},
+	kubernetes.K8sInferencePools.String(): { // TODO
+		{ObjectField: "", Message: "Kubernetes Gateway API Inference Extension Configuration Object. InferencePool defines a group of pods dedicated to serving AI models."},
+	},
 	kubernetes.K8sReferenceGrants.String(): {
 		{ObjectField: "spec", Message: "Kubernetes Gateway API Configuration Object. ReferenceGrant is for enabling cross namespace references within Gateway API."},
 		{ObjectField: "spec.from", Message: "Define the group, kind, and namespace of resources that may reference items described in the to list."},
@@ -671,6 +694,7 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 			filtered[ns].K8sGateways = []*k8s_networking_v1.Gateway{}
 			filtered[ns].K8sGRPCRoutes = []*k8s_networking_v1.GRPCRoute{}
 			filtered[ns].K8sHTTPRoutes = []*k8s_networking_v1.HTTPRoute{}
+			filtered[ns].K8sInferencePools = []*k8s_inference_v1alpha2.InferencePool{}
 			filtered[ns].K8sReferenceGrants = []*k8s_networking_v1beta1.ReferenceGrant{}
 			filtered[ns].K8sTCPRoutes = []*k8s_networking_v1alpha2.TCPRoute{}
 			filtered[ns].K8sTLSRoutes = []*k8s_networking_v1alpha2.TLSRoute{}
@@ -718,6 +742,12 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 		for _, route := range configList.K8sHTTPRoutes {
 			if route.Namespace == ns {
 				filtered[ns].K8sHTTPRoutes = append(filtered[ns].K8sHTTPRoutes, route)
+			}
+		}
+
+		for _, pool := range configList.K8sInferencePools {
+			if pool.Namespace == ns {
+				filtered[ns].K8sInferencePools = append(filtered[ns].K8sInferencePools, pool)
 			}
 		}
 
@@ -816,6 +846,7 @@ func (configList IstioConfigList) MergeConfigs(ns IstioConfigList) IstioConfigLi
 	configList.K8sGateways = append(configList.K8sGateways, ns.K8sGateways...)
 	configList.K8sGRPCRoutes = append(configList.K8sGRPCRoutes, ns.K8sGRPCRoutes...)
 	configList.K8sHTTPRoutes = append(configList.K8sHTTPRoutes, ns.K8sHTTPRoutes...)
+	configList.K8sInferencePools = append(configList.K8sInferencePools, ns.K8sInferencePools...)
 	configList.K8sReferenceGrants = append(configList.K8sReferenceGrants, ns.K8sReferenceGrants...)
 	configList.K8sTCPRoutes = append(configList.K8sTCPRoutes, ns.K8sTCPRoutes...)
 	configList.K8sTLSRoutes = append(configList.K8sTLSRoutes, ns.K8sTLSRoutes...)

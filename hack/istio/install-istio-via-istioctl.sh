@@ -29,6 +29,7 @@ ISTIO_EGRESSGATEWAY_ENABLED="true"
 ISTIO_INGRESSGATEWAY_ENABLED="true"
 K8S_GATEWAY_API_ENABLED="false"
 K8S_GATEWAY_API_VERSION=""
+K8S_GATEWAY_API_IE_VERSION=""
 ISTIO_VERSION=""
 MESH_ID=""
 MTLS="true"
@@ -127,6 +128,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -gav|--k8s-gateway-api-version)
       K8S_GATEWAY_API_VERSION="$2"
+      shift;shift
+      ;;
+    -gaiev|--k8s-gateway-api-ie-version)
+      K8S_GATEWAY_API_IE_VERSION="$2"
       shift;shift
       ;;
     -iv|--istio-version)
@@ -576,9 +581,16 @@ else
       echo "Gateway API Version is not specified, taking the latest released version"
       K8S_GATEWAY_API_VERSION=`curl --head --silent "https://github.com/kubernetes-sigs/gateway-api/releases/latest" | grep "location: " | awk '{print $2}' | sed "s/.*tag\///g" | cat -v | sed "s/\^M//g"`
     fi
+    if [ "${K8S_GATEWAY_API_IE_VERSION}" == "" ]; then
+      echo "Gateway API Inference Extension Version is not specified, taking the latest released version"
+      K8S_GATEWAY_API_IE_VERSION=`curl --head --silent "https://github.com/kubernetes-sigs/gateway-api-inference-extension/releases/latest" | grep "location: " | awk '{print $2}' | sed "s/.*tag\///g" | cat -v | sed "s/\^M//g"`
+    fi
     echo "Verifying that Gateway API is installed; if it is not then Gateway API version ${K8S_GATEWAY_API_VERSION} will be installed now."
     $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
       { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=${K8S_GATEWAY_API_VERSION}" | $CLIENT_EXE apply -f -; }
+    echo "Verifying that Gateway API Inference Extension is installed; if it is not then Gateway API Inference Extension version ${K8S_GATEWAY_API_IE_VERSION} will be installed now."
+    $CLIENT_EXE get crd inferencepools.inference.networking.x-k8s.io &> /dev/null || \
+      { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api-inference-extension/config/crd?ref=${K8S_GATEWAY_API_IE_VERSION}" | $CLIENT_EXE apply -f -; }
   fi
 
   # Do some OpenShift specific things

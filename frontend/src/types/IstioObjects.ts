@@ -854,6 +854,11 @@ export interface K8sHTTPRoute extends IstioObject {
   spec: K8sHTTPRouteSpec;
 }
 
+export interface K8sInferencePool {
+  spec: K8sInferencePoolSpec;
+  status?: K8sInferencePoolStatus;
+}
+
 export interface K8sReferenceGrant extends IstioObject {
   spec: K8sReferenceGrantSpec;
 }
@@ -896,6 +901,29 @@ export interface K8sGRPCRouteSpec extends K8sCommonRouteSpec {
 export interface K8sHTTPRouteSpec extends K8sCommonRouteSpec {
   hostnames?: string[];
   rules?: K8sHTTPRouteRule[];
+}
+
+export interface K8sInferencePoolSpec extends K8sCommonRouteSpec {
+  extensionRef?: K8sInferencePoolExtensionRef;
+  selector?: WorkloadSelector;
+  targetPortNumber?: number;
+}
+
+export interface K8sInferencePoolExtensionRef {
+  failureMode: string;
+  group: string;
+  kind: string;
+  name: string;
+  portNumber: number;
+}
+
+export interface K8sInferencePoolStatus extends K8sStatus {
+  parent: PoolStatus;
+}
+
+export interface PoolStatus {
+  conditions?: K8sStatus[];
+  parentRef: ParentRef;
 }
 
 export interface K8sReferenceGrantSpec {

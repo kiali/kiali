@@ -11742,6 +11742,7 @@ Invalid values include:
 | IstioSidecar | boolean| `bool` |  | |  |  |
 | K8sGRPCRoutes | [][GRPCRoute](#g-rpc-route)| `[]*GRPCRoute` |  | |  |  |
 | K8sHTTPRoutes | [][HTTPRoute](#http-route)| `[]*HTTPRoute` |  | |  |  |
+| K8sInferencePools | [][InferencePool](#inference-pool)| `[]*InferencePool` |  | |  |  |
 | K8sReferenceGrants | [][ReferenceGrant](#reference-grant)| `[]*ReferenceGrant` |  | |  |  |
 | ServiceEntries | [][ServiceEntry](#service-entry)| `[]*ServiceEntry` |  | |  |  |
 | SubServices | [][ServiceOverview](#service-overview)| `[]*ServiceOverview` |  | |  |  |
