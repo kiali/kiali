@@ -254,9 +254,20 @@ func createStatsMetricsLabelsBuilder(q *models.MetricsStatsQuery, conf *config.C
 	return lb
 }
 
-func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, controlPlane string) (models.MetricsMap, error) {
+func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, pods models.Pods, scaler func(n string) float64) (models.MetricsMap, error) {
+	podRegex := ""
+	separator := ""
+	podLabel := ""
 
-	podLabel := fmt.Sprintf(`{pod=~"%s-.*"}`, controlPlane)
+	if len(pods) == 1 {
+		podLabel = fmt.Sprintf(`{pod="%s"}`, pods[0].Name)
+	} else {
+		for _, pod := range pods {
+			podRegex = fmt.Sprintf("%s%s%s", podRegex, separator, pod.Name)
+			separator = "|"
+		}
+		podLabel = fmt.Sprintf(`{pod=~"(%s)"}`, podRegex)
+	}
 
 	metrics := make(models.MetricsMap)
 	var err error
@@ -305,6 +316,7 @@ func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, con
 	metrics["process_cpu_seconds_total"] = append(metrics["process_cpu_seconds_total"], converted...)
 
 	metric = in.prom.FetchRange("container_memory_working_set_bytes", podLabel, "", "", &q.RangeQuery)
+
 	converted, err = models.ConvertMetric("container_memory_working_set_bytes", metric, models.ConversionParams{Scale: 0.000001})
 	if err != nil {
 		return nil, err

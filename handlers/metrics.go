@@ -168,6 +168,11 @@ func getAggregateMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 // ControlPlaneMetrics is the API handler to fetch metrics to be displayed, related to a single control plane revision
 func ControlPlaneMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		layer, err := getBusiness(r)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
 
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
@@ -183,7 +188,7 @@ func ControlPlaneMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 
 		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace}
 
-		err := extractIstioMetricsQueryParams(r, &params, oldestNs)
+		err = extractIstioMetricsQueryParams(r, &params, oldestNs)
 		if err != nil {
 			RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
@@ -194,9 +199,22 @@ func ControlPlaneMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 			return
 		}
 
+		cpWorkload, err := layer.Workload.GetWorkload(r.Context(), business.WorkloadCriteria{
+			Cluster:               cluster,
+			Namespace:             namespace,
+			WorkloadName:          controlPlane,
+			IncludeServices:       false,
+			IncludeIstioResources: false,
+			IncludeHealth:         false,
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		metrics := make(models.MetricsMap)
 
-		controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, controlPlane)
+		controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, cpWorkload.Pods, nil)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
