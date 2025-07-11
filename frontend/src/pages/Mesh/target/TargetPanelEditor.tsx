@@ -4,7 +4,7 @@ import ReactAce from 'react-ace/lib/ace';
 import { useKialiTheme } from '../../../utils/ThemeUtils';
 import { Theme } from '../../../types/Common';
 import { ConfigButtonsTargetPanel } from '../../../components/Mesh/ConfigButtonsTargetPanel';
-import { AceOptions } from 'react-ace/types';
+import { IAceOptions } from 'react-ace';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { yamlDumpOptions } from 'types/IstioConfigDetails';
@@ -16,7 +16,7 @@ interface TargetPanelEditorProps {
   targetName: string;
 }
 
-const aceOptions: AceOptions = {
+const aceOptions: IAceOptions = {
   highlightActiveLine: false,
   highlightGutterLine: false,
   maxLines: Infinity,
