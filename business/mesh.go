@@ -72,3 +72,19 @@ func (in *MeshService) GetMeshConfig() *models.MeshConfig {
 	log.Warningf("No Kiali Home cluster found while getting mesh config")
 	return &models.MeshConfig{MeshConfig: &istiov1alpha1.MeshConfig{}}
 }
+
+func (in *MeshService) IsMeshNamespace(ns string, istiod string) bool {
+	mesh, err := in.discovery.Mesh(context.TODO())
+	if err != nil {
+		log.Errorf("Error getting mesh config: %s", err)
+		return false
+	}
+
+	for _, controlPlane := range mesh.ControlPlanes {
+		if controlPlane.IstiodNamespace == ns && controlPlane.IstiodName == istiod {
+			return true
+		}
+	}
+
+	return false
+}
