@@ -48,16 +48,17 @@ type PublicConfig struct {
 	AmbientEnabled      bool                          `json:"ambientEnabled,omitempty"`
 	Clusters            map[string]models.KubeCluster `json:"clusters,omitempty"`
 	ClusterWideAccess   bool                          `json:"clusterWideAccess,omitempty"`
+	ControlPlanes       map[string]string             `json:"controlPlanes,omitempty"`
 	Deployment          DeploymentConfig              `json:"deployment,omitempty"`
 	GatewayAPIClasses   []config.GatewayAPIClass      `json:"gatewayAPIClasses,omitempty"`
 	GatewayAPIEnabled   bool                          `json:"gatewayAPIEnabled,omitempty"`
 	HealthConfig        config.HealthConfig           `json:"healthConfig,omitempty"`
+	IgnoreLocalCluster  bool                          `json:"ignoreLocalCluster,omitempty"`
 	InstallationTag     string                        `json:"installationTag,omitempty"`
 	IstioAnnotations    IstioAnnotations              `json:"istioAnnotations,omitempty"`
 	IstioConfigMap      string                        `json:"istioConfigMap"`
 	IstioIdentityDomain string                        `json:"istioIdentityDomain,omitempty"`
 	IstioLabels         config.IstioLabels            `json:"istioLabels,omitempty"`
-	IstioNamespace      string                        `json:"istioNamespace,omitempty"`
 	IstioStatusEnabled  bool                          `json:"istioStatusEnabled,omitempty"`
 	KialiFeatureFlags   config.KialiFeatureFlags      `json:"kialiFeatureFlags,omitempty"`
 	LogLevel            string                        `json:"logLevel,omitempty"`
@@ -79,6 +80,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			AuthStrategy:      conf.Auth.Strategy,
 			Clusters:          make(map[string]models.KubeCluster),
 			ClusterWideAccess: conf.Deployment.ClusterWideAccess,
+			ControlPlanes:     make(map[string]string),
 			Deployment: DeploymentConfig{
 				ViewOnlyMode: conf.Deployment.ViewOnlyMode,
 			},
@@ -89,6 +91,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 				IstioInjectionAnnotation: conf.ExternalServices.Istio.IstioInjectionAnnotation,
 			},
 			HealthConfig:        conf.HealthConfig,
+			IgnoreLocalCluster:  conf.Clustering.IgnoreLocalCluster,
 			IstioStatusEnabled:  conf.ExternalServices.Istio.ComponentStatuses.Enabled,
 			IstioIdentityDomain: conf.ExternalServices.Istio.IstioIdentityDomain,
 			IstioLabels:         conf.IstioLabels,
@@ -121,9 +124,16 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			RespondWithError(w, http.StatusInternalServerError, "Failure while listing clusters in the mesh: "+err.Error())
 			return
 		}
-
 		for _, cluster := range clusters {
 			publicConfig.Clusters[cluster.Name] = cluster
+
+			if namespaces, found := cache.GetNamespaces(cluster.Name, userClients[cluster.Name].GetToken()); found {
+				for _, ns := range namespaces {
+					if discovery.IsControlPlane(cluster.Name, ns.Name) {
+						publicConfig.ControlPlanes[cluster.Name] = ns.Name
+					}
+				}
+			}
 		}
 
 		RespondWithJSONIndent(w, http.StatusOK, publicConfig)

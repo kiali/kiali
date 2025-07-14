@@ -8,9 +8,9 @@ import { Title, TitleSizes } from '@patternfly/react-core';
 import { ExpandableRowContent, Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { NamespaceInfo } from 'types/NamespaceInfo';
 import { TargetPanelDataPlaneNamespace } from './TargetPanelDataPlaneNamespace';
-import { serverConfig } from 'config';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { ControlPlaneVersionBadge } from 'pages/Overview/ControlPlaneVersionBadge';
+import { isIstioNamespace } from 'config/ServerConfig';
 
 type TargetPanelDataPlaneProps = TargetPanelCommonProps & {
   target: NodeTarget<DataPlaneNodeData>;
@@ -72,7 +72,7 @@ export const TargetPanelDataPlane: React.FC<TargetPanelDataPlaneProps> = props =
           </Thead>
 
           {data.infraData
-            .filter(ns => ns.name !== serverConfig.istioNamespace)
+            .filter(ns => !isIstioNamespace(ns.name))
             .sort((ns1, ns2) => (ns1.name < ns2.name ? -1 : 1))
             .map((ns, i) => {
               const namespaceData = data.infraData.find((id: NamespaceInfo) => id.name === ns.name);

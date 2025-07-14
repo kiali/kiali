@@ -288,6 +288,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 	}
 
 	// grab all config for the cluster
+	include := cluster != in.conf.KubernetesConfig.ClusterName || !in.conf.Clustering.IgnoreLocalCluster
 	criteria := IstioConfigCriteria{
 		IncludeAuthorizationPolicies:  true,
 		IncludeDestinationRules:       true,
@@ -534,6 +535,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		mtlsDetails: &kubernetes.MTLSDetails{},
 	}
 
+	include := cluster != in.conf.KubernetesConfig.ClusterName || !in.conf.Clustering.IgnoreLocalCluster
 	criteria := IstioConfigCriteria{
 		IncludeAuthorizationPolicies:  true,
 		IncludeDestinationRules:       true,

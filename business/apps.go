@@ -109,16 +109,17 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 		return *appList, err
 	}
 
+	include := cluster != in.conf.KubernetesConfig.ClusterName || !in.conf.Clustering.IgnoreLocalCluster
 	icCriteria := IstioConfigCriteria{
-		IncludeAuthorizationPolicies:  true,
-		IncludeDestinationRules:       true,
-		IncludeEnvoyFilters:           true,
-		IncludeGateways:               true,
-		IncludePeerAuthentications:    true,
-		IncludeRequestAuthentications: true,
-		IncludeSidecars:               true,
-		IncludeVirtualServices:        true,
-		IncludeWorkloadGroups:         true,
+		IncludeAuthorizationPolicies:  include,
+		IncludeDestinationRules:       include,
+		IncludeEnvoyFilters:           include,
+		IncludeGateways:               include,
+		IncludePeerAuthentications:    include,
+		IncludeRequestAuthentications: include,
+		IncludeSidecars:               include,
+		IncludeVirtualServices:        include,
+		IncludeWorkloadGroups:         include,
 	}
 	istioConfigList := &models.IstioConfigList{}
 

@@ -46,6 +46,7 @@ import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { isRemoteCluster } from './TargetPanelControlPlane';
 import { BoxTarget, ControlPlane, NamespaceNodeData } from 'types/Mesh';
 import { MeshInfraType } from 'types/Mesh';
+import { isIstioNamespace } from 'config/ServerConfig';
 
 type TargetPanelNamespaceProps = TargetPanelCommonProps & {
   target: BoxTarget<NamespaceNodeData>;
@@ -365,7 +366,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     const isControlPlane = this.isControlPlane();
     return (
       <>
-        {isControlPlane && ns.name !== serverConfig.istioNamespace && (
+        {isControlPlane && !isIstioNamespace(ns.name) && (
           <ControlPlaneVersionBadge version={ns.labels ? ns.labels['istio.io/rev'] : ''} />
         )}
 
@@ -537,7 +538,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
 
   private isControlPlane = (): boolean => {
     const namespace = this.state.targetNamespace!;
-    return namespace === serverConfig.istioNamespace;
+    return isIstioNamespace(namespace);
   };
 
   private handleApiError = (message: string, error: ApiError): void => {
