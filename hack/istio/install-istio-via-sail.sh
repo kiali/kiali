@@ -38,6 +38,7 @@ done
 ADDONS="prometheus grafana jaeger"
 CUSTOM_INSTALL_SETTINGS=""
 PATCH_FILE=""
+PROFILE=""
 WAIT=true
 
 # process command line args
@@ -50,6 +51,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -pf|--patch-file)
       PATCH_FILE="$2"
+      shift;shift
+      ;;
+    -pr|--profile)
+      PROFILE="$2"
       shift;shift
       ;;
     -s|--set)
@@ -75,6 +80,8 @@ Valid command line arguments:
   -pf|--patch-file <name=value>:
        filepath to a yaml file of an Istio resource that will overlay the default Istio resource.
        --patch-file /path/to/patch-file.yaml
+  -pr|--profile <name>:
+       istio profile. Just default and ambient are valid values.
   -s|--set <name=value>:
        Override any part of the Istio yaml providing a yq compatible path for that field.
        Options specified with --set take precedence over --patch-file. Some examples you may want to use:
@@ -115,6 +122,84 @@ SERVICE="jaeger-collector.istio-system.svc.cluster.local"
 if is_in_array "tempo" "tempo" "${ADDONS}"; then
   SERVICE=otel-collector.istio-system.svc.cluster.local
 fi
+
+if [ "${PROFILE}" == "ambient" ]; then
+cniYAML=$(
+cat <<EOF
+apiVersion: sailoperator.io/v1
+kind: IstioCNI
+metadata:
+  name: default
+spec:
+  values:
+    cni:
+      ambient:
+        dnsCapture: true
+  profile: ambient
+  namespace: istio-cni
+EOF
+)
+
+ztunnelYAML=$(
+cat <<EOF
+apiVersion: sailoperator.io/v1alpha1
+kind: ZTunnel
+metadata:
+  name: default
+spec:
+  profile: ambient
+  namespace: ztunnel
+  values: {}
+EOF
+)
+
+ISTIO_YAML=$(
+cat <<EOF
+apiVersion: sailoperator.io/v1
+kind: Istio
+metadata:
+  labels:
+    kiali.io/testing: ""
+  name: default
+spec:
+  namespace: istio-system
+  updateStrategy:
+    type: InPlace
+  profile: ambient
+  values:
+    meshConfig:
+      enableTracing: true
+      extensionProviders:
+      - name: otel-tracing
+        opentelemetry:
+          port: 4317
+          service: ${SERVICE}
+      discoverySelectors:
+        - matchLabels:
+            istio-discovery: enabled
+    global:
+      meshID: mesh-default
+      network: network-default
+      proxy:
+        resources:
+          requests:
+            cpu: 1m
+            memory: 1Mi
+      proxy_init:
+        resources:
+          requests:
+            cpu: 1m
+            memory: 1Mi
+    pilot:
+      trustedZtunnelNamespace: ztunnel
+      resources:
+        requests:
+          cpu: 1m
+          memory: 1Mi
+EOF
+)
+
+else
 
 ISTIO_YAML=$(
 cat <<EOF
@@ -159,6 +244,8 @@ spec:
 EOF
 )
 
+fi
+
 if [ -n "${PATCH_FILE}" ]; then
   base_yaml=$(mktemp)
   echo "$ISTIO_YAML" > "$base_yaml"
@@ -174,9 +261,25 @@ ISTIO_NAMESPACE=$(yq '.spec.namespace' <<< "$ISTIO_YAML")
 
 kubectl get ns "${ISTIO_NAMESPACE}" || kubectl create ns "${ISTIO_NAMESPACE}"
 
+if [ "${PROFILE}" == "ambient" ]; then
+  echo "Labeling namespace"
+  kubectl label ns "${ISTIO_NAMESPACE}" istio-discovery=enabled
+fi
+
 kubectl apply -f - <<<"$ISTIO_YAML"
 if [ "${WAIT}" == "true" ]; then
   kubectl wait --for=condition=Ready istios -l kiali.io/testing --timeout=300s
+fi
+
+if [ "${PROFILE}" == "ambient" ]; then
+  echo "Installing CNI for Ambient"
+  kubectl get ns "istio-cni" || kubectl create ns "istio-cni"
+  kubectl apply -f - <<<"$cniYAML"
+
+  echo "Create ztunnel namespace"
+  kubectl get ns "ztunnel" || kubectl create ns "ztunnel"
+  kubectl label ns "ztunnel" istio-discovery=enabled
+  kubectl apply -f - <<<"$ztunnelYAML"
 fi
 
 # Install addons
