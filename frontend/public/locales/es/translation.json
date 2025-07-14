@@ -460,7 +460,7 @@
   "Time duration": "Duración del tiempo",
   "Time range": "Rango de tiempo",
   "Time Range": "Rango de tiempo",
-  "Time Range & Replay": "Rango de tiempo & Reproducción",
+  "Time Range & Replay": "Rango de tiempo y Reproducción",
   "Timeout": "Tiempo de espera",
   "Timeout for HTTP requests. Format: 1h/1m/1s/1ms. MUST be >=1ms.": "Tiempo de espera para solicitudes HTTP. Formato: 1h/1m/1s/1ms. DEBE ser mayor o igual a 1\u202fms.",
   "Timeout per retry attempt for a given request. Format: 1h/1m/1s/1ms. MUST be >=1ms.": "Tiempo de espera por intento de reintento para una solicitud dada. Formato: 1h/1m/1s/1ms. DEBE ser mayor o igual a 1\u202fms.",
