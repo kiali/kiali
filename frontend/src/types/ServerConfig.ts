@@ -139,16 +139,17 @@ export interface ServerConfig {
   ambientEnabled: boolean;
   authStrategy: string;
   clusterWideAccess: boolean;
-  clusters: { [key: string]: MeshCluster };
+  clusters: { [key: string]: MeshCluster }; // cluster => MeshCluster
+  controlPlanes: { [key: string]: string }; // cluster => namespace
   deployment: DeploymentConfig;
   gatewayAPIClasses: GatewayAPIClass[];
   gatewayAPIEnabled: boolean;
   healthConfig: HealthConfig;
+  ignoreLocalCluster: boolean;
   installationTag?: string;
   istioAnnotations: IstioAnnotations;
   istioIdentityDomain: string;
   istioLabels: { [key in IstioLabelKey]: string };
-  istioNamespace: string;
   kialiFeatureFlags: KialiFeatureFlags;
   logLevel: string;
   prometheus: {

@@ -248,17 +248,17 @@ install_istio --patch-file "${MC_MESH_YAML}"
 #  echo "Crossnetwork gateway is not required - will not create one"
 #fi
 
-echo "==== ENABLE ENDPOINT DISCOVERY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-create_remote_secret "${CLUSTER1_NAME}"
-switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
-printf "%s" "${REMOTE_SECRET}" | ${CLIENT_EXE} apply -f -
+#echo "==== ENABLE ENDPOINT DISCOVERY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+#switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
+#create_remote_secret "${CLUSTER1_NAME}"
+#switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
+#printf "%s" "${REMOTE_SECRET}" | ${CLIENT_EXE} apply -f -
 
-echo "==== ENABLE ENDPOINT DISCOVERY ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
-switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
-create_remote_secret "${CLUSTER2_NAME}"
-switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-printf "%s" "${REMOTE_SECRET}" | ${CLIENT_EXE} apply -f -
+#echo "==== ENABLE ENDPOINT DISCOVERY ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
+#switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
+#create_remote_secret "${CLUSTER2_NAME}"
+#switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
+#printf "%s" "${REMOTE_SECRET}" | ${CLIENT_EXE} apply -f -
 
 # Expose Prometheus to the outside world
 ${CLIENT_EXE} patch svc prometheus -n ${ISTIO_NAMESPACE} --context ${CLUSTER2_CONTEXT} -p "{\"spec\": {\"type\": \"LoadBalancer\"}}"

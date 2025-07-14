@@ -99,13 +99,20 @@ func getClientFactory(kialiConf *kialiConfig.Config) (*clientFactory, error) {
 		Burst: kialiConf.KubernetesConfig.Burst,
 	}
 
-	if !kialiConf.Clustering.IgnoreLocalCluster {
-		restConfig, err := getConfigForLocalCluster()
-		if err != nil {
-			return nil, err
-		}
+	// always try to use the local cluster first. this should work unless running kiali
+	// outside of a cluster (like with run-kiali.sh).
+	restConfig, err := getConfigForLocalCluster()
+	if err == nil {
 		baseConfig.Host = restConfig.Host // remote cluster clients should ignore this
 		baseConfig.TLSClientConfig = restConfig.TLSClientConfig
+
+		return newClientFactory(kialiConf, &baseConfig)
+	}
+
+	// if the local cluster doesn't work, and ignore_local_cluster=false, it's an error. Otherwise,
+	// we need to look for a remote secret with the home cluster name, and use that cluster to run kiali.
+	if !kialiConf.Clustering.IgnoreLocalCluster {
+		return nil, err
 	}
 
 	return newClientFactory(kialiConf, &baseConfig)
@@ -164,29 +171,28 @@ func newClientFactory(kialiConf *kialiConfig.Config, restConf *rest.Config) (*cl
 		f.saClientEntries[cluster] = client
 	}
 
-	if kialiConf.Clustering.IgnoreLocalCluster {
-		if len(f.saClientEntries) == 0 {
-			return nil, fmt.Errorf("kiali will exit because it has no local or remote cluster to manage. Currently clustering.IgnoreLocalClient=true but no cluster secrets have been discovered")
-		}
-
-		// use a cluster secret to assign a home cluster
-		for _, v := range f.saClientEntries {
-			f.homeCluster = v.ClusterInfo().Name
-			break
-		}
-	} else {
-		if f.homeCluster == "" {
-			f.homeCluster = f.baseRestConfig.Host
-		}
-		// Create service account clients for the local cluster and each remote cluster.
-		// Note that this means each remote cluster secret token must be given the proper permissions
-		// in that remote cluster for Kiali to do its work. i.e. logging into a remote cluster with the
-		// remote cluster secret token must be given the same permissions as the local cluster Kiali SA.
+	// if the baseRestConfig has a host set, then we're running in-cluster, create the local sa client. Otherwise,
+	// ensure home cluster has a remote secret, because we're going to run kiali remotely (out of cluster), like with run-kiali.sh
+	if restConf.Host != "" {
 		homeClient, err := f.newSAClient(nil)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create home cluster Kiali Service Account client. Err: %s", err)
 		}
+
 		f.saClientEntries[f.homeCluster] = homeClient
+
+	} else if f.saClientEntries[f.homeCluster] == nil {
+		return nil, fmt.Errorf("kiali will exit because kiali is running out-of-cluster, but there is no remote secret defined for the home cluster [%s]", f.homeCluster)
+	}
+
+	// sanity check that we have at least one cluster to manage
+	if len(f.saClientEntries) == 0 {
+		return nil, fmt.Errorf("kiali will exit because it has no local or remote cluster to manage. No remote secrets found")
+	}
+
+	// sanity check to ensure a remote cluster when ignore_local_cluster=true
+	if kialiConf.Clustering.IgnoreLocalCluster && len(f.saClientEntries) < 2 {
+		return nil, fmt.Errorf("kiali will exit because it has no remote cluster to manage. Currently clustering.ignore_local_cluster=true but no remote control plane clusters have been discovered")
 	}
 
 	return f, nil

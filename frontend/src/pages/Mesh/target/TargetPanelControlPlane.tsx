@@ -39,6 +39,7 @@ import { ConfigSource, ControlPlane, IstiodNodeData, NodeTarget } from 'types/Me
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { HelpIcon } from '@patternfly/react-icons';
 import { OutboundTrafficPolicy } from 'types/IstioObjects';
+import { isIstioNamespace } from 'config/ServerConfig';
 
 type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
   meshStatus: string;
@@ -416,7 +417,7 @@ export class TargetPanelControlPlane extends React.Component<
 
   private isControlPlane = (): boolean => {
     const data = this.state.controlPlaneNode!.getData()!;
-    return data.namespace === serverConfig.istioNamespace;
+    return isIstioNamespace(data.namespace);
   };
 
   private handleApiError = (message: string, error: ApiError): void => {
