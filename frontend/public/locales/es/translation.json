@@ -514,7 +514,7 @@
   "When enabled in an Ambient environment, include waypoints in the mesh topology.": "Cuando está habilitado en un entorno Ambient, incluya waypoints en la topología de la malla.",
   "When enabled, include gateways in the mesh topology.": "Cuando está habilitado, incluya gateways en la topología de la malla.",
   "When List": "Cuando la lista",
-  "While the health check is simple and checks only for an HTTP 200 response for the URL, this check is more comprehensive and attempts to validate the returned trace data. It will typically use the internal_url to perform the checks. If Kiali is running outside of the cluster, the external_url will be used.": "Mientras que la comprobación de salud es simple y solo verifica una respuesta HTTP 200 para la URL, esta comprobación es más completa y intenta validar los datos de traza devueltos. Típicamente usará la internal_url para realizar las comprobaciones. Si Kiali se ejecuta fuera del clúster, se usará la external_url.",
+  "While the health check is simple and checks only for an HTTP 200 response for the URL, this check is more comprehensive and attempts to validate the returned trace data. It will typically use the internal_url to perform the checks. If Kiali is running outside of the cluster, the external_url will be used.": "Mientras que la comprobación de salud es simple y solo verifica una respuesta HTTP 200 para la URL, esta comprobación es más completa e intenta validar los datos de traza devueltos. Típicamente usará la internal_url para realizar las comprobaciones. Si Kiali se ejecuta fuera del clúster, se usará la external_url.",
   "Workload": "Carga de trabajo",
   "Workload Entry": "Entrada de carga de trabajo",
   "Workload Selector": "Selector de carga de trabajo",
