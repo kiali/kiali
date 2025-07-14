@@ -945,7 +945,9 @@ func NewConfig() (c *Config) {
 				Tracing:           TracingDefaults{Limit: 100},
 			},
 			Validations: Validations{
-				Ignore: make([]string, 0),
+				Ignore: []string{
+					"KIA1301", // Ignoring missing Auth Policy by default.
+				},
 			},
 		},
 		KialiInternal: KialiInternalConfig{

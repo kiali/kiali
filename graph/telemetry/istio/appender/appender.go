@@ -229,7 +229,7 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 	}
 
 	// if health finalizer is to be run, do it after the outsider finalizer
-	if _, ok := requestedFinalizers[HealthAppenderName]; ok {
+	if _, ok := requestedFinalizers[HealthAppenderName]; ok || o.Appenders.All {
 		finalizers = append(finalizers, &HealthAppender{
 			Namespaces:        o.Namespaces,
 			QueryTime:         o.QueryTime,
@@ -238,7 +238,7 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 	}
 
 	// if labeler finalizer is to be run, do it after the outsider finalizer
-	if _, ok := requestedFinalizers[LabelerAppenderName]; ok {
+	if _, ok := requestedFinalizers[LabelerAppenderName]; ok || o.Appenders.All {
 		finalizers = append(finalizers, &LabelerAppender{})
 	}
 

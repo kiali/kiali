@@ -43,6 +43,7 @@ const (
 	baseIstioSidecarInjectorConfigMapName = "istio-sidecar-injector" // As of 1.19 this is hardcoded in the helm charts.
 	certificatesConfigMapName             = "istio-ca-root-cert"
 	certificateName                       = "root-cert.pem"
+	kubeVersionLabel                      = "app.kubernetes.io/version"
 )
 
 // 3 seconds is somewhat arbitrary but mesh discovery expires after 20s so it needs to be less than that.
@@ -277,19 +278,43 @@ type MeshDiscovery interface {
 	Mesh(ctx context.Context) (*models.Mesh, error)
 }
 
+// getVersionFunc is a function type that matches the signature of GetVersion
+type getVersionFunc func(ctx context.Context, conf *config.Config, client kubernetes.ClientInterface, kubeCache ctrlclient.Reader, controlPlane models.ControlPlane) (*models.ExternalServiceInfo, error)
+
 // Discovery detects istio infrastructure and configuration across clusters.
 type Discovery struct {
 	conf           *config.Config
 	kialiCache     cache.KialiCache
 	kialiSAClients map[string]kubernetes.ClientInterface
+	getVersion     getVersionFunc
 }
 
 // NewDiscovery initializes a new Discovery.
 func NewDiscovery(clients map[string]kubernetes.ClientInterface, cache cache.KialiCache, conf *config.Config) *Discovery {
+	var getVersion getVersionFunc
+
+	// Set the getVersion function based on run mode
+	if conf.RunMode == config.RunModeOffline {
+		// Offline mode function that reads version from controlPlane labels
+		getVersion = func(ctx context.Context, conf *config.Config, client kubernetes.ClientInterface, kubeCache ctrlclient.Reader, controlPlane models.ControlPlane) (*models.ExternalServiceInfo, error) {
+			if version, exists := controlPlane.Labels[kubeVersionLabel]; exists && version != "" {
+				return &models.ExternalServiceInfo{
+					Name:    "Istio",
+					Version: version,
+				}, nil
+			}
+			return nil, fmt.Errorf("version label %s not found or empty in controlPlane labels", kubeVersionLabel)
+		}
+	} else {
+		// Use the actual GetVersion function for non-offline modes
+		getVersion = GetVersion
+	}
+
 	return &Discovery{
 		conf:           conf,
 		kialiCache:     cache,
 		kialiSAClients: clients,
+		getVersion:     getVersion,
 	}
 }
 
@@ -495,29 +520,30 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 					return
 				}
 
-				// TODO: Probably need a separate GetVersion func for offline.
 				// If this call hangs it can cause the rest of the mesh discovery to timeout.
 				// Getting the version shouldn't block discovery.
-				// var cancel context.CancelFunc
-				// ctx, cancel = context.WithTimeout(ctx, getVersionTimeout)
-				// defer cancel()
-				// versionInfo, err := GetVersion(ctx, in.conf, saClient, kubeCache, controlPlane.Revision, controlPlane.IstiodNamespace)
-				// if err != nil {
-				// 	log.Warningf("Unable to get version info for controlplane [%s/%s] on cluster [%s]. Err: %s", controlPlane.IstiodName, controlPlane.IstiodNamespace, cluster.Name, err)
-				// 	return
-				// }
-				// controlPlane.Version = versionInfo
+				var cancel context.CancelFunc
+				ctx, cancel = context.WithTimeout(ctx, getVersionTimeout)
+				defer cancel()
+				versionInfo, err := in.getVersion(ctx, in.conf, saClient, kubeCache, controlPlane)
+				if err != nil {
+					log.Warningf("Unable to get version info for controlplane [%s/%s] on cluster [%s]. Err: %s", controlPlane.IstiodName, controlPlane.IstiodNamespace, cluster.Name, err)
+					return
+				}
+				controlPlane.Version = versionInfo
 			}(ctx)
 
 			// Get the status for the control plane.
-			status, err := in.canConnectToIstiodForRevision(controlPlane)
-			if err != nil {
-				log.Warningf("Unable to get status for controlplane [%s/%s] on cluster [%s]. Err: %s", controlPlane.IstiodName, controlPlane.IstiodNamespace, cluster.Name, err)
-				if status != nil {
+			if in.conf.ExternalServices.Istio.IstioAPIEnabled {
+				status, err := in.canConnectToIstiodForRevision(controlPlane)
+				if err != nil {
+					log.Warningf("Unable to get status for controlplane [%s/%s] on cluster [%s]. Err: %s", controlPlane.IstiodName, controlPlane.IstiodNamespace, cluster.Name, err)
+					if status != nil {
+						controlPlane.Status = status.Status
+					}
+				} else {
 					controlPlane.Status = status.Status
 				}
-			} else {
-				controlPlane.Status = status.Status
 			}
 
 			mesh.ControlPlanes = append(mesh.ControlPlanes, controlPlane)

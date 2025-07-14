@@ -2,19 +2,19 @@ package offline
 
 import (
 	"context"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
+	core_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kiali/kiali/util/filetest"
 )
 
 func TestNewOfflineClient(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "offline-client-test")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
+	tempDir := t.TempDir()
 
 	testYAML := `apiVersion: v1
 kind: Namespace
@@ -37,9 +37,7 @@ data:
 `
 
 	testFile := filepath.Join(tempDir, "test.yaml")
-	if err := os.WriteFile(testFile, []byte(testYAML), 0o644); err != nil {
-		t.Fatalf("Failed to write test file: %v", err)
-	}
+	filetest.WriteFile(t, testFile, []byte(testYAML))
 
 	singleDocYAML := `apiVersion: v1
 kind: Secret
@@ -53,9 +51,7 @@ data:
 `
 
 	testFile2 := filepath.Join(tempDir, "secret.yml")
-	if err := os.WriteFile(testFile2, []byte(singleDocYAML), 0o644); err != nil {
-		t.Fatalf("Failed to write test file 2: %v", err)
-	}
+	filetest.WriteFile(t, testFile2, []byte(singleDocYAML))
 
 	offlineClient, err := NewOfflineClient(tempDir)
 	if err != nil {
@@ -102,11 +98,7 @@ data:
 }
 
 func TestNewOfflineClient_EmptyDirectory(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "offline-client-empty-test")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
+	tempDir := t.TempDir()
 
 	offlineClient, err := NewOfflineClient(tempDir)
 	if err != nil {
@@ -126,11 +118,7 @@ func TestNewOfflineClient_EmptyDirectory(t *testing.T) {
 }
 
 func TestNewOfflineClient_InvalidYAML(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "offline-client-invalid-test")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
+	tempDir := t.TempDir()
 
 	invalidYAML := `apiVersion: v1
 kind: Namespace
@@ -142,40 +130,28 @@ metadata:
 `
 
 	testFile := filepath.Join(tempDir, "invalid.yaml")
-	if err := os.WriteFile(testFile, []byte(invalidYAML), 0o644); err != nil {
-		t.Fatalf("Failed to write test file: %v", err)
-	}
+	filetest.WriteFile(t, testFile, []byte(invalidYAML))
 
-	_, err = NewOfflineClient(tempDir)
+	_, err := NewOfflineClient(tempDir)
 	if err == nil {
 		t.Fatalf("Expected NewOfflineClient to fail with invalid YAML, but it succeeded")
 	}
 }
 
 func TestNewOfflineClient_Subdirectories(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "offline-client-subdir-test")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
+	tempDir := t.TempDir()
 
 	subDir1 := filepath.Join(tempDir, "subdir1")
 	subDir2 := filepath.Join(tempDir, "subdir2", "nested")
-	if err := os.MkdirAll(subDir1, 0o755); err != nil {
-		t.Fatalf("Failed to create subdir1: %v", err)
-	}
-	if err := os.MkdirAll(subDir2, 0o755); err != nil {
-		t.Fatalf("Failed to create subdir2/nested: %v", err)
-	}
+	mkdirAll(t, subDir1)
+	mkdirAll(t, subDir2)
 
 	rootYAML := `apiVersion: v1
 kind: Namespace
 metadata:
   name: root-namespace
 `
-	if err := os.WriteFile(filepath.Join(tempDir, "root.yaml"), []byte(rootYAML), 0o644); err != nil {
-		t.Fatalf("Failed to write root YAML: %v", err)
-	}
+	filetest.WriteFile(t, filepath.Join(tempDir, "root.yaml"), []byte(rootYAML))
 
 	subdir1YAML := `apiVersion: v1
 kind: ConfigMap
@@ -185,9 +161,7 @@ metadata:
 data:
   config: value1
 `
-	if err := os.WriteFile(filepath.Join(subDir1, "config.yaml"), []byte(subdir1YAML), 0o644); err != nil {
-		t.Fatalf("Failed to write subdir1 YAML: %v", err)
-	}
+	filetest.WriteFile(t, filepath.Join(subDir1, "config.yaml"), []byte(subdir1YAML))
 
 	nestedYAML := `apiVersion: v1
 kind: Secret
@@ -198,13 +172,9 @@ type: Opaque
 data:
   password: bmVzdGVkCg== # nested
 `
-	if err := os.WriteFile(filepath.Join(subDir2, "secret.yml"), []byte(nestedYAML), 0o644); err != nil {
-		t.Fatalf("Failed to write nested YAML: %v", err)
-	}
+	filetest.WriteFile(t, filepath.Join(subDir2, "secret.yml"), []byte(nestedYAML))
 
-	if err := os.WriteFile(filepath.Join(subDir1, "ignore.txt"), []byte("this should be ignored"), 0o644); err != nil {
-		t.Fatalf("Failed to write ignore file: %v", err)
-	}
+	filetest.WriteFile(t, filepath.Join(subDir1, "ignore.txt"), []byte("this should be ignored"))
 
 	offlineClient, err := NewOfflineClient(tempDir)
 	if err != nil {
@@ -257,5 +227,372 @@ data:
 	totalObjects := len(namespaces.Items) + len(configMaps.Items) + len(secrets.Items)
 	if totalObjects != 3 {
 		t.Errorf("Expected 3 total objects (1 namespace + 1 configmap + 1 secret), got %d", totalObjects)
+	}
+}
+
+func mkdirAll(t *testing.T, path string) {
+	t.Helper()
+	if err := os.MkdirAll(path, 0o755); err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
+}
+
+func TestGetConfigDump(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	namespace := "test-namespace"
+	podName := "test-pod"
+
+	namespacesDir := filepath.Join(tmpDir, "buried", "layers", "deep", "namespaces")
+	mkdirAll(t, namespacesDir)
+
+	testYAML := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: ` + namespace + `
+`
+	filetest.WriteFile(t, filepath.Join(tmpDir, "test.yaml"), []byte(testYAML))
+
+	// Create the config dump directory and file
+	configDumpDir := filepath.Join(namespacesDir, namespace, "pods", podName)
+	mkdirAll(t, configDumpDir)
+
+	// Create a test config dump JSON
+	testConfigDump := `{
+  "configs": [
+    {
+      "@type": "type.googleapis.com/envoy.admin.v3.ClustersConfigDump",
+      "dynamic_active_clusters": [
+        {
+          "cluster": {
+            "name": "test-cluster",
+            "type": "EDS"
+          }
+        }
+      ]
+    }
+  ]
+}`
+	configDumpFile := filepath.Join(configDumpDir, "config_dump_proxy.json")
+	filetest.WriteFile(t, configDumpFile, []byte(testConfigDump))
+
+	// Create the offline client
+	client, err := NewOfflineClient(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to create offline client: %v", err)
+	}
+
+	// Test GetConfigDump
+	configDump, err := client.GetConfigDump(namespace, podName)
+	if err != nil {
+		t.Fatalf("Failed to get config dump: %v", err)
+	}
+
+	// Verify the config dump content
+	if len(configDump.Configs) != 1 {
+		t.Errorf("Expected 1 config in dump, got %d", len(configDump.Configs))
+	}
+}
+
+func TestGetConfigDump_NotFound(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create namespaces directory and test YAML file (to initialize the OfflineClient)
+	namespacesDir := filepath.Join(tmpDir, "namespaces")
+	mkdirAll(t, namespacesDir)
+
+	testYAML := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-namespace
+`
+	filetest.WriteFile(t, filepath.Join(tmpDir, "test.yaml"), []byte(testYAML))
+
+	// Create the offline client
+	client, err := NewOfflineClient(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to create offline client: %v", err)
+	}
+
+	// Test GetConfigDump for non-existent pod
+	configDump, err := client.GetConfigDump("nonexistent-namespace", "nonexistent-pod")
+	if err != nil {
+		t.Fatalf("Failed to get config dump: %v", err)
+	}
+
+	// Verify the config dump is empty
+	if len(configDump.Configs) != 0 {
+		t.Errorf("Expected empty config dump, got %d configs", len(configDump.Configs))
+	}
+}
+
+func TestGetConfigDump_InvalidJSON(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create the expected directory structure
+	namespace := "test-namespace"
+	podName := "test-pod"
+
+	// Create namespaces directory and test YAML file (to initialize the OfflineClient)
+	namespacesDir := filepath.Join(tmpDir, "namespaces")
+	mkdirAll(t, namespacesDir)
+
+	testYAML := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: ` + namespace + `
+`
+	filetest.WriteFile(t, filepath.Join(tmpDir, "test.yaml"), []byte(testYAML))
+
+	// Create the config dump directory and file
+	configDumpDir := filepath.Join(namespacesDir, namespace, "pods", podName)
+	mkdirAll(t, configDumpDir)
+
+	// Create an invalid JSON file
+	invalidJSON := `{
+  "configs": [
+    {
+      "@type": "type.googleapis.com/envoy.admin.v3.ClustersConfigDump",
+      "dynamic_active_clusters": [
+        // invalid comment in JSON
+        {
+          "cluster": {
+            "name": "test-cluster"
+            "type": "EDS"  // missing comma
+          }
+        }
+      ]
+    }
+  ]
+}`
+	configDumpFile := filepath.Join(configDumpDir, "config_dump_proxy.json")
+	filetest.WriteFile(t, configDumpFile, []byte(invalidJSON))
+
+	// Create the offline client
+	client, err := NewOfflineClient(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to create offline client: %v", err)
+	}
+
+	// Test GetConfigDump with invalid JSON - should return empty config dump
+	configDump, err := client.GetConfigDump(namespace, podName)
+	if err != nil {
+		t.Fatalf("Failed to get config dump: %v", err)
+	}
+
+	// Verify the config dump is empty (due to invalid JSON)
+	if len(configDump.Configs) != 0 {
+		t.Errorf("Expected empty config dump due to invalid JSON, got %d configs", len(configDump.Configs))
+	}
+}
+
+func TestStreamPodLogs(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create the expected directory structure for logs
+	namespace := "test-namespace"
+	podName := "test-pod"
+	containerName := "test-container"
+	testLogs := "test log line 1\ntest log line 2\ntest log line 3\n"
+
+	// Create namespaces directory and test YAML file (to initialize the OfflineClient)
+	namespacesDir := filepath.Join(tmpDir, "namespaces")
+	mkdirAll(t, namespacesDir)
+
+	testYAML := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: ` + namespace + `
+`
+	filetest.WriteFile(t, filepath.Join(tmpDir, "test.yaml"), []byte(testYAML))
+
+	// Create log directory with must-gather structure: container/container/logs/current.log
+	logDir := filepath.Join(namespacesDir, namespace, "pods", podName, containerName, containerName, "logs")
+	mkdirAll(t, logDir)
+	logFile := filepath.Join(logDir, "current.log")
+	filetest.WriteFile(t, logFile, []byte(testLogs))
+
+	// Create the offline client
+	client, err := NewOfflineClient(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to create offline client: %v", err)
+	}
+
+	// Test StreamPodLogs with container specified
+	opts := &core_v1.PodLogOptions{Container: containerName}
+	reader, err := client.StreamPodLogs(namespace, podName, opts)
+	if err != nil {
+		t.Fatalf("Failed to stream pod logs: %v", err)
+	}
+	defer reader.Close()
+
+	// Read the logs
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		t.Fatalf("Failed to read log data: %v", err)
+	}
+
+	// Verify the log content
+	if string(data) != testLogs {
+		t.Errorf("Expected log content %q, got %q", testLogs, string(data))
+	}
+}
+
+func TestStreamPodLogs_ContainerNotFound(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create namespaces directory and test YAML file (to initialize the OfflineClient)
+	namespacesDir := filepath.Join(tmpDir, "namespaces")
+	mkdirAll(t, namespacesDir)
+
+	testYAML := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-namespace
+`
+	filetest.WriteFile(t, filepath.Join(tmpDir, "test.yaml"), []byte(testYAML))
+
+	// Create the offline client
+	client, err := NewOfflineClient(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to create offline client: %v", err)
+	}
+
+	// Test StreamPodLogs for non-existent container
+	opts := &core_v1.PodLogOptions{Container: "nonexistent-container"}
+	reader, err := client.StreamPodLogs("test-namespace", "test-pod", opts)
+	if err != nil {
+		t.Fatalf("Failed to stream pod logs: %v", err)
+	}
+	defer reader.Close()
+
+	// Read the logs - should get empty logs (noop reader)
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		t.Fatalf("Failed to read log data: %v", err)
+	}
+
+	// Verify the log content is empty
+	if len(data) != 0 {
+		t.Errorf("Expected empty log content, got %q", string(data))
+	}
+}
+
+func TestStreamPodLogs_NoContainerSpecified(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create namespaces directory and test YAML file (to initialize the OfflineClient)
+	namespacesDir := filepath.Join(tmpDir, "namespaces")
+	mkdirAll(t, namespacesDir)
+
+	testYAML := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-namespace
+`
+	filetest.WriteFile(t, filepath.Join(tmpDir, "test.yaml"), []byte(testYAML))
+
+	// Create the offline client
+	client, err := NewOfflineClient(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to create offline client: %v", err)
+	}
+
+	// Test StreamPodLogs without container specified
+	reader, err := client.StreamPodLogs("test-namespace", "test-pod", nil)
+	if err != nil {
+		t.Fatalf("Failed to stream pod logs: %v", err)
+	}
+	defer reader.Close()
+
+	// Read the logs - should get empty logs (noop reader) since no container is specified
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		t.Fatalf("Failed to read log data: %v", err)
+	}
+
+	// Verify the log content is empty
+	if len(data) != 0 {
+		t.Errorf("Expected empty log content when no container specified, got %q", string(data))
+	}
+}
+
+func TestStreamPodLogs_EmptyPodLogOptions(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create namespaces directory and test YAML file (to initialize the OfflineClient)
+	namespacesDir := filepath.Join(tmpDir, "namespaces")
+	mkdirAll(t, namespacesDir)
+
+	testYAML := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-namespace
+`
+	filetest.WriteFile(t, filepath.Join(tmpDir, "test.yaml"), []byte(testYAML))
+
+	// Create the offline client
+	client, err := NewOfflineClient(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to create offline client: %v", err)
+	}
+
+	// Test StreamPodLogs with empty PodLogOptions (container name is empty string)
+	opts := &core_v1.PodLogOptions{Container: ""}
+	reader, err := client.StreamPodLogs("test-namespace", "test-pod", opts)
+	if err != nil {
+		t.Fatalf("Failed to stream pod logs: %v", err)
+	}
+	defer reader.Close()
+
+	// Read the logs - should get empty logs (noop reader) since container is empty string
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		t.Fatalf("Failed to read log data: %v", err)
+	}
+
+	// Verify the log content is empty
+	if len(data) != 0 {
+		t.Errorf("Expected empty log content when container is empty string, got %q", string(data))
+	}
+}
+
+func TestStreamPodLogs_NonexistentNamespace(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create namespaces directory and test YAML file (to initialize the OfflineClient)
+	namespacesDir := filepath.Join(tmpDir, "namespaces")
+	mkdirAll(t, namespacesDir)
+
+	testYAML := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-namespace
+`
+	filetest.WriteFile(t, filepath.Join(tmpDir, "test.yaml"), []byte(testYAML))
+
+	// Create the offline client
+	client, err := NewOfflineClient(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to create offline client: %v", err)
+	}
+
+	// Test StreamPodLogs for non-existent namespace
+	opts := &core_v1.PodLogOptions{Container: "test-container"}
+	reader, err := client.StreamPodLogs("nonexistent-namespace", "test-pod", opts)
+	if err != nil {
+		t.Fatalf("Failed to stream pod logs: %v", err)
+	}
+	defer reader.Close()
+
+	// Read the logs - should get empty logs (noop reader)
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		t.Fatalf("Failed to read log data: %v", err)
+	}
+
+	// Verify the log content is empty
+	if len(data) != 0 {
+		t.Errorf("Expected empty log content for nonexistent namespace, got %q", string(data))
 	}
 }

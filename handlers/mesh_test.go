@@ -26,6 +26,8 @@ import (
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 	"github.com/kiali/kiali/tracing"
+	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/stretchr/testify/mock"
 )
 
 // Fails if resp status is non-200
@@ -121,6 +123,14 @@ func TestGetMeshGraph(t *testing.T) {
 	prom, err := prometheus.NewClient()
 	require.NoError(err)
 	prom.Inject(xapi)
+
+	// Add mock expectation for Buildinfo to fix the test
+	xapi.On("Buildinfo", mock.AnythingOfType("*context.valueCtx")).Return(prom_v1.BuildinfoResult{
+		Version:   "2.35.0",
+		BuildDate: "2023-01-01T00:00:00Z",
+		Revision:  "abcdef123456",
+	}, nil)
+
 	cpm := &business.FakeControlPlaneMonitor{}
 	traceLoader := func() tracing.ClientInterface { return nil }
 

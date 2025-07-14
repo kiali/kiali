@@ -45,7 +45,7 @@ func TestGetServiceHealth(t *testing.T) {
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockServiceRequestRates("ns", conf.KubernetesConfig.ClusterName, "httpbin", serviceRates)
 
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil), userClients: clients}
+	hs := NewHealthService(NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil), conf, prom, clients)
 
 	mockSvc := models.Service{}
 	mockSvc.Name = "httpbin"
@@ -90,7 +90,7 @@ func TestGetAppHealth(t *testing.T) {
 	clients := make(map[string]kubernetes.UserClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil), userClients: clients}
+	hs := NewHealthService(NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil), conf, prom, clients)
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockAppRequestRates("ns", conf.KubernetesConfig.ClusterName, "reviews", otherRatesIn, otherRatesOut)
@@ -147,7 +147,7 @@ func TestGetWorkloadHealth(t *testing.T) {
 
 	clients := make(map[string]kubernetes.UserClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil), userClients: clients}
+	hs := NewHealthService(NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil), conf, prom, clients)
 
 	mockWorkload := models.Workload{}
 	mockWorkload.Name = "reviews-v1"
@@ -199,7 +199,7 @@ func TestGetAppHealthWithoutIstio(t *testing.T) {
 
 	clients := make(map[string]kubernetes.UserClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil), userClients: clients}
+	hs := NewHealthService(NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil), conf, prom, clients)
 
 	mockApp := appDetails{}
 
@@ -232,7 +232,7 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 
 	clients := make(map[string]kubernetes.UserClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil), userClients: clients}
+	hs := NewHealthService(NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil), conf, prom, clients)
 
 	mockWorkload := models.Workload{}
 	mockWorkload.Name = "reviews-v1"
@@ -300,7 +300,7 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 
 	clients := make(map[string]kubernetes.UserClientInterface)
 	clients[conf.KubernetesConfig.ClusterName] = k8s
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil), userClients: clients}
+	hs := NewHealthService(NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil), conf, prom, clients)
 
 	criteria := NamespaceHealthCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "tutorial", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 	health, err := hs.GetNamespaceServiceHealth(context.TODO(), criteria)
@@ -352,7 +352,7 @@ func TestGetNamespaceServicesHealthMultiCluster(t *testing.T) {
 
 	layer := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil)
 
-	hs := HealthService{prom: prom, businessLayer: layer, userClients: clients}
+	hs := NewHealthService(layer, conf, prom, clients)
 
 	criteria := NamespaceHealthCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "tutorial", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 
@@ -391,7 +391,7 @@ func TestGetNamespaceApplicationsHealthMultiCluster(t *testing.T) {
 
 	layer := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil)
 
-	hs := HealthService{prom: prom, businessLayer: layer, userClients: clients}
+	hs := NewHealthService(layer, conf, prom, clients)
 
 	criteria := NamespaceHealthCriteria{Namespace: "tutorial", Cluster: conf.KubernetesConfig.ClusterName, RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 
@@ -430,7 +430,7 @@ func TestGetNamespaceWorkloadsHealthMultiCluster(t *testing.T) {
 
 	layer := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil)
 
-	hs := HealthService{prom: prom, businessLayer: layer, userClients: clients}
+	hs := NewHealthService(layer, conf, prom, clients)
 
 	criteria := NamespaceHealthCriteria{Namespace: "tutorial", Cluster: conf.KubernetesConfig.ClusterName, RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 

@@ -246,5 +246,10 @@ func getObjectKey(obj runtime.Object) string {
 	namespace := accessor.GetNamespace()
 	name := accessor.GetName()
 
+	// TypeMeta not set in tests. Fallback to golang type.
+	if gvk.Group == "" && gvk.Version == "" && gvk.Kind == "" {
+		return fmt.Sprintf("%T", obj) + namespace + name
+	}
+
 	return gvk.Group + gvk.Version + gvk.Kind + namespace + name
 }

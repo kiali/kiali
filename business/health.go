@@ -15,6 +15,15 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
+func NewHealthService(businessLayer *Layer, conf *config.Config, prom prometheus.ClientInterface, userClients map[string]kubernetes.UserClientInterface) HealthService {
+	return HealthService{
+		businessLayer: businessLayer,
+		conf:          conf,
+		prom:          prom,
+		userClients:   userClients,
+	}
+}
+
 // HealthService deals with fetching health from various sources and convert to kiali model
 type HealthService struct {
 	businessLayer *Layer

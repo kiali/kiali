@@ -16,6 +16,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 )
 
 func TestParseIstioRawVersion(t *testing.T) {
@@ -222,7 +223,10 @@ func TestGetVersionRemoteCluster(t *testing.T) {
 	kubeCache, err := cache.GetKubeCache("remote-cluster")
 	require.NoError(err)
 
-	version, err := GetVersion(context.Background(), conf, clients["remote-cluster"], kubeCache, "default", "istio-system")
+	version, err := GetVersion(context.Background(), conf, clients["remote-cluster"], kubeCache, models.ControlPlane{
+		Revision:        "default",
+		IstiodNamespace: "istio-system",
+	})
 	require.NoError(err)
 	require.Equal("1.22.0", version.Version)
 }
