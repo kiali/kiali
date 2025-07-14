@@ -422,8 +422,10 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	mesh := &models.Mesh{}
 	var remoteClusters []*models.KubeCluster
 	for _, cluster := range clusters {
+		log.Infof("Cluster [%s]", cluster.Name)
 		// We can't get anything from an inaccessible cluster.
 		if !cluster.Accessible {
+			log.Infof("Cluster [%s] inaccessible", cluster.Name)
 			continue
 		}
 
@@ -433,7 +435,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 			return nil, err
 		}
 
-		// If there's an istiod on it, then it's a controlplane cluster. Otherwise it is a remote cluster.
+		// If there's an istiod on it, then it's a controlplane cluster. Otherwise it is a remote mesh cluster or an external kiali home cluster
 		labels := map[string]string{config.IstioAppLabel: istiodAppLabelValue}
 		depList := &appsv1.DeploymentList{}
 		err = kubeCache.List(ctx, depList, ctrlclient.MatchingLabels(labels))
@@ -443,6 +445,18 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		istiods := depList.Items
 
 		if len(istiods) == 0 {
+			if in.conf.Clustering.IgnoreLocalCluster && in.conf.KubernetesConfig.ClusterName == cluster.Name {
+				log.Tracef("Cluster [%s] is an external Kiali cluster. Adding the external management cluster.", cluster.Name)
+				externalKialis := in.discoverKiali(cluster)
+				if len(externalKialis) != 0 {
+					mesh.ExternalKiali = &models.ExternalKialiInstance{
+						Cluster: &cluster,
+						Kiali:   &externalKialis[0],
+					}
+				}
+				continue
+			}
+
 			log.Tracef("Cluster [%s] is a remote cluster. Skipping adding a controlplane.", cluster.Name)
 			remoteClusters = append(remoteClusters, &cluster)
 			continue

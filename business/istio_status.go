@@ -124,15 +124,18 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 		}
 	}
 
-	// if no control plane and no any other control plane which manages this cluster
-	if len(istiodStatus) == 0 && !isManaged {
-		istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
-			Cluster:   cluster,
-			Name:      "istiod",
-			Namespace: "",
-			Status:    kubernetes.ComponentNotFound,
-			IsCore:    true,
-		})
+	// Ignore istiod status for a mgmt cluster (external kiali)
+	if mesh.ExternalKiali != nil && cluster != mesh.ExternalKiali.Cluster.Name {
+		// if no control plane and no any other control plane which manages this cluster
+		if len(istiodStatus) == 0 && !isManaged {
+			istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
+				Cluster:   cluster,
+				Name:      "istiod",
+				Namespace: "",
+				Status:    kubernetes.ComponentNotFound,
+				IsCore:    true,
+			})
+		}
 	}
 
 	// Autodiscover gateways.

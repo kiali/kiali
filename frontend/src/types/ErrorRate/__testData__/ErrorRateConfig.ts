@@ -72,10 +72,11 @@ export const serverRateConfig = {
   ambientEnabled: false,
   clusters: {},
   clusterWideAccess: true,
-  controlPlaneClusters: [],
+  controlPlanes: {},
   gatewayAPIClasses: [],
   gatewayAPIEnabled: false,
   grafana: {},
+  ignoreLocalCluster: false,
   logLevel: '',
   kialiFeatureFlags: {
     disabledFeatures: [],

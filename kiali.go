@@ -131,8 +131,10 @@ func main() {
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()
 
-	// if necessary, look for a local control plane to determine the local cluster name
-	autodiscoverIstioClusterName()
+	// determine the Kiali home cluster name. If necessary, this will try to autodiscover the Istiod cluster name
+	if err := determineHomeClusterName(); err != nil {
+		log.Fatalf("Failed to determine Kiali home cluster name. Err: %s", err)
+	}
 
 	// create the business package dependencies.
 	clientFactory, err := kubernetes.GetClientFactory()
@@ -250,27 +252,28 @@ func main() {
 			log.Warningf("Unable to get workloads to sync cache for cluster %s. First request that accesses workloads may take awhile: %v", cluster, err)
 		}
 
+		include := cluster != conf.KubernetesConfig.ClusterName || !conf.Clustering.IgnoreLocalCluster
 		if _, err := layer.IstioConfig.GetIstioConfigList(ctx, cluster, business.IstioConfigCriteria{
-			IncludeGateways:               true,
-			IncludeK8sGateways:            true,
-			IncludeK8sInferencePools:      true,
-			IncludeK8sGRPCRoutes:          true,
-			IncludeK8sHTTPRoutes:          true,
-			IncludeK8sTCPRoutes:           true,
-			IncludeK8sTLSRoutes:           true,
-			IncludeVirtualServices:        true,
-			IncludeDestinationRules:       true,
-			IncludeSidecars:               true,
-			IncludeServiceEntries:         true,
-			IncludeWorkloadEntries:        true,
-			IncludeWorkloadGroups:         true,
-			IncludeEnvoyFilters:           true,
-			IncludeWasmPlugins:            true,
-			IncludeAuthorizationPolicies:  true,
-			IncludePeerAuthentications:    true,
-			IncludeRequestAuthentications: true,
-			IncludeTelemetry:              true,
-			IncludeK8sReferenceGrants:     true,
+			IncludeGateways:               include,
+			IncludeK8sGateways:            include,
+			IncludeK8sGRPCRoutes:          include,
+			IncludeK8sHTTPRoutes:          include,
+			IncludeK8sInferencePools:      include,
+			IncludeK8sTCPRoutes:           include,
+			IncludeK8sTLSRoutes:           include,
+			IncludeVirtualServices:        include,
+			IncludeDestinationRules:       include,
+			IncludeSidecars:               include,
+			IncludeServiceEntries:         include,
+			IncludeWorkloadEntries:        include,
+			IncludeWorkloadGroups:         include,
+			IncludeEnvoyFilters:           include,
+			IncludeWasmPlugins:            include,
+			IncludeAuthorizationPolicies:  include,
+			IncludePeerAuthentications:    include,
+			IncludeRequestAuthentications: include,
+			IncludeTelemetry:              include,
+			IncludeK8sReferenceGrants:     include,
 		}); err != nil {
 			log.Warningf("Unable to get Istio config to sync cache for cluster %s. First request that accesses Istio config may take awhile: %v", cluster, err)
 		}
@@ -341,18 +344,23 @@ func determineContainerVersion(defaultVersion string) string {
 
 // This is used to update the config with information about istio that
 // comes from the environment such as the cluster name.
-func autodiscoverIstioClusterName() {
+func determineHomeClusterName() error {
 	conf := config.Get()
 
+	// If the home cluster name is already set, we don't need to do anything
 	homeCluster := conf.KubernetesConfig.ClusterName
-	// If the cluster name is already set, we don't need to do anything
-	// If ignoring the local cluster, we don't need to do anything
-	if homeCluster != "" || conf.Clustering.IgnoreLocalCluster {
-		return
+	if homeCluster != "" {
+		return nil
 	}
 
+	// If the cluster name is not set and we don't have a co-located control plane, it's an error
+	if conf.Clustering.IgnoreLocalCluster {
+		return fmt.Errorf("Could not determine Kiali home cluster name. You must set kubernetes_config.cluster_name when clustering.ignore_local_cluster=true")
+	}
+
+	// use the control plane's configured cluster name, or the default
 	err := func() error {
-		log.Debug("Cluster name is not set. Attempting to auto-detect the cluster name from the home cluster environment.")
+		log.Debug("Cluster name is not set. Attempting to auto-detect the cluster name from the Istio control plane environment.")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
@@ -385,6 +393,8 @@ func autodiscoverIstioClusterName() {
 	log.Debugf("Auto-detected the istio cluster name to be [%s]. Updating the kiali config", homeCluster)
 	conf.KubernetesConfig.ClusterName = homeCluster
 	config.Set(conf)
+
+	return nil
 }
 
 func asReaders(caches map[string]ctrlcache.Cache) map[string]client.Reader {

@@ -70,7 +70,9 @@ export const IstioComponentStatus: React.FC<Props> = (props: Props) => {
 
     return [
       <Split key={`cell-status-icon-${comp.name}`} hasGutter={true} className={splitItemStyle}>
-        <SplitItem>{renderIcon(props.componentStatus.status, props.componentStatus.isCore)}</SplitItem>
+        <SplitItem style={{ paddingLeft: '0.5rem' }}>
+          {renderIcon(props.componentStatus.status, props.componentStatus.isCore)}
+        </SplitItem>
         <SplitItem isFilled={true}>{comp.name}</SplitItem>
         <SplitItem>{t(statusMsg[comp.status])}</SplitItem>
       </Split>
