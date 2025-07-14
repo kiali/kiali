@@ -12,6 +12,8 @@ import (
 
 	osproject_v1 "github.com/openshift/api/project/v1"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/config"
@@ -30,19 +32,19 @@ type noPrivClient struct {
 }
 
 func (n *noPrivClient) GetProjects(ctx context.Context, labelSelector string) ([]osproject_v1.Project, error) {
-	return nil, fmt.Errorf("Rejecting")
+	return nil, errors.NewForbidden(schema.GroupResource{Group: osproject_v1.GroupName, Resource: "projects"}, "", fmt.Errorf("Rejecting"))
 }
 
 func (n *noPrivClient) GetProject(ctx context.Context, name string) (*osproject_v1.Project, error) {
-	return nil, fmt.Errorf("Rejecting")
+	return nil, errors.NewForbidden(schema.GroupResource{Group: osproject_v1.GroupName, Resource: "projects"}, name, fmt.Errorf("Rejecting"))
 }
 
 func (n *noPrivClient) GetNamespace(namespace string) (*core_v1.Namespace, error) {
-	return nil, fmt.Errorf("Rejecting")
+	return nil, errors.NewForbidden(schema.GroupResource{Group: core_v1.GroupName, Resource: "namespaces"}, "namespace", fmt.Errorf("Rejecting"))
 }
 
 func (n *noPrivClient) GetNamespaces(labelSelector string) ([]core_v1.Namespace, error) {
-	return nil, fmt.Errorf("Rejecting")
+	return nil, errors.NewForbidden(schema.GroupResource{Group: core_v1.GroupName, Resource: "namespaces"}, "", fmt.Errorf("Rejecting"))
 }
 
 // WithAuthInfo injects the given auth info into the request context of the given handler.

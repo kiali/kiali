@@ -10,83 +10,99 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/tracing"
 	"github.com/kiali/kiali/util"
 )
 
 const defaultHealthRateInterval = "10m"
 
-// ClustersHealth is the API handler to get app-based health of every services from namespaces in the given cluster
-func ClustersHealth(w http.ResponseWriter, r *http.Request) {
-	params := r.URL.Query()
-	namespaces := params.Get("namespaces") // csl of namespaces
-	nss := []string{}
-	if len(namespaces) > 0 {
-		nss = strings.Split(namespaces, ",")
-	}
-	cluster := clusterNameFromQuery(config.Get(), params)
-
-	businessLayer, err := getBusiness(r)
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	if len(nss) == 0 {
-		loadedNamespaces, _ := businessLayer.Namespace.GetClusterNamespaces(r.Context(), cluster)
-		for _, ns := range loadedNamespaces {
-			nss = append(nss, ns.Name)
+// ClusterHealth is the API handler to get app-based health of every services from namespaces in the given cluster
+func ClusterHealth(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	traceClientLoader func() tracing.ClientInterface,
+	discovery istio.MeshDiscovery,
+	cpm business.ControlPlaneMonitor,
+	grafana *grafana.Service,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := r.URL.Query()
+		namespaces := params.Get("namespaces") // csl of namespaces
+		nss := []string{}
+		if len(namespaces) > 0 {
+			nss = strings.Split(namespaces, ",")
 		}
-	}
-	result := models.ClustersNamespaceHealth{
-		AppHealth:      map[string]*models.NamespaceAppHealth{},
-		WorkloadHealth: map[string]*models.NamespaceWorkloadHealth{},
-		ServiceHealth:  map[string]*models.NamespaceServiceHealth{},
-	}
-	for _, ns := range nss {
-		p := namespaceHealthParams{}
-		if ok, err := p.extract(r, ns); !ok {
-			// Bad request
-			RespondWithError(w, http.StatusBadRequest, err)
-			return
-		}
+		cluster := clusterNameFromQuery(conf, params)
 
-		// Adjust rate interval
-		rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime, p.ClusterName)
+		businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
-			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
+			RespondWithError(w, http.StatusInternalServerError, "Apps initialization error: "+err.Error())
 			return
 		}
 
-		healthCriteria := business.NamespaceHealthCriteria{Namespace: p.Namespace, Cluster: p.ClusterName, RateInterval: rateInterval, QueryTime: p.QueryTime, IncludeMetrics: true}
-		switch p.Type {
-		case "app":
-			health, err := businessLayer.Health.GetNamespaceAppHealth(r.Context(), healthCriteria)
-			if err != nil {
-				handleErrorResponse(w, err, "Error while fetching app health: "+err.Error())
-				return
+		if len(nss) == 0 {
+			loadedNamespaces, _ := businessLayer.Namespace.GetClusterNamespaces(r.Context(), cluster)
+			for _, ns := range loadedNamespaces {
+				nss = append(nss, ns.Name)
 			}
-			result.AppHealth[ns] = &health
-		case "service":
-			health, err := businessLayer.Health.GetNamespaceServiceHealth(r.Context(), healthCriteria)
-			if err != nil {
-				handleErrorResponse(w, err, "Error while fetching service health: "+err.Error())
-				return
-			}
-			result.ServiceHealth[ns] = &health
-		case "workload":
-			health, err := businessLayer.Health.GetNamespaceWorkloadHealth(r.Context(), healthCriteria)
-			if err != nil {
-				handleErrorResponse(w, err, "Error while fetching workload health: "+err.Error())
-				return
-			}
-			result.WorkloadHealth[ns] = &health
 		}
+		result := models.ClustersNamespaceHealth{
+			AppHealth:      map[string]*models.NamespaceAppHealth{},
+			WorkloadHealth: map[string]*models.NamespaceWorkloadHealth{},
+			ServiceHealth:  map[string]*models.NamespaceServiceHealth{},
+		}
+		for _, ns := range nss {
+			p := namespaceHealthParams{}
+			if ok, err := p.extract(conf, r, ns); !ok {
+				// Bad request
+				RespondWithError(w, http.StatusBadRequest, err)
+				return
+			}
+
+			// Adjust rate interval
+			rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime, p.ClusterName)
+			if err != nil {
+				handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
+				return
+			}
+
+			healthCriteria := business.NamespaceHealthCriteria{Namespace: p.Namespace, Cluster: p.ClusterName, RateInterval: rateInterval, QueryTime: p.QueryTime, IncludeMetrics: true}
+			switch p.Type {
+			case "app":
+				health, err := businessLayer.Health.GetNamespaceAppHealth(r.Context(), healthCriteria)
+				if err != nil {
+					handleErrorResponse(w, err, "Error while fetching app health: "+err.Error())
+					return
+				}
+				result.AppHealth[ns] = &health
+			case "service":
+				health, err := businessLayer.Health.GetNamespaceServiceHealth(r.Context(), healthCriteria)
+				if err != nil {
+					handleErrorResponse(w, err, "Error while fetching service health: "+err.Error())
+					return
+				}
+				result.ServiceHealth[ns] = &health
+			case "workload":
+				health, err := businessLayer.Health.GetNamespaceWorkloadHealth(r.Context(), healthCriteria)
+				if err != nil {
+					handleErrorResponse(w, err, "Error while fetching workload health: "+err.Error())
+					return
+				}
+				result.WorkloadHealth[ns] = &health
+			}
+		}
+		RespondWithJSON(w, http.StatusOK, result)
 	}
-	RespondWithJSON(w, http.StatusOK, result)
 }
 
 type baseHealthParams struct {
@@ -105,14 +121,14 @@ type baseHealthParams struct {
 	QueryTime time.Time
 }
 
-func (p *baseHealthParams) baseExtract(r *http.Request, vars map[string]string) {
+func (p *baseHealthParams) baseExtract(conf *config.Config, r *http.Request, vars map[string]string) {
 	queryParams := r.URL.Query()
 	p.RateInterval = defaultHealthRateInterval
 	p.QueryTime = util.Clock.Now()
 	if rateInterval := queryParams.Get("rateInterval"); rateInterval != "" {
 		p.RateInterval = rateInterval
 	}
-	p.ClusterName = clusterNameFromQuery(config.Get(), queryParams)
+	p.ClusterName = clusterNameFromQuery(conf, queryParams)
 	if queryTime := queryParams.Get("queryTime"); queryTime != "" {
 		unix, err := strconv.ParseInt(queryTime, 10, 64)
 		if err == nil {
@@ -134,9 +150,9 @@ type namespaceHealthParams struct {
 	Type string `json:"type"`
 }
 
-func (p *namespaceHealthParams) extract(r *http.Request, namespace string) (bool, string) {
+func (p *namespaceHealthParams) extract(conf *config.Config, r *http.Request, namespace string) (bool, string) {
 	vars := mux.Vars(r)
-	p.baseExtract(r, vars)
+	p.baseExtract(conf, r, vars)
 	p.Type = "app"
 	p.Namespace = namespace
 	queryParams := r.URL.Query()

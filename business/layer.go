@@ -34,13 +34,12 @@ type Layer struct {
 
 // Global clientfactory and prometheus clients.
 var (
-	clientFactory       kubernetes.ClientFactory
-	discovery           istio.MeshDiscovery
-	grafanaService      *grafana.Service
-	kialiCache          cache.KialiCache
-	poller              ControlPlaneMonitor
-	prometheusClient    prometheus.ClientInterface
-	tracingClientLoader func() tracing.ClientInterface
+	clientFactory    kubernetes.ClientFactory
+	discovery        istio.MeshDiscovery
+	grafanaService   *grafana.Service
+	kialiCache       cache.KialiCache
+	poller           ControlPlaneMonitor
+	prometheusClient prometheus.ClientInterface
 )
 
 // Start sets the globals necessary for the business layer.
@@ -60,26 +59,6 @@ func Start(
 	kialiCache = cache
 	poller = controlPlaneMonitor
 	prometheusClient = prom
-	tracingClientLoader = traceClientLoader
-}
-
-// Get the business.Layer
-func Get(authInfos map[string]*api.AuthInfo) (*Layer, error) {
-	// Creates new k8s clients based on the current users token
-	userClients, err := clientFactory.GetClients(authInfos)
-	if err != nil {
-		return nil, err
-	}
-
-	var traceClient tracing.ClientInterface
-	// This check is only necessary because many of the unit tests don't properly initialize the tracingClientLoader global variable.
-	// In a real environment, Start should always be called before Get so the global should always be initialized.
-	if tracingClientLoader != nil {
-		traceClient = tracingClientLoader()
-	}
-
-	kialiSAClient := clientFactory.GetSAClients()
-	return NewWithBackends(userClients, kialiSAClient, prometheusClient, traceClient), nil
 }
 
 // SetWithBackends allows for specifying the ClientFactory and Prometheus clients to be used.
