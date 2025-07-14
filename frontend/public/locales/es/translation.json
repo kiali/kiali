@@ -55,7 +55,7 @@
   "An Istio Config resource needs at least one namespace selected": "Un recurso de configuración de Istio necesita al menos un espacio de nombres seleccionado",
   "and": "y",
   "Annotations": "Anotaciones",
-  "API Endpoint: {{apiEndpoint}}": "Punto final de API: {{apiEndpoint}}",
+  "API Endpoint: {{apiEndpoint}}": "Endpoint de API: {{apiEndpoint}}",
   "api version: {{apiVersion}}": "versión de la API: {{apiVersion}}",
   "App": "Aplicación",
   "Applications": "Aplicaciones",
