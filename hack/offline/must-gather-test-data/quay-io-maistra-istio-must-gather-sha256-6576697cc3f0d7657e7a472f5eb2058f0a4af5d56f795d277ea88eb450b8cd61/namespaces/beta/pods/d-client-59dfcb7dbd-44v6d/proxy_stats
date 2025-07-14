@@ -1,0 +1,230 @@
+cluster_manager.cds.version_text: "2025-07-15T19:29:44Z/24"
+listener_manager.lds.version_text: "2025-07-15T19:29:44Z/24"
+cluster.xds-grpc;.assignment_stale: 0
+cluster.xds-grpc;.assignment_timeout_received: 0
+cluster.xds-grpc;.assignment_use_cached: 0
+cluster.xds-grpc;.bind_errors: 0
+cluster.xds-grpc;.circuit_breakers.default.cx_open: 0
+cluster.xds-grpc;.circuit_breakers.default.cx_pool_open: 0
+cluster.xds-grpc;.circuit_breakers.default.rq_open: 0
+cluster.xds-grpc;.circuit_breakers.default.rq_pending_open: 0
+cluster.xds-grpc;.circuit_breakers.default.rq_retry_open: 0
+cluster.xds-grpc;.circuit_breakers.high.cx_open: 0
+cluster.xds-grpc;.circuit_breakers.high.cx_pool_open: 0
+cluster.xds-grpc;.circuit_breakers.high.rq_open: 0
+cluster.xds-grpc;.circuit_breakers.high.rq_pending_open: 0
+cluster.xds-grpc;.circuit_breakers.high.rq_retry_open: 0
+cluster.xds-grpc;.default.total_match_count: 1
+cluster.xds-grpc;.http2.deferred_stream_close: 0
+cluster.xds-grpc;.http2.dropped_headers_with_underscores: 0
+cluster.xds-grpc;.http2.goaway_sent: 0
+cluster.xds-grpc;.http2.header_overflow: 0
+cluster.xds-grpc;.http2.headers_cb_no_stream: 0
+cluster.xds-grpc;.http2.inbound_empty_frames_flood: 0
+cluster.xds-grpc;.http2.inbound_priority_frames_flood: 0
+cluster.xds-grpc;.http2.inbound_window_update_frames_flood: 0
+cluster.xds-grpc;.http2.keepalive_timeout: 0
+cluster.xds-grpc;.http2.metadata_empty_frames: 0
+cluster.xds-grpc;.http2.outbound_control_flood: 0
+cluster.xds-grpc;.http2.outbound_control_frames_active: 0
+cluster.xds-grpc;.http2.outbound_flood: 0
+cluster.xds-grpc;.http2.outbound_frames_active: 0
+cluster.xds-grpc;.http2.pending_send_bytes: 0
+cluster.xds-grpc;.http2.requests_rejected_with_underscores_in_headers: 0
+cluster.xds-grpc;.http2.rx_messaging_error: 0
+cluster.xds-grpc;.http2.rx_reset: 0
+cluster.xds-grpc;.http2.stream_refused_errors: 0
+cluster.xds-grpc;.http2.streams_active: 1
+cluster.xds-grpc;.http2.trailers: 0
+cluster.xds-grpc;.http2.tx_flush_timeout: 0
+cluster.xds-grpc;.http2.tx_reset: 0
+cluster.xds-grpc;.internal.upstream_rq_200: 1
+cluster.xds-grpc;.internal.upstream_rq_2xx: 1
+cluster.xds-grpc;.internal.upstream_rq_completed: 1
+cluster.xds-grpc;.lb_healthy_panic: 0
+cluster.xds-grpc;.lb_local_cluster_not_ok: 0
+cluster.xds-grpc;.lb_recalculate_zone_structures: 0
+cluster.xds-grpc;.lb_subsets_active: 0
+cluster.xds-grpc;.lb_subsets_created: 0
+cluster.xds-grpc;.lb_subsets_fallback: 0
+cluster.xds-grpc;.lb_subsets_fallback_panic: 0
+cluster.xds-grpc;.lb_subsets_removed: 0
+cluster.xds-grpc;.lb_subsets_selected: 0
+cluster.xds-grpc;.lb_zone_cluster_too_small: 0
+cluster.xds-grpc;.lb_zone_no_capacity_left: 0
+cluster.xds-grpc;.lb_zone_number_differs: 0
+cluster.xds-grpc;.lb_zone_routing_all_directly: 0
+cluster.xds-grpc;.lb_zone_routing_cross_zone: 0
+cluster.xds-grpc;.lb_zone_routing_sampled: 0
+cluster.xds-grpc;.max_host_weight: 0
+cluster.xds-grpc;.membership_change: 1
+cluster.xds-grpc;.membership_degraded: 0
+cluster.xds-grpc;.membership_excluded: 0
+cluster.xds-grpc;.membership_healthy: 1
+cluster.xds-grpc;.membership_total: 1
+cluster.xds-grpc;.original_dst_host_invalid: 0
+cluster.xds-grpc;.retry_or_shadow_abandoned: 0
+cluster.xds-grpc;.update_attempt: 0
+cluster.xds-grpc;.update_empty: 0
+cluster.xds-grpc;.update_failure: 0
+cluster.xds-grpc;.update_no_rebuild: 0
+cluster.xds-grpc;.update_success: 0
+cluster.xds-grpc;.upstream_cx_active: 1
+cluster.xds-grpc;.upstream_cx_close_notify: 0
+cluster.xds-grpc;.upstream_cx_connect_attempts_exceeded: 0
+cluster.xds-grpc;.upstream_cx_connect_fail: 0
+cluster.xds-grpc;.upstream_cx_connect_timeout: 0
+cluster.xds-grpc;.upstream_cx_connect_with_0_rtt: 0
+cluster.xds-grpc;.upstream_cx_destroy: 0
+cluster.xds-grpc;.upstream_cx_destroy_local: 0
+cluster.xds-grpc;.upstream_cx_destroy_local_with_active_rq: 0
+cluster.xds-grpc;.upstream_cx_destroy_remote: 0
+cluster.xds-grpc;.upstream_cx_destroy_remote_with_active_rq: 0
+cluster.xds-grpc;.upstream_cx_destroy_with_active_rq: 0
+cluster.xds-grpc;.upstream_cx_http1_total: 0
+cluster.xds-grpc;.upstream_cx_http2_total: 1
+cluster.xds-grpc;.upstream_cx_http3_total: 0
+cluster.xds-grpc;.upstream_cx_idle_timeout: 0
+cluster.xds-grpc;.upstream_cx_max_duration_reached: 0
+cluster.xds-grpc;.upstream_cx_max_requests: 1
+cluster.xds-grpc;.upstream_cx_none_healthy: 0
+cluster.xds-grpc;.upstream_cx_overflow: 0
+cluster.xds-grpc;.upstream_cx_pool_overflow: 0
+cluster.xds-grpc;.upstream_cx_protocol_error: 0
+cluster.xds-grpc;.upstream_cx_rx_bytes_buffered: 17
+cluster.xds-grpc;.upstream_cx_rx_bytes_total: 295669
+cluster.xds-grpc;.upstream_cx_total: 1
+cluster.xds-grpc;.upstream_cx_tx_bytes_buffered: 0
+cluster.xds-grpc;.upstream_cx_tx_bytes_total: 749621
+cluster.xds-grpc;.upstream_flow_control_backed_up_total: 0
+cluster.xds-grpc;.upstream_flow_control_drained_total: 0
+cluster.xds-grpc;.upstream_flow_control_paused_reading_total: 0
+cluster.xds-grpc;.upstream_flow_control_resumed_reading_total: 0
+cluster.xds-grpc;.upstream_http3_broken: 0
+cluster.xds-grpc;.upstream_internal_redirect_failed_total: 0
+cluster.xds-grpc;.upstream_internal_redirect_succeeded_total: 0
+cluster.xds-grpc;.upstream_rq_0rtt: 0
+cluster.xds-grpc;.upstream_rq_200: 1
+cluster.xds-grpc;.upstream_rq_2xx: 1
+cluster.xds-grpc;.upstream_rq_active: 1
+cluster.xds-grpc;.upstream_rq_cancelled: 0
+cluster.xds-grpc;.upstream_rq_completed: 1
+cluster.xds-grpc;.upstream_rq_maintenance_mode: 0
+cluster.xds-grpc;.upstream_rq_max_duration_reached: 0
+cluster.xds-grpc;.upstream_rq_pending_active: 0
+cluster.xds-grpc;.upstream_rq_pending_failure_eject: 0
+cluster.xds-grpc;.upstream_rq_pending_overflow: 0
+cluster.xds-grpc;.upstream_rq_pending_total: 1
+cluster.xds-grpc;.upstream_rq_per_try_idle_timeout: 0
+cluster.xds-grpc;.upstream_rq_per_try_timeout: 0
+cluster.xds-grpc;.upstream_rq_retry: 0
+cluster.xds-grpc;.upstream_rq_retry_backoff_exponential: 0
+cluster.xds-grpc;.upstream_rq_retry_backoff_ratelimited: 0
+cluster.xds-grpc;.upstream_rq_retry_limit_exceeded: 0
+cluster.xds-grpc;.upstream_rq_retry_overflow: 0
+cluster.xds-grpc;.upstream_rq_retry_success: 0
+cluster.xds-grpc;.upstream_rq_rx_reset: 0
+cluster.xds-grpc;.upstream_rq_timeout: 0
+cluster.xds-grpc;.upstream_rq_total: 1
+cluster.xds-grpc;.upstream_rq_tx_reset: 0
+cluster.xds-grpc;.version: 0
+cluster.xds-grpc;.warming_state: 0
+cluster_manager.active_clusters: 50
+cluster_manager.cds.config_reload: 1
+cluster_manager.cds.config_reload_time_ms: 1752607791109
+cluster_manager.cds.init_fetch_timeout: 0
+cluster_manager.cds.update_attempt: 3
+cluster_manager.cds.update_failure: 0
+cluster_manager.cds.update_rejected: 0
+cluster_manager.cds.update_success: 2
+cluster_manager.cds.update_time: 1752607792108
+cluster_manager.cds.version: 4912381417060813247
+cluster_manager.cluster_added: 50
+cluster_manager.cluster_modified: 0
+cluster_manager.cluster_removed: 0
+cluster_manager.cluster_updated: 13
+cluster_manager.cluster_updated_via_merge: 0
+cluster_manager.update_merge_cancelled: 0
+cluster_manager.update_out_of_merge_window: 0
+cluster_manager.warming_clusters: 0
+istiocustom.istio_build.component.proxy.tag.1.26.2: 1
+istiocustom.istio_requests_total.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.y-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.y-server.destination_version.v1.destination_service.y-server.beta.svc.cluster.local.destination_canonical_service.y-server.destination_canonical_revision.v1.destination_service_name.y-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: 731
+istiocustom.istio_requests_total.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.y-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.y-server.destination_version.v1.destination_service.y-server.beta.svc.cluster.local.destination_canonical_service.y-server.destination_canonical_revision.v1.destination_service_name.y-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.500.grpc_response_status.response_flags.-.connection_security_policy.unknown: 73
+istiocustom.istio_requests_total.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.z-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.z-server.destination_version.v1.destination_service.z-server.beta.svc.cluster.local.destination_canonical_service.z-server.destination_canonical_revision.v1.destination_service_name.z-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: 658
+istiocustom.istio_requests_total.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.z-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.z-server.destination_version.v1.destination_service.z-server.beta.svc.cluster.local.destination_canonical_service.z-server.destination_canonical_revision.v1.destination_service_name.z-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.201.grpc_response_status.response_flags.-.connection_security_policy.unknown: 73
+istiocustom.istio_requests_total.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.z-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.z-server.destination_version.v1.destination_service.z-server.beta.svc.cluster.local.destination_canonical_service.z-server.destination_canonical_revision.v1.destination_service_name.z-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.202.grpc_response_status.response_flags.-.connection_security_policy.unknown: 73
+istiocustom.istio_requests_total.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.unknown.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.unknown.destination_workload_namespace.unknown.destination_principal.unknown.destination_app.unknown.destination_version.unknown.destination_service.y-server.beta.svc.cluster.local.destination_canonical_service.unknown.destination_canonical_revision.latest.destination_service_name.y-server.destination_service_namespace.beta.destination_cluster.unknown.request_protocol.http.response_code.503.grpc_response_status.response_flags.UH.connection_security_policy.unknown: 3
+istiocustom.istio_requests_total.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.unknown.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.unknown.destination_workload_namespace.unknown.destination_principal.unknown.destination_app.unknown.destination_version.unknown.destination_service.z-server.beta.svc.cluster.local.destination_canonical_service.unknown.destination_canonical_revision.latest.destination_service_name.z-server.destination_service_namespace.beta.destination_cluster.unknown.request_protocol.http.response_code.503.grpc_response_status.response_flags.UH.connection_security_policy.unknown: 2
+listener_manager.lds.init_fetch_timeout: 0
+listener_manager.lds.update_attempt: 3
+listener_manager.lds.update_failure: 0
+listener_manager.lds.update_rejected: 0
+listener_manager.lds.update_success: 2
+listener_manager.lds.update_time: 1752607792114
+listener_manager.lds.version: 4912381417060813247
+listener_manager.listener_added: 26
+listener_manager.listener_create_failure: 0
+listener_manager.listener_create_success: 52
+listener_manager.listener_in_place_updated: 0
+listener_manager.listener_modified: 0
+listener_manager.listener_removed: 0
+listener_manager.listener_stopped: 0
+listener_manager.total_filter_chains_draining: 0
+listener_manager.total_listeners_active: 26
+listener_manager.total_listeners_draining: 0
+listener_manager.total_listeners_warming: 0
+listener_manager.workers_started: 1
+server.compilation_settings.fips_mode: 0
+server.concurrency: 2
+server.days_until_first_cert_expiring: 0
+server.debug_assertion_failures: 0
+server.dropped_stat_flushes: 0
+server.dynamic_unknown_fields: 0
+server.envoy_bug_failures: 0
+server.hot_restart_epoch: 0
+server.live: 1
+server.main_thread.watchdog_mega_miss: 0
+server.main_thread.watchdog_miss: 0
+server.memory_allocated: 10848368
+server.memory_heap_size: 18874368
+server.memory_physical_size: 26883502
+server.parent_connections: 0
+server.seconds_until_first_ocsp_response_expiring: 0
+server.state: 0
+server.static_unknown_fields: 0
+server.stats_recent_lookups: 9483
+server.total_connections: 3
+server.uptime: 805
+server.version: 11338560
+server.wip_protos: 0
+server.worker_0.watchdog_mega_miss: 0
+server.worker_0.watchdog_miss: 0
+server.worker_1.watchdog_mega_miss: 0
+server.worker_1.watchdog_miss: 0
+cluster.xds-grpc;.upstream_cx_connect_ms: P0(nan,2) P25(nan,2.025) P50(nan,2.05) P75(nan,2.075) P90(nan,2.09) P95(nan,2.095) P99(nan,2.099) P99.5(nan,2.0995) P99.9(nan,2.0999) P100(nan,2.1)
+cluster.xds-grpc;.upstream_cx_length_ms: No recorded values
+cluster_manager.cds.update_duration: P0(nan,1) P25(nan,1.05) P50(nan,1.1) P75(nan,15.5) P90(nan,15.8) P95(nan,15.9) P99(nan,15.98) P99.5(nan,15.99) P99.9(nan,15.998) P100(nan,16)
+istiocustom.istio_request_bytes.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.y-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.y-server.destination_version.v1.destination_service.y-server.beta.svc.cluster.local.destination_canonical_service.y-server.destination_canonical_revision.v1.destination_service_name.y-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(100,100) P25(102.5,102.5) P50(105,105) P75(107.5,107.5) P90(109,109) P95(109.5,109.5) P99(109.9,109.9) P99.5(109.95,109.95) P99.9(109.99,109.99) P100(110,110)
+istiocustom.istio_request_bytes.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.y-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.y-server.destination_version.v1.destination_service.y-server.beta.svc.cluster.local.destination_canonical_service.y-server.destination_canonical_revision.v1.destination_service_name.y-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.500.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(100,100) P25(102.5,102.5) P50(105,105) P75(107.5,107.5) P90(109,109) P95(109.5,109.5) P99(109.9,109.9) P99.5(109.95,109.95) P99.9(109.99,109.99000000000001) P100(110,110)
+istiocustom.istio_request_bytes.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.z-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.z-server.destination_version.v1.destination_service.z-server.beta.svc.cluster.local.destination_canonical_service.z-server.destination_canonical_revision.v1.destination_service_name.z-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(100,100) P25(102.5,102.5) P50(105,105) P75(107.5,107.5) P90(109,109) P95(109.5,109.5) P99(109.9,109.9) P99.5(109.95,109.95) P99.9(109.99,109.99) P100(110,110)
+istiocustom.istio_request_bytes.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.z-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.z-server.destination_version.v1.destination_service.z-server.beta.svc.cluster.local.destination_canonical_service.z-server.destination_canonical_revision.v1.destination_service_name.z-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.201.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(100,100) P25(102.5,102.5) P50(105,105) P75(107.5,107.5) P90(109,109) P95(109.5,109.5) P99(109.9,109.9) P99.5(109.95,109.95) P99.9(109.99,109.99000000000001) P100(110,110)
+istiocustom.istio_request_bytes.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.z-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.z-server.destination_version.v1.destination_service.z-server.beta.svc.cluster.local.destination_canonical_service.z-server.destination_canonical_revision.v1.destination_service_name.z-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.202.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(100,100) P25(102.5,102.5) P50(105,105) P75(107.5,107.5) P90(109,109) P95(109.5,109.5) P99(109.9,109.9) P99.5(109.95,109.95) P99.9(109.99,109.99000000000001) P100(110,110)
+istiocustom.istio_request_bytes.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.unknown.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.unknown.destination_workload_namespace.unknown.destination_principal.unknown.destination_app.unknown.destination_version.unknown.destination_service.y-server.beta.svc.cluster.local.destination_canonical_service.unknown.destination_canonical_revision.latest.destination_service_name.y-server.destination_service_namespace.beta.destination_cluster.unknown.request_protocol.http.response_code.503.grpc_response_status.response_flags.UH.connection_security_policy.unknown: P0(nan,100) P25(nan,102.5) P50(nan,105) P75(nan,107.5) P90(nan,109) P95(nan,109.5) P99(nan,109.9) P99.5(nan,109.95) P99.9(nan,109.99) P100(nan,110)
+istiocustom.istio_request_bytes.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.unknown.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.unknown.destination_workload_namespace.unknown.destination_principal.unknown.destination_app.unknown.destination_version.unknown.destination_service.z-server.beta.svc.cluster.local.destination_canonical_service.unknown.destination_canonical_revision.latest.destination_service_name.z-server.destination_service_namespace.beta.destination_cluster.unknown.request_protocol.http.response_code.503.grpc_response_status.response_flags.UH.connection_security_policy.unknown: P0(nan,100) P25(nan,102.5) P50(nan,105) P75(nan,107.5) P90(nan,109) P95(nan,109.5) P99(nan,109.9) P99.5(nan,109.95) P99.9(nan,109.99) P100(nan,110)
+istiocustom.istio_request_duration_milliseconds.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.y-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.y-server.destination_version.v1.destination_service.y-server.beta.svc.cluster.local.destination_canonical_service.y-server.destination_canonical_revision.v1.destination_service_name.y-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(0,0) P25(0,0) P50(0,0) P75(1.05,1.0505797101449275) P90(1.08,1.0821449275362318) P95(1.09,1.0926666666666667) P99(1.098,2.0534285714285714) P99.5(1.099,3.0370000000000004) P99.9(1.0998,7.0274) P100(1.1,7.1)
+istiocustom.istio_request_duration_milliseconds.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.y-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.y-server.destination_version.v1.destination_service.y-server.beta.svc.cluster.local.destination_canonical_service.y-server.destination_canonical_revision.v1.destination_service_name.y-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.500.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(0,0) P25(0,0) P50(0,0) P75(0,1.0405172413793102) P90(0,1.0782758620689656) P95(0,1.0908620689655173) P99(0,5.026999999999999) P99.5(0,5.0635) P99.9(0,5.092700000000001) P100(0,5.1)
+istiocustom.istio_request_duration_milliseconds.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.z-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.z-server.destination_version.v1.destination_service.z-server.beta.svc.cluster.local.destination_canonical_service.z-server.destination_canonical_revision.v1.destination_service_name.z-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(0,0) P25(0,0) P50(1.025,0) P75(1.0625,1.0497491638795986) P90(1.085,1.0825083612040134) P95(1.0925,1.093428093645485) P99(1.0985,2.053916666666667) P99.5(1.09925,2.081125) P99.9(1.09985,5.034699999999998) P100(1.1,5.1)
+istiocustom.istio_request_duration_milliseconds.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.z-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.z-server.destination_version.v1.destination_service.z-server.beta.svc.cluster.local.destination_canonical_service.z-server.destination_canonical_revision.v1.destination_service_name.z-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.201.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(0,0) P25(0,0) P50(0,0) P75(0,1.0477272727272728) P90(0,1.080909090909091) P95(0,1.091969696969697) P99(0,4.026999999999999) P99.5(0,4.0635) P99.9(0,4.092700000000001) P100(0,4.1)
+istiocustom.istio_request_duration_milliseconds.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.z-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.z-server.destination_version.v1.destination_service.z-server.beta.svc.cluster.local.destination_canonical_service.z-server.destination_canonical_revision.v1.destination_service_name.z-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.202.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(0,0) P25(0,0) P50(0,0) P75(0,1.0477272727272728) P90(0,1.080909090909091) P95(0,1.091969696969697) P99(0,7.026999999999999) P99.5(0,7.0635) P99.9(0,7.092700000000001) P100(0,7.1)
+istiocustom.istio_request_duration_milliseconds.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.unknown.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.unknown.destination_workload_namespace.unknown.destination_principal.unknown.destination_app.unknown.destination_version.unknown.destination_service.y-server.beta.svc.cluster.local.destination_canonical_service.unknown.destination_canonical_revision.latest.destination_service_name.y-server.destination_service_namespace.beta.destination_cluster.unknown.request_protocol.http.response_code.503.grpc_response_status.response_flags.UH.connection_security_policy.unknown: P0(nan,0) P25(nan,0) P50(nan,0) P75(nan,0) P90(nan,0) P95(nan,0) P99(nan,0) P99.5(nan,0) P99.9(nan,0) P100(nan,0)
+istiocustom.istio_request_duration_milliseconds.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.unknown.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.unknown.destination_workload_namespace.unknown.destination_principal.unknown.destination_app.unknown.destination_version.unknown.destination_service.z-server.beta.svc.cluster.local.destination_canonical_service.unknown.destination_canonical_revision.latest.destination_service_name.z-server.destination_service_namespace.beta.destination_cluster.unknown.request_protocol.http.response_code.503.grpc_response_status.response_flags.UH.connection_security_policy.unknown: P0(nan,0) P25(nan,0) P50(nan,0) P75(nan,0) P90(nan,0) P95(nan,0) P99(nan,0) P99.5(nan,0) P99.9(nan,0) P100(nan,0)
+istiocustom.istio_response_bytes.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.y-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.y-server.destination_version.v1.destination_service.y-server.beta.svc.cluster.local.destination_canonical_service.y-server.destination_canonical_revision.v1.destination_service_name.y-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(170,170) P25(172.5,172.5) P50(175,175) P75(177.5,177.5) P90(179,179) P95(179.5,179.5) P99(179.9,179.9) P99.5(179.95,179.95) P99.9(179.99,179.99) P100(180,180)
+istiocustom.istio_response_bytes.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.y-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.y-server.destination_version.v1.destination_service.y-server.beta.svc.cluster.local.destination_canonical_service.y-server.destination_canonical_revision.v1.destination_service_name.y-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.500.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(190,190) P25(192.5,192.5) P50(195,195) P75(197.5,197.5) P90(199,199) P95(199.5,199.5) P99(199.9,199.9) P99.5(199.95,199.95) P99.9(199.99,199.99) P100(200,200)
+istiocustom.istio_response_bytes.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.z-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.z-server.destination_version.v1.destination_service.z-server.beta.svc.cluster.local.destination_canonical_service.z-server.destination_canonical_revision.v1.destination_service_name.z-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(170,170) P25(172.5,172.5) P50(175,175) P75(177.5,177.5) P90(179,179) P95(179.5,179.5) P99(179.9,179.9) P99.5(179.95,179.95) P99.9(179.99,179.99) P100(180,180)
+istiocustom.istio_response_bytes.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.z-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.z-server.destination_version.v1.destination_service.z-server.beta.svc.cluster.local.destination_canonical_service.z-server.destination_canonical_revision.v1.destination_service_name.z-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.201.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(180,180) P25(182.5,182.5) P50(185,185) P75(187.5,187.5) P90(189,189) P95(189.5,189.5) P99(189.9,189.9) P99.5(189.95,189.95) P99.9(189.99,189.99) P100(190,190)
+istiocustom.istio_response_bytes.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.spiffe://cluster.local/ns/beta/sa/default.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.z-server.destination_workload_namespace.beta.destination_principal.spiffe://cluster.local/ns/beta/sa/default.destination_app.z-server.destination_version.v1.destination_service.z-server.beta.svc.cluster.local.destination_canonical_service.z-server.destination_canonical_revision.v1.destination_service_name.z-server.destination_service_namespace.beta.destination_cluster.cluster-default.request_protocol.http.response_code.202.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(180,180) P25(182.5,182.5) P50(185,185) P75(187.5,187.5) P90(189,189) P95(189.5,189.5) P99(189.9,189.9) P99.5(189.95,189.95) P99.9(189.99,189.99) P100(190,190)
+istiocustom.istio_response_bytes.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.unknown.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.unknown.destination_workload_namespace.unknown.destination_principal.unknown.destination_app.unknown.destination_version.unknown.destination_service.y-server.beta.svc.cluster.local.destination_canonical_service.unknown.destination_canonical_revision.latest.destination_service_name.y-server.destination_service_namespace.beta.destination_cluster.unknown.request_protocol.http.response_code.503.grpc_response_status.response_flags.UH.connection_security_policy.unknown: P0(nan,150) P25(nan,152.5) P50(nan,155) P75(nan,157.5) P90(nan,159) P95(nan,159.5) P99(nan,159.9) P99.5(nan,159.95) P99.9(nan,159.99) P100(nan,160)
+istiocustom.istio_response_bytes.reporter.source.source_workload.d-client.source_canonical_service.d-client.source_canonical_revision.v1.source_workload_namespace.beta.source_principal.unknown.source_app.d-client.source_version.v1.source_cluster.cluster-default.destination_workload.unknown.destination_workload_namespace.unknown.destination_principal.unknown.destination_app.unknown.destination_version.unknown.destination_service.z-server.beta.svc.cluster.local.destination_canonical_service.unknown.destination_canonical_revision.latest.destination_service_name.z-server.destination_service_namespace.beta.destination_cluster.unknown.request_protocol.http.response_code.503.grpc_response_status.response_flags.UH.connection_security_policy.unknown: P0(nan,150) P25(nan,152.5) P50(nan,155) P75(nan,157.5) P90(nan,159) P95(nan,159.5) P99(nan,159.9) P99.5(nan,159.95) P99.9(nan,159.99) P100(nan,160)
+listener_manager.lds.update_duration: P0(nan,1) P25(nan,1.05) P50(nan,1.1) P75(nan,22.5) P90(nan,22.8) P95(nan,22.9) P99(nan,22.98) P99.5(nan,22.99) P99.9(nan,22.998) P100(nan,23)
+server.initialization_time_ms: P0(nan,160) P25(nan,162.5) P50(nan,165) P75(nan,167.5) P90(nan,169) P95(nan,169.5) P99(nan,169.9) P99.5(nan,169.95) P99.9(nan,169.99) P100(nan,170)
+

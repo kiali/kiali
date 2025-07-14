@@ -1,0 +1,6 @@
+---
+apiVersion: autoscaling/v2
+items: []
+kind: HorizontalPodAutoscalerList
+metadata:
+  resourceVersion: "5071"

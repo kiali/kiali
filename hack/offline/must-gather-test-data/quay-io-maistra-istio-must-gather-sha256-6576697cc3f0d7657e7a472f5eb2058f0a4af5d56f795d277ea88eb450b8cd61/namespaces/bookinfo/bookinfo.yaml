@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  creationTimestamp: "2025-07-15T19:29:07Z"
+  labels:
+    istio-injection: enabled
+    kubernetes.io/metadata.name: bookinfo
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:labels:
+          .: {}
+          f:kubernetes.io/metadata.name: {}
+    manager: kubectl-create
+    operation: Update
+    time: "2025-07-15T19:29:07Z"
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:labels:
+          f:istio-injection: {}
+    manager: kubectl-label
+    operation: Update
+    time: "2025-07-15T19:29:07Z"
+  name: bookinfo
+  resourceVersion: "1285"
+  uid: 70a92068-3363-450b-b464-74307258fb56
+spec:
+  finalizers:
+  - kubernetes
+status:
+  phase: Active

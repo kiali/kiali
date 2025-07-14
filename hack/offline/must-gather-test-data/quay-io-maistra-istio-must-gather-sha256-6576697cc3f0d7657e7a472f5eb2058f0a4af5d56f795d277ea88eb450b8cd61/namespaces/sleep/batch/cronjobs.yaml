@@ -1,0 +1,6 @@
+---
+apiVersion: batch/v1
+items: []
+kind: CronJobList
+metadata:
+  resourceVersion: "5181"

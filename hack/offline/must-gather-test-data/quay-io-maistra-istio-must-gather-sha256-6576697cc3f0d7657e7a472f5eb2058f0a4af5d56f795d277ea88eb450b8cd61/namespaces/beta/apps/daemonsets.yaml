@@ -1,0 +1,6 @@
+---
+apiVersion: apps/v1
+items: []
+kind: DaemonSetList
+metadata:
+  resourceVersion: "5098"

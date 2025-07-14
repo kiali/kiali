@@ -1,0 +1,72 @@
+---
+apiVersion: discovery.k8s.io/v1
+items:
+- addressType: IPv4
+  apiVersion: discovery.k8s.io/v1
+  endpoints:
+  - addresses:
+    - 10.244.1.50
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: sleep-868c754c4b-z9f2r
+      namespace: sleep
+      uid: 1ad4bb2f-7af8-45ae-b957-83abba63fbfc
+  kind: EndpointSlice
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:56Z"
+    creationTimestamp: "2025-07-15T19:29:39Z"
+    generateName: sleep-
+    generation: 3
+    labels:
+      app: sleep
+      endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
+      kubernetes.io/service-name: sleep
+      service: sleep
+    managedFields:
+    - apiVersion: discovery.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:addressType: {}
+        f:endpoints: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpointslice.kubernetes.io/managed-by: {}
+            f:kubernetes.io/service-name: {}
+            f:service: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"54137cda-f6ab-46f2-ab66-c24c11d000e5"}: {}
+        f:ports: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:56Z"
+    name: sleep-c24xk
+    namespace: sleep
+    ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Service
+      name: sleep
+      uid: 54137cda-f6ab-46f2-ab66-c24c11d000e5
+    resourceVersion: "2941"
+    uid: 1acdf658-d77d-4c89-93cf-d19562764188
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+kind: EndpointSliceList
+metadata:
+  resourceVersion: "5181"

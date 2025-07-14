@@ -1,0 +1,2018 @@
+---
+apiVersion: apps/v1
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app.kubernetes.io/instance":"grafana","app.kubernetes.io/name":"grafana","app.kubernetes.io/version":"11.3.1","helm.sh/chart":"grafana-8.6.3"},"name":"grafana","namespace":"istio-system"},"spec":{"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app.kubernetes.io/instance":"grafana","app.kubernetes.io/name":"grafana"}},"strategy":{"type":"RollingUpdate"},"template":{"metadata":{"annotations":{"checksum/config":"68c00ea91b7ba5c04efc55555ef2307f52aaf738b04e9665e91bb756c8f32b22","checksum/sc-dashboard-provider-config":"e70bf6a851099d385178a76de9757bb0bef8299da6d8443602590e44f05fdf24","kubectl.kubernetes.io/default-container":"grafana"},"labels":{"app.kubernetes.io/instance":"grafana","app.kubernetes.io/name":"grafana","app.kubernetes.io/version":"11.3.1","helm.sh/chart":"grafana-8.6.3","sidecar.istio.io/inject":"false"}},"spec":{"automountServiceAccountToken":true,"containers":[{"env":[{"name":"POD_IP","valueFrom":{"fieldRef":{"fieldPath":"status.podIP"}}},{"name":"GF_PATHS_DATA","value":"/var/lib/grafana/"},{"name":"GF_PATHS_LOGS","value":"/var/log/grafana"},{"name":"GF_PATHS_PLUGINS","value":"/var/lib/grafana/plugins"},{"name":"GF_PATHS_PROVISIONING","value":"/etc/grafana/provisioning"},{"name":"GF_AUTH_ANONYMOUS_ENABLED","value":"true"},{"name":"GF_AUTH_ANONYMOUS_ORG_ROLE","value":"Admin"},{"name":"GF_AUTH_BASIC_ENABLED","value":"false"},{"name":"GF_SECURITY_ADMIN_PASSWORD","value":"admin"},{"name":"GF_SECURITY_ADMIN_USER","value":"admin"}],"image":"docker.io/grafana/grafana:11.3.1","imagePullPolicy":"IfNotPresent","livenessProbe":{"failureThreshold":10,"httpGet":{"path":"/api/health","port":3000},"initialDelaySeconds":60,"timeoutSeconds":30},"name":"grafana","ports":[{"containerPort":3000,"name":"grafana","protocol":"TCP"},{"containerPort":9094,"name":"gossip-tcp","protocol":"TCP"},{"containerPort":9094,"name":"gossip-udp","protocol":"UDP"}],"readinessProbe":{"httpGet":{"path":"/api/health","port":3000}},"securityContext":{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"seccompProfile":{"type":"RuntimeDefault"}},"volumeMounts":[{"mountPath":"/etc/grafana/grafana.ini","name":"config","subPath":"grafana.ini"},{"mountPath":"/var/lib/grafana","name":"storage"},{"mountPath":"/var/lib/grafana/dashboards/istio","name":"dashboards-istio"},{"mountPath":"/var/lib/grafana/dashboards/istio-services","name":"dashboards-istio-services"},{"mountPath":"/etc/grafana/provisioning/datasources/datasources.yaml","name":"config","subPath":"datasources.yaml"},{"mountPath":"/etc/grafana/provisioning/dashboards/dashboardproviders.yaml","name":"config","subPath":"dashboardproviders.yaml"}]}],"enableServiceLinks":true,"serviceAccountName":"grafana","volumes":[{"configMap":{"name":"grafana"},"name":"config"},{"configMap":{"name":"istio-grafana-dashboards"},"name":"dashboards-istio"},{"configMap":{"name":"istio-services-grafana-dashboards"},"name":"dashboards-istio-services"},{"emptyDir":{},"name":"storage"}]}}}}
+    creationTimestamp: "2025-07-15T19:28:21Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/instance: grafana
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/version: 11.3.1
+      helm.sh/chart: grafana-8.6.3
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:app.kubernetes.io/instance: {}
+            f:app.kubernetes.io/name: {}
+            f:app.kubernetes.io/version: {}
+            f:helm.sh/chart: {}
+        f:spec:
+          f:progressDeadlineSeconds: {}
+          f:replicas: {}
+          f:revisionHistoryLimit: {}
+          f:selector: {}
+          f:strategy:
+            f:rollingUpdate:
+              .: {}
+              f:maxSurge: {}
+              f:maxUnavailable: {}
+            f:type: {}
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:checksum/config: {}
+                f:checksum/sc-dashboard-provider-config: {}
+                f:kubectl.kubernetes.io/default-container: {}
+              f:labels:
+                .: {}
+                f:app.kubernetes.io/instance: {}
+                f:app.kubernetes.io/name: {}
+                f:app.kubernetes.io/version: {}
+                f:helm.sh/chart: {}
+                f:sidecar.istio.io/inject: {}
+            f:spec:
+              f:automountServiceAccountToken: {}
+              f:containers:
+                k:{"name":"grafana"}:
+                  .: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"GF_AUTH_ANONYMOUS_ENABLED"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"GF_AUTH_ANONYMOUS_ORG_ROLE"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"GF_AUTH_BASIC_ENABLED"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"GF_PATHS_DATA"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"GF_PATHS_LOGS"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"GF_PATHS_PLUGINS"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"GF_PATHS_PROVISIONING"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"GF_SECURITY_ADMIN_PASSWORD"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"GF_SECURITY_ADMIN_USER"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"POD_IP"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:fieldRef: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:livenessProbe:
+                    .: {}
+                    f:failureThreshold: {}
+                    f:httpGet:
+                      .: {}
+                      f:path: {}
+                      f:port: {}
+                      f:scheme: {}
+                    f:initialDelaySeconds: {}
+                    f:periodSeconds: {}
+                    f:successThreshold: {}
+                    f:timeoutSeconds: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":3000,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:name: {}
+                      f:protocol: {}
+                    k:{"containerPort":9094,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:name: {}
+                      f:protocol: {}
+                    k:{"containerPort":9094,"protocol":"UDP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:name: {}
+                      f:protocol: {}
+                  f:readinessProbe:
+                    .: {}
+                    f:failureThreshold: {}
+                    f:httpGet:
+                      .: {}
+                      f:path: {}
+                      f:port: {}
+                      f:scheme: {}
+                    f:periodSeconds: {}
+                    f:successThreshold: {}
+                    f:timeoutSeconds: {}
+                  f:resources: {}
+                  f:securityContext:
+                    .: {}
+                    f:allowPrivilegeEscalation: {}
+                    f:capabilities:
+                      .: {}
+                      f:drop: {}
+                    f:seccompProfile:
+                      .: {}
+                      f:type: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+                  f:volumeMounts:
+                    .: {}
+                    k:{"mountPath":"/etc/grafana/grafana.ini"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                      f:subPath: {}
+                    k:{"mountPath":"/etc/grafana/provisioning/dashboards/dashboardproviders.yaml"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                      f:subPath: {}
+                    k:{"mountPath":"/etc/grafana/provisioning/datasources/datasources.yaml"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                      f:subPath: {}
+                    k:{"mountPath":"/var/lib/grafana"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                    k:{"mountPath":"/var/lib/grafana/dashboards/istio"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                    k:{"mountPath":"/var/lib/grafana/dashboards/istio-services"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+              f:dnsPolicy: {}
+              f:enableServiceLinks: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:serviceAccount: {}
+              f:serviceAccountName: {}
+              f:terminationGracePeriodSeconds: {}
+              f:volumes:
+                .: {}
+                k:{"name":"config"}:
+                  .: {}
+                  f:configMap:
+                    .: {}
+                    f:defaultMode: {}
+                    f:name: {}
+                  f:name: {}
+                k:{"name":"dashboards-istio"}:
+                  .: {}
+                  f:configMap:
+                    .: {}
+                    f:defaultMode: {}
+                    f:name: {}
+                  f:name: {}
+                k:{"name":"dashboards-istio-services"}:
+                  .: {}
+                  f:configMap:
+                    .: {}
+                    f:defaultMode: {}
+                    f:name: {}
+                  f:name: {}
+                k:{"name":"storage"}:
+                  .: {}
+                  f:emptyDir: {}
+                  f:name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2025-07-15T19:28:21Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            f:deployment.kubernetes.io/revision: {}
+        f:status:
+          f:availableReplicas: {}
+          f:conditions:
+            .: {}
+            k:{"type":"Available"}:
+              .: {}
+              f:lastTransitionTime: {}
+              f:lastUpdateTime: {}
+              f:message: {}
+              f:reason: {}
+              f:status: {}
+              f:type: {}
+            k:{"type":"Progressing"}:
+              .: {}
+              f:lastTransitionTime: {}
+              f:lastUpdateTime: {}
+              f:message: {}
+              f:reason: {}
+              f:status: {}
+              f:type: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+          f:updatedReplicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:28:39Z"
+    name: grafana
+    namespace: istio-system
+    resourceVersion: "1190"
+    uid: e276893d-d3e3-473d-b21a-ea828527cf40
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app.kubernetes.io/instance: grafana
+        app.kubernetes.io/name: grafana
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          checksum/config: 68c00ea91b7ba5c04efc55555ef2307f52aaf738b04e9665e91bb756c8f32b22
+          checksum/sc-dashboard-provider-config: e70bf6a851099d385178a76de9757bb0bef8299da6d8443602590e44f05fdf24
+          kubectl.kubernetes.io/default-container: grafana
+        creationTimestamp: null
+        labels:
+          app.kubernetes.io/instance: grafana
+          app.kubernetes.io/name: grafana
+          app.kubernetes.io/version: 11.3.1
+          helm.sh/chart: grafana-8.6.3
+          sidecar.istio.io/inject: "false"
+      spec:
+        automountServiceAccountToken: true
+        containers:
+        - env:
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          - name: GF_PATHS_DATA
+            value: /var/lib/grafana/
+          - name: GF_PATHS_LOGS
+            value: /var/log/grafana
+          - name: GF_PATHS_PLUGINS
+            value: /var/lib/grafana/plugins
+          - name: GF_PATHS_PROVISIONING
+            value: /etc/grafana/provisioning
+          - name: GF_AUTH_ANONYMOUS_ENABLED
+            value: "true"
+          - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+            value: Admin
+          - name: GF_AUTH_BASIC_ENABLED
+            value: "false"
+          - name: GF_SECURITY_ADMIN_PASSWORD
+            value: admin
+          - name: GF_SECURITY_ADMIN_USER
+            value: admin
+          image: docker.io/grafana/grafana:11.3.1
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 10
+            httpGet:
+              path: /api/health
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 30
+          name: grafana
+          ports:
+          - containerPort: 3000
+            name: grafana
+            protocol: TCP
+          - containerPort: 9094
+            name: gossip-tcp
+            protocol: TCP
+          - containerPort: 9094
+            name: gossip-udp
+            protocol: UDP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /api/health
+              port: 3000
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources: {}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /etc/grafana/grafana.ini
+            name: config
+            subPath: grafana.ini
+          - mountPath: /var/lib/grafana
+            name: storage
+          - mountPath: /var/lib/grafana/dashboards/istio
+            name: dashboards-istio
+          - mountPath: /var/lib/grafana/dashboards/istio-services
+            name: dashboards-istio-services
+          - mountPath: /etc/grafana/provisioning/datasources/datasources.yaml
+            name: config
+            subPath: datasources.yaml
+          - mountPath: /etc/grafana/provisioning/dashboards/dashboardproviders.yaml
+            name: config
+            subPath: dashboardproviders.yaml
+        dnsPolicy: ClusterFirst
+        enableServiceLinks: true
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: grafana
+        serviceAccountName: grafana
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: grafana
+          name: config
+        - configMap:
+            defaultMode: 420
+            name: istio-grafana-dashboards
+          name: dashboards-istio
+        - configMap:
+            defaultMode: 420
+            name: istio-services-grafana-dashboards
+          name: dashboards-istio-services
+        - emptyDir: {}
+          name: storage
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-07-15T19:28:39Z"
+      lastUpdateTime: "2025-07-15T19:28:39Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-07-15T19:28:21Z"
+      lastUpdateTime: "2025-07-15T19:28:39Z"
+      message: ReplicaSet "grafana-65bfb5f855" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      meta.helm.sh/release-name: default-istiod
+      meta.helm.sh/release-namespace: istio-system
+    creationTimestamp: "2025-07-15T19:28:11Z"
+    generation: 1
+    labels:
+      app: istiod
+      app.kubernetes.io/instance: default-istiod
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: istiod
+      app.kubernetes.io/part-of: istio
+      app.kubernetes.io/version: 1.26.2
+      helm.sh/chart: istiod-1.26.2
+      istio: pilot
+      istio.io/rev: default
+      managed-by: sail-operator
+      operator.istio.io/component: Pilot
+      release: default-istiod
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:meta.helm.sh/release-name: {}
+            f:meta.helm.sh/release-namespace: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:app.kubernetes.io/instance: {}
+            f:app.kubernetes.io/managed-by: {}
+            f:app.kubernetes.io/name: {}
+            f:app.kubernetes.io/part-of: {}
+            f:app.kubernetes.io/version: {}
+            f:helm.sh/chart: {}
+            f:istio: {}
+            f:istio.io/rev: {}
+            f:managed-by: {}
+            f:operator.istio.io/component: {}
+            f:release: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"7dcc2e5a-4806-4fbb-b8c7-d8ff38160463"}: {}
+        f:spec:
+          f:progressDeadlineSeconds: {}
+          f:replicas: {}
+          f:revisionHistoryLimit: {}
+          f:selector: {}
+          f:strategy:
+            f:rollingUpdate:
+              .: {}
+              f:maxSurge: {}
+              f:maxUnavailable: {}
+            f:type: {}
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:prometheus.io/port: {}
+                f:prometheus.io/scrape: {}
+                f:sidecar.istio.io/inject: {}
+              f:labels:
+                .: {}
+                f:app: {}
+                f:app.kubernetes.io/instance: {}
+                f:app.kubernetes.io/managed-by: {}
+                f:app.kubernetes.io/name: {}
+                f:app.kubernetes.io/part-of: {}
+                f:app.kubernetes.io/version: {}
+                f:helm.sh/chart: {}
+                f:istio: {}
+                f:istio.io/dataplane-mode: {}
+                f:istio.io/rev: {}
+                f:operator.istio.io/component: {}
+                f:sidecar.istio.io/inject: {}
+            f:spec:
+              f:containers:
+                k:{"name":"discovery"}:
+                  .: {}
+                  f:args: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"CA_TRUSTED_NODE_ACCOUNTS"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"CLUSTER_ID"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"GOMAXPROCS"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:resourceFieldRef: {}
+                    k:{"name":"GOMEMLIMIT"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:resourceFieldRef: {}
+                    k:{"name":"KUBECONFIG"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"PILOT_CERT_PROVIDER"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"PILOT_ENABLE_ANALYSIS"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"PILOT_TRACE_SAMPLING"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"PLATFORM"}:
+                      .: {}
+                      f:name: {}
+                    k:{"name":"POD_NAME"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:fieldRef: {}
+                    k:{"name":"POD_NAMESPACE"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:fieldRef: {}
+                    k:{"name":"REVISION"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"SERVICE_ACCOUNT"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:fieldRef: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":8080,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:name: {}
+                      f:protocol: {}
+                    k:{"containerPort":15010,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:name: {}
+                      f:protocol: {}
+                    k:{"containerPort":15012,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:name: {}
+                      f:protocol: {}
+                    k:{"containerPort":15014,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:name: {}
+                      f:protocol: {}
+                    k:{"containerPort":15017,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:name: {}
+                      f:protocol: {}
+                  f:readinessProbe:
+                    .: {}
+                    f:failureThreshold: {}
+                    f:httpGet:
+                      .: {}
+                      f:path: {}
+                      f:port: {}
+                      f:scheme: {}
+                    f:initialDelaySeconds: {}
+                    f:periodSeconds: {}
+                    f:successThreshold: {}
+                    f:timeoutSeconds: {}
+                  f:resources:
+                    .: {}
+                    f:requests:
+                      .: {}
+                      f:cpu: {}
+                      f:memory: {}
+                  f:securityContext:
+                    .: {}
+                    f:allowPrivilegeEscalation: {}
+                    f:capabilities:
+                      .: {}
+                      f:drop: {}
+                    f:readOnlyRootFilesystem: {}
+                    f:runAsNonRoot: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+                  f:volumeMounts:
+                    .: {}
+                    k:{"mountPath":"/etc/cacerts"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                      f:readOnly: {}
+                    k:{"mountPath":"/var/run/secrets/istio-dns"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                    k:{"mountPath":"/var/run/secrets/istiod/ca"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                      f:readOnly: {}
+                    k:{"mountPath":"/var/run/secrets/istiod/tls"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                      f:readOnly: {}
+                    k:{"mountPath":"/var/run/secrets/remote"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                      f:readOnly: {}
+                    k:{"mountPath":"/var/run/secrets/tokens"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                      f:readOnly: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:serviceAccount: {}
+              f:serviceAccountName: {}
+              f:terminationGracePeriodSeconds: {}
+              f:tolerations: {}
+              f:volumes:
+                .: {}
+                k:{"name":"cacerts"}:
+                  .: {}
+                  f:name: {}
+                  f:secret:
+                    .: {}
+                    f:defaultMode: {}
+                    f:optional: {}
+                    f:secretName: {}
+                k:{"name":"istio-csr-ca-configmap"}:
+                  .: {}
+                  f:configMap:
+                    .: {}
+                    f:defaultMode: {}
+                    f:name: {}
+                    f:optional: {}
+                  f:name: {}
+                k:{"name":"istio-csr-dns-cert"}:
+                  .: {}
+                  f:name: {}
+                  f:secret:
+                    .: {}
+                    f:defaultMode: {}
+                    f:optional: {}
+                    f:secretName: {}
+                k:{"name":"istio-kubeconfig"}:
+                  .: {}
+                  f:name: {}
+                  f:secret:
+                    .: {}
+                    f:defaultMode: {}
+                    f:optional: {}
+                    f:secretName: {}
+                k:{"name":"istio-token"}:
+                  .: {}
+                  f:name: {}
+                  f:projected:
+                    .: {}
+                    f:defaultMode: {}
+                    f:sources: {}
+                k:{"name":"local-certs"}:
+                  .: {}
+                  f:emptyDir:
+                    .: {}
+                    f:medium: {}
+                  f:name: {}
+      manager: sail-operator
+      operation: Update
+      time: "2025-07-15T19:28:11Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            f:deployment.kubernetes.io/revision: {}
+        f:status:
+          f:availableReplicas: {}
+          f:conditions:
+            .: {}
+            k:{"type":"Available"}:
+              .: {}
+              f:lastTransitionTime: {}
+              f:lastUpdateTime: {}
+              f:message: {}
+              f:reason: {}
+              f:status: {}
+              f:type: {}
+            k:{"type":"Progressing"}:
+              .: {}
+              f:lastTransitionTime: {}
+              f:lastUpdateTime: {}
+              f:message: {}
+              f:reason: {}
+              f:status: {}
+              f:type: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+          f:updatedReplicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:28:17Z"
+    name: istiod
+    namespace: istio-system
+    ownerReferences:
+    - apiVersion: sailoperator.io/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: IstioRevision
+      name: default
+      uid: 7dcc2e5a-4806-4fbb-b8c7-d8ff38160463
+    resourceVersion: "944"
+    uid: 66b74166-3899-4d96-8e8e-33a07794016a
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        istio: pilot
+    strategy:
+      rollingUpdate:
+        maxSurge: 100%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          prometheus.io/port: "15014"
+          prometheus.io/scrape: "true"
+          sidecar.istio.io/inject: "false"
+        creationTimestamp: null
+        labels:
+          app: istiod
+          app.kubernetes.io/instance: default-istiod
+          app.kubernetes.io/managed-by: Helm
+          app.kubernetes.io/name: istiod
+          app.kubernetes.io/part-of: istio
+          app.kubernetes.io/version: 1.26.2
+          helm.sh/chart: istiod-1.26.2
+          istio: pilot
+          istio.io/dataplane-mode: none
+          istio.io/rev: default
+          operator.istio.io/component: Pilot
+          sidecar.istio.io/inject: "false"
+      spec:
+        containers:
+        - args:
+          - discovery
+          - --monitoringAddr=:15014
+          - --log_output_level=default:info
+          - --domain
+          - cluster.local
+          - --keepaliveMaxServerConnectionAge
+          - 30m
+          env:
+          - name: REVISION
+            value: default
+          - name: PILOT_CERT_PROVIDER
+            value: istiod
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: SERVICE_ACCOUNT
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: spec.serviceAccountName
+          - name: KUBECONFIG
+            value: /var/run/secrets/remote/config
+          - name: CA_TRUSTED_NODE_ACCOUNTS
+            value: istio-system/ztunnel
+          - name: PILOT_TRACE_SAMPLING
+            value: "1"
+          - name: PILOT_ENABLE_ANALYSIS
+            value: "false"
+          - name: CLUSTER_ID
+            value: cluster-default
+          - name: GOMEMLIMIT
+            valueFrom:
+              resourceFieldRef:
+                divisor: "1"
+                resource: limits.memory
+          - name: GOMAXPROCS
+            valueFrom:
+              resourceFieldRef:
+                divisor: "1"
+                resource: limits.cpu
+          - name: PLATFORM
+          image: gcr.io/istio-release/pilot:1.26.2
+          imagePullPolicy: IfNotPresent
+          name: discovery
+          ports:
+          - containerPort: 8080
+            name: http-debug
+            protocol: TCP
+          - containerPort: 15010
+            name: grpc-xds
+            protocol: TCP
+          - containerPort: 15012
+            name: tls-xds
+            protocol: TCP
+          - containerPort: 15017
+            name: https-webhooks
+            protocol: TCP
+          - containerPort: 15014
+            name: http-monitoring
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /ready
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 1
+            periodSeconds: 3
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 1m
+              memory: 1Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /var/run/secrets/tokens
+            name: istio-token
+            readOnly: true
+          - mountPath: /var/run/secrets/istio-dns
+            name: local-certs
+          - mountPath: /etc/cacerts
+            name: cacerts
+            readOnly: true
+          - mountPath: /var/run/secrets/remote
+            name: istio-kubeconfig
+            readOnly: true
+          - mountPath: /var/run/secrets/istiod/tls
+            name: istio-csr-dns-cert
+            readOnly: true
+          - mountPath: /var/run/secrets/istiod/ca
+            name: istio-csr-ca-configmap
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: istiod
+        serviceAccountName: istiod
+        terminationGracePeriodSeconds: 30
+        tolerations:
+        - key: cni.istio.io/not-ready
+          operator: Exists
+        volumes:
+        - emptyDir:
+            medium: Memory
+          name: local-certs
+        - name: istio-token
+          projected:
+            defaultMode: 420
+            sources:
+            - serviceAccountToken:
+                audience: istio-ca
+                expirationSeconds: 43200
+                path: istio-token
+        - name: cacerts
+          secret:
+            defaultMode: 420
+            optional: true
+            secretName: cacerts
+        - name: istio-kubeconfig
+          secret:
+            defaultMode: 420
+            optional: true
+            secretName: istio-kubeconfig
+        - name: istio-csr-dns-cert
+          secret:
+            defaultMode: 420
+            optional: true
+            secretName: istiod-tls
+        - configMap:
+            defaultMode: 420
+            name: istio-ca-root-cert
+            optional: true
+          name: istio-csr-ca-configmap
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-07-15T19:28:17Z"
+      lastUpdateTime: "2025-07-15T19:28:17Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-07-15T19:28:11Z"
+      lastUpdateTime: "2025-07-15T19:28:17Z"
+      message: ReplicaSet "istiod-58cf6dd64" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"jaeger"},"name":"jaeger","namespace":"istio-system"},"spec":{"selector":{"matchLabels":{"app":"jaeger"}},"template":{"metadata":{"annotations":{"prometheus.io/port":"14269","prometheus.io/scrape":"true"},"labels":{"app":"jaeger","sidecar.istio.io/inject":"false"}},"spec":{"containers":[{"env":[{"name":"BADGER_EPHEMERAL","value":"false"},{"name":"SPAN_STORAGE_TYPE","value":"badger"},{"name":"BADGER_DIRECTORY_VALUE","value":"/badger/data"},{"name":"BADGER_DIRECTORY_KEY","value":"/badger/key"},{"name":"COLLECTOR_ZIPKIN_HOST_PORT","value":":9411"},{"name":"MEMORY_MAX_TRACES","value":"50000"},{"name":"QUERY_BASE_PATH","value":"/jaeger"}],"image":"docker.io/jaegertracing/all-in-one:1.67.0","livenessProbe":{"httpGet":{"path":"/","port":14269}},"name":"jaeger","readinessProbe":{"httpGet":{"path":"/","port":14269}},"resources":{"requests":{"cpu":"10m"}},"volumeMounts":[{"mountPath":"/badger","name":"data"}]}],"volumes":[{"emptyDir":{},"name":"data"}]}}}}
+    creationTimestamp: "2025-07-15T19:28:21Z"
+    generation: 1
+    labels:
+      app: jaeger
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:app: {}
+        f:spec:
+          f:progressDeadlineSeconds: {}
+          f:replicas: {}
+          f:revisionHistoryLimit: {}
+          f:selector: {}
+          f:strategy:
+            f:rollingUpdate:
+              .: {}
+              f:maxSurge: {}
+              f:maxUnavailable: {}
+            f:type: {}
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:prometheus.io/port: {}
+                f:prometheus.io/scrape: {}
+              f:labels:
+                .: {}
+                f:app: {}
+                f:sidecar.istio.io/inject: {}
+            f:spec:
+              f:containers:
+                k:{"name":"jaeger"}:
+                  .: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"BADGER_DIRECTORY_KEY"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"BADGER_DIRECTORY_VALUE"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"BADGER_EPHEMERAL"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"COLLECTOR_ZIPKIN_HOST_PORT"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"MEMORY_MAX_TRACES"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"QUERY_BASE_PATH"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"SPAN_STORAGE_TYPE"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:livenessProbe:
+                    .: {}
+                    f:failureThreshold: {}
+                    f:httpGet:
+                      .: {}
+                      f:path: {}
+                      f:port: {}
+                      f:scheme: {}
+                    f:periodSeconds: {}
+                    f:successThreshold: {}
+                    f:timeoutSeconds: {}
+                  f:name: {}
+                  f:readinessProbe:
+                    .: {}
+                    f:failureThreshold: {}
+                    f:httpGet:
+                      .: {}
+                      f:path: {}
+                      f:port: {}
+                      f:scheme: {}
+                    f:periodSeconds: {}
+                    f:successThreshold: {}
+                    f:timeoutSeconds: {}
+                  f:resources:
+                    .: {}
+                    f:requests:
+                      .: {}
+                      f:cpu: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+                  f:volumeMounts:
+                    .: {}
+                    k:{"mountPath":"/badger"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:terminationGracePeriodSeconds: {}
+              f:volumes:
+                .: {}
+                k:{"name":"data"}:
+                  .: {}
+                  f:emptyDir: {}
+                  f:name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2025-07-15T19:28:21Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            f:deployment.kubernetes.io/revision: {}
+        f:status:
+          f:availableReplicas: {}
+          f:conditions:
+            .: {}
+            k:{"type":"Available"}:
+              .: {}
+              f:lastTransitionTime: {}
+              f:lastUpdateTime: {}
+              f:message: {}
+              f:reason: {}
+              f:status: {}
+              f:type: {}
+            k:{"type":"Progressing"}:
+              .: {}
+              f:lastTransitionTime: {}
+              f:lastUpdateTime: {}
+              f:message: {}
+              f:reason: {}
+              f:status: {}
+              f:type: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+          f:updatedReplicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:28:30Z"
+    name: jaeger
+    namespace: istio-system
+    resourceVersion: "1153"
+    uid: 9f4296df-ae08-42fd-8271-5a3138ee900b
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: jaeger
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          prometheus.io/port: "14269"
+          prometheus.io/scrape: "true"
+        creationTimestamp: null
+        labels:
+          app: jaeger
+          sidecar.istio.io/inject: "false"
+      spec:
+        containers:
+        - env:
+          - name: BADGER_EPHEMERAL
+            value: "false"
+          - name: SPAN_STORAGE_TYPE
+            value: badger
+          - name: BADGER_DIRECTORY_VALUE
+            value: /badger/data
+          - name: BADGER_DIRECTORY_KEY
+            value: /badger/key
+          - name: COLLECTOR_ZIPKIN_HOST_PORT
+            value: :9411
+          - name: MEMORY_MAX_TRACES
+            value: "50000"
+          - name: QUERY_BASE_PATH
+            value: /jaeger
+          image: docker.io/jaegertracing/all-in-one:1.67.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 14269
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: jaeger
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 14269
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: 10m
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /badger
+            name: data
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: data
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-07-15T19:28:30Z"
+      lastUpdateTime: "2025-07-15T19:28:30Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-07-15T19:28:21Z"
+      lastUpdateTime: "2025-07-15T19:28:30Z"
+      message: ReplicaSet "jaeger-868fbc75d7" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      meta.helm.sh/release-name: kiali-server
+      meta.helm.sh/release-namespace: istio-system
+    creationTimestamp: "2025-07-15T19:28:26Z"
+    generation: 1
+    labels:
+      app: kiali
+      app.kubernetes.io/instance: kiali
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: kiali
+      app.kubernetes.io/part-of: kiali
+      app.kubernetes.io/version: v2.13.0-SNAPSHOT
+      helm.sh/chart: kiali-server-2.13.0-SNAPSHOT
+      version: v2.13.0-SNAPSHOT
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:meta.helm.sh/release-name: {}
+            f:meta.helm.sh/release-namespace: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:app.kubernetes.io/instance: {}
+            f:app.kubernetes.io/managed-by: {}
+            f:app.kubernetes.io/name: {}
+            f:app.kubernetes.io/part-of: {}
+            f:app.kubernetes.io/version: {}
+            f:helm.sh/chart: {}
+            f:version: {}
+        f:spec:
+          f:progressDeadlineSeconds: {}
+          f:replicas: {}
+          f:revisionHistoryLimit: {}
+          f:selector: {}
+          f:strategy:
+            f:rollingUpdate:
+              .: {}
+              f:maxSurge: {}
+              f:maxUnavailable: {}
+            f:type: {}
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:checksum/config: {}
+                f:kiali.io/dashboards: {}
+                f:prometheus.io/port: {}
+                f:prometheus.io/scrape: {}
+                f:proxy.istio.io/config: {}
+              f:labels:
+                .: {}
+                f:app: {}
+                f:app.kubernetes.io/instance: {}
+                f:app.kubernetes.io/name: {}
+                f:app.kubernetes.io/part-of: {}
+                f:app.kubernetes.io/version: {}
+                f:helm.sh/chart: {}
+                f:version: {}
+              f:name: {}
+            f:spec:
+              f:containers:
+                k:{"name":"kiali"}:
+                  .: {}
+                  f:command: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"ACTIVE_NAMESPACE"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:fieldRef: {}
+                    k:{"name":"LOG_FORMAT"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"LOG_LEVEL"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"LOG_SAMPLER_RATE"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"LOG_TIME_FIELD_FORMAT"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:livenessProbe:
+                    .: {}
+                    f:failureThreshold: {}
+                    f:httpGet:
+                      .: {}
+                      f:path: {}
+                      f:port: {}
+                      f:scheme: {}
+                    f:initialDelaySeconds: {}
+                    f:periodSeconds: {}
+                    f:successThreshold: {}
+                    f:timeoutSeconds: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":9090,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:name: {}
+                      f:protocol: {}
+                    k:{"containerPort":20001,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:name: {}
+                      f:protocol: {}
+                  f:readinessProbe:
+                    .: {}
+                    f:failureThreshold: {}
+                    f:httpGet:
+                      .: {}
+                      f:path: {}
+                      f:port: {}
+                      f:scheme: {}
+                    f:initialDelaySeconds: {}
+                    f:periodSeconds: {}
+                    f:successThreshold: {}
+                    f:timeoutSeconds: {}
+                  f:resources:
+                    .: {}
+                    f:limits:
+                      .: {}
+                      f:memory: {}
+                    f:requests:
+                      .: {}
+                      f:cpu: {}
+                      f:memory: {}
+                  f:securityContext:
+                    .: {}
+                    f:allowPrivilegeEscalation: {}
+                    f:capabilities:
+                      .: {}
+                      f:drop: {}
+                    f:privileged: {}
+                    f:readOnlyRootFilesystem: {}
+                    f:runAsNonRoot: {}
+                  f:startupProbe:
+                    .: {}
+                    f:failureThreshold: {}
+                    f:httpGet:
+                      .: {}
+                      f:path: {}
+                      f:port: {}
+                      f:scheme: {}
+                    f:initialDelaySeconds: {}
+                    f:periodSeconds: {}
+                    f:successThreshold: {}
+                    f:timeoutSeconds: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+                  f:volumeMounts:
+                    .: {}
+                    k:{"mountPath":"/kiali-cabundle"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                    k:{"mountPath":"/kiali-cert"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                    k:{"mountPath":"/kiali-configuration"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                    k:{"mountPath":"/kiali-remote-cluster-secrets/kiali-multi-cluster-secret"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                      f:readOnly: {}
+                    k:{"mountPath":"/kiali-secret"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:serviceAccount: {}
+              f:serviceAccountName: {}
+              f:terminationGracePeriodSeconds: {}
+              f:volumes:
+                .: {}
+                k:{"name":"kiali-cabundle"}:
+                  .: {}
+                  f:configMap:
+                    .: {}
+                    f:defaultMode: {}
+                    f:name: {}
+                    f:optional: {}
+                  f:name: {}
+                k:{"name":"kiali-cert"}:
+                  .: {}
+                  f:name: {}
+                  f:secret:
+                    .: {}
+                    f:defaultMode: {}
+                    f:optional: {}
+                    f:secretName: {}
+                k:{"name":"kiali-configuration"}:
+                  .: {}
+                  f:configMap:
+                    .: {}
+                    f:defaultMode: {}
+                    f:name: {}
+                  f:name: {}
+                k:{"name":"kiali-multi-cluster-secret"}:
+                  .: {}
+                  f:name: {}
+                  f:secret:
+                    .: {}
+                    f:defaultMode: {}
+                    f:optional: {}
+                    f:secretName: {}
+                k:{"name":"kiali-secret"}:
+                  .: {}
+                  f:name: {}
+                  f:secret:
+                    .: {}
+                    f:defaultMode: {}
+                    f:optional: {}
+                    f:secretName: {}
+      manager: helm
+      operation: Update
+      time: "2025-07-15T19:28:26Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            f:deployment.kubernetes.io/revision: {}
+        f:status:
+          f:availableReplicas: {}
+          f:conditions:
+            .: {}
+            k:{"type":"Available"}:
+              .: {}
+              f:lastTransitionTime: {}
+              f:lastUpdateTime: {}
+              f:message: {}
+              f:reason: {}
+              f:status: {}
+              f:type: {}
+            k:{"type":"Progressing"}:
+              .: {}
+              f:lastTransitionTime: {}
+              f:lastUpdateTime: {}
+              f:message: {}
+              f:reason: {}
+              f:status: {}
+              f:type: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+          f:updatedReplicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:06Z"
+    name: kiali
+    namespace: istio-system
+    resourceVersion: "1280"
+    uid: a877ff16-e78a-414c-829c-38db89beaf5d
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app.kubernetes.io/instance: kiali
+        app.kubernetes.io/name: kiali
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 1
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          checksum/config: 31c15e14c699572fa1f5a9b32a680f6b8d92e2abc12878def7af64522ed2796d
+          kiali.io/dashboards: go,kiali
+          prometheus.io/port: "9090"
+          prometheus.io/scrape: "true"
+          proxy.istio.io/config: '{ "holdApplicationUntilProxyStarts": true }'
+        creationTimestamp: null
+        labels:
+          app: kiali
+          app.kubernetes.io/instance: kiali
+          app.kubernetes.io/name: kiali
+          app.kubernetes.io/part-of: kiali
+          app.kubernetes.io/version: v2.13.0-SNAPSHOT
+          helm.sh/chart: kiali-server-2.13.0-SNAPSHOT
+          version: v2.13.0-SNAPSHOT
+        name: kiali
+      spec:
+        containers:
+        - command:
+          - /opt/kiali/kiali
+          - -config
+          - /kiali-configuration/config.yaml
+          env:
+          - name: ACTIVE_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: LOG_LEVEL
+            value: trace
+          - name: LOG_FORMAT
+            value: text
+          - name: LOG_TIME_FIELD_FORMAT
+            value: 2006-01-02T15:04:05Z07:00
+          - name: LOG_SAMPLER_RATE
+            value: "1"
+          image: localhost/kiali/kiali:dev
+          imagePullPolicy: Never
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /kiali/healthz
+              port: api-port
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: kiali
+          ports:
+          - containerPort: 20001
+            name: api-port
+            protocol: TCP
+          - containerPort: 9090
+            name: http-metrics
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /kiali/healthz
+              port: api-port
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              memory: 1Gi
+            requests:
+              cpu: 10m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          startupProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /kiali/healthz
+              port: api-port
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: FallbackToLogsOnError
+          volumeMounts:
+          - mountPath: /kiali-configuration
+            name: kiali-configuration
+          - mountPath: /kiali-cert
+            name: kiali-cert
+          - mountPath: /kiali-secret
+            name: kiali-secret
+          - mountPath: /kiali-cabundle
+            name: kiali-cabundle
+          - mountPath: /kiali-remote-cluster-secrets/kiali-multi-cluster-secret
+            name: kiali-multi-cluster-secret
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: kiali
+        serviceAccountName: kiali
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: kiali
+          name: kiali-configuration
+        - name: kiali-cert
+          secret:
+            defaultMode: 420
+            optional: true
+            secretName: istio.kiali-service-account
+        - name: kiali-secret
+          secret:
+            defaultMode: 420
+            optional: true
+            secretName: kiali
+        - configMap:
+            defaultMode: 420
+            name: kiali-cabundle
+            optional: true
+          name: kiali-cabundle
+        - name: kiali-multi-cluster-secret
+          secret:
+            defaultMode: 420
+            optional: true
+            secretName: kiali-multi-cluster-secret
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-07-15T19:28:26Z"
+      lastUpdateTime: "2025-07-15T19:28:26Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-07-15T19:28:26Z"
+      lastUpdateTime: "2025-07-15T19:29:06Z"
+      message: ReplicaSet "kiali-68855959f6" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app.kubernetes.io/component":"server","app.kubernetes.io/instance":"prometheus","app.kubernetes.io/name":"prometheus","app.kubernetes.io/part-of":"prometheus","app.kubernetes.io/version":"v3.2.1","helm.sh/chart":"prometheus-27.8.0"},"name":"prometheus","namespace":"istio-system"},"spec":{"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app.kubernetes.io/component":"server","app.kubernetes.io/instance":"prometheus","app.kubernetes.io/name":"prometheus"}},"strategy":{"rollingUpdate":null,"type":"Recreate"},"template":{"metadata":{"labels":{"app.kubernetes.io/component":"server","app.kubernetes.io/instance":"prometheus","app.kubernetes.io/name":"prometheus","app.kubernetes.io/part-of":"prometheus","app.kubernetes.io/version":"v3.2.1","helm.sh/chart":"prometheus-27.8.0","sidecar.istio.io/inject":"false"}},"spec":{"containers":[{"args":["--watched-dir=/etc/config","--listen-address=0.0.0.0:8080","--reload-url=http://127.0.0.1:9090/-/reload"],"image":"ghcr.io/prometheus-operator/prometheus-config-reloader:v0.81.0","imagePullPolicy":"IfNotPresent","livenessProbe":{"httpGet":{"path":"/healthz","port":"metrics","scheme":"HTTP"},"initialDelaySeconds":2,"periodSeconds":10},"name":"prometheus-server-configmap-reload","ports":[{"containerPort":8080,"name":"metrics"}],"readinessProbe":{"httpGet":{"path":"/healthz","port":"metrics","scheme":"HTTP"},"periodSeconds":10},"volumeMounts":[{"mountPath":"/etc/config","name":"config-volume","readOnly":true}]},{"args":["--storage.tsdb.retention.time=15d","--config.file=/etc/config/prometheus.yml","--storage.tsdb.path=/data","--web.console.libraries=/etc/prometheus/console_libraries","--web.console.templates=/etc/prometheus/consoles","--web.enable-lifecycle"],"image":"prom/prometheus:v3.2.1","imagePullPolicy":"IfNotPresent","livenessProbe":{"failureThreshold":3,"httpGet":{"path":"/-/healthy","port":9090,"scheme":"HTTP"},"initialDelaySeconds":30,"periodSeconds":15,"successThreshold":1,"timeoutSeconds":10},"name":"prometheus-server","ports":[{"containerPort":9090}],"readinessProbe":{"failureThreshold":3,"httpGet":{"path":"/-/ready","port":9090,"scheme":"HTTP"},"initialDelaySeconds":0,"periodSeconds":5,"successThreshold":1,"timeoutSeconds":4},"volumeMounts":[{"mountPath":"/etc/config","name":"config-volume"},{"mountPath":"/data","name":"storage-volume","subPath":""}]}],"dnsPolicy":"ClusterFirst","enableServiceLinks":true,"serviceAccountName":"prometheus","terminationGracePeriodSeconds":300,"volumes":[{"configMap":{"name":"prometheus"},"name":"config-volume"},{"emptyDir":{},"name":"storage-volume"}]}}}}
+    creationTimestamp: "2025-07-15T19:28:20Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/component: server
+      app.kubernetes.io/instance: prometheus
+      app.kubernetes.io/name: prometheus
+      app.kubernetes.io/part-of: prometheus
+      app.kubernetes.io/version: v3.2.1
+      helm.sh/chart: prometheus-27.8.0
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:app.kubernetes.io/component: {}
+            f:app.kubernetes.io/instance: {}
+            f:app.kubernetes.io/name: {}
+            f:app.kubernetes.io/part-of: {}
+            f:app.kubernetes.io/version: {}
+            f:helm.sh/chart: {}
+        f:spec:
+          f:progressDeadlineSeconds: {}
+          f:replicas: {}
+          f:revisionHistoryLimit: {}
+          f:selector: {}
+          f:strategy:
+            f:type: {}
+          f:template:
+            f:metadata:
+              f:labels:
+                .: {}
+                f:app.kubernetes.io/component: {}
+                f:app.kubernetes.io/instance: {}
+                f:app.kubernetes.io/name: {}
+                f:app.kubernetes.io/part-of: {}
+                f:app.kubernetes.io/version: {}
+                f:helm.sh/chart: {}
+                f:sidecar.istio.io/inject: {}
+            f:spec:
+              f:containers:
+                k:{"name":"prometheus-server"}:
+                  .: {}
+                  f:args: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:livenessProbe:
+                    .: {}
+                    f:failureThreshold: {}
+                    f:httpGet:
+                      .: {}
+                      f:path: {}
+                      f:port: {}
+                      f:scheme: {}
+                    f:initialDelaySeconds: {}
+                    f:periodSeconds: {}
+                    f:successThreshold: {}
+                    f:timeoutSeconds: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":9090,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:protocol: {}
+                  f:readinessProbe:
+                    .: {}
+                    f:failureThreshold: {}
+                    f:httpGet:
+                      .: {}
+                      f:path: {}
+                      f:port: {}
+                      f:scheme: {}
+                    f:periodSeconds: {}
+                    f:successThreshold: {}
+                    f:timeoutSeconds: {}
+                  f:resources: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+                  f:volumeMounts:
+                    .: {}
+                    k:{"mountPath":"/data"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                    k:{"mountPath":"/etc/config"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                k:{"name":"prometheus-server-configmap-reload"}:
+                  .: {}
+                  f:args: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:livenessProbe:
+                    .: {}
+                    f:failureThreshold: {}
+                    f:httpGet:
+                      .: {}
+                      f:path: {}
+                      f:port: {}
+                      f:scheme: {}
+                    f:initialDelaySeconds: {}
+                    f:periodSeconds: {}
+                    f:successThreshold: {}
+                    f:timeoutSeconds: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":8080,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:name: {}
+                      f:protocol: {}
+                  f:readinessProbe:
+                    .: {}
+                    f:failureThreshold: {}
+                    f:httpGet:
+                      .: {}
+                      f:path: {}
+                      f:port: {}
+                      f:scheme: {}
+                    f:periodSeconds: {}
+                    f:successThreshold: {}
+                    f:timeoutSeconds: {}
+                  f:resources: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+                  f:volumeMounts:
+                    .: {}
+                    k:{"mountPath":"/etc/config"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                      f:readOnly: {}
+              f:dnsPolicy: {}
+              f:enableServiceLinks: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:serviceAccount: {}
+              f:serviceAccountName: {}
+              f:terminationGracePeriodSeconds: {}
+              f:volumes:
+                .: {}
+                k:{"name":"config-volume"}:
+                  .: {}
+                  f:configMap:
+                    .: {}
+                    f:defaultMode: {}
+                    f:name: {}
+                  f:name: {}
+                k:{"name":"storage-volume"}:
+                  .: {}
+                  f:emptyDir: {}
+                  f:name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2025-07-15T19:28:20Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            f:deployment.kubernetes.io/revision: {}
+        f:status:
+          f:availableReplicas: {}
+          f:conditions:
+            .: {}
+            k:{"type":"Available"}:
+              .: {}
+              f:lastTransitionTime: {}
+              f:lastUpdateTime: {}
+              f:message: {}
+              f:reason: {}
+              f:status: {}
+              f:type: {}
+            k:{"type":"Progressing"}:
+              .: {}
+              f:lastTransitionTime: {}
+              f:lastUpdateTime: {}
+              f:message: {}
+              f:reason: {}
+              f:status: {}
+              f:type: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+          f:updatedReplicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:28:39Z"
+    name: prometheus
+    namespace: istio-system
+    resourceVersion: "1195"
+    uid: 589bbc0e-d296-4b38-91c2-461e68fc6895
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app.kubernetes.io/component: server
+        app.kubernetes.io/instance: prometheus
+        app.kubernetes.io/name: prometheus
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app.kubernetes.io/component: server
+          app.kubernetes.io/instance: prometheus
+          app.kubernetes.io/name: prometheus
+          app.kubernetes.io/part-of: prometheus
+          app.kubernetes.io/version: v3.2.1
+          helm.sh/chart: prometheus-27.8.0
+          sidecar.istio.io/inject: "false"
+      spec:
+        containers:
+        - args:
+          - --watched-dir=/etc/config
+          - --listen-address=0.0.0.0:8080
+          - --reload-url=http://127.0.0.1:9090/-/reload
+          image: ghcr.io/prometheus-operator/prometheus-config-reloader:v0.81.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: metrics
+              scheme: HTTP
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: prometheus-server-configmap-reload
+          ports:
+          - containerPort: 8080
+            name: metrics
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: metrics
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /etc/config
+            name: config-volume
+            readOnly: true
+        - args:
+          - --storage.tsdb.retention.time=15d
+          - --config.file=/etc/config/prometheus.yml
+          - --storage.tsdb.path=/data
+          - --web.console.libraries=/etc/prometheus/console_libraries
+          - --web.console.templates=/etc/prometheus/consoles
+          - --web.enable-lifecycle
+          image: prom/prometheus:v3.2.1
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /-/healthy
+              port: 9090
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            successThreshold: 1
+            timeoutSeconds: 10
+          name: prometheus-server
+          ports:
+          - containerPort: 9090
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /-/ready
+              port: 9090
+              scheme: HTTP
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 4
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /etc/config
+            name: config-volume
+          - mountPath: /data
+            name: storage-volume
+        dnsPolicy: ClusterFirst
+        enableServiceLinks: true
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: prometheus
+        serviceAccountName: prometheus
+        terminationGracePeriodSeconds: 300
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: prometheus
+          name: config-volume
+        - emptyDir: {}
+          name: storage-volume
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-07-15T19:28:39Z"
+      lastUpdateTime: "2025-07-15T19:28:39Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-07-15T19:28:20Z"
+      lastUpdateTime: "2025-07-15T19:28:39Z"
+      message: ReplicaSet "prometheus-689cc795d4" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+kind: DeploymentList
+metadata:
+  resourceVersion: "5060"

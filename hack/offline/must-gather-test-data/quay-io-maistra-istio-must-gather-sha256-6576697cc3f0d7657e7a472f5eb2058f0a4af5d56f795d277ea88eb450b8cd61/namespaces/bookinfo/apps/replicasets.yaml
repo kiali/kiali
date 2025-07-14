@@ -1,0 +1,1653 @@
+---
+apiVersion: apps/v1
+items:
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    generation: 1
+    labels:
+      gateway.istio.io/managed: istio.io-gateway-controller
+      gateway.networking.k8s.io/gateway-name: bookinfo-gateway
+      pod-template-hash: 5d8d9854cc
+      service.istio.io/canonical-name: bookinfo-gateway-istio
+      service.istio.io/canonical-revision: latest
+      sidecar.istio.io/inject: "false"
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:deployment.kubernetes.io/desired-replicas: {}
+            f:deployment.kubernetes.io/max-replicas: {}
+            f:deployment.kubernetes.io/revision: {}
+          f:labels:
+            .: {}
+            f:gateway.istio.io/managed: {}
+            f:gateway.networking.k8s.io/gateway-name: {}
+            f:pod-template-hash: {}
+            f:service.istio.io/canonical-name: {}
+            f:service.istio.io/canonical-revision: {}
+            f:sidecar.istio.io/inject: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"e097a9ab-096f-4bdc-a42f-c64d732afcd8"}: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:istio.io/rev: {}
+                f:prometheus.io/path: {}
+                f:prometheus.io/port: {}
+                f:prometheus.io/scrape: {}
+              f:labels:
+                .: {}
+                f:gateway.istio.io/managed: {}
+                f:gateway.networking.k8s.io/gateway-name: {}
+                f:pod-template-hash: {}
+                f:service.istio.io/canonical-name: {}
+                f:service.istio.io/canonical-revision: {}
+                f:sidecar.istio.io/inject: {}
+            f:spec:
+              f:containers:
+                k:{"name":"istio-proxy"}:
+                  .: {}
+                  f:args: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"CA_ADDR"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"GOMAXPROCS"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:resourceFieldRef: {}
+                    k:{"name":"GOMEMLIMIT"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:resourceFieldRef: {}
+                    k:{"name":"HOST_IP"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:fieldRef: {}
+                    k:{"name":"INSTANCE_IP"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:fieldRef: {}
+                    k:{"name":"ISTIO_CPU_LIMIT"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:resourceFieldRef: {}
+                    k:{"name":"ISTIO_META_APP_CONTAINERS"}:
+                      .: {}
+                      f:name: {}
+                    k:{"name":"ISTIO_META_CLUSTER_ID"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"ISTIO_META_INTERCEPTION_MODE"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"ISTIO_META_MESH_ID"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"ISTIO_META_NETWORK"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"ISTIO_META_NODE_NAME"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:fieldRef: {}
+                    k:{"name":"ISTIO_META_OWNER"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"ISTIO_META_POD_PORTS"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"ISTIO_META_WORKLOAD_NAME"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"PILOT_CERT_PROVIDER"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"POD_NAME"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:fieldRef: {}
+                    k:{"name":"POD_NAMESPACE"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:fieldRef: {}
+                    k:{"name":"PROXY_CONFIG"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"SERVICE_ACCOUNT"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:fieldRef: {}
+                    k:{"name":"TRUST_DOMAIN"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":15020,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:name: {}
+                      f:protocol: {}
+                    k:{"containerPort":15021,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:name: {}
+                      f:protocol: {}
+                    k:{"containerPort":15090,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:name: {}
+                      f:protocol: {}
+                  f:readinessProbe:
+                    .: {}
+                    f:failureThreshold: {}
+                    f:httpGet:
+                      .: {}
+                      f:path: {}
+                      f:port: {}
+                      f:scheme: {}
+                    f:periodSeconds: {}
+                    f:successThreshold: {}
+                    f:timeoutSeconds: {}
+                  f:resources:
+                    .: {}
+                    f:limits:
+                      .: {}
+                      f:cpu: {}
+                      f:memory: {}
+                    f:requests:
+                      .: {}
+                      f:cpu: {}
+                      f:memory: {}
+                  f:securityContext:
+                    .: {}
+                    f:allowPrivilegeEscalation: {}
+                    f:capabilities:
+                      .: {}
+                      f:drop: {}
+                    f:privileged: {}
+                    f:readOnlyRootFilesystem: {}
+                    f:runAsGroup: {}
+                    f:runAsNonRoot: {}
+                    f:runAsUser: {}
+                  f:startupProbe:
+                    .: {}
+                    f:failureThreshold: {}
+                    f:httpGet:
+                      .: {}
+                      f:path: {}
+                      f:port: {}
+                      f:scheme: {}
+                    f:initialDelaySeconds: {}
+                    f:periodSeconds: {}
+                    f:successThreshold: {}
+                    f:timeoutSeconds: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+                  f:volumeMounts:
+                    .: {}
+                    k:{"mountPath":"/etc/istio/pod"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                    k:{"mountPath":"/etc/istio/proxy"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                    k:{"mountPath":"/var/lib/istio/data"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                    k:{"mountPath":"/var/run/secrets/credential-uds"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                    k:{"mountPath":"/var/run/secrets/istio"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                    k:{"mountPath":"/var/run/secrets/tokens"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                    k:{"mountPath":"/var/run/secrets/workload-spiffe-credentials"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                    k:{"mountPath":"/var/run/secrets/workload-spiffe-uds"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext:
+                .: {}
+                f:sysctls: {}
+              f:serviceAccount: {}
+              f:serviceAccountName: {}
+              f:terminationGracePeriodSeconds: {}
+              f:volumes:
+                .: {}
+                k:{"name":"credential-socket"}:
+                  .: {}
+                  f:emptyDir: {}
+                  f:name: {}
+                k:{"name":"istio-data"}:
+                  .: {}
+                  f:emptyDir: {}
+                  f:name: {}
+                k:{"name":"istio-envoy"}:
+                  .: {}
+                  f:emptyDir:
+                    .: {}
+                    f:medium: {}
+                  f:name: {}
+                k:{"name":"istio-podinfo"}:
+                  .: {}
+                  f:downwardAPI:
+                    .: {}
+                    f:defaultMode: {}
+                    f:items: {}
+                  f:name: {}
+                k:{"name":"istio-token"}:
+                  .: {}
+                  f:name: {}
+                  f:projected:
+                    .: {}
+                    f:defaultMode: {}
+                    f:sources: {}
+                k:{"name":"istiod-ca-cert"}:
+                  .: {}
+                  f:configMap:
+                    .: {}
+                    f:defaultMode: {}
+                    f:name: {}
+                  f:name: {}
+                k:{"name":"workload-certs"}:
+                  .: {}
+                  f:emptyDir: {}
+                  f:name: {}
+                k:{"name":"workload-socket"}:
+                  .: {}
+                  f:emptyDir: {}
+                  f:name: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:14Z"
+    name: bookinfo-gateway-istio-5d8d9854cc
+    namespace: bookinfo
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: bookinfo-gateway-istio
+      uid: e097a9ab-096f-4bdc-a42f-c64d732afcd8
+    resourceVersion: "1523"
+    uid: 8fd1dd27-0c41-42d0-94cd-9481832b7c2b
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        gateway.networking.k8s.io/gateway-name: bookinfo-gateway
+        pod-template-hash: 5d8d9854cc
+    template:
+      metadata:
+        annotations:
+          istio.io/rev: default
+          prometheus.io/path: /stats/prometheus
+          prometheus.io/port: "15020"
+          prometheus.io/scrape: "true"
+        creationTimestamp: null
+        labels:
+          gateway.istio.io/managed: istio.io-gateway-controller
+          gateway.networking.k8s.io/gateway-name: bookinfo-gateway
+          pod-template-hash: 5d8d9854cc
+          service.istio.io/canonical-name: bookinfo-gateway-istio
+          service.istio.io/canonical-revision: latest
+          sidecar.istio.io/inject: "false"
+      spec:
+        containers:
+        - args:
+          - proxy
+          - router
+          - --domain
+          - $(POD_NAMESPACE).svc.cluster.local
+          - --proxyLogLevel
+          - warning
+          - --proxyComponentLogLevel
+          - misc:error
+          - --log_output_level
+          - default:info
+          env:
+          - name: PILOT_CERT_PROVIDER
+            value: istiod
+          - name: CA_ADDR
+            value: istiod.istio-system.svc:15012
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: INSTANCE_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          - name: SERVICE_ACCOUNT
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: spec.serviceAccountName
+          - name: HOST_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.hostIP
+          - name: ISTIO_CPU_LIMIT
+            valueFrom:
+              resourceFieldRef:
+                divisor: "0"
+                resource: limits.cpu
+          - name: PROXY_CONFIG
+            value: |
+              {"meshId":"mesh-default"}
+          - name: ISTIO_META_POD_PORTS
+            value: '[]'
+          - name: ISTIO_META_APP_CONTAINERS
+          - name: GOMEMLIMIT
+            valueFrom:
+              resourceFieldRef:
+                divisor: "0"
+                resource: limits.memory
+          - name: GOMAXPROCS
+            valueFrom:
+              resourceFieldRef:
+                divisor: "0"
+                resource: limits.cpu
+          - name: ISTIO_META_CLUSTER_ID
+            value: cluster-default
+          - name: ISTIO_META_NODE_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: spec.nodeName
+          - name: ISTIO_META_INTERCEPTION_MODE
+            value: REDIRECT
+          - name: ISTIO_META_NETWORK
+            value: network-default
+          - name: ISTIO_META_WORKLOAD_NAME
+            value: bookinfo-gateway-istio
+          - name: ISTIO_META_OWNER
+            value: kubernetes://apis/apps/v1/namespaces/bookinfo/deployments/bookinfo-gateway-istio
+          - name: ISTIO_META_MESH_ID
+            value: mesh-default
+          - name: TRUST_DOMAIN
+            value: cluster.local
+          image: gcr.io/istio-release/proxyv2:1.26.2
+          imagePullPolicy: IfNotPresent
+          name: istio-proxy
+          ports:
+          - containerPort: 15020
+            name: metrics
+            protocol: TCP
+          - containerPort: 15021
+            name: status-port
+            protocol: TCP
+          - containerPort: 15090
+            name: http-envoy-prom
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 4
+            httpGet:
+              path: /healthz/ready
+              port: 15021
+              scheme: HTTP
+            periodSeconds: 15
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: "2"
+              memory: 1Gi
+            requests:
+              cpu: 1m
+              memory: 1Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 1337
+            runAsNonRoot: true
+            runAsUser: 1337
+          startupProbe:
+            failureThreshold: 30
+            httpGet:
+              path: /healthz/ready
+              port: 15021
+              scheme: HTTP
+            initialDelaySeconds: 1
+            periodSeconds: 1
+            successThreshold: 1
+            timeoutSeconds: 1
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /var/run/secrets/workload-spiffe-uds
+            name: workload-socket
+          - mountPath: /var/run/secrets/credential-uds
+            name: credential-socket
+          - mountPath: /var/run/secrets/workload-spiffe-credentials
+            name: workload-certs
+          - mountPath: /var/run/secrets/istio
+            name: istiod-ca-cert
+          - mountPath: /var/lib/istio/data
+            name: istio-data
+          - mountPath: /etc/istio/proxy
+            name: istio-envoy
+          - mountPath: /var/run/secrets/tokens
+            name: istio-token
+          - mountPath: /etc/istio/pod
+            name: istio-podinfo
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          sysctls:
+          - name: net.ipv4.ip_unprivileged_port_start
+            value: "0"
+        serviceAccount: bookinfo-gateway-istio
+        serviceAccountName: bookinfo-gateway-istio
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: workload-socket
+        - emptyDir: {}
+          name: credential-socket
+        - emptyDir: {}
+          name: workload-certs
+        - emptyDir:
+            medium: Memory
+          name: istio-envoy
+        - emptyDir: {}
+          name: istio-data
+        - downwardAPI:
+            defaultMode: 420
+            items:
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.labels
+              path: labels
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.annotations
+              path: annotations
+          name: istio-podinfo
+        - name: istio-token
+          projected:
+            defaultMode: 420
+            sources:
+            - serviceAccountToken:
+                audience: istio-ca
+                expirationSeconds: 43200
+                path: istio-token
+        - configMap:
+            defaultMode: 420
+            name: istio-ca-root-cert
+          name: istiod-ca-cert
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    generation: 1
+    labels:
+      app: details
+      pod-template-hash: 766844796b
+      version: v1
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:deployment.kubernetes.io/desired-replicas: {}
+            f:deployment.kubernetes.io/max-replicas: {}
+            f:deployment.kubernetes.io/revision: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:pod-template-hash: {}
+            f:version: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"e7015dcb-7eac-41f5-ab09-c4ed62209a64"}: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:labels:
+                .: {}
+                f:app: {}
+                f:pod-template-hash: {}
+                f:version: {}
+            f:spec:
+              f:containers:
+                k:{"name":"details"}:
+                  .: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":9080,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:protocol: {}
+                  f:resources: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:serviceAccount: {}
+              f:serviceAccountName: {}
+              f:terminationGracePeriodSeconds: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:26Z"
+    name: details-v1-766844796b
+    namespace: bookinfo
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: details-v1
+      uid: e7015dcb-7eac-41f5-ab09-c4ed62209a64
+    resourceVersion: "1587"
+    uid: 14939a3f-cefa-4f39-94f4-19032223a8e5
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: details
+        pod-template-hash: 766844796b
+        version: v1
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: details
+          pod-template-hash: 766844796b
+          version: v1
+      spec:
+        containers:
+        - image: docker.io/istio/examples-bookinfo-details-v1:1.20.3
+          imagePullPolicy: IfNotPresent
+          name: details
+          ports:
+          - containerPort: 9080
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: bookinfo-details
+        serviceAccountName: bookinfo-details
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"ReplicaSet","metadata":{"annotations":{},"labels":{"app":"kiali-traffic-generator","kiali-test":"traffic-generator"},"name":"kiali-traffic-generator","namespace":"bookinfo"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"kiali-traffic-generator","kiali-test":"traffic-generator"}},"strategy":{"type":"Recreate"},"template":{"metadata":{"annotations":{"sidecar.istio.io/inject":"false"},"labels":{"app":"kiali-traffic-generator","istio.io/dataplane-mode":"none","kiali-test":"traffic-generator"}},"spec":{"containers":[{"env":[{"name":"DURATION","valueFrom":{"configMapKeyRef":{"key":"duration","name":"traffic-generator-config"}}},{"name":"ROUTE","valueFrom":{"configMapKeyRef":{"key":"route","name":"traffic-generator-config"}}},{"name":"RATE","valueFrom":{"configMapKeyRef":{"key":"rate","name":"traffic-generator-config"}}},{"name":"SILENT","valueFrom":{"configMapKeyRef":{"key":"silent","name":"traffic-generator-config"}}}],"image":"quay.io/kiali/kiali-test-mesh-traffic-generator:latest","imagePullPolicy":"IfNotPresent","name":"kiali-traffic-generator"}],"securityContext":{"runAsNonRoot":true,"seccompProfile":{"type":"RuntimeDefault"}}}}}}
+    creationTimestamp: "2025-07-15T19:29:36Z"
+    generation: 1
+    labels:
+      app: kiali-traffic-generator
+      kiali-test: traffic-generator
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:kiali-test: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:sidecar.istio.io/inject: {}
+              f:labels:
+                .: {}
+                f:app: {}
+                f:istio.io/dataplane-mode: {}
+                f:kiali-test: {}
+            f:spec:
+              f:containers:
+                k:{"name":"kiali-traffic-generator"}:
+                  .: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"DURATION"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:configMapKeyRef: {}
+                    k:{"name":"RATE"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:configMapKeyRef: {}
+                    k:{"name":"ROUTE"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:configMapKeyRef: {}
+                    k:{"name":"SILENT"}:
+                      .: {}
+                      f:name: {}
+                      f:valueFrom:
+                        .: {}
+                        f:configMapKeyRef: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:resources: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext:
+                .: {}
+                f:runAsNonRoot: {}
+                f:seccompProfile:
+                  .: {}
+                  f:type: {}
+              f:terminationGracePeriodSeconds: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2025-07-15T19:29:36Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:42Z"
+    name: kiali-traffic-generator
+    namespace: bookinfo
+    resourceVersion: "2335"
+    uid: 1b14b8fb-07d2-4db2-b5d4-a7654c464b21
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: kiali-traffic-generator
+        kiali-test: traffic-generator
+    template:
+      metadata:
+        annotations:
+          sidecar.istio.io/inject: "false"
+        creationTimestamp: null
+        labels:
+          app: kiali-traffic-generator
+          istio.io/dataplane-mode: none
+          kiali-test: traffic-generator
+      spec:
+        containers:
+        - env:
+          - name: DURATION
+            valueFrom:
+              configMapKeyRef:
+                key: duration
+                name: traffic-generator-config
+          - name: ROUTE
+            valueFrom:
+              configMapKeyRef:
+                key: route
+                name: traffic-generator-config
+          - name: RATE
+            valueFrom:
+              configMapKeyRef:
+                key: rate
+                name: traffic-generator-config
+          - name: SILENT
+            valueFrom:
+              configMapKeyRef:
+                key: silent
+                name: traffic-generator-config
+          image: quay.io/kiali/kiali-test-mesh-traffic-generator:latest
+          imagePullPolicy: IfNotPresent
+          name: kiali-traffic-generator
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    generation: 1
+    labels:
+      app: productpage
+      pod-template-hash: 54bb874995
+      version: v1
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:deployment.kubernetes.io/desired-replicas: {}
+            f:deployment.kubernetes.io/max-replicas: {}
+            f:deployment.kubernetes.io/revision: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:pod-template-hash: {}
+            f:version: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"bf533b4c-0415-4fd3-98da-edb875d872a9"}: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:prometheus.io/path: {}
+                f:prometheus.io/port: {}
+                f:prometheus.io/scrape: {}
+              f:labels:
+                .: {}
+                f:app: {}
+                f:pod-template-hash: {}
+                f:version: {}
+            f:spec:
+              f:containers:
+                k:{"name":"productpage"}:
+                  .: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":9080,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:protocol: {}
+                  f:resources: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+                  f:volumeMounts:
+                    .: {}
+                    k:{"mountPath":"/tmp"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:serviceAccount: {}
+              f:serviceAccountName: {}
+              f:terminationGracePeriodSeconds: {}
+              f:volumes:
+                .: {}
+                k:{"name":"tmp"}:
+                  .: {}
+                  f:emptyDir: {}
+                  f:name: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:35Z"
+    name: productpage-v1-54bb874995
+    namespace: bookinfo
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: productpage-v1
+      uid: bf533b4c-0415-4fd3-98da-edb875d872a9
+    resourceVersion: "1663"
+    uid: 8646db61-aeec-4331-8b25-b5ad7ff4855d
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: productpage
+        pod-template-hash: 54bb874995
+        version: v1
+    template:
+      metadata:
+        annotations:
+          prometheus.io/path: /metrics
+          prometheus.io/port: "9080"
+          prometheus.io/scrape: "true"
+        creationTimestamp: null
+        labels:
+          app: productpage
+          pod-template-hash: 54bb874995
+          version: v1
+      spec:
+        containers:
+        - image: docker.io/istio/examples-bookinfo-productpage-v1:1.20.3
+          imagePullPolicy: IfNotPresent
+          name: productpage
+          ports:
+          - containerPort: 9080
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: bookinfo-productpage
+        serviceAccountName: bookinfo-productpage
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: tmp
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    generation: 1
+    labels:
+      app: ratings
+      pod-template-hash: 5dc79b6bcd
+      version: v1
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:deployment.kubernetes.io/desired-replicas: {}
+            f:deployment.kubernetes.io/max-replicas: {}
+            f:deployment.kubernetes.io/revision: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:pod-template-hash: {}
+            f:version: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"39652f52-d8cb-4b52-b0f3-5d4baa2bc081"}: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:labels:
+                .: {}
+                f:app: {}
+                f:pod-template-hash: {}
+                f:version: {}
+            f:spec:
+              f:containers:
+                k:{"name":"ratings"}:
+                  .: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":9080,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:protocol: {}
+                  f:resources: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:serviceAccount: {}
+              f:serviceAccountName: {}
+              f:terminationGracePeriodSeconds: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:30Z"
+    name: ratings-v1-5dc79b6bcd
+    namespace: bookinfo
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: ratings-v1
+      uid: 39652f52-d8cb-4b52-b0f3-5d4baa2bc081
+    resourceVersion: "1620"
+    uid: c5984ac7-bf33-4f76-acf5-247098da2281
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: ratings
+        pod-template-hash: 5dc79b6bcd
+        version: v1
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: ratings
+          pod-template-hash: 5dc79b6bcd
+          version: v1
+      spec:
+        containers:
+        - image: docker.io/istio/examples-bookinfo-ratings-v1:1.20.3
+          imagePullPolicy: IfNotPresent
+          name: ratings
+          ports:
+          - containerPort: 9080
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: bookinfo-ratings
+        serviceAccountName: bookinfo-ratings
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    generation: 1
+    labels:
+      app: reviews
+      pod-template-hash: 598b896c9d
+      version: v1
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:deployment.kubernetes.io/desired-replicas: {}
+            f:deployment.kubernetes.io/max-replicas: {}
+            f:deployment.kubernetes.io/revision: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:pod-template-hash: {}
+            f:version: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"92ea9b8f-fc5a-4411-ba86-042fd66f2623"}: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:labels:
+                .: {}
+                f:app: {}
+                f:pod-template-hash: {}
+                f:version: {}
+            f:spec:
+              f:containers:
+                k:{"name":"reviews"}:
+                  .: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"LOG_DIR"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":9080,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:protocol: {}
+                  f:resources: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+                  f:volumeMounts:
+                    .: {}
+                    k:{"mountPath":"/opt/ibm/wlp/output"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                    k:{"mountPath":"/tmp"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:serviceAccount: {}
+              f:serviceAccountName: {}
+              f:terminationGracePeriodSeconds: {}
+              f:volumes:
+                .: {}
+                k:{"name":"tmp"}:
+                  .: {}
+                  f:emptyDir: {}
+                  f:name: {}
+                k:{"name":"wlp-output"}:
+                  .: {}
+                  f:emptyDir: {}
+                  f:name: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:22Z"
+    name: reviews-v1-598b896c9d
+    namespace: bookinfo
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: reviews-v1
+      uid: 92ea9b8f-fc5a-4411-ba86-042fd66f2623
+    resourceVersion: "1560"
+    uid: 5b69a3d1-bc3b-497a-b998-c468eefdedf0
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: reviews
+        pod-template-hash: 598b896c9d
+        version: v1
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: reviews
+          pod-template-hash: 598b896c9d
+          version: v1
+      spec:
+        containers:
+        - env:
+          - name: LOG_DIR
+            value: /tmp/logs
+          image: docker.io/istio/examples-bookinfo-reviews-v1:1.20.3
+          imagePullPolicy: IfNotPresent
+          name: reviews
+          ports:
+          - containerPort: 9080
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp
+          - mountPath: /opt/ibm/wlp/output
+            name: wlp-output
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: bookinfo-reviews
+        serviceAccountName: bookinfo-reviews
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: wlp-output
+        - emptyDir: {}
+          name: tmp
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    generation: 1
+    labels:
+      app: reviews
+      pod-template-hash: 556d6457d
+      version: v2
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:deployment.kubernetes.io/desired-replicas: {}
+            f:deployment.kubernetes.io/max-replicas: {}
+            f:deployment.kubernetes.io/revision: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:pod-template-hash: {}
+            f:version: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"b90a5677-9e31-4ab9-b42b-1bfa79e97267"}: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:labels:
+                .: {}
+                f:app: {}
+                f:pod-template-hash: {}
+                f:version: {}
+            f:spec:
+              f:containers:
+                k:{"name":"reviews"}:
+                  .: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"LOG_DIR"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":9080,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:protocol: {}
+                  f:resources: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+                  f:volumeMounts:
+                    .: {}
+                    k:{"mountPath":"/opt/ibm/wlp/output"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                    k:{"mountPath":"/tmp"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:serviceAccount: {}
+              f:serviceAccountName: {}
+              f:terminationGracePeriodSeconds: {}
+              f:volumes:
+                .: {}
+                k:{"name":"tmp"}:
+                  .: {}
+                  f:emptyDir: {}
+                  f:name: {}
+                k:{"name":"wlp-output"}:
+                  .: {}
+                  f:emptyDir: {}
+                  f:name: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:32Z"
+    name: reviews-v2-556d6457d
+    namespace: bookinfo
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: reviews-v2
+      uid: b90a5677-9e31-4ab9-b42b-1bfa79e97267
+    resourceVersion: "1644"
+    uid: e311298c-88a9-48bf-b653-69bf8e176f68
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: reviews
+        pod-template-hash: 556d6457d
+        version: v2
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: reviews
+          pod-template-hash: 556d6457d
+          version: v2
+      spec:
+        containers:
+        - env:
+          - name: LOG_DIR
+            value: /tmp/logs
+          image: docker.io/istio/examples-bookinfo-reviews-v2:1.20.3
+          imagePullPolicy: IfNotPresent
+          name: reviews
+          ports:
+          - containerPort: 9080
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp
+          - mountPath: /opt/ibm/wlp/output
+            name: wlp-output
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: bookinfo-reviews
+        serviceAccountName: bookinfo-reviews
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: wlp-output
+        - emptyDir: {}
+          name: tmp
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    generation: 1
+    labels:
+      app: reviews
+      pod-template-hash: 564544b4d6
+      version: v3
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:deployment.kubernetes.io/desired-replicas: {}
+            f:deployment.kubernetes.io/max-replicas: {}
+            f:deployment.kubernetes.io/revision: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:pod-template-hash: {}
+            f:version: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"734b81e7-9eb4-4c68-9fe8-518a4dcd9240"}: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:labels:
+                .: {}
+                f:app: {}
+                f:pod-template-hash: {}
+                f:version: {}
+            f:spec:
+              f:containers:
+                k:{"name":"reviews"}:
+                  .: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"LOG_DIR"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":9080,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:protocol: {}
+                  f:resources: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+                  f:volumeMounts:
+                    .: {}
+                    k:{"mountPath":"/opt/ibm/wlp/output"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+                    k:{"mountPath":"/tmp"}:
+                      .: {}
+                      f:mountPath: {}
+                      f:name: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:serviceAccount: {}
+              f:serviceAccountName: {}
+              f:terminationGracePeriodSeconds: {}
+              f:volumes:
+                .: {}
+                k:{"name":"tmp"}:
+                  .: {}
+                  f:emptyDir: {}
+                  f:name: {}
+                k:{"name":"wlp-output"}:
+                  .: {}
+                  f:emptyDir: {}
+                  f:name: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:31Z"
+    name: reviews-v3-564544b4d6
+    namespace: bookinfo
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: reviews-v3
+      uid: 734b81e7-9eb4-4c68-9fe8-518a4dcd9240
+    resourceVersion: "1633"
+    uid: 0b4cb6c0-7c9c-4001-be57-3a9495d73e51
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: reviews
+        pod-template-hash: 564544b4d6
+        version: v3
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: reviews
+          pod-template-hash: 564544b4d6
+          version: v3
+      spec:
+        containers:
+        - env:
+          - name: LOG_DIR
+            value: /tmp/logs
+          image: docker.io/istio/examples-bookinfo-reviews-v3:1.20.3
+          imagePullPolicy: IfNotPresent
+          name: reviews
+          ports:
+          - containerPort: 9080
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp
+          - mountPath: /opt/ibm/wlp/output
+            name: wlp-output
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: bookinfo-reviews
+        serviceAccountName: bookinfo-reviews
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: wlp-output
+        - emptyDir: {}
+          name: tmp
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+kind: ReplicaSetList
+metadata:
+  resourceVersion: "5129"

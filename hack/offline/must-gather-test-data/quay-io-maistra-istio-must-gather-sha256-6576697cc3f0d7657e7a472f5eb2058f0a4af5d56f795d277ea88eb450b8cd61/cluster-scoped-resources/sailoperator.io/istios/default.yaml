@@ -1,0 +1,140 @@
+apiVersion: sailoperator.io/v1
+kind: Istio
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"sailoperator.io/v1","kind":"Istio","metadata":{"annotations":{},"labels":{"kiali.io/testing":""},"name":"default"},"spec":{"namespace":"istio-system","updateStrategy":{"type":"InPlace"},"values":{"global":{"meshID":"mesh-default","multiCluster":{"clusterName":"cluster-default"},"network":"network-default","proxy":{"resources":{"requests":{"cpu":"1m","memory":"1Mi"}}},"proxy_init":{"resources":{"requests":{"cpu":"1m","memory":"1Mi"}}}},"meshConfig":{"enableTracing":true,"extensionProviders":[{"name":"otel-tracing","opentelemetry":{"port":4317,"service":"jaeger-collector.istio-system.svc.cluster.local"}}]},"pilot":{"resources":{"requests":{"cpu":"1m","memory":"1Mi"}}}}}}
+  creationTimestamp: "2025-07-15T19:28:09Z"
+  generation: 1
+  labels:
+    kiali.io/testing: ""
+  managedFields:
+  - apiVersion: sailoperator.io/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:kubectl.kubernetes.io/last-applied-configuration: {}
+        f:labels:
+          .: {}
+          f:kiali.io/testing: {}
+      f:spec:
+        .: {}
+        f:namespace: {}
+        f:updateStrategy:
+          .: {}
+          f:type: {}
+        f:values:
+          .: {}
+          f:global:
+            .: {}
+            f:meshID: {}
+            f:multiCluster:
+              .: {}
+              f:clusterName: {}
+            f:network: {}
+            f:proxy:
+              .: {}
+              f:resources:
+                .: {}
+                f:requests:
+                  .: {}
+                  f:cpu: {}
+                  f:memory: {}
+            f:proxy_init:
+              .: {}
+              f:resources:
+                .: {}
+                f:requests:
+                  .: {}
+                  f:cpu: {}
+                  f:memory: {}
+          f:meshConfig:
+            .: {}
+            f:enableTracing: {}
+            f:extensionProviders: {}
+          f:pilot:
+            .: {}
+            f:resources:
+              .: {}
+              f:requests:
+                .: {}
+                f:cpu: {}
+                f:memory: {}
+        f:version: {}
+    manager: kubectl-client-side-apply
+    operation: Update
+    time: "2025-07-15T19:28:09Z"
+  - apiVersion: sailoperator.io/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:status:
+        .: {}
+        f:activeRevisionName: {}
+        f:conditions: {}
+        f:observedGeneration: {}
+        f:revisions:
+          .: {}
+          f:inUse: {}
+          f:ready: {}
+          f:total: {}
+        f:state: {}
+    manager: sail-operator
+    operation: Update
+    subresource: status
+    time: "2025-07-15T19:29:09Z"
+  name: default
+  resourceVersion: "1439"
+  uid: fb711e4d-69cb-4998-a27d-f579dfd8fba4
+spec:
+  namespace: istio-system
+  updateStrategy:
+    type: InPlace
+  values:
+    global:
+      meshID: mesh-default
+      multiCluster:
+        clusterName: cluster-default
+      network: network-default
+      proxy:
+        resources:
+          requests:
+            cpu: 1m
+            memory: 1Mi
+      proxy_init:
+        resources:
+          requests:
+            cpu: 1m
+            memory: 1Mi
+    meshConfig:
+      enableTracing: true
+      extensionProviders:
+      - name: otel-tracing
+        opentelemetry:
+          port: 4317
+          service: jaeger-collector.istio-system.svc.cluster.local
+    pilot:
+      resources:
+        requests:
+          cpu: 1m
+          memory: 1Mi
+  version: v1.26.2
+status:
+  activeRevisionName: default
+  conditions:
+  - lastTransitionTime: "2025-07-15T19:28:11Z"
+    status: "True"
+    type: Reconciled
+  - lastTransitionTime: "2025-07-15T19:28:20Z"
+    status: "True"
+    type: Ready
+  - lastTransitionTime: "2025-07-15T19:28:11Z"
+    status: "True"
+    type: DependenciesHealthy
+  observedGeneration: 1
+  revisions:
+    inUse: 1
+    ready: 1
+    total: 1
+  state: Healthy

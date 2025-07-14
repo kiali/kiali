@@ -1,0 +1,1035 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: "2025-07-15T19:27:48Z"
+  generation: 1
+  labels:
+    app: istio-pilot
+    chart: istio
+    heritage: Tiller
+    release: istio
+  managedFields:
+  - apiVersion: apiextensions.k8s.io/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:labels:
+          .: {}
+          f:app: {}
+          f:chart: {}
+          f:heritage: {}
+          f:release: {}
+      f:spec:
+        f:conversion:
+          .: {}
+          f:strategy: {}
+        f:group: {}
+        f:names:
+          f:categories: {}
+          f:kind: {}
+          f:listKind: {}
+          f:plural: {}
+          f:shortNames: {}
+          f:singular: {}
+        f:scope: {}
+        f:versions: {}
+    manager: helm
+    operation: Update
+    time: "2025-07-15T19:27:48Z"
+  - apiVersion: apiextensions.k8s.io/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:status:
+        f:acceptedNames:
+          f:categories: {}
+          f:kind: {}
+          f:listKind: {}
+          f:plural: {}
+          f:shortNames: {}
+          f:singular: {}
+        f:conditions:
+          k:{"type":"Established"}:
+            .: {}
+            f:lastTransitionTime: {}
+            f:message: {}
+            f:reason: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"NamesAccepted"}:
+            .: {}
+            f:lastTransitionTime: {}
+            f:message: {}
+            f:reason: {}
+            f:status: {}
+            f:type: {}
+    manager: kube-apiserver
+    operation: Update
+    subresource: status
+    time: "2025-07-15T19:27:48Z"
+  name: workloadgroups.networking.istio.io
+  resourceVersion: "701"
+  uid: 274fcd4f-072f-42c8-bf7b-9b3f20facbe5
+spec:
+  conversion:
+    strategy: None
+  group: networking.istio.io
+  names:
+    categories:
+    - istio-io
+    - networking-istio-io
+    kind: WorkloadGroup
+    listKind: WorkloadGroupList
+    plural: workloadgroups
+    shortNames:
+    - wg
+    singular: workloadgroup
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: 'CreationTimestamp is a timestamp representing the server time
+        when this object was created. It is not guaranteed to be set in happens-before
+        order across separate operations. Clients may not set this value. It is represented
+        in RFC3339 form and is in UTC. Populated by the system. Read-only. Null for
+        lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata'
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: 'Describes a collection of workload instances. See more details
+              at: https://istio.io/docs/reference/config/networking/workload-group.html'
+            properties:
+              metadata:
+                description: Metadata that will be used for all corresponding `WorkloadEntries`.
+                properties:
+                  annotations:
+                    additionalProperties:
+                      type: string
+                    maxProperties: 256
+                    type: object
+                  labels:
+                    additionalProperties:
+                      type: string
+                    maxProperties: 256
+                    type: object
+                type: object
+              probe:
+                description: '`ReadinessProbe` describes the configuration the user
+                  must provide for healthchecking on their workload.'
+                oneOf:
+                - not:
+                    anyOf:
+                    - required:
+                      - httpGet
+                    - required:
+                      - tcpSocket
+                    - required:
+                      - exec
+                    - required:
+                      - grpc
+                - required:
+                  - httpGet
+                - required:
+                  - tcpSocket
+                - required:
+                  - exec
+                - required:
+                  - grpc
+                properties:
+                  exec:
+                    description: Health is determined by how the command that is executed
+                      exited.
+                    properties:
+                      command:
+                        description: Command to run.
+                        items:
+                          minLength: 1
+                          type: string
+                        type: array
+                    required:
+                    - command
+                    type: object
+                  failureThreshold:
+                    description: Minimum consecutive failures for the probe to be
+                      considered failed after having succeeded.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  grpc:
+                    description: GRPC call is made and response/error is used to determine
+                      health.
+                    properties:
+                      port:
+                        description: Port on which the endpoint lives.
+                        maximum: 4294967295
+                        minimum: 0
+                        type: integer
+                        x-kubernetes-validations:
+                        - message: port must be between 1-65535
+                          rule: 0 < self && self <= 65535
+                      service:
+                        type: string
+                    type: object
+                  httpGet:
+                    description: '`httpGet` is performed to a given endpoint and the
+                      status/able to connect determines health.'
+                    properties:
+                      host:
+                        description: Host name to connect to, defaults to the pod
+                          IP.
+                        type: string
+                      httpHeaders:
+                        description: Headers the proxy will pass on to make the request.
+                        items:
+                          properties:
+                            name:
+                              pattern: ^[-_A-Za-z0-9]+$
+                              type: string
+                            value:
+                              type: string
+                          type: object
+                        type: array
+                      path:
+                        description: Path to access on the HTTP server.
+                        type: string
+                      port:
+                        description: Port on which the endpoint lives.
+                        maximum: 4294967295
+                        minimum: 0
+                        type: integer
+                        x-kubernetes-validations:
+                        - message: port must be between 1-65535
+                          rule: 0 < self && self <= 65535
+                      scheme:
+                        type: string
+                        x-kubernetes-validations:
+                        - message: scheme must be one of [HTTP, HTTPS]
+                          rule: self in ["", "HTTP", "HTTPS"]
+                    required:
+                    - port
+                    type: object
+                  initialDelaySeconds:
+                    description: Number of seconds after the container has started
+                      before readiness probes are initiated.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  periodSeconds:
+                    description: How often (in seconds) to perform the probe.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  successThreshold:
+                    description: Minimum consecutive successes for the probe to be
+                      considered successful after having failed.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  tcpSocket:
+                    description: Health is determined by if the proxy is able to connect.
+                    properties:
+                      host:
+                        type: string
+                      port:
+                        maximum: 4294967295
+                        minimum: 0
+                        type: integer
+                        x-kubernetes-validations:
+                        - message: port must be between 1-65535
+                          rule: 0 < self && self <= 65535
+                    required:
+                    - port
+                    type: object
+                  timeoutSeconds:
+                    description: Number of seconds after which the probe times out.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                type: object
+              template:
+                description: Template to be used for the generation of `WorkloadEntry`
+                  resources that belong to this `WorkloadGroup`.
+                properties:
+                  address:
+                    description: Address associated with the network endpoint without
+                      the port.
+                    maxLength: 256
+                    type: string
+                    x-kubernetes-validations:
+                    - message: UDS must be an absolute path or abstract socket
+                      rule: 'self.startsWith("unix://") ? (self.substring(7, 8) ==
+                        "/" || self.substring(7, 8) == "@") : true'
+                    - message: UDS may not be a dir
+                      rule: 'self.startsWith("unix://") ? !self.endsWith("/") : true'
+                  labels:
+                    additionalProperties:
+                      type: string
+                    description: One or more labels associated with the endpoint.
+                    maxProperties: 256
+                    type: object
+                  locality:
+                    description: The locality associated with the endpoint.
+                    maxLength: 2048
+                    type: string
+                  network:
+                    description: Network enables Istio to group endpoints resident
+                      in the same L3 domain/network.
+                    maxLength: 2048
+                    type: string
+                  ports:
+                    additionalProperties:
+                      maximum: 4294967295
+                      minimum: 0
+                      type: integer
+                      x-kubernetes-validations:
+                      - message: port must be between 1-65535
+                        rule: 0 < self && self <= 65535
+                    description: Set of ports associated with the endpoint.
+                    maxProperties: 128
+                    type: object
+                    x-kubernetes-validations:
+                    - message: port name must be valid
+                      rule: self.all(key, size(key) < 63 && key.matches("^[a-zA-Z0-9](?:[-a-zA-Z0-9]*[a-zA-Z0-9])?$"))
+                  serviceAccount:
+                    description: The service account associated with the workload
+                      if a sidecar is present in the workload.
+                    maxLength: 253
+                    type: string
+                  weight:
+                    description: The load balancing weight associated with the endpoint.
+                    maximum: 4294967295
+                    minimum: 0
+                    type: integer
+                type: object
+                x-kubernetes-validations:
+                - message: UDS may not include ports
+                  rule: '(has(self.address) ? self.address : "").startsWith("unix://")
+                    ? !has(self.ports) : true'
+            required:
+            - template
+            type: object
+          status:
+            properties:
+              conditions:
+                description: Current service state of the resource.
+                items:
+                  properties:
+                    lastProbeTime:
+                      description: Last time we probed the condition.
+                      format: date-time
+                      type: string
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: Human-readable message indicating details about
+                        last transition.
+                      type: string
+                    observedGeneration:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      description: Resource Generation to which the Condition refers.
+                      x-kubernetes-int-or-string: true
+                    reason:
+                      description: Unique, one-word, CamelCase reason for the condition's
+                        last transition.
+                      type: string
+                    status:
+                      description: Status is the status of the condition.
+                      type: string
+                    type:
+                      description: Type is the type of the condition.
+                      type: string
+                  type: object
+                type: array
+              observedGeneration:
+                anyOf:
+                - type: integer
+                - type: string
+                x-kubernetes-int-or-string: true
+              validationMessages:
+                description: Includes any errors or warnings detected by Istio's analyzers.
+                items:
+                  properties:
+                    documentationUrl:
+                      description: A url pointing to the Istio documentation for this
+                        specific error type.
+                      type: string
+                    level:
+                      description: |-
+                        Represents how severe a message is.
+
+                        Valid Options: UNKNOWN, ERROR, WARNING, INFO
+                      enum:
+                      - UNKNOWN
+                      - ERROR
+                      - WARNING
+                      - INFO
+                      type: string
+                    type:
+                      properties:
+                        code:
+                          description: A 7 character code matching `^IST[0-9]{4}$`
+                            intended to uniquely identify the message type.
+                          type: string
+                        name:
+                          description: A human-readable name for the message type.
+                          type: string
+                      type: object
+                  type: object
+                type: array
+            type: object
+            x-kubernetes-preserve-unknown-fields: true
+        required:
+        - spec
+        type: object
+    served: true
+    storage: false
+    subresources:
+      status: {}
+  - additionalPrinterColumns:
+    - description: 'CreationTimestamp is a timestamp representing the server time
+        when this object was created. It is not guaranteed to be set in happens-before
+        order across separate operations. Clients may not set this value. It is represented
+        in RFC3339 form and is in UTC. Populated by the system. Read-only. Null for
+        lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata'
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha3
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: 'Describes a collection of workload instances. See more details
+              at: https://istio.io/docs/reference/config/networking/workload-group.html'
+            properties:
+              metadata:
+                description: Metadata that will be used for all corresponding `WorkloadEntries`.
+                properties:
+                  annotations:
+                    additionalProperties:
+                      type: string
+                    maxProperties: 256
+                    type: object
+                  labels:
+                    additionalProperties:
+                      type: string
+                    maxProperties: 256
+                    type: object
+                type: object
+              probe:
+                description: '`ReadinessProbe` describes the configuration the user
+                  must provide for healthchecking on their workload.'
+                oneOf:
+                - not:
+                    anyOf:
+                    - required:
+                      - httpGet
+                    - required:
+                      - tcpSocket
+                    - required:
+                      - exec
+                    - required:
+                      - grpc
+                - required:
+                  - httpGet
+                - required:
+                  - tcpSocket
+                - required:
+                  - exec
+                - required:
+                  - grpc
+                properties:
+                  exec:
+                    description: Health is determined by how the command that is executed
+                      exited.
+                    properties:
+                      command:
+                        description: Command to run.
+                        items:
+                          minLength: 1
+                          type: string
+                        type: array
+                    required:
+                    - command
+                    type: object
+                  failureThreshold:
+                    description: Minimum consecutive failures for the probe to be
+                      considered failed after having succeeded.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  grpc:
+                    description: GRPC call is made and response/error is used to determine
+                      health.
+                    properties:
+                      port:
+                        description: Port on which the endpoint lives.
+                        maximum: 4294967295
+                        minimum: 0
+                        type: integer
+                        x-kubernetes-validations:
+                        - message: port must be between 1-65535
+                          rule: 0 < self && self <= 65535
+                      service:
+                        type: string
+                    type: object
+                  httpGet:
+                    description: '`httpGet` is performed to a given endpoint and the
+                      status/able to connect determines health.'
+                    properties:
+                      host:
+                        description: Host name to connect to, defaults to the pod
+                          IP.
+                        type: string
+                      httpHeaders:
+                        description: Headers the proxy will pass on to make the request.
+                        items:
+                          properties:
+                            name:
+                              pattern: ^[-_A-Za-z0-9]+$
+                              type: string
+                            value:
+                              type: string
+                          type: object
+                        type: array
+                      path:
+                        description: Path to access on the HTTP server.
+                        type: string
+                      port:
+                        description: Port on which the endpoint lives.
+                        maximum: 4294967295
+                        minimum: 0
+                        type: integer
+                        x-kubernetes-validations:
+                        - message: port must be between 1-65535
+                          rule: 0 < self && self <= 65535
+                      scheme:
+                        type: string
+                        x-kubernetes-validations:
+                        - message: scheme must be one of [HTTP, HTTPS]
+                          rule: self in ["", "HTTP", "HTTPS"]
+                    required:
+                    - port
+                    type: object
+                  initialDelaySeconds:
+                    description: Number of seconds after the container has started
+                      before readiness probes are initiated.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  periodSeconds:
+                    description: How often (in seconds) to perform the probe.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  successThreshold:
+                    description: Minimum consecutive successes for the probe to be
+                      considered successful after having failed.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  tcpSocket:
+                    description: Health is determined by if the proxy is able to connect.
+                    properties:
+                      host:
+                        type: string
+                      port:
+                        maximum: 4294967295
+                        minimum: 0
+                        type: integer
+                        x-kubernetes-validations:
+                        - message: port must be between 1-65535
+                          rule: 0 < self && self <= 65535
+                    required:
+                    - port
+                    type: object
+                  timeoutSeconds:
+                    description: Number of seconds after which the probe times out.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                type: object
+              template:
+                description: Template to be used for the generation of `WorkloadEntry`
+                  resources that belong to this `WorkloadGroup`.
+                properties:
+                  address:
+                    description: Address associated with the network endpoint without
+                      the port.
+                    maxLength: 256
+                    type: string
+                    x-kubernetes-validations:
+                    - message: UDS must be an absolute path or abstract socket
+                      rule: 'self.startsWith("unix://") ? (self.substring(7, 8) ==
+                        "/" || self.substring(7, 8) == "@") : true'
+                    - message: UDS may not be a dir
+                      rule: 'self.startsWith("unix://") ? !self.endsWith("/") : true'
+                  labels:
+                    additionalProperties:
+                      type: string
+                    description: One or more labels associated with the endpoint.
+                    maxProperties: 256
+                    type: object
+                  locality:
+                    description: The locality associated with the endpoint.
+                    maxLength: 2048
+                    type: string
+                  network:
+                    description: Network enables Istio to group endpoints resident
+                      in the same L3 domain/network.
+                    maxLength: 2048
+                    type: string
+                  ports:
+                    additionalProperties:
+                      maximum: 4294967295
+                      minimum: 0
+                      type: integer
+                      x-kubernetes-validations:
+                      - message: port must be between 1-65535
+                        rule: 0 < self && self <= 65535
+                    description: Set of ports associated with the endpoint.
+                    maxProperties: 128
+                    type: object
+                    x-kubernetes-validations:
+                    - message: port name must be valid
+                      rule: self.all(key, size(key) < 63 && key.matches("^[a-zA-Z0-9](?:[-a-zA-Z0-9]*[a-zA-Z0-9])?$"))
+                  serviceAccount:
+                    description: The service account associated with the workload
+                      if a sidecar is present in the workload.
+                    maxLength: 253
+                    type: string
+                  weight:
+                    description: The load balancing weight associated with the endpoint.
+                    maximum: 4294967295
+                    minimum: 0
+                    type: integer
+                type: object
+                x-kubernetes-validations:
+                - message: UDS may not include ports
+                  rule: '(has(self.address) ? self.address : "").startsWith("unix://")
+                    ? !has(self.ports) : true'
+            required:
+            - template
+            type: object
+          status:
+            properties:
+              conditions:
+                description: Current service state of the resource.
+                items:
+                  properties:
+                    lastProbeTime:
+                      description: Last time we probed the condition.
+                      format: date-time
+                      type: string
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: Human-readable message indicating details about
+                        last transition.
+                      type: string
+                    observedGeneration:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      description: Resource Generation to which the Condition refers.
+                      x-kubernetes-int-or-string: true
+                    reason:
+                      description: Unique, one-word, CamelCase reason for the condition's
+                        last transition.
+                      type: string
+                    status:
+                      description: Status is the status of the condition.
+                      type: string
+                    type:
+                      description: Type is the type of the condition.
+                      type: string
+                  type: object
+                type: array
+              observedGeneration:
+                anyOf:
+                - type: integer
+                - type: string
+                x-kubernetes-int-or-string: true
+              validationMessages:
+                description: Includes any errors or warnings detected by Istio's analyzers.
+                items:
+                  properties:
+                    documentationUrl:
+                      description: A url pointing to the Istio documentation for this
+                        specific error type.
+                      type: string
+                    level:
+                      description: |-
+                        Represents how severe a message is.
+
+                        Valid Options: UNKNOWN, ERROR, WARNING, INFO
+                      enum:
+                      - UNKNOWN
+                      - ERROR
+                      - WARNING
+                      - INFO
+                      type: string
+                    type:
+                      properties:
+                        code:
+                          description: A 7 character code matching `^IST[0-9]{4}$`
+                            intended to uniquely identify the message type.
+                          type: string
+                        name:
+                          description: A human-readable name for the message type.
+                          type: string
+                      type: object
+                  type: object
+                type: array
+            type: object
+            x-kubernetes-preserve-unknown-fields: true
+        required:
+        - spec
+        type: object
+    served: true
+    storage: false
+    subresources:
+      status: {}
+  - additionalPrinterColumns:
+    - description: 'CreationTimestamp is a timestamp representing the server time
+        when this object was created. It is not guaranteed to be set in happens-before
+        order across separate operations. Clients may not set this value. It is represented
+        in RFC3339 form and is in UTC. Populated by the system. Read-only. Null for
+        lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata'
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1beta1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: 'Describes a collection of workload instances. See more details
+              at: https://istio.io/docs/reference/config/networking/workload-group.html'
+            properties:
+              metadata:
+                description: Metadata that will be used for all corresponding `WorkloadEntries`.
+                properties:
+                  annotations:
+                    additionalProperties:
+                      type: string
+                    maxProperties: 256
+                    type: object
+                  labels:
+                    additionalProperties:
+                      type: string
+                    maxProperties: 256
+                    type: object
+                type: object
+              probe:
+                description: '`ReadinessProbe` describes the configuration the user
+                  must provide for healthchecking on their workload.'
+                oneOf:
+                - not:
+                    anyOf:
+                    - required:
+                      - httpGet
+                    - required:
+                      - tcpSocket
+                    - required:
+                      - exec
+                    - required:
+                      - grpc
+                - required:
+                  - httpGet
+                - required:
+                  - tcpSocket
+                - required:
+                  - exec
+                - required:
+                  - grpc
+                properties:
+                  exec:
+                    description: Health is determined by how the command that is executed
+                      exited.
+                    properties:
+                      command:
+                        description: Command to run.
+                        items:
+                          minLength: 1
+                          type: string
+                        type: array
+                    required:
+                    - command
+                    type: object
+                  failureThreshold:
+                    description: Minimum consecutive failures for the probe to be
+                      considered failed after having succeeded.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  grpc:
+                    description: GRPC call is made and response/error is used to determine
+                      health.
+                    properties:
+                      port:
+                        description: Port on which the endpoint lives.
+                        maximum: 4294967295
+                        minimum: 0
+                        type: integer
+                        x-kubernetes-validations:
+                        - message: port must be between 1-65535
+                          rule: 0 < self && self <= 65535
+                      service:
+                        type: string
+                    type: object
+                  httpGet:
+                    description: '`httpGet` is performed to a given endpoint and the
+                      status/able to connect determines health.'
+                    properties:
+                      host:
+                        description: Host name to connect to, defaults to the pod
+                          IP.
+                        type: string
+                      httpHeaders:
+                        description: Headers the proxy will pass on to make the request.
+                        items:
+                          properties:
+                            name:
+                              pattern: ^[-_A-Za-z0-9]+$
+                              type: string
+                            value:
+                              type: string
+                          type: object
+                        type: array
+                      path:
+                        description: Path to access on the HTTP server.
+                        type: string
+                      port:
+                        description: Port on which the endpoint lives.
+                        maximum: 4294967295
+                        minimum: 0
+                        type: integer
+                        x-kubernetes-validations:
+                        - message: port must be between 1-65535
+                          rule: 0 < self && self <= 65535
+                      scheme:
+                        type: string
+                        x-kubernetes-validations:
+                        - message: scheme must be one of [HTTP, HTTPS]
+                          rule: self in ["", "HTTP", "HTTPS"]
+                    required:
+                    - port
+                    type: object
+                  initialDelaySeconds:
+                    description: Number of seconds after the container has started
+                      before readiness probes are initiated.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  periodSeconds:
+                    description: How often (in seconds) to perform the probe.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  successThreshold:
+                    description: Minimum consecutive successes for the probe to be
+                      considered successful after having failed.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  tcpSocket:
+                    description: Health is determined by if the proxy is able to connect.
+                    properties:
+                      host:
+                        type: string
+                      port:
+                        maximum: 4294967295
+                        minimum: 0
+                        type: integer
+                        x-kubernetes-validations:
+                        - message: port must be between 1-65535
+                          rule: 0 < self && self <= 65535
+                    required:
+                    - port
+                    type: object
+                  timeoutSeconds:
+                    description: Number of seconds after which the probe times out.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                type: object
+              template:
+                description: Template to be used for the generation of `WorkloadEntry`
+                  resources that belong to this `WorkloadGroup`.
+                properties:
+                  address:
+                    description: Address associated with the network endpoint without
+                      the port.
+                    maxLength: 256
+                    type: string
+                    x-kubernetes-validations:
+                    - message: UDS must be an absolute path or abstract socket
+                      rule: 'self.startsWith("unix://") ? (self.substring(7, 8) ==
+                        "/" || self.substring(7, 8) == "@") : true'
+                    - message: UDS may not be a dir
+                      rule: 'self.startsWith("unix://") ? !self.endsWith("/") : true'
+                  labels:
+                    additionalProperties:
+                      type: string
+                    description: One or more labels associated with the endpoint.
+                    maxProperties: 256
+                    type: object
+                  locality:
+                    description: The locality associated with the endpoint.
+                    maxLength: 2048
+                    type: string
+                  network:
+                    description: Network enables Istio to group endpoints resident
+                      in the same L3 domain/network.
+                    maxLength: 2048
+                    type: string
+                  ports:
+                    additionalProperties:
+                      maximum: 4294967295
+                      minimum: 0
+                      type: integer
+                      x-kubernetes-validations:
+                      - message: port must be between 1-65535
+                        rule: 0 < self && self <= 65535
+                    description: Set of ports associated with the endpoint.
+                    maxProperties: 128
+                    type: object
+                    x-kubernetes-validations:
+                    - message: port name must be valid
+                      rule: self.all(key, size(key) < 63 && key.matches("^[a-zA-Z0-9](?:[-a-zA-Z0-9]*[a-zA-Z0-9])?$"))
+                  serviceAccount:
+                    description: The service account associated with the workload
+                      if a sidecar is present in the workload.
+                    maxLength: 253
+                    type: string
+                  weight:
+                    description: The load balancing weight associated with the endpoint.
+                    maximum: 4294967295
+                    minimum: 0
+                    type: integer
+                type: object
+                x-kubernetes-validations:
+                - message: UDS may not include ports
+                  rule: '(has(self.address) ? self.address : "").startsWith("unix://")
+                    ? !has(self.ports) : true'
+            required:
+            - template
+            type: object
+          status:
+            properties:
+              conditions:
+                description: Current service state of the resource.
+                items:
+                  properties:
+                    lastProbeTime:
+                      description: Last time we probed the condition.
+                      format: date-time
+                      type: string
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: Human-readable message indicating details about
+                        last transition.
+                      type: string
+                    observedGeneration:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      description: Resource Generation to which the Condition refers.
+                      x-kubernetes-int-or-string: true
+                    reason:
+                      description: Unique, one-word, CamelCase reason for the condition's
+                        last transition.
+                      type: string
+                    status:
+                      description: Status is the status of the condition.
+                      type: string
+                    type:
+                      description: Type is the type of the condition.
+                      type: string
+                  type: object
+                type: array
+              observedGeneration:
+                anyOf:
+                - type: integer
+                - type: string
+                x-kubernetes-int-or-string: true
+              validationMessages:
+                description: Includes any errors or warnings detected by Istio's analyzers.
+                items:
+                  properties:
+                    documentationUrl:
+                      description: A url pointing to the Istio documentation for this
+                        specific error type.
+                      type: string
+                    level:
+                      description: |-
+                        Represents how severe a message is.
+
+                        Valid Options: UNKNOWN, ERROR, WARNING, INFO
+                      enum:
+                      - UNKNOWN
+                      - ERROR
+                      - WARNING
+                      - INFO
+                      type: string
+                    type:
+                      properties:
+                        code:
+                          description: A 7 character code matching `^IST[0-9]{4}$`
+                            intended to uniquely identify the message type.
+                          type: string
+                        name:
+                          description: A human-readable name for the message type.
+                          type: string
+                      type: object
+                  type: object
+                type: array
+            type: object
+            x-kubernetes-preserve-unknown-fields: true
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    categories:
+    - istio-io
+    - networking-istio-io
+    kind: WorkloadGroup
+    listKind: WorkloadGroupList
+    plural: workloadgroups
+    shortNames:
+    - wg
+    singular: workloadgroup
+  conditions:
+  - lastTransitionTime: "2025-07-15T19:27:48Z"
+    message: no conflicts found
+    reason: NoConflicts
+    status: "True"
+    type: NamesAccepted
+  - lastTransitionTime: "2025-07-15T19:27:48Z"
+    message: the initial names have been accepted
+    reason: InitialNamesAccepted
+    status: "True"
+    type: Established
+  storedVersions:
+  - v1beta1

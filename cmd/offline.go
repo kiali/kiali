@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,8 +30,8 @@ import (
 var offlineDataPath string
 
 // readOfflineManifest reads the manifest file and returns the cluster name
-func readOfflineManifest() config.OfflineManifest {
-	manifestPath := "/tmp/kiali-offline-manifest.json"
+func readOfflineManifest(offlineDataPath string) config.OfflineManifest {
+	manifestPath := filepath.Join(offlineDataPath, "offline-manifest.json")
 
 	manifest := config.OfflineManifest{
 		Cluster: "offline",
@@ -65,16 +66,26 @@ func newOfflineCmd() *cobra.Command {
 This mode allows you to analyze pre-collected data without requiring a live cluster connection.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			log.Infof("Running Kiali in offline mode with data from: %s", offlineDataPath)
-
-			conf := config.NewConfig()
+			var conf *config.Config
+			if argConfigFile != "" {
+				var err error
+				conf, err = config.LoadConfig(argConfigFile)
+				if err != nil {
+					return fmt.Errorf("failed to load config: %v", err)
+				}
+			} else {
+				conf = config.NewConfig()
+			}
 
 			// Read cluster name from manifest file
-			manifest := readOfflineManifest()
+			manifest := readOfflineManifest(offlineDataPath)
 
 			// Override settings for offline mode
 			conf.RunMode = config.RunModeOffline
 			conf.Auth.Strategy = config.AuthStrategyAnonymous
+			conf.Server.Observability.Metrics.Enabled = false
 			conf.KubernetesConfig.ClusterName = manifest.Cluster
+			conf.Deployment.ViewOnlyMode = true
 
 			// Configure external services for offline mode
 			conf.ExternalServices.Prometheus.Enabled = true
@@ -107,11 +118,13 @@ This mode allows you to analyze pre-collected data without requiring a live clus
 				readers[cluster] = client
 			}
 
-			kialiCache, err := cache.NewKialiCache(clientFactory.GetSAClients(), readers, *conf)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			kialiCache, err := cache.NewKialiCache(ctx, clientFactory.GetSAClients(), readers, *conf)
 			if err != nil {
 				return fmt.Errorf("failed to create KialiCache: %w", err)
 			}
-			defer kialiCache.Stop()
 
 			log.Infof("Successfully created KialiCache for offline mode")
 
@@ -126,7 +139,7 @@ This mode allows you to analyze pre-collected data without requiring a live clus
 				return nil
 			}
 
-			promClient := prometheus.NewOfflineClient("/tmp/kiali-prom-gather", &manifest)
+			promClient := prometheus.NewOfflineClient(offlineDataPath, &manifest)
 
 			kialiServer, err := server.NewServer(
 				nil, // controlPlaneMonitor
@@ -147,9 +160,6 @@ This mode allows you to analyze pre-collected data without requiring a live clus
 			kialiServer.Start()
 			log.Infof("Kiali server started in offline mode")
 
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-
 			stopped := make(chan struct{})
 			go func() {
 				defer close(stopped)
@@ -165,7 +175,7 @@ This mode allows you to analyze pre-collected data without requiring a live clus
 		},
 	}
 
-	cmd.Flags().StringVar(&offlineDataPath, "data-path", "", "Path to directory containing offline data files")
+	cmd.Flags().StringVar(&offlineDataPath, "data-path", "/tmp/kiali", "Path to directory containing offline data files")
 	cmd.MarkFlagRequired("data-path")
 
 	return cmd

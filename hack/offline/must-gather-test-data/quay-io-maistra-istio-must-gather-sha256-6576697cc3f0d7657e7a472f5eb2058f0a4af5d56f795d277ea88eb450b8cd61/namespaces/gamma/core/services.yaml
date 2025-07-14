@@ -1,0 +1,301 @@
+---
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"v-server"},"name":"v-server","namespace":"gamma"},"spec":{"ports":[{"name":"http","port":8899}],"selector":{"app":"v-server"}}}
+    creationTimestamp: "2025-07-15T19:29:38Z"
+    labels:
+      app: v-server
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:app: {}
+        f:spec:
+          f:internalTrafficPolicy: {}
+          f:ports:
+            .: {}
+            k:{"port":8899,"protocol":"TCP"}:
+              .: {}
+              f:name: {}
+              f:port: {}
+              f:protocol: {}
+              f:targetPort: {}
+          f:selector: {}
+          f:sessionAffinity: {}
+          f:type: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2025-07-15T19:29:38Z"
+    name: v-server
+    namespace: gamma
+    resourceVersion: "1929"
+    uid: 56a309f1-22b6-4193-b4f5-5c2d75bbee44
+  spec:
+    clusterIP: 10.96.143.218
+    clusterIPs:
+    - 10.96.143.218
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 8899
+      protocol: TCP
+      targetPort: 8899
+    selector:
+      app: v-server
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"w-server"},"name":"w-server","namespace":"gamma"},"spec":{"ports":[{"name":"http","port":8899}],"selector":{"app":"w-server"}}}
+    creationTimestamp: "2025-07-15T19:29:38Z"
+    labels:
+      app: w-server
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:app: {}
+        f:spec:
+          f:internalTrafficPolicy: {}
+          f:ports:
+            .: {}
+            k:{"port":8899,"protocol":"TCP"}:
+              .: {}
+              f:name: {}
+              f:port: {}
+              f:protocol: {}
+              f:targetPort: {}
+          f:selector: {}
+          f:sessionAffinity: {}
+          f:type: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2025-07-15T19:29:38Z"
+    name: w-server
+    namespace: gamma
+    resourceVersion: "1939"
+    uid: b606e939-0ed2-4524-a76f-b84670f18ca4
+  spec:
+    clusterIP: 10.96.245.107
+    clusterIPs:
+    - 10.96.245.107
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 8899
+      protocol: TCP
+      targetPort: 8899
+    selector:
+      app: w-server
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"x-server"},"name":"x-server","namespace":"gamma"},"spec":{"ports":[{"name":"http","port":8899}],"selector":{"app":"x-server"}}}
+    creationTimestamp: "2025-07-15T19:29:38Z"
+    labels:
+      app: x-server
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:app: {}
+        f:spec:
+          f:internalTrafficPolicy: {}
+          f:ports:
+            .: {}
+            k:{"port":8899,"protocol":"TCP"}:
+              .: {}
+              f:name: {}
+              f:port: {}
+              f:protocol: {}
+              f:targetPort: {}
+          f:selector: {}
+          f:sessionAffinity: {}
+          f:type: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2025-07-15T19:29:38Z"
+    name: x-server
+    namespace: gamma
+    resourceVersion: "1946"
+    uid: 13267865-1c07-4609-b204-83bc315c1449
+  spec:
+    clusterIP: 10.96.142.62
+    clusterIPs:
+    - 10.96.142.62
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 8899
+      protocol: TCP
+      targetPort: 8899
+    selector:
+      app: x-server
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"y-server"},"name":"y-server","namespace":"gamma"},"spec":{"ports":[{"name":"http","port":8899}],"selector":{"app":"y-server"}}}
+    creationTimestamp: "2025-07-15T19:29:38Z"
+    labels:
+      app: y-server
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:app: {}
+        f:spec:
+          f:internalTrafficPolicy: {}
+          f:ports:
+            .: {}
+            k:{"port":8899,"protocol":"TCP"}:
+              .: {}
+              f:name: {}
+              f:port: {}
+              f:protocol: {}
+              f:targetPort: {}
+          f:selector: {}
+          f:sessionAffinity: {}
+          f:type: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2025-07-15T19:29:38Z"
+    name: y-server
+    namespace: gamma
+    resourceVersion: "1955"
+    uid: beffe441-0b32-431f-a884-4e52f5c4c166
+  spec:
+    clusterIP: 10.96.126.223
+    clusterIPs:
+    - 10.96.126.223
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 8899
+      protocol: TCP
+      targetPort: 8899
+    selector:
+      app: y-server
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"z-server"},"name":"z-server","namespace":"gamma"},"spec":{"ports":[{"name":"http","port":8899}],"selector":{"app":"z-server"}}}
+    creationTimestamp: "2025-07-15T19:29:38Z"
+    labels:
+      app: z-server
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:app: {}
+        f:spec:
+          f:internalTrafficPolicy: {}
+          f:ports:
+            .: {}
+            k:{"port":8899,"protocol":"TCP"}:
+              .: {}
+              f:name: {}
+              f:port: {}
+              f:protocol: {}
+              f:targetPort: {}
+          f:selector: {}
+          f:sessionAffinity: {}
+          f:type: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2025-07-15T19:29:38Z"
+    name: z-server
+    namespace: gamma
+    resourceVersion: "1966"
+    uid: cd28d000-41bb-4837-8376-a04cd833c486
+  spec:
+    clusterIP: 10.96.62.44
+    clusterIPs:
+    - 10.96.62.44
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 8899
+      protocol: TCP
+      targetPort: 8899
+    selector:
+      app: z-server
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+kind: ServiceList
+metadata:
+  resourceVersion: "5153"

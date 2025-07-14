@@ -1,0 +1,484 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    checksum/config: 31c15e14c699572fa1f5a9b32a680f6b8d92e2abc12878def7af64522ed2796d
+    kiali.io/dashboards: go,kiali
+    prometheus.io/port: "9090"
+    prometheus.io/scrape: "true"
+    proxy.istio.io/config: '{ "holdApplicationUntilProxyStarts": true }'
+  creationTimestamp: "2025-07-15T19:28:26Z"
+  generateName: kiali-68855959f6-
+  generation: 1
+  labels:
+    app: kiali
+    app.kubernetes.io/instance: kiali
+    app.kubernetes.io/name: kiali
+    app.kubernetes.io/part-of: kiali
+    app.kubernetes.io/version: v2.13.0-SNAPSHOT
+    helm.sh/chart: kiali-server-2.13.0-SNAPSHOT
+    pod-template-hash: 68855959f6
+    version: v2.13.0-SNAPSHOT
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:checksum/config: {}
+          f:kiali.io/dashboards: {}
+          f:prometheus.io/port: {}
+          f:prometheus.io/scrape: {}
+          f:proxy.istio.io/config: {}
+        f:generateName: {}
+        f:labels:
+          .: {}
+          f:app: {}
+          f:app.kubernetes.io/instance: {}
+          f:app.kubernetes.io/name: {}
+          f:app.kubernetes.io/part-of: {}
+          f:app.kubernetes.io/version: {}
+          f:helm.sh/chart: {}
+          f:pod-template-hash: {}
+          f:version: {}
+        f:ownerReferences:
+          .: {}
+          k:{"uid":"df77f359-e224-4dc6-8736-ddd1a25a7f69"}: {}
+      f:spec:
+        f:containers:
+          k:{"name":"kiali"}:
+            .: {}
+            f:command: {}
+            f:env:
+              .: {}
+              k:{"name":"ACTIVE_NAMESPACE"}:
+                .: {}
+                f:name: {}
+                f:valueFrom:
+                  .: {}
+                  f:fieldRef: {}
+              k:{"name":"LOG_FORMAT"}:
+                .: {}
+                f:name: {}
+                f:value: {}
+              k:{"name":"LOG_LEVEL"}:
+                .: {}
+                f:name: {}
+                f:value: {}
+              k:{"name":"LOG_SAMPLER_RATE"}:
+                .: {}
+                f:name: {}
+                f:value: {}
+              k:{"name":"LOG_TIME_FIELD_FORMAT"}:
+                .: {}
+                f:name: {}
+                f:value: {}
+            f:image: {}
+            f:imagePullPolicy: {}
+            f:livenessProbe:
+              .: {}
+              f:failureThreshold: {}
+              f:httpGet:
+                .: {}
+                f:path: {}
+                f:port: {}
+                f:scheme: {}
+              f:initialDelaySeconds: {}
+              f:periodSeconds: {}
+              f:successThreshold: {}
+              f:timeoutSeconds: {}
+            f:name: {}
+            f:ports:
+              .: {}
+              k:{"containerPort":9090,"protocol":"TCP"}:
+                .: {}
+                f:containerPort: {}
+                f:name: {}
+                f:protocol: {}
+              k:{"containerPort":20001,"protocol":"TCP"}:
+                .: {}
+                f:containerPort: {}
+                f:name: {}
+                f:protocol: {}
+            f:readinessProbe:
+              .: {}
+              f:failureThreshold: {}
+              f:httpGet:
+                .: {}
+                f:path: {}
+                f:port: {}
+                f:scheme: {}
+              f:initialDelaySeconds: {}
+              f:periodSeconds: {}
+              f:successThreshold: {}
+              f:timeoutSeconds: {}
+            f:resources:
+              .: {}
+              f:limits:
+                .: {}
+                f:memory: {}
+              f:requests:
+                .: {}
+                f:cpu: {}
+                f:memory: {}
+            f:securityContext:
+              .: {}
+              f:allowPrivilegeEscalation: {}
+              f:capabilities:
+                .: {}
+                f:drop: {}
+              f:privileged: {}
+              f:readOnlyRootFilesystem: {}
+              f:runAsNonRoot: {}
+            f:startupProbe:
+              .: {}
+              f:failureThreshold: {}
+              f:httpGet:
+                .: {}
+                f:path: {}
+                f:port: {}
+                f:scheme: {}
+              f:initialDelaySeconds: {}
+              f:periodSeconds: {}
+              f:successThreshold: {}
+              f:timeoutSeconds: {}
+            f:terminationMessagePath: {}
+            f:terminationMessagePolicy: {}
+            f:volumeMounts:
+              .: {}
+              k:{"mountPath":"/kiali-cabundle"}:
+                .: {}
+                f:mountPath: {}
+                f:name: {}
+              k:{"mountPath":"/kiali-cert"}:
+                .: {}
+                f:mountPath: {}
+                f:name: {}
+              k:{"mountPath":"/kiali-configuration"}:
+                .: {}
+                f:mountPath: {}
+                f:name: {}
+              k:{"mountPath":"/kiali-remote-cluster-secrets/kiali-multi-cluster-secret"}:
+                .: {}
+                f:mountPath: {}
+                f:name: {}
+                f:readOnly: {}
+              k:{"mountPath":"/kiali-secret"}:
+                .: {}
+                f:mountPath: {}
+                f:name: {}
+        f:dnsPolicy: {}
+        f:enableServiceLinks: {}
+        f:restartPolicy: {}
+        f:schedulerName: {}
+        f:securityContext: {}
+        f:serviceAccount: {}
+        f:serviceAccountName: {}
+        f:terminationGracePeriodSeconds: {}
+        f:volumes:
+          .: {}
+          k:{"name":"kiali-cabundle"}:
+            .: {}
+            f:configMap:
+              .: {}
+              f:defaultMode: {}
+              f:name: {}
+              f:optional: {}
+            f:name: {}
+          k:{"name":"kiali-cert"}:
+            .: {}
+            f:name: {}
+            f:secret:
+              .: {}
+              f:defaultMode: {}
+              f:optional: {}
+              f:secretName: {}
+          k:{"name":"kiali-configuration"}:
+            .: {}
+            f:configMap:
+              .: {}
+              f:defaultMode: {}
+              f:name: {}
+            f:name: {}
+          k:{"name":"kiali-multi-cluster-secret"}:
+            .: {}
+            f:name: {}
+            f:secret:
+              .: {}
+              f:defaultMode: {}
+              f:optional: {}
+              f:secretName: {}
+          k:{"name":"kiali-secret"}:
+            .: {}
+            f:name: {}
+            f:secret:
+              .: {}
+              f:defaultMode: {}
+              f:optional: {}
+              f:secretName: {}
+    manager: kube-controller-manager
+    operation: Update
+    time: "2025-07-15T19:28:26Z"
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:status:
+        f:conditions:
+          k:{"type":"ContainersReady"}:
+            .: {}
+            f:lastProbeTime: {}
+            f:lastTransitionTime: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"Initialized"}:
+            .: {}
+            f:lastProbeTime: {}
+            f:lastTransitionTime: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"PodReadyToStartContainers"}:
+            .: {}
+            f:lastProbeTime: {}
+            f:lastTransitionTime: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"Ready"}:
+            .: {}
+            f:lastProbeTime: {}
+            f:lastTransitionTime: {}
+            f:status: {}
+            f:type: {}
+        f:containerStatuses: {}
+        f:hostIP: {}
+        f:hostIPs: {}
+        f:phase: {}
+        f:podIP: {}
+        f:podIPs:
+          .: {}
+          k:{"ip":"10.244.1.8"}:
+            .: {}
+            f:ip: {}
+        f:startTime: {}
+    manager: kubelet
+    operation: Update
+    subresource: status
+    time: "2025-07-15T19:29:06Z"
+  name: kiali-68855959f6-wl955
+  namespace: istio-system
+  ownerReferences:
+  - apiVersion: apps/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ReplicaSet
+    name: kiali-68855959f6
+    uid: df77f359-e224-4dc6-8736-ddd1a25a7f69
+  resourceVersion: "1275"
+  uid: 280a1396-0acd-4da6-876a-1a67fc179ec3
+spec:
+  containers:
+  - command:
+    - /opt/kiali/kiali
+    - -config
+    - /kiali-configuration/config.yaml
+    env:
+    - name: ACTIVE_NAMESPACE
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: metadata.namespace
+    - name: LOG_LEVEL
+      value: trace
+    - name: LOG_FORMAT
+      value: text
+    - name: LOG_TIME_FIELD_FORMAT
+      value: 2006-01-02T15:04:05Z07:00
+    - name: LOG_SAMPLER_RATE
+      value: "1"
+    image: localhost/kiali/kiali:dev
+    imagePullPolicy: Never
+    livenessProbe:
+      failureThreshold: 3
+      httpGet:
+        path: /kiali/healthz
+        port: api-port
+        scheme: HTTP
+      initialDelaySeconds: 5
+      periodSeconds: 30
+      successThreshold: 1
+      timeoutSeconds: 1
+    name: kiali
+    ports:
+    - containerPort: 20001
+      name: api-port
+      protocol: TCP
+    - containerPort: 9090
+      name: http-metrics
+      protocol: TCP
+    readinessProbe:
+      failureThreshold: 3
+      httpGet:
+        path: /kiali/healthz
+        port: api-port
+        scheme: HTTP
+      initialDelaySeconds: 5
+      periodSeconds: 30
+      successThreshold: 1
+      timeoutSeconds: 1
+    resources:
+      limits:
+        memory: 1Gi
+      requests:
+        cpu: 10m
+        memory: 64Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      privileged: false
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+    startupProbe:
+      failureThreshold: 6
+      httpGet:
+        path: /kiali/healthz
+        port: api-port
+        scheme: HTTP
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 1
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: FallbackToLogsOnError
+    volumeMounts:
+    - mountPath: /kiali-configuration
+      name: kiali-configuration
+    - mountPath: /kiali-cert
+      name: kiali-cert
+    - mountPath: /kiali-secret
+      name: kiali-secret
+    - mountPath: /kiali-cabundle
+      name: kiali-cabundle
+    - mountPath: /kiali-remote-cluster-secrets/kiali-multi-cluster-secret
+      name: kiali-multi-cluster-secret
+      readOnly: true
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-5sqb8
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  nodeName: ci-worker
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext: {}
+  serviceAccount: kiali
+  serviceAccountName: kiali
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - configMap:
+      defaultMode: 420
+      name: kiali
+    name: kiali-configuration
+  - name: kiali-cert
+    secret:
+      defaultMode: 420
+      optional: true
+      secretName: istio.kiali-service-account
+  - name: kiali-secret
+    secret:
+      defaultMode: 420
+      optional: true
+      secretName: kiali
+  - configMap:
+      defaultMode: 420
+      name: kiali-cabundle
+      optional: true
+    name: kiali-cabundle
+  - name: kiali-multi-cluster-secret
+    secret:
+      defaultMode: 420
+      optional: true
+      secretName: kiali-multi-cluster-secret
+  - name: kube-api-access-5sqb8
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 3607
+          path: token
+      - configMap:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          name: kube-root-ca.crt
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+            path: namespace
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2025-07-15T19:28:27Z"
+    status: "True"
+    type: PodReadyToStartContainers
+  - lastProbeTime: null
+    lastTransitionTime: "2025-07-15T19:28:26Z"
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2025-07-15T19:29:06Z"
+    status: "True"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2025-07-15T19:29:06Z"
+    status: "True"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2025-07-15T19:28:26Z"
+    status: "True"
+    type: PodScheduled
+  containerStatuses:
+  - allocatedResources:
+      cpu: 10m
+      memory: 64Mi
+    containerID: containerd://9c0e98fedc2cc488c1c5138ea712c7e323c8083f9e82c863595528aa0947e185
+    image: localhost/kiali/kiali:dev
+    imageID: sha256:aae0595f8e4a093bc2b5f169edc4ea0a54fec1399a67980da36d97fadbd00478
+    lastState: {}
+    name: kiali
+    ready: true
+    resources:
+      limits:
+        memory: 1Gi
+      requests:
+        cpu: 10m
+        memory: 64Mi
+    restartCount: 0
+    started: true
+    state:
+      running:
+        startedAt: "2025-07-15T19:28:27Z"
+  hostIP: 172.18.0.3
+  hostIPs:
+  - ip: 172.18.0.3
+  phase: Running
+  podIP: 10.244.1.8
+  podIPs:
+  - ip: 10.244.1.8
+  qosClass: Burstable
+  startTime: "2025-07-15T19:28:26Z"

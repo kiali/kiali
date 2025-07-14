@@ -33,6 +33,7 @@ import (
 
 	"github.com/prometheus/common/model"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry"
 	"github.com/kiali/kiali/graph/telemetry/istio/appender"
@@ -555,6 +556,11 @@ func timeSeriesHash(cluster, serviceNs, service, workloadNs, workload, app, vers
 
 // BuildNodeTrafficMap is required by the graph/TelemtryVendor interface
 func BuildNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalInfo *graph.GlobalInfo) (graph.TrafficMap, error) {
+	// TODO: Node Map not supported yet.
+	if globalInfo.Conf.RunMode == config.RunModeOffline {
+		return graph.TrafficMap{}, nil
+	}
+
 	namespace := o.NodeOptions.Namespace.Name
 	if o.NodeOptions.Aggregate != "" {
 		return handleAggregateNodeTrafficMap(ctx, o, globalInfo), nil

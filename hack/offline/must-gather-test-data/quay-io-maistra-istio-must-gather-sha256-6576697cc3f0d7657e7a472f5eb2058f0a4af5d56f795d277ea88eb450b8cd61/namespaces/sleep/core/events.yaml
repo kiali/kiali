@@ -1,0 +1,608 @@
+---
+apiVersion: v1
+items:
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: sleep-868c754c4b-z9f2r
+    namespace: sleep
+    resourceVersion: "2391"
+    uid: 1ad4bb2f-7af8-45ae-b957-83abba63fbfc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Successfully assigned sleep/sleep-868c754c4b-z9f2r to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: sleep-868c754c4b-z9f2r.1852837e2f19e3de
+    namespace: sleep
+    resourceVersion: "2394"
+    uid: c4596636-abbc-45cf-a5eb-edd74ccc54ec
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:43Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: sleep-868c754c4b-z9f2r
+    namespace: sleep
+    resourceVersion: "2393"
+    uid: 1ad4bb2f-7af8-45ae-b957-83abba63fbfc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:43Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: sleep-868c754c4b-z9f2r.1852837e48d32204
+    namespace: sleep
+    resourceVersion: "2423"
+    uid: d01954fe-8f8d-415d-b3f0-c327d64a8b7e
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:43Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: sleep-868c754c4b-z9f2r
+    namespace: sleep
+    resourceVersion: "2393"
+    uid: 1ad4bb2f-7af8-45ae-b957-83abba63fbfc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:43Z"
+  message: 'Created container: istio-init'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: sleep-868c754c4b-z9f2r.1852837e499f50c8
+    namespace: sleep
+    resourceVersion: "2426"
+    uid: c38ed15b-545b-4444-8e6f-616dd3522854
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:43Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: sleep-868c754c4b-z9f2r
+    namespace: sleep
+    resourceVersion: "2393"
+    uid: 1ad4bb2f-7af8-45ae-b957-83abba63fbfc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:43Z"
+  message: Started container istio-init
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: sleep-868c754c4b-z9f2r.1852837e4f56c405
+    namespace: sleep
+    resourceVersion: "2432"
+    uid: f198b9d6-d2b0-42df-8aad-b554b0552464
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:43Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{sleep}
+    kind: Pod
+    name: sleep-868c754c4b-z9f2r
+    namespace: sleep
+    resourceVersion: "2393"
+    uid: 1ad4bb2f-7af8-45ae-b957-83abba63fbfc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:43Z"
+  message: Pulling image "curlimages/curl"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: sleep-868c754c4b-z9f2r.1852837e678364e6
+    namespace: sleep
+    resourceVersion: "2452"
+    uid: 31679274-6d98-43f1-9dbc-d8e3c4991f88
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:54Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{sleep}
+    kind: Pod
+    name: sleep-868c754c4b-z9f2r
+    namespace: sleep
+    resourceVersion: "2393"
+    uid: 1ad4bb2f-7af8-45ae-b957-83abba63fbfc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:54Z"
+  message: 'Successfully pulled image "curlimages/curl" in 1.186s (10.264s including
+    waiting). Image size: 9834279 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:54Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: sleep-868c754c4b-z9f2r.18528380cb560d73
+    namespace: sleep
+    resourceVersion: "2872"
+    uid: 1227ebd6-998b-42e4-be83-f87b496a3b53
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:54Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{sleep}
+    kind: Pod
+    name: sleep-868c754c4b-z9f2r
+    namespace: sleep
+    resourceVersion: "2393"
+    uid: 1ad4bb2f-7af8-45ae-b957-83abba63fbfc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:54Z"
+  message: 'Created container: sleep'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:54Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: sleep-868c754c4b-z9f2r.18528380cc09e6b9
+    namespace: sleep
+    resourceVersion: "2873"
+    uid: b98138f8-695d-4d23-826d-0f9c584c8328
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:54Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{sleep}
+    kind: Pod
+    name: sleep-868c754c4b-z9f2r
+    namespace: sleep
+    resourceVersion: "2393"
+    uid: 1ad4bb2f-7af8-45ae-b957-83abba63fbfc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:54Z"
+  message: Started container sleep
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:54Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: sleep-868c754c4b-z9f2r.18528380d2c9fa9c
+    namespace: sleep
+    resourceVersion: "2875"
+    uid: 850f6912-ee54-48df-82b2-73b3eb64de41
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:54Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: sleep-868c754c4b-z9f2r
+    namespace: sleep
+    resourceVersion: "2393"
+    uid: 1ad4bb2f-7af8-45ae-b957-83abba63fbfc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:54Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:54Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: sleep-868c754c4b-z9f2r.18528380d2d09ad4
+    namespace: sleep
+    resourceVersion: "2876"
+    uid: 108a78cb-9060-47be-8adf-d78a582245a6
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:54Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: sleep-868c754c4b-z9f2r
+    namespace: sleep
+    resourceVersion: "2393"
+    uid: 1ad4bb2f-7af8-45ae-b957-83abba63fbfc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:54Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:54Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: sleep-868c754c4b-z9f2r.18528380d37f02f8
+    namespace: sleep
+    resourceVersion: "2877"
+    uid: 68c306b0-bc93-42b7-834a-26412ebdf9e1
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:54Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: sleep-868c754c4b-z9f2r
+    namespace: sleep
+    resourceVersion: "2393"
+    uid: 1ad4bb2f-7af8-45ae-b957-83abba63fbfc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:54Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:54Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: sleep-868c754c4b-z9f2r.18528380d96e4c97
+    namespace: sleep
+    resourceVersion: "2880"
+    uid: be3acfb0-2a70-4622-b8e4-858aa321bbee
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: sleep-868c754c4b
+    namespace: sleep
+    resourceVersion: "2341"
+    uid: fddb0191-49b5-455d-8282-3934443b38eb
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: 'Created pod: sleep-868c754c4b-z9f2r'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: sleep-868c754c4b.1852837e2edb50d5
+    namespace: sleep
+    resourceVersion: "2436"
+    uid: 9c0cb7e3-3f6a-4f5e-8d65-d4aae4bf8615
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sleep
+    namespace: sleep
+    resourceVersion: "2038"
+    uid: 3c1dc2d3-d6cd-4b68-869a-da07962ee12b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Scaled up replica set sleep-868c754c4b from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:44Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:44Z"
+    name: sleep.1852837e165a55d9
+    namespace: sleep
+    resourceVersion: "2509"
+    uid: c310b6df-323f-4cba-9df5-d36b18b1439b
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+kind: EventList
+metadata:
+  resourceVersion: "5181"

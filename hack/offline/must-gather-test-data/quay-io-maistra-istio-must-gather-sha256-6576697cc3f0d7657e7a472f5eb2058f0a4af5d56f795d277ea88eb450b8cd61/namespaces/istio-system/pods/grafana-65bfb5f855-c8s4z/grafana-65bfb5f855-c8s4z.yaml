@@ -1,0 +1,451 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    checksum/config: 68c00ea91b7ba5c04efc55555ef2307f52aaf738b04e9665e91bb756c8f32b22
+    checksum/sc-dashboard-provider-config: e70bf6a851099d385178a76de9757bb0bef8299da6d8443602590e44f05fdf24
+    kubectl.kubernetes.io/default-container: grafana
+  creationTimestamp: "2025-07-15T19:28:21Z"
+  generateName: grafana-65bfb5f855-
+  generation: 1
+  labels:
+    app.kubernetes.io/instance: grafana
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/version: 11.3.1
+    helm.sh/chart: grafana-8.6.3
+    pod-template-hash: 65bfb5f855
+    sidecar.istio.io/inject: "false"
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:checksum/config: {}
+          f:checksum/sc-dashboard-provider-config: {}
+          f:kubectl.kubernetes.io/default-container: {}
+        f:generateName: {}
+        f:labels:
+          .: {}
+          f:app.kubernetes.io/instance: {}
+          f:app.kubernetes.io/name: {}
+          f:app.kubernetes.io/version: {}
+          f:helm.sh/chart: {}
+          f:pod-template-hash: {}
+          f:sidecar.istio.io/inject: {}
+        f:ownerReferences:
+          .: {}
+          k:{"uid":"b1150ea4-fb9b-41c0-baa6-6d6a903f2ae4"}: {}
+      f:spec:
+        f:automountServiceAccountToken: {}
+        f:containers:
+          k:{"name":"grafana"}:
+            .: {}
+            f:env:
+              .: {}
+              k:{"name":"GF_AUTH_ANONYMOUS_ENABLED"}:
+                .: {}
+                f:name: {}
+                f:value: {}
+              k:{"name":"GF_AUTH_ANONYMOUS_ORG_ROLE"}:
+                .: {}
+                f:name: {}
+                f:value: {}
+              k:{"name":"GF_AUTH_BASIC_ENABLED"}:
+                .: {}
+                f:name: {}
+                f:value: {}
+              k:{"name":"GF_PATHS_DATA"}:
+                .: {}
+                f:name: {}
+                f:value: {}
+              k:{"name":"GF_PATHS_LOGS"}:
+                .: {}
+                f:name: {}
+                f:value: {}
+              k:{"name":"GF_PATHS_PLUGINS"}:
+                .: {}
+                f:name: {}
+                f:value: {}
+              k:{"name":"GF_PATHS_PROVISIONING"}:
+                .: {}
+                f:name: {}
+                f:value: {}
+              k:{"name":"GF_SECURITY_ADMIN_PASSWORD"}:
+                .: {}
+                f:name: {}
+                f:value: {}
+              k:{"name":"GF_SECURITY_ADMIN_USER"}:
+                .: {}
+                f:name: {}
+                f:value: {}
+              k:{"name":"POD_IP"}:
+                .: {}
+                f:name: {}
+                f:valueFrom:
+                  .: {}
+                  f:fieldRef: {}
+            f:image: {}
+            f:imagePullPolicy: {}
+            f:livenessProbe:
+              .: {}
+              f:failureThreshold: {}
+              f:httpGet:
+                .: {}
+                f:path: {}
+                f:port: {}
+                f:scheme: {}
+              f:initialDelaySeconds: {}
+              f:periodSeconds: {}
+              f:successThreshold: {}
+              f:timeoutSeconds: {}
+            f:name: {}
+            f:ports:
+              .: {}
+              k:{"containerPort":3000,"protocol":"TCP"}:
+                .: {}
+                f:containerPort: {}
+                f:name: {}
+                f:protocol: {}
+              k:{"containerPort":9094,"protocol":"TCP"}:
+                .: {}
+                f:containerPort: {}
+                f:name: {}
+                f:protocol: {}
+              k:{"containerPort":9094,"protocol":"UDP"}:
+                .: {}
+                f:containerPort: {}
+                f:name: {}
+                f:protocol: {}
+            f:readinessProbe:
+              .: {}
+              f:failureThreshold: {}
+              f:httpGet:
+                .: {}
+                f:path: {}
+                f:port: {}
+                f:scheme: {}
+              f:periodSeconds: {}
+              f:successThreshold: {}
+              f:timeoutSeconds: {}
+            f:resources: {}
+            f:securityContext:
+              .: {}
+              f:allowPrivilegeEscalation: {}
+              f:capabilities:
+                .: {}
+                f:drop: {}
+              f:seccompProfile:
+                .: {}
+                f:type: {}
+            f:terminationMessagePath: {}
+            f:terminationMessagePolicy: {}
+            f:volumeMounts:
+              .: {}
+              k:{"mountPath":"/etc/grafana/grafana.ini"}:
+                .: {}
+                f:mountPath: {}
+                f:name: {}
+                f:subPath: {}
+              k:{"mountPath":"/etc/grafana/provisioning/dashboards/dashboardproviders.yaml"}:
+                .: {}
+                f:mountPath: {}
+                f:name: {}
+                f:subPath: {}
+              k:{"mountPath":"/etc/grafana/provisioning/datasources/datasources.yaml"}:
+                .: {}
+                f:mountPath: {}
+                f:name: {}
+                f:subPath: {}
+              k:{"mountPath":"/var/lib/grafana"}:
+                .: {}
+                f:mountPath: {}
+                f:name: {}
+              k:{"mountPath":"/var/lib/grafana/dashboards/istio"}:
+                .: {}
+                f:mountPath: {}
+                f:name: {}
+              k:{"mountPath":"/var/lib/grafana/dashboards/istio-services"}:
+                .: {}
+                f:mountPath: {}
+                f:name: {}
+        f:dnsPolicy: {}
+        f:enableServiceLinks: {}
+        f:restartPolicy: {}
+        f:schedulerName: {}
+        f:securityContext: {}
+        f:serviceAccount: {}
+        f:serviceAccountName: {}
+        f:terminationGracePeriodSeconds: {}
+        f:volumes:
+          .: {}
+          k:{"name":"config"}:
+            .: {}
+            f:configMap:
+              .: {}
+              f:defaultMode: {}
+              f:name: {}
+            f:name: {}
+          k:{"name":"dashboards-istio"}:
+            .: {}
+            f:configMap:
+              .: {}
+              f:defaultMode: {}
+              f:name: {}
+            f:name: {}
+          k:{"name":"dashboards-istio-services"}:
+            .: {}
+            f:configMap:
+              .: {}
+              f:defaultMode: {}
+              f:name: {}
+            f:name: {}
+          k:{"name":"storage"}:
+            .: {}
+            f:emptyDir: {}
+            f:name: {}
+    manager: kube-controller-manager
+    operation: Update
+    time: "2025-07-15T19:28:21Z"
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:status:
+        f:conditions:
+          k:{"type":"ContainersReady"}:
+            .: {}
+            f:lastProbeTime: {}
+            f:lastTransitionTime: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"Initialized"}:
+            .: {}
+            f:lastProbeTime: {}
+            f:lastTransitionTime: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"PodReadyToStartContainers"}:
+            .: {}
+            f:lastProbeTime: {}
+            f:lastTransitionTime: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"Ready"}:
+            .: {}
+            f:lastProbeTime: {}
+            f:lastTransitionTime: {}
+            f:status: {}
+            f:type: {}
+        f:containerStatuses: {}
+        f:hostIP: {}
+        f:hostIPs: {}
+        f:phase: {}
+        f:podIP: {}
+        f:podIPs:
+          .: {}
+          k:{"ip":"10.244.1.6"}:
+            .: {}
+            f:ip: {}
+        f:startTime: {}
+    manager: kubelet
+    operation: Update
+    subresource: status
+    time: "2025-07-15T19:28:39Z"
+  name: grafana-65bfb5f855-c8s4z
+  namespace: istio-system
+  ownerReferences:
+  - apiVersion: apps/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ReplicaSet
+    name: grafana-65bfb5f855
+    uid: b1150ea4-fb9b-41c0-baa6-6d6a903f2ae4
+  resourceVersion: "1186"
+  uid: bbc84074-1766-43c0-8603-bf531e8dba4b
+spec:
+  automountServiceAccountToken: true
+  containers:
+  - env:
+    - name: POD_IP
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: status.podIP
+    - name: GF_PATHS_DATA
+      value: /var/lib/grafana/
+    - name: GF_PATHS_LOGS
+      value: /var/log/grafana
+    - name: GF_PATHS_PLUGINS
+      value: /var/lib/grafana/plugins
+    - name: GF_PATHS_PROVISIONING
+      value: /etc/grafana/provisioning
+    - name: GF_AUTH_ANONYMOUS_ENABLED
+      value: "true"
+    - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+      value: Admin
+    - name: GF_AUTH_BASIC_ENABLED
+      value: "false"
+    - name: GF_SECURITY_ADMIN_PASSWORD
+      value: admin
+    - name: GF_SECURITY_ADMIN_USER
+      value: admin
+    image: docker.io/grafana/grafana:11.3.1
+    imagePullPolicy: IfNotPresent
+    livenessProbe:
+      failureThreshold: 10
+      httpGet:
+        path: /api/health
+        port: 3000
+        scheme: HTTP
+      initialDelaySeconds: 60
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 30
+    name: grafana
+    ports:
+    - containerPort: 3000
+      name: grafana
+      protocol: TCP
+    - containerPort: 9094
+      name: gossip-tcp
+      protocol: TCP
+    - containerPort: 9094
+      name: gossip-udp
+      protocol: UDP
+    readinessProbe:
+      failureThreshold: 3
+      httpGet:
+        path: /api/health
+        port: 3000
+        scheme: HTTP
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 1
+    resources: {}
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      seccompProfile:
+        type: RuntimeDefault
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /etc/grafana/grafana.ini
+      name: config
+      subPath: grafana.ini
+    - mountPath: /var/lib/grafana
+      name: storage
+    - mountPath: /var/lib/grafana/dashboards/istio
+      name: dashboards-istio
+    - mountPath: /var/lib/grafana/dashboards/istio-services
+      name: dashboards-istio-services
+    - mountPath: /etc/grafana/provisioning/datasources/datasources.yaml
+      name: config
+      subPath: datasources.yaml
+    - mountPath: /etc/grafana/provisioning/dashboards/dashboardproviders.yaml
+      name: config
+      subPath: dashboardproviders.yaml
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-clkvl
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  nodeName: ci-worker
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext: {}
+  serviceAccount: grafana
+  serviceAccountName: grafana
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - configMap:
+      defaultMode: 420
+      name: grafana
+    name: config
+  - configMap:
+      defaultMode: 420
+      name: istio-grafana-dashboards
+    name: dashboards-istio
+  - configMap:
+      defaultMode: 420
+      name: istio-services-grafana-dashboards
+    name: dashboards-istio-services
+  - emptyDir: {}
+    name: storage
+  - name: kube-api-access-clkvl
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 3607
+          path: token
+      - configMap:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          name: kube-root-ca.crt
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+            path: namespace
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2025-07-15T19:28:28Z"
+    status: "True"
+    type: PodReadyToStartContainers
+  - lastProbeTime: null
+    lastTransitionTime: "2025-07-15T19:28:21Z"
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2025-07-15T19:28:39Z"
+    status: "True"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2025-07-15T19:28:39Z"
+    status: "True"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2025-07-15T19:28:21Z"
+    status: "True"
+    type: PodScheduled
+  containerStatuses:
+  - containerID: containerd://a60235105b117531244b51968b98d8b5f75123fb1c93bb6de77f45465050a40b
+    image: docker.io/grafana/grafana:11.3.1
+    imageID: docker.io/grafana/grafana@sha256:fa801ab6e1ae035135309580891e09f7eb94d1abdbd2106bdc288030b028158c
+    lastState: {}
+    name: grafana
+    ready: true
+    resources: {}
+    restartCount: 0
+    started: true
+    state:
+      running:
+        startedAt: "2025-07-15T19:28:28Z"
+  hostIP: 172.18.0.3
+  hostIPs:
+  - ip: 172.18.0.3
+  phase: Running
+  podIP: 10.244.1.6
+  podIPs:
+  - ip: 10.244.1.6
+  qosClass: BestEffort
+  startTime: "2025-07-15T19:28:21Z"

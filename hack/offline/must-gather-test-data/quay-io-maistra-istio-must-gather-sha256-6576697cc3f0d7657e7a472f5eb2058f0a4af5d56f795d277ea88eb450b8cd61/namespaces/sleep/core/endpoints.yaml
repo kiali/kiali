@@ -1,0 +1,50 @@
+---
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Endpoints
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:56Z"
+    creationTimestamp: "2025-07-15T19:29:39Z"
+    labels:
+      app: sleep
+      endpoints.kubernetes.io/managed-by: endpoint-controller
+      service: sleep
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpoints.kubernetes.io/managed-by: {}
+            f:service: {}
+        f:subsets: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:56Z"
+    name: sleep
+    namespace: sleep
+    resourceVersion: "2940"
+    uid: 32d95287-4b02-4948-b5c9-9b91db3811ff
+  subsets:
+  - addresses:
+    - ip: 10.244.1.50
+      nodeName: ci-worker
+      targetRef:
+        kind: Pod
+        name: sleep-868c754c4b-z9f2r
+        namespace: sleep
+        uid: 1ad4bb2f-7af8-45ae-b957-83abba63fbfc
+    ports:
+    - name: http
+      port: 80
+      protocol: TCP
+kind: EndpointsList
+metadata:
+  resourceVersion: "5181"

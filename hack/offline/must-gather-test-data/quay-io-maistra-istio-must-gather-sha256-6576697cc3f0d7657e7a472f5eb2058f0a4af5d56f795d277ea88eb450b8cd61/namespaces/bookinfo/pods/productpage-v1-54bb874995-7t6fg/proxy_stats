@@ -1,0 +1,222 @@
+cluster_manager.cds.version_text: "2025-07-15T19:29:44Z/24"
+listener_manager.lds.version_text: "2025-07-15T19:29:44Z/24"
+cluster.xds-grpc;.assignment_stale: 0
+cluster.xds-grpc;.assignment_timeout_received: 0
+cluster.xds-grpc;.assignment_use_cached: 0
+cluster.xds-grpc;.bind_errors: 0
+cluster.xds-grpc;.circuit_breakers.default.cx_open: 0
+cluster.xds-grpc;.circuit_breakers.default.cx_pool_open: 0
+cluster.xds-grpc;.circuit_breakers.default.rq_open: 0
+cluster.xds-grpc;.circuit_breakers.default.rq_pending_open: 0
+cluster.xds-grpc;.circuit_breakers.default.rq_retry_open: 0
+cluster.xds-grpc;.circuit_breakers.high.cx_open: 0
+cluster.xds-grpc;.circuit_breakers.high.cx_pool_open: 0
+cluster.xds-grpc;.circuit_breakers.high.rq_open: 0
+cluster.xds-grpc;.circuit_breakers.high.rq_pending_open: 0
+cluster.xds-grpc;.circuit_breakers.high.rq_retry_open: 0
+cluster.xds-grpc;.default.total_match_count: 1
+cluster.xds-grpc;.http2.deferred_stream_close: 0
+cluster.xds-grpc;.http2.dropped_headers_with_underscores: 0
+cluster.xds-grpc;.http2.goaway_sent: 0
+cluster.xds-grpc;.http2.header_overflow: 0
+cluster.xds-grpc;.http2.headers_cb_no_stream: 0
+cluster.xds-grpc;.http2.inbound_empty_frames_flood: 0
+cluster.xds-grpc;.http2.inbound_priority_frames_flood: 0
+cluster.xds-grpc;.http2.inbound_window_update_frames_flood: 0
+cluster.xds-grpc;.http2.keepalive_timeout: 0
+cluster.xds-grpc;.http2.metadata_empty_frames: 0
+cluster.xds-grpc;.http2.outbound_control_flood: 0
+cluster.xds-grpc;.http2.outbound_control_frames_active: 0
+cluster.xds-grpc;.http2.outbound_flood: 0
+cluster.xds-grpc;.http2.outbound_frames_active: 0
+cluster.xds-grpc;.http2.pending_send_bytes: 0
+cluster.xds-grpc;.http2.requests_rejected_with_underscores_in_headers: 0
+cluster.xds-grpc;.http2.rx_messaging_error: 0
+cluster.xds-grpc;.http2.rx_reset: 0
+cluster.xds-grpc;.http2.stream_refused_errors: 0
+cluster.xds-grpc;.http2.streams_active: 1
+cluster.xds-grpc;.http2.trailers: 0
+cluster.xds-grpc;.http2.tx_flush_timeout: 0
+cluster.xds-grpc;.http2.tx_reset: 0
+cluster.xds-grpc;.internal.upstream_rq_200: 1
+cluster.xds-grpc;.internal.upstream_rq_2xx: 1
+cluster.xds-grpc;.internal.upstream_rq_completed: 1
+cluster.xds-grpc;.lb_healthy_panic: 0
+cluster.xds-grpc;.lb_local_cluster_not_ok: 0
+cluster.xds-grpc;.lb_recalculate_zone_structures: 0
+cluster.xds-grpc;.lb_subsets_active: 0
+cluster.xds-grpc;.lb_subsets_created: 0
+cluster.xds-grpc;.lb_subsets_fallback: 0
+cluster.xds-grpc;.lb_subsets_fallback_panic: 0
+cluster.xds-grpc;.lb_subsets_removed: 0
+cluster.xds-grpc;.lb_subsets_selected: 0
+cluster.xds-grpc;.lb_zone_cluster_too_small: 0
+cluster.xds-grpc;.lb_zone_no_capacity_left: 0
+cluster.xds-grpc;.lb_zone_number_differs: 0
+cluster.xds-grpc;.lb_zone_routing_all_directly: 0
+cluster.xds-grpc;.lb_zone_routing_cross_zone: 0
+cluster.xds-grpc;.lb_zone_routing_sampled: 0
+cluster.xds-grpc;.max_host_weight: 0
+cluster.xds-grpc;.membership_change: 1
+cluster.xds-grpc;.membership_degraded: 0
+cluster.xds-grpc;.membership_excluded: 0
+cluster.xds-grpc;.membership_healthy: 1
+cluster.xds-grpc;.membership_total: 1
+cluster.xds-grpc;.original_dst_host_invalid: 0
+cluster.xds-grpc;.retry_or_shadow_abandoned: 0
+cluster.xds-grpc;.update_attempt: 0
+cluster.xds-grpc;.update_empty: 0
+cluster.xds-grpc;.update_failure: 0
+cluster.xds-grpc;.update_no_rebuild: 0
+cluster.xds-grpc;.update_success: 0
+cluster.xds-grpc;.upstream_cx_active: 1
+cluster.xds-grpc;.upstream_cx_close_notify: 0
+cluster.xds-grpc;.upstream_cx_connect_attempts_exceeded: 0
+cluster.xds-grpc;.upstream_cx_connect_fail: 0
+cluster.xds-grpc;.upstream_cx_connect_timeout: 0
+cluster.xds-grpc;.upstream_cx_connect_with_0_rtt: 0
+cluster.xds-grpc;.upstream_cx_destroy: 0
+cluster.xds-grpc;.upstream_cx_destroy_local: 0
+cluster.xds-grpc;.upstream_cx_destroy_local_with_active_rq: 0
+cluster.xds-grpc;.upstream_cx_destroy_remote: 0
+cluster.xds-grpc;.upstream_cx_destroy_remote_with_active_rq: 0
+cluster.xds-grpc;.upstream_cx_destroy_with_active_rq: 0
+cluster.xds-grpc;.upstream_cx_http1_total: 0
+cluster.xds-grpc;.upstream_cx_http2_total: 1
+cluster.xds-grpc;.upstream_cx_http3_total: 0
+cluster.xds-grpc;.upstream_cx_idle_timeout: 0
+cluster.xds-grpc;.upstream_cx_max_duration_reached: 0
+cluster.xds-grpc;.upstream_cx_max_requests: 1
+cluster.xds-grpc;.upstream_cx_none_healthy: 0
+cluster.xds-grpc;.upstream_cx_overflow: 0
+cluster.xds-grpc;.upstream_cx_pool_overflow: 0
+cluster.xds-grpc;.upstream_cx_protocol_error: 0
+cluster.xds-grpc;.upstream_cx_rx_bytes_buffered: 17
+cluster.xds-grpc;.upstream_cx_rx_bytes_total: 1171295
+cluster.xds-grpc;.upstream_cx_total: 1
+cluster.xds-grpc;.upstream_cx_tx_bytes_buffered: 0
+cluster.xds-grpc;.upstream_cx_tx_bytes_total: 2824080
+cluster.xds-grpc;.upstream_flow_control_backed_up_total: 0
+cluster.xds-grpc;.upstream_flow_control_drained_total: 0
+cluster.xds-grpc;.upstream_flow_control_paused_reading_total: 0
+cluster.xds-grpc;.upstream_flow_control_resumed_reading_total: 0
+cluster.xds-grpc;.upstream_http3_broken: 0
+cluster.xds-grpc;.upstream_internal_redirect_failed_total: 0
+cluster.xds-grpc;.upstream_internal_redirect_succeeded_total: 0
+cluster.xds-grpc;.upstream_rq_0rtt: 0
+cluster.xds-grpc;.upstream_rq_200: 1
+cluster.xds-grpc;.upstream_rq_2xx: 1
+cluster.xds-grpc;.upstream_rq_active: 1
+cluster.xds-grpc;.upstream_rq_cancelled: 0
+cluster.xds-grpc;.upstream_rq_completed: 1
+cluster.xds-grpc;.upstream_rq_maintenance_mode: 0
+cluster.xds-grpc;.upstream_rq_max_duration_reached: 0
+cluster.xds-grpc;.upstream_rq_pending_active: 0
+cluster.xds-grpc;.upstream_rq_pending_failure_eject: 0
+cluster.xds-grpc;.upstream_rq_pending_overflow: 0
+cluster.xds-grpc;.upstream_rq_pending_total: 1
+cluster.xds-grpc;.upstream_rq_per_try_idle_timeout: 0
+cluster.xds-grpc;.upstream_rq_per_try_timeout: 0
+cluster.xds-grpc;.upstream_rq_retry: 0
+cluster.xds-grpc;.upstream_rq_retry_backoff_exponential: 0
+cluster.xds-grpc;.upstream_rq_retry_backoff_ratelimited: 0
+cluster.xds-grpc;.upstream_rq_retry_limit_exceeded: 0
+cluster.xds-grpc;.upstream_rq_retry_overflow: 0
+cluster.xds-grpc;.upstream_rq_retry_success: 0
+cluster.xds-grpc;.upstream_rq_rx_reset: 0
+cluster.xds-grpc;.upstream_rq_timeout: 0
+cluster.xds-grpc;.upstream_rq_total: 1
+cluster.xds-grpc;.upstream_rq_tx_reset: 0
+cluster.xds-grpc;.version: 0
+cluster.xds-grpc;.warming_state: 0
+cluster_manager.active_clusters: 51
+cluster_manager.cds.config_reload: 11
+cluster_manager.cds.config_reload_time_ms: 1752607784078
+cluster_manager.cds.init_fetch_timeout: 0
+cluster_manager.cds.update_attempt: 13
+cluster_manager.cds.update_failure: 0
+cluster_manager.cds.update_rejected: 0
+cluster_manager.cds.update_success: 12
+cluster_manager.cds.update_time: 1752607784078
+cluster_manager.cds.version: 4912381417060813247
+cluster_manager.cluster_added: 51
+cluster_manager.cluster_modified: 16
+cluster_manager.cluster_removed: 0
+cluster_manager.cluster_updated: 18
+cluster_manager.cluster_updated_via_merge: 0
+cluster_manager.update_merge_cancelled: 0
+cluster_manager.update_out_of_merge_window: 0
+cluster_manager.warming_clusters: 0
+istiocustom.istio_build.component.proxy.tag.1.26.2: 1
+istiocustom.istio_requests_total.reporter.destination.source_workload.unknown.source_canonical_service.unknown.source_canonical_revision.latest.source_workload_namespace.unknown.source_principal.unknown.source_app.unknown.source_version.unknown.source_cluster.unknown.destination_workload.productpage-v1.destination_workload_namespace.bookinfo.destination_principal.unknown.destination_app.productpage.destination_version.v1.destination_service.productpage.bookinfo.svc.cluster.local.destination_canonical_service.productpage.destination_canonical_revision.v1.destination_service_name.productpage.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.none: 830
+istiocustom.istio_requests_total.reporter.source.source_workload.productpage-v1.source_canonical_service.productpage.source_canonical_revision.v1.source_workload_namespace.bookinfo.source_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage.source_app.productpage.source_version.v1.source_cluster.cluster-default.destination_workload.details-v1.destination_workload_namespace.bookinfo.destination_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-details.destination_app.details.destination_version.v1.destination_service.details.bookinfo.svc.cluster.local.destination_canonical_service.details.destination_canonical_revision.v1.destination_service_name.details.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: 830
+istiocustom.istio_requests_total.reporter.source.source_workload.productpage-v1.source_canonical_service.productpage.source_canonical_revision.v1.source_workload_namespace.bookinfo.source_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage.source_app.productpage.source_version.v1.source_cluster.cluster-default.destination_workload.reviews-v1.destination_workload_namespace.bookinfo.destination_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-reviews.destination_app.reviews.destination_version.v1.destination_service.reviews.bookinfo.svc.cluster.local.destination_canonical_service.reviews.destination_canonical_revision.v1.destination_service_name.reviews.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: 289
+istiocustom.istio_requests_total.reporter.source.source_workload.productpage-v1.source_canonical_service.productpage.source_canonical_revision.v1.source_workload_namespace.bookinfo.source_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage.source_app.productpage.source_version.v1.source_cluster.cluster-default.destination_workload.reviews-v2.destination_workload_namespace.bookinfo.destination_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-reviews.destination_app.reviews.destination_version.v2.destination_service.reviews.bookinfo.svc.cluster.local.destination_canonical_service.reviews.destination_canonical_revision.v2.destination_service_name.reviews.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: 272
+istiocustom.istio_requests_total.reporter.source.source_workload.productpage-v1.source_canonical_service.productpage.source_canonical_revision.v1.source_workload_namespace.bookinfo.source_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage.source_app.productpage.source_version.v1.source_cluster.cluster-default.destination_workload.reviews-v3.destination_workload_namespace.bookinfo.destination_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-reviews.destination_app.reviews.destination_version.v3.destination_service.reviews.bookinfo.svc.cluster.local.destination_canonical_service.reviews.destination_canonical_revision.v3.destination_service_name.reviews.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: 269
+listener_manager.lds.init_fetch_timeout: 0
+listener_manager.lds.update_attempt: 13
+listener_manager.lds.update_failure: 0
+listener_manager.lds.update_rejected: 0
+listener_manager.lds.update_success: 12
+listener_manager.lds.update_time: 1752607784082
+listener_manager.lds.version: 4912381417060813247
+listener_manager.listener_added: 26
+listener_manager.listener_create_failure: 0
+listener_manager.listener_create_success: 52
+listener_manager.listener_in_place_updated: 0
+listener_manager.listener_modified: 0
+listener_manager.listener_removed: 0
+listener_manager.listener_stopped: 0
+listener_manager.total_filter_chains_draining: 0
+listener_manager.total_listeners_active: 26
+listener_manager.total_listeners_draining: 0
+listener_manager.total_listeners_warming: 0
+listener_manager.workers_started: 1
+server.compilation_settings.fips_mode: 0
+server.concurrency: 2
+server.days_until_first_cert_expiring: 0
+server.debug_assertion_failures: 0
+server.dropped_stat_flushes: 0
+server.dynamic_unknown_fields: 0
+server.envoy_bug_failures: 0
+server.hot_restart_epoch: 0
+server.live: 1
+server.main_thread.watchdog_mega_miss: 0
+server.main_thread.watchdog_miss: 0
+server.memory_allocated: 11302144
+server.memory_heap_size: 18874368
+server.memory_physical_size: 27391406
+server.parent_connections: 0
+server.seconds_until_first_ocsp_response_expiring: 0
+server.state: 0
+server.static_unknown_fields: 0
+server.stats_recent_lookups: 16584
+server.total_connections: 2
+server.uptime: 835
+server.version: 11338560
+server.wip_protos: 0
+server.worker_0.watchdog_mega_miss: 0
+server.worker_0.watchdog_miss: 0
+server.worker_1.watchdog_mega_miss: 0
+server.worker_1.watchdog_miss: 0
+cluster.xds-grpc;.upstream_cx_connect_ms: P0(nan,4) P25(nan,4.025) P50(nan,4.05) P75(nan,4.075) P90(nan,4.09) P95(nan,4.095) P99(nan,4.099) P99.5(nan,4.0995) P99.9(nan,4.0999) P100(nan,4.1)
+cluster.xds-grpc;.upstream_cx_length_ms: No recorded values
+cluster_manager.cds.update_duration: P0(nan,1) P25(nan,3.1) P50(nan,7.025) P75(nan,7.1) P90(nan,12.8) P95(nan,18.4) P99(nan,18.88) P99.5(nan,18.939999999999998) P99.9(nan,18.988) P100(nan,19)
+istiocustom.istio_request_bytes.reporter.destination.source_workload.unknown.source_canonical_service.unknown.source_canonical_revision.latest.source_workload_namespace.unknown.source_principal.unknown.source_app.unknown.source_version.unknown.source_cluster.unknown.destination_workload.productpage-v1.destination_workload_namespace.bookinfo.destination_principal.unknown.destination_app.productpage.destination_version.v1.destination_service.productpage.bookinfo.svc.cluster.local.destination_canonical_service.productpage.destination_canonical_revision.v1.destination_service_name.productpage.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.none: P0(110.00000000000001,110.00000000000001) P25(112.50000000000001,112.50000000000001) P50(115.00000000000001,115.00000000000001) P75(117.50000000000001,117.50000000000001) P90(119.00000000000001,119.00000000000001) P95(119.50000000000001,119.50000000000001) P99(119.90000000000002,119.90000000000002) P99.5(119.95000000000002,119.95000000000002) P99.9(119.99000000000001,119.99000000000001) P100(120.00000000000001,120.00000000000001)
+istiocustom.istio_request_bytes.reporter.source.source_workload.productpage-v1.source_canonical_service.productpage.source_canonical_revision.v1.source_workload_namespace.bookinfo.source_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage.source_app.productpage.source_version.v1.source_cluster.cluster-default.destination_workload.details-v1.destination_workload_namespace.bookinfo.destination_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-details.destination_app.details.destination_version.v1.destination_service.details.bookinfo.svc.cluster.local.destination_canonical_service.details.destination_canonical_revision.v1.destination_service_name.details.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(280,280) P25(282.5,282.5) P50(285,285) P75(287.5,287.5) P90(289,289) P95(289.5,289.5) P99(289.9,289.9) P99.5(289.95,289.95) P99.9(289.99,289.99) P100(290,290)
+istiocustom.istio_request_bytes.reporter.source.source_workload.productpage-v1.source_canonical_service.productpage.source_canonical_revision.v1.source_workload_namespace.bookinfo.source_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage.source_app.productpage.source_version.v1.source_cluster.cluster-default.destination_workload.reviews-v1.destination_workload_namespace.bookinfo.destination_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-reviews.destination_app.reviews.destination_version.v1.destination_service.reviews.bookinfo.svc.cluster.local.destination_canonical_service.reviews.destination_canonical_revision.v1.destination_service_name.reviews.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(280,280) P25(282.5,282.5) P50(285,285) P75(287.5,287.5) P90(289,289) P95(289.5,289.5) P99(289.9,289.9) P99.5(289.95,289.95) P99.9(289.99,289.99) P100(290,290)
+istiocustom.istio_request_bytes.reporter.source.source_workload.productpage-v1.source_canonical_service.productpage.source_canonical_revision.v1.source_workload_namespace.bookinfo.source_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage.source_app.productpage.source_version.v1.source_cluster.cluster-default.destination_workload.reviews-v2.destination_workload_namespace.bookinfo.destination_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-reviews.destination_app.reviews.destination_version.v2.destination_service.reviews.bookinfo.svc.cluster.local.destination_canonical_service.reviews.destination_canonical_revision.v2.destination_service_name.reviews.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(280,280) P25(282.5,282.5) P50(285,285) P75(287.5,287.5) P90(289,289) P95(289.5,289.5) P99(289.9,289.9) P99.5(289.95,289.95) P99.9(289.99,289.99) P100(290,290)
+istiocustom.istio_request_bytes.reporter.source.source_workload.productpage-v1.source_canonical_service.productpage.source_canonical_revision.v1.source_workload_namespace.bookinfo.source_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage.source_app.productpage.source_version.v1.source_cluster.cluster-default.destination_workload.reviews-v3.destination_workload_namespace.bookinfo.destination_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-reviews.destination_app.reviews.destination_version.v3.destination_service.reviews.bookinfo.svc.cluster.local.destination_canonical_service.reviews.destination_canonical_revision.v3.destination_service_name.reviews.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(280,280) P25(282.5,282.5) P50(285,285) P75(287.5,287.5) P90(289,289) P95(289.5,289.5) P99(289.9,289.9) P99.5(289.95,289.95) P99.9(289.99,289.99) P100(290,290)
+istiocustom.istio_request_duration_milliseconds.reporter.destination.source_workload.unknown.source_canonical_service.unknown.source_canonical_revision.latest.source_workload_namespace.unknown.source_principal.unknown.source_app.unknown.source_version.unknown.source_cluster.unknown.destination_workload.productpage-v1.destination_workload_namespace.bookinfo.destination_principal.unknown.destination_app.productpage.destination_version.v1.destination_service.productpage.bookinfo.svc.cluster.local.destination_canonical_service.productpage.destination_canonical_revision.v1.destination_service_name.productpage.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.none: P0(10,7) P25(12.25,12.163636363636364) P50(14.5,15.45945945945946) P75(15.375,18.28125) P90(15.75,21.133333333333336) P95(15.875,23.93333333333332) P99(15.975,45.72000000000003) P99.5(15.9875,91.86000000000001) P99.9(15.9975,521.7200000000003) P100(16,530)
+istiocustom.istio_request_duration_milliseconds.reporter.source.source_workload.productpage-v1.source_canonical_service.productpage.source_canonical_revision.v1.source_workload_namespace.bookinfo.source_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage.source_app.productpage.source_version.v1.source_cluster.cluster-default.destination_workload.details-v1.destination_workload_namespace.bookinfo.destination_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-details.destination_app.details.destination_version.v1.destination_service.details.bookinfo.svc.cluster.local.destination_canonical_service.details.destination_canonical_revision.v1.destination_service_name.details.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(1,1) P25(1.025,1.0268134715025907) P50(1.05,1.0536269430051814) P75(1.075,1.080440414507772) P90(1.09,1.0965284974093263) P95(1.095,2.044242424242424) P99(1.099,6.086000000000001) P99.5(1.0995,8.095333333333334) P99.9(1.0999,23.172000000000025) P100(1.1,24)
+istiocustom.istio_request_duration_milliseconds.reporter.source.source_workload.productpage-v1.source_canonical_service.productpage.source_canonical_revision.v1.source_workload_namespace.bookinfo.source_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage.source_app.productpage.source_version.v1.source_cluster.cluster-default.destination_workload.reviews-v1.destination_workload_namespace.bookinfo.destination_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-reviews.destination_app.reviews.destination_version.v1.destination_service.reviews.bookinfo.svc.cluster.local.destination_canonical_service.reviews.destination_canonical_revision.v1.destination_service_name.reviews.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(3,1) P25(3.025,2.083529411764706) P50(3.05,3.0475409836065572) P75(3.075,4.013333333333334) P90(3.09,4.085333333333334) P95(3.095,5.050909090909091) P99(3.099,13.120000000000005) P99.5(3.0995,19.560000000000002) P99.9(3.0999,417.11999999999983) P100(3.1,419.99999999999994)
+istiocustom.istio_request_duration_milliseconds.reporter.source.source_workload.productpage-v1.source_canonical_service.productpage.source_canonical_revision.v1.source_workload_namespace.bookinfo.source_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage.source_app.productpage.source_version.v1.source_cluster.cluster-default.destination_workload.reviews-v2.destination_workload_namespace.bookinfo.destination_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-reviews.destination_app.reviews.destination_version.v2.destination_service.reviews.bookinfo.svc.cluster.local.destination_canonical_service.reviews.destination_canonical_revision.v2.destination_service_name.reviews.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(5,5) P25(5.075,7.067441860465117) P50(7.05,8.094736842105263) P75(8.025,11.28125) P90(8.07,13.644444444444446) P95(8.085,16.679999999999996) P99(8.097,39.27999999999997) P99.5(8.0985,46.639999999999986) P99.9(8.0997,467.28000000000003) P100(8.1,469.99999999999994)
+istiocustom.istio_request_duration_milliseconds.reporter.source.source_workload.productpage-v1.source_canonical_service.productpage.source_canonical_revision.v1.source_workload_namespace.bookinfo.source_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage.source_app.productpage.source_version.v1.source_cluster.cluster-default.destination_workload.reviews-v3.destination_workload_namespace.bookinfo.destination_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-reviews.destination_app.reviews.destination_version.v3.destination_service.reviews.bookinfo.svc.cluster.local.destination_canonical_service.reviews.destination_canonical_revision.v3.destination_service_name.reviews.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(7,5) P25(7.025,7.043396226415094) P50(7.05,8.067272727272726) P75(7.075,10.107142857142858) P90(7.09,11.950000000000001) P95(7.095,14.866666666666665) P99(7.099,50.31999999999999) P99.5(7.0995,56.660000000000025) P99.9(7.0999,517.3200000000002) P100(7.1,520)
+istiocustom.istio_response_bytes.reporter.destination.source_workload.unknown.source_canonical_service.unknown.source_canonical_revision.latest.source_workload_namespace.unknown.source_principal.unknown.source_app.unknown.source_version.unknown.source_cluster.unknown.destination_workload.productpage-v1.destination_workload_namespace.bookinfo.destination_principal.unknown.destination_app.productpage.destination_version.v1.destination_service.productpage.bookinfo.svc.cluster.local.destination_canonical_service.productpage.destination_canonical_revision.v1.destination_service_name.productpage.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.none: P0(9600,9600) P25(15062.5,9671.875) P50(15375,15231.91094619666) P75(15687.5,15615.955473098331) P90(15875,15846.382189239332) P95(15937.5,15923.191094619666) P99(15987.5,15984.638218923934) P99.5(15993.75,15992.319109461967) P99.9(15998.75,15998.463821892394) P100(16000,16000)
+istiocustom.istio_response_bytes.reporter.source.source_workload.productpage-v1.source_canonical_service.productpage.source_canonical_revision.v1.source_workload_namespace.bookinfo.source_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage.source_app.productpage.source_version.v1.source_cluster.cluster-default.destination_workload.details-v1.destination_workload_namespace.bookinfo.destination_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-details.destination_app.details.destination_version.v1.destination_service.details.bookinfo.svc.cluster.local.destination_canonical_service.details.destination_canonical_revision.v1.destination_service_name.details.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(330,330) P25(332.5,332.5) P50(335,335) P75(337.5,337.5) P90(339,339) P95(339.5,339.5) P99(339.9,339.9) P99.5(339.95,339.95) P99.9(339.99,339.99) P100(340,340)
+istiocustom.istio_response_bytes.reporter.source.source_workload.productpage-v1.source_canonical_service.productpage.source_canonical_revision.v1.source_workload_namespace.bookinfo.source_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage.source_app.productpage.source_version.v1.source_cluster.cluster-default.destination_workload.reviews-v1.destination_workload_namespace.bookinfo.destination_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-reviews.destination_app.reviews.destination_version.v1.destination_service.reviews.bookinfo.svc.cluster.local.destination_canonical_service.reviews.destination_canonical_revision.v1.destination_service_name.reviews.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(560,560) P25(562.5,562.5087108013937) P50(565,565.0174216027874) P75(567.5,567.5261324041812) P90(569,569.0313588850174) P95(569.5,569.5331010452961) P99(569.9,569.9344947735192) P99.5(569.95,569.984668989547) P99.9(569.99,577.1199999999999) P100(570,580)
+istiocustom.istio_response_bytes.reporter.source.source_workload.productpage-v1.source_canonical_service.productpage.source_canonical_revision.v1.source_workload_namespace.bookinfo.source_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage.source_app.productpage.source_version.v1.source_cluster.cluster-default.destination_workload.reviews-v2.destination_workload_namespace.bookinfo.destination_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-reviews.destination_app.reviews.destination_version.v2.destination_service.reviews.bookinfo.svc.cluster.local.destination_canonical_service.reviews.destination_canonical_revision.v2.destination_service_name.reviews.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(650,650) P25(652.5,652.5) P50(655,655) P75(657.5,657.5) P90(659,659) P95(659.5,659.5) P99(659.9,659.9) P99.5(659.95,659.95) P99.9(659.99,659.99) P100(660,660)
+istiocustom.istio_response_bytes.reporter.source.source_workload.productpage-v1.source_canonical_service.productpage.source_canonical_revision.v1.source_workload_namespace.bookinfo.source_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage.source_app.productpage.source_version.v1.source_cluster.cluster-default.destination_workload.reviews-v3.destination_workload_namespace.bookinfo.destination_principal.spiffe://cluster.local/ns/bookinfo/sa/bookinfo-reviews.destination_app.reviews.destination_version.v3.destination_service.reviews.bookinfo.svc.cluster.local.destination_canonical_service.reviews.destination_canonical_revision.v3.destination_service_name.reviews.destination_service_namespace.bookinfo.destination_cluster.cluster-default.request_protocol.http.response_code.200.grpc_response_status.response_flags.-.connection_security_policy.unknown: P0(640,640) P25(642.5,642.5187969924812) P50(645,645.0375939849624) P75(647.5,647.5563909774436) P90(649,649.0676691729324) P95(649.5,649.5714285714286) P99(649.9,649.9744360902256) P99.5(649.95,656.6000000000003) P99.9(649.99,697.3200000000003) P100(650,700)
+listener_manager.lds.update_duration: P0(nan,1) P25(nan,1.042857142857143) P50(nan,1.0857142857142856) P75(nan,4.033333333333333) P90(nan,4.093333333333334) P95(nan,14.399999999999999) P99(nan,14.879999999999999) P99.5(nan,14.94) P99.9(nan,14.988) P100(nan,15)
+server.initialization_time_ms: P0(nan,83) P25(nan,83.25) P50(nan,83.5) P75(nan,83.75) P90(nan,83.9) P95(nan,83.95) P99(nan,83.99) P99.5(nan,83.995) P99.9(nan,83.999) P100(nan,84)
+

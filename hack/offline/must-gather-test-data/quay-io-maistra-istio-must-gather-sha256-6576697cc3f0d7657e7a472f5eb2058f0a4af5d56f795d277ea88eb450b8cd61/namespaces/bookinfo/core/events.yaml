@@ -1,0 +1,4578 @@
+---
+apiVersion: v1
+items:
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: bookinfo-gateway-istio-5d8d9854cc-5zkrd
+    namespace: bookinfo
+    resourceVersion: "1409"
+    uid: 3dfe13c1-c017-4ad4-822d-20f0ff444249
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: Successfully assigned bookinfo/bookinfo-gateway-istio-5d8d9854cc-5zkrd
+    to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: bookinfo-gateway-istio-5d8d9854cc-5zkrd.1852837606c33096
+    namespace: bookinfo
+    resourceVersion: "1411"
+    uid: 7f399889-56b4-44b0-bbce-9d9f9cd8fd30
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:08Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: bookinfo-gateway-istio-5d8d9854cc-5zkrd
+    namespace: bookinfo
+    resourceVersion: "1410"
+    uid: 3dfe13c1-c017-4ad4-822d-20f0ff444249
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:08Z"
+  message: Pulling image "gcr.io/istio-release/proxyv2:1.26.2"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:08Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:08Z"
+    name: bookinfo-gateway-istio-5d8d9854cc-5zkrd.1852837621d26d2c
+    namespace: bookinfo
+    resourceVersion: "1427"
+    uid: b54f5534-04fe-444e-8b2e-477b24c08711
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:13Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: bookinfo-gateway-istio-5d8d9854cc-5zkrd
+    namespace: bookinfo
+    resourceVersion: "1410"
+    uid: 3dfe13c1-c017-4ad4-822d-20f0ff444249
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:13Z"
+  message: 'Successfully pulled image "gcr.io/istio-release/proxyv2:1.26.2" in 328ms
+    (4.929s including waiting). Image size: 92614371 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:13Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:13Z"
+    name: bookinfo-gateway-istio-5d8d9854cc-5zkrd.1852837747a2124c
+    namespace: bookinfo
+    resourceVersion: "1495"
+    uid: 1708ec8c-ef93-48f2-af9c-815b39b2e921
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:13Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: bookinfo-gateway-istio-5d8d9854cc-5zkrd
+    namespace: bookinfo
+    resourceVersion: "1410"
+    uid: 3dfe13c1-c017-4ad4-822d-20f0ff444249
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:13Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:13Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:13Z"
+    name: bookinfo-gateway-istio-5d8d9854cc-5zkrd.1852837748578dc8
+    namespace: bookinfo
+    resourceVersion: "1496"
+    uid: 04568a3a-60e0-4e9b-85f7-dbbe288ad1b1
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:13Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: bookinfo-gateway-istio-5d8d9854cc-5zkrd
+    namespace: bookinfo
+    resourceVersion: "1410"
+    uid: 3dfe13c1-c017-4ad4-822d-20f0ff444249
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:13Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:13Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:13Z"
+    name: bookinfo-gateway-istio-5d8d9854cc-5zkrd.185283774ebc38cb
+    namespace: bookinfo
+    resourceVersion: "1497"
+    uid: 6386404d-f59a-461c-b5dc-63c616c43859
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: bookinfo-gateway-istio-5d8d9854cc
+    namespace: bookinfo
+    resourceVersion: "1405"
+    uid: 8fd1dd27-0c41-42d0-94cd-9481832b7c2b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: 'Created pod: bookinfo-gateway-istio-5d8d9854cc-5zkrd'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:08Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:08Z"
+    name: bookinfo-gateway-istio-5d8d9854cc.18528376069a5def
+    namespace: bookinfo
+    resourceVersion: "1417"
+    uid: c093917e-c327-4872-85cc-cdf0bd58ca33
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: bookinfo-gateway-istio
+    namespace: bookinfo
+    resourceVersion: "1399"
+    uid: 8c75145b-27e5-4c54-9060-d5b70218bb83
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: Assigned IP ["172.18.255.71"]
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: controller
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: bookinfo-gateway-istio.18528375ff66e610
+    namespace: bookinfo
+    resourceVersion: "1402"
+    uid: bdc54935-b4b9-4355-a7c5-a04581092279
+  reason: IPAllocated
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: metallb-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: bookinfo-gateway-istio
+    namespace: bookinfo
+    resourceVersion: "1394"
+    uid: e097a9ab-096f-4bdc-a42f-c64d732afcd8
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: Scaled up replica set bookinfo-gateway-istio-5d8d9854cc from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:08Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:08Z"
+    name: bookinfo-gateway-istio.1852837603786bba
+    namespace: bookinfo
+    resourceVersion: "1416"
+    uid: 66c6ca5c-1bc6-4e05-816f-74d5cb570480
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:14Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: bookinfo-gateway-istio
+    namespace: bookinfo
+    resourceVersion: "1404"
+    uid: 8c75145b-27e5-4c54-9060-d5b70218bb83
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:14Z"
+  message: announcing from node "ci-control-plane" with protocol "layer2"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:14Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: speaker
+      operation: Update
+      time: "2025-07-15T19:29:14Z"
+    name: bookinfo-gateway-istio.18528377951449f9
+    namespace: bookinfo
+    resourceVersion: "1524"
+    uid: 843e9ad5-fc0c-4cdc-92bb-ff4e9a143bfe
+  reason: nodeAssigned
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: metallb-speaker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: details-v1-766844796b-r6b8z
+    namespace: bookinfo
+    resourceVersion: "1307"
+    uid: fc06ee68-ae00-471f-8198-36aabd24d027
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: Successfully assigned bookinfo/details-v1-766844796b-r6b8z to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: details-v1-766844796b-r6b8z.18528375f30c64bd
+    namespace: bookinfo
+    resourceVersion: "1315"
+    uid: 64e5b45c-a783-488a-8e62-9feb2db4d4cf
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:08Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: details-v1-766844796b-r6b8z
+    namespace: bookinfo
+    resourceVersion: "1310"
+    uid: fc06ee68-ae00-471f-8198-36aabd24d027
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:08Z"
+  message: Pulling image "gcr.io/istio-release/proxyv2:1.26.2"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:08Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:08Z"
+    name: details-v1-766844796b-r6b8z.185283760f7adf12
+    namespace: bookinfo
+    resourceVersion: "1418"
+    uid: 6c3d733b-b8f4-4743-87fe-24d57334a2a6
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:11Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: details-v1-766844796b-r6b8z
+    namespace: bookinfo
+    resourceVersion: "1310"
+    uid: fc06ee68-ae00-471f-8198-36aabd24d027
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:11Z"
+  message: 'Successfully pulled image "gcr.io/istio-release/proxyv2:1.26.2" in 3.322s
+    (3.322s including waiting). Image size: 92614371 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:11Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:11Z"
+    name: details-v1-766844796b-r6b8z.18528376d583119d
+    namespace: bookinfo
+    resourceVersion: "1451"
+    uid: b2d119e0-fcc9-43d9-b480-b0c7f59a33e3
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:11Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: details-v1-766844796b-r6b8z
+    namespace: bookinfo
+    resourceVersion: "1310"
+    uid: fc06ee68-ae00-471f-8198-36aabd24d027
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:11Z"
+  message: 'Created container: istio-init'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:11Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:11Z"
+    name: details-v1-766844796b-r6b8z.18528376d6119c22
+    namespace: bookinfo
+    resourceVersion: "1452"
+    uid: 35acb9dc-6b3e-42f0-8759-9ee7cbe43956
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:11Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: details-v1-766844796b-r6b8z
+    namespace: bookinfo
+    resourceVersion: "1310"
+    uid: fc06ee68-ae00-471f-8198-36aabd24d027
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:11Z"
+  message: Started container istio-init
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:11Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:11Z"
+    name: details-v1-766844796b-r6b8z.18528376ddc9d61f
+    namespace: bookinfo
+    resourceVersion: "1453"
+    uid: 8cdea222-0e0d-4497-bdfb-aeefe40f8bc0
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:12Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{details}
+    kind: Pod
+    name: details-v1-766844796b-r6b8z
+    namespace: bookinfo
+    resourceVersion: "1310"
+    uid: fc06ee68-ae00-471f-8198-36aabd24d027
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:12Z"
+  message: Pulling image "docker.io/istio/examples-bookinfo-details-v1:1.20.3"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:12Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:12Z"
+    name: details-v1-766844796b-r6b8z.185283771be4890f
+    namespace: bookinfo
+    resourceVersion: "1475"
+    uid: 8b167492-c953-45a6-b320-1bba2d94e8ad
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:25Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{details}
+    kind: Pod
+    name: details-v1-766844796b-r6b8z
+    namespace: bookinfo
+    resourceVersion: "1310"
+    uid: fc06ee68-ae00-471f-8198-36aabd24d027
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:25Z"
+  message: 'Successfully pulled image "docker.io/istio/examples-bookinfo-details-v1:1.20.3"
+    in 3.746s (12.461s including waiting). Image size: 83137723 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:25Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:25Z"
+    name: details-v1-766844796b-r6b8z.1852837a02a92264
+    namespace: bookinfo
+    resourceVersion: "1571"
+    uid: dc287491-64b2-400c-8f77-a5773c12d909
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:25Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{details}
+    kind: Pod
+    name: details-v1-766844796b-r6b8z
+    namespace: bookinfo
+    resourceVersion: "1310"
+    uid: fc06ee68-ae00-471f-8198-36aabd24d027
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:25Z"
+  message: 'Created container: details'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:25Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:25Z"
+    name: details-v1-766844796b-r6b8z.1852837a03ab154b
+    namespace: bookinfo
+    resourceVersion: "1572"
+    uid: 77068b71-5746-44b3-83a5-cd2d9faeb107
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:25Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{details}
+    kind: Pod
+    name: details-v1-766844796b-r6b8z
+    namespace: bookinfo
+    resourceVersion: "1310"
+    uid: fc06ee68-ae00-471f-8198-36aabd24d027
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:25Z"
+  message: Started container details
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:25Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:25Z"
+    name: details-v1-766844796b-r6b8z.1852837a0a2f3a78
+    namespace: bookinfo
+    resourceVersion: "1573"
+    uid: 10e71a32-c838-487f-956f-08fa69bbbf68
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:25Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: details-v1-766844796b-r6b8z
+    namespace: bookinfo
+    resourceVersion: "1310"
+    uid: fc06ee68-ae00-471f-8198-36aabd24d027
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:25Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:25Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:25Z"
+    name: details-v1-766844796b-r6b8z.1852837a0a377f51
+    namespace: bookinfo
+    resourceVersion: "1575"
+    uid: 51504776-3eba-4ddf-abc2-661d356e6fa5
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:25Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: details-v1-766844796b-r6b8z
+    namespace: bookinfo
+    resourceVersion: "1310"
+    uid: fc06ee68-ae00-471f-8198-36aabd24d027
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:25Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:25Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:25Z"
+    name: details-v1-766844796b-r6b8z.1852837a0af229cc
+    namespace: bookinfo
+    resourceVersion: "1576"
+    uid: 96c0d262-ee82-4880-86e5-d2e6adab92a0
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:25Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: details-v1-766844796b-r6b8z
+    namespace: bookinfo
+    resourceVersion: "1310"
+    uid: fc06ee68-ae00-471f-8198-36aabd24d027
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:25Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:25Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:25Z"
+    name: details-v1-766844796b-r6b8z.1852837a1329e676
+    namespace: bookinfo
+    resourceVersion: "1577"
+    uid: 1e3a1e30-e0f9-4828-8c59-031cc21824ed
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: details-v1-766844796b
+    namespace: bookinfo
+    resourceVersion: "1295"
+    uid: 14939a3f-cefa-4f39-94f4-19032223a8e5
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: 'Created pod: details-v1-766844796b-r6b8z'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: details-v1-766844796b.18528375f2c75a8e
+    namespace: bookinfo
+    resourceVersion: "1308"
+    uid: 193caa5d-bc56-4b60-90d6-9be3277e4cff
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: details-v1
+    namespace: bookinfo
+    resourceVersion: "1294"
+    uid: e7015dcb-7eac-41f5-ab09-c4ed62209a64
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: Scaled up replica set details-v1-766844796b from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: details-v1.18528375f189cb90
+    namespace: bookinfo
+    resourceVersion: "1296"
+    uid: 6f564514-55ab-4138-8331-a5870a25a832
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:36Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: kiali-traffic-generator-tj68s
+    namespace: bookinfo
+    resourceVersion: "1668"
+    uid: 22462605-0990-4ce2-ad19-59b4dd415a1f
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:36Z"
+  message: Successfully assigned bookinfo/kiali-traffic-generator-tj68s to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:36Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:36Z"
+    name: kiali-traffic-generator-tj68s.1852837ca613d46a
+    namespace: bookinfo
+    resourceVersion: "1672"
+    uid: 3a807936-00da-485c-b53c-e260d6ddd31b
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:36Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{kiali-traffic-generator}
+    kind: Pod
+    name: kiali-traffic-generator-tj68s
+    namespace: bookinfo
+    resourceVersion: "1669"
+    uid: 22462605-0990-4ce2-ad19-59b4dd415a1f
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:36Z"
+  message: Pulling image "quay.io/kiali/kiali-test-mesh-traffic-generator:latest"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:36Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:36Z"
+    name: kiali-traffic-generator-tj68s.1852837cc3bb7221
+    namespace: bookinfo
+    resourceVersion: "1693"
+    uid: 6e6bf3e2-0b4e-4581-93e2-42147b308062
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{kiali-traffic-generator}
+    kind: Pod
+    name: kiali-traffic-generator-tj68s
+    namespace: bookinfo
+    resourceVersion: "1669"
+    uid: 22462605-0990-4ce2-ad19-59b4dd415a1f
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: 'Successfully pulled image "quay.io/kiali/kiali-test-mesh-traffic-generator:latest"
+    in 4.324s (4.324s including waiting). Image size: 85642885 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: kiali-traffic-generator-tj68s.1852837dc57d9d40
+    namespace: bookinfo
+    resourceVersion: "2219"
+    uid: 4a7b1982-21e6-4a19-bc25-33429d8b0bcd
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{kiali-traffic-generator}
+    kind: Pod
+    name: kiali-traffic-generator-tj68s
+    namespace: bookinfo
+    resourceVersion: "1669"
+    uid: 22462605-0990-4ce2-ad19-59b4dd415a1f
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: 'Created container: kiali-traffic-generator'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: kiali-traffic-generator-tj68s.1852837dc634c891
+    namespace: bookinfo
+    resourceVersion: "2223"
+    uid: bab6b0b6-a62f-43fa-9da1-7e453f87fc21
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{kiali-traffic-generator}
+    kind: Pod
+    name: kiali-traffic-generator-tj68s
+    namespace: bookinfo
+    resourceVersion: "1669"
+    uid: 22462605-0990-4ce2-ad19-59b4dd415a1f
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Started container kiali-traffic-generator
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: kiali-traffic-generator-tj68s.1852837dcfc3efac
+    namespace: bookinfo
+    resourceVersion: "2233"
+    uid: 08698127-db10-4660-8384-c9fcd6031c20
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:36Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: kiali-traffic-generator
+    namespace: bookinfo
+    resourceVersion: "1667"
+    uid: 1b14b8fb-07d2-4db2-b5d4-a7654c464b21
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:36Z"
+  message: 'Created pod: kiali-traffic-generator-tj68s'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:36Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:36Z"
+    name: kiali-traffic-generator.1852837ca5e76abe
+    namespace: bookinfo
+    resourceVersion: "1670"
+    uid: 75da91c7-5113-41d0-8183-9986d3ee48f9
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: productpage-v1-54bb874995-7t6fg
+    namespace: bookinfo
+    resourceVersion: "1379"
+    uid: 4d93c869-1bd3-4972-b2f1-b6609ce75abc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: Successfully assigned bookinfo/productpage-v1-54bb874995-7t6fg to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: productpage-v1-54bb874995-7t6fg.18528375fa25bd4b
+    namespace: bookinfo
+    resourceVersion: "1382"
+    uid: d3aff96a-ae30-4d90-908f-3a5ee42efc0f
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:08Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: productpage-v1-54bb874995-7t6fg
+    namespace: bookinfo
+    resourceVersion: "1380"
+    uid: 4d93c869-1bd3-4972-b2f1-b6609ce75abc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:08Z"
+  message: Pulling image "gcr.io/istio-release/proxyv2:1.26.2"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:08Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:08Z"
+    name: productpage-v1-54bb874995-7t6fg.1852837612ae29b1
+    namespace: bookinfo
+    resourceVersion: "1424"
+    uid: 122cc943-0a44-4602-a793-50a775f1c743
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:12Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: productpage-v1-54bb874995-7t6fg
+    namespace: bookinfo
+    resourceVersion: "1380"
+    uid: 4d93c869-1bd3-4972-b2f1-b6609ce75abc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:12Z"
+  message: 'Successfully pulled image "gcr.io/istio-release/proxyv2:1.26.2" in 314ms
+    (4.855s including waiting). Image size: 92614371 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:12Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:12Z"
+    name: productpage-v1-54bb874995-7t6fg.185283773410d597
+    namespace: bookinfo
+    resourceVersion: "1491"
+    uid: a012b98a-f90f-4b1e-a52f-a58f40a8a77c
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:13Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: productpage-v1-54bb874995-7t6fg
+    namespace: bookinfo
+    resourceVersion: "1380"
+    uid: 4d93c869-1bd3-4972-b2f1-b6609ce75abc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:13Z"
+  message: 'Created container: istio-init'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:13Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:13Z"
+    name: productpage-v1-54bb874995-7t6fg.1852837734acc0d1
+    namespace: bookinfo
+    resourceVersion: "1492"
+    uid: 1751a487-b6e3-4b67-9d22-95e7771e7078
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:13Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: productpage-v1-54bb874995-7t6fg
+    namespace: bookinfo
+    resourceVersion: "1380"
+    uid: 4d93c869-1bd3-4972-b2f1-b6609ce75abc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:13Z"
+  message: Started container istio-init
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:13Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:13Z"
+    name: productpage-v1-54bb874995-7t6fg.185283773aa61a8e
+    namespace: bookinfo
+    resourceVersion: "1493"
+    uid: c7ac1dd0-5f74-4621-b424-89ad79817541
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:13Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{productpage}
+    kind: Pod
+    name: productpage-v1-54bb874995-7t6fg
+    namespace: bookinfo
+    resourceVersion: "1380"
+    uid: 4d93c869-1bd3-4972-b2f1-b6609ce75abc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:13Z"
+  message: Pulling image "docker.io/istio/examples-bookinfo-productpage-v1:1.20.3"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:13Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:13Z"
+    name: productpage-v1-54bb874995-7t6fg.1852837758444a8b
+    namespace: bookinfo
+    resourceVersion: "1500"
+    uid: 4abf93df-650b-4c7c-bbdb-f3ced1f09ccc
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:33Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{productpage}
+    kind: Pod
+    name: productpage-v1-54bb874995-7t6fg
+    namespace: bookinfo
+    resourceVersion: "1380"
+    uid: 4d93c869-1bd3-4972-b2f1-b6609ce75abc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:33Z"
+  message: 'Successfully pulled image "docker.io/istio/examples-bookinfo-productpage-v1:1.20.3"
+    in 3.458s (20.392s including waiting). Image size: 68526350 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:33Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:33Z"
+    name: productpage-v1-54bb874995-7t6fg.1852837c17bb7548
+    namespace: bookinfo
+    resourceVersion: "1649"
+    uid: a773d0ca-9adf-47bf-8713-32bc72c9ba64
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:34Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{productpage}
+    kind: Pod
+    name: productpage-v1-54bb874995-7t6fg
+    namespace: bookinfo
+    resourceVersion: "1380"
+    uid: 4d93c869-1bd3-4972-b2f1-b6609ce75abc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:34Z"
+  message: 'Created container: productpage'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:34Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:34Z"
+    name: productpage-v1-54bb874995-7t6fg.1852837c185c3829
+    namespace: bookinfo
+    resourceVersion: "1650"
+    uid: 8ecf1f92-0cdf-45aa-bc17-391f07162f34
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:34Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{productpage}
+    kind: Pod
+    name: productpage-v1-54bb874995-7t6fg
+    namespace: bookinfo
+    resourceVersion: "1380"
+    uid: 4d93c869-1bd3-4972-b2f1-b6609ce75abc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:34Z"
+  message: Started container productpage
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:34Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:34Z"
+    name: productpage-v1-54bb874995-7t6fg.1852837c1f74212c
+    namespace: bookinfo
+    resourceVersion: "1651"
+    uid: bb11d9d6-1be4-42ca-aef8-9f699c719820
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:34Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: productpage-v1-54bb874995-7t6fg
+    namespace: bookinfo
+    resourceVersion: "1380"
+    uid: 4d93c869-1bd3-4972-b2f1-b6609ce75abc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:34Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:34Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:34Z"
+    name: productpage-v1-54bb874995-7t6fg.1852837c1f7b355e
+    namespace: bookinfo
+    resourceVersion: "1652"
+    uid: 696347a3-ee1a-4ed9-a312-2364e209e66c
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:34Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: productpage-v1-54bb874995-7t6fg
+    namespace: bookinfo
+    resourceVersion: "1380"
+    uid: 4d93c869-1bd3-4972-b2f1-b6609ce75abc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:34Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:34Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:34Z"
+    name: productpage-v1-54bb874995-7t6fg.1852837c201d4d08
+    namespace: bookinfo
+    resourceVersion: "1653"
+    uid: 66bcb8ad-55e4-4acc-a18b-fbf134393a0e
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:34Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: productpage-v1-54bb874995-7t6fg
+    namespace: bookinfo
+    resourceVersion: "1380"
+    uid: 4d93c869-1bd3-4972-b2f1-b6609ce75abc
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:34Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:34Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:34Z"
+    name: productpage-v1-54bb874995-7t6fg.1852837c273c28b8
+    namespace: bookinfo
+    resourceVersion: "1654"
+    uid: bce93f51-ae79-44d6-b799-fb37b1873aab
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: productpage-v1-54bb874995
+    namespace: bookinfo
+    resourceVersion: "1377"
+    uid: 8646db61-aeec-4331-8b25-b5ad7ff4855d
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: 'Created pod: productpage-v1-54bb874995-7t6fg'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: productpage-v1-54bb874995.18528375f9e37342
+    namespace: bookinfo
+    resourceVersion: "1381"
+    uid: 76d34d58-e4fa-404e-9c79-ba9b49a7d4b8
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: productpage-v1
+    namespace: bookinfo
+    resourceVersion: "1376"
+    uid: bf533b4c-0415-4fd3-98da-edb875d872a9
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: Scaled up replica set productpage-v1-54bb874995 from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: productpage-v1.18528375f9394166
+    namespace: bookinfo
+    resourceVersion: "1387"
+    uid: 08467d2b-f993-4310-a4a4-5b2f7488574d
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: ratings-v1-5dc79b6bcd-pncl2
+    namespace: bookinfo
+    resourceVersion: "1317"
+    uid: 238431f3-bb96-4423-8749-5052f5b3c2bb
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: Successfully assigned bookinfo/ratings-v1-5dc79b6bcd-pncl2 to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: ratings-v1-5dc79b6bcd-pncl2.18528375f3e0a617
+    namespace: bookinfo
+    resourceVersion: "1328"
+    uid: 3f8a6b04-e1ac-40eb-9687-d875a032d448
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:08Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: ratings-v1-5dc79b6bcd-pncl2
+    namespace: bookinfo
+    resourceVersion: "1324"
+    uid: 238431f3-bb96-4423-8749-5052f5b3c2bb
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:08Z"
+  message: Pulling image "gcr.io/istio-release/proxyv2:1.26.2"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:08Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:08Z"
+    name: ratings-v1-5dc79b6bcd-pncl2.18528376106fbe84
+    namespace: bookinfo
+    resourceVersion: "1420"
+    uid: 3082e274-36ac-4625-b09d-788b27981b26
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:11Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: ratings-v1-5dc79b6bcd-pncl2
+    namespace: bookinfo
+    resourceVersion: "1324"
+    uid: 238431f3-bb96-4423-8749-5052f5b3c2bb
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:11Z"
+  message: 'Successfully pulled image "gcr.io/istio-release/proxyv2:1.26.2" in 305ms
+    (3.611s including waiting). Image size: 92614371 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:11Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:11Z"
+    name: ratings-v1-5dc79b6bcd-pncl2.18528376e7b29e02
+    namespace: bookinfo
+    resourceVersion: "1457"
+    uid: a1d64cb3-a419-41de-b182-ff845a662cb3
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:11Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: ratings-v1-5dc79b6bcd-pncl2
+    namespace: bookinfo
+    resourceVersion: "1324"
+    uid: 238431f3-bb96-4423-8749-5052f5b3c2bb
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:11Z"
+  message: 'Created container: istio-init'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:11Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:11Z"
+    name: ratings-v1-5dc79b6bcd-pncl2.18528376e85bc710
+    namespace: bookinfo
+    resourceVersion: "1458"
+    uid: 4280d0a8-3486-484f-b156-960147a2f9b5
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:11Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: ratings-v1-5dc79b6bcd-pncl2
+    namespace: bookinfo
+    resourceVersion: "1324"
+    uid: 238431f3-bb96-4423-8749-5052f5b3c2bb
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:11Z"
+  message: Started container istio-init
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:11Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:11Z"
+    name: ratings-v1-5dc79b6bcd-pncl2.18528376ef6897dd
+    namespace: bookinfo
+    resourceVersion: "1459"
+    uid: 27c43fdc-c7c4-4574-a31d-117538f95eb1
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:12Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{ratings}
+    kind: Pod
+    name: ratings-v1-5dc79b6bcd-pncl2
+    namespace: bookinfo
+    resourceVersion: "1324"
+    uid: 238431f3-bb96-4423-8749-5052f5b3c2bb
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:12Z"
+  message: Pulling image "docker.io/istio/examples-bookinfo-ratings-v1:1.20.3"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:12Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:12Z"
+    name: ratings-v1-5dc79b6bcd-pncl2.185283771c1613f5
+    namespace: bookinfo
+    resourceVersion: "1476"
+    uid: 4ea7e8e3-8f5b-4693-be63-9dd3e65adabc
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:29Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{ratings}
+    kind: Pod
+    name: ratings-v1-5dc79b6bcd-pncl2
+    namespace: bookinfo
+    resourceVersion: "1324"
+    uid: 238431f3-bb96-4423-8749-5052f5b3c2bb
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:29Z"
+  message: 'Successfully pulled image "docker.io/istio/examples-bookinfo-ratings-v1:1.20.3"
+    in 4.029s (16.487s including waiting). Image size: 88728842 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:29Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:29Z"
+    name: ratings-v1-5dc79b6bcd-pncl2.1852837af2d629fb
+    namespace: bookinfo
+    resourceVersion: "1596"
+    uid: 33d71533-d3b6-4b15-9d15-ff0bccd54fc5
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:29Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{ratings}
+    kind: Pod
+    name: ratings-v1-5dc79b6bcd-pncl2
+    namespace: bookinfo
+    resourceVersion: "1324"
+    uid: 238431f3-bb96-4423-8749-5052f5b3c2bb
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:29Z"
+  message: 'Created container: ratings'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:29Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:29Z"
+    name: ratings-v1-5dc79b6bcd-pncl2.1852837af379452d
+    namespace: bookinfo
+    resourceVersion: "1597"
+    uid: ce933242-82c1-4302-b100-aa91b5681c1f
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:29Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{ratings}
+    kind: Pod
+    name: ratings-v1-5dc79b6bcd-pncl2
+    namespace: bookinfo
+    resourceVersion: "1324"
+    uid: 238431f3-bb96-4423-8749-5052f5b3c2bb
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:29Z"
+  message: Started container ratings
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:29Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:29Z"
+    name: ratings-v1-5dc79b6bcd-pncl2.1852837af9675457
+    namespace: bookinfo
+    resourceVersion: "1599"
+    uid: 75591929-7df9-4e7b-ac48-64befa5c631a
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:29Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: ratings-v1-5dc79b6bcd-pncl2
+    namespace: bookinfo
+    resourceVersion: "1324"
+    uid: 238431f3-bb96-4423-8749-5052f5b3c2bb
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:29Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:29Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:29Z"
+    name: ratings-v1-5dc79b6bcd-pncl2.1852837af96d6083
+    namespace: bookinfo
+    resourceVersion: "1600"
+    uid: 1f4f9e9f-e71c-4d1a-ae01-99c74504431c
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:29Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: ratings-v1-5dc79b6bcd-pncl2
+    namespace: bookinfo
+    resourceVersion: "1324"
+    uid: 238431f3-bb96-4423-8749-5052f5b3c2bb
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:29Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:29Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:29Z"
+    name: ratings-v1-5dc79b6bcd-pncl2.1852837afa1d1f8c
+    namespace: bookinfo
+    resourceVersion: "1601"
+    uid: 4b683244-2307-41b8-a103-239890dca2e2
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:29Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: ratings-v1-5dc79b6bcd-pncl2
+    namespace: bookinfo
+    resourceVersion: "1324"
+    uid: 238431f3-bb96-4423-8749-5052f5b3c2bb
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:29Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:29Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:29Z"
+    name: ratings-v1-5dc79b6bcd-pncl2.1852837affe6994f
+    namespace: bookinfo
+    resourceVersion: "1602"
+    uid: 97575a49-94f0-448a-834d-5ff2d5abbf6f
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: ratings-v1-5dc79b6bcd
+    namespace: bookinfo
+    resourceVersion: "1306"
+    uid: c5984ac7-bf33-4f76-acf5-247098da2281
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: 'Created pod: ratings-v1-5dc79b6bcd-pncl2'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: ratings-v1-5dc79b6bcd.18528375f399e191
+    namespace: bookinfo
+    resourceVersion: "1322"
+    uid: 515a2338-e0d5-49f9-af36-de5182fa2393
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ratings-v1
+    namespace: bookinfo
+    resourceVersion: "1305"
+    uid: 39652f52-d8cb-4b52-b0f3-5d4baa2bc081
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: Scaled up replica set ratings-v1-5dc79b6bcd from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: ratings-v1.18528375f2bcfebe
+    namespace: bookinfo
+    resourceVersion: "1309"
+    uid: f1685315-8146-4fd4-ad54-5d067c81e8e6
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: reviews-v1-598b896c9d-cxrv2
+    namespace: bookinfo
+    resourceVersion: "1342"
+    uid: 77a15ddb-21d9-40e4-a280-6296b00f31f4
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: Successfully assigned bookinfo/reviews-v1-598b896c9d-cxrv2 to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: reviews-v1-598b896c9d-cxrv2.18528375f7a3b00f
+    namespace: bookinfo
+    resourceVersion: "1352"
+    uid: 47c40768-703d-4094-9f01-b60abdec6bbb
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:08Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: reviews-v1-598b896c9d-cxrv2
+    namespace: bookinfo
+    resourceVersion: "1345"
+    uid: 77a15ddb-21d9-40e4-a280-6296b00f31f4
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:08Z"
+  message: Pulling image "gcr.io/istio-release/proxyv2:1.26.2"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:08Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:08Z"
+    name: reviews-v1-598b896c9d-cxrv2.18528376109e7329
+    namespace: bookinfo
+    resourceVersion: "1421"
+    uid: 37dc6cbb-65d0-4b64-8200-40908ccda3fb
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:12Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: reviews-v1-598b896c9d-cxrv2
+    namespace: bookinfo
+    resourceVersion: "1345"
+    uid: 77a15ddb-21d9-40e4-a280-6296b00f31f4
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:12Z"
+  message: 'Successfully pulled image "gcr.io/istio-release/proxyv2:1.26.2" in 317ms
+    (3.925s including waiting). Image size: 92614371 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:12Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:12Z"
+    name: reviews-v1-598b896c9d-cxrv2.18528376fa9f82c2
+    namespace: bookinfo
+    resourceVersion: "1462"
+    uid: 12534824-a546-47b3-8e7c-bfac26452bfb
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:12Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: reviews-v1-598b896c9d-cxrv2
+    namespace: bookinfo
+    resourceVersion: "1345"
+    uid: 77a15ddb-21d9-40e4-a280-6296b00f31f4
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:12Z"
+  message: 'Created container: istio-init'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:12Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:12Z"
+    name: reviews-v1-598b896c9d-cxrv2.18528376fb476d7c
+    namespace: bookinfo
+    resourceVersion: "1463"
+    uid: f24971b6-b34e-414e-ad10-1b178307772c
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:12Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: reviews-v1-598b896c9d-cxrv2
+    namespace: bookinfo
+    resourceVersion: "1345"
+    uid: 77a15ddb-21d9-40e4-a280-6296b00f31f4
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:12Z"
+  message: Started container istio-init
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:12Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:12Z"
+    name: reviews-v1-598b896c9d-cxrv2.185283770272777d
+    namespace: bookinfo
+    resourceVersion: "1469"
+    uid: 555abf79-c500-46dd-8510-daf99d5c8cee
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:12Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{reviews}
+    kind: Pod
+    name: reviews-v1-598b896c9d-cxrv2
+    namespace: bookinfo
+    resourceVersion: "1345"
+    uid: 77a15ddb-21d9-40e4-a280-6296b00f31f4
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:12Z"
+  message: Pulling image "docker.io/istio/examples-bookinfo-reviews-v1:1.20.3"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:12Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:12Z"
+    name: reviews-v1-598b896c9d-cxrv2.185283771bd76e77
+    namespace: bookinfo
+    resourceVersion: "1473"
+    uid: eea16d13-5abd-48d5-a3d7-822d6a10f5a2
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:21Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{reviews}
+    kind: Pod
+    name: reviews-v1-598b896c9d-cxrv2
+    namespace: bookinfo
+    resourceVersion: "1345"
+    uid: 77a15ddb-21d9-40e4-a280-6296b00f31f4
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:21Z"
+  message: 'Successfully pulled image "docker.io/istio/examples-bookinfo-reviews-v1:1.20.3"
+    in 7.981s (8.715s including waiting). Image size: 167166460 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:21Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:21Z"
+    name: reviews-v1-598b896c9d-cxrv2.18528379235809cb
+    namespace: bookinfo
+    resourceVersion: "1548"
+    uid: 9d3eb92e-b423-4f43-b6fc-98179ed3af38
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:21Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{reviews}
+    kind: Pod
+    name: reviews-v1-598b896c9d-cxrv2
+    namespace: bookinfo
+    resourceVersion: "1345"
+    uid: 77a15ddb-21d9-40e4-a280-6296b00f31f4
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:21Z"
+  message: 'Created container: reviews'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:21Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:21Z"
+    name: reviews-v1-598b896c9d-cxrv2.1852837924361d30
+    namespace: bookinfo
+    resourceVersion: "1549"
+    uid: 8127ce5f-cbf2-4a63-9919-377cb98336ba
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:21Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{reviews}
+    kind: Pod
+    name: reviews-v1-598b896c9d-cxrv2
+    namespace: bookinfo
+    resourceVersion: "1345"
+    uid: 77a15ddb-21d9-40e4-a280-6296b00f31f4
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:21Z"
+  message: Started container reviews
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:21Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:21Z"
+    name: reviews-v1-598b896c9d-cxrv2.185283792acf13e7
+    namespace: bookinfo
+    resourceVersion: "1550"
+    uid: 783397c6-b37a-4306-9360-acabe65baf38
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:21Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: reviews-v1-598b896c9d-cxrv2
+    namespace: bookinfo
+    resourceVersion: "1345"
+    uid: 77a15ddb-21d9-40e4-a280-6296b00f31f4
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:21Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:21Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:21Z"
+    name: reviews-v1-598b896c9d-cxrv2.185283792ad72242
+    namespace: bookinfo
+    resourceVersion: "1551"
+    uid: d476e0a4-906f-4a89-984d-818824bc3729
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:21Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: reviews-v1-598b896c9d-cxrv2
+    namespace: bookinfo
+    resourceVersion: "1345"
+    uid: 77a15ddb-21d9-40e4-a280-6296b00f31f4
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:21Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:21Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:21Z"
+    name: reviews-v1-598b896c9d-cxrv2.185283792b810d88
+    namespace: bookinfo
+    resourceVersion: "1552"
+    uid: ee7557d8-caa8-431a-8d3a-ee86d2de60fc
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:21Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: reviews-v1-598b896c9d-cxrv2
+    namespace: bookinfo
+    resourceVersion: "1345"
+    uid: 77a15ddb-21d9-40e4-a280-6296b00f31f4
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:21Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:21Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:21Z"
+    name: reviews-v1-598b896c9d-cxrv2.185283793260f508
+    namespace: bookinfo
+    resourceVersion: "1553"
+    uid: 49d94736-c41c-4e28-b91f-7a6f5d002fea
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: reviews-v1-598b896c9d
+    namespace: bookinfo
+    resourceVersion: "1333"
+    uid: 5b69a3d1-bc3b-497a-b998-c468eefdedf0
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: 'Created pod: reviews-v1-598b896c9d-cxrv2'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: reviews-v1-598b896c9d.18528375f75397e6
+    namespace: bookinfo
+    resourceVersion: "1344"
+    uid: a3b37ba2-05ef-4b13-8331-1a51c587588f
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reviews-v1
+    namespace: bookinfo
+    resourceVersion: "1331"
+    uid: 92ea9b8f-fc5a-4411-ba86-042fd66f2623
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: Scaled up replica set reviews-v1-598b896c9d from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: reviews-v1.18528375f6968c76
+    namespace: bookinfo
+    resourceVersion: "1334"
+    uid: 9091539e-7559-4352-abd5-16952ea63083
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: reviews-v2-556d6457d-4dddd
+    namespace: bookinfo
+    resourceVersion: "1351"
+    uid: 68d898d1-63d3-4f1d-9938-398f2a7c0f62
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: Successfully assigned bookinfo/reviews-v2-556d6457d-4dddd to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: reviews-v2-556d6457d-4dddd.18528375f80bdd7f
+    namespace: bookinfo
+    resourceVersion: "1362"
+    uid: 062c1d7d-f1f2-489c-a10c-23bc4d350462
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:08Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: reviews-v2-556d6457d-4dddd
+    namespace: bookinfo
+    resourceVersion: "1356"
+    uid: 68d898d1-63d3-4f1d-9938-398f2a7c0f62
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:08Z"
+  message: Pulling image "gcr.io/istio-release/proxyv2:1.26.2"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:08Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:08Z"
+    name: reviews-v2-556d6457d-4dddd.1852837611a37665
+    namespace: bookinfo
+    resourceVersion: "1422"
+    uid: 0b2e2c43-1032-47bd-8072-7bf5fc9caacf
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:12Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: reviews-v2-556d6457d-4dddd
+    namespace: bookinfo
+    resourceVersion: "1356"
+    uid: 68d898d1-63d3-4f1d-9938-398f2a7c0f62
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:12Z"
+  message: 'Successfully pulled image "gcr.io/istio-release/proxyv2:1.26.2" in 330ms
+    (4.239s including waiting). Image size: 92614371 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:12Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:12Z"
+    name: reviews-v2-556d6457d-4dddd.185283770e4e24bf
+    namespace: bookinfo
+    resourceVersion: "1470"
+    uid: 8c8da5bd-4720-46ba-b665-10386836db9a
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:12Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: reviews-v2-556d6457d-4dddd
+    namespace: bookinfo
+    resourceVersion: "1356"
+    uid: 68d898d1-63d3-4f1d-9938-398f2a7c0f62
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:12Z"
+  message: 'Created container: istio-init'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:12Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:12Z"
+    name: reviews-v2-556d6457d-4dddd.185283770f1c9c1a
+    namespace: bookinfo
+    resourceVersion: "1471"
+    uid: bc70384b-b494-4b31-8b03-142981878060
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:12Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: reviews-v2-556d6457d-4dddd
+    namespace: bookinfo
+    resourceVersion: "1356"
+    uid: 68d898d1-63d3-4f1d-9938-398f2a7c0f62
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:12Z"
+  message: Started container istio-init
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:12Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:12Z"
+    name: reviews-v2-556d6457d-4dddd.1852837715d9e69a
+    namespace: bookinfo
+    resourceVersion: "1472"
+    uid: 70a02aa4-594a-4d1f-bc08-78b1858bb385
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:13Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{reviews}
+    kind: Pod
+    name: reviews-v2-556d6457d-4dddd
+    namespace: bookinfo
+    resourceVersion: "1356"
+    uid: 68d898d1-63d3-4f1d-9938-398f2a7c0f62
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:13Z"
+  message: Pulling image "docker.io/istio/examples-bookinfo-reviews-v2:1.20.3"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:13Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:13Z"
+    name: reviews-v2-556d6457d-4dddd.185283775803fd4d
+    namespace: bookinfo
+    resourceVersion: "1499"
+    uid: 0ecddbfe-24d6-4da5-a89e-4f5520deb5a5
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:30Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{reviews}
+    kind: Pod
+    name: reviews-v2-556d6457d-4dddd
+    namespace: bookinfo
+    resourceVersion: "1356"
+    uid: 68d898d1-63d3-4f1d-9938-398f2a7c0f62
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:30Z"
+  message: 'Successfully pulled image "docker.io/istio/examples-bookinfo-reviews-v2:1.20.3"
+    in 757ms (16.938s including waiting). Image size: 167166463 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:30Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:30Z"
+    name: reviews-v2-556d6457d-4dddd.1852837b4999b7c6
+    namespace: bookinfo
+    resourceVersion: "1613"
+    uid: 5625dfdd-1bf3-4dec-9436-b6cb3f36f4dc
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:30Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{reviews}
+    kind: Pod
+    name: reviews-v2-556d6457d-4dddd
+    namespace: bookinfo
+    resourceVersion: "1356"
+    uid: 68d898d1-63d3-4f1d-9938-398f2a7c0f62
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:30Z"
+  message: 'Created container: reviews'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:30Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:30Z"
+    name: reviews-v2-556d6457d-4dddd.1852837b4a5bdd43
+    namespace: bookinfo
+    resourceVersion: "1614"
+    uid: c8753bd6-de09-4b8d-8519-fb5aa18e7912
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:30Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{reviews}
+    kind: Pod
+    name: reviews-v2-556d6457d-4dddd
+    namespace: bookinfo
+    resourceVersion: "1356"
+    uid: 68d898d1-63d3-4f1d-9938-398f2a7c0f62
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:30Z"
+  message: Started container reviews
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:30Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:30Z"
+    name: reviews-v2-556d6457d-4dddd.1852837b5229fdb8
+    namespace: bookinfo
+    resourceVersion: "1622"
+    uid: b6381eaa-aec7-4a56-8ba3-9d2df8c79404
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:30Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: reviews-v2-556d6457d-4dddd
+    namespace: bookinfo
+    resourceVersion: "1356"
+    uid: 68d898d1-63d3-4f1d-9938-398f2a7c0f62
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:30Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:30Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:30Z"
+    name: reviews-v2-556d6457d-4dddd.1852837b52334412
+    namespace: bookinfo
+    resourceVersion: "1623"
+    uid: e5ee2f2f-443d-4995-8ec0-4e1f76800cf4
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:30Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: reviews-v2-556d6457d-4dddd
+    namespace: bookinfo
+    resourceVersion: "1356"
+    uid: 68d898d1-63d3-4f1d-9938-398f2a7c0f62
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:30Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:30Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:30Z"
+    name: reviews-v2-556d6457d-4dddd.1852837b52fb2c0f
+    namespace: bookinfo
+    resourceVersion: "1624"
+    uid: deb6f305-6478-4215-ac62-1c0bd1ba47c7
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:30Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: reviews-v2-556d6457d-4dddd
+    namespace: bookinfo
+    resourceVersion: "1356"
+    uid: 68d898d1-63d3-4f1d-9938-398f2a7c0f62
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:30Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:30Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:30Z"
+    name: reviews-v2-556d6457d-4dddd.1852837b5a3c6219
+    namespace: bookinfo
+    resourceVersion: "1626"
+    uid: c9b457d5-d8ba-4e4d-9092-90e5230d58b5
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: reviews-v2-556d6457d
+    namespace: bookinfo
+    resourceVersion: "1337"
+    uid: e311298c-88a9-48bf-b653-69bf8e176f68
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: 'Created pod: reviews-v2-556d6457d-4dddd'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: reviews-v2-556d6457d.18528375f7c5a746
+    namespace: bookinfo
+    resourceVersion: "1355"
+    uid: eadc8d03-18f2-4707-ba47-bf78dbf942be
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reviews-v2
+    namespace: bookinfo
+    resourceVersion: "1335"
+    uid: b90a5677-9e31-4ab9-b42b-1bfa79e97267
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: Scaled up replica set reviews-v2-556d6457d from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: reviews-v2.18528375f709d97e
+    namespace: bookinfo
+    resourceVersion: "1338"
+    uid: 87a6886f-d055-4c63-96fe-7e4b9c0c1cc3
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: reviews-v3-564544b4d6-czsdz
+    namespace: bookinfo
+    resourceVersion: "1361"
+    uid: fe8daf0f-625b-47a1-85cd-f94b956ae908
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: Successfully assigned bookinfo/reviews-v3-564544b4d6-czsdz to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: reviews-v3-564544b4d6-czsdz.18528375f8a38a1d
+    namespace: bookinfo
+    resourceVersion: "1370"
+    uid: 2e6cfb69-d42b-4b90-a0e0-cb75d2b7dc75
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:08Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: reviews-v3-564544b4d6-czsdz
+    namespace: bookinfo
+    resourceVersion: "1367"
+    uid: fe8daf0f-625b-47a1-85cd-f94b956ae908
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:08Z"
+  message: Pulling image "gcr.io/istio-release/proxyv2:1.26.2"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:08Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:08Z"
+    name: reviews-v3-564544b4d6-czsdz.1852837611e8aa7d
+    namespace: bookinfo
+    resourceVersion: "1423"
+    uid: 8f8736f0-6058-4460-b1e0-ab740ec03548
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:12Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: reviews-v3-564544b4d6-czsdz
+    namespace: bookinfo
+    resourceVersion: "1367"
+    uid: fe8daf0f-625b-47a1-85cd-f94b956ae908
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:12Z"
+  message: 'Successfully pulled image "gcr.io/istio-release/proxyv2:1.26.2" in 318ms
+    (4.553s including waiting). Image size: 92614371 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:12Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:12Z"
+    name: reviews-v3-564544b4d6-czsdz.18528377214e2819
+    namespace: bookinfo
+    resourceVersion: "1487"
+    uid: d648e8f3-95ab-46eb-9a44-654f31863d4a
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:12Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: reviews-v3-564544b4d6-czsdz
+    namespace: bookinfo
+    resourceVersion: "1367"
+    uid: fe8daf0f-625b-47a1-85cd-f94b956ae908
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:12Z"
+  message: 'Created container: istio-init'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:12Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:12Z"
+    name: reviews-v3-564544b4d6-czsdz.1852837724521d06
+    namespace: bookinfo
+    resourceVersion: "1489"
+    uid: 047f49e0-9155-47cd-b959-98ff46e035ee
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:12Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: reviews-v3-564544b4d6-czsdz
+    namespace: bookinfo
+    resourceVersion: "1367"
+    uid: fe8daf0f-625b-47a1-85cd-f94b956ae908
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:12Z"
+  message: Started container istio-init
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:12Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:12Z"
+    name: reviews-v3-564544b4d6-czsdz.185283772c8bbb89
+    namespace: bookinfo
+    resourceVersion: "1490"
+    uid: 6113a515-bc57-490a-a0d3-fa4a58832cc5
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:13Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{reviews}
+    kind: Pod
+    name: reviews-v3-564544b4d6-czsdz
+    namespace: bookinfo
+    resourceVersion: "1367"
+    uid: fe8daf0f-625b-47a1-85cd-f94b956ae908
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:13Z"
+  message: Pulling image "docker.io/istio/examples-bookinfo-reviews-v3:1.20.3"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:13Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:13Z"
+    name: reviews-v3-564544b4d6-czsdz.1852837757ebcfb0
+    namespace: bookinfo
+    resourceVersion: "1498"
+    uid: 2246e911-53f1-4d9f-be8d-7daa37cede71
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:29Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{reviews}
+    kind: Pod
+    name: reviews-v3-564544b4d6-czsdz
+    namespace: bookinfo
+    resourceVersion: "1367"
+    uid: fe8daf0f-625b-47a1-85cd-f94b956ae908
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:29Z"
+  message: 'Successfully pulled image "docker.io/istio/examples-bookinfo-reviews-v3:1.20.3"
+    in 697ms (16.181s including waiting). Image size: 167166463 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:29Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:29Z"
+    name: reviews-v3-564544b4d6-czsdz.1852837b1c6c1ff3
+    namespace: bookinfo
+    resourceVersion: "1605"
+    uid: 46e725fd-69e3-4411-86da-04680d025e7b
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:29Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{reviews}
+    kind: Pod
+    name: reviews-v3-564544b4d6-czsdz
+    namespace: bookinfo
+    resourceVersion: "1367"
+    uid: fe8daf0f-625b-47a1-85cd-f94b956ae908
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:29Z"
+  message: 'Created container: reviews'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:29Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:29Z"
+    name: reviews-v3-564544b4d6-czsdz.1852837b1d17ae3e
+    namespace: bookinfo
+    resourceVersion: "1606"
+    uid: b7a10bcb-fcda-4ad6-a04b-05c57382c018
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:29Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{reviews}
+    kind: Pod
+    name: reviews-v3-564544b4d6-czsdz
+    namespace: bookinfo
+    resourceVersion: "1367"
+    uid: fe8daf0f-625b-47a1-85cd-f94b956ae908
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:29Z"
+  message: Started container reviews
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:29Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:29Z"
+    name: reviews-v3-564544b4d6-czsdz.1852837b23271d49
+    namespace: bookinfo
+    resourceVersion: "1607"
+    uid: 61530fe0-31af-41ab-b239-801d7134e8b3
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:29Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: reviews-v3-564544b4d6-czsdz
+    namespace: bookinfo
+    resourceVersion: "1367"
+    uid: fe8daf0f-625b-47a1-85cd-f94b956ae908
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:29Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:29Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:29Z"
+    name: reviews-v3-564544b4d6-czsdz.1852837b232e308b
+    namespace: bookinfo
+    resourceVersion: "1608"
+    uid: 51a86d55-8700-4e62-bbb1-f28ee2d8925a
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:29Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: reviews-v3-564544b4d6-czsdz
+    namespace: bookinfo
+    resourceVersion: "1367"
+    uid: fe8daf0f-625b-47a1-85cd-f94b956ae908
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:29Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:29Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:29Z"
+    name: reviews-v3-564544b4d6-czsdz.1852837b241d6a6a
+    namespace: bookinfo
+    resourceVersion: "1609"
+    uid: f85592f2-f0b8-4774-a162-b5f47b73c862
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:30Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: reviews-v3-564544b4d6-czsdz
+    namespace: bookinfo
+    resourceVersion: "1367"
+    uid: fe8daf0f-625b-47a1-85cd-f94b956ae908
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:30Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:30Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:30Z"
+    name: reviews-v3-564544b4d6-czsdz.1852837b2e88cb19
+    namespace: bookinfo
+    resourceVersion: "1611"
+    uid: 485d4731-4465-4a07-9861-f93f6b7d37b8
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: reviews-v3-564544b4d6
+    namespace: bookinfo
+    resourceVersion: "1343"
+    uid: 0b4cb6c0-7c9c-4001-be57-3a9495d73e51
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: 'Created pod: reviews-v3-564544b4d6-czsdz'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: reviews-v3-564544b4d6.18528375f85be59a
+    namespace: bookinfo
+    resourceVersion: "1366"
+    uid: 74e6a805-9449-4e05-8716-dff6e0a0f6c3
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:07Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reviews-v3
+    namespace: bookinfo
+    resourceVersion: "1339"
+    uid: 734b81e7-9eb4-4c68-9fe8-518a4dcd9240
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:07Z"
+  message: Scaled up replica set reviews-v3-564544b4d6 from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: reviews-v3.18528375f76df6f6
+    namespace: bookinfo
+    resourceVersion: "1347"
+    uid: 764fd50d-b9b3-4faa-bd74-634a45e8a14a
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+kind: EventList
+metadata:
+  resourceVersion: "5129"

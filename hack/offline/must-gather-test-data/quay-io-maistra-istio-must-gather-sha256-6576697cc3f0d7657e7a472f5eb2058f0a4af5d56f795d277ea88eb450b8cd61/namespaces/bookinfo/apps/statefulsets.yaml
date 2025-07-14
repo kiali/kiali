@@ -1,0 +1,6 @@
+---
+apiVersion: apps/v1
+items: []
+kind: StatefulSetList
+metadata:
+  resourceVersion: "5129"

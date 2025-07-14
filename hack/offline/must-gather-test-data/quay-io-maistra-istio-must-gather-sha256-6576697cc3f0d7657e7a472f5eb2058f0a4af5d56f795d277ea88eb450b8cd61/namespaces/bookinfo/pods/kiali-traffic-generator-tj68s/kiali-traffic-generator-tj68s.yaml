@@ -1,0 +1,254 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    sidecar.istio.io/inject: "false"
+  creationTimestamp: "2025-07-15T19:29:36Z"
+  generateName: kiali-traffic-generator-
+  generation: 1
+  labels:
+    app: kiali-traffic-generator
+    istio.io/dataplane-mode: none
+    kiali-test: traffic-generator
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:sidecar.istio.io/inject: {}
+        f:generateName: {}
+        f:labels:
+          .: {}
+          f:app: {}
+          f:istio.io/dataplane-mode: {}
+          f:kiali-test: {}
+        f:ownerReferences:
+          .: {}
+          k:{"uid":"1b14b8fb-07d2-4db2-b5d4-a7654c464b21"}: {}
+      f:spec:
+        f:containers:
+          k:{"name":"kiali-traffic-generator"}:
+            .: {}
+            f:env:
+              .: {}
+              k:{"name":"DURATION"}:
+                .: {}
+                f:name: {}
+                f:valueFrom:
+                  .: {}
+                  f:configMapKeyRef: {}
+              k:{"name":"RATE"}:
+                .: {}
+                f:name: {}
+                f:valueFrom:
+                  .: {}
+                  f:configMapKeyRef: {}
+              k:{"name":"ROUTE"}:
+                .: {}
+                f:name: {}
+                f:valueFrom:
+                  .: {}
+                  f:configMapKeyRef: {}
+              k:{"name":"SILENT"}:
+                .: {}
+                f:name: {}
+                f:valueFrom:
+                  .: {}
+                  f:configMapKeyRef: {}
+            f:image: {}
+            f:imagePullPolicy: {}
+            f:name: {}
+            f:resources: {}
+            f:terminationMessagePath: {}
+            f:terminationMessagePolicy: {}
+        f:dnsPolicy: {}
+        f:enableServiceLinks: {}
+        f:restartPolicy: {}
+        f:schedulerName: {}
+        f:securityContext:
+          .: {}
+          f:runAsNonRoot: {}
+          f:seccompProfile:
+            .: {}
+            f:type: {}
+        f:terminationGracePeriodSeconds: {}
+    manager: kube-controller-manager
+    operation: Update
+    time: "2025-07-15T19:29:36Z"
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:status:
+        f:conditions:
+          k:{"type":"ContainersReady"}:
+            .: {}
+            f:lastProbeTime: {}
+            f:lastTransitionTime: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"Initialized"}:
+            .: {}
+            f:lastProbeTime: {}
+            f:lastTransitionTime: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"PodReadyToStartContainers"}:
+            .: {}
+            f:lastProbeTime: {}
+            f:lastTransitionTime: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"Ready"}:
+            .: {}
+            f:lastProbeTime: {}
+            f:lastTransitionTime: {}
+            f:status: {}
+            f:type: {}
+        f:containerStatuses: {}
+        f:hostIP: {}
+        f:hostIPs: {}
+        f:phase: {}
+        f:podIP: {}
+        f:podIPs:
+          .: {}
+          k:{"ip":"10.244.1.16"}:
+            .: {}
+            f:ip: {}
+        f:startTime: {}
+    manager: kubelet
+    operation: Update
+    subresource: status
+    time: "2025-07-15T19:29:41Z"
+  name: kiali-traffic-generator-tj68s
+  namespace: bookinfo
+  ownerReferences:
+  - apiVersion: apps/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ReplicaSet
+    name: kiali-traffic-generator
+    uid: 1b14b8fb-07d2-4db2-b5d4-a7654c464b21
+  resourceVersion: "2285"
+  uid: 22462605-0990-4ce2-ad19-59b4dd415a1f
+spec:
+  containers:
+  - env:
+    - name: DURATION
+      valueFrom:
+        configMapKeyRef:
+          key: duration
+          name: traffic-generator-config
+    - name: ROUTE
+      valueFrom:
+        configMapKeyRef:
+          key: route
+          name: traffic-generator-config
+    - name: RATE
+      valueFrom:
+        configMapKeyRef:
+          key: rate
+          name: traffic-generator-config
+    - name: SILENT
+      valueFrom:
+        configMapKeyRef:
+          key: silent
+          name: traffic-generator-config
+    image: quay.io/kiali/kiali-test-mesh-traffic-generator:latest
+    imagePullPolicy: IfNotPresent
+    name: kiali-traffic-generator
+    resources: {}
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-rg29l
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  nodeName: ci-worker
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  serviceAccount: default
+  serviceAccountName: default
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - name: kube-api-access-rg29l
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 3607
+          path: token
+      - configMap:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          name: kube-root-ca.crt
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+            path: namespace
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2025-07-15T19:29:41Z"
+    status: "True"
+    type: PodReadyToStartContainers
+  - lastProbeTime: null
+    lastTransitionTime: "2025-07-15T19:29:36Z"
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2025-07-15T19:29:41Z"
+    status: "True"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2025-07-15T19:29:41Z"
+    status: "True"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2025-07-15T19:29:36Z"
+    status: "True"
+    type: PodScheduled
+  containerStatuses:
+  - containerID: containerd://8c5debf181d32588924bf9463e92563958e9b4e8f441a149e5887114b76a33b5
+    image: quay.io/kiali/kiali-test-mesh-traffic-generator:latest
+    imageID: quay.io/kiali/kiali-test-mesh-traffic-generator@sha256:28212a2573e090e8f76ca9d1f1f9309f48a83f47be31c0073aaf539ff6777240
+    lastState: {}
+    name: kiali-traffic-generator
+    ready: true
+    resources: {}
+    restartCount: 0
+    started: true
+    state:
+      running:
+        startedAt: "2025-07-15T19:29:41Z"
+  hostIP: 172.18.0.3
+  hostIPs:
+  - ip: 172.18.0.3
+  phase: Running
+  podIP: 10.244.1.16
+  podIPs:
+  - ip: 10.244.1.16
+  qosClass: BestEffort
+  startTime: "2025-07-15T19:29:36Z"

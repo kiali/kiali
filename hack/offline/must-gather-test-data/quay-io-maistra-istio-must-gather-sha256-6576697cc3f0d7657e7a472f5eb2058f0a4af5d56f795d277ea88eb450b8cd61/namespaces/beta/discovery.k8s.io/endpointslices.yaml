@@ -1,0 +1,326 @@
+---
+apiVersion: discovery.k8s.io/v1
+items:
+- addressType: IPv4
+  apiVersion: discovery.k8s.io/v1
+  endpoints:
+  - addresses:
+    - 10.244.1.34
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: v-server-54b77ffd4f-rdg2v
+      namespace: beta
+      uid: 2f490541-acb7-45e6-8ac5-cee5f6760155
+  kind: EndpointSlice
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:53Z"
+    creationTimestamp: "2025-07-15T19:29:37Z"
+    generateName: v-server-
+    generation: 3
+    labels:
+      app: v-server
+      endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
+      kubernetes.io/service-name: v-server
+    managedFields:
+    - apiVersion: discovery.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:addressType: {}
+        f:endpoints: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpointslice.kubernetes.io/managed-by: {}
+            f:kubernetes.io/service-name: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"41e32bf9-6728-4901-accf-f38eb7c014c2"}: {}
+        f:ports: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:53Z"
+    name: v-server-pk65m
+    namespace: beta
+    ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Service
+      name: v-server
+      uid: 41e32bf9-6728-4901-accf-f38eb7c014c2
+    resourceVersion: "2828"
+    uid: d7678574-e553-4888-b0ba-688fdf248f24
+  ports:
+  - name: http
+    port: 8888
+    protocol: TCP
+- addressType: IPv4
+  apiVersion: discovery.k8s.io/v1
+  endpoints:
+  - addresses:
+    - 10.244.1.35
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: w-server-8667cdbcf7-mbqvb
+      namespace: beta
+      uid: 57c7395e-7658-4586-8aa2-89421b9ccc5c
+  kind: EndpointSlice
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:53Z"
+    creationTimestamp: "2025-07-15T19:29:37Z"
+    generateName: w-server-
+    generation: 3
+    labels:
+      app: w-server
+      endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
+      kubernetes.io/service-name: w-server
+    managedFields:
+    - apiVersion: discovery.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:addressType: {}
+        f:endpoints: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpointslice.kubernetes.io/managed-by: {}
+            f:kubernetes.io/service-name: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"ea104a28-1773-4b18-adff-c129e1e7249a"}: {}
+        f:ports: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:53Z"
+    name: w-server-dft42
+    namespace: beta
+    ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Service
+      name: w-server
+      uid: ea104a28-1773-4b18-adff-c129e1e7249a
+    resourceVersion: "2814"
+    uid: ca2288ba-b7cc-49ae-b235-d341d4b8e7e6
+  ports:
+  - name: http
+    port: 8888
+    protocol: TCP
+- addressType: IPv4
+  apiVersion: discovery.k8s.io/v1
+  endpoints:
+  - addresses:
+    - 10.244.1.36
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: x-server-6d8987d7c7-lcljz
+      namespace: beta
+      uid: 005f1bb8-7fb3-4aec-82ce-8ba6128d1409
+  kind: EndpointSlice
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:53Z"
+    creationTimestamp: "2025-07-15T19:29:37Z"
+    generateName: x-server-
+    generation: 3
+    labels:
+      app: x-server
+      endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
+      kubernetes.io/service-name: x-server
+    managedFields:
+    - apiVersion: discovery.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:addressType: {}
+        f:endpoints: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpointslice.kubernetes.io/managed-by: {}
+            f:kubernetes.io/service-name: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"8bb2e777-f074-40b4-b7cd-2d937900f146"}: {}
+        f:ports: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:53Z"
+    name: x-server-gbx62
+    namespace: beta
+    ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Service
+      name: x-server
+      uid: 8bb2e777-f074-40b4-b7cd-2d937900f146
+    resourceVersion: "2821"
+    uid: ee023c95-cda1-4325-856f-c5e0335643d0
+  ports:
+  - name: http
+    port: 8888
+    protocol: TCP
+- addressType: IPv4
+  apiVersion: discovery.k8s.io/v1
+  endpoints:
+  - addresses:
+    - 10.244.1.37
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: y-server-5b556546fd-ssp2m
+      namespace: beta
+      uid: eecd22ca-ac74-486d-82a9-1b347d2a9b3f
+  kind: EndpointSlice
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:54Z"
+    creationTimestamp: "2025-07-15T19:29:37Z"
+    generateName: y-server-
+    generation: 3
+    labels:
+      app: y-server
+      endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
+      kubernetes.io/service-name: y-server
+    managedFields:
+    - apiVersion: discovery.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:addressType: {}
+        f:endpoints: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpointslice.kubernetes.io/managed-by: {}
+            f:kubernetes.io/service-name: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"ecb62cb6-a855-4a62-a582-1e92201dff8e"}: {}
+        f:ports: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: y-server-jd292
+    namespace: beta
+    ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Service
+      name: y-server
+      uid: ecb62cb6-a855-4a62-a582-1e92201dff8e
+    resourceVersion: "2860"
+    uid: a7a1dc28-a6b3-49b6-887a-e8c3dcd5fab7
+  ports:
+  - name: http
+    port: 8888
+    protocol: TCP
+- addressType: IPv4
+  apiVersion: discovery.k8s.io/v1
+  endpoints:
+  - addresses:
+    - 10.244.1.38
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: z-server-5f94f449c5-qwb7f
+      namespace: beta
+      uid: 5d2e193a-5a27-4f22-a72e-f0101c1854da
+  kind: EndpointSlice
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:53Z"
+    creationTimestamp: "2025-07-15T19:29:37Z"
+    generateName: z-server-
+    generation: 3
+    labels:
+      app: z-server
+      endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
+      kubernetes.io/service-name: z-server
+    managedFields:
+    - apiVersion: discovery.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:addressType: {}
+        f:endpoints: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpointslice.kubernetes.io/managed-by: {}
+            f:kubernetes.io/service-name: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"386c7eed-5934-4b54-aeb3-5e025f7ca9b4"}: {}
+        f:ports: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:53Z"
+    name: z-server-cd5cx
+    namespace: beta
+    ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Service
+      name: z-server
+      uid: 386c7eed-5934-4b54-aeb3-5e025f7ca9b4
+    resourceVersion: "2837"
+    uid: f3633620-edd9-4eea-8865-26226e180cb7
+  ports:
+  - name: http
+    port: 8888
+    protocol: TCP
+kind: EndpointSliceList
+metadata:
+  resourceVersion: "5099"

@@ -1,0 +1,245 @@
+---
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Endpoints
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:14Z"
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    labels:
+      endpoints.kubernetes.io/managed-by: endpoint-controller
+      gateway.istio.io/managed: istio.io-gateway-controller
+      gateway.networking.k8s.io/gateway-name: bookinfo-gateway
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:labels:
+            .: {}
+            f:endpoints.kubernetes.io/managed-by: {}
+            f:gateway.istio.io/managed: {}
+            f:gateway.networking.k8s.io/gateway-name: {}
+        f:subsets: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:14Z"
+    name: bookinfo-gateway-istio
+    namespace: bookinfo
+    resourceVersion: "1521"
+    uid: 47181bae-4ae7-45f1-922e-2a5254353194
+  subsets:
+  - addresses:
+    - ip: 10.244.1.15
+      nodeName: ci-worker
+      targetRef:
+        kind: Pod
+        name: bookinfo-gateway-istio-5d8d9854cc-5zkrd
+        namespace: bookinfo
+        uid: 3dfe13c1-c017-4ad4-822d-20f0ff444249
+    ports:
+    - appProtocol: tcp
+      name: status-port
+      port: 15021
+      protocol: TCP
+    - appProtocol: http
+      name: http
+      port: 80
+      protocol: TCP
+- apiVersion: v1
+  kind: Endpoints
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:26Z"
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    labels:
+      app: details
+      endpoints.kubernetes.io/managed-by: endpoint-controller
+      service: details
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpoints.kubernetes.io/managed-by: {}
+            f:service: {}
+        f:subsets: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:26Z"
+    name: details
+    namespace: bookinfo
+    resourceVersion: "1586"
+    uid: 9c2fd512-8192-4550-b0c0-54845ce093ad
+  subsets:
+  - addresses:
+    - ip: 10.244.1.9
+      nodeName: ci-worker
+      targetRef:
+        kind: Pod
+        name: details-v1-766844796b-r6b8z
+        namespace: bookinfo
+        uid: fc06ee68-ae00-471f-8198-36aabd24d027
+    ports:
+    - name: http
+      port: 9080
+      protocol: TCP
+- apiVersion: v1
+  kind: Endpoints
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:35Z"
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    labels:
+      app: productpage
+      endpoints.kubernetes.io/managed-by: endpoint-controller
+      service: productpage
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpoints.kubernetes.io/managed-by: {}
+            f:service: {}
+        f:subsets: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:35Z"
+    name: productpage
+    namespace: bookinfo
+    resourceVersion: "1661"
+    uid: 6c9308b5-e0ce-4c6d-acf9-99c731261298
+  subsets:
+  - addresses:
+    - ip: 10.244.1.14
+      nodeName: ci-worker
+      targetRef:
+        kind: Pod
+        name: productpage-v1-54bb874995-7t6fg
+        namespace: bookinfo
+        uid: 4d93c869-1bd3-4972-b2f1-b6609ce75abc
+    ports:
+    - name: http
+      port: 9080
+      protocol: TCP
+- apiVersion: v1
+  kind: Endpoints
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:30Z"
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    labels:
+      app: ratings
+      endpoints.kubernetes.io/managed-by: endpoint-controller
+      service: ratings
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpoints.kubernetes.io/managed-by: {}
+            f:service: {}
+        f:subsets: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:30Z"
+    name: ratings
+    namespace: bookinfo
+    resourceVersion: "1618"
+    uid: bdc3bd54-19f8-44a7-a39a-0e8a1d5d4b69
+  subsets:
+  - addresses:
+    - ip: 10.244.1.10
+      nodeName: ci-worker
+      targetRef:
+        kind: Pod
+        name: ratings-v1-5dc79b6bcd-pncl2
+        namespace: bookinfo
+        uid: 238431f3-bb96-4423-8749-5052f5b3c2bb
+    ports:
+    - name: http
+      port: 9080
+      protocol: TCP
+- apiVersion: v1
+  kind: Endpoints
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:32Z"
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    labels:
+      app: reviews
+      endpoints.kubernetes.io/managed-by: endpoint-controller
+      service: reviews
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpoints.kubernetes.io/managed-by: {}
+            f:service: {}
+        f:subsets: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:32Z"
+    name: reviews
+    namespace: bookinfo
+    resourceVersion: "1645"
+    uid: 0c28cc21-9304-4cf4-95a8-312301e3a0f1
+  subsets:
+  - addresses:
+    - ip: 10.244.1.11
+      nodeName: ci-worker
+      targetRef:
+        kind: Pod
+        name: reviews-v1-598b896c9d-cxrv2
+        namespace: bookinfo
+        uid: 77a15ddb-21d9-40e4-a280-6296b00f31f4
+    - ip: 10.244.1.12
+      nodeName: ci-worker
+      targetRef:
+        kind: Pod
+        name: reviews-v2-556d6457d-4dddd
+        namespace: bookinfo
+        uid: 68d898d1-63d3-4f1d-9938-398f2a7c0f62
+    - ip: 10.244.1.13
+      nodeName: ci-worker
+      targetRef:
+        kind: Pod
+        name: reviews-v3-564544b4d6-czsdz
+        namespace: bookinfo
+        uid: fe8daf0f-625b-47a1-85cd-f94b956ae908
+    ports:
+    - name: http
+      port: 9080
+      protocol: TCP
+kind: EndpointsList
+metadata:
+  resourceVersion: "5129"

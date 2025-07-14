@@ -1,0 +1,155 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    meta.helm.sh/release-name: default-istiod
+    meta.helm.sh/release-namespace: istio-system
+  creationTimestamp: "2025-07-15T19:28:11Z"
+  labels:
+    app: istio-reader
+    app.kubernetes.io/instance: default-istiod
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: istio-reader
+    app.kubernetes.io/part-of: istio
+    app.kubernetes.io/version: 1.26.2
+    helm.sh/chart: istiod-1.26.2
+    managed-by: sail-operator
+    release: default-istiod
+  managedFields:
+  - apiVersion: rbac.authorization.k8s.io/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:meta.helm.sh/release-name: {}
+          f:meta.helm.sh/release-namespace: {}
+        f:labels:
+          .: {}
+          f:app: {}
+          f:app.kubernetes.io/instance: {}
+          f:app.kubernetes.io/managed-by: {}
+          f:app.kubernetes.io/name: {}
+          f:app.kubernetes.io/part-of: {}
+          f:app.kubernetes.io/version: {}
+          f:helm.sh/chart: {}
+          f:managed-by: {}
+          f:release: {}
+        f:ownerReferences:
+          .: {}
+          k:{"uid":"7dcc2e5a-4806-4fbb-b8c7-d8ff38160463"}: {}
+      f:rules: {}
+    manager: sail-operator
+    operation: Update
+    time: "2025-07-15T19:28:11Z"
+  name: istio-reader-clusterrole-istio-system
+  ownerReferences:
+  - apiVersion: sailoperator.io/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: IstioRevision
+    name: default
+    uid: 7dcc2e5a-4806-4fbb-b8c7-d8ff38160463
+  resourceVersion: "858"
+  uid: 5711546d-161c-4aa0-a50d-354472100f0a
+rules:
+- apiGroups:
+  - config.istio.io
+  - security.istio.io
+  - networking.istio.io
+  - authentication.istio.io
+  - rbac.istio.io
+  - telemetry.istio.io
+  - extensions.istio.io
+  resources:
+  - '*'
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  - pods
+  - services
+  - nodes
+  - replicationcontrollers
+  - namespaces
+  - secrets
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - networking.istio.io
+  resources:
+  - workloadentries
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - networking.x-k8s.io
+  - gateway.networking.k8s.io
+  resources:
+  - gateways
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - discovery.k8s.io
+  resources:
+  - endpointslices
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - multicluster.x-k8s.io
+  resources:
+  - serviceexports
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - delete
+- apiGroups:
+  - multicluster.x-k8s.io
+  resources:
+  - serviceimports
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - replicasets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create

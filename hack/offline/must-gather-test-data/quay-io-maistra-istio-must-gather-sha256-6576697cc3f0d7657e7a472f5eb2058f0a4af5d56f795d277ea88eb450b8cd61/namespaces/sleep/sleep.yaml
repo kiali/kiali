@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  creationTimestamp: "2025-07-15T19:29:38Z"
+  labels:
+    istio-injection: enabled
+    kubernetes.io/metadata.name: sleep
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:labels:
+          .: {}
+          f:kubernetes.io/metadata.name: {}
+    manager: kubectl-create
+    operation: Update
+    time: "2025-07-15T19:29:38Z"
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:labels:
+          f:istio-injection: {}
+    manager: kubectl-label
+    operation: Update
+    time: "2025-07-15T19:29:38Z"
+  name: sleep
+  resourceVersion: "2018"
+  uid: 14da4dec-9784-4806-944e-6d79c98f03c8
+spec:
+  finalizers:
+  - kubernetes
+status:
+  phase: Active

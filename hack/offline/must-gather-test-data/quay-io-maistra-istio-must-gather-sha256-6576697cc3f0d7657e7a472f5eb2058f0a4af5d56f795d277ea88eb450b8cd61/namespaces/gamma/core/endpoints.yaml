@@ -1,0 +1,216 @@
+---
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Endpoints
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:56Z"
+    creationTimestamp: "2025-07-15T19:29:38Z"
+    labels:
+      app: v-server
+      endpoints.kubernetes.io/managed-by: endpoint-controller
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpoints.kubernetes.io/managed-by: {}
+        f:subsets: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:56Z"
+    name: v-server
+    namespace: gamma
+    resourceVersion: "2930"
+    uid: 9168c9cc-edaa-4895-8d6a-8802c141a5cd
+  subsets:
+  - addresses:
+    - ip: 10.244.1.45
+      nodeName: ci-worker
+      targetRef:
+        kind: Pod
+        name: v-server-6494f87f47-q7s4m
+        namespace: gamma
+        uid: ef176cee-67ef-48e4-bd13-ada115ab0fe0
+    ports:
+    - name: http
+      port: 8899
+      protocol: TCP
+- apiVersion: v1
+  kind: Endpoints
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:54Z"
+    creationTimestamp: "2025-07-15T19:29:38Z"
+    labels:
+      app: w-server
+      endpoints.kubernetes.io/managed-by: endpoint-controller
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpoints.kubernetes.io/managed-by: {}
+        f:subsets: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: w-server
+    namespace: gamma
+    resourceVersion: "2866"
+    uid: e50c0b12-4ed6-45ba-8f92-b716315e23ab
+  subsets:
+  - addresses:
+    - ip: 10.244.1.46
+      nodeName: ci-worker
+      targetRef:
+        kind: Pod
+        name: w-server-57c9bbf54c-hppwc
+        namespace: gamma
+        uid: f5f46b05-d4fb-448d-b98c-947c3a4b127d
+    ports:
+    - name: http
+      port: 8899
+      protocol: TCP
+- apiVersion: v1
+  kind: Endpoints
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:55Z"
+    creationTimestamp: "2025-07-15T19:29:38Z"
+    labels:
+      app: x-server
+      endpoints.kubernetes.io/managed-by: endpoint-controller
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpoints.kubernetes.io/managed-by: {}
+        f:subsets: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:55Z"
+    name: x-server
+    namespace: gamma
+    resourceVersion: "2908"
+    uid: d747939f-fb80-4d2a-9138-8ca7dbd26249
+  subsets:
+  - addresses:
+    - ip: 10.244.1.47
+      nodeName: ci-worker
+      targetRef:
+        kind: Pod
+        name: x-server-64589bc895-qpzhg
+        namespace: gamma
+        uid: 0ced9035-0858-437d-9fd8-0ce08647796f
+    ports:
+    - name: http
+      port: 8899
+      protocol: TCP
+- apiVersion: v1
+  kind: Endpoints
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:56Z"
+    creationTimestamp: "2025-07-15T19:29:38Z"
+    labels:
+      app: y-server
+      endpoints.kubernetes.io/managed-by: endpoint-controller
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpoints.kubernetes.io/managed-by: {}
+        f:subsets: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:56Z"
+    name: y-server
+    namespace: gamma
+    resourceVersion: "2936"
+    uid: 36779cae-d3fb-499a-8a56-415c180316b5
+  subsets:
+  - addresses:
+    - ip: 10.244.1.48
+      nodeName: ci-worker
+      targetRef:
+        kind: Pod
+        name: y-server-7c67cd5dc6-f5d7s
+        namespace: gamma
+        uid: 97aa61a1-3779-4596-964f-2f8740dcb12b
+    ports:
+    - name: http
+      port: 8899
+      protocol: TCP
+- apiVersion: v1
+  kind: Endpoints
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:55Z"
+    creationTimestamp: "2025-07-15T19:29:38Z"
+    labels:
+      app: z-server
+      endpoints.kubernetes.io/managed-by: endpoint-controller
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpoints.kubernetes.io/managed-by: {}
+        f:subsets: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:55Z"
+    name: z-server
+    namespace: gamma
+    resourceVersion: "2902"
+    uid: 921feec8-ad39-43dd-bca2-4791f258102a
+  subsets:
+  - addresses:
+    - ip: 10.244.1.49
+      nodeName: ci-worker
+      targetRef:
+        kind: Pod
+        name: z-server-7f6c76b77c-ttxwl
+        namespace: gamma
+        uid: 7808aba9-4204-4516-b9aa-a1dd4203ff80
+    ports:
+    - name: http
+      port: 8899
+      protocol: TCP
+kind: EndpointsList
+metadata:
+  resourceVersion: "5153"

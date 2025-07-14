@@ -27,7 +27,7 @@ func TestNoHomeClusterReturnsError(t *testing.T) {
 
 	clients := map[string]kubernetes.ClientInterface{"nothomecluster": kubetest.NewFakeK8sClient()}
 	readers := map[string]ctrlclient.Reader{"nothomecluster": kubetest.NewFakeK8sClient()}
-	_, err := cache.NewKialiCache(clients, readers, *conf)
+	_, err := cache.NewKialiCache(t.Context(), clients, readers, *conf)
 	require.Error(err, "no home cluster should return an error")
 }
 
@@ -50,7 +50,7 @@ func TestKubeCacheCreatedPerClient(t *testing.T) {
 		"cluster2":                        client2,
 	}
 
-	kialiCache, _ := cache.NewKialiCache(saClients, readers, *conf)
+	kialiCache, _ := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 
 	_, err := kialiCache.GetKubeCache(conf.KubernetesConfig.ClusterName)
 	require.NoError(err)
@@ -286,7 +286,7 @@ func TestValidationsSetByConstructor(t *testing.T) {
 
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
 	readers := map[string]ctrlclient.Reader{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
-	cache, err := cache.NewKialiCache(clients, readers, *conf)
+	cache, err := cache.NewKialiCache(t.Context(), clients, readers, *conf)
 	require.NoError(err)
 
 	require.NotNil(cache.Validations())
@@ -298,7 +298,7 @@ func TestZtunnelDump(t *testing.T) {
 
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
 	readers := map[string]ctrlclient.Reader{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
-	cache, err := cache.NewKialiCache(clients, readers, *conf)
+	cache, err := cache.NewKialiCache(t.Context(), clients, readers, *conf)
 	require.NoError(err)
 
 	initData := cache.GetZtunnelDump("cluster-default", "istio-system", "ztunnel-7hml8")

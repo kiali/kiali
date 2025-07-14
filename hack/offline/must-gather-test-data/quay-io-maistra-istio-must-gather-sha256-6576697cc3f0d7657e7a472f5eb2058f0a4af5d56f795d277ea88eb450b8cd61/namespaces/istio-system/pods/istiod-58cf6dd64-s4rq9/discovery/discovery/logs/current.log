@@ -1,0 +1,1287 @@
+2025-07-15T19:28:16.905796637Z 2025-07-15T19:28:16.905719Z	info	FLAG: --caCertFile=""
+2025-07-15T19:28:16.905835748Z 2025-07-15T19:28:16.905739Z	info	FLAG: --clusterAliases="[]"
+2025-07-15T19:28:16.905838138Z 2025-07-15T19:28:16.905741Z	info	FLAG: --clusterID="cluster-default"
+2025-07-15T19:28:16.905840188Z 2025-07-15T19:28:16.905743Z	info	FLAG: --clusterRegistriesNamespace="istio-system"
+2025-07-15T19:28:16.905841728Z 2025-07-15T19:28:16.905745Z	info	FLAG: --cniNamespace="istio-system"
+2025-07-15T19:28:16.905843238Z 2025-07-15T19:28:16.905746Z	info	FLAG: --configDir=""
+2025-07-15T19:28:16.905844748Z 2025-07-15T19:28:16.905748Z	info	FLAG: --ctrlz_address="localhost"
+2025-07-15T19:28:16.905846258Z 2025-07-15T19:28:16.905750Z	info	FLAG: --ctrlz_port="9876"
+2025-07-15T19:28:16.905847758Z 2025-07-15T19:28:16.905752Z	info	FLAG: --domain="cluster.local"
+2025-07-15T19:28:16.905849308Z 2025-07-15T19:28:16.905753Z	info	FLAG: --grpcAddr=":15010"
+2025-07-15T19:28:16.905850778Z 2025-07-15T19:28:16.905756Z	info	FLAG: --help="false"
+2025-07-15T19:28:16.905852298Z 2025-07-15T19:28:16.905757Z	info	FLAG: --httpAddr=":8080"
+2025-07-15T19:28:16.905853788Z 2025-07-15T19:28:16.905759Z	info	FLAG: --httpsAddr=":15017"
+2025-07-15T19:28:16.905855278Z 2025-07-15T19:28:16.905761Z	info	FLAG: --keepaliveInterval="30s"
+2025-07-15T19:28:16.905857108Z 2025-07-15T19:28:16.905763Z	info	FLAG: --keepaliveMaxServerConnectionAge="30m0s"
+2025-07-15T19:28:16.905859028Z 2025-07-15T19:28:16.905766Z	info	FLAG: --keepaliveTimeout="10s"
+2025-07-15T19:28:16.905861158Z 2025-07-15T19:28:16.905768Z	info	FLAG: --kubeconfig=""
+2025-07-15T19:28:16.905863268Z 2025-07-15T19:28:16.905770Z	info	FLAG: --kubernetesApiBurst="160"
+2025-07-15T19:28:16.905877378Z 2025-07-15T19:28:16.905774Z	info	FLAG: --kubernetesApiQPS="80"
+2025-07-15T19:28:16.905890398Z 2025-07-15T19:28:16.905776Z	info	FLAG: --log_as_json="false"
+2025-07-15T19:28:16.905892308Z 2025-07-15T19:28:16.905779Z	info	FLAG: --log_caller=""
+2025-07-15T19:28:16.905894908Z 2025-07-15T19:28:16.905781Z	info	FLAG: --log_output_level="default:info"
+2025-07-15T19:28:16.905896618Z 2025-07-15T19:28:16.905784Z	info	FLAG: --log_stacktrace_level="default:none"
+2025-07-15T19:28:16.905898248Z 2025-07-15T19:28:16.905793Z	info	FLAG: --log_target="[stdout]"
+2025-07-15T19:28:16.905899878Z 2025-07-15T19:28:16.905796Z	info	FLAG: --meshConfig="./etc/istio/config/mesh"
+2025-07-15T19:28:16.905901508Z 2025-07-15T19:28:16.905798Z	info	FLAG: --monitoringAddr=":15014"
+2025-07-15T19:28:16.905903188Z 2025-07-15T19:28:16.905800Z	info	FLAG: --namespace="istio-system"
+2025-07-15T19:28:16.905905378Z 2025-07-15T19:28:16.905802Z	info	FLAG: --networksConfig="./etc/istio/config/meshNetworks"
+2025-07-15T19:28:16.905908518Z 2025-07-15T19:28:16.905804Z	info	FLAG: --profile="true"
+2025-07-15T19:28:16.905910108Z 2025-07-15T19:28:16.905809Z	info	FLAG: --registries="[Kubernetes]"
+2025-07-15T19:28:16.905911788Z 2025-07-15T19:28:16.905812Z	info	FLAG: --secureGRPCAddr=":15012"
+2025-07-15T19:28:16.905913368Z 2025-07-15T19:28:16.905813Z	info	FLAG: --shutdownDuration="10s"
+2025-07-15T19:28:16.905914908Z 2025-07-15T19:28:16.905819Z	info	FLAG: --tls-cipher-suites="[]"
+2025-07-15T19:28:16.905916458Z 2025-07-15T19:28:16.905821Z	info	FLAG: --tlsCertFile=""
+2025-07-15T19:28:16.905917978Z 2025-07-15T19:28:16.905823Z	info	FLAG: --tlsKeyFile=""
+2025-07-15T19:28:16.905919548Z 2025-07-15T19:28:16.905825Z	info	FLAG: --vklog="0"
+2025-07-15T19:28:16.916094746Z 2025-07-15T19:28:16.915977Z	info	initializing Istiod admin server
+2025-07-15T19:28:16.916638230Z 2025-07-15T19:28:16.916595Z	info	starting HTTP service at [::]:8080
+2025-07-15T19:28:16.917321704Z 2025-07-15T19:28:16.917291Z	info	initializing mesh configuration ./etc/istio/config/mesh
+2025-07-15T19:28:16.923829918Z 2025-07-15T19:28:16.923793Z	info	krt	ConfigMap_istio synced	owner=ConfigMap_istio
+2025-07-15T19:28:16.926030902Z 2025-07-15T19:28:16.925996Z	info	krt	ConfigMap_istio_mesh synced	owner=ConfigMap_istio_mesh
+2025-07-15T19:28:16.927230600Z 2025-07-15T19:28:16.927207Z	info	krt	MeshConfig synced	owner=MeshConfig
+2025-07-15T19:28:16.927700843Z 2025-07-15T19:28:16.927680Z	info	mesh configuration: connectTimeout: 10s
+2025-07-15T19:28:16.927702913Z defaultConfig:
+2025-07-15T19:28:16.927704883Z   binaryPath: /usr/local/bin/envoy
+2025-07-15T19:28:16.927706733Z   configPath: ./etc/istio/proxy
+2025-07-15T19:28:16.927708263Z   controlPlaneAuthPolicy: MUTUAL_TLS
+2025-07-15T19:28:16.927710293Z   discoveryAddress: istiod.istio-system.svc:15012
+2025-07-15T19:28:16.927712573Z   drainDuration: 45s
+2025-07-15T19:28:16.927714073Z   meshId: mesh-default
+2025-07-15T19:28:16.927715613Z   proxyAdminPort: 15000
+2025-07-15T19:28:16.927717263Z   serviceCluster: istio-proxy
+2025-07-15T19:28:16.927718753Z   statNameLength: 189
+2025-07-15T19:28:16.927720243Z   statusPort: 15020
+2025-07-15T19:28:16.927721753Z   terminationDrainDuration: 5s
+2025-07-15T19:28:16.927725263Z defaultDestinationRuleExportTo:
+2025-07-15T19:28:16.927726823Z - '*'
+2025-07-15T19:28:16.927728383Z defaultProviders:
+2025-07-15T19:28:16.927729903Z   metrics:
+2025-07-15T19:28:16.927731443Z   - prometheus
+2025-07-15T19:28:16.927732943Z defaultServiceExportTo:
+2025-07-15T19:28:16.927734433Z - '*'
+2025-07-15T19:28:16.927735933Z defaultVirtualServiceExportTo:
+2025-07-15T19:28:16.927737423Z - '*'
+2025-07-15T19:28:16.927738973Z dnsRefreshRate: 60s
+2025-07-15T19:28:16.927740453Z enableAutoMtls: true
+2025-07-15T19:28:16.927741923Z enablePrometheusMerge: true
+2025-07-15T19:28:16.927743433Z enableTracing: true
+2025-07-15T19:28:16.927744903Z extensionProviders:
+2025-07-15T19:28:16.927746383Z - name: prometheus
+2025-07-15T19:28:16.927747853Z   prometheus: {}
+2025-07-15T19:28:16.927749373Z - name: stackdriver
+2025-07-15T19:28:16.927750843Z   stackdriver: {}
+2025-07-15T19:28:16.927752353Z - envoyFileAccessLog:
+2025-07-15T19:28:16.927753823Z     path: /dev/stdout
+2025-07-15T19:28:16.927755324Z   name: envoy
+2025-07-15T19:28:16.927756804Z - name: otel-tracing
+2025-07-15T19:28:16.927758294Z   opentelemetry:
+2025-07-15T19:28:16.927759904Z     port: 4317
+2025-07-15T19:28:16.927761464Z     service: jaeger-collector.istio-system.svc.cluster.local
+2025-07-15T19:28:16.927762964Z inboundTrafficPolicy: {}
+2025-07-15T19:28:16.927764444Z ingressClass: istio
+2025-07-15T19:28:16.927765914Z ingressControllerMode: STRICT
+2025-07-15T19:28:16.927767434Z ingressService: istio-ingressgateway
+2025-07-15T19:28:16.927768904Z localityLbSetting:
+2025-07-15T19:28:16.927770484Z   enabled: true
+2025-07-15T19:28:16.927771974Z outboundTrafficPolicy:
+2025-07-15T19:28:16.927773444Z   mode: ALLOW_ANY
+2025-07-15T19:28:16.927774904Z protocolDetectionTimeout: 0s
+2025-07-15T19:28:16.927776374Z proxyInboundListenPort: 15006
+2025-07-15T19:28:16.927777834Z proxyListenPort: 15001
+2025-07-15T19:28:16.927779344Z rootNamespace: istio-system
+2025-07-15T19:28:16.927780814Z trustDomain: cluster.local
+2025-07-15T19:28:16.927782194Z 
+2025-07-15T19:28:16.927783774Z 2025-07-15T19:28:16.927687Z	info	version: 1.26.2-455f269485eacc3c4a6cdb4993db5438589d3e2d-Clean
+2025-07-15T19:28:16.928063206Z 2025-07-15T19:28:16.928044Z	info	flags: CniNamespace: istio-system
+2025-07-15T19:28:16.928070146Z CtrlZOptions:
+2025-07-15T19:28:16.928071906Z   Address: localhost
+2025-07-15T19:28:16.928073536Z   EnablePprof: false
+2025-07-15T19:28:16.928087916Z   Port: 9876
+2025-07-15T19:28:16.928089956Z InjectionOptions:
+2025-07-15T19:28:16.928091546Z   InjectionDirectory: ./var/lib/istio/inject
+2025-07-15T19:28:16.928093066Z JwtRule: ""
+2025-07-15T19:28:16.928094586Z KeepaliveOptions:
+2025-07-15T19:28:16.928096106Z   MaxServerConnectionAge: 1800000000000
+2025-07-15T19:28:16.928097606Z   MaxServerConnectionAgeGrace: 10000000000
+2025-07-15T19:28:16.928099136Z   Time: 30000000000
+2025-07-15T19:28:16.928100636Z   Timeout: 10000000000
+2025-07-15T19:28:16.928102146Z MeshConfigFile: ./etc/istio/config/mesh
+2025-07-15T19:28:16.928103636Z Namespace: istio-system
+2025-07-15T19:28:16.928105156Z NetworksConfigFile: ./etc/istio/config/meshNetworks
+2025-07-15T19:28:16.928106686Z PodName: istiod-58cf6dd64-s4rq9
+2025-07-15T19:28:16.928108186Z RegistryOptions:
+2025-07-15T19:28:16.928109686Z   ClusterRegistriesNamespace: istio-system
+2025-07-15T19:28:16.928111196Z   FileDir: ""
+2025-07-15T19:28:16.928112676Z   KubeConfig: ""
+2025-07-15T19:28:16.928114166Z   KubeOptions:
+2025-07-15T19:28:16.928115646Z     ClusterAliases: {}
+2025-07-15T19:28:16.928117136Z     ClusterID: cluster-default
+2025-07-15T19:28:16.928118606Z     CniNamespace: ""
+2025-07-15T19:28:16.928120076Z     ConfigCluster: false
+2025-07-15T19:28:16.928121556Z     DomainSuffix: cluster.local
+2025-07-15T19:28:16.928123076Z     KrtDebugger: null
+2025-07-15T19:28:16.928124556Z     KubernetesAPIBurst: 160
+2025-07-15T19:28:16.928126366Z     KubernetesAPIQPS: 80
+2025-07-15T19:28:16.928127836Z     MeshNetworksWatcher: null
+2025-07-15T19:28:16.928129326Z     MeshServiceController: null
+2025-07-15T19:28:16.928130806Z     MeshWatcher: null
+2025-07-15T19:28:16.928132366Z     Metrics: null
+2025-07-15T19:28:16.928133876Z     Revision: default
+2025-07-15T19:28:16.928135416Z     StatusWritingEnabled: null
+2025-07-15T19:28:16.928136896Z     SyncTimeout: 0
+2025-07-15T19:28:16.928138366Z     SystemNamespace: ""
+2025-07-15T19:28:16.928139846Z     XDSUpdater: null
+2025-07-15T19:28:16.928141376Z   Registries:
+2025-07-15T19:28:16.928142886Z   - Kubernetes
+2025-07-15T19:28:16.928144366Z Revision: default
+2025-07-15T19:28:16.928145846Z ServerOptions:
+2025-07-15T19:28:16.928147356Z   EnableProfiling: true
+2025-07-15T19:28:16.928148856Z   GRPCAddr: :15010
+2025-07-15T19:28:16.928150376Z   HTTPAddr: :8080
+2025-07-15T19:28:16.928151856Z   HTTPSAddr: :15017
+2025-07-15T19:28:16.928153336Z   MonitoringAddr: :15014
+2025-07-15T19:28:16.928154806Z   SecureGRPCAddr: :15012
+2025-07-15T19:28:16.928156296Z   TLSOptions:
+2025-07-15T19:28:16.928157776Z     CaCertFile: ""
+2025-07-15T19:28:16.928159286Z     CertFile: ""
+2025-07-15T19:28:16.928160776Z     CipherSuits: null
+2025-07-15T19:28:16.928162256Z     KeyFile: ""
+2025-07-15T19:28:16.928163736Z     TLSCipherSuites: null
+2025-07-15T19:28:16.928165226Z ShutdownDuration: 10000000000
+2025-07-15T19:28:16.928166636Z 
+2025-07-15T19:28:16.930198670Z 2025-07-15T19:28:16.930169Z	info	initializing mesh networks configuration ./etc/istio/config/meshNetworks
+2025-07-15T19:28:16.930252210Z 2025-07-15T19:28:16.930232Z	info	krt	ConfigMap_istio synced	owner=ConfigMap_istio
+2025-07-15T19:28:16.932444835Z 2025-07-15T19:28:16.932420Z	info	krt	ConfigMap_istio_meshNetworks synced	owner=ConfigMap_istio_meshNetworks
+2025-07-15T19:28:16.932543066Z 2025-07-15T19:28:16.932525Z	info	krt	MeshNetworks synced	owner=MeshNetworks
+2025-07-15T19:28:16.932625336Z 2025-07-15T19:28:16.932591Z	info	mesh networks configuration: {}
+2025-07-15T19:28:16.932635076Z 
+2025-07-15T19:28:16.932636986Z 2025-07-15T19:28:16.932605Z	info	initializing mesh handlers
+2025-07-15T19:28:16.932707427Z 2025-07-15T19:28:16.932688Z	info	model	reloading network gateways
+2025-07-15T19:28:16.932709827Z 2025-07-15T19:28:16.932699Z	info	creating CA and initializing public key
+2025-07-15T19:28:16.932725787Z 2025-07-15T19:28:16.932715Z	info	Using istiod file format for signing ca files
+2025-07-15T19:28:16.932735877Z 2025-07-15T19:28:16.932726Z	info	Use self-signed certificate as the CA certificate
+2025-07-15T19:28:16.933882395Z 2025-07-15T19:28:16.933853Z	info	pkica	CASecret istio-ca-secret not found, will create one
+2025-07-15T19:28:17.073326063Z 2025-07-15T19:28:17.073232Z	info	pkica	Using self-generated public key: -----BEGIN CERTIFICATE-----
+2025-07-15T19:28:17.073350003Z MIIC/TCCAeWgAwIBAgIRALjQSXsBlCVS1vKSYXC31vEwDQYJKoZIhvcNAQELBQAw
+2025-07-15T19:28:17.073353883Z GDEWMBQGA1UEChMNY2x1c3Rlci5sb2NhbDAeFw0yNTA3MTUxOTI4MTdaFw0zNTA3
+2025-07-15T19:28:17.073357283Z MTMxOTI4MTdaMBgxFjAUBgNVBAoTDWNsdXN0ZXIubG9jYWwwggEiMA0GCSqGSIb3
+2025-07-15T19:28:17.073360893Z DQEBAQUAA4IBDwAwggEKAoIBAQDDs3stoxz1sVBaijN7srF36yW/xV3OvsN+x5LX
+2025-07-15T19:28:17.073364033Z gENkrIXdo9CYKrCFsMG2G52SMwTyfYYhb3hrho1Z6iSZiDBbyE70Wwi0rOzxZQdr
+2025-07-15T19:28:17.073367123Z 3qk1HhoKBQO3o4M1XRz5hS+mX/tUyqdygYqo2ewlAYcn7HYgx0picC+CqRdWbU8f
+2025-07-15T19:28:17.073370323Z vyqpY3mpTPZHmztN6IQTn4MIls5etXH4S7Jki9aF+iLm4PVtbRcsJ29PUYYuZhoq
+2025-07-15T19:28:17.073373423Z RNLzM/HIj/vbVggTwqt50rWRATjubs3ZWq3hbRrHS8OovlWD85z/Zv9a4/yW1D81
+2025-07-15T19:28:17.073376473Z 76gKGQ1x/f1hLL8nR7EFRrTLxm7LsAHUTE26egWEeaKK7447AgMBAAGjQjBAMA4G
+2025-07-15T19:28:17.073379543Z A1UdDwEB/wQEAwICBDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRzyaD9RbCx
+2025-07-15T19:28:17.073382583Z wDM7kmu6j0ght9ZXVzANBgkqhkiG9w0BAQsFAAOCAQEAh3S1E+JS4iUOGf3QQycf
+2025-07-15T19:28:17.073385663Z QSVgKkM/fb6vy500x2wiEWUWT+Va6fVLxXtb7FMWqTtzwjs3iCWhOazRmU40LlzS
+2025-07-15T19:28:17.073388733Z Iddx6Spsnv0R7mSBgAOwEeMe/f+YGwhJ6QdBtOZog2d/VqwdbXuFEODSrUOfg9cp
+2025-07-15T19:28:17.073391783Z GVNFOGTvOBqi+ZsgjaAGFKRavUUFSH3I8s5EA1U6F8by4+4to5AAnbl1jxbknk7O
+2025-07-15T19:28:17.073394853Z pawAhKwhCnYYstPD0ykU57443N0xdGFbwFNttndXH3Ua3nT9aQEm9Fkw6aVbQ0HG
+2025-07-15T19:28:17.073397923Z abblKQkMjHyED/CwKu262p8DCJaWcKKihHJbQYxWXpSV44g94bXZiGHOLebtLqUO
+2025-07-15T19:28:17.073401123Z bA==
+2025-07-15T19:28:17.073404653Z -----END CERTIFICATE-----
+2025-07-15T19:28:17.073407513Z 
+2025-07-15T19:28:17.073410843Z 2025-07-15T19:28:17.073250Z	info	pkica	Set secret name for self-signed CA cert rotator to istio-ca-secret
+2025-07-15T19:28:17.073414183Z 2025-07-15T19:28:17.073265Z	info	rootcertrotator	Set up back off time 46m29s to start rotator.
+2025-07-15T19:28:17.073417333Z 2025-07-15T19:28:17.073276Z	info	initializing controllers
+2025-07-15T19:28:17.073429373Z 2025-07-15T19:28:17.073347Z	info	rootcertrotator	Jitter is enabled, wait 46m29s before starting root cert rotator.
+2025-07-15T19:28:17.073506954Z 2025-07-15T19:28:17.073452Z	warn	failed to add indexer: indexer conflict: map[0x27f7d40:{}]
+2025-07-15T19:28:17.073567804Z 2025-07-15T19:28:17.073533Z	info	krt	gateway/informer/Namespaces synced	owner=gateway/informer/Namespaces
+2025-07-15T19:28:17.073863546Z 2025-07-15T19:28:17.073769Z	info	krt	gateway/BackendTrafficPolicy synced	owner=gateway/BackendTrafficPolicy
+2025-07-15T19:28:17.073879406Z 2025-07-15T19:28:17.073799Z	info	krt	gateway/TCPRoute/count synced	owner=gateway/TCPRoute/count
+2025-07-15T19:28:17.073893737Z 2025-07-15T19:28:17.073828Z	info	krt	gateway/BackendTLSPolicy synced	owner=gateway/BackendTLSPolicy
+2025-07-15T19:28:17.073898677Z 2025-07-15T19:28:17.073849Z	info	krt	Join[gateway.BackendPolicy] synced
+2025-07-15T19:28:17.073945777Z 2025-07-15T19:28:17.073871Z	info	krt	gateway/TLSRoute synced	owner=gateway/TLSRoute
+2025-07-15T19:28:17.073965697Z 2025-07-15T19:28:17.073926Z	info	krt	gateway/TCPRoute synced	owner=gateway/TCPRoute
+2025-07-15T19:28:17.074056228Z 2025-07-15T19:28:17.073994Z	info	krt	gateway/TLSRoute/count synced	owner=gateway/TLSRoute/count
+2025-07-15T19:28:17.074184909Z 2025-07-15T19:28:17.074140Z	info	krt	gateway/BackendPolicyMerged synced	owner=gateway/BackendPolicyMerged
+2025-07-15T19:28:17.074524421Z 2025-07-15T19:28:17.074488Z	info	Adding Kubernetes registry adapter
+2025-07-15T19:28:17.074549501Z 2025-07-15T19:28:17.074520Z	info	Discover server subject alt names: [istio-pilot.istio-system.svc istiod-remote.istio-system.svc istiod.istio-system.svc]
+2025-07-15T19:28:17.074577421Z 2025-07-15T19:28:17.074551Z	info	initializing Istiod DNS certificates host: istiod.istio-system.svc, custom host: 
+2025-07-15T19:28:17.202385642Z 2025-07-15T19:28:17.202285Z	info	Generating istiod-signed cert for [istio-pilot.istio-system.svc istiod-remote.istio-system.svc istiod.istio-system.svc]:
+2025-07-15T19:28:17.202410702Z  -----BEGIN CERTIFICATE-----
+2025-07-15T19:28:17.202415232Z MIIDajCCAlKgAwIBAgIRAPvSqoOQr+iX9P9w+g2GJBowDQYJKoZIhvcNAQELBQAw
+2025-07-15T19:28:17.202418742Z GDEWMBQGA1UEChMNY2x1c3Rlci5sb2NhbDAeFw0yNTA3MTUxOTI2MTdaFw0zNTA3
+2025-07-15T19:28:17.202421912Z MTMxOTI4MTdaMAAwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDdfjpz
+2025-07-15T19:28:17.202424992Z rKg8Ou+g7si3yngYDFOeUkB2wGTQSMc0czAIUJzvnXf/bRQSA/JSD3PMKQ3zFSSq
+2025-07-15T19:28:17.202428032Z C7FzD8+VCtLfDZe0WZcksJZ0WcU/iwVitH7lNlqDeFrIgpV7wZJXQff3t1/7cgv+
+2025-07-15T19:28:17.202431042Z ugh3QK3qK1uLufmbNRWW9slXONm95/VbUCS/U70zS6cAlyTy7WOkgb2GCI6nSkrV
+2025-07-15T19:28:17.202434102Z iFdeV9b68/cW3EH6edU4nBD5xRb1yl2Sn7yH+t0FC5tPOmbsZzEF4TaXJCYk97OD
+2025-07-15T19:28:17.202437132Z iFpK1+xfwafTJQ3W/Q4UoR0jJKy8vqEvqXcetUq6ghyWxLTlQLCwp/jT20OzMG/j
+2025-07-15T19:28:17.202440192Z 7aHkCKyMHDGdzRP7AgMBAAGjgcYwgcMwDgYDVR0PAQH/BAQDAgWgMB0GA1UdJQQW
+2025-07-15T19:28:17.202443252Z MBQGCCsGAQUFBwMBBggrBgEFBQcDAjAMBgNVHRMBAf8EAjAAMB8GA1UdIwQYMBaA
+2025-07-15T19:28:17.202446282Z FHPJoP1FsLHAMzuSa7qPSCG31ldXMGMGA1UdEQEB/wRZMFeCHGlzdGlvLXBpbG90
+2025-07-15T19:28:17.202449312Z LmlzdGlvLXN5c3RlbS5zdmOCHmlzdGlvZC1yZW1vdGUuaXN0aW8tc3lzdGVtLnN2
+2025-07-15T19:28:17.202452382Z Y4IXaXN0aW9kLmlzdGlvLXN5c3RlbS5zdmMwDQYJKoZIhvcNAQELBQADggEBAEDx
+2025-07-15T19:28:17.202455383Z V1EjBqHAjQ5l9Cgplq1s7nltG9BnCWMEbFYSs8q6fa3a0YgWo2PL1xImaugv1PQC
+2025-07-15T19:28:17.202458403Z TVqxsYJsq5TBdapJ8hV5AKi1BmOKYEWPJO1pzrxDtnXYsoU7P3gQEgKav8bw+iRr
+2025-07-15T19:28:17.202461423Z k7gA3aPYjAQ4An+PllatECWBTHso1rz/BhWtDM1ziko15xnWROSaN82xVnVBgAX6
+2025-07-15T19:28:17.202464473Z bQTxF9luROh+FTmB7FUxT7R2u7ZztMTF+e174f08DwMGu+S2YNvQTaYmMtwxQi+M
+2025-07-15T19:28:17.202467483Z 4ggCUAS/xKXrJgxdUw7ZH2czgy0R8n/5KgbawzYGQ2LtolR6CbrAPvLnL52shAdD
+2025-07-15T19:28:17.202471223Z t03+ukDu/5r/3BLbcHo=
+2025-07-15T19:28:17.202474283Z -----END CERTIFICATE-----
+2025-07-15T19:28:17.202477103Z 
+2025-07-15T19:28:17.202480273Z 2025-07-15T19:28:17.202315Z	info	Using istiod file format for signing ca files
+2025-07-15T19:28:17.202483383Z 2025-07-15T19:28:17.202320Z	info	Use roots from istio-ca-secret
+2025-07-15T19:28:17.202495403Z 2025-07-15T19:28:17.202447Z	info	x509 cert - Issuer: "O=cluster.local", Subject: "", SN: fbd2aa8390afe897f4ff70fa0d86241a, NotBefore: "2025-07-15T19:26:17Z", NotAfter: "2035-07-13T19:28:17Z"
+2025-07-15T19:28:17.202498863Z 2025-07-15T19:28:17.202452Z	info	Istiod certificates are reloaded
+2025-07-15T19:28:17.202507293Z 2025-07-15T19:28:17.202486Z	info	spiffe	Added 1 certs to trust domain cluster.local in peer cert verifier
+2025-07-15T19:28:17.202510473Z 2025-07-15T19:28:17.202490Z	info	initializing secure discovery service
+2025-07-15T19:28:17.202537383Z 2025-07-15T19:28:17.202517Z	info	initializing secure webhook server for istiod webhooks
+2025-07-15T19:28:17.205122520Z 2025-07-15T19:28:17.205070Z	info	initializing sidecar injector
+2025-07-15T19:28:17.217374232Z 2025-07-15T19:28:17.217286Z	info	initializing config validator
+2025-07-15T19:28:17.217396382Z 2025-07-15T19:28:17.217317Z	info	initializing registry event handlers
+2025-07-15T19:28:17.217405022Z 2025-07-15T19:28:17.217342Z	info	starting discovery service
+2025-07-15T19:28:17.217407682Z 2025-07-15T19:28:17.217348Z	info	initializing CA server with IstioD CA
+2025-07-15T19:28:17.218560100Z 2025-07-15T19:28:17.218522Z	info	Starting Istiod Server with primary cluster cluster-default
+2025-07-15T19:28:17.218650310Z 2025-07-15T19:28:17.218596Z	info	ControlZ available at 127.0.0.1:9876
+2025-07-15T19:28:17.218724481Z 2025-07-15T19:28:17.218686Z	info	kube	Initializing Kubernetes service registry "cluster-default"
+2025-07-15T19:28:17.218889572Z 2025-07-15T19:28:17.218863Z	info	status	Starting status manager
+2025-07-15T19:28:17.218944812Z 2025-07-15T19:28:17.218914Z	info	Starting validation controller
+2025-07-15T19:28:17.218947272Z 2025-07-15T19:28:17.218920Z	info	Starting multicluster remote secrets controller
+2025-07-15T19:28:17.219056443Z 2025-07-15T19:28:17.218972Z	info	kube	Starting Pilot K8S CRD controller	controller=crd-controller
+2025-07-15T19:28:17.219059833Z 2025-07-15T19:28:17.219028Z	info	kube	controller "telemetry.istio.io/v1/Telemetry" is syncing...	controller=crd-controller
+2025-07-15T19:28:17.219098863Z 2025-07-15T19:28:17.219075Z	info	klog	attempting to acquire leader lease istio-system/istio-gateway-deployment-default...
+2025-07-15T19:28:17.219211234Z 2025-07-15T19:28:17.219118Z	info	klog	attempting to acquire leader lease istio-system/istio-gateway-status-leader...
+2025-07-15T19:28:17.219214314Z 2025-07-15T19:28:17.219139Z	info	Starting ADS server
+2025-07-15T19:28:17.219222174Z 2025-07-15T19:28:17.219176Z	info	starting CA server
+2025-07-15T19:28:17.219410735Z 2025-07-15T19:28:17.219244Z	info	controllers	starting	controller=healthcheck
+2025-07-15T19:28:17.219418505Z 2025-07-15T19:28:17.219254Z	info	controllers	starting	controller=auto-register existing connections
+2025-07-15T19:28:17.219636867Z 2025-07-15T19:28:17.219570Z	info	Istiod CA has started
+2025-07-15T19:28:17.219818878Z 2025-07-15T19:28:17.219759Z	info	cluster "cluster-default" kube client started
+2025-07-15T19:28:17.220200581Z 2025-07-15T19:28:17.219157Z	info	klog	attempting to acquire leader lease istio-system/istio-ip-autoallocate...
+2025-07-15T19:28:17.220380092Z 2025-07-15T19:28:17.220308Z	info	klog	attempting to acquire leader lease istio-system/istio-leader...
+2025-07-15T19:28:17.220498693Z 2025-07-15T19:28:17.219297Z	info	controllers	starting	controller=unregister_workloadentry
+2025-07-15T19:28:17.221252468Z 2025-07-15T19:28:17.221109Z	info	kube	controller "telemetry.istio.io/v1/Telemetry" is syncing...	controller=crd-controller
+2025-07-15T19:28:17.225111613Z 2025-07-15T19:28:17.225039Z	info	controllers	starting	controller=webhook patcher
+2025-07-15T19:28:17.225136603Z 2025-07-15T19:28:17.225062Z	info	controllers	starting	controller=ingress
+2025-07-15T19:28:17.225139483Z 2025-07-15T19:28:17.225074Z	info	controllers	starting	controller=default revision
+2025-07-15T19:28:17.225148523Z 2025-07-15T19:28:17.225089Z	info	controllers	starting	controller=default revision
+2025-07-15T19:28:17.225228714Z 2025-07-15T19:28:17.225190Z	info	kube	controller "gateway.networking.k8s.io/v1beta1/Gateway" is syncing...	controller=crd-controller
+2025-07-15T19:28:17.225246974Z 2025-07-15T19:28:17.225217Z	info	controllers	starting	controller=default revision
+2025-07-15T19:28:17.225277674Z 2025-07-15T19:28:17.225218Z	info	controllers	starting	controller=tag
+2025-07-15T19:28:17.225374925Z 2025-07-15T19:28:17.225344Z	info	controllers	starting	controller=default revision
+2025-07-15T19:28:17.227217927Z 2025-07-15T19:28:17.227158Z	info	controllers	starting	controller=validation
+2025-07-15T19:28:17.227381738Z 2025-07-15T19:28:17.227342Z	info	multicluster remote secrets controller cache synced in 8.439846ms
+2025-07-15T19:28:17.227391838Z 2025-07-15T19:28:17.227358Z	info	controllers	starting	controller=multicluster secret
+2025-07-15T19:28:17.227394548Z 2025-07-15T19:28:17.227358Z	info	controllers	starting	controller=tag
+2025-07-15T19:28:17.227417838Z 2025-07-15T19:28:17.227342Z	info	controllers	starting	controller=configmap istio-sidecar-injector
+2025-07-15T19:28:17.227614170Z 2025-07-15T19:28:17.227538Z	info	klog	successfully acquired lease istio-system/istio-gateway-deployment-default
+2025-07-15T19:28:17.227681390Z 2025-07-15T19:28:17.227644Z	info	leader election lock obtained: istio-gateway-deployment-default
+2025-07-15T19:28:17.228237194Z 2025-07-15T19:28:17.228103Z	info	klog	successfully acquired lease istio-system/istio-gateway-status-leader
+2025-07-15T19:28:17.228245394Z 2025-07-15T19:28:17.228204Z	info	leader election lock obtained: istio-gateway-status-leader
+2025-07-15T19:28:17.228248764Z 2025-07-15T19:28:17.228216Z	info	Starting gateway status writer
+2025-07-15T19:28:17.228941868Z 2025-07-15T19:28:17.228874Z	info	klog	successfully acquired lease istio-system/istio-ip-autoallocate
+2025-07-15T19:28:17.228949678Z 2025-07-15T19:28:17.228914Z	info	klog	successfully acquired lease istio-system/istio-leader
+2025-07-15T19:28:17.228994429Z 2025-07-15T19:28:17.228951Z	info	leader election lock obtained: istio-ip-autoallocate
+2025-07-15T19:28:17.229004759Z 2025-07-15T19:28:17.228984Z	info	leader election lock obtained: istio-leader
+2025-07-15T19:28:17.233413868Z 2025-07-15T19:28:17.233076Z	info	validationController	Not ready to switch validation to fail-closed: dummy invalid config not rejected
+2025-07-15T19:28:17.233684010Z 2025-07-15T19:28:17.233481Z	info	kube	controller "security.istio.io/v1/RequestAuthentication" is syncing...	controller=crd-controller
+2025-07-15T19:28:17.237768968Z 2025-07-15T19:28:17.237597Z	info	validationController	successfully updated	name=istio-validator-istio-system resource version=925
+2025-07-15T19:28:17.237798008Z 2025-07-15T19:28:17.237680Z	error	controllers	error handling istio-validator-istio-system, retrying (retry count: 1): webhook is not ready, retry	controller=validation
+2025-07-15T19:28:17.242115127Z 2025-07-15T19:28:17.242052Z	info	validationController	Not ready to switch validation to fail-closed: dummy invalid config not rejected
+2025-07-15T19:28:17.243874288Z 2025-07-15T19:28:17.243842Z	info	validationController	successfully updated	name=istio-validator-istio-system resource version=925
+2025-07-15T19:28:17.243886438Z 2025-07-15T19:28:17.243863Z	error	controllers	error handling istio-validator-istio-system, retrying (retry count: 2): webhook is not ready, retry	controller=validation
+2025-07-15T19:28:17.249909838Z 2025-07-15T19:28:17.249872Z	info	kube	controller "gateway.networking.k8s.io/v1beta1/HTTPRoute" is syncing...	controller=crd-controller
+2025-07-15T19:28:17.252029622Z 2025-07-15T19:28:17.251997Z	info	controllers	starting	controller=crd watcher
+2025-07-15T19:28:17.252083703Z 2025-07-15T19:28:17.252067Z	info	authorizationpolicies.security.istio.io is now ready, building client
+2025-07-15T19:28:17.252113033Z 2025-07-15T19:28:17.252095Z	info	destinationrules.networking.istio.io is now ready, building client
+2025-07-15T19:28:17.252131023Z 2025-07-15T19:28:17.252115Z	info	envoyfilters.networking.istio.io is now ready, building client
+2025-07-15T19:28:17.252150213Z 2025-07-15T19:28:17.252129Z	info	gatewayclasses.gateway.networking.k8s.io is now ready, building client
+2025-07-15T19:28:17.252179783Z 2025-07-15T19:28:17.252145Z	info	gatewayclasses.gateway.networking.k8s.io is now ready, building client
+2025-07-15T19:28:17.252211473Z 2025-07-15T19:28:17.252160Z	info	gateways.gateway.networking.k8s.io is now ready, building client
+2025-07-15T19:28:17.252213273Z 2025-07-15T19:28:17.252171Z	info	gateways.gateway.networking.k8s.io is now ready, building client
+2025-07-15T19:28:17.252220014Z 2025-07-15T19:28:17.252176Z	info	gateways.gateway.networking.k8s.io is now ready, building client
+2025-07-15T19:28:17.252222774Z 2025-07-15T19:28:17.252195Z	info	gateways.networking.istio.io is now ready, building client
+2025-07-15T19:28:17.252227224Z 2025-07-15T19:28:17.252211Z	info	grpcroutes.gateway.networking.k8s.io is now ready, building client
+2025-07-15T19:28:17.252247794Z 2025-07-15T19:28:17.252224Z	info	grpcroutes.gateway.networking.k8s.io is now ready, building client
+2025-07-15T19:28:17.252258374Z 2025-07-15T19:28:17.252237Z	info	httproutes.gateway.networking.k8s.io is now ready, building client
+2025-07-15T19:28:17.252261144Z 2025-07-15T19:28:17.252250Z	info	httproutes.gateway.networking.k8s.io is now ready, building client
+2025-07-15T19:28:17.252290034Z 2025-07-15T19:28:17.252272Z	info	peerauthentications.security.istio.io is now ready, building client
+2025-07-15T19:28:17.252406605Z 2025-07-15T19:28:17.252372Z	warn	failed to add indexer: indexer conflict: map[0x27f7d40:{}]
+2025-07-15T19:28:17.252423005Z 2025-07-15T19:28:17.252404Z	info	proxyconfigs.networking.istio.io is now ready, building client
+2025-07-15T19:28:17.252451845Z 2025-07-15T19:28:17.252438Z	info	referencegrants.gateway.networking.k8s.io is now ready, building client
+2025-07-15T19:28:17.252463525Z 2025-07-15T19:28:17.252450Z	info	referencegrants.gateway.networking.k8s.io is now ready, building client
+2025-07-15T19:28:17.252494485Z 2025-07-15T19:28:17.252463Z	info	requestauthentications.security.istio.io is now ready, building client
+2025-07-15T19:28:17.252508835Z 2025-07-15T19:28:17.252490Z	info	serviceentries.networking.istio.io is now ready, building client
+2025-07-15T19:28:17.252671997Z 2025-07-15T19:28:17.252621Z	info	serviceentries.networking.istio.io is now ready, building client
+2025-07-15T19:28:17.252683487Z 2025-07-15T19:28:17.252639Z	info	serviceentries.networking.istio.io is now ready, building client
+2025-07-15T19:28:17.252689017Z 2025-07-15T19:28:17.252677Z	info	sidecars.networking.istio.io is now ready, building client
+2025-07-15T19:28:17.252713767Z 2025-07-15T19:28:17.252693Z	info	telemetries.telemetry.istio.io is now ready, building client
+2025-07-15T19:28:17.253008319Z 2025-07-15T19:28:17.252759Z	info	virtualservices.networking.istio.io is now ready, building client
+2025-07-15T19:28:17.253057169Z 2025-07-15T19:28:17.252821Z	info	wasmplugins.extensions.istio.io is now ready, building client
+2025-07-15T19:28:17.253061259Z 2025-07-15T19:28:17.252844Z	info	workloadentries.networking.istio.io is now ready, building client
+2025-07-15T19:28:17.253063689Z 2025-07-15T19:28:17.252866Z	info	workloadgroups.networking.istio.io is now ready, building client
+2025-07-15T19:28:17.260216807Z 2025-07-15T19:28:17.260163Z	info	controllers	starting	controller=IP Autoallocator
+2025-07-15T19:28:17.260234177Z 2025-07-15T19:28:17.260168Z	info	Starting ingress controller
+2025-07-15T19:28:17.260237737Z 2025-07-15T19:28:17.260180Z	info	controllers	starting	controller=ingress status
+2025-07-15T19:28:17.282347204Z 2025-07-15T19:28:17.282298Z	info	kube	kube controller for cluster-default synced after 63.326662ms
+2025-07-15T19:28:17.282368024Z 2025-07-15T19:28:17.282321Z	info	kube	Pilot K8S CRD controller synced in 63.345001ms	controller=crd-controller
+2025-07-15T19:28:17.282447985Z 2025-07-15T19:28:17.282414Z	info	model	Full push, new service default/kubernetes.default.svc.cluster.local
+2025-07-15T19:28:17.282467655Z 2025-07-15T19:28:17.282436Z	info	model	Incremental push, service istiod.istio-system.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:28:17.282495325Z 2025-07-15T19:28:17.282461Z	info	model	Full push, new service kube-system/kube-dns.kube-system.svc.cluster.local
+2025-07-15T19:28:17.282498465Z 2025-07-15T19:28:17.282485Z	info	model	Full push, new service metallb-system/webhook-service.metallb-system.svc.cluster.local
+2025-07-15T19:28:17.282518495Z 2025-07-15T19:28:17.282501Z	info	model	Full push, new service sail-operator/sail-operator-metrics-service.sail-operator.svc.cluster.local
+2025-07-15T19:28:17.284477478Z 2025-07-15T19:28:17.284450Z	info	Waiting for caches to be synced
+2025-07-15T19:28:17.284482298Z 2025-07-15T19:28:17.284471Z	info	kube	joining leader-election for istio-namespace-controller-election in istio-system on cluster cluster-default
+2025-07-15T19:28:17.284578429Z 2025-07-15T19:28:17.284560Z	info	klog	attempting to acquire leader lease istio-system/istio-namespace-controller-election...
+2025-07-15T19:28:17.284582869Z 2025-07-15T19:28:17.284570Z	info	controllers	starting	controller=default revision
+2025-07-15T19:28:17.288423234Z 2025-07-15T19:28:17.288361Z	info	klog	successfully acquired lease istio-system/istio-namespace-controller-election
+2025-07-15T19:28:17.288470905Z 2025-07-15T19:28:17.288449Z	info	leader election lock obtained: istio-namespace-controller-election
+2025-07-15T19:28:17.288484375Z 2025-07-15T19:28:17.288469Z	info	kube	starting namespace controller for cluster cluster-default
+2025-07-15T19:28:17.301187080Z 2025-07-15T19:28:17.301143Z	info	krt	gateway/informer/ReferenceGrants synced	owner=gateway/informer/ReferenceGrants
+2025-07-15T19:28:17.301214960Z 2025-07-15T19:28:17.301195Z	info	krt	gateway/ReferenceGrants synced	owner=gateway/ReferenceGrants
+2025-07-15T19:28:17.301254040Z 2025-07-15T19:28:17.301226Z	info	krt	gateway/informer/HTTPRoutes synced	owner=gateway/informer/HTTPRoutes
+2025-07-15T19:28:17.301259660Z 2025-07-15T19:28:17.301240Z	info	krt	gateway/informer/GatewayClasses synced	owner=gateway/informer/GatewayClasses
+2025-07-15T19:28:17.301264190Z 2025-07-15T19:28:17.301241Z	info	krt	gateway/informer/GRPCRoutes synced	owner=gateway/informer/GRPCRoutes
+2025-07-15T19:28:17.301281091Z 2025-07-15T19:28:17.301229Z	info	krt	gateway/informer/ServiceEntries synced	owner=gateway/informer/ServiceEntries
+2025-07-15T19:28:17.301310901Z 2025-07-15T19:28:17.301281Z	info	krt	gateway/HTTPRoute/count synced	owner=gateway/HTTPRoute/count
+2025-07-15T19:28:17.301315461Z 2025-07-15T19:28:17.301287Z	info	krt	gateway/GRPCRoute synced	owner=gateway/GRPCRoute
+2025-07-15T19:28:17.301317111Z 2025-07-15T19:28:17.301293Z	info	krt	gateway/informer/Services synced	owner=gateway/informer/Services
+2025-07-15T19:28:17.301320681Z 2025-07-15T19:28:17.301302Z	info	krt	gateway/informer/Secrets synced	owner=gateway/informer/Secrets
+2025-07-15T19:28:17.301367651Z 2025-07-15T19:28:17.301315Z	info	krt	gateway/informer/ConfigMaps synced	owner=gateway/informer/ConfigMaps
+2025-07-15T19:28:17.301369571Z 2025-07-15T19:28:17.301335Z	info	krt	gateway/informer/Gateways synced	owner=gateway/informer/Gateways
+2025-07-15T19:28:17.301371301Z 2025-07-15T19:28:17.301342Z	info	krt	gateway/GRPCRouteMerged synced	owner=gateway/GRPCRouteMerged
+2025-07-15T19:28:17.301388541Z 2025-07-15T19:28:17.301373Z	info	krt	gateway/KubernetesGateway synced	owner=gateway/KubernetesGateway
+2025-07-15T19:28:17.301394101Z 2025-07-15T19:28:17.301381Z	info	krt	gateway/GatewayClasses synced	owner=gateway/GatewayClasses
+2025-07-15T19:28:17.301427171Z 2025-07-15T19:28:17.301401Z	info	krt	gateway/GatewayFinalStatus synced	owner=gateway/GatewayFinalStatus
+2025-07-15T19:28:17.301436662Z 2025-07-15T19:28:17.301399Z	info	krt	gateway/HTTPRoute synced	owner=gateway/HTTPRoute
+2025-07-15T19:28:17.301459752Z 2025-07-15T19:28:17.301431Z	info	krt	gateway/GRPCRoute/count synced	owner=gateway/GRPCRoute/count
+2025-07-15T19:28:17.301478462Z 2025-07-15T19:28:17.301451Z	info	krt	gateway/HTTPRouteMerged synced	owner=gateway/HTTPRouteMerged
+2025-07-15T19:28:17.301481162Z 2025-07-15T19:28:17.301466Z	info	krt	gateway/RouteAttachments synced
+2025-07-15T19:28:17.301503242Z 2025-07-15T19:28:17.301470Z	info	krt	gateway/DerivedVirtualServices synced
+2025-07-15T19:28:17.316541402Z 2025-07-15T19:28:17.316495Z	info	All controller caches have been synced up in 32.043284ms
+2025-07-15T19:28:17.342982738Z 2025-07-15T19:28:17.342908Z	info	validationController	Not ready to switch validation to fail-closed: dummy invalid config not rejected
+2025-07-15T19:28:17.345534254Z 2025-07-15T19:28:17.345457Z	info	validationController	successfully updated	name=istio-validator-istio-system resource version=925
+2025-07-15T19:28:17.345546774Z 2025-07-15T19:28:17.345486Z	error	controllers	error handling istio-validator-istio-system, retrying (retry count: 3): webhook is not ready, retry	controller=validation
+2025-07-15T19:28:17.354739916Z 2025-07-15T19:28:17.354664Z	info	controllers	starting	controller=gateway class
+2025-07-15T19:28:17.355087248Z 2025-07-15T19:28:17.355057Z	info	controllers	starting	controller=tag
+2025-07-15T19:28:17.357742466Z 2025-07-15T19:28:17.357681Z	info	controllers	starting	controller=gateway deployment
+2025-07-15T19:28:17.383575688Z 2025-07-15T19:28:17.383437Z	info	ads	Push debounce stable[1] 24 for config ConfigMap/sail-operator/kube-root-ca.crt and 16 more configs: 100.782291ms since last change, 158.904688ms since last push, full=true
+2025-07-15T19:28:17.383764439Z 2025-07-15T19:28:17.383739Z	info	ads	XDS: Pushing Services:5 ConnectedEndpoints:0 Version:2025-07-15T19:28:17Z/1
+2025-07-15T19:28:17.389626178Z 2025-07-15T19:28:17.389586Z	info	controllers	starting	controller=namespace controller
+2025-07-15T19:28:17.445806472Z 2025-07-15T19:28:17.445590Z	info	ads	All caches have been synced up in 540.371117ms, marking server ready
+2025-07-15T19:28:17.446144434Z 2025-07-15T19:28:17.445976Z	info	starting gRPC discovery service at [::]:15010
+2025-07-15T19:28:17.446170794Z 2025-07-15T19:28:17.446030Z	info	starting webhook service at [::]:15017
+2025-07-15T19:28:17.446236135Z 2025-07-15T19:28:17.446097Z	info	starting secure gRPC discovery service at [::]:15012
+2025-07-15T19:28:17.484720121Z 2025-07-15T19:28:17.484584Z	info	model	Full push, new service istio-system/istiod.istio-system.svc.cluster.local
+2025-07-15T19:28:17.594957155Z 2025-07-15T19:28:17.594873Z	info	ads	Push debounce stable[2] 2 for config ServiceEntry/istio-system/istiod.istio-system.svc.cluster.local: 100.64309ms since last change, 110.204643ms since last push, full=true
+2025-07-15T19:28:17.595053176Z 2025-07-15T19:28:17.595032Z	info	ads	XDS: Pushing Services:5 ConnectedEndpoints:0 Version:2025-07-15T19:28:17Z/2
+2025-07-15T19:28:17.750823622Z 2025-07-15T19:28:17.750739Z	info	validationController	Endpoint successfully rejected invalid config. Switching to fail-close.
+2025-07-15T19:28:17.754288326Z 2025-07-15T19:28:17.754198Z	info	validationController	successfully updated	name=istio-validator-istio-system resource version=945
+2025-07-15T19:28:20.099713068Z 2025-07-15T19:28:20.099613Z	info	validationController	successfully updated	name=istio-validator-istio-system resource version=953
+2025-07-15T19:28:20.571113095Z 2025-07-15T19:28:20.571039Z	info	model	Incremental push, service prometheus.istio-system.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:28:20.672130768Z 2025-07-15T19:28:20.672035Z	info	ads	Push debounce stable[3] 2 for config ServiceEntry/istio-system/prometheus.istio-system.svc.cluster.local: 100.951822ms since last change, 104.875848ms since last push, full=true
+2025-07-15T19:28:20.672201368Z 2025-07-15T19:28:20.672183Z	info	ads	XDS: Pushing Services:6 ConnectedEndpoints:0 Version:2025-07-15T19:28:20Z/3
+2025-07-15T19:28:21.015802165Z 2025-07-15T19:28:21.015717Z	info	model	Incremental push, service grafana.istio-system.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:28:21.116950139Z 2025-07-15T19:28:21.116738Z	info	ads	Push debounce stable[4] 2 for config ServiceEntry/istio-system/grafana.istio-system.svc.cluster.local: 100.972582ms since last change, 103.518229ms since last push, full=true
+2025-07-15T19:28:21.117055450Z 2025-07-15T19:28:21.117037Z	info	ads	XDS: Pushing Services:7 ConnectedEndpoints:0 Version:2025-07-15T19:28:21Z/4
+2025-07-15T19:28:21.405129337Z 2025-07-15T19:28:21.405036Z	info	model	Incremental push, service tracing.istio-system.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:28:21.413719564Z 2025-07-15T19:28:21.413640Z	info	model	Incremental push, service zipkin.istio-system.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:28:21.421560577Z 2025-07-15T19:28:21.421415Z	info	model	Incremental push, service jaeger-collector.istio-system.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:28:21.617653572Z 2025-07-15T19:28:21.617582Z	info	ads	Push debounce stable[5] 7 for config ServiceEntry/istio-system/jaeger-collector.istio-system.svc.cluster.local and 3 more configs: 100.809941ms since last change, 215.131892ms since last push, full=true
+2025-07-15T19:28:21.617793863Z 2025-07-15T19:28:21.617777Z	info	ads	XDS: Pushing Services:10 ConnectedEndpoints:0 Version:2025-07-15T19:28:21Z/5
+2025-07-15T19:28:22.659890089Z 2025-07-15T19:28:22.659801Z	info	validationController	successfully updated	name=istio-validator-istio-system resource version=1044
+2025-07-15T19:28:25.251974723Z 2025-07-15T19:28:25.251842Z	info	validationController	successfully updated	name=istio-validator-istio-system resource version=1064
+2025-07-15T19:28:26.545925926Z 2025-07-15T19:28:26.545820Z	info	model	Incremental push, service kiali.istio-system.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:28:26.731811884Z 2025-07-15T19:28:26.731738Z	info	ads	Push debounce stable[6] 4 for config ServiceEntry/istio-system/kiali.istio-system.svc.cluster.local: 100.987142ms since last change, 189.585872ms since last push, full=true
+2025-07-15T19:28:26.731947765Z 2025-07-15T19:28:26.731932Z	info	ads	XDS: Pushing Services:11 ConnectedEndpoints:0 Version:2025-07-15T19:28:26Z/6
+2025-07-15T19:28:27.512038787Z 2025-07-15T19:28:27.511947Z	info	model	Full push, new service istio-system/kiali.istio-system.svc.cluster.local
+2025-07-15T19:28:27.612826868Z 2025-07-15T19:28:27.612741Z	info	ads	Push debounce stable[7] 1 for config ServiceEntry/istio-system/kiali.istio-system.svc.cluster.local: 100.726741ms since last change, 100.726651ms since last push, full=true
+2025-07-15T19:28:27.612963169Z 2025-07-15T19:28:27.612939Z	info	ads	XDS: Pushing Services:11 ConnectedEndpoints:0 Version:2025-07-15T19:28:27Z/7
+2025-07-15T19:28:27.678362524Z 2025-07-15T19:28:27.678285Z	info	validationController	successfully updated	name=istio-validator-istio-system resource version=1119
+2025-07-15T19:28:28.509452597Z 2025-07-15T19:28:28.509327Z	info	model	Full push, new service istio-system/grafana.istio-system.svc.cluster.local
+2025-07-15T19:28:28.609854755Z 2025-07-15T19:28:28.609785Z	info	ads	Push debounce stable[8] 1 for config ServiceEntry/istio-system/grafana.istio-system.svc.cluster.local: 100.405218ms since last change, 100.405168ms since last push, full=true
+2025-07-15T19:28:28.609974046Z 2025-07-15T19:28:28.609953Z	info	ads	XDS: Pushing Services:11 ConnectedEndpoints:0 Version:2025-07-15T19:28:28Z/8
+2025-07-15T19:28:30.514301971Z 2025-07-15T19:28:30.514138Z	info	model	Full push, new service istio-system/jaeger-collector.istio-system.svc.cluster.local
+2025-07-15T19:28:30.514335022Z 2025-07-15T19:28:30.514210Z	info	model	Full push, new service istio-system/tracing.istio-system.svc.cluster.local
+2025-07-15T19:28:30.514359152Z 2025-07-15T19:28:30.514245Z	info	model	Full push, new service istio-system/zipkin.istio-system.svc.cluster.local
+2025-07-15T19:28:30.624842267Z 2025-07-15T19:28:30.624755Z	info	ads	Push debounce stable[9] 6 for config ServiceEntry/istio-system/zipkin.istio-system.svc.cluster.local and 2 more configs: 100.544869ms since last change, 110.474295ms since last push, full=true
+2025-07-15T19:28:30.624950518Z 2025-07-15T19:28:30.624930Z	info	ads	XDS: Pushing Services:11 ConnectedEndpoints:0 Version:2025-07-15T19:28:30Z/9
+2025-07-15T19:28:38.533603021Z 2025-07-15T19:28:38.533435Z	info	model	Full push, new service istio-system/prometheus.istio-system.svc.cluster.local
+2025-07-15T19:28:38.634356762Z 2025-07-15T19:28:38.634240Z	info	ads	Push debounce stable[10] 1 for config ServiceEntry/istio-system/prometheus.istio-system.svc.cluster.local: 100.750921ms since last change, 100.750801ms since last push, full=true
+2025-07-15T19:28:38.634514763Z 2025-07-15T19:28:38.634477Z	info	ads	XDS: Pushing Services:11 ConnectedEndpoints:0 Version:2025-07-15T19:28:38Z/10
+2025-07-15T19:28:39.634087986Z 2025-07-15T19:28:39.633989Z	info	ads	Push debounce stable[11] 2 for config ServiceEntry/istio-system/grafana.istio-system.svc.cluster.local and 1 more configs: 100.779301ms since last change, 119.940429ms since last push, full=false
+2025-07-15T19:28:39.634120297Z 2025-07-15T19:28:39.634060Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:0 Version:2025-07-15T19:28:38Z/10
+2025-07-15T19:29:07.040936677Z 2025-07-15T19:29:07.040821Z	info	ads	Push debounce stable[12] 1 for config ServiceEntry/istio-system/kiali.istio-system.svc.cluster.local: 100.822771ms since last change, 100.822731ms since last push, full=false
+2025-07-15T19:29:07.040968348Z 2025-07-15T19:29:07.040890Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:0 Version:2025-07-15T19:28:38Z/10
+2025-07-15T19:29:07.179989313Z 2025-07-15T19:29:07.179888Z	info	ads	Push debounce stable[13] 1 for config ConfigMap/bookinfo/kube-root-ca.crt: 100.954132ms since last change, 100.954042ms since last push, full=false
+2025-07-15T19:29:07.180016583Z 2025-07-15T19:29:07.179941Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:0 Version:2025-07-15T19:28:38Z/10
+2025-07-15T19:29:07.576062799Z 2025-07-15T19:29:07.575927Z	info	model	Incremental push, service details.bookinfo.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:07.595580629Z 2025-07-15T19:29:07.595466Z	info	model	Incremental push, service ratings.bookinfo.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:07.596119903Z 2025-07-15T19:29:07.596052Z	info	Process sidecar injection request	path=/inject pod=bookinfo/details-v1-766844796b-***** (actual name not yet known)
+2025-07-15T19:29:07.610408938Z 2025-07-15T19:29:07.610257Z	info	Process sidecar injection request	path=/inject pod=bookinfo/ratings-v1-5dc79b6bcd-***** (actual name not yet known)
+2025-07-15T19:29:07.621371631Z 2025-07-15T19:29:07.621131Z	info	model	Incremental push, service reviews.bookinfo.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:07.674793466Z 2025-07-15T19:29:07.674650Z	info	Process sidecar injection request	path=/inject pod=bookinfo/reviews-v1-598b896c9d-***** (actual name not yet known)
+2025-07-15T19:29:07.681380861Z 2025-07-15T19:29:07.681201Z	info	Process sidecar injection request	path=/inject pod=bookinfo/reviews-v2-556d6457d-***** (actual name not yet known)
+2025-07-15T19:29:07.688273416Z 2025-07-15T19:29:07.688034Z	info	Process sidecar injection request	path=/inject pod=bookinfo/reviews-v3-564544b4d6-***** (actual name not yet known)
+2025-07-15T19:29:07.703376257Z 2025-07-15T19:29:07.702264Z	info	model	Incremental push, service productpage.bookinfo.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:07.718010434Z 2025-07-15T19:29:07.717901Z	info	Process sidecar injection request	path=/inject pod=bookinfo/productpage-v1-54bb874995-***** (actual name not yet known)
+2025-07-15T19:29:07.784850409Z 2025-07-15T19:29:07.784733Z	info	gateway	reconciling	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:07.820459606Z 2025-07-15T19:29:07.820389Z	info	gateway	gateway updated	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:07.820479966Z 2025-07-15T19:29:07.820440Z	info	gateway	reconciling	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:07.823143854Z 2025-07-15T19:29:07.822975Z	info	model	Incremental push, service bookinfo-gateway-istio.bookinfo.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:07.847848788Z 2025-07-15T19:29:07.847549Z	info	gateway	gateway updated	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:07.847886788Z 2025-07-15T19:29:07.847686Z	info	gateway	reconciling	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:07.869957375Z 2025-07-15T19:29:07.869860Z	info	gateway	gateway updated	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:07.869986796Z 2025-07-15T19:29:07.869898Z	info	gateway	reconciling	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:07.890230190Z 2025-07-15T19:29:07.890150Z	info	gateway	gateway updated	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:07.925431104Z 2025-07-15T19:29:07.925303Z	info	ads	Push debounce stable[14] 13 for config Gateway/bookinfo/bookinfo-gateway-istio-autogenerated-k8s-gateway-http and 6 more configs: 100.67237ms since last change, 352.419355ms since last push, full=true
+2025-07-15T19:29:07.925625546Z 2025-07-15T19:29:07.925600Z	info	ads	XDS: Pushing Services:16 ConnectedEndpoints:0 Version:2025-07-15T19:29:07Z/11
+2025-07-15T19:29:07.932135589Z 2025-07-15T19:29:07.932051Z	info	gateway	reconciling	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:07.955202813Z 2025-07-15T19:29:07.955031Z	info	gateway	gateway updated	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:07.991629775Z 2025-07-15T19:29:07.991463Z	info	gateway	reconciling	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:08.026485147Z 2025-07-15T19:29:08.026387Z	info	gateway	gateway updated	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:08.026510257Z 2025-07-15T19:29:08.026449Z	info	gateway	reconciling	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:08.060693005Z 2025-07-15T19:29:08.060556Z	info	gateway	gateway updated	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:08.238966082Z 2025-07-15T19:29:08.238850Z	info	gateway	reconciling	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:08.261962964Z 2025-07-15T19:29:08.261877Z	info	gateway	gateway updated	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:09.583685323Z 2025-07-15T19:29:09.583599Z	info	validationController	successfully updated	name=istio-validator-istio-system resource version=1435
+2025-07-15T19:29:11.598548525Z 2025-07-15T19:29:11.598416Z	info	model	Full push, new service bookinfo/details.bookinfo.svc.cluster.local
+2025-07-15T19:29:11.698754672Z 2025-07-15T19:29:11.698641Z	info	ads	Push debounce stable[15] 1 for config ServiceEntry/bookinfo/details.bookinfo.svc.cluster.local: 100.169107ms since last change, 100.169017ms since last push, full=true
+2025-07-15T19:29:11.698908953Z 2025-07-15T19:29:11.698887Z	info	ads	XDS: Pushing Services:16 ConnectedEndpoints:0 Version:2025-07-15T19:29:11Z/12
+2025-07-15T19:29:12.066757741Z 2025-07-15T19:29:12.066664Z	info	validationController	successfully updated	name=istio-validator-istio-system resource version=1465
+2025-07-15T19:29:12.603458183Z 2025-07-15T19:29:12.603356Z	info	model	Full push, new service bookinfo/reviews.bookinfo.svc.cluster.local
+2025-07-15T19:29:12.610205688Z 2025-07-15T19:29:12.610091Z	info	model	Full push, new service bookinfo/ratings.bookinfo.svc.cluster.local
+2025-07-15T19:29:12.710680217Z 2025-07-15T19:29:12.710582Z	info	ads	Push debounce stable[16] 2 for config ServiceEntry/bookinfo/reviews.bookinfo.svc.cluster.local and 1 more configs: 100.441319ms since last change, 107.173704ms since last push, full=true
+2025-07-15T19:29:12.710808658Z 2025-07-15T19:29:12.710787Z	info	ads	XDS: Pushing Services:16 ConnectedEndpoints:0 Version:2025-07-15T19:29:12Z/13
+2025-07-15T19:29:13.636386089Z 2025-07-15T19:29:13.636272Z	info	model	Full push, new service bookinfo/productpage.bookinfo.svc.cluster.local
+2025-07-15T19:29:13.647638504Z 2025-07-15T19:29:13.647559Z	info	model	Full push, new service bookinfo/bookinfo-gateway-istio.bookinfo.svc.cluster.local
+2025-07-15T19:29:13.702662130Z 2025-07-15T19:29:13.702598Z	info	delta	ADS: new delta connection for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo-1
+2025-07-15T19:29:13.703070303Z 2025-07-15T19:29:13.703046Z	info	delta	CDS: PUSH request for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:28 removed:0 size:30.7kB cached:0/27
+2025-07-15T19:29:13.712810598Z 2025-07-15T19:29:13.712765Z	info	delta	EDS: PUSH request for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:27 removed:0 size:4.1kB empty:6 cached:0/27 filtered:0
+2025-07-15T19:29:13.748308474Z 2025-07-15T19:29:13.748207Z	info	ads	Push debounce stable[17] 2 for config ServiceEntry/bookinfo/productpage.bookinfo.svc.cluster.local and 1 more configs: 100.595679ms since last change, 111.865684ms since last push, full=true
+2025-07-15T19:29:13.748457105Z 2025-07-15T19:29:13.748434Z	info	ads	XDS: Pushing Services:16 ConnectedEndpoints:1 Version:2025-07-15T19:29:13Z/14
+2025-07-15T19:29:13.748833318Z 2025-07-15T19:29:13.748801Z	info	delta	CDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:4 removed:0 size:3.5kB cached:0/3
+2025-07-15T19:29:13.748883448Z 2025-07-15T19:29:13.748860Z	info	delta	EDS: PUSH INC for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:3 removed:0 size:186B empty:3 cached:0/3
+2025-07-15T19:29:13.756712770Z 2025-07-15T19:29:13.756625Z	info	gateway	reconciling	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:13.779016508Z 2025-07-15T19:29:13.778928Z	info	gateway	gateway updated	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:13.896909343Z 2025-07-15T19:29:13.896843Z	info	delta	LDS: PUSH request for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.3kB
+2025-07-15T19:29:13.899863043Z 2025-07-15T19:29:13.899819Z	info	delta	RDS: PUSH request for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.8kB cached:0/0 filtered:0
+2025-07-15T19:29:14.432926351Z 2025-07-15T19:29:14.432845Z	info	validationController	successfully updated	name=istio-validator-istio-system resource version=1516
+2025-07-15T19:29:14.624322415Z 2025-07-15T19:29:14.621620Z	info	delta	CDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:28 removed:0 size:30.9kB cached:3/27
+2025-07-15T19:29:14.624378276Z 2025-07-15T19:29:14.622138Z	info	delta	EDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:27 removed:0 size:4.1kB empty:3 cached:3/27
+2025-07-15T19:29:14.624384926Z 2025-07-15T19:29:14.622363Z	info	delta	LDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.3kB
+2025-07-15T19:29:14.624389426Z 2025-07-15T19:29:14.622517Z	info	delta	RDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.8kB cached:0/0
+2025-07-15T19:29:14.634969676Z 2025-07-15T19:29:14.634901Z	info	gateway	reconciling	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:14.662969763Z 2025-07-15T19:29:14.662830Z	info	gateway	gateway updated	gateway=bookinfo/bookinfo-gateway
+2025-07-15T19:29:14.725941812Z 2025-07-15T19:29:14.725841Z	info	ads	Push debounce stable[18] 1 for config ServiceEntry/bookinfo/bookinfo-gateway-istio.bookinfo.svc.cluster.local: 100.982842ms since last change, 100.982752ms since last push, full=false
+2025-07-15T19:29:14.725991732Z 2025-07-15T19:29:14.725903Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:1 Version:2025-07-15T19:29:13Z/14
+2025-07-15T19:29:17.219408639Z 2025-07-15T19:29:17.219339Z	info	ads	Push Status: {
+2025-07-15T19:29:17.219423569Z     "pilot_eds_no_instances": {
+2025-07-15T19:29:17.219427559Z         "outbound|15021||bookinfo-gateway-istio.bookinfo.svc.cluster.local": {},
+2025-07-15T19:29:17.219430929Z         "outbound|80||bookinfo-gateway-istio.bookinfo.svc.cluster.local": {},
+2025-07-15T19:29:17.219436809Z         "outbound|9080||details.bookinfo.svc.cluster.local": {},
+2025-07-15T19:29:17.219440339Z         "outbound|9080||productpage.bookinfo.svc.cluster.local": {},
+2025-07-15T19:29:17.219444199Z         "outbound|9080||ratings.bookinfo.svc.cluster.local": {},
+2025-07-15T19:29:17.219448149Z         "outbound|9080||reviews.bookinfo.svc.cluster.local": {}
+2025-07-15T19:29:17.219452029Z     }
+2025-07-15T19:29:17.219455709Z }
+2025-07-15T19:29:21.818816364Z 2025-07-15T19:29:21.818739Z	info	delta	ADS: new delta connection for node:reviews-v1-598b896c9d-cxrv2.bookinfo-2
+2025-07-15T19:29:21.819224047Z 2025-07-15T19:29:21.819196Z	info	delta	CDS: PUSH request for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:31 removed:0 size:32.5kB cached:0/27
+2025-07-15T19:29:21.829698017Z 2025-07-15T19:29:21.829611Z	info	delta	EDS: PUSH request for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:27 removed:0 size:4.4kB empty:4 cached:0/27 filtered:0
+2025-07-15T19:29:21.884268690Z 2025-07-15T19:29:21.884180Z	info	delta	LDS: PUSH request for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:22 removed:0 size:54.2kB
+2025-07-15T19:29:21.899926364Z 2025-07-15T19:29:21.899834Z	info	delta	RDS: PUSH request for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:14 removed:0 size:11.4kB cached:0/14 filtered:0
+2025-07-15T19:29:22.645470777Z 2025-07-15T19:29:22.641829Z	info	delta	CDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:31 removed:0 size:32.5kB cached:0/27
+2025-07-15T19:29:22.645575628Z 2025-07-15T19:29:22.642393Z	info	delta	EDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:27 removed:0 size:4.4kB empty:4 cached:0/27
+2025-07-15T19:29:22.645578868Z 2025-07-15T19:29:22.643712Z	info	delta	LDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:22 removed:0 size:54.2kB
+2025-07-15T19:29:22.645581768Z 2025-07-15T19:29:22.644253Z	info	delta	RDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:14 removed:0 size:11.4kB cached:0/14
+2025-07-15T19:29:22.745653864Z 2025-07-15T19:29:22.745552Z	info	ads	Push debounce stable[19] 1 for config ServiceEntry/bookinfo/reviews.bookinfo.svc.cluster.local: 100.172277ms since last change, 100.172227ms since last push, full=false
+2025-07-15T19:29:22.745667424Z 2025-07-15T19:29:22.745638Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:2 Version:2025-07-15T19:29:13Z/14
+2025-07-15T19:29:25.595163277Z 2025-07-15T19:29:25.595092Z	info	delta	ADS: new delta connection for node:details-v1-766844796b-r6b8z.bookinfo-3
+2025-07-15T19:29:25.595398848Z 2025-07-15T19:29:25.595369Z	info	delta	CDS: PUSH request for node:details-v1-766844796b-r6b8z.bookinfo resources:31 removed:0 size:32.5kB cached:26/27
+2025-07-15T19:29:25.606513721Z 2025-07-15T19:29:25.606372Z	info	delta	EDS: PUSH request for node:details-v1-766844796b-r6b8z.bookinfo resources:27 removed:0 size:4.6kB empty:0 cached:27/27 filtered:0
+2025-07-15T19:29:25.843340614Z 2025-07-15T19:29:25.843220Z	info	delta	LDS: PUSH request for node:details-v1-766844796b-r6b8z.bookinfo resources:22 removed:0 size:54.2kB
+2025-07-15T19:29:25.859854677Z 2025-07-15T19:29:25.859778Z	info	delta	RDS: PUSH request for node:details-v1-766844796b-r6b8z.bookinfo resources:14 removed:0 size:11.4kB cached:13/14 filtered:0
+2025-07-15T19:29:26.646099594Z 2025-07-15T19:29:26.645981Z	info	delta	CDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:31 removed:0 size:32.5kB cached:26/27
+2025-07-15T19:29:26.646134794Z 2025-07-15T19:29:26.646092Z	info	delta	EDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:27 removed:0 size:4.6kB empty:0 cached:27/27
+2025-07-15T19:29:26.646960068Z 2025-07-15T19:29:26.646899Z	info	delta	LDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:22 removed:0 size:54.2kB
+2025-07-15T19:29:26.647186190Z 2025-07-15T19:29:26.647089Z	info	delta	RDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:14 removed:0 size:11.4kB cached:13/14
+2025-07-15T19:29:26.750224159Z 2025-07-15T19:29:26.750144Z	info	ads	Push debounce stable[20] 1 for config ServiceEntry/bookinfo/details.bookinfo.svc.cluster.local: 100.669317ms since last change, 100.669227ms since last push, full=false
+2025-07-15T19:29:26.750247720Z 2025-07-15T19:29:26.750196Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:3 Version:2025-07-15T19:29:13Z/14
+2025-07-15T19:29:29.563855149Z 2025-07-15T19:29:29.563778Z	info	delta	ADS: new delta connection for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo-4
+2025-07-15T19:29:29.564018800Z 2025-07-15T19:29:29.563996Z	info	delta	CDS: PUSH request for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:31 removed:0 size:32.5kB cached:26/27
+2025-07-15T19:29:29.574320618Z 2025-07-15T19:29:29.574245Z	info	delta	EDS: PUSH request for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:27 removed:0 size:4.7kB empty:0 cached:27/27 filtered:0
+2025-07-15T19:29:29.680574016Z 2025-07-15T19:29:29.680492Z	info	delta	LDS: PUSH request for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:22 removed:0 size:54.2kB
+2025-07-15T19:29:29.697896824Z 2025-07-15T19:29:29.697747Z	info	delta	RDS: PUSH request for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:14 removed:0 size:11.4kB cached:13/14 filtered:0
+2025-07-15T19:29:30.346459944Z 2025-07-15T19:29:30.346377Z	info	delta	ADS: new delta connection for node:reviews-v3-564544b4d6-czsdz.bookinfo-5
+2025-07-15T19:29:30.346619425Z 2025-07-15T19:29:30.346600Z	info	delta	CDS: PUSH request for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:31 removed:0 size:32.5kB cached:26/27
+2025-07-15T19:29:30.356969084Z 2025-07-15T19:29:30.356890Z	info	delta	EDS: PUSH request for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:27 removed:0 size:4.7kB empty:0 cached:27/27 filtered:0
+2025-07-15T19:29:30.458187474Z 2025-07-15T19:29:30.458110Z	info	delta	LDS: PUSH request for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:22 removed:0 size:54.2kB
+2025-07-15T19:29:30.477155481Z 2025-07-15T19:29:30.476875Z	info	delta	RDS: PUSH request for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:14 removed:0 size:11.4kB cached:13/14 filtered:0
+2025-07-15T19:29:30.662410483Z 2025-07-15T19:29:30.661716Z	info	delta	CDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:31 removed:0 size:32.5kB cached:26/27
+2025-07-15T19:29:30.662446203Z 2025-07-15T19:29:30.661844Z	info	delta	EDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:27 removed:0 size:4.7kB empty:0 cached:27/27
+2025-07-15T19:29:30.662659134Z 2025-07-15T19:29:30.662622Z	info	delta	LDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:22 removed:0 size:54.2kB
+2025-07-15T19:29:30.662828465Z 2025-07-15T19:29:30.662778Z	info	delta	RDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:14 removed:0 size:11.4kB cached:13/14
+2025-07-15T19:29:30.766341209Z 2025-07-15T19:29:30.766149Z	info	ads	Push debounce stable[21] 1 for config ServiceEntry/bookinfo/ratings.bookinfo.svc.cluster.local: 100.497706ms since last change, 100.497576ms since last push, full=false
+2025-07-15T19:29:30.766383479Z 2025-07-15T19:29:30.766286Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:5 Version:2025-07-15T19:29:13Z/14
+2025-07-15T19:29:31.098986731Z 2025-07-15T19:29:31.098841Z	info	delta	ADS: new delta connection for node:reviews-v2-556d6457d-4dddd.bookinfo-6
+2025-07-15T19:29:31.099414974Z 2025-07-15T19:29:31.099355Z	info	delta	CDS: PUSH request for node:reviews-v2-556d6457d-4dddd.bookinfo resources:31 removed:0 size:32.5kB cached:26/27
+2025-07-15T19:29:31.112030815Z 2025-07-15T19:29:31.111840Z	info	delta	EDS: PUSH request for node:reviews-v2-556d6457d-4dddd.bookinfo resources:27 removed:0 size:4.9kB empty:0 cached:27/27 filtered:0
+2025-07-15T19:29:31.164819382Z 2025-07-15T19:29:31.164657Z	info	delta	LDS: PUSH request for node:reviews-v2-556d6457d-4dddd.bookinfo resources:22 removed:0 size:54.2kB
+2025-07-15T19:29:31.185284767Z 2025-07-15T19:29:31.185111Z	info	delta	RDS: PUSH request for node:reviews-v2-556d6457d-4dddd.bookinfo resources:14 removed:0 size:11.4kB cached:13/14 filtered:0
+2025-07-15T19:29:31.665881323Z 2025-07-15T19:29:31.665766Z	info	delta	CDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:31 removed:0 size:32.5kB cached:26/27
+2025-07-15T19:29:31.665929013Z 2025-07-15T19:29:31.665874Z	info	delta	EDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:27 removed:0 size:4.9kB empty:0 cached:27/27
+2025-07-15T19:29:31.666549136Z 2025-07-15T19:29:31.666504Z	info	delta	LDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:22 removed:0 size:54.2kB
+2025-07-15T19:29:31.666871858Z 2025-07-15T19:29:31.666842Z	info	delta	RDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:14 removed:0 size:11.4kB cached:13/14
+2025-07-15T19:29:31.769568426Z 2025-07-15T19:29:31.769201Z	info	ads	Push debounce stable[22] 1 for config ServiceEntry/bookinfo/reviews.bookinfo.svc.cluster.local: 100.244694ms since last change, 100.244604ms since last push, full=false
+2025-07-15T19:29:31.769592826Z 2025-07-15T19:29:31.769272Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:6 Version:2025-07-15T19:29:13Z/14
+2025-07-15T19:29:32.662176631Z 2025-07-15T19:29:32.662081Z	info	delta	CDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:31 removed:0 size:32.5kB cached:26/27
+2025-07-15T19:29:32.662245011Z 2025-07-15T19:29:32.662205Z	info	delta	EDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:27 removed:0 size:5.1kB empty:0 cached:27/27
+2025-07-15T19:29:32.663093556Z 2025-07-15T19:29:32.663067Z	info	delta	LDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:22 removed:0 size:54.2kB
+2025-07-15T19:29:32.663244207Z 2025-07-15T19:29:32.663225Z	info	delta	RDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:14 removed:0 size:11.4kB cached:13/14
+2025-07-15T19:29:32.766134266Z 2025-07-15T19:29:32.766051Z	info	ads	Push debounce stable[23] 1 for config ServiceEntry/bookinfo/reviews.bookinfo.svc.cluster.local: 101.024048ms since last change, 101.023978ms since last push, full=false
+2025-07-15T19:29:32.766155666Z 2025-07-15T19:29:32.766128Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:6 Version:2025-07-15T19:29:13Z/14
+2025-07-15T19:29:34.543396971Z 2025-07-15T19:29:34.543277Z	info	delta	ADS: new delta connection for node:productpage-v1-54bb874995-7t6fg.bookinfo-7
+2025-07-15T19:29:34.543677853Z 2025-07-15T19:29:34.543644Z	info	delta	CDS: PUSH request for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:31 removed:0 size:32.6kB cached:26/27
+2025-07-15T19:29:34.561059581Z 2025-07-15T19:29:34.560893Z	info	delta	EDS: PUSH request for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:27 removed:0 size:5.2kB empty:0 cached:27/27 filtered:0
+2025-07-15T19:29:34.575950404Z 2025-07-15T19:29:34.575771Z	info	delta	LDS: PUSH request for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:22 removed:0 size:54.3kB
+2025-07-15T19:29:34.593249162Z 2025-07-15T19:29:34.593136Z	info	delta	RDS: PUSH request for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:14 removed:0 size:11.4kB cached:13/14 filtered:0
+2025-07-15T19:29:35.669731362Z 2025-07-15T19:29:35.669611Z	info	delta	CDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:31 removed:0 size:32.6kB cached:26/27
+2025-07-15T19:29:35.669770022Z 2025-07-15T19:29:35.669741Z	info	delta	EDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:27 removed:0 size:5.2kB empty:0 cached:27/27
+2025-07-15T19:29:35.670810748Z 2025-07-15T19:29:35.670752Z	info	delta	LDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:22 removed:0 size:54.3kB
+2025-07-15T19:29:35.671417482Z 2025-07-15T19:29:35.671106Z	info	delta	RDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:14 removed:0 size:11.4kB cached:13/14
+2025-07-15T19:29:35.774753563Z 2025-07-15T19:29:35.774633Z	info	ads	Push debounce stable[24] 1 for config ServiceEntry/bookinfo/productpage.bookinfo.svc.cluster.local: 100.908478ms since last change, 100.908298ms since last push, full=false
+2025-07-15T19:29:35.774791003Z 2025-07-15T19:29:35.774715Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:7 Version:2025-07-15T19:29:13Z/14
+2025-07-15T19:29:36.381106936Z 2025-07-15T19:29:36.381026Z	info	Process sidecar injection request	path=/inject pod=bookinfo/kiali-traffic-generator-***** (actual name not yet known)
+2025-07-15T19:29:36.381128787Z 2025-07-15T19:29:36.381051Z	info	Skipping due to policy check	path=/inject pod=bookinfo/kiali-traffic-generator-***** (actual name not yet known)
+2025-07-15T19:29:36.612112657Z 2025-07-15T19:29:36.612023Z	info	ads	Push debounce stable[25] 3 for config ConfigMap/alpha/kube-root-ca.crt and 2 more configs: 100.769767ms since last change, 180.687378ms since last push, full=false
+2025-07-15T19:29:36.612132407Z 2025-07-15T19:29:36.612088Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:7 Version:2025-07-15T19:29:13Z/14
+2025-07-15T19:29:37.117745044Z 2025-07-15T19:29:37.117593Z	info	Process sidecar injection request	path=/inject pod=alpha/a-client-695f68b55d-***** (actual name not yet known)
+2025-07-15T19:29:37.126133521Z 2025-07-15T19:29:37.125993Z	info	Process sidecar injection request	path=/inject pod=alpha/b-client-75fb47d5c6-***** (actual name not yet known)
+2025-07-15T19:29:37.129934812Z 2025-07-15T19:29:37.129745Z	info	Process sidecar injection request	path=/inject pod=alpha/c-client-7988d5d85f-***** (actual name not yet known)
+2025-07-15T19:29:37.141460307Z 2025-07-15T19:29:37.141213Z	info	Process sidecar injection request	path=/inject pod=alpha/d-client-6778cdf6cd-***** (actual name not yet known)
+2025-07-15T19:29:37.151954456Z 2025-07-15T19:29:37.151759Z	info	Process sidecar injection request	path=/inject pod=alpha/e-client-57dcf59cb6-***** (actual name not yet known)
+2025-07-15T19:29:37.167749985Z 2025-07-15T19:29:37.167587Z	info	Process sidecar injection request	path=/inject pod=alpha/f-client-869f9c7bdd-***** (actual name not yet known)
+2025-07-15T19:29:37.187916149Z 2025-07-15T19:29:37.187784Z	info	model	Incremental push, service v-server.alpha.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:37.203547157Z 2025-07-15T19:29:37.203465Z	info	model	Incremental push, service w-server.alpha.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:37.216551790Z 2025-07-15T19:29:37.216483Z	info	model	Incremental push, service x-server.alpha.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:37.228037174Z 2025-07-15T19:29:37.227961Z	info	model	Incremental push, service y-server.alpha.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:37.240507845Z 2025-07-15T19:29:37.240427Z	info	model	Incremental push, service z-server.alpha.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:37.315276935Z 2025-07-15T19:29:37.315179Z	info	Process sidecar injection request	path=/inject pod=alpha/v-server-785cff56c9-***** (actual name not yet known)
+2025-07-15T19:29:37.341468133Z 2025-07-15T19:29:37.341362Z	info	ads	Push debounce stable[26] 10 for config ServiceEntry/alpha/v-server.alpha.svc.cluster.local and 4 more configs: 100.884138ms since last change, 157.731178ms since last push, full=true
+2025-07-15T19:29:37.341706874Z 2025-07-15T19:29:37.341682Z	info	ads	XDS: Pushing Services:21 ConnectedEndpoints:7 Version:2025-07-15T19:29:37Z/15
+2025-07-15T19:29:37.342216547Z 2025-07-15T19:29:37.342182Z	info	delta	CDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:9 removed:0 size:6.1kB cached:0/5
+2025-07-15T19:29:37.342222127Z 2025-07-15T19:29:37.342186Z	info	delta	CDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:9 removed:0 size:6.1kB cached:4/5
+2025-07-15T19:29:37.342253247Z 2025-07-15T19:29:37.342228Z	info	delta	CDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:9 removed:0 size:6.1kB cached:5/5
+2025-07-15T19:29:37.342334258Z 2025-07-15T19:29:37.342252Z	info	delta	CDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:9 removed:0 size:6.1kB cached:4/5
+2025-07-15T19:29:37.342541099Z 2025-07-15T19:29:37.342267Z	info	delta	CDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:6 removed:0 size:5.1kB cached:0/5
+2025-07-15T19:29:37.342687180Z 2025-07-15T19:29:37.342626Z	info	delta	CDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:9 removed:0 size:6.1kB cached:5/5
+2025-07-15T19:29:37.342693710Z 2025-07-15T19:29:37.342325Z	info	delta	CDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:9 removed:0 size:6.1kB cached:5/5
+2025-07-15T19:29:37.342782170Z 2025-07-15T19:29:37.342699Z	info	delta	LDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.3kB
+2025-07-15T19:29:37.343026541Z 2025-07-15T19:29:37.342970Z	info	delta	RDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.8kB cached:0/0
+2025-07-15T19:29:37.343499664Z 2025-07-15T19:29:37.343450Z	info	delta	LDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:23 removed:0 size:56.8kB
+2025-07-15T19:29:37.343510784Z 2025-07-15T19:29:37.343480Z	info	delta	LDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:23 removed:0 size:57.0kB
+2025-07-15T19:29:37.343811606Z 2025-07-15T19:29:37.343729Z	info	delta	RDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:14 removed:0 size:11.4kB cached:13/14
+2025-07-15T19:29:37.343845166Z 2025-07-15T19:29:37.343817Z	info	delta	LDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:23 removed:0 size:56.8kB
+2025-07-15T19:29:37.343848866Z 2025-07-15T19:29:37.343830Z	info	delta	RDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:14 removed:0 size:11.4kB cached:14/14
+2025-07-15T19:29:37.344038667Z 2025-07-15T19:29:37.343968Z	info	delta	LDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:23 removed:0 size:56.8kB
+2025-07-15T19:29:37.344430289Z 2025-07-15T19:29:37.344308Z	info	delta	RDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:14 removed:0 size:11.4kB cached:14/14
+2025-07-15T19:29:37.344517750Z 2025-07-15T19:29:37.343982Z	info	delta	RDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:14 removed:0 size:11.4kB cached:14/14
+2025-07-15T19:29:37.344580270Z 2025-07-15T19:29:37.344394Z	info	delta	LDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:23 removed:0 size:56.8kB
+2025-07-15T19:29:37.344865742Z 2025-07-15T19:29:37.344833Z	info	delta	RDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:14 removed:0 size:11.4kB cached:14/14
+2025-07-15T19:29:37.345063903Z 2025-07-15T19:29:37.344941Z	info	delta	LDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:23 removed:0 size:56.8kB
+2025-07-15T19:29:37.345328644Z 2025-07-15T19:29:37.345276Z	info	delta	RDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:14 removed:0 size:11.4kB cached:14/14
+2025-07-15T19:29:37.355353831Z 2025-07-15T19:29:37.355035Z	info	delta	EDS: PUSH request for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:5 removed:0 size:245B empty:5 cached:0/5 filtered:27
+2025-07-15T19:29:37.355909544Z 2025-07-15T19:29:37.355278Z	info	delta	EDS: PUSH request for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:5 removed:0 size:245B empty:1 cached:4/5 filtered:27
+2025-07-15T19:29:37.355983994Z 2025-07-15T19:29:37.355378Z	info	delta	EDS: PUSH request for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:5 removed:0 size:245B empty:0 cached:5/5 filtered:27
+2025-07-15T19:29:37.356037855Z 2025-07-15T19:29:37.356001Z	info	delta	EDS: PUSH request for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:5 removed:0 size:245B empty:5 cached:0/5 filtered:27
+2025-07-15T19:29:37.356077425Z 2025-07-15T19:29:37.355740Z	info	delta	EDS: PUSH request for node:details-v1-766844796b-r6b8z.bookinfo resources:5 removed:0 size:245B empty:0 cached:5/5 filtered:27
+2025-07-15T19:29:37.357637824Z 2025-07-15T19:29:37.356973Z	info	delta	EDS: PUSH request for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:5 removed:0 size:245B empty:0 cached:5/5 filtered:27
+2025-07-15T19:29:37.358075546Z 2025-07-15T19:29:37.357937Z	info	delta	EDS: PUSH request for node:reviews-v2-556d6457d-4dddd.bookinfo resources:5 removed:0 size:245B empty:0 cached:5/5 filtered:27
+2025-07-15T19:29:37.365787959Z 2025-07-15T19:29:37.365187Z	info	delta	RDS: PUSH request for node:details-v1-766844796b-r6b8z.bookinfo resources:1 removed:0 size:2.4kB cached:0/1 filtered:14
+2025-07-15T19:29:37.365917870Z 2025-07-15T19:29:37.365651Z	info	delta	RDS: PUSH request for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:1 removed:0 size:2.4kB cached:0/1 filtered:14
+2025-07-15T19:29:37.366000301Z 2025-07-15T19:29:37.365894Z	info	delta	RDS: PUSH request for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:1 removed:0 size:2.4kB cached:1/1 filtered:14
+2025-07-15T19:29:37.367724740Z 2025-07-15T19:29:37.367525Z	info	delta	RDS: PUSH request for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:1 removed:0 size:2.4kB cached:1/1 filtered:14
+2025-07-15T19:29:37.367915921Z 2025-07-15T19:29:37.367847Z	info	delta	RDS: PUSH request for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:1 removed:0 size:2.4kB cached:1/1 filtered:14
+2025-07-15T19:29:37.380428952Z 2025-07-15T19:29:37.380126Z	info	delta	RDS: PUSH request for node:reviews-v2-556d6457d-4dddd.bookinfo resources:1 removed:0 size:2.4kB cached:1/1 filtered:14
+2025-07-15T19:29:37.569335046Z 2025-07-15T19:29:37.569182Z	info	Process sidecar injection request	path=/inject pod=alpha/w-server-8667cdbcf7-***** (actual name not yet known)
+2025-07-15T19:29:37.719148729Z 2025-07-15T19:29:37.717628Z	info	Process sidecar injection request	path=/inject pod=alpha/x-server-6d8987d7c7-***** (actual name not yet known)
+2025-07-15T19:29:37.767647322Z 2025-07-15T19:29:37.767489Z	info	Process sidecar injection request	path=/inject pod=alpha/y-server-5b556546fd-***** (actual name not yet known)
+2025-07-15T19:29:37.814105624Z 2025-07-15T19:29:37.814005Z	info	model	Incremental push, service v-server.beta.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:37.827557829Z 2025-07-15T19:29:37.827480Z	info	model	Incremental push, service w-server.beta.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:37.841637989Z 2025-07-15T19:29:37.841556Z	info	model	Incremental push, service x-server.beta.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:37.860788926Z 2025-07-15T19:29:37.860330Z	info	model	Incremental push, service y-server.beta.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:37.866832770Z 2025-07-15T19:29:37.865597Z	info	Process sidecar injection request	path=/inject pod=alpha/z-server-5f94f449c5-***** (actual name not yet known)
+2025-07-15T19:29:37.889771359Z 2025-07-15T19:29:37.886059Z	info	model	Incremental push, service z-server.beta.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:37.987452369Z 2025-07-15T19:29:37.987043Z	info	ads	Push debounce stable[27] 10 for config ServiceEntry/beta/z-server.beta.svc.cluster.local and 4 more configs: 100.890688ms since last change, 174.496212ms since last push, full=true
+2025-07-15T19:29:37.987776611Z 2025-07-15T19:29:37.987731Z	info	ads	XDS: Pushing Services:26 ConnectedEndpoints:7 Version:2025-07-15T19:29:37Z/16
+2025-07-15T19:29:37.989013158Z 2025-07-15T19:29:37.988868Z	info	delta	CDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:9 removed:0 size:6.0kB cached:0/5
+2025-07-15T19:29:37.989026118Z 2025-07-15T19:29:37.988867Z	info	delta	CDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:9 removed:0 size:6.0kB cached:3/5
+2025-07-15T19:29:37.989299399Z 2025-07-15T19:29:37.989255Z	info	delta	CDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:9 removed:0 size:6.1kB cached:4/5
+2025-07-15T19:29:37.990269965Z 2025-07-15T19:29:37.990220Z	info	delta	CDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:9 removed:0 size:6.0kB cached:5/5
+2025-07-15T19:29:37.992035995Z 2025-07-15T19:29:37.991131Z	info	delta	LDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:23 removed:0 size:56.8kB
+2025-07-15T19:29:37.992056556Z 2025-07-15T19:29:37.991663Z	info	delta	CDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:9 removed:0 size:6.0kB cached:5/5
+2025-07-15T19:29:37.992061146Z 2025-07-15T19:29:37.991726Z	info	delta	LDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:23 removed:0 size:57.0kB
+2025-07-15T19:29:37.993031251Z 2025-07-15T19:29:37.992849Z	info	delta	RDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:15 removed:0 size:16.2kB cached:14/15
+2025-07-15T19:29:38.008350448Z 2025-07-15T19:29:38.006180Z	info	delta	LDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:23 removed:0 size:56.8kB
+2025-07-15T19:29:38.008431318Z 2025-07-15T19:29:38.006264Z	info	delta	CDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:6 removed:0 size:5.1kB cached:0/5
+2025-07-15T19:29:38.008435648Z 2025-07-15T19:29:38.007496Z	info	delta	RDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:15 removed:0 size:16.2kB cached:15/15
+2025-07-15T19:29:38.008438578Z 2025-07-15T19:29:38.006158Z	info	delta	LDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:23 removed:0 size:56.8kB
+2025-07-15T19:29:38.008441168Z 2025-07-15T19:29:38.005410Z	info	delta	CDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:9 removed:0 size:6.0kB cached:5/5
+2025-07-15T19:29:38.008444158Z 2025-07-15T19:29:38.008220Z	info	delta	RDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:15 removed:0 size:16.2kB cached:15/15
+2025-07-15T19:29:38.009674345Z 2025-07-15T19:29:38.008800Z	info	delta	EDS: PUSH request for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:5 removed:0 size:240B empty:5 cached:0/5 filtered:32
+2025-07-15T19:29:38.009699275Z 2025-07-15T19:29:38.008303Z	info	delta	LDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.3kB
+2025-07-15T19:29:38.009704035Z 2025-07-15T19:29:38.009023Z	info	delta	RDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.8kB cached:0/0
+2025-07-15T19:29:38.009746245Z 2025-07-15T19:29:38.008483Z	info	delta	LDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:23 removed:0 size:56.8kB
+2025-07-15T19:29:38.010215368Z 2025-07-15T19:29:38.010084Z	info	delta	RDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:15 removed:0 size:16.2kB cached:15/15
+2025-07-15T19:29:38.011894947Z 2025-07-15T19:29:38.011780Z	info	delta	LDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:23 removed:0 size:56.8kB
+2025-07-15T19:29:38.019192529Z 2025-07-15T19:29:38.017931Z	info	delta	RDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:15 removed:0 size:16.2kB cached:15/15
+2025-07-15T19:29:38.020849218Z 2025-07-15T19:29:38.018162Z	info	delta	RDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:15 removed:0 size:16.2kB cached:15/15
+2025-07-15T19:29:38.020869358Z 2025-07-15T19:29:38.019025Z	info	delta	EDS: PUSH request for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:5 removed:0 size:240B empty:0 cached:5/5 filtered:32
+2025-07-15T19:29:38.035434410Z 2025-07-15T19:29:38.025268Z	info	delta	EDS: PUSH request for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:5 removed:0 size:240B empty:0 cached:5/5 filtered:32
+2025-07-15T19:29:38.037610772Z 2025-07-15T19:29:38.037381Z	info	delta	EDS: PUSH request for node:reviews-v2-556d6457d-4dddd.bookinfo resources:5 removed:0 size:240B empty:0 cached:5/5 filtered:32
+2025-07-15T19:29:38.042529760Z 2025-07-15T19:29:38.042122Z	info	delta	EDS: PUSH request for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:5 removed:0 size:240B empty:0 cached:5/5 filtered:32
+2025-07-15T19:29:38.051433260Z 2025-07-15T19:29:38.051057Z	info	delta	EDS: PUSH request for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:5 removed:0 size:240B empty:5 cached:0/5 filtered:32
+2025-07-15T19:29:38.057791836Z 2025-07-15T19:29:38.055802Z	info	delta	EDS: PUSH request for node:details-v1-766844796b-r6b8z.bookinfo resources:5 removed:0 size:240B empty:0 cached:5/5 filtered:32
+2025-07-15T19:29:38.467941924Z 2025-07-15T19:29:38.467347Z	info	Process sidecar injection request	path=/inject pod=beta/a-client-68cffc58fd-***** (actual name not yet known)
+2025-07-15T19:29:38.522849923Z 2025-07-15T19:29:38.519208Z	info	model	Incremental push, service v-server.gamma.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:38.573058986Z 2025-07-15T19:29:38.572970Z	info	model	Incremental push, service w-server.gamma.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:38.593223679Z 2025-07-15T19:29:38.592593Z	info	model	Incremental push, service x-server.gamma.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:38.612543789Z 2025-07-15T19:29:38.612218Z	info	model	Incremental push, service y-server.gamma.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:38.616377130Z 2025-07-15T19:29:38.615744Z	info	Process sidecar injection request	path=/inject pod=beta/b-client-cd9f9866d-***** (actual name not yet known)
+2025-07-15T19:29:38.638306334Z 2025-07-15T19:29:38.632710Z	info	model	Incremental push, service z-server.gamma.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:38.719927443Z 2025-07-15T19:29:38.719720Z	info	Process sidecar injection request	path=/inject pod=beta/c-client-5646c698fc-***** (actual name not yet known)
+2025-07-15T19:29:38.741089602Z 2025-07-15T19:29:38.734422Z	info	ads	Push debounce stable[28] 10 for config ServiceEntry/gamma/v-server.gamma.svc.cluster.local and 4 more configs: 101.619711ms since last change, 220.608582ms since last push, full=true
+2025-07-15T19:29:38.741160203Z 2025-07-15T19:29:38.734851Z	info	ads	XDS: Pushing Services:31 ConnectedEndpoints:7 Version:2025-07-15T19:29:38Z/17
+2025-07-15T19:29:38.741164253Z 2025-07-15T19:29:38.735424Z	info	delta	CDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:9 removed:0 size:6.1kB cached:0/5
+2025-07-15T19:29:38.741203633Z 2025-07-15T19:29:38.735715Z	info	delta	CDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:6 removed:0 size:5.1kB cached:0/5
+2025-07-15T19:29:38.741205973Z 2025-07-15T19:29:38.735822Z	info	delta	LDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.3kB
+2025-07-15T19:29:38.741207973Z 2025-07-15T19:29:38.735903Z	info	delta	RDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.8kB cached:0/0
+2025-07-15T19:29:38.741210523Z 2025-07-15T19:29:38.736113Z	info	delta	CDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:9 removed:0 size:6.1kB cached:5/5
+2025-07-15T19:29:38.741212573Z 2025-07-15T19:29:38.736329Z	info	delta	LDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:24 removed:0 size:59.7kB
+2025-07-15T19:29:38.741214573Z 2025-07-15T19:29:38.736523Z	info	delta	CDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:9 removed:0 size:6.1kB cached:1/5
+2025-07-15T19:29:38.741216623Z 2025-07-15T19:29:38.736987Z	info	delta	LDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:38.741219373Z 2025-07-15T19:29:38.737139Z	info	delta	CDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:9 removed:0 size:6.1kB cached:5/5
+2025-07-15T19:29:38.741813006Z 2025-07-15T19:29:38.737777Z	info	delta	LDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:38.741863256Z 2025-07-15T19:29:38.737952Z	info	delta	RDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:15 removed:0 size:16.2kB cached:15/15
+2025-07-15T19:29:38.741865726Z 2025-07-15T19:29:38.738029Z	info	delta	CDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:9 removed:0 size:6.1kB cached:5/5
+2025-07-15T19:29:38.741869427Z 2025-07-15T19:29:38.738388Z	info	delta	RDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:15 removed:0 size:16.2kB cached:15/15
+2025-07-15T19:29:38.741873657Z 2025-07-15T19:29:38.738394Z	info	delta	LDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:38.741876067Z 2025-07-15T19:29:38.738602Z	info	delta	CDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:9 removed:0 size:6.1kB cached:5/5
+2025-07-15T19:29:38.741879417Z 2025-07-15T19:29:38.738860Z	info	delta	RDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:15 removed:0 size:16.2kB cached:15/15
+2025-07-15T19:29:38.741881637Z 2025-07-15T19:29:38.738893Z	info	delta	RDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:15 removed:0 size:16.2kB cached:15/15
+2025-07-15T19:29:38.741887827Z 2025-07-15T19:29:38.739510Z	info	delta	LDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:38.741901717Z 2025-07-15T19:29:38.739770Z	info	delta	RDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:15 removed:0 size:16.2kB cached:15/15
+2025-07-15T19:29:38.741907557Z 2025-07-15T19:29:38.739782Z	info	delta	LDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:38.741911897Z 2025-07-15T19:29:38.739959Z	info	delta	RDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:15 removed:0 size:16.2kB cached:15/15
+2025-07-15T19:29:38.751833463Z 2025-07-15T19:29:38.751598Z	info	delta	EDS: PUSH request for node:details-v1-766844796b-r6b8z.bookinfo resources:5 removed:0 size:245B empty:5 cached:0/5 filtered:37
+2025-07-15T19:29:38.760732323Z 2025-07-15T19:29:38.760499Z	info	delta	EDS: PUSH request for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:5 removed:0 size:245B empty:0 cached:5/5 filtered:37
+2025-07-15T19:29:38.766464275Z 2025-07-15T19:29:38.762656Z	info	delta	RDS: PUSH request for node:details-v1-766844796b-r6b8z.bookinfo resources:1 removed:0 size:2.4kB cached:0/1 filtered:15
+2025-07-15T19:29:38.766542265Z 2025-07-15T19:29:38.766055Z	info	delta	EDS: PUSH request for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:5 removed:0 size:245B empty:5 cached:0/5 filtered:37
+2025-07-15T19:29:38.774823962Z 2025-07-15T19:29:38.772327Z	info	delta	EDS: PUSH request for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:5 removed:0 size:245B empty:0 cached:5/5 filtered:37
+2025-07-15T19:29:38.774904622Z 2025-07-15T19:29:38.772326Z	info	model	Full push, new service alpha/v-server.alpha.svc.cluster.local
+2025-07-15T19:29:38.779443648Z 2025-07-15T19:29:38.776903Z	info	delta	EDS: PUSH request for node:reviews-v2-556d6457d-4dddd.bookinfo resources:5 removed:0 size:245B empty:0 cached:5/5 filtered:37
+2025-07-15T19:29:38.779489188Z 2025-07-15T19:29:38.777102Z	info	delta	RDS: PUSH request for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:1 removed:0 size:2.4kB cached:1/1 filtered:15
+2025-07-15T19:29:38.789666225Z 2025-07-15T19:29:38.786469Z	info	delta	RDS: PUSH request for node:reviews-v2-556d6457d-4dddd.bookinfo resources:1 removed:0 size:2.4kB cached:1/1 filtered:15
+2025-07-15T19:29:38.791021043Z 2025-07-15T19:29:38.790716Z	info	delta	RDS: PUSH request for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:1 removed:0 size:2.4kB cached:1/1 filtered:15
+2025-07-15T19:29:38.805399694Z 2025-07-15T19:29:38.803015Z	info	delta	EDS: PUSH request for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:5 removed:0 size:245B empty:0 cached:5/5 filtered:37
+2025-07-15T19:29:38.805432844Z 2025-07-15T19:29:38.803049Z	info	delta	EDS: PUSH request for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:5 removed:0 size:245B empty:0 cached:5/5 filtered:37
+2025-07-15T19:29:38.805436054Z 2025-07-15T19:29:38.803285Z	info	delta	RDS: PUSH request for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:1 removed:0 size:2.4kB cached:1/1 filtered:15
+2025-07-15T19:29:38.805438884Z 2025-07-15T19:29:38.804545Z	info	delta	RDS: PUSH request for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:1 removed:0 size:2.4kB cached:1/1 filtered:15
+2025-07-15T19:29:38.830430245Z 2025-07-15T19:29:38.830122Z	info	model	Full push, new service alpha/w-server.alpha.svc.cluster.local
+2025-07-15T19:29:38.866579428Z 2025-07-15T19:29:38.865702Z	info	Process sidecar injection request	path=/inject pod=beta/d-client-59dfcb7dbd-***** (actual name not yet known)
+2025-07-15T19:29:38.943665923Z 2025-07-15T19:29:38.943562Z	info	ads	Push debounce stable[29] 3 for config ServiceEntry/alpha/v-server.alpha.svc.cluster.local and 2 more configs: 100.659177ms since last change, 171.100263ms since last push, full=true
+2025-07-15T19:29:38.943861694Z 2025-07-15T19:29:38.943817Z	info	ads	XDS: Pushing Services:31 ConnectedEndpoints:7 Version:2025-07-15T19:29:38Z/18
+2025-07-15T19:29:38.945113371Z 2025-07-15T19:29:38.944739Z	info	delta	CDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:46 removed:0 size:47.8kB cached:39/42
+2025-07-15T19:29:38.945122981Z 2025-07-15T19:29:38.944870Z	info	delta	CDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:46 removed:0 size:47.8kB cached:42/42
+2025-07-15T19:29:38.945124941Z 2025-07-15T19:29:38.944960Z	info	delta	CDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:46 removed:0 size:47.8kB cached:39/42
+2025-07-15T19:29:38.945127781Z 2025-07-15T19:29:38.945014Z	info	delta	CDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:43 removed:0 size:46.2kB cached:34/42
+2025-07-15T19:29:38.945129891Z 2025-07-15T19:29:38.945024Z	info	delta	EDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:42 removed:0 size:6.1kB empty:1 cached:41/42
+2025-07-15T19:29:38.945164591Z 2025-07-15T19:29:38.944971Z	info	delta	CDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:46 removed:0 size:47.8kB cached:42/42
+2025-07-15T19:29:38.945304032Z 2025-07-15T19:29:38.945100Z	info	delta	CDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:46 removed:0 size:47.9kB cached:40/42
+2025-07-15T19:29:38.945310682Z 2025-07-15T19:29:38.945242Z	info	delta	CDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:46 removed:0 size:47.8kB cached:42/42
+2025-07-15T19:29:38.945313592Z 2025-07-15T19:29:38.945259Z	info	delta	EDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:42 removed:0 size:6.1kB empty:0 cached:42/42
+2025-07-15T19:29:38.947705806Z 2025-07-15T19:29:38.945373Z	info	delta	EDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:42 removed:0 size:6.1kB empty:0 cached:42/42
+2025-07-15T19:29:38.947754046Z 2025-07-15T19:29:38.945410Z	info	delta	EDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:42 removed:0 size:6.1kB empty:0 cached:42/42
+2025-07-15T19:29:38.947757046Z 2025-07-15T19:29:38.945550Z	info	delta	EDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:42 removed:0 size:6.1kB empty:1 cached:41/42
+2025-07-15T19:29:38.947773366Z 2025-07-15T19:29:38.945842Z	info	delta	EDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:42 removed:0 size:6.1kB empty:2 cached:40/42
+2025-07-15T19:29:38.947777196Z 2025-07-15T19:29:38.945987Z	info	delta	LDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.3kB
+2025-07-15T19:29:38.947779536Z 2025-07-15T19:29:38.946171Z	info	delta	EDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:42 removed:0 size:6.1kB empty:0 cached:42/42
+2025-07-15T19:29:38.947781876Z 2025-07-15T19:29:38.946901Z	info	delta	LDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:38.947784966Z 2025-07-15T19:29:38.946946Z	info	delta	LDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:38.947787066Z 2025-07-15T19:29:38.947349Z	info	delta	RDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.8kB cached:0/0
+2025-07-15T19:29:38.947789216Z 2025-07-15T19:29:38.947374Z	info	delta	RDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:16 removed:0 size:18.6kB cached:16/16
+2025-07-15T19:29:38.947791586Z 2025-07-15T19:29:38.947428Z	info	delta	RDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:16 removed:0 size:18.6kB cached:15/16
+2025-07-15T19:29:38.949213954Z 2025-07-15T19:29:38.948155Z	info	delta	LDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:38.949246134Z 2025-07-15T19:29:38.948413Z	info	delta	RDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:16 removed:0 size:18.6kB cached:16/16
+2025-07-15T19:29:38.949266974Z 2025-07-15T19:29:38.949079Z	info	delta	LDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:38.949595456Z 2025-07-15T19:29:38.949440Z	info	delta	RDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:16 removed:0 size:18.6kB cached:16/16
+2025-07-15T19:29:38.949604006Z 2025-07-15T19:29:38.949468Z	info	delta	LDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:24 removed:0 size:59.7kB
+2025-07-15T19:29:38.951236225Z 2025-07-15T19:29:38.950574Z	info	delta	LDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:38.951260986Z 2025-07-15T19:29:38.950649Z	info	delta	RDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:16 removed:0 size:18.6kB cached:16/16
+2025-07-15T19:29:38.951266666Z 2025-07-15T19:29:38.951021Z	info	delta	RDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:16 removed:0 size:18.6kB cached:16/16
+2025-07-15T19:29:39.002850846Z 2025-07-15T19:29:39.000073Z	info	validationController	successfully updated	name=istio-validator-istio-system resource version=2023
+2025-07-15T19:29:39.088320347Z 2025-07-15T19:29:39.088251Z	info	model	Incremental push, service sleep.sleep.svc.cluster.local at shard Kubernetes/cluster-default has no endpoints
+2025-07-15T19:29:39.116558246Z 2025-07-15T19:29:39.116446Z	info	Process sidecar injection request	path=/inject pod=beta/e-client-758d4cfff4-***** (actual name not yet known)
+2025-07-15T19:29:39.188832552Z 2025-07-15T19:29:39.188773Z	info	ads	Push debounce stable[30] 2 for config ServiceEntry/sleep/sleep.sleep.svc.cluster.local: 100.483116ms since last change, 102.273056ms since last push, full=true
+2025-07-15T19:29:39.189000453Z 2025-07-15T19:29:39.188986Z	info	ads	XDS: Pushing Services:32 ConnectedEndpoints:7 Version:2025-07-15T19:29:39Z/19
+2025-07-15T19:29:39.189382945Z 2025-07-15T19:29:39.189354Z	info	delta	CDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:5 removed:0 size:2.0kB cached:1/1
+2025-07-15T19:29:39.189429026Z 2025-07-15T19:29:39.189386Z	info	delta	CDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:5 removed:0 size:2.0kB cached:0/1
+2025-07-15T19:29:39.189484096Z 2025-07-15T19:29:39.189454Z	info	delta	CDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:5 removed:0 size:2.0kB cached:1/1
+2025-07-15T19:29:39.189501026Z 2025-07-15T19:29:39.189456Z	info	delta	CDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:5 removed:0 size:2.0kB cached:0/1
+2025-07-15T19:29:39.189846108Z 2025-07-15T19:29:39.189627Z	info	delta	CDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:2 removed:0 size:1.0kB cached:0/1
+2025-07-15T19:29:39.189852918Z 2025-07-15T19:29:39.189482Z	info	delta	CDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:5 removed:0 size:2.0kB cached:1/1
+2025-07-15T19:29:39.189866758Z 2025-07-15T19:29:39.189750Z	info	delta	LDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.3kB
+2025-07-15T19:29:39.190137910Z 2025-07-15T19:29:39.189871Z	info	delta	CDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:5 removed:0 size:2.0kB cached:1/1
+2025-07-15T19:29:39.190243460Z 2025-07-15T19:29:39.189878Z	info	delta	RDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.8kB cached:0/0
+2025-07-15T19:29:39.190980504Z 2025-07-15T19:29:39.190700Z	info	delta	LDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:39.190990614Z 2025-07-15T19:29:39.190863Z	info	delta	LDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:39.190992824Z 2025-07-15T19:29:39.190870Z	info	delta	LDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:39.190995164Z 2025-07-15T19:29:39.190899Z	info	delta	LDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:24 removed:0 size:59.7kB
+2025-07-15T19:29:39.191109975Z 2025-07-15T19:29:39.191061Z	info	delta	RDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:39.191977490Z 2025-07-15T19:29:39.191172Z	info	delta	RDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:16 removed:0 size:19.1kB cached:15/16
+2025-07-15T19:29:39.191998030Z 2025-07-15T19:29:39.191296Z	info	delta	RDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:39.192003980Z 2025-07-15T19:29:39.191301Z	info	delta	LDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:39.192043750Z 2025-07-15T19:29:39.191421Z	info	delta	RDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:39.193386808Z 2025-07-15T19:29:39.192082Z	info	delta	RDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:39.193471658Z 2025-07-15T19:29:39.192611Z	info	delta	LDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:39.194868876Z 2025-07-15T19:29:39.194345Z	info	delta	RDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:39.200388208Z 2025-07-15T19:29:39.197209Z	info	delta	EDS: PUSH request for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:1 removed:0 size:44B empty:1 cached:0/1 filtered:42
+2025-07-15T19:29:39.201014532Z 2025-07-15T19:29:39.199234Z	info	delta	EDS: PUSH request for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:1 removed:0 size:44B empty:0 cached:1/1 filtered:42
+2025-07-15T19:29:39.201021912Z 2025-07-15T19:29:39.199265Z	info	delta	EDS: PUSH request for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:1 removed:0 size:44B empty:0 cached:1/1 filtered:42
+2025-07-15T19:29:39.201025302Z 2025-07-15T19:29:39.199346Z	info	delta	EDS: PUSH request for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:1 removed:0 size:44B empty:0 cached:1/1 filtered:42
+2025-07-15T19:29:39.201028902Z 2025-07-15T19:29:39.200581Z	info	delta	EDS: PUSH request for node:details-v1-766844796b-r6b8z.bookinfo resources:1 removed:0 size:44B empty:0 cached:1/1 filtered:42
+2025-07-15T19:29:39.202163428Z 2025-07-15T19:29:39.201867Z	info	delta	EDS: PUSH request for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:44B empty:1 cached:0/1 filtered:42
+2025-07-15T19:29:39.218363949Z 2025-07-15T19:29:39.203370Z	info	delta	EDS: PUSH request for node:reviews-v2-556d6457d-4dddd.bookinfo resources:1 removed:0 size:44B empty:0 cached:1/1 filtered:42
+2025-07-15T19:29:39.514941189Z 2025-07-15T19:29:39.514853Z	info	Process sidecar injection request	path=/inject pod=beta/f-client-6b9bcf5dcb-***** (actual name not yet known)
+2025-07-15T19:29:39.618112689Z 2025-07-15T19:29:39.617960Z	info	Process sidecar injection request	path=/inject pod=beta/v-server-54b77ffd4f-***** (actual name not yet known)
+2025-07-15T19:29:39.664378740Z 2025-07-15T19:29:39.664320Z	info	Process sidecar injection request	path=/inject pod=beta/w-server-8667cdbcf7-***** (actual name not yet known)
+2025-07-15T19:29:39.814947888Z 2025-07-15T19:29:39.814861Z	info	Process sidecar injection request	path=/inject pod=beta/x-server-6d8987d7c7-***** (actual name not yet known)
+2025-07-15T19:29:39.845328409Z 2025-07-15T19:29:39.843921Z	info	model	Full push, new service alpha/y-server.alpha.svc.cluster.local
+2025-07-15T19:29:39.856198490Z 2025-07-15T19:29:39.856118Z	info	model	Full push, new service alpha/z-server.alpha.svc.cluster.local
+2025-07-15T19:29:39.864723558Z 2025-07-15T19:29:39.864477Z	info	model	Full push, new service alpha/x-server.alpha.svc.cluster.local
+2025-07-15T19:29:39.964947342Z 2025-07-15T19:29:39.964870Z	info	ads	Push debounce stable[31] 3 for config ServiceEntry/alpha/y-server.alpha.svc.cluster.local and 2 more configs: 100.315044ms since last change, 120.85628ms since last push, full=true
+2025-07-15T19:29:39.965238823Z 2025-07-15T19:29:39.965219Z	info	ads	XDS: Pushing Services:32 ConnectedEndpoints:7 Version:2025-07-15T19:29:39Z/20
+2025-07-15T19:29:39.966008098Z 2025-07-15T19:29:39.965839Z	info	delta	CDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:7 removed:0 size:4.2kB cached:2/3
+2025-07-15T19:29:39.966044008Z 2025-07-15T19:29:39.965839Z	info	delta	CDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:7 removed:0 size:4.2kB cached:0/3
+2025-07-15T19:29:39.966069588Z 2025-07-15T19:29:39.965839Z	info	delta	CDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:7 removed:0 size:4.2kB cached:3/3
+2025-07-15T19:29:39.966072538Z 2025-07-15T19:29:39.965891Z	info	delta	CDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:7 removed:0 size:4.2kB cached:3/3
+2025-07-15T19:29:39.966081988Z 2025-07-15T19:29:39.965969Z	info	delta	CDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:7 removed:0 size:4.2kB cached:0/3
+2025-07-15T19:29:39.966085458Z 2025-07-15T19:29:39.965988Z	info	delta	EDS: PUSH INC for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:3 removed:0 size:147B empty:0 cached:3/3
+2025-07-15T19:29:39.966252659Z 2025-07-15T19:29:39.966122Z	info	delta	EDS: PUSH INC for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:3 removed:0 size:147B empty:0 cached:3/3
+2025-07-15T19:29:39.966277799Z 2025-07-15T19:29:39.966142Z	info	delta	CDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:4 removed:0 size:3.2kB cached:0/3
+2025-07-15T19:29:39.966280609Z 2025-07-15T19:29:39.966015Z	info	delta	EDS: PUSH INC for node:reviews-v2-556d6457d-4dddd.bookinfo resources:3 removed:0 size:147B empty:1 cached:2/3
+2025-07-15T19:29:39.966286979Z 2025-07-15T19:29:39.966229Z	info	delta	EDS: PUSH INC for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:3 removed:0 size:147B empty:3 cached:0/3
+2025-07-15T19:29:39.966332180Z 2025-07-15T19:29:39.966270Z	info	delta	CDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:7 removed:0 size:4.2kB cached:3/3
+2025-07-15T19:29:39.966709292Z 2025-07-15T19:29:39.966056Z	info	delta	EDS: PUSH INC for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:3 removed:0 size:147B empty:0 cached:3/3
+2025-07-15T19:29:39.966716072Z 2025-07-15T19:29:39.966474Z	info	delta	LDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.3kB
+2025-07-15T19:29:39.968299451Z 2025-07-15T19:29:39.965978Z	info	delta	EDS: PUSH INC for node:details-v1-766844796b-r6b8z.bookinfo resources:3 removed:0 size:147B empty:3 cached:0/3
+2025-07-15T19:29:39.968310251Z 2025-07-15T19:29:39.966969Z	info	delta	EDS: PUSH INC for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:3 removed:0 size:147B empty:0 cached:3/3
+2025-07-15T19:29:39.973623621Z 2025-07-15T19:29:39.967744Z	info	delta	RDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.8kB cached:0/0
+2025-07-15T19:29:39.973638811Z 2025-07-15T19:29:39.967807Z	info	delta	LDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:39.973641391Z 2025-07-15T19:29:39.967880Z	info	delta	LDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:39.973643221Z 2025-07-15T19:29:39.967915Z	info	delta	LDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:39.973645071Z 2025-07-15T19:29:39.968211Z	info	delta	RDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:16 removed:0 size:19.1kB cached:15/16
+2025-07-15T19:29:39.973647211Z 2025-07-15T19:29:39.968284Z	info	delta	LDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:39.973649271Z 2025-07-15T19:29:39.968482Z	info	delta	LDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:24 removed:0 size:59.7kB
+2025-07-15T19:29:39.973651171Z 2025-07-15T19:29:39.968485Z	info	delta	LDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:39.973652981Z 2025-07-15T19:29:39.968565Z	info	delta	RDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:39.973654651Z 2025-07-15T19:29:39.968604Z	info	delta	RDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:16 removed:0 size:19.1kB cached:15/16
+2025-07-15T19:29:39.973661111Z 2025-07-15T19:29:39.968770Z	info	delta	RDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:39.973662731Z 2025-07-15T19:29:39.968213Z	info	delta	RDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:39.973664361Z 2025-07-15T19:29:39.969733Z	info	delta	RDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:40.216162046Z 2025-07-15T19:29:40.215747Z	info	Process sidecar injection request	path=/inject pod=beta/y-server-5b556546fd-***** (actual name not yet known)
+2025-07-15T19:29:40.564598028Z 2025-07-15T19:29:40.564532Z	info	Process sidecar injection request	path=/inject pod=beta/z-server-5f94f449c5-***** (actual name not yet known)
+2025-07-15T19:29:40.866819339Z 2025-07-15T19:29:40.866744Z	info	Process sidecar injection request	path=/inject pod=gamma/a-client-b46869f5b-***** (actual name not yet known)
+2025-07-15T19:29:40.882151115Z 2025-07-15T19:29:40.882070Z	info	model	Full push, new service beta/x-server.beta.svc.cluster.local
+2025-07-15T19:29:40.890999745Z 2025-07-15T19:29:40.890928Z	info	model	Full push, new service beta/y-server.beta.svc.cluster.local
+2025-07-15T19:29:40.897865714Z 2025-07-15T19:29:40.897770Z	info	model	Full push, new service beta/v-server.beta.svc.cluster.local
+2025-07-15T19:29:40.913464761Z 2025-07-15T19:29:40.913317Z	info	model	Full push, new service beta/w-server.beta.svc.cluster.local
+2025-07-15T19:29:40.970494272Z 2025-07-15T19:29:40.965800Z	info	Process sidecar injection request	path=/inject pod=gamma/b-client-76544c69b4-***** (actual name not yet known)
+2025-07-15T19:29:41.013991818Z 2025-07-15T19:29:41.013780Z	info	ads	Push debounce stable[32] 4 for config ServiceEntry/beta/v-server.beta.svc.cluster.local and 3 more configs: 100.367415ms since last change, 131.622121ms since last push, full=true
+2025-07-15T19:29:41.014539231Z 2025-07-15T19:29:41.014265Z	info	ads	XDS: Pushing Services:32 ConnectedEndpoints:7 Version:2025-07-15T19:29:41Z/21
+2025-07-15T19:29:41.015183955Z 2025-07-15T19:29:41.015062Z	info	delta	CDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:5 removed:0 size:4.3kB cached:0/4
+2025-07-15T19:29:41.015196235Z 2025-07-15T19:29:41.015115Z	info	delta	CDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:8 removed:0 size:5.2kB cached:3/4
+2025-07-15T19:29:41.015198885Z 2025-07-15T19:29:41.015144Z	info	delta	CDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:8 removed:0 size:5.2kB cached:4/4
+2025-07-15T19:29:41.015208465Z 2025-07-15T19:29:41.015172Z	info	delta	CDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:8 removed:0 size:5.2kB cached:0/4
+2025-07-15T19:29:41.015363146Z 2025-07-15T19:29:41.015222Z	info	delta	EDS: PUSH INC for node:details-v1-766844796b-r6b8z.bookinfo resources:4 removed:0 size:192B empty:1 cached:3/4
+2025-07-15T19:29:41.015370646Z 2025-07-15T19:29:41.015231Z	info	delta	EDS: PUSH INC for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:4 removed:0 size:192B empty:1 cached:3/4
+2025-07-15T19:29:41.017700259Z 2025-07-15T19:29:41.015251Z	info	delta	CDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:8 removed:0 size:5.2kB cached:4/4
+2025-07-15T19:29:41.017727869Z 2025-07-15T19:29:41.015283Z	info	delta	EDS: PUSH INC for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:4 removed:0 size:192B empty:3 cached:1/4
+2025-07-15T19:29:41.017730439Z 2025-07-15T19:29:41.015306Z	info	delta	CDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:8 removed:0 size:5.2kB cached:4/4
+2025-07-15T19:29:41.017732739Z 2025-07-15T19:29:41.015311Z	info	delta	EDS: PUSH INC for node:reviews-v2-556d6457d-4dddd.bookinfo resources:4 removed:0 size:192B empty:0 cached:4/4
+2025-07-15T19:29:41.017760299Z 2025-07-15T19:29:41.015351Z	info	delta	EDS: PUSH INC for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:4 removed:0 size:192B empty:0 cached:4/4
+2025-07-15T19:29:41.017762719Z 2025-07-15T19:29:41.015513Z	info	delta	CDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:8 removed:0 size:5.2kB cached:4/4
+2025-07-15T19:29:41.017765369Z 2025-07-15T19:29:41.015556Z	info	delta	EDS: PUSH INC for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:4 removed:0 size:192B empty:0 cached:4/4
+2025-07-15T19:29:41.017768619Z 2025-07-15T19:29:41.016635Z	info	delta	LDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:41.017770759Z 2025-07-15T19:29:41.016700Z	info	delta	LDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:24 removed:0 size:59.7kB
+2025-07-15T19:29:41.017773179Z 2025-07-15T19:29:41.016825Z	info	delta	LDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:41.017775319Z 2025-07-15T19:29:41.016870Z	info	delta	LDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:41.017777689Z 2025-07-15T19:29:41.016926Z	info	delta	LDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:41.017780249Z 2025-07-15T19:29:41.017050Z	info	delta	LDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:41.017782369Z 2025-07-15T19:29:41.017054Z	info	delta	RDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:16 removed:0 size:19.1kB cached:15/16
+2025-07-15T19:29:41.017784989Z 2025-07-15T19:29:41.017218Z	info	delta	RDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:41.017792379Z 2025-07-15T19:29:41.015258Z	info	delta	EDS: PUSH INC for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:4 removed:0 size:192B empty:4 cached:0/4
+2025-07-15T19:29:41.017794779Z 2025-07-15T19:29:41.017301Z	info	delta	RDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:41.017797119Z 2025-07-15T19:29:41.017337Z	info	delta	LDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.3kB
+2025-07-15T19:29:41.017799429Z 2025-07-15T19:29:41.017338Z	info	delta	RDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:41.017801579Z 2025-07-15T19:29:41.017382Z	info	delta	RDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:41.017804279Z 2025-07-15T19:29:41.017461Z	info	delta	RDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.8kB cached:0/0
+2025-07-15T19:29:41.017881460Z 2025-07-15T19:29:41.017836Z	info	delta	RDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:41.066252262Z 2025-07-15T19:29:41.066127Z	info	Process sidecar injection request	path=/inject pod=gamma/c-client-6bc64987db-***** (actual name not yet known)
+2025-07-15T19:29:41.368313542Z 2025-07-15T19:29:41.368239Z	info	validationController	successfully updated	name=istio-validator-istio-system resource version=2232
+2025-07-15T19:29:41.466034102Z 2025-07-15T19:29:41.465942Z	info	Process sidecar injection request	path=/inject pod=gamma/d-client-7b5896d4f9-***** (actual name not yet known)
+2025-07-15T19:29:41.514768266Z 2025-07-15T19:29:41.514694Z	info	Process sidecar injection request	path=/inject pod=gamma/e-client-69456dc8bf-***** (actual name not yet known)
+2025-07-15T19:29:41.865774512Z 2025-07-15T19:29:41.865700Z	info	Process sidecar injection request	path=/inject pod=gamma/f-client-7768db555-***** (actual name not yet known)
+2025-07-15T19:29:41.907462497Z 2025-07-15T19:29:41.907287Z	info	model	Full push, new service beta/z-server.beta.svc.cluster.local
+2025-07-15T19:29:41.915394592Z 2025-07-15T19:29:41.915310Z	info	Process sidecar injection request	path=/inject pod=gamma/v-server-6494f87f47-***** (actual name not yet known)
+2025-07-15T19:29:41.965926927Z 2025-07-15T19:29:41.965576Z	info	Process sidecar injection request	path=/inject pod=gamma/w-server-57c9bbf54c-***** (actual name not yet known)
+2025-07-15T19:29:42.008030423Z 2025-07-15T19:29:42.007961Z	info	ads	Push debounce stable[33] 1 for config ServiceEntry/beta/z-server.beta.svc.cluster.local: 100.581497ms since last change, 100.581417ms since last push, full=true
+2025-07-15T19:29:42.008262675Z 2025-07-15T19:29:42.008243Z	info	ads	XDS: Pushing Services:32 ConnectedEndpoints:7 Version:2025-07-15T19:29:42Z/22
+2025-07-15T19:29:42.008681517Z 2025-07-15T19:29:42.008644Z	info	delta	CDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:5 removed:0 size:2.1kB cached:0/1
+2025-07-15T19:29:42.008707157Z 2025-07-15T19:29:42.008685Z	info	delta	CDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:5 removed:0 size:2.1kB cached:0/1
+2025-07-15T19:29:42.008732347Z 2025-07-15T19:29:42.008714Z	info	delta	EDS: PUSH INC for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:1 removed:0 size:48B empty:1 cached:0/1
+2025-07-15T19:29:42.008739897Z 2025-07-15T19:29:42.008725Z	info	delta	EDS: PUSH INC for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:1 removed:0 size:48B empty:0 cached:1/1
+2025-07-15T19:29:42.009148190Z 2025-07-15T19:29:42.009117Z	info	delta	CDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:5 removed:0 size:2.1kB cached:1/1
+2025-07-15T19:29:42.009173900Z 2025-07-15T19:29:42.009152Z	info	delta	EDS: PUSH INC for node:details-v1-766844796b-r6b8z.bookinfo resources:1 removed:0 size:48B empty:0 cached:1/1
+2025-07-15T19:29:42.009209160Z 2025-07-15T19:29:42.009189Z	info	delta	CDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:5 removed:0 size:2.1kB cached:1/1
+2025-07-15T19:29:42.009403031Z 2025-07-15T19:29:42.009222Z	info	delta	EDS: PUSH INC for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:1 removed:0 size:48B empty:0 cached:1/1
+2025-07-15T19:29:42.009412771Z 2025-07-15T19:29:42.009275Z	info	delta	CDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:5 removed:0 size:2.1kB cached:1/1
+2025-07-15T19:29:42.009415791Z 2025-07-15T19:29:42.009315Z	info	delta	EDS: PUSH INC for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:1 removed:0 size:48B empty:0 cached:1/1
+2025-07-15T19:29:42.009993585Z 2025-07-15T19:29:42.009536Z	info	delta	LDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:42.010001065Z 2025-07-15T19:29:42.009635Z	info	delta	LDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:42.010004285Z 2025-07-15T19:29:42.009888Z	info	delta	CDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:5 removed:0 size:2.1kB cached:1/1
+2025-07-15T19:29:42.010006625Z 2025-07-15T19:29:42.009936Z	info	delta	EDS: PUSH INC for node:reviews-v2-556d6457d-4dddd.bookinfo resources:1 removed:0 size:48B empty:0 cached:1/1
+2025-07-15T19:29:42.010009615Z 2025-07-15T19:29:42.009940Z	info	delta	RDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:16 removed:0 size:19.1kB cached:15/16
+2025-07-15T19:29:42.010018805Z 2025-07-15T19:29:42.009998Z	info	delta	CDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:2 removed:0 size:1.1kB cached:0/1
+2025-07-15T19:29:42.010076705Z 2025-07-15T19:29:42.010051Z	info	delta	RDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:16 removed:0 size:19.1kB cached:15/16
+2025-07-15T19:29:42.010181116Z 2025-07-15T19:29:42.010071Z	info	delta	EDS: PUSH INC for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:48B empty:1 cached:0/1
+2025-07-15T19:29:42.011508973Z 2025-07-15T19:29:42.010212Z	info	delta	LDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.3kB
+2025-07-15T19:29:42.011557153Z 2025-07-15T19:29:42.010363Z	info	delta	RDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.8kB cached:0/0
+2025-07-15T19:29:42.011560053Z 2025-07-15T19:29:42.010643Z	info	delta	LDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:42.011563183Z 2025-07-15T19:29:42.010758Z	info	delta	LDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:24 removed:0 size:59.7kB
+2025-07-15T19:29:42.011566363Z 2025-07-15T19:29:42.010823Z	info	delta	LDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:42.011569313Z 2025-07-15T19:29:42.011022Z	info	delta	RDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:42.011571713Z 2025-07-15T19:29:42.011027Z	info	delta	RDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:42.011575073Z 2025-07-15T19:29:42.011146Z	info	delta	RDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:42.013111172Z 2025-07-15T19:29:42.012040Z	info	delta	LDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:42.013132202Z 2025-07-15T19:29:42.012289Z	info	delta	RDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:42.116417413Z 2025-07-15T19:29:42.116269Z	info	Process sidecar injection request	path=/inject pod=gamma/x-server-64589bc895-***** (actual name not yet known)
+2025-07-15T19:29:42.337437658Z 2025-07-15T19:29:42.337355Z	info	delta	ADS: new delta connection for node:c-client-6bc64987db-m2sw9.gamma-8
+2025-07-15T19:29:42.337771430Z 2025-07-15T19:29:42.337743Z	info	delta	CDS: PUSH request for node:c-client-6bc64987db-m2sw9.gamma resources:46 removed:0 size:49.0kB cached:43/43
+2025-07-15T19:29:42.344772579Z 2025-07-15T19:29:42.344703Z	info	delta	ADS: new delta connection for node:a-client-b46869f5b-4g9l2.gamma-9
+2025-07-15T19:29:42.344967010Z 2025-07-15T19:29:42.344936Z	info	delta	CDS: PUSH request for node:a-client-b46869f5b-4g9l2.gamma resources:46 removed:0 size:49.0kB cached:43/43
+2025-07-15T19:29:42.355104457Z 2025-07-15T19:29:42.355005Z	info	delta	EDS: PUSH request for node:c-client-6bc64987db-m2sw9.gamma resources:43 removed:0 size:6.2kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:42.355787441Z 2025-07-15T19:29:42.355755Z	info	delta	ADS: new delta connection for node:b-client-76544c69b4-d9p2z.gamma-10
+2025-07-15T19:29:42.355972352Z 2025-07-15T19:29:42.355944Z	info	delta	CDS: PUSH request for node:b-client-76544c69b4-d9p2z.gamma resources:46 removed:0 size:49.0kB cached:43/43
+2025-07-15T19:29:42.365962248Z 2025-07-15T19:29:42.365813Z	info	delta	EDS: PUSH request for node:a-client-b46869f5b-4g9l2.gamma resources:43 removed:0 size:6.2kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:42.377250892Z 2025-07-15T19:29:42.377169Z	info	delta	EDS: PUSH request for node:b-client-76544c69b4-d9p2z.gamma resources:43 removed:0 size:6.2kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:42.386584364Z 2025-07-15T19:29:42.386488Z	info	delta	LDS: PUSH request for node:a-client-b46869f5b-4g9l2.gamma resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:42.407275451Z 2025-07-15T19:29:42.407207Z	info	delta	RDS: PUSH request for node:a-client-b46869f5b-4g9l2.gamma resources:16 removed:0 size:19.0kB cached:0/16 filtered:0
+2025-07-15T19:29:42.444517430Z 2025-07-15T19:29:42.444358Z	info	delta	LDS: PUSH request for node:c-client-6bc64987db-m2sw9.gamma resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:42.468936978Z 2025-07-15T19:29:42.468814Z	info	delta	RDS: PUSH request for node:c-client-6bc64987db-m2sw9.gamma resources:16 removed:0 size:19.0kB cached:0/16 filtered:0
+2025-07-15T19:29:42.516284205Z 2025-07-15T19:29:42.516208Z	info	Process sidecar injection request	path=/inject pod=gamma/y-server-7c67cd5dc6-***** (actual name not yet known)
+2025-07-15T19:29:42.559357767Z 2025-07-15T19:29:42.559174Z	info	delta	LDS: PUSH request for node:b-client-76544c69b4-d9p2z.gamma resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:42.581673693Z 2025-07-15T19:29:42.581457Z	info	delta	RDS: PUSH request for node:b-client-76544c69b4-d9p2z.gamma resources:16 removed:0 size:19.0kB cached:0/16 filtered:0
+2025-07-15T19:29:42.865605601Z 2025-07-15T19:29:42.865483Z	info	Process sidecar injection request	path=/inject pod=gamma/z-server-7f6c76b77c-***** (actual name not yet known)
+2025-07-15T19:29:42.913280630Z 2025-07-15T19:29:42.912843Z	info	model	Full push, new service gamma/v-server.gamma.svc.cluster.local
+2025-07-15T19:29:42.926882086Z 2025-07-15T19:29:42.926757Z	info	model	Full push, new service gamma/w-server.gamma.svc.cluster.local
+2025-07-15T19:29:42.952311309Z 2025-07-15T19:29:42.952213Z	info	model	Full push, new service gamma/x-server.gamma.svc.cluster.local
+2025-07-15T19:29:42.968224899Z 2025-07-15T19:29:42.966595Z	info	Process sidecar injection request	path=/inject pod=sleep/sleep-868c754c4b-***** (actual name not yet known)
+2025-07-15T19:29:43.053430298Z 2025-07-15T19:29:43.053332Z	info	ads	Push debounce stable[34] 3 for config ServiceEntry/gamma/v-server.gamma.svc.cluster.local and 2 more configs: 101.038548ms since last change, 140.42499ms since last push, full=true
+2025-07-15T19:29:43.053779900Z 2025-07-15T19:29:43.053739Z	info	ads	XDS: Pushing Services:32 ConnectedEndpoints:10 Version:2025-07-15T19:29:43Z/23
+2025-07-15T19:29:43.054314803Z 2025-07-15T19:29:43.054266Z	info	delta	CDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:4 removed:0 size:3.2kB cached:0/3
+2025-07-15T19:29:43.054321763Z 2025-07-15T19:29:43.054266Z	info	delta	CDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:7 removed:0 size:4.2kB cached:0/3
+2025-07-15T19:29:43.054421464Z 2025-07-15T19:29:43.054276Z	info	delta	CDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:7 removed:0 size:4.2kB cached:3/3
+2025-07-15T19:29:43.054438694Z 2025-07-15T19:29:43.054339Z	info	delta	CDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:7 removed:0 size:4.2kB cached:3/3
+2025-07-15T19:29:43.054442224Z 2025-07-15T19:29:43.054360Z	info	delta	EDS: PUSH INC for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:3 removed:0 size:147B empty:3 cached:0/3
+2025-07-15T19:29:43.054445294Z 2025-07-15T19:29:43.054366Z	info	delta	EDS: PUSH INC for node:reviews-v2-556d6457d-4dddd.bookinfo resources:3 removed:0 size:147B empty:3 cached:0/3
+2025-07-15T19:29:43.054450164Z 2025-07-15T19:29:43.054377Z	info	delta	EDS: PUSH INC for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:3 removed:0 size:147B empty:0 cached:3/3
+2025-07-15T19:29:43.054506584Z 2025-07-15T19:29:43.054459Z	info	delta	CDS: PUSH for node:a-client-b46869f5b-4g9l2.gamma resources:6 removed:0 size:4.0kB cached:2/3
+2025-07-15T19:29:43.054529264Z 2025-07-15T19:29:43.054506Z	info	delta	EDS: PUSH INC for node:a-client-b46869f5b-4g9l2.gamma resources:3 removed:0 size:147B empty:0 cached:3/3
+2025-07-15T19:29:43.054813876Z 2025-07-15T19:29:43.054556Z	info	delta	LDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.3kB
+2025-07-15T19:29:43.054844406Z 2025-07-15T19:29:43.054572Z	info	delta	CDS: PUSH for node:c-client-6bc64987db-m2sw9.gamma resources:6 removed:0 size:4.0kB cached:3/3
+2025-07-15T19:29:43.054847066Z 2025-07-15T19:29:43.054575Z	info	delta	CDS: PUSH for node:b-client-76544c69b4-d9p2z.gamma resources:6 removed:0 size:4.0kB cached:2/3
+2025-07-15T19:29:43.054849266Z 2025-07-15T19:29:43.054618Z	info	delta	EDS: PUSH INC for node:c-client-6bc64987db-m2sw9.gamma resources:3 removed:0 size:147B empty:0 cached:3/3
+2025-07-15T19:29:43.054851676Z 2025-07-15T19:29:43.054622Z	info	delta	EDS: PUSH INC for node:b-client-76544c69b4-d9p2z.gamma resources:3 removed:0 size:147B empty:0 cached:3/3
+2025-07-15T19:29:43.054854656Z 2025-07-15T19:29:43.054657Z	info	delta	RDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.8kB cached:0/0
+2025-07-15T19:29:43.054857126Z 2025-07-15T19:29:43.054750Z	info	delta	EDS: PUSH INC for node:details-v1-766844796b-r6b8z.bookinfo resources:3 removed:0 size:147B empty:0 cached:3/3
+2025-07-15T19:29:43.056337695Z 2025-07-15T19:29:43.054997Z	info	delta	CDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:7 removed:0 size:4.2kB cached:2/3
+2025-07-15T19:29:43.056359935Z 2025-07-15T19:29:43.055050Z	info	delta	EDS: PUSH INC for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:3 removed:0 size:147B empty:0 cached:3/3
+2025-07-15T19:29:43.056362415Z 2025-07-15T19:29:43.055095Z	info	delta	CDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:7 removed:0 size:4.2kB cached:3/3
+2025-07-15T19:29:43.056364855Z 2025-07-15T19:29:43.055153Z	info	delta	EDS: PUSH INC for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:3 removed:0 size:147B empty:0 cached:3/3
+2025-07-15T19:29:43.056367925Z 2025-07-15T19:29:43.055457Z	info	delta	LDS: PUSH for node:a-client-b46869f5b-4g9l2.gamma resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:43.056370025Z 2025-07-15T19:29:43.055656Z	info	delta	LDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:24 removed:0 size:59.7kB
+2025-07-15T19:29:43.056372365Z 2025-07-15T19:29:43.055796Z	info	delta	LDS: PUSH for node:c-client-6bc64987db-m2sw9.gamma resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:43.056374855Z 2025-07-15T19:29:43.055850Z	info	delta	LDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:43.056377525Z 2025-07-15T19:29:43.055883Z	info	delta	LDS: PUSH for node:b-client-76544c69b4-d9p2z.gamma resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:43.056472365Z 2025-07-15T19:29:43.056275Z	info	delta	RDS: PUSH for node:b-client-76544c69b4-d9p2z.gamma resources:16 removed:0 size:19.0kB cached:12/16
+2025-07-15T19:29:43.056585966Z 2025-07-15T19:29:43.056547Z	info	delta	LDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:43.056794287Z 2025-07-15T19:29:43.056766Z	info	delta	RDS: PUSH for node:c-client-6bc64987db-m2sw9.gamma resources:16 removed:0 size:19.0kB cached:14/16
+2025-07-15T19:29:43.056935728Z 2025-07-15T19:29:43.056850Z	info	delta	RDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:43.057063649Z 2025-07-15T19:29:43.056970Z	info	delta	LDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:43.057216399Z 2025-07-15T19:29:43.057150Z	info	delta	RDS: PUSH for node:a-client-b46869f5b-4g9l2.gamma resources:16 removed:0 size:19.0kB cached:5/16
+2025-07-15T19:29:43.057224880Z 2025-07-15T19:29:43.057187Z	info	delta	LDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:43.057343240Z 2025-07-15T19:29:43.057301Z	info	delta	CDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:7 removed:0 size:4.2kB cached:3/3
+2025-07-15T19:29:43.057448161Z 2025-07-15T19:29:43.057415Z	info	delta	EDS: PUSH INC for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:3 removed:0 size:147B empty:0 cached:3/3
+2025-07-15T19:29:43.058466456Z 2025-07-15T19:29:43.057595Z	info	delta	RDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:43.058526547Z 2025-07-15T19:29:43.056994Z	info	delta	RDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:16 removed:0 size:19.1kB cached:15/16
+2025-07-15T19:29:43.058529857Z 2025-07-15T19:29:43.056551Z	info	delta	RDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:43.058533067Z 2025-07-15T19:29:43.058160Z	info	delta	RDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:43.060542958Z 2025-07-15T19:29:43.059539Z	info	delta	LDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:43.060562768Z 2025-07-15T19:29:43.059938Z	info	delta	RDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:43.341441200Z 2025-07-15T19:29:43.341278Z	info	ads	Push debounce stable[35] 1 for config ConfigMap/loggers/kube-root-ca.crt: 100.813507ms since last change, 100.813457ms since last push, full=false
+2025-07-15T19:29:43.341463940Z 2025-07-15T19:29:43.341395Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:10 Version:2025-07-15T19:29:43Z/23
+2025-07-15T19:29:43.811970779Z 2025-07-15T19:29:43.811724Z	info	validationController	successfully updated	name=istio-validator-istio-system resource version=2444
+2025-07-15T19:29:43.936649990Z 2025-07-15T19:29:43.935243Z	info	model	Full push, new service gamma/z-server.gamma.svc.cluster.local
+2025-07-15T19:29:43.962364345Z 2025-07-15T19:29:43.959538Z	info	model	Full push, new service gamma/y-server.gamma.svc.cluster.local
+2025-07-15T19:29:43.967454154Z 2025-07-15T19:29:43.967339Z	info	model	Full push, new service sleep/sleep.sleep.svc.cluster.local
+2025-07-15T19:29:44.068278172Z 2025-07-15T19:29:44.068195Z	info	ads	Push debounce stable[36] 3 for config ServiceEntry/gamma/z-server.gamma.svc.cluster.local and 2 more configs: 100.778168ms since last change, 132.838248ms since last push, full=true
+2025-07-15T19:29:44.068514283Z 2025-07-15T19:29:44.068492Z	info	ads	XDS: Pushing Services:32 ConnectedEndpoints:10 Version:2025-07-15T19:29:44Z/24
+2025-07-15T19:29:44.069061916Z 2025-07-15T19:29:44.069011Z	info	delta	CDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:4 removed:0 size:3.2kB cached:0/3
+2025-07-15T19:29:44.069085566Z 2025-07-15T19:29:44.069038Z	info	delta	CDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:7 removed:0 size:4.2kB cached:0/3
+2025-07-15T19:29:44.069140227Z 2025-07-15T19:29:44.069108Z	info	delta	CDS: PUSH for node:a-client-b46869f5b-4g9l2.gamma resources:6 removed:0 size:3.9kB cached:3/3
+2025-07-15T19:29:44.069144797Z 2025-07-15T19:29:44.069117Z	info	delta	EDS: PUSH INC for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:3 removed:0 size:142B empty:3 cached:0/3
+2025-07-15T19:29:44.069203627Z 2025-07-15T19:29:44.069175Z	info	delta	EDS: PUSH INC for node:a-client-b46869f5b-4g9l2.gamma resources:3 removed:0 size:142B empty:0 cached:3/3
+2025-07-15T19:29:44.069250757Z 2025-07-15T19:29:44.069208Z	info	delta	CDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:7 removed:0 size:4.2kB cached:3/3
+2025-07-15T19:29:44.069304848Z 2025-07-15T19:29:44.069246Z	info	delta	EDS: PUSH INC for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:3 removed:0 size:142B empty:3 cached:0/3
+2025-07-15T19:29:44.069422868Z 2025-07-15T19:29:44.069380Z	info	delta	CDS: PUSH for node:c-client-6bc64987db-m2sw9.gamma resources:6 removed:0 size:3.9kB cached:3/3
+2025-07-15T19:29:44.069450598Z 2025-07-15T19:29:44.069393Z	info	delta	CDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:7 removed:0 size:4.2kB cached:3/3
+2025-07-15T19:29:44.069536629Z 2025-07-15T19:29:44.069446Z	info	delta	EDS: PUSH INC for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:3 removed:0 size:142B empty:0 cached:3/3
+2025-07-15T19:29:44.069549619Z 2025-07-15T19:29:44.069454Z	info	delta	EDS: PUSH INC for node:c-client-6bc64987db-m2sw9.gamma resources:3 removed:0 size:142B empty:0 cached:3/3
+2025-07-15T19:29:44.069559889Z 2025-07-15T19:29:44.069515Z	info	delta	CDS: PUSH for node:b-client-76544c69b4-d9p2z.gamma resources:6 removed:0 size:3.9kB cached:3/3
+2025-07-15T19:29:44.069606499Z 2025-07-15T19:29:44.069568Z	info	delta	EDS: PUSH INC for node:b-client-76544c69b4-d9p2z.gamma resources:3 removed:0 size:142B empty:0 cached:3/3
+2025-07-15T19:29:44.069711380Z 2025-07-15T19:29:44.069670Z	info	delta	CDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:7 removed:0 size:4.2kB cached:3/3
+2025-07-15T19:29:44.069745850Z 2025-07-15T19:29:44.069723Z	info	delta	EDS: PUSH INC for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:3 removed:0 size:142B empty:0 cached:3/3
+2025-07-15T19:29:44.069798440Z 2025-07-15T19:29:44.069755Z	info	delta	CDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:7 removed:0 size:4.2kB cached:3/3
+2025-07-15T19:29:44.069831711Z 2025-07-15T19:29:44.069798Z	info	delta	EDS: PUSH INC for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:3 removed:0 size:142B empty:0 cached:3/3
+2025-07-15T19:29:44.069838281Z 2025-07-15T19:29:44.069813Z	info	delta	LDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.3kB
+2025-07-15T19:29:44.069960421Z 2025-07-15T19:29:44.069927Z	info	delta	RDS: PUSH for node:bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo resources:1 removed:0 size:2.8kB cached:0/0
+2025-07-15T19:29:44.070035152Z 2025-07-15T19:29:44.069261Z	info	delta	EDS: PUSH INC for node:details-v1-766844796b-r6b8z.bookinfo resources:3 removed:0 size:142B empty:0 cached:3/3
+2025-07-15T19:29:44.070302803Z 2025-07-15T19:29:44.070206Z	info	delta	CDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:7 removed:0 size:4.2kB cached:3/3
+2025-07-15T19:29:44.070426854Z 2025-07-15T19:29:44.070391Z	info	delta	EDS: PUSH INC for node:reviews-v2-556d6457d-4dddd.bookinfo resources:3 removed:0 size:142B empty:0 cached:3/3
+2025-07-15T19:29:44.070501394Z 2025-07-15T19:29:44.070446Z	info	delta	LDS: PUSH for node:a-client-b46869f5b-4g9l2.gamma resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:44.070651635Z 2025-07-15T19:29:44.070613Z	info	delta	LDS: PUSH for node:c-client-6bc64987db-m2sw9.gamma resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:44.070681835Z 2025-07-15T19:29:44.070394Z	info	delta	LDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:24 removed:0 size:59.7kB
+2025-07-15T19:29:44.070864956Z 2025-07-15T19:29:44.070828Z	info	delta	RDS: PUSH for node:a-client-b46869f5b-4g9l2.gamma resources:16 removed:0 size:19.0kB cached:14/16
+2025-07-15T19:29:44.070976477Z 2025-07-15T19:29:44.070929Z	info	delta	LDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:44.072338355Z 2025-07-15T19:29:44.071467Z	info	delta	LDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:44.072353395Z 2025-07-15T19:29:44.071829Z	info	delta	LDS: PUSH for node:b-client-76544c69b4-d9p2z.gamma resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:44.072356865Z 2025-07-15T19:29:44.070948Z	info	delta	RDS: PUSH for node:c-client-6bc64987db-m2sw9.gamma resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:44.072359665Z 2025-07-15T19:29:44.072131Z	info	delta	RDS: PUSH for node:b-client-76544c69b4-d9p2z.gamma resources:16 removed:0 size:19.0kB cached:16/16
+2025-07-15T19:29:44.072391185Z 2025-07-15T19:29:44.072218Z	info	delta	LDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:44.072702577Z 2025-07-15T19:29:44.072649Z	info	delta	RDS: PUSH for node:reviews-v2-556d6457d-4dddd.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:44.073427431Z 2025-07-15T19:29:44.073375Z	info	delta	RDS: PUSH for node:productpage-v1-54bb874995-7t6fg.bookinfo resources:16 removed:0 size:19.1kB cached:14/16
+2025-07-15T19:29:44.073898603Z 2025-07-15T19:29:44.073740Z	info	delta	RDS: PUSH for node:details-v1-766844796b-r6b8z.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:44.074437356Z 2025-07-15T19:29:44.074390Z	info	delta	RDS: PUSH for node:reviews-v3-564544b4d6-czsdz.bookinfo resources:16 removed:0 size:19.1kB cached:15/16
+2025-07-15T19:29:44.075324291Z 2025-07-15T19:29:44.075268Z	info	delta	LDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:44.075659913Z 2025-07-15T19:29:44.075607Z	info	delta	RDS: PUSH for node:ratings-v1-5dc79b6bcd-pncl2.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:44.076136286Z 2025-07-15T19:29:44.076048Z	info	delta	LDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:24 removed:0 size:59.5kB
+2025-07-15T19:29:44.076755009Z 2025-07-15T19:29:44.076497Z	info	delta	RDS: PUSH for node:reviews-v1-598b896c9d-cxrv2.bookinfo resources:16 removed:0 size:19.1kB cached:16/16
+2025-07-15T19:29:46.288257429Z 2025-07-15T19:29:46.288161Z	info	validationController	successfully updated	name=istio-validator-istio-system resource version=2523
+2025-07-15T19:29:47.178244529Z 2025-07-15T19:29:47.178165Z	info	delta	ADS: new delta connection for node:d-client-6778cdf6cd-qgrrs.alpha-11
+2025-07-15T19:29:47.178414940Z 2025-07-15T19:29:47.178387Z	info	delta	CDS: PUSH request for node:d-client-6778cdf6cd-qgrrs.alpha resources:46 removed:0 size:49.3kB cached:43/43
+2025-07-15T19:29:47.193587045Z 2025-07-15T19:29:47.193545Z	info	delta	EDS: PUSH request for node:d-client-6778cdf6cd-qgrrs.alpha resources:43 removed:0 size:6.2kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:47.219897203Z 2025-07-15T19:29:47.219812Z	info	ads	Push Status: {
+2025-07-15T19:29:47.219913914Z     "pilot_eds_no_instances": {
+2025-07-15T19:29:47.219917264Z         "outbound|80||sleep.sleep.svc.cluster.local": {},
+2025-07-15T19:29:47.219919004Z         "outbound|8899||y-server.gamma.svc.cluster.local": {},
+2025-07-15T19:29:47.219920684Z         "outbound|8899||z-server.gamma.svc.cluster.local": {}
+2025-07-15T19:29:47.219922254Z     }
+2025-07-15T19:29:47.219923774Z }
+2025-07-15T19:29:47.313586781Z 2025-07-15T19:29:47.312698Z	info	delta	ADS: new delta connection for node:c-client-7988d5d85f-pfq4d.alpha-12
+2025-07-15T19:29:47.313632171Z 2025-07-15T19:29:47.313481Z	info	delta	CDS: PUSH request for node:c-client-7988d5d85f-pfq4d.alpha resources:46 removed:0 size:49.3kB cached:43/43
+2025-07-15T19:29:47.333472802Z 2025-07-15T19:29:47.333392Z	info	delta	EDS: PUSH request for node:c-client-7988d5d85f-pfq4d.alpha resources:43 removed:0 size:6.2kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:47.573033591Z 2025-07-15T19:29:47.572969Z	info	delta	LDS: PUSH request for node:c-client-7988d5d85f-pfq4d.alpha resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:47.593347226Z 2025-07-15T19:29:47.593297Z	info	delta	RDS: PUSH request for node:c-client-7988d5d85f-pfq4d.alpha resources:16 removed:0 size:19.0kB cached:0/16 filtered:0
+2025-07-15T19:29:47.897166306Z 2025-07-15T19:29:47.897114Z	info	delta	LDS: PUSH request for node:d-client-6778cdf6cd-qgrrs.alpha resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:47.923435434Z 2025-07-15T19:29:47.923349Z	info	delta	RDS: PUSH request for node:d-client-6778cdf6cd-qgrrs.alpha resources:16 removed:0 size:19.0kB cached:0/16 filtered:0
+2025-07-15T19:29:48.709274708Z 2025-07-15T19:29:48.709202Z	info	delta	ADS: new delta connection for node:v-server-785cff56c9-5rh5w.alpha-13
+2025-07-15T19:29:48.709674950Z 2025-07-15T19:29:48.709645Z	info	delta	CDS: PUSH request for node:v-server-785cff56c9-5rh5w.alpha resources:47 removed:0 size:49.5kB cached:43/43
+2025-07-15T19:29:48.730646158Z 2025-07-15T19:29:48.730418Z	info	delta	EDS: PUSH request for node:v-server-785cff56c9-5rh5w.alpha resources:43 removed:0 size:6.2kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:48.797527114Z 2025-07-15T19:29:48.797429Z	info	delta	LDS: PUSH request for node:v-server-785cff56c9-5rh5w.alpha resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:48.817311446Z 2025-07-15T19:29:48.817182Z	info	delta	RDS: PUSH request for node:v-server-785cff56c9-5rh5w.alpha resources:16 removed:0 size:19.0kB cached:0/16 filtered:0
+2025-07-15T19:29:48.850476763Z 2025-07-15T19:29:48.850378Z	info	delta	ADS: new delta connection for node:b-client-75fb47d5c6-6svvv.alpha-14
+2025-07-15T19:29:48.850685364Z 2025-07-15T19:29:48.850664Z	info	delta	CDS: PUSH request for node:b-client-75fb47d5c6-6svvv.alpha resources:46 removed:0 size:49.3kB cached:43/43
+2025-07-15T19:29:48.867122007Z 2025-07-15T19:29:48.866969Z	info	delta	EDS: PUSH request for node:b-client-75fb47d5c6-6svvv.alpha resources:43 removed:0 size:6.2kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:48.957348185Z 2025-07-15T19:29:48.957273Z	info	delta	LDS: PUSH request for node:b-client-75fb47d5c6-6svvv.alpha resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:48.972419839Z 2025-07-15T19:29:48.972277Z	info	delta	CDS: PUSH for node:d-client-6778cdf6cd-qgrrs.alpha resources:46 removed:0 size:49.3kB cached:43/43
+2025-07-15T19:29:48.974143129Z 2025-07-15T19:29:48.972475Z	info	delta	EDS: PUSH for node:d-client-6778cdf6cd-qgrrs.alpha resources:43 removed:0 size:6.2kB empty:0 cached:43/43
+2025-07-15T19:29:48.974147319Z 2025-07-15T19:29:48.973343Z	info	delta	LDS: PUSH for node:d-client-6778cdf6cd-qgrrs.alpha resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:48.974149989Z 2025-07-15T19:29:48.973919Z	info	delta	RDS: PUSH for node:d-client-6778cdf6cd-qgrrs.alpha resources:16 removed:0 size:19.0kB cached:0/16
+2025-07-15T19:29:48.980494875Z 2025-07-15T19:29:48.980381Z	info	delta	RDS: PUSH request for node:b-client-75fb47d5c6-6svvv.alpha resources:16 removed:0 size:19.0kB cached:16/16 filtered:0
+2025-07-15T19:29:48.994242202Z 2025-07-15T19:29:48.994184Z	info	delta	ADS: new delta connection for node:f-client-869f9c7bdd-vq8wb.alpha-15
+2025-07-15T19:29:48.994471503Z 2025-07-15T19:29:48.994451Z	info	delta	CDS: PUSH request for node:f-client-869f9c7bdd-vq8wb.alpha resources:46 removed:0 size:49.3kB cached:43/43
+2025-07-15T19:29:49.000351007Z 2025-07-15T19:29:49.000269Z	info	delta	CDS: PUSH for node:c-client-7988d5d85f-pfq4d.alpha resources:46 removed:0 size:49.3kB cached:43/43
+2025-07-15T19:29:49.000511687Z 2025-07-15T19:29:49.000450Z	info	delta	EDS: PUSH for node:c-client-7988d5d85f-pfq4d.alpha resources:43 removed:0 size:6.2kB empty:0 cached:43/43
+2025-07-15T19:29:49.001703184Z 2025-07-15T19:29:49.001644Z	info	delta	LDS: PUSH for node:c-client-7988d5d85f-pfq4d.alpha resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:49.002428848Z 2025-07-15T19:29:49.002370Z	info	delta	RDS: PUSH for node:c-client-7988d5d85f-pfq4d.alpha resources:16 removed:0 size:19.0kB cached:16/16
+2025-07-15T19:29:49.015321521Z 2025-07-15T19:29:49.015130Z	info	delta	EDS: PUSH request for node:f-client-869f9c7bdd-vq8wb.alpha resources:43 removed:0 size:6.2kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:49.067024382Z 2025-07-15T19:29:49.066966Z	info	delta	LDS: PUSH request for node:f-client-869f9c7bdd-vq8wb.alpha resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:49.083788516Z 2025-07-15T19:29:49.083664Z	info	delta	RDS: PUSH request for node:f-client-869f9c7bdd-vq8wb.alpha resources:16 removed:0 size:19.0kB cached:16/16 filtered:0
+2025-07-15T19:29:49.132860262Z 2025-07-15T19:29:49.132803Z	info	delta	ADS: new delta connection for node:a-client-695f68b55d-wmdv7.alpha-16
+2025-07-15T19:29:49.133041303Z 2025-07-15T19:29:49.133019Z	info	delta	CDS: PUSH request for node:a-client-695f68b55d-wmdv7.alpha resources:46 removed:0 size:49.3kB cached:43/43
+2025-07-15T19:29:49.149242085Z 2025-07-15T19:29:49.149124Z	info	delta	EDS: PUSH request for node:a-client-695f68b55d-wmdv7.alpha resources:43 removed:0 size:6.2kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:49.167975591Z 2025-07-15T19:29:49.167921Z	info	delta	LDS: PUSH request for node:a-client-695f68b55d-wmdv7.alpha resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:49.183641859Z 2025-07-15T19:29:49.183572Z	info	delta	RDS: PUSH request for node:a-client-695f68b55d-wmdv7.alpha resources:16 removed:0 size:19.0kB cached:16/16 filtered:0
+2025-07-15T19:29:49.520221393Z 2025-07-15T19:29:49.520168Z	info	delta	ADS: new delta connection for node:e-client-57dcf59cb6-mqd78.alpha-17
+2025-07-15T19:29:49.520380384Z 2025-07-15T19:29:49.520361Z	info	delta	CDS: PUSH request for node:e-client-57dcf59cb6-mqd78.alpha resources:46 removed:0 size:49.3kB cached:43/43
+2025-07-15T19:29:49.538148014Z 2025-07-15T19:29:49.538072Z	info	delta	EDS: PUSH request for node:e-client-57dcf59cb6-mqd78.alpha resources:43 removed:0 size:6.2kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:49.650190985Z 2025-07-15T19:29:49.650128Z	info	delta	ADS: new delta connection for node:y-server-5b556546fd-t52ll.alpha-18
+2025-07-15T19:29:49.650358566Z 2025-07-15T19:29:49.650338Z	info	delta	CDS: PUSH request for node:y-server-5b556546fd-t52ll.alpha resources:47 removed:0 size:49.5kB cached:43/43
+2025-07-15T19:29:49.665037578Z 2025-07-15T19:29:49.664993Z	info	delta	EDS: PUSH request for node:y-server-5b556546fd-t52ll.alpha resources:43 removed:0 size:6.2kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:49.679039147Z 2025-07-15T19:29:49.678934Z	info	delta	LDS: PUSH request for node:y-server-5b556546fd-t52ll.alpha resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:49.697225629Z 2025-07-15T19:29:49.697161Z	info	delta	RDS: PUSH request for node:y-server-5b556546fd-t52ll.alpha resources:16 removed:0 size:19.0kB cached:16/16 filtered:0
+2025-07-15T19:29:49.773924562Z 2025-07-15T19:29:49.773861Z	info	delta	LDS: PUSH request for node:e-client-57dcf59cb6-mqd78.alpha resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:49.791140779Z 2025-07-15T19:29:49.791041Z	info	delta	RDS: PUSH request for node:e-client-57dcf59cb6-mqd78.alpha resources:16 removed:0 size:19.0kB cached:16/16 filtered:0
+2025-07-15T19:29:49.823069198Z 2025-07-15T19:29:49.822979Z	info	delta	ADS: new delta connection for node:w-server-8667cdbcf7-vf496.alpha-19
+2025-07-15T19:29:49.823232549Z 2025-07-15T19:29:49.823210Z	info	delta	CDS: PUSH request for node:w-server-8667cdbcf7-vf496.alpha resources:47 removed:0 size:49.5kB cached:43/43
+2025-07-15T19:29:49.839882213Z 2025-07-15T19:29:49.839782Z	info	delta	EDS: PUSH request for node:w-server-8667cdbcf7-vf496.alpha resources:43 removed:0 size:6.2kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:49.933831981Z 2025-07-15T19:29:49.933743Z	info	delta	LDS: PUSH request for node:w-server-8667cdbcf7-vf496.alpha resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:49.951033348Z 2025-07-15T19:29:49.950955Z	info	delta	RDS: PUSH request for node:w-server-8667cdbcf7-vf496.alpha resources:16 removed:0 size:19.0kB cached:16/16 filtered:0
+2025-07-15T19:29:50.012051082Z 2025-07-15T19:29:50.011198Z	info	delta	CDS: PUSH for node:b-client-75fb47d5c6-6svvv.alpha resources:46 removed:0 size:49.3kB cached:43/43
+2025-07-15T19:29:50.012131192Z 2025-07-15T19:29:50.011352Z	info	delta	EDS: PUSH for node:b-client-75fb47d5c6-6svvv.alpha resources:43 removed:0 size:6.2kB empty:0 cached:43/43
+2025-07-15T19:29:50.012820586Z 2025-07-15T19:29:50.012335Z	info	delta	LDS: PUSH for node:b-client-75fb47d5c6-6svvv.alpha resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:50.012835176Z 2025-07-15T19:29:50.012587Z	info	delta	RDS: PUSH for node:b-client-75fb47d5c6-6svvv.alpha resources:16 removed:0 size:19.0kB cached:16/16
+2025-07-15T19:29:50.023884748Z 2025-07-15T19:29:50.023765Z	info	delta	CDS: PUSH for node:a-client-695f68b55d-wmdv7.alpha resources:46 removed:0 size:49.3kB cached:43/43
+2025-07-15T19:29:50.023956999Z 2025-07-15T19:29:50.023931Z	info	delta	EDS: PUSH for node:a-client-695f68b55d-wmdv7.alpha resources:43 removed:0 size:6.2kB empty:0 cached:43/43
+2025-07-15T19:29:50.024782633Z 2025-07-15T19:29:50.024753Z	info	delta	LDS: PUSH for node:a-client-695f68b55d-wmdv7.alpha resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:50.025018765Z 2025-07-15T19:29:50.024975Z	info	delta	RDS: PUSH for node:a-client-695f68b55d-wmdv7.alpha resources:16 removed:0 size:19.0kB cached:16/16
+2025-07-15T19:29:50.032779858Z 2025-07-15T19:29:50.032637Z	info	delta	CDS: PUSH for node:v-server-785cff56c9-5rh5w.alpha resources:47 removed:0 size:49.5kB cached:43/43
+2025-07-15T19:29:50.032871369Z 2025-07-15T19:29:50.032844Z	info	delta	EDS: PUSH for node:v-server-785cff56c9-5rh5w.alpha resources:43 removed:0 size:6.2kB empty:0 cached:43/43
+2025-07-15T19:29:50.035215692Z 2025-07-15T19:29:50.034648Z	info	delta	LDS: PUSH for node:v-server-785cff56c9-5rh5w.alpha resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:50.035273582Z 2025-07-15T19:29:50.034925Z	info	delta	RDS: PUSH for node:v-server-785cff56c9-5rh5w.alpha resources:16 removed:0 size:19.0kB cached:16/16
+2025-07-15T19:29:50.046206174Z 2025-07-15T19:29:50.046055Z	info	delta	CDS: PUSH for node:f-client-869f9c7bdd-vq8wb.alpha resources:46 removed:0 size:49.3kB cached:42/43
+2025-07-15T19:29:50.046384855Z 2025-07-15T19:29:50.046330Z	info	delta	EDS: PUSH for node:f-client-869f9c7bdd-vq8wb.alpha resources:43 removed:0 size:6.4kB empty:0 cached:42/43
+2025-07-15T19:29:50.047535481Z 2025-07-15T19:29:50.047458Z	info	delta	LDS: PUSH for node:f-client-869f9c7bdd-vq8wb.alpha resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:50.048651458Z 2025-07-15T19:29:50.048014Z	info	delta	RDS: PUSH for node:f-client-869f9c7bdd-vq8wb.alpha resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:50.113968056Z 2025-07-15T19:29:50.113863Z	info	delta	ADS: new delta connection for node:a-client-68cffc58fd-qffvr.beta-20
+2025-07-15T19:29:50.114261298Z 2025-07-15T19:29:50.114232Z	info	delta	CDS: PUSH request for node:a-client-68cffc58fd-qffvr.beta resources:46 removed:0 size:49.3kB cached:43/43
+2025-07-15T19:29:50.130840241Z 2025-07-15T19:29:50.130675Z	info	delta	EDS: PUSH request for node:a-client-68cffc58fd-qffvr.beta resources:43 removed:0 size:6.4kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:50.136645734Z 2025-07-15T19:29:50.136446Z	info	ads	Push debounce stable[37] 1 for config ServiceEntry/alpha/v-server.alpha.svc.cluster.local: 100.441856ms since last change, 100.441056ms since last push, full=false
+2025-07-15T19:29:50.136686574Z 2025-07-15T19:29:50.136613Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:20 Version:2025-07-15T19:29:44Z/24
+2025-07-15T19:29:50.255545783Z 2025-07-15T19:29:50.255465Z	info	delta	ADS: new delta connection for node:z-server-5f94f449c5-k64sr.alpha-21
+2025-07-15T19:29:50.255776734Z 2025-07-15T19:29:50.255758Z	info	delta	CDS: PUSH request for node:z-server-5f94f449c5-k64sr.alpha resources:47 removed:0 size:49.5kB cached:42/43
+2025-07-15T19:29:50.270815508Z 2025-07-15T19:29:50.270749Z	info	delta	EDS: PUSH request for node:z-server-5f94f449c5-k64sr.alpha resources:43 removed:0 size:6.4kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:50.372488131Z 2025-07-15T19:29:50.372404Z	info	delta	LDS: PUSH request for node:a-client-68cffc58fd-qffvr.beta resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:50.389274846Z 2025-07-15T19:29:50.389206Z	info	delta	RDS: PUSH request for node:a-client-68cffc58fd-qffvr.beta resources:16 removed:0 size:19.0kB cached:0/16 filtered:0
+2025-07-15T19:29:50.404507252Z 2025-07-15T19:29:50.404445Z	info	delta	ADS: new delta connection for node:x-server-6d8987d7c7-qbtcm.alpha-22
+2025-07-15T19:29:50.404729313Z 2025-07-15T19:29:50.404708Z	info	delta	CDS: PUSH request for node:x-server-6d8987d7c7-qbtcm.alpha resources:47 removed:0 size:49.5kB cached:42/43
+2025-07-15T19:29:50.423146886Z 2025-07-15T19:29:50.423047Z	info	delta	EDS: PUSH request for node:x-server-6d8987d7c7-qbtcm.alpha resources:43 removed:0 size:6.4kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:50.448996502Z 2025-07-15T19:29:50.448900Z	info	delta	LDS: PUSH request for node:x-server-6d8987d7c7-qbtcm.alpha resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:50.466555711Z 2025-07-15T19:29:50.466494Z	info	delta	RDS: PUSH request for node:x-server-6d8987d7c7-qbtcm.alpha resources:16 removed:0 size:19.0kB cached:15/16 filtered:0
+2025-07-15T19:29:50.547397766Z 2025-07-15T19:29:50.547339Z	info	delta	LDS: PUSH request for node:z-server-5f94f449c5-k64sr.alpha resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:50.564092769Z 2025-07-15T19:29:50.564037Z	info	delta	RDS: PUSH request for node:z-server-5f94f449c5-k64sr.alpha resources:16 removed:0 size:19.0kB cached:15/16 filtered:0
+2025-07-15T19:29:50.741105326Z 2025-07-15T19:29:50.741022Z	info	delta	ADS: new delta connection for node:b-client-cd9f9866d-kh6q2.beta-23
+2025-07-15T19:29:50.741259667Z 2025-07-15T19:29:50.741243Z	info	delta	CDS: PUSH request for node:b-client-cd9f9866d-kh6q2.beta resources:46 removed:0 size:49.3kB cached:42/43
+2025-07-15T19:29:50.757682770Z 2025-07-15T19:29:50.757549Z	info	delta	EDS: PUSH request for node:b-client-cd9f9866d-kh6q2.beta resources:43 removed:0 size:6.4kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:50.910995742Z 2025-07-15T19:29:50.910910Z	info	delta	ADS: new delta connection for node:c-client-5646c698fc-b7gmq.beta-24
+2025-07-15T19:29:50.911255164Z 2025-07-15T19:29:50.911225Z	info	delta	CDS: PUSH request for node:c-client-5646c698fc-b7gmq.beta resources:46 removed:0 size:49.3kB cached:42/43
+2025-07-15T19:29:50.927470635Z 2025-07-15T19:29:50.927406Z	info	delta	EDS: PUSH request for node:c-client-5646c698fc-b7gmq.beta resources:43 removed:0 size:6.4kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:50.958004968Z 2025-07-15T19:29:50.957924Z	info	delta	LDS: PUSH request for node:b-client-cd9f9866d-kh6q2.beta resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:50.975899738Z 2025-07-15T19:29:50.975821Z	info	delta	RDS: PUSH request for node:b-client-cd9f9866d-kh6q2.beta resources:16 removed:0 size:19.0kB cached:0/16 filtered:0
+2025-07-15T19:29:51.026047370Z 2025-07-15T19:29:51.025874Z	info	delta	CDS: PUSH for node:a-client-68cffc58fd-qffvr.beta resources:46 removed:0 size:49.3kB cached:42/43
+2025-07-15T19:29:51.026094791Z 2025-07-15T19:29:51.026054Z	info	delta	EDS: PUSH for node:a-client-68cffc58fd-qffvr.beta resources:43 removed:0 size:6.4kB empty:0 cached:43/43
+2025-07-15T19:29:51.026913225Z 2025-07-15T19:29:51.026886Z	info	delta	LDS: PUSH for node:a-client-68cffc58fd-qffvr.beta resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:51.027401918Z 2025-07-15T19:29:51.027328Z	info	delta	RDS: PUSH for node:a-client-68cffc58fd-qffvr.beta resources:16 removed:0 size:19.0kB cached:0/16
+2025-07-15T19:29:51.036800141Z 2025-07-15T19:29:51.036079Z	info	delta	CDS: PUSH for node:w-server-8667cdbcf7-vf496.alpha resources:47 removed:0 size:49.5kB cached:43/43
+2025-07-15T19:29:51.036843531Z 2025-07-15T19:29:51.036304Z	info	delta	EDS: PUSH for node:w-server-8667cdbcf7-vf496.alpha resources:43 removed:0 size:6.4kB empty:0 cached:43/43
+2025-07-15T19:29:51.037913717Z 2025-07-15T19:29:51.037818Z	info	delta	LDS: PUSH for node:w-server-8667cdbcf7-vf496.alpha resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:51.038488940Z 2025-07-15T19:29:51.038205Z	info	delta	RDS: PUSH for node:w-server-8667cdbcf7-vf496.alpha resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:51.072510052Z 2025-07-15T19:29:51.071823Z	info	delta	CDS: PUSH for node:e-client-57dcf59cb6-mqd78.alpha resources:46 removed:0 size:49.3kB cached:42/43
+2025-07-15T19:29:51.072724463Z 2025-07-15T19:29:51.072682Z	info	delta	EDS: PUSH for node:e-client-57dcf59cb6-mqd78.alpha resources:43 removed:0 size:6.5kB empty:0 cached:42/43
+2025-07-15T19:29:51.074115581Z 2025-07-15T19:29:51.073651Z	info	delta	LDS: PUSH for node:e-client-57dcf59cb6-mqd78.alpha resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:51.074123941Z 2025-07-15T19:29:51.073941Z	info	delta	RDS: PUSH for node:e-client-57dcf59cb6-mqd78.alpha resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:51.082587489Z 2025-07-15T19:29:51.081569Z	info	delta	CDS: PUSH for node:y-server-5b556546fd-t52ll.alpha resources:47 removed:0 size:49.5kB cached:43/43
+2025-07-15T19:29:51.083910976Z 2025-07-15T19:29:51.081764Z	info	delta	EDS: PUSH for node:y-server-5b556546fd-t52ll.alpha resources:43 removed:0 size:6.5kB empty:0 cached:43/43
+2025-07-15T19:29:51.083950876Z 2025-07-15T19:29:51.083494Z	info	delta	LDS: PUSH for node:y-server-5b556546fd-t52ll.alpha resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:51.083954066Z 2025-07-15T19:29:51.083750Z	info	delta	RDS: PUSH for node:y-server-5b556546fd-t52ll.alpha resources:16 removed:0 size:19.0kB cached:16/16
+2025-07-15T19:29:51.090657784Z 2025-07-15T19:29:51.090255Z	info	delta	ADS: new delta connection for node:d-client-59dfcb7dbd-44v6d.beta-25
+2025-07-15T19:29:51.090728494Z 2025-07-15T19:29:51.090696Z	info	delta	CDS: PUSH request for node:d-client-59dfcb7dbd-44v6d.beta resources:46 removed:0 size:49.3kB cached:42/43
+2025-07-15T19:29:51.114477048Z 2025-07-15T19:29:51.114292Z	info	delta	EDS: PUSH request for node:d-client-59dfcb7dbd-44v6d.beta resources:43 removed:0 size:6.7kB empty:0 cached:42/43 filtered:0
+2025-07-15T19:29:51.178971831Z 2025-07-15T19:29:51.178817Z	info	delta	LDS: PUSH request for node:d-client-59dfcb7dbd-44v6d.beta resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:51.188195223Z 2025-07-15T19:29:51.188076Z	info	ads	Push debounce stable[38] 2 for config ServiceEntry/alpha/w-server.alpha.svc.cluster.local and 1 more configs: 100.590416ms since last change, 146.599495ms since last push, full=false
+2025-07-15T19:29:51.188210863Z 2025-07-15T19:29:51.188133Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:25 Version:2025-07-15T19:29:44Z/24
+2025-07-15T19:29:51.209053920Z 2025-07-15T19:29:51.208935Z	info	delta	RDS: PUSH request for node:d-client-59dfcb7dbd-44v6d.beta resources:16 removed:0 size:19.0kB cached:15/16 filtered:0
+2025-07-15T19:29:51.252337624Z 2025-07-15T19:29:51.252204Z	info	delta	ADS: new delta connection for node:f-client-6b9bcf5dcb-d7thx.beta-26
+2025-07-15T19:29:51.252644995Z 2025-07-15T19:29:51.252614Z	info	delta	CDS: PUSH request for node:f-client-6b9bcf5dcb-d7thx.beta resources:46 removed:0 size:49.3kB cached:41/43
+2025-07-15T19:29:51.271238051Z 2025-07-15T19:29:51.271085Z	info	delta	LDS: PUSH request for node:c-client-5646c698fc-b7gmq.beta resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:51.279494037Z 2025-07-15T19:29:51.279226Z	info	delta	EDS: PUSH request for node:f-client-6b9bcf5dcb-d7thx.beta resources:43 removed:0 size:6.7kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:51.293855318Z 2025-07-15T19:29:51.293747Z	info	delta	RDS: PUSH request for node:c-client-5646c698fc-b7gmq.beta resources:16 removed:0 size:19.0kB cached:15/16 filtered:0
+2025-07-15T19:29:51.399401242Z 2025-07-15T19:29:51.399315Z	info	delta	ADS: new delta connection for node:v-server-54b77ffd4f-rdg2v.beta-27
+2025-07-15T19:29:51.399665114Z 2025-07-15T19:29:51.399635Z	info	delta	CDS: PUSH request for node:v-server-54b77ffd4f-rdg2v.beta resources:47 removed:0 size:49.5kB cached:41/43
+2025-07-15T19:29:51.418296658Z 2025-07-15T19:29:51.418138Z	info	delta	EDS: PUSH request for node:v-server-54b77ffd4f-rdg2v.beta resources:43 removed:0 size:6.7kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:51.490344314Z 2025-07-15T19:29:51.490287Z	info	delta	LDS: PUSH request for node:f-client-6b9bcf5dcb-d7thx.beta resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:51.507191429Z 2025-07-15T19:29:51.507138Z	info	delta	RDS: PUSH request for node:f-client-6b9bcf5dcb-d7thx.beta resources:16 removed:0 size:19.0kB cached:15/16 filtered:0
+2025-07-15T19:29:51.546762521Z 2025-07-15T19:29:51.546679Z	info	delta	ADS: new delta connection for node:e-client-758d4cfff4-n8l96.beta-28
+2025-07-15T19:29:51.547031293Z 2025-07-15T19:29:51.546993Z	info	delta	CDS: PUSH request for node:e-client-758d4cfff4-n8l96.beta resources:46 removed:0 size:49.3kB cached:41/43
+2025-07-15T19:29:51.562872983Z 2025-07-15T19:29:51.562797Z	info	delta	EDS: PUSH request for node:e-client-758d4cfff4-n8l96.beta resources:43 removed:0 size:6.7kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:51.678794935Z 2025-07-15T19:29:51.678727Z	info	delta	LDS: PUSH request for node:v-server-54b77ffd4f-rdg2v.beta resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:51.701773164Z 2025-07-15T19:29:51.701668Z	info	delta	RDS: PUSH request for node:v-server-54b77ffd4f-rdg2v.beta resources:16 removed:0 size:19.0kB cached:15/16 filtered:0
+2025-07-15T19:29:51.709206366Z 2025-07-15T19:29:51.709147Z	info	delta	ADS: new delta connection for node:w-server-8667cdbcf7-mbqvb.beta-29
+2025-07-15T19:29:51.709415867Z 2025-07-15T19:29:51.709399Z	info	delta	CDS: PUSH request for node:w-server-8667cdbcf7-mbqvb.beta resources:47 removed:0 size:49.5kB cached:41/43
+2025-07-15T19:29:51.724294471Z 2025-07-15T19:29:51.724192Z	info	delta	EDS: PUSH request for node:w-server-8667cdbcf7-mbqvb.beta resources:43 removed:0 size:6.7kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:51.768012447Z 2025-07-15T19:29:51.767950Z	info	delta	LDS: PUSH request for node:e-client-758d4cfff4-n8l96.beta resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:51.783587715Z 2025-07-15T19:29:51.783520Z	info	delta	RDS: PUSH request for node:e-client-758d4cfff4-n8l96.beta resources:16 removed:0 size:19.0kB cached:15/16 filtered:0
+2025-07-15T19:29:51.827136050Z 2025-07-15T19:29:51.827022Z	info	delta	LDS: PUSH request for node:w-server-8667cdbcf7-mbqvb.beta resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:51.846687800Z 2025-07-15T19:29:51.846579Z	info	delta	RDS: PUSH request for node:w-server-8667cdbcf7-mbqvb.beta resources:16 removed:0 size:19.0kB cached:15/16 filtered:0
+2025-07-15T19:29:51.856495445Z 2025-07-15T19:29:51.856432Z	info	delta	ADS: new delta connection for node:x-server-6d8987d7c7-lcljz.beta-30
+2025-07-15T19:29:51.856763266Z 2025-07-15T19:29:51.856739Z	info	delta	CDS: PUSH request for node:x-server-6d8987d7c7-lcljz.beta resources:47 removed:0 size:49.5kB cached:41/43
+2025-07-15T19:29:51.875149291Z 2025-07-15T19:29:51.875079Z	info	delta	EDS: PUSH request for node:x-server-6d8987d7c7-lcljz.beta resources:43 removed:0 size:6.7kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:51.925463724Z 2025-07-15T19:29:51.925408Z	info	delta	LDS: PUSH request for node:x-server-6d8987d7c7-lcljz.beta resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:51.941331563Z 2025-07-15T19:29:51.941280Z	info	delta	RDS: PUSH request for node:x-server-6d8987d7c7-lcljz.beta resources:16 removed:0 size:19.0kB cached:15/16 filtered:0
+2025-07-15T19:29:52.057569607Z 2025-07-15T19:29:52.057427Z	info	delta	CDS: PUSH for node:z-server-5f94f449c5-k64sr.alpha resources:47 removed:0 size:49.5kB cached:41/43
+2025-07-15T19:29:52.057734028Z 2025-07-15T19:29:52.057693Z	info	delta	EDS: PUSH for node:z-server-5f94f449c5-k64sr.alpha resources:43 removed:0 size:6.7kB empty:0 cached:43/43
+2025-07-15T19:29:52.058551583Z 2025-07-15T19:29:52.058520Z	info	delta	LDS: PUSH for node:z-server-5f94f449c5-k64sr.alpha resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:52.058761574Z 2025-07-15T19:29:52.058731Z	info	delta	RDS: PUSH for node:z-server-5f94f449c5-k64sr.alpha resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:52.076474433Z 2025-07-15T19:29:52.076359Z	info	delta	CDS: PUSH for node:b-client-cd9f9866d-kh6q2.beta resources:46 removed:0 size:49.3kB cached:42/43
+2025-07-15T19:29:52.076625134Z 2025-07-15T19:29:52.076584Z	info	delta	EDS: PUSH for node:b-client-cd9f9866d-kh6q2.beta resources:43 removed:0 size:6.8kB empty:0 cached:42/43
+2025-07-15T19:29:52.077352018Z 2025-07-15T19:29:52.077302Z	info	delta	LDS: PUSH for node:b-client-cd9f9866d-kh6q2.beta resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:52.077714350Z 2025-07-15T19:29:52.077681Z	info	delta	RDS: PUSH for node:b-client-cd9f9866d-kh6q2.beta resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:52.084496979Z 2025-07-15T19:29:52.084344Z	info	delta	CDS: PUSH for node:x-server-6d8987d7c7-qbtcm.alpha resources:47 removed:0 size:49.5kB cached:43/43
+2025-07-15T19:29:52.084667379Z 2025-07-15T19:29:52.084593Z	info	delta	EDS: PUSH for node:x-server-6d8987d7c7-qbtcm.alpha resources:43 removed:0 size:6.8kB empty:0 cached:43/43
+2025-07-15T19:29:52.086301669Z 2025-07-15T19:29:52.086229Z	info	delta	LDS: PUSH for node:x-server-6d8987d7c7-qbtcm.alpha resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:52.086721541Z 2025-07-15T19:29:52.086679Z	info	delta	RDS: PUSH for node:x-server-6d8987d7c7-qbtcm.alpha resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:52.105219135Z 2025-07-15T19:29:52.104708Z	info	delta	CDS: PUSH for node:d-client-59dfcb7dbd-44v6d.beta resources:46 removed:0 size:49.3kB cached:42/43
+2025-07-15T19:29:52.105292246Z 2025-07-15T19:29:52.104976Z	info	delta	EDS: PUSH for node:d-client-59dfcb7dbd-44v6d.beta resources:43 removed:0 size:7.0kB empty:0 cached:42/43
+2025-07-15T19:29:52.106006020Z 2025-07-15T19:29:52.105973Z	info	delta	LDS: PUSH for node:d-client-59dfcb7dbd-44v6d.beta resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:52.106239401Z 2025-07-15T19:29:52.106209Z	info	delta	RDS: PUSH for node:d-client-59dfcb7dbd-44v6d.beta resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:52.120590062Z 2025-07-15T19:29:52.120261Z	info	delta	CDS: PUSH for node:f-client-6b9bcf5dcb-d7thx.beta resources:46 removed:0 size:49.3kB cached:43/43
+2025-07-15T19:29:52.120602752Z 2025-07-15T19:29:52.120402Z	info	delta	EDS: PUSH for node:f-client-6b9bcf5dcb-d7thx.beta resources:43 removed:0 size:7.0kB empty:0 cached:43/43
+2025-07-15T19:29:52.121398286Z 2025-07-15T19:29:52.121124Z	info	delta	LDS: PUSH for node:f-client-6b9bcf5dcb-d7thx.beta resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:52.121428086Z 2025-07-15T19:29:52.121304Z	info	delta	RDS: PUSH for node:f-client-6b9bcf5dcb-d7thx.beta resources:16 removed:0 size:19.0kB cached:16/16
+2025-07-15T19:29:52.188038522Z 2025-07-15T19:29:52.187795Z	info	ads	Push debounce stable[39] 2 for config ServiceEntry/alpha/z-server.alpha.svc.cluster.local and 1 more configs: 100.255445ms since last change, 126.843904ms since last push, full=false
+2025-07-15T19:29:52.188075742Z 2025-07-15T19:29:52.188017Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:30 Version:2025-07-15T19:29:44Z/24
+2025-07-15T19:29:52.279422556Z 2025-07-15T19:29:52.279010Z	info	delta	ADS: new delta connection for node:z-server-5f94f449c5-qwb7f.beta-31
+2025-07-15T19:29:52.279464136Z 2025-07-15T19:29:52.279437Z	info	delta	CDS: PUSH request for node:z-server-5f94f449c5-qwb7f.beta resources:47 removed:0 size:49.5kB cached:41/43
+2025-07-15T19:29:52.301371060Z 2025-07-15T19:29:52.301273Z	info	delta	EDS: PUSH request for node:z-server-5f94f449c5-qwb7f.beta resources:43 removed:0 size:7.0kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:52.387496564Z 2025-07-15T19:29:52.387360Z	info	delta	LDS: PUSH request for node:z-server-5f94f449c5-qwb7f.beta resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:52.409727479Z 2025-07-15T19:29:52.409554Z	info	delta	RDS: PUSH request for node:z-server-5f94f449c5-qwb7f.beta resources:16 removed:0 size:19.0kB cached:15/16 filtered:0
+2025-07-15T19:29:52.436073028Z 2025-07-15T19:29:52.435820Z	info	delta	ADS: new delta connection for node:y-server-5b556546fd-ssp2m.beta-32
+2025-07-15T19:29:52.436388449Z 2025-07-15T19:29:52.436363Z	info	delta	CDS: PUSH request for node:y-server-5b556546fd-ssp2m.beta resources:47 removed:0 size:49.5kB cached:41/43
+2025-07-15T19:29:52.458278843Z 2025-07-15T19:29:52.458151Z	info	delta	EDS: PUSH request for node:y-server-5b556546fd-ssp2m.beta resources:43 removed:0 size:7.0kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:52.477377941Z 2025-07-15T19:29:52.477316Z	info	delta	LDS: PUSH request for node:y-server-5b556546fd-ssp2m.beta resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:52.494941040Z 2025-07-15T19:29:52.494697Z	info	delta	RDS: PUSH request for node:y-server-5b556546fd-ssp2m.beta resources:16 removed:0 size:19.0kB cached:15/16 filtered:0
+2025-07-15T19:29:52.572349815Z 2025-07-15T19:29:52.572289Z	info	delta	ADS: new delta connection for node:d-client-7b5896d4f9-2mnw4.gamma-33
+2025-07-15T19:29:52.572747397Z 2025-07-15T19:29:52.572713Z	info	delta	CDS: PUSH request for node:d-client-7b5896d4f9-2mnw4.gamma resources:46 removed:0 size:49.3kB cached:41/43
+2025-07-15T19:29:52.590034205Z 2025-07-15T19:29:52.589955Z	info	delta	EDS: PUSH request for node:d-client-7b5896d4f9-2mnw4.gamma resources:43 removed:0 size:7.0kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:52.640734820Z 2025-07-15T19:29:52.640668Z	info	delta	LDS: PUSH request for node:d-client-7b5896d4f9-2mnw4.gamma resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:52.658289839Z 2025-07-15T19:29:52.658188Z	info	delta	RDS: PUSH request for node:d-client-7b5896d4f9-2mnw4.gamma resources:16 removed:0 size:19.0kB cached:15/16 filtered:0
+2025-07-15T19:29:52.722664071Z 2025-07-15T19:29:52.722611Z	info	delta	ADS: new delta connection for node:w-server-57c9bbf54c-hppwc.gamma-34
+2025-07-15T19:29:52.723039963Z 2025-07-15T19:29:52.723011Z	info	delta	CDS: PUSH request for node:w-server-57c9bbf54c-hppwc.gamma resources:47 removed:0 size:49.5kB cached:41/43
+2025-07-15T19:29:52.740630212Z 2025-07-15T19:29:52.740541Z	info	delta	EDS: PUSH request for node:w-server-57c9bbf54c-hppwc.gamma resources:43 removed:0 size:7.0kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:52.846145087Z 2025-07-15T19:29:52.846095Z	info	delta	ADS: new delta connection for node:f-client-7768db555-hhjdp.gamma-35
+2025-07-15T19:29:52.846378678Z 2025-07-15T19:29:52.846357Z	info	delta	CDS: PUSH request for node:f-client-7768db555-hhjdp.gamma resources:46 removed:0 size:49.3kB cached:41/43
+2025-07-15T19:29:52.866481241Z 2025-07-15T19:29:52.866378Z	info	delta	EDS: PUSH request for node:f-client-7768db555-hhjdp.gamma resources:43 removed:0 size:7.0kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:52.905951583Z 2025-07-15T19:29:52.905883Z	info	delta	LDS: PUSH request for node:w-server-57c9bbf54c-hppwc.gamma resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:52.922445686Z 2025-07-15T19:29:52.922388Z	info	delta	RDS: PUSH request for node:w-server-57c9bbf54c-hppwc.gamma resources:16 removed:0 size:19.0kB cached:15/16 filtered:0
+2025-07-15T19:29:53.059659618Z 2025-07-15T19:29:53.059527Z	info	delta	CDS: PUSH for node:w-server-8667cdbcf7-mbqvb.beta resources:47 removed:0 size:49.5kB cached:41/43
+2025-07-15T19:29:53.059802759Z 2025-07-15T19:29:53.059713Z	info	delta	EDS: PUSH for node:w-server-8667cdbcf7-mbqvb.beta resources:43 removed:0 size:7.0kB empty:0 cached:43/43
+2025-07-15T19:29:53.060769854Z 2025-07-15T19:29:53.060731Z	info	delta	LDS: PUSH for node:w-server-8667cdbcf7-mbqvb.beta resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:53.061059286Z 2025-07-15T19:29:53.061023Z	info	delta	RDS: PUSH for node:w-server-8667cdbcf7-mbqvb.beta resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:53.072877023Z 2025-07-15T19:29:53.069832Z	info	delta	CDS: PUSH for node:c-client-5646c698fc-b7gmq.beta resources:46 removed:0 size:49.3kB cached:42/43
+2025-07-15T19:29:53.072899163Z 2025-07-15T19:29:53.070176Z	info	delta	EDS: PUSH for node:c-client-5646c698fc-b7gmq.beta resources:43 removed:0 size:7.2kB empty:0 cached:42/43
+2025-07-15T19:29:53.074606143Z 2025-07-15T19:29:53.074428Z	info	delta	LDS: PUSH for node:c-client-5646c698fc-b7gmq.beta resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:53.075852390Z 2025-07-15T19:29:53.075361Z	info	delta	RDS: PUSH for node:c-client-5646c698fc-b7gmq.beta resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:53.090529733Z 2025-07-15T19:29:53.085744Z	info	delta	CDS: PUSH for node:x-server-6d8987d7c7-lcljz.beta resources:47 removed:0 size:49.5kB cached:43/43
+2025-07-15T19:29:53.090562233Z 2025-07-15T19:29:53.085994Z	info	delta	EDS: PUSH for node:x-server-6d8987d7c7-lcljz.beta resources:43 removed:0 size:7.2kB empty:0 cached:43/43
+2025-07-15T19:29:53.090566233Z 2025-07-15T19:29:53.087712Z	info	delta	LDS: PUSH for node:x-server-6d8987d7c7-lcljz.beta resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:53.090569963Z 2025-07-15T19:29:53.087997Z	info	delta	RDS: PUSH for node:x-server-6d8987d7c7-lcljz.beta resources:16 removed:0 size:19.0kB cached:16/16
+2025-07-15T19:29:53.110781657Z 2025-07-15T19:29:53.110547Z	info	delta	CDS: PUSH for node:v-server-54b77ffd4f-rdg2v.beta resources:47 removed:0 size:49.5kB cached:42/43
+2025-07-15T19:29:53.110930087Z 2025-07-15T19:29:53.110892Z	info	delta	EDS: PUSH for node:v-server-54b77ffd4f-rdg2v.beta resources:43 removed:0 size:7.3kB empty:0 cached:42/43
+2025-07-15T19:29:53.112165714Z 2025-07-15T19:29:53.112115Z	info	delta	LDS: PUSH for node:v-server-54b77ffd4f-rdg2v.beta resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:53.112565487Z 2025-07-15T19:29:53.112522Z	info	delta	RDS: PUSH for node:v-server-54b77ffd4f-rdg2v.beta resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:53.131818835Z 2025-07-15T19:29:53.131620Z	info	delta	LDS: PUSH request for node:f-client-7768db555-hhjdp.gamma resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:53.135533336Z 2025-07-15T19:29:53.135401Z	info	delta	CDS: PUSH for node:e-client-758d4cfff4-n8l96.beta resources:46 removed:0 size:49.3kB cached:42/43
+2025-07-15T19:29:53.135864978Z 2025-07-15T19:29:53.135832Z	info	delta	EDS: PUSH for node:e-client-758d4cfff4-n8l96.beta resources:43 removed:0 size:7.5kB empty:0 cached:42/43
+2025-07-15T19:29:53.136993754Z 2025-07-15T19:29:53.136960Z	info	delta	LDS: PUSH for node:e-client-758d4cfff4-n8l96.beta resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:53.137385716Z 2025-07-15T19:29:53.137353Z	info	delta	RDS: PUSH for node:e-client-758d4cfff4-n8l96.beta resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:53.151941688Z 2025-07-15T19:29:53.151738Z	info	delta	CDS: PUSH for node:z-server-5f94f449c5-qwb7f.beta resources:47 removed:0 size:49.5kB cached:43/43
+2025-07-15T19:29:53.152065599Z 2025-07-15T19:29:53.152026Z	info	delta	EDS: PUSH for node:z-server-5f94f449c5-qwb7f.beta resources:43 removed:0 size:7.5kB empty:0 cached:43/43
+2025-07-15T19:29:53.154865375Z 2025-07-15T19:29:53.153629Z	info	delta	LDS: PUSH for node:z-server-5f94f449c5-qwb7f.beta resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:53.154893725Z 2025-07-15T19:29:53.154316Z	info	delta	RDS: PUSH for node:z-server-5f94f449c5-qwb7f.beta resources:16 removed:0 size:19.0kB cached:16/16
+2025-07-15T19:29:53.163677204Z 2025-07-15T19:29:53.163015Z	info	delta	RDS: PUSH request for node:f-client-7768db555-hhjdp.gamma resources:16 removed:0 size:19.0kB cached:15/16 filtered:0
+2025-07-15T19:29:53.167807567Z 2025-07-15T19:29:53.167725Z	info	delta	ADS: new delta connection for node:e-client-69456dc8bf-v7wvb.gamma-36
+2025-07-15T19:29:53.168301860Z 2025-07-15T19:29:53.168256Z	info	delta	CDS: PUSH request for node:e-client-69456dc8bf-v7wvb.gamma resources:46 removed:0 size:49.3kB cached:42/43
+2025-07-15T19:29:53.187954761Z 2025-07-15T19:29:53.187845Z	info	delta	EDS: PUSH request for node:e-client-69456dc8bf-v7wvb.gamma resources:43 removed:0 size:7.7kB empty:0 cached:42/43 filtered:0
+2025-07-15T19:29:53.207366580Z 2025-07-15T19:29:53.207225Z	info	delta	LDS: PUSH request for node:e-client-69456dc8bf-v7wvb.gamma resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:53.223914453Z 2025-07-15T19:29:53.223801Z	info	delta	RDS: PUSH request for node:e-client-69456dc8bf-v7wvb.gamma resources:16 removed:0 size:19.0kB cached:15/16 filtered:0
+2025-07-15T19:29:53.261430444Z 2025-07-15T19:29:53.261315Z	info	ads	Push debounce stable[40] 4 for config ServiceEntry/beta/w-server.beta.svc.cluster.local and 3 more configs: 100.370754ms since last change, 197.18746ms since last push, full=false
+2025-07-15T19:29:53.261465644Z 2025-07-15T19:29:53.261392Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:36 Version:2025-07-15T19:29:44Z/24
+2025-07-15T19:29:53.427673770Z 2025-07-15T19:29:53.427589Z	info	delta	ADS: new delta connection for node:z-server-7f6c76b77c-ttxwl.gamma-37
+2025-07-15T19:29:53.427959822Z 2025-07-15T19:29:53.427938Z	info	delta	CDS: PUSH request for node:z-server-7f6c76b77c-ttxwl.gamma resources:47 removed:0 size:49.5kB cached:39/43
+2025-07-15T19:29:53.447019409Z 2025-07-15T19:29:53.446916Z	info	delta	EDS: PUSH request for node:z-server-7f6c76b77c-ttxwl.gamma resources:43 removed:0 size:7.7kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:53.562386928Z 2025-07-15T19:29:53.562298Z	info	delta	LDS: PUSH request for node:z-server-7f6c76b77c-ttxwl.gamma resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:53.573356220Z 2025-07-15T19:29:53.573257Z	info	delta	ADS: new delta connection for node:x-server-64589bc895-qpzhg.gamma-38
+2025-07-15T19:29:53.573760162Z 2025-07-15T19:29:53.573738Z	info	delta	CDS: PUSH request for node:x-server-64589bc895-qpzhg.gamma resources:47 removed:0 size:49.5kB cached:39/43
+2025-07-15T19:29:53.579791826Z 2025-07-15T19:29:53.579754Z	info	delta	RDS: PUSH request for node:z-server-7f6c76b77c-ttxwl.gamma resources:16 removed:0 size:19.0kB cached:15/16 filtered:0
+2025-07-15T19:29:53.588948958Z 2025-07-15T19:29:53.588825Z	info	delta	EDS: PUSH request for node:x-server-64589bc895-qpzhg.gamma resources:43 removed:0 size:7.7kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:53.878961450Z 2025-07-15T19:29:53.878899Z	info	delta	LDS: PUSH request for node:x-server-64589bc895-qpzhg.gamma resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:53.895442803Z 2025-07-15T19:29:53.895377Z	info	delta	RDS: PUSH request for node:x-server-64589bc895-qpzhg.gamma resources:16 removed:0 size:19.0kB cached:15/16 filtered:0
+2025-07-15T19:29:54.071520565Z 2025-07-15T19:29:54.071082Z	info	delta	CDS: PUSH for node:d-client-7b5896d4f9-2mnw4.gamma resources:46 removed:0 size:49.3kB cached:39/43
+2025-07-15T19:29:54.071642946Z 2025-07-15T19:29:54.071220Z	info	delta	EDS: PUSH for node:d-client-7b5896d4f9-2mnw4.gamma resources:43 removed:0 size:7.7kB empty:0 cached:43/43
+2025-07-15T19:29:54.072257909Z 2025-07-15T19:29:54.072185Z	info	delta	LDS: PUSH for node:d-client-7b5896d4f9-2mnw4.gamma resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:54.072526250Z 2025-07-15T19:29:54.072493Z	info	delta	RDS: PUSH for node:d-client-7b5896d4f9-2mnw4.gamma resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:54.090250340Z 2025-07-15T19:29:54.090117Z	info	delta	CDS: PUSH for node:f-client-7768db555-hhjdp.gamma resources:46 removed:0 size:49.3kB cached:43/43
+2025-07-15T19:29:54.090346371Z 2025-07-15T19:29:54.090315Z	info	delta	EDS: PUSH for node:f-client-7768db555-hhjdp.gamma resources:43 removed:0 size:7.7kB empty:0 cached:43/43
+2025-07-15T19:29:54.091298996Z 2025-07-15T19:29:54.091267Z	info	delta	LDS: PUSH for node:f-client-7768db555-hhjdp.gamma resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:54.091479427Z 2025-07-15T19:29:54.091442Z	info	delta	RDS: PUSH for node:f-client-7768db555-hhjdp.gamma resources:16 removed:0 size:19.0kB cached:16/16
+2025-07-15T19:29:54.100036595Z 2025-07-15T19:29:54.099169Z	info	delta	CDS: PUSH for node:y-server-5b556546fd-ssp2m.beta resources:47 removed:0 size:49.5kB cached:43/43
+2025-07-15T19:29:54.100063175Z 2025-07-15T19:29:54.099446Z	info	delta	EDS: PUSH for node:y-server-5b556546fd-ssp2m.beta resources:43 removed:0 size:7.7kB empty:0 cached:43/43
+2025-07-15T19:29:54.101450343Z 2025-07-15T19:29:54.101245Z	info	delta	LDS: PUSH for node:y-server-5b556546fd-ssp2m.beta resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:54.101764565Z 2025-07-15T19:29:54.101735Z	info	delta	RDS: PUSH for node:y-server-5b556546fd-ssp2m.beta resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:54.112954998Z 2025-07-15T19:29:54.112856Z	info	delta	CDS: PUSH for node:w-server-57c9bbf54c-hppwc.gamma resources:47 removed:0 size:49.5kB cached:42/43
+2025-07-15T19:29:54.113159769Z 2025-07-15T19:29:54.113131Z	info	delta	EDS: PUSH for node:w-server-57c9bbf54c-hppwc.gamma resources:43 removed:0 size:7.8kB empty:0 cached:42/43
+2025-07-15T19:29:54.115414932Z 2025-07-15T19:29:54.115347Z	info	delta	LDS: PUSH for node:w-server-57c9bbf54c-hppwc.gamma resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:54.115903275Z 2025-07-15T19:29:54.115853Z	info	delta	RDS: PUSH for node:w-server-57c9bbf54c-hppwc.gamma resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:54.125440378Z 2025-07-15T19:29:54.125255Z	info	delta	CDS: PUSH for node:e-client-69456dc8bf-v7wvb.gamma resources:46 removed:0 size:49.3kB cached:42/43
+2025-07-15T19:29:54.126016521Z 2025-07-15T19:29:54.125694Z	info	delta	EDS: PUSH for node:e-client-69456dc8bf-v7wvb.gamma resources:43 removed:0 size:8.0kB empty:0 cached:42/43
+2025-07-15T19:29:54.127809892Z 2025-07-15T19:29:54.126860Z	info	delta	LDS: PUSH for node:e-client-69456dc8bf-v7wvb.gamma resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:54.127815352Z 2025-07-15T19:29:54.127238Z	info	delta	RDS: PUSH for node:e-client-69456dc8bf-v7wvb.gamma resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:54.218153560Z 2025-07-15T19:29:54.218072Z	info	ads	Push debounce stable[41] 2 for config ServiceEntry/beta/y-server.beta.svc.cluster.local and 1 more configs: 101.049778ms since last change, 114.430084ms since last push, full=false
+2025-07-15T19:29:54.218179820Z 2025-07-15T19:29:54.218145Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:38 Version:2025-07-15T19:29:44Z/24
+2025-07-15T19:29:54.690936392Z 2025-07-15T19:29:54.690855Z	info	delta	ADS: new delta connection for node:sleep-868c754c4b-z9f2r.sleep-39
+2025-07-15T19:29:54.691158563Z 2025-07-15T19:29:54.691134Z	info	delta	CDS: PUSH request for node:sleep-868c754c4b-z9f2r.sleep resources:47 removed:0 size:49.5kB cached:41/43
+2025-07-15T19:29:54.707200473Z 2025-07-15T19:29:54.707142Z	info	delta	EDS: PUSH request for node:sleep-868c754c4b-z9f2r.sleep resources:43 removed:0 size:8.0kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:54.759989980Z 2025-07-15T19:29:54.759930Z	info	delta	LDS: PUSH request for node:sleep-868c754c4b-z9f2r.sleep resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:54.777159897Z 2025-07-15T19:29:54.777078Z	info	delta	RDS: PUSH request for node:sleep-868c754c4b-z9f2r.sleep resources:16 removed:0 size:19.0kB cached:0/16 filtered:0
+2025-07-15T19:29:54.818430629Z 2025-07-15T19:29:54.818366Z	info	delta	ADS: new delta connection for node:v-server-6494f87f47-q7s4m.gamma-40
+2025-07-15T19:29:54.818630870Z 2025-07-15T19:29:54.818614Z	info	delta	CDS: PUSH request for node:v-server-6494f87f47-q7s4m.gamma resources:47 removed:0 size:49.5kB cached:41/43
+2025-07-15T19:29:54.832792810Z 2025-07-15T19:29:54.832741Z	info	delta	EDS: PUSH request for node:v-server-6494f87f47-q7s4m.gamma resources:43 removed:0 size:8.0kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:54.906908278Z 2025-07-15T19:29:54.906837Z	info	delta	LDS: PUSH request for node:v-server-6494f87f47-q7s4m.gamma resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:54.927055901Z 2025-07-15T19:29:54.926974Z	info	delta	RDS: PUSH request for node:v-server-6494f87f47-q7s4m.gamma resources:16 removed:0 size:19.0kB cached:14/16 filtered:0
+2025-07-15T19:29:54.963475426Z 2025-07-15T19:29:54.963386Z	info	delta	ADS: new delta connection for node:y-server-7c67cd5dc6-f5d7s.gamma-41
+2025-07-15T19:29:54.963769518Z 2025-07-15T19:29:54.963731Z	info	delta	CDS: PUSH request for node:y-server-7c67cd5dc6-f5d7s.gamma resources:47 removed:0 size:49.5kB cached:41/43
+2025-07-15T19:29:54.979271045Z 2025-07-15T19:29:54.979218Z	info	delta	EDS: PUSH request for node:y-server-7c67cd5dc6-f5d7s.gamma resources:43 removed:0 size:8.0kB empty:0 cached:43/43 filtered:0
+2025-07-15T19:29:55.042896513Z 2025-07-15T19:29:55.042815Z	info	delta	LDS: PUSH request for node:y-server-7c67cd5dc6-f5d7s.gamma resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:55.061781499Z 2025-07-15T19:29:55.061688Z	info	delta	RDS: PUSH request for node:y-server-7c67cd5dc6-f5d7s.gamma resources:16 removed:0 size:19.0kB cached:14/16 filtered:0
+2025-07-15T19:29:55.079649960Z 2025-07-15T19:29:55.079515Z	info	delta	CDS: PUSH for node:z-server-7f6c76b77c-ttxwl.gamma resources:47 removed:0 size:49.5kB cached:41/43
+2025-07-15T19:29:55.079724280Z 2025-07-15T19:29:55.079694Z	info	delta	EDS: PUSH for node:z-server-7f6c76b77c-ttxwl.gamma resources:43 removed:0 size:8.0kB empty:0 cached:43/43
+2025-07-15T19:29:55.080636665Z 2025-07-15T19:29:55.080601Z	info	delta	LDS: PUSH for node:z-server-7f6c76b77c-ttxwl.gamma resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:55.080926777Z 2025-07-15T19:29:55.080879Z	info	delta	RDS: PUSH for node:z-server-7f6c76b77c-ttxwl.gamma resources:16 removed:0 size:19.0kB cached:14/16
+2025-07-15T19:29:55.097948893Z 2025-07-15T19:29:55.096629Z	info	delta	CDS: PUSH for node:x-server-64589bc895-qpzhg.gamma resources:47 removed:0 size:49.5kB cached:42/43
+2025-07-15T19:29:55.098001083Z 2025-07-15T19:29:55.096819Z	info	delta	EDS: PUSH for node:x-server-64589bc895-qpzhg.gamma resources:43 removed:0 size:8.2kB empty:0 cached:42/43
+2025-07-15T19:29:55.098003233Z 2025-07-15T19:29:55.097877Z	info	delta	LDS: PUSH for node:x-server-64589bc895-qpzhg.gamma resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:55.098238244Z 2025-07-15T19:29:55.098196Z	info	delta	RDS: PUSH for node:x-server-64589bc895-qpzhg.gamma resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:55.200334770Z 2025-07-15T19:29:55.200277Z	info	ads	Push debounce stable[42] 2 for config ServiceEntry/gamma/x-server.gamma.svc.cluster.local and 1 more configs: 100.255755ms since last change, 118.046285ms since last push, full=false
+2025-07-15T19:29:55.200353290Z 2025-07-15T19:29:55.200337Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:41 Version:2025-07-15T19:29:44Z/24
+2025-07-15T19:29:56.092518522Z 2025-07-15T19:29:56.092361Z	info	delta	CDS: PUSH for node:v-server-6494f87f47-q7s4m.gamma resources:47 removed:0 size:49.5kB cached:41/43
+2025-07-15T19:29:56.092625933Z 2025-07-15T19:29:56.092586Z	info	delta	EDS: PUSH for node:v-server-6494f87f47-q7s4m.gamma resources:43 removed:0 size:8.3kB empty:0 cached:43/43
+2025-07-15T19:29:56.093879840Z 2025-07-15T19:29:56.093810Z	info	delta	LDS: PUSH for node:v-server-6494f87f47-q7s4m.gamma resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:56.094211872Z 2025-07-15T19:29:56.094162Z	info	delta	RDS: PUSH for node:v-server-6494f87f47-q7s4m.gamma resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:56.104841932Z 2025-07-15T19:29:56.104658Z	info	delta	CDS: PUSH for node:y-server-7c67cd5dc6-f5d7s.gamma resources:47 removed:0 size:49.5kB cached:42/43
+2025-07-15T19:29:56.105022633Z 2025-07-15T19:29:56.104978Z	info	delta	EDS: PUSH for node:y-server-7c67cd5dc6-f5d7s.gamma resources:43 removed:0 size:8.5kB empty:0 cached:42/43
+2025-07-15T19:29:56.106594921Z 2025-07-15T19:29:56.106530Z	info	delta	LDS: PUSH for node:y-server-7c67cd5dc6-f5d7s.gamma resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:56.107061694Z 2025-07-15T19:29:56.107019Z	info	delta	RDS: PUSH for node:y-server-7c67cd5dc6-f5d7s.gamma resources:16 removed:0 size:19.0kB cached:15/16
+2025-07-15T19:29:56.116751189Z 2025-07-15T19:29:56.116626Z	info	delta	CDS: PUSH for node:sleep-868c754c4b-z9f2r.sleep resources:47 removed:0 size:49.5kB cached:42/43
+2025-07-15T19:29:56.117023090Z 2025-07-15T19:29:56.116983Z	info	delta	EDS: PUSH for node:sleep-868c754c4b-z9f2r.sleep resources:43 removed:0 size:8.7kB empty:0 cached:42/43
+2025-07-15T19:29:56.118361838Z 2025-07-15T19:29:56.118311Z	info	delta	LDS: PUSH for node:sleep-868c754c4b-z9f2r.sleep resources:24 removed:0 size:59.4kB
+2025-07-15T19:29:56.119236983Z 2025-07-15T19:29:56.119106Z	info	delta	RDS: PUSH for node:sleep-868c754c4b-z9f2r.sleep resources:16 removed:0 size:19.0kB cached:0/16
+2025-07-15T19:29:56.221100846Z 2025-07-15T19:29:56.221020Z	info	ads	Push debounce stable[43] 3 for config ServiceEntry/gamma/v-server.gamma.svc.cluster.local and 2 more configs: 100.555806ms since last change, 125.654477ms since last push, full=false
+2025-07-15T19:29:56.221128906Z 2025-07-15T19:29:56.221099Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:41 Version:2025-07-15T19:29:44Z/24
+2025-07-15T19:29:57.084588337Z 2025-07-15T19:29:57.084472Z	info	delta	CDS: PUSH for node:c-client-6bc64987db-m2sw9.gamma resources:46 removed:0 size:49.3kB cached:40/43
+2025-07-15T19:29:57.084743438Z 2025-07-15T19:29:57.084715Z	info	delta	EDS: PUSH for node:c-client-6bc64987db-m2sw9.gamma resources:43 removed:0 size:8.8kB empty:0 cached:43/43
+2025-07-15T19:29:57.085882164Z 2025-07-15T19:29:57.085842Z	info	delta	LDS: PUSH for node:c-client-6bc64987db-m2sw9.gamma resources:24 removed:0 size:54.0kB
+2025-07-15T19:29:57.086301707Z 2025-07-15T19:29:57.086271Z	info	delta	RDS: PUSH for node:c-client-6bc64987db-m2sw9.gamma resources:16 removed:0 size:19.0kB cached:14/16
+2025-07-15T19:30:00.099240908Z 2025-07-15T19:30:00.099052Z	info	delta	CDS: PUSH for node:b-client-76544c69b4-d9p2z.gamma resources:46 removed:0 size:49.3kB cached:43/43
+2025-07-15T19:30:00.099529429Z 2025-07-15T19:30:00.099292Z	info	delta	EDS: PUSH for node:b-client-76544c69b4-d9p2z.gamma resources:43 removed:0 size:8.8kB empty:0 cached:43/43
+2025-07-15T19:30:00.100531525Z 2025-07-15T19:30:00.100496Z	info	delta	LDS: PUSH for node:b-client-76544c69b4-d9p2z.gamma resources:24 removed:0 size:54.0kB
+2025-07-15T19:30:00.100854777Z 2025-07-15T19:30:00.100809Z	info	delta	RDS: PUSH for node:b-client-76544c69b4-d9p2z.gamma resources:16 removed:0 size:19.0kB cached:16/16
+2025-07-15T19:30:01.110594451Z 2025-07-15T19:30:01.110460Z	info	delta	CDS: PUSH for node:a-client-b46869f5b-4g9l2.gamma resources:46 removed:0 size:49.3kB cached:43/43
+2025-07-15T19:30:01.110726232Z 2025-07-15T19:30:01.110685Z	info	delta	EDS: PUSH for node:a-client-b46869f5b-4g9l2.gamma resources:43 removed:0 size:8.8kB empty:0 cached:43/43
+2025-07-15T19:30:01.111747477Z 2025-07-15T19:30:01.111686Z	info	delta	LDS: PUSH for node:a-client-b46869f5b-4g9l2.gamma resources:24 removed:0 size:54.0kB
+2025-07-15T19:30:01.112013279Z 2025-07-15T19:30:01.111963Z	info	delta	RDS: PUSH for node:a-client-b46869f5b-4g9l2.gamma resources:16 removed:0 size:19.0kB cached:16/16
+2025-07-15T19:42:45.031481430Z 2025-07-15T19:42:45.031376Z	info	ads	Push debounce stable[44] 1 for config ConfigMap/openshift-must-gather-dgll7/kube-root-ca.crt: 101.051168ms since last change, 101.051058ms since last push, full=false
+2025-07-15T19:42:45.031512820Z 2025-07-15T19:42:45.031450Z	info	ads	XDS: Incremental Pushing ConnectedEndpoints:41 Version:2025-07-15T19:29:44Z/24

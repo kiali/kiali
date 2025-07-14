@@ -1,0 +1,8 @@
+2025-07-15T19:28:22.897063348Z ts=2025-07-15T19:28:22.896824996Z level=info caller=/workspace/cmd/prometheus-config-reloader/main.go:148 msg="Starting prometheus-config-reloader" version="(version=0.81.0, branch=, revision=240b303)" build_context="(go=go1.23.7, platform=linux/amd64, user=, date=20250311-14:56:57, tags=unknown)"
+2025-07-15T19:28:22.897281929Z ts=2025-07-15T19:28:22.897226359Z level=info caller=/workspace/internal/goruntime/cpu.go:27 msg="Leaving GOMAXPROCS=16: CPU quota undefined"
+2025-07-15T19:28:22.897912703Z level=info ts=2025-07-15T19:28:22.897864173Z caller=reloader.go:282 msg="reloading via HTTP"
+2025-07-15T19:28:22.897968673Z level=info ts=2025-07-15T19:28:22.897936053Z caller=reloader.go:330 msg="started watching config file and directories for changes" cfg= cfgDirs= out= dirs=/etc/config
+2025-07-15T19:28:22.898006194Z ts=2025-07-15T19:28:22.897873273Z level=info caller=/workspace/cmd/prometheus-config-reloader/main.go:202 msg="Starting web server for metrics" listen=0.0.0.0:8080
+2025-07-15T19:28:22.898279866Z ts=2025-07-15T19:28:22.898230915Z level=info caller=/go/pkg/mod/github.com/prometheus/exporter-toolkit@v0.13.2/web/tls_config.go:347 msg="Listening on" address=[::]:8080
+2025-07-15T19:28:22.898287606Z ts=2025-07-15T19:28:22.898254455Z level=info caller=/go/pkg/mod/github.com/prometheus/exporter-toolkit@v0.13.2/web/tls_config.go:350 msg="TLS is disabled." http2=false address=[::]:8080
+2025-07-15T19:31:22.901390042Z level=info ts=2025-07-15T19:31:22.901305732Z caller=reloader.go:548 msg="Reload triggered" cfg_in= cfg_out= cfg_dirs= watched_dirs=/etc/config

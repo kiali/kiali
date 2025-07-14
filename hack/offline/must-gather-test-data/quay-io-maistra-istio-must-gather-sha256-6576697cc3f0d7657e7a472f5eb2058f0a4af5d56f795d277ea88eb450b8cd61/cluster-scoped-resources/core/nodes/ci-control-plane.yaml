@@ -1,0 +1,215 @@
+apiVersion: v1
+kind: Node
+metadata:
+  annotations:
+    kubeadm.alpha.kubernetes.io/cri-socket: unix:///run/containerd/containerd.sock
+    node.alpha.kubernetes.io/ttl: "0"
+    volumes.kubernetes.io/controller-managed-attach-detach: "true"
+  creationTimestamp: "2025-07-15T19:27:04Z"
+  labels:
+    beta.kubernetes.io/arch: amd64
+    beta.kubernetes.io/os: linux
+    kubernetes.io/arch: amd64
+    kubernetes.io/hostname: ci-control-plane
+    kubernetes.io/os: linux
+    node-role.kubernetes.io/control-plane: ""
+    node.kubernetes.io/exclude-from-external-load-balancers: ""
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:volumes.kubernetes.io/controller-managed-attach-detach: {}
+        f:labels:
+          .: {}
+          f:beta.kubernetes.io/arch: {}
+          f:beta.kubernetes.io/os: {}
+          f:kubernetes.io/arch: {}
+          f:kubernetes.io/hostname: {}
+          f:kubernetes.io/os: {}
+      f:spec:
+        f:providerID: {}
+    manager: kubelet
+    operation: Update
+    time: "2025-07-15T19:27:04Z"
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          f:kubeadm.alpha.kubernetes.io/cri-socket: {}
+        f:labels:
+          f:node-role.kubernetes.io/control-plane: {}
+          f:node.kubernetes.io/exclude-from-external-load-balancers: {}
+    manager: kubeadm
+    operation: Update
+    time: "2025-07-15T19:27:06Z"
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          f:node.alpha.kubernetes.io/ttl: {}
+      f:spec:
+        f:podCIDR: {}
+        f:podCIDRs:
+          .: {}
+          v:"10.244.0.0/24": {}
+        f:taints: {}
+    manager: kube-controller-manager
+    operation: Update
+    time: "2025-07-15T19:27:24Z"
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:status:
+        f:conditions:
+          k:{"type":"DiskPressure"}:
+            f:lastHeartbeatTime: {}
+          k:{"type":"MemoryPressure"}:
+            f:lastHeartbeatTime: {}
+          k:{"type":"PIDPressure"}:
+            f:lastHeartbeatTime: {}
+          k:{"type":"Ready"}:
+            f:lastHeartbeatTime: {}
+            f:lastTransitionTime: {}
+            f:message: {}
+            f:reason: {}
+            f:status: {}
+        f:images: {}
+        f:runtimeHandlers: {}
+    manager: kubelet
+    operation: Update
+    subresource: status
+    time: "2025-07-15T19:42:46Z"
+  name: ci-control-plane
+  resourceVersion: "5017"
+  uid: 35715d81-47f9-4254-a94e-531c496f3a00
+spec:
+  podCIDR: 10.244.0.0/24
+  podCIDRs:
+  - 10.244.0.0/24
+  providerID: kind://docker/ci/ci-control-plane
+  taints:
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/control-plane
+status:
+  addresses:
+  - address: 172.18.0.2
+    type: InternalIP
+  - address: ci-control-plane
+    type: Hostname
+  allocatable:
+    cpu: "16"
+    ephemeral-storage: 981876212Ki
+    hugepages-1Gi: "0"
+    hugepages-2Mi: "0"
+    memory: 65788224Ki
+    pods: "110"
+  capacity:
+    cpu: "16"
+    ephemeral-storage: 981876212Ki
+    hugepages-1Gi: "0"
+    hugepages-2Mi: "0"
+    memory: 65788224Ki
+    pods: "110"
+  conditions:
+  - lastHeartbeatTime: "2025-07-15T19:42:46Z"
+    lastTransitionTime: "2025-07-15T19:27:01Z"
+    message: kubelet has sufficient memory available
+    reason: KubeletHasSufficientMemory
+    status: "False"
+    type: MemoryPressure
+  - lastHeartbeatTime: "2025-07-15T19:42:46Z"
+    lastTransitionTime: "2025-07-15T19:27:01Z"
+    message: kubelet has no disk pressure
+    reason: KubeletHasNoDiskPressure
+    status: "False"
+    type: DiskPressure
+  - lastHeartbeatTime: "2025-07-15T19:42:46Z"
+    lastTransitionTime: "2025-07-15T19:27:01Z"
+    message: kubelet has sufficient PID available
+    reason: KubeletHasSufficientPID
+    status: "False"
+    type: PIDPressure
+  - lastHeartbeatTime: "2025-07-15T19:42:46Z"
+    lastTransitionTime: "2025-07-15T19:27:24Z"
+    message: kubelet is posting ready status
+    reason: KubeletReady
+    status: "True"
+    type: Ready
+  daemonEndpoints:
+    kubeletEndpoint:
+      Port: 10250
+  features:
+    supplementalGroupsPolicy: true
+  images:
+  - names:
+    - registry.k8s.io/kube-apiserver-amd64:v1.33.1
+    - registry.k8s.io/kube-apiserver:v1.33.1
+    sizeBytes: 102853105
+  - names:
+    - registry.k8s.io/kube-proxy-amd64:v1.33.1
+    - registry.k8s.io/kube-proxy:v1.33.1
+    sizeBytes: 99143369
+  - names:
+    - registry.k8s.io/kube-controller-manager-amd64:v1.33.1
+    - registry.k8s.io/kube-controller-manager:v1.33.1
+    sizeBytes: 95652183
+  - names:
+    - registry.k8s.io/kube-scheduler-amd64:v1.33.1
+    - registry.k8s.io/kube-scheduler:v1.33.1
+    sizeBytes: 74496343
+  - names:
+    - registry.k8s.io/etcd:3.5.21-0
+    sizeBytes: 58938593
+  - names:
+    - localhost/kiali/kiali:dev
+    sizeBytes: 55617972
+  - names:
+    - quay.io/metallb/speaker@sha256:00406ccb1fa08d48cc0ed0b43db7b3cbc3ccc1c4da0e38fca648e64639b06c3c
+    - quay.io/metallb/speaker:v0.13.10
+    sizeBytes: 50291816
+  - names:
+    - docker.io/kindest/kindnetd:v20250512-df8de77b
+    sizeBytes: 44375501
+  - names:
+    - docker.io/kindest/local-path-provisioner:v20250214-acbabc1a
+    sizeBytes: 22540870
+  - names:
+    - registry.k8s.io/coredns/coredns:v1.12.0
+    sizeBytes: 20939036
+  - names:
+    - docker.io/kindest/local-path-helper:v20241212-8ac705d0
+    sizeBytes: 3084671
+  - names:
+    - registry.k8s.io/pause:3.10
+    sizeBytes: 320368
+  nodeInfo:
+    architecture: amd64
+    bootID: 4e292a0f-906f-4c6b-818e-3c7fcc6027ea
+    containerRuntimeVersion: containerd://2.1.1
+    kernelVersion: 6.1.0-10-amd64
+    kubeProxyVersion: ""
+    kubeletVersion: v1.33.1
+    machineID: f37c95d43f0f4b5b95239ee63ae50847
+    operatingSystem: linux
+    osImage: Debian GNU/Linux 12 (bookworm)
+    swap:
+      capacity: 1024454656
+    systemUUID: ecb5cb12-1077-45e5-9d0a-9daf6a2ecbfb
+  runtimeHandlers:
+  - features:
+      recursiveReadOnlyMounts: true
+      userNamespaces: true
+    name: runc
+  - features:
+      recursiveReadOnlyMounts: true
+      userNamespaces: true
+    name: ""
+  - features:
+      recursiveReadOnlyMounts: true
+      userNamespaces: true
+    name: test-handler

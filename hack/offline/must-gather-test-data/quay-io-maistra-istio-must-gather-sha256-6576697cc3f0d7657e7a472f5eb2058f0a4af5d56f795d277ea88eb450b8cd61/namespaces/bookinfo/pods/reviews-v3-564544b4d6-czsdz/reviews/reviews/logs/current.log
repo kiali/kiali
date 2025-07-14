@@ -1,0 +1,12 @@
+2025-07-15T19:29:29.906017915Z 
+2025-07-15T19:29:30.033478003Z WARNING: Unknown module: jdk.management.agent specified to --add-exports
+2025-07-15T19:29:30.033562713Z WARNING: Unknown module: jdk.attach specified to --add-exports
+2025-07-15T19:29:30.097468043Z Launching defaultServer (Open Liberty 24.0.0.12/wlp-1.0.96.cl241220241119-0657) on Eclipse OpenJ9 VM, version 17.0.14+7 (en_US)
+2025-07-15T19:29:30.162619350Z [AUDIT   ] CWWKE0001I: The server defaultServer has been launched.
+2025-07-15T19:29:30.418860762Z [AUDIT   ] CWWKG0093A: Processing configuration drop-ins resource: /opt/ol/wlp/usr/servers/defaultServer/configDropins/defaults/keystore.xml
+2025-07-15T19:29:30.421801628Z [AUDIT   ] CWWKG0093A: Processing configuration drop-ins resource: /opt/ol/wlp/usr/servers/defaultServer/configDropins/defaults/open-default-port.xml
+2025-07-15T19:29:31.470973685Z [AUDIT   ] CWWKT0016I: Web application available (default_host): http://reviews-v3-564544b4d6-czsdz:9080/
+2025-07-15T19:29:31.527452993Z [AUDIT   ] CWWKZ0001I: Application reviews-app started in 0.239 seconds.
+2025-07-15T19:29:31.548290330Z [AUDIT   ] CWWKF0012I: The server installed the following features: [jaxrs-2.0, jaxrsClient-2.0, json-1.0, jsonp-1.0, servlet-3.1].
+2025-07-15T19:29:31.548743773Z [AUDIT   ] CWWKF0011I: The defaultServer server is ready to run a smarter planet. The defaultServer server started in 1.495 seconds.
+2025-07-15T19:42:58.377958004Z Error: unable to contact http://ratings:9080/ratings got status of 503

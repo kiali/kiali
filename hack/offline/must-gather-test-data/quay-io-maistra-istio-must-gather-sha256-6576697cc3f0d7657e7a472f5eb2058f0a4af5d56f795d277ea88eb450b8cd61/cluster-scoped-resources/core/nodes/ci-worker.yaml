@@ -1,0 +1,283 @@
+---
+apiVersion: v1
+kind: Node
+metadata:
+  annotations:
+    kubeadm.alpha.kubernetes.io/cri-socket: unix:///run/containerd/containerd.sock
+    node.alpha.kubernetes.io/ttl: "0"
+    volumes.kubernetes.io/controller-managed-attach-detach: "true"
+  creationTimestamp: "2025-07-15T19:27:14Z"
+  labels:
+    beta.kubernetes.io/arch: amd64
+    beta.kubernetes.io/os: linux
+    kubernetes.io/arch: amd64
+    kubernetes.io/hostname: ci-worker
+    kubernetes.io/os: linux
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          f:node.alpha.kubernetes.io/ttl: {}
+      f:spec:
+        f:podCIDR: {}
+        f:podCIDRs:
+          .: {}
+          v:"10.244.1.0/24": {}
+    manager: kube-controller-manager
+    operation: Update
+    time: "2025-07-15T19:27:14Z"
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          f:kubeadm.alpha.kubernetes.io/cri-socket: {}
+    manager: kubeadm
+    operation: Update
+    time: "2025-07-15T19:27:14Z"
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:volumes.kubernetes.io/controller-managed-attach-detach: {}
+        f:labels:
+          .: {}
+          f:beta.kubernetes.io/arch: {}
+          f:beta.kubernetes.io/os: {}
+          f:kubernetes.io/arch: {}
+          f:kubernetes.io/hostname: {}
+          f:kubernetes.io/os: {}
+      f:spec:
+        f:providerID: {}
+    manager: kubelet
+    operation: Update
+    time: "2025-07-15T19:27:14Z"
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:status:
+        f:conditions:
+          k:{"type":"DiskPressure"}:
+            f:lastHeartbeatTime: {}
+          k:{"type":"MemoryPressure"}:
+            f:lastHeartbeatTime: {}
+          k:{"type":"PIDPressure"}:
+            f:lastHeartbeatTime: {}
+          k:{"type":"Ready"}:
+            f:lastHeartbeatTime: {}
+            f:lastTransitionTime: {}
+            f:message: {}
+            f:reason: {}
+            f:status: {}
+        f:images: {}
+        f:runtimeHandlers: {}
+    manager: kubelet
+    operation: Update
+    subresource: status
+    time: "2025-07-15T19:42:41Z"
+  name: ci-worker
+  resourceVersion: "4996"
+  uid: c62d8026-caad-4d27-b9c4-2a03a92db63e
+spec:
+  podCIDR: 10.244.1.0/24
+  podCIDRs:
+  - 10.244.1.0/24
+  providerID: kind://docker/ci/ci-worker
+status:
+  addresses:
+  - address: 172.18.0.3
+    type: InternalIP
+  - address: ci-worker
+    type: Hostname
+  allocatable:
+    cpu: "16"
+    ephemeral-storage: 981876212Ki
+    hugepages-1Gi: "0"
+    hugepages-2Mi: "0"
+    memory: 65788224Ki
+    pods: "110"
+  capacity:
+    cpu: "16"
+    ephemeral-storage: 981876212Ki
+    hugepages-1Gi: "0"
+    hugepages-2Mi: "0"
+    memory: 65788224Ki
+    pods: "110"
+  conditions:
+  - lastHeartbeatTime: "2025-07-15T19:42:41Z"
+    lastTransitionTime: "2025-07-15T19:27:14Z"
+    message: kubelet has sufficient memory available
+    reason: KubeletHasSufficientMemory
+    status: "False"
+    type: MemoryPressure
+  - lastHeartbeatTime: "2025-07-15T19:42:41Z"
+    lastTransitionTime: "2025-07-15T19:27:14Z"
+    message: kubelet has no disk pressure
+    reason: KubeletHasNoDiskPressure
+    status: "False"
+    type: DiskPressure
+  - lastHeartbeatTime: "2025-07-15T19:42:41Z"
+    lastTransitionTime: "2025-07-15T19:27:14Z"
+    message: kubelet has sufficient PID available
+    reason: KubeletHasSufficientPID
+    status: "False"
+    type: PIDPressure
+  - lastHeartbeatTime: "2025-07-15T19:42:41Z"
+    lastTransitionTime: "2025-07-15T19:27:28Z"
+    message: kubelet is posting ready status
+    reason: KubeletReady
+    status: "True"
+    type: Ready
+  daemonEndpoints:
+    kubeletEndpoint:
+      Port: 10250
+  features:
+    supplementalGroupsPolicy: true
+  images:
+  - names:
+    - docker.io/istio/examples-bookinfo-reviews-v2@sha256:09b92ca16738b5bded2ae66ba0a4b21d32e86d8b6ddb34331abfe1179d8c6298
+    - docker.io/istio/examples-bookinfo-reviews-v2:1.20.3
+    sizeBytes: 167166463
+  - names:
+    - docker.io/istio/examples-bookinfo-reviews-v3@sha256:3b3415c5e7cc7cef3ad1741fa595f2f26627bddf2117dcee1429fa2a422df1b7
+    - docker.io/istio/examples-bookinfo-reviews-v3:1.20.3
+    sizeBytes: 167166463
+  - names:
+    - docker.io/istio/examples-bookinfo-reviews-v1@sha256:e2efe32bf087dcd35c397fc6766c0bdcbae77855df7919377bcf047e1a6ded12
+    - docker.io/istio/examples-bookinfo-reviews-v1:1.20.3
+    sizeBytes: 167166460
+  - names:
+    - docker.io/grafana/grafana@sha256:fa801ab6e1ae035135309580891e09f7eb94d1abdbd2106bdc288030b028158c
+    - docker.io/grafana/grafana:11.3.1
+    sizeBytes: 132721657
+  - names:
+    - docker.io/prom/prometheus@sha256:6927e0919a144aa7616fd0137d4816816d42f6b816de3af269ab065250859a62
+    - docker.io/prom/prometheus:v3.2.1
+    sizeBytes: 116785353
+  - names:
+    - registry.k8s.io/kube-apiserver-amd64:v1.33.1
+    - registry.k8s.io/kube-apiserver:v1.33.1
+    sizeBytes: 102853105
+  - names:
+    - registry.k8s.io/kube-proxy-amd64:v1.33.1
+    - registry.k8s.io/kube-proxy:v1.33.1
+    sizeBytes: 99143369
+  - names:
+    - registry.k8s.io/kube-controller-manager-amd64:v1.33.1
+    - registry.k8s.io/kube-controller-manager:v1.33.1
+    sizeBytes: 95652183
+  - names:
+    - gcr.io/istio-release/proxyv2@sha256:921c5ce2c5122facd9a25a7f974aaa4d3679cee38cb3f809e10618384fc3ce7f
+    - gcr.io/istio-release/proxyv2:1.26.2
+    sizeBytes: 92614371
+  - names:
+    - docker.io/istio/examples-bookinfo-ratings-v1@sha256:aad8f7bb46664704eecd92d9ebe8563e3e41571e2301f593cc521301b14ae51d
+    - docker.io/istio/examples-bookinfo-ratings-v1:1.20.3
+    sizeBytes: 88728842
+  - names:
+    - quay.io/kiali/demo_error_rates_server@sha256:2697d6a60a25f8440c21a65a466b4a468a1bc45204a9594e6bf4c139c64c6e9a
+    - quay.io/kiali/demo_error_rates_server:v1
+    sizeBytes: 88065561
+  - names:
+    - quay.io/kiali/demo_error_rates_client@sha256:e48e5aff44925b07cb603093fee1cf7da94eb1d62acaba62eb7c8a36cf261ab6
+    - quay.io/kiali/demo_error_rates_client:v1
+    sizeBytes: 87575056
+  - names:
+    - quay.io/kiali/kiali-test-mesh-traffic-generator@sha256:28212a2573e090e8f76ca9d1f1f9309f48a83f47be31c0073aaf539ff6777240
+    - quay.io/kiali/kiali-test-mesh-traffic-generator:latest
+    sizeBytes: 85642885
+  - names:
+    - docker.io/istio/examples-bookinfo-details-v1@sha256:a49731e1fc05d7c24a4103709f41d64180bed989b251625f4c31ba63022e303b
+    - docker.io/istio/examples-bookinfo-details-v1:1.20.3
+    sizeBytes: 83137723
+  - names:
+    - gcr.io/istio-release/pilot@sha256:1d4fbb7859e515b85b6c2c4787224e4e7cba73aad4573d98e2a83cc028cad392
+    - gcr.io/istio-release/pilot:1.26.2
+    sizeBytes: 77777376
+  - names:
+    - registry.k8s.io/kube-scheduler-amd64:v1.33.1
+    - registry.k8s.io/kube-scheduler:v1.33.1
+    sizeBytes: 74496343
+  - names:
+    - docker.io/istio/examples-bookinfo-productpage-v1@sha256:1e339866b782d22b063539d19c87b4682291c889e67c3d4abdea947bef917958
+    - docker.io/istio/examples-bookinfo-productpage-v1:1.20.3
+    sizeBytes: 68526350
+  - names:
+    - quay.io/sail-dev/sail-operator@sha256:65abc23ea9de01fdc2eaeb89de933900e01410fe4f1acc2a3715ecc3f930fd3d
+    - quay.io/sail-dev/sail-operator:1.26.2
+    sizeBytes: 63166314
+  - names:
+    - registry.k8s.io/etcd:3.5.21-0
+    sizeBytes: 58938593
+  - names:
+    - localhost/kiali/kiali:dev
+    sizeBytes: 55617972
+  - names:
+    - quay.io/metallb/speaker@sha256:00406ccb1fa08d48cc0ed0b43db7b3cbc3ccc1c4da0e38fca648e64639b06c3c
+    - quay.io/metallb/speaker:v0.13.10
+    sizeBytes: 50291816
+  - names:
+    - docker.io/kindest/kindnetd:v20250512-df8de77b
+    sizeBytes: 44375501
+  - names:
+    - docker.io/jaegertracing/all-in-one@sha256:34e3d18e0f2eeb9abd9bb53d0dc7abaf2a5b1c884fdca575093af3126811a9d3
+    - docker.io/jaegertracing/all-in-one:1.67.0
+    sizeBytes: 36985222
+  - names:
+    - quay.io/metallb/controller@sha256:1b33357b3595468aac9d5b9115fc4d35fc475124551180956083294cdeeb94b6
+    - quay.io/metallb/controller:v0.13.10
+    sizeBytes: 27949877
+  - names:
+    - docker.io/kindest/local-path-provisioner:v20250214-acbabc1a
+    sizeBytes: 22540870
+  - names:
+    - registry.k8s.io/coredns/coredns:v1.12.0
+    sizeBytes: 20939036
+  - names:
+    - ghcr.io/prometheus-operator/prometheus-config-reloader@sha256:959d47672fbff2776a04ec62b8afcec89e8c036af84dc5fade50019dab212746
+    - ghcr.io/prometheus-operator/prometheus-config-reloader:v0.81.0
+    sizeBytes: 14433657
+  - names:
+    - docker.io/curlimages/curl@sha256:9a1ed35addb45476afa911696297f8e115993df459278ed036182dd2cd22b67b
+    - docker.io/curlimages/curl:latest
+    sizeBytes: 9834279
+  - names:
+    - docker.io/kindest/local-path-helper:v20241212-8ac705d0
+    sizeBytes: 3084671
+  - names:
+    - docker.io/library/busybox@sha256:f85340bf132ae937d2c2a763b8335c9bab35d6e8293f70f606b9c6178d84f42b
+    - docker.io/library/busybox:latest
+    sizeBytes: 2156518
+  - names:
+    - registry.k8s.io/pause:3.10
+    sizeBytes: 320368
+  nodeInfo:
+    architecture: amd64
+    bootID: 4e292a0f-906f-4c6b-818e-3c7fcc6027ea
+    containerRuntimeVersion: containerd://2.1.1
+    kernelVersion: 6.1.0-10-amd64
+    kubeProxyVersion: ""
+    kubeletVersion: v1.33.1
+    machineID: 5e516df22562428ab5535ff4100a204e
+    operatingSystem: linux
+    osImage: Debian GNU/Linux 12 (bookworm)
+    swap:
+      capacity: 1024454656
+    systemUUID: 29ca7291-1fbf-48fd-80d1-cfa1ea5c3da1
+  runtimeHandlers:
+  - features:
+      recursiveReadOnlyMounts: true
+      userNamespaces: true
+    name: runc
+  - features:
+      recursiveReadOnlyMounts: true
+      userNamespaces: true
+    name: ""
+  - features:
+      recursiveReadOnlyMounts: true
+      userNamespaces: true
+    name: test-handler

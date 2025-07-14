@@ -1,0 +1,31 @@
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"telemetry.istio.io/v1","kind":"Telemetry","metadata":{"annotations":{},"name":"otel-tracing","namespace":"istio-system"},"spec":{"tracing":[{"providers":[{"name":"otel-tracing"}],"randomSamplingPercentage":100}]}}
+  creationTimestamp: "2025-07-15T19:28:21Z"
+  generation: 1
+  managedFields:
+  - apiVersion: telemetry.istio.io/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:kubectl.kubernetes.io/last-applied-configuration: {}
+      f:spec:
+        .: {}
+        f:tracing: {}
+    manager: kubectl-client-side-apply
+    operation: Update
+    time: "2025-07-15T19:28:21Z"
+  name: otel-tracing
+  namespace: istio-system
+  resourceVersion: "1037"
+  uid: 8737cdca-66e1-4d72-9699-6efa48529dd7
+spec:
+  tracing:
+  - providers:
+    - name: otel-tracing
+    randomSamplingPercentage: 100

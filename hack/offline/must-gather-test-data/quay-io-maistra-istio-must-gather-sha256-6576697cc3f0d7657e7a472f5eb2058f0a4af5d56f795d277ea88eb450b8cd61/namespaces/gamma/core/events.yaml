@@ -1,0 +1,6772 @@
+---
+apiVersion: v1
+items:
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:40Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: a-client-b46869f5b-4g9l2
+    namespace: gamma
+    resourceVersion: "2181"
+    uid: 9e41b63d-cbd5-46bb-b2c6-3f697c578abd
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:40Z"
+  message: Successfully assigned gamma/a-client-b46869f5b-4g9l2 to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:40Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:40Z"
+    name: a-client-b46869f5b-4g9l2.1852837db1e2f418
+    namespace: gamma
+    resourceVersion: "2186"
+    uid: 4ac090ba-ef3a-4108-a779-de32e3175272
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: a-client-b46869f5b-4g9l2
+    namespace: gamma
+    resourceVersion: "2183"
+    uid: 9e41b63d-cbd5-46bb-b2c6-3f697c578abd
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: a-client-b46869f5b-4g9l2.1852837dcc679785
+    namespace: gamma
+    resourceVersion: "2228"
+    uid: 870849cc-d6bf-4223-99d1-564d64590704
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: a-client-b46869f5b-4g9l2
+    namespace: gamma
+    resourceVersion: "2183"
+    uid: 9e41b63d-cbd5-46bb-b2c6-3f697c578abd
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: 'Created container: istio-init'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: a-client-b46869f5b-4g9l2.1852837dcd25801f
+    namespace: gamma
+    resourceVersion: "2229"
+    uid: b58e4805-33da-480d-bd38-047e2ec3ec2b
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: a-client-b46869f5b-4g9l2
+    namespace: gamma
+    resourceVersion: "2183"
+    uid: 9e41b63d-cbd5-46bb-b2c6-3f697c578abd
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Started container istio-init
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: a-client-b46869f5b-4g9l2.1852837dd4b79cc8
+    namespace: gamma
+    resourceVersion: "2240"
+    uid: 10d9d455-96f0-4aa2-a4c6-af3dba83dcca
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 4
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{a}
+    kind: Pod
+    name: a-client-b46869f5b-4g9l2
+    namespace: gamma
+    resourceVersion: "2183"
+    uid: 9e41b63d-cbd5-46bb-b2c6-3f697c578abd
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:44Z"
+  message: Container image "quay.io/kiali/demo_error_rates_client:v1" is not present
+    with pull policy of Never
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:44Z"
+    name: a-client-b46869f5b-4g9l2.1852837ded482a8c
+    namespace: gamma
+    resourceVersion: "2511"
+    uid: 6a0c04eb-cccd-4ff4-883c-bfab93b2fbde
+  reason: ErrImageNeverPull
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Warning
+- apiVersion: v1
+  count: 4
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{a}
+    kind: Pod
+    name: a-client-b46869f5b-4g9l2
+    namespace: gamma
+    resourceVersion: "2183"
+    uid: 9e41b63d-cbd5-46bb-b2c6-3f697c578abd
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:44Z"
+  message: 'Error: ErrImageNeverPull'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:44Z"
+    name: a-client-b46869f5b-4g9l2.1852837ded486524
+    namespace: gamma
+    resourceVersion: "2515"
+    uid: c40c231e-5b37-41ad-9332-14008b18e2f9
+  reason: Failed
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Warning
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: a-client-b46869f5b-4g9l2
+    namespace: gamma
+    resourceVersion: "2183"
+    uid: 9e41b63d-cbd5-46bb-b2c6-3f697c578abd
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: a-client-b46869f5b-4g9l2.1852837ded70efc1
+    namespace: gamma
+    resourceVersion: "2273"
+    uid: e07e5c95-4db0-4492-b1db-2404f188a809
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: a-client-b46869f5b-4g9l2
+    namespace: gamma
+    resourceVersion: "2183"
+    uid: 9e41b63d-cbd5-46bb-b2c6-3f697c578abd
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: a-client-b46869f5b-4g9l2.1852837dee7e3a12
+    namespace: gamma
+    resourceVersion: "2286"
+    uid: 0d9c56d7-5ac9-4645-959d-39fbc4740e5a
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: a-client-b46869f5b-4g9l2
+    namespace: gamma
+    resourceVersion: "2183"
+    uid: 9e41b63d-cbd5-46bb-b2c6-3f697c578abd
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: a-client-b46869f5b-4g9l2.1852837df7cdd910
+    namespace: gamma
+    resourceVersion: "2308"
+    uid: c2f051eb-d96b-4732-97ef-9d03a13f072f
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:30:00Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{a}
+    kind: Pod
+    name: a-client-b46869f5b-4g9l2
+    namespace: gamma
+    resourceVersion: "2183"
+    uid: 9e41b63d-cbd5-46bb-b2c6-3f697c578abd
+  kind: Event
+  lastTimestamp: "2025-07-15T19:30:00Z"
+  message: Container image "quay.io/kiali/demo_error_rates_client:v1" already present
+    on machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:30:00Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:30:00Z"
+    name: a-client-b46869f5b-4g9l2.185283823c490bb2
+    namespace: gamma
+    resourceVersion: "2968"
+    uid: fb16d885-d3a1-4c7c-ae3c-761cf297f788
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:30:00Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{a}
+    kind: Pod
+    name: a-client-b46869f5b-4g9l2
+    namespace: gamma
+    resourceVersion: "2183"
+    uid: 9e41b63d-cbd5-46bb-b2c6-3f697c578abd
+  kind: Event
+  lastTimestamp: "2025-07-15T19:30:00Z"
+  message: 'Created container: a'
+  metadata:
+    creationTimestamp: "2025-07-15T19:30:00Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:30:00Z"
+    name: a-client-b46869f5b-4g9l2.185283823d1c419c
+    namespace: gamma
+    resourceVersion: "2969"
+    uid: 4fd31560-24ce-4922-89f4-db2db9714423
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:30:00Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{a}
+    kind: Pod
+    name: a-client-b46869f5b-4g9l2
+    namespace: gamma
+    resourceVersion: "2183"
+    uid: 9e41b63d-cbd5-46bb-b2c6-3f697c578abd
+  kind: Event
+  lastTimestamp: "2025-07-15T19:30:00Z"
+  message: Started container a
+  metadata:
+    creationTimestamp: "2025-07-15T19:30:00Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:30:00Z"
+    name: a-client-b46869f5b-4g9l2.18528382443f2c67
+    namespace: gamma
+    resourceVersion: "2971"
+    uid: 09007b52-9979-4b82-b5a1-dbc8b108cc23
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:40Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: a-client-b46869f5b
+    namespace: gamma
+    resourceVersion: "2165"
+    uid: 67ce0b73-1a46-4995-9e1b-b33a37148234
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:40Z"
+  message: 'Created pod: a-client-b46869f5b-4g9l2'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: a-client-b46869f5b.1852837db1b0b176
+    namespace: gamma
+    resourceVersion: "2235"
+    uid: 17a30c1e-99ca-4af0-8f36-d0e0b0e1d33b
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:40Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: a-client
+    namespace: gamma
+    resourceVersion: "1915"
+    uid: d2a12092-c55b-4c33-b166-8c74da7a446f
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:40Z"
+  message: Scaled up replica set a-client-b46869f5b from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: a-client.1852837da5132df2
+    namespace: gamma
+    resourceVersion: "2325"
+    uid: e8a019cd-c023-4c40-9a07-bf06d99509ef
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:40Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: b-client-76544c69b4-d9p2z
+    namespace: gamma
+    resourceVersion: "2200"
+    uid: af185d04-141e-40e9-821d-ae7cf86c1223
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:40Z"
+  message: Successfully assigned gamma/b-client-76544c69b4-d9p2z to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:40Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:40Z"
+    name: b-client-76544c69b4-d9p2z.1852837db81a3a7d
+    namespace: gamma
+    resourceVersion: "2202"
+    uid: 906a2134-68fb-42e0-afb1-9cf7edaa5b79
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: b-client-76544c69b4-d9p2z
+    namespace: gamma
+    resourceVersion: "2201"
+    uid: af185d04-141e-40e9-821d-ae7cf86c1223
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: b-client-76544c69b4-d9p2z.1852837dd3dc0b3f
+    namespace: gamma
+    resourceVersion: "2237"
+    uid: 4449d2fe-35ab-4a09-8193-cecc36a88374
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: b-client-76544c69b4-d9p2z
+    namespace: gamma
+    resourceVersion: "2201"
+    uid: af185d04-141e-40e9-821d-ae7cf86c1223
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: 'Created container: istio-init'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: b-client-76544c69b4-d9p2z.1852837dd4c32858
+    namespace: gamma
+    resourceVersion: "2241"
+    uid: 61b4965a-3b93-469e-82ed-4653076e00e0
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: b-client-76544c69b4-d9p2z
+    namespace: gamma
+    resourceVersion: "2201"
+    uid: af185d04-141e-40e9-821d-ae7cf86c1223
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Started container istio-init
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: b-client-76544c69b4-d9p2z.1852837ddb9a01de
+    namespace: gamma
+    resourceVersion: "2254"
+    uid: bf5d008a-18c8-4d5a-9639-be4cdfcc1ec5
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 4
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{b-client}
+    kind: Pod
+    name: b-client-76544c69b4-d9p2z
+    namespace: gamma
+    resourceVersion: "2201"
+    uid: af185d04-141e-40e9-821d-ae7cf86c1223
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:44Z"
+  message: Container image "quay.io/kiali/demo_error_rates_client:v1" is not present
+    with pull policy of Never
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:44Z"
+    name: b-client-76544c69b4-d9p2z.1852837dee4ee07a
+    namespace: gamma
+    resourceVersion: "2512"
+    uid: 41607197-03da-4f0c-8437-5c936e11c8ac
+  reason: ErrImageNeverPull
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Warning
+- apiVersion: v1
+  count: 4
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{b-client}
+    kind: Pod
+    name: b-client-76544c69b4-d9p2z
+    namespace: gamma
+    resourceVersion: "2201"
+    uid: af185d04-141e-40e9-821d-ae7cf86c1223
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:44Z"
+  message: 'Error: ErrImageNeverPull'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:44Z"
+    name: b-client-76544c69b4-d9p2z.1852837dee4f0ad3
+    namespace: gamma
+    resourceVersion: "2516"
+    uid: 264df545-873e-4672-878b-0e6df34766af
+  reason: Failed
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Warning
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: b-client-76544c69b4-d9p2z
+    namespace: gamma
+    resourceVersion: "2201"
+    uid: af185d04-141e-40e9-821d-ae7cf86c1223
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: b-client-76544c69b4-d9p2z.1852837dee7103d3
+    namespace: gamma
+    resourceVersion: "2281"
+    uid: 22c068f0-6548-4dc1-94d7-f91a40fd8754
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: b-client-76544c69b4-d9p2z
+    namespace: gamma
+    resourceVersion: "2201"
+    uid: af185d04-141e-40e9-821d-ae7cf86c1223
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: b-client-76544c69b4-d9p2z.1852837defb27e7e
+    namespace: gamma
+    resourceVersion: "2290"
+    uid: 38d196f9-91ef-42c0-8fab-c3b1c60f4f54
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: b-client-76544c69b4-d9p2z
+    namespace: gamma
+    resourceVersion: "2201"
+    uid: af185d04-141e-40e9-821d-ae7cf86c1223
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: b-client-76544c69b4-d9p2z.1852837df7e4a120
+    namespace: gamma
+    resourceVersion: "2310"
+    uid: e87295f4-ac79-4bfc-af45-6ea8d3712bd7
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:59Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{b-client}
+    kind: Pod
+    name: b-client-76544c69b4-d9p2z
+    namespace: gamma
+    resourceVersion: "2201"
+    uid: af185d04-141e-40e9-821d-ae7cf86c1223
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:59Z"
+  message: Container image "quay.io/kiali/demo_error_rates_client:v1" already present
+    on machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:59Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:59Z"
+    name: b-client-76544c69b4-d9p2z.1852838200899188
+    namespace: gamma
+    resourceVersion: "2961"
+    uid: f7590e63-14cd-4500-a796-c142594ad324
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:59Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{b-client}
+    kind: Pod
+    name: b-client-76544c69b4-d9p2z
+    namespace: gamma
+    resourceVersion: "2201"
+    uid: af185d04-141e-40e9-821d-ae7cf86c1223
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:59Z"
+  message: 'Created container: b-client'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:59Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:59Z"
+    name: b-client-76544c69b4-d9p2z.18528382016d0192
+    namespace: gamma
+    resourceVersion: "2962"
+    uid: 5d3dd7fb-bd58-471c-b758-a3a6199c7eaa
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:59Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{b-client}
+    kind: Pod
+    name: b-client-76544c69b4-d9p2z
+    namespace: gamma
+    resourceVersion: "2201"
+    uid: af185d04-141e-40e9-821d-ae7cf86c1223
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:59Z"
+  message: Started container b-client
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:59Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:59Z"
+    name: b-client-76544c69b4-d9p2z.1852838208e807e3
+    namespace: gamma
+    resourceVersion: "2963"
+    uid: 634a811e-523c-4692-a23f-ad5a8419cfbf
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:40Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: b-client-76544c69b4
+    namespace: gamma
+    resourceVersion: "2167"
+    uid: 7e2b5882-abf5-4cc3-998a-95bc2a2c7c0a
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:40Z"
+  message: 'Created pod: b-client-76544c69b4-d9p2z'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: b-client-76544c69b4.1852837db7dabc7e
+    namespace: gamma
+    resourceVersion: "2260"
+    uid: 80e9f47f-4c97-49d2-b022-10434a30164b
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:40Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: b-client
+    namespace: gamma
+    resourceVersion: "1916"
+    uid: 2256b123-874e-4f67-b66f-c43ad6530342
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:40Z"
+  message: Scaled up replica set b-client-76544c69b4 from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: b-client.1852837da8013b73
+    namespace: gamma
+    resourceVersion: "2350"
+    uid: 52f8ab69-3b74-45b6-b6a5-a93e0a26db2d
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: c-client-6bc64987db-m2sw9
+    namespace: gamma
+    resourceVersion: "2206"
+    uid: 67811694-88de-4f8e-af85-2cfd6a761a09
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Successfully assigned gamma/c-client-6bc64987db-m2sw9 to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: c-client-6bc64987db-m2sw9.1852837dbdc4ee33
+    namespace: gamma
+    resourceVersion: "2209"
+    uid: ab91d0ff-9664-46c9-bc2b-b09105849fcd
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: c-client-6bc64987db-m2sw9
+    namespace: gamma
+    resourceVersion: "2208"
+    uid: 67811694-88de-4f8e-af85-2cfd6a761a09
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: c-client-6bc64987db-m2sw9.1852837dd4d5e6a7
+    namespace: gamma
+    resourceVersion: "2242"
+    uid: ef9c1448-82b6-4f5a-a0b3-61370631c53f
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: c-client-6bc64987db-m2sw9
+    namespace: gamma
+    resourceVersion: "2208"
+    uid: 67811694-88de-4f8e-af85-2cfd6a761a09
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: 'Created container: istio-init'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: c-client-6bc64987db-m2sw9.1852837dd5c82aec
+    namespace: gamma
+    resourceVersion: "2246"
+    uid: b7928568-1248-4156-b88c-4954b82e5799
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: c-client-6bc64987db-m2sw9
+    namespace: gamma
+    resourceVersion: "2208"
+    uid: 67811694-88de-4f8e-af85-2cfd6a761a09
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Started container istio-init
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: c-client-6bc64987db-m2sw9.1852837ddc221e34
+    namespace: gamma
+    resourceVersion: "2255"
+    uid: a7fbaaa1-6f47-4f1d-82a1-5c76c0426dc4
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 4
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{c-client}
+    kind: Pod
+    name: c-client-6bc64987db-m2sw9
+    namespace: gamma
+    resourceVersion: "2208"
+    uid: 67811694-88de-4f8e-af85-2cfd6a761a09
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:44Z"
+  message: Container image "quay.io/kiali/demo_error_rates_client:v1" is not present
+    with pull policy of Never
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:44Z"
+    name: c-client-6bc64987db-m2sw9.1852837dee4ebe2e
+    namespace: gamma
+    resourceVersion: "2513"
+    uid: bde09937-80b8-40fc-ba76-17600b8a07c1
+  reason: ErrImageNeverPull
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Warning
+- apiVersion: v1
+  count: 4
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{c-client}
+    kind: Pod
+    name: c-client-6bc64987db-m2sw9
+    namespace: gamma
+    resourceVersion: "2208"
+    uid: 67811694-88de-4f8e-af85-2cfd6a761a09
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:44Z"
+  message: 'Error: ErrImageNeverPull'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:44Z"
+    name: c-client-6bc64987db-m2sw9.1852837dee4f0529
+    namespace: gamma
+    resourceVersion: "2514"
+    uid: 8c03511e-f083-42cd-ad4d-56bff4419e66
+  reason: Failed
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Warning
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: c-client-6bc64987db-m2sw9
+    namespace: gamma
+    resourceVersion: "2208"
+    uid: 67811694-88de-4f8e-af85-2cfd6a761a09
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: c-client-6bc64987db-m2sw9.1852837dee71150d
+    namespace: gamma
+    resourceVersion: "2284"
+    uid: c8067795-ca4b-4d75-876f-922f68825572
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: c-client-6bc64987db-m2sw9
+    namespace: gamma
+    resourceVersion: "2208"
+    uid: 67811694-88de-4f8e-af85-2cfd6a761a09
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: c-client-6bc64987db-m2sw9.1852837def5fabd5
+    namespace: gamma
+    resourceVersion: "2287"
+    uid: 08ae7d1c-cbf0-4458-a3b6-e18c70250556
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: c-client-6bc64987db-m2sw9
+    namespace: gamma
+    resourceVersion: "2208"
+    uid: 67811694-88de-4f8e-af85-2cfd6a761a09
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: c-client-6bc64987db-m2sw9.1852837df7d4ee1e
+    namespace: gamma
+    resourceVersion: "2309"
+    uid: 6cb435ac-8b60-46b8-8419-f17a44a127f5
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:56Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{c-client}
+    kind: Pod
+    name: c-client-6bc64987db-m2sw9
+    namespace: gamma
+    resourceVersion: "2208"
+    uid: 67811694-88de-4f8e-af85-2cfd6a761a09
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:56Z"
+  message: Container image "quay.io/kiali/demo_error_rates_client:v1" already present
+    on machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:56Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:56Z"
+    name: c-client-6bc64987db-m2sw9.185283814dc3f152
+    namespace: gamma
+    resourceVersion: "2946"
+    uid: eb510f51-042d-49a7-9a2b-9404646c2381
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:56Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{c-client}
+    kind: Pod
+    name: c-client-6bc64987db-m2sw9
+    namespace: gamma
+    resourceVersion: "2208"
+    uid: 67811694-88de-4f8e-af85-2cfd6a761a09
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:56Z"
+  message: 'Created container: c-client'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:56Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:56Z"
+    name: c-client-6bc64987db-m2sw9.185283814eb553cf
+    namespace: gamma
+    resourceVersion: "2947"
+    uid: 8f8b5bda-19cb-41a2-931e-01a1ba4b73ec
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:56Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{c-client}
+    kind: Pod
+    name: c-client-6bc64987db-m2sw9
+    namespace: gamma
+    resourceVersion: "2208"
+    uid: 67811694-88de-4f8e-af85-2cfd6a761a09
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:56Z"
+  message: Started container c-client
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:56Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:56Z"
+    name: c-client-6bc64987db-m2sw9.185283815563d2a6
+    namespace: gamma
+    resourceVersion: "2948"
+    uid: d6baacc0-da81-4caf-96f2-8d2187e9740c
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: c-client-6bc64987db
+    namespace: gamma
+    resourceVersion: "2169"
+    uid: 834d093d-f413-415a-a9bf-aeb0534848dd
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: 'Created pod: c-client-6bc64987db-m2sw9'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: c-client-6bc64987db.1852837dbd96ce98
+    namespace: gamma
+    resourceVersion: "2307"
+    uid: 4ae3f42d-49ca-4b49-95eb-5fd3f0bf5342
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:40Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: c-client
+    namespace: gamma
+    resourceVersion: "1918"
+    uid: 7f4ca888-f833-4cb0-8939-437a29ff1875
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:40Z"
+  message: Scaled up replica set c-client-6bc64987db from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: c-client.1852837dab08467d
+    namespace: gamma
+    resourceVersion: "2389"
+    uid: 0b8b916b-952f-405e-aff5-c4d8d2884329
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: d-client-7b5896d4f9-2mnw4
+    namespace: gamma
+    resourceVersion: "2243"
+    uid: 94e24270-43cd-4316-954c-9c72d570cda2
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Successfully assigned gamma/d-client-7b5896d4f9-2mnw4 to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: d-client-7b5896d4f9-2mnw4.1852837dd5a9f729
+    namespace: gamma
+    resourceVersion: "2245"
+    uid: 31f41323-3db2-485a-ac4b-0afe9360cb7f
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: d-client-7b5896d4f9-2mnw4
+    namespace: gamma
+    resourceVersion: "2244"
+    uid: 94e24270-43cd-4316-954c-9c72d570cda2
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: d-client-7b5896d4f9-2mnw4.1852837df31e60e9
+    namespace: gamma
+    resourceVersion: "2299"
+    uid: 4d73c64e-e421-427e-938d-c873d524fdaf
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: d-client-7b5896d4f9-2mnw4
+    namespace: gamma
+    resourceVersion: "2244"
+    uid: 94e24270-43cd-4316-954c-9c72d570cda2
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: 'Created container: istio-init'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: d-client-7b5896d4f9-2mnw4.1852837df3f4db0b
+    namespace: gamma
+    resourceVersion: "2302"
+    uid: ea7377c9-bd6b-4dd0-9c5d-8f8d2a18c2ad
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: d-client-7b5896d4f9-2mnw4
+    namespace: gamma
+    resourceVersion: "2244"
+    uid: 94e24270-43cd-4316-954c-9c72d570cda2
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Started container istio-init
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: d-client-7b5896d4f9-2mnw4.1852837dfa493b48
+    namespace: gamma
+    resourceVersion: "2313"
+    uid: 1b178fc1-aa3a-4833-9e50-552b69d6fb0f
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{d-client}
+    kind: Pod
+    name: d-client-7b5896d4f9-2mnw4
+    namespace: gamma
+    resourceVersion: "2244"
+    uid: 94e24270-43cd-4316-954c-9c72d570cda2
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Pulling image "quay.io/kiali/demo_error_rates_client:v1"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: d-client-7b5896d4f9-2mnw4.1852837e2a0221e0
+    namespace: gamma
+    resourceVersion: "2365"
+    uid: cc32c552-2027-4946-a1e9-84f047489fe8
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{d-client}
+    kind: Pod
+    name: d-client-7b5896d4f9-2mnw4
+    namespace: gamma
+    resourceVersion: "2244"
+    uid: 94e24270-43cd-4316-954c-9c72d570cda2
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: 'Successfully pulled image "quay.io/kiali/demo_error_rates_client:v1" in
+    142ms (9.12s including waiting). Image size: 87575056 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: d-client-7b5896d4f9-2mnw4.18528380499d9156
+    namespace: gamma
+    resourceVersion: "2745"
+    uid: 9eacd8fb-2d67-4a8d-a060-5112d499f41d
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{d-client}
+    kind: Pod
+    name: d-client-7b5896d4f9-2mnw4
+    namespace: gamma
+    resourceVersion: "2244"
+    uid: 94e24270-43cd-4316-954c-9c72d570cda2
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: 'Created container: d-client'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: d-client-7b5896d4f9-2mnw4.185283804aa69013
+    namespace: gamma
+    resourceVersion: "2749"
+    uid: 05bece6f-3df2-4b3a-be56-78e35a39c4fe
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{d-client}
+    kind: Pod
+    name: d-client-7b5896d4f9-2mnw4
+    namespace: gamma
+    resourceVersion: "2244"
+    uid: 94e24270-43cd-4316-954c-9c72d570cda2
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: Started container d-client
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: d-client-7b5896d4f9-2mnw4.185283805254db3b
+    namespace: gamma
+    resourceVersion: "2774"
+    uid: 238e0d4f-1a6e-4dac-8c5a-e7b84a2e1e9d
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: d-client-7b5896d4f9-2mnw4
+    namespace: gamma
+    resourceVersion: "2244"
+    uid: 94e24270-43cd-4316-954c-9c72d570cda2
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: d-client-7b5896d4f9-2mnw4.18528380525cd398
+    namespace: gamma
+    resourceVersion: "2776"
+    uid: 81697185-54a1-4ce6-971b-3372720e2b8d
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: d-client-7b5896d4f9-2mnw4
+    namespace: gamma
+    resourceVersion: "2244"
+    uid: 94e24270-43cd-4316-954c-9c72d570cda2
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: d-client-7b5896d4f9-2mnw4.1852838053692c8b
+    namespace: gamma
+    resourceVersion: "2777"
+    uid: 1555b085-413e-4512-9996-04cb69cfdcd2
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: d-client-7b5896d4f9-2mnw4
+    namespace: gamma
+    resourceVersion: "2244"
+    uid: 94e24270-43cd-4316-954c-9c72d570cda2
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: d-client-7b5896d4f9-2mnw4.185283805b3243bc
+    namespace: gamma
+    resourceVersion: "2782"
+    uid: d7dddedc-8c3d-4837-9ab1-f3f29667ac0e
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: d-client-7b5896d4f9
+    namespace: gamma
+    resourceVersion: "2197"
+    uid: 295e1d7e-0ff1-4b97-a300-ec0b1ebcc267
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: 'Created pod: d-client-7b5896d4f9-2mnw4'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: d-client-7b5896d4f9.1852837dd56e3859
+    namespace: gamma
+    resourceVersion: "2324"
+    uid: 71a83171-9a8a-4018-9943-58451c3f4a0f
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:40Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: d-client
+    namespace: gamma
+    resourceVersion: "1919"
+    uid: 8324e595-52fb-4537-931f-b437db947942
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:40Z"
+  message: Scaled up replica set d-client-7b5896d4f9 from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: d-client.1852837db3e9af9b
+    namespace: gamma
+    resourceVersion: "2413"
+    uid: 54acf38a-e50b-4f92-a213-30264d380416
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: e-client-69456dc8bf-v7wvb
+    namespace: gamma
+    resourceVersion: "2248"
+    uid: ecf2db8d-e7ad-4151-a0ea-3be21ed0d352
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Successfully assigned gamma/e-client-69456dc8bf-v7wvb to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: e-client-69456dc8bf-v7wvb.1852837dd88707bc
+    namespace: gamma
+    resourceVersion: "2250"
+    uid: 6b8d6dc4-5185-474c-8c8a-d57b0a177fe7
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: e-client-69456dc8bf-v7wvb
+    namespace: gamma
+    resourceVersion: "2249"
+    uid: ecf2db8d-e7ad-4151-a0ea-3be21ed0d352
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: e-client-69456dc8bf-v7wvb.1852837df47fe0bc
+    namespace: gamma
+    resourceVersion: "2304"
+    uid: 350745cd-0634-493c-84d2-c1e6a58d82b0
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: e-client-69456dc8bf-v7wvb
+    namespace: gamma
+    resourceVersion: "2249"
+    uid: ecf2db8d-e7ad-4151-a0ea-3be21ed0d352
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: 'Created container: istio-init'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: e-client-69456dc8bf-v7wvb.1852837df54adf29
+    namespace: gamma
+    resourceVersion: "2305"
+    uid: 62acd5b7-d89e-4351-8817-f7960dd525c6
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: e-client-69456dc8bf-v7wvb
+    namespace: gamma
+    resourceVersion: "2249"
+    uid: ecf2db8d-e7ad-4151-a0ea-3be21ed0d352
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Started container istio-init
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: e-client-69456dc8bf-v7wvb.1852837dfac62712
+    namespace: gamma
+    resourceVersion: "2314"
+    uid: 4df2ef0e-1a60-4329-95d1-bafc76d1b75e
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{e-client}
+    kind: Pod
+    name: e-client-69456dc8bf-v7wvb
+    namespace: gamma
+    resourceVersion: "2249"
+    uid: ecf2db8d-e7ad-4151-a0ea-3be21ed0d352
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Pulling image "quay.io/kiali/demo_error_rates_client:v1"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: e-client-69456dc8bf-v7wvb.1852837e2aafcc54
+    namespace: gamma
+    resourceVersion: "2374"
+    uid: cc7274be-7ee4-4c5c-8768-db355abb243c
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{e-client}
+    kind: Pod
+    name: e-client-69456dc8bf-v7wvb
+    namespace: gamma
+    resourceVersion: "2249"
+    uid: ecf2db8d-e7ad-4151-a0ea-3be21ed0d352
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: 'Successfully pulled image "quay.io/kiali/demo_error_rates_client:v1" in
+    217ms (9.667s including waiting). Image size: 87575056 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: e-client-69456dc8bf-v7wvb.185283806aebc071
+    namespace: gamma
+    resourceVersion: "2792"
+    uid: 2adbd60d-9d41-40dc-bc3b-d77c22967fbb
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{e-client}
+    kind: Pod
+    name: e-client-69456dc8bf-v7wvb
+    namespace: gamma
+    resourceVersion: "2249"
+    uid: ecf2db8d-e7ad-4151-a0ea-3be21ed0d352
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: 'Created container: e-client'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: e-client-69456dc8bf-v7wvb.185283806bccd906
+    namespace: gamma
+    resourceVersion: "2794"
+    uid: 1b69efc0-af28-432e-9819-bc2ef2dbf9fa
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{e-client}
+    kind: Pod
+    name: e-client-69456dc8bf-v7wvb
+    namespace: gamma
+    resourceVersion: "2249"
+    uid: ecf2db8d-e7ad-4151-a0ea-3be21ed0d352
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: Started container e-client
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: e-client-69456dc8bf-v7wvb.1852838072df8c50
+    namespace: gamma
+    resourceVersion: "2796"
+    uid: d28f3663-27be-4bdc-8b45-0f315837e1cd
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: e-client-69456dc8bf-v7wvb
+    namespace: gamma
+    resourceVersion: "2249"
+    uid: ecf2db8d-e7ad-4151-a0ea-3be21ed0d352
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: e-client-69456dc8bf-v7wvb.1852838072e649a2
+    namespace: gamma
+    resourceVersion: "2797"
+    uid: d9a96c25-d1b2-48eb-8cc2-3a1ed5dd346d
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: e-client-69456dc8bf-v7wvb
+    namespace: gamma
+    resourceVersion: "2249"
+    uid: ecf2db8d-e7ad-4151-a0ea-3be21ed0d352
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: e-client-69456dc8bf-v7wvb.1852838073a3b5be
+    namespace: gamma
+    resourceVersion: "2798"
+    uid: d3f1fd35-ceaa-4f6a-b65c-819e3b5d1841
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: e-client-69456dc8bf-v7wvb
+    namespace: gamma
+    resourceVersion: "2249"
+    uid: ecf2db8d-e7ad-4151-a0ea-3be21ed0d352
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: e-client-69456dc8bf-v7wvb.185283807acd6af3
+    namespace: gamma
+    resourceVersion: "2799"
+    uid: dec50136-d071-4a5f-a69e-c9da037fc664
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: e-client-69456dc8bf
+    namespace: gamma
+    resourceVersion: "2212"
+    uid: c56e763f-ce33-4b91-afd2-c08961de3bf9
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: 'Created pod: e-client-69456dc8bf-v7wvb'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: e-client-69456dc8bf.1852837dd83ec95f
+    namespace: gamma
+    resourceVersion: "2345"
+    uid: 4b666508-3afc-4def-be35-ef8441341a8b
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: e-client
+    namespace: gamma
+    resourceVersion: "1922"
+    uid: eb122063-2a7b-4587-a94a-93356bbc9c3b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Scaled up replica set e-client-69456dc8bf from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: e-client.1852837dbfe1c6c2
+    namespace: gamma
+    resourceVersion: "2434"
+    uid: d6fdff96-be0b-4d20-b97e-e50641f0885e
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: f-client-7768db555-hhjdp
+    namespace: gamma
+    resourceVersion: "2266"
+    uid: 814e9aca-9e43-4b36-9804-86e368d84dee
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Successfully assigned gamma/f-client-7768db555-hhjdp to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: f-client-7768db555-hhjdp.1852837ded59ff4c
+    namespace: gamma
+    resourceVersion: "2269"
+    uid: 3f272c8e-13ae-413a-9edd-602990f18b1b
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: f-client-7768db555-hhjdp
+    namespace: gamma
+    resourceVersion: "2267"
+    uid: 814e9aca-9e43-4b36-9804-86e368d84dee
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: f-client-7768db555-hhjdp.1852837e0cfd92e5
+    namespace: gamma
+    resourceVersion: "2327"
+    uid: 1a68bade-887e-4ce8-af23-f50ec464c3e6
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: f-client-7768db555-hhjdp
+    namespace: gamma
+    resourceVersion: "2267"
+    uid: 814e9aca-9e43-4b36-9804-86e368d84dee
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: 'Created container: istio-init'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: f-client-7768db555-hhjdp.1852837e0e53c5a7
+    namespace: gamma
+    resourceVersion: "2332"
+    uid: a0fe72b3-4622-4af2-a4ae-726ff8fc82d0
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: f-client-7768db555-hhjdp
+    namespace: gamma
+    resourceVersion: "2267"
+    uid: 814e9aca-9e43-4b36-9804-86e368d84dee
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Started container istio-init
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: f-client-7768db555-hhjdp.1852837e18d2f3a1
+    namespace: gamma
+    resourceVersion: "2344"
+    uid: f6337b08-ea66-4819-a089-44788e93a941
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{f-client}
+    kind: Pod
+    name: f-client-7768db555-hhjdp
+    namespace: gamma
+    resourceVersion: "2267"
+    uid: 814e9aca-9e43-4b36-9804-86e368d84dee
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Pulling image "quay.io/kiali/demo_error_rates_client:v1"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: f-client-7768db555-hhjdp.1852837e2a613919
+    namespace: gamma
+    resourceVersion: "2367"
+    uid: e1afd752-65cd-4221-ad0f-47de56731e8a
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{f-client}
+    kind: Pod
+    name: f-client-7768db555-hhjdp
+    namespace: gamma
+    resourceVersion: "2267"
+    uid: 814e9aca-9e43-4b36-9804-86e368d84dee
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: 'Successfully pulled image "quay.io/kiali/demo_error_rates_client:v1" in
+    169ms (9.454s including waiting). Image size: 87575056 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: f-client-7768db555-hhjdp.185283805dedae8c
+    namespace: gamma
+    resourceVersion: "2785"
+    uid: ce031131-cfa0-4e8e-a70b-941e0b54e9cb
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{f-client}
+    kind: Pod
+    name: f-client-7768db555-hhjdp
+    namespace: gamma
+    resourceVersion: "2267"
+    uid: 814e9aca-9e43-4b36-9804-86e368d84dee
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: 'Created container: f-client'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: f-client-7768db555-hhjdp.185283805ec28c22
+    namespace: gamma
+    resourceVersion: "2786"
+    uid: 47272b97-398f-4bd5-bac3-6ea029a0f518
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{f-client}
+    kind: Pod
+    name: f-client-7768db555-hhjdp
+    namespace: gamma
+    resourceVersion: "2267"
+    uid: 814e9aca-9e43-4b36-9804-86e368d84dee
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: Started container f-client
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: f-client-7768db555-hhjdp.185283806459ed19
+    namespace: gamma
+    resourceVersion: "2788"
+    uid: d32e7cdb-7409-4cc3-83f2-fd0a93e47efd
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: f-client-7768db555-hhjdp
+    namespace: gamma
+    resourceVersion: "2267"
+    uid: 814e9aca-9e43-4b36-9804-86e368d84dee
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: f-client-7768db555-hhjdp.1852838064715688
+    namespace: gamma
+    resourceVersion: "2790"
+    uid: eb113f4b-2710-4aba-afa0-b5d24377264a
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: f-client-7768db555-hhjdp
+    namespace: gamma
+    resourceVersion: "2267"
+    uid: 814e9aca-9e43-4b36-9804-86e368d84dee
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: f-client-7768db555-hhjdp.185283806542ed71
+    namespace: gamma
+    resourceVersion: "2791"
+    uid: a8cc029f-1fd7-470e-978f-0337f24a2eb1
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: f-client-7768db555-hhjdp
+    namespace: gamma
+    resourceVersion: "2267"
+    uid: 814e9aca-9e43-4b36-9804-86e368d84dee
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: f-client-7768db555-hhjdp.185283806b7a6626
+    namespace: gamma
+    resourceVersion: "2793"
+    uid: 2f559051-41f1-4f27-b5da-92fed7439e4a
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: f-client-7768db555
+    namespace: gamma
+    resourceVersion: "2252"
+    uid: 084eb974-a33d-4f61-94ad-17d7013a32be
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: 'Created pod: f-client-7768db555-hhjdp'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: f-client-7768db555.1852837ded218bc5
+    namespace: gamma
+    resourceVersion: "2375"
+    uid: c98515d6-b51a-48ec-9c95-570c21a6ab13
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: f-client
+    namespace: gamma
+    resourceVersion: "1924"
+    uid: 0b346d15-db76-4e16-ac1c-5a663a0e725a
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Scaled up replica set f-client-7768db555 from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: f-client.1852837ddac40a35
+    namespace: gamma
+    resourceVersion: "2447"
+    uid: 28fad15f-dd83-4105-877c-54152f020205
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: v-server-6494f87f47-q7s4m
+    namespace: gamma
+    resourceVersion: "2291"
+    uid: ef176cee-67ef-48e4-bd13-ada115ab0fe0
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Successfully assigned gamma/v-server-6494f87f47-q7s4m to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: v-server-6494f87f47-q7s4m.1852837df085d48e
+    namespace: gamma
+    resourceVersion: "2294"
+    uid: 585fd440-480e-483a-b240-ada01c0866b4
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: v-server-6494f87f47-q7s4m
+    namespace: gamma
+    resourceVersion: "2293"
+    uid: ef176cee-67ef-48e4-bd13-ada115ab0fe0
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: v-server-6494f87f47-q7s4m.1852837e0d0cd7e6
+    namespace: gamma
+    resourceVersion: "2328"
+    uid: 6acd934e-154d-4e6c-8dd4-3f5b90be8dd3
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: v-server-6494f87f47-q7s4m
+    namespace: gamma
+    resourceVersion: "2293"
+    uid: ef176cee-67ef-48e4-bd13-ada115ab0fe0
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: 'Created container: istio-init'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: v-server-6494f87f47-q7s4m.1852837e0e4a5455
+    namespace: gamma
+    resourceVersion: "2331"
+    uid: 414d5425-2df1-452c-950b-6b8d09432ca4
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: v-server-6494f87f47-q7s4m
+    namespace: gamma
+    resourceVersion: "2293"
+    uid: ef176cee-67ef-48e4-bd13-ada115ab0fe0
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Started container istio-init
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: v-server-6494f87f47-q7s4m.1852837e1953d126
+    namespace: gamma
+    resourceVersion: "2346"
+    uid: aee3e388-87f6-4dd1-b503-3a50b6ac7e3f
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:43Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{v-server}
+    kind: Pod
+    name: v-server-6494f87f47-q7s4m
+    namespace: gamma
+    resourceVersion: "2293"
+    uid: ef176cee-67ef-48e4-bd13-ada115ab0fe0
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:43Z"
+  message: Pulling image "quay.io/kiali/demo_error_rates_server:v1"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: v-server-6494f87f47-q7s4m.1852837e67a7ecc0
+    namespace: gamma
+    resourceVersion: "2454"
+    uid: b3b12ff7-19fb-41f8-a4cf-f8b6c13b18c1
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:54Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{v-server}
+    kind: Pod
+    name: v-server-6494f87f47-q7s4m
+    namespace: gamma
+    resourceVersion: "2293"
+    uid: ef176cee-67ef-48e4-bd13-ada115ab0fe0
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:54Z"
+  message: 'Successfully pulled image "quay.io/kiali/demo_error_rates_server:v1" in
+    148ms (10.41s including waiting). Image size: 88065561 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:54Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: v-server-6494f87f47-q7s4m.18528380d4297eb1
+    namespace: gamma
+    resourceVersion: "2878"
+    uid: a42aa73e-c091-4c92-a0bf-66a121461487
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:54Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{v-server}
+    kind: Pod
+    name: v-server-6494f87f47-q7s4m
+    namespace: gamma
+    resourceVersion: "2293"
+    uid: ef176cee-67ef-48e4-bd13-ada115ab0fe0
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:54Z"
+  message: 'Created container: v-server'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:54Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: v-server-6494f87f47-q7s4m.18528380d4e3cbda
+    namespace: gamma
+    resourceVersion: "2879"
+    uid: ba0d2f69-f3db-48d4-943d-e0f1544841f5
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:54Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{v-server}
+    kind: Pod
+    name: v-server-6494f87f47-q7s4m
+    namespace: gamma
+    resourceVersion: "2293"
+    uid: ef176cee-67ef-48e4-bd13-ada115ab0fe0
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:54Z"
+  message: Started container v-server
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:54Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: v-server-6494f87f47-q7s4m.18528380d9a033bd
+    namespace: gamma
+    resourceVersion: "2881"
+    uid: 232e536d-748b-466a-beff-ad791ff38138
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:54Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: v-server-6494f87f47-q7s4m
+    namespace: gamma
+    resourceVersion: "2293"
+    uid: ef176cee-67ef-48e4-bd13-ada115ab0fe0
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:54Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:54Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: v-server-6494f87f47-q7s4m.18528380d9b2205c
+    namespace: gamma
+    resourceVersion: "2882"
+    uid: e3a3b28d-60bf-446b-8167-2a8620392452
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:54Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: v-server-6494f87f47-q7s4m
+    namespace: gamma
+    resourceVersion: "2293"
+    uid: ef176cee-67ef-48e4-bd13-ada115ab0fe0
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:54Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:54Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: v-server-6494f87f47-q7s4m.18528380da5bc366
+    namespace: gamma
+    resourceVersion: "2883"
+    uid: 6c66bfec-ca4f-4b41-9e2b-c46491af32a6
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:54Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: v-server-6494f87f47-q7s4m
+    namespace: gamma
+    resourceVersion: "2293"
+    uid: ef176cee-67ef-48e4-bd13-ada115ab0fe0
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:54Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:54Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: v-server-6494f87f47-q7s4m.18528380e1469cfd
+    namespace: gamma
+    resourceVersion: "2887"
+    uid: 4259af6f-4211-4e1d-a3b0-879f48a2e727
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: v-server-6494f87f47
+    namespace: gamma
+    resourceVersion: "2256"
+    uid: 628f6dfb-c061-4bb6-88ea-178f6b94942a
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: 'Created pod: v-server-6494f87f47-q7s4m'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: v-server-6494f87f47.1852837df03c8e3f
+    namespace: gamma
+    resourceVersion: "2403"
+    uid: 569f83c1-a714-4c83-b391-327bc07cb2e2
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: v-server
+    namespace: gamma
+    resourceVersion: "1925"
+    uid: ca95b6ab-10ee-4981-bed4-b5ff9b5c7dce
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Scaled up replica set v-server-6494f87f47 from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:44Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:44Z"
+    name: v-server.1852837dddad28c6
+    namespace: gamma
+    resourceVersion: "2479"
+    uid: aa86750a-1bbf-4832-95bc-d24602ccab09
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: w-server-57c9bbf54c-hppwc
+    namespace: gamma
+    resourceVersion: "2298"
+    uid: f5f46b05-d4fb-448d-b98c-947c3a4b127d
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Successfully assigned gamma/w-server-57c9bbf54c-hppwc to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:41Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:41Z"
+    name: w-server-57c9bbf54c-hppwc.1852837df35e1693
+    namespace: gamma
+    resourceVersion: "2301"
+    uid: 8d7f6d45-d04a-464a-9aaa-7015ddd6857f
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: w-server-57c9bbf54c-hppwc
+    namespace: gamma
+    resourceVersion: "2300"
+    uid: f5f46b05-d4fb-448d-b98c-947c3a4b127d
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: w-server-57c9bbf54c-hppwc.1852837e0d7caf59
+    namespace: gamma
+    resourceVersion: "2330"
+    uid: 74302849-6c30-4a03-849d-4d58a733c637
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: w-server-57c9bbf54c-hppwc
+    namespace: gamma
+    resourceVersion: "2300"
+    uid: f5f46b05-d4fb-448d-b98c-947c3a4b127d
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: 'Created container: istio-init'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: w-server-57c9bbf54c-hppwc.1852837e0eae21da
+    namespace: gamma
+    resourceVersion: "2333"
+    uid: 6cf9af30-d1ec-4c45-a4cb-596c208544f1
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: w-server-57c9bbf54c-hppwc
+    namespace: gamma
+    resourceVersion: "2300"
+    uid: f5f46b05-d4fb-448d-b98c-947c3a4b127d
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Started container istio-init
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: w-server-57c9bbf54c-hppwc.1852837e19817d5d
+    namespace: gamma
+    resourceVersion: "2347"
+    uid: 570de24e-237d-4e5d-9a92-2bd9eb76b34c
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{w-server}
+    kind: Pod
+    name: w-server-57c9bbf54c-hppwc
+    namespace: gamma
+    resourceVersion: "2300"
+    uid: f5f46b05-d4fb-448d-b98c-947c3a4b127d
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Pulling image "quay.io/kiali/demo_error_rates_server:v1"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: w-server-57c9bbf54c-hppwc.1852837e2a2cd65b
+    namespace: gamma
+    resourceVersion: "2366"
+    uid: 5afc0591-637c-4452-9c83-3d3417606773
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{w-server}
+    kind: Pod
+    name: w-server-57c9bbf54c-hppwc
+    namespace: gamma
+    resourceVersion: "2300"
+    uid: f5f46b05-d4fb-448d-b98c-947c3a4b127d
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: 'Successfully pulled image "quay.io/kiali/demo_error_rates_server:v1" in
+    170ms (9.288s including waiting). Image size: 88065561 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: w-server-57c9bbf54c-hppwc.1852838053ceb563
+    namespace: gamma
+    resourceVersion: "2779"
+    uid: 652e1b8f-20f3-46d1-8031-50cfaa202bef
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{w-server}
+    kind: Pod
+    name: w-server-57c9bbf54c-hppwc
+    namespace: gamma
+    resourceVersion: "2300"
+    uid: f5f46b05-d4fb-448d-b98c-947c3a4b127d
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: 'Created container: w-server'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: w-server-57c9bbf54c-hppwc.1852838056267860
+    namespace: gamma
+    resourceVersion: "2780"
+    uid: 9f0a14d9-07d7-416e-acd9-ff70152e4ffb
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{w-server}
+    kind: Pod
+    name: w-server-57c9bbf54c-hppwc
+    namespace: gamma
+    resourceVersion: "2300"
+    uid: f5f46b05-d4fb-448d-b98c-947c3a4b127d
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: Started container w-server
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: w-server-57c9bbf54c-hppwc.185283805b29ebf1
+    namespace: gamma
+    resourceVersion: "2781"
+    uid: 92c47711-1fef-4dcc-8263-64f0925be34e
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: w-server-57c9bbf54c-hppwc
+    namespace: gamma
+    resourceVersion: "2300"
+    uid: f5f46b05-d4fb-448d-b98c-947c3a4b127d
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: w-server-57c9bbf54c-hppwc.185283805b353f05
+    namespace: gamma
+    resourceVersion: "2783"
+    uid: 71b6f23c-cf33-4d9a-a7a2-44c9d2d26d76
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: w-server-57c9bbf54c-hppwc
+    namespace: gamma
+    resourceVersion: "2300"
+    uid: f5f46b05-d4fb-448d-b98c-947c3a4b127d
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: w-server-57c9bbf54c-hppwc.185283805c0f296e
+    namespace: gamma
+    resourceVersion: "2784"
+    uid: 19e99a94-1814-43e5-99e5-121ab030f5b2
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: w-server-57c9bbf54c-hppwc
+    namespace: gamma
+    resourceVersion: "2300"
+    uid: f5f46b05-d4fb-448d-b98c-947c3a4b127d
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: w-server-57c9bbf54c-hppwc.1852838063ed653a
+    namespace: gamma
+    resourceVersion: "2787"
+    uid: 6292a283-2859-4308-8a0b-56c633be2103
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: w-server-57c9bbf54c
+    namespace: gamma
+    resourceVersion: "2258"
+    uid: dc9a4a97-df95-4836-80a8-14880b5e15ce
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: 'Created pod: w-server-57c9bbf54c-hppwc'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: w-server-57c9bbf54c.1852837df328dc8f
+    namespace: gamma
+    resourceVersion: "2414"
+    uid: 32a7bca1-2fba-4e50-9fdd-6fbdce6dd6ff
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: w-server
+    namespace: gamma
+    resourceVersion: "1935"
+    uid: dfd70b15-58d7-4b81-bb02-c05274e24e20
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Scaled up replica set w-server-57c9bbf54c from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:44Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:44Z"
+    name: w-server.1852837de0ae9ba8
+    namespace: gamma
+    resourceVersion: "2497"
+    uid: 9270ad59-a0e2-4185-a4bf-81f517133cd5
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: x-server-64589bc895-qpzhg
+    namespace: gamma
+    resourceVersion: "2316"
+    uid: 0ced9035-0858-437d-9fd8-0ce08647796f
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Successfully assigned gamma/x-server-64589bc895-qpzhg to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: x-server-64589bc895-qpzhg.1852837dfc867449
+    namespace: gamma
+    resourceVersion: "2318"
+    uid: 6c3be3ef-ce3b-424a-9004-aa0a5a9b6edd
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: x-server-64589bc895-qpzhg
+    namespace: gamma
+    resourceVersion: "2317"
+    uid: 0ced9035-0858-437d-9fd8-0ce08647796f
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: x-server-64589bc895-qpzhg.1852837e1801cc1f
+    namespace: gamma
+    resourceVersion: "2343"
+    uid: 0a7ee546-5217-4123-9ec6-93cf9557d6a8
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: x-server-64589bc895-qpzhg
+    namespace: gamma
+    resourceVersion: "2317"
+    uid: 0ced9035-0858-437d-9fd8-0ce08647796f
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: 'Created container: istio-init'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: x-server-64589bc895-qpzhg.1852837e19e817eb
+    namespace: gamma
+    resourceVersion: "2348"
+    uid: 2bf298f7-72e7-4457-a26a-f87323ce61c7
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: x-server-64589bc895-qpzhg
+    namespace: gamma
+    resourceVersion: "2317"
+    uid: 0ced9035-0858-437d-9fd8-0ce08647796f
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Started container istio-init
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: x-server-64589bc895-qpzhg.1852837e257c5deb
+    namespace: gamma
+    resourceVersion: "2358"
+    uid: 0528c605-c119-466c-bc26-e227a17acd05
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:43Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{x-server}
+    kind: Pod
+    name: x-server-64589bc895-qpzhg
+    namespace: gamma
+    resourceVersion: "2317"
+    uid: 0ced9035-0858-437d-9fd8-0ce08647796f
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:43Z"
+  message: Pulling image "quay.io/kiali/demo_error_rates_server:v1"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: x-server-64589bc895-qpzhg.1852837e676ef581
+    namespace: gamma
+    resourceVersion: "2451"
+    uid: 4c88205d-e925-4f92-8ef2-d56846a163b6
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:53Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{x-server}
+    kind: Pod
+    name: x-server-64589bc895-qpzhg
+    namespace: gamma
+    resourceVersion: "2317"
+    uid: 0ced9035-0858-437d-9fd8-0ce08647796f
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:53Z"
+  message: 'Successfully pulled image "quay.io/kiali/demo_error_rates_server:v1" in
+    140ms (9.079s including waiting). Image size: 88065561 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:53Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:53Z"
+    name: x-server-64589bc895-qpzhg.1852838084966417
+    namespace: gamma
+    resourceVersion: "2806"
+    uid: ddd4174c-0f35-4b99-9690-d4de8a9e18d9
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:53Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{x-server}
+    kind: Pod
+    name: x-server-64589bc895-qpzhg
+    namespace: gamma
+    resourceVersion: "2317"
+    uid: 0ced9035-0858-437d-9fd8-0ce08647796f
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:53Z"
+  message: 'Created container: x-server'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:53Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:53Z"
+    name: x-server-64589bc895-qpzhg.18528380855922e7
+    namespace: gamma
+    resourceVersion: "2808"
+    uid: f08c9fb6-0088-4a54-8636-b8ccaa3afa26
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:53Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{x-server}
+    kind: Pod
+    name: x-server-64589bc895-qpzhg
+    namespace: gamma
+    resourceVersion: "2317"
+    uid: 0ced9035-0858-437d-9fd8-0ce08647796f
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:53Z"
+  message: Started container x-server
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:53Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:53Z"
+    name: x-server-64589bc895-qpzhg.185283808db117f9
+    namespace: gamma
+    resourceVersion: "2839"
+    uid: 9c8481b3-2c83-421b-b342-57f3095e653e
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:53Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: x-server-64589bc895-qpzhg
+    namespace: gamma
+    resourceVersion: "2317"
+    uid: 0ced9035-0858-437d-9fd8-0ce08647796f
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:53Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:53Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:53Z"
+    name: x-server-64589bc895-qpzhg.185283808dd2b89e
+    namespace: gamma
+    resourceVersion: "2840"
+    uid: a2cd7653-e8a0-45d9-ab56-78068b897361
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:53Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: x-server-64589bc895-qpzhg
+    namespace: gamma
+    resourceVersion: "2317"
+    uid: 0ced9035-0858-437d-9fd8-0ce08647796f
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:53Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:53Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:53Z"
+    name: x-server-64589bc895-qpzhg.185283808edec8b7
+    namespace: gamma
+    resourceVersion: "2843"
+    uid: 11071c58-b8d7-463b-a80f-cf6aa3fb9e21
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:53Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: x-server-64589bc895-qpzhg
+    namespace: gamma
+    resourceVersion: "2317"
+    uid: 0ced9035-0858-437d-9fd8-0ce08647796f
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:53Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:53Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:53Z"
+    name: x-server-64589bc895-qpzhg.185283809687b694
+    namespace: gamma
+    resourceVersion: "2847"
+    uid: 49314571-e8ed-45d5-939f-364ea522e7c4
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: x-server-64589bc895
+    namespace: gamma
+    resourceVersion: "2263"
+    uid: f7bb952c-b1db-4ca1-9b04-c81d85a05ea1
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: 'Created pod: x-server-64589bc895-qpzhg'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: x-server-64589bc895.1852837dfc482b8c
+    namespace: gamma
+    resourceVersion: "2424"
+    uid: cec60051-c1ce-4624-bc86-d995ebdf6c3e
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:41Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: x-server
+    namespace: gamma
+    resourceVersion: "1943"
+    uid: 9f8bd6ed-07cf-4c5f-9652-83d2b73385f9
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:41Z"
+  message: Scaled up replica set x-server-64589bc895 from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:44Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:44Z"
+    name: x-server.1852837de98be4f3
+    namespace: gamma
+    resourceVersion: "2500"
+    uid: 2b1c8a3c-3436-46c3-9909-9e45ffbab1b4
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: y-server-7c67cd5dc6-f5d7s
+    namespace: gamma
+    resourceVersion: "2337"
+    uid: 97aa61a1-3779-4596-964f-2f8740dcb12b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Successfully assigned gamma/y-server-7c67cd5dc6-f5d7s to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: y-server-7c67cd5dc6-f5d7s.1852837e1462e1ec
+    namespace: gamma
+    resourceVersion: "2339"
+    uid: c1985329-54e8-4103-aa8f-d03ef2304d55
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:43Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: y-server-7c67cd5dc6-f5d7s
+    namespace: gamma
+    resourceVersion: "2338"
+    uid: 97aa61a1-3779-4596-964f-2f8740dcb12b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:43Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: y-server-7c67cd5dc6-f5d7s.1852837e31b4a08a
+    namespace: gamma
+    resourceVersion: "2399"
+    uid: d4c85936-569b-4f7b-8c15-3e3390870d11
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:43Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: y-server-7c67cd5dc6-f5d7s
+    namespace: gamma
+    resourceVersion: "2338"
+    uid: 97aa61a1-3779-4596-964f-2f8740dcb12b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:43Z"
+  message: 'Created container: istio-init'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: y-server-7c67cd5dc6-f5d7s.1852837e35ec8490
+    namespace: gamma
+    resourceVersion: "2401"
+    uid: face08aa-4d9a-400e-9884-3d8d55954892
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:43Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: y-server-7c67cd5dc6-f5d7s
+    namespace: gamma
+    resourceVersion: "2338"
+    uid: 97aa61a1-3779-4596-964f-2f8740dcb12b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:43Z"
+  message: Started container istio-init
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: y-server-7c67cd5dc6-f5d7s.1852837e3cff1125
+    namespace: gamma
+    resourceVersion: "2406"
+    uid: 58974a55-56d1-4092-bdb3-7ac85b469677
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:43Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{y-server}
+    kind: Pod
+    name: y-server-7c67cd5dc6-f5d7s
+    namespace: gamma
+    resourceVersion: "2338"
+    uid: 97aa61a1-3779-4596-964f-2f8740dcb12b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:43Z"
+  message: Pulling image "quay.io/kiali/demo_error_rates_server:v1"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: y-server-7c67cd5dc6-f5d7s.1852837e67eab306
+    namespace: gamma
+    resourceVersion: "2462"
+    uid: 07e7ceb8-45f3-4331-94e0-7ad874a49ccf
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:54Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{y-server}
+    kind: Pod
+    name: y-server-7c67cd5dc6-f5d7s
+    namespace: gamma
+    resourceVersion: "2338"
+    uid: 97aa61a1-3779-4596-964f-2f8740dcb12b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:54Z"
+  message: 'Successfully pulled image "quay.io/kiali/demo_error_rates_server:v1" in
+    143ms (10.549s including waiting). Image size: 88065561 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:54Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: y-server-7c67cd5dc6-f5d7s.18528380dcbcc777
+    namespace: gamma
+    resourceVersion: "2884"
+    uid: f1ba851b-9498-44f3-aaf0-1b560c367119
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:54Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{y-server}
+    kind: Pod
+    name: y-server-7c67cd5dc6-f5d7s
+    namespace: gamma
+    resourceVersion: "2338"
+    uid: 97aa61a1-3779-4596-964f-2f8740dcb12b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:54Z"
+  message: 'Created container: y-server'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:54Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: y-server-7c67cd5dc6-f5d7s.18528380dd7efbae
+    namespace: gamma
+    resourceVersion: "2886"
+    uid: 70fb4282-40e6-40cc-b9b3-2f2ade0dc296
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:54Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{y-server}
+    kind: Pod
+    name: y-server-7c67cd5dc6-f5d7s
+    namespace: gamma
+    resourceVersion: "2338"
+    uid: 97aa61a1-3779-4596-964f-2f8740dcb12b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:54Z"
+  message: Started container y-server
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:54Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: y-server-7c67cd5dc6-f5d7s.18528380e1569e47
+    namespace: gamma
+    resourceVersion: "2888"
+    uid: 09ca95e2-481a-4099-b6da-1f27ee4d513c
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:54Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: y-server-7c67cd5dc6-f5d7s
+    namespace: gamma
+    resourceVersion: "2338"
+    uid: 97aa61a1-3779-4596-964f-2f8740dcb12b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:54Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:54Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: y-server-7c67cd5dc6-f5d7s.18528380e15d765c
+    namespace: gamma
+    resourceVersion: "2889"
+    uid: 53b5b747-deba-42ed-9fd9-fe889cf05353
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:54Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: y-server-7c67cd5dc6-f5d7s
+    namespace: gamma
+    resourceVersion: "2338"
+    uid: 97aa61a1-3779-4596-964f-2f8740dcb12b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:54Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:54Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: y-server-7c67cd5dc6-f5d7s.18528380e213421d
+    namespace: gamma
+    resourceVersion: "2890"
+    uid: 84ec4296-71aa-40e7-92ea-38547eb211c7
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:54Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: y-server-7c67cd5dc6-f5d7s
+    namespace: gamma
+    resourceVersion: "2338"
+    uid: 97aa61a1-3779-4596-964f-2f8740dcb12b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:54Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:54Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:54Z"
+    name: y-server-7c67cd5dc6-f5d7s.18528380e9eb9680
+    namespace: gamma
+    resourceVersion: "2892"
+    uid: fd17f5ef-2454-4c98-9b36-d46c68a37111
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: y-server-7c67cd5dc6
+    namespace: gamma
+    resourceVersion: "2306"
+    uid: 774dcc8c-85e5-4e56-a506-0e0584a5feeb
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: 'Created pod: y-server-7c67cd5dc6-f5d7s'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: y-server-7c67cd5dc6.1852837e141b360b
+    namespace: gamma
+    resourceVersion: "2431"
+    uid: d1731450-a970-45dd-b3a1-70935a38a38c
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: y-server
+    namespace: gamma
+    resourceVersion: "1950"
+    uid: bd35dbf0-587b-479f-b394-792ed8a094d5
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Scaled up replica set y-server-7c67cd5dc6 from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:44Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:44Z"
+    name: y-server.1852837df5f166b0
+    namespace: gamma
+    resourceVersion: "2502"
+    uid: 02ee33a2-6168-4030-8448-531bbbfed121
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: z-server-7f6c76b77c-ttxwl
+    namespace: gamma
+    resourceVersion: "2361"
+    uid: 7808aba9-4204-4516-b9aa-a1dd4203ff80
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Successfully assigned gamma/z-server-7f6c76b77c-ttxwl to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:42Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:29:42Z"
+    name: z-server-7f6c76b77c-ttxwl.1852837e28f0b013
+    namespace: gamma
+    resourceVersion: "2363"
+    uid: b35c6f83-ed54-42df-a55b-d5d9a07f7c64
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:43Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: z-server-7f6c76b77c-ttxwl
+    namespace: gamma
+    resourceVersion: "2362"
+    uid: 7808aba9-4204-4516-b9aa-a1dd4203ff80
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:43Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: z-server-7f6c76b77c-ttxwl.1852837e48415636
+    namespace: gamma
+    resourceVersion: "2422"
+    uid: 964684f1-9e74-4c7d-a7b4-6b536273ec7a
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:43Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: z-server-7f6c76b77c-ttxwl
+    namespace: gamma
+    resourceVersion: "2362"
+    uid: 7808aba9-4204-4516-b9aa-a1dd4203ff80
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:43Z"
+  message: 'Created container: istio-init'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: z-server-7f6c76b77c-ttxwl.1852837e4ca9cdc7
+    namespace: gamma
+    resourceVersion: "2429"
+    uid: 5bf05371-1c51-446c-ad20-6cb3d3b1f942
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:43Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.initContainers{istio-init}
+    kind: Pod
+    name: z-server-7f6c76b77c-ttxwl
+    namespace: gamma
+    resourceVersion: "2362"
+    uid: 7808aba9-4204-4516-b9aa-a1dd4203ff80
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:43Z"
+  message: Started container istio-init
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: z-server-7f6c76b77c-ttxwl.1852837e518492b7
+    namespace: gamma
+    resourceVersion: "2433"
+    uid: d1271e15-348c-4129-87aa-eb31eeca1d78
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:43Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{z-server}
+    kind: Pod
+    name: z-server-7f6c76b77c-ttxwl
+    namespace: gamma
+    resourceVersion: "2362"
+    uid: 7808aba9-4204-4516-b9aa-a1dd4203ff80
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:43Z"
+  message: Pulling image "quay.io/kiali/demo_error_rates_server:v1"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: z-server-7f6c76b77c-ttxwl.1852837e675b2319
+    namespace: gamma
+    resourceVersion: "2450"
+    uid: bb67a6ca-e877-40ce-83e5-f900c6e6ae0a
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{z-server}
+    kind: Pod
+    name: z-server-7f6c76b77c-ttxwl
+    namespace: gamma
+    resourceVersion: "2362"
+    uid: 7808aba9-4204-4516-b9aa-a1dd4203ff80
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: 'Successfully pulled image "quay.io/kiali/demo_error_rates_server:v1" in
+    289ms (8.939s including waiting). Image size: 88065561 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: z-server-7f6c76b77c-ttxwl.185283807c343456
+    namespace: gamma
+    resourceVersion: "2801"
+    uid: f94cfaea-9e1c-481e-b849-48a1acbc8876
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{z-server}
+    kind: Pod
+    name: z-server-7f6c76b77c-ttxwl
+    namespace: gamma
+    resourceVersion: "2362"
+    uid: 7808aba9-4204-4516-b9aa-a1dd4203ff80
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: 'Created container: z-server'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: z-server-7f6c76b77c-ttxwl.185283807ce68895
+    namespace: gamma
+    resourceVersion: "2802"
+    uid: bfa2a096-d146-47d0-9422-c78ddfcab267
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{z-server}
+    kind: Pod
+    name: z-server-7f6c76b77c-ttxwl
+    namespace: gamma
+    resourceVersion: "2362"
+    uid: 7808aba9-4204-4516-b9aa-a1dd4203ff80
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: Started container z-server
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: z-server-7f6c76b77c-ttxwl.1852838083f44579
+    namespace: gamma
+    resourceVersion: "2804"
+    uid: bd295a46-9ec3-49b8-839c-ff557c71d908
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:52Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: z-server-7f6c76b77c-ttxwl
+    namespace: gamma
+    resourceVersion: "2362"
+    uid: 7808aba9-4204-4516-b9aa-a1dd4203ff80
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:52Z"
+  message: Container image "gcr.io/istio-release/proxyv2:1.26.2" already present on
+    machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:52Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:52Z"
+    name: z-server-7f6c76b77c-ttxwl.1852838083fbe390
+    namespace: gamma
+    resourceVersion: "2805"
+    uid: 629a90a8-d4b0-4a66-ba13-7a602436fde0
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:53Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: z-server-7f6c76b77c-ttxwl
+    namespace: gamma
+    resourceVersion: "2362"
+    uid: 7808aba9-4204-4516-b9aa-a1dd4203ff80
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:53Z"
+  message: 'Created container: istio-proxy'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:53Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:53Z"
+    name: z-server-7f6c76b77c-ttxwl.1852838084e2d719
+    namespace: gamma
+    resourceVersion: "2807"
+    uid: e4882bbe-6fb6-4015-a203-3fa9e621ccde
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:53Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{istio-proxy}
+    kind: Pod
+    name: z-server-7f6c76b77c-ttxwl
+    namespace: gamma
+    resourceVersion: "2362"
+    uid: 7808aba9-4204-4516-b9aa-a1dd4203ff80
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:53Z"
+  message: Started container istio-proxy
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:53Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:29:53Z"
+    name: z-server-7f6c76b77c-ttxwl.185283808e03950c
+    namespace: gamma
+    resourceVersion: "2841"
+    uid: 64fa0b6b-5137-471d-afae-8fa1b92e0214
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: z-server-7f6c76b77c
+    namespace: gamma
+    resourceVersion: "2334"
+    uid: 873c5916-483a-4b9e-9cf4-14036703a267
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: 'Created pod: z-server-7f6c76b77c-ttxwl'
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:43Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:43Z"
+    name: z-server-7f6c76b77c.1852837e28c43f0e
+    namespace: gamma
+    resourceVersion: "2435"
+    uid: 84995581-5d63-4b41-96c1-5265e5bcc2ea
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:42Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: z-server
+    namespace: gamma
+    resourceVersion: "1960"
+    uid: 0b5aec20-2db5-4a0f-a81a-95cedf9b627c
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:42Z"
+  message: Scaled up replica set z-server-7f6c76b77c from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:44Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:44Z"
+    name: z-server.1852837e1058a18d
+    namespace: gamma
+    resourceVersion: "2507"
+    uid: a2acb094-69ad-4a1d-8dff-58ea820c01df
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+kind: EventList
+metadata:
+  resourceVersion: "5153"

@@ -1,5 +1,6 @@
 @mesh-page
 @ossmc
+@offline
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 Feature: Kiali Mesh page
@@ -21,18 +22,22 @@ Feature: Kiali Mesh page
     And user closes mesh tour
     Then user "does not see" mesh tour
 
+  # TODO: offline - number of infra nodes don't match up because no grafana/tracing.
   Scenario: See mesh
     When user sees mesh side panel
     Then user sees expected mesh infra
 
+  # TODO: offline - no metrics for side panel yet.
   Scenario: Test istiod
     When user selects mesh node with label "istiod"
     Then user sees control plane side panel
 
+  # TODO: offline - no grafana.
   Scenario: Grafana Infra
     When user selects mesh node with label "Grafana"
     Then user sees "Grafana" node side panel
 
+  # TODO: offline - no tracing.
   Scenario: Tracing Infra
     When user selects tracing mesh node
     Then user sees tracing node side panel
@@ -53,6 +58,7 @@ Feature: Kiali Mesh page
     When user selects mesh node with label "istio-system"
     Then user sees "istio-system" namespace side panel
 
+  # TODO: offline - must gather does not collect gateway-api resources which are what the integration tests use to create gateways.
   @bookinfo-app
   Scenario: User enables gateways
     When user "opens" display menu
@@ -116,6 +122,7 @@ Feature: Kiali Mesh page
     Then user does not see "error" icon side panel
     Then user does not see "warning" icon side panel
 
+  # TODO: offline - unable to apply config
   @shared-mesh-config
   Scenario: Shared mesh config is seen on istiod panel
     When user selects mesh node with label "istiod"
@@ -125,6 +132,7 @@ Feature: Kiali Mesh page
     And user sees "mode: REGISTRY_ONLY" in the "shared" configuration tab
     And user does not see "mode: REGISTRY_ONLY" in the "standard" configuration tab
 
+  # TODO: offline - no tracing
   Scenario: User opens and interacts with the Trace Configuration modal
     When user selects tracing mesh node
     And user opens the Trace Configuration modal

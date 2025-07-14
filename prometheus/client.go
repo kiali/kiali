@@ -26,72 +26,6 @@ import (
 
 var invalidLabelCharRE = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 
-const queryLogFile = "/tmp/kiali-prometheus-queries.log"
-
-// ClientCallRecord represents a recorded method call
-type ClientCallRecord struct {
-	Method string      `json:"method"`
-	Input  interface{} `json:"input"`
-	Output interface{} `json:"output"`
-}
-
-// ClientRecorder records method calls to files
-type ClientRecorder struct {
-	outputDir string
-	mutex     sync.Mutex
-}
-
-// NewClientRecorder creates a new method recorder
-func NewClientRecorder(outputDir string) *ClientRecorder {
-	return &ClientRecorder{
-		outputDir: outputDir,
-	}
-}
-
-// writeToFile writes a method call record to the appropriate file
-func (mr *ClientRecorder) writeToFile(methodName string, input interface{}, output interface{}) {
-	if mr == nil || mr.outputDir == "" {
-		return
-	}
-
-	mr.mutex.Lock()
-	defer mr.mutex.Unlock()
-
-	// Create output directory if it doesn't exist
-	if err := os.MkdirAll(mr.outputDir, 0o755); err != nil {
-		log.Errorf("Failed to create method recording directory %s: %v", mr.outputDir, err)
-		return
-	}
-
-	// Create record
-	record := ClientCallRecord{
-		Method: methodName,
-		Input:  input,
-		Output: output,
-	}
-
-	// Write to method-specific file
-	filename := filepath.Join(mr.outputDir, methodName+".log")
-	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
-	if err != nil {
-		log.Errorf("Failed to open method recording file %s: %v", filename, err)
-		return
-	}
-	defer file.Close()
-
-	// Marshal to JSON and write
-	jsonData, err := json.Marshal(record)
-	if err != nil {
-		log.Errorf("Failed to marshal method record: %v", err)
-		return
-	}
-
-	// Write JSON line to file
-	if _, err := file.Write(append(jsonData, '\n')); err != nil {
-		log.Errorf("Failed to write to method recording file: %v", err)
-	}
-}
-
 // QueryRecorder embeds prom_v1.API and records all Query calls to a file
 type QueryRecorder struct {
 	prom_v1.API
@@ -259,7 +193,7 @@ func (oc *OfflineClient) API() prom_v1.API {
 // NewOfflineClient creates a new OfflineClient that reads from recorded method files
 func NewOfflineClient(dataDir string, buildInfo *config.OfflineManifest) *OfflineClient {
 	// Create QueryFileReader for offline prometheus queries
-	queryFileReader := NewQueryFileReader(nil, "/tmp/kiali-prometheus-queries.log")
+	queryFileReader := NewQueryFileReader(nil, filepath.Join(dataDir, "prom-graph-gather.log"))
 	return &OfflineClient{
 		api:       queryFileReader,
 		dataDir:   dataDir,
@@ -267,175 +201,28 @@ func NewOfflineClient(dataDir string, buildInfo *config.OfflineManifest) *Offlin
 	}
 }
 
-// readMethodFile reads a method-specific log file and finds a matching input
-func (oc *OfflineClient) readMethodFile(methodName string, inputToMatch interface{}) (interface{}, bool) {
-	oc.mutex.RLock()
-	defer oc.mutex.RUnlock()
-
-	filename := filepath.Join(oc.dataDir, methodName+".log")
-	file, err := os.Open(filename)
-	if err != nil {
-		log.Debugf("Failed to open method file %s: %v", filename, err)
-		return nil, false
-	}
-	defer file.Close()
-
-	scanner := json.NewDecoder(file)
-	for scanner.More() {
-		var record ClientCallRecord
-		if err := scanner.Decode(&record); err != nil {
-			log.Errorf("Failed to decode method record: %v", err)
-			continue
-		}
-
-		if record.Method == methodName {
-			// Convert both inputs to JSON for comparison (ignoring queryTime)
-			recordInputJSON, _ := json.Marshal(record.Input)
-			matchInputJSON, _ := json.Marshal(inputToMatch)
-
-			// Simple string comparison for now - could be made more sophisticated
-			if string(recordInputJSON) == string(matchInputJSON) {
-				return record.Output, true
-			}
-		}
-	}
-
-	return nil, false
-}
-
 // GetAllRequestRates implements ClientInterface
 func (oc *OfflineClient) GetAllRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
-	input := map[string]interface{}{
-		"namespace":     namespace,
-		"cluster":       cluster,
-		"ratesInterval": ratesInterval,
-	}
-
-	if output, found := oc.readMethodFile("GetAllRequestRates", input); found {
-		if vector, ok := output.(model.Vector); ok {
-			return vector, nil
-		}
-		// Try to convert from interface{} to model.Vector via JSON
-		if jsonData, err := json.Marshal(output); err == nil {
-			var vector model.Vector
-			if err := json.Unmarshal(jsonData, &vector); err == nil {
-				return vector, nil
-			}
-		}
-	}
-
 	return model.Vector{}, nil
 }
 
 // GetNamespaceServicesRequestRates implements ClientInterface
 func (oc *OfflineClient) GetNamespaceServicesRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
-	input := map[string]interface{}{
-		"namespace":     namespace,
-		"cluster":       cluster,
-		"ratesInterval": ratesInterval,
-	}
-
-	if output, found := oc.readMethodFile("GetNamespaceServicesRequestRates", input); found {
-		if vector, ok := output.(model.Vector); ok {
-			return vector, nil
-		}
-		if jsonData, err := json.Marshal(output); err == nil {
-			var vector model.Vector
-			if err := json.Unmarshal(jsonData, &vector); err == nil {
-				return vector, nil
-			}
-		}
-	}
-
 	return model.Vector{}, nil
 }
 
 // GetServiceRequestRates implements ClientInterface
 func (oc *OfflineClient) GetServiceRequestRates(namespace, cluster, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
-	input := map[string]interface{}{
-		"namespace":     namespace,
-		"cluster":       cluster,
-		"service":       service,
-		"ratesInterval": ratesInterval,
-	}
-
-	if output, found := oc.readMethodFile("GetServiceRequestRates", input); found {
-		if vector, ok := output.(model.Vector); ok {
-			return vector, nil
-		}
-		if jsonData, err := json.Marshal(output); err == nil {
-			var vector model.Vector
-			if err := json.Unmarshal(jsonData, &vector); err == nil {
-				return vector, nil
-			}
-		}
-	}
-
 	return model.Vector{}, nil
 }
 
 // GetAppRequestRates implements ClientInterface
 func (oc *OfflineClient) GetAppRequestRates(namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
-	input := map[string]interface{}{
-		"namespace":     namespace,
-		"cluster":       cluster,
-		"app":           app,
-		"ratesInterval": ratesInterval,
-	}
-
-	if output, found := oc.readMethodFile("GetAppRequestRates", input); found {
-		// The output should be a map with "inbound" and "outbound" keys
-		if outputMap, ok := output.(map[string]interface{}); ok {
-			var inbound, outbound model.Vector
-
-			if inData, exists := outputMap["inbound"]; exists {
-				if jsonData, err := json.Marshal(inData); err == nil {
-					json.Unmarshal(jsonData, &inbound)
-				}
-			}
-
-			if outData, exists := outputMap["outbound"]; exists {
-				if jsonData, err := json.Marshal(outData); err == nil {
-					json.Unmarshal(jsonData, &outbound)
-				}
-			}
-
-			return inbound, outbound, nil
-		}
-	}
-
 	return model.Vector{}, model.Vector{}, nil
 }
 
 // GetWorkloadRequestRates implements ClientInterface
 func (oc *OfflineClient) GetWorkloadRequestRates(namespace, cluster, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
-	input := map[string]interface{}{
-		"namespace":     namespace,
-		"cluster":       cluster,
-		"workload":      workload,
-		"ratesInterval": ratesInterval,
-	}
-
-	if output, found := oc.readMethodFile("GetWorkloadRequestRates", input); found {
-		if outputMap, ok := output.(map[string]interface{}); ok {
-			var inbound, outbound model.Vector
-
-			if inData, exists := outputMap["inbound"]; exists {
-				if jsonData, err := json.Marshal(inData); err == nil {
-					json.Unmarshal(jsonData, &inbound)
-				}
-			}
-
-			if outData, exists := outputMap["outbound"]; exists {
-				if jsonData, err := json.Marshal(outData); err == nil {
-					json.Unmarshal(jsonData, &outbound)
-				}
-			}
-
-			return inbound, outbound, nil
-		}
-	}
-
 	return model.Vector{}, model.Vector{}, nil
 }
 
@@ -525,11 +312,11 @@ type ClientInterface interface {
 // Client for Prometheus API.
 // It hides the way we query Prometheus offering a layer with a high level defined API.
 type Client struct {
+	conf *config.Config
 	ClientInterface
-	p8s            api.Client
-	api            prom_v1.API
-	ctx            context.Context
-	clientRecorder *ClientRecorder
+	p8s api.Client
+	api prom_v1.API
+	ctx context.Context
 }
 
 var (
@@ -554,8 +341,7 @@ func NewClient() (*Client, error) {
 
 // NewClientForConfig creates a new client to the Prometheus API.
 // It returns an error on any problem.
-// If methodRecordingDir is provided, all method calls will be recorded to files in that directory.
-func NewClientForConfig(conf config.Config, methodRecordingDir ...string) (*Client, error) {
+func NewClientForConfig(conf config.Config) (*Client, error) {
 	cfg := conf.ExternalServices.Prometheus
 	clientConfig := api.Config{Address: cfg.URL}
 
@@ -608,22 +394,12 @@ func NewClientForConfig(conf config.Config, methodRecordingDir ...string) (*Clie
 	}
 
 	api := prom_v1.NewAPI(p8s)
-	if conf.RunMode == config.RunModeLocal {
-		zl.Info().Msgf("Using QueryRecorder for local mode")
-		api = NewQueryRecorder(api, queryLogFile)
-	}
-
-	// Create method recorder if directory is provided
-	var methodRecorder *ClientRecorder
-	if len(methodRecordingDir) > 0 && methodRecordingDir[0] != "" {
-		methodRecorder = NewClientRecorder(methodRecordingDir[0])
-	}
 
 	client := Client{
-		p8s:            p8s,
-		api:            api,
-		ctx:            ctx,
-		clientRecorder: methodRecorder,
+		conf: &conf,
+		p8s:  p8s,
+		api:  api,
+		ctx:  ctx,
 	}
 	return &client, nil
 }
@@ -639,14 +415,11 @@ func (in *Client) Inject(api prom_v1.API) {
 // (e.g total rates / error rates).
 // Returns (rates, error)
 func (in *Client) GetAllRequestRates(namespace, cluster string, ratesInterval string, queryTime time.Time) (model.Vector, error) {
-	log.FromContext(in.ctx).Trace().Msgf("GetAllRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
-
-	// Record method input
-	input := map[string]interface{}{
-		"namespace":     namespace,
-		"cluster":       cluster,
-		"ratesInterval": ratesInterval,
+	if in.conf.RunMode == config.RunModeOffline {
+		return model.Vector{}, nil
 	}
+
+	log.FromContext(in.ctx).Trace().Msgf("GetAllRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
 
 	var result model.Vector
 	var err error
@@ -664,11 +437,6 @@ func (in *Client) GetAllRequestRates(namespace, cluster string, ratesInterval st
 		}
 	}
 
-	// Record method call
-	if err == nil {
-		in.clientRecorder.writeToFile("GetAllRequestRates", input, result)
-	}
-
 	return result, err
 }
 
@@ -678,14 +446,11 @@ func (in *Client) GetAllRequestRates(namespace, cluster string, ratesInterval st
 // (e.g total rates / error rates).
 // Returns (rates, error)
 func (in *Client) GetNamespaceServicesRequestRates(namespace, cluster string, ratesInterval string, queryTime time.Time) (model.Vector, error) {
-	log.FromContext(in.ctx).Trace().Msgf("GetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
-
-	// Record method input
-	input := map[string]interface{}{
-		"namespace":     namespace,
-		"cluster":       cluster,
-		"ratesInterval": ratesInterval,
+	if in.conf.RunMode == config.RunModeOffline {
+		return model.Vector{}, nil
 	}
+
+	log.FromContext(in.ctx).Trace().Msgf("GetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
 
 	var result model.Vector
 	var err error
@@ -703,11 +468,6 @@ func (in *Client) GetNamespaceServicesRequestRates(namespace, cluster string, ra
 		}
 	}
 
-	// Record method call
-	if err == nil {
-		in.clientRecorder.writeToFile("GetNamespaceServicesRequestRates", input, result)
-	}
-
 	return result, err
 }
 
@@ -717,15 +477,11 @@ func (in *Client) GetNamespaceServicesRequestRates(namespace, cluster string, ra
 // (e.g total rates / error rates).
 // Returns (in, error)
 func (in *Client) GetServiceRequestRates(namespace, cluster, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
-	log.FromContext(in.ctx).Trace().Msgf("GetServiceRequestRates [namespace: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, service, ratesInterval, queryTime.String())
-
-	// Record method input
-	input := map[string]interface{}{
-		"namespace":     namespace,
-		"cluster":       cluster,
-		"service":       service,
-		"ratesInterval": ratesInterval,
+	if in.conf.RunMode == config.RunModeOffline {
+		return model.Vector{}, nil
 	}
+
+	log.FromContext(in.ctx).Trace().Msgf("GetServiceRequestRates [namespace: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, service, ratesInterval, queryTime.String())
 
 	var result model.Vector
 	var err error
@@ -743,11 +499,6 @@ func (in *Client) GetServiceRequestRates(namespace, cluster, service, ratesInter
 		}
 	}
 
-	// Record method call
-	if err == nil {
-		in.clientRecorder.writeToFile("GetServiceRequestRates", input, result)
-	}
-
 	return result, err
 }
 
@@ -757,15 +508,11 @@ func (in *Client) GetServiceRequestRates(namespace, cluster, service, ratesInter
 // (e.g total rates / error rates).
 // Returns (in, out, error)
 func (in *Client) GetAppRequestRates(namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
-	log.FromContext(in.ctx).Trace().Msgf("GetAppRequestRates [namespace: %s] [cluster: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, app, ratesInterval, queryTime.String())
-
-	// Record method input
-	input := map[string]interface{}{
-		"namespace":     namespace,
-		"cluster":       cluster,
-		"app":           app,
-		"ratesInterval": ratesInterval,
+	if in.conf.RunMode == config.RunModeOffline {
+		return model.Vector{}, model.Vector{}, nil
 	}
+
+	log.FromContext(in.ctx).Trace().Msgf("GetAppRequestRates [namespace: %s] [cluster: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, app, ratesInterval, queryTime.String())
 
 	var inResult, outResult model.Vector
 	var err error
@@ -783,15 +530,6 @@ func (in *Client) GetAppRequestRates(namespace, cluster, app, ratesInterval stri
 		}
 	}
 
-	// Record method call
-	if err == nil {
-		output := map[string]interface{}{
-			"inbound":  inResult,
-			"outbound": outResult,
-		}
-		in.clientRecorder.writeToFile("GetAppRequestRates", input, output)
-	}
-
 	return inResult, outResult, err
 }
 
@@ -801,15 +539,11 @@ func (in *Client) GetAppRequestRates(namespace, cluster, app, ratesInterval stri
 // (e.g total rates / error rates).
 // Returns (in, out, error)
 func (in *Client) GetWorkloadRequestRates(namespace, cluster, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
-	log.FromContext(in.ctx).Trace().Msgf("GetWorkloadRequestRates [namespace: %s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, workload, ratesInterval, queryTime.String())
-
-	// Record method input
-	input := map[string]interface{}{
-		"namespace":     namespace,
-		"cluster":       cluster,
-		"workload":      workload,
-		"ratesInterval": ratesInterval,
+	if in.conf.RunMode == config.RunModeOffline {
+		return model.Vector{}, model.Vector{}, nil
 	}
+
+	log.FromContext(in.ctx).Trace().Msgf("GetWorkloadRequestRates [namespace: %s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, workload, ratesInterval, queryTime.String())
 
 	var inResult, outResult model.Vector
 	var err error
@@ -825,15 +559,6 @@ func (in *Client) GetWorkloadRequestRates(namespace, cluster, workload, ratesInt
 		if err == nil && promCache != nil {
 			promCache.SetWorkloadRequestRates(namespace, cluster, workload, ratesInterval, queryTime, inResult, outResult)
 		}
-	}
-
-	// Record method call
-	if err == nil {
-		output := map[string]interface{}{
-			"inbound":  inResult,
-			"outbound": outResult,
-		}
-		in.clientRecorder.writeToFile("GetWorkloadRequestRates", input, output)
 	}
 
 	return inResult, outResult, err

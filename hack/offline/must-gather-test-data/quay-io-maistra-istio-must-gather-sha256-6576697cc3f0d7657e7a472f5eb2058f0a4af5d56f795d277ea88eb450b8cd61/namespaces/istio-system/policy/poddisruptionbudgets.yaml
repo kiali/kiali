@@ -1,0 +1,111 @@
+---
+apiVersion: policy/v1
+items:
+- apiVersion: policy/v1
+  kind: PodDisruptionBudget
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: default-istiod
+      meta.helm.sh/release-namespace: istio-system
+    creationTimestamp: "2025-07-15T19:28:11Z"
+    generation: 1
+    labels:
+      app: istiod
+      app.kubernetes.io/instance: default-istiod
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: istiod
+      app.kubernetes.io/part-of: istio
+      app.kubernetes.io/version: 1.26.2
+      helm.sh/chart: istiod-1.26.2
+      istio: pilot
+      istio.io/rev: default
+      managed-by: sail-operator
+      operator.istio.io/component: Pilot
+      release: default-istiod
+    managedFields:
+    - apiVersion: policy/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:meta.helm.sh/release-name: {}
+            f:meta.helm.sh/release-namespace: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:app.kubernetes.io/instance: {}
+            f:app.kubernetes.io/managed-by: {}
+            f:app.kubernetes.io/name: {}
+            f:app.kubernetes.io/part-of: {}
+            f:app.kubernetes.io/version: {}
+            f:helm.sh/chart: {}
+            f:istio: {}
+            f:istio.io/rev: {}
+            f:managed-by: {}
+            f:operator.istio.io/component: {}
+            f:release: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"7dcc2e5a-4806-4fbb-b8c7-d8ff38160463"}: {}
+        f:spec:
+          f:minAvailable: {}
+          f:selector: {}
+      manager: sail-operator
+      operation: Update
+      time: "2025-07-15T19:28:11Z"
+    - apiVersion: policy/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:conditions:
+            .: {}
+            k:{"type":"DisruptionAllowed"}:
+              .: {}
+              f:lastTransitionTime: {}
+              f:message: {}
+              f:observedGeneration: {}
+              f:reason: {}
+              f:status: {}
+              f:type: {}
+          f:currentHealthy: {}
+          f:desiredHealthy: {}
+          f:expectedPods: {}
+          f:observedGeneration: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:28:17Z"
+    name: istiod
+    namespace: istio-system
+    ownerReferences:
+    - apiVersion: sailoperator.io/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: IstioRevision
+      name: default
+      uid: 7dcc2e5a-4806-4fbb-b8c7-d8ff38160463
+    resourceVersion: "941"
+    uid: 33e45e14-bb7f-4936-9528-76c0943f3042
+  spec:
+    minAvailable: 1
+    selector:
+      matchLabels:
+        app: istiod
+        istio: pilot
+  status:
+    conditions:
+    - lastTransitionTime: "2025-07-15T19:28:11Z"
+      message: ""
+      observedGeneration: 1
+      reason: InsufficientPods
+      status: "False"
+      type: DisruptionAllowed
+    currentHealthy: 1
+    desiredHealthy: 1
+    disruptionsAllowed: 0
+    expectedPods: 1
+    observedGeneration: 1
+kind: PodDisruptionBudgetList
+metadata:
+  resourceVersion: "5060"

@@ -1,0 +1,53 @@
+2025-07-15T19:28:30.304518515Z 2025/07/15 19:28:30 maxprocs: Leaving GOMAXPROCS=16: CPU quota undefined
+2025-07-15T19:28:30.308692603Z 
+2025-07-15T19:28:30.308699973Z *******************************************************************************
+2025-07-15T19:28:30.308702423Z 
+2025-07-15T19:28:30.308704693Z 🛑  WARNING: End-of-life Notice for Jaeger v1
+2025-07-15T19:28:30.308706653Z 
+2025-07-15T19:28:30.308708203Z You are currently running a v1 version of Jaeger, which is deprecated and will
+2025-07-15T19:28:30.308709813Z reach end-of-life on December 31st, 2025. This means there will be no further
+2025-07-15T19:28:30.308711353Z development, bug fixes, or security patches for v1 after this date.
+2025-07-15T19:28:30.308712783Z 
+2025-07-15T19:28:30.308714313Z We strongly recommend migrating to Jaeger v2 for continued support and access
+2025-07-15T19:28:30.308715843Z to new features.
+2025-07-15T19:28:30.308717243Z 
+2025-07-15T19:28:30.308718743Z For detailed migration instructions, please refer to the official Jaeger
+2025-07-15T19:28:30.308720293Z documentation:  https://www.jaegertracing.io/docs/latest/migration/
+2025-07-15T19:28:30.308721723Z 
+2025-07-15T19:28:30.308723293Z Tracking issue: https://github.com/jaegertracing/jaeger/issues/6321
+2025-07-15T19:28:30.308724663Z 
+2025-07-15T19:28:30.308726183Z 🛑  WARNING: End-of-life Notice for Jaeger v1
+2025-07-15T19:28:30.308727593Z 
+2025-07-15T19:28:30.308729113Z *******************************************************************************
+2025-07-15T19:28:30.308730503Z 
+2025-07-15T19:28:30.308798783Z 2025/07/15 19:28:30 application version: git-commit=6037db24b5e11e19c6483f71b75228544a5c3860, git-version=v1.67.0, build-date=2025-03-08T05:34:31Z
+2025-07-15T19:28:30.309239456Z {"level":"info","ts":1752607710.3092074,"caller":"flags/service.go:123","msg":"Mounting metrics handler on admin server","route":"/metrics"}
+2025-07-15T19:28:30.309246766Z {"level":"info","ts":1752607710.309235,"caller":"flags/service.go:129","msg":"Mounting expvar handler on admin server","route":"/debug/vars"}
+2025-07-15T19:28:30.309371437Z {"level":"info","ts":1752607710.309354,"caller":"flags/admin.go:106","msg":"Mounting health check on admin server","route":"/"}
+2025-07-15T19:28:30.309419857Z {"level":"info","ts":1752607710.3094044,"caller":"flags/admin.go:123","msg":"Starting admin HTTP server"}
+2025-07-15T19:28:30.309468858Z {"level":"info","ts":1752607710.3094518,"caller":"flags/admin.go:137","msg":"Admin server started","http.host-port":"[::]:14269","health-status":"unavailable"}
+2025-07-15T19:28:30.309572268Z {"level":"info","ts":1752607710.309546,"caller":"grpc@v1.71.0/clientconn.go:176","msg":"[core] original dial target is: \"localhost:4317\""}
+2025-07-15T19:28:30.309579959Z {"level":"info","ts":1752607710.309566,"caller":"grpc@v1.71.0/clientconn.go:459","msg":"[core] [Channel #1]Channel created"}
+2025-07-15T19:28:30.309597599Z {"level":"info","ts":1752607710.3095808,"caller":"grpc@v1.71.0/clientconn.go:207","msg":"[core] [Channel #1]parsed dial target is: resolver.Target{URL:url.URL{Scheme:\"dns\", Opaque:\"\", User:(*url.Userinfo)(nil), Host:\"\", Path:\"/localhost:4317\", RawPath:\"\", OmitHost:false, ForceQuery:false, RawQuery:\"\", Fragment:\"\", RawFragment:\"\"}}"}
+2025-07-15T19:28:30.309600199Z {"level":"info","ts":1752607710.3095872,"caller":"grpc@v1.71.0/clientconn.go:208","msg":"[core] [Channel #1]Channel authority set to \"localhost:4317\""}
+2025-07-15T19:28:30.313858927Z badger 2025/07/15 19:28:30 INFO: All 0 tables opened in 0s
+2025-07-15T19:28:30.314392671Z badger 2025/07/15 19:28:30 INFO: Discard stats nextEmptySlot: 0
+2025-07-15T19:28:30.314401051Z badger 2025/07/15 19:28:30 INFO: Set nextTxnTs to 0
+2025-07-15T19:28:30.314760773Z {"level":"info","ts":1752607710.3146188,"caller":"badger/factory.go:160","msg":"Badger storage configuration","configuration":{"Dir":"/badger/key","ValueDir":"/badger/data","SyncWrites":false,"NumVersionsToKeep":1,"ReadOnly":false,"Logger":{},"Compression":1,"InMemory":false,"MetricsEnabled":true,"NumGoroutines":8,"MemTableSize":67108864,"BaseTableSize":2097152,"BaseLevelSize":10485760,"LevelSizeMultiplier":10,"TableSizeMultiplier":2,"MaxLevels":7,"VLogPercentile":0,"ValueThreshold":1048576,"NumMemtables":5,"BlockSize":4096,"BloomFalsePositive":0.01,"BlockCacheSize":268435456,"IndexCacheSize":0,"NumLevelZeroTables":5,"NumLevelZeroTablesStall":15,"ValueLogFileSize":1073741823,"ValueLogMaxEntries":1000000,"NumCompactors":4,"CompactL0OnClose":false,"LmaxCompaction":false,"ZSTDCompressionLevel":1,"VerifyValueChecksum":false,"EncryptionKey":"","EncryptionKeyRotationDuration":864000000000000,"BypassLockGuard":false,"ChecksumVerificationMode":0,"DetectConflicts":true,"NamespaceOffset":-1,"ExternalMagicVersion":0}}
+2025-07-15T19:28:30.318470308Z {"level":"info","ts":1752607710.3184056,"caller":"grpc@v1.71.0/server.go:690","msg":"[core] [Server #2]Server created"}
+2025-07-15T19:28:30.318526598Z {"level":"info","ts":1752607710.3185067,"caller":"server/grpc.go:75","msg":"Starting jaeger-collector gRPC server","grpc.host-port":"[::]:14250"}
+2025-07-15T19:28:30.318543888Z {"level":"info","ts":1752607710.31852,"caller":"server/http.go:37","msg":"Starting jaeger-collector HTTP server","host-port":":14268"}
+2025-07-15T19:28:30.318803850Z {"level":"info","ts":1752607710.3187702,"caller":"handler/otlp_receiver.go:68","msg":"OTLP receiver status change","status":"StatusStarting"}
+2025-07-15T19:28:30.318814060Z {"level":"info","ts":1752607710.3187914,"caller":"grpc@v1.71.0/server.go:690","msg":"[core] [Server #3]Server created"}
+2025-07-15T19:28:30.318835740Z {"level":"info","ts":1752607710.3188014,"caller":"otlpreceiver@v0.121.0/otlp.go:116","msg":"Starting GRPC server","endpoint":":4317"}
+2025-07-15T19:28:30.318897331Z {"level":"info","ts":1752607710.3188722,"caller":"otlpreceiver@v0.121.0/otlp.go:173","msg":"Starting HTTP server","endpoint":":4318"}
+2025-07-15T19:28:30.318932411Z {"level":"info","ts":1752607710.318907,"caller":"app/flags.go:168","msg":"Archive storage not initialized"}
+2025-07-15T19:28:30.318966261Z {"level":"info","ts":1752607710.318947,"caller":"grpc@v1.71.0/server.go:690","msg":"[core] [Server #4]Server created"}
+2025-07-15T19:28:30.319015351Z {"level":"info","ts":1752607710.318977,"caller":"grpc@v1.71.0/server.go:886","msg":"[core] [Server #3 ListenSocket #5]ListenSocket created"}
+2025-07-15T19:28:30.319030042Z {"level":"info","ts":1752607710.319006,"caller":"grpc@v1.71.0/server.go:886","msg":"[core] [Server #2 ListenSocket #6]ListenSocket created"}
+2025-07-15T19:28:30.319359734Z {"level":"info","ts":1752607710.3193388,"caller":"app/static_handler.go:92","msg":"Using UI configuration","path":""}
+2025-07-15T19:28:30.319462274Z {"level":"info","ts":1752607710.3194318,"caller":"app/server.go:257","msg":"Query server started","http_addr":"[::]:16686","grpc_addr":"[::]:16685"}
+2025-07-15T19:28:30.319470934Z {"level":"info","ts":1752607710.319451,"caller":"healthcheck/handler.go:118","msg":"Health Check state change","status":"ready"}
+2025-07-15T19:28:30.319475834Z {"level":"info","ts":1752607710.3194616,"caller":"app/server.go:299","msg":"Starting GRPC server","port":16685,"addr":":16685"}
+2025-07-15T19:28:30.319477884Z {"level":"info","ts":1752607710.31946,"caller":"app/server.go:285","msg":"Starting HTTP server","port":16686,"addr":":16686"}
+2025-07-15T19:28:30.319510705Z {"level":"info","ts":1752607710.3194914,"caller":"grpc@v1.71.0/server.go:886","msg":"[core] [Server #4 ListenSocket #7]ListenSocket created"}

@@ -1,0 +1,230 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+  creationTimestamp: "2025-07-15T19:27:48Z"
+  generation: 1
+  managedFields:
+  - apiVersion: apiextensions.k8s.io/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:controller-gen.kubebuilder.io/version: {}
+      f:spec:
+        f:conversion:
+          .: {}
+          f:strategy: {}
+        f:group: {}
+        f:names:
+          f:categories: {}
+          f:kind: {}
+          f:listKind: {}
+          f:plural: {}
+          f:shortNames: {}
+          f:singular: {}
+        f:scope: {}
+        f:versions: {}
+    manager: helm
+    operation: Update
+    time: "2025-07-15T19:27:48Z"
+  - apiVersion: apiextensions.k8s.io/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:status:
+        f:acceptedNames:
+          f:categories: {}
+          f:kind: {}
+          f:listKind: {}
+          f:plural: {}
+          f:shortNames: {}
+          f:singular: {}
+        f:conditions:
+          k:{"type":"Established"}:
+            .: {}
+            f:lastTransitionTime: {}
+            f:message: {}
+            f:reason: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"NamesAccepted"}:
+            .: {}
+            f:lastTransitionTime: {}
+            f:message: {}
+            f:reason: {}
+            f:status: {}
+            f:type: {}
+    manager: kube-apiserver
+    operation: Update
+    subresource: status
+    time: "2025-07-15T19:27:48Z"
+  name: istiorevisiontags.sailoperator.io
+  resourceVersion: "710"
+  uid: f1c3d613-168d-46fd-a7a1-cc4f3481245a
+spec:
+  conversion:
+    strategy: None
+  group: sailoperator.io
+  names:
+    categories:
+    - istio-io
+    kind: IstioRevisionTag
+    listKind: IstioRevisionTagList
+    plural: istiorevisiontags
+    shortNames:
+    - istiorevtag
+    singular: istiorevisiontag
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - description: The current state of this object.
+      jsonPath: .status.state
+      name: Status
+      type: string
+    - description: Whether the tag is being used by workloads.
+      jsonPath: .status.conditions[?(@.type=="InUse")].status
+      name: In use
+      type: string
+    - description: The IstioRevision this object is referencing.
+      jsonPath: .status.istioRevision
+      name: Revision
+      type: string
+    - description: The age of the object
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: IstioRevisionTag references an Istio or IstioRevision object
+          and serves as an alias for sidecar injection. It can be used to manage stable
+          revision tags without having to use istioctl or helm directly. See https://istio.io/latest/docs/setup/upgrade/canary/#stable-revision-labels
+          for more information on the concept.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: IstioRevisionTagSpec defines the desired state of IstioRevisionTag
+            properties:
+              targetRef:
+                description: IstioRevisionTagTargetReference can reference either
+                  Istio or IstioRevision objects in the cluster. In the case of referencing
+                  an Istio object, the Sail Operator will automatically update the
+                  reference to the Istio object's Active Revision.
+                properties:
+                  kind:
+                    description: Kind is the kind of the target resource.
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  name:
+                    description: Name is the name of the target resource.
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                required:
+                - kind
+                - name
+                type: object
+            required:
+            - targetRef
+            type: object
+          status:
+            description: IstioRevisionStatus defines the observed state of IstioRevision
+            properties:
+              conditions:
+                description: Represents the latest available observations of the object's
+                  current state.
+                items:
+                  description: IstioRevisionCondition represents a specific observation
+                    of the IstioRevision object's state.
+                  properties:
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: Human-readable message indicating details about
+                        the last transition.
+                      type: string
+                    reason:
+                      description: Unique, single-word, CamelCase reason for the condition's
+                        last transition.
+                      type: string
+                    status:
+                      description: The status of this condition. Can be True, False
+                        or Unknown.
+                      type: string
+                    type:
+                      description: The type of this condition.
+                      type: string
+                  type: object
+                type: array
+              istioRevision:
+                description: IstioRevision stores the name of the referenced IstioRevision
+                type: string
+              istiodNamespace:
+                description: IstiodNamespace stores the namespace of the corresponding
+                  Istiod instance
+                type: string
+              observedGeneration:
+                description: |-
+                  ObservedGeneration is the most recent generation observed for this
+                  IstioRevisionTag object. It corresponds to the object's generation, which is
+                  updated on mutation by the API Server. The information in the status
+                  pertains to this particular generation of the object.
+                format: int64
+                type: integer
+              state:
+                description: Reports the current state of the object.
+                type: string
+            required:
+            - istioRevision
+            - istiodNamespace
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    categories:
+    - istio-io
+    kind: IstioRevisionTag
+    listKind: IstioRevisionTagList
+    plural: istiorevisiontags
+    shortNames:
+    - istiorevtag
+    singular: istiorevisiontag
+  conditions:
+  - lastTransitionTime: "2025-07-15T19:27:48Z"
+    message: no conflicts found
+    reason: NoConflicts
+    status: "True"
+    type: NamesAccepted
+  - lastTransitionTime: "2025-07-15T19:27:48Z"
+    message: the initial names have been accepted
+    reason: InitialNamesAccepted
+    status: "True"
+    type: Established
+  storedVersions:
+  - v1

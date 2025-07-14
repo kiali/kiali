@@ -1,0 +1,141 @@
+apiVersion: sailoperator.io/v1
+kind: IstioRevision
+metadata:
+  creationTimestamp: "2025-07-15T19:28:09Z"
+  finalizers:
+  - sailoperator.io/sail-operator
+  generation: 1
+  managedFields:
+  - apiVersion: sailoperator.io/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:finalizers:
+          .: {}
+          v:"sailoperator.io/sail-operator": {}
+        f:ownerReferences:
+          .: {}
+          k:{"uid":"fb711e4d-69cb-4998-a27d-f579dfd8fba4"}: {}
+      f:spec:
+        .: {}
+        f:namespace: {}
+        f:values:
+          .: {}
+          f:defaultRevision: {}
+          f:global:
+            .: {}
+            f:configValidation: {}
+            f:istioNamespace: {}
+            f:meshID: {}
+            f:multiCluster:
+              .: {}
+              f:clusterName: {}
+            f:network: {}
+            f:proxy:
+              .: {}
+              f:resources:
+                .: {}
+                f:requests:
+                  .: {}
+                  f:cpu: {}
+                  f:memory: {}
+            f:proxy_init:
+              .: {}
+              f:resources:
+                .: {}
+                f:requests:
+                  .: {}
+                  f:cpu: {}
+                  f:memory: {}
+          f:meshConfig:
+            .: {}
+            f:enableTracing: {}
+            f:extensionProviders: {}
+          f:pilot:
+            .: {}
+            f:resources:
+              .: {}
+              f:requests:
+                .: {}
+                f:cpu: {}
+                f:memory: {}
+          f:revision: {}
+        f:version: {}
+    manager: sail-operator
+    operation: Update
+    time: "2025-07-15T19:28:09Z"
+  - apiVersion: sailoperator.io/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:status:
+        .: {}
+        f:conditions: {}
+        f:observedGeneration: {}
+        f:state: {}
+    manager: sail-operator
+    operation: Update
+    subresource: status
+    time: "2025-07-15T19:29:12Z"
+  name: default
+  ownerReferences:
+  - apiVersion: sailoperator.io/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Istio
+    name: default
+    uid: fb711e4d-69cb-4998-a27d-f579dfd8fba4
+  resourceVersion: "1468"
+  uid: 7dcc2e5a-4806-4fbb-b8c7-d8ff38160463
+spec:
+  namespace: istio-system
+  values:
+    defaultRevision: ""
+    global:
+      configValidation: true
+      istioNamespace: istio-system
+      meshID: mesh-default
+      multiCluster:
+        clusterName: cluster-default
+      network: network-default
+      proxy:
+        resources:
+          requests:
+            cpu: 1m
+            memory: 1Mi
+      proxy_init:
+        resources:
+          requests:
+            cpu: 1m
+            memory: 1Mi
+    meshConfig:
+      enableTracing: true
+      extensionProviders:
+      - name: otel-tracing
+        opentelemetry:
+          port: 4317
+          service: jaeger-collector.istio-system.svc.cluster.local
+    pilot:
+      resources:
+        requests:
+          cpu: 1m
+          memory: 1Mi
+    revision: ""
+  version: v1.26.2
+status:
+  conditions:
+  - lastTransitionTime: "2025-07-15T19:28:11Z"
+    status: "True"
+    type: Reconciled
+  - lastTransitionTime: "2025-07-15T19:28:22Z"
+    status: "True"
+    type: Ready
+  - lastTransitionTime: "2025-07-15T19:28:11Z"
+    status: "True"
+    type: DependenciesHealthy
+  - lastTransitionTime: "2025-07-15T19:29:12Z"
+    message: Referenced by at least one pod or namespace
+    reason: ReferencedByWorkloads
+    status: "True"
+    type: InUse
+  observedGeneration: 1
+  state: Healthy

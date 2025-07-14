@@ -12,6 +12,7 @@ FRONTEND_AMBIENT="frontend-ambient"
 FRONTEND_PRIMARY_REMOTE="frontend-primary-remote"
 FRONTEND_MULTI_PRIMARY="frontend-multi-primary"
 FRONTEND_TEMPO="frontend-tempo"
+OFFLINE="offline"
 HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
 SETUP_ONLY="false"
@@ -63,8 +64,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ts|--test-suite)
       TEST_SUITE="${2}"
-      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" -a "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ]; then
-        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_PRIMARY_REMOTE}', or '${FRONTEND_MULTI_PRIMARY}', or '${FRONTEND_AMBIENT}' or '${FRONTEND_TEMPO}'"
+      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" -a "${TEST_SUITE}" != "${FRONTEND_TEMPO}" -a "${TEST_SUITE}" != "${OFFLINE}" ]; then
+        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_PRIMARY_REMOTE}', or '${FRONTEND_MULTI_PRIMARY}', or '${FRONTEND_AMBIENT}' or '${FRONTEND_TEMPO}' or '${OFFLINE}'"
         exit 1
       fi
       shift;shift
@@ -97,7 +98,7 @@ Valid command line arguments:
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
     Default: false
-  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_TEMPO}>
+  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_TEMPO}|${OFFLINE}>
     Which test suite to run.
     Default: ${BACKEND}
   -wv|--with-video <true|false>
@@ -515,4 +516,64 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:tracing
   detectRaceConditions
+elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
+  ensureCypressInstalled
+  
+  GOPATH=$(go env GOPATH)
+  # Check if the kiali binary exists
+  if [ -z "${GOPATH}" ]; then
+    echo "ERROR: Unable to determine GOPATH. Please ensure Go is properly installed."
+    exit 1
+  fi
+  
+  if [ ! -f "${GOPATH}/bin/kiali" ]; then
+    echo "ERROR: Kiali binary not found at ${GOPATH}/bin/kiali. Please build the kiali binary first."
+    exit 1
+  fi
+
+  infomsg "Found kiali binary at ${GOPATH}/bin/kiali"
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  # Generate a random port for Kiali server
+  KIALI_PORT=$(shuf -i 8000-9999 -n 1)
+  infomsg "Using random port: ${KIALI_PORT}"
+  
+  # Create temporary config file with random port
+  TEMP_CONFIG=$(mktemp)
+  cp offline-config.yaml "$TEMP_CONFIG"
+  sed -i "s/port: 0/port: ${KIALI_PORT}/" "$TEMP_CONFIG"
+  
+  # Set up cleanup trap to kill the background process and clean up temp file
+  cleanup_kiali() {
+    if [ -n "${KIALI_PID}" ]; then
+      infomsg "Cleaning up kiali process (PID: ${KIALI_PID})"
+      kill ${KIALI_PID} 2>/dev/null || true
+      wait ${KIALI_PID} 2>/dev/null || true
+    fi
+    if [ -f "$TEMP_CONFIG" ]; then
+      rm -f "$TEMP_CONFIG"
+    fi
+  }
+  trap cleanup_kiali EXIT
+
+  # Start kiali in offline mode in the background
+  infomsg "Starting kiali in offline mode with must-gather data on port ${KIALI_PORT}"
+  "${GOPATH}/bin/kiali" offline --data-path hack/offline/must-gather-test-data/ --config "$TEMP_CONFIG" &
+  KIALI_PID=$!
+  
+  # Wait a moment for kiali to start up
+  sleep 5
+
+  # Set up cypress environment variables
+  export CYPRESS_BASE_URL="http://localhost:${KIALI_PORT}"
+  export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
+  export CYPRESS_VIDEO="${WITH_VIDEO}"
+
+  # Run cypress tests for offline mode
+  infomsg "Running cypress tests for offline mode"
+  cd "${SCRIPT_DIR}"/../frontend
+  yarn run cypress:run:offline
 fi

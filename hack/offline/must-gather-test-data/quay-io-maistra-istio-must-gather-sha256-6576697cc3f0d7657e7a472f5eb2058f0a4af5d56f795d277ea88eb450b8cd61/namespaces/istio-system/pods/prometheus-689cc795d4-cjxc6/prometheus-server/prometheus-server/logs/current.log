@@ -1,0 +1,28 @@
+2025-07-15T19:28:37.546036538Z time=2025-07-15T19:28:37.545Z level=INFO source=main.go:687 msg="Starting Prometheus Server" mode=server version="(version=3.2.1, branch=HEAD, revision=804c49d58f3f3784c77c9c8ec17c9062092cae27)"
+2025-07-15T19:28:37.546079658Z time=2025-07-15T19:28:37.545Z level=INFO source=main.go:692 msg="operational information" build_context="(go=go1.23.6, platform=linux/amd64, user=root@42fd9529152a, date=20250226-09:19:49, tags=netgo,builtinassets,stringlabels)" host_details="(Linux 6.1.0-10-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.38-1 (2023-07-14) x86_64 prometheus-689cc795d4-cjxc6 (none))" fd_limits="(soft=1048576, hard=1048576)" vm_limits="(soft=unlimited, hard=unlimited)"
+2025-07-15T19:28:37.546650662Z time=2025-07-15T19:28:37.546Z level=INFO source=main.go:768 msg="Leaving GOMAXPROCS=16: CPU quota undefined" component=automaxprocs
+2025-07-15T19:28:37.547908240Z time=2025-07-15T19:28:37.547Z level=INFO source=web.go:654 msg="Start listening for connections" component=web address=0.0.0.0:9090
+2025-07-15T19:28:37.548257122Z time=2025-07-15T19:28:37.548Z level=INFO source=main.go:1228 msg="Starting TSDB ..."
+2025-07-15T19:28:37.550475067Z time=2025-07-15T19:28:37.550Z level=INFO source=tls_config.go:347 msg="Listening on" component=web address=[::]:9090
+2025-07-15T19:28:37.550479677Z time=2025-07-15T19:28:37.550Z level=INFO source=tls_config.go:350 msg="TLS is disabled." component=web http2=false address=[::]:9090
+2025-07-15T19:28:37.551878176Z time=2025-07-15T19:28:37.551Z level=INFO source=head.go:628 msg="Replaying on-disk memory mappable chunks if any" component=tsdb
+2025-07-15T19:28:37.551899886Z time=2025-07-15T19:28:37.551Z level=INFO source=head.go:715 msg="On-disk memory mappable chunks replay completed" component=tsdb duration=1.23µs
+2025-07-15T19:28:37.551909456Z time=2025-07-15T19:28:37.551Z level=INFO source=head.go:723 msg="Replaying WAL, this may take a while" component=tsdb
+2025-07-15T19:28:37.552312659Z time=2025-07-15T19:28:37.552Z level=INFO source=head.go:795 msg="WAL segment loaded" component=tsdb segment=0 maxSegment=0
+2025-07-15T19:28:37.552318829Z time=2025-07-15T19:28:37.552Z level=INFO source=head.go:832 msg="WAL replay completed" component=tsdb checkpoint_replay_duration=21.38µs wal_replay_duration=379.903µs wbl_replay_duration=160ns chunk_snapshot_load_duration=0s mmap_chunk_replay_duration=1.23µs total_replay_duration=441.223µs
+2025-07-15T19:28:37.553977850Z time=2025-07-15T19:28:37.553Z level=INFO source=main.go:1249 msg="filesystem information" fs_type=EXT4_SUPER_MAGIC
+2025-07-15T19:28:37.553984530Z time=2025-07-15T19:28:37.553Z level=INFO source=main.go:1252 msg="TSDB started"
+2025-07-15T19:28:37.553996360Z time=2025-07-15T19:28:37.553Z level=INFO source=main.go:1437 msg="Loading configuration file" filename=/etc/config/prometheus.yml
+2025-07-15T19:28:37.555379569Z time=2025-07-15T19:28:37.555Z level=INFO source=kubernetes.go:323 msg="Using pod service account via in-cluster config" component="discovery manager scrape" discovery=kubernetes config=kubernetes-apiservers
+2025-07-15T19:28:37.555656921Z time=2025-07-15T19:28:37.555Z level=INFO source=kubernetes.go:323 msg="Using pod service account via in-cluster config" component="discovery manager scrape" discovery=kubernetes config=kubernetes-nodes-cadvisor
+2025-07-15T19:28:37.555793162Z time=2025-07-15T19:28:37.555Z level=INFO source=kubernetes.go:323 msg="Using pod service account via in-cluster config" component="discovery manager scrape" discovery=kubernetes config=kubernetes-pods
+2025-07-15T19:28:37.555925813Z time=2025-07-15T19:28:37.555Z level=INFO source=kubernetes.go:323 msg="Using pod service account via in-cluster config" component="discovery manager scrape" discovery=kubernetes config=prometheus-pushgateway
+2025-07-15T19:28:37.556301886Z time=2025-07-15T19:28:37.556Z level=INFO source=main.go:1476 msg="updated GOGC" old=100 new=75
+2025-07-15T19:28:37.556327696Z time=2025-07-15T19:28:37.556Z level=INFO source=main.go:1486 msg="Completed loading of configuration file" db_storage=720ns remote_storage=1.29µs web_handler=230ns query_engine=430ns scrape=196.432µs scrape_sd=775.235µs notify=1.19µs notify_sd=460ns rules=200.961µs tracing=7.09µs filename=/etc/config/prometheus.yml totalDuration=2.317816ms
+2025-07-15T19:28:37.556778609Z time=2025-07-15T19:28:37.556Z level=INFO source=main.go:1213 msg="Server is ready to receive web requests."
+2025-07-15T19:28:37.558333569Z time=2025-07-15T19:28:37.556Z level=INFO source=manager.go:175 msg="Starting rule manager..." component="rule manager"
+2025-07-15T19:28:37.563508334Z time=2025-07-15T19:28:37.563Z level=INFO source=warnings.go:70 msg="v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice" component=k8s_client_runtime
+2025-07-15T19:28:37.563966337Z time=2025-07-15T19:28:37.563Z level=INFO source=warnings.go:70 msg="v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice" component=k8s_client_runtime
+2025-07-15T19:31:22.899323121Z time=2025-07-15T19:31:22.899Z level=INFO source=main.go:1437 msg="Loading configuration file" filename=/etc/config/prometheus.yml
+2025-07-15T19:31:22.901183881Z time=2025-07-15T19:31:22.901Z level=INFO source=main.go:1486 msg="Completed loading of configuration file" db_storage=1.26µs remote_storage=1.37µs web_handler=560ns query_engine=770ns scrape=647.623µs scrape_sd=61.351µs notify=980ns notify_sd=470ns rules=75.53µs tracing=2.97µs filename=/etc/config/prometheus.yml totalDuration=1.924961ms
+2025-07-15T19:36:32.566177789Z time=2025-07-15T19:36:32.566Z level=INFO source=warnings.go:70 msg="v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice" component=k8s_client_runtime

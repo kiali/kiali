@@ -1,0 +1,365 @@
+---
+apiVersion: discovery.k8s.io/v1
+items:
+- addressType: IPv4
+  apiVersion: discovery.k8s.io/v1
+  endpoints:
+  - addresses:
+    - 10.244.1.15
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: bookinfo-gateway-istio-5d8d9854cc-5zkrd
+      namespace: bookinfo
+      uid: 3dfe13c1-c017-4ad4-822d-20f0ff444249
+  kind: EndpointSlice
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:14Z"
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    generateName: bookinfo-gateway-istio-
+    generation: 3
+    labels:
+      endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
+      gateway.istio.io/managed: istio.io-gateway-controller
+      gateway.networking.k8s.io/gateway-name: bookinfo-gateway
+      kubernetes.io/service-name: bookinfo-gateway-istio
+    managedFields:
+    - apiVersion: discovery.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:addressType: {}
+        f:endpoints: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:endpointslice.kubernetes.io/managed-by: {}
+            f:gateway.istio.io/managed: {}
+            f:gateway.networking.k8s.io/gateway-name: {}
+            f:kubernetes.io/service-name: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"8c75145b-27e5-4c54-9060-d5b70218bb83"}: {}
+        f:ports: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:14Z"
+    name: bookinfo-gateway-istio-ngdc7
+    namespace: bookinfo
+    ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Service
+      name: bookinfo-gateway-istio
+      uid: 8c75145b-27e5-4c54-9060-d5b70218bb83
+    resourceVersion: "1522"
+    uid: a49c4167-f72e-40e9-95ae-6ca9d646ffb7
+  ports:
+  - appProtocol: http
+    name: http
+    port: 80
+    protocol: TCP
+  - appProtocol: tcp
+    name: status-port
+    port: 15021
+    protocol: TCP
+- addressType: IPv4
+  apiVersion: discovery.k8s.io/v1
+  endpoints:
+  - addresses:
+    - 10.244.1.9
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: details-v1-766844796b-r6b8z
+      namespace: bookinfo
+      uid: fc06ee68-ae00-471f-8198-36aabd24d027
+  kind: EndpointSlice
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:26Z"
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    generateName: details-
+    generation: 3
+    labels:
+      app: details
+      endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
+      kubernetes.io/service-name: details
+      service: details
+    managedFields:
+    - apiVersion: discovery.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:addressType: {}
+        f:endpoints: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpointslice.kubernetes.io/managed-by: {}
+            f:kubernetes.io/service-name: {}
+            f:service: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"1d4ead18-fa47-4d3f-9d57-863e68c48b16"}: {}
+        f:ports: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:26Z"
+    name: details-vt5x5
+    namespace: bookinfo
+    ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Service
+      name: details
+      uid: 1d4ead18-fa47-4d3f-9d57-863e68c48b16
+    resourceVersion: "1585"
+    uid: 14843398-8cd3-449b-9698-e413af217c56
+  ports:
+  - name: http
+    port: 9080
+    protocol: TCP
+- addressType: IPv4
+  apiVersion: discovery.k8s.io/v1
+  endpoints:
+  - addresses:
+    - 10.244.1.14
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: productpage-v1-54bb874995-7t6fg
+      namespace: bookinfo
+      uid: 4d93c869-1bd3-4972-b2f1-b6609ce75abc
+  kind: EndpointSlice
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:35Z"
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    generateName: productpage-
+    generation: 3
+    labels:
+      app: productpage
+      endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
+      kubernetes.io/service-name: productpage
+      service: productpage
+    managedFields:
+    - apiVersion: discovery.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:addressType: {}
+        f:endpoints: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpointslice.kubernetes.io/managed-by: {}
+            f:kubernetes.io/service-name: {}
+            f:service: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"0f55bf21-4dee-48d2-a118-c2a6bfe3ff68"}: {}
+        f:ports: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:35Z"
+    name: productpage-d5bmn
+    namespace: bookinfo
+    ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Service
+      name: productpage
+      uid: 0f55bf21-4dee-48d2-a118-c2a6bfe3ff68
+    resourceVersion: "1662"
+    uid: 044ba7ab-f232-4c8a-9b07-0131b11b4098
+  ports:
+  - name: http
+    port: 9080
+    protocol: TCP
+- addressType: IPv4
+  apiVersion: discovery.k8s.io/v1
+  endpoints:
+  - addresses:
+    - 10.244.1.10
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: ratings-v1-5dc79b6bcd-pncl2
+      namespace: bookinfo
+      uid: 238431f3-bb96-4423-8749-5052f5b3c2bb
+  kind: EndpointSlice
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:30Z"
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    generateName: ratings-
+    generation: 3
+    labels:
+      app: ratings
+      endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
+      kubernetes.io/service-name: ratings
+      service: ratings
+    managedFields:
+    - apiVersion: discovery.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:addressType: {}
+        f:endpoints: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpointslice.kubernetes.io/managed-by: {}
+            f:kubernetes.io/service-name: {}
+            f:service: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"c080fdbd-fcbe-4961-bd49-b82d39a648bf"}: {}
+        f:ports: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:30Z"
+    name: ratings-w5f9s
+    namespace: bookinfo
+    ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Service
+      name: ratings
+      uid: c080fdbd-fcbe-4961-bd49-b82d39a648bf
+    resourceVersion: "1619"
+    uid: 8a0477c8-032e-4b8a-abc4-c8a0364964ef
+  ports:
+  - name: http
+    port: 9080
+    protocol: TCP
+- addressType: IPv4
+  apiVersion: discovery.k8s.io/v1
+  endpoints:
+  - addresses:
+    - 10.244.1.11
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: reviews-v1-598b896c9d-cxrv2
+      namespace: bookinfo
+      uid: 77a15ddb-21d9-40e4-a280-6296b00f31f4
+  - addresses:
+    - 10.244.1.12
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: reviews-v2-556d6457d-4dddd
+      namespace: bookinfo
+      uid: 68d898d1-63d3-4f1d-9938-398f2a7c0f62
+  - addresses:
+    - 10.244.1.13
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: reviews-v3-564544b4d6-czsdz
+      namespace: bookinfo
+      uid: fe8daf0f-625b-47a1-85cd-f94b956ae908
+  kind: EndpointSlice
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:32Z"
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    generateName: reviews-
+    generation: 7
+    labels:
+      app: reviews
+      endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
+      kubernetes.io/service-name: reviews
+      service: reviews
+    managedFields:
+    - apiVersion: discovery.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:addressType: {}
+        f:endpoints: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpointslice.kubernetes.io/managed-by: {}
+            f:kubernetes.io/service-name: {}
+            f:service: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"bb491b5f-8dfd-480d-8cdc-7596fddc472d"}: {}
+        f:ports: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:32Z"
+    name: reviews-cpfgb
+    namespace: bookinfo
+    ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Service
+      name: reviews
+      uid: bb491b5f-8dfd-480d-8cdc-7596fddc472d
+    resourceVersion: "1643"
+    uid: 5092cee3-98c8-45bf-8c23-63de43bf2d20
+  ports:
+  - name: http
+    port: 9080
+    protocol: TCP
+kind: EndpointSliceList
+metadata:
+  resourceVersion: "5129"

@@ -1,0 +1,2003 @@
+---
+apiVersion: v1
+items:
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:21Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: grafana-65bfb5f855-c8s4z
+    namespace: istio-system
+    resourceVersion: "994"
+    uid: bbc84074-1766-43c0-8603-bf531e8dba4b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:21Z"
+  message: Successfully assigned istio-system/grafana-65bfb5f855-c8s4z to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:21Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:28:21Z"
+    name: grafana-65bfb5f855-c8s4z.1852836b1aa6686a
+    namespace: istio-system
+    resourceVersion: "1000"
+    uid: 1db6870a-2c75-48a2-b280-3d44e723ae73
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:21Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{grafana}
+    kind: Pod
+    name: grafana-65bfb5f855-c8s4z
+    namespace: istio-system
+    resourceVersion: "997"
+    uid: bbc84074-1766-43c0-8603-bf531e8dba4b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:21Z"
+  message: Pulling image "docker.io/grafana/grafana:11.3.1"
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:21Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:21Z"
+    name: grafana-65bfb5f855-c8s4z.1852836b354e5b11
+    namespace: istio-system
+    resourceVersion: "1036"
+    uid: 787318d8-aeed-476e-8318-6b6cab1027f9
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:28Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{grafana}
+    kind: Pod
+    name: grafana-65bfb5f855-c8s4z
+    namespace: istio-system
+    resourceVersion: "997"
+    uid: bbc84074-1766-43c0-8603-bf531e8dba4b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:28Z"
+  message: 'Successfully pulled image "docker.io/grafana/grafana:11.3.1" in 5.34s
+    (6.594s including waiting). Image size: 132721657 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:28Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:28Z"
+    name: grafana-65bfb5f855-c8s4z.1852836cbe62e742
+    namespace: istio-system
+    resourceVersion: "1122"
+    uid: 97d9215a-d89c-4c32-aa92-d365ce429ad5
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:28Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{grafana}
+    kind: Pod
+    name: grafana-65bfb5f855-c8s4z
+    namespace: istio-system
+    resourceVersion: "997"
+    uid: bbc84074-1766-43c0-8603-bf531e8dba4b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:28Z"
+  message: 'Created container: grafana'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:28Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:28Z"
+    name: grafana-65bfb5f855-c8s4z.1852836cbfa301e6
+    namespace: istio-system
+    resourceVersion: "1123"
+    uid: b58cc03b-a5fe-4738-835d-a9f13bae3286
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:28Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{grafana}
+    kind: Pod
+    name: grafana-65bfb5f855-c8s4z
+    namespace: istio-system
+    resourceVersion: "997"
+    uid: bbc84074-1766-43c0-8603-bf531e8dba4b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:28Z"
+  message: Started container grafana
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:28Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:28Z"
+    name: grafana-65bfb5f855-c8s4z.1852836cc7b31f89
+    namespace: istio-system
+    resourceVersion: "1124"
+    uid: 2ed476dd-0838-4bf9-9c2e-5b2fa79fc1a1
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 2
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:28Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{grafana}
+    kind: Pod
+    name: grafana-65bfb5f855-c8s4z
+    namespace: istio-system
+    resourceVersion: "997"
+    uid: bbc84074-1766-43c0-8603-bf531e8dba4b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:29Z"
+  message: 'Readiness probe failed: Get "http://10.244.1.6:3000/api/health": dial
+    tcp 10.244.1.6:3000: connect: connection refused'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:28Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:29Z"
+    name: grafana-65bfb5f855-c8s4z.1852836cd7a6d17a
+    namespace: istio-system
+    resourceVersion: "1133"
+    uid: 876b9ac0-203d-45e0-8f6b-473015ae7855
+  reason: Unhealthy
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Warning
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:21Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: grafana-65bfb5f855
+    namespace: istio-system
+    resourceVersion: "992"
+    uid: b1150ea4-fb9b-41c0-baa6-6d6a903f2ae4
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:21Z"
+  message: 'Created pod: grafana-65bfb5f855-c8s4z'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:21Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:28:21Z"
+    name: grafana-65bfb5f855.1852836b1a32ac9a
+    namespace: istio-system
+    resourceVersion: "996"
+    uid: b879ed0b-dde5-4baa-b608-836ebc3235bf
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:21Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: grafana
+    namespace: istio-system
+    resourceVersion: "991"
+    uid: e276893d-d3e3-473d-b21a-ea828527cf40
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:21Z"
+  message: Scaled up replica set grafana-65bfb5f855 from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:21Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:28:21Z"
+    name: grafana.1852836b1a025409
+    namespace: istio-system
+    resourceVersion: "993"
+    uid: e9c100bb-9cf9-47ce-9602-30276748fbeb
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:11Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: istiod-58cf6dd64-s4rq9
+    namespace: istio-system
+    resourceVersion: "879"
+    uid: ade0abd0-079a-4f84-9469-e90c99074139
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:11Z"
+  message: Successfully assigned istio-system/istiod-58cf6dd64-s4rq9 to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:11Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:28:11Z"
+    name: istiod-58cf6dd64-s4rq9.18528368ce040729
+    namespace: istio-system
+    resourceVersion: "883"
+    uid: 71ddfd54-98af-4f57-8dec-3fd3dd23f44e
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:11Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{discovery}
+    kind: Pod
+    name: istiod-58cf6dd64-s4rq9
+    namespace: istio-system
+    resourceVersion: "882"
+    uid: ade0abd0-079a-4f84-9469-e90c99074139
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:11Z"
+  message: Pulling image "gcr.io/istio-release/pilot:1.26.2"
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:11Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:11Z"
+    name: istiod-58cf6dd64-s4rq9.18528368e9b91d74
+    namespace: istio-system
+    resourceVersion: "892"
+    uid: 8f80ee98-07fc-41fb-9d2c-e71486c6e00f
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:16Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{discovery}
+    kind: Pod
+    name: istiod-58cf6dd64-s4rq9
+    namespace: istio-system
+    resourceVersion: "882"
+    uid: ade0abd0-079a-4f84-9469-e90c99074139
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:16Z"
+  message: 'Successfully pulled image "gcr.io/istio-release/pilot:1.26.2" in 5.106s
+    (5.106s including waiting). Image size: 77777376 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:16Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:16Z"
+    name: istiod-58cf6dd64-s4rq9.1852836a1a12265c
+    namespace: istio-system
+    resourceVersion: "913"
+    uid: 11210543-f10a-454b-ab5c-f7aad40d1372
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:16Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{discovery}
+    kind: Pod
+    name: istiod-58cf6dd64-s4rq9
+    namespace: istio-system
+    resourceVersion: "882"
+    uid: ade0abd0-079a-4f84-9469-e90c99074139
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:16Z"
+  message: 'Created container: discovery'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:16Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:16Z"
+    name: istiod-58cf6dd64-s4rq9.1852836a1ae97bd8
+    namespace: istio-system
+    resourceVersion: "915"
+    uid: 973e9b64-6221-475c-91d8-ddbdfa9b2b3f
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:16Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{discovery}
+    kind: Pod
+    name: istiod-58cf6dd64-s4rq9
+    namespace: istio-system
+    resourceVersion: "882"
+    uid: ade0abd0-079a-4f84-9469-e90c99074139
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:16Z"
+  message: Started container discovery
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:16Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:16Z"
+    name: istiod-58cf6dd64-s4rq9.1852836a237d7c20
+    namespace: istio-system
+    resourceVersion: "916"
+    uid: 9f0fe5b8-5e44-4729-91ab-f3a60843700d
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:11Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: istiod-58cf6dd64
+    namespace: istio-system
+    resourceVersion: "874"
+    uid: fbc06734-7e1b-4da8-a98d-e9152121de8a
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:11Z"
+  message: 'Created pod: istiod-58cf6dd64-s4rq9'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:11Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:28:11Z"
+    name: istiod-58cf6dd64.18528368cdd57233
+    namespace: istio-system
+    resourceVersion: "880"
+    uid: 60fde465-97c0-4071-ad3f-8e8a70e687f3
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 2
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:11Z"
+  involvedObject:
+    apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    name: istiod
+    namespace: istio-system
+    resourceVersion: "849"
+    uid: 33e45e14-bb7f-4936-9528-76c0943f3042
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:11Z"
+  message: No matching pods found
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:11Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:28:11Z"
+    name: istiod.18528368c7907d4c
+    namespace: istio-system
+    resourceVersion: "857"
+    uid: 8c0c4ff7-e080-408b-8584-9f1b7518ac9b
+  reason: NoPods
+  reportingComponent: controllermanager
+  reportingInstance: ""
+  source:
+    component: controllermanager
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:11Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: istiod
+    namespace: istio-system
+    resourceVersion: "872"
+    uid: 66b74166-3899-4d96-8e8e-33a07794016a
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:11Z"
+  message: Scaled up replica set istiod-58cf6dd64 from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:11Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:28:11Z"
+    name: istiod.18528368cd7f3740
+    namespace: istio-system
+    resourceVersion: "876"
+    uid: da7ad6a4-0e90-47b6-a1bc-f0da2af45243
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 41
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:26Z"
+  involvedObject:
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    name: istiod
+    namespace: istio-system
+    resourceVersion: "873"
+    uid: 08c570e9-5ebd-4834-b0d0-3bf39fdcfba6
+  kind: Event
+  lastTimestamp: "2025-07-15T19:38:26Z"
+  message: 'failed to get cpu utilization: unable to get metrics for resource cpu:
+    unable to fetch metrics from resource metrics API: the server could not find the
+    requested resource (get pods.metrics.k8s.io)'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:26Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:38:26Z"
+    name: istiod.1852836c4be3fb24
+    namespace: istio-system
+    resourceVersion: "4316"
+    uid: 9b46f776-54e6-44ba-8c48-7dbc95cb4b42
+  reason: FailedGetResourceMetric
+  reportingComponent: horizontal-pod-autoscaler
+  reportingInstance: ""
+  source:
+    component: horizontal-pod-autoscaler
+  type: Warning
+- apiVersion: v1
+  count: 12
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:26Z"
+  involvedObject:
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    name: istiod
+    namespace: istio-system
+    resourceVersion: "873"
+    uid: 08c570e9-5ebd-4834-b0d0-3bf39fdcfba6
+  kind: Event
+  lastTimestamp: "2025-07-15T19:31:11Z"
+  message: 'invalid metrics (1 invalid out of 1), first error is: failed to get cpu
+    resource metric value: failed to get cpu utilization: unable to get metrics for
+    resource cpu: unable to fetch metrics from resource metrics API: the server could
+    not find the requested resource (get pods.metrics.k8s.io)'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:26Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:31:11Z"
+    name: istiod.1852836c4c189db9
+    namespace: istio-system
+    resourceVersion: "3176"
+    uid: 9981452e-0490-4f67-a6ed-29cff04dc185
+  reason: FailedComputeMetricsReplicas
+  reportingComponent: horizontal-pod-autoscaler
+  reportingInstance: ""
+  source:
+    component: horizontal-pod-autoscaler
+  type: Warning
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:21Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: jaeger-868fbc75d7-z7z2q
+    namespace: istio-system
+    resourceVersion: "1012"
+    uid: f32d0f73-d754-4ca4-b2b9-3513a397cf89
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:21Z"
+  message: Successfully assigned istio-system/jaeger-868fbc75d7-z7z2q to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:21Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:28:21Z"
+    name: jaeger-868fbc75d7-z7z2q.1852836b30961800
+    namespace: istio-system
+    resourceVersion: "1019"
+    uid: 7a14d108-de1c-4088-98f1-c48d1e32335e
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:21Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{jaeger}
+    kind: Pod
+    name: jaeger-868fbc75d7-z7z2q
+    namespace: istio-system
+    resourceVersion: "1016"
+    uid: f32d0f73-d754-4ca4-b2b9-3513a397cf89
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:21Z"
+  message: Pulling image "docker.io/jaegertracing/all-in-one:1.67.0"
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:21Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:21Z"
+    name: jaeger-868fbc75d7-z7z2q.1852836b4f54ef8f
+    namespace: istio-system
+    resourceVersion: "1038"
+    uid: bc43cd77-6803-4d07-ae93-993866f41e24
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:30Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{jaeger}
+    kind: Pod
+    name: jaeger-868fbc75d7-z7z2q
+    namespace: istio-system
+    resourceVersion: "1016"
+    uid: f32d0f73-d754-4ca4-b2b9-3513a397cf89
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:30Z"
+  message: 'Successfully pulled image "docker.io/jaegertracing/all-in-one:1.67.0"
+    in 2.101s (8.26s including waiting). Image size: 36985222 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:30Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:30Z"
+    name: jaeger-868fbc75d7-z7z2q.1852836d3babcf54
+    namespace: istio-system
+    resourceVersion: "1134"
+    uid: f461aaa5-24ea-4ec7-9576-9ed698899bd7
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:30Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{jaeger}
+    kind: Pod
+    name: jaeger-868fbc75d7-z7z2q
+    namespace: istio-system
+    resourceVersion: "1016"
+    uid: f32d0f73-d754-4ca4-b2b9-3513a397cf89
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:30Z"
+  message: 'Created container: jaeger'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:30Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:30Z"
+    name: jaeger-868fbc75d7-z7z2q.1852836d3c78cf03
+    namespace: istio-system
+    resourceVersion: "1135"
+    uid: d74940e1-e860-4fd5-af24-01b71dabbf9b
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:30Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{jaeger}
+    kind: Pod
+    name: jaeger-868fbc75d7-z7z2q
+    namespace: istio-system
+    resourceVersion: "1016"
+    uid: f32d0f73-d754-4ca4-b2b9-3513a397cf89
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:30Z"
+  message: Started container jaeger
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:30Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:30Z"
+    name: jaeger-868fbc75d7-z7z2q.1852836d433fcd2a
+    namespace: istio-system
+    resourceVersion: "1136"
+    uid: d4fb0e47-cf7f-487f-9efd-ab2467673b85
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:21Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: jaeger-868fbc75d7
+    namespace: istio-system
+    resourceVersion: "1009"
+    uid: 4e052b8f-8dac-4f59-96bc-04bce61e089b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:21Z"
+  message: 'Created pod: jaeger-868fbc75d7-z7z2q'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:21Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:28:21Z"
+    name: jaeger-868fbc75d7.1852836b307116bc
+    namespace: istio-system
+    resourceVersion: "1015"
+    uid: c57a158c-6594-4153-9d88-32bd90c867c6
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:21Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: jaeger
+    namespace: istio-system
+    resourceVersion: "1008"
+    uid: 9f4296df-ae08-42fd-8271-5a3138ee900b
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:21Z"
+  message: Scaled up replica set jaeger-868fbc75d7 from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:21Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:28:21Z"
+    name: jaeger.1852836b304e9ecf
+    namespace: istio-system
+    resourceVersion: "1010"
+    uid: 175f0b8d-933c-44ad-90af-9839918e2629
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:26Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: kiali-68855959f6-wl955
+    namespace: istio-system
+    resourceVersion: "1092"
+    uid: 280a1396-0acd-4da6-876a-1a67fc179ec3
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:26Z"
+  message: Successfully assigned istio-system/kiali-68855959f6-wl955 to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:26Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:28:26Z"
+    name: kiali-68855959f6-wl955.1852836c645a6bfe
+    namespace: istio-system
+    resourceVersion: "1098"
+    uid: e615a76e-732e-4e2b-90a5-3425cdcea4a0
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:27Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{kiali}
+    kind: Pod
+    name: kiali-68855959f6-wl955
+    namespace: istio-system
+    resourceVersion: "1096"
+    uid: 280a1396-0acd-4da6-876a-1a67fc179ec3
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:27Z"
+  message: Container image "localhost/kiali/kiali:dev" already present on machine
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:27Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:27Z"
+    name: kiali-68855959f6-wl955.1852836c83ccb35e
+    namespace: istio-system
+    resourceVersion: "1110"
+    uid: 44cb2c7d-22d3-4574-ae63-37512687967b
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:27Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{kiali}
+    kind: Pod
+    name: kiali-68855959f6-wl955
+    namespace: istio-system
+    resourceVersion: "1096"
+    uid: 280a1396-0acd-4da6-876a-1a67fc179ec3
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:27Z"
+  message: 'Created container: kiali'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:27Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:27Z"
+    name: kiali-68855959f6-wl955.1852836c84951ee5
+    namespace: istio-system
+    resourceVersion: "1111"
+    uid: 9930ebe7-7e31-41ce-bfa2-f796e7c74dec
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:27Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{kiali}
+    kind: Pod
+    name: kiali-68855959f6-wl955
+    namespace: istio-system
+    resourceVersion: "1096"
+    uid: 280a1396-0acd-4da6-876a-1a67fc179ec3
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:27Z"
+  message: Started container kiali
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:27Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:27Z"
+    name: kiali-68855959f6-wl955.1852836c8835a36c
+    namespace: istio-system
+    resourceVersion: "1112"
+    uid: 81646085-3c18-489a-a5e8-411c7dfbf38f
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:26Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: kiali-68855959f6
+    namespace: istio-system
+    resourceVersion: "1091"
+    uid: df77f359-e224-4dc6-8736-ddd1a25a7f69
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:26Z"
+  message: 'Created pod: kiali-68855959f6-wl955'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:26Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:28:26Z"
+    name: kiali-68855959f6.1852836c641b8166
+    namespace: istio-system
+    resourceVersion: "1095"
+    uid: e563b158-d6b4-4314-8213-7b62528b66b7
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:26Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: kiali
+    namespace: istio-system
+    resourceVersion: "1085"
+    uid: c8bc4f38-0459-428e-856e-be124e5769ca
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:26Z"
+  message: Assigned IP ["172.18.255.70"]
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:26Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: controller
+      operation: Update
+      time: "2025-07-15T19:28:26Z"
+    name: kiali.1852836c631bf7bd
+    namespace: istio-system
+    resourceVersion: "1088"
+    uid: 9a9db61e-5621-4e26-bffb-301cff7f101b
+  reason: IPAllocated
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: metallb-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:26Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: kiali
+    namespace: istio-system
+    resourceVersion: "1089"
+    uid: a877ff16-e78a-414c-829c-38db89beaf5d
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:26Z"
+  message: Scaled up replica set kiali-68855959f6 from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:26Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:28:26Z"
+    name: kiali.1852836c63b6fb21
+    namespace: istio-system
+    resourceVersion: "1093"
+    uid: 436440c5-0072-4529-ae28-6803eef7d56e
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:29:06Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Service
+    name: kiali
+    namespace: istio-system
+    resourceVersion: "1104"
+    uid: c8bc4f38-0459-428e-856e-be124e5769ca
+  kind: Event
+  lastTimestamp: "2025-07-15T19:29:06Z"
+  message: announcing from node "ci-worker" with protocol "layer2"
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:06Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: speaker
+      operation: Update
+      time: "2025-07-15T19:29:06Z"
+    name: kiali.18528375caff343e
+    namespace: istio-system
+    resourceVersion: "1279"
+    uid: 6e9454c1-5f41-4eb7-8874-5f9adaedc5db
+  reason: nodeAssigned
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: metallb-speaker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:20Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: prometheus-689cc795d4-cjxc6
+    namespace: istio-system
+    resourceVersion: "972"
+    uid: 94f50f58-a0bb-43ce-b6be-beee145e70e8
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:20Z"
+  message: Successfully assigned istio-system/prometheus-689cc795d4-cjxc6 to ci-worker
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:20Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-scheduler
+      operation: Update
+      time: "2025-07-15T19:28:20Z"
+    name: prometheus-689cc795d4-cjxc6.1852836afff46241
+    namespace: istio-system
+    resourceVersion: "977"
+    uid: a3636f7a-ddcf-4dcf-8013-9a3a5c21a753
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:21Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{prometheus-server-configmap-reload}
+    kind: Pod
+    name: prometheus-689cc795d4-cjxc6
+    namespace: istio-system
+    resourceVersion: "975"
+    uid: 94f50f58-a0bb-43ce-b6be-beee145e70e8
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:21Z"
+  message: Pulling image "ghcr.io/prometheus-operator/prometheus-config-reloader:v0.81.0"
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:21Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:21Z"
+    name: prometheus-689cc795d4-cjxc6.1852836b1babf86e
+    namespace: istio-system
+    resourceVersion: "1005"
+    uid: aaaa1fc4-75da-40a0-bda9-a92dcbd46ee4
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:22Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{prometheus-server-configmap-reload}
+    kind: Pod
+    name: prometheus-689cc795d4-cjxc6
+    namespace: istio-system
+    resourceVersion: "975"
+    uid: 94f50f58-a0bb-43ce-b6be-beee145e70e8
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:22Z"
+  message: 'Successfully pulled image "ghcr.io/prometheus-operator/prometheus-config-reloader:v0.81.0"
+    in 1.684s (1.684s including waiting). Image size: 14433657 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:22Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:22Z"
+    name: prometheus-689cc795d4-cjxc6.1852836b8017f81b
+    namespace: istio-system
+    resourceVersion: "1046"
+    uid: 12bb4126-5a68-4f34-af3f-6d2a53c2129c
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:22Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{prometheus-server-configmap-reload}
+    kind: Pod
+    name: prometheus-689cc795d4-cjxc6
+    namespace: istio-system
+    resourceVersion: "975"
+    uid: 94f50f58-a0bb-43ce-b6be-beee145e70e8
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:22Z"
+  message: 'Created container: prometheus-server-configmap-reload'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:22Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:22Z"
+    name: prometheus-689cc795d4-cjxc6.1852836b80e99138
+    namespace: istio-system
+    resourceVersion: "1048"
+    uid: 2696f2ef-aed3-4fac-aff5-69d0820dc046
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:22Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{prometheus-server-configmap-reload}
+    kind: Pod
+    name: prometheus-689cc795d4-cjxc6
+    namespace: istio-system
+    resourceVersion: "975"
+    uid: 94f50f58-a0bb-43ce-b6be-beee145e70e8
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:22Z"
+  message: Started container prometheus-server-configmap-reload
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:22Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:22Z"
+    name: prometheus-689cc795d4-cjxc6.1852836b89262de8
+    namespace: istio-system
+    resourceVersion: "1050"
+    uid: 127cf0e0-be18-4fd5-ad26-72ebc50cc82d
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:22Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{prometheus-server}
+    kind: Pod
+    name: prometheus-689cc795d4-cjxc6
+    namespace: istio-system
+    resourceVersion: "975"
+    uid: 94f50f58-a0bb-43ce-b6be-beee145e70e8
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:22Z"
+  message: Pulling image "prom/prometheus:v3.2.1"
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:22Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:22Z"
+    name: prometheus-689cc795d4-cjxc6.1852836b89309477
+    namespace: istio-system
+    resourceVersion: "1051"
+    uid: 5d9a1a2e-e20d-4d53-aa1b-596afe8e03e5
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:37Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{prometheus-server}
+    kind: Pod
+    name: prometheus-689cc795d4-cjxc6
+    namespace: istio-system
+    resourceVersion: "975"
+    uid: 94f50f58-a0bb-43ce-b6be-beee145e70e8
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:37Z"
+  message: 'Successfully pulled image "prom/prometheus:v3.2.1" in 7.219s (14.509s
+    including waiting). Image size: 116785353 bytes.'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:37Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:37Z"
+    name: prometheus-689cc795d4-cjxc6.1852836eea0215c4
+    namespace: istio-system
+    resourceVersion: "1174"
+    uid: 632413c5-f015-45ed-b138-05d22f8d528e
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:37Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{prometheus-server}
+    kind: Pod
+    name: prometheus-689cc795d4-cjxc6
+    namespace: istio-system
+    resourceVersion: "975"
+    uid: 94f50f58-a0bb-43ce-b6be-beee145e70e8
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:37Z"
+  message: 'Created container: prometheus-server'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:37Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:37Z"
+    name: prometheus-689cc795d4-cjxc6.1852836eeaa80fbc
+    namespace: istio-system
+    resourceVersion: "1175"
+    uid: 619f67a5-fb41-470f-877b-7b86d15275d8
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:37Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{prometheus-server}
+    kind: Pod
+    name: prometheus-689cc795d4-cjxc6
+    namespace: istio-system
+    resourceVersion: "975"
+    uid: 94f50f58-a0bb-43ce-b6be-beee145e70e8
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:37Z"
+  message: Started container prometheus-server
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:37Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:reportingInstance: {}
+        f:source:
+          f:component: {}
+          f:host: {}
+        f:type: {}
+      manager: kubelet
+      operation: Update
+      time: "2025-07-15T19:28:37Z"
+    name: prometheus-689cc795d4-cjxc6.1852836ef1ec4bb4
+    namespace: istio-system
+    resourceVersion: "1176"
+    uid: b3afa9db-3830-41f0-b504-779a8ea82ba5
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: ci-worker
+  source:
+    component: kubelet
+    host: ci-worker
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:20Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: prometheus-689cc795d4
+    namespace: istio-system
+    resourceVersion: "970"
+    uid: a1705a48-42d8-40fa-af4b-0608cf9d5a9d
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:20Z"
+  message: 'Created pod: prometheus-689cc795d4-cjxc6'
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:20Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:28:20Z"
+    name: prometheus-689cc795d4.1852836affc47b66
+    namespace: istio-system
+    resourceVersion: "974"
+    uid: d7cef6ee-1426-4421-bee5-a6cd2f522c4d
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2025-07-15T19:28:20Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: prometheus
+    namespace: istio-system
+    resourceVersion: "969"
+    uid: 589bbc0e-d296-4b38-91c2-461e68fc6895
+  kind: Event
+  lastTimestamp: "2025-07-15T19:28:20Z"
+  message: Scaled up replica set prometheus-689cc795d4 from 0 to 1
+  metadata:
+    creationTimestamp: "2025-07-15T19:28:20Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:count: {}
+        f:firstTimestamp: {}
+        f:involvedObject: {}
+        f:lastTimestamp: {}
+        f:message: {}
+        f:reason: {}
+        f:reportingComponent: {}
+        f:source:
+          f:component: {}
+        f:type: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:28:20Z"
+    name: prometheus.1852836aff995ca7
+    namespace: istio-system
+    resourceVersion: "971"
+    uid: 9c220b97-1a47-4ae2-8f3b-7afcb04e9d67
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+kind: EventList
+metadata:
+  resourceVersion: "5060"

@@ -1,0 +1,63 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    meta.helm.sh/release-name: default-istiod
+    meta.helm.sh/release-namespace: istio-system
+  creationTimestamp: "2025-07-15T19:28:11Z"
+  labels:
+    app: istio-reader
+    app.kubernetes.io/instance: default-istiod
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: istio-reader
+    app.kubernetes.io/part-of: istio
+    app.kubernetes.io/version: 1.26.2
+    helm.sh/chart: istiod-1.26.2
+    managed-by: sail-operator
+    release: default-istiod
+  managedFields:
+  - apiVersion: rbac.authorization.k8s.io/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:meta.helm.sh/release-name: {}
+          f:meta.helm.sh/release-namespace: {}
+        f:labels:
+          .: {}
+          f:app: {}
+          f:app.kubernetes.io/instance: {}
+          f:app.kubernetes.io/managed-by: {}
+          f:app.kubernetes.io/name: {}
+          f:app.kubernetes.io/part-of: {}
+          f:app.kubernetes.io/version: {}
+          f:helm.sh/chart: {}
+          f:managed-by: {}
+          f:release: {}
+        f:ownerReferences:
+          .: {}
+          k:{"uid":"7dcc2e5a-4806-4fbb-b8c7-d8ff38160463"}: {}
+      f:roleRef: {}
+      f:subjects: {}
+    manager: sail-operator
+    operation: Update
+    time: "2025-07-15T19:28:11Z"
+  name: istio-reader-clusterrole-istio-system
+  ownerReferences:
+  - apiVersion: sailoperator.io/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: IstioRevision
+    name: default
+    uid: 7dcc2e5a-4806-4fbb-b8c7-d8ff38160463
+  resourceVersion: "863"
+  uid: 2054544b-e27a-4943-81e3-b1ac7a1492b4
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: istio-reader-clusterrole-istio-system
+subjects:
+- kind: ServiceAccount
+  name: istio-reader-service-account
+  namespace: istio-system

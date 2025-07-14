@@ -33,6 +33,9 @@ var (
 	remoteClusterContexts []string
 	openBrowser           bool
 	portForwardToPromFlag bool
+	gatherOutputDir       string
+	clusterNameOverrides  []string
+	logLevel              string
 )
 
 func newRootCmd() *cobra.Command {
@@ -47,7 +50,22 @@ func newRootCmd() *cobra.Command {
 		Long: `Kiali is the console for Istio service mesh.
                 Complete documentation is available at http://kiali.io/docs/`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			log.InitializeLogger()
+			var opts []log.Option
+			// Set log level from flag if provided
+			if logLevel != "" {
+				opts = append(opts, log.WithLogLevel(logLevel))
+			}
+
+			// For offline and local colorize the log output.
+			// TODO: Should this go in those commands PreRun?
+			if cmd.Name() == "offline" || cmd.Name() == "local" {
+				opts = append(opts, log.WithColor())
+			}
+			log.InitializeLogger(opts...)
+
+			if log.IsTrace() {
+				outputFlags(cmd)
+			}
 			util.Clock = util.RealClock{}
 
 			// log startup information
@@ -96,6 +114,7 @@ func newRootCmd() *cobra.Command {
 		argConfigFile = flagValue
 		return nil
 	})
+	cmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "", "Log level (trace, debug, info, warn, error, fatal). If not specified, the LOG_LEVEL environment variable will be used.")
 	cmd.AddCommand(newLocalCmd())
 	cmd.AddCommand(newGatherCmd())
 	cmd.AddCommand(newOfflineCmd())

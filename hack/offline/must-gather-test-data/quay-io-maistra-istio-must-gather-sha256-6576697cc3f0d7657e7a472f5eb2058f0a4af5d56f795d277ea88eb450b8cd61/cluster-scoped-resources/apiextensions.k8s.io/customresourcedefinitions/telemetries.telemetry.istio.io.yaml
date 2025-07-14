@@ -1,0 +1,1014 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    helm.sh/resource-policy: keep
+  creationTimestamp: "2025-07-15T19:27:48Z"
+  generation: 1
+  labels:
+    app: istio-pilot
+    chart: istio
+    heritage: Tiller
+    istio: telemetry
+    release: istio
+  managedFields:
+  - apiVersion: apiextensions.k8s.io/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:helm.sh/resource-policy: {}
+        f:labels:
+          .: {}
+          f:app: {}
+          f:chart: {}
+          f:heritage: {}
+          f:istio: {}
+          f:release: {}
+      f:spec:
+        f:conversion:
+          .: {}
+          f:strategy: {}
+        f:group: {}
+        f:names:
+          f:categories: {}
+          f:kind: {}
+          f:listKind: {}
+          f:plural: {}
+          f:shortNames: {}
+          f:singular: {}
+        f:scope: {}
+        f:versions: {}
+    manager: helm
+    operation: Update
+    time: "2025-07-15T19:27:48Z"
+  - apiVersion: apiextensions.k8s.io/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:status:
+        f:acceptedNames:
+          f:categories: {}
+          f:kind: {}
+          f:listKind: {}
+          f:plural: {}
+          f:shortNames: {}
+          f:singular: {}
+        f:conditions:
+          k:{"type":"Established"}:
+            .: {}
+            f:lastTransitionTime: {}
+            f:message: {}
+            f:reason: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"NamesAccepted"}:
+            .: {}
+            f:lastTransitionTime: {}
+            f:message: {}
+            f:reason: {}
+            f:status: {}
+            f:type: {}
+    manager: kube-apiserver
+    operation: Update
+    subresource: status
+    time: "2025-07-15T19:27:48Z"
+  name: telemetries.telemetry.istio.io
+  resourceVersion: "732"
+  uid: 3c254718-17f9-41dd-b1a9-2afbb8fd8b46
+spec:
+  conversion:
+    strategy: None
+  group: telemetry.istio.io
+  names:
+    categories:
+    - istio-io
+    - telemetry-istio-io
+    kind: Telemetry
+    listKind: TelemetryList
+    plural: telemetries
+    shortNames:
+    - telemetry
+    singular: telemetry
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: 'CreationTimestamp is a timestamp representing the server time
+        when this object was created. It is not guaranteed to be set in happens-before
+        order across separate operations. Clients may not set this value. It is represented
+        in RFC3339 form and is in UTC. Populated by the system. Read-only. Null for
+        lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata'
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: 'Telemetry configuration for workloads. See more details
+              at: https://istio.io/docs/reference/config/telemetry.html'
+            properties:
+              accessLogging:
+                description: Optional.
+                items:
+                  properties:
+                    disabled:
+                      description: Controls logging.
+                      nullable: true
+                      type: boolean
+                    filter:
+                      description: Optional.
+                      properties:
+                        expression:
+                          description: CEL expression for selecting when requests/connections
+                            should be logged.
+                          type: string
+                      type: object
+                    match:
+                      description: Allows tailoring of logging behavior to specific
+                        conditions.
+                      properties:
+                        mode:
+                          description: |-
+                            This determines whether or not to apply the access logging configuration based on the direction of traffic relative to the proxied workload.
+
+                            Valid Options: CLIENT_AND_SERVER, CLIENT, SERVER
+                          enum:
+                          - CLIENT_AND_SERVER
+                          - CLIENT
+                          - SERVER
+                          type: string
+                      type: object
+                    providers:
+                      description: Optional.
+                      items:
+                        properties:
+                          name:
+                            description: Required.
+                            minLength: 1
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      type: array
+                  type: object
+                type: array
+              metrics:
+                description: Optional.
+                items:
+                  properties:
+                    overrides:
+                      description: Optional.
+                      items:
+                        properties:
+                          disabled:
+                            description: Optional.
+                            nullable: true
+                            type: boolean
+                          match:
+                            description: Match allows providing the scope of the override.
+                            oneOf:
+                            - not:
+                                anyOf:
+                                - required:
+                                  - metric
+                                - required:
+                                  - customMetric
+                            - required:
+                              - metric
+                            - required:
+                              - customMetric
+                            properties:
+                              customMetric:
+                                description: Allows free-form specification of a metric.
+                                minLength: 1
+                                type: string
+                              metric:
+                                description: |-
+                                  One of the well-known [Istio Standard Metrics](https://istio.io/latest/docs/reference/config/metrics/).
+
+                                  Valid Options: ALL_METRICS, REQUEST_COUNT, REQUEST_DURATION, REQUEST_SIZE, RESPONSE_SIZE, TCP_OPENED_CONNECTIONS, TCP_CLOSED_CONNECTIONS, TCP_SENT_BYTES, TCP_RECEIVED_BYTES, GRPC_REQUEST_MESSAGES, GRPC_RESPONSE_MESSAGES
+                                enum:
+                                - ALL_METRICS
+                                - REQUEST_COUNT
+                                - REQUEST_DURATION
+                                - REQUEST_SIZE
+                                - RESPONSE_SIZE
+                                - TCP_OPENED_CONNECTIONS
+                                - TCP_CLOSED_CONNECTIONS
+                                - TCP_SENT_BYTES
+                                - TCP_RECEIVED_BYTES
+                                - GRPC_REQUEST_MESSAGES
+                                - GRPC_RESPONSE_MESSAGES
+                                type: string
+                              mode:
+                                description: |-
+                                  Controls which mode of metrics generation is selected: `CLIENT`, `SERVER`, or `CLIENT_AND_SERVER`.
+
+                                  Valid Options: CLIENT_AND_SERVER, CLIENT, SERVER
+                                enum:
+                                - CLIENT_AND_SERVER
+                                - CLIENT
+                                - SERVER
+                                type: string
+                            type: object
+                          tagOverrides:
+                            additionalProperties:
+                              properties:
+                                operation:
+                                  description: |-
+                                    Operation controls whether or not to update/add a tag, or to remove it.
+
+                                    Valid Options: UPSERT, REMOVE
+                                  enum:
+                                  - UPSERT
+                                  - REMOVE
+                                  type: string
+                                value:
+                                  description: Value is only considered if the operation
+                                    is `UPSERT`.
+                                  type: string
+                              type: object
+                              x-kubernetes-validations:
+                              - message: value must be set when operation is UPSERT
+                                rule: '((has(self.operation) ? self.operation : "")
+                                  == "UPSERT") ? (self.value != "") : true'
+                              - message: value must not be set when operation is REMOVE
+                                rule: '((has(self.operation) ? self.operation : "")
+                                  == "REMOVE") ? !has(self.value) : true'
+                            description: Optional.
+                            type: object
+                        type: object
+                      type: array
+                    providers:
+                      description: Optional.
+                      items:
+                        properties:
+                          name:
+                            description: Required.
+                            minLength: 1
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      type: array
+                    reportingInterval:
+                      description: Optional.
+                      type: string
+                      x-kubernetes-validations:
+                      - message: must be a valid duration greater than 1ms
+                        rule: duration(self) >= duration('1ms')
+                  type: object
+                type: array
+              selector:
+                description: Optional.
+                properties:
+                  matchLabels:
+                    additionalProperties:
+                      maxLength: 63
+                      type: string
+                      x-kubernetes-validations:
+                      - message: wildcard not allowed in label value match
+                        rule: '!self.contains("*")'
+                    description: One or more labels that indicate a specific set of
+                      pods/VMs on which a policy should be applied.
+                    maxProperties: 4096
+                    type: object
+                    x-kubernetes-validations:
+                    - message: wildcard not allowed in label key match
+                      rule: self.all(key, !key.contains("*"))
+                    - message: key must not be empty
+                      rule: self.all(key, key.size() != 0)
+                type: object
+              targetRef:
+                properties:
+                  group:
+                    description: group is the group of the target resource.
+                    maxLength: 253
+                    pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                    type: string
+                  kind:
+                    description: kind is kind of the target resource.
+                    maxLength: 63
+                    minLength: 1
+                    pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
+                    type: string
+                  name:
+                    description: name is the name of the target resource.
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  namespace:
+                    description: namespace is the namespace of the referent.
+                    type: string
+                    x-kubernetes-validations:
+                    - message: cross namespace referencing is not currently supported
+                      rule: self.size() == 0
+                required:
+                - kind
+                - name
+                type: object
+              targetRefs:
+                description: Optional.
+                items:
+                  properties:
+                    group:
+                      description: group is the group of the target resource.
+                      maxLength: 253
+                      pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                      type: string
+                    kind:
+                      description: kind is kind of the target resource.
+                      maxLength: 63
+                      minLength: 1
+                      pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
+                      type: string
+                    name:
+                      description: name is the name of the target resource.
+                      maxLength: 253
+                      minLength: 1
+                      type: string
+                    namespace:
+                      description: namespace is the namespace of the referent.
+                      type: string
+                      x-kubernetes-validations:
+                      - message: cross namespace referencing is not currently supported
+                        rule: self.size() == 0
+                  required:
+                  - kind
+                  - name
+                  type: object
+                maxItems: 16
+                type: array
+              tracing:
+                description: Optional.
+                items:
+                  properties:
+                    customTags:
+                      additionalProperties:
+                        oneOf:
+                        - not:
+                            anyOf:
+                            - required:
+                              - literal
+                            - required:
+                              - environment
+                            - required:
+                              - header
+                        - required:
+                          - literal
+                        - required:
+                          - environment
+                        - required:
+                          - header
+                        properties:
+                          environment:
+                            description: Environment adds the value of an environment
+                              variable to each span.
+                            properties:
+                              defaultValue:
+                                description: Optional.
+                                type: string
+                              name:
+                                description: Name of the environment variable from
+                                  which to extract the tag value.
+                                minLength: 1
+                                type: string
+                            required:
+                            - name
+                            type: object
+                          header:
+                            description: RequestHeader adds the value of an header
+                              from the request to each span.
+                            properties:
+                              defaultValue:
+                                description: Optional.
+                                type: string
+                              name:
+                                description: Name of the header from which to extract
+                                  the tag value.
+                                minLength: 1
+                                type: string
+                            required:
+                            - name
+                            type: object
+                          literal:
+                            description: Literal adds the same, hard-coded value to
+                              each span.
+                            properties:
+                              value:
+                                description: The tag value to use.
+                                minLength: 1
+                                type: string
+                            required:
+                            - value
+                            type: object
+                        type: object
+                      description: Optional.
+                      type: object
+                    disableSpanReporting:
+                      description: Controls span reporting.
+                      nullable: true
+                      type: boolean
+                    enableIstioTags:
+                      description: Determines whether or not trace spans generated
+                        by Envoy will include Istio specific tags.
+                      nullable: true
+                      type: boolean
+                    match:
+                      description: Allows tailoring of behavior to specific conditions.
+                      properties:
+                        mode:
+                          description: |-
+                            This determines whether or not to apply the tracing configuration based on the direction of traffic relative to the proxied workload.
+
+                            Valid Options: CLIENT_AND_SERVER, CLIENT, SERVER
+                          enum:
+                          - CLIENT_AND_SERVER
+                          - CLIENT
+                          - SERVER
+                          type: string
+                      type: object
+                    providers:
+                      description: Optional.
+                      items:
+                        properties:
+                          name:
+                            description: Required.
+                            minLength: 1
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      type: array
+                    randomSamplingPercentage:
+                      description: Controls the rate at which traffic will be selected
+                        for tracing if no prior sampling decision has been made.
+                      format: double
+                      maximum: 100
+                      minimum: 0
+                      nullable: true
+                      type: number
+                    useRequestIdForTraceSampling:
+                      nullable: true
+                      type: boolean
+                  type: object
+                type: array
+            type: object
+            x-kubernetes-validations:
+            - message: only one of targetRefs or selector can be set
+              rule: '(has(self.selector) ? 1 : 0) + (has(self.targetRef) ? 1 : 0)
+                + (has(self.targetRefs) ? 1 : 0) <= 1'
+          status:
+            properties:
+              conditions:
+                description: Current service state of the resource.
+                items:
+                  properties:
+                    lastProbeTime:
+                      description: Last time we probed the condition.
+                      format: date-time
+                      type: string
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: Human-readable message indicating details about
+                        last transition.
+                      type: string
+                    observedGeneration:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      description: Resource Generation to which the Condition refers.
+                      x-kubernetes-int-or-string: true
+                    reason:
+                      description: Unique, one-word, CamelCase reason for the condition's
+                        last transition.
+                      type: string
+                    status:
+                      description: Status is the status of the condition.
+                      type: string
+                    type:
+                      description: Type is the type of the condition.
+                      type: string
+                  type: object
+                type: array
+              observedGeneration:
+                anyOf:
+                - type: integer
+                - type: string
+                x-kubernetes-int-or-string: true
+              validationMessages:
+                description: Includes any errors or warnings detected by Istio's analyzers.
+                items:
+                  properties:
+                    documentationUrl:
+                      description: A url pointing to the Istio documentation for this
+                        specific error type.
+                      type: string
+                    level:
+                      description: |-
+                        Represents how severe a message is.
+
+                        Valid Options: UNKNOWN, ERROR, WARNING, INFO
+                      enum:
+                      - UNKNOWN
+                      - ERROR
+                      - WARNING
+                      - INFO
+                      type: string
+                    type:
+                      properties:
+                        code:
+                          description: A 7 character code matching `^IST[0-9]{4}$`
+                            intended to uniquely identify the message type.
+                          type: string
+                        name:
+                          description: A human-readable name for the message type.
+                          type: string
+                      type: object
+                  type: object
+                type: array
+            type: object
+            x-kubernetes-preserve-unknown-fields: true
+        type: object
+    served: true
+    storage: false
+    subresources:
+      status: {}
+  - additionalPrinterColumns:
+    - description: 'CreationTimestamp is a timestamp representing the server time
+        when this object was created. It is not guaranteed to be set in happens-before
+        order across separate operations. Clients may not set this value. It is represented
+        in RFC3339 form and is in UTC. Populated by the system. Read-only. Null for
+        lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata'
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: 'Telemetry configuration for workloads. See more details
+              at: https://istio.io/docs/reference/config/telemetry.html'
+            properties:
+              accessLogging:
+                description: Optional.
+                items:
+                  properties:
+                    disabled:
+                      description: Controls logging.
+                      nullable: true
+                      type: boolean
+                    filter:
+                      description: Optional.
+                      properties:
+                        expression:
+                          description: CEL expression for selecting when requests/connections
+                            should be logged.
+                          type: string
+                      type: object
+                    match:
+                      description: Allows tailoring of logging behavior to specific
+                        conditions.
+                      properties:
+                        mode:
+                          description: |-
+                            This determines whether or not to apply the access logging configuration based on the direction of traffic relative to the proxied workload.
+
+                            Valid Options: CLIENT_AND_SERVER, CLIENT, SERVER
+                          enum:
+                          - CLIENT_AND_SERVER
+                          - CLIENT
+                          - SERVER
+                          type: string
+                      type: object
+                    providers:
+                      description: Optional.
+                      items:
+                        properties:
+                          name:
+                            description: Required.
+                            minLength: 1
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      type: array
+                  type: object
+                type: array
+              metrics:
+                description: Optional.
+                items:
+                  properties:
+                    overrides:
+                      description: Optional.
+                      items:
+                        properties:
+                          disabled:
+                            description: Optional.
+                            nullable: true
+                            type: boolean
+                          match:
+                            description: Match allows providing the scope of the override.
+                            oneOf:
+                            - not:
+                                anyOf:
+                                - required:
+                                  - metric
+                                - required:
+                                  - customMetric
+                            - required:
+                              - metric
+                            - required:
+                              - customMetric
+                            properties:
+                              customMetric:
+                                description: Allows free-form specification of a metric.
+                                minLength: 1
+                                type: string
+                              metric:
+                                description: |-
+                                  One of the well-known [Istio Standard Metrics](https://istio.io/latest/docs/reference/config/metrics/).
+
+                                  Valid Options: ALL_METRICS, REQUEST_COUNT, REQUEST_DURATION, REQUEST_SIZE, RESPONSE_SIZE, TCP_OPENED_CONNECTIONS, TCP_CLOSED_CONNECTIONS, TCP_SENT_BYTES, TCP_RECEIVED_BYTES, GRPC_REQUEST_MESSAGES, GRPC_RESPONSE_MESSAGES
+                                enum:
+                                - ALL_METRICS
+                                - REQUEST_COUNT
+                                - REQUEST_DURATION
+                                - REQUEST_SIZE
+                                - RESPONSE_SIZE
+                                - TCP_OPENED_CONNECTIONS
+                                - TCP_CLOSED_CONNECTIONS
+                                - TCP_SENT_BYTES
+                                - TCP_RECEIVED_BYTES
+                                - GRPC_REQUEST_MESSAGES
+                                - GRPC_RESPONSE_MESSAGES
+                                type: string
+                              mode:
+                                description: |-
+                                  Controls which mode of metrics generation is selected: `CLIENT`, `SERVER`, or `CLIENT_AND_SERVER`.
+
+                                  Valid Options: CLIENT_AND_SERVER, CLIENT, SERVER
+                                enum:
+                                - CLIENT_AND_SERVER
+                                - CLIENT
+                                - SERVER
+                                type: string
+                            type: object
+                          tagOverrides:
+                            additionalProperties:
+                              properties:
+                                operation:
+                                  description: |-
+                                    Operation controls whether or not to update/add a tag, or to remove it.
+
+                                    Valid Options: UPSERT, REMOVE
+                                  enum:
+                                  - UPSERT
+                                  - REMOVE
+                                  type: string
+                                value:
+                                  description: Value is only considered if the operation
+                                    is `UPSERT`.
+                                  type: string
+                              type: object
+                              x-kubernetes-validations:
+                              - message: value must be set when operation is UPSERT
+                                rule: '((has(self.operation) ? self.operation : "")
+                                  == "UPSERT") ? (self.value != "") : true'
+                              - message: value must not be set when operation is REMOVE
+                                rule: '((has(self.operation) ? self.operation : "")
+                                  == "REMOVE") ? !has(self.value) : true'
+                            description: Optional.
+                            type: object
+                        type: object
+                      type: array
+                    providers:
+                      description: Optional.
+                      items:
+                        properties:
+                          name:
+                            description: Required.
+                            minLength: 1
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      type: array
+                    reportingInterval:
+                      description: Optional.
+                      type: string
+                      x-kubernetes-validations:
+                      - message: must be a valid duration greater than 1ms
+                        rule: duration(self) >= duration('1ms')
+                  type: object
+                type: array
+              selector:
+                description: Optional.
+                properties:
+                  matchLabels:
+                    additionalProperties:
+                      maxLength: 63
+                      type: string
+                      x-kubernetes-validations:
+                      - message: wildcard not allowed in label value match
+                        rule: '!self.contains("*")'
+                    description: One or more labels that indicate a specific set of
+                      pods/VMs on which a policy should be applied.
+                    maxProperties: 4096
+                    type: object
+                    x-kubernetes-validations:
+                    - message: wildcard not allowed in label key match
+                      rule: self.all(key, !key.contains("*"))
+                    - message: key must not be empty
+                      rule: self.all(key, key.size() != 0)
+                type: object
+              targetRef:
+                properties:
+                  group:
+                    description: group is the group of the target resource.
+                    maxLength: 253
+                    pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                    type: string
+                  kind:
+                    description: kind is kind of the target resource.
+                    maxLength: 63
+                    minLength: 1
+                    pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
+                    type: string
+                  name:
+                    description: name is the name of the target resource.
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  namespace:
+                    description: namespace is the namespace of the referent.
+                    type: string
+                    x-kubernetes-validations:
+                    - message: cross namespace referencing is not currently supported
+                      rule: self.size() == 0
+                required:
+                - kind
+                - name
+                type: object
+              targetRefs:
+                description: Optional.
+                items:
+                  properties:
+                    group:
+                      description: group is the group of the target resource.
+                      maxLength: 253
+                      pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                      type: string
+                    kind:
+                      description: kind is kind of the target resource.
+                      maxLength: 63
+                      minLength: 1
+                      pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
+                      type: string
+                    name:
+                      description: name is the name of the target resource.
+                      maxLength: 253
+                      minLength: 1
+                      type: string
+                    namespace:
+                      description: namespace is the namespace of the referent.
+                      type: string
+                      x-kubernetes-validations:
+                      - message: cross namespace referencing is not currently supported
+                        rule: self.size() == 0
+                  required:
+                  - kind
+                  - name
+                  type: object
+                maxItems: 16
+                type: array
+              tracing:
+                description: Optional.
+                items:
+                  properties:
+                    customTags:
+                      additionalProperties:
+                        oneOf:
+                        - not:
+                            anyOf:
+                            - required:
+                              - literal
+                            - required:
+                              - environment
+                            - required:
+                              - header
+                        - required:
+                          - literal
+                        - required:
+                          - environment
+                        - required:
+                          - header
+                        properties:
+                          environment:
+                            description: Environment adds the value of an environment
+                              variable to each span.
+                            properties:
+                              defaultValue:
+                                description: Optional.
+                                type: string
+                              name:
+                                description: Name of the environment variable from
+                                  which to extract the tag value.
+                                minLength: 1
+                                type: string
+                            required:
+                            - name
+                            type: object
+                          header:
+                            description: RequestHeader adds the value of an header
+                              from the request to each span.
+                            properties:
+                              defaultValue:
+                                description: Optional.
+                                type: string
+                              name:
+                                description: Name of the header from which to extract
+                                  the tag value.
+                                minLength: 1
+                                type: string
+                            required:
+                            - name
+                            type: object
+                          literal:
+                            description: Literal adds the same, hard-coded value to
+                              each span.
+                            properties:
+                              value:
+                                description: The tag value to use.
+                                minLength: 1
+                                type: string
+                            required:
+                            - value
+                            type: object
+                        type: object
+                      description: Optional.
+                      type: object
+                    disableSpanReporting:
+                      description: Controls span reporting.
+                      nullable: true
+                      type: boolean
+                    enableIstioTags:
+                      description: Determines whether or not trace spans generated
+                        by Envoy will include Istio specific tags.
+                      nullable: true
+                      type: boolean
+                    match:
+                      description: Allows tailoring of behavior to specific conditions.
+                      properties:
+                        mode:
+                          description: |-
+                            This determines whether or not to apply the tracing configuration based on the direction of traffic relative to the proxied workload.
+
+                            Valid Options: CLIENT_AND_SERVER, CLIENT, SERVER
+                          enum:
+                          - CLIENT_AND_SERVER
+                          - CLIENT
+                          - SERVER
+                          type: string
+                      type: object
+                    providers:
+                      description: Optional.
+                      items:
+                        properties:
+                          name:
+                            description: Required.
+                            minLength: 1
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      type: array
+                    randomSamplingPercentage:
+                      description: Controls the rate at which traffic will be selected
+                        for tracing if no prior sampling decision has been made.
+                      format: double
+                      maximum: 100
+                      minimum: 0
+                      nullable: true
+                      type: number
+                    useRequestIdForTraceSampling:
+                      nullable: true
+                      type: boolean
+                  type: object
+                type: array
+            type: object
+            x-kubernetes-validations:
+            - message: only one of targetRefs or selector can be set
+              rule: '(has(self.selector) ? 1 : 0) + (has(self.targetRef) ? 1 : 0)
+                + (has(self.targetRefs) ? 1 : 0) <= 1'
+          status:
+            properties:
+              conditions:
+                description: Current service state of the resource.
+                items:
+                  properties:
+                    lastProbeTime:
+                      description: Last time we probed the condition.
+                      format: date-time
+                      type: string
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: Human-readable message indicating details about
+                        last transition.
+                      type: string
+                    observedGeneration:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      description: Resource Generation to which the Condition refers.
+                      x-kubernetes-int-or-string: true
+                    reason:
+                      description: Unique, one-word, CamelCase reason for the condition's
+                        last transition.
+                      type: string
+                    status:
+                      description: Status is the status of the condition.
+                      type: string
+                    type:
+                      description: Type is the type of the condition.
+                      type: string
+                  type: object
+                type: array
+              observedGeneration:
+                anyOf:
+                - type: integer
+                - type: string
+                x-kubernetes-int-or-string: true
+              validationMessages:
+                description: Includes any errors or warnings detected by Istio's analyzers.
+                items:
+                  properties:
+                    documentationUrl:
+                      description: A url pointing to the Istio documentation for this
+                        specific error type.
+                      type: string
+                    level:
+                      description: |-
+                        Represents how severe a message is.
+
+                        Valid Options: UNKNOWN, ERROR, WARNING, INFO
+                      enum:
+                      - UNKNOWN
+                      - ERROR
+                      - WARNING
+                      - INFO
+                      type: string
+                    type:
+                      properties:
+                        code:
+                          description: A 7 character code matching `^IST[0-9]{4}$`
+                            intended to uniquely identify the message type.
+                          type: string
+                        name:
+                          description: A human-readable name for the message type.
+                          type: string
+                      type: object
+                  type: object
+                type: array
+            type: object
+            x-kubernetes-preserve-unknown-fields: true
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    categories:
+    - istio-io
+    - telemetry-istio-io
+    kind: Telemetry
+    listKind: TelemetryList
+    plural: telemetries
+    shortNames:
+    - telemetry
+    singular: telemetry
+  conditions:
+  - lastTransitionTime: "2025-07-15T19:27:48Z"
+    message: no conflicts found
+    reason: NoConflicts
+    status: "True"
+    type: NamesAccepted
+  - lastTransitionTime: "2025-07-15T19:27:48Z"
+    message: the initial names have been accepted
+    reason: InitialNamesAccepted
+    status: "True"
+    type: Established
+  storedVersions:
+  - v1alpha1

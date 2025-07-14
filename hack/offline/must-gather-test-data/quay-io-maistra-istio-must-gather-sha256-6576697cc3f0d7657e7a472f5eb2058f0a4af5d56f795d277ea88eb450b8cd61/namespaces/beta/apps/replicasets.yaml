@@ -1,0 +1,1596 @@
+---
+apiVersion: apps/v1
+items:
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-07-15T19:29:38Z"
+    generation: 1
+    labels:
+      app: a-client
+      pod-template-hash: 68cffc58fd
+      version: v1
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:deployment.kubernetes.io/desired-replicas: {}
+            f:deployment.kubernetes.io/max-replicas: {}
+            f:deployment.kubernetes.io/revision: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:pod-template-hash: {}
+            f:version: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"dbacc82a-c6fd-4e12-8347-03a604c77c57"}: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:readiness.status.sidecar.istio.io/applicationPorts: {}
+              f:labels:
+                .: {}
+                f:app: {}
+                f:pod-template-hash: {}
+                f:version: {}
+            f:spec:
+              f:containers:
+                k:{"name":"a"}:
+                  .: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"SERVER_URL"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":8888,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:protocol: {}
+                  f:resources: {}
+                  f:securityContext:
+                    .: {}
+                    f:privileged: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:terminationGracePeriodSeconds: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:38Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:51Z"
+    name: a-client-68cffc58fd
+    namespace: beta
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: a-client
+      uid: dbacc82a-c6fd-4e12-8347-03a604c77c57
+    resourceVersion: "2693"
+    uid: 9515832c-ef68-40a4-a993-7452a6fc3eea
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: a-client
+        pod-template-hash: 68cffc58fd
+        version: v1
+    template:
+      metadata:
+        annotations:
+          readiness.status.sidecar.istio.io/applicationPorts: ""
+        creationTimestamp: null
+        labels:
+          app: a-client
+          pod-template-hash: 68cffc58fd
+          version: v1
+      spec:
+        containers:
+        - env:
+          - name: SERVER_URL
+            value: http://x-server.beta:8888/status
+          image: quay.io/kiali/demo_error_rates_client:v1
+          imagePullPolicy: IfNotPresent
+          name: a
+          ports:
+          - containerPort: 8888
+            protocol: TCP
+          resources: {}
+          securityContext:
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-07-15T19:29:38Z"
+    generation: 1
+    labels:
+      app: b-client
+      pod-template-hash: cd9f9866d
+      version: v1
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:deployment.kubernetes.io/desired-replicas: {}
+            f:deployment.kubernetes.io/max-replicas: {}
+            f:deployment.kubernetes.io/revision: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:pod-template-hash: {}
+            f:version: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"c696db9f-0919-4e12-96f2-63dbe0d999c3"}: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:readiness.status.sidecar.istio.io/applicationPorts: {}
+              f:labels:
+                .: {}
+                f:app: {}
+                f:pod-template-hash: {}
+                f:version: {}
+            f:spec:
+              f:containers:
+                k:{"name":"b-client"}:
+                  .: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"SERVER_URL"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":8888,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:protocol: {}
+                  f:resources: {}
+                  f:securityContext:
+                    .: {}
+                    f:privileged: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:terminationGracePeriodSeconds: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:38Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:52Z"
+    name: b-client-cd9f9866d
+    namespace: beta
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: b-client
+      uid: c696db9f-0919-4e12-96f2-63dbe0d999c3
+    resourceVersion: "2759"
+    uid: f90cfda9-3f71-4472-bb8b-c48e86fecb3d
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: b-client
+        pod-template-hash: cd9f9866d
+        version: v1
+    template:
+      metadata:
+        annotations:
+          readiness.status.sidecar.istio.io/applicationPorts: ""
+        creationTimestamp: null
+        labels:
+          app: b-client
+          pod-template-hash: cd9f9866d
+          version: v1
+      spec:
+        containers:
+        - env:
+          - name: SERVER_URL
+            value: http://x-server.beta:8888/status,http://y-server.beta:8888/status
+          image: quay.io/kiali/demo_error_rates_client:v1
+          imagePullPolicy: IfNotPresent
+          name: b-client
+          ports:
+          - containerPort: 8888
+            protocol: TCP
+          resources: {}
+          securityContext:
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-07-15T19:29:38Z"
+    generation: 1
+    labels:
+      app: c-client
+      pod-template-hash: 5646c698fc
+      version: v1
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:deployment.kubernetes.io/desired-replicas: {}
+            f:deployment.kubernetes.io/max-replicas: {}
+            f:deployment.kubernetes.io/revision: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:pod-template-hash: {}
+            f:version: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"32d3eadf-c8b4-4bc2-b1be-5f352802a5f1"}: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:readiness.status.sidecar.istio.io/applicationPorts: {}
+              f:labels:
+                .: {}
+                f:app: {}
+                f:pod-template-hash: {}
+                f:version: {}
+            f:spec:
+              f:containers:
+                k:{"name":"c-client"}:
+                  .: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"SERVER_URL"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":8888,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:protocol: {}
+                  f:resources: {}
+                  f:securityContext:
+                    .: {}
+                    f:privileged: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:terminationGracePeriodSeconds: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:38Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:53Z"
+    name: c-client-5646c698fc
+    namespace: beta
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: c-client
+      uid: 32d3eadf-c8b4-4bc2-b1be-5f352802a5f1
+    resourceVersion: "2818"
+    uid: 7b0d5b3d-4156-486e-94ea-7a61cc24825d
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: c-client
+        pod-template-hash: 5646c698fc
+        version: v1
+    template:
+      metadata:
+        annotations:
+          readiness.status.sidecar.istio.io/applicationPorts: ""
+        creationTimestamp: null
+        labels:
+          app: c-client
+          pod-template-hash: 5646c698fc
+          version: v1
+      spec:
+        containers:
+        - env:
+          - name: SERVER_URL
+            value: http://y-server.beta:8888/status
+          image: quay.io/kiali/demo_error_rates_client:v1
+          imagePullPolicy: IfNotPresent
+          name: c-client
+          ports:
+          - containerPort: 8888
+            protocol: TCP
+          resources: {}
+          securityContext:
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-07-15T19:29:38Z"
+    generation: 1
+    labels:
+      app: d-client
+      pod-template-hash: 59dfcb7dbd
+      version: v1
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:deployment.kubernetes.io/desired-replicas: {}
+            f:deployment.kubernetes.io/max-replicas: {}
+            f:deployment.kubernetes.io/revision: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:pod-template-hash: {}
+            f:version: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"29f25781-ad28-487f-a9d4-665d72fc5e2c"}: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:readiness.status.sidecar.istio.io/applicationPorts: {}
+              f:labels:
+                .: {}
+                f:app: {}
+                f:pod-template-hash: {}
+                f:version: {}
+            f:spec:
+              f:containers:
+                k:{"name":"d-client"}:
+                  .: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"SERVER_URL"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":8888,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:protocol: {}
+                  f:resources: {}
+                  f:securityContext:
+                    .: {}
+                    f:privileged: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:terminationGracePeriodSeconds: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:38Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:52Z"
+    name: d-client-59dfcb7dbd
+    namespace: beta
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: d-client
+      uid: 29f25781-ad28-487f-a9d4-665d72fc5e2c
+    resourceVersion: "2768"
+    uid: 95ddccc2-7d47-4cc0-af4c-dfcf4e7cdd52
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: d-client
+        pod-template-hash: 59dfcb7dbd
+        version: v1
+    template:
+      metadata:
+        annotations:
+          readiness.status.sidecar.istio.io/applicationPorts: ""
+        creationTimestamp: null
+        labels:
+          app: d-client
+          pod-template-hash: 59dfcb7dbd
+          version: v1
+      spec:
+        containers:
+        - env:
+          - name: SERVER_URL
+            value: http://y-server.beta:8888/status,http://z-server.beta:8888/status
+          image: quay.io/kiali/demo_error_rates_client:v1
+          imagePullPolicy: IfNotPresent
+          name: d-client
+          ports:
+          - containerPort: 8888
+            protocol: TCP
+          resources: {}
+          securityContext:
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-07-15T19:29:38Z"
+    generation: 1
+    labels:
+      app: e-client
+      pod-template-hash: 758d4cfff4
+      version: v1
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:deployment.kubernetes.io/desired-replicas: {}
+            f:deployment.kubernetes.io/max-replicas: {}
+            f:deployment.kubernetes.io/revision: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:pod-template-hash: {}
+            f:version: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"fd6f8ef5-bd93-4516-94f8-a059c499b94e"}: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:readiness.status.sidecar.istio.io/applicationPorts: {}
+              f:labels:
+                .: {}
+                f:app: {}
+                f:pod-template-hash: {}
+                f:version: {}
+            f:spec:
+              f:containers:
+                k:{"name":"e-client"}:
+                  .: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"SERVER_URL"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":8888,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:protocol: {}
+                  f:resources: {}
+                  f:securityContext:
+                    .: {}
+                    f:privileged: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:terminationGracePeriodSeconds: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:38Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:53Z"
+    name: e-client-758d4cfff4
+    namespace: beta
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: e-client
+      uid: fd6f8ef5-bd93-4516-94f8-a059c499b94e
+    resourceVersion: "2833"
+    uid: f851a5cf-f13e-4a6c-bcd5-e76965526b2e
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: e-client
+        pod-template-hash: 758d4cfff4
+        version: v1
+    template:
+      metadata:
+        annotations:
+          readiness.status.sidecar.istio.io/applicationPorts: ""
+        creationTimestamp: null
+        labels:
+          app: e-client
+          pod-template-hash: 758d4cfff4
+          version: v1
+      spec:
+        containers:
+        - env:
+          - name: SERVER_URL
+            value: http://z-server.beta:8888/status
+          image: quay.io/kiali/demo_error_rates_client:v1
+          imagePullPolicy: IfNotPresent
+          name: e-client
+          ports:
+          - containerPort: 8888
+            protocol: TCP
+          resources: {}
+          securityContext:
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-07-15T19:29:39Z"
+    generation: 1
+    labels:
+      app: f-client
+      pod-template-hash: 6b9bcf5dcb
+      version: v1
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:deployment.kubernetes.io/desired-replicas: {}
+            f:deployment.kubernetes.io/max-replicas: {}
+            f:deployment.kubernetes.io/revision: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:pod-template-hash: {}
+            f:version: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"3b2d45af-3410-43d5-ba44-58873ca53815"}: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:readiness.status.sidecar.istio.io/applicationPorts: {}
+              f:labels:
+                .: {}
+                f:app: {}
+                f:pod-template-hash: {}
+                f:version: {}
+            f:spec:
+              f:containers:
+                k:{"name":"f-client"}:
+                  .: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"SERVER_URL"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":8888,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:protocol: {}
+                  f:resources: {}
+                  f:securityContext:
+                    .: {}
+                    f:privileged: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:terminationGracePeriodSeconds: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:39Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:52Z"
+    name: f-client-6b9bcf5dcb
+    namespace: beta
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: f-client
+      uid: 3b2d45af-3410-43d5-ba44-58873ca53815
+    resourceVersion: "2771"
+    uid: 14755e0d-8578-40fa-927e-39bf12b567a6
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: f-client
+        pod-template-hash: 6b9bcf5dcb
+        version: v1
+    template:
+      metadata:
+        annotations:
+          readiness.status.sidecar.istio.io/applicationPorts: ""
+        creationTimestamp: null
+        labels:
+          app: f-client
+          pod-template-hash: 6b9bcf5dcb
+          version: v1
+      spec:
+        containers:
+        - env:
+          - name: SERVER_URL
+            value: http://v-server.beta:8888/status
+          image: quay.io/kiali/demo_error_rates_client:v1
+          imagePullPolicy: IfNotPresent
+          name: f-client
+          ports:
+          - containerPort: 8888
+            protocol: TCP
+          resources: {}
+          securityContext:
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-07-15T19:29:39Z"
+    generation: 1
+    labels:
+      app: v-server
+      pod-template-hash: 54b77ffd4f
+      version: v1
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:deployment.kubernetes.io/desired-replicas: {}
+            f:deployment.kubernetes.io/max-replicas: {}
+            f:deployment.kubernetes.io/revision: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:pod-template-hash: {}
+            f:version: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"21990dc6-d12c-4995-a11d-fff9e92372f9"}: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:readiness.status.sidecar.istio.io/applicationPorts: {}
+              f:labels:
+                .: {}
+                f:app: {}
+                f:pod-template-hash: {}
+                f:version: {}
+            f:spec:
+              f:containers:
+                k:{"name":"v-server"}:
+                  .: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"CODE_REQUESTS"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                    k:{"name":"SERVER_URL"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":8888,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:protocol: {}
+                  f:resources: {}
+                  f:securityContext:
+                    .: {}
+                    f:privileged: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:terminationGracePeriodSeconds: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:39Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:53Z"
+    name: v-server-54b77ffd4f
+    namespace: beta
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: v-server
+      uid: 21990dc6-d12c-4995-a11d-fff9e92372f9
+    resourceVersion: "2829"
+    uid: da1f4052-900a-473a-86cc-949f63f9d583
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: v-server
+        pod-template-hash: 54b77ffd4f
+        version: v1
+    template:
+      metadata:
+        annotations:
+          readiness.status.sidecar.istio.io/applicationPorts: ""
+        creationTimestamp: null
+        labels:
+          app: v-server
+          pod-template-hash: 54b77ffd4f
+          version: v1
+      spec:
+        containers:
+        - env:
+          - name: CODE_REQUESTS
+            value: 200,10
+          - name: SERVER_URL
+            value: http://w-server.beta:8888/status
+          image: quay.io/kiali/demo_error_rates_server:v1
+          imagePullPolicy: IfNotPresent
+          name: v-server
+          ports:
+          - containerPort: 8888
+            protocol: TCP
+          resources: {}
+          securityContext:
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-07-15T19:29:39Z"
+    generation: 1
+    labels:
+      app: w-server
+      pod-template-hash: 8667cdbcf7
+      version: v1
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:deployment.kubernetes.io/desired-replicas: {}
+            f:deployment.kubernetes.io/max-replicas: {}
+            f:deployment.kubernetes.io/revision: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:pod-template-hash: {}
+            f:version: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"f2f7a3de-8e1b-4dbf-9cd6-1679bdfcc6dc"}: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:readiness.status.sidecar.istio.io/applicationPorts: {}
+              f:labels:
+                .: {}
+                f:app: {}
+                f:pod-template-hash: {}
+                f:version: {}
+            f:spec:
+              f:containers:
+                k:{"name":"w-server"}:
+                  .: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"CODE_REQUESTS"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":8888,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:protocol: {}
+                  f:resources: {}
+                  f:securityContext:
+                    .: {}
+                    f:privileged: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:terminationGracePeriodSeconds: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:39Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:53Z"
+    name: w-server-8667cdbcf7
+    namespace: beta
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: w-server
+      uid: f2f7a3de-8e1b-4dbf-9cd6-1679bdfcc6dc
+    resourceVersion: "2815"
+    uid: e921e300-2bbc-49ae-b31f-9686e2b3cceb
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: w-server
+        pod-template-hash: 8667cdbcf7
+        version: v1
+    template:
+      metadata:
+        annotations:
+          readiness.status.sidecar.istio.io/applicationPorts: ""
+        creationTimestamp: null
+        labels:
+          app: w-server
+          pod-template-hash: 8667cdbcf7
+          version: v1
+      spec:
+        containers:
+        - env:
+          - name: CODE_REQUESTS
+            value: 503,5;200,5
+          image: quay.io/kiali/demo_error_rates_server:v1
+          imagePullPolicy: IfNotPresent
+          name: w-server
+          ports:
+          - containerPort: 8888
+            protocol: TCP
+          resources: {}
+          securityContext:
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-07-15T19:29:39Z"
+    generation: 1
+    labels:
+      app: x-server
+      pod-template-hash: 6d8987d7c7
+      version: v1
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:deployment.kubernetes.io/desired-replicas: {}
+            f:deployment.kubernetes.io/max-replicas: {}
+            f:deployment.kubernetes.io/revision: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:pod-template-hash: {}
+            f:version: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"f7dc3f16-a74e-406b-9d25-38101c750f8d"}: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:readiness.status.sidecar.istio.io/applicationPorts: {}
+              f:labels:
+                .: {}
+                f:app: {}
+                f:pod-template-hash: {}
+                f:version: {}
+            f:spec:
+              f:containers:
+                k:{"name":"x-server"}:
+                  .: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"CODE_REQUESTS"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":8888,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:protocol: {}
+                  f:resources: {}
+                  f:securityContext:
+                    .: {}
+                    f:privileged: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:terminationGracePeriodSeconds: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:39Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:53Z"
+    name: x-server-6d8987d7c7
+    namespace: beta
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: x-server
+      uid: f7dc3f16-a74e-406b-9d25-38101c750f8d
+    resourceVersion: "2823"
+    uid: a7f6dafc-9554-4283-b63b-0f5333984ad3
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: x-server
+        pod-template-hash: 6d8987d7c7
+        version: v1
+    template:
+      metadata:
+        annotations:
+          readiness.status.sidecar.istio.io/applicationPorts: ""
+        creationTimestamp: null
+        labels:
+          app: x-server
+          pod-template-hash: 6d8987d7c7
+          version: v1
+      spec:
+        containers:
+        - env:
+          - name: CODE_REQUESTS
+            value: 200,9;404,1
+          image: quay.io/kiali/demo_error_rates_server:v1
+          imagePullPolicy: IfNotPresent
+          name: x-server
+          ports:
+          - containerPort: 8888
+            protocol: TCP
+          resources: {}
+          securityContext:
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-07-15T19:29:39Z"
+    generation: 1
+    labels:
+      app: y-server
+      pod-template-hash: 5b556546fd
+      version: v1
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:deployment.kubernetes.io/desired-replicas: {}
+            f:deployment.kubernetes.io/max-replicas: {}
+            f:deployment.kubernetes.io/revision: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:pod-template-hash: {}
+            f:version: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"b96a918d-3616-4753-aa6d-bc27c96b9ff7"}: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:readiness.status.sidecar.istio.io/applicationPorts: {}
+              f:labels:
+                .: {}
+                f:app: {}
+                f:pod-template-hash: {}
+                f:version: {}
+            f:spec:
+              f:containers:
+                k:{"name":"y-server"}:
+                  .: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"CODE_REQUESTS"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":8888,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:protocol: {}
+                  f:resources: {}
+                  f:securityContext:
+                    .: {}
+                    f:privileged: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:terminationGracePeriodSeconds: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:39Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:54Z"
+    name: y-server-5b556546fd
+    namespace: beta
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: y-server
+      uid: b96a918d-3616-4753-aa6d-bc27c96b9ff7
+    resourceVersion: "2862"
+    uid: 4a6629fd-e0c6-49a8-a6cd-7a5ccec2ff6d
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: y-server
+        pod-template-hash: 5b556546fd
+        version: v1
+    template:
+      metadata:
+        annotations:
+          readiness.status.sidecar.istio.io/applicationPorts: ""
+        creationTimestamp: null
+        labels:
+          app: y-server
+          pod-template-hash: 5b556546fd
+          version: v1
+      spec:
+        containers:
+        - env:
+          - name: CODE_REQUESTS
+            value: 200,9;500,1
+          image: quay.io/kiali/demo_error_rates_server:v1
+          imagePullPolicy: IfNotPresent
+          name: y-server
+          ports:
+          - containerPort: 8888
+            protocol: TCP
+          resources: {}
+          securityContext:
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2025-07-15T19:29:40Z"
+    generation: 1
+    labels:
+      app: z-server
+      pod-template-hash: 5f94f449c5
+      version: v1
+    managedFields:
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:deployment.kubernetes.io/desired-replicas: {}
+            f:deployment.kubernetes.io/max-replicas: {}
+            f:deployment.kubernetes.io/revision: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:pod-template-hash: {}
+            f:version: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"efc6b372-49a6-4cd8-9454-e3c05e26ba98"}: {}
+        f:spec:
+          f:replicas: {}
+          f:selector: {}
+          f:template:
+            f:metadata:
+              f:annotations:
+                .: {}
+                f:readiness.status.sidecar.istio.io/applicationPorts: {}
+              f:labels:
+                .: {}
+                f:app: {}
+                f:pod-template-hash: {}
+                f:version: {}
+            f:spec:
+              f:containers:
+                k:{"name":"z-server"}:
+                  .: {}
+                  f:env:
+                    .: {}
+                    k:{"name":"CODE_REQUESTS"}:
+                      .: {}
+                      f:name: {}
+                      f:value: {}
+                  f:image: {}
+                  f:imagePullPolicy: {}
+                  f:name: {}
+                  f:ports:
+                    .: {}
+                    k:{"containerPort":8888,"protocol":"TCP"}:
+                      .: {}
+                      f:containerPort: {}
+                      f:protocol: {}
+                  f:resources: {}
+                  f:securityContext:
+                    .: {}
+                    f:privileged: {}
+                  f:terminationMessagePath: {}
+                  f:terminationMessagePolicy: {}
+              f:dnsPolicy: {}
+              f:restartPolicy: {}
+              f:schedulerName: {}
+              f:securityContext: {}
+              f:terminationGracePeriodSeconds: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:40Z"
+    - apiVersion: apps/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:availableReplicas: {}
+          f:fullyLabeledReplicas: {}
+          f:observedGeneration: {}
+          f:readyReplicas: {}
+          f:replicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:53Z"
+    name: z-server-5f94f449c5
+    namespace: beta
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: z-server
+      uid: efc6b372-49a6-4cd8-9454-e3c05e26ba98
+    resourceVersion: "2838"
+    uid: fbd62305-0f8f-406e-8c31-75b1c7548016
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: z-server
+        pod-template-hash: 5f94f449c5
+        version: v1
+    template:
+      metadata:
+        annotations:
+          readiness.status.sidecar.istio.io/applicationPorts: ""
+        creationTimestamp: null
+        labels:
+          app: z-server
+          pod-template-hash: 5f94f449c5
+          version: v1
+      spec:
+        containers:
+        - env:
+          - name: CODE_REQUESTS
+            value: 200,8;201,1;202,1
+          image: quay.io/kiali/demo_error_rates_server:v1
+          imagePullPolicy: IfNotPresent
+          name: z-server
+          ports:
+          - containerPort: 8888
+            protocol: TCP
+          resources: {}
+          securityContext:
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+kind: ReplicaSetList
+metadata:
+  resourceVersion: "5098"

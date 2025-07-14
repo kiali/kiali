@@ -1,0 +1,99 @@
+---
+apiVersion: v1
+items:
+- apiVersion: v1
+  data:
+    root-cert.pem: |
+      -----BEGIN CERTIFICATE-----
+      MIIC/TCCAeWgAwIBAgIRALjQSXsBlCVS1vKSYXC31vEwDQYJKoZIhvcNAQELBQAw
+      GDEWMBQGA1UEChMNY2x1c3Rlci5sb2NhbDAeFw0yNTA3MTUxOTI4MTdaFw0zNTA3
+      MTMxOTI4MTdaMBgxFjAUBgNVBAoTDWNsdXN0ZXIubG9jYWwwggEiMA0GCSqGSIb3
+      DQEBAQUAA4IBDwAwggEKAoIBAQDDs3stoxz1sVBaijN7srF36yW/xV3OvsN+x5LX
+      gENkrIXdo9CYKrCFsMG2G52SMwTyfYYhb3hrho1Z6iSZiDBbyE70Wwi0rOzxZQdr
+      3qk1HhoKBQO3o4M1XRz5hS+mX/tUyqdygYqo2ewlAYcn7HYgx0picC+CqRdWbU8f
+      vyqpY3mpTPZHmztN6IQTn4MIls5etXH4S7Jki9aF+iLm4PVtbRcsJ29PUYYuZhoq
+      RNLzM/HIj/vbVggTwqt50rWRATjubs3ZWq3hbRrHS8OovlWD85z/Zv9a4/yW1D81
+      76gKGQ1x/f1hLL8nR7EFRrTLxm7LsAHUTE26egWEeaKK7447AgMBAAGjQjBAMA4G
+      A1UdDwEB/wQEAwICBDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRzyaD9RbCx
+      wDM7kmu6j0ght9ZXVzANBgkqhkiG9w0BAQsFAAOCAQEAh3S1E+JS4iUOGf3QQycf
+      QSVgKkM/fb6vy500x2wiEWUWT+Va6fVLxXtb7FMWqTtzwjs3iCWhOazRmU40LlzS
+      Iddx6Spsnv0R7mSBgAOwEeMe/f+YGwhJ6QdBtOZog2d/VqwdbXuFEODSrUOfg9cp
+      GVNFOGTvOBqi+ZsgjaAGFKRavUUFSH3I8s5EA1U6F8by4+4to5AAnbl1jxbknk7O
+      pawAhKwhCnYYstPD0ykU57443N0xdGFbwFNttndXH3Ua3nT9aQEm9Fkw6aVbQ0HG
+      abblKQkMjHyED/CwKu262p8DCJaWcKKihHJbQYxWXpSV44g94bXZiGHOLebtLqUO
+      bA==
+      -----END CERTIFICATE-----
+  kind: ConfigMap
+  metadata:
+    creationTimestamp: "2025-07-15T19:29:36Z"
+    labels:
+      istio.io/config: "true"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:root-cert.pem: {}
+        f:metadata:
+          f:labels:
+            .: {}
+            f:istio.io/config: {}
+      manager: pilot-discovery
+      operation: Update
+      time: "2025-07-15T19:29:36Z"
+    name: istio-ca-root-cert
+    namespace: alpha
+    resourceVersion: "1678"
+    uid: 56c432c7-49af-4761-9119-82c00c6c09fb
+- apiVersion: v1
+  data:
+    ca.crt: |
+      -----BEGIN CERTIFICATE-----
+      MIIDBTCCAe2gAwIBAgIIVARmw8Y32jEwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNTA3MTUxOTIxNTNaFw0zNTA3MTMxOTI2NTNaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQC2FiG1WNYDVGPU+S1BNS00juuypgVjszmYAxIAQd+uxj+RvDxeMWF6PhYc
+      iv1BDqc7XmhD0JEU1BrM2IMAhCm+wwpr9pMwpU0WN1tM+QPdc7zDx5qjza27sbmN
+      VGK/c7C45Lss0Vem+n2rPN3i2baxFWx73ABZzv2OmQwWE6WO2hI03x7MgMHifbs6
+      hxrgnIYlTPJBA8A+0cx7amPAEW/w9/2M1VAH1TQ5PJmEsSHmwhX7f92qvpOlRpQ3
+      yfaaZR0lDfxPsr3d8aqYyrFiKlLJ1MXTb4zRr43JVL3vny+awNPVw8tbA4AEXzQV
+      GJwnSPI2N0dv34/wt8uTFnBkRWMVAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRnMKRoyy3FjXRGz6cIl1Wxi9IH2zAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA1NaRJFf1L
+      wbjq9H3ZM0RJah7nbm5L4oH48/qdxA2d3/7jZyz0uyKBKH3/LioqdByqHMf4EerC
+      wWa0cZeksHsdYTZ+GTgKeeI395dAEnvQ2PuPY8uDkfKooJZmgU6wFxR1usi86a8D
+      fCXgkyFM5s7Rqr54290XleywZt1bgu4e2BpKMO0IdHUP/czuz0tr+6WHiFdJIJZP
+      FZwITz/98+o2d18Zq6DeYq8e9ti44pvFvFpPS3jhOJuqZQ71cH7H/GeTsg8KI87K
+      isJUgTjBOeztRj+j3RV4JNqPR8vQWF3y65AMw5iGv+Iz32CNYmRg8ZRwG2u2bQ3C
+      U13vRB8r+v5t
+      -----END CERTIFICATE-----
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubernetes.io/description: Contains a CA bundle that can be used to verify the
+        kube-apiserver when using internal endpoints such as the internal service
+        IP or kubernetes.default.svc. No other usage is guaranteed across distributions
+        of Kubernetes clusters.
+    creationTimestamp: "2025-07-15T19:29:36Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:36Z"
+    name: kube-root-ca.crt
+    namespace: alpha
+    resourceVersion: "1677"
+    uid: 93cd6806-6785-4473-8581-81ae899a2c94
+kind: ConfigMapList
+metadata:
+  resourceVersion: "5071"

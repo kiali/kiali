@@ -56,11 +56,10 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	}
 
 	log.Info("Initializing Kiali Cache")
-	cache, err := cache.NewKialiCache(clientFactory.GetSAClients(), asReaders(kubeCaches), *conf)
+	cache, err := cache.NewKialiCache(ctx, clientFactory.GetSAClients(), asReaders(kubeCaches), *conf)
 	if err != nil {
 		log.Fatalf("Error initializing Kiali Cache. Details: %s", err)
 	}
-	defer cache.Stop()
 
 	cache.SetBuildInfo(models.BuildInfo{
 		CommitHash:       commitHash,
@@ -154,9 +153,8 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 		// Shutdown internal components
 		<-ctx.Done()
 		log.Info("Shutting down internal components")
-		cache.Stop()
 		server.Stop()
-		// Wait for controller to stop.
+		// Wait for controller and cache to stop.
 		<-controllerStopped
 		close(stopped)
 	}()

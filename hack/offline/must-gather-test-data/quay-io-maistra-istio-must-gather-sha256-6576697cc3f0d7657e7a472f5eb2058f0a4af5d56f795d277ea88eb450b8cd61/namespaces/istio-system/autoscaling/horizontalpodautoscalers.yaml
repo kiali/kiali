@@ -1,0 +1,131 @@
+---
+apiVersion: autoscaling/v2
+items:
+- apiVersion: autoscaling/v2
+  kind: HorizontalPodAutoscaler
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: default-istiod
+      meta.helm.sh/release-namespace: istio-system
+    creationTimestamp: "2025-07-15T19:28:11Z"
+    labels:
+      app: istiod
+      app.kubernetes.io/instance: default-istiod
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: istiod
+      app.kubernetes.io/part-of: istio
+      app.kubernetes.io/version: 1.26.2
+      helm.sh/chart: istiod-1.26.2
+      istio.io/rev: default
+      managed-by: sail-operator
+      operator.istio.io/component: Pilot
+      release: default-istiod
+    managedFields:
+    - apiVersion: autoscaling/v2
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:meta.helm.sh/release-name: {}
+            f:meta.helm.sh/release-namespace: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:app.kubernetes.io/instance: {}
+            f:app.kubernetes.io/managed-by: {}
+            f:app.kubernetes.io/name: {}
+            f:app.kubernetes.io/part-of: {}
+            f:app.kubernetes.io/version: {}
+            f:helm.sh/chart: {}
+            f:istio.io/rev: {}
+            f:managed-by: {}
+            f:operator.istio.io/component: {}
+            f:release: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"7dcc2e5a-4806-4fbb-b8c7-d8ff38160463"}: {}
+        f:spec:
+          f:maxReplicas: {}
+          f:metrics: {}
+          f:minReplicas: {}
+          f:scaleTargetRef:
+            f:apiVersion: {}
+            f:kind: {}
+            f:name: {}
+      manager: sail-operator
+      operation: Update
+      time: "2025-07-15T19:28:11Z"
+    - apiVersion: autoscaling/v2
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:conditions:
+            .: {}
+            k:{"type":"AbleToScale"}:
+              .: {}
+              f:lastTransitionTime: {}
+              f:message: {}
+              f:reason: {}
+              f:status: {}
+              f:type: {}
+            k:{"type":"ScalingActive"}:
+              .: {}
+              f:lastTransitionTime: {}
+              f:message: {}
+              f:reason: {}
+              f:status: {}
+              f:type: {}
+          f:currentMetrics: {}
+          f:currentReplicas: {}
+      manager: kube-controller-manager
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:28:26Z"
+    name: istiod
+    namespace: istio-system
+    ownerReferences:
+    - apiVersion: sailoperator.io/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: IstioRevision
+      name: default
+      uid: 7dcc2e5a-4806-4fbb-b8c7-d8ff38160463
+    resourceVersion: "1072"
+    uid: 08c570e9-5ebd-4834-b0d0-3bf39fdcfba6
+  spec:
+    maxReplicas: 5
+    metrics:
+    - resource:
+        name: cpu
+        target:
+          averageUtilization: 80
+          type: Utilization
+      type: Resource
+    minReplicas: 1
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: istiod
+  status:
+    conditions:
+    - lastTransitionTime: "2025-07-15T19:28:26Z"
+      message: the HPA controller was able to get the target's current scale
+      reason: SucceededGetScale
+      status: "True"
+      type: AbleToScale
+    - lastTransitionTime: "2025-07-15T19:28:26Z"
+      message: 'the HPA was unable to compute the replica count: failed to get cpu
+        utilization: unable to get metrics for resource cpu: unable to fetch metrics
+        from resource metrics API: the server could not find the requested resource
+        (get pods.metrics.k8s.io)'
+      reason: FailedGetResourceMetric
+      status: "False"
+      type: ScalingActive
+    currentMetrics:
+    - type: ""
+    currentReplicas: 1
+    desiredReplicas: 0
+kind: HorizontalPodAutoscalerList
+metadata:
+  resourceVersion: "5060"

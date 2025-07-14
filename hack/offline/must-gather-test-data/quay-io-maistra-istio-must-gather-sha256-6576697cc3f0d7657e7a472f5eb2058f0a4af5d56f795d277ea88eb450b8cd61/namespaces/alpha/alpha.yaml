@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  creationTimestamp: "2025-07-15T19:29:36Z"
+  labels:
+    istio-injection: enabled
+    kubernetes.io/metadata.name: alpha
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:labels:
+          .: {}
+          f:kubernetes.io/metadata.name: {}
+    manager: kubectl-create
+    operation: Update
+    time: "2025-07-15T19:29:36Z"
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:labels:
+          f:istio-injection: {}
+    manager: kubectl-label
+    operation: Update
+    time: "2025-07-15T19:29:36Z"
+  name: alpha
+  resourceVersion: "1687"
+  uid: f0892430-5b2f-4bcd-ad8c-2da40e9eb32d
+spec:
+  finalizers:
+  - kubernetes
+status:
+  phase: Active

@@ -17,56 +17,68 @@ Feature: Kiali Overview page
     Given user is at administrator perspective
     And user is at the "overview" page
 
+  @offline
   Scenario: See "alpha" and "beta" namespaces
     Then user sees the "alpha" namespace card
     And user does not see any cluster badge in the "alpha" namespace card
     And user sees the "beta" namespace card
     And user does not see any cluster badge in the "beta" namespace card
 
+  @offline
   Scenario: Doesn't see a "bad" namespace
     Then user doesn't see the "bad" namespace card
 
+  @offline
   Scenario: Select the COMPACT view
     When user clicks in the "COMPACT" view
     Then user sees a "COMPACT" "alpha" namespace
 
+  @offline
   Scenario: Select the EXPAND view
     When user clicks in the "EXPAND" view
     Then user sees a "EXPAND" "beta" namespace
 
+  @offline
   Scenario: Select the LIST view
     When user clicks in the "LIST" view
     Then user sees a "LIST" "beta" namespace
     And the "Cluster" column "disappears"
 
+  @offline
   Scenario: Filter by namespace
     When user filters "alpha" namespace
     Then user sees the "alpha" namespace card
     And user doesn't see the "beta" namespace card
 
+  @offline
   Scenario: Sort by name
     When user filters "alpha" namespace
     And user filters "beta" namespace
     And user sorts by name desc
     Then user sees the "beta,alpha" namespace list
 
+  @offline
   Scenario: Health for Apps
     When user selects Health for "Apps"
     Then user sees the "alpha" namespace with "Applications"
 
+  @offline
   Scenario: Health for Workloads
     When user selects Health for "Workloads"
     Then user sees the "alpha" namespace with "Workloads"
 
+  @offline
   Scenario: Health for Services
     When user selects Health for "Services"
     Then user sees the "alpha" namespace with "Services"
 
+  # TODO: offline - time range doesn't work yet.
   @error-rates-app
   Scenario: Last 10 minutes
     When user selects "Last 10m" time range
     Then user sees the "alpha" namespace with "inbound" traffic "10m"
 
+  # TODO: offline - time range doesn't work yet.
   @error-rates-app
   Scenario: Last 10 minutes Outbound traffic
     When user selects "Last 10m" time range
@@ -173,11 +185,13 @@ Feature: Kiali Overview page
     Then user sees the "Control plane" label in the "east" "istio-system" namespace card
     Then user sees the "Control plane" label in the "west" "istio-system" namespace card
 
+  # TODO: offline - provide ambient in must-gather example.
   @ambient
   Scenario: Istio panels for cluster should be visible and have the ambient label
     Then user sees the "Control plane" label in the "istio-system" namespace card
     Then user sees the "Ambient" label in the "istio-system" namespace card
 
+  # TODO: offline - provide ambient in must-gather example.
   @ambient
   Scenario: See ambient badge in the COMPACT view
     When user clicks in the "COMPACT" view
@@ -185,6 +199,7 @@ Feature: Kiali Overview page
     Then user sees the "bookinfo" namespace card
     And user sees the "Ambient" label in the "istio-system" namespace card
 
+  # TODO: offline - provide ambient in must-gather example.
   @ambient
   Scenario: See ambient badge in the LIST view
     When user clicks in the "LIST" view

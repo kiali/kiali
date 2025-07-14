@@ -1,0 +1,11 @@
+2025-07-15T19:29:30.694721965Z 
+2025-07-15T19:29:30.831857417Z WARNING: Unknown module: jdk.management.agent specified to --add-exports
+2025-07-15T19:29:30.831918098Z WARNING: Unknown module: jdk.attach specified to --add-exports
+2025-07-15T19:29:30.900626934Z Launching defaultServer (Open Liberty 24.0.0.12/wlp-1.0.96.cl241220241119-0657) on Eclipse OpenJ9 VM, version 17.0.14+7 (en_US)
+2025-07-15T19:29:30.970556048Z [AUDIT   ] CWWKE0001I: The server defaultServer has been launched.
+2025-07-15T19:29:31.303961215Z [AUDIT   ] CWWKG0093A: Processing configuration drop-ins resource: /opt/ol/wlp/usr/servers/defaultServer/configDropins/defaults/keystore.xml
+2025-07-15T19:29:31.307187673Z [AUDIT   ] CWWKG0093A: Processing configuration drop-ins resource: /opt/ol/wlp/usr/servers/defaultServer/configDropins/defaults/open-default-port.xml
+2025-07-15T19:29:32.324414490Z [AUDIT   ] CWWKT0016I: Web application available (default_host): http://reviews-v2-556d6457d-4dddd:9080/
+2025-07-15T19:29:32.381149049Z [AUDIT   ] CWWKZ0001I: Application reviews-app started in 0.251 seconds.
+2025-07-15T19:29:32.403725216Z [AUDIT   ] CWWKF0012I: The server installed the following features: [jaxrs-2.0, jaxrsClient-2.0, json-1.0, jsonp-1.0, servlet-3.1].
+2025-07-15T19:29:32.404218069Z [AUDIT   ] CWWKF0011I: The defaultServer server is ready to run a smarter planet. The defaultServer server started in 1.547 seconds.

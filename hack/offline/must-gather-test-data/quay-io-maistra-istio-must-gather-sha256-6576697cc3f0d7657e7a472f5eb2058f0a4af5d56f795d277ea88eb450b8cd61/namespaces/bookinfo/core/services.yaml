@@ -1,0 +1,345 @@
+---
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      metallb.universe.tf/ip-allocated-from-pool: config
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    labels:
+      gateway.istio.io/managed: istio.io-gateway-controller
+      gateway.networking.k8s.io/gateway-name: bookinfo-gateway
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations: {}
+          f:labels:
+            f:gateway.istio.io/managed: {}
+            f:gateway.networking.k8s.io/gateway-name: {}
+          f:ownerReferences:
+            k:{"uid":"e2b0b612-7a92-4b63-b4ce-35b31432cfa3"}: {}
+        f:spec:
+          f:ipFamilyPolicy: {}
+          f:ports:
+            k:{"port":80,"protocol":"TCP"}:
+              .: {}
+              f:appProtocol: {}
+              f:name: {}
+              f:port: {}
+              f:protocol: {}
+            k:{"port":15021,"protocol":"TCP"}:
+              .: {}
+              f:appProtocol: {}
+              f:name: {}
+              f:port: {}
+              f:protocol: {}
+          f:selector: {}
+          f:type: {}
+      manager: istio.io/gateway-controller
+      operation: Apply
+      time: "2025-07-15T19:29:07Z"
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:metallb.universe.tf/ip-allocated-from-pool: {}
+        f:status:
+          f:loadBalancer:
+            f:ingress: {}
+      manager: controller
+      operation: Update
+      subresource: status
+      time: "2025-07-15T19:29:07Z"
+    name: bookinfo-gateway-istio
+    namespace: bookinfo
+    ownerReferences:
+    - apiVersion: gateway.networking.k8s.io/v1beta1
+      kind: Gateway
+      name: bookinfo-gateway
+      uid: e2b0b612-7a92-4b63-b4ce-35b31432cfa3
+    resourceVersion: "1404"
+    uid: 8c75145b-27e5-4c54-9060-d5b70218bb83
+  spec:
+    allocateLoadBalancerNodePorts: true
+    clusterIP: 10.96.253.14
+    clusterIPs:
+    - 10.96.253.14
+    externalTrafficPolicy: Cluster
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: PreferDualStack
+    ports:
+    - appProtocol: tcp
+      name: status-port
+      nodePort: 32373
+      port: 15021
+      protocol: TCP
+      targetPort: 15021
+    - appProtocol: http
+      name: http
+      nodePort: 31544
+      port: 80
+      protocol: TCP
+      targetPort: 80
+    selector:
+      gateway.networking.k8s.io/gateway-name: bookinfo-gateway
+    sessionAffinity: None
+    type: LoadBalancer
+  status:
+    loadBalancer:
+      ingress:
+      - ip: 172.18.255.71
+        ipMode: VIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"details","service":"details"},"name":"details","namespace":"bookinfo"},"spec":{"ports":[{"name":"http","port":9080}],"selector":{"app":"details"}}}
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    labels:
+      app: details
+      service: details
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:service: {}
+        f:spec:
+          f:internalTrafficPolicy: {}
+          f:ports:
+            .: {}
+            k:{"port":9080,"protocol":"TCP"}:
+              .: {}
+              f:name: {}
+              f:port: {}
+              f:protocol: {}
+              f:targetPort: {}
+          f:selector: {}
+          f:sessionAffinity: {}
+          f:type: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: details
+    namespace: bookinfo
+    resourceVersion: "1289"
+    uid: 1d4ead18-fa47-4d3f-9d57-863e68c48b16
+  spec:
+    clusterIP: 10.96.68.228
+    clusterIPs:
+    - 10.96.68.228
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 9080
+      protocol: TCP
+      targetPort: 9080
+    selector:
+      app: details
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"productpage","service":"productpage"},"name":"productpage","namespace":"bookinfo"},"spec":{"ports":[{"name":"http","port":9080}],"selector":{"app":"productpage"}}}
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    labels:
+      app: productpage
+      service: productpage
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:service: {}
+        f:spec:
+          f:internalTrafficPolicy: {}
+          f:ports:
+            .: {}
+            k:{"port":9080,"protocol":"TCP"}:
+              .: {}
+              f:name: {}
+              f:port: {}
+              f:protocol: {}
+              f:targetPort: {}
+          f:selector: {}
+          f:sessionAffinity: {}
+          f:type: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: productpage
+    namespace: bookinfo
+    resourceVersion: "1357"
+    uid: 0f55bf21-4dee-48d2-a118-c2a6bfe3ff68
+  spec:
+    clusterIP: 10.96.26.207
+    clusterIPs:
+    - 10.96.26.207
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 9080
+      protocol: TCP
+      targetPort: 9080
+    selector:
+      app: productpage
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"ratings","service":"ratings"},"name":"ratings","namespace":"bookinfo"},"spec":{"ports":[{"name":"http","port":9080}],"selector":{"app":"ratings"}}}
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    labels:
+      app: ratings
+      service: ratings
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:service: {}
+        f:spec:
+          f:internalTrafficPolicy: {}
+          f:ports:
+            .: {}
+            k:{"port":9080,"protocol":"TCP"}:
+              .: {}
+              f:name: {}
+              f:port: {}
+              f:protocol: {}
+              f:targetPort: {}
+          f:selector: {}
+          f:sessionAffinity: {}
+          f:type: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: ratings
+    namespace: bookinfo
+    resourceVersion: "1300"
+    uid: c080fdbd-fcbe-4961-bd49-b82d39a648bf
+  spec:
+    clusterIP: 10.96.194.179
+    clusterIPs:
+    - 10.96.194.179
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 9080
+      protocol: TCP
+      targetPort: 9080
+    selector:
+      app: ratings
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"reviews","service":"reviews"},"name":"reviews","namespace":"bookinfo"},"spec":{"ports":[{"name":"http","port":9080}],"selector":{"app":"reviews"}}}
+    creationTimestamp: "2025-07-15T19:29:07Z"
+    labels:
+      app: reviews
+      service: reviews
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:service: {}
+        f:spec:
+          f:internalTrafficPolicy: {}
+          f:ports:
+            .: {}
+            k:{"port":9080,"protocol":"TCP"}:
+              .: {}
+              f:name: {}
+              f:port: {}
+              f:protocol: {}
+              f:targetPort: {}
+          f:selector: {}
+          f:sessionAffinity: {}
+          f:type: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2025-07-15T19:29:07Z"
+    name: reviews
+    namespace: bookinfo
+    resourceVersion: "1316"
+    uid: bb491b5f-8dfd-480d-8cdc-7596fddc472d
+  spec:
+    clusterIP: 10.96.194.64
+    clusterIPs:
+    - 10.96.194.64
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 9080
+      protocol: TCP
+      targetPort: 9080
+    selector:
+      app: reviews
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+kind: ServiceList
+metadata:
+  resourceVersion: "5129"

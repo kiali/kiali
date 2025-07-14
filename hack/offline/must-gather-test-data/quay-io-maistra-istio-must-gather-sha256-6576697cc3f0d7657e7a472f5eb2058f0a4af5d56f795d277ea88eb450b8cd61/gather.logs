@@ -1,0 +1,622 @@
+2025-07-15T19:42:55.606990955Z volume percentage checker started.....
+2025-07-15T19:42:55.609700810Z 
+2025-07-15T19:42:55.609804760Z Executing Istio gather script
+2025-07-15T19:42:55.609807880Z 
+2025-07-15T19:42:55.612453865Z volume usage percentage 0
+2025-07-15T19:42:55.709949955Z error: error executing jsonpath "{.items[0].metadata.namespace}": Error executing template: array index out of bounds: index 0, length 0. Printing more information for debugging the template:
+2025-07-15T19:42:55.709977215Z 	template was:
+2025-07-15T19:42:55.709980275Z 		{.items[0].metadata.namespace}
+2025-07-15T19:42:55.709982755Z 	object given to jsonpath engine was:
+2025-07-15T19:42:55.709985615Z 		map[string]interface {}{"apiVersion":"v1", "items":[]interface {}{}, "kind":"List", "metadata":map[string]interface {}{"resourceVersion":""}}
+2025-07-15T19:42:55.709988015Z 
+2025-07-15T19:42:55.709990155Z 
+2025-07-15T19:42:55.712966342Z 
+2025-07-15T19:42:55.712981892Z Inspecting resource ns/
+2025-07-15T19:42:55.778720102Z error: arguments in resource/name form must have a single resource and name
+2025-07-15T19:42:55.784279853Z 
+2025-07-15T19:42:55.784287823Z Inspecting resource clusterserviceversion
+2025-07-15T19:42:55.868537527Z error: the server doesn't have a resource type "clusterserviceversion"
+2025-07-15T19:42:55.871355573Z 
+2025-07-15T19:42:55.871365153Z Inspecting resource nodes
+2025-07-15T19:42:55.948604778Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:56.131533668Z 
+2025-07-15T19:42:56.131566638Z Inspecting resource clusterrole.rbac.authorization.k8s.io/istio-reader-clusterrole-istio-system
+2025-07-15T19:42:56.217173390Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:56.219930055Z 
+2025-07-15T19:42:56.219945385Z Inspecting resource clusterrole.rbac.authorization.k8s.io/istiod-clusterrole-istio-system
+2025-07-15T19:42:56.308160452Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:56.311021878Z 
+2025-07-15T19:42:56.311030098Z Inspecting resource clusterrole.rbac.authorization.k8s.io/istiod-gateway-controller-istio-system
+2025-07-15T19:42:56.407816313Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:56.412481289Z 
+2025-07-15T19:42:56.412496229Z Inspecting resource clusterrolebinding.rbac.authorization.k8s.io/istio-reader-clusterrole-istio-system
+2025-07-15T19:42:56.513050175Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:56.516540215Z 
+2025-07-15T19:42:56.516556765Z Inspecting resource clusterrolebinding.rbac.authorization.k8s.io/istiod-clusterrole-istio-system
+2025-07-15T19:42:56.608874095Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:56.612086323Z 
+2025-07-15T19:42:56.612104593Z Inspecting resource clusterrolebinding.rbac.authorization.k8s.io/istiod-gateway-controller-istio-system
+2025-07-15T19:42:56.700667462Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:57.140556658Z 
+2025-07-15T19:42:57.140591068Z Inspecting resource crd/authorizationpolicies.security.istio.io
+2025-07-15T19:42:57.218772919Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:57.221592024Z 
+2025-07-15T19:42:57.221608795Z Inspecting resource crd/destinationrules.networking.istio.io
+2025-07-15T19:42:57.350787081Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:57.354239871Z 
+2025-07-15T19:42:57.354247881Z Inspecting resource crd/envoyfilters.networking.istio.io
+2025-07-15T19:42:57.433172245Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:57.436397143Z 
+2025-07-15T19:42:57.436405173Z Inspecting resource crd/gateways.networking.istio.io
+2025-07-15T19:42:57.514561114Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:57.517608311Z 
+2025-07-15T19:42:57.517619221Z Inspecting resource crd/istiocnis.sailoperator.io
+2025-07-15T19:42:57.612643966Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:57.616287756Z 
+2025-07-15T19:42:57.616303496Z Inspecting resource crd/istiorevisions.sailoperator.io
+2025-07-15T19:42:57.764246689Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:57.767586808Z 
+2025-07-15T19:42:57.767600718Z Inspecting resource crd/istiorevisiontags.sailoperator.io
+2025-07-15T19:42:57.847497498Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:57.850838217Z 
+2025-07-15T19:42:57.850852937Z Inspecting resource crd/istios.sailoperator.io
+2025-07-15T19:42:58.003413425Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:58.006625363Z 
+2025-07-15T19:42:58.006639593Z Inspecting resource crd/peerauthentications.security.istio.io
+2025-07-15T19:42:58.084069020Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:58.087156027Z 
+2025-07-15T19:42:58.087170937Z Inspecting resource crd/proxyconfigs.networking.istio.io
+2025-07-15T19:42:58.160582970Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:58.163594747Z 
+2025-07-15T19:42:58.163608767Z Inspecting resource crd/requestauthentications.security.istio.io
+2025-07-15T19:42:58.243032274Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:58.246212372Z 
+2025-07-15T19:42:58.246226132Z Inspecting resource crd/serviceentries.networking.istio.io
+2025-07-15T19:42:58.326567024Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:58.329470301Z 
+2025-07-15T19:42:58.329478621Z Inspecting resource crd/sidecars.networking.istio.io
+2025-07-15T19:42:58.413441194Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:58.416018779Z 
+2025-07-15T19:42:58.416028969Z Inspecting resource crd/telemetries.telemetry.istio.io
+2025-07-15T19:42:58.496892744Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:58.500077811Z 
+2025-07-15T19:42:58.500088532Z Inspecting resource crd/virtualservices.networking.istio.io
+2025-07-15T19:42:58.599619412Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:58.602772219Z 
+2025-07-15T19:42:58.602781469Z Inspecting resource crd/wasmplugins.extensions.istio.io
+2025-07-15T19:42:58.681882795Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:58.684648991Z 
+2025-07-15T19:42:58.684656861Z Inspecting resource crd/workloadentries.networking.istio.io
+2025-07-15T19:42:58.764758272Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:58.768344552Z 
+2025-07-15T19:42:58.768357672Z Inspecting resource crd/workloadgroups.networking.istio.io
+2025-07-15T19:42:58.848982155Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:58.852013073Z 
+2025-07-15T19:42:58.852026273Z Inspecting resource crd/ztunnels.sailoperator.io
+2025-07-15T19:42:58.969064202Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:59.046111326Z 
+2025-07-15T19:42:59.046136586Z Inspecting resource mutatingwebhookconfiguration.admissionregistration.k8s.io/istio-sidecar-injector
+2025-07-15T19:42:59.137011947Z Gathering data for ns/istio-system...
+2025-07-15T19:42:59.403255516Z W0715 19:42:59.403162     673 util.go:118] the server doesn't have a resource type egressfirewalls, skipping the inspection
+2025-07-15T19:42:59.406159742Z W0715 19:42:59.406101     673 util.go:118] the server doesn't have a resource type egressqoses, skipping the inspection
+2025-07-15T19:42:59.429059541Z Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+2025-07-15T19:42:59.478389179Z W0715 19:42:59.478274     673 util.go:118] the server doesn't have a resource type servicemonitors, skipping the inspection
+2025-07-15T19:42:59.491178881Z Wrote inspect data to /must-gather.
+2025-07-15T19:42:59.568932549Z 
+2025-07-15T19:42:59.568967659Z Inspecting resource validatingwebhookconfiguration.admissionregistration.k8s.io/istio-validator-istio-system
+2025-07-15T19:42:59.665201511Z Gathering data for ns/istio-system...
+2025-07-15T19:42:59.924856432Z W0715 19:42:59.924791     713 util.go:118] the server doesn't have a resource type egressfirewalls, skipping the inspection
+2025-07-15T19:42:59.928675664Z W0715 19:42:59.928616     713 util.go:118] the server doesn't have a resource type egressqoses, skipping the inspection
+2025-07-15T19:42:59.950430756Z Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+2025-07-15T19:42:59.989114464Z W0715 19:42:59.989040     713 util.go:118] the server doesn't have a resource type servicemonitors, skipping the inspection
+2025-07-15T19:42:59.997906454Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:00.001274192Z 
+2025-07-15T19:43:00.001286473Z Inspecting resource Istio
+2025-07-15T19:43:00.083081303Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:00.085967759Z 
+2025-07-15T19:43:00.085982239Z Inspecting resource IstioRevision
+2025-07-15T19:43:00.168808866Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:00.171849093Z 
+2025-07-15T19:43:00.171857483Z Inspecting resource IstioCNI
+2025-07-15T19:43:00.251809873Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:00.254851340Z 
+2025-07-15T19:43:00.254866350Z Inspecting resource IstioRevisionTag
+2025-07-15T19:43:00.334405268Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:00.337161343Z 
+2025-07-15T19:43:00.337171533Z Inspecting resource ZTunnel
+2025-07-15T19:43:00.418727022Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:00.491025630Z error: error executing jsonpath "{.items[0].spec.namespace}": Error executing template: array index out of bounds: index 0, length 0. Printing more information for debugging the template:
+2025-07-15T19:43:00.491045600Z 	template was:
+2025-07-15T19:43:00.491047920Z 		{.items[0].spec.namespace}
+2025-07-15T19:43:00.491055200Z 	object given to jsonpath engine was:
+2025-07-15T19:43:00.491057480Z 		map[string]interface {}{"apiVersion":"v1", "items":[]interface {}{}, "kind":"List", "metadata":map[string]interface {}{"resourceVersion":""}}
+2025-07-15T19:43:00.491059240Z 
+2025-07-15T19:43:00.491060990Z 
+2025-07-15T19:43:00.567916962Z 
+2025-07-15T19:43:00.567948043Z Inspecting default IstioRevision
+2025-07-15T19:43:00.617486241Z volume usage percentage 0
+2025-07-15T19:43:00.644343623Z 
+2025-07-15T19:43:00.644367673Z Inspecting resource ns/istio-system
+2025-07-15T19:43:00.713873734Z Gathering data for ns/istio-system...
+2025-07-15T19:43:00.983979894Z W0715 19:43:00.983912     897 util.go:118] the server doesn't have a resource type egressfirewalls, skipping the inspection
+2025-07-15T19:43:00.985009040Z W0715 19:43:00.984978     897 util.go:118] the server doesn't have a resource type egressqoses, skipping the inspection
+2025-07-15T19:43:01.007404086Z Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+2025-07-15T19:43:01.044194323Z W0715 19:43:01.044110     897 util.go:118] the server doesn't have a resource type servicemonitors, skipping the inspection
+2025-07-15T19:43:01.052424899Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:01.055440586Z 
+2025-07-15T19:43:01.055453797Z Inspecting resource authorizationpolicies.security.istio.io in namespace istio-system
+2025-07-15T19:43:01.159775604Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:01.163050823Z 
+2025-07-15T19:43:01.163067303Z Inspecting resource destinationrules.networking.istio.io in namespace istio-system
+2025-07-15T19:43:01.259281754Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:01.262877524Z 
+2025-07-15T19:43:01.262899515Z Inspecting resource envoyfilters.networking.istio.io in namespace istio-system
+2025-07-15T19:43:01.363992914Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:01.367911176Z 
+2025-07-15T19:43:01.367940187Z Inspecting resource gateways.networking.istio.io in namespace istio-system
+2025-07-15T19:43:01.464085797Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:01.466924083Z 
+2025-07-15T19:43:01.466937504Z Inspecting resource istiocnis.sailoperator.io in namespace istio-system
+2025-07-15T19:43:01.561158974Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:01.564430652Z 
+2025-07-15T19:43:01.564445302Z Inspecting resource istiorevisions.sailoperator.io in namespace istio-system
+2025-07-15T19:43:01.656985173Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:01.659759608Z 
+2025-07-15T19:43:01.659773289Z Inspecting resource istiorevisiontags.sailoperator.io in namespace istio-system
+2025-07-15T19:43:01.755629149Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:01.758885227Z 
+2025-07-15T19:43:01.758913947Z Inspecting resource istios.sailoperator.io in namespace istio-system
+2025-07-15T19:43:01.855490001Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:01.858569008Z 
+2025-07-15T19:43:01.858584008Z Inspecting resource peerauthentications.security.istio.io in namespace istio-system
+2025-07-15T19:43:01.953391741Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:01.956556519Z 
+2025-07-15T19:43:01.956573469Z Inspecting resource proxyconfigs.networking.istio.io in namespace istio-system
+2025-07-15T19:43:02.052321389Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:02.055431766Z 
+2025-07-15T19:43:02.055447987Z Inspecting resource requestauthentications.security.istio.io in namespace istio-system
+2025-07-15T19:43:02.149322855Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:02.152972415Z 
+2025-07-15T19:43:02.152987445Z Inspecting resource serviceentries.networking.istio.io in namespace istio-system
+2025-07-15T19:43:02.246460301Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:02.249074186Z 
+2025-07-15T19:43:02.249086966Z Inspecting resource sidecars.networking.istio.io in namespace istio-system
+2025-07-15T19:43:02.344050711Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:02.347460890Z 
+2025-07-15T19:43:02.347471321Z Inspecting resource telemetries.telemetry.istio.io in namespace istio-system
+2025-07-15T19:43:02.446721919Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:02.449427714Z 
+2025-07-15T19:43:02.449439304Z Inspecting resource virtualservices.networking.istio.io in namespace istio-system
+2025-07-15T19:43:02.544493529Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:02.547712547Z 
+2025-07-15T19:43:02.547736557Z Inspecting resource wasmplugins.extensions.istio.io in namespace istio-system
+2025-07-15T19:43:02.646703995Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:02.649561021Z 
+2025-07-15T19:43:02.649576131Z Inspecting resource workloadentries.networking.istio.io in namespace istio-system
+2025-07-15T19:43:02.744191024Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:02.747350921Z 
+2025-07-15T19:43:02.747363191Z Inspecting resource workloadgroups.networking.istio.io in namespace istio-system
+2025-07-15T19:43:02.842125505Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:02.845213842Z 
+2025-07-15T19:43:02.845221502Z Inspecting resource ztunnels.sailoperator.io in namespace istio-system
+2025-07-15T19:43:02.942295539Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:02.944909514Z 
+2025-07-15T19:43:02.944927524Z Inspecting resource net-attach-def,roles,rolebindings in namespace istio-system
+2025-07-15T19:43:03.029728841Z error: the server doesn't have a resource type "net-attach-def"
+2025-07-15T19:43:03.109641841Z 
+2025-07-15T19:43:03.109665971Z Collecting /debug/syncz from istiod-58cf6dd64-s4rq9 in namespace istio-system
+2025-07-15T19:43:03.472319163Z 
+2025-07-15T19:43:03.472336523Z Inspecting alpha data plane namespace
+2025-07-15T19:43:03.472342103Z 
+2025-07-15T19:43:03.472356293Z Inspecting resource ns/alpha
+2025-07-15T19:43:03.544596130Z Gathering data for ns/alpha...
+2025-07-15T19:43:04.251805441Z W0715 19:43:04.251720    1369 util.go:118] the server doesn't have a resource type egressfirewalls, skipping the inspection
+2025-07-15T19:43:04.252913157Z W0715 19:43:04.252877    1369 util.go:118] the server doesn't have a resource type egressqoses, skipping the inspection
+2025-07-15T19:43:04.306731360Z Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+2025-07-15T19:43:04.329718079Z W0715 19:43:04.329638    1369 util.go:118] the server doesn't have a resource type servicemonitors, skipping the inspection
+2025-07-15T19:43:04.360926505Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:04.365614011Z 
+2025-07-15T19:43:04.365638971Z Inspecting resource authorizationpolicies.security.istio.io in namespace alpha
+2025-07-15T19:43:04.490900197Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:04.494089445Z 
+2025-07-15T19:43:04.494107765Z Inspecting resource destinationrules.networking.istio.io in namespace alpha
+2025-07-15T19:43:04.614267061Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:04.617061447Z 
+2025-07-15T19:43:04.617090907Z Inspecting resource envoyfilters.networking.istio.io in namespace alpha
+2025-07-15T19:43:04.735058022Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:04.737885137Z 
+2025-07-15T19:43:04.737900758Z Inspecting resource gateways.networking.istio.io in namespace alpha
+2025-07-15T19:43:04.857179719Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:04.860427487Z 
+2025-07-15T19:43:04.860443947Z Inspecting resource istiocnis.sailoperator.io in namespace alpha
+2025-07-15T19:43:04.977771767Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:04.980827715Z 
+2025-07-15T19:43:04.980847805Z Inspecting resource istiorevisions.sailoperator.io in namespace alpha
+2025-07-15T19:43:05.101355083Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:05.104424801Z 
+2025-07-15T19:43:05.104443401Z Inspecting resource istiorevisiontags.sailoperator.io in namespace alpha
+2025-07-15T19:43:05.223194369Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:05.226117735Z 
+2025-07-15T19:43:05.226141076Z Inspecting resource istios.sailoperator.io in namespace alpha
+2025-07-15T19:43:05.345248357Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:05.348505235Z 
+2025-07-15T19:43:05.348534575Z Inspecting resource peerauthentications.security.istio.io in namespace alpha
+2025-07-15T19:43:05.468081268Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:05.471273566Z 
+2025-07-15T19:43:05.471291586Z Inspecting resource proxyconfigs.networking.istio.io in namespace alpha
+2025-07-15T19:43:05.590365577Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:05.593161312Z 
+2025-07-15T19:43:05.593181612Z Inspecting resource requestauthentications.security.istio.io in namespace alpha
+2025-07-15T19:43:05.623716324Z volume usage percentage 0
+2025-07-15T19:43:05.708105339Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:05.711343027Z 
+2025-07-15T19:43:05.711366947Z Inspecting resource serviceentries.networking.istio.io in namespace alpha
+2025-07-15T19:43:05.825691221Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:05.828722718Z 
+2025-07-15T19:43:05.828753198Z Inspecting resource sidecars.networking.istio.io in namespace alpha
+2025-07-15T19:43:05.944789502Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:05.948348772Z 
+2025-07-15T19:43:05.948374962Z Inspecting resource telemetries.telemetry.istio.io in namespace alpha
+2025-07-15T19:43:06.066963679Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:06.069984506Z 
+2025-07-15T19:43:06.070001086Z Inspecting resource virtualservices.networking.istio.io in namespace alpha
+2025-07-15T19:43:06.190024262Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:06.193412151Z 
+2025-07-15T19:43:06.193433572Z Inspecting resource wasmplugins.extensions.istio.io in namespace alpha
+2025-07-15T19:43:06.323092241Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:06.325987087Z 
+2025-07-15T19:43:06.326005708Z Inspecting resource workloadentries.networking.istio.io in namespace alpha
+2025-07-15T19:43:06.447325730Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:06.451032541Z 
+2025-07-15T19:43:06.451056421Z Inspecting resource workloadgroups.networking.istio.io in namespace alpha
+2025-07-15T19:43:06.568192331Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:06.571655951Z 
+2025-07-15T19:43:06.571673081Z Inspecting resource ztunnels.sailoperator.io in namespace alpha
+2025-07-15T19:43:06.692893853Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:06.696747614Z 
+2025-07-15T19:43:06.696775415Z Inspecting resource net-attach-def,roles,rolebindings in namespace alpha
+2025-07-15T19:43:06.779948523Z error: the server doesn't have a resource type "net-attach-def"
+2025-07-15T19:43:06.860506957Z 
+2025-07-15T19:43:06.860541987Z Collecting Envoy config for pods in alpha pointing to default revision
+2025-07-15T19:43:07.036134015Z Collecting config_dump and stats for pod a-client-695f68b55d-wmdv7.alpha
+2025-07-15T19:43:07.702880039Z Collecting config_dump and stats for pod b-client-75fb47d5c6-6svvv.alpha
+2025-07-15T19:43:08.330826394Z Collecting config_dump and stats for pod c-client-7988d5d85f-pfq4d.alpha
+2025-07-15T19:43:09.037908064Z Collecting config_dump and stats for pod d-client-6778cdf6cd-qgrrs.alpha
+2025-07-15T19:43:09.690011685Z Collecting config_dump and stats for pod e-client-57dcf59cb6-mqd78.alpha
+2025-07-15T19:43:10.367195207Z Collecting config_dump and stats for pod f-client-869f9c7bdd-vq8wb.alpha
+2025-07-15T19:43:10.630580280Z volume usage percentage 0
+2025-07-15T19:43:11.019853552Z Collecting config_dump and stats for pod v-server-785cff56c9-5rh5w.alpha
+2025-07-15T19:43:11.709706625Z Collecting config_dump and stats for pod w-server-8667cdbcf7-vf496.alpha
+2025-07-15T19:43:12.368547474Z Collecting config_dump and stats for pod x-server-6d8987d7c7-qbtcm.alpha
+2025-07-15T19:43:13.056545997Z Collecting config_dump and stats for pod y-server-5b556546fd-t52ll.alpha
+2025-07-15T19:43:13.705334909Z Collecting config_dump and stats for pod z-server-5f94f449c5-k64sr.alpha
+2025-07-15T19:43:14.275600119Z 
+2025-07-15T19:43:14.275630000Z Inspecting beta data plane namespace
+2025-07-15T19:43:14.275640110Z 
+2025-07-15T19:43:14.275645100Z Inspecting resource ns/beta
+2025-07-15T19:43:14.345834585Z Gathering data for ns/beta...
+2025-07-15T19:43:15.055847952Z W0715 19:43:15.055763    2724 util.go:118] the server doesn't have a resource type egressfirewalls, skipping the inspection
+2025-07-15T19:43:15.057177170Z W0715 19:43:15.057144    2724 util.go:118] the server doesn't have a resource type egressqoses, skipping the inspection
+2025-07-15T19:43:15.127942148Z Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+2025-07-15T19:43:15.161272475Z W0715 19:43:15.161183    2724 util.go:118] the server doesn't have a resource type servicemonitors, skipping the inspection
+2025-07-15T19:43:15.228927516Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:15.232269205Z 
+2025-07-15T19:43:15.232295386Z Inspecting resource authorizationpolicies.security.istio.io in namespace beta
+2025-07-15T19:43:15.375822563Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:15.378832690Z 
+2025-07-15T19:43:15.378855930Z Inspecting resource destinationrules.networking.istio.io in namespace beta
+2025-07-15T19:43:15.523486144Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:15.526993324Z 
+2025-07-15T19:43:15.527005914Z Inspecting resource envoyfilters.networking.istio.io in namespace beta
+2025-07-15T19:43:15.637848639Z volume usage percentage 0
+2025-07-15T19:43:15.667109493Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:15.670259711Z 
+2025-07-15T19:43:15.670282831Z Inspecting resource gateways.networking.istio.io in namespace beta
+2025-07-15T19:43:15.813178005Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:15.816248682Z 
+2025-07-15T19:43:15.816263702Z Inspecting resource istiocnis.sailoperator.io in namespace beta
+2025-07-15T19:43:15.956064340Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:15.959053497Z 
+2025-07-15T19:43:15.959073877Z Inspecting resource istiorevisions.sailoperator.io in namespace beta
+2025-07-15T19:43:16.105494981Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:16.109419383Z 
+2025-07-15T19:43:16.109440193Z Inspecting resource istiorevisiontags.sailoperator.io in namespace beta
+2025-07-15T19:43:16.247048438Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:16.250160256Z 
+2025-07-15T19:43:16.250184166Z Inspecting resource istios.sailoperator.io in namespace beta
+2025-07-15T19:43:16.392592697Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:16.395729795Z 
+2025-07-15T19:43:16.395748365Z Inspecting resource peerauthentications.security.istio.io in namespace beta
+2025-07-15T19:43:16.536045855Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:16.539376544Z 
+2025-07-15T19:43:16.539395104Z Inspecting resource proxyconfigs.networking.istio.io in namespace beta
+2025-07-15T19:43:16.679302281Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:16.682396198Z 
+2025-07-15T19:43:16.682412149Z Inspecting resource requestauthentications.security.istio.io in namespace beta
+2025-07-15T19:43:16.840478039Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:16.843962108Z 
+2025-07-15T19:43:16.843978458Z Inspecting resource serviceentries.networking.istio.io in namespace beta
+2025-07-15T19:43:16.991995211Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:16.995461121Z 
+2025-07-15T19:43:16.995477191Z Inspecting resource sidecars.networking.istio.io in namespace beta
+2025-07-15T19:43:17.137017878Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:17.140575008Z 
+2025-07-15T19:43:17.140597198Z Inspecting resource telemetries.telemetry.istio.io in namespace beta
+2025-07-15T19:43:17.289613737Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:17.293412258Z 
+2025-07-15T19:43:17.293437848Z Inspecting resource virtualservices.networking.istio.io in namespace beta
+2025-07-15T19:43:17.432113289Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:17.434964255Z 
+2025-07-15T19:43:17.434993946Z Inspecting resource wasmplugins.extensions.istio.io in namespace beta
+2025-07-15T19:43:17.576984785Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:17.580422364Z 
+2025-07-15T19:43:17.580445574Z Inspecting resource workloadentries.networking.istio.io in namespace beta
+2025-07-15T19:43:17.723015337Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:17.726774058Z 
+2025-07-15T19:43:17.726799628Z Inspecting resource workloadgroups.networking.istio.io in namespace beta
+2025-07-15T19:43:17.866986977Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:17.870146565Z 
+2025-07-15T19:43:17.870175395Z Inspecting resource ztunnels.sailoperator.io in namespace beta
+2025-07-15T19:43:18.014203136Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:18.017125243Z 
+2025-07-15T19:43:18.017150263Z Inspecting resource net-attach-def,roles,rolebindings in namespace beta
+2025-07-15T19:43:18.103808921Z error: the server doesn't have a resource type "net-attach-def"
+2025-07-15T19:43:18.180035939Z 
+2025-07-15T19:43:18.180066590Z Collecting Envoy config for pods in beta pointing to default revision
+2025-07-15T19:43:18.354918154Z Collecting config_dump and stats for pod a-client-68cffc58fd-qffvr.beta
+2025-07-15T19:43:19.029889924Z Collecting config_dump and stats for pod b-client-cd9f9866d-kh6q2.beta
+2025-07-15T19:43:19.732326498Z Collecting config_dump and stats for pod c-client-5646c698fc-b7gmq.beta
+2025-07-15T19:43:20.385436365Z Collecting config_dump and stats for pod d-client-59dfcb7dbd-44v6d.beta
+2025-07-15T19:43:20.647013667Z volume usage percentage 0
+2025-07-15T19:43:20.999811514Z Collecting config_dump and stats for pod e-client-758d4cfff4-n8l96.beta
+2025-07-15T19:43:21.644647205Z Collecting config_dump and stats for pod f-client-6b9bcf5dcb-d7thx.beta
+2025-07-15T19:43:22.285568123Z Collecting config_dump and stats for pod v-server-54b77ffd4f-rdg2v.beta
+2025-07-15T19:43:22.954244967Z Collecting config_dump and stats for pod w-server-8667cdbcf7-mbqvb.beta
+2025-07-15T19:43:23.651355141Z Collecting config_dump and stats for pod x-server-6d8987d7c7-lcljz.beta
+2025-07-15T19:43:24.301225100Z Collecting config_dump and stats for pod y-server-5b556546fd-ssp2m.beta
+2025-07-15T19:43:24.933626240Z Collecting config_dump and stats for pod z-server-5f94f449c5-qwb7f.beta
+2025-07-15T19:43:25.526366077Z 
+2025-07-15T19:43:25.526399327Z Inspecting bookinfo data plane namespace
+2025-07-15T19:43:25.526402047Z 
+2025-07-15T19:43:25.526405367Z Inspecting resource ns/bookinfo
+2025-07-15T19:43:25.595804518Z Gathering data for ns/bookinfo...
+2025-07-15T19:43:25.655309682Z volume usage percentage 0
+2025-07-15T19:43:25.868245311Z W0715 19:43:25.868164    4077 util.go:118] the server doesn't have a resource type egressfirewalls, skipping the inspection
+2025-07-15T19:43:25.869327518Z W0715 19:43:25.869296    4077 util.go:118] the server doesn't have a resource type egressqoses, skipping the inspection
+2025-07-15T19:43:25.907564913Z Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+2025-07-15T19:43:25.933317648Z W0715 19:43:25.933224    4077 util.go:118] the server doesn't have a resource type servicemonitors, skipping the inspection
+2025-07-15T19:43:26.019518953Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:26.022985302Z 
+2025-07-15T19:43:26.023002492Z Inspecting resource authorizationpolicies.security.istio.io in namespace bookinfo
+2025-07-15T19:43:26.180324428Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:26.183614657Z 
+2025-07-15T19:43:26.183636957Z Inspecting resource destinationrules.networking.istio.io in namespace bookinfo
+2025-07-15T19:43:26.344230100Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:26.347498279Z 
+2025-07-15T19:43:26.347530099Z Inspecting resource envoyfilters.networking.istio.io in namespace bookinfo
+2025-07-15T19:43:26.504407123Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:26.507370489Z 
+2025-07-15T19:43:26.507401929Z Inspecting resource gateways.networking.istio.io in namespace bookinfo
+2025-07-15T19:43:26.672570829Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:26.676006348Z 
+2025-07-15T19:43:26.676024868Z Inspecting resource istiocnis.sailoperator.io in namespace bookinfo
+2025-07-15T19:43:26.832551310Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:26.835671997Z 
+2025-07-15T19:43:26.835696858Z Inspecting resource istiorevisions.sailoperator.io in namespace bookinfo
+2025-07-15T19:43:26.995290066Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:26.998279473Z 
+2025-07-15T19:43:26.998300743Z Inspecting resource istiorevisiontags.sailoperator.io in namespace bookinfo
+2025-07-15T19:43:27.158173833Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:27.163186931Z 
+2025-07-15T19:43:27.163207641Z Inspecting resource istios.sailoperator.io in namespace bookinfo
+2025-07-15T19:43:27.321933115Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:27.324893582Z 
+2025-07-15T19:43:27.324909872Z Inspecting resource peerauthentications.security.istio.io in namespace bookinfo
+2025-07-15T19:43:27.483175932Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:27.486182489Z 
+2025-07-15T19:43:27.486194259Z Inspecting resource proxyconfigs.networking.istio.io in namespace bookinfo
+2025-07-15T19:43:27.643390935Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:27.646845604Z 
+2025-07-15T19:43:27.646866594Z Inspecting resource requestauthentications.security.istio.io in namespace bookinfo
+2025-07-15T19:43:27.803408805Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:27.806780904Z 
+2025-07-15T19:43:27.806796994Z Inspecting resource serviceentries.networking.istio.io in namespace bookinfo
+2025-07-15T19:43:27.961388015Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:27.964780904Z 
+2025-07-15T19:43:27.964795374Z Inspecting resource sidecars.networking.istio.io in namespace bookinfo
+2025-07-15T19:43:28.124214181Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:28.127390459Z 
+2025-07-15T19:43:28.127429439Z Inspecting resource telemetries.telemetry.istio.io in namespace bookinfo
+2025-07-15T19:43:28.284306813Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:28.287721502Z 
+2025-07-15T19:43:28.287741342Z Inspecting resource virtualservices.networking.istio.io in namespace bookinfo
+2025-07-15T19:43:28.452078977Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:28.457127915Z 
+2025-07-15T19:43:28.457151385Z Inspecting resource wasmplugins.extensions.istio.io in namespace bookinfo
+2025-07-15T19:43:28.616737124Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:28.620341964Z 
+2025-07-15T19:43:28.620371284Z Inspecting resource workloadentries.networking.istio.io in namespace bookinfo
+2025-07-15T19:43:28.791507457Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:28.795014317Z 
+2025-07-15T19:43:28.795041047Z Inspecting resource workloadgroups.networking.istio.io in namespace bookinfo
+2025-07-15T19:43:28.950129071Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:28.953328769Z 
+2025-07-15T19:43:28.953346349Z Inspecting resource ztunnels.sailoperator.io in namespace bookinfo
+2025-07-15T19:43:29.109660289Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:29.112649006Z 
+2025-07-15T19:43:29.112673916Z Inspecting resource net-attach-def,roles,rolebindings in namespace bookinfo
+2025-07-15T19:43:29.193806993Z error: the server doesn't have a resource type "net-attach-def"
+2025-07-15T19:43:29.269780670Z 
+2025-07-15T19:43:29.269812920Z Collecting Envoy config for pods in bookinfo pointing to default revision
+2025-07-15T19:43:29.438750602Z Collecting config_dump and stats for pod bookinfo-gateway-istio-5d8d9854cc-5zkrd.bookinfo
+2025-07-15T19:43:30.068478517Z Collecting config_dump and stats for pod details-v1-766844796b-r6b8z.bookinfo
+2025-07-15T19:43:30.663607357Z volume usage percentage 0
+2025-07-15T19:43:30.791604167Z Collecting config_dump and stats for pod productpage-v1-54bb874995-7t6fg.bookinfo
+2025-07-15T19:43:31.517179962Z Collecting config_dump and stats for pod ratings-v1-5dc79b6bcd-pncl2.bookinfo
+2025-07-15T19:43:32.204863923Z Collecting config_dump and stats for pod reviews-v1-598b896c9d-cxrv2.bookinfo
+2025-07-15T19:43:32.896722488Z Collecting config_dump and stats for pod reviews-v2-556d6457d-4dddd.bookinfo
+2025-07-15T19:43:33.537183173Z Collecting config_dump and stats for pod reviews-v3-564544b4d6-czsdz.bookinfo
+2025-07-15T19:43:34.100365494Z 
+2025-07-15T19:43:34.100392534Z Inspecting gamma data plane namespace
+2025-07-15T19:43:34.100407534Z 
+2025-07-15T19:43:34.100438854Z Inspecting resource ns/gamma
+2025-07-15T19:43:34.171205742Z Gathering data for ns/gamma...
+2025-07-15T19:43:34.596531657Z W0715 19:43:34.596447    5130 util.go:118] the server doesn't have a resource type egressfirewalls, skipping the inspection
+2025-07-15T19:43:34.597682894Z W0715 19:43:34.597648    5130 util.go:118] the server doesn't have a resource type egressqoses, skipping the inspection
+2025-07-15T19:43:34.650994554Z Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+2025-07-15T19:43:34.674040573Z W0715 19:43:34.673959    5130 util.go:118] the server doesn't have a resource type servicemonitors, skipping the inspection
+2025-07-15T19:43:34.765621079Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:34.769069388Z 
+2025-07-15T19:43:34.769082898Z Inspecting resource authorizationpolicies.security.istio.io in namespace gamma
+2025-07-15T19:43:34.947011760Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:34.950222228Z 
+2025-07-15T19:43:34.950238018Z Inspecting resource destinationrules.networking.istio.io in namespace gamma
+2025-07-15T19:43:35.131614290Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:35.135058729Z 
+2025-07-15T19:43:35.135091929Z Inspecting resource envoyfilters.networking.istio.io in namespace gamma
+2025-07-15T19:43:35.333316015Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:35.336463572Z 
+2025-07-15T19:43:35.336495043Z Inspecting resource gateways.networking.istio.io in namespace gamma
+2025-07-15T19:43:35.522484790Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:35.525906219Z 
+2025-07-15T19:43:35.525929359Z Inspecting resource istiocnis.sailoperator.io in namespace gamma
+2025-07-15T19:43:35.672495964Z volume usage percentage 0
+2025-07-15T19:43:35.706512195Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:35.709692543Z 
+2025-07-15T19:43:35.709703993Z Inspecting resource istiorevisions.sailoperator.io in namespace gamma
+2025-07-15T19:43:35.905547556Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:35.908879885Z 
+2025-07-15T19:43:35.908913905Z Inspecting resource istiorevisiontags.sailoperator.io in namespace gamma
+2025-07-15T19:43:36.087051108Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:36.090195226Z 
+2025-07-15T19:43:36.090215826Z Inspecting resource istios.sailoperator.io in namespace gamma
+2025-07-15T19:43:36.281936295Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:36.285236043Z 
+2025-07-15T19:43:36.285275094Z Inspecting resource peerauthentications.security.istio.io in namespace gamma
+2025-07-15T19:43:36.471490722Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:36.475122423Z 
+2025-07-15T19:43:36.475148123Z Inspecting resource proxyconfigs.networking.istio.io in namespace gamma
+2025-07-15T19:43:36.658139013Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:36.661651333Z 
+2025-07-15T19:43:36.661679793Z Inspecting resource requestauthentications.security.istio.io in namespace gamma
+2025-07-15T19:43:36.840376189Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:36.843713727Z 
+2025-07-15T19:43:36.843725717Z Inspecting resource serviceentries.networking.istio.io in namespace gamma
+2025-07-15T19:43:37.042458297Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:37.045473384Z 
+2025-07-15T19:43:37.045539874Z Inspecting resource sidecars.networking.istio.io in namespace gamma
+2025-07-15T19:43:37.227598658Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:37.231044638Z 
+2025-07-15T19:43:37.231077218Z Inspecting resource telemetries.telemetry.istio.io in namespace gamma
+2025-07-15T19:43:37.410020466Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:37.413033853Z 
+2025-07-15T19:43:37.413067573Z Inspecting resource virtualservices.networking.istio.io in namespace gamma
+2025-07-15T19:43:37.622997925Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:37.626193043Z 
+2025-07-15T19:43:37.626220723Z Inspecting resource wasmplugins.extensions.istio.io in namespace gamma
+2025-07-15T19:43:37.829832899Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:37.832759715Z 
+2025-07-15T19:43:37.832782805Z Inspecting resource workloadentries.networking.istio.io in namespace gamma
+2025-07-15T19:43:38.011514362Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:38.015201932Z 
+2025-07-15T19:43:38.015222763Z Inspecting resource workloadgroups.networking.istio.io in namespace gamma
+2025-07-15T19:43:38.204049336Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:38.208616512Z 
+2025-07-15T19:43:38.208648862Z Inspecting resource ztunnels.sailoperator.io in namespace gamma
+2025-07-15T19:43:38.394737909Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:38.398036487Z 
+2025-07-15T19:43:38.398048507Z Inspecting resource net-attach-def,roles,rolebindings in namespace gamma
+2025-07-15T19:43:38.482624314Z error: the server doesn't have a resource type "net-attach-def"
+2025-07-15T19:43:38.564750996Z 
+2025-07-15T19:43:38.564783156Z Collecting Envoy config for pods in gamma pointing to default revision
+2025-07-15T19:43:38.737389148Z Collecting config_dump and stats for pod a-client-b46869f5b-4g9l2.gamma
+2025-07-15T19:43:39.398489200Z Collecting config_dump and stats for pod b-client-76544c69b4-d9p2z.gamma
+2025-07-15T19:43:40.067523596Z Collecting config_dump and stats for pod c-client-6bc64987db-m2sw9.gamma
+2025-07-15T19:43:40.681154731Z volume usage percentage 0
+2025-07-15T19:43:40.724354384Z Collecting config_dump and stats for pod d-client-7b5896d4f9-2mnw4.gamma
+2025-07-15T19:43:41.346714777Z Collecting config_dump and stats for pod e-client-69456dc8bf-v7wvb.gamma
+2025-07-15T19:43:42.004720911Z Collecting config_dump and stats for pod f-client-7768db555-hhjdp.gamma
+2025-07-15T19:43:42.672941674Z Collecting config_dump and stats for pod v-server-6494f87f47-q7s4m.gamma
+2025-07-15T19:43:43.373279006Z Collecting config_dump and stats for pod w-server-57c9bbf54c-hppwc.gamma
+2025-07-15T19:43:44.015092579Z Collecting config_dump and stats for pod x-server-64589bc895-qpzhg.gamma
+2025-07-15T19:43:44.649139038Z Collecting config_dump and stats for pod y-server-7c67cd5dc6-f5d7s.gamma
+2025-07-15T19:43:45.369028750Z Collecting config_dump and stats for pod z-server-7f6c76b77c-ttxwl.gamma
+2025-07-15T19:43:45.724392162Z volume usage percentage 0
+2025-07-15T19:43:45.950142622Z 
+2025-07-15T19:43:45.950175632Z Inspecting sleep data plane namespace
+2025-07-15T19:43:45.950189622Z 
+2025-07-15T19:43:45.950195552Z Inspecting resource ns/sleep
+2025-07-15T19:43:46.019253832Z Gathering data for ns/sleep...
+2025-07-15T19:43:46.081643923Z W0715 19:43:46.081334    6487 util.go:118] the server doesn't have a resource type egressfirewalls, skipping the inspection
+2025-07-15T19:43:46.083987476Z W0715 19:43:46.083939    6487 util.go:118] the server doesn't have a resource type egressqoses, skipping the inspection
+2025-07-15T19:43:46.094381554Z Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+2025-07-15T19:43:46.117787456Z W0715 19:43:46.117600    6487 util.go:118] the server doesn't have a resource type servicemonitors, skipping the inspection
+2025-07-15T19:43:46.219015256Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:46.222008812Z 
+2025-07-15T19:43:46.222040353Z Inspecting resource authorizationpolicies.security.istio.io in namespace sleep
+2025-07-15T19:43:46.411954912Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:46.415194020Z 
+2025-07-15T19:43:46.415220840Z Inspecting resource destinationrules.networking.istio.io in namespace sleep
+2025-07-15T19:43:46.598734984Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:46.602182953Z 
+2025-07-15T19:43:46.602212303Z Inspecting resource envoyfilters.networking.istio.io in namespace sleep
+2025-07-15T19:43:46.805867459Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:46.809372499Z 
+2025-07-15T19:43:46.809400599Z Inspecting resource gateways.networking.istio.io in namespace sleep
+2025-07-15T19:43:46.996247941Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:46.999436059Z 
+2025-07-15T19:43:46.999458969Z Inspecting resource istiocnis.sailoperator.io in namespace sleep
+2025-07-15T19:43:47.182794631Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:47.185790678Z 
+2025-07-15T19:43:47.185807428Z Inspecting resource istiorevisions.sailoperator.io in namespace sleep
+2025-07-15T19:43:47.367406351Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:47.370606839Z 
+2025-07-15T19:43:47.370633059Z Inspecting resource istiorevisiontags.sailoperator.io in namespace sleep
+2025-07-15T19:43:47.554044532Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:47.558376716Z 
+2025-07-15T19:43:47.558400316Z Inspecting resource istios.sailoperator.io in namespace sleep
+2025-07-15T19:43:47.743930490Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:47.747066988Z 
+2025-07-15T19:43:47.747085668Z Inspecting resource peerauthentications.security.istio.io in namespace sleep
+2025-07-15T19:43:47.929675626Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:47.933072205Z 
+2025-07-15T19:43:47.933094925Z Inspecting resource proxyconfigs.networking.istio.io in namespace sleep
+2025-07-15T19:43:48.116891920Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:48.120091708Z 
+2025-07-15T19:43:48.120118378Z Inspecting resource requestauthentications.security.istio.io in namespace sleep
+2025-07-15T19:43:48.322505507Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:48.326071117Z 
+2025-07-15T19:43:48.326091387Z Inspecting resource serviceentries.networking.istio.io in namespace sleep
+2025-07-15T19:43:48.514755960Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:48.518384150Z 
+2025-07-15T19:43:48.518416650Z Inspecting resource sidecars.networking.istio.io in namespace sleep
+2025-07-15T19:43:48.709418326Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:48.713053926Z 
+2025-07-15T19:43:48.713102317Z Inspecting resource telemetries.telemetry.istio.io in namespace sleep
+2025-07-15T19:43:48.915414175Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:48.918911375Z 
+2025-07-15T19:43:48.918939645Z Inspecting resource virtualservices.networking.istio.io in namespace sleep
+2025-07-15T19:43:49.100739239Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:49.104173778Z 
+2025-07-15T19:43:49.104209118Z Inspecting resource wasmplugins.extensions.istio.io in namespace sleep
+2025-07-15T19:43:49.292650738Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:49.295612065Z 
+2025-07-15T19:43:49.295639035Z Inspecting resource workloadentries.networking.istio.io in namespace sleep
+2025-07-15T19:43:49.487410775Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:49.490401822Z 
+2025-07-15T19:43:49.490434332Z Inspecting resource workloadgroups.networking.istio.io in namespace sleep
+2025-07-15T19:43:49.688726689Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:49.692179908Z 
+2025-07-15T19:43:49.692203998Z Inspecting resource ztunnels.sailoperator.io in namespace sleep
+2025-07-15T19:43:49.897010611Z Wrote inspect data to /must-gather.
+2025-07-15T19:43:49.900308900Z 
+2025-07-15T19:43:49.900336300Z Inspecting resource net-attach-def,roles,rolebindings in namespace sleep
+2025-07-15T19:43:49.985614910Z error: the server doesn't have a resource type "net-attach-def"
+2025-07-15T19:43:50.069803824Z 
+2025-07-15T19:43:50.069831864Z Collecting Envoy config for pods in sleep pointing to default revision
+2025-07-15T19:43:50.219397636Z Collecting config_dump and stats for pod sleep-868c754c4b-z9f2r.sleep
+2025-07-15T19:43:50.733742991Z volume usage percentage 0
+2025-07-15T19:43:50.868151118Z 
+2025-07-15T19:43:50.868184809Z 
+2025-07-15T19:43:50.868188909Z Done
+2025-07-15T19:43:50.868190979Z 

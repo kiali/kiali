@@ -1,0 +1,535 @@
+---
+apiVersion: discovery.k8s.io/v1
+items:
+- addressType: IPv4
+  apiVersion: discovery.k8s.io/v1
+  endpoints:
+  - addresses:
+    - 10.244.1.6
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: grafana-65bfb5f855-c8s4z
+      namespace: istio-system
+      uid: bbc84074-1766-43c0-8603-bf531e8dba4b
+  kind: EndpointSlice
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:28:39Z"
+    creationTimestamp: "2025-07-15T19:28:21Z"
+    generateName: grafana-
+    generation: 3
+    labels:
+      app.kubernetes.io/instance: grafana
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/version: 11.3.1
+      endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
+      helm.sh/chart: grafana-8.6.3
+      kubernetes.io/service-name: grafana
+    managedFields:
+    - apiVersion: discovery.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:addressType: {}
+        f:endpoints: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:app.kubernetes.io/instance: {}
+            f:app.kubernetes.io/name: {}
+            f:app.kubernetes.io/version: {}
+            f:endpointslice.kubernetes.io/managed-by: {}
+            f:helm.sh/chart: {}
+            f:kubernetes.io/service-name: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"6430854c-362a-4493-a6a7-e629bb98138e"}: {}
+        f:ports: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:28:39Z"
+    name: grafana-l5pgv
+    namespace: istio-system
+    ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Service
+      name: grafana
+      uid: 6430854c-362a-4493-a6a7-e629bb98138e
+    resourceVersion: "1187"
+    uid: a1198039-2e5e-47b0-b454-88cb49d582af
+  ports:
+  - name: service
+    port: 3000
+    protocol: TCP
+- addressType: IPv4
+  apiVersion: discovery.k8s.io/v1
+  endpoints:
+  - addresses:
+    - 10.244.1.4
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: istiod-58cf6dd64-s4rq9
+      namespace: istio-system
+      uid: ade0abd0-079a-4f84-9469-e90c99074139
+  kind: EndpointSlice
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:28:17Z"
+    creationTimestamp: "2025-07-15T19:28:11Z"
+    generateName: istiod-
+    generation: 3
+    labels:
+      app: istiod
+      app.kubernetes.io/instance: default-istiod
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: istiod
+      app.kubernetes.io/part-of: istio
+      app.kubernetes.io/version: 1.26.2
+      endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
+      helm.sh/chart: istiod-1.26.2
+      istio: pilot
+      istio.io/rev: default
+      kubernetes.io/service-name: istiod
+      managed-by: sail-operator
+      operator.istio.io/component: Pilot
+      release: default-istiod
+    managedFields:
+    - apiVersion: discovery.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:addressType: {}
+        f:endpoints: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:app.kubernetes.io/instance: {}
+            f:app.kubernetes.io/managed-by: {}
+            f:app.kubernetes.io/name: {}
+            f:app.kubernetes.io/part-of: {}
+            f:app.kubernetes.io/version: {}
+            f:endpointslice.kubernetes.io/managed-by: {}
+            f:helm.sh/chart: {}
+            f:istio: {}
+            f:istio.io/rev: {}
+            f:kubernetes.io/service-name: {}
+            f:managed-by: {}
+            f:operator.istio.io/component: {}
+            f:release: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"e82c599c-b12d-4634-a802-03cd1be8d572"}: {}
+        f:ports: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:28:17Z"
+    name: istiod-6dt8g
+    namespace: istio-system
+    ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Service
+      name: istiod
+      uid: e82c599c-b12d-4634-a802-03cd1be8d572
+    resourceVersion: "942"
+    uid: 39d9685f-a9d3-4e47-87bd-aa73f4086678
+  ports:
+  - name: https-dns
+    port: 15012
+    protocol: TCP
+  - name: https-webhook
+    port: 15017
+    protocol: TCP
+  - name: grpc-xds
+    port: 15010
+    protocol: TCP
+  - name: http-monitoring
+    port: 15014
+    protocol: TCP
+- addressType: IPv4
+  apiVersion: discovery.k8s.io/v1
+  endpoints:
+  - addresses:
+    - 10.244.1.7
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: jaeger-868fbc75d7-z7z2q
+      namespace: istio-system
+      uid: f32d0f73-d754-4ca4-b2b9-3513a397cf89
+  kind: EndpointSlice
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:28:30Z"
+    creationTimestamp: "2025-07-15T19:28:21Z"
+    generateName: jaeger-collector-
+    generation: 3
+    labels:
+      app: jaeger
+      endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
+      kubernetes.io/service-name: jaeger-collector
+    managedFields:
+    - apiVersion: discovery.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:addressType: {}
+        f:endpoints: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpointslice.kubernetes.io/managed-by: {}
+            f:kubernetes.io/service-name: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"992d9492-0733-4762-abe0-4513d1b77f6f"}: {}
+        f:ports: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:28:30Z"
+    name: jaeger-collector-xzvj5
+    namespace: istio-system
+    ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Service
+      name: jaeger-collector
+      uid: 992d9492-0733-4762-abe0-4513d1b77f6f
+    resourceVersion: "1147"
+    uid: a971de50-7cff-494a-9d31-1a18291367d9
+  ports:
+  - name: jaeger-collector-grpc
+    port: 14250
+    protocol: TCP
+  - name: http-zipkin
+    port: 9411
+    protocol: TCP
+  - name: jaeger-collector-http
+    port: 14268
+    protocol: TCP
+  - name: http-otel
+    port: 4318
+    protocol: TCP
+  - name: grpc-otel
+    port: 4317
+    protocol: TCP
+- addressType: IPv4
+  apiVersion: discovery.k8s.io/v1
+  endpoints:
+  - addresses:
+    - 10.244.1.8
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: kiali-68855959f6-wl955
+      namespace: istio-system
+      uid: 280a1396-0acd-4da6-876a-1a67fc179ec3
+  kind: EndpointSlice
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:29:06Z"
+    creationTimestamp: "2025-07-15T19:28:26Z"
+    generateName: kiali-
+    generation: 3
+    labels:
+      app: kiali
+      app.kubernetes.io/instance: kiali
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: kiali
+      app.kubernetes.io/part-of: kiali
+      app.kubernetes.io/version: v2.13.0-SNAPSHOT
+      endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
+      helm.sh/chart: kiali-server-2.13.0-SNAPSHOT
+      kubernetes.io/service-name: kiali
+      version: v2.13.0-SNAPSHOT
+    managedFields:
+    - apiVersion: discovery.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:addressType: {}
+        f:endpoints: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:app.kubernetes.io/instance: {}
+            f:app.kubernetes.io/managed-by: {}
+            f:app.kubernetes.io/name: {}
+            f:app.kubernetes.io/part-of: {}
+            f:app.kubernetes.io/version: {}
+            f:endpointslice.kubernetes.io/managed-by: {}
+            f:helm.sh/chart: {}
+            f:kubernetes.io/service-name: {}
+            f:version: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"c8bc4f38-0459-428e-856e-be124e5769ca"}: {}
+        f:ports: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:29:06Z"
+    name: kiali-wjgxc
+    namespace: istio-system
+    ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Service
+      name: kiali
+      uid: c8bc4f38-0459-428e-856e-be124e5769ca
+    resourceVersion: "1277"
+    uid: 537b0acd-d9fa-46db-a9a2-cf10d61912c1
+  ports:
+  - appProtocol: http
+    name: http
+    port: 20001
+    protocol: TCP
+  - appProtocol: http
+    name: http-metrics
+    port: 9090
+    protocol: TCP
+- addressType: IPv4
+  apiVersion: discovery.k8s.io/v1
+  endpoints:
+  - addresses:
+    - 10.244.1.5
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: prometheus-689cc795d4-cjxc6
+      namespace: istio-system
+      uid: 94f50f58-a0bb-43ce-b6be-beee145e70e8
+  kind: EndpointSlice
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:28:39Z"
+    creationTimestamp: "2025-07-15T19:28:20Z"
+    generateName: prometheus-
+    generation: 3
+    labels:
+      app.kubernetes.io/component: server
+      app.kubernetes.io/instance: prometheus
+      app.kubernetes.io/name: prometheus
+      app.kubernetes.io/part-of: prometheus
+      app.kubernetes.io/version: v3.2.1
+      endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
+      helm.sh/chart: prometheus-27.8.0
+      kubernetes.io/service-name: prometheus
+    managedFields:
+    - apiVersion: discovery.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:addressType: {}
+        f:endpoints: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:app.kubernetes.io/component: {}
+            f:app.kubernetes.io/instance: {}
+            f:app.kubernetes.io/name: {}
+            f:app.kubernetes.io/part-of: {}
+            f:app.kubernetes.io/version: {}
+            f:endpointslice.kubernetes.io/managed-by: {}
+            f:helm.sh/chart: {}
+            f:kubernetes.io/service-name: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"3ae61d02-ab79-40c9-adf2-a06f0b2c6416"}: {}
+        f:ports: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:28:39Z"
+    name: prometheus-n9bd5
+    namespace: istio-system
+    ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Service
+      name: prometheus
+      uid: 3ae61d02-ab79-40c9-adf2-a06f0b2c6416
+    resourceVersion: "1192"
+    uid: 1d677909-9d16-428f-8ca9-9a3408362fd8
+  ports:
+  - name: http
+    port: 9090
+    protocol: TCP
+- addressType: IPv4
+  apiVersion: discovery.k8s.io/v1
+  endpoints:
+  - addresses:
+    - 10.244.1.7
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: jaeger-868fbc75d7-z7z2q
+      namespace: istio-system
+      uid: f32d0f73-d754-4ca4-b2b9-3513a397cf89
+  kind: EndpointSlice
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:28:30Z"
+    creationTimestamp: "2025-07-15T19:28:21Z"
+    generateName: tracing-
+    generation: 3
+    labels:
+      app: jaeger
+      endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
+      kubernetes.io/service-name: tracing
+    managedFields:
+    - apiVersion: discovery.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:addressType: {}
+        f:endpoints: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:endpointslice.kubernetes.io/managed-by: {}
+            f:kubernetes.io/service-name: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"e43bf19b-aff5-40a2-a313-4f5969a8121a"}: {}
+        f:ports: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:28:30Z"
+    name: tracing-cxsz7
+    namespace: istio-system
+    ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Service
+      name: tracing
+      uid: e43bf19b-aff5-40a2-a313-4f5969a8121a
+    resourceVersion: "1150"
+    uid: 0ca93e72-d9e3-4b83-8e5a-87b8be0aeca1
+  ports:
+  - name: http-query
+    port: 16686
+    protocol: TCP
+  - name: grpc-query
+    port: 16685
+    protocol: TCP
+- addressType: IPv4
+  apiVersion: discovery.k8s.io/v1
+  endpoints:
+  - addresses:
+    - 10.244.1.7
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    nodeName: ci-worker
+    targetRef:
+      kind: Pod
+      name: jaeger-868fbc75d7-z7z2q
+      namespace: istio-system
+      uid: f32d0f73-d754-4ca4-b2b9-3513a397cf89
+  kind: EndpointSlice
+  metadata:
+    annotations:
+      endpoints.kubernetes.io/last-change-trigger-time: "2025-07-15T19:28:30Z"
+    creationTimestamp: "2025-07-15T19:28:21Z"
+    generateName: zipkin-
+    generation: 3
+    labels:
+      endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
+      kubernetes.io/service-name: zipkin
+      name: zipkin
+    managedFields:
+    - apiVersion: discovery.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:addressType: {}
+        f:endpoints: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:endpoints.kubernetes.io/last-change-trigger-time: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:endpointslice.kubernetes.io/managed-by: {}
+            f:kubernetes.io/service-name: {}
+            f:name: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"d74a844a-efa5-4dea-a6fd-99cd0bdd4abb"}: {}
+        f:ports: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2025-07-15T19:28:30Z"
+    name: zipkin-6kq9v
+    namespace: istio-system
+    ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Service
+      name: zipkin
+      uid: d74a844a-efa5-4dea-a6fd-99cd0bdd4abb
+    resourceVersion: "1149"
+    uid: 420abd07-cf62-4b7b-9775-4edda80c3ec9
+  ports:
+  - name: http-query
+    port: 9411
+    protocol: TCP
+kind: EndpointSliceList
+metadata:
+  resourceVersion: "5060"

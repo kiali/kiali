@@ -1,0 +1,62 @@
+2025-07-15T19:29:49.989146573Z 2025-07-15T19:29:49.989064Z	info	FLAG: --concurrency="0"
+2025-07-15T19:29:49.989177153Z 2025-07-15T19:29:49.989082Z	info	FLAG: --domain="alpha.svc.cluster.local"
+2025-07-15T19:29:49.989179733Z 2025-07-15T19:29:49.989086Z	info	FLAG: --help="false"
+2025-07-15T19:29:49.989181743Z 2025-07-15T19:29:49.989087Z	info	FLAG: --log_as_json="false"
+2025-07-15T19:29:49.989183683Z 2025-07-15T19:29:49.989089Z	info	FLAG: --log_caller=""
+2025-07-15T19:29:49.989185743Z 2025-07-15T19:29:49.989090Z	info	FLAG: --log_output_level="default:info"
+2025-07-15T19:29:49.989187983Z 2025-07-15T19:29:49.989092Z	info	FLAG: --log_stacktrace_level="default:none"
+2025-07-15T19:29:49.989189993Z 2025-07-15T19:29:49.989096Z	info	FLAG: --log_target="[stdout]"
+2025-07-15T19:29:49.989192203Z 2025-07-15T19:29:49.989098Z	info	FLAG: --meshConfig="./etc/istio/config/mesh"
+2025-07-15T19:29:49.989194193Z 2025-07-15T19:29:49.989100Z	info	FLAG: --outlierLogPath=""
+2025-07-15T19:29:49.989196243Z 2025-07-15T19:29:49.989101Z	info	FLAG: --profiling="true"
+2025-07-15T19:29:49.989198263Z 2025-07-15T19:29:49.989103Z	info	FLAG: --proxyComponentLogLevel="misc:error"
+2025-07-15T19:29:49.989200173Z 2025-07-15T19:29:49.989105Z	info	FLAG: --proxyLogLevel="warning"
+2025-07-15T19:29:49.989202103Z 2025-07-15T19:29:49.989107Z	info	FLAG: --serviceCluster="istio-proxy"
+2025-07-15T19:29:49.989204133Z 2025-07-15T19:29:49.989109Z	info	FLAG: --stsPort="0"
+2025-07-15T19:29:49.989206293Z 2025-07-15T19:29:49.989111Z	info	FLAG: --templateFile=""
+2025-07-15T19:29:49.989208613Z 2025-07-15T19:29:49.989113Z	info	FLAG: --tokenManagerPlugin=""
+2025-07-15T19:29:49.989211073Z 2025-07-15T19:29:49.989117Z	info	FLAG: --vklog="0"
+2025-07-15T19:29:49.989213903Z 2025-07-15T19:29:49.989119Z	info	Version 1.26.2-455f269485eacc3c4a6cdb4993db5438589d3e2d-Clean
+2025-07-15T19:29:49.989226813Z 2025-07-15T19:29:49.989126Z	info	Set max file descriptors (ulimit -n) to: 1048576
+2025-07-15T19:29:49.989325244Z 2025-07-15T19:29:49.989290Z	info	Proxy role	ips=[10.244.1.27] type=sidecar id=z-server-5f94f449c5-k64sr.alpha domain=alpha.svc.cluster.local
+2025-07-15T19:29:49.989343364Z 2025-07-15T19:29:49.989324Z	info	Apply proxy config from env {"meshId":"mesh-default"}
+2025-07-15T19:29:49.989346084Z 
+2025-07-15T19:29:49.990511450Z 2025-07-15T19:29:49.990481Z	info	cpu limit detected as 2, setting concurrency
+2025-07-15T19:29:49.990638911Z 2025-07-15T19:29:49.990622Z	info	Effective config: binaryPath: /usr/local/bin/envoy
+2025-07-15T19:29:49.990652201Z concurrency: 2
+2025-07-15T19:29:49.990654811Z configPath: ./etc/istio/proxy
+2025-07-15T19:29:49.990657091Z controlPlaneAuthPolicy: MUTUAL_TLS
+2025-07-15T19:29:49.990658701Z discoveryAddress: istiod.istio-system.svc:15012
+2025-07-15T19:29:49.990660601Z drainDuration: 45s
+2025-07-15T19:29:49.990662151Z meshId: mesh-default
+2025-07-15T19:29:49.990663701Z proxyAdminPort: 15000
+2025-07-15T19:29:49.990665221Z serviceCluster: istio-proxy
+2025-07-15T19:29:49.990666791Z statNameLength: 189
+2025-07-15T19:29:49.990668331Z statusPort: 15020
+2025-07-15T19:29:49.990669911Z terminationDrainDuration: 5s
+2025-07-15T19:29:49.990671691Z 
+2025-07-15T19:29:49.990674131Z 2025-07-15T19:29:49.990628Z	info	JWT policy is third-party-jwt
+2025-07-15T19:29:49.990676741Z 2025-07-15T19:29:49.990631Z	info	using credential fetcher of JWT type in cluster.local trust domain
+2025-07-15T19:29:50.192577838Z 2025-07-15T19:29:50.192490Z	info	Starting default Istio SDS Server
+2025-07-15T19:29:50.192592758Z 2025-07-15T19:29:50.192523Z	info	CA Endpoint istiod.istio-system.svc:15012, provider Citadel
+2025-07-15T19:29:50.192595268Z 2025-07-15T19:29:50.192539Z	info	Using CA istiod.istio-system.svc:15012 cert with certs: var/run/secrets/istio/root-cert.pem
+2025-07-15T19:29:50.193024931Z 2025-07-15T19:29:50.192941Z	info	Opening status port 15020
+2025-07-15T19:29:50.194834981Z 2025-07-15T19:29:50.194689Z	info	xdsproxy	Initializing with upstream address "istiod.istio-system.svc:15012" and cluster "cluster-default"
+2025-07-15T19:29:50.196760112Z 2025-07-15T19:29:50.196718Z	info	Pilot SAN: [istiod.istio-system.svc]
+2025-07-15T19:29:50.197694387Z 2025-07-15T19:29:50.197642Z	info	Starting proxy agent
+2025-07-15T19:29:50.197722497Z 2025-07-15T19:29:50.197696Z	info	Envoy command: [-c etc/istio/proxy/envoy-rev.json --drain-time-s 45 --drain-strategy immediate --local-address-ip-version v4 --file-flush-interval-msec 1000 --disable-hot-restart --allow-unknown-static-fields -l warning --component-log-level misc:error --skip-deprecated-logs --concurrency 2]
+2025-07-15T19:29:50.211862717Z 2025-07-15T19:29:50.211705Z	info	sds	Starting SDS grpc server
+2025-07-15T19:29:50.211875197Z 2025-07-15T19:29:50.211782Z	info	sds	Starting SDS server for workload certificates, will listen on "var/run/secrets/workload-spiffe-uds/socket"
+2025-07-15T19:29:50.246373841Z 2025-07-15T19:29:50.246274Z	warning	envoy main external/envoy/source/server/server.cc:874	Usage of the deprecated runtime key overload.global_downstream_max_connections, consider switching to `envoy.resource_monitors.global_downstream_max_connections` instead.This runtime key will be removed in future.	thread=21
+2025-07-15T19:29:50.246513652Z 2025-07-15T19:29:50.246492Z	warning	envoy main external/envoy/source/server/server.cc:970	There is no configured limit to the number of allowed active downstream connections. Configure a limit in `envoy.resource_monitors.global_downstream_max_connections` resource monitor.	thread=21
+2025-07-15T19:29:50.251284499Z 2025-07-15T19:29:50.251230Z	info	xdsproxy	connected to delta upstream XDS server: istiod.istio-system.svc:15012	id=1
+2025-07-15T19:29:50.273457223Z 2025-07-15T19:29:50.273394Z	info	ads	ADS: new connection for node:1
+2025-07-15T19:29:50.274228578Z 2025-07-15T19:29:50.274205Z	info	ads	ADS: new connection for node:2
+2025-07-15T19:29:50.536713055Z 2025-07-15T19:29:50.536626Z	info	cache	generated new workload certificate	resourceName=default latency=342.169236ms ttl=23h59m59.463377755s
+2025-07-15T19:29:50.536739286Z 2025-07-15T19:29:50.536652Z	info	cache	Root cert has changed, start rotating root cert
+2025-07-15T19:29:50.536747996Z 2025-07-15T19:29:50.536683Z	info	cache	returned workload trust anchor from cache	ttl=23h59m59.463317445s
+2025-07-15T19:29:50.536749786Z 2025-07-15T19:29:50.536698Z	info	cache	returned workload certificate from cache	ttl=23h59m59.463302115s
+2025-07-15T19:29:50.536808346Z 2025-07-15T19:29:50.536783Z	info	cache	returned workload trust anchor from cache	ttl=23h59m59.463219434s
+2025-07-15T19:29:50.536978847Z 2025-07-15T19:29:50.536959Z	info	cache	returned workload trust anchor from cache	ttl=23h59m59.463040973s
+2025-07-15T19:29:51.234087301Z 2025-07-15T19:29:51.233857Z	info	Readiness succeeded in 1.246622787s
+2025-07-15T19:29:51.234877185Z 2025-07-15T19:29:51.234227Z	info	Envoy proxy is ready
