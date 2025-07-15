@@ -1,0 +1,49 @@
+name: Tag Release Creator
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_branch:
+        description: Branch to tag
+        required: true
+        default: v2.4
+        type: string
+      target_commit:
+        description: Commit hash to tag
+        required: true
+        type: string
+
+jobs:
+  create_tag:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Backend
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.tag_branch }}
+
+    - name: Configure git backend
+      run: |
+        git config user.email 'kiali-dev@googlegroups.com'
+
+        git config user.name 'kiali-bot'
+
+    - name: Validate target commit
+      run: |
+        # Check if commit exists
+        if ! git cat-file -e ${{ inputs.target_commit }}^{commit} 2>/dev/null; then
+          echo "Error: Commit ${{ inputs.target_commit }} not found in branch ${{ inputs.tag_branch }}"
+          exit 1
+        fi
+
+        echo "Commit ${{ inputs.target_commit }} is valid and exists in branch ${{ inputs.tag_branch }}"
+
+    - name: Create Release Tag in kiali/kiali
+      run: |
+        RELEASE_VERSION=$(sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
+
+        # Create the release tag
+        git push origin ${{ inputs.target_commit }}:refs/tags/$RELEASE_VERSION
+
+        # Delete the bump version tag if it exists
+        git push origin --delete refs/tags/$RELEASE_VERSION-ossm || true
