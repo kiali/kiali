@@ -217,7 +217,7 @@
   "HTTP Cookie Name must be non empty and TTL must be expressed in in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).": "El nombre de la cookie HTTP debe ser no vacío y TTL debe expresarse en nanosegundos (por ejemplo, 1000, 2000, etc.) o segundos (por ejemplo, 10s, 1.5s, etc.).",
   "HTTP Status Code": "Código de estado HTTP",
   "HTTP status code to use to abort the Http request.": "Código de estado HTTP a usar para abortar la solicitud HTTP.",
-  "HTTP1 Max Pending Requests": "Solicitudes HTTP1 máximas pendientes",
+  "HTTP1 Max Pending Requests": "Máximas solicitudes pendientes de HTTP1",
   "Idle": "Inactivo",
   "inbound": "entrante",
   "Inbound": "Entrante",
