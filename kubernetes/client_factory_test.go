@@ -115,7 +115,7 @@ func TestConcurrentClientExpiration(t *testing.T) {
 func TestConcurrentClientFactory(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
-	istioConfig := rest.Config{}
+	istioConfig := rest.Config{Host: "Kubernetes"}
 	count := 100
 
 	wg := sync.WaitGroup{}

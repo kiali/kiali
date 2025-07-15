@@ -55,7 +55,7 @@ func NewTestingClientFactory(t *testing.T) *clientFactory {
 		t.Fatalf("Unable to create token file for testing. Err: %s", err)
 	}
 
-	clientConfig := rest.Config{}
+	clientConfig := rest.Config{Host: "Kubernetes"}
 	client, err := newClientFactory(config.Get(), &clientConfig)
 	if err != nil {
 		t.Fatalf("Error creating client factory: %v", err)
