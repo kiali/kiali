@@ -45,7 +45,9 @@ When('user selects mesh node with label {string}', (label: string) => {
       assert.isTrue(controller.hasGraph());
 
       const { nodes } = elems(controller);
-      const node = nodes.find(n => n.getLabel().toLowerCase() === label.toLowerCase());
+      const node = nodes.find(n => {
+        return n.getLabel().toLowerCase() === label.toLowerCase() && n.getData().infraType !== 'namespace';
+      });
       assert.exists(node);
 
       const setSelectedIds = state.meshRefs.setSelectedIds as (values: string[]) => void;
