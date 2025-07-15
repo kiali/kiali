@@ -7,7 +7,13 @@ exports[`IstioComponentStatus renders error icon when core component is not foun
     hasGutter={true}
     key="cell-status-icon-isito-ingress"
   >
-    <SplitItem>
+    <SplitItem
+      style={
+        Object {
+          "paddingLeft": "0.5rem",
+        }
+      }
+    >
       <Icon
         className="kiali_fi2mdky kiali_f1h37jb8"
       >
@@ -33,7 +39,13 @@ exports[`IstioComponentStatus renders error icon when core component is not runn
     hasGutter={true}
     key="cell-status-icon-isito-ingress"
   >
-    <SplitItem>
+    <SplitItem
+      style={
+        Object {
+          "paddingLeft": "0.5rem",
+        }
+      }
+    >
       <Icon
         className="kiali_fi2mdky kiali_f1h37jb8"
       >
@@ -59,7 +71,13 @@ exports[`IstioComponentStatus renders minus icon when addon component is not rea
     hasGutter={true}
     key="cell-status-icon-addon"
   >
-    <SplitItem>
+    <SplitItem
+      style={
+        Object {
+          "paddingLeft": "0.5rem",
+        }
+      }
+    >
       <Icon
         className="kiali_fi2mdky kiali_f1elceoh"
       >
@@ -85,7 +103,13 @@ exports[`IstioComponentStatus renders minus icon when core component is not read
     hasGutter={true}
     key="cell-status-icon-core"
   >
-    <SplitItem>
+    <SplitItem
+      style={
+        Object {
+          "paddingLeft": "0.5rem",
+        }
+      }
+    >
       <Icon
         className="kiali_fi2mdky kiali_f1elceoh"
       >
@@ -111,7 +135,13 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
     hasGutter={true}
     key="cell-status-icon-isito-ingress"
   >
-    <SplitItem>
+    <SplitItem
+      style={
+        Object {
+          "paddingLeft": "0.5rem",
+        }
+      }
+    >
       <Icon
         className="kiali_fi2mdky kiali_f1r5cf3w"
       >
@@ -137,7 +167,13 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
     hasGutter={true}
     key="cell-status-icon-prometheus"
   >
-    <SplitItem>
+    <SplitItem
+      style={
+        Object {
+          "paddingLeft": "0.5rem",
+        }
+      }
+    >
       <Icon
         className="kiali_fi2mdky kiali_f1r5cf3w"
       >
@@ -163,7 +199,13 @@ exports[`IstioComponentStatus renders warning icon when core component is not fo
     hasGutter={true}
     key="cell-status-icon-prometheus"
   >
-    <SplitItem>
+    <SplitItem
+      style={
+        Object {
+          "paddingLeft": "0.5rem",
+        }
+      }
+    >
       <Icon
         className="kiali_fi2mdky kiali_frkkrth"
       >
@@ -189,7 +231,13 @@ exports[`IstioComponentStatus renders warning icon when core component is not ru
     hasGutter={true}
     key="cell-status-icon-prometheus"
   >
-    <SplitItem>
+    <SplitItem
+      style={
+        Object {
+          "paddingLeft": "0.5rem",
+        }
+      }
+    >
       <Icon
         className="kiali_fi2mdky kiali_frkkrth"
       >
