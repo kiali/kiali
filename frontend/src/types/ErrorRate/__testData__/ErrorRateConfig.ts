@@ -72,7 +72,7 @@ export const serverRateConfig = {
   ambientEnabled: false,
   clusters: {},
   clusterWideAccess: true,
-  controlPlanes: {},
+  controlPlanes: { Kubernetes: 'istio-system' },
   gatewayAPIClasses: [],
   gatewayAPIEnabled: false,
   grafana: {},
