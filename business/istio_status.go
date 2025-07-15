@@ -125,7 +125,7 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 	}
 
 	// Ignore istiod status for a mgmt cluster (external kiali)
-	if mesh.ExternalKiali != nil && cluster != mesh.ExternalKiali.Cluster.Name {
+	if mesh.ExternalKiali == nil || cluster != mesh.ExternalKiali.Cluster.Name {
 		// if no control plane and no any other control plane which manages this cluster
 		if len(istiodStatus) == 0 && !isManaged {
 			istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
