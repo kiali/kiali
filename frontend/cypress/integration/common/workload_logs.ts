@@ -29,6 +29,11 @@ When('I go to the Logs tab of the workload detail page', () => {
   cy.get('[data-test=workload-details-logs-tab]').click();
 });
 
+When('I set the duration to 1h', () => {
+  cy.get('#metrics_filter_interval_duration-toggle').click();
+  cy.get('#3600').click();
+});
+
 When('I type {string} on the Show text field', (showText: string) => {
   cy.get('#log_show').type(`${showText}{enter}`);
 });

@@ -78,7 +78,7 @@ Feature: Workload logs tab
   Scenario: The logs tab should show the waypoint logs for a pod
     Given I am on the "ratings-v1" workload detail page of the "bookinfo" namespace
     When I go to the Logs tab of the workload detail page
-    When user selects "Last 30m" time range
+    When I set the duration to 1h
     Then I should see the "waypoint" container listed
     And I should see the "ratings" container listed
     And I select the "waypoint-ratings" container
