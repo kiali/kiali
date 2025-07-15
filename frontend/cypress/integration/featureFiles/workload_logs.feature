@@ -84,7 +84,7 @@ Feature: Workload logs tab
     And the "waypoint-ratings" container should be checked
     And the "container-ratings" container should be checked
     And I should see some "ratings-v1" pod selected in the pod selector
-    Then the log pane should show log lines containing "envoy://internal_client_address/"
+    Then the log pane should show log lines containing "ratings.bookinfo.svc.cluster.local"
 
   @bookinfo-app
   @tracing
