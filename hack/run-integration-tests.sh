@@ -401,7 +401,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${ISTIO_VERSION_ARG} --ambient true --sail true ${HELM_CHARTS_DIR_ARG}
 
     # Install demo apps
-    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --ambient true
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --ambient true --use-gateway-api true
   fi
 
   ensureKialiServerReady
