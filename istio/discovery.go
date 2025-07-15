@@ -422,10 +422,8 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	mesh := &models.Mesh{}
 	var remoteClusters []*models.KubeCluster
 	for _, cluster := range clusters {
-		log.Infof("Cluster [%s]", cluster.Name)
 		// We can't get anything from an inaccessible cluster.
 		if !cluster.Accessible {
-			log.Infof("Cluster [%s] inaccessible", cluster.Name)
 			continue
 		}
 
