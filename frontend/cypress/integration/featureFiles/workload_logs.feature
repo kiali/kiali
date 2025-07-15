@@ -26,7 +26,7 @@ Feature: Workload logs tab
     Given I am on the logs tab of the "custom-logger" workload detail page of the "loggers" namespace
     When I type "GET" on the Show text field
     Then the log pane should only show log lines containing "GET"
-  
+
   @loggers-app
   Scenario: The log pane of the logs tab should hide the lines with the requested text
     Given I am on the logs tab of the "custom-logger" workload detail page of the "loggers" namespace
@@ -38,7 +38,7 @@ Feature: Workload logs tab
     Given I am on the logs tab of the "json-logger" workload detail page of the "loggers" namespace
     When I type "text log format" on the Hide text field
     Then the log pane should only show json log lines
-  
+
   @loggers-app
   Scenario: The json log should contain certain values on the parsed object
     Given I am on the logs tab of the "json-logger" workload detail page of the "loggers" namespace
@@ -78,6 +78,7 @@ Feature: Workload logs tab
   Scenario: The logs tab should show the waypoint logs for a pod
     Given I am on the "ratings-v1" workload detail page of the "bookinfo" namespace
     When I go to the Logs tab of the workload detail page
+    When user selects "Last 30m" time range
     Then I should see the "waypoint" container listed
     And I should see the "ratings" container listed
     And I select the "waypoint-ratings" container
