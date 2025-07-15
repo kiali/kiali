@@ -174,9 +174,6 @@ spec:
         opentelemetry:
           port: 4317
           service: ${SERVICE}
-      discoverySelectors:
-        - matchLabels:
-            istio-discovery: enabled
     global:
       meshID: mesh-default
       network: network-default
@@ -263,7 +260,6 @@ kubectl get ns "${ISTIO_NAMESPACE}" || kubectl create ns "${ISTIO_NAMESPACE}"
 
 if [ "${PROFILE}" == "ambient" ]; then
   echo "Labeling namespace"
-  kubectl label ns "${ISTIO_NAMESPACE}" istio-discovery=enabled
 fi
 
 kubectl apply -f - <<<"$ISTIO_YAML"
@@ -278,7 +274,6 @@ if [ "${PROFILE}" == "ambient" ]; then
 
   echo "Create ztunnel namespace"
   kubectl get ns "ztunnel" || kubectl create ns "ztunnel"
-  kubectl label ns "ztunnel" istio-discovery=enabled
   kubectl apply -f - <<<"$ztunnelYAML"
 fi
 
