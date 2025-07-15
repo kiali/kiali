@@ -190,9 +190,9 @@ func newClientFactory(kialiConf *kialiConfig.Config, restConf *rest.Config) (*cl
 		return nil, fmt.Errorf("kiali will exit because it has no local or remote cluster to manage. No remote secrets found")
 	}
 
-	// sanity check to ensure a remote cluster when ignore_local_cluster=true
+	// warning check to ensure a remote cluster when ignore_local_cluster=true, should be more >= 2, but I guess it's not fatal if it's only 1
 	if kialiConf.Clustering.IgnoreLocalCluster && len(f.saClientEntries) < 2 {
-		return nil, fmt.Errorf("kiali will exit because it has no remote cluster to manage. Currently clustering.ignore_local_cluster=true but no remote control plane clusters have been discovered")
+		log.Warningf("Only one remote cluster detected. clustering.ignore_local_cluster=true but Kiali seems to be running on the same remote cluster as the mesh.")
 	}
 
 	return f, nil
