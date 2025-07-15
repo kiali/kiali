@@ -466,6 +466,7 @@ func TestNewClientFactoryClosesRecycleWhenCTXCancelled(t *testing.T) {
 
 	cfg := config.NewConfig()
 	cfg.Clustering.IgnoreLocalCluster = true
+	cfg.KubernetesConfig.ClusterName = testClusterName
 	SetConfig(t, *cfg)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -502,6 +503,7 @@ func TestNewClientFactoryDoesNotSetGlobalClientFactory(t *testing.T) {
 
 	cfg := config.NewConfig()
 	cfg.Clustering.IgnoreLocalCluster = true
+	cfg.KubernetesConfig.ClusterName = testClusterName
 	SetConfig(t, *cfg)
 
 	ctx, cancel := context.WithCancel(context.Background())
