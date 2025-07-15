@@ -197,12 +197,13 @@ func ControlPlaneMetrics(
 
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
+
 		controlPlane := vars["controlplane"]
 		conf := config.Get()
 		cluster := clusterNameFromQuery(conf, r.URL.Query())
 
-		if !discovery.IsControlPlane(r.Context(), cluster, namespace) {
-			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
+		if !discovery.HasControlPlane(r.Context(), cluster, namespace, controlPlane) {
+			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("provided namespace [%s] and control plane [%s] are not found in the cluster [%s] ", namespace, controlPlane, cluster))
 			return
 		}
 
@@ -217,11 +218,6 @@ func ControlPlaneMetrics(
 		err = extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 		if err != nil {
 			RespondWithError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		if !layer.Mesh.HasControlPlane(r.Context(), cluster, namespace, controlPlane) {
-			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
 			return
 		}
 
