@@ -45,8 +45,29 @@ When('user selects mesh node with label {string}', (label: string) => {
       assert.isTrue(controller.hasGraph());
 
       const { nodes } = elems(controller);
+      const node = nodes.find(n => n.getLabel().toLowerCase() === label.toLowerCase());
+      assert.exists(node);
+
+      const setSelectedIds = state.meshRefs.setSelectedIds as (values: string[]) => void;
+      setSelectedIds([node!.getId()]);
+    });
+});
+
+// For duplicates
+When('user selects mesh node with label {string} and nodeType {string}', (label: string, nodeType: string) => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+
+      const controller = state.meshRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+
+      const { nodes } = elems(controller);
       const node = nodes.find(n => {
-        return n.getLabel().toLowerCase() === label.toLowerCase() && n.getData().infraType !== 'namespace';
+        return n.getLabel().toLowerCase() === label.toLowerCase() && n.getData().nodeType === nodeType;
       });
       assert.exists(node);
 
