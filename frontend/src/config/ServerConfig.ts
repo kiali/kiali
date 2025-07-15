@@ -59,7 +59,7 @@ const defaultServerConfig: ComputedServerConfig = {
   authStrategy: '',
   clusters: {},
   clusterWideAccess: true,
-  controlPlanes: {},
+  controlPlanes: { Kubernetes: 'istio-system' },
   durations: {},
   gatewayAPIClasses: [],
   gatewayAPIEnabled: false,
