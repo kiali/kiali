@@ -114,18 +114,15 @@ Feature: Kiali Overview page
   Scenario: The badge for local cluster should be visible
     Then user sees the "east" cluster badge in the Kiali header
 
-  @multi-cluster
   @multi-primary
   Scenario: Istio panels for both clusters should be visible and have the control plane label
     Then user sees the "istio-system" namespace card in cluster "east"
     And user sees the "istio-system" namespace card in cluster "west"
     And user sees the "Control plane" label in both "istio-system" namespace cards
     And the toggle on the right side of both "istio-system" namespace cards exists
-    And Istio config should not be available for the "west" "istio-system"
-    And health should be different for "east" and "west" "istio-system"
-
+  
   @multi-cluster
-  Scenario: Istio panels for both clusters should be visible and have the control plane label
+  Scenario: Istio panel for east cluster should be visible and have the control plane label
     Then user sees the "istio-system" namespace card in cluster "east"
     And user sees the "istio-system" namespace card in cluster "west"
     And user sees the "Control plane" label in the "east" "istio-system" namespace card
@@ -177,7 +174,6 @@ Feature: Kiali Overview page
     And user sorts by column "Cluster" desc
     Then the list is sorted by "Cluster" desc
 
-  @multi-cluster
   @multi-primary
   Scenario: There should be two control plane cards for each cluster
     Then user sees the "Control plane" label in the "east" "istio-system" namespace card
