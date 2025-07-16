@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       tag_branch:
-        description: Branch to bump version (Separate branches by commas. Ex v2.4,v2.11)
+        description: Branch to bump version (Separate branches by commas. Ex v1.73,v2.4)
         required: true
-        default: v2.4
+        default: v1.73
         type: string
 
 jobs:
