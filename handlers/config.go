@@ -110,7 +110,6 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			return
 		}
 
-		// @TODO hardcoded home cluster
 		if client := userClients[conf.KubernetesConfig.ClusterName]; client != nil {
 			publicConfig.GatewayAPIEnabled = client.IsGatewayAPI()
 		}
@@ -124,13 +123,16 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			RespondWithError(w, http.StatusInternalServerError, "Failure while listing clusters in the mesh: "+err.Error())
 			return
 		}
+
 		for _, cluster := range clusters {
 			publicConfig.Clusters[cluster.Name] = cluster
 
-			if namespaces, found := cache.GetNamespaces(cluster.Name, userClients[cluster.Name].GetToken()); found {
-				for _, ns := range namespaces {
-					if discovery.IsControlPlane(cluster.Name, ns.Name) {
-						publicConfig.ControlPlanes[cluster.Name] = ns.Name
+			if client := userClients[cluster.Name]; client != nil {
+				if namespaces, found := cache.GetNamespaces(cluster.Name, client.GetToken()); found {
+					for _, ns := range namespaces {
+						if discovery.IsControlPlane(cluster.Name, ns.Name) {
+							publicConfig.ControlPlanes[cluster.Name] = ns.Name
+						}
 					}
 				}
 			}
