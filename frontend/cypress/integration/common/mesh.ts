@@ -267,6 +267,16 @@ Then('user sees {string} node side panel', (name: string) => {
     });
 });
 
+Then('user does not see {string} in mesh body', (text: string) => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-mesh-body')
+    .should('be.visible')
+    .within(() => {
+      cy.contains(text).should('not.exist');
+    });
+});
+
 Then('user sees tracing node side panel', () => {
   cy.waitForReact();
   cy.get('#loading_kiali_spinner').should('not.exist');
