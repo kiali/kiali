@@ -359,9 +359,8 @@ export const renderInfraSummary = (
     controlPlaneNodes = controlPlaneNodes.filter(
       n => n.getData().cluster === forCluster && (!forNamespace || n.getData().namespace === forNamespace)
     );
-    dataPlaneNodes = dataPlaneNodes.filter(
-      n => n.getData().cluster === forCluster && (!forNamespace || n.getData().namespace === forNamespace)
-    );
+    // 'infraType: dataplane' does not have a value for 'namespace', a filtering by 'revision' is used when displaying
+    dataPlaneNodes = dataPlaneNodes.filter(n => n.getData().cluster === forCluster);
     gatewayNodes = gatewayNodes.filter(
       n => n.getData().cluster === forCluster && (!forNamespace || n.getData().namespace === forNamespace)
     );
@@ -390,7 +389,7 @@ export const renderInfraSummary = (
         {controlPlaneNodes.map(infra => {
           const cpRev = infra.getData().infraData.revision ?? 'default';
           const dataPlaneNode = dataPlaneNodes.find(dpn => {
-            const dpRev = dpn.getData().infraData.revision ?? 'default';
+            const dpRev = dpn.getData().version ?? 'default';
             return cpRev === dpRev;
           });
           const dataPlaneNamespaceCount = dataPlaneNode?.getData().infraData?.length ?? 0;
