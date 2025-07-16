@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+	inferenceapiclient "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned"
 	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 
 	kialiconfig "github.com/kiali/kiali/config"
@@ -51,6 +52,7 @@ type ClientInterface interface {
 	IsOpenShift() bool
 	IsExpGatewayAPI() bool
 	IsGatewayAPI() bool
+	IsInferenceAPI() bool
 	IsIstioAPI() bool
 	// ClusterInfo returns some information about the cluster this client is connected to.
 	// This gets set when the client is first created.
@@ -109,9 +111,12 @@ type K8SClient struct {
 	isExpGatewayAPI *bool
 	// isGatewayAPI private variable will check if K8s Gateway API CRD exists on cluster or not
 	isGatewayAPI *bool
-	gatewayapi   gatewayapiclient.Interface
-	isIstioAPI   *bool
-	clusterInfo  ClusterInfo
+	// isInferenceAPI private variable will check if K8s Gateway API Inference Extension CRD exists on cluster or not
+	isInferenceAPI *bool
+	gatewayapi     gatewayapiclient.Interface
+	inferenceapi   inferenceapiclient.Interface
+	isIstioAPI     *bool
+	clusterInfo    ClusterInfo
 
 	// mutex to acquire if you want to access or modify any field in K8SClient concurrently
 	rwMutex sync.RWMutex
@@ -214,6 +219,11 @@ func newClientFromConfig(config *rest.Config) (*K8SClient, error) {
 		return nil, err
 	}
 
+	client.inferenceapi, err = inferenceapiclient.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
 	client.osAppsClient, err = osappsclient.NewForConfig(config)
 	if err != nil {
 		return nil, err
@@ -249,6 +259,7 @@ func NewClient(
 	kubeClient kube.Interface,
 	istioClient istio.Interface,
 	gatewayapiClient gatewayapiclient.Interface,
+	inferenceapiClient inferenceapiclient.Interface,
 	osAppsClient osappsclient.Interface,
 	projectClient projectclient.Interface,
 	routeClient routeclient.Interface,
@@ -260,6 +271,7 @@ func NewClient(
 		istioClientset: istioClient,
 		k8s:            kubeClient,
 		gatewayapi:     gatewayapiClient,
+		inferenceapi:   inferenceapiClient,
 		osAppsClient:   osAppsClient,
 		projectClient:  projectClient,
 		routeClient:    routeClient,

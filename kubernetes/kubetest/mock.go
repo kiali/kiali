@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	inferenceapifake "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned/fake"
 	gatewayapifake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
 
 	"github.com/kiali/kiali/config"
@@ -102,8 +103,9 @@ func (o *K8SClientFactoryMock) GetSAClientsAsUserClientInterfaces() map[string]k
 
 type K8SClientMock struct {
 	mock.Mock
-	istioClientset      *istio_fake.Clientset
-	gatewayapiClientSet *gatewayapifake.Clientset
+	istioClientset        *istio_fake.Clientset
+	gatewayapiClientSet   *gatewayapifake.Clientset
+	inferenceapiClientSet *inferenceapifake.Clientset
 	client.Reader
 }
 
@@ -117,6 +119,7 @@ func NewK8SClientMock() *K8SClientMock {
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("IsExpGatewayAPI").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
+	k8s.On("IsInferenceAPI").Return(false)
 	k8s.On("IsIstioAPI").Return(true)
 	k8s.On("GetKialiTokenForHomeCluster").Return("", "")
 	return k8s
@@ -164,6 +167,11 @@ func (o *K8SClientMock) IsExpGatewayAPI() bool {
 }
 
 func (o *K8SClientMock) IsGatewayAPI() bool {
+	args := o.Called()
+	return args.Get(0).(bool)
+}
+
+func (o *K8SClientMock) IsInferenceAPI() bool {
 	args := o.Called()
 	return args.Get(0).(bool)
 }

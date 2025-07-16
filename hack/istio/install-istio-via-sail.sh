@@ -111,6 +111,11 @@ echo "Verifying that Gateway API is installed; if it is not then Gateway API ver
 kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
   { kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=${K8S_GATEWAY_API_VERSION}" | kubectl apply -f -; }
 
+K8S_GATEWAY_API_IE_VERSION=$(curl --head --silent "https://github.com/kubernetes-sigs/gateway-api-inference-extension/releases/latest" | grep "location: " | awk '{print $2}' | sed "s/.*tag\///g" | cat -v | sed "s/\^M//g")
+echo "Verifying that Gateway API Inference Extension is installed; if it is not then Gateway API Inference Extension version ${K8S_GATEWAY_API_IE_VERSION} will be installed now."
+kubectl get crd inferencepools.inference.networking.x-k8s.io &> /dev/null || \
+  { kubectl kustomize "github.com/kubernetes-sigs/gateway-api-inference-extension/config/crd?ref=${K8S_GATEWAY_API_IE_VERSION}" | kubectl apply -f -; }
+
 SERVICE="jaeger-collector.istio-system.svc.cluster.local"
 if is_in_array "tempo" "tempo" "${ADDONS}"; then
   SERVICE=otel-collector.istio-system.svc.cluster.local

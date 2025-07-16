@@ -130,6 +130,10 @@ export const istioTypeFilter: FilterType = {
       title: 'K8sHTTPRoute'
     },
     {
+      id: 'K8sInferencePool',
+      title: 'K8sInferencePool'
+    },
+    {
       id: 'K8sReferenceGrant',
       title: 'K8sReferenceGrant'
     },

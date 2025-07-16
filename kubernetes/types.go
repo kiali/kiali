@@ -25,6 +25,7 @@ const (
 	K8sGatewayClassType   = "GatewayClass"
 	K8sGRPCRouteType      = "GRPCRoute"
 	K8sHTTPRouteType      = "HTTPRoute"
+	K8sInferencePoolsType = "InferencePool"
 	K8sReferenceGrantType = "ReferenceGrant"
 	K8sTCPRouteType       = "TCPRoute"
 	K8sTLSRouteType       = "TLSRoute"
@@ -70,6 +71,7 @@ var (
 	K8sGatewayClasses  = K8sNetworkingGroupVersionV1.WithKind(K8sGatewayClassType)
 	K8sGRPCRoutes      = K8sNetworkingGroupVersionV1.WithKind(K8sGRPCRouteType)
 	K8sHTTPRoutes      = K8sNetworkingGroupVersionV1.WithKind(K8sHTTPRouteType)
+	K8sInferencePools  = K8sInferenceGroupVersionV1Alpha2.WithKind(K8sInferencePoolsType)
 	K8sReferenceGrants = K8sNetworkingGroupVersionV1Beta1.WithKind(K8sReferenceGrantType)
 	K8sTCPRoutes       = K8sNetworkingGroupVersionV1Alpha2.WithKind(K8sTCPRouteType)
 	K8sTLSRoutes       = K8sNetworkingGroupVersionV1Alpha2.WithKind(K8sTLSRouteType)
@@ -127,6 +129,11 @@ var (
 		Version: "v1",
 	}
 
+	K8sInferenceGroupVersionV1Alpha2 = schema.GroupVersion{
+		Group:   "inference.networking.x-k8s.io",
+		Version: "v1alpha2",
+	}
+
 	K8sNetworkingGroupVersionV1Alpha2 = schema.GroupVersion{
 		Group:   "gateway.networking.k8s.io",
 		Version: "v1alpha2",
@@ -173,6 +180,7 @@ var (
 		K8sGateways.String():        K8sGateways,
 		K8sGRPCRoutes.String():      K8sGRPCRoutes,
 		K8sHTTPRoutes.String():      K8sHTTPRoutes,
+		K8sInferencePools.String():  K8sInferencePools,
 		K8sReferenceGrants.String(): K8sReferenceGrants,
 		K8sTCPRoutes.String():       K8sTCPRoutes,
 		K8sTLSRoutes.String():       K8sTLSRoutes,

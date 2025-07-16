@@ -24,6 +24,7 @@ DEFAULT_CLIENT_EXE="kubectl"
 DEFAULT_DELETE="false"
 DEFAULT_DRY_RUN="false"
 DEFAULT_HELM="helm"
+DEFAULT_HELM_CHARTS="kiali-server"
 DEFAULT_KIALI_CLUSTER_CONTEXT="east"
 DEFAULT_KIALI_CLUSTER_NAMESPACE="istio-system"
 DEFAULT_KIALI_VERSION="latest"
@@ -45,6 +46,7 @@ DEFAULT_EXEC_AUTH_JSON=""
 : ${KIALI_CLUSTER_CONTEXT:=${DEFAULT_KIALI_CLUSTER_CONTEXT}}
 : ${KIALI_CLUSTER_NAMESPACE:=${DEFAULT_KIALI_CLUSTER_NAMESPACE}}
 : ${KIALI_RESOURCE_NAME:=${DEFAULT_RESOURCE_NAME}}
+: ${KIALI_SERVER_HELM_CHARTS:=${DEFAULT_HELM_CHARTS}}
 : ${KIALI_VERSION:=${DEFAULT_KIALI_VERSION}}
 : ${PROCESS_KIALI_SECRET:=${DEFAULT_PROCESS_KIALI_SECRET}}
 : ${PROCESS_REMOTE_RESOURCES:=${DEFAULT_PROCESS_REMOTE_RESOURCES}}
@@ -120,7 +122,7 @@ create_resources_in_remote_cluster() {
       --set auth.strategy=anonymous                         \
       --repo https://kiali.org/helm-charts                  \
       kiali-server                                          \
-      kiali-server)"
+      ${KIALI_SERVER_HELM_CHARTS})"
 
   if [ "${DRY_RUN}" == "true" ]; then
     echo "${helm_template_output}"
@@ -382,6 +384,10 @@ while [ $# -gt 0 ]; do
       KIALI_RESOURCE_NAME="$2"
       shift;shift
       ;;
+    -kshc|--kiali-server-helm-charts)
+      KIALI_SERVER_HELM_CHARTS="$2"
+      shift;shift
+      ;;
     -kv|--kiali-version)
       KIALI_VERSION="$2"
       shift;shift
@@ -480,6 +486,8 @@ Valid command line arguments:
                                   Default: "${DEFAULT_KIALI_CLUSTER_NAMESPACE}"
   -krn|--kiali-resource-name: used to name all the resources on the remote cluster.
                               Default: "${DEFAULT_RESOURCE_NAME}"
+  -kshc|--kiali-server-helm-charts <path>: If specified, must be the path to a Kiali server helm charts tarball. If not
+                                           specified, the latest published helm charts is used.
   -kv|--kiali-version: The version of Kiali that is installed. This is used to
                        determine what the role should look like. Pass in
                        "latest" to specify the latest version of Kiali.
@@ -552,6 +560,7 @@ info HELM=${HELM}
 info KIALI_CLUSTER_CONTEXT=${KIALI_CLUSTER_CONTEXT}
 info KIALI_CLUSTER_NAMESPACE=${KIALI_CLUSTER_NAMESPACE}
 info KIALI_RESOURCE_NAME=${KIALI_RESOURCE_NAME}
+info KIALI_SERVER_HELM_CHARTS=${KIALI_SERVER_HELM_CHARTS}
 info KIALI_VERSION=${KIALI_VERSION}
 info REMOTE_CLUSTER_CONTEXT=${REMOTE_CLUSTER_CONTEXT}
 info REMOTE_CLUSTER_NAME=${REMOTE_CLUSTER_NAME}

@@ -52,12 +52,12 @@ func (o *PromAPIMock) Runtimeinfo(ctx context.Context) (prom_v1.RuntimeinfoResul
 	return args.Get(0).(prom_v1.RuntimeinfoResult), nil
 }
 
-func (o *PromAPIMock) LabelNames(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]string, prom_v1.Warnings, error) {
+func (o *PromAPIMock) LabelNames(ctx context.Context, matches []string, startTime time.Time, endTime time.Time, opts ...prom_v1.Option) ([]string, prom_v1.Warnings, error) {
 	args := o.Called(ctx, matches, startTime, endTime)
 	return args.Get(0).([]string), args.Get(1).(prom_v1.Warnings), nil
 }
 
-func (o *PromAPIMock) LabelValues(ctx context.Context, label string, matches []string, startTime time.Time, endTime time.Time) (model.LabelValues, prom_v1.Warnings, error) {
+func (o *PromAPIMock) LabelValues(ctx context.Context, label string, matches []string, startTime time.Time, endTime time.Time, opts ...prom_v1.Option) (model.LabelValues, prom_v1.Warnings, error) {
 	args := o.Called(ctx, label, matches, startTime, endTime)
 	return args.Get(0).(model.LabelValues), nil, nil
 }
@@ -90,7 +90,7 @@ func (o *PromAPIMock) Flags(ctx context.Context) (prom_v1.FlagsResult, error) {
 	return prom_v1.FlagsResult{}, nil
 }
 
-func (o *PromAPIMock) Series(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]model.LabelSet, prom_v1.Warnings, error) {
+func (o *PromAPIMock) Series(ctx context.Context, matches []string, startTime time.Time, endTime time.Time, opts ...prom_v1.Option) ([]model.LabelSet, prom_v1.Warnings, error) {
 	args := o.Called(ctx, matches, startTime, endTime)
 	return args.Get(0).([]model.LabelSet), nil, nil
 }
@@ -110,7 +110,7 @@ func (o *PromAPIMock) TargetsMetadata(ctx context.Context, matchTarget, metric, 
 	return args.Get(0).([]prom_v1.MetricMetadata), nil
 }
 
-func (o *PromAPIMock) TSDB(ctx context.Context) (prom_v1.TSDBResult, error) {
+func (o *PromAPIMock) TSDB(ctx context.Context, opts ...prom_v1.Option) (prom_v1.TSDBResult, error) {
 	return prom_v1.TSDBResult{}, nil
 }
 
