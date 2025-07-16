@@ -117,8 +117,9 @@ func handlePanic(ctx context.Context, w http.ResponseWriter) {
 		}
 		if code == http.StatusInternalServerError {
 			stack := debug.Stack()
+			message = fmt.Sprintf("%s: %s", message, stack)
 			log.FromContext(ctx).Error().Msgf("%s: %s", message, stack)
-			RespondWithDetailedError(w, code, message, "Stack trace available in Kiali logs")
+			RespondWithDetailedError(w, code, message, "Stack trace available in Kiali logs:")
 			return
 		}
 		RespondWithError(w, code, message)
