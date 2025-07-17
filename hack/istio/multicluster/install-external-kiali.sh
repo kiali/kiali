@@ -23,7 +23,7 @@ fi
 # Only install Kiali on cluster-1
 CLUSTER1_CONTEXT="${CLUSTER1_NAME}"
 CLUSTER2_CONTEXT="${CLUSTER2_NAME}"
-IGNORE_LOCAL_CLUSTER="true"
+IGNORE_HOME_CLUSTER="true"
 SINGLE_KIALI="true"
 
 # TODO: just use anonymous auth until we have this working...

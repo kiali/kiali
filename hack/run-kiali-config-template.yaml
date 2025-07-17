@@ -19,7 +19,7 @@ auth:
 clustering:
   # run-kiali is, by definition, running outside of a cluster so you must ignore home cluster
   # when ignore_home_cluster=true, use run-kiali.sh -cn option if the context name != cluster name.
-  ignore_local_cluster: true
+  ignore_home_cluster: true
 
 deployment:
   cluster_wide_access: true

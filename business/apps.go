@@ -109,7 +109,7 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 		return *appList, err
 	}
 
-	include := cluster != in.conf.KubernetesConfig.ClusterName || !in.conf.Clustering.IgnoreLocalCluster
+	include := cluster != in.conf.KubernetesConfig.ClusterName || !in.conf.Clustering.IgnoreHomeCluster
 	icCriteria := IstioConfigCriteria{
 		IncludeAuthorizationPolicies:  include,
 		IncludeDestinationRules:       include,

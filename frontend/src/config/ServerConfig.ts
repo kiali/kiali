@@ -70,7 +70,7 @@ const defaultServerConfig: ComputedServerConfig = {
   deployment: {
     viewOnlyMode: false
   },
-  ignoreLocalCluster: false,
+  ignoreHomeCluster: false,
   installationTag: 'Kiali Console',
   istioAnnotations: {
     ambientAnnotation: 'ambient.istio.io/redirection',

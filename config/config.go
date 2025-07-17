@@ -641,9 +641,9 @@ type Clustering struct {
 	// Clusters is a list of clusters that cannot be autodetected by the Kiali Server.
 	// Remote clusters are specified here if ‘autodetect_secrets.enabled’ is false or
 	// if the Kiali Server does not have access to the remote cluster’s secret.
-	Clusters           []Cluster  `yaml:"clusters" json:"clusters"`
-	IgnoreLocalCluster bool       `yaml:"ignore_local_cluster" json:"ignoreLocalCluster"`
-	KialiURLs          []KialiURL `yaml:"kiali_urls" json:"kiali_urls"`
+	Clusters          []Cluster  `yaml:"clusters" json:"clusters"`
+	IgnoreHomeCluster bool       `yaml:"ignore_home_cluster" json:"ignoreHomeCluster"`
+	KialiURLs         []KialiURL `yaml:"kiali_urls" json:"kiali_urls"`
 }
 
 // IsZero implements: https://pkg.go.dev/gopkg.in/yaml.v2#IsZeroer so that
@@ -751,7 +751,7 @@ func NewConfig() (c *Config) {
 			},
 		},
 		Clustering: Clustering{
-			IgnoreLocalCluster: false,
+			IgnoreHomeCluster: false,
 		},
 		CustomDashboards: dashboards.GetBuiltInMonitoringDashboards(),
 		Deployment: DeploymentConfig{
