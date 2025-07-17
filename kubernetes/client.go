@@ -147,14 +147,9 @@ func NewClientWithRemoteClusterInfo(config *rest.Config, remoteClusterInfo *Remo
 	}
 
 	if remoteClusterInfo != nil {
-		cfg, err := remoteClusterInfo.Config.RawConfig()
-		if err != nil {
-			return nil, err
-		}
-
-		clusterName := getClusterName(&cfg)
+		// the secret name is the cluster name, the kube context may differ
 		client.clusterInfo = ClusterInfo{
-			Name:       clusterName,
+			Name:       remoteClusterInfo.SecretName,
 			SecretName: remoteClusterInfo.SecretName,
 		}
 	} else {
