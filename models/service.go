@@ -4,6 +4,7 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
@@ -91,6 +92,7 @@ type ServiceDetails struct {
 	IstioSidecar       bool                                     `json:"istioSidecar"`
 	K8sGRPCRoutes      []*k8s_networking_v1.GRPCRoute           `json:"k8sGRPCRoutes"`
 	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute           `json:"k8sHTTPRoutes"`
+	K8sInferencePools  []*v1alpha2.InferencePool                `json:"k8sInferencePools"`
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant `json:"k8sReferenceGrants"`
 	Service            Service                                  `json:"service"`
 	ServiceEntries     []*networking_v1.ServiceEntry            `json:"serviceEntries"`

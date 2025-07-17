@@ -4,6 +4,7 @@ import {
   getWizardUpdateLabel,
   K8sHTTPRoute,
   K8sGRPCRoute,
+  K8sInferencePool,
   ObjectCheck,
   ObjectValidation,
   ServiceEntry,
@@ -95,6 +96,7 @@ export interface ServiceDetailsInfo {
   istioSidecar: boolean;
   k8sGRPCRoutes: K8sGRPCRoute[];
   k8sHTTPRoutes: K8sHTTPRoute[];
+  k8sInferencePools: K8sInferencePool[];
   namespaceMTLS?: TLSStatus;
   service: Service;
   serviceEntries: ServiceEntry[];

@@ -11,7 +11,8 @@ import {
   VirtualService,
   IstioObject,
   GroupVersionKind,
-  K8sResource
+  K8sResource,
+  K8sInferencePool
 } from './IstioObjects';
 import { ResourcePermissions } from './Permissions';
 import { getGVKTypeString, getIstioObjectGVK, kindToStringIncludeK8s } from '../utils/IstioConfigUtils';
@@ -522,6 +523,30 @@ export const k8sGRPCRouteToIstioItems = (
       resource: route,
       resourceVersion: route.metadata.resourceVersion,
       validation: hasValidations(vKey) ? validations[objectGVK][vKey] : undefined
+    };
+
+    istioItems.push(item);
+  });
+
+  return istioItems;
+};
+
+export const k8sInferencePoolToIstioItems = (
+  inferencePools: K8sInferencePool[],
+  cluster?: string
+): IstioConfigItem[] => {
+  const istioItems: IstioConfigItem[] = [];
+
+  inferencePools.forEach(pool => {
+    const item = {
+      cluster: cluster,
+      namespace: pool.metadata.namespace ?? '',
+      kind: pool.kind,
+      apiVersion: pool.apiVersion,
+      name: pool.metadata.name,
+      creationTimestamp: pool.metadata.creationTimestamp,
+      resource: pool,
+      resourceVersion: pool.metadata.resourceVersion
     };
 
     istioItems.push(item);

@@ -89,6 +89,7 @@ export const SERVICE_DETAILS: ServiceDetailsInfo = {
   ],
   k8sHTTPRoutes: [],
   k8sGRPCRoutes: [],
+  k8sInferencePools: [],
   destinationRules: [
     {
       kind: 'DestinationRule',

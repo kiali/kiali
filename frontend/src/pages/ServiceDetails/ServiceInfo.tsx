@@ -27,7 +27,8 @@ import {
   k8sHTTPRouteToIstioItems,
   k8sGRPCRouteToIstioItems,
   validationKey,
-  k8sGwToIstioItems
+  k8sGwToIstioItems,
+  k8sInferencePoolToIstioItems
 } from '../../types/IstioConfigList';
 import { canCreate, canUpdate } from '../../types/Permissions';
 import { KialiAppState } from '../../store/Store';
@@ -224,11 +225,17 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
         )
       : [];
 
+    const k8sInferencePoolIstioConfigItems = this.props.serviceDetails?.k8sInferencePools
+      ? k8sInferencePoolToIstioItems(this.props.serviceDetails.k8sInferencePools, this.props.cluster)
+      : [];
+
     const istioConfigItems = seIstioConfigItems.concat(
       gwIstioConfigItems.concat(
         k8sGwIstioConfigItems.concat(
           vsIstioConfigItems.concat(
-            drIstioConfigItems.concat(k8sHTTPRouteIstioConfigItems.concat(k8sGRPCRouteIstioConfigItems))
+            drIstioConfigItems.concat(
+              k8sHTTPRouteIstioConfigItems.concat(k8sGRPCRouteIstioConfigItems.concat(k8sInferencePoolIstioConfigItems))
+            )
           )
         )
       )

@@ -854,9 +854,8 @@ export interface K8sHTTPRoute extends IstioObject {
   spec: K8sHTTPRouteSpec;
 }
 
-export interface K8sInferencePool {
+export interface K8sInferencePool extends IstioObject {
   spec: K8sInferencePoolSpec;
-  status?: K8sInferencePoolStatus;
 }
 
 export interface K8sReferenceGrant extends IstioObject {
@@ -915,15 +914,6 @@ export interface K8sInferencePoolExtensionRef {
   kind: string;
   name: string;
   portNumber: number;
-}
-
-export interface K8sInferencePoolStatus extends K8sStatus {
-  parent: PoolStatus;
-}
-
-export interface PoolStatus {
-  conditions?: K8sStatus[];
-  parentRef: ParentRef;
 }
 
 export interface K8sReferenceGrantSpec {
