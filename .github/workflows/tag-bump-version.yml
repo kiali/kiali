@@ -36,14 +36,14 @@ jobs:
         BRANCHES=$(python conversor.py $TAG_BRANCHES)
         echo "branches=$BRANCHES" >> $GITHUB_ENV
 
-  create_tag:
+  bump_version:
     needs: [initialize]
     runs-on: ubuntu-latest
     strategy:
       matrix:
         branch: ${{fromJson(needs.initialize.outputs.branches)}}
     steps:
-    - name: Checkout Backend
+    - name: Checkout branch
       uses: actions/checkout@v4
       with:
         ref: ${{matrix.branch}}
@@ -70,10 +70,9 @@ jobs:
         print('.'.join(['v' + str(major), str(minor), str(patch)]))
         EOF
 
-    - name: Configure git backend
+    - name: Configure git
       run: |
         git config user.email 'kiali-dev@googlegroups.com'
-
         git config user.name 'kiali-bot'
 
     - name: Create Bump Version Tag in kiali/kiali
@@ -91,7 +90,7 @@ jobs:
         # Commit the changes
         git add Makefile frontend/package.json
         git commit -m "Bump to version $RELEASE_VERSION"
-        git push origin
+        git push origin $(git rev-parse HEAD):refs/heads/$BRANCH
 
         # Create the bump version tag
         git push origin $(git rev-parse HEAD):refs/tags/$RELEASE_VERSION-ossm
