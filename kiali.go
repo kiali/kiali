@@ -149,11 +149,17 @@ func main() {
 	// fetch a fresh config here, it could have been updated during auto-discovery
 	conf := config.Get()
 
-	// ensure the config is set to Kiali's home cluster name. Note that this may not be accessed via a remote secret
+	// ensure the config is set to Kiali's home cluster name. Note that this may be accessed via a remote secret
 	if clientFactory.GetSAHomeClusterClient().ClusterInfo().Name != conf.KubernetesConfig.ClusterName {
 		conf.KubernetesConfig.ClusterName = clientFactory.GetSAHomeClusterClient().ClusterInfo().Name
-		config.Set(conf)
 	}
+	// special case handling for run-kiali.sh or other "local" modes. If the the ONLY cluster is the local
+	// cluster, don't ignore it, even if we're accessing it via a remote secret.
+	if conf.Clustering.IgnoreLocalCluster && len(clientFactory.GetSAClients()) == 1 {
+		log.Debugf("Setting IgnoreHomeCluster=false, because the home cluster is the only cluster.")
+		conf.Clustering.IgnoreLocalCluster = false
+	}
+	config.Set(conf)
 
 	log.Tracef("Kiali Configuration after auto-discovery:\n%s", conf)
 
