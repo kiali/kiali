@@ -80,8 +80,8 @@ jobs:
           echo "Using specified target commit: $TARGET_COMMIT"
         fi
 
-        # Check if commit exists
-        if ! git cat-file -e $TARGET_COMMIT^{commit} 2>/dev/null; then
+        # Check if commit exists in the specified branch
+        if ! git merge-base --is-ancestor $TARGET_COMMIT HEAD 2>/dev/null; then
           echo "Error: Commit $TARGET_COMMIT not found in branch ${{ matrix.branch }}"
           exit 1
         fi
