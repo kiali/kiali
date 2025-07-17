@@ -155,9 +155,9 @@ func main() {
 	}
 	// special case handling for run-kiali.sh or other "local" modes. If the the ONLY cluster is the local
 	// cluster, don't ignore it, even if we're accessing it via a remote secret.
-	if conf.Clustering.IgnoreLocalCluster && len(clientFactory.GetSAClients()) == 1 {
+	if conf.Clustering.IgnoreHomeCluster && len(clientFactory.GetSAClients()) == 1 {
 		log.Debugf("Setting IgnoreHomeCluster=false, because the home cluster is the only cluster.")
-		conf.Clustering.IgnoreLocalCluster = false
+		conf.Clustering.IgnoreHomeCluster = false
 	}
 	config.Set(conf)
 
@@ -258,7 +258,7 @@ func main() {
 			log.Warningf("Unable to get workloads to sync cache for cluster %s. First request that accesses workloads may take awhile: %v", cluster, err)
 		}
 
-		include := cluster != conf.KubernetesConfig.ClusterName || !conf.Clustering.IgnoreLocalCluster
+		include := cluster != conf.KubernetesConfig.ClusterName || !conf.Clustering.IgnoreHomeCluster
 		if _, err := layer.IstioConfig.GetIstioConfigList(ctx, cluster, business.IstioConfigCriteria{
 			IncludeGateways:               include,
 			IncludeK8sGateways:            include,
@@ -360,8 +360,8 @@ func determineHomeClusterName() error {
 	}
 
 	// If the cluster name is not set and we don't have a co-located control plane, it's an error
-	if conf.Clustering.IgnoreLocalCluster {
-		return fmt.Errorf("Could not determine Kiali home cluster name. You must set kubernetes_config.cluster_name when clustering.ignore_local_cluster=true")
+	if conf.Clustering.IgnoreHomeCluster {
+		return fmt.Errorf("Could not determine Kiali home cluster name. You must set kubernetes_config.cluster_name when clustering.ignore_home_cluster=true")
 	}
 
 	// use the control plane's configured cluster name, or the default

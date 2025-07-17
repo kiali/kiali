@@ -76,7 +76,7 @@ export const serverRateConfig = {
   gatewayAPIClasses: [],
   gatewayAPIEnabled: false,
   grafana: {},
-  ignoreLocalCluster: false,
+  ignoreHomeCluster: false,
   logLevel: '',
   kialiFeatureFlags: {
     disabledFeatures: [],

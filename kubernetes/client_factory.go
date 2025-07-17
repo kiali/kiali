@@ -109,9 +109,9 @@ func getClientFactory(kialiConf *kialiConfig.Config) (*clientFactory, error) {
 		return newClientFactory(kialiConf, &baseConfig)
 	}
 
-	// if the local cluster doesn't work, and ignore_local_cluster=false, it's an error. Otherwise,
+	// if the local cluster doesn't work, and ignore_home_cluster=false, it's an error. Otherwise,
 	// we need to look for a remote secret with the home cluster name, and use that cluster to run kiali.
-	if !kialiConf.Clustering.IgnoreLocalCluster {
+	if !kialiConf.Clustering.IgnoreHomeCluster {
 		return nil, err
 	}
 
@@ -190,9 +190,9 @@ func newClientFactory(kialiConf *kialiConfig.Config, restConf *rest.Config) (*cl
 		return nil, fmt.Errorf("kiali will exit because it has no local or remote cluster to manage. No remote secrets found")
 	}
 
-	// warning check to ensure a remote cluster when ignore_local_cluster=true, should be more >= 2, but I guess it's not fatal if it's only 1
-	if kialiConf.Clustering.IgnoreLocalCluster && len(f.saClientEntries) < 2 {
-		log.Warningf("Only one remote cluster detected. clustering.ignore_local_cluster=true but Kiali seems to be running on the same remote cluster as the mesh.")
+	// warning check to ensure a remote cluster when ignore_home_cluster=true, should be more >= 2, but I guess it's not fatal if it's only 1
+	if kialiConf.Clustering.IgnoreHomeCluster && len(f.saClientEntries) < 2 {
+		log.Warningf("Only one remote cluster detected. clustering.ignore_home_cluster=true but Kiali seems to be running on the same remote cluster as the mesh.")
 	}
 
 	return f, nil

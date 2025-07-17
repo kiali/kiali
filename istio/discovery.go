@@ -434,7 +434,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		}
 
 		// if this is an external kiali cluster, don't look for control planes but ensure that Kiali is found
-		if in.conf.Clustering.IgnoreLocalCluster && in.conf.KubernetesConfig.ClusterName == cluster.Name {
+		if in.conf.Clustering.IgnoreHomeCluster && in.conf.KubernetesConfig.ClusterName == cluster.Name {
 			log.Tracef("Cluster [%s] is an external Kiali cluster. Adding the external management cluster.", cluster.Name)
 			externalKialis := in.discoverKiali(cluster)
 			if len(externalKialis) != 0 {

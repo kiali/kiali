@@ -465,7 +465,7 @@ func TestNewClientFactoryClosesRecycleWhenCTXCancelled(t *testing.T) {
 	createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
 
 	cfg := config.NewConfig()
-	cfg.Clustering.IgnoreLocalCluster = true
+	cfg.Clustering.IgnoreHomeCluster = true
 	cfg.KubernetesConfig.ClusterName = testClusterName
 	SetConfig(t, *cfg)
 
@@ -502,7 +502,7 @@ func TestNewClientFactoryDoesNotSetGlobalClientFactory(t *testing.T) {
 	createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
 
 	cfg := config.NewConfig()
-	cfg.Clustering.IgnoreLocalCluster = true
+	cfg.Clustering.IgnoreHomeCluster = true
 	cfg.KubernetesConfig.ClusterName = testClusterName
 	SetConfig(t, *cfg)
 
@@ -524,7 +524,7 @@ func TestClientFactoryReturnsNilWhenLocalClusterIsIgnored(t *testing.T) {
 	cfg := config.NewConfig()
 	cfg.KubernetesConfig.ClusterName = ""
 	// Ignore the local cluster, otherwise the "in cluster" config looks for some env vars that are not present.
-	cfg.Clustering.IgnoreLocalCluster = true
+	cfg.Clustering.IgnoreHomeCluster = true
 	SetConfig(t, *cfg)
 
 	ctx, cancel := context.WithCancel(context.Background())

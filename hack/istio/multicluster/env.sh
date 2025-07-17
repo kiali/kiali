@@ -73,7 +73,7 @@ ISTIO_DIR=""
 DORP="${DORP:-podman}"
 
 # Set true if the kiali home cluster is out of the mesh (not co-located with an istio control plane)
-IGNORE_LOCAL_CLUSTER="${IGNORE_LOCAL_CLUSTER:-false}"
+IGNORE_HOME_CLUSTER="${IGNORE_HOME_CLUSTER:-false}"
 
 # The namespace where Istio will be found - this namespace must be the same on both clusters
 ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-istio-system}"
@@ -265,7 +265,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ilc|--ignore-local-cluster)
       [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--ignore-local-cluster must be 'true' or 'false'" && exit 1
-      IGNORE_LOCAL_CLUSTER="$2"
+      IGNORE_HOME_CLUSTER="$2"
       shift;shift
       ;;
     -in|--istio-namespace)
@@ -638,7 +638,7 @@ export AUTH_GROUPS \
        CLUSTER2_USER \
        CROSSNETWORK_GATEWAY_REQUIRED \
        DORP \
-       IGNORE_LOCAL_CLUSTER \
+       IGNORE_HOME_CLUSTER \
        IS_OPENSHIFT \
        ISTIO_DIR \
        ISTIO_NAMESPACE \
@@ -685,7 +685,7 @@ CLUSTER2_PASS=$CLUSTER2_PASS
 CLUSTER2_USER=$CLUSTER2_USER
 CROSSNETWORK_GATEWAY_REQUIRED=$CROSSNETWORK_GATEWAY_REQUIRED
 DORP=$DORP
-IGNORE_LOCAL_CLUSTER=$IGNORE_LOCAL_CLUSTER
+IGNORE_HOME_CLUSTER=$IGNORE_HOME_CLUSTER
 IS_OPENSHIFT=$IS_OPENSHIFT
 ISTIO_DIR=$ISTIO_DIR
 ISTIO_NAMESPACE=$ISTIO_NAMESPACE

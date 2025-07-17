@@ -194,9 +194,9 @@ deploy_kiali() {
         )
   fi
 
-  if [ "${IGNORE_LOCAL_CLUSTER}" == "true" ]; then
+  if [ "${IGNORE_HOME_CLUSTER}" == "true" ]; then
     helm_args+=(
-          --set clustering.ignore_local_cluster="true"
+          --set clustering.ignore_home_cluster="true"
           --set kubernetes_config.cluster_name="${CLUSTER1_NAME}"
         )
   fi

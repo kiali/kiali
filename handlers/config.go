@@ -53,7 +53,7 @@ type PublicConfig struct {
 	GatewayAPIClasses   []config.GatewayAPIClass      `json:"gatewayAPIClasses,omitempty"`
 	GatewayAPIEnabled   bool                          `json:"gatewayAPIEnabled,omitempty"`
 	HealthConfig        config.HealthConfig           `json:"healthConfig,omitempty"`
-	IgnoreLocalCluster  bool                          `json:"ignoreLocalCluster,omitempty"`
+	IgnoreHomeCluster   bool                          `json:"ignoreHomeCluster,omitempty"`
 	InstallationTag     string                        `json:"installationTag,omitempty"`
 	IstioAnnotations    IstioAnnotations              `json:"istioAnnotations,omitempty"`
 	IstioConfigMap      string                        `json:"istioConfigMap"`
@@ -91,7 +91,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 				IstioInjectionAnnotation: conf.ExternalServices.Istio.IstioInjectionAnnotation,
 			},
 			HealthConfig:        conf.HealthConfig,
-			IgnoreLocalCluster:  conf.Clustering.IgnoreLocalCluster,
+			IgnoreHomeCluster:   conf.Clustering.IgnoreHomeCluster,
 			IstioStatusEnabled:  conf.ExternalServices.Istio.ComponentStatuses.Enabled,
 			IstioIdentityDomain: conf.ExternalServices.Istio.IstioIdentityDomain,
 			IstioLabels:         conf.IstioLabels,

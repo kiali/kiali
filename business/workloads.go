@@ -262,7 +262,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	var istioConfigMap models.IstioConfigMap
 
 	if criteria.IncludeIstioResources {
-		include := cluster != in.conf.KubernetesConfig.ClusterName || !in.conf.Clustering.IgnoreLocalCluster
+		include := cluster != in.conf.KubernetesConfig.ClusterName || !in.conf.Clustering.IgnoreHomeCluster
 		istioConfigCriteria := IstioConfigCriteria{
 			IncludeAuthorizationPolicies:  true,
 			IncludeEnvoyFilters:           true,
@@ -825,7 +825,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 
 	ws := models.Workloads{}
 
-	includeIstioWorkloads := cluster != in.conf.KubernetesConfig.ClusterName || !in.conf.Clustering.IgnoreLocalCluster
+	includeIstioWorkloads := cluster != in.conf.KubernetesConfig.ClusterName || !in.conf.Clustering.IgnoreHomeCluster
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
