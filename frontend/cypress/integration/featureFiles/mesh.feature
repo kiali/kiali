@@ -52,6 +52,7 @@ Feature: Kiali Mesh page
   Scenario: Test istio-system
     When user selects mesh node with label "istio-system"
     Then user sees "istio-system" namespace side panel
+    Then user does not see "dataplane namespaces: 0" in mesh body
 
   @bookinfo-app
   Scenario: User enables gateways
