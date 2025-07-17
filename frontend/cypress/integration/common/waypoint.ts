@@ -175,3 +175,8 @@ When('the user validates the Ztunnel tab for the {string} namespace', (namespace
     cy.wrap($cell).contains(namespace);
   });
 });
+
+Then('the user updates the log level to {string}', (level: string) => {
+  cy.get('[data-test=log-actions-dropdown]').should('exist').click();
+  cy.get(`#setLogLevel${level}`).should('exist').click();
+});

@@ -53,7 +53,7 @@ Feature: Kiali Waypoint related features
     And validates waypoint Info data for "service"
 
   Scenario: [Workload details - ztunnel] The workload details for a ztunnel are valid
-    Given user is at the details page for the "workload" "istio-system/ztunnel" located in the "" cluster
+    Given user is at the details page for the "workload" "ztunnel/ztunnel" located in the "" cluster
     Then the user cannot see the "missing-sidecar" badge for "ztunnel" workload in "istio-system" namespace
     And the proxy status is "healthy"
     And the user validates the Ztunnel tab for the "bookinfo" namespace
@@ -381,6 +381,11 @@ Feature: Kiali Waypoint related features
     And validates Services data with "1" rows and "echo-service" workload, "waypoint-override" namespace, "service" label for, "pfbadge-S" badge
     Then user goes to the waypoint "Info" subtab
     And validates waypoint Info data for "service"
+
+  Scenario: [Waypoint details] The waypoint workload log level os updated
+    Given user is at the details page for the "workload" "bookinfo/waypoint" located in the "" cluster
+    When the user goes to the "Logs" tab
+    Then the user updates the log level to "Debug"
 
   @skip-istio-1-23
   Scenario: [Traffic] Sidecar Ambient traffic

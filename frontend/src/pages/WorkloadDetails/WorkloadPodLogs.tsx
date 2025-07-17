@@ -843,12 +843,15 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   };
 
   private getLogsDiv = (): React.ReactNode => {
-    const hasProxyContainer = this.state.containerOptions?.some(opt => opt.isProxy);
-
+    // istio-proxy for waypoint proxies
+    const hasProxyContainer = this.state.containerOptions?.some(opt => {
+      return opt.isProxy || opt.name === 'istio-proxy';
+    });
     const logDropDowns = Object.keys(LogLevel).map(level => {
       return (
         <DropdownItem
           key={`setLogLevel${level}`}
+          id={`setLogLevel${level}`}
           onClick={() => {
             this.setLogLevel(LogLevel[level]);
           }}
@@ -940,6 +943,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                 toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
                   <MenuToggle
                     ref={toggleRef}
+                    data-test="log-actions-dropdown"
                     className={kebabToggleStyle}
                     aria-label="Actions"
                     variant="plain"
