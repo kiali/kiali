@@ -11,7 +11,7 @@ TARGET_ARCHS ?= amd64 arm64 s390x ppc64le
 
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
-VERSION ?= v2.11.0
+VERSION ?= v2.11.1
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
 # Version label is used in the OpenShift/K8S resources to identify
