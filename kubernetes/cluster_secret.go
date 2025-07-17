@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/log"
 )
@@ -125,15 +124,4 @@ func getRemoteClusterInfosFromDir(rootSecretsDir string) (map[string]RemoteClust
 	}
 
 	return meshClusters, nil
-}
-
-// getClusterName returns the name of the first cluster in the config.
-// Only useful if there's only one cluster in the config since maps are unordered.
-func getClusterName(config *api.Config) string {
-	var clusterName string
-	for name := range config.Clusters {
-		clusterName = name
-		break
-	}
-	return clusterName
 }
