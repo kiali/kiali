@@ -40,22 +40,23 @@ jobs:
         BRANCHES=$(python conversor.py $TAG_BRANCHES)
         echo "branches=$BRANCHES" >> $GITHUB_ENV
 
-  create_tag:
+  release_tag:
     needs: [initialize]
     runs-on: ubuntu-latest
     strategy:
       matrix:
         branch: ${{fromJson(needs.initialize.outputs.branches)}}
     steps:
-    - name: Checkout Backend
+    - name: Checkout branch
       uses: actions/checkout@v4
       with:
         ref: ${{matrix.branch}}
+        # We need to fetch the full history to check if the commit exists
+        fetch-depth: 0
 
-    - name: Configure git backend
+    - name: Configure git
       run: |
         git config user.email 'kiali-dev@googlegroups.com'
-
         git config user.name 'kiali-bot'
 
     - name: Validate target commit
@@ -79,8 +80,8 @@ jobs:
           echo "Using specified target commit: $TARGET_COMMIT"
         fi
 
-        # Check if commit exists
-        if ! git cat-file -e $TARGET_COMMIT^{commit} 2>/dev/null; then
+        # Check if commit exists in the specified branch
+        if ! git merge-base --is-ancestor $TARGET_COMMIT HEAD 2>/dev/null; then
           echo "Error: Commit $TARGET_COMMIT not found in branch ${{ matrix.branch }}"
           exit 1
         fi
