@@ -145,7 +145,7 @@ export interface ServerConfig {
   gatewayAPIClasses: GatewayAPIClass[];
   gatewayAPIEnabled: boolean;
   healthConfig: HealthConfig;
-  ignoreLocalCluster: boolean;
+  ignoreHomeCluster: boolean;
   installationTag?: string;
   istioAnnotations: IstioAnnotations;
   istioIdentityDomain: string;
