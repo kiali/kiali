@@ -1,0 +1,101 @@
+name: Tag Release Creator
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_branch:
+        description: Branch to tag (Separate branches by commas. Ex v1.73,v2.4)
+        required: true
+        default: v1.73
+        type: string
+      target_commit:
+        description: Commit hash to tag (if empty, uses HEAD of each branch; if specified, requires single branch)
+        required: false
+        type: string
+
+jobs:
+  initialize:
+    name: Initialize
+    runs-on: ubuntu-latest
+    outputs:
+      branches: ${{ env.branches }}
+    steps:
+    - name: Prepare script to var
+      id: script_convert
+      run: |
+        cat <<-EOF > conversor.py
+        import sys, json
+
+        branch_arg = sys.argv[1]
+        branches = branch_arg.split(',')
+
+        print(json.dumps(branches))
+        EOF
+
+    - name: Set Branch
+      id: branches
+      env:
+        TAG_BRANCHES: ${{ github.event.inputs.tag_branch }}
+      run: |
+        BRANCHES=$(python conversor.py $TAG_BRANCHES)
+        echo "branches=$BRANCHES" >> $GITHUB_ENV
+
+  create_tag:
+    needs: [initialize]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        branch: ${{fromJson(needs.initialize.outputs.branches)}}
+    steps:
+    - name: Checkout Backend
+      uses: actions/checkout@v4
+      with:
+        ref: ${{matrix.branch}}
+
+    - name: Configure git backend
+      run: |
+        git config user.email 'kiali-dev@googlegroups.com'
+
+        git config user.name 'kiali-bot'
+
+    - name: Validate target commit
+      run: |
+        # Validate that only single branch is specified when target_commit is provided
+        if [ -n "${{ inputs.target_commit }}" ]; then
+          if [[ "${{ inputs.tag_branch }}" == *","* ]]; then
+            echo "Error: When target_commit is specified, only a single branch is allowed in tag_branch"
+            echo "Provided: ${{ inputs.tag_branch }}"
+            echo "Remove commas and specify only one branch when using a specific commit"
+            exit 1
+          fi
+        fi
+
+        # Set target commit to HEAD if empty
+        if [ -z "${{ inputs.target_commit }}" ]; then
+          TARGET_COMMIT=$(git rev-parse HEAD)
+          echo "No target commit specified, using HEAD: $TARGET_COMMIT"
+        else
+          TARGET_COMMIT="${{ inputs.target_commit }}"
+          echo "Using specified target commit: $TARGET_COMMIT"
+        fi
+
+        # Check if commit exists
+        if ! git cat-file -e $TARGET_COMMIT^{commit} 2>/dev/null; then
+          echo "Error: Commit $TARGET_COMMIT not found in branch ${{ matrix.branch }}"
+          exit 1
+        fi
+
+        echo "Commit $TARGET_COMMIT is valid and exists in branch ${{ matrix.branch }}"
+        echo "TARGET_COMMIT=$TARGET_COMMIT" >> $GITHUB_ENV
+
+    - name: Create Release Tag in kiali/kiali
+      run: |
+        RELEASE_VERSION=$(sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
+
+        echo "Creating release tag $RELEASE_VERSION for commit $TARGET_COMMIT"
+
+        # Create the release tag
+        git push origin $TARGET_COMMIT:refs/tags/$RELEASE_VERSION
+
+        # Delete the bump version tag if it exists
+        git push origin --delete refs/tags/$RELEASE_VERSION-ossm || true
