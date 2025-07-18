@@ -406,7 +406,7 @@ type clusterRevisionKey struct {
 func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "Mesh",
-		observability.Attribute("package", "business"),
+		observability.Attribute("package", "istio"),
 	)
 	defer end()
 
