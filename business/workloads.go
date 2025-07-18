@@ -262,7 +262,6 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	var istioConfigMap models.IstioConfigMap
 
 	if criteria.IncludeIstioResources {
-		include := cluster != in.conf.KubernetesConfig.ClusterName || !in.conf.Clustering.IgnoreHomeCluster
 		istioConfigCriteria := IstioConfigCriteria{
 			IncludeAuthorizationPolicies:  true,
 			IncludeEnvoyFilters:           true,
