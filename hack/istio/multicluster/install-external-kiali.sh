@@ -272,6 +272,36 @@ else
   echo "Prometheus external IP: ${MGMT_PROMETHEUS_ADDRESS}"
 fi
 
+# Expose Grafana to the outside world if it exists
+MGMT_GRAFANA_ADDRESS=""
+if ${CLIENT_EXE} get svc grafana -n ${ISTIO_NAMESPACE} --context ${CLUSTER2_CONTEXT} >/dev/null 2>&1; then
+  ${CLIENT_EXE} patch svc grafana -n ${ISTIO_NAMESPACE} --context ${CLUSTER2_CONTEXT} -p "{\"spec\": {\"type\": \"LoadBalancer\"}}"
+
+  MGMT_GRAFANA_ADDRESS=$(${CLIENT_EXE} --context=${CLUSTER2_CONTEXT} -n ${ISTIO_NAMESPACE} get svc grafana -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  if [ -z "${MGMT_GRAFANA_ADDRESS}" ]; then
+    echo "WARNING! Grafana not updated - cannot determine the grafana load balancer ingress IP"
+  else
+    echo "Grafana external IP: ${MGMT_GRAFANA_ADDRESS}"
+  fi
+else
+  echo "Grafana service not found - skipping grafana exposure"
+fi
+
+# Expose tracing service to the outside world if it exists
+MGMT_TRACING_ADDRESS=""
+if ${CLIENT_EXE} get svc tracing -n ${ISTIO_NAMESPACE} --context ${CLUSTER2_CONTEXT} >/dev/null 2>&1; then
+  ${CLIENT_EXE} patch svc tracing -n ${ISTIO_NAMESPACE} --context ${CLUSTER2_CONTEXT} -p "{\"spec\": {\"type\": \"LoadBalancer\"}}"
+
+  MGMT_TRACING_ADDRESS=$(${CLIENT_EXE} --context=${CLUSTER2_CONTEXT} -n ${ISTIO_NAMESPACE} get svc tracing -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  if [ -z "${MGMT_TRACING_ADDRESS}" ]; then
+    echo "WARNING! Tracing not updated - cannot determine the tracing load balancer ingress IP"
+  else
+    echo "Tracing external IP: ${MGMT_TRACING_ADDRESS}"
+  fi
+else
+  echo "Tracing service not found - skipping tracing exposure"
+fi
+
 # TODO Anything to do for this? Configure Tracing "federation"
 #source ${SCRIPT_DIR}/setup-tracing.sh
 
@@ -281,5 +311,17 @@ if [ "${KIALI_ENABLED}" == "true" ]; then
     echo "Keycloak is not available for this cluster setup. Switching Kiali to 'anonymous' mode."
     export KIALI_AUTH_STRATEGY="anonymous"
   fi
+
+  # Set external service addresses for Kiali configuration
+  if [ -n "${MGMT_PROMETHEUS_ADDRESS}" ]; then
+    export KIALI_PROMETHEUS_ADDRESS="${MGMT_PROMETHEUS_ADDRESS}"
+  fi
+  if [ -n "${MGMT_GRAFANA_ADDRESS}" ]; then
+    export KIALI_GRAFANA_ADDRESS="${MGMT_GRAFANA_ADDRESS}"
+  fi
+  if [ -n "${MGMT_TRACING_ADDRESS}" ]; then
+    export KIALI_TRACING_ADDRESS="${MGMT_TRACING_ADDRESS}"
+  fi
+
   source ${SCRIPT_DIR}/deploy-kiali.sh
 fi
