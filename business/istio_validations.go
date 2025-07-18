@@ -295,6 +295,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 		IncludeK8sGateways:            true,
 		IncludeK8sGRPCRoutes:          true,
 		IncludeK8sHTTPRoutes:          true,
+		IncludeK8sInferencePools:      true,
 		IncludeK8sReferenceGrants:     true,
 		IncludePeerAuthentications:    true,
 		IncludeRequestAuthentications: true,
@@ -540,6 +541,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		IncludeK8sGateways:            true,
 		IncludeK8sGRPCRoutes:          true,
 		IncludeK8sHTTPRoutes:          true,
+		IncludeK8sInferencePools:      true,
 		IncludeK8sReferenceGrants:     true,
 		IncludePeerAuthentications:    true,
 		IncludeRequestAuthentications: true,
@@ -655,6 +657,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		referenceChecker = references.K8sHTTPRouteReferences{Conf: conf, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, Namespaces: nsNames, K8sReferenceGrants: istioConfigList.K8sReferenceGrants}
 	case kubernetes.K8sInferencePools:
 		// Validation on K8sInferencePools is not expected
+		referenceChecker = references.K8sInferencePoolReferences{Conf: conf, Namespaces: nsNames, K8sInferencePools: istioConfigList.K8sInferencePools, RegistryServices: registryServices, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.K8sReferenceGrants:
 		objectCheckers = []checkers.ObjectChecker{
 			checkers.K8sReferenceGrantChecker{Cluster: cluster, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces},
@@ -789,6 +792,9 @@ func (in *IstioValidationsService) setNamespaceIstioConfig(
 
 	// All K8sGRPCRoutes
 	namespaceIstioConfigList.K8sGRPCRoutes = append(namespaceIstioConfigList.K8sGRPCRoutes, clusterIstioConfig.K8sGRPCRoutes...)
+
+	// All K8sInferencePools
+	namespaceIstioConfigList.K8sInferencePools = append(namespaceIstioConfigList.K8sInferencePools, clusterIstioConfig.K8sInferencePools...)
 
 	// All K8sReferenceGrants
 	namespaceIstioConfigList.K8sReferenceGrants = append(namespaceIstioConfigList.K8sReferenceGrants, clusterIstioConfig.K8sReferenceGrants...)

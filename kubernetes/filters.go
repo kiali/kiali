@@ -237,8 +237,8 @@ func FilterK8sInferencePoolsBySelector(workloadSelector string, inferencePools [
 	workloadLabels := mapWorkloadSelector(workloadSelector)
 	for _, pool := range inferencePools {
 		wkLabelsS := []string{}
-		gwSelector := pool.Spec.Selector
-		for k, v := range gwSelector {
+		poolSelector := pool.Spec.Selector
+		for k, v := range poolSelector {
 			wkLabelsS = append(wkLabelsS, fmt.Sprintf("%s=%s", k, v))
 		}
 		if resourceSelector, err := labels.Parse(strings.Join(wkLabelsS, ",")); err == nil {
