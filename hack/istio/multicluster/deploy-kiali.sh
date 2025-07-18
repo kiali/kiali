@@ -163,7 +163,41 @@ deploy_kiali() {
     helm_args+=(--set kiali_route_url="${kiali_route_url}")
   fi
 
-  if [ "${TEMPO}" == "true" ]; then
+  # Configure external services if external addresses are available
+  if [ -n "${KIALI_PROMETHEUS_ADDRESS}" ]; then
+    echo "Configuring Kiali to use external Prometheus at: ${KIALI_PROMETHEUS_ADDRESS}"
+    helm_args+=(
+          --set external_services.prometheus.url="http://${KIALI_PROMETHEUS_ADDRESS}:9090"
+        )
+  fi
+
+  if [ -n "${KIALI_GRAFANA_ADDRESS}" ]; then
+    echo "Configuring Kiali to use external Grafana at: ${KIALI_GRAFANA_ADDRESS}"
+    helm_args+=(
+          --set external_services.grafana.external_url="http://${KIALI_GRAFANA_ADDRESS}:3000"
+        )
+  else
+    echo "No external Grafana address provided, using default Grafana address"
+    helm_args+=(
+          --set external_services.grafana.external_url="http://grafana.istio-system:3000"
+        )
+  fi
+
+  if [ -n "${KIALI_TRACING_ADDRESS}" ]; then
+    echo "Configuring Kiali to use external tracing at: ${KIALI_TRACING_ADDRESS}"
+    if [ "${TEMPO}" == "true" ]; then
+      helm_args+=(
+            --set external_services.tracing.external_url="http://${KIALI_TRACING_ADDRESS}:3200"
+            --set external_services.tracing.provider="tempo"
+            --set external_services.tracing.internal_url="http://${KIALI_TRACING_ADDRESS}:3200"
+            --set external_services.tracing.use_grpc="false"
+          )
+    else
+      helm_args+=(
+            --set external_services.tracing.external_url="http://${KIALI_TRACING_ADDRESS}/jaeger"
+          )
+    fi
+  elif [ "${TEMPO}" == "true" ]; then
     helm_args+=(
           --set external_services.tracing.external_url="http://tempo-cr-query-frontend.tempo:3200"
           --set external_services.tracing.provider="tempo"
@@ -178,7 +212,6 @@ deploy_kiali() {
 
   if [ "${CI_CONFIG}" == "true" ]; then
     helm_args+=(
-          --set external_services.grafana.external_url="http://grafana.istio-system:3000"
           --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard"
           --set external_services.istio.validation_reconcile_interval="5s"
           --set health_config.rate[0].kind="service"

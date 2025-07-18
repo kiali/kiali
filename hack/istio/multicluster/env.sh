@@ -188,6 +188,11 @@ KIALI2_WEB_SCHEMA="${KIALI2_WEB_SCHEMA:-}"
 # If true the local dev image of Kiali will be built and used in the Kiali deployment
 KIALI_BUILD_DEV_IMAGE="${KIALI_BUILD_DEV_IMAGE:-false}"
 
+# External service addresses for Kiali configuration
+KIALI_PROMETHEUS_ADDRESS="${KIALI_PROMETHEUS_ADDRESS:-}"
+KIALI_GRAFANA_ADDRESS="${KIALI_GRAFANA_ADDRESS:-}"
+KIALI_TRACING_ADDRESS="${KIALI_TRACING_ADDRESS:-}"
+
 # process command line args
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -319,6 +324,18 @@ while [[ $# -gt 0 ]]; do
     -kudi|--kiali-use-dev-image)
       [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--kiali-use-dev-image must be 'true' or 'false'" && exit 1
       KIALI_USE_DEV_IMAGE="$2"
+      shift;shift
+      ;;
+    -kpa|--kiali-prometheus-address)
+      KIALI_PROMETHEUS_ADDRESS="$2"
+      shift;shift
+      ;;
+    -kga|--kiali-grafana-address)
+      KIALI_GRAFANA_ADDRESS="$2"
+      shift;shift
+      ;;
+    -kta|--kiali-tracing-address)
+      KIALI_TRACING_ADDRESS="$2"
       shift;shift
       ;;
     -k1wf|--kiali1-web-fqdn)
@@ -457,6 +474,9 @@ Valid command line arguments:
                                that will be the image pushed to the clusters. You can "make container-build-kiali" to build it.
                                Will be ignored if --kiali-enabled is 'false'. (Default: false)
                                CURRENTLY ONLY SUPPORTED WITH MINIKUBE!
+  -kpa|--kiali-prometheus-address <address>: External IP address of Prometheus service for Kiali to connect to.
+  -kga|--kiali-grafana-address <address>: External IP address of Grafana service for Kiali to connect to.
+  -kta|--kiali-tracing-address <address>: External IP address of tracing service for Kiali to connect to.
   -kup|--kiali-user-password <password>: Password for the kiali user in keycloak.
   -mcpu|--minikube-cpu <cpu count>: Number of CPUs to give to each minikube cluster
   -md|--minikube-driver <name>: The driver used by minikube (e.g. virtualbox, kvm2) (Default: kvm2)
@@ -650,7 +670,10 @@ export AUTH_GROUPS \
        KIALI_BUILD_DEV_IMAGE \
        KIALI_CREATE_REMOTE_CLUSTER_SECRETS \
        KIALI_ENABLED \
+       KIALI_GRAFANA_ADDRESS \
+       KIALI_PROMETHEUS_ADDRESS \
        KIALI_SERVER_HELM_CHARTS \
+       KIALI_TRACING_ADDRESS \
        KIALI_USE_DEV_IMAGE \
        KIND_NODE_IMAGE \
        MANAGE_KIND \
@@ -697,7 +720,10 @@ KIALI_AUTH_STRATEGY=$KIALI_AUTH_STRATEGY
 KIALI_BUILD_DEV_IMAGE=$KIALI_BUILD_DEV_IMAGE
 KIALI_CREATE_REMOTE_CLUSTER_SECRETS=$KIALI_CREATE_REMOTE_CLUSTER_SECRETS
 KIALI_ENABLED=$KIALI_ENABLED
+KIALI_GRAFANA_ADDRESS=$KIALI_GRAFANA_ADDRESS
+KIALI_PROMETHEUS_ADDRESS=$KIALI_PROMETHEUS_ADDRESS
 KIALI_SERVER_HELM_CHARTS=$KIALI_SERVER_HELM_CHARTS
+KIALI_TRACING_ADDRESS=$KIALI_TRACING_ADDRESS
 KIALI_USE_DEV_IMAGE=$KIALI_USE_DEV_IMAGE
 KIALI1_WEB_FQDN=$KIALI1_WEB_FQDN
 KIALI1_WEB_SCHEMA=$KIALI1_WEB_SCHEMA
