@@ -103,6 +103,7 @@ while [[ $# -gt 0 ]]; do
     -cn|--cluster-name)          CLUSTER_NAME="$2";                  shift;shift ;;
     -es|--enable-server)         ENABLE_SERVER="$2";                 shift;shift ;;
     -gu|--grafana-url)           GRAFANA_URL="$2";                   shift;shift ;;
+    -hkc|--home-kube-context)    HOME_KUBE_CONTEXT="$2";             shift;shift ;;
     -in|--istio-namespace)       ISTIO_NAMESPACE="$2";               shift;shift ;;
     -isn|--istiod-service-name)  ISTIOD_SERVICE_NAME="$2";           shift;shift ;;
     -iu|--istiod-url)            ISTIOD_URL="$2";                    shift;shift ;;
@@ -116,7 +117,6 @@ while [[ $# -gt 0 ]]; do
     -pt|--ports-tracing)         LOCAL_REMOTE_PORTS_TRACING="$2";    shift;shift ;;
     -pu|--prometheus-url)        PROMETHEUS_URL="$2";                shift;shift ;;
     -r|--rebootable)             REBOOTABLE="$2";                    shift;shift ;;
-    -skc|--secret-kube-context)  SECRET_KUBE_CONTEXT="$2";           shift;shift ;;
     -trd|--tmp-root-dir)         TMP_ROOT_DIR="$2";                  shift;shift ;;
     -tr|--tracing-app)           TRACING_APP="$2";                   shift;shift ;;
     -ts|--tracing-service)       TRACING_SERVICE="$2";               shift;shift ;;
@@ -168,6 +168,11 @@ Valid options:
       to external clients outside of the cluster - that external URL is what this value should be.
       For example, for OpenShift clusters, this should be the Grafana Route URL.
       Default: <will be auto-discovered>
+  -hkc|--home-kube-context
+      The kubernetes context to use specifically when talking to the Kiali pod to download secrets.
+      For all other operations, the --kube-context value will be used.
+      If not specified, the --kube-context value will be used as the default.
+      Default: <same as --kube-context>
   -in|--istio-namespace
       The name of the control plane namespace - this is where Istio components are installed.
       Default: ${DEFAULT_ISTIO_NAMESPACE}
@@ -230,11 +235,6 @@ Valid options:
       be run in foreground and Control-C will kill it immediately without the ability to reboot it.
       If --enabled-server is 'false', this setting is ignored and assumed 'false'.
       Default: ${DEFAULT_REBOOTABLE}
-  -skc|--secret-kube-context
-      The kubernetes context to use specifically when talking to the Kiali pod to download secrets.
-      For all other operations, the --kube-context value will be used.
-      If not specified, the --kube-context value will be used as the default.
-      Default: <same as --kube-context>
   -trd|--tmp-root-dir)
       Where temporary files and directories will be created.
       Default: ${DEFAULT_TMP_ROOT_DIR}
@@ -273,12 +273,12 @@ ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-${DEFAULT_ISTIO_NAMESPACE}}"
 KIALI_CONFIG_TEMPLATE_FILE="${KIALI_CONFIG_TEMPLATE_FILE:-${DEFAULT_KIALI_CONFIG_TEMPLATE_FILE}}"
 KIALI_EXE="${KIALI_EXE:-${DEFAULT_KIALI_EXE}}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-${DEFAULT_KUBE_CONTEXT}}"
+HOME_KUBE_CONTEXT="${HOME_KUBE_CONTEXT:-${KUBE_CONTEXT}}" # uses KUBE_CONTEXT as default, that's why it appears after KUBE_CONTEXT
 LOCAL_REMOTE_PORTS_GRAFANA="${LOCAL_REMOTE_PORTS_GRAFANA:-${DEFAULT_LOCAL_REMOTE_PORTS_GRAFANA}}"
 LOCAL_REMOTE_PORTS_PROMETHEUS="${LOCAL_REMOTE_PORTS_PROMETHEUS:-${DEFAULT_LOCAL_REMOTE_PORTS_PROMETHEUS}}"
 LOCAL_REMOTE_PORTS_TRACING="${LOCAL_REMOTE_PORTS_TRACING:-${DEFAULT_LOCAL_REMOTE_PORTS_TRACING}}"
 LOG_LEVEL="${LOG_LEVEL:-${DEFAULT_LOG_LEVEL}}"
 REBOOTABLE="${REBOOTABLE:-${DEFAULT_REBOOTABLE}}"
-SECRET_KUBE_CONTEXT="${SECRET_KUBE_CONTEXT:-${KUBE_CONTEXT}}"
 TMP_ROOT_DIR="${TMP_ROOT_DIR:-${DEFAULT_TMP_ROOT_DIR}}"
 TRACING_APP="${TRACING_APP:-${DEFAULT_TRACING_APP}}"
 TRACING_SERVICE="${TRACING_SERVICE:-${DEFAULT_TRACING_SERVICE}}"
@@ -501,6 +501,7 @@ echo "CLUSTER_NAME=$CLUSTER_NAME"
 echo "COPY_CLUSTER_SECRETS=$COPY_CLUSTER_SECRETS"
 echo "ENABLE_SERVER=$ENABLE_SERVER"
 echo "GRAFANA_URL=$GRAFANA_URL"
+echo "HOME_KUBE_CONTEXT=$HOME_KUBE_CONTEXT"
 echo "ISTIO_NAMESPACE=$ISTIO_NAMESPACE"
 echo "ISTIOD_URL=$ISTIOD_URL"
 echo "KIALI_CONFIG_TEMPLATE_FILE=$KIALI_CONFIG_TEMPLATE_FILE"
@@ -516,7 +517,6 @@ echo "LOCAL_REMOTE_PORTS_TRACING=$LOCAL_REMOTE_PORTS_TRACING"
 echo "LOG_LEVEL=$LOG_LEVEL"
 echo "PROMETHEUS_URL=$PROMETHEUS_URL"
 echo "REBOOTABLE=$REBOOTABLE"
-echo "SECRET_KUBE_CONTEXT=$SECRET_KUBE_CONTEXT"
 echo "TMP_ROOT_DIR=$TMP_ROOT_DIR"
 echo "TRACING_APP=$TRACING_APP"
 echo "TRACING_SERVICE=$TRACING_SERVICE"
@@ -581,27 +581,27 @@ rm -rf ${REMOTE_CLUSTER_SECRETS_DIR}/*
 if [ "${COPY_CLUSTER_SECRETS}" == "true" ]; then
   infomsg "Attempting to copy the remote cluster secrets from a Kiali pod deployed in the cluster..."
   # Determine the context option for secret operations
-  if [ "${SECRET_KUBE_CONTEXT}" != "current" ]; then
-    SECRET_CONTEXT_OPT="--context=${SECRET_KUBE_CONTEXT}"
+  if [ "${HOME_KUBE_CONTEXT}" != "current" ]; then
+    HOME_CONTEXT_OPT="--context=${HOME_KUBE_CONTEXT}"
   else
-    SECRET_CONTEXT_OPT=""
+    HOME_CONTEXT_OPT=""
   fi
-  POD_NAME="$(${CLIENT_EXE} ${SECRET_CONTEXT_OPT} -n ${ISTIO_NAMESPACE} get pod -l app.kubernetes.io/name=kiali -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)"
+  POD_NAME="$(${CLIENT_EXE} ${HOME_CONTEXT_OPT} -n ${ISTIO_NAMESPACE} get pod -l app.kubernetes.io/name=kiali -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)"
   if [ -z "${POD_NAME}" ]; then
     warnmsg "Cannot get the Kiali pod name. Kiali must be deployed in [${ISTIO_NAMESPACE}]. If you do not want to deploy Kiali in the cluster, set '--copy-cluster-secrets' to 'false'."
   else
-    infomsg "Will copy remote cluster secrets from the Kiali pod [${SECRET_KUBE_CONTEXT}/${ISTIO_NAMESPACE}/${POD_NAME}]"
+    infomsg "Will copy remote cluster secrets from the Kiali pod [${HOME_KUBE_CONTEXT}/${ISTIO_NAMESPACE}/${POD_NAME}]"
 
     # if the directory doesn't exist, then no remote secrets are available, so skip everything else
-    ${CLIENT_EXE} ${SECRET_CONTEXT_OPT} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- ls -d ${REMOTE_CLUSTER_SECRETS_DIR} >&/dev/null
+    ${CLIENT_EXE} ${HOME_CONTEXT_OPT} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- ls -d ${REMOTE_CLUSTER_SECRETS_DIR} >&/dev/null
     if [ "$?" == "0" ]; then
-      pod_remote_secrets_dirs=$(${CLIENT_EXE} ${SECRET_CONTEXT_OPT} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- ls -1 ${REMOTE_CLUSTER_SECRETS_DIR} | tr -d '\r')
+      pod_remote_secrets_dirs=$(${CLIENT_EXE} ${HOME_CONTEXT_OPT} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- ls -1 ${REMOTE_CLUSTER_SECRETS_DIR} | tr -d '\r')
       for d in $pod_remote_secrets_dirs; do
         mkdir -p "${REMOTE_CLUSTER_SECRETS_DIR}/$d"
-        pod_remote_secrets_files=$(${CLIENT_EXE} ${SECRET_CONTEXT_OPT} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- ls -1 ${REMOTE_CLUSTER_SECRETS_DIR}/${d} | tr -d '\r')
+        pod_remote_secrets_files=$(${CLIENT_EXE} ${HOME_CONTEXT_OPT} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- ls -1 ${REMOTE_CLUSTER_SECRETS_DIR}/${d} | tr -d '\r')
         for f in $pod_remote_secrets_files; do
           infomsg "Copying remote cluster secret file: ${REMOTE_CLUSTER_SECRETS_DIR}/${d}/${f}"
-          secret_file_content=$(${CLIENT_EXE} ${SECRET_CONTEXT_OPT} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- cat ${REMOTE_CLUSTER_SECRETS_DIR}/${d}/${f})
+          secret_file_content=$(${CLIENT_EXE} ${HOME_CONTEXT_OPT} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- cat ${REMOTE_CLUSTER_SECRETS_DIR}/${d}/${f})
           echo "${secret_file_content}" > ${REMOTE_CLUSTER_SECRETS_DIR}/${d}/${f}
         done
       done
