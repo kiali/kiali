@@ -330,6 +330,9 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 			return nil, err
 		}
 		istioConfigList.K8sInferencePools = ToPtrs(list.Items)
+		if isWorkloadSelector {
+			istioConfigList.K8sInferencePools = kubernetes.FilterK8sInferencePoolsBySelector(workloadSelector, istioConfigList.K8sInferencePools)
+		}
 	}
 
 	if userClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sReferenceGrants) {

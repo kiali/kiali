@@ -232,6 +232,24 @@ func FilterK8sGatewaysByLabel(allGws []*k8s_networking_v1.Gateway, gatewayLabel 
 	return gateways
 }
 
+func FilterK8sInferencePoolsBySelector(workloadSelector string, inferencePools []*k8s_inference_v1alpha2.InferencePool) []*k8s_inference_v1alpha2.InferencePool {
+	filtered := []*k8s_inference_v1alpha2.InferencePool{}
+	workloadLabels := mapWorkloadSelector(workloadSelector)
+	for _, pool := range inferencePools {
+		wkLabelsS := []string{}
+		gwSelector := pool.Spec.Selector
+		for k, v := range gwSelector {
+			wkLabelsS = append(wkLabelsS, fmt.Sprintf("%s=%s", k, v))
+		}
+		if resourceSelector, err := labels.Parse(strings.Join(wkLabelsS, ",")); err == nil {
+			if resourceSelector.Matches(labels.Set(workloadLabels)) {
+				filtered = append(filtered, pool)
+			}
+		}
+	}
+	return filtered
+}
+
 func FilterPodsByController(controllerName string, controllerGVK schema.GroupVersionKind, allPods []core_v1.Pod) []core_v1.Pod {
 	var pods []core_v1.Pod
 	for _, pod := range allPods {

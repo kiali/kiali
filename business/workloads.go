@@ -267,6 +267,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 			IncludeEnvoyFilters:           true,
 			IncludeGateways:               true,
 			IncludeK8sGateways:            true,
+			IncludeK8sInferencePools:      true,
 			IncludePeerAuthentications:    true,
 			IncludeRequestAuthentications: true,
 			IncludeSidecars:               true,
@@ -337,6 +338,17 @@ func FilterWorkloadReferences(conf *config.Config, wLabels map[string]string, is
 	k8sGwFiltered := kubernetes.FilterK8sGatewaysByLabel(istioConfigList.K8sGateways, wLabels[conf.IstioLabels.AmbientWaypointGatewayLabel])
 	for _, g := range k8sGwFiltered {
 		ref := models.BuildKey(kubernetes.K8sGateways, g.Name, g.Namespace, cluster)
+		exist := false
+		for _, r := range wkdReferences {
+			exist = exist || *r == ref
+		}
+		if !exist {
+			wkdReferences = append(wkdReferences, &ref)
+		}
+	}
+	k8sIPFiltered := kubernetes.FilterK8sInferencePoolsBySelector(wSelector, istioConfigList.K8sInferencePools)
+	for _, pool := range k8sIPFiltered {
+		ref := models.BuildKey(kubernetes.K8sInferencePools, pool.Name, pool.Namespace, cluster)
 		exist := false
 		for _, r := range wkdReferences {
 			exist = exist || *r == ref
