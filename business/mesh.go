@@ -57,7 +57,9 @@ func (in *MeshService) IsControlPlane(cluster, namespace string) bool {
 	return in.discovery.IsControlPlane(cluster, namespace)
 }
 
-// GetMeshConfig returns the home cluster's mesh config.
+// This returns the home cluster's mesh config, if possible. For external
+// Kiali deployments it returns the mesh config of a random control plane.
+// If no mesh config can be found, an empty mesh config is returned.
 // TODO: Remove when validations can read from a specific controlplane.
 func (in *MeshService) GetMeshConfig() *models.MeshConfig {
 	mesh, err := in.discovery.Mesh(context.TODO())
@@ -72,8 +74,9 @@ func (in *MeshService) GetMeshConfig() *models.MeshConfig {
 			return controlPlane.MeshConfig
 		}
 	}
+	if len(mesh.ControlPlanes) > 0 {
+		return mesh.ControlPlanes[0].MeshConfig
+	}
 
-	// This should not happen
-	log.Warningf("No Kiali Home cluster found while getting mesh config")
 	return &models.MeshConfig{MeshConfig: &istiov1alpha1.MeshConfig{}}
 }
