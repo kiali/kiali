@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"context"
+	"path/filepath"
 	"sync"
 
 	osappsclient "github.com/openshift/client-go/apps/clientset/versioned"
@@ -147,9 +148,9 @@ func NewClientWithRemoteClusterInfo(config *rest.Config, remoteClusterInfo *Remo
 	}
 
 	if remoteClusterInfo != nil {
-		// the secret name is the cluster name, the kube context may differ
+		// the secret file name is the cluster name, the kube context may differ
 		client.clusterInfo = ClusterInfo{
-			Name:       remoteClusterInfo.SecretName,
+			Name:       filepath.Base(remoteClusterInfo.SecretFile),
 			SecretName: remoteClusterInfo.SecretName,
 		}
 	} else {
