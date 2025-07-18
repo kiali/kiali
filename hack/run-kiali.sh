@@ -619,7 +619,7 @@ fi
 # the current user may have permissions that are different than the Kiali service account.
 # But the benefit of this is that you do not need to have a Kiali deployment in the cluster.
 REMOTE_SECRET_PATH="${TMP_DIR}/kubeconfig"
-if [ "${KUBE_CONTEXT}" != "current" ]; then
+if [ "${HOME_KUBE_CONTEXT}" != "current" ] && ! ${CLIENT_EXE} config get-contexts "${HOME_KUBE_CONTEXT}" >/dev/null 2>&1; then
   TOKEN_FILE="${TMP_DIR}/token"
   CA_FILE="${TMP_DIR}/ca.crt"
 
@@ -667,9 +667,14 @@ EOM
     CLUSTER_NAME_FOR_SECRET="${CLUSTER_NAME}"
   fi
 else
-  # we are using the current context - extract only the current cluster info and create a new kubeconfig
-  infomsg "Extracting current cluster information from user's kubeconfig: $(${CLIENT_EXE} config current-context)"
-  ${CLIENT_EXE} config view --minify --flatten > "${REMOTE_SECRET_PATH}"
+  # we are using an existing context - extract the specified context info and create a new kubeconfig
+  if [ "${HOME_KUBE_CONTEXT}" == "current" ]; then
+    infomsg "Extracting current cluster information from user's kubeconfig: $(${CLIENT_EXE} config current-context)"
+    ${CLIENT_EXE} config view --minify --flatten > "${REMOTE_SECRET_PATH}"
+  else
+    infomsg "Extracting context [${HOME_KUBE_CONTEXT}] information from user's kubeconfig"
+    ${CLIENT_EXE} config view --minify --flatten --context="${HOME_KUBE_CONTEXT}" > "${REMOTE_SECRET_PATH}"
+  fi
 
   # Set the cluster name for the secret
   if [ -z "${CLUSTER_NAME}" ]; then
