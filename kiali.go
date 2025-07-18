@@ -258,28 +258,27 @@ func main() {
 			log.Warningf("Unable to get workloads to sync cache for cluster [%s]. First request that accesses workloads may take awhile: %v", cluster, err)
 		}
 
-		include := cluster != conf.KubernetesConfig.ClusterName || !conf.Clustering.IgnoreHomeCluster
 		if _, err := layer.IstioConfig.GetIstioConfigList(ctx, cluster, business.IstioConfigCriteria{
-			IncludeGateways:               include,
-			IncludeK8sGateways:            include,
-			IncludeK8sGRPCRoutes:          include,
-			IncludeK8sHTTPRoutes:          include,
-			IncludeK8sInferencePools:      include,
-			IncludeK8sTCPRoutes:           include,
-			IncludeK8sTLSRoutes:           include,
-			IncludeVirtualServices:        include,
-			IncludeDestinationRules:       include,
-			IncludeSidecars:               include,
-			IncludeServiceEntries:         include,
-			IncludeWorkloadEntries:        include,
-			IncludeWorkloadGroups:         include,
-			IncludeEnvoyFilters:           include,
-			IncludeWasmPlugins:            include,
-			IncludeAuthorizationPolicies:  include,
-			IncludePeerAuthentications:    include,
-			IncludeRequestAuthentications: include,
-			IncludeTelemetry:              include,
-			IncludeK8sReferenceGrants:     include,
+			IncludeGateways:               true,
+			IncludeK8sGateways:            true,
+			IncludeK8sGRPCRoutes:          true,
+			IncludeK8sHTTPRoutes:          true,
+			IncludeK8sInferencePools:      true,
+			IncludeK8sTCPRoutes:           true,
+			IncludeK8sTLSRoutes:           true,
+			IncludeVirtualServices:        true,
+			IncludeDestinationRules:       true,
+			IncludeSidecars:               true,
+			IncludeServiceEntries:         true,
+			IncludeWorkloadEntries:        true,
+			IncludeWorkloadGroups:         true,
+			IncludeEnvoyFilters:           true,
+			IncludeWasmPlugins:            true,
+			IncludeAuthorizationPolicies:  true,
+			IncludePeerAuthentications:    true,
+			IncludeRequestAuthentications: true,
+			IncludeTelemetry:              true,
+			IncludeK8sReferenceGrants:     true,
 		}); err != nil {
 			log.Warningf("Unable to get Istio config to sync cache for cluster [%s]. First request that accesses Istio config may take awhile: %v", cluster, err)
 		}
