@@ -140,7 +140,7 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	for _, cluster := range r.clusters {
 		validationPerformed, clusterValidations, err := r.validationsService.Validate(ctx, cluster, vInfo)
 		if err != nil {
-			log.Errorf("[ValidationsReconciler] Error performing validation for cluster %s: %s", cluster, err)
+			log.Errorf("[ValidationsReconciler] Error performing validation for cluster [%s]: %s", cluster, err)
 			return ctrl.Result{}, err
 		}
 

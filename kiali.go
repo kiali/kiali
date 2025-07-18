@@ -241,7 +241,7 @@ func main() {
 
 	// Not totally sure we need to call this for all clusters but better to be safe.
 	for cluster, cache := range kubeCaches {
-		log.Infof("Waiting for cluster: %s cache to sync", cluster)
+		log.Infof("Waiting for cluster [%s] cache to sync", cluster)
 
 		if !cache.WaitForCacheSync(ctx) {
 			log.Fatal("Timed out waiting for cache to sync")
@@ -255,7 +255,7 @@ func main() {
 		// that tries to access these resources will block until the informer is synced
 		// which can take a long time.
 		if _, err := layer.Workload.GetAllWorkloads(ctx, cluster, ""); err != nil {
-			log.Warningf("Unable to get workloads to sync cache for cluster %s. First request that accesses workloads may take awhile: %v", cluster, err)
+			log.Warningf("Unable to get workloads to sync cache for cluster [%s]. First request that accesses workloads may take awhile: %v", cluster, err)
 		}
 
 		include := cluster != conf.KubernetesConfig.ClusterName || !conf.Clustering.IgnoreHomeCluster
@@ -281,7 +281,7 @@ func main() {
 			IncludeTelemetry:              include,
 			IncludeK8sReferenceGrants:     include,
 		}); err != nil {
-			log.Warningf("Unable to get Istio config to sync cache for cluster %s. First request that accesses Istio config may take awhile: %v", cluster, err)
+			log.Warningf("Unable to get Istio config to sync cache for cluster [%s]. First request that accesses Istio config may take awhile: %v", cluster, err)
 		}
 	}
 	log.Info("All caches synced")

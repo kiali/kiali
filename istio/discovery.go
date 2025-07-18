@@ -188,16 +188,16 @@ func setSharedConfig(controlPlane *models.ControlPlane, controlPlaneConf *models
 		ctrlclient.ObjectKey{Name: controlPlane.SharedMeshConfig, Namespace: controlPlane.IstiodNamespace},
 		sharedUserConfigMap,
 	); err != nil {
-		return fmt.Errorf("unable to get Shared User ConfigMap %s in namespace %s on cluster %s: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
+		return fmt.Errorf("unable to get Shared User ConfigMap [%s] in namespace [%s] on cluster [%s]: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
 	}
 
 	if err := parseIstioConfigMap(sharedUserConfigMap, sharedConfig.ConfigMap); err != nil {
-		return fmt.Errorf("unable to parse Shared User ConfigMap %s in namespace %s on cluster %s: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
+		return fmt.Errorf("unable to parse Shared User ConfigMap [%s] in namespace [%s] on cluster [%s]: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
 	}
 
 	// Unmarshal again into effective.
 	if err := parseIstioConfigMap(sharedUserConfigMap, controlPlaneConf.EffectiveConfig.ConfigMap); err != nil {
-		return fmt.Errorf("unable to parse Shared User ConfigMap %s in namespace %s on cluster %s into EffectiveConfig: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
+		return fmt.Errorf("unable to parse Shared User ConfigMap [%s] in namespace [%s] on cluster [%s] into EffectiveConfig: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
 	}
 
 	controlPlaneConf.SharedConfig = sharedConfig
@@ -306,8 +306,8 @@ func (in *Discovery) IsControlPlane(cluster, namespace string) bool {
 				return true
 			}
 		}
-	} else {
-		log.Warning("IsControlPlane(): Mesh not found in cache, returning false")
+	} else if cluster == in.conf.KubernetesConfig.ClusterName {
+		log.Warning("IsControlPlane(): Mesh not found in hime cluster cache, returning false")
 	}
 	return false
 }

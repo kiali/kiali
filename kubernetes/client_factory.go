@@ -242,7 +242,7 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 	if cluster == cf.homeCluster {
 		client, err := NewClientWithRemoteClusterInfo(&config, nil)
 		if err != nil {
-			log.Errorf("Error creating client for cluster %s: %s", cluster, err.Error())
+			log.Errorf("Error creating client for cluster [%s]: %s", cluster, err.Error())
 			return nil, err
 		}
 		newClient = client

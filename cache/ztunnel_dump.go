@@ -39,7 +39,7 @@ func (c *kialiCacheImpl) GetZtunnelDump(cluster, namespace, pod string) *kuberne
 	zl := c.zl
 	client, found := c.clients[cluster]
 	if !found {
-		zl.Error().Msgf("[GetZtunnelDump] Kiali Service Account client not found for cluster %s", cluster)
+		zl.Error().Msgf("[GetZtunnelDump] Kiali Service Account client not found for cluster [%s]", cluster)
 		return nil
 	}
 
