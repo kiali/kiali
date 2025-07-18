@@ -2,8 +2,9 @@ package references
 
 import (
 	"fmt"
-	k8s_inference_v1alpha2 "sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
 	"strings"
+
+	k8s_inference_v1alpha2 "sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
 
 	"k8s.io/apimachinery/pkg/labels"
 

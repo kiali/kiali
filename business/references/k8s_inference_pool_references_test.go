@@ -62,11 +62,11 @@ func TestK8sInferencePoolNoWorkloadReferences(t *testing.T) {
 	assert := assert.New(t)
 	config.Set(config.NewConfig())
 
-	pool := fakeInferencePool("test-pool", "test-ns", map[k8s_inference_v1alpha2.LabelKey]k8s_inference_v1alpha2.LabelValue{"app": "vllm-llama3-8b-instruct"}, "my-service")
+	pool := fakeInferencePool("test-pool", "test-ns", map[k8s_inference_v1alpha2.LabelKey]k8s_inference_v1alpha2.LabelValue{"app": "vllm-llama3-8b-instruct"}, "my-service-epp")
 	workloads := models.Workloads{
 		data.CreateWorkload("workload1", map[string]string{"app": "my-app"}),
 	}
-	services := data.CreateFakeRegistryServicesLabels("my-service.test-ns.svc.cluster.local", "test-ns")
+	services := data.CreateFakeMultiRegistryServices([]string{"my-service-epp.test-ns.svc.cluster.local", "other-service"}, "test-ns", ".")
 
 	references := prepareTestForK8sInferencePool(pool, workloads, services)
 
@@ -75,7 +75,7 @@ func TestK8sInferencePoolNoWorkloadReferences(t *testing.T) {
 
 	// Check Service references (1)
 	assert.Len(references.ServiceReferences, 1)
-	assert.Equal("my-service", references.ServiceReferences[0].Name)
+	assert.Equal("my-service-epp", references.ServiceReferences[0].Name)
 }
 
 // TestK8sInferencePoolNoServiceReference tests the case where the extensionRef points to a non-existent service.
@@ -87,7 +87,7 @@ func TestK8sInferencePoolNoServiceReference(t *testing.T) {
 	workloads := models.Workloads{
 		data.CreateWorkload("workload1", map[string]string{"app": "vllm-llama3-8b-instruct"}),
 	}
-	services := data.CreateFakeRegistryServicesLabels("my-service.test-ns.svc.cluster.local", "test-ns")
+	services := data.CreateFakeMultiRegistryServices([]string{"my-service-epp.test-ns.svc.cluster.local", "other-service"}, "test-ns", ".")
 
 	references := prepareTestForK8sInferencePool(pool, workloads, services)
 
@@ -109,7 +109,7 @@ func TestK8sInferencePoolNoReferences(t *testing.T) {
 	workloads := models.Workloads{
 		data.CreateWorkload("workload1", map[string]string{"app": "my-app"}),
 	}
-	services := data.CreateFakeRegistryServicesLabels("my-service.test-ns.svc.cluster.local", "test-ns")
+	services := data.CreateFakeMultiRegistryServices([]string{"my-service-epp.test-ns.svc.cluster.local", "other-service"}, "test-ns", ".")
 
 	references := prepareTestForK8sInferencePool(pool, workloads, services)
 
