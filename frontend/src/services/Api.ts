@@ -303,7 +303,7 @@ export const getClustersMetrics = (
 
 export const getMeshTls = (cluster: string, revision: string): Promise<ApiResponse<TLSStatus>> => {
   const queryParams = {
-    cluster,
+    clusterName: cluster,
     revision
   };
 
