@@ -103,7 +103,7 @@ func (in *IstioValidationsService) GetValidationsForService(ctx context.Context,
 
 func (in *IstioValidationsService) GetValidationsForWorkload(ctx context.Context, cluster, namespace, workload string) (models.IstioValidations, error) {
 	if namespace == "" {
-		return nil, fmt.Errorf("namespace param should be set for Validations in cluster %s", cluster)
+		return nil, fmt.Errorf("namespace param should be set for Validations in cluster [%s]", cluster)
 	}
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)

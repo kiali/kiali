@@ -179,7 +179,7 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 		}
 		istioConfigs, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, cluster, istioCriteria)
 		if err != nil {
-			log.Errorf("Error fetching IstioConfigList per cluster %s per namespace %s: %s", cluster, criteria.Namespace, err)
+			log.Errorf("Error fetching IstioConfigList per cluster [%s] per namespace [%s]: %s", cluster, criteria.Namespace, err)
 			return nil, err
 		}
 		istioConfigList = *istioConfigs
