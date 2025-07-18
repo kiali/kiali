@@ -590,7 +590,7 @@ if [ "${COPY_CLUSTER_SECRETS}" == "true" ]; then
   if [ -z "${POD_NAME}" ]; then
     warnmsg "Cannot get the Kiali pod name. Kiali must be deployed in [${ISTIO_NAMESPACE}]. If you do not want to deploy Kiali in the cluster, set '--copy-cluster-secrets' to 'false'."
   else
-    infomsg "Will copy remote cluster secrets from the Kiali pod [${ISTIO_NAMESPACE}/${POD_NAME}]"
+    infomsg "Will copy remote cluster secrets from the Kiali pod [${SECRET_KUBE_CONTEXT}/${ISTIO_NAMESPACE}/${POD_NAME}]"
 
     # if the directory doesn't exist, then no remote secrets are available, so skip everything else
     ${CLIENT_EXE} ${SECRET_CONTEXT_OPT} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- ls -d ${REMOTE_CLUSTER_SECRETS_DIR} >&/dev/null
@@ -659,6 +659,13 @@ EOM
   ${CLIENT_EXE} config set-credentials ${KUBE_CONTEXT} --kubeconfig="${REMOTE_SECRET_PATH}" --token="$(cat ${TOKEN_FILE})"
   ${CLIENT_EXE} config set-context ${KUBE_CONTEXT} --kubeconfig="${REMOTE_SECRET_PATH}" --user=${KUBE_CONTEXT} --cluster=${KUBE_CONTEXT} --namespace=${ISTIO_NAMESPACE}
   ${CLIENT_EXE} config use-context --kubeconfig="${REMOTE_SECRET_PATH}" ${KUBE_CONTEXT}
+
+  # Set the cluster name for the secret when not specifying -kc current
+  if [ -z "${CLUSTER_NAME}" ]; then
+    CLUSTER_NAME_FOR_SECRET=$KUBE_CONTEXT
+  else
+    CLUSTER_NAME_FOR_SECRET="${CLUSTER_NAME}"
+  fi
 else
   # we are using the current context - extract only the current cluster info and create a new kubeconfig
   infomsg "Extracting current cluster information from user's kubeconfig: $(${CLIENT_EXE} config current-context)"
