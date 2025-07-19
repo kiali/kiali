@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	k8s_inference_v1alpha2 "sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
@@ -229,6 +230,24 @@ func FilterK8sGatewaysByLabel(allGws []*k8s_networking_v1.Gateway, gatewayLabel 
 		}
 	}
 	return gateways
+}
+
+func FilterK8sInferencePoolsBySelector(workloadSelector string, inferencePools []*k8s_inference_v1alpha2.InferencePool) []*k8s_inference_v1alpha2.InferencePool {
+	filtered := []*k8s_inference_v1alpha2.InferencePool{}
+	workloadLabels := mapWorkloadSelector(workloadSelector)
+	for _, pool := range inferencePools {
+		wkLabelsS := []string{}
+		poolSelector := pool.Spec.Selector
+		for k, v := range poolSelector {
+			wkLabelsS = append(wkLabelsS, fmt.Sprintf("%s=%s", k, v))
+		}
+		if resourceSelector, err := labels.Parse(strings.Join(wkLabelsS, ",")); err == nil {
+			if resourceSelector.Matches(labels.Set(workloadLabels)) {
+				filtered = append(filtered, pool)
+			}
+		}
+	}
+	return filtered
 }
 
 func FilterPodsByController(controllerName string, controllerGVK schema.GroupVersionKind, allPods []core_v1.Pod) []core_v1.Pod {
@@ -589,6 +608,16 @@ func FilterK8sGRPCRoutesByService(allRoutes []*k8s_networking_v1.GRPCRoute, refe
 		}
 		if appendRoute {
 			filtered = append(filtered, route)
+		}
+	}
+	return filtered
+}
+
+func FilterK8sInferencePoolByService(allObjects []*k8s_inference_v1alpha2.InferencePool, namespace string, serviceName string) []*k8s_inference_v1alpha2.InferencePool {
+	filtered := []*k8s_inference_v1alpha2.InferencePool{}
+	for _, obj := range allObjects {
+		if string(*obj.Spec.ExtensionRef.Kind) == ServiceType && string(obj.Spec.ExtensionRef.Name) == serviceName && obj.Namespace == namespace {
+			filtered = append(filtered, obj)
 		}
 	}
 	return filtered

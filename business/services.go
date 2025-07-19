@@ -172,6 +172,7 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 			IncludeK8sGateways:        true,
 			IncludeK8sGRPCRoutes:      true,
 			IncludeK8sHTTPRoutes:      true,
+			IncludeK8sInferencePools:  true,
 			IncludeK8sReferenceGrants: true,
 			IncludeServiceEntries:     true,
 			IncludeVirtualServices:    true,
@@ -269,6 +270,7 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 			svcK8sGRPCRoutes := kubernetes.FilterK8sGRPCRoutesByService(istioConfigList.K8sGRPCRoutes, istioConfigList.K8sReferenceGrants, item.Namespace, item.Name, in.conf)
 			svcK8sHTTPRoutes := kubernetes.FilterK8sHTTPRoutesByService(istioConfigList.K8sHTTPRoutes, istioConfigList.K8sReferenceGrants, item.Namespace, item.Name, in.conf)
 			svcK8sGateways := append(kubernetes.FilterK8sGatewaysByRoutes(istioConfigList.K8sGateways, svcK8sHTTPRoutes, svcK8sGRPCRoutes), kubernetes.FilterK8sGatewaysByLabel(kubernetes.FilterByNamespaceNames(istioConfigList.K8sGateways, []string{item.Namespace}), item.Labels[in.conf.IstioLabels.AmbientWaypointGatewayLabel])...)
+			svcK8sInferencePools := kubernetes.FilterK8sInferencePoolByService(istioConfigList.K8sInferencePools, item.Namespace, item.Name)
 
 			for _, vs := range svcVirtualServices {
 				ref := models.BuildKey(kubernetes.VirtualServices, vs.Name, vs.Namespace, cluster)
@@ -295,6 +297,10 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 			for _, route := range svcK8sHTTPRoutes {
 				// Should be K8s type to generate correct link
 				ref := models.BuildKey(kubernetes.K8sHTTPRoutes, route.Name, route.Namespace, cluster)
+				svcReferences = append(svcReferences, &ref)
+			}
+			for _, pool := range svcK8sInferencePools {
+				ref := models.BuildKey(kubernetes.K8sInferencePools, pool.Name, pool.Namespace, cluster)
 				svcReferences = append(svcReferences, &ref)
 			}
 			svcReferences = FilterUniqueIstioReferences(svcReferences)
@@ -529,6 +535,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 			IncludeK8sGateways:        true,
 			IncludeK8sGRPCRoutes:      true,
 			IncludeK8sHTTPRoutes:      true,
+			IncludeK8sInferencePools:  true,
 			IncludeK8sReferenceGrants: true,
 			IncludeServiceEntries:     true,
 			IncludeVirtualServices:    true,
@@ -629,6 +636,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 	s.DestinationRules = kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, namespace, service, in.conf)
 	s.K8sHTTPRoutes = kubernetes.FilterK8sHTTPRoutesByService(istioConfigList.K8sHTTPRoutes, istioConfigList.K8sReferenceGrants, namespace, service, in.conf)
 	s.K8sGRPCRoutes = kubernetes.FilterK8sGRPCRoutesByService(istioConfigList.K8sGRPCRoutes, istioConfigList.K8sReferenceGrants, namespace, service, in.conf)
+	s.K8sInferencePools = kubernetes.FilterK8sInferencePoolByService(istioConfigList.K8sInferencePools, namespace, service)
 	if s.Service.Type == "External" || s.Service.Type == "Federation" {
 		// On ServiceEntries cases the Service name is the hostname
 		s.ServiceEntries = kubernetes.FilterServiceEntriesByHostname(istioConfigList.ServiceEntries, s.Service.Name)
