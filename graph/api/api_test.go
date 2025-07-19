@@ -1242,7 +1242,7 @@ func TestAppGraph(t *testing.T) {
 	mr := mux.NewRouter()
 
 	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
-		options := graph.NewOptions(r, &biz.Namespace)
+		options := graph.NewOptions(r, biz)
 		options.Rates.Ambient = graph.AmbientTrafficNone
 		code, config := graphNamespacesIstio(r.Context(), biz, client, options)
 		respond(w, code, config)
@@ -1277,7 +1277,7 @@ func TestVersionedAppGraph(t *testing.T) {
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
-		options := graph.NewOptions(r, &biz.Namespace)
+		options := graph.NewOptions(r, biz)
 		options.Rates.Ambient = graph.AmbientTrafficNone
 		code, config := graphNamespacesIstio(r.Context(), biz, client, options)
 		respond(w, code, config)
@@ -1312,7 +1312,7 @@ func TestServiceGraph(t *testing.T) {
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
-		options := graph.NewOptions(r, &biz.Namespace)
+		options := graph.NewOptions(r, biz)
 		options.Rates.Ambient = graph.AmbientTrafficNone
 		code, config := graphNamespacesIstio(r.Context(), biz, client, options)
 		respond(w, code, config)
@@ -1347,7 +1347,7 @@ func TestWorkloadGraph(t *testing.T) {
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
-		options := graph.NewOptions(r, &biz.Namespace)
+		options := graph.NewOptions(r, biz)
 		options.Rates.Ambient = graph.AmbientTrafficNone
 		code, config := graphNamespacesIstio(r.Context(), biz, client, options)
 		respond(w, code, config)
@@ -1383,7 +1383,7 @@ func TestRatesGraphSent(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph",
 		func(w http.ResponseWriter, r *http.Request) {
-			options := graph.NewOptions(r, &biz.Namespace)
+			options := graph.NewOptions(r, biz)
 			options.Rates.Ambient = graph.AmbientTrafficNone
 			code, config := graphNamespacesIstio(r.Context(), biz, client, options)
 			respond(w, code, config)
@@ -1418,7 +1418,7 @@ func TestRatesGraphReceived(t *testing.T) {
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
-		options := graph.NewOptions(r, &biz.Namespace)
+		options := graph.NewOptions(r, biz)
 		options.Rates.Ambient = graph.AmbientTrafficNone
 		code, config := graphNamespacesIstio(r.Context(), biz, client, options)
 		respond(w, code, config)
@@ -1453,7 +1453,7 @@ func TestRatesGraphTotal(t *testing.T) {
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
-		options := graph.NewOptions(r, &biz.Namespace)
+		options := graph.NewOptions(r, biz)
 		options.Rates.Ambient = graph.AmbientTrafficNone
 		code, config := graphNamespacesIstio(r.Context(), biz, client, options)
 		respond(w, code, config)
@@ -1489,7 +1489,7 @@ func TestRatesGraphNone(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph",
 		func(w http.ResponseWriter, r *http.Request) {
-			options := graph.NewOptions(r, &biz.Namespace)
+			options := graph.NewOptions(r, biz)
 			options.Rates.Ambient = graph.AmbientTrafficNone
 			code, config := graphNamespacesIstio(r.Context(), biz, client, options)
 			respond(w, code, config)
@@ -1809,7 +1809,7 @@ func TestWorkloadNodeGraph(t *testing.T) {
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/graph", func(w http.ResponseWriter, r *http.Request) {
-		options := graph.NewOptions(r, &biz.Namespace)
+		options := graph.NewOptions(r, biz)
 		options.Rates.Ambient = graph.AmbientTrafficNone
 		code, config := graphNodeIstio(r.Context(), biz, client, options)
 		respond(w, code, config)
@@ -2129,7 +2129,7 @@ func TestAppNodeGraph(t *testing.T) {
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/applications/{app}/graph", func(w http.ResponseWriter, r *http.Request) {
-		code, config := graphNodeIstio(r.Context(), biz, client, graph.NewOptions(r, &biz.Namespace))
+		code, config := graphNodeIstio(r.Context(), biz, client, graph.NewOptions(r, biz))
 		respond(w, code, config)
 	},
 	)
@@ -2447,7 +2447,7 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/applications/{app}/versions/{version}/graph", func(w http.ResponseWriter, r *http.Request) {
-		options := graph.NewOptions(r, &biz.Namespace)
+		options := graph.NewOptions(r, biz)
 		options.Rates.Ambient = graph.AmbientTrafficNone
 		code, config := graphNodeIstio(r.Context(), biz, client, options)
 		respond(w, code, config)
@@ -2536,7 +2536,7 @@ func TestServiceNodeGraph(t *testing.T) {
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/graph", func(w http.ResponseWriter, r *http.Request) {
-		options := graph.NewOptions(r, &biz.Namespace)
+		options := graph.NewOptions(r, biz)
 		options.Rates.Ambient = graph.AmbientTrafficNone
 		code, config := graphNodeIstio(r.Context(), biz, client, options)
 		respond(w, code, config)
@@ -2966,7 +2966,7 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/graph", func(w http.ResponseWriter, r *http.Request) {
-		options := graph.NewOptions(r, &biz.Namespace)
+		options := graph.NewOptions(r, biz)
 		options.Rates.Ambient = graph.AmbientTrafficNone
 		code, config := graphNodeIstio(r.Context(), biz, client, options)
 		respond(w, code, config)
@@ -3522,7 +3522,7 @@ func TestComplexGraph(t *testing.T) {
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
-		options := graph.NewOptions(r, &biz.Namespace)
+		options := graph.NewOptions(r, biz)
 		options.Rates.Ambient = graph.AmbientTrafficNone
 		code, config := graphNamespacesIstio(r.Context(), biz, client, options)
 		respond(w, code, config)
@@ -3838,7 +3838,7 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
-		options := graph.NewOptions(r, &biz.Namespace)
+		options := graph.NewOptions(r, biz)
 		options.Rates.Ambient = graph.AmbientTrafficNone
 		code, config := graphNamespacesIstio(r.Context(), biz, client, options)
 		respond(w, code, config)
@@ -4180,7 +4180,7 @@ func TestAmbientGraph(t *testing.T) {
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
-		code, config := graphNamespacesIstio(r.Context(), businessLayer, client, graph.NewOptions(r, &businessLayer.Namespace))
+		code, config := graphNamespacesIstio(r.Context(), businessLayer, client, graph.NewOptions(r, businessLayer))
 		respond(w, code, config)
 	},
 	)

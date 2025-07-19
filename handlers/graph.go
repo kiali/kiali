@@ -67,7 +67,7 @@ func GraphNamespaces(
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		graph.CheckError(err)
 
-		o := graph.NewOptions(r, &business.Namespace)
+		o := graph.NewOptions(r, business)
 
 		code, payload := api.GraphNamespaces(r.Context(), business, o)
 		respond(w, code, payload)
@@ -91,7 +91,7 @@ func GraphNode(
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		graph.CheckError(err)
 
-		o := graph.NewOptions(r, &business.Namespace)
+		o := graph.NewOptions(r, business)
 
 		code, payload := api.GraphNode(r.Context(), business, o)
 		respond(w, code, payload)
@@ -118,7 +118,7 @@ func handlePanic(ctx context.Context, w http.ResponseWriter) {
 		if code == http.StatusInternalServerError {
 			stack := debug.Stack()
 			log.FromContext(ctx).Error().Msgf("%s: %s", message, stack)
-			RespondWithDetailedError(w, code, message, "Stack trace available in Kiali logs")
+			RespondWithDetailedError(w, code, message, "Stack trace available in Kiali logs:")
 			return
 		}
 		RespondWithError(w, code, message)

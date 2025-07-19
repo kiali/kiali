@@ -3,7 +3,6 @@ package appender
 import (
 	"context"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 )
 
@@ -51,7 +50,7 @@ func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalI
 		}
 
 		// We whitelist istio components because they may not report telemetry using injected sidecars.
-		if config.IsIstioNamespace(n.Namespace) {
+		if globalInfo.Business.Mesh.IsControlPlane(n.Cluster, n.Namespace) {
 			continue
 		}
 

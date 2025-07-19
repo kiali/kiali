@@ -124,15 +124,18 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 		}
 	}
 
-	// if no control plane and no any other control plane which manages this cluster
-	if len(istiodStatus) == 0 && !isManaged {
-		istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
-			Cluster:   cluster,
-			Name:      "istiod",
-			Namespace: iss.conf.IstioNamespace,
-			Status:    kubernetes.ComponentNotFound,
-			IsCore:    true,
-		})
+	// Ignore istiod status for a mgmt cluster (external kiali)
+	if mesh.ExternalKiali == nil || cluster != mesh.ExternalKiali.Cluster.Name {
+		// if no control plane and no any other control plane which manages this cluster
+		if len(istiodStatus) == 0 && !isManaged {
+			istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
+				Cluster:   cluster,
+				Name:      "istiod",
+				Namespace: "",
+				Status:    kubernetes.ComponentNotFound,
+				IsCore:    true,
+			})
+		}
 	}
 
 	// Autodiscover gateways.
@@ -207,9 +210,6 @@ func (iss *IstioStatusService) getComponentNamespacesWorkloads(ctx context.Conte
 
 func getComponentNamespaces(conf *config.Config) []string {
 	nss := make([]string, 0)
-
-	// By default, add the istio control plane namespace
-	nss = append(nss, conf.IstioNamespace)
 
 	// Adding Istio Components namespaces
 	externalServices := conf.ExternalServices
@@ -289,7 +289,7 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster
 						if stat.Namespace != "" {
 							return stat.Namespace
 						}
-						return iss.conf.IstioNamespace
+						return ""
 					}(),
 					Name:   comp,
 					Status: kubernetes.ComponentNotFound,

@@ -189,16 +189,16 @@ func setSharedConfig(controlPlane *models.ControlPlane, controlPlaneConf *models
 		ctrlclient.ObjectKey{Name: controlPlane.SharedMeshConfig, Namespace: controlPlane.IstiodNamespace},
 		sharedUserConfigMap,
 	); err != nil {
-		return fmt.Errorf("unable to get Shared User ConfigMap %s in namespace %s on cluster %s: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
+		return fmt.Errorf("unable to get Shared User ConfigMap [%s] in namespace [%s] on cluster [%s]: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
 	}
 
 	if err := parseIstioConfigMap(sharedUserConfigMap, sharedConfig.ConfigMap); err != nil {
-		return fmt.Errorf("unable to parse Shared User ConfigMap %s in namespace %s on cluster %s: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
+		return fmt.Errorf("unable to parse Shared User ConfigMap [%s] in namespace [%s] on cluster [%s]: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
 	}
 
 	// Unmarshal again into effective.
 	if err := parseIstioConfigMap(sharedUserConfigMap, controlPlaneConf.EffectiveConfig.ConfigMap); err != nil {
-		return fmt.Errorf("unable to parse Shared User ConfigMap %s in namespace %s on cluster %s into EffectiveConfig: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
+		return fmt.Errorf("unable to parse Shared User ConfigMap [%s] in namespace [%s] on cluster [%s] into EffectiveConfig: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
 	}
 
 	controlPlaneConf.SharedConfig = sharedConfig
@@ -274,6 +274,7 @@ func sidecarInjectorConfigMapName(revision string) string {
 
 type MeshDiscovery interface {
 	Clusters() ([]models.KubeCluster, error)
+	IsControlPlane(cluster, namespace string) bool
 	Mesh(ctx context.Context) (*models.Mesh, error)
 }
 
@@ -291,6 +292,25 @@ func NewDiscovery(clients map[string]kubernetes.ClientInterface, cache cache.Kia
 		kialiCache:     cache,
 		kialiSAClients: clients,
 	}
+}
+
+// IsControlPlane returns true if the cluster-namespace is an istio control plane. If cluster == "" it
+// is ignored, and only the namespace is considered. Otherwise false.
+func (in *Discovery) IsControlPlane(cluster, namespace string) bool {
+	if in.conf.ExternalServices.Istio.IstioNamespace != "" {
+		return in.conf.ExternalServices.Istio.IstioNamespace == namespace
+	}
+
+	if mesh, ok := in.kialiCache.GetMesh(); ok {
+		for _, cp := range mesh.ControlPlanes {
+			if (cluster == "" || cluster == cp.Cluster.Name) && namespace == cp.IstiodNamespace {
+				return true
+			}
+		}
+	} else if cluster == in.conf.KubernetesConfig.ClusterName {
+		log.Warning("IsControlPlane(): Mesh not found in hime cluster cache, returning false")
+	}
+	return false
 }
 
 // IsRemoteCluster determines if the cluster has a controlplane or if it's a remote cluster without one.
@@ -320,8 +340,8 @@ func (in *Discovery) Clusters() ([]models.KubeCluster, error) {
 		return clusters, nil
 	}
 
-	// Even if somehow there are no clusters found, which there should always be at least the homecluster,
-	// setting this to an empty slice will prevent us from trying to resolve again.
+	// Even if somehow there are no clusters found, setting this to an empty slice will prevent us
+	// from trying to resolve again.
 	clustersByName := map[string]models.KubeCluster{}
 	for cluster, client := range in.kialiSAClients {
 		info := client.ClusterInfo()
@@ -360,8 +380,9 @@ func (in *Discovery) Clusters() ([]models.KubeCluster, error) {
 	}
 
 	// TODO: Separate KialiInstance from Cluster model.
-	for idx := range clusters {
-		cluster := &clusters[idx]
+	for i := range clusters {
+		// need the actual object for update, so use the index, not the copy
+		cluster := &clusters[i]
 		instances, err := in.getKialiInstances(*cluster)
 		if err != nil {
 			log.Warningf("Unable to get Kiali instances for cluster [%s]: %v", cluster.Name, err)
@@ -386,7 +407,7 @@ type clusterRevisionKey struct {
 func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "Mesh",
-		observability.Attribute("package", "business"),
+		observability.Attribute("package", "istio"),
 	)
 	defer end()
 
@@ -413,7 +434,22 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 			return nil, err
 		}
 
-		// If there's an istiod on it, then it's a controlplane cluster. Otherwise it is a remote cluster.
+		// if this is an external kiali cluster, don't look for control planes but ensure that Kiali is found
+		if in.conf.Clustering.IgnoreHomeCluster && in.conf.KubernetesConfig.ClusterName == cluster.Name {
+			log.Tracef("Cluster [%s] is an external Kiali cluster. Adding the external management cluster.", cluster.Name)
+			externalKialis := in.discoverKiali(cluster)
+			if len(externalKialis) != 0 {
+				mesh.ExternalKiali = &models.ExternalKialiInstance{
+					Cluster: &cluster,
+					Kiali:   &externalKialis[0],
+				}
+			} else {
+				log.Errorf("cluster [%s] is an external Kiali cluster. But a Kiali instance was not found", cluster.Name)
+			}
+			continue
+		}
+
+		// If there's an istiod on it, then it's a controlplane cluster. Otherwise it is a remote mesh cluster
 		labels := map[string]string{config.IstioAppLabel: istiodAppLabelValue}
 		depList := &appsv1.DeploymentList{}
 		err = kubeCache.List(ctx, depList, ctrlclient.MatchingLabels(labels))

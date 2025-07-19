@@ -46,7 +46,7 @@ func TestGetClusterInfoFromIstiod(t *testing.T) {
 			},
 		},
 	)
-	clusterID, err := kubernetes.ClusterNameFromIstiod(*conf, k8s)
+	clusterID, err := kubernetes.ClusterNameFromIstiod(conf, k8s)
 	require.NoError(err)
 
 	assert.Equal("east", clusterID)
@@ -78,7 +78,7 @@ func TestGetClusterInfoFromIstiodFails(t *testing.T) {
 			},
 		},
 	)
-	_, err := kubernetes.ClusterNameFromIstiod(*conf, k8s)
+	_, err := kubernetes.ClusterNameFromIstiod(conf, k8s)
 	require.Error(err)
 }
 
@@ -130,7 +130,7 @@ func TestClusterNameFromIstiodUsesConfigWhenSet(t *testing.T) {
 		},
 	)
 
-	clusterName, err := kubernetes.ClusterNameFromIstiod(*conf, k8s)
+	clusterName, err := kubernetes.ClusterNameFromIstiod(conf, k8s)
 	require.NoError(err)
 
 	require.Equal("west", clusterName)
@@ -184,7 +184,7 @@ func TestClusterNameFromIstiodResolvesClusterWithoutConfig(t *testing.T) {
 		},
 	)
 
-	clusterName, err := kubernetes.ClusterNameFromIstiod(*conf, k8s)
+	clusterName, err := kubernetes.ClusterNameFromIstiod(conf, k8s)
 	require.NoError(err)
 
 	require.Equal("west", clusterName)
