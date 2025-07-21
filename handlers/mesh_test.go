@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -26,8 +28,6 @@ import (
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 	"github.com/kiali/kiali/tracing"
-	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/stretchr/testify/mock"
 )
 
 // Fails if resp status is non-200

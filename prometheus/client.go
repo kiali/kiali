@@ -182,7 +182,6 @@ func (qfr *QueryFileReader) readFromFile(query string) (model.Value, prom_v1.War
 type OfflineClient struct {
 	api       prom_v1.API
 	dataDir   string
-	mutex     sync.RWMutex
 	buildInfo *prom_v1.BuildinfoResult
 }
 

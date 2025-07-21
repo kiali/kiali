@@ -52,12 +52,6 @@ func getVersions(ctx context.Context, conf *config.Config, clientFactory kuberne
 	return components
 }
 
-type p8sResponseVersion struct {
-	Data struct {
-		Version string `json:"version"`
-	} `json:"data"`
-}
-
 type jaegerResponseVersion struct {
 	Version string `json:"gitVersion"`
 }
