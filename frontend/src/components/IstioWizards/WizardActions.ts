@@ -1956,7 +1956,7 @@ export const buildGraphSidecars = (namespace: string, graph: GraphDefinition): S
             },
             egress: [
               {
-                hosts: istioNamespaces().map(ns => `${ns}}/*`)
+                hosts: istioNamespaces().map(ns => `${ns}/*`)
               }
             ]
           }
