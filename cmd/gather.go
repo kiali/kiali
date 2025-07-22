@@ -13,7 +13,6 @@ import (
 
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -67,21 +66,29 @@ func writeOfflineManifest(outputDir string, conf *config.Config, buildInfo *prom
 	return nil
 }
 
-func newGatherCmd() *cobra.Command {
+func newGatherCmd(conf *config.Config) *cobra.Command {
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Infof("Error getting current working directory: %s", err)
+	}
+
+	// Local flag variables for gather command
+	var (
+		homeClusterContext    string
+		kubeConfig            = kubernetes.KubeConfigDir()
+		remoteClusterContexts []string
+		openBrowser           = true
+		portForwardToPromFlag bool
+		gatherOutputDir       = wd
+		clusterNameOverrides  []string
+	)
+
 	cmd := &cobra.Command{
 		Use:          "gather",
 		SilenceUsage: false,
 		Short:        "Run Kiali in gather mode to collect Prometheus queries",
 		Long:         `Run Kiali in gather mode to collect and log all Prometheus queries to a file.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cmd.Flags().VisitAll(func(f *pflag.Flag) {
-				log.Infof("Flag: %s, Value: %s", f.Name, f.Value.String())
-			})
-			conf, err := config.LoadConfig(argConfigFile)
-			if err != nil {
-				return fmt.Errorf("failed to load config: %v", err)
-			}
-
 			// Override some settings in gather mode.
 			conf.RunMode = config.RunModeLocal
 			conf.Auth.Strategy = config.AuthStrategyAnonymous
@@ -223,15 +230,15 @@ func newGatherCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&homeClusterContext, "home-cluster-context", "", "Sets Kiali's home cluster context in gather mode.")
-	cmd.Flags().StringVar(&kubeConfig, "kubeconfig", kubernetes.KubeConfigDir(), "Path to the kubeconfig file for Kiali to use.")
-	cmd.Flags().StringSliceVar(&remoteClusterContexts, "remote-cluster-contexts", []string{},
+	cmd.Flags().StringVar(&homeClusterContext, "home-cluster-context", homeClusterContext, "Sets Kiali's home cluster context in gather mode.")
+	cmd.Flags().StringVar(&kubeConfig, "kubeconfig", kubeConfig, "Path to the kubeconfig file for Kiali to use.")
+	cmd.Flags().StringSliceVar(&remoteClusterContexts, "remote-cluster-contexts", remoteClusterContexts,
 		"Comma separated list of remote cluster contexts.")
-	cmd.Flags().BoolVar(&openBrowser, "open-browser", true, "If true, will open the default browser after startup.")
-	cmd.Flags().BoolVar(&portForwardToPromFlag, "port-forward-to-prom", true,
+	cmd.Flags().BoolVar(&openBrowser, "open-browser", openBrowser, "If true, will open the default browser after startup.")
+	cmd.Flags().BoolVar(&portForwardToPromFlag, "port-forward-to-prom", portForwardToPromFlag,
 		"If true, will port-forward to the Prometheus pod in the home cluster. Disable this if you want to use an external Prometheus URL.")
-	cmd.Flags().StringVar(&gatherOutputDir, "output-dir", "/tmp/kiali", "Directory where gather mode output files will be written.")
-	cmd.Flags().StringSliceVar(&clusterNameOverrides, "cluster-name-overrides", []string{},
+	cmd.Flags().StringVar(&gatherOutputDir, "output-dir", gatherOutputDir, "Directory where gather mode output files will be written.")
+	cmd.Flags().StringSliceVar(&clusterNameOverrides, "cluster-name-overrides", clusterNameOverrides,
 		"Comma separated list of cluster name overrides in the format 'original-name=override-name'.")
 	return cmd
 }

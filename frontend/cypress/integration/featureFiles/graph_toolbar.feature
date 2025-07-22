@@ -142,7 +142,7 @@ Feature: Kiali Graph page - Toolbar (various)
     And user "opens" traffic menu
     Then user sees "ambient" graph traffic menu
 
-  @offline
+  # TODO: offline - ambient support.
   @ambient
   Scenario: Close traffic dropdown for ambient
     When user "closes" traffic menu

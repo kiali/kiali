@@ -26,12 +26,6 @@ import (
 	"github.com/kiali/kiali/tracing"
 )
 
-// Command line arguments for offline mode
-var (
-	offlineDataPath string
-	withoutBrowser  bool
-)
-
 // readOfflineManifest reads the manifest file and returns the cluster name
 func readOfflineManifest(offlineDataPath string) config.OfflineManifest {
 	manifestPath := filepath.Join(offlineDataPath, "offline-manifest.json")
@@ -60,7 +54,13 @@ func readOfflineManifest(offlineDataPath string) config.OfflineManifest {
 	return manifest
 }
 
-func newOfflineCmd() *cobra.Command {
+func newOfflineCmd(conf *config.Config) *cobra.Command {
+	// Local flag variables for offline command
+	var (
+		offlineDataPath string
+		withoutBrowser  bool
+	)
+
 	cmd := &cobra.Command{
 		Use:          "offline",
 		SilenceUsage: false,
@@ -69,16 +69,6 @@ func newOfflineCmd() *cobra.Command {
 This mode allows you to analyze pre-collected data without requiring a live cluster connection.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			log.Infof("Running Kiali in offline mode with data from: %s", offlineDataPath)
-			var conf *config.Config
-			if argConfigFile != "" {
-				var err error
-				conf, err = config.LoadConfig(argConfigFile)
-				if err != nil {
-					return fmt.Errorf("failed to load config: %v", err)
-				}
-			} else {
-				conf = config.NewConfig()
-			}
 
 			// Read cluster name from manifest file
 			manifest := readOfflineManifest(offlineDataPath)
@@ -184,9 +174,9 @@ This mode allows you to analyze pre-collected data without requiring a live clus
 		},
 	}
 
-	cmd.Flags().StringVar(&offlineDataPath, "data-path", "/tmp/kiali", "Path to directory containing offline data files")
+	cmd.Flags().FuncP("data-path", "d", "Path to directory containing offline data files", FileNameFlag(&offlineDataPath))
 	cmd.MarkFlagRequired("data-path")
-	cmd.Flags().BoolVarP(&withoutBrowser, "without-browser", "w", false, "If true, will not open the default browser after startup.")
+	cmd.Flags().BoolVarP(&withoutBrowser, "without-browser", "w", withoutBrowser, "If true, will not open the default browser after startup.")
 
 	return cmd
 }

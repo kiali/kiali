@@ -22,18 +22,22 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
-func newLocalCmd() *cobra.Command {
+func newLocalCmd(conf *config.Config) *cobra.Command {
+	// Local flag variables for local command
+	var (
+		homeClusterContext    string
+		kubeConfig            = kubernetes.KubeConfigDir() // Set default value
+		remoteClusterContexts []string
+		openBrowser           = true // Set default value
+		portForwardToPromFlag = true // Set default value
+	)
+
 	cmd := &cobra.Command{
 		Use:          "local",
 		SilenceUsage: false,
 		Short:        "Run Kiali in local mode",
 		Long:         `Run Kiali in local mode with a local Kubernetes cluster.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conf, err := config.LoadConfig(argConfigFile)
-			if err != nil {
-				return fmt.Errorf("failed to load config: %v", err)
-			}
-
 			// Override some settings in local mode.
 			conf.RunMode = config.RunModeLocal
 			conf.Auth.Strategy = config.AuthStrategyAnonymous
@@ -45,7 +49,7 @@ func newLocalCmd() *cobra.Command {
 
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			serverStopped, err := RunLocal(ctx, conf)
+			serverStopped, err := RunLocal(ctx, conf, remoteClusterContexts, homeClusterContext, portForwardToPromFlag, openBrowser)
 			if err != nil {
 				return fmt.Errorf("unable to run kiali locally: %s", err)
 			}
@@ -57,12 +61,12 @@ func newLocalCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&homeClusterContext, "home-cluster-context", "", "Sets Kiali's home cluster context in local mode.")
-	cmd.Flags().StringVar(&kubeConfig, "kubeconfig", kubernetes.KubeConfigDir(), "Path to the kubeconfig file for Kiali to use.")
-	cmd.Flags().StringSliceVar(&remoteClusterContexts, "remote-cluster-contexts", []string{},
+	cmd.Flags().StringVar(&homeClusterContext, "home-cluster-context", homeClusterContext, "Sets Kiali's home cluster context in local mode.")
+	cmd.Flags().StringVar(&kubeConfig, "kubeconfig", kubeConfig, "Path to the kubeconfig file for Kiali to use.")
+	cmd.Flags().StringSliceVar(&remoteClusterContexts, "remote-cluster-contexts", remoteClusterContexts,
 		"Comma separated list of remote cluster contexts.")
-	cmd.Flags().BoolVar(&openBrowser, "open-browser", true, "If true, will open the default browser after startup.")
-	cmd.Flags().BoolVar(&portForwardToPromFlag, "port-forward-to-prom", true,
+	cmd.Flags().BoolVar(&openBrowser, "open-browser", openBrowser, "If true, will open the default browser after startup.")
+	cmd.Flags().BoolVar(&portForwardToPromFlag, "port-forward-to-prom", portForwardToPromFlag,
 		"If true, will port-forward to the Prometheus pod in the home cluster. Disable this if you want to use an external Prometheus URL.")
 	return cmd
 }
@@ -98,6 +102,10 @@ func setupPortForwarding(ctx context.Context, cf kubernetes.ClientFactory, conf 
 func RunLocal(
 	ctx context.Context,
 	conf *config.Config,
+	remoteClusterContexts []string,
+	homeClusterContext string,
+	portForwardToPromFlag bool,
+	openBrowser bool,
 ) (<-chan struct{}, error) {
 	log.Info("Running Kiali in local mode")
 	log.Infof("Loading kubeconfig from file: %s", conf.Deployment.RemoteSecretPath)
