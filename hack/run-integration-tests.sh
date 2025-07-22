@@ -562,24 +562,26 @@ elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
     exit 0
   fi
 
-  # Generate a random port for Kiali server
-  KIALI_PORT=$(shuf -i 8000-9999 -n 1)
-  infomsg "Using random port: ${KIALI_PORT}"
+  # Generate a random port for Kiali server that is not already in use.
+  KIALI_PORT=8000
+  while lsof -i :${KIALI_PORT} >/dev/null 2>&1; do
+    KIALI_PORT=$((KIALI_PORT + 1))
+  done
+  infomsg "Using port: ${KIALI_PORT}"
   
   # Create temporary config file with random port
   TEMP_CONFIG=$(mktemp)
-  cp offline-config.yaml "$TEMP_CONFIG"
-  sed -i "s/port: 0/port: ${KIALI_PORT}/" "$TEMP_CONFIG"
+  cat <<EOF > "$TEMP_CONFIG"
+server:
+  port: ${KIALI_PORT}
+EOF
   
-  # Set up cleanup trap to kill the background process and clean up temp file
+  # Set up cleanup trap to kill the background process
   cleanup_kiali() {
     if [ -n "${KIALI_PID}" ]; then
       infomsg "Cleaning up kiali process (PID: ${KIALI_PID})"
       kill ${KIALI_PID} 2>/dev/null || true
       wait ${KIALI_PID} 2>/dev/null || true
-    fi
-    if [ -f "$TEMP_CONFIG" ]; then
-      rm -f "$TEMP_CONFIG"
     fi
   }
   trap cleanup_kiali EXIT
