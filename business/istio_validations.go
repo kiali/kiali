@@ -654,10 +654,10 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	case kubernetes.K8sHTTPRoutes:
 		httpRouteChecker := checkers.K8sHTTPRouteChecker{Conf: conf, Cluster: cluster, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices}
 		objectCheckers = []checkers.ObjectChecker{noServiceChecker, httpRouteChecker}
-		referenceChecker = references.K8sHTTPRouteReferences{Conf: conf, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, Namespaces: nsNames, K8sReferenceGrants: istioConfigList.K8sReferenceGrants}
+		referenceChecker = references.K8sHTTPRouteReferences{Conf: conf, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, Namespaces: nsNames, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, K8sInferencePools: istioConfigList.K8sInferencePools}
 	case kubernetes.K8sInferencePools:
 		// Validation on K8sInferencePools is not expected
-		referenceChecker = references.K8sInferencePoolReferences{Conf: conf, Namespaces: nsNames, K8sInferencePools: istioConfigList.K8sInferencePools, RegistryServices: registryServices, WorkloadsPerNamespace: workloadsPerNamespace}
+		referenceChecker = references.K8sInferencePoolReferences{Conf: conf, Namespaces: nsNames, K8sInferencePools: istioConfigList.K8sInferencePools, RegistryServices: registryServices, WorkloadsPerNamespace: workloadsPerNamespace, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes}
 	case kubernetes.K8sReferenceGrants:
 		objectCheckers = []checkers.ObjectChecker{
 			checkers.K8sReferenceGrantChecker{Cluster: cluster, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces},
