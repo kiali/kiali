@@ -61,8 +61,7 @@ const (
 const (
 	IstioMultiClusterHostSuffix = "global"
 	IstioNamespaceDefault       = "istio-system"
-	// IstioNamespaceNone          = "<none>" // signals an external kiali deployment
-	OidcClientSecretFile = "/kiali-secret/oidc-secret"
+	OidcClientSecretFile        = "/kiali-secret/oidc-secret"
 )
 
 const (
@@ -495,10 +494,6 @@ type DeploymentConfig struct {
 	InstanceName         string                   `yaml:"instance_name"`
 	Namespace            string                   `yaml:"namespace,omitempty"` // Kiali deployment namespace
 	ViewOnlyMode         bool                     `yaml:"view_only_mode,omitempty"`
-	// RemoteSecretPath is used to identify the remote cluster Kiali will connect to as its "local cluster".
-	// This is to support installing Kiali in the control plane, but observing only the data plane in the remote cluster.
-	// Experimental feature. See: https://github.com/kiali/kiali/issues/3002
-	// RemoteSecretPath string `yaml:"remote_secret_path,omitempty"`
 }
 
 // we need to play games with a custom unmarshaller/marshaller for metav1.LabelSelector because it has no yaml struct tags so
@@ -716,18 +711,16 @@ type Config struct {
 	Identity                 security.Identity                   `yaml:",omitempty"`
 	InstallationTag          string                              `yaml:"installation_tag,omitempty"`
 	IstioLabels              IstioLabels                         `yaml:"istio_labels,omitempty"`
-	//IstioNamespace           string                              `yaml:"istio_namespace,omitempty"` // default component namespace
-	KialiFeatureFlags KialiFeatureFlags   `yaml:"kiali_feature_flags,omitempty"`
-	KialiInternal     KialiInternalConfig `yaml:"kiali_internal,omitempty"`
-	KubernetesConfig  KubernetesConfig    `yaml:"kubernetes_config,omitempty"`
-	LoginToken        LoginToken          `yaml:"login_token,omitempty"`
-	Server            Server              `yaml:",omitempty"`
+	KialiFeatureFlags        KialiFeatureFlags                   `yaml:"kiali_feature_flags,omitempty"`
+	KialiInternal            KialiInternalConfig                 `yaml:"kiali_internal,omitempty"`
+	KubernetesConfig         KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
+	LoginToken               LoginToken                          `yaml:"login_token,omitempty"`
+	Server                   Server                              `yaml:",omitempty"`
 }
 
 // NewConfig creates a default Config struct
 func NewConfig() (c *Config) {
 	c = &Config{
-		// IstioNamespace: IstioNamespaceDefault,
 		Auth: AuthConfig{
 			Strategy: AuthStrategyToken,
 			OpenId: OpenIdConfig{

@@ -103,35 +103,6 @@ spec:
       network: ${NETWORK2_ID}
 EOF
 
-#MC_MGMT_YAML=$(mktemp)
-#cat <<EOF > "$MC_MGMT_YAML"
-#spec:
-#  values:
-#    global:
-#      meshID: ${MESH_ID}
-#      multiCluster:
-#        clusterName: ${CLUSTER2_NAME}
-#      network: ${NETWORK2_ID}
-#EOF
-
-# Find the files necessary to create the crossnetwork gateway, if required
-#if [ "${CROSSNETWORK_GATEWAY_REQUIRED}" == "true" ]; then
-#  GEN_GATEWAY_SCRIPT="${ISTIO_DIR}/samples/multicluster/gen-eastwest-gateway.sh"
-#  EXPOSE_SERVICES_YAML="${ISTIO_DIR}/samples/multicluster/expose-services.yaml"
-#  if [ -x "${GEN_GATEWAY_SCRIPT}" ]; then
-#    echo "Generate-gateway script: ${GEN_GATEWAY_SCRIPT}"
-#  else
-#    echo "Cannot find the generate-gateway script at: ${GEN_GATEWAY_SCRIPT}"
-#    exit 1
-#  fi
-#  if [ -f "${EXPOSE_SERVICES_YAML}" ]; then
-#    echo "Expose-services yaml: ${EXPOSE_SERVICES_YAML}"
-#  else
-#    echo "Cannot find the expose-services yaml at: ${EXPOSE_SERVICES_YAML}"
-#    exit 1
-#  fi
-#fi
-
 # Start up two minikube instances if requested
 if [ "${MANAGE_MINIKUBE}" == "true" ]; then
   echo "Starting minikube instances"
@@ -221,44 +192,9 @@ fi
 # Setup the certificates
 source ${SCRIPT_DIR}/setup-ca.sh
 
-#echo "==== INSTALL ISTIO ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-#switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-#install_istio --patch-file "${MC_MESH_YAML}"
-
 echo "==== INSTALL ISTIO ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
 switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
 install_istio --patch-file "${MC_MESH_YAML}"
-
-#echo "==== DEPLOY ISTIO INGRESS GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-#switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-#kubectl apply -n istio-system -f "${SCRIPT_DIR}/../istio-gateway.yaml"
-#
-#if [ "${CROSSNETWORK_GATEWAY_REQUIRED}" == "true" ]; then
-#  echo "==== CREATE CROSSNETWORK GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-#  switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-#  create_crossnetwork_gateway "${CLUSTER1_NAME}" "${NETWORK1_ID}"
-#
-#  echo "==== CREATE CROSSNETWORK GATEWAY ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
-#  switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
-#  create_crossnetwork_gateway "${CLUSTER2_NAME}" "${NETWORK2_ID}"
-
-#  echo "==== SETTING UP THE MESH NETWORK CONFIGURATION MANUALLY"
-#  source ${SCRIPT_DIR}/config-mesh-networks.sh
-#else
-#  echo "Crossnetwork gateway is not required - will not create one"
-#fi
-
-#echo "==== ENABLE ENDPOINT DISCOVERY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-#switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-#create_remote_secret "${CLUSTER1_NAME}"
-#switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
-#printf "%s" "${REMOTE_SECRET}" | ${CLIENT_EXE} apply -f -
-
-#echo "==== ENABLE ENDPOINT DISCOVERY ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
-#switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
-#create_remote_secret "${CLUSTER2_NAME}"
-#switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-#printf "%s" "${REMOTE_SECRET}" | ${CLIENT_EXE} apply -f -
 
 # Expose Prometheus to the outside world
 ${CLIENT_EXE} patch svc prometheus -n ${ISTIO_NAMESPACE} --context ${CLUSTER2_CONTEXT} -p "{\"spec\": {\"type\": \"LoadBalancer\"}}"
