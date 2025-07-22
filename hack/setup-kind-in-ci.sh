@@ -222,7 +222,7 @@ setup_kind_singlecluster() {
         local image_tag_arg=${ISTIO_TAG:+--set ".spec.values.pilot.tag=\"${ISTIO_TAG}\""}
         local image_hub_arg=${ISTIO_HUB:+--set ".spec.values.pilot.hub=\"${ISTIO_HUB}\""}
         local version_arg=${ISTIO_VERSION:+--set ".spec.version=\"v${ISTIO_VERSION}\""}
-        "${ISTIO_INSTALL_SCRIPT}" ${image_tag_arg} ${image_hub_arg} ${version_arg} --profile ambient
+        "${ISTIO_INSTALL_SCRIPT}" ${image_tag_arg} ${image_hub_arg} ${version_arg} --config-profile ambient
       else
         # -net is giving issues trying to access the services inside the cluster with HTTP code 56
         # At least with Ambient 1.21
