@@ -722,6 +722,7 @@ type Config struct {
 	KubernetesConfig         KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
 	LoginToken               LoginToken                          `yaml:"login_token,omitempty"`
 	Server                   Server                              `yaml:",omitempty"`
+	RunConfig                *OfflineManifest                    `yaml:"runConfig,omitempty"`
 	RunMode                  RunMode                             `yaml:"runMode,omitempty"`
 }
 

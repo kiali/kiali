@@ -550,7 +550,7 @@ elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
     # Opting here to use the ossm-must-gather image directly so as not to make the test suite depend on oc.
     docker run --network host --volume "$HOME/.kube/config:/root/.kube/config:ro" --volume "$MUST_GATHER_DIR:/must-gather" --rm quay.io/maistra/istio-must-gather:3.0
 
-    "${GOPATH}/bin/kiali" gather --cluster-name-overrides kind-ci=cluster-default --output-dir "${MUST_GATHER_DIR}"
+    "${GOPATH}/bin/kiali" gather --cluster-name-overrides kind-ci=cluster-default --output-dir "${MUST_GATHER_DIR}" --port-forward-to-prom
 
     # No longer need the kind cluster after we've gathered the data.
     kind delete clusters -A

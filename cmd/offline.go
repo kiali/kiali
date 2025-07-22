@@ -9,6 +9,8 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,6 +27,28 @@ import (
 	"github.com/kiali/kiali/server"
 	"github.com/kiali/kiali/tracing"
 )
+
+// result of calling time.Time.String()
+const timeStringLayout = "2006-01-02 15:04:05.999999999 -0700 MST"
+
+func readTimestampFile(offlineDataPath string) (string, error) {
+	timestampPath := filepath.Join(offlineDataPath, "timestamp")
+	b, err := os.ReadFile(timestampPath)
+	if err != nil {
+		return "", fmt.Errorf("could not read timestamp file %s: %v", timestampPath, err)
+	}
+	timestamp := string(b)
+
+	// Strip off the monotonic clock reading.
+	timestamp = strings.Split(timestamp, " m=")[0]
+
+	ts, err := time.Parse(timeStringLayout, timestamp)
+	if err != nil {
+		return "", fmt.Errorf("could not parse timestamp %s: %v", timestamp, err)
+	}
+
+	return ts.Format(time.RFC3339), nil
+}
 
 // readOfflineManifest reads the manifest file and returns the cluster name
 func readOfflineManifest(offlineDataPath string) config.OfflineManifest {
@@ -43,6 +67,18 @@ func readOfflineManifest(offlineDataPath string) config.OfflineManifest {
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		log.Debugf("Could not unmarshal manifest file %s: %v, using default cluster name", manifestPath, err)
 		return manifest
+	}
+
+	// If the timestamp is not set, look for a file called "timestamp" in the data directory.
+	// Assume it's just a time.Time.String() result.
+	if manifest.Timestamp == "" {
+		timestamp, err := readTimestampFile(offlineDataPath)
+		if err != nil {
+			log.Debugf("Could not read timestamp from file: %v", err)
+		} else {
+			log.Debugf("Using timestamp from file: %s", timestamp)
+			manifest.Timestamp = timestamp
+		}
 	}
 
 	if manifest.Cluster == "" {
@@ -75,6 +111,7 @@ This mode allows you to analyze pre-collected data without requiring a live clus
 
 			// Override settings for offline mode
 			conf.RunMode = config.RunModeOffline
+			conf.RunConfig = &manifest
 			conf.Auth.Strategy = config.AuthStrategyAnonymous
 			conf.Server.Observability.Metrics.Enabled = false
 			conf.KubernetesConfig.ClusterName = manifest.Cluster

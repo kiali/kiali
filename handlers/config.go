@@ -62,6 +62,7 @@ type PublicConfig struct {
 	KialiFeatureFlags   config.KialiFeatureFlags      `json:"kialiFeatureFlags,omitempty"`
 	LogLevel            string                        `json:"logLevel,omitempty"`
 	Prometheus          PrometheusConfig              `json:"prometheus,omitempty"`
+	RunConfig           *config.OfflineManifest       `json:"runConfig,omitempty"`
 	RunMode             config.RunMode                `json:"runMode,omitempty"`
 }
 
@@ -107,6 +108,10 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 				StorageTsdbRetention: promConfig.StorageTsdbRetention,
 			},
 			RunMode: conf.RunMode,
+		}
+
+		if conf.RunMode == config.RunModeOffline {
+			publicConfig.RunConfig = conf.RunConfig
 		}
 
 		userClients, err := getUserClients(r, clientFactory)

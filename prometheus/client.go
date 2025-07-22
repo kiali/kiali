@@ -196,7 +196,7 @@ func NewOfflineClient(dataDir string, buildInfo *config.OfflineManifest) *Offlin
 	return &OfflineClient{
 		api:       queryFileReader,
 		dataDir:   dataDir,
-		buildInfo: &buildInfo.PrometheusBuildInfo,
+		buildInfo: buildInfo.PrometheusBuildInfo,
 	}
 }
 

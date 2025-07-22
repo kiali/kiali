@@ -51,18 +51,23 @@ func mustParseDuration(s string) time.Duration {
 // writeOfflineManifest writes the offline manifest file to the specified directory
 func writeOfflineManifest(outputDir string, conf *config.Config, buildInfo *prom_v1.BuildinfoResult) error {
 	manifestPath := filepath.Join(outputDir, "offline-manifest.json")
+
 	manifest := config.OfflineManifest{
 		Cluster:             conf.KubernetesConfig.ClusterName,
-		PrometheusBuildInfo: *buildInfo,
+		PrometheusBuildInfo: buildInfo,
+		Timestamp:           time.Now().Format(time.RFC3339),
 	}
+
 	manifestData, err := json.Marshal(manifest)
 	if err != nil {
 		return fmt.Errorf("failed to marshal manifest: %v", err)
 	}
+
 	if err := os.WriteFile(manifestPath, manifestData, 0o644); err != nil {
 		return fmt.Errorf("failed to write manifest file: %v", err)
 	}
 	log.Infof("Written manifest file to: %s", manifestPath)
+
 	return nil
 }
 
@@ -77,7 +82,6 @@ func newGatherCmd(conf *config.Config) *cobra.Command {
 		homeClusterContext    string
 		kubeConfig            = kubernetes.KubeConfigDir()
 		remoteClusterContexts []string
-		openBrowser           = true
 		portForwardToPromFlag bool
 		gatherOutputDir       = wd
 		clusterNameOverrides  []string
@@ -234,7 +238,6 @@ func newGatherCmd(conf *config.Config) *cobra.Command {
 	cmd.Flags().StringVar(&kubeConfig, "kubeconfig", kubeConfig, "Path to the kubeconfig file for Kiali to use.")
 	cmd.Flags().StringSliceVar(&remoteClusterContexts, "remote-cluster-contexts", remoteClusterContexts,
 		"Comma separated list of remote cluster contexts.")
-	cmd.Flags().BoolVar(&openBrowser, "open-browser", openBrowser, "If true, will open the default browser after startup.")
 	cmd.Flags().BoolVar(&portForwardToPromFlag, "port-forward-to-prom", portForwardToPromFlag,
 		"If true, will port-forward to the Prometheus pod in the home cluster. Disable this if you want to use an external Prometheus URL.")
 	cmd.Flags().StringVar(&gatherOutputDir, "output-dir", gatherOutputDir, "Directory where gather mode output files will be written.")
