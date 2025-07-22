@@ -1,4 +1,3 @@
-import * as React from 'react';
 import * as API from '../Api';
 import { mount, ReactWrapper } from 'enzyme';
 import { Provider } from 'react-redux';
@@ -25,7 +24,7 @@ export class MounterMocker {
   // About nestData: set it accordingly to the object returned by API promise:
   // - if it's the Api response directly, keep default (true) as content is encapsulated in 'data' field
   // - if it's a transformed object extracted from Api response, set to false.
-  addMock = (func: keyof typeof API, obj: any, nestData = true): MounterMocker => {
+  addMock = (func: any, obj: any, nestData = true): MounterMocker => {
     this.promises.push(
       new Promise((resolve, reject) => {
         jest.spyOn(API, func).mockImplementation(() => {
