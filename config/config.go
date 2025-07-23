@@ -336,7 +336,6 @@ type IstioConfig struct {
 	IstioAPIEnabled                   bool              `yaml:"istio_api_enabled"`
 	IstioIdentityDomain               string            `yaml:"istio_identity_domain,omitempty"`
 	IstioInjectionAnnotation          string            `yaml:"istio_injection_annotation,omitempty"`
-	IstioNamespace                    string            `yaml:"istio_namespace,omitempty"`
 	IstioSidecarInjectorConfigMapName string            `yaml:"istio_sidecar_injector_config_map_name,omitempty"`
 	IstioSidecarAnnotation            string            `yaml:"istio_sidecar_annotation,omitempty"`
 	IstiodDeploymentName              string            `yaml:"istiod_deployment_name,omitempty"`

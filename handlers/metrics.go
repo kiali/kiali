@@ -201,7 +201,7 @@ func ControlPlaneMetrics(
 		conf := config.Get()
 		cluster := clusterNameFromQuery(conf, r.URL.Query())
 
-		if conf.ExternalServices.Istio.IstioNamespace != "" && conf.ExternalServices.Istio.IstioNamespace != namespace {
+		if !discovery.IsControlPlane(cluster, namespace) {
 			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
 			return
 		}
@@ -258,7 +258,7 @@ func ResourceUsageMetrics(conf *config.Config, cache cache.KialiCache, discovery
 		conf := config.Get()
 		cluster := clusterNameFromQuery(conf, r.URL.Query())
 
-		if conf.ExternalServices.Istio.IstioNamespace != "" && conf.ExternalServices.Istio.IstioNamespace != namespace {
+		if !discovery.IsControlPlane(cluster, namespace) {
 			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
 			return
 		}
