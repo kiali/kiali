@@ -167,7 +167,6 @@ spec:
   namespace: istio-system
   updateStrategy:
     type: InPlace
-$( [ "$CONFIG_PROFILE" = "ambient" ] && echo "  profile: ambient" )
   values:
     meshConfig:
       enableTracing: true
@@ -179,8 +178,6 @@ $( [ "$CONFIG_PROFILE" = "ambient" ] && echo "  profile: ambient" )
     global:
       meshID: mesh-default
       network: network-default
-$( [ "$CONFIG_PROFILE" != "ambient" ] && echo "      multiCluster:" )
-$( [ "$CONFIG_PROFILE" != "ambient" ] && echo "        clusterName: cluster-default" )
       proxy:
         resources:
           requests:
@@ -192,13 +189,23 @@ $( [ "$CONFIG_PROFILE" != "ambient" ] && echo "        clusterName: cluster-defa
             cpu: 1m
             memory: 1Mi
     pilot:
-$( [ "$CONFIG_PROFILE" = "ambient" ] && echo "      trustedZtunnelNamespace: ztunnel" )
       resources:
         requests:
           cpu: 1m
           memory: 1Mi
 EOF
 )
+
+if [ "${CONFIG_PROFILE}" == "ambient" ]; then
+  ISTIO_YAML=$(echo "$ISTIO_YAML" | yq eval '
+    .spec.profile = "ambient" |
+    .spec.values.pilot.trustedZtunnelNamespace = "ztunnel"
+  ' -)
+else
+  ISTIO_YAML=$(echo "$ISTIO_YAML" | yq eval '
+    .spec.values.global.multiCluster.clusterName = "cluster-default"
+  ' -)
+fi
 
 if [ -n "${PATCH_FILE}" ]; then
   base_yaml=$(mktemp)
