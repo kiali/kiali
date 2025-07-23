@@ -296,10 +296,6 @@ func NewDiscovery(clients map[string]kubernetes.ClientInterface, cache cache.Kia
 // IsControlPlane returns true if the cluster-namespace is an istio control plane. If cluster == "" it
 // is ignored, and only the namespace is considered. Otherwise false.
 func (in *Discovery) IsControlPlane(cluster, namespace string) bool {
-	if in.conf.ExternalServices.Istio.IstioNamespace != "" {
-		return in.conf.ExternalServices.Istio.IstioNamespace == namespace
-	}
-
 	if mesh, ok := in.kialiCache.GetMesh(); ok {
 		for _, cp := range mesh.ControlPlanes {
 			if (cluster == "" || cluster == cp.Cluster.Name) && namespace == cp.IstiodNamespace {
@@ -307,7 +303,7 @@ func (in *Discovery) IsControlPlane(cluster, namespace string) bool {
 			}
 		}
 	} else if cluster == in.conf.KubernetesConfig.ClusterName {
-		log.Warning("IsControlPlane(): Mesh not found in hime cluster cache, returning false")
+		log.Warning("IsControlPlane(): Mesh not found in home cluster cache, returning false")
 	}
 	return false
 }

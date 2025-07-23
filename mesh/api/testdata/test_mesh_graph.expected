@@ -276,7 +276,6 @@
             "IstioAPIEnabled": true,
             "IstioIdentityDomain": "svc.cluster.local",
             "IstioInjectionAnnotation": "sidecar.istio.io/inject",
-            "IstioNamespace": "",
             "IstioSidecarInjectorConfigMapName": "",
             "IstioSidecarAnnotation": "sidecar.istio.io/status",
             "IstiodDeploymentName": "",

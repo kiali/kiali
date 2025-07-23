@@ -288,7 +288,7 @@ func ZtunnelDashboard(
 			return
 		}
 
-		if conf.ExternalServices.Istio.IstioNamespace != "" && conf.ExternalServices.Istio.IstioNamespace != namespace {
+		if !discovery.IsControlPlane(cluster, namespace) {
 			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
 			return
 		}
