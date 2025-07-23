@@ -36,6 +36,7 @@ for req in "${requirements[@]}"; do
 done
 
 ADDONS="prometheus grafana jaeger"
+CONFIG_PROFILE=""
 CUSTOM_INSTALL_SETTINGS=""
 PATCH_FILE=""
 WAIT=true
@@ -46,6 +47,10 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -a|--addons)
       ADDONS="$2"
+      shift;shift
+      ;;
+    -cp|--config-profile)
+      CONFIG_PROFILE="$2"
       shift;shift
       ;;
     -pf|--patch-file)
@@ -72,6 +77,8 @@ Valid command line arguments:
        Make sure this value is space-separated. Valid addon names can be found in your Istio
        distribution directory samples/addons and tempo. tempo and jaeger are not allowed at once.
        Default: prometheus grafana jaeger
+  -cp|--config-profile <name>:
+       istio config profile. Just default and ambient are valid values.
   -pf|--patch-file <name=value>:
        filepath to a yaml file of an Istio resource that will overlay the default Istio resource.
        --patch-file /path/to/patch-file.yaml
@@ -121,6 +128,38 @@ if is_in_array "tempo" "tempo" "${ADDONS}"; then
   SERVICE=otel-collector.istio-system.svc.cluster.local
 fi
 
+if [ "${CONFIG_PROFILE}" == "ambient" ]; then
+cniYAML=$(
+cat <<EOF
+apiVersion: sailoperator.io/v1
+kind: IstioCNI
+metadata:
+  name: default
+spec:
+  values:
+    cni:
+      ambient:
+        dnsCapture: true
+  profile: ambient
+  namespace: istio-cni
+EOF
+)
+
+ztunnelYAML=$(
+cat <<EOF
+apiVersion: sailoperator.io/v1alpha1
+kind: ZTunnel
+metadata:
+  name: default
+spec:
+  profile: ambient
+  namespace: ztunnel
+  values: {}
+EOF
+)
+
+fi
+
 ISTIO_YAML=$(
 cat <<EOF
 apiVersion: sailoperator.io/v1
@@ -144,8 +183,6 @@ spec:
     global:
       meshID: mesh-default
       network: network-default
-      multiCluster:
-        clusterName: cluster-default
       proxy:
         resources:
           requests:
@@ -163,6 +200,17 @@ spec:
           memory: 1Mi
 EOF
 )
+
+if [ "${CONFIG_PROFILE}" == "ambient" ]; then
+  ISTIO_YAML=$(echo "$ISTIO_YAML" | yq eval '
+    .spec.profile = "ambient" |
+    .spec.values.pilot.trustedZtunnelNamespace = "ztunnel"
+  ' -)
+else
+  ISTIO_YAML=$(echo "$ISTIO_YAML" | yq eval '
+    .spec.values.global.multiCluster.clusterName = "cluster-default"
+  ' -)
+fi
 
 if [ -n "${PATCH_FILE}" ]; then
   base_yaml=$(mktemp)
@@ -182,6 +230,16 @@ kubectl get ns "${ISTIO_NAMESPACE}" || kubectl create ns "${ISTIO_NAMESPACE}"
 kubectl apply -f - <<<"$ISTIO_YAML"
 if [ "${WAIT}" == "true" ]; then
   kubectl wait --for=condition=Ready istios -l kiali.io/testing --timeout=300s
+fi
+
+if [ "${CONFIG_PROFILE}" == "ambient" ]; then
+  echo "Installing CNI for Ambient"
+  kubectl get ns "istio-cni" || kubectl create ns "istio-cni"
+  kubectl apply -f - <<<"$cniYAML"
+
+  echo "Create ztunnel namespace"
+  kubectl get ns "ztunnel" || kubectl create ns "ztunnel"
+  kubectl apply -f - <<<"$ztunnelYAML"
 fi
 
 # Install addons

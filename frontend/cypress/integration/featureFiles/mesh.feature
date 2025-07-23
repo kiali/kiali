@@ -73,7 +73,7 @@ Feature: Kiali Mesh page
 
   @waypoint-tracing
   Scenario: Test ztunnel
-    When user selects mesh node with label "ztunnel"
+    When user selects mesh node with label "ztunnel" and nodeType "infra"
     Then user sees "ztunnel" node side panel
 
   @skip-ossmc

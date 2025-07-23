@@ -218,9 +218,16 @@ setup_kind_singlecluster() {
 
   if [ -n "${AMBIENT}" ]; then
       infomsg "Installing Istio with Ambient profile"
-      # -net is giving issues trying to access the services inside the cluster with HTTP code 56
-      # At least with Ambient 1.21
-      "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -gae true ${hub_arg:-} -cp ambient
+      if [ "${SAIL}" == "true" ]; then
+        local image_tag_arg=${ISTIO_TAG:+--set ".spec.values.pilot.tag=\"${ISTIO_TAG}\""}
+        local image_hub_arg=${ISTIO_HUB:+--set ".spec.values.pilot.hub=\"${ISTIO_HUB}\""}
+        local version_arg=${ISTIO_VERSION:+--set ".spec.version=\"v${ISTIO_VERSION}\""}
+        "${ISTIO_INSTALL_SCRIPT}" ${image_tag_arg} ${image_hub_arg} ${version_arg} --config-profile ambient
+      else
+        # -net is giving issues trying to access the services inside the cluster with HTTP code 56
+        # At least with Ambient 1.21
+        "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -gae true ${hub_arg:-} -cp ambient
+      fi
   elif [ "${SAIL}" == "true" ]; then
     install_istio
   else
