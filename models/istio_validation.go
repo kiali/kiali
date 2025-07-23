@@ -348,6 +348,16 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Subset not found",
 		Severity: WarningSeverity,
 	},
+	"workload.ambient.sidecarandannotation": {
+		Code:     "KIA1311",
+		Message:  "This workload has both sidecar and Ambient annotation",
+		Severity: ErrorSeverity,
+	},
+	"workload.ambient.waypointandnotambient": {
+		Code:     "KIA1312",
+		Message:  "This workload has waypoint annotations but is not in Ambient",
+		Severity: ErrorSeverity,
+	},
 	"workload.authorizationpolicy.needstobecovered": {
 		Code:     "KIA1301",
 		Message:  "This workload is not covered by any authorization policy",
