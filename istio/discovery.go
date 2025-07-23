@@ -303,7 +303,7 @@ func (in *Discovery) IsControlPlane(cluster, namespace string) bool {
 			}
 		}
 	} else if cluster == in.conf.KubernetesConfig.ClusterName {
-		log.Warning("IsControlPlane(): Mesh not found in home cluster cache, returning false")
+		log.Warningf("IsControlPlane(%s,%s): Mesh not found in home cluster cache, returning false", cluster, namespace)
 	}
 	return false
 }
