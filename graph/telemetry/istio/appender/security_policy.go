@@ -57,7 +57,7 @@ func (a SecurityPolicyAppender) AppendGraph(ctx context.Context, trafficMap grap
 	a.appendGraph(ctx, trafficMap, namespaceInfo.Namespace, globalInfo.PromClient, globalInfo.Conf)
 }
 
-func (a SecurityPolicyAppender) appendGraph(ctx context.Context, trafficMap graph.TrafficMap, namespace string, client *prometheus.Client, conf *config.Config) {
+func (a SecurityPolicyAppender) appendGraph(ctx context.Context, trafficMap graph.TrafficMap, namespace string, client prometheus.ClientInterface, conf *config.Config) {
 	zl := log.FromContext(ctx)
 
 	zl.Trace().Msgf("Resolving security policy for namespace [%v], rates [%+v]", namespace, a.Rates)

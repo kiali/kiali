@@ -1,4 +1,5 @@
 {
+  "proxy": "http://localhost:20001",
   "name": "@kiali/kiali-ui",
   "version": "2.14.0",
   "description": "React UI for [Kiali](https://github.com/kiali/kiali).",
@@ -52,6 +53,7 @@
     "cypress:run:junit": "cypress run --reporter cypress-multi-reporters --reporter-options configFile=reporter-config.json -e TAGS=\"not @crd-validation and not @multi-cluster and not @ambient and not @waypoint and (not @waypoint-tracing or @tracing)\" && cypress run --reporter cypress-multi-reporters --reporter-options configFile=reporter-config.json -e TAGS=\"@crd-validation\"",
     "cypress:run:multi-cluster": "cypress run -e TAGS=\"@multi-cluster and not @multi-primary\"",
     "cypress:run:multi-primary": "cypress run -e TAGS=\"@multi-cluster and @multi-primary\"",
+    "cypress:run:offline": "cypress run -e TAGS=\"@offline and @offline-only and not @multi-cluster and not @multi-primary\"",
     "cypress:run:perf": "cypress run --config-file cypress-perf.config.ts",
     "cypress:run:selected": "cypress run -e TAGS=\"@selected\"",
     "cypress:run:smoke": "cypress run -e TAGS=\"@smoke\"",

@@ -2,9 +2,12 @@ package prometheus
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -23,8 +26,271 @@ import (
 
 var invalidLabelCharRE = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 
+// QueryRecorder embeds prom_v1.API and records all Query calls to a file
+type QueryRecorder struct {
+	prom_v1.API
+	filePath string
+	mutex    sync.Mutex
+}
+
+// QueryLogEntry represents the structure of logged query data
+type QueryLogEntry struct {
+	Query     string          `json:"query"`
+	Timestamp string          `json:"timestamp"`
+	Result    json.RawMessage `json:"result"`
+	Warnings  []string        `json:"warnings"`
+}
+
+// NewQueryRecorder creates a new QueryRecorder that wraps the provided API
+func NewQueryRecorder(api prom_v1.API, filePath string) *QueryRecorder {
+	return &QueryRecorder{
+		API:      api,
+		filePath: filePath,
+	}
+}
+
+// Query implements the prom_v1.API Query method and logs the results
+func (qr *QueryRecorder) Query(ctx context.Context, query string, ts time.Time, opts ...prom_v1.Option) (model.Value, prom_v1.Warnings, error) {
+	// Call the underlying API Query method
+	result, warnings, err := qr.API.Query(ctx, query, ts, opts...)
+
+	// Only write to file if there's no error
+	if err != nil {
+		log.Errorf("Prometheus query error, will not write to file: %v, query: %s", err, query)
+	} else {
+		// Marshal result to JSON
+		resultJSON, marshalErr := json.Marshal(result)
+		if marshalErr != nil {
+			log.Errorf("Failed to marshal prometheus result: %v", marshalErr)
+		} else {
+			// Create log entry for successful queries only
+			entry := QueryLogEntry{
+				Query:     query,
+				Timestamp: ts.Format(time.RFC3339),
+				Result:    resultJSON,
+				Warnings:  warnings,
+			}
+
+			// Write to file
+			qr.writeToFile(entry)
+		}
+	}
+
+	return result, warnings, err
+}
+
+// writeToFile safely writes the query log entry to the file
+func (qr *QueryRecorder) writeToFile(entry QueryLogEntry) {
+	qr.mutex.Lock()
+	defer qr.mutex.Unlock()
+
+	// Open file for appending (create if it doesn't exist)
+	file, err := os.OpenFile(qr.filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+	if err != nil {
+		// Log error but don't fail the query
+		log.Errorf("Failed to open query log file %s: %v", qr.filePath, err)
+		return
+	}
+	defer file.Close()
+
+	// Marshal to JSON and write
+	jsonData, err := json.Marshal(entry)
+	if err != nil {
+		log.Errorf("Failed to marshal query log entry: %v", err)
+		return
+	}
+
+	// Write JSON line to file
+	if _, err := file.Write(append(jsonData, '\n')); err != nil {
+		log.Errorf("Failed to write to query log file: %v", err)
+	}
+}
+
+// QueryFileReader embeds prom_v1.API and reads queries from a log file
+type QueryFileReader struct {
+	prom_v1.API
+	filePath string
+	mutex    sync.RWMutex
+}
+
+// NewQueryFileReader creates a new QueryFileReader that reads from the provided file
+func NewQueryFileReader(api prom_v1.API, filePath string) *QueryFileReader {
+	return &QueryFileReader{
+		API:      api,
+		filePath: filePath,
+	}
+}
+
+// Query implements the prom_v1.API Query method by reading from the log file
+func (qfr *QueryFileReader) Query(_ context.Context, query string, _ time.Time, _ ...prom_v1.Option) (model.Value, prom_v1.Warnings, error) {
+	// Try to find the query result in the log file
+	result, warnings, _, found := qfr.readFromFile(query)
+	if found {
+		return result, warnings, nil
+	}
+
+	// If not found, return empty values
+	return result, warnings, nil
+}
+
+// readFromFile reads the log file and searches for a matching query and timestamp
+func (qfr *QueryFileReader) readFromFile(query string) (model.Value, prom_v1.Warnings, error, bool) {
+	qfr.mutex.RLock()
+	defer qfr.mutex.RUnlock()
+
+	// Open file for reading
+	file, err := os.Open(qfr.filePath)
+	if err != nil {
+		// If file doesn't exist or can't be opened, return not found
+		return model.Vector{}, prom_v1.Warnings{}, nil, false
+	}
+	defer file.Close()
+
+	// Create a scanner to read line by line
+	scanner := json.NewDecoder(file)
+
+	// Read each line and try to find a match
+	for scanner.More() {
+		var entry QueryLogEntry
+		if err := scanner.Decode(&entry); err != nil {
+			log.Errorf("unable to decode entry: %s", err)
+			continue
+		}
+
+		if entry.Query == query {
+			// Unmarshal the raw JSON back to model.Value
+			// Try different model.Value types until one works
+			var result model.Value
+
+			// Try model.Vector first (most common)
+			var vector model.Vector
+			if err := json.Unmarshal(entry.Result, &vector); err == nil {
+				result = vector
+			} else {
+				log.Errorf("Unsupported type %T: %s", entry.Result, err)
+			}
+
+			return result, entry.Warnings, nil, true
+		}
+	}
+
+	// No match found
+	return model.Vector{}, prom_v1.Warnings{}, nil, false
+}
+
+// OfflineClient implements ClientInterface by reading from recorded method call files
+type OfflineClient struct {
+	api       prom_v1.API
+	dataDir   string
+	buildInfo *prom_v1.BuildinfoResult
+}
+
+func (oc *OfflineClient) API() prom_v1.API {
+	return oc.api
+}
+
+// NewOfflineClient creates a new OfflineClient that reads from recorded method files
+func NewOfflineClient(dataDir string, buildInfo *config.OfflineManifest) *OfflineClient {
+	// Create QueryFileReader for offline prometheus queries
+	queryFileReader := NewQueryFileReader(nil, filepath.Join(dataDir, "prom-graph-gather.log"))
+	return &OfflineClient{
+		api:       queryFileReader,
+		dataDir:   dataDir,
+		buildInfo: buildInfo.PrometheusBuildInfo,
+	}
+}
+
+// GetAllRequestRates implements ClientInterface
+func (oc *OfflineClient) GetAllRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+	return model.Vector{}, nil
+}
+
+// GetNamespaceServicesRequestRates implements ClientInterface
+func (oc *OfflineClient) GetNamespaceServicesRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+	return model.Vector{}, nil
+}
+
+// GetServiceRequestRates implements ClientInterface
+func (oc *OfflineClient) GetServiceRequestRates(namespace, cluster, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+	return model.Vector{}, nil
+}
+
+// GetAppRequestRates implements ClientInterface
+func (oc *OfflineClient) GetAppRequestRates(namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
+	return model.Vector{}, model.Vector{}, nil
+}
+
+// GetWorkloadRequestRates implements ClientInterface
+func (oc *OfflineClient) GetWorkloadRequestRates(namespace, cluster, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
+	return model.Vector{}, model.Vector{}, nil
+}
+
+// FetchDelta implements ClientInterface
+func (oc *OfflineClient) FetchDelta(metricName, labels, grouping string, queryTime time.Time, duration time.Duration) Metric {
+	// Return empty metric - this method is not recorded by ClientRecorder
+	return Metric{}
+}
+
+// FetchHistogramRange implements ClientInterface
+func (oc *OfflineClient) FetchHistogramRange(metricName, labels, grouping string, q *RangeQuery) Histogram {
+	// Return empty histogram - this method is not recorded by ClientRecorder
+	return Histogram{}
+}
+
+// FetchHistogramValues implements ClientInterface
+func (oc *OfflineClient) FetchHistogramValues(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error) {
+	// Return empty map - this method is not recorded by ClientRecorder
+	return map[string]model.Vector{}, nil
+}
+
+// FetchRange implements ClientInterface
+func (oc *OfflineClient) FetchRange(metricName, labels, grouping, aggregator string, q *RangeQuery) Metric {
+	// Return empty metric - this method is not recorded by ClientRecorder
+	return Metric{}
+}
+
+// FetchRateRange implements ClientInterface
+func (oc *OfflineClient) FetchRateRange(metricName string, labels []string, grouping string, q *RangeQuery) Metric {
+	// Return empty metric - this method is not recorded by ClientRecorder
+	return Metric{}
+}
+
+// GetConfiguration implements ClientInterface
+func (oc *OfflineClient) GetConfiguration() (prom_v1.ConfigResult, error) {
+	// Return empty config - this method is not recorded by ClientRecorder
+	return prom_v1.ConfigResult{}, nil
+}
+
+// GetExistingMetricNames implements ClientInterface
+func (oc *OfflineClient) GetExistingMetricNames(metricNames []string) ([]string, error) {
+	// Return empty slice - this method is not recorded by ClientRecorder
+	return []string{}, nil
+}
+
+// GetMetricsForLabels implements ClientInterface
+func (oc *OfflineClient) GetMetricsForLabels(metricNames []string, labels string) ([]string, error) {
+	// Return empty slice - this method is not recorded by ClientRecorder
+	return []string{}, nil
+}
+
+// GetBuildInfo implements ClientInterface
+func (oc *OfflineClient) GetBuildInfo(ctx context.Context) (*prom_v1.BuildinfoResult, error) {
+	if oc.buildInfo == nil {
+		return nil, fmt.Errorf("build info not available in offline mode")
+	}
+
+	return oc.buildInfo, nil
+}
+
+// GetRuntimeinfo implements ClientInterface
+func (oc *OfflineClient) GetRuntimeinfo() (prom_v1.RuntimeinfoResult, error) {
+	// Return empty runtime info - this method is not recorded by ClientRecorder
+	return prom_v1.RuntimeinfoResult{}, nil
+}
+
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
+	API() prom_v1.API
 	FetchDelta(metricName, labels, grouping string, queryTime time.Time, duration time.Duration) Metric
 	FetchHistogramRange(metricName, labels, grouping string, q *RangeQuery) Histogram
 	FetchHistogramValues(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error)
@@ -32,6 +298,7 @@ type ClientInterface interface {
 	FetchRateRange(metricName string, labels []string, grouping string, q *RangeQuery) Metric
 	GetAllRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetAppRequestRates(namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
+	GetBuildInfo(ctx context.Context) (*prom_v1.BuildinfoResult, error)
 	GetConfiguration() (prom_v1.ConfigResult, error)
 	GetExistingMetricNames(metricNames []string) ([]string, error)
 	GetMetricsForLabels(metricNames []string, labels string) ([]string, error)
@@ -44,6 +311,7 @@ type ClientInterface interface {
 // Client for Prometheus API.
 // It hides the way we query Prometheus offering a layer with a high level defined API.
 type Client struct {
+	conf *config.Config
 	ClientInterface
 	p8s api.Client
 	api prom_v1.API
@@ -70,7 +338,7 @@ func NewClient() (*Client, error) {
 	return NewClientForConfig(*config.Get())
 }
 
-// NewClient creates a new client to the Prometheus API.
+// NewClientForConfig creates a new client to the Prometheus API.
 // It returns an error on any problem.
 func NewClientForConfig(conf config.Config) (*Client, error) {
 	cfg := conf.ExternalServices.Prometheus
@@ -94,7 +362,7 @@ func NewClientForConfig(conf config.Config) (*Client, error) {
 		// Note: if we are using the 'bearer' authentication method then we want to use the Kiali
 		// service account token and not the user's token. This is because Kiali does filtering based
 		// on the user's token and prevents people who shouldn't have access to particular metrics.
-		token, _, err := kubernetes.GetKialiTokenForHomeCluster()
+		token, _, err := kubernetes.GetKialiTokenForHomeCluster(config.Get())
 		if err != nil {
 			zl.Error().Msgf("Could not read the Kiali Service Account token: %v", err)
 			return nil, err
@@ -123,10 +391,14 @@ func NewClientForConfig(conf config.Config) (*Client, error) {
 	if err != nil {
 		return nil, errors.NewServiceUnavailable(err.Error())
 	}
+
+	api := prom_v1.NewAPI(p8s)
+
 	client := Client{
-		p8s: p8s,
-		api: prom_v1.NewAPI(p8s),
-		ctx: ctx,
+		conf: &conf,
+		p8s:  p8s,
+		api:  api,
+		ctx:  ctx,
 	}
 	return &client, nil
 }
@@ -142,20 +414,29 @@ func (in *Client) Inject(api prom_v1.API) {
 // (e.g total rates / error rates).
 // Returns (rates, error)
 func (in *Client) GetAllRequestRates(namespace, cluster string, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+	if in.conf.RunMode == config.RunModeOffline {
+		return model.Vector{}, nil
+	}
+
 	log.FromContext(in.ctx).Trace().Msgf("GetAllRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
+
+	var result model.Vector
+	var err error
+
 	if promCache != nil {
-		if isCached, result := promCache.GetAllRequestRates(namespace, cluster, ratesInterval, queryTime); isCached {
-			return result, nil
+		if isCached, cachedResult := promCache.GetAllRequestRates(namespace, cluster, ratesInterval, queryTime); isCached {
+			result = cachedResult
 		}
 	}
-	result, err := getAllRequestRates(in.ctx, in.api, namespace, cluster, queryTime, ratesInterval)
-	if err != nil {
-		return result, err
+
+	if result == nil {
+		result, err = getAllRequestRates(in.ctx, in.api, namespace, cluster, queryTime, ratesInterval)
+		if err == nil && promCache != nil {
+			promCache.SetAllRequestRates(namespace, cluster, ratesInterval, queryTime, result)
+		}
 	}
-	if promCache != nil {
-		promCache.SetAllRequestRates(namespace, cluster, ratesInterval, queryTime, result)
-	}
-	return result, nil
+
+	return result, err
 }
 
 // GetNamespaceServicesRequestRates queries Prometheus to fetch request counter rates, over a time interval, limited to
@@ -164,20 +445,29 @@ func (in *Client) GetAllRequestRates(namespace, cluster string, ratesInterval st
 // (e.g total rates / error rates).
 // Returns (rates, error)
 func (in *Client) GetNamespaceServicesRequestRates(namespace, cluster string, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+	if in.conf.RunMode == config.RunModeOffline {
+		return model.Vector{}, nil
+	}
+
 	log.FromContext(in.ctx).Trace().Msgf("GetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
+
+	var result model.Vector
+	var err error
+
 	if promCache != nil {
-		if isCached, result := promCache.GetNamespaceServicesRequestRates(namespace, cluster, ratesInterval, queryTime); isCached {
-			return result, nil
+		if isCached, cachedResult := promCache.GetNamespaceServicesRequestRates(namespace, cluster, ratesInterval, queryTime); isCached {
+			result = cachedResult
 		}
 	}
-	result, err := getNamespaceServicesRequestRates(in.ctx, in.api, namespace, cluster, queryTime, ratesInterval)
-	if err != nil {
-		return result, err
+
+	if result == nil {
+		result, err = getNamespaceServicesRequestRates(in.ctx, in.api, namespace, cluster, queryTime, ratesInterval)
+		if err == nil && promCache != nil {
+			promCache.SetNamespaceServicesRequestRates(namespace, cluster, ratesInterval, queryTime, result)
+		}
 	}
-	if promCache != nil {
-		promCache.SetNamespaceServicesRequestRates(namespace, cluster, ratesInterval, queryTime, result)
-	}
-	return result, nil
+
+	return result, err
 }
 
 // GetServiceRequestRates queries Prometheus to fetch request counters rates over a time interval
@@ -186,20 +476,29 @@ func (in *Client) GetNamespaceServicesRequestRates(namespace, cluster string, ra
 // (e.g total rates / error rates).
 // Returns (in, error)
 func (in *Client) GetServiceRequestRates(namespace, cluster, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+	if in.conf.RunMode == config.RunModeOffline {
+		return model.Vector{}, nil
+	}
+
 	log.FromContext(in.ctx).Trace().Msgf("GetServiceRequestRates [namespace: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, service, ratesInterval, queryTime.String())
+
+	var result model.Vector
+	var err error
+
 	if promCache != nil {
-		if isCached, result := promCache.GetServiceRequestRates(namespace, cluster, service, ratesInterval, queryTime); isCached {
-			return result, nil
+		if isCached, cachedResult := promCache.GetServiceRequestRates(namespace, cluster, service, ratesInterval, queryTime); isCached {
+			result = cachedResult
 		}
 	}
-	result, err := getServiceRequestRates(in.ctx, in.api, namespace, cluster, service, queryTime, ratesInterval)
-	if err != nil {
-		return result, err
+
+	if result == nil {
+		result, err = getServiceRequestRates(in.ctx, in.api, namespace, cluster, service, queryTime, ratesInterval)
+		if err == nil && promCache != nil {
+			promCache.SetServiceRequestRates(namespace, cluster, service, ratesInterval, queryTime, result)
+		}
 	}
-	if promCache != nil {
-		promCache.SetServiceRequestRates(namespace, cluster, service, ratesInterval, queryTime, result)
-	}
-	return result, nil
+
+	return result, err
 }
 
 // GetAppRequestRates queries Prometheus to fetch request counters rates over a time interval
@@ -208,20 +507,29 @@ func (in *Client) GetServiceRequestRates(namespace, cluster, service, ratesInter
 // (e.g total rates / error rates).
 // Returns (in, out, error)
 func (in *Client) GetAppRequestRates(namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
+	if in.conf.RunMode == config.RunModeOffline {
+		return model.Vector{}, model.Vector{}, nil
+	}
+
 	log.FromContext(in.ctx).Trace().Msgf("GetAppRequestRates [namespace: %s] [cluster: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, app, ratesInterval, queryTime.String())
+
+	var inResult, outResult model.Vector
+	var err error
+
 	if promCache != nil {
-		if isCached, inResult, outResult := promCache.GetAppRequestRates(namespace, cluster, app, ratesInterval, queryTime); isCached {
-			return inResult, outResult, nil
+		if isCached, cachedIn, cachedOut := promCache.GetAppRequestRates(namespace, cluster, app, ratesInterval, queryTime); isCached {
+			inResult, outResult = cachedIn, cachedOut
 		}
 	}
-	inResult, outResult, err := getItemRequestRates(in.ctx, in.api, namespace, cluster, app, "app", queryTime, ratesInterval)
-	if err != nil {
-		return inResult, outResult, err
+
+	if inResult == nil {
+		inResult, outResult, err = getItemRequestRates(in.ctx, in.api, namespace, cluster, app, "app", queryTime, ratesInterval)
+		if err == nil && promCache != nil {
+			promCache.SetAppRequestRates(namespace, cluster, app, ratesInterval, queryTime, inResult, outResult)
+		}
 	}
-	if promCache != nil {
-		promCache.SetAppRequestRates(namespace, cluster, app, ratesInterval, queryTime, inResult, outResult)
-	}
-	return inResult, outResult, nil
+
+	return inResult, outResult, err
 }
 
 // GetWorkloadRequestRates queries Prometheus to fetch request counters rates over a time interval
@@ -230,20 +538,29 @@ func (in *Client) GetAppRequestRates(namespace, cluster, app, ratesInterval stri
 // (e.g total rates / error rates).
 // Returns (in, out, error)
 func (in *Client) GetWorkloadRequestRates(namespace, cluster, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
+	if in.conf.RunMode == config.RunModeOffline {
+		return model.Vector{}, model.Vector{}, nil
+	}
+
 	log.FromContext(in.ctx).Trace().Msgf("GetWorkloadRequestRates [namespace: %s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, workload, ratesInterval, queryTime.String())
+
+	var inResult, outResult model.Vector
+	var err error
+
 	if promCache != nil {
-		if isCached, inResult, outResult := promCache.GetWorkloadRequestRates(namespace, cluster, workload, ratesInterval, queryTime); isCached {
-			return inResult, outResult, nil
+		if isCached, cachedIn, cachedOut := promCache.GetWorkloadRequestRates(namespace, cluster, workload, ratesInterval, queryTime); isCached {
+			inResult, outResult = cachedIn, cachedOut
 		}
 	}
-	inResult, outResult, err := getItemRequestRates(in.ctx, in.api, namespace, cluster, workload, "workload", queryTime, ratesInterval)
-	if err != nil {
-		return inResult, outResult, err
+
+	if inResult == nil {
+		inResult, outResult, err = getItemRequestRates(in.ctx, in.api, namespace, cluster, workload, "workload", queryTime, ratesInterval)
+		if err == nil && promCache != nil {
+			promCache.SetWorkloadRequestRates(namespace, cluster, workload, ratesInterval, queryTime, inResult, outResult)
+		}
 	}
-	if promCache != nil {
-		promCache.SetWorkloadRequestRates(namespace, cluster, workload, ratesInterval, queryTime, inResult, outResult)
-	}
-	return inResult, outResult, nil
+
+	return inResult, outResult, err
 }
 
 // FetchDelta fetches a delta for a simple metric (gauge or counter), for a given duration
@@ -284,9 +601,12 @@ func (in *Client) API() prom_v1.API {
 	return in.api
 }
 
-// Address return the configured Prometheus service URL
-func (in *Client) Address() string {
-	return config.Get().ExternalServices.Prometheus.URL
+func (in *Client) GetBuildInfo(ctx context.Context) (*prom_v1.BuildinfoResult, error) {
+	info, err := in.api.Buildinfo(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &info, nil
 }
 
 func (in *Client) GetConfiguration() (prom_v1.ConfigResult, error) {

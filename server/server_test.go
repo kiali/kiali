@@ -26,6 +26,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/security"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/prometheus/prometheustest"
 	"github.com/kiali/kiali/util"
 	"github.com/kiali/kiali/util/filetest"
 )
@@ -123,7 +124,9 @@ func TestAnonymousMode(t *testing.T) {
 	cf := kubernetes.NewTestingClientFactory(t)
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	server, _ := NewServer(cpm, cf, cache, conf, nil, nil, nil, filetest.StaticAssetDir(t))
+	prom := prometheustest.FakeClient{}
+
+	server, _ := NewServer(cpm, cf, cache, conf, &prom, nil, nil, filetest.StaticAssetDir(t))
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -215,7 +218,8 @@ func TestSecureComm(t *testing.T) {
 	cf := kubernetes.NewTestingClientFactory(t)
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	server, _ := NewServer(cpm, cf, cache, conf, nil, nil, nil, filetest.StaticAssetDir(t))
+	prom := prometheustest.FakeClient{}
+	server, _ := NewServer(cpm, cf, cache, conf, &prom, nil, nil, filetest.StaticAssetDir(t))
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -328,7 +332,8 @@ func TestTracingConfigured(t *testing.T) {
 
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	server, _ := NewServer(cpm, cf, cache, conf, nil, nil, nil, filetest.StaticAssetDir(t))
+	prom := prometheustest.FakeClient{}
+	server, _ := NewServer(cpm, cf, cache, conf, &prom, nil, nil, filetest.StaticAssetDir(t))
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {

@@ -11,6 +11,7 @@ Feature: Kiali Service Details page
     Given user is at administrator perspective
     And user is at the details page for the "service" "bookinfo/productpage" located in the "" cluster
 
+  # TODO: offline - no tracing details yet
   @bookinfo-app
   Scenario: See details for productpage
     Then sd::user sees a list with content "Overview"
@@ -19,6 +20,7 @@ Feature: Kiali Service Details page
     Then sd::user sees a list with content "Traces"
     Then sd::user sees the service actions
 
+  # TODO: offline - no "Hostname" found but this doesn't exist in regular runs either?
   @bookinfo-app
   Scenario: See details for service
     Then sd::user sees "productpage" details information for service "v1"
@@ -50,6 +52,7 @@ Feature: Kiali Service Details page
   Scenario: See Graph data for productspage service details Inbound Metrics graphs
     Then sd::user does not see No data message in the "Request volume" graph
 
+  # TODO: offline - no tracing details yet
   @bookinfo-app
   @tracing
   @waypoint-tracing
@@ -58,6 +61,7 @@ Feature: Kiali Service Details page
     When user selects a trace
     Then user sees trace details
 
+  # TODO: offline - no tracing details yet
   @bookinfo-app
   @tracing
   @waypoint-tracing

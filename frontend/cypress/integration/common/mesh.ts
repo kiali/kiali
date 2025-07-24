@@ -135,6 +135,7 @@ Then('user sees cluster side panel', () => {
   cy.get('#target-panel-cluster').should('be.visible');
 });
 
+// TODO: No memory metrics for offline yet.
 Then('user sees control plane side panel', () => {
   cy.waitForReact();
   cy.get('#loading_kiali_spinner').should('not.exist');
@@ -187,6 +188,7 @@ Then('user sees data plane side panel', () => {
     });
 });
 
+// TODO: No jaeger and grafana in offline mode for now.
 Then('user sees expected mesh infra', () => {
   cy.waitForReact();
   cy.get('#loading_kiali_spinner').should('not.exist');

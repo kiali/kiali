@@ -138,12 +138,16 @@ func parseRawIstioVersion(rawVersion string) *models.ExternalServiceInfo {
 // GetVersion returns the latest version of the Istio control plane.
 // If there are multiple healthy istiod pods, the latest one by
 // creation timestamp is returned.
-func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.ClientInterface, kubeCache ctrlclient.Reader, revision string, namespace string) (*models.ExternalServiceInfo, error) {
+func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.ClientInterface, kubeCache ctrlclient.Reader, controlPlane models.ControlPlane) (*models.ExternalServiceInfo, error) {
+	revision := controlPlane.Revision
+	namespace := controlPlane.IstiodNamespace
+
 	istioConfig := conf.ExternalServices.Istio
 	// If kiali is running on the same cluster as the istio control plane, use the URL instead
 	// of port forwarding. For remote clusters we need to port forward to get the version since the
 	// http monitoring port (15014) is not exposed publicly.
-	if client.ClusterInfo().Name == conf.KubernetesConfig.ClusterName {
+	// TODO: Better check for this?
+	if conf.Deployment.RemoteSecretPath == "" && client.ClusterInfo().Name == conf.KubernetesConfig.ClusterName {
 		url := ""
 		// If the config has a URL for the service version, use that until the config option is removed.
 		if istioConfig.UrlServiceVersion != "" {

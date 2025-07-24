@@ -12,6 +12,7 @@ FRONTEND_AMBIENT="frontend-ambient"
 FRONTEND_PRIMARY_REMOTE="frontend-primary-remote"
 FRONTEND_MULTI_PRIMARY="frontend-multi-primary"
 FRONTEND_TEMPO="frontend-tempo"
+OFFLINE="offline"
 HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
 SETUP_ONLY="false"
@@ -63,8 +64,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ts|--test-suite)
       TEST_SUITE="${2}"
-      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" -a "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ]; then
-        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_PRIMARY_REMOTE}', or '${FRONTEND_MULTI_PRIMARY}', or '${FRONTEND_AMBIENT}' or '${FRONTEND_TEMPO}'"
+      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" -a "${TEST_SUITE}" != "${FRONTEND_TEMPO}" -a "${TEST_SUITE}" != "${OFFLINE}" ]; then
+        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_PRIMARY_REMOTE}', or '${FRONTEND_MULTI_PRIMARY}', or '${FRONTEND_AMBIENT}' or '${FRONTEND_TEMPO}' or '${OFFLINE}'"
         exit 1
       fi
       shift;shift
@@ -97,7 +98,7 @@ Valid command line arguments:
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
     Default: false
-  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_TEMPO}>
+  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_TEMPO}|${OFFLINE}>
     Which test suite to run.
     Default: ${BACKEND}
   -wv|--with-video <true|false>
@@ -514,4 +515,92 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:tracing
   detectRaceConditions
+elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
+  ensureCypressInstalled
+  
+  GOPATH=$(go env GOPATH)
+  # Check if the kiali binary exists
+  if [ -z "${GOPATH}" ]; then
+    echo "ERROR: Unable to determine GOPATH. Please ensure Go is properly installed."
+    exit 1
+  fi
+  
+  if [ ! -f "${GOPATH}/bin/kiali" ]; then
+    echo "ERROR: Kiali binary not found at ${GOPATH}/bin/kiali. Please build the kiali binary first."
+    exit 1
+  fi
+  
+  infomsg "Found kiali binary at ${GOPATH}/bin/kiali"
+
+  MUST_GATHER_DIR=""
+  
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+
+    # Install demo apps
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"
+
+    ensureKialiServerReady
+
+    # Make a temp dir for the must-gather data
+    MUST_GATHER_DIR=$(mktemp -d)
+
+    # We either need to run oc adm inspect which requires us to download `oc` or we can run the ossm-must-gather image directly.
+    # Opting here to use the ossm-must-gather image directly so as not to make the test suite depend on oc.
+    docker run --network host --volume "$HOME/.kube/config:/root/.kube/config:ro" --volume "$MUST_GATHER_DIR:/must-gather" --rm quay.io/maistra/istio-must-gather:3.0
+
+    "${GOPATH}/bin/kiali" gather --cluster-name-overrides kind-ci=cluster-default --output-dir "${MUST_GATHER_DIR}" --port-forward-to-prom
+
+    # No longer need the kind cluster after we've gathered the data.
+    kind delete clusters -A
+
+    export CYPRESS_BASE_URL="${KIALI_URL}"
+  fi
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  # Generate a random port for Kiali server that is not already in use.
+  KIALI_PORT=8000
+  while lsof -i :${KIALI_PORT} >/dev/null 2>&1; do
+    KIALI_PORT=$((KIALI_PORT + 1))
+  done
+  infomsg "Using port: ${KIALI_PORT}"
+  
+  # Create temporary config file with random port
+  TEMP_CONFIG=$(mktemp)
+  cat <<EOF > "$TEMP_CONFIG"
+server:
+  port: ${KIALI_PORT}
+EOF
+  
+  # Set up cleanup trap to kill the background process
+  cleanup_kiali() {
+    if [ -n "${KIALI_PID}" ]; then
+      infomsg "Cleaning up kiali process (PID: ${KIALI_PID})"
+      kill ${KIALI_PID} 2>/dev/null || true
+      wait ${KIALI_PID} 2>/dev/null || true
+    fi
+  }
+  trap cleanup_kiali EXIT
+
+  # Start kiali in offline mode in the background
+  infomsg "Starting kiali in offline mode with must-gather data on port ${KIALI_PORT}"
+  "${GOPATH}/bin/kiali" offline --log-level debug --data-path "${MUST_GATHER_DIR}" --config "$TEMP_CONFIG" --without-browser &
+  KIALI_PID=$!
+  
+  # Wait a moment for kiali to start up
+  sleep 5
+
+  # Set up cypress environment variables
+  export CYPRESS_BASE_URL="http://localhost:${KIALI_PORT}"
+  export CYPRESS_RUN_MODE="offline"
+  export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
+  export CYPRESS_VIDEO="${WITH_VIDEO}"
+
+  # Run cypress tests for offline mode
+  infomsg "Running cypress tests for offline mode"
+  cd "${SCRIPT_DIR}"/../frontend
+  yarn run cypress:run:offline
 fi
