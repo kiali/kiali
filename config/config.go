@@ -288,7 +288,7 @@ type GrafanaVariablesConfig struct {
 type PersesConfig struct {
 	Auth           Auth                     `yaml:"auth" json:"auth"`
 	Dashboards     []GrafanaDashboardConfig `yaml:"dashboards" json:"dashboards"`
-	Enabled        bool                     `yaml:"enabled" json:"enabled"`          // Enable or disable Grafana support in Kiali
+	Enabled        bool                     `yaml:"enabled" json:"enabled"`          // Enable or disable Perses support in Kiali
 	ExternalURL    string                   `yaml:"external_url" json:"externalURL"` // replaces the old url
 	HealthCheckUrl string                   `yaml:"health_check_url,omitempty" json:"healthCheckUrl,omitempty"`
 	InternalURL    string                   `yaml:"internal_url" json:"internalURL"` // replaces the old in_cluster_url
