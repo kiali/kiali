@@ -867,12 +867,7 @@ func (in *Discovery) getNetworkFromSidecarInejctorConfigMap(kubeCache ctrlclient
 	// Try to resolve the logical Istio's network ID of the cluster where
 	// Kiali is installed. This assumes that the mesh Control Plane is installed in the same
 	// cluster as Kiali.
-	var configMapName string
-	if in.conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName != "" {
-		configMapName = in.conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName
-	} else {
-		configMapName = sidecarInjectorConfigMapName(revision)
-	}
+	configMapName := sidecarInjectorConfigMapName(revision)
 
 	istioSidecarConfig := &corev1.ConfigMap{}
 	err := kubeCache.Get(context.Background(), ctrlclient.ObjectKey{Name: configMapName, Namespace: namespace}, istioSidecarConfig)

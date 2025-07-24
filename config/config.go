@@ -320,15 +320,14 @@ type RegistryConfig struct {
 
 // IstioConfig describes configuration used for istio links
 type IstioConfig struct {
-	ComponentStatuses                 ComponentStatuses `yaml:"component_status,omitempty" json:"componentStatuses,omitempty"`
-	GatewayAPIClasses                 []GatewayAPIClass `yaml:"gateway_api_classes,omitempty" json:"gatewayApiClasses,omitempty"`
-	GatewayAPIClassesLabelSelector    string            `yaml:"gateway_api_classes_label_selector,omitempty" json:"gatewayApiClassesLabelSelector,omitempty"`
-	IstioAPIEnabled                   bool              `yaml:"istio_api_enabled" json:"istioApiEnabled"`
-	IstioIdentityDomain               string            `yaml:"istio_identity_domain,omitempty" json:"istioIdentityDomain,omitempty"`
-	IstioInjectionAnnotation          string            `yaml:"istio_injection_annotation,omitempty" json:"istioInjectionAnnotation,omitempty"`
-	IstioSidecarInjectorConfigMapName string            `yaml:"istio_sidecar_injector_config_map_name,omitempty" json:"istioSidecarInjectorConfigMapName,omitempty"`
-	IstioSidecarAnnotation            string            `yaml:"istio_sidecar_annotation,omitempty" json:"istioSidecarAnnotation,omitempty"`
-	IstiodPodMonitoringPort           int               `yaml:"istiod_pod_monitoring_port,omitempty" json:"istiodPodMonitoringPort,omitempty"`
+	ComponentStatuses              ComponentStatuses `yaml:"component_status,omitempty" json:"componentStatuses,omitempty"`
+	GatewayAPIClasses              []GatewayAPIClass `yaml:"gateway_api_classes,omitempty" json:"gatewayApiClasses,omitempty"`
+	GatewayAPIClassesLabelSelector string            `yaml:"gateway_api_classes_label_selector,omitempty" json:"gatewayApiClassesLabelSelector,omitempty"`
+	IstioAPIEnabled                bool              `yaml:"istio_api_enabled" json:"istioApiEnabled"`
+	IstioIdentityDomain            string            `yaml:"istio_identity_domain,omitempty" json:"istioIdentityDomain,omitempty"`
+	IstioInjectionAnnotation       string            `yaml:"istio_injection_annotation,omitempty" json:"istioInjectionAnnotation,omitempty"`
+	IstioSidecarAnnotation         string            `yaml:"istio_sidecar_annotation,omitempty" json:"istioSidecarAnnotation,omitempty"`
+	IstiodPodMonitoringPort        int               `yaml:"istiod_pod_monitoring_port,omitempty" json:"istiodPodMonitoringPort,omitempty"`
 	// IstiodPollingIntervalSeconds is how often in seconds Kiali will poll istiod(s) for
 	// proxy status and registry services. Polling is not performed if IstioAPIEnabled is false.
 	IstiodPollingIntervalSeconds     int             `yaml:"istiod_polling_interval_seconds,omitempty" json:"istiodPollingIntervalSeconds,omitempty"`
@@ -776,17 +775,16 @@ func NewConfig() (c *Config) {
 					// Components config is left for custom components status check
 					Components: []ComponentStatus{},
 				},
-				IstioAPIEnabled:                   true,
-				IstioIdentityDomain:               "svc.cluster.local",
-				IstioInjectionAnnotation:          "sidecar.istio.io/inject",
-				IstioSidecarInjectorConfigMapName: "",
-				IstioSidecarAnnotation:            "sidecar.istio.io/status",
-				IstiodPodMonitoringPort:           15014,
-				IstiodPollingIntervalSeconds:      20,
-				RootNamespace:                     "istio-system",
-				ValidationChangeDetectionEnabled:  true,
-				ValidationReconcileInterval:       util.AsPtr(time.Minute),
-				GatewayAPIClasses:                 []GatewayAPIClass{},
+				IstioAPIEnabled:                  true,
+				IstioIdentityDomain:              "svc.cluster.local",
+				IstioInjectionAnnotation:         "sidecar.istio.io/inject",
+				IstioSidecarAnnotation:           "sidecar.istio.io/status",
+				IstiodPodMonitoringPort:          15014,
+				IstiodPollingIntervalSeconds:     20,
+				RootNamespace:                    "istio-system",
+				ValidationChangeDetectionEnabled: true,
+				ValidationReconcileInterval:      util.AsPtr(time.Minute),
+				GatewayAPIClasses:                []GatewayAPIClass{},
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{
