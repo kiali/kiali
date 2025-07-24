@@ -5,17 +5,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/dashboards"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/httputil"
-	"net/http"
-	"net/url"
-	"strings"
-	"sync"
-	"time"
 )
 
 // Service provides discovery and info about Perses.
