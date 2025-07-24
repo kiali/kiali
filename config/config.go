@@ -78,7 +78,9 @@ const (
 	AmbientAnnotationEnabled  = "enabled"
 	GatewayLabel              = "gateway.networking.k8s.io/gateway-name" // On any k8s GW API gateway
 	IstioAppLabel             = "app"                                    // we can assume istio components are labeled with "app"
+	IstioInjectionAnnotation  = "sidecar.istio.io/inject"                // the standard annotation for sidecar injection
 	IstioRevisionLabel        = "istio.io/rev"                           // the standard label key used to identify the istio revision.
+	IstioSidecarAnnotation    = "sidecar.istio.io/status"                // the standard annotation for sidecar status
 	IstioVersionLabel         = "version"                                // we can assume istio components are labeled with "version", if versioned
 	KubernetesAppLabel        = "app.kubernetes.io/name"
 	Waypoint                  = "waypoint"
@@ -325,8 +327,6 @@ type IstioConfig struct {
 	GatewayAPIClassesLabelSelector string            `yaml:"gateway_api_classes_label_selector,omitempty" json:"gatewayApiClassesLabelSelector,omitempty"`
 	IstioAPIEnabled                bool              `yaml:"istio_api_enabled" json:"istioApiEnabled"`
 	IstioIdentityDomain            string            `yaml:"istio_identity_domain,omitempty" json:"istioIdentityDomain,omitempty"`
-	IstioInjectionAnnotation       string            `yaml:"istio_injection_annotation,omitempty" json:"istioInjectionAnnotation,omitempty"`
-	IstioSidecarAnnotation         string            `yaml:"istio_sidecar_annotation,omitempty" json:"istioSidecarAnnotation,omitempty"`
 	IstiodPodMonitoringPort        int               `yaml:"istiod_pod_monitoring_port,omitempty" json:"istiodPodMonitoringPort,omitempty"`
 	// IstiodPollingIntervalSeconds is how often in seconds Kiali will poll istiod(s) for
 	// proxy status and registry services. Polling is not performed if IstioAPIEnabled is false.
@@ -777,8 +777,6 @@ func NewConfig() (c *Config) {
 				},
 				IstioAPIEnabled:                  true,
 				IstioIdentityDomain:              "svc.cluster.local",
-				IstioInjectionAnnotation:         "sidecar.istio.io/inject",
-				IstioSidecarAnnotation:           "sidecar.istio.io/status",
 				IstiodPodMonitoringPort:          15014,
 				IstiodPollingIntervalSeconds:     20,
 				RootNamespace:                    "istio-system",

@@ -85,7 +85,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			IstioAnnotations: IstioAnnotations{
 				AmbientAnnotation:        config.AmbientAnnotation,
 				AmbientAnnotationEnabled: config.AmbientAnnotationEnabled,
-				IstioInjectionAnnotation: conf.ExternalServices.Istio.IstioInjectionAnnotation,
+				IstioInjectionAnnotation: config.IstioInjectionAnnotation,
 			},
 			HealthConfig:        conf.HealthConfig,
 			IstioStatusEnabled:  conf.ExternalServices.Istio.ComponentStatuses.Enabled,

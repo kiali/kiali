@@ -252,8 +252,6 @@
           },
           "istioApiEnabled" : true,
           "istioIdentityDomain" : "svc.cluster.local",
-          "istioInjectionAnnotation" : "sidecar.istio.io/inject",
-          "istioSidecarAnnotation" : "sidecar.istio.io/status",
           "istiodPodMonitoringPort" : 15014,
           "istiodPollingIntervalSeconds" : 20,
           "rootNamespace" : "istio-system",
