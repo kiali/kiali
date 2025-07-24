@@ -39,11 +39,11 @@ func getVersions(ctx context.Context, conf *config.Config, clientFactory kuberne
 	}
 
 	if conf.ExternalServices.Perses.Enabled && perses != nil {
-		gv, err := persesVersion(ctx, perses, conf, clientFactory.GetSAHomeClusterClient())
+		pev, err := persesVersion(ctx, perses, conf, clientFactory.GetSAHomeClusterClient())
 		if err != nil {
 			log.Infof("Error getting Perses version: %v", err)
 		} else {
-			components = append(components, *gv)
+			components = append(components, *pev)
 		}
 	} else {
 		log.Debugf("Perses is disabled in Kiali by configuration")
@@ -170,7 +170,7 @@ type grafanaResponseVersion struct {
 }
 
 type persesResponseVersion struct {
-	Version string `json:"buildInfo"`
+	Version string `json:"version"`
 }
 
 func grafanaVersion(ctx context.Context, grafana *grafana.Service, conf *config.Config, homeClusterSAClient kubernetes.ClientInterface) (*models.ExternalServiceInfo, error) {
