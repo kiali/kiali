@@ -128,12 +128,10 @@ func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.
 	const (
 		istioConfigMapName                = "istio-1-19-0"
 		istioSidecarInjectorConfigMapName = "istio-sidecar-injector-1-19-0"
-		istiodDeploymentName              = "istiod-1-19-0"
 	)
 	conf := config.NewConfig()
 
 	conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName = istioSidecarInjectorConfigMapName
-	conf.ExternalServices.Istio.IstiodDeploymentName = istiodDeploymentName
 	config.Set(conf)
 	revConfigMap := &core_v1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{
@@ -150,7 +148,7 @@ func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.
 
 	istiod_1_19_0 := &apps_v1.Deployment{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      istiodDeploymentName,
+			Name:      "istiod",
 			Namespace: "istio-system",
 			Labels: map[string]string{
 				config.IstioRevisionLabel: "1-19-0",
