@@ -113,9 +113,6 @@ func TestGetMeshGraph(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	grafana := grafana.NewService(conf, clients[conf.KubernetesConfig.ClusterName])
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
-	business.SetupBusinessLayer(t, clients[conf.KubernetesConfig.ClusterName], *conf)
-	business.WithKialiCache(cache)
-	business.WithDiscovery(discovery)
 
 	xapi := new(prometheustest.PromAPIMock)
 	prom, err := prometheus.NewClient()

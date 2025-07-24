@@ -20,7 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -30,12 +29,10 @@ import (
 	"github.com/kiali/kiali/util/sliceutil"
 )
 
-func setupWorkloadService(k8s kubernetes.UserClientInterface, conf *config.Config) WorkloadService {
+func setupWorkloadService(t testing.TB, k8s kubernetes.UserClientInterface, conf *config.Config) WorkloadService {
 	// config needs to be set by other services since those rely on the global.
 	prom := new(prometheustest.PromClientMock)
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	return NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), prom, nil).Workload
+	return NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Workload
 }
 
 func callStreamPodLogs(svc WorkloadService, namespace, workload, app, podName string, opts *LogOptions) PodLog {
@@ -71,8 +68,7 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false, Cluster: conf.KubernetesConfig.ClusterName}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
@@ -112,8 +108,7 @@ func TestGetWorkloadListFromDeploymentsNoAppVerLabelNames(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false, Cluster: conf.KubernetesConfig.ClusterName}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
@@ -164,8 +159,7 @@ func TestGetWorkloadListFromWorkloadGroups(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: true, IncludeHealth: false, Cluster: conf.KubernetesConfig.ClusterName}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
@@ -217,8 +211,7 @@ func TestGetWorkloadListFromReplicaSets(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
@@ -259,8 +252,7 @@ func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 	svc.excludedWorkloads = map[string]bool{}
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
@@ -302,8 +294,7 @@ func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 	svc.excludedWorkloads = map[string]bool{}
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
@@ -345,8 +336,7 @@ func TestGetWorkloadListFromStatefulSets(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 	svc.excludedWorkloads = map[string]bool{}
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
@@ -388,8 +378,7 @@ func TestGetWorkloadListFromDaemonSets(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
-	svc := setupWorkloadService(k8s, config.NewConfig())
+	svc := setupWorkloadService(t, k8s, config.NewConfig())
 	svc.excludedWorkloads = map[string]bool{}
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
@@ -439,8 +428,7 @@ func TestGetWorkloadListFromDepRCPod(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
@@ -473,8 +461,7 @@ func TestGetWorkloadListFromPod(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
@@ -511,8 +498,7 @@ func TestGetWorkloadListFromPods(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
@@ -551,8 +537,7 @@ func TestGetWorkloadFromDeployment(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details-v1", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
@@ -593,8 +578,7 @@ func TestGetWorkloadFromWorkloadGroup(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "ratings-vm", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
@@ -649,8 +633,7 @@ func TestGetWorkloadWithInvalidWorkloadType(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details-v1", WorkloadGVK: schema.GroupVersionKind{Kind: "invalid"}, IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
@@ -688,8 +671,7 @@ func TestGetWorkloadFromPods(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "custom-controller", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
@@ -709,8 +691,7 @@ func TestGetPod(t *testing.T) {
 
 	conf := config.NewConfig()
 	k8s := kubetest.NewFakeK8sClient(FakePodSyncedWithDeployments(conf), &osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}})
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	pod, err := svc.GetPod(conf.KubernetesConfig.ClusterName, "Namespace", "details-v1-3618568057-dnkjp")
 	require.NoError(err)
@@ -737,8 +718,7 @@ func TestGetPodLogs(t *testing.T) {
 		UserClientInterface: kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}),
 	}
 
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
-	svc := setupWorkloadService(k8s, config.NewConfig())
+	svc := setupWorkloadService(t, k8s, config.NewConfig())
 	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}})
 
 	require.Equal(len(podLogs.Entries), 4)
@@ -773,8 +753,7 @@ func TestGetPodLogsMaxLines(t *testing.T) {
 		UserClientInterface: kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}),
 	}
 
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
-	svc := setupWorkloadService(k8s, config.NewConfig())
+	svc := setupWorkloadService(t, k8s, config.NewConfig())
 
 	maxLines := 2
 	duration, _ := time.ParseDuration("6h")
@@ -795,8 +774,7 @@ func TestGetPodLogsDuration(t *testing.T) {
 		logs:                FakePodLogsSyncedWithDeployments().Logs,
 		UserClientInterface: kubetest.NewFakeK8sClient(proj),
 	}
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
-	svc := setupWorkloadService(k8s, config.NewConfig())
+	svc := setupWorkloadService(t, k8s, config.NewConfig())
 
 	duration, _ := time.ParseDuration("59m")
 	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
@@ -808,7 +786,7 @@ func TestGetPodLogsDuration(t *testing.T) {
 		logs:                FakePodLogsSyncedWithDeployments().Logs,
 		UserClientInterface: kubetest.NewFakeK8sClient(proj),
 	}
-	svc = setupWorkloadService(k8s, conf)
+	svc = setupWorkloadService(t, k8s, conf)
 
 	duration, _ = time.ParseDuration("1h")
 	podLogs = callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
@@ -821,7 +799,7 @@ func TestGetPodLogsDuration(t *testing.T) {
 		logs:                FakePodLogsSyncedWithDeployments().Logs,
 		UserClientInterface: kubetest.NewFakeK8sClient(proj),
 	}
-	svc = setupWorkloadService(k8s, conf)
+	svc = setupWorkloadService(t, k8s, conf)
 
 	duration, _ = time.ParseDuration("2h")
 	podLogs = callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
@@ -842,8 +820,7 @@ func TestGetPodLogsMaxLinesAndDurations(t *testing.T) {
 		logs:                FakePodLogsSyncedWithDeployments().Logs,
 		UserClientInterface: kubetest.NewFakeK8sClient(proj),
 	}
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	maxLines := 2
 	duration, _ := time.ParseDuration("2h")
@@ -858,7 +835,7 @@ func TestGetPodLogsMaxLinesAndDurations(t *testing.T) {
 		logs:                FakePodLogsSyncedWithDeployments().Logs,
 		UserClientInterface: kubetest.NewFakeK8sClient(proj),
 	}
-	svc = setupWorkloadService(k8s, conf)
+	svc = setupWorkloadService(t, k8s, conf)
 
 	maxLines = 3
 	duration, _ = time.ParseDuration("3h")
@@ -881,8 +858,7 @@ func TestGetPodLogsProxy(t *testing.T) {
 		logs:                FakePodLogsProxy().Logs,
 		UserClientInterface: kubetest.NewFakeK8sClient(proj),
 	}
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	maxLines := 2
 	duration, _ := time.ParseDuration("2h")
@@ -923,8 +899,7 @@ func TestGetZtunnelPodLogsProxy(t *testing.T) {
 		logs:                FakePodLogsZtunnel().Logs,
 		UserClientInterface: kubetest.NewFakeK8sClient(kubeObjs...),
 	}
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	maxLines := 2
 	duration, _ := time.ParseDuration("2h")
@@ -1011,8 +986,7 @@ func TestGetWaypointPodLogsProxy(t *testing.T) {
 		UserClientInterface: client,
 	}
 
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	a, v := svc.GetWorkload(context.TODO(), WorkloadCriteria{Cluster: svc.conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", IncludeServices: false})
 	assert.Nil(v)
@@ -1073,8 +1047,7 @@ func TestDuplicatedControllers(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, err := svc.GetWorkloadList(context.TODO(), criteria)
@@ -1122,8 +1095,7 @@ func TestGetWorkloadListFromGenericPodController(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	// Disabling CustomDashboards on Workload details testing
 	conf = config.Get()
@@ -1173,8 +1145,7 @@ func TestGetWorkloadListKindsWithSameName(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
@@ -1222,8 +1193,7 @@ func TestGetWorkloadListRSWithoutPrefix(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
@@ -1278,8 +1248,7 @@ func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, err := svc.GetWorkloadList(context.TODO(), criteria)
@@ -1315,8 +1284,7 @@ func TestGetPodLogsWithoutAccessLogs(t *testing.T) {
 	}
 	conf := config.NewConfig()
 	config.Set(conf)
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{LogType: models.LogTypeProxy, PodLogOptions: core_v1.PodLogOptions{Container: "istio-proxy"}})
 
@@ -1346,7 +1314,6 @@ func TestGetWorkloadMultiCluster(t *testing.T) {
 	conf.KubernetesConfig.ClusterName = "east"
 	config.Set(conf)
 
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.UserClientInterface{
 		"east": kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("bookinfo"),
@@ -1373,11 +1340,7 @@ func TestGetWorkloadMultiCluster(t *testing.T) {
 			},
 		),
 	}
-	clientFactory.SetClients(clients)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
-	kialiCache = cache
-
-	workloadService := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, nil).Workload
+	workloadService := NewLayerBuilder(t, conf).WithClients(clients).Build().Workload
 	workload, err := workloadService.GetWorkload(context.TODO(), WorkloadCriteria{Cluster: "west", Namespace: "bookinfo", WorkloadName: "ratings-v1"})
 	require.NoError(err)
 	assert.Equal("west", workload.Cluster)
@@ -1436,8 +1399,7 @@ func TestValidateWaypoint(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	// Get waypoint proxy
 	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "waypoint", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
@@ -1518,21 +1480,9 @@ func TestValidateWaypointNS(t *testing.T) {
 		},
 	)
 
-	// cache
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
-	clients := map[string]kubernetes.UserClientInterface{
-		"": kubetest.NewFakeK8sClient(
-			&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace", Labels: map[string]string{waypointLabel: "waypoint"}}},
-		),
-	}
-	clientFactory.SetClients(clients)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
-	kialiCache = cache
-
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	// Get waypoint proxy
 	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "waypoint", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
@@ -1621,8 +1571,7 @@ func TestValidateWaypointService(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	// Get waypoint proxy
 	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "waypoint", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
@@ -1713,8 +1662,7 @@ func TestGetWaypointWorkloads(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	// Get waypoint proxy
 	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "waypoint", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
@@ -1776,8 +1724,7 @@ func TestValidateWaypointProxyStatus(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	// Set cache proxy status
 	ps := kubernetes.ProxyStatus{
@@ -1842,8 +1789,7 @@ func TestGetWorkloadSetsIsGateway(t *testing.T) {
 			},
 		},
 	)
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "ingress-gateway", IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
@@ -1881,8 +1827,7 @@ func TestGetAllGateways(t *testing.T) {
 			},
 		},
 	)
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	gateways, err := svc.GetGateways(context.Background())
 	require.NoError(err)
@@ -1913,8 +1858,7 @@ func TestGetWorkloadListWithCustomKindThatMatchesCoreKind(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, conf)
+	svc := setupWorkloadService(t, k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)

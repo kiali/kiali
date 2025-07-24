@@ -14,7 +14,6 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry/istio/appender"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
@@ -31,11 +30,7 @@ func setupBusinessLayer(t *testing.T, istioObjects ...runtime.Object) *business.
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	business.SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
-	return businessLayer
+	return business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 }
 
 func setupWorkloadEntries(t *testing.T) *business.Layer {
@@ -137,7 +132,8 @@ func TestWorkloadEntry(t *testing.T) {
 				Cluster:           testCluster,
 				CreationTimestamp: time.Now(),
 				Name:              appNamespace,
-			}},
+			},
+		},
 	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
@@ -215,7 +211,8 @@ func TestWorkloadEntryAppLabelNotMatching(t *testing.T) {
 				Cluster:           testCluster,
 				CreationTimestamp: time.Now(),
 				Name:              appNamespace,
-			}},
+			},
+		},
 	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
@@ -301,7 +298,8 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 				Cluster:           testCluster,
 				CreationTimestamp: time.Now(),
 				Name:              appNamespace,
-			}},
+			},
+		},
 	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
@@ -369,7 +367,8 @@ func TestWorkloadWithoutWorkloadEntries(t *testing.T) {
 				Cluster:           testCluster,
 				CreationTimestamp: time.Now(),
 				Name:              appNamespace,
-			}},
+			},
+		},
 	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
@@ -417,7 +416,8 @@ func TestWEKiali7305(t *testing.T) {
 				Cluster:           testCluster,
 				CreationTimestamp: time.Now(),
 				Name:              appNamespace,
-			}},
+			},
+		},
 	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 

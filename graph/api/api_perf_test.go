@@ -3,7 +3,6 @@ package api
 import (
 	"flag"
 	"fmt"
-
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -949,12 +948,9 @@ func setupMockedPerf(b *testing.B, numNs int) (*prometheus.Client, *prometheuste
 	}
 	client.Inject(api)
 
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	business.SetWithBackends(mockClientFactory, nil)
+	mockClientFactory := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
 	testingCache := cache.NewTestingCache(b, k8s, *conf)
-	business.WithKialiCache(testingCache)
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), testingCache, conf)
-	business.WithDiscovery(discovery)
 
 	biz, err := business.NewLayer(conf, testingCache, mockClientFactory, client, nil, nil, nil, discovery, authInfo)
 	require.NoError(b, err)

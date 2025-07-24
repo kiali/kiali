@@ -910,9 +910,8 @@ func TestNamespaceMetricsWithParams(t *testing.T) {
 }
 
 func TestNamespaceMetricsInaccessibleNamespace(t *testing.T) {
-	ts, _ := setupNamespaceMetricsEndpoint(t)
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("my_namespace"))
-	business.SetupBusinessLayer(t, &noPrivClient{k8s}, *config.NewConfig())
+	ts, _ := setupNamespaceMetricsEndpointWithClient(t, &noPrivClient{k8s})
 
 	url := ts.URL + "/api/namespaces/my_namespace/metrics"
 
@@ -933,6 +932,29 @@ func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
 
 	handler := WithFakeAuthInfo(conf, NamespaceMetrics(conf, cache, discovery, cf, client))
+
+	mr := mux.NewRouter()
+	mr.HandleFunc("/api/namespaces/{namespace}/metrics", handler)
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+	return ts, xapi
+}
+
+func setupNamespaceMetricsEndpointWithClient(t *testing.T, k kubernetes.ClientInterface) (*httptest.Server, *prometheustest.PromAPIMock) {
+	conf := config.NewConfig()
+	xapi := new(prometheustest.PromAPIMock)
+	prom, err := prometheus.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	prom.Inject(xapi)
+
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k.(kubernetes.UserClientInterface))
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
+
+	handler := WithFakeAuthInfo(conf, NamespaceMetrics(conf, cache, discovery, cf, prom))
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/metrics", handler)

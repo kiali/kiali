@@ -84,7 +84,6 @@ func testPerfScenario(exStatus string, namespaces []core_v1.Namespace, drs []*ne
 	objs = append(objs, kubernetes.ToRuntimeObjects(drs)...)
 
 	k8s := kubetest.NewFakeK8sClient(objs...)
-	SetupBusinessLayer(t, k8s, *conf)
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
@@ -99,12 +98,7 @@ func testPerfScenario(exStatus string, namespaces []core_v1.Namespace, drs []*ne
 			}},
 		},
 	}
-	WithDiscovery(discovery)
-
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-
-	tlsService := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil).TLS
+	tlsService := NewLayerBuilder(t, conf).WithClient(k8s).WithDiscovery(discovery).Build().TLS
 
 	statuses, err := tlsService.ClusterWideNSmTLSStatus(context.TODO(), models.CastNamespaceCollection(namespaces, conf.KubernetesConfig.ClusterName), conf.KubernetesConfig.ClusterName)
 	assert.NoError(err)

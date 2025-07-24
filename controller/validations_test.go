@@ -22,7 +22,6 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/controller"
-	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
@@ -64,13 +63,11 @@ func TestValidationsFailsToUpdateWithOldCache(t *testing.T) {
 	client := kubetest.NewFakeK8sClient(
 		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
 	)
-	cache := newIncrementFirstVersionCache(business.SetupBusinessLayer(t, client, *conf))
-	k8sclients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: client}
-	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(k8sclients), cache, conf)
-	namespace := business.NewNamespaceService(cache, conf, discovery, kubernetes.ConvertFromUserClients(k8sclients), k8sclients)
-	mesh := business.NewMeshService(conf, discovery, kubernetes.ConvertFromUserClients(k8sclients))
-	layer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
-	validations := business.NewValidationsService(conf, &layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
+	clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: client}
+
+	cache := newIncrementFirstVersionCache(cache.NewTestingCacheWithClients(t, kubernetes.ConvertFromUserClients(clients), *conf))
+	layer := business.NewLayerBuilder(t, conf).WithClients(clients).WithCache(cache).Build()
+	validations := business.NewValidationsService(conf, &layer.IstioConfig, cache, &layer.Mesh, &layer.Namespace, &layer.Svc, clients, &layer.Workload)
 	reconciler := controller.NewValidationsReconciler([]string{conf.KubernetesConfig.ClusterName}, conf, cache, &validations, 0)
 
 	// We want to test that the reconciler won't update the cache if the version has changed.

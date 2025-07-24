@@ -14,7 +14,6 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
@@ -28,11 +27,13 @@ func TestWorkloadSidecarsPasses(t *testing.T) {
 
 	a := MeshCheckAppender{
 		AccessibleNamespaces: map[graph.ClusterSensitiveKey]*graph.AccessibleNamespace{
-			key: &graph.AccessibleNamespace{
+			key: {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}}}
+			},
+		},
+	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -51,11 +52,13 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 
 	a := MeshCheckAppender{
 		AccessibleNamespaces: map[graph.ClusterSensitiveKey]*graph.AccessibleNamespace{
-			key: &graph.AccessibleNamespace{
+			key: {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}}}
+			},
+		},
+	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -75,11 +78,13 @@ func TestInaccessibleWorkload(t *testing.T) {
 
 	a := MeshCheckAppender{
 		AccessibleNamespaces: map[graph.ClusterSensitiveKey]*graph.AccessibleNamespace{
-			key: &graph.AccessibleNamespace{
+			key: {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}}}
+			},
+		},
+	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -98,11 +103,13 @@ func TestAppNoPodsPasses(t *testing.T) {
 
 	a := MeshCheckAppender{
 		AccessibleNamespaces: map[graph.ClusterSensitiveKey]*graph.AccessibleNamespace{
-			key: &graph.AccessibleNamespace{
+			key: {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}}}
+			},
+		},
+	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -121,11 +128,13 @@ func TestAppSidecarsPasses(t *testing.T) {
 
 	a := MeshCheckAppender{
 		AccessibleNamespaces: map[graph.ClusterSensitiveKey]*graph.AccessibleNamespace{
-			key: &graph.AccessibleNamespace{
+			key: {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}}}
+			},
+		},
+	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -144,11 +153,13 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 
 	a := MeshCheckAppender{
 		AccessibleNamespaces: map[graph.ClusterSensitiveKey]*graph.AccessibleNamespace{
-			key: &graph.AccessibleNamespace{
+			key: {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}}}
+			},
+		},
+	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -168,11 +179,13 @@ func TestAppWithAmbientIsFlagged(t *testing.T) {
 
 	a := MeshCheckAppender{
 		AccessibleNamespaces: map[graph.ClusterSensitiveKey]*graph.AccessibleNamespace{
-			key: &graph.AccessibleNamespace{
+			key: {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}}}
+			},
+		},
+	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -192,11 +205,13 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 
 	a := MeshCheckAppender{
 		AccessibleNamespaces: map[graph.ClusterSensitiveKey]*graph.AccessibleNamespace{
-			key: &graph.AccessibleNamespace{
+			key: {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}}}
+			},
+		},
+	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -295,7 +310,6 @@ func buildFakeWorkloadPodsNoSidecar() []core_v1.Pod {
 }
 
 func buildFakeWorkloadPodsAmbient() []core_v1.Pod {
-
 	podList := buildFakeWorkloadPodsNoSidecar()
 	podList[0].ObjectMeta.Annotations["ambient.istio.io/redirection"] = "enabled"
 
@@ -319,9 +333,5 @@ func setupSidecarsCheckWorkloads(t *testing.T, deployments []apps_v1.Deployment,
 	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 	config.Set(conf)
 
-	business.SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
-	return businessLayer
+	return business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 }

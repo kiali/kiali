@@ -17,14 +17,11 @@ import (
 func TestGetMeshConfig(t *testing.T) {
 	check := assert.New(t)
 
-	k8s := kubetest.NewFakeK8sClient()
 	conf := config.NewConfig()
-
-	config.Set(conf)
 
 	// Create a MeshService and invoke IsMeshConfigured
 	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
+	k8sclients[conf.KubernetesConfig.ClusterName] = kubetest.NewFakeK8sClient()
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
@@ -40,9 +37,7 @@ func TestGetMeshConfig(t *testing.T) {
 		},
 	}
 
-	business.WithDiscovery(discovery)
-	layer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
-	meshSvc := layer.Mesh
+	meshSvc := business.NewMeshService(conf, discovery, kubernetes.ConvertFromUserClients(k8sclients))
 
 	meshConfig := meshSvc.GetMeshConfig()
 

@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/kubernetes"
@@ -154,22 +155,17 @@ func BenchmarkValidate(b *testing.B) {
 		fakeIstioObjects = append(fakeIstioObjects, ns)
 	}
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
-	cache := SetupBusinessLayer(b, k8s, *conf)
+	cache := cache.NewTestingCache(b, k8s, *conf)
 	cache.SetRegistryStatus(map[string]*kubernetes.RegistryStatus{
 		conf.KubernetesConfig.ClusterName: {
 			Services: data.CreateFakeMultiRegistryServices(services, "test", "*"),
 		},
 	})
 
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}, Config: models.ControlPlaneConfiguration{}}}},
 	}
-	namespace := NewNamespaceService(cache, conf, discovery, kubernetes.ConvertFromUserClients(k8sclients), k8sclients)
-	mesh := NewMeshService(conf, discovery, kubernetes.ConvertFromUserClients(k8sclients))
-	layer := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
-	vs := NewValidationsService(conf, &layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
+	vs := NewLayerBuilder(b, conf).WithClient(k8s).WithCache(cache).WithDiscovery(discovery).Build().Validations
 
 	var changeMap ValidationChangeMap
 	if conf.ExternalServices.Istio.ValidationChangeDetectionEnabled {

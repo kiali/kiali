@@ -222,15 +222,10 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 		conf.KubernetesConfig.ClusterName: primaryClient,
 		"cluster-remote":                  remoteClient,
 	}
-	factory := kubetest.NewK8SClientFactoryMock(nil)
-	factory.SetClients(clients)
 
-	cache := cache.NewTestingCacheWithFactory(t, factory, *conf)
+	cache := cache.NewTestingCacheWithClients(t, kubernetes.ConvertFromUserClients(clients), *conf)
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
-	business.WithDiscovery(discovery)
-	business.WithKialiCache(cache)
-	business.SetWithBackends(factory, nil)
-	layer := business.NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, nil)
+	layer := business.NewLayerBuilder(t, conf).WithClients(clients).WithCache(cache).WithDiscovery(discovery).Build()
 
 	meshDef, err := discovery.Mesh(context.TODO())
 	require.NoError(err)

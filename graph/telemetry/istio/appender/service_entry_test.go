@@ -12,10 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -33,10 +31,8 @@ func setupBusinessLayer(t *testing.T, meshExportTo []string, istioObjects ...run
 		kubetest.FakeNamespace("otherNamespace"),
 	)
 	k8s := kubetest.NewFakeK8sClient(istioObjects...)
-	business.SetupBusinessLayer(t, k8s, *conf)
 
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
+	lb := business.NewLayerBuilder(t, conf).WithClient(k8s)
 
 	if len(meshExportTo) != 0 {
 		discovery := &istiotest.FakeDiscovery{
@@ -53,10 +49,10 @@ func setupBusinessLayer(t *testing.T, meshExportTo []string, istioObjects ...run
 				}},
 			},
 		}
-		business.WithDiscovery(discovery)
+		lb.WithDiscovery(discovery)
 	}
-	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
-	return businessLayer
+
+	return lb.Build()
 }
 
 func setupServiceEntries(t *testing.T, namespace string, exportTo []string, meshExportTo []string) *business.Layer {
@@ -1100,13 +1096,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	business.SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := map[string]kubernetes.UserClientInterface{
-		config.DefaultClusterID: kubetest.NewFakeK8sClient(
-			kubetest.FakeNamespace("namespace"),
-		),
-	}
-	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
+	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 
 	// Create a VersionedApp traffic map where a workload is calling a remote service entry and also an internal one
 	trafficMap := make(map[string]*graph.Node)
@@ -1197,13 +1187,7 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	business.SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := map[string]kubernetes.UserClientInterface{
-		config.DefaultClusterID: kubetest.NewFakeK8sClient(
-			kubetest.FakeNamespace("testNamespace"),
-		),
-	}
-	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
+	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 
 	assert := assert.New(t)
 
@@ -1333,13 +1317,7 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 
 	istioObjects := append([]runtime.Object{SE1, SE2}, kubetest.FakeNamespace("otherNamespace"))
 	k8s := kubetest.NewFakeK8sClient(istioObjects...)
-	business.SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := map[string]kubernetes.UserClientInterface{
-		config.DefaultClusterID: kubetest.NewFakeK8sClient(
-			kubetest.FakeNamespace("otherNamespace"),
-		),
-	}
-	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
+	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 
 	assert := assert.New(t)
 
@@ -1633,15 +1611,7 @@ func TestSEKiali7589(t *testing.T) {
 		"cluster2": client2,
 	}
 
-	factory := kubetest.NewK8SClientFactoryMock(nil)
-	factory.SetClients(clients)
-
-	cache := cache.NewTestingCacheWithFactory(t, factory, *conf)
-	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
-	business.WithDiscovery(discovery)
-	business.WithKialiCache(cache)
-	business.SetWithBackends(factory, nil)
-	businessLayer := business.NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, nil)
+	businessLayer := business.NewLayerBuilder(t, conf).WithClients(clients).Build()
 
 	// VersionedApp graph
 	trafficMap := make(map[string]*graph.Node)

@@ -55,10 +55,6 @@ func TestGetDashboard(t *testing.T) {
 	prom.MockMetric("my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
 	prom.MockHistogram("my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
 
-	k8s := kubetest.NewFakeK8sClient()
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
-
 	dashboard, err := service.GetDashboard(context.Background(), query, "dashboard1")
 
 	assert.Nil(err)

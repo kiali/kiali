@@ -8,7 +8,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
@@ -16,7 +15,6 @@ import (
 )
 
 func getLayer(t *testing.T, conf *config.Config) *Layer {
-
 	config.Set(conf)
 	s1 := kubetest.FakeService("Namespace", "reviews")
 	s2 := kubetest.FakeService("Namespace", "httpbin")
@@ -27,10 +25,7 @@ func getLayer(t *testing.T, conf *config.Config) *Layer {
 	}
 
 	k8s := kubetest.NewFakeK8sClient(objects...)
-	SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	return NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
+	return NewLayerBuilder(t, conf).WithClient(k8s).Build()
 }
 
 var trace1 = jaegerModels.Trace{
@@ -238,7 +233,6 @@ func TestTracesToSpanWaypointWithWorkloadFilter(t *testing.T) {
 }
 
 func TestValidateConfiguration(t *testing.T) {
-
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	conf.ExternalServices.Tracing.Enabled = true
@@ -258,5 +252,4 @@ func TestValidateConfiguration(t *testing.T) {
 	assert.NotNil(validConfig)
 	assert.NotNil(validConfig.Error)
 	assert.Contains(validConfig.Error, "Error creating tracing client")
-
 }

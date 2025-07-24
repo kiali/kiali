@@ -498,16 +498,15 @@ func TestErrorCausesPanic(t *testing.T) {
 	kubeCache, err := cache.GetKubeCache(conf.KubernetesConfig.ClusterName)
 	require.NoError(err)
 	cache = &cacheWithServicesError{KialiCache: cache, kubeCache: &servicesError{Reader: kubeCache, errorMsg: panicErrMsg}}
-	business.WithKialiCache(cache)
 	discovery := istio.NewDiscovery(map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s}, cache, conf)
-	business.WithDiscovery(discovery)
 
 	prom := new(prometheustest.PromClientMock)
 	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
 	prom.MockAllRequestRates("testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
 	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), prom, nil)
+	businessLayer, err := business.NewLayerWithSAClients(conf, cache, nil, nil, nil, nil, discovery, k8sclients)
+	require.NoError(err)
 
 	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
@@ -543,27 +542,20 @@ func TestMultiClusterHealthConfig(t *testing.T) {
 		objects = append(objects, &o)
 	}
 
-	factory := kubetest.NewK8SClientFactoryMock(nil)
-	factory.Clients = map[string]kubernetes.UserClientInterface{
+	clients := map[string]kubernetes.UserClientInterface{
 		"east": kubetest.NewFakeK8sClient(objects...),
 		"west": westClient,
 	}
 
 	conf := config.NewConfig()
-	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
-	config.Set(conf)
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	conf.KubernetesConfig.ClusterName = "east"
 	config.Set(conf)
-	cache := cache.NewTestingCacheWithFactory(t, factory, *conf)
-	discovery := istio.NewDiscovery(factory.GetSAClients(), cache, conf)
-	business.WithDiscovery(discovery)
-	business.WithKialiCache(cache)
 
 	prom := new(prometheustest.PromClientMock)
 	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
 	prom.MockAllRequestRates("testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
-	businessLayer := business.NewWithBackends(factory.Clients, factory.GetSAClients(), prom, nil)
+	businessLayer := business.NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build()
 
 	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
@@ -633,13 +625,8 @@ func setupHealthConfig(t *testing.T, services []core_v1.Service, deployments []a
 	config.Set(conf)
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
-	business.SetupBusinessLayer(t, k8s, *conf)
-
 	prom := new(prometheustest.PromClientMock)
 	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
 	prom.MockAllRequestRates("testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), prom, nil)
-	return businessLayer
+	return business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 }

@@ -14,8 +14,8 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -764,20 +764,12 @@ func TestGetVSReferencesNotExisting(t *testing.T) {
 
 func fakeValidationMeshService(t *testing.T, conf config.Config, objects ...runtime.Object) IstioValidationsService {
 	k8s := kubetest.NewFakeK8sClient(objects...)
-	cache := SetupBusinessLayer(t, k8s, conf)
-
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(k8sclients), cache, &conf)
-	namespace := NewNamespaceService(cache, &conf, discovery, kubernetes.ConvertFromUserClients(k8sclients), k8sclients)
-	mesh := NewMeshService(&conf, discovery, kubernetes.ConvertFromUserClients(k8sclients))
-	layer := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
-	return NewValidationsService(&conf, &layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
+	return NewLayerBuilder(t, &conf).WithClient(k8s).Build().Validations
 }
 
 func fakeValidationMeshServiceWithRegistryStatus(t *testing.T, cfg config.Config, services []string, objects ...runtime.Object) IstioValidationsService {
 	k8s := kubetest.NewFakeK8sClient(objects...)
-	cache := SetupBusinessLayer(t, k8s, cfg)
+	cache := cache.NewTestingCache(t, k8s, cfg)
 	conf := config.NewConfig()
 	cache.SetRegistryStatus(map[string]*kubernetes.RegistryStatus{
 		conf.KubernetesConfig.ClusterName: {
@@ -785,15 +777,11 @@ func fakeValidationMeshServiceWithRegistryStatus(t *testing.T, cfg config.Config
 		},
 	})
 
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[cfg.KubernetesConfig.ClusterName] = k8s
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}, MeshConfig: models.NewMeshConfig()}}},
 	}
-	namespace := NewNamespaceService(cache, conf, discovery, kubernetes.ConvertFromUserClients(k8sclients), k8sclients)
-	mesh := NewMeshService(conf, discovery, kubernetes.ConvertFromUserClients(k8sclients))
-	layer := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
-	return NewValidationsService(conf, &layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
+
+	return NewLayerBuilder(t, &cfg).WithClient(k8s).WithCache(cache).WithDiscovery(discovery).Build().Validations
 }
 
 func mockMultiNamespaceGateways(conf *config.Config) []runtime.Object {

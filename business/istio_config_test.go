@@ -231,17 +231,8 @@ func mockGetIstioConfigList(t *testing.T) IstioConfigService {
 	k8s.OpenShift = true
 
 	conf := config.NewConfig()
-	cache := SetupBusinessLayer(t, k8s, *conf)
 
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
-	return IstioConfigService{
-		userClients:   k8sclients,
-		saClients:     kubernetes.ConvertFromUserClients(k8sclients),
-		kialiCache:    cache,
-		businessLayer: NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil),
-		conf:          conf,
-	}
+	return NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
 }
 
 func fakeGetGateways() []*networking_v1.Gateway {
@@ -419,11 +410,7 @@ func mockGetIstioConfigDetails(t *testing.T) IstioConfigService {
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
 	k8s.OpenShift = true
 
-	cache := SetupBusinessLayer(t, k8s, *conf)
-
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = &fakeAccessReview{k8s}
-	return IstioConfigService{userClients: k8sclients, kialiCache: cache, businessLayer: NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil), conf: conf}
+	return NewLayerBuilder(t, conf).WithClient(&fakeAccessReview{k8s}).Build().IstioConfig
 }
 
 func mockGetIstioConfigDetailsMulticluster(t *testing.T) IstioConfigService {
@@ -439,12 +426,11 @@ func mockGetIstioConfigDetailsMulticluster(t *testing.T) IstioConfigService {
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
 	k8s.OpenShift = true
 
-	cache := SetupBusinessLayer(t, k8s, *conf)
-
 	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = &fakeAccessReview{k8s}
 	k8sclients["east"] = &fakeAccessReview{k8s}
-	return IstioConfigService{userClients: k8sclients, kialiCache: cache, businessLayer: NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil), conf: conf}
+
+	return NewLayerBuilder(t, conf).WithClients(k8sclients).Build().IstioConfig
 }
 
 func TestIsValidHost(t *testing.T) {
@@ -513,14 +499,10 @@ func TestDeleteIstioConfigDetails(t *testing.T) {
 		kubetest.FakeNamespace("test"),
 		data.CreateEmptyVirtualService("reviews-to-delete", "test", []string{"reviews"}),
 	)
-	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
-	conf := config.Get()
+	conf := config.NewConfig()
+	config.Set(conf)
 
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-
-	layer := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
-	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller, businessLayer: layer, conf: conf}
+	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
 
 	err := configService.DeleteIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "reviews-to-delete")
 	assert.Nil(err)
@@ -533,13 +515,10 @@ func TestUpdateIstioConfigDetails(t *testing.T) {
 		kubetest.FakeNamespace("test"),
 		data.CreateEmptyVirtualService("reviews-to-update", "test", []string{"reviews"}),
 	)
-	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
-	conf := config.Get()
+	conf := config.NewConfig()
+	config.Set(conf)
 
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	layer := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
-	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller, businessLayer: layer, conf: conf}
+	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
 
 	updatedVirtualService, err := configService.UpdateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "reviews-to-update", "{}")
 	require.NoError(err)
@@ -553,13 +532,9 @@ func TestCreateIstioConfigDetails(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(
 		kubetest.FakeNamespace("test"),
 	)
-	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
-	conf := config.Get()
-
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	layer := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
-	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller, businessLayer: layer, conf: conf}
+	conf := config.NewConfig()
+	config.Set(conf)
+	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
 
 	createVirtualService, err := configService.CreateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, []byte("{}"))
 	assert.Equal("test", createVirtualService.Namespace.Name)
@@ -623,16 +598,12 @@ func TestListWithAllNamespacesButNoAccessReturnsEmpty(t *testing.T) {
 	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(fakeGetGateways())...)
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
 
-	cache := SetupBusinessLayer(t, k8s, *conf)
-
 	// Set the token and set the namespaces so that when namespace access is checked,
 	// the token namespace cache will be used but will not have the "test" namespace
 	// in it so the list should return empty.
 	k8s.Token = "test"
-	cache.SetNamespaces("test", []models.Namespace{{Name: "nottest", Cluster: "Kubernetes"}})
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	configService := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil).IstioConfig
+	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
+	configService.kialiCache.SetNamespaces("test", []models.Namespace{{Name: "nottest", Cluster: "Kubernetes"}})
 
 	criteria := IstioConfigCriteria{
 		IncludeGateways: true,
@@ -679,11 +650,7 @@ deployment:
 	}
 	k8s := kubetest.NewFakeK8sClient(objects...)
 
-	SetupBusinessLayer(t, k8s, *conf)
-
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	configService := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil).IstioConfig
+	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
 
 	criteria := IstioConfigCriteria{
 		IncludeGateways: true,
@@ -722,14 +689,8 @@ func TestUpdateIstioObjectWithoutValidations(t *testing.T) {
 	}
 	conf.ExternalServices.Istio.ValidationReconcileInterval = &duration
 
-	cache := SetupBusinessLayer(t, k8s, *conf)
-
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	layer := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
-	layer.Validations = validationService
-
-	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller, businessLayer: layer, conf: conf}
+	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
+	configService.businessLayer.Validations = validationService
 
 	updatedVirtualService, err := configService.UpdateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "product-vs", "{}")
 

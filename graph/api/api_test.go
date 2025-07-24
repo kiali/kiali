@@ -54,11 +54,8 @@ func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock,
 	client.Inject(api)
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	business.SetWithBackends(mockClientFactory, nil)
 	cache := cache.NewTestingCache(t, k8s, *conf)
-	business.WithKialiCache(cache)
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, conf)
-	business.WithDiscovery(discovery)
 
 	biz, err := business.NewLayer(conf, cache, mockClientFactory, client, nil, nil, nil, discovery, authInfo)
 	require.NoError(t, err)
@@ -99,10 +96,6 @@ func setupMockedWithIstioComponentNamespaces(t *testing.T, meshId string, userCl
 
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *testConfig)
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(userClients), cache, testConfig)
-
-	business.WithDiscovery(discovery)
-	business.WithKialiCache(cache)
-	business.SetWithBackends(mockClientFactory, nil)
 
 	biz, err := business.NewLayer(testConfig, cache, mockClientFactory, client, nil, nil, nil, discovery, authInfo)
 	require.NoError(t, err)
@@ -3926,10 +3919,7 @@ func ambientWorkloads(t *testing.T) *business.Layer {
 	conf.KubernetesConfig.ClusterName = "Kubernetes"
 	config.Set(conf)
 
-	business.SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients["Kubernetes"] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
+	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 	return businessLayer
 }
 

@@ -18,9 +18,10 @@ import (
 	"github.com/kiali/kiali/tests/data"
 )
 
-func setupAppService(clients map[string]kubernetes.UserClientInterface) *AppService {
+func setupAppService(t testing.TB, clients map[string]kubernetes.UserClientInterface) *AppService {
 	prom := new(prometheustest.PromClientMock)
-	layer := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil)
+	conf := config.Get()
+	layer := NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build()
 	return &layer.App
 }
 
@@ -46,12 +47,8 @@ func TestGetAppListFromDeployments(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
 	k8s.Token = "token" // Not needed a result, just to not send an error to test this usecase
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
 
-	SetupBusinessLayer(t, k8s, *conf)
-
-	svc := setupAppService(mockClientFactory.Clients)
+	svc := setupAppService(t, map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s})
 
 	criteria := AppCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	appList, err := svc.GetClusterAppList(context.TODO(), criteria)
@@ -93,12 +90,8 @@ func TestGetAppListFromWorkloadGroups(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
 	k8s.Token = "token" // Not needed a result, just to not send an error to test this usecase
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
 
-	SetupBusinessLayer(t, k8s, *conf)
-
-	svc := setupAppService(mockClientFactory.Clients)
+	svc := setupAppService(t, map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s})
 
 	criteria := AppCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", IncludeIstioResources: true, IncludeHealth: false}
 	appList, err := svc.GetClusterAppList(context.TODO(), criteria)
@@ -139,12 +132,8 @@ func TestGetAppFromDeployments(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
 
-	SetupBusinessLayer(t, k8s, *conf)
-
-	svc := setupAppService(mockClientFactory.Clients)
+	svc := setupAppService(t, map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s})
 
 	criteria := AppCriteria{Namespace: "Namespace", AppName: "httpbin", Cluster: conf.KubernetesConfig.ClusterName}
 	appDetails, appDetailsErr := svc.GetAppDetails(context.TODO(), criteria)
@@ -183,12 +172,8 @@ func TestGetAppFromDeploymentsNoAppVerLabelNames(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
 
-	SetupBusinessLayer(t, k8s, *conf)
-
-	svc := setupAppService(mockClientFactory.Clients)
+	svc := setupAppService(t, map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s})
 
 	criteria := AppCriteria{Namespace: "Namespace", AppName: "httpbin", Cluster: conf.KubernetesConfig.ClusterName}
 	appDetails, appDetailsErr := svc.GetAppDetails(context.TODO(), criteria)
@@ -233,12 +218,8 @@ func TestGetAppFromWorkloadGroups(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
 
-	SetupBusinessLayer(t, k8s, *conf)
-
-	svc := setupAppService(mockClientFactory.Clients)
+	svc := setupAppService(t, map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s})
 
 	criteria := AppCriteria{Namespace: "Namespace", AppName: "ratings-vm", Cluster: conf.KubernetesConfig.ClusterName}
 	appDetails, appDetailsErr := svc.GetAppDetails(context.TODO(), criteria)
@@ -271,12 +252,8 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
 
-	SetupBusinessLayer(t, k8s, *conf)
-
-	svc := setupAppService(mockClientFactory.Clients)
+	svc := setupAppService(t, map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s})
 
 	criteria := AppCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	appList, _ := svc.GetClusterAppList(context.TODO(), criteria)
@@ -312,12 +289,8 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	SetWithBackends(mockClientFactory, nil)
 
-	SetupBusinessLayer(t, k8s, *conf)
-
-	svc := setupAppService(mockClientFactory.Clients)
+	svc := setupAppService(t, map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s})
 
 	criteria := AppCriteria{Namespace: "Namespace", AppName: "httpbin", Cluster: conf.KubernetesConfig.ClusterName}
 	appDetails, _ := svc.GetAppDetails(context.TODO(), criteria)
