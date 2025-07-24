@@ -196,6 +196,16 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				kiali.AddEdge(node)
 				hasExternalServices = hasExternalServices || isExternal
 			}
+
+			if conf.ExternalServices.Perses.Enabled {
+				cluster, namespace, isExternal = discoverInfraService(es.Perses.InternalURL, ctx, gi)
+				name = "Perses"
+				node, _, err = addInfra(meshMap, mesh.InfraTypePerses, cluster, namespace, name, es.Perses, esVersions[name], isExternal, healthData[persesHealthKey])
+				mesh.CheckError(err)
+
+				kiali.AddEdge(node)
+				hasExternalServices = hasExternalServices || isExternal
+			}
 		}
 
 		if hasExternalServices {
