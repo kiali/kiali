@@ -250,7 +250,6 @@
           "componentStatuses" : {
             "enabled" : true
           },
-          "envoyAdminLocalPort" : 15000,
           "istioApiEnabled" : true,
           "istioIdentityDomain" : "svc.cluster.local",
           "istioInjectionAnnotation" : "sidecar.istio.io/inject",
@@ -258,7 +257,6 @@
           "istiodPodMonitoringPort" : 15014,
           "istiodPollingIntervalSeconds" : 20,
           "rootNamespace" : "istio-system",
-          "urlServiceVersion" : "",
           "validationChangeDetectionEnabled" : true,
           "validationReconcileInterval" : 60000000000
         }
