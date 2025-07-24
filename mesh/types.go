@@ -19,6 +19,7 @@ const (
 	InfraTypeKiali       string = "kiali"
 	InfraTypeMetricStore string = "metricStore"
 	InfraTypeNamespace   string = "namespace"
+	InfraTypePerses      string = "perses"
 	InfraTypeTraceStore  string = "traceStore"
 	InfraTypeWaypoint    string = "waypoint"
 	InfraTypeZtunnel     string = "ztunnel"
