@@ -1,6 +1,7 @@
 package references
 
 import (
+	k8s_inference_v1alpha2 "sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
@@ -13,6 +14,7 @@ import (
 type K8sHTTPRouteReferences struct {
 	Conf               *config.Config
 	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute
+	K8sInferencePools  []*k8s_inference_v1alpha2.InferencePool
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant
 	Namespaces         []string
 }
@@ -76,6 +78,8 @@ func (n K8sHTTPRouteReferences) getConfigReferences(rt *k8s_networking_v1.HTTPRo
 		}
 	}
 	result = append(result, n.getAllK8sReferenceGrants(rt)...)
+	result = append(result, n.getK8sInferencePoolRefs(rt)...)
+
 	return result
 }
 
@@ -95,6 +99,34 @@ func getAllK8sGateways(prs []k8s_networking_v1.ParentReference, ns string, conf 
 	}
 
 	return allGateways
+}
+
+func (n K8sHTTPRouteReferences) getK8sInferencePoolRefs(rt *k8s_networking_v1.HTTPRoute) []models.IstioReference {
+	keys := make(map[string]bool)
+	result := make([]models.IstioReference, 0)
+	for _, httpRoute := range rt.Spec.Rules {
+		for _, ref := range httpRoute.BackendRefs {
+			if ref.Kind == nil || string(*ref.Kind) != kubernetes.K8sInferencePoolsType || string(*ref.Group) != kubernetes.K8sInferencePools.Group {
+				continue
+			}
+			namespace := rt.Namespace
+			if ref.Namespace != nil && string(*ref.Namespace) != "" {
+				namespace = string(*ref.Namespace)
+			}
+			for _, ip := range n.K8sInferencePools {
+				if ip.Name == string(ref.Name) && ip.Namespace == namespace {
+					// unique filtering, backendRefs can ref to the same InferencePools
+					key := util.BuildNameNSTypeKey(ip.Name, ip.Namespace, kubernetes.K8sInferencePools)
+					if !keys[key] {
+						result = append(result, getK8sInferencePoolReference(ip.Name, ip.Namespace))
+						keys[key] = true
+					}
+				}
+			}
+		}
+	}
+
+	return result
 }
 
 func (n K8sHTTPRouteReferences) getAllK8sReferenceGrants(rt *k8s_networking_v1.HTTPRoute) []models.IstioReference {
@@ -117,4 +149,8 @@ func getK8sGatewayReference(gateway string, namespace string, conf *config.Confi
 
 func getK8sGrantReference(name string, namespace string) models.IstioReference {
 	return models.IstioReference{Name: name, Namespace: namespace, ObjectGVK: kubernetes.K8sReferenceGrants}
+}
+
+func getK8sInferencePoolReference(name string, namespace string) models.IstioReference {
+	return models.IstioReference{Name: name, Namespace: namespace, ObjectGVK: kubernetes.K8sInferencePools}
 }
