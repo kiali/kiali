@@ -49,7 +49,11 @@ func (g K8sGatewayReferences) getConfigReferences(gw *k8s_networking_v1.Gateway)
 
 	for _, rt := range g.K8sHTTPRoutes {
 		for _, pr := range rt.Spec.ParentRefs {
-			if string(pr.Name) == gw.Name && string(*pr.Kind) == gvk.Kind && string(*pr.Group) == gvk.Group {
+			namespace := rt.Namespace
+			if pr.Namespace != nil && string(*pr.Namespace) != "" {
+				namespace = string(*pr.Namespace)
+			}
+			if string(pr.Name) == gw.Name && string(*pr.Kind) == gvk.Kind && string(*pr.Group) == gvk.Group && namespace == gw.Namespace {
 				ref := models.IstioReference{Name: rt.Name, Namespace: rt.Namespace, ObjectGVK: kubernetes.K8sHTTPRoutes}
 				result = append(result, ref)
 			}
