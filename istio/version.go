@@ -139,34 +139,27 @@ func parseRawIstioVersion(rawVersion string) *models.ExternalServiceInfo {
 // If there are multiple healthy istiod pods, the latest one by
 // creation timestamp is returned.
 func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.ClientInterface, kubeCache ctrlclient.Reader, revision string, namespace string) (*models.ExternalServiceInfo, error) {
-	istioConfig := conf.ExternalServices.Istio
 	// If kiali is running on the same cluster as the istio control plane, use the URL instead
 	// of port forwarding. For remote clusters we need to port forward to get the version since the
 	// http monitoring port (15014) is not exposed publicly.
 	if client.ClusterInfo().Name == conf.KubernetesConfig.ClusterName {
-		url := ""
-		// If the config has a URL for the service version, use that until the config option is removed.
-		if istioConfig.UrlServiceVersion != "" {
-			url = istioConfig.UrlServiceVersion
-		} else {
-			// Look for an istio service with the rev label in the control plane namespace.
-			revLabelSelector := map[string]string{
-				config.IstioAppLabel:      istiodAppLabelValue,
-				config.IstioRevisionLabel: revision,
-			}
-
-			serviceList := &corev1.ServiceList{}
-			err := kubeCache.List(ctx, serviceList, ctrlclient.InNamespace(namespace), ctrlclient.MatchingLabels(revLabelSelector))
-			if err != nil {
-				return nil, err
-			}
-			services := serviceList.Items
-			if len(services) == 0 {
-				return nil, fmt.Errorf("no istio service found for revision [%s]", revision)
-			}
-
-			url = fmt.Sprintf("http://%s.%s:%d/version", services[0].Name, services[0].Namespace, 15014)
+		// Look for an istio service with the rev label in the control plane namespace.
+		revLabelSelector := map[string]string{
+			config.IstioAppLabel:      istiodAppLabelValue,
+			config.IstioRevisionLabel: revision,
 		}
+
+		serviceList := &corev1.ServiceList{}
+		err := kubeCache.List(ctx, serviceList, ctrlclient.InNamespace(namespace), ctrlclient.MatchingLabels(revLabelSelector))
+		if err != nil {
+			return nil, err
+		}
+		services := serviceList.Items
+		if len(services) == 0 {
+			return nil, fmt.Errorf("no istio service found for revision [%s]", revision)
+		}
+
+		url := fmt.Sprintf("http://%s.%s:%d/version", services[0].Name, services[0].Namespace, 15014)
 
 		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 		if err != nil {
