@@ -15,6 +15,7 @@ import (
 	"github.com/kiali/kiali/mesh"
 	"github.com/kiali/kiali/mesh/api"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
 )
@@ -48,6 +49,7 @@ func MeshGraph(
 	clientFactory kubernetes.ClientFactory,
 	cache cache.KialiCache,
 	grafana *grafana.Service,
+	perses *perses.Service,
 	prom prometheus.ClientInterface,
 	traceClientLoader func() tracing.ClientInterface,
 	discovery *istio.Discovery,
@@ -78,7 +80,7 @@ func MeshGraph(
 			o.MeshName = meshId
 		}
 
-		code, payload := api.GraphMesh(r.Context(), business, o, clientFactory, cache, conf, grafana, discovery)
+		code, payload := api.GraphMesh(r.Context(), business, o, clientFactory, cache, conf, grafana, perses, discovery)
 		respond(w, code, payload)
 	}
 }

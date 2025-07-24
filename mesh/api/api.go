@@ -19,6 +19,7 @@ import (
 	"github.com/kiali/kiali/mesh/config/common"
 	"github.com/kiali/kiali/mesh/generator"
 	"github.com/kiali/kiali/observability"
+	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
@@ -31,6 +32,7 @@ func GraphMesh(
 	kialiCache cache.KialiCache,
 	conf *config.Config,
 	grafana *grafana.Service,
+	perses *perses.Service,
 	discovery *istio.Discovery,
 ) (code int, config interface{}) {
 	var end observability.EndFunc
@@ -46,6 +48,7 @@ func GraphMesh(
 	globalInfo.Conf = conf
 	globalInfo.Discovery = discovery
 	globalInfo.Grafana = grafana
+	globalInfo.Perses = perses
 	globalInfo.KialiCache = kialiCache
 	globalInfo.IstioStatusGetter = &business.IstioStatus
 

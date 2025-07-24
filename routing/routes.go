@@ -1439,7 +1439,7 @@ func NewRoutes(
 			log.GraphLogName,
 			"GET",
 			"/api/mesh/graph",
-			handlers.MeshGraph(conf, clientFactory, kialiCache, grafana, prom, traceClientLoader, discovery, cpm),
+			handlers.MeshGraph(conf, clientFactory, kialiCache, grafana, perses, prom, traceClientLoader, discovery, cpm),
 			true,
 		},
 		// swagger:route GET /mesh/controlplanes controlplanes

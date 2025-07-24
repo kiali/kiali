@@ -19,6 +19,7 @@ import prometheusLogo from '../../assets/img/mesh/prometheus.svg';
 import grafanaLogo from '../../assets/img/mesh/grafana.svg';
 import istioLogo from '../../assets/img/mesh/istio.svg';
 import kialiLogo from '../../assets/img/mesh/kiali.svg';
+import persesLogo from '../../assets/img/mesh/perses.svg';
 import tempoLogo from '../../assets/img/mesh/tempo.svg';
 import waypoint from '../../assets/img/mesh/waypoint.svg';
 
@@ -68,6 +69,7 @@ export const legendData: MeshLegendItem[] = [
       { label: 'Jaeger', icon: jaegerLogo },
       { label: 'Kiali', icon: kialiLogo },
       { label: 'Istio', icon: istioLogo },
+      { label: 'Perses', icon: persesLogo },
       { label: 'Prometheus', icon: prometheusLogo },
       { label: 'Tempo', icon: tempoLogo },
       { label: t('Waypoint'), icon: waypoint }

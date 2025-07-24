@@ -315,7 +315,7 @@ func GetWorkloadStatus(wl models.Workload) string {
 
 func (iss *IstioStatusService) getAddonComponentStatus(cluster string) kubernetes.IstioComponentStatus {
 	var wg sync.WaitGroup
-	wg.Add(4)
+	wg.Add(5)
 
 	staChan := make(chan kubernetes.IstioComponentStatus, 4)
 	extServices := iss.conf.ExternalServices
@@ -329,6 +329,7 @@ func (iss *IstioStatusService) getAddonComponentStatus(cluster string) kubernete
 
 	go iss.getAddonStatus(cluster, "prometheus", true, extServices.Prometheus.IsCore, &extServices.Prometheus.Auth, extServices.Prometheus.URL, extServices.Prometheus.HealthCheckUrl, staChan, &wg)
 	go iss.getAddonStatus(cluster, "grafana", extServices.Grafana.Enabled, extServices.Grafana.IsCore, &extServices.Grafana.Auth, extServices.Grafana.InternalURL, extServices.Grafana.HealthCheckUrl, staChan, &wg)
+	go iss.getAddonStatus(cluster, "perses", extServices.Perses.Enabled, extServices.Perses.IsCore, &extServices.Perses.Auth, extServices.Perses.InternalURL, extServices.Perses.HealthCheckUrl, staChan, &wg)
 	go iss.getTracingStatus(cluster, "tracing", extServices.Tracing.Enabled, extServices.Tracing.IsCore, staChan, &wg)
 
 	// Custom dashboards may use the main Prometheus config
