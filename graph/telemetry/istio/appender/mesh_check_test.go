@@ -283,7 +283,7 @@ func buildFakeWorkloadDeployments() []apps_v1.Deployment {
 }
 
 func buildFakeWorkloadPods() []core_v1.Pod {
-	istioAnnotation := config.Get().ExternalServices.Istio.IstioSidecarAnnotation
+	istioAnnotation := config.IstioSidecarAnnotation
 
 	return []core_v1.Pod{
 		{
@@ -301,7 +301,7 @@ func buildFakeWorkloadPods() []core_v1.Pod {
 }
 
 func buildFakeWorkloadPodsNoSidecar() []core_v1.Pod {
-	istioAnnotation := config.Get().ExternalServices.Istio.IstioSidecarAnnotation
+	istioAnnotation := config.IstioSidecarAnnotation
 
 	podList := buildFakeWorkloadPods()
 	podList[0].Annotations[istioAnnotation] = "{}"

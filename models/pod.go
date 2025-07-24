@@ -93,7 +93,7 @@ func (pod *Pod) Parse(p *core_v1.Pod, isControlPlane func(ctx context.Context, c
 	conf := config.Get()
 	// ParsePod some annotations
 	istioContainerNames := map[string]bool{}
-	if jSon, ok := p.Annotations[conf.ExternalServices.Istio.IstioSidecarAnnotation]; ok {
+	if jSon, ok := p.Annotations[config.IstioSidecarAnnotation]; ok {
 		var scs sideCarStatus
 		err := json.Unmarshal([]byte(jSon), &scs)
 		if err == nil {

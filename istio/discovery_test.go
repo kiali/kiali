@@ -291,13 +291,16 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 
 	// Prepare mocks for first time call.
 	conf := config.NewConfig()
-	conf.ExternalServices.Istio.IstiodDeploymentName = "bar"
+	conf.ExternalServices.Istio.RootNamespace = "foo"
 	conf.KubernetesConfig.ClusterName = "KialiCluster"
 
 	istioDeploymentMock := &apps_v1.Deployment{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      "bar",
+			Name:      "istiod",
 			Namespace: "foo",
+			Labels: map[string]string{
+				"app": "istiod",
+			},
 		},
 		Spec: apps_v1.DeploymentSpec{
 			Template: core_v1.PodTemplateSpec{
@@ -478,11 +481,11 @@ trustDomain: cluster.local
 
 func TestMeshResolvesNetwork(t *testing.T) {
 	cases := map[string]struct {
-		expectedNetwork              string
-		objects                      []runtime.Object
-		sideCarInjectorConfigMap     *core_v1.ConfigMap
-		sideCarInjectorConfigMapName string
-		sideCarConfigMapYAML         string
+		expectedNetwork          string
+		sideCarInjectorConfigMap *core_v1.ConfigMap
+		revision                 string // defaults to "default"
+		istiodName               string // defaults to "istiod"
+		istioConfigMapName       string // defaults to "istio"
 	}{
 		"Network from sidecar injector configmap": {
 			expectedNetwork: "kialiNetwork",
@@ -496,18 +499,20 @@ func TestMeshResolvesNetwork(t *testing.T) {
 				},
 			},
 		},
-		"Sidecar injector configmap set in kiali config": {
-			expectedNetwork: "kialiNetwork",
+		"Network from revisioned sidecar injector configmap": {
+			expectedNetwork:    "revisionedNetwork",
+			revision:           "v1-19-0",
+			istiodName:         "istiod-v1-19-0",
+			istioConfigMapName: "istio-v1-19-0",
 			sideCarInjectorConfigMap: &core_v1.ConfigMap{
 				ObjectMeta: v1.ObjectMeta{
-					Name:      "istio-sidecar-injector",
+					Name:      "istio-sidecar-injector-v1-19-0",
 					Namespace: "istio-system",
 				},
 				Data: map[string]string{
-					"values": `{"global": {"network": "kialiNetwork"}}`,
+					"values": `{"global": {"network": "revisionedNetwork"}}`,
 				},
 			},
-			sideCarInjectorConfigMapName: "istio-sidecar-injector",
 		},
 		"bad sidecar injector configmap json returns empty string": {
 			expectedNetwork: "",
@@ -575,23 +580,36 @@ func TestMeshResolvesNetwork(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			require := require.New(t)
 			conf := config.NewConfig()
-			conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName = tc.sideCarInjectorConfigMapName
+
+			// Use default values if not specified in test case
+			revision := tc.revision
+			if revision == "" {
+				revision = "default"
+			}
+			istiodName := tc.istiodName
+			if istiodName == "" {
+				istiodName = "istiod"
+			}
+			istioConfigMapName := tc.istioConfigMapName
+			if istioConfigMapName == "" {
+				istioConfigMapName = "istio"
+			}
 
 			istiodDeployment := &apps_v1.Deployment{
 				ObjectMeta: v1.ObjectMeta{
-					Name:      "istiod",
+					Name:      istiodName,
 					Namespace: "istio-system",
 					Labels: map[string]string{
 						"app":                     "istiod",
-						config.IstioRevisionLabel: "default",
+						config.IstioRevisionLabel: revision,
 					},
 				},
 			}
 			istioConfigMap := &core_v1.ConfigMap{
 				ObjectMeta: v1.ObjectMeta{
-					Name:      "istio",
+					Name:      istioConfigMapName,
 					Namespace: "istio-system",
-					Labels:    map[string]string{config.IstioRevisionLabel: "default"},
+					Labels:    map[string]string{config.IstioRevisionLabel: revision},
 				},
 				Data: map[string]string{"mesh": ""},
 			}
@@ -697,11 +715,6 @@ trustDomain: cluster.local
 	require.True(controlPlane_1_19.MeshConfig.EnableAutoMtls.Value)
 	require.Len(controlPlane_1_19.ManagedClusters, 1)
 
-	// Neeed to call Setup again to clear the cached mesh object.
-	// business.SetupBusinessLayer(t, k8s, *conf)
-	// Test for setting the configmap name explicitly due to regression: https://github.com/kiali/kiali/issues/6669
-	conf.ExternalServices.Istio.ConfigMapName = istio_1_19_ConfigMap.Name
-	// config.Set(conf)
 	// Create a new cache to clear the old mesh object.
 	cache := cache.NewTestingCache(t, k8s, *conf)
 	discovery = istio.NewDiscovery(clients, cache, conf)
@@ -710,7 +723,7 @@ trustDomain: cluster.local
 
 	require.Len(mesh.ControlPlanes, 2)
 	// Both controlplanes should set this to true since both will use the 1.19 configmap.
-	require.True(mesh.ControlPlanes[0].MeshConfig.EnableAutoMtls.Value)
+	require.False(mesh.ControlPlanes[0].MeshConfig.EnableAutoMtls.Value)
 	require.True(mesh.ControlPlanes[1].MeshConfig.EnableAutoMtls.Value)
 }
 

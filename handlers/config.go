@@ -56,7 +56,6 @@ type PublicConfig struct {
 	IgnoreHomeCluster   bool                          `json:"ignoreHomeCluster,omitempty"`
 	InstallationTag     string                        `json:"installationTag,omitempty"`
 	IstioAnnotations    IstioAnnotations              `json:"istioAnnotations,omitempty"`
-	IstioConfigMap      string                        `json:"istioConfigMap"`
 	IstioIdentityDomain string                        `json:"istioIdentityDomain,omitempty"`
 	IstioLabels         config.IstioLabels            `json:"istioLabels,omitempty"`
 	IstioStatusEnabled  bool                          `json:"istioStatusEnabled,omitempty"`
@@ -88,14 +87,13 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			IstioAnnotations: IstioAnnotations{
 				AmbientAnnotation:        config.AmbientAnnotation,
 				AmbientAnnotationEnabled: config.AmbientAnnotationEnabled,
-				IstioInjectionAnnotation: conf.ExternalServices.Istio.IstioInjectionAnnotation,
+				IstioInjectionAnnotation: config.IstioInjectionAnnotation,
 			},
 			HealthConfig:        conf.HealthConfig,
 			IgnoreHomeCluster:   conf.Clustering.IgnoreHomeCluster,
 			IstioStatusEnabled:  conf.ExternalServices.Istio.ComponentStatuses.Enabled,
 			IstioIdentityDomain: conf.ExternalServices.Istio.IstioIdentityDomain,
 			IstioLabels:         conf.IstioLabels,
-			IstioConfigMap:      conf.ExternalServices.Istio.ConfigMapName,
 			KialiFeatureFlags:   conf.KialiFeatureFlags,
 			LogLevel:            log.GetLogLevel(),
 			Prometheus: PrometheusConfig{

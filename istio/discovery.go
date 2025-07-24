@@ -73,14 +73,7 @@ func parseIstioControlPlaneCertificate(certConfigMap *corev1.ConfigMap) models.C
 
 // sets the mesh configuration for a controlplane from the istio configmap(s).
 func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlPlane *models.ControlPlane) error {
-	var configMapName string
-	// If the config map name is explicitly set we should always use that
-	// until the config option is removed.
-	if in.conf.ExternalServices.Istio.ConfigMapName != "" {
-		configMapName = in.conf.ExternalServices.Istio.ConfigMapName
-	} else {
-		configMapName = istioConfigMapName(controlPlane.Revision)
-	}
+	configMapName := istioConfigMapName(controlPlane.Revision)
 
 	controlPlaneConf := &models.ControlPlaneConfiguration{
 		Network: in.resolveNetwork(kubeCache, controlPlane),
@@ -921,12 +914,7 @@ func (in *Discovery) getNetworkFromSidecarInejctorConfigMap(kubeCache ctrlclient
 	// Try to resolve the logical Istio's network ID of the cluster where
 	// Kiali is installed. This assumes that the mesh Control Plane is installed in the same
 	// cluster as Kiali.
-	var configMapName string
-	if in.conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName != "" {
-		configMapName = in.conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName
-	} else {
-		configMapName = sidecarInjectorConfigMapName(revision)
-	}
+	configMapName := sidecarInjectorConfigMapName(revision)
 
 	istioSidecarConfig := &corev1.ConfigMap{}
 	err := kubeCache.Get(context.Background(), ctrlclient.ObjectKey{Name: configMapName, Namespace: namespace}, istioSidecarConfig)
