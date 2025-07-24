@@ -9,6 +9,7 @@ import (
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -26,6 +27,7 @@ type GlobalInfo struct {
 	Grafana           *grafana.Service
 	IstioStatusGetter IstioStatusGetter
 	KialiCache        cache.KialiCache
+	Perses            *perses.Service
 	PromClient        *prometheus.Client
 
 	Vendor VendorInfo // telemetry vendor's global info

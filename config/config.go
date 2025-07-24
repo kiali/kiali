@@ -284,6 +284,19 @@ type GrafanaVariablesConfig struct {
 	Workload   string `yaml:"workload" json:"workload,omitempty"`
 }
 
+// PersesConfig describes configuration used for Perses links
+type PersesConfig struct {
+	Auth           Auth                     `yaml:"auth" json:"auth"`
+	Dashboards     []GrafanaDashboardConfig `yaml:"dashboards" json:"dashboards"`
+	Enabled        bool                     `yaml:"enabled" json:"enabled"`          // Enable or disable Grafana support in Kiali
+	ExternalURL    string                   `yaml:"external_url" json:"externalURL"` // replaces the old url
+	HealthCheckUrl string                   `yaml:"health_check_url,omitempty" json:"healthCheckUrl,omitempty"`
+	InternalURL    string                   `yaml:"internal_url" json:"internalURL"` // replaces the old in_cluster_url
+	IsCore         bool                     `yaml:"is_core,omitempty" json:"isCore,omitempty"`
+	Project        string                   `yaml:"project,omitempty" json:"project,omitempty"`
+	URLFormat      string                   `yaml:"url_format,omitempty" json:"urlFormat,omitempty"`
+}
+
 type TempoConfig struct {
 	CacheCapacity int    `yaml:"cache_capacity" json:"cacheCapacity,omitempty"`
 	CacheEnabled  bool   `yaml:"cache_enabled" json:"cacheEnabled,omitempty"`
@@ -368,6 +381,7 @@ type GatewayAPIClass struct {
 type ExternalServices struct {
 	Grafana          GrafanaConfig          `yaml:"grafana,omitempty"`
 	Istio            IstioConfig            `yaml:"istio,omitempty"`
+	Perses           PersesConfig           `yaml:"perses,omitempty"`
 	Prometheus       PrometheusConfig       `yaml:"prometheus,omitempty"`
 	CustomDashboards CustomDashboardsConfig `yaml:"custom_dashboards,omitempty"`
 	Tracing          TracingConfig          `yaml:"tracing,omitempty"`
@@ -787,6 +801,15 @@ func NewConfig() (c *Config) {
 				ValidationChangeDetectionEnabled: true,
 				ValidationReconcileInterval:      util.AsPtr(time.Minute),
 				GatewayAPIClasses:                []GatewayAPIClass{},
+			},
+			Perses: PersesConfig{
+				Auth: Auth{
+					Type: AuthTypeNone,
+				},
+				Enabled:     true,
+				InternalURL: "http://perses.istio-system:4000",
+				IsCore:      false,
+				Project:     "istio",
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{
