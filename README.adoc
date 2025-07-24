@@ -238,11 +238,22 @@ link:./hack[hack] directory. Check the `--help` output for available options.
 By default, the script uses the configuration template file located in the same directory it uses, and can be found in the link:./hack/run-kiali-config-template.yaml[config template file]
 also located in the `hack` directory. For additional information, refer to the comments at the top of both files.
 
+The following command has a typical set of options when running this with a typical "all-in-one" environment (single cluster, co-located Istio and Kiali, default "Kubernetes" cluster name), and
+an intent to start a debug server in your IDE (like vscode). It overrides some ports so they don't conflict with defaults:
 
 [source,shell]
 ----
 cd $KIALI_SOURCES/kiali/hack
-./run-kiali.sh
+./run-kiali.sh --enable-server false --tmp-root-dir $HOME/tmp -pg 3005:3005 -cn Kubernetes
+----
+
+The following command has a typical set of options when running this in an external Kiali environment, setup using the install-external-kiali.sh hack script. In this
+environment you will have two clusters, "mesh" has the Istio and deployed apps,  and "mgmt" has Kiali.
+
+[source,shell]
+----
+cd $KIALI_SOURCES/kiali/hack
+./run-kiali.sh --enable-server false --tmp-root-dir $HOME/tmp -pg 3005:3005 -kc mesh -cn mgmt -hkc mgmt
 ----
 
 === Running integration tests

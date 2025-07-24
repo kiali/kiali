@@ -153,7 +153,8 @@ Valid options:
       Cluster client executable - must refer to 'oc' or 'kubectl'.
       Default: ${DEFAULT_CLIENT_EXE}
   -cn|--cluster-name)
-      The name of the cluster as defined by the Istio infrastructure.
+      The name of the Kiali home cluster. This option must be specified if the home cluster name is
+      not the same as the active home context.
       Default: <not defined>
   -es|--enable-server
       When 'true', this script will start the server and manage its lifecycle.
