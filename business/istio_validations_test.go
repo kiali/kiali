@@ -131,7 +131,7 @@ func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.
 		istiodDeploymentName              = "istiod-1-19-0"
 	)
 	conf := config.NewConfig()
-	// conf.ExternalServices.Istio.ConfigMapName = istioConfigMapName
+
 	conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName = istioSidecarInjectorConfigMapName
 	conf.ExternalServices.Istio.IstiodDeploymentName = istiodDeploymentName
 	config.Set(conf)

@@ -321,7 +321,6 @@ type RegistryConfig struct {
 // IstioConfig describes configuration used for istio links
 type IstioConfig struct {
 	ComponentStatuses                 ComponentStatuses `yaml:"component_status,omitempty" json:"componentStatuses,omitempty"`
-	ConfigMapName                     string            `yaml:"config_map_name,omitempty" json:"configMapName,omitempty"`
 	EnvoyAdminLocalPort               int               `yaml:"envoy_admin_local_port,omitempty" json:"envoyAdminLocalPort,omitempty"`
 	GatewayAPIClasses                 []GatewayAPIClass `yaml:"gateway_api_classes,omitempty" json:"gatewayApiClasses,omitempty"`
 	GatewayAPIClassesLabelSelector    string            `yaml:"gateway_api_classes_label_selector,omitempty" json:"gatewayApiClassesLabelSelector,omitempty"`
@@ -780,7 +779,6 @@ func NewConfig() (c *Config) {
 					// Components config is left for custom components status check
 					Components: []ComponentStatus{},
 				},
-				ConfigMapName:                     "",
 				EnvoyAdminLocalPort:               15000,
 				IstioAPIEnabled:                   true,
 				IstioIdentityDomain:               "svc.cluster.local",

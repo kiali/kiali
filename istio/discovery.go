@@ -89,14 +89,7 @@ func parseIstioControlPlaneCertificate(certConfigMap *corev1.ConfigMap) models.C
 
 // sets the mesh configuration for a controlplane from the istio configmap(s).
 func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlPlane *models.ControlPlane) error {
-	var configMapName string
-	// If the config map name is explicitly set we should always use that
-	// until the config option is removed.
-	if in.conf.ExternalServices.Istio.ConfigMapName != "" {
-		configMapName = in.conf.ExternalServices.Istio.ConfigMapName
-	} else {
-		configMapName = istioConfigMapName(controlPlane.Revision)
-	}
+	configMapName := istioConfigMapName(controlPlane.Revision)
 
 	controlPlaneConf := &models.ControlPlaneConfiguration{
 		Network: in.resolveNetwork(kubeCache, controlPlane),

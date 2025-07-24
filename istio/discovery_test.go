@@ -700,11 +700,6 @@ trustDomain: cluster.local
 	require.True(controlPlane_1_19.MeshConfig.EnableAutoMtls.Value)
 	require.Len(controlPlane_1_19.ManagedClusters, 1)
 
-	// Neeed to call Setup again to clear the cached mesh object.
-	// business.SetupBusinessLayer(t, k8s, *conf)
-	// Test for setting the configmap name explicitly due to regression: https://github.com/kiali/kiali/issues/6669
-	conf.ExternalServices.Istio.ConfigMapName = istio_1_19_ConfigMap.Name
-	// config.Set(conf)
 	// Create a new cache to clear the old mesh object.
 	cache := cache.NewTestingCache(t, k8s, *conf)
 	discovery = istio.NewDiscovery(clients, cache, conf)
@@ -713,7 +708,7 @@ trustDomain: cluster.local
 
 	require.Len(mesh.ControlPlanes, 2)
 	// Both controlplanes should set this to true since both will use the 1.19 configmap.
-	require.True(mesh.ControlPlanes[0].MeshConfig.EnableAutoMtls.Value)
+	require.False(mesh.ControlPlanes[0].MeshConfig.EnableAutoMtls.Value)
 	require.True(mesh.ControlPlanes[1].MeshConfig.EnableAutoMtls.Value)
 }
 
