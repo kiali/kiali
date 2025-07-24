@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
 )
@@ -44,6 +45,7 @@ func NewRoutes(
 	traceClientLoader func() tracing.ClientInterface,
 	authController authentication.AuthController,
 	grafana *grafana.Service,
+	perses *perses.Service,
 	discovery *istio.Discovery,
 ) (r *Routes) {
 	r = new(Routes)
@@ -84,7 +86,7 @@ func NewRoutes(
 			log.StatusLogName,
 			"GET",
 			"/api",
-			handlers.Root(conf, clientFactory, kialiCache, grafana),
+			handlers.Root(conf, clientFactory, kialiCache, grafana, perses),
 			conf.Server.RequireAuth,
 		},
 		// swagger:route GET /authenticate auth authenticate
@@ -187,7 +189,7 @@ func NewRoutes(
 			log.StatusLogName,
 			"GET",
 			"/api/status",
-			handlers.Root(conf, clientFactory, kialiCache, grafana),
+			handlers.Root(conf, clientFactory, kialiCache, grafana, perses),
 			true,
 		},
 		// swagger:route GET /tracing/diagnose tracing tracingDiagnose
