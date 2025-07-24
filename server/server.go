@@ -20,6 +20,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/observability"
+	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/routing"
 	"github.com/kiali/kiali/tracing"
@@ -44,8 +45,9 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 	staticAssetFS fs.FS,
 ) (*Server, error) {
 	grafana := grafana.NewService(conf, clientFactory.GetSAHomeClusterClient())
+	perses := perses.NewService(conf, clientFactory.GetSAHomeClusterClient())
 	// create a router that will route all incoming API server requests to different handlers
-	router, err := routing.NewRouter(conf, cache, clientFactory, prom, traceClientLoader, controlPlaneMonitor, grafana, discovery, staticAssetFS)
+	router, err := routing.NewRouter(conf, cache, clientFactory, prom, traceClientLoader, controlPlaneMonitor, grafana, perses, discovery, staticAssetFS)
 	if err != nil {
 		return nil, err
 	}

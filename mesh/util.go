@@ -8,6 +8,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/status"
 )
 
@@ -17,7 +18,7 @@ type Response struct {
 }
 
 // StatusGetter var allows test code to mock out this function with a mock
-var StatusGetter func(context.Context, *config.Config, kubernetes.ClientFactory, cache.KialiCache, *grafana.Service) status.StatusInfo = status.Get
+var StatusGetter func(context.Context, *config.Config, kubernetes.ClientFactory, cache.KialiCache, *grafana.Service, *perses.Service) status.StatusInfo = status.Get
 
 // Error panics with InternalServerError (500) and the provided message
 func Error(message string) {
