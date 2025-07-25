@@ -24,6 +24,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 const (
@@ -273,6 +274,7 @@ func sidecarInjectorConfigMapName(revision string) string {
 
 type MeshDiscovery interface {
 	Clusters() ([]models.KubeCluster, error)
+	GetControlPlaneNamespaces(cluster string) []string
 	IsControlPlane(cluster, namespace string) bool
 	Mesh(ctx context.Context) (*models.Mesh, error)
 }
@@ -293,17 +295,31 @@ func NewDiscovery(clients map[string]kubernetes.ClientInterface, cache cache.Kia
 	}
 }
 
-// IsControlPlane returns true if the cluster-namespace is an istio control plane. If cluster == "" it
-// is ignored, and only the namespace is considered. Otherwise false.
-func (in *Discovery) IsControlPlane(cluster, namespace string) bool {
+// GetControlPlaneNamespaces returns control plane namespaces for the cluster. If cluster == "" then
+// it is for all clusters. it returns an empty slice.
+func (in *Discovery) GetControlPlaneNamespaces(cluster string) []string {
+	namespaces := map[string]bool{}
+
 	mesh, err := in.Mesh(context.TODO())
 	if err != nil {
-		log.Debugf("Unable to get mesh to determine if namespace [%s][%s] is a control plane. Err: %s", cluster, namespace, err)
-		return false
+		log.Debugf("Unable to get mesh to determine control plane namespaces for cluster [%s]. Err: %s", cluster, err)
+		return maps.Keys(namespaces)
 	}
 
 	for _, cp := range mesh.ControlPlanes {
-		if (cluster == "" || cluster == cp.Cluster.Name) && namespace == cp.IstiodNamespace {
+		if cluster == "" || cluster == cp.Cluster.Name {
+			namespaces[cp.IstiodNamespace] = true
+		}
+	}
+
+	return maps.Keys(namespaces)
+}
+
+// IsControlPlane returns true if the cluster-namespace is an istio control plane. If cluster == "" it
+// is ignored, and only the namespace is considered. Otherwise false.
+func (in *Discovery) IsControlPlane(cluster, namespace string) bool {
+	for _, cpns := range in.GetControlPlaneNamespaces(cluster) {
+		if namespace == cpns {
 			return true
 		}
 	}
@@ -688,8 +704,16 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 
 			namespaces := FilterNamespacesWithDiscoverySelectors(
 				models.CastNamespaceCollection(k8sNamespaces, cluster.Name),
-				GetDiscoverySelectorsForCluster(cluster.Name, in.conf),
+				GetDiscoverySelectorsForCluster(in, cluster.Name, in.conf, false),
 			)
+			// add control plane namespaces, which should always be included
+			for _, cp := range controlPlanesByClusterName[cluster.Name] {
+				if !sliceutil.Some(namespaces, func(ns models.Namespace) bool {
+					return ns.Name == cp.IstiodNamespace
+				}) {
+					namespaces = append(namespaces, models.Namespace{Cluster: cluster.Name, Name: cp.IstiodNamespace})
+				}
+			}
 
 			for _, n := range namespaces {
 				rev := GetRevision(n)
