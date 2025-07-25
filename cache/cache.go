@@ -384,25 +384,24 @@ func (c *kialiCacheImpl) GatewayAPIClasses(cluster string) []config.GatewayAPICl
 			i, gwClass.Name, gwClass.ClassName)
 	}
 
-	if c.conf.Deployment.ClusterWideAccess {
+	if len(result) == 0 && c.conf.Deployment.ClusterWideAccess {
 		labelSelector, err := labels.ConvertSelectorToLabelsMap(config.Get().ExternalServices.Istio.GatewayAPIClassesLabelSelector)
 		if err != nil {
-			c.zl.Error().Msgf("bad gateway_api_classes_label_selector: %s", err)
-		}
-		// If there are no configured classes, get classes using the Istio controller
-		listOpts := []client.ListOption{client.MatchingLabels(labelSelector)}
-		classList := &k8s_networking_v1.GatewayClassList{}
-		if len(result) == 0 {
-			c.zl.Debug().Msg("Auto discovery of GatewayAPIClasses")
+			c.zl.Error().Msgf("Cannot auto discover gateways: bad gateway_api_classes_label_selector: %s", err)
+		} else {
+			// If there are no configured classes, get classes using the Istio controller
+			listOpts := []client.ListOption{client.MatchingLabels(labelSelector)}
+			classList := &k8s_networking_v1.GatewayClassList{}
+			c.zl.Debug().Msgf("Auto discovery of GatewayAPIClasses using label selector [%v]", labelSelector)
 			err := kubeCache.List(context.TODO(), classList, listOpts...)
 			if err != nil {
-				return result
-			}
-
-			for _, class := range classList.Items {
-				// Filter out classes that don't use Istio as a controller when the label filter is set
-				if strings.HasPrefix(string(class.Spec.ControllerName), "istio.io") || len(labelSelector) > 0 {
-					result = append(result, config.GatewayAPIClass{Name: class.Name, ClassName: class.Name})
+				c.zl.Error().Msgf("Cannot auto discover gateways: list failed: %s", err)
+			} else {
+				for _, class := range classList.Items {
+					// Filter out classes that don't use Istio as a controller when the label filter is set
+					if strings.HasPrefix(string(class.Spec.ControllerName), "istio.io") || len(labelSelector) > 0 {
+						result = append(result, config.GatewayAPIClass{Name: class.Name, ClassName: class.Name})
+					}
 				}
 			}
 		}
@@ -411,9 +410,9 @@ func (c *kialiCacheImpl) GatewayAPIClasses(cluster string) []config.GatewayAPICl
 	if len(result) == 0 {
 		c.zl.Debug().Msg("GatewayAPIClasses are not configured and cannot be automatically discovered, so using default values")
 		// Using default values
-		result = append(result, config.GatewayAPIClass{Name: "Istio", ClassName: "istio"})
+		result = append(result, config.GatewayAPIClass{Name: "istio", ClassName: "istio"})
 		if c.IsAmbientEnabled(cluster) {
-			result = append(result, config.GatewayAPIClass{Name: "Waypoint", ClassName: "istio-waypoint"})
+			result = append(result, config.GatewayAPIClass{Name: "istio-waypoint", ClassName: "istio-waypoint"})
 		}
 	}
 
