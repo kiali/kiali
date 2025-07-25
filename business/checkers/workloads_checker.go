@@ -1,11 +1,12 @@
 package checkers
 
 import (
-	workloads_ambient "github.com/kiali/kiali/business/checkers/workloads/ambient"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/business/checkers/workloads"
+	workloads_ambient "github.com/kiali/kiali/business/checkers/workloads/ambient"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 )
 
@@ -13,8 +14,10 @@ const WorkloadCheckerType = "workload"
 
 type WorkloadChecker struct {
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
-	WorkloadsPerNamespace map[string]models.Workloads
 	Cluster               string
+	Conf                  *config.Config
+	Namespaces            models.Namespaces
+	WorkloadsPerNamespace map[string]models.Workloads
 }
 
 func (w WorkloadChecker) Check() models.IstioValidations {
@@ -36,7 +39,7 @@ func (w WorkloadChecker) runChecks(workload *models.Workload, namespace string) 
 
 	enabledCheckers := []Checker{
 		workloads.UncoveredWorkloadChecker{Workload: workload, Namespace: namespace, AuthorizationPolicies: w.AuthorizationPolicies},
-		workloads_ambient.AmbientWorkloadChecker{Workload: workload, Namespace: namespace, AuthorizationPolicies: w.AuthorizationPolicies},
+		workloads_ambient.AmbientWorkloadChecker{Workload: workload, Namespace: namespace, AuthorizationPolicies: w.AuthorizationPolicies, Cluster: w.Cluster, Namespaces: w.Namespaces, Conf: w.Conf},
 	}
 
 	for _, checker := range enabledCheckers {
