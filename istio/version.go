@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -138,11 +139,11 @@ func parseRawIstioVersion(rawVersion string) *models.ExternalServiceInfo {
 // GetVersion returns the latest version of the Istio control plane.
 // If there are multiple healthy istiod pods, the latest one by
 // creation timestamp is returned.
-func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.ClientInterface, kubeCache ctrlclient.Reader, revision string, namespace string) (*models.ExternalServiceInfo, error) {
+func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.ClientInterface, kubeCache ctrlclient.Reader, controlPlane models.ControlPlane) (*models.ExternalServiceInfo, error) {
 	istioConfig := conf.ExternalServices.Istio
 	// If kiali is running on the same cluster as the istio control plane, use the URL instead
 	// of port forwarding. For remote clusters we need to port forward to get the version since the
-	// http monitoring port (15014) is not exposed publicly.
+	// http monitoring port (usually 15014) is not exposed publicly.
 	if client.ClusterInfo().Name == conf.KubernetesConfig.ClusterName {
 		url := ""
 		// If the config has a URL for the service version, use that until the config option is removed.
@@ -152,20 +153,37 @@ func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.Clie
 			// Look for an istio service with the rev label in the control plane namespace.
 			revLabelSelector := map[string]string{
 				config.IstioAppLabel:      istiodAppLabelValue,
-				config.IstioRevisionLabel: revision,
+				config.IstioRevisionLabel: controlPlane.Revision,
 			}
 
 			serviceList := &corev1.ServiceList{}
-			err := kubeCache.List(ctx, serviceList, ctrlclient.InNamespace(namespace), ctrlclient.MatchingLabels(revLabelSelector))
+			err := kubeCache.List(ctx, serviceList, ctrlclient.InNamespace(controlPlane.IstiodNamespace), ctrlclient.MatchingLabels(revLabelSelector))
 			if err != nil {
 				return nil, err
 			}
 			services := serviceList.Items
 			if len(services) == 0 {
-				return nil, fmt.Errorf("no istio service found for revision [%s]", revision)
+				return nil, fmt.Errorf("no istio service found for revision [%s]", controlPlane.Revision)
 			}
 
-			url = fmt.Sprintf("http://%s.%s:%d/version", services[0].Name, services[0].Namespace, 15014)
+			// In case the monitoring port is not the default, use the port from the service.
+			port := defaultMonitoringPort
+			if services[0].Spec.Ports != nil {
+				for _, p := range services[0].Spec.Ports {
+					if p.Name == monitoringPortName {
+						port = int(p.Port)
+						break
+					}
+				}
+			}
+
+			url = "http://" + services[0].Name
+			// In practice, the namespace is always set.
+			// This is just to facilitate testing.
+			if services[0].Namespace != "" {
+				url += "." + services[0].Namespace
+			}
+			url += ":" + strconv.Itoa(port) + "/version"
 		}
 
 		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
@@ -197,13 +215,13 @@ func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.Clie
 		return parseRawIstioVersion(rawVersion), nil
 	}
 
-	istiods, err := GetHealthyIstiodPods(kubeCache, revision, namespace)
+	istiods, err := GetHealthyIstiodPods(kubeCache, controlPlane.Revision, controlPlane.IstiodNamespace)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(istiods) == 0 {
-		return nil, fmt.Errorf("no healthy istiod pods found for revision [%s]", revision)
+		return nil, fmt.Errorf("no healthy istiod pods found for revision [%s]", controlPlane.Revision)
 	}
 
 	// Assuming that all pods are running the same version, we only need to get the version from one healthy istiod pod.
@@ -213,7 +231,7 @@ func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.Clie
 	})
 	istiod := GetLatestPod(istiods)
 
-	resp, err := client.ForwardGetRequest(istiod.Namespace, istiod.Name, conf.ExternalServices.Istio.IstiodPodMonitoringPort, "/version")
+	resp, err := client.ForwardGetRequest(istiod.Namespace, istiod.Name, controlPlane.MonitoringPort, "/version")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get mesh version: %s", err)
 	}
