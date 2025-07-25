@@ -33,6 +33,8 @@ import { ApiResponse } from 'types/Api';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 import { TraceSpansLimit } from './TraceSpansLimit';
 import { GrafanaLinks } from './GrafanaLinks';
+import { PersesInfo } from '../../types/PersesInfo';
+import { PersesLinks } from './PersesLinks';
 
 type MetricsState = {
   crippledFeatures?: KialiCrippledFeatures;
@@ -40,6 +42,7 @@ type MetricsState = {
   grafanaInfo: GrafanaInfo;
   isTimeOptionsOpen: boolean;
   labelsSettings: LabelsSettings;
+  persesInfo: PersesInfo;
   showSpans: boolean;
   showTrendlines: boolean;
   spanOverlay?: Overlay<JaegerLineInfo>;
@@ -86,6 +89,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
   options: IstioMetricsOptions;
   spanOverlay: SpanOverlay;
   static grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
+  static persesInfoPromise: Promise<PersesInfo | undefined> | undefined;
 
   constructor(props: Props) {
     super(props);
@@ -100,6 +104,9 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
         externalLinks: []
       },
       isTimeOptionsOpen: false,
+      persesInfo: {
+        externalLinks: []
+      },
       tabHeight: 300,
       showSpans: settings.showSpans,
       showTrendlines: settings.showTrendlines,
@@ -134,6 +141,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
     });
 
     this.fetchGrafanaInfo();
+    this.fetchPersesInfo();
     this.refresh();
   }
 
@@ -241,6 +249,35 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
       .catch(err => {
         AlertUtils.addMessage({
           ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
+          group: 'default',
+          type: MessageType.INFO,
+          showNotification: false
+        });
+      });
+  }
+
+  private fetchPersesInfo(): void {
+    if (!IstioMetricsComponent.persesInfoPromise) {
+      IstioMetricsComponent.persesInfoPromise = API.getPersesInfo().then(response => {
+        if (response.status === 204) {
+          return undefined;
+        }
+
+        return response.data;
+      });
+    }
+
+    IstioMetricsComponent.persesInfoPromise
+      .then(persesInfo => {
+        if (persesInfo) {
+          this.setState({ persesInfo: persesInfo });
+        } else {
+          this.setState({ persesInfo: { externalLinks: [] } });
+        }
+      })
+      .catch(err => {
+        AlertUtils.addMessage({
+          ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
           group: 'default',
           type: MessageType.INFO,
           showNotification: false
@@ -434,6 +471,15 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
                 object={this.props.object}
                 objectType={this.props.objectType}
                 datasourceUID={this.state.grafanaInfo.datasourceUID}
+              />
+            </ToolbarItem>
+            <ToolbarItem style={{ marginLeft: 'auto', paddingRight: '20px' }}>
+              <PersesLinks
+                links={this.state.persesInfo.externalLinks}
+                namespace={this.props.namespace}
+                object={this.props.object}
+                objectType={this.props.objectType}
+                project={this.state.persesInfo.project}
               />
             </ToolbarItem>
 
