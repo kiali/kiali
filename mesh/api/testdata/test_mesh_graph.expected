@@ -25,6 +25,7 @@
           "nodeType": "box",
           "healthData": "Healthy",
           "infraData": {
+            "accessible": true,
             "apiEndpoint": "http://127.0.0.2:9443",
             "isKialiHome": true,
             "kialiInstances": [
@@ -37,8 +38,7 @@
               }
             ],
             "name": "cluster-primary",
-            "secretName": "",
-            "accessible": true
+            "secretName": ""
           },
           "isBox": "cluster",
           "version": "Unknown"
@@ -54,12 +54,12 @@
           "nodeType": "box",
           "healthData": "Healthy",
           "infraData": {
+            "accessible": true,
             "apiEndpoint": "",
             "isKialiHome": false,
             "kialiInstances": null,
             "name": "cluster-remote",
-            "secretName": "",
-            "accessible": true
+            "secretName": ""
           },
           "isBox": "cluster"
         }
@@ -266,20 +266,14 @@
           "nodeType": "infra",
           "healthData": "Healthy",
           "infraData": {
-            "ComponentStatuses": {
+            "componentStatuses": {
               "enabled": true
             },
-            "ConfigMapName": "",
-            "EnvoyAdminLocalPort": 15000,
-            "GatewayAPIClasses": [],
-            "GatewayAPIClassesLabelSelector": "",
-            "IstioAPIEnabled": true,
-            "IstioIdentityDomain": "svc.cluster.local",
-            "IstioInjectionAnnotation": "sidecar.istio.io/inject",
-            "IstioSidecarInjectorConfigMapName": "",
-            "IstioSidecarAnnotation": "sidecar.istio.io/status",
-            "IstiodDeploymentName": "",
-            "IstiodPodMonitoringPort": 15014,
+            "envoyAdminLocalPort": 15000,
+            "istioApiEnabled": true,
+            "istioIdentityDomain": "svc.cluster.local",
+            "istioInjectionAnnotation": "sidecar.istio.io/inject",
+            "istioSidecarAnnotation": "sidecar.istio.io/status",
             "istiodPollingIntervalSeconds": 20,
             "rootNamespace": "istio-system",
             "urlServiceVersion": "",
@@ -329,6 +323,7 @@
           "healthData": "Healthy",
           "infraData": {
             "cluster": {
+              "accessible": true,
               "apiEndpoint": "http://127.0.0.2:9443",
               "isKialiHome": true,
               "kialiInstances": [
@@ -341,8 +336,7 @@
                 }
               ],
               "name": "cluster-primary",
-              "secretName": "",
-              "accessible": true
+              "secretName": ""
             },
             "config": {
               "certificates": [
@@ -388,6 +382,7 @@
             "istiodNamespace": "istio-system",
             "managedClusters": [
               {
+                "accessible": true,
                 "apiEndpoint": "http://127.0.0.2:9443",
                 "isKialiHome": true,
                 "kialiInstances": [
@@ -400,16 +395,15 @@
                   }
                 ],
                 "name": "cluster-primary",
-                "secretName": "",
-                "accessible": true
+                "secretName": ""
               },
               {
+                "accessible": true,
                 "apiEndpoint": "",
                 "isKialiHome": false,
                 "kialiInstances": null,
                 "name": "cluster-remote",
-                "secretName": "",
-                "accessible": true
+                "secretName": ""
               }
             ],
             "managesExternal": true,
@@ -459,6 +453,7 @@
                 "revision": "default"
               }
             ],
+            "monitoringPort": 15014,
             "resources": {},
             "revision": "default",
             "status": "",

@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/spf13/pflag"
 	"golang.org/x/exp/maps"
-
 	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -25,24 +27,6 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/util/sliceutil"
-)
-
-const (
-	AmbientDataplaneModeLabelValue = "ambient"
-	IstioDataplaneModeLabelKey     = "istio.io/dataplane-mode"
-)
-
-const (
-	istioControlPlaneClustersLabel        = "topology.istio.io/controlPlaneClusters"
-	istiodAppLabelValue                   = "istiod"
-	istiodClusterIDEnvKey                 = "CLUSTER_ID"
-	istiodExternalEnvKey                  = "EXTERNAL_ISTIOD"
-	istiodScopeGatewayEnvKey              = "PILOT_SCOPE_GATEWAY_TO_NAMESPACE"
-	istiodSharedMeshConfigEnvKey          = "SHARED_MESH_CONFIG"
-	baseIstioConfigMapName                = "istio"                  // As of 1.19 this is hardcoded in the helm charts.
-	baseIstioSidecarInjectorConfigMapName = "istio-sidecar-injector" // As of 1.19 this is hardcoded in the helm charts.
-	certificatesConfigMapName             = "istio-ca-root-cert"
-	certificateName                       = "root-cert.pem"
 )
 
 // 3 seconds is somewhat arbitrary but mesh discovery expires after 20s so it needs to be less than that.
@@ -495,6 +479,10 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 						controlPlane.SharedMeshConfig = env.Value
 					}
 				}
+
+				// Parse the deployment args and set fields on the control plane
+				parseArgsInto(containers[0].Args, &controlPlane)
+
 				controlPlane.Resources = containers[0].Resources
 				if memoryLimit := controlPlane.Resources.Limits.Memory(); memoryLimit != nil {
 					if thresholds := controlPlane.Thresholds; thresholds == nil {
@@ -550,7 +538,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				var cancel context.CancelFunc
 				ctx, cancel = context.WithTimeout(ctx, getVersionTimeout)
 				defer cancel()
-				versionInfo, err := GetVersion(ctx, in.conf, saClient, kubeCache, controlPlane.Revision, controlPlane.IstiodNamespace)
+				versionInfo, err := GetVersion(ctx, in.conf, saClient, kubeCache, controlPlane)
 				if err != nil {
 					log.Warningf("Unable to get version info for controlplane [%s/%s] on cluster [%s]. Err: %s", controlPlane.IstiodName, controlPlane.IstiodNamespace, cluster.Name, err)
 					return
@@ -774,6 +762,7 @@ func newControlPlane(istiod appsv1.Deployment, cluster *models.KubeCluster) mode
 		Cluster:         cluster,
 		Labels:          istiod.Labels,
 		MeshConfig:      models.NewMeshConfig(),
+		MonitoringPort:  defaultMonitoringPort, // Default monitoring port, will be overridden by parseArgsInto if --monitoringAddr is found
 		IstiodName:      istiod.Name,
 		IstiodNamespace: istiod.Namespace,
 		Revision:        istiod.Labels[config.IstioRevisionLabel],
@@ -1080,4 +1069,32 @@ func (in *Discovery) canConnectToIstiodForRevision(controlPlane models.ControlPl
 		Status:    status,
 		IsCore:    true,
 	}, nil
+}
+
+func parseArgsInto(args []string, controlPlane *models.ControlPlane) {
+	if controlPlane == nil {
+		return
+	}
+
+	flagSet := pflag.NewFlagSet("istiod", pflag.ContinueOnError)
+	flagSet.ParseErrorsWhitelist.UnknownFlags = true
+
+	monitoringAddr := flagSet.String("monitoringAddr", "", "Monitoring address in format :port")
+
+	if err := flagSet.Parse(args); err != nil {
+		log.Debugf("Unable to parse args from control plane: %s", err)
+		return
+	}
+
+	if *monitoringAddr != "" {
+		if _, port, err := net.SplitHostPort(*monitoringAddr); err == nil {
+			if portNum, err := strconv.Atoi(port); err == nil {
+				controlPlane.MonitoringPort = portNum
+			} else {
+				log.Debugf("Invalid --monitoringAddr port '%s', expected valid port number. Using default port %d: %s", port, defaultMonitoringPort, err)
+			}
+		} else {
+			log.Debugf("Invalid --monitoringAddr format '%s', expected 'host:port' or ':port'. Using default port %d: %s", *monitoringAddr, defaultMonitoringPort, err)
+		}
+	}
 }
