@@ -1487,6 +1487,29 @@ func NewRoutes(
 			handlers.GetGrafanaInfo(conf, grafana),
 			true,
 		},
+		// swagger:route GET /perses integrations persesInfo
+		// ---
+		// Get the perses URL and other descriptors
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      503: serviceUnavailableError
+		//      200: persesInfoResponse
+		//      204: noContent
+		//
+		{
+			"PersesURL",
+			log.ConfigLogName,
+			"GET",
+			"/api/perses",
+			handlers.GetPersesInfo(conf, perses),
+			true,
+		},
 		// swagger:route GET /tracing integrations tracingInfo
 		// ---
 		// Get the tracing URL and other descriptors
