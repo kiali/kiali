@@ -28,23 +28,23 @@ import (
 //
 //	layer := NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build()
 type layerBuilder struct {
-	t              testing.TB
-	userClients    map[string]kubernetes.UserClientInterface
-	kialiSAClients map[string]kubernetes.ClientInterface
-	prom           prometheus.ClientInterface
-	tracingLoader  func() tracing.ClientInterface
 	cache          cache.KialiCache
 	conf           *config.Config
-	grafana        *grafana.Service
-	discovery      istio.MeshDiscovery
 	cpm            ControlPlaneMonitor
+	discovery      istio.MeshDiscovery
+	grafana        *grafana.Service
+	kialiSAClients map[string]kubernetes.ClientInterface
+	prom           prometheus.ClientInterface
+	t              testing.TB
+	tracingLoader  func() tracing.ClientInterface
+	userClients    map[string]kubernetes.UserClientInterface
 }
 
 // NewLayerBuilder creates a new layerBuilder with the given config.
 func NewLayerBuilder(t testing.TB, conf *config.Config) *layerBuilder {
 	return &layerBuilder{
-		t:             t,
 		conf:          conf,
+		t:             t,
 		tracingLoader: func() tracing.ClientInterface { return nil },
 	}
 }
