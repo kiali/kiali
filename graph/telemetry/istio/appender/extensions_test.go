@@ -175,11 +175,8 @@ func setupMockedExt(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMo
 	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	business.SetWithBackends(mockClientFactory, nil)
 	cache := cache.NewTestingCache(t, k8s, *conf)
-	business.WithKialiCache(cache)
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, conf)
-	business.WithDiscovery(discovery)
 
 	businessLayer, err := business.NewLayer(conf, cache, mockClientFactory, promClient, nil, nil, nil, discovery, authInfo)
 	require.NoError(t, err)

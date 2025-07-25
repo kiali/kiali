@@ -10,7 +10,6 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
@@ -30,11 +29,7 @@ func setupMocks(t *testing.T) *business.Layer {
 	conf.KubernetesConfig.ClusterName = defaultCluster
 	config.Set(conf)
 
-	business.SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[defaultCluster] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
-	return businessLayer
+	return business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 }
 
 func workloadEntriesTrafficMap() map[string]*graph.Node {
@@ -124,7 +119,8 @@ func TestRemoveWaypoint(t *testing.T) {
 				Name:    appNamespace,
 			},
 		},
-		ShowWaypoints: false}
+		ShowWaypoints: false,
+	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(4, len(trafficMap))
@@ -154,7 +150,8 @@ func TestIsWaypointExcludedNs(t *testing.T) {
 				Name:    appNamespace,
 			},
 		},
-		ShowWaypoints: true}
+		ShowWaypoints: true,
+	}
 
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 

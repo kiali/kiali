@@ -10,63 +10,104 @@ import (
 
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/tracing"
 )
 
-// SetWithBackends allows for specifying the ClientFactory and Prometheus clients to be used.
-// Mock friendly. Used only with tests.
-func setWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterface, cache cache.KialiCache, cpm ControlPlaneMonitor, d istio.MeshDiscovery) {
-	clientFactory = cf
-	discovery = d
-	kialiCache = cache
-	poller = cpm
-	prometheusClient = prom
+// layerBuilder is a helper for building a Layer for testing.
+// It is used to create a Layer with the necessary dependencies for testing.
+// It is not meant to be used outside of unit tests.
+// You must call either WithClient or WithClients to set the clients but everything else is optional.
+// You can chain the methods to set the dependencies and call Build() at the end to create the Layer.
+// Example:
+//
+//	layer := NewLayerBuilder(t, conf).WithClient(k8s).Build()
+//
+//	layer := NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build()
+type layerBuilder struct {
+	cache          cache.KialiCache
+	conf           *config.Config
+	cpm            ControlPlaneMonitor
+	discovery      istio.MeshDiscovery
+	grafana        *grafana.Service
+	kialiSAClients map[string]kubernetes.ClientInterface
+	prom           prometheus.ClientInterface
+	t              testing.TB
+	tracingLoader  func() tracing.ClientInterface
+	userClients    map[string]kubernetes.UserClientInterface
 }
 
-// SetupBusinessLayer mocks out some global variables in the business package
-// such as the kiali cache and the prometheus client.
-func SetupBusinessLayer(t testing.TB, k8s kubernetes.UserClientInterface, config config.Config) cache.KialiCache {
-	t.Helper()
-
-	originalClientFactory := clientFactory
-	originalPrometheusClient := prometheusClient
-	originalKialiCache := kialiCache
-	originalDiscovery := discovery
-	t.Cleanup(func() {
-		clientFactory = originalClientFactory
-		prometheusClient = originalPrometheusClient
-		kialiCache = originalKialiCache
-		discovery = originalDiscovery
-	})
-
-	cf := kubetest.NewK8SClientFactoryMock(k8s)
-	cache := cache.NewTestingCacheWithFactory(t, cf, config)
-	cpm := &FakeControlPlaneMonitor{}
-	d := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, &config)
-
-	setWithBackends(cf, nil, cache, cpm, d)
-	return cache
+// NewLayerBuilder creates a new layerBuilder with the given config.
+func NewLayerBuilder(t testing.TB, conf *config.Config) *layerBuilder {
+	return &layerBuilder{
+		conf:          conf,
+		t:             t,
+		tracingLoader: func() tracing.ClientInterface { return nil },
+	}
 }
 
-// WithProm is a testing func that lets you replace the global prom client var.
-func WithProm(prom prometheus.ClientInterface) {
-	prometheusClient = prom
+// WithClient sets the user client for the layer. Use this for single cluster.
+func (lb *layerBuilder) WithClient(k8s kubernetes.UserClientInterface) *layerBuilder {
+	clients := map[string]kubernetes.UserClientInterface{lb.conf.KubernetesConfig.ClusterName: k8s}
+	lb.userClients = clients
+	lb.kialiSAClients = kubernetes.ConvertFromUserClients(clients)
+	return lb
 }
 
-// WithKialiCache is a testing func that lets you replace the global cache var.
-func WithKialiCache(cache cache.KialiCache) {
-	kialiCache = cache
+// WithClients sets both user and SA clients for the layer. Use this for multi-cluster.
+func (lb *layerBuilder) WithClients(clients map[string]kubernetes.UserClientInterface) *layerBuilder {
+	lb.userClients = clients
+	lb.kialiSAClients = kubernetes.ConvertFromUserClients(clients)
+	return lb
 }
 
-// WithControlPlaneMonitor is a testing func that lets you replace the global cpm var.
-func WithControlPlaneMonitor(cpm ControlPlaneMonitor) {
-	poller = cpm
+// WithCache sets the cache for the layer.
+func (lb *layerBuilder) WithCache(cache cache.KialiCache) *layerBuilder {
+	lb.cache = cache
+	return lb
 }
 
-// WithDiscovery is a testing func that lets you replace the global discovery var.
-func WithDiscovery(disc istio.MeshDiscovery) {
-	discovery = disc
+// WithDiscovery sets the discovery for the layer.
+func (lb *layerBuilder) WithDiscovery(discovery istio.MeshDiscovery) *layerBuilder {
+	lb.discovery = discovery
+	return lb
+}
+
+// WithTraceLoader sets the trace loader for the layer.
+func (lb *layerBuilder) WithTraceLoader(traceLoader func() tracing.ClientInterface) *layerBuilder {
+	lb.tracingLoader = traceLoader
+	return lb
+}
+
+// WithProm sets the prometheus client for the layer.
+func (lb *layerBuilder) WithProm(prom prometheus.ClientInterface) *layerBuilder {
+	lb.prom = prom
+	return lb
+}
+
+// Build creates a new Layer with the given dependencies.
+// If you did not call WithClient or WithClients, the layerBuilder will fail the test.
+func (lb *layerBuilder) Build() *Layer {
+	lb.t.Helper()
+	if lb.userClients == nil && lb.kialiSAClients == nil {
+		lb.t.Fatalf("You must call either WithClient or WithClients to set the clients")
+		return nil
+	}
+
+	if lb.cache == nil {
+		lb.cache = cache.NewTestingCacheWithClients(lb.t, lb.kialiSAClients, *lb.conf)
+	}
+	if lb.cpm == nil {
+		lb.cpm = &FakeControlPlaneMonitor{}
+	}
+	if lb.discovery == nil {
+		lb.discovery = istio.NewDiscovery(lb.kialiSAClients, lb.cache, lb.conf)
+	}
+	if lb.grafana == nil {
+		lb.grafana = grafana.NewService(lb.conf, lb.userClients[lb.conf.KubernetesConfig.ClusterName])
+	}
+	return newLayer(lb.userClients, lb.kialiSAClients, lb.prom, lb.tracingLoader(), lb.cache, lb.conf, lb.grafana, lb.discovery, lb.cpm)
 }

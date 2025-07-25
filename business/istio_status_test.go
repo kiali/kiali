@@ -191,12 +191,7 @@ func TestGrafanaWorking(t *testing.T) {
 	conf := config.Get()
 	config.Set(conf)
 
-	// Set global cache var
-	SetupBusinessLayer(t, k8s, *conf)
-
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
+	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithTraceLoader(mockJaeger).Build().IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
@@ -230,12 +225,7 @@ func TestGrafanaDisabled(t *testing.T) {
 	conf.ExternalServices.Grafana.Enabled = false
 	config.Set(conf)
 
-	// Set global cache var
-	SetupBusinessLayer(t, k8s, *conf)
-
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
+	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithTraceLoader(mockJaeger).Build().IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
@@ -287,12 +277,7 @@ func TestGrafanaNotWorking(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
 
-	// Set global cache var
-	SetupBusinessLayer(t, k8s, *conf)
-
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
+	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithTraceLoader(mockJaeger).Build().IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
@@ -320,12 +305,7 @@ func TestFailingTracingService(t *testing.T) {
 	conf := config.Get()
 	config.Set(conf)
 
-	// Set global cache var
-	SetupBusinessLayer(t, k8s, *conf)
-
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockFailingJaeger()).IstioStatus
+	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithTraceLoader(mockFailingJaeger).Build().IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
@@ -348,13 +328,10 @@ func TestOverriddenUrls(t *testing.T) {
 	objects, idReachable, _ := sampleIstioComponent()
 	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, idReachable, true)
 
-	conf := config.NewConfig()
-	// Set global cache var
-	SetupBusinessLayer(t, k8s, *conf)
+	// conf set in mockAddOnsCalls
+	conf := config.Get()
 
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
+	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithTraceLoader(mockJaeger).Build().IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
@@ -380,12 +357,7 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 	conf.ExternalServices.CustomDashboards.Prometheus.URL = ""
 	config.Set(conf)
 
-	// Set global cache var
-	SetupBusinessLayer(t, k8s, *conf)
-
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
+	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithTraceLoader(mockJaeger).Build().IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
@@ -405,14 +377,9 @@ func TestNoIstioComponentFoundError(t *testing.T) {
 
 	k8s, _, _ := mockAddOnsCalls(t, []runtime.Object{}, true, false)
 
-	conf := config.NewConfig()
-	// Set global cache var
-	SetupBusinessLayer(t, k8s, *conf)
+	conf := config.Get()
 
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-
-	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
+	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithTraceLoader(mockJaeger).Build().IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 	assertComponent(assert, icsl, "istiod", kubernetes.ComponentNotFound, true)
@@ -433,19 +400,15 @@ func TestDefaults(t *testing.T) {
 
 	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
 
-	conf := config.NewConfig()
-	// Set global cache var
-	SetupBusinessLayer(t, k8s, *conf)
+	// conf set in mockAddOnsCalls
+	conf := config.Get()
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentHealthy}},
 		},
 	}
-	WithDiscovery(discovery)
 
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
+	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithDiscovery(discovery).WithTraceLoader(mockJaeger).Build().IstioStatus
 
 	icsl, err := iss.GetStatus(context.TODO())
 	assert.NoError(err)
@@ -488,18 +451,13 @@ func TestNonDefaults(t *testing.T) {
 	}
 	config.Set(conf)
 
-	// Set global cache var
-	SetupBusinessLayer(t, k8s, *conf)
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentHealthy}},
 		},
 	}
-	WithDiscovery(discovery)
 
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
+	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithDiscovery(discovery).WithTraceLoader(mockJaeger).Build().IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
@@ -541,18 +499,13 @@ func TestIstiodNotReady(t *testing.T) {
 	}
 	config.Set(conf)
 
-	// Set global cache var
-	SetupBusinessLayer(t, k8s, *conf)
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentNotReady}},
 		},
 	}
-	WithDiscovery(discovery)
 
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
+	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithDiscovery(discovery).WithTraceLoader(mockJaeger).Build().IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
@@ -599,18 +552,13 @@ func TestCustomizedAppLabel(t *testing.T) {
 	}
 	config.Set(conf)
 
-	// Set global cache var
-	SetupBusinessLayer(t, k8s, *conf)
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentHealthy}},
 		},
 	}
-	WithDiscovery(discovery)
 
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
+	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithDiscovery(discovery).WithTraceLoader(mockJaeger).Build().IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
@@ -653,18 +601,13 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 	}
 	config.Set(conf)
 
-	// Set global cache var
-	SetupBusinessLayer(t, k8s, *conf)
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentHealthy}},
 		},
 	}
-	WithDiscovery(discovery)
 
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
+	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithDiscovery(discovery).WithTraceLoader(mockJaeger).Build().IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
@@ -705,17 +648,12 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 	config.Set(conf)
 
 	// Set global cache var
-	SetupBusinessLayer(t, k8s, *conf)
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentHealthy}},
 		},
 	}
-	WithDiscovery(discovery)
-
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	iss := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, mockJaeger()).IstioStatus
+	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithDiscovery(discovery).WithTraceLoader(mockJaeger).Build().IstioStatus
 
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)

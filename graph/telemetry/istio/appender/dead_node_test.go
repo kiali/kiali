@@ -13,7 +13,6 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
@@ -98,12 +97,7 @@ func setupWorkloads(t *testing.T) *business.Layer {
 		},
 	)
 
-	business.SetupBusinessLayer(t, k8s, *conf)
-
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[config.DefaultClusterID] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
-	return businessLayer
+	return business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 }
 
 func TestDeadNode(t *testing.T) {

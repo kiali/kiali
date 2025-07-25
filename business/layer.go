@@ -32,49 +32,6 @@ type Layer struct {
 	Workload       WorkloadService
 }
 
-// Global clientfactory and prometheus clients.
-var (
-	clientFactory    kubernetes.ClientFactory
-	discovery        istio.MeshDiscovery
-	grafanaService   *grafana.Service
-	kialiCache       cache.KialiCache
-	poller           ControlPlaneMonitor
-	prometheusClient prometheus.ClientInterface
-)
-
-// Start sets the globals necessary for the business layer.
-// TODO: Refactor out global vars.
-func Start(
-	cf kubernetes.ClientFactory,
-	controlPlaneMonitor ControlPlaneMonitor,
-	cache cache.KialiCache,
-	disc istio.MeshDiscovery,
-	prom prometheus.ClientInterface,
-	traceClientLoader func() tracing.ClientInterface,
-	grafana *grafana.Service,
-) {
-	clientFactory = cf
-	discovery = disc
-	grafanaService = grafana
-	kialiCache = cache
-	poller = controlPlaneMonitor
-	prometheusClient = prom
-}
-
-// SetWithBackends allows for specifying the ClientFactory and Prometheus clients to be used.
-// Mock friendly. Used only with tests.
-func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterface) {
-	clientFactory = cf
-	prometheusClient = prom
-}
-
-// NewWithBackends creates the business layer using the passed k8sClients and prom clients.
-// Note that the client passed here should *not* be the Kiali ServiceAccount client.
-// It should be the user client based on the logged in user's token.
-func NewWithBackends(userClients map[string]kubernetes.UserClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, traceClient tracing.ClientInterface) *Layer {
-	return newLayer(userClients, kialiSAClients, prom, traceClient, kialiCache, config.Get(), grafanaService, discovery, poller)
-}
-
 func newLayer(
 	userClients map[string]kubernetes.UserClientInterface,
 	kialiSAClients map[string]kubernetes.ClientInterface,

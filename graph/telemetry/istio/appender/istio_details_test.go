@@ -13,7 +13,6 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
@@ -67,13 +66,7 @@ func TestCBAll(t *testing.T) {
 		},
 	}
 	k8s := kubetest.NewFakeK8sClient(dRule, kubetest.FakeNamespace("testNamespace"))
-	business.SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := map[string]kubernetes.UserClientInterface{
-		config.DefaultClusterID: kubetest.NewFakeK8sClient(
-			kubetest.FakeNamespace("testNamespace"),
-		),
-	}
-	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
+	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _, _ := setupTrafficMap()
 
 	assert.Equal(7, len(trafficMap))
@@ -132,14 +125,11 @@ func TestCBSubset(t *testing.T) {
 			},
 		},
 	}
-	k8s := kubetest.NewFakeK8sClient(dRule, kubetest.FakeNamespace("testNamespace"))
-	business.SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := map[string]kubernetes.UserClientInterface{
-		config.DefaultClusterID: kubetest.NewFakeK8sClient(
-			kubetest.FakeNamespace("testNamespace"),
-		),
-	}
-	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
+	k8s := kubetest.NewFakeK8sClient(
+		dRule,
+		kubetest.FakeNamespace("testNamespace"),
+	)
+	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _, _ := setupTrafficMap()
 
 	assert.Equal(7, len(trafficMap))
@@ -201,7 +191,7 @@ func TestCBSubset(t *testing.T) {
 //	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Endpoints{}, nil)
 //	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{}}, nil)
 //
-//	businessLayer := business.NewWithBackends(k8s, nil, nil)
+//	businessLayer := business.NewWithBackends(t, k8s, nil, nil)
 //	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, fooSvcNodeId := setupTrafficMap()
 //
 //	assert.Equal(7, len(trafficMap))
@@ -276,7 +266,7 @@ func TestCBSubset(t *testing.T) {
 //	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Endpoints{}, nil)
 //	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{}}, nil)
 //
-//	businessLayer := business.NewWithBackends(k8s, nil, nil)
+//	businessLayer := business.NewWithBackends(t, k8s, nil, nil)
 //	trafficMap, _, _, _, _, _, fooSvcNodeId := setupTrafficMap()
 //
 //	assert.Equal(nil, trafficMap[fooSvcNodeId].Metadata[graph.HasVS])
@@ -310,13 +300,7 @@ func TestSEInAppBox(t *testing.T) {
 		},
 	}
 	k8s := kubetest.NewFakeK8sClient(svc, kubetest.FakeNamespace("testNamespace"))
-	business.SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := map[string]kubernetes.UserClientInterface{
-		config.DefaultClusterID: kubetest.NewFakeK8sClient(
-			kubetest.FakeNamespace("testNamespace"),
-		),
-	}
-	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
+	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 
 	trafficMap := graph.NewTrafficMap()
 	serviceEntryNode, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "ratings", "", "", "", "", graph.GraphTypeVersionedApp)

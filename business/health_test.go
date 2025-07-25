@@ -15,9 +15,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
@@ -37,15 +35,13 @@ func TestGetServiceHealth(t *testing.T) {
 		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "ns"}},
 	)
 	k8s.OpenShift = true
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
 
 	prom := new(prometheustest.PromClientMock)
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockServiceRequestRates("ns", conf.KubernetesConfig.ClusterName, "httpbin", serviceRates)
 
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil), userClients: clients}
+	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
 
 	mockSvc := models.Service{}
 	mockSvc.Name = "httpbin"
@@ -87,10 +83,7 @@ func TestGetAppHealth(t *testing.T) {
 	k8s.OpenShift = true
 	prom := new(prometheustest.PromClientMock)
 
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil), userClients: clients}
+	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockAppRequestRates("ns", conf.KubernetesConfig.ClusterName, "reviews", otherRatesIn, otherRatesOut)
@@ -145,9 +138,7 @@ func TestGetWorkloadHealth(t *testing.T) {
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockWorkloadRequestRates("ns", conf.KubernetesConfig.ClusterName, "reviews-v1", otherRatesIn, otherRatesOut)
 
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil), userClients: clients}
+	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
 
 	mockWorkload := models.Workload{}
 	mockWorkload.Name = "reviews-v1"
@@ -197,9 +188,7 @@ func TestGetAppHealthWithoutIstio(t *testing.T) {
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockAppRequestRates("ns", conf.KubernetesConfig.ClusterName, "reviews", otherRatesIn, otherRatesOut)
 
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil), userClients: clients}
+	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
 
 	mockApp := appDetails{}
 
@@ -230,9 +219,7 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockWorkloadRequestRates("ns", conf.KubernetesConfig.ClusterName, "reviews-v1", otherRatesIn, otherRatesOut)
 
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil), userClients: clients}
+	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
 
 	mockWorkload := models.Workload{}
 	mockWorkload.Name = "reviews-v1"
@@ -264,11 +251,8 @@ func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
 	prom := new(prometheustest.PromClientMock)
-	SetupBusinessLayer(t, k8s, *conf)
 
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	hs := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil).Health
+	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
 	criteria := NamespaceHealthCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "ns", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 
 	_, err := hs.GetNamespaceAppHealth(context.TODO(), criteria)
@@ -294,13 +278,10 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 	)
 	k8s.OpenShift = true
 	prom := new(prometheustest.PromClientMock)
-	SetupBusinessLayer(t, k8s, *conf)
 
 	prom.On("GetNamespaceServicesRequestRates", "tutorial", conf.KubernetesConfig.ClusterName, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
 
-	clients := make(map[string]kubernetes.UserClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	hs := HealthService{prom: prom, businessLayer: NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil), userClients: clients}
+	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
 
 	criteria := NamespaceHealthCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "tutorial", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 	health, err := hs.GetNamespaceServiceHealth(context.TODO(), criteria)
@@ -331,7 +312,6 @@ func TestGetNamespaceServicesHealthMultiCluster(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.UserClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("tutorial"),
@@ -342,17 +322,11 @@ func TestGetNamespaceServicesHealthMultiCluster(t *testing.T) {
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "tutorial"}},
 		),
 	}
-	clientFactory.SetClients(clients)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
-	kialiCache = cache
 	prom := new(prometheustest.PromClientMock)
 	prom.On("GetNamespaceServicesRequestRates", "tutorial", conf.KubernetesConfig.ClusterName, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
 	prom.On("GetNamespaceServicesRequestRates", "tutorial", "west", mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
-	discovery = istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 
-	layer := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil)
-
-	hs := HealthService{prom: prom, businessLayer: layer, userClients: clients}
+	hs := NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build().Health
 
 	criteria := NamespaceHealthCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "tutorial", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 
@@ -369,7 +343,6 @@ func TestGetNamespaceApplicationsHealthMultiCluster(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.UserClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("tutorial"),
@@ -382,16 +355,11 @@ func TestGetNamespaceApplicationsHealthMultiCluster(t *testing.T) {
 			&core_v1.Pod{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "tutorial", Labels: map[string]string{"app": "httpbin", "version": "v1"}, Annotations: kubetest.FakeIstioAnnotations()}, Status: core_v1.PodStatus{Phase: core_v1.PodRunning}},
 		),
 	}
-	clientFactory.SetClients(clients)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
-	kialiCache = cache
 	prom := new(prometheustest.PromClientMock)
 	prom.On("GetAllRequestRates", "tutorial", conf.KubernetesConfig.ClusterName, "1m", mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
 	prom.On("GetAllRequestRates", "tutorial", "west", "1m", mock.AnythingOfType("time.Time")).Return(serviceRates500, nil)
 
-	layer := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil)
-
-	hs := HealthService{prom: prom, businessLayer: layer, userClients: clients}
+	hs := NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build().Health
 
 	criteria := NamespaceHealthCriteria{Namespace: "tutorial", Cluster: conf.KubernetesConfig.ClusterName, RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 
@@ -410,7 +378,6 @@ func TestGetNamespaceWorkloadsHealthMultiCluster(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.UserClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("tutorial"),
@@ -421,16 +388,11 @@ func TestGetNamespaceWorkloadsHealthMultiCluster(t *testing.T) {
 			&core_v1.Pod{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "tutorial", Labels: map[string]string{"app": "httpbin", "version": "v1"}, Annotations: kubetest.FakeIstioAnnotations()}, Status: core_v1.PodStatus{Phase: core_v1.PodRunning}},
 		),
 	}
-	clientFactory.SetClients(clients)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
-	kialiCache = cache
 	prom := new(prometheustest.PromClientMock)
 	prom.On("GetAllRequestRates", "tutorial", conf.KubernetesConfig.ClusterName, "1m", mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
 	prom.On("GetAllRequestRates", "tutorial", "west", "1m", mock.AnythingOfType("time.Time")).Return(serviceRates500, nil)
 
-	layer := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil)
-
-	hs := HealthService{prom: prom, businessLayer: layer, userClients: clients}
+	hs := NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build().Health
 
 	criteria := NamespaceHealthCriteria{Namespace: "tutorial", Cluster: conf.KubernetesConfig.ClusterName, RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 

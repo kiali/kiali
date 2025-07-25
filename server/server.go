@@ -26,17 +26,10 @@ import (
 )
 
 type Server struct {
-	conf                *config.Config
-	controlPlaneMonitor business.ControlPlaneMonitor
-	clientFactory       kubernetes.ClientFactory
-	discovery           *istio.Discovery
-	grafana             *grafana.Service
-	httpServer          *http.Server
-	kialiCache          cache.KialiCache
-	prom                prometheus.ClientInterface
-	router              *mux.Router
-	tracer              *sdktrace.TracerProvider
-	traceClientLoader   func() tracing.ClientInterface
+	conf       *config.Config
+	httpServer *http.Server
+	router     *mux.Router
+	tracer     *sdktrace.TracerProvider
 }
 
 // NewServer creates a new server configured with the given settings.
@@ -109,16 +102,9 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 
 	// return our new Server
 	s := &Server{
-		conf:                conf,
-		clientFactory:       clientFactory,
-		controlPlaneMonitor: controlPlaneMonitor,
-		discovery:           discovery,
-		grafana:             grafana,
-		httpServer:          httpServer,
-		kialiCache:          cache,
-		prom:                prom,
-		router:              router,
-		traceClientLoader:   traceClientLoader,
+		conf:       conf,
+		httpServer: httpServer,
+		router:     router,
 	}
 	if conf.Server.Observability.Tracing.Enabled && tracingProvider != nil {
 		s.tracer = tracingProvider
@@ -128,8 +114,6 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 
 // Start HTTP server asynchronously. TLS may be active depending on the global configuration.
 func (s *Server) Start() {
-	business.Start(s.clientFactory, s.controlPlaneMonitor, s.kialiCache, s.discovery, s.prom, s.traceClientLoader, s.grafana)
-
 	log.Infof("Server endpoint will start at [%v%v]", s.httpServer.Addr, s.conf.Server.WebRoot)
 
 	go func() {

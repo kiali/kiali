@@ -47,7 +47,7 @@ func NewTestingCacheWithFactory(t testing.TB, cf kubernetes.ClientFactory, conf 
 }
 
 // NewTestingCacheWithClients allows you to pass in a map of clients instead of creating a client factory. Good for testing multicluster.
-func NewTestingCacheWithClients(t *testing.T, clients map[string]kubernetes.ClientInterface, conf config.Config) KialiCache {
+func NewTestingCacheWithClients(t testing.TB, clients map[string]kubernetes.ClientInterface, conf config.Config) KialiCache {
 	t.Helper()
 	return newTestingCache(t, clients, conf)
 }

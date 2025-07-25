@@ -18,9 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
-	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
@@ -43,10 +41,7 @@ func TestServiceListParsing(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 	k8s := kubetest.NewFakeK8sClient(objects...)
-	SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	svc := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil).Svc
+	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
 
 	criteria := ServiceCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	serviceList, err := svc.GetServiceList(context.TODO(), criteria)
@@ -80,9 +75,7 @@ func TestParseRegistryServices(t *testing.T) {
 	objs := []runtime.Object{kubetest.FakeNamespace("electronic-shop")}
 	objs = append(objs, kubernetes.ToRuntimeObjects(serviceEntries)...)
 	k8s := kubetest.NewFakeK8sClient(objs...)
-	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	svc := NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil).Svc
+	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
 
 	servicesz := "../tests/data/registry/services-registryz.json"
 	bServicesz, err := os.ReadFile(servicesz)
@@ -133,7 +126,6 @@ func TestGetServiceListFromMultipleClusters(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.UserClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("bookinfo"),
@@ -144,11 +136,7 @@ func TestGetServiceListFromMultipleClusters(t *testing.T) {
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-west-cluster", Namespace: "bookinfo"}},
 		),
 	}
-	clientFactory.SetClients(clients)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
-	kialiCache = cache
-
-	svc := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, nil).Svc
+	svc := NewLayerBuilder(t, conf).WithClients(clients).Build().Svc
 	svcs, err := svc.GetServiceList(context.TODO(), ServiceCriteria{Namespace: "bookinfo"})
 	require.NoError(err)
 	require.Len(svcs.Services, 2)
@@ -168,7 +156,6 @@ func TestMultiClusterGetService(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.UserClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("bookinfo"),
@@ -179,11 +166,7 @@ func TestMultiClusterGetService(t *testing.T) {
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-west-cluster", Namespace: "bookinfo"}},
 		),
 	}
-	clientFactory.SetClients(clients)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
-	kialiCache = cache
-
-	svc := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, nil).Svc
+	svc := NewLayerBuilder(t, conf).WithClients(clients).Build().Svc
 	s, err := svc.GetService(context.TODO(), "west", "bookinfo", "ratings-west-cluster")
 	require.NoError(err)
 
@@ -227,7 +210,7 @@ func TestMultiClusterGetService(t *testing.T) {
 // 	promMock := new(prometheustest.PromAPIMock)
 // 	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
 // 	prom.Inject(promMock)
-// 	svc := NewWithBackends(clients, clients, prom, nil).Svc
+// 	svc := NewWithBackends(t, clients, clients, prom, nil).Svc
 // 	_, err = svc.UpdateService(context.TODO(), "west", "bookinfo", "ratings-west-cluster", "60s", time.Now(), `{"metadata":{"annotations":{"test":"newlabel"}}}`, "merge")
 // 	require.NoError(err)
 
@@ -248,7 +231,6 @@ func TestMultiClusterGetServiceDetails(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.UserClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("bookinfo"),
@@ -259,17 +241,13 @@ func TestMultiClusterGetServiceDetails(t *testing.T) {
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-west-cluster", Namespace: "bookinfo"}},
 		),
 	}
-	clientFactory.SetClients(clients)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
-	kialiCache = cache
-
 	prom, err := prometheus.NewClient()
 	require.NoError(err)
 
 	promMock := new(prometheustest.PromAPIMock)
 	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
 	prom.Inject(promMock)
-	svc := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil).Svc
+	svc := NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build().Svc
 	s, err := svc.GetServiceDetails(context.TODO(), "west", "bookinfo", "ratings-west-cluster", "60s", time.Now(), true)
 	require.NoError(err)
 
@@ -283,7 +261,6 @@ func TestMultiClusterGetServiceAppName(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.UserClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("bookinfo"),
@@ -304,11 +281,7 @@ func TestMultiClusterGetServiceAppName(t *testing.T) {
 			},
 		),
 	}
-	clientFactory.SetClients(clients)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
-	kialiCache = cache
-
-	svc := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, nil).Svc
+	svc := NewLayerBuilder(t, conf).WithClients(clients).Build().Svc
 	s, err := svc.GetServiceTracingName(context.TODO(), "west", "bookinfo", "ratings-west-cluster")
 	require.NoError(err)
 
@@ -324,19 +297,12 @@ func TestGetServiceRouteURL(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	k8s := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
 		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings", Namespace: "bookinfo"}},
 		&osroutes_v1.Route{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings", Namespace: "bookinfo"}, Spec: osroutes_v1.RouteSpec{Host: "external.com"}},
 	)
 	k8s.OpenShift = true
-	clients := map[string]kubernetes.UserClientInterface{
-		conf.KubernetesConfig.ClusterName: k8s,
-	}
-	clientFactory.SetClients(clients)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
-	kialiCache = cache
 
 	prom, err := prometheus.NewClient()
 	require.NoError(err)
@@ -344,7 +310,7 @@ func TestGetServiceRouteURL(t *testing.T) {
 	promMock := new(prometheustest.PromAPIMock)
 	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
 	prom.Inject(promMock)
-	svc := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil).Svc
+	svc := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Svc
 
 	url := svc.GetServiceRouteURL(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "ratings")
 	require.NoError(err)
@@ -363,13 +329,8 @@ func TestGetServicesFromWaypoint(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := kubetest.FakeWaypointAndEnrolledClients("ratings", conf.KubernetesConfig.ClusterName, "bookinfo")
-	clientFactory.SetClients(clients)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
-	kialiCache = cache
-
-	svc := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, nil).Svc
+	svc := NewLayerBuilder(t, conf).WithClients(clients).Build().Svc
 
 	svcList := svc.ListWaypointServices(context.TODO(), "waypoint", "bookinfo", conf.KubernetesConfig.ClusterName)
 	require.NotNil(svcList)
@@ -388,13 +349,8 @@ func TestGetWaypointServices(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := kubetest.FakeWaypointAndEnrolledClients("ratings", conf.KubernetesConfig.ClusterName, "bookinfo")
-	clientFactory.SetClients(clients)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
-	kialiCache = cache
-
-	svc := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), nil, nil).Svc
+	svc := NewLayerBuilder(t, conf).WithClients(clients).Build().Svc
 
 	service, _ := svc.GetService(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "ratings")
 
@@ -415,7 +371,6 @@ func TestGetServiceDetailsValidations(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.UserClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("bookinfo"),
@@ -426,9 +381,6 @@ func TestGetServiceDetailsValidations(t *testing.T) {
 			FakeDeploymentWithPort("ratings", 9080),
 		),
 	}
-	clientFactory.SetClients(clients)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
-	kialiCache = cache
 
 	prom, err := prometheus.NewClient()
 	require.NoError(err)
@@ -436,9 +388,7 @@ func TestGetServiceDetailsValidations(t *testing.T) {
 	promMock := new(prometheustest.PromAPIMock)
 	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
 	prom.Inject(promMock)
-	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
-	svc := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil).Svc
-	svc.businessLayer.TLS.discovery = discovery
+	svc := NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build().Svc
 
 	s, err := svc.GetServiceDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "ratings-home-cluster", "60s", time.Now(), true)
 	require.NoError(err)
@@ -460,7 +410,6 @@ func TestGetServiceDetailsValidationErrors(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.UserClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("bookinfo"),
@@ -471,9 +420,6 @@ func TestGetServiceDetailsValidationErrors(t *testing.T) {
 			FakeDeploymentWithPort("ratings", 9080),
 		),
 	}
-	clientFactory.SetClients(clients)
-	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
-	kialiCache = cache
 
 	prom, err := prometheus.NewClient()
 	require.NoError(err)
@@ -481,9 +427,7 @@ func TestGetServiceDetailsValidationErrors(t *testing.T) {
 	promMock := new(prometheustest.PromAPIMock)
 	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
 	prom.Inject(promMock)
-	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
-	svc := NewWithBackends(clients, kubernetes.ConvertFromUserClients(clients), prom, nil).Svc
-	svc.businessLayer.TLS.discovery = discovery
+	svc := NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build().Svc
 
 	s, err := svc.GetServiceDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "ratings-home-cluster", "60s", time.Now(), true)
 	require.NoError(err)

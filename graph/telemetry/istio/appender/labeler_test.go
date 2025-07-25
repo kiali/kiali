@@ -12,7 +12,6 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
@@ -100,14 +99,7 @@ func setupLabelerK8S(t *testing.T) *business.Layer {
 		},
 	)
 
-	business.SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := map[string]kubernetes.UserClientInterface{
-		config.DefaultClusterID: kubetest.NewFakeK8sClient(
-			kubetest.FakeNamespace("testNamespace"),
-		),
-	}
-	businessLayer := business.NewWithBackends(k8sclients, kubernetes.ConvertFromUserClients(k8sclients), nil, nil)
-	return businessLayer
+	return business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 }
 
 func TestLabeler(t *testing.T) {
