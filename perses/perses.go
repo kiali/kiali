@@ -111,9 +111,9 @@ func (s *Service) discoverServiceURL(ctx context.Context, ns, service string) (u
 	return
 }
 
-type DashboardSupplierFunc func(string, string, *config.Auth) ([]byte, int, error)
+type DashboardSupplierFunc func(string, string, string, *config.Auth) ([]byte, int, string, error)
 
-var DashboardSupplier = findDashboard
+var DashboardSupplier = checkDashboard
 
 // Info returns the Perses URL and other info, the HTTP status code (int) and eventually an error
 func (s *Service) Info(ctx context.Context, dashboardSupplier DashboardSupplierFunc) (*models.PersesInfo, int, error) {
@@ -127,10 +127,12 @@ func (s *Service) Info(ctx context.Context, dashboardSupplier DashboardSupplierF
 		return nil, code, err
 	}
 
+	project := s.conf.ExternalServices.Perses.Project
+
 	// Call Perses REST API to get dashboard urls
 	links := []models.ExternalLink{}
 	for _, dashboardConfig := range persesConfig.Dashboards {
-		dashboardPath, err := getDashboardPath(ctx, dashboardConfig.Name, conn, dashboardSupplier)
+		dashboardPath, err := getDashboardPath(ctx, project, dashboardConfig.Name, conn, dashboardSupplier)
 		if err != nil {
 			return nil, http.StatusServiceUnavailable, err
 		}
@@ -177,7 +179,7 @@ func (s *Service) Links(ctx context.Context, linksSpec []dashboards.MonitoringDa
 		zl.Trace().Msgf("Skip checking Perses links as Perses is not configured")
 		return nil, 0, nil
 	}
-	return getPersesLinks(ctx, connectionInfo, linksSpec, DashboardSupplier)
+	return getPersesLinks(ctx, connectionInfo, persesConfig.Project, linksSpec, DashboardSupplier)
 }
 
 // VersionURL returns the Perses URL that can be used to obtain the Perses build information that includes its version.
@@ -212,12 +214,12 @@ func (s *Service) VersionURL(ctx context.Context) string {
 	return fmt.Sprintf("%s/api/v1/health", baseUrl)
 }
 
-func getPersesLinks(ctx context.Context, conn persesConnectionInfo, linksSpec []dashboards.MonitoringDashboardExternalLink, dashboardSupplier DashboardSupplierFunc) ([]models.ExternalLink, int, error) {
+func getPersesLinks(ctx context.Context, conn persesConnectionInfo, project string, linksSpec []dashboards.MonitoringDashboardExternalLink, dashboardSupplier DashboardSupplierFunc) ([]models.ExternalLink, int, error) {
 	// Call Perses REST API to get dashboard urls
 	linksOut := []models.ExternalLink{}
 	for _, linkSpec := range linksSpec {
 		if linkSpec.Type == "perses" {
-			dashboardPath, err := getDashboardPath(ctx, linkSpec.Name, conn, dashboardSupplier)
+			dashboardPath, err := getDashboardPath(ctx, project, linkSpec.Name, conn, dashboardSupplier)
 			if err != nil {
 				return nil, http.StatusServiceUnavailable, err
 			}
@@ -278,8 +280,10 @@ func (s *Service) getPersesConnectionInfo(ctx context.Context) (persesConnection
 	}, 0, nil
 }
 
-func getDashboardPath(ctx context.Context, name string, conn persesConnectionInfo, dashboardSupplier DashboardSupplierFunc) (string, error) {
-	body, code, err := dashboardSupplier(conn.internalURL, url.PathEscape(name), conn.auth)
+func getDashboardPath(ctx context.Context, project, name string, conn persesConnectionInfo, dashboardSupplier DashboardSupplierFunc) (string, error) {
+	lowerName := strings.ToLower(name)
+	spacedName := strings.ReplaceAll(lowerName, " ", "-")
+	body, code, url, err := dashboardSupplier(conn.internalURL, project, url.PathEscape(spacedName), conn.auth)
 	if err != nil {
 		return "", err
 	}
@@ -297,45 +301,16 @@ func getDashboardPath(ctx context.Context, name string, conn persesConnectionInf
 		return "", fmt.Errorf("error from Perses (%d): %s", code, message)
 	}
 
-	// Status OK, read dashboards info
-	var dashboards []map[string]interface{}
-	err = json.Unmarshal(body, &dashboards)
-	if err != nil {
-		return "", err
-	}
-
-	zl := log.FromContext(ctx)
-
-	if len(dashboards) == 0 {
-		zl.Warn().Msgf("No Perses dashboard found for pattern '%s'", name)
-		return "", nil
-	}
-	if len(dashboards) > 1 {
-		zl.Info().Msgf("Several Perses dashboards found for pattern '%s', picking the first one", name)
-	}
-	dashPath, ok := dashboards[0]["url"]
-	if !ok {
-		zl.Warn().Msgf("URL field not found in Perses dashboard for search pattern '%s'", name)
-		return "", nil
-	}
-
-	fullPath := dashPath.(string)
-	if fullPath != "" {
-		// Dashboard path might be an absolute URL (hence starting with cfg.URL) or a relative one, depending on perses's "GF_SERVER_SERVE_FROM_SUB_PATH"
-		if !strings.HasPrefix(fullPath, conn.baseExternalURL) {
-			fullPath = strings.TrimSuffix(conn.baseExternalURL, "/") + "/" + strings.TrimPrefix(fullPath, "/")
-		}
-	}
-
-	return fullPath + conn.externalURLParams, nil
+	return url, nil
 }
 
-func findDashboard(url, searchPattern string, auth *config.Auth) ([]byte, int, error) {
+func checkDashboard(url, project, searchPattern string, auth *config.Auth) ([]byte, int, string, error) {
 	urlParts := strings.Split(url, "?")
-	query := strings.TrimSuffix(urlParts[0], "/") + "/api/search?query=" + searchPattern
+	query := strings.TrimSuffix(urlParts[0], "/") + fmt.Sprintf("/api/v1/projects/%s/dashboards/%s", project, searchPattern)
 	if len(urlParts) > 1 {
 		query = query + "&" + urlParts[1]
 	}
 	resp, code, _, err := httputil.HttpGet(query, auth, time.Second*10, nil, nil, config.Get())
-	return resp, code, err
+	extUrl := fmt.Sprintf("%s/projects/%s/dashboards/%s", urlParts[0], project, searchPattern)
+	return resp, code, extUrl, err
 }
