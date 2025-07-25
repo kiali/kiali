@@ -637,7 +637,7 @@ type Clustering struct {
 	// if the Kiali Server does not have access to the remote cluster’s secret.
 	Clusters          []Cluster  `yaml:"clusters" json:"clusters"`
 	IgnoreHomeCluster bool       `yaml:"ignore_home_cluster" json:"ignoreHomeCluster"`
-	KialiURLs         []KialiURL `yaml:"kiali_urls" json:"kiali_urls"`
+	KialiURLs         []KialiURL `yaml:"kiali_urls" json:"kialiUrls"`
 }
 
 // IsZero implements: https://pkg.go.dev/gopkg.in/yaml.v2#IsZeroer so that
