@@ -32,12 +32,19 @@ const (
 
 var maistraLabels = []string{maistraOwnerLabel, maistraOwnerNameLabel, maistraVersionLabel}
 
+type ExternalKialiInstance struct {
+	Cluster *KubeCluster
+	Kiali   *KialiInstance
+}
+
 // Mesh is one or more controlplanes (primaries) managing a dataPlane across one or more clusters.
 // There can be multiple primaries on a single cluster when istio revisions are used. A single
 // primary can also manage multiple clusters (primary-remote deployment).
 type Mesh struct {
 	// ControlPlanes that share the same mesh ID.
 	ControlPlanes []ControlPlane
+	// External Kiali mesh management cluster
+	ExternalKiali *ExternalKialiInstance
 }
 
 // Tag maps a controlplane revision to a namespace label.
@@ -271,6 +278,11 @@ func (ci *Certificate) Parse(certificate []byte) {
 // Cluster holds some metadata about a Kubernetes cluster that is
 // part of the mesh.
 type KubeCluster struct {
+	// Accessible specifies if the cluster is accessible or not. Clusters that are manually specified in the Kiali config
+	// but do not have an associated remote cluster secret are considered not accessible. This is helpful when you have
+	// two disconnected Kialis and want to link them without giving them access to each other.
+	Accessible bool `json:"accessible"`
+
 	// ApiEndpoint is the URL where the Kubernetes/Cluster API Server can be contacted
 	ApiEndpoint string `json:"apiEndpoint"`
 
@@ -285,11 +297,6 @@ type KubeCluster struct {
 
 	// SecretName is the name of the kubernetes "remote cluster secret" that was mounted to the file system and where data of this cluster was resolved
 	SecretName string `json:"secretName"`
-
-	// Accessible specifies if the cluster is accessible or not. Clusters that are manually specified in the Kiali config
-	// but do not have an associated remote cluster secret are considered not accessible. This is helpful when you have
-	// two disconnected Kialis and want to link them without giving them access to each other.
-	Accessible bool `json:"accessible"`
 }
 
 // KialiInstance represents a Kiali installation. It holds some data about

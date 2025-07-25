@@ -87,7 +87,7 @@ func testPerfScenario(exStatus string, namespaces []core_v1.Namespace, drs []*ne
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
-				IstiodNamespace: conf.IstioNamespace,
+				IstiodNamespace: config.IstioNamespaceDefault,
 				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
 				MeshConfig: &models.MeshConfig{

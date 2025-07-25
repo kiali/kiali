@@ -95,7 +95,6 @@ operator-create: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists
     --kiali-image-name              "${CLUSTER_KIALI_INTERNAL_NAME}" \
     --kiali-image-pull-policy       "${KIALI_IMAGE_PULL_POLICY}" \
     --kiali-image-version           "${CONTAINER_VERSION}" \
-    --istio-namespace               "${ISTIO_NAMESPACE}" \
     --namespace                     "${NAMESPACE}" \
     --version                       "${KIALI_CR_SPEC_VERSION}"
 
@@ -123,7 +122,6 @@ KIALI_EXTERNAL_SERVICES_PASSWORD="$(shell ${OC} get secrets htpasswd -n ${NAMESP
 KIALI_IMAGE_NAME="${CLUSTER_KIALI_INTERNAL_NAME}" \
 KIALI_IMAGE_PULL_POLICY="${KIALI_IMAGE_PULL_POLICY}" \
 KIALI_IMAGE_VERSION="${CONTAINER_VERSION}" \
-ISTIO_NAMESPACE="${ISTIO_NAMESPACE}" \
 NAMESPACE="${NAMESPACE}" \
 ROUTER_HOSTNAME="$(shell ${OC} get $(shell (${OC} get routes -n ${NAMESPACE} -o name 2>/dev/null || echo 'noroute') | head -n 1) -n ${NAMESPACE} -o jsonpath='{.status.ingress[0].routerCanonicalHostname}' 2>/dev/null)" \
 SERVICE_TYPE="${SERVICE_TYPE}" \

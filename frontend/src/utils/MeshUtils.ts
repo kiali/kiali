@@ -1,5 +1,5 @@
 import { store } from '../store/ConfigStore';
-import { serverConfig } from '../config';
+import { isIstioNamespace } from 'config/ServerConfig';
 
 // isControlPlaneAccessible returns true if
 export const isControlPlaneAccessible = (cluster?: string): boolean => {
@@ -9,9 +9,9 @@ export const isControlPlaneAccessible = (cluster?: string): boolean => {
     ns.items !== undefined &&
     ns.items.some(nsItem => {
       if (cluster) {
-        return nsItem.name === serverConfig.istioNamespace && nsItem.cluster === cluster;
+        return isIstioNamespace(nsItem.name) && nsItem.cluster === cluster;
       }
-      return nsItem.name === serverConfig.istioNamespace;
+      return isIstioNamespace(nsItem.name);
     })
   );
 };

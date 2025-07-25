@@ -103,6 +103,7 @@ while [[ $# -gt 0 ]]; do
     -cn|--cluster-name)          CLUSTER_NAME="$2";                  shift;shift ;;
     -es|--enable-server)         ENABLE_SERVER="$2";                 shift;shift ;;
     -gu|--grafana-url)           GRAFANA_URL="$2";                   shift;shift ;;
+    -hkc|--home-kube-context)    HOME_KUBE_CONTEXT="$2";             shift;shift ;;
     -in|--istio-namespace)       ISTIO_NAMESPACE="$2";               shift;shift ;;
     -isn|--istiod-service-name)  ISTIOD_SERVICE_NAME="$2";           shift;shift ;;
     -iu|--istiod-url)            ISTIOD_URL="$2";                    shift;shift ;;
@@ -152,7 +153,8 @@ Valid options:
       Cluster client executable - must refer to 'oc' or 'kubectl'.
       Default: ${DEFAULT_CLIENT_EXE}
   -cn|--cluster-name)
-      The name of the cluster as defined by the Istio infrastructure.
+      The name of the Kiali home cluster. This option must be specified if the home cluster name is
+      not the same as the active home context.
       Default: <not defined>
   -es|--enable-server
       When 'true', this script will start the server and manage its lifecycle.
@@ -167,6 +169,11 @@ Valid options:
       to external clients outside of the cluster - that external URL is what this value should be.
       For example, for OpenShift clusters, this should be the Grafana Route URL.
       Default: <will be auto-discovered>
+  -hkc|--home-kube-context
+      The kubernetes context to use specifically when talking to the Kiali pod to download secrets.
+      For all other operations, the --kube-context value will be used.
+      If not specified, the --kube-context value will be used as the default.
+      Default: <same as --kube-context>
   -in|--istio-namespace
       The name of the control plane namespace - this is where Istio components are installed.
       Default: ${DEFAULT_ISTIO_NAMESPACE}
@@ -267,6 +274,7 @@ ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-${DEFAULT_ISTIO_NAMESPACE}}"
 KIALI_CONFIG_TEMPLATE_FILE="${KIALI_CONFIG_TEMPLATE_FILE:-${DEFAULT_KIALI_CONFIG_TEMPLATE_FILE}}"
 KIALI_EXE="${KIALI_EXE:-${DEFAULT_KIALI_EXE}}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-${DEFAULT_KUBE_CONTEXT}}"
+HOME_KUBE_CONTEXT="${HOME_KUBE_CONTEXT:-${KUBE_CONTEXT}}" # uses KUBE_CONTEXT as default, that's why it appears after KUBE_CONTEXT
 LOCAL_REMOTE_PORTS_GRAFANA="${LOCAL_REMOTE_PORTS_GRAFANA:-${DEFAULT_LOCAL_REMOTE_PORTS_GRAFANA}}"
 LOCAL_REMOTE_PORTS_PROMETHEUS="${LOCAL_REMOTE_PORTS_PROMETHEUS:-${DEFAULT_LOCAL_REMOTE_PORTS_PROMETHEUS}}"
 LOCAL_REMOTE_PORTS_TRACING="${LOCAL_REMOTE_PORTS_TRACING:-${DEFAULT_LOCAL_REMOTE_PORTS_TRACING}}"
@@ -494,6 +502,7 @@ echo "CLUSTER_NAME=$CLUSTER_NAME"
 echo "COPY_CLUSTER_SECRETS=$COPY_CLUSTER_SECRETS"
 echo "ENABLE_SERVER=$ENABLE_SERVER"
 echo "GRAFANA_URL=$GRAFANA_URL"
+echo "HOME_KUBE_CONTEXT=$HOME_KUBE_CONTEXT"
 echo "ISTIO_NAMESPACE=$ISTIO_NAMESPACE"
 echo "ISTIOD_URL=$ISTIOD_URL"
 echo "KIALI_CONFIG_TEMPLATE_FILE=$KIALI_CONFIG_TEMPLATE_FILE"
@@ -528,15 +537,6 @@ if ! echo "${LOG_LEVEL}" | grep -qiE "^(trace|debug|info|warn|error|fatal)$"; th
 [ "${ENABLE_SERVER}" == "false" -a "${REBOOTABLE}" == "true" ] && infomsg "--enable-server was set to false - turning off rebootable flag for you" && REBOOTABLE="false"
 [ "${COPY_CLUSTER_SECRETS}" != "true" -a "${COPY_CLUSTER_SECRETS}" != "false" ] && errormsg "--copy-cluster-secrets must be 'true' or 'false'" && exit 1
 
-REMOTE_SECRET_PATH=""
-if [ "${KUBE_CONTEXT}" == "current" ]; then
-  infomsg "Will use the current context as-is: $(${CLIENT_EXE} config current-context)"
-  # Re-use your current kubeconfig file.
-  REMOTE_SECRET_PATH="${HOME}/.kube/config"
-else
-  REMOTE_SECRET_PATH="${TMP_DIR}/kubeconfig"
-fi
-
 # Build the config file from the template
 
 KIALI_CONFIG_FILE="${TMP_DIR}/run-kiali-config.yaml"
@@ -547,7 +547,6 @@ cat ${KIALI_CONFIG_TEMPLATE_FILE} | \
   GRAFANA_URL=${GRAFANA_URL} \
   TRACING_APP=${TRACING_APP} \
   TRACING_URL=${TRACING_URL} \
-  REMOTE_SECRET_PATH=${REMOTE_SECRET_PATH} \
   envsubst > ${KIALI_CONFIG_FILE}
 
 # Set kubernetes_config.cluster_name only if the user told us to configure a specific cluster name
@@ -566,35 +565,44 @@ cd ${TMP_DIR}
 # If we are told to copy the remote cluster secrets, prepare the local directory
 # and pull the files down from the Kiali pod. If there is no Kiali pod deployed,
 # then spit out a warning but keep going.
+# We always prepare the kiali-remote-cluster-secrets location because we will
+# at minimum put our local cluster kubeconfig there (we do that later in the script).
 
+# Unless this dir already exists, it will most likely fail to be created because
+# creating a directory under the root directory usually requires sudo access.
+REMOTE_CLUSTER_SECRETS_DIR="/kiali-remote-cluster-secrets"
+mkdir -p ${REMOTE_CLUSTER_SECRETS_DIR}
+if [ ! -d ${REMOTE_CLUSTER_SECRETS_DIR} ]; then
+  errormsg "You first must prepare the remote cluster secrets directory: sudo mkdir -p ${REMOTE_CLUSTER_SECRETS_DIR}; sudo chmod ugo+w ${REMOTE_CLUSTER_SECRETS_DIR}"
+  exit 1
+fi
+rm -rf ${REMOTE_CLUSTER_SECRETS_DIR}/*
+
+# remote clusters
 if [ "${COPY_CLUSTER_SECRETS}" == "true" ]; then
   infomsg "Attempting to copy the remote cluster secrets from a Kiali pod deployed in the cluster..."
-  POD_NAME="$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get pod -l app.kubernetes.io/name=kiali -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)"
+  # Determine the context option for secret operations
+  if [ "${HOME_KUBE_CONTEXT}" != "current" ]; then
+    HOME_CONTEXT_OPT="--context=${HOME_KUBE_CONTEXT}"
+  else
+    HOME_CONTEXT_OPT=""
+  fi
+  POD_NAME="$(${CLIENT_EXE} ${HOME_CONTEXT_OPT} -n ${ISTIO_NAMESPACE} get pod -l app.kubernetes.io/name=kiali -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)"
   if [ -z "${POD_NAME}" ]; then
     warnmsg "Cannot get the Kiali pod name. Kiali must be deployed in [${ISTIO_NAMESPACE}]. If you do not want to deploy Kiali in the cluster, set '--copy-cluster-secrets' to 'false'."
   else
-    infomsg "Will copy remote cluster secrets from the Kiali pod [${ISTIO_NAMESPACE}/${POD_NAME}]"
-
-    # Unless this dir already exists, it will most likely fail to be created because
-    # creating a directory under the root directory usually requires sudo access.
-    REMOTE_CLUSTER_SECRETS_DIR="/kiali-remote-cluster-secrets"
-    mkdir -p ${REMOTE_CLUSTER_SECRETS_DIR}
-    if [ ! -d ${REMOTE_CLUSTER_SECRETS_DIR} ]; then
-      errormsg "You first must prepare the remote cluster secrets directory: sudo mkdir -p ${REMOTE_CLUSTER_SECRETS_DIR}; sudo chmod ugo+w ${REMOTE_CLUSTER_SECRETS_DIR}"
-      exit 1
-    fi
-    rm -rf ${REMOTE_CLUSTER_SECRETS_DIR}/*
+    infomsg "Will copy remote cluster secrets from the Kiali pod [${HOME_KUBE_CONTEXT}/${ISTIO_NAMESPACE}/${POD_NAME}]"
 
     # if the directory doesn't exist, then no remote secrets are available, so skip everything else
-    ${CLIENT_EXE} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- ls -d ${REMOTE_CLUSTER_SECRETS_DIR} >&/dev/null
+    ${CLIENT_EXE} ${HOME_CONTEXT_OPT} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- ls -d ${REMOTE_CLUSTER_SECRETS_DIR} >&/dev/null
     if [ "$?" == "0" ]; then
-      pod_remote_secrets_dirs=$(${CLIENT_EXE} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- ls -1 ${REMOTE_CLUSTER_SECRETS_DIR} | tr -d '\r')
+      pod_remote_secrets_dirs=$(${CLIENT_EXE} ${HOME_CONTEXT_OPT} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- ls -1 ${REMOTE_CLUSTER_SECRETS_DIR} | tr -d '\r')
       for d in $pod_remote_secrets_dirs; do
         mkdir -p "${REMOTE_CLUSTER_SECRETS_DIR}/$d"
-        pod_remote_secrets_files=$(${CLIENT_EXE} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- ls -1 ${REMOTE_CLUSTER_SECRETS_DIR}/${d} | tr -d '\r')
+        pod_remote_secrets_files=$(${CLIENT_EXE} ${HOME_CONTEXT_OPT} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- ls -1 ${REMOTE_CLUSTER_SECRETS_DIR}/${d} | tr -d '\r')
         for f in $pod_remote_secrets_files; do
           infomsg "Copying remote cluster secret file: ${REMOTE_CLUSTER_SECRETS_DIR}/${d}/${f}"
-          secret_file_content=$(${CLIENT_EXE} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- cat ${REMOTE_CLUSTER_SECRETS_DIR}/${d}/${f})
+          secret_file_content=$(${CLIENT_EXE} ${HOME_CONTEXT_OPT} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- cat ${REMOTE_CLUSTER_SECRETS_DIR}/${d}/${f})
           echo "${secret_file_content}" > ${REMOTE_CLUSTER_SECRETS_DIR}/${d}/${f}
         done
       done
@@ -611,7 +619,8 @@ fi
 # Kiali will report errors in this case because it will be missing the service account, and
 # the current user may have permissions that are different than the Kiali service account.
 # But the benefit of this is that you do not need to have a Kiali deployment in the cluster.
-if [ "${KUBE_CONTEXT}" != "current" ]; then
+REMOTE_SECRET_PATH="${TMP_DIR}/kubeconfig"
+if [ "${HOME_KUBE_CONTEXT}" != "current" ] && ! ${CLIENT_EXE} config get-contexts "${HOME_KUBE_CONTEXT}" >/dev/null 2>&1; then
   TOKEN_FILE="${TMP_DIR}/token"
   CA_FILE="${TMP_DIR}/ca.crt"
 
@@ -651,7 +660,35 @@ EOM
   ${CLIENT_EXE} config set-credentials ${KUBE_CONTEXT} --kubeconfig="${REMOTE_SECRET_PATH}" --token="$(cat ${TOKEN_FILE})"
   ${CLIENT_EXE} config set-context ${KUBE_CONTEXT} --kubeconfig="${REMOTE_SECRET_PATH}" --user=${KUBE_CONTEXT} --cluster=${KUBE_CONTEXT} --namespace=${ISTIO_NAMESPACE}
   ${CLIENT_EXE} config use-context --kubeconfig="${REMOTE_SECRET_PATH}" ${KUBE_CONTEXT}
+
+  # Set the cluster name for the secret when not specifying -kc current
+  if [ -z "${CLUSTER_NAME}" ]; then
+    CLUSTER_NAME_FOR_SECRET=$KUBE_CONTEXT
+  else
+    CLUSTER_NAME_FOR_SECRET="${CLUSTER_NAME}"
+  fi
+else
+  # we are using an existing context - extract the specified context info and create a new kubeconfig
+  if [ "${HOME_KUBE_CONTEXT}" == "current" ]; then
+    infomsg "Extracting current cluster information from user's kubeconfig: $(${CLIENT_EXE} config current-context)"
+    ${CLIENT_EXE} config view --minify --flatten > "${REMOTE_SECRET_PATH}"
+  else
+    infomsg "Extracting context [${HOME_KUBE_CONTEXT}] information from user's kubeconfig"
+    ${CLIENT_EXE} config view --minify --flatten --context="${HOME_KUBE_CONTEXT}" > "${REMOTE_SECRET_PATH}"
+  fi
+
+  # Set the cluster name for the secret
+  if [ -z "${CLUSTER_NAME}" ]; then
+    CLUSTER_NAME_FOR_SECRET=$(${CLIENT_EXE} config view --kubeconfig="${REMOTE_SECRET_PATH}" -o jsonpath='{.contexts[0].context.cluster}')
+  else
+    CLUSTER_NAME_FOR_SECRET="${CLUSTER_NAME}"
+  fi
 fi
+
+# Set up the local cluster with the local kubeconfig
+CLUSTER_NAME_FOR_SECRET="${CLUSTER_NAME_FOR_SECRET:-run-kiali-cluster}"
+mkdir ${REMOTE_CLUSTER_SECRETS_DIR}/${CLUSTER_NAME_FOR_SECRET}
+cp ${REMOTE_SECRET_PATH} ${REMOTE_CLUSTER_SECRETS_DIR}/${CLUSTER_NAME_FOR_SECRET}/${CLUSTER_NAME_FOR_SECRET}
 
 # Functions that port-forward to components we need
 

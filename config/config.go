@@ -60,6 +60,7 @@ const (
 
 const (
 	IstioMultiClusterHostSuffix = "global"
+	IstioNamespaceDefault       = "istio-system"
 	OidcClientSecretFile        = "/kiali-secret/oidc-secret"
 )
 
@@ -318,20 +319,27 @@ type RegistryConfig struct {
 	// TODO: Support auth options
 }
 
-// IstioConfig describes configuration used for istio links
+// IstioConfig describes configuration used for istio links.
+// IMPORTANT: Values set here MUST apply to ALL Istio control planes being monitored by the Kiali
+//
+//	instance. Otherwise Kiali will do it's best to auto-detect differences.
+//
+// TODO: Go through this list and remove anything that requires auto-detection or does not make sense for
+//
+//	a multi-control-plane deployment.
 type IstioConfig struct {
-	ComponentStatuses                 ComponentStatuses `yaml:"component_status,omitempty" json:"componentStatuses,omitempty"`
-	ConfigMapName                     string            `yaml:"config_map_name,omitempty" json:"configMapName,omitempty"`
-	EnvoyAdminLocalPort               int               `yaml:"envoy_admin_local_port,omitempty" json:"envoyAdminLocalPort,omitempty"`
-	GatewayAPIClasses                 []GatewayAPIClass `yaml:"gateway_api_classes,omitempty" json:"gatewayApiClasses,omitempty"`
-	GatewayAPIClassesLabelSelector    string            `yaml:"gateway_api_classes_label_selector,omitempty" json:"gatewayApiClassesLabelSelector,omitempty"`
-	IstioAPIEnabled                   bool              `yaml:"istio_api_enabled" json:"istioApiEnabled"`
-	IstioIdentityDomain               string            `yaml:"istio_identity_domain,omitempty" json:"istioIdentityDomain,omitempty"`
-	IstioInjectionAnnotation          string            `yaml:"istio_injection_annotation,omitempty" json:"istioInjectionAnnotation,omitempty"`
-	IstioSidecarInjectorConfigMapName string            `yaml:"istio_sidecar_injector_config_map_name,omitempty" json:"istioSidecarInjectorConfigMapName,omitempty"`
-	IstioSidecarAnnotation            string            `yaml:"istio_sidecar_annotation,omitempty" json:"istioSidecarAnnotation,omitempty"`
-	IstiodDeploymentName              string            `yaml:"istiod_deployment_name,omitempty" json:"istiodDeploymentName,omitempty"`
-	IstiodPodMonitoringPort           int               `yaml:"istiod_pod_monitoring_port,omitempty" json:"istiodPodMonitoringPort,omitempty"`
+	ComponentStatuses                 ComponentStatuses `yaml:"component_status,omitempty"`
+	ConfigMapName                     string            `yaml:"config_map_name,omitempty"`
+	EnvoyAdminLocalPort               int               `yaml:"envoy_admin_local_port,omitempty"`
+	GatewayAPIClasses                 []GatewayAPIClass `yaml:"gateway_api_classes,omitempty"`
+	GatewayAPIClassesLabelSelector    string            `yaml:"gateway_api_classes_label_selector,omitempty"`
+	IstioAPIEnabled                   bool              `yaml:"istio_api_enabled"`
+	IstioIdentityDomain               string            `yaml:"istio_identity_domain,omitempty"`
+	IstioInjectionAnnotation          string            `yaml:"istio_injection_annotation,omitempty"`
+	IstioSidecarInjectorConfigMapName string            `yaml:"istio_sidecar_injector_config_map_name,omitempty"`
+	IstioSidecarAnnotation            string            `yaml:"istio_sidecar_annotation,omitempty"`
+	IstiodDeploymentName              string            `yaml:"istiod_deployment_name,omitempty"`
+	IstiodPodMonitoringPort           int               `yaml:"istiod_pod_monitoring_port,omitempty"`
 	// IstiodPollingIntervalSeconds is how often in seconds Kiali will poll istiod(s) for
 	// proxy status and registry services. Polling is not performed if IstioAPIEnabled is false.
 	IstiodPollingIntervalSeconds     int             `yaml:"istiod_polling_interval_seconds,omitempty" json:"istiodPollingIntervalSeconds,omitempty"`
@@ -485,10 +493,6 @@ type DeploymentConfig struct {
 	InstanceName         string                   `yaml:"instance_name"`
 	Namespace            string                   `yaml:"namespace,omitempty"` // Kiali deployment namespace
 	ViewOnlyMode         bool                     `yaml:"view_only_mode,omitempty"`
-	// RemoteSecretPath is used to identify the remote cluster Kiali will connect to as its "local cluster".
-	// This is to support installing Kiali in the control plane, but observing only the data plane in the remote cluster.
-	// Experimental feature. See: https://github.com/kiali/kiali/issues/3002
-	RemoteSecretPath string `yaml:"remote_secret_path,omitempty"`
 }
 
 // we need to play games with a custom unmarshaller/marshaller for metav1.LabelSelector because it has no yaml struct tags so
@@ -631,8 +635,9 @@ type Clustering struct {
 	// Clusters is a list of clusters that cannot be autodetected by the Kiali Server.
 	// Remote clusters are specified here if ‘autodetect_secrets.enabled’ is false or
 	// if the Kiali Server does not have access to the remote cluster’s secret.
-	Clusters  []Cluster  `yaml:"clusters" json:"clusters"`
-	KialiURLs []KialiURL `yaml:"kiali_urls" json:"kiali_urls"`
+	Clusters          []Cluster  `yaml:"clusters" json:"clusters"`
+	IgnoreHomeCluster bool       `yaml:"ignore_home_cluster" json:"ignoreHomeCluster"`
+	KialiURLs         []KialiURL `yaml:"kiali_urls" json:"kialiUrls"`
 }
 
 // IsZero implements: https://pkg.go.dev/gopkg.in/yaml.v2#IsZeroer so that
@@ -703,10 +708,8 @@ type Config struct {
 	ExternalServices         ExternalServices                    `yaml:"external_services,omitempty"`
 	HealthConfig             HealthConfig                        `yaml:"health_config,omitempty" json:"healthConfig,omitempty"`
 	Identity                 security.Identity                   `yaml:",omitempty"`
-	InCluster                bool                                `yaml:"in_cluster,omitempty"`
 	InstallationTag          string                              `yaml:"installation_tag,omitempty"`
 	IstioLabels              IstioLabels                         `yaml:"istio_labels,omitempty"`
-	IstioNamespace           string                              `yaml:"istio_namespace,omitempty"` // default component namespace
 	KialiFeatureFlags        KialiFeatureFlags                   `yaml:"kiali_feature_flags,omitempty"`
 	KialiInternal            KialiInternalConfig                 `yaml:"kiali_internal,omitempty"`
 	KubernetesConfig         KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
@@ -717,8 +720,6 @@ type Config struct {
 // NewConfig creates a default Config struct
 func NewConfig() (c *Config) {
 	c = &Config{
-		InCluster:      true,
-		IstioNamespace: "istio-system",
 		Auth: AuthConfig{
 			Strategy: AuthStrategyToken,
 			OpenId: OpenIdConfig{
@@ -741,14 +742,16 @@ func NewConfig() (c *Config) {
 				InsecureSkipVerifyTLS: false,
 			},
 		},
+		Clustering: Clustering{
+			IgnoreHomeCluster: false,
+		},
 		CustomDashboards: dashboards.GetBuiltInMonitoringDashboards(),
 		Deployment: DeploymentConfig{
 			certPool:           x509.NewCertPool(),
 			ClusterWideAccess:  true,
 			DiscoverySelectors: DiscoverySelectorsConfig{Default: nil, Overrides: nil},
 			InstanceName:       "kiali",
-			Namespace:          "istio-system",
-			RemoteSecretPath:   "/kiali-remote-secret/kiali",
+			Namespace:          IstioNamespaceDefault,
 			ViewOnlyMode:       false,
 		},
 		ExternalServices: ExternalServices{
@@ -790,7 +793,7 @@ func NewConfig() (c *Config) {
 				IstiodDeploymentName:              "",
 				IstiodPodMonitoringPort:           15014,
 				IstiodPollingIntervalSeconds:      20,
-				RootNamespace:                     "istio-system",
+				RootNamespace:                     IstioNamespaceDefault,
 				UrlServiceVersion:                 "",
 				ValidationChangeDetectionEnabled:  true,
 				ValidationReconcileInterval:       util.AsPtr(time.Minute),
@@ -1346,11 +1349,6 @@ func SaveToFile(filename string, conf *Config) (err error) {
 	return
 }
 
-// IsIstioNamespace returns true if the namespace is the default istio namespace
-func IsIstioNamespace(namespace string) bool {
-	return namespace == configuration.IstioNamespace
-}
-
 // IsRootNamespace returns true if the namespace is the root namespace
 func IsRootNamespace(namespace string) bool {
 	return namespace == configuration.ExternalServices.Istio.RootNamespace
@@ -1457,7 +1455,7 @@ func (conf Config) IsValidationsEnabled() bool {
 
 // Validate will ensure the config is valid. This should be called after the config
 // is initialized and before the config is used.
-func Validate(conf Config) error {
+func Validate(conf *Config) error {
 	if conf.Server.Port < 0 {
 		return fmt.Errorf("server port is negative: %v", conf.Server.Port)
 	}

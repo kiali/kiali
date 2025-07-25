@@ -13,14 +13,16 @@
 #
 ###################################################################
 
-istio_namespace: "${ISTIO_NAMESPACE}"
-
 auth:
   strategy: "anonymous"
 
+clustering:
+  # run-kiali is, by definition, running outside of a cluster so you must ignore home cluster
+  # when ignore_home_cluster=true, use run-kiali.sh -cn option if the context name != cluster name.
+  ignore_home_cluster: true
+
 deployment:
   cluster_wide_access: true
-  remote_secret_path: "${REMOTE_SECRET_PATH}"
 
 external_services:
   custom_dashboards:
@@ -46,6 +48,3 @@ external_services:
 
 login_token:
   signing_key: "notsecure"
-
-# in_cluster must be false - do not change
-in_cluster: false

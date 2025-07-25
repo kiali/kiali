@@ -72,6 +72,9 @@ ISTIO_DIR=""
 # If the scripts need image registry client, this is it (docker or podman)
 DORP="${DORP:-podman}"
 
+# Set true if the kiali home cluster is out of the mesh (not co-located with an istio control plane)
+IGNORE_HOME_CLUSTER="${IGNORE_HOME_CLUSTER:-false}"
+
 # The namespace where Istio will be found - this namespace must be the same on both clusters
 ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-istio-system}"
 
@@ -185,6 +188,11 @@ KIALI2_WEB_SCHEMA="${KIALI2_WEB_SCHEMA:-}"
 # If true the local dev image of Kiali will be built and used in the Kiali deployment
 KIALI_BUILD_DEV_IMAGE="${KIALI_BUILD_DEV_IMAGE:-false}"
 
+# External service addresses for Kiali configuration
+KIALI_PROMETHEUS_ADDRESS="${KIALI_PROMETHEUS_ADDRESS:-}"
+KIALI_GRAFANA_ADDRESS="${KIALI_GRAFANA_ADDRESS:-}"
+KIALI_TRACING_ADDRESS="${KIALI_TRACING_ADDRESS:-}"
+
 # process command line args
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -260,6 +268,11 @@ while [[ $# -gt 0 ]]; do
       ISTIO_DIR="$2"
       shift;shift
       ;;
+    -ilc|--ignore-local-cluster)
+      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--ignore-local-cluster must be 'true' or 'false'" && exit 1
+      IGNORE_HOME_CLUSTER="$2"
+      shift;shift
+      ;;
     -in|--istio-namespace)
       ISTIO_NAMESPACE="$2"
       shift;shift
@@ -311,6 +324,18 @@ while [[ $# -gt 0 ]]; do
     -kudi|--kiali-use-dev-image)
       [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--kiali-use-dev-image must be 'true' or 'false'" && exit 1
       KIALI_USE_DEV_IMAGE="$2"
+      shift;shift
+      ;;
+    -kpa|--kiali-prometheus-address)
+      KIALI_PROMETHEUS_ADDRESS="$2"
+      shift;shift
+      ;;
+    -kga|--kiali-grafana-address)
+      KIALI_GRAFANA_ADDRESS="$2"
+      shift;shift
+      ;;
+    -kta|--kiali-tracing-address)
+      KIALI_TRACING_ADDRESS="$2"
       shift;shift
       ;;
     -k1wf|--kiali1-web-fqdn)
@@ -419,6 +444,7 @@ Valid command line arguments:
   -ag|--auth-groups <string>: If using Group for authentication, a comma separated groups list. Just for OpenID.
   -gr|--gateway-required <bool>: If a gateway is required to cross between networks, set this to true
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
+  -ilc|--ignore-local-cluster <bool>: True id the kiali home cluster is not in the mesh (not co-located with an Istio control plane)
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -ih|--istio-hub <hub>: If you want to override the image hub used by istioctl (where the images are found),
                          set this to the hub name, or "default" to use the default image locations.
@@ -448,6 +474,9 @@ Valid command line arguments:
                                that will be the image pushed to the clusters. You can "make container-build-kiali" to build it.
                                Will be ignored if --kiali-enabled is 'false'. (Default: false)
                                CURRENTLY ONLY SUPPORTED WITH MINIKUBE!
+  -kpa|--kiali-prometheus-address <address>: External IP address of Prometheus service for Kiali to connect to.
+  -kga|--kiali-grafana-address <address>: External IP address of Grafana service for Kiali to connect to.
+  -kta|--kiali-tracing-address <address>: External IP address of tracing service for Kiali to connect to.
   -kup|--kiali-user-password <password>: Password for the kiali user in keycloak.
   -mcpu|--minikube-cpu <cpu count>: Number of CPUs to give to each minikube cluster
   -md|--minikube-driver <name>: The driver used by minikube (e.g. virtualbox, kvm2) (Default: kvm2)
@@ -629,6 +658,7 @@ export AUTH_GROUPS \
        CLUSTER2_USER \
        CROSSNETWORK_GATEWAY_REQUIRED \
        DORP \
+       IGNORE_HOME_CLUSTER \
        IS_OPENSHIFT \
        ISTIO_DIR \
        ISTIO_NAMESPACE \
@@ -640,7 +670,10 @@ export AUTH_GROUPS \
        KIALI_BUILD_DEV_IMAGE \
        KIALI_CREATE_REMOTE_CLUSTER_SECRETS \
        KIALI_ENABLED \
+       KIALI_GRAFANA_ADDRESS \
+       KIALI_PROMETHEUS_ADDRESS \
        KIALI_SERVER_HELM_CHARTS \
+       KIALI_TRACING_ADDRESS \
        KIALI_USE_DEV_IMAGE \
        KIND_NODE_IMAGE \
        MANAGE_KIND \
@@ -675,6 +708,7 @@ CLUSTER2_PASS=$CLUSTER2_PASS
 CLUSTER2_USER=$CLUSTER2_USER
 CROSSNETWORK_GATEWAY_REQUIRED=$CROSSNETWORK_GATEWAY_REQUIRED
 DORP=$DORP
+IGNORE_HOME_CLUSTER=$IGNORE_HOME_CLUSTER
 IS_OPENSHIFT=$IS_OPENSHIFT
 ISTIO_DIR=$ISTIO_DIR
 ISTIO_NAMESPACE=$ISTIO_NAMESPACE
@@ -686,7 +720,10 @@ KIALI_AUTH_STRATEGY=$KIALI_AUTH_STRATEGY
 KIALI_BUILD_DEV_IMAGE=$KIALI_BUILD_DEV_IMAGE
 KIALI_CREATE_REMOTE_CLUSTER_SECRETS=$KIALI_CREATE_REMOTE_CLUSTER_SECRETS
 KIALI_ENABLED=$KIALI_ENABLED
+KIALI_GRAFANA_ADDRESS=$KIALI_GRAFANA_ADDRESS
+KIALI_PROMETHEUS_ADDRESS=$KIALI_PROMETHEUS_ADDRESS
 KIALI_SERVER_HELM_CHARTS=$KIALI_SERVER_HELM_CHARTS
+KIALI_TRACING_ADDRESS=$KIALI_TRACING_ADDRESS
 KIALI_USE_DEV_IMAGE=$KIALI_USE_DEV_IMAGE
 KIALI1_WEB_FQDN=$KIALI1_WEB_FQDN
 KIALI1_WEB_SCHEMA=$KIALI1_WEB_SCHEMA

@@ -203,12 +203,6 @@ func ToPtrs[T any](s []T) []*T {
 }
 
 func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster string, namespace string, criteria IstioConfigCriteria) (*models.IstioConfigList, error) {
-	var end observability.EndFunc
-	_, end = observability.StartSpan(ctx, "GetIstioConfigListForNamespace",
-		observability.Attribute("package", "business"),
-	)
-	defer end()
-
 	istioConfigList := &models.IstioConfigList{
 		DestinationRules: []*networking_v1.DestinationRule{},
 		EnvoyFilters:     []*networking_v1alpha3.EnvoyFilter{},
@@ -233,6 +227,18 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		PeerAuthentications:    []*security_v1.PeerAuthentication{},
 		RequestAuthentications: []*security_v1.RequestAuthentication{},
 	}
+
+	// This is called from many places but should be ignored for an external kiali home cluster. It's easier to check here
+	// than at all of the callers. If not applicable, just return.
+	if in.conf.Clustering.IgnoreHomeCluster && cluster == in.conf.KubernetesConfig.ClusterName {
+		return istioConfigList, nil
+	}
+
+	var end observability.EndFunc
+	_, end = observability.StartSpan(ctx, "GetIstioConfigListForNamespace",
+		observability.Attribute("package", "business"),
+	)
+	defer end()
 
 	saClient := in.saClients[cluster]
 	if saClient == nil {
