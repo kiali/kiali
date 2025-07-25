@@ -348,6 +348,36 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Subset not found",
 		Severity: WarningSeverity,
 	},
+	"workload.ambient.sidecarandannotation": {
+		Code:     "KIA1311",
+		Message:  "This workload has both sidecar and Ambient annotation",
+		Severity: ErrorSeverity,
+	},
+	"workload.ambient.waypointandnotambient": {
+		Code:     "KIA1312",
+		Message:  "This workload has waypoint annotations but is not in Ambient",
+		Severity: ErrorSeverity,
+	},
+	"workload.ambient.waypointnotfound": {
+		Code:     "KIA1313",
+		Message:  "This workload has annotated waypoint but it does not exist or is misconfigured",
+		Severity: ErrorSeverity,
+	},
+	"workload.ambient.podsidecarandambientredirection": {
+		Code:     "KIA1314",
+		Message:  "This workload has a pod with both a sidecar container and ambient redirection",
+		Severity: ErrorSeverity,
+	},
+	"workload.ambient.podsidecarinjectandambientredirection": {
+		Code:     "KIA1315",
+		Message:  "This workload has a pod with both a sidecar container and ambient redirection",
+		Severity: WarningSeverity,
+	},
+	"workload.ambient.authpolicybutnowaypoint": {
+		Code:     "KIA1315",
+		Message:  "This workload has Authorization Policies but no Waypoint",
+		Severity: WarningSeverity,
+	},
 	"workload.authorizationpolicy.needstobecovered": {
 		Code:     "KIA1301",
 		Message:  "This workload is not covered by any authorization policy",
