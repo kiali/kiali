@@ -75,6 +75,8 @@ import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { EmptyOverview } from './EmptyOverview';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
+import { isIstioControlPlane } from 'config/ServerConfig';
+import { PersesInfo } from '../../types/PersesInfo';
 
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
@@ -134,6 +136,7 @@ type State = {
   namespaces: NamespaceInfo[];
   nsTarget: string;
   opTarget: string;
+  persesLinks: ExternalLink[];
   showTrafficPoliciesModal: boolean;
   type: OverviewType;
 };
@@ -159,6 +162,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
   // Grafana promise is only invoked by componentDidMount() no need to repeat it on componentDidUpdate()
   static grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
+  static persesInfoPromise: Promise<PersesInfo | undefined> | undefined;
 
   constructor(props: OverviewProps) {
     super(props);
@@ -175,6 +179,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       namespaces: [],
       nsTarget: '',
       opTarget: '',
+      persesLinks: [],
       showTrafficPoliciesModal: false,
       type: OverviewToolbar.currentOverviewType()
     };
@@ -182,6 +187,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
   componentDidMount(): void {
     this.fetchGrafanaInfo();
+    this.fetchPersesInfo();
     if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
       this.load();
     }
@@ -636,6 +642,38 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       });
   };
 
+  fetchPersesInfo = (): void => {
+    if (!OverviewPageComponent.persesInfoPromise) {
+      OverviewPageComponent.persesInfoPromise = API.getPersesInfo().then(response => {
+        if (response.status === 204) {
+          return undefined;
+        }
+
+        return response.data;
+      });
+    }
+
+    OverviewPageComponent.persesInfoPromise
+      .then(persesInfo => {
+        if (persesInfo) {
+          // For Overview Page only Performance and Wasm Extension dashboard are interesting
+          this.setState({
+            persesLinks: persesInfo.externalLinks.filter(link => ISTIO_DASHBOARDS.indexOf(link.name) > -1)
+          });
+        } else {
+          this.setState({ persesLinks: [] });
+        }
+      })
+      .catch(err => {
+        AlertUtils.addMessage({
+          ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
+          group: 'default',
+          type: MessageType.INFO,
+          showNotification: false
+        });
+      });
+  };
+
   private fetchControlPlanes = async (): Promise<void> => {
     return API.getControlPlanes()
       .then(response => {
@@ -999,27 +1037,51 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           namespaceActions.push(removeAuthorizationAction);
         }
       }
-    } else if (this.state.grafanaLinks.length > 0) {
-      // Istio namespace will render external Grafana dashboards
-      namespaceActions.push({
-        isGroup: false,
-        isSeparator: true
-      });
-
-      this.state.grafanaLinks.forEach(link => {
-        const grafanaDashboard = {
+    } else {
+      if (this.state.grafanaLinks.length > 0) {
+        // Istio namespace will render external Grafana dashboards
+        namespaceActions.push({
           isGroup: false,
-          isSeparator: false,
-          isExternal: true,
-          title: link.name,
-          action: (_ns: string) => {
-            window.open(link.url, '_blank');
-            this.onChange();
-          }
-        };
+          isSeparator: true
+        });
 
-        namespaceActions.push(grafanaDashboard);
-      });
+        this.state.grafanaLinks.forEach(link => {
+          const grafanaDashboard = {
+            isGroup: false,
+            isSeparator: false,
+            isExternal: true,
+            title: link.name,
+            action: (_ns: string) => {
+              window.open(link.url, '_blank');
+              this.onChange();
+            }
+          };
+
+          namespaceActions.push(grafanaDashboard);
+        });
+      }
+      if (this.state.persesLinks.length > 0) {
+        // Istio namespace will render external Perses dashboards
+        namespaceActions.push({
+          isGroup: false,
+          isSeparator: true
+        });
+
+        this.state.persesLinks.forEach(link => {
+          const persesDashboard = {
+            isGroup: false,
+            isSeparator: false,
+            isExternal: true,
+            title: link.name,
+            action: (_ns: string) => {
+              window.open(link.url, '_blank');
+              this.onChange();
+            }
+          };
+
+          namespaceActions.push(persesDashboard);
+        });
+      }
     }
 
     return namespaceActions;
