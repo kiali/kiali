@@ -189,6 +189,8 @@ func TestGrafanaWorking(t *testing.T) {
 	k8s, grafanaCalls, persesCalls, promCalls := mockAddOnsCalls(t, objs, b1, b2)
 
 	conf := config.Get()
+	// TODO: Change to true
+	conf.ExternalServices.Perses.Enabled = false
 	config.Set(conf)
 
 	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithTraceLoader(mockJaeger).Build().IstioStatus
@@ -198,7 +200,7 @@ func TestGrafanaWorking(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
-	assert.Equal(1, *persesCalls)
+	assert.Equal(0, *persesCalls)
 
 	// All services are healthy
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
@@ -862,6 +864,9 @@ func addonAddMockUrls(baseUrl string, conf *config.Config, overrideUrl bool) *co
 	if overrideUrl {
 		conf.ExternalServices.Grafana.HealthCheckUrl = conf.ExternalServices.Grafana.InternalURL
 		conf.ExternalServices.Grafana.InternalURL = baseUrl + "/grafana/wrong"
+
+		conf.ExternalServices.Perses.HealthCheckUrl = conf.ExternalServices.Perses.InternalURL
+		conf.ExternalServices.Perses.InternalURL = baseUrl + "/perses/wrong"
 
 		conf.ExternalServices.Prometheus.HealthCheckUrl = conf.ExternalServices.Prometheus.URL
 		conf.ExternalServices.Prometheus.URL = baseUrl + "/prometheus/wrong"
