@@ -19,26 +19,23 @@ var systemNamespaceRegex = regexp.MustCompile(`^(kube-.*|openshift.*|ibm.*|kiali
 // If there are no overrides, but default discovery selectors are defined in the Kiali config, those will be returned.
 // If there are no selectors defined in the Kiali config, nil is returned (Istio's own discovery selectors will be ignored).
 // kialiConf argument may be nil - if so, they are ignored and nil is returned.
-func GetDiscoverySelectorsForCluster(discovery MeshDiscovery, cluster string, kialiConf *config.Config, includeControlPlanes bool) config.DiscoverySelectorsType {
+func GetDiscoverySelectorsForCluster(discovery MeshDiscovery, cluster string, kialiConf *config.Config) config.DiscoverySelectorsType {
 	if kialiConf == nil {
 		return nil
 	}
 
-	cpNamespaces := []string{}
-	if includeControlPlanes {
-		cpNamespaces = discovery.GetControlPlaneNamespaces(cluster)
-	}
+	cpNamespaces := discovery.GetControlPlaneNamespaces(cluster)
 	ds := GetKialiDiscoverySelectors(cpNamespaces, cluster, kialiConf)
 	return ds
 }
 
-// getKialiDiscoverySelectors will return the discovery selectors applicable for the named cluster as configured
+// GetKialiDiscoverySelectors will return the discovery selectors applicable for the named cluster as configured
 // in the Kiali config (this func does nothing with Istio discovery selectors - it is only concerned with the Kiali config).
 // If the cluster has overrides defined in the Kiali config, those overrides will be returned.
 // If there are no overrides, but default discovery selectors are defined in the Kiali config, those will be returned.
 // If there are no selectors defined in the Kiali config, nil is returned.
-// If selectors are defined, the function may return more than what was configured - the extra selectors
-// ensure that we always have access to control-plane namespaces.
+// If selectors are defined, the function will return the selectors, and as a convenience, additional selectors for
+// any provided cpNamespaces (for a set that ensures we always have access to control-plane namespaces).
 // NOTE: This is mainly a test hook, You probably want to use getDiscoverySelectorsForCluster()
 func GetKialiDiscoverySelectors(cpNamespaces []string, cluster string, conf *config.Config) config.DiscoverySelectorsType {
 	if conf == nil {

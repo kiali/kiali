@@ -302,7 +302,7 @@ func TestGetKialiDiscoverySelectors(t *testing.T) {
 }
 
 func TestGetDiscoverySelectorsForCluster(t *testing.T) {
-	assert.Nil(t, GetDiscoverySelectorsForCluster(nil, "cluster1", nil, true))
+	assert.Nil(t, GetDiscoverySelectorsForCluster(nil, "cluster1", nil))
 
 	// config with only "cluster1" override selectors
 	overrideSelectors := config.Config{

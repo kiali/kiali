@@ -704,7 +704,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 
 			namespaces := FilterNamespacesWithDiscoverySelectors(
 				models.CastNamespaceCollection(k8sNamespaces, cluster.Name),
-				GetDiscoverySelectorsForCluster(in, cluster.Name, in.conf, false),
+				GetKialiDiscoverySelectors([]string{}, cluster.Name, in.conf),
 			)
 			// add control plane namespaces, which should always be included
 			for _, cp := range controlPlanesByClusterName[cluster.Name] {

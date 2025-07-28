@@ -216,7 +216,7 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 		}
 	}
 
-	namespaces = istio.FilterNamespacesWithDiscoverySelectors(namespaces, istio.GetDiscoverySelectorsForCluster(in.discovery, cluster, in.conf, true))
+	namespaces = istio.FilterNamespacesWithDiscoverySelectors(namespaces, istio.GetDiscoverySelectorsForCluster(in.discovery, cluster, in.conf))
 
 	return namespaces, nil
 }
@@ -387,7 +387,7 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelec
 // This ignores cluster-wide-access mode since we can have discovery selectors even when given cluster wide access.
 // Also, this may be asking for the accessibility of a namespace in a remote cluster, in which case cluster-wide-access is moot.
 func (in *NamespaceService) isAccessibleNamespace(namespace models.Namespace) bool {
-	selectors := istio.GetDiscoverySelectorsForCluster(in.discovery, namespace.Cluster, in.conf, true)
+	selectors := istio.GetDiscoverySelectorsForCluster(in.discovery, namespace.Cluster, in.conf)
 	// see if the discovery selectors match the one namespace we are checking
 	return len(istio.FilterNamespacesWithDiscoverySelectors([]models.Namespace{namespace}, selectors)) == 1
 }

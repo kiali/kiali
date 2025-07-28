@@ -1,7 +1,7 @@
 import { store } from '../store/ConfigStore';
 import { isIstioNamespace } from 'config/ServerConfig';
 
-// isControlPlaneAccessible returns true if
+// isControlPlaneAccessible returns true if the use has access to any control plane namespace
 export const isControlPlaneAccessible = (cluster?: string): boolean => {
   const ns = store.getState().namespaces;
 

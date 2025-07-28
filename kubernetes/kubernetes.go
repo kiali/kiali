@@ -370,14 +370,12 @@ func (in *K8SClient) GetDeployment(namespace, name string) (*apps_v1.Deployment,
 // GetDeployments returns an array of deployments for a given namespace.
 // It returns an error on any problem.
 func (in *K8SClient) GetDeployments(namespace string, opts meta_v1.ListOptions) ([]apps_v1.Deployment, error) {
-	if namespace != "" {
-		if depList, err := in.k8s.AppsV1().Deployments(namespace).List(in.ctx, opts); err == nil {
-			return depList.Items, nil
-		} else {
-			return []apps_v1.Deployment{}, err
-		}
+	depList, err := in.k8s.AppsV1().Deployments(namespace).List(in.ctx, opts)
+	if err != nil {
+		return []apps_v1.Deployment{}, err
 	}
-	return []apps_v1.Deployment{}, nil
+
+	return depList.Items, nil
 }
 
 func (in *K8SClient) GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error) {
