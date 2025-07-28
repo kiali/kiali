@@ -387,7 +387,7 @@ func (c *kialiCacheImpl) GatewayAPIClasses(cluster string) []config.GatewayAPICl
 	if len(result) == 0 && c.conf.Deployment.ClusterWideAccess {
 		labelSelector, err := labels.ConvertSelectorToLabelsMap(config.Get().ExternalServices.Istio.GatewayAPIClassesLabelSelector)
 		if err != nil {
-			c.zl.Error().Msgf("Cannot auto discover gateways: bad gateway_api_classes_label_selector: %s", err)
+			c.zl.Error().Msgf("Cannot auto discover GatewayAPIClasses: bad gateway_api_classes_label_selector: %s", err)
 		} else {
 			// If there are no configured classes, get classes using the Istio controller
 			listOpts := []client.ListOption{client.MatchingLabels(labelSelector)}
