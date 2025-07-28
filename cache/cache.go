@@ -391,17 +391,25 @@ func (c *kialiCacheImpl) GatewayAPIClasses(cluster string) []config.GatewayAPICl
 		} else {
 			// If there are no configured classes, get classes using the Istio controller
 			listOpts := []client.ListOption{client.MatchingLabels(labelSelector)}
+			if len(labelSelector) == 0 {
+				c.zl.Debug().Msgf("GatewayAPIClasses label selector is not set. Auto discovery of all GatewayAPIClasses.")
+			} else {
+				c.zl.Debug().Msgf("Auto discovery of GatewayAPIClasses using label selector [%v]", labelSelector)
+			}
 			classList := &k8s_networking_v1.GatewayClassList{}
-			c.zl.Debug().Msgf("Auto discovery of GatewayAPIClasses using label selector [%v]", labelSelector)
+
 			err := kubeCache.List(context.TODO(), classList, listOpts...)
 			if err != nil {
-				c.zl.Error().Msgf("Cannot auto discover gateways: list failed: %s", err)
+				c.zl.Error().Msgf("Cannot auto discover GatewayAPIClasses: list failed: %s", err)
 			} else {
 				for _, class := range classList.Items {
 					// Filter out classes that don't use Istio as a controller when the label filter is set
 					if strings.HasPrefix(string(class.Spec.ControllerName), "istio.io") || len(labelSelector) > 0 {
 						result = append(result, config.GatewayAPIClass{Name: class.Name, ClassName: class.Name})
 					}
+				}
+				if len(result) == 0 && len(labelSelector) != 0 {
+					c.zl.Error().Msgf("Cannot auto discover GatewayAPIClasses using label selector [%v]", labelSelector)
 				}
 			}
 		}
