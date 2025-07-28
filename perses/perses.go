@@ -284,6 +284,7 @@ func getDashboardPath(ctx context.Context, project, name string, conn persesConn
 	lowerName := strings.ToLower(name)
 	spacedName := strings.ReplaceAll(lowerName, " ", "-")
 	body, code, url, err := dashboardSupplier(conn.internalURL, project, url.PathEscape(spacedName), conn.auth)
+	zl := log.FromContext(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -292,13 +293,16 @@ func getDashboardPath(ctx context.Context, project, name string, conn persesConn
 		var f map[string]string
 		err = json.Unmarshal(body, &f)
 		if err != nil {
-			return "", fmt.Errorf("unknown error from Perses (%d)", code)
+			zl.Warn().Msgf("No Perses dashboard found for pattern '%s'. Code %d", name, code)
+			return "", nil
 		}
 		message, ok := f["message"]
 		if !ok {
-			return "", fmt.Errorf("unknown error from Perses (%d)", code)
+			zl.Warn().Msgf("No Perses dashboard found for pattern '%s'. Code %d", name, code)
+			return "", nil
 		}
-		return "", fmt.Errorf("error from Perses (%d): %s", code, message)
+		zl.Warn().Msgf("No Perses dashboard found for pattern '%s'. Code %d. Message: %s", name, code, message)
+		return "", nil
 	}
 
 	return url, nil
