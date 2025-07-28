@@ -189,7 +189,7 @@ func TestGrafanaWorking(t *testing.T) {
 	k8s, grafanaCalls, persesCalls, promCalls := mockAddOnsCalls(t, objs, b1, b2)
 
 	conf := config.Get()
-	// TODO: Change to true
+	// TODO: Set to true
 	conf.ExternalServices.Perses.Enabled = false
 	config.Set(conf)
 
@@ -200,7 +200,7 @@ func TestGrafanaWorking(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
-	assert.Equal(0, *persesCalls)
+	assert.Equal(1, *persesCalls)
 
 	// All services are healthy
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
@@ -277,6 +277,8 @@ func TestGrafanaNotWorking(t *testing.T) {
 
 	// Adapt the AddOns URLs to the mock Server
 	conf := addonAddMockUrls(httpServer.URL, config.NewConfig(), false)
+	// TODO: Set to true
+	conf.ExternalServices.Perses.Enabled = false
 	config.Set(conf)
 
 	k8s := kubetest.NewFakeK8sClient(objects...)
