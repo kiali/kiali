@@ -406,12 +406,12 @@ func TracingDiagnose(
 	return func(w http.ResponseWriter, r *http.Request) {
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Services initialization getLayer error: "+err.Error())
+			RespondWithError(w, http.StatusInternalServerError, "TracingDiagnose getLayer error: "+err.Error())
 			return
 		}
 
 		if !business.Namespace.HasMeshAccess(r.Context(), clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
-			RespondWithError(w, http.StatusInternalServerError, "Unauthorized")
+			RespondWithError(w, http.StatusInternalServerError, "TracingDiagnose unauthorized")
 			return
 		}
 
@@ -451,7 +451,12 @@ func TracingConfigurationCheck(
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			RespondWithError(w, http.StatusInternalServerError, "TracingConfigurationCheck getLayer error: "+err.Error())
+			return
+		}
+
+		if !business.Namespace.HasMeshAccess(r.Context(), clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
+			RespondWithError(w, http.StatusInternalServerError, "TracingConfigurationCheck Unauthorized")
 			return
 		}
 
