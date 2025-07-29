@@ -19,8 +19,8 @@ type AmbientWorkloadChecker struct {
 func (awc AmbientWorkloadChecker) Check() ([]*models.IstioCheck, bool) {
 	checks, valid := make([]*models.IstioCheck, 0), true
 
-	if awc.hasBothSidecarAndAmbientAnnotation() {
-		check := models.Build("workload.ambient.sidecarandannotation", "workload")
+	if awc.hasBothSidecarAndAmbientLabels() {
+		check := models.Build("workload.ambient.sidecarandlabel", "workload")
 		checks = append(checks, &check)
 	}
 	if awc.isWaypointAndNotAmbient() {
@@ -56,8 +56,8 @@ func (awc AmbientWorkloadChecker) Check() ([]*models.IstioCheck, bool) {
 	return checks, valid
 }
 
-func (awc AmbientWorkloadChecker) hasBothSidecarAndAmbientAnnotation() bool {
-	return awc.Workload.IsAmbient && awc.Workload.IstioSidecar
+func (awc AmbientWorkloadChecker) hasBothSidecarAndAmbientLabels() bool {
+	return awc.hasAmbientLabel() && awc.hasSidecarLabel()
 }
 
 func (awc AmbientWorkloadChecker) isWaypointAndNotAmbient() bool {
@@ -115,4 +115,23 @@ func (awc AmbientWorkloadChecker) hasAuthPolicyAndNoWaypoint() bool {
 		}
 	}
 	return false
+}
+
+// hasAmbientLabel Check if the namespace or the workload has Ambient enabled
+// See https://istio.io/latest/docs/ambient/usage/add-workloads/#ambient-labels
+func (awc AmbientWorkloadChecker) hasAmbientLabel() bool {
+	ns := awc.Namespaces.GetNamespace(awc.Workload.Namespace, awc.Cluster)
+	return (ns.Labels[awc.Conf.IstioLabels.AmbientNamespaceLabel] == awc.Conf.IstioLabels.AmbientNamespaceLabelValue &&
+		awc.Workload.Labels[awc.Conf.IstioLabels.AmbientNamespaceLabel] != "none") ||
+		awc.Workload.Labels[awc.Conf.IstioLabels.AmbientNamespaceLabel] == awc.Conf.IstioLabels.AmbientNamespaceLabelValue
+}
+
+// hasSidecarLabel Check if the namespace or the workload has Sidecars enabled
+// See https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/
+func (awc AmbientWorkloadChecker) hasSidecarLabel() bool {
+	ns := awc.Namespaces.GetNamespace(awc.Workload.Namespace, awc.Cluster)
+	return (ns.Labels[awc.Conf.IstioLabels.InjectionLabelName] == "enabled" ||
+		ns.Labels[awc.Conf.IstioLabels.InjectionLabelRev] != "" ||
+		awc.Workload.Labels[awc.Conf.ExternalServices.Istio.IstioInjectionAnnotation] == "enabled") && (ns.Labels[awc.Conf.IstioLabels.InjectionLabelName] != "disabled" &&
+		awc.Workload.Labels[awc.Conf.ExternalServices.Istio.IstioInjectionAnnotation] != "none")
 }

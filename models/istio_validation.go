@@ -348,14 +348,14 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Subset not found",
 		Severity: WarningSeverity,
 	},
-	"workload.ambient.sidecarandannotation": {
+	"workload.ambient.sidecarandlabel": {
 		Code:     "KIA1311",
-		Message:  "This workload has both sidecar and Ambient annotation",
+		Message:  "This workload has both sidecar and Ambient label",
 		Severity: ErrorSeverity,
 	},
 	"workload.ambient.waypointandnotambient": {
 		Code:     "KIA1312",
-		Message:  "This workload has waypoint annotations but is not in Ambient",
+		Message:  "This workload has waypoint labels but is not in Ambient",
 		Severity: ErrorSeverity,
 	},
 	"workload.ambient.waypointnotfound": {
