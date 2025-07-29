@@ -200,7 +200,7 @@ func TestGrafanaWorking(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
-	assert.Equal(1, *persesCalls)
+	assert.Equal(0, *persesCalls)
 
 	// All services are healthy
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
@@ -310,6 +310,8 @@ func TestFailingTracingService(t *testing.T) {
 	k8s, grafanaCalls, persesCalls, promCalls := mockAddOnsCalls(t, objs, b1, b2)
 
 	conf := config.Get()
+	// TODO: Set to true
+	conf.ExternalServices.Perses.Enabled = false
 	config.Set(conf)
 
 	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithTraceLoader(mockFailingJaeger).Build().IstioStatus
@@ -319,7 +321,7 @@ func TestFailingTracingService(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
-	assert.Equal(1, *persesCalls)
+	assert.Equal(0, *persesCalls)
 
 	// Tracing service is unreachable
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentUnreachable, false)
@@ -338,6 +340,8 @@ func TestOverriddenUrls(t *testing.T) {
 
 	// conf set in mockAddOnsCalls
 	conf := config.Get()
+	// TODO: Set to true
+	conf.ExternalServices.Perses.Enabled = false
 
 	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithTraceLoader(mockJaeger).Build().IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
@@ -346,7 +350,7 @@ func TestOverriddenUrls(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
-	assert.Equal(1, *persesCalls)
+	assert.Equal(0, *persesCalls)
 
 	// All the services are healthy
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
@@ -364,6 +368,8 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 	// Custom Dashboard prom URL forced to be empty
 	conf := config.Get()
 	conf.ExternalServices.CustomDashboards.Prometheus.URL = ""
+	// TODO: Set to true
+	conf.ExternalServices.Perses.Enabled = false
 	config.Set(conf)
 
 	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithTraceLoader(mockJaeger).Build().IstioStatus
@@ -373,7 +379,7 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(2, *promCalls)
-	assert.Equal(1, *persesCalls)
+	assert.Equal(0, *persesCalls)
 
 	// All the services are healthy
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
@@ -388,6 +394,8 @@ func TestNoIstioComponentFoundError(t *testing.T) {
 	k8s, _, _, _ := mockAddOnsCalls(t, []runtime.Object{}, true, false)
 
 	conf := config.Get()
+	// TODO: Set to true
+	conf.ExternalServices.Perses.Enabled = false
 
 	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithTraceLoader(mockJaeger).Build().IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
@@ -412,6 +420,10 @@ func TestDefaults(t *testing.T) {
 
 	// conf set in mockAddOnsCalls
 	conf := config.Get()
+	// TODO: Set to true
+	conf.ExternalServices.Perses.Enabled = false
+	config.Set(conf)
+
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentHealthy}},
@@ -436,7 +448,7 @@ func TestDefaults(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
-	assert.Equal(1, *persesCalls)
+	assert.Equal(0, *persesCalls)
 }
 
 func TestNonDefaults(t *testing.T) {
@@ -460,6 +472,8 @@ func TestNonDefaults(t *testing.T) {
 	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
 	}
+	// TODO: Enable
+	conf.ExternalServices.Perses.Enabled = false
 	config.Set(conf)
 
 	discovery := &istiotest.FakeDiscovery{
@@ -489,7 +503,7 @@ func TestNonDefaults(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
-	assert.Equal(1, *persesCalls)
+	assert.Equal(0, *persesCalls)
 }
 
 // Istiod replicas is downscaled to 0
@@ -509,6 +523,8 @@ func TestIstiodNotReady(t *testing.T) {
 	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
 	}
+	// TODO: Enable
+	conf.ExternalServices.Perses.Enabled = false
 	config.Set(conf)
 
 	discovery := &istiotest.FakeDiscovery{
@@ -538,7 +554,7 @@ func TestIstiodNotReady(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
-	assert.Equal(1, *persesCalls)
+	assert.Equal(0, *persesCalls)
 }
 
 // Istio deployments only have the "app" app_label.
@@ -563,6 +579,8 @@ func TestCustomizedAppLabel(t *testing.T) {
 	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
 	}
+	// TODO: Enable
+	conf.ExternalServices.Perses.Enabled = false
 	config.Set(conf)
 
 	discovery := &istiotest.FakeDiscovery{
@@ -589,7 +607,7 @@ func TestCustomizedAppLabel(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
-	assert.Equal(1, *persesCalls)
+	assert.Equal(0, *persesCalls)
 }
 
 func TestDaemonSetComponentHealthy(t *testing.T) {
@@ -613,6 +631,8 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
 	}
+	// TODO: Enable
+	conf.ExternalServices.Perses.Enabled = false
 	config.Set(conf)
 
 	discovery := &istiotest.FakeDiscovery{
@@ -640,7 +660,7 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
-	assert.Equal(1, *persesCalls)
+	assert.Equal(0, *persesCalls)
 }
 
 // Users may use DaemonSets to deploy istio components
@@ -660,6 +680,8 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
 	}
+	// TODO: Enable
+	conf.ExternalServices.Perses.Enabled = false
 	config.Set(conf)
 
 	// Set global cache var
@@ -687,7 +709,7 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
-	assert.Equal(1, *persesCalls)
+	assert.Equal(0, *persesCalls)
 }
 
 func assertComponent(assert *assert.Assertions, icsl kubernetes.IstioComponentStatus, name string, status string, isCore bool) {

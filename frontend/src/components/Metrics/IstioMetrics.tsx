@@ -464,7 +464,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
               />
             </ToolbarItem>
 
-            <ToolbarItem style={{ marginLeft: 'auto', paddingRight: '20px' }}>
+            <ToolbarItem style={{ marginLeft: 'auto', paddingRight: '20px', display: 'block' }}>
               <GrafanaLinks
                 links={this.state.grafanaInfo.externalLinks}
                 namespace={this.props.namespace}
@@ -472,8 +472,6 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
                 objectType={this.props.objectType}
                 datasourceUID={this.state.grafanaInfo.datasourceUID}
               />
-            </ToolbarItem>
-            <ToolbarItem style={{ marginLeft: 'auto', paddingRight: '20px' }}>
               <PersesLinks
                 links={this.state.persesInfo.externalLinks}
                 namespace={this.props.namespace}
@@ -482,7 +480,6 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
                 project={this.state.persesInfo.project}
               />
             </ToolbarItem>
-
             <KioskElement>
               <ToolbarItem>
                 <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} />
