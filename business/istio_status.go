@@ -317,7 +317,7 @@ func (iss *IstioStatusService) getAddonComponentStatus(cluster string) kubernete
 	var wg sync.WaitGroup
 	wg.Add(5)
 
-	staChan := make(chan kubernetes.IstioComponentStatus, 4)
+	staChan := make(chan kubernetes.IstioComponentStatus, 5)
 	extServices := iss.conf.ExternalServices
 
 	// https://github.com/kiali/kiali/issues/6966 - use the well-known Prom healthy endpoint
