@@ -180,6 +180,9 @@ func newClientFactory(kialiConf *kialiConfig.Config, restConf *rest.Config) (*cl
 			return nil, fmt.Errorf("unable to create home cluster Kiali Service Account client. Err: %s", err)
 		}
 
+		if f.homeCluster == "" {
+			f.homeCluster = restConf.Host
+		}
 		f.saClientEntries[f.homeCluster] = homeClient
 
 	} else if f.saClientEntries[f.homeCluster] == nil {

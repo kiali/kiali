@@ -39,6 +39,7 @@ func TestClientExpiration(t *testing.T) {
 	conf := config.Get()
 	conf.Auth.Strategy = config.AuthStrategyOpenId
 	conf.Auth.OpenId.DisableRBAC = false
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 	SetConfig(t, *conf)
 
 	clientFactory := NewTestingClientFactory(t)
@@ -100,7 +101,7 @@ func TestConcurrentClientExpiration(t *testing.T) {
 			defer wg.Done()
 			authInfo := api.NewAuthInfo()
 			authInfo.Token = fmt.Sprintf("%d", rand.Intn(10000000000))
-			_, innerErr := clientFactory.getRecycleClient(authInfo, 10*time.Millisecond, config.Get().KubernetesConfig.ClusterName)
+			_, innerErr := clientFactory.getRecycleClient(authInfo, 10*time.Millisecond, config.DefaultClusterID)
 			assert.NoError(innerErr)
 		}()
 	}
@@ -143,6 +144,7 @@ func TestClientCreatedWithClusterInfo(t *testing.T) {
 	assert := assert.New(t)
 
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 	config.Set(conf)
 
 	const testClusterName = "TestRemoteCluster"
@@ -432,6 +434,7 @@ func TestClientCreatedWithProxyInfo(t *testing.T) {
 
 			cfg := config.NewConfig()
 			cfg.Auth = tc.auth
+			cfg.KubernetesConfig.ClusterName = config.DefaultClusterID
 			SetConfig(t, *cfg)
 
 			clientFactory := NewTestingClientFactory(t)

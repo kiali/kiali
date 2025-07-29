@@ -11,6 +11,8 @@ import (
 func TestReloadRemoteClusterSecret(t *testing.T) {
 	check := assert.New(t)
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+	config.Set(conf)
 
 	const testClusterName = "TestRemoteCluster"
 
