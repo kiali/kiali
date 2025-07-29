@@ -419,6 +419,10 @@ func (c *kialiCacheImpl) GatewayAPIClasses(cluster string) []config.GatewayAPICl
 		c.zl.Debug().Msg("GatewayAPIClasses are not configured and cannot be automatically discovered, so using default values")
 		// Using default values
 		result = append(result, config.GatewayAPIClass{Name: "istio", ClassName: "istio"})
+		result = append(result, config.GatewayAPIClass{Name: "istio-remote", ClassName: "istio-remote"})
+		if len(c.clients) > 1 {
+			result = append(result, config.GatewayAPIClass{Name: "istio-east-west", ClassName: "istio-east-west"})
+		}
 		if c.IsAmbientEnabled(cluster) {
 			result = append(result, config.GatewayAPIClass{Name: "istio-waypoint", ClassName: "istio-waypoint"})
 		}
