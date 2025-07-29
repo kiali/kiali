@@ -403,7 +403,7 @@ func (in *NamespaceService) HasMeshAccess(ctx context.Context, cluster string) b
 		namespaces, err = in.GetClusterNamespaces(ctx, cluster)
 	}
 	if err != nil {
-		log.Errorf("failed HasMeshAccess", err)
+		log.Errorf("failed HasMeshAccess: %s", err)
 		return false
 	}
 
