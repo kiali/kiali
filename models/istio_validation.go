@@ -363,14 +363,14 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "This workload has annotated waypoint but it does not exist or is misconfigured",
 		Severity: ErrorSeverity,
 	},
-	"workload.ambient.podsidecarandambientredirection": {
+	"workload.ambient.podsidecarlabelandambientredirection": {
 		Code:     "KIA1314",
-		Message:  "This workload has a pod with both a sidecar container and ambient redirection",
+		Message:  "This workload has a sidecar label and ambient redirection",
 		Severity: ErrorSeverity,
 	},
-	"workload.ambient.podsidecarinjectandambientredirection": {
+	"workload.ambient.podsidecarinjectandambientlabel": {
 		Code:     "KIA1315",
-		Message:  "This workload has a pod with both a sidecar container and ambient redirection",
+		Message:  "This workload has a pod with both a sidecar container and ambient labels",
 		Severity: WarningSeverity,
 	},
 	"workload.ambient.authpolicybutnowaypoint": {

@@ -32,13 +32,13 @@ func (awc AmbientWorkloadChecker) Check() ([]*models.IstioCheck, bool) {
 		checks = append(checks, &check)
 		valid = false
 	}
-	if awc.hasPodWithSidecarAndAmbientRedirection() {
-		check := models.Build("workload.ambient.podsidecarandambientredirection", "workload")
+	if awc.hasPodWithSidecarLabelAndAmbientRedirection() {
+		check := models.Build("workload.ambient.podsidecarlabelandambientredirection", "workload")
 		checks = append(checks, &check)
 		valid = false
 	}
-	if awc.hasPodWithSidecarInjectAndAmbientRedirection() {
-		check := models.Build("workload.ambient.podsidecarinjectandambientredirection", "workload")
+	if awc.hasPodWithSidecarInjectAndAmbientLabel() {
+		check := models.Build("workload.ambient.podsidecarinjectandambientlabel", "workload")
 		checks = append(checks, &check)
 		valid = false
 	}
@@ -61,38 +61,32 @@ func (awc AmbientWorkloadChecker) hasBothSidecarAndAmbientLabels() bool {
 }
 
 func (awc AmbientWorkloadChecker) isWaypointAndNotAmbient() bool {
-	return awc.Workload.IsWaypoint() && !awc.Workload.IsAmbient
+	return awc.hasWaypointLabel() && !awc.Workload.IsAmbient
 }
 
 func (awc AmbientWorkloadChecker) referencesNonExistentWaypoint() bool {
-	// Check if the workload has a waypoint reference label/annotation
-	waypointName, hasWaypoint := awc.Workload.TemplateLabels[config.WaypointUseLabel]
-	if !hasWaypoint {
-		waypointName, hasWaypoint = awc.Workload.Labels[config.WaypointUseLabel]
-	}
-	if !hasWaypoint || waypointName == config.WaypointNone {
-		return false
-	}
 	// If there is a reference but no resolved waypoint workload, it's missing or misconfigured
-	return len(awc.Workload.WaypointWorkloads) == 0
+	return awc.hasWaypointLabel() && len(awc.Workload.WaypointWorkloads) == 0
 }
 
-func (awc AmbientWorkloadChecker) hasPodWithSidecarAndAmbientRedirection() bool {
+func (awc AmbientWorkloadChecker) hasPodWithSidecarLabelAndAmbientRedirection() bool {
+	if !awc.hasSidecarLabel() {
+		return false
+	}
 	for _, pod := range awc.Workload.Pods {
-		if pod.HasIstioSidecar() && pod.AmbientEnabled() {
+		if pod.AmbientEnabled() {
 			return true
 		}
 	}
 	return false
 }
 
-func (awc AmbientWorkloadChecker) hasPodWithSidecarInjectAndAmbientRedirection() bool {
-	label, exist := awc.Workload.Labels[awc.Conf.ExternalServices.Istio.IstioInjectionAnnotation]
-	if !exist || label != "true" {
+func (awc AmbientWorkloadChecker) hasPodWithSidecarInjectAndAmbientLabel() bool {
+	if !awc.hasAmbientLabel() {
 		return false
 	}
 	for _, pod := range awc.Workload.Pods {
-		if pod.AmbientEnabled() {
+		if pod.HasIstioSidecar() || pod.HasNativeSidecar() {
 			return true
 		}
 	}
@@ -134,4 +128,14 @@ func (awc AmbientWorkloadChecker) hasSidecarLabel() bool {
 		ns.Labels[awc.Conf.IstioLabels.InjectionLabelRev] != "" ||
 		awc.Workload.Labels[awc.Conf.ExternalServices.Istio.IstioInjectionAnnotation] == "enabled") && (ns.Labels[awc.Conf.IstioLabels.InjectionLabelName] != "disabled" &&
 		awc.Workload.Labels[awc.Conf.ExternalServices.Istio.IstioInjectionAnnotation] != "none")
+}
+
+// hasWaypointLabel Check if the namespace or the workload has Waypoint labels
+// See https://istio.io/latest/docs/ambient/usage/waypoint/#configure-a-pod-to-use-a-specific-waypoint
+func (awc AmbientWorkloadChecker) hasWaypointLabel() bool {
+	ns := awc.Namespaces.GetNamespace(awc.Workload.Namespace, awc.Cluster)
+	return (ns.Labels[awc.Conf.IstioLabels.AmbientWaypointUseLabel] != "" &&
+		ns.Labels[awc.Conf.IstioLabels.AmbientWaypointUseLabel] != config.WaypointNone) ||
+		(awc.Workload.Labels[awc.Conf.IstioLabels.AmbientWaypointUseLabel] != "" &&
+			awc.Workload.Labels[awc.Conf.IstioLabels.AmbientWaypointUseLabel] != config.WaypointNone)
 }
