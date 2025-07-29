@@ -360,7 +360,7 @@ func determineHomeClusterName() error {
 
 	// If the cluster name is not set and we don't have a co-located control plane, it's an error
 	if conf.Clustering.IgnoreHomeCluster {
-		return fmt.Errorf("Could not determine Kiali home cluster name. You must set kubernetes_config.cluster_name when clustering.ignore_home_cluster=true")
+		return fmt.Errorf("could not determine Kiali home cluster name. You must set kubernetes_config.cluster_name when clustering.ignore_home_cluster=true")
 	}
 
 	// use the control plane's configured cluster name, or the default
@@ -377,6 +377,7 @@ func determineHomeClusterName() error {
 		// To get around that we create a temporary client factory here and then set the kiali
 		// config cluster name. We then create the global client factory later in the business
 		// package and that global client factory has the cluster id set properly.
+		log.Debugf("REMOVE homeCluster=[%s]", conf.KubernetesConfig.ClusterName)
 		cf, err := kubernetes.NewClientFactory(ctx, conf)
 		if err != nil {
 			return err

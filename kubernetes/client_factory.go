@@ -105,7 +105,7 @@ func getClientFactory(kialiConf *kialiConfig.Config) (*clientFactory, error) {
 	if err == nil {
 		baseConfig.Host = restConfig.Host // remote cluster clients should ignore this
 		baseConfig.TLSClientConfig = restConfig.TLSClientConfig
-
+		log.Debugf("REMOVE LocalClusterInUse hoset=[%s]", restConfig.Host)
 		return newClientFactory(kialiConf, &baseConfig)
 	}
 
