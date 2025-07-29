@@ -24,10 +24,20 @@ var anError = map[string]string{
 	"message": "unauthorized",
 }
 
-func genDashboard(path string) []map[string]interface{} {
-	return []map[string]interface{}{
-		{
-			"url": path,
+func genDashboard(project string) map[string]interface{} {
+	return map[string]interface{}{
+		"kind": "Dashboard",
+		"metadata": map[string]interface{}{
+			"name":      "istio-service-dashboard",
+			"createdAt": "2025-07-29T11:28:52.089767152Z",
+			"updatedAt": "2025-07-29T13:31:53.641344984Z",
+			"version":   247,
+			"project":   project,
+		},
+		"spec": map[string]interface{}{
+			"display": map[string]interface{}{
+				"name": "Istio Service Dashboard",
+			},
 		},
 	}
 }
@@ -40,7 +50,7 @@ func TestGetPersesInfoDisabled(t *testing.T) {
 
 	info, code, err := perses.Info(
 		context.Background(),
-		buildDashboardSupplier(genDashboard("/some_path"), 200, "whatever", t),
+		buildDashboardSupplier(genDashboard("istio"), 200, "whatever", t),
 	)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusNoContent, code)
@@ -57,7 +67,7 @@ func TestGetPersesInfoExternal(t *testing.T) {
 
 	info, code, err := perses.Info(
 		context.Background(),
-		buildDashboardSupplier(genDashboard("/some_path"), 200, PERSES_URL, t),
+		buildDashboardSupplier(genDashboard("istio"), 200, PERSES_URL, t),
 	)
 
 	assert.Nil(t, err)
@@ -65,27 +75,6 @@ func TestGetPersesInfoExternal(t *testing.T) {
 	assert.Len(t, info.ExternalLinks, 1)
 	assert.Equal(t, PERSES_URL, info.ExternalLinks[0].URL)
 	assert.Equal(t, "istio", info.Project)
-}
-
-func TestGetPersesInfoInCluster(t *testing.T) {
-	conf := config.NewConfig()
-	conf.ExternalServices.Perses.ExternalURL = PERSES_URL
-	conf.ExternalServices.Perses.Dashboards = dashboardsConfig
-	conf.ExternalServices.Perses.InternalURL = PERSES_URL
-	conf.ExternalServices.Perses.Project = "new_project"
-
-	perses := perses.NewService(conf, kubetest.NewFakeK8sClient())
-
-	info, code, err := perses.Info(
-		context.Background(),
-		buildDashboardSupplier(genDashboard("/some_path"), 200, PERSES_URL, t),
-	)
-
-	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, code)
-	assert.Len(t, info.ExternalLinks, 1)
-	assert.Equal(t, fmt.Sprintf("%s/some_path", PERSES_URL), info.ExternalLinks[0].URL)
-	assert.Equal(t, "new_project", info.Project)
 }
 
 func TestGetPersesInfoGetError(t *testing.T) {
@@ -139,26 +128,27 @@ func TestGetPersesInfoWithoutLeadingSlashPath(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
 	assert.Len(t, info.ExternalLinks, 1)
-	assert.Equal(t, fmt.Sprintf("%s/some_path", PERSES_URL), info.ExternalLinks[0].URL)
+	assert.Equal(t, PERSES_URL, info.ExternalLinks[0].URL)
 }
 
 func TestGetPersesInfoWithTrailingSlashURL(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Perses.InternalURL = ""
-	conf.ExternalServices.Perses.ExternalURL = "http://grafana-external:3001/"
+	conf.ExternalServices.Perses.ExternalURL = "http://perses-external:4001"
 	conf.ExternalServices.Perses.Dashboards = dashboardsConfig
 
 	perses := perses.NewService(conf, kubetest.NewFakeK8sClient())
 
 	info, code, err := perses.Info(
 		context.Background(),
-		buildDashboardSupplier(genDashboard("/some_path"), 200, PERSES_URL, t),
+		buildDashboardSupplier(genDashboard("istio"), 200, "http://perses-external:4001", t),
 	)
 
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
+	assert.Equal(t, "istio", info.Project)
 	assert.Len(t, info.ExternalLinks, 1)
-	assert.Equal(t, fmt.Sprintf("%s/some_path", PERSES_URL), info.ExternalLinks[0].URL)
+	assert.Equal(t, PERSES_URL, info.ExternalLinks[0].URL)
 }
 
 func TestGetPersesInfoWithQueryParams(t *testing.T) {
@@ -171,13 +161,13 @@ func TestGetPersesInfoWithQueryParams(t *testing.T) {
 
 	info, code, err := perses.Info(
 		context.Background(),
-		buildDashboardSupplier(genDashboard("/some_path"), 200, fmt.Sprintf("%s/?orgId=1", PERSES_URL), t),
+		buildDashboardSupplier(genDashboard("istio"), 200, fmt.Sprintf("%s/?orgId=1", PERSES_URL), t),
 	)
 
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
 	assert.Len(t, info.ExternalLinks, 1)
-	assert.Equal(t, fmt.Sprintf("%s/some_path?orgId=1", PERSES_URL), info.ExternalLinks[0].URL)
+	assert.Equal(t, fmt.Sprintf("%s/?orgId=1", PERSES_URL), info.ExternalLinks[0].URL)
 }
 
 func TestGetPersesInfoWithAbsoluteDashboardURL(t *testing.T) {
@@ -191,12 +181,12 @@ func TestGetPersesInfoWithAbsoluteDashboardURL(t *testing.T) {
 
 	info, code, err := perses.Info(
 		context.Background(),
-		buildDashboardSupplier(genDashboard("/system/perses/some_path"), 200, PERSES_URL, t),
+		buildDashboardSupplier(genDashboard("istio"), 200, PERSES_URL, t),
 	)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
 	assert.Len(t, info.ExternalLinks, 1)
-	assert.Equal(t, "/system/perses/some_path", info.ExternalLinks[0].URL)
+	assert.Equal(t, PERSES_URL, info.ExternalLinks[0].URL)
 }
 
 func buildDashboardSupplier(jSon interface{}, code int, expectURL string, t *testing.T) perses.DashboardSupplierFunc {
