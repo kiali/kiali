@@ -337,6 +337,7 @@ func ClusterNameFromIstiod(conf *config.Config, k8s ClientInterface) (string, er
 		return "", fmt.Errorf("istiod deployment not found in any namespaces")
 	}
 
+	log.Debugf("REMOVE ClusterInfo.Name=[%s] SecreteName=[%s]", k8s.ClusterInfo().Name, k8s.ClusterInfo().SecretName)
 	istiod := istiods[0]
 	istiodContainers := istiod.Spec.Template.Spec.Containers
 	if len(istiodContainers) == 0 {
@@ -345,9 +346,10 @@ func ClusterNameFromIstiod(conf *config.Config, k8s ClientInterface) (string, er
 
 	clusterName := ""
 	for _, v := range istiodContainers[0].Env {
+		log.Debugf("REMOVE Env [%s]=[%s]", v.Name, v.Value)
 		if v.Name == "CLUSTER_ID" {
 			clusterName = v.Value
-			break
+			//break
 		}
 	}
 

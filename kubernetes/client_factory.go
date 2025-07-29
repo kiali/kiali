@@ -169,6 +169,7 @@ func newClientFactory(kialiConf *kialiConfig.Config, restConf *rest.Config) (*cl
 		if err != nil {
 			return nil, fmt.Errorf("unable to create remote Kiali Service Account client. Err: %s", err)
 		}
+		log.Debugf("Adding saClientEntry [%s]", cluster)
 		f.saClientEntries[cluster] = client
 	}
 
@@ -183,6 +184,7 @@ func newClientFactory(kialiConf *kialiConfig.Config, restConf *rest.Config) (*cl
 		if f.homeCluster == "" {
 			f.homeCluster = restConf.Host
 		}
+		log.Debugf("Adding home saClientEntry [%s]", f.homeCluster)
 		f.saClientEntries[f.homeCluster] = homeClient
 
 	} else if f.saClientEntries[f.homeCluster] == nil {
@@ -487,6 +489,7 @@ func (cf *clientFactory) GetSAClientsAsUserClientInterfaces() map[string]UserCli
 
 // KialiSAHomeClusterClient returns the read-only Kiali SA client for the cluster where Kiali is running.
 func (cf *clientFactory) GetSAHomeClusterClient() ClientInterface {
+	log.Debugf("REMOVE cf.homeCluster=[%s]", cf.homeCluster)
 	return cf.GetSAClient(cf.homeCluster)
 }
 
@@ -505,7 +508,7 @@ func (cf *clientFactory) getConfig(clusterInfo *RemoteClusterInfo) (*rest.Config
 		clientConfig = *remoteConfig
 	} else {
 		// Just read the token and then use the base config.
-		// We're an in cluster client. Read the kiali service account token.
+		// We're an in-cluster client. Read the kiali service account token.
 		kialiToken, kialiTokenFile, err := GetKialiTokenForHomeCluster()
 		if err != nil {
 			return nil, fmt.Errorf("unable to get Kiali service account token: %s", err)
