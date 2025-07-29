@@ -22,10 +22,12 @@ func (awc AmbientWorkloadChecker) Check() ([]*models.IstioCheck, bool) {
 	if awc.hasBothSidecarAndAmbientLabels() {
 		check := models.Build("workload.ambient.sidecarandlabel", "workload")
 		checks = append(checks, &check)
+		valid = false
 	}
 	if awc.isWaypointAndNotAmbient() {
 		check := models.Build("workload.ambient.waypointandnotambient", "workload")
 		checks = append(checks, &check)
+		valid = false
 	}
 	if awc.referencesNonExistentWaypoint() {
 		check := models.Build("workload.ambient.waypointnotfound", "workload")
@@ -86,7 +88,7 @@ func (awc AmbientWorkloadChecker) hasPodWithSidecarInjectAndAmbientLabel() bool 
 		return false
 	}
 	for _, pod := range awc.Workload.Pods {
-		if pod.HasIstioSidecar() || pod.HasNativeSidecar() {
+		if pod.HasIstioSidecar() {
 			return true
 		}
 	}

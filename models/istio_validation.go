@@ -371,10 +371,15 @@ var checkDescriptors = map[string]IstioCheck{
 	"workload.ambient.podsidecarinjectandambientlabel": {
 		Code:     "KIA1315",
 		Message:  "This workload has a pod with both a sidecar container and ambient labels",
+		Severity: ErrorSeverity,
+	},
+	"workload.ambient.sidecarinambientnamespace": {
+		Code:     "KIA1316",
+		Message:  "This workload has a sidecar but is in an Ambient-enabled namespace",
 		Severity: WarningSeverity,
 	},
 	"workload.ambient.authpolicybutnowaypoint": {
-		Code:     "KIA1315",
+		Code:     "KIA1317",
 		Message:  "This workload has Authorization Policies but no Waypoint",
 		Severity: WarningSeverity,
 	},
