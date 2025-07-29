@@ -11,7 +11,6 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	istio "istio.io/client-go/pkg/clientset/versioned"
-	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	inferenceapiclient "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -329,15 +328,7 @@ func DestinationRuleHasMTLSEnabled(destinationRule *networking_v1.DestinationRul
 // this code is limited to the k8s API, the Kiali cache may not yet exist.
 func ClusterNameFromIstiod(conf *config.Config, k8s ClientInterface) (string, error) {
 	// The "cluster_id" is set in an environment variable of the "istiod" deployment. Let's try to fetch it.
-	// TODO: Is the "If" necessary, I think every Istio control plane is labeled with "app=istiod". Can we get rid
-	//       of conf.ExternalServices.Istio?
-	var istiods []appsv1.Deployment
-	var err error
-	if istiodDeploymentName := conf.ExternalServices.Istio.IstiodDeploymentName; istiodDeploymentName != "" {
-		istiods, err = k8s.GetDeployments("", metav1.ListOptions{FieldSelector: "metadata.name=" + conf.ExternalServices.Istio.IstiodDeploymentName})
-	} else {
-		istiods, err = k8s.GetDeployments("", metav1.ListOptions{LabelSelector: "app=istiod"})
-	}
+	istiods, err := k8s.GetDeployments("", metav1.ListOptions{LabelSelector: "app=istiod"})
 	if err != nil {
 		return "", err
 	}
