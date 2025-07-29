@@ -297,12 +297,19 @@ func getDashboardPath(ctx context.Context, project, name string, conn persesConn
 			return "", nil
 		}
 		message, ok := f["message"]
-		if !ok {
+		if !ok || message == "document not found" {
 			zl.Warn().Msgf("No Perses dashboard found for pattern '%s'. Code %d", name, code)
 			return "", nil
 		}
 		zl.Warn().Msgf("No Perses dashboard found for pattern '%s'. Code %d. Message: %s", name, code, message)
-		return "", nil
+		return "", fmt.Errorf("error from Perses (%d): %s", code, message)
+	}
+
+	// Status OK, read dashboards info
+	var dashboards map[string]interface{}
+	err = json.Unmarshal(body, &dashboards)
+	if err != nil {
+		return "", err
 	}
 
 	return url, nil
