@@ -409,14 +409,11 @@ func TracingDiagnose(
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization getLayer error: "+err.Error())
 			return
 		}
-		/* I'm not sure this is necessary or really makes sense. The Kiali home cluster may not be the same as istio, or there
-		   may not be an control plane on the cluster.
 
-		if !isHomeCPAccessible(r.Context(), conf, business.Namespace, clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
-			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		if !business.Namespace.HasMeshAccess(r.Context(), clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
+			RespondWithError(w, http.StatusInternalServerError, "Unauthorized")
 			return
 		}
-		*/
 
 		status, err := business.Tracing.TracingDiagnose(r.Context(), clientFactory.GetSAHomeClusterClient().GetToken())
 		if err != nil {

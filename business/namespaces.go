@@ -391,3 +391,29 @@ func (in *NamespaceService) isAccessibleNamespace(namespace models.Namespace) bo
 	// see if the discovery selectors match the one namespace we are checking
 	return len(istio.FilterNamespacesWithDiscoverySelectors([]models.Namespace{namespace}, selectors)) == 1
 }
+
+// HasMeshAccess expects a request context and returns true if the the context can access
+// any control plane namespace. The test is narrowed to the cluster, if provided.
+func (in *NamespaceService) HasMeshAccess(ctx context.Context, cluster string) bool {
+	var namespaces []models.Namespace
+	var err error
+	if cluster == "" {
+		namespaces, err = in.GetNamespaces(ctx)
+	} else {
+		namespaces, err = in.GetClusterNamespaces(ctx, cluster)
+	}
+	if err != nil {
+		log.Errorf("failed HasMeshAccess", err)
+		return false
+	}
+
+	for _, cpNamespace := range in.discovery.GetControlPlaneNamespaces(cluster) {
+		for _, ns := range namespaces {
+			if cpNamespace == ns.Name && (cluster == "" || cluster == ns.Cluster) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
