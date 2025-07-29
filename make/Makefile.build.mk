@@ -121,7 +121,7 @@ lint-install:
 ## lint: Runs golangci-lint
 # doc.go is ommited for linting, because it generates lots of warnings.
 lint:
-	golangci-lint run --build-tags exclude_frontend -c ./.github/workflows/config/.golangci.yml
+	golangci-lint run -c ./.github/workflows/config/.golangci.yml
 
 # Assuming here that if the bin dir exists then the tools also exist inside of it.
 .ensure-envtest-bin-dir-exists: .ensure-envtest-exists

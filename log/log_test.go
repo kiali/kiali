@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -13,6 +15,9 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kiali/kiali/util"
+	pathutil "github.com/kiali/kiali/util/path"
 )
 
 func TestEnvVarLogLevel(t *testing.T) {
@@ -113,7 +118,6 @@ func TestLogRegression(t *testing.T) {
 		t.Logf("Set ENVs: %v", os.Environ())
 
 		t.Run(fmt.Sprintf("Test %d", index), func(t *testing.T) {
-
 			buf := &bytes.Buffer{}
 			log.Logger = InitializeLogger().Output(buf)
 
@@ -209,7 +213,6 @@ func TestSupportedTimeFormats(t *testing.T) {
 		t.Setenv("LOG_TIME_FIELD_FORMAT", formatToTest.format)
 		assert.Equal(t, formatToTest.testResult, resolveTimeFormatFromEnv(), fmt.Sprintf("LOG_TIME_FIELD_FORMAT=%v,formatToTest=%+v", os.Getenv("LOG_TIME_FIELD_FORMAT"), formatToTest))
 	}
-
 }
 
 func TestContextLoggerJson(t *testing.T) {
@@ -293,9 +296,7 @@ func TestContextLoggerJson(t *testing.T) {
 	t.Setenv("LOG_FORMAT", "json")
 
 	for index, test := range tests {
-
 		t.Run(fmt.Sprintf("Test %d", index), func(t *testing.T) {
-
 			buf := &bytes.Buffer{}
 			log.Logger = InitializeLogger().Output(buf)
 
@@ -434,9 +435,7 @@ func TestContextLoggerText(t *testing.T) {
 	t.Setenv("LOG_FORMAT", "text")
 
 	for index, test := range tests {
-
 		t.Run(fmt.Sprintf("Test %d", index), func(t *testing.T) {
-
 			buf := &bytes.Buffer{}
 			log.Logger = InitializeLogger()
 			ctx := log.Logger.With()
@@ -472,7 +471,7 @@ func TestContextLoggerText(t *testing.T) {
 			isRightLogFormat := !isJSON(loggedMessage)
 			if isRightLogFormat {
 				level, message, ctx := parseTextLogLineWithContext(loggedMessage)
-				assert.Equal(t, test.expectedMessage, message)
+				assert.Contains(t, message, test.expectedMessage)
 				assert.Equal(t, test.expectedLevel, level)
 				assert.Equal(t, test.expectedContext["ctx1"], ctx["ctx1"])
 				assert.Equal(t, test.expectedContext["ctx2"], ctx["ctx2"])
@@ -490,7 +489,7 @@ func TestContextLoggerText(t *testing.T) {
 	loggedMessage := buf.String()
 	assert.False(t, isJSON(loggedMessage))
 	level, message, ctx := parseTextLogLineWithContext(loggedMessage)
-	assert.Equal(t, "test group message", message)
+	assert.Contains(t, message, "test group message")
 	assert.Equal(t, "info", level)
 	assert.Equal(t, "testgroup", ctx["group"])
 	assert.Equal(t, "", ctx["ctx1"])
@@ -548,4 +547,229 @@ func parseTextLogLineWithContext(line string) (level string, message string, con
 
 	// If no known level found, return empty values
 	return "", "", nil
+}
+
+func TestWithLogLevel(t *testing.T) {
+	tests := map[string]struct {
+		inputLevel    string
+		expectedLevel *zerolog.Level
+	}{
+		"valid debug level": {
+			inputLevel:    "debug",
+			expectedLevel: util.AsPtr(zerolog.DebugLevel),
+		},
+		"valid info level uppercase": {
+			inputLevel:    "INFO",
+			expectedLevel: util.AsPtr(zerolog.InfoLevel),
+		},
+		"valid trace level mixed case": {
+			inputLevel:    "TrAcE",
+			expectedLevel: util.AsPtr(zerolog.TraceLevel),
+		},
+		"invalid level": {
+			inputLevel:    "invalid",
+			expectedLevel: nil,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			cfg := &config{}
+			option := WithLogLevel(tt.inputLevel)
+			option(cfg)
+
+			if tt.expectedLevel == nil {
+				assert.Nil(cfg.logLevel, "Expected logLevel to be nil for invalid level")
+			} else {
+				assert.NotNil(cfg.logLevel, "Expected logLevel to be set")
+				assert.Equal(*tt.expectedLevel, *cfg.logLevel, "Expected log level to match")
+			}
+		})
+	}
+}
+
+func TestWithColor(t *testing.T) {
+	assert := assert.New(t)
+	cfg := &config{color: false}
+	option := WithColor()
+	option(cfg)
+
+	assert.True(cfg.color, "Expected color to be enabled")
+}
+
+func TestInitializeLoggerWithOptions(t *testing.T) {
+	tests := map[string]struct {
+		options         []Option
+		expectedLevel   zerolog.Level
+		expectedColor   bool
+		envLogLevel     string
+		shouldUseEnvVar bool
+	}{
+		"with debug log level option": {
+			options:       []Option{WithLogLevel("debug")},
+			expectedLevel: zerolog.DebugLevel,
+			expectedColor: false,
+		},
+		"with color option": {
+			options:       []Option{WithColor()},
+			expectedLevel: zerolog.InfoLevel,
+			expectedColor: true,
+		},
+		"with both options": {
+			options:       []Option{WithLogLevel("error"), WithColor()},
+			expectedLevel: zerolog.ErrorLevel,
+			expectedColor: true,
+		},
+		"option overrides env var": {
+			options:         []Option{WithLogLevel("warn")},
+			envLogLevel:     "trace",
+			expectedLevel:   zerolog.WarnLevel,
+			expectedColor:   false,
+			shouldUseEnvVar: true,
+		},
+		"no options uses env var": {
+			options:         []Option{},
+			envLogLevel:     "debug",
+			expectedLevel:   zerolog.DebugLevel,
+			expectedColor:   false,
+			shouldUseEnvVar: true,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			os.Clearenv()
+			assert := assert.New(t)
+			if tt.shouldUseEnvVar {
+				t.Setenv("LOG_LEVEL", tt.envLogLevel)
+			}
+			t.Setenv("LOG_FORMAT", "json")
+
+			buf := &bytes.Buffer{}
+			logger := InitializeLogger(tt.options...).Output(buf)
+
+			assert.Equal(tt.expectedLevel, zerolog.GlobalLevel(), "Expected global log level to match")
+
+			logger.Debug().Msg("debug message")
+			logger.Info().Msg("info message")
+			logger.Error().Msg("error message")
+
+			output := buf.String()
+			lines := strings.Split(strings.TrimSpace(output), "\n")
+
+			switch tt.expectedLevel {
+			case zerolog.DebugLevel:
+				assert.Equal(3, len(lines), "Expected 3 messages (debug, info, error)")
+			case zerolog.InfoLevel:
+				assert.Equal(2, len(lines), "Expected 2 messages (info, error)")
+			case zerolog.WarnLevel:
+				assert.Equal(1, len(lines), "Expected 1 message (error)")
+			case zerolog.ErrorLevel:
+				assert.Equal(1, len(lines), "Expected 1 message (error)")
+			}
+		})
+	}
+}
+
+func TestTrimmedCallerMarshalFunc(t *testing.T) {
+	tests := map[string]struct {
+		filePath string
+		line     int
+		expected string
+	}{
+		"file within project root": {
+			filePath: filepath.Join(pathutil.ProjectRoot, "models", "istio_validation.go"),
+			line:     577,
+			expected: "models/istio_validation.go:577",
+		},
+		"file within project root - config directory": {
+			filePath: filepath.Join(pathutil.ProjectRoot, "config", "config.go"),
+			line:     1490,
+			expected: "config/config.go:1490",
+		},
+		"file within project root - nested directory": {
+			filePath: filepath.Join(pathutil.ProjectRoot, "business", "checkers", "authorization.go"),
+			line:     123,
+			expected: "business/checkers/authorization.go:123",
+		},
+		"file outside project root": {
+			filePath: "/some/other/path/external.go",
+			line:     456,
+			expected: "/some/other/path/external.go:456",
+		},
+		"file with project root as substring but not prefix": {
+			filePath: "/other" + pathutil.ProjectRoot + "/file.go",
+			line:     789,
+			expected: "/other" + pathutil.ProjectRoot + "/file.go:789",
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			result := trimmedCallerMarshalFunc(0, tt.filePath, tt.line)
+			assert.Equal(tt.expected, result, "Expected trimmed path to match")
+		})
+	}
+}
+
+func TestRelativePathsInTraceLogs(t *testing.T) {
+	os.Clearenv()
+	t.Setenv("LOG_LEVEL", "trace")
+	t.Setenv("LOG_FORMAT", "json")
+	assert := assert.New(t)
+
+	buf := &bytes.Buffer{}
+	logger := InitializeLogger().Output(buf)
+
+	_, currentFile, _, _ := runtime.Caller(0)
+	expectedRelativePath := strings.TrimPrefix(currentFile, pathutil.ProjectRoot)
+	expectedRelativePath = strings.TrimPrefix(expectedRelativePath, "/")
+
+	logger.Trace().Msg("test trace message")
+
+	output := buf.String()
+	t.Logf("Logged output: %s", output)
+
+	assert.Contains(output, expectedRelativePath, "Expected output to contain relative path")
+	assert.NotContains(output, pathutil.ProjectRoot, "Expected output to not contain absolute project root path")
+
+	var logEntry map[string]interface{}
+	err := json.Unmarshal([]byte(output), &logEntry)
+	assert.NoError(err, "Expected valid JSON output")
+
+	caller, exists := logEntry["caller"]
+	assert.True(exists, "Expected caller field to exist in trace logs")
+	callerStr, ok := caller.(string)
+	assert.True(ok, "Expected caller to be a string")
+	assert.Contains(callerStr, "log_test.go:", "Expected caller to contain relative file path")
+	assert.NotContains(callerStr, pathutil.ProjectRoot, "Expected caller to not contain absolute path")
+}
+
+func TestRelativePathsInTraceLogs_TextFormat(t *testing.T) {
+	os.Clearenv()
+	t.Setenv("LOG_LEVEL", "trace")
+	t.Setenv("LOG_FORMAT", "text")
+	assert := assert.New(t)
+	buf := &bytes.Buffer{}
+	logger := InitializeLogger().Output(zerolog.ConsoleWriter{
+		Out:        buf,
+		TimeFormat: time.RFC3339,
+		NoColor:    true,
+	})
+
+	_, currentFile, _, _ := runtime.Caller(0)
+	expectedRelativePath := strings.TrimPrefix(currentFile, pathutil.ProjectRoot)
+	expectedRelativePath = strings.TrimPrefix(expectedRelativePath, "/")
+
+	logger.Trace().Msg("test trace message in text format")
+
+	output := buf.String()
+	t.Logf("Logged output: %s", output)
+
+	assert.Contains(output, expectedRelativePath, "Expected output to contain relative path")
+	assert.NotContains(output, pathutil.ProjectRoot, "Expected output to not contain absolute project root path")
+	assert.Contains(output, "test trace message in text format", "Expected output to contain the log message")
+	assert.Contains(output, "log_test.go:", "Expected output to contain relative file path")
 }
