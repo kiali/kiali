@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/perses"
-	"github.com/stretchr/testify/assert"
-	"net/http"
-	"testing"
 )
 
 const PERSES_URL = "http://perses-external:4001"
