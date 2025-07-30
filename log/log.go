@@ -11,6 +11,9 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog/pkgerrors"
+
+	pathutil "github.com/kiali/kiali/util/path"
 )
 
 type Format string
@@ -38,16 +41,89 @@ var supportedTimeFormats = [...]string{
 	time.StampNano,
 }
 
-// InitializeLogger configures the global log level and log format.
-func InitializeLogger() zerolog.Logger {
+// trimmedCallerMarshalFunc is a custom caller marshal function that trims
+// the project root from file paths to show relative paths from project root.
+// It takes log lines that look like this:
+// /home/project/kiali/models/istio_validation.go:577
+// and turns them into this:
+// models/istio_validation.go:577
+func trimmedCallerMarshalFunc(_ uintptr, file string, line int) string {
+	// Remove the project root prefix from the file path
+	if strings.HasPrefix(file, pathutil.ProjectRoot) {
+		// Trim the project root and leading slash to get relative path
+		relative := strings.TrimPrefix(file, pathutil.ProjectRoot)
+		relative = strings.TrimPrefix(relative, "/")
+		return relative + ":" + strconv.Itoa(line)
+	}
+	// Fallback to original behavior if project root not found
+	return file + ":" + strconv.Itoa(line)
+}
+
+// Option is a functional option for configuring the logger
+type Option func(*config)
+
+// config holds the configuration for the logger
+type config struct {
+	logLevel *zerolog.Level
+	color    bool
+}
+
+// WithLogLevel sets the log level for the logger
+func WithLogLevel(level string) Option {
+	return func(cfg *config) {
+		logLevel, err := zerolog.ParseLevel(strings.ToLower(level))
+		if err != nil {
+			log.Warn().Msgf("Provided log level [%s] is invalid. Error: %v", level, err)
+			return
+		}
+		cfg.logLevel = &logLevel
+	}
+}
+
+// WithColor enables colored output in text format
+func WithColor() Option {
+	return func(cfg *config) {
+		cfg.color = true
+	}
+}
+
+// Logger returns the global logger instance.
+func Logger() *zerolog.Logger {
+	return &log.Logger
+}
+
+// InitializeLogger configures the global log level and log format with optional overrides.
+func InitializeLogger(options ...Option) zerolog.Logger {
+	cfg := &config{
+		color: false,
+	}
+
+	for _, opt := range options {
+		opt(cfg)
+	}
+
 	zerolog.TimeFieldFormat = resolveTimeFormatFromEnv()
 	zerolog.TimestampFieldName = "ts" // save chars in the json output
 	zerolog.MessageFieldName = "msg"  // save chars in the json output
 
-	log.Logger = setLogFormat(setSamplingRate(log.Logger))
+	log.Logger = setLogFormat(setSamplingRate(log.Logger), cfg.color)
 
-	logLevel := resolveLogLevelFromEnv()
+	// Use provided log level or fall back to environment
+	var logLevel zerolog.Level
+	if cfg.logLevel != nil {
+		logLevel = *cfg.logLevel
+	} else {
+		logLevel = resolveLogLevelFromEnv()
+	}
+	// TODO: This is setting our libraries' log levels as well which may not be what we want.
 	zerolog.SetGlobalLevel(logLevel)
+
+	// Adds line numbers and prints stack traces on errors if the log level is Trace.
+	if logLevel == zerolog.TraceLevel {
+		zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+		zerolog.CallerMarshalFunc = trimmedCallerMarshalFunc
+		log.Logger = log.Logger.With().Caller().Logger()
+	}
 
 	// set this logger as the default for when loggers are not found in a context
 	zerolog.DefaultContextLogger = &log.Logger
@@ -70,10 +146,10 @@ func setSamplingRate(l zerolog.Logger) zerolog.Logger {
 	return l
 }
 
-func setLogFormat(l zerolog.Logger) zerolog.Logger {
+func setLogFormat(l zerolog.Logger, color bool) zerolog.Logger {
 	logFormat := resolveLogFormatFromEnv()
 	if logFormat != "json" {
-		l = l.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: resolveTimeFormatFromEnv(), NoColor: true})
+		l = l.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: resolveTimeFormatFromEnv(), NoColor: !color})
 	}
 	return l
 }
@@ -103,44 +179,47 @@ func ToContext(ctx context.Context, zl *zerolog.Logger) context.Context {
 	return zl.WithContext(ctx)
 }
 
+// CallerSkipFrame is for printing the correct line number
+// when the logger is configured to print line numbers.
+
 // Info logs a message via the global logger
 func Info(args ...interface{}) {
-	log.Info().Msgf("%s", args...)
+	log.Info().CallerSkipFrame(1).Msgf("%s", args...)
 }
 
 // Infof logs a message via the global logger
 func Infof(format string, args ...interface{}) {
-	log.Info().Msgf(format, args...)
+	log.Info().CallerSkipFrame(1).Msgf(format, args...)
 }
 
 // Warning logs a warning message via the global logger
 func Warning(args ...interface{}) {
-	log.Warn().Msgf("%s", args...)
+	log.Warn().CallerSkipFrame(1).Msgf("%s", args...)
 }
 
 // Warningf logs a warning message via the global logger
 func Warningf(format string, args ...interface{}) {
-	log.Warn().Msgf(format, args...)
+	log.Warn().CallerSkipFrame(1).Msgf(format, args...)
 }
 
 // Error logs an error message via the global logger
 func Error(args ...interface{}) {
-	log.Error().Msgf("%s", args...)
+	log.Error().CallerSkipFrame(1).Msgf("%s", args...)
 }
 
 // Errorf logs an error message via the global logger
 func Errorf(format string, args ...interface{}) {
-	log.Error().Msgf(format, args...)
+	log.Error().CallerSkipFrame(1).Msgf(format, args...)
 }
 
 // Debug logs a debug message via the global logger
 func Debug(args ...interface{}) {
-	log.Debug().Msgf("%s", args...)
+	log.Debug().CallerSkipFrame(1).Msgf("%s", args...)
 }
 
 // Debugf logs a debug message via the global logger
 func Debugf(format string, args ...interface{}) {
-	log.Debug().Msgf(format, args...)
+	log.Debug().CallerSkipFrame(1).Msgf(format, args...)
 }
 
 // IsDebug returns true if the global logger will actually log debug or trace level messages
@@ -150,12 +229,12 @@ func IsDebug() bool {
 
 // Trace logs a trace message via the global logger
 func Trace(args ...interface{}) {
-	log.Trace().Msgf("%s", args...)
+	log.Trace().CallerSkipFrame(1).Msgf("%s", args...)
 }
 
 // Tracef logs a trace message via the global logger
 func Tracef(format string, args ...interface{}) {
-	log.Trace().Msgf(format, args...)
+	log.Trace().CallerSkipFrame(1).Msgf(format, args...)
 }
 
 // IsTrace returns true if the global logger will actually log trace level messages
@@ -165,12 +244,12 @@ func IsTrace() bool {
 
 // Fatal logs a fatal message via the global logger
 func Fatal(args ...interface{}) {
-	log.Fatal().Msgf("%s", args...)
+	log.Fatal().CallerSkipFrame(1).Msgf("%s", args...)
 }
 
 // Fatalf logs a fatal message via the global logger
 func Fatalf(format string, args ...interface{}) {
-	log.Fatal().Msgf(format, args...)
+	log.Fatal().CallerSkipFrame(1).Msgf(format, args...)
 }
 
 // GetLogLevel will return the level of logs the global logger will output.

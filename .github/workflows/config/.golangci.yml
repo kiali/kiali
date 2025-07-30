@@ -1,6 +1,11 @@
 version: "2"
 run:
+  timeout: 5m
   tests: true
+  relative-path-mode: gomod
+  build-tags:
+  - exclude_frontend
+  modules-download-mode: readonly
 linters:
   exclusions:
     generated: lax
