@@ -11,6 +11,7 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	istio "istio.io/client-go/pkg/clientset/versioned"
+	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	inferenceapiclient "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -19,6 +20,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util/httputil"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 const (
@@ -333,23 +335,41 @@ func ClusterNameFromIstiod(conf *config.Config, k8s ClientInterface) (string, er
 		return "", err
 	}
 
-	if len(istiods) == 0 {
-		return "", fmt.Errorf("istiod deployment not found in any namespaces")
+	// Do our best to filter out any external control plane, because the CLUSTER_ID will be set to
+	// the dataplane cluster, not the hosting cluster (which seems weird, but that's how Istio does it)
+	validIstiods := sliceutil.Filter(istiods, func(istiod v1.Deployment) bool {
+		// a typical namespace name is external-istiod
+		if strings.Contains(strings.ToLower(istiod.Namespace), "external") {
+			log.Tracef("Ignoring likely external controlplane [%s] during Kiali home clustername discovery. Namespace=[%s]", istiod.Name, istiod.Namespace)
+			return false
+		}
+		// there is a decent chance there will be an env var with "EXTERNAL"
+		for _, container := range istiod.Spec.Template.Spec.Containers {
+			for _, v := range container.Env {
+				if strings.Contains(strings.ToLower(v.Name), "external") {
+					log.Tracef("Ignoring likely external controlplane [%s] during Kiali home clustername discovery. EnvVar=[%s]", istiod.Name, v.Name)
+					return false
+				}
+			}
+		}
+		return true
+	})
+
+	if len(validIstiods) == 0 {
+		return "", fmt.Errorf("no valid istiod deployment found in any namespaces for kiali home cluster name discovery. You may need to set kubernetes_config.cluster_name in the Kiali CR")
 	}
 
-	log.Debugf("REMOVE ClusterInfo.Name=[%s] SecreteName=[%s]", k8s.ClusterInfo().Name, k8s.ClusterInfo().SecretName)
+	log.Debugf("REMOVE numberOfValidControlPlanes=%d", len(validIstiods))
 	istiod := istiods[0]
 	istiodContainers := istiod.Spec.Template.Spec.Containers
 	if len(istiodContainers) == 0 {
-		return "", fmt.Errorf("istiod deployment [%s] has no containers", istiod.Name)
+		return "", fmt.Errorf("unexpected, istiod deployment [%s] has no containers", istiod.Name)
 	}
 
 	clusterName := ""
 	for _, v := range istiodContainers[0].Env {
-		log.Debugf("REMOVE Env [%s]=[%s]", v.Name, v.Value)
 		if v.Name == "CLUSTER_ID" {
 			clusterName = v.Value
-			//break
 		}
 	}
 
