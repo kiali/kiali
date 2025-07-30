@@ -3,7 +3,6 @@ package checkers
 import (
 	apps_v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/business/checkers/services"
@@ -17,11 +16,11 @@ type ServiceChecker struct {
 	Cluster       string
 	Deployments   []apps_v1.Deployment
 	MeshDiscovery istio.MeshDiscovery
-	Pods          []core_v1.Pod
-	Services      []v1.Service
+	Pods          []corev1.Pod
+	Services      []corev1.Service
 }
 
-func NewServiceChecker(cluster string, deployments []apps_v1.Deployment, meshDiscovery istio.MeshDiscovery, pods []core_v1.Pod, services []v1.Service) ServiceChecker {
+func NewServiceChecker(cluster string, deployments []apps_v1.Deployment, meshDiscovery istio.MeshDiscovery, pods []corev1.Pod, services []corev1.Service) ServiceChecker {
 	return ServiceChecker{
 		Cluster:       cluster,
 		Deployments:   deployments,

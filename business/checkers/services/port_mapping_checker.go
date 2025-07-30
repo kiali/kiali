@@ -6,7 +6,6 @@ import (
 
 	apps_v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -20,11 +19,11 @@ import (
 type PortMappingChecker struct {
 	Deployments   []apps_v1.Deployment
 	MeshDiscovery istio.MeshDiscovery
-	Pods          []core_v1.Pod
-	Service       v1.Service
+	Pods          []corev1.Pod
+	Service       corev1.Service
 }
 
-func NewPortMappingChecker(deployments []apps_v1.Deployment, meshDiscovery istio.MeshDiscovery, pods []core_v1.Pod, service v1.Service) PortMappingChecker {
+func NewPortMappingChecker(deployments []apps_v1.Deployment, meshDiscovery istio.MeshDiscovery, pods []corev1.Pod, service corev1.Service) PortMappingChecker {
 	return PortMappingChecker{
 		Deployments:   deployments,
 		MeshDiscovery: meshDiscovery,
