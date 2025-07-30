@@ -115,9 +115,9 @@ while [[ $# -gt 0 ]]; do
     -kc|--kube-context)          KUBE_CONTEXT="$2";                  shift;shift ;;
     -ke|--kiali-exe)             KIALI_EXE="$2";                     shift;shift ;;
     -ll|--log-level)             LOG_LEVEL="$2";                     shift;shift ;;
-    -peu|--perses-url)          PERSES_URL="$2";    shift;shift ;;
+    -peu|--perses-url)           PERSES_URL="$2";                    shift;shift ;;
     -pg|--ports-grafana)         LOCAL_REMOTE_PORTS_GRAFANA="$2";    shift;shift ;;
-  -ppe|--ports-perses)          LOCAL_REMOTE_PORTS_PERSES="$2";    shift;shift ;;
+    -ppe|--ports-perses)         LOCAL_REMOTE_PORTS_PERSES="$2";     shift;shift ;;
     -pp|--ports-prometheus)      LOCAL_REMOTE_PORTS_PROMETHEUS="$2"; shift;shift ;;
     -pt|--ports-tracing)         LOCAL_REMOTE_PORTS_TRACING="$2";    shift;shift ;;
     -pu|--prometheus-url)        PROMETHEUS_URL="$2";                shift;shift ;;
@@ -235,10 +235,10 @@ Valid options:
       If a port-forward is created for the Prometheus component, this specifies the
       local and remote ports separated with a colon.
       Default: ${DEFAULT_LOCAL_REMOTE_PORTS_PROMETHEUS}
-    -ppe|--ports-perses
-          If a port-forward is created for the perses component, this specifies the
-          local and remote ports separated with a colon.
-          Default: ${DEFAULT_LOCAL_REMOTE_PORTS_PERSES}
+  -ppe|--ports-perses
+      If a port-forward is created for the perses component, this specifies the
+      local and remote ports separated with a colon.
+      Default: ${DEFAULT_LOCAL_REMOTE_PORTS_PERSES}
   -pt|--ports-tracing
       If a port-forward is created for the Tracing component, this specifies the
       local and remote ports separated with a colon.
@@ -450,8 +450,7 @@ if [ -z "${PERSES_URL:-}" ]; then
     if [ "$?" != "0" -o -z "${pers_host}" ]; then
       PORT_FORWARD_DEPLOYMENT_PERSES="$(${CLIENT_EXE} get deployment -n ${ISTIO_NAMESPACE} perses -o name)"
       if [ "$?" != "0" -o -z "${PORT_FORWARD_DEPLOYMENT_PERSES}" ]; then
-        errormsg "Cannot auto-discover Perses on OpenShift. You must specify the Perses URL via --perses-url"
-        exit 1
+        errormsg "Cannot auto-discover Perses on OpenShift. You must specify the Perses URL via --perses-url. Skipping"
       else
         warnmsg "Cannot auto-discover Perses on OpenShift. If you exposed it, you can specify the Perses URL via --perses-url. For now, this session will attempt to port-forward to it."
         graf_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} perses -o jsonpath='{.spec.ports[0].targetPort}')"
@@ -470,8 +469,7 @@ if [ -z "${PERSES_URL:-}" ]; then
   else
     PORT_FORWARD_DEPLOYMENT_PERSES="$(${CLIENT_EXE} get deployment -n ${ISTIO_NAMESPACE} perses -o name)"
     if [ "$?" != "0" -o -z "${PORT_FORWARD_DEPLOYMENT_PERSES}" ]; then
-      errormsg "Cannot auto-discover Perses on Kubernetes. You must specify the Perses URL via --perses-url"
-      exit 1
+      errormsg "Cannot auto-discover Perses on Kubernetes. You must specify the Perses URL via --perses-url. Skipping"
     else
       warnmsg "Cannot auto-discover Perses on Kubernetes. If you exposed it, you can specify the Perses URL via --perses-url. For now, this session will attempt to port-forward to it."
       graf_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} perses -o jsonpath='{.spec.ports[0].targetPort}')"
@@ -584,7 +582,9 @@ echo "LOCAL_REMOTE_PORTS_PROMETHEUS=$LOCAL_REMOTE_PORTS_PROMETHEUS"
 echo "LOCAL_REMOTE_PORTS_TRACING=$LOCAL_REMOTE_PORTS_TRACING"
 echo "LOCAL_REMOTE_PORTS_PERSES=$LOCAL_REMOTE_PORTS_PERSES"
 echo "LOG_LEVEL=$LOG_LEVEL"
-echo "PERSES_URL=$PERSES_URL"
+if [[ -n "${$PERSES_URL+x}" ]]; then
+  echo "PERSES_URL=$PERSES_URL"
+fi
 echo "PROMETHEUS_URL=$PROMETHEUS_URL"
 echo "REBOOTABLE=$REBOOTABLE"
 echo "TMP_ROOT_DIR=$TMP_ROOT_DIR"
@@ -931,7 +931,9 @@ cleanup_and_exit() {
   kill_port_forward_istiod
   kill_port_forward_prometheus
   kill_port_forward_grafana
-  kill_port_forward_perses
+  if [[ -n "${$PERSES_URL+x}" ]]; then
+    kill_port_forward_perses
+  fi
   kill_port_forward_tracing
 
   exitmsg "Exiting"
@@ -950,7 +952,9 @@ if [ "${ISTIOD_URL}" != "" ]; then
 fi
 start_port_forward_prometheus
 start_port_forward_grafana
-start_port_forward_perses
+if [[ -n "${$PERSES_URL+x}" ]]; then
+  start_port_forward_perses
+fi
 start_port_forward_tracing
 start_proxy
 
