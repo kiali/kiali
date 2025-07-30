@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -345,4 +346,328 @@ func TestGetZtunnelPods(t *testing.T) {
 
 	ztunnelPods := cache.GetZtunnelPods(client.ClusterInfo().Name)
 	require.Equal(2, len(ztunnelPods))
+}
+
+func TestGatewayAPIClasses(t *testing.T) {
+	require := require.New(t)
+
+	// Gateway API not configured
+	t.Run("GatewayAPINotConfigured", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
+		client := kubetest.NewFakeK8sClient()
+		client.GatewayAPIEnabled = false // Set Gateway API as disabled
+		saClients := map[string]kubernetes.ClientInterface{
+			conf.KubernetesConfig.ClusterName: client,
+		}
+		readers := map[string]ctrlclient.Reader{
+			conf.KubernetesConfig.ClusterName: client,
+		}
+
+		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		require.NoError(err)
+
+		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		require.Empty(result)
+	})
+
+	// Configured classes in config
+	t.Run("ConfiguredClassesInConfig", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
+		client := kubetest.NewFakeK8sClient()
+		client.GatewayAPIEnabled = true // Enable Gateway API
+		saClients := map[string]kubernetes.ClientInterface{
+			conf.KubernetesConfig.ClusterName: client,
+		}
+		readers := map[string]ctrlclient.Reader{
+			conf.KubernetesConfig.ClusterName: client,
+		}
+
+		// Set configured GatewayAPIClasses
+		conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{
+			{Name: "custom-istio", ClassName: "custom-istio"},
+			{Name: "custom-remote", ClassName: "custom-remote"},
+		}
+
+		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		require.NoError(err)
+
+		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		require.Len(result, 2)
+		require.Equal("custom-istio", result[0].Name)
+		require.Equal("custom-istio", result[0].ClassName)
+		require.Equal("custom-remote", result[1].Name)
+		require.Equal("custom-remote", result[1].ClassName)
+	})
+
+	// Invalid configured classes (missing name or classname)
+	t.Run("InvalidConfiguredClasses", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
+		client := kubetest.NewFakeK8sClient()
+		client.GatewayAPIEnabled = true // Enable Gateway API
+		saClients := map[string]kubernetes.ClientInterface{
+			conf.KubernetesConfig.ClusterName: client,
+		}
+		readers := map[string]ctrlclient.Reader{
+			conf.KubernetesConfig.ClusterName: client,
+		}
+
+		// Set invalid configured GatewayAPIClasses
+		conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{
+			{Name: "", ClassName: "valid-class"},          // Missing name
+			{Name: "valid-name", ClassName: ""},           // Missing classname
+			{Name: "valid-both", ClassName: "valid-both"}, // Valid
+		}
+
+		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		require.NoError(err)
+
+		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		require.Len(result, 1) // Only the valid one should be included
+		require.Equal("valid-both", result[0].Name)
+		require.Equal("valid-both", result[0].ClassName)
+	})
+
+	// Auto-discovery with label selector
+	t.Run("AutoDiscoveryWithLabelSelector", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
+		// Add GatewayClass resources to the fake client
+		gatewayClass1 := &k8s_networking_v1.GatewayClass{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:   "istio",
+				Labels: map[string]string{"app": "istio"},
+			},
+			Spec: k8s_networking_v1.GatewayClassSpec{
+				ControllerName: "istio.io/gateway-controller",
+			},
+		}
+		gatewayClass2 := &k8s_networking_v1.GatewayClass{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:   "istio-remote",
+				Labels: map[string]string{"app": "istio"},
+			},
+			Spec: k8s_networking_v1.GatewayClassSpec{
+				ControllerName: "istio.io/gateway-controller",
+			},
+		}
+		objs := []runtime.Object{}
+		objs = append(objs, gatewayClass1, gatewayClass2)
+
+		client := kubetest.NewFakeK8sClient(objs...)
+		client.GatewayAPIEnabled = true // Enable Gateway API
+		saClients := map[string]kubernetes.ClientInterface{
+			conf.KubernetesConfig.ClusterName: client,
+		}
+		readers := map[string]ctrlclient.Reader{
+			conf.KubernetesConfig.ClusterName: client,
+		}
+
+		// Enable cluster-wide access and set label selector
+		conf.Deployment.ClusterWideAccess = true
+		conf.ExternalServices.Istio.GatewayAPIClassesLabelSelector = "app=istio"
+		conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{} // Empty to trigger auto-discovery
+
+		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		require.NoError(err)
+
+		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		require.Len(result, 2)
+		require.Equal("istio", result[0].Name)
+		require.Equal("istio", result[0].ClassName)
+		require.Equal("istio-remote", result[1].Name)
+		require.Equal("istio-remote", result[1].ClassName)
+	})
+
+	// Auto-discovery without label selector
+	t.Run("AutoDiscoveryWithoutLabelSelector", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
+		// Add GatewayClass resources to the fake client
+		gatewayClass1 := &k8s_networking_v1.GatewayClass{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "istio",
+			},
+			Spec: k8s_networking_v1.GatewayClassSpec{
+				ControllerName: "istio.io/gateway-controller",
+			},
+		}
+		gatewayClass2 := &k8s_networking_v1.GatewayClass{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "other-controller",
+			},
+			Spec: k8s_networking_v1.GatewayClassSpec{
+				ControllerName: "other.io/gateway-controller",
+			},
+		}
+		objs := []runtime.Object{}
+		objs = append(objs, gatewayClass1, gatewayClass2)
+
+		client := kubetest.NewFakeK8sClient(objs...)
+		client.GatewayAPIEnabled = true // Enable Gateway API
+		saClients := map[string]kubernetes.ClientInterface{
+			conf.KubernetesConfig.ClusterName: client,
+		}
+		readers := map[string]ctrlclient.Reader{
+			conf.KubernetesConfig.ClusterName: client,
+		}
+
+		// Enable cluster-wide access and no label selector
+		conf.Deployment.ClusterWideAccess = true
+		conf.ExternalServices.Istio.GatewayAPIClassesLabelSelector = ""
+		conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{} // Empty to trigger auto-discovery
+
+		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		require.NoError(err)
+
+		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		require.Len(result, 1) // Only istio.io controller should be included
+		require.Equal("istio", result[0].Name)
+		require.Equal("istio", result[0].ClassName)
+	})
+
+	// Default values when no classes found
+	t.Run("DefaultValuesWhenNoClassesFound", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
+		client := kubetest.NewFakeK8sClient()
+		client.GatewayAPIEnabled = true // Enable Gateway API
+		saClients := map[string]kubernetes.ClientInterface{
+			conf.KubernetesConfig.ClusterName: client,
+		}
+		readers := map[string]ctrlclient.Reader{
+			conf.KubernetesConfig.ClusterName: client,
+		}
+
+		// Enable cluster-wide access but no classes configured or discovered
+		conf.Deployment.ClusterWideAccess = true
+		conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{}
+
+		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		require.NoError(err)
+
+		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		require.Len(result, 2) // Default istio and istio-remote
+		require.Equal("istio", result[0].Name)
+		require.Equal("istio", result[0].ClassName)
+		require.Equal("istio-remote", result[1].Name)
+		require.Equal("istio-remote", result[1].ClassName)
+	})
+
+	// Default values with multi-cluster
+	t.Run("DefaultValuesWithMultiCluster", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
+		client1 := kubetest.NewFakeK8sClient()
+		client1.GatewayAPIEnabled = true // Enable Gateway API
+		client2 := kubetest.NewFakeK8sClient()
+		client2.GatewayAPIEnabled = true // Enable Gateway API
+		saClients := map[string]kubernetes.ClientInterface{
+			"cluster1": client1,
+			"cluster2": client2,
+		}
+		readers := map[string]ctrlclient.Reader{
+			"cluster1": client1,
+			"cluster2": client2,
+		}
+
+		// Enable cluster-wide access but no classes configured or discovered
+		conf.Deployment.ClusterWideAccess = true
+		conf.KubernetesConfig.ClusterName = "cluster1"
+		conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{}
+
+		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		require.NoError(err)
+
+		result := kialiCache.GatewayAPIClasses("cluster1")
+		require.Len(result, 3) // istio, istio-remote, istio-east-west (multi-cluster)
+		require.Equal("istio", result[0].Name)
+		require.Equal("istio-remote", result[1].Name)
+		require.Equal("istio-east-west", result[2].Name)
+	})
+
+	// Default values with ambient enabled
+	t.Run("DefaultValuesWithAmbientEnabled", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
+		client := kubetest.NewFakeK8sClient(
+			kubetest.FakeNamespace("istio-system"),
+			ztunnelDaemonSet(),
+		)
+		client.GatewayAPIEnabled = true // Enable Gateway API
+		saClients := map[string]kubernetes.ClientInterface{
+			conf.KubernetesConfig.ClusterName: client,
+		}
+		readers := map[string]ctrlclient.Reader{
+			conf.KubernetesConfig.ClusterName: client,
+		}
+
+		// Enable cluster-wide access but no classes configured or discovered
+		conf.Deployment.ClusterWideAccess = true
+		conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{}
+
+		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		require.NoError(err)
+
+		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		require.Len(result, 3) // istio, istio-remote, istio-waypoint (ambient enabled)
+		require.Equal("istio", result[0].Name)
+		require.Equal("istio-remote", result[1].Name)
+		require.Equal("istio-waypoint", result[2].Name)
+	})
+
+	// Bad label selector
+	t.Run("BadLabelSelector", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
+		client := kubetest.NewFakeK8sClient()
+		client.GatewayAPIEnabled = true // Enable Gateway API
+		saClients := map[string]kubernetes.ClientInterface{
+			conf.KubernetesConfig.ClusterName: client,
+		}
+		readers := map[string]ctrlclient.Reader{
+			conf.KubernetesConfig.ClusterName: client,
+		}
+
+		// Enable cluster-wide access with bad label selector
+		conf.Deployment.ClusterWideAccess = true
+		conf.ExternalServices.Istio.GatewayAPIClassesLabelSelector = "invalid-label-selector["
+		conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{}
+
+		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		require.NoError(err)
+
+		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		require.Len(result, 2) // Should fall back to default values
+		require.Equal("istio", result[0].Name)
+		require.Equal("istio-remote", result[1].Name)
+	})
+
+	// No cluster-wide access
+	t.Run("NoClusterWideAccess", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
+		client := kubetest.NewFakeK8sClient()
+		client.GatewayAPIEnabled = true // Enable Gateway API
+		saClients := map[string]kubernetes.ClientInterface{
+			conf.KubernetesConfig.ClusterName: client,
+		}
+		readers := map[string]ctrlclient.Reader{
+			conf.KubernetesConfig.ClusterName: client,
+		}
+
+		// Disable cluster-wide access
+		conf.Deployment.ClusterWideAccess = false
+		conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{}
+
+		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		require.NoError(err)
+
+		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		require.Len(result, 2) // Should fall back to default values
+		require.Equal("istio", result[0].Name)
+		require.Equal("istio-remote", result[1].Name)
+	})
 }
