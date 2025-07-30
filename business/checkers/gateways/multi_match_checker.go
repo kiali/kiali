@@ -209,7 +209,7 @@ func (m MultiMatchChecker) findMatch(host Host, otherHosts []Host) (bool, []Host
 func regexpFromHostname(hostname string) *regexp.Regexp {
 	// Escaping dot chars for RegExp. Dot char means all possible chars.
 	// This protects this validation to false positive for (api-dev.example.com and api.dev.example.com)
-	escaped := strings.Replace(hostname, ".", "\\.", -1)
+	escaped := strings.ReplaceAll(hostname, ".", "\\.")
 
 	// We anchor the beginning and end of the string when it's
 	// to be used as a regex, so that we don't get spurious

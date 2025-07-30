@@ -40,11 +40,11 @@ func NewTracingService(conf *config.Config, tracing tracing.ClientInterface, svc
 
 func (in *TracingService) client() (tracing.ClientInterface, error) {
 	if !in.conf.ExternalServices.Tracing.Enabled {
-		return nil, fmt.Errorf("Tracing is not enabled")
+		return nil, fmt.Errorf("tracing is not enabled")
 	}
 
 	if in.tracing == nil {
-		return nil, fmt.Errorf("Tracing client is not initialized")
+		return nil, fmt.Errorf("tracing client is not initialized")
 	}
 
 	return in.tracing, nil
@@ -61,7 +61,6 @@ func (in *TracingService) getFilteredSpans(ctx context.Context, ns string, app m
 }
 
 func (in *TracingService) GetAppSpans(ctx context.Context, cluster, ns, app string, query models.TracingQuery) ([]model.TracingSpan, error) {
-
 	tracingName := in.app.GetAppTracingName(ctx, cluster, ns, app)
 	var waypointFilter SpanFilter
 	if tracingName.Lookup != app {
@@ -384,7 +383,6 @@ func (in *TracingService) TracingDiagnose(ctx context.Context, token string) (tr
 }
 
 func (in *TracingService) ValidateConfiguration(ctx context.Context, conf *config.Config, tracingConfig *config.TracingConfig, token string) *model.ConfigurationValidation {
-
 	validation := model.ConfigurationValidation{}
 
 	// Merge config

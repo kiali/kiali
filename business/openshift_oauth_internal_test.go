@@ -101,7 +101,8 @@ func TestExchangeUsesSystemPoolAndRestTLS(t *testing.T) {
 	conf.KubernetesConfig.ClusterName = "Kubernetes"
 	addr := ""
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/.well-known/oauth-authorization-server" {
+		switch r.URL.Path {
+		case "/.well-known/oauth-authorization-server":
 			oAuthResponse := &OAuthAuthorizationServer{
 				AuthorizationEndpoint: addr + "/oauth/authorize",
 				Issuer:                addr,
@@ -112,7 +113,7 @@ func TestExchangeUsesSystemPoolAndRestTLS(t *testing.T) {
 				panic("unable to marshal json response for fake oAuthMetadataServer")
 			}
 			_, _ = w.Write(b)
-		} else if r.URL.Path == "/oauth/token" {
+		case "/oauth/token":
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(`{"access_token": "abc123", "expires_in": 3600, "token_type": "Bearer"}`))
 		}

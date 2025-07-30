@@ -232,19 +232,21 @@ func (in *MetricsService) getSingleQueryStats(q *models.MetricsStatsQuery) (*mod
 func createStatsMetricsLabelsBuilder(q *models.MetricsStatsQuery, conf *config.Config) *MetricsLabelsBuilder {
 	lb := NewMetricsLabelsBuilder(q.Direction, conf)
 	lb.SelfReporter()
-	if q.Target.Kind == "app" {
+	switch q.Target.Kind {
+	case "app":
 		lb.App(q.Target.Name, q.Target.Namespace)
-	} else if q.Target.Kind == "workload" {
+	case "workload":
 		lb.Workload(q.Target.Name, q.Target.Namespace)
-	} else if q.Target.Kind == "service" {
+	case "service":
 		lb.Service(q.Target.Name, q.Target.Namespace)
 	}
 	if q.PeerTarget != nil {
-		if q.PeerTarget.Kind == "app" {
+		switch q.PeerTarget.Kind {
+		case "app":
 			lb.PeerApp(q.PeerTarget.Name, q.PeerTarget.Namespace)
-		} else if q.PeerTarget.Kind == "workload" {
+		case "workload":
 			lb.PeerWorkload(q.PeerTarget.Name, q.PeerTarget.Namespace)
-		} else if q.PeerTarget.Kind == "service" {
+		case "service":
 			lb.PeerService(q.PeerTarget.Name, q.PeerTarget.Namespace)
 		}
 	}
@@ -334,7 +336,6 @@ func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, pod
 }
 
 func (in *MetricsService) GetZtunnelMetrics(q models.IstioMetricsQuery) (models.MetricsMap, error) {
-
 	metrics := make(models.MetricsMap)
 	var err error
 	var converted []models.Metric
@@ -404,7 +405,6 @@ func (in *MetricsService) GetZtunnelMetrics(q models.IstioMetricsQuery) (models.
 }
 
 func (in *MetricsService) GetResourceMetrics(q models.IstioMetricsQuery) (models.MetricsMap, error) {
-
 	metrics := make(models.MetricsMap)
 	var err error
 	var converted []models.Metric

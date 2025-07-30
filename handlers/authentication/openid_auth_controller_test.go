@@ -156,13 +156,14 @@ func TestValidateOpenIdTokenInHouse(t *testing.T) {
 	var oidcMetadata []byte
 	var jwksResponseBytes []byte
 	testServer := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/.well-known/openid-configuration" {
+		switch r.URL.Path {
+		case "/.well-known/openid-configuration":
 			w.WriteHeader(200)
 			_, _ = w.Write(oidcMetadata)
-		} else if r.URL.Path == "/jwks" {
+		case "/jwks":
 			w.WriteHeader(200)
 			_, _ = w.Write(jwksResponseBytes)
-		} else if r.URL.Path == "/token" {
+		case "/token":
 			_ = r.ParseForm()
 			assert.Equal(t, "f0code", r.Form.Get("code"))
 			assert.Equal(t, "authorization_code", r.Form.Get("grant_type"))

@@ -80,11 +80,12 @@ func NewRouter(
 			urlPath = r.URL.Path
 		}
 
-		if urlPath == webRootWithSlash || urlPath == webRoot || urlPath == webRootWithSlash+"index.html" {
+		switch urlPath {
+		case webRootWithSlash, webRoot, webRootWithSlash + "index.html":
 			serveIndexFile(conf, w, staticAssetFS)
-		} else if urlPath == webRootWithSlash+"env.js" {
+		case webRootWithSlash + "env.js":
 			serveEnvJsFile(conf, w)
-		} else {
+		default:
 			staticFileServer.ServeHTTP(w, r)
 		}
 	}
@@ -99,21 +100,22 @@ func NewRouter(
 	var authRoutes []Route
 	var authController authentication.AuthController
 	var authRedirectHandler http.Handler
-	if strategy == config.AuthStrategyToken {
+	switch strategy {
+	case config.AuthStrategyToken:
 		tokenAuth, err := authentication.NewTokenAuthController(clientFactory, kialiCache, conf, discovery)
 		if err != nil {
 			zl.Error().Msgf("Error creating TokenAuthController: %v", err)
 			return nil, err
 		}
 		authController = tokenAuth
-	} else if strategy == config.AuthStrategyOpenId {
+	case config.AuthStrategyOpenId:
 		openIDAuth, err := authentication.NewOpenIdAuthController(kialiCache, clientFactory, conf, discovery)
 		if err != nil {
 			zl.Error().Msgf("Error creating OpenIdAuthController: %v", err)
 			return nil, err
 		}
 		authController = openIDAuth
-	} else if strategy == config.AuthStrategyOpenshift {
+	case config.AuthStrategyOpenshift:
 		openshiftAuth, err := authentication.NewOpenshiftAuthController(conf, clientFactory)
 		if err != nil {
 			zl.Error().Msgf("Error creating OpenshiftAuthController: %v", err)
@@ -154,7 +156,7 @@ func NewRouter(
 		}
 		authRoutes = append(authRoutes, authCallbacks...)
 		authRedirectHandler = http.HandlerFunc(openshiftAuth.OpenshiftAuthRedirect)
-	} else if strategy == config.AuthStrategyHeader {
+	case config.AuthStrategyHeader:
 		headerAuth, err := authentication.NewHeaderAuthController(conf, clientFactory.GetSAHomeClusterClient())
 		if err != nil {
 			zl.Error().Msgf("Error creating HeaderAuthController: %v", err)
@@ -347,7 +349,7 @@ func serveIndexFile(conf *config.Config, w http.ResponseWriter, staticAssetFS fs
 	if len(webRootPath) != 0 {
 		searchStr := `<base href="/"`
 		newStr := `<base href="` + webRootPath + `/"`
-		newHTML = strings.Replace(html, searchStr, newStr, -1)
+		newHTML = strings.ReplaceAll(html, searchStr, newStr)
 	}
 
 	w.Header().Set("content-type", "text/html")
@@ -376,7 +378,6 @@ func (a alice) then(h http.Handler) http.Handler {
 }
 
 func buildHttpHandlerLogger(route Route, handlerFunction http.Handler) http.Handler {
-
 	// prepare the request's logger
 	zlc := zerolog.With().Str(log.RouteLogName, route.Name)
 	if log.IsTrace() {

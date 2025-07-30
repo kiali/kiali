@@ -115,13 +115,14 @@ func addEdgeTrafficToNodeHealth(edge *graph.Edge) {
 
 func initHealthData(node *graph.Node) {
 	if _, ok := node.Metadata[graph.HealthData]; !ok {
-		if node.NodeType == graph.NodeTypeService {
+		switch node.NodeType {
+		case graph.NodeTypeService:
 			m := models.EmptyServiceHealth()
 			node.Metadata[graph.HealthData] = &m
-		} else if node.NodeType == graph.NodeTypeWorkload {
+		case graph.NodeTypeWorkload:
 			m := models.EmptyWorkloadHealth()
 			node.Metadata[graph.HealthData] = m
-		} else if node.NodeType == graph.NodeTypeApp {
+		case graph.NodeTypeApp:
 			m := models.EmptyAppHealth()
 			mApp := models.EmptyAppHealth()
 			node.Metadata[graph.HealthData] = &m

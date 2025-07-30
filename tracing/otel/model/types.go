@@ -11,7 +11,7 @@ type TraceMetadata struct {
 	TraceID           string        `json:"traceID"`
 	RootServiceName   string        `json:"RootServiceName"`
 	StartTimeUnixNano string        `json:"startTimeUnixNano"`
-	DurationMs        time.Duration `json:"durationMs"`
+	Duration          time.Duration `json:"durationMs"`
 }
 
 type TracingResponse struct {
@@ -41,7 +41,7 @@ type Trace struct {
 	RootServiceName   string  `json:"rootServiceName"`
 	RootTraceName     string  `json:"rootTraceName,omitempty"`
 	StartTimeUnixNano string  `json:"startTimeUnixNano"`
-	DurationMs        int     `json:"durationMs"`
+	Duration          int     `json:"durationMs"`
 	SpanSet           SpanSet `json:"spanSet"`
 }
 

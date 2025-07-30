@@ -37,7 +37,8 @@ func fakeOAuthMetadataServer(t *testing.T) *httptest.Server {
 	// Probably another way of doing this but this works too.
 	addr := ""
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/.well-known/oauth-authorization-server" {
+		switch r.URL.Path {
+		case "/.well-known/oauth-authorization-server":
 			oAuthResponse := &business.OAuthAuthorizationServer{
 				AuthorizationEndpoint: addr + "/oauth/authorize",
 				Issuer:                addr,
@@ -48,7 +49,7 @@ func fakeOAuthMetadataServer(t *testing.T) *httptest.Server {
 				panic("unable to marshal json response for fake oAuthMetadataServer")
 			}
 			_, _ = w.Write(b)
-		} else if r.URL.Path == "/oauth/token" {
+		case "/oauth/token":
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(`{"access_token": "abc123", "expires_in": 3600, "token_type": "Bearer"}`))
 		}

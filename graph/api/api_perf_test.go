@@ -37,7 +37,7 @@ func parseFlags(b *testing.B) {
 	flag.Parse()
 }
 
-func mockNamespaceGraphPerf(b *testing.B, numNs int) (*prometheus.Client, *prometheustest.PromAPIMock, error, *business.Layer) {
+func mockNamespaceGraphPerf(b *testing.B, numNs int) (*prometheus.Client, *prometheustest.PromAPIMock, *business.Layer, error) {
 	client, api, biz := setupMockedPerf(b, numNs)
 
 	for i := 1; i <= numNs; i++ {
@@ -922,7 +922,7 @@ func mockNamespaceGraphPerf(b *testing.B, numNs int) (*prometheus.Client, *prome
 		mockQuery(api, q5, &v5)
 	}
 
-	return client, api, nil, biz
+	return client, api, biz, nil
 }
 
 func setupMockedPerf(b *testing.B, numNs int) (*prometheus.Client, *prometheustest.PromAPIMock, *business.Layer) {
@@ -958,10 +958,10 @@ func setupMockedPerf(b *testing.B, numNs int) (*prometheus.Client, *prometheuste
 	return client, api, biz
 }
 
-func mockNamespaceRatesGraphPerf(b *testing.B, numNs int) (*prometheus.Client, *prometheustest.PromAPIMock, error, *business.Layer) {
-	client, api, err, biz := mockNamespaceGraphPerf(b, numNs)
+func mockNamespaceRatesGraphPerf(b *testing.B, numNs int) (*prometheus.Client, *prometheustest.PromAPIMock, *business.Layer, error) {
+	client, api, biz, err := mockNamespaceGraphPerf(b, numNs)
 	if err != nil {
-		return client, api, err, biz
+		return client, api, biz, err
 	}
 	for i := 1; i <= numNs; i++ {
 		q6 := fmt.Sprintf(`round(sum(rate(istio_tcp_received_bytes_total{app!="ztunnel",reporter="source",source_workload_namespace!="bookinfo%d",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.bookinfo%d\\..+$"} [600s])) by (app,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags) > 0,0.001)`, i, i)
@@ -1124,13 +1124,13 @@ func mockNamespaceRatesGraphPerf(b *testing.B, numNs int) (*prometheus.Client, *
 		mockQuery(api, q14, &v14)
 	}
 
-	return client, api, nil, biz
+	return client, api, biz, nil
 }
 
 func BenchmarkVersionedAppGraph(b *testing.B) {
 	parseFlags(b)
 
-	client, _, err, biz := mockNamespaceRatesGraphPerf(b, numberOfNamespacesFlag)
+	client, _, biz, err := mockNamespaceRatesGraphPerf(b, numberOfNamespacesFlag)
 	if err != nil {
 		b.Fatal(err)
 	}

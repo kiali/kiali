@@ -13,9 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apps_v1 "k8s.io/api/apps/v1"
-	core_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -60,7 +59,7 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeDeployments(*conf) {
 		o := obj
@@ -100,7 +99,7 @@ func TestGetWorkloadListFromDeploymentsNoAppVerLabelNames(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeDeployments(*conf) {
 		o := obj
@@ -142,7 +141,7 @@ func TestGetWorkloadListFromWorkloadGroups(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range data.CreateWorkloadGroups(*conf) {
 		o := obj
@@ -203,7 +202,7 @@ func TestGetWorkloadListFromReplicaSets(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeReplicaSets(*conf) {
 		o := obj
@@ -244,7 +243,7 @@ func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeReplicationControllers(conf) {
 		o := obj
@@ -286,7 +285,7 @@ func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeDeploymentConfigs(conf) {
 		o := obj
@@ -328,7 +327,7 @@ func TestGetWorkloadListFromStatefulSets(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeStatefulSets(conf) {
 		o := obj
@@ -370,7 +369,7 @@ func TestGetWorkloadListFromDaemonSets(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeDaemonSets(conf) {
 		o := obj
@@ -412,7 +411,7 @@ func TestGetWorkloadListFromDepRCPod(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeDepSyncedWithRS(conf) {
 		o := obj
@@ -453,7 +452,7 @@ func TestGetWorkloadListFromPod(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakePodsNoController(conf) {
 		o := obj
@@ -486,7 +485,7 @@ func TestGetWorkloadListFromPods(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeCustomControllerRSSyncedWithPods(conf) {
 		o := obj
@@ -526,7 +525,7 @@ func TestGetWorkloadFromDeployment(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 		&FakeDepSyncedWithRS(conf)[0],
 	}
 	for _, o := range FakeRSSyncedWithPods(conf) {
@@ -562,7 +561,7 @@ func TestGetWorkloadFromWorkloadGroup(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range data.CreateWorkloadGroups(*conf) {
 		o := obj
@@ -621,7 +620,7 @@ func TestGetWorkloadWithInvalidWorkloadType(t *testing.T) {
 	// Setup mocks
 	kubeObjs := []runtime.Object{
 		&FakeDepSyncedWithRS(conf)[0],
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeRSSyncedWithPods(conf) {
 		o := obj
@@ -659,7 +658,7 @@ func TestGetWorkloadFromPods(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeCustomControllerRSSyncedWithPods(conf) {
 		o := obj
@@ -690,7 +689,7 @@ func TestGetPod(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
-	k8s := kubetest.NewFakeK8sClient(FakePodSyncedWithDeployments(conf), &osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}})
+	k8s := kubetest.NewFakeK8sClient(FakePodSyncedWithDeployments(conf), &osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}})
 	svc := setupWorkloadService(t, k8s, conf)
 
 	pod, err := svc.GetPod(conf.KubernetesConfig.ClusterName, "Namespace", "details-v1-3618568057-dnkjp")
@@ -705,7 +704,7 @@ type logStreamer struct {
 	kubernetes.UserClientInterface
 }
 
-func (l *logStreamer) StreamPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error) {
+func (l *logStreamer) StreamPodLogs(namespace, name string, opts *corev1.PodLogOptions) (io.ReadCloser, error) {
 	return io.NopCloser(strings.NewReader(l.logs)), nil
 }
 
@@ -715,11 +714,11 @@ func TestGetPodLogs(t *testing.T) {
 
 	k8s := &logStreamer{
 		logs:                FakePodLogsSyncedWithDeployments().Logs,
-		UserClientInterface: kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}),
+		UserClientInterface: kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}}),
 	}
 
 	svc := setupWorkloadService(t, k8s, config.NewConfig())
-	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: corev1.PodLogOptions{Container: "details"}})
 
 	require.Equal(len(podLogs.Entries), 4)
 
@@ -750,14 +749,14 @@ func TestGetPodLogsMaxLines(t *testing.T) {
 
 	k8s := &logStreamer{
 		logs:                FakePodLogsSyncedWithDeployments().Logs,
-		UserClientInterface: kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}),
+		UserClientInterface: kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}}),
 	}
 
 	svc := setupWorkloadService(t, k8s, config.NewConfig())
 
 	maxLines := 2
 	duration, _ := time.ParseDuration("6h")
-	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines, Duration: &duration})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: corev1.PodLogOptions{Container: "details"}, MaxLines: &maxLines, Duration: &duration})
 
 	require.Equal(2, len(podLogs.Entries))
 	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
@@ -769,7 +768,7 @@ func TestGetPodLogsDuration(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
 
-	proj := &osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}
+	proj := &osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}}
 	k8s := &logStreamer{
 		logs:                FakePodLogsSyncedWithDeployments().Logs,
 		UserClientInterface: kubetest.NewFakeK8sClient(proj),
@@ -777,7 +776,7 @@ func TestGetPodLogsDuration(t *testing.T) {
 	svc := setupWorkloadService(t, k8s, config.NewConfig())
 
 	duration, _ := time.ParseDuration("59m")
-	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: corev1.PodLogOptions{Container: "details"}, Duration: &duration})
 	require.Equal(1, len(podLogs.Entries))
 	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
 
@@ -789,7 +788,7 @@ func TestGetPodLogsDuration(t *testing.T) {
 	svc = setupWorkloadService(t, k8s, conf)
 
 	duration, _ = time.ParseDuration("1h")
-	podLogs = callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
+	podLogs = callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: corev1.PodLogOptions{Container: "details"}, Duration: &duration})
 	require.Equal(2, len(podLogs.Entries))
 	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
 	assert.Equal("WARN #2 Log Message", podLogs.Entries[1].Message)
@@ -802,7 +801,7 @@ func TestGetPodLogsDuration(t *testing.T) {
 	svc = setupWorkloadService(t, k8s, conf)
 
 	duration, _ = time.ParseDuration("2h")
-	podLogs = callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
+	podLogs = callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: corev1.PodLogOptions{Container: "details"}, Duration: &duration})
 	require.Equal(3, len(podLogs.Entries))
 	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
 	assert.Equal("WARN #2 Log Message", podLogs.Entries[1].Message)
@@ -815,7 +814,7 @@ func TestGetPodLogsMaxLinesAndDurations(t *testing.T) {
 	conf := config.NewConfig()
 
 	// Setup mocks
-	proj := &osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}
+	proj := &osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}}
 	k8s := &logStreamer{
 		logs:                FakePodLogsSyncedWithDeployments().Logs,
 		UserClientInterface: kubetest.NewFakeK8sClient(proj),
@@ -824,7 +823,7 @@ func TestGetPodLogsMaxLinesAndDurations(t *testing.T) {
 
 	maxLines := 2
 	duration, _ := time.ParseDuration("2h")
-	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, PodLogOptions: corev1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
 	require.Equal(2, len(podLogs.Entries))
 	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
 	assert.Equal("WARN #2 Log Message", podLogs.Entries[1].Message)
@@ -839,7 +838,7 @@ func TestGetPodLogsMaxLinesAndDurations(t *testing.T) {
 
 	maxLines = 3
 	duration, _ = time.ParseDuration("3h")
-	podLogs = callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	podLogs = callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, PodLogOptions: corev1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
 	require.Equal(3, len(podLogs.Entries))
 	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
 	assert.Equal("WARN #2 Log Message", podLogs.Entries[1].Message)
@@ -853,7 +852,7 @@ func TestGetPodLogsProxy(t *testing.T) {
 	conf := config.NewConfig()
 
 	// Setup mocks
-	proj := &osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}
+	proj := &osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}}
 	k8s := &logStreamer{
 		logs:                FakePodLogsProxy().Logs,
 		UserClientInterface: kubetest.NewFakeK8sClient(proj),
@@ -862,7 +861,7 @@ func TestGetPodLogsProxy(t *testing.T) {
 
 	maxLines := 2
 	duration, _ := time.ParseDuration("2h")
-	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, LogType: models.LogTypeProxy, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, LogType: models.LogTypeProxy, PodLogOptions: corev1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
 	require.Equal(1, len(podLogs.Entries))
 	entry := podLogs.Entries[0]
 	assert.Equal(`[2021-02-01T21:34:35.533Z] "GET /hotels/Ljubljana HTTP/1.1" 200 - via_upstream - "-" 0 99 14 14 "-" "Go-http-client/1.1" "7e7e2dd0-0a96-4535-950b-e303805b7e27" "hotels.travel-agency:8000" "127.0.2021-02-01T21:34:38.761055140Z 0.1:8000" inbound|8000|| 127.0.0.1:33704 10.129.0.72:8000 10.128.0.79:39880 outbound_.8000_._.hotels.travel-agency.svc.cluster.local default`, entry.Message)
@@ -885,7 +884,7 @@ func TestGetZtunnelPodLogsProxy(t *testing.T) {
 	// Setup mocks
 	kubeObjs := []runtime.Object{
 		FakePodSyncedWithDeployments(conf),
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "bookinfo"}},
 	}
 	for _, obj := range FakeZtunnelDaemonSet(conf) {
 		o := obj
@@ -903,7 +902,7 @@ func TestGetZtunnelPodLogsProxy(t *testing.T) {
 
 	maxLines := 2
 	duration, _ := time.ParseDuration("2h")
-	podLogs := callStreamPodLogs(svc, "bookinfo", "details", "details", "details-v1-cf74bb974-wg44w", &LogOptions{Duration: &duration, LogType: models.LogTypeZtunnel, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	podLogs := callStreamPodLogs(svc, "bookinfo", "details", "details", "details-v1-cf74bb974-wg44w", &LogOptions{Duration: &duration, LogType: models.LogTypeZtunnel, PodLogOptions: corev1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
 	require.Equal(1, len(podLogs.Entries))
 	entry := podLogs.Entries[0]
 
@@ -917,7 +916,7 @@ func TestGetZtunnelPodLogsProxy(t *testing.T) {
 	assert.Equal("details.bookinfo.svc.cluster.local", entry.AccessLog.RequestedServer)
 	assert.Equal(int64(1712917911078), entry.TimestampUnix)
 
-	podLogsQuotes := callStreamPodLogs(svc, "travel-agency", "cars", "cars", "cars-v1-6c869ff769-4hk27", &LogOptions{Duration: &duration, LogType: models.LogTypeZtunnel, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	podLogsQuotes := callStreamPodLogs(svc, "travel-agency", "cars", "cars", "cars-v1-6c869ff769-4hk27", &LogOptions{Duration: &duration, LogType: models.LogTypeZtunnel, PodLogOptions: corev1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
 	require.Equal(2, len(podLogsQuotes.Entries))
 	entryQuotes := podLogsQuotes.Entries[0]
 
@@ -943,7 +942,7 @@ func TestGetWaypointPodLogsProxy(t *testing.T) {
 	// Setup mocks
 	kubeObjs := []runtime.Object{
 		FakePodWithWaypointAndDeployments(),
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeWaypointPod() {
 		o := obj
@@ -957,17 +956,17 @@ func TestGetWaypointPodLogsProxy(t *testing.T) {
 
 	kubeObjs = append(kubeObjs,
 		&apps_v1.Deployment{
-			TypeMeta: meta_v1.TypeMeta{
+			TypeMeta: metav1.TypeMeta{
 				APIVersion: kubernetes.Deployments.GroupVersion().String(),
 				Kind:       kubernetes.Deployments.Kind,
 			},
-			ObjectMeta: meta_v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Name:      "waypoint",
 				Namespace: "Namespace",
 			},
 			Spec: apps_v1.DeploymentSpec{
-				Template: core_v1.PodTemplateSpec{
-					ObjectMeta: meta_v1.ObjectMeta{
+				Template: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
 							"gateway.istio.io/managed":               "istio.io-mesh-controller",
 							"gateway.networking.k8s.io/gateway-name": "waypoint",
@@ -993,7 +992,7 @@ func TestGetWaypointPodLogsProxy(t *testing.T) {
 	assert.NotNil(a)
 	maxLines := 2
 	duration, _ := time.ParseDuration("2h")
-	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-cf74bb974-wg44w", &LogOptions{Duration: &duration, LogType: models.LogTypeWaypoint, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-cf74bb974-wg44w", &LogOptions{Duration: &duration, LogType: models.LogTypeWaypoint, PodLogOptions: corev1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
 	require.Equal(2, len(podLogs.Entries))
 	entry := podLogs.Entries[0]
 
@@ -1027,7 +1026,7 @@ func TestDuplicatedControllers(t *testing.T) {
 	// Setup mocks
 	kubeObjs := []runtime.Object{
 		FakePodSyncedWithDeployments(conf),
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeDuplicatedDeployments() {
 		o := obj
@@ -1073,21 +1072,21 @@ func TestGetWorkloadListFromGenericPodController(t *testing.T) {
 	pods := FakePodsSyncedWithDeployments(conf)
 
 	// Doesn't matter what the type is as long as kiali doesn't recognize it as a workload.
-	owner := &core_v1.ConfigMap{
-		ObjectMeta: v1.ObjectMeta{
+	owner := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "testing",
 			UID:  types.UID("f9952f02-5552-4b2c-afdb-441d859dbb36"),
 		},
 	}
-	ref := v1.NewControllerRef(owner, core_v1.SchemeGroupVersion.WithKind("ConfigMap"))
+	ref := metav1.NewControllerRef(owner, corev1.SchemeGroupVersion.WithKind("ConfigMap"))
 
 	for i := range pods {
-		pods[i].OwnerReferences = []v1.OwnerReference{*ref}
+		pods[i].OwnerReferences = []metav1.OwnerReference{*ref}
 	}
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range pods {
 		o := obj
@@ -1133,7 +1132,7 @@ func TestGetWorkloadListKindsWithSameName(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range rs {
 		o := obj
@@ -1166,22 +1165,22 @@ func TestGetWorkloadListRSWithoutPrefix(t *testing.T) {
 
 	rs := FakeRSSyncedWithPods(conf)
 	// Doesn't matter what the type is as long as kiali doesn't recognize it as a workload.
-	owner := &core_v1.ConfigMap{
-		ObjectMeta: v1.ObjectMeta{
+	owner := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
 			// Random prefix
 			Name: "h79a3h-controlling-workload",
 			UID:  types.UID("f9952f02-5552-4b2c-afdb-441d859dbb36"),
 		},
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind: "ConfigMap",
 		},
 	}
-	rs[0].OwnerReferences = []v1.OwnerReference{*v1.NewControllerRef(owner, core_v1.SchemeGroupVersion.WithKind(owner.Kind))}
+	rs[0].OwnerReferences = []metav1.OwnerReference{*metav1.NewControllerRef(owner, corev1.SchemeGroupVersion.WithKind(owner.Kind))}
 	pods := FakePodsSyncedWithDeployments(conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range rs {
 		o := obj
@@ -1217,26 +1216,26 @@ func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 	replicaSets := FakeRSSyncedWithPods(conf)
 
 	// Doesn't matter what the type is as long as kiali doesn't recognize it as a workload.
-	owner := &core_v1.ConfigMap{
-		ObjectMeta: v1.ObjectMeta{
+	owner := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "controlling-workload",
 			UID:  types.UID("f9952f02-5552-4b2c-afdb-441d859dbb36"),
 		},
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind: "ConfigMap",
 		},
 	}
-	ref := v1.NewControllerRef(owner, core_v1.SchemeGroupVersion.WithKind(owner.Kind))
+	ref := metav1.NewControllerRef(owner, corev1.SchemeGroupVersion.WithKind(owner.Kind))
 
 	for i := range replicaSets {
-		replicaSets[i].OwnerReferences = []v1.OwnerReference{*ref}
+		replicaSets[i].OwnerReferences = []metav1.OwnerReference{*ref}
 	}
 
 	pods := FakePodsSyncedWithDeployments(conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range replicaSets {
 		o := obj
@@ -1280,13 +1279,13 @@ func TestGetPodLogsWithoutAccessLogs(t *testing.T) {
 2021-10-05T00:32:40.309457Z     ':scheme', 'http'`
 	k8s := &logStreamer{
 		logs:                logs,
-		UserClientInterface: kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}),
+		UserClientInterface: kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}}),
 	}
 	conf := config.NewConfig()
 	config.Set(conf)
 	svc := setupWorkloadService(t, k8s, conf)
 
-	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{LogType: models.LogTypeProxy, PodLogOptions: core_v1.PodLogOptions{Container: "istio-proxy"}})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{LogType: models.LogTypeProxy, PodLogOptions: corev1.PodLogOptions{Container: "istio-proxy"}})
 
 	assert.Equal(8, len(podLogs.Entries))
 	for _, entry := range podLogs.Entries {
@@ -1318,7 +1317,7 @@ func TestGetWorkloadMultiCluster(t *testing.T) {
 		"east": kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("bookinfo"),
 			&apps_v1.Deployment{
-				ObjectMeta: meta_v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "ratings-v1",
 					Namespace: "bookinfo",
 					Annotations: map[string]string{
@@ -1330,7 +1329,7 @@ func TestGetWorkloadMultiCluster(t *testing.T) {
 		"west": kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("bookinfo"),
 			&apps_v1.Deployment{
-				ObjectMeta: meta_v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "ratings-v1",
 					Namespace: "bookinfo",
 					Annotations: map[string]string{
@@ -1361,7 +1360,7 @@ func TestValidateWaypoint(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 
 	for _, obj := range FakeWaypointPod() {
@@ -1376,17 +1375,17 @@ func TestValidateWaypoint(t *testing.T) {
 
 	kubeObjs = append(kubeObjs,
 		&apps_v1.Deployment{
-			TypeMeta: meta_v1.TypeMeta{
+			TypeMeta: metav1.TypeMeta{
 				APIVersion: kubernetes.Deployments.GroupVersion().String(),
 				Kind:       kubernetes.Deployments.Kind,
 			},
-			ObjectMeta: meta_v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Name:      "waypoint",
 				Namespace: "Namespace",
 			},
 			Spec: apps_v1.DeploymentSpec{
-				Template: core_v1.PodTemplateSpec{
-					ObjectMeta: meta_v1.ObjectMeta{
+				Template: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
 							"gateway.istio.io/managed":               "istio.io-mesh-controller",
 							"gateway.networking.k8s.io/gateway-name": "waypoint",
@@ -1444,7 +1443,7 @@ func TestValidateWaypointNS(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace", Labels: map[string]string{waypointLabel: "waypoint"}}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace", Labels: map[string]string{waypointLabel: "waypoint"}}},
 	}
 
 	for _, obj := range FakeWaypointPod() {
@@ -1459,17 +1458,17 @@ func TestValidateWaypointNS(t *testing.T) {
 
 	kubeObjs = append(kubeObjs,
 		&apps_v1.Deployment{
-			TypeMeta: meta_v1.TypeMeta{
+			TypeMeta: metav1.TypeMeta{
 				APIVersion: kubernetes.Deployments.GroupVersion().String(),
 				Kind:       kubernetes.Deployments.Kind,
 			},
-			ObjectMeta: meta_v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Name:      "waypoint",
 				Namespace: "Namespace",
 			},
 			Spec: apps_v1.DeploymentSpec{
-				Template: core_v1.PodTemplateSpec{
-					ObjectMeta: meta_v1.ObjectMeta{
+				Template: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
 							"gateway.istio.io/managed":               "istio.io-mesh-controller",
 							"gateway.networking.k8s.io/gateway-name": "waypoint",
@@ -1528,7 +1527,7 @@ func TestValidateWaypointService(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 
 	for _, obj := range FakeWaypointPod() {
@@ -1548,17 +1547,17 @@ func TestValidateWaypointService(t *testing.T) {
 
 	kubeObjs = append(kubeObjs,
 		&apps_v1.Deployment{
-			TypeMeta: meta_v1.TypeMeta{
+			TypeMeta: metav1.TypeMeta{
 				APIVersion: kubernetes.Deployments.GroupVersion().String(),
 				Kind:       kubernetes.Deployments.Kind,
 			},
-			ObjectMeta: meta_v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Name:      "waypoint",
 				Namespace: "Namespace",
 			},
 			Spec: apps_v1.DeploymentSpec{
-				Template: core_v1.PodTemplateSpec{
-					ObjectMeta: meta_v1.ObjectMeta{
+				Template: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
 							"gateway.istio.io/managed":               "istio.io-mesh-controller",
 							"gateway.networking.k8s.io/gateway-name": "waypoint",
@@ -1619,7 +1618,7 @@ func TestGetWaypointWorkloads(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace", Labels: map[string]string{"istio.io/use-waypoint": "waypoint"}}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace", Labels: map[string]string{"istio.io/use-waypoint": "waypoint"}}},
 	}
 
 	for _, obj := range FakeWaypointPod() {
@@ -1639,17 +1638,17 @@ func TestGetWaypointWorkloads(t *testing.T) {
 
 	kubeObjs = append(kubeObjs,
 		&apps_v1.Deployment{
-			TypeMeta: meta_v1.TypeMeta{
+			TypeMeta: metav1.TypeMeta{
 				APIVersion: kubernetes.Deployments.GroupVersion().String(),
 				Kind:       kubernetes.Deployments.Kind,
 			},
-			ObjectMeta: meta_v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Name:      "waypoint",
 				Namespace: "Namespace",
 			},
 			Spec: apps_v1.DeploymentSpec{
-				Template: core_v1.PodTemplateSpec{
-					ObjectMeta: meta_v1.ObjectMeta{
+				Template: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
 							"gateway.istio.io/managed":               "istio.io-mesh-controller",
 							"gateway.networking.k8s.io/gateway-name": "waypoint",
@@ -1709,7 +1708,7 @@ func TestValidateWaypointProxyStatus(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 
 	for _, obj := range FakeWaypointPod() {
@@ -1772,15 +1771,15 @@ func TestGetWorkloadSetsIsGateway(t *testing.T) {
 	config.Set(conf)
 
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Namespace"}},
+		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 		&apps_v1.Deployment{
-			ObjectMeta: meta_v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Name:      "ingress-gateway",
 				Namespace: "Namespace",
 			},
 			Spec: apps_v1.DeploymentSpec{
-				Template: core_v1.PodTemplateSpec{
-					ObjectMeta: meta_v1.ObjectMeta{
+				Template: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
 							"istio.io/gateway-name": "ingress-gateway",
 						},
@@ -1804,15 +1803,15 @@ func TestGetAllGateways(t *testing.T) {
 	config.Set(conf)
 
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Namespace"}},
+		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 		&apps_v1.Deployment{
-			ObjectMeta: meta_v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Name:      "ingress-gateway",
 				Namespace: "Namespace",
 			},
 			Spec: apps_v1.DeploymentSpec{
-				Template: core_v1.PodTemplateSpec{
-					ObjectMeta: meta_v1.ObjectMeta{
+				Template: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
 							"istio.io/gateway-name": "ingress-gateway",
 						},
@@ -1821,7 +1820,7 @@ func TestGetAllGateways(t *testing.T) {
 			},
 		},
 		&apps_v1.Deployment{
-			ObjectMeta: meta_v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Name:      "non-gateway-workload",
 				Namespace: "Namespace",
 			},
@@ -1846,7 +1845,7 @@ func TestGetWorkloadListWithCustomKindThatMatchesCoreKind(t *testing.T) {
 	conf := config.NewConfig()
 
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, pod := range FakePodsFromCustomController(conf) {
 		p := pod

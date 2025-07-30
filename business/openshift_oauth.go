@@ -103,10 +103,10 @@ func httpClientWithPool(conf *config.Config, restConfig rest.Config, systemPool 
 	if !tlsConfig.InsecureSkipVerify {
 		// Append system certs
 		pool := systemPool.Clone()
-		if restConfig.TLSClientConfig.CAData != nil {
+		if restConfig.CAData != nil {
 			log.Trace("Appending CA data from tls client config to pool")
-			if !pool.AppendCertsFromPEM(restConfig.TLSClientConfig.CAData) {
-				return nil, fmt.Errorf("unable to append CA from restConfig to system pool: %s", restConfig.TLSClientConfig.CAData)
+			if !pool.AppendCertsFromPEM(restConfig.CAData) {
+				return nil, fmt.Errorf("unable to append CA from restConfig to system pool: %s", restConfig.CAData)
 			}
 		}
 		tlsConfig.RootCAs = pool

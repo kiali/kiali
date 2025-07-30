@@ -78,7 +78,7 @@ func TestExpired(t *testing.T) {
 	expirationStore.Set("foo2", "bar2")
 	expirationStore.Set("foo3", "bar3")
 
-	require.Equal(len(expirationStore.Store.Items()), 3)
+	require.Equal(len(expirationStore.Items()), 3)
 
 	time.Sleep(30 * time.Millisecond)
 

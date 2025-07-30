@@ -33,7 +33,6 @@ func (n ServiceEntryReferences) References() models.IstioReferencesMap {
 	}
 
 	return result
-
 }
 
 func (n ServiceEntryReferences) getConfigReferences(se *networking_v1.ServiceEntry) []models.IstioReference {
@@ -117,7 +116,7 @@ func (n ServiceEntryReferences) getServiceReferences(se *networking_v1.ServiceEn
 	for _, seHost := range se.Spec.Hosts {
 		for _, rStatus := range n.RegistryServices {
 			if kubernetes.FilterByRegistryService(se.Namespace, seHost, rStatus) {
-				allServices = append(allServices, models.ServiceReference{Name: rStatus.Hostname, Namespace: rStatus.IstioService.Attributes.Namespace})
+				allServices = append(allServices, models.ServiceReference{Name: rStatus.Hostname, Namespace: rStatus.Attributes.Namespace})
 			}
 		}
 	}

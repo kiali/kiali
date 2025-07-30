@@ -25,7 +25,6 @@ type JaegerGRPCClient struct {
 }
 
 func NewGRPCJaegerClient(cc model.QueryServiceClient) (jaegerClient *JaegerGRPCClient, err error) {
-
 	return &JaegerGRPCClient{JaegergRPCClient: cc}, nil
 }
 
@@ -37,7 +36,7 @@ func (jc JaegerGRPCClient) FindTraces(ctx context.Context, serviceName string, q
 		TracingServiceName: jaegerServiceName,
 	}
 
-	var tags = util.CopyStringMap(q.Tags)
+	tags := util.CopyStringMap(q.Tags)
 
 	findTracesRQ := &model.FindTracesRequest{
 		Query: &model.TraceQueryParameters{
@@ -54,7 +53,6 @@ func (jc JaegerGRPCClient) FindTraces(ctx context.Context, serviceName string, q
 
 	zl.Debug().Msgf("Jaeger gRPC FindTraces request: %v", findTracesRQ)
 	tracesMap, err := jc.queryTraces(ctx, findTracesRQ)
-
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +66,6 @@ func (jc JaegerGRPCClient) FindTraces(ctx context.Context, serviceName string, q
 }
 
 func (jc JaegerGRPCClient) GetTrace(ctx context.Context, strTraceID string) (*model.TracingSingleTrace, error) {
-
 	traceID, err := model.TraceIDFromString(strTraceID)
 	if err != nil {
 		return nil, fmt.Errorf("GetTraceDetail, invalid trace ID: %v", err)
@@ -152,7 +149,7 @@ func readSpansStream(ctx context.Context, stream SpansStreamer) (map[model.Trace
 				break
 			}
 			zl.Error().Msgf("jaeger GRPC client, stream error: %v", err)
-			return nil, fmt.Errorf("Tracing GRPC client, stream error: %v", err)
+			return nil, fmt.Errorf("tracing GRPC client, stream error: %v", err)
 		}
 		for i, span := range received.Spans {
 			traceId := model.TraceID{}

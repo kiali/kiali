@@ -502,9 +502,10 @@ func (iv IstioValidations) SummarizeValidation(ns string, cluster string) *Istio
 
 func (summary *IstioValidationSummary) mergeSummaries(cs []*IstioCheck) {
 	for _, c := range cs {
-		if c.Severity == ErrorSeverity {
+		switch c.Severity {
+		case ErrorSeverity:
 			summary.Errors += 1
-		} else if c.Severity == WarningSeverity {
+		case WarningSeverity:
 			summary.Warnings += 1
 		}
 	}

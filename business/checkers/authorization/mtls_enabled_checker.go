@@ -107,7 +107,7 @@ func fromNeedsMtls(froms []*api_security_v1.Rule_From, ruleNum int) (bool, []str
 }
 
 func conditionNeedsMtls(conditions []*api_security_v1.Condition, ruleNum int) (bool, []string) {
-	var keysWithMtls = [3]string{"source.namespace", "source.principal", "connection.sni"}
+	keysWithMtls := [3]string{"source.namespace", "source.principal", "connection.sni"}
 	paths := make([]string, 0)
 
 	for i, c := range conditions {
@@ -137,11 +137,12 @@ func (c MtlsEnabledChecker) IsMtlsEnabledFor(labels labels.Set, namespace string
 		RegistryServices:    c.RegistryServices,
 	}.WorkloadMtlsStatus(namespace, c.Conf)
 
-	if workloadmTlsStatus == mtls.MTLSEnabled {
+	switch workloadmTlsStatus {
+	case mtls.MTLSEnabled:
 		return true
-	} else if workloadmTlsStatus == mtls.MTLSDisabled {
+	case mtls.MTLSDisabled:
 		return false
-	} else if workloadmTlsStatus == mtls.MTLSNotEnabled {
+	case mtls.MTLSNotEnabled:
 		// need to check with ns-level and mesh-level status
 		return mtlsEnabledNamespaceLevel
 	}

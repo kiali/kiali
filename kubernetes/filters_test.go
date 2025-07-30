@@ -177,10 +177,10 @@ func TestFilterRegistryServicesBySelector(t *testing.T) {
 func CreateFakeRegistryService(host string, namespace string, exportToNamespace string, labels map[string]string) *RegistryService {
 	registryService := RegistryService{}
 	registryService.Hostname = host
-	registryService.IstioService.Attributes.Namespace = namespace
-	registryService.IstioService.Attributes.Labels = labels
-	registryService.IstioService.Attributes.ExportTo = make(map[string]struct{})
-	registryService.IstioService.Attributes.ExportTo[exportToNamespace] = struct{}{}
+	registryService.Attributes.Namespace = namespace
+	registryService.Attributes.Labels = labels
+	registryService.Attributes.ExportTo = make(map[string]struct{})
+	registryService.Attributes.ExportTo[exportToNamespace] = struct{}{}
 
 	return &registryService
 }

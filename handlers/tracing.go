@@ -62,7 +62,6 @@ func AppTraces(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
@@ -100,7 +99,6 @@ func ServiceTraces(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
@@ -134,7 +132,6 @@ func WorkloadTraces(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
@@ -169,7 +166,6 @@ func ErrorTraces(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
@@ -182,7 +178,7 @@ func ErrorTraces(
 		durationInSeconds := queryParams.Get("duration")
 		conv, err := strconv.ParseInt(durationInSeconds, 10, 64)
 		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, "Cannot parse parameter 'duration': "+err.Error())
+			RespondWithError(w, http.StatusBadRequest, "cannot parse parameter 'duration': "+err.Error())
 			return
 		}
 		traces, err := business.Tracing.GetErrorTraces(r.Context(), namespace, app, time.Second*time.Duration(conv))
@@ -205,7 +201,6 @@ func TraceDetails(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
@@ -239,7 +234,6 @@ func AppSpans(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
@@ -277,7 +271,6 @@ func ServiceSpans(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
@@ -315,7 +308,6 @@ func WorkloadSpans(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
@@ -353,28 +345,28 @@ func readQuery(conf *config.Config, values url.Values) (models.TracingQuery, err
 		if num, err := strconv.ParseInt(v, 10, 64); err == nil {
 			q.Start = time.Unix(0, num*int64(time.Microsecond))
 		} else {
-			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'startMicros': %s", err.Error())
+			return models.TracingQuery{}, fmt.Errorf("cannot parse parameter 'startMicros': %s", err.Error())
 		}
 	}
 	if v := values.Get("endMicros"); v != "" {
 		if num, err := strconv.ParseInt(v, 10, 64); err == nil {
 			q.End = time.Unix(0, num*int64(time.Microsecond))
 		} else {
-			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'endMicros': %s", err.Error())
+			return models.TracingQuery{}, fmt.Errorf("cannot parse parameter 'endMicros': %s", err.Error())
 		}
 	}
 	if strLimit := values.Get("limit"); strLimit != "" {
 		if num, err := strconv.Atoi(strLimit); err == nil {
 			q.Limit = num
 		} else {
-			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'limit': %s", err.Error())
+			return models.TracingQuery{}, fmt.Errorf("cannot parse parameter 'limit': %s", err.Error())
 		}
 	}
 	if rawTags := values.Get("tags"); rawTags != "" {
 		var tags map[string]string
 		err := json.Unmarshal([]byte(rawTags), &tags)
 		if err != nil {
-			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'tags': %s", err.Error())
+			return models.TracingQuery{}, fmt.Errorf("cannot parse parameter 'tags': %s", err.Error())
 		}
 		q.Tags = tags
 	}
@@ -382,7 +374,7 @@ func readQuery(conf *config.Config, values url.Values) (models.TracingQuery, err
 		if num, err := strconv.Atoi(strMinD); err == nil {
 			q.MinDuration = time.Duration(num) * time.Microsecond
 		} else {
-			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'minDuration': %s", err.Error())
+			return models.TracingQuery{}, fmt.Errorf("cannot parse parameter 'minDuration': %s", err.Error())
 		}
 	}
 
@@ -413,7 +405,6 @@ func TracingDiagnose(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
@@ -446,7 +437,6 @@ func TracingConfigurationCheck(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())

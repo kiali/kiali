@@ -106,7 +106,7 @@ func (pc PrincipalsChecker) hasMatchingRemoteServiceAccount(principal string) bo
 
 func regexpFromPrincipal(principal string) *regexp.Regexp {
 	// Replace '*' from principal with regexp '.*'
-	escaped := strings.Replace(principal, "*", ".*", -1)
+	escaped := strings.ReplaceAll(principal, "*", ".*")
 
 	// We anchor the beginning and end of the string when it's
 	// to be used as a regex, so that we don't get spurious

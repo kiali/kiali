@@ -159,7 +159,7 @@ func isIstioProxy(pod *core_v1.Pod, container *core_v1.Container, conf *config.C
 }
 
 func isIstioAmbient(pod *core_v1.Pod) bool {
-	return pod.ObjectMeta.Annotations[config.AmbientAnnotation] == config.AmbientAnnotationEnabled
+	return pod.Annotations[config.AmbientAnnotation] == config.AmbientAnnotationEnabled
 }
 
 func lookupImage(containerName string, containers []core_v1.Container) string {

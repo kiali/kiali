@@ -887,7 +887,7 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, clust
 		istioConfigDetail.Object = istioConfigDetail.K8sInferencePool
 	case kubernetes.K8sReferenceGrants.String():
 		istioConfigDetail.K8sReferenceGrant = &k8s_networking_v1beta1.ReferenceGrant{}
-		fixedPatch := strings.Replace(jsonPatch, "\"group\":null", "\"group\":\"\"", -1)
+		fixedPatch := strings.ReplaceAll(jsonPatch, "\"group\":null", "\"group\":\"\"")
 		istioConfigDetail.K8sReferenceGrant, err = userClient.GatewayAPI().GatewayV1beta1().ReferenceGrants(namespace).Patch(ctx, name, patchType, []byte(fixedPatch), patchOpts)
 		istioConfigDetail.Object = istioConfigDetail.K8sReferenceGrant
 	case kubernetes.K8sTCPRoutes.String():

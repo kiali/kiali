@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	core_v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +13,7 @@ import (
 func TestGetEndpointsFromPods(t *testing.T) {
 	cases := []struct {
 		name      string
-		inputPods []core_v1.Pod
+		inputPods []corev1.Pod
 		expected  *Endpoints
 	}{
 		{
@@ -24,20 +23,20 @@ func TestGetEndpointsFromPods(t *testing.T) {
 		},
 		{
 			name:      "Empty input slice",
-			inputPods: []core_v1.Pod{},
+			inputPods: []corev1.Pod{},
 			expected:  &Endpoints{},
 		},
 		{
 			name: "Single pod with IP",
-			inputPods: []core_v1.Pod{
+			inputPods: []corev1.Pod{
 				{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "Pod",
 						APIVersion: "",
 					},
-					ObjectMeta: v1.ObjectMeta{Name: "pod1"},
-					Spec:       core_v1.PodSpec{},
-					Status:     core_v1.PodStatus{PodIP: "10.0.0.1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "pod1"},
+					Spec:       corev1.PodSpec{},
+					Status:     corev1.PodStatus{PodIP: "10.0.0.1"},
 				},
 			},
 			expected: &Endpoints{
@@ -49,33 +48,33 @@ func TestGetEndpointsFromPods(t *testing.T) {
 		},
 		{
 			name: "Multiple pods, some with IPs, some without",
-			inputPods: []core_v1.Pod{
+			inputPods: []corev1.Pod{
 				{
-					TypeMeta: v1.TypeMeta{
+					TypeMeta: metav1.TypeMeta{
 						Kind:       "Pod",
 						APIVersion: "",
 					},
-					ObjectMeta: v1.ObjectMeta{Name: "podA"},
-					Spec:       core_v1.PodSpec{},
-					Status:     core_v1.PodStatus{PodIP: "192.168.1.10"},
+					ObjectMeta: metav1.ObjectMeta{Name: "podA"},
+					Spec:       corev1.PodSpec{},
+					Status:     corev1.PodStatus{PodIP: "192.168.1.10"},
 				},
 				{
-					TypeMeta: v1.TypeMeta{
+					TypeMeta: metav1.TypeMeta{
 						Kind:       "Pod",
 						APIVersion: "",
 					},
-					ObjectMeta: v1.ObjectMeta{Name: "podB"},
-					Spec:       core_v1.PodSpec{},
-					Status:     core_v1.PodStatus{PodIP: ""},
+					ObjectMeta: metav1.ObjectMeta{Name: "podB"},
+					Spec:       corev1.PodSpec{},
+					Status:     corev1.PodStatus{PodIP: ""},
 				},
 				{
-					TypeMeta: v1.TypeMeta{
+					TypeMeta: metav1.TypeMeta{
 						Kind:       "Pod",
 						APIVersion: "",
 					},
-					ObjectMeta: v1.ObjectMeta{Name: "podC"},
-					Spec:       core_v1.PodSpec{},
-					Status:     core_v1.PodStatus{PodIP: "192.168.1.12"},
+					ObjectMeta: metav1.ObjectMeta{Name: "podC"},
+					Spec:       corev1.PodSpec{},
+					Status:     corev1.PodStatus{PodIP: "192.168.1.12"},
 				},
 			},
 			expected: &Endpoints{

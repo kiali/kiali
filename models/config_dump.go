@@ -17,31 +17,37 @@ type EnvoyProxyDump struct {
 	Routes     *Routes                `json:"routes,omitempty"`
 }
 
-type Listeners []*Listener
-type Listener struct {
-	Address     string  `json:"address"`
-	Port        float64 `json:"port"`
-	Match       string  `json:"match"`
-	Destination string  `json:"destination"`
-}
+type (
+	Listeners []*Listener
+	Listener  struct {
+		Address     string  `json:"address"`
+		Port        float64 `json:"port"`
+		Match       string  `json:"match"`
+		Destination string  `json:"destination"`
+	}
+)
 
-type Clusters []*Cluster
-type Cluster struct {
-	ServiceFQDN     kubernetes.Host `json:"service_fqdn"`
-	Port            int             `json:"port"`
-	Subset          string          `json:"subset"`
-	Direction       string          `json:"direction"`
-	Type            string          `json:"type"`
-	DestinationRule string          `json:"destination_rule"`
-}
+type (
+	Clusters []*Cluster
+	Cluster  struct {
+		ServiceFQDN     kubernetes.Host `json:"service_fqdn"`
+		Port            int             `json:"port"`
+		Subset          string          `json:"subset"`
+		Direction       string          `json:"direction"`
+		Type            string          `json:"type"`
+		DestinationRule string          `json:"destination_rule"`
+	}
+)
 
-type Routes []*Route
-type Route struct {
-	Name           string          `json:"name"`
-	Domains        kubernetes.Host `json:"domains"`
-	Match          string          `json:"match"`
-	VirtualService string          `json:"virtual_service"`
-}
+type (
+	Routes []*Route
+	Route  struct {
+		Name           string          `json:"name"`
+		Domains        kubernetes.Host `json:"domains"`
+		Match          string          `json:"match"`
+		VirtualService string          `json:"virtual_service"`
+	}
+)
 
 type Bootstrap struct {
 	Bootstrap map[string]interface{} `json:"bootstrap,inline"`
@@ -133,7 +139,8 @@ func getListenerDestination(filters []kubernetes.EnvoyListenerFilter) string {
 	}
 
 	for _, filter := range filters {
-		if filter.Name == "envoy.filters.network.http_connection_manager" {
+		switch filter.Name {
+		case "envoy.filters.network.http_connection_manager":
 			typedConfig := filter.TypedConfig
 			if typedConfig.RouteConfig != nil {
 				if cluster := getMatchAllCluster(typedConfig.RouteConfig); cluster != "" {
@@ -155,7 +162,7 @@ func getListenerDestination(filters []kubernetes.EnvoyListenerFilter) string {
 			}
 
 			return "HTTP"
-		} else if filter.Name == "envoy.filters.network.tcp_proxy" {
+		case "envoy.filters.network.tcp_proxy":
 			typedConfig := filter.TypedConfig
 			if strings.Contains(typedConfig.Cluster, "Cluster") {
 				return typedConfig.Cluster
@@ -191,7 +198,7 @@ func getMatchAllCluster(route *kubernetes.RouteConfig) string {
 
 	vh := vhs[0]
 	domains := vh.Domains
-	if !(len(domains) == 1 && domains[0] == "*") {
+	if len(domains) != 1 || domains[0] != "*" {
 		return ""
 	}
 

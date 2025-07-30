@@ -172,10 +172,7 @@ func WorkloadDetails(
 			return
 		}
 
-		includeValidations := false
-		if p.IncludeIstioResources {
-			includeValidations = true
-		}
+		includeValidations := p.IncludeIstioResources
 
 		istioConfigValidations := models.IstioValidations{}
 		var errValidations error

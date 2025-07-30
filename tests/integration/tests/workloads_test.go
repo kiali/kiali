@@ -56,13 +56,13 @@ func TestWorkloadDetails(t *testing.T) {
 	}
 	require.NotEmpty(wl.Runtimes)
 	require.NotEmpty(wl.Validations)
-	require.NotEmpty(wl.Workload.Health)
-	require.NotNil(wl.Workload.Health)
-	require.NotNil(wl.Workload.Health.WorkloadStatus)
-	require.Contains(wl.Workload.Health.WorkloadStatus.Name, name)
-	require.NotNil(wl.Workload.Health.Requests)
-	require.NotNil(wl.Workload.Health.Requests.Outbound)
-	require.NotNil(wl.Workload.Health.Requests.Inbound)
+	require.NotEmpty(wl.Health)
+	require.NotNil(wl.Health)
+	require.NotNil(wl.Health.WorkloadStatus)
+	require.Contains(wl.Health.WorkloadStatus.Name, name)
+	require.NotNil(wl.Health.Requests)
+	require.NotNil(wl.Health.Requests.Outbound)
+	require.NotNil(wl.Health.Requests.Inbound)
 }
 
 func TestWorkloadIstioIngressEmptyProxyStatus(t *testing.T) {

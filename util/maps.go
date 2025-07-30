@@ -84,7 +84,7 @@ func StringToGVK(gvk string) (schema.GroupVersionKind, error) {
 		}, nil
 	}
 
-	return schema.GroupVersionKind{}, fmt.Errorf("Invalid GVK format: %s", gvk)
+	return schema.GroupVersionKind{}, fmt.Errorf("invalid GVK format: %s", gvk)
 }
 
 func LabelsToSortedString(labels map[string]string) string {
