@@ -32,10 +32,10 @@ func (a MeshCheckAppender) AppendGraph(ctx context.Context, trafficMap graph.Tra
 		return
 	}
 
-	a.applyMeshChecks(trafficMap, globalInfo, namespaceInfo)
+	a.applyMeshChecks(ctx, trafficMap, globalInfo, namespaceInfo)
 }
 
-func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a *MeshCheckAppender) applyMeshChecks(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	for _, n := range trafficMap {
 		// skip if we've already determined the node is out-of-mesh. we may process the same
 		// node multiple times to ensure we check every node (e.g. missing sidecars indicate missing
@@ -50,7 +50,7 @@ func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalI
 		}
 
 		// We whitelist istio components because they may not report telemetry using injected sidecars.
-		if globalInfo.Business.Mesh.IsControlPlane(n.Cluster, n.Namespace) {
+		if globalInfo.Business.Mesh.IsControlPlane(ctx, n.Cluster, n.Namespace) {
 			continue
 		}
 

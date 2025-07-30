@@ -53,8 +53,8 @@ func (in *MeshService) IsValidCluster(cluster string) bool {
 }
 
 // IsControlPlane is just a convenience method that calls MeshDiscovery.IsControlPlane()
-func (in *MeshService) IsControlPlane(cluster, namespace string) bool {
-	return in.discovery.IsControlPlane(cluster, namespace)
+func (in *MeshService) IsControlPlane(ctx context.Context, cluster, namespace string) bool {
+	return in.discovery.IsControlPlane(ctx, cluster, namespace)
 }
 
 // This returns the home cluster's mesh config, if possible. For external

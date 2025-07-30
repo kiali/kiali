@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -53,7 +54,7 @@ func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
 	}
 
 	// Ignoring istio-system Services as some ports are used for debug purposes and not exposed in deployments
-	if p.MeshDiscovery.IsControlPlane("", p.Service.Namespace) {
+	if p.MeshDiscovery.IsControlPlane(context.TODO(), "", p.Service.Namespace) {
 		log.Tracef("Skipping Port matching check for Service %s from Istio Namespace %s", p.Service.Name, p.Service.Namespace)
 		return validations, len(validations) == 0
 	}

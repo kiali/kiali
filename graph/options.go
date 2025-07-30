@@ -287,7 +287,7 @@ func NewOptions(r *net_http.Request, businessLayer *business.Layer) Options {
 				Name:      namespaceName,
 				Duration:  getSafeNamespaceDuration(r.Context(), namespaceName, *earliestCreationTimestamp, time.Duration(duration), queryTime),
 				IsAmbient: isAmbient,
-				IsIstio:   businessLayer.Mesh.IsControlPlane("", namespaceName),
+				IsIstio:   businessLayer.Mesh.IsControlPlane(r.Context(), "", namespaceName),
 			}
 		}
 	}

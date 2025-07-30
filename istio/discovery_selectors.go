@@ -1,6 +1,7 @@
 package istio
 
 import (
+	"context"
 	"regexp"
 
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,12 +20,12 @@ var systemNamespaceRegex = regexp.MustCompile(`^(kube-.*|openshift.*|ibm.*|kiali
 // If there are no overrides, but default discovery selectors are defined in the Kiali config, those will be returned.
 // If there are no selectors defined in the Kiali config, nil is returned (Istio's own discovery selectors will be ignored).
 // kialiConf argument may be nil - if so, they are ignored and nil is returned.
-func GetDiscoverySelectorsForCluster(discovery MeshDiscovery, cluster string, kialiConf *config.Config) config.DiscoverySelectorsType {
+func GetDiscoverySelectorsForCluster(ctx context.Context, discovery MeshDiscovery, cluster string, kialiConf *config.Config) config.DiscoverySelectorsType {
 	if kialiConf == nil {
 		return nil
 	}
 
-	cpNamespaces := discovery.GetControlPlaneNamespaces(cluster)
+	cpNamespaces := discovery.GetControlPlaneNamespaces(ctx, cluster)
 	ds := GetKialiDiscoverySelectors(cpNamespaces, cluster, kialiConf)
 	return ds
 }

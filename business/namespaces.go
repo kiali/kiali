@@ -216,7 +216,7 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 		}
 	}
 
-	namespaces = istio.FilterNamespacesWithDiscoverySelectors(namespaces, istio.GetDiscoverySelectorsForCluster(in.discovery, cluster, in.conf))
+	namespaces = istio.FilterNamespacesWithDiscoverySelectors(namespaces, istio.GetDiscoverySelectorsForCluster(ctx, in.discovery, cluster, in.conf))
 
 	return namespaces, nil
 }
@@ -290,7 +290,7 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 		result = models.CastNamespace(*ns, cluster)
 	}
 
-	if !in.isAccessibleNamespace(result) {
+	if !in.isAccessibleNamespace(ctx, result) {
 		return nil, &AccessibleNamespaceError{msg: "Namespace [" + namespace + "] in cluster [" + cluster + "] is not accessible to Kiali"}
 	}
 
@@ -386,8 +386,8 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelec
 // isAccessibleNamespace will look at the discovery selectors and see if the namespace is allowed to be accessed.
 // This ignores cluster-wide-access mode since we can have discovery selectors even when given cluster wide access.
 // Also, this may be asking for the accessibility of a namespace in a remote cluster, in which case cluster-wide-access is moot.
-func (in *NamespaceService) isAccessibleNamespace(namespace models.Namespace) bool {
-	selectors := istio.GetDiscoverySelectorsForCluster(in.discovery, namespace.Cluster, in.conf)
+func (in *NamespaceService) isAccessibleNamespace(ctx context.Context, namespace models.Namespace) bool {
+	selectors := istio.GetDiscoverySelectorsForCluster(ctx, in.discovery, namespace.Cluster, in.conf)
 	// see if the discovery selectors match the one namespace we are checking
 	return len(istio.FilterNamespacesWithDiscoverySelectors([]models.Namespace{namespace}, selectors)) == 1
 }
@@ -407,7 +407,7 @@ func (in *NamespaceService) HasMeshAccess(ctx context.Context, cluster string) b
 		return false
 	}
 
-	for _, cpNamespace := range in.discovery.GetControlPlaneNamespaces(cluster) {
+	for _, cpNamespace := range in.discovery.GetControlPlaneNamespaces(ctx, cluster) {
 		for _, ns := range namespaces {
 			if cpNamespace == ns.Name && (cluster == "" || cluster == ns.Cluster) {
 				return true

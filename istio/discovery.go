@@ -274,8 +274,8 @@ func sidecarInjectorConfigMapName(revision string) string {
 
 type MeshDiscovery interface {
 	Clusters() ([]models.KubeCluster, error)
-	GetControlPlaneNamespaces(cluster string) []string
-	IsControlPlane(cluster, namespace string) bool
+	GetControlPlaneNamespaces(ctx context.Context, cluster string) []string
+	IsControlPlane(ctx context.Context, cluster, namespace string) bool
 	Mesh(ctx context.Context) (*models.Mesh, error)
 }
 
@@ -297,10 +297,10 @@ func NewDiscovery(clients map[string]kubernetes.ClientInterface, cache cache.Kia
 
 // GetControlPlaneNamespaces returns control plane namespaces for the cluster. If cluster == "" then
 // it is for all clusters. it returns an empty slice.
-func (in *Discovery) GetControlPlaneNamespaces(cluster string) []string {
+func (in *Discovery) GetControlPlaneNamespaces(ctx context.Context, cluster string) []string {
 	namespaces := map[string]bool{}
 
-	mesh, err := in.Mesh(context.TODO())
+	mesh, err := in.Mesh(ctx)
 	if err != nil {
 		log.Debugf("Unable to get mesh to determine control plane namespaces for cluster [%s]. Err: %s", cluster, err)
 		return maps.Keys(namespaces)
@@ -317,8 +317,8 @@ func (in *Discovery) GetControlPlaneNamespaces(cluster string) []string {
 
 // IsControlPlane returns true if the cluster-namespace is an istio control plane. If cluster == "" it
 // is ignored, and only the namespace is considered. Otherwise false.
-func (in *Discovery) IsControlPlane(cluster, namespace string) bool {
-	for _, cpns := range in.GetControlPlaneNamespaces(cluster) {
+func (in *Discovery) IsControlPlane(ctx context.Context, cluster, namespace string) bool {
+	for _, cpns := range in.GetControlPlaneNamespaces(ctx, cluster) {
 		if namespace == cpns {
 			return true
 		}

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/kiali/kiali/config"
 )
 
-func fakeIsControlPlane(c, n string) bool { return false }
+func fakeIsControlPlane(ctx context.Context, c, n string) bool { return false }
 
 func TestPodFullyParsing(t *testing.T) {
 	assert := assert.New(t)

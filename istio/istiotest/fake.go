@@ -22,11 +22,11 @@ func (fmd *FakeDiscovery) Clusters() ([]models.KubeCluster, error) {
 	return fmd.ClustersReturn, nil
 }
 
-func (fmd *FakeDiscovery) GetControlPlaneNamespaces(cluster string) []string {
+func (fmd *FakeDiscovery) GetControlPlaneNamespaces(ctx context.Context, cluster string) []string {
 	return fmd.GetControlPlaneNamespacesReturn
 }
 
-func (fmd *FakeDiscovery) IsControlPlane(cluster, namespace string) bool {
+func (fmd *FakeDiscovery) IsControlPlane(ctx context.Context, cluster, namespace string) bool {
 	return fmd.IsControlPlaneReturn
 }
 

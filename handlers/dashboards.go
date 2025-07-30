@@ -288,7 +288,7 @@ func ZtunnelDashboard(
 			return
 		}
 
-		if !discovery.IsControlPlane(cluster, namespace) {
+		if !discovery.IsControlPlane(r.Context(), cluster, namespace) {
 			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
 			return
 		}

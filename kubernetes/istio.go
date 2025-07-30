@@ -335,6 +335,7 @@ func ClusterNameFromIstiod(conf *config.Config, k8s ClientInterface) (string, er
 		return "", err
 	}
 
+	log.Debugf("REMOVE numberOfControlPlanes=%d", len(istiods))
 	// Do our best to filter out any external control plane, because the CLUSTER_ID will be set to
 	// the dataplane cluster, not the hosting cluster (which seems weird, but that's how Istio does it)
 	validIstiods := sliceutil.Filter(istiods, func(istiod v1.Deployment) bool {
@@ -360,14 +361,14 @@ func ClusterNameFromIstiod(conf *config.Config, k8s ClientInterface) (string, er
 	}
 
 	log.Debugf("REMOVE numberOfValidControlPlanes=%d", len(validIstiods))
-	istiod := istiods[0]
-	istiodContainers := istiod.Spec.Template.Spec.Containers
-	if len(istiodContainers) == 0 {
-		return "", fmt.Errorf("unexpected, istiod deployment [%s] has no containers", istiod.Name)
+	validIstiod := validIstiods[0]
+	containers := validIstiod.Spec.Template.Spec.Containers
+	if len(containers) == 0 {
+		return "", fmt.Errorf("unexpected, istiod deployment [%s] has no containers", validIstiod.Name)
 	}
 
 	clusterName := ""
-	for _, v := range istiodContainers[0].Env {
+	for _, v := range containers[0].Env {
 		if v.Name == "CLUSTER_ID" {
 			clusterName = v.Value
 		}
@@ -375,7 +376,7 @@ func ClusterNameFromIstiod(conf *config.Config, k8s ClientInterface) (string, er
 
 	if clusterName == "" {
 		// We didn't find it. This may mean that Istio is not setup with multi-cluster enabled.
-		return "", fmt.Errorf("istiod deployment [%s] does not have the CLUSTER_ID environment variable set", istiod.Name)
+		return "", fmt.Errorf("istiod deployment [%s] does not have the CLUSTER_ID environment variable set", validIstiod.Name)
 	}
 
 	return clusterName, nil

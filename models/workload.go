@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"strconv"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
@@ -603,7 +604,7 @@ func (workload *Workload) ParsePods(controllerName string, controllerGVK schema.
 	}
 }
 
-func (workload *Workload) SetPods(pods []core_v1.Pod, isControlPlane func(cluster, namespace string) bool) {
+func (workload *Workload) SetPods(pods []core_v1.Pod, isControlPlane func(ctx context.Context, cluster, namespace string) bool) {
 	workload.Pods.Parse(pods, isControlPlane)
 	workload.IstioSidecar = workload.HasIstioSidecar()
 	workload.IsAmbient = workload.HasIstioAmbient()
