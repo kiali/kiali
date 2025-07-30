@@ -351,11 +351,11 @@ func TestGetZtunnelPods(t *testing.T) {
 
 func TestGatewayAPIClasses(t *testing.T) {
 	require := require.New(t)
-	conf := config.NewConfig()
-	config.Set(conf)
 
 	// Gateway API not configured
 	t.Run("GatewayAPINotConfigured", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
 		client := kubetest.NewFakeK8sClient()
 		client.GatewayAPIEnabled = false // Set Gateway API as disabled
 		saClients := map[string]kubernetes.ClientInterface{
@@ -374,6 +374,8 @@ func TestGatewayAPIClasses(t *testing.T) {
 
 	// Configured classes in config
 	t.Run("ConfiguredClassesInConfig", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
 		client := kubetest.NewFakeK8sClient()
 		client.GatewayAPIEnabled = true // Enable Gateway API
 		saClients := map[string]kubernetes.ClientInterface{
@@ -402,6 +404,8 @@ func TestGatewayAPIClasses(t *testing.T) {
 
 	// Invalid configured classes (missing name or classname)
 	t.Run("InvalidConfiguredClasses", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
 		client := kubetest.NewFakeK8sClient()
 		client.GatewayAPIEnabled = true // Enable Gateway API
 		saClients := map[string]kubernetes.ClientInterface{
@@ -429,6 +433,8 @@ func TestGatewayAPIClasses(t *testing.T) {
 
 	// Auto-discovery with label selector
 	t.Run("AutoDiscoveryWithLabelSelector", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
 		// Add GatewayClass resources to the fake client
 		gatewayClass1 := &k8s_networking_v1.GatewayClass{
 			ObjectMeta: metav1.ObjectMeta{
@@ -478,6 +484,8 @@ func TestGatewayAPIClasses(t *testing.T) {
 
 	// Auto-discovery without label selector
 	t.Run("AutoDiscoveryWithoutLabelSelector", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
 		// Add GatewayClass resources to the fake client
 		gatewayClass1 := &k8s_networking_v1.GatewayClass{
 			ObjectMeta: metav1.ObjectMeta{
@@ -523,6 +531,8 @@ func TestGatewayAPIClasses(t *testing.T) {
 
 	// Default values when no classes found
 	t.Run("DefaultValuesWhenNoClassesFound", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
 		client := kubetest.NewFakeK8sClient()
 		client.GatewayAPIEnabled = true // Enable Gateway API
 		saClients := map[string]kubernetes.ClientInterface{
@@ -549,6 +559,8 @@ func TestGatewayAPIClasses(t *testing.T) {
 
 	// Default values with multi-cluster
 	t.Run("DefaultValuesWithMultiCluster", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
 		client1 := kubetest.NewFakeK8sClient()
 		client1.GatewayAPIEnabled = true // Enable Gateway API
 		client2 := kubetest.NewFakeK8sClient()
@@ -579,6 +591,8 @@ func TestGatewayAPIClasses(t *testing.T) {
 
 	// Default values with ambient enabled
 	t.Run("DefaultValuesWithAmbientEnabled", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
 		client := kubetest.NewFakeK8sClient(
 			kubetest.FakeNamespace("istio-system"),
 			ztunnelDaemonSet(),
@@ -607,6 +621,8 @@ func TestGatewayAPIClasses(t *testing.T) {
 
 	// Bad label selector
 	t.Run("BadLabelSelector", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
 		client := kubetest.NewFakeK8sClient()
 		client.GatewayAPIEnabled = true // Enable Gateway API
 		saClients := map[string]kubernetes.ClientInterface{
@@ -632,6 +648,8 @@ func TestGatewayAPIClasses(t *testing.T) {
 
 	// No cluster-wide access
 	t.Run("NoClusterWideAccess", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
 		client := kubetest.NewFakeK8sClient()
 		client.GatewayAPIEnabled = true // Enable Gateway API
 		saClients := map[string]kubernetes.ClientInterface{
