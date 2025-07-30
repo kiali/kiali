@@ -61,6 +61,7 @@ func TestGetPersesInfoDisabled(t *testing.T) {
 
 func TestGetPersesInfoExternal(t *testing.T) {
 	conf := config.NewConfig()
+	conf.ExternalServices.Perses.Enabled = true
 	conf.ExternalServices.Perses.InternalURL = ""
 	conf.ExternalServices.Perses.ExternalURL = PERSES_URL
 	conf.ExternalServices.Perses.Dashboards = dashboardsConfig
@@ -81,6 +82,7 @@ func TestGetPersesInfoExternal(t *testing.T) {
 
 func TestGetPersesInfoGetError(t *testing.T) {
 	conf := config.NewConfig()
+	conf.ExternalServices.Perses.Enabled = true
 	conf.ExternalServices.Perses.InternalURL = ""
 	conf.ExternalServices.Perses.ExternalURL = PERSES_URL
 	conf.ExternalServices.Perses.Dashboards = dashboardsConfig
@@ -98,6 +100,7 @@ func TestGetPersesInfoGetError(t *testing.T) {
 
 func TestGetPersesInfoInvalidDashboard(t *testing.T) {
 	conf := config.NewConfig()
+	conf.ExternalServices.Perses.Enabled = true
 	conf.ExternalServices.Perses.InternalURL = ""
 	conf.ExternalServices.Perses.ExternalURL = PERSES_URL
 	conf.ExternalServices.Perses.Dashboards = dashboardsConfig
@@ -116,6 +119,7 @@ func TestGetPersesInfoInvalidDashboard(t *testing.T) {
 
 func TestGetPersesInfoWithoutLeadingSlashPath(t *testing.T) {
 	conf := config.NewConfig()
+	conf.ExternalServices.Perses.Enabled = true
 	conf.ExternalServices.Perses.InternalURL = ""
 	conf.ExternalServices.Perses.ExternalURL = PERSES_URL
 	conf.ExternalServices.Perses.Dashboards = dashboardsConfig
@@ -135,6 +139,7 @@ func TestGetPersesInfoWithoutLeadingSlashPath(t *testing.T) {
 
 func TestGetPersesInfoWithTrailingSlashURL(t *testing.T) {
 	conf := config.NewConfig()
+	conf.ExternalServices.Perses.Enabled = true
 	conf.ExternalServices.Perses.InternalURL = ""
 	conf.ExternalServices.Perses.ExternalURL = "http://perses-external:4001"
 	conf.ExternalServices.Perses.Dashboards = dashboardsConfig
@@ -155,6 +160,7 @@ func TestGetPersesInfoWithTrailingSlashURL(t *testing.T) {
 
 func TestGetPersesInfoWithQueryParams(t *testing.T) {
 	conf := config.NewConfig()
+	conf.ExternalServices.Perses.Enabled = true
 	conf.ExternalServices.Perses.InternalURL = ""
 	conf.ExternalServices.Perses.ExternalURL = fmt.Sprintf("%s/?orgId=1", PERSES_URL)
 	conf.ExternalServices.Perses.Dashboards = dashboardsConfig
@@ -174,6 +180,7 @@ func TestGetPersesInfoWithQueryParams(t *testing.T) {
 
 func TestGetPersesInfoWithAbsoluteDashboardURL(t *testing.T) {
 	conf := config.NewConfig()
+	conf.ExternalServices.Perses.Enabled = true
 	conf.ExternalServices.Perses.InternalURL = ""
 	conf.ExternalServices.Perses.ExternalURL = "/system/perses/"
 	conf.ExternalServices.Perses.Dashboards = dashboardsConfig

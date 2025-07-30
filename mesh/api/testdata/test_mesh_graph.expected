@@ -112,35 +112,6 @@
       }
     }, {
       "data" : {
-        "id" : "365718cbf8aefe03672bc9cb56f33f865b6a6faa87577b4762a24a51ec38c3ae",
-        "parent" : "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
-        "cluster" : "_external_",
-        "infraName" : "Perses",
-        "infraType" : "perses",
-        "namespace" : "",
-        "nodeType" : "infra",
-        "healthData" : "Healthy",
-        "infraData" : {
-          "auth" : {
-            "caFile" : "",
-            "insecureSkipVerify" : false,
-            "password" : "",
-            "token" : "",
-            "type" : "none",
-            "useKialiToken" : false,
-            "username" : ""
-          },
-          "dashboards" : null,
-          "enabled" : true,
-          "externalURL" : "",
-          "internalURL" : "http://perses.istio-system:4000",
-          "project" : "istio"
-        },
-        "isExternal" : true,
-        "isInaccessible" : true
-      }
-    }, {
-      "data" : {
         "id" : "41b50563edf837e2e828b50492b24356bf392be6e0a7a7f21d90eabe551dd686",
         "parent" : "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
         "cluster" : "_external_",
@@ -501,12 +472,6 @@
         "id" : "3c1e5459c5b6268c2f2452f3e6b620fd1ae0297b4621175c97e376558bea9d58",
         "source" : "29c05b5dfa30d15d450e54f0651c03c68a25a78ae4dc8f292c6ceb5ce6be7e6d",
         "target" : "33493098cdd63801f773396da680159d0bb57b482ef38a4b208899a2e477e1f0"
-      }
-    }, {
-      "data" : {
-        "id" : "319ca1866309285f663fcd900a6917f6a7c5bdada40c2251bf330a1b47e570c1",
-        "source" : "29c05b5dfa30d15d450e54f0651c03c68a25a78ae4dc8f292c6ceb5ce6be7e6d",
-        "target" : "365718cbf8aefe03672bc9cb56f33f865b6a6faa87577b4762a24a51ec38c3ae"
       }
     }, {
       "data" : {
