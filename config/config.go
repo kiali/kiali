@@ -806,7 +806,7 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				Enabled:     true,
+				Enabled:     false,
 				InternalURL: "http://perses.istio-system:4000",
 				IsCore:      false,
 				Project:     "istio",
