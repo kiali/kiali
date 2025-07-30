@@ -270,12 +270,16 @@ type GrafanaConfig struct {
 	XURL           string                   `yaml:"url,omitempty" json:"URL,omitempty"`                     // DEPRECATED!
 }
 
-type GrafanaDashboardConfig struct {
-	Name      string                 `yaml:"name" json:"name"`
-	Variables GrafanaVariablesConfig `yaml:"variables" json:"variables"`
+// Alias to keep the same name in Grafana but more generic (Used by Perses as well)
+type GrafanaDashboardConfig = DashboardConfig
+type GrafanaVariablesConfig = DashboardVariablesConfig
+
+type DashboardConfig struct {
+	Name      string                   `yaml:"name" json:"name"`
+	Variables DashboardVariablesConfig `yaml:"variables" json:"variables"`
 }
 
-type GrafanaVariablesConfig struct {
+type DashboardVariablesConfig struct {
 	App        string `yaml:"app" json:"app,omitempty"`
 	Datasource string `yaml:"datasource" json:"datasource,omitempty"`
 	Namespace  string `yaml:"namespace" json:"namespace,omitempty"`
@@ -286,15 +290,15 @@ type GrafanaVariablesConfig struct {
 
 // PersesConfig describes configuration used for Perses links
 type PersesConfig struct {
-	Auth           Auth                     `yaml:"auth" json:"auth"`
-	Dashboards     []GrafanaDashboardConfig `yaml:"dashboards" json:"dashboards"`
-	Enabled        bool                     `yaml:"enabled" json:"enabled"`          // Enable or disable Perses support in Kiali
-	ExternalURL    string                   `yaml:"external_url" json:"externalURL"` // replaces the old url
-	HealthCheckUrl string                   `yaml:"health_check_url,omitempty" json:"healthCheckUrl,omitempty"`
-	InternalURL    string                   `yaml:"internal_url" json:"internalURL"` // replaces the old in_cluster_url
-	IsCore         bool                     `yaml:"is_core,omitempty" json:"isCore,omitempty"`
-	Project        string                   `yaml:"project,omitempty" json:"project,omitempty"`
-	URLFormat      string                   `yaml:"url_format,omitempty" json:"urlFormat,omitempty"`
+	Auth           Auth              `yaml:"auth" json:"auth"`
+	Dashboards     []DashboardConfig `yaml:"dashboards" json:"dashboards"`
+	Enabled        bool              `yaml:"enabled" json:"enabled"`          // Enable or disable Perses support in Kiali
+	ExternalURL    string            `yaml:"external_url" json:"externalURL"` // replaces the old url
+	HealthCheckUrl string            `yaml:"health_check_url,omitempty" json:"healthCheckUrl,omitempty"`
+	InternalURL    string            `yaml:"internal_url" json:"internalURL"` // replaces the old in_cluster_url
+	IsCore         bool              `yaml:"is_core,omitempty" json:"isCore,omitempty"`
+	Project        string            `yaml:"project,omitempty" json:"project,omitempty"`
+	URLFormat      string            `yaml:"url_format,omitempty" json:"urlFormat,omitempty"`
 }
 
 type TempoConfig struct {
