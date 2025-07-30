@@ -221,7 +221,7 @@ func Id(cluster, serviceNamespace, service, workloadNamespace, workload, app, ve
 	serviceOk := IsOK(service)
 
 	if !workloadOk && !appOk && !serviceOk {
-		return "", "", fmt.Errorf("Failed ID gen1: cluster=[%s] namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", cluster, namespace, workload, app, version, service, graphType)
+		return "", "", fmt.Errorf("failed ID gen1: cluster=[%s] namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", cluster, namespace, workload, app, version, service, graphType)
 	}
 
 	// handle workload graph nodes (service graphs are initially processed as workload graphs)

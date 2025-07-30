@@ -209,7 +209,7 @@ func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.Clie
 	// Assuming that all pods are running the same version, we only need to get the version from one healthy istiod pod.
 	// Sort by creation time stamp to return the "latest" pod.
 	slices.SortFunc(istiods, func(a, b *corev1.Pod) int {
-		return a.CreationTimestamp.Time.Compare(b.CreationTimestamp.Time)
+		return a.CreationTimestamp.Compare(b.CreationTimestamp.Time)
 	})
 	istiod := GetLatestPod(istiods)
 

@@ -169,7 +169,7 @@ type MeshConfig struct {
 func (m MeshConfig) MarshalJSON() ([]byte, error) {
 	// Don't do custom unmarhsaling if OutboundTrafficPolicy is not set.
 	// There are probably other fields like this but only handling this one for now.
-	if m.MeshConfig.OutboundTrafficPolicy == nil {
+	if m.OutboundTrafficPolicy == nil {
 		return m.MeshConfig.MarshalJSON()
 	}
 
@@ -192,7 +192,7 @@ func (m MeshConfig) MarshalJSON() ([]byte, error) {
 		meshUnstructured["outboundTrafficPolicy"] = struct {
 			Mode string `json:"mode"`
 		}{
-			Mode: istiov1alpha1.MeshConfig_OutboundTrafficPolicy_Mode_name[int32(m.MeshConfig.OutboundTrafficPolicy.Mode)],
+			Mode: istiov1alpha1.MeshConfig_OutboundTrafficPolicy_Mode_name[int32(m.OutboundTrafficPolicy.Mode)],
 		}
 	}
 

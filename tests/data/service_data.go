@@ -7,21 +7,21 @@ import (
 )
 
 func CreateEmptyRegistryServices() []*kubernetes.RegistryService {
-	return []*kubernetes.RegistryService{&kubernetes.RegistryService{}}
+	return []*kubernetes.RegistryService{{}}
 }
 
 func CreateFakeRegistryServicesLabels(service string, namespace string) []*kubernetes.RegistryService {
 	registryService := kubernetes.RegistryService{}
 	registryService.Hostname = service + "." + namespace + ".svc.cluster.local"
-	registryService.IstioService.Attributes.Name = service
-	registryService.IstioService.Attributes.Namespace = namespace
-	registryService.IstioService.Attributes.ExportTo = make(map[string]struct{})
-	registryService.IstioService.Attributes.ExportTo["*"] = struct{}{}
-	registryService.IstioService.Attributes.Labels = make(map[string]string)
-	registryService.IstioService.Attributes.Labels["app"] = service
-	registryService.IstioService.Attributes.Labels["version"] = "v1"
-	registryService.IstioService.Attributes.LabelSelectors = make(map[string]string)
-	registryService.IstioService.Attributes.LabelSelectors["app"] = service
+	registryService.Attributes.Name = service
+	registryService.Attributes.Namespace = namespace
+	registryService.Attributes.ExportTo = make(map[string]struct{})
+	registryService.Attributes.ExportTo["*"] = struct{}{}
+	registryService.Attributes.Labels = make(map[string]string)
+	registryService.Attributes.Labels["app"] = service
+	registryService.Attributes.Labels["version"] = "v1"
+	registryService.Attributes.LabelSelectors = make(map[string]string)
+	registryService.Attributes.LabelSelectors["app"] = service
 
 	return []*kubernetes.RegistryService{&registryService}
 }
@@ -29,10 +29,10 @@ func CreateFakeRegistryServicesLabels(service string, namespace string) []*kuber
 func CreateFakeRegistryServices(host string, namespace string, exportToNamespace string) []*kubernetes.RegistryService {
 	registryService := kubernetes.RegistryService{}
 	registryService.Hostname = host
-	registryService.IstioService.Attributes.Namespace = namespace
-	registryService.IstioService.Attributes.Name = strings.Split(host, ".")[0]
-	registryService.IstioService.Attributes.ExportTo = make(map[string]struct{})
-	registryService.IstioService.Attributes.ExportTo[exportToNamespace] = struct{}{}
+	registryService.Attributes.Namespace = namespace
+	registryService.Attributes.Name = strings.Split(host, ".")[0]
+	registryService.Attributes.ExportTo = make(map[string]struct{})
+	registryService.Attributes.ExportTo[exportToNamespace] = struct{}{}
 
 	return []*kubernetes.RegistryService{&registryService}
 }

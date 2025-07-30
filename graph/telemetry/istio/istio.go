@@ -555,14 +555,14 @@ func timeSeriesHash(cluster, serviceNs, service, workloadNs, workload, app, vers
 
 // BuildNodeTrafficMap is required by the graph/TelemtryVendor interface
 func BuildNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalInfo *graph.GlobalInfo) (graph.TrafficMap, error) {
-	namespace := o.NodeOptions.Namespace.Name
-	if o.NodeOptions.Aggregate != "" {
+	namespace := o.Namespace.Name
+	if o.Aggregate != "" {
 		return handleAggregateNodeTrafficMap(ctx, o, globalInfo), nil
 	}
 
 	zl := log.FromContext(ctx)
 
-	n, err := graph.NewNode(o.NodeOptions.Cluster, namespace, o.NodeOptions.Service, namespace, o.NodeOptions.Workload, o.NodeOptions.App, o.NodeOptions.Version, o.GraphType)
+	n, err := graph.NewNode(o.Cluster, namespace, o.Service, namespace, o.Workload, o.App, o.Version, o.GraphType)
 	if err != nil {
 		zl.Warn().Msgf("Skipping NodeTrafficMap (bad node), %s", err)
 		return nil, err
@@ -576,9 +576,9 @@ func BuildNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalIn
 		globalInfo.Vendor[appender.AmbientWaypoints] = GetWaypointMap(ctx, globalInfo)
 	}
 
-	trafficMap := buildNodeTrafficMap(ctx, o.Cluster, o.NodeOptions.Namespace, n, o, globalInfo)
+	trafficMap := buildNodeTrafficMap(ctx, o.Cluster, o.Namespace, n, o, globalInfo)
 
-	namespaceInfo := graph.NewAppenderNamespaceInfo(o.NodeOptions.Namespace.Name)
+	namespaceInfo := graph.NewAppenderNamespaceInfo(o.Namespace.Name)
 
 	for _, a := range appenders {
 		appenderCtx := buildAppenderContext(ctx, a.Name())
@@ -1002,7 +1002,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 }
 
 func handleAggregateNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalInfo *graph.GlobalInfo) graph.TrafficMap {
-	n := graph.NewAggregateNode(o.NodeOptions.Cluster, o.NodeOptions.Namespace.Name, o.NodeOptions.Aggregate, o.NodeOptions.AggregateValue, o.NodeOptions.Service, o.NodeOptions.App)
+	n := graph.NewAggregateNode(o.Cluster, o.Namespace.Name, o.Aggregate, o.AggregateValue, o.Service, o.App)
 
 	zl := log.FromContext(ctx)
 
@@ -1012,9 +1012,9 @@ func handleAggregateNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions
 		o.Appenders.AppenderNames = append(o.Appenders.AppenderNames, appender.AggregateNodeAppenderName)
 	}
 	appenders, finalizers := appender.ParseAppenders(o)
-	trafficMap := buildAggregateNodeTrafficMap(ctx, o.NodeOptions.Namespace.Name, n, o, globalInfo)
+	trafficMap := buildAggregateNodeTrafficMap(ctx, o.Namespace.Name, n, o, globalInfo)
 
-	namespaceInfo := graph.NewAppenderNamespaceInfo(o.NodeOptions.Namespace.Name)
+	namespaceInfo := graph.NewAppenderNamespaceInfo(o.Namespace.Name)
 
 	for _, a := range appenders {
 		appenderCtx := buildAppenderContext(ctx, a.Name())
@@ -1095,7 +1095,7 @@ func buildAggregateNodeTrafficMap(ctx context.Context, namespace string, n graph
 func GetWaypointMap(ctx context.Context, gi *graph.GlobalInfo) waypointMap {
 	waypoints := gi.Business.Workload.GetWaypoints(ctx)
 	wpMap := make(waypointMap, len(waypoints))
-	var wpKey = waypointKey{} // a re-usable key struct. This works because map keys are always copies
+	wpKey := waypointKey{} // a re-usable key struct. This works because map keys are always copies
 
 	for _, wp := range waypoints {
 		wpKey.Cluster = wp.Cluster
@@ -1122,7 +1122,6 @@ func setWaypointKey(wpKey *waypointKey, cluster, namespace, name string) *waypoi
 
 // hasWaypoint returns true if the source or dest workload is determined to be a waypoint workload.
 func hasWaypoint(wpKeySource, wpKeyDest *waypointKey, globalInfo *graph.GlobalInfo) (sourceIsWaypoint bool, destIsWaypoint bool) {
-
 	wpMap := globalInfo.Vendor[appender.AmbientWaypoints].(waypointMap)
 	sourceIsWaypoint = wpMap[*wpKeySource]
 	destIsWaypoint = wpMap[*wpKeyDest]

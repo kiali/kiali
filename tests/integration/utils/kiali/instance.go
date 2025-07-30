@@ -54,7 +54,7 @@ func NewInstance(ctx context.Context, kubeClient kubernetes.Interface, dynamicCl
 		}
 
 		if len(kialiCRs.Items) > 1 {
-			return nil, fmt.Errorf("Expecting only one Kiali CR but found %d", len(kialiCRs.Items))
+			return nil, fmt.Errorf("expecting only one Kiali CR but found %d", len(kialiCRs.Items))
 		}
 
 		kialiCR := kialiCRs.Items[0]
@@ -79,7 +79,7 @@ func NewInstance(ctx context.Context, kubeClient kubernetes.Interface, dynamicCl
 		}
 
 		if len(kialiDeployments.Items) > 1 {
-			return nil, fmt.Errorf("Expecting only one Kiali deployment but found %d", len(kialiDeployments.Items))
+			return nil, fmt.Errorf("expecting only one Kiali deployment but found %d", len(kialiDeployments.Items))
 		}
 
 		kialiDeployment := kialiDeployments.Items[0]
@@ -208,10 +208,10 @@ func restartDeployment(ctx context.Context, clientset kubernetes.Interface, name
 		}
 
 		// Update the pod template annotation to trigger a rolling restart
-		if deployment.Spec.Template.ObjectMeta.Annotations == nil {
-			deployment.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
+		if deployment.Spec.Template.Annotations == nil {
+			deployment.Spec.Template.Annotations = make(map[string]string)
 		}
-		deployment.Spec.Template.ObjectMeta.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
+		deployment.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
 
 		_, err = clientset.AppsV1().Deployments(namespace).Update(ctx, deployment, metav1.UpdateOptions{})
 		return err

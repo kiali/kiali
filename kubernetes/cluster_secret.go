@@ -28,19 +28,19 @@ type RemoteClusterInfo struct {
 func newRemoteClusterInfo(secretName string, secretFile string) (RemoteClusterInfo, error) {
 	cfg, err := clientcmd.LoadFromFile(secretFile)
 	if err != nil {
-		return RemoteClusterInfo{}, fmt.Errorf("Failed to parse bytes from remote cluster secret [%s](%s): %v", secretName, secretFile, err)
+		return RemoteClusterInfo{}, fmt.Errorf("failed to parse bytes from remote cluster secret [%s](%s): %v", secretName, secretFile, err)
 	}
 
 	if len(cfg.Clusters) != 1 {
-		return RemoteClusterInfo{}, fmt.Errorf("Bytes for remote cluster secret [%s](%s) has [%v] clusters associated with it", secretName, secretFile, len(cfg.Clusters))
+		return RemoteClusterInfo{}, fmt.Errorf("bytes for remote cluster secret [%s](%s) has [%v] clusters associated with it", secretName, secretFile, len(cfg.Clusters))
 	}
 
 	if len(cfg.AuthInfos) == 0 {
-		return RemoteClusterInfo{}, fmt.Errorf("Bytes for remote cluster secret [%s](%s) has 0 users associated with it", secretName, secretFile)
+		return RemoteClusterInfo{}, fmt.Errorf("bytes for remote cluster secret [%s](%s) has 0 users associated with it", secretName, secretFile)
 	}
 
 	if len(cfg.AuthInfos) > 1 {
-		log.Warningf("Bytes for remote cluster secret [%s](%s) has [%v] users associated with it - will use the first one", secretName, secretFile, len(cfg.AuthInfos))
+		log.Warningf("bytes for remote cluster secret [%s](%s) has [%v] users associated with it - will use the first one", secretName, secretFile, len(cfg.AuthInfos))
 	}
 
 	return RemoteClusterInfo{

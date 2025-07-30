@@ -79,7 +79,7 @@ func (in *DashboardsService) prom() (prometheus.ClientInterface, error) {
 func (in *DashboardsService) loadRawDashboardResource(template string) (*dashboards.MonitoringDashboard, error) {
 	dashboard, ok := in.dashboards[template]
 	if !ok {
-		return nil, fmt.Errorf("Dashboard [%v] does not exist or is disabled", template)
+		return nil, fmt.Errorf("dashboard [%v] does not exist or is disabled", template)
 	}
 
 	return &dashboard, nil
@@ -186,17 +186,18 @@ func (in *DashboardsService) GetDashboard(ctx context.Context, params models.Das
 			for _, ref := range metrics {
 				var converted []models.Metric
 				var err error
-				if chart.DataType == dashboards.Raw {
+				switch chart.DataType {
+				case dashboards.Raw:
 					aggregator := params.RawDataAggregator
 					if chart.Aggregator != "" {
 						aggregator = chart.Aggregator
 					}
 					metric := promClient.FetchRange(ref.MetricName, filters, grouping, aggregator, &params.RangeQuery)
 					converted, err = models.ConvertMetric(ref.DisplayName, metric, conversionParams)
-				} else if chart.DataType == dashboards.Rate {
+				case dashboards.Rate:
 					metric := promClient.FetchRateRange(ref.MetricName, []string{filters}, grouping, &params.RangeQuery)
 					converted, err = models.ConvertMetric(ref.DisplayName, metric, conversionParams)
-				} else {
+				default:
 					histo := promClient.FetchHistogramRange(ref.MetricName, filters, grouping, &params.RangeQuery)
 					converted, err = models.ConvertHistogram(ref.DisplayName, histo, conversionParams)
 				}

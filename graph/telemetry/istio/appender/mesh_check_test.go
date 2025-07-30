@@ -304,14 +304,14 @@ func buildFakeWorkloadPodsNoSidecar() []core_v1.Pod {
 	istioAnnotation := config.Get().ExternalServices.Istio.IstioSidecarAnnotation
 
 	podList := buildFakeWorkloadPods()
-	podList[0].ObjectMeta.Annotations[istioAnnotation] = "{}"
+	podList[0].Annotations[istioAnnotation] = "{}"
 
 	return podList
 }
 
 func buildFakeWorkloadPodsAmbient() []core_v1.Pod {
 	podList := buildFakeWorkloadPodsNoSidecar()
-	podList[0].ObjectMeta.Annotations["ambient.istio.io/redirection"] = "enabled"
+	podList[0].Annotations["ambient.istio.io/redirection"] = "enabled"
 
 	return podList
 }

@@ -5,8 +5,7 @@ import (
 	"strings"
 
 	apps_v1 "k8s.io/api/apps/v1"
-	core_v1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -17,9 +16,9 @@ import (
 )
 
 type PortMappingChecker struct {
-	Service     v1.Service
+	Service     corev1.Service
 	Deployments []apps_v1.Deployment
-	Pods        []core_v1.Pod
+	Pods        []corev1.Pod
 }
 
 func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
@@ -59,7 +58,7 @@ func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
 	return validations, len(validations) == 0
 }
 
-func (p PortMappingChecker) hasMatchingPodsWithSidecar(service v1.Service) bool {
+func (p PortMappingChecker) hasMatchingPodsWithSidecar(service corev1.Service) bool {
 	sPods := models.Pods{}
 	sPods.Parse(kubernetes.FilterPodsByService(&service, p.Pods))
 	return sPods.HasIstioSidecar()
@@ -82,7 +81,7 @@ func (p PortMappingChecker) findMatchingDeployment(selectors map[string]string) 
 	return nil
 }
 
-func (p PortMappingChecker) matchPorts(service *v1.Service, deployment *apps_v1.Deployment, validations *[]*models.IstioCheck) {
+func (p PortMappingChecker) matchPorts(service *corev1.Service, deployment *apps_v1.Deployment, validations *[]*models.IstioCheck) {
 Service:
 	for portIndex, sp := range service.Spec.Ports {
 		if sp.TargetPort.Type == intstr.String && sp.TargetPort.StrVal != "" {

@@ -291,7 +291,7 @@ func FilterPeerAuthenticationsBySelector(workloadSelector string, peerauthentica
 func FilterPodsBySelector(selector labels.Selector, allPods []core_v1.Pod) []core_v1.Pod {
 	var pods []core_v1.Pod
 	for _, pod := range allPods {
-		if selector.Matches(labels.Set(pod.ObjectMeta.Labels)) {
+		if selector.Matches(labels.Set(pod.Labels)) {
 			pods = append(pods, pod)
 		}
 	}
@@ -365,7 +365,7 @@ func FilterRegistryServicesBySelector(selector labels.Selector, namespace string
 	filtered := []*RegistryService{}
 	for _, rSvc := range registryServices {
 		// here is a hack with providing own hostname
-		if FilterByRegistryService(namespace, rSvc.Hostname, rSvc) && selector.Matches(labels.Set(rSvc.IstioService.Attributes.Labels)) {
+		if FilterByRegistryService(namespace, rSvc.Hostname, rSvc) && selector.Matches(labels.Set(rSvc.Attributes.Labels)) {
 			filtered = append(filtered, rSvc)
 		}
 	}
@@ -376,7 +376,7 @@ func FilterByRegistryService(namespace string, hostname string, registryService 
 	// Basic filter using Hostname, also consider exported Namespaces of Service
 	// but for a first iteration if it's found in the registry it will be considered "valid" to reduce the number of false validation errors
 	if hostname == registryService.Hostname {
-		exportTo := registryService.IstioService.Attributes.ExportTo
+		exportTo := registryService.Attributes.ExportTo
 		// TODO
 		// if len(exportTo) == 0 {
 		// exportTo = Mesh.GetMeshConfig().DefaultServiceExportTo
@@ -384,7 +384,7 @@ func FilterByRegistryService(namespace string, hostname string, registryService 
 		if len(exportTo) > 0 {
 			for exportToNs := range exportTo {
 				// take only namespaces where it is exported to, exported to the own namespace, or if it is exported to all namespaces
-				if exportToNs == "*" || exportToNs == namespace || (exportToNs == "." && registryService.IstioService.Attributes.Namespace == namespace) {
+				if exportToNs == "*" || exportToNs == namespace || (exportToNs == "." && registryService.Attributes.Namespace == namespace) {
 					return true
 				}
 			}
@@ -419,7 +419,7 @@ func FilterRequestAuthenticationsBySelector(workloadSelector string, requestauth
 func FilterServicesByLabels(selector labels.Selector, allServices []core_v1.Service) []core_v1.Service {
 	var services []core_v1.Service
 	for _, svc := range allServices {
-		if selector.Matches(labels.Set(svc.ObjectMeta.Labels)) {
+		if selector.Matches(labels.Set(svc.Labels)) {
 			services = append(services, svc)
 		}
 	}

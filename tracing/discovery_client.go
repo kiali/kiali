@@ -211,7 +211,7 @@ func discoverUrl(ctx context.Context, zl *zerolog.Logger, parsedUrl model.Parsed
 						validConfigs = append(validConfigs, vc)
 						logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Tempo Client 9095 Ok", Result: "Valid gRPC Client found. Notice this config also requires any valid HTTP configuration. "})
 					} else {
-						logs = append(logs, model.LogLine{Time: time.Now(), Test: "GetServices gRPC Tempo Client 9095", Result: fmt.Sprintf("Error getting gRPC Services: [%s]", err.Error())})
+						logs = append(logs, model.LogLine{Time: time.Now(), Test: "GetServices gRPC Tempo Client 9095", Result: fmt.Sprintf("error getting gRPC Services: [%s]", err.Error())})
 					}
 				}
 			}
@@ -272,17 +272,17 @@ func validateGRPCClient(ctx context.Context, conf *config.Config, auth *config.A
 					logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Client 16685 Ok", Result: "Valid gRPC Client found"})
 					return &validConfig, logs, nil
 				} else {
-					logs = append(logs, model.LogLine{Time: time.Now(), Test: "GetServices gRPC Client 16685", Result: fmt.Sprintf("Error getting gRPC Services: [%s]", err.Error())})
-					return nil, logs, fmt.Errorf("Error getting gRPC Services: [%s]", err.Error())
+					logs = append(logs, model.LogLine{Time: time.Now(), Test: "GetServices gRPC Client 16685", Result: fmt.Sprintf("error getting gRPC Services: [%s]", err.Error())})
+					return nil, logs, fmt.Errorf("error getting gRPC Services: [%s]", err.Error())
 				}
 			}
 		} else {
-			logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC client 16685", Result: fmt.Sprintf("Error creating client: %s", err.Error())})
-			return nil, logs, fmt.Errorf("Error creating client %s", err.Error())
+			logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC client 16685", Result: fmt.Sprintf("error creating client: %s", err.Error())})
+			return nil, logs, fmt.Errorf("error creating client %s", err.Error())
 		}
 	} else {
 		logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC client 16685", Result: fmt.Sprintf("Error creating dial options: %s", err.Error())})
-		return nil, logs, fmt.Errorf("Error creating client %s", err.Error())
+		return nil, logs, fmt.Errorf("error creating client %s", err.Error())
 	}
 	return nil, logs, nil
 }

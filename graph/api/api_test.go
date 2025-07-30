@@ -74,7 +74,7 @@ func firstKey[K comparable, V any](m map[K]V) K {
 	return k
 }
 
-func setupMockedWithIstioComponentNamespaces(t *testing.T, meshId string, userClients map[string]kubernetes.UserClientInterface) (*prometheus.Client, *prometheustest.PromAPIMock, error, *business.Layer) {
+func setupMockedWithIstioComponentNamespaces(t *testing.T, meshId string, userClients map[string]kubernetes.UserClientInterface) (*prometheus.Client, *prometheustest.PromAPIMock, *business.Layer, error) {
 	testConfig := config.NewConfig()
 	testConfig.KubernetesConfig.ClusterName = firstKey(userClients)
 	if meshId != "" {
@@ -87,7 +87,7 @@ func setupMockedWithIstioComponentNamespaces(t *testing.T, meshId string, userCl
 	api := new(prometheustest.PromAPIMock)
 	client, err := prometheus.NewClient()
 	if err != nil {
-		return nil, nil, err, nil
+		return nil, nil, nil, err
 	}
 	client.Inject(api)
 
@@ -99,7 +99,7 @@ func setupMockedWithIstioComponentNamespaces(t *testing.T, meshId string, userCl
 
 	biz, err := business.NewLayer(testConfig, cache, mockClientFactory, client, nil, nil, nil, discovery, authInfo)
 	require.NoError(t, err)
-	return client, api, nil, biz
+	return client, api, biz, nil
 }
 
 func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector) {
@@ -118,7 +118,7 @@ func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector)
 }
 
 // mockNamespaceGraph provides the same single-namespace mocks to be used for different graph types
-func mockNamespaceGraph(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock, error, *business.Layer) {
+func mockNamespaceGraph(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock, *business.Layer, error) {
 	q0 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace!="bookinfo",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.bookinfo\\..+$"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags) > 0,0.001)`
 	v0 := model.Vector{}
 
@@ -1001,16 +1001,16 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, *prometheustest.PromA
 	mockQuery(api, q4, &v4)
 	mockQuery(api, q5, &v5)
 
-	return client, api, nil, biz
+	return client, api, biz, nil
 }
 
 // mockNamespaceRatesGraph adds additional queries to mockNamespaceGraph to test non-default rates for graph-gen. Basic approach
 // is for "sent" to use the same traffic/rates as is done for the default traffic.  This produces the same rates (and nearly the
 // same graph as for the defaults). Use double the rates for "received".  And so "total" should be triple the "sent" rates.
-func mockNamespaceRatesGraph(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock, error, *business.Layer) {
-	client, api, err, biz := mockNamespaceGraph(t)
+func mockNamespaceRatesGraph(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock, *business.Layer, error) {
+	client, api, biz, err := mockNamespaceGraph(t)
 	if err != nil {
-		return client, api, err, biz
+		return client, api, biz, err
 	}
 
 	q6 := `round(sum(rate(istio_tcp_received_bytes_total{app!="ztunnel",reporter="source",source_workload_namespace!="bookinfo",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.bookinfo\\..+$"} [600s])) by (app,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags) > 0,0.001)`
@@ -1172,7 +1172,7 @@ func mockNamespaceRatesGraph(t *testing.T) (*prometheus.Client, *prometheustest.
 	mockQuery(api, q13, &v13)
 	mockQuery(api, q14, &v14)
 
-	return client, api, nil, biz
+	return client, api, biz, nil
 }
 
 func respond(w http.ResponseWriter, code int, payload interface{}) {
@@ -1226,7 +1226,7 @@ func assertObjectsEqual(t *testing.T, expected, actual []byte, expectedFileName 
 }
 
 func TestAppGraph(t *testing.T) {
-	client, _, err, biz := mockNamespaceRatesGraph(t)
+	client, _, biz, err := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
@@ -1254,7 +1254,7 @@ func TestAppGraph(t *testing.T) {
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile(expectedFilename)
 	if runtime.GOOS == "windows" {
-		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+		expected = bytes.ReplaceAll(expected, []byte("\r\n"), []byte("\n"))
 	}
 
 	assertObjectsEqual(t, expected, actual, expectedFilename)
@@ -1262,7 +1262,7 @@ func TestAppGraph(t *testing.T) {
 }
 
 func TestVersionedAppGraph(t *testing.T) {
-	client, _, err, biz := mockNamespaceRatesGraph(t)
+	client, _, biz, err := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
@@ -1289,7 +1289,7 @@ func TestVersionedAppGraph(t *testing.T) {
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile(expectedFilename)
 	if runtime.GOOS == "windows" {
-		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+		expected = bytes.ReplaceAll(expected, []byte("\r\n"), []byte("\n"))
 	}
 
 	assertObjectsEqual(t, expected, actual, expectedFilename)
@@ -1297,7 +1297,7 @@ func TestVersionedAppGraph(t *testing.T) {
 }
 
 func TestServiceGraph(t *testing.T) {
-	client, _, err, biz := mockNamespaceRatesGraph(t)
+	client, _, biz, err := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
@@ -1324,7 +1324,7 @@ func TestServiceGraph(t *testing.T) {
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile(expectedFilename)
 	if runtime.GOOS == "windows" {
-		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+		expected = bytes.ReplaceAll(expected, []byte("\r\n"), []byte("\n"))
 	}
 
 	assertObjectsEqual(t, expected, actual, expectedFilename)
@@ -1332,7 +1332,7 @@ func TestServiceGraph(t *testing.T) {
 }
 
 func TestWorkloadGraph(t *testing.T) {
-	client, _, err, biz := mockNamespaceRatesGraph(t)
+	client, _, biz, err := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
@@ -1359,7 +1359,7 @@ func TestWorkloadGraph(t *testing.T) {
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile(expectedFilename)
 	if runtime.GOOS == "windows" {
-		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+		expected = bytes.ReplaceAll(expected, []byte("\r\n"), []byte("\n"))
 	}
 
 	assertObjectsEqual(t, expected, actual, expectedFilename)
@@ -1367,7 +1367,7 @@ func TestWorkloadGraph(t *testing.T) {
 }
 
 func TestRatesGraphSent(t *testing.T) {
-	client, _, err, biz := mockNamespaceRatesGraph(t)
+	client, _, biz, err := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
@@ -1395,7 +1395,7 @@ func TestRatesGraphSent(t *testing.T) {
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile(expectedFilename)
 	if runtime.GOOS == "windows" {
-		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+		expected = bytes.ReplaceAll(expected, []byte("\r\n"), []byte("\n"))
 	}
 
 	assertObjectsEqual(t, expected, actual, expectedFilename)
@@ -1403,7 +1403,7 @@ func TestRatesGraphSent(t *testing.T) {
 }
 
 func TestRatesGraphReceived(t *testing.T) {
-	client, _, err, biz := mockNamespaceRatesGraph(t)
+	client, _, biz, err := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
@@ -1430,7 +1430,7 @@ func TestRatesGraphReceived(t *testing.T) {
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile(expectedFilename)
 	if runtime.GOOS == "windows" {
-		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+		expected = bytes.ReplaceAll(expected, []byte("\r\n"), []byte("\n"))
 	}
 
 	assertObjectsEqual(t, expected, actual, expectedFilename)
@@ -1438,7 +1438,7 @@ func TestRatesGraphReceived(t *testing.T) {
 }
 
 func TestRatesGraphTotal(t *testing.T) {
-	client, _, err, biz := mockNamespaceRatesGraph(t)
+	client, _, biz, err := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
@@ -1465,7 +1465,7 @@ func TestRatesGraphTotal(t *testing.T) {
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile(expectedFilename)
 	if runtime.GOOS == "windows" {
-		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+		expected = bytes.ReplaceAll(expected, []byte("\r\n"), []byte("\n"))
 	}
 
 	assertObjectsEqual(t, expected, actual, expectedFilename)
@@ -1473,7 +1473,7 @@ func TestRatesGraphTotal(t *testing.T) {
 }
 
 func TestRatesGraphNone(t *testing.T) {
-	client, _, err, biz := mockNamespaceRatesGraph(t)
+	client, _, biz, err := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
@@ -1501,7 +1501,7 @@ func TestRatesGraphNone(t *testing.T) {
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile(expectedFilename)
 	if runtime.GOOS == "windows" {
-		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+		expected = bytes.ReplaceAll(expected, []byte("\r\n"), []byte("\n"))
 	}
 
 	assertObjectsEqual(t, expected, actual, expectedFilename)
@@ -1821,7 +1821,7 @@ func TestWorkloadNodeGraph(t *testing.T) {
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile(expectedFilename)
 	if runtime.GOOS == "windows" {
-		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+		expected = bytes.ReplaceAll(expected, []byte("\r\n"), []byte("\n"))
 	}
 
 	assertObjectsEqual(t, expected, actual, expectedFilename)
@@ -2139,7 +2139,7 @@ func TestAppNodeGraph(t *testing.T) {
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile(expectedFilename)
 	if runtime.GOOS == "windows" {
-		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+		expected = bytes.ReplaceAll(expected, []byte("\r\n"), []byte("\n"))
 	}
 
 	assertObjectsEqual(t, expected, actual, expectedFilename)
@@ -2459,7 +2459,7 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile(expectedFilename)
 	if runtime.GOOS == "windows" {
-		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+		expected = bytes.ReplaceAll(expected, []byte("\r\n"), []byte("\n"))
 	}
 
 	assertObjectsEqual(t, expected, actual, expectedFilename)
@@ -2548,7 +2548,7 @@ func TestServiceNodeGraph(t *testing.T) {
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile(expectedFilename)
 	if runtime.GOOS == "windows" {
-		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+		expected = bytes.ReplaceAll(expected, []byte("\r\n"), []byte("\n"))
 	}
 
 	assertObjectsEqual(t, expected, actual, expectedFilename)
@@ -2978,7 +2978,7 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile(expectedFilename)
 	if runtime.GOOS == "windows" {
-		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+		expected = bytes.ReplaceAll(expected, []byte("\r\n"), []byte("\n"))
 	}
 
 	assertObjectsEqual(t, expected, actual, expectedFilename)
@@ -3489,7 +3489,7 @@ func TestComplexGraph(t *testing.T) {
 			kubetest.FakeNamespace("istio-telemetry"),
 		),
 	}
-	client, xapi, err, biz := setupMockedWithIstioComponentNamespaces(t, "mesh1", clients)
+	client, xapi, biz, err := setupMockedWithIstioComponentNamespaces(t, "mesh1", clients)
 	if err != nil {
 		t.Error(err)
 		return
@@ -3534,7 +3534,7 @@ func TestComplexGraph(t *testing.T) {
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile(expectedFilename)
 	if runtime.GOOS == "windows" {
-		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+		expected = bytes.ReplaceAll(expected, []byte("\r\n"), []byte("\n"))
 	}
 
 	assertObjectsEqual(t, expected, actual, expectedFilename)
@@ -3816,7 +3816,7 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 			kubetest.FakeNamespace("istio-system"),
 		),
 	}
-	client, xapi, err, biz := setupMockedWithIstioComponentNamespaces(t, "", clients)
+	client, xapi, biz, err := setupMockedWithIstioComponentNamespaces(t, "", clients)
 	if err != nil {
 		t.Error(err)
 		return
@@ -3850,7 +3850,7 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile(expectedFilename)
 	if runtime.GOOS == "windows" {
-		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+		expected = bytes.ReplaceAll(expected, []byte("\r\n"), []byte("\n"))
 	}
 
 	assertObjectsEqual(t, expected, actual, expectedFilename)
@@ -4187,7 +4187,7 @@ func TestAmbientGraph(t *testing.T) {
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile(expectedFilename)
 	if runtime.GOOS == "windows" {
-		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+		expected = bytes.ReplaceAll(expected, []byte("\r\n"), []byte("\n"))
 	}
 
 	assertObjectsEqual(t, expected, actual, expectedFilename)

@@ -730,7 +730,7 @@ func parseZtunnelLine(line, name string) *LogEntry {
 		for _, field := range accessLog {
 			parsed := strings.SplitN(field, "=", 2)
 			if len(parsed) == 2 {
-				parsed[1] = strings.Replace(parsed[1], "\"", "", -1)
+				parsed[1] = strings.ReplaceAll(parsed[1], "\"", "")
 				switch parsed[0] {
 				case "src.identity":
 					al.UpstreamCluster = parsed[1]
@@ -2069,7 +2069,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		isWaypoint := w.IsWaypoint()
 		w.WorkloadListItem.IsWaypoint = isWaypoint
 		w.WorkloadListItem.IsZtunnel = w.IsZtunnel()
-		w.WorkloadListItem.IsAmbient = isWaypoint || w.WorkloadListItem.IsZtunnel || w.HasIstioAmbient()
+		w.IsAmbient = isWaypoint || w.WorkloadListItem.IsZtunnel || w.HasIstioAmbient()
 
 		// Add the Proxy Status to the workload
 		istioAPIEnabled := in.conf.ExternalServices.Istio.IstioAPIEnabled
@@ -2709,7 +2709,7 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 		// First, get ztunnel namespace and containers
 		pods := in.cache.GetZtunnelPods(cluster)
 		// This is needed for the K8S client
-		opts.PodLogOptions.Container = models.IstioProxy
+		opts.Container = models.IstioProxy
 		wkDstPattern := fmt.Sprintf(`dst\.workload=("?%s"?)`, name)
 		nsDstPattern := fmt.Sprintf(`dst\.namespace=("?%s"?)`, namespace)
 		wkSrcPattern := fmt.Sprintf(`src\.workload=("?%s"?)`, name)
@@ -2753,7 +2753,7 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 						names = append(names, pod.Name)
 					}
 					// This is needed for the K8S client
-					opts.PodLogOptions.Container = models.IstioProxy
+					opts.Container = models.IstioProxy
 					return in.streamParsedLogs(cluster, waypoint.Namespace, names, opts, w)
 				}
 			}

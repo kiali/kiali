@@ -62,9 +62,10 @@ func ConvertSpans(spans []otelModels.Span, serviceName string, traceID string) [
 		// This is how Jaeger reports it
 		// Used to determine the envoy direction
 		atb_val := ""
-		if span.Kind == "SPAN_KIND_CLIENT" {
+		switch span.Kind {
+		case "SPAN_KIND_CLIENT":
 			atb_val = "client"
-		} else if span.Kind == "SPAN_KIND_SERVER" {
+		case "SPAN_KIND_SERVER":
 			atb_val = "server"
 		}
 		if atb_val != "" {
@@ -94,7 +95,6 @@ func ConvertTraceMetadata(trace tempopb.TraceSearchMetadata, serviceName string)
 
 // convertOtelSpan used for GRPC format Spans
 func convertOtelSpan(span *tempopb.Span, serviceName, traceID, rootTrace string) jaegerModels.Span {
-
 	modelSpan := jaegerModels.Span{
 		SpanID:    jaegerModels.SpanID(span.SpanID),
 		TraceID:   jaegerModels.TraceID(traceID),
@@ -140,7 +140,7 @@ func ConvertSpanSet(span otel.Span, serviceName string, traceId string, rootName
 		StartTime: startTime / 1000,
 		// No more mapped data
 		Flags: 0,
-		//OperationName: span.Name,
+		// OperationName: span.Name,
 		References:    []jaegerModels.Reference{},
 		Tags:          convertAttributes(span.Attributes, span.Status),
 		Logs:          []jaegerModels.Log{},
@@ -177,7 +177,7 @@ func convertReferences(traceId jaegerModels.TraceID, parentSpanId jaegerModels.S
 		return references
 	}
 
-	var ref = jaegerModels.Reference{
+	ref := jaegerModels.Reference{
 		RefType: jaegerModels.ReferenceType("CHILD_OF"),
 		TraceID: traceId,
 		SpanID:  parentSpanId,

@@ -41,7 +41,7 @@ type Protocol struct {
 // GRPC Protocol
 const (
 	grpc             = "grpc"
-	grpcNoResponse   = "grpcNoResponse" //typically a client termination (envoy flag=DC)
+	grpcNoResponse   = "grpcNoResponse" // typically a client termination (envoy flag=DC)
 	grpcErr          = "grpcErr"
 	grpcPercentErr   = "grpcPercentErr"
 	grpcPercentReq   = "grpcPercentReq"
@@ -165,8 +165,8 @@ func addToMetadataGrpc(val float64, code, flags, host string, sourceMetadata, de
 	addToMetadataValue(edgeMetadata, grpc, val)
 	addToMetadataResponses(edgeMetadata, grpcResponses, code, flags, host, val)
 
-	switch {
-	case code == "-":
+	switch code {
+	case "-":
 		addToMetadataValue(destMetadata, grpcInNoResponse, val)
 		addToMetadataValue(edgeMetadata, grpcNoResponse, val)
 	default:

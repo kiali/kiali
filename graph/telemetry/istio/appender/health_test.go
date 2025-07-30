@@ -588,7 +588,7 @@ func buildFakeServicesHealth(rate string) []core_v1.Service {
 func buildFakeWorkloadDeploymentsHealth(rate string) []apps_v1.Deployment {
 	apps := buildFakeWorkloadDeployments()
 	if rate != "" {
-		apps[0].ObjectMeta.Annotations = map[string]string{string(models.RateHealthAnnotation): rate}
+		apps[0].Annotations = map[string]string{string(models.RateHealthAnnotation): rate}
 	}
 	return apps
 }
@@ -596,7 +596,7 @@ func buildFakeWorkloadDeploymentsHealth(rate string) []apps_v1.Deployment {
 func buildFakePodsHealth(rate string) []core_v1.Pod {
 	pods := buildFakeWorkloadPods()
 	if rate != "" {
-		pods[0].ObjectMeta.Annotations[string(models.RateHealthAnnotation)] = rate
+		pods[0].Annotations[string(models.RateHealthAnnotation)] = rate
 	}
 	return pods
 }

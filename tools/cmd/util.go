@@ -34,14 +34,14 @@ func GetKubeConfig() (*rest.Config, error) {
 	if len(kubeconfig) == 0 {
 		home, err := os.UserHomeDir()
 		if err != nil {
-			return nil, fmt.Errorf("Unable to find user home dir. Err: %w", err)
+			return nil, fmt.Errorf("unable to find user home dir. Err: %w", err)
 		}
 		kubeconfig = fmt.Sprintf("%s/.kube/config", home)
 	}
 
 	restConfig, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to build config from flags: %w", err)
+		return nil, fmt.Errorf("unable to build config from flags: %w", err)
 	}
 
 	return restConfig, nil

@@ -173,7 +173,7 @@ func (ss *Services) Parse(cluster string, services []core_v1.Service, conf *conf
 
 func (s *Service) Parse(cluster string, service *core_v1.Service, conf *config.Config) {
 	if service != nil {
-		s.AdditionalDetails = GetAdditionalDetails(conf, service.ObjectMeta.Annotations)
+		s.AdditionalDetails = GetAdditionalDetails(conf, service.Annotations)
 		if len(service.Annotations) > 0 {
 			s.Annotations = service.Annotations
 		} else {

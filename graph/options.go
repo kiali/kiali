@@ -408,10 +408,10 @@ func NewOptions(r *net_http.Request, namespacesService *business.NamespaceServic
 
 // GetGraphKind will return the kind of graph represented by the options.
 func (o *TelemetryOptions) GetGraphKind() string {
-	if o.NodeOptions.App != "" ||
-		o.NodeOptions.Version != "" ||
-		o.NodeOptions.Workload != "" ||
-		o.NodeOptions.Service != "" {
+	if o.App != "" ||
+		o.Version != "" ||
+		o.Workload != "" ||
+		o.Service != "" {
 		return graphKindNode
 	}
 	return graphKindNamespace

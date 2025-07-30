@@ -345,7 +345,7 @@ func TestMeshGraph(t *testing.T) {
 	expected, _ := os.ReadFile(expectedFilename)
 
 	if runtime.GOOS == "windows" {
-		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+		expected = bytes.ReplaceAll(expected, []byte("\r\n"), []byte("\n"))
 	}
 
 	if !assert.JSONEq(t, string(expected), string(actual)) {

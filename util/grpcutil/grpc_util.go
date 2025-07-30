@@ -40,10 +40,11 @@ func GetAuthDialOptions(conf *config.Config, tls bool, auth *config.Auth) ([]grp
 			opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(tlscfg)))
 		}
 	}
-	if auth.Type == config.AuthTypeBasic {
+	switch auth.Type {
+	case config.AuthTypeBasic:
 		encoded := base64.StdEncoding.EncodeToString([]byte(auth.Username + ":" + auth.Password))
 		opts = append(opts, grpc.WithPerRPCCredentials(perRPCCredentials{auth: "Basic " + encoded, requireSecurity: !auth.InsecureSkipVerify}))
-	} else if auth.Type == config.AuthTypeBearer {
+	case config.AuthTypeBearer:
 		opts = append(opts, grpc.WithPerRPCCredentials(perRPCCredentials{auth: "Bearer " + auth.Token, requireSecurity: !auth.InsecureSkipVerify}))
 	}
 	if len(opts) == 0 {

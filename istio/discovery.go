@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/cache"
@@ -175,7 +174,7 @@ func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlP
 	return nil
 }
 
-func setSharedConfig(controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, kubeCache client.Reader) error {
+func setSharedConfig(controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, kubeCache ctrlclient.Reader) error {
 	sharedConfig := &models.MeshConfigSource{
 		Cluster:   controlPlane.Cluster.Name,
 		ConfigMap: &models.MeshConfigMap{},
@@ -1001,7 +1000,7 @@ func (in *Discovery) canConnectToIstiodForRevision(controlPlane models.ControlPl
 	// Assuming that all pods are running the same version, we only need to get the version from one healthy istiod pod.
 	// Sort by creation time stamp to return the "latest" pod.
 	slices.SortFunc(istiodPods, func(a, b *corev1.Pod) int {
-		return a.CreationTimestamp.Time.Compare(b.CreationTimestamp.Time)
+		return a.CreationTimestamp.Compare(b.CreationTimestamp.Time)
 	})
 	istiodPod := GetLatestPod(istiodPods)
 	status := kubernetes.ComponentHealthy

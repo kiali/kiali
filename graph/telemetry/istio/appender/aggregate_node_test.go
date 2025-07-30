@@ -36,7 +36,8 @@ func TestNamespacesGraphWithServiceInjection(t *testing.T) {
 		"response_code":                  "200",
 		"response_flags":                 "",
 		"request_protocol":               "http",
-		"request_operation":              "Top"}
+		"request_operation":              "Top",
+	}
 	q1m1 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -54,14 +55,18 @@ func TestNamespacesGraphWithServiceInjection(t *testing.T) {
 		"response_code":                  "200",
 		"response_flags":                 "",
 		"request_protocol":               "http",
-		"request_operation":              "All"}
+		"request_operation":              "All",
+	}
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,
-			Value:  70},
+			Value:  70,
+		},
 		&model.Sample{
 			Metric: q1m1,
-			Value:  30}}
+			Value:  30,
+		},
+	}
 
 	client, api, err := setupMocked()
 	if err != nil {
@@ -107,7 +112,7 @@ func TestNamespacesGraphWithServiceInjection(t *testing.T) {
 	assert.Equal(graph.NodeTypeAggregate, pp.Edges[1].Dest.NodeType)
 
 	topReviews := pp.Edges[0].Dest
-	if "Top" != topReviews.Metadata[graph.AggregateValue] {
+	if topReviews.Metadata[graph.AggregateValue] != "Top" {
 		topReviews = pp.Edges[1].Dest
 	}
 	assert.Equal("request_operation", topReviews.Metadata[graph.Aggregate])
@@ -118,7 +123,7 @@ func TestNamespacesGraphWithServiceInjection(t *testing.T) {
 	assert.Equal(graph.NodeTypeService, topReviews.Edges[0].Dest.NodeType)
 
 	allReviews := pp.Edges[1].Dest
-	if "All" != allReviews.Metadata[graph.AggregateValue] {
+	if allReviews.Metadata[graph.AggregateValue] != "All" {
 		allReviews = pp.Edges[0].Dest
 	}
 	assert.Equal("request_operation", allReviews.Metadata[graph.Aggregate])
@@ -164,7 +169,8 @@ func TestNamespacesGraphNoServiceInjection(t *testing.T) {
 		"response_code":                  "200",
 		"response_flags":                 "",
 		"request_protocol":               "http",
-		"request_operation":              "Top"}
+		"request_operation":              "Top",
+	}
 	q1m1 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -182,14 +188,18 @@ func TestNamespacesGraphNoServiceInjection(t *testing.T) {
 		"response_code":                  "200",
 		"response_flags":                 "",
 		"request_protocol":               "http",
-		"request_operation":              "All"}
+		"request_operation":              "All",
+	}
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,
-			Value:  70},
+			Value:  70,
+		},
 		&model.Sample{
 			Metric: q1m1,
-			Value:  30}}
+			Value:  30,
+		},
+	}
 
 	client, api, err := setupMocked()
 	if err != nil {
@@ -223,7 +233,8 @@ func TestNamespacesGraphNoServiceInjection(t *testing.T) {
 			Grpc:    graph.RateRequests,
 			Http:    graph.RateRequests,
 			Tcp:     graph.RateTotal,
-		}}
+		},
+	}
 
 	appender.appendGraph(context.Background(), trafficMap, "bookinfo", client, config.Get())
 
@@ -234,7 +245,7 @@ func TestNamespacesGraphNoServiceInjection(t *testing.T) {
 	assert.Equal(graph.NodeTypeAggregate, pp.Edges[1].Dest.NodeType)
 
 	topReviews := pp.Edges[0].Dest
-	if "Top" != topReviews.Metadata[graph.AggregateValue] {
+	if topReviews.Metadata[graph.AggregateValue] != "Top" {
 		topReviews = pp.Edges[1].Dest
 	}
 	assert.Equal("request_operation", topReviews.Metadata[graph.Aggregate])
@@ -244,7 +255,7 @@ func TestNamespacesGraphNoServiceInjection(t *testing.T) {
 	assert.Equal(graph.NodeTypeApp, topReviews.Edges[0].Dest.NodeType)
 
 	allReviews := pp.Edges[1].Dest
-	if "All" != allReviews.Metadata[graph.AggregateValue] {
+	if allReviews.Metadata[graph.AggregateValue] != "All" {
 		allReviews = pp.Edges[0].Dest
 	}
 	assert.Equal("request_operation", allReviews.Metadata[graph.Aggregate])
@@ -282,11 +293,14 @@ func TestNodeGraphWithServiceInjection(t *testing.T) {
 		"response_code":                  "200",
 		"response_flags":                 "",
 		"request_protocol":               "http",
-		"request_operation":              "Top"}
+		"request_operation":              "Top",
+	}
 	v0 := model.Vector{
 		&model.Sample{
 			Metric: q0m0,
-			Value:  70}}
+			Value:  70,
+		},
+	}
 
 	client, api, err := setupMocked()
 	if err != nil {
@@ -373,7 +387,8 @@ func TestNamespacesGraphWithServiceInjectionSkipRates(t *testing.T) {
 		"response_code":                  "200",
 		"response_flags":                 "",
 		"request_protocol":               "http",
-		"request_operation":              "Top"}
+		"request_operation":              "Top",
+	}
 	q1m1 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -391,14 +406,18 @@ func TestNamespacesGraphWithServiceInjectionSkipRates(t *testing.T) {
 		"response_code":                  "200",
 		"response_flags":                 "",
 		"request_protocol":               "http",
-		"request_operation":              "All"}
+		"request_operation":              "All",
+	}
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,
-			Value:  70},
+			Value:  70,
+		},
 		&model.Sample{
 			Metric: q1m1,
-			Value:  30}}
+			Value:  30,
+		},
+	}
 
 	client, api, err := setupMocked()
 	if err != nil {
@@ -473,11 +492,14 @@ func TestNodeGraphNoServiceInjection(t *testing.T) {
 		"response_code":                  "200",
 		"response_flags":                 "",
 		"request_protocol":               "http",
-		"request_operation":              "Top"}
+		"request_operation":              "Top",
+	}
 	v0 := model.Vector{
 		&model.Sample{
 			Metric: q0m0,
-			Value:  70}}
+			Value:  70,
+		},
+	}
 
 	client, api, err := setupMocked()
 	if err != nil {
@@ -555,11 +577,14 @@ func TestNodeGraphWithServiceInjectionSkipRates(t *testing.T) {
 		"response_code":                  "200",
 		"response_flags":                 "",
 		"request_protocol":               "http",
-		"request_operation":              "Top"}
+		"request_operation":              "Top",
+	}
 	v0 := model.Vector{
 		&model.Sample{
 			Metric: q0m0,
-			Value:  70}}
+			Value:  70,
+		},
+	}
 
 	client, api, err := setupMocked()
 	if err != nil {

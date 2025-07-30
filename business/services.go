@@ -320,7 +320,7 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 			IstioSidecar:           hasSidecar,
 			IsAmbient:              hasAmbient,
 			AppLabel:               appLabelNameFound,
-			AdditionalDetailSample: models.GetFirstAdditionalIcon(in.conf, item.ObjectMeta.Annotations),
+			AdditionalDetailSample: models.GetFirstAdditionalIcon(in.conf, item.Annotations),
 			Health:                 models.EmptyServiceHealth(),
 			HealthAnnotations:      models.GetHealthAnnotation(item.Annotations, models.GetHealthConfigAnnotation()),
 			Labels:                 item.Labels,
