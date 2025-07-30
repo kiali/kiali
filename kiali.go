@@ -377,7 +377,6 @@ func determineHomeClusterName() error {
 		// To get around that we create a temporary client factory here and then set the kiali
 		// config cluster name. We then create the global client factory later in the business
 		// package and that global client factory has the cluster id set properly.
-		log.Debugf("REMOVE homeCluster=[%s]", conf.KubernetesConfig.ClusterName)
 		cf, err := kubernetes.NewClientFactory(ctx, conf)
 		if err != nil {
 			return err

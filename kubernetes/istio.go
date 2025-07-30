@@ -335,9 +335,12 @@ func ClusterNameFromIstiod(conf *config.Config, k8s ClientInterface) (string, er
 		return "", err
 	}
 
-	log.Debugf("REMOVE numberOfControlPlanes=%d", len(istiods))
+	if len(istiods) == 0 {
+		return "", fmt.Errorf("no valid istiod deployment found in any namespaces for kiali home cluster name discovery. You may need to set kubernetes_config.cluster_name in the Kiali CR")
+	}
+
 	// Do our best to filter out any external control plane, because the CLUSTER_ID will be set to
-	// the dataplane cluster, not the hosting cluster (which seems weird, but that's how Istio does it)
+	// the dataplane cluster, not the hosting cluster (which seems weird, but that's how Istio does it).
 	validIstiods := sliceutil.Filter(istiods, func(istiod v1.Deployment) bool {
 		// a typical namespace name is external-istiod
 		if strings.Contains(strings.ToLower(istiod.Namespace), "external") {
@@ -356,11 +359,13 @@ func ClusterNameFromIstiod(conf *config.Config, k8s ClientInterface) (string, er
 		return true
 	})
 
+	// If we filtered out all of the istiods, just go back to what we had. In this case it's probably a primary-remote deployment where
+	// the primary may still have an EXTERNAL_ISTIOD env var.
 	if len(validIstiods) == 0 {
-		return "", fmt.Errorf("no valid istiod deployment found in any namespaces for kiali home cluster name discovery. You may need to set kubernetes_config.cluster_name in the Kiali CR")
+		validIstiods = istiods
+		log.Tracef("Restoring original istiods as all were filtered. This is likely a primary-remote deployment.")
 	}
 
-	log.Debugf("REMOVE numberOfValidControlPlanes=%d", len(validIstiods))
 	validIstiod := validIstiods[0]
 	containers := validIstiod.Spec.Template.Spec.Containers
 	if len(containers) == 0 {

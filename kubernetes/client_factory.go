@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"maps"
 	"sync"
 	"time"
 
@@ -106,7 +105,6 @@ func getClientFactory(kialiConf *kialiConfig.Config) (*clientFactory, error) {
 	if err == nil {
 		baseConfig.Host = restConfig.Host // remote cluster clients should ignore this
 		baseConfig.TLSClientConfig = restConfig.TLSClientConfig
-		log.Debugf("REMOVE LocalClusterInUse host=[%s]", restConfig.Host)
 		return newClientFactory(kialiConf, &baseConfig)
 	}
 
@@ -459,8 +457,6 @@ func getTokenHash(authInfo *api.AuthInfo) string {
 func (cf *clientFactory) GetSAClient(cluster string) ClientInterface {
 	cf.mutex.RLock()
 	defer cf.mutex.RUnlock()
-	log.Debugf("REMOVE cf.homeCluster=[%s]", cluster)
-	log.Debugf("REMOVE saClientEntries=%+v", maps.Keys(cf.saClientEntries))
 	return cf.saClientEntries[cluster]
 }
 
@@ -489,7 +485,6 @@ func (cf *clientFactory) GetSAClientsAsUserClientInterfaces() map[string]UserCli
 
 // KialiSAHomeClusterClient returns the read-only Kiali SA client for the cluster where Kiali is running.
 func (cf *clientFactory) GetSAHomeClusterClient() ClientInterface {
-	log.Debugf("REMOVE cf.homeCluster=[%s]", cf.homeCluster)
 	return cf.GetSAClient(cf.homeCluster)
 }
 
