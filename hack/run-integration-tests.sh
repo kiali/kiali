@@ -541,7 +541,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_EXTERNAL_KIALI}" ]; then
   fi
 
   cd "${SCRIPT_DIR}"/../frontend
-  yarn run cypress:run:external
+  yarn run cypress:run:external-kiali
   detectRaceConditions ${CYPRESS_CLUSTER1_CONTEXT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
   ensureCypressInstalled
