@@ -7,6 +7,8 @@
 PRIMARY_REMOTE="primary-remote"
 MULTI_PRIMARY="multi-primary"
 EXTERNAL_CONTROLPLANE="external-controlplane"
+KEYCLOAK_LIMIT_MEMORY=""
+KEYCLOAK_REQUESTS_MEMORY=""
 
 infomsg() {
   echo "[INFO] ${1}"
@@ -34,6 +36,10 @@ Options:
     This option is ignored if -ii is false.
     If not specified, the latest version of Istio is installed.
     Default: <the latest release>
+ -klm|--keycloak-limit-memory
+    The keycloak resources limit memory in the keycloak helm charts
+-krm|--keycloak-requests-memory)
+    The keycloak resources requests memory in the keycloak helm charts.
 -mc|--multicluster <${MULTI_PRIMARY}|${PRIMARY_REMOTE}|${EXTERNAL_CONTROLPLANE}>
     Whether to set up a multicluster environment
     and which kind of multicluster environment to setup.
@@ -63,6 +69,8 @@ while [[ $# -gt 0 ]]; do
     -h|--help)                    helpmsg;                    exit 1       ;;
     -hcd|--helm-charts-dir)       HELM_CHARTS_DIR="$2";       shift;shift; ;;
     -iv|--istio-version)          ISTIO_VERSION="$2";         shift;shift; ;;
+    -klm|--keycloak-limit-memory) KEYCLOAK_LIMIT_MEMORY="$2"; shift;shift; ;;
+    -krm|--keycloak-requests-memory) KEYCLOAK_REQUESTS_MEMORY="$2"; shift;shift; ;;
     -mc|--multicluster)
       MULTICLUSTER="${2}"
       if [ "${MULTICLUSTER}" != "${PRIMARY_REMOTE}" -a "${MULTICLUSTER}" != "${MULTI_PRIMARY}" -a "${MULTICLUSTER}" != "${EXTERNAL_CONTROLPLANE}" ]; then
@@ -142,6 +150,8 @@ AUTH_STRATEGY=$AUTH_STRATEGY
 DORP=$DORP
 HELM_CHARTS_DIR=$HELM_CHARTS_DIR
 ISTIO_VERSION=$ISTIO_VERSION
+KEYCLOAK_LIMIT_MEMORY=$KEYCLOAK_LIMIT_MEMORY
+KEYCLOAK_REQUESTS_MEMORY=$KEYCLOAK_REQUESTS_MEMORY
 KIND_NODE_IMAGE=$KIND_NODE_IMAGE
 MULTICLUSTER=$MULTICLUSTER
 SAIL=$SAIL
@@ -201,7 +211,20 @@ setup_kind_singlecluster() {
             --enable-keycloak true \
             --keycloak-certs-dir "${KEYCLOAK_CERTS_DIR}" \
             --keycloak-issuer-uri "https://${KEYCLOAK_ADDRESS}/realms/kube"
-      "${SCRIPT_DIR}/keycloak.sh" -kcd "${KEYCLOAK_CERTS_DIR}" -kip "${KEYCLOAK_ADDRESS}" deploy
+ echo "KEYCLOAK: $KEYCLOAK_LIMIT_MEMORY $KEYCLOAK_REQUESTS_MEMORY "
+      # Optional: keycloak memory limits
+      if [ -n "$KEYCLOAK_LIMIT_MEMORY" ]; then
+        MEMORY_LIMIT_ARG="-slm $KEYCLOAK_LIMIT_MEMORY"
+      else
+        MEMORY_LIMIT_ARG=""
+      fi
+      if [ -n "$KEYCLOAK_REQUESTS_MEMORY" ]; then
+        MEMORY_REQUEST_ARG="-srm $KEYCLOAK_REQUESTS_MEMORY"
+      else
+        MEMORY_REQUEST_ARG=""
+      fi
+      echo "Args: $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG"
+      "${SCRIPT_DIR}/keycloak.sh" -kcd "${KEYCLOAK_CERTS_DIR}" -kip "${KEYCLOAK_ADDRESS}" $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG deploy
 
       keycloak_ip_cl=$(kubectl get svc keycloak -n keycloak -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
             auth_flags+=(--keycloak-address "${keycloak_ip_cl}")
@@ -410,6 +433,17 @@ setup_kind_multicluster() {
     local kind_node_image="--kind-node-image ${KIND_NODE_IMAGE}"
   fi
 
+if [ -n "$KEYCLOAK_LIMIT_MEMORY" ]; then
+        MEMORY_LIMIT_ARG="-kml $KEYCLOAK_LIMIT_MEMORY"
+      else
+        MEMORY_LIMIT_ARG=""
+      fi
+      if [ -n "$KEYCLOAK_REQUESTS_MEMORY" ]; then
+        MEMORY_REQUEST_ARG="-krm $KEYCLOAK_REQUESTS_MEMORY"
+      else
+        MEMORY_REQUEST_ARG=""
+      fi
+
   local cluster1_context
   local cluster2_context
   local cluster1_name
@@ -422,6 +456,8 @@ setup_kind_multicluster() {
       --certs-dir "${certs_dir}" \
       -dorp docker \
       --istio-dir "${istio_dir}" \
+      ${MEMORY_REQUEST_ARG} \
+      ${MEMORY_LIMIT_ARG} \
       ${kind_node_image:-} \
       ${hub_arg:-} \
       ${istio_version_arg}
