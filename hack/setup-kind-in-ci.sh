@@ -481,11 +481,11 @@ setup_kind_multicluster() {
     kubectl rollout status deployment prometheus -n istio-system --context kind-west
   elif [ "${MULTICLUSTER}" == "${EXTERNAL_KIALI}" ]; then
     "${SCRIPT_DIR}"/istio/multicluster/install-external-kiali.sh --kiali-enabled false --manage-kind true -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" ${kind_node_image:-} ${hub_arg:-} ${istio_version_arg}
-    cluster1_context="mgmt"
-    cluster2_context="mesh"
+    cluster1_context="kind-mgmt"
+    cluster2_context="kind-mesh"
     cluster1_name="mgmt"
     cluster2_name="mesh"
-    kubectl rollout status deployment prometheus -n istio-system --context mgmt
+    kubectl rollout status deployment prometheus -n istio-system --context kind-mgmt
     kubectl rollout status deployment prometheus -n istio-system --context mesh
   elif [ "${MULTICLUSTER}" == "${EXTERNAL_CONTROLPLANE}" ]; then
     "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh ${kind_node_image:-} ${istio_version_arg}
