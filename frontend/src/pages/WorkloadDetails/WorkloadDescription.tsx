@@ -14,8 +14,8 @@ import { isMultiCluster } from '../../config';
 import { MissingSidecar } from '../../components/MissingSidecar/MissingSidecar';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { MissingLabel } from '../../components/MissingLabel/MissingLabel';
-import { MissingAuthPolicy } from 'components/MissingAuthPolicy/MissingAuthPolicy';
-import { getGVKTypeString, hasMissingAuthPolicy, isGVKSupported } from 'utils/IstioConfigUtils';
+import { WorkloadConfigValidation } from '../../components/Validations/WorkloadConfigValidation';
+import { getGVKTypeString, isGVKSupported } from 'utils/IstioConfigUtils';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { gvkType, validationKey } from '../../types/IstioConfigList';
@@ -204,15 +204,6 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             />
           )}
 
-          {hasMissingAuthPolicy(validationKey(workload.name, props.namespace), workload.validations) && (
-            <MissingAuthPolicy
-              namespace={props.namespace}
-              tooltip={true}
-              className={classes(infoStyle, workloadInfoStyle)}
-              text=""
-            />
-          )}
-
           {(!workload.appLabel || !workload.versionLabel) && !workload.isWaypoint && (
             <MissingLabel
               missingApp={!workload.appLabel}
@@ -238,6 +229,11 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             style={{ marginTop: '0.25rem' }}
           />
         )}
+        <WorkloadConfigValidation
+          validations={workload.validations!['workload'][validationKey(workload.name, workload.namespace)]}
+          namespace={props.namespace}
+          className={classes(workloadInfoStyle)}
+        />
       </CardHeader>
 
       <CardBody>

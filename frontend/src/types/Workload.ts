@@ -1,5 +1,13 @@
 import { WorkloadHealth, WorkloadHealthResponse } from './Health';
-import { GroupVersionKind, ObjectReference, Pod, Service, Validations, WorkloadGroupEntry } from './IstioObjects';
+import {
+  GroupVersionKind,
+  ObjectReference,
+  ObjectValidation,
+  Pod,
+  Service,
+  Validations,
+  WorkloadGroupEntry
+} from './IstioObjects';
 import { InstanceType } from 'types/Common';
 import { ServiceInfo } from './ServiceInfo';
 
@@ -91,7 +99,7 @@ export interface WorkloadListItem {
   labels: { [key: string]: string };
   name: string;
   namespace: string;
-  notCoveredAuthPolicy: boolean;
+  validations?: ObjectValidation;
   versionLabel: boolean;
 }
 

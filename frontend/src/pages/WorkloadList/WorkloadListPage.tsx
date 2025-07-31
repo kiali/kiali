@@ -19,7 +19,6 @@ import { connect } from 'react-redux';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
-import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
 import { WorkloadHealth } from '../../types/Health';
 import { isMultiCluster, serverConfig } from 'config';
 import { validationKey } from '../../types/IstioConfigList';
@@ -152,10 +151,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         }),
         labels: deployment.labels,
         istioReferences: sortIstioReferences(deployment.istioReferences, true),
-        notCoveredAuthPolicy: hasMissingAuthPolicy(
-          validationKey(deployment.name, deployment.namespace),
-          data.validations
-        )
+        validations: data.validations['workload'][validationKey(deployment.name, deployment.namespace)]
       }));
     }
 
