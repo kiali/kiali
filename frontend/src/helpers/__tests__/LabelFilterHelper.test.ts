@@ -99,8 +99,7 @@ const workloadList: WorkloadListItem[] = [
     appLabel: true,
     versionLabel: true,
     istioReferences: [],
-    instanceType: InstanceType.Workload,
-    notCoveredAuthPolicy: false
+    instanceType: InstanceType.Workload
   },
   {
     namespace: 'bookinfo',
@@ -116,8 +115,7 @@ const workloadList: WorkloadListItem[] = [
     appLabel: true,
     versionLabel: true,
     istioReferences: [],
-    instanceType: InstanceType.Workload,
-    notCoveredAuthPolicy: false
+    instanceType: InstanceType.Workload
   },
   {
     namespace: 'bookinfo',
@@ -133,8 +131,7 @@ const workloadList: WorkloadListItem[] = [
     appLabel: true,
     versionLabel: true,
     istioReferences: [],
-    instanceType: InstanceType.Workload,
-    notCoveredAuthPolicy: false
+    instanceType: InstanceType.Workload
   },
   {
     namespace: 'bookinfo',
@@ -150,8 +147,7 @@ const workloadList: WorkloadListItem[] = [
     appLabel: true,
     versionLabel: true,
     istioReferences: [],
-    instanceType: InstanceType.Workload,
-    notCoveredAuthPolicy: false
+    instanceType: InstanceType.Workload
   },
   {
     namespace: 'bookinfo',
@@ -167,8 +163,7 @@ const workloadList: WorkloadListItem[] = [
     appLabel: true,
     versionLabel: true,
     istioReferences: [],
-    instanceType: InstanceType.Workload,
-    notCoveredAuthPolicy: false
+    instanceType: InstanceType.Workload
   },
   {
     namespace: 'bookinfo',
@@ -184,8 +179,7 @@ const workloadList: WorkloadListItem[] = [
     appLabel: true,
     versionLabel: true,
     istioReferences: [],
-    instanceType: InstanceType.Workload,
-    notCoveredAuthPolicy: false
+    instanceType: InstanceType.Workload
   }
 ];
 
@@ -328,7 +322,7 @@ describe('LabelFilter', () => {
         appLabel: true,
         versionLabel: true,
         istioReferences: [],
-        notCoveredAuthPolicy: false
+        validations: []
       },
       {
         namespace: 'bookinfo',
@@ -345,7 +339,7 @@ describe('LabelFilter', () => {
         appLabel: true,
         versionLabel: true,
         istioReferences: [],
-        notCoveredAuthPolicy: false
+        validations: []
       },
       {
         namespace: 'bookinfo',
@@ -362,7 +356,7 @@ describe('LabelFilter', () => {
         appLabel: true,
         versionLabel: true,
         istioReferences: [],
-        notCoveredAuthPolicy: false
+        validations: []
       }
     ]);
   });
