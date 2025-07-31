@@ -331,7 +331,6 @@ type IstioConfig struct {
 	IstioSidecarInjectorConfigMapName string            `yaml:"istio_sidecar_injector_config_map_name,omitempty" json:"istioSidecarInjectorConfigMapName,omitempty"`
 	IstioSidecarAnnotation            string            `yaml:"istio_sidecar_annotation,omitempty" json:"istioSidecarAnnotation,omitempty"`
 	IstiodDeploymentName              string            `yaml:"istiod_deployment_name,omitempty" json:"istiodDeploymentName,omitempty"`
-	IstiodPodMonitoringPort           int               `yaml:"istiod_pod_monitoring_port,omitempty" json:"istiodPodMonitoringPort,omitempty"`
 	// IstiodPollingIntervalSeconds is how often in seconds Kiali will poll istiod(s) for
 	// proxy status and registry services. Polling is not performed if IstioAPIEnabled is false.
 	IstiodPollingIntervalSeconds     int             `yaml:"istiod_polling_interval_seconds,omitempty" json:"istiodPollingIntervalSeconds,omitempty"`
@@ -788,7 +787,6 @@ func NewConfig() (c *Config) {
 				IstioSidecarInjectorConfigMapName: "",
 				IstioSidecarAnnotation:            "sidecar.istio.io/status",
 				IstiodDeploymentName:              "",
-				IstiodPodMonitoringPort:           15014,
 				IstiodPollingIntervalSeconds:      20,
 				RootNamespace:                     "istio-system",
 				UrlServiceVersion:                 "",

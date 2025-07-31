@@ -154,6 +154,10 @@ func setLogFormat(l zerolog.Logger, color bool) zerolog.Logger {
 	return l
 }
 
+func Logger() zerolog.Logger {
+	return log.Logger
+}
+
 // WithGroup is a simple convienence function that provides a zerolog logger that will log messages associated with a group name in the log context
 // Use this to obtain a logger that has only group name associated with it - there will be no associated data.
 func WithGroup(group string) *zerolog.Logger {
