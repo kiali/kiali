@@ -528,8 +528,8 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_EXTERNAL_KIALI}" ]; then
   ensureKialiServerReady
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
-  export CYPRESS_CLUSTER1_CONTEXT="mgmt"
-  export CYPRESS_CLUSTER2_CONTEXT="mesh"
+  export CYPRESS_CLUSTER1_CONTEXT="kind-mgmt"
+  export CYPRESS_CLUSTER2_CONTEXT="kind-mesh"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
   export CYPRESS_VIDEO="${WITH_VIDEO}"
