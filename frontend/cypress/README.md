@@ -42,7 +42,7 @@ yarn cypress:run
 In order to run the Cypress suite for a different setup (Multicluster, Tempo, etc.), add a specific suffix to your command above. The list of suffixes is available here:
 ```bash
 :ambient            #for ambient mesh tests
-:external           #for the External Kiali tests
+:external-kiali     #for the External Kiali tests
 :multi-cluster      #for the Primary-Remote tests
 :multi-primary      #for the Multi-Primary tests
 :tracing            #for tests related to Tempo

@@ -196,3 +196,11 @@ Feature: Kiali Overview page
     When user clicks in the "LIST" view
     Then user sees a "LIST" "istio-system" namespace
     And badge for "Ambient" is visible in the LIST view in the namespace "istio-system"
+
+  @external-kiali
+  Scenario: Istio panels for mgmt and mesh clusters should be visible
+    Then user sees the "istio-system" namespace card in cluster "mgmt"
+    And user sees the "istio-system" namespace card in cluster "mesh"
+    And user sees the "Control plane" label in the "mesh" "istio-system" namespace card
+    And user does not see the "Control plane" label in the "mgmt" "istio-system" namespace card
+    And Istio config should not be available for the "mgmt" "istio-system"

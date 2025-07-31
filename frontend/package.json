@@ -40,7 +40,7 @@
     "build:prod": "sh -ac '. ./.env.downstream; npm run build:kiali'",
     "cypress": "cypress open -e TAGS=\"not @multi-cluster and not @multi-primary and not @ambient and not @waypoint and (not @waypoint-tracing or @tracing)\"",
     "cypress:ambient": "cypress open -e TAGS=\"@ambient\"",
-    "cypress:external": "cypress open -e TAGS=\"@external\"",
+    "cypress:external-kiali": "cypress open -e TAGS=\"@external-kiali\"",
     "cypress:waypoint": "cypress open -e TAGS=\"@waypoint or @waypoint-tracing\"",
     "cypress:combine:reports": "jrm cypress/results/combined-report.xml \"cypress/results/*.xml\"",
     "cypress:delete:reports": "rm cypress/results/* || true",
