@@ -522,16 +522,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_EXTERNAL_KIALI}" ]; then
   ensureCypressInstalled
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    # Use the external Kiali installation script instead of setup-kind-in-ci.sh
-    if [ -n "${ISTIO_VERSION}" ]; then
-      if [[ "${ISTIO_VERSION}" == *-dev ]]; then
-        ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
-      else
-        ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
-      fi
-    fi
-    
-    "${SCRIPT_DIR}"/istio/multicluster/install-external-kiali.sh --manage-kind true ${ISTIO_VERSION_ARG}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "external-kiali" ${ISTIO_VERSION_ARG} --tempo ${TEMPO} ${HELM_CHARTS_DIR_ARG}
   fi
 
   ensureKialiServerReady
