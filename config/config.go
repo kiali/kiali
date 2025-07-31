@@ -78,7 +78,9 @@ const (
 	AmbientAnnotationEnabled  = "enabled"
 	GatewayLabel              = "gateway.networking.k8s.io/gateway-name" // On any k8s GW API gateway
 	IstioAppLabel             = "app"                                    // we can assume istio components are labeled with "app"
+	IstioInjectionAnnotation  = "sidecar.istio.io/inject"                // the standard annotation for sidecar injection
 	IstioRevisionLabel        = "istio.io/rev"                           // the standard label key used to identify the istio revision.
+	IstioSidecarAnnotation    = "sidecar.istio.io/status"                // the standard annotation for sidecar status
 	IstioVersionLabel         = "version"                                // we can assume istio components are labeled with "version", if versioned
 	KubernetesAppLabel        = "app.kubernetes.io/name"
 	Waypoint                  = "waypoint"
@@ -320,24 +322,17 @@ type RegistryConfig struct {
 
 // IstioConfig describes configuration used for istio links
 type IstioConfig struct {
-	ComponentStatuses                 ComponentStatuses `yaml:"component_status,omitempty" json:"componentStatuses,omitempty"`
-	ConfigMapName                     string            `yaml:"config_map_name,omitempty" json:"configMapName,omitempty"`
-	EnvoyAdminLocalPort               int               `yaml:"envoy_admin_local_port,omitempty" json:"envoyAdminLocalPort,omitempty"`
-	GatewayAPIClasses                 []GatewayAPIClass `yaml:"gateway_api_classes,omitempty" json:"gatewayApiClasses,omitempty"`
-	GatewayAPIClassesLabelSelector    string            `yaml:"gateway_api_classes_label_selector,omitempty" json:"gatewayApiClassesLabelSelector,omitempty"`
-	IstioAPIEnabled                   bool              `yaml:"istio_api_enabled" json:"istioApiEnabled"`
-	IstioIdentityDomain               string            `yaml:"istio_identity_domain,omitempty" json:"istioIdentityDomain,omitempty"`
-	IstioInjectionAnnotation          string            `yaml:"istio_injection_annotation,omitempty" json:"istioInjectionAnnotation,omitempty"`
-	IstioSidecarInjectorConfigMapName string            `yaml:"istio_sidecar_injector_config_map_name,omitempty" json:"istioSidecarInjectorConfigMapName,omitempty"`
-	IstioSidecarAnnotation            string            `yaml:"istio_sidecar_annotation,omitempty" json:"istioSidecarAnnotation,omitempty"`
-	IstiodDeploymentName              string            `yaml:"istiod_deployment_name,omitempty" json:"istiodDeploymentName,omitempty"`
-	IstiodPodMonitoringPort           int               `yaml:"istiod_pod_monitoring_port,omitempty" json:"istiodPodMonitoringPort,omitempty"`
+	ComponentStatuses              ComponentStatuses `yaml:"component_status,omitempty" json:"componentStatuses,omitempty"`
+	GatewayAPIClasses              []GatewayAPIClass `yaml:"gateway_api_classes,omitempty" json:"gatewayApiClasses,omitempty"`
+	GatewayAPIClassesLabelSelector string            `yaml:"gateway_api_classes_label_selector,omitempty" json:"gatewayApiClassesLabelSelector,omitempty"`
+	IstioAPIEnabled                bool              `yaml:"istio_api_enabled" json:"istioApiEnabled"`
+	IstioIdentityDomain            string            `yaml:"istio_identity_domain,omitempty" json:"istioIdentityDomain,omitempty"`
+	IstiodPodMonitoringPort        int               `yaml:"istiod_pod_monitoring_port,omitempty" json:"istiodPodMonitoringPort,omitempty"`
 	// IstiodPollingIntervalSeconds is how often in seconds Kiali will poll istiod(s) for
 	// proxy status and registry services. Polling is not performed if IstioAPIEnabled is false.
 	IstiodPollingIntervalSeconds     int             `yaml:"istiod_polling_interval_seconds,omitempty" json:"istiodPollingIntervalSeconds,omitempty"`
 	Registry                         *RegistryConfig `yaml:"registry,omitempty" json:"registry,omitempty"`
 	RootNamespace                    string          `yaml:"root_namespace,omitempty" json:"rootNamespace,omitempty"`
-	UrlServiceVersion                string          `yaml:"url_service_version" json:"urlServiceVersion"`
 	ValidationChangeDetectionEnabled bool            `yaml:"validation_change_detection_enabled,omitempty" json:"validationChangeDetectionEnabled,omitempty"`
 	// ValidationReconcileInterval sets how often Kiali will validate Istio configuration.
 	// Validations can be disabled setting the interval to 0
@@ -780,21 +775,14 @@ func NewConfig() (c *Config) {
 					// Components config is left for custom components status check
 					Components: []ComponentStatus{},
 				},
-				ConfigMapName:                     "",
-				EnvoyAdminLocalPort:               15000,
-				IstioAPIEnabled:                   true,
-				IstioIdentityDomain:               "svc.cluster.local",
-				IstioInjectionAnnotation:          "sidecar.istio.io/inject",
-				IstioSidecarInjectorConfigMapName: "",
-				IstioSidecarAnnotation:            "sidecar.istio.io/status",
-				IstiodDeploymentName:              "",
-				IstiodPodMonitoringPort:           15014,
-				IstiodPollingIntervalSeconds:      20,
-				RootNamespace:                     "istio-system",
-				UrlServiceVersion:                 "",
-				ValidationChangeDetectionEnabled:  true,
-				ValidationReconcileInterval:       util.AsPtr(time.Minute),
-				GatewayAPIClasses:                 []GatewayAPIClass{},
+				IstioAPIEnabled:                  true,
+				IstioIdentityDomain:              "svc.cluster.local",
+				IstiodPodMonitoringPort:          15014,
+				IstiodPollingIntervalSeconds:     20,
+				RootNamespace:                    "istio-system",
+				ValidationChangeDetectionEnabled: true,
+				ValidationReconcileInterval:      util.AsPtr(time.Minute),
+				GatewayAPIClasses:                []GatewayAPIClass{},
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{

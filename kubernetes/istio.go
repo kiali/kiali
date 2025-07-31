@@ -11,7 +11,6 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	istio "istio.io/client-go/pkg/clientset/versioned"
-	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	inferenceapiclient "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -329,27 +328,17 @@ func DestinationRuleHasMTLSEnabled(destinationRule *networking_v1.DestinationRul
 func ClusterNameFromIstiod(conf config.Config, k8s ClientInterface) (string, error) {
 	// The "cluster_id" is set in an environment variable of
 	// the "istiod" deployment. Let's try to fetch it.
-	var istiodDeployment *appsv1.Deployment
-	if istiodDeploymentName := conf.ExternalServices.Istio.IstiodDeploymentName; istiodDeploymentName != "" {
-		deployment, err := k8s.GetDeployment(conf.IstioNamespace, istiodDeploymentName)
-		if err != nil {
-			return "", err
-		}
-
-		istiodDeployment = deployment
-	} else {
-		istiodDeployments, err := k8s.GetDeployments(conf.IstioNamespace, metav1.ListOptions{LabelSelector: "app=istiod"})
-		if err != nil {
-			return "", err
-		}
-
-		if len(istiodDeployments) == 0 {
-			return "", fmt.Errorf("istiod deployment not found in namespace [%s]", conf.IstioNamespace)
-		}
-
-		// Just take the first one since they should all have the same cluster id.
-		istiodDeployment = &istiodDeployments[0]
+	istiodDeployments, err := k8s.GetDeployments(conf.IstioNamespace, metav1.ListOptions{LabelSelector: "app=istiod"})
+	if err != nil {
+		return "", err
 	}
+
+	if len(istiodDeployments) == 0 {
+		return "", fmt.Errorf("istiod deployment not found in namespace [%s]", conf.IstioNamespace)
+	}
+
+	// Just take the first one since they should all have the same cluster id.
+	istiodDeployment := &istiodDeployments[0]
 
 	istiodContainers := istiodDeployment.Spec.Template.Spec.Containers
 	if len(istiodContainers) == 0 {
