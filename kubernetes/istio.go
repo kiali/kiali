@@ -376,6 +376,7 @@ func ClusterNameFromIstiod(conf *config.Config, k8s ClientInterface) (string, er
 	for _, v := range containers[0].Env {
 		if v.Name == "CLUSTER_ID" {
 			clusterName = v.Value
+			break
 		}
 	}
 
