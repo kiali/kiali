@@ -347,10 +347,10 @@ func ClusterNameFromIstiod(conf *config.Config, k8s ClientInterface) (string, er
 			log.Tracef("Ignoring likely external controlplane [%s] during Kiali home clustername discovery. Namespace=[%s]", istiod.Name, istiod.Namespace)
 			return false
 		}
-		// there is a decent chance there will be an env var with "EXTERNAL"
+		// also, look for the EXTERNAL_ISTIOD env var
 		for _, container := range istiod.Spec.Template.Spec.Containers {
 			for _, v := range container.Env {
-				if strings.Contains(strings.ToLower(v.Name), "external") {
+				if strings.Contains(strings.ToLower(v.Name), "external_istiod") && strings.ToLower(v.Value) == "true" {
 					log.Tracef("Ignoring likely external controlplane [%s] during Kiali home clustername discovery. EnvVar=[%s]", istiod.Name, v.Name)
 					return false
 				}
