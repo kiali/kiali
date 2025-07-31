@@ -321,8 +321,7 @@ describe('LabelFilter', () => {
         labels: { app: 'reviews', version: 'v1' },
         appLabel: true,
         versionLabel: true,
-        istioReferences: [],
-        validations: []
+        istioReferences: []
       },
       {
         namespace: 'bookinfo',
@@ -338,8 +337,7 @@ describe('LabelFilter', () => {
         labels: { app: 'reviews', version: 'v2' },
         appLabel: true,
         versionLabel: true,
-        istioReferences: [],
-        validations: []
+        istioReferences: []
       },
       {
         namespace: 'bookinfo',
@@ -355,8 +353,7 @@ describe('LabelFilter', () => {
         labels: { app: 'reviews', version: 'v3' },
         appLabel: true,
         versionLabel: true,
-        istioReferences: [],
-        validations: []
+        istioReferences: []
       }
     ]);
   });
