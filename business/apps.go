@@ -105,7 +105,7 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 
 	allApps, err := in.businessLayer.App.fetchNamespaceApps(ctx, namespace, cluster, "")
 	if err != nil {
-		log.Errorf("Error fetching Applications for cluster %s per namespace %s: %s", cluster, namespace, err)
+		log.Errorf("Error fetching Applications for cluster [%s] per namespace [%s]: %s", cluster, namespace, err)
 		return *appList, err
 	}
 
@@ -125,7 +125,7 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 	if criteria.IncludeIstioResources {
 		istioConfigList, err = in.businessLayer.IstioConfig.GetIstioConfigListForNamespace(ctx, cluster, namespace, icCriteria)
 		if err != nil {
-			log.Errorf("Error fetching Istio Config for Cluster %s per namespace %s: %s", cluster, namespace, err)
+			log.Errorf("Error fetching Istio Config for Cluster [%s] per namespace [%s]: %s", cluster, namespace, err)
 			return *appList, err
 		}
 	}
@@ -252,10 +252,10 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 		if resultCh.err != nil {
 			// Return failure if we are in single cluster
 			if resultCh.cluster == in.conf.KubernetesConfig.ClusterName && len(in.userClients) == 1 {
-				log.Errorf("Error fetching Applications for local cluster %s: %s", resultCh.cluster, resultCh.err)
+				log.Errorf("Error fetching Applications for local cluster [%s]: %s", resultCh.cluster, resultCh.err)
 				return models.AppList{}, resultCh.err
 			} else {
-				log.Infof("Error fetching Applications for cluster %s: %s", resultCh.cluster, resultCh.err)
+				log.Infof("Error fetching Applications for cluster [%s]: %s", resultCh.cluster, resultCh.err)
 			}
 		}
 		allApps = append(allApps, resultCh.nsApps)

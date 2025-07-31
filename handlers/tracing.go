@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -407,11 +406,12 @@ func TracingDiagnose(
 	return func(w http.ResponseWriter, r *http.Request) {
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			RespondWithError(w, http.StatusInternalServerError, "TracingDiagnose getLayer error: "+err.Error())
 			return
 		}
-		if !isHomeCPAccessible(r.Context(), conf, business.Namespace, clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
-			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+
+		if !business.Namespace.HasMeshAccess(r.Context(), clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
+			RespondWithError(w, http.StatusInternalServerError, "TracingDiagnose unauthorized")
 			return
 		}
 
@@ -451,21 +451,16 @@ func TracingConfigurationCheck(
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			RespondWithError(w, http.StatusInternalServerError, "TracingConfigurationCheck getLayer error: "+err.Error())
 			return
 		}
-		if !isHomeCPAccessible(r.Context(), conf, business.Namespace, clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
-			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+
+		if !business.Namespace.HasMeshAccess(r.Context(), clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
+			RespondWithError(w, http.StatusInternalServerError, "TracingConfigurationCheck Unauthorized")
 			return
 		}
 
 		status := business.Tracing.ValidateConfiguration(r.Context(), conf, &tracingConfig, clientFactory.GetSAHomeClusterClient().GetToken())
 		RespondWithJSON(w, http.StatusOK, status)
 	}
-}
-
-// isHomeCPAccessible Check access to the home istio namespace
-func isHomeCPAccessible(ctx context.Context, conf *config.Config, namespaceService business.NamespaceService, cluster string) bool {
-	_, err := namespaceService.GetClusterNamespace(ctx, conf.IstioNamespace, cluster)
-	return err == nil
 }

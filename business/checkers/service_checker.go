@@ -6,16 +6,28 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/business/checkers/services"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/models"
 )
 
 const ServiceCheckerType = "service"
 
 type ServiceChecker struct {
-	Services    []corev1.Service
-	Deployments []apps_v1.Deployment
-	Pods        []corev1.Pod
-	Cluster     string
+	Cluster       string
+	Deployments   []apps_v1.Deployment
+	MeshDiscovery istio.MeshDiscovery
+	Pods          []corev1.Pod
+	Services      []corev1.Service
+}
+
+func NewServiceChecker(cluster string, deployments []apps_v1.Deployment, meshDiscovery istio.MeshDiscovery, pods []corev1.Pod, services []corev1.Service) ServiceChecker {
+	return ServiceChecker{
+		Cluster:       cluster,
+		Deployments:   deployments,
+		MeshDiscovery: meshDiscovery,
+		Pods:          pods,
+		Services:      services,
+	}
 }
 
 func (sc ServiceChecker) Check() models.IstioValidations {
@@ -33,7 +45,7 @@ func (sc ServiceChecker) runSingleChecks(service corev1.Service) models.IstioVal
 	key, validations := EmptyValidValidation(service.GetObjectMeta().GetName(), service.GetObjectMeta().GetNamespace(), schema.GroupVersionKind{Group: "", Version: "", Kind: ServiceCheckerType}, sc.Cluster)
 
 	enabledCheckers := []Checker{
-		services.PortMappingChecker{Service: service, Deployments: sc.Deployments, Pods: sc.Pods},
+		services.NewPortMappingChecker(sc.Deployments, sc.MeshDiscovery, sc.Pods, service),
 	}
 
 	for _, checker := range enabledCheckers {

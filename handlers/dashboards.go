@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -284,6 +285,11 @@ func ZtunnelDashboard(
 
 		if err := extractIstioMetricsQueryParams(r, &params, oldestNs); err != nil {
 			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if !discovery.IsControlPlane(r.Context(), cluster, namespace) {
+			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
 			return
 		}
 

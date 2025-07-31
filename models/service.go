@@ -1,6 +1,8 @@
 package models
 
 import (
+	"context"
+
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -214,9 +216,9 @@ func (s *ServiceDetails) SetService(cluster string, svc *core_v1.Service, conf *
 	s.Service.Parse(cluster, svc, conf)
 }
 
-func (s *ServiceDetails) SetPods(pods []core_v1.Pod) {
+func (s *ServiceDetails) SetPods(pods []core_v1.Pod, isControlPlane func(ctx context.Context, cluster, namespace string) bool) {
 	mPods := Pods{}
-	mPods.Parse(pods)
+	mPods.Parse(pods, isControlPlane)
 }
 
 func (s *ServiceDetails) SetIstioSidecar(workloads WorkloadOverviews) {

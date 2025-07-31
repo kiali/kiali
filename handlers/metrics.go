@@ -197,13 +197,14 @@ func ControlPlaneMetrics(
 
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
-		if namespace != conf.IstioNamespace {
+		controlPlane := vars["controlplane"]
+		conf := config.Get()
+		cluster := clusterNameFromQuery(conf, r.URL.Query())
+
+		if !discovery.IsControlPlane(r.Context(), cluster, namespace) {
 			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
 			return
 		}
-
-		controlPlane := vars["controlplane"]
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
 
 		namespaceInfo, err := checkNamespaceAccessWithService(w, r, &layer.Namespace, namespace, cluster)
 		if err != nil {
@@ -254,7 +255,13 @@ func ResourceUsageMetrics(conf *config.Config, cache cache.KialiCache, discovery
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		app := vars["app"]
+		conf := config.Get()
 		cluster := clusterNameFromQuery(conf, r.URL.Query())
+
+		if !discovery.IsControlPlane(r.Context(), cluster, namespace) {
+			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
+			return
+		}
 
 		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {

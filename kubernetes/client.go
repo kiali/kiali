@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"context"
+	"path/filepath"
 	"sync"
 
 	osappsclient "github.com/openshift/client-go/apps/clientset/versioned"
@@ -14,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
+
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	inferenceapiclient "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned"
 	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
@@ -146,14 +147,9 @@ func NewClientWithRemoteClusterInfo(config *rest.Config, remoteClusterInfo *Remo
 	}
 
 	if remoteClusterInfo != nil {
-		cfg, err := remoteClusterInfo.Config.RawConfig()
-		if err != nil {
-			return nil, err
-		}
-
-		clusterName := getClusterName(&cfg)
+		// the secret file name is the cluster name, the kube context may differ
 		client.clusterInfo = ClusterInfo{
-			Name:       clusterName,
+			Name:       filepath.Base(remoteClusterInfo.SecretFile),
 			SecretName: remoteClusterInfo.SecretName,
 		}
 	} else {
@@ -168,25 +164,15 @@ func NewClientWithRemoteClusterInfo(config *rest.Config, remoteClusterInfo *Remo
 	return client, nil
 }
 
-// getConfigForLocalCluster return a client with the correct configuration
-// Returns configuration if Kiali is in Cluster when InCluster is true
-// Returns configuration if Kiali is not in Cluster when InCluster is false
+// getConfigForLocalCluster returns the config for the cluster on which Kiali is running.
 // It returns an error on any problem
 func getConfigForLocalCluster() (*rest.Config, error) {
-	remoteSecretPath := kialiconfig.Get().Deployment.RemoteSecretPath
-	if remoteSecret, readErr := GetRemoteSecret(remoteSecretPath); readErr == nil {
-		log.Debugf("Using remote secret for local cluster config found at: [%s]. Kiali must be running outside the kube cluster.", remoteSecretPath)
-		return clientcmd.NewDefaultClientConfig(*remoteSecret, nil).ClientConfig()
-	} else {
-		log.Debugf("Unable to read remote secret. It may or may not exist. Error: %v. Falling back to in cluster config", readErr)
-		// Fallback to in cluster config
-		incluster, err := rest.InClusterConfig()
-		if err != nil {
-			log.Errorf("Error '%v' getting config for local cluster", err.Error())
-			return nil, err
-		}
-		return incluster, nil
+	incluster, err := rest.InClusterConfig()
+	if err != nil {
+		log.Errorf("Error '%v' getting config for local cluster", err.Error())
+		return nil, err
 	}
+	return incluster, nil
 }
 
 // newClientFromConfig creates a new client to the Kubernetes and Istio APIs.

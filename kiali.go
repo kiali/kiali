@@ -123,19 +123,20 @@ func main() {
 		config.Set(config.NewConfig())
 	}
 
-	updateConfigWithIstioInfo()
-
-	conf := config.Get()
-	log.Tracef("Kiali Configuration:\n%s", conf)
-
-	if err := config.Validate(*conf); err != nil {
+	if err := config.Validate(config.Get()); err != nil {
+		log.Debugf("Kiali Configuration before auto-discovery:\n%s", config.Get())
 		log.Fatal(err)
 	}
 
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()
 
-	// Create the business package dependencies.
+	// determine the Kiali home cluster name. If necessary, this will try to autodiscover the Istiod cluster name
+	if err := determineHomeClusterName(); err != nil {
+		log.Fatalf("Failed to determine Kiali home cluster name. Err: %s", err)
+	}
+
+	// create the business package dependencies.
 	clientFactory, err := kubernetes.GetClientFactory()
 	if err != nil {
 		log.Fatalf("Failed to create client factory. Err: %s", err)
@@ -144,6 +145,23 @@ func main() {
 	// This context is used for polling and for creating some high level clients like tracing.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	// fetch a fresh config here, it could have been updated during auto-discovery
+	conf := config.Get()
+
+	// ensure the config is set to Kiali's home cluster name. Note that this may be accessed via a remote secret
+	if clientFactory.GetSAHomeClusterClient().ClusterInfo().Name != conf.KubernetesConfig.ClusterName {
+		conf.KubernetesConfig.ClusterName = clientFactory.GetSAHomeClusterClient().ClusterInfo().Name
+	}
+	// special case handling for run-kiali.sh or other "local" modes. If the the ONLY cluster is the local
+	// cluster, don't ignore it, even if we're accessing it via a remote secret.
+	if conf.Clustering.IgnoreHomeCluster && len(clientFactory.GetSAClients()) == 1 {
+		log.Debugf("Setting IgnoreHomeCluster=false, because the home cluster is the only cluster.")
+		conf.Clustering.IgnoreHomeCluster = false
+	}
+	config.Set(conf)
+
+	log.Tracef("Kiali Configuration after auto-discovery:\n%s", conf)
 
 	mgr, kubeCaches, err := newManager(ctx, conf, &zl, clientFactory)
 	if err != nil {
@@ -223,7 +241,7 @@ func main() {
 
 	// Not totally sure we need to call this for all clusters but better to be safe.
 	for cluster, cache := range kubeCaches {
-		log.Infof("Waiting for cluster: %s cache to sync", cluster)
+		log.Infof("Waiting for cluster [%s] cache to sync", cluster)
 
 		if !cache.WaitForCacheSync(ctx) {
 			log.Fatal("Timed out waiting for cache to sync")
@@ -237,15 +255,15 @@ func main() {
 		// that tries to access these resources will block until the informer is synced
 		// which can take a long time.
 		if _, err := layer.Workload.GetAllWorkloads(ctx, cluster, ""); err != nil {
-			log.Warningf("Unable to get workloads to sync cache for cluster %s. First request that accesses workloads may take awhile: %v", cluster, err)
+			log.Warningf("Unable to get workloads to sync cache for cluster [%s]. First request that accesses workloads may take awhile: %v", cluster, err)
 		}
 
 		if _, err := layer.IstioConfig.GetIstioConfigList(ctx, cluster, business.IstioConfigCriteria{
 			IncludeGateways:               true,
 			IncludeK8sGateways:            true,
-			IncludeK8sInferencePools:      true,
 			IncludeK8sGRPCRoutes:          true,
 			IncludeK8sHTTPRoutes:          true,
+			IncludeK8sInferencePools:      true,
 			IncludeK8sTCPRoutes:           true,
 			IncludeK8sTLSRoutes:           true,
 			IncludeVirtualServices:        true,
@@ -262,7 +280,7 @@ func main() {
 			IncludeTelemetry:              true,
 			IncludeK8sReferenceGrants:     true,
 		}); err != nil {
-			log.Warningf("Unable to get Istio config to sync cache for cluster %s. First request that accesses Istio config may take awhile: %v", cluster, err)
+			log.Warningf("Unable to get Istio config to sync cache for cluster [%s]. First request that accesses Istio config may take awhile: %v", cluster, err)
 		}
 	}
 	log.Info("All caches synced")
@@ -331,17 +349,23 @@ func determineContainerVersion(defaultVersion string) string {
 
 // This is used to update the config with information about istio that
 // comes from the environment such as the cluster name.
-func updateConfigWithIstioInfo() {
-	conf := *config.Get()
+func determineHomeClusterName() error {
+	conf := config.Get()
 
+	// If the home cluster name is already set, we don't need to do anything
 	homeCluster := conf.KubernetesConfig.ClusterName
 	if homeCluster != "" {
-		// If the cluster name is already set, we don't need to do anything
-		return
+		return nil
 	}
 
+	// If the cluster name is not set and we don't have a co-located control plane, it's an error
+	if conf.Clustering.IgnoreHomeCluster {
+		return fmt.Errorf("could not determine Kiali home cluster name. You must set kubernetes_config.cluster_name when clustering.ignore_home_cluster=true")
+	}
+
+	// use the control plane's configured cluster name, or the default
 	err := func() error {
-		log.Debug("Cluster name is not set. Attempting to auto-detect the cluster name from the home cluster environment.")
+		log.Debug("Cluster name is not set. Attempting to auto-detect the cluster name from the Istio control plane environment.")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
@@ -373,7 +397,9 @@ func updateConfigWithIstioInfo() {
 
 	log.Debugf("Auto-detected the istio cluster name to be [%s]. Updating the kiali config", homeCluster)
 	conf.KubernetesConfig.ClusterName = homeCluster
-	config.Set(&conf)
+	config.Set(conf)
+
+	return nil
 }
 
 func asReaders(caches map[string]ctrlcache.Cache) map[string]client.Reader {
@@ -397,8 +423,9 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 		return nil, nil, fmt.Errorf("error setting up manager when creating scheme: %s", err)
 	}
 
-	// In the future this could be any cluster and not just home cluster.
+	// This could be any cluster and not just the local cluster.
 	homeClusterInfo := clientFactory.GetSAHomeClusterClient().ClusterInfo()
+
 	var defaultNamespaces map[string]ctrlcache.Config
 	if !conf.AllNamespacesAccessible() {
 		defaultNamespaces = make(map[string]ctrlcache.Config)

@@ -52,6 +52,7 @@ func TestRootContextPath(t *testing.T) {
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
 	conf.Auth.Strategy = "anonymous"
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 
 	serverURL := fmt.Sprintf("http://%v", testServerHostPort)
 
@@ -111,6 +112,7 @@ func TestAnonymousMode(t *testing.T) {
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
 	conf.Auth.Strategy = "anonymous"
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 
 	serverURL := fmt.Sprintf("http://%v", testServerHostPort)
 	apiURLWithAuthentication := serverURL + "/api/authenticate"
@@ -201,6 +203,7 @@ func TestSecureComm(t *testing.T) {
 	conf.Server.Observability.Metrics.Port = testMetricsPort
 	conf.Server.Profiler.Enabled = true
 	conf.Auth.Strategy = "anonymous"
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 	util.Clock = util.RealClock{}
 
 	serverURL := fmt.Sprintf("https://%v", testServerHostPort)
@@ -319,6 +322,7 @@ func TestTracingConfigured(t *testing.T) {
 	conf.Server.Observability.Tracing.Enabled = true
 	conf.Server.Observability.Tracing.CollectorType = "otel"
 	conf.Auth.Strategy = "anonymous"
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 
 	// Set the global client factory.
 	cf := kubernetes.NewTestingClientFactory(t)

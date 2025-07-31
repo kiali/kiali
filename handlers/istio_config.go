@@ -420,7 +420,7 @@ func IstioConfigPermissions(
 		}
 
 		if !business.Mesh.IsValidCluster(cluster) {
-			RespondWithError(w, http.StatusBadRequest, "Cluster %s does not exist "+cluster)
+			RespondWithError(w, http.StatusBadRequest, "Cluster [%s] does not exist "+cluster)
 			return
 		}
 

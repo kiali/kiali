@@ -24,7 +24,7 @@ func TestMeshShowsExternalControlPlane(t *testing.T) {
 
 	require.Len(istiodNodes, 2)
 	for _, node := range istiodNodes {
-		require.Equal(node.Data.Cluster, "Kubernetes")
+		require.Equal("Kubernetes", node.Data.Cluster)
 	}
 
 	// TODO: When this is a mesh page test, need to ensure that there's two controlplanes

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 
@@ -59,14 +60,14 @@ type ContainerInfo struct {
 }
 
 // Parse extracts desired information from k8s []Pod info
-func (pods *Pods) Parse(list []core_v1.Pod) {
+func (pods *Pods) Parse(list []core_v1.Pod, isControlPlane func(ctx context.Context, cluster, namespace string) bool) {
 	if list == nil {
 		return
 	}
 
 	for _, pod := range list {
 		casted := Pod{}
-		casted.Parse(&pod)
+		casted.Parse(&pod, isControlPlane)
 		*pods = append(*pods, &casted)
 	}
 }
@@ -78,7 +79,7 @@ type sideCarStatus struct {
 }
 
 // Parse extracts desired information from k8s Pod info
-func (pod *Pod) Parse(p *core_v1.Pod) {
+func (pod *Pod) Parse(p *core_v1.Pod, isControlPlane func(ctx context.Context, cluster, namespace string) bool) {
 	pod.Name = p.Name
 	pod.Labels = p.Labels
 	pod.Annotations = p.Annotations
@@ -125,7 +126,7 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 		container := ContainerInfo{
 			Name:      c.Name,
 			Image:     c.Image,
-			IsProxy:   isIstioProxy(p, &c, conf),
+			IsProxy:   isIstioProxy(p, &c, *conf, isControlPlane),
 			IsReady:   lookupReady(c.Name, p.Status.ContainerStatuses),
 			IsAmbient: isIstioAmbient(p),
 		}
@@ -143,8 +144,8 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 	pod.ServiceAccountName = p.Spec.ServiceAccountName
 }
 
-func isIstioProxy(pod *core_v1.Pod, container *core_v1.Container, conf *config.Config) bool {
-	if pod.Namespace != conf.IstioNamespace {
+func isIstioProxy(pod *core_v1.Pod, container *core_v1.Container, conf config.Config, isControlPlane func(ctx context.Context, cluster, namespace string) bool) bool {
+	if !isControlPlane(context.TODO(), "", pod.Namespace) {
 		return false
 	}
 	if container.Name == IstioProxy {

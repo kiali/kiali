@@ -80,6 +80,10 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 	graph.CheckError(err)
 
 	clusterMap := make(map[string]bool)
+	conf := gi.Conf.Obfuscate()
+	es := conf.ExternalServices
+	hasExternalServices := false // external to the cluster/mesh (or a URL that can't be parsed)
+
 	for _, cp := range meshDef.ControlPlanes {
 		// Check if istio namespace is accessible for that cluster
 		cpKey := mesh.GetClusterSensitiveKey(cp.Cluster.Name, cp.IstiodNamespace)
@@ -144,13 +148,11 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 		}
 
 		// add any Kiali instances
-		conf := gi.Conf.Obfuscate()
-		es := conf.ExternalServices
-		hasExternalServices := false // external to the cluster/mesh (or a URL that can't be parsed)
-
 		for _, ki := range cp.Cluster.KialiInstances {
 			kiali, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cp.Cluster.Name, ki.Namespace, ki.ServiceName, es.Istio, ki.Version, false, "")
 			mesh.CheckError(err)
+
+			es := conf.ExternalServices
 
 			if es.Istio.IstioAPIEnabled {
 				kiali.AddEdge(istiod)
@@ -348,6 +350,70 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 					}
 				}
 			}
+		}
+	}
+
+	if meshDef.ExternalKiali != nil {
+		cluster := meshDef.ExternalKiali.Cluster.Name
+
+		// add external cluster if not already added
+		if _, ok := clusterMap[cluster]; !ok {
+			k8sVersion := esVersions[fmt.Sprintf("%s-%s", "Kubernetes", cluster)]
+			if k8sVersion == "" {
+				k8sVersion = "Unknown"
+			}
+			_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, cluster, "", cluster, cluster, k8sVersion, false, "")
+			mesh.CheckError(err)
+			clusterMap[cluster] = true
+		}
+
+		ek := meshDef.ExternalKiali.Kiali
+		kiali, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cluster, ek.Namespace, ek.ServiceName, es.Istio, ek.Version, false, "")
+		mesh.CheckError(err)
+
+		if es.Istio.IstioAPIEnabled {
+			for _, infra := range meshMap {
+				if infra.InfraType == mesh.InfraTypeIstiod {
+					kiali.AddEdge(infra)
+				}
+			}
+		}
+
+		// add the Kiali external services...
+
+		// metrics/prometheus
+		cluster, namespace, isExternal := discoverInfraService(es.Prometheus.URL, ctx, gi)
+		var node *mesh.Node
+		name := "Prometheus"
+		node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, cluster, namespace, name, es.Prometheus, esVersions[name], isExternal, healthData[promHealthKey])
+		mesh.CheckError(err)
+
+		kiali.AddEdge(node)
+		hasExternalServices = hasExternalServices || isExternal
+
+		if conf.ExternalServices.Tracing.Enabled {
+			cluster, namespace, isExternal = discoverInfraService(es.Tracing.InternalURL, ctx, gi)
+			name = string(es.Tracing.Provider)
+			node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, cluster, namespace, name, es.Tracing, esVersions[name], isExternal, healthData[tracingHealthKey])
+			mesh.CheckError(err)
+
+			kiali.AddEdge(node)
+			hasExternalServices = hasExternalServices || isExternal
+		}
+
+		if conf.ExternalServices.Grafana.Enabled {
+			cluster, namespace, isExternal = discoverInfraService(es.Grafana.InternalURL, ctx, gi)
+			name = "Grafana"
+			node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, cluster, namespace, name, es.Grafana, esVersions[name], isExternal, healthData[grafanaHealthKey])
+			mesh.CheckError(err)
+
+			kiali.AddEdge(node)
+			hasExternalServices = hasExternalServices || isExternal
+		}
+
+		if hasExternalServices {
+			_, _, err = addInfra(meshMap, mesh.InfraTypeCluster, mesh.External, "", "External Deployments", nil, "", true, "")
+			mesh.CheckError(err)
 		}
 	}
 

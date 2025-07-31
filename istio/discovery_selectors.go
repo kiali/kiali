@@ -1,6 +1,7 @@
 package istio
 
 import (
+	"context"
 	"regexp"
 
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -9,6 +10,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 var systemNamespaceRegex = regexp.MustCompile(`^(kube-.*|openshift.*|ibm.*|kiali-operator|istio-operator)`)
@@ -17,33 +19,37 @@ var systemNamespaceRegex = regexp.MustCompile(`^(kube-.*|openshift.*|ibm.*|kiali
 // If the cluster has overrides defined in the Kiali config, those overrides will be returned.
 // If there are no overrides, but default discovery selectors are defined in the Kiali config, those will be returned.
 // If there are no selectors defined in the Kiali config, nil is returned (Istio's own discovery selectors will be ignored).
-// kialiConfig argument may be nil - if so, they are ignored and nil is returned.
-func GetDiscoverySelectorsForCluster(cluster string, kialiConfig *config.Config) config.DiscoverySelectorsType {
-	ds := GetKialiDiscoverySelectors(cluster, kialiConfig)
+// kialiConf argument may be nil - if so, they are ignored and nil is returned.
+func GetDiscoverySelectorsForCluster(ctx context.Context, discovery MeshDiscovery, cluster string, kialiConf *config.Config) config.DiscoverySelectorsType {
+	if kialiConf == nil {
+		return nil
+	}
+
+	cpNamespaces := discovery.GetControlPlaneNamespaces(ctx, cluster)
+	ds := GetKialiDiscoverySelectors(cpNamespaces, cluster, kialiConf)
 	return ds
 }
 
-// getKialiDiscoverySelectors will return the discovery selectors applicable for the named cluster as configured
+// GetKialiDiscoverySelectors will return the discovery selectors applicable for the named cluster as configured
 // in the Kiali config (this func does nothing with Istio discovery selectors - it is only concerned with the Kiali config).
 // If the cluster has overrides defined in the Kiali config, those overrides will be returned.
 // If there are no overrides, but default discovery selectors are defined in the Kiali config, those will be returned.
 // If there are no selectors defined in the Kiali config, nil is returned.
-// If selectors are defined, this function will always return one more than what was configured - this extra selector
-// will select the control plane namespace as defined in the Kiali config in order to assure Kiali will always match
-// the control plane namespace (Kiali should always see that namespace).
-// NOTE: You probably don't want to use this func; instead, see getDiscoverySelectorsForCluster()
-func GetKialiDiscoverySelectors(cluster string, conf *config.Config) config.DiscoverySelectorsType {
+// If selectors are defined, the function will return the selectors, and as a convenience, additional selectors for
+// any provided cpNamespaces (for a set that ensures we always have access to control-plane namespaces).
+// NOTE: This is mainly a test hook, You probably want to use getDiscoverySelectorsForCluster()
+func GetKialiDiscoverySelectors(cpNamespaces []string, cluster string, conf *config.Config) config.DiscoverySelectorsType {
 	if conf == nil {
 		return nil
 	}
 
-	cpNamespaceSelector := config.DiscoverySelectorsType{
-		&config.DiscoverySelectorType{
+	cpNamespaceSelectors := sliceutil.Map(cpNamespaces, func(ns string) *config.DiscoverySelectorType {
+		return &config.DiscoverySelectorType{
 			MatchLabels: map[string]string{
-				"kubernetes.io/metadata.name": conf.IstioNamespace,
+				"kubernetes.io/metadata.name": ns,
 			},
-		},
-	}
+		}
+	})
 
 	dsConfig := conf.Deployment.DiscoverySelectors
 
@@ -51,14 +57,14 @@ func GetKialiDiscoverySelectors(cluster string, conf *config.Config) config.Disc
 	dsOverrides := dsConfig.Overrides
 	if dsOverrides != nil {
 		if dsCluster, ok := dsOverrides[cluster]; ok {
-			return append(cpNamespaceSelector, dsCluster...)
+			return append(cpNamespaceSelectors, dsCluster...)
 		}
 	}
 
 	// there are no overrides for the given cluster, see if we have defaults that we can fallback to
 	dsDefault := dsConfig.Default
 	if dsDefault != nil {
-		return append(cpNamespaceSelector, dsDefault...)
+		return append(cpNamespaceSelectors, dsDefault...)
 	}
 
 	// there are no discovery selectors configured within the Kiali config; return nil to indicate this

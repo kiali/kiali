@@ -36,7 +36,7 @@ import {
   kindToStringIncludeK8s
 } from 'utils/IstioConfigUtils';
 import { Label } from 'components/Label/Label';
-import { isMultiCluster, serverConfig } from 'config/ServerConfig';
+import { isIstioNamespace, isMultiCluster } from 'config/ServerConfig';
 import { ControlPlaneBadge } from 'pages/Overview/ControlPlaneBadge';
 import { NamespaceStatuses } from 'pages/Overview/NamespaceStatuses';
 import { KialiIcon } from '../../config/KialiIcon';
@@ -260,7 +260,7 @@ export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo, _config: Reso
     >
       <PFBadge badge={badge} />
       {ns.name}
-      {ns.name === serverConfig.istioNamespace && <ControlPlaneBadge />}
+      {isIstioNamespace(ns.name) && <ControlPlaneBadge />}
     </Td>
   );
 };

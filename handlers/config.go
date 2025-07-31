@@ -48,16 +48,17 @@ type PublicConfig struct {
 	AmbientEnabled      bool                          `json:"ambientEnabled,omitempty"`
 	Clusters            map[string]models.KubeCluster `json:"clusters,omitempty"`
 	ClusterWideAccess   bool                          `json:"clusterWideAccess,omitempty"`
+	ControlPlanes       map[string]string             `json:"controlPlanes,omitempty"`
 	Deployment          DeploymentConfig              `json:"deployment,omitempty"`
 	GatewayAPIClasses   []config.GatewayAPIClass      `json:"gatewayAPIClasses,omitempty"`
 	GatewayAPIEnabled   bool                          `json:"gatewayAPIEnabled,omitempty"`
 	HealthConfig        config.HealthConfig           `json:"healthConfig,omitempty"`
+	IgnoreHomeCluster   bool                          `json:"ignoreHomeCluster,omitempty"`
 	InstallationTag     string                        `json:"installationTag,omitempty"`
 	IstioAnnotations    IstioAnnotations              `json:"istioAnnotations,omitempty"`
 	IstioConfigMap      string                        `json:"istioConfigMap"`
 	IstioIdentityDomain string                        `json:"istioIdentityDomain,omitempty"`
 	IstioLabels         config.IstioLabels            `json:"istioLabels,omitempty"`
-	IstioNamespace      string                        `json:"istioNamespace,omitempty"`
 	IstioStatusEnabled  bool                          `json:"istioStatusEnabled,omitempty"`
 	KialiFeatureFlags   config.KialiFeatureFlags      `json:"kialiFeatureFlags,omitempty"`
 	LogLevel            string                        `json:"logLevel,omitempty"`
@@ -79,6 +80,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			AuthStrategy:      conf.Auth.Strategy,
 			Clusters:          make(map[string]models.KubeCluster),
 			ClusterWideAccess: conf.Deployment.ClusterWideAccess,
+			ControlPlanes:     make(map[string]string),
 			Deployment: DeploymentConfig{
 				ViewOnlyMode: conf.Deployment.ViewOnlyMode,
 			},
@@ -89,9 +91,9 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 				IstioInjectionAnnotation: conf.ExternalServices.Istio.IstioInjectionAnnotation,
 			},
 			HealthConfig:        conf.HealthConfig,
+			IgnoreHomeCluster:   conf.Clustering.IgnoreHomeCluster,
 			IstioStatusEnabled:  conf.ExternalServices.Istio.ComponentStatuses.Enabled,
 			IstioIdentityDomain: conf.ExternalServices.Istio.IstioIdentityDomain,
-			IstioNamespace:      conf.IstioNamespace,
 			IstioLabels:         conf.IstioLabels,
 			IstioConfigMap:      conf.ExternalServices.Istio.ConfigMapName,
 			KialiFeatureFlags:   conf.KialiFeatureFlags,
@@ -108,7 +110,6 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			return
 		}
 
-		// @TODO hardcoded home cluster
 		if client := userClients[conf.KubernetesConfig.ClusterName]; client != nil {
 			publicConfig.GatewayAPIEnabled = client.IsGatewayAPI()
 		}
@@ -125,6 +126,16 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 
 		for _, cluster := range clusters {
 			publicConfig.Clusters[cluster.Name] = cluster
+
+			if client := userClients[cluster.Name]; client != nil {
+				if namespaces, found := cache.GetNamespaces(cluster.Name, client.GetToken()); found {
+					for _, ns := range namespaces {
+						if discovery.IsControlPlane(r.Context(), cluster.Name, ns.Name) {
+							publicConfig.ControlPlanes[cluster.Name] = ns.Name
+						}
+					}
+				}
+			}
 		}
 
 		RespondWithJSONIndent(w, http.StatusOK, publicConfig)

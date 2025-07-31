@@ -50,7 +50,7 @@ func TestNewClient(ctx context.Context, conf *config.Config, token string) (*mod
 
 	// Internal URL not set
 	url := cfgTracing.InternalURL
-	if !conf.InCluster {
+	if url == "" {
 		url = cfgTracing.ExternalURL
 		logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Using external url %s because not in cluster", url)})
 		if url == "" {

@@ -77,6 +77,7 @@ import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { GroupVersionKind } from '../../types/IstioObjects';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { usePreviousValue } from 'utils/ReactUtils';
+import { istioNamespaces } from 'config/ServerConfig';
 
 type ReduxProps = {
   activeClusters: MeshCluster[];
@@ -139,7 +140,7 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
   const [showAnnotationsWizard, setShowAnnotationsWizard] = React.useState<boolean>(false);
   const [showLabelsWizard, setShowLabelsWizard] = React.useState<boolean>(false);
   const [showPreview, setShowPreview] = React.useState<boolean>(false);
-  const [sidecar, setSidecar] = React.useState<SidecarState>(initSidecar(`${serverConfig.istioNamespace}/*`));
+  const [sidecar, setSidecar] = React.useState<SidecarState>(initSidecar(`${istioNamespaces()[0]}/*`));
 
   const { t } = useKialiTranslation();
 

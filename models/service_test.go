@@ -18,7 +18,7 @@ func TestServiceDetailParsing(t *testing.T) {
 
 	service := ServiceDetails{}
 	service.SetService(config.DefaultClusterID, fakeService(), config.Get())
-	service.SetPods(fakePods())
+	service.SetPods(fakePods(), fakeIsControlPlane)
 	service.SetIstioSidecar(fakeWorkloads())
 
 	// Kubernetes Details

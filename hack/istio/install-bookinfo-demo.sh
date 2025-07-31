@@ -186,6 +186,11 @@ else
   exit 1
 fi
 
+# if we have a valid minikube profile just add it to every kubectl command
+if minikube -p ${MINIKUBE_PROFILE} status > /dev/null 2>&1 ; then
+  CLIENT_EXE="${CLIENT_EXE} --context=${MINIKUBE_PROFILE}"
+fi
+
 IS_OPENSHIFT="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_OPENSHIFT="true"

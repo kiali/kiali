@@ -350,14 +350,14 @@ func TestValidateWebRoot(t *testing.T) {
 
 	for _, webroot := range validWebRoots {
 		conf.Server.WebRoot = webroot
-		if err := Validate(*conf); err != nil {
+		if err := Validate(conf); err != nil {
 			t.Errorf("Web root validation should have succeeded for [%v]: %v", conf.Server.WebRoot, err)
 		}
 	}
 
 	for _, webroot := range invalidWebRoots {
 		conf.Server.WebRoot = webroot
-		if err := Validate(*conf); err == nil {
+		if err := Validate(conf); err == nil {
 			t.Errorf("Web root validation should have failed [%v]", conf.Server.WebRoot)
 		}
 	}
@@ -385,14 +385,14 @@ func TestValidateAuthStrategy(t *testing.T) {
 
 	for _, strategies := range validStrategies {
 		conf.Auth.Strategy = strategies
-		if err := Validate(*conf); err != nil {
+		if err := Validate(conf); err != nil {
 			t.Errorf("Auth Strategy validation should have succeeded for [%v]: %v", conf.Auth.Strategy, err)
 		}
 	}
 
 	for _, strategies := range invalidStrategies {
 		conf.Auth.Strategy = strategies
-		if err := Validate(*conf); err == nil {
+		if err := Validate(conf); err == nil {
 			t.Errorf("Auth Strategy validation should have failed [%v]", conf.Auth.Strategy)
 		}
 	}

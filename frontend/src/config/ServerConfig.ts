@@ -59,6 +59,7 @@ const defaultServerConfig: ComputedServerConfig = {
   authStrategy: '',
   clusters: {},
   clusterWideAccess: true,
+  controlPlanes: { Kubernetes: 'istio-system' },
   durations: {},
   gatewayAPIClasses: [],
   gatewayAPIEnabled: false,
@@ -69,6 +70,7 @@ const defaultServerConfig: ComputedServerConfig = {
   deployment: {
     viewOnlyMode: false
   },
+  ignoreHomeCluster: false,
   installationTag: 'Kiali Console',
   istioAnnotations: {
     ambientAnnotation: 'ambient.istio.io/redirection',
@@ -76,7 +78,6 @@ const defaultServerConfig: ComputedServerConfig = {
     istioInjectionAnnotation: 'sidecar.istio.io/inject'
   },
   istioIdentityDomain: 'svc.cluster.local',
-  istioNamespace: 'istio-system',
   istioLabels: {
     ambientNamespaceLabel: 'istio.io/dataplane-mode',
     ambientNamespaceLabelValue: 'ambient',
@@ -183,11 +184,17 @@ export const setServerConfig = (cfg: ServerConfig): void => {
   }
 };
 
+export const isIstioControlPlane = (cluster: string, namespace: string): boolean => {
+  return serverConfig.controlPlanes[cluster] === namespace;
+};
+
 export const isIstioNamespace = (namespace: string): boolean => {
-  if (namespace === serverConfig.istioNamespace) {
-    return true;
-  }
-  return false;
+  return Object.values(serverConfig.controlPlanes).some(cpNamespace => cpNamespace === namespace);
+};
+
+export const istioNamespaces = (): string[] => {
+  const cpNamespaces = Object.values(serverConfig.controlPlanes);
+  return [...new Set(cpNamespaces)];
 };
 
 export const isHomeCluster = (cluster: string): boolean => {

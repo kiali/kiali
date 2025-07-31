@@ -106,7 +106,6 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
-	conf.InCluster = false
 	conf.KubernetesConfig.ClusterName = "KialiCluster"
 
 	istioDeploymentMock := apps_v1.Deployment{
@@ -214,9 +213,8 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	check := require.New(t)
 
 	conf := config.NewConfig()
-	conf.InCluster = false
 
-	remoteNs := kubetest.FakeNamespaceWithLabels(conf.IstioNamespace, map[string]string{"topology.istio.io/network": "TheRemoteNetwork"})
+	remoteNs := kubetest.FakeNamespaceWithLabels(config.IstioNamespaceDefault, map[string]string{"topology.istio.io/network": "TheRemoteNetwork"})
 
 	kialiSvc := &core_v1.Service{
 		ObjectMeta: v1.ObjectMeta{
@@ -228,7 +226,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 				"app.kubernetes.io/part-of": "kiali",
 			},
 			Name:      "kiali-service",
-			Namespace: conf.IstioNamespace,
+			Namespace: config.IstioNamespaceDefault,
 		},
 		Spec: core_v1.ServiceSpec{
 			Selector: map[string]string{
@@ -266,7 +264,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	check.Equal("https://192.168.144.17:123", remoteCluster.ApiEndpoint)
 
 	check.Len(remoteCluster.KialiInstances, 1, "GetClusters didn't resolve the remote Kiali instance")
-	check.Equal(conf.IstioNamespace, remoteCluster.KialiInstances[0].Namespace, "GetClusters didn't set the right namespace of the Kiali instance")
+	check.Equal(config.IstioNamespaceDefault, remoteCluster.KialiInstances[0].Namespace, "GetClusters didn't set the right namespace of the Kiali instance")
 	check.Equal("kiali-operator/myKialiCR", remoteCluster.KialiInstances[0].OperatorResource, "GetClusters didn't set the right operator resource of the Kiali instance")
 	check.Equal("", remoteCluster.KialiInstances[0].Url, "GetClusters didn't set the right URL of the Kiali instance")
 	check.Equal("v1.25", remoteCluster.KialiInstances[0].Version, "GetClusters didn't set the right version of the Kiali instance")
@@ -293,7 +291,6 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 
 	// Prepare mocks for first time call.
 	conf := config.NewConfig()
-	conf.IstioNamespace = "foo"
 	conf.ExternalServices.Istio.IstiodDeploymentName = "bar"
 	conf.KubernetesConfig.ClusterName = "KialiCluster"
 
@@ -2586,4 +2583,175 @@ func TestSharedMeshConfig(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestIsControlPlane(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "cluster1"
+
+	// Create istiod deployment for cluster1
+	istiodDeployment := fakeIstiodDeployment("cluster1", false)
+
+	// Create istio config map
+	const configMapData = `accessLogFile: /dev/stdout
+enableAutoMtls: true
+rootNamespace: istio-system
+trustDomain: cluster.local
+`
+	istioConfigMap := &core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istio",
+			Namespace: "istio-system",
+			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
+		},
+		Data: map[string]string{"mesh": configMapData},
+	}
+
+	// Set up client for cluster1 with control plane in istio-system
+	k8sClient := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("istio-system"),
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("default"),
+		istiodDeployment,
+		istioConfigMap,
+		istio.FakeCertificateConfigMap("istio-system"),
+	)
+
+	// Set up clients for discovery
+	clients := map[string]kubernetes.ClientInterface{
+		"cluster1": k8sClient,
+	}
+	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
+	discovery := istio.NewDiscovery(clients, cache, conf)
+
+	ctx := context.Background()
+
+	// Test: namespace is a control plane namespace in the specified cluster
+	require.True(discovery.IsControlPlane(ctx, "cluster1", "istio-system"),
+		"Should return true when namespace matches control plane namespace")
+
+	// Test: namespace is not a control plane namespace
+	require.False(discovery.IsControlPlane(ctx, "cluster1", "bookinfo"),
+		"Should return false when namespace is not a control plane namespace")
+
+	require.False(discovery.IsControlPlane(ctx, "cluster1", "default"),
+		"Should return false when namespace is not a control plane namespace")
+
+	// Test: empty cluster parameter should ignore cluster and only check namespace
+	require.True(discovery.IsControlPlane(ctx, "", "istio-system"),
+		"Should return true when cluster is empty and namespace matches control plane")
+
+	require.False(discovery.IsControlPlane(ctx, "", "bookinfo"),
+		"Should return false when cluster is empty and namespace doesn't match control plane")
+
+	// Test: non-existent cluster
+	require.False(discovery.IsControlPlane(ctx, "non-existent", "istio-system"),
+		"Should return false for non-existent cluster")
+
+	// Test: empty namespace
+	require.False(discovery.IsControlPlane(ctx, "cluster1", ""),
+		"Should return false for empty namespace")
+}
+
+func TestGetControlPlaneNamespaces(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "cluster1"
+
+	// Create istiod deployment for cluster1
+	istiodDeploymentCluster1 := fakeIstiodDeployment("cluster1", false)
+
+	// Create istio config map
+	const configMapData = `accessLogFile: /dev/stdout
+enableAutoMtls: true
+rootNamespace: istio-system
+trustDomain: cluster.local
+`
+	istioConfigMapCluster1 := &core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istio",
+			Namespace: "istio-system",
+			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
+		},
+		Data: map[string]string{"mesh": configMapData},
+	}
+
+	// Set up client for cluster1 with control plane in istio-system
+	cluster1Client := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("istio-system"),
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("default"),
+		istiodDeploymentCluster1,
+		istioConfigMapCluster1,
+		istio.FakeCertificateConfigMap("istio-system"),
+	)
+
+	// Create istiod deployment for cluster2 with different namespace
+	istiodDeploymentCluster2 := fakeIstiodDeployment("cluster2", false)
+	istiodDeploymentCluster2.Namespace = "istio-control"
+
+	istioConfigMapCluster2 := &core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istio",
+			Namespace: "istio-control",
+			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
+		},
+		Data: map[string]string{"mesh": configMapData},
+	}
+
+	// Set up client for cluster2 with control plane in istio-control
+	cluster2Client := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("istio-control"),
+		kubetest.FakeNamespace("production"),
+		istiodDeploymentCluster2,
+		istioConfigMapCluster2,
+		istio.FakeCertificateConfigMap("istio-control"),
+	)
+
+	// Set up clients for discovery
+	clients := map[string]kubernetes.ClientInterface{
+		"cluster1": cluster1Client,
+		"cluster2": cluster2Client,
+	}
+	cacheNotEmpty := cache.NewTestingCacheWithClients(t, clients, *conf)
+	discovery := istio.NewDiscovery(clients, cacheNotEmpty, conf)
+
+	ctx := context.Background()
+
+	// Test: get control plane namespaces for specific cluster1
+	namespaces := discovery.GetControlPlaneNamespaces(ctx, "cluster1")
+	require.Len(namespaces, 1, "Should return exactly one control plane namespace for cluster1")
+	require.Contains(namespaces, "istio-system", "Should contain istio-system namespace for cluster1")
+
+	// Test: get control plane namespaces for specific cluster2
+	namespaces = discovery.GetControlPlaneNamespaces(ctx, "cluster2")
+	require.Len(namespaces, 1, "Should return exactly one control plane namespace for cluster2")
+	require.Contains(namespaces, "istio-control", "Should contain istio-control namespace for cluster2")
+
+	// Test: get control plane namespaces for all clusters (empty cluster parameter)
+	namespaces = discovery.GetControlPlaneNamespaces(ctx, "")
+	require.Len(namespaces, 2, "Should return control plane namespaces from all clusters")
+	require.Contains(namespaces, "istio-system", "Should contain istio-system namespace from cluster1")
+	require.Contains(namespaces, "istio-control", "Should contain istio-control namespace from cluster2")
+
+	// Test: get control plane namespaces for non-existent cluster
+	namespaces = discovery.GetControlPlaneNamespaces(ctx, "non-existent")
+	require.Empty(namespaces, "Should return empty slice for non-existent cluster")
+
+	// Test: get control plane namespaces for cluster with no control plane
+	emptyClient := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("default"),
+		kubetest.FakeNamespace("kube-system"),
+	)
+	clientsWithEmpty := map[string]kubernetes.ClientInterface{
+		"cluster1":      cluster1Client,
+		"cluster2":      cluster2Client,
+		"empty-cluster": emptyClient,
+	}
+	cacheEmpty := cache.NewTestingCacheWithClients(t, clientsWithEmpty, *conf)
+	discoveryWithEmpty := istio.NewDiscovery(clientsWithEmpty, cacheEmpty, conf)
+
+	namespaces = discoveryWithEmpty.GetControlPlaneNamespaces(ctx, "empty-cluster")
+	require.Empty(namespaces, "Should return empty slice for cluster with no control plane")
 }
