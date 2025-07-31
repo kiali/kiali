@@ -118,17 +118,13 @@ EOF
   # create kube secret from the certs
   kubectl create secret tls keycloak-tls --cert="${KEYCLOAK_CERTS_DIR}"/cert.pem --key="${KEYCLOAK_CERTS_DIR}"/key.pem -n keycloak
 
-  echo "Creating keycloak deployment"
   HELM_MEMORY_ARGS=""
   if [ -n "$SET_LIMIT_MEMORY" ]; then
-    echo "$SET_LIMIT_MEMORY"
     HELM_MEMORY_ARGS="$HELM_MEMORY_ARGS --set resources.limits.memory=$SET_LIMIT_MEMORY"
   fi
   if [ -n "$SET_REQUESTS_MEMORY" ]; then
-    echo "$SET_REQUESTS_MEMORY"
     HELM_MEMORY_ARGS="$HELM_MEMORY_ARGS --set resources.requests.memory=$SET_REQUESTS_MEMORY"
   fi
-  echo "$HELM_MEMORY_ARGS"
   helm upgrade --install --wait --timeout 15m \
   --namespace keycloak \
   keycloak oci://registry-1.docker.io/bitnamicharts/keycloak --version 24.3.2 \

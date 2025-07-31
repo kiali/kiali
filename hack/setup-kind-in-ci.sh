@@ -36,7 +36,7 @@ Options:
     This option is ignored if -ii is false.
     If not specified, the latest version of Istio is installed.
     Default: <the latest release>
- -klm|--keycloak-limit-memory
+-klm|--keycloak-limit-memory
     The keycloak resources limit memory in the keycloak helm charts
 -krm|--keycloak-requests-memory)
     The keycloak resources requests memory in the keycloak helm charts.
@@ -211,7 +211,7 @@ setup_kind_singlecluster() {
             --enable-keycloak true \
             --keycloak-certs-dir "${KEYCLOAK_CERTS_DIR}" \
             --keycloak-issuer-uri "https://${KEYCLOAK_ADDRESS}/realms/kube"
- echo "KEYCLOAK: $KEYCLOAK_LIMIT_MEMORY $KEYCLOAK_REQUESTS_MEMORY "
+
       # Optional: keycloak memory limits
       if [ -n "$KEYCLOAK_LIMIT_MEMORY" ]; then
         MEMORY_LIMIT_ARG="-slm $KEYCLOAK_LIMIT_MEMORY"
@@ -223,7 +223,7 @@ setup_kind_singlecluster() {
       else
         MEMORY_REQUEST_ARG=""
       fi
-      echo "Args: $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG"
+
       "${SCRIPT_DIR}/keycloak.sh" -kcd "${KEYCLOAK_CERTS_DIR}" -kip "${KEYCLOAK_ADDRESS}" $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG deploy
 
       keycloak_ip_cl=$(kubectl get svc keycloak -n keycloak -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
@@ -433,16 +433,16 @@ setup_kind_multicluster() {
     local kind_node_image="--kind-node-image ${KIND_NODE_IMAGE}"
   fi
 
-if [ -n "$KEYCLOAK_LIMIT_MEMORY" ]; then
-        MEMORY_LIMIT_ARG="-kml $KEYCLOAK_LIMIT_MEMORY"
-      else
-        MEMORY_LIMIT_ARG=""
-      fi
-      if [ -n "$KEYCLOAK_REQUESTS_MEMORY" ]; then
-        MEMORY_REQUEST_ARG="-krm $KEYCLOAK_REQUESTS_MEMORY"
-      else
-        MEMORY_REQUEST_ARG=""
-      fi
+  if [ -n "$KEYCLOAK_LIMIT_MEMORY" ]; then
+    MEMORY_LIMIT_ARG="-kml $KEYCLOAK_LIMIT_MEMORY"
+  else
+    MEMORY_LIMIT_ARG=""
+  fi
+  if [ -n "$KEYCLOAK_REQUESTS_MEMORY" ]; then
+    MEMORY_REQUEST_ARG="-krm $KEYCLOAK_REQUESTS_MEMORY"
+  else
+    MEMORY_REQUEST_ARG=""
+  fi
 
   local cluster1_context
   local cluster2_context

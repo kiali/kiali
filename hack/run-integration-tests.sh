@@ -483,15 +483,15 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   ensureCypressInstalled
 
   if [ -n "$KEYCLOAK_LIMIT_MEMORY" ]; then
-        MEMORY_LIMIT_ARG="-klm $KEYCLOAK_LIMIT_MEMORY"
-      else
-        MEMORY_LIMIT_ARG=""
-      fi
-      if [ -n "$KEYCLOAK_REQUESTS_MEMORY" ]; then
-        MEMORY_REQUEST_ARG="-krm $KEYCLOAK_REQUESTS_MEMORY"
-      else
-        MEMORY_REQUEST_ARG=""
-      fi
+      MEMORY_LIMIT_ARG="-klm $KEYCLOAK_LIMIT_MEMORY"
+  else
+      MEMORY_LIMIT_ARG=""
+  fi
+  if [ -n "$KEYCLOAK_REQUESTS_MEMORY" ]; then
+     MEMORY_REQUEST_ARG="-krm $KEYCLOAK_REQUESTS_MEMORY"
+  else
+     MEMORY_REQUEST_ARG=""
+  fi
 
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy openid ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG
