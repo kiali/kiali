@@ -1,0 +1,78 @@
+name: Integration Tests Frontend External Kiali
+
+on:
+  workflow_call:
+    inputs:
+      target_branch:
+        required: true
+        type: string
+      build_branch:
+        required: true
+        type: string
+      istio_version:
+        required: false
+        type: string
+        default: ""
+
+env:
+  TARGET_BRANCH: ${{ inputs.target_branch }}
+
+jobs:
+  integration_tests_frontend_multicluster_external_kiali:
+    name: Cypress integration tests (External Kiali)
+    runs-on: ubuntu-latest
+    env:
+      # Copied from: https://github.com/bahmutov/cypress-gh-action-split-install/blob/ca3916d4e7240ebdc337825d2d78eb354855464b/.github/workflows/tests.yml#L7-L11
+      # prevents extra Cypress installation progress messages
+      CI: 1
+      # avoid warnings like "tput: No value for $TERM and no -T specified"
+      TERM: xterm
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.build_branch }}
+
+    - name: Setup node
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+        cache: yarn
+        cache-dependency-path: frontend/yarn.lock
+
+    - name: Download go binary
+      uses: actions/download-artifact@v4
+      with:
+        name: kiali
+        path: ~/go/bin/
+
+    - name: Ensure kiali binary is executable
+      run: chmod +x ~/go/bin/kiali
+
+    # Need to install frontend dependencies to run cypress tests.
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: yarn install --frozen-lockfile
+
+    - name: Run frontend external Kiali integration tests
+      run: hack/run-integration-tests.sh --test-suite frontend-external-kiali $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
+
+    - name: Get debug info when integration tests fail
+      if: failure()
+      run: |
+        mkdir debug-output
+        hack/ci-get-debug-info.sh --output-directory debug-output --kubectl-context mgmt
+
+    - name: Upload debug info artifact
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-info-${{ github.job }}
+        path: debug-output
+
+    - name: Upload cypress screenshots when tests fail
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: cypress-screenshots-${{ github.job }}
+        path: frontend/cypress/screenshots
