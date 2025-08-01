@@ -451,6 +451,7 @@ setup_kind_multicluster() {
   local cluster2_context
   local cluster1_name
   local cluster2_name
+  local ignore_home_cluster="false"
   local istio_version_arg=${ISTIO_VERSION:+--istio-version ${ISTIO_VERSION}}
   if [ "${MULTICLUSTER}" == "${MULTI_PRIMARY}" ]; then
     "${SCRIPT_DIR}"/istio/multicluster/install-multi-primary.sh \
@@ -485,6 +486,7 @@ setup_kind_multicluster() {
     cluster2_context="kind-mesh"
     cluster1_name="mgmt"
     cluster2_name="mesh"
+    ignore_home_cluster="true"
     kubectl rollout status deployment prometheus -n istio-system --context kind-mesh
   elif [ "${MULTICLUSTER}" == "${EXTERNAL_CONTROLPLANE}" ]; then
     "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh ${kind_node_image:-} ${istio_version_arg}
@@ -508,6 +510,7 @@ setup_kind_multicluster() {
     --cluster2-context ${cluster2_context} \
     --cluster1-name ${cluster1_name} \
     --cluster2-name ${cluster2_name} \
+    --ignore-home-cluster ${ignore_home_cluster} \
     --manage-kind true \
     ${auth_flags[@]} \
     -dorp docker \
