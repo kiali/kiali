@@ -32,7 +32,9 @@ var _ = Describe("Validations controller", Ordered, func() {
 	Context("When validating a VirtualService", func() {
 		BeforeAll(func(specCtx SpecContext) {
 			conf := config.NewConfig()
-			kialiKubeClient, err := kubernetes.NewClientWithRemoteClusterInfo(cfg, nil)
+			kialiKubeClient, err := kubernetes.NewClient(kubernetes.ClusterInfo{
+				Name: conf.KubernetesConfig.ClusterName,
+			}, conf)
 			Expect(err).ToNot(HaveOccurred())
 
 			saClients := map[string]kubernetes.UserClientInterface{

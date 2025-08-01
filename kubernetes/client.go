@@ -2,7 +2,6 @@ package kubernetes
 
 import (
 	"context"
-	"path/filepath"
 	"sync"
 
 	osappsclient "github.com/openshift/client-go/apps/clientset/versioned"
@@ -125,6 +124,8 @@ type K8SClient struct {
 	// Separated out for testing purposes
 	getPodPortForwarderFunc func(namespace, name, portMap string) (httputil.PortForwarder, error)
 
+	// TODO: This should really just be the cert pool since that's all that we need.
+	// There's probably even a way to set the cert pool on the restConfig.
 	conf *kialiconfig.Config
 }
 
@@ -140,50 +141,24 @@ func (client *K8SClient) ClusterInfo() ClusterInfo {
 	return client.clusterInfo
 }
 
-func NewClientWithRemoteClusterInfo(config *rest.Config, remoteClusterInfo *RemoteClusterInfo) (*K8SClient, error) {
-	client, err := newClientFromConfig(config)
+func NewClient(clusterInfo ClusterInfo, conf *kialiconfig.Config) (*K8SClient, error) {
+	client, err := newClientFromConfig(clusterInfo.ClientConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	if remoteClusterInfo != nil {
-		// the secret file name is the cluster name, the kube context may differ
-		client.clusterInfo = ClusterInfo{
-			Name:       filepath.Base(remoteClusterInfo.SecretFile),
-			SecretName: remoteClusterInfo.SecretName,
-		}
-	} else {
-		client.clusterInfo = ClusterInfo{
-			Name: kialiconfig.Get().KubernetesConfig.ClusterName,
-		}
-	}
-	// Copy config
-	clientConfig := *config
-	client.clusterInfo.ClientConfig = &clientConfig
+	client.clusterInfo = clusterInfo
+	client.conf = conf
 
 	return client, nil
-}
-
-// getConfigForLocalCluster returns the config for the cluster on which Kiali is running.
-// It returns an error on any problem
-func getConfigForLocalCluster() (*rest.Config, error) {
-	incluster, err := rest.InClusterConfig()
-	if err != nil {
-		log.Errorf("Error '%v' getting config for local cluster", err.Error())
-		return nil, err
-	}
-	return incluster, nil
 }
 
 // newClientFromConfig creates a new client to the Kubernetes and Istio APIs.
 // It takes the assumption that Istio is deployed into the cluster.
 // It hides the access to Kubernetes/Openshift credentials.
-// It hides the low level use of the API of Kubernetes and Istio, it should be considered as an implementation detail.
-// It returns an error on any problem.
 func newClientFromConfig(config *rest.Config) (*K8SClient, error) {
 	client := K8SClient{
 		token: config.BearerToken,
-		conf:  kialiconfig.Get(),
 	}
 
 	log.Debugf("Rest perf config QPS: %f Burst: %d", config.QPS, config.Burst)
@@ -238,31 +213,4 @@ func newClientFromConfig(config *rest.Config) (*K8SClient, error) {
 	client.ctx = context.Background()
 
 	return &client, nil
-}
-
-// NewClient is just used for testing purposes.
-func NewClient(
-	kubeClient kube.Interface,
-	istioClient istio.Interface,
-	gatewayapiClient gatewayapiclient.Interface,
-	inferenceapiClient inferenceapiclient.Interface,
-	osAppsClient osappsclient.Interface,
-	projectClient projectclient.Interface,
-	routeClient routeclient.Interface,
-	userClient userclient.Interface,
-	oAuthClient oauthclient.Interface,
-	reader ctrlclient.Reader,
-) *K8SClient {
-	return &K8SClient{
-		istioClientset: istioClient,
-		k8s:            kubeClient,
-		gatewayapi:     gatewayapiClient,
-		inferenceapi:   inferenceapiClient,
-		osAppsClient:   osAppsClient,
-		projectClient:  projectClient,
-		routeClient:    routeClient,
-		userClient:     userClient,
-		oAuthClient:    oAuthClient,
-		Reader:         reader,
-	}
 }

@@ -18,6 +18,16 @@ import (
 	"github.com/kiali/kiali/config"
 )
 
+// Helper function to create a fake rest.Config for tests
+func createFakeRestConfig() *rest.Config {
+	return &rest.Config{
+		Host: "https://fake-k8s-server:443",
+		TLSClientConfig: rest.TLSClientConfig{
+			Insecure: true,
+		},
+	}
+}
+
 var (
 	//go:embed testdata/remote-cluster-exec.yaml
 	remoteClusterExecYAML string
@@ -27,22 +37,18 @@ var (
 
 	//go:embed testdata/proxy-ca.pem
 	proxyCAData []byte
-
-	//go:embed testdata/sa-token.yaml
-	saTokenYAML string
 )
 
 // TestClientExpiration Verify the details that clients expire are correct
 func TestClientExpiration(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
-	conf := config.Get()
+	conf := config.NewConfig()
 	conf.Auth.Strategy = config.AuthStrategyOpenId
 	conf.Auth.OpenId.DisableRBAC = false
 	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
-	SetConfig(t, *conf)
 
-	clientFactory := NewTestingClientFactory(t)
+	clientFactory := NewTestingClientFactory(t, conf)
 
 	// Make sure we are starting off with an empty set of clients
 	assert.Equal(0, clientFactory.getClientsLength())
@@ -90,7 +96,10 @@ func TestClientExpiration(t *testing.T) {
 func TestConcurrentClientExpiration(t *testing.T) {
 	assert := assert.New(t)
 
-	clientFactory := NewTestingClientFactory(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+
+	clientFactory := NewTestingClientFactory(t, conf)
 	count := 100
 
 	wg := sync.WaitGroup{}
@@ -122,12 +131,10 @@ func TestConcurrentClientFactory(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(count)
 
-	setGlobalKialiSAToken(t)
-
 	for i := 0; i < count; i++ {
 		go func() {
 			defer wg.Done()
-			_, err := newClientFactory(conf, &istioConfig)
+			_, err := NewClientFactory(t.Context(), conf, &istioConfig)
 			require.NoError(err)
 		}()
 	}
@@ -145,12 +152,11 @@ func TestClientCreatedWithClusterInfo(t *testing.T) {
 
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
-	config.Set(conf)
 
 	const testClusterName = "TestRemoteCluster"
 	createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
 
-	clientFactory := NewTestingClientFactory(t)
+	clientFactory := NewTestingClientFactory(t, conf)
 
 	// Service account clients
 	saClients := clientFactory.GetSAClients()
@@ -182,13 +188,11 @@ func TestClientCreatedWithAuthStrategyAnonymous(t *testing.T) {
 	conf := config.NewConfig()
 	conf.Auth.Strategy = config.AuthStrategyAnonymous
 
-	config.Set(conf)
-
 	const testClusterName = "TestRemoteCluster"
 	const testUserToken = "TestUserToken"
 
 	createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
-	clientFactory := NewTestingClientFactory(t)
+	clientFactory := NewTestingClientFactory(t, conf)
 
 	// Create a single initial test clients
 	authInfo := map[string]*api.AuthInfo{testClusterName: {Token: testUserToken}}
@@ -214,12 +218,10 @@ func TestClientCreatedWithAuthStrategyOpenIdAndDisableRBAC(t *testing.T) {
 	conf.Auth.Strategy = config.AuthStrategyOpenId
 	conf.Auth.OpenId.DisableRBAC = true
 
-	config.Set(conf)
-
 	const testClusterName = "TestRemoteCluster"
 	const testUserToken = "TestUserToken"
 	createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
-	clientFactory := NewTestingClientFactory(t)
+	clientFactory := NewTestingClientFactory(t, conf)
 
 	// Create a single initial test clients
 	authInfo := map[string]*api.AuthInfo{testClusterName: {Token: testUserToken}}
@@ -244,12 +246,10 @@ func TestClientCreatedWithAuthStrategyOpenIdAndDisableRBACFalse(t *testing.T) {
 	conf.Auth.Strategy = config.AuthStrategyOpenId
 	conf.Auth.OpenId.DisableRBAC = false
 
-	config.Set(conf)
-
 	const testClusterName = "TestRemoteCluster"
 	const testUserToken = "TestUserToken"
 	createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
-	clientFactory := NewTestingClientFactory(t)
+	clientFactory := NewTestingClientFactory(t, conf)
 
 	// Create a single initial test clients
 	authInfo := map[string]*api.AuthInfo{testClusterName: {Token: testUserToken}}
@@ -260,8 +260,8 @@ func TestClientCreatedWithAuthStrategyOpenIdAndDisableRBACFalse(t *testing.T) {
 
 	require.Contains(userClients, testClusterName)
 	assert.Equal(testClusterName, userClients[testClusterName].ClusterInfo().Name)
-	assert.Equal(userClients[testClusterName].GetToken(), testUserToken)
-	assert.NotEqual(userClients[testClusterName].GetToken(), "token")
+	assert.Equal(testUserToken, userClients[testClusterName].GetToken())
+	assert.NotEqual("token", userClients[testClusterName].GetToken())
 }
 
 func TestSAClientCreatedWithExecProvider(t *testing.T) {
@@ -298,7 +298,7 @@ func TestSAClientCreatedWithExecProvider(t *testing.T) {
 			RemoteClusterSecretsDir = t.TempDir()
 
 			createTestRemoteClusterSecretFile(t, RemoteClusterSecretsDir, clusterName, tc.remoteSecretContents)
-			cf := NewTestingClientFactory(t)
+			cf := NewTestingClientFactory(t, config.NewConfig())
 
 			saClients := cf.GetSAClients()
 			// Should be home cluster client and one remote client
@@ -314,7 +314,6 @@ func TestSAClientCreatedWithExecProvider(t *testing.T) {
 	// now enable ExecProvider support
 	conf := config.NewConfig()
 	conf.KialiFeatureFlags.Clustering.EnableExecProvider = true
-	SetConfig(t, *conf)
 
 	cases = map[string]struct {
 		remoteSecretContents string
@@ -351,7 +350,7 @@ func TestSAClientCreatedWithExecProvider(t *testing.T) {
 			RemoteClusterSecretsDir = t.TempDir()
 
 			createTestRemoteClusterSecretFile(t, RemoteClusterSecretsDir, clusterName, tc.remoteSecretContents)
-			cf := NewTestingClientFactory(t)
+			cf := NewTestingClientFactory(t, conf)
 
 			saClients := cf.GetSAClients()
 			// Should be home cluster client and one remote client
@@ -362,31 +361,12 @@ func TestSAClientCreatedWithExecProvider(t *testing.T) {
 			require.Equal(tc.expected.BearerToken, clientConfig.BearerToken)
 			if tc.expected.ExecProvider != nil {
 				// Just check a few fields for sanity
+				require.NotNil(clientConfig.ExecProvider)
 				require.Equal(tc.expected.ExecProvider.Command, clientConfig.ExecProvider.Command)
 				require.Equal(tc.expected.ExecProvider.Args, clientConfig.ExecProvider.Args)
 			}
 		})
 	}
-}
-
-func setGlobalKialiSAToken(t *testing.T) {
-	t.Helper()
-
-	// reuse the "create a test remote cluster secret file" function, but for this test it is really representing our home cluster SA token
-	saTokenDir := t.TempDir()
-	createTestRemoteClusterSecretFile(t, saTokenDir, "saSecret", saTokenYAML)
-
-	originalToken := KialiTokenForHomeCluster
-	originalTokenFile := KialiTokenFileForHomeCluster
-	t.Cleanup(func() {
-		KialiTokenForHomeCluster = originalToken
-		KialiTokenFileForHomeCluster = originalTokenFile
-		tokenRead = time.Time{}
-	})
-
-	KialiTokenForHomeCluster = "test-token" // as defined in testdata/sa-token.yaml
-	KialiTokenFileForHomeCluster = ""
-	tokenRead = time.Now()
 }
 
 func TestClientCreatedWithProxyInfo(t *testing.T) {
@@ -435,9 +415,8 @@ func TestClientCreatedWithProxyInfo(t *testing.T) {
 			cfg := config.NewConfig()
 			cfg.Auth = tc.auth
 			cfg.KubernetesConfig.ClusterName = config.DefaultClusterID
-			SetConfig(t, *cfg)
 
-			clientFactory := NewTestingClientFactory(t)
+			clientFactory := NewTestingClientFactory(t, cfg)
 
 			// Regular clients should have the proxy info
 			client, err := clientFactory.GetClient(api.NewAuthInfo(), cfg.KubernetesConfig.ClusterName)
@@ -470,15 +449,10 @@ func TestNewClientFactoryClosesRecycleWhenCTXCancelled(t *testing.T) {
 	cfg := config.NewConfig()
 	cfg.Clustering.IgnoreHomeCluster = true
 	cfg.KubernetesConfig.ClusterName = testClusterName
-	SetConfig(t, *cfg)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
-	f, err := NewClientFactory(ctx, cfg)
-	t.Cleanup(func() {
-		KialiTokenForHomeCluster = ""     // Need to reset this global because other tests depend on it being empty.
-		KialiTokenFileForHomeCluster = "" // Need to reset this global because other tests depend on it being empty.
-	})
+	f, err := NewClientFactory(ctx, cfg, createFakeRestConfig())
 	require.NoError(err)
 	factory := f.(*clientFactory)
 
@@ -489,56 +463,6 @@ func TestNewClientFactoryClosesRecycleWhenCTXCancelled(t *testing.T) {
 		require.Fail("recycleChan should have been closed")
 	case <-factory.recycleChan:
 	}
-}
-
-func TestNewClientFactoryDoesNotSetGlobalClientFactory(t *testing.T) {
-	require := require.New(t)
-
-	// Make sure global is nil before test begins
-	if factory != nil {
-		factory = nil
-	}
-
-	// Create the remote secret so that the "in cluster" config is not used.
-	// Otherwise the "in cluster" config looks for some env vars that are not present.
-	const testClusterName = "TestRemoteCluster"
-	createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
-
-	cfg := config.NewConfig()
-	cfg.Clustering.IgnoreHomeCluster = true
-	cfg.KubernetesConfig.ClusterName = testClusterName
-	SetConfig(t, *cfg)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
-	_, err := NewClientFactory(ctx, cfg)
-	t.Cleanup(func() {
-		KialiTokenForHomeCluster = ""     // Need to reset this global because other tests depend on it being empty.
-		KialiTokenFileForHomeCluster = "" // Need to reset this global because other tests depend on it being empty.
-	})
-	require.NoError(err)
-
-	require.Nil(factory)
-}
-
-func TestClientFactoryReturnsNilWhenLocalClusterIsIgnored(t *testing.T) {
-	require := require.New(t)
-
-	cfg := config.NewConfig()
-	cfg.KubernetesConfig.ClusterName = ""
-	// Ignore the local cluster, otherwise the "in cluster" config looks for some env vars that are not present.
-	cfg.Clustering.IgnoreHomeCluster = true
-	SetConfig(t, *cfg)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
-	clientFactory, err := NewClientFactory(ctx, cfg)
-	t.Cleanup(func() {
-		KialiTokenForHomeCluster = ""     // Need to reset this global because other tests depend on it being empty.
-		KialiTokenFileForHomeCluster = "" // Need to reset this global because other tests depend on it being empty.
-	})
-	require.Error(err)
-	require.Nil(clientFactory)
 }
 
 func TestClientFactoryGetClients(t *testing.T) {
@@ -588,9 +512,8 @@ func TestClientFactoryGetClients(t *testing.T) {
 			conf := config.NewConfig()
 			conf.Auth = tc.auth
 			conf.KubernetesConfig.ClusterName = "cluster1"
-			SetConfig(t, *conf)
 
-			clientFactory := NewTestingClientFactory(t)
+			clientFactory := NewTestingClientFactory(t, conf)
 			clients, err := clientFactory.GetClients(tc.authInfo)
 			require.NoError(err)
 			require.Len(clients, 1)

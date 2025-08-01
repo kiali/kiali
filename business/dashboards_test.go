@@ -75,7 +75,7 @@ func TestGetDashboardFromKialiNamespace(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 	// allows GetDashboard to get the SA client under the covers
-	kubernetes.NewTestingClientFactory(t)
+	kubernetes.NewTestingClientFactory(t, conf)
 
 	// Setup mocks
 	service, prom := setupService(conf, "my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("1")})

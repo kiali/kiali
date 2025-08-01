@@ -808,6 +808,9 @@ kill_proxy() {
 start_server() {
   if [ "${ENABLE_SERVER}" == "true" ]; then
     startmsg "The Kiali server is being started with config: ${KIALI_CONFIG_FILE}"
+    # Setting this env variable will tell Kiali to use the local kubeconfig
+    # found at the env var instead of assuming it's an in cluster kubeconfig.
+    export KUBECONFIG="${HOME}/.kube/config"
     "${KIALI_EXE}" -config "${KIALI_CONFIG_FILE}" &
     SERVER_PID="$!"
   else
