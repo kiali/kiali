@@ -70,7 +70,7 @@ func CustomDashboard(
 			}
 		}
 
-		svc := business.NewDashboardsService(conf, grafana, info, wkd)
+		svc := business.NewDashboardsService(conf, grafana, prom, info, wkd)
 		if !svc.CustomEnabled {
 			RespondWithError(w, http.StatusServiceUnavailable, "Custom dashboards are disabled in config")
 			return
@@ -156,7 +156,7 @@ func AppDashboard(
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
 		}
-		dashboard := business.NewDashboardsService(conf, grafana, namespaceInfo, nil).BuildIstioDashboard(metrics, params.Direction)
+		dashboard := business.NewDashboardsService(conf, grafana, prom, namespaceInfo, nil).BuildIstioDashboard(metrics, params.Direction)
 		RespondWithJSON(w, http.StatusOK, dashboard)
 	}
 }
@@ -216,7 +216,7 @@ func ServiceDashboard(
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
 		}
-		dashboard := business.NewDashboardsService(conf, grafana, namespaceInfo, nil).BuildIstioDashboard(metrics, params.Direction)
+		dashboard := business.NewDashboardsService(conf, grafana, prom, namespaceInfo, nil).BuildIstioDashboard(metrics, params.Direction)
 		RespondWithJSON(w, http.StatusOK, dashboard)
 	}
 }
@@ -253,7 +253,7 @@ func WorkloadDashboard(
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
 		}
-		dashboard := business.NewDashboardsService(conf, grafana, namespaceInfo, nil).BuildIstioDashboard(metrics, params.Direction)
+		dashboard := business.NewDashboardsService(conf, grafana, prom, namespaceInfo, nil).BuildIstioDashboard(metrics, params.Direction)
 		RespondWithJSON(w, http.StatusOK, dashboard)
 	}
 }
@@ -301,7 +301,7 @@ func ZtunnelDashboard(
 			return
 		}
 		ns := namespaceInfo[0]
-		dashboard := business.NewDashboardsService(conf, grafana, &ns, nil).BuildZtunnelDashboard(ztunnelMetrics)
+		dashboard := business.NewDashboardsService(conf, grafana, prom, &ns, nil).BuildZtunnelDashboard(ztunnelMetrics)
 		RespondWithJSON(w, http.StatusOK, dashboard)
 	}
 }

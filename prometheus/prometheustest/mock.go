@@ -374,6 +374,11 @@ func (o *PromClientMock) GetRuntimeinfo() (prom_v1.RuntimeinfoResult, error) {
 	return args.Get(0).(prom_v1.RuntimeinfoResult), args.Error(1)
 }
 
+func (o *PromClientMock) API() prom_v1.API {
+	args := o.Called()
+	return args.Get(0).(prom_v1.API)
+}
+
 func (o *PromClientMock) MockMetric(name string, labels string, q *prometheus.RangeQuery, value float64) {
 	o.On("FetchRateRange", name, []string{labels}, "", q).Return(fakeMetric(value))
 }

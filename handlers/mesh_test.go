@@ -115,7 +115,7 @@ func TestGetMeshGraph(t *testing.T) {
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 
 	xapi := new(prometheustest.PromAPIMock)
-	prom, err := prometheus.NewClient()
+	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
 	require.NoError(err)
 	prom.Inject(xapi)
 	cpm := &business.FakeControlPlaneMonitor{}

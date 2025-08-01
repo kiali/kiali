@@ -12,7 +12,6 @@ import (
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/prometheus"
 )
 
 const (
@@ -53,12 +52,6 @@ func (a ThroughputAppender) AppendGraph(ctx context.Context, trafficMap graph.Tr
 	// HTTP Throughput only apply to HTTP request traffic
 	if a.Rates.Http != graph.RateRequests {
 		return
-	}
-
-	if globalInfo.PromClient == nil {
-		var err error
-		globalInfo.PromClient, err = prometheus.NewClient()
-		graph.CheckError(err)
 	}
 
 	a.appendGraph(ctx, trafficMap, namespaceInfo.Namespace, globalInfo)

@@ -47,7 +47,7 @@ func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock,
 	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
 
 	api := new(prometheustest.PromAPIMock)
-	client, err := prometheus.NewClient()
+	client, err := prometheus.NewClient(*conf, k8s.GetToken())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +85,7 @@ func setupMockedWithIstioComponentNamespaces(t *testing.T, meshId string, userCl
 	authInfo := map[string]*api.AuthInfo{testConfig.KubernetesConfig.ClusterName: {Token: "test"}}
 
 	api := new(prometheustest.PromAPIMock)
-	client, err := prometheus.NewClient()
+	client, err := prometheus.NewClient(*testConfig, userClients[testConfig.KubernetesConfig.ClusterName].GetToken())
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -4160,7 +4160,7 @@ func TestAmbientGraph(t *testing.T) {
 	businessLayer := ambientWorkloads(t)
 
 	api := new(prometheustest.PromAPIMock)
-	client, err := prometheus.NewClient()
+	client, err := prometheus.NewClient(*config.Get(), "")
 	if err != nil {
 		t.Fatal(err)
 	}

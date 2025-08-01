@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util/httputil"
 )
@@ -25,6 +24,7 @@ var invalidLabelCharRE = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
+	API() prom_v1.API
 	FetchDelta(metricName, labels, grouping string, queryTime time.Time, duration time.Duration) Metric
 	FetchHistogramRange(metricName, labels, grouping string, q *RangeQuery) Histogram
 	FetchHistogramValues(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error)
@@ -65,14 +65,8 @@ func initPromCache(ctx context.Context) {
 }
 
 // NewClient creates a new client to the Prometheus API.
-// It returns an error on any problem.
-func NewClient() (*Client, error) {
-	return NewClientForConfig(*config.Get())
-}
-
-// NewClient creates a new client to the Prometheus API.
-// It returns an error on any problem.
-func NewClientForConfig(conf config.Config) (*Client, error) {
+// It returns an error on any problem. kialiSAToken is only used if auth.UseKialiToken is true.
+func NewClient(conf config.Config, kialiSAToken string) (*Client, error) {
 	cfg := conf.ExternalServices.Prometheus
 	clientConfig := api.Config{Address: cfg.URL}
 
@@ -94,12 +88,7 @@ func NewClientForConfig(conf config.Config) (*Client, error) {
 		// Note: if we are using the 'bearer' authentication method then we want to use the Kiali
 		// service account token and not the user's token. This is because Kiali does filtering based
 		// on the user's token and prevents people who shouldn't have access to particular metrics.
-		token, _, err := kubernetes.GetKialiTokenForHomeCluster()
-		if err != nil {
-			zl.Error().Msgf("Could not read the Kiali Service Account token: %v", err)
-			return nil, err
-		}
-		auth.Token = token
+		auth.Token = kialiSAToken
 	}
 
 	// make a copy of the prometheus DefaultRoundTripper to avoid race condition (issue #3518)

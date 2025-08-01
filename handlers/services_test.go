@@ -335,7 +335,7 @@ func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustes
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
 
 	xapi := new(prometheustest.PromAPIMock)
-	prom, err := prometheus.NewClient()
+	prom, err := prometheus.NewClient(*config.NewConfig(), k.GetToken())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -359,7 +359,7 @@ func setupServiceMetricsEndpointWithClient(t *testing.T, client kubernetes.Clien
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
 
 	xapi := new(prometheustest.PromAPIMock)
-	prom, err := prometheus.NewClient()
+	prom, err := prometheus.NewClient(*config.NewConfig(), client.GetToken())
 	if err != nil {
 		t.Fatal(err)
 	}
