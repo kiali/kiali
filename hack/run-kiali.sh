@@ -582,7 +582,7 @@ echo "LOCAL_REMOTE_PORTS_PROMETHEUS=$LOCAL_REMOTE_PORTS_PROMETHEUS"
 echo "LOCAL_REMOTE_PORTS_TRACING=$LOCAL_REMOTE_PORTS_TRACING"
 echo "LOCAL_REMOTE_PORTS_PERSES=$LOCAL_REMOTE_PORTS_PERSES"
 echo "LOG_LEVEL=$LOG_LEVEL"
-if [[ -n "${$PERSES_URL+x}" ]]; then
+if [[ -n "${PERSES_URL}" ]]; then
   echo "PERSES_URL=$PERSES_URL"
 fi
 echo "PROMETHEUS_URL=$PROMETHEUS_URL"
@@ -931,7 +931,7 @@ cleanup_and_exit() {
   kill_port_forward_istiod
   kill_port_forward_prometheus
   kill_port_forward_grafana
-  if [[ -n "${$PERSES_URL+x}" ]]; then
+  if [[ -n "${PERSES_URL}" ]]; then
     kill_port_forward_perses
   fi
   kill_port_forward_tracing
@@ -952,7 +952,7 @@ if [ "${ISTIOD_URL}" != "" ]; then
 fi
 start_port_forward_prometheus
 start_port_forward_grafana
-if [[ -n "${$PERSES_URL+x}" ]]; then
+if [[ -n "${PERSES_URL}" ]]; then
   start_port_forward_perses
 fi
 start_port_forward_tracing
