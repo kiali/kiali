@@ -76,7 +76,7 @@ while [[ $# -gt 0 ]]; do
     -krm|--keycloak-requests-memory) KEYCLOAK_REQUESTS_MEMORY="$2"; shift;shift; ;;
     -mc|--multicluster)
       MULTICLUSTER="${2}"
-      if [ "${MULTICLUSTER}" != "${PRIMARY_REMOTE}" -a "${MULTICLUSTER}" != "${MULTI_PRIMARY}" -a "${MULTICLUSTER}" != "${EXTERNAL_CONTROLPLANE}" -a "${MULTICLUSTER}" != "${EXTERNAL_KIALI}"]; then
+      if [ "${MULTICLUSTER}" != "${PRIMARY_REMOTE}" -a "${MULTICLUSTER}" != "${MULTI_PRIMARY}" -a "${MULTICLUSTER}" != "${EXTERNAL_CONTROLPLANE}" -a "${MULTICLUSTER}" != "${EXTERNAL_KIALI}" ]; then
         echo "--multicluster option must be one of '${PRIMARY_REMOTE}' or '${MULTI_PRIMARY}' or '${EXTERNAL_CONTROLPLANE}' or '${EXTERNAL_KIALI}'"
         exit 1
       fi
@@ -485,6 +485,7 @@ setup_kind_multicluster() {
     cluster2_context="kind-mesh"
     cluster1_name="mgmt"
     cluster2_name="mesh"
+    kubectl rollout status deployment prometheus -n istio-system --context kind-mgmt
     kubectl rollout status deployment prometheus -n istio-system --context kind-mesh
   elif [ "${MULTICLUSTER}" == "${EXTERNAL_CONTROLPLANE}" ]; then
     "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh ${kind_node_image:-} ${istio_version_arg}
