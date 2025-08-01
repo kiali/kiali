@@ -14,6 +14,8 @@ FRONTEND_MULTI_PRIMARY="frontend-multi-primary"
 FRONTEND_TEMPO="frontend-tempo"
 HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
+KEYCLOAK_LIMIT_MEMORY=""
+KEYCLOAK_REQUESTS_MEMORY=""
 SETUP_ONLY="false"
 STERN="false"
 TEMPO="false"
@@ -31,6 +33,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     -iv|--istio-version)
       ISTIO_VERSION="${2}"
+      shift;shift
+      ;;
+    -klm|--keycloak-limit-memory)
+      KEYCLOAK_LIMIT_MEMORY="${2}"
+      shift;shift
+      ;;
+    -krm|--keycloak-requests-memory)
+      KEYCLOAK_REQUESTS_MEMORY="${2}"
       shift;shift
       ;;
     -so|--setup-only)
@@ -85,6 +95,10 @@ Valid command line arguments:
   -iv|--istio-version <version>
     Which Istio version to test with. For releases, specify "#.#.#". For dev builds, specify in the form "#.#-dev"
     Default: The latest release
+  -klm|--keycloak-limit-memory <value>
+    Set the keycloak resources limit memory in the keycloak helm charts. Ex. 1Gi
+  -krm|--keycloak-requests-memory <value>
+    Set the keycloak resources requests memory in the keycloak helm charts. Ex. 1Gi
   -so|--setup-only <true|false>
     If true, only setup the test environment and exit without running the tests.
     Default: false
@@ -132,6 +146,8 @@ cat <<EOM
 === SETTINGS ===
 HELM_CHARTS_DIR=$HELM_CHARTS_DIR
 ISTIO_VERSION=$ISTIO_VERSION
+KEYCLOAK_LIMIT_MEMORY=$KEYCLOAK_LIMIT_MEMORY
+KEYCLOAK_REQUESTS_MEMORY=$KEYCLOAK_LIMIT_MEMORY
 SETUP_ONLY=$SETUP_ONLY
 STERN=$STERN
 TESTS_ONLY=$TESTS_ONLY
@@ -466,8 +482,19 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
 elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   ensureCypressInstalled
 
+  if [ -n "$KEYCLOAK_LIMIT_MEMORY" ]; then
+      MEMORY_LIMIT_ARG="-klm $KEYCLOAK_LIMIT_MEMORY"
+  else
+      MEMORY_LIMIT_ARG=""
+  fi
+  if [ -n "$KEYCLOAK_REQUESTS_MEMORY" ]; then
+     MEMORY_REQUEST_ARG="-krm $KEYCLOAK_REQUESTS_MEMORY"
+  else
+     MEMORY_REQUEST_ARG=""
+  fi
+
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy openid ${HELM_CHARTS_DIR_ARG}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy openid ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG
   fi
   
   ensureKialiServerReady

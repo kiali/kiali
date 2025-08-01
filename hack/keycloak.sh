@@ -6,6 +6,8 @@ set -e
 
 KEYCLOAK_CERTS_DIR=""
 KEYCLOAK_EXTERNAL_IP=""
+SET_LIMIT_MEMORY=""
+SET_REQUESTS_MEMORY=""
 
 infomsg() {
   echo "[INFO] ${1}"
@@ -19,6 +21,10 @@ while [[ $# -gt 0 ]]; do
     deploy) _CMD="deploy"; shift ;;
     -kcd|--keycloak-certs-dir)    KEYCLOAK_CERTS_DIR="$2";    shift;shift; ;;
     -kip|--keycloak-external-ip)    KEYCLOAK_EXTERNAL_IP="$2";    shift;shift; ;;
+    -slm|--set-limit-memory)
+      SET_LIMIT_MEMORY="$2"; shift; shift ;;
+    -srm|--set-requests-memory)
+      SET_REQUESTS_MEMORY="$2"; shift; shift ;;
     -h|--help)
       cat <<HELPMSG
 
@@ -31,6 +37,10 @@ Valid options:
   -kip|--keycloak-external-ip
       External IP address for the keycloak service.
       Required for the 'deploy' command.
+  -slm|--set-limit-memory
+      Add --set resources.limits.memory <value> to the helm command. Ex. resources.limits.memory=1Gi
+  -srm|--set-requests-memory
+      Add --set resources.requests.memory <valor>  to the helm command. Ex. resources.requests.memory=1Gi
 
 The command must be one of:
   create-ca:        create the root CA for keycloak.
@@ -108,10 +118,17 @@ EOF
   # create kube secret from the certs
   kubectl create secret tls keycloak-tls --cert="${KEYCLOAK_CERTS_DIR}"/cert.pem --key="${KEYCLOAK_CERTS_DIR}"/key.pem -n keycloak
 
-  echo "Creating keycloak deployment"
+  HELM_MEMORY_ARGS=""
+  if [ -n "$SET_LIMIT_MEMORY" ]; then
+    HELM_MEMORY_ARGS="$HELM_MEMORY_ARGS --set resources.limits.memory=$SET_LIMIT_MEMORY"
+  fi
+  if [ -n "$SET_REQUESTS_MEMORY" ]; then
+    HELM_MEMORY_ARGS="$HELM_MEMORY_ARGS --set resources.requests.memory=$SET_REQUESTS_MEMORY"
+  fi
   helm upgrade --install --wait --timeout 15m \
   --namespace keycloak \
-   keycloak oci://registry-1.docker.io/bitnamicharts/keycloak --version 24.3.2 \
+  keycloak oci://registry-1.docker.io/bitnamicharts/keycloak --version 24.3.2 \
+  $HELM_MEMORY_ARGS \
   --reuse-values --values - <<EOF
 auth:
   createAdminUser: true

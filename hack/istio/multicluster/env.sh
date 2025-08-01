@@ -175,6 +175,11 @@ KEYCLOAK_ADDRESS="${KEYCLOAK_ADDRESS:-}"
 KEYCLOAK_DB_PASSWORD="${KEYCLOAK_DB_PASSWORD:-keycloak-password}"
 KEYCLOAK_KUBE_CLIENT_SECRET="${KEYCLOAK_KUBE_CLIENT_SECRET:-kube-client-secret}"
 KIALI_USER_PASSWORD="${KIALI_USER_PASSWORD:-kiali}"
+# Optional: set memory limits for Keycloak deployment (passed to keycloak.sh as -slm and -srm)
+# Example: KEYCLOAK_LIMIT_MEMORY=1Gi
+KEYCLOAK_LIMIT_MEMORY="${KEYCLOAK_LIMIT_MEMORY:-}"
+# Example: KEYCLOAK_REQUESTS_MEMORY=1Gi
+KEYCLOAK_REQUESTS_MEMORY="${KEYCLOAK_REQUESTS_MEMORY:-}"
 
 # Path to a Kiali server helm charts tarball
 KIALI_SERVER_HELM_CHARTS="${KIALI_SERVER_HELM_CHARTS:-}"
@@ -311,6 +316,14 @@ while [[ $# -gt 0 ]]; do
     -ke|--kiali-enabled)
       [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--kiali-enabled must be 'true' or 'false'" && exit 1
       KIALI_ENABLED="$2"
+      shift;shift
+      ;;
+    -kml|--keycloak-memory-limit)
+      KEYCLOAK_LIMIT_MEMORY="$2"
+      shift;shift
+      ;;
+    -krm|--keycloak-requests-memory)
+      KEYCLOAK_REQUESTS_MEMORY="$2"
       shift;shift
       ;;
     -kni|--kind-node-image)
@@ -466,6 +479,8 @@ Valid command line arguments:
   -ke|--kiali-enabled <bool>: If "true" the latest release of Kiali will be installed in both clusters. If you want
                               a different version of Kiali installed, you must set this to "false" and install it yourself.
                               (Default: true)
+  -kml|--keycloak-memory-limit <value>: Value to increase Keycloak memory limit
+  -krm|--keycloak-requests-memory <value>: Value to increase Keycloak requests memory
   -kni|--kind-node-image: Image of the kind cluster. Defaults to latest kind image if not specified.
   -kshc|--kiali-server-helm-charts <path>: If specified, must be the path to a Kiali server helm charts tarball. If not
                                            specified, the latest published helm charts is used.
@@ -666,6 +681,8 @@ export AUTH_GROUPS \
        ISTIO_TAG \
        ISTIO_VERSION \
        KEYCLOAK_CERTS_DIR \
+       KEYCLOAK_LIMIT_MEMORY \
+       KEYCLOAK_REQUESTS_MEMORY \
        KIALI_AUTH_STRATEGY \
        KIALI_BUILD_DEV_IMAGE \
        KIALI_CREATE_REMOTE_CLUSTER_SECRETS \
@@ -716,6 +733,8 @@ ISTIO_HUB=$ISTIO_HUB
 ISTIO_TAG=$ISTIO_TAG
 ISTIO_VERSION=$ISTIO_VERSION
 KEYCLOAK_CERTS_DIR=$KEYCLOAK_CERTS_DIR
+KEYCLOAK_LIMIT_MEMORY=$KEYCLOAK_LIMIT_MEMORY
+KEYCLOAK_REQUESTS_MEMORY=$KEYCLOAK_REQUESTS_MEMORY
 KIALI_AUTH_STRATEGY=$KIALI_AUTH_STRATEGY
 KIALI_BUILD_DEV_IMAGE=$KIALI_BUILD_DEV_IMAGE
 KIALI_CREATE_REMOTE_CLUSTER_SECRETS=$KIALI_CREATE_REMOTE_CLUSTER_SECRETS
