@@ -241,7 +241,7 @@ func TestMultiClusterGetServiceDetails(t *testing.T) {
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-west-cluster", Namespace: "bookinfo"}},
 		),
 	}
-	prom, err := prometheus.NewClient()
+	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
 	require.NoError(err)
 
 	promMock := new(prometheustest.PromAPIMock)
@@ -304,7 +304,7 @@ func TestGetServiceRouteURL(t *testing.T) {
 	)
 	k8s.OpenShift = true
 
-	prom, err := prometheus.NewClient()
+	prom, err := prometheus.NewClient(*conf, k8s.GetToken())
 	require.NoError(err)
 
 	promMock := new(prometheustest.PromAPIMock)
@@ -382,7 +382,7 @@ func TestGetServiceDetailsValidations(t *testing.T) {
 		),
 	}
 
-	prom, err := prometheus.NewClient()
+	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
 	require.NoError(err)
 
 	promMock := new(prometheustest.PromAPIMock)
@@ -421,7 +421,7 @@ func TestGetServiceDetailsValidationErrors(t *testing.T) {
 		),
 	}
 
-	prom, err := prometheus.NewClient()
+	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
 	require.NoError(err)
 
 	promMock := new(prometheustest.PromAPIMock)

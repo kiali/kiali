@@ -323,7 +323,7 @@ func setupAggregateMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 	xapi := new(prometheustest.PromAPIMock)
 	k := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
 	k.OpenShift = true
-	prom, err := prometheus.NewClient()
+	prom, err := prometheus.NewClient(*config.NewConfig(), k.GetToken())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -347,7 +347,7 @@ func setupAggregateMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 func setupAggregateMetricsEndpointWithClient(t *testing.T, k kubernetes.ClientInterface) (*httptest.Server, *prometheustest.PromAPIMock) {
 	conf := config.NewConfig()
 	xapi := new(prometheustest.PromAPIMock)
-	prom, err := prometheus.NewClient()
+	prom, err := prometheus.NewClient(*config.NewConfig(), k.GetToken())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -373,16 +373,17 @@ func TestPrepareStatsQueriesPartialError(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
 	xapi := new(prometheustest.PromAPIMock)
-	prom, err := prometheus.NewClient()
+	baseClient := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("ns1"),
+		kubetest.FakeNamespace("ns2"),
+	)
+	prom, err := prometheus.NewClient(*config.NewConfig(), baseClient.GetToken())
 	if err != nil {
 		t.Fatal(err)
 	}
 	prom.Inject(xapi)
 
-	k := &nsForbidden{kubetest.NewFakeK8sClient(
-		kubetest.FakeNamespace("ns1"),
-		kubetest.FakeNamespace("ns2"),
-	), "nsNil"}
+	k := &nsForbidden{baseClient, "nsNil"}
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, k)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
@@ -774,7 +775,7 @@ func setupWorkloadMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheuste
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
 
 	xapi := new(prometheustest.PromAPIMock)
-	prom, err := prometheus.NewClient()
+	prom, err := prometheus.NewClient(*config.NewConfig(), k8s.GetToken())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -800,7 +801,7 @@ func setupWorkloadMetricsEndpointWithClient(t *testing.T, k8s kubernetes.ClientI
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
 
 	xapi := new(prometheustest.PromAPIMock)
-	prom, err := prometheus.NewClient()
+	prom, err := prometheus.NewClient(*config.NewConfig(), k8s.GetToken())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -944,7 +945,7 @@ func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 func setupNamespaceMetricsEndpointWithClient(t *testing.T, k kubernetes.ClientInterface) (*httptest.Server, *prometheustest.PromAPIMock) {
 	conf := config.NewConfig()
 	xapi := new(prometheustest.PromAPIMock)
-	prom, err := prometheus.NewClient()
+	prom, err := prometheus.NewClient(*config.NewConfig(), k.GetToken())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -978,7 +979,7 @@ func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock,
 	k.OpenShift = true
 
 	api := new(prometheustest.PromAPIMock)
-	client, err := prometheus.NewClient()
+	client, err := prometheus.NewClient(*config.NewConfig(), k.GetToken())
 	if err != nil {
 		t.Fatal(err)
 		return nil, nil, nil
