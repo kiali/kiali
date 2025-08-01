@@ -485,7 +485,6 @@ setup_kind_multicluster() {
     cluster2_context="kind-mesh"
     cluster1_name="mgmt"
     cluster2_name="mesh"
-    kubectl rollout status deployment prometheus -n istio-system --context kind-mgmt
     kubectl rollout status deployment prometheus -n istio-system --context kind-mesh
   elif [ "${MULTICLUSTER}" == "${EXTERNAL_CONTROLPLANE}" ]; then
     "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh ${kind_node_image:-} ${istio_version_arg}
