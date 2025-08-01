@@ -25,6 +25,7 @@ import (
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/perses"
 	kialiprometheus "github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/tracing"
@@ -39,6 +40,7 @@ func NewRouter(
 	traceClientLoader func() tracing.ClientInterface,
 	cpm business.ControlPlaneMonitor,
 	grafana *grafana.Service,
+	perses *perses.Service,
 	discovery *istio.Discovery,
 	staticAssetFS fs.FS,
 ) (*mux.Router, error) {
@@ -166,7 +168,7 @@ func NewRouter(
 	}
 
 	// Build our API server routes and install them.
-	apiRoutes := NewRoutes(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, authController, grafana, discovery)
+	apiRoutes := NewRoutes(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, authController, grafana, perses, discovery)
 	// Add any auth routes to the app router.
 	apiRoutes.Routes = append(apiRoutes.Routes, authRoutes...)
 

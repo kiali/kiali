@@ -17,6 +17,7 @@ import { ReactComponent as PrometheusLogo } from '../../../assets/img/mesh/prome
 import { ReactComponent as GrafanaLogo } from '../../../assets/img/mesh/grafana.svg';
 import { ReactComponent as IstioLogo } from '../../../assets/img/mesh/istio.svg';
 import { ReactComponent as KialiLogo } from '../../../assets/img/mesh/kiali.svg';
+import { ReactComponent as PersesLogo } from '../../../assets/img/mesh/perses.svg';
 import { ReactComponent as TempoLogo } from '../../../assets/img/mesh/tempo.svg';
 import { ReactComponent as ZtunnelLogo } from '../../../assets/img/mesh/ztunnel-blue-on-transparent.svg';
 import { store } from 'store/ConfigStore';
@@ -59,6 +60,9 @@ const renderIcon = (element: Node): React.ReactNode => {
     case MeshInfraType.METRIC_STORE:
       // TODO: don't assume Prometheus
       Component = PrometheusLogo;
+      break;
+    case MeshInfraType.PERSES:
+      Component = PersesLogo;
       break;
     case MeshInfraType.TRACE_STORE:
       if (externalServices.find(service => service.name.toLowerCase() === TEMPO)) {
