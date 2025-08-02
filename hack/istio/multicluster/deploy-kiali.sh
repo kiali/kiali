@@ -234,6 +234,8 @@ deploy_kiali() {
         )
   fi
 
+  echo "helm_args: ${helm_args[@]}"
+
   helm upgrade --install \
     "${helm_args[@]}" \
     --namespace "${ISTIO_NAMESPACE}" \

@@ -20,9 +20,15 @@ if [ "${CLUSTER2_NAME}" == "west" ]; then
   CLUSTER2_NAME="mesh"
 fi
 
+if [ "${MANAGE_KIND}" == "true" ]; then
+  CLUSTER1_CONTEXT="kind-${CLUSTER1_NAME}"
+  CLUSTER2_CONTEXT="kind-${CLUSTER2_NAME}"
+else
+  CLUSTER1_CONTEXT="${CLUSTER1_NAME}"
+  CLUSTER2_CONTEXT="${CLUSTER2_NAME}"
+fi
+
 # Only install Kiali on cluster-1
-CLUSTER1_CONTEXT="${CLUSTER1_NAME}"
-CLUSTER2_CONTEXT="${CLUSTER2_NAME}"
 IGNORE_HOME_CLUSTER="true"
 SINGLE_KIALI="true"
 

@@ -2590,10 +2590,8 @@ func TestIsControlPlane(t *testing.T) {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "cluster1"
 
-	// Create istiod deployment for cluster1
 	istiodDeployment := fakeIstiodDeployment("cluster1", false)
 
-	// Create istio config map
 	const configMapData = `accessLogFile: /dev/stdout
 enableAutoMtls: true
 rootNamespace: istio-system
@@ -2618,7 +2616,6 @@ trustDomain: cluster.local
 		istio.FakeCertificateConfigMap("istio-system"),
 	)
 
-	// Set up clients for discovery
 	clients := map[string]kubernetes.ClientInterface{
 		"cluster1": k8sClient,
 	}
@@ -2627,29 +2624,24 @@ trustDomain: cluster.local
 
 	ctx := context.Background()
 
-	// Test: namespace is a control plane namespace in the specified cluster
 	require.True(discovery.IsControlPlane(ctx, "cluster1", "istio-system"),
 		"Should return true when namespace matches control plane namespace")
 
-	// Test: namespace is not a control plane namespace
 	require.False(discovery.IsControlPlane(ctx, "cluster1", "bookinfo"),
 		"Should return false when namespace is not a control plane namespace")
 
 	require.False(discovery.IsControlPlane(ctx, "cluster1", "default"),
 		"Should return false when namespace is not a control plane namespace")
 
-	// Test: empty cluster parameter should ignore cluster and only check namespace
 	require.True(discovery.IsControlPlane(ctx, "", "istio-system"),
 		"Should return true when cluster is empty and namespace matches control plane")
 
 	require.False(discovery.IsControlPlane(ctx, "", "bookinfo"),
 		"Should return false when cluster is empty and namespace doesn't match control plane")
 
-	// Test: non-existent cluster
 	require.False(discovery.IsControlPlane(ctx, "non-existent", "istio-system"),
 		"Should return false for non-existent cluster")
 
-	// Test: empty namespace
 	require.False(discovery.IsControlPlane(ctx, "cluster1", ""),
 		"Should return false for empty namespace")
 }
@@ -2659,10 +2651,8 @@ func TestGetControlPlaneNamespaces(t *testing.T) {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "cluster1"
 
-	// Create istiod deployment for cluster1
 	istiodDeploymentCluster1 := fakeIstiodDeployment("cluster1", false)
 
-	// Create istio config map
 	const configMapData = `accessLogFile: /dev/stdout
 enableAutoMtls: true
 rootNamespace: istio-system
@@ -2700,7 +2690,6 @@ trustDomain: cluster.local
 		Data: map[string]string{"mesh": configMapData},
 	}
 
-	// Set up client for cluster2 with control plane in istio-control
 	cluster2Client := kubetest.NewFakeK8sClient(
 		kubetest.FakeNamespace("istio-control"),
 		kubetest.FakeNamespace("production"),
@@ -2709,7 +2698,6 @@ trustDomain: cluster.local
 		istio.FakeCertificateConfigMap("istio-control"),
 	)
 
-	// Set up clients for discovery
 	clients := map[string]kubernetes.ClientInterface{
 		"cluster1": cluster1Client,
 		"cluster2": cluster2Client,
@@ -2719,27 +2707,22 @@ trustDomain: cluster.local
 
 	ctx := context.Background()
 
-	// Test: get control plane namespaces for specific cluster1
 	namespaces := discovery.GetControlPlaneNamespaces(ctx, "cluster1")
 	require.Len(namespaces, 1, "Should return exactly one control plane namespace for cluster1")
 	require.Contains(namespaces, "istio-system", "Should contain istio-system namespace for cluster1")
 
-	// Test: get control plane namespaces for specific cluster2
 	namespaces = discovery.GetControlPlaneNamespaces(ctx, "cluster2")
 	require.Len(namespaces, 1, "Should return exactly one control plane namespace for cluster2")
 	require.Contains(namespaces, "istio-control", "Should contain istio-control namespace for cluster2")
 
-	// Test: get control plane namespaces for all clusters (empty cluster parameter)
 	namespaces = discovery.GetControlPlaneNamespaces(ctx, "")
 	require.Len(namespaces, 2, "Should return control plane namespaces from all clusters")
 	require.Contains(namespaces, "istio-system", "Should contain istio-system namespace from cluster1")
 	require.Contains(namespaces, "istio-control", "Should contain istio-control namespace from cluster2")
 
-	// Test: get control plane namespaces for non-existent cluster
 	namespaces = discovery.GetControlPlaneNamespaces(ctx, "non-existent")
 	require.Empty(namespaces, "Should return empty slice for non-existent cluster")
 
-	// Test: get control plane namespaces for cluster with no control plane
 	emptyClient := kubetest.NewFakeK8sClient(
 		kubetest.FakeNamespace("default"),
 		kubetest.FakeNamespace("kube-system"),
