@@ -27,7 +27,7 @@ export const ControlPlaneBadge: React.FC = () => {
           </>
         }
       >
-        <Label style={{ marginLeft: '0.5rem' }} color="green" isCompact>
+        <Label style={{ marginLeft: '0.5rem' }} color="green" isCompact data-test="control-plane-badge">
           {t('Control plane')}
         </Label>
       </Tooltip>
