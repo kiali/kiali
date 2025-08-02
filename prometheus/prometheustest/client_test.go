@@ -10,13 +10,17 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 )
 
 func setupMocked() (*prometheus.Client, *PromAPIMock, error) {
-	config.Set(config.NewConfig())
+	// TODO: Update
+	conf := config.NewConfig()
+	config.Set(conf)
 	api := new(PromAPIMock)
-	client, err := prometheus.NewClient()
+	fakeClient := kubetest.NewFakeK8sClient()
+	client, err := prometheus.NewClient(*config.NewConfig(), fakeClient.GetToken())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -31,7 +35,7 @@ func TestGetAllRequestRates(t *testing.T) {
 		return
 	}
 
-	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
+	queryTime := time.Date(2017, 0o1, 15, 0, 0, 0, 0, time.UTC)
 
 	vectorQ1 := model.Vector{
 		&model.Sample{
@@ -46,7 +50,8 @@ func TestGetAllRequestRates(t *testing.T) {
 		&model.Sample{
 			Timestamp: model.Now(),
 			Value:     model.SampleValue(2),
-			Metric:    model.Metric{"foo": "bar"}},
+			Metric:    model.Metric{"foo": "bar"},
+		},
 	}
 	api.OnQueryTime(`rate(istio_requests_total{source_workload_namespace="ns",source_cluster="east"}[5m]) > 0`, &queryTime, vectorQ2)
 
@@ -63,7 +68,7 @@ func TestGetAllRequestRatesIstioSystem(t *testing.T) {
 		return
 	}
 
-	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
+	queryTime := time.Date(2017, 0o1, 15, 0, 0, 0, 0, time.UTC)
 
 	vectorQ1 := model.Vector{
 		&model.Sample{
@@ -78,7 +83,8 @@ func TestGetAllRequestRatesIstioSystem(t *testing.T) {
 		&model.Sample{
 			Timestamp: model.Now(),
 			Value:     model.SampleValue(2),
-			Metric:    model.Metric{"foo": "bar"}},
+			Metric:    model.Metric{"foo": "bar"},
+		},
 	}
 	api.OnQueryTime(`rate(istio_requests_total{source_workload_namespace="istio-system",source_cluster="east"}[5m]) > 0`, &queryTime, vectorQ2)
 
@@ -95,7 +101,7 @@ func TestGetNamespaceServicesRequestRates(t *testing.T) {
 		return
 	}
 
-	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
+	queryTime := time.Date(2017, 0o1, 15, 0, 0, 0, 0, time.UTC)
 
 	vectorQ1 := model.Vector{
 		&model.Sample{

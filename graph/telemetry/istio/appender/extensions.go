@@ -14,7 +14,6 @@ import (
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util/sliceutil"
 )
 
@@ -54,12 +53,6 @@ func (a ExtensionsAppender) IsFinalizer() bool {
 func (a ExtensionsAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(globalInfo.Conf.Extensions) == 0 {
 		return
-	}
-
-	if globalInfo.PromClient == nil {
-		var err error
-		globalInfo.PromClient, err = prometheus.NewClient()
-		graph.CheckError(err)
 	}
 
 	a.globalInfo = globalInfo

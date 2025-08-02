@@ -17,7 +17,7 @@ type VendorInfo map[string]interface{}
 type GlobalInfo struct {
 	Business   *business.Layer
 	Conf       *config.Config
-	PromClient *prometheus.Client
+	PromClient prometheus.ClientInterface
 	Vendor     VendorInfo // telemetry vendor's global info
 }
 
@@ -34,12 +34,13 @@ func NewVendorInfo() VendorInfo {
 	return make(map[string]interface{})
 }
 
-func NewGlobalInfo(business *business.Layer, prom *prometheus.Client, conf *config.Config) *GlobalInfo {
+func NewGlobalInfo(business *business.Layer, prom prometheus.ClientInterface, conf *config.Config) *GlobalInfo {
 	return &GlobalInfo{
 		Business:   business,
 		Conf:       conf,
 		PromClient: prom,
-		Vendor:     NewVendorInfo()}
+		Vendor:     NewVendorInfo(),
+	}
 }
 
 func NewAppenderNamespaceInfo(namespace string) *AppenderNamespaceInfo {

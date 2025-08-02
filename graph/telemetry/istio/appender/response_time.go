@@ -12,7 +12,6 @@ import (
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/prometheus"
 )
 
 const (
@@ -56,12 +55,6 @@ func (a ResponseTimeAppender) AppendGraph(ctx context.Context, trafficMap graph.
 	// Response times only apply to request traffic (not TCP or gRPC-message traffic)
 	if a.Rates.Grpc != graph.RateRequests && a.Rates.Http != graph.RateRequests {
 		return
-	}
-
-	if globalInfo.PromClient == nil {
-		var err error
-		globalInfo.PromClient, err = prometheus.NewClient()
-		graph.CheckError(err)
 	}
 
 	a.appendGraph(ctx, trafficMap, a.Namespaces[namespaceInfo.Namespace], globalInfo)

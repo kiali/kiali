@@ -481,7 +481,7 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		verLabelName, _ := conf.GetVersionLabelName(workload.Labels)
 		app := workload.Labels[appLabelName]
 		version := workload.Labels[verLabelName]
-		runtimes = NewDashboardsService(in.conf, in.grafana, ns, workload).GetCustomDashboardRefs(criteria.Namespace, app, version, workload.Pods)
+		runtimes = NewDashboardsService(in.conf, in.grafana, in.prom, ns, workload).GetCustomDashboardRefs(criteria.Namespace, app, version, workload.Pods)
 	}()
 
 	// WorkloadGroup.Labels can be empty

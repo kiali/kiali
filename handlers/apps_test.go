@@ -151,12 +151,13 @@ func TestAppMetricsInaccessibleNamespace(t *testing.T) {
 
 func setupAppMetricsEndpoint(t *testing.T, conf *config.Config) (*httptest.Server, *prometheustest.PromAPIMock, kubernetes.ClientInterface) {
 	xapi := new(prometheustest.PromAPIMock)
-	prom, err := prometheus.NewClient()
+	fakeClient := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("ns"))
+	prom, err := prometheus.NewClient(*conf, fakeClient.GetToken())
 	if err != nil {
 		t.Fatal(err)
 	}
 	prom.Inject(xapi)
-	k8s := &clientNoPrivileges{kubetest.NewFakeK8sClient(kubetest.FakeNamespace("ns"))}
+	k8s := &clientNoPrivileges{fakeClient}
 	mr := mux.NewRouter()
 
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
@@ -182,7 +183,7 @@ func setupAppListEndpoint(t *testing.T, k8s kubernetes.UserClientInterface, conf
 
 	promMock := new(prometheustest.PromAPIMock)
 	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
-	prom, err := prometheus.NewClient()
+	prom, err := prometheus.NewClient(*config.NewConfig(), k8s.GetToken())
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -161,17 +161,16 @@ func setupMockedExt(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMo
 	conf.KubernetesConfig.ClusterName = rootCluster
 	config.Set(conf)
 
-	promApi := new(prometheustest.PromAPIMock)
-	promClient, err := prometheus.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
-	promClient.Inject(promApi)
-
 	k8s := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: rootNamespace}},
 		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: extName, Namespace: rootNamespace, Annotations: map[string]string{"extension.kiali.io/ui-url": extUrl}}},
 	)
+	promApi := new(prometheustest.PromAPIMock)
+	promClient, err := prometheus.NewClient(*config.NewConfig(), k8s.GetToken())
+	if err != nil {
+		t.Fatal(err)
+	}
+	promClient.Inject(promApi)
 	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)

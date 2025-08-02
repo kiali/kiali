@@ -186,7 +186,7 @@ func main() {
 	cpm := business.NewControlPlaneMonitor(cache, clientFactory, conf, discovery)
 
 	// Create shared prometheus client shared by all prometheus requests in the business layer.
-	prom, err := prometheus.NewClient()
+	prom, err := prometheus.NewClient(*conf, clientFactory.GetSAHomeClusterClient().GetToken())
 	if err != nil {
 		log.Fatalf("Error creating Prometheus client: %s", err)
 	}

@@ -31,7 +31,7 @@ type DashboardsService struct {
 }
 
 // NewDashboardsService initializes this business service
-func NewDashboardsService(conf *config.Config, grafana *grafana.Service, namespace *models.Namespace, workload *models.Workload) *DashboardsService {
+func NewDashboardsService(conf *config.Config, grafana *grafana.Service, promClient prometheus.ClientInterface, namespace *models.Namespace, workload *models.Workload) *DashboardsService {
 	customEnabled := conf.ExternalServices.CustomDashboards.Enabled
 	prom := conf.ExternalServices.Prometheus
 	if customEnabled && conf.ExternalServices.CustomDashboards.Prometheus.URL != "" {
@@ -57,23 +57,12 @@ func NewDashboardsService(conf *config.Config, grafana *grafana.Service, namespa
 		conf:            conf,
 		CustomEnabled:   customEnabled,
 		grafana:         grafana,
+		promClient:      promClient,
 		promConfig:      prom,
 		globalNamespace: conf.Deployment.Namespace,
 		namespaceLabel:  nsLabel,
 		dashboards:      builtInDashboards.OrganizeByName(),
 	}
-}
-
-func (in *DashboardsService) prom() (prometheus.ClientInterface, error) {
-	// Lazy init
-	if in.promClient == nil {
-		client, err := prometheus.NewClientForConfig(*in.conf)
-		if err != nil {
-			return nil, fmt.Errorf("cannot initialize Prometheus Client: %v", err)
-		}
-		in.promClient = client
-	}
-	return in.promClient, nil
 }
 
 func (in *DashboardsService) loadRawDashboardResource(template string) (*dashboards.MonitoringDashboard, error) {
@@ -134,10 +123,7 @@ func (in *DashboardsService) resolveReferences(dashboard *dashboards.MonitoringD
 
 // GetDashboard returns a dashboard filled-in with target data
 func (in *DashboardsService) GetDashboard(ctx context.Context, params models.DashboardQuery, template string) (*models.MonitoringDashboard, error) {
-	promClient, err := in.prom()
-	if err != nil {
-		return nil, err
-	}
+	promClient := in.promClient
 
 	dashboard, err := in.loadAndResolveDashboardResource(template, map[string]bool{})
 	if err != nil {
@@ -282,10 +268,7 @@ func (in *DashboardsService) buildRuntimesList(templatesNames []string) []models
 }
 
 func (in *DashboardsService) fetchDashboardMetricNames(namespace string, labelsFilters map[string]string) []string {
-	promClient, err := in.prom()
-	if err != nil {
-		return []string{}
-	}
+	promClient := in.promClient
 
 	// Get the list of metrics that we look for to determine which dashboards can be used.
 	// Some dashboards cannot be discovered using metric lookups - ignore those.
@@ -308,15 +291,8 @@ func (in *DashboardsService) fetchDashboardMetricNames(namespace string, labelsF
 func (in *DashboardsService) discoverDashboards(namespace string, labelsFilters map[string]string) []models.Runtime {
 	log.Tracef("starting custom dashboard discovery on namespace [%s] with filters [%v]", namespace, labelsFilters)
 
-	var metrics []string
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		metrics = in.fetchDashboardMetricNames(namespace, labelsFilters)
-	}()
+	metrics := in.fetchDashboardMetricNames(namespace, labelsFilters)
 
-	wg.Wait()
 	return runDiscoveryMatcher(metrics, in.dashboards)
 }
 
