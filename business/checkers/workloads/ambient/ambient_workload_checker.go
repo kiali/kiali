@@ -116,28 +116,68 @@ func (awc AmbientWorkloadChecker) hasAuthPolicyAndNoWaypoint() bool {
 // hasAmbientLabel Check if the namespace or the workload has Ambient enabled
 // See https://istio.io/latest/docs/ambient/usage/add-workloads/#ambient-labels
 func (awc AmbientWorkloadChecker) hasAmbientLabel() bool {
+	ambientLabelKey := awc.Conf.IstioLabels.AmbientNamespaceLabel
+	ambientLabelValue := awc.Conf.IstioLabels.AmbientNamespaceLabelValue
+
+	// Get the label values from both the workload and its namespace.
 	ns := awc.Namespaces.GetNamespace(awc.Workload.Namespace, awc.Cluster)
-	return (ns.Labels[awc.Conf.IstioLabels.AmbientNamespaceLabel] == awc.Conf.IstioLabels.AmbientNamespaceLabelValue &&
-		awc.Workload.Labels[awc.Conf.IstioLabels.AmbientNamespaceLabel] != "none") ||
-		awc.Workload.Labels[awc.Conf.IstioLabels.AmbientNamespaceLabel] == awc.Conf.IstioLabels.AmbientNamespaceLabelValue
+	workloadLabelVal := awc.Workload.Labels[ambientLabelKey]
+	namespaceLabelVal := ns.Labels[ambientLabelKey]
+
+	workloadIsEnabled := workloadLabelVal == ambientLabelValue
+	workloadIsDisabled := workloadLabelVal == "none"
+	namespaceIsEnabled := namespaceLabelVal == ambientLabelValue
+
+	// The workload is in ambient mode if The workload itself is explicitly labeled with the ambient value.
+	// OR
+	// The namespace is labeled with the ambient value AND the workload is NOT explicitly labeled "none".
+	return workloadIsEnabled || (namespaceIsEnabled && !workloadIsDisabled)
 }
 
 // hasSidecarLabel Check if the namespace or the workload has Sidecars enabled
 // See https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/
 func (awc AmbientWorkloadChecker) hasSidecarLabel() bool {
 	ns := awc.Namespaces.GetNamespace(awc.Workload.Namespace, awc.Cluster)
-	return (ns.Labels[awc.Conf.IstioLabels.InjectionLabelName] == "enabled" ||
-		ns.Labels[awc.Conf.IstioLabels.InjectionLabelRev] != "" ||
-		awc.Workload.Labels[awc.Conf.ExternalServices.Istio.IstioInjectionAnnotation] == "enabled") && (ns.Labels[awc.Conf.IstioLabels.InjectionLabelName] != "disabled" &&
-		awc.Workload.Labels[awc.Conf.ExternalServices.Istio.IstioInjectionAnnotation] != "none")
+
+	// Check for enablement at the namespace level.
+	namespaceIsEnabled := ns.Labels[awc.Conf.IstioLabels.InjectionLabelName] == "enabled" ||
+		ns.Labels[awc.Conf.IstioLabels.InjectionLabelRev] != ""
+
+	// Check for enablement at the workload level.
+	workloadIsEnabled := awc.Workload.Labels[awc.Conf.ExternalServices.Istio.IstioInjectionAnnotation] == "enabled"
+
+	// Check for explicit disablement at the namespace level.
+	namespaceIsDisabled := ns.Labels[awc.Conf.IstioLabels.InjectionLabelName] == "disabled"
+
+	// Check for explicit disablement at the workload level.
+	workloadIsDisabled := awc.Workload.Labels[awc.Conf.ExternalServices.Istio.IstioInjectionAnnotation] == "none"
+
+	// A sidecar is enabled if either the namespace OR the workload enables it,
+	// AND neither the namespace NOR the workload explicitly disables it.
+	isEnabled := namespaceIsEnabled || workloadIsEnabled
+	isDisabled := namespaceIsDisabled || workloadIsDisabled
+
+	return isEnabled && !isDisabled
 }
 
 // hasWaypointLabel Check if the namespace or the workload has Waypoint labels
 // See https://istio.io/latest/docs/ambient/usage/waypoint/#configure-a-pod-to-use-a-specific-waypoint
 func (awc AmbientWorkloadChecker) hasWaypointLabel() bool {
+	waypointLabel := awc.Conf.IstioLabels.AmbientWaypointUseLabel
+
+	// Check the workload label first
+	if val, ok := awc.Workload.Labels[waypointLabel]; ok {
+		// The label is present on the workload.
+		return val != "" && val != config.WaypointNone
+	}
+
+	// The workload label is not set. Fall back to the namespace label.
 	ns := awc.Namespaces.GetNamespace(awc.Workload.Namespace, awc.Cluster)
-	return (ns.Labels[awc.Conf.IstioLabels.AmbientWaypointUseLabel] != "" &&
-		ns.Labels[awc.Conf.IstioLabels.AmbientWaypointUseLabel] != config.WaypointNone) ||
-		(awc.Workload.Labels[awc.Conf.IstioLabels.AmbientWaypointUseLabel] != "" &&
-			awc.Workload.Labels[awc.Conf.IstioLabels.AmbientWaypointUseLabel] != config.WaypointNone)
+	if val, ok := ns.Labels[waypointLabel]; ok {
+		// The label is present on the namespace.
+		return val != "" && val != config.WaypointNone
+	}
+
+	// No waypoint label was found on either the workload or its namespace.
+	return false
 }

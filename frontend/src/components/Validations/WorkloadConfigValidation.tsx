@@ -44,14 +44,16 @@ export const WorkloadConfigValidation: React.FC<WorkloadConfigValidationProps> =
     icon = ExclamationCircleIcon;
     color = PFColors.Danger;
     const headerSummary = `Config Issues (${errorCountStr}, ${warningCountStr})`;
-    const errorsList = `Errors:\n${errors.map(e => `• ${e.message}`).join('\n')}`;
-    const warningsList = hasWarnings ? `Warnings:\n${warnings.map(w => `• ${w.message}`).join('\n')}` : '';
+    const errorsList = `Errors:\n${errors.map(e => `• ${e.code ? `${e.code} - ` : ''}${e.message}`).join('\n')}`;
+    const warningsList = hasWarnings
+      ? `Warnings:\n${warnings.map(w => `• ${w.code ? `${w.code} - ` : ''}${w.message}`).join('\n')}`
+      : '';
     tooltipContent = [headerSummary, errorsList, warningsList].join('\n');
   } else if (hasWarnings) {
     icon = ExclamationTriangleIcon;
     color = PFColors.Warning;
     const headerSummary = `Config Issues (${warningCountStr}):`;
-    const warningsList = warnings.map(w => `• ${w.message}`).join('\n');
+    const warningsList = warnings.map(w => `• ${w.code ? `${w.code} - ` : ''}${w.message}`).join('\n');
     tooltipContent = [headerSummary, warningsList].join('\n');
   } else {
     return <></>;
