@@ -33,7 +33,8 @@ var _ = Describe("Validations controller", Ordered, func() {
 		BeforeAll(func(specCtx SpecContext) {
 			conf := config.NewConfig()
 			kialiKubeClient, err := kubernetes.NewClient(kubernetes.ClusterInfo{
-				Name: conf.KubernetesConfig.ClusterName,
+				ClientConfig: cfg,
+				Name:         conf.KubernetesConfig.ClusterName,
 			}, conf)
 			Expect(err).ToNot(HaveOccurred())
 
