@@ -267,3 +267,9 @@ if [ "${KIALI_ENABLED}" == "true" ]; then
 
   source ${SCRIPT_DIR}/deploy-kiali.sh
 fi
+
+if [ "${BOOKINFO_ENABLED}" == "true" ]; then
+  echo "Installing bookinfo demo in namespace [${BOOKINFO_NAMESPACE}] on [${CLUSTER2_CONTEXT}]"
+  source ${SCRIPT_DIR}/../install-bookinfo-demo.sh --client-exe "${CLIENT_EXE}" --istio-dir "${ISTIO_DIR}" --istio-namespace "${ISTIO_NAMESPACE}" --namespace "${BOOKINFO_NAMESPACE}" --minikube-profile "${CLUSTER2_CONTEXT}" --namespace "${BOOKINFO_NAMESPACE}" --minikube-profile "${CLUSTER2_CONTEXT}"
+  return 0
+fi

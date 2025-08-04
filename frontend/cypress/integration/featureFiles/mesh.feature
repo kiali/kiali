@@ -144,7 +144,6 @@ Feature: Kiali Mesh page
     Then user sees the Tester result "correct"
 
   @external-kiali
-  @bookinfo-app
   Scenario: External-kiali: see one dataplane and one controlplane for mesh cluster
     Then user sees 1 "dataplane" nodes on the "mesh" cluster
     And user sees 1 "istiod" nodes on the "mesh" cluster
