@@ -405,7 +405,7 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 		}
 	}
 
-	appInstance.Runtimes = NewDashboardsService(in.conf, in.grafana, ns, nil).GetCustomDashboardRefs(criteria.Namespace, criteria.AppName, "", pods)
+	appInstance.Runtimes = NewDashboardsService(in.conf, in.grafana, in.prom, ns, nil).GetCustomDashboardRefs(criteria.Namespace, criteria.AppName, "", pods)
 	if criteria.IncludeHealth {
 		appInstance.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, criteria.Cluster, criteria.AppName, criteria.RateInterval, criteria.QueryTime, appDetails)
 		if err != nil {
@@ -522,7 +522,8 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 // If the app has any Waypoint, the information is included, as it will be the search name used by the tracing backend
 func (in *AppService) GetAppTracingName(ctx context.Context, cluster, namespace, app string) models.TracingName {
 	criteria := AppCriteria{
-		Namespace: namespace, AppName: app, IncludeIstioResources: false, IncludeHealth: false, Cluster: cluster}
+		Namespace: namespace, AppName: app, IncludeIstioResources: false, IncludeHealth: false, Cluster: cluster,
+	}
 
 	tracingName := models.TracingName{App: app, Lookup: app}
 	// Fetch and build app

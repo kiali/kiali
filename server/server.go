@@ -132,7 +132,7 @@ func (s *Server) Start() {
 
 	// Start the Metrics Server
 	if s.conf.Server.Observability.Metrics.Enabled {
-		StartMetricsServer()
+		StartMetricsServer(s.conf)
 	}
 }
 

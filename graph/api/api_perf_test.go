@@ -942,7 +942,7 @@ func setupMockedPerf(b *testing.B, numNs int) (*prometheus.Client, *prometheuste
 	authInfo := map[string]*cmdapi.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
 
 	api := new(prometheustest.PromAPIMock)
-	client, err := prometheus.NewClient()
+	client, err := prometheus.NewClient(*config.NewConfig(), k8s.GetToken())
 	if err != nil {
 		b.Fatal(err)
 	}

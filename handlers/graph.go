@@ -69,7 +69,7 @@ func GraphNamespaces(
 
 		o := graph.NewOptions(r, business)
 
-		code, payload := api.GraphNamespaces(r.Context(), business, o)
+		code, payload := api.GraphNamespaces(r.Context(), business, prom, o)
 		respond(w, code, payload)
 	}
 }
@@ -93,7 +93,7 @@ func GraphNode(
 
 		o := graph.NewOptions(r, business)
 
-		code, payload := api.GraphNode(r.Context(), business, o)
+		code, payload := api.GraphNode(r.Context(), business, prom, o)
 		respond(w, code, payload)
 	}
 }
