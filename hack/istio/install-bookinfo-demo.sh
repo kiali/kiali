@@ -25,6 +25,7 @@ DELETE_BOOKINFO="false"
 ISTIO_NAMESPACE="istio-system"
 INGRESS_NAMESPACE=${ISTIO_NAMESPACE}
 ISTIO_DIR=
+GATEWAY_YAML=""
 MANUAL_INJECTION="false"
 MINIKUBE_PROFILE="minikube"
 NAMESPACE="bookinfo"
@@ -221,6 +222,7 @@ echo "AMBIENT_ENABLED=${AMBIENT_ENABLED}"
 echo "SERVICE_VERSIONS=${SERVICE_VERSIONS}"
 
 # check arch values and prepare new bookinfo-arch.yaml with matching images
+BOOKINFO_YAML=""
 if [ "${ARCH}" == "ppc64le" ]; then
   cp ${HACK_SCRIPT_DIR}/kustomization/bookinfo-ppc64le.yaml ${ISTIO_DIR}/samples/bookinfo/platform/kube/kustomization.yaml
   ${CLIENT_EXE} kustomize ${ISTIO_DIR}/samples/bookinfo/platform/kube > ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ppc64le.yaml
@@ -235,10 +237,10 @@ elif [ "${ARCH}" != "amd64" ] && [ "${ARCH}" != "arm64" ]; then
 fi
 
 # use default bookinfo.yaml when there was no custom file provided or different arch selected
-if [ "${BOOKINFO_YAML}" == "" ]; then
+if [ -z "$BOOKINFO_YAML" ]; then
   BOOKINFO_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo.yaml"
 fi
-if [ "${GATEWAY_YAML}" == "" ]; then
+if [ -z "$GATEWAY_YAML" ]; then
   if [ "${AMBIENT_ENABLED}" == "true" ]; then
     GATEWAY_YAML="${ISTIO_DIR}/samples/bookinfo/gateway-api/bookinfo-gateway.yaml"
   else
