@@ -24,7 +24,7 @@ Feature: Kiali Overview page
     And user does not see any cluster badge in the "beta" namespace card
 
   Scenario: Doesn't see a "bad" namespace
-    Then user doesn't see the "bad" namespace card
+    Then user does not see the "bad" namespace card in any cluster
 
   Scenario: Select the COMPACT view
     When user clicks in the "COMPACT" view
@@ -42,7 +42,7 @@ Feature: Kiali Overview page
   Scenario: Filter by namespace
     When user filters "alpha" namespace
     Then user sees the "alpha" namespace card
-    And user doesn't see the "beta" namespace card
+    And user does not see the "beta" namespace card in any cluster
 
   Scenario: Sort by name
     When user filters "alpha" namespace
@@ -204,3 +204,8 @@ Feature: Kiali Overview page
     And user sees the "Control plane" label in the "mesh" "istio-system" namespace card
     And user does not see the "Control plane" label in the "mgmt" "istio-system" namespace card
     And Istio config should not be available for the "mgmt" "istio-system"
+
+  @external-kiali
+  Scenario: See bookinfo in mesh cluster only
+    Then user sees the "bookinfo" namespace card in cluster "mesh"
+    And user does not see the "bookinfo" namespace card in cluster "mgmt"
