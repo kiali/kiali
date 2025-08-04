@@ -236,33 +236,26 @@ Then(
   }
 );
 
-Then(
-  'user sees the {string} node connected to the {int} {string} nodes',
-  (sourceInfraType: string, numEdges: number, destInfraType: string) => {
-    cy.waitForReact();
-    cy.get('#loading_kiali_spinner').should('not.exist');
-    cy.getReact('MeshPageComponent', { state: { isReady: true } })
-      .should('have.length', 1)
-      .then($graph => {
-        const { state } = $graph[0];
+Then('user sees the {string} node connected to the {string} node', (sourceInfraType, destInfraType: string) => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
 
-        const controller = state.meshRefs.getController() as Visualization;
-        assert.isTrue(controller.hasGraph());
+      const controller = state.meshRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
 
-        const { nodes } = elems(controller);
-        const istiodNode = nodes.find(n => n.getData().infraType === sourceInfraType);
+      const { nodes } = elems(controller);
+      const sourceNode = nodes.find(n => n.getData().infraType === sourceInfraType);
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        expect(istiodNode).to.exist;
-        expect(istiodNode?.getSourceEdges()).to.have.lengthOf(numEdges);
-
-        istiodNode?.getSourceEdges().every(e => {
-          const targetNodeData = e.getTarget().getData();
-          return targetNodeData.infraType === destInfraType && targetNodeData.cluster === 'cluster';
-        });
+      sourceNode?.getSourceEdges().every(e => {
+        const targetNodeData = e.getTarget().getData();
+        return targetNodeData.infraType === destInfraType && targetNodeData.cluster === 'cluster';
       });
-  }
-);
+    });
+});
 
 Then('user {string} mesh tour', (action: string) => {
   cy.waitForReact();

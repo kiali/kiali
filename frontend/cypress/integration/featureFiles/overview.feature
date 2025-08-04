@@ -206,6 +206,7 @@ Feature: Kiali Overview page
     And Istio config should not be available for the "mgmt" "istio-system"
 
   @external-kiali
+  @bookinfo-app
   Scenario: See bookinfo in mesh cluster only
     Then user sees the "bookinfo" namespace card in cluster "mesh"
     And user does not see the "bookinfo" namespace card in cluster "mgmt"
