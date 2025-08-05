@@ -106,7 +106,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
   const hasMissingVersion = isWorkload && !item['versionLabel'] && !item.isWaypoint;
   const additionalDetails = (item as WorkloadListItem | ServiceListItem).additionalDetailSample;
   const spacer = isWorkload && hasMissingSidecar(item) && additionalDetails && additionalDetails.icon;
-  console.log(JSON.stringify(item));
+
   return (
     <Td
       role="gridcell"
