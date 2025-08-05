@@ -236,26 +236,34 @@ Then(
   }
 );
 
-Then('user sees the {string} node connected to the {string} node', (sourceInfraType, destInfraType: string) => {
-  cy.waitForReact();
-  cy.get('#loading_kiali_spinner').should('not.exist');
-  cy.getReact('MeshPageComponent', { state: { isReady: true } })
-    .should('have.length', 1)
-    .then($graph => {
-      const { state } = $graph[0];
+Then(
+  'user sees the {string} node connected to the {int} {string} nodes',
+  (sourceInfraType: string, numEdges: number, destInfraType: string) => {
+    cy.waitForReact();
+    cy.get('#loading_kiali_spinner').should('not.exist');
+    cy.getReact('MeshPageComponent', { state: { isReady: true } })
+      .should('have.length', 1)
+      .then($graph => {
+        const { state } = $graph[0];
 
-      const controller = state.meshRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
+        const controller = state.meshRefs.getController() as Visualization;
+        assert.isTrue(controller.hasGraph());
 
-      const { nodes } = elems(controller);
-      const sourceNode = nodes.find(n => n.getData().infraType === sourceInfraType);
+        const { nodes } = elems(controller);
+        const sourceNode = nodes.find(n => n.getData().infraType === sourceInfraType);
 
-      sourceNode?.getSourceEdges().every(e => {
-        const targetNodeData = e.getTarget().getData();
-        return targetNodeData.infraType === destInfraType && targetNodeData.cluster === 'cluster';
+        const destNodes = sourceNode?.getSourceEdges().filter(e => {
+          const targetNodeData = e.getTarget().getData();
+          return targetNodeData.infraType === destInfraType;
+        });
+
+        assert.isTrue(
+          destNodes?.length === numEdges,
+          `Expected ${numEdges} ${destInfraType} nodes, but got ${destNodes?.length}`
+        );
       });
-    });
-});
+  }
+);
 
 Then('user {string} mesh tour', (action: string) => {
   cy.waitForReact();
