@@ -5,6 +5,7 @@ import { ExclamationTriangleIcon, ExclamationCircleIcon } from '@patternfly/reac
 import { isIstioNamespace } from 'config/ServerConfig';
 import { ValidationTypes, ObjectValidation } from 'types/IstioObjects';
 import { PFColors } from '../Pf/PfColors';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type WorkloadConfigValidationProps = {
   className?: string;
@@ -17,6 +18,8 @@ export const WorkloadConfigValidation: React.FC<WorkloadConfigValidationProps> =
   namespace,
   validations
 }) => {
+  const { t } = useKialiTranslation();
+
   // Skip rendering for Istio namespaces
   if (isIstioNamespace(namespace)) {
     return <></>;
@@ -37,22 +40,36 @@ export const WorkloadConfigValidation: React.FC<WorkloadConfigValidationProps> =
   let icon: React.ComponentClass<SVGIconProps>;
   let color: string;
   let tooltipContent: string;
-  const errorCountStr = hasErrors ? `${errors.length} error${errors.length !== 1 ? 's' : ''}` : '';
-  const warningCountStr = hasWarnings ? `${warnings.length} warning${warnings.length !== 1 ? 's' : ''}` : '';
+  const errorCountStr = hasErrors
+    ? t('{{count}} error', {
+        count: errors.length,
+        defaultValueOne: '{{count}} error',
+        defaultValueOther: '{{count}} errors'
+      })
+    : '';
+  const warningCountStr = hasWarnings
+    ? t('{{count}} warning', {
+        count: warnings.length,
+        defaultValueOne: '{{count}} warning',
+        defaultValueOther: '{{count}} warnings'
+      })
+    : '';
 
   if (hasErrors) {
     icon = ExclamationCircleIcon;
     color = PFColors.Danger;
-    const headerSummary = `Config Issues (${errorCountStr}, ${warningCountStr})`;
-    const errorsList = `Errors:\n${errors.map(e => `• ${e.code ? `${e.code} - ` : ''}${e.message}`).join('\n')}`;
+    const headerSummary = `${t('Config Issues')} (${errorCountStr}, ${warningCountStr})`;
+    const errorsList = `${t('Errors')}:\n${errors
+      .map(e => `• ${e.code ? `${e.code} - ` : ''}${e.message}`)
+      .join('\n')}`;
     const warningsList = hasWarnings
-      ? `Warnings:\n${warnings.map(w => `• ${w.code ? `${w.code} - ` : ''}${w.message}`).join('\n')}`
+      ? `${t('Warnings')}:\n${warnings.map(w => `• ${w.code ? `${w.code} - ` : ''}${w.message}`).join('\n')}`
       : '';
     tooltipContent = [headerSummary, errorsList, warningsList].join('\n');
   } else if (hasWarnings) {
     icon = ExclamationTriangleIcon;
     color = PFColors.Warning;
-    const headerSummary = `Config Issues (${warningCountStr}):`;
+    const headerSummary = `${t('Config Issues')} (${warningCountStr}):`;
     const warningsList = warnings.map(w => `• ${w.code ? `${w.code} - ` : ''}${w.message}`).join('\n');
     tooltipContent = [headerSummary, warningsList].join('\n');
   } else {
@@ -62,7 +79,7 @@ export const WorkloadConfigValidation: React.FC<WorkloadConfigValidationProps> =
   const iconComponent = (
     <span className={className}>
       {React.createElement(icon, { style: { color: color } })}
-      <span style={{ marginLeft: '0.5rem' }}>Config Issues</span>
+      <span style={{ marginLeft: '0.5rem' }}>{t('Config Issues')}</span>
     </span>
   );
 
