@@ -25,7 +25,7 @@ Next, install Istio along with its sample application, Bookinfo.
 Once Istio and Bookinfo are up, you can deploy Kiali to visualize your service mesh.
 
 ```bash
-make clean build build-ui cluster-push operator-create kiali-create
+make clean build-ui build cluster-push operator-create kiali-create
 ```
 
 ## Install Backstage
