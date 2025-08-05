@@ -26,11 +26,15 @@ ISTIO_NAMESPACE="istio-system"
 INGRESS_NAMESPACE=${ISTIO_NAMESPACE}
 ISTIO_DIR=
 GATEWAY_YAML=""
+BOOKINFO_YAML=""
 MANUAL_INJECTION="false"
 MINIKUBE_PROFILE="minikube"
+MONGO_ENABLED="false"
+MYSQL_ENABLED="false"
 NAMESPACE="bookinfo"
 RATE=1
 SERVICE_VERSIONS="false"
+TRAFFIC_GENERATOR_ENABLED="false"
 WAIT_TIMEOUT="0" # can be things like "60s" or "30m"
 WAYPOINT="false"
 
@@ -222,7 +226,6 @@ echo "AMBIENT_ENABLED=${AMBIENT_ENABLED}"
 echo "SERVICE_VERSIONS=${SERVICE_VERSIONS}"
 
 # check arch values and prepare new bookinfo-arch.yaml with matching images
-BOOKINFO_YAML=""
 if [ "${ARCH}" == "ppc64le" ]; then
   cp ${HACK_SCRIPT_DIR}/kustomization/bookinfo-ppc64le.yaml ${ISTIO_DIR}/samples/bookinfo/platform/kube/kustomization.yaml
   ${CLIENT_EXE} kustomize ${ISTIO_DIR}/samples/bookinfo/platform/kube > ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ppc64le.yaml
