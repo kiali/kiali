@@ -7,13 +7,31 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
+func NewAmbientWorkloadChecker(
+	cluster string,
+	conf *config.Config,
+	workload *models.Workload,
+	namespace string,
+	namespaces models.Namespaces,
+	authorizationPolicies []*security_v1.AuthorizationPolicy,
+) AmbientWorkloadChecker {
+	return AmbientWorkloadChecker{
+		cluster:               cluster,
+		conf:                  conf,
+		workload:              workload,
+		namespace:             namespace,
+		namespaces:            namespaces,
+		authorizationPolicies: authorizationPolicies,
+	}
+}
+
 type AmbientWorkloadChecker struct {
-	Cluster               string
-	Conf                  *config.Config
-	Workload              *models.Workload
-	Namespace             string
-	Namespaces            models.Namespaces
-	AuthorizationPolicies []*security_v1.AuthorizationPolicy
+	cluster               string
+	conf                  *config.Config
+	workload              *models.Workload
+	namespace             string
+	namespaces            models.Namespaces
+	authorizationPolicies []*security_v1.AuthorizationPolicy
 }
 
 func (awc AmbientWorkloadChecker) Check() ([]*models.IstioCheck, bool) {
@@ -63,19 +81,19 @@ func (awc AmbientWorkloadChecker) hasBothSidecarAndAmbientLabels() bool {
 }
 
 func (awc AmbientWorkloadChecker) isWaypointAndNotAmbient() bool {
-	return awc.hasWaypointLabel() && !awc.Workload.IsAmbient
+	return awc.hasWaypointLabel() && !awc.workload.IsAmbient
 }
 
 func (awc AmbientWorkloadChecker) referencesNonExistentWaypoint() bool {
 	// If there is a reference but no resolved waypoint workload, it's missing or misconfigured
-	return awc.hasWaypointLabel() && len(awc.Workload.WaypointWorkloads) == 0
+	return awc.hasWaypointLabel() && len(awc.workload.WaypointWorkloads) == 0
 }
 
 func (awc AmbientWorkloadChecker) hasPodWithSidecarLabelAndAmbientRedirection() bool {
 	if !awc.hasSidecarLabel() {
 		return false
 	}
-	for _, pod := range awc.Workload.Pods {
+	for _, pod := range awc.workload.Pods {
 		if pod.AmbientEnabled() {
 			return true
 		}
@@ -87,7 +105,7 @@ func (awc AmbientWorkloadChecker) hasPodWithSidecarInjectAndAmbientLabel() bool 
 	if !awc.hasAmbientLabel() {
 		return false
 	}
-	for _, pod := range awc.Workload.Pods {
+	for _, pod := range awc.workload.Pods {
 		if pod.HasIstioSidecar() {
 			return true
 		}
@@ -97,16 +115,16 @@ func (awc AmbientWorkloadChecker) hasPodWithSidecarInjectAndAmbientLabel() bool 
 
 func (awc AmbientWorkloadChecker) hasSidecarInAmbientNamespace() bool {
 	// If the workload has a sidecar and the namespace is ambient-enabled
-	if !awc.Workload.IstioSidecar {
+	if !awc.workload.IstioSidecar {
 		return false
 	}
 
-	return awc.Namespaces.IsNamespaceAmbient(awc.Workload.Namespace, awc.Cluster)
+	return awc.namespaces.IsNamespaceAmbient(awc.workload.Namespace, awc.cluster)
 }
 
 func (awc AmbientWorkloadChecker) hasAuthPolicyAndNoWaypoint() bool {
-	for _, ap := range awc.AuthorizationPolicies {
-		if ap.Namespace == awc.Workload.Namespace && len(awc.Workload.WaypointWorkloads) == 0 {
+	for _, ap := range awc.authorizationPolicies {
+		if ap.Namespace == awc.workload.Namespace && len(awc.workload.WaypointWorkloads) == 0 {
 			return true
 		}
 	}
@@ -116,12 +134,12 @@ func (awc AmbientWorkloadChecker) hasAuthPolicyAndNoWaypoint() bool {
 // hasAmbientLabel Check if the namespace or the workload has Ambient enabled
 // See https://istio.io/latest/docs/ambient/usage/add-workloads/#ambient-labels
 func (awc AmbientWorkloadChecker) hasAmbientLabel() bool {
-	ambientLabelKey := awc.Conf.IstioLabels.AmbientNamespaceLabel
-	ambientLabelValue := awc.Conf.IstioLabels.AmbientNamespaceLabelValue
+	ambientLabelKey := awc.conf.IstioLabels.AmbientNamespaceLabel
+	ambientLabelValue := awc.conf.IstioLabels.AmbientNamespaceLabelValue
 
 	// Get the label values from both the workload and its namespace.
-	ns := awc.Namespaces.GetNamespace(awc.Workload.Namespace, awc.Cluster)
-	workloadLabelVal := awc.Workload.Labels[ambientLabelKey]
+	ns := awc.namespaces.GetNamespace(awc.workload.Namespace, awc.cluster)
+	workloadLabelVal := awc.workload.Labels[ambientLabelKey]
 	namespaceLabelVal := ns.Labels[ambientLabelKey]
 
 	workloadIsEnabled := workloadLabelVal == ambientLabelValue
@@ -137,20 +155,20 @@ func (awc AmbientWorkloadChecker) hasAmbientLabel() bool {
 // hasSidecarLabel Check if the namespace or the workload has Sidecars enabled
 // See https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/
 func (awc AmbientWorkloadChecker) hasSidecarLabel() bool {
-	ns := awc.Namespaces.GetNamespace(awc.Workload.Namespace, awc.Cluster)
+	ns := awc.namespaces.GetNamespace(awc.workload.Namespace, awc.cluster)
 
 	// Check for enablement at the namespace level.
-	namespaceIsEnabled := ns.Labels[awc.Conf.IstioLabels.InjectionLabelName] == "enabled" ||
-		ns.Labels[awc.Conf.IstioLabels.InjectionLabelRev] != ""
+	namespaceIsEnabled := ns.Labels[awc.conf.IstioLabels.InjectionLabelName] == "enabled" ||
+		ns.Labels[awc.conf.IstioLabels.InjectionLabelRev] != ""
 
 	// Check for enablement at the workload level.
-	workloadIsEnabled := awc.Workload.Labels[awc.Conf.ExternalServices.Istio.IstioInjectionAnnotation] == "enabled"
+	workloadIsEnabled := awc.workload.Labels[awc.conf.ExternalServices.Istio.IstioInjectionAnnotation] == "enabled"
 
 	// Check for explicit disablement at the namespace level.
-	namespaceIsDisabled := ns.Labels[awc.Conf.IstioLabels.InjectionLabelName] == "disabled"
+	namespaceIsDisabled := ns.Labels[awc.conf.IstioLabels.InjectionLabelName] == "disabled"
 
 	// Check for explicit disablement at the workload level.
-	workloadIsDisabled := awc.Workload.Labels[awc.Conf.ExternalServices.Istio.IstioInjectionAnnotation] == "none"
+	workloadIsDisabled := awc.workload.Labels[awc.conf.ExternalServices.Istio.IstioInjectionAnnotation] == "none"
 
 	// A sidecar is enabled if either the namespace OR the workload enables it,
 	// AND neither the namespace NOR the workload explicitly disables it.
@@ -163,16 +181,16 @@ func (awc AmbientWorkloadChecker) hasSidecarLabel() bool {
 // hasWaypointLabel Check if the namespace or the workload has Waypoint labels
 // See https://istio.io/latest/docs/ambient/usage/waypoint/#configure-a-pod-to-use-a-specific-waypoint
 func (awc AmbientWorkloadChecker) hasWaypointLabel() bool {
-	waypointLabel := awc.Conf.IstioLabels.AmbientWaypointUseLabel
+	waypointLabel := awc.conf.IstioLabels.AmbientWaypointUseLabel
 
 	// Check the workload label first
-	if val, ok := awc.Workload.Labels[waypointLabel]; ok {
+	if val, ok := awc.workload.Labels[waypointLabel]; ok {
 		// The label is present on the workload.
 		return val != "" && val != config.WaypointNone
 	}
 
 	// The workload label is not set. Fall back to the namespace label.
-	ns := awc.Namespaces.GetNamespace(awc.Workload.Namespace, awc.Cluster)
+	ns := awc.namespaces.GetNamespace(awc.workload.Namespace, awc.cluster)
 	if val, ok := ns.Labels[waypointLabel]; ok {
 		// The label is present on the namespace.
 		return val != "" && val != config.WaypointNone

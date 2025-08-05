@@ -39,7 +39,7 @@ func (w WorkloadChecker) runChecks(workload *models.Workload, namespace string) 
 
 	enabledCheckers := []Checker{
 		workloads.UncoveredWorkloadChecker{Workload: workload, Namespace: namespace, AuthorizationPolicies: w.AuthorizationPolicies},
-		workloads_ambient.AmbientWorkloadChecker{Workload: workload, Namespace: namespace, AuthorizationPolicies: w.AuthorizationPolicies, Cluster: w.Cluster, Namespaces: w.Namespaces, Conf: w.Conf},
+		workloads_ambient.NewAmbientWorkloadChecker(w.Cluster, w.Conf, workload, namespace, w.Namespaces, w.AuthorizationPolicies),
 	}
 
 	for _, checker := range enabledCheckers {

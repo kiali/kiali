@@ -34,13 +34,14 @@ func TestValidAmbientWorkloads(t *testing.T) {
 		conf.IstioLabels.AmbientNamespaceLabel: conf.IstioLabels.AmbientNamespaceLabelValue,
 	}
 
-	vals, valid = AmbientWorkloadChecker{
-		Conf:                  conf,
-		Workload:              workload,
-		Namespace:             ns1,
-		Namespaces:            models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
-		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{},
-	}.Check()
+	vals, valid = NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
+		[]*security_v1.AuthorizationPolicy{},
+	).Check()
 
 	assert.Empty(vals)
 	assert.True(valid)
@@ -63,13 +64,14 @@ func TestWorkloadBothSidecarAndAmbientLabels(t *testing.T) {
 	workload := data.CreateWorkload("mixed-workload", labels)
 	workload.Namespace = ns1
 
-	vals, valid := AmbientWorkloadChecker{
-		Conf:                  conf,
-		Workload:              workload,
-		Namespace:             ns1,
-		Namespaces:            models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
-		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{},
-	}.Check()
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
+		[]*security_v1.AuthorizationPolicy{},
+	).Check()
 
 	assert.NotEmpty(vals)
 	assert.False(valid)
@@ -91,13 +93,14 @@ func TestWorkloadWaypointAndNotAmbient(t *testing.T) {
 	workload.Namespace = ns1
 	workload.IsAmbient = false
 
-	vals, valid := AmbientWorkloadChecker{
-		Conf:                  conf,
-		Workload:              workload,
-		Namespace:             ns1,
-		Namespaces:            models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
-		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{},
-	}.Check()
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
+		[]*security_v1.AuthorizationPolicy{},
+	).Check()
 
 	assert.NotEmpty(vals)
 	assert.False(valid)
@@ -120,13 +123,14 @@ func TestWorkloadReferencesNonExistentWaypoint(t *testing.T) {
 	workload.IsAmbient = true
 	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
 
-	vals, valid := AmbientWorkloadChecker{
-		Conf:                  conf,
-		Workload:              workload,
-		Namespace:             ns1,
-		Namespaces:            models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
-		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{},
-	}.Check()
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
+		[]*security_v1.AuthorizationPolicy{},
+	).Check()
 
 	assert.NotEmpty(vals)
 	assert.False(valid)
@@ -150,13 +154,14 @@ func TestWorkloadPodWithSidecarLabelAndAmbientRedirection(t *testing.T) {
 	workload.Namespace = ns1
 	workload.Pods = models.Pods{data.CreatePod("ambient-pod", labels, true, false, false)}
 
-	vals, valid := AmbientWorkloadChecker{
-		Conf:                  conf,
-		Workload:              workload,
-		Namespace:             ns1,
-		Namespaces:            models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
-		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{},
-	}.Check()
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
+		[]*security_v1.AuthorizationPolicy{},
+	).Check()
 
 	assert.NotEmpty(vals)
 	assert.False(valid)
@@ -178,13 +183,14 @@ func TestWorkloadPodWithSidecarInjectAndAmbientLabel(t *testing.T) {
 	workload.Namespace = ns1
 	workload.Pods = models.Pods{data.CreatePod("ambient-pod", labels, false, true, false)}
 
-	vals, valid := AmbientWorkloadChecker{
-		Conf:                  conf,
-		Workload:              workload,
-		Namespace:             ns1,
-		Namespaces:            models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
-		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{},
-	}.Check()
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
+		[]*security_v1.AuthorizationPolicy{},
+	).Check()
 
 	assert.NotEmpty(vals)
 	assert.False(valid)
@@ -204,13 +210,14 @@ func TestWorkloadSidecarInAmbientNamespace(t *testing.T) {
 	workload.Namespace = ns1
 	workload.IstioSidecar = true
 
-	vals, valid := AmbientWorkloadChecker{
-		Conf:                  conf,
-		Workload:              workload,
-		Namespace:             ns1,
-		Namespaces:            models.Namespaces{models.Namespace{Name: ns1, Labels: labels, IsAmbient: true}},
-		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{},
-	}.Check()
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: labels, IsAmbient: true}},
+		[]*security_v1.AuthorizationPolicy{},
+	).Check()
 
 	assert.NotEmpty(vals)
 	assert.False(valid)
@@ -230,13 +237,14 @@ func TestWorkloadHasAuthPolicyAndNoWaypoint(t *testing.T) {
 	workload.Namespace = ns1
 	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
 
-	vals, valid := AmbientWorkloadChecker{
-		Conf:                  conf,
-		Workload:              workload,
-		Namespace:             ns1,
-		Namespaces:            models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
-		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{data.CreateEmptyAuthorizationPolicy("test", ns1)},
-	}.Check()
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
+		[]*security_v1.AuthorizationPolicy{data.CreateEmptyAuthorizationPolicy("test", ns1)},
+	).Check()
 
 	assert.NotEmpty(vals)
 	assert.False(valid)
