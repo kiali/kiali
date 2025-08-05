@@ -323,3 +323,59 @@ func TestConvertToDiscoverySelectors(t *testing.T) {
 		})
 	}
 }
+
+func TestParseArgsInto(t *testing.T) {
+	tests := map[string]struct {
+		args            []string
+		expectedMonPort int
+	}{
+		"Valid monitoring addr with custom port (space-separated)": {
+			args:            []string{"pilot-discovery", "--monitoringAddr", ":8080", "discovery"},
+			expectedMonPort: 8080,
+		},
+		"Valid monitoring addr with custom port (equals format)": {
+			args:            []string{"pilot-discovery", "--monitoringAddr=:9090", "discovery"},
+			expectedMonPort: 9090,
+		},
+		"Valid monitoring addr with host:port format": {
+			args:            []string{"pilot-discovery", "--monitoringAddr=localhost:7777", "discovery"},
+			expectedMonPort: 7777,
+		},
+		"Invalid format - missing colon": {
+			args:            []string{"pilot-discovery", "--monitoringAddr=8080", "discovery"},
+			expectedMonPort: defaultMonitoringPort,
+		},
+		"No monitoring addr argument": {
+			args:            []string{"pilot-discovery", "discovery"},
+			expectedMonPort: defaultMonitoringPort,
+		},
+		"Empty args": {
+			args:            []string{},
+			expectedMonPort: defaultMonitoringPort,
+		},
+		"Unknown flags should not break parsing": {
+			args:            []string{"pilot-discovery", "--unknown-flag=value", "--monitoringAddr=:3333", "--another-unknown", "test"},
+			expectedMonPort: 3333,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			controlPlane := &models.ControlPlane{
+				MonitoringPort: defaultMonitoringPort,
+			}
+
+			parseArgsInto(tt.args, controlPlane)
+
+			assert.Equal(tt.expectedMonPort, controlPlane.MonitoringPort, "Expected MonitoringPort to be %d, got %d for args %v", tt.expectedMonPort, controlPlane.MonitoringPort, tt.args)
+		})
+	}
+}
+
+func TestParseArgsInto_NilControlPlane(t *testing.T) {
+	require := require.New(t)
+	require.NotPanics(func() {
+		parseArgsInto([]string{"pilot-discovery", "--monitoringAddr=:8080"}, nil)
+	})
+}

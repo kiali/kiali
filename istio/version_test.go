@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -16,6 +17,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 )
 
 func TestParseIstioRawVersion(t *testing.T) {
@@ -142,11 +144,11 @@ func TestParseIstioRawVersion(t *testing.T) {
 
 type fakeForwarder struct {
 	kubernetes.ClientInterface
-	testURL string
+	hostname string
 }
 
 func (f *fakeForwarder) ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error) {
-	url, _ := url.JoinPath(f.testURL, path)
+	url, _ := url.JoinPath("http://"+f.hostname+":"+strconv.Itoa(destinationPort), path)
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -188,6 +190,20 @@ func runningIstiodPod() *corev1.Pod {
 	}
 }
 
+func mustParseURL(t *testing.T, s string) *url.URL {
+	t.Helper()
+	u, err := url.Parse(s)
+	require.NoError(t, err)
+	return u
+}
+
+func mustAtoi(t *testing.T, s string) int {
+	t.Helper()
+	i, err := strconv.Atoi(s)
+	require.NoError(t, err)
+	return i
+}
+
 func TestGetVersionRemoteCluster(t *testing.T) {
 	require := require.New(t)
 
@@ -195,6 +211,7 @@ func TestGetVersionRemoteCluster(t *testing.T) {
 	conf.KubernetesConfig.ClusterName = "test-cluster"
 
 	testServer := istiodTestServer(t)
+	u := mustParseURL(t, testServer.URL)
 
 	clients := map[string]kubernetes.ClientInterface{
 		"test-cluster": kubetest.NewFakeK8sClient(),
@@ -216,13 +233,66 @@ func TestGetVersionRemoteCluster(t *testing.T) {
 
 	clients["remote-cluster"] = &fakeForwarder{
 		ClientInterface: clients["remote-cluster"],
-		testURL:         testServer.URL,
+		hostname:        u.Hostname(),
 	}
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
 	kubeCache, err := cache.GetKubeCache("remote-cluster")
 	require.NoError(err)
 
-	version, err := GetVersion(context.Background(), conf, clients["remote-cluster"], kubeCache, "default", "istio-system")
+	controlPlane := models.ControlPlane{
+		Revision:        "default",
+		IstiodNamespace: "istio-system",
+		MonitoringPort:  mustAtoi(t, u.Port()),
+	}
+
+	version, err := GetVersion(context.Background(), conf, clients["remote-cluster"], kubeCache, controlPlane)
+	require.NoError(err)
+	require.Equal("1.22.0", version.Version)
+}
+
+func TestGetVersionSingleClusterCustomPort(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+
+	testServer := istiodTestServer(t)
+	u := mustParseURL(t, testServer.URL)
+
+	var k8s kubernetes.ClientInterface = kubetest.NewFakeK8sClient(
+		&corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: u.Hostname(),
+				Labels: map[string]string{
+					"app":          "istiod",
+					"istio.io/rev": "default",
+				},
+			},
+			Spec: corev1.ServiceSpec{
+				Ports: []corev1.ServicePort{
+					{
+						Name: "http-monitoring",
+						Port: int32(mustAtoi(t, u.Port())),
+					},
+				},
+			},
+		},
+		kubetest.FakeNamespace("istio-system"),
+	)
+
+	k8s = &fakeForwarder{
+		ClientInterface: k8s,
+		hostname:        u.Hostname(),
+	}
+	cache := cache.NewTestingCache(t, k8s, *conf)
+
+	controlPlane := models.ControlPlane{
+		Revision:       "default",
+		MonitoringPort: mustAtoi(t, u.Port()),
+	}
+	reader, err := cache.GetKubeCache(conf.KubernetesConfig.ClusterName)
+	require.NoError(err)
+
+	version, err := GetVersion(context.Background(), conf, k8s, reader, controlPlane)
 	require.NoError(err)
 	require.Equal("1.22.0", version.Version)
 }

@@ -112,6 +112,10 @@ type ControlPlane struct {
 	// and user configmap. This field is just for the backend to use. The frontend should use the Config field.
 	MeshConfig *MeshConfig `json:"-"`
 
+	// MonitoringPort is the port used for monitoring metrics, parsed from the --monitoringAddr argument.
+	// Defaults to 15014 if not specified or in invalid format.
+	MonitoringPort int `json:"monitoringPort"`
+
 	// Resources are the resources that the controlplane is using.
 	Resources corev1.ResourceRequirements `json:"resources"`
 
