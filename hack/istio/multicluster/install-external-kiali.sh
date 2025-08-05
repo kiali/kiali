@@ -270,5 +270,5 @@ fi
 
 if [ "${BOOKINFO_ENABLED}" == "true" ]; then
   echo "Installing bookinfo demo in namespace [${BOOKINFO_NAMESPACE}] on [${CLUSTER2_CONTEXT}]"
-  source ${SCRIPT_DIR}/../install-bookinfo-demo.sh --client-exe "${CLIENT_EXE}" --istio-dir "${ISTIO_DIR}" --istio-namespace "${ISTIO_NAMESPACE}" --namespace "${BOOKINFO_NAMESPACE}" --minikube-profile "${CLUSTER2_CONTEXT}" --namespace "${BOOKINFO_NAMESPACE}" --minikube-profile "${CLUSTER2_CONTEXT}"
+  source ${SCRIPT_DIR}/../install-bookinfo-demo.sh --client-exe "${CLIENT_EXE}" --istio-dir "${ISTIO_DIR}" --istio-namespace "${ISTIO_NAMESPACE}" --namespace "${BOOKINFO_NAMESPACE}" --minikube-profile "${CLUSTER2_CONTEXT}" --namespace "${BOOKINFO_NAMESPACE}" --kube-context "${CLUSTER2_CONTEXT}"
 fi
