@@ -238,7 +238,7 @@ Then(
 
 Then(
   'user sees the {string} node connected to the {int} {string} nodes',
-  (sourceInfraType: string, numEdges: number, destInfraType: string) => {
+  (sourceInfraType: MeshInfraType, numEdges: number, destInfraType: MeshInfraType) => {
     cy.waitForReact();
     cy.get('#loading_kiali_spinner').should('not.exist');
     cy.getReact('MeshPageComponent', { state: { isReady: true } })
