@@ -75,6 +75,7 @@ DEFAULT_API_PROXY_PORT="8001"
 DEFAULT_CLIENT_EXE="kubectl"
 DEFAULT_COPY_CLUSTER_SECRETS="true"
 DEFAULT_ENABLE_SERVER="true"
+DEFAULT_IGNORE_HOME_CLUSTER="false"
 DEFAULT_ISTIO_NAMESPACE="istio-system"
 DEFAULT_ISTIOD_URL="http://127.0.0.1:15014/version"
 DEFAULT_ISTIOD_SERVICE_NAME="istiod"
@@ -104,6 +105,7 @@ while [[ $# -gt 0 ]]; do
     -es|--enable-server)         ENABLE_SERVER="$2";                 shift;shift ;;
     -gu|--grafana-url)           GRAFANA_URL="$2";                   shift;shift ;;
     -hkc|--home-kube-context)    HOME_KUBE_CONTEXT="$2";             shift;shift ;;
+    -ihc|--ignore-home-cluster)  IGNORE_HOME_CLUSTER="$2";          shift;shift ;;
     -in|--istio-namespace)       ISTIO_NAMESPACE="$2";               shift;shift ;;
     -isn|--istiod-service-name)  ISTIOD_SERVICE_NAME="$2";           shift;shift ;;
     -iu|--istiod-url)            ISTIOD_URL="$2";                    shift;shift ;;
@@ -174,6 +176,10 @@ Valid options:
       For all other operations, the --kube-context value will be used.
       If not specified, the --kube-context value will be used as the default.
       Default: <same as --kube-context>
+  -ihc|--ignore-home-cluster
+      When true, Kiali won't consider the home cluster as part of the mesh.
+      Set this when testing the external deployment mode.
+      Default: ${DEFAULT_IGNORE_HOME_CLUSTER}
   -in|--istio-namespace
       The name of the control plane namespace - this is where Istio components are installed.
       Default: ${DEFAULT_ISTIO_NAMESPACE}
@@ -270,6 +276,7 @@ API_PROXY_PORT="${API_PROXY_PORT:-${DEFAULT_API_PROXY_PORT}}"
 CLUSTER_NAME="${CLUSTER_NAME:-}"
 COPY_CLUSTER_SECRETS="${COPY_CLUSTER_SECRETS:-${DEFAULT_COPY_CLUSTER_SECRETS}}"
 ENABLE_SERVER="${ENABLE_SERVER:-${DEFAULT_ENABLE_SERVER}}"
+IGNORE_HOME_CLUSTER="${IGNORE_HOME_CLUSTER:-${DEFAULT_IGNORE_HOME_CLUSTER}}"
 ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-${DEFAULT_ISTIO_NAMESPACE}}"
 KIALI_CONFIG_TEMPLATE_FILE="${KIALI_CONFIG_TEMPLATE_FILE:-${DEFAULT_KIALI_CONFIG_TEMPLATE_FILE}}"
 KIALI_EXE="${KIALI_EXE:-${DEFAULT_KIALI_EXE}}"
@@ -327,7 +334,8 @@ fi
 ISTIOD_SERVICE_NAME="${ISTIOD_SERVICE_NAME:-${DEFAULT_ISTIOD_SERVICE_NAME}}"
 PORT_FORWARD_SERVICE_ISTIOD="service/${ISTIOD_SERVICE_NAME}"
 LOCAL_REMOTE_PORTS_ISTIOD="15014:15014"
-ISTIOD_URL="${ISTIOD_URL:-${DEFAULT_ISTIOD_URL}}"
+# Use default only if ISTIOD_URL is unset, not if it's explicitly set to empty
+ISTIOD_URL="${ISTIOD_URL-${DEFAULT_ISTIOD_URL}}"
 
 
 # If the user didn't tell us what the Prometheus URL is, try to auto-discover it
@@ -503,6 +511,7 @@ echo "COPY_CLUSTER_SECRETS=$COPY_CLUSTER_SECRETS"
 echo "ENABLE_SERVER=$ENABLE_SERVER"
 echo "GRAFANA_URL=$GRAFANA_URL"
 echo "HOME_KUBE_CONTEXT=$HOME_KUBE_CONTEXT"
+echo "IGNORE_HOME_CLUSTER=$IGNORE_HOME_CLUSTER"
 echo "ISTIO_NAMESPACE=$ISTIO_NAMESPACE"
 echo "ISTIOD_URL=$ISTIOD_URL"
 echo "KIALI_CONFIG_TEMPLATE_FILE=$KIALI_CONFIG_TEMPLATE_FILE"
@@ -535,6 +544,7 @@ if ! echo "${LOG_LEVEL}" | grep -qiE "^(trace|debug|info|warn|error|fatal)$"; th
 [ "${REBOOTABLE}" != "true" -a "${REBOOTABLE}" != "false" ] && errormsg "--rebootable must be 'true' or 'false'" && exit 1
 [ "${ENABLE_SERVER}" != "true" -a "${ENABLE_SERVER}" != "false" ] && errormsg "--enable-server must be 'true' or 'false'" && exit 1
 [ "${ENABLE_SERVER}" == "false" -a "${REBOOTABLE}" == "true" ] && infomsg "--enable-server was set to false - turning off rebootable flag for you" && REBOOTABLE="false"
+[ "${IGNORE_HOME_CLUSTER}" != "true" -a "${IGNORE_HOME_CLUSTER}" != "false" ] && errormsg "--ignore-home-cluster must be 'true' or 'false'" && exit 1
 [ "${COPY_CLUSTER_SECRETS}" != "true" -a "${COPY_CLUSTER_SECRETS}" != "false" ] && errormsg "--copy-cluster-secrets must be 'true' or 'false'" && exit 1
 
 # Build the config file from the template
@@ -542,11 +552,13 @@ if ! echo "${LOG_LEVEL}" | grep -qiE "^(trace|debug|info|warn|error|fatal)$"; th
 KIALI_CONFIG_FILE="${TMP_DIR}/run-kiali-config.yaml"
 cat ${KIALI_CONFIG_TEMPLATE_FILE} | \
   ISTIO_NAMESPACE=${ISTIO_NAMESPACE} \
+  CLUSTER_NAME=${CLUSTER_NAME} \
   ISTIOD_URL=${ISTIOD_URL} \
   PROMETHEUS_URL=${PROMETHEUS_URL} \
   GRAFANA_URL=${GRAFANA_URL} \
   TRACING_APP=${TRACING_APP} \
   TRACING_URL=${TRACING_URL} \
+  IGNORE_HOME_CLUSTER=${IGNORE_HOME_CLUSTER} \
   envsubst > ${KIALI_CONFIG_FILE}
 
 # Set kubernetes_config.cluster_name only if the user told us to configure a specific cluster name
@@ -863,7 +875,9 @@ else
   infomsg "The server is not rebootable. You can kill this script via either [kill $$] or [kill -USR1 $$]"
 fi
 
-start_port_forward_istiod
+if [ "${ISTIOD_URL}" != "" ]; then
+  start_port_forward_istiod
+fi
 start_port_forward_prometheus
 start_port_forward_grafana
 start_port_forward_tracing
