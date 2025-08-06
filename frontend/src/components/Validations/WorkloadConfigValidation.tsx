@@ -81,7 +81,9 @@ export const WorkloadConfigValidation: React.FC<WorkloadConfigValidationProps> =
   const moreInfo = (
     <div>
       <span>{t('More info at ')}</span>
-      <Link to="https://kiali.io/docs/features/validations">{t('Kiali.io Validations')}</Link>
+      <Link to="https://kiali.io/docs/features/validations" target="_blank" rel="noopener noreferrer">
+        {t('Kiali.io Validations')}
+      </Link>
     </div>
   );
 
