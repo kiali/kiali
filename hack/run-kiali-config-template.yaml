@@ -24,6 +24,10 @@ clustering:
 deployment:
   cluster_wide_access: true
 
+kiali_internal:
+  # TODO: Remove with: https://github.com/kiali/kiali/issues/8263.
+  url_service_version: "${ISTIOD_URL}"
+
 external_services:
   custom_dashboards:
     enabled: false
@@ -32,9 +36,6 @@ external_services:
     enabled: true
     internal_url: "${GRAFANA_URL}"
     external_url: "${GRAFANA_URL}"
-
-  istio:
-    url_service_version: "${ISTIOD_URL}"
 
   prometheus:
     url: "${PROMETHEUS_URL}"

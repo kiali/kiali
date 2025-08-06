@@ -98,12 +98,10 @@ discoverySelectors:
 
 func TestIstioConfigMapName(t *testing.T) {
 	testCases := map[string]struct {
-		configMapName string
-		configMap     *corev1.ConfigMap
-		expectErr     bool
+		configMap *corev1.ConfigMap
+		expectErr bool
 	}{
-		"ConfigMapName is empty and revision is default": {
-			configMapName: "",
+		"Revision is default": {
 			configMap: &corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "istio",
@@ -113,8 +111,7 @@ func TestIstioConfigMapName(t *testing.T) {
 				Data: map[string]string{"mesh": ""},
 			},
 		},
-		"ConfigMapName is empty and revision is v1": {
-			configMapName: "",
+		"Revision is v1": {
 			configMap: &corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "istio-v1",
@@ -124,21 +121,7 @@ func TestIstioConfigMapName(t *testing.T) {
 				Data: map[string]string{"mesh": ""},
 			},
 		},
-		"ConfigMapName is set and revision is default": {
-			configMapName: "my-istio-config",
-			configMap: &corev1.ConfigMap{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "istio",
-					Namespace: "istio-system",
-					Labels:    map[string]string{config.IstioRevisionLabel: "default"},
-				},
-				Data: map[string]string{"mesh": ""},
-			},
-			// An error occurs because the configMapName setting takes precedence over the revision label
-			expectErr: true,
-		},
-		"ConfigMapName is set and revision is v2": {
-			configMapName: "my-istio-config",
+		"Revision is v2": {
 			configMap: &corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "istio-v2",
@@ -147,11 +130,8 @@ func TestIstioConfigMapName(t *testing.T) {
 				},
 				Data: map[string]string{"mesh": ""},
 			},
-			// An error occurs because the configMapName setting takes precedence over the revision label
-			expectErr: true,
 		},
-		"ConfigMapName is set and revision is empty": {
-			configMapName: "my-istio-config",
+		"Revision is empty": {
 			configMap: &corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "istio",
@@ -159,8 +139,6 @@ func TestIstioConfigMapName(t *testing.T) {
 				},
 				Data: map[string]string{"mesh": ""},
 			},
-			// An error occurs because the configMapName setting takes precedence over the revision label
-			expectErr: true,
 		},
 	}
 
@@ -168,7 +146,6 @@ func TestIstioConfigMapName(t *testing.T) {
 		t.Run(desc, func(t *testing.T) {
 			require := require.New(t)
 			conf := config.NewConfig()
-			conf.ExternalServices.Istio.ConfigMapName = tc.configMapName
 			k8s := kubetest.NewFakeK8sClient(
 				kubetest.FakeNamespace("istio-system"),
 				tc.configMap,

@@ -517,7 +517,8 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		"SingleValidationProcessingTime",
 		map[string]string{
 			"namespace": namespace,
-			"gvk":       objectGVK.String()},
+			"gvk":       objectGVK.String(),
+		},
 		"Single object validation time")
 
 	// validating a single object is not particularly efficient, it still requires a lot of up-front setup

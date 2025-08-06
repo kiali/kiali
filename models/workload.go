@@ -345,7 +345,7 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 	// If both are defined, label always overrides annotation (see https://github.com/kiali/kiali/issues/5713)
 	// If none are defined, assume injection is disabled (again, we ignore the possibility of a namespace label enabling injection)
 	labelExplicitlySet := false // true means the label is defined
-	label, exist := workload.Labels[conf.ExternalServices.Istio.IstioInjectionAnnotation]
+	label, exist := workload.Labels[config.IstioInjectionAnnotation]
 	if exist {
 		if value, err := strconv.ParseBool(label); err == nil {
 			workload.IstioInjectionAnnotation = &value
@@ -355,7 +355,7 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 
 	// do not bother to check the annotation if the label is explicitly set - label always overrides the annotation
 	if !labelExplicitlySet {
-		annotation, exist := annotations[conf.ExternalServices.Istio.IstioInjectionAnnotation]
+		annotation, exist := annotations[config.IstioInjectionAnnotation]
 		if exist {
 			if value, err := strconv.ParseBool(annotation); err == nil {
 				if !value {
@@ -611,7 +611,6 @@ func (workload *Workload) SetPods(pods []core_v1.Pod, isControlPlane func(ctx co
 }
 
 func (workload *Workload) AddPodsProtocol(ztunnelConfig kubernetes.ZtunnelConfigDump) {
-
 	for _, pod := range workload.Pods {
 		for _, wk := range ztunnelConfig.Workloads {
 			if wk.Name == pod.Name {
@@ -679,7 +678,6 @@ func (workload *Workload) WaypointFor() string {
 		log.Errorf("Invalid waypoint for label: %s", workload.Labels[config.WaypointFor])
 		return ""
 	}
-
 }
 
 // IsWaypoint return true if the workload is a ztunnel (Based in labels)

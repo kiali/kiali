@@ -11,7 +11,6 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	istio "istio.io/client-go/pkg/clientset/versioned"
-	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	inferenceapiclient "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -20,7 +19,6 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util/httputil"
-	"github.com/kiali/kiali/util/sliceutil"
 )
 
 const (
@@ -325,55 +323,30 @@ func DestinationRuleHasMTLSEnabled(destinationRule *networking_v1.DestinationRul
 	return false, ""
 }
 
-// ClusterNameFromIstiod checks for an istio control plane deployment (istiod) and if found returns the Istio
-// clusterID. Returns "" if no control plane is found or the cluster name can not be determined. Note that
-// this code is limited to the k8s API, the Kiali cache may not yet exist.
+// ClusterNameFromIstiod attempts to resolve the cluster info of the "home" cluster where kiali is running
+// by inspecting the istiod deployment. Assumes that the istiod deployment is in the same cluster as the kiali pod.
 func ClusterNameFromIstiod(conf *config.Config, k8s ClientInterface) (string, error) {
-	// The "cluster_id" is set in an environment variable of the "istiod" deployment. Let's try to fetch it.
-	istiods, err := k8s.GetDeployments("", metav1.ListOptions{LabelSelector: "app=istiod"})
+	// The "cluster_id" is set in an environment variable of
+	// the "istiod" deployment. Let's try to fetch it.
+	istiodDeployments, err := k8s.GetDeployments(conf.ExternalServices.Istio.RootNamespace, metav1.ListOptions{LabelSelector: "app=istiod"})
 	if err != nil {
 		return "", err
 	}
 
-	if len(istiods) == 0 {
-		return "", fmt.Errorf("no valid istiod deployment found in any namespaces for kiali home cluster name discovery. You may need to set kubernetes_config.cluster_name in the Kiali CR")
+	if len(istiodDeployments) == 0 {
+		return "", fmt.Errorf("istiod deployment not found in namespace [%s]", conf.ExternalServices.Istio.RootNamespace)
 	}
 
-	// Do our best to filter out any external control plane, because the CLUSTER_ID will be set to
-	// the dataplane cluster, not the hosting cluster (which seems weird, but that's how Istio does it).
-	validIstiods := sliceutil.Filter(istiods, func(istiod v1.Deployment) bool {
-		// a typical namespace name is external-istiod
-		if strings.Contains(strings.ToLower(istiod.Namespace), "external") {
-			log.Tracef("Ignoring likely external controlplane [%s] during Kiali home clustername discovery. Namespace=[%s]", istiod.Name, istiod.Namespace)
-			return false
-		}
-		// also, look for the EXTERNAL_ISTIOD env var
-		for _, container := range istiod.Spec.Template.Spec.Containers {
-			for _, v := range container.Env {
-				if strings.Contains(strings.ToLower(v.Name), "external_istiod") && strings.ToLower(v.Value) == "true" {
-					log.Tracef("Ignoring likely external controlplane [%s] during Kiali home clustername discovery. EnvVar=[%s]", istiod.Name, v.Name)
-					return false
-				}
-			}
-		}
-		return true
-	})
+	// Just take the first one since they should all have the same cluster id.
+	istiodDeployment := &istiodDeployments[0]
 
-	// If we filtered out all of the istiods, just go back to what we had. In this case it's probably a primary-remote deployment where
-	// the primary may still have an EXTERNAL_ISTIOD env var.
-	if len(validIstiods) == 0 {
-		validIstiods = istiods
-		log.Tracef("Restoring original istiods as all were filtered. This is likely a primary-remote deployment.")
-	}
-
-	validIstiod := validIstiods[0]
-	containers := validIstiod.Spec.Template.Spec.Containers
-	if len(containers) == 0 {
-		return "", fmt.Errorf("unexpected, istiod deployment [%s] has no containers", validIstiod.Name)
+	istiodContainers := istiodDeployment.Spec.Template.Spec.Containers
+	if len(istiodContainers) == 0 {
+		return "", fmt.Errorf("istiod deployment [%s] has no containers", istiodDeployment.Name)
 	}
 
 	clusterName := ""
-	for _, v := range containers[0].Env {
+	for _, v := range istiodContainers[0].Env {
 		if v.Name == "CLUSTER_ID" {
 			clusterName = v.Value
 			break
@@ -382,7 +355,7 @@ func ClusterNameFromIstiod(conf *config.Config, k8s ClientInterface) (string, er
 
 	if clusterName == "" {
 		// We didn't find it. This may mean that Istio is not setup with multi-cluster enabled.
-		return "", fmt.Errorf("istiod deployment [%s] does not have the CLUSTER_ID environment variable set", validIstiod.Name)
+		return "", fmt.Errorf("istiod deployment [%s] does not have the CLUSTER_ID environment variable set", istiodDeployment.Name)
 	}
 
 	return clusterName, nil

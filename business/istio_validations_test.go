@@ -126,14 +126,10 @@ func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.
 	assert := assert.New(t)
 	require := require.New(t)
 	const (
-		istioConfigMapName                = "istio-1-19-0"
-		istioSidecarInjectorConfigMapName = "istio-sidecar-injector-1-19-0"
-		istiodDeploymentName              = "istiod-1-19-0"
+		istioConfigMapName = "istio-1-19-0"
 	)
 	conf := config.NewConfig()
-	// conf.ExternalServices.Istio.ConfigMapName = istioConfigMapName
-	conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName = istioSidecarInjectorConfigMapName
-	conf.ExternalServices.Istio.IstiodDeploymentName = istiodDeploymentName
+
 	config.Set(conf)
 	revConfigMap := &core_v1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{
@@ -145,12 +141,12 @@ func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.
 		},
 		Data: map[string]string{"mesh": ""},
 	}
-	injectorConfigMap := &core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: istioSidecarInjectorConfigMapName, Namespace: "istio-system"}}
+	injectorConfigMap := &core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio-sidecar-injector-1-19-0", Namespace: "istio-system"}}
 	istioSystemNamespace := kubetest.FakeNamespace("istio-system")
 
 	istiod_1_19_0 := &apps_v1.Deployment{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      istiodDeploymentName,
+			Name:      "istiod",
 			Namespace: "istio-system",
 			Labels: map[string]string{
 				config.IstioRevisionLabel: "1-19-0",

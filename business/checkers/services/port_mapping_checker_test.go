@@ -224,7 +224,8 @@ func getService(servicePort int32, portName string, appProtocol *string, namespa
 			Name:      "service1",
 			Namespace: namespace,
 			Labels: map[string]string{
-				labelKey: labelValue},
+				labelKey: labelValue,
+			},
 		},
 		Spec: v1.ServiceSpec{
 			Ports: []v1.ServicePort{
@@ -270,11 +271,9 @@ func getDeployment(containerPort int32) []apps_v1.Deployment {
 }
 
 func getPods(withSidecar bool) []v1.Pod {
-	conf := config.NewConfig()
-
 	annotation := "sidecarless-annotation"
 	if withSidecar {
-		annotation = conf.ExternalServices.Istio.IstioSidecarAnnotation
+		annotation = config.IstioSidecarAnnotation
 	}
 
 	return []v1.Pod{

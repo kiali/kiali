@@ -136,54 +136,61 @@ func parseRawIstioVersion(rawVersion string) *models.ExternalServiceInfo {
 	return &product
 }
 
+func getLocalIstiodURL(ctx context.Context, conf *config.Config, controlPlane models.ControlPlane, kubeCache ctrlclient.Reader) (string, error) {
+	if conf.KialiInternal.UrlServiceVersion != "" {
+		return conf.KialiInternal.UrlServiceVersion, nil
+	}
+
+	// Look for an istio service with the rev label in the control plane namespace.
+	revLabelSelector := map[string]string{
+		config.IstioAppLabel:      istiodAppLabelValue,
+		config.IstioRevisionLabel: controlPlane.Revision,
+	}
+
+	serviceList := &corev1.ServiceList{}
+	err := kubeCache.List(ctx, serviceList, ctrlclient.InNamespace(controlPlane.IstiodNamespace), ctrlclient.MatchingLabels(revLabelSelector))
+	if err != nil {
+		return "", err
+	}
+
+	services := serviceList.Items
+	if len(services) == 0 {
+		return "", fmt.Errorf("no istio service found for revision [%s]", controlPlane.Revision)
+	}
+
+	// In case the monitoring port is not the default, use the port from the service.
+	port := defaultMonitoringPort
+	if services[0].Spec.Ports != nil {
+		for _, p := range services[0].Spec.Ports {
+			if p.Name == monitoringPortName {
+				port = int(p.Port)
+				break
+			}
+		}
+	}
+
+	url := "http://" + services[0].Name
+	// In practice, the namespace is always set.
+	// This is just to facilitate testing.
+	if services[0].Namespace != "" {
+		url += "." + services[0].Namespace
+	}
+	url += ":" + strconv.Itoa(port) + "/version"
+
+	return url, nil
+}
+
 // GetVersion returns the latest version of the Istio control plane.
 // If there are multiple healthy istiod pods, the latest one by
 // creation timestamp is returned.
 func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.ClientInterface, kubeCache ctrlclient.Reader, controlPlane models.ControlPlane) (*models.ExternalServiceInfo, error) {
-	istioConfig := conf.ExternalServices.Istio
 	// If kiali is running on the same cluster as the istio control plane, use the URL instead
 	// of port forwarding. For remote clusters we need to port forward to get the version since the
 	// http monitoring port (usually 15014) is not exposed publicly.
 	if client.ClusterInfo().Name == conf.KubernetesConfig.ClusterName {
-		url := ""
-		// If the config has a URL for the service version, use that until the config option is removed.
-		if istioConfig.UrlServiceVersion != "" {
-			url = istioConfig.UrlServiceVersion
-		} else {
-			// Look for an istio service with the rev label in the control plane namespace.
-			revLabelSelector := map[string]string{
-				config.IstioAppLabel:      istiodAppLabelValue,
-				config.IstioRevisionLabel: controlPlane.Revision,
-			}
-
-			serviceList := &corev1.ServiceList{}
-			err := kubeCache.List(ctx, serviceList, ctrlclient.InNamespace(controlPlane.IstiodNamespace), ctrlclient.MatchingLabels(revLabelSelector))
-			if err != nil {
-				return nil, err
-			}
-			services := serviceList.Items
-			if len(services) == 0 {
-				return nil, fmt.Errorf("no istio service found for revision [%s]", controlPlane.Revision)
-			}
-
-			// In case the monitoring port is not the default, use the port from the service.
-			port := defaultMonitoringPort
-			if services[0].Spec.Ports != nil {
-				for _, p := range services[0].Spec.Ports {
-					if p.Name == monitoringPortName {
-						port = int(p.Port)
-						break
-					}
-				}
-			}
-
-			url = "http://" + services[0].Name
-			// In practice, the namespace is always set.
-			// This is just to facilitate testing.
-			if services[0].Namespace != "" {
-				url += "." + services[0].Namespace
-			}
-			url += ":" + strconv.Itoa(port) + "/version"
+		url, err := getLocalIstiodURL(ctx, conf, controlPlane, kubeCache)
+		if err != nil {
+			return nil, err
 		}
 
 		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
