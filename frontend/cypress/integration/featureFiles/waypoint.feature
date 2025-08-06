@@ -410,3 +410,21 @@ Feature: Kiali Waypoint related features
     Then user "disables" "tcp" traffic option
     Then 4 edges appear in the graph
     Then user "closes" traffic menu
+
+  @selected
+  Scenario: [Overview] Add to Ambient in the test-sidecar namespace
+    Given user is at administrator perspective
+    Given user is at the "overview" page
+    And user filters "test-sidecar" namespace
+    And user opens the menu
+    And the option "Add to Ambient" does not exist for "test-sidecar" namespace
+    And the user clicks on "removes auto injection" for "test-sidecar" namespace
+    Then "default" badge "not exist"
+    And user opens the menu
+    And the user clicks on "Add to Ambient" for "test-sidecar" namespace
+    Then "Ambient" badge "exist"
+    And user opens the menu
+    And the user clicks on "remove Ambient" for "test-sidecar" namespace
+    And user opens the menu
+    And the user clicks on "enable sidecar" for "test-sidecar" namespace
+    Then "default" badge "exist"
