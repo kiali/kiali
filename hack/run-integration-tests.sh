@@ -11,6 +11,7 @@ FRONTEND="frontend"
 FRONTEND_AMBIENT="frontend-ambient"
 FRONTEND_PRIMARY_REMOTE="frontend-primary-remote"
 FRONTEND_MULTI_PRIMARY="frontend-multi-primary"
+FRONTEND_EXTERNAL_KIALI="frontend-external-kiali"
 FRONTEND_TEMPO="frontend-tempo"
 HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
@@ -73,8 +74,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ts|--test-suite)
       TEST_SUITE="${2}"
-      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" -a "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ]; then
-        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_PRIMARY_REMOTE}', or '${FRONTEND_MULTI_PRIMARY}', or '${FRONTEND_AMBIENT}' or '${FRONTEND_TEMPO}'"
+      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" -a "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" -a "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ]; then
+        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_PRIMARY_REMOTE}', '${FRONTEND_MULTI_PRIMARY}', '${FRONTEND_EXTERNAL_KIALI}', '${FRONTEND_AMBIENT}' or '${FRONTEND_TEMPO}'"
         exit 1
       fi
       shift;shift
@@ -111,7 +112,7 @@ Valid command line arguments:
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
     Default: false
-  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_TEMPO}>
+  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}>
     Which test suite to run.
     Default: ${BACKEND}
   -wv|--with-video <true|false>
@@ -516,6 +517,31 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:multi-primary
+  detectRaceConditions ${CYPRESS_CLUSTER1_CONTEXT}
+elif [ "${TEST_SUITE}" == "${FRONTEND_EXTERNAL_KIALI}" ]; then
+  ensureCypressInstalled
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "external-kiali" ${ISTIO_VERSION_ARG} --tempo ${TEMPO} ${HELM_CHARTS_DIR_ARG}
+  fi
+
+  ensureKialiServerReady
+
+  export CYPRESS_BASE_URL="${KIALI_URL}"
+  export CYPRESS_CLUSTER1_CONTEXT="kind-mgmt"
+  export CYPRESS_CLUSTER2_CONTEXT="kind-mesh"
+  export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
+  # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
+  export CYPRESS_VIDEO="${WITH_VIDEO}"
+  export CYPRESS_USERNAME="kiali"
+  export CYPRESS_PASSWD="kiali"
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  cd "${SCRIPT_DIR}"/../frontend
+  yarn run cypress:run:external-kiali
   detectRaceConditions ${CYPRESS_CLUSTER1_CONTEXT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
   ensureCypressInstalled

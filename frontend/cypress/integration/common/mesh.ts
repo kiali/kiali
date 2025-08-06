@@ -215,7 +215,7 @@ Then('user sees expected mesh infra', () => {
 
 Then(
   'user sees {int} {string} nodes on the {string} cluster',
-  (numberOfDataplaneNodes: number, infraNodeType: MeshInfraType, cluster: string) => {
+  (numberOfNodes: number, infraNodeType: MeshInfraType, cluster: string) => {
     cy.waitForReact();
     cy.get('#loading_kiali_spinner').should('not.exist');
     cy.getReact('MeshPageComponent', { state: { isReady: true } })
@@ -227,39 +227,43 @@ Then(
         assert.isTrue(controller.hasGraph());
 
         const { nodes } = elems(controller);
-        const dataplaneNodes = nodes.filter(
+        const infraNodes = nodes.filter(
           n => n.getData().infraType === infraNodeType && n.getData().cluster === cluster
         );
 
-        expect(dataplaneNodes).to.have.lengthOf(numberOfDataplaneNodes);
+        expect(infraNodes).to.have.lengthOf(numberOfNodes);
       });
   }
 );
 
-Then('user sees the istiod node connected to the dataplane nodes', () => {
-  cy.waitForReact();
-  cy.get('#loading_kiali_spinner').should('not.exist');
-  cy.getReact('MeshPageComponent', { state: { isReady: true } })
-    .should('have.length', 1)
-    .then($graph => {
-      const { state } = $graph[0];
+Then(
+  'user sees the {string} node connected to the {int} {string} nodes',
+  (sourceInfraType: MeshInfraType, numEdges: number, destInfraType: MeshInfraType) => {
+    cy.waitForReact();
+    cy.get('#loading_kiali_spinner').should('not.exist');
+    cy.getReact('MeshPageComponent', { state: { isReady: true } })
+      .should('have.length', 1)
+      .then($graph => {
+        const { state } = $graph[0];
 
-      const controller = state.meshRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
+        const controller = state.meshRefs.getController() as Visualization;
+        assert.isTrue(controller.hasGraph());
 
-      const { nodes } = elems(controller);
-      const istiodNode = nodes.find(n => n.getData().infraType === MeshInfraType.ISTIOD);
+        const { nodes } = elems(controller);
+        const sourceNode = nodes.find(n => n.getData().infraType === sourceInfraType);
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-      expect(istiodNode).to.exist;
-      expect(istiodNode?.getSourceEdges()).to.have.lengthOf(2);
+        const destNodes = sourceNode?.getSourceEdges().filter(e => {
+          const targetNodeData = e.getTarget().getData();
+          return targetNodeData.infraType === destInfraType;
+        });
 
-      istiodNode?.getSourceEdges().every(e => {
-        const targetNodeData = e.getTarget().getData();
-        return targetNodeData.infraType === MeshInfraType.DATAPLANE && targetNodeData.cluster === 'cluster';
+        assert.isTrue(
+          destNodes?.length === numEdges,
+          `Expected ${numEdges} ${destInfraType} nodes, but got ${destNodes?.length}`
+        );
       });
-    });
-});
+  }
+);
 
 Then('user {string} mesh tour', (action: string) => {
   cy.waitForReact();

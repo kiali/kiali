@@ -273,8 +273,8 @@ while [[ $# -gt 0 ]]; do
       ISTIO_DIR="$2"
       shift;shift
       ;;
-    -ilc|--ignore-local-cluster)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--ignore-local-cluster must be 'true' or 'false'" && exit 1
+    -ihc|--ignore-home-cluster)
+      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--ignore-home-cluster must be 'true' or 'false'" && exit 1
       IGNORE_HOME_CLUSTER="$2"
       shift;shift
       ;;
@@ -457,7 +457,7 @@ Valid command line arguments:
   -ag|--auth-groups <string>: If using Group for authentication, a comma separated groups list. Just for OpenID.
   -gr|--gateway-required <bool>: If a gateway is required to cross between networks, set this to true
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
-  -ilc|--ignore-local-cluster <bool>: True id the kiali home cluster is not in the mesh (not co-located with an Istio control plane)
+  -ihc|--ignore-home-cluster <bool>: True id the kiali home cluster is not in the mesh (not co-located with an Istio control plane)
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -ih|--istio-hub <hub>: If you want to override the image hub used by istioctl (where the images are found),
                          set this to the hub name, or "default" to use the default image locations.

@@ -4,11 +4,14 @@
 # Refer to the --help output for a description of this script and its available options.
 #
 
-PRIMARY_REMOTE="primary-remote"
-MULTI_PRIMARY="multi-primary"
 EXTERNAL_CONTROLPLANE="external-controlplane"
+EXTERNAL_KIALI="external-kiali"
+MULTI_PRIMARY="multi-primary"
+PRIMARY_REMOTE="primary-remote"
+
 KEYCLOAK_LIMIT_MEMORY=""
 KEYCLOAK_REQUESTS_MEMORY=""
+
 
 infomsg() {
   echo "[INFO] ${1}"
@@ -40,7 +43,7 @@ Options:
     The keycloak resources limit memory in the keycloak helm charts
 -krm|--keycloak-requests-memory)
     The keycloak resources requests memory in the keycloak helm charts.
--mc|--multicluster <${MULTI_PRIMARY}|${PRIMARY_REMOTE}|${EXTERNAL_CONTROLPLANE}>
+-mc|--multicluster <${MULTI_PRIMARY}|${PRIMARY_REMOTE}|${EXTERNAL_CONTROLPLANE}|${EXTERNAL_KIALI}>
     Whether to set up a multicluster environment
     and which kind of multicluster environment to setup.
     Default: <none>
@@ -73,8 +76,8 @@ while [[ $# -gt 0 ]]; do
     -krm|--keycloak-requests-memory) KEYCLOAK_REQUESTS_MEMORY="$2"; shift;shift; ;;
     -mc|--multicluster)
       MULTICLUSTER="${2}"
-      if [ "${MULTICLUSTER}" != "${PRIMARY_REMOTE}" -a "${MULTICLUSTER}" != "${MULTI_PRIMARY}" -a "${MULTICLUSTER}" != "${EXTERNAL_CONTROLPLANE}" ]; then
-        echo "--multicluster option must be one of '${PRIMARY_REMOTE}' or '${MULTI_PRIMARY}' or '${EXTERNAL_CONTROLPLANE}'"
+      if [ "${MULTICLUSTER}" != "${PRIMARY_REMOTE}" -a "${MULTICLUSTER}" != "${MULTI_PRIMARY}" -a "${MULTICLUSTER}" != "${EXTERNAL_CONTROLPLANE}" -a "${MULTICLUSTER}" != "${EXTERNAL_KIALI}" ]; then
+        echo "--multicluster option must be one of '${PRIMARY_REMOTE}' or '${MULTI_PRIMARY}' or '${EXTERNAL_CONTROLPLANE}' or '${EXTERNAL_KIALI}'"
         exit 1
       fi
       shift;shift
@@ -448,6 +451,7 @@ setup_kind_multicluster() {
   local cluster2_context
   local cluster1_name
   local cluster2_name
+  local ignore_home_cluster="false"
   local istio_version_arg=${ISTIO_VERSION:+--istio-version ${ISTIO_VERSION}}
   if [ "${MULTICLUSTER}" == "${MULTI_PRIMARY}" ]; then
     "${SCRIPT_DIR}"/istio/multicluster/install-multi-primary.sh \
@@ -476,6 +480,14 @@ setup_kind_multicluster() {
     cluster2_name="west"
     kubectl rollout status deployment prometheus -n istio-system --context kind-east
     kubectl rollout status deployment prometheus -n istio-system --context kind-west
+  elif [ "${MULTICLUSTER}" == "${EXTERNAL_KIALI}" ]; then
+    "${SCRIPT_DIR}"/istio/multicluster/install-external-kiali.sh --kiali-enabled false --manage-kind true -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" ${kind_node_image:-} ${hub_arg:-} ${istio_version_arg}
+    cluster1_context="kind-mgmt"
+    cluster2_context="kind-mesh"
+    cluster1_name="mgmt"
+    cluster2_name="mesh"
+    ignore_home_cluster="true"
+    kubectl rollout status deployment prometheus -n istio-system --context kind-mesh
   elif [ "${MULTICLUSTER}" == "${EXTERNAL_CONTROLPLANE}" ]; then
     "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh ${kind_node_image:-} ${istio_version_arg}
     cluster1_context="kind-controlplane"
@@ -498,6 +510,7 @@ setup_kind_multicluster() {
     --cluster2-context ${cluster2_context} \
     --cluster1-name ${cluster1_name} \
     --cluster2-name ${cluster2_name} \
+    --ignore-home-cluster ${ignore_home_cluster} \
     --manage-kind true \
     ${auth_flags[@]} \
     -dorp docker \

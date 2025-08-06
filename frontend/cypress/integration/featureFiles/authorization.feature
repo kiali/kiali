@@ -14,7 +14,7 @@ Feature: Kiali Authorization
   @authorization
   Scenario: There should be one bookinfo namespace card
     Then user sees the "bookinfo" namespace card in cluster "east"
-    Then user doesn't see the "istio-system" namespace card
+    Then user does not see the "istio-system" namespace card in any cluster
     Then user doesn't see the "mesh" menu
 
   @multi-cluster

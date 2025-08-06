@@ -91,7 +91,7 @@ Feature: Kiali Mesh page
     Then user sees 1 "dataplane" nodes on the "east" cluster
     And user sees 1 "dataplane" nodes on the "west" cluster
     And user sees 1 "istiod" nodes on the "east" cluster
-    And user sees the istiod node connected to the dataplane nodes
+    And user sees the "istiod" node connected to the 2 "dataplane" nodes
 
   @multi-cluster
   @multi-primary
@@ -142,3 +142,16 @@ Feature: Kiali Mesh page
     And user changes the provider in the Tester tab
     And user clicks the Test Configuration button
     Then user sees the Tester result "correct"
+
+  @external-kiali
+  Scenario: External-kiali: see one dataplane and one controlplane for mesh cluster
+    Then user sees 1 "dataplane" nodes on the "mesh" cluster
+    And user sees 1 "istiod" nodes on the "mesh" cluster
+    And user sees the "istiod" node connected to the 1 "dataplane" nodes
+
+  @external-kiali
+  Scenario: External-kiali: see only kiali for mgmt cluster
+    Then user sees 1 "kiali" nodes on the "mgmt" cluster
+    And user sees 0 "dataplane" nodes on the "mgmt" cluster
+    And user sees 0 "istiod" nodes on the "mgmt" cluster
+    And user sees the "kiali" node connected to the 1 "istiod" nodes

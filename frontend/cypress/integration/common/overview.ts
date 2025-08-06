@@ -125,8 +125,12 @@ Then(`user sees the {string} namespace card in cluster {string}`, (ns: string, c
   cy.get(`[data-test="CardItem_${ns}_${cluster}"]`);
 });
 
-Then(`user doesn't see the {string} namespace card`, ns => {
+Then(`user does not see the {string} namespace card in any cluster`, ns => {
   cy.get(`div[data-test^="${ns}"]`).should('not.exist');
+});
+
+Then(`user does not see the {string} namespace card in cluster {string}`, (ns, cluster) => {
+  cy.get(`[data-test="CardItem_${ns}_${cluster}"]`).should('not.exist');
 });
 
 Then(`user sees a {string} {string} namespace`, (view, ns: string) => {

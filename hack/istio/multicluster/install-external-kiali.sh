@@ -20,9 +20,15 @@ if [ "${CLUSTER2_NAME}" == "west" ]; then
   CLUSTER2_NAME="mesh"
 fi
 
+if [ "${MANAGE_KIND}" == "true" ]; then
+  CLUSTER1_CONTEXT="kind-${CLUSTER1_NAME}"
+  CLUSTER2_CONTEXT="kind-${CLUSTER2_NAME}"
+else
+  CLUSTER1_CONTEXT="${CLUSTER1_NAME}"
+  CLUSTER2_CONTEXT="${CLUSTER2_NAME}"
+fi
+
 # Only install Kiali on cluster-1
-CLUSTER1_CONTEXT="${CLUSTER1_NAME}"
-CLUSTER2_CONTEXT="${CLUSTER2_NAME}"
 IGNORE_HOME_CLUSTER="true"
 SINGLE_KIALI="true"
 
@@ -260,4 +266,9 @@ if [ "${KIALI_ENABLED}" == "true" ]; then
   fi
 
   source ${SCRIPT_DIR}/deploy-kiali.sh
+fi
+
+if [ "${BOOKINFO_ENABLED}" == "true" ]; then
+  echo "Installing bookinfo demo in namespace [${BOOKINFO_NAMESPACE}] on [${CLUSTER2_CONTEXT}]"
+  source ${SCRIPT_DIR}/../install-bookinfo-demo.sh --client-exe "${CLIENT_EXE}" --istio-dir "${ISTIO_DIR}" --istio-namespace "${ISTIO_NAMESPACE}" --namespace "${BOOKINFO_NAMESPACE}" --minikube-profile "${CLUSTER2_CONTEXT}" --namespace "${BOOKINFO_NAMESPACE}" --kube-context "${CLUSTER2_CONTEXT}"
 fi
