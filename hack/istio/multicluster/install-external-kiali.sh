@@ -32,9 +32,6 @@ fi
 IGNORE_HOME_CLUSTER="true"
 SINGLE_KIALI="true"
 
-# TODO: need to see this work with openshift auth
-KIALI_AUTH_STRATEGY="anonymous"
-
 create_crossnetwork_gateway() {
   local clustername="${1}"
   local network="${2}"
@@ -169,8 +166,21 @@ if [ "${MANAGE_KIND}" == "true" ]; then
       --keycloak-certs-dir "${KEYCLOAK_CERTS_DIR}" \
       --keycloak-issuer-uri https://"${KEYCLOAK_ADDRESS}"/realms/kube \
       --image "${KIND_NODE_IMAGE}"
-
-    "${SCRIPT_DIR}/../../keycloak.sh" -kcd "${KEYCLOAK_CERTS_DIR}" -kip "${KEYCLOAK_ADDRESS}" deploy
+    
+    # Optional: keycloak memory limits
+    KEYCLOAK_LIMIT_MEMORY="${KEYCLOAK_LIMIT_MEMORY:-}"
+    KEYCLOAK_REQUESTS_MEMORY="${KEYCLOAK_REQUESTS_MEMORY:-}"
+    if [ -n "$KEYCLOAK_LIMIT_MEMORY" ]; then
+      MEMORY_LIMIT_ARG="-slm $KEYCLOAK_LIMIT_MEMORY"
+    else
+      MEMORY_LIMIT_ARG=""
+    fi
+    if [ -n "$KEYCLOAK_REQUESTS_MEMORY" ]; then
+      MEMORY_REQUEST_ARG="-srm $KEYCLOAK_REQUESTS_MEMORY"
+    else
+      MEMORY_REQUEST_ARG=""
+    fi
+    "${SCRIPT_DIR}/../../keycloak.sh" -kcd "${KEYCLOAK_CERTS_DIR}" -kip "${KEYCLOAK_ADDRESS}" $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG deploy
 
     echo "==== START KIND FOR CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
     "${SCRIPT_DIR}"/../../start-kind.sh \
