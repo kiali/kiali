@@ -233,6 +233,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
           validations={workload.validations!['workload'][validationKey(workload.name, workload.namespace)]}
           namespace={props.namespace}
           className={classes(workloadInfoStyle)}
+          iconSize={'md'}
         />
       </CardHeader>
 

@@ -6,15 +6,38 @@ import { isIstioNamespace } from 'config/ServerConfig';
 import { ValidationTypes, ObjectValidation } from 'types/IstioObjects';
 import { PFColors } from '../Pf/PfColors';
 import { useKialiTranslation } from 'utils/I18nUtils';
+import { classes } from 'typestyle';
+import { infoStyle } from '../../styles/IconStyle';
+import { KialiIcon } from '../../config/KialiIcon';
+import { kialiStyle } from '../../styles/StyleUtils';
+import { Link } from 'react-router-dom-v5-compat';
 
 type WorkloadConfigValidationProps = {
   className?: string;
+  iconSize?: 'sm' | 'md';
   namespace: string;
   validations?: ObjectValidation;
 };
 
+const issuesInfoStyle = kialiStyle({
+  marginLeft: '0.5rem',
+  marginBottom: '0.125rem'
+});
+
+const iconSizeStyles = {
+  sm: kialiStyle({
+    width: '1em',
+    height: '1em'
+  }),
+  md: kialiStyle({
+    width: '1.25em',
+    height: '1.25em'
+  })
+};
+
 export const WorkloadConfigValidation: React.FC<WorkloadConfigValidationProps> = ({
   className,
+  iconSize = 'sm',
   namespace,
   validations
 }) => {
@@ -39,7 +62,7 @@ export const WorkloadConfigValidation: React.FC<WorkloadConfigValidationProps> =
 
   let icon: React.ComponentClass<SVGIconProps>;
   let color: string;
-  let tooltipContent: string;
+  let tooltipContent: React.ReactNode;
   const errorCountStr = hasErrors
     ? t('{{count}} error', {
         count: errors.length,
@@ -55,39 +78,63 @@ export const WorkloadConfigValidation: React.FC<WorkloadConfigValidationProps> =
       })
     : '';
 
+  const moreInfo = (
+    <div>
+      <span>{t('More info at ')}</span>
+      <Link to="https://kiali.io/docs/features/validations">{t('Kiali.io Validations')}</Link>
+    </div>
+  );
+
   if (hasErrors) {
     icon = ExclamationCircleIcon;
     color = PFColors.Danger;
-    const headerSummary = `${t('Config Issues')} (${errorCountStr}, ${warningCountStr})`;
+    const headerSummary = hasWarnings
+      ? `${t('Config Issues')} (${errorCountStr}, ${warningCountStr})`
+      : `${t('Config Issues')} (${errorCountStr})`;
     const errorsList = `${t('Errors')}:\n${errors
       .map(e => `• ${e.code ? `${e.code} - ` : ''}${e.message}`)
       .join('\n')}`;
     const warningsList = hasWarnings
       ? `${t('Warnings')}:\n${warnings.map(w => `• ${w.code ? `${w.code} - ` : ''}${w.message}`).join('\n')}`
       : '';
-    tooltipContent = [headerSummary, errorsList, warningsList].join('\n');
+    tooltipContent = (
+      <div style={{ textAlign: 'left', whiteSpace: 'pre-line' }}>
+        <div>{headerSummary}</div>
+        <div>{errorsList}</div>
+        {hasWarnings && <div>{warningsList}</div>}
+        {moreInfo}
+      </div>
+    );
   } else if (hasWarnings) {
     icon = ExclamationTriangleIcon;
     color = PFColors.Warning;
     const headerSummary = `${t('Config Issues')} (${warningCountStr}):`;
     const warningsList = warnings.map(w => `• ${w.code ? `${w.code} - ` : ''}${w.message}`).join('\n');
-    tooltipContent = [headerSummary, warningsList].join('\n');
+
+    tooltipContent = (
+      <div style={{ textAlign: 'left', whiteSpace: 'pre-line' }}>
+        <div>{headerSummary}</div>
+        <div>{warningsList}</div>
+        {moreInfo}
+      </div>
+    );
   } else {
     return <></>;
   }
 
   const iconComponent = (
     <span className={className}>
-      {React.createElement(icon, { style: { color: color } })}
+      {React.createElement(icon, {
+        className: iconSizeStyles[iconSize],
+        style: { color: color }
+      })}
       <span style={{ marginLeft: '0.5rem' }}>{t('Config Issues')}</span>
+      <KialiIcon.Info className={classes(infoStyle, issuesInfoStyle)} />
     </span>
   );
 
   return (
-    <Tooltip
-      content={<div style={{ textAlign: 'left', whiteSpace: 'pre-line' }}>{tooltipContent}</div>}
-      position={TooltipPosition.top}
-    >
+    <Tooltip content={tooltipContent} position={TooltipPosition.top}>
       {iconComponent}
     </Tooltip>
   );

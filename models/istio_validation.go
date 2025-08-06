@@ -356,7 +356,7 @@ var checkDescriptors = map[string]IstioCheck{
 	"workload.ambient.waypointandnotambient": {
 		Code:     "KIA1312",
 		Message:  "This workload has waypoint labels but is not in Ambient",
-		Severity: ErrorSeverity,
+		Severity: WarningSeverity,
 	},
 	"workload.ambient.waypointnotfound": {
 		Code:     "KIA1313",
