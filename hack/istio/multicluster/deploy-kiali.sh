@@ -325,11 +325,12 @@ subjects:
   name: oidc:kiali
 EOF
 
-      # Role to access bookinfo
-      kubectl apply --context "${CLUSTER1_CONTEXT}" -f ${SCRIPT_DIR}/roleBookinfo.yaml
+      # Role to access bookinfo - only if bookinfo namespace exists
+      if kubectl get namespace bookinfo --context "${CLUSTER1_CONTEXT}" >/dev/null 2>&1; then
+        kubectl apply --context "${CLUSTER1_CONTEXT}" -f ${SCRIPT_DIR}/roleBookinfo.yaml
 
-      # Create a rolebinding
-      kubectl apply --context "${CLUSTER1_CONTEXT}" -f - <<EOF
+        # Create a rolebinding
+        kubectl apply --context "${CLUSTER1_CONTEXT}" -f - <<EOF
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -343,6 +344,9 @@ subjects:
 - kind: User
   name: oidc:bookinfouser
 EOF
+      else
+        echo "Skipping bookinfo role setup - bookinfo namespace does not exist on cluster ${CLUSTER1_NAME}"
+      fi
 
     fi
 
