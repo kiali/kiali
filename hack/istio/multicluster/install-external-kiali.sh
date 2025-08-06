@@ -33,7 +33,7 @@ IGNORE_HOME_CLUSTER="true"
 SINGLE_KIALI="true"
 
 # TODO: need to see this work with openshift auth
-KIALI_AUTH_STRATEGY="openid"
+KIALI_AUTH_STRATEGY="anonymous"
 
 create_crossnetwork_gateway() {
   local clustername="${1}"
