@@ -1,4 +1,4 @@
-package workloads
+package ambient
 
 import (
 	"testing"
@@ -54,10 +54,10 @@ func TestWorkloadBothSidecarAndAmbientLabels(t *testing.T) {
 	assert := assert.New(t)
 
 	labels := map[string]string{
-		conf.IstioLabels.AmbientNamespaceLabel:               conf.IstioLabels.AmbientNamespaceLabelValue,
-		conf.IstioLabels.InjectionLabelName:                  "enabled",
-		conf.IstioLabels.InjectionLabelRev:                   "latest",
-		conf.ExternalServices.Istio.IstioInjectionAnnotation: "enabled",
+		conf.IstioLabels.AmbientNamespaceLabel: conf.IstioLabels.AmbientNamespaceLabelValue,
+		conf.IstioLabels.InjectionLabelName:    "enabled",
+		conf.IstioLabels.InjectionLabelRev:     "latest",
+		config.IstioInjectionAnnotation:        "enabled",
 	}
 
 	// Test workload with both sidecar and ambient annotation
@@ -144,9 +144,9 @@ func TestWorkloadPodWithSidecarLabelAndAmbientRedirection(t *testing.T) {
 	assert := assert.New(t)
 
 	labels := map[string]string{
-		conf.IstioLabels.InjectionLabelName:                  "enabled",
-		conf.IstioLabels.InjectionLabelRev:                   "latest",
-		conf.ExternalServices.Istio.IstioInjectionAnnotation: "enabled",
+		conf.IstioLabels.InjectionLabelName: "enabled",
+		conf.IstioLabels.InjectionLabelRev:  "latest",
+		config.IstioInjectionAnnotation:     "enabled",
 	}
 
 	// Test workload with sidecar labels and ambient pod

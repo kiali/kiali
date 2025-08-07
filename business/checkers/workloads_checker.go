@@ -4,7 +4,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	workloads_ambient "github.com/kiali/kiali/business/checkers/ambient/workloads"
+	ambient "github.com/kiali/kiali/business/checkers/ambient"
 	"github.com/kiali/kiali/business/checkers/workloads"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
@@ -39,7 +39,7 @@ func (w WorkloadChecker) runChecks(workload *models.Workload, namespace string) 
 
 	enabledCheckers := []Checker{
 		workloads.UncoveredWorkloadChecker{Workload: workload, Namespace: namespace, AuthorizationPolicies: w.AuthorizationPolicies},
-		workloads_ambient.NewAmbientWorkloadChecker(w.Cluster, w.Conf, workload, namespace, w.Namespaces, w.AuthorizationPolicies),
+		ambient.NewAmbientWorkloadChecker(w.Cluster, w.Conf, workload, namespace, w.Namespaces, w.AuthorizationPolicies),
 	}
 
 	for _, checker := range enabledCheckers {

@@ -1,4 +1,4 @@
-package workloads
+package ambient
 
 import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
@@ -162,13 +162,13 @@ func (awc AmbientWorkloadChecker) hasSidecarLabel() bool {
 		ns.Labels[awc.conf.IstioLabels.InjectionLabelRev] != ""
 
 	// Check for enablement at the workload level.
-	workloadIsEnabled := awc.workload.Labels[awc.conf.ExternalServices.Istio.IstioInjectionAnnotation] == "enabled"
+	workloadIsEnabled := awc.workload.Labels[config.IstioInjectionAnnotation] == "enabled"
 
 	// Check for explicit disablement at the namespace level.
 	namespaceIsDisabled := ns.Labels[awc.conf.IstioLabels.InjectionLabelName] == "disabled"
 
 	// Check for explicit disablement at the workload level.
-	workloadIsDisabled := awc.workload.Labels[awc.conf.ExternalServices.Istio.IstioInjectionAnnotation] == "none"
+	workloadIsDisabled := awc.workload.Labels[config.IstioInjectionAnnotation] == "none"
 
 	// A sidecar is enabled if either the namespace OR the workload enables it,
 	// AND neither the namespace NOR the workload explicitly disables it.
