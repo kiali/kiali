@@ -4,8 +4,8 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	workloads_ambient "github.com/kiali/kiali/business/checkers/ambient/workloads"
 	"github.com/kiali/kiali/business/checkers/workloads"
-	workloads_ambient "github.com/kiali/kiali/business/checkers/workloads/ambient"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 )
