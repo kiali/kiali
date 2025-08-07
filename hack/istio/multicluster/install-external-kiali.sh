@@ -235,21 +235,11 @@ if [ "${KIALI_ENABLED}" == "true" ]; then
     export KIALI_AUTH_STRATEGY="anonymous"
   fi
 
-  # Set external service addresses for Kiali configuration
-  if [ -n "${MGMT_PROMETHEUS_ADDRESS}" ]; then
-    export KIALI_PROMETHEUS_ADDRESS="${MGMT_PROMETHEUS_ADDRESS}"
-  fi
-  if [ -n "${MGMT_GRAFANA_ADDRESS}" ]; then
-    export KIALI_GRAFANA_ADDRESS="${MGMT_GRAFANA_ADDRESS}"
-  fi
-  if [ -n "${MGMT_TRACING_ADDRESS}" ]; then
-    export KIALI_TRACING_ADDRESS="${MGMT_TRACING_ADDRESS}"
-  fi
-
   source ${SCRIPT_DIR}/deploy-kiali.sh
 fi
 
 if [ "${BOOKINFO_ENABLED}" == "true" ]; then
+  switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
   echo "Installing bookinfo demo in namespace [${BOOKINFO_NAMESPACE}] on [${CLUSTER2_CONTEXT}]"
-  source ${SCRIPT_DIR}/../install-bookinfo-demo.sh --client-exe "${CLIENT_EXE}" --istio-dir "${ISTIO_DIR}" --istio-namespace "${ISTIO_NAMESPACE}" --namespace "${BOOKINFO_NAMESPACE}" --minikube-profile "${CLUSTER2_CONTEXT}" --namespace "${BOOKINFO_NAMESPACE}" --kube-context "${CLUSTER2_CONTEXT}"
+  source ${SCRIPT_DIR}/../install-bookinfo-demo.sh --client-exe "${CLIENT_EXE}" --istio-dir "${ISTIO_DIR}" --istio-namespace "${ISTIO_NAMESPACE}" --namespace "${BOOKINFO_NAMESPACE}" --minikube-profile "${CLUSTER2_CONTEXT}" --kube-context "${CLUSTER2_CONTEXT}"
 fi
