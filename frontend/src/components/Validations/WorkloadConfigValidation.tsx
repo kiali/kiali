@@ -24,6 +24,16 @@ const issuesInfoStyle = kialiStyle({
   marginBottom: '0.125rem'
 });
 
+export const moreInfoLinkStyle = kialiStyle({
+  display: 'flex',
+  marginTop: '0.75rem',
+  $nest: {
+    '& > span': {
+      marginRight: '0.5rem'
+    }
+  }
+});
+
 const iconSizeStyles = {
   sm: kialiStyle({
     width: '1em',
@@ -79,8 +89,8 @@ export const WorkloadConfigValidation: React.FC<WorkloadConfigValidationProps> =
     : '';
 
   const moreInfo = (
-    <div>
-      <span>{t('More info at ')}</span>
+    <div className={moreInfoLinkStyle}>
+      <span>{t('More info at')}</span>
       <Link to="https://kiali.io/docs/features/validations" target="_blank" rel="noopener noreferrer">
         {t('Kiali.io Validations')}
       </Link>
