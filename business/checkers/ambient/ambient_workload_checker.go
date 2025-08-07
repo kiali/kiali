@@ -181,6 +181,11 @@ func (awc AmbientWorkloadChecker) hasSidecarLabel() bool {
 // hasWaypointLabel Check if the namespace or the workload has Waypoint labels
 // See https://istio.io/latest/docs/ambient/usage/waypoint/#configure-a-pod-to-use-a-specific-waypoint
 func (awc AmbientWorkloadChecker) hasWaypointLabel() bool {
+	// Skip if it is not part of Ambient
+	if awc.workload.Labels[awc.conf.IstioLabels.AmbientNamespaceLabel] == config.WaypointNone {
+		return false
+	}
+
 	waypointLabel := awc.conf.IstioLabels.AmbientWaypointUseLabel
 
 	// Check the workload label first
