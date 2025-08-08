@@ -680,7 +680,7 @@ func (workload *Workload) WaypointFor() string {
 	}
 }
 
-// IsWaypoint return true if the workload is a ztunnel (Based in labels)
+// IsZtunnel return true if the workload is a ztunnel (Based in labels)
 func (workload *Workload) IsZtunnel() bool {
 	for _, pod := range workload.Pods {
 		if pod.Labels[config.IstioAppLabel] == config.Ztunnel {

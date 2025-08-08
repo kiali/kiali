@@ -267,3 +267,23 @@ func CreateWorkloadEntries(conf config.Config) []*networking_v1.WorkloadEntry {
 		},
 	}
 }
+
+func CreatePod(name string, labels map[string]string, ambientEnabled bool, hasSidecar bool, nativeSidecar bool) *models.Pod {
+	annotations := make(map[string]string)
+	if ambientEnabled {
+		annotations[config.AmbientAnnotation] = config.AmbientAnnotationEnabled
+	}
+	pod := models.Pod{
+		Name:        name,
+		Labels:      labels,
+		Annotations: annotations,
+	}
+	if hasSidecar {
+		pod.IstioContainers = make([]*models.ContainerInfo, 1)
+	}
+	if nativeSidecar {
+		pod.IstioInitContainers = make([]*models.ContainerInfo, 1)
+	}
+
+	return &pod
+}
