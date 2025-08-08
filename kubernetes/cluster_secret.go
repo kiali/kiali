@@ -3,7 +3,9 @@ package kubernetes
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"os"
+	"slices"
 
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -13,12 +15,9 @@ import (
 // RemoteClusterInfo is data that identifies a cluster particpating in the mesh. Multi-cluster meshes have multiple RemoteClusterInfos.
 // Information obtained for a RemoteClusterInfo comes from remote cluster secrets.
 type RemoteClusterInfo struct {
-	// Config contains information necessary to connect to the remote cluster
-	Config clientcmd.ClientConfig
+	ClusterInfo
 	// SecretFile is the absolute file location of the secret as found on the file system
 	SecretFile string
-	// SecretName is the name of the secret where the data about this cluster was found
-	SecretName string
 }
 
 // newRemoteClusterInfo returns a new RemoteClusterInfo with Cluster and User data that are extracted from the given kubeconfig data.
@@ -42,10 +41,18 @@ func newRemoteClusterInfo(secretName string, secretFile string) (RemoteClusterIn
 		log.Warningf("bytes for remote cluster secret [%s](%s) has [%v] users associated with it - will use the first one", secretName, secretFile, len(cfg.AuthInfos))
 	}
 
+	restConf, err := clientcmd.NewDefaultClientConfig(*cfg, nil).ClientConfig()
+	if err != nil {
+		return RemoteClusterInfo{}, fmt.Errorf("failed to get client config for remote cluster secret [%s](%s): %v", secretName, secretFile, err)
+	}
+
 	return RemoteClusterInfo{
-		Config:     clientcmd.NewDefaultClientConfig(*cfg, nil),
+		ClusterInfo: ClusterInfo{
+			Name:         slices.Collect(maps.Keys(cfg.Clusters))[0],
+			ClientConfig: restConf,
+			SecretName:   secretName,
+		},
 		SecretFile: secretFile,
-		SecretName: secretName,
 	}, nil
 }
 

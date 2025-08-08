@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/config"
 )
@@ -18,10 +19,12 @@ func TestReloadRemoteClusterSecret(t *testing.T) {
 
 	createTestRemoteClusterSecret(t, testClusterName, remoteClusterYAML)
 
-	clientFactory := NewTestingClientFactory(t)
+	const testTokenFile = "/my/token/file"
+	clientFactory, err := NewClientFactory(t.Context(), conf, &rest.Config{BearerToken: "home-cluster-token", BearerTokenFile: testTokenFile})
+	check.NoError(err)
 
 	var clusterNames []string
-	for cluster := range clientFactory.saClientEntries {
+	for cluster := range clientFactory.GetSAClients() {
 		clusterNames = append(clusterNames, cluster)
 	}
 	check.Equal(2, len(clusterNames), "Should have seen the remote cluster secret")
@@ -29,17 +32,17 @@ func TestReloadRemoteClusterSecret(t *testing.T) {
 	check.Contains(clusterNames, testClusterName)
 
 	rcis, err := GetRemoteClusterInfos()
-	check.Nil(err)
+	check.NoError(err)
+	rciConfig := rcis[testClusterName].ClientConfig
+	check.NotNil(rciConfig)
 
 	// test the home cluster config
 	restConfig := clientFactory.GetSAClient(conf.KubernetesConfig.ClusterName).ClusterInfo().ClientConfig
-	check.Equal(KialiTokenFileForHomeCluster, restConfig.BearerTokenFile, "BearerTokenFile should always be set to the home cluster SA token file")
-	check.Equal(KialiTokenForHomeCluster, restConfig.BearerToken, "BearerToken should be set for home cluster")
+	check.Equal(testTokenFile, restConfig.BearerTokenFile, "BearerTokenFile should always be set to the home cluster SA token file")
+	check.NotEmpty(restConfig.BearerToken, "BearerToken should be set for home cluster")
 
 	// test the remote cluster config
-	testRCI := rcis[testClusterName]
-	restConfig, err = clientFactory.getConfig(&testRCI)
-	check.Nil(err)
+	restConfig = clientFactory.GetSAClient(testClusterName).ClusterInfo().ClientConfig
 	check.Equal("", restConfig.BearerTokenFile, "BearerTokenFile is never set")
-	check.Equal("token", restConfig.BearerToken, "BearerToken should be set to the value in the remote cluster yaml")
+	check.Equal(rciConfig.BearerToken, restConfig.BearerToken, "BearerToken should be set to the value in the remote cluster yaml")
 }

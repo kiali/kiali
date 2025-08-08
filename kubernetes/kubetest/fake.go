@@ -151,7 +151,7 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 	}
 
 	return &FakeK8sClient{
-		UserClientInterface: kialikube.NewClient(kubeClient, istioClient, gatewayAPIClient, inferenceAPIClient, osAppsClient, projectClient, routeClient, userClient, oAuthClient, ctrlclient),
+		UserClientInterface: kialikube.NewClientForClients(kubeClient, istioClient, gatewayAPIClient, inferenceAPIClient, osAppsClient, projectClient, routeClient, userClient, oAuthClient, ctrlclient),
 		KubeClientset:       kubeClient,
 		IstioClientset:      istioClient,
 		ProjectFake:         projectClient,

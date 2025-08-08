@@ -17,9 +17,7 @@ auth:
   strategy: "anonymous"
 
 clustering:
-  # run-kiali is, by definition, running outside of a cluster so you must ignore home cluster
-  # when ignore_home_cluster=true, use run-kiali.sh -cn option if the context name != cluster name.
-  ignore_home_cluster: true
+  ignore_home_cluster: ${IGNORE_HOME_CLUSTER}
 
 deployment:
   cluster_wide_access: true
@@ -46,6 +44,9 @@ external_services:
     internal_url: "${TRACING_URL}"
     external_url: "${TRACING_URL}"
     use_grpc: false
+
+kubernetes_config:
+  cluster_name: "${CLUSTER_NAME}"
 
 login_token:
   signing_key: "notsecure"

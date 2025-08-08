@@ -20,12 +20,14 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/security"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/util"
 	"github.com/kiali/kiali/util/filetest"
 )
@@ -56,9 +58,7 @@ func TestRootContextPath(t *testing.T) {
 
 	serverURL := fmt.Sprintf("http://%v", testServerHostPort)
 
-	config.Set(conf)
-
-	cf := kubernetes.NewTestingClientFactory(t)
+	cf := kubernetes.NewTestingClientFactory(t, conf)
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	server, _ := NewServer(cpm, cf, cache, conf, nil, nil, nil, filetest.StaticAssetDir(t))
@@ -120,9 +120,7 @@ func TestAnonymousMode(t *testing.T) {
 
 	assert.False(t, conf.IsServerHTTPS())
 
-	config.Set(conf)
-
-	cf := kubernetes.NewTestingClientFactory(t)
+	cf := kubernetes.NewTestingClientFactory(t, conf)
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	server, _ := NewServer(cpm, cf, cache, conf, nil, nil, nil, filetest.StaticAssetDir(t))
@@ -158,6 +156,7 @@ func TestAnonymousMode(t *testing.T) {
 }
 
 func TestSecureComm(t *testing.T) {
+	require := require.New(t)
 	testPort, err := getFreePort(testHostname)
 	if err != nil {
 		t.Fatalf("Cannot get a free port to run tests on host [%v]", testHostname)
@@ -213,12 +212,11 @@ func TestSecureComm(t *testing.T) {
 	profilerURL := serverURL + "/debug/pprof/"
 	assert.True(t, conf.IsServerHTTPS())
 
-	config.Set(conf)
-
-	cf := kubernetes.NewTestingClientFactory(t)
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, kubetest.NewFakeK8sClient())
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	server, _ := NewServer(cpm, cf, cache, conf, nil, nil, nil, filetest.StaticAssetDir(t))
+	server, err := NewServer(cpm, cf, cache, conf, nil, nil, nil, filetest.StaticAssetDir(t))
+	require.NoError(err)
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -325,10 +323,8 @@ func TestTracingConfigured(t *testing.T) {
 	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 
 	// Set the global client factory.
-	cf := kubernetes.NewTestingClientFactory(t)
+	cf := kubernetes.NewTestingClientFactory(t, conf)
 	serverURL := fmt.Sprintf("http://%v", testServerHostPort)
-
-	config.Set(conf)
 
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
