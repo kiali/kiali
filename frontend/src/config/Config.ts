@@ -163,6 +163,7 @@ const conf = {
       namespaces: 'api/namespaces',
       namespacesGraphElements: `api/namespaces/graph`,
       outboundTrafficPolicyMode: () => 'api/mesh/outbound_traffic_policy/mode',
+      perses: 'api/perses',
       pod: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}`,
       podLogs: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}/logs`,
       podEnvoyProxy: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}/config_dump`,

@@ -298,6 +298,25 @@ exports[`GraphLegend test should render correctly 1`] = `
       </div>
       <div
         className="kiali_fxx5dxr"
+        key="perses.svg"
+      >
+        <span
+          className="kiali_fzoxfwf"
+        >
+          <img
+            alt="Perses"
+            className="kiali_fkbfmy6"
+            src="perses.svg"
+          />
+        </span>
+        <span
+          className="kiali_f7pgfh0"
+        >
+          Perses
+        </span>
+      </div>
+      <div
+        className="kiali_fxx5dxr"
         key="prometheus.svg"
       >
         <span
