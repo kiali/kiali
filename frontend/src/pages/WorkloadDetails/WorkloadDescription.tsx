@@ -234,6 +234,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
           namespace={props.namespace}
           className={classes(workloadInfoStyle)}
           iconSize={'md'}
+          detailed={true}
         />
       </CardHeader>
 

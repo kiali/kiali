@@ -111,8 +111,9 @@ func (in *IstioValidationsService) GetValidationsForWorkload(ctx context.Context
 		return nil, err
 	}
 
-	validations := in.kialiCache.Validations().Items()
-	return models.IstioValidations(validations).FilterByCluster(cluster).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}, workload), nil
+	// @TODO, workload validations are not up to date in a cache, because now they depend on namespace and worklaod labels as well, and those are not in a change detection
+	validations, _, err := in.ValidateIstioObject(ctx, cluster, namespace, schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}, workload)
+	return validations, err
 }
 
 type validationNamespaceInfo struct {
@@ -623,6 +624,9 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		peerAuthnChecker := checkers.PeerAuthenticationChecker{Conf: conf, Cluster: cluster, PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: *mtlsDetails, WorkloadsPerNamespace: workloadsPerNamespace}
 		objectCheckers = []checkers.ObjectChecker{peerAuthnChecker}
 		referenceChecker = references.PeerAuthReferences{Conf: conf, MTLSDetails: *mtlsDetails, WorkloadsPerNamespace: workloadsPerNamespace}
+	case schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}:
+		workloadChecker := checkers.WorkloadChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster, Namespaces: namespaces, Conf: conf}
+		objectCheckers = []checkers.ObjectChecker{workloadChecker}
 	case kubernetes.WorkloadEntries:
 		// Validation on WorkloadEntries are not yet in place
 		referenceChecker = references.WorkloadEntryReferences{WorkloadGroups: istioConfigList.WorkloadGroups, WorkloadEntries: istioConfigList.WorkloadEntries}

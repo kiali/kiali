@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom-v5-compat';
 
 type WorkloadConfigValidationProps = {
   className?: string;
+  detailed?: boolean;
   iconSize?: 'sm' | 'md';
   namespace: string;
   validations?: ObjectValidation;
@@ -47,6 +48,7 @@ const iconSizeStyles = {
 
 export const WorkloadConfigValidation: React.FC<WorkloadConfigValidationProps> = ({
   className,
+  detailed,
   iconSize = 'sm',
   namespace,
   validations
@@ -96,13 +98,14 @@ export const WorkloadConfigValidation: React.FC<WorkloadConfigValidationProps> =
       </Link>
     </div>
   );
-
+  let headerSummary: string;
+  const configIssuesText = t('Config Issues');
   if (hasErrors) {
     icon = ExclamationCircleIcon;
     color = PFColors.Danger;
-    const headerSummary = hasWarnings
-      ? `${t('Config Issues')} (${errorCountStr}, ${warningCountStr})`
-      : `${t('Config Issues')} (${errorCountStr})`;
+    headerSummary = hasWarnings
+      ? `${configIssuesText} (${errorCountStr}, ${warningCountStr})`
+      : `${configIssuesText} (${errorCountStr})`;
     const errorsList = `${t('Errors')}:\n${errors
       .map(e => `• ${e.code ? `${e.code} - ` : ''}${e.message}`)
       .join('\n')}`;
@@ -120,7 +123,7 @@ export const WorkloadConfigValidation: React.FC<WorkloadConfigValidationProps> =
   } else if (hasWarnings) {
     icon = ExclamationTriangleIcon;
     color = PFColors.Warning;
-    const headerSummary = `${t('Config Issues')} (${warningCountStr}):`;
+    headerSummary = `${configIssuesText} (${warningCountStr}):`;
     const warningsList = warnings.map(w => `• ${w.code ? `${w.code} - ` : ''}${w.message}`).join('\n');
 
     tooltipContent = (
@@ -134,20 +137,18 @@ export const WorkloadConfigValidation: React.FC<WorkloadConfigValidationProps> =
     return <></>;
   }
 
-  const iconComponent = (
+  const iconComponent = <KialiIcon.Info className={classes(infoStyle, issuesInfoStyle)} />;
+
+  return (
     <span className={className}>
       {React.createElement(icon, {
         className: iconSizeStyles[iconSize],
         style: { color: color }
       })}
-      <span style={{ marginLeft: '0.5rem' }}>{t('Config Issues')}</span>
-      <KialiIcon.Info className={classes(infoStyle, issuesInfoStyle)} />
+      <span style={{ marginLeft: '0.5rem' }}>{detailed ? headerSummary : configIssuesText}</span>
+      <Tooltip content={tooltipContent} position={TooltipPosition.top}>
+        {iconComponent}
+      </Tooltip>
     </span>
-  );
-
-  return (
-    <Tooltip content={tooltipContent} position={TooltipPosition.top}>
-      {iconComponent}
-    </Tooltip>
   );
 };
