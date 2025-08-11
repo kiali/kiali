@@ -14,20 +14,24 @@ Feature: Kiali App Details page
     And user is at the details page for the "app" "bookinfo/details" located in the "" cluster
 
   @bookinfo-app
+  @base
   Scenario: See details for app.
     Then user sees details information for the "details" app
     But no cluster badge for the "app" should be visible
 
   @bookinfo-app
+  @base
   Scenario: See app Traffic information
     Then user sees inbound and outbound traffic information
     And the "Cluster" column "disappears"
 
   @bookinfo-app
+  @base
   Scenario: See Inbound Metrics
     Then user sees inbound metrics information
 
   @bookinfo-app
+  @base
   Scenario: See Outbound Metrics
     Then user sees outbound metrics information
 

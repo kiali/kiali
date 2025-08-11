@@ -50,6 +50,7 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
       | toolbar_edge_mode_none      |
 
   @error-rates-app
+  @base
   Scenario: The Hide Healthy Edges is turned off by turning on the Hide All Edges
     When the "toolbar_edge_mode_unhealthy" is turned off
     And the "toolbar_edge_mode_none" is turned off
@@ -59,6 +60,7 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
     And the button "toolbar_edge_mode_none" is active
 
   @error-rates-app
+  @base
   Scenario: The Hide All Edges is turned off by turning on the Hide Healthy Edges
     When the "toolbar_edge_mode_unhealthy" is turned off
     And the "toolbar_edge_mode_none" is turned off
@@ -68,6 +70,7 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
     And the button "toolbar_edge_mode_none" is not active
 
   @error-rates-app
+  @base
   Scenario: Graph Layout Style buttons are mutually exclusive
     When the "toolbar_layout_dagre" is turned on
     And the "toolbar_layout_grid" is turned off
@@ -82,12 +85,14 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
     And the button "toolbar_layout_breadth_first" is active
 
   @error-rates-app
+  @base
   Scenario: Show the Legend
     When the button "legend" is clicked
     Then user can see the legend section
     And the button "legend" is active
 
   @error-rates-app
+  @base
   Scenario: Close the Legend using the button
     When the Legend section is visible
     And the button "legend" is clicked
@@ -95,6 +100,7 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
     And the button "legend" is not active
 
   @error-rates-app
+  @base
   Scenario: Close the Legend using the cross
     When the Legend section is visible
     And the cross is clicked

@@ -9,6 +9,7 @@ Feature: Kiali Services page
     Given user is at administrator perspective
 
   @bookinfo-app
+  @base
   Scenario: See services table with correct info
     And user is at the "services" page
     When user applies kiali api "rest" annotations
@@ -50,6 +51,7 @@ Feature: Kiali Services page
     And table length should be 1
 
   @bookinfo-app
+  @base
   Scenario: Filter services table by Service Type
     And user is at the "services" page
     When user selects the "bookinfo" namespace
@@ -58,6 +60,7 @@ Feature: Kiali Services page
     Then user sees "nothing" in the table
 
   @bookinfo-app
+  @base
   Scenario: Filter services table by sidecar
     And user is at the "services" page
     When user selects the "bookinfo" namespace
@@ -66,6 +69,7 @@ Feature: Kiali Services page
     Then user sees "something" in the table
 
   @bookinfo-app
+  @base
   Scenario: Filter services table by Istio Config Type
     And user is at the "services" page
     When user selects the "bookinfo" namespace
@@ -75,6 +79,7 @@ Feature: Kiali Services page
     And table length should be 1
 
   @bookinfo-app
+  @base
   Scenario: Filter services table by health
     And user is at the "services" page
     When user selects the "bookinfo" namespace
@@ -84,6 +89,7 @@ Feature: Kiali Services page
     And user should only see healthy services in the table
 
   @bookinfo-app
+  @base
   Scenario: Filter services table by label
     And user is at the "services" page
     When user selects the "bookinfo" namespace
@@ -93,6 +99,7 @@ Feature: Kiali Services page
     And table length should be 1
 
   @bookinfo-app
+  @base
   Scenario: Filter services table by label click
     And user is at the "services" page
     When user selects the "bookinfo" namespace
@@ -101,6 +108,7 @@ Feature: Kiali Services page
     And table length should be 1
 
   @bookinfo-app
+  @base
   Scenario: Filter and unfilter services table by label click
     And user is at the "services" page
     When user selects the "bookinfo" namespace
@@ -109,6 +117,7 @@ Feature: Kiali Services page
     Then table length should exceed 1
 
   @bookinfo-app
+  @base
   Scenario: The healthy status of a service is reported in the list of services
     And user is at the "services" page
     Given a service in the cluster with a healthy amount of traffic
@@ -116,6 +125,7 @@ Feature: Kiali Services page
     Then the service should be listed as "healthy"
 
   @sleep-app
+  @base
   Scenario: The idle status of a service is reported in the list of services
     And user is at the "services" page
     Given a service in the cluster with no traffic
@@ -124,6 +134,7 @@ Feature: Kiali Services page
     And the health status of the service should be "No health information"
 
   @error-rates-app
+  @base
   Scenario: The failing status of a service is reported in the list of services
     And user is at the "services" page
     Given a service in the mesh with a failing amount of traffic
@@ -133,6 +144,7 @@ Feature: Kiali Services page
 
   @error-rates-app
   @skip-lpinterop
+  @base
   Scenario: The degraded status of a service is reported in the list of services
     And user is at the "services" page
     Given a service in the mesh with a degraded amount of traffic

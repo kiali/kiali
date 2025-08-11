@@ -10,6 +10,7 @@ Feature: Kiali Graph page - Side panel menu actions
     Given user is at administrator perspective
 
   @bookinfo-app
+  @base
   Scenario: Actions in kebab menu of the side panel for a service node with existing traffic routing
     Given user graphs "bookinfo" namespaces
     And user clicks the "productpage" "service" node
@@ -69,6 +70,7 @@ Feature: Kiali Graph page - Side panel menu actions
     Then user should see the traces tab not empty
 
   @bookinfo-app
+  @base
   Scenario: Validate summary panel edge
     Given user graphs "bookinfo" namespaces
     And user clicks the edge from "productpage" "app" to "details" "service"

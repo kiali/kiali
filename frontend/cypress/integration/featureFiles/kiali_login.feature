@@ -12,6 +12,7 @@ Feature: Kiali login
     And user fills in an invalid username
     Then user sees the "Invalid login or password. Please try again." phrase displayed
 
+  @base
   Scenario: Try to log in with an invalid password
     Given all sessions are cleared
     And user opens base url
@@ -19,6 +20,7 @@ Feature: Kiali login
     And user fills in an invalid password
     Then user sees the "Invalid login or password. Please try again." phrase displayed
 
+  @base
   Scenario: Try to log in with a valid password
     Given all sessions are cleared
     And user opens base url
@@ -27,6 +29,7 @@ Feature: Kiali login
     Then user sees the Overview page
 
   @openshift
+  @base
   Scenario: Openshift login shows error message when code exchange fails
     Given all sessions are cleared
     And user opens base url
@@ -51,6 +54,7 @@ Feature: Kiali login
     Then user sees the Overview page
 
   @requireslogin
+  @base
   Scenario: An expiring session should show a pop up to renew.
     Given user is at administrator perspective
     And user session is expiring soon

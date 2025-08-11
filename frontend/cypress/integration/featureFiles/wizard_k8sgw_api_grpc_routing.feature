@@ -10,6 +10,7 @@ Feature: Service Details Wizard: K8s GRPC Routing
 
   @gateway-api
   @bookinfo-app
+  @base
   Scenario: Create a K8s GRPC Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "K8s GRPC Routing" actions
@@ -32,6 +33,7 @@ Feature: Service Details Wizard: K8s GRPC Routing
 
   @gateway-api
   @bookinfo-app
+  @base
   Scenario: See a GRPCRoute generated
     When user clicks in the "Istio Config" table "gRPC" badge "reviews" name row link
     Then user sees the "kind: GRPCRoute" regex in the editor
@@ -39,6 +41,7 @@ Feature: Service Details Wizard: K8s GRPC Routing
 
   @gateway-api
   @bookinfo-app
+  @base
   Scenario: Update a K8s GRPC Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "K8s GRPC Routing" actions
@@ -53,12 +56,14 @@ Feature: Service Details Wizard: K8s GRPC Routing
 
   @gateway-api
   @bookinfo-app
+  @base
   Scenario: See a K8s Gateway generated with warning
     When user clicks in the "Istio Config" table "G" badge "reviews-gateway" name row link
     Then user sees the "kind: Gateway" regex in the editor
 
   @gateway-api
   @bookinfo-app
+  @base
   Scenario: Delete the K8s Gateway Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "Delete Traffic Routing" actions

@@ -9,6 +9,7 @@ Feature: Kiali logout
     Given user is at administrator perspective
     And user is at the "overview" page
 
+  @base
   Scenario: Kiali logout successfully
     And user clicks on admin
     And user logout successfully

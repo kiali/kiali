@@ -14,17 +14,20 @@ Feature: Kiali Graph page - Display menu
   # NOTE: Traffic animation, missing sidecars, virtual service, and idle edge options are nominally tested
 
   @error-rates-app
+  @base
   Scenario: Graph no namespaces
     When user graphs "" namespaces
     Then user sees no namespace selected
 
   # gamma will only show nodes when idle-nodes is enabled
   @error-rates-app
+  @base
   Scenario: Graph gamma namespaces
     When user graphs "gamma" namespaces
     Then user sees empty graph
 
   @error-rates-app
+  @base
   Scenario: User enables idle nodes
     When user "opens" display menu
     And user "enables" "idle nodes" option
@@ -33,6 +36,7 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   @error-rates-app
+  @base
   Scenario: User disables idle nodes
     When user "opens" display menu
     And user "disables" "idle nodes" option
@@ -40,12 +44,14 @@ Feature: Kiali Graph page - Display menu
     Then user sees empty graph
 
   @error-rates-app
+  @base
   Scenario: Graph alpha and beta namespaces
     When user graphs "alpha,beta" namespaces
     Then user sees the "alpha" namespace
     And user sees the "beta" namespace
 
   @error-rates-app
+  @base
   Scenario: User clicks Display Menu
     When user "opens" display menu
     Then the display menu opens
@@ -56,6 +62,7 @@ Feature: Kiali Graph page - Display menu
   # percentile variable must match input id
   # edge label variable must match edge data name
   @error-rates-app
+  @base
   Scenario: Average Response-time edge labels
     When user "opens" display menu
     And user enables "avg" "responseTime" edge labels
@@ -65,6 +72,7 @@ Feature: Kiali Graph page - Display menu
   # percentile variable must match input id
   # edge label variable must match edge data name
   @error-rates-app
+  @base
   Scenario: Median Response-time edge labels
     When user "opens" display menu
     And user enables "rt50" "responseTime" edge labels
@@ -74,6 +82,7 @@ Feature: Kiali Graph page - Display menu
   # percentile variable must match input id
   # edge label variable must match edge data name
   @error-rates-app
+  @base
   Scenario: 95th Percentile Response-time edge labels
     When user "opens" display menu
     And user enables "rt95" "responseTime" edge labels
@@ -83,6 +92,7 @@ Feature: Kiali Graph page - Display menu
   # percentile variable must match input id
   # edge label variable must match edge data name
   @error-rates-app
+  @base
   Scenario: 99th Percentile Response-time edge labels
     When user "opens" display menu
     And user enables "rt99" "responseTime" edge labels
@@ -91,6 +101,7 @@ Feature: Kiali Graph page - Display menu
 
   # edge label variable must match edge data name
   @error-rates-app
+  @base
   Scenario: Disable response time edge labels
     When user "opens" display menu
     And user "disables" "responseTime" edge labels
@@ -100,6 +111,7 @@ Feature: Kiali Graph page - Display menu
   # percentile variable must match input id
   # edge label variable must match edge data name
   @error-rates-app
+  @base
   Scenario: Request Throughput edge labels
     When user "opens" display menu
     And user enables "throughputRequest" "throughput" edge labels
@@ -109,6 +121,7 @@ Feature: Kiali Graph page - Display menu
   # percentile variable must match input id
   # edge label variable must match edge data name
   @error-rates-app
+  @base
   Scenario: Response Throughput edge labels
     When user "opens" display menu
     And user enables "throughputResponse" "throughput" edge labels
@@ -117,6 +130,7 @@ Feature: Kiali Graph page - Display menu
 
   # edge label variable must match edge data name
   @error-rates-app
+  @base
   Scenario: Disable throughput edge labels
     When user "opens" display menu
     And user "disables" "throughput" edge labels
@@ -125,6 +139,7 @@ Feature: Kiali Graph page - Display menu
 
   # edge label variable must match edge data name
   @error-rates-app
+  @base
   Scenario: Enable Traffic Distribution edge labels
     When user "opens" display menu
     And user "enables" "trafficDistribution" edge labels
@@ -133,6 +148,7 @@ Feature: Kiali Graph page - Display menu
 
   # edge label variable must match edge data name
   @error-rates-app
+  @base
   Scenario: Disable Traffic Distribution edge labels
     When user "opens" display menu
     And user "disables" "trafficDistribution" edge labels
@@ -141,6 +157,7 @@ Feature: Kiali Graph page - Display menu
 
   # edge label variable must match edge data name
   @error-rates-app
+  @base
   Scenario: Enable Traffic Rate edge labels
     When user "opens" display menu
     And user "enables" "trafficRate" edge labels
@@ -149,6 +166,7 @@ Feature: Kiali Graph page - Display menu
 
   # edge label variable must match edge data name
   @error-rates-app
+  @base
   Scenario: Disable Traffic Rate edge labels
     When user "opens" display menu
     And user "disables" "trafficRate" edge labels
@@ -156,6 +174,7 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   @error-rates-app
+  @base
   Scenario: User disables cluster boxes
     When user "opens" display menu
     And user "disables" "cluster boxes" option
@@ -163,6 +182,7 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   @error-rates-app
+  @base
   Scenario: User disables Namespace boxes
     When user "opens" display menu
     And user "disables" "namespace boxes" option
@@ -170,6 +190,7 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   @error-rates-app
+  @base
   Scenario: User enables idle edges
     When user "opens" display menu
     And user "enables" "idle edges" option
@@ -177,6 +198,7 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   @error-rates-app
+  @base
   Scenario: User disables idle edges
     When user "opens" display menu
     And user "disables" "idle edges" option
@@ -184,6 +206,7 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   @error-rates-app
+  @base
   Scenario: User enables rank
     When user "opens" display menu
     And user "enables" "rank" option
@@ -191,6 +214,7 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   @error-rates-app
+  @base
   Scenario: User disables rank
     When user "opens" display menu
     And user "disables" "rank" option
@@ -198,6 +222,7 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   @error-rates-app
+  @base
   Scenario: User disables service nodes
     When user "opens" display menu
     And user "disables" "service nodes" option
@@ -205,6 +230,7 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   @error-rates-app
+  @base
   Scenario: User enables security
     When user "opens" display menu
     And user "enables" "security" option
@@ -212,6 +238,7 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   @error-rates-app
+  @base
   Scenario: User disables security
     When user "opens" display menu
     And user "disables" "security" option
@@ -219,6 +246,7 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   @error-rates-app
+  @base
   Scenario: User disables missing sidecars
     When user "opens" display menu
     And user "disables" "missing sidecars" option
@@ -226,6 +254,7 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   @error-rates-app
+  @base
   Scenario: User disables virtual services
     When user "opens" display menu
     And user "disables" "virtual services" option
@@ -233,6 +262,7 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   @error-rates-app
+  @base
   Scenario: User enables animation
     When user "opens" display menu
     And user "enables" "traffic animation" option
@@ -240,6 +270,7 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   @error-rates-app
+  @base
   Scenario: User disables animation
     When user "opens" display menu
     And user "disables" "traffic animation" option
@@ -247,6 +278,7 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   @error-rates-app
+  @base
   Scenario: User resets to factory default setting
     When user resets to factory default
     And user "opens" display menu
@@ -255,6 +287,7 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   @error-rates-app
+  @base
   Scenario: User observes some options not being clickable when switching to Service graph
     When user "opens" display menu
     And user "disables" "service nodes" option
