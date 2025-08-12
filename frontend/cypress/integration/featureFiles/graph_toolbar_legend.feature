@@ -12,6 +12,7 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
     And user graphs "alpha,beta" namespaces
 
   @error-rates-app
+  @base
   Scenario Outline: Check if the <id> button is usable
     Then the toggle button "<id>" is enabled
     Examples:
@@ -26,6 +27,7 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
       | legend                       |
 
   @error-rates-app
+  @base
   Scenario Outline: Check if the not active by default <id> Graph button can be turned on
     When the button "<id>" is clicked
     Then the button "<id>" is active
@@ -40,6 +42,7 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
       | legend                       |
 
   @error-rates-app
+  @base
   Scenario Outline: Check if the not active by default <label> Graph button can be turned off
     When the "<id>" is turned on
     And the button "<id>" is clicked

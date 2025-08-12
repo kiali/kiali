@@ -36,6 +36,7 @@ Feature: Kiali Graph page - Context menu actions
     Then user should see the confirmation dialog to delete all traffic routing
 
   @bookinfo-app
+  @base
   Scenario Outline: Ability to launch <action> wizard from graph context menu
     And user opens the context menu of the "reviews" service node
     And user clicks the "<action>" item of the context menu

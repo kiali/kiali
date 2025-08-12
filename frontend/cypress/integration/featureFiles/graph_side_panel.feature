@@ -20,6 +20,7 @@ Feature: Kiali Graph page - Side panel menu actions
     Then user should see the confirmation dialog to delete all traffic routing
 
   @bookinfo-app
+  @base
   Scenario Outline: Ability to launch <action> wizard from graph side panel
     Given user graphs "bookinfo" namespaces
     And user clicks the "reviews" "service" node

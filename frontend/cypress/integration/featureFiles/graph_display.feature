@@ -305,6 +305,7 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   @bookinfo-app
+  @base
   Scenario Outline: Multiple cluster boxes should not be visible in the graph
     When user graphs "bookinfo" namespaces
     And user resets to factory default
