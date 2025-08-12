@@ -4,10 +4,19 @@ import (
 	"fmt"
 	"os"
 	"testing"
-	"time"
 
+	osappsclient "github.com/openshift/client-go/apps/clientset/versioned"
+	oauthclient "github.com/openshift/client-go/oauth/clientset/versioned"
+	projectclient "github.com/openshift/client-go/project/clientset/versioned"
+	routeclient "github.com/openshift/client-go/route/clientset/versioned"
+	userclient "github.com/openshift/client-go/user/clientset/versioned"
+	istio "istio.io/client-go/pkg/clientset/versioned"
 	"k8s.io/apimachinery/pkg/runtime"
+	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+	inferenceapiclient "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned"
+	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 
 	"github.com/kiali/kiali/config"
 )
@@ -39,35 +48,14 @@ func SetConfig(t *testing.T, newConfig config.Config) {
 // It really should just be used for internal client factory tests
 // since it has side effects with globals and local files/env vars.
 // If you need a test client factory outside this package, use the mock implementation.
-func NewTestingClientFactory(t *testing.T) *clientFactory {
+func NewTestingClientFactory(t *testing.T, conf *config.Config) *clientFactory {
 	t.Helper()
 
-	// Reset global vars after test
-	originalToken := KialiTokenForHomeCluster
-	originalPath := DefaultServiceAccountPath
-	t.Cleanup(func() {
-		KialiTokenForHomeCluster = originalToken
-		DefaultServiceAccountPath = originalPath
-	})
-
-	DefaultServiceAccountPath = fmt.Sprintf("%s/kiali-testing-token-%s", t.TempDir(), time.Now())
-	if err := os.WriteFile(DefaultServiceAccountPath, []byte("test-token"), 0o644); err != nil {
-		t.Fatalf("Unable to create token file for testing. Err: %s", err)
-	}
-
 	clientConfig := rest.Config{Host: "Kubernetes"}
-	client, err := newClientFactory(config.Get(), &clientConfig)
+	client, err := newClientFactory(conf, &clientConfig)
 	if err != nil {
 		t.Fatalf("Error creating client factory: %v", err)
 	}
-
-	// Override global client factory for test
-	factory = client
-
-	// Reset after test is over
-	t.Cleanup(func() {
-		factory = nil
-	})
 
 	return client
 }
@@ -120,4 +108,32 @@ func ToRuntimeObjects[T runtime.Object](objs []T) []runtime.Object {
 		retObjs = append(retObjs, o)
 	}
 	return retObjs
+}
+
+// NewClientForClients is just used for testing purposes
+// and allows you to pass in fake clients for testing.
+func NewClientForClients(
+	kubeClient kube.Interface,
+	istioClient istio.Interface,
+	gatewayapiClient gatewayapiclient.Interface,
+	inferenceapiClient inferenceapiclient.Interface,
+	osAppsClient osappsclient.Interface,
+	projectClient projectclient.Interface,
+	routeClient routeclient.Interface,
+	userClient userclient.Interface,
+	oAuthClient oauthclient.Interface,
+	reader ctrlclient.Reader,
+) *K8SClient {
+	return &K8SClient{
+		istioClientset: istioClient,
+		k8s:            kubeClient,
+		gatewayapi:     gatewayapiClient,
+		inferenceapi:   inferenceapiClient,
+		osAppsClient:   osAppsClient,
+		projectClient:  projectClient,
+		routeClient:    routeClient,
+		userClient:     userClient,
+		oAuthClient:    oAuthClient,
+		Reader:         reader,
+	}
 }

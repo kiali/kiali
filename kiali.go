@@ -53,6 +53,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/rest"
 	toolscache "k8s.io/client-go/tools/cache"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlcache "sigs.k8s.io/controller-runtime/pkg/cache"
@@ -131,20 +132,25 @@ func main() {
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()
 
-	// determine the Kiali home cluster name. If necessary, this will try to autodiscover the Istiod cluster name
-	if err := determineHomeClusterName(); err != nil {
-		log.Fatalf("Failed to determine Kiali home cluster name. Err: %s", err)
+	restConf, err := ctrl.GetConfig()
+	if err != nil {
+		log.Fatalf("Failed to get in-cluster config. Err: %s", err)
 	}
 
-	// create the business package dependencies.
-	clientFactory, err := kubernetes.GetClientFactory()
-	if err != nil {
-		log.Fatalf("Failed to create client factory. Err: %s", err)
+	// determine the Kiali home cluster name. If necessary, this will try to autodiscover the Istiod cluster name
+	if err := determineHomeClusterName(restConf); err != nil {
+		log.Fatalf("Failed to determine Kiali home cluster name. Err: %s", err)
 	}
 
 	// This context is used for polling and for creating some high level clients like tracing.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	// create the business package dependencies.
+	clientFactory, err := kubernetes.NewClientFactory(ctx, config.Get(), restConf)
+	if err != nil {
+		log.Fatalf("Failed to create client factory. Err: %s", err)
+	}
 
 	// fetch a fresh config here, it could have been updated during auto-discovery
 	conf := config.Get()
@@ -349,7 +355,7 @@ func determineContainerVersion(defaultVersion string) string {
 
 // This is used to update the config with information about istio that
 // comes from the environment such as the cluster name.
-func determineHomeClusterName() error {
+func determineHomeClusterName(restConf *rest.Config) error {
 	conf := config.Get()
 
 	// If the home cluster name is already set, we don't need to do anything
@@ -366,24 +372,25 @@ func determineHomeClusterName() error {
 	// use the control plane's configured cluster name, or the default
 	err := func() error {
 		log.Debug("Cluster name is not set. Attempting to auto-detect the cluster name from the Istio control plane environment.")
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
 
-		// Need to create a temporary client factory here so that we can create a client
+		// Need to create a temporary client here in order
 		// to auto-detect the istio cluster name from the environment. There's a bit of a
 		// chicken and egg problem with the client factory because the client factory
 		// uses the cluster id to keep track of all the clients. But in order to create
 		// a client to get the cluster id from the environment, you need to create a client factory.
-		// To get around that we create a temporary client factory here and then set the kiali
-		// config cluster name. We then create the global client factory later in the business
-		// package and that global client factory has the cluster id set properly.
-		cf, err := kubernetes.NewClientFactory(ctx, conf)
+		// To get around that we create a temporary client here and then set the kiali
+		// config cluster name. We then create the client factory later and that
+		// client factory has the cluster id set properly.
+		client, err := kubernetes.NewClient(kubernetes.ClusterInfo{
+			ClientConfig: restConf,
+			Name:         conf.KubernetesConfig.ClusterName,
+		}, conf)
 		if err != nil {
 			return err
 		}
 
 		// Try to auto-detect the cluster name
-		homeCluster, err = kubernetes.ClusterNameFromIstiod(conf, cf.GetSAHomeClusterClient())
+		homeCluster, err = kubernetes.ClusterNameFromIstiod(conf, client)
 		if err != nil {
 			return err
 		}

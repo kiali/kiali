@@ -214,52 +214,33 @@ source ${SCRIPT_DIR}/setup-ca.sh
 
 echo "==== INSTALL ISTIO ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
 switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
-install_istio --patch-file "${MC_MESH_YAML}"
+install_istio --patch-file "${MC_MESH_YAML}" -a "prometheus jaeger"
 
-# Expose Prometheus to the outside world
+echo "==== INSTALL ADDONS ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+ADDONS="prometheus grafana jaeger"
+for addon in ${ADDONS}; do
+    istio_version=$(${CLIENT_EXE} --context="${CLUSTER2_CONTEXT}" -n "${ISTIO_NAMESPACE}" get istios -l kiali.io/testing -o jsonpath='{.items[0].spec.version}')
+    # Verison comes in the form v1.23.0 but we want 1.23
+    # Remove the 'v' and remove the .0 from 1.23.0 and we should be left with 1.23
+    addon_version="${istio_version:1:4}"
+    curl -s "https://raw.githubusercontent.com/istio/istio/refs/heads/release-$addon_version/samples/addons/$addon.yaml" | \
+      yq "select(.metadata) | .metadata.namespace = \"${ISTIO_NAMESPACE}\"" - | \
+      kubectl --context="${CLUSTER1_CONTEXT}" apply -n "${ISTIO_NAMESPACE}" -f -
+done
+
+# Configure Prometheus federation
 ${CLIENT_EXE} patch svc prometheus -n ${ISTIO_NAMESPACE} --context ${CLUSTER2_CONTEXT} -p "{\"spec\": {\"type\": \"LoadBalancer\"}}"
 
-MGMT_PROMETHEUS_ADDRESS=$(${CLIENT_EXE} --context=${CLUSTER2_CONTEXT} -n ${ISTIO_NAMESPACE} get svc prometheus -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-if [ -z "${MGMT_PROMETHEUS_ADDRESS}" ]; then
+WEST_PROMETHEUS_ADDRESS=$(${CLIENT_EXE} --context=${CLUSTER2_CONTEXT} -n ${ISTIO_NAMESPACE} get svc prometheus -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+if [ -z "${WEST_PROMETHEUS_ADDRESS}" ]; then
   echo "WARNING! Prometheus not updated - cannot determine the west prometheus load balancer ingress IP"
 else
-#  ## TODO: prometheus.yaml has CLUSTER_NAME in it that should also be searched-replaced, but that is not done here
-#  cat ${SCRIPT_DIR}/prometheus.yaml | sed -e "s/MGMT_PROMETHEUS_ADDRESS/$MGMT_PROMETHEUS_ADDRESS/g" | ${CLIENT_EXE} apply -n ${ISTIO_NAMESPACE} --context ${CLUSTER1_CONTEXT} -f -
-  echo "Prometheus external IP: ${MGMT_PROMETHEUS_ADDRESS}"
-fi
-
-# Expose Grafana to the outside world if it exists
-MGMT_GRAFANA_ADDRESS=""
-if ${CLIENT_EXE} get svc grafana -n ${ISTIO_NAMESPACE} --context ${CLUSTER2_CONTEXT} >/dev/null 2>&1; then
-  ${CLIENT_EXE} patch svc grafana -n ${ISTIO_NAMESPACE} --context ${CLUSTER2_CONTEXT} -p "{\"spec\": {\"type\": \"LoadBalancer\"}}"
-
-  MGMT_GRAFANA_ADDRESS=$(${CLIENT_EXE} --context=${CLUSTER2_CONTEXT} -n ${ISTIO_NAMESPACE} get svc grafana -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-  if [ -z "${MGMT_GRAFANA_ADDRESS}" ]; then
-    echo "WARNING! Grafana not updated - cannot determine the grafana load balancer ingress IP"
-  else
-    echo "Grafana external IP: ${MGMT_GRAFANA_ADDRESS}"
-  fi
-else
-  echo "Grafana service not found - skipping grafana exposure"
-fi
-
-# Expose tracing service to the outside world if it exists
-MGMT_TRACING_ADDRESS=""
-if ${CLIENT_EXE} get svc tracing -n ${ISTIO_NAMESPACE} --context ${CLUSTER2_CONTEXT} >/dev/null 2>&1; then
-  ${CLIENT_EXE} patch svc tracing -n ${ISTIO_NAMESPACE} --context ${CLUSTER2_CONTEXT} -p "{\"spec\": {\"type\": \"LoadBalancer\"}}"
-
-  MGMT_TRACING_ADDRESS=$(${CLIENT_EXE} --context=${CLUSTER2_CONTEXT} -n ${ISTIO_NAMESPACE} get svc tracing -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-  if [ -z "${MGMT_TRACING_ADDRESS}" ]; then
-    echo "WARNING! Tracing not updated - cannot determine the tracing load balancer ingress IP"
-  else
-    echo "Tracing external IP: ${MGMT_TRACING_ADDRESS}"
-  fi
-else
-  echo "Tracing service not found - skipping tracing exposure"
+  ## TODO: prometheus.yaml has CLUSTER_NAME in it that should also be searched-replaced, but that is not done here
+  cat ${SCRIPT_DIR}/prometheus.yaml | sed -e "s/WEST_PROMETHEUS_ADDRESS/$WEST_PROMETHEUS_ADDRESS/g" | ${CLIENT_EXE} apply -n ${ISTIO_NAMESPACE} --context ${CLUSTER1_CONTEXT} -f -
 fi
 
 # TODO Anything to do for this? Configure Tracing "federation"
-#source ${SCRIPT_DIR}/setup-tracing.sh
+# source ${SCRIPT_DIR}/setup-tracing.sh
 
 # Install Kiali if enabled
 if [ "${KIALI_ENABLED}" == "true" ]; then
@@ -268,21 +249,11 @@ if [ "${KIALI_ENABLED}" == "true" ]; then
     export KIALI_AUTH_STRATEGY="anonymous"
   fi
 
-  # Set external service addresses for Kiali configuration
-  if [ -n "${MGMT_PROMETHEUS_ADDRESS}" ]; then
-    export KIALI_PROMETHEUS_ADDRESS="${MGMT_PROMETHEUS_ADDRESS}"
-  fi
-  if [ -n "${MGMT_GRAFANA_ADDRESS}" ]; then
-    export KIALI_GRAFANA_ADDRESS="${MGMT_GRAFANA_ADDRESS}"
-  fi
-  if [ -n "${MGMT_TRACING_ADDRESS}" ]; then
-    export KIALI_TRACING_ADDRESS="${MGMT_TRACING_ADDRESS}"
-  fi
-
   source ${SCRIPT_DIR}/deploy-kiali.sh
 fi
 
 if [ "${BOOKINFO_ENABLED}" == "true" ]; then
+  switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
   echo "Installing bookinfo demo in namespace [${BOOKINFO_NAMESPACE}] on [${CLUSTER2_CONTEXT}]"
-  source ${SCRIPT_DIR}/../install-bookinfo-demo.sh --client-exe "${CLIENT_EXE}" --istio-dir "${ISTIO_DIR}" --istio-namespace "${ISTIO_NAMESPACE}" --namespace "${BOOKINFO_NAMESPACE}" --minikube-profile "${CLUSTER2_CONTEXT}" --namespace "${BOOKINFO_NAMESPACE}" --kube-context "${CLUSTER2_CONTEXT}"
+  source ${SCRIPT_DIR}/../install-bookinfo-demo.sh --client-exe "${CLIENT_EXE}" --istio-dir "${ISTIO_DIR}" --istio-namespace "${ISTIO_NAMESPACE}" --namespace "${BOOKINFO_NAMESPACE}" --kube-context "${CLUSTER2_CONTEXT}" -tg --mongo
 fi
