@@ -560,7 +560,7 @@ else
   fi
   # Create the citest service account whose token will be used to log into Kiali
   infomsg "Installing the test ServiceAccount with read-write permissions"
-  for o in role rolebinding serviceaccount; do ${HELM} template --show-only "templates/${o}.yaml" --set deployment.instance_name=citest --set auth.strategy=anonymous kiali-server "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz; done | kubectl apply -f -
+  for o in role rolebinding serviceaccount; do ${HELM} template --show-only "templates/${o}.yaml" --namespace=istio-system --set deployment.instance_name=citest --set auth.strategy=anonymous kiali-server "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz; done | kubectl apply -f -
 fi
 
 if [ "${DEPLOY_KIALI}" != "true" ]; then
