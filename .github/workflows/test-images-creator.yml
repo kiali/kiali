@@ -71,7 +71,7 @@ jobs:
         echo "Images tag": ${{ inputs.images_tag }}
         echo "Builde mode": ${{ inputs.build_mode }}
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         ref: ${{ inputs.release_branch }}
     - name: Login to Quay.io
@@ -101,7 +101,7 @@ jobs:
         echo "Images tag": ${{ inputs.images_tag }}
         echo "Builde mode": ${{ inputs.build_mode }}
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         ref: ${{ inputs.release_branch }}
     - name: Login to Quay.io
