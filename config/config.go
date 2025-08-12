@@ -28,6 +28,8 @@ const (
 	SecretFileGrafanaUsername    = "grafana-username"
 	SecretFileGrafanaPassword    = "grafana-password"
 	SecretFileGrafanaToken       = "grafana-token"
+	SecretFilePersesUsername     = "perses-username"
+	SecretFilePersesPassword     = "perses-password"
 	SecretFilePrometheusUsername = "prometheus-username"
 	SecretFilePrometheusPassword = "prometheus-password"
 	SecretFilePrometheusToken    = "prometheus-token"
@@ -1253,6 +1255,14 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		{
 			configValue: &conf.ExternalServices.Grafana.Auth.Token,
 			fileName:    SecretFileGrafanaToken,
+		},
+		{
+			configValue: &conf.ExternalServices.Perses.Auth.Username,
+			fileName:    SecretFilePersesUsername,
+		},
+		{
+			configValue: &conf.ExternalServices.Perses.Auth.Password,
+			fileName:    SecretFilePersesPassword,
 		},
 		{
 			configValue: &conf.ExternalServices.Prometheus.Auth.Username,
