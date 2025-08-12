@@ -625,7 +625,7 @@ EOF
 
   # Start Kiali locally in the background
   infomsg "Starting Kiali locally in the background using binary: ${KIALI_BINARY}"
-  "${KIALI_BINARY}" local --without-browser --config "${CONFIG_FILE}" &
+  "${KIALI_BINARY}" local --port-forward-to-tracing --enable-tracing --port-forward-to-prom --port-forward-to-grafana --without-browser --config "${CONFIG_FILE}" &
   KIALI_PID=$!
   
   # Set the local Kiali URL
