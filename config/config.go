@@ -1101,6 +1101,7 @@ func Set(conf *Config) {
 func (conf Config) Obfuscate() (obf Config) {
 	obf = conf
 	obf.ExternalServices.Grafana.Auth.Obfuscate()
+	obf.ExternalServices.Perses.Auth.Obfuscate()
 	obf.ExternalServices.Prometheus.Auth.Obfuscate()
 	obf.ExternalServices.Tracing.Auth.Obfuscate()
 	obf.ExternalServices.CustomDashboards.Prometheus.Auth.Obfuscate()
@@ -1228,6 +1229,9 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	if conf.ExternalServices.Tracing.XURL != "" {
 		conf.ExternalServices.Tracing.ExternalURL = conf.ExternalServices.Tracing.XURL
 		log.Info("DEPRECATION NOTICE: 'external_services.tracing.url' has been deprecated - switch to 'external_services.tracing.external_url'")
+	}
+	if conf.ExternalServices.Perses.Enabled == true && conf.ExternalServices.Perses.Auth.Type != AuthTypeBasic {
+		log.Errorf("Perses authentication not supported %s", conf.ExternalServices.Perses.Auth.Type)
 	}
 
 	// Validate tracing min and max values
