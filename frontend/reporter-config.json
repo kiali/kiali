@@ -4,6 +4,6 @@
     "mochaFile": "cypress/results/results-[hash].xml",
     "testCaseSwitchClassnameAndName": true,
     "jenkinsMode": true,
-    "jenkinsClassnamePrefix": "[Kiali]"
+    "jenkinsClassnamePrefix": "Kiali"
   }
 }
