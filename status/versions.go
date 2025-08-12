@@ -208,12 +208,7 @@ func persesVersion(ctx context.Context, perses *perses.Service, conf *config.Con
 
 	versionUrl := perses.VersionURL(ctx)
 	if versionUrl != "" {
-		// Be sure to copy config.Auth and not modify the existing
-		auth := conf.ExternalServices.Grafana.Auth
-		if auth.UseKialiToken {
-			auth.Token = homeClusterSAClient.GetToken()
-		}
-		body, statusCode, _, err := httputil.HttpGet(versionUrl, &auth, 10*time.Second, nil, nil, conf)
+		body, statusCode, _, err := httputil.HttpGet(versionUrl, perses.GetAuth(), 10*time.Second, nil, nil, conf)
 
 		if err != nil || statusCode > 399 {
 			log.Infof("perses version check failed: url=[%v], code=[%v]", versionUrl, statusCode)

@@ -1,10 +1,12 @@
 package perses
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -25,6 +27,18 @@ type Service struct {
 	homeClusterSAClient kubernetes.ClientInterface
 	routeLock           sync.RWMutex
 	routeURL            *string
+	sessionData         *sessionData
+}
+
+type loginRequest struct {
+	Login    string `json:"login"`
+	Password string `json:"password"`
+}
+
+type sessionData struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    string `json:"expiry"`
 }
 
 // NewService creates a new Perses service.
@@ -109,6 +123,95 @@ func (s *Service) discoverServiceURL(ctx context.Context, ns, service string) (u
 	}
 	zl.Info().Msgf("URL discovered for service [%s]: %s", service, url)
 	return
+}
+
+func (s *Service) getToken() (token string, err error) {
+
+	loginURL := fmt.Sprintf("%s/api/auth/providers/native/login", s.URL(context.TODO()))
+
+	reqBody := loginRequest{
+		Login:    s.conf.ExternalServices.Perses.Auth.Username,
+		Password: s.conf.ExternalServices.Perses.Auth.Password,
+	}
+
+	bodyBytes, err := json.Marshal(reqBody)
+	if err != nil {
+		log.Errorf("Failed to marshal login request body: %v", err)
+		return "", fmt.Errorf("failed to marshal login request body: %s", err.Error())
+	}
+
+	req, err := http.NewRequest("POST", loginURL, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		log.Errorf("Failed to create HTTP request: %v", err)
+		return "", fmt.Errorf("failed to create HTTP request: %s", err.Error())
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Errorf("Failed to request login URL: %v", err)
+		return "", fmt.Errorf("failed to request login URL: %s", err.Error())
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		log.Errorf("Failed to read response: %v", err)
+		return "", fmt.Errorf("failed to read response: %d", resp.StatusCode)
+	}
+
+	var loginResp sessionData
+	if err := json.Unmarshal(respBody, &loginResp); err != nil {
+		log.Errorf("Failed to unmarshall reponse: %v", err)
+		return "", fmt.Errorf("failed to unmarshall reponse: %s", err.Error())
+	}
+
+	s.sessionData = &sessionData{AccessToken: loginResp.AccessToken, RefreshToken: loginResp.RefreshToken, ExpiresIn: loginResp.ExpiresIn}
+
+	return loginResp.AccessToken, nil
+}
+
+func isExpired(expiryStr string) bool {
+
+	if expiryStr == "0001-01-01T00:00:00Z" {
+		return false
+	}
+
+	expiryTime, err := time.Parse(time.RFC3339, expiryStr)
+	if err != nil {
+		log.Infof("Error parsing expire time %s", err.Error())
+		return true
+	}
+
+	return time.Now().After(expiryTime)
+}
+
+func (s *Service) GetAuth() *config.Auth {
+
+	newAuth := config.Auth{}
+	auth := s.conf.ExternalServices.Perses.Auth
+
+	if auth.Type == config.AuthTypeNone {
+		return &newAuth
+	}
+
+	if auth.Type == config.AuthTypeBasic {
+
+		newAuth.Type = config.AuthTypeBearer
+
+		if s.sessionData == nil || isExpired(s.sessionData.ExpiresIn) {
+			token, err := s.getToken()
+			if err != nil {
+				log.Errorf("Error loggin %s", err.Error())
+			}
+			newAuth.Token = token
+			return &newAuth
+		}
+		newAuth.Token = s.sessionData.AccessToken
+		return &newAuth
+	}
+
+	log.Errorf("Auth type not supported %s", auth.Type)
+	return &newAuth
 }
 
 type DashboardSupplierFunc func(string, string, string, *config.Auth) ([]byte, int, string, error)
@@ -276,7 +379,7 @@ func (s *Service) getPersesConnectionInfo(ctx context.Context) (persesConnection
 		baseExternalURL:   externalURL,
 		externalURLParams: externalURLParams,
 		internalURL:       apiURL,
-		auth:              &cfg.Auth,
+		auth:              s.GetAuth(),
 	}, 0, nil
 }
 
