@@ -102,12 +102,8 @@ func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlP
 		}
 	}
 
-	standardConfigMap := &corev1.ConfigMap{}
-	if err := kubeCache.Get(
-		context.Background(),
-		ctrlclient.ObjectKey{Name: configMapName, Namespace: controlPlane.IstiodNamespace},
-		standardConfigMap,
-	); err != nil {
+	standardConfigMap, err := in.kialiSAClients[controlPlane.Cluster.Name].GetConfigMap(controlPlane.IstiodNamespace, configMapName)
+	if err != nil {
 		return err
 	}
 
@@ -135,12 +131,8 @@ func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlP
 		return err
 	}
 
-	certConfigMap := &corev1.ConfigMap{}
-	if err := kubeCache.Get(
-		context.Background(),
-		ctrlclient.ObjectKey{Name: certificatesConfigMapName, Namespace: controlPlane.IstiodNamespace},
-		certConfigMap,
-	); err != nil {
+	certConfigMap, err := in.kialiSAClients[controlPlane.Cluster.Name].GetConfigMap(controlPlane.IstiodNamespace, certificatesConfigMapName)
+	if err != nil {
 		log.Warningf("Unable to get certificate configmap [%s/%s]. Err: %s", controlPlane.IstiodNamespace, certificatesConfigMapName, err)
 	} else {
 		cert := parseIstioControlPlaneCertificate(certConfigMap)
