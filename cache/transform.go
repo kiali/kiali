@@ -7,19 +7,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TransformConfigMap(obj any) (any, error) {
-	cm, ok := obj.(*corev1.ConfigMap)
-	if !ok {
-		return nil, fmt.Errorf("%T is not of type 'ConfigMap'", obj)
-	}
-
-	partial := &metav1.PartialObjectMetadata{}
-	partial.SetGroupVersionKind(cm.GroupVersionKind())
-	partial.ObjectMeta = cm.ObjectMeta
-
-	return partial, nil
-}
-
 func TransformPod(pod any) (any, error) {
 	obj, ok := pod.(*corev1.Pod)
 	if !ok {
