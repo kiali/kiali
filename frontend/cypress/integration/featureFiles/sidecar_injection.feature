@@ -14,7 +14,7 @@ Feature: Controlling sidecar injection
 		Given user is at administrator perspective
 
 	@sleep-app
-	@base
+	@core
 	Scenario: Override the default policy for automatic sidecar injection by enabling it in a namespace
 		Given a namespace without override configuration for automatic sidecar injection
 		When I visit the overview page
@@ -23,7 +23,7 @@ Feature: Controlling sidecar injection
 		Then I should see the override annotation for sidecar injection in the namespace as "enabled"
 
 	@sleep-app
-	@base
+	@core
 	Scenario: Switch the override configuration for automatic sidecar injection in a namespace to disabled
 		Given a namespace which has override configuration for automatic sidecar injection
 		And the override configuration for sidecar injection is "enabled"
@@ -33,7 +33,7 @@ Feature: Controlling sidecar injection
 		Then I should see the override annotation for sidecar injection in the namespace as "disabled"
 
 	@sleep-app
-	@base
+	@core
 	Scenario: Switch the override configuration for automatic sidecar injection in a namespace to enabled
 		Given a namespace which has override configuration for automatic sidecar injection
 		And the override configuration for sidecar injection is "disabled"
@@ -43,7 +43,7 @@ Feature: Controlling sidecar injection
 		Then I should see the override annotation for sidecar injection in the namespace as "enabled"
 
 	@sleep-app
-	@base
+	@core
 	Scenario: Switch to using the default policy for automatic sidecar injection in a namespace
 		Given a namespace which has override configuration for automatic sidecar injection
 		When I visit the overview page
@@ -52,7 +52,7 @@ Feature: Controlling sidecar injection
 		Then I should see no override annotation for sidecar injection in the namespace
 
 	@sleep-app
-	@base
+	@core
 	Scenario: Override the default policy for automatic sidecar injection by enabling it in a workload
 		Given a workload without a sidecar
 		And the workload does not have override configuration for automatic sidecar injection
@@ -60,7 +60,7 @@ Feature: Controlling sidecar injection
 		Then the workload should get a sidecar
 
 	@sleep-app
-	@base
+	@core
 	Scenario: Override the default policy for automatic sidecar injection by disabling it in a workload
 		Given a workload with a sidecar
 		And the workload does not have override configuration for automatic sidecar injection
@@ -68,7 +68,7 @@ Feature: Controlling sidecar injection
 		Then the sidecar of the workload should vanish
 
 	@sleep-app
-	@base
+	@core
 	Scenario: Switch the override configuration for automatic sidecar injection in a workload to disabled
 		Given a workload with a sidecar
 		And the workload has override configuration for automatic sidecar injection
@@ -76,7 +76,7 @@ Feature: Controlling sidecar injection
 		Then the sidecar of the workload should vanish
 
 	@sleep-app
-	@base
+	@core
 	Scenario: Switch the override configuration for automatic sidecar injection in a workload to enabled
 		Given a workload without a sidecar
 		And the workload has override configuration for automatic sidecar injection
@@ -84,7 +84,7 @@ Feature: Controlling sidecar injection
 		Then the workload should get a sidecar
 
 	@sleep-app
-	@base
+	@core
 	Scenario: Remove override configuration for automatic sidecar injection in a workload
 		Given a workload with override configuration for automatic sidecar injection
 		When I remove override configuration for sidecar injection in the workload

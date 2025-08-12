@@ -14,13 +14,13 @@ Feature: Kiali Graph page - Toolbar (various)
   # NOTE: Graph Find/Hide has its own test script
   # NOTE: Graph Replay has its own test script
 
-  @base
+  @core
   Scenario: On the graph page the namespace selector should be sorted alphabetically
     When user graphs "" namespaces
     Then the namespace dropdown is sorted alphabetically
 
   @error-rates-app
-  @base
+  @core
   Scenario: Graph alpha namespace with query params
     When user graphs "alpha" namespaces with refresh "900000" and duration "300"
     Then user sees the "alpha" namespace
@@ -28,32 +28,32 @@ Feature: Kiali Graph page - Toolbar (various)
     And user sees selected graph refresh "Every 15m"
 
   @error-rates-app
-  @base
+  @core
   Scenario: Open graph Tour
     When user clicks graph tour
     Then user "sees" graph tour
 
   @error-rates-app
-  @base
+  @core
   Scenario: Close graph Tour
     When user closes graph tour
     Then user "does not see" graph tour
 
   @error-rates-app
-  @base
+  @core
   Scenario: Open traffic dropdown
     When user "opens" traffic menu
     Then user sees "default" graph traffic menu
 
   @error-rates-app
-  @base
+  @core
   Scenario: Disable all traffic
     When user disables all traffic
     Then user does not see any traffic
 
   # todo: would be a better test if demos has tcp and/or grpc traffic
   @error-rates-app
-  @base
+  @core
   Scenario: Enable http traffic
     When user disables all traffic
     When user "enables" "http" traffic option
@@ -62,75 +62,75 @@ Feature: Kiali Graph page - Toolbar (various)
     And user "does not see" "grpc" traffic
 
   @error-rates-app
-  @base
+  @core
   Scenario: Close traffic dropdown
     When user "closes" traffic menu
     Then user does not see graph traffic menu
 
   @error-rates-app
   @graph-page-display
-  @base
+  @core
   Scenario: User resets to factory default
     When user resets to factory default
     And user "opens" traffic menu
     Then user sees "default" graph traffic menu
 
   @error-rates-app
-  @base
+  @core
   Scenario: Open duration dropdown
     When user clicks graph duration menu
     Then user sees graph duration menu
 
   @error-rates-app
-  @base
+  @core
   Scenario: Close duration dropdown
     When user clicks graph duration menu
     Then user does not see graph duration menu
 
   @error-rates-app
-  @base
+  @core
   Scenario: Set duration dropdown
     When user selects graph duration "600"
     Then user sees selected graph duration "Last 10m"
 
   @error-rates-app
-  @base
+  @core
   Scenario: Open refresh dropdown
     When user clicks graph refresh menu
     Then user sees graph refresh menu
 
   @error-rates-app
-  @base
+  @core
   Scenario: Close refresh dropdown
     When user clicks graph refresh menu
     Then user does not see graph refresh menu
 
   @error-rates-app
-  @base
+  @core
   Scenario: Set refresh dropdown
     When user selects graph refresh "0"
     Then user sees selected graph refresh "Pause"
 
   @error-rates-app
-  @base
+  @core
   Scenario: graph type app
     When user selects "APP" graph type
     Then user sees a "app" graph
 
   @error-rates-app
-  @base
+  @core
   Scenario: graph type service
     When user selects "SERVICE" graph type
     Then user sees a "service" graph
 
   @error-rates-app
-  @base
+  @core
   Scenario: graph type versioned app
     When user selects "VERSIONED_APP" graph type
     Then user sees a "versionedApp" graph
 
   @error-rates-app
-  @base
+  @core
   Scenario: graph type workload
     When user selects "WORKLOAD" graph type
     Then user sees a "workload" graph

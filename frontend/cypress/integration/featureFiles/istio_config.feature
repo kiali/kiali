@@ -13,7 +13,7 @@ Feature: Kiali Istio Config page
     And user selects the "bookinfo" namespace
 
   @bookinfo-app
-  @base
+  @core
   Scenario: See all Istio Config objects in the bookinfo namespace.
     Then user sees all the Istio Config objects in the bookinfo namespace
     And the "Cluster" column "disappears"
@@ -23,12 +23,12 @@ Feature: Kiali Istio Config page
     And user sees Configuration information for Istio objects
 
   @bookinfo-app
-  @base
+  @core
   Scenario: See all Istio Config toggles
     Then user sees all the Istio Config toggles
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Toggle Istio Config configuration toggle
     When user "unchecks" toggle "configuration"
     Then the "Configuration" column "disappears"
@@ -36,43 +36,43 @@ Feature: Kiali Istio Config page
     Then the "Configuration" column "appears"
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Filter Istio Config objects by Istio Name
     When the user filters by "Istio Name" for "bookinfo-gateway"
     Then user only sees "bookinfo-gateway"
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Filter Istio Config objects by Type
     When the user filters by "Type" for "Gateway"
     Then only "Gateway" objects are visible in the "bookinfo" namespace
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Filter Istio Config objects by Valid configuration
     When the user filters by "Config" for "Valid"
     Then user sees "bookinfo-gateway"
     And user sees "bookinfo"
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Ability to create an AuthorizationPolicy object
     Then the user can create a "security.istio.io" "v1" "AuthorizationPolicy" Istio object
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Ability to create a Gateway object
     Then the user can create a "networking.istio.io" "v1" "Gateway" Istio object
 
   @gateway-api
   @bookinfo-app
-  @base
+  @core
   Scenario: Ability to create a K8sGateway object
     Then the user can create a "gateway.networking.k8s.io" "v1" "Gateway" K8s Istio object
 
   @bookinfo-app
   @gateway-api-ie
-  @base
+  @core
   Scenario: K8s Inference Pool list
     Given user deletes k8sinferencepool named "foo" and the resource is no longer available
     When there is a "foo" K8sInferencePool in the "bookinfo" namespace with "details-v1" selector
@@ -82,22 +82,22 @@ Feature: Kiali Istio Config page
     Then the "foo" "K8sInferencePool" of the "bookinfo" namespace should have a "N/A"
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Ability to create a PeerAuthentication object
     Then the user can create a "security.istio.io" "v1" "PeerAuthentication" Istio object
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Ability to create a RequestAuthentication object
     Then the user can create a "security.istio.io" "v1" "RequestAuthentication" Istio object
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Ability to create a ServiceEntry object
     Then the user can create a "networking.istio.io" "v1" "ServiceEntry" Istio object
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Ability to create a Sidecar object
     Then the user can create a "networking.istio.io" "v1" "Sidecar" Istio object
 

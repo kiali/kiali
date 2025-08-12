@@ -9,7 +9,7 @@ Feature: Kiali help about verify
     Given user is at administrator perspective
     And user is at the "overview" page
 
-  @base
+  @core
   Scenario: Open Kiali notifications
     Then user should see no Istio Components Status
 

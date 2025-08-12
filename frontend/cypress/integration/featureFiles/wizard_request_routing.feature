@@ -9,7 +9,7 @@ Feature: Service Details Wizard: Request Routing
     Given user is at administrator perspective
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Create a Request Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "Request Routing" actions
@@ -33,7 +33,7 @@ Feature: Service Details Wizard: Request Routing
     Then user sees the "Istio Config" table with 2 rows
 
   @bookinfo-app
-  @base
+  @core
   Scenario: See a DestinationRule generated
     When user clicks in the "Istio Config" table "DR" badge "reviews" name row link
     Then user sees the "kind: DestinationRule" regex in the editor
@@ -44,7 +44,7 @@ Feature: Service Details Wizard: Request Routing
     And user sees the "bookinfo" "reviews" "VirtualService" reference
 
   @bookinfo-app
-  @base
+  @core
   Scenario: See a VirtualService generated
     When user clicks in the "bookinfo" "reviews" "VirtualService" reference
     Then user sees the "kind: VirtualService" regex in the editor
@@ -53,7 +53,7 @@ Feature: Service Details Wizard: Request Routing
     And user sees the "end-user:[\n ]*exact: jason" regex in the editor
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Update a Request Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "Request Routing" actions
@@ -67,13 +67,13 @@ Feature: Service Details Wizard: Request Routing
     Then user sees the "Istio Config" table with 3 rows
 
   @bookinfo-app
-  @base
+  @core
   Scenario: See a Gateway generated
     When user clicks in the "Istio Config" table "G" badge "reviews-gateway" name row link
     Then user sees the "kind: Gateway" regex in the editor
 
   ##   @bookinfo-app
-  @base
+  @core
   Scenario: Delete the Request Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "Delete Traffic Routing" actions

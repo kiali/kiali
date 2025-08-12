@@ -10,6 +10,6 @@ Feature: Kiali App Details page
     And user is at the details page for the "app" "bookinfo/details" located in the "" cluster
 
   @bookinfo-app
-  @base
+  @core
   Scenario: See app minigraph for details app.
     Then user sees a minigraph

@@ -10,7 +10,7 @@ Feature: Kiali Workloads page
     And user is at the "workloads" list page
 
   @bookinfo-app
-  @base
+  @core
   Scenario: See workloads table with correct info
     When user selects the "bookinfo" namespace
     Then user sees a table with headings
@@ -26,12 +26,12 @@ Feature: Kiali Workloads page
     And the "Cluster" column "disappears"
 
   @bookinfo-app
-  @base
+  @core
   Scenario: See all Workloads toggles
     Then user sees all the Apps toggles
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Toggle Workloads health toggle
     When user "unchecks" toggle "health"
     Then the "Health" column "disappears"
@@ -39,7 +39,7 @@ Feature: Kiali Workloads page
     Then the "Health" column "appears"
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Filter workloads table by Workloads Name
     When user selects the "bookinfo" namespace
     And user selects filter "Workload Name"
@@ -48,7 +48,7 @@ Feature: Kiali Workloads page
     And table length should be 1
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Filter workloads table by Workloads Type
     When user selects the "bookinfo" namespace
     And user selects filter "Workload Type"
@@ -56,7 +56,7 @@ Feature: Kiali Workloads page
     Then user sees "no workloads" in workloads table
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Filter workloads table by sidecar
     When user selects the "bookinfo" namespace
     And user selects filter "Istio Sidecar"
@@ -64,7 +64,7 @@ Feature: Kiali Workloads page
     Then user sees "workloads" in workloads table
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Filter workloads table by Istio Config Type
     When user selects the "bookinfo" namespace
     And user selects filter "Istio Config Type"
@@ -72,7 +72,7 @@ Feature: Kiali Workloads page
     Then user sees "no workloads" in workloads table
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Filter workloads table by health
     When user selects the "bookinfo" namespace
     And user selects filter "Health"
@@ -81,7 +81,7 @@ Feature: Kiali Workloads page
     And user should only see healthy workloads in workloads table
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Filter workloads table by App Label
     When user selects the "bookinfo" namespace
     And user selects filter "App Label"
@@ -90,7 +90,7 @@ Feature: Kiali Workloads page
     And user should only see workloads with an app label
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Filter workloads table by Version Label
     When user selects the "bookinfo" namespace
     And user selects filter "Version Label"
@@ -99,7 +99,7 @@ Feature: Kiali Workloads page
     And user should only see workloads with a version label
 
   @bookinfo-app
-  @base
+  @core
   Scenario: Filter workloads table by label
     When user selects the "bookinfo" namespace
     And user selects filter "Label"
@@ -108,7 +108,7 @@ Feature: Kiali Workloads page
     And table length should be 1
 
   @bookinfo-app
-  @base
+  @core
   Scenario: The healthy status of a workload is reported in the list of workloads
     Given a healthy workload in the cluster
     When user selects the "bookinfo" namespace
@@ -116,7 +116,7 @@ Feature: Kiali Workloads page
 
   @sleep-app
   @sleep-app-scaleup-after
-  @base
+  @core
   Scenario: The idle status of a workload is reported in the list of workloads
     Given an idle sleep workload in the cluster
     When user selects the "sleep" namespace
@@ -124,7 +124,7 @@ Feature: Kiali Workloads page
     And the health status of the workload should be "Not Ready"
 
   @error-rates-app
-  @base
+  @core
   Scenario: The failing status of a workload is reported in the list of workloads
     Given a failing workload in the mesh
     When user selects the "alpha" namespace
@@ -133,7 +133,7 @@ Feature: Kiali Workloads page
 
   @error-rates-app
   @skip-lpinterop
-  @base
+  @core
   Scenario: The degraded status of a workload is reported in the list of workloads
     Given a degraded workload in the mesh
     When user selects the "alpha" namespace

@@ -10,7 +10,7 @@ Feature: Service Details Wizard: K8s HTTP Routing
 
   @gateway-api
   @bookinfo-app
-  @base
+  @core
   Scenario: Create a K8s HTTP Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "K8s HTTP Routing" actions
@@ -33,7 +33,7 @@ Feature: Service Details Wizard: K8s HTTP Routing
 
   @gateway-api
   @bookinfo-app
-  @base
+  @core
   Scenario: See a HTTPRoute generated
     When user clicks in the "Istio Config" table "HTTP" badge "reviews" name row link
     Then user sees the "kind: HTTPRoute" regex in the editor
@@ -41,7 +41,7 @@ Feature: Service Details Wizard: K8s HTTP Routing
 
   @gateway-api
   @bookinfo-app
-  @base
+  @core
   Scenario: Update a K8s HTTP Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "K8s HTTP Routing" actions
@@ -56,14 +56,14 @@ Feature: Service Details Wizard: K8s HTTP Routing
 
   @gateway-api
   @bookinfo-app
-  @base
+  @core
   Scenario: See a K8s Gateway generated with warning
     When user clicks in the "Istio Config" table "G" badge "reviews-gateway" name row link
     Then user sees the "kind: Gateway" regex in the editor
 
   @gateway-api
   @bookinfo-app
-  @base
+  @core
   Scenario: Delete the K8s Gateway Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "Delete Traffic Routing" actions
