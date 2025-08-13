@@ -20,7 +20,6 @@ import (
 )
 
 func newLocalCmd(conf *config.Config) *cobra.Command {
-	// Local flag variables for local command
 	var (
 		homeClusterContext       string
 		kubeConfig               = kubernetes.KubeConfigDir()
