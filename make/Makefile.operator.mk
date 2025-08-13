@@ -82,6 +82,7 @@ operator-create: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists
     --helm-set                      "allowAdHocKialiNamespace=${OPERATOR_ALLOW_AD_HOC_KIALI_NAMESPACE}" \
     --helm-set                      "allowAdHocKialiImage=${OPERATOR_ALLOW_AD_HOC_KIALI_IMAGE}" \
     --helm-set                      "allowAdHocOSSMConsoleImage=${OPERATOR_ALLOW_AD_HOC_OSSMCONSOLE_IMAGE}" \
+	 --helm-set                      "allowAdHocContainers=${OPERATOR_ALLOW_AD_HOC_CONTAINERS}" \
     --helm-set                      "image.pullSecrets={${OPERATOR_IMAGE_PULL_SECRET_NAME}}" \
     --operator-cluster-role-creator "true" \
     --operator-image-name           "${CLUSTER_OPERATOR_INTERNAL_NAME}" \
