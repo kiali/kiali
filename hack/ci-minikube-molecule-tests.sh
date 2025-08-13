@@ -193,7 +193,7 @@ if ! ${minikube_sh} status; then
 
     echo "Configuring the Kiali operator to allow ad hoc images and ad hoc namespaces and security context override."
     operator_namespace="$(${CLIENT_EXE} get deployments --all-namespaces | grep kiali-operator | cut -d ' ' -f 1)"
-    for env_name in ALLOW_AD_HOC_KIALI_NAMESPACE ALLOW_AD_HOC_KIALI_IMAGE ALLOW_SECURITY_CONTEXT_OVERRIDE; do
+    for env_name in ALLOW_AD_HOC_KIALI_NAMESPACE ALLOW_AD_HOC_KIALI_IMAGE ALLOW_AD_HOC_INIT_CONTAINERS ALLOW_SECURITY_CONTEXT_OVERRIDE; do
       ${CLIENT_EXE} -n ${operator_namespace} patch $(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali) --type=json -p "[{'op':'replace','path':"/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/$(${CLIENT_EXE} -n ${operator_namespace} get $(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali) -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}' | tr ' ' '\n' | cat --number | grep ${env_name} | cut -f 1 | xargs echo -n | cat - <(echo "-1") | bc)/value",'value':"\"true\""}]"
     done
 
