@@ -182,6 +182,13 @@ EOF
     if [ "${AMBIENT_ENABLED}" != "true" ]; then
       echo "Deploying error rates demo ..."
       "${SCRIPT_DIR}/install-error-rates-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_ERROR_RATES}
+    else
+      "${ISTIO_DIR}/bin/istioctl" waypoint apply -n bookinfo
+      echo "Deploying waypoint proxies ..."
+      "${SCRIPT_DIR}/ambient/install-waypoints.sh"
+
+      echo "Deploying sidecar-ambient ..."
+      "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh"
     fi
     echo "Deploying sleep demo ..."
     "${SCRIPT_DIR}/install-sleep-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
