@@ -163,7 +163,7 @@ func BenchmarkValidate(b *testing.B) {
 	})
 
 	discovery := &istiotest.FakeDiscovery{
-		MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}, Config: models.ControlPlaneConfiguration{}}}},
+		MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}, Config: models.ControlPlaneConfiguration{}, MeshConfig: models.NewMeshConfig()}}},
 	}
 	vs := NewLayerBuilder(b, conf).WithClient(k8s).WithCache(cache).WithDiscovery(discovery).Build().Validations
 

@@ -443,6 +443,14 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 
 	var mgr manager.Manager
 	mgr, err = ctrl.NewManager(homeClusterInfo.ClientConfig, ctrl.Options{
+		// Disabling caching for ConfigMaps, as in large clusters it can take a lot of unnecessary memory,
+		Client: client.Options{
+			Cache: &client.CacheOptions{
+				DisableFor: []client.Object{
+					&corev1.ConfigMap{},
+				},
+			},
+		},
 		// Disable metrics server since Kiali has its own metrics server.
 		Cache: ctrlcache.Options{
 			DefaultNamespaces: defaultNamespaces,
