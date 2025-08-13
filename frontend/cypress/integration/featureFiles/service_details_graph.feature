@@ -12,11 +12,13 @@ Feature: Kiali Service Details page
     And user is at the details page for the "service" "bookinfo/productpage" located in the "" cluster
 
   @bookinfo-app
+  @core
   Scenario: See service minigraph for details app.
     Then user sees a minigraph
 
   @bookinfo-app
   @skip-ossmc
+  @core
   Scenario: Verify that the Graph type dropdown is disabled when changing to Show node graph
     When user sees a minigraph
     And user chooses the "Show node graph" option

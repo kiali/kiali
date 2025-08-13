@@ -10,12 +10,14 @@ Feature: Kiali Graph page - Replay
     Given user is at administrator perspective
 
   @error-rates-app
+  @core
   Scenario: Graph alpha and beta namespaces
     When user graphs "alpha,beta" namespaces
     Then user sees the "alpha" namespace
     And user sees the "beta" namespace
 
   @error-rates-app
+  @core
   Scenario: Show Replay
     When user presses the Replay button
     Then user sees the Replay Close button
@@ -27,6 +29,7 @@ Feature: Kiali Graph page - Replay
     And user presses the Pause button
 
   @error-rates-app
+  @core
   Scenario: Close Replay
     When user presses the Replay Close button
     Then user no longer sees the slider

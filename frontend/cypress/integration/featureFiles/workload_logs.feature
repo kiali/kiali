@@ -12,6 +12,7 @@ Feature: Workload logs tab
     Given user is at administrator perspective
 
   @bookinfo-app
+  @core
   Scenario: The logs tab should show the logs of a pod
     Given I am on the "ratings-v1" workload detail page of the "bookinfo" namespace
     When I go to the Logs tab of the workload detail page
@@ -22,24 +23,28 @@ Feature: Workload logs tab
     And I should see some "ratings-v1" pod selected in the pod selector
 
   @loggers-app
+  @core
   Scenario: The log pane of the logs tab should only show the lines with the requested text
     Given I am on the logs tab of the "custom-logger" workload detail page of the "loggers" namespace
     When I type "GET" on the Show text field
     Then the log pane should only show log lines containing "GET"
 
   @loggers-app
+  @core
   Scenario: The log pane of the logs tab should hide the lines with the requested text
     Given I am on the logs tab of the "custom-logger" workload detail page of the "loggers" namespace
     When I type "GET" on the Hide text field
     Then the log pane should only show log lines not containing "GET"
 
   @loggers-app
+  @core
   Scenario: The log pane of the logs tab should show json log lines with a json log indicator
     Given I am on the logs tab of the "json-logger" workload detail page of the "loggers" namespace
     When I type "text log format" on the Hide text field
     Then the log pane should only show json log lines
 
   @loggers-app
+  @core
   Scenario: The json log should contain certain values on the parsed object
     Given I am on the logs tab of the "json-logger" workload detail page of the "loggers" namespace
     When I type "text log format" on the Hide text field
@@ -48,12 +53,14 @@ Feature: Workload logs tab
     And I should see certain values on the parsed object
 
   @bookinfo-app
+  @core
   Scenario: The log pane of the logs tab should limit the number of log lines that are fetched
     Given I am on the logs tab of the "ratings-v1" workload detail page of the "bookinfo" namespace
     When I choose to show 100 lines of logs
     Then the log pane should show at most 100 lines of logs of each selected container
 
   @bookinfo-app
+  @core
   Scenario: The log pane of the logs tab should only show logs for the selected container
     Given I am on the logs tab of the "ratings-v1" workload detail page of the "bookinfo" namespace
     When I select only the "ratings" container

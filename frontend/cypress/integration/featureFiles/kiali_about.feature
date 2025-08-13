@@ -9,6 +9,7 @@ Feature: Kiali help about verify
     Given user is at administrator perspective
     And user is at the "overview" page
 
+  @core
   Scenario: Open Kiali about page
 
     And user clicks on Help Button
