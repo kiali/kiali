@@ -583,7 +583,6 @@ elif [ "${TEST_SUITE}" == "${LOCAL}" ]; then
   ensureCypressInstalled
 
   GOPATH=$(go env GOPATH)
-  # Check if the kiali binary exists
   if [ -z "${GOPATH}" ]; then
     echo "ERROR: Unable to determine GOPATH. Please ensure Go is properly installed."
     exit 1
@@ -598,7 +597,6 @@ elif [ "${TEST_SUITE}" == "${LOCAL}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true --deploy-kiali false ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
-    # Install demo apps
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"
   fi
 
@@ -608,24 +606,9 @@ elif [ "${TEST_SUITE}" == "${LOCAL}" ]; then
     exit 0
   fi
 
-  # Create a kiali config to turn off grafana for the tests since it's not reachable from the local Kiali.
-  # Create a temp dir for the config
-  TEMP_DIR=$(mktemp -d)
-  CONFIG_FILE="${TEMP_DIR}/kiali-config.yaml"
-  cat <<EOF > "${CONFIG_FILE}"
-deployment:
-  cluster_name_overrides:
-    kind-ci: cluster-default
-external_services:
-  grafana:
-    enabled: false
-  tracing:
-    enabled: true
-EOF
-
   # Start Kiali locally in the background
   infomsg "Starting Kiali locally in the background using binary: ${KIALI_BINARY}"
-  "${KIALI_BINARY}" local --port-forward-to-tracing --enable-tracing --port-forward-to-prom --port-forward-to-grafana --without-browser --config "${CONFIG_FILE}" &
+  "${KIALI_BINARY}" local --cluster-name-overrides kind-ci=cluster-default --port-forward-to-tracing --enable-tracing --port-forward-to-prom --port-forward-to-grafana --without-browser &
   KIALI_PID=$!
   
   # Set the local Kiali URL
@@ -651,6 +634,5 @@ EOF
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:smoke
   
-  # Stop the local Kiali process
   kill ${KIALI_PID} 2>/dev/null || true
 fi

@@ -8,13 +8,10 @@ import (
 	"io"
 	"os/exec"
 	"runtime"
-	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -64,16 +61,37 @@ func newLocalCmd(conf *config.Config) *cobra.Command {
 				return fmt.Errorf("invalid configuration: %v", err)
 			}
 
-			ctx, cancel := context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(cmd.Context())
 			defer cancel()
-			serverStopped, err := RunLocal(ctx, conf, remoteClusterContexts, homeClusterContext, portForwardToPromFlag, portForwardToGrafanaFlag, portForwardToTracingFlag, enableTracing, withoutBrowser, kubeConfig)
+
+			log.Info("Running Kiali in local mode")
+			log.Infof("Loading kubeconfig from file: %s", kubeConfig)
+
+			clients, err := kubernetes.NewClientsFromKubeConfig(conf, kubeConfig, remoteClusterContexts, homeClusterContext)
 			if err != nil {
-				return fmt.Errorf("unable to run kiali locally: %s", err)
+				return fmt.Errorf("unable to create Kubernetes clients: %s", err)
+			}
+
+			cf, err := kubernetes.NewClientFactoryWithSAClients(ctx, conf, clients)
+			if err != nil {
+				return fmt.Errorf("unable to create new client factory")
+			}
+
+			if err := setupPortForwarding(ctx, cf, conf, portForwardToPromFlag, portForwardToGrafanaFlag, portForwardToTracingFlag, enableTracing); err != nil {
+				return fmt.Errorf("unable to setup port forwarding: %s", err)
+			}
+
+			stopped := RunServer(ctx, conf, cf)
+			if !withoutBrowser {
+				log.Info("Opening Kiali in default browser")
+				if err := openDefaultBrowser(ctx, conf); err != nil {
+					log.Errorf("Unable to open default browser: %s", err)
+				}
 			}
 
 			WaitForTermination(cancel)
 			// This ensures that the Run process has fully cleaned itself up.
-			<-serverStopped
+			<-stopped
 
 			return nil
 		},
@@ -127,48 +145,6 @@ func setupPortForwarding(ctx context.Context, cf kubernetes.ClientFactory, conf 
 	}
 
 	return nil
-}
-
-func RunLocal(
-	ctx context.Context,
-	conf *config.Config,
-	remoteClusterContexts []string,
-	homeClusterContext string,
-	portForwardToPromFlag bool,
-	portForwardToGrafanaFlag bool,
-	portForwardToTracingFlag bool,
-	enableTracing bool,
-	withoutBrowser bool,
-	kubeConfigPath string,
-) (<-chan struct{}, error) {
-	log.Info("Running Kiali in local mode")
-	log.Infof("Loading kubeconfig from file: %s", kubeConfigPath)
-
-	clients, err := createKubernetesClients(conf, kubeConfigPath, remoteClusterContexts, homeClusterContext)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create Kubernetes clients: %s", err)
-	}
-
-	cf, err := kubernetes.NewClientFactoryWithSAClients(ctx, *conf, clients)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create new client factory")
-	}
-
-	if err := setupPortForwarding(ctx, cf, conf, portForwardToPromFlag, portForwardToGrafanaFlag, portForwardToTracingFlag, enableTracing); err != nil {
-		return nil, fmt.Errorf("unable to setup port forwarding: %s", err)
-	}
-
-	log.Info("Running server")
-	stopped := RunServer(ctx, conf, cf)
-	log.Info("Server is ready.")
-	if !withoutBrowser {
-		log.Info("Opening Kiali in default browser")
-		if err := openDefaultBrowser(ctx, conf); err != nil {
-			log.Errorf("Unable to open default browser: %s", err)
-		}
-	}
-
-	return stopped, nil
 }
 
 func openDefaultBrowser(ctx context.Context, conf *config.Config) error {
@@ -255,60 +231,4 @@ func portForwardToProm(ctx context.Context, localClient kubernetes.ClientInterfa
 	config.Set(conf)
 
 	return nil
-}
-
-// createKubernetesClients creates kubernetes clients from kubeconfig contexts
-func createKubernetesClients(conf *config.Config, kubeConfigPath string, remoteClusterContexts []string, homeClusterContext string) (map[string]kubernetes.ClientInterface, error) {
-	kubeConfig, err := clientcmd.LoadFromFile(kubeConfigPath)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read kubeconfig from file: %s", kubeConfigPath)
-	}
-
-	contextNames := slices.Clone(remoteClusterContexts)
-	homeContext := kubeConfig.CurrentContext
-	if homeClusterContext != "" {
-		homeContext = homeClusterContext
-	}
-	contextNames = append(contextNames, homeContext)
-
-	contexts := map[string]*api.Context{}
-	for _, ctx := range contextNames {
-		kubeContext := kubeConfig.Contexts[ctx]
-		if kubeContext == nil {
-			return nil, fmt.Errorf("current context not set in kubeconfig file: %s", kubeConfigPath)
-		}
-		contexts[ctx] = kubeContext
-	}
-
-	clients := map[string]kubernetes.ClientInterface{}
-	for context, clusterInfo := range contexts {
-		clusterName := clusterInfo.Cluster
-		if override := conf.Deployment.ClusterNameOverrides[clusterInfo.Cluster]; override != "" {
-			clusterName = override
-		}
-
-		restConf, err := clientcmd.NewDefaultClientConfig(*kubeConfig, &clientcmd.ConfigOverrides{CurrentContext: context}).ClientConfig()
-		if err != nil {
-			return nil, fmt.Errorf("unable to get client config for remote cluster [%s]. Err: %s", context, err)
-		}
-
-		client, err := kubernetes.NewClient(kubernetes.ClusterInfo{
-			Name:         clusterName,
-			ClientConfig: restConf,
-		}, conf)
-		if err != nil {
-			return nil, fmt.Errorf("unable to create remote Kiali Service Account client. Err: %s", err)
-		}
-
-		clients[clusterName] = client
-
-		// TODO: Need to set the kube cluster name to the current context otherwise cache won't start.
-		// TODO: Does the cache really need to fail on that condition?
-		if context == homeContext {
-			conf.KubernetesConfig.ClusterName = clusterName
-			config.Set(conf)
-		}
-	}
-
-	return clients, nil
 }

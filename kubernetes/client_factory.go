@@ -96,7 +96,8 @@ func NewClientFactory(ctx context.Context, conf *kialiconfig.Config, restConf *r
 	return cf, nil
 }
 
-func NewClientFactoryWithSAClients(ctx context.Context, conf kialiconfig.Config, saClients map[string]ClientInterface) (ClientFactory, error) {
+// NewClientFactoryWithSAClients creates a new client factory with the given SA clients.
+func NewClientFactoryWithSAClients(ctx context.Context, conf *kialiconfig.Config, saClients map[string]ClientInterface) (ClientFactory, error) {
 	saClientEntries := map[string]UserClientInterface{}
 	for k, v := range saClients {
 		saClientEntries[k] = v.(UserClientInterface)
@@ -104,16 +105,14 @@ func NewClientFactoryWithSAClients(ctx context.Context, conf kialiconfig.Config,
 	f := &clientFactory{
 		// Create a new config based on what was gathered above but don't specify the bearer token to use
 		baseRestConfig:  &rest.Config{},
-		kialiConfig:     &conf,
+		kialiConfig:     conf,
 		clientEntries:   make(map[string]map[string]UserClientInterface),
 		recycleChan:     make(chan string),
 		saClientEntries: saClientEntries,
 		homeCluster:     conf.KubernetesConfig.ClusterName,
 	}
 
-	// after creating a client factory
-	// background goroutines will be watching the clients` expiration
-	// if a client is expired, it will be removed from clientEntries
+	// TODO: May not need this since it's assumed that when using this method there won't be any user clients.
 	go f.watchClients()
 
 	// Need to cleanup the recycle chan since this client factory could be transitory.
