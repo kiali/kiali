@@ -1230,7 +1230,7 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		conf.ExternalServices.Tracing.ExternalURL = conf.ExternalServices.Tracing.XURL
 		log.Info("DEPRECATION NOTICE: 'external_services.tracing.url' has been deprecated - switch to 'external_services.tracing.external_url'")
 	}
-	if conf.ExternalServices.Perses.Enabled == true && conf.ExternalServices.Perses.Auth.Type != AuthTypeBasic {
+	if conf.ExternalServices.Perses.Enabled && conf.ExternalServices.Perses.Auth.Type != AuthTypeBasic {
 		log.Errorf("Perses authentication not supported %s", conf.ExternalServices.Perses.Auth.Type)
 	}
 
