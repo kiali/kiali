@@ -183,29 +183,31 @@ EOF
       echo "Deploying error rates demo ..."
       "${SCRIPT_DIR}/install-error-rates-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_ERROR_RATES}
     else
-      "${ISTIO_DIR}/bin/istioctl" waypoint apply -n bookinfo
+      ${CLIENT_EXE} apply -f "${SCRIPT_DIR}/ambient/resources/waypoint.yaml" -n bookinfo
+      ${CLIENT_EXE} label ns bookinfo istio.io/use-waypoint=waypoint
       echo "Deploying waypoint proxies ..."
-      "${SCRIPT_DIR}/ambient/install-waypoints.sh"
+      "${SCRIPT_DIR}/ambient/install-waypoints.sh" -c ${CLIENT_EXE}
 
       echo "Deploying sidecar-ambient ..."
-      "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh"
+      "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh" -c ${CLIENT_EXE}
     fi
     echo "Deploying sleep demo ..."
     "${SCRIPT_DIR}/install-sleep-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
 
   elif [ "${AMBIENT_ENABLED}" == "true" ]; then
     echo "Deploying bookinfo demo..."
-    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg ${AMBIENT_ARGS_BOOKINFO}
-    "${ISTIO_DIR}/bin/istioctl" waypoint apply -n bookinfo
+    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c ${CLIENT_EXE} -mp ${MINIKUBE_PROFILE} -tg ${AMBIENT_ARGS_BOOKINFO}
+    ${CLIENT_EXE} apply -f "${SCRIPT_DIR}/ambient/resources/waypoint.yaml" -n bookinfo
+    ${CLIENT_EXE} label ns bookinfo istio.io/use-waypoint=waypoint
 
     echo "Deploying sleep demo ..."
     "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
 
     echo "Deploying waypoint proxies ..."
-    "${SCRIPT_DIR}/ambient/install-waypoints.sh"
+    "${SCRIPT_DIR}/ambient/install-waypoints.sh" -c ${CLIENT_EXE}
 
     echo "Deploying sidecar-ambient ..."
-    "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh"
+    "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh" -c ${CLIENT_EXE}
 
   else
     echo "Deploying bookinfo demo..."

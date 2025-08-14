@@ -9,6 +9,8 @@
 #
 ##############################################################################
 
+CLIENT_EXE_NAME="oc"
+
 # Go to the main output directory and try to find an Istio there.
 AMBIENT_NS="test-ambient"
 CLIENT_EXE="kubectl"
@@ -20,6 +22,10 @@ WAYPOINT="false"
 while [ $# -gt 0 ]; do
   key="$1"
   case $key in
+    -c|--client)
+      CLIENT_EXE="$2"
+      shift;shift
+      ;;
     -d|--delete)
       DELETE="$2"
       shift;shift
@@ -31,6 +37,7 @@ while [ $# -gt 0 ]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -c|--client: either 'oc' or 'kubectl'
   -d|--delete: either 'true' or 'false'. If 'true' the namespaces demo will be deleted, not installed.
   -w|--waypoint: Install a waypoint proxy in the ambient namespace. By default is false.
   -h|--help: this text
@@ -52,34 +59,18 @@ if [ "${DELETE}" == "true" ]; then
   exit 0
 fi
 
-ALL_ISTIOS=$(ls -dt1 ${OUTPUT_DIR}/istio-*)
-if [ "$?" != "0" ]; then
-  ${HACK_SCRIPT_DIR}/../download-istio.sh
-  if [ "$?" != "0" ]; then
-    echo "ERROR: You do not have Istio installed and it cannot be downloaded"
-    exit 1
-  fi
-fi
-# use the Istio release that was last downloaded (that's the -t option to ls)
-ISTIO_DIR=$(ls -dt1 ${OUTPUT_DIR}/istio-* | head -n1)
-
-if [ ! -d "${ISTIO_DIR}" ]; then
-   echo "ERROR: Istio cannot be found at: ${ISTIO_DIR}"
-   exit 1
+IS_OPENSHIFT="false"
+if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+  IS_OPENSHIFT="true"
 fi
 
-echo "Istio is found here: ${ISTIO_DIR}"
-if [[ -x "${ISTIO_DIR}/bin/istioctl" ]]; then
-  echo "istioctl is found here: ${ISTIO_DIR}/bin/istioctl"
-  ISTIOCTL="${ISTIO_DIR}/bin/istioctl"
-  ${ISTIOCTL} version
+if [ "${IS_OPENSHIFT}" == "true" ]; then
+  $CLIENT_EXE new-project ${SIDECAR_NS}
+  $CLIENT_EXE new-project ${AMBIENT_NS}
 else
-  echo "ERROR: istioctl is NOT found at ${ISTIO_DIR}/bin/istioctl"
-  exit 1
+  ${CLIENT_EXE} create ns ${SIDECAR_NS}
+  ${CLIENT_EXE} create ns ${AMBIENT_NS}
 fi
-
-${CLIENT_EXE} create ns ${SIDECAR_NS}
-${CLIENT_EXE} create ns ${AMBIENT_NS}
 
 ${CLIENT_EXE} label ns ${SIDECAR_NS} istio-injection=enabled
 ${CLIENT_EXE} label ns ${AMBIENT_NS} istio.io/dataplane-mode=ambient
@@ -122,6 +113,7 @@ if [ "${WAYPOINT}" == "true" ]; then
   echo "Verifying that Gateway API is installed; if it is not then it will be installed now."
   $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
     { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.3.0" | $CLIENT_EXE apply -f -; }
-  ${ISTIOCTL} waypoint apply -n ${AMBIENT_NS} --enroll-namespace
+  ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/waypoint.yaml -n ${AMBIENT_NS}
+  ${CLIENT_EXE} label ns ${AMBIENT_NS} istio.io/use-waypoint=waypoint
 fi
 
