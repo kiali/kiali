@@ -230,15 +230,8 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   load = (): void => {
     this.promises.cancelAll();
 
-    // First fetch control planes, then fetch namespaces
     this.promises
-      .register('controlPlanes', API.getControlPlanes())
-      .then(controlPlanesResponse => {
-        this.setState({
-          controlPlanes: controlPlanesResponse.data
-        });
-        return this.promises.register('namespaces', API.getNamespaces());
-      })
+      .register('namespaces', API.getNamespaces())
       .then(namespacesResponse => {
         const nameFilters = FilterSelected.getSelected().filters.filter(
           f => f.category === Filters.nameFilter.category
@@ -291,6 +284,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             this.fetchHealth(isAscending, sortField, type);
             this.fetchTLS(isAscending, sortField);
             this.fetchValidations(isAscending, sortField);
+            this.fetchControlPlanes();
 
             if (displayMode !== OverviewDisplayMode.COMPACT) {
               this.fetchMetrics(direction);
@@ -298,9 +292,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           }
         );
       })
-      .catch(error => {
-        if (!error.isCanceled) {
-          this.handleApiError('Could not fetch Overview cards', error);
+      .catch(namespacesError => {
+        if (!namespacesError.isCanceled) {
+          this.handleApiError('Could not fetch namespace list', namespacesError);
         }
       });
   };
@@ -639,6 +633,18 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           type: MessageType.INFO,
           showNotification: false
         });
+      });
+  };
+
+  private fetchControlPlanes = async (): Promise<void> => {
+    return API.getControlPlanes()
+      .then(response => {
+        this.setState({
+          controlPlanes: response.data
+        });
+      })
+      .catch(error => {
+        AlertUtils.addError('Error fetching controlplanes.', error, 'default', MessageType.ERROR);
       });
   };
 
@@ -1391,12 +1397,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             Istio API disabled
           </Label>
         )}
-
+        
         {serverConfig.ambientEnabled && !isControlPlane && ns.labels && ns.isAmbient && (
-          <AmbientBadge
-            tooltip={tooltip ? 'labeled as part of Ambient Mesh' : undefined}
-            data-test="ambient-badge"
-          ></AmbientBadge>
+          <AmbientBadge tooltip={tooltip ? 'labeled as part of Ambient Mesh' : undefined} data-test="ambient-badge"></AmbientBadge>
         )}
       </>
     );
