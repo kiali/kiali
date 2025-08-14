@@ -47,6 +47,13 @@ Then('the {string} column on the {string} row is empty', (column: string, rowTex
   getColWithRowText(rowText, column).children().should('be.empty');
 });
 
+Then(
+  'the {string} column on the {string} row does not contain {string}',
+  (column: string, row: string, text: string) => {
+    getColWithRowText(row, column).should('not.contain.text', text);
+  }
+);
+
 When('user clicks in {string} column on the {string} text', (column: string, rowText: string) => {
   getColWithRowText(rowText, column).find('a').click();
 });

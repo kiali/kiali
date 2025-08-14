@@ -144,9 +144,16 @@ func (in *WorkloadService) isWorkloadIncluded(workload string) bool {
 }
 
 // @TODO do validations per cluster
-func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1.AuthorizationPolicy, workloadsPerNamespace map[string]models.Workloads) models.IstioValidations {
+func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1.AuthorizationPolicy, workloadsPerNamespace map[string]models.Workloads, cluster string) models.IstioValidations {
+	namespaces, found := in.cache.GetNamespaces(cluster, in.userClients[cluster].GetToken())
+	if !found {
+		return models.IstioValidations{}
+	}
 	validations := checkers.WorkloadChecker{
 		AuthorizationPolicies: authpolicies,
+		Cluster:               cluster,
+		Conf:                  in.conf,
+		Namespaces:            namespaces,
 		WorkloadsPerNamespace: workloadsPerNamespace,
 	}.Check()
 
@@ -313,7 +320,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		authpolicies := istioConfigList.AuthorizationPolicies
 		allWorkloads := map[string]models.Workloads{}
 		allWorkloads[namespace] = ws
-		validations := in.getWorkloadValidations(authpolicies, allWorkloads)
+		validations := in.getWorkloadValidations(authpolicies, allWorkloads, cluster)
 		validations.StripIgnoredChecks(in.conf)
 		workloadList.Validations = workloadList.Validations.MergeValidations(validations)
 	}

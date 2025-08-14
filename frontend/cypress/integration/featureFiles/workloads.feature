@@ -22,7 +22,7 @@ Feature: Kiali Workloads page
     And the "Labels" column on the "details-v1" row has the text "app=details"
     And the "Labels" column on the "details-v1" row has the text "version=v1"
     And the "Type" column on the "details-v1" row has the text "Deployment"
-    And the "Details" column on the "details-v1" row is empty
+    And the "Details" column on the "details-v1" row does not contain "Config Issues"
     And the "Cluster" column "disappears"
 
   @bookinfo-app
