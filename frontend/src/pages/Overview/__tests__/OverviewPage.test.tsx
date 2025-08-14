@@ -36,6 +36,10 @@ const mockAPIToPromise = (func: keyof typeof API, obj: any, encapsData: boolean)
   });
 };
 
+const mockControlPlanes = (name: string): Promise<void> => {
+  return mockAPIToPromise('getControlPlanes', [{ name: name, cluster: CLUSTER_DEFAULT }], true);
+};
+
 const mockNamespaces = (names: string[]): Promise<void> => {
   return mockAPIToPromise(
     'getNamespaces',
@@ -96,6 +100,7 @@ describe('Overview page', () => {
     mockAPIToPromise('getConfigValidations', null, false);
     mockAPIToPromise('getAllIstioConfigs', null, false);
     mockAPIToPromise('getIstioPermissions', {}, false);
+    mockAPIToPromise('getControlPlanes', [{ name: 'default', cluster: CLUSTER_DEFAULT }], true);
   });
 
   afterEach(() => {
@@ -126,6 +131,7 @@ describe('Overview page', () => {
   it('renders all without filters', done => {
     FilterSelected.setSelected({ filters: [], op: DEFAULT_LABEL_OPERATION });
     Promise.all([
+      mockControlPlanes('default'),
       mockNamespaces(['a', 'b', 'c']),
       mockNamespaceHealth(['a', 'b', 'c'], {
         app1: {
@@ -147,6 +153,7 @@ describe('Overview page', () => {
   it('filters failures match', done => {
     FilterSelected.setSelected(genActiveFilters(healthFilter, ['Failure']));
     Promise.all([
+      mockControlPlanes('default'),
       mockNamespaces(['a']),
       mockNamespaceHealth(['a'], {
         app1: {
@@ -170,6 +177,7 @@ describe('Overview page', () => {
   it('filters failures no match', done => {
     FilterSelected.setSelected(genActiveFilters(healthFilter, ['Failure']));
     Promise.all([
+      mockControlPlanes('default'),
       mockNamespaces(['a']),
       mockNamespaceHealth(['a'], {
         app1: {
@@ -193,6 +201,7 @@ describe('Overview page', () => {
   it('multi-filters health match', done => {
     FilterSelected.setSelected(genActiveFilters(healthFilter, ['Failure', 'Degraded']));
     Promise.all([
+      mockControlPlanes('default'),
       mockNamespaces(['a']),
       mockNamespaceHealth(['a'], {
         app1: {
@@ -213,6 +222,7 @@ describe('Overview page', () => {
   it('multi-filters health no match', done => {
     FilterSelected.setSelected(genActiveFilters(healthFilter, ['Failure', 'Degraded']));
     Promise.all([
+      mockControlPlanes('default'),
       mockNamespaces(['a']),
       mockNamespaceHealth(['a'], {
         app1: {
@@ -233,6 +243,7 @@ describe('Overview page', () => {
   it('filters namespaces info name match', done => {
     FilterSelected.setSelected(genActiveFilters(nameFilter, ['bc']));
     Promise.all([
+      mockControlPlanes('default'),
       mockNamespaces(['abc', 'bce', 'ced']),
       mockNamespaceHealth(['abc', 'bce', 'ced'], {
         app1: {
@@ -249,7 +260,7 @@ describe('Overview page', () => {
 
   it('filters namespaces info name no match', done => {
     FilterSelected.setSelected(genActiveFilters(nameFilter, ['yz']));
-    mockNamespaces(['abc', 'bce', 'ced']).then(() => {
+    Promise.all([mockControlPlanes('default'), mockNamespaces(['abc', 'bce', 'ced'])]).then(() => {
       mounted!.update();
       expect(mounted!.find('Card')).toHaveLength(0);
       done();
@@ -262,6 +273,7 @@ describe('Overview page', () => {
       concat(genActiveFilters(nameFilter, ['bc']), genActiveFilters(healthFilter, ['Healthy']))
     );
     Promise.all([
+      mockControlPlanes('default'),
       mockNamespaces(['abc', 'bce', 'ced']),
       mockNamespaceHealth(['abc', 'bce', 'ced'], {
         app1: {
@@ -281,6 +293,7 @@ describe('Overview page', () => {
       concat(genActiveFilters(nameFilter, ['bc']), genActiveFilters(healthFilter, ['Healthy']))
     );
     Promise.all([
+      mockControlPlanes('default'),
       mockNamespaces(['abc', 'bce', 'ced']),
       mockNamespaceHealth(['abc', 'bce', 'ced'], {
         app1: {
