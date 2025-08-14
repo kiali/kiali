@@ -2,7 +2,7 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   labels:
-    istio.io/waypoint-for: none
+    istio.io/waypoint-for: service
   name: use-this
 spec:
   gatewayClassName: istio-waypoint
