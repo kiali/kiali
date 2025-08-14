@@ -2,6 +2,7 @@ export interface Namespace {
   annotations?: { [key: string]: string };
   cluster?: string;
   isAmbient?: boolean;
+  isControlPlane?: boolean;
   labels?: { [key: string]: string };
   name: string;
   revision?: string;

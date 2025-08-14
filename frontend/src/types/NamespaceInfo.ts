@@ -8,6 +8,7 @@ export type NamespaceInfo = {
   cluster?: string;
   errorMetrics?: Metric[];
   isAmbient?: boolean;
+  isControlPlane?: boolean;
   istioConfig?: IstioConfigList;
   labels?: { [key: string]: string };
   metrics?: Metric[];

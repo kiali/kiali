@@ -215,6 +215,17 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 			namespaces = models.CastNamespaceCollection(k8sNamespaces, cluster)
 		}
 	}
+	// here is called GetControlPlaneNamespaces instead of IsControlPlane for performance reasons
+	cpnList := in.discovery.GetControlPlaneNamespaces(ctx, cluster)
+	cpnSet := make(map[string]struct{}, len(cpnList))
+	for _, n := range cpnList {
+		cpnSet[n] = struct{}{}
+	}
+
+	for i := range namespaces {
+		_, ok := cpnSet[namespaces[i].Name]
+		namespaces[i].IsControlPlane = ok
+	}
 
 	namespaces = istio.FilterNamespacesWithDiscoverySelectors(namespaces, istio.GetDiscoverySelectorsForCluster(ctx, in.discovery, cluster, in.conf))
 

@@ -184,10 +184,6 @@ export const setServerConfig = (cfg: ServerConfig): void => {
   }
 };
 
-export const isIstioControlPlane = (cluster: string, namespace: string): boolean => {
-  return serverConfig.controlPlanes[cluster] === namespace;
-};
-
 export const isIstioNamespace = (namespace: string): boolean => {
   return Object.values(serverConfig.controlPlanes).some(cpNamespace => cpNamespace === namespace);
 };
