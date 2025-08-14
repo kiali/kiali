@@ -184,7 +184,6 @@ EOF
       "${SCRIPT_DIR}/install-error-rates-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_ERROR_RATES}
     else
       ${CLIENT_EXE} apply -f "${SCRIPT_DIR}/ambient/resources/waypoint.yaml" -n bookinfo
-      ${CLIENT_EXE} label ns bookinfo istio.io/use-waypoint=waypoint
       echo "Deploying waypoint proxies ..."
       "${SCRIPT_DIR}/ambient/install-waypoints.sh" -c ${CLIENT_EXE}
 
@@ -198,7 +197,6 @@ EOF
     echo "Deploying bookinfo demo..."
     "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c ${CLIENT_EXE} -mp ${MINIKUBE_PROFILE} -tg ${AMBIENT_ARGS_BOOKINFO}
     ${CLIENT_EXE} apply -f "${SCRIPT_DIR}/ambient/resources/waypoint.yaml" -n bookinfo
-    ${CLIENT_EXE} label ns bookinfo istio.io/use-waypoint=waypoint
 
     echo "Deploying sleep demo ..."
     "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}

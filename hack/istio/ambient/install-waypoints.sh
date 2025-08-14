@@ -125,7 +125,7 @@ ${CLIENT_EXE} label pod -l app=echo-server istio.io/use-waypoint=bwaypoint -n wa
 # Create a waypoint for all
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/echo-service.yaml -n waypoint-forall
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/curl-pod.yaml -n waypoint-forall
-${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/waypoint-forall.yaml -n waypoint-forservice
+${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/waypoint-forall.yaml -n waypoint-forall
 ${CLIENT_EXE} label namespace waypoint-forall istio.io/use-waypoint=cgw
 
 # Create a waypoint for none (No L7 traffic should be seen)
