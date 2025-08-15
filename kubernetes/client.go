@@ -2,6 +2,8 @@ package kubernetes
 
 import (
 	"context"
+	"fmt"
+	"slices"
 	"sync"
 
 	osappsclient "github.com/openshift/client-go/apps/clientset/versioned"
@@ -14,7 +16,8 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	inferenceapiclient "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned"
 	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
@@ -213,4 +216,60 @@ func newClientFromConfig(config *rest.Config) (*K8SClient, error) {
 	client.ctx = context.Background()
 
 	return &client, nil
+}
+
+// NewClientsFromKubeConfig creates kubernetes clients by reading the kubeconfig file
+// and creating clients for the specified contexts.
+func NewClientsFromKubeConfig(conf *kialiconfig.Config, kubeConfigPath string, remoteClusterContexts []string, homeClusterContext string) (map[string]ClientInterface, error) {
+	kubeConfig, err := clientcmd.LoadFromFile(kubeConfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read kubeconfig from file: %s", kubeConfigPath)
+	}
+
+	contextNames := slices.Clone(remoteClusterContexts)
+	homeContext := kubeConfig.CurrentContext
+	if homeClusterContext != "" {
+		homeContext = homeClusterContext
+	}
+	contextNames = append(contextNames, homeContext)
+
+	contexts := map[string]*api.Context{}
+	for _, ctx := range contextNames {
+		kubeContext := kubeConfig.Contexts[ctx]
+		if kubeContext == nil {
+			return nil, fmt.Errorf("current context not set in kubeconfig file: %s", kubeConfigPath)
+		}
+		contexts[ctx] = kubeContext
+	}
+
+	clients := map[string]ClientInterface{}
+	for context, clusterInfo := range contexts {
+		clusterName := clusterInfo.Cluster
+		if override := conf.Deployment.ClusterNameOverrides[clusterInfo.Cluster]; override != "" {
+			clusterName = override
+		}
+
+		restConf, err := clientcmd.NewDefaultClientConfig(*kubeConfig, &clientcmd.ConfigOverrides{CurrentContext: context}).ClientConfig()
+		if err != nil {
+			return nil, fmt.Errorf("unable to create client config for context %s: %s", context, err)
+		}
+
+		client, err := NewClient(ClusterInfo{
+			Name:         clusterName,
+			ClientConfig: restConf,
+		}, conf)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create remote Kiali Service Account client: %s", err)
+		}
+
+		clients[clusterName] = client
+
+		// Need to set the kube cluster name to the current context otherwise cache won't start.
+		if context == homeContext {
+			conf.KubernetesConfig.ClusterName = clusterName
+			kialiconfig.Set(conf)
+		}
+	}
+
+	return clients, nil
 }

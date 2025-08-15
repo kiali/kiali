@@ -99,9 +99,6 @@ type KialiCache interface {
 
 	// SetNamespace caches a specific namespace by cluster + token.
 	SetNamespace(token string, namespace models.Namespace)
-
-	// Stop stops the cache and all its kube caches.
-	Stop()
 }
 
 type kialiCacheImpl struct {
@@ -109,7 +106,6 @@ type kialiCacheImpl struct {
 	// This isn't expected to change so it's not protected by a mutex.
 	buildInfo               models.BuildInfo
 	canReadWebhookByCluster map[string]bool
-	cleanup                 func()
 	clients                 map[string]kubernetes.ClientInterface
 	conf                    config.Config
 
@@ -163,15 +159,13 @@ type kialiCacheImpl struct {
 	ztunnelConfigStore store.Store[string, *kubernetes.ZtunnelConfigDump]
 }
 
-func NewKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, kubeCache map[string]client.Reader, conf config.Config) (KialiCache, error) {
+func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.ClientInterface, kubeCache map[string]client.Reader, conf config.Config) (KialiCache, error) {
 	zl := log.WithGroup(log.KialiCacheLogName)
-	ctx := log.ToContext(context.Background(), zl)
-	ctx, cancel := context.WithCancel(ctx)
+	ctx = log.ToContext(ctx, zl)
 	namespaceKeyTTL := time.Duration(conf.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
 	kialiCacheImpl := kialiCacheImpl{
 		ambientChecksPerCluster: store.NewExpirationStore(ctx, store.New[string, bool](), util.AsPtr(conf.KialiInternal.CacheExpiration.AmbientCheck), nil),
 		canReadWebhookByCluster: make(map[string]bool),
-		cleanup:                 cancel,
 		clients:                 kialiSAClients,
 		conf:                    conf,
 		zl:                      zl,
@@ -212,7 +206,7 @@ func NewKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, kubeCac
 	// TODO: Treat all clusters the same way.
 	// Ensure home client got set.
 	if _, found := kialiCacheImpl.kubeCache[conf.KubernetesConfig.ClusterName]; !found {
-		return nil, fmt.Errorf("home cluster not configured in kiali cache")
+		return nil, fmt.Errorf("[Kiali Cache] home cluster [%s] not configured in kiali cache", conf.KubernetesConfig.ClusterName)
 	}
 
 	return &kialiCacheImpl, nil
@@ -229,12 +223,6 @@ func (c *kialiCacheImpl) GetKubeCache(cluster string) (client.Reader, error) {
 		return nil, fmt.Errorf("cache for cluster [%s] not found", cluster)
 	}
 	return cache, nil
-}
-
-// Stops all caches across all clusters.
-func (c *kialiCacheImpl) Stop() {
-	c.zl.Info().Msgf("Stopping Kiali Cache")
-	c.cleanup()
 }
 
 func (c *kialiCacheImpl) GetClusters() []models.KubeCluster {

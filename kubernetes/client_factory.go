@@ -74,30 +74,69 @@ type clientFactory struct {
 	saClientEntries map[string]UserClientInterface
 }
 
-// NewClientFactory creates a new client factory that can be transitory.
+// NewClientFactory creates a new client factory.
 // Callers should close the ctx when done with the client factory.
-// Does not set the global ClientFactory. You should probably use
-// GetClientFactory instead of this method unless you temporaily need
-// to create a client like when Kiali sets the cluster id.
 func NewClientFactory(ctx context.Context, conf *kialiconfig.Config, restConf *rest.Config) (ClientFactory, error) {
-	cf, err := newClientFactory(conf, restConf)
+	cf, err := newClientFactory(ctx, conf, restConf)
 	if err != nil {
 		return nil, err
 	}
 
-	// Need to cleanup the recycle chan since this client factory could be transitory.
-	go func() {
-		<-ctx.Done()
-		log.Debug("Stopping client factory recycle chan")
-		close(cf.recycleChan)
-	}()
+	// obtain details on all known remote clusters
+	remoteClusterInfos, err := GetRemoteClusterInfos()
+	if err != nil {
+		return nil, err
+	}
+	cf.remoteClusterInfos = remoteClusterInfos
+
+	for cluster, clusterInfo := range remoteClusterInfos {
+		client, err := cf.newSAClient(clusterInfo.ClusterInfo)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create remote Kiali Service Account client. Err: %s", err)
+		}
+		log.Debugf("Adding saClientEntry [%s]", cluster)
+		cf.saClientEntries[cluster] = client
+	}
+
+	homeClient, err := NewClient(ClusterInfo{
+		ClientConfig: restConf,
+		Name:         cf.homeCluster,
+	}, conf)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create home cluster Kiali Service Account client. Err: %s", err)
+	}
+
+	log.Debugf("Adding home saClientEntry [%s]", cf.homeCluster)
+	cf.saClientEntries[cf.homeCluster] = homeClient
+
+	// warning check to ensure a remote cluster when ignore_home_cluster=true, should be more >= 2, but I guess it's not fatal if it's only 1
+	if conf.Clustering.IgnoreHomeCluster && len(cf.saClientEntries) < 2 {
+		log.Warningf("Only one remote cluster detected. clustering.ignore_home_cluster=true but Kiali seems to be running on the same remote cluster as the mesh.")
+	}
+
+	return cf, nil
+}
+
+// NewClientFactoryWithSAClients creates a new client factory with the given SA clients.
+func NewClientFactoryWithSAClients(ctx context.Context, conf *kialiconfig.Config, saClients map[string]ClientInterface) (ClientFactory, error) {
+	saClientEntries := map[string]UserClientInterface{}
+	for k, v := range saClients {
+		saClientEntries[k] = v.(UserClientInterface)
+	}
+
+	cf, err := newClientFactory(ctx, conf, &rest.Config{})
+	if err != nil {
+		return nil, err
+	}
+
+	cf.saClientEntries = saClientEntries
 
 	return cf, nil
 }
 
 // newClientFactory allows for specifying the config and expiry duration
 // Mock friendly for testing purposes
-func newClientFactory(kialiConf *kialiconfig.Config, restConf *rest.Config) (*clientFactory, error) {
+func newClientFactory(ctx context.Context, kialiConf *kialiconfig.Config, restConf *rest.Config) (*clientFactory, error) {
 	// We only want to remove the auth info from the base rest config which is saved and used later
 	// but we will immediately use the auth info for the home cluster SA client.
 	baseRestConfig := *restConf
@@ -117,37 +156,12 @@ func newClientFactory(kialiConf *kialiconfig.Config, restConf *rest.Config) (*cl
 	// if a client is expired, it will be removed from clientEntries
 	go f.watchClients()
 
-	// obtain details on all known remote clusters
-	remoteClusterInfos, err := GetRemoteClusterInfos()
-	if err != nil {
-		return nil, err
-	}
-	f.remoteClusterInfos = remoteClusterInfos
-
-	for cluster, clusterInfo := range remoteClusterInfos {
-		client, err := f.newSAClient(clusterInfo.ClusterInfo)
-		if err != nil {
-			return nil, fmt.Errorf("unable to create remote Kiali Service Account client. Err: %s", err)
-		}
-		log.Debugf("Adding saClientEntry [%s]", cluster)
-		f.saClientEntries[cluster] = client
-	}
-
-	homeClient, err := NewClient(ClusterInfo{
-		ClientConfig: restConf,
-		Name:         f.homeCluster,
-	}, kialiConf)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create home cluster Kiali Service Account client. Err: %s", err)
-	}
-
-	log.Debugf("Adding home saClientEntry [%s]", f.homeCluster)
-	f.saClientEntries[f.homeCluster] = homeClient
-
-	// warning check to ensure a remote cluster when ignore_home_cluster=true, should be more >= 2, but I guess it's not fatal if it's only 1
-	if kialiConf.Clustering.IgnoreHomeCluster && len(f.saClientEntries) < 2 {
-		log.Warningf("Only one remote cluster detected. clustering.ignore_home_cluster=true but Kiali seems to be running on the same remote cluster as the mesh.")
-	}
+	// Cleanup the recycle chan when the context is done.
+	go func() {
+		<-ctx.Done()
+		log.Debug("Stopping client factory recycle chan")
+		close(f.recycleChan)
+	}()
 
 	return f, nil
 }
@@ -253,7 +267,7 @@ func stripAuthInfo(restConf *rest.Config) {
 
 // newSAClient returns a new client for the given cluster. If clusterInfo is nil then a client for the local cluster is returned.
 func (cf *clientFactory) newSAClient(clusterInfo ClusterInfo) (*K8SClient, error) {
-	log.Debugf("Creating new Kiali Service Account client [%v]", clusterInfo)
+	log.Debugf("Creating new Kiali Service Account client for cluster [%s]", clusterInfo.Name)
 
 	cf.applySettings(clusterInfo.ClientConfig)
 	return NewClient(clusterInfo, cf.kialiConfig)

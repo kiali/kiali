@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { ServerConfig } from '../types/ServerConfig';
+import { RunMode, ServerConfig } from '../types/ServerConfig';
 import { parseHealthConfig } from './HealthConfig';
 import { MeshCluster } from '../types/Mesh';
 
@@ -128,7 +128,8 @@ const defaultServerConfig: ComputedServerConfig = {
   prometheus: {
     globalScrapeInterval: 15,
     storageTsdbRetention: 21600
-  }
+  },
+  runMode: RunMode.APP
 };
 
 // Overwritten with real server config on user login. Also used for tests.

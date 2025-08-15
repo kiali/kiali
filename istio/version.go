@@ -187,7 +187,7 @@ func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.Clie
 	// If kiali is running on the same cluster as the istio control plane, use the URL instead
 	// of port forwarding. For remote clusters we need to port forward to get the version since the
 	// http monitoring port (usually 15014) is not exposed publicly.
-	if client.ClusterInfo().Name == conf.KubernetesConfig.ClusterName {
+	if conf.RunMode != config.RunModeLocal && client.ClusterInfo().Name == conf.KubernetesConfig.ClusterName {
 		url, err := getLocalIstiodURL(ctx, conf, controlPlane, kubeCache)
 		if err != nil {
 			return nil, err
