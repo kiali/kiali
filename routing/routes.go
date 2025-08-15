@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
 )
@@ -44,6 +45,7 @@ func NewRoutes(
 	traceClientLoader func() tracing.ClientInterface,
 	authController authentication.AuthController,
 	grafana *grafana.Service,
+	perses *perses.Service,
 	discovery *istio.Discovery,
 ) (r *Routes) {
 	r = new(Routes)
@@ -84,7 +86,7 @@ func NewRoutes(
 			log.StatusLogName,
 			"GET",
 			"/api",
-			handlers.Root(conf, clientFactory, kialiCache, grafana),
+			handlers.Root(conf, clientFactory, kialiCache, grafana, perses),
 			conf.Server.RequireAuth,
 		},
 		// swagger:route GET /authenticate auth authenticate
@@ -187,7 +189,7 @@ func NewRoutes(
 			log.StatusLogName,
 			"GET",
 			"/api/status",
-			handlers.Root(conf, clientFactory, kialiCache, grafana),
+			handlers.Root(conf, clientFactory, kialiCache, grafana, perses),
 			true,
 		},
 		// swagger:route GET /tracing/diagnose tracing tracingDiagnose
@@ -1437,7 +1439,7 @@ func NewRoutes(
 			log.GraphLogName,
 			"GET",
 			"/api/mesh/graph",
-			handlers.MeshGraph(conf, clientFactory, kialiCache, grafana, prom, traceClientLoader, discovery, cpm),
+			handlers.MeshGraph(conf, clientFactory, kialiCache, grafana, perses, prom, traceClientLoader, discovery, cpm),
 			true,
 		},
 		// swagger:route GET /mesh/controlplanes controlplanes
@@ -1483,6 +1485,29 @@ func NewRoutes(
 			"GET",
 			"/api/grafana",
 			handlers.GetGrafanaInfo(conf, grafana),
+			true,
+		},
+		// swagger:route GET /perses integrations persesInfo
+		// ---
+		// Get the perses URL and other descriptors
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      503: serviceUnavailableError
+		//      200: persesInfoResponse
+		//      204: noContent
+		//
+		{
+			"PersesURL",
+			log.ConfigLogName,
+			"GET",
+			"/api/perses",
+			handlers.GetPersesInfo(conf, perses),
 			true,
 		},
 		// swagger:route GET /tracing integrations tracingInfo

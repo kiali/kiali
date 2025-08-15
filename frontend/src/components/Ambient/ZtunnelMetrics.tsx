@@ -15,6 +15,8 @@ import { Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { GrafanaInfo } from '../../types/GrafanaInfo';
 import { MessageType } from '../../types/MessageCenter';
+import { PersesInfo } from '../../types/PersesInfo';
+import { PersesLinks } from '../Metrics/PersesLinks';
 
 type ZtunnelMetricsProps = {
   cluster: string;
@@ -30,6 +32,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
   const toolbarRef = React.createRef<HTMLDivElement>();
   const [metrics, setMetrics] = React.useState<DashboardModel>();
   const [grafanaInfo, setGrafanaInfo] = React.useState<GrafanaInfo>();
+  const [persesInfo, setPersesInfo] = React.useState<PersesInfo>();
   const rateParams = computePrometheusRateParams(
     props.rangeDuration.rangeDuration ? props.rangeDuration.rangeDuration : 60,
     10
@@ -76,6 +79,23 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
       });
   };
 
+  const fetchPersesInfo = (): void => {
+    API.getPersesInfo()
+      .then(persesInfo => {
+        if (persesInfo) {
+          setPersesInfo(persesInfo.data);
+        }
+      })
+      .catch(err => {
+        AlertUtils.addMessage({
+          ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
+          group: 'default',
+          type: MessageType.INFO,
+          showNotification: false
+        });
+      });
+  };
+
   React.useEffect(() => {
     fetchMetrics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -83,6 +103,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
 
   React.useEffect(() => {
     fetchGrafanaInfo();
+    fetchPersesInfo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -100,18 +121,30 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
 
   return (
     <div>
-      {grafanaInfo && (
+      {(grafanaInfo || persesInfo) && (
         <div ref={toolbarRef}>
           <Toolbar style={{ padding: 0, marginBottom: '1.25rem' }}>
             <ToolbarGroup>
               <ToolbarItem style={{ marginLeft: 'auto', paddingRight: '1.25rem' }}>
-                <GrafanaLinks
-                  links={grafanaInfo.externalLinks}
-                  namespace={props.namespace}
-                  object="ztunnel"
-                  objectType={MetricsObjectTypes.ZTUNNEL}
-                  datasourceUID={grafanaInfo.datasourceUID}
-                />
+                {grafanaInfo && (
+                  <GrafanaLinks
+                    links={grafanaInfo.externalLinks}
+                    namespace={props.namespace}
+                    object="ztunnel"
+                    objectType={MetricsObjectTypes.ZTUNNEL}
+                    datasourceUID={grafanaInfo.datasourceUID}
+                  />
+                )}
+
+                {persesInfo && (
+                  <PersesLinks
+                    links={persesInfo.externalLinks}
+                    namespace={props.namespace}
+                    object="ztunnel"
+                    objectType={MetricsObjectTypes.ZTUNNEL}
+                    project={persesInfo.project}
+                  />
+                )}
               </ToolbarItem>
             </ToolbarGroup>
           </Toolbar>

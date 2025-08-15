@@ -85,6 +85,7 @@ DEFAULT_KUBE_CONTEXT="kiali-developer"
 DEFAULT_LOCAL_REMOTE_PORTS_GRAFANA="3000:3000"
 DEFAULT_LOCAL_REMOTE_PORTS_PROMETHEUS="9091:9090"
 DEFAULT_LOCAL_REMOTE_PORTS_TRACING="16686:16686"
+DEFAULT_LOCAL_REMOTE_PORTS_PERSES="4000:4000"
 DEFAULT_LOG_LEVEL="info"
 DEFAULT_REBOOTABLE="true"
 DEFAULT_TMP_ROOT_DIR="${HOME}/tmp"
@@ -114,7 +115,9 @@ while [[ $# -gt 0 ]]; do
     -kc|--kube-context)          KUBE_CONTEXT="$2";                  shift;shift ;;
     -ke|--kiali-exe)             KIALI_EXE="$2";                     shift;shift ;;
     -ll|--log-level)             LOG_LEVEL="$2";                     shift;shift ;;
+    -peu|--perses-url)           PERSES_URL="$2";                    shift;shift ;;
     -pg|--ports-grafana)         LOCAL_REMOTE_PORTS_GRAFANA="$2";    shift;shift ;;
+    -ppe|--ports-perses)         LOCAL_REMOTE_PORTS_PERSES="$2";     shift;shift ;;
     -pp|--ports-prometheus)      LOCAL_REMOTE_PORTS_PROMETHEUS="$2"; shift;shift ;;
     -pt|--ports-tracing)         LOCAL_REMOTE_PORTS_TRACING="$2";    shift;shift ;;
     -pu|--prometheus-url)        PROMETHEUS_URL="$2";                shift;shift ;;
@@ -219,6 +222,11 @@ Valid options:
       The noisiness of the output logs.
       Log levels can be one of: trace, debug, info, warn, error, fatal
       Default: ${DEFAULT_LOG_LEVEL}
+  -peu|--perses-url
+        The URL that can be used to query the exposed Perses service. You must have exposed Perses
+        to external clients outside of the cluster - that external URL is what this value should be.
+        For example, for OpenShift clusters, this should be the Perses Route URL.
+        Default: <will be auto-discovered>
   -pg|--ports-grafana
       If a port-forward is created for the Grafana component, this specifies the
       local and remote ports separated with a colon.
@@ -227,6 +235,10 @@ Valid options:
       If a port-forward is created for the Prometheus component, this specifies the
       local and remote ports separated with a colon.
       Default: ${DEFAULT_LOCAL_REMOTE_PORTS_PROMETHEUS}
+  -ppe|--ports-perses
+      If a port-forward is created for the perses component, this specifies the
+      local and remote ports separated with a colon.
+      Default: ${DEFAULT_LOCAL_REMOTE_PORTS_PERSES}
   -pt|--ports-tracing
       If a port-forward is created for the Tracing component, this specifies the
       local and remote ports separated with a colon.
@@ -285,6 +297,7 @@ HOME_KUBE_CONTEXT="${HOME_KUBE_CONTEXT:-${KUBE_CONTEXT}}" # uses KUBE_CONTEXT as
 LOCAL_REMOTE_PORTS_GRAFANA="${LOCAL_REMOTE_PORTS_GRAFANA:-${DEFAULT_LOCAL_REMOTE_PORTS_GRAFANA}}"
 LOCAL_REMOTE_PORTS_PROMETHEUS="${LOCAL_REMOTE_PORTS_PROMETHEUS:-${DEFAULT_LOCAL_REMOTE_PORTS_PROMETHEUS}}"
 LOCAL_REMOTE_PORTS_TRACING="${LOCAL_REMOTE_PORTS_TRACING:-${DEFAULT_LOCAL_REMOTE_PORTS_TRACING}}"
+LOCAL_REMOTE_PORTS_PERSES="${LOCAL_REMOTE_PORTS_PERSES:-${DEFAULT_LOCAL_REMOTE_PORTS_PERSES}}"
 LOG_LEVEL="${LOG_LEVEL:-${DEFAULT_LOG_LEVEL}}"
 REBOOTABLE="${REBOOTABLE:-${DEFAULT_REBOOTABLE}}"
 TMP_ROOT_DIR="${TMP_ROOT_DIR:-${DEFAULT_TMP_ROOT_DIR}}"
@@ -428,6 +441,49 @@ if [ -z "${GRAFANA_URL:-}" ]; then
   fi
 fi
 
+# If the user didn't tell us what the Perses URL is, try to auto-discover it
+
+PORT_FORWARD_DEPLOYMENT_PERSES=""
+if [ -z "${PERSES_URL:-}" ]; then
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    graf_host="$(${CLIENT_EXE} get route -n ${ISTIO_NAMESPACE} perses -o jsonpath='{.spec.host}')"
+    if [ "$?" != "0" -o -z "${pers_host}" ]; then
+      PORT_FORWARD_DEPLOYMENT_PERSES="$(${CLIENT_EXE} get deployment -n ${ISTIO_NAMESPACE} perses -o name)"
+      if [ "$?" != "0" -o -z "${PORT_FORWARD_DEPLOYMENT_PERSES}" ]; then
+        errormsg "Cannot auto-discover Perses on OpenShift. You must specify the Perses URL via --perses-url. Skipping"
+      else
+        warnmsg "Cannot auto-discover Perses on OpenShift. If you exposed it, you can specify the Perses URL via --perses-url. For now, this session will attempt to port-forward to it."
+        graf_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} perses -o jsonpath='{.spec.ports[0].targetPort}')"
+        if [ "$?" != "0" -o -z "${graf_remote_port}" ]; then
+          warnmsg "Cannot auto-discover Perses port on OpenShift. If you exposed it, you can specify the Perses URL via --perses-url. For now, this session will attempt to port-forward to it."
+        else
+          graf_local_port="$(echo ${LOCAL_REMOTE_PORTS_PERSES} | cut -d ':' -f 1)"
+          LOCAL_REMOTE_PORTS_PERSES="${pers_local_port}:${pers_remote_port}"
+        fi
+        PERSES_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_PERSES} | cut -d ':' -f 1)"
+      fi
+    else
+      infomsg "Auto-discovered OpenShift route that exposes Perses"
+      PERSES_URL="http://${pers_host}"
+    fi
+  else
+    PORT_FORWARD_DEPLOYMENT_PERSES="$(${CLIENT_EXE} get deployment -n ${ISTIO_NAMESPACE} perses -o name)"
+    if [ "$?" != "0" -o -z "${PORT_FORWARD_DEPLOYMENT_PERSES}" ]; then
+      errormsg "Cannot auto-discover Perses on Kubernetes. You must specify the Perses URL via --perses-url. Skipping"
+    else
+      warnmsg "Cannot auto-discover Perses on Kubernetes. If you exposed it, you can specify the Perses URL via --perses-url. For now, this session will attempt to port-forward to it."
+      graf_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} perses -o jsonpath='{.spec.ports[0].targetPort}')"
+      if [ "$?" != "0" -o -z "${graf_remote_port}" ]; then
+        warnmsg "Cannot auto-discover Perses port on Kubernetes. If you exposed it, you can specify the Perses URL via --perses-url. For now, this session will attempt to port-forward to it."
+      else
+        graf_local_port="$(echo ${LOCAL_REMOTE_PORTS_PERSES} | cut -d ':' -f 1)"
+        LOCAL_REMOTE_PORTS_PERSES="${graf_local_port}:${graf_remote_port}"
+      fi
+      PERSES_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_PERSES} | cut -d ':' -f 1)"
+    fi
+  fi
+fi
+
 # If the user didn't tell us what the Tracing URL is, try to auto-discover it
 
 PORT_FORWARD_DEPLOYMENT_TRACING=""
@@ -524,7 +580,11 @@ echo "KUBERNETES_SERVICE_PORT=$KUBERNETES_SERVICE_PORT"
 echo "LOCAL_REMOTE_PORTS_GRAFANA=$LOCAL_REMOTE_PORTS_GRAFANA"
 echo "LOCAL_REMOTE_PORTS_PROMETHEUS=$LOCAL_REMOTE_PORTS_PROMETHEUS"
 echo "LOCAL_REMOTE_PORTS_TRACING=$LOCAL_REMOTE_PORTS_TRACING"
+echo "LOCAL_REMOTE_PORTS_PERSES=$LOCAL_REMOTE_PORTS_PERSES"
 echo "LOG_LEVEL=$LOG_LEVEL"
+if [[ -v PERSES_URL && -n "${PERSES_URL}" ]]; then
+  echo "PERSES_URL=$PERSES_URL"
+fi
 echo "PROMETHEUS_URL=$PROMETHEUS_URL"
 echo "REBOOTABLE=$REBOOTABLE"
 echo "TMP_ROOT_DIR=$TMP_ROOT_DIR"
@@ -538,6 +598,7 @@ echo "TRACING_URL=$TRACING_URL"
 [ ! -f "${KIALI_CONFIG_TEMPLATE_FILE}" ] && errormsg "Missing the Kiali config file. Make sure --config is correctly specified" && exit 1
 [ ! -x "${KIALI_EXE}" ] && errormsg "Missing the Kiali executable. You must build it and make sure --kiali-exe is correctly specified" && exit 1
 if ! echo "${LOCAL_REMOTE_PORTS_GRAFANA}" | grep -qiE "^[0-9]+:[0-9]+$"; then errormsg "Invalid Grafana local-remote ports specifer: ${LOCAL_REMOTE_PORTS_GRAFANA}"; exit 1; fi
+if ! echo "${LOCAL_REMOTE_PORTS_PERSES}" | grep -qiE "^[0-9]+:[0-9]+$"; then errormsg "Invalid Perses local-remote ports specifer: ${LOCAL_REMOTE_PORTS_PERSES}"; exit 1; fi
 if ! echo "${LOCAL_REMOTE_PORTS_PROMETHEUS}" | grep -qiE "^[0-9]+:[0-9]+$"; then errormsg "Invalid Prometheus local-remote ports specifer: ${LOCAL_REMOTE_PORTS_PROMETHEUS}"; exit 1; fi
 if ! echo "${LOCAL_REMOTE_PORTS_TRACING}" | grep -qiE "^[0-9]+:[0-9]+$"; then errormsg "Invalid Tracing local-remote ports specifer: ${LOCAL_REMOTE_PORTS_TRACING}"; exit 1; fi
 if ! echo "${LOG_LEVEL}" | grep -qiE "^(trace|debug|info|warn|error|fatal)$"; then errormsg "Invalid log level: ${LOG_LEVEL}"; exit 1; fi
@@ -784,6 +845,14 @@ kill_port_forward_grafana() {
   kill_port_forward_component 'Grafana' 'PORT_FORWARD_JOB_GRAFANA'
 }
 
+start_port_forward_perses() {
+  start_port_forward_component 'Perses' 'PORT_FORWARD_JOB_PERSES' "${PORT_FORWARD_DEPLOYMENT_PERSES}" "${LOCAL_REMOTE_PORTS_PERSES}" "${PERSES_URL}" '--perses-url'
+}
+
+kill_port_forward_perses() {
+  kill_port_forward_component 'Perses' 'PORT_FORWARD_JOB_PERSES'
+}
+
 start_port_forward_tracing() {
   start_port_forward_component 'Tracing' 'PORT_FORWARD_JOB_TRACING' "${PORT_FORWARD_DEPLOYMENT_TRACING}" "${LOCAL_REMOTE_PORTS_TRACING}" "${TRACING_URL}" '--tracing-url'
 }
@@ -862,6 +931,9 @@ cleanup_and_exit() {
   kill_port_forward_istiod
   kill_port_forward_prometheus
   kill_port_forward_grafana
+  if [[ -v PERSES_URL && -n "${PERSES_URL}" ]]; then
+    kill_port_forward_perses
+  fi
   kill_port_forward_tracing
 
   exitmsg "Exiting"
@@ -880,6 +952,9 @@ if [ "${ISTIOD_URL}" != "" ]; then
 fi
 start_port_forward_prometheus
 start_port_forward_grafana
+if [[ -v PERSES_URL && -n "${PERSES_URL}" ]]; then
+  start_port_forward_perses
+fi
 start_port_forward_tracing
 start_proxy
 

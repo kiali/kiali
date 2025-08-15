@@ -35,6 +35,7 @@ export enum MeshInfraType {
   KIALI = 'kiali',
   METRIC_STORE = 'metricStore',
   NAMESPACE = 'namespace',
+  PERSES = 'perses',
   TRACE_STORE = 'traceStore',
   WAYPOINT = 'waypoint',
   ZTUNNEL = 'ztunnel'
@@ -79,6 +80,13 @@ export interface GrafanaNodeData extends BaseNodeData {
   infraType: MeshInfraType.GRAFANA;
 }
 
+export interface PersesNodeData extends BaseNodeData {
+  // Perses node data is the raw perses config. We don't actually care about what
+  // each field is since we just display the whole config in the side panel as is.
+  infraData: any;
+  infraType: MeshInfraType.PERSES;
+}
+
 export interface KialiNodeData extends BaseNodeData {
   // Kiali node data is the raw kiali config. We don't actually care about what
   // each field is since we just display the whole config in the side panel as is.
@@ -121,6 +129,7 @@ export type MeshNodeData =
   | GrafanaNodeData
   | KialiNodeData
   | MetricStoreNodeData
+  | PersesNodeData
   | TraceStoreNodeData
   | WaypointNodeData
   | ZtunnelNodeData;
