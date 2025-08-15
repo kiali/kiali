@@ -366,7 +366,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     const isControlPlane = this.isControlPlane();
     return (
       <>
-        {isControlPlane && !isIstioNamespace(ns.name) && (
+        {isControlPlane && !ns.isControlPlane && (
           <ControlPlaneVersionBadge version={ns.labels ? ns.labels['istio.io/rev'] : ''} />
         )}
 

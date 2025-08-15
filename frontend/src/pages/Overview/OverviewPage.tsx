@@ -75,7 +75,6 @@ import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { EmptyOverview } from './EmptyOverview';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
-import { isIstioControlPlane } from 'config/ServerConfig';
 
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
@@ -248,6 +247,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               name: ns.name,
               cluster: ns.cluster,
               isAmbient: ns.isAmbient,
+              isControlPlane: ns.isControlPlane,
               status: previous ? previous.status : undefined,
               tlsStatus: previous ? previous.tlsStatus : undefined,
               metrics: previous ? previous.metrics : undefined,
@@ -776,7 +776,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     // then it can use the Istio Injection Actions.
     // RBAC allow more fine granularity but Kiali won't check that in detail.
 
-    if (!isIstioControlPlane(nsInfo.cluster!, nsInfo.name)) {
+    if (!nsInfo.isControlPlane) {
       if (
         !(
           serverConfig.ambientEnabled &&
@@ -1385,7 +1385,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   };
 
   renderNamespaceBadges = (ns: NamespaceInfo, tooltip: boolean): React.ReactNode => {
-    const isControlPlane = isIstioControlPlane(ns.cluster!, ns.name);
+    const isControlPlane = ns.isControlPlane;
     return (
       <>
         {isControlPlane && <ControlPlaneBadge />}
@@ -1397,9 +1397,12 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             Istio API disabled
           </Label>
         )}
-        
+
         {serverConfig.ambientEnabled && !isControlPlane && ns.labels && ns.isAmbient && (
-          <AmbientBadge tooltip={tooltip ? 'labeled as part of Ambient Mesh' : undefined} data-test="ambient-badge"></AmbientBadge>
+          <AmbientBadge
+            tooltip={tooltip ? 'labeled as part of Ambient Mesh' : undefined}
+            data-test="ambient-badge"
+          ></AmbientBadge>
         )}
       </>
     );

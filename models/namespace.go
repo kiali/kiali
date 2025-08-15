@@ -31,6 +31,11 @@ type Namespace struct {
 	// required: true
 	IsAmbient bool `json:"isAmbient"`
 
+	// If the namespace is a control plane
+	//
+	// required: true
+	IsControlPlane bool `json:"isControlPlane"`
+
 	// Creation date of the namespace.
 	// There is no need to export this through the API. So, this is
 	// set to be ignored by JSON package.

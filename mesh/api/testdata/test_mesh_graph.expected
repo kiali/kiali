@@ -208,6 +208,7 @@
               "name": "data-plane-1",
               "cluster": "cluster-primary",
               "isAmbient": false,
+              "isControlPlane": false,
               "labels": {
                 "istio-injection": "enabled",
                 "kubernetes.io/metadata.name": "data-plane-1"
@@ -219,6 +220,7 @@
               "name": "data-plane-2",
               "cluster": "cluster-primary",
               "isAmbient": false,
+              "isControlPlane": false,
               "labels": {
                 "istio.io/rev": "default",
                 "kubernetes.io/metadata.name": "data-plane-2"
@@ -408,6 +410,7 @@
                 "name": "data-plane-1",
                 "cluster": "cluster-primary",
                 "isAmbient": false,
+                "isControlPlane": false,
                 "labels": {
                   "istio-injection": "enabled",
                   "kubernetes.io/metadata.name": "data-plane-1"
@@ -419,6 +422,7 @@
                 "name": "data-plane-2",
                 "cluster": "cluster-primary",
                 "isAmbient": false,
+                "isControlPlane": false,
                 "labels": {
                   "istio.io/rev": "default",
                   "kubernetes.io/metadata.name": "data-plane-2"
@@ -430,6 +434,7 @@
                 "name": "data-plane-3",
                 "cluster": "cluster-remote",
                 "isAmbient": false,
+                "isControlPlane": false,
                 "labels": {
                   "istio-injection": "enabled",
                   "kubernetes.io/metadata.name": "data-plane-3"
@@ -441,6 +446,7 @@
                 "name": "data-plane-4",
                 "cluster": "cluster-remote",
                 "isAmbient": false,
+                "isControlPlane": false,
                 "labels": {
                   "istio.io/rev": "default",
                   "kubernetes.io/metadata.name": "data-plane-4"
@@ -476,6 +482,7 @@
               "name": "data-plane-3",
               "cluster": "cluster-remote",
               "isAmbient": false,
+              "isControlPlane": false,
               "labels": {
                 "istio-injection": "enabled",
                 "kubernetes.io/metadata.name": "data-plane-3"
@@ -487,6 +494,7 @@
               "name": "data-plane-4",
               "cluster": "cluster-remote",
               "isAmbient": false,
+              "isControlPlane": false,
               "labels": {
                 "istio.io/rev": "default",
                 "kubernetes.io/metadata.name": "data-plane-4"
