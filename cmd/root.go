@@ -21,9 +21,9 @@ import (
 // Identifies the build. These are set via ldflags during the build (see Makefile).
 // TODO: Probably these should go in their own package.
 var (
-	version    = "unknown"
 	commitHash = "unknown"
 	goVersion  = "unknown"
+	version    = "unknown"
 )
 
 func newRootCmd() *cobra.Command {
