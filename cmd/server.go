@@ -51,6 +51,9 @@ import (
 
 func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFactory kubernetes.ClientFactory) <-chan struct{} {
 	logger := log.Logger()
+	// log startup information
+	log.Infof("Kiali: Version: %v, Commit: %v, Go: %v", version, commitHash, goVersion)
+
 	mgr, kubeCaches, err := newManager(ctx, conf, logger, clientFactory)
 	if err != nil {
 		log.Fatalf("Unable to setup manager: %s", err)

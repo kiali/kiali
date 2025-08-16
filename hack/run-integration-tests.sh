@@ -608,7 +608,7 @@ elif [ "${TEST_SUITE}" == "${LOCAL}" ]; then
 
   # Start Kiali locally in the background
   infomsg "Starting Kiali locally in the background using binary: ${KIALI_BINARY}"
-  "${KIALI_BINARY}" local --cluster-name-overrides kind-ci=cluster-default --port-forward-to-tracing --enable-tracing --port-forward-to-prom --port-forward-to-grafana --without-browser &
+  "${KIALI_BINARY}" run --cluster-name-overrides kind-ci=cluster-default --port-forward-tracing --enable-tracing --port-forward-prom --port-forward-grafana --no-browser &
   KIALI_PID=$!
   
   # Set the local Kiali URL

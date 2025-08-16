@@ -81,7 +81,7 @@ To use Kiali, a management console for Istio-based service meshes, an Istio-comp
 We provide a few unsupported scripts that can help to get started. The scripts below are already in the Kiali Repository. Ensure that the correct path is being used to run the scripts without issues.
 
 
-* The simplest way to test Kiali locally is to run the link:hack/run-integration-tests.sh[`run-integration-tests.sh`] script. This will start a local cluster, install Istio and Bookinfo, and then start Kiali. It supports every deployment scenario including multi-cluster, external Kiali, etc. It is also run as part of the CI pipeline so there's a high chance it will work for you. This script **does not** work with podman and you must have docker engine installed on your system.
+* One way to setup your development environment locally is to run the link:hack/run-integration-tests.sh[`run-integration-tests.sh`] script. This will start a local cluster, install Istio and Bookinfo, and then start Kiali. It supports every deployment scenario including multi-cluster, external Kiali, etc. It is also run as part of the CI pipeline so there's a high chance it will work for you. The multi-cluster suites currently **do not** work with podman and you must have docker engine installed on your system.
 * The link:hack/crc-openshift.sh[`crc-openshift.sh`] script allows creation of an OpenShift cluster on a local machine.
 * For those familiar with minikube, the link:hack/k8s-minikube.sh[`k8s-minikube.sh`] script can be used. This script includes an option to install Dex, which is helpful for testing with OpenID.
 * Alternatively, the link:hack/start-kind.sh[`start-kind.sh`] script can be used to create a single-node KinD cluster with MetalLB enabled, allowing Kiali to be tested in a real environment.
@@ -106,12 +106,12 @@ This is the simplest way to get started developing on Kiali. You will startup th
 make build-ui
 make run-backend
 
-# To pass additional arguments to the backend, set the KIALI_LOCAL_ARGS environment variable.
+# To pass additional arguments to the backend, set the KIALI_RUN_ARGS environment variable.
 # For example:
-# make KIALI_LOCAL_ARGS="--log-level debug" run-backend
+# make KIALI_RUN_ARGS="--log-level debug" run-backend
 #
 # To pass additional contexts from your kubeconfig for multi-cluster Kiali:
-# make KIALI_LOCAL_ARGS="--remote-cluster-contexts kind-mesh --cluster-name-overrides kind-mesh=mesh" run-backend
+# make KIALI_RUN_ARGS="--remote-cluster-contexts kind-mesh --cluster-name-overrides kind-mesh=mesh" run-backend
 # The kube context name must match the Istio cluster name otherwise you must provide a cluster name override as shown above.
 ----
 

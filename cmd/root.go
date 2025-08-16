@@ -35,10 +35,6 @@ func newRootCmd() *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		// We don't really need completions.
-		CompletionOptions: cobra.CompletionOptions{
-			DisableDefaultCmd: true,
-		},
 		SilenceUsage: true,
 		Use:          "kiali",
 		Short:        "Kiali - the console for Istio service mesh",
@@ -54,7 +50,7 @@ Complete documentation is available at http://kiali.io/docs/.`,
 
 			// For offline and local colorize the log output.
 			// TODO: Should this go in those commands PreRun?
-			if cmd.Name() == "offline" || cmd.Name() == "local" {
+			if cmd.Name() == "offline" || cmd.Name() == "run" {
 				opts = append(opts, log.WithColor())
 			}
 			log.InitializeLogger(opts...)
@@ -63,9 +59,6 @@ Complete documentation is available at http://kiali.io/docs/.`,
 				outputFlags(cmd)
 			}
 			util.Clock = util.RealClock{}
-
-			// log startup information
-			log.Infof("Kiali: Version: %v, Commit: %v, Go: %v", version, commitHash, goVersion)
 
 			if argConfigFile != "" {
 				c, err := config.LoadConfig(argConfigFile)
@@ -119,7 +112,7 @@ Complete documentation is available at http://kiali.io/docs/.`,
 	}
 	cmd.PersistentFlags().FuncP("config", "c", "Path to the YAML configuration file. If not specified, environment variables will be used for configuration.", FileNameFlag(&argConfigFile))
 	cmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "", "Log level (trace, debug, info, warn, error, fatal). If not specified, the LOG_LEVEL environment variable will be used.")
-	cmd.AddCommand(newLocalCmd(conf))
+	cmd.AddCommand(newRunCmd(conf))
 	return cmd
 }
 

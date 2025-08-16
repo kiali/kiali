@@ -1,4 +1,6 @@
 [build]
-  args_bin = ["local", "--port-forward-to-grafana", "--port-forward-to-prom", "--port-forward-to-tracing", "--enable-tracing", "--without-browser", "--cluster-name-overrides", "kind-ci=cluster-default,kind-east=east,kind-west=west", "--log-level", "trace"]
+  args_bin = ["run", "--port-forward-grafana", "--port-forward-prom", "--port-forward-tracing", "--enable-tracing", "--enable-dashboards", "--no-browser", "--cluster-name-overrides", "kind-ci=cluster-default,kind-east=east,kind-west=west", "--log-level", "trace"]
   exclude_dir = ["frontend", "design", "hack", "_output"]
   exclude_regex = ["_test.go"]
+[misc]
+clean_on_exit = true

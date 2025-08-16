@@ -137,8 +137,8 @@ export interface ToleranceConfig {
 
 // enum for run mode
 export enum RunMode {
-  APP = 'app'
-  LOCAL = 'local',
+  APP = 'app',
+  LOCAL = 'local'
 }
 
 export interface ServerConfig {
