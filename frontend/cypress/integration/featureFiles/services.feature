@@ -29,11 +29,13 @@ Feature: Kiali Services page
     And the "Cluster" column "disappears"
 
   @smoke
+  @core
   Scenario: See all Services toggles
     And user is at the "services" list page
     Then user sees all the Services toggles
 
   @smoke
+  @core
   Scenario: Toggle Services configuration toggle
     And user is at the "services" list page
     When user "unchecks" toggle "configuration"
@@ -42,6 +44,7 @@ Feature: Kiali Services page
     Then the "Configuration" column "appears"
 
   @bookinfo-app
+  @core
   Scenario: Filter services table by Service Name
     And user is at the "services" page
     When user selects the "bookinfo" namespace

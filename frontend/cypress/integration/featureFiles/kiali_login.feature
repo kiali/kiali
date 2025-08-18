@@ -30,8 +30,6 @@ Feature: Kiali login
     Then user sees the Overview page
 
   @openshift
-  @smoke
-  @core
   Scenario: Openshift login shows error message when code exchange fails
     Given all sessions are cleared
     And user opens base url
