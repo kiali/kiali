@@ -79,28 +79,26 @@ if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_OPENSHIFT="true"
 fi
 
+# Define waypoint namespaces
+declare -a waypoint_namespaces=("waypoint-forservice" "waypoint-forworkload" "waypoint-forall" "waypoint-fornone" "waypoint-differentns" "waypoint-common-infrastructure" "waypoint-override")
+
 # If we are to delete, remove everything and exit immediately after
 if [ "${DELETE}" == "true" ]; then
+
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     $CLIENT_EXE delete network-attachment-definition istio-cni -n waypoint-forservice
     $CLIENT_EXE delete scc waypoint-forservice-scc
-    ${CLIENT_EXE} delete project waypoint-forservice
-    ${CLIENT_EXE} delete project waypoint-forworkload
-    ${CLIENT_EXE} delete project waypoint-forall
-    ${CLIENT_EXE} delete project waypoint-fornone
-    ${CLIENT_EXE} delete project waypoint-differentns
-    ${CLIENT_EXE} delete project waypoint-override
-    ${CLIENT_EXE} delete project waypoint-common-infrastructure
+    
+    for namespace in "${waypoint_namespaces[@]}"; do
+      ${CLIENT_EXE} delete project ${namespace}
+    done
     exit 0
   else
     echo "Deleting Waypoint demos namespaces"
-    ${CLIENT_EXE} delete namespace waypoint-forservice
-    ${CLIENT_EXE} delete namespace waypoint-forworkload
-    ${CLIENT_EXE} delete namespace waypoint-forall
-    ${CLIENT_EXE} delete namespace waypoint-fornone
-    ${CLIENT_EXE} delete namespace waypoint-differentns
-    ${CLIENT_EXE} delete namespace waypoint-override
-    ${CLIENT_EXE} delete namespace waypoint-common-infrastructure
+    
+    for namespace in "${waypoint_namespaces[@]}"; do
+      ${CLIENT_EXE} delete namespace ${namespace}
+    done
     exit 0
   fi
 fi
@@ -111,46 +109,27 @@ $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
   { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.3.0" | $CLIENT_EXE apply -f -; }
 
 if [ "${IS_OPENSHIFT}" == "true" ]; then
-  $CLIENT_EXE new-project waypoint-forservice
-  $CLIENT_EXE new-project waypoint-forworkload
-  $CLIENT_EXE new-project waypoint-forall
-  $CLIENT_EXE new-project waypoint-fornone
-  $CLIENT_EXE new-project waypoint-differentns
-  $CLIENT_EXE new-project waypoint-common-infrastructure
-  $CLIENT_EXE new-project waypoint-override
+  for namespace in "${waypoint_namespaces[@]}"; do
+    $CLIENT_EXE new-project ${namespace}
+  done
 else
-  ${CLIENT_EXE} create ns waypoint-forservice
-  ${CLIENT_EXE} create ns waypoint-forworkload
-  ${CLIENT_EXE} create ns waypoint-forall
-  ${CLIENT_EXE} create ns waypoint-fornone
-  ${CLIENT_EXE} create ns waypoint-differentns
-  ${CLIENT_EXE} create ns waypoint-common-infrastructure
-  ${CLIENT_EXE} create ns waypoint-override
+  for namespace in "${waypoint_namespaces[@]}"; do
+    ${CLIENT_EXE} create ns ${namespace}
+  done
 fi
 
-${CLIENT_EXE} label ns waypoint-forservice istio.io/dataplane-mode=ambient
-${CLIENT_EXE} label ns waypoint-forworkload istio.io/dataplane-mode=ambient
-${CLIENT_EXE} label ns waypoint-forall istio.io/dataplane-mode=ambient
-${CLIENT_EXE} label ns waypoint-fornone istio.io/dataplane-mode=ambient
-${CLIENT_EXE} label ns waypoint-differentns istio.io/dataplane-mode=ambient
-${CLIENT_EXE} label ns waypoint-override istio.io/dataplane-mode=ambient
+
+for namespace in "${waypoint_namespaces[@]}"; do
+  ${CLIENT_EXE} label ns ${namespace} istio.io/dataplane-mode=ambient
+done
 
 # Create a waypoint for service
 if [ "${IS_OPENSHIFT}" == "true" ]; then
-  apply_network_attachment waypoint-forservice
-  $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n waypoint-forservice
-  apply_network_attachment waypoint-forworkload
-  $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n waypoint-forworkload
-  apply_network_attachment waypoint-forall
-  $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n waypoint-forall
-  apply_network_attachment waypoint-fornone
-  $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n waypoint-fornone
-  apply_network_attachment waypoint-differentns
-  $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n waypoint-differentns
-  apply_network_attachment waypoint-forservice
-  $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n waypoint-forservice
-  apply_network_attachment waypoint-override
-  $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n waypoint-override
+  for namespace in "${waypoint_namespaces[@]}"; do
+    apply_network_attachment ${namespace}
+    $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${namespace}
+  done
+
 fi
 
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n waypoint-forservice
