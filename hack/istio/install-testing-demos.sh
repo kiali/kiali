@@ -237,23 +237,41 @@ else
   # Delete everything - don't abort on error, just keep going and try to delete everything
   set +e
 
-  if [ "${IS_OPENSHIFT}" == "true" ]; then
-    echo "Deleting sleep demo ..."
-    "${SCRIPT_DIR}/install-sleep-demo.sh" --delete-sleep true
-    echo "Deleting bookinfo demo ..."
-    "${SCRIPT_DIR}/install-bookinfo-demo.sh" --delete-bookinfo true
-    echo "Deleting error rates demo ..."
-    "${SCRIPT_DIR}/install-error-rates-demo.sh" --delete true
-    echo "Deleting loggers demo..."
-    "${SCRIPT_DIR}/install-loggers-demo.sh" --delete true
+  if [ "${AMBIENT_ENABLED}" == "true" ]; then
+    if [ "${IS_OPENSHIFT}" == "true" ]; then
+          echo "Deleting bookinfo demo ..."
+          "${SCRIPT_DIR}/install-bookinfo-demo.sh" --delete-bookinfo true
+          echo "Deleting waypoints demo ..."
+          "${SCRIPT_DIR}/ambient/install-waypoints.sh" --delete true
+          echo "Deleting ambient sidecars demo..."
+          "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh" --delete true
+    else
+          echo "Deleting bookinfo demo..."
+          "${SCRIPT_DIR}/install-bookinfo-demo.sh" --delete-bookinfo true -c kubectl
+          echo "Deleting waypoints demo ..."
+          "${SCRIPT_DIR}/ambient/install-waypoints.sh" --delete true -c kubectl
+          echo "Deleting ambient sidecars demo..."
+          "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh" --delete true -c kubectl
+    fi
   else
-    echo "Deleting sleep demo ..."
-    "${SCRIPT_DIR}/install-sleep-demo.sh" --delete-sleep true -c kubectl
-    echo "Deleting bookinfo demo..."
-    "${SCRIPT_DIR}/install-bookinfo-demo.sh" --delete-bookinfo true -c kubectl
-    echo "Deleting error rates demo..."
-    "${SCRIPT_DIR}/install-error-rates-demo.sh" --delete true -c kubectl
-    echo "Deleting loggers demo..."
-    "${SCRIPT_DIR}/install-loggers-demo.sh" --delete true -c kubectl
+    if [ "${IS_OPENSHIFT}" == "true" ]; then
+      echo "Deleting sleep demo ..."
+      "${SCRIPT_DIR}/install-sleep-demo.sh" --delete-sleep true
+      echo "Deleting bookinfo demo ..."
+      "${SCRIPT_DIR}/install-bookinfo-demo.sh" --delete-bookinfo true
+      echo "Deleting error rates demo ..."
+      "${SCRIPT_DIR}/install-error-rates-demo.sh" --delete true
+      echo "Deleting loggers demo..."
+      "${SCRIPT_DIR}/install-loggers-demo.sh" --delete true
+    else
+      echo "Deleting sleep demo ..."
+      "${SCRIPT_DIR}/install-sleep-demo.sh" --delete-sleep true -c kubectl
+      echo "Deleting bookinfo demo..."
+      "${SCRIPT_DIR}/install-bookinfo-demo.sh" --delete-bookinfo true -c kubectl
+      echo "Deleting error rates demo..."
+      "${SCRIPT_DIR}/install-error-rates-demo.sh" --delete true -c kubectl
+      echo "Deleting loggers demo..."
+      "${SCRIPT_DIR}/install-loggers-demo.sh" --delete true -c kubectl
+    fi
   fi
 fi
