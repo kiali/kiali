@@ -13,8 +13,8 @@ type MissingLabelProps = {
 };
 
 export const MissingLabel: React.FC<MissingLabelProps> = (props: MissingLabelProps) => {
-  const appLabelName = serverConfig.istioLabels.appLabelName ?? 'app'; // just need a value for badge text
-  const versionLabelName = serverConfig.istioLabels.versionLabelName ?? 'version'; // just need a value for badge text
+  const appLabelName = serverConfig.istioLabels.appLabelName || 'app'; // just need a value for badge text
+  const versionLabelName = serverConfig.istioLabels.versionLabelName || 'version'; // just need a value for badge text
   const icon = icons.istio.missingLabel.icon;
   const color = icons.istio.missingLabel.color;
 
