@@ -9,11 +9,9 @@
 #
 ##############################################################################
 
-CLIENT_EXE_NAME="oc"
-
 # Go to the main output directory and try to find an Istio there.
 AMBIENT_NS="test-ambient"
-CLIENT_EXE="kubectl"
+CLIENT_EXE="oc"
 HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../../_output}"
 SIDECAR_NS="test-sidecar"
@@ -57,6 +55,14 @@ if [ "${DELETE}" == "true" ]; then
   ${CLIENT_EXE} delete namespace ${SIDECAR_NS}
   ${CLIENT_EXE} delete namespace ${AMBIENT_NS}
   exit 0
+fi
+
+CLIENT_EXE=`which ${CLIENT_EXE}`
+if [ "$?" = "0" ]; then
+  echo "The cluster client executable is found here: ${CLIENT_EXE}"
+else
+  echo "You must install the cluster client ${CLIENT_EXE} in your PATH before you can continue"
+  exit 1
 fi
 
 IS_OPENSHIFT="false"

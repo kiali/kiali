@@ -7,7 +7,7 @@
 #
 ##############################################################################
 
-CLIENT_EXE_NAME="oc"
+CLIENT_EXE="oc"
 
 while [ $# -gt 0 ]; do
   key="$1"
@@ -39,6 +39,14 @@ done
 # Go to the main output directory and try to find an Istio there.
 HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../../_output}"
+
+CLIENT_EXE=`which ${CLIENT_EXE}`
+if [ "$?" = "0" ]; then
+  echo "The cluster client executable is found here: ${CLIENT_EXE}"
+else
+  echo "You must install the cluster client ${CLIENT_EXE} in your PATH before you can continue"
+  exit 1
+fi
 
 IS_OPENSHIFT="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
