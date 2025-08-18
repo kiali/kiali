@@ -1,10 +1,10 @@
-@smoke
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 Feature: Kiali login
 
   User wants to login to Kiali and see landing page
 
+  @smoke
   Scenario: Try to log in with an invalid username
     Given all sessions are cleared
     And user opens base url
@@ -12,6 +12,7 @@ Feature: Kiali login
     And user fills in an invalid username
     Then user sees the "Invalid login or password. Please try again." phrase displayed
 
+  @smoke
   @core
   Scenario: Try to log in with an invalid password
     Given all sessions are cleared
@@ -20,6 +21,7 @@ Feature: Kiali login
     And user fills in an invalid password
     Then user sees the "Invalid login or password. Please try again." phrase displayed
 
+  @smoke
   @core
   Scenario: Try to log in with a valid password
     Given all sessions are cleared
@@ -54,6 +56,7 @@ Feature: Kiali login
     Then user sees the Overview page
 
   @requireslogin
+  @smoke
   @core
   Scenario: An expiring session should show a pop up to renew.
     Given user is at administrator perspective
