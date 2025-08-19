@@ -332,7 +332,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		if istioConfigList, ok := istioConfigMap[cluster]; ok && criteria.IncludeIstioResources {
 			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(in.conf, wItem.Labels, istioConfigList, cluster))
 		}
-		if criteria.IncludeHealth && in.conf.ExternalServices.Prometheus.Enabled {
+		if criteria.IncludeHealth {
 			wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, namespace, cluster, wItem.Name, criteria.RateInterval, criteria.QueryTime, w)
 			if err != nil {
 				log.Errorf("Error fetching Health in namespace %s for workload %s: %s", namespace, wItem.Name, err)

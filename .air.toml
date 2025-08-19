@@ -3,4 +3,4 @@
   exclude_dir = ["frontend", "design", "hack", "_output"]
   exclude_regex = ["_test.go"]
 [misc]
-clean_on_exit = true
+  clean_on_exit = true

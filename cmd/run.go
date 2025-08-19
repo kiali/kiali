@@ -169,7 +169,8 @@ func setupPortForwarding(ctx context.Context, cf kubernetes.ClientFactory, conf 
 
 	// Need a separate "port-forward to prom option" because you can specify an external prometheus URL
 	// in the config file and that should not be overridden by the port-forwarding.
-	if conf.ExternalServices.Prometheus.Enabled && opts.portForwardToPromFlag {
+	// TODO: Add an option to enable/disable prom.
+	if opts.portForwardToPromFlag {
 		if err := portForwardToProm(ctx, cf.GetSAHomeClusterClient(), conf, opts.metricsPort, opts.metricsSelector); err != nil {
 			return fmt.Errorf("Unable to setup port forwarding to metrics store pods: %s", err)
 		}

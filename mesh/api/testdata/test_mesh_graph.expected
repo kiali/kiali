@@ -142,7 +142,6 @@
             "cacheDuration": 7,
             "cacheEnabled": true,
             "cacheExpiration": 300,
-            "enabled": true,
             "thanosProxy": {
               "retentionPeriod": "7d",
               "scrapeInterval": "30s"
