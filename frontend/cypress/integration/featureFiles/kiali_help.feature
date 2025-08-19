@@ -11,11 +11,13 @@ Feature: Kiali help dropdown verify
     When user clicks on Help Button
 
   @smoke
+  @core
   Scenario: Open Kiali help dropdown
     Then user can see all of the Help dropdown options
       | Documentation | View Debug Info | About |
 
   @smoke
+  @core
   Scenario: User opens the View Debug Info section
     When user clicks on the "View Debug Info" button
     Then user sees the "Debug information" modal

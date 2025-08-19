@@ -1,7 +1,6 @@
 @sidebar-toggle
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
-@smoke
 Feature: Sidebar toggle
 
   User opens the Overview page and toggles the main sidebar.
@@ -15,6 +14,7 @@ Feature: Sidebar toggle
     And user presses the navigation toggle button
     Then user cannot see the sidebar
 
+  @smoke
   @core
   Scenario: Open the sidebar
     When the sidebar is closed
