@@ -11,7 +11,7 @@
 
 # Go to the main output directory and try to find an Istio there.
 AMBIENT_NS="test-ambient"
-CLIENT_EXE="kubectl"
+CLIENT_EXE="oc"
 HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../../_output}"
 SIDECAR_NS="test-sidecar"
@@ -20,6 +20,10 @@ WAYPOINT="false"
 while [ $# -gt 0 ]; do
   key="$1"
   case $key in
+    -c|--client)
+      CLIENT_EXE="$2"
+      shift;shift
+      ;;
     -d|--delete)
       DELETE="$2"
       shift;shift
@@ -31,6 +35,7 @@ while [ $# -gt 0 ]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -c|--client: either 'oc' or 'kubectl'
   -d|--delete: either 'true' or 'false'. If 'true' the namespaces demo will be deleted, not installed.
   -w|--waypoint: Install a waypoint proxy in the ambient namespace. By default is false.
   -h|--help: this text
@@ -46,47 +51,76 @@ done
 
 # If we are to delete, remove everything and exit immediately after
 if [ "${DELETE}" == "true" ]; then
-  echo "Deleting ambient-sidecar demo namespaces"
-  ${CLIENT_EXE} delete namespace ${SIDECAR_NS}
-  ${CLIENT_EXE} delete namespace ${AMBIENT_NS}
-  exit 0
-fi
-
-ALL_ISTIOS=$(ls -dt1 ${OUTPUT_DIR}/istio-*)
-if [ "$?" != "0" ]; then
-  ${HACK_SCRIPT_DIR}/../download-istio.sh
-  if [ "$?" != "0" ]; then
-    echo "ERROR: You do not have Istio installed and it cannot be downloaded"
-    exit 1
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    echo "Deleting Waypoint demos namespaces"
+    ${CLIENT_EXE} delete project ${SIDECAR_NS}
+    ${CLIENT_EXE} delete project ${AMBIENT_NS}
+    exit 0
+  else
+    echo "Deleting ambient-sidecar demo namespaces"
+    ${CLIENT_EXE} delete namespace ${SIDECAR_NS}
+    ${CLIENT_EXE} delete namespace ${AMBIENT_NS}
+    exit 0
   fi
 fi
-# use the Istio release that was last downloaded (that's the -t option to ls)
-ISTIO_DIR=$(ls -dt1 ${OUTPUT_DIR}/istio-* | head -n1)
 
-if [ ! -d "${ISTIO_DIR}" ]; then
-   echo "ERROR: Istio cannot be found at: ${ISTIO_DIR}"
-   exit 1
-fi
+apply_network_attachment() {
+  NAME=$1
+  cat <<NAD | $CLIENT_EXE -n ${NAME} apply -f -
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: istio-cni
+NAD
+  cat <<SCC | $CLIENT_EXE apply -f -
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: ${NAME}-scc
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+priority: 9
+users:
+- "system:serviceaccount:${NAME}:default"
+- "system:serviceaccount:${NAME}:${NAME}"
+SCC
+}
 
-echo "Istio is found here: ${ISTIO_DIR}"
-if [[ -x "${ISTIO_DIR}/bin/istioctl" ]]; then
-  echo "istioctl is found here: ${ISTIO_DIR}/bin/istioctl"
-  ISTIOCTL="${ISTIO_DIR}/bin/istioctl"
-  ${ISTIOCTL} version
+CLIENT_EXE=`which ${CLIENT_EXE}`
+if [ "$?" = "0" ]; then
+  echo "The cluster client executable is found here: ${CLIENT_EXE}"
 else
-  echo "ERROR: istioctl is NOT found at ${ISTIO_DIR}/bin/istioctl"
+  echo "You must install the cluster client ${CLIENT_EXE} in your PATH before you can continue"
   exit 1
 fi
 
-${CLIENT_EXE} create ns ${SIDECAR_NS}
-${CLIENT_EXE} create ns ${AMBIENT_NS}
+IS_OPENSHIFT="false"
+if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+  IS_OPENSHIFT="true"
+fi
+
+if [ "${IS_OPENSHIFT}" == "true" ]; then
+  $CLIENT_EXE new-project ${SIDECAR_NS}
+  $CLIENT_EXE new-project ${AMBIENT_NS}
+  apply_network_attachment ${SIDECAR_NS}
+  $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${SIDECAR_NS}
+  apply_network_attachment ${AMBIENT_NS}
+  $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${AMBIENT_NS}
+else
+  ${CLIENT_EXE} create ns ${SIDECAR_NS}
+  ${CLIENT_EXE} create ns ${AMBIENT_NS}
+fi
 
 ${CLIENT_EXE} label ns ${SIDECAR_NS} istio-injection=enabled
 ${CLIENT_EXE} label ns ${AMBIENT_NS} istio.io/dataplane-mode=ambient
 
 # Create the echo service
-${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/echo-service.yaml -n ${AMBIENT_NS}
-${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/echo-service.yaml -n ${SIDECAR_NS}
+${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n ${AMBIENT_NS}
+${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n ${SIDECAR_NS}
 
 # Create the echo service
 cat <<NAD | ${CLIENT_EXE} -n ${SIDECAR_NS} apply -f -
@@ -122,6 +156,7 @@ if [ "${WAYPOINT}" == "true" ]; then
   echo "Verifying that Gateway API is installed; if it is not then it will be installed now."
   $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
     { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.3.0" | $CLIENT_EXE apply -f -; }
-  ${ISTIOCTL} waypoint apply -n ${AMBIENT_NS} --enroll-namespace
+  ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/waypoint.yaml -n ${AMBIENT_NS}
+  ${CLIENT_EXE} label ns ${AMBIENT_NS} istio.io/use-waypoint=waypoint
 fi
 
