@@ -75,7 +75,6 @@ import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { EmptyOverview } from './EmptyOverview';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
-import { isIstioControlPlane } from 'config/ServerConfig';
 import { PersesInfo } from '../../types/PersesInfo';
 
 const gridStyleCompact = kialiStyle({
