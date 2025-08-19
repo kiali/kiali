@@ -49,6 +49,11 @@ const iconStyle = kialiStyle({
   display: 'inline-block'
 });
 
+const blockElementStyle = kialiStyle({
+  display: 'block',
+  marginTop: '0.125rem'
+});
+
 const workloadInfoStyle = kialiStyle({
   verticalAlign: '-0.125rem'
 });
@@ -232,7 +237,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
         <WorkloadConfigValidation
           validations={workload.validations!['workload'][validationKey(workload.name, workload.namespace)]}
           namespace={props.namespace}
-          className={classes(workloadInfoStyle)}
+          className={classes(workloadInfoStyle, blockElementStyle)}
           iconSize={'md'}
           detailed={true}
         />
