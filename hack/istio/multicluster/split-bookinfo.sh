@@ -26,6 +26,7 @@ install_bookinfo() {
   if [ "${traffic_gen_enabled}" == "true" ]; then
     traffic_gen_arg="-tg"
   fi
+  ambient_args=""
   if [ "${AMBIENT}" == "true" ]; then
     echo "Using Ambient args"
     ambient_args="-ai false -w true"
