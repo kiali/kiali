@@ -26,9 +26,10 @@ install_bookinfo() {
   if [ "${traffic_gen_enabled}" == "true" ]; then
     traffic_gen_arg="-tg"
   fi
-  #if [ "${AMBIENT}" == "true" ]; then
+  if [ "${AMBIENT}" == "true" ]; then
+    echo "Using Ambient args"
     ambient_args="-ai false -w true"
-  #fi
+  fi
   "${INSTALL_BOOKINFO_SCRIPT}"             \
     --client-exe "${CLIENT_EXE}"           \
     --istio-dir "${ISTIO_DIR}"             \
