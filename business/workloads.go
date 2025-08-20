@@ -1479,16 +1479,15 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 
 		if cnFound {
 			// Add the Proxy Status to the workload
+			addedWaypointsForWorkload := false
 			for _, pod := range w.Pods {
 				isWaypoint := w.IsWaypoint()
 				if in.conf.ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
 					pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(cluster, namespace, pod.Name, !isWaypoint)
 				}
-				// Add the Proxy Status to the workload
-				if pod.AmbientEnabled() {
+				if !addedWaypointsForWorkload && pod.AmbientEnabled() {
 					w.WaypointWorkloads = in.getWaypointsForWorkload(ctx, *w, false, waypoints)
-					// only need to do this work one time per workload
-					break
+					addedWaypointsForWorkload = true
 				}
 			}
 
