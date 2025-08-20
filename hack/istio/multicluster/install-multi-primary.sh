@@ -17,6 +17,7 @@ infomsg() {
 
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 source ${SCRIPT_DIR}/env.sh $*
+source ${SCRIPT_DIR}/install_ambient_mc.sh $*
 
 create_crossnetwork_gateway() {
   local clustername="${1}"
@@ -30,8 +31,13 @@ create_crossnetwork_gateway() {
   if [ ! -z "${ISTIO_TAG}" ]; then
     local image_tag_arg="--set tag=${ISTIO_TAG}"
   fi
-  
-  local gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --network "${network}")"
+
+  if [ "${AMBIENT}" == "true" ]; then
+    local gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --ambient --network "${network}")"
+  elsif
+    local gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --network "${network}")"
+  fi
+
   local profile_flag=""
   if [ "${IS_OPENSHIFT}" == "true" ] || [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
     profile_flag="--set profile=openshift"
@@ -182,7 +188,7 @@ if [ "${MANAGE_KIND}" == "true" ]; then
       --keycloak-issuer-uri https://"${KEYCLOAK_ADDRESS}"/realms/kube \
       --image "${KIND_NODE_IMAGE}"
 
-    
+
     # Optional: keycloak memory limits
     KEYCLOAK_LIMIT_MEMORY="${KEYCLOAK_LIMIT_MEMORY:-}"
     KEYCLOAK_REQUESTS_MEMORY="${KEYCLOAK_REQUESTS_MEMORY:-}"
@@ -224,13 +230,18 @@ fi
 # Setup the certificates
 source ${SCRIPT_DIR}/setup-ca.sh
 
-echo "==== INSTALL ISTIO ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-install_istio --patch-file "${MC_EAST_YAML}"
+if [ "${AMBIENT}" == "true" ]; then
+  echo "==== Installing Istio Ambient in multi cluster (Alpha)"
+  install_ambient_mc
+else
+  echo "==== INSTALL ISTIO ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+  switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
+  install_istio --patch-file "${MC_EAST_YAML}"
 
-echo "==== INSTALL ISTIO ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
-switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
-install_istio --patch-file "${MC_WEST_YAML}"
+  echo "==== INSTALL ISTIO ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
+  switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
+  install_istio --patch-file "${MC_WEST_YAML}"
+fi
 
 echo "==== DEPLOY ISTIO INGRESS GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
 switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
@@ -279,6 +290,11 @@ source ${SCRIPT_DIR}/setup-tracing.sh
 
 # Install bookinfo across cluster if enabled
 source ${SCRIPT_DIR}/split-bookinfo.sh
+
+if [ "${AMBIENT}" == "true" ]; then
+  echo "==== Installing Istio Ambient hello world demo"
+  install_helloworld_demo
+fi
 
 # Install Kiali if enabled
 if [ "${KIALI_ENABLED}" == "true" ]; then

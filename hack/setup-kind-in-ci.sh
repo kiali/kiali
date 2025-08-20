@@ -250,6 +250,7 @@ if [ -n "${ISTIO_VERSION}" ]; then
 fi
 
 make HELM_VERSION="v3.18.4" -C "${HELM_CHARTS_DIR}" .download-helm-binary
+
 HELM="${HELM_CHARTS_DIR}/_output/helm-install/helm"
 
 infomsg "Using helm: $(ls -l ${HELM})"
@@ -498,7 +499,7 @@ setup_kind_tempo() {
     --set kiali_internal.cache_expiration.waypoint="2m" \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
-  
+
   # Helm chart doesn't support passing in service opts so patch them after the helm deploy.
   kubectl patch service kiali -n istio-system --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'
   kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
@@ -547,6 +548,11 @@ setup_kind_multicluster() {
   else
     MEMORY_REQUEST_ARG=""
   fi
+  if [ -n "$AMBIENT" ]; then
+    AMBIENT_ARG="-a true"
+  else
+    AMBIENT_ARG=""
+  fi
 
   local cluster1_context
   local cluster2_context
@@ -563,6 +569,7 @@ setup_kind_multicluster() {
       --istio-dir "${istio_dir}" \
       ${MEMORY_REQUEST_ARG} \
       ${MEMORY_LIMIT_ARG} \
+      ${AMBIENT_ARG} \
       ${kind_node_image:-} \
       ${hub_arg:-} \
       ${istio_version_arg}
@@ -602,7 +609,7 @@ setup_kind_multicluster() {
   auth_flags=()
   if [ "${AUTH_STRATEGY}" == "openid" ]; then
     local keycloak_ip
-    keycloak_ip=$(kubectl get svc keycloak -n keycloak -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' --context "${cluster1_context}") 
+    keycloak_ip=$(kubectl get svc keycloak -n keycloak -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' --context "${cluster1_context}")
     auth_flags+=(--keycloak-address "${keycloak_ip}")
     auth_flags+=(--certs-dir "${certs_dir}")
   fi
