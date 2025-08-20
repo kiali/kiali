@@ -109,6 +109,10 @@ SINGLE_KIALI="${SINGLE_KIALI:-true}"
 # Deploy just in one cluster
 SINGLE_CLUSTER="${SINGLE_CLUSTER:-false}"
 
+# If Ambient should be installed (Alpha, for multi primary)
+# https://istio.io/latest/docs/ambient/install/multicluster/
+AMBIENT="${AMBIENT:-false}"
+
 # Use groups for OpenId authorization (single cluster)
 AUTH_GROUPS="${AUTH_GROUPS:-}"
 
@@ -202,6 +206,10 @@ KIALI_TRACING_ADDRESS="${KIALI_TRACING_ADDRESS:-}"
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    -a|--ambient)
+      AMBIENT="$2"
+      shift;shift
+      ;;
     -be|--bookinfo-enabled)
       [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--bookinfo-enabled must be 'true' or 'false'" && exit 1
       BOOKINFO_ENABLED="$2"
@@ -439,6 +447,7 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -a|--ambient <bool>: If true, install Ambient profile (alpha) Just for multi-primary (Default: false)
   -be|--bookinfo-enabled <bool>: If true, install the bookinfo demo spread across the two clusters (Default: true)
   -bn|--bookinfo-namespace: If the bookinfo demo will be installed, this is its namespace (Default: bookinfo)
   -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc". If you use
@@ -657,7 +666,8 @@ else
 fi
 
 # Export all variables so child scripts pick them up
-export AUTH_GROUPS \
+export AMBIENT \
+       AUTH_GROUPS \
        BOOKINFO_ENABLED \
        BOOKINFO_NAMESPACE \
        CERTS_DIR \
@@ -709,6 +719,7 @@ export AUTH_GROUPS \
 
 cat <<EOM
 === SETTINGS ===
+AMBIENT=$AMBIENT
 AUTH_GROUPS=$AUTH_GROUPS
 BOOKINFO_ENABLED=$BOOKINFO_ENABLED
 BOOKINFO_NAMESPACE=$BOOKINFO_NAMESPACE
