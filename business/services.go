@@ -487,7 +487,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		go func(ctx context.Context) {
 			defer wg.Done()
 			var err2 error
-			ws, err2 = in.businessLayer.Workload.fetchWorkloadsFromCluster(ctx, cluster, namespace, labelsSelector)
+			ws, err2 = in.businessLayer.Workload.GetNamespaceWorkloads(ctx, cluster, namespace, labelsSelector)
 			if err2 != nil {
 				log.Errorf("Error fetching Workloads per namespace %s and service %s: %s", namespace, service, err2)
 				errChan <- err2
@@ -724,7 +724,7 @@ func (in *SvcService) GetWaypointsForService(ctx context.Context, svc *models.Se
 
 	// then, get the waypoint workloads to filter out "forNone" waypoints
 	for _, waypoint := range waypoints {
-		waypointWorkload, err := in.businessLayer.Workload.fetchWorkload(ctx, WorkloadCriteria{Cluster: svc.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, WorkloadGVK: schema.GroupVersionKind{}, IncludeWaypoints: false})
+		waypointWorkload, err := in.businessLayer.Workload.GetWorkload(ctx, WorkloadCriteria{Cluster: svc.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, WorkloadGVK: schema.GroupVersionKind{}, IncludeWaypoints: false})
 		if err != nil {
 			log.Debugf("GetWaypointsForService: Error fetching waypoint workload %s", err.Error())
 			return nil

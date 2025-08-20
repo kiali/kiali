@@ -474,7 +474,7 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 
 	appNameSelectors := in.conf.GetAppVersionLabelSelectors(appName, "")
 	for _, appNameSelector := range appNameSelectors {
-		selectedWorkloads, err := in.businessLayer.Workload.fetchWorkloadsFromCluster(ctx, cluster, namespace, appNameSelector.LabelSelector)
+		selectedWorkloads, err := in.businessLayer.Workload.GetNamespaceWorkloads(ctx, cluster, namespace, appNameSelector.LabelSelector)
 		if err != nil {
 			return nil, err
 		}
