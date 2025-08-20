@@ -14,7 +14,6 @@ FRONTEND_PRIMARY_REMOTE="frontend-primary-remote"
 FRONTEND_MULTI_PRIMARY="frontend-multi-primary"
 FRONTEND_EXTERNAL_KIALI="frontend-external-kiali"
 FRONTEND_TEMPO="frontend-tempo"
-LOCAL="local"
 HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
 KEYCLOAK_LIMIT_MEMORY=""
@@ -112,16 +111,13 @@ Valid command line arguments:
   -so|--setup-only <true|false>
     If true, only setup the test environment and exit without running the tests.
     Default: false
-  -st|--stern <true|false>
-    If true, will setup stern logging binary.
-    Default: false
   -t|--tempo <true|false>
     If true, Tempo will be installed instead of Jaeger. Just for primary-remote suite
     Default: false
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
     Default: false
-  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${LOCAL}>
+  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}>
     Which test suite to run.
     Default: ${BACKEND}
   -wv|--with-video <true|false>
