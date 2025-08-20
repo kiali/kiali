@@ -17,8 +17,8 @@ import (
 
 func TestParseDeploymentToWorkload(t *testing.T) {
 	assert := assert.New(t)
-	cfg := config.NewConfig()
-	cfg.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
+	conf := config.NewConfig()
+	conf.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
 		{
 			Annotation: "annotation-2",
 			Title:      "Annotation 2",
@@ -32,11 +32,11 @@ func TestParseDeploymentToWorkload(t *testing.T) {
 			Title:      "Annotation 4",
 		},
 	}
-	config.Set(cfg)
+	config.Set(conf)
 
 	w := Workload{}
 	d := fakeDeployment()
-	w.ParseDeployment(d)
+	w.ParseDeployment(d, conf)
 
 	assert.Equal("reviews-v1", w.Name)
 	assert.Equal("bar", w.Labels["foo"])
@@ -54,23 +54,23 @@ func TestParseDeploymentToWorkload(t *testing.T) {
 	// TODO: The parsing is actually clobbering the Deployment.Annotations if Template.Annotations
 	// is set but fixing it may cause unintended side effects so putting this test after the rest.
 	d.Spec.Template.Annotations = map[string]string{"food": "pizza", "drink": "soda"}
-	w.ParseDeployment(d)
+	w.ParseDeployment(d, conf)
 	assert.Equal(w.TemplateAnnotations, d.Spec.Template.Annotations)
 }
 
 func TestParseReplicaSetToWorkload(t *testing.T) {
 	assert := assert.New(t)
-	cfg := config.NewConfig()
-	cfg.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
+	conf := config.NewConfig()
+	conf.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
 		{
 			Annotation: "annotation",
 			Title:      "Annotation",
 		},
 	}
-	config.Set(cfg)
+	config.Set(conf)
 
 	w := Workload{}
-	w.ParseReplicaSet(fakeReplicaSet())
+	w.ParseReplicaSet(fakeReplicaSet(), conf)
 
 	assert.Equal("reviews-v1", w.Name)
 	assert.Equal("bar", w.Labels["foo"])
@@ -87,17 +87,17 @@ func TestParseReplicaSetToWorkload(t *testing.T) {
 
 func TestParseReplicationControllerToWorkload(t *testing.T) {
 	assert := assert.New(t)
-	cfg := config.NewConfig()
-	cfg.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
+	conf := config.NewConfig()
+	conf.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
 		{
 			Annotation: "annotation",
 			Title:      "Annotation",
 		},
 	}
-	config.Set(cfg)
+	config.Set(conf)
 
 	w := Workload{}
-	w.ParseReplicationController(fakeReplicationController())
+	w.ParseReplicationController(fakeReplicationController(), conf)
 
 	assert.Equal("reviews-v1", w.Name)
 	assert.Equal("bar", w.Labels["foo"])
@@ -114,17 +114,17 @@ func TestParseReplicationControllerToWorkload(t *testing.T) {
 
 func TestParseDeploymentConfigToWorkload(t *testing.T) {
 	assert := assert.New(t)
-	cfg := config.NewConfig()
-	cfg.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
+	conf := config.NewConfig()
+	conf.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
 		{
 			Annotation: "annotation",
 			Title:      "Annotation",
 		},
 	}
-	config.Set(cfg)
+	config.Set(conf)
 
 	w := Workload{}
-	w.ParseDeploymentConfig(fakeDeploymentConfig())
+	w.ParseDeploymentConfig(fakeDeploymentConfig(), conf)
 
 	assert.Equal("reviews-v1", w.Name)
 	assert.Equal("bar", w.Labels["foo"])
@@ -140,17 +140,17 @@ func TestParseDeploymentConfigToWorkload(t *testing.T) {
 
 func TestParsePodToWorkload(t *testing.T) {
 	assert := assert.New(t)
-	cfg := config.NewConfig()
-	cfg.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
+	conf := config.NewConfig()
+	conf.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
 		{
 			Annotation: "annotation",
 			Title:      "Annotation",
 		},
 	}
-	config.Set(cfg)
+	config.Set(conf)
 
 	w := Workload{}
-	w.ParsePod(fakePod())
+	w.ParsePod(fakePod(), conf)
 
 	assert.Equal("reviews-v1", w.Name)
 	assert.Equal("bar", w.Labels["foo"])
@@ -169,7 +169,7 @@ func TestParseWaypointPodToWorkload(t *testing.T) {
 	assert := assert.New(t)
 
 	w := Workload{}
-	w.ParsePod(fakeWaypointPod())
+	w.ParsePod(fakeWaypointPod(), config.Get())
 
 	assert.Equal("waypoint", w.Name)
 	assert.Equal("istio.io-mesh-controller", w.Labels["gateway.istio.io/managed"])
@@ -189,7 +189,7 @@ func TestParsePodsToWorkload(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	w := Workload{}
-	w.ParsePods("workload-from-controller", schema.GroupVersionKind{Kind: "Controller"}, []core_v1.Pod{*fakePod()})
+	w.ParsePods("workload-from-controller", schema.GroupVersionKind{Kind: "Controller"}, []core_v1.Pod{*fakePod()}, config.NewConfig())
 
 	assert.Equal("workload-from-controller", w.Name)
 	assert.Equal("bar", w.Labels["foo"])
@@ -208,7 +208,7 @@ func TestParsePodWithoutLabelsToWorkload(t *testing.T) {
 	fakePod := fakePod()
 	fakePod.Labels = nil
 	w := Workload{}
-	w.ParsePod(fakePod)
+	w.ParsePod(fakePod, config.Get())
 
 	assert.Equal(map[string]string{}, w.Labels)
 }

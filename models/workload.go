@@ -316,9 +316,9 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload, conf *config.Config
 	}
 }
 
-func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *meta_v1.ObjectMeta) {
-	conf := config.Get()
+func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *meta_v1.ObjectMeta, conf *config.Config) {
 	workload.Name = meta.Name
+	workload.Namespace = meta.Namespace
 	if tplMeta != nil && tplMeta.Labels != nil {
 		workload.TemplateLabels = tplMeta.Labels
 		// TODO: This is not right since the template labels won't match the workload's labels.
@@ -373,9 +373,9 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 	workload.HealthAnnotations = GetHealthAnnotation(annotations, GetHealthConfigAnnotation())
 }
 
-func (workload *Workload) ParseDeployment(d *apps_v1.Deployment) {
+func (workload *Workload) ParseDeployment(d *apps_v1.Deployment, conf *config.Config) {
 	workload.WorkloadGVK = kubernetes.Deployments
-	workload.parseObjectMeta(&d.ObjectMeta, &d.Spec.Template.ObjectMeta)
+	workload.parseObjectMeta(&d.ObjectMeta, &d.Spec.Template.ObjectMeta, conf)
 	if d.Spec.Replicas != nil {
 		workload.DesiredReplicas = *d.Spec.Replicas
 	}
@@ -388,9 +388,9 @@ func (workload *Workload) ParseDeployment(d *apps_v1.Deployment) {
 	workload.AvailableReplicas = d.Status.AvailableReplicas
 }
 
-func (workload *Workload) ParseReplicaSet(r *apps_v1.ReplicaSet) {
+func (workload *Workload) ParseReplicaSet(r *apps_v1.ReplicaSet, conf *config.Config) {
 	workload.WorkloadGVK = kubernetes.ReplicaSets
-	workload.parseObjectMeta(&r.ObjectMeta, &r.Spec.Template.ObjectMeta)
+	workload.parseObjectMeta(&r.ObjectMeta, &r.Spec.Template.ObjectMeta, conf)
 	if r.Spec.Replicas != nil {
 		workload.DesiredReplicas = *r.Spec.Replicas
 	}
@@ -398,9 +398,9 @@ func (workload *Workload) ParseReplicaSet(r *apps_v1.ReplicaSet) {
 	workload.AvailableReplicas = r.Status.AvailableReplicas
 }
 
-func (workload *Workload) ParseReplicaSetParent(r *apps_v1.ReplicaSet, workloadName string, workloadGVK schema.GroupVersionKind) {
+func (workload *Workload) ParseReplicaSetParent(r *apps_v1.ReplicaSet, workloadName string, workloadGVK schema.GroupVersionKind, conf *config.Config) {
 	// Some properties are taken from the ReplicaSet
-	workload.parseObjectMeta(&r.ObjectMeta, &r.Spec.Template.ObjectMeta)
+	workload.parseObjectMeta(&r.ObjectMeta, &r.Spec.Template.ObjectMeta, conf)
 	// But name and type are coming from the parent
 	// Custom properties from parent controller are not processed by Kiali
 	workload.WorkloadGVK = workloadGVK
@@ -412,9 +412,9 @@ func (workload *Workload) ParseReplicaSetParent(r *apps_v1.ReplicaSet, workloadN
 	workload.AvailableReplicas = r.Status.AvailableReplicas
 }
 
-func (workload *Workload) ParseReplicationController(r *core_v1.ReplicationController) {
+func (workload *Workload) ParseReplicationController(r *core_v1.ReplicationController, conf *config.Config) {
 	workload.WorkloadGVK = kubernetes.ReplicationControllers
-	workload.parseObjectMeta(&r.ObjectMeta, &r.Spec.Template.ObjectMeta)
+	workload.parseObjectMeta(&r.ObjectMeta, &r.Spec.Template.ObjectMeta, conf)
 	if r.Spec.Replicas != nil {
 		workload.DesiredReplicas = *r.Spec.Replicas
 	}
@@ -422,17 +422,17 @@ func (workload *Workload) ParseReplicationController(r *core_v1.ReplicationContr
 	workload.AvailableReplicas = r.Status.AvailableReplicas
 }
 
-func (workload *Workload) ParseDeploymentConfig(dc *osapps_v1.DeploymentConfig) {
+func (workload *Workload) ParseDeploymentConfig(dc *osapps_v1.DeploymentConfig, conf *config.Config) {
 	workload.WorkloadGVK = kubernetes.DeploymentConfigs
-	workload.parseObjectMeta(&dc.ObjectMeta, &dc.Spec.Template.ObjectMeta)
+	workload.parseObjectMeta(&dc.ObjectMeta, &dc.Spec.Template.ObjectMeta, conf)
 	workload.DesiredReplicas = dc.Spec.Replicas
 	workload.CurrentReplicas = dc.Status.Replicas
 	workload.AvailableReplicas = dc.Status.AvailableReplicas
 }
 
-func (workload *Workload) ParseStatefulSet(s *apps_v1.StatefulSet) {
+func (workload *Workload) ParseStatefulSet(s *apps_v1.StatefulSet, conf *config.Config) {
 	workload.WorkloadGVK = kubernetes.StatefulSets
-	workload.parseObjectMeta(&s.ObjectMeta, &s.Spec.Template.ObjectMeta)
+	workload.parseObjectMeta(&s.ObjectMeta, &s.Spec.Template.ObjectMeta, conf)
 	if s.Spec.Replicas != nil {
 		workload.DesiredReplicas = *s.Spec.Replicas
 	}
@@ -440,9 +440,9 @@ func (workload *Workload) ParseStatefulSet(s *apps_v1.StatefulSet) {
 	workload.AvailableReplicas = s.Status.ReadyReplicas
 }
 
-func (workload *Workload) ParsePod(pod *core_v1.Pod) {
+func (workload *Workload) ParsePod(pod *core_v1.Pod, conf *config.Config) {
 	workload.WorkloadGVK = kubernetes.Pods
-	workload.parseObjectMeta(&pod.ObjectMeta, &pod.ObjectMeta)
+	workload.parseObjectMeta(&pod.ObjectMeta, &pod.ObjectMeta, conf)
 
 	var podReplicas, podAvailableReplicas int32
 	podReplicas = 1
@@ -464,9 +464,9 @@ func (workload *Workload) ParsePod(pod *core_v1.Pod) {
 	workload.AvailableReplicas = podAvailableReplicas
 }
 
-func (workload *Workload) ParseJob(job *batch_v1.Job) {
+func (workload *Workload) ParseJob(job *batch_v1.Job, conf *config.Config) {
 	workload.WorkloadGVK = kubernetes.Jobs
-	workload.parseObjectMeta(&job.ObjectMeta, &job.ObjectMeta)
+	workload.parseObjectMeta(&job.ObjectMeta, &job.ObjectMeta, conf)
 	// Job controller does not use replica parameters as other controllers
 	// this is a workaround to use same values from Workload perspective
 	workload.DesiredReplicas = job.Status.Active + job.Status.Succeeded + job.Status.Failed
@@ -474,9 +474,9 @@ func (workload *Workload) ParseJob(job *batch_v1.Job) {
 	workload.AvailableReplicas = job.Status.Active + job.Status.Succeeded
 }
 
-func (workload *Workload) ParseCronJob(cnjb *batch_v1.CronJob) {
+func (workload *Workload) ParseCronJob(cnjb *batch_v1.CronJob, conf *config.Config) {
 	workload.WorkloadGVK = kubernetes.CronJobs
-	workload.parseObjectMeta(&cnjb.ObjectMeta, &cnjb.ObjectMeta)
+	workload.parseObjectMeta(&cnjb.ObjectMeta, &cnjb.ObjectMeta, conf)
 
 	// We don't have the information of this controller
 	// We will infer the number of replicas as the number of pods without succeed state
@@ -499,9 +499,9 @@ func (workload *Workload) ParseCronJob(cnjb *batch_v1.CronJob) {
 	workload.HealthAnnotations = GetHealthAnnotation(cnjb.Annotations, GetHealthConfigAnnotation())
 }
 
-func (workload *Workload) ParseDaemonSet(ds *apps_v1.DaemonSet) {
+func (workload *Workload) ParseDaemonSet(ds *apps_v1.DaemonSet, conf *config.Config) {
 	workload.WorkloadGVK = kubernetes.DaemonSets
-	workload.parseObjectMeta(&ds.ObjectMeta, &ds.Spec.Template.ObjectMeta)
+	workload.parseObjectMeta(&ds.ObjectMeta, &ds.Spec.Template.ObjectMeta, conf)
 	// This is a cornercase for DaemonSet controllers
 	// Desired is the number of desired nodes in a cluster that are running a DaemonSet Pod
 	// We are not going to change that terminology in the backend model yet, but probably add a note in the UI in the future
@@ -511,10 +511,9 @@ func (workload *Workload) ParseDaemonSet(ds *apps_v1.DaemonSet) {
 	workload.HealthAnnotations = GetHealthAnnotation(ds.Annotations, GetHealthConfigAnnotation())
 }
 
-func (workload *Workload) ParseWorkloadGroup(wg *networking_v1.WorkloadGroup, wentries []*networking_v1.WorkloadEntry, sidecars []*networking_v1.Sidecar) {
-	conf := config.Get()
+func (workload *Workload) ParseWorkloadGroup(wg *networking_v1.WorkloadGroup, wentries []*networking_v1.WorkloadEntry, sidecars []*networking_v1.Sidecar, conf *config.Config) {
 	workload.WorkloadGVK = kubernetes.WorkloadGroups
-	workload.parseObjectMeta(&wg.ObjectMeta, &wg.ObjectMeta)
+	workload.parseObjectMeta(&wg.ObjectMeta, &wg.ObjectMeta, conf)
 	workload.DesiredReplicas = int32(len(wentries))
 	workload.CurrentReplicas = int32(len(wentries))
 	workload.Labels = map[string]string{}
@@ -562,8 +561,7 @@ func (workload *Workload) ParseWorkloadGroup(wg *networking_v1.WorkloadGroup, we
 	}
 }
 
-func (workload *Workload) ParsePods(controllerName string, controllerGVK schema.GroupVersionKind, pods []core_v1.Pod) {
-	conf := config.Get()
+func (workload *Workload) ParsePods(controllerName string, controllerGVK schema.GroupVersionKind, pods []core_v1.Pod, conf *config.Config) {
 	workload.Name = controllerName
 	workload.WorkloadGVK = controllerGVK
 	// We don't have the information of this controller
