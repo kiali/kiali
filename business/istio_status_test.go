@@ -87,7 +87,7 @@ func TestComponentNotRunning(t *testing.T) {
 			ds,
 		)
 		wl := &models.Workload{}
-		wl.ParseDeployment(d)
+		wl.ParseDeployment(d, config.Get())
 		assert.Equal(kubernetes.ComponentUnhealthy, GetWorkloadStatus(*wl))
 	}
 }
@@ -105,7 +105,7 @@ func TestComponentRunning(t *testing.T) {
 		})
 
 	wl := &models.Workload{}
-	wl.ParseDeployment(d)
+	wl.ParseDeployment(d, config.Get())
 
 	assert.Equal(kubernetes.ComponentHealthy, GetWorkloadStatus(*wl))
 }

@@ -40,6 +40,8 @@ import (
 	"github.com/kiali/kiali/util/sliceutil"
 )
 
+// NewWorkloadService is not always a lightweight call. It may need to pull Workloads. This
+// returned service should not be cached across API calls.
 func NewWorkloadService(
 	cache cache.KialiCache,
 	conf *config.Config,
@@ -161,7 +163,7 @@ func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1.Au
 }
 
 // GetAllWorkloads fetches all workloads across the cluster's namespaces.
-func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string, labelSelector string) (models.Workloads, error) {
+func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster, labelSelector string) (models.Workloads, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetAllWorkloads",
 		observability.Attribute("package", "business"),
@@ -169,22 +171,44 @@ func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string, 
 	)
 	defer end()
 
-	namespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
+	// Because workloads may need to be decorated with Waypoint information, we first ensure that Waypoints are updated in
+	// the cache, and pass them down through the workload fetch logic.
+	waypoints := in.GetWaypoints(ctx)
+
+	return in.getAllWorkloads(ctx, cluster, labelSelector, waypoints)
+}
+
+// GetAllWorkloads fetches all workloads across the cluster's namespaces.
+func (in *WorkloadService) getAllWorkloads(ctx context.Context, cluster, labelSelector string, waypoints models.Workloads) (models.Workloads, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetAllWorkloads",
+		observability.Attribute("package", "business"),
+		observability.Attribute(observability.TracingClusterTag, cluster),
+	)
+	defer end()
+
+	workloads, err := in.fetchWorkloadsFromCluster(ctx, cluster, nil, labelSelector, waypoints)
 	if err != nil {
 		return nil, err
 	}
 
-	var workloads models.Workloads
-	for _, namespace := range namespaces {
-		w, err := in.fetchWorkloadsFromCluster(ctx, cluster, namespace.Name, labelSelector)
-		if err != nil {
-			return nil, err
-		}
-
-		workloads = append(workloads, w...)
-	}
-
 	return workloads, nil
+}
+
+// GetNamespacesWorkloads fetches all workloads for a single namespace
+func (in *WorkloadService) GetNamespaceWorkloads(ctx context.Context, cluster, namespace, labelSelector string) (models.Workloads, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetAllWorkloads",
+		observability.Attribute("package", "business"),
+		observability.Attribute(observability.TracingClusterTag, cluster),
+	)
+	defer end()
+
+	// Because workloads may need to be decorated with Waypoint information, we first ensure that Waypoints are updated in
+	// the cache, and pass them down through the workload fetch logic.
+	waypoints := in.GetWaypoints(ctx)
+
+	return in.fetchWorkloadsFromCluster(ctx, cluster, []string{namespace}, labelSelector, waypoints)
 }
 
 // GetGateways fetches all gateway workloads across all clusters and namespaces.
@@ -226,6 +250,10 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	)
 	defer end()
 
+	// Because workloads may need to be decorated with Waypoint information, we first ensure that Waypoints are updated in
+	// the cache, and pass them down through the workload fetch logic.
+	waypoints := in.GetWaypoints(ctx)
+
 	namespace := criteria.Namespace
 	cluster := criteria.Cluster
 
@@ -259,7 +287,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	go func(ctx context.Context) {
 		defer wg.Done()
 		var err2 error
-		ws, err2 = in.fetchWorkloadsFromCluster(ctx, cluster, namespace, "")
+		ws, err2 = in.fetchWorkloadsFromCluster(ctx, cluster, []string{namespace}, "", waypoints)
 		if err2 != nil {
 			log.Errorf("Error fetching Workloads per namespace %s: %s", namespace, err2)
 			errChan <- err2
@@ -467,13 +495,17 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 	)
 	defer end()
 
+	// Because workloads may need to be decorated with Waypoint information, we first ensure that Waypoints are updated in
+	// the cache, and pass them down through the workload fetch logic.
+	waypoints := in.GetWaypoints(ctx)
+
 	ns, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, criteria.Namespace, criteria.Cluster)
 	if err != nil {
 		return nil, err
 	}
 
 	criteria.IncludeWaypoints = true
-	workload, err2 := in.fetchWorkload(ctx, criteria)
+	workload, err2 := in.fetchWorkload(ctx, criteria, waypoints)
 	if err2 != nil {
 		return nil, err2
 	}
@@ -815,7 +847,9 @@ func isAccessLogEmpty(al *parser.AccessLog) bool {
 		al.UserAgent == "")
 }
 
-func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluster string, namespace string, labelSelector string) (models.Workloads, error) {
+// fetchWorkloadsFromCluster returns all cluster workloads for the specified namespaces. The caller must have access to all of
+// the specified namespaces or it is an error. If <namespaces> is empty it returns the workloads for all accessible namespaces.
+func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluster string, fetchNamespaces []string, labelSelector string, waypoints models.Workloads) (models.Workloads, error) {
 	var pods []core_v1.Pod
 	var repcon []core_v1.ReplicationController
 	var dep []apps_v1.Deployment
@@ -823,7 +857,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	var depcon []osapps_v1.DeploymentConfig
 	var fulset []apps_v1.StatefulSet
 	var jbs []batch_v1.Job
-	var conjbs []batch_v1.CronJob
+	var cronjbs []batch_v1.CronJob
 	var daeset []apps_v1.DaemonSet
 	var wgroups []*networking_v1.WorkloadGroup
 	var wentries []*networking_v1.WorkloadEntry
@@ -833,13 +867,25 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 
 	includeIstioWorkloads := cluster != in.conf.KubernetesConfig.ClusterName || !in.conf.Clustering.IgnoreHomeCluster
 
-	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
-	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
+	accessibleNamespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
+	if err != nil {
 		return nil, err
 	}
 
-	// we've already established the user has access to the namespace; use SA client to obtain namespace resource info
+	// Ensure the requested namespaces are accessible
+	if len(fetchNamespaces) > 0 {
+		accessibleNamespaces = sliceutil.Filter(accessibleNamespaces, func(ns models.Namespace) bool {
+			return slices.Contains(fetchNamespaces, ns.Name)
+		})
+		if len(fetchNamespaces) != len(accessibleNamespaces) {
+			return nil, fmt.Errorf("cannot fetch workloads for inaccessible namespaces [%v]", fetchNamespaces)
+		}
+	}
+	namespaces := sliceutil.Map(accessibleNamespaces, func(ns models.Namespace) string {
+		return ns.Name
+	})
+
+	// we've already established the user has access to the namespaces; use SA client to obtain namespace resource info
 	client, ok := in.kialiSAClients[cluster]
 	if !ok {
 		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
@@ -857,25 +903,30 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		return nil, fmt.Errorf("bad selector: %s", err)
 	}
 	selectorOpt := ctrlclient.MatchingLabelsSelector{Selector: sel}
-	inNamespaceOpt := ctrlclient.InNamespace(namespace)
 
 	podList := &core_v1.PodList{}
-	if err := kubeCache.List(ctx, podList, inNamespaceOpt, selectorOpt); err != nil {
-		return nil, fmt.Errorf("Error fetching Pods per namespace [%s][%s]: %s", cluster, namespace, err)
+	if err := kubeCache.List(ctx, podList, selectorOpt); err != nil {
+		return nil, fmt.Errorf("Error fetching cluster [%s] Pods : %s", cluster, err)
 	}
-	pods = podList.Items
+	pods = sliceutil.Filter(podList.Items, func(pod core_v1.Pod) bool {
+		return slices.Contains(namespaces, pod.Namespace)
+	})
 
 	depList := &apps_v1.DeploymentList{}
-	if err := kubeCache.List(ctx, depList, inNamespaceOpt); err != nil {
-		return nil, fmt.Errorf("Error fetching Deployments per namespace [%s][%s]: %s", cluster, namespace, err)
+	if err := kubeCache.List(ctx, depList); err != nil {
+		return nil, fmt.Errorf("Error fetching cluster [%s] Deployments : %s", cluster, err)
 	}
-	dep = depList.Items
+	dep = sliceutil.Filter(depList.Items, func(dep apps_v1.Deployment) bool {
+		return slices.Contains(namespaces, dep.Namespace)
+	})
 
 	repList := &apps_v1.ReplicaSetList{}
-	if err := kubeCache.List(ctx, repList, inNamespaceOpt); err != nil {
-		return nil, fmt.Errorf("Error fetching ReplicaSets per namespace [%s][%s]: %s", cluster, namespace, err)
+	if err := kubeCache.List(ctx, repList); err != nil {
+		return nil, fmt.Errorf("Error fetching cluster [%s] ReplicaSets: %s", cluster, err)
 	}
-	repset = repList.Items
+	repset = sliceutil.Filter(repList.Items, func(rs apps_v1.ReplicaSet) bool {
+		return slices.Contains(namespaces, rs.Namespace)
+	})
 
 	// ReplicaControllers are fetched only when included
 	wg.Add(1)
@@ -885,11 +936,14 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		var err error
 		if in.isWorkloadIncluded(kubernetes.ReplicationControllerType) {
 			// No Cache for ReplicationControllers
-			repcon, err = client.GetReplicationControllers(namespace)
+			repcon, err = client.GetReplicationControllers("")
 			if err != nil {
-				log.Errorf("Error fetching GetReplicationControllers per namespace [%s][%s]: %s", cluster, namespace, err)
+				log.Errorf("Error fetching cluster [%s] GetReplicationControllers: %s", cluster, err)
 				errChan <- err
 			}
+			repcon = sliceutil.Filter(repcon, func(rc core_v1.ReplicationController) bool {
+				return slices.Contains(namespaces, rc.Namespace)
+			})
 		}
 	}()
 
@@ -901,21 +955,26 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		var err error
 		if client.IsOpenShift() && in.isWorkloadIncluded(kubernetes.DeploymentConfigType) {
 			// No cache for DeploymentConfigs
-			depcon, err = client.GetDeploymentConfigs(ctx, namespace)
+			depcon, err = client.GetDeploymentConfigs(ctx, "")
 			if err != nil {
-				log.Errorf("Error fetching DeploymentConfigs per namespace [%s][%s]: %s", cluster, namespace, err)
+				log.Errorf("Error fetching cluster [%s] DeploymentConfigs: %s", cluster, err)
 				errChan <- err
 			}
+			depcon = sliceutil.Filter(depcon, func(dc osapps_v1.DeploymentConfig) bool {
+				return slices.Contains(namespaces, dc.Namespace)
+			})
 		}
 	}()
 
 	// StatefulSets are fetched only when included
 	if in.isWorkloadIncluded(kubernetes.StatefulSetType) {
 		setList := &apps_v1.StatefulSetList{}
-		if err := kubeCache.List(ctx, setList, inNamespaceOpt); err != nil {
-			return nil, fmt.Errorf("Error fetching StatefulSets per namespace [%s][%s]: %s", cluster, namespace, err)
+		if err := kubeCache.List(ctx, setList); err != nil {
+			return nil, fmt.Errorf("Error fetching cluster [%s] StatefulSets: %s", cluster, err)
 		}
-		fulset = setList.Items
+		fulset = sliceutil.Filter(setList.Items, func(ss apps_v1.StatefulSet) bool {
+			return slices.Contains(namespaces, ss.Namespace)
+		})
 	}
 
 	// CronJobs are fetched only when included
@@ -926,11 +985,14 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		var err error
 		if in.isWorkloadIncluded(kubernetes.CronJobType) {
 			// No cache for Cronjobs
-			conjbs, err = client.GetCronJobs(namespace)
+			cronjbs, err = client.GetCronJobs("")
 			if err != nil {
-				log.Errorf("Error fetching CronJobs per namespace [%s][%s]: %s", cluster, namespace, err)
+				log.Errorf("Error fetching cluster[%s] CronJobs: %s", cluster, err)
 				errChan <- err
 			}
+			cronjbs = sliceutil.Filter(cronjbs, func(cj batch_v1.CronJob) bool {
+				return slices.Contains(namespaces, cj.Namespace)
+			})
 		}
 	}()
 
@@ -942,48 +1004,59 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		var err error
 		if in.isWorkloadIncluded(kubernetes.JobType) {
 			// No cache for Jobs
-			jbs, err = client.GetJobs(namespace)
+			jbs, err = client.GetJobs("")
 			if err != nil {
-				log.Errorf("Error fetching Jobs per namespace [%s][%s]: %s", cluster, namespace, err)
+				log.Errorf("Error fetching cluster [%s] Jobs: %s", cluster, err)
 				errChan <- err
 			}
+			jbs = sliceutil.Filter(jbs, func(jb batch_v1.Job) bool {
+				return slices.Contains(namespaces, jb.Namespace)
+			})
 		}
 	}()
 
 	// DaemonSets are fetched only when included
 	if in.isWorkloadIncluded(kubernetes.DaemonSetType) {
 		daeList := &apps_v1.DaemonSetList{}
-		if err := kubeCache.List(ctx, daeList, inNamespaceOpt); err != nil {
-			return nil, fmt.Errorf("Error fetching DaemonSets per namespace [%s][%s]: %s", cluster, namespace, err)
+		if err := kubeCache.List(ctx, daeList); err != nil {
+			return nil, fmt.Errorf("Error fetching cluster [%s] DaemonSets: %s", cluster, err)
 		}
-		daeset = daeList.Items
+		daeset = sliceutil.Filter(daeList.Items, func(ds apps_v1.DaemonSet) bool {
+			return slices.Contains(namespaces, ds.Namespace)
+		})
 	}
 
 	// WorkloadGroups are fetched only when included
 	if includeIstioWorkloads && in.isWorkloadIncluded(kubernetes.WorkloadGroupType) {
 		wgroupList := &networking_v1.WorkloadGroupList{}
-		if err := kubeCache.List(ctx, wgroupList, inNamespaceOpt); err != nil {
-			return nil, fmt.Errorf("Error fetching WorkloadGroups per namespace [%s][%s]: %s", cluster, namespace, err)
+		if err := kubeCache.List(ctx, wgroupList); err != nil {
+			return nil, fmt.Errorf("Error fetching cluster [%s] WorkloadGroups: %s", cluster, err)
 		}
-		wgroups = wgroupList.Items
+		wgroups = sliceutil.Filter(wgroupList.Items, func(wg *networking_v1.WorkloadGroup) bool {
+			return slices.Contains(namespaces, wg.Namespace)
+		})
 	}
 
 	// WorkloadEntries are fetched only when included
 	if includeIstioWorkloads && in.isWorkloadIncluded(kubernetes.WorkloadEntryType) {
 		wentryList := &networking_v1.WorkloadEntryList{}
-		if err := kubeCache.List(ctx, wentryList, inNamespaceOpt); err != nil {
-			return nil, fmt.Errorf("Error fetching WorkloadEntries per namespace [%s][%s]: %s", cluster, namespace, err)
+		if err := kubeCache.List(ctx, wentryList); err != nil {
+			return nil, fmt.Errorf("Error fetching cluster [%s] WorkloadEntries : %s", cluster, err)
 		}
-		wentries = wentryList.Items
+		wentries = sliceutil.Filter(wentryList.Items, func(we *networking_v1.WorkloadEntry) bool {
+			return slices.Contains(namespaces, we.Namespace)
+		})
 	}
 
 	// Sidecars are fetched only when included
 	if includeIstioWorkloads && in.isWorkloadIncluded(kubernetes.SidecarType) {
 		sidecarList := &networking_v1.SidecarList{}
-		if err := kubeCache.List(ctx, sidecarList, inNamespaceOpt); err != nil {
-			return nil, fmt.Errorf("Error fetching Sidecars per namespace [%s][%s]: %s", cluster, namespace, err)
+		if err := kubeCache.List(ctx, sidecarList); err != nil {
+			return nil, fmt.Errorf("Error fetching cluster [%s] Sidecars: %s", cluster, err)
 		}
-		sidecars = sidecarList.Items
+		sidecars = sliceutil.Filter(sidecarList.Items, func(sc *networking_v1.Sidecar) bool {
+			return slices.Contains(namespaces, sc.Namespace)
+		})
 	}
 
 	wg.Wait()
@@ -992,8 +1065,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		return ws, err
 	}
 
-	// Key: name of controller; Value: GroupVersionKind of controller
-	controllers := map[string]schema.GroupVersionKind{}
+	controllers := newControllerMap()
 
 	// Find controllers from pods
 	for _, pod := range pods {
@@ -1005,39 +1077,43 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 					continue
 				}
 				if ref.Controller != nil && *ref.Controller && in.isWorkloadIncluded(ref.Kind) {
-					if _, exist := controllers[ref.Name]; !exist {
-						controllers[ref.Name] = refGV.WithKind(ref.Kind)
+					refKey := controllers.key(pod.Namespace, ref.Name)
+					if _, exist := controllers[refKey]; !exist {
+						controllers[refKey] = refGV.WithKind(ref.Kind)
 					} else {
-						if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
-							controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
+						if controllers[refKey] != refGV.WithKind(ref.Kind) {
+							controllers[refKey] = refGV.WithKind(controllerPriority(controllers[refKey].Kind, ref.Kind))
 						}
 					}
 				}
 			}
 		} else {
-			if _, exist := controllers[pod.Name]; !exist {
-				// Pod without controller
-				controllers[pod.Name] = kubernetes.Pods
+			// pod without ref controller
+			podKey := controllers.key(pod.Namespace, pod.Name)
+			if _, exist := controllers[podKey]; !exist {
+				controllers[podKey] = kubernetes.Pods
 			}
 		}
 	}
 
 	// Find controllers from WorkloadGroups
 	for _, wgroup := range wgroups {
-		if _, exist := controllers[wgroup.Name]; !exist {
-			controllers[wgroup.Name] = kubernetes.WorkloadGroups
+		wgroupKey := controllers.key(wgroup.Namespace, wgroup.Name)
+		if _, exist := controllers[wgroupKey]; !exist {
+			controllers[wgroupKey] = kubernetes.WorkloadGroups
 		}
 	}
 
 	// Resolve ReplicaSets from Deployments
 	// Resolve ReplicationControllers from DeploymentConfigs
 	// Resolve Jobs from CronJobs
-	for controllerName, controllerGVK := range controllers {
+	for controllerKey, controllerGVK := range controllers {
+		controllerNamespace, controllerName := controllers.parse(controllerKey)
 		if controllerGVK == kubernetes.ReplicaSets {
 			found := false
 			iFound := -1
 			for i, rs := range repset {
-				if rs.Name == controllerName {
+				if rs.Name == controllerName && rs.Namespace == controllerNamespace {
 					iFound = i
 					found = true
 					break
@@ -1052,14 +1128,15 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 							continue
 						}
 						// Delete the child ReplicaSet and add the parent controller
-						if _, exist := controllers[ref.Name]; !exist {
-							controllers[ref.Name] = refGV.WithKind(ref.Kind)
+						parentKey := controllers.key(repset[iFound].Namespace, ref.Name)
+						if _, exist := controllers[parentKey]; !exist {
+							controllers[parentKey] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
-								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
+							if controllers[parentKey] != refGV.WithKind(ref.Kind) {
+								controllers[parentKey] = refGV.WithKind(controllerPriority(controllers[parentKey].Kind, ref.Kind))
 							}
 						}
-						delete(controllers, controllerName)
+						delete(controllers, controllerKey)
 					}
 				}
 			}
@@ -1068,7 +1145,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
-				if rc.Name == controllerName {
+				if rc.Name == controllerName && rc.Namespace == controllerNamespace {
 					iFound = i
 					found = true
 					break
@@ -1083,14 +1160,15 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 					}
 					if ref.Controller != nil && *ref.Controller {
 						// Delete the child ReplicationController and add the parent controller
-						if _, exist := controllers[ref.Name]; !exist {
-							controllers[ref.Name] = refGV.WithKind(ref.Kind)
+						parentKey := controllers.key(repcon[iFound].Namespace, ref.Name)
+						if _, exist := controllers[parentKey]; !exist {
+							controllers[parentKey] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
-								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
+							if controllers[parentKey] != refGV.WithKind(ref.Kind) {
+								controllers[parentKey] = refGV.WithKind(controllerPriority(controllers[parentKey].Kind, ref.Kind))
 							}
 						}
-						delete(controllers, controllerName)
+						delete(controllers, controllerKey)
 					}
 				}
 			}
@@ -1099,7 +1177,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
-				if jb.Name == controllerName {
+				if jb.Name == controllerName && jb.Namespace == controllerNamespace {
 					iFound = i
 					found = true
 					break
@@ -1114,24 +1192,25 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 					}
 					if ref.Controller != nil && *ref.Controller {
 						// Delete the child Job and add the parent controller
-						if _, exist := controllers[ref.Name]; !exist {
-							controllers[ref.Name] = refGV.WithKind(ref.Kind)
+						parentKey := controllers.key(jbs[iFound].Namespace, ref.Name)
+						if _, exist := controllers[parentKey]; !exist {
+							controllers[parentKey] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
-								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
+							if controllers[parentKey] != refGV.WithKind(ref.Kind) {
+								controllers[parentKey] = refGV.WithKind(controllerPriority(controllers[parentKey].Kind, ref.Kind))
 							}
 						}
 						// Jobs are special as deleting CronJob parent doesn't delete children
 						// So we need to check that parent exists before to delete children controller
 						cnExist := false
-						for _, cnj := range conjbs {
-							if cnj.Name == ref.Name {
+						for _, cnj := range cronjbs {
+							if cnj.Name == ref.Name && cnj.Namespace == jbs[iFound].Namespace {
 								cnExist = true
 								break
 							}
 						}
 						if cnExist {
-							delete(controllers, controllerName)
+							delete(controllers, controllerKey)
 						}
 					}
 				}
@@ -1153,8 +1232,9 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		if selector != nil {
 			selectorCheck = selector.Matches(labels.Set(d.Spec.Template.Labels))
 		}
-		if _, exist := controllers[d.Name]; !exist && selectorCheck {
-			controllers[d.Name] = kubernetes.Deployments
+		depKey := controllers.key(d.Namespace, d.Name)
+		if _, exist := controllers[depKey]; !exist && selectorCheck {
+			controllers[depKey] = kubernetes.Deployments
 		}
 	}
 	for _, rs := range repset {
@@ -1162,8 +1242,9 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		if selector != nil {
 			selectorCheck = selector.Matches(labels.Set(rs.Spec.Template.Labels))
 		}
-		if _, exist := controllers[rs.Name]; !exist && len(rs.OwnerReferences) == 0 && selectorCheck {
-			controllers[rs.Name] = kubernetes.ReplicaSets
+		rsKey := controllers.key(rs.Namespace, rs.Name)
+		if _, exist := controllers[rsKey]; !exist && len(rs.OwnerReferences) == 0 && selectorCheck {
+			controllers[rsKey] = kubernetes.ReplicaSets
 		}
 	}
 	for _, dc := range depcon {
@@ -1171,8 +1252,9 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		if selector != nil {
 			selectorCheck = selector.Matches(labels.Set(dc.Spec.Template.Labels))
 		}
-		if _, exist := controllers[dc.Name]; !exist && selectorCheck {
-			controllers[dc.Name] = kubernetes.DeploymentConfigs
+		dcKey := controllers.key(dc.Namespace, dc.Name)
+		if _, exist := controllers[dcKey]; !exist && selectorCheck {
+			controllers[dcKey] = kubernetes.DeploymentConfigs
 		}
 	}
 	for _, rc := range repcon {
@@ -1180,8 +1262,9 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		if selector != nil {
 			selectorCheck = selector.Matches(labels.Set(rc.Spec.Template.Labels))
 		}
-		if _, exist := controllers[rc.Name]; !exist && len(rc.OwnerReferences) == 0 && selectorCheck {
-			controllers[rc.Name] = kubernetes.ReplicationControllers
+		rcKey := controllers.key(rc.Namespace, rc.Name)
+		if _, exist := controllers[rcKey]; !exist && len(rc.OwnerReferences) == 0 && selectorCheck {
+			controllers[rcKey] = kubernetes.ReplicationControllers
 		}
 	}
 	for _, fs := range fulset {
@@ -1189,8 +1272,9 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		if selector != nil {
 			selectorCheck = selector.Matches(labels.Set(fs.Spec.Template.Labels))
 		}
-		if _, exist := controllers[fs.Name]; !exist && selectorCheck {
-			controllers[fs.Name] = kubernetes.StatefulSets
+		fsKey := controllers.key(fs.Namespace, fs.Name)
+		if _, exist := controllers[fsKey]; !exist && selectorCheck {
+			controllers[fsKey] = kubernetes.StatefulSets
 		}
 	}
 	for _, ds := range daeset {
@@ -1198,25 +1282,26 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		if selector != nil {
 			selectorCheck = selector.Matches(labels.Set(ds.Spec.Template.Labels))
 		}
-		if _, exist := controllers[ds.Name]; !exist && selectorCheck {
-			controllers[ds.Name] = kubernetes.DaemonSets
+		dsKey := controllers.key(ds.Namespace, ds.Name)
+		if _, exist := controllers[dsKey]; !exist && selectorCheck {
+			controllers[dsKey] = kubernetes.DaemonSets
 		}
 	}
 
 	// Build workloads from controllers
-	var controllerNames []string
+	var controllerKeys []string
 	for k := range controllers {
-		controllerNames = append(controllerNames, k)
+		controllerKeys = append(controllerKeys, k)
 	}
-	sort.Strings(controllerNames)
-	for _, controllerName := range controllerNames {
+	sort.Strings(controllerKeys)
+	for _, controllerKey := range controllerKeys {
+		controllerNamespace, controllerName := controllers.parse(controllerKey)
 		w := &models.Workload{
 			Pods:     models.Pods{},
 			Services: []models.ServiceOverview{},
 		}
-		w.Cluster = cluster
-		w.Namespace = namespace
-		controllerGVK := controllers[controllerName]
+		w.Cluster = cluster // namespace will be set when parsing the target object
+		controllerGVK := controllers[controllerKey]
 		// Flag to add a controller if it is found
 		cnFound := true
 		switch controllerGVK {
@@ -1224,7 +1309,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, dp := range dep {
-				if dp.Name == controllerName {
+				if dp.Name == controllerName && dp.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1233,7 +1318,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			if found {
 				selector := labels.Set(dep[iFound].Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
-				w.ParseDeployment(&dep[iFound])
+				w.ParseDeployment(&dep[iFound], in.conf)
 			} else {
 				log.Errorf("Workload %s is not found as Deployment", controllerName)
 				cnFound = false
@@ -1242,7 +1327,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, rs := range repset {
-				if rs.Name == controllerName {
+				if rs.Name == controllerName && rs.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1251,7 +1336,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			if found {
 				selector := labels.Set(repset[iFound].Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
-				w.ParseReplicaSet(&repset[iFound])
+				w.ParseReplicaSet(&repset[iFound], in.conf)
 			} else {
 				log.Errorf("Workload %s is not found as ReplicaSet", controllerName)
 				cnFound = false
@@ -1260,7 +1345,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
-				if rc.Name == controllerName {
+				if rc.Name == controllerName && rc.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1269,7 +1354,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			if found {
 				selector := labels.Set(repcon[iFound].Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
-				w.ParseReplicationController(&repcon[iFound])
+				w.ParseReplicationController(&repcon[iFound], in.conf)
 			} else {
 				log.Errorf("Workload %s is not found as ReplicationController", controllerName)
 				cnFound = false
@@ -1278,7 +1363,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, dc := range depcon {
-				if dc.Name == controllerName {
+				if dc.Name == controllerName && dc.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1287,7 +1372,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			if found {
 				selector := labels.Set(depcon[iFound].Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
-				w.ParseDeploymentConfig(&depcon[iFound])
+				w.ParseDeploymentConfig(&depcon[iFound], in.conf)
 			} else {
 				log.Errorf("Workload %s is not found as DeploymentConfig", controllerName)
 				cnFound = false
@@ -1296,7 +1381,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, fs := range fulset {
-				if fs.Name == controllerName {
+				if fs.Name == controllerName && fs.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1305,7 +1390,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			if found {
 				selector := labels.Set(fulset[iFound].Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
-				w.ParseStatefulSet(&fulset[iFound])
+				w.ParseStatefulSet(&fulset[iFound], in.conf)
 			} else {
 				log.Errorf("Workload %s is not found as StatefulSet", controllerName)
 				cnFound = false
@@ -1314,7 +1399,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, pod := range pods {
-				if pod.Name == controllerName {
+				if pod.Name == controllerName && pod.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1322,7 +1407,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			}
 			if found {
 				w.SetPods([]core_v1.Pod{pods[iFound]}, in.businessLayer.Mesh.IsControlPlane)
-				w.ParsePod(&pods[iFound])
+				w.ParsePod(&pods[iFound], in.conf)
 			} else {
 				log.Errorf("Workload %s is not found as Pod", controllerName)
 				cnFound = false
@@ -1331,7 +1416,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
-				if jb.Name == controllerName {
+				if jb.Name == controllerName && jb.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1340,7 +1425,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			if found {
 				selector := labels.Set(jbs[iFound].Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
-				w.ParseJob(&jbs[iFound])
+				w.ParseJob(&jbs[iFound], in.conf)
 			} else {
 				log.Errorf("Workload %s is not found as Job", controllerName)
 				cnFound = false
@@ -1348,17 +1433,17 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		case kubernetes.CronJobs:
 			found := false
 			iFound := -1
-			for i, cjb := range conjbs {
-				if cjb.Name == controllerName {
+			for i, cjb := range cronjbs {
+				if cjb.Name == controllerName && cjb.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
 				}
 			}
 			if found {
-				selector := labels.Set(conjbs[iFound].Spec.JobTemplate.Spec.Template.Labels).AsSelector()
+				selector := labels.Set(cronjbs[iFound].Spec.JobTemplate.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
-				w.ParseCronJob(&conjbs[iFound])
+				w.ParseCronJob(&cronjbs[iFound], in.conf)
 			} else {
 				log.Warningf("Workload %s is not found as CronJob (CronJob could be deleted but children are still in the namespace)", controllerName)
 				cnFound = false
@@ -1367,7 +1452,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, ds := range daeset {
-				if ds.Name == controllerName {
+				if ds.Name == controllerName && ds.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1376,7 +1461,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			if found {
 				selector := labels.Set(daeset[iFound].Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
-				w.ParseDaemonSet(&daeset[iFound])
+				w.ParseDaemonSet(&daeset[iFound], in.conf)
 			} else {
 				log.Errorf("Workload %s is not found as DaemonSet", controllerName)
 				cnFound = false
@@ -1385,7 +1470,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, wgroup := range wgroups {
-				if wgroup.Name == controllerName {
+				if wgroup.Name == controllerName && wgroup.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1394,9 +1479,9 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			if found {
 				if wgroups[iFound].Spec.Metadata != nil {
 					selector := labels.Set(wgroups[iFound].Spec.Metadata.Labels).AsSelector()
-					w.ParseWorkloadGroup(wgroups[iFound], kubernetes.FilterWorkloadEntriesBySelector(selector, wentries), kubernetes.FilterSidecarsBySelector(selector.String(), sidecars))
+					w.ParseWorkloadGroup(wgroups[iFound], kubernetes.FilterWorkloadEntriesBySelector(selector, wentries), kubernetes.FilterSidecarsBySelector(selector.String(), sidecars), in.conf)
 				} else {
-					w.ParseWorkloadGroup(wgroups[iFound], []*networking_v1.WorkloadEntry{}, []*networking_v1.Sidecar{})
+					w.ParseWorkloadGroup(wgroups[iFound], []*networking_v1.WorkloadEntry{}, []*networking_v1.Sidecar{}, in.conf)
 				}
 			} else {
 				log.Errorf("Workload %s is not found as WorkloadGroup", controllerName)
@@ -1414,7 +1499,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			for _, rs := range repset {
 				rsOwnerRef := meta_v1.GetControllerOf(&rs.ObjectMeta)
 				if rsOwnerRef != nil && rsOwnerRef.Name == controllerName && rsOwnerRef.Kind == controllerGVK.Kind {
-					w.ParseReplicaSetParent(&rs, controllerName, controllerGVK)
+					w.ParseReplicaSetParent(&rs, controllerName, controllerGVK, in.conf)
 					for _, pod := range pods {
 						if meta_v1.IsControlledBy(&pod, &rs) {
 							cPods = append(cPods, pod)
@@ -1428,7 +1513,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				// is managing the pods itself i.e. the pod's have an owner ref directly to the controller type.
 				cPods = kubernetes.FilterPodsByController(controllerName, controllerGVK, pods)
 				if len(cPods) > 0 {
-					w.ParsePods(controllerName, controllerGVK, cPods)
+					w.ParsePods(controllerName, controllerGVK, cPods, in.conf)
 					log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", controllerName, controllerGVK.Kind)
 				}
 			}
@@ -1437,14 +1522,15 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 
 		if cnFound {
 			// Add the Proxy Status to the workload
+			addedWaypointsForWorkload := false
 			for _, pod := range w.Pods {
 				isWaypoint := w.IsWaypoint()
 				if in.conf.ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
-					pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(cluster, namespace, pod.Name, !isWaypoint)
+					pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(cluster, w.Namespace, pod.Name, !isWaypoint)
 				}
-				// Add the Proxy Status to the workload
-				if pod.AmbientEnabled() {
-					w.WaypointWorkloads = in.GetWaypointsForWorkload(ctx, *w, false)
+				if !addedWaypointsForWorkload && pod.AmbientEnabled() {
+					w.WaypointWorkloads = in.getWaypointsForWorkload(ctx, *w, false, waypoints)
+					addedWaypointsForWorkload = true
 				}
 			}
 
@@ -1461,7 +1547,28 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	return ws, nil
 }
 
-func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadCriteria) (*models.Workload, error) {
+// Key: namespace:name of controller; Value: GVK of controller
+type controllerMap map[string]schema.GroupVersionKind
+
+func newControllerMap() controllerMap {
+	return map[string]schema.GroupVersionKind{}
+}
+
+// controllers.key is a helper func for controller maps
+func (in controllerMap) key(namespace, name string) string {
+	return namespace + ":" + name
+}
+
+// controllers.parse is a helper func for controller maps
+func (in controllerMap) parse(key string) (namespace, name string) {
+	parts := strings.SplitN(key, ":", 2)
+	if len(parts) == 2 {
+		return parts[0], parts[1]
+	}
+	return "", key // fallback for malformed key
+}
+
+func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadCriteria, waypoints models.Workloads) (*models.Workload, error) {
 	var pods []core_v1.Pod
 	var repcon []core_v1.ReplicationController
 	var dep *apps_v1.Deployment
@@ -1469,7 +1576,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	var depcon *osapps_v1.DeploymentConfig
 	var fulset *apps_v1.StatefulSet
 	var jbs []batch_v1.Job
-	var conjbs []batch_v1.CronJob
+	var cronjbs []batch_v1.CronJob
 	var ds *apps_v1.DaemonSet
 	var wgroup *networking_v1.WorkloadGroup
 	var wentries []*networking_v1.WorkloadEntry
@@ -1649,7 +1756,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		var err error
 		if in.isWorkloadIncluded(kubernetes.CronJobType) {
 			// No cache for CronJobs
-			conjbs, err = client.GetCronJobs(criteria.Namespace)
+			cronjbs, err = client.GetCronJobs(criteria.Namespace)
 			if err != nil {
 				log.Errorf("Error fetching CronJobs per namespace %s: %s", criteria.Namespace, err)
 				errChan <- err
@@ -1695,8 +1802,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		return wl, err
 	}
 
-	// Key: name of controller; Value: GVK of controller
-	controllers := map[string]schema.GroupVersionKind{}
+	controllers := newControllerMap()
 
 	// Find controllers from pods
 	for _, pod := range pods {
@@ -1708,39 +1814,43 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 					continue
 				}
 				if ref.Controller != nil && *ref.Controller && in.isWorkloadIncluded(ref.Kind) {
-					if _, exist := controllers[ref.Name]; !exist {
-						controllers[ref.Name] = refGV.WithKind(ref.Kind)
+					refKey := controllers.key(pod.Namespace, ref.Name)
+					if _, exist := controllers[refKey]; !exist {
+						controllers[refKey] = refGV.WithKind(ref.Kind)
 					} else {
-						if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
-							controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].String(), ref.Kind))
+						if controllers[refKey] != refGV.WithKind(ref.Kind) {
+							controllers[refKey] = refGV.WithKind(controllerPriority(controllers[refKey].Kind, ref.Kind))
 						}
 					}
 				}
 			}
 		} else {
-			if _, exist := controllers[pod.Name]; !exist {
-				// Pod without controller
-				controllers[pod.Name] = kubernetes.Pods
+			// Pod without ref controller
+			podKey := controllers.key(pod.Namespace, pod.Name)
+			if _, exist := controllers[podKey]; !exist {
+				controllers[podKey] = kubernetes.Pods
 			}
 		}
 	}
 
 	// Find controllers from WorkloadGroups
 	if wgroup != nil {
-		if _, exist := controllers[wgroup.Name]; !exist {
-			controllers[wgroup.Name] = kubernetes.WorkloadGroups
+		wgroupKey := controllers.key(wgroup.Namespace, wgroup.Name)
+		if _, exist := controllers[wgroupKey]; !exist {
+			controllers[wgroupKey] = kubernetes.WorkloadGroups
 		}
 	}
 
 	// Resolve ReplicaSets from Deployments
 	// Resolve ReplicationControllers from DeploymentConfigs
 	// Resolve Jobs from CronJobs
-	for controllerName, controllerGVK := range controllers {
+	for controllerKey, controllerGVK := range controllers {
+		controllerNamespace, controllerName := controllers.parse(controllerKey)
 		if controllerGVK == kubernetes.ReplicaSets {
 			found := false
 			iFound := -1
 			for i, rs := range repset {
-				if rs.Name == controllerName {
+				if rs.Name == controllerName && rs.Namespace == controllerNamespace {
 					iFound = i
 					found = true
 					break
@@ -1755,14 +1865,15 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 					}
 					if ref.Controller != nil && *ref.Controller {
 						// Delete the child ReplicaSet and add the parent controller
-						if _, exist := controllers[ref.Name]; !exist {
-							controllers[ref.Name] = refGV.WithKind(ref.Kind)
+						parentKey := controllers.key(repset[iFound].Namespace, ref.Name)
+						if _, exist := controllers[parentKey]; !exist {
+							controllers[parentKey] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
-								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
+							if controllers[parentKey] != refGV.WithKind(ref.Kind) {
+								controllers[parentKey] = refGV.WithKind(controllerPriority(controllers[parentKey].Kind, ref.Kind))
 							}
 						}
-						delete(controllers, controllerName)
+						delete(controllers, controllerKey)
 					}
 				}
 			}
@@ -1771,7 +1882,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
-				if rc.Name == controllerName {
+				if rc.Name == controllerName && rc.Namespace == controllerNamespace {
 					iFound = i
 					found = true
 					break
@@ -1786,14 +1897,15 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 					}
 					if ref.Controller != nil && *ref.Controller {
 						// Delete the child ReplicationController and add the parent controller
-						if _, exist := controllers[ref.Name]; !exist {
-							controllers[ref.Name] = refGV.WithKind(ref.Kind)
+						parentKey := controllers.key(repcon[iFound].Namespace, ref.Name)
+						if _, exist := controllers[parentKey]; !exist {
+							controllers[parentKey] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
-								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].String(), ref.Kind))
+							if controllers[parentKey] != refGV.WithKind(ref.Kind) {
+								controllers[parentKey] = refGV.WithKind(controllerPriority(controllers[parentKey].Kind, ref.Kind))
 							}
 						}
-						delete(controllers, controllerName)
+						delete(controllers, controllerKey)
 					}
 				}
 			}
@@ -1802,7 +1914,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
-				if jb.Name == controllerName {
+				if jb.Name == controllerName && jb.Namespace == controllerNamespace {
 					iFound = i
 					found = true
 					break
@@ -1817,24 +1929,25 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 					}
 					if ref.Controller != nil && *ref.Controller {
 						// Delete the child Job and add the parent controller
-						if _, exist := controllers[ref.Name]; !exist {
-							controllers[ref.Name] = refGV.WithKind(ref.Kind)
+						parentKey := controllers.key(jbs[iFound].Namespace, ref.Name)
+						if _, exist := controllers[parentKey]; !exist {
+							controllers[parentKey] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
-								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].String(), ref.Kind))
+							if controllers[parentKey] != refGV.WithKind(ref.Kind) {
+								controllers[parentKey] = refGV.WithKind(controllerPriority(controllers[parentKey].Kind, ref.Kind))
 							}
 						}
 						// Jobs are special as deleting CronJob parent doesn't delete children
 						// So we need to check that parent exists before to delete children controller
 						cnExist := false
-						for _, cnj := range conjbs {
-							if cnj.Name == ref.Name {
+						for _, cnj := range cronjbs {
+							if cnj.Name == ref.Name && cnj.Namespace == jbs[iFound].Namespace {
 								cnExist = true
 								break
 							}
 						}
 						if cnExist {
-							delete(controllers, controllerName)
+							delete(controllers, controllerKey)
 						}
 					}
 				}
@@ -1844,39 +1957,46 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 
 	// Cornercase, check for controllers without pods, to show them as a workload
 	if dep != nil {
-		if _, exist := controllers[dep.Name]; !exist {
-			controllers[dep.Name] = kubernetes.Deployments
+		depKey := controllers.key(dep.Namespace, dep.Name)
+		if _, exist := controllers[depKey]; !exist {
+			controllers[depKey] = kubernetes.Deployments
 		}
 	}
 	for _, rs := range repset {
-		if _, exist := controllers[rs.Name]; !exist && len(rs.OwnerReferences) == 0 {
-			controllers[rs.Name] = kubernetes.ReplicaSets
+		rsKey := controllers.key(rs.Namespace, rs.Name)
+		if _, exist := controllers[rsKey]; !exist && len(rs.OwnerReferences) == 0 {
+			controllers[rsKey] = kubernetes.ReplicaSets
 		}
 	}
 	if depcon != nil {
-		if _, exist := controllers[depcon.Name]; !exist {
-			controllers[depcon.Name] = kubernetes.DeploymentConfigs
+		dcKey := controllers.key(depcon.Namespace, depcon.Name)
+		if _, exist := controllers[dcKey]; !exist {
+			controllers[dcKey] = kubernetes.DeploymentConfigs
 		}
 	}
 	for _, rc := range repcon {
-		if _, exist := controllers[rc.Name]; !exist && len(rc.OwnerReferences) == 0 {
-			controllers[rc.Name] = kubernetes.ReplicationControllers
+		rcKey := controllers.key(rc.Namespace, rc.Name)
+		if _, exist := controllers[rcKey]; !exist && len(rc.OwnerReferences) == 0 {
+			controllers[rcKey] = kubernetes.ReplicationControllers
 		}
 	}
 	if fulset != nil {
-		if _, exist := controllers[fulset.Name]; !exist {
-			controllers[fulset.Name] = kubernetes.StatefulSets
+		fsKey := controllers.key(fulset.Namespace, fulset.Name)
+		if _, exist := controllers[fsKey]; !exist {
+			controllers[fsKey] = kubernetes.StatefulSets
 		}
 	}
 	if ds != nil {
-		if _, exist := controllers[ds.Name]; !exist {
-			controllers[ds.Name] = kubernetes.DaemonSets
+		dsKey := controllers.key(ds.Namespace, ds.Name)
+		if _, exist := controllers[dsKey]; !exist {
+			controllers[dsKey] = kubernetes.DaemonSets
 		}
 	}
 
 	// Build workload from controllers
 
-	if _, exist := controllers[criteria.WorkloadName]; exist {
+	workloadKey := controllers.key(criteria.Namespace, criteria.WorkloadName)
+	if _, exist := controllers[workloadKey]; exist {
 		w := models.Workload{
 			WorkloadListItem: models.WorkloadListItem{
 				Cluster:   criteria.Cluster,
@@ -1895,7 +2015,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		// For custom types: fall through to the default handler and try to get the workload definition working
 		// up from the pods or replicas sets.
 		// see https://github.com/kiali/kiali/issues/3830
-		discoveredControllerGVK := controllers[criteria.WorkloadName]
+		discoveredControllerGVK := controllers[workloadKey]
 		controllerGVK := discoveredControllerGVK
 		if criteria.WorkloadGVK.Kind != "" && discoveredControllerGVK != criteria.WorkloadGVK {
 			controllerGVK = criteria.WorkloadGVK
@@ -1908,7 +2028,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			if dep != nil && dep.Name == criteria.WorkloadName {
 				selector := labels.Set(dep.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
-				w.ParseDeployment(dep)
+				w.ParseDeployment(dep, in.conf)
 			} else {
 				log.Errorf("Workload %s is not found as Deployment", criteria.WorkloadName)
 				cnFound = false
@@ -1926,7 +2046,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			if found {
 				selector := labels.Set(repset[iFound].Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
-				w.ParseReplicaSet(&repset[iFound])
+				w.ParseReplicaSet(&repset[iFound], in.conf)
 			} else {
 				log.Errorf("Workload %s is not found as ReplicaSet", criteria.WorkloadName)
 				cnFound = false
@@ -1944,7 +2064,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			if found {
 				selector := labels.Set(repcon[iFound].Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
-				w.ParseReplicationController(&repcon[iFound])
+				w.ParseReplicationController(&repcon[iFound], in.conf)
 			} else {
 				log.Errorf("Workload %s is not found as ReplicationController", criteria.WorkloadName)
 				cnFound = false
@@ -1953,7 +2073,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			if depcon != nil && depcon.Name == criteria.WorkloadName {
 				selector := labels.Set(depcon.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
-				w.ParseDeploymentConfig(depcon)
+				w.ParseDeploymentConfig(depcon, in.conf)
 			} else {
 				log.Errorf("Workload %s is not found as DeploymentConfig", criteria.WorkloadName)
 				cnFound = false
@@ -1962,7 +2082,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			if fulset != nil && fulset.Name == criteria.WorkloadName {
 				selector := labels.Set(fulset.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
-				w.ParseStatefulSet(fulset)
+				w.ParseStatefulSet(fulset, in.conf)
 			} else {
 				log.Errorf("Workload %s is not found as StatefulSet", criteria.WorkloadName)
 				cnFound = false
@@ -1979,7 +2099,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			}
 			if found {
 				w.SetPods([]core_v1.Pod{pods[iFound]}, in.businessLayer.Mesh.IsControlPlane)
-				w.ParsePod(&pods[iFound])
+				w.ParsePod(&pods[iFound], in.conf)
 			} else {
 				log.Errorf("Workload %s is not found as Pod", criteria.WorkloadName)
 				cnFound = false
@@ -1997,7 +2117,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			if found {
 				selector := labels.Set(jbs[iFound].Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
-				w.ParseJob(&jbs[iFound])
+				w.ParseJob(&jbs[iFound], in.conf)
 			} else {
 				log.Errorf("Workload %s is not found as Job", criteria.WorkloadName)
 				cnFound = false
@@ -2005,7 +2125,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		case kubernetes.CronJobs:
 			found := false
 			iFound := -1
-			for i, cjb := range conjbs {
+			for i, cjb := range cronjbs {
 				if cjb.Name == criteria.WorkloadName {
 					found = true
 					iFound = i
@@ -2013,9 +2133,9 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				}
 			}
 			if found {
-				selector := labels.Set(conjbs[iFound].Spec.JobTemplate.Spec.Template.Labels).AsSelector()
+				selector := labels.Set(cronjbs[iFound].Spec.JobTemplate.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
-				w.ParseCronJob(&conjbs[iFound])
+				w.ParseCronJob(&cronjbs[iFound], in.conf)
 			} else {
 				log.Warningf("Workload %s is not found as CronJob (CronJob could be deleted but children are still in the namespace)", criteria.WorkloadName)
 				cnFound = false
@@ -2024,7 +2144,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			if ds != nil && ds.Name == criteria.WorkloadName {
 				selector := labels.Set(ds.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
-				w.ParseDaemonSet(ds)
+				w.ParseDaemonSet(ds, in.conf)
 			} else {
 				log.Errorf("Workload %s is not found as DaemonSet", criteria.WorkloadName)
 				cnFound = false
@@ -2033,9 +2153,9 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			if wgroup != nil && wgroup.Name == criteria.WorkloadName {
 				if wgroup.Spec.Metadata != nil {
 					selector := labels.Set(wgroup.Spec.Metadata.Labels).AsSelector()
-					w.ParseWorkloadGroup(wgroup, kubernetes.FilterWorkloadEntriesBySelector(selector, wentries), kubernetes.FilterSidecarsBySelector(selector.String(), sidecars))
+					w.ParseWorkloadGroup(wgroup, kubernetes.FilterWorkloadEntriesBySelector(selector, wentries), kubernetes.FilterSidecarsBySelector(selector.String(), sidecars), in.conf)
 				} else {
-					w.ParseWorkloadGroup(wgroup, []*networking_v1.WorkloadEntry{}, []*networking_v1.Sidecar{})
+					w.ParseWorkloadGroup(wgroup, []*networking_v1.WorkloadEntry{}, []*networking_v1.Sidecar{}, in.conf)
 				}
 			} else {
 				log.Errorf("Workload %s is not found as WorkloadGroup", criteria.WorkloadName)
@@ -2053,7 +2173,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			for _, rs := range repset {
 				rsOwnerRef := meta_v1.GetControllerOf(&rs.ObjectMeta)
 				if rsOwnerRef != nil && rsOwnerRef.Name == criteria.WorkloadName && rsOwnerRef.Kind == discoveredControllerGVK.Kind {
-					w.ParseReplicaSetParent(&rs, criteria.WorkloadName, discoveredControllerGVK)
+					w.ParseReplicaSetParent(&rs, criteria.WorkloadName, discoveredControllerGVK, in.conf)
 					for _, pod := range pods {
 						if meta_v1.IsControlledBy(&pod, &rs) {
 							cPods = append(cPods, pod)
@@ -2066,7 +2186,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			if len(cPods) == 0 {
 				cPods = kubernetes.FilterPodsByController(criteria.WorkloadName, discoveredControllerGVK, pods)
 				if len(cPods) > 0 {
-					w.ParsePods(criteria.WorkloadName, discoveredControllerGVK, cPods)
+					w.ParsePods(criteria.WorkloadName, discoveredControllerGVK, cPods, in.conf)
 					log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", criteria.WorkloadName, discoveredControllerGVK.Kind)
 				}
 			}
@@ -2088,7 +2208,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			}
 			// If Ambient is enabled for pod, check if has any Waypoint proxy
 			if !isWaypoint && pod.AmbientEnabled() && criteria.IncludeWaypoints {
-				w.WaypointWorkloads = in.GetWaypointsForWorkload(ctx, w, false)
+				w.WaypointWorkloads = in.getWaypointsForWorkload(ctx, w, false, waypoints)
 				// TODO: Maybe user doesn't have permissions
 				ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
 				for _, zPod := range ztunnelPods {
@@ -2111,8 +2231,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 					includeServices = true
 				}
 				// Get waypoint workloads
-				in.cache.GetWaypoints()
-				waypointWorkloads, waypointServices := in.listWaypointWorkloads(ctx, w.Name, w.Namespace, criteria.Cluster, includeServices)
+				waypointWorkloads, waypointServices := in.listWaypointWorkloads(ctx, criteria.Cluster, w.Namespace, w.Name, includeServices, waypoints)
 				w.WaypointWorkloads = waypointWorkloads
 				if includeServices {
 					w.WaypointServices = waypointServices
@@ -2131,7 +2250,8 @@ func (in *WorkloadService) GetZtunnelConfig(cluster, namespace, pod string) *kub
 	return in.cache.GetZtunnelDump(cluster, namespace, pod)
 }
 
-// GetWaypoints: Return the list of waypoint workloads.  This looks for all k8s gateways and then tests their labels
+// GetWaypoints: Return the list of waypoint workloads.  This looks for all k8s gateways and then tests their labels. Note
+// that this may call GetAllWorkloads(), be careful of unintended recursion.
 func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
 	if waypoints, ok := in.cache.GetWaypoints(); ok {
 		log.Tracef("GetWaypoints: Returning list from cache")
@@ -2140,7 +2260,8 @@ func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
 
 	waypoints := models.Workloads{}
 	for cluster := range in.userClients {
-		gateways, err := in.GetAllWorkloads(ctx, cluster, config.GatewayLabel)
+		// We are determining the waypoints, so here we just pass an empty list of waypoints
+		gateways, err := in.getAllWorkloads(ctx, cluster, config.GatewayLabel, []*models.Workload{})
 		if err != nil {
 			log.Debugf("GetWaypoints: Error fetching k8s gateway workloads for cluster=[%s]: %s", cluster, err.Error())
 			continue
@@ -2253,7 +2374,7 @@ func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload m
 // GetWaypointsForWorkload Returns the waypoint references capturing the workload. Only the active waypoint is returned unless <all>
 // is true, in which case all capturing waypoints will be returned. If so, they are returned in order of priority, so [0]
 // reflects the active waypoint, the others have been overriden.
-func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload models.Workload, all bool) []models.WorkloadReferenceInfo {
+func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, workload models.Workload, all bool, waypoints models.Workloads) []models.WorkloadReferenceInfo {
 	workloadsList := []models.WorkloadReferenceInfo{}
 
 	if workload.Labels[config.WaypointUseLabel] == config.WaypointNone {
@@ -2267,11 +2388,10 @@ func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload
 	}
 
 	// then, get the waypoint workloads to filter out "forNone" waypoints
-	waypointWorkloads := in.GetWaypoints(ctx)
 	workloadsMap := map[string]bool{} // Ensure unique
 	for _, capturingWaypoint := range capturingWaypoints {
 		var waypointWorkload *models.Workload
-		for _, ww := range waypointWorkloads {
+		for _, ww := range waypoints {
 			if ww.Name == capturingWaypoint.Name && ww.Namespace == capturingWaypoint.Namespace && ww.Cluster == capturingWaypoint.Cluster {
 				waypointWorkload = ww
 				break
@@ -2294,10 +2414,10 @@ func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload
 
 // listWaypointWorkloads returns the list of workloads when the waypoint proxy is applied per namespace
 // Maybe use some cache?
-func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, namespace, cluster string, includeServices bool) ([]models.WorkloadReferenceInfo, []models.ServiceReferenceInfo) {
+func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, wpCluster, wpNamespace, wpName string, includeServices bool, waypoints models.Workloads) ([]models.WorkloadReferenceInfo, []models.ServiceReferenceInfo) {
 	// Get all the workloads for a namespaces labeled
-	labelSelector := fmt.Sprintf("%s=%s", config.WaypointUseLabel, name)
-	nslist, errNs := in.userClients[cluster].GetNamespaces(labelSelector)
+	labelSelector := fmt.Sprintf("%s=%s", config.WaypointUseLabel, wpName)
+	nslist, errNs := in.userClients[wpCluster].GetNamespaces(labelSelector)
 	if errNs != nil {
 		log.Errorf("listWaypointWorkloads: Error fetching namespaces by selector %s", labelSelector)
 	}
@@ -2308,45 +2428,50 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, name
 	servicesMap := make(map[string]bool)
 
 	// Excluded workloads
-	excludedWk := make(map[string]bool)
+	excludedWorkloads := make(map[string]bool)
 	labelType := "namespace"
-	// Get all the workloads for the namespaces that has the waypoint label
-	for _, ns := range nslist {
-		// If it doesn't have a namespace label, it is the same namespace
-		if ns.Name == namespace || ns.Labels[config.WaypointUseNamespaceLabel] == namespace {
-			workloadList, err := in.fetchWorkloadsFromCluster(ctx, cluster, ns.Name, "")
-			if err != nil {
-				log.Debugf("listWaypointWorkloads: Error fetching workloads for namespace %s", ns.Name)
-			}
-			for _, wk := range workloadList {
-				// This annotation disables other labels (Like the ns one)
-				if wk.Labels[in.conf.IstioLabels.AmbientNamespaceLabel] != "none" && wk.Labels[config.WaypointUseLabel] != config.WaypointNone {
-					workloadslist = append(workloadslist, models.WorkloadReferenceInfo{Name: wk.Name, Namespace: wk.Namespace, Labels: wk.Labels, LabelType: labelType, Cluster: wk.Cluster})
-				} else {
-					excludedWk[wk.Name] = true
-				}
+
+	// Get all the workloads for the namespaces that have the waypoint label
+	labeledNamespaces := sliceutil.Filter(nslist, func(ns core_v1.Namespace) bool {
+		return ns.Name == wpNamespace || ns.Labels[config.WaypointUseNamespaceLabel] == wpNamespace
+	})
+	if len(labeledNamespaces) > 0 {
+		labeledNamespaceNames := sliceutil.Map(labeledNamespaces, func(ns core_v1.Namespace) string {
+			return ns.Name
+		})
+		workloadList, err := in.fetchWorkloadsFromCluster(ctx, wpCluster, labeledNamespaceNames, "", waypoints)
+		if err != nil {
+			log.Debugf("listWaypointWorkloads: Error fetching workloads for namespaces %v", labeledNamespaceNames)
+		}
+		for _, wk := range workloadList {
+			// This annotation disables other labels (Like the ns one)
+			if wk.Labels[in.conf.IstioLabels.AmbientNamespaceLabel] != "none" && wk.Labels[config.WaypointUseLabel] != config.WaypointNone {
+				workloadslist = append(workloadslist, models.WorkloadReferenceInfo{Name: wk.Name, Namespace: wk.Namespace, Labels: wk.Labels, LabelType: labelType, Cluster: wk.Cluster})
+			} else {
+				excludedWorkloads[wk.Name] = true
 			}
 		}
 	}
 
 	// Get annotated workloads
-	namespaces, found := in.cache.GetNamespaces(cluster, in.userClients[cluster].GetToken())
+	namespaces, found := in.cache.GetNamespaces(wpCluster, in.userClients[wpCluster].GetToken())
+	namespaceNames := sliceutil.Map(namespaces, func(ns models.Namespace) string {
+		return ns.Name
+	})
 	if found {
-		for _, ns := range namespaces {
-			wlist, err := in.fetchWorkloadsFromCluster(ctx, cluster, ns.Name, labelSelector)
-			if err != nil {
-				log.Debugf("listWaypointWorkloads: Error fetching workloads for namespace label selector %s", labelSelector)
-			}
-			if len(wlist) > 0 {
-				labelType = "workload"
-			}
-			for _, workload := range wlist {
-				// none disables the waypoint enrollment
-				if workload.Labels[config.WaypointUseLabel] != config.WaypointNone {
-					workloadslist = append(workloadslist, models.WorkloadReferenceInfo{Name: workload.Name, Namespace: workload.Namespace, LabelType: labelType, Labels: workload.Labels, Cluster: workload.Cluster})
-				} else {
-					excludedWk[workload.Name] = true
-				}
+		wlist, err := in.fetchWorkloadsFromCluster(ctx, wpCluster, namespaceNames, labelSelector, waypoints)
+		if err != nil {
+			log.Debugf("listWaypointWorkloads: Error fetching workloads for namespace label selector %s", labelSelector)
+		}
+		if len(wlist) > 0 {
+			labelType = "workload"
+		}
+		for _, workload := range wlist {
+			// none disables the waypoint enrollment
+			if workload.Labels[config.WaypointUseLabel] != config.WaypointNone {
+				workloadslist = append(workloadslist, models.WorkloadReferenceInfo{Name: workload.Name, Namespace: workload.Namespace, LabelType: labelType, Labels: workload.Labels, Cluster: workload.Cluster})
+			} else {
+				excludedWorkloads[workload.Name] = true
 			}
 		}
 	}
@@ -2358,7 +2483,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, name
 		var err error
 
 		for _, wl := range workloadslist {
-			if !excludedWk[wl.Name] {
+			if !excludedWorkloads[wl.Name] {
 				serviceCriteria := ServiceCriteria{
 					Cluster:                wl.Cluster,
 					Namespace:              wl.Namespace,
@@ -2385,7 +2510,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, name
 			}
 		}
 		// Get annotated services
-		servicesList = append(servicesList, in.businessLayer.Svc.ListWaypointServices(ctx, name, namespace, cluster)...)
+		servicesList = append(servicesList, in.businessLayer.Svc.ListWaypointServices(ctx, wpName, wpNamespace, wpCluster)...)
 	}
 	return workloadslist, servicesList
 }
@@ -2511,8 +2636,12 @@ func (in *WorkloadService) GetWorkloadTracingName(ctx context.Context, cluster, 
 	)
 	defer end()
 
+	// Because workloads may need to be decorated with Waypoint information, we first ensure that Waypoints are updated in
+	// the cache, and pass them down through the workload fetch logic.
+	waypoints := in.GetWaypoints(ctx)
+
 	tracingName := models.TracingName{Workload: workload}
-	wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: workload, WorkloadGVK: schema.GroupVersionKind{Group: "", Version: "", Kind: ""}, IncludeWaypoints: true})
+	wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: workload, WorkloadGVK: schema.GroupVersionKind{Group: "", Version: "", Kind: ""}, IncludeWaypoints: true}, waypoints)
 	if err != nil {
 		return tracingName, err
 	}
@@ -2528,11 +2657,10 @@ func (in *WorkloadService) GetWorkloadTracingName(ctx context.Context, cluster, 
 	tracingName.App = app
 	tracingName.Lookup = app
 
-	waypoints := wkd.WaypointWorkloads
-	if len(waypoints) > 0 {
-		tracingName.WaypointName = waypoints[0].Name
-		tracingName.Lookup = waypoints[0].Name
-		tracingName.WaypointNamespace = waypoints[0].Namespace
+	if len(wkd.WaypointWorkloads) > 0 {
+		tracingName.WaypointName = wkd.WaypointWorkloads[0].Name
+		tracingName.Lookup = wkd.WaypointWorkloads[0].Name
+		tracingName.WaypointNamespace = wkd.WaypointWorkloads[0].Namespace
 	}
 
 	return tracingName, nil

@@ -287,7 +287,7 @@ func (in *HealthService) GetNamespaceWorkloadHealth(ctx context.Context, criteri
 		return nil, err
 	}
 
-	wl, err := in.businessLayer.Workload.fetchWorkloadsFromCluster(ctx, cluster, namespace, "")
+	wl, err := in.businessLayer.Workload.GetNamespaceWorkloads(ctx, cluster, namespace, "")
 	if err != nil {
 		return nil, err
 	}
