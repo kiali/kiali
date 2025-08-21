@@ -32,11 +32,11 @@ create_crossnetwork_gateway() {
     local image_tag_arg="--set tag=${ISTIO_TAG}"
   fi
 
+  local gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --network "${network}")"
+
   if [ "${AMBIENT}" == "true" ]; then
     echo "Using Ambient to generate gateway yaml"
-    local gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --ambient --network "${network}")"
-  else
-    local gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --network "${network}")"
+    gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --ambient --network "${network}")"
   fi
 
   local profile_flag=""
