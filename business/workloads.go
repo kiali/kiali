@@ -1065,7 +1065,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		return ws, err
 	}
 
-	// Key: name of controller; Value: GroupVersionKind of controller
+	// Key: namespace/name of controller; Value: GroupVersionKind of controller
 	controllers := map[string]schema.GroupVersionKind{}
 
 	// Find controllers from pods
@@ -1078,39 +1078,52 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 					continue
 				}
 				if ref.Controller != nil && *ref.Controller && in.isWorkloadIncluded(ref.Kind) {
-					if _, exist := controllers[ref.Name]; !exist {
-						controllers[ref.Name] = refGV.WithKind(ref.Kind)
+					controllerKey := fmt.Sprintf("%s/%s", pod.Namespace, ref.Name)
+					if _, exist := controllers[controllerKey]; !exist {
+						controllers[controllerKey] = refGV.WithKind(ref.Kind)
 					} else {
-						if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
-							controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
+						if controllers[controllerKey] != refGV.WithKind(ref.Kind) {
+							controllers[controllerKey] = refGV.WithKind(controllerPriority(controllers[controllerKey].Kind, ref.Kind))
 						}
 					}
 				}
 			}
 		} else {
-			if _, exist := controllers[pod.Name]; !exist {
+			podKey := fmt.Sprintf("%s/%s", pod.Namespace, pod.Name)
+			if _, exist := controllers[podKey]; !exist {
 				// Pod without controller
-				controllers[pod.Name] = kubernetes.Pods
+				controllers[podKey] = kubernetes.Pods
 			}
 		}
 	}
 
 	// Find controllers from WorkloadGroups
 	for _, wgroup := range wgroups {
-		if _, exist := controllers[wgroup.Name]; !exist {
-			controllers[wgroup.Name] = kubernetes.WorkloadGroups
+		wgroupKey := fmt.Sprintf("%s/%s", wgroup.Namespace, wgroup.Name)
+		if _, exist := controllers[wgroupKey]; !exist {
+			controllers[wgroupKey] = kubernetes.WorkloadGroups
 		}
+	}
+
+	// Helper function to parse namespace/name controller key
+	parseControllerKey := func(key string) (namespace, name string) {
+		parts := strings.SplitN(key, "/", 2)
+		if len(parts) == 2 {
+			return parts[0], parts[1]
+		}
+		return "", key // fallback for malformed key
 	}
 
 	// Resolve ReplicaSets from Deployments
 	// Resolve ReplicationControllers from DeploymentConfigs
 	// Resolve Jobs from CronJobs
-	for controllerName, controllerGVK := range controllers {
+	for controllerKey, controllerGVK := range controllers {
+		controllerNamespace, controllerName := parseControllerKey(controllerKey)
 		if controllerGVK == kubernetes.ReplicaSets {
 			found := false
 			iFound := -1
 			for i, rs := range repset {
-				if rs.Name == controllerName {
+				if rs.Name == controllerName && rs.Namespace == controllerNamespace {
 					iFound = i
 					found = true
 					break
@@ -1125,14 +1138,15 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 							continue
 						}
 						// Delete the child ReplicaSet and add the parent controller
-						if _, exist := controllers[ref.Name]; !exist {
-							controllers[ref.Name] = refGV.WithKind(ref.Kind)
+						parentKey := fmt.Sprintf("%s/%s", repset[iFound].Namespace, ref.Name)
+						if _, exist := controllers[parentKey]; !exist {
+							controllers[parentKey] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
-								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
+							if controllers[parentKey] != refGV.WithKind(ref.Kind) {
+								controllers[parentKey] = refGV.WithKind(controllerPriority(controllers[parentKey].Kind, ref.Kind))
 							}
 						}
-						delete(controllers, controllerName)
+						delete(controllers, controllerKey)
 					}
 				}
 			}
@@ -1141,7 +1155,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
-				if rc.Name == controllerName {
+				if rc.Name == controllerName && rc.Namespace == controllerNamespace {
 					iFound = i
 					found = true
 					break
@@ -1156,14 +1170,15 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 					}
 					if ref.Controller != nil && *ref.Controller {
 						// Delete the child ReplicationController and add the parent controller
-						if _, exist := controllers[ref.Name]; !exist {
-							controllers[ref.Name] = refGV.WithKind(ref.Kind)
+						parentKey := fmt.Sprintf("%s/%s", repcon[iFound].Namespace, ref.Name)
+						if _, exist := controllers[parentKey]; !exist {
+							controllers[parentKey] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
-								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
+							if controllers[parentKey] != refGV.WithKind(ref.Kind) {
+								controllers[parentKey] = refGV.WithKind(controllerPriority(controllers[parentKey].Kind, ref.Kind))
 							}
 						}
-						delete(controllers, controllerName)
+						delete(controllers, controllerKey)
 					}
 				}
 			}
@@ -1172,7 +1187,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
-				if jb.Name == controllerName {
+				if jb.Name == controllerName && jb.Namespace == controllerNamespace {
 					iFound = i
 					found = true
 					break
@@ -1187,24 +1202,25 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 					}
 					if ref.Controller != nil && *ref.Controller {
 						// Delete the child Job and add the parent controller
-						if _, exist := controllers[ref.Name]; !exist {
-							controllers[ref.Name] = refGV.WithKind(ref.Kind)
+						parentKey := fmt.Sprintf("%s/%s", jbs[iFound].Namespace, ref.Name)
+						if _, exist := controllers[parentKey]; !exist {
+							controllers[parentKey] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
-								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
+							if controllers[parentKey] != refGV.WithKind(ref.Kind) {
+								controllers[parentKey] = refGV.WithKind(controllerPriority(controllers[parentKey].Kind, ref.Kind))
 							}
 						}
 						// Jobs are special as deleting CronJob parent doesn't delete children
 						// So we need to check that parent exists before to delete children controller
 						cnExist := false
 						for _, cnj := range cronjbs {
-							if cnj.Name == ref.Name {
+							if cnj.Name == ref.Name && cnj.Namespace == jbs[iFound].Namespace {
 								cnExist = true
 								break
 							}
 						}
 						if cnExist {
-							delete(controllers, controllerName)
+							delete(controllers, controllerKey)
 						}
 					}
 				}
@@ -1226,8 +1242,9 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		if selector != nil {
 			selectorCheck = selector.Matches(labels.Set(d.Spec.Template.Labels))
 		}
-		if _, exist := controllers[d.Name]; !exist && selectorCheck {
-			controllers[d.Name] = kubernetes.Deployments
+		depKey := fmt.Sprintf("%s/%s", d.Namespace, d.Name)
+		if _, exist := controllers[depKey]; !exist && selectorCheck {
+			controllers[depKey] = kubernetes.Deployments
 		}
 	}
 	for _, rs := range repset {
@@ -1235,8 +1252,9 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		if selector != nil {
 			selectorCheck = selector.Matches(labels.Set(rs.Spec.Template.Labels))
 		}
-		if _, exist := controllers[rs.Name]; !exist && len(rs.OwnerReferences) == 0 && selectorCheck {
-			controllers[rs.Name] = kubernetes.ReplicaSets
+		rsKey := fmt.Sprintf("%s/%s", rs.Namespace, rs.Name)
+		if _, exist := controllers[rsKey]; !exist && len(rs.OwnerReferences) == 0 && selectorCheck {
+			controllers[rsKey] = kubernetes.ReplicaSets
 		}
 	}
 	for _, dc := range depcon {
@@ -1244,8 +1262,9 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		if selector != nil {
 			selectorCheck = selector.Matches(labels.Set(dc.Spec.Template.Labels))
 		}
-		if _, exist := controllers[dc.Name]; !exist && selectorCheck {
-			controllers[dc.Name] = kubernetes.DeploymentConfigs
+		dcKey := fmt.Sprintf("%s/%s", dc.Namespace, dc.Name)
+		if _, exist := controllers[dcKey]; !exist && selectorCheck {
+			controllers[dcKey] = kubernetes.DeploymentConfigs
 		}
 	}
 	for _, rc := range repcon {
@@ -1253,8 +1272,9 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		if selector != nil {
 			selectorCheck = selector.Matches(labels.Set(rc.Spec.Template.Labels))
 		}
-		if _, exist := controllers[rc.Name]; !exist && len(rc.OwnerReferences) == 0 && selectorCheck {
-			controllers[rc.Name] = kubernetes.ReplicationControllers
+		rcKey := fmt.Sprintf("%s/%s", rc.Namespace, rc.Name)
+		if _, exist := controllers[rcKey]; !exist && len(rc.OwnerReferences) == 0 && selectorCheck {
+			controllers[rcKey] = kubernetes.ReplicationControllers
 		}
 	}
 	for _, fs := range fulset {
@@ -1262,8 +1282,9 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		if selector != nil {
 			selectorCheck = selector.Matches(labels.Set(fs.Spec.Template.Labels))
 		}
-		if _, exist := controllers[fs.Name]; !exist && selectorCheck {
-			controllers[fs.Name] = kubernetes.StatefulSets
+		fsKey := fmt.Sprintf("%s/%s", fs.Namespace, fs.Name)
+		if _, exist := controllers[fsKey]; !exist && selectorCheck {
+			controllers[fsKey] = kubernetes.StatefulSets
 		}
 	}
 	for _, ds := range daeset {
@@ -1271,24 +1292,26 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		if selector != nil {
 			selectorCheck = selector.Matches(labels.Set(ds.Spec.Template.Labels))
 		}
-		if _, exist := controllers[ds.Name]; !exist && selectorCheck {
-			controllers[ds.Name] = kubernetes.DaemonSets
+		dsKey := fmt.Sprintf("%s/%s", ds.Namespace, ds.Name)
+		if _, exist := controllers[dsKey]; !exist && selectorCheck {
+			controllers[dsKey] = kubernetes.DaemonSets
 		}
 	}
 
 	// Build workloads from controllers
-	var controllerNames []string
+	var controllerKeys []string
 	for k := range controllers {
-		controllerNames = append(controllerNames, k)
+		controllerKeys = append(controllerKeys, k)
 	}
-	sort.Strings(controllerNames)
-	for _, controllerName := range controllerNames {
+	sort.Strings(controllerKeys)
+	for _, controllerKey := range controllerKeys {
+		controllerNamespace, controllerName := parseControllerKey(controllerKey)
 		w := &models.Workload{
 			Pods:     models.Pods{},
 			Services: []models.ServiceOverview{},
 		}
 		w.Cluster = cluster // namespace will be set when parsing the target object
-		controllerGVK := controllers[controllerName]
+		controllerGVK := controllers[controllerKey]
 		// Flag to add a controller if it is found
 		cnFound := true
 		switch controllerGVK {
@@ -1296,7 +1319,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, dp := range dep {
-				if dp.Name == controllerName {
+				if dp.Name == controllerName && dp.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1314,7 +1337,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, rs := range repset {
-				if rs.Name == controllerName {
+				if rs.Name == controllerName && rs.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1332,7 +1355,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
-				if rc.Name == controllerName {
+				if rc.Name == controllerName && rc.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1350,7 +1373,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, dc := range depcon {
-				if dc.Name == controllerName {
+				if dc.Name == controllerName && dc.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1368,7 +1391,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, fs := range fulset {
-				if fs.Name == controllerName {
+				if fs.Name == controllerName && fs.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1386,7 +1409,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, pod := range pods {
-				if pod.Name == controllerName {
+				if pod.Name == controllerName && pod.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1403,7 +1426,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
-				if jb.Name == controllerName {
+				if jb.Name == controllerName && jb.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1421,7 +1444,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, cjb := range cronjbs {
-				if cjb.Name == controllerName {
+				if cjb.Name == controllerName && cjb.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1439,7 +1462,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, ds := range daeset {
-				if ds.Name == controllerName {
+				if ds.Name == controllerName && ds.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1457,7 +1480,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			found := false
 			iFound := -1
 			for i, wgroup := range wgroups {
-				if wgroup.Name == controllerName {
+				if wgroup.Name == controllerName && wgroup.Namespace == controllerNamespace {
 					found = true
 					iFound = i
 					break
@@ -1768,7 +1791,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		return wl, err
 	}
 
-	// Key: name of controller; Value: GVK of controller
+	// Key: namespace/name of controller; Value: GVK of controller
 	controllers := map[string]schema.GroupVersionKind{}
 
 	// Find controllers from pods
@@ -1781,39 +1804,52 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 					continue
 				}
 				if ref.Controller != nil && *ref.Controller && in.isWorkloadIncluded(ref.Kind) {
-					if _, exist := controllers[ref.Name]; !exist {
-						controllers[ref.Name] = refGV.WithKind(ref.Kind)
+					controllerKey := fmt.Sprintf("%s/%s", pod.Namespace, ref.Name)
+					if _, exist := controllers[controllerKey]; !exist {
+						controllers[controllerKey] = refGV.WithKind(ref.Kind)
 					} else {
-						if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
-							controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].String(), ref.Kind))
+						if controllers[controllerKey] != refGV.WithKind(ref.Kind) {
+							controllers[controllerKey] = refGV.WithKind(controllerPriority(controllers[controllerKey].Kind, ref.Kind))
 						}
 					}
 				}
 			}
 		} else {
-			if _, exist := controllers[pod.Name]; !exist {
+			podKey := fmt.Sprintf("%s/%s", pod.Namespace, pod.Name)
+			if _, exist := controllers[podKey]; !exist {
 				// Pod without controller
-				controllers[pod.Name] = kubernetes.Pods
+				controllers[podKey] = kubernetes.Pods
 			}
 		}
 	}
 
 	// Find controllers from WorkloadGroups
 	if wgroup != nil {
-		if _, exist := controllers[wgroup.Name]; !exist {
-			controllers[wgroup.Name] = kubernetes.WorkloadGroups
+		wgroupKey := fmt.Sprintf("%s/%s", wgroup.Namespace, wgroup.Name)
+		if _, exist := controllers[wgroupKey]; !exist {
+			controllers[wgroupKey] = kubernetes.WorkloadGroups
 		}
+	}
+
+	// Helper function to parse namespace/name controller key
+	parseControllerKey := func(key string) (namespace, name string) {
+		parts := strings.SplitN(key, "/", 2)
+		if len(parts) == 2 {
+			return parts[0], parts[1]
+		}
+		return "", key // fallback for malformed key
 	}
 
 	// Resolve ReplicaSets from Deployments
 	// Resolve ReplicationControllers from DeploymentConfigs
 	// Resolve Jobs from CronJobs
-	for controllerName, controllerGVK := range controllers {
+	for controllerKey, controllerGVK := range controllers {
+		controllerNamespace, controllerName := parseControllerKey(controllerKey)
 		if controllerGVK == kubernetes.ReplicaSets {
 			found := false
 			iFound := -1
 			for i, rs := range repset {
-				if rs.Name == controllerName {
+				if rs.Name == controllerName && rs.Namespace == controllerNamespace {
 					iFound = i
 					found = true
 					break
@@ -1828,14 +1864,15 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 					}
 					if ref.Controller != nil && *ref.Controller {
 						// Delete the child ReplicaSet and add the parent controller
-						if _, exist := controllers[ref.Name]; !exist {
-							controllers[ref.Name] = refGV.WithKind(ref.Kind)
+						parentKey := fmt.Sprintf("%s/%s", repset[iFound].Namespace, ref.Name)
+						if _, exist := controllers[parentKey]; !exist {
+							controllers[parentKey] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
-								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
+							if controllers[parentKey] != refGV.WithKind(ref.Kind) {
+								controllers[parentKey] = refGV.WithKind(controllerPriority(controllers[parentKey].Kind, ref.Kind))
 							}
 						}
-						delete(controllers, controllerName)
+						delete(controllers, controllerKey)
 					}
 				}
 			}
@@ -1844,7 +1881,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
-				if rc.Name == controllerName {
+				if rc.Name == controllerName && rc.Namespace == controllerNamespace {
 					iFound = i
 					found = true
 					break
@@ -1859,14 +1896,15 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 					}
 					if ref.Controller != nil && *ref.Controller {
 						// Delete the child ReplicationController and add the parent controller
-						if _, exist := controllers[ref.Name]; !exist {
-							controllers[ref.Name] = refGV.WithKind(ref.Kind)
+						parentKey := fmt.Sprintf("%s/%s", repcon[iFound].Namespace, ref.Name)
+						if _, exist := controllers[parentKey]; !exist {
+							controllers[parentKey] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
-								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].String(), ref.Kind))
+							if controllers[parentKey] != refGV.WithKind(ref.Kind) {
+								controllers[parentKey] = refGV.WithKind(controllerPriority(controllers[parentKey].Kind, ref.Kind))
 							}
 						}
-						delete(controllers, controllerName)
+						delete(controllers, controllerKey)
 					}
 				}
 			}
@@ -1875,7 +1913,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
-				if jb.Name == controllerName {
+				if jb.Name == controllerName && jb.Namespace == controllerNamespace {
 					iFound = i
 					found = true
 					break
@@ -1890,24 +1928,25 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 					}
 					if ref.Controller != nil && *ref.Controller {
 						// Delete the child Job and add the parent controller
-						if _, exist := controllers[ref.Name]; !exist {
-							controllers[ref.Name] = refGV.WithKind(ref.Kind)
+						parentKey := fmt.Sprintf("%s/%s", jbs[iFound].Namespace, ref.Name)
+						if _, exist := controllers[parentKey]; !exist {
+							controllers[parentKey] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
-								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].String(), ref.Kind))
+							if controllers[parentKey] != refGV.WithKind(ref.Kind) {
+								controllers[parentKey] = refGV.WithKind(controllerPriority(controllers[parentKey].Kind, ref.Kind))
 							}
 						}
 						// Jobs are special as deleting CronJob parent doesn't delete children
 						// So we need to check that parent exists before to delete children controller
 						cnExist := false
 						for _, cnj := range conjbs {
-							if cnj.Name == ref.Name {
+							if cnj.Name == ref.Name && cnj.Namespace == jbs[iFound].Namespace {
 								cnExist = true
 								break
 							}
 						}
 						if cnExist {
-							delete(controllers, controllerName)
+							delete(controllers, controllerKey)
 						}
 					}
 				}
@@ -1917,39 +1956,46 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 
 	// Cornercase, check for controllers without pods, to show them as a workload
 	if dep != nil {
-		if _, exist := controllers[dep.Name]; !exist {
-			controllers[dep.Name] = kubernetes.Deployments
+		depKey := fmt.Sprintf("%s/%s", dep.Namespace, dep.Name)
+		if _, exist := controllers[depKey]; !exist {
+			controllers[depKey] = kubernetes.Deployments
 		}
 	}
 	for _, rs := range repset {
-		if _, exist := controllers[rs.Name]; !exist && len(rs.OwnerReferences) == 0 {
-			controllers[rs.Name] = kubernetes.ReplicaSets
+		rsKey := fmt.Sprintf("%s/%s", rs.Namespace, rs.Name)
+		if _, exist := controllers[rsKey]; !exist && len(rs.OwnerReferences) == 0 {
+			controllers[rsKey] = kubernetes.ReplicaSets
 		}
 	}
 	if depcon != nil {
-		if _, exist := controllers[depcon.Name]; !exist {
-			controllers[depcon.Name] = kubernetes.DeploymentConfigs
+		dcKey := fmt.Sprintf("%s/%s", depcon.Namespace, depcon.Name)
+		if _, exist := controllers[dcKey]; !exist {
+			controllers[dcKey] = kubernetes.DeploymentConfigs
 		}
 	}
 	for _, rc := range repcon {
-		if _, exist := controllers[rc.Name]; !exist && len(rc.OwnerReferences) == 0 {
-			controllers[rc.Name] = kubernetes.ReplicationControllers
+		rcKey := fmt.Sprintf("%s/%s", rc.Namespace, rc.Name)
+		if _, exist := controllers[rcKey]; !exist && len(rc.OwnerReferences) == 0 {
+			controllers[rcKey] = kubernetes.ReplicationControllers
 		}
 	}
 	if fulset != nil {
-		if _, exist := controllers[fulset.Name]; !exist {
-			controllers[fulset.Name] = kubernetes.StatefulSets
+		fsKey := fmt.Sprintf("%s/%s", fulset.Namespace, fulset.Name)
+		if _, exist := controllers[fsKey]; !exist {
+			controllers[fsKey] = kubernetes.StatefulSets
 		}
 	}
 	if ds != nil {
-		if _, exist := controllers[ds.Name]; !exist {
-			controllers[ds.Name] = kubernetes.DaemonSets
+		dsKey := fmt.Sprintf("%s/%s", ds.Namespace, ds.Name)
+		if _, exist := controllers[dsKey]; !exist {
+			controllers[dsKey] = kubernetes.DaemonSets
 		}
 	}
 
 	// Build workload from controllers
 
-	if _, exist := controllers[criteria.WorkloadName]; exist {
+	workloadKey := fmt.Sprintf("%s/%s", criteria.Namespace, criteria.WorkloadName)
+	if _, exist := controllers[workloadKey]; exist {
 		w := models.Workload{
 			WorkloadListItem: models.WorkloadListItem{
 				Cluster:   criteria.Cluster,
@@ -1968,7 +2014,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		// For custom types: fall through to the default handler and try to get the workload definition working
 		// up from the pods or replicas sets.
 		// see https://github.com/kiali/kiali/issues/3830
-		discoveredControllerGVK := controllers[criteria.WorkloadName]
+		discoveredControllerGVK := controllers[workloadKey]
 		controllerGVK := discoveredControllerGVK
 		if criteria.WorkloadGVK.Kind != "" && discoveredControllerGVK != criteria.WorkloadGVK {
 			controllerGVK = criteria.WorkloadGVK
