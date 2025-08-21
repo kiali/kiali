@@ -296,7 +296,7 @@ func (in *Discovery) IsControlPlane(ctx context.Context, cluster, namespace stri
 	return false
 }
 
-// HasControlPlane returns true if the control plane is in the namespace of provided cluster.
+// HasControlPlane returns true if the control plane is in the namespace of the provided cluster.
 func (in *Discovery) HasControlPlane(ctx context.Context, cluster string, ns string, istiod string) bool {
 	mesh, err := in.Mesh(ctx)
 	if err != nil {
