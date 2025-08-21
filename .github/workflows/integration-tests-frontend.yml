@@ -37,6 +37,11 @@ jobs:
       with:
         ref: ${{ inputs.build_branch }}
 
+    - name: Install Helm
+      uses: Azure/setup-helm@v4.2.0
+      with:
+        version: 'v3.18.4'
+
     # This caches the yarn deps but does not touch node_modules so it's still necessary
     # to run 'yarn install' later to link these into node_modules.
     - name: Setup node
