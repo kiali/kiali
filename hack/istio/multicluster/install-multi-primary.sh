@@ -35,7 +35,7 @@ create_crossnetwork_gateway() {
   if [ "${AMBIENT}" == "true" ]; then
     echo "Using Ambient to generate gateway yaml"
     local gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --ambient --network "${network}")"
-  elsif
+  else
     local gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --network "${network}")"
   fi
 
