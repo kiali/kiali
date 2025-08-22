@@ -79,6 +79,7 @@ import {
 import { CertsInfo } from 'types/CertsInfo';
 import { ApiError, ApiResponse } from 'types/Api';
 import { getGVKTypeString } from '../utils/IstioConfigUtils';
+import { PersesInfo } from '../types/PersesInfo';
 
 export const ANONYMOUS_USER = 'anonymous';
 
@@ -856,6 +857,10 @@ export const getClustersWorkloadHealth = async (
 
 export const getGrafanaInfo = (): Promise<ApiResponse<GrafanaInfo>> => {
   return newRequest<GrafanaInfo>(HTTP_VERBS.GET, urls.grafana, {}, {});
+};
+
+export const getPersesInfo = (): Promise<ApiResponse<PersesInfo>> => {
+  return newRequest<PersesInfo>(HTTP_VERBS.GET, urls.perses, {}, {});
 };
 
 export const getTracingInfo = (): Promise<ApiResponse<TracingInfo>> => {
