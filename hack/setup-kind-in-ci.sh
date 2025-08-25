@@ -182,6 +182,7 @@ if [ -n "${ISTIO_VERSION}" ]; then
   fi
 fi
 
+make HELM_VERSION="v3.18.4" -C "${HELM_CHARTS_DIR}" .download-helm-binary
 HELM="${HELM_CHARTS_DIR}/_output/helm-install/helm"
 
 infomsg "Using helm: $(ls -l ${HELM})"
@@ -279,12 +280,6 @@ setup_kind_singlecluster() {
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
 
-  make HELM_VERSION="v3.18.4" -C "${HELM_CHARTS_DIR}" .download-helm-binary
-  HELM="${HELM_CHARTS_DIR}/_output/helm-install/helm"
-
-  infomsg "Using helm: $(ls -l ${HELM})"
-  infomsg "$(${HELM} version)"
-
   infomsg "Installing kiali server via Helm"
   infomsg "Chart to be installed: $(ls -1 ${HELM_CHARTS_DIR}/_output/charts/kiali-server-*.tgz)"
 
@@ -380,11 +375,6 @@ setup_kind_tempo() {
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
 
-  make HELM_VERSION="v3.18.4" -C "${HELM_CHARTS_DIR}" .download-helm-binary
-  HELM="${HELM_CHARTS_DIR}/_output/helm-install/helm"
-
-  infomsg "Using helm: $(ls -l ${HELM})"
-  infomsg "$(${HELM} version)"
 
   infomsg "Installing kiali server via Helm"
   infomsg "Chart to be installed: $(ls -1 ${HELM_CHARTS_DIR}/_output/charts/kiali-server-*.tgz)"
