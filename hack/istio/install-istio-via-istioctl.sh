@@ -37,6 +37,7 @@ NAMESPACE="istio-system"
 NETWORK=""
 REDUCE_RESOURCES="false"
 REQUIRE_SCC="false"
+REVISION=""
 IMAGE_HUB="gcr.io/istio-release"
 IMAGE_TAG="default"
 
@@ -142,6 +143,10 @@ while [[ $# -gt 0 ]]; do
       IMAGE_HUB="$2"
       shift;shift
       ;;
+    -ir|--istio-revision)
+      REVISION="$2"
+      shift;shift
+      ;;
     -it|--image-tag)
       IMAGE_TAG="$2"
       shift;shift
@@ -244,6 +249,9 @@ Valid command line arguments:
   -iie|--istio-ingressgateway-enabled (true|false)
        When set to true, istio-ingressgateway will be installed.
        Default: true
+  -ir|--istio-revision <revision>:
+       The Istio revision to set while installing, "istio.io/rev=<revision>".
+       Default: empty
   -gae|--k8s-gateway-api-enabled (true|false)
        When set to true, K8s Gateway API will be installed.
        Default: false
@@ -487,6 +495,11 @@ if [ "${NETWORK}" != "" ]; then
   NETWORK_OPTION="--set values.global.network=${NETWORK}"
 fi
 
+if [ "${REVISION}" != "" ]; then
+  REVISION_OPTION="--set revision=${REVISION}"
+  REVISION_CM="-${REVISION}"
+fi
+
 DEFAULT_ZIPKIN_SERVICE_OPTION="--set values.meshConfig.defaultConfig.tracing.zipkin.address=zipkin.${NAMESPACE}:9411"
 if [[ "${CUSTOM_INSTALL_SETTINGS}" == *"values.meshConfig.defaultConfig.tracing.zipkin.address"* ]]; then
   echo "Custom zipkin address set. Not setting default zipkin address."
@@ -510,6 +523,7 @@ for s in \
    "${MESH_ID_OPTION}" \
    "${NETWORK_OPTION}" \
    "${REDUCE_RESOURCES_OPTIONS}" \
+   "${REVISION_OPTION}" \
    "${DUALSTACK_OPTIONS}" \
    "${CUSTOM_INSTALL_SETTINGS}"
 do
@@ -613,7 +627,7 @@ NAD
     echo "===== IMPORTANT ====="
 
     # Since we are on OpenShift, make sure CNI is enabled
-    if [ "$($CLIENT_EXE -n ${NAMESPACE} get cm istio-sidecar-injector -ojsonpath='{.data.values}' | jq '.istio_cni.enabled')" != "true" ]; then
+    if [ "$($CLIENT_EXE -n ${NAMESPACE} get cm istio-sidecar-injector${REVISION_CM} -ojsonpath='{.data.values}' | jq '.istio_cni.enabled')" != "true" ]; then
       echo "===== WARNING ====="
       echo "CNI IS NOT ENABLED BUT SHOULD HAVE BEEN"
       echo "===== WARNING ====="
