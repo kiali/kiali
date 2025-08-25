@@ -15,7 +15,6 @@ import (
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osoauth_v1 "github.com/openshift/api/oauth/v1"
-	osproject_v1 "github.com/openshift/api/project/v1"
 	osroutes_v1 "github.com/openshift/api/route/v1"
 	osuser_v1 "github.com/openshift/api/user/v1"
 	"go.opentelemetry.io/otel"
@@ -76,15 +75,12 @@ type OSClientInterface interface {
 	GetDeploymentConfig(ctx context.Context, namespace string, name string) (*osapps_v1.DeploymentConfig, error)
 	GetDeploymentConfigs(ctx context.Context, namespace string) ([]osapps_v1.DeploymentConfig, error)
 	GetOAuthClient(ctx context.Context, name string) (*osoauth_v1.OAuthClient, error)
-	GetProject(ctx context.Context, project string) (*osproject_v1.Project, error)
-	GetProjects(ctx context.Context, labelSelector string) ([]osproject_v1.Project, error)
 	GetRoute(ctx context.Context, namespace string, name string) (*osroutes_v1.Route, error)
 	GetUser(ctx context.Context, name string) (*osuser_v1.User, error)
 }
 
 type OSUserClientInterface interface {
 	OSClientInterface
-	UpdateProject(ctx context.Context, project string, jsonPatch string) (*osproject_v1.Project, error)
 }
 
 func (in *K8SClient) ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error) {
@@ -178,22 +174,6 @@ func (in *K8SClient) GetNamespaces(labelSelector string) ([]core_v1.Namespace, e
 	return namespaces.Items, nil
 }
 
-// GetProject fetches and returns the definition of the project with
-// the specified name by querying the cluster API. GetProject will fail
-// if the underlying cluster is not Openshift.
-func (in *K8SClient) GetProject(ctx context.Context, name string) (*osproject_v1.Project, error) {
-	return in.projectClient.ProjectV1().Projects().Get(ctx, name, emptyGetOptions)
-}
-
-func (in *K8SClient) GetProjects(ctx context.Context, labelSelector string) ([]osproject_v1.Project, error) {
-	projects, err := in.projectClient.ProjectV1().Projects().List(ctx, meta_v1.ListOptions{LabelSelector: labelSelector})
-	if err != nil {
-		return nil, err
-	}
-
-	return projects.Items, nil
-}
-
 func (in *K8SClient) GetDeploymentConfig(ctx context.Context, namespace string, name string) (*osapps_v1.DeploymentConfig, error) {
 	return in.osAppsClient.AppsV1().DeploymentConfigs(namespace).Get(ctx, name, emptyGetOptions)
 }
@@ -217,10 +197,6 @@ func (in *K8SClient) GetUser(ctx context.Context, name string) (*osuser_v1.User,
 
 func (in *K8SClient) DeleteOAuthToken(ctx context.Context, token string) error {
 	return in.oAuthClient.OauthV1().OAuthAccessTokens().Delete(ctx, token, meta_v1.DeleteOptions{})
-}
-
-func (in *K8SClient) UpdateProject(ctx context.Context, project string, jsonPatch string) (*osproject_v1.Project, error) {
-	return in.projectClient.ProjectV1().Projects().Patch(ctx, project, types.MergePatchType, []byte(jsonPatch), meta_v1.PatchOptions{})
 }
 
 func (in *K8SClient) GetRoute(ctx context.Context, namespace string, name string) (*osroutes_v1.Route, error) {

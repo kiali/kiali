@@ -5,12 +5,10 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"time"
 
-	osproject_v1 "github.com/openshift/api/project/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -29,14 +27,6 @@ func mockClock() {
 
 type noPrivClient struct {
 	kubernetes.UserClientInterface
-}
-
-func (n *noPrivClient) GetProjects(ctx context.Context, labelSelector string) ([]osproject_v1.Project, error) {
-	return nil, errors.NewForbidden(schema.GroupResource{Group: osproject_v1.GroupName, Resource: "projects"}, "", fmt.Errorf("Rejecting"))
-}
-
-func (n *noPrivClient) GetProject(ctx context.Context, name string) (*osproject_v1.Project, error) {
-	return nil, errors.NewForbidden(schema.GroupResource{Group: osproject_v1.GroupName, Resource: "projects"}, name, fmt.Errorf("Rejecting"))
 }
 
 func (n *noPrivClient) GetNamespace(namespace string) (*core_v1.Namespace, error) {

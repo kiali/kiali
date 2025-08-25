@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -37,7 +36,7 @@ func TestStrategyTokenAuthentication(t *testing.T) {
 	cfg.LoginToken.SigningKey = util.RandomString(16)
 	config.Set(cfg)
 
-	k8s := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}})
+	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}})
 	k8s.OpenShift = true
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
@@ -78,7 +77,7 @@ func TestStrategyTokenFails(t *testing.T) {
 	cfg.LoginToken.SigningKey = util.RandomString(16)
 	config.Set(cfg)
 
-	k8s := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}})
+	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}})
 	k8s.OpenShift = true
 	rejectClient := &rejectClient{k8s}
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(rejectClient)
@@ -176,7 +175,7 @@ func TestStrategyHeaderOidcAuthentication(t *testing.T) {
 	clockTime := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 	util.Clock = util.ClockMock{Time: clockTime}
 
-	k8s := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}})
+	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}})
 	k8s.OpenShift = true
 	authController, err := authentication.NewHeaderAuthController(cfg, k8s)
 	require.NoError(err)
@@ -219,7 +218,7 @@ func TestStrategyHeaderAuthentication(t *testing.T) {
 	clockTime := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 	util.Clock = util.ClockMock{Time: clockTime}
 
-	k8s := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}})
+	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}})
 	k8s.OpenShift = true
 	authController, err := authentication.NewHeaderAuthController(cfg, k8s)
 	require.NoError(err)
@@ -262,7 +261,7 @@ func TestStrategyHeaderOidcWithImpersonationAuthentication(t *testing.T) {
 	clockTime := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 	util.Clock = util.ClockMock{Time: clockTime}
 
-	k8s := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}})
+	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}})
 	k8s.OpenShift = true
 	authController, err := authentication.NewHeaderAuthController(cfg, k8s)
 	require.NoError(err)
@@ -456,6 +455,6 @@ func TestAuthenticationInfo(t *testing.T) {
 
 type rejectClient struct{ kubernetes.UserClientInterface }
 
-func (r *rejectClient) GetProjects(ctx context.Context, labelSelector string) ([]osproject_v1.Project, error) {
+func (r *rejectClient) GetNamespaces(labelSelector string) ([]core_v1.Namespace, error) {
 	return nil, fmt.Errorf("Rejecting")
 }

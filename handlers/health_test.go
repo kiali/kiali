@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	core_v1 "k8s.io/api/core/v1"
@@ -106,9 +105,9 @@ func setupClustersHealthEndpoint(t *testing.T, k8s *kubetest.FakeK8sClient) (*ht
 	return ts, prom
 }
 
-func setupMockData() *osproject_v1.Project {
+func setupMockData() *core_v1.Namespace {
 	mockClock()
-	return &osproject_v1.Project{
+	return &core_v1.Namespace{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:              "ns",
 			CreationTimestamp: meta_v1.NewTime(util.Clock.Now().Add(-17 * time.Second)),

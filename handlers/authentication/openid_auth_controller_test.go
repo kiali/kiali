@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/go-jose/go-jose/v4"
-	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -236,7 +235,7 @@ QwIDAQAB
 	// Returning some namespace when a cluster API call is made should have the result of
 	// a successful authentication.
 	k8s := kubetest.NewFakeK8sClient(
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}},
 	)
 	k8s.OpenShift = true
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
@@ -312,7 +311,7 @@ func TestOpenIdAuthControllerRejectsImplicitFlow(t *testing.T) {
 	// Returning some namespace when a cluster API call is made should have the result of
 	// a successful authentication.
 	k8s := kubetest.NewFakeK8sClient(
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}},
 	)
 	k8s.OpenShift = true
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
