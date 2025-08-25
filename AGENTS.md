@@ -1727,6 +1727,17 @@ kubectl logs -n istio-system deployment/kiali --tail=100
 kubectl get all,kiali,ossmconsole -A | grep kiali
 ```
 
+### Browser Self-Signed Certificate Warnings (OIDC / Keycloak)
+
+When testing Kiali in a KinD multi-primary environment with OpenID (Keycloak) authentication, the Keycloak server uses self-signed TLS certificates. When you open the Kiali URL in a browser (or via the Playwright MCP), the OIDC login redirect to Keycloak will trigger a "Your connection is not private" / `NET::ERR_CERT_AUTHORITY_INVALID` warning.
+
+To proceed:
+1. Click **Advanced**
+2. Click **Proceed to \<IP\> (unsafe)**
+3. You will then reach the Keycloak login page where you can sign in
+
+This is expected behavior in the test environment and is not a bug.
+
 ### SELinux Issues
 
 If you encounter permission errors with molecule tests:
@@ -1941,6 +1952,12 @@ make help
 - Ask to run molecule tests after operator changes
 - Update all installation methods (Helm, OLM, Operator templates)
 - Check backward compatibility with versioned roles
+
+**Installer (`tools/cmd/installer/`):**
+- Before making changes, read `tools/cmd/installer/DESIGN.md` to understand the design principles and current architecture
+- After making changes, update `DESIGN.md` to reflect the new state of the code — but NEVER modify the four main principles (Idempotent, Fast, Clean output, Simple)
+- After making any changes to the installer, always run it end-to-end to verify the change works: `go run ./tools/cmd/installer multi-primary`
+- Do NOT report the change as done until the installer has been run successfully
 
 **Protected Files:**
 - Never modify versioned operator roles (`roles/v1.*/`, `roles/v2.*/`)
