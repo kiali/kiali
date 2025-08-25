@@ -163,13 +163,13 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster string) ([]models.Namespace, error) {
 	var namespaces []models.Namespace
 
-	// If we are running in OpenShift, we will use the project names since these are the list of accessible namespaces
+	// If we are running in OpenShift, we will use the namespace names since these are the list of accessible namespaces
 	if in.clusterIsOpenShift(cluster) {
-		projects, err := in.userClients[cluster].GetProjects(ctx, "")
+		nss, err := in.userClients[cluster].GetNamespaces("")
 		if err != nil {
 			return nil, err
 		}
-		namespaces = models.CastProjectCollection(projects, cluster)
+		namespaces = models.CastNamespaceCollection(nss, cluster)
 	} else {
 		// Note that cluster-wide-access mode requires cluster role permission to list all namespaces.
 		if in.conf.Deployment.ClusterWideAccess {
@@ -286,20 +286,11 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 		return &ns, nil
 	}
 
-	var result models.Namespace
-	if in.clusterIsOpenShift(cluster) {
-		project, err := client.GetProject(ctx, namespace)
-		if err != nil {
-			return nil, err
-		}
-		result = models.CastProject(*project, cluster)
-	} else {
-		ns, err := client.GetNamespace(namespace)
-		if err != nil {
-			return nil, err
-		}
-		result = models.CastNamespace(*ns, cluster)
+	ns, err := client.GetNamespace(namespace)
+	if err != nil {
+		return nil, err
 	}
+	result := models.CastNamespace(*ns, cluster)
 
 	if !in.isAccessibleNamespace(ctx, result) {
 		return nil, &AccessibleNamespaceError{msg: "Namespace [" + namespace + "] in cluster [" + cluster + "] is not accessible to Kiali"}

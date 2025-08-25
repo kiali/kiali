@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -31,7 +30,7 @@ func TestGetServiceHealth(t *testing.T) {
 	config.Set(conf)
 
 	k8s := kubetest.NewFakeK8sClient(
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
 		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "ns"}},
 	)
 	k8s.OpenShift = true
@@ -68,7 +67,7 @@ func TestGetAppHealth(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 	objects := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
 		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "ns"}},
 	}
 	for _, obj := range fakeDeploymentsHealthReview() {
@@ -123,7 +122,7 @@ func TestGetWorkloadHealth(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 	objects := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
 		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "ns"}},
 		&fakeDeploymentsHealthReview()[0],
 	}
@@ -171,7 +170,7 @@ func TestGetAppHealthWithoutIstio(t *testing.T) {
 	conf := config.NewConfig()
 
 	objects := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
 		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "ns"}},
 	}
 	for _, obj := range fakeDeploymentsHealthReview() {
@@ -204,7 +203,7 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 	objects := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
 		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "ns"}},
 		&fakeDeploymentsHealthReview()[0],
 	}
@@ -237,7 +236,7 @@ func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 	config.Set(conf)
 
 	objects := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
 		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "ns"}},
 	}
 	for _, obj := range fakeDeploymentsHealthReview() {
@@ -270,8 +269,8 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 	reviews := kubetest.FakeService("tutorial", "reviews")
 	httpbin := kubetest.FakeService("tutorial", "httpbin")
 	k8s := kubetest.NewFakeK8sClient(
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
 		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "ns"}},
 		&reviews,
 		&httpbin,

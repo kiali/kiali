@@ -4,13 +4,13 @@ import (
 	"context"
 	"testing"
 
-	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	api_security_v1 "istio.io/api/security/v1"
 	api_security_v1beta1 "istio.io/api/security/v1beta1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -356,7 +356,7 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 	var objs []runtime.Object
 	objs = append(objs, kubernetes.ToRuntimeObjects(ps)...)
 	objs = append(objs, kubernetes.ToRuntimeObjects(drs)...)
-	objs = append(objs, kubernetes.ToRuntimeObjects(fakeProjects())...)
+	objs = append(objs, kubernetes.ToRuntimeObjects(fakeTestNamespaces())...)
 	k8s := kubetest.NewFakeK8sClient(objs...)
 	k8s.OpenShift = true
 	conf := config.NewConfig()
@@ -392,13 +392,10 @@ func testNamespaceScenario(exStatus string, drs []*networking_v1.DestinationRule
 	conf.Deployment.ClusterWideAccess = true
 	kubernetes.SetConfig(t, *conf)
 
-	objs := []runtime.Object{
-		kubetest.FakeNamespaceWithLabels("bookinfo", injectionEnabledLabel),
-		kubetest.FakeNamespaceWithLabels("foo", injectionEnabledLabel),
-	}
+	objs := []runtime.Object{}
 	objs = append(objs, kubernetes.ToRuntimeObjects(ps)...)
 	objs = append(objs, kubernetes.ToRuntimeObjects(drs)...)
-	objs = append(objs, kubernetes.ToRuntimeObjects(fakeProjects())...)
+	objs = append(objs, kubernetes.ToRuntimeObjects(fakeTestNamespaces())...)
 	k8s := kubetest.NewFakeK8sClient(objs...)
 	k8s.OpenShift = true
 
@@ -429,8 +426,8 @@ func testNamespaceScenario(exStatus string, drs []*networking_v1.DestinationRule
 	}
 }
 
-func fakeProjects() []*osproject_v1.Project {
-	return []*osproject_v1.Project{
+func fakeTestNamespaces() []*core_v1.Namespace {
+	return []*core_v1.Namespace{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:   "bookinfo",

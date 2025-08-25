@@ -11,13 +11,11 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	osproject_v1 "github.com/openshift/api/project/v1"
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	core_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/business"
@@ -200,14 +198,6 @@ func setupAppListEndpoint(t *testing.T, k8s kubernetes.UserClientInterface, conf
 	return ts
 }
 
-func newProject() *osproject_v1.Project {
-	return &osproject_v1.Project{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "ns",
-		},
-	}
-}
-
 func TestAppsEndpoint(t *testing.T) {
 	assert := assert.New(t)
 
@@ -216,9 +206,7 @@ func TestAppsEndpoint(t *testing.T) {
 	config.Set(cfg)
 
 	mockClock()
-	proj := newProject()
-	proj.Name = "Namespace"
-	kubeObjects := []runtime.Object{proj}
+	kubeObjects := []runtime.Object{kubetest.FakeNamespace("Namespace")}
 	for _, obj := range business.FakeDeployments(*cfg) {
 		o := obj
 		kubeObjects = append(kubeObjects, &o)
@@ -253,9 +241,7 @@ func TestAppDetailsEndpoint(t *testing.T) {
 	kubernetes.SetConfig(t, *conf)
 
 	mockClock()
-	proj := newProject()
-	proj.Name = "Namespace"
-	kubeObjects := []runtime.Object{proj}
+	kubeObjects := []runtime.Object{kubetest.FakeNamespace("Namespace")}
 	for _, obj := range business.FakeDeployments(*conf) {
 		o := obj
 		kubeObjects = append(kubeObjects, &o)

@@ -7,9 +7,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -60,9 +58,6 @@ func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock,
 		kubetest.FakeNamespace("bookinfo"),
 		kubetest.FakeNamespace("tutorial"),
 		kubetest.FakeNamespace("ns"),
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
 	)
 	k.OpenShift = true
 
