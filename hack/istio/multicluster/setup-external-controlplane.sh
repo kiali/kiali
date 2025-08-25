@@ -18,6 +18,15 @@ else
   exit 1
 fi
 
+# Find the installer used to create the kind clusters
+KIND_INSTALLER=${SCRIPT_DIR}/../../../tools/cmd/installer/main.go
+if [  -f "${KIND_INSTALLER}" ]; then
+  echo "Kind installer script: ${KIND_INSTALLER}"
+else
+  echo "Cannot find the Kind installer at: ${KIND_INSTALLER}"
+  exit 1
+fi
+
 install_bookinfo() {
   local profile="${1}"
   local traffic_gen_enabled="${2}"
@@ -41,10 +50,10 @@ install_bookinfo() {
 }
 
 if ! kind get clusters -q | grep -q "${EXTERNAL_CLUSTER_NAME}" ; then
-    ./hack/start-kind.sh --load-balancer-range 255.70-255.84 -n "${EXTERNAL_CLUSTER_NAME}" -eir false --image "${KIND_NODE_IMAGE}"
+    go run "${KIND_INSTALLER}" --load-balancer-range 255.70-255.84 -n "${EXTERNAL_CLUSTER_NAME}" --image "${KIND_NODE_IMAGE}"
 fi
 if ! kind get clusters -q | grep -q "${REMOTE_CLUSTER_NAME}" ; then
-    ./hack/start-kind.sh --load-balancer-range 255.85-255.98 -n "${REMOTE_CLUSTER_NAME}" -eir false --image "${KIND_NODE_IMAGE}"
+    go run "${KIND_INSTALLER}" --load-balancer-range 255.85-255.98 -n "${REMOTE_CLUSTER_NAME}" --image "${KIND_NODE_IMAGE}"
 fi
 
 # Following: https://github.com/istio-ecosystem/sail-operator/tree/main/docs#external-control-plane
