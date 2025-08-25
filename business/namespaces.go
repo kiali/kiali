@@ -65,10 +65,6 @@ func NewNamespaceService(
 	}
 }
 
-func (in *NamespaceService) clusterIsOpenShift(cluster string) bool {
-	return in.hasProjects[cluster]
-}
-
 // GetClusterList Returns a list of cluster names based on the user clients
 func (in *NamespaceService) GetClusterList() []string {
 	var clusterList []string
