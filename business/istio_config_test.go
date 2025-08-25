@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
-	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	api_networking_v1 "istio.io/api/networking/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -212,7 +212,7 @@ func TestCheckMulticlusterPermissions(t *testing.T) {
 }
 
 func mockGetIstioConfigList(t *testing.T) IstioConfigService {
-	fakeIstioObjects := []runtime.Object{&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}}}
+	fakeIstioObjects := []runtime.Object{&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}}}
 	for _, g := range fakeGetGateways() {
 		fakeIstioObjects = append(fakeIstioObjects, g.DeepCopyObject())
 	}
@@ -405,7 +405,7 @@ func mockGetIstioConfigDetails(t *testing.T) IstioConfigService {
 		fakeGetVirtualServices()[0],
 		fakeGetDestinationRules()[0],
 		fakeGetServiceEntries()[0],
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
 	}
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
 	k8s.OpenShift = true
@@ -421,7 +421,7 @@ func mockGetIstioConfigDetailsMulticluster(t *testing.T) IstioConfigService {
 		fakeGetVirtualServices()[0],
 		fakeGetDestinationRules()[0],
 		fakeGetServiceEntries()[0],
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
 	}
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
 	k8s.OpenShift = true

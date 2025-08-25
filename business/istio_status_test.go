@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	apps_v1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -127,7 +126,7 @@ func mockAddOnsCalls(t *testing.T, objects []runtime.Object, _ bool, overrideAdd
 	// Prepare the Call counts for each Addon
 	grafanaCalls, prometheusCalls := 0, 0
 
-	objects = append(objects, &osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}})
+	objects = append(objects, &v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}})
 
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
@@ -260,7 +259,7 @@ func TestGrafanaNotWorking(t *testing.T) {
 				UnavailableReplicas: 0,
 			}),
 	}
-	objects = append(objects, &osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}})
+	objects = append(objects, &v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}})
 	addOnsStetup := defaultAddOnCalls(&grafanaCalls, &prometheusCalls)
 	addOnsStetup["grafana"] = addOnsSetup{
 		Url:        "/grafana/mock",
