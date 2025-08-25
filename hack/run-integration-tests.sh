@@ -5,6 +5,7 @@ infomsg() {
 }
 
 # Suites
+AMBIENT=""
 BACKEND="backend"
 BACKEND_EXTERNAL_CONTROLPLANE="backend-external-controlplane"
 FRONTEND="frontend"
@@ -28,6 +29,10 @@ WITH_VIDEO="false"
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    -am|--ambient)
+      AMBIENT="${2}"
+      shift;shift
+      ;;
     -hcd|--helm-charts-dir)
       HELM_CHARTS_DIR="${2}"
       shift;shift
@@ -91,6 +96,9 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -am|--ambient <true|false>
+    If true, install istio ambient profile. Just valid for multi primary suite (alpha).
+    Default: false
   -hcd|--helm-charts-dir
     The directory where the Helm charts are located. If not specified, the Helm charts for the target branch will be used.
   -iv|--istio-version <version>
@@ -102,9 +110,6 @@ Valid command line arguments:
     Set the keycloak resources requests memory in the keycloak helm charts. Ex. 1Gi
   -so|--setup-only <true|false>
     If true, only setup the test environment and exit without running the tests.
-    Default: false
-  -st|--stern <true|false> 
-    If true, will setup stern logging binary. 
     Default: false
   -t|--tempo <true|false>
     If true, Tempo will be installed instead of Jaeger. Just for primary-remote suite
@@ -145,6 +150,7 @@ fi
 # print out our settings for debug purposes
 cat <<EOM
 === SETTINGS ===
+AMBIENT=$AMBIENT
 HELM_CHARTS_DIR=$HELM_CHARTS_DIR
 ISTIO_VERSION=$ISTIO_VERSION
 KEYCLOAK_LIMIT_MEMORY=$KEYCLOAK_LIMIT_MEMORY
@@ -343,7 +349,7 @@ if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true
 
     ensureKialiServerReady
-    
+
     # This envvar is used by the backend tests
     export URL="${KIALI_URL}"
   fi
@@ -372,7 +378,7 @@ elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
     # Switch back to controlplane since that is where kiali is installed.
     kubectl config use-context "${CLUSTER1_CONTEXT}"
     ensureKialiServerReady
-    
+
     # This envvar is used by the backend tests
     export URL="${KIALI_URL}"
   fi
@@ -387,7 +393,7 @@ elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
   detectRaceConditions "${CLUSTER1_CONTEXT}"
 elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
   ensureCypressInstalled
-  
+
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
@@ -455,7 +461,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
 
 elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
   ensureCypressInstalled
-  
+
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "primary-remote" ${ISTIO_VERSION_ARG} --tempo ${TEMPO} ${HELM_CHARTS_DIR_ARG}
   fi
@@ -493,11 +499,16 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   else
      MEMORY_REQUEST_ARG=""
   fi
+  if [ -n "$AMBIENT" ]; then
+     AMBIENT_ARG="-ab true"
+  else
+     AMBIENT_ARG=""
+  fi
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy openid ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy openid ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG $AMBIENT_ARG
   fi
-  
+
   ensureKialiServerReady
   # We now need a kiali-aes-cookie to be able to talk to the API so checks for the applications
   # being healthy have moved into the frontend tests where it's easier to get the cookie.
