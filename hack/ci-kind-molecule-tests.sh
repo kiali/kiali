@@ -492,7 +492,7 @@ else
     # KinD requires OIDC config at cluster creation, but we need actual IP for certificates.
     # Solution: create cluster twice - first to get IP, second with proper OIDC config.
     infomsg "Creating initial cluster to determine actual cluster IP..."
-    hack/start-kind.sh --name ${KIND_NAME} --enable-image-registry true --enable-keycloak false --enable-hydra false
+    go run "${SCRIPT_DIR}"/../tools/cmd/installer/main.go --name ${KIND_NAME} --enable-image-registry true --enable-keycloak false --enable-hydra false
 
     # Extract actual cluster IP and create nip.io hostname for certificates
     # Use the lowest cluster node IP (control-plane or worker) to avoid race condition where
@@ -516,7 +516,7 @@ else
     # Recreate cluster with OIDC configuration using the generated certificates
     infomsg "Recreating cluster with OIDC configuration for Hydra..."
     ${KIND_EXE} delete cluster --name ${KIND_NAME}
-    hack/start-kind.sh --name ${KIND_NAME} --enable-image-registry true --enable-keycloak false --enable-hydra true --hydra-certs-dir "${CERTS_PATH}/ssl" --hydra-issuer-uri "${HYDRA_ISSUER_URI}"
+    go run "${SCRIPT_DIR}"/../tools/cmd/installer/main.go --name ${KIND_NAME} --enable-image-registry true --enable-keycloak false --enable-hydra true --hydra-certs-dir "${CERTS_PATH}/ssl" --hydra-issuer-uri "${HYDRA_ISSUER_URI}"
 
     # Validate that the predicted cluster IP matches the actual cluster IP
     infomsg "Validating that predicted cluster IP matches actual cluster IP..."
@@ -534,7 +534,7 @@ else
       infomsg "SUCCESS: IP prediction is correct! Both predicted and actual IPs are [${KIND_CLUSTER_IP}]"
     fi
   else
-    hack/start-kind.sh --name ${KIND_NAME} --enable-image-registry true --enable-keycloak false --enable-hydra false
+    go run "${SCRIPT_DIR}"/../tools/cmd/installer/main.go --name ${KIND_NAME} --enable-image-registry true --enable-keycloak false --enable-hydra false
   fi
 fi
 
