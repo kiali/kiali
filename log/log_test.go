@@ -111,7 +111,6 @@ func TestLogRegression(t *testing.T) {
 	for index, test := range tests {
 
 		t.Logf("Cleaned env vars")
-		os.Clearenv()
 		for envName, envValue := range test.envSettings {
 			t.Setenv(envName, envValue)
 		}
@@ -159,7 +158,6 @@ func TestLogRegression(t *testing.T) {
 }
 
 func TestEnvVarLogSampler(t *testing.T) {
-	os.Clearenv()
 	t.Logf("Cleaned env vars")
 	t.Setenv("LOG_SAMPLER_RATE", "10")
 	t.Setenv("LOG_FORMAT", "json")
@@ -639,7 +637,6 @@ func TestInitializeLoggerWithOptions(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			os.Clearenv()
 			assert := assert.New(t)
 			if tt.shouldUseEnvVar {
 				t.Setenv("LOG_LEVEL", tt.envLogLevel)
@@ -715,7 +712,6 @@ func TestTrimmedCallerMarshalFunc(t *testing.T) {
 }
 
 func TestRelativePathsInTraceLogs(t *testing.T) {
-	os.Clearenv()
 	t.Setenv("LOG_LEVEL", "trace")
 	t.Setenv("LOG_FORMAT", "json")
 	assert := assert.New(t)
@@ -748,7 +744,6 @@ func TestRelativePathsInTraceLogs(t *testing.T) {
 }
 
 func TestRelativePathsInTraceLogs_TextFormat(t *testing.T) {
-	os.Clearenv()
 	t.Setenv("LOG_LEVEL", "trace")
 	t.Setenv("LOG_FORMAT", "text")
 	assert := assert.New(t)

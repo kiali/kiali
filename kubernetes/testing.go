@@ -52,12 +52,12 @@ func NewTestingClientFactory(t *testing.T, conf *config.Config) *clientFactory {
 	t.Helper()
 
 	clientConfig := rest.Config{Host: "Kubernetes"}
-	client, err := newClientFactory(conf, &clientConfig)
+	client, err := NewClientFactory(t.Context(), conf, &clientConfig)
 	if err != nil {
 		t.Fatalf("Error creating client factory: %v", err)
 	}
 
-	return client
+	return client.(*clientFactory)
 }
 
 func createTestRemoteClusterSecretFile(t *testing.T, parentDir string, name string, content string) string {

@@ -113,6 +113,7 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 }
 
 // Start HTTP server asynchronously. TLS may be active depending on the global configuration.
+// TODO: Need to bubble up error somehow. Address is in use etc.
 func (s *Server) Start() {
 	log.Infof("Server endpoint will start at [%v%v]", s.httpServer.Addr, s.conf.Server.WebRoot)
 

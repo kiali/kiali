@@ -27,6 +27,9 @@ Options:
 -ab|--ambient
     Install Istio Ambient profile
     Default: Not set
+-dk|--deploy-kiali <true|false>
+    Whether to deploy Kiali as part of the setup.
+    Default: true
 -dorp|--docker-or-podman <docker|podman>
     What to use when building images.
     Default: docker
@@ -68,6 +71,7 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -a|--auth-strategy)           AUTH_STRATEGY="$2";         shift;shift; ;;
     -ab|--ambient)                AMBIENT="true";             shift;shift; ;;
+    -dk|--deploy-kiali)           DEPLOY_KIALI="$2";          shift;shift; ;;
     -dorp|--docker-or-podman)     DORP="$2";                  shift;shift; ;;
     -h|--help)                    helpmsg;                    exit 1       ;;
     -hcd|--helm-charts-dir)       HELM_CHARTS_DIR="$2";       shift;shift; ;;
@@ -114,6 +118,7 @@ install_istio() {
 
 # set up some of our defaults
 AUTH_STRATEGY="${AUTH_STRATEGY:-anonymous}"
+DEPLOY_KIALI="${DEPLOY_KIALI:-true}"
 DORP="${DORP:-docker}"
 TEMPO="${TEMPO:-false}"
 
@@ -150,6 +155,7 @@ fi
 cat <<EOM
 === SETTINGS ===
 AUTH_STRATEGY=$AUTH_STRATEGY
+DEPLOY_KIALI=$DEPLOY_KIALI
 DORP=$DORP
 HELM_CHARTS_DIR=$HELM_CHARTS_DIR
 ISTIO_VERSION=$ISTIO_VERSION
@@ -175,6 +181,12 @@ if [ -n "${ISTIO_VERSION}" ]; then
     DOWNLOAD_ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
   fi
 fi
+
+make HELM_VERSION="v3.18.4" -C "${HELM_CHARTS_DIR}" .download-helm-binary
+HELM="${HELM_CHARTS_DIR}/_output/helm-install/helm"
+
+infomsg "Using helm: $(ls -l ${HELM})"
+infomsg "$(${HELM} version)"
 
 # The sample apps setup scripts still rely on the istioctl dir to be present
 # to deploy the samples so we still need to download istio even when using
@@ -260,14 +272,13 @@ setup_kind_singlecluster() {
     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae true ${hub_arg:-}
   fi
 
+  if [ "${DEPLOY_KIALI}" != "true" ]; then
+    infomsg "Skipping Kiali deployment as requested"
+    return
+  fi
+
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
-
-  make HELM_VERSION="v3.18.4" -C "${HELM_CHARTS_DIR}" .download-helm-binary
-  HELM="${HELM_CHARTS_DIR}/_output/helm-install/helm"
-
-  infomsg "Using helm: $(ls -l ${HELM})"
-  infomsg "$(${HELM} version)"
 
   infomsg "Installing kiali server via Helm"
   infomsg "Chart to be installed: $(ls -1 ${HELM_CHARTS_DIR}/_output/charts/kiali-server-*.tgz)"
@@ -326,9 +337,9 @@ setup_kind_singlecluster() {
         -ag "default" \
         -ci true
   else
-     # Helm chart doesn't support passing in service opts so patch them after the helm deploy.
-      kubectl patch service kiali -n istio-system --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'
-      kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
+    # Helm chart doesn't support passing in service opts so patch them after the helm deploy.
+    kubectl patch service kiali -n istio-system --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'
+    kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
   fi
 }
 
@@ -356,14 +367,14 @@ setup_kind_tempo() {
     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
   fi
 
+  if [ "${DEPLOY_KIALI}" != "true" ]; then
+    infomsg "Skipping Kiali deployment as requested"
+    return
+  fi
+
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
 
-  make HELM_VERSION="v3.18.4" -C "${HELM_CHARTS_DIR}" .download-helm-binary
-  HELM="${HELM_CHARTS_DIR}/_output/helm-install/helm"
-
-  infomsg "Using helm: $(ls -l ${HELM})"
-  infomsg "$(${HELM} version)"
 
   infomsg "Installing kiali server via Helm"
   infomsg "Chart to be installed: $(ls -1 ${HELM_CHARTS_DIR}/_output/charts/kiali-server-*.tgz)"
@@ -507,6 +518,11 @@ setup_kind_multicluster() {
     auth_flags+=(--keycloak-address "${keycloak_ip}")
     auth_flags+=(--certs-dir "${certs_dir}")
   fi
+  if [ "${DEPLOY_KIALI}" != "true" ]; then
+    infomsg "Skipping Kiali deployment as requested"
+    return
+  fi
+
   "${SCRIPT_DIR}"/istio/multicluster/deploy-kiali.sh \
     --cluster1-context ${cluster1_context} \
     --cluster2-context ${cluster2_context} \
@@ -537,6 +553,10 @@ else
   for o in role rolebinding serviceaccount; do ${HELM} template --show-only "templates/${o}.yaml" --namespace=istio-system --set deployment.instance_name=citest --set auth.strategy=anonymous kiali-server "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz; done | kubectl apply -f -
 fi
 
+if [ "${DEPLOY_KIALI}" != "true" ]; then
+  infomsg "Skipping Kiali readiness checks as Kiali was not deployed"
+  exit 0
+fi
 
 # Unfortunately kubectl rollout status fails if the resource does not exist yet.
 for (( i=1; i<=60; i++ ))
