@@ -265,11 +265,16 @@ jobs:
 
         git push origin $(git rev-parse HEAD):refs/tags/$RELEASE_VERSION
 
+    - name: Build cross-platform binaries
+      run: |
+        mkdir -p dist
+        ./hack/build-cross-platform.sh -o dist
+
     - name: Create release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        gh release create $RELEASE_VERSION -t "Kiali $RELEASE_VERSION"
+        gh release create $RELEASE_VERSION dist/* -t "Kiali $RELEASE_VERSION"
 
     - name: Create or update version branch
       run: git push origin $(git rev-parse HEAD):refs/heads/$BRANCH_VERSION
