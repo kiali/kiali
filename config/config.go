@@ -486,6 +486,7 @@ type DeploymentConfig struct {
 
 	AccessibleNamespaces []string                 // this is no longer part of the actual config - we will generate this in Unmarshal()
 	ClusterWideAccess    bool                     `yaml:"cluster_wide_access,omitempty"`
+	ClusterNameOverrides map[string]string        `yaml:"cluster_name_overrides,omitempty"`
 	DiscoverySelectors   DiscoverySelectorsConfig `yaml:"discovery_selectors,omitempty"`
 	InstanceName         string                   `yaml:"instance_name"`
 	Namespace            string                   `yaml:"namespace,omitempty"` // Kiali deployment namespace
@@ -694,6 +695,13 @@ type Profiler struct {
 	Enabled bool `yaml:"enabled,omitempty"`
 }
 
+type RunMode string
+
+const (
+	RunModeLocal RunMode = "local"
+	RunModeApp   RunMode = "app"
+)
+
 // Config defines full YAML configuration.
 type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
@@ -712,6 +720,7 @@ type Config struct {
 	KubernetesConfig         KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
 	LoginToken               LoginToken                          `yaml:"login_token,omitempty"`
 	Server                   Server                              `yaml:",omitempty"`
+	RunMode                  RunMode                             `yaml:"runMode,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -981,6 +990,7 @@ func NewConfig() (c *Config) {
 			WebSchema:      "",
 			WriteTimeout:   30,
 		},
+		RunMode: RunModeApp,
 	}
 
 	return
@@ -1668,4 +1678,25 @@ func (c *Config) CertPool() *x509.CertPool {
 		return pool.Clone()
 	}
 	return nil
+}
+
+// LoadConfig loads config file if specified, otherwise, relies on environment variables to configure.
+// If loading from the file fails then log.Fatal is called.
+func LoadConfig(configFilePath string) (*Config, error) {
+	var conf *Config
+
+	if configFilePath != "" {
+		var err error
+		conf, err = LoadFromFile(configFilePath)
+		if err != nil {
+			return nil, err
+		}
+		Set(conf)
+	} else {
+		log.Infof("No configuration file specified. Will rely on environment for configuration.")
+		conf = NewConfig()
+		Set(conf)
+	}
+
+	return conf, nil
 }

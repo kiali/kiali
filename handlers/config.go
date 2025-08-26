@@ -62,6 +62,7 @@ type PublicConfig struct {
 	KialiFeatureFlags   config.KialiFeatureFlags      `json:"kialiFeatureFlags,omitempty"`
 	LogLevel            string                        `json:"logLevel,omitempty"`
 	Prometheus          PrometheusConfig              `json:"prometheus,omitempty"`
+	RunMode             config.RunMode                `json:"runMode,omitempty"`
 }
 
 // Config is a REST http.HandlerFunc serving up the Kiali configuration made public to clients.
@@ -100,6 +101,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 				GlobalScrapeInterval: promConfig.GlobalScrapeInterval,
 				StorageTsdbRetention: promConfig.StorageTsdbRetention,
 			},
+			RunMode: conf.RunMode,
 		}
 
 		userClients, err := getUserClients(r, clientFactory)

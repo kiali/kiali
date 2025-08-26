@@ -55,12 +55,12 @@ git clone https://github.com/kiali/helm-charts.git
 
 ln -s $KIALI_SOURCES/kiali-operator kiali/operator
 
-# Build the front-end and run the tests
-make build-ui-test
+# Build the front-end
+make build-ui
 
-# Build the back-end and run the tests
+# Build the back-end
 cd $KIALI_SOURCES/kiali
-make build test
+make build
 
 # Go test flags can be passed via the GO_TEST_FLAGS environment variable.
 # make -e GO_TEST_FLAGS="-race -v -run=\"TestCanConnectToIstiodReachable\"" test
@@ -81,6 +81,7 @@ To use Kiali, a management console for Istio-based service meshes, an Istio-comp
 We provide a few unsupported scripts that can help to get started. The scripts below are already in the Kiali Repository. Ensure that the correct path is being used to run the scripts without issues.
 
 
+* One way to setup your development environment locally is to run the link:hack/run-integration-tests.sh[`run-integration-tests.sh`] script. This will start a local cluster, install Istio and Bookinfo, and then start Kiali. It supports every deployment scenario including multi-cluster, external Kiali, etc. It is also run as part of the CI pipeline so there's a high chance it will work for you. The multi-cluster suites currently **do not** work with podman and you must have docker engine installed on your system.
 * The link:hack/crc-openshift.sh[`crc-openshift.sh`] script allows creation of an OpenShift cluster on a local machine.
 * For those familiar with minikube, the link:hack/k8s-minikube.sh[`k8s-minikube.sh`] script can be used. This script includes an option to install Dex, which is helpful for testing with OpenID.
 * Alternatively, the link:hack/start-kind.sh[`start-kind.sh`] script can be used to create a single-node KinD cluster with MetalLB enabled, allowing Kiali to be tested in a real environment.
@@ -95,6 +96,33 @@ For `minikube` it is recommended to enable the `registry` and `ingress` add-ons,
 
 [NOTE]
 When using `docker` with Minikube's registry add-on or any custom non-secure registry, ensure the link:https://docs.docker.com/registry/insecure/[Docker daemon is properly configured to use your registry].
+
+=== Running Kiali from your local kubeconfig (with hot-reload)
+
+This is the simplest way to get started developing on Kiali. You will startup the backend which reads from your local kubeconfig file and connects to the cluster set as your current context by default. Kiali uses link:air[`https://github.com/air-verse/air`] to enable hot reloads for the backend server.
+
+[source,shell]
+----
+make build-ui
+make run-backend
+
+# To pass additional arguments to the backend, set the KIALI_RUN_ARGS environment variable.
+# For example:
+# make KIALI_RUN_ARGS="--log-level debug" run-backend
+#
+# To pass additional contexts from your kubeconfig for multi-cluster Kiali:
+# make KIALI_RUN_ARGS="--remote-cluster-contexts kind-mesh --cluster-name-overrides kind-mesh=mesh" run-backend
+# The kube context name must match the Istio cluster name otherwise you must provide a cluster name override as shown above.
+----
+
+In a separate terminal, start the frontend dev server. This will start the frontend dev server that connects to the backend running in the other terminal. It will also open the Kiali UI in your default browser.
+
+[source,shell]
+----
+make run-frontend
+----
+
+Now kiali will be rebuilt and reloaded automatically when you make changes to either the backend or the frontend.
 
 === Building the Container Image and deploying to a cluster
 

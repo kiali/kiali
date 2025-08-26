@@ -23,11 +23,10 @@ func newTestingCache(t testing.TB, clients map[string]kubernetes.ClientInterface
 		readers[cluster] = client
 	}
 
-	cache, err := NewKialiCache(clients, readers, conf)
+	cache, err := NewKialiCache(t.Context(), clients, readers, conf)
 	if err != nil {
 		t.Fatalf("Error creating KialiCache: %v", err)
 	}
-	t.Cleanup(cache.Stop)
 
 	return cache
 }

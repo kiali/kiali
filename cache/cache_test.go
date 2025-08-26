@@ -28,7 +28,7 @@ func TestNoHomeClusterReturnsError(t *testing.T) {
 
 	clients := map[string]kubernetes.ClientInterface{"nothomecluster": kubetest.NewFakeK8sClient()}
 	readers := map[string]ctrlclient.Reader{"nothomecluster": kubetest.NewFakeK8sClient()}
-	_, err := cache.NewKialiCache(clients, readers, *conf)
+	_, err := cache.NewKialiCache(t.Context(), clients, readers, *conf)
 	require.Error(err, "no home cluster should return an error")
 }
 
@@ -51,7 +51,7 @@ func TestKubeCacheCreatedPerClient(t *testing.T) {
 		"cluster2":                        client2,
 	}
 
-	kialiCache, _ := cache.NewKialiCache(saClients, readers, *conf)
+	kialiCache, _ := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 
 	_, err := kialiCache.GetKubeCache(conf.KubernetesConfig.ClusterName)
 	require.NoError(err)
@@ -287,7 +287,7 @@ func TestValidationsSetByConstructor(t *testing.T) {
 
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
 	readers := map[string]ctrlclient.Reader{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
-	cache, err := cache.NewKialiCache(clients, readers, *conf)
+	cache, err := cache.NewKialiCache(t.Context(), clients, readers, *conf)
 	require.NoError(err)
 
 	require.NotNil(cache.Validations())
@@ -299,7 +299,7 @@ func TestZtunnelDump(t *testing.T) {
 
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
 	readers := map[string]ctrlclient.Reader{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
-	cache, err := cache.NewKialiCache(clients, readers, *conf)
+	cache, err := cache.NewKialiCache(t.Context(), clients, readers, *conf)
 	require.NoError(err)
 
 	initData := cache.GetZtunnelDump("cluster-default", "istio-system", "ztunnel-7hml8")
@@ -365,7 +365,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 			conf.KubernetesConfig.ClusterName: client,
 		}
 
-		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
 		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
@@ -391,7 +391,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 			{Name: "custom-remote", ClassName: "custom-remote"},
 		}
 
-		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
 		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
@@ -422,7 +422,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 			{Name: "valid-both", ClassName: "valid-both"}, // Valid
 		}
 
-		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
 		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
@@ -471,7 +471,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 		conf.ExternalServices.Istio.GatewayAPIClassesLabelSelector = "app=istio"
 		conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{} // Empty to trigger auto-discovery
 
-		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
 		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
@@ -520,7 +520,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 		conf.ExternalServices.Istio.GatewayAPIClassesLabelSelector = ""
 		conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{} // Empty to trigger auto-discovery
 
-		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
 		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
@@ -546,7 +546,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 		conf.Deployment.ClusterWideAccess = true
 		conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{}
 
-		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
 		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
@@ -579,7 +579,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 		conf.KubernetesConfig.ClusterName = "cluster1"
 		conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{}
 
-		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
 		result := kialiCache.GatewayAPIClasses("cluster1")
@@ -609,7 +609,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 		conf.Deployment.ClusterWideAccess = true
 		conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{}
 
-		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
 		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
@@ -637,7 +637,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 		conf.ExternalServices.Istio.GatewayAPIClassesLabelSelector = "invalid-label-selector["
 		conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{}
 
-		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
 		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
@@ -663,7 +663,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 		conf.Deployment.ClusterWideAccess = false
 		conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{}
 
-		kialiCache, err := cache.NewKialiCache(saClients, readers, *conf)
+		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
 		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
