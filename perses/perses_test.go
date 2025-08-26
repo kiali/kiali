@@ -190,18 +190,19 @@ func TestGetPersesInfoWithAbsoluteDashboardURL(t *testing.T) {
 
 	info, code, err := perses.Info(
 		context.Background(),
-		buildDashboardSupplier(genDashboard("istio"), 200, PERSES_URL, t),
+		buildDashboardSupplier(genDashboard("istio"), 200, "/system/perses/", t),
 	)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
 	assert.Len(t, info.ExternalLinks, 1)
-	assert.Equal(t, PERSES_URL, info.ExternalLinks[0].URL)
+	assert.Equal(t, "/system/perses/", info.ExternalLinks[0].URL)
 }
 
-func buildDashboardSupplier(jSon interface{}, code int, expectURL string, t *testing.T) perses.DashboardSupplierFunc {
-	return func(url, _, _ string, _ *config.Auth) ([]byte, int, string, error) {
-		assert.Equal(t, expectURL, url)
-		bytes, err := json.Marshal(jSon)
-		return bytes, code, url, err
+func buildDashboardSupplier(jsonData interface{}, code int, expectURL string, t *testing.T) perses.DashboardSupplierFunc {
+	return func(connection perses.PersesConnectionInfo, _, _ string, _ *config.Auth) ([]byte, int, string, error) {
+		bytes, err := json.Marshal(jsonData)
+		extUrl := fmt.Sprintf("%s%s", connection.BaseExternalURL, connection.ExternalURLParams)
+		assert.Equal(t, expectURL, extUrl)
+		return bytes, code, extUrl, err
 	}
 }

@@ -214,7 +214,7 @@ func (s *Service) GetAuth() *config.Auth {
 	return &newAuth
 }
 
-type DashboardSupplierFunc func(string, string, string, *config.Auth) ([]byte, int, string, error)
+type DashboardSupplierFunc func(PersesConnectionInfo, string, string, *config.Auth) ([]byte, int, string, error)
 
 var DashboardSupplier = checkDashboard
 
@@ -278,7 +278,7 @@ func (s *Service) Links(ctx context.Context, linksSpec []dashboards.MonitoringDa
 
 	zl := log.FromContext(ctx)
 
-	if connectionInfo.baseExternalURL == "" {
+	if connectionInfo.BaseExternalURL == "" {
 		zl.Trace().Msgf("Skip checking Perses links as Perses is not configured")
 		return nil, 0, nil
 	}
@@ -298,15 +298,15 @@ func (s *Service) VersionURL(ctx context.Context) string {
 	connectionInfo, code, err := s.getPersesConnectionInfo(ctx)
 	if err != nil {
 		zl.Warn().Msgf("Cannot get Perses connection info. Will try a different way to obtain Perses version. code=[%v]: %v", code, err)
-		connectionInfo = persesConnectionInfo{
-			baseExternalURL: persesConfig.ExternalURL,
-			internalURL:     persesConfig.InternalURL,
+		connectionInfo = PersesConnectionInfo{
+			BaseExternalURL: persesConfig.ExternalURL,
+			InternalURL:     persesConfig.InternalURL,
 		}
 	}
 	// we want to use the internal URL - but if it isn't known, try the external URL
-	baseUrl := connectionInfo.internalURL
-	if connectionInfo.internalURL == "" {
-		baseUrl = connectionInfo.baseExternalURL
+	baseUrl := connectionInfo.InternalURL
+	if connectionInfo.InternalURL == "" {
+		baseUrl = connectionInfo.BaseExternalURL
 	}
 
 	if baseUrl == "" {
@@ -317,7 +317,7 @@ func (s *Service) VersionURL(ctx context.Context) string {
 	return fmt.Sprintf("%s/api/v1/health", baseUrl)
 }
 
-func getPersesLinks(ctx context.Context, conn persesConnectionInfo, project string, linksSpec []dashboards.MonitoringDashboardExternalLink, dashboardSupplier DashboardSupplierFunc) ([]models.ExternalLink, int, error) {
+func getPersesLinks(ctx context.Context, conn PersesConnectionInfo, project string, linksSpec []dashboards.MonitoringDashboardExternalLink, dashboardSupplier DashboardSupplierFunc) ([]models.ExternalLink, int, error) {
 	// Call Perses REST API to get dashboard urls
 	linksOut := []models.ExternalLink{}
 	for _, linkSpec := range linksSpec {
@@ -340,24 +340,24 @@ func getPersesLinks(ctx context.Context, conn persesConnectionInfo, project stri
 	return linksOut, http.StatusOK, nil
 }
 
-type persesConnectionInfo struct {
-	baseExternalURL   string
-	externalURLParams string
-	internalURL       string
-	auth              *config.Auth
+type PersesConnectionInfo struct {
+	BaseExternalURL   string
+	ExternalURLParams string
+	InternalURL       string
+	Auth              *config.Auth
 }
 
-func (s *Service) getPersesConnectionInfo(ctx context.Context) (persesConnectionInfo, int, error) {
+func (s *Service) getPersesConnectionInfo(ctx context.Context) (PersesConnectionInfo, int, error) {
 	externalURL := s.URL(ctx)
 	if externalURL == "" {
-		return persesConnectionInfo{}, http.StatusServiceUnavailable, errors.New("perses URL is not set in Kiali configuration")
+		return PersesConnectionInfo{}, http.StatusServiceUnavailable, errors.New("perses URL is not set in Kiali configuration")
 	}
 	cfg := s.conf.ExternalServices.Perses
 
 	// Check if URL is valid
 	_, err := url.ParseRequestURI(externalURL)
 	if err != nil {
-		return persesConnectionInfo{}, http.StatusServiceUnavailable, errors.New("wrong format for Perses URL: " + err.Error())
+		return PersesConnectionInfo{}, http.StatusServiceUnavailable, errors.New("wrong format for Perses URL: " + err.Error())
 	}
 
 	apiURL := externalURL
@@ -375,18 +375,18 @@ func (s *Service) getPersesConnectionInfo(ctx context.Context) (persesConnection
 		externalURLParams = "?" + urlParts[1]
 	}
 
-	return persesConnectionInfo{
-		baseExternalURL:   externalURL,
-		externalURLParams: externalURLParams,
-		internalURL:       apiURL,
-		auth:              s.GetAuth(),
+	return PersesConnectionInfo{
+		BaseExternalURL:   externalURL,
+		ExternalURLParams: externalURLParams,
+		InternalURL:       apiURL,
+		Auth:              s.GetAuth(),
 	}, 0, nil
 }
 
-func getDashboardPath(ctx context.Context, project, name string, conn persesConnectionInfo, dashboardSupplier DashboardSupplierFunc) (string, error) {
+func getDashboardPath(ctx context.Context, project, name string, conn PersesConnectionInfo, dashboardSupplier DashboardSupplierFunc) (string, error) {
 	lowerName := strings.ToLower(name)
 	spacedName := strings.ReplaceAll(lowerName, " ", "-")
-	body, code, url, err := dashboardSupplier(conn.internalURL, project, url.PathEscape(spacedName), conn.auth)
+	body, code, url, err := dashboardSupplier(conn, project, url.PathEscape(spacedName), conn.Auth)
 	zl := log.FromContext(ctx)
 	if err != nil {
 		return "", err
@@ -418,13 +418,28 @@ func getDashboardPath(ctx context.Context, project, name string, conn persesConn
 	return url, nil
 }
 
-func checkDashboard(url, project, searchPattern string, auth *config.Auth) ([]byte, int, string, error) {
+// checkDashboard uses the internal and external URL from the Perses connection data
+// Kiali will use the internal URL to check for the dashboard, but the external URL to be returned (And used as an external link)
+// This is because, contrary to Grafana, the external URL from the dashboard is not returned in the API response
+func checkDashboard(conn PersesConnectionInfo, project, searchPattern string, auth *config.Auth) ([]byte, int, string, error) {
+	url := conn.BaseExternalURL
+	if conn.InternalURL != "" {
+		url = conn.InternalURL
+	}
 	urlParts := strings.Split(url, "?")
 	query := strings.TrimSuffix(urlParts[0], "/") + fmt.Sprintf("/api/v1/projects/%s/dashboards/%s", project, searchPattern)
 	if len(urlParts) > 1 {
 		query = query + "&" + urlParts[1]
 	}
 	resp, code, _, err := httputil.HttpGet(query, auth, time.Second*10, nil, nil, config.Get())
-	extUrl := fmt.Sprintf("%s/projects/%s/dashboards/%s", urlParts[0], project, searchPattern)
+
+	useURL := conn.BaseExternalURL
+	if useURL == "" {
+		useURL = urlParts[0]
+	}
+	extUrl := fmt.Sprintf("%s/projects/%s/dashboards/%s", useURL, project, searchPattern)
+	if conn.ExternalURLParams != "" {
+		extUrl = fmt.Sprintf("%s%s", extUrl, conn.ExternalURLParams)
+	}
 	return resp, code, extUrl, err
 }
