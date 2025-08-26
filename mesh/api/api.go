@@ -48,9 +48,9 @@ func GraphMesh(
 	globalInfo.Conf = conf
 	globalInfo.Discovery = discovery
 	globalInfo.Grafana = grafana
-	globalInfo.Perses = perses
-	globalInfo.KialiCache = kialiCache
 	globalInfo.IstioStatusGetter = &business.IstioStatus
+	globalInfo.KialiCache = kialiCache
+	globalInfo.Perses = perses
 
 	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer("mesh", "mesh", false)
 	defer internalmetrics.ObserveDurationAndLogResults(

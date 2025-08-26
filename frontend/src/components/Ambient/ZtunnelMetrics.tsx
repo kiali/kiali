@@ -17,6 +17,7 @@ import { GrafanaInfo } from '../../types/GrafanaInfo';
 import { MessageType } from '../../types/MessageCenter';
 import { PersesInfo } from '../../types/PersesInfo';
 import { PersesLinks } from '../Metrics/PersesLinks';
+import { store } from '../../store/ConfigStore';
 
 type ZtunnelMetricsProps = {
   cluster: string;
@@ -33,6 +34,8 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
   const [metrics, setMetrics] = React.useState<DashboardModel>();
   const [grafanaInfo, setGrafanaInfo] = React.useState<GrafanaInfo>();
   const [persesInfo, setPersesInfo] = React.useState<PersesInfo>();
+  const externalServices = store.getState().statusState.externalServices;
+
   const rateParams = computePrometheusRateParams(
     props.rangeDuration.rangeDuration ? props.rangeDuration.rangeDuration : 60,
     10
@@ -63,37 +66,41 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
   };
 
   const fetchGrafanaInfo = (): void => {
-    API.getGrafanaInfo()
-      .then(grafanaInfo => {
-        if (grafanaInfo) {
-          setGrafanaInfo(grafanaInfo.data);
-        }
-      })
-      .catch(err => {
-        AlertUtils.addMessage({
-          ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
-          group: 'default',
-          type: MessageType.INFO,
-          showNotification: false
+    if (externalServices.find(service => service.name.toLowerCase() === 'grafana')) {
+      API.getGrafanaInfo()
+        .then(grafanaInfo => {
+          if (grafanaInfo) {
+            setGrafanaInfo(grafanaInfo.data);
+          }
+        })
+        .catch(err => {
+          AlertUtils.addMessage({
+            ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
+            group: 'default',
+            type: MessageType.INFO,
+            showNotification: false
+          });
         });
-      });
+    }
   };
 
   const fetchPersesInfo = (): void => {
-    API.getPersesInfo()
-      .then(persesInfo => {
-        if (persesInfo) {
-          setPersesInfo(persesInfo.data);
-        }
-      })
-      .catch(err => {
-        AlertUtils.addMessage({
-          ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
-          group: 'default',
-          type: MessageType.INFO,
-          showNotification: false
+    if (externalServices.find(service => service.name.toLowerCase() === 'perses')) {
+      API.getPersesInfo()
+        .then(persesInfo => {
+          if (persesInfo) {
+            setPersesInfo(persesInfo.data);
+          }
+        })
+        .catch(err => {
+          AlertUtils.addMessage({
+            ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
+            group: 'default',
+            type: MessageType.INFO,
+            showNotification: false
+          });
         });
-      });
+    }
   };
 
   React.useEffect(() => {

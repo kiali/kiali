@@ -63,7 +63,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   PeerAuthentication: { badge: 'PA', tt: 'Peer Authentication' } as PFBadgeType,
   Perses: { badge: 'PE', tt: 'Perses' } as PFBadgeType,
   Pod: { badge: 'P', tt: 'Pod', style: { backgroundColor: PFColors.Cyan300 } } as PFBadgeType,
-  Policy: { badge: 'P', tt: 'Policy' } as PFBadgeType,
+  Policy: { badge: 'PO', tt: 'Policy' } as PFBadgeType,
   RBACConfig: { badge: 'RC', tt: 'RBAC Configuration' } as PFBadgeType,
   RequestAuthentication: { badge: 'RA', tt: 'Request Authentication' } as PFBadgeType,
   RequestRetry: {

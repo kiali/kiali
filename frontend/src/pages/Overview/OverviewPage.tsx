@@ -76,6 +76,7 @@ import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { EmptyOverview } from './EmptyOverview';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { PersesInfo } from '../../types/PersesInfo';
+import { ExternalServiceInfo } from '../../types/StatusState';
 
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
@@ -142,6 +143,7 @@ type State = {
 
 type ReduxProps = {
   duration: DurationInSeconds;
+  externalServices: ExternalServiceInfo[];
   istioAPIEnabled: boolean;
   kiosk: string;
   language: string;
@@ -610,67 +612,71 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   };
 
   fetchGrafanaInfo = (): void => {
-    if (!OverviewPageComponent.grafanaInfoPromise) {
-      OverviewPageComponent.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
-        if (response.status === 204) {
-          return undefined;
-        }
+    if (this.props.externalServices.find(service => service.name.toLowerCase() === 'grafana')) {
+      if (!OverviewPageComponent.grafanaInfoPromise) {
+        OverviewPageComponent.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
+          if (response.status === 204) {
+            return undefined;
+          }
 
-        return response.data;
-      });
-    }
-
-    OverviewPageComponent.grafanaInfoPromise
-      .then(grafanaInfo => {
-        if (grafanaInfo) {
-          // For Overview Page only Performance and Wasm Extension dashboard are interesting
-          this.setState({
-            grafanaLinks: grafanaInfo.externalLinks.filter(link => ISTIO_DASHBOARDS.indexOf(link.name) > -1)
-          });
-        } else {
-          this.setState({ grafanaLinks: [] });
-        }
-      })
-      .catch(err => {
-        AlertUtils.addMessage({
-          ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
-          group: 'default',
-          type: MessageType.INFO,
-          showNotification: false
+          return response.data;
         });
-      });
+      }
+
+      OverviewPageComponent.grafanaInfoPromise
+        .then(grafanaInfo => {
+          if (grafanaInfo) {
+            // For Overview Page only Performance and Wasm Extension dashboard are interesting
+            this.setState({
+              grafanaLinks: grafanaInfo.externalLinks.filter(link => ISTIO_DASHBOARDS.indexOf(link.name) > -1)
+            });
+          } else {
+            this.setState({ grafanaLinks: [] });
+          }
+        })
+        .catch(err => {
+          AlertUtils.addMessage({
+            ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
+            group: 'default',
+            type: MessageType.INFO,
+            showNotification: false
+          });
+        });
+    }
   };
 
   fetchPersesInfo = (): void => {
-    if (!OverviewPageComponent.persesInfoPromise) {
-      OverviewPageComponent.persesInfoPromise = API.getPersesInfo().then(response => {
-        if (response.status === 204) {
-          return undefined;
-        }
+    if (this.props.externalServices.find(service => service.name.toLowerCase() === 'perses')) {
+      if (!OverviewPageComponent.persesInfoPromise) {
+        OverviewPageComponent.persesInfoPromise = API.getPersesInfo().then(response => {
+          if (response.status === 204) {
+            return undefined;
+          }
 
-        return response.data;
-      });
-    }
-
-    OverviewPageComponent.persesInfoPromise
-      .then(persesInfo => {
-        if (persesInfo) {
-          // For Overview Page only Performance and Wasm Extension dashboard are interesting
-          this.setState({
-            persesLinks: persesInfo.externalLinks.filter(link => ISTIO_DASHBOARDS.indexOf(link.name) > -1)
-          });
-        } else {
-          this.setState({ persesLinks: [] });
-        }
-      })
-      .catch(err => {
-        AlertUtils.addMessage({
-          ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
-          group: 'default',
-          type: MessageType.INFO,
-          showNotification: false
+          return response.data;
         });
-      });
+      }
+
+      OverviewPageComponent.persesInfoPromise
+        .then(persesInfo => {
+          if (persesInfo) {
+            // For Overview Page only Performance and Wasm Extension dashboard are interesting
+            this.setState({
+              persesLinks: persesInfo.externalLinks.filter(link => ISTIO_DASHBOARDS.indexOf(link.name) > -1)
+            });
+          } else {
+            this.setState({ persesLinks: [] });
+          }
+        })
+        .catch(err => {
+          AlertUtils.addMessage({
+            ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
+            group: 'default',
+            type: MessageType.INFO,
+            showNotification: false
+          });
+        });
+    }
   };
 
   private fetchControlPlanes = async (): Promise<void> => {
@@ -1472,6 +1478,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   duration: durationSelector(state),
+  externalServices: state.statusState.externalServices,
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
   kiosk: state.globalState.kiosk,
   meshStatus: meshWideMTLSStatusSelector(state),

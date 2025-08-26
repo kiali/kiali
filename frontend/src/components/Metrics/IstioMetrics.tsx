@@ -35,6 +35,7 @@ import { TraceSpansLimit } from './TraceSpansLimit';
 import { GrafanaLinks } from './GrafanaLinks';
 import { PersesInfo } from '../../types/PersesInfo';
 import { PersesLinks } from './PersesLinks';
+import { ExternalServiceInfo } from '../../types/StatusState';
 
 type MetricsState = {
   crippledFeatures?: KialiCrippledFeatures;
@@ -65,6 +66,7 @@ type IstioMetricsProps = ObjectId & {
 };
 
 type ReduxStateProps = {
+  externalServices: ExternalServiceInfo[];
   kiosk: string;
   refreshInterval: IntervalInMilliseconds;
   timeRange: TimeRange;
@@ -228,61 +230,65 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
   };
 
   private fetchGrafanaInfo(): void {
-    if (!IstioMetricsComponent.grafanaInfoPromise) {
-      IstioMetricsComponent.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
-        if (response.status === 204) {
-          return undefined;
-        }
+    if (this.props.externalServices.find(service => service.name.toLowerCase() === 'grafana')) {
+      if (!IstioMetricsComponent.grafanaInfoPromise) {
+        IstioMetricsComponent.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
+          if (response.status === 204) {
+            return undefined;
+          }
 
-        return response.data;
-      });
-    }
-
-    IstioMetricsComponent.grafanaInfoPromise
-      .then(grafanaInfo => {
-        if (grafanaInfo) {
-          this.setState({ grafanaInfo: grafanaInfo });
-        } else {
-          this.setState({ grafanaInfo: { externalLinks: [] } });
-        }
-      })
-      .catch(err => {
-        AlertUtils.addMessage({
-          ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
-          group: 'default',
-          type: MessageType.INFO,
-          showNotification: false
+          return response.data;
         });
-      });
+      }
+
+      IstioMetricsComponent.grafanaInfoPromise
+        .then(grafanaInfo => {
+          if (grafanaInfo) {
+            this.setState({ grafanaInfo: grafanaInfo });
+          } else {
+            this.setState({ grafanaInfo: { externalLinks: [] } });
+          }
+        })
+        .catch(err => {
+          AlertUtils.addMessage({
+            ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
+            group: 'default',
+            type: MessageType.INFO,
+            showNotification: false
+          });
+        });
+    }
   }
 
   private fetchPersesInfo(): void {
-    if (!IstioMetricsComponent.persesInfoPromise) {
-      IstioMetricsComponent.persesInfoPromise = API.getPersesInfo().then(response => {
-        if (response.status === 204) {
-          return undefined;
-        }
+    if (this.props.externalServices.find(service => service.name.toLowerCase() === 'perses')) {
+      if (!IstioMetricsComponent.persesInfoPromise) {
+        IstioMetricsComponent.persesInfoPromise = API.getPersesInfo().then(response => {
+          if (response.status === 204) {
+            return undefined;
+          }
 
-        return response.data;
-      });
-    }
-
-    IstioMetricsComponent.persesInfoPromise
-      .then(persesInfo => {
-        if (persesInfo) {
-          this.setState({ persesInfo: persesInfo });
-        } else {
-          this.setState({ persesInfo: { externalLinks: [] } });
-        }
-      })
-      .catch(err => {
-        AlertUtils.addMessage({
-          ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
-          group: 'default',
-          type: MessageType.INFO,
-          showNotification: false
+          return response.data;
         });
-      });
+      }
+
+      IstioMetricsComponent.persesInfoPromise
+        .then(persesInfo => {
+          if (persesInfo) {
+            this.setState({ persesInfo: persesInfo });
+          } else {
+            this.setState({ persesInfo: { externalLinks: [] } });
+          }
+        })
+        .catch(err => {
+          AlertUtils.addMessage({
+            ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
+            group: 'default',
+            type: MessageType.INFO,
+            showNotification: false
+          });
+        });
+    }
   }
 
   private onMetricsSettingsChanged = (settings: MetricsSettings): void => {
@@ -505,6 +511,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
   return {
+    externalServices: state.statusState.externalServices,
     kiosk: state.globalState.kiosk,
     tracingIntegration: state.tracingState.info ? state.tracingState.info.integration : false,
     timeRange: timeRangeSelector(state),
