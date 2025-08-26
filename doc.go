@@ -850,6 +850,34 @@ type ClusterTlsResponse struct {
 	Body models.MTLSStatus
 }
 
+// Response of the configuration validation query
+// swagger:response configurationValidation
+type ConfigurationValidationResponse struct {
+	// in: body
+	Body model.ConfigurationValidation
+}
+
+// Response of the tracing diagnose query
+// swagger:response tracingDiagnose
+type TracingDiagnoseResponse struct {
+	// in: body
+	Body model.TracingDiagnose
+}
+
+// Response of the perses info query
+// swagger:response persesInfoResponse
+type PersesInfoResponse struct {
+	// in: body
+	Body models.PersesInfo
+}
+
+// Response of the ztunnel config dump query
+// swagger:response ztunnelConfigDump
+type ZtunnelConfigDumpResponse struct {
+	// in: body
+	Body kubernetes.ZtunnelConfigDump
+}
+
 // swagger:enum ProxyLogLevel
 type ProxyLogLevel string
 
