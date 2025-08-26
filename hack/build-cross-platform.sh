@@ -107,11 +107,15 @@ build_platform() {
     
     log "Building for ${goos}/${goarch}..."
     
+    local make_status
     if [[ "${VERBOSE}" == "true" ]]; then
         GO_BUILD_OUTPUT="${output_file}" GOOS="${goos}" GOARCH="${goarch}" make -C "${ROOTDIR}" build
+        make_status=$?
     else
         GO_BUILD_OUTPUT="${output_file}" GOOS="${goos}" GOARCH="${goarch}" make -C "${ROOTDIR}" build > /dev/null 2>&1
+        make_status=$?
     fi
+    return "${make_status}"
 }
 
 main() {
