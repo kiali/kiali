@@ -75,6 +75,7 @@ import { ApiResponse } from 'types/Api';
 import { t } from 'utils/I18nUtils';
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
+import { serverConfig } from '../../config';
 
 const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState => {
   return {
@@ -1024,19 +1025,21 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                   </div>
                 </Tab>
 
-                <Tab eventKey={1} title={t('Gateways')} data-test={'Gateways'}>
-                  <div style={{ marginTop: '20px', marginBottom: '10px' }}>
-                    <GatewaySelector
-                      serviceName={this.props.serviceName}
-                      hasGateway={hasGateway(this.props.virtualServices)}
-                      gateway={gatewaySelected}
-                      isMesh={isMesh}
-                      gateways={this.props.gateways}
-                      vsHosts={this.state.vsHosts}
-                      onGatewayChange={this.onGateway}
-                    />
-                  </div>
-                </Tab>
+                {serverConfig.ingressGatewayEnabled && (
+                  <Tab eventKey={1} title={t('Gateways')} data-test={'Gateways'}>
+                    <div style={{ marginTop: '20px', marginBottom: '10px' }}>
+                      <GatewaySelector
+                        serviceName={this.props.serviceName}
+                        hasGateway={hasGateway(this.props.virtualServices)}
+                        gateway={gatewaySelected}
+                        isMesh={isMesh}
+                        gateways={this.props.gateways}
+                        vsHosts={this.state.vsHosts}
+                        onGatewayChange={this.onGateway}
+                      />
+                    </div>
+                  </Tab>
+                )}
 
                 <Tab eventKey={2} title={t('Traffic Policy')}>
                   <div style={{ marginTop: '20px', marginBottom: '10px' }}>

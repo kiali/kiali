@@ -160,6 +160,7 @@ export const serverRateConfig = {
       }
     ]
   },
+  ingressGatewayEnabled: false,
   installationTag: 'Kiali Console',
   istioAnnotations: {
     ambientAnnotation: 'ambient.istio.io/redirection',

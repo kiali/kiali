@@ -81,6 +81,7 @@ export const healthConfig = {
     ]
   },
   installationTag: 'Kiali Console',
+  ingressGatewayEnabled: false,
   istioAnnotations: {
     ambientAnnotation: 'ambient.istio.io/redirection',
     ambientAnnotationEnabled: 'enabled',

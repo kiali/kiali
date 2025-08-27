@@ -72,6 +72,7 @@ const defaultServerConfig: ComputedServerConfig = {
   },
   ignoreHomeCluster: false,
   installationTag: 'Kiali Console',
+  ingressGatewayEnabled: false,
   istioAnnotations: {
     ambientAnnotation: 'ambient.istio.io/redirection',
     ambientAnnotationEnabled: 'enabled',
