@@ -146,8 +146,50 @@ fi
 
 if [ -z "${HELM_CHARTS_DIR}" ]; then
   HELM_CHARTS_DIR="$(mktemp -d)"
-  infomsg "Cloning kiali helm-charts..."
-  git clone --single-branch --branch "${TARGET_BRANCH}" https://github.com/kiali/helm-charts.git "${HELM_CHARTS_DIR}"
+
+  # We want to test the helm chart changes that correspond to the server PR being tested.
+  # If the server PR has a corresponding helm-charts PR, the helm-charts PR branch
+  # must be the same name as the server PR branch.
+  # As a fallback, we will use the helm-charts repo's master branch in order to support
+  # server PR testing that do not have any corresponding helm-charts PRs.
+  # Prefer the PR head branch if this script is running in a pull-request. If
+  # that branch does not exist in the helm-charts repo, gracefully fall back to
+  # TARGET_BRANCH, and finally to 'master'.
+  CANDIDATE_BRANCHES=("${BUILD_BRANCH}" "${GITHUB_HEAD_REF}" "${TARGET_BRANCH}" "master")
+  CANDIDATE_OWNERS=("${GITHUB_ACTOR}" "kiali")
+
+  HELM_CHARTS_BRANCH=""
+  for b in "${CANDIDATE_BRANCHES[@]}"; do
+    infomsg "Evaluating helm-charts branch candidate: [${b}]"
+    # Skip empty candidates (GITHUB_HEAD_REF is empty on push workflows)
+    if [ -z "${b}" ]; then
+      infomsg " -> branch skipped (empty)"
+      continue
+    fi
+    for owner in "${CANDIDATE_OWNERS[@]}"; do
+      repo_url="https://github.com/${owner}/helm-charts.git"
+      infomsg "Evaluating helm-charts branch [${b}] of owner [${owner}]: ${repo_url}"
+      if git ls-remote --exit-code --heads "${repo_url}" "refs/heads/${b}" >/dev/null 2>&1; then
+        infomsg " -> branch [${b}] exists in ${owner}/helm-charts"
+        HELM_CHARTS_BRANCH="${b}"
+        HELM_CHARTS_REPO_URL="${repo_url}"
+        break 2
+      else
+        infomsg " -> branch [${b}] not found in ${owner}/helm-charts"
+      fi
+    done
+    infomsg " -> branch [${b}] not found in candidate owners"
+  done
+
+  if [ -z "${HELM_CHARTS_BRANCH}" ]; then
+    echo "ERROR: Unable to find a suitable branch in helm-charts repository." >&2
+    exit 1
+  fi
+
+  infomsg "Cloning kiali helm-charts (branch: ${HELM_CHARTS_BRANCH}) into ${HELM_CHARTS_DIR} ..."
+  # Default to kiali repo URL if not set in loop (this should not happen)
+  HELM_CHARTS_REPO_URL="${HELM_CHARTS_REPO_URL:-https://github.com/kiali/helm-charts.git}"
+  git clone --single-branch --branch "${HELM_CHARTS_BRANCH}" "${HELM_CHARTS_REPO_URL}" "${HELM_CHARTS_DIR}"
   make -C "${HELM_CHARTS_DIR}" build-helm-charts
 fi
 
@@ -165,6 +207,7 @@ KIND_NODE_IMAGE=$KIND_NODE_IMAGE
 MULTICLUSTER=$MULTICLUSTER
 SAIL=$SAIL
 TARGET_BRANCH=$TARGET_BRANCH
+BUILD_BRANCH=$BUILD_BRANCH
 TEMPO=$TEMPO
 === SETTINGS ===
 EOM
