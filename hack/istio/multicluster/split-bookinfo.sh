@@ -112,7 +112,7 @@ spec:
 EOF
 }
 
-if [ "${AMBIENT}" == "true" ]; then
+if [ "${AMBIENT}" != "true" ]; then
 
   create_traffic_shifting_rules "${CLUSTER1_CONTEXT}"
 

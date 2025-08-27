@@ -70,47 +70,81 @@ install_ambient_multicluster() {
 }
 
 
-install_helloworld_demo() {
+# Helper function to setup ambient namespace on a cluster
+setup_ambient_namespace() {
+  local context="${1}"
+  local namespace="${2:-sample}"
+  
+  kubectl create --context="${context}" namespace "${namespace}" || true
+  kubectl label --context="${context}" namespace "${namespace}" \
+      istio.io/dataplane-mode=ambient --overwrite
+}
 
+# Helper function to deploy helloworld service on a cluster
+deploy_helloworld_service() {
+  local context="${1}"
+  local namespace="${2:-sample}"
+  
+  kubectl apply --context="${context}" \
+      -f "${ISTIO_DIR}/samples/helloworld/helloworld.yaml" \
+      -l service=helloworld -n "${namespace}"
+}
+
+# Helper function to deploy helloworld version and optionally label service as global
+deploy_helloworld_version() {
+  local context="${1}"
+  local version="${2}"
+  local namespace="${3:-sample}"
+  local make_global="${4:-true}"
+  
+  kubectl apply --context="${context}" \
+      -f "${ISTIO_DIR}/samples/helloworld/helloworld.yaml" \
+      -l version="${version}" -n "${namespace}"
+  
+  if [ "${make_global}" == "true" ]; then
+    kubectl label --context="${context}" svc helloworld -n "${namespace}" \
+        istio.io/global="true" --overwrite
+  fi
+}
+
+# Helper function to deploy curl tool on a cluster
+deploy_curl_tool() {
+  local context="${1}"
+  local namespace="${2:-sample}"
+  
+  kubectl apply --context="${context}" \
+      -f "${ISTIO_DIR}/samples/curl/curl.yaml" -n "${namespace}"
+}
+
+install_helloworld_demo() {
   CLIENT_EXE="kubectl"
 
-  ${CLIENT_EXE} create --context="${CLUSTER1_CONTEXT}" namespace sample
-  ${CLIENT_EXE} create --context="${CLUSTER2_CONTEXT}" namespace sample
+  # Setup ambient namespaces on both clusters
+  setup_ambient_namespace "${CLUSTER1_CONTEXT}"
+  setup_ambient_namespace "${CLUSTER2_CONTEXT}"
 
-  ${CLIENT_EXE} label --context="${CLUSTER1_CONTEXT}" namespace sample \
-      istio.io/dataplane-mode=ambient
-  ${CLIENT_EXE} label --context="${CLUSTER2_CONTEXT}" namespace sample \
-      istio.io/dataplane-mode=ambient
+  # Deploy helloworld service on both clusters
+  deploy_helloworld_service "${CLUSTER1_CONTEXT}"
+  deploy_helloworld_service "${CLUSTER2_CONTEXT}"
 
-  ${CLIENT_EXE} apply --context="${CLUSTER1_CONTEXT}" \
-      -f ${ISTIO_DIR}/samples/helloworld/helloworld.yaml \
-      -l service=helloworld -n sample
-  ${CLIENT_EXE} apply --context="${CLUSTER2_CONTEXT}" \
-      -f ${ISTIO_DIR}/samples/helloworld/helloworld.yaml \
-      -l service=helloworld -n sample
+  # Deploy v1 on cluster 1 and v2 on cluster 2, both marked as global
+  deploy_helloworld_version "${CLUSTER1_CONTEXT}" "v1"
+  deploy_helloworld_version "${CLUSTER2_CONTEXT}" "v2"
 
-  ${CLIENT_EXE} apply --context="${CLUSTER1_CONTEXT}" \
-      -f ${ISTIO_DIR}/samples/helloworld/helloworld.yaml \
-      -l version=v1 -n sample
-  ${CLIENT_EXE} label --context="${CLUSTER1_CONTEXT}" svc helloworld -n sample \
-      istio.io/global="true"
+  # Deploy curl tool on both clusters
+  deploy_curl_tool "${CLUSTER1_CONTEXT}"
+  deploy_curl_tool "${CLUSTER2_CONTEXT}"
 
-  ${CLIENT_EXE} apply --context="${CLUSTER2_CONTEXT}" \
-      -f ${ISTIO_DIR}/samples/helloworld/helloworld.yaml \
-      -l version=v2 -n sample
-
-  ${CLIENT_EXE} label --context="${CLUSTER2_CONTEXT}" svc helloworld -n sample \
-      istio.io/global="true"
-
-  ${CLIENT_EXE} apply --context="${CLUSTER1_CONTEXT}" \
-      -f ${ISTIO_DIR}/samples/curl/curl.yaml -n sample
-  ${CLIENT_EXE} apply --context="${CLUSTER2_CONTEXT}" \
-      -f ${ISTIO_DIR}/samples/curl/curl.yaml -n sample
-
-# Verify with:
-# kubectl exec --context="${CLUSTER1_CONTEXT}" -n sample -c curl \
-#    "$(kubectl get pod --context="${CLUSTER1_CONTEXT}" -n sample -l \
-#    app=curl -o jsonpath='{.items[0].metadata.name}')" \
-#    -- curl -sS helloworld.sample:5000/hello
+  # Show verification command for user to test the deployment
+  echo ""
+  echo "==== HELLOWORLD DEMO INSTALLED SUCCESSFULLY ===="
+  echo "To verify the multicluster setup from cluster 1 [${CLUSTER1_NAME}], run:"
+  echo ""
+  echo "kubectl exec --context=\"${CLUSTER1_CONTEXT}\" -n sample -c curl \\"
+  echo "    \"\$(kubectl get pod --context=\"${CLUSTER1_CONTEXT}\" -n sample -l \\"
+  echo "    app=curl -o jsonpath='{.items[0].metadata.name}')\" \\"
+  echo "    -- curl -sS helloworld.sample:5000/hello"
+  echo ""
+  echo "This will test connectivity between clusters and show responses from both v1 and v2."
 
 }
