@@ -7,6 +7,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
@@ -29,9 +30,10 @@ func TestCoveredworkloads(t *testing.T) {
 		//firstCase - one authorization policy namespace is wide mesh and has no selector (covers all workloads including current workload),
 		// while other auths has diffrenet namespaces than current workload
 		vals, valid = UncoveredWorkloadChecker{
-			Workload:              wl,
-			Namespace:             ns2,
 			AuthorizationPolicies: variedAuthPolicies1(),
+			Discovery:             &istiotest.FakeDiscovery{},
+			Namespace:             ns2,
+			Workload:              wl,
 		}.Check()
 
 		assert.Empty(vals)
@@ -40,9 +42,10 @@ func TestCoveredworkloads(t *testing.T) {
 		// second case - one authorization policy has no selector but belongs to the curr workload ns (covers it),
 		// while  other auths has diffrenet namespaces than current workload
 		vals, valid = UncoveredWorkloadChecker{
-			Workload:              wl,
-			Namespace:             ns2,
 			AuthorizationPolicies: variedAuthPolicies2(),
+			Discovery:             &istiotest.FakeDiscovery{},
+			Namespace:             ns2,
+			Workload:              wl,
 		}.Check()
 
 		assert.Empty(vals)
@@ -53,9 +56,10 @@ func TestCoveredworkloads(t *testing.T) {
 	// third case - curr workload in the same namespace and has a matching authorization policy (same ns and labels)
 	workloadsNS1 := workloadsNS1()
 	vals, valid = UncoveredWorkloadChecker{
-		Workload:              workloadsNS1[1],
-		Namespace:             ns1,
 		AuthorizationPolicies: authorizationPoliciesNS1(),
+		Discovery:             &istiotest.FakeDiscovery{},
+		Namespace:             ns1,
+		Workload:              workloadsNS1[1],
 	}.Check()
 
 	assert.Empty(vals)
@@ -89,9 +93,10 @@ func TestUnCoveredWorkloads(t *testing.T) {
 
 func testFailure(assert *assert.Assertions, ns string, authpolicies []*security_v1.AuthorizationPolicy, workload *models.Workload) {
 	vals, valid := UncoveredWorkloadChecker{
-		Workload:              workload,
-		Namespace:             ns,
 		AuthorizationPolicies: authpolicies,
+		Discovery:             &istiotest.FakeDiscovery{},
+		Namespace:             ns,
+		Workload:              workload,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -102,10 +107,10 @@ func testFailure(assert *assert.Assertions, ns string, authpolicies []*security_
 
 func workloadsNS1() models.Workloads {
 	workloads := models.Workloads{
-		data.CreateWorkload("covered-workload1", map[string]string{"app": "ratings", "version": "v1"}),
-		data.CreateWorkload("covered-workload2", map[string]string{"app": "productpage", "version": "v1"}),
-		data.CreateWorkload("covered-workload3", map[string]string{"app": "details", "version": "v3"}),
-		data.CreateWorkload("uncovered-workload", map[string]string{"app": "wrong", "version": "v5"}),
+		data.CreateWorkload(ns1, "covered-workload1", map[string]string{"app": "ratings", "version": "v1"}),
+		data.CreateWorkload(ns1, "covered-workload2", map[string]string{"app": "productpage", "version": "v1"}),
+		data.CreateWorkload(ns1, "covered-workload3", map[string]string{"app": "details", "version": "v3"}),
+		data.CreateWorkload(ns1, "uncovered-workload", map[string]string{"app": "wrong", "version": "v5"}),
 	}
 
 	return workloads
@@ -113,8 +118,8 @@ func workloadsNS1() models.Workloads {
 
 func workloadsNS2() models.Workloads {
 	workloads := models.Workloads{
-		data.CreateWorkload("uncovered-workload1", map[string]string{"app": "ratings", "version": "v1"}),
-		data.CreateWorkload("uncovered-workload2", map[string]string{"app": "details", "version": "v2"}),
+		data.CreateWorkload(ns2, "uncovered-workload1", map[string]string{"app": "ratings", "version": "v1"}),
+		data.CreateWorkload(ns2, "uncovered-workload2", map[string]string{"app": "details", "version": "v2"}),
 	}
 	return workloads
 }

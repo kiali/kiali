@@ -8,6 +8,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
@@ -15,6 +16,8 @@ import (
 
 func prepareTestForAuthPolicy(ap *security_v1.AuthorizationPolicy, vs *networking_v1.VirtualService, se *networking_v1.ServiceEntry) models.IstioReferences {
 	drReferences := AuthorizationPolicyReferences{
+		Cluster:               config.DefaultClusterID,
+		Discovery:             &istiotest.FakeDiscovery{},
 		Conf:                  config.Get(),
 		Namespace:             "bookinfo",
 		Namespaces:            []string{"bookinfo", "bookinfo2", "bookinfo3"},
@@ -23,7 +26,7 @@ func prepareTestForAuthPolicy(ap *security_v1.AuthorizationPolicy, vs *networkin
 		VirtualServices:       []*networking_v1.VirtualService{vs},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"istio-system": {
-				data.CreateWorkload("istiod", map[string]string{"app": "istio-ingressgateway"}),
+				data.CreateWorkload("istio-system", "istiod", map[string]string{"app": "istio-ingressgateway"}),
 			}},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("foo-dev", "istio-system"),
 	}

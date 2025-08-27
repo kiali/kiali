@@ -130,7 +130,8 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 	}
 
 	pas := kubernetes.FilterByNamespace(istioConfigList.PeerAuthentications, namespace)
-	if config.IsRootNamespace(namespace) {
+	rootNamespace := in.discovery.GetRootNamespace(ctx, cluster, namespace)
+	if rootNamespace == namespace {
 		pas = []*security_v1.PeerAuthentication{}
 	}
 	drs := models.FilterByNamespaces(istioConfigList.DestinationRules, allNamespaces)
@@ -177,7 +178,8 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 
 	for _, namespace := range namespaces {
 		pas := kubernetes.FilterByNamespace(istioConfigList.PeerAuthentications, namespace.Name)
-		if config.IsRootNamespace(namespace.Name) {
+		rootNamespace := in.discovery.GetRootNamespace(ctx, namespace.Cluster, namespace.Name)
+		if rootNamespace == namespace.Name {
 			pas = []*security_v1.PeerAuthentication{}
 		}
 
