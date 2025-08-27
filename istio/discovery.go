@@ -296,6 +296,23 @@ func (in *Discovery) IsControlPlane(ctx context.Context, cluster, namespace stri
 	return false
 }
 
+// HasControlPlane returns true if the control plane is in the namespace of the provided cluster.
+func (in *Discovery) HasControlPlane(ctx context.Context, cluster string, ns string, istiod string) bool {
+	mesh, err := in.Mesh(ctx)
+	if err != nil {
+		log.Errorf("Error getting mesh config: %s", err)
+		return false
+	}
+
+	for _, controlPlane := range mesh.ControlPlanes {
+		if controlPlane.IstiodNamespace == ns && controlPlane.IstiodName == istiod && controlPlane.Cluster.Name == cluster {
+			return true
+		}
+	}
+
+	return false
+}
+
 // IsRemoteCluster determines if the cluster has a controlplane or if it's a remote cluster without one.
 // Clusters that do not exist or are not accessible are considered remote clusters.
 func (in *Discovery) IsRemoteCluster(ctx context.Context, cluster string) bool {
