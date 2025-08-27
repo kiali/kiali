@@ -105,15 +105,15 @@ Valid command line arguments:
   -iv|--istio-version <version>
     Which Istio version to test with. For releases, specify "#.#.#". For dev builds, specify in the form "#.#-dev"
     Default: The latest release
-  -st|--stern <true|false>
-    If true, will setup stern logging binary.
-    Default: false
   -klm|--keycloak-limit-memory <value>
     Set the keycloak resources limit memory in the keycloak helm charts. Ex. 1Gi
   -krm|--keycloak-requests-memory <value>
     Set the keycloak resources requests memory in the keycloak helm charts. Ex. 1Gi
   -so|--setup-only <true|false>
     If true, only setup the test environment and exit without running the tests.
+    Default: false
+  -st|--stern <true|false>
+    If true, will setup stern logging binary.
     Default: false
   -t|--tempo <true|false>
     If true, Tempo will be installed instead of Jaeger. Just for primary-remote suite

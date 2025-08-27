@@ -12,8 +12,9 @@ source ${SCRIPT_DIR}/env.sh $*
 
 # This adds a port to the istio-ingressgateway service. This could probably be done through istioctl and passing the right combination
 # of settings into the istioctl hack script but it's way simpler to just patch the service directly.
-if [ "${AMBIENT_ENABLED}" == "true" ]; then
-  ingress_output=$(${CLIENT_EXE} get gateway -n istio-system --context "${CLUSTER1_CONTEXT}" zipkin-gateway -o jsonpath='{.spec.listeners[?(@.name=="zipkin")]}')
+if [ "${AMBIENT}" == "true" ]; then
+  ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" apply -f ${SCRIPT_DIR}/resources/zipkin-gw.yaml
+  ingress_output=$(${CLIENT_EXE} get gateway -n istio-system --context "${CLUSTER1_CONTEXT}" zipkin-gateway-istio -o jsonpath='{.spec.listeners[?(@.name=="zipkin")]}')
 else
   ingress_output=$(${CLIENT_EXE} get svc -n istio-system --context "${CLUSTER1_CONTEXT}" istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="zipkin-http")]}')
 fi
@@ -45,7 +46,11 @@ EOF
 
 else
 
-${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" apply -f - <<EOF
+  if [ "${AMBIENT}" == "true" ]; then
+    ${CLIENT_EXE} label --context="${CLUSTER1_CONTEXT}" svc zipkin -n istio-system istio.io/global="true"
+  else
+
+    ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" apply -f - <<EOF
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
@@ -65,9 +70,11 @@ spec:
           number: 9411
 EOF
 
+  fi
 fi
 
-${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" apply -f - <<EOF
+if [ "${AMBIENT}" != "true" ]; then
+  ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" apply -f - <<EOF
 apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
@@ -85,7 +92,10 @@ spec:
       protocol: HTTP
 EOF
 
-ISTIO_INGRESS_IP=$(${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" get service -n istio-system istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  ISTIO_INGRESS_IP=$(${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" get service -n istio-system istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+else
+  ISTIO_INGRESS_IP=$(${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" get service -n istio-system zipkin-gateway-istio -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+fi
 
 helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
 # Disable everything except zipkin. We can't rename the service so disable that too and create one ourselves.
