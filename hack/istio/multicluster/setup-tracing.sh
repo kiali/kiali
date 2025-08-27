@@ -14,7 +14,19 @@ source ${SCRIPT_DIR}/env.sh $*
 # of settings into the istioctl hack script but it's way simpler to just patch the service directly.
 if [ "${AMBIENT}" == "true" ]; then
   ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" apply -f ${SCRIPT_DIR}/resources/zipkin-gw.yaml
-  ingress_output=$(${CLIENT_EXE} get gateway -n istio-system --context "${CLUSTER1_CONTEXT}" zipkin-gateway-istio -o jsonpath='{.spec.listeners[?(@.name=="zipkin")]}')
+  
+  # Wait for the zipkin-gateway-istio service to be created by Istio
+  echo "Waiting for zipkin-gateway-istio service to be ready..."
+  for i in {1..30}; do
+    if ${CLIENT_EXE} get svc -n istio-system --context "${CLUSTER1_CONTEXT}" zipkin-gateway-istio &>/dev/null; then
+      echo "Service zipkin-gateway-istio is ready"
+      break
+    fi
+    echo "Waiting for service... attempt $i/30"
+    sleep 2
+  done
+  
+  ingress_output=$(${CLIENT_EXE} get svc -n istio-system --context "${CLUSTER1_CONTEXT}" zipkin-gateway-istio -o jsonpath='{.spec.ports[?(@.name=="zipkin")]}')
 else
   ingress_output=$(${CLIENT_EXE} get svc -n istio-system --context "${CLUSTER1_CONTEXT}" istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="zipkin-http")]}')
 fi
