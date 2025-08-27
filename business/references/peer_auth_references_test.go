@@ -8,6 +8,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
@@ -15,7 +16,9 @@ import (
 
 func prepareTestForPeerAuth(pa *security_v1.PeerAuthentication, drs []*networking_v1.DestinationRule) models.IstioReferences {
 	drReferences := PeerAuthReferences{
-		Conf: config.Get(),
+		Cluster:   config.DefaultClusterID,
+		Conf:      config.Get(),
+		Discovery: &istiotest.FakeDiscovery{},
 		MTLSDetails: kubernetes.MTLSDetails{
 			PeerAuthentications: []*security_v1.PeerAuthentication{pa},
 			DestinationRules:    drs,
@@ -23,10 +26,10 @@ func prepareTestForPeerAuth(pa *security_v1.PeerAuthentication, drs []*networkin
 		},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"istio-system": {
-				data.CreateWorkload("grafana", map[string]string{"app": "grafana"}),
+				data.CreateWorkload("istio-system", "grafana", map[string]string{"app": "grafana"}),
 			},
 			"bookinfo": {
-				data.CreateWorkload("details", map[string]string{"app": "details"}),
+				data.CreateWorkload("bookinfo", "details", map[string]string{"app": "details"}),
 			},
 		},
 	}

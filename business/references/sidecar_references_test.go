@@ -23,7 +23,7 @@ func prepareTestForSidecar(sc *networking_v1.Sidecar, vs *networking_v1.VirtualS
 		ServiceEntries: []*networking_v1.ServiceEntry{se},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"istio-system": {
-				data.CreateWorkload("istiod", map[string]string{"app": "istio-ingressgateway"}),
+				data.CreateWorkload("istio-system", "istiod", map[string]string{"app": "istio-ingressgateway"}),
 			}},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("foo-service", "istio-system"),
 	}

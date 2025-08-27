@@ -27,9 +27,11 @@ func CreateWorkloadList(namespace string, items ...models.WorkloadListItem) mode
 	}
 }
 
-func CreateWorkload(name string, labels map[string]string) *models.Workload {
+func CreateWorkload(namespace, name string, labels map[string]string) *models.Workload {
 	w := models.Workload{}
 	w.Name = name
+	w.Cluster = config.DefaultClusterID
+	w.Namespace = namespace
 	w.Labels = labels
 
 	if _, found := labels["app"]; found {

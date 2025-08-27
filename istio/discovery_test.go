@@ -291,7 +291,7 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 
 	// Prepare mocks for first time call.
 	conf := config.NewConfig()
-	conf.ExternalServices.Istio.RootNamespace = "foo"
+	//conf.ExternalServices.Istio.RootNamespace = "foo"
 	conf.KubernetesConfig.ClusterName = "KialiCluster"
 
 	istioDeploymentMock := &apps_v1.Deployment{

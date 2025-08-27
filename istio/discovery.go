@@ -244,6 +244,8 @@ func sidecarInjectorConfigMapName(revision string) string {
 type MeshDiscovery interface {
 	Clusters() ([]models.KubeCluster, error)
 	GetControlPlaneNamespaces(ctx context.Context, cluster string) []string
+	GetManagingControlPlane(ctx context.Context, cluster, namespace string) *models.ControlPlane
+	GetRootNamespace(ctx context.Context, cluster, namespace string) string
 	IsControlPlane(ctx context.Context, cluster, namespace string) bool
 	Mesh(ctx context.Context) (*models.Mesh, error)
 }
@@ -300,7 +302,7 @@ func (in *Discovery) IsControlPlane(ctx context.Context, cluster, namespace stri
 func (in *Discovery) HasControlPlane(ctx context.Context, cluster string, ns string, istiod string) bool {
 	mesh, err := in.Mesh(ctx)
 	if err != nil {
-		log.Errorf("Error getting mesh config: %s", err)
+		log.Errorf("Unable to get mesh to determine HasControlPlane for cluster [%s] namespace [%s]. Err: %s", cluster, ns, err)
 		return false
 	}
 
@@ -311,6 +313,35 @@ func (in *Discovery) HasControlPlane(ctx context.Context, cluster string, ns str
 	}
 
 	return false
+}
+
+func (in *Discovery) GetManagingControlPlane(ctx context.Context, cluster, namespace string) *models.ControlPlane {
+	mesh, err := in.Mesh(ctx)
+	if err != nil {
+		log.Errorf("Unable to get mesh to determine managing control plane for cluster [%s] namespace [%s]. Err: %s", cluster, namespace, err)
+		return nil
+	}
+
+	for _, controlPlane := range mesh.ControlPlanes {
+		for _, managedNamespace := range controlPlane.ManagedNamespaces {
+			if managedNamespace.Cluster == cluster && managedNamespace.Name == namespace {
+				return &controlPlane
+			}
+		}
+	}
+
+	return nil
+}
+
+// GetRootNamespace returns the Istio root namespace for the control plane managing the given namespace
+func (in *Discovery) GetRootNamespace(ctx context.Context, cluster, namespace string) string {
+	cp := in.GetManagingControlPlane(ctx, cluster, namespace)
+	if cp != nil {
+		return cp.RootNamespace
+	}
+
+	log.Warningf("Failed to determine RootNamespace for cluster [%s] namespace [%s]. Returning [%s]", cluster, namespace, config.IstioNamespaceDefault)
+	return config.IstioNamespaceDefault
 }
 
 // IsRemoteCluster determines if the cluster has a controlplane or if it's a remote cluster without one.
@@ -506,6 +537,11 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				// If this errors the configuration will likely be wrong but Kiali will fallback
 				// to the istio defaults for the mesh config values it relies on.
 				log.Warningf("Unable to set control plane configuration: %s", err)
+			}
+
+			controlPlane.RootNamespace = controlPlane.MeshConfig.RootNamespace
+			if controlPlane.RootNamespace == "" {
+				controlPlane.RootNamespace = controlPlane.IstiodNamespace
 			}
 
 			// If the cluster id that is set on the controlplane matches this cluster's id then it manages the cluster it is deployed on.

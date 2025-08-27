@@ -1,12 +1,15 @@
 package references
 
 import (
+	"context"
+
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -14,6 +17,8 @@ import (
 type AuthorizationPolicyReferences struct {
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	Conf                  *config.Config
+	Cluster               string
+	Discovery             istio.MeshDiscovery
 	Namespace             string
 	Namespaces            []string
 	ServiceEntries        []*networking_v1.ServiceEntry
@@ -98,7 +103,8 @@ func (n AuthorizationPolicyReferences) getWorkloadReferences(ap *security_v1.Aut
 
 		// AuthPolicy searches Workloads from own namespace, or from all namespaces when AuthPolicy is in root namespace
 		for ns, workloads := range n.WorkloadsPerNamespace {
-			if !config.IsRootNamespace(ap.Namespace) && ns != ap.Namespace {
+			rootNamespace := n.Discovery.GetRootNamespace(context.TODO(), n.Cluster, ap.Namespace)
+			if rootNamespace != ap.Namespace && ns != ap.Namespace {
 				continue
 			}
 			for _, wl := range workloads {

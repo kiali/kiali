@@ -19,7 +19,7 @@ func prepareTestForGateway(gw *networking_v1.Gateway, vss []*networking_v1.Virtu
 		VirtualServices: vss,
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"istio-system": {
-				data.CreateWorkload("istio-ingressgateway", map[string]string{"istio": "ingressgateway"}),
+				data.CreateWorkload("istio-system", "istio-ingressgateway", map[string]string{"istio": "ingressgateway"}),
 			}},
 	}
 	return *gwReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.Gateways, Namespace: gw.Namespace, Name: gw.Name}]

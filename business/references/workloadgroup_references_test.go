@@ -17,10 +17,10 @@ func prepareTestForWorkloadGroup(name string) models.IstioReferences {
 		WorkloadEntries: data.CreateWorkloadEntries(*config.Get()),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"Namespace": {
-				data.CreateWorkload("ratings-vm", map[string]string{"app": "ratings-vm", "class": "vm", "version": "v3"}),
-				data.CreateWorkload("ratings-vm2", map[string]string{"app": "ratings-vm2", "class": "vm2", "version": "v4"}),
-				data.CreateWorkload("ratings-vm-no-entry", map[string]string{"app": "ratings-vm-no-entry", "class": "vm3"}),
-				data.CreateWorkload("ratings-vm-no-labels", map[string]string{}),
+				data.CreateWorkload("Namespace", "ratings-vm", map[string]string{"app": "ratings-vm", "class": "vm", "version": "v3"}),
+				data.CreateWorkload("Namespace", "ratings-vm2", map[string]string{"app": "ratings-vm2", "class": "vm2", "version": "v4"}),
+				data.CreateWorkload("Namespace", "ratings-vm-no-entry", map[string]string{"app": "ratings-vm-no-entry", "class": "vm3"}),
+				data.CreateWorkload("Namespace", "ratings-vm-no-labels", map[string]string{}),
 			}},
 	}
 	return *wgReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.WorkloadGroups, Namespace: "Namespace", Name: name}]
