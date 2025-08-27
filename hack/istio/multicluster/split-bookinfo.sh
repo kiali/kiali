@@ -121,12 +121,11 @@ if [ "${AMBIENT}" != "true" ]; then
     INGRESS_HOST=$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
   fi
 else
+  INGRESS_HOST="bookinfo-gateway-istio.${BOOKINFO_NAMESPACE}"
   # Make the services global
   ${CLIENT_EXE} label --context="${CLUSTER1_CONTEXT}" svc productpage -n ${BOOKINFO_NAMESPACE} istio.io/global="true"
   ${CLIENT_EXE} label --context="${CLUSTER1_CONTEXT}" svc details -n ${BOOKINFO_NAMESPACE} istio.io/global="true"
   ${CLIENT_EXE} label --context="${CLUSTER1_CONTEXT}" svc reviews -n ${BOOKINFO_NAMESPACE} istio.io/global="true"
-  ${CLIENT_EXE} label --context="${CLUSTER2_CONTEXT}" svc ratings -n ${BOOKINFO_NAMESPACE} istio.io/global="true"
-  ${CLIENT_EXE} label --context="${CLUSTER2_CONTEXT}" svc reviews -n ${BOOKINFO_NAMESPACE} istio.io/global="true"
 fi
 
 echo "==== INSTALL BOOKINFO ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
@@ -141,6 +140,9 @@ if [ "${AMBIENT}" != "true" ]; then
   if [ -n "$(${CLIENT_EXE} --context "${CLUSTER2_CONTEXT}" get crds virtualservices.networking.istio.io --ignore-not-found 2>&1)" ]; then
     create_traffic_shifting_rules "${CLUSTER2_CONTEXT}"
   fi
+else
+  ${CLIENT_EXE} label --context="${CLUSTER2_CONTEXT}" svc ratings -n ${BOOKINFO_NAMESPACE} istio.io/global="true"
+  ${CLIENT_EXE} label --context="${CLUSTER2_CONTEXT}" svc reviews -n ${BOOKINFO_NAMESPACE} istio.io/global="true"
 fi
 
 echo "Bookinfo application will be available soon at http://${INGRESS_HOST}/productpage"
