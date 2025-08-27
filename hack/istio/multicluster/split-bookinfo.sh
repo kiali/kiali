@@ -112,12 +112,15 @@ spec:
 EOF
 }
 
-create_traffic_shifting_rules "${CLUSTER1_CONTEXT}"
+if [ "${AMBIENT}" == "true" ]; then
 
-if [ "${IS_OPENSHIFT}" == "true" ]; then
-  INGRESS_HOST=$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get route istio-ingressgateway -o jsonpath='{.spec.host}')
-else
-  INGRESS_HOST=$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  create_traffic_shifting_rules "${CLUSTER1_CONTEXT}"
+
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    INGRESS_HOST=$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get route istio-ingressgateway -o jsonpath='{.spec.host}')
+  else
+    INGRESS_HOST=$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  fi
 fi
 
 echo "==== INSTALL BOOKINFO ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
@@ -127,9 +130,11 @@ ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} productpage-v1 --replicas=0
 ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} details-v1 --replicas=0
 ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} reviews-v1 --replicas=0
 
-# If istio CRDs exist on both clusters then it's multi-primary and we need to create traffic shifting rules on both clusters.
-if [ -n "$(${CLIENT_EXE} --context "${CLUSTER2_CONTEXT}" get crds virtualservices.networking.istio.io --ignore-not-found 2>&1)" ]; then
-  create_traffic_shifting_rules "${CLUSTER2_CONTEXT}"
+if [ "${AMBIENT}" == "true" ]; then
+  # If istio CRDs exist on both clusters then it's multi-primary and we need to create traffic shifting rules on both clusters.
+  if [ -n "$(${CLIENT_EXE} --context "${CLUSTER2_CONTEXT}" get crds virtualservices.networking.istio.io --ignore-not-found 2>&1)" ]; then
+    create_traffic_shifting_rules "${CLUSTER2_CONTEXT}"
+  fi
 fi
 
 echo "Bookinfo application will be available soon at http://${INGRESS_HOST}/productpage"

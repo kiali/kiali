@@ -8,7 +8,7 @@ install_ambient_mc() {
   echo "==== INSTALL ISTIO ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
   switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
 
-  echo "Installing Istio with ambient profile on cluster: ${CLUSTER1_NAME}"
+  echo "Installing Istio with ambient profile on cluster: ${CLUSTER1_NAME}, network: ${NETWORK1_ID} and meshID: ${MESH_ID}"
 
   CLIENT_EXE="kubectl"
 
@@ -59,6 +59,8 @@ EOF
   echo "Configuration content:"
   cat "${MC_EAST_YAML}"
 
+  kubectl --context="${CLUSTER1_CONTEXT}" label namespace istio-system topology.istio.io/network=${NETWORK1_ID}
+
   # Install Istio using istioctl directly with ambient profile
   "${ISTIOCTL}" install --skip-confirmation=true -f "${MC_EAST_YAML}"
   if [ "$?" != "0" ]; then
@@ -85,7 +87,8 @@ EOF
   echo "==== INSTALL ISTIO ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
   switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
 
-  echo "Installing Istio with ambient profile on cluster: ${CLUSTER2_NAME}"
+  kubectl --context="${CLUSTER2_CONTEXT}" label namespace istio-system topology.istio.io/network=${NETWORK2_ID}
+  echo "Installing Istio with ambient profile on cluster: ${CLUSTER2_NAME}, network: ${NETWORK2_ID} and meshID: ${MESH_ID}"
 
   MC_WEST_YAML=$(mktemp)
   cat <<EOF > "$MC_WEST_YAML"

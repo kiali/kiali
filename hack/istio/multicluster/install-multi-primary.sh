@@ -36,26 +36,33 @@ create_crossnetwork_gateway() {
 
   if [ "${AMBIENT}" == "true" ]; then
     echo "Using Ambient to generate gateway yaml"
-    gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --ambient --network "${network}")"
+    #gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --ambient --network "${network}")"
+    ${GEN_GATEWAY_SCRIPT} \
+        --network "${network}" \
+        --cluster "${clustername}" \
+        --ambient | \
+        kubectl apply -f -
+  else
+    local profile_flag=""
+    if [ "${IS_OPENSHIFT}" == "true" ] || [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
+      profile_flag="--set profile=openshift"
+    fi
+
+    printf "%s" "${gateway_yaml}" | "${ISTIOCTL}" install ${profile_flag} ${image_hub_arg} ${image_tag_arg:-} -y -f -
+    if [ "$?" != "0" ]; then
+      echo "Failed to install crossnetwork gateway on cluster [${clustername}]"
+      exit 1
+    fi
+    kubectl get svc istio-eastwestgateway -n istio-system
+
+    # expose services
+    ${CLIENT_EXE} apply -n ${ISTIO_NAMESPACE} -f "${EXPOSE_SERVICES_YAML}"
+    if [ "$?" != "0" ]; then
+      echo "Failed to expose services on cluster [${clustername}]"
+      exit 1
+    fi
   fi
 
-  local profile_flag=""
-  if [ "${IS_OPENSHIFT}" == "true" ] || [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
-    profile_flag="--set profile=openshift"
-  fi
-
-  printf "%s" "${gateway_yaml}" | "${ISTIOCTL}" install ${profile_flag} ${image_hub_arg} ${image_tag_arg:-} -y -f -
-  if [ "$?" != "0" ]; then
-    echo "Failed to install crossnetwork gateway on cluster [${clustername}]"
-    exit 1
-  fi
-
-  # expose services
-  ${CLIENT_EXE} apply -n ${ISTIO_NAMESPACE} -f "${EXPOSE_SERVICES_YAML}"
-  if [ "$?" != "0" ]; then
-    echo "Failed to expose services on cluster [${clustername}]"
-    exit 1
-  fi
 }
 
 create_remote_secret() {
@@ -233,6 +240,10 @@ source ${SCRIPT_DIR}/setup-ca.sh
 
 if [ "${AMBIENT}" == "true" ]; then
   echo "==== Installing Istio Ambient in multi cluster (Alpha)"
+  kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+    kubectl --context=${CLUSTER1_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
+  kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+    kubectl --context=${CLUSTER2_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
   install_ambient_mc
 else
   echo "==== INSTALL ISTIO ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
@@ -244,9 +255,11 @@ else
   install_istio --patch-file "${MC_WEST_YAML}"
 fi
 
-echo "==== DEPLOY ISTIO INGRESS GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-kubectl apply -n istio-system -f "${SCRIPT_DIR}/../istio-gateway.yaml"
+if [ "${AMBIENT}" != "true" ]; then
+  echo "==== DEPLOY ISTIO INGRESS GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+  switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
+  kubectl apply -n istio-system -f "${SCRIPT_DIR}/../istio-gateway.yaml"
+fi
 
 if [ "${CROSSNETWORK_GATEWAY_REQUIRED}" == "true" ]; then
   echo "==== CREATE CROSSNETWORK GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
@@ -287,10 +300,11 @@ else
 fi
 
 # Configure Tracing "federation"
-source ${SCRIPT_DIR}/setup-tracing.sh
-
-# Install bookinfo across cluster if enabled
-source ${SCRIPT_DIR}/split-bookinfo.sh
+if [ "${AMBIENT}" != "true" ]; then
+  source ${SCRIPT_DIR}/setup-tracing.sh
+  # Install bookinfo across cluster if enabled
+  source ${SCRIPT_DIR}/split-bookinfo.sh
+fi
 
 if [ "${AMBIENT}" == "true" ]; then
   echo "==== Installing Istio Ambient hello world demo"
