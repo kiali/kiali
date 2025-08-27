@@ -14,6 +14,7 @@ FRONTEND_PRIMARY_REMOTE="frontend-primary-remote"
 FRONTEND_MULTI_PRIMARY="frontend-multi-primary"
 FRONTEND_EXTERNAL_KIALI="frontend-external-kiali"
 FRONTEND_TEMPO="frontend-tempo"
+LOCAL="local"
 HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
 KEYCLOAK_LIMIT_MEMORY=""
@@ -104,6 +105,9 @@ Valid command line arguments:
   -iv|--istio-version <version>
     Which Istio version to test with. For releases, specify "#.#.#". For dev builds, specify in the form "#.#-dev"
     Default: The latest release
+  -st|--stern <true|false>
+    If true, will setup stern logging binary.
+    Default: false
   -klm|--keycloak-limit-memory <value>
     Set the keycloak resources limit memory in the keycloak helm charts. Ex. 1Gi
   -krm|--keycloak-requests-memory <value>
