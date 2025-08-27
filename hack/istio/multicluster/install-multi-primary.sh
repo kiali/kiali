@@ -260,11 +260,10 @@ else
 fi
 
 # Configure Tracing "federation"
-if [ "${AMBIENT}" != "true" ]; then
-  source ${SCRIPT_DIR}/setup-tracing.sh
-  # Install bookinfo across cluster if enabled
-  source ${SCRIPT_DIR}/split-bookinfo.sh
-fi
+source ${SCRIPT_DIR}/setup-tracing.sh
+
+# Install bookinfo across cluster if enabled
+source ${SCRIPT_DIR}/split-bookinfo.sh
 
 if [ "${AMBIENT}" == "true" ]; then
   echo "==== Installing Istio Ambient hello world demo"

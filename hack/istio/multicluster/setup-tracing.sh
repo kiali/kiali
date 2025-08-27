@@ -12,7 +12,11 @@ source ${SCRIPT_DIR}/env.sh $*
 
 # This adds a port to the istio-ingressgateway service. This could probably be done through istioctl and passing the right combination
 # of settings into the istioctl hack script but it's way simpler to just patch the service directly.
-ingress_output=$(${CLIENT_EXE} get svc -n istio-system --context "${CLUSTER1_CONTEXT}" istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="zipkin-http")]}')
+if [ "${AMBIENT_ENABLED}" == "true" ]; then
+  ingress_output=$(${CLIENT_EXE} get gateway -n istio-system --context "${CLUSTER1_CONTEXT}" zipkin-gateway -o jsonpath='{.spec.listeners[?(@.name=="zipkin")]}')
+else
+  ingress_output=$(${CLIENT_EXE} get svc -n istio-system --context "${CLUSTER1_CONTEXT}" istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="zipkin-http")]}')
+fi
 # Check if the output is empty
 if [ -z "$ingress_output" ]; then
     ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" patch Service -n istio-system istio-ingressgateway --type=json -p '[{"op": "add", "path": "/spec/ports/-", "value": {"name": "zipkin-http", "port": 9411, "protocol": "TCP", "targetPort": 8080}}]'
