@@ -176,7 +176,6 @@ if [ -n "${ISTIO_VERSION}" ]; then
   fi
 fi
 
-<<<<<<< HEAD
 make HELM_VERSION="v3.18.4" -C "${HELM_CHARTS_DIR}" .download-helm-binary
 
 HELM="${HELM_CHARTS_DIR}/_output/helm-install/helm"
@@ -184,8 +183,6 @@ HELM="${HELM_CHARTS_DIR}/_output/helm-install/helm"
 infomsg "Using helm: $(ls -l ${HELM})"
 infomsg "$(${HELM} version)"
 
-=======
->>>>>>> 06a155baa (Fix files)
 # The sample apps setup scripts still rely on the istioctl dir to be present
 # to deploy the samples so we still need to download istio even when using
 # sail until the sample app scripts can be updated to pull the sample apps
