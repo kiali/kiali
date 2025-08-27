@@ -293,7 +293,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		}
 	}
 
-	if criteria.Include(kubernetes.Gateways) {
+	if userClient.IsIngressGateway() && criteria.Include(kubernetes.Gateways) {
 		list := &networking_v1.GatewayList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
