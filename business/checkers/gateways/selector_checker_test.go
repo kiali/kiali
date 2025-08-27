@@ -24,7 +24,7 @@ func TestValidInternalSelector(t *testing.T) {
 		Gateway: ingress,
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test": {
-				data.CreateWorkload("istio-ingressgateway", map[string]string{"istio": "ingressgateway"}),
+				data.CreateWorkload("test", "istio-ingressgateway", map[string]string{"istio": "ingressgateway"}),
 			}},
 		IsGatewayToNamespace: false,
 	}.Check()
@@ -36,7 +36,7 @@ func TestValidInternalSelector(t *testing.T) {
 		Gateway: egress,
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test": {
-				data.CreateWorkload("istio-egressgateway", map[string]string{"istio": "egressgateway"}),
+				data.CreateWorkload("test", "istio-egressgateway", map[string]string{"istio": "egressgateway"}),
 			}},
 		IsGatewayToNamespace: false,
 	}.Check()
@@ -57,7 +57,7 @@ func TestValidNamespaceSelector(t *testing.T) {
 		Gateway: gw,
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test": {
-				data.CreateWorkload("testproxy", map[string]string{"app": "proxy"}),
+				data.CreateWorkload("test", "testproxy", map[string]string{"app": "proxy"}),
 			}},
 		IsGatewayToNamespace: false,
 	}.Check()
@@ -79,7 +79,7 @@ func TestLocalNamespaceSelector(t *testing.T) {
 		Gateway: gw,
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test": {
-				data.CreateWorkload("testproxy", map[string]string{"app": "proxy"}),
+				data.CreateWorkload("test", "testproxy", map[string]string{"app": "proxy"}),
 			}},
 		IsGatewayToNamespace: true,
 	}.Check()
@@ -94,7 +94,7 @@ func TestLocalNamespaceSelector(t *testing.T) {
 		Gateway: gw,
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test": {
-				data.CreateWorkload("testproxy", map[string]string{"app": "proxy"}),
+				data.CreateWorkload("test", "testproxy", map[string]string{"app": "proxy"}),
 			}},
 		IsGatewayToNamespace: false,
 	}.Check()
@@ -109,7 +109,7 @@ func TestLocalNamespaceSelector(t *testing.T) {
 		Gateway: gw,
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test": {
-				data.CreateWorkload("testproxy", map[string]string{"app": "proxy"}),
+				data.CreateWorkload("test", "testproxy", map[string]string{"app": "proxy"}),
 			}},
 		IsGatewayToNamespace: true,
 	}.Check()
@@ -124,7 +124,7 @@ func TestLocalNamespaceSelector(t *testing.T) {
 		Gateway: gw,
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test": {
-				data.CreateWorkload("testproxy", map[string]string{"app": "proxy"}),
+				data.CreateWorkload("test", "testproxy", map[string]string{"app": "proxy"}),
 			}},
 		IsGatewayToNamespace: false,
 	}.Check()
@@ -145,7 +145,7 @@ func TestValidIstioNamespaceSelector(t *testing.T) {
 		Gateway: gw,
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"testproxy": {
-				data.CreateWorkload("testproxy", map[string]string{"app": "proxy"}),
+				data.CreateWorkload("testproxy", "testproxy", map[string]string{"app": "proxy"}),
 			}},
 		IsGatewayToNamespace: false,
 	}.Check()

@@ -1,17 +1,20 @@
 package workloads
 
 import (
+	"context"
+
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
-	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/models"
 )
 
 type UncoveredWorkloadChecker struct {
-	Workload              *models.Workload
-	Namespace             string
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
+	Discovery             istio.MeshDiscovery
+	Namespace             string
+	Workload              *models.Workload
 }
 
 func (ucw UncoveredWorkloadChecker) Check() ([]*models.IstioCheck, bool) {
@@ -42,8 +45,8 @@ func (ucw UncoveredWorkloadChecker) hasCoveringAuthPolicy(wlSelector labels.Labe
 		if len(apLabels) > 0 {
 			apSelector = labels.SelectorFromSet(apLabels)
 		}
-
-		if config.IsRootNamespace(apNamespace) || apNamespace == ucw.Namespace {
+		rootNamespace := ucw.Discovery.GetRootNamespace(context.TODO(), ucw.Workload.Cluster, apNamespace)
+		if rootNamespace == apNamespace || apNamespace == ucw.Namespace {
 			if apSelector == nil || apSelector.Matches(wlSelector) {
 				return true
 			}

@@ -41,9 +41,9 @@ func TestK8sInferencePoolReferences(t *testing.T) {
 	// Setup mocks
 	pool := fakeInferencePool("test-pool", "test-ns", map[k8s_inference_v1alpha2.LabelKey]k8s_inference_v1alpha2.LabelValue{"app": "vllm-llama3-8b-instruct"}, "my-service-epp")
 	workloads := models.Workloads{
-		data.CreateWorkload("workload1", map[string]string{"app": "vllm-llama3-8b-instruct"}),
-		data.CreateWorkload("workload2", map[string]string{"app": "vllm-llama3-8b-instruct-new"}),
-		data.CreateWorkload("other-workload", map[string]string{"app": "other-app"}),
+		data.CreateWorkload("test-ns", "workload1", map[string]string{"app": "vllm-llama3-8b-instruct"}),
+		data.CreateWorkload("test-ns", "workload2", map[string]string{"app": "vllm-llama3-8b-instruct-new"}),
+		data.CreateWorkload("test-ns", "other-workload", map[string]string{"app": "other-app"}),
 	}
 	services := data.CreateFakeMultiRegistryServices([]string{"my-service-epp.test-ns.svc.cluster.local", "other-service"}, "test-ns", ".")
 	httpRoutes := []*k8s_networking_v1.HTTPRoute{
@@ -76,7 +76,7 @@ func TestK8sInferencePoolNoWorkloadReferences(t *testing.T) {
 
 	pool := fakeInferencePool("test-pool", "test-ns", map[k8s_inference_v1alpha2.LabelKey]k8s_inference_v1alpha2.LabelValue{"app": "vllm-llama3-8b-instruct"}, "my-service-epp")
 	workloads := models.Workloads{
-		data.CreateWorkload("workload1", map[string]string{"app": "my-app"}),
+		data.CreateWorkload("test-ns", "workload1", map[string]string{"app": "my-app"}),
 	}
 	services := data.CreateFakeMultiRegistryServices([]string{"my-service-epp.test-ns.svc.cluster.local", "other-service"}, "test-ns", ".")
 
@@ -97,7 +97,7 @@ func TestK8sInferencePoolNoServiceReference(t *testing.T) {
 
 	pool := fakeInferencePool("test-pool", "test-ns", map[k8s_inference_v1alpha2.LabelKey]k8s_inference_v1alpha2.LabelValue{"app": "vllm-llama3-8b-instruct"}, "non-existent-service")
 	workloads := models.Workloads{
-		data.CreateWorkload("workload1", map[string]string{"app": "vllm-llama3-8b-instruct"}),
+		data.CreateWorkload("test-ns", "workload1", map[string]string{"app": "vllm-llama3-8b-instruct"}),
 	}
 	services := data.CreateFakeMultiRegistryServices([]string{"my-service-epp.test-ns.svc.cluster.local", "other-service"}, "test-ns", ".")
 
@@ -122,7 +122,7 @@ func TestK8sInferencePoolNoReferences(t *testing.T) {
 	// Create a pool with a selector that won't match and a reference to a non-existent service
 	pool := fakeInferencePool("test-pool", "test-ns", map[k8s_inference_v1alpha2.LabelKey]k8s_inference_v1alpha2.LabelValue{"app": "non-existent"}, "non-existent")
 	workloads := models.Workloads{
-		data.CreateWorkload("workload1", map[string]string{"app": "my-app"}),
+		data.CreateWorkload("test-ns", "workload1", map[string]string{"app": "my-app"}),
 	}
 	services := data.CreateFakeMultiRegistryServices([]string{"my-service-epp.test-ns.svc.cluster.local", "other-service"}, "test-ns", ".")
 	httpRoutes := []*k8s_networking_v1.HTTPRoute{

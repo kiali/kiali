@@ -357,7 +357,6 @@ type IstioConfig struct {
 	// proxy status and registry services. Polling is not performed if IstioAPIEnabled is false.
 	IstiodPollingIntervalSeconds     int             `yaml:"istiod_polling_interval_seconds,omitempty" json:"istiodPollingIntervalSeconds,omitempty"`
 	Registry                         *RegistryConfig `yaml:"registry,omitempty" json:"registry,omitempty"`
-	RootNamespace                    string          `yaml:"root_namespace,omitempty" json:"rootNamespace,omitempty"`
 	ValidationChangeDetectionEnabled bool            `yaml:"validation_change_detection_enabled,omitempty" json:"validationChangeDetectionEnabled,omitempty"`
 	// ValidationReconcileInterval sets how often Kiali will validate Istio configuration.
 	// Validations can be disabled setting the interval to 0
@@ -812,7 +811,6 @@ func NewConfig() (c *Config) {
 				IstioAPIEnabled:                  true,
 				IstioIdentityDomain:              "svc.cluster.local",
 				IstiodPollingIntervalSeconds:     20,
-				RootNamespace:                    "istio-system",
 				ValidationChangeDetectionEnabled: true,
 				ValidationReconcileInterval:      util.AsPtr(time.Minute),
 				GatewayAPIClasses:                []GatewayAPIClass{},
@@ -1387,11 +1385,6 @@ func SaveToFile(filename string, conf *Config) (err error) {
 	log.Debugf("Writing YAML config to [%s]", filename)
 	err = os.WriteFile(filename, []byte(fileContent), 0o640)
 	return
-}
-
-// IsRootNamespace returns true if the namespace is the root namespace
-func IsRootNamespace(namespace string) bool {
-	return namespace == configuration.ExternalServices.Istio.RootNamespace
 }
 
 // IsFeatureDisabled will return true if the named feature is to be disabled.

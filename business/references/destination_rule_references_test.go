@@ -21,10 +21,10 @@ func prepareTestForDestinationRule(dr *networking_v1.DestinationRule, vs *networ
 		VirtualServices:  []*networking_v1.VirtualService{vs},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
-				data.CreateWorkload("reviewsv1", appVersionLabel("reviews", "v1")),
-				data.CreateWorkload("reviewsv2", appVersionLabel("reviews", "v2")),
-				data.CreateWorkload("reviewsv3", appVersionLabel("reviews", "v3")),
-				data.CreateWorkload("reviewsv4", appVersionLabel("reviews", "v4")),
+				data.CreateWorkload("test-namespace", "reviewsv1", appVersionLabel("reviews", "v1")),
+				data.CreateWorkload("test-namespace", "reviewsv2", appVersionLabel("reviews", "v2")),
+				data.CreateWorkload("test-namespace", "reviewsv3", appVersionLabel("reviews", "v3")),
+				data.CreateWorkload("test-namespace", "reviewsv4", appVersionLabel("reviews", "v4")),
 			}},
 		ServiceEntries:   []*networking_v1.ServiceEntry{fakeServiceEntry()},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),

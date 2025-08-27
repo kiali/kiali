@@ -475,10 +475,10 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) [
 		checkers.K8sHTTPRouteChecker{Conf: conf, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices, Cluster: cluster},
 		checkers.K8sReferenceGrantChecker{K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Cluster: cluster},
 		checkers.NoServiceChecker{Conf: conf, Namespaces: namespaces, IstioConfigList: istioConfigList, WorkloadsPerNamespace: workloadsPerNamespace, AuthorizationDetails: rbacDetails, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh), Cluster: cluster},
-		checkers.PeerAuthenticationChecker{Conf: conf, PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: *mtlsDetails, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster},
+		checkers.PeerAuthenticationChecker{Conf: conf, PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: *mtlsDetails, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster, Discovery: in.mesh.discovery},
 		checkers.RequestAuthenticationChecker{RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster},
 		checkers.ServiceEntryChecker{ServiceEntries: istioConfigList.ServiceEntries, Namespaces: namespaces, WorkloadEntries: istioConfigList.WorkloadEntries, Cluster: cluster},
-		checkers.SidecarChecker{Conf: conf, Sidecars: istioConfigList.Sidecars, Namespaces: namespaces, WorkloadsPerNamespace: workloadsPerNamespace, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices, Cluster: cluster},
+		checkers.SidecarChecker{Conf: conf, Sidecars: istioConfigList.Sidecars, Namespaces: namespaces, WorkloadsPerNamespace: workloadsPerNamespace, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices, Cluster: cluster, Discovery: in.mesh.discovery},
 		checkers.TelemetryChecker{Telemetries: istioConfigList.Telemetries, Namespaces: namespaces},
 		checkers.VirtualServiceChecker{Conf: conf, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices, DestinationRules: istioConfigList.DestinationRules, Cluster: cluster},
 		checkers.WasmPluginChecker{WasmPlugins: istioConfigList.WasmPlugins, Namespaces: namespaces},
@@ -828,7 +828,7 @@ func (in *IstioValidationsService) setNamespaceIstioConfig(
 
 func (in *IstioValidationsService) filterPeerAuths(vInfo *validationInfo, mtlsDetails *kubernetes.MTLSDetails, peerAuths []*security_v1.PeerAuthentication) {
 	namespace := vInfo.nsInfo.namespace.Name
-	rootNs := in.conf.ExternalServices.Istio.RootNamespace
+	rootNs := in.mesh.discovery.GetRootNamespace(context.TODO(), vInfo.clusterInfo.cluster, namespace)
 	for _, pa := range peerAuths {
 		if pa.Namespace == rootNs {
 			mtlsDetails.MeshPeerAuthentications = append(mtlsDetails.MeshPeerAuthentications, pa)

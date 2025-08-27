@@ -31,10 +31,10 @@ func TestK8sGatewayReferences(t *testing.T) {
 		K8sGRPCRoutes: []*k8s_networking_v1.GRPCRoute{r3, r4},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"bookinfo": {
-				data.CreateWorkload("bookinfo", map[string]string{conf.IstioLabels.AmbientWaypointGatewayLabel: "bookinfo"}),
+				data.CreateWorkload("bookinfo", "bookinfo", map[string]string{conf.IstioLabels.AmbientWaypointGatewayLabel: "bookinfo"}),
 			},
 			"test": {
-				data.CreateWorkload("test", map[string]string{conf.IstioLabels.AmbientWaypointGatewayLabel: "bookinfo"}),
+				data.CreateWorkload("test", "test", map[string]string{conf.IstioLabels.AmbientWaypointGatewayLabel: "bookinfo"}),
 			}},
 	}
 
