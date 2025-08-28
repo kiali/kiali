@@ -68,34 +68,48 @@ func (s *Service) discover(ctx context.Context) string {
 	defer s.routeLock.Unlock()
 	// Try to get service and namespace from in-cluster URL, to discover route
 	routeURL := ""
-	if internalURL := s.conf.ExternalServices.Grafana.InternalURL; internalURL != "" {
-		parsedURL, err := url.Parse(internalURL)
+	var err error
+	if internalURL := s.conf.ExternalServices.Perses.InternalURL; internalURL != "" {
+		routeURL, err = ParseUrl(ctx, internalURL, s.homeClusterSAClient)
 		if err == nil {
-			parts := strings.Split(parsedURL.Hostname(), ".")
-			if len(parts) >= 2 {
-				routeURL, err = s.discoverServiceURL(ctx, parts[1], parts[0])
-				if err != nil {
-					log.FromContext(ctx).Debug().Msgf("URL discovery failed: %v", err)
-				}
-				s.routeURL = &routeURL
-			}
+			s.routeURL = &routeURL
 		}
 	}
 	return routeURL
 }
 
-func (s *Service) discoverServiceURL(ctx context.Context, ns, service string) (url string, err error) {
+type DashboardSupplierFunc func(string, string, *config.Auth) ([]byte, int, error)
+
+var DashboardSupplier = findDashboard
+
+func ParseUrl(ctx context.Context, internalURL string, homeClusterSAClient kubernetes.ClientInterface) (string, error) {
+	parsedURL, err := url.Parse(internalURL)
+	if err == nil {
+		parts := strings.Split(parsedURL.Hostname(), ".")
+		if len(parts) >= 2 {
+			routeURL, err := discoverServiceURL(ctx, parts[1], parts[0], homeClusterSAClient)
+			if err != nil {
+				log.FromContext(ctx).Debug().Msgf("URL discovery failed: %v", err)
+				return "", err
+			}
+			return routeURL, nil
+		}
+	}
+	return "", err
+}
+
+func discoverServiceURL(ctx context.Context, ns, service string, homeClusterSAClient kubernetes.ClientInterface) (url string, err error) {
 	zl := log.FromContext(ctx)
 	zl.Debug().Msgf("URL discovery for service [%s], namespace '%s'...", service, ns)
 	url = ""
 	// If the client is not openshift return and avoid discover
-	if !s.homeClusterSAClient.IsOpenShift() {
+	if !homeClusterSAClient.IsOpenShift() {
 		zl.Debug().Msgf("Client for service [%s] is not Openshift, discovery url is only supported in Openshift", service)
 		return
 	}
 
 	// Assuming service name == route name
-	route, err := s.homeClusterSAClient.GetRoute(ctx, ns, service)
+	route, err := homeClusterSAClient.GetRoute(ctx, ns, service)
 	if err != nil {
 		zl.Debug().Msgf("Discovery for service [%s] failed: %v", service, err)
 		return
@@ -110,10 +124,6 @@ func (s *Service) discoverServiceURL(ctx context.Context, ns, service string) (u
 	zl.Info().Msgf("URL discovered for service [%s]: %s", service, url)
 	return
 }
-
-type DashboardSupplierFunc func(string, string, *config.Auth) ([]byte, int, error)
-
-var DashboardSupplier = findDashboard
 
 // Info returns the Grafana URL and other info, the HTTP status code (int) and eventually an error
 func (s *Service) Info(ctx context.Context, dashboardSupplier DashboardSupplierFunc) (*models.GrafanaInfo, int, error) {

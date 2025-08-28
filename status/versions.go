@@ -208,7 +208,7 @@ func persesVersion(ctx context.Context, perses *perses.Service, conf *config.Con
 
 	versionUrl := perses.VersionURL(ctx)
 	if versionUrl != "" {
-		body, statusCode, _, err := httputil.HttpGet(versionUrl, perses.GetAuth(), 10*time.Second, nil, nil, conf)
+		body, statusCode, _, err := httputil.HttpGet(versionUrl, perses.GetAuth(ctx), 10*time.Second, nil, nil, conf)
 
 		if err != nil || statusCode > 399 {
 			log.Infof("perses version check failed: url=[%v], code=[%v]", versionUrl, statusCode)

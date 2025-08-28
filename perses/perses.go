@@ -15,6 +15,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/dashboards"
+	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -82,52 +83,19 @@ func (s *Service) discover(ctx context.Context) string {
 	defer s.routeLock.Unlock()
 	// Try to get service and namespace from in-cluster URL, to discover route
 	routeURL := ""
+	var err error
 	if internalURL := s.conf.ExternalServices.Perses.InternalURL; internalURL != "" {
-		parsedURL, err := url.Parse(internalURL)
+		routeURL, err = grafana.ParseUrl(ctx, internalURL, s.homeClusterSAClient)
 		if err == nil {
-			parts := strings.Split(parsedURL.Hostname(), ".")
-			if len(parts) >= 2 {
-				routeURL, err = s.discoverServiceURL(ctx, parts[1], parts[0])
-				if err != nil {
-					log.FromContext(ctx).Debug().Msgf("URL discovery failed: %v", err)
-				}
-				s.routeURL = &routeURL
-			}
+			s.routeURL = &routeURL
 		}
 	}
 	return routeURL
 }
 
-func (s *Service) discoverServiceURL(ctx context.Context, ns, service string) (url string, err error) {
-	zl := log.FromContext(ctx)
-	zl.Debug().Msgf("URL discovery for service [%s], namespace '%s'...", service, ns)
-	url = ""
-	// If the client is not openshift return and avoid discover
-	if !s.homeClusterSAClient.IsOpenShift() {
-		zl.Debug().Msgf("Client for service [%s] is not Openshift, discovery url is only supported in Openshift", service)
-		return
-	}
+func (s *Service) getToken(ctx context.Context) (token string, err error) {
 
-	// Assuming service name == route name
-	route, err := s.homeClusterSAClient.GetRoute(ctx, ns, service)
-	if err != nil {
-		zl.Debug().Msgf("Discovery for service [%s] failed: %v", service, err)
-		return
-	}
-
-	host := route.Spec.Host
-	if route.Spec.TLS != nil {
-		url = "https://" + host
-	} else {
-		url = "http://" + host
-	}
-	zl.Info().Msgf("URL discovered for service [%s]: %s", service, url)
-	return
-}
-
-func (s *Service) getToken() (token string, err error) {
-
-	loginURL := fmt.Sprintf("%s/api/auth/providers/native/login", s.URL(context.TODO()))
+	loginURL := fmt.Sprintf("%s/api/auth/providers/native/login", s.URL(ctx))
 
 	reqBody := loginRequest{
 		Login:    s.conf.ExternalServices.Perses.Auth.Username,
@@ -185,7 +153,7 @@ func isExpired(expiryStr string) bool {
 	return time.Now().After(expiryTime)
 }
 
-func (s *Service) GetAuth() *config.Auth {
+func (s *Service) GetAuth(ctx context.Context) *config.Auth {
 
 	newAuth := config.Auth{}
 	auth := s.conf.ExternalServices.Perses.Auth
@@ -199,7 +167,7 @@ func (s *Service) GetAuth() *config.Auth {
 		newAuth.Type = config.AuthTypeBearer
 
 		if s.sessionData == nil || isExpired(s.sessionData.ExpiresIn) {
-			token, err := s.getToken()
+			token, err := s.getToken(ctx)
 			if err != nil {
 				log.Errorf("Error loggin %s", err.Error())
 			}
@@ -379,7 +347,7 @@ func (s *Service) getPersesConnectionInfo(ctx context.Context) (PersesConnection
 		BaseExternalURL:   externalURL,
 		ExternalURLParams: externalURLParams,
 		InternalURL:       apiURL,
-		Auth:              s.GetAuth(),
+		Auth:              s.GetAuth(ctx),
 	}, 0, nil
 }
 
