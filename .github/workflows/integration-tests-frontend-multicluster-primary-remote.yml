@@ -16,7 +16,7 @@ on:
 
 env:
   TARGET_BRANCH: ${{ inputs.target_branch }}
-  BUILD_BRANCH: ${{ inputs.build_branch }}
+  BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch }}
 
 jobs:
   integration_tests_frontend_multicluster:
