@@ -509,10 +509,10 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="2.49.0"
+DEFAULT_CRC_DOWNLOAD_VERSION="2.53.0"
 
 # The default version of the crc bundle - this is typically the version included with the CRC download
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.18.2"
+DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.19.3"
 
 # The default virtual CPUs assigned to the CRC VM
 DEFAULT_CRC_CPUS="6"
