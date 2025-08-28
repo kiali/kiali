@@ -183,7 +183,7 @@ func (awc AmbientWorkloadChecker) hasSidecarLabel() bool {
 
 		return isEnabled && !isDisabled
 	}
-	log.Infof("hasSidecarLabel: Namespace %s not found", awc.workload.Namespace)
+	log.Infof("hasSidecarLabel: Namespace [%s] not found", awc.workload.Namespace)
 	return false
 }
 
