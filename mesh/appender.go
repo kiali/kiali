@@ -26,7 +26,7 @@ type GlobalInfo struct {
 	Grafana           *grafana.Service
 	IstioStatusGetter IstioStatusGetter
 	KialiCache        cache.KialiCache
-	PromClient        *prometheus.Client
+	PromClient        prometheus.ClientInterface
 
 	Vendor VendorInfo // telemetry vendor's global info
 }

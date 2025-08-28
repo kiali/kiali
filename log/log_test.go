@@ -122,7 +122,7 @@ func TestLogRegression(t *testing.T) {
 
 			if !isJsonLogFormat() {
 				t.Logf("Overwrite logger for test %d", index)
-				log.Logger = log.Logger.Output(zerolog.ConsoleWriter{Out: buf, TimeFormat: zerolog.TimeFieldFormat, NoColor: true})
+				log.Logger = log.Logger.Output(zerolog.ConsoleWriter{Out: buf, TimeFormat: zerolog.TimeFieldFormat, NoColor: true, PartsExclude: []string{zerolog.CallerFieldName}})
 			}
 
 			Infof("Kiali logging %s %d: %v", "test", index, test.envSettings)
@@ -445,7 +445,7 @@ func TestContextLoggerText(t *testing.T) {
 			// we know this test should not use json
 			if !isJsonLogFormat() {
 				t.Logf("Overwrite logger for test %d", index)
-				testlogger = testlogger.Output(zerolog.ConsoleWriter{Out: buf, TimeFormat: zerolog.TimeFieldFormat, NoColor: true})
+				testlogger = testlogger.Output(zerolog.ConsoleWriter{Out: buf, TimeFormat: zerolog.TimeFieldFormat, NoColor: true, PartsExclude: []string{zerolog.CallerFieldName}})
 			}
 
 			switch test.expectedLevel {
@@ -482,7 +482,7 @@ func TestContextLoggerText(t *testing.T) {
 	// Do a quick test of the WithGroup logger just for a sanity check.
 	// WithGroup is simply WithContext under the covers so it should pass if the above tests pass.
 	buf := &bytes.Buffer{}
-	testlogger := WithGroup("testgroup").Output(zerolog.ConsoleWriter{Out: buf, TimeFormat: zerolog.TimeFieldFormat, NoColor: true})
+	testlogger := WithGroup("testgroup").Output(zerolog.ConsoleWriter{Out: buf, TimeFormat: zerolog.TimeFieldFormat, NoColor: true, PartsExclude: []string{zerolog.CallerFieldName}})
 	testlogger.Info().Msg("test group message")
 	loggedMessage := buf.String()
 	assert.False(t, isJSON(loggedMessage))

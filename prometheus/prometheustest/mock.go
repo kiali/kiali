@@ -17,6 +17,10 @@ type PromAPIMock struct {
 	mock.Mock
 }
 
+func (o *PromAPIMock) API() prom_v1.API {
+	return o
+}
+
 func (o *PromAPIMock) Alerts(ctx context.Context) (prom_v1.AlertsResult, error) {
 	args := o.Called(ctx)
 	return args.Get(0).(prom_v1.AlertsResult), nil
@@ -274,6 +278,10 @@ type PromClientMock struct {
 	mock.Mock
 }
 
+func (o *PromClientMock) API() prom_v1.API {
+	return o.Called().Get(0).(prom_v1.API)
+}
+
 // MockAllRequestRates mocks GetAllRequestRates for given namespace, rateInverval and queryTime, returning out vector
 func (o *PromClientMock) MockAllRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time, out model.Vector) {
 	o.On("GetAllRequestRates", namespace, cluster, ratesInterval, queryTime).Return(out, nil)
@@ -307,6 +315,14 @@ func (o *PromClientMock) MockMetricsForLabels(metrics []string) {
 func (o *PromClientMock) GetAllRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	args := o.Called(namespace, cluster, ratesInterval, queryTime)
 	return args.Get(0).(model.Vector), args.Error(1)
+}
+
+func (o *PromClientMock) GetBuildInfo(ctx context.Context) (*prom_v1.BuildinfoResult, error) {
+	args := o.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*prom_v1.BuildinfoResult), args.Error(1)
 }
 
 func (o *PromClientMock) GetConfiguration() (prom_v1.ConfigResult, error) {
@@ -372,11 +388,6 @@ func (o *PromClientMock) GetMetricsForLabels(metricNames []string, labels string
 func (o *PromClientMock) GetRuntimeinfo() (prom_v1.RuntimeinfoResult, error) {
 	args := o.Called()
 	return args.Get(0).(prom_v1.RuntimeinfoResult), args.Error(1)
-}
-
-func (o *PromClientMock) API() prom_v1.API {
-	args := o.Called()
-	return args.Get(0).(prom_v1.API)
 }
 
 func (o *PromClientMock) MockMetric(name string, labels string, q *prometheus.RangeQuery, value float64) {

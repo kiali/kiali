@@ -78,7 +78,7 @@ func MeshGraph(
 			o.MeshName = meshId
 		}
 
-		code, payload := api.GraphMesh(r.Context(), business, o, clientFactory, cache, conf, grafana, discovery)
+		code, payload := api.GraphMesh(r.Context(), business, o, clientFactory, cache, conf, grafana, discovery, prom)
 		respond(w, code, payload)
 	}
 }

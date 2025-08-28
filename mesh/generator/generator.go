@@ -69,7 +69,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 	if gi.Grafana != nil && healthData[grafanaHealthKey] == kubernetes.ComponentHealthy {
 		grafanaService = gi.Grafana
 	}
-	kialiStatus := mesh.StatusGetter(ctx, gi.Conf, gi.ClientFactory, gi.KialiCache, grafanaService)
+	kialiStatus := mesh.StatusGetter(ctx, gi.Conf, gi.ClientFactory, gi.KialiCache, grafanaService, gi.PromClient)
 	esVersions := make(map[string]string)
 	for _, es := range kialiStatus.ExternalServices {
 		esVersions[es.Name] = es.Version

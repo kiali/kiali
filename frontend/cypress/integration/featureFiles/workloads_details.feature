@@ -18,6 +18,7 @@ Feature: Kiali Workload Details page
     Then user sees details information for workload
     But no cluster badge for the "workload" should be visible
 
+  # TODO: offline - workload health.
   @bookinfo-app
   @core
   Scenario: See workload traffic information
@@ -37,6 +38,7 @@ Feature: Kiali Workload Details page
   @bookinfo-app
   @tracing
   @waypoint-tracing
+  # TODO: offline - tracing support.
   Scenario: See workload tracing info after selecting a trace
     And user sees trace information
     When user selects a trace
@@ -44,6 +46,7 @@ Feature: Kiali Workload Details page
 
   @bookinfo-app
   @tracing
+  # TODO: offline - tracing support.
   Scenario: See workload span info after selecting a span
     And user sees trace information
     When user selects a trace with at least 6 spans
@@ -51,6 +54,7 @@ Feature: Kiali Workload Details page
     And user can filter spans by workload "details-v1"
 
   @waypoint-tracing
+  # TODO: offline - ambient.
   Scenario: See workload span info after selecting a span
     And user sees trace information
     When user selects a trace
@@ -59,6 +63,7 @@ Feature: Kiali Workload Details page
 
   @bookinfo-app
   @tracing
+  # TODO: offline - tracing.
   Scenario: See tracing links
     And user sees trace information
     Then the user can see the "View in Tracing" link
@@ -69,6 +74,7 @@ Feature: Kiali Workload Details page
 
   @bookinfo-app
   @core
+  @offline
   Scenario: See Envoy clusters configuration for a workload
     When the user filters by "Port" with value "9080" on the "Clusters" tab
     Then the user sees clusters expected information
@@ -77,34 +83,40 @@ Feature: Kiali Workload Details page
   @responseTimeout(30000)
   @bookinfo-app
   @core
+  @offline
   Scenario: See Envoy listeners configuration for a workload
     When the user filters by "Destination" with value "Route: 9090" on the "Listeners" tab
     Then the user sees listeners expected information
 
   @bookinfo-app
   @core
+  @offline
   Scenario: See Envoy routes configuration for a workload
     When the user filters by "Domains" with value "details" on the "Routes" tab
     Then the user sees routes expected information
 
   @bookinfo-app
   @core
+  @offline
   Scenario: See Envoy bootstrap configuration for a workload
     When the user looks for the bootstrap tab
     Then the user sees bootstrap expected information
 
   @bookinfo-app
   @core
+  @offline
   Scenario: See Envoy config configuration for a workload
     When the user looks for the config tab
     Then the user sees bootstrap expected information
 
   @bookinfo-app
   @core
+  # TODO: offline - envoy metrics support.
   Scenario: See Envoy metrics for a workload
     Then the user sees the metrics tab
 
   @ambient
+  # TODO: offline - ambient support.
   Scenario: See ambient label for workload
     Then user sees "ambient" badge
     Then the user cannot see the "missing-sidecar" badge for "details-v1" workload in "bookinfo" namespace
