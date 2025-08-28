@@ -17,6 +17,16 @@ type UncoveredWorkloadChecker struct {
 	Workload              *models.Workload
 }
 
+// NewUncoveredWorkloadChecker creates a new UncoveredWorkloadChecker with all required fields
+func NewUncoveredWorkloadChecker(authorizationPolicies []*security_v1.AuthorizationPolicy, discovery istio.MeshDiscovery, namespace string, workload *models.Workload) UncoveredWorkloadChecker {
+	return UncoveredWorkloadChecker{
+		AuthorizationPolicies: authorizationPolicies,
+		Discovery:             discovery,
+		Namespace:             namespace,
+		Workload:              workload,
+	}
+}
+
 func (ucw UncoveredWorkloadChecker) Check() ([]*models.IstioCheck, bool) {
 	checks, valid := make([]*models.IstioCheck, 0), true
 
