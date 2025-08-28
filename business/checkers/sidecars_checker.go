@@ -22,6 +22,29 @@ type SidecarChecker struct {
 	WorkloadsPerNamespace map[string]models.Workloads
 }
 
+// NewSidecarChecker creates a new SidecarChecker with all required fields
+func NewSidecarChecker(
+	cluster string,
+	conf *config.Config,
+	discovery istio.MeshDiscovery,
+	namespaces models.Namespaces,
+	registryServices []*kubernetes.RegistryService,
+	serviceEntries []*networking_v1.ServiceEntry,
+	sidecars []*networking_v1.Sidecar,
+	workloadsPerNamespace map[string]models.Workloads,
+) SidecarChecker {
+	return SidecarChecker{
+		Cluster:               cluster,
+		Conf:                  conf,
+		Discovery:             discovery,
+		Namespaces:            namespaces,
+		RegistryServices:      registryServices,
+		ServiceEntries:        serviceEntries,
+		Sidecars:              sidecars,
+		WorkloadsPerNamespace: workloadsPerNamespace,
+	}
+}
+
 func (s SidecarChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
@@ -67,7 +90,7 @@ func (s SidecarChecker) runChecks(sidecar *networking_v1.Sidecar) models.IstioVa
 	enabledCheckers := []Checker{
 		common.WorkloadSelectorNoWorkloadFoundChecker(kubernetes.Sidecars, selectorLabels, s.WorkloadsPerNamespace),
 		sidecars.EgressHostChecker{Conf: s.Conf, Sidecar: sidecar, ServiceEntries: serviceHosts, RegistryServices: s.RegistryServices},
-		sidecars.GlobalChecker{Cluster: s.Cluster, Discovery: s.Discovery, Sidecar: sidecar},
+		sidecars.NewGlobalChecker(s.Cluster, s.Discovery, sidecar),
 		sidecars.OutboundTrafficPolicyModeChecker{Sidecar: sidecar},
 	}
 

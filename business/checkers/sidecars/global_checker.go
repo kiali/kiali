@@ -15,6 +15,15 @@ type GlobalChecker struct {
 	Sidecar   *networking_v1.Sidecar
 }
 
+// NewGlobalChecker creates a new GlobalChecker with all required fields
+func NewGlobalChecker(cluster string, discovery istio.MeshDiscovery, sidecar *networking_v1.Sidecar) GlobalChecker {
+	return GlobalChecker{
+		Cluster:   cluster,
+		Discovery: discovery,
+		Sidecar:   sidecar,
+	}
+}
+
 func (gc GlobalChecker) Check() ([]*models.IstioCheck, bool) {
 	checks, valid := make([]*models.IstioCheck, 0), true
 
