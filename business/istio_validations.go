@@ -618,7 +618,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 			WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: *mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh),
 		}
 		objectCheckers = []checkers.ObjectChecker{authPoliciesChecker}
-		referenceChecker = references.AuthorizationPolicyReferences{Conf: conf, AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: nsNames, VirtualServices: istioConfigList.VirtualServices, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices, WorkloadsPerNamespace: workloadsPerNamespace}
+		referenceChecker = references.NewAuthorizationPolicyReferences(rbacDetails.AuthorizationPolicies, conf, cluster, in.mesh.discovery, namespace, nsNames, istioConfigList.ServiceEntries, istioConfigList.VirtualServices, registryServices, workloadsPerNamespace)
 	case kubernetes.PeerAuthentications:
 		// Validations on PeerAuthentications
 		peerAuthnChecker := checkers.PeerAuthenticationChecker{Conf: conf, Cluster: cluster, PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: *mtlsDetails, WorkloadsPerNamespace: workloadsPerNamespace}
