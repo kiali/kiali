@@ -156,7 +156,12 @@ if [ -z "${HELM_CHARTS_DIR}" ]; then
   # that branch does not exist in the helm-charts repo, gracefully fall back to
   # TARGET_BRANCH, and finally to 'master'.
   CANDIDATE_BRANCHES=("${BUILD_BRANCH}" "${GITHUB_HEAD_REF}" "${TARGET_BRANCH}" "master")
-  CANDIDATE_OWNERS=("${GITHUB_ACTOR}" "kiali")
+  # Only add GITHUB_ACTOR if it's not empty to avoid malformed URLs
+  CANDIDATE_OWNERS=()
+  if [ -n "${GITHUB_ACTOR}" ]; then
+    CANDIDATE_OWNERS+=("${GITHUB_ACTOR}")
+  fi
+  CANDIDATE_OWNERS+=("kiali")
 
   HELM_CHARTS_BRANCH=""
   for b in "${CANDIDATE_BRANCHES[@]}"; do
