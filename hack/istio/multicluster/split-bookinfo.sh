@@ -29,7 +29,7 @@ install_bookinfo() {
   ambient_args=""
   if [ "${AMBIENT}" == "true" ]; then
     echo "Using Ambient args"
-    ambient_args="-ai false -w true"
+    ambient_args="-ai false"
   fi
   "${INSTALL_BOOKINFO_SCRIPT}"             \
     --client-exe "${CLIENT_EXE}"           \
