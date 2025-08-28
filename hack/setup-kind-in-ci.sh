@@ -156,7 +156,6 @@ if [ -z "${HELM_CHARTS_DIR}" ]; then
   # that branch does not exist in the helm-charts repo, gracefully fall back to
   # TARGET_BRANCH, and finally to 'master'.
   CANDIDATE_BRANCHES=("${BUILD_BRANCH}" "${GITHUB_HEAD_REF}" "${TARGET_BRANCH}" "master")
-  CANDIDATE_OWNERS=("${GITHUB_ACTOR}" "kiali")
 
   HELM_CHARTS_BRANCH=""
   for b in "${CANDIDATE_BRANCHES[@]}"; do
@@ -166,6 +165,25 @@ if [ -z "${HELM_CHARTS_DIR}" ]; then
       infomsg " -> branch skipped (empty)"
       continue
     fi
+
+    # For master branch, prioritize the official kiali repo over forks
+    # For other branches, try the PR author's fork first, then fall back to kiali repo
+    # Only add GITHUB_ACTOR if it's not empty to avoid malformed URLs
+    CANDIDATE_OWNERS=()
+    if [ "${b}" = "master" ]; then
+      # For master, prioritize kiali repo first
+      CANDIDATE_OWNERS+=("kiali")
+      if [ -n "${GITHUB_ACTOR}" ]; then
+        CANDIDATE_OWNERS+=("${GITHUB_ACTOR}")
+      fi
+    else
+      # For feature branches, try author's fork first
+      if [ -n "${GITHUB_ACTOR}" ]; then
+        CANDIDATE_OWNERS+=("${GITHUB_ACTOR}")
+      fi
+      CANDIDATE_OWNERS+=("kiali")
+    fi
+
     for owner in "${CANDIDATE_OWNERS[@]}"; do
       repo_url="https://github.com/${owner}/helm-charts.git"
       infomsg "Evaluating helm-charts branch [${b}] of owner [${owner}]: ${repo_url}"

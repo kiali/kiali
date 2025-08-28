@@ -17,7 +17,8 @@ on:
 env:
   TARGET_BRANCH: ${{ inputs.target_branch }}
   # BUILD_BRANCH is used by setup-kind-in-ci.sh to locate a matching helm-charts branch.
-  BUILD_BRANCH: ${{ inputs.build_branch }}
+  # If build_branch is empty, fallback to target_branch
+  BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch }}
 
 jobs:
   integration_tests_backend:
