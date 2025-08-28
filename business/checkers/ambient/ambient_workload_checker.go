@@ -153,7 +153,7 @@ func (awc AmbientWorkloadChecker) hasAmbientLabel() bool {
 		// The namespace is labeled with the ambient value AND the workload is NOT explicitly labeled "none".
 		return workloadIsEnabled || (namespaceIsEnabled && !workloadIsDisabled)
 	}
-	log.Infof("hasAmbientLabel: Namespace %s not found", awc.workload.Namespace)
+	log.Infof("hasAmbientLabel: Namespace [%s] not found", awc.workload.Namespace)
 	return false
 }
 
