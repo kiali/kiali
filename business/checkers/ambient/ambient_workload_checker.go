@@ -4,6 +4,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -139,6 +140,11 @@ func (awc AmbientWorkloadChecker) hasAmbientLabel() bool {
 
 	// Get the label values from both the workload and its namespace.
 	ns := awc.namespaces.GetNamespace(awc.workload.Namespace, awc.cluster)
+	if ns == nil {
+		log.Infof("hasAmbientLabel: Namespace [%s] not found", awc.workload.Namespace)
+		return false
+	}
+
 	workloadLabelVal := awc.workload.Labels[ambientLabelKey]
 	namespaceLabelVal := ns.Labels[ambientLabelKey]
 
@@ -150,6 +156,7 @@ func (awc AmbientWorkloadChecker) hasAmbientLabel() bool {
 	// OR
 	// The namespace is labeled with the ambient value AND the workload is NOT explicitly labeled "none".
 	return workloadIsEnabled || (namespaceIsEnabled && !workloadIsDisabled)
+
 }
 
 // hasSidecarLabel Check if the namespace or the workload has Sidecars enabled
@@ -157,6 +164,10 @@ func (awc AmbientWorkloadChecker) hasAmbientLabel() bool {
 func (awc AmbientWorkloadChecker) hasSidecarLabel() bool {
 	ns := awc.namespaces.GetNamespace(awc.workload.Namespace, awc.cluster)
 
+	if ns == nil {
+		log.Infof("hasSidecarLabel: Namespace [%s] not found", awc.workload.Namespace)
+		return false
+	}
 	// Check for enablement at the namespace level.
 	namespaceIsEnabled := ns.Labels[awc.conf.IstioLabels.InjectionLabelName] == "enabled" ||
 		ns.Labels[awc.conf.IstioLabels.InjectionLabelRev] != ""
@@ -196,6 +207,11 @@ func (awc AmbientWorkloadChecker) hasWaypointLabel() bool {
 
 	// The workload label is not set. Fall back to the namespace label.
 	ns := awc.namespaces.GetNamespace(awc.workload.Namespace, awc.cluster)
+	if ns == nil {
+		log.Infof("hasWaypointLabel: Namespace [%s] not found", awc.workload.Namespace)
+		return false
+	}
+
 	if val, ok := ns.Labels[waypointLabel]; ok {
 		// The label is present on the namespace.
 		return val != "" && val != config.WaypointNone
