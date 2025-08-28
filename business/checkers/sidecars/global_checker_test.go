@@ -16,11 +16,11 @@ func TestSidecarWithoutSelectorOutOfControlPlane(t *testing.T) {
 	assert := assert.New(t)
 	config.Set(config.NewConfig())
 
-	vals, valid := GlobalChecker{
-		Cluster:   config.DefaultClusterID,
-		Discovery: &istiotest.FakeDiscovery{},
-		Sidecar:   data.CreateSidecar("sidecar1", "bookinfo"),
-	}.Check()
+	vals, valid := NewGlobalChecker(
+		config.DefaultClusterID,
+		&istiotest.FakeDiscovery{},
+		data.CreateSidecar("sidecar1", "bookinfo"),
+	).Check()
 
 	assert.Empty(vals)
 	assert.True(valid)
@@ -31,11 +31,11 @@ func TestSidecarWithoutSelectorInControlPlane(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	vals, valid := GlobalChecker{
-		Cluster:   config.DefaultClusterID,
-		Discovery: &istiotest.FakeDiscovery{},
-		Sidecar:   data.CreateSidecar("sidecar1", config.IstioNamespaceDefault),
-	}.Check()
+	vals, valid := NewGlobalChecker(
+		config.DefaultClusterID,
+		&istiotest.FakeDiscovery{},
+		data.CreateSidecar("sidecar1", config.IstioNamespaceDefault),
+	).Check()
 
 	assert.Empty(vals)
 	assert.True(valid)
@@ -45,13 +45,13 @@ func TestSidecarWithSelectorOutOfControlPlane(t *testing.T) {
 	assert := assert.New(t)
 	config.Set(config.NewConfig())
 
-	vals, valid := GlobalChecker{
-		Cluster:   config.DefaultClusterID,
-		Discovery: &istiotest.FakeDiscovery{},
-		Sidecar: data.AddSelectorToSidecar(map[string]string{
+	vals, valid := NewGlobalChecker(
+		config.DefaultClusterID,
+		&istiotest.FakeDiscovery{},
+		data.AddSelectorToSidecar(map[string]string{
 			"app": "reviews",
 		}, data.CreateSidecar("sidecar1", "bookinfo")),
-	}.Check()
+	).Check()
 
 	assert.Empty(vals)
 	assert.True(valid)
@@ -62,13 +62,13 @@ func TestSidecarWithSelectorInControlPlane(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	vals, valid := GlobalChecker{
-		Cluster:   config.DefaultClusterID,
-		Discovery: &istiotest.FakeDiscovery{},
-		Sidecar: data.AddSelectorToSidecar(map[string]string{
+	vals, valid := NewGlobalChecker(
+		config.DefaultClusterID,
+		&istiotest.FakeDiscovery{},
+		data.AddSelectorToSidecar(map[string]string{
 			"app": "reviews",
 		}, data.CreateSidecar("sidecar1", config.IstioNamespaceDefault)),
-	}.Check()
+	).Check()
 
 	assert.NotEmpty(vals)
 	assert.True(valid)
