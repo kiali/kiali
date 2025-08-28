@@ -27,6 +27,33 @@ type AuthorizationPolicyReferences struct {
 	WorkloadsPerNamespace map[string]models.Workloads
 }
 
+// NewAuthorizationPolicyReferences creates a new AuthorizationPolicyReferences with all required fields
+func NewAuthorizationPolicyReferences(
+	authorizationPolicies []*security_v1.AuthorizationPolicy,
+	conf *config.Config,
+	cluster string,
+	discovery istio.MeshDiscovery,
+	namespace string,
+	namespaces []string,
+	serviceEntries []*networking_v1.ServiceEntry,
+	virtualServices []*networking_v1.VirtualService,
+	registryServices []*kubernetes.RegistryService,
+	workloadsPerNamespace map[string]models.Workloads,
+) AuthorizationPolicyReferences {
+	return AuthorizationPolicyReferences{
+		AuthorizationPolicies: authorizationPolicies,
+		Conf:                  conf,
+		Cluster:               cluster,
+		Discovery:             discovery,
+		Namespace:             namespace,
+		Namespaces:            namespaces,
+		ServiceEntries:        serviceEntries,
+		VirtualServices:       virtualServices,
+		RegistryServices:      registryServices,
+		WorkloadsPerNamespace: workloadsPerNamespace,
+	}
+}
+
 func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
 	result := models.IstioReferencesMap{}
 
