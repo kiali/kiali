@@ -38,7 +38,7 @@ go-check:
 build: go-check check-ui
 	@echo Building...
 	${GO_BUILD_ENVVARS} ${GO} build \
-		-o ${GOPATH}/bin/kiali -ldflags "-X github.com/kiali/kiali/cmd.version=${VERSION} -X github.com/kiali/kiali/cmd.commitHash=${COMMIT_HASH} -X github.com/kiali/kiali/cmd.goVersion=${GO_ACTUAL_VERSION}" ${GO_BUILD_FLAGS}
+		-o ${GO_BUILD_OUTPUT} -ldflags "-X github.com/kiali/kiali/cmd.version=${VERSION} -X github.com/kiali/kiali/cmd.commitHash=${COMMIT_HASH} -X github.com/kiali/kiali/cmd.goVersion=${GO_ACTUAL_VERSION}" ${GO_BUILD_FLAGS}
 
 ## build-ui: Runs the yarn commands to build the frontend UI
 build-ui:

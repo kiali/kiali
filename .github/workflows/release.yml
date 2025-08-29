@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       release_type:
-        description: 'Release type'
+        description: "Release type"
         required: true
         type: choice
         options:
@@ -206,11 +206,94 @@ jobs:
       olm_version: "skip"
       istio_minor_version_offset: 0
 
+  build_cross_platform_binaries:
+    name: Build cross-platform binaries
+    if: ${{ needs.initialize.outputs.release_type != 'skip' }}
+    runs-on: ubuntu-latest
+    needs: [initialize, build_frontend]
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        ref: ${{ github.event.inputs.release_branch || github.ref_name }}
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+        cache: true
+        cache-dependency-path: go.sum
+
+    - name: Download frontend build
+      uses: actions/download-artifact@v5
+      with:
+        name: build
+        path: frontend/build
+
+    - name: Build cross-platform binaries
+      run: |
+        mkdir -p dist
+        ./hack/build-cross-platform.sh -v -o dist
+
+    - name: Upload cross-platform binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: cross-platform-binaries
+        path: dist/kiali-*
+        retention-days: 30
+
+  test_cross_platform_binaries:
+    name: Test cross-platform binaries
+    if: ${{ needs.initialize.outputs.release_type != 'skip' }}
+    runs-on: ${{ matrix.os }}
+    needs: [initialize, build_cross_platform_binaries]
+    strategy:
+      matrix:
+        include:
+        - os: ubuntu-latest
+          binary_name: kiali-linux-amd64
+          # No support for linux arm in GH actions yet.
+          # https://github.com/actions/runner-images?tab=readme-ov-file#available-images
+          # - os: ubuntu-latest
+          #   binary_name: kiali-linux-arm64
+          # TODO: Windows and mac work but they require properly signing the binaries.
+          # - os: macos-latest-large
+          #   binary_name: kiali-darwin-amd64
+          # - os: macos-latest
+          #   binary_name: kiali-darwin-arm64
+          # - os: windows-latest
+          #   binary_name: kiali-windows-amd64.exe
+    steps:
+    - name: Download cross-platform binaries
+      uses: actions/download-artifact@v5
+      with:
+        name: cross-platform-binaries
+        path: dist
+
+    - name: Test binary on native platform
+      shell: bash
+      run: |
+        binary_path="dist/${{ matrix.binary_name }}"
+
+        # Make binary executable (needed on Unix-like systems)
+        if [[ "${{ matrix.os }}" != "windows-latest" ]]; then
+          chmod +x "$binary_path"
+        fi
+
+        # Test the binary by running --help
+        echo "Testing ${{ matrix.binary_name }} on ${{ matrix.os }}..."
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          "./$binary_path" --help > /dev/null
+        else
+          "./$binary_path" --help > /dev/null
+        fi
+        echo "✓ ${{ matrix.binary_name }} works correctly on ${{ matrix.os }}"
+
   release:
     name: Release
     if: ${{ needs.initialize.outputs.release_type != 'skip' && ((github.event_name == 'schedule' && github.repository == 'kiali/kiali') || github.event_name != 'schedule') }}
     runs-on: ubuntu-latest
-    needs: [initialize, build_frontend, build_backend, run_molecule_tests]
+    needs: [initialize, build_frontend, build_backend, run_molecule_tests, build_cross_platform_binaries, test_cross_platform_binaries]
     env:
       RELEASE_VERSION: ${{ needs.initialize.outputs.release_version }}
       BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
@@ -245,6 +328,12 @@ jobs:
         name: build
         path: frontend/build
 
+    - name: Download cross-platform binaries
+      uses: actions/download-artifact@v5
+      with:
+        name: cross-platform-binaries
+        path: dist
+
     - name: Build and push image
       run: |
         docker login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_PASSWORD }} quay.io
@@ -269,7 +358,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        gh release create $RELEASE_VERSION -t "Kiali $RELEASE_VERSION"
+        gh release create $RELEASE_VERSION dist/* -t "Kiali $RELEASE_VERSION"
 
     - name: Create or update version branch
       run: git push origin $(git rev-parse HEAD):refs/heads/$BRANCH_VERSION

@@ -67,6 +67,9 @@ ARCH := $(shell uname -m | sed 's/x86_64/amd64/')
 # A default go GOPATH if it isn't user defined
 GOPATH ?= ${HOME}/go
 
+# Build output location for the kiali binary
+GO_BUILD_OUTPUT ?= ${GOPATH}/bin/kiali
+
 # Environment variables set when running the Go compiler.
 GOOS ?= $(shell ${GO} env GOOS)
 GOARCH ?= $(shell ${GO} env GOARCH)

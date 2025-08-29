@@ -41,8 +41,10 @@ func newRunCmd(conf *config.Config) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "run",
-		Short: "Run Kiali in local mode",
-		Long:  `Run Kiali in local mode with a local Kubernetes cluster.`,
+		Short: "Run Kiali locally",
+		Long: `Run Kiali locally using a local kubeconfig.
+
+EXPERIMENTAL: This command and the flags are subject to change.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Override some settings in local mode.
 			conf.RunMode = config.RunModeLocal
