@@ -227,7 +227,7 @@ jobs:
     - name: Build cross-platform binaries
       run: |
         mkdir -p dist
-        ./hack/build-cross-platform.sh -o dist
+        ./hack/build-cross-platform.sh -v -o dist
 
     - name: Upload cross-platform binaries
       uses: actions/upload-artifact@v4
