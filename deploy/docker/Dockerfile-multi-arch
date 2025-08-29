@@ -7,8 +7,8 @@ FROM base-${TARGETARCH}
 
 LABEL maintainer="kiali-dev@googlegroups.com"
 
-ENV KIALI_HOME=/opt/kiali \
-    PATH=$KIALI_HOME:$PATH
+ENV KIALI_HOME=/opt/kiali
+ENV PATH=$KIALI_HOME:$PATH
 
 WORKDIR $KIALI_HOME
 
