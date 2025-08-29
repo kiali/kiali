@@ -1025,7 +1025,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                   </div>
                 </Tab>
 
-                {serverConfig.ingressGatewayEnabled && (
+                {serverConfig.ingressGatewayInstalled && (
                   <Tab eventKey={1} title={t('Gateways')} data-test={'Gateways'}>
                     <div style={{ marginTop: '20px', marginBottom: '10px' }}>
                       <GatewaySelector

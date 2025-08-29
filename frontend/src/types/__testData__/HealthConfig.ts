@@ -81,12 +81,13 @@ export const healthConfig = {
     ]
   },
   installationTag: 'Kiali Console',
-  ingressGatewayEnabled: false,
+  ingressGatewayInstalled: false,
   istioAnnotations: {
     ambientAnnotation: 'ambient.istio.io/redirection',
     ambientAnnotationEnabled: 'enabled',
     istioInjectionAnnotation: ''
   },
+  istioAPIInstalled: false,
   istioIdentityDomain: 'svc.cluster.local',
   istioNamespace: 'istio-system',
   istioLabels: {
