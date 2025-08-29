@@ -162,6 +162,9 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap): void => {
       case MeshInfraType.NAMESPACE:
         pfBadge = PFBadges.Namespace;
         break;
+      case MeshInfraType.PERSES:
+        pfBadge = PFBadges.Perses;
+        break;
       case MeshInfraType.TRACE_STORE:
         pfBadge = PFBadges.TraceStore;
         break;

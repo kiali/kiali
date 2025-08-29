@@ -30,6 +30,8 @@ func TestSecretFileOverrides(t *testing.T) {
 	conf.ExternalServices.Grafana.Auth.Username = "grafanausername"
 	conf.ExternalServices.Grafana.Auth.Password = "grafanapassword"
 	conf.ExternalServices.Grafana.Auth.Token = "grafanatoken"
+	conf.ExternalServices.Perses.Auth.Username = "persesusername"
+	conf.ExternalServices.Perses.Auth.Password = "persespassword"
 	conf.ExternalServices.Prometheus.Auth.Username = "prometheususername"
 	conf.ExternalServices.Prometheus.Auth.Password = "prometheuspassword"
 	conf.ExternalServices.Prometheus.Auth.Token = "prometheustoken"
@@ -52,6 +54,8 @@ func TestSecretFileOverrides(t *testing.T) {
 	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Username, "grafanausername")
 	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Password, "grafanapassword")
 	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Token, "grafanatoken")
+	assert.Equal(t, conf.ExternalServices.Perses.Auth.Username, "persesusername")
+	assert.Equal(t, conf.ExternalServices.Perses.Auth.Password, "persespassword")
 	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Username, "prometheususername")
 	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Password, "prometheuspassword")
 	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, "prometheustoken")
@@ -67,6 +71,8 @@ func TestSecretFileOverrides(t *testing.T) {
 	createTestSecretFile(t, overrideSecretsDir, SecretFileGrafanaUsername, "grafanausernameENV")
 	createTestSecretFile(t, overrideSecretsDir, SecretFileGrafanaPassword, "grafanapasswordENV")
 	createTestSecretFile(t, overrideSecretsDir, SecretFileGrafanaToken, "grafanatokenENV")
+	createTestSecretFile(t, overrideSecretsDir, SecretFilePersesUsername, "persesusernameENV")
+	createTestSecretFile(t, overrideSecretsDir, SecretFilePersesPassword, "persespasswordENV")
 	createTestSecretFile(t, overrideSecretsDir, SecretFilePrometheusUsername, "prometheususernameENV")
 	createTestSecretFile(t, overrideSecretsDir, SecretFilePrometheusPassword, "prometheuspasswordENV")
 	createTestSecretFile(t, overrideSecretsDir, SecretFilePrometheusToken, "prometheustokenENV")
@@ -84,6 +90,8 @@ func TestSecretFileOverrides(t *testing.T) {
 	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Username, "grafanausernameENV")
 	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Password, "grafanapasswordENV")
 	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Token, "grafanatokenENV")
+	assert.Equal(t, conf.ExternalServices.Perses.Auth.Username, "persesusernameENV")
+	assert.Equal(t, conf.ExternalServices.Perses.Auth.Password, "persespasswordENV")
 	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Username, "prometheususernameENV")
 	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Password, "prometheuspasswordENV")
 	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, "prometheustokenENV")
@@ -117,6 +125,8 @@ func TestSensitiveDataObfuscation(t *testing.T) {
 	conf.ExternalServices.Grafana.Auth.Username = "my-username"
 	conf.ExternalServices.Grafana.Auth.Password = "my-password"
 	conf.ExternalServices.Grafana.Auth.Token = "my-token"
+	conf.ExternalServices.Perses.Auth.Username = "my-username"
+	conf.ExternalServices.Perses.Auth.Password = "my-password"
 	conf.ExternalServices.Prometheus.Auth.Username = "my-username"
 	conf.ExternalServices.Prometheus.Auth.Password = "my-password"
 	conf.ExternalServices.Prometheus.Auth.Token = "my-token"
@@ -141,6 +151,8 @@ func TestSensitiveDataObfuscation(t *testing.T) {
 	assert.Equal(t, "my-username", conf.ExternalServices.Grafana.Auth.Username)
 	assert.Equal(t, "my-password", conf.ExternalServices.Grafana.Auth.Password)
 	assert.Equal(t, "my-token", conf.ExternalServices.Grafana.Auth.Token)
+	assert.Equal(t, "my-username", conf.ExternalServices.Perses.Auth.Username)
+	assert.Equal(t, "my-password", conf.ExternalServices.Perses.Auth.Password)
 	assert.Equal(t, "my-username", conf.ExternalServices.Prometheus.Auth.Username)
 	assert.Equal(t, "my-password", conf.ExternalServices.Prometheus.Auth.Password)
 	assert.Equal(t, "my-token", conf.ExternalServices.Prometheus.Auth.Token)

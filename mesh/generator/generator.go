@@ -20,6 +20,7 @@ import (
 	"github.com/kiali/kiali/mesh/appender"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
+	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/util/sliceutil"
 )
 
@@ -61,6 +62,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 	}
 
 	grafanaHealthKey := componentHealthKey{Name: "grafana", Namespace: "", Cluster: gi.Conf.KubernetesConfig.ClusterName}.String()
+	persesHealthKey := componentHealthKey{Name: "perses", Namespace: "", Cluster: gi.Conf.KubernetesConfig.ClusterName}.String()
 	promHealthKey := componentHealthKey{Name: "prometheus", Namespace: "", Cluster: gi.Conf.KubernetesConfig.ClusterName}.String()
 	tracingHealthKey := componentHealthKey{Name: "tracing", Namespace: "", Cluster: gi.Conf.KubernetesConfig.ClusterName}.String()
 
@@ -69,7 +71,12 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 	if gi.Grafana != nil && healthData[grafanaHealthKey] == kubernetes.ComponentHealthy {
 		grafanaService = gi.Grafana
 	}
-	kialiStatus := mesh.StatusGetter(ctx, gi.Conf, gi.ClientFactory, gi.KialiCache, grafanaService)
+	// get the current status info to determine versions
+	var persesService *perses.Service
+	if gi.Perses != nil && healthData[persesHealthKey] == kubernetes.ComponentHealthy {
+		persesService = gi.Perses
+	}
+	kialiStatus := mesh.StatusGetter(ctx, gi.Conf, gi.ClientFactory, gi.KialiCache, grafanaService, persesService)
 	esVersions := make(map[string]string)
 	for _, es := range kialiStatus.ExternalServices {
 		esVersions[es.Name] = es.Version
@@ -184,6 +191,16 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				cluster, namespace, isExternal = discoverInfraService(es.Grafana.InternalURL, ctx, gi)
 				name = "Grafana"
 				node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, cluster, namespace, name, es.Grafana, esVersions[name], isExternal, healthData[grafanaHealthKey])
+				mesh.CheckError(err)
+
+				kiali.AddEdge(node)
+				hasExternalServices = hasExternalServices || isExternal
+			}
+
+			if conf.ExternalServices.Perses.Enabled {
+				cluster, namespace, isExternal = discoverInfraService(es.Perses.InternalURL, ctx, gi)
+				name = "Perses"
+				node, _, err = addInfra(meshMap, mesh.InfraTypePerses, cluster, namespace, name, es.Perses, esVersions[name], isExternal, healthData[persesHealthKey])
 				mesh.CheckError(err)
 
 				kiali.AddEdge(node)

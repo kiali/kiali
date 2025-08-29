@@ -123,22 +123,22 @@ func TestComponentNamespaces(t *testing.T) {
 	a.Len(nss, 4)
 }
 
-func mockAddOnsCalls(t *testing.T, objects []runtime.Object, _ bool, overrideAddonURLs bool) (kubernetes.UserClientInterface, *int, *int) {
+func mockAddOnsCalls(t *testing.T, objects []runtime.Object, _ bool, overrideAddonURLs bool) (kubernetes.UserClientInterface, *int, *int, *int) {
 	// Prepare the Call counts for each Addon
-	grafanaCalls, prometheusCalls := 0, 0
+	grafanaCalls, persesCalls, prometheusCalls := 0, 0, 0
 
 	objects = append(objects, &osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}})
 
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = true
-	routes := mockAddOnCalls(defaultAddOnCalls(&grafanaCalls, &prometheusCalls))
+	routes := mockAddOnCalls(defaultAddOnCalls(&grafanaCalls, &persesCalls, &prometheusCalls))
 	httpServer := mockServer(t, routes)
 
 	// Adapt the AddOns URLs to the mock Server
 	conf := addonAddMockUrls(httpServer.URL, config.NewConfig(), overrideAddonURLs)
 	config.Set(conf)
 
-	return k8s, &grafanaCalls, &prometheusCalls
+	return k8s, &grafanaCalls, &persesCalls, &prometheusCalls
 }
 
 func sampleIstioComponent() ([]runtime.Object, bool, bool) {
@@ -186,7 +186,7 @@ func TestGrafanaWorking(t *testing.T) {
 	assert := assert.New(t)
 
 	objs, b1, b2 := sampleIstioComponent()
-	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objs, b1, b2)
+	k8s, grafanaCalls, persesCalls, promCalls := mockAddOnsCalls(t, objs, b1, b2)
 
 	conf := config.Get()
 	config.Set(conf)
@@ -198,6 +198,7 @@ func TestGrafanaWorking(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
+	assert.Equal(1, *persesCalls)
 
 	// All services are healthy
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
@@ -219,7 +220,7 @@ func TestGrafanaDisabled(t *testing.T) {
 				UnavailableReplicas: 0,
 			}),
 	}
-	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
+	k8s, grafanaCalls, persesCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
 	// Disable Grafana
 	conf := config.Get()
 	conf.ExternalServices.Grafana.Enabled = false
@@ -234,6 +235,8 @@ func TestGrafanaDisabled(t *testing.T) {
 
 	// Requests to Tracing and Prometheus performed once
 	assert.Equal(1, *promCalls)
+
+	assert.Equal(1, *persesCalls)
 	// Grafana is disabled
 	assertNotPresent(assert, icsl, "grafana")
 
@@ -249,7 +252,7 @@ func TestGrafanaDisabled(t *testing.T) {
 
 func TestGrafanaNotWorking(t *testing.T) {
 	assert := assert.New(t)
-	grafanaCalls, prometheusCalls := 0, 0
+	grafanaCalls, persesCalls, prometheusCalls := 0, 0, 0
 	objects := []runtime.Object{
 		fakeDeploymentWithStatus(
 			"istio=egressgateway",
@@ -261,7 +264,7 @@ func TestGrafanaNotWorking(t *testing.T) {
 			}),
 	}
 	objects = append(objects, &osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}})
-	addOnsStetup := defaultAddOnCalls(&grafanaCalls, &prometheusCalls)
+	addOnsStetup := defaultAddOnCalls(&grafanaCalls, &persesCalls, &prometheusCalls)
 	addOnsStetup["grafana"] = addOnsSetup{
 		Url:        "/grafana/mock",
 		StatusCode: 501,
@@ -300,7 +303,7 @@ func TestFailingTracingService(t *testing.T) {
 	assert := assert.New(t)
 
 	objs, b1, b2 := sampleIstioComponent()
-	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objs, b1, b2)
+	k8s, grafanaCalls, persesCalls, promCalls := mockAddOnsCalls(t, objs, b1, b2)
 
 	conf := config.Get()
 	config.Set(conf)
@@ -312,6 +315,7 @@ func TestFailingTracingService(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
+	assert.Equal(1, *persesCalls)
 
 	// Tracing service is unreachable
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentUnreachable, false)
@@ -326,7 +330,7 @@ func TestOverriddenUrls(t *testing.T) {
 	assert := assert.New(t)
 
 	objects, idReachable, _ := sampleIstioComponent()
-	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, idReachable, true)
+	k8s, grafanaCalls, persesCalls, promCalls := mockAddOnsCalls(t, objects, idReachable, true)
 
 	// conf set in mockAddOnsCalls
 	conf := config.Get()
@@ -338,6 +342,7 @@ func TestOverriddenUrls(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
+	assert.Equal(1, *persesCalls)
 
 	// All the services are healthy
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
@@ -350,7 +355,7 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 	assert := assert.New(t)
 
 	objs, b1, b2 := sampleIstioComponent()
-	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objs, b1, b2)
+	k8s, grafanaCalls, persesCalls, promCalls := mockAddOnsCalls(t, objs, b1, b2)
 
 	// Custom Dashboard prom URL forced to be empty
 	conf := config.Get()
@@ -364,6 +369,7 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(2, *promCalls)
+	assert.Equal(1, *persesCalls)
 
 	// All the services are healthy
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
@@ -375,7 +381,7 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 func TestNoIstioComponentFoundError(t *testing.T) {
 	assert := assert.New(t)
 
-	k8s, _, _ := mockAddOnsCalls(t, []runtime.Object{}, true, false)
+	k8s, _, _, _ := mockAddOnsCalls(t, []runtime.Object{}, true, false)
 
 	conf := config.Get()
 
@@ -398,10 +404,12 @@ func TestDefaults(t *testing.T) {
 		objects = append(objects, &o)
 	}
 
-	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
+	k8s, grafanaCalls, persesCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
 
 	// conf set in mockAddOnsCalls
 	conf := config.Get()
+	config.Set(conf)
+
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentHealthy}},
@@ -426,6 +434,7 @@ func TestDefaults(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
+	assert.Equal(1, *persesCalls)
 }
 
 func TestNonDefaults(t *testing.T) {
@@ -443,7 +452,7 @@ func TestNonDefaults(t *testing.T) {
 		objects = append(objects, &o)
 	}
 
-	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
+	k8s, grafanaCalls, persesCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
 
 	conf := config.Get()
 	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
@@ -478,6 +487,7 @@ func TestNonDefaults(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
+	assert.Equal(1, *persesCalls)
 }
 
 // Istiod replicas is downscaled to 0
@@ -490,7 +500,7 @@ func TestIstiodNotReady(t *testing.T) {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, notReadyStatus),
 	}
 
-	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, false, false)
+	k8s, grafanaCalls, persesCalls, promCalls := mockAddOnsCalls(t, objects, false, false)
 
 	conf := config.Get()
 	conf.IstioLabels.AppLabelName = "app.kubernetes.io/name"
@@ -526,6 +536,7 @@ func TestIstiodNotReady(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
+	assert.Equal(1, *persesCalls)
 }
 
 // Istio deployments only have the "app" app_label.
@@ -543,7 +554,7 @@ func TestCustomizedAppLabel(t *testing.T) {
 		objects = append(objects, &o)
 	}
 
-	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
+	k8s, grafanaCalls, persesCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
 
 	conf := config.Get()
 	conf.IstioLabels.AppLabelName = "app.kubernetes.io/name"
@@ -576,6 +587,7 @@ func TestCustomizedAppLabel(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
+	assert.Equal(1, *persesCalls)
 }
 
 func TestDaemonSetComponentHealthy(t *testing.T) {
@@ -592,7 +604,7 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 		objects = append(objects, &o)
 	}
 
-	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
+	k8s, grafanaCalls, persesCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
 
 	conf := config.Get()
 	conf.IstioLabels.AppLabelName = "app.kubernetes.io/name"
@@ -626,6 +638,7 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
+	assert.Equal(1, *persesCalls)
 }
 
 // Users may use DaemonSets to deploy istio components
@@ -638,7 +651,7 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
-	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
+	k8s, grafanaCalls, persesCalls, promCalls := mockAddOnsCalls(t, objects, true, false)
 
 	conf := config.Get()
 	conf.IstioLabels.AppLabelName = "app.kubernetes.io/name"
@@ -672,6 +685,7 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
+	assert.Equal(1, *persesCalls)
 }
 
 func assertComponent(assert *assert.Assertions, icsl kubernetes.IstioComponentStatus, name string, status string, isCore bool) {
@@ -798,7 +812,7 @@ func mockAddOnCalls(addons map[string]addOnsSetup) *mux.Router {
 	return mr
 }
 
-func defaultAddOnCalls(grafana, prom *int) map[string]addOnsSetup {
+func defaultAddOnCalls(grafana, perses, prom *int) map[string]addOnsSetup {
 	return map[string]addOnsSetup{
 		"prometheus": {
 			Url:        "/prometheus/mock",
@@ -815,6 +829,11 @@ func defaultAddOnCalls(grafana, prom *int) map[string]addOnsSetup {
 			StatusCode: 200,
 			CallCount:  grafana,
 		},
+		"perses": {
+			Url:        "/perses/mock",
+			StatusCode: 200,
+			CallCount:  perses,
+		},
 		"custom dashboards": {
 			Url:        "/prometheus-dashboards/mock",
 			StatusCode: 200,
@@ -827,6 +846,10 @@ func addonAddMockUrls(baseUrl string, conf *config.Config, overrideUrl bool) *co
 	conf.ExternalServices.Grafana.Enabled = true
 	conf.ExternalServices.Grafana.InternalURL = baseUrl + "/grafana/mock"
 	conf.ExternalServices.Grafana.IsCore = false
+
+	conf.ExternalServices.Perses.Enabled = true
+	conf.ExternalServices.Perses.InternalURL = baseUrl + "/perses/mock"
+	conf.ExternalServices.Perses.IsCore = false
 
 	conf.ExternalServices.Tracing.Enabled = true
 	conf.ExternalServices.Tracing.InternalURL = baseUrl + "/tracing/mock"
@@ -841,6 +864,9 @@ func addonAddMockUrls(baseUrl string, conf *config.Config, overrideUrl bool) *co
 	if overrideUrl {
 		conf.ExternalServices.Grafana.HealthCheckUrl = conf.ExternalServices.Grafana.InternalURL
 		conf.ExternalServices.Grafana.InternalURL = baseUrl + "/grafana/wrong"
+
+		conf.ExternalServices.Perses.HealthCheckUrl = conf.ExternalServices.Perses.InternalURL
+		conf.ExternalServices.Perses.InternalURL = baseUrl + "/perses/wrong"
 
 		conf.ExternalServices.Prometheus.HealthCheckUrl = conf.ExternalServices.Prometheus.URL
 		conf.ExternalServices.Prometheus.URL = baseUrl + "/prometheus/wrong"

@@ -1,571 +1,522 @@
 {
-  "elements": {
-    "nodes": [
-      {
-        "data": {
-          "id": "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
-          "cluster": "_external_",
-          "infraName": "External Deployments",
-          "infraType": "cluster",
-          "namespace": "",
-          "nodeType": "box",
-          "healthData": "Healthy",
-          "isBox": "cluster",
-          "isExternal": true,
-          "isInaccessible": true
-        }
-      },
-      {
-        "data": {
-          "id": "52e2139bb2622c3156273a148bb95c794e674e820ffcf433a3e530e31e5fcd36",
-          "cluster": "cluster-primary",
-          "infraName": "cluster-primary",
-          "infraType": "cluster",
-          "namespace": "",
-          "nodeType": "box",
-          "healthData": "Healthy",
-          "infraData": {
-            "accessible": true,
-            "apiEndpoint": "http://127.0.0.2:9443",
-            "isKialiHome": true,
-            "kialiInstances": [
-              {
-                "namespace": "istio-system",
-                "operatorResource": "",
-                "serviceName": "kiali",
-                "url": "",
-                "version": ""
-              }
-            ],
-            "name": "cluster-primary",
-            "secretName": ""
+  "elements" : {
+    "nodes" : [ {
+      "data" : {
+        "id" : "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
+        "cluster" : "_external_",
+        "infraName" : "External Deployments",
+        "infraType" : "cluster",
+        "namespace" : "",
+        "nodeType" : "box",
+        "healthData" : "Healthy",
+        "isBox" : "cluster",
+        "isExternal" : true,
+        "isInaccessible" : true
+      }
+    }, {
+      "data" : {
+        "id" : "52e2139bb2622c3156273a148bb95c794e674e820ffcf433a3e530e31e5fcd36",
+        "cluster" : "cluster-primary",
+        "infraName" : "cluster-primary",
+        "infraType" : "cluster",
+        "namespace" : "",
+        "nodeType" : "box",
+        "healthData" : "Healthy",
+        "infraData" : {
+          "accessible" : true,
+          "apiEndpoint" : "http://127.0.0.2:9443",
+          "isKialiHome" : true,
+          "kialiInstances" : [ {
+            "namespace" : "istio-system",
+            "operatorResource" : "",
+            "serviceName" : "kiali",
+            "url" : "",
+            "version" : ""
+          } ],
+          "name" : "cluster-primary",
+          "secretName" : ""
+        },
+        "isBox" : "cluster",
+        "version" : "Unknown"
+      }
+    }, {
+      "data" : {
+        "id" : "421c6926a61f0f21f1fe0babb48ea9fac6454c1d9a448dea2c559402723ec4da",
+        "cluster" : "cluster-remote",
+        "infraName" : "cluster-remote",
+        "infraType" : "cluster",
+        "namespace" : "",
+        "nodeType" : "box",
+        "healthData" : "Healthy",
+        "infraData" : {
+          "accessible" : true,
+          "apiEndpoint" : "",
+          "isKialiHome" : false,
+          "kialiInstances" : null,
+          "name" : "cluster-remote",
+          "secretName" : ""
+        },
+        "isBox" : "cluster"
+      }
+    }, {
+      "data" : {
+        "id" : "5d47c4043773968316f9d71a07212a1c363d76a3d9ffe7c52198f864cde8c5f5",
+        "parent" : "52e2139bb2622c3156273a148bb95c794e674e820ffcf433a3e530e31e5fcd36",
+        "cluster" : "cluster-primary",
+        "infraName" : "data-plane-1",
+        "infraType" : "namespace",
+        "namespace" : "data-plane-1",
+        "nodeType" : "box",
+        "healthData" : null,
+        "isBox" : "namespace"
+      }
+    }, {
+      "data" : {
+        "id" : "d267c54a08bd79c4a07c88b2e0d93b5c93962da0703c7bfd70d1ead571b067f0",
+        "parent" : "52e2139bb2622c3156273a148bb95c794e674e820ffcf433a3e530e31e5fcd36",
+        "cluster" : "cluster-primary",
+        "infraName" : "istio-system",
+        "infraType" : "namespace",
+        "namespace" : "istio-system",
+        "nodeType" : "box",
+        "healthData" : null,
+        "isBox" : "namespace"
+      }
+    }, {
+      "data" : {
+        "id" : "33493098cdd63801f773396da680159d0bb57b482ef38a4b208899a2e477e1f0",
+        "parent" : "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
+        "cluster" : "_external_",
+        "infraName" : "Grafana",
+        "infraType" : "grafana",
+        "namespace" : "",
+        "nodeType" : "infra",
+        "healthData" : "Healthy",
+        "infraData" : {
+          "auth" : {
+            "caFile" : "xxx",
+            "insecureSkipVerify" : false,
+            "password" : "xxx",
+            "token" : "xxx",
+            "type" : "none",
+            "useKialiToken" : false,
+            "username" : "xxx"
           },
-          "isBox": "cluster",
-          "version": "Unknown"
-        }
-      },
-      {
-        "data": {
-          "id": "421c6926a61f0f21f1fe0babb48ea9fac6454c1d9a448dea2c559402723ec4da",
-          "cluster": "cluster-remote",
-          "infraName": "cluster-remote",
-          "infraType": "cluster",
-          "namespace": "",
-          "nodeType": "box",
-          "healthData": "Healthy",
-          "infraData": {
-            "accessible": true,
-            "apiEndpoint": "",
-            "isKialiHome": false,
-            "kialiInstances": null,
-            "name": "cluster-remote",
-            "secretName": ""
+          "dashboards" : null,
+          "enabled" : true,
+          "externalURL" : "",
+          "internalURL" : "http://grafana.istio-system:3000"
+        },
+        "isExternal" : true,
+        "isInaccessible" : true
+      }
+    }, {
+      "data" : {
+        "id" : "41b50563edf837e2e828b50492b24356bf392be6e0a7a7f21d90eabe551dd686",
+        "parent" : "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
+        "cluster" : "_external_",
+        "infraName" : "Prometheus",
+        "infraType" : "metricStore",
+        "namespace" : "",
+        "nodeType" : "infra",
+        "healthData" : "Healthy",
+        "infraData" : {
+          "auth" : {
+            "caFile" : "xxx",
+            "insecureSkipVerify" : false,
+            "password" : "xxx",
+            "token" : "xxx",
+            "type" : "none",
+            "useKialiToken" : false,
+            "username" : "xxx"
           },
-          "isBox": "cluster"
-        }
-      },
-      {
-        "data": {
-          "id": "5d47c4043773968316f9d71a07212a1c363d76a3d9ffe7c52198f864cde8c5f5",
-          "parent": "52e2139bb2622c3156273a148bb95c794e674e820ffcf433a3e530e31e5fcd36",
-          "cluster": "cluster-primary",
-          "infraName": "data-plane-1",
-          "infraType": "namespace",
-          "namespace": "data-plane-1",
-          "nodeType": "box",
-          "healthData": null,
-          "isBox": "namespace"
-        }
-      },
-      {
-        "data": {
-          "id": "d267c54a08bd79c4a07c88b2e0d93b5c93962da0703c7bfd70d1ead571b067f0",
-          "parent": "52e2139bb2622c3156273a148bb95c794e674e820ffcf433a3e530e31e5fcd36",
-          "cluster": "cluster-primary",
-          "infraName": "istio-system",
-          "infraType": "namespace",
-          "namespace": "istio-system",
-          "nodeType": "box",
-          "healthData": null,
-          "isBox": "namespace"
-        }
-      },
-      {
-        "data": {
-          "id": "33493098cdd63801f773396da680159d0bb57b482ef38a4b208899a2e477e1f0",
-          "parent": "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
-          "cluster": "_external_",
-          "infraName": "Grafana",
-          "infraType": "grafana",
-          "namespace": "",
-          "nodeType": "infra",
-          "healthData": "Healthy",
-          "infraData": {
-            "auth": {
-              "caFile": "xxx",
-              "insecureSkipVerify": false,
-              "password": "xxx",
-              "token": "xxx",
-              "type": "none",
-              "useKialiToken": false,
-              "username": "xxx"
-            },
-            "dashboards": null,
-            "enabled": true,
-            "externalURL": "",
-            "internalURL": "http://grafana.istio-system:3000"
+          "cacheDuration" : 7,
+          "cacheEnabled" : true,
+          "cacheExpiration" : 300,
+          "thanosProxy" : {
+            "retentionPeriod" : "7d",
+            "scrapeInterval" : "30s"
           },
-          "isExternal": true,
-          "isInaccessible": true
-        }
-      },
-      {
-        "data": {
-          "id": "41b50563edf837e2e828b50492b24356bf392be6e0a7a7f21d90eabe551dd686",
-          "parent": "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
-          "cluster": "_external_",
-          "infraName": "Prometheus",
-          "infraType": "metricStore",
-          "namespace": "",
-          "nodeType": "infra",
-          "healthData": "Healthy",
-          "infraData": {
-            "auth": {
-              "caFile": "xxx",
-              "insecureSkipVerify": false,
-              "password": "xxx",
-              "token": "xxx",
-              "type": "none",
-              "useKialiToken": false,
-              "username": "xxx"
-            },
-            "cacheDuration": 7,
-            "cacheEnabled": true,
-            "cacheExpiration": 300,
-            "thanosProxy": {
-              "retentionPeriod": "7d",
-              "scrapeInterval": "30s"
-            },
-            "url": "http://prometheus.istio-system:9090"
+          "url" : "http://prometheus.istio-system:9090"
+        },
+        "isExternal" : true,
+        "isInaccessible" : true
+      }
+    }, {
+      "data" : {
+        "id" : "e0733a58436c292ece7cbcf37db7b77510545c027d03c1798c3d6d8202b93f6f",
+        "parent" : "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
+        "cluster" : "_external_",
+        "infraName" : "jaeger",
+        "infraType" : "traceStore",
+        "namespace" : "",
+        "nodeType" : "infra",
+        "healthData" : "Healthy",
+        "infraData" : {
+          "auth" : {
+            "caFile" : "xxx",
+            "insecureSkipVerify" : false,
+            "password" : "xxx",
+            "token" : "xxx",
+            "type" : "none",
+            "useKialiToken" : false,
+            "username" : "xxx"
           },
-          "isExternal": true,
-          "isInaccessible": true
-        }
-      },
-      {
-        "data": {
-          "id": "e0733a58436c292ece7cbcf37db7b77510545c027d03c1798c3d6d8202b93f6f",
-          "parent": "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
-          "cluster": "_external_",
-          "infraName": "jaeger",
-          "infraType": "traceStore",
-          "namespace": "",
-          "nodeType": "infra",
-          "healthData": "Healthy",
-          "infraData": {
-            "auth": {
-              "caFile": "xxx",
-              "insecureSkipVerify": false,
-              "password": "xxx",
-              "token": "xxx",
-              "type": "none",
-              "useKialiToken": false,
-              "username": "xxx"
-            },
-            "enabled": true,
-            "externalURL": "",
-            "grpcPort": 9095,
-            "internalURL": "http://tracing.istio-system:16685/jaeger",
-            "provider": "jaeger",
-            "tempoConfig": {
-              "cacheCapacity": 200,
-              "cacheEnabled": true
-            },
-            "namespaceSelector": true,
-            "queryTimeout": 5,
-            "useGRPC": true,
-            "whiteListIstioSystem": [
-              "jaeger-query",
-              "istio-ingressgateway"
-            ]
+          "enabled" : true,
+          "externalURL" : "",
+          "grpcPort" : 9095,
+          "internalURL" : "http://tracing.istio-system:16685/jaeger",
+          "provider" : "jaeger",
+          "tempoConfig" : {
+            "cacheCapacity" : 200,
+            "cacheEnabled" : true
           },
-          "isExternal": true,
-          "isInaccessible": true
-        }
-      },
-      {
-        "data": {
-          "id": "0bb699228f65bc52ec82ed3c72726df27b56e7518b38b7e2021196ea0065233c",
-          "parent": "52e2139bb2622c3156273a148bb95c794e674e820ffcf433a3e530e31e5fcd36",
-          "cluster": "cluster-primary",
-          "infraName": "Data Plane",
-          "infraType": "dataplane",
-          "namespace": "",
-          "nodeType": "infra",
-          "healthData": "Healthy",
-          "infraData": [
-            {
-              "name": "data-plane-1",
-              "cluster": "cluster-primary",
-              "isAmbient": false,
-              "isControlPlane": false,
-              "labels": {
-                "istio-injection": "enabled",
-                "kubernetes.io/metadata.name": "data-plane-1"
-              },
-              "annotations": null,
-              "revision": "default"
-            },
-            {
-              "name": "data-plane-2",
-              "cluster": "cluster-primary",
-              "isAmbient": false,
-              "isControlPlane": false,
-              "labels": {
-                "istio.io/rev": "default",
-                "kubernetes.io/metadata.name": "data-plane-2"
-              },
-              "annotations": null,
-              "revision": "default"
-            }
-          ],
-          "version": "default"
-        }
-      },
-      {
-        "data": {
-          "id": "5d63e313a5acadb4bf9f5bcaa606b69bbaf81a4193a511719a878e9ad8729a5f",
-          "parent": "5d47c4043773968316f9d71a07212a1c363d76a3d9ffe7c52198f864cde8c5f5",
-          "cluster": "cluster-primary",
-          "infraName": "waypoint",
-          "infraType": "waypoint",
-          "namespace": "data-plane-1",
-          "nodeType": "infra",
-          "healthData": "Healthy",
-          "infraData": {
-            "Annotations": {},
-            "Labels": {
-              "gateway.istio.io/managed": "istio.io-mesh-controller",
-              "gateway.networking.k8s.io/gateway-name": "waypoint"
-            },
-            "TemplateAnnotations": null,
-            "TemplateLabels": {
-              "gateway.istio.io/managed": "istio.io-mesh-controller",
-              "gateway.networking.k8s.io/gateway-name": "waypoint"
-            }
+          "namespaceSelector" : true,
+          "queryTimeout" : 5,
+          "useGRPC" : true,
+          "whiteListIstioSystem" : [ "jaeger-query", "istio-ingressgateway" ]
+        },
+        "isExternal" : true,
+        "isInaccessible" : true
+      }
+    }, {
+      "data" : {
+        "id" : "0bb699228f65bc52ec82ed3c72726df27b56e7518b38b7e2021196ea0065233c",
+        "parent" : "52e2139bb2622c3156273a148bb95c794e674e820ffcf433a3e530e31e5fcd36",
+        "cluster" : "cluster-primary",
+        "infraName" : "Data Plane",
+        "infraType" : "dataplane",
+        "namespace" : "",
+        "nodeType" : "infra",
+        "healthData" : "Healthy",
+        "infraData" : [ {
+          "name" : "data-plane-1",
+          "cluster" : "cluster-primary",
+          "isAmbient" : false,
+          "isControlPlane" : false,
+          "labels" : {
+            "istio-injection" : "enabled",
+            "kubernetes.io/metadata.name" : "data-plane-1"
           },
-          "version": "default"
-        }
-      },
-      {
-        "data": {
-          "id": "29c05b5dfa30d15d450e54f0651c03c68a25a78ae4dc8f292c6ceb5ce6be7e6d",
-          "parent": "d267c54a08bd79c4a07c88b2e0d93b5c93962da0703c7bfd70d1ead571b067f0",
-          "cluster": "cluster-primary",
-          "infraName": "kiali",
-          "infraType": "kiali",
-          "namespace": "istio-system",
-          "nodeType": "infra",
-          "healthData": "Healthy",
-          "infraData": {
-            "componentStatuses": {
-              "enabled": true
-            },
-            "istioApiEnabled": true,
-            "istioIdentityDomain": "svc.cluster.local",
-            "istiodPollingIntervalSeconds": 20,
-            "rootNamespace": "istio-system",
-            "validationChangeDetectionEnabled": true,
-            "validationReconcileInterval": 60000000000
+          "annotations" : null,
+          "revision" : "default"
+        }, {
+          "name" : "data-plane-2",
+          "cluster" : "cluster-primary",
+          "isAmbient" : false,
+          "isControlPlane" : false,
+          "labels" : {
+            "istio.io/rev" : "default",
+            "kubernetes.io/metadata.name" : "data-plane-2"
+          },
+          "annotations" : null,
+          "revision" : "default"
+        } ],
+        "version" : "default"
+      }
+    }, {
+      "data" : {
+        "id" : "5d63e313a5acadb4bf9f5bcaa606b69bbaf81a4193a511719a878e9ad8729a5f",
+        "parent" : "5d47c4043773968316f9d71a07212a1c363d76a3d9ffe7c52198f864cde8c5f5",
+        "cluster" : "cluster-primary",
+        "infraName" : "waypoint",
+        "infraType" : "waypoint",
+        "namespace" : "data-plane-1",
+        "nodeType" : "infra",
+        "healthData" : "Healthy",
+        "infraData" : {
+          "Annotations" : { },
+          "Labels" : {
+            "gateway.istio.io/managed" : "istio.io-mesh-controller",
+            "gateway.networking.k8s.io/gateway-name" : "waypoint"
+          },
+          "TemplateAnnotations" : null,
+          "TemplateLabels" : {
+            "gateway.istio.io/managed" : "istio.io-mesh-controller",
+            "gateway.networking.k8s.io/gateway-name" : "waypoint"
           }
-        }
-      },
-      {
-        "data": {
-          "id": "4ffd132efe1291fcd70490d6add887f9e160a72c4885a83669432bea09de23f9",
-          "parent": "d267c54a08bd79c4a07c88b2e0d93b5c93962da0703c7bfd70d1ead571b067f0",
-          "cluster": "cluster-primary",
-          "infraName": "gateway",
-          "infraType": "gateway",
-          "namespace": "istio-system",
-          "nodeType": "infra",
-          "healthData": "Healthy",
-          "infraData": {
-            "kind": "Gateway",
-            "apiVersion": "networking.istio.io/v1",
-            "metadata": {
-              "name": "gateway",
-              "namespace": "istio-system",
-              "resourceVersion": "999",
-              "creationTimestamp": null
-            },
-            "spec": {
-              "selector": {
-                "istio": "ingressgateway"
-              }
-            },
-            "status": {}
+        },
+        "version" : "default"
+      }
+    }, {
+      "data" : {
+        "id" : "29c05b5dfa30d15d450e54f0651c03c68a25a78ae4dc8f292c6ceb5ce6be7e6d",
+        "parent" : "d267c54a08bd79c4a07c88b2e0d93b5c93962da0703c7bfd70d1ead571b067f0",
+        "cluster" : "cluster-primary",
+        "infraName" : "kiali",
+        "infraType" : "kiali",
+        "namespace" : "istio-system",
+        "nodeType" : "infra",
+        "healthData" : "Healthy",
+        "infraData" : {
+          "componentStatuses" : {
+            "enabled" : true
           },
-          "version": "default"
-        }
-      },
-      {
-        "data": {
-          "id": "9b5c974b8b5c42157a685413c86f2ff15ee4266f307f0c519d9acc50b6c97bc2",
-          "parent": "d267c54a08bd79c4a07c88b2e0d93b5c93962da0703c7bfd70d1ead571b067f0",
-          "cluster": "cluster-primary",
-          "infraName": "istiod",
-          "infraType": "istiod",
-          "namespace": "istio-system",
-          "nodeType": "infra",
-          "healthData": "Healthy",
-          "infraData": {
-            "cluster": {
-              "accessible": true,
-              "apiEndpoint": "http://127.0.0.2:9443",
-              "isKialiHome": true,
-              "kialiInstances": [
-                {
-                  "namespace": "istio-system",
-                  "operatorResource": "",
-                  "serviceName": "kiali",
-                  "url": "",
-                  "version": ""
-                }
-              ],
-              "name": "cluster-primary",
-              "secretName": ""
-            },
-            "config": {
-              "certificates": [
-                {
-                  "dnsNames": null,
-                  "configMapName": "istio-ca-root-cert",
-                  "issuer": "O=cluster.local",
-                  "notBefore": "2021-07-27T14:37:00Z",
-                  "notAfter": "2031-07-25T14:37:00Z",
-                  "error": "",
-                  "accessible": true,
-                  "cluster": ""
-                }
-              ],
-              "effectiveConfig": {
-                "configMap": {
-                  "mesh": {
-                    "accessLogFile": "/dev/stdout",
-                    "enableAutoMtls": true,
-                    "trustDomain": "cluster.local",
-                    "rootNamespace": "istio-system"
-                  }
-                }
-              },
-              "network": "kialiNetwork",
-              "standardConfig": {
-                "cluster": "cluster-primary",
-                "configMap": {
-                  "mesh": {
-                    "accessLogFile": "/dev/stdout",
-                    "enableAutoMtls": true,
-                    "trustDomain": "cluster.local",
-                    "rootNamespace": "istio-system"
-                  }
-                },
-                "name": "istio",
-                "namespace": "istio-system"
-              }
-            },
-            "externalControlPlane": false,
-            "id": "cluster-primary",
-            "istiodName": "istiod",
-            "istiodNamespace": "istio-system",
-            "managedClusters": [
-              {
-                "accessible": true,
-                "apiEndpoint": "http://127.0.0.2:9443",
-                "isKialiHome": true,
-                "kialiInstances": [
-                  {
-                    "namespace": "istio-system",
-                    "operatorResource": "",
-                    "serviceName": "kiali",
-                    "url": "",
-                    "version": ""
-                  }
-                ],
-                "name": "cluster-primary",
-                "secretName": ""
-              },
-              {
-                "accessible": true,
-                "apiEndpoint": "",
-                "isKialiHome": false,
-                "kialiInstances": null,
-                "name": "cluster-remote",
-                "secretName": ""
-              }
-            ],
-            "managesExternal": true,
-            "managedNamespaces": [
-              {
-                "name": "data-plane-1",
-                "cluster": "cluster-primary",
-                "isAmbient": false,
-                "isControlPlane": false,
-                "labels": {
-                  "istio-injection": "enabled",
-                  "kubernetes.io/metadata.name": "data-plane-1"
-                },
-                "annotations": null,
-                "revision": "default"
-              },
-              {
-                "name": "data-plane-2",
-                "cluster": "cluster-primary",
-                "isAmbient": false,
-                "isControlPlane": false,
-                "labels": {
-                  "istio.io/rev": "default",
-                  "kubernetes.io/metadata.name": "data-plane-2"
-                },
-                "annotations": null,
-                "revision": "default"
-              },
-              {
-                "name": "data-plane-3",
-                "cluster": "cluster-remote",
-                "isAmbient": false,
-                "isControlPlane": false,
-                "labels": {
-                  "istio-injection": "enabled",
-                  "kubernetes.io/metadata.name": "data-plane-3"
-                },
-                "annotations": null,
-                "revision": "default"
-              },
-              {
-                "name": "data-plane-4",
-                "cluster": "cluster-remote",
-                "isAmbient": false,
-                "isControlPlane": false,
-                "labels": {
-                  "istio.io/rev": "default",
-                  "kubernetes.io/metadata.name": "data-plane-4"
-                },
-                "annotations": null,
-                "revision": "default"
-              }
-            ],
-            "monitoringPort": 15014,
-            "resources": {},
-            "revision": "default",
-            "status": "",
-            "thresholds": {
-              "memory": 0,
-              "cpu": 0
-            }
-          },
-          "version": "Unknown"
-        }
-      },
-      {
-        "data": {
-          "id": "5ff0f691c850d727e75813fb484e06f5bad835b005b08caf2a62c0cff7cd5405",
-          "parent": "421c6926a61f0f21f1fe0babb48ea9fac6454c1d9a448dea2c559402723ec4da",
-          "cluster": "cluster-remote",
-          "infraName": "Data Plane",
-          "infraType": "dataplane",
-          "namespace": "",
-          "nodeType": "infra",
-          "healthData": "Healthy",
-          "infraData": [
-            {
-              "name": "data-plane-3",
-              "cluster": "cluster-remote",
-              "isAmbient": false,
-              "isControlPlane": false,
-              "labels": {
-                "istio-injection": "enabled",
-                "kubernetes.io/metadata.name": "data-plane-3"
-              },
-              "annotations": null,
-              "revision": "default"
-            },
-            {
-              "name": "data-plane-4",
-              "cluster": "cluster-remote",
-              "isAmbient": false,
-              "isControlPlane": false,
-              "labels": {
-                "istio.io/rev": "default",
-                "kubernetes.io/metadata.name": "data-plane-4"
-              },
-              "annotations": null,
-              "revision": "default"
-            }
-          ],
-          "version": "default"
+          "istioApiEnabled" : true,
+          "istioIdentityDomain" : "svc.cluster.local",
+          "istiodPollingIntervalSeconds" : 20,
+          "rootNamespace" : "istio-system",
+          "validationChangeDetectionEnabled" : true,
+          "validationReconcileInterval" : 60000000000
         }
       }
-    ],
-    "edges": [
-      {
-        "data": {
-          "id": "3c1e5459c5b6268c2f2452f3e6b620fd1ae0297b4621175c97e376558bea9d58",
-          "source": "29c05b5dfa30d15d450e54f0651c03c68a25a78ae4dc8f292c6ceb5ce6be7e6d",
-          "target": "33493098cdd63801f773396da680159d0bb57b482ef38a4b208899a2e477e1f0"
-        }
-      },
-      {
-        "data": {
-          "id": "3800bf57dd84bfc7bb159fc26de3fd964dc4faa7274b6250dcde483edeba542d",
-          "source": "29c05b5dfa30d15d450e54f0651c03c68a25a78ae4dc8f292c6ceb5ce6be7e6d",
-          "target": "41b50563edf837e2e828b50492b24356bf392be6e0a7a7f21d90eabe551dd686"
-        }
-      },
-      {
-        "data": {
-          "id": "3444b8aee4ed1e0a9d9388de97152e089e723e1efae8db5658d9558b12346ac4",
-          "source": "29c05b5dfa30d15d450e54f0651c03c68a25a78ae4dc8f292c6ceb5ce6be7e6d",
-          "target": "9b5c974b8b5c42157a685413c86f2ff15ee4266f307f0c519d9acc50b6c97bc2"
-        }
-      },
-      {
-        "data": {
-          "id": "6fb152c8305cf91514cbb0d86796cc62eb47e275cf803af3fbb26224c9ddf600",
-          "source": "29c05b5dfa30d15d450e54f0651c03c68a25a78ae4dc8f292c6ceb5ce6be7e6d",
-          "target": "e0733a58436c292ece7cbcf37db7b77510545c027d03c1798c3d6d8202b93f6f"
-        }
-      },
-      {
-        "data": {
-          "id": "8213394da06023363e2d5747d26db6f7e23d0beeacc84fcf97119768822e6dc8",
-          "source": "9b5c974b8b5c42157a685413c86f2ff15ee4266f307f0c519d9acc50b6c97bc2",
-          "target": "0bb699228f65bc52ec82ed3c72726df27b56e7518b38b7e2021196ea0065233c"
-        }
-      },
-      {
-        "data": {
-          "id": "ea8e134859bb70d340128c62d2468a12174517151b37014f82613d6a0957eb8e",
-          "source": "9b5c974b8b5c42157a685413c86f2ff15ee4266f307f0c519d9acc50b6c97bc2",
-          "target": "4ffd132efe1291fcd70490d6add887f9e160a72c4885a83669432bea09de23f9"
-        }
-      },
-      {
-        "data": {
-          "id": "f25288d2a684e5be99e297439adad0d0f65e5893ba592b397f4841a42e3bab68",
-          "source": "9b5c974b8b5c42157a685413c86f2ff15ee4266f307f0c519d9acc50b6c97bc2",
-          "target": "5d63e313a5acadb4bf9f5bcaa606b69bbaf81a4193a511719a878e9ad8729a5f"
-        }
-      },
-      {
-        "data": {
-          "id": "1622664f016a337006cce1427c522c2e24c1b1b39548109f49ad478594f7d8ca",
-          "source": "9b5c974b8b5c42157a685413c86f2ff15ee4266f307f0c519d9acc50b6c97bc2",
-          "target": "5ff0f691c850d727e75813fb484e06f5bad835b005b08caf2a62c0cff7cd5405"
-        }
+    }, {
+      "data" : {
+        "id" : "4ffd132efe1291fcd70490d6add887f9e160a72c4885a83669432bea09de23f9",
+        "parent" : "d267c54a08bd79c4a07c88b2e0d93b5c93962da0703c7bfd70d1ead571b067f0",
+        "cluster" : "cluster-primary",
+        "infraName" : "gateway",
+        "infraType" : "gateway",
+        "namespace" : "istio-system",
+        "nodeType" : "infra",
+        "healthData" : "Healthy",
+        "infraData" : {
+          "kind" : "Gateway",
+          "apiVersion" : "networking.istio.io/v1",
+          "metadata" : {
+            "name" : "gateway",
+            "namespace" : "istio-system",
+            "resourceVersion" : "999",
+            "creationTimestamp" : null
+          },
+          "spec" : {
+            "selector" : {
+              "istio" : "ingressgateway"
+            }
+          },
+          "status" : { }
+        },
+        "version" : "default"
       }
-    ]
+    }, {
+      "data" : {
+        "id" : "9b5c974b8b5c42157a685413c86f2ff15ee4266f307f0c519d9acc50b6c97bc2",
+        "parent" : "d267c54a08bd79c4a07c88b2e0d93b5c93962da0703c7bfd70d1ead571b067f0",
+        "cluster" : "cluster-primary",
+        "infraName" : "istiod",
+        "infraType" : "istiod",
+        "namespace" : "istio-system",
+        "nodeType" : "infra",
+        "healthData" : "Healthy",
+        "infraData" : {
+          "cluster" : {
+            "accessible" : true,
+            "apiEndpoint" : "http://127.0.0.2:9443",
+            "isKialiHome" : true,
+            "kialiInstances" : [ {
+              "namespace" : "istio-system",
+              "operatorResource" : "",
+              "serviceName" : "kiali",
+              "url" : "",
+              "version" : ""
+            } ],
+            "name" : "cluster-primary",
+            "secretName" : ""
+          },
+          "config" : {
+            "certificates" : [ {
+              "dnsNames" : null,
+              "configMapName" : "istio-ca-root-cert",
+              "issuer" : "O=cluster.local",
+              "notBefore" : "2021-07-27T14:37:00Z",
+              "notAfter" : "2031-07-25T14:37:00Z",
+              "error" : "",
+              "accessible" : true,
+              "cluster" : ""
+            } ],
+            "effectiveConfig" : {
+              "configMap" : {
+                "mesh" : {
+                  "accessLogFile" : "/dev/stdout",
+                  "enableAutoMtls" : true,
+                  "trustDomain" : "cluster.local",
+                  "rootNamespace" : "istio-system"
+                }
+              }
+            },
+            "network" : "kialiNetwork",
+            "standardConfig" : {
+              "cluster" : "cluster-primary",
+              "configMap" : {
+                "mesh" : {
+                  "accessLogFile" : "/dev/stdout",
+                  "enableAutoMtls" : true,
+                  "trustDomain" : "cluster.local",
+                  "rootNamespace" : "istio-system"
+                }
+              },
+              "name" : "istio",
+              "namespace" : "istio-system"
+            }
+          },
+          "externalControlPlane" : false,
+          "id" : "cluster-primary",
+          "istiodName" : "istiod",
+          "istiodNamespace" : "istio-system",
+          "managedClusters" : [ {
+            "accessible" : true,
+            "apiEndpoint" : "http://127.0.0.2:9443",
+            "isKialiHome" : true,
+            "kialiInstances" : [ {
+              "namespace" : "istio-system",
+              "operatorResource" : "",
+              "serviceName" : "kiali",
+              "url" : "",
+              "version" : ""
+            } ],
+            "name" : "cluster-primary",
+            "secretName" : ""
+          }, {
+            "accessible" : true,
+            "apiEndpoint" : "",
+            "isKialiHome" : false,
+            "kialiInstances" : null,
+            "name" : "cluster-remote",
+            "secretName" : ""
+          } ],
+          "managesExternal" : true,
+          "managedNamespaces" : [ {
+            "name" : "data-plane-1",
+            "cluster" : "cluster-primary",
+            "isAmbient" : false,
+            "isControlPlane" : false,
+            "labels" : {
+              "istio-injection" : "enabled",
+              "kubernetes.io/metadata.name" : "data-plane-1"
+            },
+            "annotations" : null,
+            "revision" : "default"
+          }, {
+            "name" : "data-plane-2",
+            "cluster" : "cluster-primary",
+            "isAmbient" : false,
+            "isControlPlane" : false,
+            "labels" : {
+              "istio.io/rev" : "default",
+              "kubernetes.io/metadata.name" : "data-plane-2"
+            },
+            "annotations" : null,
+            "revision" : "default"
+          }, {
+            "name" : "data-plane-3",
+            "cluster" : "cluster-remote",
+            "isAmbient" : false,
+            "isControlPlane" : false,
+            "labels" : {
+              "istio-injection" : "enabled",
+              "kubernetes.io/metadata.name" : "data-plane-3"
+            },
+            "annotations" : null,
+            "revision" : "default"
+          }, {
+            "name" : "data-plane-4",
+            "cluster" : "cluster-remote",
+            "isAmbient" : false,
+            "isControlPlane" : false,
+            "labels" : {
+              "istio.io/rev" : "default",
+              "kubernetes.io/metadata.name" : "data-plane-4"
+            },
+            "annotations" : null,
+            "revision" : "default"
+          } ],
+          "monitoringPort" : 15014,
+          "resources" : { },
+          "revision" : "default",
+          "status" : "",
+          "thresholds" : {
+            "memory" : 0,
+            "cpu" : 0
+          }
+        },
+        "version" : "Unknown"
+      }
+    }, {
+      "data" : {
+        "id" : "5ff0f691c850d727e75813fb484e06f5bad835b005b08caf2a62c0cff7cd5405",
+        "parent" : "421c6926a61f0f21f1fe0babb48ea9fac6454c1d9a448dea2c559402723ec4da",
+        "cluster" : "cluster-remote",
+        "infraName" : "Data Plane",
+        "infraType" : "dataplane",
+        "namespace" : "",
+        "nodeType" : "infra",
+        "healthData" : "Healthy",
+        "infraData" : [ {
+          "name" : "data-plane-3",
+          "cluster" : "cluster-remote",
+          "isAmbient" : false,
+          "isControlPlane" : false,
+          "labels" : {
+            "istio-injection" : "enabled",
+            "kubernetes.io/metadata.name" : "data-plane-3"
+          },
+          "annotations" : null,
+          "revision" : "default"
+        }, {
+          "name" : "data-plane-4",
+          "cluster" : "cluster-remote",
+          "isAmbient" : false,
+          "isControlPlane" : false,
+          "labels" : {
+            "istio.io/rev" : "default",
+            "kubernetes.io/metadata.name" : "data-plane-4"
+          },
+          "annotations" : null,
+          "revision" : "default"
+        } ],
+        "version" : "default"
+      }
+    } ],
+    "edges" : [ {
+      "data" : {
+        "id" : "3c1e5459c5b6268c2f2452f3e6b620fd1ae0297b4621175c97e376558bea9d58",
+        "source" : "29c05b5dfa30d15d450e54f0651c03c68a25a78ae4dc8f292c6ceb5ce6be7e6d",
+        "target" : "33493098cdd63801f773396da680159d0bb57b482ef38a4b208899a2e477e1f0"
+      }
+    }, {
+      "data" : {
+        "id" : "3800bf57dd84bfc7bb159fc26de3fd964dc4faa7274b6250dcde483edeba542d",
+        "source" : "29c05b5dfa30d15d450e54f0651c03c68a25a78ae4dc8f292c6ceb5ce6be7e6d",
+        "target" : "41b50563edf837e2e828b50492b24356bf392be6e0a7a7f21d90eabe551dd686"
+      }
+    }, {
+      "data" : {
+        "id" : "3444b8aee4ed1e0a9d9388de97152e089e723e1efae8db5658d9558b12346ac4",
+        "source" : "29c05b5dfa30d15d450e54f0651c03c68a25a78ae4dc8f292c6ceb5ce6be7e6d",
+        "target" : "9b5c974b8b5c42157a685413c86f2ff15ee4266f307f0c519d9acc50b6c97bc2"
+      }
+    }, {
+      "data" : {
+        "id" : "6fb152c8305cf91514cbb0d86796cc62eb47e275cf803af3fbb26224c9ddf600",
+        "source" : "29c05b5dfa30d15d450e54f0651c03c68a25a78ae4dc8f292c6ceb5ce6be7e6d",
+        "target" : "e0733a58436c292ece7cbcf37db7b77510545c027d03c1798c3d6d8202b93f6f"
+      }
+    }, {
+      "data" : {
+        "id" : "8213394da06023363e2d5747d26db6f7e23d0beeacc84fcf97119768822e6dc8",
+        "source" : "9b5c974b8b5c42157a685413c86f2ff15ee4266f307f0c519d9acc50b6c97bc2",
+        "target" : "0bb699228f65bc52ec82ed3c72726df27b56e7518b38b7e2021196ea0065233c"
+      }
+    }, {
+      "data" : {
+        "id" : "ea8e134859bb70d340128c62d2468a12174517151b37014f82613d6a0957eb8e",
+        "source" : "9b5c974b8b5c42157a685413c86f2ff15ee4266f307f0c519d9acc50b6c97bc2",
+        "target" : "4ffd132efe1291fcd70490d6add887f9e160a72c4885a83669432bea09de23f9"
+      }
+    }, {
+      "data" : {
+        "id" : "f25288d2a684e5be99e297439adad0d0f65e5893ba592b397f4841a42e3bab68",
+        "source" : "9b5c974b8b5c42157a685413c86f2ff15ee4266f307f0c519d9acc50b6c97bc2",
+        "target" : "5d63e313a5acadb4bf9f5bcaa606b69bbaf81a4193a511719a878e9ad8729a5f"
+      }
+    }, {
+      "data" : {
+        "id" : "1622664f016a337006cce1427c522c2e24c1b1b39548109f49ad478594f7d8ca",
+        "source" : "9b5c974b8b5c42157a685413c86f2ff15ee4266f307f0c519d9acc50b6c97bc2",
+        "target" : "5ff0f691c850d727e75813fb484e06f5bad835b005b08caf2a62c0cff7cd5405"
+      }
+    } ]
   },
-  "meshName": "",
-  "timestamp": 1523364075
+  "meshName" : "",
+  "timestamp" : 1523364075
 }

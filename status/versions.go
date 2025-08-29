@@ -13,10 +13,11 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/util/httputil"
 )
 
-func getVersions(ctx context.Context, conf *config.Config, clientFactory kubernetes.ClientFactory, grafana *grafana.Service) []models.ExternalServiceInfo {
+func getVersions(ctx context.Context, conf *config.Config, clientFactory kubernetes.ClientFactory, grafana *grafana.Service, perses *perses.Service) []models.ExternalServiceInfo {
 	components := getKubernetesVersions(clientFactory)
 
 	pv, err := prometheusVersion(conf, clientFactory.GetSAHomeClusterClient())
@@ -35,6 +36,17 @@ func getVersions(ctx context.Context, conf *config.Config, clientFactory kuberne
 		}
 	} else {
 		log.Debugf("Grafana is disabled in Kiali by configuration")
+	}
+
+	if conf.ExternalServices.Perses.Enabled && perses != nil {
+		pev, err := persesVersion(ctx, perses, conf, clientFactory.GetSAHomeClusterClient())
+		if err != nil {
+			log.Infof("Error getting Perses version: %v", err)
+		} else {
+			components = append(components, *pev)
+		}
+	} else {
+		log.Debugf("Perses is disabled in Kiali by configuration")
 	}
 
 	if conf.ExternalServices.Tracing.Enabled {
@@ -157,6 +169,10 @@ type grafanaResponseVersion struct {
 	BuildInfo grafanaBuildInfo `json:"buildInfo"`
 }
 
+type persesResponseVersion struct {
+	Version string `json:"version"`
+}
+
 func grafanaVersion(ctx context.Context, grafana *grafana.Service, conf *config.Config, homeClusterSAClient kubernetes.ClientInterface) (*models.ExternalServiceInfo, error) {
 	product := models.ExternalServiceInfo{}
 	product.Name = "Grafana"
@@ -178,6 +194,29 @@ func grafanaVersion(ctx context.Context, grafana *grafana.Service, conf *config.
 			err = json.Unmarshal(body, &grafanaV)
 			if err == nil {
 				product.Version = grafanaV.BuildInfo.Version
+			}
+		}
+	}
+
+	return &product, nil
+}
+
+func persesVersion(ctx context.Context, perses *perses.Service, conf *config.Config, homeClusterSAClient kubernetes.ClientInterface) (*models.ExternalServiceInfo, error) {
+	product := models.ExternalServiceInfo{}
+	product.Name = "Perses"
+	product.Url = perses.URL(ctx)
+
+	versionUrl := perses.VersionURL(ctx)
+	if versionUrl != "" {
+		body, statusCode, _, err := httputil.HttpGet(versionUrl, perses.GetAuth(ctx), 10*time.Second, nil, nil, conf)
+
+		if err != nil || statusCode > 399 {
+			log.Infof("perses version check failed: url=[%v], code=[%v]", versionUrl, statusCode)
+		} else {
+			persesV := new(persesResponseVersion)
+			err = json.Unmarshal(body, &persesV)
+			if err == nil {
+				product.Version = persesV.Version
 			}
 		}
 	}

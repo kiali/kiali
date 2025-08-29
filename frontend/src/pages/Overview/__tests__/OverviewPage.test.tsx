@@ -2,18 +2,19 @@ import * as React from 'react';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { Provider } from 'react-redux';
 import { shallowToJson } from 'enzyme-to-json';
-import { mount, shallow, ReactWrapper } from 'enzyme';
+import { mount, ReactWrapper, shallow } from 'enzyme';
 import { OverviewPage, OverviewPageComponent } from '../OverviewPage';
 import { FilterSelected } from '../../../components/Filters/StatefulFilters';
 import * as API from '../../../services/Api';
-import { AppHealth, NamespaceAppHealth, HEALTHY, FAILURE, DEGRADED } from '../../../types/Health';
+import { AppHealth, DEGRADED, FAILURE, HEALTHY, NamespaceAppHealth } from '../../../types/Health';
 import { store } from '../../../store/ConfigStore';
 import { MTLSStatuses } from '../../../types/TLSStatus';
-import { FilterType, ActiveFiltersInfo } from 'types/Filters';
+import { ActiveFiltersInfo, FilterType } from 'types/Filters';
 import { healthFilter } from 'components/Filters/CommonFilters';
 import { nameFilter } from '../Filters';
 import { DEFAULT_LABEL_OPERATION } from '../../../types/Filters';
 import { CLUSTER_DEFAULT } from '../../../types/Graph';
+import { ExternalServiceInfo, TempoUrlFormat } from '../../../types/StatusState';
 
 const mockAPIToPromise = (func: keyof typeof API, obj: any, encapsData: boolean): Promise<void> => {
   return new Promise((resolve, reject) => {
@@ -83,6 +84,37 @@ const concat = (f1: ActiveFiltersInfo, f2: ActiveFiltersInfo): ActiveFiltersInfo
   };
 };
 
+const externalServices: ExternalServiceInfo[] = [
+  {
+    name: 'Kubernetes-Kubernetes',
+    version: 'v1.33.0'
+  },
+  {
+    name: 'Prometheus',
+    version: '3.4.2'
+  },
+  {
+    name: 'Grafana',
+    version: '12.0.1',
+    url: 'http://localhost:13000'
+  },
+  {
+    name: 'Perses',
+    version: '0.52.0-beta.5',
+    url: 'http://localhost:4000'
+  },
+  {
+    name: 'jaeger',
+    version: 'v1.70.0',
+    url: 'http://localhost:16686',
+    tempoConfig: {
+      datasourceUID: 'ee347fx2g9ypse',
+      urlFormat: TempoUrlFormat.GRAFANA,
+      orgID: '2'
+    }
+  }
+];
+
 describe('Overview page', () => {
   beforeEach(() => {
     mounted = null;
@@ -109,6 +141,7 @@ describe('Overview page', () => {
   it('renders initial layout', () => {
     const wrapper = shallow(
       <OverviewPageComponent
+        externalServices={externalServices}
         lastRefreshAt={1720526431902}
         meshStatus={MTLSStatuses.NOT_ENABLED}
         navCollapse={false}

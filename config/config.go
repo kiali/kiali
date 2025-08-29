@@ -28,6 +28,8 @@ const (
 	SecretFileGrafanaUsername    = "grafana-username"
 	SecretFileGrafanaPassword    = "grafana-password"
 	SecretFileGrafanaToken       = "grafana-token"
+	SecretFilePersesUsername     = "perses-username"
+	SecretFilePersesPassword     = "perses-password"
 	SecretFilePrometheusUsername = "prometheus-username"
 	SecretFilePrometheusPassword = "prometheus-password"
 	SecretFilePrometheusToken    = "prometheus-token"
@@ -270,18 +272,35 @@ type GrafanaConfig struct {
 	XURL           string                   `yaml:"url,omitempty" json:"URL,omitempty"`                     // DEPRECATED!
 }
 
-type GrafanaDashboardConfig struct {
-	Name      string                 `yaml:"name" json:"name"`
-	Variables GrafanaVariablesConfig `yaml:"variables" json:"variables"`
+// Alias to keep the same name in Grafana but more generic (Used by Perses as well)
+type GrafanaDashboardConfig = DashboardConfig
+type GrafanaVariablesConfig = DashboardVariablesConfig
+
+type DashboardConfig struct {
+	Name      string                   `yaml:"name" json:"name"`
+	Variables DashboardVariablesConfig `yaml:"variables" json:"variables"`
 }
 
-type GrafanaVariablesConfig struct {
+type DashboardVariablesConfig struct {
 	App        string `yaml:"app" json:"app,omitempty"`
 	Datasource string `yaml:"datasource" json:"datasource,omitempty"`
 	Namespace  string `yaml:"namespace" json:"namespace,omitempty"`
 	Service    string `yaml:"service" json:"service,omitempty"`
 	Version    string `yaml:"version" json:"version,omitempty"`
 	Workload   string `yaml:"workload" json:"workload,omitempty"`
+}
+
+// PersesConfig describes configuration used for Perses links
+type PersesConfig struct {
+	Auth           Auth              `yaml:"auth" json:"auth"`
+	Dashboards     []DashboardConfig `yaml:"dashboards" json:"dashboards"`
+	Enabled        bool              `yaml:"enabled" json:"enabled"`          // Enable or disable Perses support in Kiali
+	ExternalURL    string            `yaml:"external_url" json:"externalURL"` // replaces the old url
+	HealthCheckUrl string            `yaml:"health_check_url,omitempty" json:"healthCheckUrl,omitempty"`
+	InternalURL    string            `yaml:"internal_url" json:"internalURL"` // replaces the old in_cluster_url
+	IsCore         bool              `yaml:"is_core,omitempty" json:"isCore,omitempty"`
+	Project        string            `yaml:"project,omitempty" json:"project,omitempty"`
+	URLFormat      string            `yaml:"url_format,omitempty" json:"urlFormat,omitempty"`
 }
 
 type TempoConfig struct {
@@ -368,6 +387,7 @@ type GatewayAPIClass struct {
 type ExternalServices struct {
 	Grafana          GrafanaConfig          `yaml:"grafana,omitempty"`
 	Istio            IstioConfig            `yaml:"istio,omitempty"`
+	Perses           PersesConfig           `yaml:"perses,omitempty"`
 	Prometheus       PrometheusConfig       `yaml:"prometheus,omitempty"`
 	CustomDashboards CustomDashboardsConfig `yaml:"custom_dashboards,omitempty"`
 	Tracing          TracingConfig          `yaml:"tracing,omitempty"`
@@ -797,6 +817,15 @@ func NewConfig() (c *Config) {
 				ValidationReconcileInterval:      util.AsPtr(time.Minute),
 				GatewayAPIClasses:                []GatewayAPIClass{},
 			},
+			Perses: PersesConfig{
+				Auth: Auth{
+					Type: AuthTypeNone,
+				},
+				Enabled:     false,
+				InternalURL: "http://perses.istio-system:4000",
+				IsCore:      false,
+				Project:     "istio",
+			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{
 					Type: AuthTypeNone,
@@ -1082,6 +1111,7 @@ func Set(conf *Config) {
 func (conf Config) Obfuscate() (obf Config) {
 	obf = conf
 	obf.ExternalServices.Grafana.Auth.Obfuscate()
+	obf.ExternalServices.Perses.Auth.Obfuscate()
 	obf.ExternalServices.Prometheus.Auth.Obfuscate()
 	obf.ExternalServices.Tracing.Auth.Obfuscate()
 	obf.ExternalServices.CustomDashboards.Prometheus.Auth.Obfuscate()
@@ -1210,6 +1240,9 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		conf.ExternalServices.Tracing.ExternalURL = conf.ExternalServices.Tracing.XURL
 		log.Info("DEPRECATION NOTICE: 'external_services.tracing.url' has been deprecated - switch to 'external_services.tracing.external_url'")
 	}
+	if conf.ExternalServices.Perses.Enabled && conf.ExternalServices.Perses.Auth.Type != AuthTypeBasic {
+		log.Errorf("Perses authentication not supported %s", conf.ExternalServices.Perses.Auth.Type)
+	}
 
 	// Validate tracing min and max values
 	if conf.KialiFeatureFlags.UIDefaults.Tracing.Limit < 10 || conf.KialiFeatureFlags.UIDefaults.Tracing.Limit > 1000 {
@@ -1236,6 +1269,14 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		{
 			configValue: &conf.ExternalServices.Grafana.Auth.Token,
 			fileName:    SecretFileGrafanaToken,
+		},
+		{
+			configValue: &conf.ExternalServices.Perses.Auth.Username,
+			fileName:    SecretFilePersesUsername,
+		},
+		{
+			configValue: &conf.ExternalServices.Perses.Auth.Password,
+			fileName:    SecretFilePersesPassword,
 		},
 		{
 			configValue: &conf.ExternalServices.Prometheus.Auth.Username,
