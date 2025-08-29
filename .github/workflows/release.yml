@@ -252,16 +252,17 @@ jobs:
         include:
         - os: ubuntu-latest
           binary_name: kiali-linux-amd64
-        # No support for linux arm in GH actions yet.
-        # https://github.com/actions/runner-images?tab=readme-ov-file#available-images
-        # - os: ubuntu-latest
-        #   binary_name: kiali-linux-arm64
-        - os: macos-latest-large
-          binary_name: kiali-darwin-amd64
-        - os: macos-latest
-          binary_name: kiali-darwin-arm64
-        - os: windows-latest
-          binary_name: kiali-windows-amd64.exe
+          # No support for linux arm in GH actions yet.
+          # https://github.com/actions/runner-images?tab=readme-ov-file#available-images
+          # - os: ubuntu-latest
+          #   binary_name: kiali-linux-arm64
+          # TODO: Windows and mac work but they require properly signing the binaries.
+          # - os: macos-latest-large
+          #   binary_name: kiali-darwin-amd64
+          # - os: macos-latest
+          #   binary_name: kiali-darwin-arm64
+          # - os: windows-latest
+          #   binary_name: kiali-windows-amd64.exe
     steps:
     - name: Download cross-platform binaries
       uses: actions/download-artifact@v5

@@ -28,10 +28,11 @@ NC='\033[0m' # No Color
 
 # Platform combinations we want to build for
 # Format: "GOOS:GOARCH:suffix"
-PLATFORMS=(
-    "windows:amd64:windows-amd64.exe"
-    "darwin:amd64:darwin-amd64"
-    "darwin:arm64:darwin-arm64"
+PLATFORMS=( 
+    # TODO: Windows and mac work but they require properly signing the binaries.
+    # "windows:amd64:windows-amd64.exe"
+    # "darwin:amd64:darwin-amd64"
+    # "darwin:arm64:darwin-arm64"
     "linux:amd64:linux-amd64"
     "linux:arm64:linux-arm64"
 )
