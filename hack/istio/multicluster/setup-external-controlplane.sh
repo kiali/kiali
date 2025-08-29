@@ -41,10 +41,10 @@ install_bookinfo() {
 }
 
 if ! kind get clusters -q | grep -q "${EXTERNAL_CLUSTER_NAME}" ; then
-    go run ../../../tools/cmd/installer/main.go --load-balancer-range 255.70-255.84 -n "${EXTERNAL_CLUSTER_NAME}" --enable-image-registry false --image "${KIND_NODE_IMAGE}"
+    go run ${SCRIPT_DIR}/../../../tools/cmd/installer/main.go --load-balancer-range 255.70-255.84 -n "${EXTERNAL_CLUSTER_NAME}" --enable-image-registry false --image "${KIND_NODE_IMAGE}"
 fi
 if ! kind get clusters -q | grep -q "${REMOTE_CLUSTER_NAME}" ; then
-    go run ../../../tools/cmd/installer/main.go --load-balancer-range 255.85-255.98 -n "${REMOTE_CLUSTER_NAME}" --enable-image-registry false --image "${KIND_NODE_IMAGE}"
+    go run ${SCRIPT_DIR}/../../../tools/cmd/installer/main.go --load-balancer-range 255.85-255.98 -n "${REMOTE_CLUSTER_NAME}" --enable-image-registry false --image "${KIND_NODE_IMAGE}"
 fi
 
 # Following: https://github.com/istio-ecosystem/sail-operator/tree/main/docs#external-control-plane
