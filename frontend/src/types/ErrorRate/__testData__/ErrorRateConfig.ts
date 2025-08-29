@@ -160,13 +160,14 @@ export const serverRateConfig = {
       }
     ]
   },
-  ingressGatewayEnabled: false,
+  ingressGatewayInstalled: false,
   installationTag: 'Kiali Console',
   istioAnnotations: {
     ambientAnnotation: 'ambient.istio.io/redirection',
     ambientAnnotationEnabled: 'enabled',
     istioInjectionAnnotation: ''
   },
+  istioAPIInstalled: false,
   istioIdentityDomain: 'svc.cluster.local',
   istioNamespace: 'istio-system',
   istioLabels: {

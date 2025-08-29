@@ -72,12 +72,13 @@ const defaultServerConfig: ComputedServerConfig = {
   },
   ignoreHomeCluster: false,
   installationTag: 'Kiali Console',
-  ingressGatewayEnabled: false,
+  ingressGatewayInstalled: false,
   istioAnnotations: {
     ambientAnnotation: 'ambient.istio.io/redirection',
     ambientAnnotationEnabled: 'enabled',
     istioInjectionAnnotation: 'sidecar.istio.io/inject'
   },
+  istioAPIInstalled: false,
   istioIdentityDomain: 'svc.cluster.local',
   istioLabels: {
     ambientNamespaceLabel: 'istio.io/dataplane-mode',

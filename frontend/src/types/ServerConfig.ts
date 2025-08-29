@@ -152,8 +152,9 @@ export interface ServerConfig {
   gatewayAPIEnabled: boolean;
   healthConfig: HealthConfig;
   ignoreHomeCluster: boolean;
-  ingressGatewayEnabled: boolean;
+  ingressGatewayInstalled: boolean;
   installationTag?: string;
+  istioAPIInstalled: false;
   istioAnnotations: IstioAnnotations;
   istioIdentityDomain: string;
   istioLabels: { [key in IstioLabelKey]: string };
