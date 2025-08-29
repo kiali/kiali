@@ -196,11 +196,48 @@ jobs:
     with:
       build_branch: ${{ github.ref_name }}
 
+  validate_crd_sync:
+    name: Validate CRD synchronization
+    if: ${{ needs.initialize.outputs.release_type != 'skip' }}
+    runs-on: ubuntu-latest
+    needs: [initialize]
+    steps:
+    - name: Checkout current repo
+      uses: actions/checkout@v5
+      with:
+        ref: ${{ github.event.inputs.release_branch || github.ref_name }}
+
+    - name: Checkout kiali-operator repository
+      uses: actions/checkout@v5
+      with:
+        repository: kiali/kiali-operator
+        ref: ${{ github.event.inputs.release_branch || github.ref_name }}
+        path: validation-temp/kiali-operator
+
+    - name: Checkout helm-charts repository
+      uses: actions/checkout@v5
+      with:
+        repository: kiali/helm-charts
+        ref: ${{ github.event.inputs.release_branch || github.ref_name }}
+        path: validation-temp/helm-charts
+
+    - name: Validate CRD synchronization using make targets
+      run: |
+        echo "========== Validating CRD Synchronization for Kiali Server Release =========="
+
+        # Change to kiali-operator directory and run validation
+        # The helm-charts repo is checked out as a sibling directory, so ../helm-charts will work
+        cd validation-temp/kiali-operator
+        echo "Running validate-crd-sync from kiali-operator repository..."
+        make validate-crd-sync
+
+        echo "✓ All CRD validations passed using official make targets"
+
   run_molecule_tests:
     name: Molecule tests
     if: ${{ needs.initialize.outputs.release_type != 'skip' }}
     uses: ./.github/workflows/molecules.yml
-    needs: [initialize]
+    needs: [initialize, validate_crd_sync]
     with:
       all_tests: ""
       olm_version: "skip"
@@ -210,7 +247,7 @@ jobs:
     name: Release
     if: ${{ needs.initialize.outputs.release_type != 'skip' && ((github.event_name == 'schedule' && github.repository == 'kiali/kiali') || github.event_name != 'schedule') }}
     runs-on: ubuntu-latest
-    needs: [initialize, build_frontend, build_backend, run_molecule_tests]
+    needs: [initialize, build_frontend, build_backend, run_molecule_tests, validate_crd_sync]
     env:
       RELEASE_VERSION: ${{ needs.initialize.outputs.release_version }}
       BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
