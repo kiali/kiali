@@ -20,8 +20,8 @@ LABEL maintainer="kiali-dev@googlegroups.com"
 RUN echo kiali:x:1000: >> /etc/group
 RUN echo kiali:x:1000:1000:/home/kiali:/sbin/nologin >> /etc/passwd
 
-ENV KIALI_HOME=/opt/kiali \
-    PATH=$KIALI_HOME:$PATH
+ENV KIALI_HOME=/opt/kiali
+ENV PATH=$KIALI_HOME:$PATH
 
 WORKDIR $KIALI_HOME
 

@@ -1,12 +1,15 @@
 package references
 
 import (
+	"context"
+
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -14,12 +17,41 @@ import (
 type AuthorizationPolicyReferences struct {
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	Conf                  *config.Config
+	Cluster               string
+	Discovery             istio.MeshDiscovery
 	Namespace             string
 	Namespaces            []string
 	ServiceEntries        []*networking_v1.ServiceEntry
 	VirtualServices       []*networking_v1.VirtualService
 	RegistryServices      []*kubernetes.RegistryService
 	WorkloadsPerNamespace map[string]models.Workloads
+}
+
+// NewAuthorizationPolicyReferences creates a new AuthorizationPolicyReferences with all required fields
+func NewAuthorizationPolicyReferences(
+	authorizationPolicies []*security_v1.AuthorizationPolicy,
+	conf *config.Config,
+	cluster string,
+	discovery istio.MeshDiscovery,
+	namespace string,
+	namespaces []string,
+	serviceEntries []*networking_v1.ServiceEntry,
+	virtualServices []*networking_v1.VirtualService,
+	registryServices []*kubernetes.RegistryService,
+	workloadsPerNamespace map[string]models.Workloads,
+) AuthorizationPolicyReferences {
+	return AuthorizationPolicyReferences{
+		AuthorizationPolicies: authorizationPolicies,
+		Conf:                  conf,
+		Cluster:               cluster,
+		Discovery:             discovery,
+		Namespace:             namespace,
+		Namespaces:            namespaces,
+		ServiceEntries:        serviceEntries,
+		VirtualServices:       virtualServices,
+		RegistryServices:      registryServices,
+		WorkloadsPerNamespace: workloadsPerNamespace,
+	}
 }
 
 func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
@@ -98,7 +130,8 @@ func (n AuthorizationPolicyReferences) getWorkloadReferences(ap *security_v1.Aut
 
 		// AuthPolicy searches Workloads from own namespace, or from all namespaces when AuthPolicy is in root namespace
 		for ns, workloads := range n.WorkloadsPerNamespace {
-			if !config.IsRootNamespace(ap.Namespace) && ns != ap.Namespace {
+			rootNamespace := n.Discovery.GetRootNamespace(context.TODO(), n.Cluster, ap.Namespace)
+			if rootNamespace != ap.Namespace && ns != ap.Namespace {
 				continue
 			}
 			for _, wl := range workloads {

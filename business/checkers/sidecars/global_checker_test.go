@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
@@ -15,9 +16,11 @@ func TestSidecarWithoutSelectorOutOfControlPlane(t *testing.T) {
 	assert := assert.New(t)
 	config.Set(config.NewConfig())
 
-	vals, valid := GlobalChecker{
-		Sidecar: data.CreateSidecar("sidecar1", "bookinfo"),
-	}.Check()
+	vals, valid := NewGlobalChecker(
+		config.DefaultClusterID,
+		&istiotest.FakeDiscovery{},
+		data.CreateSidecar("sidecar1", "bookinfo"),
+	).Check()
 
 	assert.Empty(vals)
 	assert.True(valid)
@@ -28,9 +31,11 @@ func TestSidecarWithoutSelectorInControlPlane(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	vals, valid := GlobalChecker{
-		Sidecar: data.CreateSidecar("sidecar1", conf.ExternalServices.Istio.RootNamespace),
-	}.Check()
+	vals, valid := NewGlobalChecker(
+		config.DefaultClusterID,
+		&istiotest.FakeDiscovery{},
+		data.CreateSidecar("sidecar1", config.IstioNamespaceDefault),
+	).Check()
 
 	assert.Empty(vals)
 	assert.True(valid)
@@ -40,11 +45,13 @@ func TestSidecarWithSelectorOutOfControlPlane(t *testing.T) {
 	assert := assert.New(t)
 	config.Set(config.NewConfig())
 
-	vals, valid := GlobalChecker{
-		Sidecar: data.AddSelectorToSidecar(map[string]string{
+	vals, valid := NewGlobalChecker(
+		config.DefaultClusterID,
+		&istiotest.FakeDiscovery{},
+		data.AddSelectorToSidecar(map[string]string{
 			"app": "reviews",
 		}, data.CreateSidecar("sidecar1", "bookinfo")),
-	}.Check()
+	).Check()
 
 	assert.Empty(vals)
 	assert.True(valid)
@@ -55,11 +62,13 @@ func TestSidecarWithSelectorInControlPlane(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	vals, valid := GlobalChecker{
-		Sidecar: data.AddSelectorToSidecar(map[string]string{
+	vals, valid := NewGlobalChecker(
+		config.DefaultClusterID,
+		&istiotest.FakeDiscovery{},
+		data.AddSelectorToSidecar(map[string]string{
 			"app": "reviews",
-		}, data.CreateSidecar("sidecar1", conf.ExternalServices.Istio.RootNamespace)),
-	}.Check()
+		}, data.CreateSidecar("sidecar1", config.IstioNamespaceDefault)),
+	).Check()
 
 	assert.NotEmpty(vals)
 	assert.True(valid)

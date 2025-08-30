@@ -181,9 +181,9 @@ func assertMultimatchFailure(t *testing.T, code string, vals models.IstioValidat
 
 func workloads() map[string]models.Workloads {
 	workloads := models.Workloads{
-		data.CreateWorkload("details-v1", map[string]string{"app": "details", "version": "v1"}),
-		data.CreateWorkload("details-v2", map[string]string{"app": "details", "version": "v2"}),
-		data.CreateWorkload("details-v3", map[string]string{"app": "details", "version": "v3"}),
+		data.CreateWorkload("bookinfo", "details-v1", map[string]string{"app": "details", "version": "v1"}),
+		data.CreateWorkload("bookinfo", "details-v2", map[string]string{"app": "details", "version": "v2"}),
+		data.CreateWorkload("bookinfo", "details-v3", map[string]string{"app": "details", "version": "v3"}),
 	}
 
 	return data.CreateWorkloadsPerNamespace([]string{"bookinfo", "bookinfo2", "bookinfo3", "bookinfo4"}, workloads)
