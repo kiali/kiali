@@ -60,6 +60,92 @@ install_istio() {
   fi
 }
 
+# Shared function to install Istio addons (used by multiple multicluster scripts)
+install_istio_addons() {
+  local client_exe="${1:-kubectl}"
+  local addons="${2:-prometheus grafana jaeger}"
+  
+  echo "Installing Addons: [${addons}]"
+  for addon in ${addons}; do
+    echo "Installing addon: [${addon}]"
+    while ! (cat ${ISTIO_DIR}/samples/addons/${addon}.yaml | ${client_exe} apply -n istio-system -f -)
+    do
+      echo "Failed to install addon [${addon}] - will retry in 10 seconds..."
+      sleep 10
+    done
+  done
+}
+
+# Shared function to setup Istio directory (used by ambient and other scripts)
+setup_istio_environment() {
+  local script_dir="${1}"
+  local output_dir="${OUTPUT_DIR:-${script_dir}/../../../_output}"
+  
+  if [ "${ISTIO_VERSION}" == "" ]; then
+    ALL_ISTIOS=$(ls -dt1 ${output_dir}/istio-*)
+    if [ "$?" != "0" ]; then
+      ${script_dir}/download-istio.sh
+      if [ "$?" != "0" ]; then
+        echo "ERROR: You do not have Istio installed and it cannot be downloaded."
+        exit 1
+      fi
+    fi
+  fi
+  # install the Istio release that was last downloaded (that's the -t option to ls)
+  ISTIO_DIR=$(ls -dt1 ${output_dir}/istio-* | head -n1)
+
+  ISTIOCTL="${ISTIOCTL:-${ISTIO_DIR}/bin/istioctl}"
+  if [ ! -f "${ISTIOCTL}" ]; then
+     echo "ERROR: istioctl cannot be found at: ${ISTIOCTL}"
+     exit 1
+  fi
+}
+
+# Shared function to create crossnetwork gateway
+create_crossnetwork_gateway() {
+  local clustername="${1}"
+  local network="${2}"
+
+  # create the gateway
+  local image_hub_arg="--set hub=gcr.io/istio-release"
+  if [ ! -z "${ISTIO_HUB}" -a "${ISTIO_HUB}" != "default" ]; then
+    image_hub_arg="--set hub=${ISTIO_HUB}"
+  fi
+  if [ ! -z "${ISTIO_TAG}" ]; then
+    local image_tag_arg="--set tag=${ISTIO_TAG}"
+  fi
+
+  local gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --network "${network}")"
+
+  if [ "${AMBIENT}" == "true" ]; then
+    echo "Using Ambient to generate gateway yaml"
+    ${GEN_GATEWAY_SCRIPT} \
+        --network "${network}" \
+        --cluster "${clustername}" \
+        --ambient | \
+        kubectl apply -f -
+  else
+    local profile_flag=""
+    if [ "${IS_OPENSHIFT}" == "true" ] || [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
+      profile_flag="--set profile=openshift"
+    fi
+
+    printf "%s" "${gateway_yaml}" | "${ISTIOCTL}" install ${profile_flag} ${image_hub_arg} ${image_tag_arg:-} -y -f -
+    if [ "$?" != "0" ]; then
+      echo "Failed to install crossnetwork gateway on cluster [${clustername}]"
+      exit 1
+    fi
+    kubectl get svc istio-eastwestgateway -n istio-system
+
+    # expose services
+    ${CLIENT_EXE} apply -n ${ISTIO_NAMESPACE} -f "${EXPOSE_SERVICES_YAML}"
+    if [ "$?" != "0" ]; then
+      echo "Failed to expose services on cluster [${clustername}]"
+      exit 1
+    fi
+  fi
+}
+
 #
 # SET UP THE DEFAULTS FOR ALL SETTINGS
 #
@@ -108,6 +194,10 @@ SINGLE_KIALI="${SINGLE_KIALI:-true}"
 
 # Deploy just in one cluster
 SINGLE_CLUSTER="${SINGLE_CLUSTER:-false}"
+
+# If Ambient should be installed (Alpha, for multi primary)
+# https://istio.io/latest/docs/ambient/install/multicluster/
+AMBIENT="${AMBIENT:-false}"
 
 # Use groups for OpenId authorization (single cluster)
 AUTH_GROUPS="${AUTH_GROUPS:-}"
@@ -202,6 +292,10 @@ KIALI_TRACING_ADDRESS="${KIALI_TRACING_ADDRESS:-}"
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    -a|--ambient)
+      AMBIENT="$2"
+      shift;shift
+      ;;
     -be|--bookinfo-enabled)
       [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--bookinfo-enabled must be 'true' or 'false'" && exit 1
       BOOKINFO_ENABLED="$2"
@@ -439,6 +533,7 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -a|--ambient <bool>: If true, install Ambient profile (alpha) Just for multi-primary (Default: false)
   -be|--bookinfo-enabled <bool>: If true, install the bookinfo demo spread across the two clusters (Default: true)
   -bn|--bookinfo-namespace: If the bookinfo demo will be installed, this is its namespace (Default: bookinfo)
   -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc". If you use
@@ -657,7 +752,8 @@ else
 fi
 
 # Export all variables so child scripts pick them up
-export AUTH_GROUPS \
+export AMBIENT \
+       AUTH_GROUPS \
        BOOKINFO_ENABLED \
        BOOKINFO_NAMESPACE \
        CERTS_DIR \
@@ -709,6 +805,7 @@ export AUTH_GROUPS \
 
 cat <<EOM
 === SETTINGS ===
+AMBIENT=$AMBIENT
 AUTH_GROUPS=$AUTH_GROUPS
 BOOKINFO_ENABLED=$BOOKINFO_ENABLED
 BOOKINFO_NAMESPACE=$BOOKINFO_NAMESPACE
