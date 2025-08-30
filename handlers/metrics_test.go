@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	osproject_v1 "github.com/openshift/api/project/v1"
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -248,7 +247,7 @@ func TestAggregateMetricsWithParams(t *testing.T) {
 }
 
 func TestAggregateMetricsInaccessibleNamespace(t *testing.T) {
-	k := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
+	k := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
 	k.OpenShift = true
 
 	ts, _ := setupAggregateMetricsEndpointWithClient(t, &noPrivClient{k})
@@ -321,7 +320,7 @@ func TestAggregateMetricsBadReporter(t *testing.T) {
 func setupAggregateMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
 	conf := config.NewConfig()
 	xapi := new(prometheustest.PromAPIMock)
-	k := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
+	k := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
 	k.OpenShift = true
 	prom, err := prometheus.NewClient(*config.NewConfig(), k.GetToken())
 	if err != nil {
@@ -972,9 +971,6 @@ func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock,
 		kubetest.FakeNamespace("bookinfo"),
 		kubetest.FakeNamespace("tutorial"),
 		kubetest.FakeNamespace("ns"),
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
 	)
 	k.OpenShift = true
 
