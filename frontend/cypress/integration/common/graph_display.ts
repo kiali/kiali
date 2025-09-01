@@ -512,7 +512,7 @@ Then('{int} edges appear in the graph', (graphEdges: number) => {
 // For some data, when Prometheus is installed in the istio-system namespace, it generates an additional edge.
 // This step expects the provided number including Prometheus; if Prometheus is absent, we accept one fewer edge.
 // Does not happen with cluster monitoring
-Then('{int} edges appear in the graph (including Prometheus)', (graphEdges: number) => {
+Then('{int} edges appear in the graph including Prometheus', (graphEdges: number) => {
   cy.waitForReact();
   cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
     .should('have.length', '1')
