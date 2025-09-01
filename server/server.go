@@ -89,8 +89,13 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 	// The /debug/pprof/profiler by default needs a write timeout larger than 30s. But also, you can pass in &seconds=XY on the pprof URL
 	// and ask for any profile to extend to those number of seconds you specify, which could be larger than 30s.
 	// To limit the damage this may cause with large write timeouts, we only increase the timeout to 1 minute.
-	writeTimeout := conf.Server.WriteTimeout * time.Second
-	if conf.Server.Profiler.Enabled && writeTimeout < 60 {
+	writeTimeout := conf.Server.WriteTimeout
+	// For backward compatibility: if WriteTimeout appears to be in nanoseconds (i.e., a small integer was parsed),
+	// multiply by time.Second to convert to seconds. Duration strings are parsed correctly by YAML unmarshaling.
+	if writeTimeout > 0 && writeTimeout < time.Millisecond {
+		writeTimeout = writeTimeout * time.Second
+	}
+	if conf.Server.Profiler.Enabled && writeTimeout < 60*time.Second {
 		writeTimeout = 1 * time.Minute
 	}
 

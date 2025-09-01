@@ -300,7 +300,6 @@ type PersesConfig struct {
 	InternalURL    string            `yaml:"internal_url" json:"internalURL"` // replaces the old in_cluster_url
 	IsCore         bool              `yaml:"is_core,omitempty" json:"isCore,omitempty"`
 	Project        string            `yaml:"project,omitempty" json:"project,omitempty"`
-	URLFormat      string            `yaml:"url_format,omitempty" json:"urlFormat,omitempty"`
 }
 
 type TempoConfig struct {
@@ -959,7 +958,7 @@ func NewConfig() (c *Config) {
 				MetricsOutbound:   MetricsDefaults{},
 				MetricsPerRefresh: "1m",
 				Namespaces:        make([]string, 0),
-				RefreshInterval:   "60s",
+				RefreshInterval:   "1m",
 				Tracing:           TracingDefaults{Limit: 100},
 			},
 			Validations: Validations{
@@ -1004,7 +1003,7 @@ func NewConfig() (c *Config) {
 					Otel: OtelCollector{
 						CAName:     "",
 						Protocol:   "http",
-						SkipVerify: true,
+						SkipVerify: false,
 						TLSEnabled: false,
 					},
 					// Sample half of traces.

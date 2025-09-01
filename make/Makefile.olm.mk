@@ -210,6 +210,8 @@ catalog-source-delete: .generate-catalog-source .remove-operator-pull-secret
 	@echo '      value: "true"'                       >> ${OUTDIR}/kiali-subscription.yaml
 	@echo "    - name: ALLOW_AD_HOC_OSSMCONSOLE_IMAGE" >> ${OUTDIR}/kiali-subscription.yaml
 	@echo '      value: "true"'                       >> ${OUTDIR}/kiali-subscription.yaml
+	@echo "    - name: ALLOW_SECURITY_CONTEXT_OVERRIDE" >> ${OUTDIR}/kiali-subscription.yaml
+	@echo '      value: "true"'                       >> ${OUTDIR}/kiali-subscription.yaml
 
 ## subscription-create: Creates the OLM Subscription on the remote cluster which installs the operator
 subscription-create: .ensure-oc-login .generate-subscription
