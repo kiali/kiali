@@ -883,7 +883,7 @@ func NewConfig() (c *Config) {
 				MetricsOutbound:   MetricsDefaults{},
 				MetricsPerRefresh: "1m",
 				Namespaces:        make([]string, 0),
-				RefreshInterval:   "60s",
+				RefreshInterval:   "1m",
 			},
 			Validations: Validations{
 				Ignore: make([]string, 0),
@@ -916,7 +916,7 @@ func NewConfig() (c *Config) {
 					Otel: OtelCollector{
 						CAName:     "",
 						Protocol:   "http",
-						SkipVerify: true,
+						SkipVerify: false,
 						TLSEnabled: false,
 					},
 					// Sample half of traces.
