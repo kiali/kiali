@@ -162,7 +162,7 @@ func (in *Instance) UpdateConfig(ctx context.Context, conf *config.Config) error
 
 		// Need to know when the kiali operator has seen the CR change and finished updating
 		// the configmap. There's no ObservedGeneration on the Kiali CR so just checking the configmap itself.
-		timeout := 5 * time.Minute
+		timeout := 10 * time.Minute
 		pollInterval := 10 * time.Second
 
 		return wait.PollUntilContextTimeout(ctx, pollInterval, timeout, true, func(ctx context.Context) (bool, error) {
