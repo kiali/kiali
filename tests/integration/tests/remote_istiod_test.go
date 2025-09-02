@@ -89,6 +89,9 @@ func TestRemoteIstiod(t *testing.T) {
 	conf.ExternalServices.Istio.Registry = &config.RegistryConfig{
 		IstiodURL: "http://istiod-debug.istio-system:9240",
 	}
+	// Since the current operator version doesn't support ExternalServices.Istio.Registry,
+	// we need to modify the ConfigMap directly
+	instance.UseKialiCR = false
 	require.NoError(instance.UpdateConfig(ctx, &conf))
 	require.NoError(instance.Restart(ctx))
 
