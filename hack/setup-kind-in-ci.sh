@@ -12,6 +12,7 @@ PRIMARY_REMOTE="primary-remote"
 KEYCLOAK_LIMIT_MEMORY=""
 KEYCLOAK_REQUESTS_MEMORY=""
 
+INSTALL_PERSES="false"
 
 infomsg() {
   echo "[INFO] ${1}"
@@ -36,6 +37,10 @@ Options:
 -hcd|--helm-charts-dir
     Directory where the Kiali helm charts are located.
     If one is not supplied a /tmp dir will be created and used.
+-ip|--install-perses <true|false>
+    Whether to deploy Perses as part of the setup.
+    Helm charts will be installed.
+    Default: false
 -iv|--istio-version <#.#.#>
     The version of Istio you want to install.
     If you want to run with a dev build of Istio, the value must be something like "#.#-dev".
@@ -75,6 +80,7 @@ while [[ $# -gt 0 ]]; do
     -dorp|--docker-or-podman)     DORP="$2";                  shift;shift; ;;
     -h|--help)                    helpmsg;                    exit 1       ;;
     -hcd|--helm-charts-dir)       HELM_CHARTS_DIR="$2";       shift;shift; ;;
+    -ip|--install-perses)         INSTALL_PERSES="$2";        shift;shift; ;;
     -iv|--istio-version)          ISTIO_VERSION="$2";         shift;shift; ;;
     -klm|--keycloak-limit-memory) KEYCLOAK_LIMIT_MEMORY="$2"; shift;shift; ;;
     -krm|--keycloak-requests-memory) KEYCLOAK_REQUESTS_MEMORY="$2"; shift;shift; ;;
@@ -331,6 +337,16 @@ setup_kind_singlecluster() {
     install_istio
   else
     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae true ${hub_arg:-}
+  fi
+
+  if [ "${INSTALL_PERSES}" == "true" ]; then
+    infomsg "Installing Perses"
+    kubectl apply -f "${SCRIPT_DIR}"/istio/perses/project.yaml
+    kubectl apply -f "${SCRIPT_DIR}"/istio/perses/datasource.yaml
+    kubectl apply -f "${SCRIPT_DIR}"/istio/perses/dashboard.yaml
+
+    ${HELM} repo add perses https://perses.github.io/helm-charts
+    ${HELM} install perses perses/perses -n istio-system -f "${SCRIPT_DIR}"/istio/perses/values.yaml
   fi
 
   if [ "${DEPLOY_KIALI}" != "true" ]; then

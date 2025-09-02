@@ -1,0 +1,6 @@
+sidecar:
+  enabled: true
+logLevel: "debug"
+config:
+  provisioning:
+    interval: 1m
