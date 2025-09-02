@@ -93,9 +93,6 @@ func TestRemoteIstiod(t *testing.T) {
 	// we need to modify the ConfigMap directly
 	instance.UseKialiCR = false
 	require.NoError(instance.UpdateConfig(ctx, &conf))
-	require.NoError(err)
-
-	// Restart Kiali to pick up the new configuration
 	require.NoError(instance.Restart(ctx))
 
 	log.Debugf("Successfully patched kiali to use remote istiod")
