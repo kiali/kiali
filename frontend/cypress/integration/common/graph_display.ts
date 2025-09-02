@@ -475,12 +475,12 @@ Then(
         ).rightclick();
       });
 
-    cy.get('@istioConfigRequest-east').then((resp: any) => {
+    cy.get('@istioConfigRequest-east').then(resp => {
       let totalObjectsEast = 0;
       Object.keys(resp.body.resources).forEach(resourceKey => {
         totalObjectsEast += resp.body.resources[resourceKey].length;
       });
-      cy.get('@istioConfigRequest-west').then((resp: any) => {
+      cy.get('@istioConfigRequest-west').then(resp => {
         let totalObjectsWest = 0;
         Object.keys(resp.body.resources).forEach(resourceKey => {
           totalObjectsEast += resp.body.resources[resourceKey].length;
