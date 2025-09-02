@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -84,12 +85,35 @@ func TestRemoteIstiod(t *testing.T) {
 	require.True(utils.ApplyFile(assetsFolder+"/remote-istiod/istiod-debug-service.yaml", config.IstioNamespaceDefault), "Could not create istiod debug service")
 
 	// Now patch kiali to use that remote endpoint.
-	log.Debug("Patching kiali to use remote istiod")
-	conf := *originalConf
-	conf.ExternalServices.Istio.Registry = &config.RegistryConfig{
-		IstiodURL: "http://istiod-debug.istio-system:9240",
+	// Since the current operator version doesn't support ExternalServices.Istio.Registry,
+	// we need to modify the ConfigMap directly
+	log.Debug("Patching kiali to use remote istiod via ConfigMap")
+
+	// Get the current ConfigMap
+	configMap, err := kubeClient.CoreV1().ConfigMaps(config.IstioNamespaceDefault).Get(ctx, "kiali", metav1.GetOptions{})
+	require.NoError(err)
+
+	// Parse the current config
+	currentConfig := &config.Config{}
+	err = yaml.Unmarshal([]byte(configMap.Data["config.yaml"]), currentConfig)
+	require.NoError(err)
+
+	// Add the registry configuration
+	if currentConfig.ExternalServices.Istio.Registry == nil {
+		currentConfig.ExternalServices.Istio.Registry = &config.RegistryConfig{}
 	}
-	require.NoError(instance.UpdateConfig(ctx, &conf))
+	currentConfig.ExternalServices.Istio.Registry.IstiodURL = "http://istiod-debug.istio-system:9240"
+
+	// Marshal the updated config back to YAML
+	updatedConfigYAML, err := config.Marshal(currentConfig)
+	require.NoError(err)
+
+	// Update the ConfigMap
+	configMap.Data["config.yaml"] = updatedConfigYAML
+	_, err = kubeClient.CoreV1().ConfigMaps(config.IstioNamespaceDefault).Update(ctx, configMap, metav1.UpdateOptions{})
+	require.NoError(err)
+
+	// Restart Kiali to pick up the new configuration
 	require.NoError(instance.Restart(ctx))
 
 	log.Debugf("Successfully patched kiali to use remote istiod")
