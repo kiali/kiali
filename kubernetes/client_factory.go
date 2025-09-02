@@ -456,7 +456,9 @@ func (cf *clientFactory) GetSAHomeClusterClient() ClientInterface {
 }
 
 func (cf *clientFactory) applySettings(restConf *rest.Config) {
-	if !cf.kialiConfig.KialiFeatureFlags.Clustering.EnableExecProvider {
+	// feature flags.clustering is deprecated, but we still need to support it for backwards compatibility
+	// if either are set to true, we enable exec provider
+	if !cf.kialiConfig.Clustering.EnableExecProvider && !cf.kialiConfig.KialiFeatureFlags.Clustering.EnableExecProvider {
 		restConf.ExecProvider = nil
 	}
 

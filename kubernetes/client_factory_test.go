@@ -313,6 +313,113 @@ func TestSAClientCreatedWithExecProvider(t *testing.T) {
 
 	// now enable ExecProvider support
 	conf := config.NewConfig()
+	conf.Clustering.EnableExecProvider = true
+
+	cases = map[string]struct {
+		remoteSecretContents string
+		expected             rest.Config
+	}{
+		"Only bearer token": {
+			remoteSecretContents: remoteClusterYAML,
+			expected: rest.Config{
+				BearerToken:  "token",
+				ExecProvider: nil,
+			},
+		},
+		"Use bearer token and exec credentials": {
+			remoteSecretContents: remoteClusterExecYAML,
+			expected: rest.Config{
+				BearerToken: "token",
+				ExecProvider: &api.ExecConfig{
+					Command: "command",
+					Args:    []string{"arg1", "arg2"},
+				},
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+			const clusterName = "TestRemoteCluster"
+
+			originalSecretsDir := RemoteClusterSecretsDir
+			t.Cleanup(func() {
+				RemoteClusterSecretsDir = originalSecretsDir
+			})
+			RemoteClusterSecretsDir = t.TempDir()
+
+			createTestRemoteClusterSecretFile(t, RemoteClusterSecretsDir, clusterName, tc.remoteSecretContents)
+			cf := NewTestingClientFactory(t, conf)
+
+			saClients := cf.GetSAClients()
+			// Should be home cluster client and one remote client
+			require.Equal(2, len(saClients))
+			require.Contains(saClients, clusterName)
+
+			clientConfig := saClients[clusterName].ClusterInfo().ClientConfig
+			require.Equal(tc.expected.BearerToken, clientConfig.BearerToken)
+			if tc.expected.ExecProvider != nil {
+				// Just check a few fields for sanity
+				require.NotNil(clientConfig.ExecProvider)
+				require.Equal(tc.expected.ExecProvider.Command, clientConfig.ExecProvider.Command)
+				require.Equal(tc.expected.ExecProvider.Args, clientConfig.ExecProvider.Args)
+			}
+		})
+	}
+}
+
+func TestSAClientCreatedWithExecProviderDEPRECATED(t *testing.T) {
+	// by default, ExecProvider support should be disabled
+	cases := map[string]struct {
+		remoteSecretContents string
+		expected             rest.Config
+	}{
+		"Only bearer token": {
+			remoteSecretContents: remoteClusterYAML,
+			expected: rest.Config{
+				BearerToken:  "token",
+				ExecProvider: nil,
+			},
+		},
+		"Use bearer token and exec credentials (which should be ignored)": {
+			remoteSecretContents: remoteClusterExecYAML,
+			expected: rest.Config{
+				BearerToken:  "token",
+				ExecProvider: nil,
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+			const clusterName = "TestRemoteCluster"
+
+			originalSecretsDir := RemoteClusterSecretsDir
+			t.Cleanup(func() {
+				RemoteClusterSecretsDir = originalSecretsDir
+			})
+			RemoteClusterSecretsDir = t.TempDir()
+
+			createTestRemoteClusterSecretFile(t, RemoteClusterSecretsDir, clusterName, tc.remoteSecretContents)
+			cf := NewTestingClientFactory(t, config.NewConfig())
+
+			saClients := cf.GetSAClients()
+			// Should be home cluster client and one remote client
+			require.Equal(2, len(saClients))
+			require.Contains(saClients, clusterName)
+
+			clientConfig := saClients[clusterName].ClusterInfo().ClientConfig
+			require.Equal(tc.expected.BearerToken, clientConfig.BearerToken)
+			require.Nil(clientConfig.ExecProvider)
+		})
+	}
+
+	// now enable ExecProvider support
+	conf := config.NewConfig()
+
+	// THIS IS THE DEPRECATED FIELD - THIS IS WHAT THIS TEST IS FOR
 	conf.KialiFeatureFlags.Clustering.EnableExecProvider = true
 
 	cases = map[string]struct {
