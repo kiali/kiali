@@ -65,7 +65,7 @@ Feature: Kiali Waypoint related features
     Then user "opens" traffic menu
     And user "enables" "ambientZtunnel" traffic option
     And user "closes" traffic menu
-    Then 5 edges appear in the graph
+    Then 5 edges appear in the graph including Prometheus
 
   Scenario: [Traffic Graph] User sees no Ambient traffic
     Given user is at the "graph" page
@@ -84,7 +84,7 @@ Feature: Kiali Waypoint related features
     And user "enables" "ambientTotal" traffic option
     And user "enables" "ambient" traffic option
     And user "closes" traffic menu
-    Then 14 edges appear in the graph
+    Then 14 edges appear in the graph including Prometheus
 
   Scenario: [Traffic Graph] User doesn't see waypoint proxy
     And the "waypoint" node "doesn't" exists

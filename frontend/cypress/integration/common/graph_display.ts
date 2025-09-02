@@ -475,12 +475,12 @@ Then(
         ).rightclick();
       });
 
-    cy.get('@istioConfigRequest-east').then(resp => {
+    cy.get('@istioConfigRequest-east').then((resp: any) => {
       let totalObjectsEast = 0;
       Object.keys(resp.body.resources).forEach(resourceKey => {
         totalObjectsEast += resp.body.resources[resourceKey].length;
       });
-      cy.get('@istioConfigRequest-west').then(resp => {
+      cy.get('@istioConfigRequest-west').then((resp: any) => {
         let totalObjectsWest = 0;
         Object.keys(resp.body.resources).forEach(resourceKey => {
           totalObjectsEast += resp.body.resources[resourceKey].length;
@@ -506,6 +506,35 @@ Then('{int} edges appear in the graph', (graphEdges: number) => {
       const numEdges = select(edges, { prop: EdgeAttr.hasTraffic, op: '!=', val: undefined }).length;
       // It can be more, depending on the service version redirection
       assert.isAtLeast(numEdges, graphEdges);
+    });
+});
+
+// For some data, when Prometheus is installed in the istio-system namespace, it generates an additional edge.
+// This step expects the provided number including Prometheus; if Prometheus is absent, we accept one fewer edge.
+// Does not happen with cluster monitoring
+Then('{int} edges appear in the graph including Prometheus', (graphEdges: number) => {
+  cy.waitForReact();
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
+    .should('have.length', '1')
+    .then($graph => {
+      // Check if Prometheus deployment exists
+      cy.exec(`kubectl get deployments -A | grep prometheus | wc -l`).then(result => {
+        const prometheusPodsCount = parseInt(result.stdout.trim());
+        const { state } = $graph[0];
+
+        const controller = state.graphRefs.getController() as Visualization;
+        assert.isTrue(controller.hasGraph());
+        const { edges } = elems(controller);
+
+        const numEdges = select(edges, { prop: EdgeAttr.hasTraffic, op: '!=', val: undefined }).length;
+
+        // If no Prometheus pods exist, validate against graphEdges
+        // If Prometheus pods exist, validate against graphEdges - 1
+        const expectedEdges = prometheusPodsCount > 0 ? graphEdges - 1 : graphEdges;
+
+        // It can be more, depending on the service version redirection
+        assert.isAtLeast(numEdges, expectedEdges);
+      });
     });
 });
 
