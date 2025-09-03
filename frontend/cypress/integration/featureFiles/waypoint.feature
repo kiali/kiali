@@ -411,7 +411,6 @@ Feature: Kiali Waypoint related features
     Then 4 edges appear in the graph
     Then user "closes" traffic menu
 
-  @selected
   Scenario: [Overview] Add to Ambient in the test-sidecar namespace
     Given user is at administrator perspective
     Given user is at the "overview" page

@@ -339,6 +339,7 @@ setup_kind_singlecluster() {
     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae true ${hub_arg:-}
   fi
 
+  PERSES_ARGS=()
   if [ "${INSTALL_PERSES}" == "true" ]; then
     infomsg "Installing Perses"
     kubectl apply -f "${SCRIPT_DIR}"/istio/perses/project.yaml
@@ -347,6 +348,15 @@ setup_kind_singlecluster() {
 
     ${HELM} repo add perses https://perses.github.io/helm-charts
     ${HELM} install perses perses/perses -n istio-system -f "${SCRIPT_DIR}"/istio/perses/values.yaml
+          PERSES_ARGS=(
+        "--set" "external_services.perses.enabled=true"
+        "--set" "external_services.perses.internal_url=http://perses.istio-system:8080"
+        "--set" "external_services.perses.external_url=http://localhost:4000"
+        "--set" "external_services.perses.dashboards[0].name=Istio Mesh Dashboard"
+        "--set" "external_services.perses.dashboards[0].variables.namespace=var-namespace"
+        "--set" "external_services.perses.dashboards[0].variables.workload=var-workload"
+        "--set" "external_services.perses.dashboards[0].variables.datasource=var-datasource"
+      )
   fi
 
   if [ "${DEPLOY_KIALI}" != "true" ]; then
@@ -378,6 +388,7 @@ setup_kind_singlecluster() {
     --set deployment.service_type="LoadBalancer" \
     --set external_services.grafana.external_url="http://grafana.istio-system:3000" \
     --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard" \
+    "${PERSES_ARGS[@]}" \
     --set external_services.tracing.enabled="true" \
     --set external_services.tracing.external_url="http://tracing.istio-system:16685/jaeger" \
     --set external_services.istio.validation_reconcile_interval="5s" \

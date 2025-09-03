@@ -39,6 +39,11 @@ Feature: Kiali Mesh page
     Then user sees "Grafana" node side panel
 
   @core
+  Scenario: Perses Infra
+    When user selects mesh node with label "Perses"
+    Then user sees "Perses" node side panel
+
+  @core
   Scenario: Tracing Infra
     When user selects tracing mesh node
     Then user sees tracing node side panel
