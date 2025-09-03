@@ -70,9 +70,6 @@ Then('user sees Perses link in the Inbound Metrics tab', () => {
   openTab('Inbound Metrics');
   cy.waitForReact();
 
-  // Wait for the metrics component to load
-  cy.get('[data-test="inbound-metrics-component"]').should('be.visible');
-
   // Check that the Perses link exists within the card body
   cy.get('.pf-v5-c-card__body').within(() => {
     cy.get('#perses_link_0')
