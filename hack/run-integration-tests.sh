@@ -14,6 +14,7 @@ FRONTEND_MULTI_PRIMARY="frontend-multi-primary"
 FRONTEND_EXTERNAL_KIALI="frontend-external-kiali"
 FRONTEND_TEMPO="frontend-tempo"
 LOCAL="local"
+CLUSTER_TYPE="kind"
 HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
 KEYCLOAK_LIMIT_MEMORY=""
@@ -29,6 +30,14 @@ WITH_VIDEO="false"
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    -ct|--cluster-type)
+      CLUSTER_TYPE="${2}"
+      if [ "${CLUSTER_TYPE}" != "kind" -a "${CLUSTER_TYPE}" != "minikube" ]; then
+        echo "--cluster-type option must be one of 'kind' or 'minikube'"
+        exit 1
+      fi
+      shift;shift
+      ;;
     -hcd|--helm-charts-dir)
       HELM_CHARTS_DIR="${2}"
       shift;shift
@@ -92,6 +101,9 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -ct|--cluster-type <kind|minikube>
+    Which cluster type to use for testing. Kind is faster for local testing, minikube provides closer-to-real environment.
+    Default: kind
   -hcd|--helm-charts-dir
     The directory where the Helm charts are located. If not specified, the Helm charts for the target branch will be used.
   -iv|--istio-version <version>
@@ -128,6 +140,8 @@ edit some kernel settings to allow for the kind clusters to be created.
 The following settings added to your sysctl config file should work (the filename will be something like '/etc/sysctl.d/local.conf' - refer to your operating system 'man sysctl' docs to determine which file should be changed):
 fs.inotify.max_user_watches=524288
 fs.inotify.max_user_instances=512
+
+NOTE: Minikube cluster type currently only supports the ${BACKEND_EXTERNAL_CONTROLPLANE} test suite.
 HELPMSG
       exit 1
       ;;
@@ -143,9 +157,18 @@ if [ "${SETUP_ONLY}" == "true" -a "${TESTS_ONLY}" == "true" ]; then
   exit 1
 fi
 
+# Validate minikube support
+if [ "${CLUSTER_TYPE}" == "minikube" ]; then
+  if [ "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
+    echo "ERROR: Minikube cluster type currently only supports the ${BACKEND_EXTERNAL_CONTROLPLANE} test suite. Aborting."
+    exit 1
+  fi
+fi
+
 # print out our settings for debug purposes
 cat <<EOM
 === SETTINGS ===
+CLUSTER_TYPE=$CLUSTER_TYPE
 HELM_CHARTS_DIR=$HELM_CHARTS_DIR
 ISTIO_VERSION=$ISTIO_VERSION
 KEYCLOAK_LIMIT_MEMORY=$KEYCLOAK_LIMIT_MEMORY
@@ -181,7 +204,7 @@ source ${SCRIPT_DIR}/istio/functions.sh
 KIALI_URL=""
 # Generate the kiali url. Will wait for kiali service's ingress to have an ip so this can timeout.
 setKialiURL() {
-  kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
+  kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali --timeout=600s
   local ingress_ip="$(kubectl get svc kiali -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
   KIALI_URL="http://${ingress_ip}/kiali"
 }
@@ -359,9 +382,15 @@ if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
   detectRaceConditions
 elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
-    export CLUSTER1_CONTEXT=kind-controlplane
-    export CLUSTER2_CONTEXT=kind-dataplane
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "external-controlplane" ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    if [ "${CLUSTER_TYPE}" == "kind" ]; then
+      export CLUSTER1_CONTEXT=kind-controlplane
+      export CLUSTER2_CONTEXT=kind-dataplane
+      "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "external-controlplane" ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    elif [ "${CLUSTER_TYPE}" == "minikube" ]; then
+      export CLUSTER1_CONTEXT=controlplane
+      export CLUSTER2_CONTEXT=dataplane
+      "${SCRIPT_DIR}"/setup-minikube-in-ci.sh --multicluster "external-controlplane" ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    fi
 
     ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
 
