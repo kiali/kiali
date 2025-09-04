@@ -13,8 +13,6 @@ type FakeDiscovery struct {
 	ClustersReturn []models.KubeCluster
 	// GetControlPlaneNamespacesReturn is the return value of GetControlPlaneNamespaces().
 	GetControlPlaneNamespacesReturn []string
-	// GetManagingControlPlaneReturn is the return value of GetManagingControlPlane().
-	GetManagingControlPlaneReturn *models.ControlPlane
 	// GetRootNamespaceReturn is the return value of GetRootNamespace().
 	GetRootNamespaceReturn string
 	// IsControlPlaneReturn is the return value of IsControlPlane().
@@ -29,10 +27,6 @@ func (fmd *FakeDiscovery) Clusters() ([]models.KubeCluster, error) {
 
 func (fmd *FakeDiscovery) GetControlPlaneNamespaces(ctx context.Context, cluster string) []string {
 	return fmd.GetControlPlaneNamespacesReturn
-}
-
-func (fmd *FakeDiscovery) GetManagingControlPlane(ctx context.Context, cluster, namespace string) *models.ControlPlane {
-	return fmd.GetManagingControlPlaneReturn
 }
 
 func (fmd *FakeDiscovery) GetRootNamespace(ctx context.Context, cluster, namespace string) string {

@@ -45,6 +45,8 @@ type Mesh struct {
 	ControlPlanes []ControlPlane
 	// External Kiali mesh management cluster
 	ExternalKiali *ExternalKialiInstance
+	// NamespaceMap provides quick lookup from Namespace to ControlPlane key="cluster:namespace"
+	NamespaceMap map[string]*ControlPlane
 }
 
 // Tag maps a controlplane revision to a namespace label.

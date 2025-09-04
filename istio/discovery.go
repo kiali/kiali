@@ -244,7 +244,6 @@ func sidecarInjectorConfigMapName(revision string) string {
 type MeshDiscovery interface {
 	Clusters() ([]models.KubeCluster, error)
 	GetControlPlaneNamespaces(ctx context.Context, cluster string) []string
-	GetManagingControlPlane(ctx context.Context, cluster, namespace string) *models.ControlPlane
 	GetRootNamespace(ctx context.Context, cluster, namespace string) string
 	IsControlPlane(ctx context.Context, cluster, namespace string) bool
 	Mesh(ctx context.Context) (*models.Mesh, error)
@@ -315,32 +314,20 @@ func (in *Discovery) HasControlPlane(ctx context.Context, cluster string, ns str
 	return false
 }
 
-func (in *Discovery) GetManagingControlPlane(ctx context.Context, cluster, namespace string) *models.ControlPlane {
-	mesh, err := in.Mesh(ctx)
-	if err != nil {
-		log.Errorf("Unable to get mesh to determine managing control plane for cluster [%s] namespace [%s]. Err: %s", cluster, namespace, err)
-		return nil
-	}
-
-	for _, controlPlane := range mesh.ControlPlanes {
-		for _, managedNamespace := range controlPlane.ManagedNamespaces {
-			if managedNamespace.Cluster == cluster && managedNamespace.Name == namespace {
-				return &controlPlane
-			}
-		}
-	}
-
-	return nil
-}
-
 // GetRootNamespace returns the Istio root namespace for the control plane managing the given namespace
 func (in *Discovery) GetRootNamespace(ctx context.Context, cluster, namespace string) string {
-	cp := in.GetManagingControlPlane(ctx, cluster, namespace)
+	mesh, err := in.Mesh(ctx)
+	if err != nil {
+		log.Errorf("GetRootNamespace: Unable to get mesh to determine control plane for cluster [%s] namespace [%s]. Err: %s", cluster, namespace, err)
+		return config.IstioNamespaceDefault
+	}
+
+	cp := mesh.NamespaceMap[Key(cluster, namespace)]
 	if cp != nil {
 		return cp.RootNamespace
 	}
 
-	log.Warningf("Failed to determine RootNamespace for cluster [%s] namespace [%s]. Returning [%s]", cluster, namespace, config.IstioNamespaceDefault)
+	log.Warningf("GetRootNamespace: failed to determine RootNamespace for cluster [%s] namespace [%s]. Returning [%s]", cluster, namespace, config.IstioNamespaceDefault)
 	return config.IstioNamespaceDefault
 }
 
@@ -790,9 +777,23 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		}
 	}
 
+	// add set the NamespaceMap
+	mesh.NamespaceMap = map[string]*models.ControlPlane{}
+	for _, cp := range controlPlanes {
+		for _, mn := range cp.ManagedNamespaces {
+			key := Key(mn.Cluster, mn.Name)
+			mesh.NamespaceMap[key] = cp
+		}
+	}
+
 	in.kialiCache.SetMesh(mesh)
 
 	return mesh, nil
+}
+
+// key returns "cluster:namespace"
+func Key(cluster, namespace string) string {
+	return cluster + ":" + namespace
 }
 
 func newControlPlane(istiod appsv1.Deployment, cluster *models.KubeCluster) models.ControlPlane {
