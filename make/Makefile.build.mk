@@ -59,14 +59,14 @@ build-linux-multi-arch: go-check
 	@for arch in ${TARGET_ARCHS}; do \
 		echo "Building for architecture [$${arch}]"; \
 		${GO_BUILD_ENVVARS} GOOS=linux GOARCH=$${arch} ${GO} build \
-			-o ${GOPATH}/bin/kiali-$${arch} -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH} -X main.goVersion=${GO_ACTUAL_VERSION}" ${GO_BUILD_FLAGS}; \
+			-o ${GOPATH}/bin/kiali-$${arch} -ldflags "-X github.com/kiali/kiali/cmd.version=${VERSION} -X github.com/kiali/kiali/cmd.commitHash=${COMMIT_HASH} -X github.com/kiali/kiali/cmd.goVersion=${GO_ACTUAL_VERSION}" ${GO_BUILD_FLAGS}; \
 	done
 
 ## install: Install missing dependencies. Runs `go install` internally
 install: go-check
 	@echo Installing...
 	${GO_BUILD_ENVVARS} ${GO} install \
-		-ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH} -X main.goVersion=${GO_ACTUAL_VERSION}"
+		-ldflags "-X github.com/kiali/kiali/cmd.version=${VERSION} -X github.com/kiali/kiali/cmd.commitHash=${COMMIT_HASH} -X github.com/kiali/kiali/cmd.goVersion=${GO_ACTUAL_VERSION}"
 
 ## format: Format all the files excluding vendor. Runs `gofmt` and `goimports` internally
 format:
@@ -80,7 +80,7 @@ format:
 build-system-test: go-check
 	@echo Building executable for system tests with code coverage enabled
 	${GO} test -c -covermode=count -coverpkg $(shell ${GO} list ./... | grep -v test |  awk -vORS=, "{ print $$1 }" | sed "s/,$$//") \
-	  -o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH} -X main.goVersion=${GO_ACTUAL_VERSION}"
+	  -o ${GOPATH}/bin/kiali -ldflags "-X github.com/kiali/kiali/cmd.version=${VERSION} -X github.com/kiali/kiali/cmd.commitHash=${COMMIT_HASH} -X github.com/kiali/kiali/cmd.goVersion=${GO_ACTUAL_VERSION}"
 
 ## test: Run tests, excluding third party tests under vendor and frontend. Runs `go test` internally
 test: .ensure-envtest-bin-dir-exists
