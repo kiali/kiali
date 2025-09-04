@@ -27,6 +27,8 @@ type Subnet struct {
 
 // Config holds all configuration options for the kind cluster installer
 type Config struct {
+	registryName        string
+	registryPort        string
 	DockerOrPodman      string
 	EnableKeycloak      bool
 	EnableImageRegistry bool
@@ -66,7 +68,17 @@ func NewCluster(config *Config, logger *zerolog.Logger) (*Cluster, error) {
 
 // NewConfig creates a new configuration with default values
 func NewConfig() *Config {
+	registryName := os.Getenv("KIND_IMAGE_REGISTRY_NAME")
+	if registryName == "" {
+		registryName = "kind-registry"
+	}
+	registryPort := os.Getenv("KIND_IMAGE_REGISTRY_PORT")
+	if registryPort == "" {
+		registryPort = "5000"
+	}
 	return &Config{
+		registryName:        registryName,
+		registryPort:        registryPort,
 		DockerOrPodman:      docker,
 		EnableKeycloak:      false,
 		EnableImageRegistry: false,
@@ -190,6 +202,8 @@ func (c *Cluster) Create() error {
 		if err := c.startImageRegistryDaemon(); err != nil {
 			return fmt.Errorf("failed to start image registry daemon: %w", err)
 		}
+	} else {
+		c.killImageRegistryDaemon()
 	}
 
 	createOpts := []cluster.CreateOption{
@@ -215,15 +229,7 @@ func (c *Cluster) Create() error {
 
 	c.log.Info().Msgf("Kind cluster '%s' created successfully with MetalLB load balancer", c.config.Name)
 	if c.config.EnableImageRegistry {
-		registryName := os.Getenv("KIND_IMAGE_REGISTRY_NAME")
-		if registryName == "" {
-			registryName = "kind-registry"
-		}
-		registryPort := os.Getenv("KIND_IMAGE_REGISTRY_PORT")
-		if registryPort == "" {
-			registryPort = "5000"
-		}
-		c.log.Info().Msgf("The Kind cluster's image registry is named [%s] and is accessible at [localhost:%s]", registryName, registryPort)
+		c.log.Info().Msgf("The Kind cluster's image registry is named [%s] and is accessible at [localhost:%s]", c.config.registryName, c.config.registryPort)
 	}
 
 	return nil
@@ -477,31 +483,41 @@ spec:
 	return nil
 }
 
-// startImageRegistryDaemon starts the image registry daemon container
-func (c *Cluster) startImageRegistryDaemon() error {
-	registryName := os.Getenv("KIND_IMAGE_REGISTRY_NAME")
-	if registryName == "" {
-		registryName = "kind-registry"
-	}
-	registryPort := os.Getenv("KIND_IMAGE_REGISTRY_PORT")
-	if registryPort == "" {
-		registryPort = "5000"
+// killImageRegistryDaemon kills the image registry daemon container
+func (c *Cluster) killImageRegistryDaemon() {
+	// err is set if the container is not running
+	// so assume that if output is returned then the container is running
+	output, _ := exec.Command(c.config.DockerOrPodman, "inspect", "-f", "{{.State.Running}}", c.config.registryName).Output()
+	if strings.TrimSpace(string(output)) != "true" {
+		c.log.Info().Msg("An image registry daemon is not running")
+		return
 	}
 
+	c.log.Info().Msg("Removing existing stopped registry container")
+
+	if output, err := exec.Command(c.config.DockerOrPodman, "kill", c.config.registryName).CombinedOutput(); err != nil {
+		c.log.Info().Msgf("failed to kill image registry daemon: %s: %s", err, output)
+	}
+
+	if output, err := exec.Command(c.config.DockerOrPodman, "rm", c.config.registryName).CombinedOutput(); err != nil {
+		c.log.Info().Msgf("failed to remove image registry daemon: %s: %s", err, output)
+	}
+}
+
+// startImageRegistryDaemon starts the image registry daemon container
+func (c *Cluster) startImageRegistryDaemon() error {
 	c.log.Info().Msg("Starting image registry daemon")
 
 	// err is set if the container is not running
 	// so assume that if output is returned then the container is running
-	output, _ := exec.Command(c.config.DockerOrPodman, "inspect", "-f", "{{.State.Running}}", registryName).Output()
+	output, _ := exec.Command(c.config.DockerOrPodman, "inspect", "-f", "{{.State.Running}}", c.config.registryName).Output()
 	if strings.TrimSpace(string(output)) == "true" {
 		c.log.Info().Msg("An image registry daemon appears to already be running; this existing daemon will be used.")
 		return nil
 	}
 
 	// Kill and remove existing registry if it exists but not running
-	c.log.Info().Msg("Removing existing stopped registry container")
-	_ = exec.Command(c.config.DockerOrPodman, "kill", registryName).Run()
-	_ = exec.Command(c.config.DockerOrPodman, "rm", registryName).Run()
+	c.killImageRegistryDaemon()
 
 	disableIPv6 := "1"
 	if c.config.IPFamily == "dual" {
@@ -513,8 +529,8 @@ func (c *Cluster) startImageRegistryDaemon() error {
 		"--sysctl=net.ipv6.conf.all.disable_ipv6=" + disableIPv6,
 		"-d",
 		"--restart=always",
-		"-p", "127.0.0.1:" + registryPort + ":5000",
-		"--name", registryName,
+		"-p", "127.0.0.1:" + c.config.registryPort + ":5000",
+		"--name", c.config.registryName,
 		"--network", "bridge",
 		"registry:2",
 	}
@@ -526,23 +542,14 @@ func (c *Cluster) startImageRegistryDaemon() error {
 
 	c.log.Info().Msg("An image registry daemon has started.")
 	c.log.Info().Msgf("To kill this image registry daemon, run: %s kill %s && %s rm %s",
-		c.config.DockerOrPodman, registryName, c.config.DockerOrPodman, registryName)
+		c.config.DockerOrPodman, c.config.registryName, c.config.DockerOrPodman, c.config.registryName)
 
 	return nil
 }
 
 // finishImageRegistryConfig completes the image registry setup
 func (c *Cluster) finishImageRegistryConfig() error {
-	registryName := os.Getenv("KIND_IMAGE_REGISTRY_NAME")
-	if registryName == "" {
-		registryName = "kind-registry"
-	}
-	registryPort := os.Getenv("KIND_IMAGE_REGISTRY_PORT")
-	if registryPort == "" {
-		registryPort = "5000"
-	}
-
-	regDir := fmt.Sprintf("/etc/containerd/certs.d/localhost:%s", registryPort)
+	regDir := fmt.Sprintf("/etc/containerd/certs.d/localhost:%s", c.config.registryPort)
 
 	cmd := exec.Command("kind", "get", "nodes", "--name", c.config.Name)
 	output, err := cmd.Output()
@@ -557,7 +564,7 @@ func (c *Cluster) finishImageRegistryConfig() error {
 			return fmt.Errorf("failed to create registry dir in node %s: %w", node, err)
 		}
 
-		hostsConfig := fmt.Sprintf(`[host."http://%s:5000"]`, registryName)
+		hostsConfig := fmt.Sprintf(`[host."http://%s:5000"]`, c.config.registryName)
 		cmd = exec.Command(c.config.DockerOrPodman, "exec", "-i", node, "cp", "/dev/stdin", regDir+"/hosts.toml")
 		cmd.Stdin = strings.NewReader(hostsConfig)
 		if err := cmd.Run(); err != nil {
@@ -565,14 +572,14 @@ func (c *Cluster) finishImageRegistryConfig() error {
 		}
 	}
 
-	cmd = exec.Command(c.config.DockerOrPodman, "inspect", "-f", "{{json .NetworkSettings.Networks.kind}}", registryName)
+	cmd = exec.Command(c.config.DockerOrPodman, "inspect", "-f", "{{json .NetworkSettings.Networks.kind}}", c.config.registryName)
 	output, err = cmd.Output()
 	if err != nil {
 		return fmt.Errorf("failed to inspect registry container: %w", err)
 	}
 
 	if strings.TrimSpace(string(output)) == "null" {
-		cmd = exec.Command(c.config.DockerOrPodman, "network", "connect", "kind", registryName)
+		cmd = exec.Command(c.config.DockerOrPodman, "network", "connect", "kind", c.config.registryName)
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("failed to connect registry to kind network: %w", err)
 		}
@@ -586,7 +593,7 @@ metadata:
 data:
   localRegistryHosting.v1: |
     host: "localhost:%s"
-    help: "https://kind.sigs.k8s.io/docs/user/local-registry/"`, registryPort)
+    help: "https://kind.sigs.k8s.io/docs/user/local-registry/"`, c.config.registryPort)
 
 	cmd = exec.Command("kubectl", "apply", "-f", "-")
 	cmd.Stdin = strings.NewReader(configMapManifest)
