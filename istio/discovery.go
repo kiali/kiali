@@ -254,6 +254,8 @@ type Discovery struct {
 	conf           *config.Config
 	kialiCache     cache.KialiCache
 	kialiSAClients map[string]kubernetes.ClientInterface
+	// namespaceMap provides quick lookup from Namespace to ControlPlane key="cluster:namespace", set during Mesh dsiscovery
+	namespaceMap map[string]*models.ControlPlane
 }
 
 // NewDiscovery initializes a new Discovery.
@@ -316,13 +318,7 @@ func (in *Discovery) HasControlPlane(ctx context.Context, cluster string, ns str
 
 // GetRootNamespace returns the Istio root namespace for the control plane managing the given namespace
 func (in *Discovery) GetRootNamespace(ctx context.Context, cluster, namespace string) string {
-	mesh, err := in.Mesh(ctx)
-	if err != nil {
-		log.Errorf("GetRootNamespace: Unable to get mesh to determine control plane for cluster [%s] namespace [%s]. Err: %s", cluster, namespace, err)
-		return config.IstioNamespaceDefault
-	}
-
-	cp := mesh.NamespaceMap[Key(cluster, namespace)]
+	cp := in.namespaceMap[in.namespaceMapKey(cluster, namespace)]
 	if cp != nil {
 		return cp.RootNamespace
 	}
@@ -777,12 +773,12 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		}
 	}
 
-	// add set the NamespaceMap
-	mesh.NamespaceMap = map[string]*models.ControlPlane{}
+	// set the NamespaceMap, any previous map will get gc'd
+	in.namespaceMap = map[string]*models.ControlPlane{}
 	for _, cp := range controlPlanes {
 		for _, mn := range cp.ManagedNamespaces {
-			key := Key(mn.Cluster, mn.Name)
-			mesh.NamespaceMap[key] = cp
+			key := in.namespaceMapKey(mn.Cluster, mn.Name)
+			in.namespaceMap[key] = cp
 		}
 	}
 
@@ -792,7 +788,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 }
 
 // key returns "cluster:namespace"
-func Key(cluster, namespace string) string {
+func (in *Discovery) namespaceMapKey(cluster, namespace string) string {
 	return cluster + ":" + namespace
 }
 

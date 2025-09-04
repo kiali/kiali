@@ -23,8 +23,9 @@ func TestMeshShowsExternalControlPlane(t *testing.T) {
 	})
 
 	require.Len(istiodNodes, 2)
-	require.Equal("controlplane", istiodNodes[0].Data.Cluster)
-	require.Equal("controlplane", istiodNodes[1].Data.Cluster)
+	require.True(istiodNodes[0].Data.Cluster != istiodNodes[1].Data.Cluster, "istiod clusters both set to [%s]", istiodNodes[0].Data.Cluster)
+	require.True((istiodNodes[0].Data.Cluster == "controlplane" || istiodNodes[0].Data.Cluster == "dataplane"), "istiod cluster [%s]", istiodNodes[0].Data.Cluster)
+	require.True((istiodNodes[1].Data.Cluster == "controlplane" || istiodNodes[1].Data.Cluster == "dataplane"), "istiod cluster [%s]", istiodNodes[1].Data.Cluster)
 
 	// TODO: When this is a mesh page test, need to ensure that there's two controlplanes
 	// the "external" controlplane is managing the dataplane on the "remote" cluster.
