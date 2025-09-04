@@ -490,12 +490,9 @@ func (c *Cluster) startImageRegistryDaemon() error {
 
 	c.log.Info().Msg("Starting image registry daemon")
 
-	checkCmd := exec.Command(c.config.DockerOrPodman, "inspect", "-f", "{{.State.Running}}", registryName)
-	output, err := checkCmd.Output()
-	if err != nil {
-		return fmt.Errorf("failed to check if image registry daemon is running: %w", err)
-	}
-
+	// err is set if the container is not running
+	// so assume that if output is returned then the container is running
+	output, _ := exec.Command(c.config.DockerOrPodman, "inspect", "-f", "{{.State.Running}}", registryName).Output()
 	if strings.TrimSpace(string(output)) == "true" {
 		c.log.Info().Msg("An image registry daemon appears to already be running; this existing daemon will be used.")
 		return nil
