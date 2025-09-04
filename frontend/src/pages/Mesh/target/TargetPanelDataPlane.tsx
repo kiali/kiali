@@ -101,6 +101,7 @@ export const TargetPanelDataPlane: React.FC<TargetPanelDataPlaneProps> = props =
                           istioAPIEnabled={props.istioAPIEnabled}
                           isExpanded={isExpanded(ns)}
                           kiosk={props.kiosk}
+                          meshData={props.meshData}
                           refreshInterval={props.refreshInterval}
                           targetCluster={ns.cluster!}
                           targetNamespace={ns.name}

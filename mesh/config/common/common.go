@@ -58,7 +58,7 @@ type Elements struct {
 
 type Config struct {
 	Elements  Elements `json:"elements"`
-	MeshName  string   `json:"meshName"`
+	MeshNames []string `json:"meshNames"`
 	Timestamp int64    `json:"timestamp"`
 }
 
@@ -118,7 +118,7 @@ func NewConfig(meshMap mesh.MeshMap, o mesh.ConfigOptions) (result Config) {
 	elements := Elements{nodes, edges}
 	result = Config{
 		Elements:  elements,
-		MeshName:  o.MeshName,
+		MeshNames: o.MeshNames,
 		Timestamp: o.QueryTime,
 	}
 	return result
