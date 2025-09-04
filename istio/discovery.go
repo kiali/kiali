@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -256,6 +257,8 @@ type Discovery struct {
 	kialiSAClients map[string]kubernetes.ClientInterface
 	// namespaceMap provides quick lookup from Namespace to ControlPlane key="cluster:namespace", set during Mesh dsiscovery
 	namespaceMap map[string]*models.ControlPlane
+	// meshMutex protects concurrent access to the Mesh function to prevent race conditions
+	meshMutex sync.Mutex
 }
 
 // NewDiscovery initializes a new Discovery.
@@ -418,6 +421,7 @@ type clusterRevisionKey struct {
 // Mesh gathers information about the mesh and controlplanes running in the mesh
 // from various sources e.g. istio configmap, istiod deployment envvars, etc.
 // Do not edit the mesh object returned from here directly. It is shared across threads.
+// This function is protected by a mutex to prevent concurrent execution and race conditions.
 func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "Mesh",
@@ -425,6 +429,12 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	)
 	defer end()
 
+	// Protect against concurrent access to prevent race conditions
+	in.meshMutex.Lock()
+	defer in.meshMutex.Unlock()
+
+	// Check cache after acquiring the lock in case another goroutine
+	// already populated it while we were waiting for the lock
 	if mesh, ok := in.kialiCache.GetMesh(); ok {
 		return mesh, nil
 	}
