@@ -50,7 +50,6 @@ if ! minikube profile list -o json | jq -r '.valid[].Name' | grep -q "^${EXTERNA
     "${SCRIPT_DIR}"/../../k8s-minikube.sh \
         --minikube-profile "${EXTERNAL_CLUSTER_NAME}" \
         --load-balancer-addrs '70-84' \
-        --metrics-server-enabled "true" \
         start
 fi
 
@@ -59,7 +58,6 @@ if ! minikube profile list -o json | jq -r '.valid[].Name' | grep -q "^${REMOTE_
     "${SCRIPT_DIR}"/../../k8s-minikube.sh \
         --minikube-profile "${REMOTE_CLUSTER_NAME}" \
         --load-balancer-addrs '85-98' \
-        --metrics-server-enabled "true" \
         start
 fi
 
@@ -78,7 +76,7 @@ spec:
 EOF
 
 switch_cluster "${CTX_EXTERNAL_CLUSTER}"
-install_istio --patch-file "${EXTERNAL_ISTIO_YAML}" -cn "${EXTERNAL_CLUSTER_NAME}" -mid "mesh1" -net "network1" -a "prometheus"
+install_istio --patch-file "${EXTERNAL_ISTIO_YAML}" -cn "${EXTERNAL_CLUSTER_NAME}" -mid "mesh1" -net "network1" -a "prometheus" --set '.spec.values.pilot.autoscaleEnabled=false'
 kubectl wait --context "${CTX_EXTERNAL_CLUSTER}" --for=condition=Ready istios/default --timeout=3m
 
 helm upgrade --install --kube-context "${CTX_EXTERNAL_CLUSTER}" --wait -n istio-system istio-ingressgateway gateway --repo https://istio-release.storage.googleapis.com/charts -f - <<EOF
@@ -152,6 +150,7 @@ spec:
       defaultConfig:
         discoveryAddress: $EXTERNAL_ISTIOD_ADDR:15012
     pilot:
+      autoscaleEnabled: false
       enabled: true
       volumes:
         - name: config-volume
