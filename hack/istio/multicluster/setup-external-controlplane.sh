@@ -56,9 +56,8 @@ spec:
   values:
     global:
       network: network1
-      meshID: mesh1
       multiCluster:
-        clusterName: Kubernetes
+        clusterName: "${EXTERNAL_CLUSTER_NAME}"
 EOF
 
 switch_cluster "${CTX_EXTERNAL_CLUSTER}"
@@ -153,7 +152,7 @@ spec:
         VALIDATION_WEBHOOK_CONFIG_NAME: "istio-validator-external-istiod-external-istiod"
         EXTERNAL_ISTIOD: "true"
         LOCAL_CLUSTER_SECRET_WATCHER: "true"
-        CLUSTER_ID: ${EXTERNAL_CLUSTER_NAME}
+        CLUSTER_ID: ${REMOTE_CLUSTER_NAME}
         SHARED_MESH_CONFIG: istio
     global:
       caAddress: $EXTERNAL_ISTIOD_ADDR:15012
@@ -162,7 +161,7 @@ spec:
       configValidation: false
       meshID: mesh1
       multiCluster:
-        clusterName: ${EXTERNAL_CLUSTER_NAME}
+        clusterName: ${REMOTE_CLUSTER_NAME}
       network: network1
 EOF
 
