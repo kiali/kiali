@@ -17,43 +17,29 @@ Then(`user see Kiali brand`, () => {
 });
 
 Then(`user see valid version information`, () => {
-  // Find the Kiali version field (server version)
-  cy.contains('dt', 'Kiali')
-    .next('dd')
+  // Test Kiali server version using data-test attribute
+  cy.get('[data-test="kiali-version"]')
     .should('be.visible')
     .should('not.contain', 'undefined')
     .should('not.be.empty')
-    .invoke('text')
-    .should('match', /^.+$/) // Should contain some text
-    .and('have.length.greaterThan', 0); // Should not be empty string
-
-  // Find the Kiali Container version field
-  cy.contains('dt', 'Kiali Container')
-    .next('dd')
-    .should('be.visible')
-    .should('not.contain', 'undefined')
-    .should('not.be.empty')
-    .invoke('text')
-    .should('match', /^.+$/) // Should contain some text
-    .and('have.length.greaterThan', 0); // Should not be empty string
-
-  // Additional validation: ensure versions contain meaningful content
-  // (not just whitespace or other placeholder text)
-  cy.contains('dt', 'Kiali')
-    .next('dd')
     .invoke('text')
     .then(text => {
       expect(text.trim()).to.not.equal('');
       expect(text.trim()).to.not.equal('unknown');
       expect(text.trim()).to.not.equal('null');
+      expect(text.trim()).to.have.length.greaterThan(0);
     });
 
-  cy.contains('dt', 'Kiali Container')
-    .next('dd')
+  // Test Kiali container version using data-test attribute
+  cy.get('[data-test="kiali-container-version"]')
+    .should('be.visible')
+    .should('not.contain', 'undefined')
+    .should('not.be.empty')
     .invoke('text')
     .then(text => {
       expect(text.trim()).to.not.equal('');
       expect(text.trim()).to.not.equal('unknown');
       expect(text.trim()).to.not.equal('null');
+      expect(text.trim()).to.have.length.greaterThan(0);
     });
 });

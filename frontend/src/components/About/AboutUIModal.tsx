@@ -135,13 +135,13 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
           <TextListItem key="kiali-name" component="dt">
             Kiali
           </TextListItem>
-          <TextListItem key="kiali-version" component="dd">
+          <TextListItem key="kiali-version" component="dd" data-test="kiali-version">
             {coreVersion!}
           </TextListItem>
           <TextListItem key="kiali-container-name" component="dt">
             Kiali Container
           </TextListItem>
-          <TextListItem key="kiali-container-version" component="dd">
+          <TextListItem key="kiali-container-version" component="dd" data-test="kiali-container-version">
             {containerVersion!}
           </TextListItem>
         </TextList>
