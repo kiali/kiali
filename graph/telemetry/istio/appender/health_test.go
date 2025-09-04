@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -475,7 +474,6 @@ func TestErrorCausesPanic(t *testing.T) {
 
 	trafficMap := buildAppTrafficMap()
 	objects := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
 		kubetest.FakeNamespace("testNamespace"),
 	}
 	for _, obj := range buildFakeWorkloadDeploymentsHealth(rateDefinition) {
@@ -525,7 +523,6 @@ func TestMultiClusterHealthConfig(t *testing.T) {
 	westNode, _ := graph.NewNode("west", "testNamespace", "", "testNamespace", graph.Unknown, "myTest", graph.Unknown, graph.GraphTypeVersionedApp)
 	trafficMap[westNode.ID] = westNode
 	objects := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
 		kubetest.FakeNamespace("testNamespace"),
 	}
 	westClient := kubetest.NewFakeK8sClient(objects...)
@@ -603,7 +600,6 @@ func buildFakePodsHealth(rate string) []core_v1.Pod {
 
 func setupHealthConfig(t *testing.T, services []core_v1.Service, deployments []apps_v1.Deployment, pods []core_v1.Pod) *business.Layer {
 	objects := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
 		kubetest.FakeNamespace("testNamespace"),
 	}
 	for _, obj := range services {

@@ -7,7 +7,6 @@ import (
 	"slices"
 	"testing"
 
-	v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	core_v1 "k8s.io/api/core/v1"
@@ -80,9 +79,9 @@ func setupAmbientProjectWithNs() kubernetes.UserClientInterface {
 	}
 	// config needs to be set by other services since those rely on the global.
 	objects := []runtime.Object{
-		&v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo", Labels: labels}},
-		&v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "alpha"}},
-		&v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "beta"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo", Labels: labels}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "alpha"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "beta"}},
 	}
 	for _, obj := range fakeNamespaces() {
 		o := obj
@@ -381,14 +380,13 @@ func TestMixedClustersNoError(t *testing.T) {
 
 	openshift := kubetest.NewFakeK8sClient(
 		kubetest.FakeNamespace("alpha"),
-		&v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "alpha"}},
 	)
 	openshift.OpenShift = true
 	vanilla := kubetest.NewFakeK8sClient(
 		kubetest.FakeNamespace("beta"),
 	)
-	vanilla.ProjectFake.PrependReactor("get", "projects", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
-		return true, nil, errors.NewForbidden(v1.Resource("projects"), "beta", fmt.Errorf("forbidden"))
+	vanilla.ProjectFake.PrependReactor("get", "namespaces", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, errors.NewForbidden(core_v1.Resource("namespaces"), "beta", fmt.Errorf("forbidden"))
 	})
 
 	clients := map[string]kubernetes.UserClientInterface{

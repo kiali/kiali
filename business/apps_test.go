@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	core_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -36,7 +36,6 @@ func TestGetAppListFromDeployments(t *testing.T) {
 	// Auxiliar fake* tests defined in workload_test.go
 	objects := []runtime.Object{
 		kubetest.FakeNamespace("Namespace"),
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeDeployments(*conf) {
 		o := obj
@@ -71,7 +70,6 @@ func TestGetAppListFromWorkloadGroups(t *testing.T) {
 	// Auxiliar fake* tests defined in workload_test.go
 	kubeObjs := []runtime.Object{
 		kubetest.FakeNamespace("Namespace"),
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range data.CreateWorkloadGroups(*conf) {
 		o := obj
@@ -119,7 +117,7 @@ func TestGetAppFromDeployments(t *testing.T) {
 
 	// Setup mocks
 	objects := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeDeployments(*conf) {
 		o := obj
@@ -159,7 +157,7 @@ func TestGetAppFromDeploymentsNoAppVerLabelNames(t *testing.T) {
 
 	// Setup mocks
 	objects := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeDeployments(*conf) {
 		o := obj
@@ -201,7 +199,7 @@ func TestGetAppFromWorkloadGroups(t *testing.T) {
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range data.CreateWorkloadGroups(*conf) {
 		o := obj
@@ -243,7 +241,7 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 	// Setup mocks
 	// Auxiliar fake* tests defined in workload_test.go
 	objects := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeReplicaSets(*conf) {
 		o := obj
@@ -276,7 +274,7 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 
 	// Setup mocks
 	objects := []runtime.Object{
-		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeReplicaSets(*conf) {
 		o := obj

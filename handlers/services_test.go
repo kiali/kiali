@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	osproject_v1 "github.com/openshift/api/project/v1"
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/cache"
@@ -309,7 +309,7 @@ func TestServiceMetricsBadRateFunc(t *testing.T) {
 }
 
 func TestServiceMetricsInaccessibleNamespace(t *testing.T) {
-	k := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
+	k := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
 	k.OpenShift = true
 	ts, _ := setupServiceMetricsEndpointWithClient(t, &noPrivClient{UserClientInterface: k})
 
@@ -325,7 +325,7 @@ func TestServiceMetricsInaccessibleNamespace(t *testing.T) {
 
 func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
 	conf := config.NewConfig()
-	k := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+	k := kubetest.NewFakeK8sClient(
 		kubetest.FakeNamespace("my_namespace"),
 		kubetest.FakeNamespace("ns"))
 	k.OpenShift = true

@@ -3,7 +3,6 @@ package models
 import (
 	"time"
 
-	osproject_v1 "github.com/openshift/api/project/v1"
 	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
@@ -94,29 +93,6 @@ func CastNamespace(ns core_v1.Namespace, cluster string) Namespace {
 	}
 
 	if label, hasLabel := ns.Labels[istioLabels.AmbientNamespaceLabel]; hasLabel && label == istioLabels.AmbientNamespaceLabelValue {
-		namespace.IsAmbient = true
-	}
-	return namespace
-}
-
-func CastProjectCollection(ps []osproject_v1.Project, cluster string) []Namespace {
-	namespaces := make([]Namespace, len(ps))
-	for i, project := range ps {
-		namespaces[i] = CastProject(project, cluster)
-	}
-
-	return namespaces
-}
-
-func CastProject(p osproject_v1.Project, cluster string) Namespace {
-	istioLabels := config.Get().IstioLabels
-	namespace := Namespace{}
-	namespace.Name = p.Name
-	namespace.Cluster = cluster
-	namespace.CreationTimestamp = p.CreationTimestamp.Time
-	namespace.Labels = p.Labels
-	namespace.Annotations = p.Annotations
-	if p.Labels[istioLabels.AmbientNamespaceLabel] == istioLabels.AmbientNamespaceLabelValue {
 		namespace.IsAmbient = true
 	}
 	return namespace
