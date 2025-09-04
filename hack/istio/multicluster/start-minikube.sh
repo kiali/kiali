@@ -105,35 +105,190 @@ start_minikube "${CLUSTER1_NAME}" "70-84" "--extra-config=apiserver.oidc-issuer-
 # Wait for ingress to become ready before deploying keycloak since keycloak relies on it.
 ${CLIENT_EXE} rollout status deployment/ingress-nginx-controller -n ingress-nginx
 
-# Note the specific image for keycloak. There are issues with 22+ that are not yet resolved.
-# See: https://github.com/kiali/kiali/issues/6455.
-helm upgrade --install --wait --timeout 15m \
-  --namespace keycloak --create-namespace \
-  --repo https://charts.bitnami.com/bitnami keycloak keycloak \
-  --reuse-values --values - <<EOF
-auth:
-  createAdminUser: true
-  adminUser: admin
-  adminPassword: admin
-  managementUser: manager
-  managementPassword: manager
-image:
-  tag: 21.1.2-debian-11-r4
-proxyAddressForwarding: true
-ingress:
-  enabled: true
-  hostname: ${KEYCLOAK_HOSTNAME}
+# Deploy Keycloak 26.3.2 using plain Kubernetes manifests
+kubectl create namespace keycloak --dry-run=client -o yaml | kubectl apply -f -
+
+# Deploy PostgreSQL database first
+echo "Deploying PostgreSQL database..."
+kubectl apply -n keycloak -f - <<EOF
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-db
+  namespace: keycloak
+spec:
+  serviceName: postgres-db-service
+  selector:
+    matchLabels:
+      app: postgres-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: postgres-db
+    spec:
+      containers:
+        - name: postgres-db
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: keycloak
+            - name: POSTGRES_PASSWORD
+              value: password
+            - name: POSTGRES_DB
+              value: keycloak
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-db
+  namespace: keycloak
+spec:
+  selector:
+    app: postgres-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP
+EOF
+
+# Wait for PostgreSQL to be ready
+echo "Waiting for PostgreSQL to be ready..."
+kubectl wait --for=condition=Ready pod -l app=postgres-db -n keycloak --timeout=300s
+
+# Deploy Keycloak using official image version 26.3.2
+echo "Deploying Keycloak 26.3.2..."
+kubectl apply -n keycloak -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:26.3.2
+          args: ["start"]
+          env:
+            - name: KEYCLOAK_ADMIN
+              value: admin
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: admin
+            - name: KC_DB
+              value: postgres
+            - name: KC_DB_URL
+              value: jdbc:postgresql://postgres-db:5432/keycloak
+            - name: KC_DB_USERNAME
+              value: keycloak
+            - name: KC_DB_PASSWORD
+              value: password
+            - name: KC_HOSTNAME
+              value: ${KEYCLOAK_HOSTNAME}
+            - name: KC_PROXY
+              value: edge
+            - name: KC_HTTP_ENABLED
+              value: "true"
+            - name: KC_HTTPS_CERTIFICATE_FILE
+              value: /opt/keycloak/conf/tls.crt
+            - name: KC_HTTPS_CERTIFICATE_KEY_FILE
+              value: /opt/keycloak/conf/tls.key
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: https
+              containerPort: 8443
+          volumeMounts:
+            - name: keycloak-tls-certs
+              mountPath: /opt/keycloak/conf
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /realms/master
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /realms/master
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 30
+      volumes:
+        - name: keycloak-tls-certs
+          secret:
+            secretName: keycloak.kind.cluster-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+  namespace: keycloak
+spec:
+  selector:
+    app: keycloak
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+    - name: https
+      port: 8443
+      targetPort: 8443
+  type: LoadBalancer
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: keycloak-ingress
+  namespace: keycloak
   annotations:
     kubernetes.io/ingress.class: nginx
-  tls: true
-  extraTls:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+spec:
+  tls:
   - hosts:
     - ${KEYCLOAK_HOSTNAME}
     secretName: keycloak.kind.cluster-tls
-postgresql:
-  enabled: true
-  postgresqlPassword: password
+  rules:
+  - host: ${KEYCLOAK_HOSTNAME}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: keycloak
+            port:
+              number: 8080
 EOF
+
+# Wait for Keycloak to be ready
+echo "Waiting for Keycloak 26.3.2 to be ready..."
+kubectl wait --for=condition=Available deployment/keycloak -n keycloak --timeout=600s
 
 # create secret used by keycloak ingress
 ${CLIENT_EXE} create secret tls -n keycloak keycloak.kind.cluster-tls \
@@ -164,7 +319,7 @@ CLUSTER2_IP=$(minikube ip -p "${CLUSTER2_NAME}")
 ${CLIENT_EXE} wait ingress/keycloak -n keycloak --context "${CLUSTER1_CONTEXT}" --for=jsonpath='{.status.loadBalancer.ingress[*].ip}'="${CLUSTER1_IP}"
 
 # Get a token from keycloak to use the admin api
-TOKEN_KEY=$(curl -k -X POST https://"${KEYCLOAK_HOSTNAME}"/realms/master/protocol/openid-connect/token \
+TOKEN_KEY=$(curl -k -X POST https://"${KEYCLOAK_HOSTNAME}":8443/realms/master/protocol/openid-connect/token \
             -d grant_type=password \
             -d client_id=admin-cli \
             -d username=admin \
@@ -173,10 +328,10 @@ TOKEN_KEY=$(curl -k -X POST https://"${KEYCLOAK_HOSTNAME}"/realms/master/protoco
             -d response_type=id_token | jq -r '.access_token')
 
 # Replace the redirect URI with the minikube ip. Create the realm.
-jq ".clients[] |= if .clientId == \"kube\" then .redirectUris = [\"https://${CLUSTER1_IP}/kiali/*\", \"https://${CLUSTER2_IP}/kiali/*\"] else . end" < "${SCRIPT_DIR}"/realm-export-template.json | curl -k -L https://"${KEYCLOAK_HOSTNAME}"/admin/realms -H "Authorization: Bearer $TOKEN_KEY" -H "Content-Type: application/json" -X POST -d @-
+jq ".clients[] |= if .clientId == \"kube\" then .redirectUris = [\"https://${CLUSTER1_IP}/kiali/*\", \"https://${CLUSTER2_IP}/kiali/*\"] else . end" < "${SCRIPT_DIR}"/realm-export-template.json | curl -k -L https://"${KEYCLOAK_HOSTNAME}":8443/admin/realms -H "Authorization: Bearer $TOKEN_KEY" -H "Content-Type: application/json" -X POST -d @-
 
 # Create the kiali user
-curl -k -L https://"${KEYCLOAK_HOSTNAME}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
+curl -k -L https://"${KEYCLOAK_HOSTNAME}":8443/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
 
 # Restart with kubernetes
 minikube stop -p "${CLUSTER2_NAME}"
