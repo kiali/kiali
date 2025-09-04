@@ -28,7 +28,7 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
     <div id="target-panel-mesh" className={classes(panelStyle, targetPanelStyle)}>
       <div id="target-panel-mesh-heading" className={panelHeadingStyle}>
         <div className={targetPanelTitle}>
-          {t('Mesh: {{name}}', { name: controller.getGraph().getData().meshData.name })}
+          {t('Mesh: {{names}}', { names: controller.getGraph().getData().meshData.names })}
           <br />
         </div>
       </div>
