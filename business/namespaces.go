@@ -21,7 +21,6 @@ import (
 type NamespaceService struct {
 	conf                  *config.Config
 	discovery             istio.MeshDiscovery
-	hasProjects           map[string]bool
 	homeClusterUserClient kubernetes.UserClientInterface
 	kialiCache            cache.KialiCache
 	kialiSAClients        map[string]kubernetes.ClientInterface
@@ -49,15 +48,10 @@ func NewNamespaceService(
 	userClients map[string]kubernetes.UserClientInterface,
 ) NamespaceService {
 	homeClusterName := conf.KubernetesConfig.ClusterName
-	hasProjects := make(map[string]bool)
-	for cluster, client := range kialiSAClients {
-		hasProjects[cluster] = client.IsOpenShift()
-	}
 
 	return NamespaceService{
 		conf:                  conf,
 		discovery:             discovery,
-		hasProjects:           hasProjects,
 		homeClusterUserClient: userClients[homeClusterName],
 		kialiCache:            cache,
 		kialiSAClients:        kialiSAClients,
