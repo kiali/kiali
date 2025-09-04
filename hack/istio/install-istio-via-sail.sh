@@ -36,8 +36,11 @@ for req in "${requirements[@]}"; do
 done
 
 ADDONS="prometheus grafana jaeger"
+CLUSTER_NAME=""
 CONFIG_PROFILE=""
 CUSTOM_INSTALL_SETTINGS=""
+MESH_ID=""
+NETWORK=""
 PATCH_FILE=""
 WAIT=true
 
@@ -49,8 +52,20 @@ while [[ $# -gt 0 ]]; do
       ADDONS="$2"
       shift;shift
       ;;
+    -cn|--cluster-name)
+      CLUSTER_NAME="$2"
+      shift;shift
+      ;;
     -cp|--config-profile)
       CONFIG_PROFILE="$2"
+      shift;shift
+      ;;
+    -mid|--mesh-id)
+      MESH_ID="$2"
+      shift;shift
+      ;;
+    -net|--network)
+      NETWORK="$2"
       shift;shift
       ;;
     -pf|--patch-file)
@@ -77,8 +92,17 @@ Valid command line arguments:
        Make sure this value is space-separated. Valid addon names can be found in your Istio
        distribution directory samples/addons and tempo. tempo and jaeger are not allowed at once.
        Default: prometheus grafana jaeger
+  -cn|--cluster-name <cluster name>:
+       Installs Istio as part of multi-cluster with the given cluster name.
+       Default: cluster-default
   -cp|--config-profile <name>:
        istio config profile. Just default and ambient are valid values.
+  -mid|--mesh-id <mesh ID>:
+       Installs Istio as part of mesh with the given name.
+       Default: mesh-default
+  -net|--network <network>:
+       Installs Istio as part of network with the given name.
+       Default: network-default
   -pf|--patch-file <name=value>:
        filepath to a yaml file of an Istio resource that will overlay the default Istio resource.
        --patch-file /path/to/patch-file.yaml
@@ -181,8 +205,8 @@ spec:
           port: 4317
           service: ${SERVICE}
     global:
-      meshID: mesh-default
-      network: network-default
+      meshID: ${MESH_ID:-mesh-default}
+      network: ${NETWORK:-network-default}
       proxy:
         resources:
           requests:
@@ -206,11 +230,11 @@ if [ "${CONFIG_PROFILE}" == "ambient" ]; then
     .spec.profile = "ambient" |
     .spec.values.pilot.trustedZtunnelNamespace = "ztunnel"
   ' -)
-else
-  ISTIO_YAML=$(echo "$ISTIO_YAML" | yq eval '
-    .spec.values.global.multiCluster.clusterName = "cluster-default"
-  ' -)
 fi
+
+# Set cluster name for multiCluster configurations (both ambient and non-ambient)
+CLUSTER_NAME_VALUE="${CLUSTER_NAME:-cluster-default}"
+ISTIO_YAML=$(echo "$ISTIO_YAML" | yq eval ".spec.values.global.multiCluster.clusterName = \"${CLUSTER_NAME_VALUE}\"" -)
 
 if [ -n "${PATCH_FILE}" ]; then
   base_yaml=$(mktemp)
