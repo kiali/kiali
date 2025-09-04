@@ -105,9 +105,13 @@ When('user sees mesh side panel', () => {
       // Get the name of the mesh from the API.
       cy.request({ url: 'api/mesh/graph' }).then(resp => {
         expect(resp.status).to.eq(200);
-        expect(resp.body.meshName).to.not.equal(undefined);
-        expect(resp.body.meshName).to.not.equal('');
-        cy.contains(`Mesh: ${resp.body.meshName}`);
+        expect(resp.body.meshNames).to.not.equal(null);
+        expect(resp.body.meshNames.length).to.be.greaterThan(0);
+        expect(resp.body.meshNames).to.not.include('');
+        // Check that each mesh name is displayed in the UI
+        resp.body.meshNames.forEach((meshName: string) => {
+          cy.contains(`Mesh: ${meshName}`);
+        });
       });
     });
 });
@@ -202,10 +206,12 @@ Then('user sees expected mesh infra', () => {
 
       const { nodes, edges } = elems(controller);
       const nodeNames = nodes.map(n => n.getLabel().toLowerCase());
-      const minNodesLength = nodeNames.some(n => n === 'external deployments') ? 9 : 8;
+      const isMultiControlplane = nodeNames.some(n => n === 'istiod-default-v1-26-0');
+      const minNodesLength = nodeNames.some(n => n === 'external deployments') ? (isMultiControlplane ? 13 : 9) : 8;
+      const minEdgesLength = isMultiControlplane ? 7 : 5;
 
       assert.isAtLeast(nodes.length, minNodesLength, 'Unexpected number of infra nodes');
-      assert.isAtLeast(edges.length, 5, 'Unexpected number of infra edges');
+      assert.isAtLeast(edges.length, minEdgesLength, 'Unexpected number of infra edges');
       assert.isTrue(nodeNames.some(n => n === 'data plane'));
       assert.isTrue(nodeNames.some(n => n === 'grafana'));
       assert.isTrue(nodeNames.some(n => n.startsWith('istiod')));

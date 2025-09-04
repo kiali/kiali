@@ -258,7 +258,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
             )}
           </CardBody>
         </Card>
-        {renderInfraSummary(controller, nsInfo.cluster, nsInfo.name)}
+        {renderInfraSummary(controller, this.props.meshData, nsInfo.cluster, nsInfo.name)}
       </div>
     );
   }

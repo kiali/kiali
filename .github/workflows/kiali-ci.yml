@@ -163,3 +163,11 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_multi_mesh:
+    name: Run frontend multi mesh integration tests
+    uses: ./.github/workflows/integration-tests-frontend-multi-mesh.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
