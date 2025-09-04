@@ -269,6 +269,10 @@ Then('Istio config should not be available for the {string} {string}', (cluster:
   cy.get(`[data-test="CardItem_${ns}_${cluster}"]`).contains('Istio config').siblings().contains('N/A');
 });
 
+Then('Istio config should be available for the {string} {string}', (cluster: string, ns: string) => {
+  cy.get(`[data-test="CardItem_${ns}_${cluster}"]`).contains('Istio config').siblings().should('not.contain', 'N/A');
+});
+
 Then(
   'health should be different for {string} and {string} {string}',
   (cluster1: string, cluster2: string, ns: string) => {
