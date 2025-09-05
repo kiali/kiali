@@ -41,6 +41,8 @@ import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelSty
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { renderWaypointLabel } from '../../components/Ambient/WaypointLabel';
 import { Node } from '@patternfly/react-topology';
+import { KialiPageLink } from 'components/Link/KialiPageLink';
+import { ExternalServiceInfo } from 'types/StatusState';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -51,6 +53,7 @@ const defaultState: SummaryPanelNodeState = {
 };
 
 type ReduxProps = {
+  externalServices: ExternalServiceInfo[];
   kiosk: string;
   rankResult: RankResult;
   showRank: boolean;
@@ -192,6 +195,9 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       <></>
     );
 
+    const netObs = this.props.externalServices?.find(s => s.name && s.url && s.name.toLowerCase().includes('observ'));
+    const netObsUrl = netObs?.url;
+
     return (
       <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
         <div className={panelHeadingStyle}>
@@ -227,6 +233,20 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
               )}
 
               {secondBadge}
+              <div className={nodeInfoStyle}>
+                <KialiPageLink
+                  href={`/graph/namespaces?namespaces=${encodeURIComponent(nodeData.namespace)}`}
+                  cluster={nodeData.cluster}
+                >
+                  {nodeData.namespace}
+                </KialiPageLink>
+                <PFBadge badge={PFBadges.NetworkTraffic} size="sm" />
+                {netObsUrl && (
+                  <a href={netObsUrl} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '0.25rem' }}>
+                    Network Observability <KialiIcon.ExternalLink />
+                  </a>
+                )}
+              </div>
               {!nodeData.isWaypoint && (
                 <div className={nodeInfoStyle}>
                   {renderBadgedLink(nodeData)}
@@ -574,6 +594,7 @@ export const SummaryPanelNode: React.FC<SummaryPanelNodeProps> = (props: Summary
   const rankResult = useKialiSelector(state => state.graph.rankResult);
   const showRank = useKialiSelector(state => state.graph.toolbarState.showRank);
   const updateTime = useKialiSelector(state => state.graph.updateTime);
+  const externalServices = useKialiSelector(state => state.statusState.externalServices);
 
   const [isKebabOpen, setIsKebabOpen] = React.useState<boolean>(false);
 
@@ -600,6 +621,7 @@ export const SummaryPanelNode: React.FC<SummaryPanelNodeProps> = (props: Summary
       serviceDetails={isServiceDetailsLoading ? undefined : serviceDetails}
       gateways={gateways}
       peerAuthentications={peerAuthentications}
+      externalServices={externalServices}
       onKebabToggled={handleKebabToggled}
       {...props}
     />
