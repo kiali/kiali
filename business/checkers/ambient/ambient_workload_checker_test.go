@@ -25,8 +25,7 @@ func TestValidAmbientWorkloads(t *testing.T) {
 	var valid bool
 
 	// Test workload with no ambient issues
-	workload := data.CreateWorkload("valid-ambient-workload", map[string]string{})
-	workload.Namespace = ns1
+	workload := data.CreateWorkload(ns1, "valid-ambient-workload", map[string]string{})
 	workload.IsAmbient = true
 	workload.IstioSidecar = false
 
@@ -61,8 +60,7 @@ func TestWorkloadBothSidecarAndAmbientLabels(t *testing.T) {
 	}
 
 	// Test workload with both sidecar and ambient annotation
-	workload := data.CreateWorkload("mixed-workload", labels)
-	workload.Namespace = ns1
+	workload := data.CreateWorkload(ns1, "mixed-workload", labels)
 
 	vals, valid := NewAmbientWorkloadChecker(
 		conf.KubernetesConfig.ClusterName,
@@ -89,8 +87,7 @@ func TestWorkloadWaypointAndNotAmbient(t *testing.T) {
 	}
 
 	// Test workload with waypoint annotation and isAmbient
-	workload := data.CreateWorkload("mixed-workload", labels)
-	workload.Namespace = ns1
+	workload := data.CreateWorkload(ns1, "mixed-workload", labels)
 	workload.IsAmbient = false
 	workload.Pods = models.Pods{data.CreatePod("w-pod", labels, false, true, false)}
 
@@ -119,8 +116,7 @@ func TestWorkloadReferencesNonExistentWaypoint(t *testing.T) {
 	}
 
 	// Test workload with waypoint annotation and empty Waypoints
-	workload := data.CreateWorkload("mixed-workload", labels)
-	workload.Namespace = ns1
+	workload := data.CreateWorkload(ns1, "mixed-workload", labels)
 	workload.IsAmbient = true
 	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
 	workload.Pods = models.Pods{data.CreatePod("w-pod", labels, true, false, false)}
@@ -152,8 +148,7 @@ func TestWorkloadPodWithSidecarLabelAndAmbientRedirection(t *testing.T) {
 	}
 
 	// Test workload with sidecar labels and ambient pod
-	workload := data.CreateWorkload("mixed-workload", labels)
-	workload.Namespace = ns1
+	workload := data.CreateWorkload(ns1, "mixed-workload", labels)
 	workload.Pods = models.Pods{data.CreatePod("ambient-pod", labels, true, false, false)}
 
 	vals, valid := NewAmbientWorkloadChecker(
@@ -181,8 +176,7 @@ func TestWorkloadPodWithSidecarInjectAndAmbientLabel(t *testing.T) {
 	}
 
 	// Test workload with ambient labels and ambient pod
-	workload := data.CreateWorkload("mixed-workload", labels)
-	workload.Namespace = ns1
+	workload := data.CreateWorkload(ns1, "mixed-workload", labels)
 	workload.Pods = models.Pods{data.CreatePod("ambient-pod", labels, false, true, false)}
 
 	vals, valid := NewAmbientWorkloadChecker(
@@ -208,8 +202,7 @@ func TestWorkloadSidecarInAmbientNamespace(t *testing.T) {
 	labels := map[string]string{}
 
 	// Test workload with sidecar and ambient namespace
-	workload := data.CreateWorkload("mixed-workload", labels)
-	workload.Namespace = ns1
+	workload := data.CreateWorkload(ns1, "mixed-workload", labels)
 	workload.IstioSidecar = true
 	workload.Pods = models.Pods{data.CreatePod("ambient-pod", labels, false, true, false)}
 
@@ -236,8 +229,7 @@ func TestWorkloadHasAuthPolicyAndNoWaypoint(t *testing.T) {
 	labels := map[string]string{}
 
 	// Test workload with sidecar and ambient namespace
-	workload := data.CreateWorkload("mixed-workload", labels)
-	workload.Namespace = ns1
+	workload := data.CreateWorkload(ns1, "mixed-workload", labels)
 	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
 
 	vals, valid := NewAmbientWorkloadChecker(
