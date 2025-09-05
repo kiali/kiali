@@ -263,10 +263,9 @@ func TestWorkloadZeroReplicasInAmbientNamespace(t *testing.T) {
 	labels := map[string]string{}
 
 	// Test workload with 0 replicas (no pods) in ambient namespace
-	// This should NOT trigger KIA1316 error because there are no pods to check for sidecars
+	// This should NOT trigger KIA1316 error because there are no pods to check for sidecars or Ambient
 	workload := data.CreateWorkload("zero-replica-workload", labels)
 	workload.Namespace = ns1
-	workload.IstioSidecar = false // This should be false when there are no pods
 	workload.Pods = models.Pods{} // No pods = 0 replicas
 
 	vals, valid := NewAmbientWorkloadChecker(
