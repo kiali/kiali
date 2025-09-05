@@ -34,7 +34,7 @@ Feature: Kiali Workload Details page
   Scenario: See workload Outbound Metrics
     Then user sees workload outbound metrics information
 
-  @core
+  @perses
   Scenario: See workload Perses link
     Then user sees Perses link in the Inbound Metrics tab
 
