@@ -59,6 +59,11 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
     style: { backgroundColor: PFColors.Purple500 }
   } as PFBadgeType,
   Namespace: { badge: 'NS', tt: 'Namespace', style: { backgroundColor: PFColors.Green600 } } as PFBadgeType,
+  NetworkTraffic: {
+    badge: 'NT',
+    tt: 'Network Traffic',
+    style: { backgroundColor: PFColors.LightGreen500 }
+  } as PFBadgeType,
   Operation: { badge: 'O', tt: 'Operation' } as PFBadgeType,
   PeerAuthentication: { badge: 'PA', tt: 'Peer Authentication' } as PFBadgeType,
   Perses: { badge: 'PE', tt: 'Perses' } as PFBadgeType,
