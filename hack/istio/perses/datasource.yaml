@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: perses-provisioning-dsh
+  namespace: istio-system
+  labels:
+    perses.dev/resource: "true"
+data:
+  datasources.yaml: |
+    apiVersion: perses.dev/v1alpha1
+    kind: Datasource
+    metadata:
+      name: prometheus
+      project: istio
+    spec:
+      default: true
+      plugin:
+        kind: PrometheusDatasource
+        spec:
+          proxy:
+            kind: HTTPProxy
+            spec:
+              url: 'http://prometheus.istio-system:9090'

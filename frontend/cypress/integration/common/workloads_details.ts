@@ -66,6 +66,24 @@ Then('user sees workload outbound metrics information', () => {
     });
 });
 
+Then('user sees Perses link in the Inbound Metrics tab', () => {
+  openTab('Inbound Metrics');
+  cy.waitForReact();
+
+  // Check that the Perses link exists within the card body
+  cy.get('.pf-v5-c-card__body').within(() => {
+    cy.get('#perses_link_0')
+      .should('be.visible')
+      .and('have.attr', 'title', 'Istio Mesh Dashboard')
+      .and('have.attr', 'target', '_blank')
+      .and('have.attr', 'rel', 'noopener noreferrer')
+      .and('contain', 'View in Perses');
+
+    // Validate the href contains istio-mesh-dashboard
+    cy.get('#perses_link_0').should('have.attr', 'href').and('include', 'istio-mesh-dashboard');
+  });
+});
+
 When('user can filter spans by workload {string}', (workload: string) => {
   cy.get('button#filter_select_type-toggle').click();
   cy.get('button#Workload').click();
