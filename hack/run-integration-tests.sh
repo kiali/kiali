@@ -14,6 +14,7 @@ FRONTEND_MULTI_PRIMARY="frontend-multi-primary"
 FRONTEND_EXTERNAL_KIALI="frontend-external-kiali"
 FRONTEND_TEMPO="frontend-tempo"
 LOCAL="local"
+CLUSTER_TYPE="kind"
 HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
 KEYCLOAK_LIMIT_MEMORY=""
@@ -29,6 +30,14 @@ WITH_VIDEO="false"
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    -ct|--cluster-type)
+      CLUSTER_TYPE="${2}"
+      if [ "${CLUSTER_TYPE}" != "kind" -a "${CLUSTER_TYPE}" != "minikube" ]; then
+        echo "--cluster-type option must be one of 'kind' or 'minikube'"
+        exit 1
+      fi
+      shift;shift
+      ;;
     -hcd|--helm-charts-dir)
       HELM_CHARTS_DIR="${2}"
       shift;shift
@@ -92,6 +101,9 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -ct|--cluster-type <kind|minikube>
+    Which cluster type to use for testing. 
+    Default: kind
   -hcd|--helm-charts-dir
     The directory where the Helm charts are located. If not specified, the Helm charts for the target branch will be used.
   -iv|--istio-version <version>
@@ -146,6 +158,7 @@ fi
 # print out our settings for debug purposes
 cat <<EOM
 === SETTINGS ===
+CLUSTER_TYPE=$CLUSTER_TYPE
 HELM_CHARTS_DIR=$HELM_CHARTS_DIR
 ISTIO_VERSION=$ISTIO_VERSION
 KEYCLOAK_LIMIT_MEMORY=$KEYCLOAK_LIMIT_MEMORY
@@ -359,11 +372,17 @@ if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
   detectRaceConditions
 elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
-    export CLUSTER1_CONTEXT=kind-controlplane
-    export CLUSTER2_CONTEXT=kind-dataplane
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "external-controlplane" ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    if [ "${CLUSTER_TYPE}" == "kind" ]; then
+      export CLUSTER1_CONTEXT=kind-controlplane
+      export CLUSTER2_CONTEXT=kind-dataplane
+      "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "external-controlplane" ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    elif [ "${CLUSTER_TYPE}" == "minikube" ]; then
+      export CLUSTER1_CONTEXT=controlplane
+      export CLUSTER2_CONTEXT=dataplane
+      "${SCRIPT_DIR}"/setup-minikube-in-ci.sh --multicluster "external-controlplane" ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    fi
 
-    ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+    ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' --context="${CLUSTER1_CONTEXT}")"
 
     # Switch to the dataplane cluster before installing the demo apps because
     # that's where all the workloads should be in the external controlplane deployment.

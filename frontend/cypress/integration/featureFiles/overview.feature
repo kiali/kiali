@@ -137,7 +137,7 @@ Feature: Kiali Overview page
     And user sees the "istio-system" namespace card in cluster "west"
     And user sees the "Control plane" label in both "istio-system" namespace cards
     And the toggle on the right side of both "istio-system" namespace cards exists
-  
+
   @multi-cluster
   Scenario: Istio panel for east cluster should be visible and have the control plane label
     Then user sees the "istio-system" namespace card in cluster "east"
@@ -151,7 +151,7 @@ Feature: Kiali Overview page
   Scenario: See "bookinfo" in "east" and "west" clusters
     Then user sees the "bookinfo" namespace card in cluster "east"
     And user sees the "bookinfo" namespace card in cluster "west"
-    And Istio config should not be available for the "west" "bookinfo"
+    And Istio config should be available for the "west" "bookinfo"
     And health should be different for "east" and "west" "bookinfo"
 
   @multi-cluster

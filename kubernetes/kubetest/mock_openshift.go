@@ -5,7 +5,6 @@ import (
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osoauth_v1 "github.com/openshift/api/oauth/v1"
-	osproject_v1 "github.com/openshift/api/project/v1"
 	osroutes_v1 "github.com/openshift/api/route/v1"
 	osuser_v1 "github.com/openshift/api/user/v1"
 )
@@ -23,21 +22,6 @@ func (o *K8SClientMock) GetDeploymentConfig(ctx context.Context, namespace strin
 func (o *K8SClientMock) GetDeploymentConfigs(ctx context.Context, namespace string) ([]osapps_v1.DeploymentConfig, error) {
 	args := o.Called(namespace)
 	return args.Get(0).([]osapps_v1.DeploymentConfig), args.Error(1)
-}
-
-func (o *K8SClientMock) GetProject(ctx context.Context, project string) (*osproject_v1.Project, error) {
-	args := o.Called(project)
-	return args.Get(0).(*osproject_v1.Project), args.Error(1)
-}
-
-func (o *K8SClientMock) GetProjects(ctx context.Context, labelSelector string) ([]osproject_v1.Project, error) {
-	args := o.Called(labelSelector)
-	return args.Get(0).([]osproject_v1.Project), args.Error(1)
-}
-
-func (o *K8SClientMock) UpdateProject(ctx context.Context, project string, jsonPatch string) (*osproject_v1.Project, error) {
-	args := o.Called(project)
-	return args.Get(0).(*osproject_v1.Project), args.Error(1)
 }
 
 func (o *K8SClientMock) DeleteOAuthToken(ctx context.Context, token string) error {

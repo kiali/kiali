@@ -21,7 +21,6 @@ import (
 type NamespaceService struct {
 	conf                  *config.Config
 	discovery             istio.MeshDiscovery
-	hasProjects           map[string]bool
 	homeClusterUserClient kubernetes.UserClientInterface
 	kialiCache            cache.KialiCache
 	kialiSAClients        map[string]kubernetes.ClientInterface
@@ -49,24 +48,15 @@ func NewNamespaceService(
 	userClients map[string]kubernetes.UserClientInterface,
 ) NamespaceService {
 	homeClusterName := conf.KubernetesConfig.ClusterName
-	hasProjects := make(map[string]bool)
-	for cluster, client := range kialiSAClients {
-		hasProjects[cluster] = client.IsOpenShift()
-	}
 
 	return NamespaceService{
 		conf:                  conf,
 		discovery:             discovery,
-		hasProjects:           hasProjects,
 		homeClusterUserClient: userClients[homeClusterName],
 		kialiCache:            cache,
 		kialiSAClients:        kialiSAClients,
 		userClients:           userClients,
 	}
-}
-
-func (in *NamespaceService) clusterIsOpenShift(cluster string) bool {
-	return in.hasProjects[cluster]
 }
 
 // GetClusterList Returns a list of cluster names based on the user clients
@@ -163,58 +153,50 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster string) ([]models.Namespace, error) {
 	var namespaces []models.Namespace
 
-	// If we are running in OpenShift, we will use the project names since these are the list of accessible namespaces
-	if in.clusterIsOpenShift(cluster) {
-		projects, err := in.userClients[cluster].GetProjects(ctx, "")
-		if err != nil {
-			return nil, err
-		}
-		namespaces = models.CastProjectCollection(projects, cluster)
-	} else {
-		// Note that cluster-wide-access mode requires cluster role permission to list all namespaces.
-		if in.conf.Deployment.ClusterWideAccess {
+	// Note that cluster-wide-access mode requires cluster role permission to list all namespaces.
+	if in.conf.Deployment.ClusterWideAccess {
 
-			nss, err := in.userClients[cluster].GetNamespaces("")
-			if err != nil {
-				// Fallback to using the Kiali service account, if needed
-				if errors.IsForbidden(err) {
-					if nss, err = in.getNamespacesUsingKialiSA(cluster, "", err); err != nil {
-						return nil, err
-					}
-				} else {
+		nss, err := in.userClients[cluster].GetNamespaces("")
+		if err != nil {
+			// Fallback to using the Kiali service account, if needed
+			if errors.IsForbidden(err) {
+				if nss, err = in.getNamespacesUsingKialiSA(cluster, "", err); err != nil {
 					return nil, err
 				}
+			} else {
+				return nil, err
 			}
-
-			namespaces = models.CastNamespaceCollection(nss, cluster)
-		} else {
-			// We do not have cluster wide access, so we do not have permission to list namespaces.
-			// Therefore, we assume we can extract the list of accessible namespaces from the discovery selectors configuration.
-			// That list of accessible namespaces will be used as our base list which we then filter with discovery selectors down below.
-			// Note if this is a remote cluster, that remote cluster must have the same namespaces as those in our own local
-			// cluster's accessible namespaces. This is one reason why we suggest enabling CWA for multi-cluster environments.
-			accessibleNamespaces := in.conf.Deployment.AccessibleNamespaces
-			k8sNamespaces := make([]core_v1.Namespace, 0)
-			for _, ans := range accessibleNamespaces {
-				k8sNs, err := in.userClients[cluster].GetNamespace(ans)
-				if err != nil {
-					if errors.IsNotFound(err) {
-						// If a namespace is not found, then we skip it from the list of namespaces
-						log.Warningf("Kiali has an accessible namespace [%s] which doesn't exist", ans)
-					} else if errors.IsForbidden(err) {
-						// Also, if namespace isn't readable, skip it.
-						log.Warningf("Kiali has an accessible namespace [%s] which is forbidden", ans)
-					} else {
-						// On any other error, abort and return the error.
-						return nil, err
-					}
-				} else {
-					k8sNamespaces = append(k8sNamespaces, *k8sNs)
-				}
-			}
-			namespaces = models.CastNamespaceCollection(k8sNamespaces, cluster)
 		}
+
+		namespaces = models.CastNamespaceCollection(nss, cluster)
+	} else {
+		// We do not have cluster wide access, so we do not have permission to list namespaces.
+		// Therefore, we assume we can extract the list of accessible namespaces from the discovery selectors configuration.
+		// That list of accessible namespaces will be used as our base list which we then filter with discovery selectors down below.
+		// Note if this is a remote cluster, that remote cluster must have the same namespaces as those in our own local
+		// cluster's accessible namespaces. This is one reason why we suggest enabling CWA for multi-cluster environments.
+		accessibleNamespaces := in.conf.Deployment.AccessibleNamespaces
+		k8sNamespaces := make([]core_v1.Namespace, 0)
+		for _, ans := range accessibleNamespaces {
+			k8sNs, err := in.userClients[cluster].GetNamespace(ans)
+			if err != nil {
+				if errors.IsNotFound(err) {
+					// If a namespace is not found, then we skip it from the list of namespaces
+					log.Warningf("Kiali has an accessible namespace [%s] which doesn't exist", ans)
+				} else if errors.IsForbidden(err) {
+					// Also, if namespace isn't readable, skip it.
+					log.Warningf("Kiali has an accessible namespace [%s] which is forbidden", ans)
+				} else {
+					// On any other error, abort and return the error.
+					return nil, err
+				}
+			} else {
+				k8sNamespaces = append(k8sNamespaces, *k8sNs)
+			}
+		}
+		namespaces = models.CastNamespaceCollection(k8sNamespaces, cluster)
 	}
+
 	// here is called GetControlPlaneNamespaces instead of IsControlPlane for performance reasons
 	cpnList := in.discovery.GetControlPlaneNamespaces(ctx, cluster)
 	cpnSet := make(map[string]struct{}, len(cpnList))
@@ -286,20 +268,11 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 		return &ns, nil
 	}
 
-	var result models.Namespace
-	if in.clusterIsOpenShift(cluster) {
-		project, err := client.GetProject(ctx, namespace)
-		if err != nil {
-			return nil, err
-		}
-		result = models.CastProject(*project, cluster)
-	} else {
-		ns, err := client.GetNamespace(namespace)
-		if err != nil {
-			return nil, err
-		}
-		result = models.CastNamespace(*ns, cluster)
+	ns, err := client.GetNamespace(namespace)
+	if err != nil {
+		return nil, err
 	}
+	result := models.CastNamespace(*ns, cluster)
 
 	if !in.isAccessibleNamespace(ctx, result) {
 		return nil, &AccessibleNamespaceError{msg: "Namespace [" + namespace + "] in cluster [" + cluster + "] is not accessible to Kiali"}
