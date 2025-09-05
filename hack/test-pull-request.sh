@@ -45,7 +45,7 @@
 # == KIND
 #
 # 1. Install KinD cluster:
-#      $ hack/start-kind.sh --enable-image-registry true --name test
+#      $ go run tools/cmd/installer/main.go --enable-image-registry true --name test
 # 2. Install Istio:
 #      $ hack/istio/install-istio-via-istioctl.sh -c kubectl
 # 3. Use this script to deploy the server and operator built from the source code
