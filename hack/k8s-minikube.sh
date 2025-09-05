@@ -34,6 +34,7 @@ DEFAULT_K8S_DRIVER="kvm2"
 DEFAULT_K8S_MEMORY="8g"
 DEFAULT_K8S_VERSION="stable"
 DEFAULT_LB_ADDRESSES="" # example: "'192.168.99.70-192.168.99.84'"
+DEFAULT_METRICS_SERVER_ENABLED="false"
 DEFAULT_MINIKUBE_EXE="minikube"
 DEFAULT_MINIKUBE_PROFILE="minikube"
 DEFAULT_MINIKUBE_START_FLAGS=""
@@ -563,6 +564,7 @@ while [[ $# -gt 0 ]]; do
     -me|--minikube-exe) MINIKUBE_EXE="$2"; shift;shift ;;
     -mf|--minikube-flags) MINIKUBE_START_FLAGS="$2"; shift;shift ;;
     -mp|--minikube-profile) MINIKUBE_PROFILE="$2"; shift;shift ;;
+    -mse|--metrics-server-enabled) METRICS_SERVER_ENABLED="$2"; shift;shift ;;
     -oe|--olm-enabled) OLM_ENABLED="$2"; shift;shift ;;
     -op|--output-path) OUTPUT_PATH="$2"; shift;shift ;;
     -ov|--olm-version) OLM_VERSION="$2"; shift;shift ;;
@@ -650,6 +652,10 @@ Valid options:
   -mp|--minikube-profile
       The profile which minikube will be started with.
       Default: ${DEFAULT_MINIKUBE_PROFILE}
+  -mse|--metrics-server-enabled
+      If true, the metrics-server addon will be enabled in the minikube cluster allowing you to use kubectl top commands and HPA.
+      Only used for the 'start' command.
+      Default: ${DEFAULT_METRICS_SERVER_ENABLED}
   -oe|--olm-enabled
       If true, OLM will be installed in the minikube cluster allowing you to install operators using the OLM API.
       Only used for the 'start' command.
@@ -708,6 +714,7 @@ done
 : ${K8S_VERSION:=${DEFAULT_K8S_VERSION}}
 : ${K8S_MEMORY:=${DEFAULT_K8S_MEMORY}}
 : ${LB_ADDRESSES:=${DEFAULT_LB_ADDRESSES}}
+: ${METRICS_SERVER_ENABLED:=${DEFAULT_METRICS_SERVER_ENABLED}}
 : ${MINIKUBE_EXE:=${DEFAULT_MINIKUBE_EXE}}
 : ${MINIKUBE_START_FLAGS:=${DEFAULT_MINIKUBE_START_FLAGS}}
 : ${MINIKUBE_PROFILE:=${DEFAULT_MINIKUBE_PROFILE}}
@@ -737,6 +744,7 @@ debug "K8S_DRIVER=$K8S_DRIVER"
 debug "K8S_MEMORY=$K8S_MEMORY"
 debug "K8S_VERSION=$K8S_VERSION"
 debug "LB_ADDRESSES=$LB_ADDRESSES"
+debug "METRICS_SERVER_ENABLED=$METRICS_SERVER_ENABLED"
 debug "MINIKUBE_EXE=$MINIKUBE_EXE"
 debug "MINIKUBE_START_FLAGS=$MINIKUBE_START_FLAGS"
 debug "MINIKUBE_PROFILE=$MINIKUBE_PROFILE"
@@ -790,6 +798,12 @@ if [ "$_CMD" = "start" ]; then
   echo 'Enabling the image registry'
   ${MINIKUBE_EXEC_WITH_PROFILE} addons enable registry
   [ "$?" != "0" ] && echo "ERROR: Failed to enable registry addon" && exit 1
+
+  if [ "${METRICS_SERVER_ENABLED}" == "true" ]; then
+    echo 'Enabling the metrics-server addon'
+    ${MINIKUBE_EXEC_WITH_PROFILE} addons enable metrics-server
+    [ "$?" != "0" ] && echo "ERROR: Failed to enable metrics-server addon" && exit 1
+  fi
 
   if [ ! -z "${LB_ADDRESSES}" ]; then
     echo 'Enabling the metallb load balancer'

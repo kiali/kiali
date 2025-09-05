@@ -320,12 +320,19 @@ else
 	@if [ -n "${CLUSTER_REPO}" ]; then podman push --tls-verify=false ${CLUSTER_KIALI_TAG}; fi
 endif
 else
+ifeq ($(CLUSTER_TYPE),minikube)
+	@echo Pushing Kiali image to minikube cluster: ${CLUSTER_KIALI_TAG}
+	@rm -f /tmp/kiali-cluster-push-kiali.tar
+	${DORP} save -o /tmp/kiali-cluster-push-kiali.tar ${CLUSTER_KIALI_TAG}
+	minikube image load /tmp/kiali-cluster-push-kiali.tar --profile ${MINIKUBE_PROFILE}
+else
 ifeq ($(DORP),docker)
 	@echo Pushing Kiali image to remote cluster using docker: ${CLUSTER_KIALI_TAG}
 	docker push ${CLUSTER_KIALI_TAG}
 else
 	@echo Pushing Kiali image to remote cluster using podman: ${CLUSTER_KIALI_TAG}
 	podman push --tls-verify=false ${CLUSTER_KIALI_TAG}
+endif
 endif
 endif
 
