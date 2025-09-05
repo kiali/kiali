@@ -404,6 +404,7 @@
   "Service Entry": "Service Entry",
   "Service Name": "Service Name",
   "Service VIP": "Service VIP",
+  "ServiceEntry": "ServiceEntry",
   "Services": "服务",
   "Set display options for the mesh.": "Set display options for the mesh.",
   "Set edge labeling, node badging, and various display options. Response-time edge labeling, security badging, and traffic animation may affect performance. Response-times reflect the 95th percentile.": "设置边标签、节点标签和各种显示选项。响应时间边缘标记、安全标记和流量动画可能会影响性能",

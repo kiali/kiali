@@ -1027,7 +1027,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	}
 
 	// WorkloadGroups are fetched only when included
-	if includeIstioWorkloads && in.isWorkloadIncluded(kubernetes.WorkloadGroupType) {
+	if client.IsIstioAPI() && includeIstioWorkloads && in.isWorkloadIncluded(kubernetes.WorkloadGroupType) {
 		wgroupList := &networking_v1.WorkloadGroupList{}
 		if err := kubeCache.List(ctx, wgroupList); err != nil {
 			return nil, fmt.Errorf("Error fetching cluster [%s] WorkloadGroups: %s", cluster, err)
@@ -1038,7 +1038,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	}
 
 	// WorkloadEntries are fetched only when included
-	if includeIstioWorkloads && in.isWorkloadIncluded(kubernetes.WorkloadEntryType) {
+	if client.IsIstioAPI() && includeIstioWorkloads && in.isWorkloadIncluded(kubernetes.WorkloadEntryType) {
 		wentryList := &networking_v1.WorkloadEntryList{}
 		if err := kubeCache.List(ctx, wentryList); err != nil {
 			return nil, fmt.Errorf("Error fetching cluster [%s] WorkloadEntries : %s", cluster, err)
@@ -1049,7 +1049,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	}
 
 	// Sidecars are fetched only when included
-	if includeIstioWorkloads && in.isWorkloadIncluded(kubernetes.SidecarType) {
+	if client.IsIstioAPI() && includeIstioWorkloads && in.isWorkloadIncluded(kubernetes.SidecarType) {
 		sidecarList := &networking_v1.SidecarList{}
 		if err := kubeCache.List(ctx, sidecarList); err != nil {
 			return nil, fmt.Errorf("Error fetching cluster [%s] Sidecars: %s", cluster, err)
@@ -1625,7 +1625,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	}
 	pods = podList.Items
 
-	if criteria.WorkloadGVK.Kind == "" || criteria.WorkloadGVK == kubernetes.WorkloadGroups {
+	if client.IsIstioAPI() && (criteria.WorkloadGVK.Kind == "" || criteria.WorkloadGVK == kubernetes.WorkloadGroups) {
 		wgroup = &networking_v1.WorkloadGroup{}
 		err := kubeCache.Get(ctx, ctrlclient.ObjectKey{Name: criteria.WorkloadName, Namespace: criteria.Namespace}, wgroup)
 		if err != nil {
@@ -1637,7 +1637,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		}
 	}
 
-	if criteria.WorkloadGVK.Kind == "" || criteria.WorkloadGVK == kubernetes.WorkloadGroups {
+	if client.IsIstioAPI() && (criteria.WorkloadGVK.Kind == "" || criteria.WorkloadGVK == kubernetes.WorkloadGroups) {
 		wentryList := &networking_v1.WorkloadEntryList{}
 		err := kubeCache.List(ctx, wentryList, ctrlclient.InNamespace(criteria.Namespace))
 		if err != nil {
@@ -1651,7 +1651,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		}
 	}
 
-	if criteria.WorkloadGVK.Kind == "" || criteria.WorkloadGVK == kubernetes.WorkloadGroups {
+	if client.IsIstioAPI() && (criteria.WorkloadGVK.Kind == "" || criteria.WorkloadGVK == kubernetes.WorkloadGroups) {
 		sidecarList := &networking_v1.SidecarList{}
 		err := kubeCache.List(ctx, sidecarList, ctrlclient.InNamespace(criteria.Namespace))
 		if err != nil {
