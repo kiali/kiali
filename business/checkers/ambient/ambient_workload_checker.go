@@ -43,12 +43,12 @@ func (awc AmbientWorkloadChecker) Check() ([]*models.IstioCheck, bool) {
 		checks = append(checks, &check)
 		valid = false
 	}
-	if awc.isWaypointAndNotAmbient() {
+	if len(awc.workload.Pods) > 0 && awc.isWaypointAndNotAmbient() {
 		check := models.Build("workload.ambient.waypointandnotambient", "workload")
 		checks = append(checks, &check)
 		valid = false
 	}
-	if awc.referencesNonExistentWaypoint() {
+	if len(awc.workload.Pods) > 0 && awc.referencesNonExistentWaypoint() {
 		check := models.Build("workload.ambient.waypointnotfound", "workload")
 		checks = append(checks, &check)
 		valid = false
@@ -63,7 +63,7 @@ func (awc AmbientWorkloadChecker) Check() ([]*models.IstioCheck, bool) {
 		checks = append(checks, &check)
 		valid = false
 	}
-	if awc.hasSidecarInAmbientNamespace() {
+	if len(awc.workload.Pods) > 0 && awc.hasSidecarInAmbientNamespace() {
 		check := models.Build("workload.ambient.sidecarinambientnamespace", "workload")
 		checks = append(checks, &check)
 		valid = false

@@ -92,6 +92,7 @@ func TestWorkloadWaypointAndNotAmbient(t *testing.T) {
 	workload := data.CreateWorkload("mixed-workload", labels)
 	workload.Namespace = ns1
 	workload.IsAmbient = false
+	workload.Pods = models.Pods{data.CreatePod("w-pod", labels, false, true, false)}
 
 	vals, valid := NewAmbientWorkloadChecker(
 		conf.KubernetesConfig.ClusterName,
@@ -122,6 +123,7 @@ func TestWorkloadReferencesNonExistentWaypoint(t *testing.T) {
 	workload.Namespace = ns1
 	workload.IsAmbient = true
 	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
+	workload.Pods = models.Pods{data.CreatePod("w-pod", labels, true, false, false)}
 
 	vals, valid := NewAmbientWorkloadChecker(
 		conf.KubernetesConfig.ClusterName,
@@ -209,6 +211,7 @@ func TestWorkloadSidecarInAmbientNamespace(t *testing.T) {
 	workload := data.CreateWorkload("mixed-workload", labels)
 	workload.Namespace = ns1
 	workload.IstioSidecar = true
+	workload.Pods = models.Pods{data.CreatePod("ambient-pod", labels, false, true, false)}
 
 	vals, valid := NewAmbientWorkloadChecker(
 		conf.KubernetesConfig.ClusterName,
@@ -249,4 +252,64 @@ func TestWorkloadHasAuthPolicyAndNoWaypoint(t *testing.T) {
 	assert.NotEmpty(vals)
 	assert.False(valid)
 	assert.NoError(validations.ConfirmIstioCheckMessage("workload.ambient.authpolicybutnowaypoint", vals[0]))
+}
+
+func TestWorkloadZeroReplicasInAmbientNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	labels := map[string]string{}
+
+	// Test workload with 0 replicas (no pods) in ambient namespace
+	// This should NOT trigger KIA1316 error because there are no pods to check for sidecars or Ambient
+	workload := data.CreateWorkload("zero-replica-workload", labels)
+	workload.Namespace = ns1
+	workload.Pods = models.Pods{} // No pods = 0 replicas
+
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: labels, IsAmbient: true}},
+		[]*security_v1.AuthorizationPolicy{},
+	).Check()
+
+	// Should not have any validation errors because there are no pods to check
+	assert.Empty(vals)
+	assert.True(valid)
+}
+
+func TestWaypointZeroReplicas(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	// Test waypoint with 0 replicas (no pods)
+	// This should NOT trigger KIA1312 or KIA1316 errors because waypoints are always ambient
+	waypointLabels := map[string]string{
+		config.WaypointLabel: config.WaypointLabelValue,
+	}
+
+	workload := data.CreateWorkload("zero-replica-waypoint", waypointLabels)
+	workload.Namespace = ns1
+	workload.IstioSidecar = false // This should be false when there are no pods
+	workload.IsAmbient = true     // Waypoints should always be ambient
+	workload.Pods = models.Pods{} // No pods = 0 replicas
+
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: map[string]string{}, IsAmbient: true}},
+		[]*security_v1.AuthorizationPolicy{},
+	).Check()
+
+	// Should not have any validation errors because waypoints are always ambient
+	assert.Empty(vals)
+	assert.True(valid)
 }
