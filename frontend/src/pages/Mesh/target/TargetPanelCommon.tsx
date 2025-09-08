@@ -116,6 +116,14 @@ export const renderHealthStatus = (data: MeshNodeData): React.ReactNode => {
   );
 };
 
+export const getMeshId = (nodeData: MeshNodeData): string => {
+  return (
+    nodeData.infraData.config.standardConfig.configMap.mesh.defaultConfig.meshId ||
+    nodeData.infraData.config.standardConfig.configMap.mesh.trustDomain ||
+    t('Istio mesh')
+  );
+};
+
 export const nodeStyle = kialiStyle({
   alignItems: 'center',
   display: 'flex'
@@ -291,6 +299,7 @@ export const renderControlPlaneSummary = (nodeData: MeshNodeData, dataPlaneNames
     <div key={nodeData.id} className={summaryStyle}>
       {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true }, summaryHeaderStyle)}
       <div className={summaryInfoStyle}>
+        <div>{t('Mesh: {{meshId}}', { meshId: getMeshId(nodeData) })}</div>
         <div>{t('version: {{version}}', { version: nodeData.version || t(UNKNOWN) })}</div>
         <div>{t('revision: {{revision}}', { revision: nodeData.infraData.revision || t('default') })}</div>
         <div>
