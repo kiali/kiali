@@ -32,6 +32,7 @@ import (
 	"github.com/kiali/kiali/mesh"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/perses"
+	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/status"
 	"github.com/kiali/kiali/tests/data"
 )
@@ -265,7 +266,7 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 func mockMeshGraph(t *testing.T) (*mesh.GlobalInfo, error) {
 	globalInfo := setupMocks(t)
 
-	mesh.StatusGetter = func(context.Context, *config.Config, kubernetes.ClientFactory, cache.KialiCache, *grafana.Service, *perses.Service) status.StatusInfo {
+	mesh.StatusGetter = func(context.Context, *config.Config, kubernetes.ClientFactory, cache.KialiCache, *grafana.Service, *perses.Service, prometheus.ClientInterface) status.StatusInfo {
 		return status.StatusInfo{
 			ExternalServices: []models.ExternalServiceInfo{},
 		}

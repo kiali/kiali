@@ -86,7 +86,7 @@ func NewRoutes(
 			log.StatusLogName,
 			"GET",
 			"/api",
-			handlers.Root(conf, clientFactory, kialiCache, grafana, perses),
+			handlers.Root(conf, clientFactory, kialiCache, grafana, perses, prom),
 			conf.Server.RequireAuth,
 		},
 		// swagger:route GET /authenticate auth authenticate
@@ -189,7 +189,7 @@ func NewRoutes(
 			log.StatusLogName,
 			"GET",
 			"/api/status",
-			handlers.Root(conf, clientFactory, kialiCache, grafana, perses),
+			handlers.Root(conf, clientFactory, kialiCache, grafana, perses, prom),
 			true,
 		},
 		// swagger:route GET /tracing/diagnose tracing tracingDiagnose

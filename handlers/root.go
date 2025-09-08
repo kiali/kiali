@@ -8,6 +8,7 @@ import (
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/perses"
+	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/status"
 )
 
@@ -19,8 +20,8 @@ func Healthz(w http.ResponseWriter, r *http.Request) {
 }
 
 // Root provides basic status of the server.
-func Root(conf *config.Config, clientFactory kubernetes.ClientFactory, cache cache.KialiCache, grafana *grafana.Service, perses *perses.Service) http.HandlerFunc {
+func Root(conf *config.Config, clientFactory kubernetes.ClientFactory, cache cache.KialiCache, grafana *grafana.Service, perses *perses.Service, prom prometheus.ClientInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		RespondWithJSONIndent(w, http.StatusOK, status.Get(r.Context(), conf, clientFactory, cache, grafana, perses))
+		RespondWithJSONIndent(w, http.StatusOK, status.Get(r.Context(), conf, clientFactory, cache, grafana, perses, prom))
 	}
 }
