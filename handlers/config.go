@@ -44,27 +44,27 @@ type DeploymentConfig struct {
 // PublicConfig is a subset of Kiali configuration that can be exposed to clients to
 // help them interact with the system.
 type PublicConfig struct {
-	AuthStrategy            string                        `json:"authStrategy,omitempty"`
-	AmbientEnabled          bool                          `json:"ambientEnabled,omitempty"`
-	Clusters                map[string]models.KubeCluster `json:"clusters,omitempty"`
-	ClusterWideAccess       bool                          `json:"clusterWideAccess,omitempty"`
-	ControlPlanes           map[string]string             `json:"controlPlanes,omitempty"`
-	Deployment              DeploymentConfig              `json:"deployment,omitempty"`
-	GatewayAPIClasses       []config.GatewayAPIClass      `json:"gatewayAPIClasses,omitempty"`
-	GatewayAPIEnabled       bool                          `json:"gatewayAPIEnabled,omitempty"`
-	HealthConfig            config.HealthConfig           `json:"healthConfig,omitempty"`
-	IgnoreHomeCluster       bool                          `json:"ignoreHomeCluster,omitempty"`
-	IngressGatewayInstalled bool                          `json:"ingressGatewayInstalled,omitempty"`
-	InstallationTag         string                        `json:"installationTag,omitempty"`
-	IstioAnnotations        IstioAnnotations              `json:"istioAnnotations,omitempty"`
-	IstioAPIInstalled       bool                          `json:"istioAPIInstalled,omitempty"`
-	IstioIdentityDomain     string                        `json:"istioIdentityDomain,omitempty"`
-	IstioLabels             config.IstioLabels            `json:"istioLabels,omitempty"`
-	IstioStatusEnabled      bool                          `json:"istioStatusEnabled,omitempty"`
-	KialiFeatureFlags       config.KialiFeatureFlags      `json:"kialiFeatureFlags,omitempty"`
-	LogLevel                string                        `json:"logLevel,omitempty"`
-	Prometheus              PrometheusConfig              `json:"prometheus,omitempty"`
-	RunMode                 config.RunMode                `json:"runMode,omitempty"`
+	AuthStrategy          string                        `json:"authStrategy,omitempty"`
+	AmbientEnabled        bool                          `json:"ambientEnabled,omitempty"`
+	Clusters              map[string]models.KubeCluster `json:"clusters,omitempty"`
+	ClusterWideAccess     bool                          `json:"clusterWideAccess,omitempty"`
+	ControlPlanes         map[string]string             `json:"controlPlanes,omitempty"`
+	Deployment            DeploymentConfig              `json:"deployment,omitempty"`
+	GatewayAPIClasses     []config.GatewayAPIClass      `json:"gatewayAPIClasses,omitempty"`
+	GatewayAPIEnabled     bool                          `json:"gatewayAPIEnabled,omitempty"`
+	HealthConfig          config.HealthConfig           `json:"healthConfig,omitempty"`
+	IgnoreHomeCluster     bool                          `json:"ignoreHomeCluster,omitempty"`
+	InstallationTag       string                        `json:"installationTag,omitempty"`
+	IstioAnnotations      IstioAnnotations              `json:"istioAnnotations,omitempty"`
+	IstioAPIInstalled     bool                          `json:"istioAPIInstalled,omitempty"`
+	IstioGatewayInstalled bool                          `json:"istioGatewayInstalled,omitempty"`
+	IstioIdentityDomain   string                        `json:"istioIdentityDomain,omitempty"`
+	IstioLabels           config.IstioLabels            `json:"istioLabels,omitempty"`
+	IstioStatusEnabled    bool                          `json:"istioStatusEnabled,omitempty"`
+	KialiFeatureFlags     config.KialiFeatureFlags      `json:"kialiFeatureFlags,omitempty"`
+	LogLevel              string                        `json:"logLevel,omitempty"`
+	Prometheus            PrometheusConfig              `json:"prometheus,omitempty"`
+	RunMode               config.RunMode                `json:"runMode,omitempty"`
 }
 
 // Config is a REST http.HandlerFunc serving up the Kiali configuration made public to clients.
@@ -114,7 +114,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 
 		if client := userClients[conf.KubernetesConfig.ClusterName]; client != nil {
 			publicConfig.GatewayAPIEnabled = client.IsGatewayAPI()
-			publicConfig.IngressGatewayInstalled = client.IsIngressGateway()
+			publicConfig.IstioGatewayInstalled = client.IsIstioGateway()
 			publicConfig.IstioAPIInstalled = client.IsIstioAPI()
 		}
 		publicConfig.AmbientEnabled = cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName)

@@ -152,10 +152,10 @@ export interface ServerConfig {
   gatewayAPIEnabled: boolean;
   healthConfig: HealthConfig;
   ignoreHomeCluster: boolean;
-  ingressGatewayInstalled: boolean;
   installationTag?: string;
   istioAPIInstalled: false;
   istioAnnotations: IstioAnnotations;
+  istioGatewayInstalled: boolean;
   istioIdentityDomain: string;
   istioLabels: { [key in IstioLabelKey]: string };
   kialiFeatureFlags: KialiFeatureFlags;
