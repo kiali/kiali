@@ -31,7 +31,7 @@ external_services:
     enabled: false
 
   grafana:
-    enabled: true
+    enabled: ${GRAFANA_ENABLED}
     internal_url: "${GRAFANA_URL}"
     external_url: "${GRAFANA_URL}"
 
@@ -39,7 +39,7 @@ external_services:
     url: "${PROMETHEUS_URL}"
 
   tracing:
-    enabled: true
+    enabled: ${TRACING_ENABLED}
     provider: "${TRACING_APP}"
     internal_url: "${TRACING_URL}"
     external_url: "${TRACING_URL}"
