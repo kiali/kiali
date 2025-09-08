@@ -256,8 +256,7 @@ func TestWorkloadZeroReplicasInAmbientNamespace(t *testing.T) {
 
 	// Test workload with 0 replicas (no pods) in ambient namespace
 	// This should NOT trigger KIA1316 error because there are no pods to check for sidecars or Ambient
-	workload := data.CreateWorkload("zero-replica-workload", labels)
-	workload.Namespace = ns1
+	workload := data.CreateWorkload(ns1, "zero-replica-workload", labels)
 	workload.Pods = models.Pods{} // No pods = 0 replicas
 
 	vals, valid := NewAmbientWorkloadChecker(
@@ -286,8 +285,7 @@ func TestWaypointZeroReplicas(t *testing.T) {
 		config.WaypointLabel: config.WaypointLabelValue,
 	}
 
-	workload := data.CreateWorkload("zero-replica-waypoint", waypointLabels)
-	workload.Namespace = ns1
+	workload := data.CreateWorkload("ns1", "zero-replica-waypoint", waypointLabels)
 	workload.IstioSidecar = false // This should be false when there are no pods
 	workload.IsAmbient = true     // Waypoints should always be ambient
 	workload.Pods = models.Pods{} // No pods = 0 replicas
