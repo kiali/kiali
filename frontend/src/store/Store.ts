@@ -56,6 +56,9 @@ export interface NamespaceState {
   // it to be a complete list of namespaces across all clusters.
   readonly items?: Namespace[];
   readonly lastUpdated?: Date;
+  // all namespace info
+  readonly namespaces: Namespace[];
+  // a convenience mapping of cluster names to namespace names
   readonly namespacesPerCluster: Map<string, string[]>; // map clusterName -> namespaces on cluster
 }
 

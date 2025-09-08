@@ -2,15 +2,15 @@ import { store } from '../store/ConfigStore';
 
 // isControlPlaneAccessible returns true if the user has access to any control plane namespace
 export const isControlPlaneAccessible = (cluster?: string): boolean => {
-  const ns = store.getState().namespaces;
+  const namespaceState = store.getState().namespaces;
 
   return (
-    ns.items !== undefined &&
-    ns.items.some(nsItem => {
+    namespaceState.namespaces !== undefined &&
+    Array.from(namespaceState.namespaces.values()).some(ns => {
       if (cluster) {
-        return nsItem.isControlPlane && nsItem.cluster === cluster;
+        return ns.isControlPlane && ns.cluster === cluster;
       }
-      return nsItem.isControlPlane;
+      return ns.isControlPlane;
     })
   );
 };
