@@ -810,6 +810,7 @@ func (in *Discovery) namespaceMapKey(cluster, namespace string) string {
 func newControlPlane(istiod appsv1.Deployment, cluster *models.KubeCluster) models.ControlPlane {
 	return models.ControlPlane{
 		Cluster:         cluster,
+		ID:              cluster.Name, // set to the cluster name by default, it may be reset by an ENV var
 		Labels:          istiod.Labels,
 		MeshConfig:      models.NewMeshConfig(),
 		MonitoringPort:  defaultMonitoringPort, // Default monitoring port, will be overridden by parseArgsInto if --monitoringAddr is found
