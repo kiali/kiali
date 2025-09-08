@@ -240,12 +240,15 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
                 >
                   {nodeData.namespace}
                 </KialiPageLink>
-                <PFBadge badge={PFBadges.NetworkTraffic} size="sm" />
-                {netObsUrl && (
-                  <a href={netObsUrl} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '0.25rem' }}>
-                    Network Observability <KialiIcon.ExternalLink />
-                  </a>
-                )}
+                <PFBadge badge={PFBadges.NetObserv} size="sm" />
+                <a
+                  href={netObsUrl || '#'}
+                  target={netObsUrl ? '_blank' : undefined}
+                  rel={netObsUrl ? 'noopener noreferrer' : undefined}
+                  style={{ marginLeft: '0.25rem' }}
+                >
+                  Network Observability {netObsUrl && <KialiIcon.ExternalLink />}
+                </a>
               </div>
               {!nodeData.isWaypoint && (
                 <div className={nodeInfoStyle}>
