@@ -598,10 +598,10 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		controlPlanes[i] = &mesh.ControlPlanes[i]
 	}
 	// Convert to map.
-	controlPlanesByClusterName := map[string][]*models.ControlPlane{}
+	controlPlanesByClusterID := map[string][]*models.ControlPlane{}
 	for _, cp := range controlPlanes {
 		// Need the id not the cluster name.
-		controlPlanesByClusterName[cp.ID] = append(controlPlanesByClusterName[cp.ID], cp)
+		controlPlanesByClusterID[cp.ID] = append(controlPlanesByClusterID[cp.ID], cp)
 	}
 
 	// We don't have access to the istio secrets so can't use that to determine what
@@ -658,7 +658,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				}
 			} else {
 				for _, controlPlaneClusterName := range strings.Split(controlClusters, ",") {
-					if controlPlanes, ok := controlPlanesByClusterName[controlPlaneClusterName]; ok {
+					if controlPlanes, ok := controlPlanesByClusterID[controlPlaneClusterName]; ok {
 						for _, controlPlane := range controlPlanes {
 							if controlPlane.ManagesExternal {
 								controlPlane.ManagedClusters = append(controlPlane.ManagedClusters, cluster)
@@ -726,7 +726,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				GetKialiDiscoverySelectors([]string{}, cluster.Name, in.conf),
 			)
 			// add control plane namespaces, which should always be included
-			for _, cp := range controlPlanesByClusterName[cluster.Name] {
+			for _, cp := range controlPlanesByClusterID[cluster.Name] {
 				if !sliceutil.Some(namespaces, func(ns models.Namespace) bool {
 					return ns.Name == cp.IstiodNamespace
 				}) {
@@ -786,8 +786,13 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	// set the NamespaceMap, any previous map will get gc'd
 	in.namespaceMap = map[string]*models.ControlPlane{}
 	for _, cp := range controlPlanes {
-		for _, mn := range cp.ManagedNamespaces {
-			key := in.namespaceMapKey(mn.Cluster, mn.Name)
+		namespaces, err := in.kialiSAClients[cp.ID].GetNamespaces("")
+		if err != nil {
+			log.Errorf("unable to populate NamespaceMap for controlPlane with ID [%s]. Err: %s", cp.ID, err)
+			continue
+		}
+		for _, ns := range namespaces {
+			key := in.namespaceMapKey(cp.ID, ns.Name)
 			in.namespaceMap[key] = cp
 		}
 	}
