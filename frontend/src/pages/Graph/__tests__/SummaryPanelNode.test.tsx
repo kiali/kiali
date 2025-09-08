@@ -34,6 +34,7 @@ describe('SummaryPanelNodeComponent', () => {
         summaryTarget: target
       },
       duration: 15,
+      externalServices: [],
       graphType: GraphType.VERSIONED_APP,
       injectServiceNodes: false,
       kiosk: '',
