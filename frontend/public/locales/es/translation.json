@@ -420,6 +420,7 @@
   "Service Entry": "Entrada de servicio",
   "Service Name": "Nombre del servicio",
   "Service VIP": "VIP del servicio",
+  "ServiceEntry": "ServiceEntry",
   "Services": "Servicios",
   "Set display options for the mesh.": "Establecer opciones de visualización para la malla.",
   "Set edge labeling, node badging, and various display options. Response-time edge labeling, security badging, and traffic animation may affect performance. Response-times reflect the 95th percentile.": "Establezca el etiquetado de conexiones, insignias de nodos y varias opciones de visualización. La etiquetado de tiempo de respuesta, insignias de seguridad y animación de tráfico pueden afectar el rendimiento. Las respuestas de tiempo reflejan el percentil 95.",

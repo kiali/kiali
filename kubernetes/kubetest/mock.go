@@ -120,6 +120,7 @@ func NewK8SClientMock() *K8SClientMock {
 	k8s.On("IsExpGatewayAPI").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("IsInferenceAPI").Return(false)
+	k8s.On("IsIstioGateway").Return(true)
 	k8s.On("IsIstioAPI").Return(true)
 	return k8s
 }
@@ -171,6 +172,11 @@ func (o *K8SClientMock) IsGatewayAPI() bool {
 }
 
 func (o *K8SClientMock) IsInferenceAPI() bool {
+	args := o.Called()
+	return args.Get(0).(bool)
+}
+
+func (o *K8SClientMock) IsIstioGateway() bool {
 	args := o.Called()
 	return args.Get(0).(bool)
 }

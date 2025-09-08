@@ -153,7 +153,9 @@ export interface ServerConfig {
   healthConfig: HealthConfig;
   ignoreHomeCluster: boolean;
   installationTag?: string;
+  istioAPIInstalled: false;
   istioAnnotations: IstioAnnotations;
+  istioGatewayInstalled: boolean;
   istioIdentityDomain: string;
   istioLabels: { [key in IstioLabelKey]: string };
   kialiFeatureFlags: KialiFeatureFlags;

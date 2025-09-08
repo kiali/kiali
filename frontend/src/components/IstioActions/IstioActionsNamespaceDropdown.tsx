@@ -47,6 +47,18 @@ export const IstioActionsNamespaceDropdown: React.FC = () => {
     }
   };
 
+  const isDisabled = (label: string, disabled: boolean): boolean => {
+    if (label.includes('K8s')) {
+      return !serverConfig.gatewayAPIEnabled;
+    } else if (label === t('Gateway')) {
+      return !serverConfig.istioGatewayInstalled;
+    } else if (label === t('ServiceEntry') || label === t('Sidecar')) {
+      return !serverConfig.istioAPIInstalled;
+    } else {
+      return disabled;
+    }
+  };
+
   const dropdownItemsRaw = NEW_ISTIO_RESOURCE.map(
     (r): ActionItem => {
       const label = kindToStringIncludeK8s(r.value.Group, r.value.Kind);
@@ -55,7 +67,7 @@ export const IstioActionsNamespaceDropdown: React.FC = () => {
         action: (
           <DropdownItem
             key={`createIstioConfig_${label}`}
-            isDisabled={label.includes('K8s') ? !serverConfig.gatewayAPIEnabled : r.disabled}
+            isDisabled={isDisabled(label, r.disabled)}
             onClick={() => onClickCreate(r.value)}
             data-test={`create_${label}`}
           >

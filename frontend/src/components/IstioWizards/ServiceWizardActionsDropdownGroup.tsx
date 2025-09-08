@@ -10,7 +10,12 @@ import {
   WIZARD_EDIT_ANNOTATIONS,
   WIZARD_TITLES,
   WizardAction,
-  WizardMode
+  WizardMode,
+  WIZARD_REQUEST_ROUTING,
+  WIZARD_FAULT_INJECTION,
+  WIZARD_TRAFFIC_SHIFTING,
+  WIZARD_REQUEST_TIMEOUTS,
+  WIZARD_TCP_TRAFFIC_SHIFTING
 } from './WizardActions';
 import { hasServiceDetailsTrafficRouting } from '../../types/ServiceInfo';
 import { groupMenuStyle } from 'styles/DropdownStyles';
@@ -81,8 +86,19 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
         ? serverConfig.gatewayAPIEnabled
         : true;
 
+    const istioWizardKeys = [
+      WIZARD_REQUEST_ROUTING,
+      WIZARD_FAULT_INJECTION,
+      WIZARD_TRAFFIC_SHIFTING,
+      WIZARD_REQUEST_TIMEOUTS,
+      WIZARD_TCP_TRAFFIC_SHIFTING
+    ];
+
+    const isIstioAPIInstalled = istioWizardKeys.includes(eventKey) ? serverConfig.istioAPIInstalled : true;
+
     const enabledItem =
       isGatewayAPIEnabled &&
+      isIstioAPIInstalled &&
       !props.isDisabled &&
       (!hasTrafficRouting() || (hasTrafficRouting() && updateLabel === eventKey));
 

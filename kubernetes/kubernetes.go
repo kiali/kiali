@@ -256,6 +256,33 @@ func (in *K8SClient) IsInferenceAPI() bool {
 	return *in.isInferenceAPI
 }
 
+func (in *K8SClient) IsIstioGateway() bool {
+	in.rwMutex.Lock()
+	defer in.rwMutex.Unlock()
+	if in.Istio() == nil {
+		return false
+	}
+	if in.isIstioGateway == nil {
+		res, err := in.k8s.Discovery().ServerResourcesForGroupVersion(NetworkingGroupVersionV1.String())
+		if err != nil {
+			log.Debugf("Istio Networking CRDs not installed.")
+			return false
+		}
+		isIstioGateway := false
+		for _, r := range res.APIResources {
+			if r.Kind == GatewayType && r.Name == "gateways" {
+				isIstioGateway = true
+				break
+			}
+		}
+		if !isIstioGateway {
+			log.Debugf("Istio Ingress Gateway's 'gateways.networking.istio.io' CRD is not installed.")
+		}
+		in.isIstioGateway = &isIstioGateway
+	}
+	return *in.isIstioGateway
+}
+
 func (in *K8SClient) IsExpGatewayAPI() bool {
 	in.rwMutex.Lock()
 	defer in.rwMutex.Unlock()

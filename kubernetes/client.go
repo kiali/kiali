@@ -56,6 +56,7 @@ type ClientInterface interface {
 	IsExpGatewayAPI() bool
 	IsGatewayAPI() bool
 	IsInferenceAPI() bool
+	IsIstioGateway() bool
 	IsIstioAPI() bool
 	// ClusterInfo returns some information about the cluster this client is connected to.
 	// This gets set when the client is first created.
@@ -118,6 +119,8 @@ type K8SClient struct {
 	isInferenceAPI *bool
 	gatewayapi     gatewayapiclient.Interface
 	inferenceapi   inferenceapiclient.Interface
+	// isIstioGateway will check if 'gateways.networking.istio.io' CRD is installed, it can be not installed when K8s Gateway API CRD exists on cluster
+	isIstioGateway *bool
 	isIstioAPI     *bool
 	clusterInfo    ClusterInfo
 

@@ -86,6 +86,8 @@ export const healthConfig = {
     ambientAnnotationEnabled: 'enabled',
     istioInjectionAnnotation: ''
   },
+  istioAPIInstalled: false,
+  istioGatewayInstalled: false,
   istioIdentityDomain: 'svc.cluster.local',
   istioNamespace: 'istio-system',
   istioLabels: {

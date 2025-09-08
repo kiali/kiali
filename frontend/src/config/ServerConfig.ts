@@ -77,6 +77,8 @@ const defaultServerConfig: ComputedServerConfig = {
     ambientAnnotationEnabled: 'enabled',
     istioInjectionAnnotation: 'sidecar.istio.io/inject'
   },
+  istioAPIInstalled: false,
+  istioGatewayInstalled: false,
   istioIdentityDomain: 'svc.cluster.local',
   istioLabels: {
     ambientNamespaceLabel: 'istio.io/dataplane-mode',

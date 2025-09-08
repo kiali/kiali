@@ -245,8 +245,8 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		return nil, fmt.Errorf("kiali ServiceAccount Client for cluster [%s] is not found or is not accessible for Kiali", cluster)
 	}
 
-	if !saClient.IsIstioAPI() {
-		log.FromContext(ctx).Info().Msgf("Cluster [%s] does not have Istio API installed", cluster)
+	if !saClient.IsIstioAPI() && !saClient.IsGatewayAPI() {
+		log.FromContext(ctx).Debug().Msgf("Cluster [%s] does not have Istio API or Gateway API installed", cluster)
 		// Return empty object here since there are no istio config objects in the cluster
 		// and returning nil would cause nil pointer dereference in the caller.
 		return istioConfigList, nil
@@ -274,7 +274,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 	}
 	listOpts := []client.ListOption{client.MatchingLabels(selector), client.InNamespace(namespace)}
 
-	if criteria.Include(kubernetes.DestinationRules) {
+	if userClient.IsIstioAPI() && criteria.Include(kubernetes.DestinationRules) {
 		list := &networking_v1.DestinationRuleList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -282,7 +282,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.DestinationRules = list.Items
 	}
 
-	if criteria.Include(kubernetes.EnvoyFilters) {
+	if userClient.IsIstioAPI() && criteria.Include(kubernetes.EnvoyFilters) {
 		list := &networking_v1alpha3.EnvoyFilterList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -293,7 +293,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		}
 	}
 
-	if criteria.Include(kubernetes.Gateways) {
+	if userClient.IsIstioAPI() && userClient.IsIstioGateway() && criteria.Include(kubernetes.Gateways) {
 		list := &networking_v1.GatewayList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -365,7 +365,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.K8sTLSRoutes = ToPtrs(list.Items)
 	}
 
-	if criteria.Include(kubernetes.ServiceEntries) {
+	if userClient.IsIstioAPI() && criteria.Include(kubernetes.ServiceEntries) {
 		list := &networking_v1.ServiceEntryList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -373,7 +373,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.ServiceEntries = list.Items
 	}
 
-	if criteria.Include(kubernetes.Sidecars) {
+	if userClient.IsIstioAPI() && criteria.Include(kubernetes.Sidecars) {
 		list := &networking_v1.SidecarList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -385,7 +385,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		}
 	}
 
-	if criteria.Include(kubernetes.VirtualServices) {
+	if userClient.IsIstioAPI() && criteria.Include(kubernetes.VirtualServices) {
 		list := &networking_v1.VirtualServiceList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -393,7 +393,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.VirtualServices = list.Items
 	}
 
-	if criteria.Include(kubernetes.WorkloadEntries) {
+	if userClient.IsIstioAPI() && criteria.Include(kubernetes.WorkloadEntries) {
 		list := &networking_v1.WorkloadEntryList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -401,7 +401,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.WorkloadEntries = list.Items
 	}
 
-	if criteria.Include(kubernetes.WorkloadGroups) {
+	if userClient.IsIstioAPI() && criteria.Include(kubernetes.WorkloadGroups) {
 		list := &networking_v1.WorkloadGroupList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err

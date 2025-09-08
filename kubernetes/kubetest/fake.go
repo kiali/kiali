@@ -151,22 +151,24 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 	}
 
 	return &FakeK8sClient{
-		UserClientInterface: kialikube.NewClientForClients(kubeClient, istioClient, gatewayAPIClient, inferenceAPIClient, osAppsClient, projectClient, routeClient, userClient, oAuthClient, ctrlclient),
-		KubeClientset:       kubeClient,
-		IstioClientset:      istioClient,
-		ProjectFake:         projectClient,
-		UserFake:            userClient,
-		IstioAPIEnabled:     true,
-		OAuthFake:           oAuthClient,
+		UserClientInterface:   kialikube.NewClientForClients(kubeClient, istioClient, gatewayAPIClient, inferenceAPIClient, osAppsClient, projectClient, routeClient, userClient, oAuthClient, ctrlclient),
+		KubeClientset:         kubeClient,
+		IstioClientset:        istioClient,
+		ProjectFake:           projectClient,
+		UserFake:              userClient,
+		IstioGatewayInstalled: true,
+		IstioAPIInstalled:     true,
+		OAuthFake:             oAuthClient,
 	}
 }
 
 // FakeK8sClient is an implementation of the kiali Kubernetes client interface used for tests.
 type FakeK8sClient struct {
-	OpenShift           bool
-	GatewayAPIEnabled   bool
-	InferenceAPIEnabled bool
-	IstioAPIEnabled     bool
+	OpenShift             bool
+	GatewayAPIEnabled     bool
+	InferenceAPIEnabled   bool
+	IstioAPIInstalled     bool
+	IstioGatewayInstalled bool
 	kialikube.UserClientInterface
 	// Underlying kubernetes clientset.
 	KubeClientset kubernetes.Interface
@@ -186,7 +188,8 @@ func (c *FakeK8sClient) IsOpenShift() bool                  { return c.OpenShift
 func (c *FakeK8sClient) IsExpGatewayAPI() bool              { return c.GatewayAPIEnabled }
 func (c *FakeK8sClient) IsGatewayAPI() bool                 { return c.GatewayAPIEnabled }
 func (c *FakeK8sClient) IsInferenceAPI() bool               { return c.InferenceAPIEnabled }
-func (c *FakeK8sClient) IsIstioAPI() bool                   { return c.IstioAPIEnabled }
+func (c *FakeK8sClient) IsIstioGateway() bool               { return c.IstioGatewayInstalled }
+func (c *FakeK8sClient) IsIstioAPI() bool                   { return c.IstioAPIInstalled }
 func (c *FakeK8sClient) GetToken() string                   { return c.Token }
 func (c *FakeK8sClient) ClusterInfo() kialikube.ClusterInfo { return c.KubeClusterInfo }
 func (c *FakeK8sClient) SetProxyLogLevel(namespace string, podName string, level string) error {
