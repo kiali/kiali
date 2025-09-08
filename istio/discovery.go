@@ -786,9 +786,13 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	// set the NamespaceMap, any previous map will get gc'd
 	in.namespaceMap = map[string]*models.ControlPlane{}
 	for _, cp := range controlPlanes {
-		namespaces, err := in.kialiSAClients[cp.ID].GetNamespaces("")
+		ci := in.kialiSAClients[cp.ID]
+		if ci == nil {
+			ci = in.kialiSAClients[cp.Cluster.Name]
+		}
+		namespaces, err := ci.GetNamespaces("")
 		if err != nil {
-			log.Errorf("unable to populate NamespaceMap for controlPlane with ID [%s]. Err: %s", cp.ID, err)
+			log.Errorf("unable to populate NamespaceMap for controlPlane with ID [%s], name [%s]. Err: %s", cp.ID, cp.Cluster.Name, err)
 			continue
 		}
 		for _, ns := range namespaces {
@@ -810,7 +814,6 @@ func (in *Discovery) namespaceMapKey(cluster, namespace string) string {
 func newControlPlane(istiod appsv1.Deployment, cluster *models.KubeCluster) models.ControlPlane {
 	return models.ControlPlane{
 		Cluster:         cluster,
-		ID:              cluster.Name, // set to the cluster name by default, it may be reset by an ENV var
 		Labels:          istiod.Labels,
 		MeshConfig:      models.NewMeshConfig(),
 		MonitoringPort:  defaultMonitoringPort, // Default monitoring port, will be overridden by parseArgsInto if --monitoringAddr is found
