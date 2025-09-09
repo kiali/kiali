@@ -227,10 +227,16 @@ deploy_kiali() {
         )
   fi
 
+  if [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
+    helm_args+=(
+          --set kubernetes_config.cluster_name="${cluster_name}"
+        )
+  fi
+
   if [ "${IGNORE_HOME_CLUSTER}" == "true" ]; then
     helm_args+=(
           --set clustering.ignore_home_cluster="true"
-          --set kubernetes_config.cluster_name="${CLUSTER1_NAME}"
+          --set kubernetes_config.cluster_name="${cluster_name}"
         )
   fi
 
