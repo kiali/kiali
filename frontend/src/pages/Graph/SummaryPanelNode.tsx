@@ -41,13 +41,8 @@ import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelSty
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { renderWaypointLabel } from '../../components/Ambient/WaypointLabel';
 import { Node } from '@patternfly/react-topology';
-<<<<<<< HEAD
-import { KialiPageLink } from 'components/Link/KialiPageLink';
-import { ExternalServiceInfo } from 'types/StatusState';
-=======
 import { NetworkTrafficBadge } from 'components/TrafficGraph/NetworkTrafficBadge';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
->>>>>>> 38f966dc9 (Added Badge and link to nothing right now)
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -58,7 +53,6 @@ const defaultState: SummaryPanelNodeState = {
 };
 
 type ReduxProps = {
-  externalServices: ExternalServiceInfo[];
   kiosk: string;
   rankResult: RankResult;
   showRank: boolean;
@@ -200,8 +194,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       <></>
     );
 
-    const netObs = this.props.externalServices?.find(s => s.name && s.url && s.name.toLowerCase().includes('observ'));
-    const netObsUrl = netObs?.url;
+    // Note: NetObserv link removed per current requirements
 
     return (
       <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
@@ -239,30 +232,13 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 
               {secondBadge}
               <div className={nodeInfoStyle}>
-<<<<<<< HEAD
-=======
                 <NetworkTrafficBadge />
->>>>>>> 38f966dc9 (Added Badge and link to nothing right now)
                 <KialiPageLink
                   href={`/graph/namespaces?namespaces=${encodeURIComponent(nodeData.namespace)}`}
                   cluster={nodeData.cluster}
                 >
-<<<<<<< HEAD
-                  {nodeData.namespace}
-                </KialiPageLink>
-                <PFBadge badge={PFBadges.NetObserv} size="sm" />
-                <a
-                  href={netObsUrl || '#'}
-                  target={netObsUrl ? '_blank' : undefined}
-                  rel={netObsUrl ? 'noopener noreferrer' : undefined}
-                  style={{ marginLeft: '0.25rem' }}
-                >
-                  Network Observability {netObsUrl && <KialiIcon.ExternalLink />}
-                </a>
-=======
                   Network Traffic
                 </KialiPageLink>
->>>>>>> 38f966dc9 (Added Badge and link to nothing right now)
               </div>
               {!nodeData.isWaypoint && (
                 <div className={nodeInfoStyle}>
@@ -611,7 +587,7 @@ export const SummaryPanelNode: React.FC<SummaryPanelNodeProps> = (props: Summary
   const rankResult = useKialiSelector(state => state.graph.rankResult);
   const showRank = useKialiSelector(state => state.graph.toolbarState.showRank);
   const updateTime = useKialiSelector(state => state.graph.updateTime);
-  const externalServices = useKialiSelector(state => state.statusState.externalServices);
+  // const externalServices = useKialiSelector(state => state.statusState.externalServices);
 
   const [isKebabOpen, setIsKebabOpen] = React.useState<boolean>(false);
 
@@ -638,7 +614,7 @@ export const SummaryPanelNode: React.FC<SummaryPanelNodeProps> = (props: Summary
       serviceDetails={isServiceDetailsLoading ? undefined : serviceDetails}
       gateways={gateways}
       peerAuthentications={peerAuthentications}
-      externalServices={externalServices}
+      // externalServices={externalServices}
       onKebabToggled={handleKebabToggled}
       {...props}
     />
