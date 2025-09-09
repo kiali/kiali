@@ -232,7 +232,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 
               {secondBadge}
               <div className={nodeInfoStyle}>
-                <NetworkTrafficBadge />
+                <NetworkTrafficBadge namespace={nodeData.namespace} />
                 <KialiPageLink
                   href={`/graph/namespaces?namespaces=${encodeURIComponent(nodeData.namespace)}`}
                   cluster={nodeData.cluster}
