@@ -21,7 +21,7 @@ var _ = Describe("Kiali API Status", func() {
 	Context("when Kiali is properly deployed", func() {
 		It("should return healthy status", func() {
 			By("requesting Kiali status endpoint")
-			Expect(client.GetStatusEventually(30*time.Second)).To(BeTrue())
+			Expect(client.GetStatusEventually(30 * time.Second)).To(BeTrue())
 		})
 
 		It("should return HTTP 200 status code", func() {
@@ -40,4 +40,4 @@ var _ = Describe("Kiali API Status", func() {
 			}, 30*time.Second, 5*time.Second).Should(BeNil())
 		})
 	})
-}) 
+})

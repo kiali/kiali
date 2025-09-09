@@ -4,7 +4,7 @@ import (
 	"time"
 
 	. "github.com/onsi/gomega"
-	
+
 	"github.com/kiali/kiali/tests/integration/utils/kiali"
 )
 
@@ -37,4 +37,4 @@ func (c *EnhancedKialiClient) GetStatusEventually(timeout time.Duration) AsyncAs
 // GetStatus provides direct access to the Kiali status for non-async usage
 func (c *EnhancedKialiClient) GetStatus() (bool, int, error) {
 	return kiali.KialiStatus()
-} 
+}
