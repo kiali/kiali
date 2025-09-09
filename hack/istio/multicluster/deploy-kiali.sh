@@ -49,6 +49,10 @@ deploy_kiali() {
   [ -n "${web_fqdn}" ] && helm_args+=("--set server.web_fqdn=${web_fqdn}")
   [ -n "${web_schema}" ] && helm_args+=("--set server.web_schema=${web_schema}")
 
+  # homecluster autodiscovery does not work in all scenarios, particularly external-controlplane, so just set the
+  # the home cluster. In the future, this could be limited to just the non-working scenarios.
+  helm_args+=(--set kubernetes_config.cluster_name="${cluster_name}")
+
   if [ "${KIALI_AUTH_STRATEGY}" == "anonymous" ]; then
     helm_args+=(--set auth.strategy="anonymous")
   elif [ "${KIALI_AUTH_STRATEGY}" == "openid" ]; then
@@ -224,12 +228,6 @@ deploy_kiali() {
           --set kiali_internal.cache_expiration.istio_status="0"
           --set kiali_internal.cache_expiration.mesh="10s"
           --set kiali_internal.cache_expiration.waypoint="2m"
-        )
-  fi
-
-  if [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
-    helm_args+=(
-          --set kubernetes_config.cluster_name="${cluster_name}"
         )
   fi
 
