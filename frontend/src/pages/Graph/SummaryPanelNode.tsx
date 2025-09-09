@@ -41,8 +41,13 @@ import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelSty
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { renderWaypointLabel } from '../../components/Ambient/WaypointLabel';
 import { Node } from '@patternfly/react-topology';
+<<<<<<< HEAD
 import { KialiPageLink } from 'components/Link/KialiPageLink';
 import { ExternalServiceInfo } from 'types/StatusState';
+=======
+import { NetworkTrafficBadge } from 'components/TrafficGraph/NetworkTrafficBadge';
+import { KialiPageLink } from 'components/Link/KialiPageLink';
+>>>>>>> 38f966dc9 (Added Badge and link to nothing right now)
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -234,10 +239,15 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 
               {secondBadge}
               <div className={nodeInfoStyle}>
+<<<<<<< HEAD
+=======
+                <NetworkTrafficBadge />
+>>>>>>> 38f966dc9 (Added Badge and link to nothing right now)
                 <KialiPageLink
                   href={`/graph/namespaces?namespaces=${encodeURIComponent(nodeData.namespace)}`}
                   cluster={nodeData.cluster}
                 >
+<<<<<<< HEAD
                   {nodeData.namespace}
                 </KialiPageLink>
                 <PFBadge badge={PFBadges.NetObserv} size="sm" />
@@ -249,6 +259,10 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
                 >
                   Network Observability {netObsUrl && <KialiIcon.ExternalLink />}
                 </a>
+=======
+                  Network Traffic
+                </KialiPageLink>
+>>>>>>> 38f966dc9 (Added Badge and link to nothing right now)
               </div>
               {!nodeData.isWaypoint && (
                 <div className={nodeInfoStyle}>
