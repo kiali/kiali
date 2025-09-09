@@ -55,7 +55,6 @@ cat <<EOF > "$EXTERNAL_ISTIO_YAML"
 spec:
   values:
     global:
-      meshID: mesh1
       multiCluster:
         clusterName: "${EXTERNAL_CLUSTER_NAME}"
       network: network1
