@@ -80,7 +80,7 @@ func MeshGraph(
 			o.MeshName = meshId
 		}
 
-		code, payload := api.GraphMesh(r.Context(), business, o, clientFactory, cache, conf, grafana, perses, discovery)
+		code, payload := api.GraphMesh(r.Context(), business, o, clientFactory, cache, conf, grafana, perses, prom, discovery)
 		respond(w, code, payload)
 	}
 }

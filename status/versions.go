@@ -14,13 +14,14 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/perses"
+	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util/httputil"
 )
 
-func getVersions(ctx context.Context, conf *config.Config, clientFactory kubernetes.ClientFactory, grafana *grafana.Service, perses *perses.Service) []models.ExternalServiceInfo {
+func getVersions(ctx context.Context, conf *config.Config, clientFactory kubernetes.ClientFactory, grafana *grafana.Service, perses *perses.Service, prom prometheus.ClientInterface) []models.ExternalServiceInfo {
 	components := getKubernetesVersions(clientFactory)
 
-	pv, err := prometheusVersion(conf, clientFactory.GetSAHomeClusterClient())
+	pv, err := prometheusVersion(ctx, prom)
 	if err != nil {
 		log.Infof("Error getting Prometheus version: %v", err)
 	} else {
@@ -61,12 +62,6 @@ func getVersions(ctx context.Context, conf *config.Config, clientFactory kuberne
 	}
 
 	return components
-}
-
-type p8sResponseVersion struct {
-	Data struct {
-		Version string `json:"version"`
-	} `json:"data"`
 }
 
 type jaegerResponseVersion struct {
@@ -224,28 +219,20 @@ func persesVersion(ctx context.Context, perses *perses.Service, conf *config.Con
 	return &product, nil
 }
 
-func prometheusVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientInterface) (*models.ExternalServiceInfo, error) {
-	product := models.ExternalServiceInfo{}
-	prometheusV := new(p8sResponseVersion)
-	cfg := conf.ExternalServices.Prometheus
-
-	// Be sure to copy config.Auth and not modify the existing
-	auth := cfg.Auth
-	if auth.UseKialiToken {
-		auth.Token = homeClusterSAClient.GetToken()
+func prometheusVersion(ctx context.Context, prom prometheus.ClientInterface) (*models.ExternalServiceInfo, error) {
+	if prom == nil {
+		return nil, fmt.Errorf("prometheus client is nil")
 	}
 
-	// see https://prometheus.io/docs/prometheus/latest/querying/api/#build-information
-	body, _, _, err := httputil.HttpGet(cfg.URL+"/api/v1/status/buildinfo", &auth, 10*time.Second, nil, nil, conf)
-	if err == nil {
-		err = json.Unmarshal(body, &prometheusV)
-		if err == nil {
-			product.Name = "Prometheus"
-			product.Version = prometheusV.Data.Version
-			return &product, nil
-		}
+	info, err := prom.GetBuildInfo(ctx)
+	if err != nil {
+		return nil, err
 	}
-	return nil, err
+
+	return &models.ExternalServiceInfo{
+		Name:    "Prometheus",
+		Version: info.Version,
+	}, nil
 }
 
 func getKubernetesVersions(clientFactory kubernetes.ClientFactory) []models.ExternalServiceInfo {

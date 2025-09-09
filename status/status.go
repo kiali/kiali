@@ -11,6 +11,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/perses"
+	"github.com/kiali/kiali/prometheus"
 )
 
 const (
@@ -64,7 +65,7 @@ type StatusInfo struct {
 // }
 
 // Get returns a copy of the current status info.
-func Get(ctx context.Context, conf *config.Config, clientFactory kubernetes.ClientFactory, cache cache.KialiCache, grafana *grafana.Service, perses *perses.Service) StatusInfo {
+func Get(ctx context.Context, conf *config.Config, clientFactory kubernetes.ClientFactory, cache cache.KialiCache, grafana *grafana.Service, perses *perses.Service, prom prometheus.ClientInterface) StatusInfo {
 	buildInfo := cache.GetBuildInfo()
 	info := StatusInfo{
 		ExternalServices: []models.ExternalServiceInfo{},
@@ -82,7 +83,7 @@ func Get(ctx context.Context, conf *config.Config, clientFactory kubernetes.Clie
 		WarningMessages: []string{},
 	}
 
-	info.ExternalServices = getVersions(ctx, conf, clientFactory, grafana, perses)
+	info.ExternalServices = getVersions(ctx, conf, clientFactory, grafana, perses, prom)
 
 	return info
 }

@@ -32,6 +32,7 @@ type ClientInterface interface {
 	FetchRateRange(metricName string, labels []string, grouping string, q *RangeQuery) Metric
 	GetAllRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetAppRequestRates(namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
+	GetBuildInfo(ctx context.Context) (*prom_v1.BuildinfoResult, error)
 	GetConfiguration() (prom_v1.ConfigResult, error)
 	GetExistingMetricNames(metricNames []string) ([]string, error)
 	GetMetricsForLabels(metricNames []string, labels string) ([]string, error)
@@ -44,7 +45,6 @@ type ClientInterface interface {
 // Client for Prometheus API.
 // It hides the way we query Prometheus offering a layer with a high level defined API.
 type Client struct {
-	ClientInterface
 	p8s api.Client
 	api prom_v1.API
 	ctx context.Context
@@ -112,6 +112,7 @@ func NewClient(conf config.Config, kialiSAToken string) (*Client, error) {
 	if err != nil {
 		return nil, errors.NewServiceUnavailable(err.Error())
 	}
+
 	client := Client{
 		p8s: p8s,
 		api: prom_v1.NewAPI(p8s),
@@ -273,9 +274,12 @@ func (in *Client) API() prom_v1.API {
 	return in.api
 }
 
-// Address return the configured Prometheus service URL
-func (in *Client) Address() string {
-	return config.Get().ExternalServices.Prometheus.URL
+func (in *Client) GetBuildInfo(ctx context.Context) (*prom_v1.BuildinfoResult, error) {
+	info, err := in.api.Buildinfo(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &info, nil
 }
 
 func (in *Client) GetConfiguration() (prom_v1.ConfigResult, error) {

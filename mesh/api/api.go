@@ -20,6 +20,7 @@ import (
 	"github.com/kiali/kiali/mesh/generator"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/perses"
+	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
@@ -33,6 +34,7 @@ func GraphMesh(
 	conf *config.Config,
 	grafana *grafana.Service,
 	perses *perses.Service,
+	prom prometheus.ClientInterface,
 	discovery *istio.Discovery,
 ) (code int, config interface{}) {
 	var end observability.EndFunc
@@ -50,6 +52,7 @@ func GraphMesh(
 	globalInfo.Grafana = grafana
 	globalInfo.IstioStatusGetter = &business.IstioStatus
 	globalInfo.KialiCache = kialiCache
+	globalInfo.PromClient = prom
 	globalInfo.Perses = perses
 
 	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer("mesh", "mesh", false)

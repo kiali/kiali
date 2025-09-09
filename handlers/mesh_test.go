@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -120,6 +122,14 @@ func TestGetMeshGraph(t *testing.T) {
 	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
 	require.NoError(err)
 	prom.Inject(xapi)
+
+	// Add mock expectation for Buildinfo to fix the test
+	xapi.On("Buildinfo", mock.AnythingOfType("*context.valueCtx")).Return(prom_v1.BuildinfoResult{
+		Version:   "2.35.0",
+		BuildDate: "2023-01-01T00:00:00Z",
+		Revision:  "abcdef123456",
+	}, nil)
+
 	cpm := &business.FakeControlPlaneMonitor{}
 	traceLoader := func() tracing.ClientInterface { return nil }
 
