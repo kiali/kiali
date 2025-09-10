@@ -1,14 +1,20 @@
-name: Tag Bump Version
+name: Bump release version
 
 on:
   workflow_dispatch:
     inputs:
-      tag_branch:
-        description: Branch to bump version (Separate branches by commas. Ex v1.73,v2.4)
+      tag_branches:
+        description: Branches to bump version (Separate branches by commas)
         required: true
-        default: v1.73
+        default: v1.73,v2.4,v2.11
         type: string
-
+  workflow_call:
+    inputs:
+      tag_branches:
+        description: Branches to bump version (Separate branches by commas)
+        required: true
+        default: v1.73,v2.4,v2.11
+        type: string
 jobs:
   initialize:
     name: Initialize
@@ -31,7 +37,7 @@ jobs:
     - name: Set Branch
       id: branches
       env:
-        TAG_BRANCHES: ${{ github.event.inputs.tag_branch }}
+        TAG_BRANCHES: ${{ github.event.inputs.tag_branches }}
       run: |
         BRANCHES=$(python conversor.py $TAG_BRANCHES)
         echo "branches=$BRANCHES" >> $GITHUB_ENV
@@ -75,22 +81,29 @@ jobs:
         git config user.email 'kiali-dev@googlegroups.com'
         git config user.name 'kiali-bot'
 
-    - name: Create Bump Version Tag in kiali/kiali
+    - name: Bump to next version
       env:
         BRANCH: ${{matrix.branch}}
       run: |
         RAW_VERSION=$(sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
 
-        RELEASE_VERSION=$(python bump.py patch $RAW_VERSION)
+        # Check if the latest tag is the ossm tag (meaning no release tag of current version exists)
+        LATEST_TAG=$(git describe --tags --abbrev=0)
+        if [[ "$LATEST_TAG" == "$RAW_VERSION-ossm" ]]; then
+          echo "Error: Cannot bump release version because the ossm tag $RAW_VERSION-ossm exists"
+          exit 1
+        else
+          RELEASE_VERSION=$(python bump.py patch $RAW_VERSION)
 
-        # Update the version in Kiali repository
-        sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
-        sed -i -r 's/"version": (.*)/"version": "'${RELEASE_VERSION:1}'",/' frontend/package.json
+          # Update the version in Kiali repository
+          sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
+          sed -i -r 's/"version": (.*)/"version": "'${RELEASE_VERSION:1}'",/' frontend/package.json
 
-        # Commit the changes
-        git add Makefile frontend/package.json
-        git commit -m "Bump to version $RELEASE_VERSION"
-        git push origin $(git rev-parse HEAD):refs/heads/$BRANCH
+          # Commit the changes
+          git add Makefile frontend/package.json
+          git commit -m "Bump to version $RELEASE_VERSION"
+          git push origin $(git rev-parse HEAD):refs/heads/$BRANCH
 
-        # Create the bump version tag
-        git push origin $(git rev-parse HEAD):refs/tags/$RELEASE_VERSION-ossm
+          # Create the ossm version tag
+          git push origin $(git rev-parse HEAD):refs/tags/$RELEASE_VERSION-ossm
+        fi
