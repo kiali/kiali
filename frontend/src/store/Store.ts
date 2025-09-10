@@ -49,16 +49,17 @@ export interface NamespaceState {
   readonly activeNamespaces: Namespace[]; // the namespaces currently selected in NamespaceDropdown
   readonly filter: string; // the filter currently defined in NamespaceDropdown
   readonly isFetching: boolean;
+  // "items" is the Set of unique namespace names. It is a
+  // convenience for when we want to list namespaces without
+  // duplication for namespaces found on multiple clusters.
+  // Do not use this expecting it to be a complete list of namespaces
+  // across all clusters. For that, use "namespaces".
   // TODO: Can this be non-optional since we default to empty list?
-  // Set of unique namespace names, for convenience.
-  // namespaces on different clusters that share the same name
-  // are filtered out of this list. Do not use this expecting
-  // it to be a complete list of namespaces across all clusters.
   readonly items?: Namespace[];
   readonly lastUpdated?: Date;
-  // all namespace info
+  // "namespaces" provides the complete set of namespace info, across clusters.
   readonly namespaces: Namespace[];
-  // a convenience mapping of cluster names to namespace names
+  // "namespacesPerCluster" is a convenience mapping of cluster names to namespace names.
   readonly namespacesPerCluster: Map<string, string[]>; // map clusterName -> namespaces on cluster
 }
 

@@ -155,7 +155,6 @@ func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1.Au
 		AuthorizationPolicies: authpolicies,
 		Cluster:               cluster,
 		Conf:                  in.conf,
-		Discovery:             in.businessLayer.Mesh.discovery,
 		Namespaces:            namespaces,
 		WorkloadsPerNamespace: workloadsPerNamespace,
 	}.Check()

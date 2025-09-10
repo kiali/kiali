@@ -255,7 +255,7 @@ type Discovery struct {
 	conf           *config.Config
 	kialiCache     cache.KialiCache
 	kialiSAClients map[string]kubernetes.ClientInterface
-	// namespaceMap provides quick lookup from Namespace to ControlPlane key="cluster:namespace", set during Mesh dsiscovery
+	// namespaceMap provides quick lookup from Namespace to ControlPlane key="cluster:namespace", set during Mesh discovery
 	namespaceMap map[string]*models.ControlPlane
 	// meshMutex protects concurrent access to the Mesh function to prevent race conditions
 	meshMutex sync.Mutex

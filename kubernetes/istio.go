@@ -11,6 +11,8 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	istio "istio.io/client-go/pkg/clientset/versioned"
+	apps_v1 "k8s.io/api/apps/v1"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	inferenceapiclient "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -19,6 +21,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util/httputil"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 const (
@@ -326,15 +329,29 @@ func DestinationRuleHasMTLSEnabled(destinationRule *networking_v1.DestinationRul
 // ClusterNameFromIstiod attempts to resolve the cluster info of the "home" cluster where kiali is running
 // by inspecting the istiod deployment. Assumes that the istiod deployment is in the same cluster as the kiali pod.
 func ClusterNameFromIstiod(conf *config.Config, k8s ClientInterface) (string, error) {
-	// The "cluster_id" is set in an environment variable of
-	// the "istiod" deployment. Let's try to fetch it.
-	istiodDeployments, err := k8s.GetDeployments("", meta_v1.ListOptions{LabelSelector: "app=istiod"})
+	// Loop through all namespaces to find istiod deployments. We don't perform a single query for all namespaces
+	// because that works only if Kiali has cluster-wide access.
+	namespaces, err := k8s.GetNamespaces("")
 	if err != nil {
 		return "", err
 	}
 
+	namespaceNames := sliceutil.Map(namespaces, func(ns core_v1.Namespace) string {
+		return ns.Name
+	})
+
+	var istiodDeployments []apps_v1.Deployment
+	for _, namespaceName := range namespaceNames {
+		deployments, err := k8s.GetDeployments(namespaceName, meta_v1.ListOptions{LabelSelector: "app=istiod"})
+		if err != nil {
+			log.Warningf("Failed to get deployments from namespace %s: %v", namespaceName, err)
+			continue
+		}
+		istiodDeployments = append(istiodDeployments, deployments...)
+	}
+
 	if len(istiodDeployments) == 0 {
-		return "", fmt.Errorf("istiod deployment not found in any namespace")
+		return "", fmt.Errorf("istiod deployment not found in any namespace (searched namespaces: %v)", namespaceNames)
 	}
 
 	// Just take the first one since they should all have the same cluster id.
