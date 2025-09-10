@@ -17,7 +17,7 @@ infomsg() {
 
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 source ${SCRIPT_DIR}/env.sh $*
-source ${SCRIPT_DIR}/install_ambient_multicluster.sh $*
+source ${SCRIPT_DIR}/install-ambient-multicluster.sh $*
 
 create_remote_secret() {
   local clustername="${1}"
