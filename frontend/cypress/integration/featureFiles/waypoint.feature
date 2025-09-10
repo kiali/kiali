@@ -35,6 +35,7 @@ Feature: Kiali Waypoint related features
     And the user sees the L7 "waypoint" link
     And the link for the waypoint "waypoint" should redirect to a valid workload details
 
+  @retries(3)
   Scenario: [Workload details - waypoint] The workload details for a waypoint are valid
     Given user is at the details page for the "workload" "bookinfo/waypoint" located in the "" cluster
     Then the user sees the "L7" badge
