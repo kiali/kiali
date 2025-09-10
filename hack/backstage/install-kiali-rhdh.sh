@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# hack/install-rhdh-kiali.sh - Install RHDH and configure the Kiali plugin on OpenShift
+# hack/backstage/install-rhdh-kiali.sh - Install RHDH and configure the Kiali plugin on OpenShift
 #
 # Usage:
-#   $(basename "$0") [-h] [-U KIALI_URL] [-F FRONTEND_TAG] [-B BACKEND_TAG] [-H BASE_URL]
+#   $(basename "$0") [-h] [-U KIALI_URL] [-F FRONTEND_TAG] [-B BACKEND_TAG] [-H BASE_URL] [-S SKIP_SUBSCRIPTION]
 #
 # Options:
 #   -h                Show this help message and exit
@@ -11,6 +11,7 @@
 #   -F FRONTEND_TAG   Kiali plugin image tag (frontend)          (default: pr_1368__1.40.0)
 #   -B BACKEND_TAG    Kiali plugin image tag (backend)           (default: pr_1368__1.23.0)
 #   -H BASE_URL       Backstage baseUrl                          (default: https://backstage-developer-hub-rhdh.apps-crc.testing)
+#   -S SKIP_SUBSCRIPTION       Skip subscription   
 #
 # Example:
 #   $(basename "$0") -U https://kiali-istio-system.apps-crc.testing/
@@ -28,14 +29,16 @@ KIALI_URL="https://kiali-istio-system.apps-crc.testing/"
 FRONTEND_TAG="pr_1368__1.40.0"
 BACKEND_TAG="pr_1368__1.23.0"
 BASE_URL="https://backstage-developer-hub-rhdh.apps-crc.testing"
+SKIP_SUBSCRIPTION="false"
 
-while getopts ":hU:F:B:H:" opt; do
+while getopts ":hU:F:B:H:S:" opt; do
   case ${opt} in
     h) show_help; exit 0 ;;
     U) KIALI_URL="$OPTARG" ;;
     F) FRONTEND_TAG="$OPTARG" ;;
     B) BACKEND_TAG="$OPTARG" ;;
     H) BASE_URL="$OPTARG" ;;
+    S) SKIP_SUBSCRIPTION="$OPTARG" ;;
     \?) echo "Error: Invalid option -$OPTARG" >&2; show_help; exit 1 ;;
     :)  echo "Error: Option -$OPTARG requires an argument." >&2; show_help; exit 1 ;;
   esac
@@ -53,6 +56,7 @@ log "Channel: ${CHANNEL} | Source: ${SOURCE}"
 log "Kiali URL: ${KIALI_URL}"
 log "Plugin tags -> frontend: ${FRONTEND_TAG} | backend: ${BACKEND_TAG}"
 log "Backstage BASE_URL: ${BASE_URL}"
+log "Skip subscription: ${SKIP_SUSCRIPTION}"
 
 # 0) Namespaces
 log "Ensuring namespaces exist..."
@@ -61,6 +65,7 @@ oc get ns "${APP_NS}" >/dev/null 2>&1 || oc new-project "${APP_NS}" >/dev/null
 ok "Namespaces ready"
 
 # 1) RHDH Operator Subscription
+if [[ "${SKIP_SUBSCRIPTION}" == "false" ]]; then
 log "Creating/updating RHDH Subscription in ${OP_NS}..."
 cat <<EOF | oc apply -f -
 apiVersion: operators.coreos.com/v1alpha1
@@ -76,6 +81,7 @@ spec:
   sourceNamespace: openshift-marketplace
 EOF
 ok "Subscription applied"
+fi
 
 # 2) app-config ConfigMap
 log "Creating app-config ConfigMap in ${APP_NS}..."
