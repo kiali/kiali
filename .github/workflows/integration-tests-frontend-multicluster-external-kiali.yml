@@ -34,7 +34,7 @@ jobs:
         ref: ${{ inputs.build_branch }}
 
     - name: Install Helm
-      uses: Azure/setup-helm@v4.2.0
+      uses: Azure/setup-helm@v4.3.1
       with:
         version: 'v3.18.4'
 
