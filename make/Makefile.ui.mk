@@ -3,19 +3,20 @@
 #
 
 ## run-frontend: Run the frontend UI in a local development server. Set YARN_START_URL to update package.json.
-# If the YARN_START_URL env var is passed, the 'proxy' field will either be created or replaced with the YARN_START_URL.
-# If the YARN_START_URL is empty but the 'proxy' field is set, the existing value will be used. Otherwise this cmd fails.
+# The 'proxy' field will be set to the YARN_START_URL value (or empty if not provided).
+# The proxy field will be automatically cleaned up when yarn start exits.
 run-frontend:
-	@if [ -n "${YARN_START_URL}" ]; then \
-		sed -i -e "2 i \ \ \"proxy\": \"${YARN_START_URL}\"," -e "/\"proxy\":/d" ${ROOTDIR}/frontend/package.json; \
-	else \
-		if ! (cat ${ROOTDIR}/frontend/package.json | grep -q "\"proxy\":"); then \
-			echo "${ROOTDIR}/frontend/package.json does not have a 'proxy' setting and you did not set YARN_START_URL. Aborting."; \
-			exit 1; \
+	sed -i -e "2 i \ \ \"proxy\": \"${YARN_START_URL}\"," -e "/\"proxy\":/d" ${ROOTDIR}/frontend/package.json
+	@echo "'yarn start' will use this proxy setting: $$(grep proxy ${ROOTDIR}/frontend/package.json || echo 'No proxy configured')"
+	@cleanup() { \
+		if [ "$$cleanup_done" != "true" ]; then \
+			echo "Cleaning up: removing proxy field from package.json"; \
+			sed -i -e "/\"proxy\":/d" ${ROOTDIR}/frontend/package.json; \
+			cleanup_done=true; \
 		fi; \
-	fi
-	@echo "'yarn start' will use this proxy setting: $$(grep proxy ${ROOTDIR}/frontend/package.json)"
-	@cd ${ROOTDIR}/frontend && yarn start
+	}; \
+	trap cleanup EXIT INT TERM; \
+	cd ${ROOTDIR}/frontend && yarn start
 
 ## yarn-start: Alias for run-frontend
 yarn-start: run-frontend

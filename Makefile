@@ -91,6 +91,9 @@ DORP ?= docker
 # Set this to 'minikube' if you want images to be tagged/pushed for minikube as opposed to OpenShift/AWS. Set to 'local' if the image should not be pushed to any remote cluster (requires the cluster to be able to pull from your local image repository).
 CLUSTER_TYPE ?= openshift
 
+# Set this to the URL of the Kiali server that you want to use for local development.
+YARN_START_URL ?= http://localhost:20001
+
 # Find the client executable (either oc or kubectl). If minikube or kind, only look for kubectl (though we might not need be so strict)
 ifeq ($(CLUSTER_TYPE),minikube)
 OC ?= $(shell which kubectl 2>/dev/null || echo "MISSING-KUBECTL-FROM-PATH")

@@ -20,6 +20,9 @@
 # The compiled binary
 /kiali
 
+# This gets added by air when running make run-backend.
+tmp/
+
 # Files specific to our build process
 _output
 
