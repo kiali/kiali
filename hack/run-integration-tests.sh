@@ -33,6 +33,8 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -am|--ambient)
       AMBIENT="${2}"
+      shift;shift
+      ;;
     -ct|--cluster-type)
       CLUSTER_TYPE="${2}"
       if [ "${CLUSTER_TYPE}" != "kind" -a "${CLUSTER_TYPE}" != "minikube" ]; then
