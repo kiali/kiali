@@ -36,7 +36,7 @@ jobs:
         version: 'v3.18.4'
 
     - name: Set up Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v6
       with:
         go-version-file: go.mod
         # The builtin cache feature ensures that installing golangci-lint
