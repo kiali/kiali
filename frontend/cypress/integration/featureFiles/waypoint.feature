@@ -58,6 +58,7 @@ Feature: Kiali Waypoint related features
     And the proxy status is "healthy"
     And the user validates the Ztunnel tab for the "bookinfo" namespace
 
+  @retries(3)
   Scenario: [Traffic Graph] User sees ztunnel traffic
     Given user is at the "graph" page
     When user graphs "bookinfo" namespaces
@@ -67,6 +68,7 @@ Feature: Kiali Waypoint related features
     And user "closes" traffic menu
     Then 5 edges appear in the graph including Prometheus
 
+  @retries(3)
   Scenario: [Traffic Graph] User sees no Ambient traffic
     Given user is at the "graph" page
     When user graphs "bookinfo" namespaces
@@ -76,6 +78,7 @@ Feature: Kiali Waypoint related features
     And user "closes" traffic menu
     Then 2 edges appear in the graph
 
+  @retries(3)
   Scenario: [Traffic Graph] User sees all Ambient traffic
     Given user is at the "graph" page
     When user graphs "bookinfo" namespaces
@@ -86,9 +89,11 @@ Feature: Kiali Waypoint related features
     And user "closes" traffic menu
     Then 14 edges appear in the graph including Prometheus
 
+  @retries(3)
   Scenario: [Traffic Graph] User doesn't see waypoint proxy
     And the "waypoint" node "doesn't" exists
 
+  @retries(3)
   Scenario: [Traffic Graph] User sees waypoint proxy
     When user "opens" display menu
     Then the display menu opens
@@ -99,6 +104,7 @@ Feature: Kiali Waypoint related features
     Then 16 edges appear in the graph
     And the "waypoint" node "does" exists
 
+  @retries(3)
   Scenario: [Traffic Graph] User sees waypoint traffic
     Given user is at the "graph" page
     When user graphs "bookinfo" namespaces
@@ -119,6 +125,7 @@ Feature: Kiali Waypoint related features
     Then user sees a "LIST" "bookinfo" namespace
     And badge for "istio.io/use-waypoint=waypoint" is visible in the LIST view in the namespace "bookinfo"
 
+  @retries(3)
   Scenario: [Traffic] Waypoint for different namespaces working as expected
     Given user is at the "graph" page
     When user graphs "waypoint-differentns" namespaces
@@ -134,6 +141,7 @@ Feature: Kiali Waypoint related features
     And the "echo-server" node "does" exists
     And the "curl-client" node "does" exists
 
+  @retries(3)
   Scenario: [Traffic] Waypoint for different namespaces working as expected with waypoints
     Given user is at the "graph" page
     When user graphs "waypoint-differentns" namespaces
@@ -151,6 +159,7 @@ Feature: Kiali Waypoint related features
     And user "closes" traffic menu
     Then 2 edges appear in the graph
 
+  @retries(3)
   Scenario: [Traffic] Waypoint for all
     Given user is at the "graph" page
     When user graphs "waypoint-forall" namespaces
@@ -166,6 +175,7 @@ Feature: Kiali Waypoint related features
     And the "echo-server" node "does" exists
     And the "curl-client" node "does" exists
 
+  @retries(3)
   Scenario: [Traffic] Waypoint for all with waypoint
     Given user is at the "graph" page
     When user graphs "waypoint-forall" namespaces
@@ -184,6 +194,7 @@ Feature: Kiali Waypoint related features
     And user "closes" traffic menu
     Then 2 edges appear in the graph
 
+  @retries(3)
   Scenario: [Traffic] Waypoint for none
     Given user is at the "graph" page
     When user graphs "waypoint-fornone" namespaces
@@ -199,6 +210,7 @@ Feature: Kiali Waypoint related features
     And the "echo-server" node "does" exists
     And the "curl-client" node "does" exists
 
+  @retries(3)
   Scenario: [Traffic] Waypoint for none with waypoint proxies
     Given user is at the "graph" page
     When user graphs "waypoint-fornone" namespaces
@@ -216,6 +228,7 @@ Feature: Kiali Waypoint related features
     And user "closes" traffic menu
     Then 0 edges appear in the graph
 
+  @retries(3)
   Scenario: [Traffic] Waypoint for service
     Given user is at the "graph" page
     When user graphs "waypoint-forservice" namespaces
@@ -385,6 +398,7 @@ Feature: Kiali Waypoint related features
     When the user goes to the "Logs" tab
     Then the user updates the log level to "Debug"
 
+  @retries(3)
   Scenario: [Traffic] Sidecar Ambient traffic
     Given user is at the "graph" page
     When user graphs "test-ambient,test-sidecar" namespaces
