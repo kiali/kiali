@@ -56,7 +56,7 @@ log "Channel: ${CHANNEL} | Source: ${SOURCE}"
 log "Kiali URL: ${KIALI_URL}"
 log "Plugin tags -> frontend: ${FRONTEND_TAG} | backend: ${BACKEND_TAG}"
 log "Backstage BASE_URL: ${BASE_URL}"
-log "Skip subscription: ${SKIP_SUSCRIPTION}"
+log "Skip subscription: ${SKIP_SUBSCRIPTION}"
 
 # 0) Namespaces
 log "Ensuring namespaces exist..."
