@@ -17,39 +17,7 @@ infomsg() {
 
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 source ${SCRIPT_DIR}/env.sh $*
-
-create_crossnetwork_gateway() {
-  local clustername="${1}"
-  local network="${2}"
-
-  # create the gateway
-  local image_hub_arg="--set hub=gcr.io/istio-release"
-  if [ ! -z "${ISTIO_HUB}" -a "${ISTIO_HUB}" != "default" ]; then
-    image_hub_arg="--set hub=${ISTIO_HUB}"
-  fi
-  if [ ! -z "${ISTIO_TAG}" ]; then
-    local image_tag_arg="--set tag=${ISTIO_TAG}"
-  fi
-  
-  local gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --network "${network}")"
-  local profile_flag=""
-  if [ "${IS_OPENSHIFT}" == "true" ] || [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
-    profile_flag="--set profile=openshift"
-  fi
-
-  printf "%s" "${gateway_yaml}" | "${ISTIOCTL}" install ${profile_flag} ${image_hub_arg} ${image_tag_arg:-} -y -f -
-  if [ "$?" != "0" ]; then
-    echo "Failed to install crossnetwork gateway on cluster [${clustername}]"
-    exit 1
-  fi
-
-  # expose services
-  ${CLIENT_EXE} apply -n ${ISTIO_NAMESPACE} -f "${EXPOSE_SERVICES_YAML}"
-  if [ "$?" != "0" ]; then
-    echo "Failed to expose services on cluster [${clustername}]"
-    exit 1
-  fi
-}
+source ${SCRIPT_DIR}/install-ambient-multicluster.sh $*
 
 create_remote_secret() {
   local clustername="${1}"
@@ -81,27 +49,7 @@ create_remote_secret() {
   fi
 }
 
-MC_EAST_YAML=$(mktemp)
-cat <<EOF > "$MC_EAST_YAML"
-spec:
-  values:
-    global:
-      meshID: ${MESH_ID}
-      multiCluster:
-        clusterName: ${CLUSTER1_NAME}
-      network: ${NETWORK1_ID}
-EOF
-
-MC_WEST_YAML=$(mktemp)
-cat <<EOF > "$MC_WEST_YAML"
-spec:
-  values:
-    global:
-      meshID: ${MESH_ID}
-      multiCluster:
-        clusterName: ${CLUSTER2_NAME}
-      network: ${NETWORK2_ID}
-EOF
+# Configuration is now generated dynamically by the ambient script or install_istio function
 
 # Find the files necessary to create the crossnetwork gateway, if required
 if [ "${CROSSNETWORK_GATEWAY_REQUIRED}" == "true" ]; then
@@ -182,7 +130,7 @@ if [ "${MANAGE_KIND}" == "true" ]; then
       --keycloak-issuer-uri https://"${KEYCLOAK_ADDRESS}"/realms/kube \
       --image "${KIND_NODE_IMAGE}"
 
-    
+
     # Optional: keycloak memory limits
     KEYCLOAK_LIMIT_MEMORY="${KEYCLOAK_LIMIT_MEMORY:-}"
     KEYCLOAK_REQUESTS_MEMORY="${KEYCLOAK_REQUESTS_MEMORY:-}"
@@ -224,17 +172,54 @@ fi
 # Setup the certificates
 source ${SCRIPT_DIR}/setup-ca.sh
 
-echo "==== INSTALL ISTIO ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-install_istio --patch-file "${MC_EAST_YAML}"
+if [ "${AMBIENT}" == "true" ]; then
+  echo "==== Installing Istio Ambient in multi cluster (Alpha)"
+  kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+    kubectl --context=${CLUSTER1_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
+  kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+    kubectl --context=${CLUSTER2_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
+  install_ambient_multicluster
+else
+  # Generate configuration for cluster 1
+  MC_EAST_YAML=$(mktemp)
+  cat <<EOF > "$MC_EAST_YAML"
+spec:
+  values:
+    global:
+      meshID: ${MESH_ID}
+      multiCluster:
+        clusterName: ${CLUSTER1_NAME}
+      network: ${NETWORK1_ID}
+EOF
 
-echo "==== INSTALL ISTIO ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
-switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
-install_istio --patch-file "${MC_WEST_YAML}"
+  echo "==== INSTALL ISTIO ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+  switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
+  install_istio --patch-file "${MC_EAST_YAML}"
+  rm -f "${MC_EAST_YAML}"
 
-echo "==== DEPLOY ISTIO INGRESS GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-kubectl apply -n istio-system -f "${SCRIPT_DIR}/../istio-gateway.yaml"
+  # Generate configuration for cluster 2
+  MC_WEST_YAML=$(mktemp)
+  cat <<EOF > "$MC_WEST_YAML"
+spec:
+  values:
+    global:
+      meshID: ${MESH_ID}
+      multiCluster:
+        clusterName: ${CLUSTER2_NAME}
+      network: ${NETWORK2_ID}
+EOF
+
+  echo "==== INSTALL ISTIO ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
+  switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
+  install_istio --patch-file "${MC_WEST_YAML}"
+  rm -f "${MC_WEST_YAML}"
+fi
+
+if [ "${AMBIENT}" != "true" ]; then
+  echo "==== DEPLOY ISTIO INGRESS GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+  switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
+  kubectl apply -n istio-system -f "${SCRIPT_DIR}/../istio-gateway.yaml"
+fi
 
 if [ "${CROSSNETWORK_GATEWAY_REQUIRED}" == "true" ]; then
   echo "==== CREATE CROSSNETWORK GATEWAY ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
@@ -279,6 +264,11 @@ source ${SCRIPT_DIR}/setup-tracing.sh
 
 # Install bookinfo across cluster if enabled
 source ${SCRIPT_DIR}/split-bookinfo.sh
+
+if [ "${AMBIENT}" == "true" ]; then
+  echo "==== Installing Istio Ambient hello world demo"
+  install_helloworld_demo
+fi
 
 # Install Kiali if enabled
 if [ "${KIALI_ENABLED}" == "true" ]; then
