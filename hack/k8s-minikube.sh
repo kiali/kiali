@@ -856,7 +856,11 @@ elif [ "$_CMD" = "ingress" ]; then
 elif [ "$_CMD" = "istio" ]; then
   ensure_minikube_is_running
   echo 'Installing Istio'
-  ./istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE}
+  if [ "${MINIKUBE_PROFILE}" != "${DEFAULT_MINIKUBE_PROFILE}" ]; then
+    ./istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE} -cn ${MINIKUBE_PROFILE}
+  else
+    ./istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE}
+  fi
 
 elif [ "$_CMD" = "bookinfo" ]; then
   ensure_minikube_is_running
