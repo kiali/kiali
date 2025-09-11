@@ -16,11 +16,13 @@ import { classes } from 'typestyle';
 import { UNKNOWN } from 'types/Graph';
 import { elems, selectAnd } from 'helpers/GraphHelpers';
 import { Controller } from '@patternfly/react-topology';
+import { MeshData } from '../MeshPage';
 
 export interface TargetPanelCommonProps {
   duration: DurationInSeconds;
   istioAPIEnabled: boolean;
   kiosk: string;
+  meshData: MeshData;
   refreshInterval: IntervalInMilliseconds;
   target: MeshTarget;
   updateTime: TimeInMilliseconds;
@@ -64,6 +66,21 @@ export const summaryTitle = kialiStyle({
   marginBottom: '0.25rem',
   textAlign: 'left'
 });
+
+const meshHeaderStyle = kialiStyle({
+  fontWeight: 'bolder',
+  marginTop: '0.25rem',
+  marginBottom: '0.25rem',
+  textAlign: 'left'
+});
+
+export const getMeshId = (nodeData: MeshNodeData): string => {
+  return (
+    nodeData.infraData.config.standardConfig.configMap.mesh.defaultConfig.meshId ||
+    nodeData.infraData.config.standardConfig.configMap.mesh.trustDomain ||
+    t('Istio mesh')
+  );
+};
 
 export const targetPanelHR = <hr className={hrStyle} />;
 export const targetPanelUnderlineHR = <hr className={hrStyle} style={{ marginTop: 0 }} />;
@@ -113,14 +130,6 @@ export const renderHealthStatus = (data: MeshNodeData): React.ReactNode => {
         </Tooltip>
       )}
     </>
-  );
-};
-
-export const getMeshId = (nodeData: MeshNodeData): string => {
-  return (
-    nodeData.infraData.config.standardConfig.configMap.mesh.defaultConfig.meshId ||
-    nodeData.infraData.config.standardConfig.configMap.mesh.trustDomain ||
-    t('Istio mesh')
   );
 };
 
@@ -299,7 +308,6 @@ export const renderControlPlaneSummary = (nodeData: MeshNodeData, dataPlaneNames
     <div key={nodeData.id} className={summaryStyle}>
       {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true }, summaryHeaderStyle)}
       <div className={summaryInfoStyle}>
-        <div>{t('Mesh: {{meshId}}', { meshId: getMeshId(nodeData) })}</div>
         <div>{t('version: {{version}}', { version: nodeData.version || t(UNKNOWN) })}</div>
         <div>{t('revision: {{revision}}', { revision: nodeData.infraData.revision || t('default') })}</div>
         <div>
@@ -349,6 +357,7 @@ export const renderObservabilitySummary = (nodeData: MeshNodeData): React.ReactN
 
 export const renderInfraSummary = (
   controller: Controller,
+  meshData: MeshData,
   forCluster?: string,
   forNamespace?: string
 ): React.ReactNode => {
@@ -399,14 +408,30 @@ export const renderInfraSummary = (
 
       <div className={infraStyle}>
         {controlPlaneNodes.length > 0 && t('ControlPlanes: {{num}}', { num: controlPlaneNodes.length })}
-        {controlPlaneNodes.map(infra => {
-          const cpRev = infra.getData().infraData.revision ?? 'default';
-          const dataPlaneNode = dataPlaneNodes.find(dpn => {
-            const dpRev = dpn.getData().version ?? 'default';
-            return cpRev === dpRev;
+        {meshData.names.map(meshName => {
+          // Group control planes by mesh names
+          const meshControlPlanes = controlPlaneNodes.filter(infra => {
+            return getMeshId(infra.getData()) === meshName;
           });
-          const dataPlaneNamespaceCount = dataPlaneNode?.getData().infraData?.length ?? 0;
-          return renderControlPlaneSummary(infra.getData(), dataPlaneNamespaceCount);
+
+          if (meshControlPlanes.length === 0) {
+            return null;
+          }
+
+          return (
+            <div key={meshName}>
+              <div className={meshHeaderStyle}>{t('Mesh: {{meshName}}', { meshName })}</div>
+              {meshControlPlanes.map(infra => {
+                const cpRev = infra.getData().infraData.revision ?? 'default';
+                const dataPlaneNode = dataPlaneNodes.find(dpn => {
+                  const dpRev = dpn.getData().version ?? 'default';
+                  return cpRev === dpRev;
+                });
+                const dataPlaneNamespaceCount = dataPlaneNode?.getData().infraData?.length ?? 0;
+                return renderControlPlaneSummary(infra.getData(), dataPlaneNamespaceCount);
+              })}
+            </div>
+          );
         })}
       </div>
 
