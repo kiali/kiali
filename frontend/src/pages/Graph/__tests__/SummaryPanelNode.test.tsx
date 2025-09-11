@@ -34,6 +34,8 @@ describe('SummaryPanelNodeComponent', () => {
         summaryTarget: target
       },
       duration: 15,
+      // @ts-ignore - kept for backward compatibility with older prop shape
+      externalServices: [],
       graphType: GraphType.VERSIONED_APP,
       injectServiceNodes: false,
       kiosk: '',

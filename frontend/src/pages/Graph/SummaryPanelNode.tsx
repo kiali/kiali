@@ -42,6 +42,7 @@ import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { renderWaypointLabel } from '../../components/Ambient/WaypointLabel';
 import { Node } from '@patternfly/react-topology';
 import { NetworkTrafficBadge } from 'components/TrafficGraph/NetworkTrafficBadge';
+import { KialiPageLink } from 'components/Link/KialiPageLink';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -233,10 +234,17 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
               {secondBadge}
               <div className={nodeInfoStyle}>
                 <NetworkTrafficBadge namespace={nodeData.namespace} />
-                {!isMultiCluster && this.props.netObsUrl && (
+                {this.props.netObsUrl ? (
                   <a href={this.props.netObsUrl} target="_blank" rel="noopener noreferrer">
                     Network Traffic <KialiIcon.ExternalLink />
                   </a>
+                ) : (
+                  <KialiPageLink
+                    href={`/graph/namespaces?namespaces=${encodeURIComponent(nodeData.namespace)}`}
+                    cluster={nodeData.cluster}
+                  >
+                    Network Traffic
+                  </KialiPageLink>
                 )}
               </div>
               {!nodeData.isWaypoint && (
