@@ -48,7 +48,7 @@ Complete documentation is available at http://kiali.io/docs/.`,
 				opts = append(opts, log.WithLogLevel(logLevel))
 			}
 
-			// For offline and local colorize the log output.
+			// For offline and run colorize the log output.
 			// TODO: Should this go in those commands PreRun?
 			if cmd.Name() == "offline" || cmd.Name() == "run" {
 				opts = append(opts, log.WithColor())
@@ -113,6 +113,7 @@ Complete documentation is available at http://kiali.io/docs/.`,
 	cmd.PersistentFlags().FuncP("config", "c", "Path to the YAML configuration file. If not specified, environment variables will be used for configuration.", FileNameFlag(&argConfigFile))
 	cmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "", "Log level (trace, debug, info, warn, error, fatal). If not specified, the LOG_LEVEL environment variable will be used.")
 	cmd.AddCommand(newRunCmd(conf))
+	cmd.AddCommand(newGatherCmd(conf))
 	return cmd
 }
 

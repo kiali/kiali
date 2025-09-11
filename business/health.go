@@ -15,6 +15,15 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
+func NewHealthService(businessLayer *Layer, conf *config.Config, prom prometheus.ClientInterface, userClients map[string]kubernetes.UserClientInterface) HealthService {
+	return HealthService{
+		businessLayer: businessLayer,
+		conf:          conf,
+		prom:          prom,
+		userClients:   userClients,
+	}
+}
+
 // HealthService deals with fetching health from various sources and convert to kiali model
 type HealthService struct {
 	businessLayer *Layer
@@ -155,7 +164,7 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 
 	// Perf: do not bother fetching request rate if no workloads or no workload has sidecar
 	sidecarPresent := false
-	var appSidecars = make(map[string]bool)
+	appSidecars := make(map[string]bool)
 
 	// Prepare all data
 	for app, entities := range appEntities {
@@ -302,7 +311,7 @@ func (in *HealthService) getNamespaceWorkloadHealth(ws models.Workloads, criteri
 	rateInterval := criteria.RateInterval
 	queryTime := criteria.QueryTime
 	cluster := criteria.Cluster
-	var wlSidecars = make(map[string]bool)
+	wlSidecars := make(map[string]bool)
 
 	allHealth := make(models.NamespaceWorkloadHealth)
 	for _, w := range ws {
@@ -375,6 +384,7 @@ func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates mo
 
 func (in *HealthService) getServiceRequestsHealth(namespace, cluster, service, rateInterval string, queryTime time.Time, svc *models.Service) (models.RequestHealth, error) {
 	rqHealth := models.NewEmptyRequestHealth()
+
 	if svc.Type == "External" {
 		// ServiceEntry from Istio Registry
 		// Telemetry doesn't collect a namespace
@@ -411,6 +421,7 @@ func (in *HealthService) getAppRequestsHealth(namespace, cluster, app, rateInter
 
 func (in *HealthService) getWorkloadRequestsHealth(namespace, cluster, workload, rateInterval string, queryTime time.Time, w *models.Workload) (models.RequestHealth, error) {
 	rqHealth := models.NewEmptyRequestHealth()
+
 	// @TODO include w.Cluster into query
 	inbound, outbound, err := in.prom.GetWorkloadRequestRates(namespace, cluster, workload, rateInterval, queryTime)
 	if err != nil {

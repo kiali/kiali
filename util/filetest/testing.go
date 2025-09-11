@@ -36,3 +36,11 @@ func StaticAssetDir(t *testing.T) fs.FS {
 
 	return os.DirFS(dir)
 }
+
+func WriteFile(t *testing.T, path string, contents []byte) {
+	t.Helper()
+
+	if err := os.WriteFile(path, contents, 0o644); err != nil {
+		t.Fatalf("Failed to write file %s: %v", path, err)
+	}
+}

@@ -50,6 +50,8 @@ func GraphMesh(
 	globalInfo.Conf = conf
 	globalInfo.Discovery = discovery
 	globalInfo.Grafana = grafana
+	globalInfo.KialiCache = kialiCache
+	globalInfo.PromClient = prom
 	globalInfo.IstioStatusGetter = &business.IstioStatus
 	globalInfo.KialiCache = kialiCache
 	globalInfo.PromClient = prom
