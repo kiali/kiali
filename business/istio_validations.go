@@ -619,7 +619,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		// Validations on PeerAuthentications
 		peerAuthnChecker := checkers.NewPeerAuthenticationChecker(cluster, conf, in.mesh.discovery, *mtlsDetails, mtlsDetails.PeerAuthentications, workloadsPerNamespace)
 		objectCheckers = []checkers.ObjectChecker{peerAuthnChecker}
-		referenceChecker = references.PeerAuthReferences{Conf: conf, MTLSDetails: *mtlsDetails, WorkloadsPerNamespace: workloadsPerNamespace}
+		referenceChecker = references.NewPeerAuthReferences(cluster, conf, in.mesh.discovery, *mtlsDetails, workloadsPerNamespace)
 	case schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}:
 		workloadChecker := checkers.NewWorkloadChecker(rbacDetails.AuthorizationPolicies, cluster, conf, in.mesh.discovery, namespaces, workloadsPerNamespace)
 		objectCheckers = []checkers.ObjectChecker{workloadChecker}

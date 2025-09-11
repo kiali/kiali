@@ -22,6 +22,23 @@ type PeerAuthReferences struct {
 	WorkloadsPerNamespace map[string]models.Workloads
 }
 
+// NewPeerAuthReferences creates a new PeerAuthReferences with all attributes
+func NewPeerAuthReferences(
+	cluster string,
+	conf *config.Config,
+	discovery istio.MeshDiscovery,
+	mtlsDetails kubernetes.MTLSDetails,
+	workloadsPerNamespace map[string]models.Workloads,
+) PeerAuthReferences {
+	return PeerAuthReferences{
+		Cluster:               cluster,
+		Conf:                  conf,
+		Discovery:             discovery,
+		MTLSDetails:           mtlsDetails,
+		WorkloadsPerNamespace: workloadsPerNamespace,
+	}
+}
+
 func (n PeerAuthReferences) References() models.IstioReferencesMap {
 	result := models.IstioReferencesMap{}
 
