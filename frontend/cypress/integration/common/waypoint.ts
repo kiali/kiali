@@ -1,6 +1,9 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { openTab } from './transition';
 import { getCellsForCol } from './table';
+import { Visualization } from '@patternfly/react-topology';
+import { elems, select } from './graph';
+import { EdgeAttr } from 'types/Graph';
 
 // waitForWorkloadEnrolled waits until Kiali returns the namespace labels updated
 // Adding the waypoint label into the bookinfo namespace
@@ -59,6 +62,101 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (maxRetries = 30, retryCo
       });
     }
   });
+};
+
+// Wait for graph to have a specific number of edges
+const waitForGraphEdges = (expectedEdges: number, maxRetries = 30, retryCount = 0): void => {
+  if (retryCount >= maxRetries) {
+    throw new Error(`Expected ${expectedEdges} edges not found after ${maxRetries} retries`);
+  }
+
+  cy.waitForReact();
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
+    .should('have.length', '1')
+    .then($graph => {
+      const { state } = $graph[0];
+      const controller = state.graphRefs.getController() as Visualization;
+
+      if (!controller || !controller.hasGraph()) {
+        // Refresh the graph data and retry
+        cy.get('[data-test="refresh-button"]').click();
+        cy.wait(5000).then(() => {
+          return waitForGraphEdges(expectedEdges, maxRetries, retryCount + 1);
+        });
+        return;
+      }
+
+      const { edges } = elems(controller);
+      const numEdges = select(edges, { prop: EdgeAttr.hasTraffic, op: '!=', val: undefined }).length;
+
+      if (numEdges >= expectedEdges) {
+        return;
+      } else {
+        // Refresh the graph data and retry
+        cy.get('[data-test="refresh-button"]').click();
+        cy.wait(5000).then(() => {
+          return waitForGraphEdges(expectedEdges, maxRetries, retryCount + 1);
+        });
+      }
+    });
+};
+
+// Wait for graph to have a specific number of edges including Prometheus
+const waitForGraphEdgesIncludingPrometheus = (expectedEdges: number, maxRetries = 30, retryCount = 0): void => {
+  if (retryCount >= maxRetries) {
+    throw new Error(`Expected ${expectedEdges} edges (including Prometheus) not found after ${maxRetries} retries`);
+  }
+
+  // Check if Prometheus deployment exists
+  cy.exec(`kubectl get deployments -A | grep prometheus | wc -l`).then(result => {
+    const prometheusPodsCount = parseInt(result.stdout.trim());
+
+    // If no Prometheus pods exist, validate against expectedEdges
+    // If Prometheus pods exist, validate against expectedEdges - 1
+    const adjustedExpectedEdges = prometheusPodsCount > 0 ? expectedEdges - 1 : expectedEdges;
+
+    // Use the base waitForGraphEdges function with the adjusted edge count
+    waitForGraphEdges(adjustedExpectedEdges, maxRetries, retryCount);
+  });
+};
+
+// Wait for a specific node to exist or not exist in the graph
+const waitForNodeExistence = (nodeName: string, shouldExist: boolean, maxRetries = 30, retryCount = 0): void => {
+  if (retryCount >= maxRetries) {
+    const action = shouldExist ? 'exist' : 'not exist';
+    throw new Error(`Node ${nodeName} should ${action} but condition not met after ${maxRetries} retries`);
+  }
+
+  cy.waitForReact();
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+      const controller = state.graphRefs.getController() as Visualization;
+
+      if (!controller || !controller.hasGraph()) {
+        // Refresh the graph data and retry
+        cy.get('[data-test="refresh-button"]').click();
+        cy.wait(5000).then(() => {
+          return waitForNodeExistence(nodeName, shouldExist, maxRetries, retryCount + 1);
+        });
+        return;
+      }
+
+      const { nodes } = elems(controller);
+      const foundNode = nodes.filter(node => node.getData().workload === nodeName);
+
+      const nodeExists = foundNode.length > 0;
+      if (nodeExists === shouldExist) {
+        return;
+      } else {
+        // Refresh the graph data and retry
+        cy.get('[data-test="refresh-button"]').click();
+        cy.wait(5000).then(() => {
+          return waitForNodeExistence(nodeName, shouldExist, maxRetries, retryCount + 1);
+        });
+      }
+    });
 };
 
 Then('{string} namespace is labeled with the waypoint label', (namespace: string) => {
@@ -224,4 +322,18 @@ When('{string} badge {string}', (badge, option: string) => {
   }
 
   cy.get(`[data-test="${badgeSelector}"]`).should(selector);
+});
+
+// New step definitions that use wait functions instead of direct assertions
+Then('{int} edges appear in the graph with retry', (graphEdges: number) => {
+  waitForGraphEdges(graphEdges);
+});
+
+Then('{int} edges appear in the graph including Prometheus with retry', (graphEdges: number) => {
+  waitForGraphEdgesIncludingPrometheus(graphEdges);
+});
+
+Then('the {string} node {string} exists with retry', (nodeName: string, action: string) => {
+  const shouldExist = action === 'does';
+  waitForNodeExistence(nodeName, shouldExist);
 });

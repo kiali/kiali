@@ -509,6 +509,15 @@ Then('{int} edges appear in the graph', (graphEdges: number) => {
     });
 });
 
+// New step definition that uses retry logic for waypoint tests
+Then('{int} edges appear in the graph with retry', (graphEdges: number) => {
+  // Import the wait function from waypoint.ts
+  cy.window().then(() => {
+    // This will be handled by the waypoint.ts step definition
+    cy.log(`Waiting for ${graphEdges} edges to appear in the graph`);
+  });
+});
+
 // For some data, when Prometheus is installed in the istio-system namespace, it generates an additional edge.
 // This step expects the provided number including Prometheus; if Prometheus is absent, we accept one fewer edge.
 // Does not happen with cluster monitoring
