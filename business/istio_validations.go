@@ -475,7 +475,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) [
 		checkers.K8sHTTPRouteChecker{Conf: conf, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices, Cluster: cluster},
 		checkers.K8sReferenceGrantChecker{K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Cluster: cluster},
 		checkers.NoServiceChecker{Conf: conf, Namespaces: namespaces, IstioConfigList: istioConfigList, WorkloadsPerNamespace: workloadsPerNamespace, AuthorizationDetails: rbacDetails, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh), Cluster: cluster},
-		checkers.PeerAuthenticationChecker{Conf: conf, PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: *mtlsDetails, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster, Discovery: in.mesh.discovery},
+		checkers.NewPeerAuthenticationChecker(cluster, conf, in.mesh.discovery, *mtlsDetails, mtlsDetails.PeerAuthentications, workloadsPerNamespace),
 		checkers.RequestAuthenticationChecker{RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster},
 		checkers.ServiceEntryChecker{ServiceEntries: istioConfigList.ServiceEntries, Namespaces: namespaces, WorkloadEntries: istioConfigList.WorkloadEntries, Cluster: cluster},
 		checkers.NewSidecarChecker(cluster, conf, in.mesh.discovery, namespaces, registryServices, istioConfigList.ServiceEntries, istioConfigList.Sidecars, workloadsPerNamespace),
@@ -617,7 +617,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		referenceChecker = references.NewAuthorizationPolicyReferences(rbacDetails.AuthorizationPolicies, conf, cluster, in.mesh.discovery, namespace, nsNames, istioConfigList.ServiceEntries, istioConfigList.VirtualServices, registryServices, workloadsPerNamespace)
 	case kubernetes.PeerAuthentications:
 		// Validations on PeerAuthentications
-		peerAuthnChecker := checkers.PeerAuthenticationChecker{Conf: conf, Cluster: cluster, PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: *mtlsDetails, WorkloadsPerNamespace: workloadsPerNamespace}
+		peerAuthnChecker := checkers.NewPeerAuthenticationChecker(cluster, conf, in.mesh.discovery, *mtlsDetails, mtlsDetails.PeerAuthentications, workloadsPerNamespace)
 		objectCheckers = []checkers.ObjectChecker{peerAuthnChecker}
 		referenceChecker = references.PeerAuthReferences{Conf: conf, MTLSDetails: *mtlsDetails, WorkloadsPerNamespace: workloadsPerNamespace}
 	case schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}:

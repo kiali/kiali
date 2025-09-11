@@ -22,6 +22,25 @@ type PeerAuthenticationChecker struct {
 	WorkloadsPerNamespace map[string]models.Workloads
 }
 
+// NewPeerAuthenticationChecker creates a new PeerAuthenticationChecker with all attributes
+func NewPeerAuthenticationChecker(
+	cluster string,
+	conf *config.Config,
+	discovery istio.MeshDiscovery,
+	mtlsDetails kubernetes.MTLSDetails,
+	peerAuthentications []*security_v1.PeerAuthentication,
+	workloadsPerNamespace map[string]models.Workloads,
+) PeerAuthenticationChecker {
+	return PeerAuthenticationChecker{
+		Cluster:               cluster,
+		Conf:                  conf,
+		Discovery:             discovery,
+		MTLSDetails:           mtlsDetails,
+		PeerAuthentications:   peerAuthentications,
+		WorkloadsPerNamespace: workloadsPerNamespace,
+	}
+}
+
 func (m PeerAuthenticationChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
