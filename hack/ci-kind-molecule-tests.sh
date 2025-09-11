@@ -574,7 +574,7 @@ if ! $CLIENT_EXE get namespace istio-system > /dev/null; then
       DOWNLOAD_ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
     fi
     hack/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
-    hack/istio/install-istio-via-istioctl.sh --client-exe-path "$CLIENT_EXE"
+    hack/istio/install-istio-via-istioctl.sh --client-exe-path "$CLIENT_EXE" --disable-ipv6 true
   else
     infomsg "There is no 'istio-system' namespace, and this script was told not to install Istio. Aborting."
     exit 1
