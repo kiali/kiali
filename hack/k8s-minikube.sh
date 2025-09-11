@@ -822,9 +822,9 @@ elif [ "$_CMD" = "istio" ]; then
   ensure_minikube_is_running
   echo 'Installing Istio'
   if [ "${MINIKUBE_PROFILE}" != "${DEFAULT_MINIKUBE_PROFILE}" ]; then
-    ./istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE} -cn ${MINIKUBE_PROFILE}
+    ./istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE} --disable-ipv6 true -cn ${MINIKUBE_PROFILE}
   else
-    ./istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE}
+    ./istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE} --disable-ipv6 true
   fi
 
 elif [ "$_CMD" = "bookinfo" ]; then
