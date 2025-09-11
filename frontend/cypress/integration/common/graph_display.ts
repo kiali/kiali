@@ -509,44 +509,6 @@ Then('{int} edges appear in the graph', (graphEdges: number) => {
     });
 });
 
-// New step definition that uses retry logic for waypoint tests
-Then('{int} edges appear in the graph with retry', (graphEdges: number) => {
-  // Import the wait function from waypoint.ts
-  cy.window().then(() => {
-    // This will be handled by the waypoint.ts step definition
-    cy.log(`Waiting for ${graphEdges} edges to appear in the graph`);
-  });
-});
-
-// For some data, when Prometheus is installed in the istio-system namespace, it generates an additional edge.
-// This step expects the provided number including Prometheus; if Prometheus is absent, we accept one fewer edge.
-// Does not happen with cluster monitoring
-Then('{int} edges appear in the graph including Prometheus', (graphEdges: number) => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      // Check if Prometheus deployment exists
-      cy.exec(`kubectl get deployments -A | grep prometheus | wc -l`).then(result => {
-        const prometheusPodsCount = parseInt(result.stdout.trim());
-        const { state } = $graph[0];
-
-        const controller = state.graphRefs.getController() as Visualization;
-        assert.isTrue(controller.hasGraph());
-        const { edges } = elems(controller);
-
-        const numEdges = select(edges, { prop: EdgeAttr.hasTraffic, op: '!=', val: undefined }).length;
-
-        // If no Prometheus pods exist, validate against graphEdges
-        // If Prometheus pods exist, validate against graphEdges - 1
-        const expectedEdges = prometheusPodsCount > 0 ? graphEdges - 1 : graphEdges;
-
-        // It can be more, depending on the service version redirection
-        assert.isAtLeast(numEdges, expectedEdges);
-      });
-    });
-});
-
 Then('the {string} node {string} exists', (nodeName: string, action: string) => {
   cy.waitForReact();
   cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
