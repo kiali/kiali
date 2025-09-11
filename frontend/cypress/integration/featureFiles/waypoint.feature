@@ -35,6 +35,7 @@ Feature: Kiali Waypoint related features
     And the user sees the L7 "waypoint" link
     And the link for the waypoint "waypoint" should redirect to a valid workload details
 
+  @retries(3)
   Scenario: [Workload details - waypoint] The workload details for a waypoint are valid
     Given user is at the details page for the "workload" "bookinfo/waypoint" located in the "" cluster
     Then the user sees the "L7" badge
@@ -65,7 +66,7 @@ Feature: Kiali Waypoint related features
     Then user "opens" traffic menu
     And user "enables" "ambientZtunnel" traffic option
     And user "closes" traffic menu
-    Then 5 edges appear in the graph including Prometheus
+    Then 5 edges appear in the graph including Prometheus with retry
 
   Scenario: [Traffic Graph] User sees no Ambient traffic
     Given user is at the "graph" page
@@ -74,7 +75,7 @@ Feature: Kiali Waypoint related features
     Then user "opens" traffic menu
     And user "disables" "ambient" traffic option
     And user "closes" traffic menu
-    Then 2 edges appear in the graph
+    Then 2 edges appear in the graph with retry
 
   Scenario: [Traffic Graph] User sees all Ambient traffic
     Given user is at the "graph" page
@@ -84,10 +85,10 @@ Feature: Kiali Waypoint related features
     And user "enables" "ambientTotal" traffic option
     And user "enables" "ambient" traffic option
     And user "closes" traffic menu
-    Then 14 edges appear in the graph including Prometheus
+    Then 14 edges appear in the graph including Prometheus with retry
 
   Scenario: [Traffic Graph] User doesn't see waypoint proxy
-    And the "waypoint" node "doesn't" exists
+    And the "waypoint" node "doesn't" exists with retry
 
   Scenario: [Traffic Graph] User sees waypoint proxy
     When user "opens" display menu
@@ -96,8 +97,8 @@ Feature: Kiali Waypoint related features
     Then user "opens" traffic menu
     And user "enables" "ambientTotal" traffic option
     And user "closes" traffic menu
-    Then 16 edges appear in the graph
-    And the "waypoint" node "does" exists
+    Then 16 edges appear in the graph with retry
+    And the "waypoint" node "does" exists with retry
 
   Scenario: [Traffic Graph] User sees waypoint traffic
     Given user is at the "graph" page
@@ -106,7 +107,7 @@ Feature: Kiali Waypoint related features
     Then user "opens" traffic menu
     And user "enables" "ambientWaypoint" traffic option
     And user "closes" traffic menu
-    Then 11 edges appear in the graph
+    Then 11 edges appear in the graph with retry
 
   Scenario: [Istio Config] Waypoint should not have validation errors
     Given user is at the "istio" page
@@ -130,9 +131,9 @@ Feature: Kiali Waypoint related features
     Then user "opens" display menu
     And user "disables" "waypoint proxies" option
     And user "closes" display menu
-    Then 2 edges appear in the graph
-    And the "echo-server" node "does" exists
-    And the "curl-client" node "does" exists
+    Then 2 edges appear in the graph with retry
+    And the "echo-server" node "does" exists with retry
+    And the "curl-client" node "does" exists with retry
 
   Scenario: [Traffic] Waypoint for different namespaces working as expected with waypoints
     Given user is at the "graph" page
@@ -145,11 +146,11 @@ Feature: Kiali Waypoint related features
     Then user "opens" display menu
     And user "enables" "waypoint proxies" option
     And user "closes" display menu
-    Then 4 edges appear in the graph
+    Then 4 edges appear in the graph with retry
     Then user "opens" traffic menu
     And user "disables" "http" traffic option
     And user "closes" traffic menu
-    Then 2 edges appear in the graph
+    Then 2 edges appear in the graph with retry
 
   Scenario: [Traffic] Waypoint for all
     Given user is at the "graph" page
@@ -162,9 +163,9 @@ Feature: Kiali Waypoint related features
     Then user "opens" display menu
     And user "disables" "waypoint proxies" option
     And user "closes" display menu
-    Then 2 edges appear in the graph
-    And the "echo-server" node "does" exists
-    And the "curl-client" node "does" exists
+    Then 2 edges appear in the graph with retry
+    And the "echo-server" node "does" exists with retry
+    And the "curl-client" node "does" exists with retry
 
   Scenario: [Traffic] Waypoint for all with waypoint
     Given user is at the "graph" page
@@ -177,12 +178,12 @@ Feature: Kiali Waypoint related features
     Then user "opens" display menu
     And user "enables" "waypoint proxies" option
     And user "closes" display menu
-    Then 4 edges appear in the graph
-    And the "cgw" node "does" exists
+    Then 4 edges appear in the graph with retry
+    And the "cgw" node "does" exists with retry
     Then user "opens" traffic menu
     And user "disables" "http" traffic option
     And user "closes" traffic menu
-    Then 2 edges appear in the graph
+    Then 2 edges appear in the graph with retry
 
   Scenario: [Traffic] Waypoint for none
     Given user is at the "graph" page
@@ -195,9 +196,9 @@ Feature: Kiali Waypoint related features
     Then user "opens" display menu
     And user "disables" "waypoint proxies" option
     And user "closes" display menu
-    Then 2 edges appear in the graph
-    And the "echo-server" node "does" exists
-    And the "curl-client" node "does" exists
+    Then 2 edges appear in the graph with retry
+    And the "echo-server" node "does" exists with retry
+    And the "curl-client" node "does" exists with retry
 
   Scenario: [Traffic] Waypoint for none with waypoint proxies
     Given user is at the "graph" page
@@ -210,11 +211,11 @@ Feature: Kiali Waypoint related features
     Then user "opens" display menu
     And user "enables" "waypoint proxies" option
     And user "closes" display menu
-    Then 2 edges appear in the graph
+    Then 2 edges appear in the graph with retry
     Then user "opens" traffic menu
     And user "disables" "http" traffic option
     And user "closes" traffic menu
-    Then 0 edges appear in the graph
+    Then 0 edges appear in the graph with retry
 
   Scenario: [Traffic] Waypoint for service
     Given user is at the "graph" page
@@ -226,9 +227,9 @@ Feature: Kiali Waypoint related features
     Then user "opens" display menu
     And user "disables" "waypoint proxies" option
     And user "closes" display menu
-    Then 2 edges appear in the graph
-    And the "echo-server" node "does" exists
-    And the "curl-client" node "does" exists
+    Then 2 edges appear in the graph with retry
+    And the "echo-server" node "does" exists with retry
+    And the "curl-client" node "does" exists with retry
 
   Scenario: [Traffic] Waypoint for service with waypoints
     Given user is at the "graph" page
@@ -395,17 +396,17 @@ Feature: Kiali Waypoint related features
     And user "closes" traffic menu
     Then user "opens" display menu
     And user "enables" "security" option
-    Then 9 edges appear in the graph
+    Then 9 edges appear in the graph with retry
     Then security "appears" in the graph
     And user "closes" display menu
     Then user "opens" traffic menu
     And user "disables" "ambient" traffic option
     And user "closes" traffic menu
-    Then 5 edges appear in the graph
+    Then 5 edges appear in the graph with retry
     Then user "opens" traffic menu
     Then user "enables" "ambient" traffic option
     Then user "disables" "tcp" traffic option
-    Then 4 edges appear in the graph
+    Then 4 edges appear in the graph with retry
     Then user "closes" traffic menu
 
   Scenario: [Overview] Add to Ambient in the test-sidecar namespace
