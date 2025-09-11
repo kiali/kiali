@@ -12,6 +12,7 @@ source ${HACK_SCRIPT_DIR}/functions.sh
 : ${CLIENT_EXE:=oc}
 : ${ARCH:=amd64}
 : ${DELETE_DEMO:=false}
+: ${INSTALL_GAMMA:=false}
 : ${ISTIO_NAMESPACE:=istio-system}
 : ${NAMESPACE_ALPHA:=alpha}
 : ${NAMESPACE_BETA:=beta}
@@ -65,6 +66,10 @@ while [ $# -gt 0 ]; do
       WAYPOINT="$2"
       shift;shift
       ;;
+    -ig|--install-gamma)
+      INSTALL_GAMMA="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -78,6 +83,7 @@ Valid command line arguments:
   -c1|--cluster1: context name of the cluster 1. Doesn't do anything if --distribute-demo is set to false (default: east)
   -c2|--cluster2: context name of the cluster 2. Doesn't do anything if --distribute-demo is set to false (default: west)
   -w|--waypoint: Create a waypoint proxy per namespace (When ISTIO_INJECTION=false) (default: false)
+  -ig|--install-gamma <true|false>: If you want to install the gamma namespace and demo (default: false)
   -h|--help: this text
   -s|--source: demo file source. For example: file:///home/me/demos Default: https://raw.githubusercontent.com/kiali/demos/master
 HELPMSG
@@ -103,6 +109,7 @@ echo CLUSTER1_CONTEXT=${CLUSTER1_CONTEXT}
 echo CLUSTER2_CONTEXT=${CLUSTER2_CONTEXT}
 echo DELETE_DEMO=${DELETE_DEMO}
 echo DISTRIBUTE_DEMO=${DISTRIBUTE_DEMO}
+echo INSTALL_GAMMA=${INSTALL_GAMMA}
 echo ISTIO_NAMESPACE=${ISTIO_NAMESPACE}
 echo NAMESPACE_ALPHA=${NAMESPACE_ALPHA}
 echo NAMESPACE_BETA=${NAMESPACE_BETA}
@@ -133,18 +140,24 @@ if [ "${DELETE_DEMO}" == "true" ]; then
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE_ALPHA}
     $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE_BETA}
-    $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE_GAMMA}
+    if [ "${INSTALL_GAMMA}" == "true" ]; then
+      $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE_GAMMA}
+    fi
     $CLIENT_EXE delete scc error-rates-scc
   fi
   
   if [ "${DISTRIBUTE_DEMO}" == "true" ]; then
     ${CLIENT_EXE} delete namespace ${NAMESPACE_ALPHA} --context ${CLUSTER1_CONTEXT}
     ${CLIENT_EXE} delete namespace ${NAMESPACE_BETA}  --context ${CLUSTER2_CONTEXT}
-    ${CLIENT_EXE} delete namespace ${NAMESPACE_GAMMA} --context ${CLUSTER2_CONTEXT}
+    if [ "${INSTALL_GAMMA}" == "true" ]; then
+      ${CLIENT_EXE} delete namespace ${NAMESPACE_GAMMA} --context ${CLUSTER2_CONTEXT}
+    fi
   else
     ${CLIENT_EXE} delete namespace ${NAMESPACE_ALPHA}
     ${CLIENT_EXE} delete namespace ${NAMESPACE_BETA}
-    ${CLIENT_EXE} delete namespace ${NAMESPACE_GAMMA}
+    if [ "${INSTALL_GAMMA}" == "true" ]; then
+      ${CLIENT_EXE} delete namespace ${NAMESPACE_GAMMA}
+    fi
   fi
   
   exit 0
@@ -155,16 +168,22 @@ fi
 if [ "${IS_OPENSHIFT}" == "true" ]; then
   $CLIENT_EXE new-project ${NAMESPACE_ALPHA}
   $CLIENT_EXE new-project ${NAMESPACE_BETA}
-  $CLIENT_EXE new-project ${NAMESPACE_GAMMA}
+  if [ "${INSTALL_GAMMA}" == "true" ]; then
+    $CLIENT_EXE new-project ${NAMESPACE_GAMMA}
+  fi
 else
   if [ "${DISTRIBUTE_DEMO}" == "true" ]; then
     $CLIENT_EXE create namespace ${NAMESPACE_ALPHA} --context ${CLUSTER1_CONTEXT}
     $CLIENT_EXE create namespace ${NAMESPACE_BETA} --context ${CLUSTER2_CONTEXT}
-    $CLIENT_EXE create namespace ${NAMESPACE_GAMMA} --context ${CLUSTER2_CONTEXT}
+    if [ "${INSTALL_GAMMA}" == "true" ]; then
+      $CLIENT_EXE create namespace ${NAMESPACE_GAMMA} --context ${CLUSTER2_CONTEXT}
+    fi
   else
     $CLIENT_EXE create namespace ${NAMESPACE_ALPHA}
     $CLIENT_EXE create namespace ${NAMESPACE_BETA}
-    $CLIENT_EXE create namespace ${NAMESPACE_GAMMA}
+    if [ "${INSTALL_GAMMA}" == "true" ]; then
+      $CLIENT_EXE create namespace ${NAMESPACE_GAMMA}
+    fi
   fi
 fi
 
@@ -196,7 +215,9 @@ if [ "${AMBIENT_ENABLED}" == "true" ]; then
     echo "Create Waypoint proxy"
     ${ISTIOCTL} x waypoint apply -n ${NAMESPACE_ALPHA}
     ${ISTIOCTL} x waypoint apply -n ${NAMESPACE_BETA}
-    ${ISTIOCTL} x waypoint apply -n ${NAMESPACE_GAMMA}
+    if [ "${INSTALL_GAMMA}" == "true" ]; then
+      ${ISTIOCTL} x waypoint apply -n ${NAMESPACE_GAMMA}
+    fi
   fi
 else
   if [ "${AUTO_INJECTION}" == "true" ]; then
@@ -207,18 +228,24 @@ fi
 if [ "${DISTRIBUTE_DEMO}" == "true" ]; then
     ${CLIENT_EXE} label namespace ${NAMESPACE_ALPHA} ${ISTIO_INJECTION} --context ${CLUSTER1_CONTEXT}
     ${CLIENT_EXE} label namespace ${NAMESPACE_BETA} ${ISTIO_INJECTION}  --context ${CLUSTER2_CONTEXT}
-    ${CLIENT_EXE} label namespace ${NAMESPACE_GAMMA} ${ISTIO_INJECTION}  --context ${CLUSTER2_CONTEXT}
+    if [ "${INSTALL_GAMMA}" == "true" ]; then
+      ${CLIENT_EXE} label namespace ${NAMESPACE_GAMMA} ${ISTIO_INJECTION}  --context ${CLUSTER2_CONTEXT}
+    fi
   else
     ${CLIENT_EXE} label namespace ${NAMESPACE_ALPHA} ${ISTIO_INJECTION}
     ${CLIENT_EXE} label namespace ${NAMESPACE_BETA} ${ISTIO_INJECTION}
-    ${CLIENT_EXE} label namespace ${NAMESPACE_GAMMA} ${ISTIO_INJECTION}
+    if [ "${INSTALL_GAMMA}" == "true" ]; then
+      ${CLIENT_EXE} label namespace ${NAMESPACE_GAMMA} ${ISTIO_INJECTION}
+    fi
 fi
 
 # For OpenShift 4.11, adds default service account in the current ns to use as a user
 if [ "${IS_OPENSHIFT}" == "true" ]; then
   $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE_ALPHA}
   $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE_BETA}
-  $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE_GAMMA}
+  if [ "${INSTALL_GAMMA}" == "true" ]; then
+    $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE_GAMMA}
+  fi
 fi
 
 if [ "${IS_OPENSHIFT}" == "true" ]; then
@@ -234,12 +261,20 @@ kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
-  cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_GAMMA} create -f -
+  if [ "${INSTALL_GAMMA}" == "true" ]; then
+    cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_GAMMA} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
+  fi
+  SCC_USERS="- \"system:serviceaccount:${NAMESPACE_ALPHA}:default\"
+- \"system:serviceaccount:${NAMESPACE_BETA}:default\""
+  if [ "${INSTALL_GAMMA}" == "true" ]; then
+    SCC_USERS="${SCC_USERS}
+- \"system:serviceaccount:${NAMESPACE_GAMMA}:default\""
+  fi
   cat <<SCC | $CLIENT_EXE apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
@@ -253,9 +288,7 @@ supplementalGroups:
   type: RunAsAny
 priority: 9
 users:
-- "system:serviceaccount:${NAMESPACE_ALPHA}:default"
-- "system:serviceaccount:${NAMESPACE_BETA}:default"
-- "system:serviceaccount:${NAMESPACE_GAMMA}:default"
+${SCC_USERS}
 SCC
 fi
 
@@ -272,28 +305,40 @@ if [ "${DISTRIBUTE_DEMO}" == "true" ]; then
   if [ "${ARCH}" == "ppc64le" ]; then
     ${CLIENT_EXE} apply -f <(curl -L ${url_alpha} | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_ALPHA} --context ${CLUSTER1_CONTEXT}
     ${CLIENT_EXE} apply -f <(curl -L "${url_beta}" | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_BETA} --context ${CLUSTER2_CONTEXT}
-    ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}" | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_GAMMA} --context ${CLUSTER2_CONTEXT}
+    if [ "${INSTALL_GAMMA}" == "true" ]; then
+      ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}" | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_GAMMA} --context ${CLUSTER2_CONTEXT}
+    fi
   elif [ "${ARCH}" == "s390x" ]; then
     ${CLIENT_EXE} apply -f <(curl -L ${url_alpha} | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_ALPHA} --context ${CLUSTER1_CONTEXT}
     ${CLIENT_EXE} apply -f <(curl -L "${url_beta}" | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_BETA} --context ${CLUSTER2_CONTEXT}
-    ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}" | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_GAMMA} --context ${CLUSTER2_CONTEXT}
+    if [ "${INSTALL_GAMMA}" == "true" ]; then
+      ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}" | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_GAMMA} --context ${CLUSTER2_CONTEXT}
+    fi
   else
     ${CLIENT_EXE} apply -f <(curl -L ${url_alpha}) -n ${NAMESPACE_ALPHA} --context ${CLUSTER1_CONTEXT}
     ${CLIENT_EXE} apply -f <(curl -L "${url_beta}") -n ${NAMESPACE_BETA} --context ${CLUSTER2_CONTEXT}
-    ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}") -n ${NAMESPACE_GAMMA} --context ${CLUSTER2_CONTEXT}
+    if [ "${INSTALL_GAMMA}" == "true" ]; then
+      ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}") -n ${NAMESPACE_GAMMA} --context ${CLUSTER2_CONTEXT}
+    fi
   fi
 else
   if [ "${ARCH}" == "ppc64le" ]; then
     ${CLIENT_EXE} apply -f <(curl -L ${url_alpha} | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_ALPHA}
     ${CLIENT_EXE} apply -f <(curl -L "${url_beta}" | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_BETA}
-    ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}" | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_GAMMA}
+    if [ "${INSTALL_GAMMA}" == "true" ]; then
+      ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}" | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_GAMMA}
+    fi
   elif [ "${ARCH}" == "s390x" ]; then
     ${CLIENT_EXE} apply -f <(curl -L ${url_alpha} | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_ALPHA}
     ${CLIENT_EXE} apply -f <(curl -L "${url_beta}" | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_BETA}
-    ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}" | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_GAMMA}
+    if [ "${INSTALL_GAMMA}" == "true" ]; then
+      ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}" | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_GAMMA}
+    fi
   else
     ${CLIENT_EXE} apply -f <(curl -L ${url_alpha}) -n ${NAMESPACE_ALPHA}
     ${CLIENT_EXE} apply -f <(curl -L "${url_beta}") -n ${NAMESPACE_BETA}
-    ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}") -n ${NAMESPACE_GAMMA}
+    if [ "${INSTALL_GAMMA}" == "true" ]; then
+      ${CLIENT_EXE} apply -f <(curl -L "${url_gamma}") -n ${NAMESPACE_GAMMA}
+    fi
   fi
 fi
