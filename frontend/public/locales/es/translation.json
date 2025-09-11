@@ -286,7 +286,7 @@
   "Mesh": "Malla de servicios",
   "Mesh page": "Página de malla",
   "mesh settings": "configuración de malla",
-  "Mesh: {{meshId}}": "Mesh: {{meshId}}",
+  "Mesh: {{meshName}}": "Mesh: {{meshName}}",
   "Metrics": "Métricas",
   "Min TLS version": "Versión mínima de TLS",
   "Mirror Percentage": "Porcentaje de espejo",
