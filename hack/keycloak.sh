@@ -38,9 +38,9 @@ Valid options:
       External IP address for the keycloak service.
       Required for the 'deploy' command.
   -slm|--set-limit-memory
-      Add --set resources.limits.memory <value> to the helm command. Ex. resources.limits.memory=1Gi
+      Set memory limits for Keycloak. Ex. 1Gi
   -srm|--set-requests-memory
-      Add --set resources.requests.memory <valor>  to the helm command. Ex. resources.requests.memory=1Gi
+      Set memory requests for Keycloak. Ex. 1Gi
 
 The command must be one of:
   create-ca:        create the root CA for keycloak.
@@ -118,35 +118,176 @@ EOF
   # create kube secret from the certs
   kubectl create secret tls keycloak-tls --cert="${KEYCLOAK_CERTS_DIR}"/cert.pem --key="${KEYCLOAK_CERTS_DIR}"/key.pem -n keycloak
 
-  HELM_MEMORY_ARGS=""
+  # Deploy PostgreSQL database first
+  echo "Deploying PostgreSQL database..."
+  kubectl apply -n keycloak -f - <<EOF
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-db
+  namespace: keycloak
+spec:
+  serviceName: postgres-db-service
+  selector:
+    matchLabels:
+      app: postgres-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: postgres-db
+    spec:
+      containers:
+        - name: postgres-db
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: keycloak
+            - name: POSTGRES_PASSWORD
+              value: keycloak
+            - name: POSTGRES_DB
+              value: keycloak
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-db
+  namespace: keycloak
+spec:
+  selector:
+    app: postgres-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP
+EOF
+
+  # Wait for PostgreSQL to be ready
+  echo "Waiting for PostgreSQL to be ready..."
+  kubectl wait --for=condition=Ready pod -l app=postgres-db -n keycloak --timeout=300s
+
+  # Build memory resource specifications
+  MEMORY_LIMITS=""
+  MEMORY_REQUESTS=""
   if [ -n "$SET_LIMIT_MEMORY" ]; then
-    HELM_MEMORY_ARGS="$HELM_MEMORY_ARGS --set resources.limits.memory=$SET_LIMIT_MEMORY"
+    MEMORY_LIMITS="            limits:
+              memory: $SET_LIMIT_MEMORY"
   fi
   if [ -n "$SET_REQUESTS_MEMORY" ]; then
-    HELM_MEMORY_ARGS="$HELM_MEMORY_ARGS --set resources.requests.memory=$SET_REQUESTS_MEMORY"
+    MEMORY_REQUESTS="            requests:
+              memory: $SET_REQUESTS_MEMORY"
   fi
-  helm upgrade --install --wait --timeout 15m \
-  --namespace keycloak \
-  keycloak oci://registry-1.docker.io/bitnamicharts/keycloak --version 24.3.2 \
-  $HELM_MEMORY_ARGS \
-  --reuse-values --values - <<EOF
-auth:
-  createAdminUser: true
-  adminUser: admin
-  adminPassword: admin
-  managementUser: manager
-  managementPassword: manager
-proxyAddressForwarding: true
-postgresql:
-  enabled: true
-tls:
-  enabled: true
-  usePem: true
-  existingSecret: keycloak-tls
-service:
+
+  # Deploy Keycloak using official image version 26.3.2
+  echo "Deploying Keycloak 26.3.2..."
+  kubectl apply -n keycloak -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:26.3.2
+          args: ["start"]
+          env:
+            - name: KEYCLOAK_ADMIN
+              value: admin
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: admin
+            - name: KC_DB
+              value: postgres
+            - name: KC_DB_URL
+              value: jdbc:postgresql://postgres-db:5432/keycloak
+            - name: KC_DB_USERNAME
+              value: keycloak
+            - name: KC_DB_PASSWORD
+              value: keycloak
+            - name: KC_HOSTNAME
+              value: ${KEYCLOAK_EXTERNAL_ADDRESS}
+            - name: KC_PROXY
+              value: edge
+            - name: KC_HTTP_ENABLED
+              value: "true"
+            - name: KC_HTTPS_CERTIFICATE_FILE
+              value: /opt/keycloak/conf/tls.crt
+            - name: KC_HTTPS_CERTIFICATE_KEY_FILE
+              value: /opt/keycloak/conf/tls.key
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: https
+              containerPort: 8443
+          volumeMounts:
+            - name: keycloak-tls-certs
+              mountPath: /opt/keycloak/conf
+              readOnly: true
+          resources:
+$MEMORY_LIMITS
+$MEMORY_REQUESTS
+          readinessProbe:
+            httpGet:
+              path: /realms/master
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /realms/master
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 30
+      volumes:
+        - name: keycloak-tls-certs
+          secret:
+            secretName: keycloak-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+  namespace: keycloak
+spec:
+  selector:
+    app: keycloak
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+    - name: https
+      port: 8443
+      targetPort: 8443
   type: LoadBalancer
 EOF
 
-  echo "Keycloak deployed. Waiting for the keycloak ingress to be ready..."
-  kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n keycloak service/keycloak
+  echo "Keycloak 26.3.2 deployed. Waiting for Keycloak to be ready..."
+  kubectl wait --for=condition=Available deployment/keycloak -n keycloak --timeout=600s
+  
+  echo "Waiting for Keycloak service to get LoadBalancer IP..."
+  kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n keycloak service/keycloak --timeout=300s
 fi
