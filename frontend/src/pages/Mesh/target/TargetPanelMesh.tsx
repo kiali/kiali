@@ -15,7 +15,7 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
 
   return (
     <div id="target-panel-mesh" className={classes(panelStyle, targetPanelStyle)}>
-      {renderInfraSummary(controller)}
+      {renderInfraSummary(controller, props.meshData)}
     </div>
   );
 };

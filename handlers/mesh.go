@@ -70,13 +70,17 @@ func MeshGraph(
 		filterAccessibleControlPlanes(r.Context(), business.Namespace, &meshInfo)
 
 		// controlplanes can belong to different meshes
+		meshNameSet := make(map[string]bool)
 		for _, cp := range meshInfo.ControlPlanes {
 			meshId := cp.MeshConfig.DefaultConfig.MeshId
 			if meshId == "" {
 				// MeshId defaults to trust domain in istio if not set.
 				meshId = cp.MeshConfig.TrustDomain
 			}
-			o.MeshNames = append(o.MeshNames, meshId)
+			if !meshNameSet[meshId] {
+				o.MeshNames = append(o.MeshNames, meshId)
+				meshNameSet[meshId] = true
+			}
 		}
 
 		code, payload := api.GraphMesh(r.Context(), business, o, clientFactory, cache, conf, grafana, perses, discovery)
