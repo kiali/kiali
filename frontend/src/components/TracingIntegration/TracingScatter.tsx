@@ -159,28 +159,26 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
       color: (({ datum }) => datum.color) as any,
       legendItem: makeLegend('Error Traces', PFColors.Red200)
     };
-    return (
+    return this.props.errorFetchTraces && this.props.errorFetchTraces.length > 0 ? (
+      this.renderFetchEmpty('Error fetching traces', this.props.errorFetchTraces![0].msg)
+    ) : this.props.traces.length > 0 ? (
       <div data-test="tracing-scatterplot" className={tracingChartStyle}>
-        {this.props.errorFetchTraces && this.props.errorFetchTraces.length > 0 ? (
-          this.renderFetchEmpty('Error fetching traces', this.props.errorFetchTraces![0].msg)
-        ) : this.props.traces.length > 0 ? (
-          <div style={{ marginTop: 20 }}>
-            <ChartWithLegend<Datapoint, JaegerLineInfo>
-              data={[successTraces, errorTraces]}
-              fill={true}
-              unit="seconds"
-              seriesComponent={<ChartScatter />}
-              onClick={dp => this.props.setTraceId(this.props.cluster, dp.trace.traceID)}
-              onTooltipClose={dp => this.onTooltipClose(dp.trace)}
-              onTooltipOpen={dp => this.onTooltipOpen(dp.trace)}
-              labelComponent={<TraceTooltip />}
-              pointer={true}
-            />
-          </div>
-        ) : (
-          this.renderFetchEmpty('No traces', 'No trace results. Try another query.')
-        )}
+        <div style={{ marginTop: 20 }}>
+          <ChartWithLegend<Datapoint, JaegerLineInfo>
+            data={[successTraces, errorTraces]}
+            fill={true}
+            unit="seconds"
+            seriesComponent={<ChartScatter />}
+            onClick={dp => this.props.setTraceId(this.props.cluster, dp.trace.traceID)}
+            onTooltipClose={dp => this.onTooltipClose(dp.trace)}
+            onTooltipOpen={dp => this.onTooltipOpen(dp.trace)}
+            labelComponent={<TraceTooltip />}
+            pointer={true}
+          />
+        </div>
       </div>
+    ) : (
+      this.renderFetchEmpty('No traces', 'No trace results. Try another query.')
     );
   }
 
