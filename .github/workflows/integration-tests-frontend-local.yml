@@ -40,7 +40,7 @@ jobs:
     # This caches the yarn deps but does not touch node_modules so it's still necessary
     # to run 'yarn install' later to link these into node_modules.
     - name: Setup node
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v5
       with:
         node-version: "20"
         cache: yarn
