@@ -22,6 +22,25 @@ type WorkloadChecker struct {
 	WorkloadsPerNamespace map[string]models.Workloads
 }
 
+// NewWorkloadChecker creates a new WorkloadChecker with all attributes
+func NewWorkloadChecker(
+	authorizationPolicies []*security_v1.AuthorizationPolicy,
+	cluster string,
+	conf *config.Config,
+	discovery istio.MeshDiscovery,
+	namespaces models.Namespaces,
+	workloadsPerNamespace map[string]models.Workloads,
+) WorkloadChecker {
+	return WorkloadChecker{
+		AuthorizationPolicies: authorizationPolicies,
+		Cluster:               cluster,
+		Conf:                  conf,
+		Discovery:             discovery,
+		Namespaces:            namespaces,
+		WorkloadsPerNamespace: workloadsPerNamespace,
+	}
+}
+
 func (w WorkloadChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 

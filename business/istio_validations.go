@@ -482,7 +482,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) [
 		checkers.TelemetryChecker{Telemetries: istioConfigList.Telemetries, Namespaces: namespaces},
 		checkers.VirtualServiceChecker{Conf: conf, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices, DestinationRules: istioConfigList.DestinationRules, Cluster: cluster},
 		checkers.WasmPluginChecker{WasmPlugins: istioConfigList.WasmPlugins, Namespaces: namespaces},
-		checkers.WorkloadChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster, Namespaces: namespaces, Conf: conf},
+		checkers.NewWorkloadChecker(rbacDetails.AuthorizationPolicies, cluster, conf, in.mesh.discovery, namespaces, workloadsPerNamespace),
 		checkers.WorkloadGroupsChecker{Cluster: cluster, WorkloadGroups: istioConfigList.WorkloadGroups, ServiceAccounts: vInfo.saMap},
 	}
 }
@@ -621,7 +621,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		objectCheckers = []checkers.ObjectChecker{peerAuthnChecker}
 		referenceChecker = references.PeerAuthReferences{Conf: conf, MTLSDetails: *mtlsDetails, WorkloadsPerNamespace: workloadsPerNamespace}
 	case schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}:
-		workloadChecker := checkers.WorkloadChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster, Namespaces: namespaces, Conf: conf}
+		workloadChecker := checkers.NewWorkloadChecker(rbacDetails.AuthorizationPolicies, cluster, conf, in.mesh.discovery, namespaces, workloadsPerNamespace)
 		objectCheckers = []checkers.ObjectChecker{workloadChecker}
 	case kubernetes.WorkloadEntries:
 		// Validation on WorkloadEntries are not yet in place
