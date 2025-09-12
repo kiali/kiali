@@ -75,6 +75,8 @@ DEFAULT_API_PROXY_PORT="8001"
 DEFAULT_CLIENT_EXE="kubectl"
 DEFAULT_COPY_CLUSTER_SECRETS="true"
 DEFAULT_ENABLE_SERVER="true"
+DEFAULT_ENABLE_GRAFANA="true"
+DEFAULT_ENABLE_TRACING="true"
 DEFAULT_IGNORE_HOME_CLUSTER="false"
 DEFAULT_ISTIO_NAMESPACE="istio-system"
 DEFAULT_ISTIOD_URL="http://127.0.0.1:15014/version"
@@ -104,6 +106,8 @@ while [[ $# -gt 0 ]]; do
     -ce|--client-exe)            CLIENT_EXE="$2";                    shift;shift ;;
     -cn|--cluster-name)          CLUSTER_NAME="$2";                  shift;shift ;;
     -es|--enable-server)         ENABLE_SERVER="$2";                 shift;shift ;;
+    -eg|--enable-grafana)        ENABLE_GRAFANA="$2";                shift;shift ;;
+    -et|--enable-tracing)        ENABLE_TRACING="$2";                shift;shift ;;
     -gu|--grafana-url)           GRAFANA_URL="$2";                   shift;shift ;;
     -hkc|--home-kube-context)    HOME_KUBE_CONTEXT="$2";             shift;shift ;;
     -ihc|--ignore-home-cluster)  IGNORE_HOME_CLUSTER="$2";          shift;shift ;;
@@ -169,6 +173,14 @@ Valid options:
       will be the job of an external tool such as an IDE. When 'false' this script will print out a command
       so you can know what that external tool should execute to start a properly configured server.
       Default: ${DEFAULT_ENABLE_SERVER}
+  -eg|--enable-grafana
+      When true, Grafana integration will be enabled and Grafana URL will be auto-discovered or
+      used from --grafana-url. When false, Grafana integration will be completely disabled.
+      Default: ${DEFAULT_ENABLE_GRAFANA}
+  -et|--enable-tracing
+      When true, tracing integration will be enabled and tracing URL will be auto-discovered or
+      used from --tracing-url. When false, tracing integration will be completely disabled.
+      Default: ${DEFAULT_ENABLE_TRACING}
   -gu|--grafana-url
       The URL that can be used to query the exposed Grafana service. You must have exposed Grafana
       to external clients outside of the cluster - that external URL is what this value should be.
@@ -288,6 +300,8 @@ API_PROXY_PORT="${API_PROXY_PORT:-${DEFAULT_API_PROXY_PORT}}"
 CLUSTER_NAME="${CLUSTER_NAME:-}"
 COPY_CLUSTER_SECRETS="${COPY_CLUSTER_SECRETS:-${DEFAULT_COPY_CLUSTER_SECRETS}}"
 ENABLE_SERVER="${ENABLE_SERVER:-${DEFAULT_ENABLE_SERVER}}"
+ENABLE_GRAFANA="${ENABLE_GRAFANA:-${DEFAULT_ENABLE_GRAFANA}}"
+ENABLE_TRACING="${ENABLE_TRACING:-${DEFAULT_ENABLE_TRACING}}"
 IGNORE_HOME_CLUSTER="${IGNORE_HOME_CLUSTER:-${DEFAULT_IGNORE_HOME_CLUSTER}}"
 ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-${DEFAULT_ISTIO_NAMESPACE}}"
 KIALI_CONFIG_TEMPLATE_FILE="${KIALI_CONFIG_TEMPLATE_FILE:-${DEFAULT_KIALI_CONFIG_TEMPLATE_FILE}}"
@@ -399,7 +413,11 @@ fi
 # If the user didn't tell us what the Grafana URL is, try to auto-discover it
 
 PORT_FORWARD_DEPLOYMENT_GRAFANA=""
-if [ -z "${GRAFANA_URL:-}" ]; then
+if [ "${ENABLE_GRAFANA}" == "false" ]; then
+  infomsg "Grafana integration is disabled via --enable-grafana=false"
+  GRAFANA_URL=""
+  GRAFANA_ENABLED="false"
+elif [ -z "${GRAFANA_URL:-}" ]; then
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     graf_host="$(${CLIENT_EXE} get route -n ${ISTIO_NAMESPACE} grafana -o jsonpath='{.spec.host}')"
     if [ "$?" != "0" -o -z "${graf_host}" ]; then
@@ -439,6 +457,9 @@ if [ -z "${GRAFANA_URL:-}" ]; then
       GRAFANA_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_GRAFANA} | cut -d ':' -f 1)"
     fi
   fi
+  GRAFANA_ENABLED="true"
+else
+  GRAFANA_ENABLED="true"
 fi
 
 # If the user didn't tell us what the Perses URL is, try to auto-discover it
@@ -487,7 +508,11 @@ fi
 # If the user didn't tell us what the Tracing URL is, try to auto-discover it
 
 PORT_FORWARD_DEPLOYMENT_TRACING=""
-if [ -z "${TRACING_URL:-}" ]; then
+if [ "${ENABLE_TRACING}" == "false" ]; then
+  infomsg "Tracing integration is disabled via --enable-tracing=false"
+  TRACING_URL=""
+  TRACING_ENABLED="false"
+elif [ -z "${TRACING_URL:-}" ]; then
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     trac_host="$(${CLIENT_EXE} get route -n ${TRACING_NAMESPACE} ${TRACING_SERVICE} -o jsonpath='{.spec.host}')"
     if [ "$?" != "0" -o -z "${trac_host}" ]; then
@@ -536,6 +561,9 @@ if [ -z "${TRACING_URL:-}" ]; then
       TRACING_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)${TRACING_PREFIX}"
     fi
   fi
+  TRACING_ENABLED="true"
+else
+  TRACING_ENABLED="true"
 fi
 
 # If the user didn't tell us what the k8s master api endpoint is, try to auto-discover it
@@ -565,7 +593,10 @@ echo "CLIENT_EXE=$CLIENT_EXE"
 echo "CLUSTER_NAME=$CLUSTER_NAME"
 echo "COPY_CLUSTER_SECRETS=$COPY_CLUSTER_SECRETS"
 echo "ENABLE_SERVER=$ENABLE_SERVER"
+echo "ENABLE_GRAFANA=$ENABLE_GRAFANA"
+echo "ENABLE_TRACING=$ENABLE_TRACING"
 echo "GRAFANA_URL=$GRAFANA_URL"
+echo "GRAFANA_ENABLED=$GRAFANA_ENABLED"
 echo "HOME_KUBE_CONTEXT=$HOME_KUBE_CONTEXT"
 echo "IGNORE_HOME_CLUSTER=$IGNORE_HOME_CLUSTER"
 echo "ISTIO_NAMESPACE=$ISTIO_NAMESPACE"
@@ -592,6 +623,7 @@ echo "TRACING_APP=$TRACING_APP"
 echo "TRACING_SERVICE=$TRACING_SERVICE"
 echo "TRACING_NAMESPACE=$TRACING_NAMESPACE"
 echo "TRACING_URL=$TRACING_URL"
+echo "TRACING_ENABLED=$TRACING_ENABLED"
 
 # Validate the settings
 
@@ -605,6 +637,8 @@ if ! echo "${LOG_LEVEL}" | grep -qiE "^(trace|debug|info|warn|error|fatal)$"; th
 [ "${REBOOTABLE}" != "true" -a "${REBOOTABLE}" != "false" ] && errormsg "--rebootable must be 'true' or 'false'" && exit 1
 [ "${ENABLE_SERVER}" != "true" -a "${ENABLE_SERVER}" != "false" ] && errormsg "--enable-server must be 'true' or 'false'" && exit 1
 [ "${ENABLE_SERVER}" == "false" -a "${REBOOTABLE}" == "true" ] && infomsg "--enable-server was set to false - turning off rebootable flag for you" && REBOOTABLE="false"
+[ "${ENABLE_GRAFANA}" != "true" -a "${ENABLE_GRAFANA}" != "false" ] && errormsg "--enable-grafana must be 'true' or 'false'" && exit 1
+[ "${ENABLE_TRACING}" != "true" -a "${ENABLE_TRACING}" != "false" ] && errormsg "--enable-tracing must be 'true' or 'false'" && exit 1
 [ "${IGNORE_HOME_CLUSTER}" != "true" -a "${IGNORE_HOME_CLUSTER}" != "false" ] && errormsg "--ignore-home-cluster must be 'true' or 'false'" && exit 1
 [ "${COPY_CLUSTER_SECRETS}" != "true" -a "${COPY_CLUSTER_SECRETS}" != "false" ] && errormsg "--copy-cluster-secrets must be 'true' or 'false'" && exit 1
 
@@ -617,8 +651,10 @@ cat ${KIALI_CONFIG_TEMPLATE_FILE} | \
   ISTIOD_URL=${ISTIOD_URL} \
   PROMETHEUS_URL=${PROMETHEUS_URL} \
   GRAFANA_URL=${GRAFANA_URL} \
+  GRAFANA_ENABLED=${GRAFANA_ENABLED} \
   TRACING_APP=${TRACING_APP} \
   TRACING_URL=${TRACING_URL} \
+  TRACING_ENABLED=${TRACING_ENABLED} \
   IGNORE_HOME_CLUSTER=${IGNORE_HOME_CLUSTER} \
   envsubst > ${KIALI_CONFIG_FILE}
 
@@ -930,11 +966,15 @@ cleanup_and_exit() {
   kill_proxy
   kill_port_forward_istiod
   kill_port_forward_prometheus
-  kill_port_forward_grafana
+  if [ "${ENABLE_GRAFANA}" == "true" ]; then
+    kill_port_forward_grafana
+  fi
   if [[ -v PERSES_URL && -n "${PERSES_URL}" ]]; then
     kill_port_forward_perses
   fi
-  kill_port_forward_tracing
+  if [ "${ENABLE_TRACING}" == "true" ]; then
+    kill_port_forward_tracing
+  fi
 
   exitmsg "Exiting"
   exit ${1:-0}
@@ -951,11 +991,15 @@ if [ "${ISTIOD_URL}" != "" ]; then
   start_port_forward_istiod
 fi
 start_port_forward_prometheus
-start_port_forward_grafana
+if [ "${ENABLE_GRAFANA}" == "true" ]; then
+  start_port_forward_grafana
+fi
 if [[ -v PERSES_URL && -n "${PERSES_URL}" ]]; then
   start_port_forward_perses
 fi
-start_port_forward_tracing
+if [ "${ENABLE_TRACING}" == "true" ]; then
+  start_port_forward_tracing
+fi
 start_proxy
 
 if [ "${ENABLE_SERVER}" == "true" ]; then

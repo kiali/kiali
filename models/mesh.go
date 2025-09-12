@@ -123,6 +123,10 @@ type ControlPlane struct {
 	// Can be empty when it's the default revision.
 	Revision string `json:"revision"`
 
+	// RootNamespace is the root namespace name of the deployed control plane, if not set in MeshConfig then it
+	// defaults to IstiodNamespace. See https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/#MeshConfig-root_namespace
+	RootNamespace string `json:"rootNamespace"`
+
 	// SharedMeshConfig is the name of a second configmap that will be merged
 	// with the standard mesh config if it's present.
 	SharedMeshConfig string `json:"-"`

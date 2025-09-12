@@ -11,7 +11,8 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	istio "istio.io/client-go/pkg/clientset/versioned"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apps_v1 "k8s.io/api/apps/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	inferenceapiclient "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
@@ -323,21 +324,34 @@ func DestinationRuleHasMTLSEnabled(destinationRule *networking_v1.DestinationRul
 	return false, ""
 }
 
-// ClusterNameFromIstiod attempts to resolve the cluster info of the "home" cluster where kiali is running
+// ClusterNameFromIstiod attempts to resolve the clusterName of the "home" cluster where kiali is running,
 // by inspecting the istiod deployment. Assumes that the istiod deployment is in the same cluster as the kiali pod.
 func ClusterNameFromIstiod(conf *config.Config, k8s ClientInterface) (string, error) {
-	// The "cluster_id" is set in an environment variable of
-	// the "istiod" deployment. Let's try to fetch it.
-	istiodDeployments, err := k8s.GetDeployments(conf.ExternalServices.Istio.RootNamespace, metav1.ListOptions{LabelSelector: "app=istiod"})
-	if err != nil {
-		return "", err
+	var istiodDeployments []apps_v1.Deployment
+	if conf.AllNamespacesAccessible() {
+		deployments, err := k8s.GetDeployments("", meta_v1.ListOptions{LabelSelector: "app=istiod"})
+		if err != nil {
+			log.Warningf("Failed to get istiod deployments: %v", err)
+		} else {
+			istiodDeployments = deployments
+		}
+	} else {
+		// this should always include the controlplane namespace(s) if the discovery selectors are correctly set up
+		for _, ns := range conf.Deployment.AccessibleNamespaces {
+			deployments, err := k8s.GetDeployments(ns, meta_v1.ListOptions{LabelSelector: "app=istiod"})
+			if err != nil {
+				log.Warningf("Failed to get istiod deployments from namespace %s: %v", ns, err)
+				continue
+			}
+			istiodDeployments = append(istiodDeployments, deployments...)
+		}
 	}
 
 	if len(istiodDeployments) == 0 {
-		return "", fmt.Errorf("istiod deployment not found in namespace [%s]", conf.ExternalServices.Istio.RootNamespace)
+		return "", fmt.Errorf("no istiod deployment found, no clusterName determined")
 	}
 
-	// Just take the first one since they should all have the same cluster id.
+	// Just take the first one since they should all have the same clusterID.
 	istiodDeployment := &istiodDeployments[0]
 
 	istiodContainers := istiodDeployment.Spec.Template.Spec.Containers

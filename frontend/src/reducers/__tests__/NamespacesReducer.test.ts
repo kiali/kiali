@@ -11,6 +11,7 @@ describe('Namespaces reducer', () => {
       items: [],
       lastUpdated: undefined,
       filter: '',
+      namespaces: [],
       namespacesPerCluster: new Map<string, string[]>()
     } as NamespaceState);
   });
@@ -21,6 +22,7 @@ describe('Namespaces reducer', () => {
       isFetching: false,
       items: [],
       lastUpdated: undefined,
+      namespaces: [],
       namespacesPerCluster: new Map<string, string[]>(),
       filter: ''
     };
@@ -30,6 +32,7 @@ describe('Namespaces reducer', () => {
       isFetching: false,
       items: [],
       lastUpdated: undefined,
+      namespaces: [],
       namespacesPerCluster: new Map<string, string[]>(),
       filter: ''
     };
@@ -42,6 +45,7 @@ describe('Namespaces reducer', () => {
       isFetching: false,
       items: [],
       lastUpdated: undefined,
+      namespaces: [],
       namespacesPerCluster: new Map<string, string[]>(),
       filter: ''
     };
@@ -51,6 +55,7 @@ describe('Namespaces reducer', () => {
       isFetching: false,
       items: [],
       lastUpdated: undefined,
+      namespaces: [],
       namespacesPerCluster: new Map<string, string[]>(),
       filter: 'istio'
     };
@@ -63,6 +68,7 @@ describe('Namespaces reducer', () => {
       isFetching: false,
       items: [],
       lastUpdated: undefined,
+      namespaces: [],
       namespacesPerCluster: new Map<string, string[]>(),
       filter: ''
     };
@@ -72,6 +78,7 @@ describe('Namespaces reducer', () => {
       isFetching: false,
       items: [],
       lastUpdated: undefined,
+      namespaces: [],
       namespacesPerCluster: new Map<string, string[]>(),
       filter: ''
     };
@@ -84,6 +91,7 @@ describe('Namespaces reducer', () => {
       isFetching: false,
       items: [],
       lastUpdated: undefined,
+      namespaces: [],
       namespacesPerCluster: new Map<string, string[]>(),
       filter: ''
     };
@@ -93,6 +101,7 @@ describe('Namespaces reducer', () => {
       isFetching: false,
       items: [],
       lastUpdated: undefined,
+      namespaces: [],
       namespacesPerCluster: new Map<string, string[]>(),
       filter: ''
     };
@@ -105,6 +114,7 @@ describe('Namespaces reducer', () => {
       isFetching: false,
       items: [],
       lastUpdated: undefined,
+      namespaces: [],
       namespacesPerCluster: new Map<string, string[]>(),
       filter: ''
     };
@@ -115,6 +125,7 @@ describe('Namespaces reducer', () => {
       items: [],
       lastUpdated: undefined,
       filter: '',
+      namespaces: [],
       namespacesPerCluster: new Map<string, string[]>()
     };
     expect(NamespaceStateReducer(currentState, requestStartedAction)).toEqual(expectedState);
@@ -126,6 +137,7 @@ describe('Namespaces reducer', () => {
       isFetching: true,
       items: [],
       filter: '',
+      namespaces: [],
       namespacesPerCluster: new Map<string, string[]>()
     };
     const requestStartedAction = NamespaceActions.requestFailed();
@@ -134,6 +146,7 @@ describe('Namespaces reducer', () => {
       isFetching: false,
       items: [],
       filter: '',
+      namespaces: [],
       namespacesPerCluster: new Map<string, string[]>()
     };
     expect(NamespaceStateReducer(currentState, requestStartedAction)).toEqual(expectedState);
@@ -147,6 +160,7 @@ describe('Namespaces reducer', () => {
       isFetching: true,
       items: [{ name: 'old' }, { name: 'my-namespace' }],
       lastUpdated: undefined,
+      namespaces: [],
       namespacesPerCluster: new Map<string, string[]>()
     };
     const requestStartedAction = NamespaceActions.receiveList(
@@ -159,6 +173,7 @@ describe('Namespaces reducer', () => {
       isFetching: false,
       items: [{ name: 'a' }, { name: 'b' }, { name: 'c' }],
       lastUpdated: currentDate,
+      namespaces: [{ name: 'a' }, { name: 'b' }, { name: 'c' }],
       namespacesPerCluster: new Map<string, string[]>()
     };
     expect(NamespaceStateReducer(currentState, requestStartedAction)).toEqual(expectedState);

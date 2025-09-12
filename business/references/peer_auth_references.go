@@ -1,20 +1,42 @@
 package references
 
 import (
+	"context"
+
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util"
 )
 
 type PeerAuthReferences struct {
+	Cluster               string
 	Conf                  *config.Config
+	Discovery             istio.MeshDiscovery
 	MTLSDetails           kubernetes.MTLSDetails
 	WorkloadsPerNamespace map[string]models.Workloads
+}
+
+// NewPeerAuthReferences creates a new PeerAuthReferences with all attributes
+func NewPeerAuthReferences(
+	cluster string,
+	conf *config.Config,
+	discovery istio.MeshDiscovery,
+	mtlsDetails kubernetes.MTLSDetails,
+	workloadsPerNamespace map[string]models.Workloads,
+) PeerAuthReferences {
+	return PeerAuthReferences{
+		Cluster:               cluster,
+		Conf:                  conf,
+		Discovery:             discovery,
+		MTLSDetails:           mtlsDetails,
+		WorkloadsPerNamespace: workloadsPerNamespace,
+	}
 }
 
 func (n PeerAuthReferences) References() models.IstioReferencesMap {
@@ -35,7 +57,8 @@ func (n PeerAuthReferences) getConfigReferences(peerAuthn *security_v1.PeerAuthe
 	keys := make(map[string]bool)
 	allDRs := make([]models.IstioReference, 0)
 	result := make([]models.IstioReference, 0)
-	if config.IsRootNamespace(peerAuthn.Namespace) {
+	rootNamespace := n.Discovery.GetRootNamespace(context.TODO(), n.Cluster, peerAuthn.Namespace)
+	if rootNamespace == peerAuthn.Namespace {
 		if _, mode := kubernetes.PeerAuthnHasMTLSEnabled(peerAuthn); mode == "DISABLE" {
 			for _, dr := range n.MTLSDetails.DestinationRules {
 				if _, mode := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr); mode == "DISABLE" {
@@ -59,7 +82,8 @@ func (n PeerAuthReferences) getConfigReferences(peerAuthn *security_v1.PeerAuthe
 	// MeshWide and NamespaceWide references are only needed with autoMtls disabled
 	if !n.MTLSDetails.EnabledAutoMtls {
 		// PeerAuthentications into  the root namespace namespace are considered Mesh-wide objects
-		if config.IsRootNamespace(peerAuthn.Namespace) {
+		rootNamespace := n.Discovery.GetRootNamespace(context.TODO(), n.Cluster, peerAuthn.Namespace)
+		if rootNamespace == peerAuthn.Namespace {
 			// if MeshPolicy have mtls in strict mode.
 			if strictMode := kubernetes.PeerAuthnHasStrictMTLS(peerAuthn); strictMode {
 				for _, dr := range n.MTLSDetails.DestinationRules {

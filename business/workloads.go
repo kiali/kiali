@@ -151,13 +151,7 @@ func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1.Au
 	if !found {
 		return models.IstioValidations{}
 	}
-	validations := checkers.WorkloadChecker{
-		AuthorizationPolicies: authpolicies,
-		Cluster:               cluster,
-		Conf:                  in.conf,
-		Namespaces:            namespaces,
-		WorkloadsPerNamespace: workloadsPerNamespace,
-	}.Check()
+	validations := checkers.NewWorkloadChecker(authpolicies, cluster, in.conf, in.businessLayer.Mesh.discovery, namespaces, workloadsPerNamespace).Check()
 
 	return validations
 }

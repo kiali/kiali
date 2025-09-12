@@ -7,6 +7,7 @@ import (
 	ambient "github.com/kiali/kiali/business/checkers/ambient"
 	"github.com/kiali/kiali/business/checkers/workloads"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/models"
 )
 
@@ -16,8 +17,28 @@ type WorkloadChecker struct {
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	Cluster               string
 	Conf                  *config.Config
+	Discovery             istio.MeshDiscovery
 	Namespaces            models.Namespaces
 	WorkloadsPerNamespace map[string]models.Workloads
+}
+
+// NewWorkloadChecker creates a new WorkloadChecker with all attributes
+func NewWorkloadChecker(
+	authorizationPolicies []*security_v1.AuthorizationPolicy,
+	cluster string,
+	conf *config.Config,
+	discovery istio.MeshDiscovery,
+	namespaces models.Namespaces,
+	workloadsPerNamespace map[string]models.Workloads,
+) WorkloadChecker {
+	return WorkloadChecker{
+		AuthorizationPolicies: authorizationPolicies,
+		Cluster:               cluster,
+		Conf:                  conf,
+		Discovery:             discovery,
+		Namespaces:            namespaces,
+		WorkloadsPerNamespace: workloadsPerNamespace,
+	}
 }
 
 func (w WorkloadChecker) Check() models.IstioValidations {
@@ -38,7 +59,7 @@ func (w WorkloadChecker) runChecks(workload *models.Workload, namespace string) 
 	key, rrValidation := EmptyValidValidation(wlName, namespace, schema.GroupVersionKind{Group: "", Version: "", Kind: WorkloadCheckerType}, w.Cluster)
 
 	enabledCheckers := []Checker{
-		workloads.UncoveredWorkloadChecker{Workload: workload, Namespace: namespace, AuthorizationPolicies: w.AuthorizationPolicies},
+		workloads.NewUncoveredWorkloadChecker(w.AuthorizationPolicies, w.Discovery, namespace, workload),
 		ambient.NewAmbientWorkloadChecker(w.Cluster, w.Conf, workload, namespace, w.Namespaces, w.AuthorizationPolicies),
 	}
 

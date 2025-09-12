@@ -4,8 +4,12 @@ source ${SCRIPT_DIR}/env.sh $*
 
 set -e
 
-CTX_EXTERNAL_CLUSTER="kind-controlplane"
-CTX_REMOTE_CLUSTER="kind-dataplane"
+infomsg() {
+  echo "[INFO] ${1}"
+}
+
+CTX_EXTERNAL_CLUSTER="controlplane"
+CTX_REMOTE_CLUSTER="dataplane"
 REMOTE_CLUSTER_NAME="dataplane"
 EXTERNAL_CLUSTER_NAME="controlplane"
 
@@ -40,12 +44,47 @@ install_bookinfo() {
   fi
 }
 
-if ! kind get clusters -q | grep -q "${EXTERNAL_CLUSTER_NAME}" ; then
-    ./hack/start-kind.sh --load-balancer-range 255.70-255.84 -n "${EXTERNAL_CLUSTER_NAME}" -eir false --image "${KIND_NODE_IMAGE}"
+# Use the k8s-minikube.sh script to start minikube clusters with proper networking
+K8S_MINIKUBE_SCRIPT="${SCRIPT_DIR}/../../k8s-minikube.sh"
+
+if ! minikube profile list -o json 2>/dev/null | jq -e --arg profile "${EXTERNAL_CLUSTER_NAME}" '.valid[] | select(.Name == $profile)' > /dev/null; then
+    infomsg "Creating minikube profile: ${EXTERNAL_CLUSTER_NAME}"
+    "${K8S_MINIKUBE_SCRIPT}" --minikube-profile "${EXTERNAL_CLUSTER_NAME}" --load-balancer-addrs "70-84" start
 fi
-if ! kind get clusters -q | grep -q "${REMOTE_CLUSTER_NAME}" ; then
-    ./hack/start-kind.sh --load-balancer-range 255.85-255.98 -n "${REMOTE_CLUSTER_NAME}" -eir false --image "${KIND_NODE_IMAGE}"
+
+if ! minikube profile list -o json 2>/dev/null | jq -e --arg profile "${REMOTE_CLUSTER_NAME}" '.valid[] | select(.Name == $profile)' > /dev/null; then
+    infomsg "Creating minikube profile: ${REMOTE_CLUSTER_NAME}"
+    # Create second cluster on the same network as the first - use the network parameter
+    "${K8S_MINIKUBE_SCRIPT}" --minikube-profile "${REMOTE_CLUSTER_NAME}" --load-balancer-addrs "85-98" -mf "--network=mk-${EXTERNAL_CLUSTER_NAME}" start
 fi
+
+# Set up kubectl contexts - minikube creates contexts with the profile names
+# If contexts don't exist, create them; if they do exist, update them to point to the right clusters
+EXTERNAL_CLUSTER_SERVER="https://$(minikube ip -p ${EXTERNAL_CLUSTER_NAME}):8443"
+REMOTE_CLUSTER_SERVER="https://$(minikube ip -p ${REMOTE_CLUSTER_NAME}):8443"
+
+# Create or update the external cluster context
+kubectl config set-cluster ${CTX_EXTERNAL_CLUSTER} --server="${EXTERNAL_CLUSTER_SERVER}" --certificate-authority="${HOME}/.minikube/ca.crt"
+kubectl config set-credentials ${CTX_EXTERNAL_CLUSTER} --client-certificate="${HOME}/.minikube/profiles/${EXTERNAL_CLUSTER_NAME}/client.crt" --client-key="${HOME}/.minikube/profiles/${EXTERNAL_CLUSTER_NAME}/client.key"
+kubectl config set-context ${CTX_EXTERNAL_CLUSTER} --cluster=${CTX_EXTERNAL_CLUSTER} --user=${CTX_EXTERNAL_CLUSTER}
+
+# Create or update the remote cluster context  
+kubectl config set-cluster ${CTX_REMOTE_CLUSTER} --server="${REMOTE_CLUSTER_SERVER}" --certificate-authority="${HOME}/.minikube/ca.crt"
+kubectl config set-credentials ${CTX_REMOTE_CLUSTER} --client-certificate="${HOME}/.minikube/profiles/${REMOTE_CLUSTER_NAME}/client.crt" --client-key="${HOME}/.minikube/profiles/${REMOTE_CLUSTER_NAME}/client.key"
+kubectl config set-context ${CTX_REMOTE_CLUSTER} --cluster=${CTX_REMOTE_CLUSTER} --user=${CTX_REMOTE_CLUSTER}
+
+# Verify the contexts are working
+kubectl config use-context ${CTX_EXTERNAL_CLUSTER}
+kubectl cluster-info --context ${CTX_EXTERNAL_CLUSTER} || {
+  echo "Error: Cannot connect to external cluster context '${CTX_EXTERNAL_CLUSTER}'"
+  exit 1
+}
+
+kubectl config use-context ${CTX_REMOTE_CLUSTER}
+kubectl cluster-info --context ${CTX_REMOTE_CLUSTER} || {
+  echo "Error: Cannot connect to remote cluster context '${CTX_REMOTE_CLUSTER}'"
+  exit 1
+}
 
 # Following: https://github.com/istio-ecosystem/sail-operator/tree/main/docs#external-control-plane
 # Create the Istio install configuration for the ingress gateway that will expose the external control plane ports to other clusters:
@@ -66,6 +105,7 @@ kubectl wait --context "${CTX_EXTERNAL_CLUSTER}" --for=condition=Ready istios/de
 
 helm upgrade --install --kube-context "${CTX_EXTERNAL_CLUSTER}" --wait -n istio-system istio-ingressgateway gateway --repo https://istio-release.storage.googleapis.com/charts -f - <<EOF
 service:
+  type: LoadBalancer
   ports:
     - port: 15021
       targetPort: 15021
@@ -108,8 +148,8 @@ install_istio --patch-file "${REMOTE_ISTIO_YAML}" -a "prometheus" --wait false
 
 kubectl get ns external-istiod --context="${CTX_EXTERNAL_CLUSTER}" || kubectl create namespace external-istiod --context="${CTX_EXTERNAL_CLUSTER}"
 
-KIND_IP=$(docker inspect ${REMOTE_CLUSTER_NAME}-control-plane --format "{{ .NetworkSettings.Networks.kind.IPAddress }}")
-REMOTE_KUBE_API_SERVER_URL="https://${KIND_IP}:6443"
+REMOTE_IP=$(minikube ip -p ${REMOTE_CLUSTER_NAME})
+REMOTE_KUBE_API_SERVER_URL="https://${REMOTE_IP}:8443"
 [ "$(kubectl get istios external-istiod -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')" = "True" ] || kubectl --context="${CTX_REMOTE_CLUSTER}" wait --for='jsonpath={.status.conditions[?(@.type=="Ready")].message}="readiness probe on remote istiod failed"' istios/external-istiod --timeout=1m
 "${ISTIOCTL}" create-remote-secret \
   --context="${CTX_REMOTE_CLUSTER}" \

@@ -29,6 +29,7 @@ export const INITIAL_NAMESPACE_STATE: NamespaceState = {
   isFetching: false,
   items: [],
   lastUpdated: undefined,
+  namespaces: [],
   namespacesPerCluster: new Map<string, string[]>()
 };
 
@@ -71,6 +72,7 @@ export const NamespaceStateReducer = (
         isFetching: false,
         items: filterDuplicateNamespaces(action.payload.list),
         lastUpdated: action.payload.receivedAt,
+        namespaces: action.payload.list,
         namespacesPerCluster: namespacesPerCluster(action.payload.list),
         ...updatedActive
       });

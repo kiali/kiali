@@ -6,6 +6,7 @@ import (
 	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/business/checkers/sidecars"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -13,11 +14,35 @@ import (
 type SidecarChecker struct {
 	Cluster               string
 	Conf                  *config.Config
+	Discovery             istio.MeshDiscovery
 	Namespaces            models.Namespaces
 	RegistryServices      []*kubernetes.RegistryService
 	ServiceEntries        []*networking_v1.ServiceEntry
 	Sidecars              []*networking_v1.Sidecar
 	WorkloadsPerNamespace map[string]models.Workloads
+}
+
+// NewSidecarChecker creates a new SidecarChecker with all required fields
+func NewSidecarChecker(
+	cluster string,
+	conf *config.Config,
+	discovery istio.MeshDiscovery,
+	namespaces models.Namespaces,
+	registryServices []*kubernetes.RegistryService,
+	serviceEntries []*networking_v1.ServiceEntry,
+	sidecars []*networking_v1.Sidecar,
+	workloadsPerNamespace map[string]models.Workloads,
+) SidecarChecker {
+	return SidecarChecker{
+		Cluster:               cluster,
+		Conf:                  conf,
+		Discovery:             discovery,
+		Namespaces:            namespaces,
+		RegistryServices:      registryServices,
+		ServiceEntries:        serviceEntries,
+		Sidecars:              sidecars,
+		WorkloadsPerNamespace: workloadsPerNamespace,
+	}
 }
 
 func (s SidecarChecker) Check() models.IstioValidations {
@@ -65,7 +90,7 @@ func (s SidecarChecker) runChecks(sidecar *networking_v1.Sidecar) models.IstioVa
 	enabledCheckers := []Checker{
 		common.WorkloadSelectorNoWorkloadFoundChecker(kubernetes.Sidecars, selectorLabels, s.WorkloadsPerNamespace),
 		sidecars.EgressHostChecker{Conf: s.Conf, Sidecar: sidecar, ServiceEntries: serviceHosts, RegistryServices: s.RegistryServices},
-		sidecars.GlobalChecker{Sidecar: sidecar},
+		sidecars.NewGlobalChecker(s.Cluster, s.Discovery, sidecar),
 		sidecars.OutboundTrafficPolicyModeChecker{Sidecar: sidecar},
 	}
 

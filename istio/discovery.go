@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -244,6 +245,7 @@ func sidecarInjectorConfigMapName(revision string) string {
 type MeshDiscovery interface {
 	Clusters() ([]models.KubeCluster, error)
 	GetControlPlaneNamespaces(ctx context.Context, cluster string) []string
+	GetRootNamespace(ctx context.Context, cluster, namespace string) string
 	IsControlPlane(ctx context.Context, cluster, namespace string) bool
 	Mesh(ctx context.Context) (*models.Mesh, error)
 }
@@ -253,6 +255,10 @@ type Discovery struct {
 	conf           *config.Config
 	kialiCache     cache.KialiCache
 	kialiSAClients map[string]kubernetes.ClientInterface
+	// namespaceMap provides quick lookup from Namespace to ControlPlane key="cluster:namespace", set during Mesh discovery
+	namespaceMap map[string]*models.ControlPlane
+	// meshMutex protects concurrent access to the Mesh function to prevent race conditions
+	meshMutex sync.Mutex
 }
 
 // NewDiscovery initializes a new Discovery.
@@ -300,7 +306,7 @@ func (in *Discovery) IsControlPlane(ctx context.Context, cluster, namespace stri
 func (in *Discovery) HasControlPlane(ctx context.Context, cluster string, ns string, istiod string) bool {
 	mesh, err := in.Mesh(ctx)
 	if err != nil {
-		log.Errorf("Error getting mesh config: %s", err)
+		log.Errorf("Unable to get mesh to determine HasControlPlane for cluster [%s] namespace [%s]. Err: %s", cluster, ns, err)
 		return false
 	}
 
@@ -311,6 +317,17 @@ func (in *Discovery) HasControlPlane(ctx context.Context, cluster string, ns str
 	}
 
 	return false
+}
+
+// GetRootNamespace returns the Istio root namespace for the control plane managing the given namespace
+func (in *Discovery) GetRootNamespace(ctx context.Context, cluster, namespace string) string {
+	cp := in.namespaceMap[in.namespaceMapKey(cluster, namespace)]
+	if cp != nil {
+		return cp.RootNamespace
+	}
+
+	log.Warningf("GetRootNamespace: failed to determine RootNamespace for cluster [%s] namespace [%s]. Returning [%s]", cluster, namespace, config.IstioNamespaceDefault)
+	return config.IstioNamespaceDefault
 }
 
 // IsRemoteCluster determines if the cluster has a controlplane or if it's a remote cluster without one.
@@ -404,6 +421,7 @@ type clusterRevisionKey struct {
 // Mesh gathers information about the mesh and controlplanes running in the mesh
 // from various sources e.g. istio configmap, istiod deployment envvars, etc.
 // Do not edit the mesh object returned from here directly. It is shared across threads.
+// This function is protected by a mutex to prevent concurrent execution and race conditions.
 func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "Mesh",
@@ -411,6 +429,12 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	)
 	defer end()
 
+	// Protect against concurrent access to prevent race conditions
+	in.meshMutex.Lock()
+	defer in.meshMutex.Unlock()
+
+	// Check cache after acquiring the lock in case another goroutine
+	// already populated it while we were waiting for the lock
 	if mesh, ok := in.kialiCache.GetMesh(); ok {
 		return mesh, nil
 	}
@@ -508,6 +532,11 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				log.Warningf("Unable to set control plane configuration: %s", err)
 			}
 
+			controlPlane.RootNamespace = controlPlane.MeshConfig.RootNamespace
+			if controlPlane.RootNamespace == "" {
+				controlPlane.RootNamespace = controlPlane.IstiodNamespace
+			}
+
 			// If the cluster id that is set on the controlplane matches this cluster's id then it manages the cluster it is deployed on.
 			// This is for single cluster deployments and primary-remote where the cluster here is the primary cluster.
 			if controlPlane.ID == cluster.Name {
@@ -569,10 +598,10 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		controlPlanes[i] = &mesh.ControlPlanes[i]
 	}
 	// Convert to map.
-	controlPlanesByClusterName := map[string][]*models.ControlPlane{}
+	controlPlanesByClusterID := map[string][]*models.ControlPlane{}
 	for _, cp := range controlPlanes {
 		// Need the id not the cluster name.
-		controlPlanesByClusterName[cp.ID] = append(controlPlanesByClusterName[cp.ID], cp)
+		controlPlanesByClusterID[cp.ID] = append(controlPlanesByClusterID[cp.ID], cp)
 	}
 
 	// We don't have access to the istio secrets so can't use that to determine what
@@ -629,7 +658,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				}
 			} else {
 				for _, controlPlaneClusterName := range strings.Split(controlClusters, ",") {
-					if controlPlanes, ok := controlPlanesByClusterName[controlPlaneClusterName]; ok {
+					if controlPlanes, ok := controlPlanesByClusterID[controlPlaneClusterName]; ok {
 						for _, controlPlane := range controlPlanes {
 							if controlPlane.ManagesExternal {
 								controlPlane.ManagedClusters = append(controlPlane.ManagedClusters, cluster)
@@ -697,7 +726,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				GetKialiDiscoverySelectors([]string{}, cluster.Name, in.conf),
 			)
 			// add control plane namespaces, which should always be included
-			for _, cp := range controlPlanesByClusterName[cluster.Name] {
+			for _, cp := range controlPlanesByClusterID[cluster.Name] {
 				if !sliceutil.Some(namespaces, func(ns models.Namespace) bool {
 					return ns.Name == cp.IstiodNamespace
 				}) {
@@ -754,9 +783,32 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		}
 	}
 
+	// set the NamespaceMap, any previous map will get gc'd
+	in.namespaceMap = map[string]*models.ControlPlane{}
+	for _, cp := range controlPlanes {
+		ci := in.kialiSAClients[cp.ID]
+		if ci == nil {
+			ci = in.kialiSAClients[cp.Cluster.Name]
+		}
+		namespaces, err := ci.GetNamespaces("")
+		if err != nil {
+			log.Errorf("unable to populate NamespaceMap for controlPlane with ID [%s], name [%s]. Err: %s", cp.ID, cp.Cluster.Name, err)
+			continue
+		}
+		for _, ns := range namespaces {
+			key := in.namespaceMapKey(cp.ID, ns.Name)
+			in.namespaceMap[key] = cp
+		}
+	}
+
 	in.kialiCache.SetMesh(mesh)
 
 	return mesh, nil
+}
+
+// key returns "cluster:namespace"
+func (in *Discovery) namespaceMapKey(cluster, namespace string) string {
+	return cluster + ":" + namespace
 }
 
 func newControlPlane(istiod appsv1.Deployment, cluster *models.KubeCluster) models.ControlPlane {
