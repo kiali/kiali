@@ -156,6 +156,7 @@ Feature: Kiali Workloads page
     Then the list is sorted by column "Cluster" in "descending" order
 
   @ambient
+  @skip-ossmc
   Scenario: Out of mesh
     When user selects the "sleep" namespace
     Then user sees "Out of mesh" in the table

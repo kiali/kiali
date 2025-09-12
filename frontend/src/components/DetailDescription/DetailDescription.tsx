@@ -67,6 +67,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
       const link = isParentKiosk(props.kiosk) ? (
         <Link
           to=""
+          data-test="waypoint-link"
           onClick={() => {
             kioskContextMenuAction(href);
           }}
