@@ -52,6 +52,8 @@ jobs:
       uses: actions/checkout@v5
       with:
         ref: ${{matrix.branch}}
+        # We need to fetch all the history to determine the latest tag
+        fetch-depth: 0
 
     - name: Configure git
       run: |
@@ -73,7 +75,7 @@ jobs:
           echo "Creating release tag $RELEASE_VERSION"
           git push origin $(git rev-parse HEAD):refs/tags/$RELEASE_VERSION
         else
-          echo "Error: Expected ossm version tag refs/tags/$RELEASE_VERSION-ossm does not exist"
+          echo "Error: Latest tag $LATEST_TAG does not match expected $RELEASE_VERSION-ossm tag"
           exit 1
         fi
 
