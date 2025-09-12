@@ -1,4 +1,4 @@
-name: Bump release version
+name: Bump Release Version
 
 on:
   workflow_dispatch:
@@ -46,6 +46,8 @@ jobs:
     needs: [initialize]
     runs-on: ubuntu-latest
     strategy:
+      # Allow other branches to bump to next version even if one of the branches failed
+      fail-fast: false
       matrix:
         branch: ${{fromJson(needs.initialize.outputs.branches)}}
     steps:
@@ -89,12 +91,10 @@ jobs:
       run: |
         RAW_VERSION=$(sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
 
-        # Check if the latest tag is the ossm tag (meaning no release tag of current version exists)
         LATEST_TAG=$(git describe --tags --abbrev=0)
-        if [[ "$LATEST_TAG" == "$RAW_VERSION-ossm" ]]; then
-          echo "Error: Cannot bump release version because the latest tag is not the release tag $RAW_VERSION"
-          exit 1
-        else
+
+        # Check if the latest tag is the current release version tag
+        if [[ "$LATEST_TAG" == "$RAW_VERSION" ]]; then
           RELEASE_VERSION=$(python bump.py patch $RAW_VERSION)
 
           # Update the version in Kiali repository
@@ -108,4 +108,7 @@ jobs:
 
           # Create the ossm version tag
           git push origin $(git rev-parse HEAD):refs/tags/$RELEASE_VERSION-ossm
+        else
+          echo "Error: Latest tag $LATEST_TAG does not match expected $RAW_VERSION tag"
+          exit 1
         fi

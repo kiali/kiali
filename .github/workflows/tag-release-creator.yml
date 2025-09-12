@@ -1,4 +1,4 @@
-name: Tag Release Creator
+name: Release Tag Creator
 
 on:
   workflow_dispatch:
@@ -45,6 +45,8 @@ jobs:
     needs: [initialize]
     runs-on: ubuntu-latest
     strategy:
+      # Allow other branches to continue even if one of the branches failed
+      fail-fast: false
       matrix:
         branch: ${{fromJson(needs.initialize.outputs.branches)}}
     steps:
@@ -64,8 +66,9 @@ jobs:
       run: |
         RELEASE_VERSION=$(sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
 
-        # Check if the latest tag is the ossm tag (meaning no release tag of current version exists)
         LATEST_TAG=$(git describe --tags --abbrev=0)
+
+        # Check if the latest tag is the current ossm version tag
         if [[ "$LATEST_TAG" == "$RELEASE_VERSION-ossm" ]]; then
           # Delete the ossm version tag
           echo "Deleting existing ossm version tag: $RELEASE_VERSION-ossm"
@@ -82,7 +85,8 @@ jobs:
   bump_version:
     name: Bump to Next Version
     needs: [initialize, release_tag]
-    if: ${{ inputs.bump_next_version }}
-    uses: ./.github/workflows/tag-bump-version.yml
+    # Allow other branches to bump to next version even if one of the branches failed to create the release tag
+    if: ${{ inputs.bump_next_version && always() }}
+    uses: ./.github/workflows/bump-release-version.yml
     with:
       tag_branches: ${{ inputs.tag_branches }}
