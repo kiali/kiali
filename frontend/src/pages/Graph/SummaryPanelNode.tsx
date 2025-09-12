@@ -41,6 +41,8 @@ import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelSty
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { renderWaypointLabel } from '../../components/Ambient/WaypointLabel';
 import { Node } from '@patternfly/react-topology';
+import { NetworkTrafficBadge } from 'components/TrafficGraph/NetworkTrafficBadge';
+import { KialiPageLink } from 'components/Link/KialiPageLink';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -72,6 +74,7 @@ export type SummaryPanelNodeProps = Omit<SummaryPanelPropType, 'kiosk'> & {
 export type SummaryPanelNodeComponentProps = ReduxProps &
   SummaryPanelNodeProps & {
     gateways: string[] | null;
+    netObsUrl?: string;
     onKebabToggled?: (isOpen: boolean) => void;
     peerAuthentications: PeerAuthentication[] | null;
     serviceDetails: ServiceDetailsInfo | null | undefined;
@@ -192,6 +195,8 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       <></>
     );
 
+    // Note: NetObserv link removed per current requirements
+
     return (
       <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
         <div className={panelHeadingStyle}>
@@ -227,6 +232,21 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
               )}
 
               {secondBadge}
+              <div className={nodeInfoStyle}>
+                <NetworkTrafficBadge namespace={nodeData.namespace} />
+                {this.props.netObsUrl ? (
+                  <a href={this.props.netObsUrl} target="_blank" rel="noopener noreferrer">
+                    Network Traffic <KialiIcon.ExternalLink />
+                  </a>
+                ) : (
+                  <KialiPageLink
+                    href={`/graph/namespaces?namespaces=${encodeURIComponent(nodeData.namespace)}`}
+                    cluster={nodeData.cluster}
+                  >
+                    Network Traffic
+                  </KialiPageLink>
+                )}
+              </div>
               {!nodeData.isWaypoint && (
                 <div className={nodeInfoStyle}>
                   {renderBadgedLink(nodeData)}
@@ -574,6 +594,7 @@ export const SummaryPanelNode: React.FC<SummaryPanelNodeProps> = (props: Summary
   const rankResult = useKialiSelector(state => state.graph.rankResult);
   const showRank = useKialiSelector(state => state.graph.toolbarState.showRank);
   const updateTime = useKialiSelector(state => state.graph.updateTime);
+  const externalServices = useKialiSelector(state => state.statusState.externalServices);
 
   const [isKebabOpen, setIsKebabOpen] = React.useState<boolean>(false);
 
@@ -591,6 +612,12 @@ export const SummaryPanelNode: React.FC<SummaryPanelNodeProps> = (props: Summary
     setIsKebabOpen(isOpen);
   };
 
+  const netObs = externalServices?.find(s => s.name && s.url && s.name.toLowerCase().includes('observ'));
+  const netObsBase = netObs?.url ? netObs.url.replace(/\/$/, '') : undefined;
+  const netObsUrl = netObsBase
+    ? `${netObsBase}#/?view=topology&namespace=${encodeURIComponent(nodeData.namespace)}`
+    : undefined;
+
   return (
     <SummaryPanelNodeComponent
       tracingState={tracingState}
@@ -600,6 +627,7 @@ export const SummaryPanelNode: React.FC<SummaryPanelNodeProps> = (props: Summary
       serviceDetails={isServiceDetailsLoading ? undefined : serviceDetails}
       gateways={gateways}
       peerAuthentications={peerAuthentications}
+      netObsUrl={netObsUrl}
       onKebabToggled={handleKebabToggled}
       {...props}
     />
