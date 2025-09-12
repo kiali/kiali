@@ -13,7 +13,9 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 )
 
 func setupTrafficMap() (map[string]*graph.Node, string, string, string, string, string, string, string) {
@@ -82,7 +84,9 @@ func TestCBAll(t *testing.T) {
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 
 	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
+	globalInfo.Clusters = []models.KubeCluster{{Name: config.DefaultClusterID}}
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	util.PopulateWorkloadMap(t.Context(), businessLayer, globalInfo, trafficMap)
 
 	a := IstioAppender{}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
@@ -145,7 +149,9 @@ func TestCBSubset(t *testing.T) {
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 
 	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
+	globalInfo.Clusters = []models.KubeCluster{{Name: config.DefaultClusterID}}
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	util.PopulateWorkloadMap(t.Context(), businessLayer, globalInfo, trafficMap)
 
 	a := IstioAppender{}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
@@ -312,7 +318,9 @@ func TestSEInAppBox(t *testing.T) {
 	trafficMap[serviceEntryNode.ID] = serviceEntryNode
 
 	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
+	globalInfo.Clusters = []models.KubeCluster{{Name: config.DefaultClusterID}}
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	util.PopulateWorkloadMap(t.Context(), businessLayer, globalInfo, trafficMap)
 
 	a := IstioAppender{}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)

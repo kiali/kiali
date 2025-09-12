@@ -35,8 +35,6 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 				requestedAppenders[DeadNodeAppenderName] = true
 			case IdleNodeAppenderName:
 				requestedAppenders[IdleNodeAppenderName] = true
-			case IstioAppenderName:
-				requestedAppenders[IstioAppenderName] = true
 			case MeshCheckAppenderName, SidecarsCheckAppenderName:
 				requestedAppenders[MeshCheckAppenderName] = true
 			case ResponseTimeAppenderName:
@@ -53,6 +51,8 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 			// finalizer appenders
 			case AmbientAppenderName:
 				requestedFinalizers[AmbientAppenderName] = true
+			case IstioAppenderName:
+				requestedFinalizers[IstioAppenderName] = true
 			case HealthAppenderName:
 				// currently, because health is still calculated in the client, if requesting health
 				// we also need to run the healthConfig appender.  Eventually, asking for health will supply
@@ -180,12 +180,6 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		}
 		appenders = append(appenders, a)
 	}
-	if _, ok := requestedAppenders[IstioAppenderName]; ok || o.Appenders.All {
-		a := IstioAppender{
-			AccessibleNamespaces: o.AccessibleNamespaces,
-		}
-		appenders = append(appenders, a)
-	}
 	if _, ok := requestedAppenders[MeshCheckAppenderName]; ok || o.Appenders.All {
 		a := MeshCheckAppender{
 			AccessibleNamespaces: o.AccessibleNamespaces,
@@ -204,6 +198,7 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		Rates:            o.Rates,
 		ShowUnrooted:     true, // ToDo possibly make this an option
 	})
+	finalizers = append(finalizers, &IstioAppender{})
 
 	// always run the outsider finalizer next, this allows other finalizers to
 	// utilize graph.isInaccessible and graph.isOutside metatdata values.

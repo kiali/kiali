@@ -11,6 +11,7 @@ import (
 	prom_client "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
@@ -19,8 +20,10 @@ import (
 )
 
 // badServiceMatcher looks for a physical IP address with optional port (e.g. 10.11.12.13:80)
-var badServiceMatcher = regexp.MustCompile(`^\d+\.\d+\.\d+\.\d+(:\d+)?$`)
-var egressHost string
+var (
+	badServiceMatcher = regexp.MustCompile(`^\d+\.\d+\.\d+\.\d+(:\d+)?$`)
+	egressHost        string
+)
 
 // HandleClusters just sets source an dest cluster to unknown if it is not supplied on the telemetry
 // TODO: Starting in Istio 1.9 source_cluster and destination_cluster are always reported.  So, this
@@ -223,4 +226,25 @@ func PromQueryAppender(ctx context.Context, query string, queryTime time.Time, a
 	}
 
 	return nil
+}
+
+// PopulateWorkloadMap populates the globalInfo.WorkloadMap with the workloads from the trafficMap.
+// TODO: This is only exported for tests to use.
+func PopulateWorkloadMap(ctx context.Context, business *business.Layer, globalInfo *graph.GlobalInfo, trafficMap graph.TrafficMap) {
+	for _, cluster := range globalInfo.Clusters {
+		workloads, err := business.Workload.GetAllWorkloads(ctx, cluster.Name, "")
+		if err != nil {
+			graph.Error(fmt.Sprintf("Error fetching workloads: %s", err.Error()))
+		}
+
+		for _, workload := range workloads {
+			globalInfo.WorkloadMap[graph.WorkloadNodeKey{Cluster: workload.Cluster, Namespace: workload.Namespace, Workload: workload.Name}] = nil
+		}
+	}
+
+	for _, node := range trafficMap {
+		if _, ok := globalInfo.WorkloadMap[graph.WorkloadNodeKey{Cluster: node.Cluster, Namespace: node.Namespace, Workload: node.Workload}]; ok {
+			globalInfo.WorkloadMap[graph.WorkloadNodeKey{Cluster: node.Cluster, Namespace: node.Namespace, Workload: node.Workload}] = node
+		}
+	}
 }

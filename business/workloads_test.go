@@ -1861,7 +1861,8 @@ func TestGetWorkloadListWithCustomKindThatMatchesCoreKind(t *testing.T) {
 	svc := setupWorkloadService(t, k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
-	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
+	workloadList, err := svc.GetWorkloadList(context.TODO(), criteria)
+	require.NoError(err)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace)

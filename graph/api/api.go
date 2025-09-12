@@ -61,7 +61,14 @@ func graphNamespacesIstio(ctx context.Context, business *business.Layer, prom pr
 	// Create a 'global' object to store the business. Global only to the request.
 	globalInfo := graph.NewGlobalInfo(business, prom, config.Get())
 
+	clusters, err := business.Mesh.Clusters()
+	if err != nil {
+		graph.Error(fmt.Sprintf("Error fetching clusters: %s", err.Error()))
+	}
+	globalInfo.Clusters = clusters
+
 	trafficMap := istio.BuildNamespacesTrafficMap(ctx, o.TelemetryOptions, globalInfo)
+
 	code, graphConfig = generateGraph(ctx, trafficMap, o)
 
 	return code, graphConfig

@@ -109,6 +109,8 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 		telemetry.MergeTrafficMaps(trafficMap, namespaceInfo.Name, namespaceTrafficMap)
 	}
 
+	util.PopulateWorkloadMap(ctx, globalInfo.Business, globalInfo, trafficMap)
+
 	// The finalizers can perform final manipulations on the complete graph
 	for _, f := range finalizers {
 		f.AppendGraph(buildAppenderContext(ctx, f.Name()), trafficMap, globalInfo, nil)

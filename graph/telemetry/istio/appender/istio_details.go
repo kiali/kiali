@@ -4,9 +4,8 @@ import (
 	"context"
 	"strings"
 
-	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	networkingv1 "istio.io/client-go/pkg/apis/networking/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -23,9 +22,7 @@ const IstioAppenderName = "istio"
 // - Ingress Gateways: n.Metadata[IsIngressGateway] = Map of GatewayName => hosts
 // - VirtualService: n.Metadata[HasVS] = Map of VirtualServiceName => hosts
 // Name: istio
-type IstioAppender struct {
-	AccessibleNamespaces graph.AccessibleNamespaces
-}
+type IstioAppender struct{}
 
 // Name implements Appender
 func (a IstioAppender) Name() string {
@@ -34,7 +31,7 @@ func (a IstioAppender) Name() string {
 
 // IsFinalizer implements Appender
 func (a IstioAppender) IsFinalizer() bool {
-	return false
+	return true
 }
 
 // AppendGraph implements Appender
@@ -43,52 +40,46 @@ func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.Traffic
 		return
 	}
 
-	serviceLists := getServiceLists(trafficMap, namespaceInfo.Namespace, globalInfo)
-
-	addBadging(ctx, trafficMap, globalInfo, namespaceInfo)
-	addLabels(ctx, trafficMap, globalInfo, serviceLists)
-	a.decorateGateways(ctx, trafficMap, globalInfo, namespaceInfo)
-}
-
-func addBadging(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
-	clusters := getTrafficClusters(trafficMap, namespaceInfo.Namespace, globalInfo)
-	destinationRuleLists := map[string]models.IstioConfigList{}
-	virtualServiceLists := map[string]models.IstioConfigList{}
-
-	for _, cluster := range clusters {
-		// Currently no other appenders use DestinationRules or VirtualServices, so they are not cached in AppenderNamespaceInfo
-		destinationRuleList, err := globalInfo.Business.IstioConfig.GetIstioConfigListForNamespace(ctx, cluster, namespaceInfo.Namespace, business.IstioConfigCriteria{
-			IncludeDestinationRules: true,
-		})
+	serviceLists := map[string]*models.ServiceList{}
+	for _, cluster := range globalInfo.Clusters {
+		svcs, err := globalInfo.Business.Svc.GetServiceListForCluster(ctx, business.ServiceCriteria{Cluster: cluster.Name}, cluster.Name)
 		graph.CheckError(err)
-		destinationRuleLists[cluster] = *destinationRuleList
 
-		virtualServiceList, err := globalInfo.Business.IstioConfig.GetIstioConfigList(ctx, cluster, business.IstioConfigCriteria{
-			IncludeVirtualServices: true,
-		})
-		graph.CheckError(err)
-		virtualServiceLists[cluster] = *virtualServiceList
+		serviceLists[cluster.Name] = svcs
 	}
 
-	applyCircuitBreakers(trafficMap, namespaceInfo.Namespace, destinationRuleLists)
-	applyVirtualServices(trafficMap, namespaceInfo.Namespace, virtualServiceLists, globalInfo.Conf)
+	addBadging(ctx, trafficMap, globalInfo)
+	addLabels(ctx, trafficMap, globalInfo, serviceLists)
+	for _, cluster := range globalInfo.Clusters {
+		a.decorateGateways(ctx, cluster.Name, globalInfo)
+	}
 }
 
-func applyCircuitBreakers(trafficMap graph.TrafficMap, namespace string, destinationRuleLists map[string]models.IstioConfigList) {
+func addBadging(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo) {
+	for _, cluster := range globalInfo.Clusters {
+		// Currently no other appenders use DestinationRules or VirtualServices, so they are not cached in AppenderNamespaceInfo
+		istioConfig, err := globalInfo.Business.IstioConfig.GetIstioConfigList(ctx, cluster.Name, business.IstioConfigCriteria{
+			IncludeDestinationRules: true,
+			IncludeVirtualServices:  true,
+		})
+		graph.CheckError(err)
+
+		applyCircuitBreakers(trafficMap, istioConfig.DestinationRules)
+		applyVirtualServices(trafficMap, istioConfig.VirtualServices, globalInfo.Conf)
+	}
+}
+
+func applyCircuitBreakers(trafficMap graph.TrafficMap, destinationRules []*networkingv1.DestinationRule) {
 NODES:
 	for _, n := range trafficMap {
-		// Skip the check if this node is outside the requested namespace, we limit badging to the requested namespaces
-		if n.Namespace != namespace {
-			continue
-		}
 
 		// Note, Because DestinationRules are applied to services we limit CB badges to service nodes and app nodes.
 		// Whether we should add to workload nodes is debatable, we could add it later if needed.
 		versionOk := graph.IsOK(n.Version)
 		switch {
 		case n.NodeType == graph.NodeTypeService:
-			for _, destinationRule := range destinationRuleLists[n.Cluster].DestinationRules {
-				if models.HasDRCircuitBreaker(destinationRule, namespace, n.Service, "") {
+			for _, destinationRule := range destinationRules {
+				if models.HasDRCircuitBreaker(destinationRule, n.Namespace, n.Service, "") {
 					n.Metadata[graph.HasCB] = true
 					continue NODES
 				}
@@ -96,7 +87,7 @@ NODES:
 		case !versionOk && (n.NodeType == graph.NodeTypeApp):
 			if destServices, ok := n.Metadata[graph.DestServices]; ok {
 				for _, ds := range destServices.(graph.DestServicesMetadata) {
-					for _, destinationRule := range destinationRuleLists[n.Cluster].DestinationRules {
+					for _, destinationRule := range destinationRules {
 						if models.HasDRCircuitBreaker(destinationRule, ds.Namespace, ds.Name, "") {
 							n.Metadata[graph.HasCB] = true
 							continue NODES
@@ -107,7 +98,7 @@ NODES:
 		case versionOk:
 			if destServices, ok := n.Metadata[graph.DestServices]; ok {
 				for _, ds := range destServices.(graph.DestServicesMetadata) {
-					for _, destinationRule := range destinationRuleLists[n.Cluster].DestinationRules {
+					for _, destinationRule := range destinationRules {
 						if models.HasDRCircuitBreaker(destinationRule, ds.Namespace, ds.Name, n.Version) {
 							n.Metadata[graph.HasCB] = true
 							continue NODES
@@ -121,13 +112,13 @@ NODES:
 	}
 }
 
-func applyVirtualServices(trafficMap graph.TrafficMap, namespace string, virtualServiceLists map[string]models.IstioConfigList, conf *config.Config) {
+func applyVirtualServices(trafficMap graph.TrafficMap, virtualServices []*networkingv1.VirtualService, conf *config.Config) {
 NODES:
 	for _, n := range trafficMap {
 		if n.NodeType != graph.NodeTypeService {
 			continue
 		}
-		for _, virtualService := range virtualServiceLists[n.Cluster].VirtualServices {
+		for _, virtualService := range virtualServices {
 			if models.IsVSValidHost(virtualService, n.Namespace, n.Service, conf) {
 				var vsMetadata graph.VirtualServicesMetadata
 				var vsOk bool
@@ -174,260 +165,128 @@ NODES:
 	}
 }
 
+type serviceKey struct {
+	Cluster   string
+	Name      string
+	Namespace string
+}
+
 // addLabels is a chance to add any missing label info to nodes when the telemetry does not provide enough information.
 // For example, service injection has this problem.
 func addLabels(ctx context.Context, trafficMap graph.TrafficMap, gi *graph.GlobalInfo, serviceLists map[string]*models.ServiceList) {
 	// build map for quick lookup
-	svcMap := map[graph.ClusterSensitiveKey]models.ServiceOverview{}
+	svcMap := map[serviceKey]models.ServiceOverview{}
 	for cluster, serviceList := range serviceLists {
 		for _, sd := range serviceList.Services {
-			svcMap[graph.GetClusterSensitiveKey(cluster, sd.Name)] = sd
+			svcMap[serviceKey{Cluster: cluster, Namespace: sd.Namespace, Name: sd.Name}] = sd
 		}
 	}
 
 	for _, n := range trafficMap {
-		if serviceList, ok := serviceLists[n.Cluster]; ok {
-			// make sure service nodes have the defined app label so it can be used for app grouping in the UI.
-			if n.NodeType == graph.NodeTypeService && n.Namespace == serviceList.Namespace && n.App == "" {
-				// For service nodes that are a service entries, use the `hosts` property of the SE to find
-				// a matching Kubernetes Svc for adding missing labels
-				if _, ok := n.Metadata[graph.IsServiceEntry]; ok {
-					seInfo := n.Metadata[graph.IsServiceEntry].(*graph.SEInfo)
-					for _, host := range seInfo.Hosts {
-						var hostToTest string
+		// make sure service nodes have the defined app label so it can be used for app grouping in the UI.
+		if n.NodeType != graph.NodeTypeService || n.App != "" {
+			continue
+		}
+		// For service nodes that are a service entries, use the `hosts` property of the SE to find
+		// a matching Kubernetes Svc for adding missing labels
+		if _, ok := n.Metadata[graph.IsServiceEntry]; ok {
+			seInfo := n.Metadata[graph.IsServiceEntry].(*graph.SEInfo)
+			for _, host := range seInfo.Hosts {
+				var hostToTest string
 
-						hostSplitted := strings.Split(host, ".")
-						if len(hostSplitted) == 3 && hostSplitted[2] == config.IstioMultiClusterHostSuffix {
-							hostToTest = host
-						} else {
-							hostToTest = hostSplitted[0]
-						}
-
-						if svc, found := svcMap[graph.GetClusterSensitiveKey(n.Cluster, hostToTest)]; found {
-							appLabelName, _ := gi.Conf.GetAppLabelName(svc.Labels)
-							if app, ok := svc.Labels[appLabelName]; ok {
-								n.App = app
-							}
-							continue
-						}
-					}
-					continue
-				}
-				// A service node that is an Istio egress cluster will not have a service definition
-				if _, ok := n.Metadata[graph.IsEgressCluster]; ok {
-					continue
-				}
-
-				if svc, found := svcMap[graph.GetClusterSensitiveKey(n.Cluster, n.Service)]; !found {
-					log.FromContext(ctx).Debug().Msgf("Service not found, may not apply app label correctly for [%s:%s]", n.Namespace, n.Service)
-					continue
+				hostSplitted := strings.Split(host, ".")
+				if len(hostSplitted) == 3 && hostSplitted[2] == config.IstioMultiClusterHostSuffix {
+					hostToTest = host
 				} else {
+					hostToTest = hostSplitted[0]
+				}
+
+				if svc, found := svcMap[serviceKey{Cluster: n.Cluster, Namespace: n.Namespace, Name: hostToTest}]; found {
 					appLabelName, _ := gi.Conf.GetAppLabelName(svc.Labels)
 					if app, ok := svc.Labels[appLabelName]; ok {
 						n.App = app
 					}
+					continue
 				}
 			}
+			continue
 		}
-	}
-}
-
-func decorateMatchingGateways(cluster string, gwCrd *networking_v1.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
-	gwSelector := labels.Set(gwCrd.Spec.Selector).AsSelector()
-	for gw, nodes := range gatewayNodeMapping {
-		if gw.Cluster != cluster {
+		// A service node that is an Istio egress cluster will not have a service definition
+		if _, ok := n.Metadata[graph.IsEgressCluster]; ok {
 			continue
 		}
 
-		if gwSelector.Matches(labels.Set(gw.Labels)) {
-			// If we are here, the GatewayCrd selects the Gateway workload.
-			// So, all node graphs associated with the GW workload should be listening
-			// requests for the hostnames listed in the GatewayCRD.
-
-			// Let's extract the hostnames and add them to the node metadata.
-			for _, node := range nodes {
-				gwServers := gwCrd.Spec.Servers
-				var hostnames []string
-
-				for _, gwServer := range gwServers {
-					gwHosts := gwServer.Hosts
-					hostnames = append(hostnames, gwHosts...)
-				}
-
-				// Metadata format: { gatewayName => array of hostnames }
-				node.Metadata[nodeMetadataKey].(graph.GatewaysMetadata)[gwCrd.Name] = hostnames
-			}
-		}
-	}
-}
-
-func decorateMatchingAPIGateways(cluster string, gwCrd *k8s_networking_v1.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
-	gwSelector := labels.Set(gwCrd.Labels).AsSelector()
-	for gw, nodes := range gatewayNodeMapping {
-		if gw.Cluster != cluster {
+		if svc, found := svcMap[serviceKey{Cluster: n.Cluster, Namespace: n.Namespace, Name: n.Service}]; !found {
+			log.FromContext(ctx).Debug().Msgf("Service not found, may not apply app label correctly for [%s:%s]", n.Namespace, n.Service)
 			continue
-		}
-		// If the selector is empty, try to match with the crd name and the GW label
-		if (!gwSelector.Empty() && gwSelector.Matches(labels.Set(gw.Labels))) || (gwSelector.Empty() && gwCrd.Name == gw.Labels[config.GatewayLabel]) {
-			// If we are here, the GatewayCrd selects the GatewayAPI workload.
-			// So, all node graphs associated with the GW API workload should be listening
-			// requests for the hostnames listed in the GatewayAPI CRD.
-
-			// Let's extract the hostnames and add them to the node metadata.
-			for _, node := range nodes {
-				gwListeners := gwCrd.Spec.Listeners
-				var hostnames []string
-
-				for _, gwListener := range gwListeners {
-					if gwListener.Hostname != nil {
-						hostnames = append(hostnames, string(*gwListener.Hostname))
-					}
-				}
-				// Hostnames are not required. Adding * to be processed by the frontend (Indicates the kind of GW).
-				if len(hostnames) == 0 {
-					hostnames = append(hostnames, "*")
-				}
-				// Metadata format: { gatewayName => array of hostnames }
-				node.Metadata[nodeMetadataKey].(graph.GatewaysMetadata)[gwCrd.Name] = hostnames
+		} else {
+			appLabelName, _ := gi.Conf.GetAppLabelName(svc.Labels)
+			if app, ok := svc.Labels[appLabelName]; ok {
+				n.App = app
 			}
 		}
 	}
 }
 
-func resolveGatewayNodeMapping(gatewayWorkloads map[string][]models.WorkloadListItem, nodeMetadataKey graph.MetadataKey, trafficMap graph.TrafficMap, gi *graph.GlobalInfo) map[*models.WorkloadListItem][]*graph.Node {
-	gatewayNodeMapping := make(map[*models.WorkloadListItem][]*graph.Node)
-	for key, gwWorkloadsList := range gatewayWorkloads {
-		split := strings.Split(key, ":")
-		gwCluster := split[0]
-		gwNs := split[1]
-		for _, gw := range gwWorkloadsList {
-			for _, node := range trafficMap {
-				if _, ok := node.Metadata[nodeMetadataKey]; !ok {
-					appLabelName, _ := gi.Conf.GetAppLabelName(gw.Labels)
-					if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && node.App != "" && node.App == gw.Labels[appLabelName] && node.Cluster == gwCluster && node.Namespace == gwNs {
-						node.Metadata[nodeMetadataKey] = graph.GatewaysMetadata{}
-						gatewayNodeMapping[&gw] = append(gatewayNodeMapping[&gw], node)
-					}
-				}
-			}
-		}
-	}
+// decorateGateways gets all the Gateway CRDs and GatewayAPI CRDs for the given cluster and namespace and adds the hostnames to the node metadata.
+func (a IstioAppender) decorateGateways(ctx context.Context, cluster string, globalInfo *graph.GlobalInfo) {
+	l, err := globalInfo.Business.IstioConfig.GetIstioConfigList(ctx, cluster, business.IstioConfigCriteria{
+		IncludeGateways:    true,
+		IncludeK8sGateways: true,
+	})
+	graph.CheckError(err)
 
-	return gatewayNodeMapping
-}
-
-func (a IstioAppender) decorateGateways(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
-	// Get ingress-gateways deployments in the namespace. Then, find if the graph is showing any of them. If so, flag the GW nodes.
-	ingressWorkloads := a.getIngressGatewayWorkloads(ctx, globalInfo)
-	ingressNodeMapping := resolveGatewayNodeMapping(ingressWorkloads, graph.IsIngressGateway, trafficMap, globalInfo)
-
-	// Get egress-gateways deployments in the namespace. (Same logic as in the previous chunk of code)
-	egressWorkloads := a.getEgressGatewayWorkloads(ctx, globalInfo)
-	egressNodeMapping := resolveGatewayNodeMapping(egressWorkloads, graph.IsEgressGateway, trafficMap, globalInfo)
-
-	// Get Gateway API workloads (ingress)
-	gatewayAPIWorkloads := a.getGatewayAPIWorkloads(ctx, globalInfo)
-	gatewayAPINodeMapping := resolveGatewayNodeMapping(gatewayAPIWorkloads, graph.IsGatewayAPI, trafficMap, globalInfo)
-
-	// If there is any ingress or egress gateway node in the processing namespace, find Gateway CRDs and
-	// match them against gateways in the graph.
-	if len(ingressNodeMapping) != 0 || len(egressNodeMapping) != 0 {
-		gatewaysCrds := a.getIstioGatewayResources(ctx, globalInfo)
-
-		for accessibleNamespaceKey, gwCrds := range gatewaysCrds {
-			cluster := strings.Split(accessibleNamespaceKey, ":")[0]
-			for _, gwCrd := range gwCrds {
-				decorateMatchingGateways(cluster, gwCrd, ingressNodeMapping, graph.IsIngressGateway)
-				decorateMatchingGateways(cluster, gwCrd, egressNodeMapping, graph.IsEgressGateway)
-			}
-		}
-	}
-	// If there is any GatewayAPI node in the processing namespace, find GatewayAPI CRDs and
-	// match them against gateways in the graph.
-	if len(gatewayAPINodeMapping) != 0 {
-		gatewaysCrds := a.getGatewayAPIResources(ctx, globalInfo)
-
-		for accessibleNamespaceKey, gwCrds := range gatewaysCrds {
-			cluster := strings.Split(accessibleNamespaceKey, ":")[0]
-			for _, gwCrd := range gwCrds {
-				decorateMatchingAPIGateways(cluster, gwCrd, gatewayAPINodeMapping, graph.IsGatewayAPI)
-			}
-		}
-	}
-}
-
-func (a IstioAppender) getEgressGatewayWorkloads(ctx context.Context, globalInfo *graph.GlobalInfo) map[string][]models.WorkloadListItem {
-	return a.getIstioComponentWorkloads(ctx, "EgressGateways", globalInfo)
-}
-
-func (a IstioAppender) getIngressGatewayWorkloads(ctx context.Context, globalInfo *graph.GlobalInfo) map[string][]models.WorkloadListItem {
-	return a.getIstioComponentWorkloads(ctx, "IngressGateways", globalInfo)
-}
-
-func (a IstioAppender) getIstioComponentWorkloads(ctx context.Context, component string, globalInfo *graph.GlobalInfo) map[string][]models.WorkloadListItem {
-	componentWorkloads := make(map[string][]models.WorkloadListItem)
-	for key, an := range a.AccessibleNamespaces {
-		criteria := business.WorkloadCriteria{Cluster: an.Cluster, Namespace: an.Name, IncludeIstioResources: false, IncludeHealth: false}
-		wList, err := globalInfo.Business.Workload.GetWorkloadList(ctx, criteria)
+	for _, gw := range l.Gateways {
+		selector := labels.Set(gw.Spec.Selector).AsSelector()
+		wk, err := globalInfo.Business.Workload.GetAllWorkloads(ctx, cluster, selector.String())
 		graph.CheckError(err)
-
-		// Find Istio component deployments
-		for _, workload := range wList.Workloads {
-			if workload.WorkloadGVK == kubernetes.Deployments {
-				if labelValue, ok := workload.Labels["operator.istio.io/component"]; ok && labelValue == component {
-					componentWorkloads[key] = append(componentWorkloads[key], workload)
+		var hostnames []string
+		for _, gwServer := range gw.Spec.Servers {
+			gwHosts := gwServer.Hosts
+			hostnames = append(hostnames, gwHosts...)
+		}
+		for _, w := range wk {
+			node := globalInfo.WorkloadMap[graph.WorkloadNodeKey{Cluster: w.Cluster, Namespace: w.Namespace, Workload: w.Name}]
+			if node != nil {
+				// TODO: This doesn't work for the generic gateway chart.
+				switch w.Labels["operator.istio.io/component"] {
+				case "IngressGateways":
+					node.Metadata[graph.IsIngressGateway] = graph.GatewaysMetadata{gw.Name: hostnames}
+				case "EgressGateways":
+					node.Metadata[graph.IsEgressGateway] = graph.GatewaysMetadata{gw.Name: hostnames}
 				}
 			}
 		}
 	}
 
-	return componentWorkloads
-}
-
-func (a IstioAppender) getGatewayAPIWorkloads(ctx context.Context, globalInfo *graph.GlobalInfo) map[string][]models.WorkloadListItem {
-	managedWorkloads := make(map[string][]models.WorkloadListItem)
-	for key, an := range a.AccessibleNamespaces {
-		criteria := business.WorkloadCriteria{Cluster: an.Cluster, Namespace: an.Name, IncludeIstioResources: false, IncludeHealth: false}
-		wList, err := globalInfo.Business.Workload.GetWorkloadList(ctx, criteria)
-		graph.CheckError(err)
-
-		// Find Istio managed Gateway API deployments
-		for _, workload := range wList.Workloads {
-			if workload.WorkloadGVK == kubernetes.Deployments {
-				if workload.IsGateway {
-					managedWorkloads[key] = append(managedWorkloads[key], workload)
-				}
-			}
-		}
-	}
-
-	return managedWorkloads
-}
-
-func (a IstioAppender) getIstioGatewayResources(ctx context.Context, globalInfo *graph.GlobalInfo) map[string][]*networking_v1.Gateway {
-	retVal := map[string][]*networking_v1.Gateway{}
-	for key, an := range a.AccessibleNamespaces {
-		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigListForNamespace(ctx, an.Cluster, an.Name, business.IstioConfigCriteria{
-			IncludeGateways: true,
+	for _, gw := range l.K8sGateways {
+		wl, err := globalInfo.Business.Workload.GetWorkloadList(ctx, business.WorkloadCriteria{
+			Cluster:       cluster,
+			LabelSelector: labels.Set(map[string]string{config.GatewayLabel: gw.Name}).String(),
 		})
 		graph.CheckError(err)
+		if wlLen := len(wl.Workloads); wlLen == 0 {
+			continue
+		} else if wlLen > 1 {
+			log.FromContext(ctx).Warn().Msgf("Multiple workloads found for GatewayAPI %s in namespace %s", gw.Name, gw.Namespace)
+		}
 
-		retVal[key] = append(retVal[key], istioCfg.Gateways...)
+		workload := wl.Workloads[0]
+		node := globalInfo.WorkloadMap[graph.WorkloadNodeKey{Cluster: workload.Cluster, Namespace: workload.Namespace, Workload: workload.Name}]
+		if node != nil {
+			gwListeners := gw.Spec.Listeners
+			var hostnames []string
+
+			for _, gwListener := range gwListeners {
+				if gwListener.Hostname != nil {
+					hostnames = append(hostnames, string(*gwListener.Hostname))
+				}
+			}
+			// Hostnames are not required. Adding * to be processed by the frontend (Indicates the kind of GW).
+			if len(hostnames) == 0 {
+				hostnames = append(hostnames, "*")
+			}
+			node.Metadata[graph.IsGatewayAPI] = graph.GatewaysMetadata{gw.Name: hostnames}
+		}
 	}
-
-	return retVal
-}
-
-func (a IstioAppender) getGatewayAPIResources(ctx context.Context, globalInfo *graph.GlobalInfo) map[string][]*k8s_networking_v1.Gateway {
-	retVal := map[string][]*k8s_networking_v1.Gateway{}
-	for key, an := range a.AccessibleNamespaces {
-		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigListForNamespace(ctx, an.Cluster, an.Name, business.IstioConfigCriteria{
-			IncludeK8sGateways: true,
-		})
-		graph.CheckError(err)
-
-		retVal[key] = append(retVal[key], istioCfg.K8sGateways...)
-	}
-
-	return retVal
 }

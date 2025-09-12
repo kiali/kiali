@@ -83,9 +83,11 @@ type WorkloadService struct {
 }
 
 type WorkloadCriteria struct {
-	Cluster               string
-	Namespace             string
-	WorkloadName          string
+	Cluster      string
+	Namespace    string
+	WorkloadName string
+	// TODO: use Selector type directly.
+	LabelSelector         string
 	WorkloadGVK           schema.GroupVersionKind
 	IncludeIstioResources bool
 	IncludeServices       bool
@@ -261,12 +263,16 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		return *workloadList, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
 	}
 
-	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
-		return *workloadList, err
+	// When criteria.Namespace == "", we fetch workloads across all namespaces
+	// and then filter out workloads that are not in accessible namespaces so
+	// not checking here for access to a single namespace.
+	if criteria.Namespace != "" {
+		if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
+			return *workloadList, err
+		}
 	}
 
 	var ws models.Workloads
-	// var authpolicies []*security_v1.AuthorizationPolicy
 	var err error
 
 	nFetches := 1
@@ -280,12 +286,35 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 
 	go func(ctx context.Context) {
 		defer wg.Done()
+		// When criteria.Namespace == "", this should be nil.
+		var fetchNamespaces []string
+		if criteria.Namespace != "" {
+			fetchNamespaces = []string{criteria.Namespace}
+		}
 		var err2 error
-		ws, err2 = in.fetchWorkloadsFromCluster(ctx, cluster, []string{namespace}, "", waypoints)
+		ws, err2 = in.fetchWorkloadsFromCluster(ctx, cluster, fetchNamespaces, criteria.LabelSelector, waypoints)
 		if err2 != nil {
 			log.Errorf("Error fetching Workloads per namespace %s: %s", namespace, err2)
 			errChan <- err2
+			return
 		}
+		// Filter out workloads that are not in accessible namespaces since it's valid to pass `""` for the namespace
+		// which means list across all namespaces.
+		accessibleNamespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		namespaceSet := make(map[string]struct{})
+		for _, ns := range accessibleNamespaces {
+			namespaceSet[ns.Name] = struct{}{}
+		}
+
+		ws = sliceutil.Filter(ws, func(w *models.Workload) bool {
+			_, ok := namespaceSet[w.Namespace]
+			return ok
+		})
 	}(ctx)
 
 	var istioConfigMap models.IstioConfigMap
@@ -333,7 +362,6 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 			}
 		}
 		wItem.Cluster = cluster
-		wItem.Namespace = namespace
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
 
@@ -1511,6 +1539,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 					log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", controllerName, controllerGVK.Kind)
 				}
 			}
+			w.Namespace = controllerNamespace
 			w.SetPods(cPods, in.businessLayer.Mesh.IsControlPlane)
 		}
 
@@ -2248,7 +2277,6 @@ func (in *WorkloadService) GetZtunnelConfig(cluster, namespace, pod string) *kub
 // that this may call GetAllWorkloads(), be careful of unintended recursion.
 func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
 	if waypoints, ok := in.cache.GetWaypoints(); ok {
-		log.Tracef("GetWaypoints: Returning list from cache")
 		return waypoints
 	}
 

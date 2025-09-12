@@ -5,10 +5,18 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 )
 
 type VendorInfo map[string]interface{}
+
+// WorkloadNodeKey maps a Workload to its node on the map.
+type WorkloadNodeKey struct {
+	Cluster   string
+	Namespace string
+	Workload  string
+}
 
 // GlobalInfo caches information relevant to a single graph. It allows
 // the main graph code, or an appender, to populate the cache and then it,
@@ -16,9 +24,13 @@ type VendorInfo map[string]interface{}
 // generated for graph and is initially empty.
 type GlobalInfo struct {
 	Business   *business.Layer
+	Clusters   []models.KubeCluster
 	Conf       *config.Config
 	PromClient prometheus.ClientInterface
 	Vendor     VendorInfo // telemetry vendor's global info
+	// WorkloadMap maps workloads to their nodes on the map. Only available to finalizers
+	// since the full graph hasn't been generated until all appenders have run.
+	WorkloadMap map[WorkloadNodeKey]*Node
 }
 
 // AppenderNamespaceInfo caches information relevant to a single namespace. It allows
@@ -36,10 +48,11 @@ func NewVendorInfo() VendorInfo {
 
 func NewGlobalInfo(business *business.Layer, prom prometheus.ClientInterface, conf *config.Config) *GlobalInfo {
 	return &GlobalInfo{
-		Business:   business,
-		Conf:       conf,
-		PromClient: prom,
-		Vendor:     NewVendorInfo(),
+		Business:    business,
+		Conf:        conf,
+		PromClient:  prom,
+		Vendor:      NewVendorInfo(),
+		WorkloadMap: make(map[WorkloadNodeKey]*Node),
 	}
 }
 
