@@ -105,9 +105,13 @@ When('user sees mesh side panel', () => {
       // Get the name of the mesh from the API.
       cy.request({ url: 'api/mesh/graph' }).then(resp => {
         expect(resp.status).to.eq(200);
-        expect(resp.body.meshName).to.not.equal(undefined);
-        expect(resp.body.meshName).to.not.equal('');
-        cy.contains(`Mesh: ${resp.body.meshName}`);
+        expect(resp.body.meshNames).to.not.equal(null);
+        expect(resp.body.meshNames.length).to.be.greaterThan(0);
+        expect(resp.body.meshNames).to.not.include('');
+        // Check that each mesh name is displayed in the UI
+        resp.body.meshNames.forEach((meshName: string) => {
+          cy.contains(`Mesh: ${meshName}`);
+        });
       });
     });
 });
