@@ -14,6 +14,7 @@ Feature: Kiali Waypoint related features
     Then "bookinfo" namespace is labeled with the waypoint label
     And the graph page has enough data
 
+  @skip-ossmc
   Scenario: [Workload list] See the workload list of bookinfo with the correct info
     Given user is at the "workloads" list page
     When user selects the "bookinfo" namespace
