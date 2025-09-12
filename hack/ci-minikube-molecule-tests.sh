@@ -169,7 +169,7 @@ fi
 
 if ! ${minikube_sh} status; then
 
-  ${minikube_sh} start --dex-enabled true ${olm_enabled_arg}
+  ${minikube_sh} start --hydra-enabled true ${olm_enabled_arg}
   if ! ${minikube_sh} status; then
     echo "Failed to install the minikube cluster."
     exit 1

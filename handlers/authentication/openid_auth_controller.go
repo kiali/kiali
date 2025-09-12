@@ -1247,24 +1247,36 @@ func verifyAudienceClaim(openIdParams *openidFlowHelper, oidCfg config.OpenIdCon
 	} else {
 		switch ac := audienceClaim.(type) {
 		case string:
+			// client has a single audience - clientId must be the same as the audience
 			if oidCfg.ClientId != ac {
-				return fmt.Errorf("the OpenId token is not targeted for Kiali; got aud = '%s'", audienceClaim)
+				return fmt.Errorf("the OpenId token is not targeted for Kiali; got aud [%s]", audienceClaim)
 			}
 		case []string:
-			if len(ac) != 1 {
-				return fmt.Errorf("the OpenId string token was rejected because it has more than one audience; got aud = %v", audienceClaim)
+			// client has multiple audiences within string array - clientId must be in the list
+			if len(ac) == 0 {
+				return errors.New("the OpenId token contains empty audience list")
 			}
-			if oidCfg.ClientId != ac[0] {
-				return fmt.Errorf("the OpenId string token is not targeted for Kiali; got []aud = '%v'", audienceClaim)
+
+			for _, audStr := range ac {
+				if oidCfg.ClientId == audStr {
+					return nil
+				}
 			}
+			return fmt.Errorf("the OpenId token is not targeted for Kiali; ClientId [%s] not found in audiences [%v]", oidCfg.ClientId, ac)
 		case []any:
-			if len(audienceClaim.([]any)) != 1 {
-				return fmt.Errorf("the OpenId token was rejected because it has more than one audience; got aud = %v", audienceClaim)
+			// cilent has multiple audiences within interface{} array -- clientId must be in the list
+			audArray := audienceClaim.([]any)
+			if len(audArray) == 0 {
+				return errors.New("the OpenId token contains empty audience list")
 			}
-			acStr := fmt.Sprintf("%v", audienceClaim.([]any)[0])
-			if oidCfg.ClientId != acStr {
-				return fmt.Errorf("the OpenId token is not targeted for Kiali; got []aud = '%v'", acStr)
+
+			for _, audItem := range audArray {
+				audStr := fmt.Sprintf("%v", audItem)
+				if oidCfg.ClientId == audStr {
+					return nil
+				}
 			}
+			return fmt.Errorf("the OpenId token is not targeted for Kiali; ClientId [%s] not found in audiences [%v]", oidCfg.ClientId, audArray)
 		default:
 			return fmt.Errorf("the OpenId token has an unexpected audience claim; value [%v] of type [%T]", audienceClaim, audienceClaim)
 		}
