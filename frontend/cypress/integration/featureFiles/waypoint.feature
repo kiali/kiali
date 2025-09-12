@@ -82,8 +82,8 @@ Feature: Kiali Waypoint related features
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     Then user "opens" traffic menu
-    And user "enables" "ambientTotal" traffic option
     And user "enables" "ambient" traffic option
+    And user "enables" "ambientTotal" traffic option
     And user "closes" traffic menu
     Then 14 edges appear in the graph including Prometheus
 
@@ -95,6 +95,7 @@ Feature: Kiali Waypoint related features
     Then the display menu opens
     Then user "enables" "filterWaypoints" edge labels
     Then user "opens" traffic menu
+    And user "enables" "ambient" traffic option
     And user "enables" "ambientTotal" traffic option
     And user "closes" traffic menu
     Then 16 edges appear in the graph
@@ -105,10 +106,12 @@ Feature: Kiali Waypoint related features
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     Then user "opens" traffic menu
+    And user "enables" "ambient" traffic option
     And user "enables" "ambientWaypoint" traffic option
     And user "closes" traffic menu
     Then 11 edges appear in the graph
 
+  @skip-ossmc
   Scenario: [Istio Config] Waypoint should not have validation errors
     Given user is at the "istio" page
     And user selects the "bookinfo" namespace
@@ -126,6 +129,7 @@ Feature: Kiali Waypoint related features
     Then user sees the "waypoint-differentns" namespace
     Then user "opens" traffic menu
     And user "enables" "ambient" traffic option
+    And user "enables" "ambientTotal" traffic option
     And user "enables" "http" traffic option
     And user "closes" traffic menu
     Then user "opens" display menu
