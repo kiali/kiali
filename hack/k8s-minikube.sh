@@ -22,10 +22,9 @@
 set -u
 
 DEFAULT_CLIENT_EXE="kubectl"
-DEFAULT_DEX_ENABLED="false"
-DEFAULT_DEX_REPO="https://github.com/dexidp/dex"
-DEFAULT_DEX_VERSION="v2.30.2"
-DEFAULT_DEX_USER_NAMESPACES="bookinfo"
+DEFAULT_HYDRA_ENABLED="false"
+DEFAULT_HYDRA_USER_NAMESPACES="bookinfo"
+DEFAULT_HYDRA_VERSION="v2.2.0"
 DEFAULT_INSECURE_REGISTRY_IP=""
 DEFAULT_K8S_CNI="auto"
 DEFAULT_K8S_CPU="4"
@@ -102,24 +101,9 @@ check_insecure_registry() {
   fi
 }
 
-install_dex() {
-  echo 'Installing Dex for OpenID Connect support...'
 
-  # Download dex - prepare a clean copy
-  DEX_VERSION_PATH="${OUTPUT_PATH}/dex/${DEX_VERSION}"
-  rm -rf ${DEX_VERSION_PATH}
-  if [ ! -d "${DEX_VERSION_PATH}" ]; then
-    echo "Will download Dex version [${DEX_VERSION}] to [${DEX_VERSION_PATH}]"
-    mkdir -p ${DEX_VERSION_PATH}
-
-    if command -v wget >/dev/null 2>&1; then
-      wget ${DEX_REPO}/archive/${DEX_VERSION}.tar.gz -O - | tar -C ${DEX_VERSION_PATH} --strip-components 1 -zxf -
-    else
-      curl -L -o - | tar -C ${DEX_VERSION_PATH} --strip-components 1 -zxf -
-    fi
-  else
-    echo "Will use existing Dex version [${DEX_VERSION}] found at [${DEX_VERSION_PATH}]"
-  fi
+install_hydra() {
+  echo 'Installing Ory Hydra for OpenID Connect support...'
 
   # Find minikube ip
   MINIKUBE_IP=$(${MINIKUBE_EXEC_WITH_PROFILE} ip)
@@ -129,88 +113,96 @@ install_dex() {
   KUBE_HOSTNAME="${MINIKUBE_IP_DASHED}.nip.io"
   echo "Hostname will be ${KUBE_HOSTNAME}"
 
-  # Generate certs for the minikube instance, if we still don't have them
-  CERTS_PATH="${DEX_VERSION_PATH}/examples/k8s/ssl_${KUBE_HOSTNAME}"
+  # Create output directory for Hydra
+  HYDRA_PATH="${OUTPUT_PATH}/hydra"
+  mkdir -p ${HYDRA_PATH}
+
+  # Generate certificates using our existing gencert.sh script
+  CERTS_PATH="${HYDRA_PATH}/ssl_${KUBE_HOSTNAME}"
   if [ ! -d "${CERTS_PATH}" ]; then
-    # Patch gencert.sh script from dex
-    rm -f ${DEX_VERSION_PATH}/examples/k8s/kiali.gencert.sh
-    rm -rf ${DEX_VERSION_PATH}/examples/k8s/ssl
-    patch -i - -o ${DEX_VERSION_PATH}/examples/k8s/kiali.gencert.sh ${DEX_VERSION_PATH}/examples/k8s/gencert.sh <<EOF
-18c18
-< DNS.1 = dex.example.com
----
-> DNS.1 = ${KUBE_HOSTNAME}
-EOF
-    [ "$?" != "0" ] && echo "ERROR: Failed to patch gencert.sh" && exit 1
+    echo "Generating TLS certificates for Hydra..."
+    # Use the gencert.sh script from our Hydra implementation (use absolute path)
+    HYDRA_GENCERT_SCRIPT="$(pwd)/ory-hydra/scripts/gencert.sh"
+    if [ ! -f "${HYDRA_GENCERT_SCRIPT}" ]; then
+      echo "ERROR: Hydra gencert.sh script not found at ${HYDRA_GENCERT_SCRIPT}"
+      exit 1
+    fi
 
-    $(cd ${DEX_VERSION_PATH}/examples/k8s/; bash ./kiali.gencert.sh)
-    mv ${DEX_VERSION_PATH}/examples/k8s/ssl ${CERTS_PATH}
-
+    # Run certificate generation
+    mkdir -p ${CERTS_PATH}
+    MINIKUBE_IP=${MINIKUBE_IP} KUBE_HOSTNAME=${KUBE_HOSTNAME} bash ${HYDRA_GENCERT_SCRIPT} "${KUBE_HOSTNAME}" "${MINIKUBE_IP}" "${CERTS_PATH}/ssl"
+    [ "$?" != "0" ] && echo "ERROR: Failed to generate certificates for Hydra" && exit 1
   fi
 
   # Copy certificates to minikube cluster
-  # Because the user may destroy and create many minikube VMs, expect the VM fingerprint to change (i.e. avoid known_hosts checks)
   mkdir -p ${OUTPUT_PATH}
   local tmp_known_hosts="${OUTPUT_PATH}/minikube-known-hosts"
   rm -f ${tmp_known_hosts}
-  ${MINIKUBE_EXEC_WITH_PROFILE} ssh -- mkdir dex_certs
-  scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=${tmp_known_hosts} -i $(${MINIKUBE_EXEC_WITH_PROFILE} ssh-key) ${CERTS_PATH}/* docker@$(${MINIKUBE_EXEC_WITH_PROFILE} ip):dex_certs/
+  ${MINIKUBE_EXEC_WITH_PROFILE} ssh -- mkdir -p hydra_certs
+  scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=${tmp_known_hosts} -i $(${MINIKUBE_EXEC_WITH_PROFILE} ssh-key) ${CERTS_PATH}/ssl/* docker@$(${MINIKUBE_EXEC_WITH_PROFILE} ip):hydra_certs/
   ${MINIKUBE_EXEC_WITH_PROFILE} ssh -- sudo mkdir -p /var/lib/minikube/certs/
-  ${MINIKUBE_EXEC_WITH_PROFILE} ssh -- sudo cp /home/docker/dex_certs/* /var/lib/minikube/certs/
+  ${MINIKUBE_EXEC_WITH_PROFILE} ssh -- sudo cp /home/docker/hydra_certs/* /var/lib/minikube/certs/
 
-  # Patch dex file
-  rm -rf ${DEX_VERSION_PATH}/examples/k8s/dex.kiali.yaml
-  patch -i - -o ${DEX_VERSION_PATH}/examples/k8s/dex.kiali.yaml ${DEX_VERSION_PATH}/examples/k8s/dex.yaml << EOF
-15c15
-<   replicas: 3
----
->   replicas: 1
-26c26
-<       - image: dexidp/dex:v2.27.0 #or quay.io/dexidp/dex:v2.26.0
----
->       - image: ghcr.io/dexidp/dex:${DEX_VERSION}
-41c41
-<         - name: GITHUB_CLIENT_ID
----
->         - name: KUBERNETES_POD_NAMESPACE
-43,50c43,44
-<             secretKeyRef:
-<               name: github-client
-<               key: client-id
-<         - name: GITHUB_CLIENT_SECRET
-<           valueFrom:
-<             secretKeyRef:
-<               name: github-client
-<               key: client-secret
----
->             fieldRef:
->               fieldPath: metadata.namespace
-75c69
-<     issuer: https://dex.example.com:32000
----
->     issuer: https://${KUBE_HOSTNAME}:32000
-85,92d78
-<     - type: github
-<       id: github
-<       name: GitHub
-<       config:
-<         clientID: \$GITHUB_CLIENT_ID
-<         clientSecret: \$GITHUB_CLIENT_SECRET
-<         redirectURI: https://dex.example.com:32000/callback
-<         org: kubernetes
-94a81
->       responseTypes: ["code", "id_token"]
-96a84,89
->     - id: kiali-app
->       redirectURIs:
->       - 'http://${MINIKUBE_IP}/kiali'
->       - 'http://kiali-proxy.${MINIKUBE_IP}.nip.io:30805/oauth2/callback'
->       name: 'Kiali'
->       secret: dontTellAnyone
-EOF
-    [ "$?" != "0" ] && echo "ERROR: Failed to patch dex file" && exit 1
+  # Deploy Hydra using our existing install script
+  echo "Deploying Ory Hydra..."
+  HYDRA_INSTALL_SCRIPT="./ory-hydra/scripts/install-hydra.sh"
+  if [ ! -f "${HYDRA_INSTALL_SCRIPT}" ]; then
+    echo "ERROR: Hydra install script not found at ${HYDRA_INSTALL_SCRIPT}"
+    exit 1
+  fi
 
-    cat <<EOF > ${DEX_VERSION_PATH}/examples/k8s/oauth2.proxy
+  # Run Hydra installation with minikube context
+  MINIKUBE_IP=${MINIKUBE_IP} KUBE_HOSTNAME=${KUBE_HOSTNAME} KUBECTL_CMD="${MINIKUBE_EXEC_WITH_PROFILE} kubectl --" HYDRA_VERSION=${HYDRA_VERSION} MINIKUBE_PROFILE=${MINIKUBE_PROFILE} bash ${HYDRA_INSTALL_SCRIPT}
+  [ "$?" != "0" ] && echo "ERROR: Failed to install Hydra" && exit 1
+
+  # Restart minikube with OIDC configuration
+  echo "Restarting minikube with proper flags for API server and the autodetected registry IP..."
+  ${MINIKUBE_EXEC_WITH_PROFILE} stop
+  ${MINIKUBE_EXEC_WITH_PROFILE} start \
+    ${MINIKUBE_START_FLAGS} \
+    ${INSECURE_REGISTRY_START_ARG} \
+    --insecure-registry ${MINIKUBE_IP}:5000 \
+    --cni=${K8S_CNI} \
+    --cpus=${K8S_CPU} \
+    --memory=${K8S_MEMORY} \
+    --disk-size=${K8S_DISK} \
+    --driver=${K8S_DRIVER} \
+    --kubernetes-version=${K8S_VERSION} \
+    --extra-config=apiserver.oidc-issuer-url=https://$(echo ${MINIKUBE_IP} | sed 's/\./-/g').nip.io:30967 \
+    --extra-config=apiserver.oidc-username-claim=email \
+    --extra-config=apiserver.oidc-ca-file=/var/lib/minikube/certs/hydra-ca.pem \
+    --extra-config=apiserver.oidc-client-id=kiali-app \
+    --extra-config=apiserver.oidc-groups-claim=groups
+  [ "$?" != "0" ] && echo "ERROR: Failed to restart minikube in preparation for Hydra" && exit 1
+
+  # Wait for Hydra to be ready again after minikube restart
+  echo "Waiting for Hydra to be ready after minikube restart..."
+  for i in {1..60}; do
+    if ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- get pods -n ory -l app.kubernetes.io/name=hydra --no-headers 2>/dev/null | grep -q "1/1.*Running"; then
+      echo "Hydra is ready after restart!"
+      break
+    fi
+    echo "Waiting for Hydra to restart... (attempt $i/60)"
+    sleep 5
+  done
+
+  # Verify Hydra is accessible via nip.io after restart
+  echo "Verifying Hydra OIDC endpoint is accessible..."
+  for i in {1..30}; do
+    if curl -k -s "https://$(echo ${MINIKUBE_IP} | sed 's/\./-/g').nip.io:30967/.well-known/openid-configuration" > /dev/null 2>&1; then
+      echo "Hydra OIDC endpoint is accessible!"
+      break
+    fi
+    echo "Waiting for Hydra OIDC endpoint... (attempt $i/30)"
+    sleep 2
+  done
+
+  echo "Creating istio-system namespace for Kiali deployment"
+  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create namespace istio-system
+
+  # Deploy OAuth2 Proxy for header authentication testing
+  echo "Deploying OAuth2 Proxy for header authentication..."
+  cat <<EOF | ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- apply -f -
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -228,15 +220,15 @@ data:
     cookie_secret="secretxxsecretxx"
     provider="oidc"
     email_domains="example.com"
-    oidc_issuer_url="https://${KUBE_HOSTNAME}:32000"
+    oidc_issuer_url="https://${KUBE_HOSTNAME}:30967"
     client_id="kiali-app"
     cookie_secure="false"
-    redirect_url="http://kiali-proxy.${MINIKUBE_IP}.nip.io:30805/oauth2/callback"
+    redirect_url="http://kiali-proxy.${KUBE_HOSTNAME}:30805/oauth2/callback"
     upstreams="http://kiali.istio-system.svc:20001"
     pass_authorization_header = true
     set_authorization_header = true
     ssl_insecure_skip_verify = true
-    client_secret="dontTellAnyone"
+    client_secret="doNotTell"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -298,79 +290,43 @@ spec:
   selector:
     k8s-app: oauth2-proxy
 EOF
+  [ "$?" != "0" ] && echo "ERROR: Failed to deploy OAuth2 Proxy" && exit 1
 
-  # Install dex
-  echo "Deploying dex..."
-  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create namespace dex
-  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create secret tls dex.example.com.tls --cert=${CERTS_PATH}/cert.pem --key=${CERTS_PATH}/key.pem -n dex
+  echo "Minikube should now be configured with Ory Hydra OpenID connect and OAuth2 Proxy. Just wait for all pods to start."
 
-  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- apply -n dex -f ${DEX_VERSION_PATH}/examples/k8s/dex.kiali.yaml
-  [ "$?" != "0" ] && echo "ERROR: Failed to install dex" && exit 1
-  echo "Deploying oauth2 proxy..."
-  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create -f ${DEX_VERSION_PATH}/examples/k8s/oauth2.proxy
-  [ "$?" != "0" ] && echo "ERROR: Failed to deploy oauth2 proxy" && exit 1
-
-  # Restart minikube
-  echo "Restarting minikube with proper flags for API server and the autodetected registry IP..."
-  ${MINIKUBE_EXEC_WITH_PROFILE} stop
-  ${MINIKUBE_EXEC_WITH_PROFILE} start \
-    ${MINIKUBE_START_FLAGS} \
-    ${INSECURE_REGISTRY_START_ARG} \
-    --insecure-registry ${MINIKUBE_IP}:5000 \
-    --cni=${K8S_CNI} \
-    --cpus=${K8S_CPU} \
-    --memory=${K8S_MEMORY} \
-    --disk-size=${K8S_DISK} \
-    --driver=${K8S_DRIVER} \
-    --kubernetes-version=${K8S_VERSION} \
-    --extra-config=apiserver.oidc-issuer-url=https://${KUBE_HOSTNAME}:32000 \
-    --extra-config=apiserver.oidc-username-claim=email \
-    --extra-config=apiserver.oidc-ca-file=/var/lib/minikube/certs/ca.pem \
-    --extra-config=apiserver.oidc-client-id=kiali-app \
-    --extra-config=apiserver.oidc-groups-claim=groups
-  [ "$?" != "0" ] && echo "ERROR: Failed to restart minikube in preparation for dex" && exit 1
-
-  echo "Need to create the OpenID secret now - assuming Kiali will eventually be installed in istio-system"
-  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create namespace istio-system
-  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create secret generic kiali --from-literal="oidc-secret=dontTellAnyone" -n istio-system
-
-  echo "Minikube should now be configured with OpenID connect. Just wait for all pods to start."
   cat <<EOF
-Commands to query Dex deployments and pods:
-  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- get deployments -n dex
-  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- get pods -n dex
+Commands to query Hydra deployments and pods:
+  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- get deployments -n ory
+  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- get pods -n ory
 
-OpenID configuration for Kiali CR:
+OpenID configuration for Kiali CR (confidential client - secret required):
   auth:
     strategy: openid
     openid:
       client_id: "kiali-app"
       insecure_skip_verify_tls: true
-      issuer_uri: "https://${KUBE_HOSTNAME}:32000"
+      issuer_uri: "https://$(echo ${MINIKUBE_IP} | sed 's/\./-/g').nip.io:30967"
       username_claim: "email"
 
 OpenID user is:
   Username: admin@example.com
   Password: password
 
-Kiali reverse proxy URL: http://kiali-proxy.${MINIKUBE_IP}.nip.io:30805
-
-The Kiali OIDC secret named 'kiali' has been created in istio-system namespace.
-If you need to recreate this OIDC secret, run this command:
-  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create secret generic kiali --from-literal="oidc-secret=dontTellAnyone" -n istio-system
+NOTE: kiali-app is configured as a confidential OAuth2 client (client secret required).
+A Kubernetes secret containing the OAuth2 client secret needs to be created for Kiali to authenticate with this client.
 
 EOF
 
-  if [ "${DEX_USER_NAMESPACES}" != "none" ]; then
-    if [ "${DEX_USER_NAMESPACES}" == "all" ]; then
+  if [ "${HYDRA_USER_NAMESPACES}" != "none" ]; then
+    if [ "${HYDRA_USER_NAMESPACES}" == "all" ]; then
       echo "!!!CAUTION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
       echo "!! The user 'admin@example.com' will be granted cluster-admin permissions ! "
       echo "!!!CAUTION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-      ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create clusterrolebinding dex-rolebinding-admin --clusterrole=cluster-admin --user="admin@example.com"
+      ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create clusterrolebinding hydra-rolebinding-admin --clusterrole=cluster-admin --user="admin@example.com"
     else
       echo "After you install Kiali, execute these commands to grant the user 'admin@example.com' permission to see specific namespaces:"
-      for ns in ${DEX_USER_NAMESPACES}; do
-        echo ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create rolebinding dex-rolebinding-${ns} --clusterrole=kiali --user="admin@example.com" --namespace=${ns}
+      for ns in ${HYDRA_USER_NAMESPACES}; do
+        echo ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create rolebinding hydra-rolebinding-${ns} --clusterrole=kiali --user="admin@example.com" --namespace=${ns}
       done
     fi
   fi
@@ -548,10 +504,9 @@ while [[ $# -gt 0 ]]; do
     resetclock) _CMD="resetclock"; shift ;;
     olm) _CMD="olm"; shift ;;
     -ce|--client-exe) CLIENT_EXE="$2"; shift;shift ;;
-    -de|--dex-enabled) DEX_ENABLED="$2"; shift;shift ;;
-    -dr|--dex-repo) DEX_REPO="$2"; shift;shift ;;
-    -dun|--dex-user-namespaces) DEX_USER_NAMESPACES="$2"; shift;shift ;;
-    -dv|--dex-version) DEX_VERSION="$2"; shift;shift ;;
+    -he|--hydra-enabled) HYDRA_ENABLED="$2"; shift;shift ;;
+    -hun|--hydra-user-namespaces) HYDRA_USER_NAMESPACES="$2"; shift;shift ;;
+    -hv|--hydra-version) HYDRA_VERSION="$2"; shift;shift ;;
     -iri|--insecure-registry-ip) INSECURE_REGISTRY_IP="$2"; shift;shift ;;
     -kc|--kubernetes-cpu) K8S_CPU="$2"; shift;shift ;;
     -kcni|--kubernetes-cni) K8S_CNI="$2"; shift;shift ;;
@@ -577,27 +532,23 @@ Valid options:
       The kubectl client to use.
       Only used for needing to install Istio or the Bookinfo demo. The "minikube kubectl" command will be used instead when possible.
       Default: ${DEFAULT_CLIENT_EXE}
-  -de|--dex-enabled
-      If true, install and configure Dex. This provides an OpenID Connect implementation.
+  -he|--hydra-enabled
+      If true, install and configure Ory Hydra. This provides an OpenID Connect implementation with multi-audience support.
       Only used for the 'start' command.
-      Default: ${DEFAULT_DEX_ENABLED}
-  -dr|--dex-repo
-      The github repo where the Dex archive is to be found.
-      Only used for the 'start' command and when Dex is to be installed (--dex-enabled=true).
-      Default: ${DEFAULT_DEX_REPO}
-  -dun|--dex-user-namespaces
+      Default: ${DEFAULT_HYDRA_ENABLED}
+  -hun|--hydra-user-namespaces
       A space-separated list of namespaces that you would like the admin@example.com user to be able to see.
       If this value is set to "all", the admin@example.com user will immediately be granted cluster-admin permissions.
       If this value is set to "none", nothing is done.
       Any other value and this will not trigger actual creation of role bindings but instead the script merely
       outputs the commands in the final summary that you should then execute in order to grant those permissions.
       This is because the namespaces may not exist yet (such as "bookinfo") nor will the Kiali role exist.
-      Only used for the 'start' command and when Dex is to be installed (--dex-enabled=true).
-      Default: ${DEFAULT_DEX_USER_NAMESPACES}
-  -dv|--dex-version
-      The version of Dex to be installed.
-      Only used for the 'start' command and when Dex is to be installed (--dex-enabled=true).
-      Default: ${DEFAULT_DEX_VERSION}
+      Only used for the 'start' command and when Hydra is to be installed (--hydra-enabled=true).
+      Default: ${DEFAULT_HYDRA_USER_NAMESPACES}
+  -hv|--hydra-version
+      The version of Ory Hydra to be installed.
+      Only used for the 'start' command and when Hydra is to be installed (--hydra-enabled=true).
+      Default: ${DEFAULT_HYDRA_VERSION}
   -iri|--insecure-registry-ip
       This is used for the setting up an insecure registry IP within the minikube docker daemon.
       This is needed to easily authenticate and push images to the docker daemon.
@@ -696,10 +647,9 @@ done
 
 # Prepare some env vars
 : ${CLIENT_EXE:=${DEFAULT_CLIENT_EXE}}
-: ${DEX_ENABLED:=${DEFAULT_DEX_ENABLED}}
-: ${DEX_REPO:=${DEFAULT_DEX_REPO}}
-: ${DEX_USER_NAMESPACES:=${DEFAULT_DEX_USER_NAMESPACES}}
-: ${DEX_VERSION:=${DEFAULT_DEX_VERSION}}
+: ${HYDRA_ENABLED:=${DEFAULT_HYDRA_ENABLED}}
+: ${HYDRA_USER_NAMESPACES:=${DEFAULT_HYDRA_USER_NAMESPACES}}
+: ${HYDRA_VERSION:=${DEFAULT_HYDRA_VERSION}}
 : ${INSECURE_REGISTRY_IP:=${DEFAULT_INSECURE_REGISTRY_IP}}
 : ${K8S_CNI:=${DEFAULT_K8S_CNI}}
 : ${K8S_CPU:=${DEFAULT_K8S_CPU}}
@@ -724,10 +674,9 @@ else
 fi
 
 debug "CLIENT_EXE=$CLIENT_EXE"
-debug "DEX_ENABLED=$DEX_ENABLED"
-debug "DEX_REPO=$DEX_REPO"
-debug "DEX_USER_NAMESPACES=$DEX_USER_NAMESPACES"
-debug "DEX_VERSION=$DEX_VERSION"
+debug "HYDRA_ENABLED=$HYDRA_ENABLED"
+debug "HYDRA_USER_NAMESPACES=$HYDRA_USER_NAMESPACES"
+debug "HYDRA_VERSION=$HYDRA_VERSION"
 debug "INSECURE_REGISTRY_IP=$INSECURE_REGISTRY_IP"
 debug "INSECURE_REGISTRY_START_ARG=$INSECURE_REGISTRY_START_ARG"
 debug "K8S_CNI=$K8S_CNI"
@@ -812,8 +761,8 @@ LBCONFIGMAP
     [ "$?" != "0" ] && echo "ERROR: Failed to configure metallb addon" && exit 1
   fi
 
-  if [ "${DEX_ENABLED}" == "true" ]; then
-    install_dex
+  if [ "${HYDRA_ENABLED}" == "true" ]; then
+    install_hydra
   fi
 
   if [ "${OLM_ENABLED}" == "true" ]; then
