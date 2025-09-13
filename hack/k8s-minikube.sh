@@ -200,13 +200,24 @@ EOF
 <         org: kubernetes
 94a81
 >       responseTypes: ["code", "id_token"]
-96a84,89
+96a84,100
 >     - id: kiali-app
 >       redirectURIs:
 >       - 'http://${MINIKUBE_IP}/kiali'
 >       - 'http://kiali-proxy.${MINIKUBE_IP}.nip.io:30805/oauth2/callback'
 >       name: 'Kiali'
 >       secret: dontTellAnyone
+>     - id: multi-aud-client
+>       redirectURIs:
+>       - 'http://${MINIKUBE_IP}/kiali'
+>       - 'http://kiali-proxy.${MINIKUBE_IP}.nip.io:30805/oauth2/callback'
+>       name: 'Multi-Audience Test Client'
+>       secret: multiAudSecret
+>       audiences:
+>       - 'kiali-app'
+>       - 'grafana-app'
+>       - 'jaeger-app'
+>       - 'multi-aud-client'
 EOF
     [ "$?" != "0" ] && echo "ERROR: Failed to patch dex file" && exit 1
 
