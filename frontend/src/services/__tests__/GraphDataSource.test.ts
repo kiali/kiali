@@ -26,6 +26,7 @@ const FETCH_PARAMS = {
   showIdleNodes: false,
   showOperationNodes: false,
   showSecurity: false,
+  showVirtualServices: false,
   showWaypoints: false,
   trafficRates: DefaultTrafficRates
 };

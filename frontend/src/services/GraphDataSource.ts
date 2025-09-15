@@ -73,6 +73,7 @@ export interface FetchParams {
   showIdleNodes: boolean;
   showOperationNodes: boolean;
   showSecurity: boolean;
+  showVirtualServices: boolean;
   showWaypoints: boolean;
   trafficRates: TrafficRate[];
 }
@@ -135,6 +136,7 @@ export class GraphDataSource {
       showOperationNodes: false,
       showSecurity: false,
       showWaypoints: true,
+      showVirtualServices: true,
       trafficRates: []
     };
     this._isError = this._isLoading = false;
@@ -185,10 +187,14 @@ export class GraphDataSource {
     }
 
     // Some appenders are expensive so only specify an appender if needed.
-    let appenders: AppenderString = 'deadNode,istio,serviceEntry,meshCheck,workloadEntry';
+    let appenders: AppenderString = 'deadNode,serviceEntry,meshCheck,workloadEntry';
 
     if (fetchParams.includeHealth) {
       appenders += ',health';
+    }
+
+    if (fetchParams.showVirtualServices) {
+      appenders += ',istio';
     }
 
     if (fetchParams.showOperationNodes) {
@@ -521,6 +527,7 @@ export class GraphDataSource {
       showIdleNodes: false,
       showOperationNodes: false,
       showSecurity: false,
+      showVirtualServices: true,
       showWaypoints: true,
       trafficRates: DefaultTrafficRates
     };

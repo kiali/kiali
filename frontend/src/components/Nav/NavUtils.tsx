@@ -28,6 +28,7 @@ export type GraphUrlParams = {
   showOperationNodes: boolean;
   showServiceNodes: boolean;
   showWaypoints: boolean;
+  showVirtualServices: boolean;
   trafficRates: TrafficRate[];
 };
 
