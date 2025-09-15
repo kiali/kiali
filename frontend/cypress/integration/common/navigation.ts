@@ -3,8 +3,8 @@ import { ensureKialiFinishedLoading } from './transition';
 
 enum detailType {
   App = 'app',
-  Deployments = 'deployments',
   Istio = 'istio',
+  Pods = 'pods',
   Service = 'service',
   Workload = 'workload'
 }
@@ -59,10 +59,10 @@ Given(
       let detailPage = '';
       // ossmc requires deployment as the pod name is different than the deployment name. Ex for waypoints, can be waypoint-fdsfdsfs
       if (
-        detail === detailType.Deployments &&
+        detail === detailType.Pods &&
         (currentURL.includes('openshift-console') || currentURL.includes('/ossmconsole/'))
       ) {
-        detailPage = detailType.Deployments;
+        detailPage = detailType.Pods;
       } else {
         detailPage = getPageDetail(detail);
       }
