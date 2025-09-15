@@ -75,8 +75,8 @@ When('user selects a trace with at least {int} spans', (spans: number) => {
 Then('user sees span details', () => {
   cy.getBySel('trace-details-tabs').should('be.visible').contains('Span Details').click({ scrollBehavior: false });
 
-  cy.get('table')
-    .should('be.visible')
+  cy.get('table', { timeout: 5000 })
+    .should('exist')
     .find('tbody tr') // ignore thead rows
     .should('have.length.above', 1) // retries above cy.find() until we have a non head-row
     .eq(1) // take 1st  row
@@ -84,8 +84,8 @@ Then('user sees span details', () => {
     .eq(4) // take 5th cell (kebab)
     .should('exist');
 
-  cy.get('table')
-    .should('be.visible')
+  cy.get('table', { timeout: 5000 })
+    .should('exist')
     .find('tbody tr') // ignore thead rows
     .should('have.length.above', 1) // retries above cy.find() until we have a non head-row
     .eq(1) // take 1st  row

@@ -178,6 +178,7 @@ func AggregateMetrics(conf *config.Config, cache cache.KialiCache, discovery *is
 }
 
 // ControlPlaneMetrics is the API handler to fetch metrics to be displayed, related to a single control plane revision
+// It doesn't check if the namespace is from a control plane, it is also called for Ztunnel and Kiali, which sometimes are not deployed in a control plane namespace
 func ControlPlaneMetrics(
 	conf *config.Config,
 	cache cache.KialiCache,
@@ -201,11 +202,6 @@ func ControlPlaneMetrics(
 		controlPlane := vars["controlplane"]
 		conf := config.Get()
 		cluster := clusterNameFromQuery(conf, r.URL.Query())
-
-		if !discovery.HasControlPlane(r.Context(), cluster, namespace, controlPlane) {
-			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("provided namespace [%s] and control plane [%s] are not found in the cluster [%s] ", namespace, controlPlane, cluster))
-			return
-		}
 
 		namespaceInfo, err := checkNamespaceAccessWithService(w, r, &layer.Namespace, namespace, cluster)
 		if err != nil {
