@@ -150,3 +150,7 @@ Then(`user doesn't see the {string} menu`, menu => {
 Then(`user see the {string} menu`, menu => {
   cy.get('#page-sidebar').find(`#${menu}`).should('exist');
 });
+
+Given('wait for {string} does not exist', (element: string) => {
+  cy.get(`div[data-test="${element}"]`).should('not.exist');
+});
