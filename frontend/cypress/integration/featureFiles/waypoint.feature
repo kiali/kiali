@@ -316,7 +316,7 @@ Feature: Kiali Waypoint related features
   Scenario: [Waypoint details] The waypoint details for a waypoint for none are valid
     Given user is at the details page for the "workload" "waypoint-fornone/curl-client" located in the "" cluster
     And the user doesn't see a L7 link
-    And user is at the details page for the "workload" "waypoint-fornone/waypoint" located in the "" cluster
+    And user is at the details page for the "deployments" "waypoint-fornone/waypoint" located in the "" cluster
     When the user goes to the "Waypoint" tab
     Then the "Services" subtab doesn't exist
     Then the "Workloads" subtab doesn't exist

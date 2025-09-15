@@ -3,9 +3,10 @@ import { ensureKialiFinishedLoading } from './transition';
 
 enum detailType {
   App = 'app',
-  Workload = 'workload',
+  Deployments = 'deployments',
+  Istio = 'istio',
   Service = 'service',
-  Istio = 'istio'
+  Workload = 'workload'
 }
 
 Given('user is at the {string} list page', (page: string) => {
@@ -54,33 +55,45 @@ Given('autorefresh is enabled', () => {
 Given(
   'user is at the details page for the {string} {string} located in the {string} cluster',
   (detail: detailType, namespacedNamed: string, cluster: string) => {
-    const qs = {
-      // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
-      refresh: '0'
-    };
-    if (cluster !== '') {
-      qs['clusterName'] = cluster;
-    }
+    cy.url().then(currentURL => {
+      let detailPage = '';
+      // ossmc requires deployment as the pod name is different than the deployment name. Ex for waypoints, can be waypoint-fdsfdsfs
+      if (
+        detail === detailType.Deployments &&
+        (currentURL.includes('openshift-console') || currentURL.includes('/ossmconsole/'))
+      ) {
+        detailPage = detailType.Deployments;
+      } else {
+        detailPage = getPageDetail(detail);
+      }
+      const qs = {
+        // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
+        refresh: '0'
+      };
+      if (cluster !== '') {
+        qs['clusterName'] = cluster;
+      }
 
-    const namespaceAndName = namespacedNamed.split('/');
-    const namespace = namespaceAndName[0];
-    const pageDetail = getPageDetail(detail);
-    const name =
-      pageDetail === 'istio'
-        ? `${namespaceAndName[1]}/${namespaceAndName[2]}/${namespaceAndName[3]}/${namespaceAndName[4]}`
-        : namespaceAndName[1];
+      const namespaceAndName = namespacedNamed.split('/');
+      const namespace = namespaceAndName[0];
+      const pageDetail = detailPage;
+      const name =
+        pageDetail === 'istio'
+          ? `${namespaceAndName[1]}/${namespaceAndName[2]}/${namespaceAndName[3]}/${namespaceAndName[4]}`
+          : namespaceAndName[1];
 
-    if (pageDetail === 'services') {
-      cy.intercept({
-        pathname: '**/api/namespaces/bookinfo/services/productpage',
-        query: {
-          objects: ''
-        }
-      }).as('waitForCall');
-    }
+      if (pageDetail === 'services') {
+        cy.intercept({
+          pathname: '**/api/namespaces/bookinfo/services/productpage',
+          query: {
+            objects: ''
+          }
+        }).as('waitForCall');
+      }
 
-    cy.visit({ url: `${Cypress.config('baseUrl')}/console/namespaces/${namespace}/${pageDetail}/${name}`, qs });
-    ensureKialiFinishedLoading();
+      cy.visit({ url: `${Cypress.config('baseUrl')}/console/namespaces/${namespace}/${pageDetail}/${name}`, qs });
+      ensureKialiFinishedLoading();
+    });
   }
 );
 
