@@ -58,11 +58,12 @@ Given(
     cy.url().then(currentURL => {
       let detailPage = '';
       // ossmc requires deployment as the pod name is different than the deployment name. Ex for waypoints, can be waypoint-fdsfdsfs
-      if (
-        detail === detailType.Pods &&
-        (currentURL.includes('openshift-console') || currentURL.includes('/ossmconsole/'))
-      ) {
-        detailPage = detailType.Pods;
+      if (detail === detailType.Pods) {
+        if (currentURL.includes('openshift-console') || currentURL.includes('/ossmconsole/')) {
+          detailPage = detailType.Pods;
+        } else {
+          detailPage = 'workloads';
+        }
       } else {
         detailPage = getPageDetail(detail);
       }
