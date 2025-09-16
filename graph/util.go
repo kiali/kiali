@@ -9,12 +9,12 @@ import (
 
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	prom_client "github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
-	"github.com/prometheus/common/model"
 )
 
 type Response struct {
