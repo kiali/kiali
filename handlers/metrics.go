@@ -250,7 +250,7 @@ func ControlPlaneMetrics(
 	}
 }
 
-// ResourceUsageMetrics is the API handler to fetch metrics to be displayed, related to a single control plane revision
+// ResourceUsageMetrics is the API handler to fetch metrics to be displayed
 // It doesn't check if the namespace is from a control plane, it is called for Ztunnel and Kiali, which sometimes are not deployed in a control plane namespace
 func ResourceUsageMetrics(conf *config.Config, cache cache.KialiCache, discovery *istio.Discovery, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
