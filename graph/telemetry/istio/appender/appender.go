@@ -95,13 +95,13 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []Appender, finalizers 
 			// finalizer appenders
 			case AmbientAppenderName:
 				requestedFinalizers[AmbientAppenderName] = true
-			case IstioAppenderName:
-				requestedFinalizers[IstioAppenderName] = true
 			case HealthAppenderName:
 				// currently, because health is still calculated in the client, if requesting health
 				// we also need to run the healthConfig appender.  Eventually, asking for health will supply
 				// the result of a server-side health calculation.
 				requestedFinalizers[HealthAppenderName] = true
+			case IstioAppenderName:
+				requestedFinalizers[IstioAppenderName] = true
 			case LabelerAppenderName:
 				requestedFinalizers[LabelerAppenderName] = true
 			case OutsiderAppenderName, TrafficGeneratorAppenderName:
