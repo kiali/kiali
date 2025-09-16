@@ -1,22 +1,14 @@
 package util
 
 import (
-	"context"
 	"fmt"
 	"regexp"
-	"strings"
-	"time"
 
-	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	prom_client "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
-	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/prometheus"
-	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // badServiceMatcher looks for a physical IP address with optional port (e.g. 10.11.12.13:80)
@@ -134,22 +126,6 @@ func IsBadDestTelemetry(cluster string, clusterOK bool, svcNs, svc, svcName, wl 
 	return false
 }
 
-// AddQueryScope returns the prom query unchanged if there is no configured queryScope, otherwise
-// it returns the query with the queryScope injected after each occurrence of a leading '{'.
-func AddQueryScope(query string, conf *config.Config) string {
-	queryScope := conf.ExternalServices.Prometheus.QueryScope
-	if len(queryScope) == 0 {
-		return query
-	}
-
-	scope := "{"
-	for labelName, labelValue := range queryScope {
-		scope = fmt.Sprintf("%s%s=\"%s\",", scope, prometheus.SanitizeLabelName(labelName), labelValue)
-	}
-
-	return strings.ReplaceAll(query, "{", scope)
-}
-
 // GetReporter returns the "reporter=" prom query fragment based on whether the reporter must include waypoint traffic
 func GetReporter(reporter string, rates graph.RequestedRates) string {
 	if rates.Ambient == graph.AmbientTrafficWaypoint || rates.Ambient == graph.AmbientTrafficTotal {
@@ -164,87 +140,4 @@ func GetApp(rates graph.RequestedRates) string {
 		return "app!=\"ztunnel\","
 	}
 	return ""
-}
-
-// PromQuery queries Prometheus for metric data
-func PromQuery(ctx context.Context, query string, queryTime time.Time, api prom_v1.API, conf *config.Config) model.Vector {
-	return PromQueryAppender(ctx, query, queryTime, api, conf, nil)
-}
-
-// PromQueryAppender is for appenders to query Prometheus for metric data
-func PromQueryAppender(ctx context.Context, query string, queryTime time.Time, api prom_v1.API, conf *config.Config, a graph.Appender) model.Vector {
-	if query == "" {
-		return model.Vector{}
-	}
-
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	// get logger from context
-	zl := log.FromContext(ctx)
-
-	// add scope if necessary
-	query = AddQueryScope(query, conf)
-
-	// wrap with a round() to be in line with metrics api
-	query = fmt.Sprintf("round(%s,0.001)", query)
-
-	// start our timer
-	var promtimer *prom_client.Timer
-	if a == nil {
-		promtimer = internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Graph-Generation")
-	} else {
-		promtimer = internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Graph-Appender-" + a.Name())
-	}
-
-	// perform the Prometheus query now
-	value, warnings, err := api.Query(ctx, query, queryTime)
-
-	// log warnings and abort immediately on errors
-	if len(warnings) > 0 {
-		zl.Warn().Str("problemQuery", query).Msgf("PromQuery: Prometheus Warnings: [%s]", strings.Join(warnings, ","))
-	}
-	if err != nil {
-		zl.Trace().Str("failedQuery", query).Msgf("PromQuery: Prometheus Error: [%v]", err)
-	}
-	graph.CheckUnavailable(err)
-
-	// notice we only collect metrics and log a message for successful prom queries
-	internalmetrics.ObserveDurationAndLogResults(
-		ctx,
-		conf,
-		promtimer,
-		"PrometheusProcessingTime",
-		map[string]string{"query": query},
-		fmt.Sprintf("PromQuery: queryTime=[%v], queryTime.Unix=[%v])", queryTime.Format(graph.TF), queryTime.Unix()))
-
-	switch t := value.Type(); t {
-	case model.ValVector: // Instant Vector
-		return value.(model.Vector)
-	default:
-		graph.Error(fmt.Sprintf("No handling for type %v!\n", t))
-	}
-
-	return nil
-}
-
-// PopulateWorkloadMap populates the globalInfo.WorkloadMap with the workloads from the trafficMap.
-// TODO: This is only exported for tests to use.
-func PopulateWorkloadMap(ctx context.Context, business *business.Layer, globalInfo *graph.GlobalInfo, trafficMap graph.TrafficMap) {
-	for _, cluster := range globalInfo.Clusters {
-		workloads, err := business.Workload.GetAllWorkloads(ctx, cluster.Name, "")
-		if err != nil {
-			graph.Error(fmt.Sprintf("Error fetching workloads: %s", err.Error()))
-		}
-
-		for _, workload := range workloads {
-			globalInfo.WorkloadMap[graph.WorkloadNodeKey{Cluster: workload.Cluster, Namespace: workload.Namespace, Workload: workload.Name}] = nil
-		}
-	}
-
-	for _, node := range trafficMap {
-		if _, ok := globalInfo.WorkloadMap[graph.WorkloadNodeKey{Cluster: node.Cluster, Namespace: node.Namespace, Workload: node.Workload}]; ok {
-			globalInfo.WorkloadMap[graph.WorkloadNodeKey{Cluster: node.Cluster, Namespace: node.Namespace, Workload: node.Workload}] = node
-		}
-	}
 }

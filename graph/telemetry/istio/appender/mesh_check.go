@@ -6,8 +6,10 @@ import (
 	"github.com/kiali/kiali/graph"
 )
 
-const MeshCheckAppenderName = "meshCheck"
-const SidecarsCheckAppenderName = "sidecarsCheck"
+const (
+	MeshCheckAppenderName     = "meshCheck"
+	SidecarsCheckAppenderName = "sidecarsCheck"
+)
 
 // MeshCheckAppender flags nodes whose backing workloads are missing at least one Envoy sidecar. Note that
 // a node with no backing workloads is not flagged.
@@ -27,7 +29,7 @@ func (a MeshCheckAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a MeshCheckAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a MeshCheckAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -35,7 +37,7 @@ func (a MeshCheckAppender) AppendGraph(ctx context.Context, trafficMap graph.Tra
 	a.applyMeshChecks(ctx, trafficMap, globalInfo, namespaceInfo)
 }
 
-func (a *MeshCheckAppender) applyMeshChecks(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a *MeshCheckAppender) applyMeshChecks(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *AppenderNamespaceInfo) {
 	for _, n := range trafficMap {
 		// skip if we've already determined the node is out-of-mesh. we may process the same
 		// node multiple times to ensure we check every node (e.g. missing sidecars indicate missing

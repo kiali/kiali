@@ -15,6 +15,7 @@ import (
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry/istio/appender"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 )
 
 const (
@@ -121,8 +122,8 @@ func TestWorkloadEntry(t *testing.T) {
 	assert.True(found)
 	assert.NotContains(v4Node.Metadata, graph.HasWorkloadEntry)
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, appender.NewIstioInfo())
+	namespaceInfo := appender.NewAppenderNamespaceInfo(appNamespace)
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
 	// Run the appender...
@@ -200,8 +201,8 @@ func TestWorkloadEntryAppLabelNotMatching(t *testing.T) {
 	assert.True(found)
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, appender.NewIstioInfo())
+	namespaceInfo := appender.NewAppenderNamespaceInfo(appNamespace)
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
 	// Run the appender...
@@ -287,8 +288,8 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 	assert.True(found)
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, appender.NewIstioInfo())
+	namespaceInfo := appender.NewAppenderNamespaceInfo(appNamespace)
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
 	// Run the appender...
@@ -356,8 +357,8 @@ func TestWorkloadWithoutWorkloadEntries(t *testing.T) {
 	assert.True(found)
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, appender.NewIstioInfo())
+	namespaceInfo := appender.NewAppenderNamespaceInfo(appNamespace)
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
 	// Run the appender...
@@ -405,8 +406,8 @@ func TestWEKiali7305(t *testing.T) {
 
 	assert.Equal(1, len(trafficMap))
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, appender.NewIstioInfo())
+	namespaceInfo := appender.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
 	// Run the appender...

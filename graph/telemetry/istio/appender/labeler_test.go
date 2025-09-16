@@ -13,6 +13,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 )
 
 func setupLabelerTrafficMap() (map[string]*graph.Node, string, string, string, string, string) {
@@ -115,7 +116,7 @@ func TestLabeler(t *testing.T) {
 	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.Labels])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.Labels])
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewIstioInfo())
 
 	a := LabelerAppender{}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, nil)

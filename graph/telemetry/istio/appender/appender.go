@@ -12,6 +12,46 @@ import (
 	"github.com/kiali/kiali/util/sliceutil"
 )
 
+func NewIstioInfo() *IstioInfo {
+	return &IstioInfo{
+		AmbientWaypoints:  make(map[NodeKey]bool),
+		AppsMap:           make(map[string]map[string]*models.AppListItem),
+		ServiceEntryHosts: make(map[string]serviceEntryHosts),
+		ServiceLists:      make(map[string]*models.ServiceList),
+		WorkloadLists:     make(map[string]*models.WorkloadList),
+		WorkloadMap:       make(map[NodeKey]*graph.Node),
+	}
+}
+
+type NodeKey struct {
+	Cluster   string
+	Namespace string
+	Name      string
+}
+
+// IstioInfo contains structured information for Istio telemetry vendor
+type IstioInfo struct {
+	// AmbientWaypoints maps waypoint keys to their availability status
+	AmbientWaypoints any
+	// AppsMap contains application list items keyed by cluster:namespace
+	AppsMap map[string]map[string]*models.AppListItem
+	// ServiceEntryHosts maps composite keys (serviceEntryHostsKey:cluster:namespace) to service entry hosts
+	ServiceEntryHosts map[string]serviceEntryHosts
+	// ServiceLists caches service lists by cluster:namespace key
+	ServiceLists map[string]*models.ServiceList
+	// WorkloadLists caches workload lists by cluster:namespace key
+	WorkloadLists map[string]*models.WorkloadList
+	// WorkloadMap maps workloads to their nodes on the map. Only available to finalizers
+	// since the full graph hasn't been generated until all appenders have run.
+	WorkloadMap map[NodeKey]*graph.Node
+}
+
+type (
+	GlobalInfo            = graph.GlobalInfo[*IstioInfo]
+	AppenderNamespaceInfo = graph.AppenderNamespaceInfo[*IstioInfo]
+	Appender              = graph.Appender[*IstioInfo]
+)
+
 const (
 	defaultAggregate      = "request_operation"
 	defaultQuantile       = 0.95
@@ -19,8 +59,12 @@ const (
 	defaultWaypoints      = true
 )
 
+func NewAppenderNamespaceInfo(namespace string) *AppenderNamespaceInfo {
+	return &AppenderNamespaceInfo{Namespace: namespace, Vendor: NewIstioInfo()}
+}
+
 // ParseAppenders determines which appenders should run for this graphing request
-func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, finalizers []graph.Appender) {
+func ParseAppenders(o graph.TelemetryOptions) (appenders []Appender, finalizers []Appender) {
 	requestedAppenders := map[string]bool{}
 	requestedFinalizers := map[string]bool{}
 
@@ -198,7 +242,6 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		Rates:            o.Rates,
 		ShowUnrooted:     true, // ToDo possibly make this an option
 	})
-	finalizers = append(finalizers, &IstioAppender{})
 
 	// always run the outsider finalizer next, this allows other finalizers to
 	// utilize graph.isInaccessible and graph.isOutside metatdata values.
@@ -206,6 +249,10 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		AccessibleNamespaces: o.AccessibleNamespaces,
 		Namespaces:           o.Namespaces,
 	})
+
+	if _, ok := requestedFinalizers[IstioAppenderName]; ok {
+		finalizers = append(finalizers, &IstioAppender{})
+	}
 
 	if _, ok := requestedFinalizers[AmbientAppenderName]; ok || o.Appenders.All {
 		waypoints := defaultWaypoints
@@ -265,7 +312,7 @@ type serviceEntryHosts map[string][]*serviceEntry
 type appsMap map[string]*models.AppListItem
 
 func newServiceEntryHosts() serviceEntryHosts {
-	return make(map[string][]*serviceEntry)
+	return make(serviceEntryHosts)
 }
 
 func (seh serviceEntryHosts) addHost(host string, se *serviceEntry) {
@@ -286,7 +333,7 @@ func (seh serviceEntryHosts) addHost(host string, se *serviceEntry) {
 
 // getServiceLists returns a map[clusterName]*models.ServiceList for all clusters with traffic in the namespace, or if trafficMap is nil
 // then all clusters on which the namespace is valid.
-func getServiceLists(trafficMap graph.TrafficMap, namespace string, gi *graph.GlobalInfo) map[string]*models.ServiceList {
+func getServiceLists(trafficMap graph.TrafficMap, namespace string, gi *GlobalInfo) map[string]*models.ServiceList {
 	clusters := getTrafficClusters(trafficMap, namespace, gi)
 	serviceLists := map[string]*models.ServiceList{}
 
@@ -297,17 +344,9 @@ func getServiceLists(trafficMap graph.TrafficMap, namespace string, gi *graph.Gl
 	return serviceLists
 }
 
-func getServiceList(cluster, namespace string, gi *graph.GlobalInfo) *models.ServiceList {
-	var serviceListMap map[string]*models.ServiceList
-	if existingServiceMap, ok := gi.Vendor[serviceListKey]; ok {
-		serviceListMap = existingServiceMap.(map[string]*models.ServiceList)
-	} else {
-		serviceListMap = make(map[string]*models.ServiceList)
-		gi.Vendor[serviceListKey] = serviceListMap
-	}
-
+func getServiceList(cluster, namespace string, gi *GlobalInfo) *models.ServiceList {
 	key := graph.GetClusterSensitiveKey(cluster, namespace)
-	if serviceList, ok := serviceListMap[key]; ok {
+	if serviceList, ok := gi.Vendor.ServiceLists[key]; ok {
 		return serviceList
 	}
 
@@ -319,12 +358,12 @@ func getServiceList(cluster, namespace string, gi *graph.GlobalInfo) *models.Ser
 	}
 	serviceList, err := gi.Business.Svc.GetServiceList(context.TODO(), criteria)
 	graph.CheckError(err)
-	serviceListMap[key] = serviceList
+	gi.Vendor.ServiceLists[key] = serviceList
 
 	return serviceList
 }
 
-func getServiceDefinition(cluster, namespace, serviceName string, gi *graph.GlobalInfo) (*models.ServiceOverview, bool) {
+func getServiceDefinition(cluster, namespace, serviceName string, gi *GlobalInfo) (*models.ServiceOverview, bool) {
 	if serviceName == "" || serviceName == graph.Unknown {
 		return nil, false
 	}
@@ -338,21 +377,21 @@ func getServiceDefinition(cluster, namespace, serviceName string, gi *graph.Glob
 
 // getServiceEntryHosts returns ServiceEntryHost information cached for a specific cluster and namespace. If not
 // previously cached a new, empty cache entry is created and returned.
-func getServiceEntryHosts(cluster, namespace string, gi *graph.GlobalInfo) (serviceEntryHosts, bool) {
+func getServiceEntryHosts(cluster, namespace string, gi *GlobalInfo) (serviceEntryHosts, bool) {
 	key := strings.Join([]string{serviceEntryHostsKey, cluster, namespace}, ":")
-	if seHosts, ok := gi.Vendor[key]; ok {
-		return seHosts.(serviceEntryHosts), true
+	if seHosts, ok := gi.Vendor.ServiceEntryHosts[key]; ok {
+		return seHosts, true
 	}
 
 	seHosts := newServiceEntryHosts()
-	gi.Vendor[key] = seHosts
+	gi.Vendor.ServiceEntryHosts[key] = seHosts
 
 	return seHosts, false
 }
 
 // getWorkloadLists returns a map[clusterName]*models.WorkloadList for all clusters with traffic in the namespace, or if trafficMap is nil
 // then all clusters on which the namespace is valid.
-func getWorkloadLists(trafficMap graph.TrafficMap, namespace string, gi *graph.GlobalInfo) map[string]*models.WorkloadList {
+func getWorkloadLists(trafficMap graph.TrafficMap, namespace string, gi *GlobalInfo) map[string]*models.WorkloadList {
 	clusters := getTrafficClusters(trafficMap, namespace, gi)
 	workloadLists := map[string]*models.WorkloadList{}
 
@@ -363,29 +402,21 @@ func getWorkloadLists(trafficMap graph.TrafficMap, namespace string, gi *graph.G
 	return workloadLists
 }
 
-func getWorkloadList(cluster, namespace string, gi *graph.GlobalInfo) *models.WorkloadList {
-	var workloadListMap map[string]*models.WorkloadList
-	if existingWorkloadListMap, ok := gi.Vendor[workloadListKey]; ok {
-		workloadListMap = existingWorkloadListMap.(map[string]*models.WorkloadList)
-	} else {
-		workloadListMap = make(map[string]*models.WorkloadList)
-		gi.Vendor[workloadListKey] = workloadListMap
-	}
-
+func getWorkloadList(cluster, namespace string, gi *GlobalInfo) *models.WorkloadList {
 	key := graph.GetClusterSensitiveKey(cluster, namespace)
-	if workloadList, ok := workloadListMap[key]; ok {
+	if workloadList, ok := gi.Vendor.WorkloadLists[key]; ok {
 		return workloadList
 	}
 
 	criteria := business.WorkloadCriteria{Cluster: cluster, Namespace: namespace, IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, err := gi.Business.Workload.GetWorkloadList(context.TODO(), criteria)
 	graph.CheckError(err)
-	workloadListMap[key] = &workloadList
+	gi.Vendor.WorkloadLists[key] = &workloadList
 
 	return &workloadList
 }
 
-func getWorkload(cluster, namespace, workloadName string, gi *graph.GlobalInfo) (*models.WorkloadListItem, bool) {
+func getWorkload(cluster, namespace, workloadName string, gi *GlobalInfo) (*models.WorkloadListItem, bool) {
 	if workloadName == "" || workloadName == graph.Unknown {
 		return nil, false
 	}
@@ -400,7 +431,7 @@ func getWorkload(cluster, namespace, workloadName string, gi *graph.GlobalInfo) 
 	return nil, false
 }
 
-func getAppWorkloads(cluster, namespace, app, version string, gi *graph.GlobalInfo) []models.WorkloadListItem {
+func getAppWorkloads(cluster, namespace, app, version string, gi *GlobalInfo) []models.WorkloadListItem {
 	result := []models.WorkloadListItem{}
 	versionOk := graph.IsOKVersion(version)
 	for _, workload := range getWorkloadList(cluster, namespace, gi).Workloads {
@@ -417,21 +448,13 @@ func getAppWorkloads(cluster, namespace, app, version string, gi *graph.GlobalIn
 	return result
 }
 
-func getApp(namespace, appName string, gi *graph.GlobalInfo) (*models.AppListItem, bool) {
+func getApp(namespace, appName string, gi *GlobalInfo) (*models.AppListItem, bool) {
 	if appName == "" || appName == graph.Unknown {
 		return nil, false
 	}
 
-	var allAppsMap map[string]appsMap
-	if existingAllAppsMap, ok := gi.Vendor[appsMapKey]; ok {
-		allAppsMap = existingAllAppsMap.(map[string]appsMap)
-	} else {
-		allAppsMap = make(map[string]appsMap)
-		gi.Vendor[appsMapKey] = allAppsMap
-	}
-
 	var namespaceApps appsMap
-	if existingNamespaceApps, ok := allAppsMap[namespace]; ok {
+	if existingNamespaceApps, ok := gi.Vendor.AppsMap[namespace]; ok {
 		if app, ok := existingNamespaceApps[appName]; ok {
 			return app, true
 		} else {
@@ -439,7 +462,7 @@ func getApp(namespace, appName string, gi *graph.GlobalInfo) (*models.AppListIte
 		}
 	} else {
 		namespaceApps = appsMap{}
-		allAppsMap[namespace] = namespaceApps
+		gi.Vendor.AppsMap[namespace] = namespaceApps
 	}
 
 	if appList, err := gi.Business.App.GetAppList(context.TODO(), business.AppCriteria{Namespace: namespace, IncludeIstioResources: false, IncludeHealth: false}); err == nil {
@@ -456,7 +479,7 @@ func getApp(namespace, appName string, gi *graph.GlobalInfo) (*models.AppListIte
 
 // getTrafficClusters returns an array of accessible cluster names for which the TrafficMap has nodes in the given
 // namespace. If the trafficMap is nil then return all cluster names for which the namespace exists.
-func getTrafficClusters(trafficMap graph.TrafficMap, namespace string, gi *graph.GlobalInfo) []string {
+func getTrafficClusters(trafficMap graph.TrafficMap, namespace string, gi *GlobalInfo) []string {
 	// get all of the accessible clusters for the given namespace
 	namespaceClusters, err := gi.Business.Namespace.GetNamespaceClusters(context.TODO(), namespace)
 	graph.CheckError(err)
@@ -480,4 +503,25 @@ func getTrafficClusters(trafficMap graph.TrafficMap, namespace string, gi *graph
 	})
 
 	return filteredClusterNames
+}
+
+// PopulateWorkloadMap populates the globalInfo.WorkloadMap with the workloads from the trafficMap.
+// TODO: This is only exported for tests to use.
+func PopulateWorkloadMap(ctx context.Context, business *business.Layer, globalInfo *GlobalInfo, trafficMap graph.TrafficMap) {
+	for _, cluster := range globalInfo.Clusters {
+		workloads, err := business.Workload.GetAllWorkloads(ctx, cluster.Name, "")
+		if err != nil {
+			graph.Error(fmt.Sprintf("Error fetching workloads: %s", err.Error()))
+		}
+
+		for _, workload := range workloads {
+			globalInfo.Vendor.WorkloadMap[NodeKey{Cluster: workload.Cluster, Namespace: workload.Namespace, Name: workload.Name}] = nil
+		}
+	}
+
+	for _, node := range trafficMap {
+		if _, ok := globalInfo.Vendor.WorkloadMap[NodeKey{Cluster: node.Cluster, Namespace: node.Namespace, Name: node.Workload}]; ok {
+			globalInfo.Vendor.WorkloadMap[NodeKey{Cluster: node.Cluster, Namespace: node.Namespace, Name: node.Workload}] = node
+		}
+	}
 }

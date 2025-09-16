@@ -11,6 +11,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 )
 
 const (
@@ -105,8 +106,8 @@ func TestRemoveWaypoint(t *testing.T) {
 	businessLayer := setupMocks(t)
 	trafficMap := workloadEntriesTrafficMap()
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewIstioInfo())
+	namespaceInfo := NewAppenderNamespaceInfo(appNamespace)
 
 	assert.Equal(5, len(trafficMap))
 
@@ -136,8 +137,8 @@ func TestIsWaypointExcludedNs(t *testing.T) {
 	businessLayer := setupMocks(t)
 	trafficMap := workloadEntriesTrafficMapExcludedNs()
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewIstioInfo())
+	namespaceInfo := NewAppenderNamespaceInfo(appNamespace)
 
 	assert.Equal(9, len(trafficMap))
 

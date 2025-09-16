@@ -9,10 +9,15 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
-type VendorInfo map[string]interface{}
+// ServiceEntry represents a service entry configuration
+type ServiceEntry struct {
+	Hosts     []string
+	ExportTo  []string
+	Namespace string
+}
 
-// WorkloadNodeKey maps a Workload to its node on the map.
-type WorkloadNodeKey struct {
+// NodeKey maps a Workload to its node on the map.
+type NodeKey struct {
 	Cluster   string
 	Namespace string
 	Workload  string
@@ -22,51 +27,40 @@ type WorkloadNodeKey struct {
 // the main graph code, or an appender, to populate the cache and then it,
 // or another appender can re-use the information.  A new instance is
 // generated for graph and is initially empty.
-type GlobalInfo struct {
+type GlobalInfo[T any] struct {
 	Business   *business.Layer
 	Clusters   []models.KubeCluster
 	Conf       *config.Config
 	PromClient prometheus.ClientInterface
-	Vendor     VendorInfo // telemetry vendor's global info
-	// WorkloadMap maps workloads to their nodes on the map. Only available to finalizers
-	// since the full graph hasn't been generated until all appenders have run.
-	WorkloadMap map[WorkloadNodeKey]*Node
+	Vendor     T // telemetry vendor's global info
 }
 
 // AppenderNamespaceInfo caches information relevant to a single namespace. It allows
 // one appender to populate the cache and another to then re-use the information.
 // A new instance is generated for each namespace of a single graph and is initially
 // seeded with only Namespace.
-type AppenderNamespaceInfo struct {
-	Namespace string     // always provided
-	Vendor    VendorInfo // telemetry vendor's namespace info
+type AppenderNamespaceInfo[T any] struct {
+	Namespace string // always provided
+	Vendor    T      // telemetry vendor's namespace info
 }
 
-func NewVendorInfo() VendorInfo {
-	return make(map[string]interface{})
-}
-
-func NewGlobalInfo(business *business.Layer, prom prometheus.ClientInterface, conf *config.Config) *GlobalInfo {
-	return &GlobalInfo{
-		Business:    business,
-		Conf:        conf,
-		PromClient:  prom,
-		Vendor:      NewVendorInfo(),
-		WorkloadMap: make(map[WorkloadNodeKey]*Node),
+func NewGlobalInfo[T any](business *business.Layer, prom prometheus.ClientInterface, conf *config.Config, clusters []models.KubeCluster, vendorInfo T) *GlobalInfo[T] {
+	return &GlobalInfo[T]{
+		Business:   business,
+		Clusters:   clusters,
+		Conf:       conf,
+		PromClient: prom,
+		Vendor:     vendorInfo,
 	}
-}
-
-func NewAppenderNamespaceInfo(namespace string) *AppenderNamespaceInfo {
-	return &AppenderNamespaceInfo{Namespace: namespace, Vendor: NewVendorInfo()}
 }
 
 // Appender is implemented by any code offering to append a service graph with
 // supplemental information.  On error the appender should panic and it will be
 // handled as an error response.
-type Appender interface {
+type Appender[T any] interface {
 	// AppendGraph performs the appender work on the provided traffic map. The map may be initially empty.
 	// An appender is allowed to add or remove map entries. namespaceInfo will be nil for Finalizer appenders.
-	AppendGraph(ctx context.Context, trafficMap TrafficMap, globalInfo *GlobalInfo, namespaceInfo *AppenderNamespaceInfo)
+	AppendGraph(ctx context.Context, trafficMap TrafficMap, globalInfo *GlobalInfo[T], namespaceInfo *AppenderNamespaceInfo[T])
 
 	// IsFinalizer returns true if the appender should run only on the final TrafficMap, or false if the appender should
 	// run against every requested namespace.

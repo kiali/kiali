@@ -43,7 +43,7 @@ func (a SecurityPolicyAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a SecurityPolicyAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a SecurityPolicyAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -130,7 +130,7 @@ func (a SecurityPolicyAppender) appendGraph(ctx context.Context, trafficMap grap
 		}
 	}
 
-	outVector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a)
+	outVector := graph.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a.Name())
 
 	// 2) query for requests originating from a workload inside of the namespace
 	query = ""
@@ -227,7 +227,7 @@ func (a SecurityPolicyAppender) appendGraph(ctx context.Context, trafficMap grap
 		}
 	}
 
-	inVector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a)
+	inVector := graph.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), conf, a.Name())
 
 	// create map to quickly look up securityPolicy
 	securityPolicyMap := make(map[string]PolicyRates)

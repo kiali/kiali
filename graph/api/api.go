@@ -11,6 +11,7 @@ import (
 	"github.com/kiali/kiali/graph"
 	config_common "github.com/kiali/kiali/graph/config/common"
 	"github.com/kiali/kiali/graph/telemetry/istio"
+	"github.com/kiali/kiali/graph/telemetry/istio/appender"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
@@ -58,14 +59,12 @@ func GraphNamespaces(ctx context.Context, business *business.Layer, prom prometh
 
 // graphNamespacesIstio provides a test hook that accepts mock clients
 func graphNamespacesIstio(ctx context.Context, business *business.Layer, prom prometheus.ClientInterface, o graph.Options) (code int, graphConfig interface{}) {
-	// Create a 'global' object to store the business. Global only to the request.
-	globalInfo := graph.NewGlobalInfo(business, prom, config.Get())
-
 	clusters, err := business.Mesh.Clusters()
 	if err != nil {
 		graph.Error(fmt.Sprintf("Error fetching clusters: %s", err.Error()))
 	}
-	globalInfo.Clusters = clusters
+	// Create a 'global' object to store the business. Global only to the request.
+	globalInfo := graph.NewGlobalInfo(business, prom, config.Get(), clusters, appender.NewIstioInfo())
 
 	trafficMap := istio.BuildNamespacesTrafficMap(ctx, o.TelemetryOptions, globalInfo)
 
@@ -113,7 +112,11 @@ func GraphNode(ctx context.Context, business *business.Layer, prom prometheus.Cl
 // graphNodeIstio provides a test hook that accepts mock clients
 func graphNodeIstio(ctx context.Context, business *business.Layer, prom prometheus.ClientInterface, o graph.Options) (code int, graphConfig interface{}) {
 	// Create a 'global' object to store the business. Global only to the request.
-	globalInfo := graph.NewGlobalInfo(business, prom, config.Get())
+	clusters, err := business.Mesh.Clusters()
+	if err != nil {
+		graph.Error(fmt.Sprintf("Error fetching clusters: %s", err.Error()))
+	}
+	globalInfo := graph.NewGlobalInfo(business, prom, config.Get(), clusters, appender.NewIstioInfo())
 	globalInfo.Business = business
 	globalInfo.PromClient = prom
 

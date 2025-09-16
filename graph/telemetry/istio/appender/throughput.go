@@ -44,7 +44,7 @@ func (a ThroughputAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a ThroughputAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a ThroughputAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -57,7 +57,7 @@ func (a ThroughputAppender) AppendGraph(ctx context.Context, trafficMap graph.Tr
 	a.appendGraph(ctx, trafficMap, namespaceInfo.Namespace, globalInfo)
 }
 
-func (a ThroughputAppender) appendGraph(ctx context.Context, trafficMap graph.TrafficMap, namespace string, gi *graph.GlobalInfo) {
+func (a ThroughputAppender) appendGraph(ctx context.Context, trafficMap graph.TrafficMap, namespace string, gi *GlobalInfo) {
 	zl := log.FromContext(ctx)
 
 	zl.Trace().Msgf("Generating [%s] throughput; namespace = %v", a.ThroughputType, namespace)
@@ -84,7 +84,7 @@ func (a ThroughputAppender) appendGraph(ctx context.Context, trafficMap graph.Tr
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	vector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+	vector := graph.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a.Name())
 	a.populateThroughputMap(ctx, throughputMap, &vector, gi.Conf)
 
 	// 2) query for requests originating from a workload inside of the namespace
@@ -94,7 +94,7 @@ func (a ThroughputAppender) appendGraph(ctx context.Context, trafficMap graph.Tr
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	vector = util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+	vector = graph.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a.Name())
 	a.populateThroughputMap(ctx, throughputMap, &vector, gi.Conf)
 
 	applyThroughput(trafficMap, throughputMap)

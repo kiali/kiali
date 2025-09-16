@@ -10,6 +10,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/models"
 )
 
 func TestResponseThroughput(t *testing.T) {
@@ -29,11 +30,13 @@ func TestResponseThroughput(t *testing.T) {
 		"destination_workload_namespace": "bookinfo",
 		"destination_workload":           "productpage-v1",
 		"destination_canonical_service":  "productpage",
-		"destination_canonical_revision": "v1"}
+		"destination_canonical_revision": "v1",
+	}
 	v0 := model.Vector{
 		&model.Sample{
 			Metric: q0m0,
-			Value:  1000.0},
+			Value:  1000.0,
+		},
 	}
 
 	q1 := `round(sum(rate(istio_response_bytes_sum{reporter=~"waypoint|destination",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision) > 0,0.001)`
@@ -50,7 +53,8 @@ func TestResponseThroughput(t *testing.T) {
 		"destination_workload_namespace": "bookinfo",
 		"destination_workload":           "reviews-v1",
 		"destination_canonical_service":  "reviews",
-		"destination_canonical_revision": "v1"}
+		"destination_canonical_revision": "v1",
+	}
 	q1m1 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -64,7 +68,8 @@ func TestResponseThroughput(t *testing.T) {
 		"destination_workload_namespace": "bookinfo",
 		"destination_workload":           "reviews-v2",
 		"destination_canonical_service":  "reviews",
-		"destination_canonical_revision": "v2"}
+		"destination_canonical_revision": "v2",
+	}
 	q1m2 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -78,7 +83,8 @@ func TestResponseThroughput(t *testing.T) {
 		"destination_workload_namespace": "bookinfo",
 		"destination_workload":           "ratings-v1",
 		"destination_canonical_service":  "ratings",
-		"destination_canonical_revision": "v1"}
+		"destination_canonical_revision": "v1",
+	}
 	q1m3 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -92,20 +98,26 @@ func TestResponseThroughput(t *testing.T) {
 		"destination_workload_namespace": "bookinfo",
 		"destination_workload":           "ratings-v1",
 		"destination_canonical_service":  "ratings",
-		"destination_canonical_revision": "v1"}
+		"destination_canonical_revision": "v1",
+	}
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,
-			Value:  1000.0},
+			Value:  1000.0,
+		},
 		&model.Sample{
 			Metric: q1m1,
-			Value:  2000.0},
+			Value:  2000.0,
+		},
 		&model.Sample{
 			Metric: q1m2,
-			Value:  1000.0},
+			Value:  1000.0,
+		},
 		&model.Sample{
 			Metric: q1m3,
-			Value:  2000.0}}
+			Value:  2000.0,
+		},
+	}
 
 	client, api, err := setupMocked()
 	if err != nil {
@@ -143,7 +155,7 @@ func TestResponseThroughput(t *testing.T) {
 		ThroughputType: "response",
 	}
 
-	gi := &graph.GlobalInfo{Conf: config.Get(), PromClient: client}
+	gi := graph.NewGlobalInfo(nil, client, config.Get(), []models.KubeCluster{}, NewIstioInfo())
 	appender.appendGraph(context.Background(), trafficMap, "bookinfo", gi)
 
 	ingress, ok = trafficMap[ingressID]
@@ -257,11 +269,13 @@ func TestRequestThroughput(t *testing.T) {
 		"destination_workload_namespace": "bookinfo",
 		"destination_workload":           "productpage-v1",
 		"destination_canonical_service":  "productpage",
-		"destination_canonical_revision": "v1"}
+		"destination_canonical_revision": "v1",
+	}
 	v0 := model.Vector{
 		&model.Sample{
 			Metric: q0m0,
-			Value:  1000.0},
+			Value:  1000.0,
+		},
 	}
 
 	q1 := `round(sum(rate(istio_request_bytes_sum{reporter=~"waypoint|source",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision) > 0,0.001)`
@@ -278,11 +292,14 @@ func TestRequestThroughput(t *testing.T) {
 		"destination_workload_namespace": "unknown", // simulate failed requests to reviews service
 		"destination_workload":           "unknown",
 		"destination_canonical_service":  "unknown",
-		"destination_canonical_revision": "unknown"}
+		"destination_canonical_revision": "unknown",
+	}
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,
-			Value:  1000.0}}
+			Value:  1000.0,
+		},
+	}
 
 	client, api, err := setupMocked()
 	if err != nil {
@@ -320,7 +337,7 @@ func TestRequestThroughput(t *testing.T) {
 		ThroughputType: "request",
 	}
 
-	gi := &graph.GlobalInfo{Conf: config.Get(), PromClient: client}
+	gi := graph.NewGlobalInfo(nil, client, config.Get(), []models.KubeCluster{}, NewIstioInfo())
 	appender.appendGraph(context.Background(), trafficMap, "bookinfo", gi)
 
 	ingress, ok = trafficMap[ingressID]
@@ -368,11 +385,13 @@ func TestRequestThroughputSkipRates(t *testing.T) {
 		"destination_workload_namespace": "bookinfo",
 		"destination_workload":           "productpage-v1",
 		"destination_canonical_service":  "productpage",
-		"destination_canonical_revision": "v1"}
+		"destination_canonical_revision": "v1",
+	}
 	v0 := model.Vector{
 		&model.Sample{
 			Metric: q0m0,
-			Value:  1000.0},
+			Value:  1000.0,
+		},
 	}
 
 	q1 := `round(sum(rate(istio_request_bytes_sum{reporter=~"waypoint|source",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision) > 0,0.001)`
@@ -389,11 +408,14 @@ func TestRequestThroughputSkipRates(t *testing.T) {
 		"destination_workload_namespace": "unknown", // simulate failed requests to reviews service
 		"destination_workload":           "unknown",
 		"destination_canonical_service":  "unknown",
-		"destination_canonical_revision": "unknown"}
+		"destination_canonical_revision": "unknown",
+	}
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,
-			Value:  1000.0}}
+			Value:  1000.0,
+		},
+	}
 
 	_, api, err := setupMocked()
 	if err != nil {

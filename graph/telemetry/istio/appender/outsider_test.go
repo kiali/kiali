@@ -9,6 +9,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/models"
 )
 
 func TestOutsider(t *testing.T) {
@@ -22,8 +23,8 @@ func TestOutsider(t *testing.T) {
 	accessible, _ := graph.NewNode(config.DefaultClusterID, "accessibleNamespace", "test", "accessibleNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
 	trafficMap[accessible.ID] = accessible
 
-	globalInfo := graph.NewGlobalInfo(nil, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	globalInfo := graph.NewGlobalInfo(nil, nil, config.Get(), []models.KubeCluster{}, NewIstioInfo())
+	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
 
 	a := OutsiderAppender{
 		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{

@@ -35,14 +35,17 @@ func (a IstioAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
 
 	serviceLists := map[string]*models.ServiceList{}
 	for _, cluster := range globalInfo.Clusters {
-		svcs, err := globalInfo.Business.Svc.GetServiceListForCluster(ctx, business.ServiceCriteria{Cluster: cluster.Name}, cluster.Name)
+		svcs, err := globalInfo.Business.Svc.GetServiceListForCluster(ctx,
+			business.ServiceCriteria{Cluster: cluster.Name, IncludeOnlyDefinitions: true, IncludeHealth: false},
+			cluster.Name,
+		)
 		graph.CheckError(err)
 
 		serviceLists[cluster.Name] = svcs
@@ -55,7 +58,7 @@ func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.Traffic
 	}
 }
 
-func addBadging(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo) {
+func addBadging(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *GlobalInfo) {
 	for _, cluster := range globalInfo.Clusters {
 		// Currently no other appenders use DestinationRules or VirtualServices, so they are not cached in AppenderNamespaceInfo
 		istioConfig, err := globalInfo.Business.IstioConfig.GetIstioConfigList(ctx, cluster.Name, business.IstioConfigCriteria{
@@ -173,7 +176,7 @@ type serviceKey struct {
 
 // addLabels is a chance to add any missing label info to nodes when the telemetry does not provide enough information.
 // For example, service injection has this problem.
-func addLabels(ctx context.Context, trafficMap graph.TrafficMap, gi *graph.GlobalInfo, serviceLists map[string]*models.ServiceList) {
+func addLabels(ctx context.Context, trafficMap graph.TrafficMap, gi *GlobalInfo, serviceLists map[string]*models.ServiceList) {
 	// build map for quick lookup
 	svcMap := map[serviceKey]models.ServiceOverview{}
 	for cluster, serviceList := range serviceLists {
@@ -183,8 +186,12 @@ func addLabels(ctx context.Context, trafficMap graph.TrafficMap, gi *graph.Globa
 	}
 
 	for _, n := range trafficMap {
+		var isOutsider bool
+		if outside, ok := n.Metadata[graph.IsOutside].(bool); ok {
+			isOutsider = outside
+		}
 		// make sure service nodes have the defined app label so it can be used for app grouping in the UI.
-		if n.NodeType != graph.NodeTypeService || n.App != "" {
+		if n.NodeType != graph.NodeTypeService || n.App != "" || isOutsider {
 			continue
 		}
 		// For service nodes that are a service entries, use the `hosts` property of the SE to find
@@ -229,7 +236,7 @@ func addLabels(ctx context.Context, trafficMap graph.TrafficMap, gi *graph.Globa
 }
 
 // decorateGateways gets all the Gateway CRDs and GatewayAPI CRDs for the given cluster and namespace and adds the hostnames to the node metadata.
-func (a IstioAppender) decorateGateways(ctx context.Context, cluster string, globalInfo *graph.GlobalInfo) {
+func (a IstioAppender) decorateGateways(ctx context.Context, cluster string, globalInfo *GlobalInfo) {
 	l, err := globalInfo.Business.IstioConfig.GetIstioConfigList(ctx, cluster, business.IstioConfigCriteria{
 		IncludeGateways:    true,
 		IncludeK8sGateways: true,
@@ -246,7 +253,7 @@ func (a IstioAppender) decorateGateways(ctx context.Context, cluster string, glo
 			hostnames = append(hostnames, gwHosts...)
 		}
 		for _, w := range wk {
-			node := globalInfo.WorkloadMap[graph.WorkloadNodeKey{Cluster: w.Cluster, Namespace: w.Namespace, Workload: w.Name}]
+			node := globalInfo.Vendor.WorkloadMap[NodeKey{Cluster: w.Cluster, Namespace: w.Namespace, Name: w.Name}]
 			if node != nil {
 				// TODO: This doesn't work for the generic gateway chart.
 				switch w.Labels["operator.istio.io/component"] {
@@ -272,7 +279,7 @@ func (a IstioAppender) decorateGateways(ctx context.Context, cluster string, glo
 		}
 
 		workload := wl.Workloads[0]
-		node := globalInfo.WorkloadMap[graph.WorkloadNodeKey{Cluster: workload.Cluster, Namespace: workload.Namespace, Workload: workload.Name}]
+		node := globalInfo.Vendor.WorkloadMap[NodeKey{Cluster: workload.Cluster, Namespace: workload.Namespace, Name: workload.Name}]
 		if node != nil {
 			gwListeners := gw.Spec.Listeners
 			var hostnames []string
