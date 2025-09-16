@@ -250,7 +250,8 @@ func ControlPlaneMetrics(
 	}
 }
 
-// ResourceUsageMetrics is the API handler to fetch metrics to be displayed, related to a single control plane revision
+// ResourceUsageMetrics is the API handler to fetch metrics to be displayed
+// It doesn't check if the namespace is from a control plane, it is called for Ztunnel and Kiali, which sometimes are not deployed in a control plane namespace
 func ResourceUsageMetrics(conf *config.Config, cache cache.KialiCache, discovery *istio.Discovery, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -258,11 +259,6 @@ func ResourceUsageMetrics(conf *config.Config, cache cache.KialiCache, discovery
 		app := vars["app"]
 		conf := config.Get()
 		cluster := clusterNameFromQuery(conf, r.URL.Query())
-
-		if !discovery.IsControlPlane(r.Context(), cluster, namespace) {
-			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
-			return
-		}
 
 		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {

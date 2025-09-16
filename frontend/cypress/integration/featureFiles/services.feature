@@ -180,6 +180,7 @@ Feature: Kiali Services page
     Then the list is sorted by column "Cluster" in "descending" order
 
   @ambient
+  @skip-ossmc
   Scenario: Filter services table by health
     And user is at the "services" page
     When user selects the "bookinfo" namespace

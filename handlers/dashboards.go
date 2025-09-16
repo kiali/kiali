@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -259,6 +258,7 @@ func WorkloadDashboard(
 }
 
 // ZtunnelDashboard is the API handler to fetch metrics to be displayed, related to a single control plane revision
+// It doesn't check if the namespace is a control plane, sometimes it is deployed in a different namespace (ex. OpenShift)
 func ZtunnelDashboard(
 	conf *config.Config,
 	cache cache.KialiCache,
@@ -285,11 +285,6 @@ func ZtunnelDashboard(
 
 		if err := extractIstioMetricsQueryParams(r, &params, oldestNs); err != nil {
 			RespondWithError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		if !discovery.IsControlPlane(r.Context(), cluster, namespace) {
-			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
 			return
 		}
 
