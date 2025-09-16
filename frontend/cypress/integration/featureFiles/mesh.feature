@@ -24,6 +24,8 @@ Feature: Kiali Mesh page
     Then user "does not see" mesh tour
 
   @core-2
+  @core
+  @multiple-controlplanes
   Scenario: See mesh
     When user sees mesh side panel
     Then user sees expected mesh infra

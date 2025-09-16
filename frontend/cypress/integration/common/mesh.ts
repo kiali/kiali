@@ -204,10 +204,12 @@ Then('user sees expected mesh infra', () => {
 
       const { nodes, edges } = elems(controller);
       const nodeNames = nodes.map(n => n.getLabel().toLowerCase());
-      const minNodesLength = nodeNames.some(n => n === 'external deployments') ? 9 : 8;
+      const isMultiControlplane = nodeNames.some(n => n === 'istiod-default-v1-26-0');
+      const minNodesLength = nodeNames.some(n => n === 'external deployments') ? (isMultiControlplane ? 13 : 9) : 8;
+      const minEdgesLength = isMultiControlplane ? 7 : 5;
 
       assert.isAtLeast(nodes.length, minNodesLength, 'Unexpected number of infra nodes');
-      assert.isAtLeast(edges.length, 5, 'Unexpected number of infra edges');
+      assert.isAtLeast(edges.length, minEdgesLength, 'Unexpected number of infra edges');
       assert.isTrue(nodeNames.some(n => n === 'data plane'));
       assert.isTrue(nodeNames.some(n => n === 'grafana'));
       assert.isTrue(nodeNames.some(n => n.startsWith('istiod')));

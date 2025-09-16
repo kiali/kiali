@@ -17,6 +17,7 @@ FRONTEND_CORE_2="frontend-core-2"
 FRONTEND_CORE_OPTIONAL="frontend-core-optional"
 FRONTEND_PRIMARY_REMOTE="frontend-primary-remote"
 FRONTEND_MULTI_PRIMARY="frontend-multi-primary"
+FRONTEND_MULTIPLE_CONTROLPLANES="frontend-multiple-controlplanes"
 FRONTEND_EXTERNAL_KIALI="frontend-external-kiali"
 FRONTEND_TEMPO="frontend-tempo"
 LOCAL="local"
@@ -144,7 +145,11 @@ Valid command line arguments:
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
     Default: false
+<<<<<<< HEAD
   -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_CORE_1}|${FRONTEND_CORE_2}|${FRONTEND_CORE_OPTIONAL}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${LOCAL}>
+=======
+  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_MULTIPLE_CONTROLPLANES}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${LOCAL}>
+>>>>>>> 655ce7408 (Added CI for multiple controlplanes)
     Which test suite to run.
     Default: ${BACKEND}
   -wv|--with-video <true|false>
@@ -676,6 +681,36 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:tracing
+  detectRaceConditions
+elif [ "${TEST_SUITE}" == "${FRONTEND_MULTIPLE_CONTROLPLANES}" ]; then
+  ensureCypressInstalled
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    # Setup single cluster with multiple control planes
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+
+    # Install demo apps
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true
+
+    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c oc -iv 1.26.0 -mid istio_26 -n istio-system-26 -ir "default-v1-26-0"
+
+    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c oc -iv 1.26.2 -mid istio_26 -n istio-system-26-2 -ir "default-v1-26-2"
+
+  fi
+
+  ensureKialiServerReady
+
+  export CYPRESS_BASE_URL="${KIALI_URL}"
+  export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
+  # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
+  export CYPRESS_VIDEO="${WITH_VIDEO}"
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  cd "${SCRIPT_DIR}"/../frontend
+  yarn run cypress:run:multiple-controlplanes
   detectRaceConditions
 elif [ "${TEST_SUITE}" == "${LOCAL}" ]; then
   ensureCypressInstalled
