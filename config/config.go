@@ -332,13 +332,6 @@ type TracingConfig struct {
 	XURL                 string            `yaml:"url,omitempty" json:"URL,omitempty"`                     // DEPRECATED!
 }
 
-// RegistryConfig contains configuration for connecting to an external istiod.
-// This is used when Kiali should connect to the istiod via a url instead of port forwarding.
-type RegistryConfig struct {
-	IstiodURL string `yaml:"istiod_url" json:"istiodUrl"`
-	// TODO: Support auth options
-}
-
 // IstioConfig describes configuration used for istio links.
 // IMPORTANT: Values set here MUST apply to ALL Istio control planes being monitored by the Kiali
 //
@@ -355,9 +348,8 @@ type IstioConfig struct {
 	IstioIdentityDomain            string            `yaml:"istio_identity_domain,omitempty" json:"istioIdentityDomain,omitempty"`
 	// IstiodPollingIntervalSeconds is how often in seconds Kiali will poll istiod(s) for
 	// proxy status and registry services. Polling is not performed if IstioAPIEnabled is false.
-	IstiodPollingIntervalSeconds     int             `yaml:"istiod_polling_interval_seconds,omitempty" json:"istiodPollingIntervalSeconds,omitempty"`
-	Registry                         *RegistryConfig `yaml:"registry,omitempty" json:"registry,omitempty"`
-	ValidationChangeDetectionEnabled bool            `yaml:"validation_change_detection_enabled,omitempty" json:"validationChangeDetectionEnabled,omitempty"`
+	IstiodPollingIntervalSeconds     int  `yaml:"istiod_polling_interval_seconds,omitempty" json:"istiodPollingIntervalSeconds,omitempty"`
+	ValidationChangeDetectionEnabled bool `yaml:"validation_change_detection_enabled,omitempty" json:"validationChangeDetectionEnabled,omitempty"`
 	// ValidationReconcileInterval sets how often Kiali will validate Istio configuration.
 	// Validations can be disabled setting the interval to 0
 	ValidationReconcileInterval *time.Duration `yaml:"validation_reconcile_interval,omitempty" json:"validationReconcileInterval,omitempty"`

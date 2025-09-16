@@ -340,22 +340,12 @@ func (p *controlPlaneMonitor) getProxyStatus(ctx context.Context, client kuberne
 	const synczPath = "/debug/syncz"
 	var result map[string][]byte
 
-	if externalConf := p.conf.ExternalServices.Istio.Registry; externalConf != nil && externalConf.IstiodURL != "" {
-		url := joinURL(externalConf.IstiodURL, synczPath)
-		r, err := getRequest(ctx, url)
-		if err != nil {
-			log.Error().Msgf("Failed to get Istiod info from remote endpoint %s error: %s", synczPath, err)
-			return nil, err
-		}
-		result = map[string][]byte{"remote": r}
-	} else {
-		debugStatus, err := p.getIstiodDebugStatus(client, controlPlane, synczPath)
-		if err != nil {
-			log.Error().Msgf("Failed to call Istiod endpoint %s error: %s", synczPath, err)
-			return nil, err
-		}
-		result = debugStatus
+	debugStatus, err := p.getIstiodDebugStatus(client, controlPlane, synczPath)
+	if err != nil {
+		log.Error().Msgf("Failed to call Istiod endpoint %s error: %s", synczPath, err)
+		return nil, err
 	}
+	result = debugStatus
 	return parseProxyStatus(result)
 }
 
@@ -364,22 +354,12 @@ func (p *controlPlaneMonitor) getRegistryServices(ctx context.Context, client ku
 	const registryzPath = "/debug/registryz"
 	var result map[string][]byte
 
-	if externalConf := p.conf.ExternalServices.Istio.Registry; externalConf != nil && externalConf.IstiodURL != "" {
-		url := joinURL(externalConf.IstiodURL, registryzPath)
-		r, err := getRequest(ctx, url)
-		if err != nil {
-			log.Error().Msgf("Failed to get Istiod info from remote endpoint %s error: %s", registryzPath, err)
-			return nil, err
-		}
-		result = map[string][]byte{"remote": r}
-	} else {
-		debugStatus, err := p.getIstiodDebugStatus(client, controlPlane, registryzPath)
-		if err != nil {
-			log.Error().Msgf("Failed to call Istiod endpoint %s error: %s", registryzPath, err)
-			return nil, err
-		}
-		result = debugStatus
+	debugStatus, err := p.getIstiodDebugStatus(client, controlPlane, registryzPath)
+	if err != nil {
+		log.Error().Msgf("Failed to call Istiod endpoint %s error: %s", registryzPath, err)
+		return nil, err
 	}
+	result = debugStatus
 	return parseRegistryServices(result)
 }
 
