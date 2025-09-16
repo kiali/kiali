@@ -178,7 +178,6 @@ func AggregateMetrics(conf *config.Config, cache cache.KialiCache, discovery *is
 }
 
 // ControlPlaneMetrics is the API handler to fetch metrics to be displayed, related to a single control plane revision
-// It doesn't check if the namespace is from a control plane, it is also called for Ztunnel and Kiali, which sometimes are not deployed in a control plane namespace
 func ControlPlaneMetrics(
 	conf *config.Config,
 	cache cache.KialiCache,
@@ -202,6 +201,11 @@ func ControlPlaneMetrics(
 		controlPlane := vars["controlplane"]
 		conf := config.Get()
 		cluster := clusterNameFromQuery(conf, r.URL.Query())
+
+		if !discovery.HasControlPlane(r.Context(), cluster, namespace, controlPlane) {
+			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("provided namespace [%s] and control plane [%s] are not found in the cluster [%s] ", namespace, controlPlane, cluster))
+			return
+		}
 
 		namespaceInfo, err := checkNamespaceAccessWithService(w, r, &layer.Namespace, namespace, cluster)
 		if err != nil {
@@ -247,6 +251,7 @@ func ControlPlaneMetrics(
 }
 
 // ResourceUsageMetrics is the API handler to fetch metrics to be displayed, related to a single control plane revision
+// It doesn't check if the namespace is from a control plane, it is called for Ztunnel and Kiali, which sometimes are not deployed in a control plane namespace
 func ResourceUsageMetrics(conf *config.Config, cache cache.KialiCache, discovery *istio.Discovery, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -254,11 +259,6 @@ func ResourceUsageMetrics(conf *config.Config, cache cache.KialiCache, discovery
 		app := vars["app"]
 		conf := config.Get()
 		cluster := clusterNameFromQuery(conf, r.URL.Query())
-
-		if !discovery.IsControlPlane(r.Context(), cluster, namespace) {
-			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
-			return
-		}
 
 		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
