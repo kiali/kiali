@@ -604,9 +604,9 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTIPLE_CONTROLPLANES}" ]; then
     # Install demo apps
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true
 
-    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c oc -iv 1.26.0 -mid istio_26 -n istio-system-26 -ir "default-v1-26-0"
+     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.26.0 -mid istio_26 -n istio-system-26 -ir "default-v1-26-0"
 
-    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c oc -iv 1.26.2 -mid istio_26 -n istio-system-26-2 -ir "default-v1-26-2"
+     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.26.2 -mid istio_26 -n istio-system-26-2 -ir "default-v1-26-2"
 
   fi
 
