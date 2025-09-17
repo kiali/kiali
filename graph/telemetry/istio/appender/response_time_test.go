@@ -246,7 +246,7 @@ func TestResponseTimeP95(t *testing.T) {
 		},
 	}
 
-	gi := graph.NewGlobalInfo(nil, client, config.Get(), []models.KubeCluster{}, NewIstioInfo())
+	gi := graph.NewGlobalInfo(nil, client, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 	appender.appendGraph(context.Background(), trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: true}, gi)
 
 	ingress, ok = trafficMap[ingressID]
@@ -539,7 +539,7 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		},
 	}
 
-	gi := graph.NewGlobalInfo(nil, client, config.Get(), []models.KubeCluster{}, NewIstioInfo())
+	gi := graph.NewGlobalInfo(nil, client, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 	appender.appendGraph(context.Background(), trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: false}, gi)
 
 	ingress, ok = trafficMap[ingressID]
@@ -832,7 +832,7 @@ func TestResponseTimeAvg(t *testing.T) {
 		},
 	}
 
-	gi := graph.NewGlobalInfo(nil, client, config.Get(), []models.KubeCluster{}, NewIstioInfo())
+	gi := graph.NewGlobalInfo(nil, client, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 	appender.appendGraph(context.Background(), trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: false}, gi)
 
 	ingress, ok = trafficMap[ingressID]

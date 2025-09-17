@@ -83,18 +83,18 @@ type WorkloadService struct {
 }
 
 type WorkloadCriteria struct {
-	Cluster      string
-	Namespace    string
-	WorkloadName string
-	// TODO: use Selector type directly.
-	LabelSelector         string
-	WorkloadGVK           schema.GroupVersionKind
+	Cluster               string
+	IncludeHealth         bool
 	IncludeIstioResources bool
 	IncludeServices       bool
-	IncludeHealth         bool
 	IncludeWaypoints      bool
-	RateInterval          string
-	QueryTime             time.Time
+	// TODO: use Selector type directly.
+	LabelSelector string
+	Namespace     string
+	QueryTime     time.Time
+	RateInterval  string
+	WorkloadName  string
+	WorkloadGVK   schema.GroupVersionKind
 }
 
 // PodLog reports log entries

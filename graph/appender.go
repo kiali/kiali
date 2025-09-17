@@ -9,18 +9,11 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
-// ServiceEntry represents a service entry configuration
-type ServiceEntry struct {
-	Hosts     []string
-	ExportTo  []string
-	Namespace string
-}
-
-// NodeKey maps a Workload to its node on the map.
+// NodeKey maps a Workload or Service or App to its node on the map.
 type NodeKey struct {
 	Cluster   string
+	Name      string
 	Namespace string
-	Workload  string
 }
 
 // GlobalInfo caches information relevant to a single graph. It allows
@@ -32,7 +25,8 @@ type GlobalInfo[T any] struct {
 	Clusters   []models.KubeCluster
 	Conf       *config.Config
 	PromClient prometheus.ClientInterface
-	Vendor     T // telemetry vendor's global info
+	// Vendor is the telemetry vendor's global info.
+	Vendor T
 }
 
 // AppenderNamespaceInfo caches information relevant to a single namespace. It allows

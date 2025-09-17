@@ -40,6 +40,10 @@ func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.Traffic
 		return
 	}
 
+	if globalInfo.Vendor.WorkloadMap == nil {
+		populateWorkloadMap(ctx, globalInfo.Business, globalInfo, trafficMap)
+	}
+
 	serviceLists := map[string]*models.ServiceList{}
 	for _, cluster := range globalInfo.Clusters {
 		svcs, err := globalInfo.Business.Svc.GetServiceListForCluster(ctx,
@@ -253,7 +257,7 @@ func (a IstioAppender) decorateGateways(ctx context.Context, cluster string, glo
 			hostnames = append(hostnames, gwHosts...)
 		}
 		for _, w := range wk {
-			node := globalInfo.Vendor.WorkloadMap[NodeKey{Cluster: w.Cluster, Namespace: w.Namespace, Name: w.Name}]
+			node := globalInfo.Vendor.WorkloadMap[graph.NodeKey{Cluster: w.Cluster, Namespace: w.Namespace, Name: w.Name}]
 			if node != nil {
 				// TODO: This doesn't work for the generic gateway chart.
 				switch w.Labels["operator.istio.io/component"] {
@@ -279,7 +283,7 @@ func (a IstioAppender) decorateGateways(ctx context.Context, cluster string, glo
 		}
 
 		workload := wl.Workloads[0]
-		node := globalInfo.Vendor.WorkloadMap[NodeKey{Cluster: workload.Cluster, Namespace: workload.Namespace, Name: workload.Name}]
+		node := globalInfo.Vendor.WorkloadMap[graph.NodeKey{Cluster: workload.Cluster, Namespace: workload.Namespace, Name: workload.Name}]
 		if node != nil {
 			gwListeners := gw.Spec.Listeners
 			var hostnames []string

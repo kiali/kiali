@@ -27,7 +27,7 @@ func TestNonTrafficScenario(t *testing.T) {
 	serviceLists := mockServiceLists(a)
 	workloadLists := mockWorkloadLists(a)
 
-	globalInfo := graph.NewGlobalInfo(nil, nil, config.Get(), []models.KubeCluster{}, NewIstioInfo())
+	globalInfo := graph.NewGlobalInfo(nil, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 	a.addIdleNodes(context.Background(), trafficMap, "testNamespace", serviceLists, workloadLists, globalInfo)
 	assert.Equal(7, len(trafficMap))
 
@@ -100,7 +100,7 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	serviceLists := mockServiceLists(a)
 	workloadLists := mockWorkloadLists(a)
 
-	globalInfo := graph.NewGlobalInfo(nil, nil, config.Get(), []models.KubeCluster{}, NewIstioInfo())
+	globalInfo := graph.NewGlobalInfo(nil, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 	a.addIdleNodes(context.Background(), trafficMap, "testNamespace", serviceLists, workloadLists, globalInfo)
 
 	assert.Equal(5, len(trafficMap))
@@ -160,7 +160,7 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	serviceLists := mockServiceLists(a)
 	workloadLists := mockWorkloadLists(a)
 
-	globalInfo := graph.NewGlobalInfo(nil, nil, config.Get(), []models.KubeCluster{}, NewIstioInfo())
+	globalInfo := graph.NewGlobalInfo(nil, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 	a.addIdleNodes(context.Background(), trafficMap, "testNamespace", serviceLists, workloadLists, globalInfo)
 
 	assert.Equal(5, len(trafficMap))

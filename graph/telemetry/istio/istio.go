@@ -47,7 +47,7 @@ const (
 	tsHashMap graph.MetadataKey = "tsHashMap"
 )
 
-type waypointMap = map[appender.NodeKey]bool
+type waypointMap = map[graph.NodeKey]bool
 
 var grpcMetric = regexp.MustCompile(`istio_.*_messages`)
 
@@ -102,8 +102,6 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 		// Merge this namespace into the final TrafficMap
 		telemetry.MergeTrafficMaps(trafficMap, namespaceInfo.Name, namespaceTrafficMap)
 	}
-
-	appender.PopulateWorkloadMap(ctx, globalInfo.Business, globalInfo, trafficMap)
 
 	// The finalizers can perform final manipulations on the complete graph
 	for _, f := range finalizers {
@@ -331,8 +329,8 @@ func populateTrafficMap(ctx context.Context, trafficMap graph.TrafficMap, vector
 	}
 	skipRequestsGrpc := isRequests && o.Rates.Grpc != graph.RateRequests
 	skipRequestsHttp := isRequests && o.Rates.Http != graph.RateRequests
-	wpKeySource := &appender.NodeKey{}
-	wpKeyDest := &appender.NodeKey{}
+	wpKeySource := &graph.NodeKey{}
+	wpKeyDest := &graph.NodeKey{}
 
 	zl := log.FromContext(ctx)
 
@@ -1091,7 +1089,7 @@ func buildAggregateNodeTrafficMap(ctx context.Context, namespace string, n graph
 func GetWaypointMap(ctx context.Context, gi *appender.GlobalInfo) waypointMap {
 	waypoints := gi.Business.Workload.GetWaypoints(ctx)
 	wpMap := make(waypointMap, len(waypoints))
-	wpKey := appender.NodeKey{} // a re-usable key struct. This works because map keys are always copies
+	wpKey := graph.NodeKey{} // a re-usable key struct. This works because map keys are always copies
 
 	for _, wp := range waypoints {
 		wpKey.Cluster = wp.Cluster
@@ -1106,9 +1104,9 @@ func GetWaypointMap(ctx context.Context, gi *appender.GlobalInfo) waypointMap {
 	return wpMap
 }
 
-func setWaypointKey(wpKey *appender.NodeKey, cluster, namespace, name string) *appender.NodeKey {
+func setWaypointKey(wpKey *graph.NodeKey, cluster, namespace, name string) *graph.NodeKey {
 	if wpKey == nil {
-		wpKey = &appender.NodeKey{}
+		wpKey = &graph.NodeKey{}
 	}
 	wpKey.Cluster = cluster
 	wpKey.Namespace = namespace
@@ -1117,7 +1115,7 @@ func setWaypointKey(wpKey *appender.NodeKey, cluster, namespace, name string) *a
 }
 
 // hasWaypoint returns true if the source or dest workload is determined to be a waypoint workload.
-func hasWaypoint(wpKeySource, wpKeyDest *appender.NodeKey, globalInfo *appender.GlobalInfo) (sourceIsWaypoint bool, destIsWaypoint bool) {
+func hasWaypoint(wpKeySource, wpKeyDest *graph.NodeKey, globalInfo *appender.GlobalInfo) (sourceIsWaypoint bool, destIsWaypoint bool) {
 	wpMap := globalInfo.Vendor.AmbientWaypoints.(waypointMap)
 	sourceIsWaypoint = wpMap[*wpKeySource]
 	destIsWaypoint = wpMap[*wpKeyDest]
@@ -1126,7 +1124,7 @@ func hasWaypoint(wpKeySource, wpKeyDest *appender.NodeKey, globalInfo *appender.
 }
 
 // isWaypoint returns true if the ns, name and cluster of a workload matches with one of the known waypoints
-func isWaypoint(wpMap waypointMap, wpKey *appender.NodeKey) bool {
+func isWaypoint(wpMap waypointMap, wpKey *graph.NodeKey) bool {
 	return wpMap[*wpKey]
 }
 

@@ -122,7 +122,7 @@ func TestWorkloadEntry(t *testing.T) {
 	assert.True(found)
 	assert.NotContains(v4Node.Metadata, graph.HasWorkloadEntry)
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, appender.NewIstioInfo())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, appender.NewGlobalIstioInfo())
 	namespaceInfo := appender.NewAppenderNamespaceInfo(appNamespace)
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
@@ -201,7 +201,7 @@ func TestWorkloadEntryAppLabelNotMatching(t *testing.T) {
 	assert.True(found)
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, appender.NewIstioInfo())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, appender.NewGlobalIstioInfo())
 	namespaceInfo := appender.NewAppenderNamespaceInfo(appNamespace)
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
@@ -288,7 +288,7 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 	assert.True(found)
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, appender.NewIstioInfo())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, appender.NewGlobalIstioInfo())
 	namespaceInfo := appender.NewAppenderNamespaceInfo(appNamespace)
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
@@ -357,7 +357,7 @@ func TestWorkloadWithoutWorkloadEntries(t *testing.T) {
 	assert.True(found)
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, appender.NewIstioInfo())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, appender.NewGlobalIstioInfo())
 	namespaceInfo := appender.NewAppenderNamespaceInfo(appNamespace)
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
@@ -406,7 +406,7 @@ func TestWEKiali7305(t *testing.T) {
 
 	assert.Equal(1, len(trafficMap))
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, appender.NewIstioInfo())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, appender.NewGlobalIstioInfo())
 	namespaceInfo := appender.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 

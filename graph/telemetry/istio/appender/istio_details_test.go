@@ -82,10 +82,9 @@ func TestCBAll(t *testing.T) {
 	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewIstioInfo())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 	globalInfo.Clusters = []models.KubeCluster{{Name: config.DefaultClusterID}}
 	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
-	PopulateWorkloadMap(t.Context(), businessLayer, globalInfo, trafficMap)
 
 	a := IstioAppender{}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
@@ -147,10 +146,9 @@ func TestCBSubset(t *testing.T) {
 	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewIstioInfo())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 	globalInfo.Clusters = []models.KubeCluster{{Name: config.DefaultClusterID}}
 	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
-	PopulateWorkloadMap(t.Context(), businessLayer, globalInfo, trafficMap)
 
 	a := IstioAppender{}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
@@ -316,10 +314,9 @@ func TestSEInAppBox(t *testing.T) {
 	}
 	trafficMap[serviceEntryNode.ID] = serviceEntryNode
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewIstioInfo())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 	globalInfo.Clusters = []models.KubeCluster{{Name: config.DefaultClusterID}}
 	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
-	PopulateWorkloadMap(t.Context(), businessLayer, globalInfo, trafficMap)
 
 	a := IstioAppender{}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)

@@ -155,7 +155,7 @@ func TestResponseThroughput(t *testing.T) {
 		ThroughputType: "response",
 	}
 
-	gi := graph.NewGlobalInfo(nil, client, config.Get(), []models.KubeCluster{}, NewIstioInfo())
+	gi := graph.NewGlobalInfo(nil, client, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 	appender.appendGraph(context.Background(), trafficMap, "bookinfo", gi)
 
 	ingress, ok = trafficMap[ingressID]
@@ -337,7 +337,7 @@ func TestRequestThroughput(t *testing.T) {
 		ThroughputType: "request",
 	}
 
-	gi := graph.NewGlobalInfo(nil, client, config.Get(), []models.KubeCluster{}, NewIstioInfo())
+	gi := graph.NewGlobalInfo(nil, client, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 	appender.appendGraph(context.Background(), trafficMap, "bookinfo", gi)
 
 	ingress, ok = trafficMap[ingressID]

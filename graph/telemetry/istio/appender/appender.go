@@ -12,25 +12,19 @@ import (
 	"github.com/kiali/kiali/util/sliceutil"
 )
 
-func NewIstioInfo() *IstioInfo {
-	return &IstioInfo{
-		AmbientWaypoints:  make(map[NodeKey]bool),
+func NewGlobalIstioInfo() *GlobalIstioInfo {
+	return &GlobalIstioInfo{
+		AmbientWaypoints:  make(map[graph.NodeKey]bool),
 		AppsMap:           make(map[string]map[string]*models.AppListItem),
 		ServiceEntryHosts: make(map[string]serviceEntryHosts),
 		ServiceLists:      make(map[string]*models.ServiceList),
 		WorkloadLists:     make(map[string]*models.WorkloadList),
-		WorkloadMap:       make(map[NodeKey]*graph.Node),
+		WorkloadMap:       make(map[graph.NodeKey]*graph.Node),
 	}
 }
 
-type NodeKey struct {
-	Cluster   string
-	Namespace string
-	Name      string
-}
-
-// IstioInfo contains structured information for Istio telemetry vendor
-type IstioInfo struct {
+// GlobalIstioInfo contains structured information for Istio telemetry vendor
+type GlobalIstioInfo struct {
 	// AmbientWaypoints maps waypoint keys to their availability status
 	AmbientWaypoints any
 	// AppsMap contains application list items keyed by cluster:namespace
@@ -43,13 +37,13 @@ type IstioInfo struct {
 	WorkloadLists map[string]*models.WorkloadList
 	// WorkloadMap maps workloads to their nodes on the map. Only available to finalizers
 	// since the full graph hasn't been generated until all appenders have run.
-	WorkloadMap map[NodeKey]*graph.Node
+	WorkloadMap map[graph.NodeKey]*graph.Node
 }
 
 type (
-	GlobalInfo            = graph.GlobalInfo[*IstioInfo]
-	AppenderNamespaceInfo = graph.AppenderNamespaceInfo[*IstioInfo]
-	Appender              = graph.Appender[*IstioInfo]
+	GlobalInfo            = graph.GlobalInfo[*GlobalIstioInfo]
+	AppenderNamespaceInfo = graph.AppenderNamespaceInfo[*GlobalIstioInfo]
+	Appender              = graph.Appender[*GlobalIstioInfo]
 )
 
 const (
@@ -60,7 +54,7 @@ const (
 )
 
 func NewAppenderNamespaceInfo(namespace string) *AppenderNamespaceInfo {
-	return &AppenderNamespaceInfo{Namespace: namespace, Vendor: NewIstioInfo()}
+	return &AppenderNamespaceInfo{Namespace: namespace, Vendor: NewGlobalIstioInfo()}
 }
 
 // ParseAppenders determines which appenders should run for this graphing request
@@ -292,10 +286,7 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []Appender, finalizers 
 
 const (
 	AmbientWaypoints     = "ambientWaypoints"     // global vendor info models.Workloads
-	appsMapKey           = "appsMapKey"           // global vendor info map[cluster:namespace]appsMap
 	serviceEntryHostsKey = "serviceEntryHostsKey" // global vendor info service entries for all accessible namespaces
-	serviceListKey       = "serviceListKey"       // global vendor info map[cluster:namespace]serviceDefinitionList
-	workloadListKey      = "workloadListKey"      // global vendor info map[cluster:namespace]workloadListKey
 )
 
 type serviceEntry struct {
@@ -505,9 +496,8 @@ func getTrafficClusters(trafficMap graph.TrafficMap, namespace string, gi *Globa
 	return filteredClusterNames
 }
 
-// PopulateWorkloadMap populates the globalInfo.WorkloadMap with the workloads from the trafficMap.
-// TODO: This is only exported for tests to use.
-func PopulateWorkloadMap(ctx context.Context, business *business.Layer, globalInfo *GlobalInfo, trafficMap graph.TrafficMap) {
+// populateWorkloadMap populates the globalInfo.WorkloadMap with the workloads from the trafficMap.
+func populateWorkloadMap(ctx context.Context, business *business.Layer, globalInfo *GlobalInfo, trafficMap graph.TrafficMap) {
 	for _, cluster := range globalInfo.Clusters {
 		workloads, err := business.Workload.GetAllWorkloads(ctx, cluster.Name, "")
 		if err != nil {
@@ -515,13 +505,13 @@ func PopulateWorkloadMap(ctx context.Context, business *business.Layer, globalIn
 		}
 
 		for _, workload := range workloads {
-			globalInfo.Vendor.WorkloadMap[NodeKey{Cluster: workload.Cluster, Namespace: workload.Namespace, Name: workload.Name}] = nil
+			globalInfo.Vendor.WorkloadMap[graph.NodeKey{Cluster: workload.Cluster, Namespace: workload.Namespace, Name: workload.Name}] = nil
 		}
 	}
 
 	for _, node := range trafficMap {
-		if _, ok := globalInfo.Vendor.WorkloadMap[NodeKey{Cluster: node.Cluster, Namespace: node.Namespace, Name: node.Workload}]; ok {
-			globalInfo.Vendor.WorkloadMap[NodeKey{Cluster: node.Cluster, Namespace: node.Namespace, Name: node.Workload}] = node
+		if _, ok := globalInfo.Vendor.WorkloadMap[graph.NodeKey{Cluster: node.Cluster, Namespace: node.Namespace, Name: node.Workload}]; ok {
+			globalInfo.Vendor.WorkloadMap[graph.NodeKey{Cluster: node.Cluster, Namespace: node.Namespace, Name: node.Workload}] = node
 		}
 	}
 }

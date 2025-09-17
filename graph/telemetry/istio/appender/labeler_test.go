@@ -116,7 +116,7 @@ func TestLabeler(t *testing.T) {
 	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.Labels])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.Labels])
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewIstioInfo())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 
 	a := LabelerAppender{}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, nil)

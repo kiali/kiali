@@ -106,7 +106,7 @@ func TestRemoveWaypoint(t *testing.T) {
 	businessLayer := setupMocks(t)
 	trafficMap := workloadEntriesTrafficMap()
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewIstioInfo())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 	namespaceInfo := NewAppenderNamespaceInfo(appNamespace)
 
 	assert.Equal(5, len(trafficMap))
@@ -137,7 +137,7 @@ func TestIsWaypointExcludedNs(t *testing.T) {
 	businessLayer := setupMocks(t)
 	trafficMap := workloadEntriesTrafficMapExcludedNs()
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewIstioInfo())
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 	namespaceInfo := NewAppenderNamespaceInfo(appNamespace)
 
 	assert.Equal(9, len(trafficMap))
