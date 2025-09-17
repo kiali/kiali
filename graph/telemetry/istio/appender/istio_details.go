@@ -41,6 +41,7 @@ func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.Traffic
 	}
 
 	if globalInfo.Vendor.WorkloadMap == nil {
+		globalInfo.Vendor.WorkloadMap = make(map[graph.NodeKey]*graph.Node)
 		populateWorkloadMap(ctx, globalInfo.Business, globalInfo, trafficMap)
 	}
 

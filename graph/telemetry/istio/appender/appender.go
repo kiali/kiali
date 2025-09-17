@@ -19,7 +19,6 @@ func NewGlobalIstioInfo() *GlobalIstioInfo {
 		ServiceEntryHosts: make(map[string]serviceEntryHosts),
 		ServiceLists:      make(map[string]*models.ServiceList),
 		WorkloadLists:     make(map[string]*models.WorkloadList),
-		WorkloadMap:       make(map[graph.NodeKey]*graph.Node),
 	}
 }
 
