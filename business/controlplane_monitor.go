@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -231,33 +229,6 @@ func joinURL(base, path string) string {
 	base = strings.TrimSuffix(base, "/")
 	path = strings.TrimPrefix(path, "/")
 	return base + "/" + path
-}
-
-func getRequest(ctx context.Context, url string) ([]byte, error) {
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read response body when getting config from remote istiod. Err: %s", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("bad response when getting config from remote istiod. Status: %s. Body: %s", resp.Status, body)
-	}
-
-	return body, err
 }
 
 func (p *controlPlaneMonitor) getIstiodDebugStatus(client kubernetes.ClientInterface, controlPlane models.ControlPlane, debugPath string) (map[string][]byte, error) {
