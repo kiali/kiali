@@ -250,7 +250,7 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []Appender, finalizers 
 		Namespaces:           o.Namespaces,
 	})
 
-	if _, ok := requestedFinalizers[IstioAppenderName]; ok {
+	if _, ok := requestedFinalizers[IstioAppenderName]; ok || o.Appenders.All {
 		finalizers = append(finalizers, &IstioAppender{})
 	}
 
