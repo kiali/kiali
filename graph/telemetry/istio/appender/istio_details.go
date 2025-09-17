@@ -79,6 +79,10 @@ func addBadging(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *Gl
 func applyCircuitBreakers(trafficMap graph.TrafficMap, destinationRules []*networkingv1.DestinationRule) {
 NODES:
 	for _, n := range trafficMap {
+		// Skip nodes that are outside the requested namespaces.
+		if outside, ok := n.Metadata[graph.IsOutside].(bool); ok && outside {
+			continue
+		}
 
 		// Note, Because DestinationRules are applied to services we limit CB badges to service nodes and app nodes.
 		// Whether we should add to workload nodes is debatable, we could add it later if needed.
@@ -122,9 +126,15 @@ NODES:
 func applyVirtualServices(trafficMap graph.TrafficMap, virtualServices []*networkingv1.VirtualService, conf *config.Config) {
 NODES:
 	for _, n := range trafficMap {
-		if n.NodeType != graph.NodeTypeService {
+		var isOutsider bool
+		if outside, ok := n.Metadata[graph.IsOutside].(bool); ok {
+			isOutsider = outside
+		}
+		// Skip nodes that are outside the requested namespaces.
+		if n.NodeType != graph.NodeTypeService || isOutsider {
 			continue
 		}
+
 		for _, virtualService := range virtualServices {
 			if models.IsVSValidHost(virtualService, n.Namespace, n.Service, conf) {
 				var vsMetadata graph.VirtualServicesMetadata
