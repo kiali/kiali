@@ -13,7 +13,10 @@ source ${SCRIPT_DIR}/env.sh $*
 # backdoor delete functionality - set "DELETE_KEYCLOAK" to "true" to have this script delete things rather than install them
 if [ "${DELETE_KEYCLOAK:-}" == "true" ]; then
   echo "DELETING KEYCLOAK / OIDC FROM CLUSTER 1"
-  helm uninstall --kube-context "${CLUSTER1_CONTEXT}" -n keycloak postgresql
+  kubectl --context "${CLUSTER1_CONTEXT}" delete deployment keycloak -n keycloak --ignore-not-found=true
+  kubectl --context "${CLUSTER1_CONTEXT}" delete service keycloak-service -n keycloak --ignore-not-found=true
+  kubectl --context "${CLUSTER1_CONTEXT}" delete statefulset postgres-db -n keycloak --ignore-not-found=true
+  kubectl --context "${CLUSTER1_CONTEXT}" delete service postgres-db -n keycloak --ignore-not-found=true
   kubectl --context "${CLUSTER1_CONTEXT}" delete --ignore-not-found=true namespace keycloak
   kubectl --context "${CLUSTER1_CONTEXT}" delete --ignore-not-found=true -n openshift-config secret openid-client-secret
   kubectl --context "${CLUSTER1_CONTEXT}" delete --ignore-not-found=true -n openshift-config cm keycloak-oidc-client-ca-cert
@@ -49,57 +52,167 @@ CLUSTER2_OPENSHIFT_OAUTH_ROUTE=https://$(kubectl get routes --context "${CLUSTER
 kubectl --context "${CLUSTER1_CONTEXT}" get ns keycloak || kubectl --context "${CLUSTER1_CONTEXT}" create ns keycloak
 SE_LINUX_LEVEL="$(kubectl --context "${CLUSTER1_CONTEXT}" get ns keycloak -o jsonpath='{.metadata.annotations.openshift\.io/sa\.scc\.mcs}')"
 
-# Postgres is required for keycloak and it's easiest to set it up separately.
+# PostgreSQL is required for keycloak and it's easiest to set it up separately.
 echo "Creating postgres deployment"
-helm upgrade --kube-context "${CLUSTER1_CONTEXT}" --install --wait \
-  --repo https://charts.bitnami.com/bitnami postgresql postgresql \
-  -n keycloak --reuse-values --values - <<EOF
-primary:
-  persistence:
-    enabled: false
-  containerSecurityContext:
-    runAsUser: null
-    seLinuxOptions:
-      level: "${SE_LINUX_LEVEL}"
-  podSecurityContext:
-    fsGroup: null 
-auth:
-  username: keycloak
-  password: "${KEYCLOAK_DB_PASSWORD}"
-  database: keycloak
+kubectl --context "${CLUSTER1_CONTEXT}" apply -n keycloak -f - <<EOF
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-db
+  namespace: keycloak
+spec:
+  serviceName: postgres-db-service
+  selector:
+    matchLabels:
+      app: postgres-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: postgres-db
+    spec:
+      securityContext:
+        fsGroup: null
+        seLinuxOptions:
+          level: "${SE_LINUX_LEVEL}"
+      containers:
+        - name: postgres-db
+          image: postgres:15
+          securityContext:
+            runAsUser: null
+            seLinuxOptions:
+              level: "${SE_LINUX_LEVEL}"
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: keycloak
+            - name: POSTGRES_PASSWORD
+              value: "${KEYCLOAK_DB_PASSWORD}"
+            - name: POSTGRES_DB
+              value: keycloak
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-db
+  namespace: keycloak
+spec:
+  selector:
+    app: postgres-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP
 EOF
+
+# Wait for PostgreSQL to be ready
+echo "Waiting for PostgreSQL to be ready..."
+kubectl --context "${CLUSTER1_CONTEXT}" wait --for=condition=Ready pod -l app=postgres-db -n keycloak --timeout=300s
 
 APPS_DOMAIN=$(echo "${CLUSTER1_OPENSHIFT_OAUTH_ROUTE}" | cut -d '.' -f2-)
 KEYCLOAK_HOSTNAME="keycloak-keycloak.${APPS_DOMAIN}"
 
-echo "Creating keycloak deployment"
-helm upgrade --kube-context "${CLUSTER1_CONTEXT}" --install --wait --timeout 15m \
-  --namespace keycloak \
-   keycloak oci://registry-1.docker.io/bitnamicharts/keycloak \
-  --reuse-values --values - <<EOF
-auth:
-  createAdminUser: true
-  adminUser: admin
-  adminPassword: admin
-  managementUser: manager
-  managementPassword: manager
-image:
-  tag: 21.1.2-debian-11-r4
-proxyAddressForwarding: true
-containerSecurityContext:
-  seLinuxOptions:
-    level: "${SE_LINUX_LEVEL}"
-  runAsUser: null
-podSecurityContext:
-  fsGroup: null
-externalDatabase:
-  host: postgresql
-  database: keycloak
-  user: keycloak
-  password: "${KEYCLOAK_DB_PASSWORD}"
-postgresql:
-  enabled: false
+echo "Creating keycloak 26.3.2 deployment"
+kubectl --context "${CLUSTER1_CONTEXT}" apply -n keycloak -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      securityContext:
+        fsGroup: null
+        seLinuxOptions:
+          level: "${SE_LINUX_LEVEL}"
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:26.3.2
+          args: ["start"]
+          securityContext:
+            runAsUser: null
+            seLinuxOptions:
+              level: "${SE_LINUX_LEVEL}"
+          env:
+            - name: KEYCLOAK_ADMIN
+              value: admin
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: admin
+            - name: KC_DB
+              value: postgres
+            - name: KC_DB_URL
+              value: jdbc:postgresql://postgres-db:5432/keycloak
+            - name: KC_DB_USERNAME
+              value: keycloak
+            - name: KC_DB_PASSWORD
+              value: "${KEYCLOAK_DB_PASSWORD}"
+            - name: KC_HOSTNAME
+              value: ${KEYCLOAK_HOSTNAME}
+            - name: KC_PROXY
+              value: edge
+            - name: KC_HTTP_ENABLED
+              value: "true"
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: https
+              containerPort: 8443
+          readinessProbe:
+            httpGet:
+              path: /realms/master
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /realms/master
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-service
+  namespace: keycloak
+spec:
+  selector:
+    app: keycloak
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+    - name: https
+      port: 8443
+      targetPort: 8443
+  type: ClusterIP
 EOF
+
+# Wait for Keycloak to be ready
+echo "Waiting for Keycloak 26.3.2 to be ready..."
+kubectl --context "${CLUSTER1_CONTEXT}" wait --for=condition=Available deployment/keycloak -n keycloak --timeout=600s
 
 # Create keycloak route.
 echo "Creating keycloak route"
