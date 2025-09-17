@@ -72,7 +72,40 @@ jobs:
   integration_tests_backend:
     name: Run backend integration tests
     uses: ./.github/workflows/integration-tests-backend.yml
-    needs: [initialize, build_backend]
+    needs: [build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend:
+    name: Run frontend integration tests
+    uses: ./.github/workflows/integration-tests-frontend.yml
+    needs: [build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_ambient:
+    name: Run Ambient frontend integration tests
+    uses: ./.github/workflows/integration-tests-frontend-ambient.yml
+    needs: [build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_tempo:
+    name: Run tracing frontend integration tests
+    uses: ./.github/workflows/integration-tests-frontend-tempo.yml
+    needs: [build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_local:
+    if: contains(github.event.issue.labels.*.name, 'full-ci')
+    name: Run frontend local mode integration tests
+    uses: ./.github/workflows/integration-tests-frontend-local.yml
+    needs: [build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -81,39 +114,7 @@ jobs:
     if: contains(github.event.issue.labels.*.name, 'full-ci')
     name: Run backend multicluster external-controlplane integration tests
     uses: ./.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend:
-    name: Run frontend integration tests
-    uses: ./.github/workflows/integration-tests-frontend.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend_ambient:
-    name: Run Ambient frontend integration tests
-    uses: ./.github/workflows/integration-tests-frontend-ambient.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend_local:
-    name: Run frontend local mode integration tests
-    uses: ./.github/workflows/integration-tests-frontend-local.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend_tempo:
-    name: Run tracing frontend integration tests
-    uses: ./.github/workflows/integration-tests-frontend-tempo.yml
-    needs: [initialize, build_backend]
+    needs: [integration_tests_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -122,7 +123,7 @@ jobs:
     if: contains(github.event.issue.labels.*.name, 'full-ci')
     name: Run frontend multicluster primary-remote integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-primary-remote.yml
-    needs: [initialize, build_backend, integration_tests_frontend]
+    needs: [integration_tests_backend, integration_tests_frontend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -131,7 +132,8 @@ jobs:
     if: contains(github.event.issue.labels.*.name, 'full-ci')
     name: Run frontend multicluster multi-primary integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-multi-primary.yml
-    needs: [initialize, build_backend, integration_tests_frontend]
+    needs: [integration_tests_backend, integration_tests_frontend]
+
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -140,7 +142,8 @@ jobs:
     if: contains(github.event.issue.labels.*.name, 'full-ci')
     name: Run frontend multicluster external-kiali integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-external-kiali.yml
-    needs: [initialize, build_backend, integration_tests_frontend]
+    needs: [integration_tests_backend, integration_tests_frontend]
+
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
