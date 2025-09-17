@@ -22,11 +22,13 @@ describe('Parse find value test', () => {
         showRank={true}
         showSecurity={false}
         showIdleNodes={false}
+        showVirtualServices={true}
         setEdgeLabels={testSetter}
         setFindValue={testSetter}
         setHideValue={testSetter}
         toggleFindHelp={testHandler}
         toggleGraphSecurity={testHandler}
+        toggleGraphVirtualServices={testHandler}
         toggleIdleNodes={testHandler}
         toggleRank={testHandler}
       />

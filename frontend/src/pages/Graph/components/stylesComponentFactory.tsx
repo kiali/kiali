@@ -284,6 +284,7 @@ const handleGraphNav = (fromNode: GraphElement, kiosk: string): void => {
     showIdleNodes: state.graph.toolbarState.showIdleNodes,
     showOperationNodes: state.graph.toolbarState.showOperationNodes,
     showServiceNodes: state.graph.toolbarState.showServiceNodes,
+    showVirtualServices: state.graph.toolbarState.showVirtualServices,
     showWaypoints: state.graph.toolbarState.showWaypoints,
     trafficRates: graphData.fetchParams.trafficRates
   };

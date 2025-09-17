@@ -416,6 +416,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
           (prev.refreshInterval !== curr.refreshInterval && curr.refreshInterval !== RefreshIntervalPause) ||
           prev.replayQueryTime !== curr.replayQueryTime ||
           prev.showSecurity !== curr.showSecurity ||
+          prev.showVirtualServices !== curr.showVirtualServices ||
           prev.trafficRates !== curr.trafficRates))
     ) {
       this.loadGraphDataFromBackend();
@@ -762,6 +763,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       showOperationNodes: this.props.showOperationNodes,
       showSecurity: this.props.showSecurity,
       showWaypoints: this.props.showWaypoints,
+      showVirtualServices: this.props.showVirtualServices,
       trafficRates: this.props.trafficRates
     });
   };

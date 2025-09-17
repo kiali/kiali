@@ -47,6 +47,7 @@ type ReduxStateProps = {
   showIdleNodes: boolean;
   showRank: boolean;
   showSecurity: boolean;
+  showVirtualServices: boolean;
 };
 
 type ReduxDispatchProps = {
@@ -55,6 +56,7 @@ type ReduxDispatchProps = {
   setHideValue: (val: string) => void;
   toggleFindHelp: () => void;
   toggleGraphSecurity: () => void;
+  toggleGraphVirtualServices: () => void;
   toggleIdleNodes: () => void;
   toggleRank: () => void;
 };
@@ -1090,11 +1092,21 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       //
       case 'cb':
       case 'circuitbreaker':
+        if (!this.props.showVirtualServices) {
+          AlertUtils.addSuccess('Enabling "Virtual Services" display option for graph find/hide expression');
+          this.props.toggleGraphVirtualServices();
+        }
+
         return { target: 'node', selector: { prop: NodeAttr.hasCB, op: isNegation ? 'falsy' : 'truthy' } };
       case 'dead':
         return { target: 'node', selector: { prop: NodeAttr.isDead, op: isNegation ? 'falsy' : 'truthy' } };
       case 'fi':
       case 'faultinjection':
+        if (!this.props.showVirtualServices) {
+          AlertUtils.addSuccess('Enabling "Virtual Services" display option for graph find/hide expression');
+          this.props.toggleGraphVirtualServices();
+        }
+
         return {
           target: 'node',
           selector: { prop: NodeAttr.hasFaultInjection, op: isNegation ? 'falsy' : 'truthy' }
@@ -1122,6 +1134,11 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
         }
         return { target: 'node', selector: { prop: NodeAttr.isIdle, op: isNegation ? 'falsy' : 'truthy' } };
       case 'mirroring':
+        if (!this.props.showVirtualServices) {
+          AlertUtils.addSuccess('Enabling "Virtual Services" display option for graph find/hide expression');
+          this.props.toggleGraphVirtualServices();
+        }
+
         return { target: 'node', selector: { prop: NodeAttr.hasMirroring, op: isNegation ? 'falsy' : 'truthy' } };
       case 'outside':
       case 'outsider':
@@ -1149,12 +1166,22 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
         return { target: 'node', selector: { prop: NodeAttr.isOutOfMesh, op: isNegation ? 'falsy' : 'truthy' } };
       case 'tcpts':
       case 'tcptrafficshifting':
+        if (!this.props.showVirtualServices) {
+          AlertUtils.addSuccess('Enabling "Virtual Services" display option for graph find/hide expression');
+          this.props.toggleGraphVirtualServices();
+        }
+
         return {
           target: 'node',
           selector: { prop: NodeAttr.hasTCPTrafficShifting, op: isNegation ? 'falsy' : 'truthy' }
         };
       case 'ts':
       case 'trafficshifting':
+        if (!this.props.showVirtualServices) {
+          AlertUtils.addSuccess('Enabling "Virtual Services" display option for graph find/hide expression');
+          this.props.toggleGraphVirtualServices();
+        }
+
         return {
           target: 'node',
           selector: { prop: NodeAttr.hasTrafficShifting, op: isNegation ? 'falsy' : 'truthy' }
@@ -1164,6 +1191,11 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
         return { target: 'node', selector: { prop: NodeAttr.isRoot, op: isNegation ? 'falsy' : 'truthy' } };
       case 'vs':
       case 'virtualservice':
+        if (!this.props.showVirtualServices) {
+          AlertUtils.addSuccess('Enabling "Virtual Services" display option for graph find/hide expression');
+          this.props.toggleGraphVirtualServices();
+        }
+
         return { target: 'node', selector: { prop: NodeAttr.hasVS, op: isNegation ? 'falsy' : 'truthy' } };
       case 'we':
       case 'workloadentry':
@@ -1204,7 +1236,8 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   showFindHelp: state.graph.toolbarState.showFindHelp,
   showIdleNodes: state.graph.toolbarState.showIdleNodes,
   showRank: state.graph.toolbarState.showRank,
-  showSecurity: state.graph.toolbarState.showSecurity
+  showSecurity: state.graph.toolbarState.showSecurity,
+  showVirtualServices: state.graph.toolbarState.showVirtualServices
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
@@ -1215,7 +1248,8 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
     toggleFindHelp: bindActionCreators(GraphToolbarActions.toggleFindHelp, dispatch),
     toggleGraphSecurity: bindActionCreators(GraphToolbarActions.toggleGraphSecurity, dispatch),
     toggleIdleNodes: bindActionCreators(GraphToolbarActions.toggleIdleNodes, dispatch),
-    toggleRank: bindActionCreators(GraphToolbarActions.toggleRank, dispatch)
+    toggleRank: bindActionCreators(GraphToolbarActions.toggleRank, dispatch),
+    toggleGraphVirtualServices: bindActionCreators(GraphToolbarActions.toggleGraphVirtualServices, dispatch)
   };
 };
 
