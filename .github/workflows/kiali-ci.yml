@@ -19,6 +19,10 @@ on:
     - "**/*.md"
     - "**/*.adoc"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   initialize:
     name: Initialize
@@ -110,6 +114,7 @@ jobs:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   integration_tests_frontend_tempo:
+    if: contains(github.event.issue.labels.*.name, 'full-ci')
     name: Run tracing frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-tempo.yml
     needs: [build_backend]

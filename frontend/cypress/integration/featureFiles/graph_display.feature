@@ -19,16 +19,22 @@ Feature: Kiali Graph page - Display menu
     When user graphs "" namespaces
     Then user sees no namespace selected
 
+  # default should show empty graph
+  @core-1
+  Scenario: Show empty graph
+    When user graphs "default" namespaces
+    Then user sees empty graph
+
   # istio-system will only show nodes when idle-nodes is enabled
   @error-rates-app
   @core-1
-  Scenario: Graph istio-system namespaces
+  Scenario: Show no idle nodes
     When user graphs "istio-system" namespaces
-    Then user sees empty graph
+    Then idle nodes "do not appear" in the graph
 
   @error-rates-app
   @core-1
-  Scenario: User enables idle nodes
+  Scenario: Show idle nodes
     When user "opens" display menu
     And user "enables" "idle nodes" option
     Then user sees the "istio-system" namespace
@@ -41,7 +47,7 @@ Feature: Kiali Graph page - Display menu
     When user "opens" display menu
     And user "disables" "idle nodes" option
     And user "closes" display menu
-    Then user sees empty graph
+    Then idle nodes "do not appear" in the graph
 
   @error-rates-app
   @core-1
