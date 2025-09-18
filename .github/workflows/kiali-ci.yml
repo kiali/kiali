@@ -77,9 +77,25 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
-  integration_tests_frontend:
+  integration_tests_frontend_core_1:
     name: Run frontend integration tests
-    uses: ./.github/workflows/integration-tests-frontend.yml
+    uses: ./.github/workflows/integration-tests-frontend-core-1.yml
+    needs: [build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_core_2:
+    name: Run frontend integration tests
+    uses: ./.github/workflows/integration-tests-frontend-core-2.yml
+    needs: [build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_core_optional:
+    name: Run frontend integration tests
+    uses: ./.github/workflows/integration-tests-frontend-core-optional.yml
     needs: [build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
@@ -123,7 +139,7 @@ jobs:
     if: contains(github.event.issue.labels.*.name, 'full-ci')
     name: Run frontend multicluster primary-remote integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-primary-remote.yml
-    needs: [integration_tests_backend, integration_tests_frontend]
+    needs: [integration_tests_backend, integration_tests_frontend_core_1, integration_tests_frontend_core_2, integration_tests_frontend_core_optional]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -132,7 +148,7 @@ jobs:
     if: contains(github.event.issue.labels.*.name, 'full-ci')
     name: Run frontend multicluster multi-primary integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-multi-primary.yml
-    needs: [integration_tests_backend, integration_tests_frontend]
+    needs: [integration_tests_backend, integration_tests_frontend_core_1, integration_tests_frontend_core_2, integration_tests_frontend_core_optional]
 
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
@@ -142,7 +158,7 @@ jobs:
     if: contains(github.event.issue.labels.*.name, 'full-ci')
     name: Run frontend multicluster external-kiali integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-external-kiali.yml
-    needs: [integration_tests_backend, integration_tests_frontend]
+    needs: [integration_tests_backend, integration_tests_frontend_core_1, integration_tests_frontend_core_2, integration_tests_frontend_core_optional]
 
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
