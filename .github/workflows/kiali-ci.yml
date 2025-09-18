@@ -20,7 +20,7 @@ on:
     - "**/*.adoc"
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
