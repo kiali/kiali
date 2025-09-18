@@ -40,8 +40,8 @@ Feature: Kiali Graph page - Display menu
   Scenario: User disables idle nodes
     When user "opens" display menu
     And user "disables" "idle nodes" option
-    And user "closes" display menu
     Then idle nodes "do not appear" in the graph
+    And user "closes" display menu
 
   @error-rates-app
   @core-1
