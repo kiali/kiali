@@ -46,7 +46,7 @@ jobs:
     needs: [initialize]
     runs-on: ubuntu-latest
     strategy:
-      # Allow other branches to bump to next version even if one of the branches failed
+      # Allow other branches to continue even if one of the branches failed
       fail-fast: false
       matrix:
         branch: ${{fromJson(needs.initialize.outputs.branches)}}
@@ -55,7 +55,7 @@ jobs:
       uses: actions/checkout@v5
       with:
         ref: ${{matrix.branch}}
-        # We need to fetch all the history to determine the latest tag
+        # We need to fetch the full history to determine the latest tag
         fetch-depth: 0
 
     - name: Prepare scripts
