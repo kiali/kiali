@@ -147,7 +147,11 @@ func (in *WorkloadService) isWorkloadIncluded(workload string) bool {
 
 // @TODO do validations per cluster
 func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1.AuthorizationPolicy, workloadsPerNamespace map[string]models.Workloads, cluster string) models.IstioValidations {
-	namespaces, found := in.cache.GetNamespaces(cluster, in.userClients[cluster].GetToken())
+	userClient, ok := in.userClients[cluster]
+	if !ok {
+		return models.IstioValidations{}
+	}
+	namespaces, found := in.cache.GetNamespaces(cluster, userClient.GetToken())
 	if !found {
 		return models.IstioValidations{}
 	}
@@ -1471,7 +1475,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				}
 			}
 			if found {
-				if wgroups[iFound].Spec.Metadata != nil {
+				if wgroups[iFound].Spec.Metadata != nil && wgroups[iFound].Spec.Metadata.Labels != nil {
 					selector := labels.Set(wgroups[iFound].Spec.Metadata.Labels).AsSelector()
 					w.ParseWorkloadGroup(wgroups[iFound], kubernetes.FilterWorkloadEntriesBySelector(selector, wentries), kubernetes.FilterSidecarsBySelector(selector.String(), sidecars), in.conf)
 				} else {
@@ -2145,7 +2149,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			}
 		case kubernetes.WorkloadGroups:
 			if wgroup != nil && wgroup.Name == criteria.WorkloadName {
-				if wgroup.Spec.Metadata != nil {
+				if wgroup.Spec.Metadata != nil && wgroup.Spec.Metadata.Labels != nil {
 					selector := labels.Set(wgroup.Spec.Metadata.Labels).AsSelector()
 					w.ParseWorkloadGroup(wgroup, kubernetes.FilterWorkloadEntriesBySelector(selector, wentries), kubernetes.FilterSidecarsBySelector(selector.String(), sidecars), in.conf)
 				} else {
@@ -2312,17 +2316,18 @@ func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload m
 			IncludeOnlyDefinitions: true,
 		}
 		svc, err := in.businessLayer.Svc.GetServiceList(ctx, serviceCriteria)
-		if err != nil {
-			log.Debugf("isWorkloadCaptured: Error fetching services %s", err.Error())
-		}
-		// a proper service selector on the workload should, I think, return only a single service (there are ways
-		// a workload can map to multiple services, but I think only one should be returned using a proper selector). If
-		// multiple were returned I'm not sure how the waypoint capture logic should work, so for now, more than 1 will
-		// indicate that the labels did not have a proper service selector. In this case, ignore the returned services.
-		if len(svc.Services) > 1 {
-			log.Warningf("Ignoring service override for waypoint capture. Found [%d] services for [%s] workload [%s:%s:%s]", len(svc.Services), workload.WorkloadGVK.GroupKind(), workload.Cluster, workload.Namespace, workload.Name)
+		if err == nil {
+			// a proper service selector on the workload should, I think, return only a single service (there are ways
+			// a workload can map to multiple services, but I think only one should be returned using a proper selector). If
+			// multiple were returned I'm not sure how the waypoint capture logic should work, so for now, more than 1 will
+			// indicate that the labels did not have a proper service selector. In this case, ignore the returned services.
+			if len(svc.Services) > 1 {
+				log.Warningf("Ignoring service override for waypoint capture. Found [%d] services for [%s] workload [%s:%s:%s]", len(svc.Services), workload.WorkloadGVK.GroupKind(), workload.Cluster, workload.Namespace, workload.Name)
+			} else {
+				services = svc.Services
+			}
 		} else {
-			services = svc.Services
+			log.Infof("isWorkloadCaptured: Error fetching services %s", err.Error())
 		}
 	}
 	if len(services) > 0 {
@@ -2344,7 +2349,11 @@ func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload m
 	}
 
 	// If we don't have a workload or service override, look for a namespace-level waypoint
-	if ns, nsFound := in.cache.GetNamespace(workload.Cluster, in.userClients[workload.Cluster].GetToken(), workload.Namespace); nsFound {
+	userClient, ok := in.userClients[workload.Cluster]
+	if !ok {
+		return waypoints, false
+	}
+	if ns, nsFound := in.cache.GetNamespace(workload.Cluster, userClient.GetToken(), workload.Namespace); nsFound {
 		waypointUse, waypointUseFound = ns.Labels[config.WaypointUseLabel]
 		waypointUseNamespace, waypointUseNamespaceFound = ns.Labels[config.WaypointUseNamespaceLabel]
 
@@ -2411,7 +2420,12 @@ func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, workload
 func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, wpCluster, wpNamespace, wpName string, includeServices bool, waypoints models.Workloads) ([]models.WorkloadReferenceInfo, []models.ServiceReferenceInfo) {
 	// Get all the workloads for a namespaces labeled
 	labelSelector := fmt.Sprintf("%s=%s", config.WaypointUseLabel, wpName)
-	nslist, errNs := in.userClients[wpCluster].GetNamespaces(labelSelector)
+	userClient, ok := in.userClients[wpCluster]
+	if !ok {
+		log.Errorf("listWaypointWorkloads: cluster [%s] not found", wpCluster)
+		return []models.WorkloadReferenceInfo{}, []models.ServiceReferenceInfo{}
+	}
+	nslist, errNs := userClient.GetNamespaces(labelSelector)
 	if errNs != nil {
 		log.Errorf("listWaypointWorkloads: Error fetching namespaces by selector %s", labelSelector)
 	}
@@ -2448,7 +2462,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, wpCluster,
 	}
 
 	// Get annotated workloads
-	namespaces, found := in.cache.GetNamespaces(wpCluster, in.userClients[wpCluster].GetToken())
+	namespaces, found := in.cache.GetNamespaces(wpCluster, userClient.GetToken())
 	namespaceNames := sliceutil.Map(namespaces, func(ns models.Namespace) string {
 		return ns.Name
 	})
