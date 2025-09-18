@@ -2326,7 +2326,7 @@ func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload m
 			log.Infof("isWorkloadCaptured: Error fetching services %s", err.Error())
 		}
 	}
-	if services != nil && len(services) > 0 {
+	if len(services) > 0 {
 		svc := services[0]
 		waypointUse, waypointUseFound = svc.Labels[config.WaypointUseLabel]
 		waypointUseNamespace, waypointUseNamespaceFound = svc.Labels[config.WaypointUseNamespaceLabel]
