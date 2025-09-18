@@ -19,11 +19,11 @@ Feature: Kiali Graph page - Display menu
     When user graphs "" namespaces
     Then user sees no namespace selected
 
-  # gamma will only show nodes when idle-nodes is enabled
+  # istio-system will only show nodes when idle-nodes is enabled
   @error-rates-app
   @core
-  Scenario: Graph gamma namespaces
-    When user graphs "gamma" namespaces
+  Scenario: Graph istio-system namespaces
+    When user graphs "istio-system" namespaces
     Then user sees empty graph
 
   @error-rates-app
@@ -31,7 +31,7 @@ Feature: Kiali Graph page - Display menu
   Scenario: User enables idle nodes
     When user "opens" display menu
     And user "enables" "idle nodes" option
-    Then user sees the "gamma" namespace
+    Then user sees the "istio-system" namespace
     And idle nodes "appear" in the graph
     And user "closes" display menu
 
