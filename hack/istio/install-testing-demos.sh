@@ -22,6 +22,7 @@ MINIKUBE_PROFILE="minikube"
 : ${CLIENT_EXE:=oc}
 : ${AMBIENT_ENABLED:="false"}
 : ${ARCH:=amd64}
+: ${BOOKINFO_ONLY:=false}
 : ${DELETE_DEMOS:=false}
 : ${ENABLE_INJECTION:=true}
 : ${GATEWAY_HOST:=""}
@@ -37,6 +38,10 @@ while [ $# -gt 0 ]; do
       ;;
     -ab|--ambient)
       AMBIENT_ENABLED="$2"
+      shift;shift
+      ;;
+    -bo|--bookinfo-only)
+      BOOKINFO_ONLY="$2"
       shift;shift
       ;;
     -c|--client)
@@ -68,6 +73,7 @@ while [ $# -gt 0 ]; do
 Valid command line arguments:
   -a|--arch <amd64|ppc64le|s390x|arm64>: Images for given arch will be used (default: amd64).
   -ab|--ambient: Istio Ambient enabled
+  -bo|--bookinfo-only: if 'true' only bookinfo demo will be installed (default: false).
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: if 'true' demos will be deleted; otherwise, they will be installed
   -g|--gateway-host: host to use for the ingress gateway
@@ -178,48 +184,61 @@ EOF
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     echo "Deploying bookinfo demo ..."
     "${SCRIPT_DIR}/install-bookinfo-demo.sh" -tg -in ${ISTIO_NAMESPACE} -a ${ARCH} ${gateway_yaml:+-g ${gateway_yaml}} ${AMBIENT_ARGS_BOOKINFO}
-    # Install just bookinfo for now for Ambient
-    if [ "${AMBIENT_ENABLED}" != "true" ]; then
-      echo "Deploying error rates demo ..."
-      "${SCRIPT_DIR}/install-error-rates-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_ERROR_RATES}
-    else
-      ${CLIENT_EXE} apply -f "${SCRIPT_DIR}/ambient/resources/waypoint.yaml" -n bookinfo
-      echo "Deploying waypoint proxies ..."
-      "${SCRIPT_DIR}/ambient/install-waypoints.sh" -c ${CLIENT_EXE}
+    
+    # Only install additional demos if not in bookinfo-only mode
+    if [ "${BOOKINFO_ONLY}" != "true" ]; then
+      # Install just bookinfo for now for Ambient
+      if [ "${AMBIENT_ENABLED}" != "true" ]; then
+        echo "Deploying error rates demo ..."
+        "${SCRIPT_DIR}/install-error-rates-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_ERROR_RATES}
+      else
+        ${CLIENT_EXE} apply -f "${SCRIPT_DIR}/ambient/resources/waypoint.yaml" -n bookinfo
+        echo "Deploying waypoint proxies ..."
+        "${SCRIPT_DIR}/ambient/install-waypoints.sh" -c ${CLIENT_EXE}
 
-      echo "Deploying sidecar-ambient ..."
-      "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh" -c ${CLIENT_EXE}
+        echo "Deploying sidecar-ambient ..."
+        "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh" -c ${CLIENT_EXE}
+      fi
+      echo "Deploying sleep demo ..."
+      "${SCRIPT_DIR}/install-sleep-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
     fi
-    echo "Deploying sleep demo ..."
-    "${SCRIPT_DIR}/install-sleep-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
 
   elif [ "${AMBIENT_ENABLED}" == "true" ]; then
     echo "Deploying bookinfo demo..."
     "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c ${CLIENT_EXE} -mp ${MINIKUBE_PROFILE} -tg ${AMBIENT_ARGS_BOOKINFO}
     ${CLIENT_EXE} apply -f "${SCRIPT_DIR}/ambient/resources/waypoint.yaml" -n bookinfo
 
-    echo "Deploying sleep demo ..."
-    "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
+    # Only install additional demos if not in bookinfo-only mode
+    if [ "${BOOKINFO_ONLY}" != "true" ]; then
+      echo "Deploying sleep demo ..."
+      "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
 
-    echo "Deploying waypoint proxies ..."
-    "${SCRIPT_DIR}/ambient/install-waypoints.sh" -c ${CLIENT_EXE}
+      echo "Deploying waypoint proxies ..."
+      "${SCRIPT_DIR}/ambient/install-waypoints.sh" -c ${CLIENT_EXE}
 
-    echo "Deploying sidecar-ambient ..."
-    "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh" -c ${CLIENT_EXE}
+      echo "Deploying sidecar-ambient ..."
+      "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh" -c ${CLIENT_EXE}
+    fi
 
   else
     echo "Deploying bookinfo demo..."
     "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg -in ${ISTIO_NAMESPACE} -a ${ARCH} ${gateway_yaml:+-g ${gateway_yaml}} ${AMBIENT_ARGS_BOOKINFO}
 
-    echo "Deploying error rates demo..."
-    "${SCRIPT_DIR}/install-error-rates-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_ERROR_RATES}
+    # Only install additional demos if not in bookinfo-only mode
+    if [ "${BOOKINFO_ONLY}" != "true" ]; then
+      echo "Deploying error rates demo..."
+      "${SCRIPT_DIR}/install-error-rates-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_ERROR_RATES}
 
-    echo "Deploying sleep demo ..."
-    "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
+      echo "Deploying sleep demo ..."
+      "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
+    fi
   fi
 
-  echo "Deploying loggers demo..."
-  "${SCRIPT_DIR}/install-loggers-demo.sh" -ab ${AMBIENT_ENABLED} -c ${CLIENT_EXE}
+  # Only install loggers demo if not in bookinfo-only mode
+  if [ "${BOOKINFO_ONLY}" != "true" ]; then
+    echo "Deploying loggers demo..."
+    "${SCRIPT_DIR}/install-loggers-demo.sh" -ab ${AMBIENT_ENABLED} -c ${CLIENT_EXE}
+  fi
 
   if [[ -z "$GATEWAY_HOST" && "${USE_GATEWAY_API}" != "true" ]]; then
     # Assume that the '*' is used for hosts if the gateway host is not specified.
@@ -228,10 +247,14 @@ EOF
     ${CLIENT_EXE} patch VirtualService bookinfo -n bookinfo --type json -p "[{\"op\": \"replace\", \"path\": \"/spec/hosts/0\", \"value\": \"${ISTIO_INGRESS_HOST}\"}]"
   fi
 
-  for namespace in bookinfo alpha beta gamma
-  do
-    wait_for_workloads "${namespace}"
-  done
+  if [ "${BOOKINFO_ONLY}" == "true" ]; then
+    wait_for_workloads "bookinfo"
+  else
+    for namespace in bookinfo alpha beta gamma
+    do
+      wait_for_workloads "${namespace}"
+    done
+  fi
 
 else
   # Delete everything - don't abort on error, just keep going and try to delete everything

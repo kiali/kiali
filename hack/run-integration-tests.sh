@@ -8,6 +8,7 @@ infomsg() {
 AMBIENT=""
 BACKEND="backend"
 BACKEND_EXTERNAL_CONTROLPLANE="backend-external-controlplane"
+BOOKINFO_ONLY="false"
 CLUSTER_TYPE="kind"
 FRONTEND="frontend"
 FRONTEND_AMBIENT="frontend-ambient"
@@ -33,6 +34,10 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -am|--ambient)
       AMBIENT="${2}"
+      shift;shift
+      ;;
+    -bo|--bookinfo-only)
+      BOOKINFO_ONLY="${2}"
       shift;shift
       ;;
     -ct|--cluster-type)
@@ -109,6 +114,9 @@ Valid command line arguments:
   -am|--ambient <true|false>
     If true, install istio ambient profile. Just valid for multi primary suite (alpha).
     Default: false
+  -bo|--bookinfo-only <true|false>
+    If true, only install bookinfo demo instead of all demos.
+    Default: false
   -ct|--cluster-type <kind|minikube>
     Which cluster type to use for testing. 
     Default: kind
@@ -167,6 +175,7 @@ fi
 cat <<EOM
 === SETTINGS ===
 AMBIENT=$AMBIENT
+BOOKINFO_ONLY=$BOOKINFO_ONLY
 CLUSTER_TYPE=$CLUSTER_TYPE
 HELM_CHARTS_DIR=$HELM_CHARTS_DIR
 ISTIO_VERSION=$ISTIO_VERSION
@@ -362,7 +371,7 @@ if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     # Install demo apps
-    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --bookinfo-only ${BOOKINFO_ONLY}
 
     ensureKialiServerReady
 
@@ -420,7 +429,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true"
 
     # Install demo apps
-    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --bookinfo-only ${BOOKINFO_ONLY}
   fi
 
   ensureKialiServerReady
@@ -445,7 +454,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${ISTIO_VERSION_ARG} --ambient true --sail true ${HELM_CHARTS_DIR_ARG}
 
     # Install demo apps
-    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --ambient true --use-gateway-api true
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --ambient true --use-gateway-api true --bookinfo-only ${BOOKINFO_ONLY}
   fi
 
   ensureKialiServerReady
@@ -576,7 +585,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --tempo true --sail true --auth-strategy token ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     # Install demo apps
-    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --bookinfo-only ${BOOKINFO_ONLY}
   fi
 
   ensureKialiServerReady
@@ -611,7 +620,7 @@ elif [ "${TEST_SUITE}" == "${LOCAL}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true --deploy-kiali false ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
-    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --bookinfo-only ${BOOKINFO_ONLY}
   fi
 
   infomsg "Setup complete."
