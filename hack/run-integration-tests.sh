@@ -13,7 +13,7 @@ FRONTEND="frontend"
 FRONTEND_AMBIENT="frontend-ambient"
 FRONTEND_PRIMARY_REMOTE="frontend-primary-remote"
 FRONTEND_MULTI_PRIMARY="frontend-multi-primary"
-FRONTEND_MULTIPLE_CONTROLPLANES="frontend-multiple-controlplanes"
+FRONTEND_MULTI_MESH="frontend-multi-mesh"
 FRONTEND_EXTERNAL_KIALI="frontend-external-kiali"
 FRONTEND_TEMPO="frontend-tempo"
 LOCAL="local"
@@ -90,8 +90,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ts|--test-suite)
       TEST_SUITE="${2}"
-      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" -a "${TEST_SUITE}" != "${FRONTEND_MULTIPLE_CONTROLPLANES}" -a "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" -a "${TEST_SUITE}" != "${FRONTEND_TEMPO}" -a "${TEST_SUITE}" != "${LOCAL}" ]; then
-        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_PRIMARY_REMOTE}', '${FRONTEND_MULTI_PRIMARY}', '${FRONTEND_MULTIPLE_CONTROLPLANES}', '${FRONTEND_EXTERNAL_KIALI}', '${FRONTEND_AMBIENT}', '${FRONTEND_TEMPO}' or '${LOCAL}'"
+      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_MESH}" -a "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" -a "${TEST_SUITE}" != "${FRONTEND_TEMPO}" -a "${TEST_SUITE}" != "${LOCAL}" ]; then
+        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_PRIMARY_REMOTE}', '${FRONTEND_MULTI_PRIMARY}', '${FRONTEND_MULTI_MESH}', '${FRONTEND_EXTERNAL_KIALI}', '${FRONTEND_AMBIENT}', '${FRONTEND_TEMPO}' or '${LOCAL}'"
         exit 1
       fi
       shift;shift
@@ -134,7 +134,7 @@ Valid command line arguments:
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
     Default: false
-  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_MULTIPLE_CONTROLPLANES}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${LOCAL}>
+  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_MULTI_MESH}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${LOCAL}>
     Which test suite to run.
     Default: ${BACKEND}
   -wv|--with-video <true|false>
@@ -594,11 +594,11 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:tracing
   detectRaceConditions
-elif [ "${TEST_SUITE}" == "${FRONTEND_MULTIPLE_CONTROLPLANES}" ]; then
+elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_MESH}" ]; then
   ensureCypressInstalled
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    # Setup single cluster with multiple control planes
+    # Setup single cluster with multi mesh
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     # Install demo apps
@@ -622,7 +622,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTIPLE_CONTROLPLANES}" ]; then
   fi
 
   cd "${SCRIPT_DIR}"/../frontend
-  yarn run cypress:run:multiple-controlplanes
+  yarn run cypress:run:multi-mesh
   detectRaceConditions
 elif [ "${TEST_SUITE}" == "${LOCAL}" ]; then
   ensureCypressInstalled
