@@ -23,8 +23,8 @@ env:
   BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch }}
 
 jobs:
-  integration_tests_frontend_multiple_controlplanes:
-    name: Cypress integration tests for multiple control planes
+  integration_tests_frontend_multi-mesh:
+    name: Cypress integration tests for multi mesh
     runs-on: ubuntu-latest
     env:
       # Copied from: https://github.com/bahmutov/cypress-gh-action-split-install/blob/ca3916d4e7240ebdc337825d2d78eb354855464b/.github/workflows/tests.yml#L7-L11
@@ -66,8 +66,8 @@ jobs:
       working-directory: ./frontend
       run: yarn install --frozen-lockfile
 
-    - name: Run frontend integration tests for multiple control planes
-      run: hack/run-integration-tests.sh --test-suite frontend-multiple-controlplanes --stern ${{ inputs.stern_logs }} $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
+    - name: Run frontend integration tests for multi mesh
+      run: hack/run-integration-tests.sh --test-suite frontend-multi-mesh --stern ${{ inputs.stern_logs }} $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
     - name: Get debug info when integration tests fail
       if: failure()

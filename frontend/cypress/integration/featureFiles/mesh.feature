@@ -25,7 +25,7 @@ Feature: Kiali Mesh page
 
   @core-2
   @core
-  @multiple-controlplanes
+  @multi-mesh
   Scenario: See mesh
     When user sees mesh side panel
     Then user sees expected mesh infra
