@@ -12,28 +12,28 @@ Feature: Kiali Mesh page
 
 # NOTE: Mesh Find/Hide has its own feature file
 
-  @core
+  @core-2
   Scenario: Open mesh Tour
     When user opens mesh tour
     Then user "sees" mesh tour
 
-  @core
+  @core-2
   Scenario: Close mesh Tour
     When user opens mesh tour
     And user closes mesh tour
     Then user "does not see" mesh tour
 
-  @core
+  @core-2
   Scenario: See mesh
     When user sees mesh side panel
     Then user sees expected mesh infra
 
-  @core
+  @core-2
   Scenario: Test istiod
     When user selects mesh node with label "istiod"
     Then user sees control plane side panel
 
-  @core
+  @core-2
   Scenario: Grafana Infra
     When user selects mesh node with label "Grafana"
     Then user sees "Grafana" node side panel
@@ -43,34 +43,34 @@ Feature: Kiali Mesh page
     When user selects mesh node with label "Perses"
     Then user sees "Perses" node side panel
 
-  @core
+  @core-2
   Scenario: Tracing Infra
     When user selects tracing mesh node
     Then user sees tracing node side panel
 
-  @core
+  @core-2
   Scenario: Prometheus Infra
     When user selects mesh node with label "Prometheus"
     Then user sees "Prometheus" node side panel
 
-  @core
+  @core-2
   Scenario: Test DataPlane
     When user selects mesh node with label "Data Plane"
     Then user sees data plane side panel
 
-  @core
+  @core-2
   Scenario: Test Cluster
     When user selects cluster mesh node
     Then user sees cluster side panel
 
-  @core
+  @core-2
   Scenario: Test istio-system
     When user selects mesh node with label "istio-system"
     Then user sees "istio-system" namespace side panel
     Then user does not see "dataplane namespaces: 0" in mesh body
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: User enables gateways
     When user "opens" display menu
     And user "enables" mesh display option "gateways"
@@ -93,12 +93,12 @@ Feature: Kiali Mesh page
     Then user sees "ztunnel" node side panel
 
   @skip-ossmc
-  @core
+  @core-2
   Scenario: See the Mesh menu link
     Then user see the "mesh" menu
 
   @skip-ossmc
-  @core
+  @core-2
   Scenario: See the Mesh link in the about
     And user clicks on Help Button
     And user clicks on About Button
@@ -120,7 +120,7 @@ Feature: Kiali Mesh page
     And user sees 1 "istiod" nodes on the "west" cluster
 
   @component-health-upscale
-  @core
+  @core-2
   Scenario: Grafana Infra unreachable
     When user scales to "0" the "grafana" in namespace "istio-system"
     Then the user refreshes the page
@@ -137,7 +137,7 @@ Feature: Kiali Mesh page
     Then user does not see "warning" icon side panel
 
   @shared-mesh-config
-  @core
+  @core-2
   Scenario: Shared mesh config is seen on istiod panel
     When user selects mesh node with label "istiod"
     Then user sees control plane side panel
@@ -146,7 +146,7 @@ Feature: Kiali Mesh page
     And user sees "mode: REGISTRY_ONLY" in the "shared" configuration tab
     And user does not see "mode: REGISTRY_ONLY" in the "standard" configuration tab
 
-  @core
+  @core-2
   Scenario: User opens and interacts with the Trace Configuration modal
     When user selects tracing mesh node
     And user opens the Trace Configuration modal

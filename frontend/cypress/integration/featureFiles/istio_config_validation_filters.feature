@@ -14,46 +14,46 @@ Feature: Kiali Istio Config page
     And no filters are active
 
   @smoke
-  @core
+  @core-1
   Scenario: Filters should be available in the dropdown
     Then user can see the Filter by Config Validation dropdown
     And the dropdown contains all of the filters
 
   @smoke
-  @core
+  @core-1
   Scenario: Single validation filter should be usable
     When a validation filter is chosen from the dropdown
     Then the filter is applied and visible
 
   @smoke
-  @core
+  @core-1
   Scenario: Filter should be deletable
     When a validation filter "Valid" is applied
     And user clicks the cross next to the "Valid"
     Then the filter is no longer active
 
   @smoke
-  @core
+  @core-1
   Scenario: Deleting all filters at once
     When a validation filter "Valid" is applied
     And user clicks on "Clear all filters"
     Then the filter is no longer active
 
   @smoke
-  @core
+  @core-1
   Scenario: When 4 or more filters are chosen, only 3 are visible
     When user chooses 4 validation filters
     Then he can only see 3 right away
 
   @smoke
-  @core
+  @core-1
   Scenario: Show the view of all validation filters
     When user chooses 4 validation filters
     And clicks on the button next to them
     Then he can see the remaining filter
 
   @smoke
-  @core
+  @core-1
   Scenario: Hide the menu of all chosen filters for valdiation
     When user chooses 4 validation filters
     And makes them all visible

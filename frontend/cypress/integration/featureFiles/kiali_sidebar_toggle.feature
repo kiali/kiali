@@ -15,7 +15,7 @@ Feature: Sidebar toggle
     Then user cannot see the sidebar
 
   @smoke
-  @core
+  @core-2
   Scenario: Open the sidebar
     When the sidebar is closed
     And user presses the navigation toggle button

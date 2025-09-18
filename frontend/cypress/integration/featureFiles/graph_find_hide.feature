@@ -15,34 +15,34 @@ Feature: Kiali Graph page - Find/Hide
     And user graphs "alpha,beta" namespaces
 
   @error-rates-app
-  @core
+  @core-1
   Scenario: Find unhealthy workloads
     Then user sees nothing highlighted on the graph
     When user finds unhealthy workloads
     Then user sees unhealthy workloads highlighted on the graph
 
   @error-rates-app
-  @core
+  @core-1
   Scenario: Hide unhealthy workloads
     When user hides unhealthy workloads
     Then user sees no unhealthy workloads on the graph
 
   @error-rates-app
-  @core
+  @core-1
   Scenario: Use preset find option to filter workloads
     Then user sees preset find options
     When user selects the preset the find option "Find: unhealthy nodes"
     Then user sees unhealthy workloads highlighted on the graph
 
   @error-rates-app
-  @core
+  @core-1
   Scenario: Use preset hide option to filter workloads
     Then user sees preset hide options
     When user selects the preset hide option "Hide: healthy nodes"
     Then user sees no healthy workloads on the graph
 
   @error-rates-app
-  @core
+  @core-1
   Scenario: Show Graph Find/Hide help menu
     When user seeks help for find and hide
     Then user sees the help menu
@@ -53,7 +53,7 @@ Feature: Kiali Graph page - Find/Hide
     And the help menu has info on "Usage Notes"
 
   @error-rates-app
-  @core
+  @core-1
   Scenario: Filling the find form with nonsense
     When user fills "hello world" in find and submits
     Then user sees the "Find: No valid operator found in expression" message

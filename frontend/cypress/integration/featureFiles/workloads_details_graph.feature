@@ -13,6 +13,6 @@ Feature: Kiali Workload Details page
     And user is at the details page for the "workload" "bookinfo/details-v1" located in the "" cluster
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: See minigraph for workload.
     Then user sees a minigraph

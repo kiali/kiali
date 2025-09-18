@@ -7,7 +7,7 @@ Feature: Kiali help about verify
     And user is at the "overview" page
 
   @smoke
-  @core
+  @core-2
   Scenario: Open Kiali notifications
     Then user should see no Istio Components Status
 
