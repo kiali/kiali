@@ -32,7 +32,7 @@ func (a DeadNodeAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a DeadNodeAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a DeadNodeAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -53,7 +53,7 @@ func (a DeadNodeAppender) AppendGraph(ctx context.Context, trafficMap graph.Traf
 	}
 }
 
-func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) (numRemoved int) {
+func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *AppenderNamespaceInfo) (numRemoved int) {
 	for id, n := range trafficMap {
 		isDead := true
 

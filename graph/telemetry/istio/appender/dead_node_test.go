@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 )
 
 func setupWorkloads(t *testing.T) *business.Layer {
@@ -119,8 +120,8 @@ func TestDeadNode(t *testing.T) {
 	assert.Equal("istio-ingressgateway", ingressNode.Workload)
 	assert.Equal(10, len(ingressNode.Edges))
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
 
 	a := DeadNodeAppender{
 		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
@@ -282,8 +283,8 @@ func TestDeadNodeIssue2783(t *testing.T) {
 	assert.Equal(true, found)
 	assert.Equal(0, len(bNode.Edges))
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
 
 	a := DeadNodeAppender{
 		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
@@ -340,8 +341,8 @@ func TestDeadNodeIssue2982(t *testing.T) {
 	assert.Equal(true, found)
 	assert.Equal(0, len(bNode.Edges))
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
 
 	a := DeadNodeAppender{
 		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
@@ -396,8 +397,8 @@ func TestDeadNodeIssue7179(t *testing.T) {
 	assert.Equal(true, found)
 	assert.Equal(0, len(bNode.Edges))
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
 
 	a := DeadNodeAppender{
 		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{

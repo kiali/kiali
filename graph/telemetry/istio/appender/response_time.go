@@ -47,7 +47,7 @@ func (a ResponseTimeAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a ResponseTimeAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a ResponseTimeAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -60,7 +60,7 @@ func (a ResponseTimeAppender) AppendGraph(ctx context.Context, trafficMap graph.
 	a.appendGraph(ctx, trafficMap, a.Namespaces[namespaceInfo.Namespace], globalInfo)
 }
 
-func (a ResponseTimeAppender) appendGraph(ctx context.Context, trafficMap graph.TrafficMap, namespaceInfo graph.NamespaceInfo, gi *graph.GlobalInfo) {
+func (a ResponseTimeAppender) appendGraph(ctx context.Context, trafficMap graph.TrafficMap, namespaceInfo graph.NamespaceInfo, gi *GlobalInfo) {
 	zl := log.FromContext(ctx)
 
 	namespace := namespaceInfo.Name
@@ -89,7 +89,7 @@ func (a ResponseTimeAppender) appendGraph(ctx context.Context, trafficMap graph.
 				namespace,
 				int(duration.Seconds()), // range duration for the query
 				groupBy)
-			incomingVector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+			incomingVector := graph.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a.Name())
 			a.populateResponseTimeMap(ctx, responseTimeMap, &incomingVector, gi.Conf)
 		}
 
@@ -107,7 +107,7 @@ func (a ResponseTimeAppender) appendGraph(ctx context.Context, trafficMap graph.
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
-		incomingVector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+		incomingVector := graph.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a.Name())
 		a.populateResponseTimeMap(ctx, responseTimeMap, &incomingVector, gi.Conf)
 
 		// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
@@ -122,7 +122,7 @@ func (a ResponseTimeAppender) appendGraph(ctx context.Context, trafficMap graph.
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
-		outgoingVector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+		outgoingVector := graph.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a.Name())
 		a.populateResponseTimeMap(ctx, responseTimeMap, &outgoingVector, gi.Conf)
 
 	} else {
@@ -140,7 +140,7 @@ func (a ResponseTimeAppender) appendGraph(ctx context.Context, trafficMap graph.
 				namespace,
 				int(duration.Seconds()), // range duration for the query
 				groupBy)
-			incomingVector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+			incomingVector := graph.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a.Name())
 			a.populateResponseTimeMap(ctx, responseTimeMap, &incomingVector, gi.Conf)
 		}
 
@@ -154,7 +154,7 @@ func (a ResponseTimeAppender) appendGraph(ctx context.Context, trafficMap graph.
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
-		incomingVector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+		incomingVector := graph.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a.Name())
 		a.populateResponseTimeMap(ctx, responseTimeMap, &incomingVector, gi.Conf)
 
 		// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
@@ -165,7 +165,7 @@ func (a ResponseTimeAppender) appendGraph(ctx context.Context, trafficMap graph.
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
-		outgoingVector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a)
+		outgoingVector := graph.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), gi.Conf, a.Name())
 		a.populateResponseTimeMap(ctx, responseTimeMap, &outgoingVector, gi.Conf)
 	}
 

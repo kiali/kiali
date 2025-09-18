@@ -47,18 +47,12 @@ const (
 	tsHashMap graph.MetadataKey = "tsHashMap"
 )
 
-type waypointKey = struct {
-	Cluster   string
-	Namespace string
-	Name      string
-}
-
-type waypointMap = map[waypointKey]bool
+type waypointMap = map[graph.NodeKey]bool
 
 var grpcMetric = regexp.MustCompile(`istio_.*_messages`)
 
 // BuildNamespacesTrafficMap is required by the graph/TelemetryVendor interface
-func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalInfo *graph.GlobalInfo) graph.TrafficMap {
+func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalInfo *appender.GlobalInfo) graph.TrafficMap {
 	ctx, end := observability.StartSpan(
 		ctx,
 		"BuildNamespacesTrafficMap",
@@ -73,7 +67,7 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 	trafficMap := graph.NewTrafficMap()
 
 	if o.Rates.Ambient != "none" {
-		globalInfo.Vendor[appender.AmbientWaypoints] = GetWaypointMap(ctx, globalInfo)
+		globalInfo.Vendor.AmbientWaypoints = GetWaypointMap(ctx, globalInfo)
 	}
 
 	for _, namespaceInfo := range o.Namespaces {
@@ -81,7 +75,7 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 		namespaceTrafficMap := buildNamespaceTrafficMap(ctx, namespaceInfo, o, globalInfo)
 
 		// The appenders can add/remove/alter nodes for the namespace
-		appenderNamespaceInfo := graph.NewAppenderNamespaceInfo(namespaceInfo.Name)
+		appenderNamespaceInfo := appender.NewAppenderNamespaceInfo(namespaceInfo.Name)
 		for _, a := range appenders {
 			var appenderEnd observability.EndFunc
 			ctx, appenderEnd = observability.StartSpan(
@@ -123,7 +117,7 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 
 // buildNamespaceTrafficMap returns a map of all namespace nodes (key=id).  All
 // nodes either directly send and/or receive requests from a node in the namespace.
-func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.NamespaceInfo, o graph.TelemetryOptions, globalInfo *graph.GlobalInfo) graph.TrafficMap {
+func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.NamespaceInfo, o graph.TelemetryOptions, globalInfo *appender.GlobalInfo) graph.TrafficMap {
 	namespace := namespaceInfo.Name
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "buildNamespaceTrafficMap",
@@ -157,7 +151,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 			int(duration.Seconds()), // range duration for the query
 			groupBy,
 			idleCondition)
-		trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+		trafficVector = graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 		populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 
 		// 1) Incoming: Ambient only: query source telemetry, typically from a non-waypoint ingress gateway, that will likely not have overlapping dest or waypoint telem for the traffic (that traffic will be picked up in query #2)
@@ -169,7 +163,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 				int(duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+			trafficVector = graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 		}
 
@@ -181,7 +175,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 			int(duration.Seconds()), // range duration for the query
 			groupBy,
 			idleCondition)
-		trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+		trafficVector = graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 		populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 
 		// 3) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
@@ -192,7 +186,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 			int(duration.Seconds()), // range duration for the query
 			groupBy,
 			idleCondition)
-		trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+		trafficVector = graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 		populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 	}
 
@@ -222,7 +216,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 				int(duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+			trafficVector = graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 1) Incoming: Ambient only: query source telemetry, typically from a non-waypoint ingress gateway, that will likely not have overlapping dest or waypoint telem for the traffic (that traffic will be picked up in query #2)
@@ -234,7 +228,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 					int(duration.Seconds()), // range duration for the query
 					groupBy,
 					idleCondition)
-				trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+				trafficVector = graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 				populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 			}
 
@@ -246,7 +240,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 				int(duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+			trafficVector = graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 3) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
@@ -257,7 +251,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 				int(duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+			trafficVector = graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 		}
 	}
@@ -290,7 +284,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 				int(duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+			trafficVector = graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 1) Incoming: query destination telemetry to capture namespace services' incoming traffic	query = fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s"} [%vs])) by (%s) %s`,
@@ -302,7 +296,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 				int(duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+			trafficVector = graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
@@ -314,7 +308,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 				int(duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+			trafficVector = graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 		}
 	}
@@ -322,7 +316,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespaceInfo graph.Namespace
 	return trafficMap
 }
 
-func populateTrafficMap(ctx context.Context, trafficMap graph.TrafficMap, vector *model.Vector, metric string, o graph.TelemetryOptions, globalInfo *graph.GlobalInfo) {
+func populateTrafficMap(ctx context.Context, trafficMap graph.TrafficMap, vector *model.Vector, metric string, o graph.TelemetryOptions, globalInfo *appender.GlobalInfo) {
 	isRequests := true
 	protocol := ""
 	switch {
@@ -335,8 +329,8 @@ func populateTrafficMap(ctx context.Context, trafficMap graph.TrafficMap, vector
 	}
 	skipRequestsGrpc := isRequests && o.Rates.Grpc != graph.RateRequests
 	skipRequestsHttp := isRequests && o.Rates.Http != graph.RateRequests
-	wpKeySource := &waypointKey{}
-	wpKeyDest := &waypointKey{}
+	wpKeySource := &graph.NodeKey{}
+	wpKeyDest := &graph.NodeKey{}
 
 	zl := log.FromContext(ctx)
 
@@ -554,7 +548,7 @@ func timeSeriesHash(cluster, serviceNs, service, workloadNs, workload, app, vers
 }
 
 // BuildNodeTrafficMap is required by the graph/TelemtryVendor interface
-func BuildNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalInfo *graph.GlobalInfo) (graph.TrafficMap, error) {
+func BuildNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalInfo *appender.GlobalInfo) (graph.TrafficMap, error) {
 	namespace := o.Namespace.Name
 	if o.Aggregate != "" {
 		return handleAggregateNodeTrafficMap(ctx, o, globalInfo), nil
@@ -573,12 +567,12 @@ func BuildNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalIn
 	appenders, finalizers := appender.ParseAppenders(o)
 
 	if o.Rates.Ambient != "none" {
-		globalInfo.Vendor[appender.AmbientWaypoints] = GetWaypointMap(ctx, globalInfo)
+		globalInfo.Vendor.AmbientWaypoints = GetWaypointMap(ctx, globalInfo)
 	}
 
 	trafficMap := buildNodeTrafficMap(ctx, o.Cluster, o.Namespace, n, o, globalInfo)
 
-	namespaceInfo := graph.NewAppenderNamespaceInfo(o.Namespace.Name)
+	namespaceInfo := appender.NewAppenderNamespaceInfo(o.Namespace.Name)
 
 	for _, a := range appenders {
 		appenderCtx := buildAppenderContext(ctx, a.Name())
@@ -610,7 +604,7 @@ func BuildNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalIn
 // buildNodeTrafficMap returns a map of all nodes requesting or requested by the target node (key=id). Node graphs
 // are from the perspective of the node, as such we use destination telemetry for incoming traffic and source telemetry
 // for outgoing traffic.
-func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo graph.NamespaceInfo, n *graph.Node, o graph.TelemetryOptions, globalInfo *graph.GlobalInfo) graph.TrafficMap {
+func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo graph.NamespaceInfo, n *graph.Node, o graph.TelemetryOptions, globalInfo *appender.GlobalInfo) graph.TrafficMap {
 	// create map to aggregate traffic by protocol and response code
 	namespace := namespaceInfo.Name
 	trafficMap := graph.NewTrafficMap()
@@ -690,7 +684,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 				int(duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+			trafficVector = graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 1.b) query dest telemetry for requests to the service, serviced by service workloads
@@ -707,7 +701,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 		default:
 			graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 		}
-		trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+		trafficVector = graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 		populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 
 		// 2) query for outbound traffic
@@ -750,7 +744,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 		default:
 			graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 		}
-		trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+		trafficVector = graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 		populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 	}
 
@@ -820,7 +814,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 			default:
 				graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 			}
-			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+			trafficVector = graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 2) query for outbound traffic
@@ -863,7 +857,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 			default:
 				graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 			}
-			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+			trafficVector = graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 		}
 	}
@@ -875,7 +869,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 
 		inboundReporter := `reporter="destination"`
 		outboutReporter := `reporter="source"`
-		if wpMap, ok := globalInfo.Vendor[appender.AmbientWaypoints]; ok {
+		if wpMap := globalInfo.Vendor.AmbientWaypoints; wpMap != nil {
 			if isWaypoint(wpMap.(waypointMap), setWaypointKey(nil, n.Cluster, n.Namespace, n.Workload)) {
 				inboundReporter = util.GetReporter("source", o.Rates)
 				outboutReporter = util.GetReporter("destination", o.Rates)
@@ -947,7 +941,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 			default:
 				graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 			}
-			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+			trafficVector = graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 
 			// 2) query for outbound traffic
@@ -993,7 +987,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 			default:
 				graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 			}
-			trafficVector = util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+			trafficVector = graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 			populateTrafficMap(ctx, trafficMap, &trafficVector, metric, o, globalInfo)
 		}
 	}
@@ -1001,7 +995,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster string, namespaceInfo grap
 	return trafficMap
 }
 
-func handleAggregateNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalInfo *graph.GlobalInfo) graph.TrafficMap {
+func handleAggregateNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalInfo *appender.GlobalInfo) graph.TrafficMap {
 	n := graph.NewAggregateNode(o.Cluster, o.Namespace.Name, o.Aggregate, o.AggregateValue, o.Service, o.App)
 
 	zl := log.FromContext(ctx)
@@ -1014,7 +1008,7 @@ func handleAggregateNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions
 	appenders, finalizers := appender.ParseAppenders(o)
 	trafficMap := buildAggregateNodeTrafficMap(ctx, o.Namespace.Name, n, o, globalInfo)
 
-	namespaceInfo := graph.NewAppenderNamespaceInfo(o.Namespace.Name)
+	namespaceInfo := appender.NewAppenderNamespaceInfo(o.Namespace.Name)
 
 	for _, a := range appenders {
 		appenderCtx := buildAppenderContext(ctx, a.Name())
@@ -1045,7 +1039,7 @@ func handleAggregateNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions
 // TODO: This *may* require an additional query to pick up incoming gateway traffic (source reported) for ambient namespaces (no dest
 // proxy reporting) but because it's unclear whether this is a used feature, or whether we really need to handle that use case, I'm
 // deferring. If necessary, see the incoming traffic handling in buildNamespacesTrafficMap.
-func buildAggregateNodeTrafficMap(ctx context.Context, namespace string, n graph.Node, o graph.TelemetryOptions, globalInfo *graph.GlobalInfo) graph.TrafficMap {
+func buildAggregateNodeTrafficMap(ctx context.Context, namespace string, n graph.Node, o graph.TelemetryOptions, globalInfo *appender.GlobalInfo) graph.TrafficMap {
 	interval := o.Namespaces[namespace].Duration
 
 	// create map to aggregate traffic by response code
@@ -1080,7 +1074,7 @@ func buildAggregateNodeTrafficMap(ctx context.Context, namespace string, n graph
 	query := fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
 	*/
 	query := httpQuery
-	vector := util.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
+	vector := graph.PromQuery(ctx, query, time.Unix(o.QueryTime, 0), promApi, globalInfo.Conf)
 	populateTrafficMap(ctx, trafficMap, &vector, metric, o, globalInfo)
 
 	return trafficMap
@@ -1092,10 +1086,10 @@ func buildAggregateNodeTrafficMap(ctx context.Context, namespace string, n graph
 // our best to identify source or dest waypoint workloads.  If in the future we can make that determination
 // via the telem, we should change to that approach (see https://github.com/istio/ztunnel/issues/1128).
 // Here we build a waypointMap to help quickly identify waypoints in telemetry.
-func GetWaypointMap(ctx context.Context, gi *graph.GlobalInfo) waypointMap {
+func GetWaypointMap(ctx context.Context, gi *appender.GlobalInfo) waypointMap {
 	waypoints := gi.Business.Workload.GetWaypoints(ctx)
 	wpMap := make(waypointMap, len(waypoints))
-	wpKey := waypointKey{} // a re-usable key struct. This works because map keys are always copies
+	wpKey := graph.NodeKey{} // a re-usable key struct. This works because map keys are always copies
 
 	for _, wp := range waypoints {
 		wpKey.Cluster = wp.Cluster
@@ -1110,9 +1104,9 @@ func GetWaypointMap(ctx context.Context, gi *graph.GlobalInfo) waypointMap {
 	return wpMap
 }
 
-func setWaypointKey(wpKey *waypointKey, cluster, namespace, name string) *waypointKey {
+func setWaypointKey(wpKey *graph.NodeKey, cluster, namespace, name string) *graph.NodeKey {
 	if wpKey == nil {
-		wpKey = &waypointKey{}
+		wpKey = &graph.NodeKey{}
 	}
 	wpKey.Cluster = cluster
 	wpKey.Namespace = namespace
@@ -1121,8 +1115,8 @@ func setWaypointKey(wpKey *waypointKey, cluster, namespace, name string) *waypoi
 }
 
 // hasWaypoint returns true if the source or dest workload is determined to be a waypoint workload.
-func hasWaypoint(wpKeySource, wpKeyDest *waypointKey, globalInfo *graph.GlobalInfo) (sourceIsWaypoint bool, destIsWaypoint bool) {
-	wpMap := globalInfo.Vendor[appender.AmbientWaypoints].(waypointMap)
+func hasWaypoint(wpKeySource, wpKeyDest *graph.NodeKey, globalInfo *appender.GlobalInfo) (sourceIsWaypoint bool, destIsWaypoint bool) {
+	wpMap := globalInfo.Vendor.AmbientWaypoints.(waypointMap)
 	sourceIsWaypoint = wpMap[*wpKeySource]
 	destIsWaypoint = wpMap[*wpKeyDest]
 
@@ -1130,7 +1124,7 @@ func hasWaypoint(wpKeySource, wpKeyDest *waypointKey, globalInfo *graph.GlobalIn
 }
 
 // isWaypoint returns true if the ns, name and cluster of a workload matches with one of the known waypoints
-func isWaypoint(wpMap waypointMap, wpKey *waypointKey) bool {
+func isWaypoint(wpMap waypointMap, wpKey *graph.NodeKey) bool {
 	return wpMap[*wpKey]
 }
 

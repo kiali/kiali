@@ -10,6 +10,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/models"
 )
 
 func TestResponseTimeP95(t *testing.T) {
@@ -33,7 +34,8 @@ func TestResponseTimeP95(t *testing.T) {
 		"destination_workload":           "productpage-v1",
 		"destination_canonical_service":  "productpage",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q1m1 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -48,7 +50,8 @@ func TestResponseTimeP95(t *testing.T) {
 		"destination_workload":           "reviews-v1",
 		"destination_canonical_service":  "reviews",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q1m2 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -63,7 +66,8 @@ func TestResponseTimeP95(t *testing.T) {
 		"destination_workload":           "reviews-v2",
 		"destination_canonical_service":  "reviews",
 		"destination_canonical_revision": "v2",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q1m3 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -78,7 +82,8 @@ func TestResponseTimeP95(t *testing.T) {
 		"destination_workload":           "ratings-v1",
 		"destination_canonical_service":  "ratings",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q1m4 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -93,23 +98,29 @@ func TestResponseTimeP95(t *testing.T) {
 		"destination_workload":           "ratings-v1",
 		"destination_canonical_service":  "ratings",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,
-			Value:  0.010},
+			Value:  0.010,
+		},
 		&model.Sample{
 			Metric: q1m1,
-			Value:  0.020},
+			Value:  0.020,
+		},
 		&model.Sample{
 			Metric: q1m2,
-			Value:  0.020},
+			Value:  0.020,
+		},
 		&model.Sample{
 			Metric: q1m3,
-			Value:  0.030}, // same edge reported by outgoing (q1), this > value should be preferred
+			Value:  0.030,
+		}, // same edge reported by outgoing (q1), this > value should be preferred
 		&model.Sample{
 			Metric: q1m4,
-			Value:  0.030}, // same edge reported by outgoing (q1), this > value should be preferred
+			Value:  0.030,
+		}, // same edge reported by outgoing (q1), this > value should be preferred
 	}
 
 	q2 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_milliseconds_bucket{reporter=~"waypoint|source",source_workload_namespace="bookinfo"}[60s])) by (le,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol)) > 0,0.001)`
@@ -127,7 +138,8 @@ func TestResponseTimeP95(t *testing.T) {
 		"destination_workload":           "reviews-v1",
 		"destination_canonical_service":  "reviews",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q2m1 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -142,7 +154,8 @@ func TestResponseTimeP95(t *testing.T) {
 		"destination_workload":           "reviews-v2",
 		"destination_canonical_service":  "reviews",
 		"destination_canonical_revision": "v2",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q2m2 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -157,7 +170,8 @@ func TestResponseTimeP95(t *testing.T) {
 		"destination_workload":           "ratings-v1",
 		"destination_canonical_service":  "ratings",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q2m3 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -172,21 +186,26 @@ func TestResponseTimeP95(t *testing.T) {
 		"destination_workload":           "ratings-v1",
 		"destination_canonical_service":  "ratings",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 
 	v2 := model.Vector{
 		&model.Sample{
 			Metric: q2m0,
-			Value:  0.020},
+			Value:  0.020,
+		},
 		&model.Sample{
 			Metric: q2m1,
-			Value:  0.020},
+			Value:  0.020,
+		},
 		&model.Sample{
 			Metric: q2m2,
-			Value:  0.040}, // same edge reported by incoming (q0), this > value should get ignored
+			Value:  0.040,
+		}, // same edge reported by incoming (q0), this > value should get ignored
 		&model.Sample{
 			Metric: q2m3,
-			Value:  0.040}, // same edge reported by incoming (q0), this > value should get ignored
+			Value:  0.040,
+		}, // same edge reported by incoming (q0), this > value should get ignored
 	}
 
 	client, api, err := setupMocked()
@@ -227,7 +246,7 @@ func TestResponseTimeP95(t *testing.T) {
 		},
 	}
 
-	gi := &graph.GlobalInfo{Conf: config.Get(), PromClient: client}
+	gi := graph.NewGlobalInfo(nil, client, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 	appender.appendGraph(context.Background(), trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: true}, gi)
 
 	ingress, ok = trafficMap[ingressID]
@@ -310,7 +329,8 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		"destination_workload":           "productpage-v1",
 		"destination_canonical_service":  "productpage",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q0m1 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -325,7 +345,8 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		"destination_workload":           "reviews-v1",
 		"destination_canonical_service":  "reviews",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q0m2 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -340,7 +361,8 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		"destination_workload":           "reviews-v2",
 		"destination_canonical_service":  "reviews",
 		"destination_canonical_revision": "v2",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q0m3 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -355,7 +377,8 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		"destination_workload":           "ratings-v1",
 		"destination_canonical_service":  "ratings",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q0m4 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -370,23 +393,29 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		"destination_workload":           "ratings-v1",
 		"destination_canonical_service":  "ratings",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	v0 := model.Vector{
 		&model.Sample{
 			Metric: q0m0,
-			Value:  0.010},
+			Value:  0.010,
+		},
 		&model.Sample{
 			Metric: q0m1,
-			Value:  0.020},
+			Value:  0.020,
+		},
 		&model.Sample{
 			Metric: q0m2,
-			Value:  0.020},
+			Value:  0.020,
+		},
 		&model.Sample{
 			Metric: q0m3,
-			Value:  0.030}, // same edge reported by outgoing (q1), this > value should be preferred
+			Value:  0.030,
+		}, // same edge reported by outgoing (q1), this > value should be preferred
 		&model.Sample{
 			Metric: q0m4,
-			Value:  0.030}, // same edge reported by outgoing (q1), this > value should be preferred
+			Value:  0.030,
+		}, // same edge reported by outgoing (q1), this > value should be preferred
 	}
 
 	q1 := `round(sum(rate(istio_request_duration_milliseconds_sum{reporter=~"waypoint|source",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol) / sum(rate(istio_request_duration_milliseconds_count{reporter=~"waypoint|source",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol) > 0,0.001)`
@@ -404,7 +433,8 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		"destination_workload":           "reviews-v1",
 		"destination_canonical_service":  "reviews",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q1m1 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -419,7 +449,8 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		"destination_workload":           "reviews-v2",
 		"destination_canonical_service":  "reviews",
 		"destination_canonical_revision": "v2",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q1m2 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -434,7 +465,8 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		"destination_workload":           "ratings-v1",
 		"destination_canonical_service":  "ratings",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q1m3 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -449,21 +481,26 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		"destination_workload":           "ratings-v1",
 		"destination_canonical_service":  "ratings",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,
-			Value:  0.020},
+			Value:  0.020,
+		},
 		&model.Sample{
 			Metric: q1m1,
-			Value:  0.020},
+			Value:  0.020,
+		},
 		&model.Sample{
 			Metric: q1m2,
-			Value:  0.040}, // same edge reported by incoming (q0), this > value should get ignored
+			Value:  0.040,
+		}, // same edge reported by incoming (q0), this > value should get ignored
 		&model.Sample{
 			Metric: q1m3,
-			Value:  0.040}, // same edge reported by incoming (q0), this > value should get ignored
+			Value:  0.040,
+		}, // same edge reported by incoming (q0), this > value should get ignored
 	}
 
 	client, api, err := setupMocked()
@@ -502,7 +539,7 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		},
 	}
 
-	gi := &graph.GlobalInfo{Conf: config.Get(), PromClient: client}
+	gi := graph.NewGlobalInfo(nil, client, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 	appender.appendGraph(context.Background(), trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: false}, gi)
 
 	ingress, ok = trafficMap[ingressID]
@@ -585,7 +622,8 @@ func TestResponseTimeAvg(t *testing.T) {
 		"destination_workload":           "productpage-v1",
 		"destination_canonical_service":  "productpage",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q0m1 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -600,7 +638,8 @@ func TestResponseTimeAvg(t *testing.T) {
 		"destination_workload":           "reviews-v1",
 		"destination_canonical_service":  "reviews",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q0m2 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -615,7 +654,8 @@ func TestResponseTimeAvg(t *testing.T) {
 		"destination_workload":           "reviews-v2",
 		"destination_canonical_service":  "reviews",
 		"destination_canonical_revision": "v2",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q0m3 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -630,7 +670,8 @@ func TestResponseTimeAvg(t *testing.T) {
 		"destination_workload":           "ratings-v1",
 		"destination_canonical_service":  "ratings",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q0m4 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -645,23 +686,29 @@ func TestResponseTimeAvg(t *testing.T) {
 		"destination_workload":           "ratings-v1",
 		"destination_canonical_service":  "ratings",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	v0 := model.Vector{
 		&model.Sample{
 			Metric: q0m0,
-			Value:  0.010},
+			Value:  0.010,
+		},
 		&model.Sample{
 			Metric: q0m1,
-			Value:  0.020},
+			Value:  0.020,
+		},
 		&model.Sample{
 			Metric: q0m2,
-			Value:  0.020},
+			Value:  0.020,
+		},
 		&model.Sample{
 			Metric: q0m3,
-			Value:  0.030}, // same edge reported by outgoing (q1), this > value should be preferred
+			Value:  0.030,
+		}, // same edge reported by outgoing (q1), this > value should be preferred
 		&model.Sample{
 			Metric: q0m4,
-			Value:  0.030}, // same edge reported by outgoing (q1), this > value should be preferred
+			Value:  0.030,
+		}, // same edge reported by outgoing (q1), this > value should be preferred
 	}
 
 	q1 := `round(sum(rate(istio_request_duration_milliseconds_sum{reporter=~"waypoint|source",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol) / sum(rate(istio_request_duration_milliseconds_count{reporter=~"waypoint|source",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol) > 0,0.001)`
@@ -679,7 +726,8 @@ func TestResponseTimeAvg(t *testing.T) {
 		"destination_workload":           "reviews-v1",
 		"destination_canonical_service":  "reviews",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q1m1 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -694,7 +742,8 @@ func TestResponseTimeAvg(t *testing.T) {
 		"destination_workload":           "reviews-v2",
 		"destination_canonical_service":  "reviews",
 		"destination_canonical_revision": "v2",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q1m2 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -709,7 +758,8 @@ func TestResponseTimeAvg(t *testing.T) {
 		"destination_workload":           "ratings-v1",
 		"destination_canonical_service":  "ratings",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 	q1m3 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "bookinfo",
@@ -724,21 +774,26 @@ func TestResponseTimeAvg(t *testing.T) {
 		"destination_workload":           "ratings-v1",
 		"destination_canonical_service":  "ratings",
 		"destination_canonical_revision": "v1",
-		"request_protocol":               "http"}
+		"request_protocol":               "http",
+	}
 
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,
-			Value:  0.020},
+			Value:  0.020,
+		},
 		&model.Sample{
 			Metric: q1m1,
-			Value:  0.020},
+			Value:  0.020,
+		},
 		&model.Sample{
 			Metric: q1m2,
-			Value:  0.040}, // same edge reported by incoming (q0), this > value should get ignored
+			Value:  0.040,
+		}, // same edge reported by incoming (q0), this > value should get ignored
 		&model.Sample{
 			Metric: q1m3,
-			Value:  0.040}, // same edge reported by incoming (q0), this > value should get ignored
+			Value:  0.040,
+		}, // same edge reported by incoming (q0), this > value should get ignored
 	}
 
 	client, api, err := setupMocked()
@@ -777,7 +832,7 @@ func TestResponseTimeAvg(t *testing.T) {
 		},
 	}
 
-	gi := &graph.GlobalInfo{Conf: config.Get(), PromClient: client}
+	gi := graph.NewGlobalInfo(nil, client, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 	appender.appendGraph(context.Background(), trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: false}, gi)
 
 	ingress, ok = trafficMap[ingressID]

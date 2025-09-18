@@ -30,7 +30,7 @@ func (a IdleNodeAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a IdleNodeAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a IdleNodeAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *AppenderNamespaceInfo) {
 	if a.IsNodeGraph {
 		return
 	}
@@ -49,7 +49,7 @@ func (a IdleNodeAppender) AppendGraph(ctx context.Context, trafficMap graph.Traf
 	a.addIdleNodes(ctx, trafficMap, namespaceInfo.Namespace, serviceLists, workloadLists, globalInfo)
 }
 
-func (a IdleNodeAppender) addIdleNodes(ctx context.Context, trafficMap graph.TrafficMap, namespace string, serviceLists map[string]*models.ServiceList, workloadLists map[string]*models.WorkloadList, gi *graph.GlobalInfo) {
+func (a IdleNodeAppender) addIdleNodes(ctx context.Context, trafficMap graph.TrafficMap, namespace string, serviceLists map[string]*models.ServiceList, workloadLists map[string]*models.WorkloadList, gi *GlobalInfo) {
 	idleNodeTrafficMap := a.buildIdleNodeTrafficMap(ctx, trafficMap, namespace, serviceLists, workloadLists, gi)
 
 	// Integrate the idle nodes into the existing traffic map
@@ -58,7 +58,7 @@ func (a IdleNodeAppender) addIdleNodes(ctx context.Context, trafficMap graph.Tra
 	}
 }
 
-func (a IdleNodeAppender) buildIdleNodeTrafficMap(ctx context.Context, trafficMap graph.TrafficMap, namespace string, serviceLists map[string]*models.ServiceList, workloadLists map[string]*models.WorkloadList, gi *graph.GlobalInfo) graph.TrafficMap {
+func (a IdleNodeAppender) buildIdleNodeTrafficMap(ctx context.Context, trafficMap graph.TrafficMap, namespace string, serviceLists map[string]*models.ServiceList, workloadLists map[string]*models.WorkloadList, gi *GlobalInfo) graph.TrafficMap {
 	zl := log.FromContext(ctx)
 
 	idleNodeTrafficMap := graph.NewTrafficMap()

@@ -15,14 +15,15 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 )
 
 func TestWorkloadSidecarsPasses(t *testing.T) {
 	trafficMap := buildWorkloadTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, buildFakeWorkloadDeployments(), buildFakeWorkloadPods())
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	a := MeshCheckAppender{
@@ -46,8 +47,8 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 	trafficMap := buildWorkloadTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, buildFakeWorkloadDeployments(), buildFakeWorkloadPodsNoSidecar())
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	a := MeshCheckAppender{
@@ -72,8 +73,8 @@ func TestInaccessibleWorkload(t *testing.T) {
 	trafficMap := buildInaccessibleWorkloadTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, buildFakeWorkloadDeployments(), buildFakeWorkloadPodsNoSidecar())
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	a := MeshCheckAppender{
@@ -97,8 +98,8 @@ func TestAppNoPodsPasses(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, []core_v1.Pod{})
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	a := MeshCheckAppender{
@@ -122,8 +123,8 @@ func TestAppSidecarsPasses(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, buildFakeWorkloadPods())
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	a := MeshCheckAppender{
@@ -147,8 +148,8 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, buildFakeWorkloadPodsNoSidecar())
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	a := MeshCheckAppender{
@@ -173,8 +174,8 @@ func TestAppWithAmbientIsFlagged(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, buildFakeWorkloadPodsAmbient())
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	a := MeshCheckAppender{
@@ -199,8 +200,8 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 	trafficMap := buildServiceTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, []core_v1.Pod{})
 
-	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get())
-	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
 
 	a := MeshCheckAppender{

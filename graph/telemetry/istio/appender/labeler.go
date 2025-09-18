@@ -11,8 +11,7 @@ const LabelerAppenderName = "labeler"
 
 // LabelerAppender is responsible for obtaining and attaching all k8s labels to all nodes in the graph.
 // Name: labeler
-type LabelerAppender struct {
-}
+type LabelerAppender struct{}
 
 // Name implements Appender
 func (f *LabelerAppender) Name() string {
@@ -25,7 +24,7 @@ func (a LabelerAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (f *LabelerAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, _namespaceInfo *graph.AppenderNamespaceInfo) {
+func (f *LabelerAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *GlobalInfo, _namespaceInfo *AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -34,7 +33,7 @@ func (f *LabelerAppender) AppendGraph(ctx context.Context, trafficMap graph.Traf
 }
 
 // labelNodes puts all k8s labels in the metadata for all nodes.
-func labelNodes(trafficMap graph.TrafficMap, gi *graph.GlobalInfo, ctx context.Context) {
+func labelNodes(trafficMap graph.TrafficMap, gi *GlobalInfo, ctx context.Context) {
 	zl := log.FromContext(ctx)
 
 	for _, n := range trafficMap {

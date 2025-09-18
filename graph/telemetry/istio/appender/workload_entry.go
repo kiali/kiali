@@ -30,7 +30,7 @@ func (a WorkloadEntryAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a WorkloadEntryAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a WorkloadEntryAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *AppenderNamespaceInfo) {
 	zl := log.FromContext(ctx)
 
 	if len(trafficMap) == 0 {
@@ -42,7 +42,7 @@ func (a WorkloadEntryAppender) AppendGraph(ctx context.Context, trafficMap graph
 	a.applyWorkloadEntries(ctx, trafficMap, globalInfo, namespaceInfo)
 }
 
-func (a WorkloadEntryAppender) applyWorkloadEntries(ctx context.Context, trafficMap graph.TrafficMap, gi *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a WorkloadEntryAppender) applyWorkloadEntries(ctx context.Context, trafficMap graph.TrafficMap, gi *GlobalInfo, namespaceInfo *AppenderNamespaceInfo) {
 	zl := log.FromContext(ctx)
 
 	for _, n := range trafficMap {

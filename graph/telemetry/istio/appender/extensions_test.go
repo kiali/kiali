@@ -19,6 +19,7 @@ import (
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
@@ -61,7 +62,7 @@ func TestExtension(t *testing.T) {
 	}
 
 	duration, _ := time.ParseDuration("60s")
-	globalInfo := graph.NewGlobalInfo(businessLayer, client, config.Get())
+	globalInfo := graph.NewGlobalInfo(businessLayer, client, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 
 	appender := ExtensionsAppender{
 		Duration:         duration,

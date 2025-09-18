@@ -27,7 +27,8 @@ func TestNonTrafficScenario(t *testing.T) {
 	serviceLists := mockServiceLists(a)
 	workloadLists := mockWorkloadLists(a)
 
-	a.addIdleNodes(context.Background(), trafficMap, "testNamespace", serviceLists, workloadLists, &graph.GlobalInfo{Conf: config.Get()})
+	globalInfo := graph.NewGlobalInfo(nil, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	a.addIdleNodes(context.Background(), trafficMap, "testNamespace", serviceLists, workloadLists, globalInfo)
 	assert.Equal(7, len(trafficMap))
 
 	id, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "customer", "testNamespace", "customer-v1", "customer", "v1", a.GraphType)
@@ -99,7 +100,8 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	serviceLists := mockServiceLists(a)
 	workloadLists := mockWorkloadLists(a)
 
-	a.addIdleNodes(context.Background(), trafficMap, "testNamespace", serviceLists, workloadLists, &graph.GlobalInfo{Conf: config.Get()})
+	globalInfo := graph.NewGlobalInfo(nil, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	a.addIdleNodes(context.Background(), trafficMap, "testNamespace", serviceLists, workloadLists, globalInfo)
 
 	assert.Equal(5, len(trafficMap))
 	id, _, _ := graph.Id(graph.Unknown, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, a.GraphType)
@@ -158,7 +160,8 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	serviceLists := mockServiceLists(a)
 	workloadLists := mockWorkloadLists(a)
 
-	a.addIdleNodes(context.Background(), trafficMap, "testNamespace", serviceLists, workloadLists, &graph.GlobalInfo{Conf: config.Get()})
+	globalInfo := graph.NewGlobalInfo(nil, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	a.addIdleNodes(context.Background(), trafficMap, "testNamespace", serviceLists, workloadLists, globalInfo)
 
 	assert.Equal(5, len(trafficMap))
 	id, _, _ := graph.Id(graph.Unknown, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, a.GraphType)
@@ -224,7 +227,7 @@ func mockServiceLists(a IdleNodeAppender) map[string]*models.ServiceList {
 		}
 	}
 
-	return map[string]*models.ServiceList{config.DefaultClusterID: &models.ServiceList{Services: serviceOverviews}}
+	return map[string]*models.ServiceList{config.DefaultClusterID: {Services: serviceOverviews}}
 }
 
 func mockWorkloadLists(a IdleNodeAppender) map[string]*models.WorkloadList {
@@ -251,7 +254,7 @@ func mockWorkloadLists(a IdleNodeAppender) map[string]*models.WorkloadList {
 		}
 	}
 
-	return map[string]*models.WorkloadList{config.DefaultClusterID: &models.WorkloadList{Workloads: workloadListItems}}
+	return map[string]*models.WorkloadList{config.DefaultClusterID: {Workloads: workloadListItems}}
 }
 
 func (a *IdleNodeAppender) oneNodeTraffic() map[string]*graph.Node {

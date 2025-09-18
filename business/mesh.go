@@ -80,3 +80,7 @@ func (in *MeshService) GetMeshConfig() *models.MeshConfig {
 
 	return &models.MeshConfig{MeshConfig: &istiov1alpha1.MeshConfig{}}
 }
+
+func (in *MeshService) Clusters() ([]models.KubeCluster, error) {
+	return in.discovery.Clusters()
+}

@@ -12,7 +12,6 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util/sliceutil"
 )
@@ -30,7 +29,7 @@ const (
 // Name: extensions
 type ExtensionsAppender struct {
 	Duration         time.Duration
-	globalInfo       *graph.GlobalInfo
+	globalInfo       *GlobalInfo
 	GraphType        string
 	IncludeIdleEdges bool
 	QueryTime        int64 // unix time in seconds
@@ -50,7 +49,7 @@ func (a ExtensionsAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a ExtensionsAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a ExtensionsAppender) AppendGraph(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *AppenderNamespaceInfo) {
 	if len(globalInfo.Conf.Extensions) == 0 {
 		return
 	}
@@ -93,7 +92,7 @@ func (a ExtensionsAppender) appendGraph(ctx context.Context, ext config.Extensio
 			groupBy,
 			idleCondition)
 		zl.Trace().Msgf("Extension [%s] requests query [%s]", ext.Name, query)
-		vector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), a.globalInfo.Conf, a)
+		vector := graph.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), a.globalInfo.Conf, a.Name())
 		a.appendTrafficMap(ctx, ext, trafficMap, &vector, metric)
 	}
 
@@ -127,7 +126,7 @@ func (a ExtensionsAppender) appendGraph(ctx context.Context, ext config.Extensio
 				groupBy,
 				idleCondition)
 			zl.Trace().Msgf("Extension [%s] tcp query [%s]", ext.Name, query)
-			vector := util.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), a.globalInfo.Conf, a)
+			vector := graph.PromQueryAppender(ctx, query, time.Unix(a.QueryTime, 0), client.API(), a.globalInfo.Conf, a.Name())
 			a.appendTrafficMap(ctx, ext, trafficMap, &vector, metric)
 		}
 	}

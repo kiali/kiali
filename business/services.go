@@ -22,6 +22,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
@@ -105,6 +106,32 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 	}
 
 	return &serviceList, nil
+}
+
+func (in *SvcService) GetServiceListForCluster(ctx context.Context, criteria ServiceCriteria, cluster string) (*models.ServiceList, error) {
+	svcs, err := in.getServiceListForCluster(ctx, criteria, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	// Filter out services that are not in accessible namespaces since it's valid to pass `""` for the namespace
+	// which means list across all namespaces.
+	accessibleNamespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	namespaceSet := make(map[string]struct{})
+	for _, ns := range accessibleNamespaces {
+		namespaceSet[ns.Name] = struct{}{}
+	}
+
+	sliceutil.Filter(svcs.Services, func(svc models.ServiceOverview) bool {
+		_, ok := namespaceSet[svc.Namespace]
+		return ok
+	})
+
+	return svcs, nil
 }
 
 func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria ServiceCriteria, cluster string) (*models.ServiceList, error) {
