@@ -2312,20 +2312,21 @@ func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload m
 			IncludeOnlyDefinitions: true,
 		}
 		svc, err := in.businessLayer.Svc.GetServiceList(ctx, serviceCriteria)
-		if err != nil {
-			log.Debugf("isWorkloadCaptured: Error fetching services %s", err.Error())
-		}
-		// a proper service selector on the workload should, I think, return only a single service (there are ways
-		// a workload can map to multiple services, but I think only one should be returned using a proper selector). If
-		// multiple were returned I'm not sure how the waypoint capture logic should work, so for now, more than 1 will
-		// indicate that the labels did not have a proper service selector. In this case, ignore the returned services.
-		if len(svc.Services) > 1 {
-			log.Warningf("Ignoring service override for waypoint capture. Found [%d] services for [%s] workload [%s:%s:%s]", len(svc.Services), workload.WorkloadGVK.GroupKind(), workload.Cluster, workload.Namespace, workload.Name)
+		if err == nil {
+			// a proper service selector on the workload should, I think, return only a single service (there are ways
+			// a workload can map to multiple services, but I think only one should be returned using a proper selector). If
+			// multiple were returned I'm not sure how the waypoint capture logic should work, so for now, more than 1 will
+			// indicate that the labels did not have a proper service selector. In this case, ignore the returned services.
+			if len(svc.Services) > 1 {
+				log.Warningf("Ignoring service override for waypoint capture. Found [%d] services for [%s] workload [%s:%s:%s]", len(svc.Services), workload.WorkloadGVK.GroupKind(), workload.Cluster, workload.Namespace, workload.Name)
+			} else {
+				services = svc.Services
+			}
 		} else {
-			services = svc.Services
+			log.Infof("isWorkloadCaptured: Error fetching services %s", err.Error())
 		}
 	}
-	if len(services) > 0 {
+	if services != nil && len(services) > 0 {
 		svc := services[0]
 		waypointUse, waypointUseFound = svc.Labels[config.WaypointUseLabel]
 		waypointUseNamespace, waypointUseNamespaceFound = svc.Labels[config.WaypointUseNamespaceLabel]
