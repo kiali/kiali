@@ -391,6 +391,30 @@ const filterSharedInfrastructureNodes = (nodes: any[]): any[] => {
   });
 };
 
+// Helper function to render mesh control planes content
+const renderMeshControlPlanes = (
+  meshName: string,
+  controlPlaneNodes: any[],
+  dataPlaneNodes: any[]
+): React.ReactNode => {
+  const meshControlPlanes = filterNodesByMesh(controlPlaneNodes, meshName);
+
+  return (
+    <div key={meshName} className={targetBodyStyle}>
+      {t('ControlPlanes: {{num}}', { num: meshControlPlanes.length })}
+      {meshControlPlanes.map(infra => {
+        const cpRev = infra.getData().infraData.revision ?? 'default';
+        const dataPlaneNode = dataPlaneNodes.find(dpn => {
+          const dpRev = dpn.getData().version ?? 'default';
+          return cpRev === dpRev;
+        });
+        const dataPlaneNamespaceCount = dataPlaneNode?.getData().infraData?.length ?? 0;
+        return renderControlPlaneSummary(infra.getData(), dataPlaneNamespaceCount);
+      })}
+    </div>
+  );
+};
+
 // Helper function to render shared infrastructure content
 const renderSharedInfrastructure = (
   clusterNodes: any[],
@@ -462,28 +486,36 @@ const MeshTabsComponent: React.FC<{
 }) => {
   const [activeTab, setActiveTab] = React.useState<string | number>(0);
 
-  const tabs = meshData.names.map((meshName, index) => {
-    // Filter control planes for this specific mesh
+  // Filter out meshes that have no control planes
+  const meshesWithControlPlanes = meshData.names.filter(meshName => {
     const meshControlPlanes = filterNodesByMesh(controlPlaneNodes, meshName);
+    return meshControlPlanes.length > 0;
+  });
 
+  // If only one mesh has control planes, render without tabs
+  if (meshesWithControlPlanes.length === 1) {
+    const meshName = meshesWithControlPlanes[0];
+
+    return (
+      <div>
+        <div className={targetBodyStyle}>
+          <div className={tabTitleStyle}>{t('Mesh: {{meshName}}', { meshName })}</div>
+        </div>
+        {renderMeshControlPlanes(meshName, controlPlaneNodes, dataPlaneNodes)}
+
+        {renderSharedInfrastructure(clusterNodes, gatewayNodes, waypointNodes, kialiNodes, observeNodes, forCluster)}
+      </div>
+    );
+  }
+
+  const tabs = meshesWithControlPlanes.map((meshName, index) => {
     return (
       <Tab
         key={meshName}
         eventKey={index}
         title={<TabTitleText className={tabTitleStyle}>{t('Mesh: {{meshName}}', { meshName })}</TabTitleText>}
       >
-        <div key={meshName} className={targetBodyStyle}>
-          {meshControlPlanes.length > 0 && t('ControlPlanes: {{num}}', { num: meshControlPlanes.length })}
-          {meshControlPlanes.map(infra => {
-            const cpRev = infra.getData().infraData.revision ?? 'default';
-            const dataPlaneNode = dataPlaneNodes.find(dpn => {
-              const dpRev = dpn.getData().version ?? 'default';
-              return cpRev === dpRev;
-            });
-            const dataPlaneNamespaceCount = dataPlaneNode?.getData().infraData?.length ?? 0;
-            return renderControlPlaneSummary(infra.getData(), dataPlaneNamespaceCount);
-          })}
-        </div>
+        {renderMeshControlPlanes(meshName, controlPlaneNodes, dataPlaneNodes)}
 
         {renderSharedInfrastructure(clusterNodes, gatewayNodes, waypointNodes, kialiNodes, observeNodes, forCluster)}
       </Tab>
