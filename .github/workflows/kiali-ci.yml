@@ -11,6 +11,7 @@ on:
     - "**/*.md"
     - "**/*.adoc"
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     branches:
     - master
     - v*.*
