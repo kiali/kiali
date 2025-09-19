@@ -44,7 +44,7 @@ func NewInstance(ctx context.Context, kubeClient kubernetes.Interface, dynamicCl
 	instance := &Instance{
 		kubeClient:    kubeClient,
 		dynamicClient: dynamicClient,
-		UseKialiCR:    kialiCRDExists,
+		useKialiCR:    kialiCRDExists,
 	}
 
 	if kialiCRDExists {
@@ -109,7 +109,7 @@ type Instance struct {
 	// ResourceNamespace is the namespace where the Kiali resources are deployed aka spec.deployment.namespace.
 	ResourceNamespace string
 
-	UseKialiCR bool
+	useKialiCR bool
 }
 
 // GetConfig fetches the kiali configuration from the kiali configmap.
@@ -133,7 +133,7 @@ func (in *Instance) GetConfig(ctx context.Context) (*config.Config, error) {
 func (in *Instance) UpdateConfig(ctx context.Context, conf *config.Config) error {
 	log.Debug("Updating Kiali config")
 	// Update the configmap directly by getting the configmap and patching it.
-	if in.UseKialiCR {
+	if in.useKialiCR {
 		// Before we patch the Kiali CR, get the current configmap so that later we can ensure the configmap is updated.
 		cm, err := in.kubeClient.CoreV1().ConfigMaps(in.ResourceNamespace).Get(ctx, in.Name, metav1.GetOptions{})
 		if err != nil {
