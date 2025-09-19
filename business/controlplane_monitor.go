@@ -309,15 +309,13 @@ func parseProxyStatus(statuses map[string][]byte) ([]*kubernetes.ProxyStatus, er
 func (p *controlPlaneMonitor) getProxyStatus(ctx context.Context, client kubernetes.ClientInterface, controlPlane models.ControlPlane) ([]*kubernetes.ProxyStatus, error) {
 	log := zerolog.Ctx(ctx)
 	const synczPath = "/debug/syncz"
-	var result map[string][]byte
 
 	debugStatus, err := p.getIstiodDebugStatus(client, controlPlane, synczPath)
 	if err != nil {
 		log.Error().Msgf("Failed to call Istiod endpoint %s error: %s", synczPath, err)
 		return nil, err
 	}
-	result = debugStatus
-	return parseProxyStatus(result)
+	return parseProxyStatus(debugStatus)
 }
 
 func (p *controlPlaneMonitor) getRegistryServices(ctx context.Context, client kubernetes.ClientInterface, controlPlane models.ControlPlane) ([]*kubernetes.RegistryService, error) {
