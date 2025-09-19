@@ -75,26 +75,47 @@ const proxyStatusHealthy = ({ proxyStatus }: Pod): boolean => {
   );
 };
 
-const waitForHealthyWaypoint = (maxRetries = 30, retryCount = 0): void => {
-  if (retryCount >= maxRetries) {
-    throw new Error(`Condition not met after ${maxRetries} retries`);
+const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: string): void => {
+  const maxRetries = 30;
+  let url = `/api/namespaces/${namespace}/workloads/${name}?validate=true&rateInterval=60s&health=true`;
+  if (cluster) {
+    url += `&cluster=${cluster}`;
   }
-  cy.request({
-    method: 'GET',
-    url: '/api/namespaces/bookinfo/workloads/waypoint?validate=true&rateInterval=60s&health=true'
-  }).then(response => {
-    expect(response.status).to.equal(200);
-    const workload = response.body;
 
-    if (workload.pods.length > 0 && workload.pods.every(pod => proxyStatusHealthy(pod))) {
-      return;
+  const wait = (retryCount: number): void => {
+    if (retryCount >= maxRetries) {
+      throw new Error(`Condition not met after ${maxRetries} retries`);
     }
+    cy.request({
+      method: 'GET',
+      url: url
+    }).then(response => {
+      expect(response.status).to.equal(200);
+      const workload = response.body;
 
-    return cy.wait(10000).then(() => {
-      return waitForHealthyWaypoint(maxRetries, retryCount + 1);
+      if (workload.pods.length > 0 && workload.pods.every(pod => proxyStatusHealthy(pod))) {
+        return;
+      }
+
+      return cy.wait(10000).then(() => {
+        return wait(retryCount + 1);
+      });
+    });
+  };
+  wait(0);
+};
+
+Then('all waypoints are healthy', () => {
+  cy.exec(
+    `kubectl get deployments -A -l gateway.istio.io/managed=istio.io-mesh-controller -o jsonpath='{range .items[*]}{.metadata.name}/{.metadata.namespace} {end}'`
+  ).then(response => {
+    const waypoints = response.stdout.split(' ');
+    waypoints.forEach(waypoint => {
+      const [name, namespace] = waypoint.split('/');
+      waitForHealthyWaypoint(name, namespace, '');
     });
   });
-};
+});
 
 Then('{string} namespace is labeled with the waypoint label', (namespace: string) => {
   cy.exec(`kubectl label namespace ${namespace} istio.io/use-waypoint=waypoint`, { failOnNonZeroExit: false });
@@ -141,9 +162,12 @@ Then('the proxy status is {string}', (status: string) => {
   cy.get('[data-label=Status]').get(`.icon-${status}`).should('exist');
 });
 
-Then('the waypoint is healthy', () => {
-  waitForHealthyWaypoint();
-});
+Then(
+  'the waypoint {string} in namespace {string} in cluster {string} is healthy',
+  (name: string, namespace: string, cluster: string) => {
+    waitForHealthyWaypoint(name, namespace, cluster);
+  }
+);
 
 Then('the user can see the {string} istio config and badge {string}', (config: string, badge: string) => {
   cy.get('#IstioConfigCard').should('be.visible').get(`[data-test="${config}"]`).should('exist');
