@@ -168,6 +168,16 @@ func TestVerifyAudienceClaim(t *testing.T) {
 		assert.Contains(t, err.Error(), "not found in audiences")
 	})
 
+	t.Run("NonStringInArray_Match", func(t *testing.T) {
+		// Test that numeric values in audience arrays can match after string conversion
+		tempOidCfg := config.OpenIdConfig{
+			ClientId: "456",
+		}
+		oip.IdTokenPayload["aud"] = []interface{}{123, 456, 789}
+		err := verifyAudienceClaim(&oip, tempOidCfg)
+		assert.Nil(t, err, "verifyAudienceClaim should pass when numeric audience converts to matching string")
+	})
+
 	t.Run("MissingAudClaim", func(t *testing.T) {
 		delete(oip.IdTokenPayload, "aud")
 		err := verifyAudienceClaim(&oip, oidCfg)
@@ -175,11 +185,22 @@ func TestVerifyAudienceClaim(t *testing.T) {
 		assert.Contains(t, err.Error(), "has no aud claim")
 	})
 
-	t.Run("InvalidType", func(t *testing.T) {
+	t.Run("InvalidType_NoMatch", func(t *testing.T) {
 		oip.IdTokenPayload["aud"] = 12345
 		err := verifyAudienceClaim(&oip, oidCfg)
 		assert.NotNil(t, err, "verifyAudienceClaim should have failed")
-		assert.Contains(t, err.Error(), "unexpected audience claim")
+		assert.Contains(t, err.Error(), "got aud [12345]")
+	})
+
+	t.Run("NonStringType_ConversionMatch", func(t *testing.T) {
+		// Test that non-string audience claims are converted to strings and can match
+		// Use a temporary config with a numeric ClientId that matches the integer aud
+		tempOidCfg := config.OpenIdConfig{
+			ClientId: "12345",
+		}
+		oip.IdTokenPayload["aud"] = 12345
+		err := verifyAudienceClaim(&oip, tempOidCfg)
+		assert.Nil(t, err, "verifyAudienceClaim should pass when integer audience converts to matching string")
 	})
 }
 
