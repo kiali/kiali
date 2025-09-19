@@ -1278,7 +1278,11 @@ func verifyAudienceClaim(openIdParams *openidFlowHelper, oidCfg config.OpenIdCon
 			}
 			return fmt.Errorf("the OpenId token is not targeted for Kiali; ClientId [%s] not found in audiences [%v]", oidCfg.ClientId, audArray)
 		default:
-			return fmt.Errorf("the OpenId token has an unexpected audience claim; value [%v] of type [%T]", audienceClaim, audienceClaim)
+			// Try to convert the single audience claim to string, similar to []any case
+			audStr := fmt.Sprintf("%v", audienceClaim)
+			if oidCfg.ClientId != audStr {
+				return fmt.Errorf("the OpenId token is not targeted for Kiali; got aud [%s]", audStr)
+			}
 		}
 	}
 
