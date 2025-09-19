@@ -467,18 +467,18 @@ fi
 PORT_FORWARD_DEPLOYMENT_PERSES=""
 if [ -z "${PERSES_URL:-}" ]; then
   if [ "${IS_OPENSHIFT}" == "true" ]; then
-    graf_host="$(${CLIENT_EXE} get route -n ${ISTIO_NAMESPACE} perses -o jsonpath='{.spec.host}')"
+    pers_host="$(${CLIENT_EXE} get route -n ${ISTIO_NAMESPACE} perses -o jsonpath='{.spec.host}')"
     if [ "$?" != "0" -o -z "${pers_host}" ]; then
       PORT_FORWARD_DEPLOYMENT_PERSES="$(${CLIENT_EXE} get deployment -n ${ISTIO_NAMESPACE} perses -o name)"
       if [ "$?" != "0" -o -z "${PORT_FORWARD_DEPLOYMENT_PERSES}" ]; then
         errormsg "Cannot auto-discover Perses on OpenShift. You must specify the Perses URL via --perses-url. Skipping"
       else
         warnmsg "Cannot auto-discover Perses on OpenShift. If you exposed it, you can specify the Perses URL via --perses-url. For now, this session will attempt to port-forward to it."
-        graf_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} perses -o jsonpath='{.spec.ports[0].targetPort}')"
-        if [ "$?" != "0" -o -z "${graf_remote_port}" ]; then
+        pers_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} perses -o jsonpath='{.spec.ports[0].targetPort}')"
+        if [ "$?" != "0" -o -z "${pers_remote_port}" ]; then
           warnmsg "Cannot auto-discover Perses port on OpenShift. If you exposed it, you can specify the Perses URL via --perses-url. For now, this session will attempt to port-forward to it."
         else
-          graf_local_port="$(echo ${LOCAL_REMOTE_PORTS_PERSES} | cut -d ':' -f 1)"
+          pers_local_port="$(echo ${LOCAL_REMOTE_PORTS_PERSES} | cut -d ':' -f 1)"
           LOCAL_REMOTE_PORTS_PERSES="${pers_local_port}:${pers_remote_port}"
         fi
         PERSES_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_PERSES} | cut -d ':' -f 1)"
@@ -493,12 +493,12 @@ if [ -z "${PERSES_URL:-}" ]; then
       errormsg "Cannot auto-discover Perses on Kubernetes. You must specify the Perses URL via --perses-url. Skipping"
     else
       warnmsg "Cannot auto-discover Perses on Kubernetes. If you exposed it, you can specify the Perses URL via --perses-url. For now, this session will attempt to port-forward to it."
-      graf_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} perses -o jsonpath='{.spec.ports[0].targetPort}')"
-      if [ "$?" != "0" -o -z "${graf_remote_port}" ]; then
+      pers_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} perses -o jsonpath='{.spec.ports[0].targetPort}')"
+      if [ "$?" != "0" -o -z "${pers_remote_port}" ]; then
         warnmsg "Cannot auto-discover Perses port on Kubernetes. If you exposed it, you can specify the Perses URL via --perses-url. For now, this session will attempt to port-forward to it."
       else
-        graf_local_port="$(echo ${LOCAL_REMOTE_PORTS_PERSES} | cut -d ':' -f 1)"
-        LOCAL_REMOTE_PORTS_PERSES="${graf_local_port}:${graf_remote_port}"
+        pers_local_port="$(echo ${LOCAL_REMOTE_PORTS_PERSES} | cut -d ':' -f 1)"
+        LOCAL_REMOTE_PORTS_PERSES="${pers_local_port}:${pers_remote_port}"
       fi
       PERSES_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_PERSES} | cut -d ':' -f 1)"
     fi
