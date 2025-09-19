@@ -136,7 +136,7 @@ jobs:
     if: contains(github.event.pull_request.labels.*.name, 'full-ci')
     name: Run backend multicluster external-controlplane integration tests
     uses: ./.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml
-    needs: [integration_tests_backend]
+    needs: [build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -145,7 +145,7 @@ jobs:
     if: contains(github.event.pull_request.labels.*.name, 'full-ci')
     name: Run frontend multicluster primary-remote integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-primary-remote.yml
-    needs: [integration_tests_backend, integration_tests_frontend_core_1, integration_tests_frontend_core_2, integration_tests_frontend_core_optional]
+    needs: [build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -154,7 +154,7 @@ jobs:
     if: contains(github.event.pull_request.labels.*.name, 'full-ci')
     name: Run frontend multicluster multi-primary integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-multi-primary.yml
-    needs: [integration_tests_backend, integration_tests_frontend_core_1, integration_tests_frontend_core_2, integration_tests_frontend_core_optional]
+    needs: [build_backend]
 
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
@@ -164,7 +164,7 @@ jobs:
     if: contains(github.event.pull_request.labels.*.name, 'full-ci')
     name: Run frontend multicluster external-kiali integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-external-kiali.yml
-    needs: [integration_tests_backend, integration_tests_frontend_core_1, integration_tests_frontend_core_2, integration_tests_frontend_core_optional]
+    needs: [build_backend]
 
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
