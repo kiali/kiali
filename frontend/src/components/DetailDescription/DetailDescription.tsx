@@ -61,12 +61,15 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
   const renderWaypoints = (): React.ReactNode => {
     const waypointList = props.waypointWorkloads?.map(waypoint => {
       let href = `/namespaces/${waypoint.namespace}/workloads/${waypoint.name}`;
+      // Still the kiosk context actions will handle the action
+      // This is needed by cypress, if no link is specified, is the same as the current url
+      const ossmcHref = `/k8s/ns/${waypoint.namespace}/deployments/${waypoint.name}/ossmconsole`;
       if (props.cluster && isMultiCluster) {
         href = `${href}?clusterName=${props.cluster}`;
       }
       const link = isParentKiosk(props.kiosk) ? (
         <Link
-          to=""
+          to={ossmcHref}
           data-test="waypoint-link"
           onClick={() => {
             kioskContextMenuAction(href);
