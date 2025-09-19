@@ -1,11 +1,22 @@
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: curl-client
+  labels:
+    app: curl-client
 spec:
-  containers:
-  - name: curl-client
-    image: curlimages/curl
-    command: ["/bin/sh", "-c"]
-    args:
-    - while true; do echo "Calling echo-service..."; curl -s http://echo-service sleep 5; done;
+  replicas: 1
+  selector:
+    matchLabels:
+      app: curl-client
+  template:
+    metadata:
+      labels:
+        app: curl-client
+    spec:
+      containers:
+      - name: curl-client
+        image: curlimages/curl
+        command: ["/bin/sh", "-c"]
+        args:
+        - while true; do echo "Calling echo-service..."; curl -s http://echo-service sleep 5; done;
