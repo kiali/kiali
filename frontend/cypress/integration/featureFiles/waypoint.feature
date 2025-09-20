@@ -9,6 +9,7 @@ Feature: Kiali Waypoint related features
 
   Background:
     Given user is at administrator perspective
+    And all waypoints are healthy
 
   Scenario: [Setup] namespace is labeled with waypoint label
     Then "bookinfo" namespace is labeled with the waypoint label
@@ -37,7 +38,7 @@ Feature: Kiali Waypoint related features
     And the link for the waypoint "waypoint" should redirect to a valid workload details
 
   Scenario: [Workload details - waypoint] The workload details for a waypoint are valid
-    Given user is at the details page for the "workload" "bookinfo/waypoint" located in the "" cluster
+    And user is at the details page for the "workload" "bookinfo/waypoint" located in the "" cluster
     Then the user sees the "L7" badge
     Then the user cannot see the "missing-sidecar" badge for "waypoint" workload in "bookinfo" namespace
     And the proxy status is "info" with "RDS: IGNORED" details
