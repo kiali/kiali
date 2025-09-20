@@ -122,33 +122,56 @@ ${CLIENT_EXE} label ns ${AMBIENT_NS} istio.io/dataplane-mode=ambient
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n ${AMBIENT_NS}
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n ${SIDECAR_NS}
 
-# Create the echo service
+# Create the curl client deployment for sidecar namespace
 cat <<NAD | ${CLIENT_EXE} -n ${SIDECAR_NS} apply -f -
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: curl-client
+  labels:
+    app: curl-client
 spec:
-  containers:
-  - name: curl-client
-    image: curlimages/curl
-    command: ["/bin/sh", "-c"]
-    args:
-    - while true; do echo "Calling echo-service..."; curl -s http://echo-service.test-ambient sleep 5; done;
+  replicas: 1
+  selector:
+    matchLabels:
+      app: curl-client
+  template:
+    metadata:
+      labels:
+        app: curl-client
+    spec:
+      containers:
+      - name: curl-client
+        image: curlimages/curl
+        command: ["/bin/sh", "-c"]
+        args:
+        - while true; do echo "Calling echo-service..."; curl -s http://echo-service.test-ambient sleep 5; done;
 NAD
 
+# Create the curl client deployment for ambient namespace
 cat <<NAD | ${CLIENT_EXE} -n ${AMBIENT_NS} apply -f -
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: curl-client
+  labels:
+    app: curl-client
 spec:
-  containers:
-  - name: curl-client
-    image: curlimages/curl
-    command: ["/bin/sh", "-c"]
-    args:
-    - while true; do echo "Calling echo-service..."; curl -s http://echo-service.test-sidecar sleep 5; done;
+  replicas: 1
+  selector:
+    matchLabels:
+      app: curl-client
+  template:
+    metadata:
+      labels:
+        app: curl-client
+    spec:
+      containers:
+      - name: curl-client
+        image: curlimages/curl
+        command: ["/bin/sh", "-c"]
+        args:
+        - while true; do echo "Calling echo-service..."; curl -s http://echo-service.test-sidecar sleep 5; done;
 NAD
 
 # Use waypoint?
