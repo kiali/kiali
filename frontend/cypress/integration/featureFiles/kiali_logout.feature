@@ -7,7 +7,7 @@ Feature: Kiali logout
     And user is at the "overview" page
 
   @smoke
-  @core
+  @core-2
   Scenario: Kiali logout successfully
     And user clicks on admin
     And user logout successfully

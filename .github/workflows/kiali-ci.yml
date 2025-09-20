@@ -11,6 +11,7 @@ on:
     - "**/*.md"
     - "**/*.adoc"
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     branches:
     - master
     - v*.*
@@ -18,6 +19,10 @@ on:
     - "design/**"
     - "**/*.md"
     - "**/*.adoc"
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
 
 jobs:
   initialize:
@@ -72,47 +77,31 @@ jobs:
   integration_tests_backend:
     name: Run backend integration tests
     uses: ./.github/workflows/integration-tests-backend.yml
-    needs: [initialize, build_backend]
+    needs: [build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
-  integration_tests_backend_multicluster_external_controlplane:
-    name: Run backend multicluster external-controlplane integration tests
-    uses: ./.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend:
+  integration_tests_frontend_core_1:
     name: Run frontend integration tests
-    uses: ./.github/workflows/integration-tests-frontend.yml
-    needs: [initialize, build_backend]
+    uses: ./.github/workflows/integration-tests-frontend-core-1.yml
+    needs: [build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
-  integration_tests_frontend_multicluster_primary_remote:
-    name: Run frontend multicluster primary-remote integration tests
-    uses: ./.github/workflows/integration-tests-frontend-multicluster-primary-remote.yml
-    needs: [initialize, build_backend]
+  integration_tests_frontend_core_2:
+    name: Run frontend integration tests
+    uses: ./.github/workflows/integration-tests-frontend-core-2.yml
+    needs: [build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
-  integration_tests_frontend_multicluster_multi_primary:
-    name: Run frontend multicluster multi-primary integration tests
-    uses: ./.github/workflows/integration-tests-frontend-multicluster-multi-primary.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend_multicluster_external_kiali:
-    name: Run frontend multicluster external-kiali integration tests
-    uses: ./.github/workflows/integration-tests-frontend-multicluster-external-kiali.yml
-    needs: [initialize, build_backend]
+  integration_tests_frontend_core_optional:
+    name: Run frontend integration tests
+    uses: ./.github/workflows/integration-tests-frontend-core-optional.yml
+    needs: [build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -120,23 +109,63 @@ jobs:
   integration_tests_frontend_ambient:
     name: Run Ambient frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-ambient.yml
-    needs: [initialize, build_backend]
+    needs: [build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   integration_tests_frontend_tempo:
+    if: contains(github.event.pull_request.labels.*.name, 'full-ci')
     name: Run tracing frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-tempo.yml
-    needs: [initialize, build_backend]
+    needs: [build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   integration_tests_frontend_local:
+    if: contains(github.event.pull_request.labels.*.name, 'full-ci')
     name: Run frontend local mode integration tests
     uses: ./.github/workflows/integration-tests-frontend-local.yml
-    needs: [initialize, build_backend]
+    needs: [build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_backend_multicluster_external_controlplane:
+    if: contains(github.event.pull_request.labels.*.name, 'full-ci')
+    name: Run backend multicluster external-controlplane integration tests
+    uses: ./.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml
+    needs: [build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_multicluster_primary_remote:
+    if: contains(github.event.pull_request.labels.*.name, 'full-ci')
+    name: Run frontend multicluster primary-remote integration tests
+    uses: ./.github/workflows/integration-tests-frontend-multicluster-primary-remote.yml
+    needs: [build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_multicluster_multi_primary:
+    if: contains(github.event.pull_request.labels.*.name, 'full-ci')
+    name: Run frontend multicluster multi-primary integration tests
+    uses: ./.github/workflows/integration-tests-frontend-multicluster-multi-primary.yml
+    needs: [build_backend]
+
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_multicluster_external_kiali:
+    if: contains(github.event.pull_request.labels.*.name, 'full-ci')
+    name: Run frontend multicluster external-kiali integration tests
+    uses: ./.github/workflows/integration-tests-frontend-multicluster-external-kiali.yml
+    needs: [build_backend]
+
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}

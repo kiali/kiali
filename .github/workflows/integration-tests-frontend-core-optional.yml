@@ -1,4 +1,4 @@
-name: Integration Tests Frontend
+name: Integration Tests Frontend Core Optional
 
 on:
   workflow_call:
@@ -13,14 +13,18 @@ on:
         required: false
         type: string
         default: ""
+      stern_logs:
+        required: false
+        type: boolean
+        default: false
 
 env:
   TARGET_BRANCH: ${{ inputs.target_branch }}
   BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch }}
 
 jobs:
-  integration_tests_frontend_multicluster_multi_primary:
-    name: Cypress tests (MC MP)
+  integration_tests_frontend_core_optional:
+    name: Cypress tests (core optional)
     runs-on: ubuntu-latest
     env:
       # Copied from: https://github.com/bahmutov/cypress-gh-action-split-install/blob/ca3916d4e7240ebdc337825d2d78eb354855464b/.github/workflows/tests.yml#L7-L11
@@ -39,6 +43,8 @@ jobs:
       with:
         version: 'v3.18.4'
 
+    # This caches the yarn deps but does not touch node_modules so it's still necessary
+    # to run 'yarn install' later to link these into node_modules.
     - name: Setup node
       uses: actions/setup-node@v5
       with:
@@ -60,14 +66,14 @@ jobs:
       working-directory: ./frontend
       run: yarn install --frozen-lockfile
 
-    - name: Run frontend multi-cluster integration tests
-      run: hack/run-integration-tests.sh --test-suite frontend-multi-primary $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
+    - name: Run frontend core optional integration tests
+      run: hack/run-integration-tests.sh --test-suite frontend-core-optional --stern ${{ inputs.stern_logs }} $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
     - name: Get debug info when integration tests fail
       if: failure()
       run: |
         mkdir debug-output
-        hack/ci-get-debug-info.sh --output-directory debug-output --kubectl-context kind-east
+        hack/ci-get-debug-info.sh --output-directory debug-output
 
     - name: Upload debug info artifact
       if: failure()
@@ -82,3 +88,10 @@ jobs:
       with:
         name: cypress-screenshots-${{ github.job }}
         path: frontend/cypress/screenshots
+
+    - name: Upload cypress logs from stern
+      uses: actions/upload-artifact@v4
+      if: ${{ inputs.stern_logs == true }}
+      with:
+        name: cypress-logs-${{ github.job }}
+        path: hack/stern

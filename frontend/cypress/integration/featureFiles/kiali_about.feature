@@ -7,14 +7,14 @@ Feature: Kiali help about verify
     And user is at the "overview" page
 
   @smoke
-  @core
+  @core-2
   Scenario: Open Kiali about page
     And user clicks on Help Button
     And user clicks on About Button
     Then user see Kiali brand
 
   @smoke
-  @core
+  @core-2
   Scenario: Verify version information is displayed correctly
     And user clicks on Help Button
     And user clicks on About Button

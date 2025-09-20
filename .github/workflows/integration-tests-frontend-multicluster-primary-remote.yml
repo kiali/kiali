@@ -20,7 +20,7 @@ env:
 
 jobs:
   integration_tests_frontend_multicluster:
-    name: Cypress integration tests
+    name: Cypress tests (MC PR)
     runs-on: ubuntu-latest
     env:
       # Copied from: https://github.com/bahmutov/cypress-gh-action-split-install/blob/ca3916d4e7240ebdc337825d2d78eb354855464b/.github/workflows/tests.yml#L7-L11

@@ -13,14 +13,14 @@ Feature: Kiali Istio Config wizard
     And user selects the "bookinfo" namespace
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Dropdown for cluster selection should not be visible in single cluster setup
     When user clicks in the "Gateway" Istio config actions
     Then user sees the "Create Gateway" config wizard
     And user does not see a dropdown for cluster selection
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Create an Sidecar with labels and annotations
     When user deletes sidecar named "mysidecarwithlabels" and the resource is no longer available
     And user clicks in the "Sidecar" Istio config actions
@@ -39,7 +39,7 @@ Feature: Kiali Istio Config wizard
 
   @gateway-api
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Create a K8s Gateway scenario
     When user deletes k8sgateway named "k8sapigateway" and the resource is no longer available
     And user clicks in the "K8sGateway" Istio config actions
@@ -56,7 +56,7 @@ Feature: Kiali Istio Config wizard
 
   @gateway-api
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Create a K8s Gateway HTTPS scenario
     When user deletes k8sgateway named "k8sapigateway" and the resource is no longer available
     And user clicks in the "K8sGateway" Istio config actions
@@ -76,7 +76,7 @@ Feature: Kiali Istio Config wizard
 
   @gateway-api
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Create a K8s Reference Grant scenario
     When user deletes k8sreferencegrant named "k8srefgrant" and the resource is no longer available
     And user clicks in the "K8sReferenceGrant" Istio config actions
@@ -90,7 +90,7 @@ Feature: Kiali Istio Config wizard
     Then the "K8sReferenceGrant" "k8srefgrant" should be listed in "bookinfo" namespace
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Try to create a Gateway with no name
     When user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
@@ -99,7 +99,7 @@ Feature: Kiali Istio Config wizard
     And the preview button should be disabled
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Try to create a Gateway with invalid name
     When user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
@@ -108,7 +108,7 @@ Feature: Kiali Istio Config wizard
     And the preview button should be disabled
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Create a Gateway scenario and check that Gateway with the same name cannot be created
     When user deletes gateway named "mygateway" and the resource is no longer available
     And user clicks in the "Gateway" Istio config actions
@@ -135,7 +135,7 @@ Feature: Kiali Istio Config wizard
     Then an error message "Could not create Istio networking.istio.io/v1, Kind=Gateway objects" is displayed
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Try to create a Gateway with negative port number
     When user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
@@ -148,7 +148,7 @@ Feature: Kiali Istio Config wizard
     And the "addPortNumber_0" input should display a warning
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Try to create a Gateway with invalid port number
     When user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
@@ -161,7 +161,7 @@ Feature: Kiali Istio Config wizard
     And the "addPortNumber_0" input should display a warning
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Try to insert letters in the port field
     When user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
@@ -175,7 +175,7 @@ Feature: Kiali Istio Config wizard
 
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Try to create a Gateway without filling the inputs related to TLS
     When user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
@@ -193,7 +193,7 @@ Feature: Kiali Istio Config wizard
     And the preview button should be disabled
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Create a Gateway with TLS
     When user deletes gateway named "mygatewaywithtls" and the resource is no longer available
     And user clicks in the "Gateway" Istio config actions
@@ -212,7 +212,7 @@ Feature: Kiali Istio Config wizard
     Then the "Gateway" "mygatewaywithtls" should be listed in "bookinfo" namespace
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Try to create a ServiceEntry with empty fields
     When user clicks in the "ServiceEntry" Istio config actions
     And user sees the "Create ServiceEntry" config wizard
@@ -224,7 +224,7 @@ Feature: Kiali Istio Config wizard
     And the preview button should be disabled
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Try to create a ServiceEntry with invalid name and host specified
     When user clicks in the "ServiceEntry" Istio config actions
     And user sees the "Create ServiceEntry" config wizard
@@ -235,7 +235,7 @@ Feature: Kiali Istio Config wizard
     And the preview button should be disabled
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Try to create a ServiceEntry without ports specified
     When user deletes service named "myservice" and the resource is no longer available
     And user clicks in the "ServiceEntry" Istio config actions
@@ -246,7 +246,7 @@ Feature: Kiali Istio Config wizard
     And the preview button should be disabled
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Try to create a ServiceEntry with empty ports specified
     When user clicks in the "ServiceEntry" Istio config actions
     And user sees the "Create ServiceEntry" config wizard
@@ -262,7 +262,7 @@ Feature: Kiali Istio Config wizard
     And the preview button should be disabled
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Create a ServiceEntry with ports specified
     When user deletes service named "myservice2" and the resource is no longer available
     And user clicks in the "ServiceEntry" Istio config actions
@@ -279,7 +279,7 @@ Feature: Kiali Istio Config wizard
     Then the "ServiceEntry" "myservice2" should be listed in "bookinfo" namespace
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Try to create duplicate port specifications on a ServiceEntry
     When user clicks in the "ServiceEntry" Istio config actions
     And user sees the "Create ServiceEntry" config wizard
@@ -296,7 +296,7 @@ Feature: Kiali Istio Config wizard
     Then the preview button should be disabled
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Create a ServiceEntry and view the service detail page of the external service associated
     When user deletes service named "myservice3" and the resource is no longer available
     And user clicks in the "ServiceEntry" Istio config actions
@@ -320,7 +320,7 @@ Feature: Kiali Istio Config wizard
 
   @gateway-api
   @bookinfo-app
-  @core
+  @core-2
   Scenario: Create multiple K8s Gateways with colliding hostnames and port combinations and check for a reference. Then delete one of them and the reference should be gone.
     When user deletes k8sgateway named "gatewayapi-1" and the resource is no longer available
     And user deletes k8sgateway named "gatewayapi-2" and the resource is no longer available

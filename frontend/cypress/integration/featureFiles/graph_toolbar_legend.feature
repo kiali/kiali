@@ -12,7 +12,7 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
     And user graphs "alpha,beta" namespaces
 
   @error-rates-app
-  @core
+  @core-1
   Scenario Outline: Check if the <id> button is usable
     Then the toggle button "<id>" is enabled
     Examples:
@@ -27,7 +27,7 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
       | legend                       |
 
   @error-rates-app
-  @core
+  @core-1
   Scenario Outline: Check if the not active by default <id> Graph button can be turned on
     When the button "<id>" is clicked
     Then the button "<id>" is active
@@ -42,7 +42,7 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
       | legend                       |
 
   @error-rates-app
-  @core
+  @core-1
   Scenario Outline: Check if the not active by default <label> Graph button can be turned off
     When the "<id>" is turned on
     And the button "<id>" is clicked
@@ -53,7 +53,7 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
       | toolbar_edge_mode_none      |
 
   @error-rates-app
-  @core
+  @core-1
   Scenario: The Hide Healthy Edges is turned off by turning on the Hide All Edges
     When the "toolbar_edge_mode_unhealthy" is turned off
     And the "toolbar_edge_mode_none" is turned off
@@ -63,7 +63,7 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
     And the button "toolbar_edge_mode_none" is active
 
   @error-rates-app
-  @core
+  @core-1
   Scenario: The Hide All Edges is turned off by turning on the Hide Healthy Edges
     When the "toolbar_edge_mode_unhealthy" is turned off
     And the "toolbar_edge_mode_none" is turned off
@@ -73,7 +73,7 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
     And the button "toolbar_edge_mode_none" is not active
 
   @error-rates-app
-  @core
+  @core-1
   Scenario: Graph Layout Style buttons are mutually exclusive
     When the "toolbar_layout_dagre" is turned on
     And the "toolbar_layout_grid" is turned off
@@ -88,14 +88,14 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
     And the button "toolbar_layout_breadth_first" is active
 
   @error-rates-app
-  @core
+  @core-1
   Scenario: Show the Legend
     When the button "legend" is clicked
     Then user can see the legend section
     And the button "legend" is active
 
   @error-rates-app
-  @core
+  @core-1
   Scenario: Close the Legend using the button
     When the Legend section is visible
     And the button "legend" is clicked
@@ -103,7 +103,7 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
     And the button "legend" is not active
 
   @error-rates-app
-  @core
+  @core-1
   Scenario: Close the Legend using the cross
     When the Legend section is visible
     And the cross is clicked

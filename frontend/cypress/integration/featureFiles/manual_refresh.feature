@@ -11,39 +11,39 @@ Feature: Manual Refresh option
     Given user is at administrator perspective
 
   @ossmc
-  @core
+  @core-2
   Scenario: Overview page shows manual
     When user is at the "overview" page with manual refresh
     Then user "sees" manual refresh messaging
 
   @ossmc
-  @core
+  @core-2
   Scenario: Graph page shows manual
     When user is at the "graph" page with manual refresh
     Then user "sees" manual refresh messaging
 
-  @core
+  @core-2
   Scenario: Applications page shows manual
     When user is at the "applications" page with manual refresh
     Then user "sees" manual refresh messaging
 
-  @core
+  @core-2
   Scenario: Services page shows manual
     When user is at the "services" page with manual refresh
     Then user "sees" manual refresh messaging
 
-  @core
+  @core-2
   Scenario: Workloads page shows manual
     When user is at the "workloads" page with manual refresh
     Then user "sees" manual refresh messaging
 
-  @core
+  @core-2
   Scenario: Istio page does not show manual
     When user is at the "istio" page with manual refresh
     Then user "does not see" manual refresh messaging
 
   @ossmc
-  @core
+  @core-2
   Scenario: Mesh page shows manual
     When user is at the "mesh" page with manual refresh
     Then user "sees" manual refresh messaging

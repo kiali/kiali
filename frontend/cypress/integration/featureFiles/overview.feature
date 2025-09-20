@@ -17,69 +17,69 @@ Feature: Kiali Overview page
     Given user is at administrator perspective
     And user is at the "overview" page
 
-  @core
+  @core-2
   Scenario: See "alpha" and "beta" namespaces
     Then user sees the "alpha" namespace card
     And user does not see any cluster badge in the "alpha" namespace card
     And user sees the "beta" namespace card
     And user does not see any cluster badge in the "beta" namespace card
 
-  @core
+  @core-2
   Scenario: Doesn't see a "bad" namespace
     Then user does not see the "bad" namespace card in any cluster
 
-  @core
+  @core-2
   Scenario: Select the COMPACT view
     When user clicks in the "COMPACT" view
     Then user sees a "COMPACT" "alpha" namespace
 
-  @core
+  @core-2
   Scenario: Select the EXPAND view
     When user clicks in the "EXPAND" view
     Then user sees a "EXPAND" "beta" namespace
 
-  @core
+  @core-2
   Scenario: Select the LIST view
     When user clicks in the "LIST" view
     Then user sees a "LIST" "beta" namespace
     And the "Cluster" column "disappears"
 
-  @core
+  @core-2
   Scenario: Filter by namespace
     When user filters "alpha" namespace
     Then user sees the "alpha" namespace card
     And user does not see the "beta" namespace card in any cluster
 
-  @core
+  @core-2
   Scenario: Sort by name
     When user filters "alpha" namespace
     And user filters "beta" namespace
     And user sorts by name desc
     Then user sees the "beta,alpha" namespace list
 
-  @core
+  @core-2
   Scenario: Health for Apps
     When user selects Health for "Apps"
     Then user sees the "alpha" namespace with "Applications"
 
-  @core
+  @core-2
   Scenario: Health for Workloads
     When user selects Health for "Workloads"
     Then user sees the "alpha" namespace with "Workloads"
 
-  @core
+  @core-2
   Scenario: Health for Services
     When user selects Health for "Services"
     Then user sees the "alpha" namespace with "Services"
 
   @error-rates-app
-  @core
+  @core-2
   Scenario: Last 10 minutes
     When user selects "Last 10m" time range
     Then user sees the "alpha" namespace with "inbound" traffic "10m"
 
   @error-rates-app
-  @core
+  @core-2
   Scenario: Last 10 minutes Outbound traffic
     When user selects "Last 10m" time range
     And user selects "Outbound" traffic direction
@@ -87,7 +87,7 @@ Feature: Kiali Overview page
 
   @error-rates-app
   @bookinfo-app
-  @core
+  @core-2
   Scenario: The healthy status of a logical mesh application is reported in the overview of a namespace
     Given a healthy application in the cluster
     When I fetch the overview of the cluster
@@ -96,7 +96,7 @@ Feature: Kiali Overview page
 
   @sleep-app
   @sleep-app-scaleup-after
-  @core
+  @core-2
   Scenario: The idle status of a logical mesh application is reported in the overview of a namespace
     Given an idle sleep application in the cluster
     When I fetch the overview of the cluster
@@ -104,7 +104,7 @@ Feature: Kiali Overview page
     And the "idle" application indicator should list the application
 
   @error-rates-app
-  @core
+  @core-2
   Scenario: The failing status of a logical mesh application is reported in the overview of a namespace
     Given a failing application in the mesh
     When I fetch the overview of the cluster
@@ -113,7 +113,7 @@ Feature: Kiali Overview page
 
   @error-rates-app
   @skip-lpinterop
-  @core
+  @core-2
   Scenario: The degraded status of a logical mesh application is reported in the overview of a namespace
     Given a degraded application in the mesh
     When I fetch the overview of the cluster
@@ -121,7 +121,7 @@ Feature: Kiali Overview page
     And the "degraded" application indicator should list the application
 
   @error-rates-app
-  @core
+  @core-2
   Scenario: The Istio panel should be visible in the control panel
     Then user sees the "istio-system" namespace card
     And user does not see any cluster badge in the "istio-system" namespace card

@@ -10,7 +10,7 @@ const install_demoapp = (demoapp: string): void => {
   let istio = '-in istio-system';
 
   if (demoapp === 'error-rates') {
-    namespaces = 'alpha beta gamma';
+    namespaces = 'alpha beta';
     deletion = '--delete';
     tg = '';
   } else if (demoapp === 'sleep') {

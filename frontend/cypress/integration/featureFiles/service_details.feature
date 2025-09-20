@@ -12,7 +12,7 @@ Feature: Kiali Service Details page
     And user is at the details page for the "service" "bookinfo/productpage" located in the "" cluster
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: See details for productpage
     Then sd::user sees a list with content "Overview"
     Then sd::user sees a list with content "Traffic"
@@ -21,7 +21,7 @@ Feature: Kiali Service Details page
     Then sd::user sees the service actions
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: See details for service
     Then sd::user sees "productpage" details information for service "v1"
     Then sd::user sees Network card
@@ -29,13 +29,13 @@ Feature: Kiali Service Details page
     But no cluster badge for the "service" should be visible
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: See service Traffic information
     Then sd::user sees inbound and outbound traffic information
     And the "Cluster" column "disappears"
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: See Inbound Metrics for productspage service details
     Then sd::user sees "Request volume" graph
     Then sd::user sees "Request duration" graph
@@ -51,7 +51,7 @@ Feature: Kiali Service Details page
     Then sd::user sees "TCP sent" graph
 
   @bookinfo-app
-  @core
+  @core-2
   Scenario: See Graph data for productspage service details Inbound Metrics graphs
     Then sd::user does not see No data message in the "Request volume" graph
 

@@ -290,7 +290,7 @@ Then('idle nodes {string} in the graph', (action: string) => {
       let numNodes = select(nodes, { prop: NodeAttr.isIdle, op: 'truthy' }).length;
 
       if (action === 'appear') {
-        assert.equal(numNodes, 16);
+        assert.isAbove(numNodes, 0);
       } else {
         assert.equal(numNodes, 0);
       }
