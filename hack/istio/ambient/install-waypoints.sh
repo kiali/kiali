@@ -139,7 +139,7 @@ ${CLIENT_EXE} label ns waypoint-forservice istio.io/use-waypoint=waypoint
 
 # Create a waypoint for workload and send requests to pod b
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n waypoint-forworkload
-${CLIENT_EXE} wait --for=condition=Available deployment/echo-server -n waypoint-forworkload --timeout=60s
+${CLIENT_EXE} wait --for=condition=Ready pod -l app=echo-server -n waypoint-forworkload --timeout=60s
 
 sleep 15
 # Update with echo-server IP
@@ -174,7 +174,7 @@ spec:
               done;
 NAD
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/waypoint-for-workload.yaml -n waypoint-forworkload
-${CLIENT_EXE} label deployment echo-server istio.io/use-waypoint=bwaypoint -n waypoint-forworkload
+${CLIENT_EXE} label pod -l app=echo-server istio.io/use-waypoint=bwaypoint -n waypoint-forworkload
 
 # Create a waypoint for all
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n waypoint-forall
