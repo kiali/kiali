@@ -2330,6 +2330,28 @@ func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload m
 		if !all {
 			return waypoints, true
 		}
+	} else {
+		// Try directly with pods
+		// The pod can be captured if it has the label but the deployment template doesn't
+		for _, pod := range workload.Pods {
+			waypointUsePod, waypointUseFoundPod := pod.Labels[config.WaypointUseLabel]
+			waypointUseNamespacePod, waypointUseNamespaceFoundPod := pod.Labels[config.WaypointUseNamespaceLabel]
+			if waypointUseFoundPod {
+				// if the workload opts-out from waypoint capture, then we are done
+				// note: this opt-out is currently undocumented but exists (2/14/25)
+				if waypointUse == config.WaypointNone {
+					return waypoints, false
+				}
+				if !waypointUseNamespaceFoundPod {
+					waypointUseNamespacePod = workload.Namespace
+				}
+				// Ambient doesn't support multicluster (For now), cluster is the same as the workload
+				waypoints = append(waypoints, models.Waypoint{Name: waypointUsePod, Type: "pod", Namespace: waypointUseNamespacePod, Cluster: workload.Cluster})
+				if !all {
+					return waypoints, true
+				}
+			}
+		}
 	}
 
 	// the next level of override is service level, if necessary, fetch the workload's service
@@ -2411,7 +2433,6 @@ func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, workload
 	if workload.Labels[config.WaypointUseLabel] == config.WaypointNone {
 		return workloadsList
 	}
-
 	// get waypoint references for the workload
 	capturingWaypoints, found := in.getCapturingWaypoints(ctx, workload, all)
 	if !found {
