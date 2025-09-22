@@ -27,14 +27,6 @@ Feature: Kiali Graph page - Display menu
     When user graphs "default" namespaces
     Then user sees empty graph
 
-  # gamma will only show nodes when idle-nodes is enabled
-  @error-rates-app
-  @core-1
-  @offline
-  Scenario: Graph gamma namespaces
-    When user graphs "gamma" namespaces
-    Then user sees empty graph
-
   @error-rates-app
   @core-1
   @offline

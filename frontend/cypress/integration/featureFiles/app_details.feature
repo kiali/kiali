@@ -14,7 +14,7 @@ Feature: Kiali App Details page
     And user is at the details page for the "app" "bookinfo/details" located in the "" cluster
 
   @bookinfo-app
-  @core
+  @core-1
   @offline
   Scenario: See details for app.
     Then user sees details information for the "details" app
