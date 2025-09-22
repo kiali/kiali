@@ -271,7 +271,51 @@ install_tempo_single_attempt() {
   sleep 10
 
   echo -e "Installing latest Tempo operator \n"
-  ${CLIENT_EXE} apply -f https://github.com/grafana/tempo-operator/releases/latest/download/tempo-operator.yaml
+  
+  # Download the tempo operator YAML to modify it locally
+  TEMPO_OPERATOR_YAML="/tmp/tempo-operator.yaml"
+  echo "Downloading tempo-operator.yaml from GitHub..."
+  curl -L -o "${TEMPO_OPERATOR_YAML}" https://github.com/grafana/tempo-operator/releases/latest/download/tempo-operator.yaml
+  
+  # Add ENABLE_WEBHOOKS=true environment variable to the tempo-operator deployment
+  echo "Adding ENABLE_WEBHOOKS=true environment variable to tempo-operator..."
+  
+  # Create a temporary file for the modified YAML
+  MODIFIED_TEMPO_YAML="/tmp/tempo-operator-modified.yaml"
+  
+  # Use awk to find the tempo-operator container and add the environment variable
+  awk '
+  BEGIN { in_tempo_operator = 0; in_container = 0; env_added = 0 }
+  
+  # Look for tempo-operator deployment
+  /kind: Deployment/ { in_tempo_operator = 1 }
+  /name: tempo-operator/ && in_tempo_operator { in_tempo_operator = 2 }
+  
+  # Look for the container spec within tempo-operator deployment
+  /- name: manager/ && in_tempo_operator == 2 { in_container = 1 }
+  
+  # Add env section if we find the image line in the manager container
+  /image:/ && in_container && !env_added {
+    print $0
+    print "        env:"
+    print "        - name: ENABLE_WEBHOOKS"
+    print "          value: \"true\""
+    env_added = 1
+    next
+  }
+  
+  # Reset flags when we exit the deployment
+  /^---/ { in_tempo_operator = 0; in_container = 0; env_added = 0 }
+  
+  # Print all other lines as-is
+  { print }
+  ' "${TEMPO_OPERATOR_YAML}" > "${MODIFIED_TEMPO_YAML}"
+  
+  # Apply the modified YAML
+  ${CLIENT_EXE} apply -f "${MODIFIED_TEMPO_YAML}"
+  
+  # Clean up temporary files
+  rm -f "${TEMPO_OPERATOR_YAML}" "${MODIFIED_TEMPO_YAML}"
   echo -e "Waiting for Tempo operator to be ready... \n"
   $CLIENT_EXE wait pods --all -n tempo-operator-system --for=condition=Ready --timeout=5m
 
