@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -233,33 +231,6 @@ func joinURL(base, path string) string {
 	return base + "/" + path
 }
 
-func getRequest(ctx context.Context, url string) ([]byte, error) {
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read response body when getting config from remote istiod. Err: %s", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("bad response when getting config from remote istiod. Status: %s. Body: %s", resp.Status, body)
-	}
-
-	return body, err
-}
-
 func (p *controlPlaneMonitor) getIstiodDebugStatus(client kubernetes.ClientInterface, controlPlane models.ControlPlane, debugPath string) (map[string][]byte, error) {
 	kubeCache, err := p.cache.GetKubeCache(client.ClusterInfo().Name)
 	if err != nil {
@@ -338,25 +309,13 @@ func parseProxyStatus(statuses map[string][]byte) ([]*kubernetes.ProxyStatus, er
 func (p *controlPlaneMonitor) getProxyStatus(ctx context.Context, client kubernetes.ClientInterface, controlPlane models.ControlPlane) ([]*kubernetes.ProxyStatus, error) {
 	log := zerolog.Ctx(ctx)
 	const synczPath = "/debug/syncz"
-	var result map[string][]byte
 
-	if externalConf := p.conf.ExternalServices.Istio.Registry; externalConf != nil && externalConf.IstiodURL != "" {
-		url := joinURL(externalConf.IstiodURL, synczPath)
-		r, err := getRequest(ctx, url)
-		if err != nil {
-			log.Error().Msgf("Failed to get Istiod info from remote endpoint %s error: %s", synczPath, err)
-			return nil, err
-		}
-		result = map[string][]byte{"remote": r}
-	} else {
-		debugStatus, err := p.getIstiodDebugStatus(client, controlPlane, synczPath)
-		if err != nil {
-			log.Error().Msgf("Failed to call Istiod endpoint %s error: %s", synczPath, err)
-			return nil, err
-		}
-		result = debugStatus
+	debugStatus, err := p.getIstiodDebugStatus(client, controlPlane, synczPath)
+	if err != nil {
+		log.Error().Msgf("Failed to call Istiod endpoint %s error: %s", synczPath, err)
+		return nil, err
 	}
-	return parseProxyStatus(result)
+	return parseProxyStatus(debugStatus)
 }
 
 func (p *controlPlaneMonitor) getRegistryServices(ctx context.Context, client kubernetes.ClientInterface, controlPlane models.ControlPlane) ([]*kubernetes.RegistryService, error) {
@@ -364,22 +323,12 @@ func (p *controlPlaneMonitor) getRegistryServices(ctx context.Context, client ku
 	const registryzPath = "/debug/registryz"
 	var result map[string][]byte
 
-	if externalConf := p.conf.ExternalServices.Istio.Registry; externalConf != nil && externalConf.IstiodURL != "" {
-		url := joinURL(externalConf.IstiodURL, registryzPath)
-		r, err := getRequest(ctx, url)
-		if err != nil {
-			log.Error().Msgf("Failed to get Istiod info from remote endpoint %s error: %s", registryzPath, err)
-			return nil, err
-		}
-		result = map[string][]byte{"remote": r}
-	} else {
-		debugStatus, err := p.getIstiodDebugStatus(client, controlPlane, registryzPath)
-		if err != nil {
-			log.Error().Msgf("Failed to call Istiod endpoint %s error: %s", registryzPath, err)
-			return nil, err
-		}
-		result = debugStatus
+	debugStatus, err := p.getIstiodDebugStatus(client, controlPlane, registryzPath)
+	if err != nil {
+		log.Error().Msgf("Failed to call Istiod endpoint %s error: %s", registryzPath, err)
+		return nil, err
 	}
+	result = debugStatus
 	return parseRegistryServices(result)
 }
 

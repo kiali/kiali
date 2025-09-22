@@ -55,7 +55,6 @@
     "cypress:run": "cypress run -e TAGS=\"@core-1 or @core-2\" && cypress run -e TAGS=\"@crd-validation\" && cypress run -e TAGS=\"@perses\"",
     "cypress:run:ambient": "cypress run -e TAGS=\"@ambient\" && cypress run -e TAGS=\"@waypoint\" && cypress run -e TAGS=\"@waypoint-tracing\"",
     "cypress:run:ambient:junit": "cypress run --reporter cypress-multi-reporters --reporter-options configFile=reporter-config.json -e TAGS=\"@ambient\" && cypress run --reporter cypress-multi-reporters --reporter-options configFile=reporter-config.json -e TAGS=\"@waypoint\" && cypress run --reporter cypress-multi-reporters --reporter-options configFile=reporter-config.json -e TAGS=\"@waypoint-tracing\"",
-    "cypress:run:ambient123": "cypress run -e TAGS=\"@ambient\" && cypress run -e TAGS=\"@waypoint and not @skip-istio-1-23\" && cypress run -e TAGS=\"@waypoint-tracing\"",
     "cypress:run:core-1": "cypress run -e TAGS=\"@core-1\"",
     "cypress:run:core-2": "cypress run -e TAGS=\"@core-2\"",
     "cypress:run:core-optional": "cypress run -e TAGS=\"@crd-validation or @perses\"",
