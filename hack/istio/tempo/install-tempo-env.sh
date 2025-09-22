@@ -264,6 +264,12 @@ install_tempo_single_attempt() {
   echo -e "Waiting for cert-manager pods to be ready... \n"
   $CLIENT_EXE wait pods --all -n cert-manager --for=condition=Ready --timeout=5m
 
+  # There's some issue with the cert-manager webhook where it fails to add the https cert to the webhook
+  # before it is marked as ready. So we need to wait for a small period of time before installing the Tempo operator
+  # because the tempo manifests rely on the cert-manager webhook to be ready.
+  echo -e "Waiting for cert-manager webhook to be ready... \n"
+  sleep 10
+
   echo -e "Installing latest Tempo operator \n"
   ${CLIENT_EXE} apply -f https://github.com/grafana/tempo-operator/releases/latest/download/tempo-operator.yaml
   echo -e "Waiting for Tempo operator to be ready... \n"
