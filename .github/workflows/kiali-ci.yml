@@ -11,7 +11,7 @@ on:
     - "**/*.md"
     - "**/*.adoc"
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
+    types: [opened, synchronize, reopened]
     branches:
     - master
     - v*.*
@@ -115,7 +115,6 @@ jobs:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   integration_tests_frontend_tempo:
-    if: contains(github.event.pull_request.labels.*.name, 'full-ci')
     name: Run tracing frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-tempo.yml
     needs: [build_backend]
@@ -124,7 +123,6 @@ jobs:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   integration_tests_frontend_local:
-    if: contains(github.event.pull_request.labels.*.name, 'full-ci')
     name: Run frontend local mode integration tests
     uses: ./.github/workflows/integration-tests-frontend-local.yml
     needs: [build_backend]
@@ -133,7 +131,6 @@ jobs:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   integration_tests_backend_multicluster_external_controlplane:
-    if: contains(github.event.pull_request.labels.*.name, 'full-ci')
     name: Run backend multicluster external-controlplane integration tests
     uses: ./.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml
     needs: [build_backend]
@@ -142,7 +139,6 @@ jobs:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   integration_tests_frontend_multicluster_primary_remote:
-    if: contains(github.event.pull_request.labels.*.name, 'full-ci')
     name: Run frontend multicluster primary-remote integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-primary-remote.yml
     needs: [build_backend]
@@ -151,7 +147,6 @@ jobs:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   integration_tests_frontend_multicluster_multi_primary:
-    if: contains(github.event.pull_request.labels.*.name, 'full-ci')
     name: Run frontend multicluster multi-primary integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-multi-primary.yml
     needs: [build_backend]
@@ -161,7 +156,6 @@ jobs:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   integration_tests_frontend_multicluster_external_kiali:
-    if: contains(github.event.pull_request.labels.*.name, 'full-ci')
     name: Run frontend multicluster external-kiali integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-external-kiali.yml
     needs: [build_backend]
