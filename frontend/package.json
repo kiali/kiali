@@ -80,7 +80,7 @@
     "@patternfly/react-core": "^5.4.0",
     "@patternfly/react-table": "^5.4.0",
     "@patternfly/react-topology": "^5.4.1",
-    "axios": "^1.11.0",
+    "axios": "^1.12.2",
     "bootstrap-slider-without-jquery": "10.0.0",
     "deep-freeze": "0.0.1",
     "eventemitter3": "4.0.7",
