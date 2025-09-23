@@ -2339,7 +2339,7 @@ func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload m
 			if waypointUseFoundPod {
 				// if the workload opts-out from waypoint capture, then we are done
 				// note: this opt-out is currently undocumented but exists (2/14/25)
-				if waypointUse == config.WaypointNone {
+				if waypointUsePod == config.WaypointNone {
 					return waypoints, false
 				}
 				if !waypointUseNamespaceFoundPod {
