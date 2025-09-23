@@ -497,7 +497,7 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
         <DefaultSecondaryMasthead showClusterSelector={false} hideNamespaceSelector={true} />
       </div>
 
-      <div style={{ flex: 1, overflow: 'auto' }}>
+       <div style={{ flexGrow: 1, overflowY: 'auto' }}>
         <RenderContent>
           <Form className={formPadding} isHorizontal={true}>
             <FormGroup label={t('Namespaces')} isRequired={true} fieldId="namespaces">
