@@ -224,7 +224,18 @@ detectRaceConditions() {
   local kubecontext=$1
 
   local context_arg=${kubecontext:+--context ${kubecontext}}
-  kubectl ${context_arg} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system | grep -vzq "WARNING: DATA RACE"
+  if ! kubectl ${context_arg} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system | grep -vzq "WARNING: DATA RACE"; then
+    echo "ERROR: Data race detected in Kiali logs!"
+    echo "Showing a preview of Kiali logs with data race warnings:"
+    echo "=========================================="
+    kubectl ${context_arg} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system | grep -A5 -B5 "WARNING: DATA RACE" || true
+    echo "=========================================="
+    echo "Integration tests failed due to a data race in Kiali."
+    echo "Download and review the Kiali server logs for more details."
+    exit 1
+  else
+    echo "No data race conditions detected in Kiali logs"
+  fi
 }
 
 ensureCypressInstalled() {
