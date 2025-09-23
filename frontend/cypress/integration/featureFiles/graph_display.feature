@@ -33,12 +33,6 @@ Feature: Kiali Graph page - Display menu
   Scenario: Show idle nodes
     When user graphs "istio-system" namespaces
     And user "opens" display menu
-
-  @error-rates-app
-  @core-1
-  @offline
-  Scenario: User enables idle nodes
-    When user "opens" display menu
     And user "enables" "idle nodes" option
     Then user sees the "istio-system" namespace
     And idle nodes "appear" in the graph
