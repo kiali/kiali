@@ -111,6 +111,8 @@ done
 SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
 MINIO_FILE="${SCRIPT_DIR}/minio.yaml"
 
+set -e
+
 # Function to wait for webhook readiness with retries
 wait_for_webhook_readiness() {
   local webhook_name="$1"
@@ -313,7 +315,17 @@ emailAddress=not@mail
     ${CLIENT_EXE} create secret tls tempo-cert -n ${TEMPO_NS} --key="/tmp/tls.key" --cert="/tmp/service-ca.crt"
     # Install TempoStack CR
     echo -e "Installing tempo with tls enabled \n"
-    ${CLIENT_EXE} apply -n ${TEMPO_NS} -f - <<EOF
+    
+    # Retry logic for TempoStack installation as it sometimes fails because the webhook isn't ready.
+    local max_retries=3
+    local retry_count=0
+    local success=false
+    
+    while [ $retry_count -lt $max_retries ] && [ "$success" = false ]; do
+      retry_count=$((retry_count + 1))
+      echo "Attempt ${retry_count}/${max_retries}: Installing TempoStack with TLS..."
+      
+      if ${CLIENT_EXE} apply -n ${TEMPO_NS} -f - <<EOF
 apiVersion: tempo.grafana.com/v1alpha1
 kind: TempoStack
 metadata:
@@ -338,10 +350,37 @@ spec:
       jaegerQuery:
         enabled: false
 EOF
+      then
+        echo "TempoStack with TLS installation successful"
+        success=true
+      else
+        echo "TempoStack with TLS installation failed on attempt ${retry_count}"
+        if [ $retry_count -lt $max_retries ]; then
+          echo "Waiting 10 seconds before retry..."
+          sleep 10
+        fi
+      fi
+    done
+    
+    if [ "$success" = false ]; then
+      echo "ERROR: Failed to install TempoStack with TLS after ${max_retries} attempts"
+      exit 1
+    fi
+    
     else
       # Install TempoStack CR
       echo -e "Installing tempo \n"
-      ${CLIENT_EXE} apply -n ${TEMPO_NS} -f - <<EOF
+      
+      # Retry logic for TempoStack installation as it sometimes fails because the webhook isn't ready.
+      local max_retries=3
+      local retry_count=0
+      local success=false
+      
+      while [ $retry_count -lt $max_retries ] && [ "$success" = false ]; do
+        retry_count=$((retry_count + 1))
+        echo "Attempt ${retry_count}/${max_retries}: Installing TempoStack..."
+        
+        if ${CLIENT_EXE} apply -n ${TEMPO_NS} -f - <<EOF
 apiVersion: tempo.grafana.com/v1alpha1
 kind: TempoStack
 metadata:
@@ -362,6 +401,22 @@ spec:
       jaegerQuery:
         enabled: false
 EOF
+        then
+          echo "TempoStack installation successful"
+          success=true
+        else
+          echo "TempoStack installation failed on attempt ${retry_count}"
+          if [ $retry_count -lt $max_retries ]; then
+            echo "Waiting 10 seconds before retry..."
+            sleep 10
+          fi
+        fi
+      done
+      
+      if [ "$success" = false ]; then
+        echo "ERROR: Failed to install TempoStack after ${max_retries} attempts"
+        exit 1
+      fi
     fi
 
   else
