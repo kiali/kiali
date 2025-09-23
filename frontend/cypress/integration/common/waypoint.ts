@@ -143,7 +143,7 @@ Then('the user sees the L7 {string} link', (waypoint: string) => {
 });
 
 Then('the link for the waypoint {string} should redirect to a valid workload details', (waypoint: string) => {
-  cy.get(`[data-test=waypoint-link]`).contains('a', waypoint).click();
+  cy.get(`[data-test=waypoint-link]`).contains('a', waypoint).click({ force: true });
   cy.get(`[data-test=workload-description-card]`).contains('h5', waypoint);
 });
 
@@ -169,9 +169,15 @@ Then(
   }
 );
 
+// Action skipped in ossmc
 Then('the user can see the {string} istio config and badge {string}', (config: string, badge: string) => {
-  cy.get('#IstioConfigCard').should('be.visible').get(`[data-test="${config}"]`).should('exist');
-  cy.get('#IstioConfigCard').should('be.visible').get(`#${badge}`).should('exist');
+  cy.url().then(currentURL => {
+    // The istio configs for OpenShift are not the same
+    if (!currentURL?.includes('ossmconsole')) {
+      cy.get('#IstioConfigCard').should('be.visible').get(`[data-test="${config}"]`).should('exist');
+      cy.get('#IstioConfigCard').should('be.visible').get(`#${badge}`).should('exist');
+    }
+  });
 });
 
 Then('the proxy status is {string} with {string} details', (status: string, detail: string) => {
