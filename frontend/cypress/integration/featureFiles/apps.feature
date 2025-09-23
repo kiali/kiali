@@ -24,11 +24,13 @@ Feature: Kiali Apps List page
 
   @bookinfo-app
   @core-1
+  @offline
   Scenario: See all Apps toggles
     Then user sees all the Apps toggles
 
   @bookinfo-app
   @core-1
+  @offline
   Scenario: Toggle Apps health toggle
     When user "unchecks" toggle "health"
     Then the "Health" column "disappears"
@@ -37,12 +39,14 @@ Feature: Kiali Apps List page
 
   @bookinfo-app
   @core-1
+  @offline
   Scenario: Filter Apps by Istio Name
     When the user filters by "App Name" for "productpage"
     Then user only sees "productpage"
 
   @bookinfo-app
   @core-1
+  @offline
   Scenario: Filter Apps by Istio Sidecar
     When the user filters by "Istio Sidecar" for "Present"
     Then user sees "productpage"
@@ -52,6 +56,7 @@ Feature: Kiali Apps List page
 
   @bookinfo-app
   @core-1
+  @offline
   Scenario: Filter workloads table by Istio Sidecar not being present
     When the user filters by "Istio Sidecar" for "Not Present"
     Then user sees "kiali-traffic-generator"
@@ -64,12 +69,14 @@ Feature: Kiali Apps List page
 
   @bookinfo-app
   @core-1
+  @offline
   Scenario: Filter Apps by Health
     When the user filters by "Health" for "Healthy"
     Then user only sees healthy apps
 
   @bookinfo-app
   @core-1
+  @offline
   Scenario: Filter Applications table by Label
     When the user filters by "Label" for "app=reviews"
     Then user sees "reviews"
@@ -77,6 +84,7 @@ Feature: Kiali Apps List page
 
   @bookinfo-app
   @core-1
+  @offline
   Scenario: The healthy status of a logical mesh application is reported in the list of applications
     Given a healthy application in the cluster
     When I fetch the list of applications

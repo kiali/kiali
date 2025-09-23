@@ -21,23 +21,14 @@ import (
 
 func newRunCmd(conf *config.Config) *cobra.Command {
 	var (
-		clusterNameOverrides     []string
-		dashboardSelector        = Selector("app.kubernetes.io/name=grafana")
-		dashboardsPort           = "3000"
-		enableDashboards         = false
-		enableTracing            = false
-		homeClusterContext       string
-		kubeConfig               = kubernetes.KubeConfigDir()
-		metricsPort              = "9090"
-		metricsSelector          = Selector("app.kubernetes.io/name=prometheus")
-		portForwardToGrafanaFlag = false
-		portForwardToPromFlag    = false
-		portForwardToTracingFlag = false
-		remoteClusterContexts    []string
-		tracingPort              = "16686"
-		tracingSelector          = Selector("app=jaeger")
-		withoutBrowser           = false
+		clusterNameOverrides  []string
+		homeClusterContext    string
+		kubeConfig            = kubernetes.KubeConfigDir()
+		remoteClusterContexts []string
+		withoutBrowser        = false
 	)
+
+	portForwardingOpts := newPortForwardingOptions()
 
 	cmd := &cobra.Command{
 		Use:   "run",
@@ -85,19 +76,7 @@ EXPERIMENTAL: This command and the flags are subject to change.`,
 				return fmt.Errorf("unable to create new client factory")
 			}
 
-			if err := setupPortForwarding(ctx, cf, conf, portForwardingOptions{
-				dashboardSelector:        dashboardSelector,
-				dashboardsPort:           dashboardsPort,
-				enableDashboards:         enableDashboards,
-				enableTracing:            enableTracing,
-				metricsPort:              metricsPort,
-				metricsSelector:          metricsSelector,
-				portForwardToGrafanaFlag: portForwardToGrafanaFlag,
-				portForwardToPromFlag:    portForwardToPromFlag,
-				portForwardToTracingFlag: portForwardToTracingFlag,
-				tracingPort:              tracingPort,
-				tracingSelector:          tracingSelector,
-			}); err != nil {
+			if err := setupPortForwarding(ctx, cf, conf, *portForwardingOpts); err != nil {
 				return fmt.Errorf("unable to setup port forwarding: %s", err)
 			}
 
@@ -121,39 +100,15 @@ EXPERIMENTAL: This command and the flags are subject to change.`,
 	cmd.Flags().StringSliceVar(&remoteClusterContexts, "remote-cluster-contexts", remoteClusterContexts,
 		"Comma separated list of remote cluster contexts.")
 	cmd.Flags().BoolVar(&withoutBrowser, "no-browser", withoutBrowser, "Disables opening the default browser after startup.")
-	cmd.Flags().BoolVar(&portForwardToPromFlag, "port-forward-prom", portForwardToPromFlag,
-		"Enables port-forwarding to the Prometheus pod in the home cluster. Use this when your metrics store is not accessible from the outside of the cluster. Otherwise set the URL in the config file.")
-	cmd.Flags().BoolVar(&portForwardToGrafanaFlag, "port-forward-grafana", portForwardToGrafanaFlag,
-		"Enables port-forwarding to the Grafana pod in the home cluster. Use this when your dashboard service is not accessible from the outside of the cluster. Otherwise set the URL in the config file.")
-	cmd.Flags().BoolVar(&portForwardToTracingFlag, "port-forward-tracing", portForwardToTracingFlag,
-		"Enables port-forwarding to the Jaeger pod in the home cluster. Use this when your tracing service is not accessible from the outside of the cluster. Otherwise set the URL in the config file.")
-	cmd.Flags().BoolVar(&enableTracing, "enable-tracing", enableTracing, "Enable tracing.")
-	cmd.Flags().BoolVar(&enableDashboards, "enable-dashboards", enableDashboards, "Enable dashboards.")
 	cmd.Flags().StringSliceVar(&clusterNameOverrides, "cluster-name-overrides", clusterNameOverrides,
 		"Comma separated list of cluster name overrides in the format 'original-name=override-name'.")
-	cmd.Flags().StringVar(&tracingPort, "tracing-port", tracingPort, "Port number to use for tracing port forwarding.")
-	cmd.Flags().StringVar(&metricsPort, "metrics-port", metricsPort, "Port number to use for metrics port forwarding.")
-	cmd.Flags().StringVar(&dashboardsPort, "dashboards-port", dashboardsPort, "Port number to use for dashboards port forwarding.")
-	cmd.Flags().Func("tracing-selector", fmt.Sprintf("Label selector to find tracing pods when port-forwarding is enabled (default: %s)", tracingSelector), LabelSelectorFlag(&tracingSelector))
-	cmd.Flags().Func("dashboard-selector", fmt.Sprintf("Label selector to find dashboard pods when port-forwarding is enabled (default: %s)", dashboardSelector), LabelSelectorFlag(&dashboardSelector))
-	cmd.Flags().Func("metrics-selector", fmt.Sprintf("Label selector to find metrics pods when port-forwarding is enabled (default: %s)", metricsSelector), LabelSelectorFlag(&metricsSelector))
-	return cmd
-}
 
-// setupPortForwarding configures port forwarding for Prometheus and Tracing services
-// when running in local mode.
-type portForwardingOptions struct {
-	dashboardSelector        Selector
-	dashboardsPort           string
-	enableDashboards         bool
-	enableTracing            bool
-	metricsPort              string
-	metricsSelector          Selector
-	portForwardToGrafanaFlag bool
-	portForwardToPromFlag    bool
-	portForwardToTracingFlag bool
-	tracingPort              string
-	tracingSelector          Selector
+	// Add all port forwarding related flags
+	portForwardingOpts.addFlags(cmd)
+
+	cmd.AddCommand(newOfflineCmd(conf))
+
+	return cmd
 }
 
 func setupPortForwarding(ctx context.Context, cf kubernetes.ClientFactory, conf *config.Config, opts portForwardingOptions) error {

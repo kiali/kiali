@@ -8,6 +8,7 @@ const (
 )
 
 const (
+	kubeVersionLabel                      = "app.kubernetes.io/version"
 	istioControlPlaneClustersLabel        = "topology.istio.io/controlPlaneClusters"
 	istiodAppLabelValue                   = "istiod"
 	istiodClusterIDEnvKey                 = "CLUSTER_ID"

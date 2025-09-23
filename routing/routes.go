@@ -269,7 +269,7 @@ func NewRoutes(
 			log.ConfigLogName,
 			"GET",
 			"/api/crippled",
-			handlers.CrippledFeatures(prom),
+			handlers.CrippledFeatures(conf, prom),
 			true,
 		},
 		// swagger:route GET /istio/permissions config getPermissions

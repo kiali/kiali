@@ -21,6 +21,7 @@ Feature: Kiali Graph page - Side panel menu actions
 
   @bookinfo-app
   @core-1
+  @offline
   Scenario Outline: Ability to launch <action> wizard from graph side panel
     Given user graphs "bookinfo" namespaces
     And user clicks the "reviews" "service" node
@@ -72,6 +73,7 @@ Feature: Kiali Graph page - Side panel menu actions
 
   @bookinfo-app
   @core-1
+  @offline
   Scenario: Validate summary panel edge
     Given user graphs "bookinfo" namespaces
     And user clicks the edge from "productpage" "app" to "details" "service"

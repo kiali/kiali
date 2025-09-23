@@ -192,8 +192,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	cache := cache.NewTestingCache(t, k8s, *conf)
 	discovery := istio.NewDiscovery(clients, cache, conf)
 
-	a, err := discovery.Clusters()
-	require.Nil(err, "GetClusters returned error: %v", err)
+	a := discovery.Clusters()
 
 	require.NotNil(a, "GetClusters returned nil")
 	require.Len(a, 1, "GetClusters didn't resolve the Kiali cluster")
@@ -252,8 +251,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
 	discovery := istio.NewDiscovery(clients, cache, conf)
 
-	a, err := discovery.Clusters()
-	check.Nil(err, "GetClusters returned error: %v", err)
+	a := discovery.Clusters()
 
 	remoteCluster := slicetest.FindOrFail(t, a, func(c models.KubeCluster) bool { return c.Name == "KialiCluster" })
 
@@ -352,16 +350,14 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	cache := cache.NewTestingCache(t, k8s, *conf)
 	getClustersCache := &fakeClusterCache{KialiCache: cache}
 	discovery := istio.NewDiscovery(map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}, getClustersCache, conf)
-	result, err := discovery.Clusters()
-	require.NoError(err)
+	result := discovery.Clusters()
 	require.NotNil(result)
 	require.Len(result, 1)
 	check.Equal("KialiCluster", result[0].Name) // Sanity check. Rest of values are tested in TestGetClustersResolvesTheKialiCluster
 	// Check that the cache now has clusters populated.
 	check.Len(getClustersCache.clusters, 1)
 
-	result, err = discovery.Clusters()
-	require.NoError(err)
+	result = discovery.Clusters()
 	require.NotNil(result)
 	require.Len(result, 1)
 	check.Equal("KialiCluster", result[0].Name)
@@ -1126,9 +1122,7 @@ func TestGetClustersShowsConfiguredKialiInstances(t *testing.T) {
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
 	discovery := istio.NewDiscovery(clients, cache, conf)
 
-	clusters, err := discovery.Clusters()
-
-	require.NoError(err)
+	clusters := discovery.Clusters()
 	require.Len(clusters, 2)
 	homeIndex := slices.IndexFunc(clusters, func(c models.KubeCluster) bool {
 		return c.Name == conf.KubernetesConfig.ClusterName
@@ -1178,9 +1172,7 @@ deployment:
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
 	discovery := istio.NewDiscovery(clients, cache, conf)
-	clusters, err := discovery.Clusters()
-
-	require.NoError(err)
+	clusters := discovery.Clusters()
 	require.Len(clusters, 1)
 	require.Len(clusters[0].KialiInstances, 1)
 	kialiInstance := clusters[0].KialiInstances[0]
@@ -1203,9 +1195,7 @@ func TestAddingKialiInstanceToExistingClusterDoesntAddNewCluster(t *testing.T) {
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
 	discovery := istio.NewDiscovery(clients, cache, conf)
-	clusters, err := discovery.Clusters()
-
-	require.NoError(err)
+	clusters := discovery.Clusters()
 	require.Len(clusters, 1)
 }
 

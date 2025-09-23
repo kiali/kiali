@@ -273,8 +273,10 @@ type GrafanaConfig struct {
 }
 
 // Alias to keep the same name in Grafana but more generic (Used by Perses as well)
-type GrafanaDashboardConfig = DashboardConfig
-type GrafanaVariablesConfig = DashboardVariablesConfig
+type (
+	GrafanaDashboardConfig = DashboardConfig
+	GrafanaVariablesConfig = DashboardVariablesConfig
+)
 
 type DashboardConfig struct {
 	Name      string                   `yaml:"name" json:"name"`
@@ -709,8 +711,9 @@ type Profiler struct {
 type RunMode string
 
 const (
-	RunModeLocal RunMode = "local"
-	RunModeApp   RunMode = "app"
+	RunModeApp     RunMode = "app"
+	RunModeLocal   RunMode = "local"
+	RunModeOffline RunMode = "offline"
 )
 
 // Config defines full YAML configuration.
@@ -731,6 +734,7 @@ type Config struct {
 	KubernetesConfig         KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
 	LoginToken               LoginToken                          `yaml:"login_token,omitempty"`
 	Server                   Server                              `yaml:",omitempty"`
+	RunConfig                *OfflineManifest                    `yaml:"runConfig,omitempty"`
 	RunMode                  RunMode                             `yaml:"runMode,omitempty"`
 }
 
@@ -953,7 +957,9 @@ func NewConfig() (c *Config) {
 				Tracing:           TracingDefaults{Limit: 100},
 			},
 			Validations: Validations{
-				Ignore: make([]string, 0),
+				Ignore: []string{
+					"KIA1301",
+				},
 			},
 		},
 		KialiInternal: KialiInternalConfig{

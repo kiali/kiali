@@ -18,6 +18,7 @@ import (
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	istiofake "istio.io/client-go/pkg/clientset/versioned/fake"
 	istioscheme "istio.io/client-go/pkg/clientset/versioned/scheme"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
@@ -102,6 +103,18 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 	if err != nil {
 		panic(fmt.Errorf("unable to create kubescheme in FakeK8sClient: %s", err))
 	}
+
+	// Handle List types by trying to extract them.
+	var extractedObjs []runtime.Object
+	for _, obj := range objects {
+		if objs, err := meta.ExtractList(obj); err == nil {
+			extractedObjs = append(extractedObjs, objs...)
+		} else {
+			extractedObjs = append(extractedObjs, obj)
+		}
+	}
+
+	objects = filterDuplicateObjects(extractedObjs)
 
 	ctrlclient := ctrlfake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).Build()
 
@@ -197,3 +210,49 @@ func (c *FakeK8sClient) SetProxyLogLevel(namespace string, podName string, level
 }
 
 var _ kialikube.ClientInterface = &FakeK8sClient{}
+
+// filterDuplicateObjects removes duplicate objects based on their GroupVersionKind, namespace, and name.
+// The last occurrence of a duplicate object is kept.
+func filterDuplicateObjects(objects []runtime.Object) []runtime.Object {
+	objectMap := make(map[string]runtime.Object)
+
+	for _, obj := range objects {
+		key := getObjectKey(obj)
+		if key != "" {
+			objectMap[key] = obj
+		}
+	}
+
+	// Convert map back to slice
+	uniqueObjects := make([]runtime.Object, 0, len(objectMap))
+	for _, obj := range objectMap {
+		uniqueObjects = append(uniqueObjects, obj)
+	}
+
+	return uniqueObjects
+}
+
+// getObjectKey creates a unique identifier for a Kubernetes object
+// based on its GroupVersionKind, namespace, and name.
+func getObjectKey(obj runtime.Object) string {
+	if obj == nil {
+		return ""
+	}
+
+	gvk := obj.GetObjectKind().GroupVersionKind()
+
+	accessor, err := meta.Accessor(obj)
+	if err != nil {
+		return ""
+	}
+
+	namespace := accessor.GetNamespace()
+	name := accessor.GetName()
+
+	// TypeMeta not set in tests. Fallback to golang type.
+	if gvk.Group == "" && gvk.Version == "" && gvk.Kind == "" {
+		return fmt.Sprintf("%T", obj) + namespace + name
+	}
+
+	return gvk.Group + gvk.Version + gvk.Kind + namespace + name
+}

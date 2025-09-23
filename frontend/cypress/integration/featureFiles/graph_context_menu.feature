@@ -10,18 +10,21 @@ Feature: Kiali Graph page - Context menu actions
     Given user is at administrator perspective
     When user graphs "bookinfo" namespaces
 
+  @offline
   @bookinfo-app
   @core-1
   Scenario: Detail action in context menu for service node
     And user opens the context menu of the "productpage" service node
     And user should see no cluster parameter in the url when clicking the "Details" link in the context menu
 
+  @offline
   @bookinfo-app
   @core-1
   Scenario: Traffic action in context menu for service node
     And user opens the context menu of the "productpage" service node
     And user should see no cluster parameter in the url when clicking the "Traffic" link in the context menu
 
+  @offline
   @bookinfo-app
   @core-1
   Scenario: Inbound Metrics in context menu for service node
@@ -35,6 +38,7 @@ Feature: Kiali Graph page - Context menu actions
     And user clicks the "delete_traffic_routing" item of the context menu
     Then user should see the confirmation dialog to delete all traffic routing
 
+  @offline
   @bookinfo-app
   @core-1
   Scenario Outline: Ability to launch <action> wizard from graph context menu

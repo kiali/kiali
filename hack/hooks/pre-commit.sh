@@ -24,7 +24,7 @@ if [ -n "$go_unformatted" ]; then
 fi
 
 #### YAML Formatting ####
-yaml_files=$(git diff --staged --name-only HEAD --diff-filter=AM | grep -E '\.yml|\.yaml' | grep -v istio-crds)
+yaml_files=$(git diff --staged --name-only HEAD --diff-filter=AM | grep -E '\.yml|\.yaml' | grep -v istio-crds | grep -v hack/offline/must-gather-test-data)
 
 if [ -n "$yaml_files" ]; then
   yaml_unformatted=$(yamlfmt -dry -quiet $yaml_files 2>&1 | sed 's/^.*://')

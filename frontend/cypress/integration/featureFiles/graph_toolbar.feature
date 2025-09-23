@@ -15,10 +15,12 @@ Feature: Kiali Graph page - Toolbar (various)
   # NOTE: Graph Replay has its own test script
 
   @core-1
+  @offline
   Scenario: On the graph page the namespace selector should be sorted alphabetically
     When user graphs "" namespaces
     Then the namespace dropdown is sorted alphabetically
 
+  @offline
   @error-rates-app
   @core-1
   Scenario: Graph alpha namespace with query params
@@ -27,24 +29,28 @@ Feature: Kiali Graph page - Toolbar (various)
     And user sees selected graph duration "Last 5m"
     And user sees selected graph refresh "Every 15m"
 
+  @offline
   @error-rates-app
   @core-1
   Scenario: Open graph Tour
     When user clicks graph tour
     Then user "sees" graph tour
 
+  @offline
   @error-rates-app
   @core-1
   Scenario: Close graph Tour
     When user closes graph tour
     Then user "does not see" graph tour
 
+  @offline
   @error-rates-app
   @core-1
   Scenario: Open traffic dropdown
     When user "opens" traffic menu
     Then user sees "default" graph traffic menu
 
+  @offline
   @error-rates-app
   @core-1
   Scenario: Disable all traffic
@@ -52,6 +58,7 @@ Feature: Kiali Graph page - Toolbar (various)
     Then user does not see any traffic
 
   # todo: would be a better test if demos has tcp and/or grpc traffic
+  @offline
   @error-rates-app
   @core-1
   Scenario: Enable http traffic
@@ -61,12 +68,14 @@ Feature: Kiali Graph page - Toolbar (various)
     And user "does not see" "tcp" traffic
     And user "does not see" "grpc" traffic
 
+  @offline
   @error-rates-app
   @core-1
   Scenario: Close traffic dropdown
     When user "closes" traffic menu
     Then user does not see graph traffic menu
 
+  @offline
   @error-rates-app
   @graph-page-display
   @core-1
@@ -75,72 +84,84 @@ Feature: Kiali Graph page - Toolbar (various)
     And user "opens" traffic menu
     Then user sees "default" graph traffic menu
 
+  @offline
   @error-rates-app
   @core-1
   Scenario: Open duration dropdown
     When user clicks graph duration menu
     Then user sees graph duration menu
 
+  @offline
   @error-rates-app
   @core-1
   Scenario: Close duration dropdown
     When user clicks graph duration menu
     Then user does not see graph duration menu
 
+  @offline
   @error-rates-app
   @core-1
   Scenario: Set duration dropdown
     When user selects graph duration "600"
     Then user sees selected graph duration "Last 10m"
 
+  @offline
   @error-rates-app
   @core-1
   Scenario: Open refresh dropdown
     When user clicks graph refresh menu
     Then user sees graph refresh menu
 
+  @offline
   @error-rates-app
   @core-1
   Scenario: Close refresh dropdown
     When user clicks graph refresh menu
     Then user does not see graph refresh menu
 
+  @offline
   @error-rates-app
   @core-1
   Scenario: Set refresh dropdown
     When user selects graph refresh "0"
     Then user sees selected graph refresh "Pause"
 
+  @offline
   @error-rates-app
   @core-1
   Scenario: graph type app
     When user selects "APP" graph type
     Then user sees a "app" graph
 
+  @offline
   @error-rates-app
   @core-1
   Scenario: graph type service
     When user selects "SERVICE" graph type
     Then user sees a "service" graph
 
+  @offline
   @error-rates-app
   @core-1
   Scenario: graph type versioned app
     When user selects "VERSIONED_APP" graph type
     Then user sees a "versionedApp" graph
 
+  @offline
   @error-rates-app
   @core-1
   Scenario: graph type workload
     When user selects "WORKLOAD" graph type
     Then user sees a "workload" graph
 
+  # TODO: offline - ambient support.
   @ambient
   Scenario: Open traffic dropdown for ambient
     When user graphs "" namespaces
     And user "opens" traffic menu
     Then user sees "ambient" graph traffic menu
 
+  # TODO: offline - ambient support.
   @ambient
   Scenario: Close traffic dropdown for ambient
     When user "closes" traffic menu

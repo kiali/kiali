@@ -15,11 +15,13 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   @core-1
+  @offline
   Scenario: Graph no namespaces
     When user graphs "" namespaces
     Then user sees no namespace selected
 
   # default should show empty graph
+  # TODO: default namespace does not exist in offline mode
   @core-1
   Scenario: Show empty graph
     When user graphs "default" namespaces
@@ -27,6 +29,7 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   @core-1
+  @offline
   Scenario: Show idle nodes
     When user graphs "istio-system" namespaces
     And user "opens" display menu
@@ -37,6 +40,7 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   @core-1
+  @offline
   Scenario: User disables idle nodes
     When user "opens" display menu
     And user "disables" "idle nodes" option
@@ -45,6 +49,7 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   @core-1
+  @offline
   Scenario: Graph alpha and beta namespaces
     When user graphs "alpha,beta" namespaces
     Then user sees the "alpha" namespace
@@ -52,6 +57,7 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   @core-1
+  @offline
   Scenario: User clicks Display Menu
     When user "opens" display menu
     Then the display menu opens
@@ -83,6 +89,7 @@ Feature: Kiali Graph page - Display menu
   # edge label variable must match edge data name
   @error-rates-app
   @core-1
+  @offline
   Scenario: 95th Percentile Response-time edge labels
     When user "opens" display menu
     And user enables "rt95" "responseTime" edge labels
@@ -131,6 +138,7 @@ Feature: Kiali Graph page - Display menu
   # edge label variable must match edge data name
   @error-rates-app
   @core-1
+  @offline
   Scenario: Disable throughput edge labels
     When user "opens" display menu
     And user "disables" "throughput" edge labels
@@ -140,6 +148,7 @@ Feature: Kiali Graph page - Display menu
   # edge label variable must match edge data name
   @error-rates-app
   @core-1
+  @offline
   Scenario: Enable Traffic Distribution edge labels
     When user "opens" display menu
     And user "enables" "trafficDistribution" edge labels
@@ -149,6 +158,7 @@ Feature: Kiali Graph page - Display menu
   # edge label variable must match edge data name
   @error-rates-app
   @core-1
+  @offline
   Scenario: Disable Traffic Distribution edge labels
     When user "opens" display menu
     And user "disables" "trafficDistribution" edge labels
@@ -158,6 +168,7 @@ Feature: Kiali Graph page - Display menu
   # edge label variable must match edge data name
   @error-rates-app
   @core-1
+  @offline
   Scenario: Enable Traffic Rate edge labels
     When user "opens" display menu
     And user "enables" "trafficRate" edge labels
@@ -167,6 +178,7 @@ Feature: Kiali Graph page - Display menu
   # edge label variable must match edge data name
   @error-rates-app
   @core-1
+  @offline
   Scenario: Disable Traffic Rate edge labels
     When user "opens" display menu
     And user "disables" "trafficRate" edge labels
@@ -175,6 +187,7 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   @core-1
+  @offline
   Scenario: User disables cluster boxes
     When user "opens" display menu
     And user "disables" "cluster boxes" option
@@ -183,6 +196,7 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   @core-1
+  @offline
   Scenario: User disables Namespace boxes
     When user "opens" display menu
     And user "disables" "namespace boxes" option
@@ -191,6 +205,7 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   @core-1
+  @offline
   Scenario: User enables idle edges
     When user "opens" display menu
     And user "enables" "idle edges" option
@@ -199,6 +214,7 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   @core-1
+  @offline
   Scenario: User disables idle edges
     When user "opens" display menu
     And user "disables" "idle edges" option
@@ -207,6 +223,7 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   @core-1
+  @offline
   Scenario: User enables rank
     When user "opens" display menu
     And user "enables" "rank" option
@@ -215,6 +232,7 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   @core-1
+  @offline
   Scenario: User disables rank
     When user "opens" display menu
     And user "disables" "rank" option
@@ -223,6 +241,7 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   @core-1
+  @offline
   Scenario: User disables service nodes
     When user "opens" display menu
     And user "disables" "service nodes" option
@@ -247,6 +266,7 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   @core-1
+  @offline
   Scenario: User disables missing sidecars
     When user "opens" display menu
     And user "disables" "missing sidecars" option
@@ -255,6 +275,7 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   @core-1
+  @offline
   Scenario: User disables virtual services
     When user "opens" display menu
     And user "disables" "virtual services" option
@@ -263,6 +284,7 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   @core-1
+  @offline
   Scenario: User enables animation
     When user "opens" display menu
     And user "enables" "traffic animation" option
@@ -271,6 +293,7 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   @core-1
+  @offline
   Scenario: User disables animation
     When user "opens" display menu
     And user "disables" "traffic animation" option
@@ -279,6 +302,7 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   @core-1
+  @offline
   Scenario: User resets to factory default setting
     When user resets to factory default
     And user "opens" display menu
@@ -288,6 +312,7 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   @core-1
+  @offline
   Scenario: User observes some options not being clickable when switching to Service graph
     When user "opens" display menu
     And user "disables" "service nodes" option
@@ -351,6 +376,7 @@ Feature: Kiali Graph page - Display menu
     Then the Istio objects for the "bookinfo" namespace for both clusters should be grouped together in the panel
 
   @ambient
+  @offline
   Scenario: User sees tcp traffic
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
@@ -360,6 +386,7 @@ Feature: Kiali Graph page - Display menu
     Then 6 edges appear in the graph
 
   @ambient
+  @offline
   Scenario: User sees http traffic
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
