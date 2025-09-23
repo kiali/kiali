@@ -21,8 +21,8 @@ Feature: Kiali Graph page - Display menu
     Then user sees no namespace selected
 
   # default should show empty graph
+  # TODO: default namespace does not exist in offline mode
   @core-1
-  @offline
   Scenario: Show empty graph
     When user graphs "default" namespaces
     Then user sees empty graph
