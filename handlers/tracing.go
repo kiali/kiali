@@ -32,6 +32,7 @@ func GetTracingInfo(conf *config.Config) http.HandlerFunc {
 			info = models.TracingInfo{
 				Enabled:              true,
 				Integration:          tracingConfig.InternalURL != "",
+				InternalURL:          tracingConfig.InternalURL, // This is needed for OSSMC distributed tracing redirection
 				Provider:             string(tracingConfig.Provider),
 				TempoConfig:          tracingConfig.TempoConfig,
 				URL:                  tracingConfig.ExternalURL,
