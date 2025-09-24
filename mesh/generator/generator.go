@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"regexp"
+	"runtime/debug"
 	"slices"
 	"strings"
 
@@ -364,6 +365,58 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 						if tag == gwNode.Metadata[mesh.Version] {
 							infraNode.AddEdge(gwNode)
 						}
+					}
+				}
+			}
+		}
+	}
+
+	// In local mode, add Kiali as a local infrastructure node since it's not deployed in the cluster
+	if gi.Conf.RunMode == config.RunModeLocal {
+		// Check if Kiali hasn't been added yet from any cluster
+		kialiExists := false
+		for _, node := range meshMap {
+			if node.InfraType == mesh.InfraTypeKiali {
+				kialiExists = true
+				break
+			}
+		}
+
+		if !kialiExists {
+			// Add local Kiali instance
+			// keep the existing cluster name, otherwise more changes will be required for metrics and info in a side panel
+			cluster := gi.Conf.KubernetesConfig.ClusterName
+			namespace := gi.Conf.Deployment.Namespace
+			name := gi.Conf.Deployment.InstanceName
+			// Get version info - use commit hash or fallback to "local-dev"
+			version := "local-dev"
+			if buildInfo, ok := debug.ReadBuildInfo(); ok {
+				for _, setting := range buildInfo.Settings {
+					if setting.Key == "vcs.revision" {
+						version = setting.Value
+						break
+					}
+				}
+			}
+
+			// Create local Kiali infrastructure data
+			localKialiData := struct {
+				Mode string `json:"mode"`
+				URL  string `json:"url,omitempty"`
+			}{
+				Mode: "local",
+				URL:  fmt.Sprintf("http://localhost:%d", gi.Conf.Server.Port),
+			}
+
+			kiali, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cluster, namespace, name, localKialiData, version, false, kubernetes.ComponentHealthy)
+			mesh.CheckError(err)
+
+			// Connect to control planes if Istio API is enabled
+			es := gi.Conf.Obfuscate().ExternalServices
+			if es.Istio.IstioAPIEnabled {
+				for _, infra := range meshMap {
+					if infra.InfraType == mesh.InfraTypeIstiod && infra.Cluster == cluster {
+						kiali.AddEdge(infra)
 					}
 				}
 			}
