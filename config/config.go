@@ -488,7 +488,10 @@ type OpenIdConfig struct {
 	HTTPSProxy              string            `yaml:"https_proxy,omitempty"`
 	InsecureSkipVerifyTLS   bool              `yaml:"insecure_skip_verify_tls,omitempty"`
 	IssuerUri               string            `yaml:"issuer_uri,omitempty"`
+	JwksUri                 string            `yaml:"jwks_uri,omitempty"`
 	Scopes                  []string          `yaml:"scopes,omitempty"`
+	TokenEndpoint           string            `yaml:"token_endpoint,omitempty"`
+	UserInfoEndpoint        string            `yaml:"userinfo_endpoint,omitempty"`
 	UsernameClaim           string            `yaml:"username_claim,omitempty"`
 }
 
@@ -756,7 +759,10 @@ func NewConfig() (c *Config) {
 				DisableRBAC:             false,
 				InsecureSkipVerifyTLS:   false,
 				IssuerUri:               "",
+				JwksUri:                 "",
 				Scopes:                  []string{"openid", "profile", "email"},
+				TokenEndpoint:           "",
+				UserInfoEndpoint:        "",
 				UsernameClaim:           "sub",
 			},
 			OpenShift: OpenShiftConfig{
