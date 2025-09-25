@@ -476,26 +476,36 @@ type OpenShiftConfig struct {
 }
 
 // OpenIdConfig contains specific configuration for authentication using an OpenID provider
+// DiscoveryOverrideConfig contains explicit OIDC endpoints to override auto-discovery
+type DiscoveryOverrideConfig struct {
+	AuthorizationEndpoint string `yaml:"authorization_endpoint,omitempty"`
+	TokenEndpoint         string `yaml:"token_endpoint,omitempty"`
+	UserInfoEndpoint      string `yaml:"userinfo_endpoint,omitempty"`
+	JwksUri               string `yaml:"jwks_uri,omitempty"`
+}
+
+// OpenIdConfig contains specific configuration for authentication using an OpenID provider
 type OpenIdConfig struct {
-	AdditionalRequestParams map[string]string `yaml:"additional_request_params,omitempty"`
-	AllowedDomains          []string          `yaml:"allowed_domains,omitempty"`
-	ApiProxy                string            `yaml:"api_proxy,omitempty"`
-	ApiProxyCAData          string            `yaml:"api_proxy_ca_data,omitempty"`
-	ApiToken                string            `yaml:"api_token,omitempty"`
-	AuthenticationTimeout   int               `yaml:"authentication_timeout,omitempty"`
-	AuthorizationEndpoint   string            `yaml:"authorization_endpoint,omitempty"`
-	ClientId                string            `yaml:"client_id,omitempty"`
-	ClientSecret            string            `yaml:"client_secret,omitempty"`
-	DisableRBAC             bool              `yaml:"disable_rbac,omitempty"`
-	HTTPProxy               string            `yaml:"http_proxy,omitempty"`
-	HTTPSProxy              string            `yaml:"https_proxy,omitempty"`
-	InsecureSkipVerifyTLS   bool              `yaml:"insecure_skip_verify_tls,omitempty"`
-	IssuerUri               string            `yaml:"issuer_uri,omitempty"`
-	JwksUri                 string            `yaml:"jwks_uri,omitempty"`
-	Scopes                  []string          `yaml:"scopes,omitempty"`
-	TokenEndpoint           string            `yaml:"token_endpoint,omitempty"`
-	UserInfoEndpoint        string            `yaml:"userinfo_endpoint,omitempty"`
-	UsernameClaim           string            `yaml:"username_claim,omitempty"`
+	AdditionalRequestParams map[string]string       `yaml:"additional_request_params,omitempty"`
+	AllowedDomains          []string                `yaml:"allowed_domains,omitempty"`
+	ApiProxy                string                  `yaml:"api_proxy,omitempty"`
+	ApiProxyCAData          string                  `yaml:"api_proxy_ca_data,omitempty"`
+	ApiToken                string                  `yaml:"api_token,omitempty"`
+	AuthenticationTimeout   int                     `yaml:"authentication_timeout,omitempty"`
+	AuthorizationEndpoint   string                  `yaml:"authorization_endpoint,omitempty"` // Deprecated: use DiscoveryOverride.AuthorizationEndpoint
+	ClientId                string                  `yaml:"client_id,omitempty"`
+	ClientSecret            string                  `yaml:"client_secret,omitempty"`
+	DisableRBAC             bool                    `yaml:"disable_rbac,omitempty"`
+	DiscoveryOverride       DiscoveryOverrideConfig `yaml:"discovery_override,omitempty"`
+	HTTPProxy               string                  `yaml:"http_proxy,omitempty"`
+	HTTPSProxy              string                  `yaml:"https_proxy,omitempty"`
+	InsecureSkipVerifyTLS   bool                    `yaml:"insecure_skip_verify_tls,omitempty"`
+	IssuerUri               string                  `yaml:"issuer_uri,omitempty"`
+	JwksUri                 string                  `yaml:"jwks_uri,omitempty"` // Deprecated: use DiscoveryOverride.JwksUri
+	Scopes                  []string                `yaml:"scopes,omitempty"`
+	TokenEndpoint           string                  `yaml:"token_endpoint,omitempty"`    // Deprecated: use DiscoveryOverride.TokenEndpoint
+	UserInfoEndpoint        string                  `yaml:"userinfo_endpoint,omitempty"` // Deprecated: use DiscoveryOverride.UserInfoEndpoint
+	UsernameClaim           string                  `yaml:"username_claim,omitempty"`
 }
 
 // DeploymentConfig provides details on how Kiali was deployed.
@@ -761,13 +771,19 @@ func NewConfig() (c *Config) {
 				ClientId:                "",
 				ClientSecret:            "",
 				DisableRBAC:             false,
-				InsecureSkipVerifyTLS:   false,
-				IssuerUri:               "",
-				JwksUri:                 "",
-				Scopes:                  []string{"openid", "profile", "email"},
-				TokenEndpoint:           "",
-				UserInfoEndpoint:        "",
-				UsernameClaim:           "sub",
+				DiscoveryOverride: DiscoveryOverrideConfig{
+					AuthorizationEndpoint: "",
+					TokenEndpoint:         "",
+					UserInfoEndpoint:      "",
+					JwksUri:               "",
+				},
+				InsecureSkipVerifyTLS: false,
+				IssuerUri:             "",
+				JwksUri:               "",
+				Scopes:                []string{"openid", "profile", "email"},
+				TokenEndpoint:         "",
+				UserInfoEndpoint:      "",
+				UsernameClaim:         "sub",
 			},
 			OpenShift: OpenShiftConfig{
 				InsecureSkipVerifyTLS: false,
