@@ -1117,17 +1117,33 @@ func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 	fetchedMetadata, fetchError, _ := openIdFlightGroup.Do("metadata", func() (interface{}, error) {
 		cfg := conf.Auth.OpenId
 
-		// Check if we have explicit endpoint configuration
-		if cfg.AuthorizationEndpoint != "" && cfg.TokenEndpoint != "" {
+		// Check if we have explicit endpoint configuration (new grouped structure)
+		var authEndpoint, tokenEndpoint, jwksUri, userInfoEndpoint string
+
+		// Prefer new grouped structure, fall back to legacy flat structure for backward compatibility
+		if cfg.DiscoveryOverride.AuthorizationEndpoint != "" && cfg.DiscoveryOverride.TokenEndpoint != "" {
+			authEndpoint = cfg.DiscoveryOverride.AuthorizationEndpoint
+			tokenEndpoint = cfg.DiscoveryOverride.TokenEndpoint
+			jwksUri = cfg.DiscoveryOverride.JwksUri
+			userInfoEndpoint = cfg.DiscoveryOverride.UserInfoEndpoint
+		} else if cfg.AuthorizationEndpoint != "" && cfg.TokenEndpoint != "" {
+			// Legacy flat structure for backward compatibility
+			authEndpoint = cfg.AuthorizationEndpoint
+			tokenEndpoint = cfg.TokenEndpoint
+			jwksUri = cfg.JwksUri
+			userInfoEndpoint = cfg.UserInfoEndpoint
+		}
+
+		if authEndpoint != "" && tokenEndpoint != "" {
 			// Use explicit configuration for security-hardened environments
 			log.Infof("Using explicit OpenID endpoints for restricted environment")
 
 			metadata := &openIdMetadata{
 				Issuer:      cfg.IssuerUri,
-				AuthURL:     cfg.AuthorizationEndpoint,
-				TokenURL:    cfg.TokenEndpoint,
-				JWKSURL:     cfg.JwksUri,
-				UserInfoURL: cfg.UserInfoEndpoint, // Optional
+				AuthURL:     authEndpoint,
+				TokenURL:    tokenEndpoint,
+				JWKSURL:     jwksUri,
+				UserInfoURL: userInfoEndpoint,
 				// Assume "code" is supported when explicit config is provided
 				ResponseTypesSupported: []string{"code"},
 			}
