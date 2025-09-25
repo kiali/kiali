@@ -69,7 +69,7 @@ func (s *Service) discover(ctx context.Context) string {
 	// Try to get service and namespace from in-cluster URL, to discover route
 	routeURL := ""
 	var err error
-	if internalURL := s.conf.ExternalServices.Perses.InternalURL; internalURL != "" {
+	if internalURL := s.conf.ExternalServices.Grafana.InternalURL; internalURL != "" {
 		routeURL, err = ParseUrl(ctx, internalURL, s.homeClusterSAClient)
 		if err == nil {
 			s.routeURL = &routeURL
