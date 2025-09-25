@@ -41,6 +41,7 @@ import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelSty
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { renderWaypointLabel } from '../../components/Ambient/WaypointLabel';
 import { Node } from '@patternfly/react-topology';
+import { NetworkTrafficBadge } from 'components/TrafficGraph/NetworkTrafficBadge';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -192,6 +193,8 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       <></>
     );
 
+    // Note: NetObserv link removed per current requirements
+
     return (
       <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
         <div className={panelHeadingStyle}>
@@ -227,6 +230,9 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
               )}
 
               {secondBadge}
+              <div className={nodeInfoStyle}>
+                <NetworkTrafficBadge namespace={nodeData.namespace} />
+              </div>
               {!nodeData.isWaypoint && (
                 <div className={nodeInfoStyle}>
                   {renderBadgedLink(nodeData)}
