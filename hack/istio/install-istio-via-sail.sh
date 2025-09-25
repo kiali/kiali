@@ -116,12 +116,54 @@ helm upgrade sail-operator sail-operator \
 K8S_GATEWAY_API_VERSION=$(curl --head --silent "https://github.com/kubernetes-sigs/gateway-api/releases/latest" | grep "location: " | awk '{print $2}' | sed "s/.*tag\///g" | cat -v | sed "s/\^M//g")
 echo "Verifying that Gateway API is installed; if it is not then Gateway API version ${K8S_GATEWAY_API_VERSION} will be installed now."
 kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-  { kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=${K8S_GATEWAY_API_VERSION}" | kubectl apply -f -; }
+  {
+    echo "Installing Gateway API CRDs with retry logic..."
+    RETRY_COUNT=0
+    MAX_RETRIES=30
+    RETRY_INTERVAL=60
+    while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+      echo "Attempt $((RETRY_COUNT + 1))/$MAX_RETRIES: Installing Gateway API CRDs..."
+      if kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=${K8S_GATEWAY_API_VERSION}" | kubectl apply -f -; then
+        echo "Gateway API CRDs installed successfully."
+        break
+      else
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+          echo "Failed to install Gateway API CRDs. Retrying in ${RETRY_INTERVAL} seconds..."
+          sleep $RETRY_INTERVAL
+        else
+          echo "Failed to install Gateway API CRDs after $MAX_RETRIES attempts. Exiting."
+          exit 1
+        fi
+      fi
+    done
+  }
 
 K8S_GATEWAY_API_IE_VERSION=$(curl --head --silent "https://github.com/kubernetes-sigs/gateway-api-inference-extension/releases/latest" | grep "location: " | awk '{print $2}' | sed "s/.*tag\///g" | cat -v | sed "s/\^M//g")
 echo "Verifying that Gateway API Inference Extension is installed; if it is not then Gateway API Inference Extension version ${K8S_GATEWAY_API_IE_VERSION} will be installed now."
 kubectl get crd inferencepools.inference.networking.x-k8s.io &> /dev/null || \
-  { kubectl kustomize "github.com/kubernetes-sigs/gateway-api-inference-extension/config/crd?ref=${K8S_GATEWAY_API_IE_VERSION}" | kubectl apply -f -; }
+  {
+    echo "Installing Gateway API Inference Extension CRDs with retry logic..."
+    RETRY_COUNT=0
+    MAX_RETRIES=30
+    RETRY_INTERVAL=60
+    while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+      echo "Attempt $((RETRY_COUNT + 1))/$MAX_RETRIES: Installing Gateway API Inference Extension CRDs..."
+      if kubectl kustomize "github.com/kubernetes-sigs/gateway-api-inference-extension/config/crd?ref=${K8S_GATEWAY_API_IE_VERSION}" | kubectl apply -f -; then
+        echo "Gateway API Inference Extension CRDs installed successfully."
+        break
+      else
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+          echo "Failed to install Gateway API Inference Extension CRDs. Retrying in ${RETRY_INTERVAL} seconds..."
+          sleep $RETRY_INTERVAL
+        else
+          echo "Failed to install Gateway API Inference Extension CRDs after $MAX_RETRIES attempts. Exiting."
+          exit 1
+        fi
+      fi
+    done
+  }
 
 SERVICE="jaeger-collector.istio-system.svc.cluster.local"
 if is_in_array "tempo" "tempo" "${ADDONS}"; then
