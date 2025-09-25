@@ -1117,6 +1117,27 @@ func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 	fetchedMetadata, fetchError, _ := openIdFlightGroup.Do("metadata", func() (interface{}, error) {
 		cfg := conf.Auth.OpenId
 
+		// Check if we have explicit endpoint configuration
+		if cfg.AuthorizationEndpoint != "" && cfg.TokenEndpoint != "" {
+			// Use explicit configuration, skip auto-discovery
+			log.Infof("Using explicit OpenID endpoints, skipping auto-discovery")
+
+			metadata := &openIdMetadata{
+				Issuer:      cfg.IssuerUri,
+				AuthURL:     cfg.AuthorizationEndpoint,
+				TokenURL:    cfg.TokenEndpoint,
+				JWKSURL:     cfg.JwksUri,
+				UserInfoURL: cfg.UserInfoEndpoint, // Optional
+				// Assume "code" is supported when explicit config is provided
+				ResponseTypesSupported: []string{"code"},
+			}
+
+			return metadata, nil
+		}
+
+		// Original auto-discovery logic continues here...
+		log.Infof("Using auto-discovery for OpenID endpoints")
+
 		// Remove trailing slash from issuer URI, if needed
 		trimmedIssuerUri := strings.TrimRight(cfg.IssuerUri, "/")
 
