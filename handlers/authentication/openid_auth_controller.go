@@ -1119,8 +1119,8 @@ func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 
 		// Check if we have explicit endpoint configuration
 		if cfg.AuthorizationEndpoint != "" && cfg.TokenEndpoint != "" {
-			// Use explicit configuration, skip auto-discovery
-			log.Infof("Using explicit OpenID endpoints, skipping auto-discovery")
+			// Use explicit configuration for security-hardened environments
+			log.Infof("Using explicit OpenID endpoints for restricted environment")
 
 			metadata := &openIdMetadata{
 				Issuer:      cfg.IssuerUri,
@@ -1136,7 +1136,7 @@ func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 		}
 
 		// Original auto-discovery logic continues here...
-		log.Infof("Using auto-discovery for OpenID endpoints")
+		log.Infof("Using OpenID auto-discovery from provider")
 
 		// Remove trailing slash from issuer URI, if needed
 		trimmedIssuerUri := strings.TrimRight(cfg.IssuerUri, "/")
