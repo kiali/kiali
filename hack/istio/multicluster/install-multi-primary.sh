@@ -122,7 +122,7 @@ if [ "${MANAGE_KIND}" == "true" ]; then
     KEYCLOAK_ADDRESS="${beginning_subnet_octets}.${lb_range_start}"
 
     echo "==== START KIND FOR CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-    "${SCRIPT_DIR}"/../../start-kind.sh \
+    go run "${SCRIPT_DIR}"/../../../tools/cmd/installer/main.go \
       --name "${CLUSTER1_NAME}" \
       --load-balancer-range "${lb_range_start}-${lb_range_end}" \
       --enable-keycloak true \
@@ -147,7 +147,7 @@ if [ "${MANAGE_KIND}" == "true" ]; then
     "${SCRIPT_DIR}/../../keycloak.sh" -kcd "${KEYCLOAK_CERTS_DIR}" -kip "${KEYCLOAK_ADDRESS}" $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG deploy
 
     echo "==== START KIND FOR CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
-    "${SCRIPT_DIR}"/../../start-kind.sh \
+    go run "${SCRIPT_DIR}"/../../../tools/cmd/installer/main.go \
       --name "${CLUSTER2_NAME}" \
       --load-balancer-range "255.85-255.98" \
       --enable-keycloak true \
@@ -156,13 +156,13 @@ if [ "${MANAGE_KIND}" == "true" ]; then
       --image "${KIND_NODE_IMAGE}"
   else
     echo "==== START KIND FOR CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-    "${SCRIPT_DIR}"/../../start-kind.sh \
+    go run "${SCRIPT_DIR}"/../../../tools/cmd/installer/main.go \
       --name "${CLUSTER1_NAME}" \
       --load-balancer-range "255.70-255.84" \
       --image "${KIND_NODE_IMAGE}"
 
     echo "==== START KIND FOR CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
-    "${SCRIPT_DIR}"/../../start-kind.sh \
+    go run "${SCRIPT_DIR}"/../../../tools/cmd/installer/main.go \
       --name "${CLUSTER2_NAME}" \
       --load-balancer-range "255.85-255.98" \
       --image "${KIND_NODE_IMAGE}"
