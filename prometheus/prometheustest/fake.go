@@ -20,37 +20,37 @@ func (f *FakeClient) API() prom_v1.API {
 }
 
 // FetchDelta returns empty Metric
-func (f *FakeClient) FetchDelta(metricName, labels, grouping string, queryTime time.Time, duration time.Duration) prometheus.Metric {
+func (f *FakeClient) FetchDelta(ctx context.Context, metricName, labels, grouping string, queryTime time.Time, duration time.Duration) prometheus.Metric {
 	return prometheus.Metric{}
 }
 
 // FetchHistogramRange returns empty Histogram
-func (f *FakeClient) FetchHistogramRange(metricName, labels, grouping string, q *prometheus.RangeQuery) prometheus.Histogram {
+func (f *FakeClient) FetchHistogramRange(ctx context.Context, metricName, labels, grouping string, q *prometheus.RangeQuery) prometheus.Histogram {
 	return prometheus.Histogram{}
 }
 
 // FetchHistogramValues returns empty map and nil error
-func (f *FakeClient) FetchHistogramValues(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error) {
+func (f *FakeClient) FetchHistogramValues(ctx context.Context, metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error) {
 	return map[string]model.Vector{}, nil
 }
 
 // FetchRange returns empty Metric
-func (f *FakeClient) FetchRange(metricName, labels, grouping, aggregator string, q *prometheus.RangeQuery) prometheus.Metric {
+func (f *FakeClient) FetchRange(ctx context.Context, metricName, labels, grouping, aggregator string, q *prometheus.RangeQuery) prometheus.Metric {
 	return prometheus.Metric{}
 }
 
 // FetchRateRange returns empty Metric
-func (f *FakeClient) FetchRateRange(metricName string, labels []string, grouping string, q *prometheus.RangeQuery) prometheus.Metric {
+func (f *FakeClient) FetchRateRange(ctx context.Context, metricName string, labels []string, grouping string, q *prometheus.RangeQuery) prometheus.Metric {
 	return prometheus.Metric{}
 }
 
 // GetAllRequestRates returns empty Vector and nil error
-func (f *FakeClient) GetAllRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+func (f *FakeClient) GetAllRequestRates(ctx context.Context, namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	return model.Vector{}, nil
 }
 
 // GetAppRequestRates returns empty Vectors and nil error
-func (f *FakeClient) GetAppRequestRates(namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
+func (f *FakeClient) GetAppRequestRates(ctx context.Context, namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
 	return model.Vector{}, model.Vector{}, nil
 }
 
@@ -60,36 +60,36 @@ func (f *FakeClient) GetBuildInfo(ctx context.Context) (*prom_v1.BuildinfoResult
 }
 
 // GetConfiguration returns empty ConfigResult and nil error
-func (f *FakeClient) GetConfiguration() (prom_v1.ConfigResult, error) {
+func (f *FakeClient) GetConfiguration(ctx context.Context) (prom_v1.ConfigResult, error) {
 	return prom_v1.ConfigResult{}, nil
 }
 
 // GetExistingMetricNames returns empty slice and nil error
-func (f *FakeClient) GetExistingMetricNames(metricNames []string) ([]string, error) {
+func (f *FakeClient) GetExistingMetricNames(ctx context.Context, metricNames []string) ([]string, error) {
 	return []string{}, nil
 }
 
 // GetMetricsForLabels returns empty slice and nil error
-func (f *FakeClient) GetMetricsForLabels(metricNames []string, labels string) ([]string, error) {
+func (f *FakeClient) GetMetricsForLabels(ctx context.Context, metricNames []string, labels string) ([]string, error) {
 	return []string{}, nil
 }
 
 // GetNamespaceServicesRequestRates returns empty Vector and nil error
-func (f *FakeClient) GetNamespaceServicesRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+func (f *FakeClient) GetNamespaceServicesRequestRates(ctx context.Context, namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	return model.Vector{}, nil
 }
 
 // GetServiceRequestRates returns empty Vector and nil error
-func (f *FakeClient) GetServiceRequestRates(namespace, cluster, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+func (f *FakeClient) GetServiceRequestRates(ctx context.Context, namespace, cluster, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	return model.Vector{}, nil
 }
 
 // GetRuntimeinfo returns empty RuntimeinfoResult and nil error
-func (f *FakeClient) GetRuntimeinfo() (prom_v1.RuntimeinfoResult, error) {
+func (f *FakeClient) GetRuntimeinfo(ctx context.Context) (prom_v1.RuntimeinfoResult, error) {
 	return prom_v1.RuntimeinfoResult{}, nil
 }
 
 // GetWorkloadRequestRates returns empty Vectors and nil error
-func (f *FakeClient) GetWorkloadRequestRates(namespace, cluster, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
+func (f *FakeClient) GetWorkloadRequestRates(ctx context.Context, namespace, cluster, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
 	return model.Vector{}, model.Vector{}, nil
 }

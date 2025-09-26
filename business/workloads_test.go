@@ -31,7 +31,7 @@ func setupWorkloadService(t testing.TB, k8s kubernetes.UserClientInterface, conf
 	// config needs to be set by other services since those rely on the global.
 	prom := new(prometheustest.PromClientMock)
 	// Mocking out for the dashboards service. Maybe this should be set to something real?
-	prom.MockMetricsForLabels([]string{})
+	prom.MockMetricsForLabels(context.Background(), []string{})
 	return NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Workload
 }
 

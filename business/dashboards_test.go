@@ -50,8 +50,8 @@ func TestGetDashboard(t *testing.T) {
 		},
 	}
 	query.FillDefaults()
-	prom.MockMetric("my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
-	prom.MockHistogram("my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
+	prom.MockMetric(context.Background(), "my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
+	prom.MockHistogram(context.Background(), "my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
 
 	dashboard, err := service.GetDashboard(context.Background(), query, "dashboard1")
 
@@ -91,8 +91,8 @@ func TestGetDashboardFromKialiNamespace(t *testing.T) {
 		},
 	}
 	query.FillDefaults()
-	prom.MockMetric("my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
-	prom.MockHistogram("my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
+	prom.MockMetric(context.Background(), "my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
+	prom.MockHistogram(context.Background(), "my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
 
 	dashboard, err := service.GetDashboard(context.Background(), query, "dashboard1")
 
@@ -218,10 +218,10 @@ func TestGetCustomDashboardRefs(t *testing.T) {
 	// Setup mocks
 	service, prom := setupService(conf, "my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("1"), *fakeDashboard("2")})
 
-	prom.MockMetricsForLabels([]string{"my_metric_1_1", "request_count", "tcp_received", "tcp_sent"})
+	prom.MockMetricsForLabels(context.Background(), []string{"my_metric_1_1", "request_count", "tcp_received", "tcp_sent"})
 	pods := []*models.Pod{}
 
-	runtimes := service.GetCustomDashboardRefs("my-namespace", "app", "", pods)
+	runtimes := service.GetCustomDashboardRefs(context.Background(), "my-namespace", "app", "", pods)
 
 	prom.AssertNumberOfCalls(t, "GetMetricsForLabels", 1)
 	assert.Len(runtimes, 1)

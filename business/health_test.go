@@ -38,7 +38,7 @@ func TestGetServiceHealth(t *testing.T) {
 	prom := new(prometheustest.PromClientMock)
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
-	prom.MockServiceRequestRates("ns", conf.KubernetesConfig.ClusterName, "httpbin", serviceRates)
+	prom.MockServiceRequestRates(context.Background(), "ns", conf.KubernetesConfig.ClusterName, "httpbin", serviceRates)
 
 	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
 
@@ -85,7 +85,7 @@ func TestGetAppHealth(t *testing.T) {
 	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
-	prom.MockAppRequestRates("ns", conf.KubernetesConfig.ClusterName, "reviews", otherRatesIn, otherRatesOut)
+	prom.MockAppRequestRates(context.Background(), "ns", conf.KubernetesConfig.ClusterName, "reviews", otherRatesIn, otherRatesOut)
 
 	mockWkd := models.Workload{}
 	mockWkd.Name = "reviews-v1"
@@ -135,7 +135,7 @@ func TestGetWorkloadHealth(t *testing.T) {
 	prom := new(prometheustest.PromClientMock)
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
-	prom.MockWorkloadRequestRates("ns", conf.KubernetesConfig.ClusterName, "reviews-v1", otherRatesIn, otherRatesOut)
+	prom.MockWorkloadRequestRates(context.Background(), "ns", conf.KubernetesConfig.ClusterName, "reviews-v1", otherRatesIn, otherRatesOut)
 
 	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
 
@@ -185,7 +185,7 @@ func TestGetAppHealthWithoutIstio(t *testing.T) {
 	prom := new(prometheustest.PromClientMock)
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
-	prom.MockAppRequestRates("ns", conf.KubernetesConfig.ClusterName, "reviews", otherRatesIn, otherRatesOut)
+	prom.MockAppRequestRates(context.Background(), "ns", conf.KubernetesConfig.ClusterName, "reviews", otherRatesIn, otherRatesOut)
 
 	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
 
@@ -216,7 +216,7 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 	prom := new(prometheustest.PromClientMock)
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
-	prom.MockWorkloadRequestRates("ns", conf.KubernetesConfig.ClusterName, "reviews-v1", otherRatesIn, otherRatesOut)
+	prom.MockWorkloadRequestRates(context.Background(), "ns", conf.KubernetesConfig.ClusterName, "reviews-v1", otherRatesIn, otherRatesOut)
 
 	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
 
@@ -278,7 +278,7 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 	k8s.OpenShift = true
 	prom := new(prometheustest.PromClientMock)
 
-	prom.On("GetNamespaceServicesRequestRates", "tutorial", conf.KubernetesConfig.ClusterName, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
+	prom.On("GetNamespaceServicesRequestRates", mock.Anything, "tutorial", conf.KubernetesConfig.ClusterName, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
 
 	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
 
@@ -322,8 +322,8 @@ func TestGetNamespaceServicesHealthMultiCluster(t *testing.T) {
 		),
 	}
 	prom := new(prometheustest.PromClientMock)
-	prom.On("GetNamespaceServicesRequestRates", "tutorial", conf.KubernetesConfig.ClusterName, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
-	prom.On("GetNamespaceServicesRequestRates", "tutorial", "west", mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
+	prom.On("GetNamespaceServicesRequestRates", mock.Anything, "tutorial", conf.KubernetesConfig.ClusterName, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
+	prom.On("GetNamespaceServicesRequestRates", mock.Anything, "tutorial", "west", mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
 
 	hs := NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build().Health
 
@@ -355,8 +355,8 @@ func TestGetNamespaceApplicationsHealthMultiCluster(t *testing.T) {
 		),
 	}
 	prom := new(prometheustest.PromClientMock)
-	prom.On("GetAllRequestRates", "tutorial", conf.KubernetesConfig.ClusterName, "1m", mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
-	prom.On("GetAllRequestRates", "tutorial", "west", "1m", mock.AnythingOfType("time.Time")).Return(serviceRates500, nil)
+	prom.On("GetAllRequestRates", mock.Anything, "tutorial", conf.KubernetesConfig.ClusterName, "1m", mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
+	prom.On("GetAllRequestRates", mock.Anything, "tutorial", "west", "1m", mock.AnythingOfType("time.Time")).Return(serviceRates500, nil)
 
 	hs := NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build().Health
 
@@ -388,8 +388,8 @@ func TestGetNamespaceWorkloadsHealthMultiCluster(t *testing.T) {
 		),
 	}
 	prom := new(prometheustest.PromClientMock)
-	prom.On("GetAllRequestRates", "tutorial", conf.KubernetesConfig.ClusterName, "1m", mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
-	prom.On("GetAllRequestRates", "tutorial", "west", "1m", mock.AnythingOfType("time.Time")).Return(serviceRates500, nil)
+	prom.On("GetAllRequestRates", mock.Anything, "tutorial", conf.KubernetesConfig.ClusterName, "1m", mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
+	prom.On("GetAllRequestRates", mock.Anything, "tutorial", "west", "1m", mock.AnythingOfType("time.Time")).Return(serviceRates500, nil)
 
 	hs := NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build().Health
 

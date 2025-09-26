@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -60,7 +61,7 @@ func TestGetServiceMetrics(t *testing.T) {
 	api.MockHistoRange("istio_response_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.9)
 
 	// Test that range and rate interval are changed when needed (namespace bounds)
-	metrics, err := srv.GetMetrics(q, nil)
+	metrics, err := srv.GetMetrics(context.Background(), q, nil)
 
 	assert.Nil(err)
 	assert.Equal(13, len(metrics))
@@ -150,7 +151,7 @@ func TestGetAppMetrics(t *testing.T) {
 	q.FillDefaults()
 	q.RateInterval = "5m"
 	q.Quantiles = []string{"0.5", "0.95", "0.99"}
-	metrics, err := srv.GetMetrics(q, nil)
+	metrics, err := srv.GetMetrics(context.Background(), q, nil)
 
 	assert.Nil(err)
 	assert.Equal(13, len(metrics))
@@ -209,7 +210,7 @@ func TestGetFilteredAppMetrics(t *testing.T) {
 	q.FillDefaults()
 	q.RateInterval = "5m"
 	q.Filters = []string{"request_count", "request_size"}
-	metrics, err := srv.GetMetrics(q, nil)
+	metrics, err := srv.GetMetrics(context.Background(), q, nil)
 
 	assert.Nil(err)
 	assert.Equal(2, len(metrics))
@@ -234,7 +235,7 @@ func TestGetAppMetricsInstantRates(t *testing.T) {
 	q.FillDefaults()
 	q.RateFunc = "irate"
 	q.Filters = []string{"request_count"}
-	metrics, err := srv.GetMetrics(q, nil)
+	metrics, err := srv.GetMetrics(context.Background(), q, nil)
 
 	assert.Nil(err)
 	assert.Equal(1, len(metrics))
@@ -260,7 +261,7 @@ func TestGetAppMetricsUnavailable(t *testing.T) {
 	q.RateInterval = "5m"
 	q.Quantiles = []string{"0.5", "0.95", "0.99"}
 	q.Filters = []string{"request_count", "request_size"}
-	metrics, err := srv.GetMetrics(q, nil)
+	metrics, err := srv.GetMetrics(context.Background(), q, nil)
 
 	assert.Nil(err)
 	assert.Equal(2, len(metrics))
@@ -306,7 +307,7 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	q.FillDefaults()
 	q.RateInterval = "5m"
 	q.Quantiles = []string{"0.5", "0.95", "0.99"}
-	metrics, err := srv.GetMetrics(q, nil)
+	metrics, err := srv.GetMetrics(context.Background(), q, nil)
 
 	assert.Nil(err)
 	assert.Equal(13, len(metrics))
@@ -450,10 +451,10 @@ func TestGetMetricsStats(t *testing.T) {
 	q2P95 := model.Vector{createSample(9.3)}
 	q1Labels := `reporter="source",source_workload_namespace="ns1",source_canonical_service="foo"`
 	q2Labels := `reporter="destination",destination_service_name="bar",destination_service_namespace="ns2",source_workload_namespace="ns3",source_workload="w1"`
-	api.MockHistoValue("istio_request_duration_milliseconds", "{"+q1Labels+"}[30m]", q1Avg, v0, q1P95, v0)
-	api.MockHistoValue("istio_request_duration_milliseconds", "{"+q2Labels+"}[3h]", v0, q2P50, q2P95, v0)
+	api.MockHistoValue(context.Background(), "istio_request_duration_milliseconds", "{"+q1Labels+"}[30m]", q1Avg, v0, q1P95, v0)
+	api.MockHistoValue(context.Background(), "istio_request_duration_milliseconds", "{"+q2Labels+"}[3h]", v0, q2P50, q2P95, v0)
 
-	stats, err := srv.GetStats(queries)
+	stats, err := srv.GetStats(context.Background(), queries)
 
 	assert.Nil(err)
 	assert.Len(stats, 2)
