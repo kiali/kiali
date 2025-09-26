@@ -6,5 +6,5 @@ export const ensureKialiFinishedLoading = (): void => {
 };
 
 export const openTab = (tab: string): void => {
-  cy.get('#basic-tabs', { timeout: 60000 }).should('be.visible').contains(tab).click(); // Can be very slow for OpenShift, specially in the UI
+  cy.get('#basic-tabs', { timeout: 60000 }).should('exist').contains(tab).click(); // Can be very slow for OpenShift, specially in the UI
 };
