@@ -796,3 +796,71 @@ func TestLoadingCertPool(t *testing.T) {
 		})
 	}
 }
+
+func TestOpenIdConfigDefaults(t *testing.T) {
+	conf := NewConfig()
+
+	// Test that new OIDC endpoint fields are initialized to empty strings
+	assert.Equal(t, "", conf.Auth.OpenId.AuthorizationEndpoint)
+	assert.Equal(t, "", conf.Auth.OpenId.TokenEndpoint)
+	assert.Equal(t, "", conf.Auth.OpenId.UserInfoEndpoint)
+	assert.Equal(t, "", conf.Auth.OpenId.JwksUri)
+}
+
+func TestOpenIdConfigUnmarshaling(t *testing.T) {
+	yamlConfig := `
+auth:
+  strategy: "openid"
+  openid:
+    issuer_uri: "https://example.com"
+    client_id: "kiali-client"
+    client_secret: "secret"
+    authorization_endpoint: "https://example.com/auth"
+    token_endpoint: "https://example.com/token"
+    userinfo_endpoint: "https://example.com/userinfo"
+    jwks_uri: "https://example.com/jwks"
+`
+
+	conf, err := Unmarshal(yamlConfig)
+	require.NoError(t, err)
+
+	assert.Equal(t, "openid", conf.Auth.Strategy)
+	assert.Equal(t, "https://example.com", conf.Auth.OpenId.IssuerUri)
+	assert.Equal(t, "kiali-client", conf.Auth.OpenId.ClientId)
+	assert.Equal(t, "secret", conf.Auth.OpenId.ClientSecret)
+	assert.Equal(t, "https://example.com/auth", conf.Auth.OpenId.AuthorizationEndpoint)
+	assert.Equal(t, "https://example.com/token", conf.Auth.OpenId.TokenEndpoint)
+	assert.Equal(t, "https://example.com/userinfo", conf.Auth.OpenId.UserInfoEndpoint)
+	assert.Equal(t, "https://example.com/jwks", conf.Auth.OpenId.JwksUri)
+}
+
+func TestOpenIdConfigMarshalUnmarshal(t *testing.T) {
+	// Create a config with explicit OIDC endpoints
+	conf := NewConfig()
+	conf.Auth.Strategy = "openid"
+	conf.Auth.OpenId.IssuerUri = "https://example.com"
+	conf.Auth.OpenId.ClientId = "kiali-client"
+	conf.Auth.OpenId.ClientSecret = "secret"
+	conf.Auth.OpenId.AuthorizationEndpoint = "https://example.com/auth"
+	conf.Auth.OpenId.TokenEndpoint = "https://example.com/token"
+	conf.Auth.OpenId.UserInfoEndpoint = "https://example.com/userinfo"
+	conf.Auth.OpenId.JwksUri = "https://example.com/jwks"
+
+	// Marshal to YAML
+	yamlData, err := Marshal(conf)
+	require.NoError(t, err)
+
+	// Unmarshal back to config
+	conf2, err := Unmarshal(yamlData)
+	require.NoError(t, err)
+
+	// Verify all fields are preserved
+	assert.Equal(t, conf.Auth.Strategy, conf2.Auth.Strategy)
+	assert.Equal(t, conf.Auth.OpenId.IssuerUri, conf2.Auth.OpenId.IssuerUri)
+	assert.Equal(t, conf.Auth.OpenId.ClientId, conf2.Auth.OpenId.ClientId)
+	assert.Equal(t, conf.Auth.OpenId.ClientSecret, conf2.Auth.OpenId.ClientSecret)
+	assert.Equal(t, conf.Auth.OpenId.AuthorizationEndpoint, conf2.Auth.OpenId.AuthorizationEndpoint)
+	assert.Equal(t, conf.Auth.OpenId.TokenEndpoint, conf2.Auth.OpenId.TokenEndpoint)
+	assert.Equal(t, conf.Auth.OpenId.UserInfoEndpoint, conf2.Auth.OpenId.UserInfoEndpoint)
+	assert.Equal(t, conf.Auth.OpenId.JwksUri, conf2.Auth.OpenId.JwksUri)
+}
