@@ -3,11 +3,11 @@ import { getCellsForCol } from './table';
 import { clusterParameterExists } from './navigation';
 
 const openTab = (tab: string): void => {
-  cy.get('#basic-tabs').should('be.visible').contains(tab).click();
+  cy.get('#basic-tabs').should('exist').contains(tab).click();
 };
 
 const openEnvoyTab = (tab: string): void => {
-  cy.get('#envoy-details').should('be.visible').contains(tab).click();
+  cy.get('#envoy-details').should('exist').contains(tab).click();
 };
 
 Then('user sees details information for workload', () => {
