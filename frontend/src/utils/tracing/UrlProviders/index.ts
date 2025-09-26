@@ -25,6 +25,7 @@ export function GetTracingUrlProvider(
     if (svc.tempoConfig?.urlFormat === TempoUrlFormat.JAEGER) {
       urlProvider = new JaegerUrlProvider(svc);
     } else {
+      // Handle GRAFANA, OPENSHIFT, and other formats through TempoUrlProvider
       urlProvider = new TempoUrlProvider(svc, externalServices);
     }
   }

@@ -1,8 +1,9 @@
 import { ConcreteService, TracingUrlProvider, TEMPO, GRAFANA, JAEGER } from 'types/Tracing';
-import { ExternalServiceInfo, TempoConfig } from 'types/StatusState';
+import { ExternalServiceInfo, TempoConfig, TempoUrlFormat } from 'types/StatusState';
 import { BoundsInMilliseconds } from 'types/Common';
 import { GrafanaLegacyUrlProvider } from './GrafanaLegacy';
 import { GrafanaUrlProvider } from './Grafana';
+import { OpenShiftUrlProvider } from './OpenShift';
 import { SpanData, TraceData } from 'types/TracingInfo';
 
 interface TempoExternalService extends ConcreteService {
@@ -39,17 +40,27 @@ export class TempoUrlProvider implements TracingUrlProvider {
 
   constructor(service: TempoExternalService, externalServices: ExternalServiceInfo[]) {
     let frontendProvider: TracingUrlProvider | undefined = undefined;
-    const svc = externalServices.find(s => [GRAFANA, JAEGER].includes(s.name.toLowerCase()));
-    if (svc && svc.name.toLowerCase() === GRAFANA && svc.url !== undefined) {
-      if (service.tempoConfig?.datasourceUID !== undefined) {
-        // Grafana 10+
-        frontendProvider = new GrafanaUrlProvider(svc.url, {
-          datasource_uid: service.tempoConfig.datasourceUID,
-          orgID: service.tempoConfig.orgID
-        });
-      } else {
-        // Fallback to older Grafana URL schema
-        frontendProvider = new GrafanaLegacyUrlProvider(svc.url);
+
+    // Handle OpenShift URL format
+    if (service.tempoConfig?.urlFormat === TempoUrlFormat.OPENSHIFT) {
+      // For OpenShift, we use the service's own URL
+      if (service.url) {
+        frontendProvider = new OpenShiftUrlProvider(service);
+      }
+    } else {
+      // Handle Grafana and Jaeger formats
+      const svc = externalServices.find(s => [GRAFANA, JAEGER].includes(s.name.toLowerCase()));
+      if (svc && svc.name.toLowerCase() === GRAFANA && svc.url !== undefined) {
+        if (service.tempoConfig?.datasourceUID !== undefined) {
+          // Grafana 10+
+          frontendProvider = new GrafanaUrlProvider(svc.url, {
+            datasource_uid: service.tempoConfig.datasourceUID,
+            orgID: service.tempoConfig.orgID
+          });
+        } else {
+          // Fallback to older Grafana URL schema
+          frontendProvider = new GrafanaLegacyUrlProvider(svc.url);
+        }
       }
     }
 

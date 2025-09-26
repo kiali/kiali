@@ -308,7 +308,10 @@ type TempoConfig struct {
 	CacheCapacity int    `yaml:"cache_capacity" json:"cacheCapacity,omitempty"`
 	CacheEnabled  bool   `yaml:"cache_enabled" json:"cacheEnabled,omitempty"`
 	DatasourceUID string `yaml:"datasource_uid" json:"datasourceUID,omitempty"`
+	Name          string `yaml:"name" json:"name,omitempty"`
+	Namespace     string `yaml:"namespace" json:"namespace,omitempty"`
 	OrgID         string `yaml:"org_id" json:"orgID,omitempty"`
+	Tenant        string `yaml:"tenant" json:"tenant,omitempty"`
 	URLFormat     string `yaml:"url_format" json:"urlFormat,omitempty"`
 }
 
@@ -857,6 +860,9 @@ func NewConfig() (c *Config) {
 				TempoConfig: TempoConfig{
 					CacheCapacity: 200,
 					CacheEnabled:  true,
+					Name:          "sample",
+					Namespace:     "tempo",
+					Tenant:        "default",
 				},
 				UseGRPC:              true,
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
