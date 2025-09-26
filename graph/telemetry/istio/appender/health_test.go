@@ -452,7 +452,7 @@ type servicesError struct {
 }
 
 func (s *servicesError) GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
-	return nil, fmt.Errorf(s.errorMsg)
+	return nil, fmt.Errorf("%s", s.errorMsg)
 }
 
 func (s *servicesError) GetKubeCache(cluster string) (cache.KubeCache, error) {
