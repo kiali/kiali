@@ -872,7 +872,7 @@ func (conf Config) String() (str string) {
 	str, err := Marshal(&obf)
 	if err != nil {
 		str = fmt.Sprintf("Failed to marshal config to string. err=%v", err)
-		log.Debugf(str)
+		log.Debugf("%s", str)
 	}
 
 	return

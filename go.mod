@@ -1,6 +1,6 @@
 module github.com/kiali/kiali
 
-go 1.23.6
+go 1.24.4
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1
