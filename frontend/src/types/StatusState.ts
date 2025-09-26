@@ -8,14 +8,18 @@ export enum StatusKey {
 
 export enum TempoUrlFormat {
   JAEGER = 'jaeger',
-  GRAFANA = 'grafana'
+  GRAFANA = 'grafana',
+  OPENSHIFT = 'openshift'
 }
 
 export type Status = { [K in StatusKey]?: string };
 
 export type TempoConfig = {
   datasourceUID: string;
+  name: string;
+  namespace: string;
   orgID: string;
+  tenant: string;
   urlFormat: TempoUrlFormat;
 };
 
