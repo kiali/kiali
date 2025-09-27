@@ -150,7 +150,7 @@ func AppDashboard(
 		}
 
 		metricsService := business.NewMetricsService(prom, conf)
-		metrics, err := metricsService.GetMetrics(params, business.GetIstioScaler())
+		metrics, err := metricsService.GetMetrics(r.Context(), params, business.GetIstioScaler())
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
@@ -210,7 +210,7 @@ func ServiceDashboard(
 		}
 
 		metricsService := business.NewMetricsService(prom, conf)
-		metrics, err := metricsService.GetMetrics(params, business.GetIstioScaler())
+		metrics, err := metricsService.GetMetrics(r.Context(), params, business.GetIstioScaler())
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
@@ -247,7 +247,7 @@ func WorkloadDashboard(
 		}
 
 		metricsService := business.NewMetricsService(prom, conf)
-		metrics, err := metricsService.GetMetrics(params, business.GetIstioScaler())
+		metrics, err := metricsService.GetMetrics(r.Context(), params, business.GetIstioScaler())
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
@@ -290,7 +290,7 @@ func ZtunnelDashboard(
 
 		metricsService := business.NewMetricsService(prom, conf)
 
-		ztunnelMetrics, err := metricsService.GetZtunnelMetrics(params)
+		ztunnelMetrics, err := metricsService.GetZtunnelMetrics(r.Context(), params)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return

@@ -183,7 +183,7 @@ func (o *PromAPIMock) MockEmptyRange(query string) {
 	o.OnQueryRange(query, nil, emptyMatrix())
 }
 
-func (o *PromAPIMock) MockHistoValue(baseName, suffix string, retAvg model.Vector, retMed model.Vector, ret95 model.Vector, ret99 model.Vector) {
+func (o *PromAPIMock) MockHistoValue(ctx context.Context, baseName, suffix string, retAvg model.Vector, retMed model.Vector, ret95 model.Vector, ret99 model.Vector) {
 	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le))"
 	o.MockTime("histogram_quantile(0.5, "+histMetric, retMed)
 	o.MockTime("histogram_quantile(0.95, "+histMetric, ret95)
@@ -283,37 +283,37 @@ func (o *PromClientMock) API() prom_v1.API {
 }
 
 // MockAllRequestRates mocks GetAllRequestRates for given namespace, rateInverval and queryTime, returning out vector
-func (o *PromClientMock) MockAllRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time, out model.Vector) {
-	o.On("GetAllRequestRates", namespace, cluster, ratesInterval, queryTime).Return(out, nil)
+func (o *PromClientMock) MockAllRequestRates(ctx context.Context, namespace, cluster, ratesInterval string, queryTime time.Time, out model.Vector) {
+	o.On("GetAllRequestRates", mock.Anything, namespace, cluster, ratesInterval, queryTime).Return(out, nil)
 }
 
 // MockAppRequestRates mocks GetAppRequestRates for given namespace and app, returning in & out vectors
-func (o *PromClientMock) MockAppRequestRates(namespace, cluster, app string, in, out model.Vector) {
-	o.On("GetAppRequestRates", namespace, cluster, app, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(in, out, nil)
+func (o *PromClientMock) MockAppRequestRates(ctx context.Context, namespace, cluster, app string, in, out model.Vector) {
+	o.On("GetAppRequestRates", mock.Anything, namespace, cluster, app, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(in, out, nil)
 }
 
 // MockNamespaceServicesRequestRates mocks GetNamespaceServicesRequestRates for given namespace, rateInterval and queryTime, returning out vector
-func (o *PromClientMock) MockNamespaceServicesRequestRates(namespace, ratesInterval string, queryTime time.Time, out model.Vector) {
-	o.On("GetNamespaceServicesRequestRates", namespace, ratesInterval, queryTime).Return(out, nil)
+func (o *PromClientMock) MockNamespaceServicesRequestRates(ctx context.Context, namespace, cluster, ratesInterval string, queryTime time.Time, out model.Vector) {
+	o.On("GetNamespaceServicesRequestRates", mock.Anything, namespace, cluster, ratesInterval, queryTime).Return(out, nil)
 }
 
 // MockServiceRequestRates mocks GetServiceRequestRates for given namespace and service, returning in vector
-func (o *PromClientMock) MockServiceRequestRates(namespace, cluster, service string, in model.Vector) {
-	o.On("GetServiceRequestRates", namespace, cluster, service, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(in, nil)
+func (o *PromClientMock) MockServiceRequestRates(ctx context.Context, namespace, cluster, service string, in model.Vector) {
+	o.On("GetServiceRequestRates", mock.Anything, namespace, cluster, service, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(in, nil)
 }
 
 // MockWorkloadRequestRates mocks GetWorkloadRequestRates for given namespace and workload, returning in & out vectors
-func (o *PromClientMock) MockWorkloadRequestRates(namespace, cluster, wkld string, in, out model.Vector) {
-	o.On("GetWorkloadRequestRates", namespace, cluster, wkld, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(in, out, nil)
+func (o *PromClientMock) MockWorkloadRequestRates(ctx context.Context, namespace, cluster, wkld string, in, out model.Vector) {
+	o.On("GetWorkloadRequestRates", mock.Anything, namespace, cluster, wkld, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(in, out, nil)
 }
 
 // MockMetricsForLabels mocks GetMetricsForLabels
-func (o *PromClientMock) MockMetricsForLabels(metrics []string) {
-	o.On("GetMetricsForLabels", mock.AnythingOfType("[]string"), mock.AnythingOfType("string")).Return(metrics, nil)
+func (o *PromClientMock) MockMetricsForLabels(ctx context.Context, metrics []string) {
+	o.On("GetMetricsForLabels", mock.Anything, mock.AnythingOfType("[]string"), mock.AnythingOfType("string")).Return(metrics, nil)
 }
 
-func (o *PromClientMock) GetAllRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
-	args := o.Called(namespace, cluster, ratesInterval, queryTime)
+func (o *PromClientMock) GetAllRequestRates(ctx context.Context, namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+	args := o.Called(ctx, namespace, cluster, ratesInterval, queryTime)
 	return args.Get(0).(model.Vector), args.Error(1)
 }
 
@@ -325,77 +325,77 @@ func (o *PromClientMock) GetBuildInfo(ctx context.Context) (*prom_v1.BuildinfoRe
 	return args.Get(0).(*prom_v1.BuildinfoResult), args.Error(1)
 }
 
-func (o *PromClientMock) GetConfiguration() (prom_v1.ConfigResult, error) {
-	args := o.Called()
+func (o *PromClientMock) GetConfiguration(ctx context.Context) (prom_v1.ConfigResult, error) {
+	args := o.Called(ctx)
 	return args.Get(0).(prom_v1.ConfigResult), args.Error(1)
 }
 
-func (o *PromClientMock) GetExistingMetricNames(metricNames []string) ([]string, error) {
-	args := o.Called(metricNames)
+func (o *PromClientMock) GetExistingMetricNames(ctx context.Context, metricNames []string) ([]string, error) {
+	args := o.Called(ctx, metricNames)
 	return args.Get(0).([]string), args.Error(1)
 }
 
-func (o *PromClientMock) GetNamespaceServicesRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
-	args := o.Called(namespace, cluster, ratesInterval, queryTime)
+func (o *PromClientMock) GetNamespaceServicesRequestRates(ctx context.Context, namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+	args := o.Called(ctx, namespace, cluster, ratesInterval, queryTime)
 	return args.Get(0).(model.Vector), args.Error(1)
 }
 
-func (o *PromClientMock) GetAppRequestRates(namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
-	args := o.Called(namespace, cluster, app, ratesInterval, queryTime)
+func (o *PromClientMock) GetAppRequestRates(ctx context.Context, namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
+	args := o.Called(ctx, namespace, cluster, app, ratesInterval, queryTime)
 	return args.Get(0).(model.Vector), args.Get(1).(model.Vector), args.Error(2)
 }
 
-func (o *PromClientMock) GetServiceRequestRates(namespace, cluster, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
-	args := o.Called(namespace, cluster, service, ratesInterval, queryTime)
+func (o *PromClientMock) GetServiceRequestRates(ctx context.Context, namespace, cluster, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+	args := o.Called(ctx, namespace, cluster, service, ratesInterval, queryTime)
 	return args.Get(0).(model.Vector), args.Error(1)
 }
 
-func (o *PromClientMock) GetWorkloadRequestRates(namespace, cluster, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
-	args := o.Called(namespace, cluster, workload, ratesInterval, queryTime)
+func (o *PromClientMock) GetWorkloadRequestRates(ctx context.Context, namespace, cluster, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
+	args := o.Called(ctx, namespace, cluster, workload, ratesInterval, queryTime)
 	return args.Get(0).(model.Vector), args.Get(1).(model.Vector), args.Error(2)
 }
 
-func (o *PromClientMock) FetchDelta(metricName, labels, grouping string, queryTime time.Time, duration time.Duration) prometheus.Metric {
-	args := o.Called(metricName, labels, grouping, queryTime, duration)
+func (o *PromClientMock) FetchDelta(ctx context.Context, metricName, labels, grouping string, queryTime time.Time, duration time.Duration) prometheus.Metric {
+	args := o.Called(ctx, metricName, labels, grouping, queryTime, duration)
 	return args.Get(0).(prometheus.Metric)
 }
 
-func (o *PromClientMock) FetchRange(metricName, labels, grouping, aggregator string, q *prometheus.RangeQuery) prometheus.Metric {
-	args := o.Called(metricName, labels, grouping, aggregator, q)
+func (o *PromClientMock) FetchRange(ctx context.Context, metricName, labels, grouping, aggregator string, q *prometheus.RangeQuery) prometheus.Metric {
+	args := o.Called(ctx, metricName, labels, grouping, aggregator, q)
 	return args.Get(0).(prometheus.Metric)
 }
 
-func (o *PromClientMock) FetchRateRange(metricName string, labels []string, grouping string, q *prometheus.RangeQuery) prometheus.Metric {
-	args := o.Called(metricName, labels, grouping, q)
+func (o *PromClientMock) FetchRateRange(ctx context.Context, metricName string, labels []string, grouping string, q *prometheus.RangeQuery) prometheus.Metric {
+	args := o.Called(ctx, metricName, labels, grouping, q)
 	return args.Get(0).(prometheus.Metric)
 }
 
-func (o *PromClientMock) FetchHistogramRange(metricName, labels, grouping string, q *prometheus.RangeQuery) prometheus.Histogram {
-	args := o.Called(metricName, labels, grouping, q)
+func (o *PromClientMock) FetchHistogramRange(ctx context.Context, metricName, labels, grouping string, q *prometheus.RangeQuery) prometheus.Histogram {
+	args := o.Called(ctx, metricName, labels, grouping, q)
 	return args.Get(0).(prometheus.Histogram)
 }
 
-func (o *PromClientMock) FetchHistogramValues(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error) {
-	args := o.Called(metricName, labels, grouping, rateInterval, avg, quantiles, queryTime)
+func (o *PromClientMock) FetchHistogramValues(ctx context.Context, metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error) {
+	args := o.Called(ctx, metricName, labels, grouping, rateInterval, avg, quantiles, queryTime)
 	return args.Get(0).(map[string]model.Vector), args.Error((1))
 }
 
-func (o *PromClientMock) GetMetricsForLabels(metricNames []string, labels string) ([]string, error) {
-	args := o.Called(metricNames, labels)
+func (o *PromClientMock) GetMetricsForLabels(ctx context.Context, metricNames []string, labels string) ([]string, error) {
+	args := o.Called(ctx, metricNames, labels)
 	return args.Get(0).([]string), args.Error(1)
 }
 
-func (o *PromClientMock) GetRuntimeinfo() (prom_v1.RuntimeinfoResult, error) {
-	args := o.Called()
+func (o *PromClientMock) GetRuntimeinfo(ctx context.Context) (prom_v1.RuntimeinfoResult, error) {
+	args := o.Called(ctx)
 	return args.Get(0).(prom_v1.RuntimeinfoResult), args.Error(1)
 }
 
-func (o *PromClientMock) MockMetric(name string, labels string, q *prometheus.RangeQuery, value float64) {
-	o.On("FetchRateRange", name, []string{labels}, "", q).Return(fakeMetric(value))
+func (o *PromClientMock) MockMetric(ctx context.Context, name string, labels string, q *prometheus.RangeQuery, value float64) {
+	o.On("FetchRateRange", mock.Anything, name, []string{labels}, "", q).Return(fakeMetric(value))
 }
 
-func (o *PromClientMock) MockHistogram(name string, labels string, q *prometheus.RangeQuery, avg, p99 float64) {
-	o.On("FetchHistogramRange", name, labels, "", q).Return(fakeHistogram(avg, p99))
+func (o *PromClientMock) MockHistogram(ctx context.Context, name string, labels string, q *prometheus.RangeQuery, avg, p99 float64) {
+	o.On("FetchHistogramRange", mock.Anything, name, labels, "", q).Return(fakeHistogram(avg, p99))
 }
 
 func fakeMetric(value float64) prometheus.Metric {

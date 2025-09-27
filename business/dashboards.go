@@ -178,13 +178,13 @@ func (in *DashboardsService) GetDashboard(ctx context.Context, params models.Das
 					if chart.Aggregator != "" {
 						aggregator = chart.Aggregator
 					}
-					metric := promClient.FetchRange(ref.MetricName, filters, grouping, aggregator, &params.RangeQuery)
+					metric := promClient.FetchRange(ctx, ref.MetricName, filters, grouping, aggregator, &params.RangeQuery)
 					converted, err = models.ConvertMetric(ref.DisplayName, metric, conversionParams)
 				case dashboards.Rate:
-					metric := promClient.FetchRateRange(ref.MetricName, []string{filters}, grouping, &params.RangeQuery)
+					metric := promClient.FetchRateRange(ctx, ref.MetricName, []string{filters}, grouping, &params.RangeQuery)
 					converted, err = models.ConvertMetric(ref.DisplayName, metric, conversionParams)
 				default:
-					histo := promClient.FetchHistogramRange(ref.MetricName, filters, grouping, &params.RangeQuery)
+					histo := promClient.FetchHistogramRange(ctx, ref.MetricName, filters, grouping, &params.RangeQuery)
 					converted, err = models.ConvertHistogram(ref.DisplayName, histo, conversionParams)
 				}
 
@@ -267,7 +267,7 @@ func (in *DashboardsService) buildRuntimesList(templatesNames []string) []models
 	return runtimes
 }
 
-func (in *DashboardsService) fetchDashboardMetricNames(namespace string, labelsFilters map[string]string) []string {
+func (in *DashboardsService) fetchDashboardMetricNames(ctx context.Context, namespace string, labelsFilters map[string]string) []string {
 	promClient := in.promClient
 
 	// Get the list of metrics that we look for to determine which dashboards can be used.
@@ -280,7 +280,7 @@ func (in *DashboardsService) fetchDashboardMetricNames(namespace string, labelsF
 	}
 
 	labels := in.buildLabelsQueryString(namespace, labelsFilters)
-	metrics, err := promClient.GetMetricsForLabels(discoverOnMetrics, labels)
+	metrics, err := promClient.GetMetricsForLabels(ctx, discoverOnMetrics, labels)
 	if err != nil {
 		log.Errorf("custom dashboard discovery failed, cannot load metrics for labels [%s]: %v", labels, err)
 	}
@@ -288,10 +288,10 @@ func (in *DashboardsService) fetchDashboardMetricNames(namespace string, labelsF
 }
 
 // discoverDashboards tries to discover dashboards based on existing metrics
-func (in *DashboardsService) discoverDashboards(namespace string, labelsFilters map[string]string) []models.Runtime {
+func (in *DashboardsService) discoverDashboards(ctx context.Context, namespace string, labelsFilters map[string]string) []models.Runtime {
 	log.Tracef("starting custom dashboard discovery on namespace [%s] with filters [%v]", namespace, labelsFilters)
 
-	metrics := in.fetchDashboardMetricNames(namespace, labelsFilters)
+	metrics := in.fetchDashboardMetricNames(ctx, namespace, labelsFilters)
 
 	return runDiscoveryMatcher(metrics, in.dashboards)
 }
@@ -603,7 +603,7 @@ func (in *DashboardsService) BuildIstioDashboard(metrics models.MetricsMap, dire
 }
 
 // GetCustomDashboardRefs finds all dashboard IDs and Titles associated to this app and add them to the model
-func (in *DashboardsService) GetCustomDashboardRefs(namespace, app, version string, pods []*models.Pod) []models.Runtime {
+func (in *DashboardsService) GetCustomDashboardRefs(ctx context.Context, namespace, app, version string, pods []*models.Pod) []models.Runtime {
 	if !in.CustomEnabled || app == "" {
 		// Custom dashboards are disabled or the app label is not configured
 		return []models.Runtime{}
@@ -623,7 +623,7 @@ func (in *DashboardsService) GetCustomDashboardRefs(namespace, app, version stri
 			(discoveryEnabled == config.DashboardsDiscoveryAuto &&
 				len(pods) <= in.conf.ExternalServices.CustomDashboards.DiscoveryAutoThreshold) {
 			for _, appVersionLabelSelector := range in.conf.GetAppVersionLabelSelectors(app, version) {
-				for _, discoveredDashboard := range in.discoverDashboards(namespace, appVersionLabelSelector.Requirements) {
+				for _, discoveredDashboard := range in.discoverDashboards(ctx, namespace, appVersionLabelSelector.Requirements) {
 					discoveredRuntimes[discoveredDashboard.Name] = discoveredDashboard
 				}
 			}

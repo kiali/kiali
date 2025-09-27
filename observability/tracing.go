@@ -24,6 +24,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
+	utilcontext "github.com/kiali/kiali/util/context"
 )
 
 const (
@@ -121,9 +122,15 @@ func Attribute(key string, val interface{}) attribute.KeyValue {
 // a new context with the span added and a func to be called when the span ends.
 // If tracing is not enabled, this function does nothing. The return func is
 // safe to call even when tracing is not enabled.
+// Automatically includes X-Request-Id as a span attribute if available in context.
 func StartSpan(ctx context.Context, funcName string, attrs ...attribute.KeyValue) (context.Context, EndFunc) {
 	var span trace.Span
 	if config.Get().Server.Observability.Tracing.Enabled {
+		// Add X-Request-Id as span attribute if available in context
+		if headers := utilcontext.GetRequestHeadersContext(ctx); headers != nil && headers.IsValid() {
+			attrs = append(attrs, Attribute("request_id", headers.XRequestID))
+		}
+
 		ctx, span = otel.Tracer(TracerName()).Start(ctx, funcName,
 			trace.WithAttributes(attrs...),
 		)

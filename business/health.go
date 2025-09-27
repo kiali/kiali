@@ -55,7 +55,7 @@ func (in *HealthService) GetServiceHealth(ctx context.Context, namespace, cluste
 	)
 	defer end()
 
-	rqHealth, err := in.getServiceRequestsHealth(namespace, cluster, service, rateInterval, queryTime, svc)
+	rqHealth, err := in.getServiceRequestsHealth(ctx, namespace, cluster, service, rateInterval, queryTime, svc)
 	return models.ServiceHealth{Requests: rqHealth}, err
 }
 
@@ -72,10 +72,10 @@ func (in *HealthService) GetAppHealth(ctx context.Context, namespace, cluster, a
 	)
 	defer end()
 
-	return in.getAppHealth(namespace, cluster, app, rateInterval, queryTime, appD.Workloads)
+	return in.getAppHealth(ctx, namespace, cluster, app, rateInterval, queryTime, appD.Workloads)
 }
 
-func (in *HealthService) getAppHealth(namespace, cluster, app, rateInterval string, queryTime time.Time, ws models.Workloads) (models.AppHealth, error) {
+func (in *HealthService) getAppHealth(ctx context.Context, namespace, cluster, app, rateInterval string, queryTime time.Time, ws models.Workloads) (models.AppHealth, error) {
 	health := models.EmptyAppHealth()
 
 	// Perf: do not bother fetching request rate if there are no workloads or no workload has sidecar
@@ -90,7 +90,7 @@ func (in *HealthService) getAppHealth(namespace, cluster, app, rateInterval stri
 	// Fetch services requests rates
 	var errRate error
 	if hasSidecar {
-		rate, err := in.getAppRequestsHealth(namespace, cluster, app, rateInterval, queryTime)
+		rate, err := in.getAppRequestsHealth(ctx, namespace, cluster, app, rateInterval, queryTime)
 		health.Requests = rate
 		errRate = err
 	}
@@ -122,7 +122,7 @@ func (in *HealthService) GetWorkloadHealth(ctx context.Context, namespace, clust
 	}
 
 	// Add Telemetry info
-	rate, err := in.getWorkloadRequestsHealth(namespace, cluster, workload, rateInterval, queryTime, w)
+	rate, err := in.getWorkloadRequestsHealth(ctx, namespace, cluster, workload, rateInterval, queryTime, w)
 	return models.WorkloadHealth{
 		WorkloadStatus: w.CastWorkloadStatus(),
 		Requests:       rate,
@@ -186,7 +186,7 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 
 	if sidecarPresent && criteria.IncludeMetrics {
 		// Fetch services requests rates
-		rates, err := in.prom.GetAllRequestRates(namespace, cluster, rateInterval, queryTime)
+		rates, err := in.prom.GetAllRequestRates(context.Background(), namespace, cluster, rateInterval, queryTime)
 		if err != nil {
 			return allHealth, errors.NewServiceUnavailable(err.Error())
 		}
@@ -234,10 +234,10 @@ func (in *HealthService) GetNamespaceServiceHealth(ctx context.Context, criteria
 	if err != nil {
 		return nil, err
 	}
-	return in.getNamespaceServiceHealth(services, criteria), nil
+	return in.getNamespaceServiceHealth(ctx, services, criteria), nil
 }
 
-func (in *HealthService) getNamespaceServiceHealth(services *models.ServiceList, criteria NamespaceHealthCriteria) models.NamespaceServiceHealth {
+func (in *HealthService) getNamespaceServiceHealth(ctx context.Context, services *models.ServiceList, criteria NamespaceHealthCriteria) models.NamespaceServiceHealth {
 	namespace := criteria.Namespace
 	queryTime := criteria.QueryTime
 	rateInterval := criteria.RateInterval
@@ -256,7 +256,7 @@ func (in *HealthService) getNamespaceServiceHealth(services *models.ServiceList,
 
 	if criteria.IncludeMetrics {
 		// Fetch services requests rates
-		rates, _ := in.prom.GetNamespaceServicesRequestRates(namespace, cluster, rateInterval, queryTime)
+		rates, _ := in.prom.GetNamespaceServicesRequestRates(ctx, namespace, cluster, rateInterval, queryTime)
 		// Fill with collected request rates
 		lblDestSvc := model.LabelName("destination_service_name")
 		for _, sample := range rates {
@@ -301,10 +301,10 @@ func (in *HealthService) GetNamespaceWorkloadHealth(ctx context.Context, criteri
 		return nil, err
 	}
 
-	return in.getNamespaceWorkloadHealth(wl, criteria)
+	return in.getNamespaceWorkloadHealth(ctx, wl, criteria)
 }
 
-func (in *HealthService) getNamespaceWorkloadHealth(ws models.Workloads, criteria NamespaceHealthCriteria) (models.NamespaceWorkloadHealth, error) {
+func (in *HealthService) getNamespaceWorkloadHealth(ctx context.Context, ws models.Workloads, criteria NamespaceHealthCriteria) (models.NamespaceWorkloadHealth, error) {
 	// Perf: do not bother fetching request rate if no workloads or no workload has sidecar
 	hasSidecar := false
 	namespace := criteria.Namespace
@@ -326,7 +326,7 @@ func (in *HealthService) getNamespaceWorkloadHealth(ws models.Workloads, criteri
 
 	if hasSidecar && criteria.IncludeMetrics {
 		// Fetch services requests rates
-		rates, err := in.prom.GetAllRequestRates(namespace, cluster, rateInterval, queryTime)
+		rates, err := in.prom.GetAllRequestRates(ctx, namespace, cluster, rateInterval, queryTime)
 		if err != nil {
 			return allHealth, errors.NewServiceUnavailable(err.Error())
 		}
@@ -382,7 +382,7 @@ func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates mo
 	}
 }
 
-func (in *HealthService) getServiceRequestsHealth(namespace, cluster, service, rateInterval string, queryTime time.Time, svc *models.Service) (models.RequestHealth, error) {
+func (in *HealthService) getServiceRequestsHealth(ctx context.Context, namespace, cluster, service, rateInterval string, queryTime time.Time, svc *models.Service) (models.RequestHealth, error) {
 	rqHealth := models.NewEmptyRequestHealth()
 
 	if svc.Type == "External" {
@@ -390,7 +390,7 @@ func (in *HealthService) getServiceRequestsHealth(namespace, cluster, service, r
 		// Telemetry doesn't collect a namespace
 		namespace = "unknown"
 	}
-	inbound, err := in.prom.GetServiceRequestRates(namespace, cluster, service, rateInterval, queryTime)
+	inbound, err := in.prom.GetServiceRequestRates(ctx, namespace, cluster, service, rateInterval, queryTime)
 	if err != nil {
 		return rqHealth, errors.NewServiceUnavailable(err.Error())
 	}
@@ -402,10 +402,10 @@ func (in *HealthService) getServiceRequestsHealth(namespace, cluster, service, r
 	return rqHealth, nil
 }
 
-func (in *HealthService) getAppRequestsHealth(namespace, cluster, app, rateInterval string, queryTime time.Time) (models.RequestHealth, error) {
+func (in *HealthService) getAppRequestsHealth(ctx context.Context, namespace, cluster, app, rateInterval string, queryTime time.Time) (models.RequestHealth, error) {
 	rqHealth := models.NewEmptyRequestHealth()
 
-	inbound, outbound, err := in.prom.GetAppRequestRates(namespace, cluster, app, rateInterval, queryTime)
+	inbound, outbound, err := in.prom.GetAppRequestRates(ctx, namespace, cluster, app, rateInterval, queryTime)
 	if err != nil {
 		return rqHealth, errors.NewServiceUnavailable(err.Error())
 	}
@@ -419,11 +419,11 @@ func (in *HealthService) getAppRequestsHealth(namespace, cluster, app, rateInter
 	return rqHealth, nil
 }
 
-func (in *HealthService) getWorkloadRequestsHealth(namespace, cluster, workload, rateInterval string, queryTime time.Time, w *models.Workload) (models.RequestHealth, error) {
+func (in *HealthService) getWorkloadRequestsHealth(ctx context.Context, namespace, cluster, workload, rateInterval string, queryTime time.Time, w *models.Workload) (models.RequestHealth, error) {
 	rqHealth := models.NewEmptyRequestHealth()
 
 	// @TODO include w.Cluster into query
-	inbound, outbound, err := in.prom.GetWorkloadRequestRates(namespace, cluster, workload, rateInterval, queryTime)
+	inbound, outbound, err := in.prom.GetWorkloadRequestRates(ctx, namespace, cluster, workload, rateInterval, queryTime)
 	if err != nil {
 		return rqHealth, err
 	}

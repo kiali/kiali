@@ -1,6 +1,7 @@
 package prometheustest
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -52,7 +53,7 @@ func TestGetAllRequestRates(t *testing.T) {
 	}
 	api.OnQueryTime(`rate(istio_requests_total{source_workload_namespace="ns",source_cluster="east"}[5m]) > 0`, &queryTime, vectorQ2)
 
-	rates, _ := client.GetAllRequestRates("ns", "east", "5m", queryTime)
+	rates, _ := client.GetAllRequestRates(context.Background(), "ns", "east", "5m", queryTime)
 	assert.Equal(t, 2, rates.Len())
 	assert.Equal(t, vectorQ1[0], rates[0])
 	assert.Equal(t, vectorQ2[0], rates[1])
@@ -85,7 +86,7 @@ func TestGetAllRequestRatesIstioSystem(t *testing.T) {
 	}
 	api.OnQueryTime(`rate(istio_requests_total{source_workload_namespace="istio-system",source_cluster="east"}[5m]) > 0`, &queryTime, vectorQ2)
 
-	rates, _ := client.GetAllRequestRates("istio-system", "east", "5m", queryTime)
+	rates, _ := client.GetAllRequestRates(context.Background(), "istio-system", "east", "5m", queryTime)
 	assert.Equal(t, 2, rates.Len())
 	assert.Equal(t, vectorQ1[0], rates[0])
 	assert.Equal(t, vectorQ2[0], rates[1])
@@ -109,7 +110,7 @@ func TestGetNamespaceServicesRequestRates(t *testing.T) {
 	}
 	api.OnQueryTime(`rate(istio_requests_total{destination_service_namespace="ns",destination_cluster=~"east|unknown"}[5m]) > 0`, &queryTime, vectorQ1)
 
-	rates, _ := client.GetNamespaceServicesRequestRates("ns", "east", "5m", queryTime)
+	rates, _ := client.GetNamespaceServicesRequestRates(context.Background(), "ns", "east", "5m", queryTime)
 	assert.Equal(t, 1, rates.Len())
 	assert.Equal(t, vectorQ1[0], rates[0])
 }
@@ -124,7 +125,7 @@ func TestConfig(t *testing.T) {
 		YAML: `{"status":"success","data":{"yaml":"global:\n  scrape_interval: 15s\n"}}`,
 	})
 
-	config, _ := client.GetConfiguration()
+	config, _ := client.GetConfiguration(context.Background())
 	assert.Contains(t, config.YAML, "scrape_interval")
 }
 
@@ -136,7 +137,7 @@ func TestRuntimeInfo(t *testing.T) {
 	}
 	mockRuntimeinfoResult(api, prom_v1.RuntimeinfoResult{StorageRetention: "6h"})
 
-	ri, _ := client.GetRuntimeinfo()
+	ri, _ := client.GetRuntimeinfo(context.Background())
 	assert.Equal(t, "6h", ri.StorageRetention)
 }
 

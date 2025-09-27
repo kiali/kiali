@@ -29,6 +29,7 @@ import (
 	kialiprometheus "github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/tracing"
+	utilcontext "github.com/kiali/kiali/util/context"
 )
 
 // NewRouter creates the router with all API routes and the static files handler
@@ -411,6 +412,31 @@ func buildHttpHandlerLogger(route Route, handlerFunction http.Handler) http.Hand
 			} else {
 				customHeaderHandler(next).ServeHTTP(w, r)
 			}
+		})
+	})
+
+	// Store X-Request-Id in context for propagation to external services
+	// We need this because hlog handlers serve different purposes:
+	// - CustomHeaderHandler: Preserves existing X-Request-Id for logging but doesn't provide programmatic access
+	// - RequestIDHandler: Generates new IDs for logging and provides access via hlog.IDFromRequest()
+	// For external service propagation, we need the actual ID value from either source
+	c = c.append(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var xRequestId string
+
+			// First try HTTP header (preserved by CustomHeaderHandler)
+			if xRequestId = r.Header.Get(xRequestIdHeader); xRequestId == "" {
+				// Fall back to hlog-generated ID (from RequestIDHandler)
+				if id, ok := hlog.IDFromRequest(r); ok {
+					xRequestId = id.String()
+				}
+			}
+
+			if xRequestId != "" {
+				headers := &utilcontext.RequestHeaders{XRequestID: xRequestId}
+				r = r.WithContext(utilcontext.SetRequestHeadersContext(r.Context(), headers))
+			}
+			next.ServeHTTP(w, r)
 		})
 	})
 

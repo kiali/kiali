@@ -48,7 +48,7 @@ func AppMetrics(conf *config.Config, cache cache.KialiCache, discovery *istio.Di
 		}
 
 		metricsService := business.NewMetricsService(prom, conf)
-		metrics, err := metricsService.GetMetrics(params, nil)
+		metrics, err := metricsService.GetMetrics(r.Context(), params, nil)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
@@ -78,7 +78,7 @@ func WorkloadMetrics(conf *config.Config, cache cache.KialiCache, discovery *ist
 		}
 
 		metricsService := business.NewMetricsService(prom, conf)
-		metrics, err := metricsService.GetMetrics(params, nil)
+		metrics, err := metricsService.GetMetrics(r.Context(), params, nil)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
@@ -108,7 +108,7 @@ func ServiceMetrics(conf *config.Config, cache cache.KialiCache, discovery *isti
 		}
 
 		metricsService := business.NewMetricsService(prom, conf)
-		metrics, err := metricsService.GetMetrics(params, nil)
+		metrics, err := metricsService.GetMetrics(r.Context(), params, nil)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
@@ -168,7 +168,7 @@ func AggregateMetrics(conf *config.Config, cache cache.KialiCache, discovery *is
 		}
 
 		metricsService := business.NewMetricsService(prom, conf)
-		metrics, err := metricsService.GetMetrics(params, nil)
+		metrics, err := metricsService.GetMetrics(r.Context(), params, nil)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
@@ -236,7 +236,7 @@ func ControlPlaneMetrics(
 
 		metrics := make(models.MetricsMap)
 		metricsService := business.NewMetricsService(prom, conf)
-		controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, cpWorkload.Pods, nil)
+		controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(r.Context(), params, cpWorkload.Pods, nil)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
@@ -275,7 +275,7 @@ func ResourceUsageMetrics(conf *config.Config, cache cache.KialiCache, discovery
 		metricsService := business.NewMetricsService(prom, conf)
 		metrics := make(models.MetricsMap)
 
-		resourceMetrics, err := metricsService.GetResourceMetrics(params)
+		resourceMetrics, err := metricsService.GetResourceMetrics(r.Context(), params)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
@@ -311,7 +311,7 @@ func NamespaceMetrics(conf *config.Config, cache cache.KialiCache, discovery *is
 		}
 
 		metricsService := business.NewMetricsService(prom, conf)
-		metrics, err := metricsService.GetMetrics(params, nil)
+		metrics, err := metricsService.GetMetrics(r.Context(), params, nil)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
@@ -369,7 +369,7 @@ func ClustersMetrics(conf *config.Config, cache cache.KialiCache, discovery *ist
 				return
 			}
 
-			metrics, err := metricsService.GetMetrics(params, nil)
+			metrics, err := metricsService.GetMetrics(r.Context(), params, nil)
 			if err != nil {
 				RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 				return
@@ -537,7 +537,7 @@ func MetricsStats(conf *config.Config, cache cache.KialiCache, discovery *istio.
 		}
 
 		metricsService := business.NewMetricsService(prom, conf)
-		stats, err := metricsService.GetStats(queries)
+		stats, err := metricsService.GetStats(r.Context(), queries)
 		if err != nil {
 			handleErrorResponse(w, err)
 			return

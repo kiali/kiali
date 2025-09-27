@@ -405,7 +405,7 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 		}
 	}
 
-	appInstance.Runtimes = NewDashboardsService(in.conf, in.grafana, in.prom, ns, nil).GetCustomDashboardRefs(criteria.Namespace, criteria.AppName, "", pods)
+	appInstance.Runtimes = NewDashboardsService(in.conf, in.grafana, in.prom, ns, nil).GetCustomDashboardRefs(ctx, criteria.Namespace, criteria.AppName, "", pods)
 	if criteria.IncludeHealth {
 		appInstance.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, criteria.Cluster, criteria.AppName, criteria.RateInterval, criteria.QueryTime, appDetails)
 		if err != nil {
