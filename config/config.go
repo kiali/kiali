@@ -672,13 +672,14 @@ type KialiURL struct {
 
 // KialiFeatureFlags available from the CR
 type KialiFeatureFlags struct {
-	Clustering            FeatureFlagClustering `yaml:"clustering,omitempty" json:"clustering,omitempty"`
-	DisabledFeatures      []string              `yaml:"disabled_features,omitempty" json:"disabledFeatures,omitempty"`
-	IstioAnnotationAction bool                  `yaml:"istio_annotation_action,omitempty" json:"istioAnnotationAction"`
-	IstioInjectionAction  bool                  `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
-	IstioUpgradeAction    bool                  `yaml:"istio_upgrade_action,omitempty" json:"istioUpgradeAction"`
-	UIDefaults            UIDefaults            `yaml:"ui_defaults,omitempty" json:"uiDefaults,omitempty"`
-	Validations           Validations           `yaml:"validations,omitempty" json:"validations,omitempty"`
+	Clustering            FeatureFlagClustering     `yaml:"clustering,omitempty" json:"clustering,omitempty"`
+	CustomWorkloadTypes   []metav1.GroupVersionKind `yaml:"custom_workload_types,omitempty" json:"customWorkloadTypes,omitempty"`
+	DisabledFeatures      []string                  `yaml:"disabled_features,omitempty" json:"disabledFeatures,omitempty"`
+	IstioAnnotationAction bool                      `yaml:"istio_annotation_action,omitempty" json:"istioAnnotationAction"`
+	IstioInjectionAction  bool                      `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
+	IstioUpgradeAction    bool                      `yaml:"istio_upgrade_action,omitempty" json:"istioUpgradeAction"`
+	UIDefaults            UIDefaults                `yaml:"ui_defaults,omitempty" json:"uiDefaults,omitempty"`
+	Validations           Validations               `yaml:"validations,omitempty" json:"validations,omitempty"`
 }
 
 // Tolerance config

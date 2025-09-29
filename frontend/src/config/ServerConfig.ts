@@ -92,6 +92,7 @@ const defaultServerConfig: ComputedServerConfig = {
     versionLabelName: ''
   },
   kialiFeatureFlags: {
+    customWorkloadTypes: [],
     disabledFeatures: [],
     istioInjectionAction: true,
     istioAnnotationAction: true,
