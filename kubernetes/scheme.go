@@ -14,7 +14,7 @@ import (
 	telemetryv1 "istio.io/client-go/pkg/apis/telemetry/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	k8sinferencev1alpha2 "sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
+	k8sinferencev1 "sigs.k8s.io/gateway-api-inference-extension/api/v1"
 	k8snetworkingv1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8snetworkingv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	k8snetworkingv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
@@ -34,7 +34,7 @@ func NewScheme() (*runtime.Scheme, error) {
 		k8snetworkingv1.Install,
 		k8snetworkingv1beta1.Install,
 		k8snetworkingv1alpha2.Install,
-		k8sinferencev1alpha2.Install,
+		k8sinferencev1.Install,
 		osappsscheme.AddToScheme,
 		oauthscheme.AddToScheme,
 		projectscheme.AddToScheme,

@@ -603,7 +603,7 @@ else
     $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
       { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=${K8S_GATEWAY_API_VERSION}" | $CLIENT_EXE apply -f -; }
     echo "Verifying that Gateway API Inference Extension is installed; if it is not then Gateway API Inference Extension version ${K8S_GATEWAY_API_IE_VERSION} will be installed now."
-    $CLIENT_EXE get crd inferencepools.inference.networking.x-k8s.io &> /dev/null || \
+    $CLIENT_EXE get crd inferencepools.inference.networking.k8s.io &> /dev/null || \
       { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api-inference-extension/config/crd?ref=${K8S_GATEWAY_API_IE_VERSION}" | $CLIENT_EXE apply -f -; }
   fi
 

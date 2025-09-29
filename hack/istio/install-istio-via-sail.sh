@@ -141,7 +141,7 @@ kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
 
 K8S_GATEWAY_API_IE_VERSION=$(curl --head --silent "https://github.com/kubernetes-sigs/gateway-api-inference-extension/releases/latest" | grep "location: " | awk '{print $2}' | sed "s/.*tag\///g" | cat -v | sed "s/\^M//g")
 echo "Verifying that Gateway API Inference Extension is installed; if it is not then Gateway API Inference Extension version ${K8S_GATEWAY_API_IE_VERSION} will be installed now."
-kubectl get crd inferencepools.inference.networking.x-k8s.io &> /dev/null || \
+kubectl get crd inferencepools.inference.networking.k8s.io &> /dev/null || \
   {
     echo "Installing Gateway API Inference Extension CRDs with retry logic..."
     RETRY_COUNT=0

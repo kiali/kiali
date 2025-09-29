@@ -903,12 +903,12 @@ export interface K8sHTTPRouteSpec extends K8sCommonRouteSpec {
 }
 
 export interface K8sInferencePoolSpec extends K8sCommonRouteSpec {
-  extensionRef?: K8sInferencePoolExtensionRef;
-  selector?: WorkloadSelector;
+  endpointPickerRef?: K8sInferencePoolEndpointPickerRef;
+  selector?: LabelSelector;
   targetPortNumber?: number;
 }
 
-export interface K8sInferencePoolExtensionRef {
+export interface K8sInferencePoolEndpointPickerRef {
   failureMode: string;
   group: string;
   kind: string;
