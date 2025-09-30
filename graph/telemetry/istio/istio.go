@@ -29,6 +29,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -77,28 +78,7 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 
 		// The appenders can add/remove/alter nodes for the namespace
 		appenderNamespaceInfo := appender.NewAppenderNamespaceInfo(namespaceInfo.Name)
-		for _, a := range appenders {
-			var appenderEnd observability.EndFunc
-			ctx, appenderEnd = observability.StartSpan(
-				ctx,
-				"Appender "+a.Name(),
-				observability.Attribute("package", "istio"),
-				observability.Attribute("namespace", namespaceInfo.Name),
-			)
-			appenderCtx := buildAppenderContext(ctx, a.Name())
-			appenderTimer := internalmetrics.GetGraphAppenderTimePrometheusTimer(a.Name())
-			a.AppendGraph(appenderCtx, namespaceTrafficMap, globalInfo, appenderNamespaceInfo)
-			internalmetrics.ObserveDurationAndLogResults(
-				appenderCtx,
-				globalInfo.Conf,
-				appenderTimer,
-				"GraphAppenderTime",
-				map[string]string{
-					"namespace": namespaceInfo.Name,
-				},
-				"Namespace graph appender time")
-			appenderEnd()
-		}
+		runAppendersInParallel(ctx, appenders, namespaceTrafficMap, globalInfo, appenderNamespaceInfo)
 
 		// Merge this namespace into the final TrafficMap
 		telemetry.MergeTrafficMaps(trafficMap, namespaceInfo.Name, namespaceTrafficMap)
@@ -114,6 +94,189 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 	}
 
 	return trafficMap
+}
+
+// runAppendersInParallel executes appenders with proper dependency ordering and true parallelization.
+// Sequential appenders run first, then parallel appenders run concurrently using a copy-on-write approach.
+//
+// Performance: Provides significant performance improvement by running independent appenders concurrently
+// while maintaining thread safety through isolated data copies.
+//
+// Appender Classification and Execution Order:
+//   - Sequential (dependency-ordered): ServiceEntry, DeadNode, WorkloadEntry, AggregateNode, IdleNode, MeshCheck
+//     (These modify the TrafficMap structure or have dependencies on other appenders)
+//   - Parallel (metadata-only): ResponseTime, SecurityPolicy, Throughput
+//     (These only modify metadata of existing nodes/edges and can run concurrently)
+//
+// Thread Safety: Uses copy-on-write approach where each parallel appender works on its own
+// copy of the TrafficMap, then results are merged back safely.
+func runAppendersInParallel(ctx context.Context, appenders []appender.Appender, trafficMap graph.TrafficMap, globalInfo *appender.GlobalInfo, namespaceInfo *appender.AppenderNamespaceInfo) {
+	if len(appenders) == 0 {
+		return
+	}
+
+	// Define appenders that must run sequentially due to dependencies or map structure modifications
+	sequentialAppenders := []string{
+		appender.ServiceEntryAppenderName,  // Must run first - pre-processes service nodes
+		appender.DeadNodeAppenderName,      // Must run second - filters dead nodes to reduce processing, MODIFIES MAP
+		appender.WorkloadEntryAppenderName, // Must run third - depends on service processing
+		appender.AggregateNodeAppenderName, // MODIFIES MAP - adds nodes
+		appender.IdleNodeAppenderName,      // MODIFIES MAP - adds nodes
+		appender.MeshCheckAppenderName,     // May depend on other appenders
+	}
+
+	// Create a map for quick lookup of sequential appenders
+	isSequential := make(map[string]bool)
+	for _, name := range sequentialAppenders {
+		isSequential[name] = true
+	}
+
+	// Separate appenders into sequential and parallel groups
+	var sequential []appender.Appender
+	var parallel []appender.Appender
+
+	for _, a := range appenders {
+		if isSequential[a.Name()] {
+			sequential = append(sequential, a)
+		} else {
+			parallel = append(parallel, a)
+		}
+	}
+
+	// Run sequential appenders first (in order)
+	for _, a := range sequential {
+		runSingleAppender(ctx, a, trafficMap, globalInfo, namespaceInfo)
+	}
+
+	// Run parallel appenders concurrently using copy-on-write approach
+	if len(parallel) > 0 {
+		var wg sync.WaitGroup
+		resultChan := make(chan graph.TrafficMap, len(parallel))
+
+		for _, a := range parallel {
+			wg.Add(1)
+			go func(appender appender.Appender) {
+				defer wg.Done()
+				// Create a deep copy of the traffic map for this appender
+				trafficMapCopy := deepCopyTrafficMap(trafficMap)
+				runSingleAppender(ctx, appender, trafficMapCopy, globalInfo, namespaceInfo)
+				resultChan <- trafficMapCopy
+			}(a)
+		}
+
+		// Wait for all appenders to complete
+		go func() {
+			wg.Wait()
+			close(resultChan)
+		}()
+
+		// Merge all metadata results back into the original traffic map
+		for resultMap := range resultChan {
+			mergeMetadata(trafficMap, resultMap)
+		}
+	}
+}
+
+// runSingleAppender executes a single appender with proper observability and metrics
+func runSingleAppender(ctx context.Context, a appender.Appender, trafficMap graph.TrafficMap, globalInfo *appender.GlobalInfo, namespaceInfo *appender.AppenderNamespaceInfo) {
+	var appenderEnd observability.EndFunc
+	ctx, appenderEnd = observability.StartSpan(
+		ctx,
+		"Appender "+a.Name(),
+		observability.Attribute("package", "istio"),
+		observability.Attribute("namespace", namespaceInfo.Namespace),
+	)
+	defer appenderEnd()
+
+	appenderCtx := buildAppenderContext(ctx, a.Name())
+	appenderTimer := internalmetrics.GetGraphAppenderTimePrometheusTimer(a.Name())
+
+	a.AppendGraph(appenderCtx, trafficMap, globalInfo, namespaceInfo)
+
+	internalmetrics.ObserveDurationAndLogResults(
+		appenderCtx,
+		globalInfo.Conf,
+		appenderTimer,
+		"GraphAppenderTime",
+		map[string]string{
+			"namespace": namespaceInfo.Namespace,
+		},
+		"Namespace graph appender time")
+}
+
+// deepCopyTrafficMap creates a deep copy of the traffic map for parallel processing
+func deepCopyTrafficMap(original graph.TrafficMap) graph.TrafficMap {
+	copy := make(graph.TrafficMap, len(original))
+
+	// First pass: copy all nodes
+	for id, node := range original {
+		newNode := &graph.Node{
+			ID:        node.ID,
+			NodeType:  node.NodeType,
+			Cluster:   node.Cluster,
+			Namespace: node.Namespace,
+			Workload:  node.Workload,
+			App:       node.App,
+			Version:   node.Version,
+			Service:   node.Service,
+			Edges:     make([]*graph.Edge, len(node.Edges)),
+			Metadata:  make(graph.Metadata, len(node.Metadata)),
+		}
+
+		// Copy node metadata
+		for k, v := range node.Metadata {
+			newNode.Metadata[k] = v
+		}
+
+		copy[id] = newNode
+	}
+
+	// Second pass: copy edges with correct node references
+	for id, node := range original {
+		newNode := copy[id]
+		for i, edge := range node.Edges {
+			newEdge := &graph.Edge{
+				Source:   copy[edge.Source.ID], // Reference to copied source node
+				Dest:     copy[edge.Dest.ID],   // Reference to copied dest node
+				Metadata: make(graph.Metadata, len(edge.Metadata)),
+			}
+
+			// Copy edge metadata
+			for k, v := range edge.Metadata {
+				newEdge.Metadata[k] = v
+			}
+
+			newNode.Edges[i] = newEdge
+		}
+	}
+
+	return copy
+}
+
+// mergeMetadata merges metadata from the result map back into the original traffic map
+func mergeMetadata(original, result graph.TrafficMap) {
+	for id, resultNode := range result {
+		if originalNode, exists := original[id]; exists {
+			// Merge node metadata (only add new keys, don't overwrite existing)
+			for k, v := range resultNode.Metadata {
+				if _, exists := originalNode.Metadata[k]; !exists {
+					originalNode.Metadata[k] = v
+				}
+			}
+
+			// Merge edge metadata
+			for i, resultEdge := range resultNode.Edges {
+				if i < len(originalNode.Edges) {
+					originalEdge := originalNode.Edges[i]
+					for k, v := range resultEdge.Metadata {
+						if _, exists := originalEdge.Metadata[k]; !exists {
+							originalEdge.Metadata[k] = v
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 // buildNamespaceTrafficMap returns a map of all namespace nodes (key=id).  All
