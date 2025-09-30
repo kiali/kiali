@@ -20,6 +20,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/util/httputil"
 )
 
@@ -183,74 +184,74 @@ func NewOfflineClient(dataDir string, buildInfo *config.OfflineManifest) *Offlin
 }
 
 // GetAllRequestRates implements ClientInterface
-func (oc *OfflineClient) GetAllRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+func (oc *OfflineClient) GetAllRequestRates(ctx context.Context, namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	return model.Vector{}, nil
 }
 
 // GetNamespaceServicesRequestRates implements ClientInterface
-func (oc *OfflineClient) GetNamespaceServicesRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+func (oc *OfflineClient) GetNamespaceServicesRequestRates(ctx context.Context, namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	return model.Vector{}, nil
 }
 
 // GetServiceRequestRates implements ClientInterface
-func (oc *OfflineClient) GetServiceRequestRates(namespace, cluster, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+func (oc *OfflineClient) GetServiceRequestRates(ctx context.Context, namespace, cluster, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	return model.Vector{}, nil
 }
 
 // GetAppRequestRates implements ClientInterface
-func (oc *OfflineClient) GetAppRequestRates(namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
+func (oc *OfflineClient) GetAppRequestRates(ctx context.Context, namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
 	return model.Vector{}, model.Vector{}, nil
 }
 
 // GetWorkloadRequestRates implements ClientInterface
-func (oc *OfflineClient) GetWorkloadRequestRates(namespace, cluster, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
+func (oc *OfflineClient) GetWorkloadRequestRates(ctx context.Context, namespace, cluster, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
 	return model.Vector{}, model.Vector{}, nil
 }
 
 // FetchDelta implements ClientInterface
-func (oc *OfflineClient) FetchDelta(metricName, labels, grouping string, queryTime time.Time, duration time.Duration) Metric {
+func (oc *OfflineClient) FetchDelta(ctx context.Context, metricName, labels, grouping string, queryTime time.Time, duration time.Duration) Metric {
 	// Return empty metric - this method is not recorded by ClientRecorder
 	return Metric{}
 }
 
 // FetchHistogramRange implements ClientInterface
-func (oc *OfflineClient) FetchHistogramRange(metricName, labels, grouping string, q *RangeQuery) Histogram {
+func (oc *OfflineClient) FetchHistogramRange(ctx context.Context, metricName, labels, grouping string, q *RangeQuery) Histogram {
 	// Return empty histogram - this method is not recorded by ClientRecorder
 	return Histogram{}
 }
 
 // FetchHistogramValues implements ClientInterface
-func (oc *OfflineClient) FetchHistogramValues(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error) {
+func (oc *OfflineClient) FetchHistogramValues(ctx context.Context, metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error) {
 	// Return empty map - this method is not recorded by ClientRecorder
 	return map[string]model.Vector{}, nil
 }
 
 // FetchRange implements ClientInterface
-func (oc *OfflineClient) FetchRange(metricName, labels, grouping, aggregator string, q *RangeQuery) Metric {
+func (oc *OfflineClient) FetchRange(ctx context.Context, metricName, labels, grouping, aggregator string, q *RangeQuery) Metric {
 	// Return empty metric - this method is not recorded by ClientRecorder
 	return Metric{}
 }
 
 // FetchRateRange implements ClientInterface
-func (oc *OfflineClient) FetchRateRange(metricName string, labels []string, grouping string, q *RangeQuery) Metric {
+func (oc *OfflineClient) FetchRateRange(ctx context.Context, metricName string, labels []string, grouping string, q *RangeQuery) Metric {
 	// Return empty metric - this method is not recorded by ClientRecorder
 	return Metric{}
 }
 
 // GetConfiguration implements ClientInterface
-func (oc *OfflineClient) GetConfiguration() (prom_v1.ConfigResult, error) {
+func (oc *OfflineClient) GetConfiguration(ctx context.Context) (prom_v1.ConfigResult, error) {
 	// Return empty config - this method is not recorded by ClientRecorder
 	return prom_v1.ConfigResult{}, nil
 }
 
 // GetExistingMetricNames implements ClientInterface
-func (oc *OfflineClient) GetExistingMetricNames(metricNames []string) ([]string, error) {
+func (oc *OfflineClient) GetExistingMetricNames(ctx context.Context, metricNames []string) ([]string, error) {
 	// Return empty slice - this method is not recorded by ClientRecorder
 	return []string{}, nil
 }
 
 // GetMetricsForLabels implements ClientInterface
-func (oc *OfflineClient) GetMetricsForLabels(metricNames []string, labels string) ([]string, error) {
+func (oc *OfflineClient) GetMetricsForLabels(ctx context.Context, metricNames []string, labels string) ([]string, error) {
 	// Return empty slice - this method is not recorded by ClientRecorder
 	return []string{}, nil
 }
@@ -265,28 +266,28 @@ func (oc *OfflineClient) GetBuildInfo(ctx context.Context) (*prom_v1.BuildinfoRe
 }
 
 // GetRuntimeinfo implements ClientInterface
-func (oc *OfflineClient) GetRuntimeinfo() (prom_v1.RuntimeinfoResult, error) {
+func (oc *OfflineClient) GetRuntimeinfo(ctx context.Context) (prom_v1.RuntimeinfoResult, error) {
 	return prom_v1.RuntimeinfoResult{}, nil
 }
 
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
 	API() prom_v1.API
-	FetchDelta(metricName, labels, grouping string, queryTime time.Time, duration time.Duration) Metric
-	FetchHistogramRange(metricName, labels, grouping string, q *RangeQuery) Histogram
-	FetchHistogramValues(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error)
-	FetchRange(metricName, labels, grouping, aggregator string, q *RangeQuery) Metric
-	FetchRateRange(metricName string, labels []string, grouping string, q *RangeQuery) Metric
-	GetAllRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error)
-	GetAppRequestRates(namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
+	FetchDelta(ctx context.Context, metricName, labels, grouping string, queryTime time.Time, duration time.Duration) Metric
+	FetchHistogramRange(ctx context.Context, metricName, labels, grouping string, q *RangeQuery) Histogram
+	FetchHistogramValues(ctx context.Context, metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error)
+	FetchRange(ctx context.Context, metricName, labels, grouping, aggregator string, q *RangeQuery) Metric
+	FetchRateRange(ctx context.Context, metricName string, labels []string, grouping string, q *RangeQuery) Metric
+	GetAllRequestRates(ctx context.Context, namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error)
+	GetAppRequestRates(ctx context.Context, namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 	GetBuildInfo(ctx context.Context) (*prom_v1.BuildinfoResult, error)
-	GetConfiguration() (prom_v1.ConfigResult, error)
-	GetExistingMetricNames(metricNames []string) ([]string, error)
-	GetMetricsForLabels(metricNames []string, labels string) ([]string, error)
-	GetNamespaceServicesRequestRates(namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error)
-	GetServiceRequestRates(namespace, cluster, service, ratesInterval string, queryTime time.Time) (model.Vector, error)
-	GetRuntimeinfo() (prom_v1.RuntimeinfoResult, error)
-	GetWorkloadRequestRates(namespace, cluster, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
+	GetConfiguration(ctx context.Context) (prom_v1.ConfigResult, error)
+	GetExistingMetricNames(ctx context.Context, metricNames []string) ([]string, error)
+	GetMetricsForLabels(ctx context.Context, metricNames []string, labels string) ([]string, error)
+	GetNamespaceServicesRequestRates(ctx context.Context, namespace, cluster, ratesInterval string, queryTime time.Time) (model.Vector, error)
+	GetServiceRequestRates(ctx context.Context, namespace, cluster, service, ratesInterval string, queryTime time.Time) (model.Vector, error)
+	GetRuntimeinfo(ctx context.Context) (prom_v1.RuntimeinfoResult, error)
+	GetWorkloadRequestRates(ctx context.Context, namespace, cluster, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 }
 
 // Client for Prometheus API.
@@ -295,7 +296,12 @@ type Client struct {
 	conf *config.Config
 	p8s  api.Client
 	api  prom_v1.API
-	ctx  context.Context
+	// ctx is a fallback context containing a prometheus-specific logger for operations
+	// outside of HTTP request contexts. When client methods are called with a valid
+	// request context (containing X-Request-Id, user info, etc.), that context takes
+	// precedence. This context serves as the default logging context for background
+	// operations, ensuring consistent prometheus component identification in logs.
+	ctx context.Context
 }
 
 var (
@@ -354,7 +360,9 @@ func NewClient(conf config.Config, kialiSAToken string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	clientConfig.RoundTripper = transportConfig
+
+	// Add context headers RoundTripper to the chain for X-Request-Id propagation
+	clientConfig.RoundTripper = newContextHeadersRoundTripper(transportConfig)
 
 	p8s, err := api.NewClient(clientConfig)
 	if err != nil {
@@ -382,12 +390,21 @@ func (in *Client) Inject(api prom_v1.API) {
 // be inflated due to duplication, and therefore should be used mainly for calculating ratios
 // (e.g total rates / error rates).
 // Returns (rates, error)
-func (in *Client) GetAllRequestRates(namespace, cluster string, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+func (in *Client) GetAllRequestRates(ctx context.Context, namespace, cluster string, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(in.contextOrDefault(ctx), "GetAllRequestRates",
+		observability.Attribute("package", "prometheus"),
+		observability.Attribute("namespace", namespace),
+		observability.Attribute("cluster", cluster),
+		observability.Attribute("ratesInterval", ratesInterval),
+	)
+	defer end()
+
 	if in.conf.RunMode == config.RunModeOffline {
 		return model.Vector{}, nil
 	}
 
-	log.FromContext(in.ctx).Trace().Msgf("GetAllRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
+	log.FromContext(ctx).Trace().Msgf("GetAllRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
 
 	var result model.Vector
 	var err error
@@ -399,7 +416,7 @@ func (in *Client) GetAllRequestRates(namespace, cluster string, ratesInterval st
 	}
 
 	if result == nil {
-		result, err = getAllRequestRates(in.ctx, in.api, namespace, cluster, queryTime, ratesInterval)
+		result, err = getAllRequestRates(ctx, in.api, namespace, cluster, queryTime, ratesInterval)
 		if err == nil && promCache != nil {
 			promCache.SetAllRequestRates(namespace, cluster, ratesInterval, queryTime, result)
 		}
@@ -413,19 +430,28 @@ func (in *Client) GetAllRequestRates(namespace, cluster string, ratesInterval st
 // be inflated due to duplication, and therefore should be used mainly for calculating ratios
 // (e.g total rates / error rates).
 // Returns (rates, error)
-func (in *Client) GetNamespaceServicesRequestRates(namespace, cluster string, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+func (in *Client) GetNamespaceServicesRequestRates(ctx context.Context, namespace, cluster string, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(in.contextOrDefault(ctx), "GetNamespaceServicesRequestRates",
+		observability.Attribute("package", "prometheus"),
+		observability.Attribute("namespace", namespace),
+		observability.Attribute("cluster", cluster),
+		observability.Attribute("ratesInterval", ratesInterval),
+	)
+	defer end()
+
 	if in.conf.RunMode == config.RunModeOffline {
 		return model.Vector{}, nil
 	}
 
-	log.FromContext(in.ctx).Trace().Msgf("GetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
+	log.FromContext(ctx).Trace().Msgf("GetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
 
 	if promCache != nil {
 		if isCached, result := promCache.GetNamespaceServicesRequestRates(namespace, cluster, ratesInterval, queryTime); isCached {
 			return result, nil
 		}
 	}
-	result, err := getNamespaceServicesRequestRates(in.ctx, in.api, namespace, cluster, queryTime, ratesInterval)
+	result, err := getNamespaceServicesRequestRates(ctx, in.api, namespace, cluster, queryTime, ratesInterval)
 	if err != nil {
 		return result, err
 	}
@@ -440,19 +466,29 @@ func (in *Client) GetNamespaceServicesRequestRates(namespace, cluster string, ra
 // be inflated due to duplication, and therefore should be used mainly for calculating ratios
 // (e.g total rates / error rates).
 // Returns (in, error)
-func (in *Client) GetServiceRequestRates(namespace, cluster, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+func (in *Client) GetServiceRequestRates(ctx context.Context, namespace, cluster, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(in.contextOrDefault(ctx), "GetServiceRequestRates",
+		observability.Attribute("package", "prometheus"),
+		observability.Attribute("namespace", namespace),
+		observability.Attribute("cluster", cluster),
+		observability.Attribute("service", service),
+		observability.Attribute("ratesInterval", ratesInterval),
+	)
+	defer end()
+
 	if in.conf.RunMode == config.RunModeOffline {
 		return model.Vector{}, nil
 	}
 
-	log.FromContext(in.ctx).Trace().Msgf("GetServiceRequestRates [namespace: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, service, ratesInterval, queryTime.String())
+	log.FromContext(ctx).Trace().Msgf("GetServiceRequestRates [namespace: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, service, ratesInterval, queryTime.String())
 
 	if promCache != nil {
 		if isCached, result := promCache.GetServiceRequestRates(namespace, cluster, service, ratesInterval, queryTime); isCached {
 			return result, nil
 		}
 	}
-	result, err := getServiceRequestRates(in.ctx, in.api, namespace, cluster, service, queryTime, ratesInterval)
+	result, err := getServiceRequestRates(ctx, in.api, namespace, cluster, service, queryTime, ratesInterval)
 	if err != nil {
 		return result, err
 	}
@@ -467,19 +503,29 @@ func (in *Client) GetServiceRequestRates(namespace, cluster, service, ratesInter
 // be inflated due to duplication, and therefore should be used mainly for calculating ratios
 // (e.g total rates / error rates).
 // Returns (in, out, error)
-func (in *Client) GetAppRequestRates(namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
+func (in *Client) GetAppRequestRates(ctx context.Context, namespace, cluster, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(in.contextOrDefault(ctx), "GetAppRequestRates",
+		observability.Attribute("package", "prometheus"),
+		observability.Attribute("namespace", namespace),
+		observability.Attribute("cluster", cluster),
+		observability.Attribute("app", app),
+		observability.Attribute("ratesInterval", ratesInterval),
+	)
+	defer end()
+
 	if in.conf.RunMode == config.RunModeOffline {
 		return model.Vector{}, model.Vector{}, nil
 	}
 
-	log.FromContext(in.ctx).Trace().Msgf("GetAppRequestRates [namespace: %s] [cluster: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, app, ratesInterval, queryTime.String())
+	log.FromContext(ctx).Trace().Msgf("GetAppRequestRates [namespace: %s] [cluster: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, app, ratesInterval, queryTime.String())
 
 	if promCache != nil {
 		if isCached, inResult, outResult := promCache.GetAppRequestRates(namespace, cluster, app, ratesInterval, queryTime); isCached {
 			return inResult, outResult, nil
 		}
 	}
-	inResult, outResult, err := getItemRequestRates(in.ctx, in.api, namespace, cluster, app, "app", queryTime, ratesInterval)
+	inResult, outResult, err := getItemRequestRates(ctx, in.api, namespace, cluster, app, "app", queryTime, ratesInterval)
 	if err != nil {
 		return inResult, outResult, err
 	}
@@ -494,19 +540,29 @@ func (in *Client) GetAppRequestRates(namespace, cluster, app, ratesInterval stri
 // be inflated due to duplication, and therefore should be used mainly for calculating ratios
 // (e.g total rates / error rates).
 // Returns (in, out, error)
-func (in *Client) GetWorkloadRequestRates(namespace, cluster, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
+func (in *Client) GetWorkloadRequestRates(ctx context.Context, namespace, cluster, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(in.contextOrDefault(ctx), "GetWorkloadRequestRates",
+		observability.Attribute("package", "prometheus"),
+		observability.Attribute("namespace", namespace),
+		observability.Attribute("cluster", cluster),
+		observability.Attribute("workload", workload),
+		observability.Attribute("ratesInterval", ratesInterval),
+	)
+	defer end()
+
 	if in.conf.RunMode == config.RunModeOffline {
 		return model.Vector{}, model.Vector{}, nil
 	}
 
-	log.FromContext(in.ctx).Trace().Msgf("GetWorkloadRequestRates [namespace: %s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, workload, ratesInterval, queryTime.String())
+	log.FromContext(ctx).Trace().Msgf("GetWorkloadRequestRates [namespace: %s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, workload, ratesInterval, queryTime.String())
 
 	if promCache != nil {
 		if isCached, inResult, outResult := promCache.GetWorkloadRequestRates(namespace, cluster, workload, ratesInterval, queryTime); isCached {
 			return inResult, outResult, nil
 		}
 	}
-	inResult, outResult, err := getItemRequestRates(in.ctx, in.api, namespace, cluster, workload, "workload", queryTime, ratesInterval)
+	inResult, outResult, err := getItemRequestRates(ctx, in.api, namespace, cluster, workload, "workload", queryTime, ratesInterval)
 	if err != nil {
 		return inResult, outResult, err
 	}
@@ -517,36 +573,83 @@ func (in *Client) GetWorkloadRequestRates(namespace, cluster, workload, ratesInt
 }
 
 // FetchDelta fetches a delta for a simple metric (gauge or counter), for a given duration
-func (in *Client) FetchDelta(metricName, labels, grouping string, queryTime time.Time, duration time.Duration) Metric {
+func (in *Client) FetchDelta(ctx context.Context, metricName, labels, grouping string, queryTime time.Time, duration time.Duration) Metric {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(in.contextOrDefault(ctx), "FetchDelta",
+		observability.Attribute("package", "prometheus"),
+		observability.Attribute("metricName", metricName),
+		observability.Attribute("labels", labels),
+		observability.Attribute("grouping", grouping),
+	)
+	defer end()
+
 	query := fmt.Sprintf("delta(%s%s[%s])", metricName, labels, duration.Round(time.Second).String())
 	if grouping != "" {
 		query += fmt.Sprintf(" by (%s)", grouping)
 	}
-	return fetchQuery(in.ctx, in.api, query, queryTime)
+	return fetchQuery(ctx, in.api, query, queryTime)
 }
 
 // FetchRange fetches a simple metric (gauge or counter) in given range
-func (in *Client) FetchRange(metricName, labels, grouping, aggregator string, q *RangeQuery) Metric {
+func (in *Client) FetchRange(ctx context.Context, metricName, labels, grouping, aggregator string, q *RangeQuery) Metric {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(in.contextOrDefault(ctx), "FetchRange",
+		observability.Attribute("package", "prometheus"),
+		observability.Attribute("metricName", metricName),
+		observability.Attribute("labels", labels),
+		observability.Attribute("grouping", grouping),
+		observability.Attribute("aggregator", aggregator),
+	)
+	defer end()
+
 	query := fmt.Sprintf("%s(%s%s)", aggregator, metricName, labels)
 	if grouping != "" {
 		query += fmt.Sprintf(" by (%s)", grouping)
 	}
-	return fetchRange(in.ctx, in.api, query, q.Range)
+	return fetchRange(ctx, in.api, query, q.Range)
 }
 
 // FetchRateRange fetches a counter's rate in given range
-func (in *Client) FetchRateRange(metricName string, labels []string, grouping string, q *RangeQuery) Metric {
-	return fetchRateRange(in.ctx, in.api, metricName, labels, grouping, q)
+func (in *Client) FetchRateRange(ctx context.Context, metricName string, labels []string, grouping string, q *RangeQuery) Metric {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(in.contextOrDefault(ctx), "FetchRateRange",
+		observability.Attribute("package", "prometheus"),
+		observability.Attribute("metricName", metricName),
+		observability.Attribute("grouping", grouping),
+	)
+	defer end()
+
+	return fetchRateRange(ctx, in.api, metricName, labels, grouping, q)
 }
 
 // FetchHistogramRange fetches bucketed metric as histogram in given range
-func (in *Client) FetchHistogramRange(metricName, labels, grouping string, q *RangeQuery) Histogram {
-	return fetchHistogramRange(in.ctx, in.api, metricName, labels, grouping, q)
+func (in *Client) FetchHistogramRange(ctx context.Context, metricName, labels, grouping string, q *RangeQuery) Histogram {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(in.contextOrDefault(ctx), "FetchHistogramRange",
+		observability.Attribute("package", "prometheus"),
+		observability.Attribute("metricName", metricName),
+		observability.Attribute("labels", labels),
+		observability.Attribute("grouping", grouping),
+	)
+	defer end()
+
+	return fetchHistogramRange(ctx, in.api, metricName, labels, grouping, q)
 }
 
 // FetchHistogramValues fetches bucketed metric as histogram at a given specific time
-func (in *Client) FetchHistogramValues(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error) {
-	return fetchHistogramValues(in.ctx, in.api, metricName, labels, grouping, rateInterval, avg, quantiles, queryTime)
+func (in *Client) FetchHistogramValues(ctx context.Context, metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(in.contextOrDefault(ctx), "FetchHistogramValues",
+		observability.Attribute("package", "prometheus"),
+		observability.Attribute("metricName", metricName),
+		observability.Attribute("labels", labels),
+		observability.Attribute("grouping", grouping),
+		observability.Attribute("rateInterval", rateInterval),
+		observability.Attribute("avg", avg),
+	)
+	defer end()
+
+	return fetchHistogramValues(ctx, in.api, metricName, labels, grouping, rateInterval, avg, quantiles, queryTime)
 }
 
 // API returns the Prometheus V1 HTTP API for performing calls not supported natively by this client
@@ -555,6 +658,12 @@ func (in *Client) API() prom_v1.API {
 }
 
 func (in *Client) GetBuildInfo(ctx context.Context) (*prom_v1.BuildinfoResult, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetBuildInfo",
+		observability.Attribute("package", "prometheus"),
+	)
+	defer end()
+
 	info, err := in.api.Buildinfo(ctx)
 	if err != nil {
 		return nil, err
@@ -562,16 +671,28 @@ func (in *Client) GetBuildInfo(ctx context.Context) (*prom_v1.BuildinfoResult, e
 	return &info, nil
 }
 
-func (in *Client) GetConfiguration() (prom_v1.ConfigResult, error) {
-	config, err := in.API().Config(in.ctx)
+func (in *Client) GetConfiguration(ctx context.Context) (prom_v1.ConfigResult, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(in.contextOrDefault(ctx), "GetConfiguration",
+		observability.Attribute("package", "prometheus"),
+	)
+	defer end()
+
+	config, err := in.API().Config(ctx)
 	if err != nil {
 		return prom_v1.ConfigResult{}, err
 	}
 	return config, nil
 }
 
-func (in *Client) GetRuntimeinfo() (prom_v1.RuntimeinfoResult, error) {
-	ri, err := in.API().Runtimeinfo(in.ctx)
+func (in *Client) GetRuntimeinfo(ctx context.Context) (prom_v1.RuntimeinfoResult, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(in.contextOrDefault(ctx), "GetRuntimeinfo",
+		observability.Attribute("package", "prometheus"),
+	)
+	defer end()
+
+	ri, err := in.API().Runtimeinfo(ctx)
 	if err != nil {
 		return prom_v1.RuntimeinfoResult{}, err
 	}
@@ -580,17 +701,25 @@ func (in *Client) GetRuntimeinfo() (prom_v1.RuntimeinfoResult, error) {
 
 // GetMetricsForLabels returns a list of metrics existing for the provided labels set. Only metrics that match a name in the given
 // list of metricNames will be returned - others will be ignored.
-func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString string) ([]string, error) {
+func (in *Client) GetMetricsForLabels(ctx context.Context, metricNames []string, labelQueryString string) ([]string, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(in.contextOrDefault(ctx), "GetMetricsForLabels",
+		observability.Attribute("package", "prometheus"),
+		observability.Attribute("labelQueryString", labelQueryString),
+		observability.Attribute("metricNamesCount", len(metricNames)),
+	)
+	defer end()
+
 	if len(metricNames) == 0 {
 		return []string{}, nil
 	}
 
-	zl := log.FromContext(in.ctx)
+	zl := log.FromContext(ctx)
 
 	zl.Trace().Msgf("GetMetricsForLabels: labels=[%v] metricNames=[%v]", labelQueryString, metricNames)
 	startT := time.Now()
 	queryString := fmt.Sprintf("count(%v) by (__name__)", labelQueryString)
-	results, warnings, err := in.api.Query(in.ctx, queryString, time.Now())
+	results, warnings, err := in.api.Query(ctx, queryString, time.Now())
 	if len(warnings) > 0 {
 		zl.Warn().Msgf("GetMetricsForLabels. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
@@ -616,16 +745,23 @@ func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString str
 }
 
 // GetExistingMetricNames returns a list of the requested metric names that exist in Prometheus (meaning there is a matching __name__ label).
-func (in *Client) GetExistingMetricNames(metricNames []string) ([]string, error) {
+func (in *Client) GetExistingMetricNames(ctx context.Context, metricNames []string) ([]string, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(in.contextOrDefault(ctx), "GetExistingMetricNames",
+		observability.Attribute("package", "prometheus"),
+		observability.Attribute("metricNamesCount", len(metricNames)),
+	)
+	defer end()
+
 	if len(metricNames) == 0 {
 		return []string{}, nil
 	}
 
-	zl := log.FromContext(in.ctx)
+	zl := log.FromContext(ctx)
 
 	zl.Trace().Msgf("GetExistingMetricNames: metricNames=[%v]", metricNames)
 	startT := time.Now()
-	results, warnings, err := in.api.LabelValues(in.ctx, "__name__", []string{}, time.Unix(0, 0), time.Now())
+	results, warnings, err := in.api.LabelValues(ctx, "__name__", []string{}, time.Unix(0, 0), time.Now())
 	if len(warnings) > 0 {
 		zl.Warn().Msgf("GetExistingMetricNames. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
@@ -654,4 +790,14 @@ func (in *Client) GetExistingMetricNames(metricNames []string) ([]string, error)
 // Copied from https://github.com/prometheus/prometheus/blob/df80dc4d3970121f2f76cba79050983ffb3cdbb0/util/strutil/strconv.go
 func SanitizeLabelName(name string) string {
 	return invalidLabelCharRE.ReplaceAllString(name, "_")
+}
+
+// contextOrDefault returns the provided context if it's not nil or background,
+// otherwise returns the client's default context. This ensures proper context
+// propagation for HTTP requests while maintaining backwards compatibility.
+func (in *Client) contextOrDefault(ctx context.Context) context.Context {
+	if ctx == nil || ctx == context.Background() {
+		return in.ctx
+	}
+	return ctx
 }

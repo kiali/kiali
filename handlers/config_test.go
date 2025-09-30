@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -23,11 +24,11 @@ type fakePromClient struct {
 	prometheustest.PromClientMock
 }
 
-func (fpc *fakePromClient) GetConfiguration() (prom_v1.ConfigResult, error) {
+func (fpc *fakePromClient) GetConfiguration(ctx context.Context) (prom_v1.ConfigResult, error) {
 	return prom_v1.ConfigResult{}, nil
 }
 
-func (fpc *fakePromClient) GetRuntimeinfo() (prom_v1.RuntimeinfoResult, error) {
+func (fpc *fakePromClient) GetRuntimeinfo(ctx context.Context) (prom_v1.RuntimeinfoResult, error) {
 	return prom_v1.RuntimeinfoResult{}, nil
 }
 

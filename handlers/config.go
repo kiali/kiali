@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -173,7 +174,7 @@ func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface,
 			promConfig.StorageTsdbRetention = int64(time.Duration(retention).Seconds())
 		}
 	} else {
-		configResult, err := client.GetConfiguration()
+		configResult, err := client.GetConfiguration(context.Background())
 		if checkErr(err, "Failed to fetch Prometheus configuration", logger) {
 			var config PrometheusPartialConfig
 			if checkErr(yaml.Unmarshal([]byte(configResult.YAML), &config), "Failed to unmarshal Prometheus configuration", logger) {
@@ -185,7 +186,7 @@ func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface,
 			}
 		}
 
-		promRuntimeinfoResults, err := client.GetRuntimeinfo()
+		promRuntimeinfoResults, err := client.GetRuntimeinfo(context.Background())
 		if checkErr(err, "Failed to fetch Prometheus runtime info", logger) {
 			// the storage retention as reported by Prometheus endpoint /api/v1/status/runtimeinfo
 			// It will either be time-based (e.g. "1d") or size-based (e.g "10GB") or both (e.g "1d or 10GB").
@@ -251,7 +252,7 @@ func CrippledFeatures(conf *config.Config, client prometheus.ClientInterface) ht
 			return
 		}
 
-		existingMetrics, err := client.GetExistingMetricNames(requiredMetrics)
+		existingMetrics, err := client.GetExistingMetricNames(r.Context(), requiredMetrics)
 		if !checkErr(err, "", logger) {
 			log.Error(err)
 			RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)

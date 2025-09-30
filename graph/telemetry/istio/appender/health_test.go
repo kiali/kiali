@@ -499,8 +499,8 @@ func TestErrorCausesPanic(t *testing.T) {
 	discovery := istio.NewDiscovery(map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s}, cache, conf)
 
 	prom := new(prometheustest.PromClientMock)
-	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
-	prom.MockAllRequestRates("testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
+	prom.MockNamespaceServicesRequestRates(context.Background(), "testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
+	prom.MockAllRequestRates(context.Background(), "testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
 	k8sclients := make(map[string]kubernetes.UserClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	businessLayer, err := business.NewLayerWithSAClients(conf, cache, nil, nil, nil, nil, discovery, k8sclients)
@@ -550,8 +550,8 @@ func TestMultiClusterHealthConfig(t *testing.T) {
 	config.Set(conf)
 
 	prom := new(prometheustest.PromClientMock)
-	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
-	prom.MockAllRequestRates("testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
+	prom.MockNamespaceServicesRequestRates(context.Background(), "testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
+	prom.MockAllRequestRates(context.Background(), "testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
 	businessLayer := business.NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build()
 
 	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
@@ -622,7 +622,7 @@ func setupHealthConfig(t *testing.T, services []core_v1.Service, deployments []a
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 	prom := new(prometheustest.PromClientMock)
-	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
-	prom.MockAllRequestRates("testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
+	prom.MockNamespaceServicesRequestRates(context.Background(), "testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
+	prom.MockAllRequestRates(context.Background(), "testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
 	return business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 }

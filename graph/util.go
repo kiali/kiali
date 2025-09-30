@@ -13,6 +13,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
@@ -96,6 +97,17 @@ func PromQueryAppender(ctx context.Context, query string, queryTime time.Time, a
 	if query == "" {
 		return model.Vector{}
 	}
+
+	// Add tracing span for Prometheus query
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(
+		ctx,
+		"PromQueryAppender",
+		observability.Attribute("package", "prometheus"),
+		observability.Attribute("query", query),
+		observability.Attribute("appenderName", appenderName),
+	)
+	defer end()
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()

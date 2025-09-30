@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -72,7 +73,7 @@ func TestClustersHealth(t *testing.T) {
 	conf := config.NewConfig()
 
 	// Test 17s on rate interval to check that rate interval is adjusted correctly.
-	prom.On("GetAllRequestRates", "ns", conf.KubernetesConfig.ClusterName, "17s", util.Clock.Now()).Return(model.Vector{}, nil)
+	prom.On("GetAllRequestRates", mock.Anything, "ns", conf.KubernetesConfig.ClusterName, "17s", util.Clock.Now()).Return(model.Vector{}, nil)
 
 	resp, err := http.Get(url)
 	if err != nil {

@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"sort"
@@ -23,10 +24,10 @@ func NewMetricsService(prom prometheus.ClientInterface, conf *config.Config) *Me
 	return &MetricsService{conf: conf, prom: prom}
 }
 
-func (in *MetricsService) GetMetrics(q models.IstioMetricsQuery, scaler func(n string) float64) (models.MetricsMap, error) {
+func (in *MetricsService) GetMetrics(ctx context.Context, q models.IstioMetricsQuery, scaler func(n string) float64) (models.MetricsMap, error) {
 	lb := createMetricsLabelsBuilder(&q, in.conf)
 	grouping := strings.Join(q.ByLabels, ",")
-	return in.fetchAllMetrics(q, lb, grouping, scaler)
+	return in.fetchAllMetrics(ctx, q, lb, grouping, scaler)
 }
 
 func createMetricsLabelsBuilder(q *models.IstioMetricsQuery, conf *config.Config) *MetricsLabelsBuilder {
@@ -68,20 +69,20 @@ func createMetricsLabelsBuilder(q *models.IstioMetricsQuery, conf *config.Config
 	return lb
 }
 
-func (in *MetricsService) fetchAllMetrics(q models.IstioMetricsQuery, lb *MetricsLabelsBuilder, grouping string, scaler func(n string) float64) (models.MetricsMap, error) {
+func (in *MetricsService) fetchAllMetrics(ctx context.Context, q models.IstioMetricsQuery, lb *MetricsLabelsBuilder, grouping string, scaler func(n string) float64) (models.MetricsMap, error) {
 	labels := lb.Build()
 	labelsError := lb.BuildForErrors()
 
 	var wg sync.WaitGroup
 	fetchRate := func(p8sFamilyName string, metric *prometheus.Metric, lbl []string) {
 		defer wg.Done()
-		m := in.prom.FetchRateRange(p8sFamilyName, lbl, grouping, &q.RangeQuery)
+		m := in.prom.FetchRateRange(ctx, p8sFamilyName, lbl, grouping, &q.RangeQuery)
 		*metric = m
 	}
 
 	fetchHisto := func(p8sFamilyName string, histo *prometheus.Histogram) {
 		defer wg.Done()
-		h := in.prom.FetchHistogramRange(p8sFamilyName, labels, grouping, &q.RangeQuery)
+		h := in.prom.FetchHistogramRange(ctx, p8sFamilyName, labels, grouping, &q.RangeQuery)
 		*histo = h
 	}
 
@@ -152,7 +153,7 @@ func (in *MetricsService) fetchAllMetrics(q models.IstioMetricsQuery, lb *Metric
 }
 
 // GetStats computes metrics stats, currently response times, for a set of queries
-func (in *MetricsService) GetStats(queries []models.MetricsStatsQuery) (map[string]models.MetricsStats, error) {
+func (in *MetricsService) GetStats(ctx context.Context, queries []models.MetricsStatsQuery) (map[string]models.MetricsStats, error) {
 	type statsChanResult struct {
 		key   string
 		stats *models.MetricsStats
@@ -184,7 +185,7 @@ func (in *MetricsService) GetStats(queries []models.MetricsStatsQuery) (map[stri
 			wg.Add(1)
 			go func(q models.MetricsStatsQuery) {
 				defer wg.Done()
-				stats, err := in.getSingleQueryStats(&q)
+				stats, err := in.getSingleQueryStats(ctx, &q)
 				statsChan <- statsChanResult{key: q.GenKey(), stats: stats, err: err}
 			}(q)
 		}
@@ -204,10 +205,10 @@ func (in *MetricsService) GetStats(queries []models.MetricsStatsQuery) (map[stri
 	return result, nil
 }
 
-func (in *MetricsService) getSingleQueryStats(q *models.MetricsStatsQuery) (*models.MetricsStats, error) {
+func (in *MetricsService) getSingleQueryStats(ctx context.Context, q *models.MetricsStatsQuery) (*models.MetricsStats, error) {
 	lb := createStatsMetricsLabelsBuilder(q, in.conf)
 	labels := lb.Build()
-	stats, err := in.prom.FetchHistogramValues("istio_request_duration_milliseconds", labels, "", q.Interval, q.Avg, q.Quantiles, q.QueryTime)
+	stats, err := in.prom.FetchHistogramValues(ctx, "istio_request_duration_milliseconds", labels, "", q.Interval, q.Avg, q.Quantiles, q.QueryTime)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +257,7 @@ func createStatsMetricsLabelsBuilder(q *models.MetricsStatsQuery, conf *config.C
 	return lb
 }
 
-func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, pods models.Pods, scaler func(n string) float64) (models.MetricsMap, error) {
+func (in *MetricsService) GetControlPlaneMetrics(ctx context.Context, q models.IstioMetricsQuery, pods models.Pods, scaler func(n string) float64) (models.MetricsMap, error) {
 	podRegex := ""
 	separator := ""
 	podLabel := ""
@@ -280,12 +281,12 @@ func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, pod
 	// is delta(sum) / delta(count) for the time period. Note, this is pretty non-standard manipulation of a histogram,
 	// don't try this at home.
 	deltaDuration := q.End.Sub(q.Start)
-	deltaSumMetric := in.prom.FetchDelta("pilot_proxy_convergence_time_sum", podLabel, "", q.End, deltaDuration)
+	deltaSumMetric := in.prom.FetchDelta(ctx, "pilot_proxy_convergence_time_sum", podLabel, "", q.End, deltaDuration)
 	deltaSumConverted, err := models.ConvertMetric("pilot_proxy_convergence_time_sum", deltaSumMetric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
 	}
-	deltaCountMetric := in.prom.FetchDelta("pilot_proxy_convergence_time_count", podLabel, "", q.End, deltaDuration)
+	deltaCountMetric := in.prom.FetchDelta(ctx, "pilot_proxy_convergence_time_count", podLabel, "", q.End, deltaDuration)
 	deltaCountConverted, err := models.ConvertMetric("pilot_proxy_convergence_time_count", deltaCountMetric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
@@ -302,14 +303,14 @@ func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, pod
 		metrics["pilot_proxy_convergence_time"] = append(metrics["pilot_proxy_convergence_time"], converted...)
 	}
 
-	metric := in.prom.FetchRateRange("container_cpu_usage_seconds_total", []string{podLabel}, "", &q.RangeQuery)
+	metric := in.prom.FetchRateRange(ctx, "container_cpu_usage_seconds_total", []string{podLabel}, "", &q.RangeQuery)
 	converted, err = models.ConvertMetric("container_cpu_usage_seconds_total", metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
 	}
 	metrics["container_cpu_usage_seconds_total"] = append(metrics["container_cpu_usage_seconds_total"], converted...)
 
-	metric = in.prom.FetchRateRange("process_cpu_seconds_total", []string{podLabel}, "", &q.RangeQuery)
+	metric = in.prom.FetchRateRange(ctx, "process_cpu_seconds_total", []string{podLabel}, "", &q.RangeQuery)
 
 	converted, err = models.ConvertMetric("process_cpu_seconds_total", metric, models.ConversionParams{Scale: 1})
 	if err != nil {
@@ -317,7 +318,7 @@ func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, pod
 	}
 	metrics["process_cpu_seconds_total"] = append(metrics["process_cpu_seconds_total"], converted...)
 
-	metric = in.prom.FetchRange("container_memory_working_set_bytes", podLabel, "", "", &q.RangeQuery)
+	metric = in.prom.FetchRange(ctx, "container_memory_working_set_bytes", podLabel, "", "", &q.RangeQuery)
 
 	converted, err = models.ConvertMetric("container_memory_working_set_bytes", metric, models.ConversionParams{Scale: 0.000001})
 	if err != nil {
@@ -325,7 +326,7 @@ func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, pod
 	}
 	metrics["container_memory_working_set_bytes"] = append(metrics["container_memory_working_set_bytes"], converted...)
 
-	metric = in.prom.FetchRange("process_resident_memory_bytes", podLabel, "", "", &q.RangeQuery)
+	metric = in.prom.FetchRange(ctx, "process_resident_memory_bytes", podLabel, "", "", &q.RangeQuery)
 	converted, err = models.ConvertMetric("process_resident_memory_bytes", metric, models.ConversionParams{Scale: 0.000001})
 	if err != nil {
 		return nil, err
@@ -335,19 +336,19 @@ func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, pod
 	return metrics, nil
 }
 
-func (in *MetricsService) GetZtunnelMetrics(q models.IstioMetricsQuery) (models.MetricsMap, error) {
+func (in *MetricsService) GetZtunnelMetrics(ctx context.Context, q models.IstioMetricsQuery) (models.MetricsMap, error) {
 	metrics := make(models.MetricsMap)
 	var err error
 	var converted []models.Metric
 
 	// ZTunnel connections
-	metric := in.prom.FetchRateRange("istio_tcp_connections_opened_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
+	metric := in.prom.FetchRateRange(ctx, "istio_tcp_connections_opened_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
 	converted, err = models.ConvertMetric("istio_tcp_connections_opened_total", metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
 	}
 	metrics["ztunnel_connections"] = append(metrics["istio_tcp_connections_closed_total"], converted...)
-	metric = in.prom.FetchRateRange("istio_tcp_connections_closed_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
+	metric = in.prom.FetchRateRange(ctx, "istio_tcp_connections_closed_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
 	converted, err = models.ConvertMetric("istio_tcp_connections_closed_total", metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
@@ -355,7 +356,7 @@ func (in *MetricsService) GetZtunnelMetrics(q models.IstioMetricsQuery) (models.
 	metrics["ztunnel_connections"] = append(metrics["istio_tcp_connections_closed_total"], converted...)
 
 	// Ztunnel versions
-	metric = in.prom.FetchRange("istio_build", "{component=\"ztunnel\"}", "tag", "sum", &q.RangeQuery)
+	metric = in.prom.FetchRange(ctx, "istio_build", "{component=\"ztunnel\"}", "tag", "sum", &q.RangeQuery)
 	converted, err = models.ConvertMetric("istio_build", metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
@@ -363,7 +364,7 @@ func (in *MetricsService) GetZtunnelMetrics(q models.IstioMetricsQuery) (models.
 	metrics["ztunnel_versions"] = append(metrics["istio_build"], converted...)
 
 	// Ztunnel memory usage ztunnel_memory_usage
-	metric = in.prom.FetchRange("container_memory_working_set_bytes", "{pod=~\"ztunnel-.*\"}", "pod", "sum", &q.RangeQuery)
+	metric = in.prom.FetchRange(ctx, "container_memory_working_set_bytes", "{pod=~\"ztunnel-.*\"}", "pod", "sum", &q.RangeQuery)
 	converted, err = models.ConvertMetric("container_memory_working_set_bytes", metric, models.ConversionParams{Scale: 0.000001})
 	if err != nil {
 		return nil, err
@@ -372,7 +373,7 @@ func (in *MetricsService) GetZtunnelMetrics(q models.IstioMetricsQuery) (models.
 
 	// Ztunnel ztunnel_cpu_usage
 	metricName := fmt.Sprintf("irate(container_cpu_usage_seconds_total{pod=~\"ztunnel-.*\"}[%s])", q.RateInterval)
-	metric = in.prom.FetchRange(metricName, "", "pod", "sum", &q.RangeQuery)
+	metric = in.prom.FetchRange(ctx, metricName, "", "pod", "sum", &q.RangeQuery)
 	converted, err = models.ConvertMetric(metricName, metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
@@ -380,13 +381,13 @@ func (in *MetricsService) GetZtunnelMetrics(q models.IstioMetricsQuery) (models.
 	metrics["ztunnel_cpu_usage"] = append(metrics[metricName], converted...)
 
 	// ztunnel_bytes_transmitted
-	metric = in.prom.FetchRateRange("istio_tcp_received_bytes_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
+	metric = in.prom.FetchRateRange(ctx, "istio_tcp_received_bytes_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
 	converted, err = models.ConvertMetric("ztunnel_bytes_transmitted", metric, models.ConversionParams{Scale: 0.001, LabelPrefix: "Received"})
 	if err != nil {
 		return nil, err
 	}
 	metrics["ztunnel_bytes_transmitted"] = append(metrics["ztunnel_bytes_transmitted"], converted...)
-	metric = in.prom.FetchRateRange("istio_tcp_sent_bytes_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
+	metric = in.prom.FetchRateRange(ctx, "istio_tcp_sent_bytes_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
 	converted, err = models.ConvertMetric("ztunnel_bytes_transmitted", metric, models.ConversionParams{Scale: 0.001, LabelPrefix: "Sent"})
 	if err != nil {
 		return nil, err
@@ -394,7 +395,7 @@ func (in *MetricsService) GetZtunnelMetrics(q models.IstioMetricsQuery) (models.
 	metrics["ztunnel_bytes_transmitted"] = append(metrics["ztunnel_bytes_transmitted"], converted...)
 
 	// ztunnel_workload_manager
-	metric = in.prom.FetchRange("workload_manager_active_proxy_count", "{pod=~\"ztunnel-.*\"}", "pod", "sum", &q.RangeQuery)
+	metric = in.prom.FetchRange(ctx, "workload_manager_active_proxy_count", "{pod=~\"ztunnel-.*\"}", "pod", "sum", &q.RangeQuery)
 	converted, err = models.ConvertMetric("ztunnel_workload_manager", metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
@@ -404,14 +405,14 @@ func (in *MetricsService) GetZtunnelMetrics(q models.IstioMetricsQuery) (models.
 	return metrics, nil
 }
 
-func (in *MetricsService) GetResourceMetrics(q models.IstioMetricsQuery) (models.MetricsMap, error) {
+func (in *MetricsService) GetResourceMetrics(ctx context.Context, q models.IstioMetricsQuery) (models.MetricsMap, error) {
 	metrics := make(models.MetricsMap)
 	var err error
 	var converted []models.Metric
 
 	// Component memory usage memory_usage
 	labels := fmt.Sprintf("{pod=~\"%s-.*\"}", q.App)
-	metric := in.prom.FetchRange("container_memory_working_set_bytes", labels, "pod", "sum", &q.RangeQuery)
+	metric := in.prom.FetchRange(ctx, "container_memory_working_set_bytes", labels, "pod", "sum", &q.RangeQuery)
 	converted, err = models.ConvertMetric("container_memory_working_set_bytes", metric, models.ConversionParams{Scale: 0.000001})
 	if err != nil {
 		return nil, err
@@ -420,7 +421,7 @@ func (in *MetricsService) GetResourceMetrics(q models.IstioMetricsQuery) (models
 
 	// Component cpu_usage
 	metricName := fmt.Sprintf("irate(container_cpu_usage_seconds_total{pod=~\"%s-.*\"}[%s])", q.App, q.RateInterval)
-	metric = in.prom.FetchRange(metricName, "", "pod", "sum", &q.RangeQuery)
+	metric = in.prom.FetchRange(ctx, metricName, "", "pod", "sum", &q.RangeQuery)
 	converted, err = models.ConvertMetric(metricName, metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err

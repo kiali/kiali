@@ -12,6 +12,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/util/sliceutil"
 )
@@ -96,6 +97,13 @@ func buildHistogramQueries(ctx context.Context, metricName, labels, grouping, ra
 }
 
 func fetchQuery(ctx context.Context, api prom_v1.API, query string, queryTime time.Time) Metric {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "fetchQuery",
+		observability.Attribute("package", "prometheus"),
+		observability.Attribute("query", query),
+	)
+	defer end()
+
 	result, warnings, err := api.Query(ctx, query, queryTime)
 	if len(warnings) > 0 {
 		zl := log.FromContext(ctx)
@@ -129,6 +137,13 @@ func vectorToMatrix(ctx context.Context, vector []*model.Sample, t model.Time) m
 }
 
 func fetchRange(ctx context.Context, api prom_v1.API, query string, bounds prom_v1.Range) Metric {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "fetchRange",
+		observability.Attribute("package", "prometheus"),
+		observability.Attribute("query", query),
+	)
+	defer end()
+
 	result, warnings, err := api.QueryRange(ctx, query, bounds)
 	if len(warnings) > 0 {
 		zl := log.FromContext(ctx)
@@ -148,6 +163,14 @@ func fetchRange(ctx context.Context, api prom_v1.API, query string, bounds prom_
 // Note that it does not discriminate on "reporter", so rates can be inflated due to duplication, and therefore
 // should be used mainly for calculating ratios (e.g total rates / error rates)
 func getAllRequestRates(ctx context.Context, api prom_v1.API, namespace, cluster string, queryTime time.Time, ratesInterval string) (model.Vector, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "getAllRequestRates",
+		observability.Attribute("package", "prometheus"),
+		observability.Attribute("namespace", namespace),
+		observability.Attribute("cluster", cluster),
+		observability.Attribute("ratesInterval", ratesInterval),
+	)
+	defer end()
 	// traffic originating outside the namespace to destinations inside the namespace
 	lbl := fmt.Sprintf(`destination_service_namespace="%s",source_workload_namespace!="%s",destination_cluster="%s"`, namespace, namespace, cluster)
 	fromOutside, err := getRequestRatesForLabel(ctx, api, queryTime, lbl, ratesInterval)
@@ -215,6 +238,14 @@ func getItemRequestRates(ctx context.Context, api prom_v1.API, namespace, cluste
 // TODO: Disable health rate calculations in offline mode.
 // It would be better if we could align the graph rate calculations with the health rate calculations.
 func getRequestRatesForLabel(ctx context.Context, api prom_v1.API, time time.Time, labels, ratesInterval string) (model.Vector, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "getRequestRatesForLabel",
+		observability.Attribute("package", "prometheus"),
+		observability.Attribute("labels", labels),
+		observability.Attribute("ratesInterval", ratesInterval),
+	)
+	defer end()
+
 	zl := log.FromContext(ctx)
 	query := fmt.Sprintf("rate(istio_requests_total{%s}[%s]) > 0", labels, ratesInterval)
 	zl.Trace().Msgf("getRequestRatesForLabel: %s", query)
