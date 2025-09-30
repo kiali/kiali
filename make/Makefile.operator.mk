@@ -144,7 +144,7 @@ kiali-purge: .ensure-oc-exists
 	    ${OC} patch  kiali $${cr_name} -n $${cr_namespace} -p '{"metadata":{"finalizers": []}}' --type=merge ;\
 	    ${OC} delete kiali $${cr_name} -n $${cr_namespace} ;\
 	  done
-	${OC} delete --ignore-not-found=true all,secrets,sa,configmaps,deployments,roles,rolebindings,ingresses,horizontalpodautoscalers --selector="app.kubernetes.io/name=kiali" -n "${NAMESPACE}"
+	${OC} delete --ignore-not-found=true all,secrets,sa,configmaps,deployments,roles,rolebindings,ingresses,horizontalpodautoscalers,networkpolicies --selector="app.kubernetes.io/name=kiali" -n "${NAMESPACE}"
 	${OC} delete --ignore-not-found=true clusterroles,clusterrolebindings --selector="app.kubernetes.io/name=kiali"
 	${OC} delete --ignore-not-found=true networkpolicies.networking.k8s.io -n ${NAMESPACE} kiali-network-policy-from-make
 ifeq ($(CLUSTER_TYPE),openshift)
