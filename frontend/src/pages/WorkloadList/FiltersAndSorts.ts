@@ -279,10 +279,12 @@ const workloadTypeFilter: FilterType = {
       }
     ]
       .concat(
-        (serverConfig.kialiFeatureFlags.customWorkloadTypes || []).map(gvk => ({
-          id: gvk.kind,
-          title: gvk.kind
-        }))
+        (serverConfig.kialiFeatureFlags.customWorkloadTypes || [])
+          .filter(gvk => gvk.kind && gvk.kind.trim() !== '')
+          .map(gvk => ({
+            id: gvk.kind,
+            title: gvk.kind
+          }))
       )
       .sort((a, b) => a.title.localeCompare(b.title));
   }
