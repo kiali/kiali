@@ -179,23 +179,34 @@ install_hydra() {
   echo "Waiting for Hydra to be ready after minikube restart..."
   for i in {1..60}; do
     if ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- get pods -n ory -l app.kubernetes.io/name=hydra --no-headers 2>/dev/null | grep -q "1/1.*Running"; then
-      echo "Hydra is ready after restart!"
       break
     fi
     echo "Waiting for Hydra to restart... (attempt $i/60)"
     sleep 5
   done
+  if ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- get pods -n ory -l app.kubernetes.io/name=hydra --no-headers 2>/dev/null | grep -q "1/1.*Running"; then
+    echo "Hydra is ready after restart!"
+  else
+    echo "Error: Hydra failed to become ready after restart!"
+    exit 1
+  fi
 
   # Verify Hydra is accessible via nip.io after restart
   echo "Verifying Hydra OIDC endpoint is accessible..."
-  for i in {1..30}; do
+  for i in {1..40}; do
     if curl -k -s "https://$(echo ${MINIKUBE_IP} | sed 's/\./-/g').nip.io:30967/.well-known/openid-configuration" > /dev/null 2>&1; then
       echo "Hydra OIDC endpoint is accessible!"
       break
     fi
-    echo "Waiting for Hydra OIDC endpoint... (attempt $i/30)"
+    echo "Waiting for Hydra OIDC endpoint... (attempt $i/40)"
     sleep 2
   done
+  if curl -k -s "https://$(echo ${MINIKUBE_IP} | sed 's/\./-/g').nip.io:30967/.well-known/openid-configuration" > /dev/null 2>&1; then
+    echo "Hydra OIDC endpoint is accessible!"
+  else
+    echo "Error: Hydra OIDC endpoint is not accessible!"
+    exit 1
+  fi
 
   echo "Creating istio-system namespace for Kiali deployment"
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create namespace istio-system
