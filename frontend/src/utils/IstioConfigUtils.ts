@@ -1,3 +1,4 @@
+import { serverConfig } from '../config/ServerConfig';
 import { IstioConfigDetails } from '../types/IstioConfigDetails';
 import {
   ConnectionPoolSettings,
@@ -251,6 +252,26 @@ export function istioTypesToGVKString(istioTypes: string[]): string[] {
   });
 }
 
-export function isGVKSupported(gvk: GroupVersionKind): boolean {
-  return getGVKTypeString(gvk) === getGVKTypeString(gvkType[gvk.Kind]) && gvk.Kind !== gvkType.WorkloadGroup;
+export function isGVKSupported(gvk?: GroupVersionKind): boolean {
+  if (!gvk || !gvk.Kind) {
+    return false;
+  }
+
+
+  // WorkloadGroup is not supported
+  if (gvk.Kind === gvkType.WorkloadGroup) {
+    return false;
+  }
+
+  // Check built-in workload types
+  const builtIn = dicTypeToGVK[gvk.Kind as gvkType];
+  if (builtIn) {
+    return getGVKTypeString(gvk) === getGVKTypeString(builtIn);
+  }
+
+  // Check custom (user-configured) workload types.
+  const custom = serverConfig.kialiFeatureFlags?.customWorkloadTypes ?? [];
+  return custom.some(
+    c => c.group === gvk.Group && c.version === gvk.Version && c.kind === gvk.Kind
+  );
 }

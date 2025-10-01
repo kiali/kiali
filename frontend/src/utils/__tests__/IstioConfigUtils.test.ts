@@ -1,6 +1,7 @@
 import {
   getGVKTypeString,
   getIstioObjectGVK,
+  isGVKSupported,
   isServerHostValid,
   istioTypesToGVKString,
   isValidUrl,
@@ -244,5 +245,71 @@ describe('Validate Istio Types array To GVK Strings array', () => {
     const istioTypes = ['InvalidType'];
     const result = istioTypesToGVKString(istioTypes);
     expect(result).toEqual(['']);
+  });
+});
+
+// Mock serverConfig for isGVKSupported tests.
+jest.mock('../../config/ServerConfig', () => ({
+  serverConfig: {
+    kialiFeatureFlags: {
+      customWorkloadTypes: []
+    }
+  }
+}));
+
+describe('Validate isGVKSupported', () => {
+  const { serverConfig } = require('../../config/ServerConfig');
+
+  beforeEach(() => {
+    // Reset custom workload types before each test.
+    serverConfig.kialiFeatureFlags.customWorkloadTypes = [];
+  });
+
+  it('should support built-in Deployment', () => {
+    const gvk = { Group: 'apps', Version: 'v1', Kind: 'Deployment' };
+    expect(isGVKSupported(gvk)).toBeTruthy();
+  });
+
+  it('should support built-in StatefulSet', () => {
+    const gvk = { Group: 'apps', Version: 'v1', Kind: 'StatefulSet' };
+    expect(isGVKSupported(gvk)).toBeTruthy();
+  });
+
+  it('should not support unknown GVK by default', () => {
+    const gvk = { Group: 'argoproj.io', Version: 'v1alpha1', Kind: 'Rollout' };
+    expect(isGVKSupported(gvk)).toBeFalsy();
+  });
+
+  it('should support custom workload types when configured', () => {
+    serverConfig.kialiFeatureFlags.customWorkloadTypes = [
+      { group: 'argoproj.io', version: 'v1alpha1', kind: 'Rollout' }
+    ];
+
+    const gvk = { Group: 'argoproj.io', Version: 'v1alpha1', Kind: 'Rollout' };
+    expect(isGVKSupported(gvk)).toBeTruthy();
+  });
+
+  it('should support custom workload types with exact matching', () => {
+    serverConfig.kialiFeatureFlags.customWorkloadTypes = [
+      { group: 'argoproj.io', version: 'v1alpha1', kind: 'Rollout' }
+    ];
+
+    // Exact match should work.
+    expect(isGVKSupported({ Group: 'argoproj.io', Version: 'v1alpha1', Kind: 'Rollout' })).toBeTruthy();
+
+    // Built-in should still work.
+    expect(isGVKSupported({ Group: 'apps', Version: 'v1', Kind: 'Deployment' })).toBeTruthy();
+
+    // Wrong GVK components should not match.
+    expect(isGVKSupported({ Group: 'wrong.io', Version: 'v1alpha1', Kind: 'Rollout' })).toBeFalsy();
+    expect(isGVKSupported({ Group: 'argoproj.io', Version: 'v1beta1', Kind: 'Rollout' })).toBeFalsy();
+  });
+
+  it('should handle empty or undefined custom workload types', () => {
+    serverConfig.kialiFeatureFlags.customWorkloadTypes = [];
+    expect(isGVKSupported({ Group: 'argoproj.io', Version: 'v1alpha1', Kind: 'Rollout' })).toBeFalsy();
+
+    serverConfig.kialiFeatureFlags.customWorkloadTypes = undefined;
+    expect(isGVKSupported({ Group: 'argoproj.io', Version: 'v1alpha1', Kind: 'Rollout' })).toBeFalsy();
   });
 });

@@ -235,48 +235,59 @@ const workloadTypeFilter: FilterType = {
   placeholder: 'Filter by Workload Type',
   filterType: AllFilterTypes.typeAhead,
   action: FILTER_ACTION_APPEND,
-  filterValues: [
-    {
-      id: dicTypeToGVK.CronJob.Kind,
-      title: dicTypeToGVK.CronJob.Kind
-    },
-    {
-      id: dicTypeToGVK.DaemonSet.Kind,
-      title: dicTypeToGVK.DaemonSet.Kind
-    },
-    {
-      id: dicTypeToGVK.Deployment.Kind,
-      title: dicTypeToGVK.Deployment.Kind
-    },
-    {
-      id: dicTypeToGVK.DeploymentConfig.Kind,
-      title: dicTypeToGVK.DeploymentConfig.Kind
-    },
-    {
-      id: dicTypeToGVK.Job.Kind,
-      title: dicTypeToGVK.Job.Kind
-    },
-    {
-      id: dicTypeToGVK.Pod.Kind,
-      title: dicTypeToGVK.Pod.Kind
-    },
-    {
-      id: dicTypeToGVK.ReplicaSet.Kind,
-      title: dicTypeToGVK.ReplicaSet.Kind
-    },
-    {
-      id: dicTypeToGVK.ReplicationController.Kind,
-      title: dicTypeToGVK.ReplicationController.Kind
-    },
-    {
-      id: dicTypeToGVK.StatefulSet.Kind,
-      title: dicTypeToGVK.StatefulSet.Kind
-    },
-    {
-      id: dicTypeToGVK.WorkloadGroup.Kind,
-      title: dicTypeToGVK.WorkloadGroup.Kind
-    }
-  ]
+  get filterValues() {
+    return [
+      {
+        id: dicTypeToGVK.CronJob.Kind,
+        title: dicTypeToGVK.CronJob.Kind
+      },
+      {
+        id: dicTypeToGVK.DaemonSet.Kind,
+        title: dicTypeToGVK.DaemonSet.Kind
+      },
+      {
+        id: dicTypeToGVK.Deployment.Kind,
+        title: dicTypeToGVK.Deployment.Kind
+      },
+      {
+        id: dicTypeToGVK.DeploymentConfig.Kind,
+        title: dicTypeToGVK.DeploymentConfig.Kind
+      },
+      {
+        id: dicTypeToGVK.Job.Kind,
+        title: dicTypeToGVK.Job.Kind
+      },
+      {
+        id: dicTypeToGVK.Pod.Kind,
+        title: dicTypeToGVK.Pod.Kind
+      },
+      {
+        id: dicTypeToGVK.ReplicaSet.Kind,
+        title: dicTypeToGVK.ReplicaSet.Kind
+      },
+      {
+        id: dicTypeToGVK.ReplicationController.Kind,
+        title: dicTypeToGVK.ReplicationController.Kind
+      },
+      {
+        id: dicTypeToGVK.StatefulSet.Kind,
+        title: dicTypeToGVK.StatefulSet.Kind
+      },
+      {
+        id: dicTypeToGVK.WorkloadGroup.Kind,
+        title: dicTypeToGVK.WorkloadGroup.Kind
+      }
+    ]
+      .concat(
+        (serverConfig.kialiFeatureFlags.customWorkloadTypes || [])
+          .filter(gvk => gvk.kind && gvk.kind.trim() !== '')
+          .map(gvk => ({
+            id: gvk.kind,
+            title: gvk.kind
+          }))
+      )
+      .sort((a, b) => a.title.localeCompare(b.title));
+  }
 };
 
 export const availableFilters: FilterType[] = [

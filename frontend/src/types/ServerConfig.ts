@@ -79,7 +79,14 @@ interface UIDefaults {
   tracing: TracingDefaults;
 }
 
+interface CustomWorkloadType {
+  group: string;
+  version: string;
+  kind: string;
+}
+
 interface KialiFeatureFlags {
+  customWorkloadTypes?: CustomWorkloadType[];
   disabledFeatures: string[];
   istioAnnotationAction: boolean;
   istioInjectionAction: boolean;
