@@ -41,7 +41,7 @@ const openIdTestToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZG9lQG
 
 /*** Function tests ***/
 
-// see https://github.com/kiali/kiali/issues/6226
+// see https://github.com/kiali/kiali/issues/6226 and https://github.com/kiali/kiali/issues/8717
 func TestVerifyAudienceClaim(t *testing.T) {
 	oidCfg := config.OpenIdConfig{
 		ClientId: "kiali-client",
@@ -51,29 +51,157 @@ func TestVerifyAudienceClaim(t *testing.T) {
 		IdTokenPayload: map[string]interface{}{},
 	}
 
-	oip.IdTokenPayload["aud"] = []interface{}{oidCfg.ClientId}
-	err := verifyAudienceClaim(&oip, oidCfg)
-	assert.Nil(t, err, "verifyAudienceClaim failed: %v", err)
+	// Test single audience scenarios (existing behavior)
+	t.Run("SingleAudience_Valid", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = oidCfg.ClientId
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.Nil(t, err, "verifyAudienceClaim failed: %v", err)
+	})
 
-	oip.IdTokenPayload["aud"] = []string{oidCfg.ClientId}
-	err = verifyAudienceClaim(&oip, oidCfg)
-	assert.Nil(t, err, "verifyAudienceClaim failed: %v", err)
+	t.Run("SingleAudience_Invalid", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = oidCfg.ClientId + "DIFFERENT"
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.NotNil(t, err, "verifyAudienceClaim should have failed")
+	})
 
-	oip.IdTokenPayload["aud"] = oidCfg.ClientId
-	err = verifyAudienceClaim(&oip, oidCfg)
-	assert.Nil(t, err, "verifyAudienceClaim failed: %v", err)
+	// Test single-element array scenarios (existing behavior)
+	t.Run("SingleElementArray_Interface_Valid", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = []interface{}{oidCfg.ClientId}
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.Nil(t, err, "verifyAudienceClaim failed: %v", err)
+	})
 
-	oip.IdTokenPayload["aud"] = []interface{}{oidCfg.ClientId + "DIFFERENT"}
-	err = verifyAudienceClaim(&oip, oidCfg)
-	assert.NotNil(t, err, "verifyAudienceClaim should have failed")
+	t.Run("SingleElementArray_String_Valid", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = []string{oidCfg.ClientId}
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.Nil(t, err, "verifyAudienceClaim failed: %v", err)
+	})
 
-	oip.IdTokenPayload["aud"] = []string{oidCfg.ClientId + "DIFFERENT"}
-	err = verifyAudienceClaim(&oip, oidCfg)
-	assert.NotNil(t, err, "verifyAudienceClaim should have failed")
+	t.Run("SingleElementArray_Interface_Invalid", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = []interface{}{oidCfg.ClientId + "DIFFERENT"}
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.NotNil(t, err, "verifyAudienceClaim should have failed")
+	})
 
-	oip.IdTokenPayload["aud"] = oidCfg.ClientId + "DIFFERENT"
-	err = verifyAudienceClaim(&oip, oidCfg)
-	assert.NotNil(t, err, "verifyAudienceClaim should have failed")
+	t.Run("SingleElementArray_String_Invalid", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = []string{oidCfg.ClientId + "DIFFERENT"}
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.NotNil(t, err, "verifyAudienceClaim should have failed")
+	})
+
+	// Test multi-audience scenarios (new functionality for issue #8717)
+	t.Run("MultiAudience_Interface_ValidFirst", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = []interface{}{oidCfg.ClientId, "other-service", "api-gateway"}
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.Nil(t, err, "verifyAudienceClaim failed: %v", err)
+	})
+
+	t.Run("MultiAudience_Interface_ValidMiddle", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = []interface{}{"other-service", oidCfg.ClientId, "api-gateway"}
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.Nil(t, err, "verifyAudienceClaim failed: %v", err)
+	})
+
+	t.Run("MultiAudience_Interface_ValidLast", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = []interface{}{"other-service", "api-gateway", oidCfg.ClientId}
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.Nil(t, err, "verifyAudienceClaim failed: %v", err)
+	})
+
+	t.Run("MultiAudience_String_ValidFirst", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = []string{oidCfg.ClientId, "other-service", "api-gateway"}
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.Nil(t, err, "verifyAudienceClaim failed: %v", err)
+	})
+
+	t.Run("MultiAudience_String_ValidMiddle", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = []string{"other-service", oidCfg.ClientId, "api-gateway"}
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.Nil(t, err, "verifyAudienceClaim failed: %v", err)
+	})
+
+	t.Run("MultiAudience_String_ValidLast", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = []string{"other-service", "api-gateway", oidCfg.ClientId}
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.Nil(t, err, "verifyAudienceClaim failed: %v", err)
+	})
+
+	t.Run("MultiAudience_Interface_NotFound", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = []interface{}{"other-service", "api-gateway", "different-client"}
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.NotNil(t, err, "verifyAudienceClaim should have failed")
+		assert.Contains(t, err.Error(), "not found in audiences")
+	})
+
+	t.Run("MultiAudience_String_NotFound", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = []string{"other-service", "api-gateway", "different-client"}
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.NotNil(t, err, "verifyAudienceClaim should have failed")
+		assert.Contains(t, err.Error(), "not found in audiences")
+	})
+
+	// Test edge cases
+	t.Run("EmptyArray_Interface", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = []interface{}{}
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.NotNil(t, err, "verifyAudienceClaim should have failed")
+		assert.Contains(t, err.Error(), "empty audience list")
+	})
+
+	t.Run("EmptyArray_String", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = []string{}
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.NotNil(t, err, "verifyAudienceClaim should have failed")
+		assert.Contains(t, err.Error(), "empty audience list")
+	})
+
+	t.Run("MixedTypeArray", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = []interface{}{123, oidCfg.ClientId, "other-service"}
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.Nil(t, err, "verifyAudienceClaim should pass when valid audience is found")
+	})
+
+	t.Run("NonStringInArray", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = []interface{}{123, 456}
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.NotNil(t, err, "verifyAudienceClaim should have failed")
+		assert.Contains(t, err.Error(), "not found in audiences")
+	})
+
+	t.Run("NonStringInArray_Match", func(t *testing.T) {
+		// Test that numeric values in audience arrays can match after string conversion
+		tempOidCfg := config.OpenIdConfig{
+			ClientId: "456",
+		}
+		oip.IdTokenPayload["aud"] = []interface{}{123, 456, 789}
+		err := verifyAudienceClaim(&oip, tempOidCfg)
+		assert.Nil(t, err, "verifyAudienceClaim should pass when numeric audience converts to matching string")
+	})
+
+	t.Run("MissingAudClaim", func(t *testing.T) {
+		delete(oip.IdTokenPayload, "aud")
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.NotNil(t, err, "verifyAudienceClaim should have failed")
+		assert.Contains(t, err.Error(), "has no aud claim")
+	})
+
+	t.Run("InvalidType_NoMatch", func(t *testing.T) {
+		oip.IdTokenPayload["aud"] = 12345
+		err := verifyAudienceClaim(&oip, oidCfg)
+		assert.NotNil(t, err, "verifyAudienceClaim should have failed")
+		assert.Contains(t, err.Error(), "got aud [12345]")
+	})
+
+	t.Run("NonStringType_ConversionMatch", func(t *testing.T) {
+		// Test that non-string audience claims are converted to strings and can match
+		// Use a temporary config with a numeric ClientId that matches the integer aud
+		tempOidCfg := config.OpenIdConfig{
+			ClientId: "12345",
+		}
+		oip.IdTokenPayload["aud"] = 12345
+		err := verifyAudienceClaim(&oip, tempOidCfg)
+		assert.Nil(t, err, "verifyAudienceClaim should pass when integer audience converts to matching string")
+	})
 }
 
 func TestValidateOpenIdTokenInHouse(t *testing.T) {
@@ -295,7 +423,7 @@ QwIDAQAB
 	response = rr.Result()
 	assert.Len(t, response.Cookies(), 1)
 	assert.Equal(t, nonceCookieName(conf.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
-	assert.Equal(t, "/kiali-test/?openid_error=the+OpenID+token+was+rejected%3A+the+OpenId+token+is+not+targeted+for+Kiali%3B+got+aud+%3D+%27bad-aud-client%27", response.Header.Get("Location"))
+	assert.Equal(t, "/kiali-test/?openid_error=the+OpenID+token+was+rejected%3A+the+OpenId+token+is+not+targeted+for+Kiali%3B+got+aud+%5Bbad-aud-client%5D", response.Header.Get("Location"))
 }
 
 /*** Implicit flow tests ***/
