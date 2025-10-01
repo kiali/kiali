@@ -387,11 +387,20 @@ if [ "${IS_OPENSHIFT}" == "true" ]; then
   fi
 fi
 
-# If Ambient profile, disable ipv6; this is broken on minikube when not using docker driver
+# If IPv6 is disabled, apply the appropriate settings based on profile
 echo "DISABLE_IPV6: ${DISABLE_IPV6}"
-if [ "${CONFIG_PROFILE}" == "ambient" ] && [ "${DISABLE_IPV6}" == "true" ]; then
-  CNI_OPTIONS="${CNI_OPTIONS} --set values.cni.ambient.ipv6=false"
-  echo "Disabling Ambient CNI IPv6"
+if [ "${DISABLE_IPV6}" == "true" ]; then
+  if [ "${CONFIG_PROFILE}" == "ambient" ]; then
+    CNI_OPTIONS="${CNI_OPTIONS} --set values.cni.ambient.ipv6=false"
+    echo "Disabling Ambient CNI IPv6"
+  else
+    # For non-ambient profiles (like demo), disable IPv6 by preventing dual-stack and IPv6 iptables rules
+    IPV6_DISABLE_OPTIONS=" \
+      --set values.global.proxy.excludeIPRanges=::1/128 \
+      --set meshConfig.defaultConfig.proxyMetadata.DISABLE_IPV6=true \
+      --set meshConfig.defaultConfig.proxyMetadata.ENABLE_INBOUND_IPV6=false"
+    echo "Disabling IPv6 for [${CONFIG_PROFILE}] profile"
+  fi
 fi
 
 if [ "${DISABLE_IPV6}" == "false" ]; then
@@ -525,6 +534,7 @@ for s in \
    "${REDUCE_RESOURCES_OPTIONS}" \
    "${REVISION_OPTION}" \
    "${DUALSTACK_OPTIONS}" \
+   "${IPV6_DISABLE_OPTIONS}" \
    "${CUSTOM_INSTALL_SETTINGS}"
 do
   MANIFEST_CONFIG_SETTINGS_TO_APPLY="${MANIFEST_CONFIG_SETTINGS_TO_APPLY} ${s}"
