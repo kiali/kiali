@@ -345,6 +345,9 @@ func (in *Discovery) HasControlPlane(ctx context.Context, cluster string, ns str
 
 // GetRootNamespace returns the Istio root namespace for the control plane managing the given namespace
 func (in *Discovery) GetRootNamespace(ctx context.Context, cluster, namespace string) string {
+	defer in.meshMutex.Unlock()
+	in.meshMutex.Lock()
+
 	cp := in.namespaceMap[in.namespaceMapKey(cluster, namespace)]
 	if cp != nil {
 		return cp.RootNamespace
