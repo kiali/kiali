@@ -257,10 +257,16 @@ export function isGVKSupported(gvk?: GroupVersionKind): boolean {
     return false;
   }
 
-  // Check built-in workload types.
+
+  // WorkloadGroup is not supported
+  if (gvk.Kind === gvkType.WorkloadGroup) {
+    return false;
+  }
+
+  // Check built-in workload types
   const builtIn = dicTypeToGVK[gvk.Kind as gvkType];
-  if (builtIn && builtIn.Group === gvk.Group && builtIn.Version === gvk.Version && builtIn.Kind === gvk.Kind) {
-    return true;
+  if (builtIn) {
+    return getGVKTypeString(gvk) === getGVKTypeString(builtIn);
   }
 
   // Check custom (user-configured) workload types.
