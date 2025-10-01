@@ -385,7 +385,7 @@ if ${KIND_EXE} get kubeconfig --name ${KIND_NAME} > /dev/null 2>&1; then
   infomsg "Kind cluster named [${KIND_NAME}] already exists - it will be used as-is"
 else
   infomsg "Kind cluster to be created with name [${KIND_NAME}]"
-  hack/start-kind.sh --name ${KIND_NAME} --enable-image-registry true --enable-keycloak false
+  go run "${SCRIPT_DIR}"/../tools/cmd/installer/main.go --name ${KIND_NAME} --enable-image-registry true --enable-keycloak false
 fi
 
 if [ "${USE_DEV_IMAGES}" == "true" ]; then
