@@ -283,7 +283,7 @@ else
     ISTIO_YAML=$(echo "$ISTIO_YAML" | yq eval '
       .spec.values.global.multiCluster.clusterName = "'"${CLUSTER_NAME}"'"
     ' -)
-    ztunnelYAML=$(echo "ztunnelYAML" | yq eval '
+    ztunnelYAML=$(echo "$ztunnelYAML" | yq eval '
        .spec.values.ztunnel.multiCluster.clusterName = "'"${CLUSTER_NAME}"'" |
        .spec.values.global.network = "'"${NETWORK_ID:-network-default}"'"
     ' -)
@@ -291,8 +291,8 @@ else
     ISTIO_YAML=$(echo "$ISTIO_YAML" | yq eval '
       .spec.values.global.multiCluster.clusterName = "cluster-default"
     ' -)
-    ztunnelYAML=$(echo "ztunnelYAML" | yq eval '
-      .spec.values = {} |
+    ztunnelYAML=$(echo "$ztunnelYAML" | yq eval '
+      .spec.values = {}
     ' -)
   fi
 fi
