@@ -112,8 +112,10 @@ endif
 endif
 
 # Set up some additional things needed in order to run the molecule tests against a kind installation
+# NOTE: this assumes KinD is using docker as the container runtime.
 ifeq ($(CLUSTER_TYPE),kind)
-MOLECULE_KIND_IP ?= $(shell ${DORP} inspect ${KIND_NAME}-control-plane --format "{{ .NetworkSettings.Networks.kind.IPAddress }}")
+# Use deterministic IP selection (lowest cluster node IP) to match certificate generation logic
+MOLECULE_KIND_IP ?= $(shell docker network inspect kind | jq -r '.[0].Containers | to_entries | map(select(.value.Name | test("-(control-plane|worker)$$"))) | map(.value.IPv4Address | split("/")[0]) | sort | .[0]')
 MOLECULE_KIND_ENV_ARGS ?= --env MOLECULE_KIND_IP=$(shell echo -n ${MOLECULE_KIND_IP})
 # if there are no hosts the user wants, explicitly set this to empty string to avoid errors later
 ifndef MOLECULE_ADD_HOST_ARGS

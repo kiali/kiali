@@ -13,11 +13,14 @@
 NAME="kiali-testing"
 DORP="docker"
 ENABLE_KEYCLOAK="false"
+ENABLE_HYDRA="false"
 ENABLE_IMAGE_REGISTRY="false"
 IMAGE=""
 LOAD_BALANCER_RANGE="255.70-255.84"
 KEYCLOAK_ISSUER_URI=""
 KEYCLOAK_CERTS_DIR=""
+HYDRA_ISSUER_URI=""
+HYDRA_CERTS_DIR=""
 IP_FAMILY="ipv4" # or "dual"
 
 # for now these are fixed unless you override with env vars (no cmdline opts)
@@ -36,21 +39,30 @@ Options:
     What to use when running kind.
     NOTE: Today only docker works. If you specify podman, it will be ignored and docker will be forced.
     Default: docker
+-eh|--enable-hydra <true|false>
+    If true, the KinD cluster will be configured to use Hydra for authentication.
+    Cannot be used with --enable-keycloak.
+    Default: false
 -ek|--enable-keycloak <true|false>
     If true, the KinD cluster will be configured to use Keycloak for authentication.
+    Cannot be used with --enable-hydra.
     Default: false
 -eir|--enable-image-registry <true|false>
     If true, an external image registry will be started and will be used by the KinD cluster.
     When enabled, you can push/pull images using the normal docker/podman push/pull commands
     to manage images that are accessible to the KinD cluster.
     Default: false
+-hcd|--hydra-certs-dir <directory>
+    Directory where the Hydra certificates are stored.
+-hiu|--hydra-issuer-uri <uri>
+    The Hydra issuer URI.
 -i|--image
     Image of the kind cluster. Defaults to latest kind image if not specified.
 -if|--ip-family
     Can be "ipv4" if only IPv4 network is enabled, or "dual" if dual-stack is supported. Default: ipv4
--kcd|--keycloak-certs-dir
-    Directory where the keycloak certs are stored.
--kiu|--keycloak-issuer-uri
+-kcd|--keycloak-certs-dir <directory>
+    Directory where the Keycloak certificates are stored.
+-kiu|--keycloak-issuer-uri <uri>
     The Keycloak issuer URI.
 -lbr|--load-balancer-range
     Range for the metallb load balancer.
@@ -66,8 +78,11 @@ while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
     -dorp|--docker-or-podman)     DORP="$2";                  shift;shift; ;;
+    -eh|--enable-hydra)           ENABLE_HYDRA="$2";          shift;shift; ;;
     -ek|--enable-keycloak)        ENABLE_KEYCLOAK="$2";       shift;shift; ;;
     -eir|--enable-image-registry) ENABLE_IMAGE_REGISTRY="$2"; shift;shift; ;;
+    -hcd|--hydra-certs-dir)       HYDRA_CERTS_DIR="$2";       shift;shift; ;;
+    -hiu|--hydra-issuer-uri)      HYDRA_ISSUER_URI="$2";      shift;shift; ;;
     -i|--image)                   IMAGE="$2";                 shift;shift; ;;
     -if|--ip-family)              IP_FAMILY="$2";             shift;shift; ;;
     -kcd|--keycloak-certs-dir)    KEYCLOAK_CERTS_DIR="$2";    shift;shift; ;;
@@ -78,6 +93,12 @@ while [[ $# -gt 0 ]]; do
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
 done
+
+# Validate that only one of Keycloak or Hydra is enabled
+if [ "${ENABLE_KEYCLOAK}" == "true" ] && [ "${ENABLE_HYDRA}" == "true" ]; then
+  echo "ERROR: Cannot enable both Keycloak and Hydra. Please choose only one."
+  exit 1
+fi
 
 # TODO KinD doesn't play nice with podman today. Force docker.
 if [ "${DORP}" != "docker" ]; then
@@ -180,6 +201,38 @@ EOF
   fi
 }
 
+echo_hydra_kubeadm_config() {
+  if [ "${ENABLE_HYDRA}" == "true" ]; then
+    cat <<EOF
+kubeadmConfigPatches:
+- |-
+  kind: ClusterConfiguration
+  apiServer:
+    extraArgs:
+      oidc-client-id: kiali-app
+      oidc-issuer-url: ${HYDRA_ISSUER_URI}
+      oidc-groups-claim: groups
+      oidc-username-claim: email
+      oidc-ca-file: /etc/ca-certificates/hydra/hydra-ca.pem
+EOF
+  else
+    echo
+  fi
+}
+
+echo_hydra_mount() {
+  if [ "${ENABLE_HYDRA}" == "true" ]; then
+    cat <<EOF
+    extraMounts:
+    - hostPath: $HYDRA_CERTS_DIR/hydra-ca.pem
+      containerPath: /etc/ca-certificates/hydra/hydra-ca.pem
+      readOnly: true
+EOF
+  else
+    echo
+  fi
+}
+
 finish_image_registry_config() {
   # see: https://kind.sigs.k8s.io/docs/user/local-registry/
   if [ "${ENABLE_IMAGE_REGISTRY}" == "true" ]; then
@@ -214,6 +267,11 @@ if [ "${ENABLE_KEYCLOAK}" == "true" ] && [ -z "${KEYCLOAK_CERTS_DIR}" ]; then
   exit 1
 fi
 
+if [ "${ENABLE_HYDRA}" == "true" ] && [ -z "${HYDRA_CERTS_DIR}" ]; then
+  echo "You must specify the directory where the Hydra certs are stored with the -hcd|--hydra-certs-dir option when Hydra is enabled."
+  exit 1
+fi
+
 start_kind() {
   # Due to: https://github.com/kubernetes-sigs/kind/issues/1449#issuecomment-1612648982 we need two nodes.
   infomsg "Kind cluster to be created with name [${NAME}]"
@@ -224,11 +282,11 @@ kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 networking:
   ipFamily: ${IP_FAMILY}
-$(echo_keycloak_kubeadm_config)
+$(echo_keycloak_kubeadm_config)$(echo_hydra_kubeadm_config)
 nodes:
   - role: control-plane
     ${KIND_NODE_IMAGE}
-$(echo_keycloak_mount)
+$(echo_keycloak_mount)$(echo_hydra_mount)
   - role: worker
     ${KIND_NODE_IMAGE}
 $(echo_image_registry_cluster_config)
