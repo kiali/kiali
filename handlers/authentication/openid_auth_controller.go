@@ -1128,6 +1128,7 @@ func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 			userInfoEndpoint = cfg.DiscoveryOverride.UserInfoEndpoint
 		} else if cfg.AuthorizationEndpoint != "" && cfg.TokenEndpoint != "" {
 			// Legacy flat structure for backward compatibility
+			log.Warning("OpenID configuration is using deprecated fields (authorization_endpoint, token_endpoint, etc.). Please migrate to the new 'discovery_override' configuration structure.")
 			authEndpoint = cfg.AuthorizationEndpoint
 			tokenEndpoint = cfg.TokenEndpoint
 			jwksUri = cfg.JwksUri
