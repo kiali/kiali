@@ -209,13 +209,23 @@ const minimalK8sInferencePool = (name: string, namespace: string, selector: stri
     "namespace": "${namespace}"
   },
   "spec": {
-    "targetPortNumber": 8000,
-    "selector":
-      matchLabels: {
+    "targetPorts": [
+      {
+        "number": 8000
+      }
+    ],
+    "selector": {
+      "matchLabels": {
         "app": "${selector}"
-      },
+      }
+    },
     "endpointPickerRef": {
+      "group": "",
+      "kind": "Service",
       "name": "${selector}-epp",
+      "port": {
+        "number": 9002
+      },
       "failureMode": "FailClose"
     }
   }
