@@ -178,7 +178,7 @@ if [ "${AMBIENT}" == "true" ]; then
     kubectl --context=${CLUSTER1_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
   kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
     kubectl --context=${CLUSTER2_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
-  install_ambient_multicluster
+  install_ambient_multicluster "false"
 else
   # Generate configuration for cluster 1
   MC_EAST_YAML=$(mktemp)
