@@ -6,7 +6,8 @@ import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 't
 import { ValidationTypes } from 'types/IstioObjects';
 import { Status, statusMsg } from 'types/IstioStatus';
 import { Validation } from 'components/Validations/Validation';
-import { Title, Tooltip, TooltipPosition, Tabs, Tab, TabTitleText } from '@patternfly/react-core';
+import { Title, Tooltip, TooltipPosition, SearchInput } from '@patternfly/react-core';
+import { ExpandableRowContent, Table, Tbody, Td, Tr } from '@patternfly/react-table';
 import { t } from 'utils/I18nUtils';
 import { PFBadge, PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
 import { AmbientLabel, tooltipMsgType } from '../../../components/Ambient/AmbientLabel';
@@ -132,9 +133,15 @@ export const nodeStyle = kialiStyle({
   display: 'flex'
 });
 
-const tabTitleStyle = kialiStyle({
+const meshTitleStyle = kialiStyle({
   fontWeight: 'bold',
   fontSize: '0.875rem'
+});
+
+const expandTitleStyle = kialiStyle({
+  fontWeight: 'bold',
+  fontSize: '0.875rem',
+  paddingLeft: '0.125rem'
 });
 
 interface NodeHeaderOptions {
@@ -400,17 +407,19 @@ const renderMeshControlPlanes = (
   const meshControlPlanes = filterNodesByMesh(controlPlaneNodes, meshName);
 
   return (
-    <div key={meshName} className={targetBodyStyle}>
+    <div key={meshName} style={{ marginLeft: '1rem', marginTop: '0.5rem' }}>
       {t('ControlPlanes: {{num}}', { num: meshControlPlanes.length })}
-      {meshControlPlanes.map(infra => {
-        const cpRev = infra.getData().infraData.revision ?? 'default';
-        const dataPlaneNode = dataPlaneNodes.find(dpn => {
-          const dpRev = dpn.getData().version ?? 'default';
-          return cpRev === dpRev;
-        });
-        const dataPlaneNamespaceCount = dataPlaneNode?.getData().infraData?.length ?? 0;
-        return renderControlPlaneSummary(infra.getData(), dataPlaneNamespaceCount);
-      })}
+      <div>
+        {meshControlPlanes.map(infra => {
+          const cpRev = infra.getData().infraData.revision ?? 'default';
+          const dataPlaneNode = dataPlaneNodes.find(dpn => {
+            const dpRev = dpn.getData().version ?? 'default';
+            return cpRev === dpRev;
+          });
+          const dataPlaneNamespaceCount = dataPlaneNode?.getData().infraData?.length ?? 0;
+          return renderControlPlaneSummary(infra.getData(), dataPlaneNamespaceCount);
+        })}
+      </div>
     </div>
   );
 };
@@ -462,7 +471,7 @@ const renderSharedInfrastructure = (
   );
 };
 
-// Component for mesh tabs
+// Component for mesh expandable table
 const MeshTabsComponent: React.FC<{
   clusterNodes: any[];
   controlPlaneNodes: any[];
@@ -484,7 +493,20 @@ const MeshTabsComponent: React.FC<{
   observeNodes,
   forCluster
 }) => {
-  const [activeTab, setActiveTab] = React.useState<string | number>(0);
+  const [expanded, setExpanded] = React.useState<string[]>([]);
+  const [filter, setFilter] = React.useState<string>('');
+
+  const isExpanded = (meshName: string): boolean => {
+    return expanded.includes(meshName);
+  };
+
+  const toggleExpanded = (meshName: string): void => {
+    const updatedExpanded = expanded.filter(n => meshName !== n);
+    if (updatedExpanded.length === expanded.length) {
+      updatedExpanded.push(meshName);
+    }
+    setExpanded(updatedExpanded);
+  };
 
   // Filter out meshes that have no control planes
   const meshesWithControlPlanes = meshData.names.filter(meshName => {
@@ -492,14 +514,14 @@ const MeshTabsComponent: React.FC<{
     return meshControlPlanes.length > 0;
   });
 
-  // If only one mesh has control planes, render without tabs
+  // If only one mesh has control planes, render without table
   if (meshesWithControlPlanes.length === 1) {
     const meshName = meshesWithControlPlanes[0];
 
     return (
       <div>
         <div className={targetBodyStyle}>
-          <div className={tabTitleStyle}>{t('Mesh: {{meshName}}', { meshName })}</div>
+          <div className={meshTitleStyle}>{t('Mesh: {{meshName}}', { meshName })}</div>
         </div>
         {renderMeshControlPlanes(meshName, controlPlaneNodes, dataPlaneNodes)}
 
@@ -508,25 +530,47 @@ const MeshTabsComponent: React.FC<{
     );
   }
 
-  const tabs = meshesWithControlPlanes.map((meshName, index) => {
-    return (
-      <Tab
-        key={meshName}
-        eventKey={index}
-        title={<TabTitleText className={tabTitleStyle}>{t('Mesh: {{meshName}}', { meshName })}</TabTitleText>}
-      >
-        {renderMeshControlPlanes(meshName, controlPlaneNodes, dataPlaneNodes)}
-
-        {renderSharedInfrastructure(clusterNodes, gatewayNodes, waypointNodes, kialiNodes, observeNodes, forCluster)}
-      </Tab>
-    );
-  });
-
   return (
     <div>
-      <Tabs activeKey={activeTab} onSelect={(_, tabIndex) => setActiveTab(tabIndex)} aria-label="Mesh tabs">
-        {tabs}
-      </Tabs>
+      <SearchInput
+        placeholder="Filter meshes..."
+        value={filter}
+        onChange={(_event, value) => setFilter(value)}
+        onClear={() => setFilter('')}
+      />
+      <Table aria-label="Mesh table" variant="compact">
+        {meshesWithControlPlanes
+          .filter(meshName => filter === '' || meshName.toLowerCase().includes(filter.toLowerCase()))
+          .sort((a, b) => a.localeCompare(b))
+          .map((meshName, i) => (
+            <Tbody key={meshName} isExpanded={isExpanded(meshName)}>
+              <Tr>
+                <Td
+                  expand={{
+                    rowIndex: i,
+                    isExpanded: isExpanded(meshName),
+                    onToggle: () => toggleExpanded(meshName),
+                    expandId: `mesh-${meshName}`
+                  }}
+                  style={{ paddingRight: '0.125rem' }}
+                />
+                <Td dataLabel={t('Mesh')} className={expandTitleStyle}>
+                  {t('Mesh: {{meshName}}', { meshName })}
+                </Td>
+              </Tr>
+              <Tr isExpanded={isExpanded(meshName)}>
+                <Td dataLabel={`mesh-detail-${meshName}`} noPadding={true} colSpan={2}>
+                  <ExpandableRowContent>
+                    {renderMeshControlPlanes(meshName, controlPlaneNodes, dataPlaneNodes)}
+                  </ExpandableRowContent>
+                </Td>
+              </Tr>
+            </Tbody>
+          ))}
+      </Table>
+
+      {/* Shared infrastructure outside expandable sections */}
+      {renderSharedInfrastructure(clusterNodes, gatewayNodes, waypointNodes, kialiNodes, observeNodes, forCluster)}
     </div>
   );
 };
