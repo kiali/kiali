@@ -218,9 +218,6 @@ spec:
   profile: ambient
   namespace: ztunnel
   values: 
-    ztunnel: 
-      multiCluster:
-        clusterName: ${CLUSTER_NAME:-Kubernetes}
     global:
       network: ${NETWORK_ID:-network-default}
 EOF
@@ -288,6 +285,9 @@ else
   if [ -n "${CLUSTER_NAME}" ]; then
     ISTIO_YAML=$(echo "$ISTIO_YAML" | yq eval '
       .spec.values.global.multiCluster.clusterName = "'"${CLUSTER_NAME}"'"
+    ' -)
+    ztunnelYAML=$(echo "ztunnelYAML" | yq eval '
+       .spec.values.ztunnel.multiCluster.clusterName = "'"${CLUSTER_NAME}"'"
     ' -)
   else
     ISTIO_YAML=$(echo "$ISTIO_YAML" | yq eval '
