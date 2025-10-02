@@ -7,18 +7,48 @@ install_ambient_on_cluster() {
   local pass="${3}"
   local cluster_name="${4}"
   local network="${5}"
+  local sail="${6}"
   
   echo "==== INSTALL ISTIO ON CLUSTER [${cluster_name}] - ${context}"
   switch_cluster "${context}" "${user}" "${pass}"
 
   echo "Installing Istio with ambient profile on cluster: ${cluster_name}, network: ${network} and meshID: ${MESH_ID}"
 
-  # Label the namespace
-  kubectl --context="${context}" label namespace istio-system topology.istio.io/network=${network}
+  # Create istio-system namespace if it doesn't exist
+  kubectl --context="${context}" get ns istio-system || kubectl --context="${context}" create ns istio-system
 
-  # Create the IstioOperator configuration for ambient multi-cluster
-  local config_yaml=$(mktemp)
-  cat <<EOF > "${config_yaml}"
+  # Label the namespace
+  kubectl --context="${context}" label namespace istio-system topology.istio.io/network=${network} --overwrite
+
+  if [ "${sail}" == "true" ]; then
+
+    # Use the existing install-istio-via-sail.sh script with ambient profile and multicluster configuration
+    HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+    ISTIO_INSTALL_SCRIPT="${HACK_SCRIPT_DIR}/../install-istio-via-sail.sh"
+
+    if [ ! -x "${ISTIO_INSTALL_SCRIPT}" ]; then
+      echo "Cannot find the Istio install script at: ${ISTIO_INSTALL_SCRIPT}"
+      exit 1
+    fi
+
+    # Install Istio using the Sail operator script with ambient profile and multicluster configuration
+    echo "Installing Istio with ambient profile and multicluster configuration..."
+    "${ISTIO_INSTALL_SCRIPT}" \
+      --config-profile ambient \
+      --mesh-id "${MESH_ID}" \
+      --cluster-name "${cluster_name}" \
+      --network "${network}" \
+      --addons "prometheus grafana jaeger" \
+      --wait true
+
+    if [ "$?" != "0" ]; then
+      echo "Failed to install Istio with ambient profile using Sail operator"
+      exit 1
+    fi
+  else
+    # Create the IstioOperator configuration for ambient multi-cluster
+    local config_yaml=$(mktemp)
+    cat <<EOF > "${config_yaml}"
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
@@ -37,36 +67,39 @@ spec:
       network: ${network}
 EOF
 
-  echo "Istio configuration file created at: ${config_yaml}"
-  echo "Configuration content:"
-  cat "${config_yaml}"
+    echo "Istio configuration file created at: ${config_yaml}"
+    echo "Configuration content:"
+    cat "${config_yaml}"
 
-  # Install Istio using istioctl directly with ambient profile
-  "${ISTIOCTL}" install --skip-confirmation=true -f "${config_yaml}"
-  if [ "$?" != "0" ]; then
-    echo "Failed to install Istio with ambient profile"
+    # Install Istio using istioctl directly with ambient profile
+    "${ISTIOCTL}" install --skip-confirmation=true -f "${config_yaml}"
+    if [ "$?" != "0" ]; then
+      echo "Failed to install Istio with ambient profile"
+      rm -f "${config_yaml}"
+      exit 1
+    fi
+
+    # Install addons
+    install_istio_addons "kubectl"
+    # Clean up the temporary file
     rm -f "${config_yaml}"
-    exit 1
   fi
-
-  # Install addons
-  install_istio_addons "kubectl"
-
-  # Clean up the temporary file
-  rm -f "${config_yaml}"
-
   echo "Istio ambient installation completed for cluster: ${cluster_name}"
 }
 
 install_ambient_multicluster() {
-  CLIENT_EXE="kubectl"
-  
-  # Setup Istio environment using shared function
-  HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
-  setup_istio_environment "${HACK_SCRIPT_DIR}"
 
-  install_ambient_on_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}" "${CLUSTER1_NAME}" "${NETWORK1_ID}"
-  install_ambient_on_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}" "${CLUSTER2_NAME}" "${NETWORK2_ID}"
+  CLIENT_EXE="kubectl"
+  local SAIL="${1}"
+  if [ "${SAIL}" == "true" ]; then
+    # Setup Istio environment using shared function
+    HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+    setup_istio_environment "${HACK_SCRIPT_DIR}"
+  fi
+
+  install_ambient_on_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}" "${CLUSTER1_NAME}" "${NETWORK1_ID}" "${SAIL}"
+  install_ambient_on_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}" "${CLUSTER2_NAME}" "${NETWORK2_ID}" "${SAIL}"
+
 }
 
 
