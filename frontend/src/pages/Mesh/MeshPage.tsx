@@ -86,7 +86,7 @@ export type MeshData = {
   isError?: boolean;
   isLoading: boolean;
   loaded: boolean;
-  name: string;
+  names: string[];
   timestamp: TimeInMilliseconds;
 };
 
@@ -154,7 +154,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         fetchParams: this.meshDataSource.fetchParameters,
         isLoading: false,
         loaded: false,
-        name: UNKNOWN,
+        names: [UNKNOWN],
         timestamp: 0
       }
     };
@@ -274,6 +274,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
                 duration={this.props.duration}
                 isPageVisible={this.props.isPageVisible}
                 istioAPIEnabled={this.props.istioAPIEnabled}
+                meshData={this.state.meshData}
                 refreshInterval={this.props.refreshInterval}
                 target={this.props.target}
                 updateTime={this.state.meshData.timestamp / 1000}
@@ -295,7 +296,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   };
 
   private handleMeshDataSourceSuccess = (
-    meshName: string,
+    meshNames: string[],
     meshTimestamp: TimeInSeconds,
     elements: DecoratedMeshElements,
     fetchParams: MeshFetchParams
@@ -309,7 +310,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         fetchParams: fetchParams,
         isLoading: false,
         loaded: true,
-        name: meshName,
+        names: meshNames,
         timestamp: meshTimestamp * 1000
       }
     });
@@ -329,7 +330,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         isError: true,
         isLoading: false,
         loaded: true,
-        name: UNKNOWN,
+        names: [UNKNOWN],
         timestamp: Date.now()
       }
     });
@@ -343,7 +344,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         fetchParams: fetchParams,
         isLoading: true,
         loaded: this.state.meshData.loaded,
-        name: isPreviousDataInvalid ? UNKNOWN : this.state.meshData.name,
+        names: isPreviousDataInvalid ? [UNKNOWN] : this.state.meshData.names,
         timestamp: isPreviousDataInvalid ? Date.now() : this.state.meshData.timestamp
       }
     });

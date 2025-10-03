@@ -183,7 +183,7 @@ export interface MeshQuery {
 
 export interface MeshDefinition {
   elements: MeshElements;
-  name: string;
+  names: string[];
   timestamp: number;
 }
 

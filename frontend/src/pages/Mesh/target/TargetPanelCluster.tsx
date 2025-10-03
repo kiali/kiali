@@ -87,7 +87,7 @@ export const TargetPanelCluster: React.FC<TargetPanelClusterProps> = (props: Tar
           <br />
         </div>
       )}
-      {renderInfraSummary(controller, clusterNode.getData()?.cluster)}
+      {renderInfraSummary(controller, props.meshData, clusterNode.getData()?.cluster)}
     </div>
   );
 };
