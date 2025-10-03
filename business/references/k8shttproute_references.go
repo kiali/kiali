@@ -1,7 +1,7 @@
 package references
 
 import (
-	k8s_inference_v1alpha2 "sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
+	k8s_inference_v1 "sigs.k8s.io/gateway-api-inference-extension/api/v1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
@@ -14,7 +14,7 @@ import (
 type K8sHTTPRouteReferences struct {
 	Conf               *config.Config
 	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute
-	K8sInferencePools  []*k8s_inference_v1alpha2.InferencePool
+	K8sInferencePools  []*k8s_inference_v1.InferencePool
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant
 	Namespaces         []string
 }

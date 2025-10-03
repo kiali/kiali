@@ -203,18 +203,29 @@ const minimalK8sReferenceGrant = (name: string, namespace: string, fromNamespace
 const minimalK8sInferencePool = (name: string, namespace: string, selector: string): string => {
   return `{
   "kind": "InferencePool",
-  "apiVersion": "inference.networking.x-k8s.io/v1alpha2",
+  "apiVersion": "inference.networking.k8s.io/v1",
   "metadata": {
     "name": "${name}",
     "namespace": "${namespace}"
   },
   "spec": {
-    "targetPortNumber": 8000,
+    "targetPorts": [
+      {
+        "number": 8000
+      }
+    ],
     "selector": {
-      "app": "${selector}"
+      "matchLabels": {
+        "app": "${selector}"
+      }
     },
-    "extensionRef": {
+    "endpointPickerRef": {
+      "group": "",
+      "kind": "Service",
       "name": "${selector}-epp",
+      "port": {
+        "number": 9002
+      },
       "failureMode": "FailClose"
     }
   }

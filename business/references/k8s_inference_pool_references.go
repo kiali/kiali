@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	k8s_inference_v1alpha2 "sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
+	k8s_inference_v1 "sigs.k8s.io/gateway-api-inference-extension/api/v1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"k8s.io/apimachinery/pkg/labels"
@@ -18,7 +18,7 @@ type K8sInferencePoolReferences struct {
 	Conf                  *config.Config
 	Namespaces            []string
 	K8sHTTPRoutes         []*k8s_networking_v1.HTTPRoute
-	K8sInferencePools     []*k8s_inference_v1alpha2.InferencePool
+	K8sInferencePools     []*k8s_inference_v1.InferencePool
 	RegistryServices      []*kubernetes.RegistryService
 	WorkloadsPerNamespace map[string]models.Workloads
 }
@@ -44,11 +44,11 @@ func (r K8sInferencePoolReferences) References() models.IstioReferencesMap {
 }
 
 // getWorkloadReferences finds all Workloads that are selected by the InferencePool's spec.selector.
-func (r K8sInferencePoolReferences) getWorkloadReferences(pool *k8s_inference_v1alpha2.InferencePool) []models.WorkloadReference {
+func (r K8sInferencePoolReferences) getWorkloadReferences(pool *k8s_inference_v1.InferencePool) []models.WorkloadReference {
 	result := make([]models.WorkloadReference, 0)
 
 	poolLabelsS := []string{}
-	poolSelector := pool.Spec.Selector
+	poolSelector := pool.Spec.Selector.MatchLabels
 	for k, v := range poolSelector {
 		poolLabelsS = append(poolLabelsS, fmt.Sprintf("%s=%s", k, v))
 	}
@@ -66,18 +66,18 @@ func (r K8sInferencePoolReferences) getWorkloadReferences(pool *k8s_inference_v1
 }
 
 // getServiceReferences finds the Service referenced by the InferencePool's spec.extensionRef.
-func (r K8sInferencePoolReferences) getServiceReferences(pool *k8s_inference_v1alpha2.InferencePool) []models.ServiceReference {
+func (r K8sInferencePoolReferences) getServiceReferences(pool *k8s_inference_v1.InferencePool) []models.ServiceReference {
 	result := make([]models.ServiceReference, 0)
 
-	fqdn := kubernetes.GetHost(string(pool.Spec.ExtensionRef.Name), pool.Namespace, r.Namespaces, r.Conf)
+	fqdn := kubernetes.GetHost(string(pool.Spec.EndpointPickerRef.Name), pool.Namespace, r.Namespaces, r.Conf)
 	if kubernetes.HasMatchingRegistryService(pool.Namespace, fqdn.String(), r.RegistryServices) {
-		result = append(result, models.ServiceReference{Name: string(pool.Spec.ExtensionRef.Name), Namespace: pool.Namespace})
+		result = append(result, models.ServiceReference{Name: string(pool.Spec.EndpointPickerRef.Name), Namespace: pool.Namespace})
 	}
 	return result
 }
 
 // getK8sHTTPRouteRefs finds the K8s  HTTPRoute objects which refer to InferencePool by their spec.rules.backendRefs
-func (r K8sInferencePoolReferences) getK8sHTTPRouteRefs(pool *k8s_inference_v1alpha2.InferencePool) []models.IstioReference {
+func (r K8sInferencePoolReferences) getK8sHTTPRouteRefs(pool *k8s_inference_v1.InferencePool) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 
 routes:

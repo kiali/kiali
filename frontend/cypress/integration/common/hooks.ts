@@ -115,12 +115,12 @@ Before({ tags: '@gateway-api' }, () => {
 });
 
 Before({ tags: '@gateway-api-ie' }, () => {
-  cy.exec('kubectl get crd inference.networking.x-k8s.io', { failOnNonZeroExit: false }).then(result => {
+  cy.exec('kubectl get crd inference.networking.k8s.io', { failOnNonZeroExit: false }).then(result => {
     if (result.code !== 0) {
       cy.log('Gateway API Inference Extension not found. Enabling it now.');
 
       cy.exec(
-        'kubectl kustomize "github.com/kubernetes-sigs/gateway-api-inference-extension/config/crd?ref=v0.4.0" | kubectl apply -f -;'
+        'kubectl kustomize "github.com/kubernetes-sigs/gateway-api-inference-extension/config/crd?ref=v1.0.0" | kubectl apply -f -;'
       )
         .its('code')
         .should('eq', 0);

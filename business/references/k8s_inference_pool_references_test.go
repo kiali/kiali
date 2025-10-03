@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8s_inference_v1alpha2 "sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
+	k8s_inference_v1 "sigs.k8s.io/gateway-api-inference-extension/api/v1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/config"
@@ -14,7 +14,7 @@ import (
 	"github.com/kiali/kiali/tests/data"
 )
 
-func prepareTestForK8sInferencePool(pool *k8s_inference_v1alpha2.InferencePool, workloads models.Workloads, services []*kubernetes.RegistryService, httpRoutes []*k8s_networking_v1.HTTPRoute) models.IstioReferences {
+func prepareTestForK8sInferencePool(pool *k8s_inference_v1.InferencePool, workloads models.Workloads, services []*kubernetes.RegistryService, httpRoutes []*k8s_networking_v1.HTTPRoute) models.IstioReferences {
 	conf := config.Get()
 	if conf.KubernetesConfig.ClusterName == "" {
 		conf.KubernetesConfig.ClusterName = "Kubernetes"
@@ -24,7 +24,7 @@ func prepareTestForK8sInferencePool(pool *k8s_inference_v1alpha2.InferencePool, 
 		Conf:              conf,
 		Namespaces:        []string{pool.Namespace, "different-ns"},
 		K8sHTTPRoutes:     httpRoutes,
-		K8sInferencePools: []*k8s_inference_v1alpha2.InferencePool{pool},
+		K8sInferencePools: []*k8s_inference_v1.InferencePool{pool},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			pool.Namespace: workloads,
 		},
@@ -39,7 +39,7 @@ func TestK8sInferencePoolReferences(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	// Setup mocks
-	pool := fakeInferencePool("test-pool", "test-ns", map[k8s_inference_v1alpha2.LabelKey]k8s_inference_v1alpha2.LabelValue{"app": "vllm-llama3-8b-instruct"}, "my-service-epp")
+	pool := fakeInferencePool("test-pool", "test-ns", map[k8s_inference_v1.LabelKey]k8s_inference_v1.LabelValue{"app": "vllm-llama3-8b-instruct"}, "my-service-epp")
 	workloads := models.Workloads{
 		data.CreateWorkload("test-ns", "workload1", map[string]string{"app": "vllm-llama3-8b-instruct"}),
 		data.CreateWorkload("test-ns", "workload2", map[string]string{"app": "vllm-llama3-8b-instruct-new"}),
@@ -74,7 +74,7 @@ func TestK8sInferencePoolNoWorkloadReferences(t *testing.T) {
 	assert := assert.New(t)
 	config.Set(config.NewConfig())
 
-	pool := fakeInferencePool("test-pool", "test-ns", map[k8s_inference_v1alpha2.LabelKey]k8s_inference_v1alpha2.LabelValue{"app": "vllm-llama3-8b-instruct"}, "my-service-epp")
+	pool := fakeInferencePool("test-pool", "test-ns", map[k8s_inference_v1.LabelKey]k8s_inference_v1.LabelValue{"app": "vllm-llama3-8b-instruct"}, "my-service-epp")
 	workloads := models.Workloads{
 		data.CreateWorkload("test-ns", "workload1", map[string]string{"app": "my-app"}),
 	}
@@ -95,7 +95,7 @@ func TestK8sInferencePoolNoServiceReference(t *testing.T) {
 	assert := assert.New(t)
 	config.Set(config.NewConfig())
 
-	pool := fakeInferencePool("test-pool", "test-ns", map[k8s_inference_v1alpha2.LabelKey]k8s_inference_v1alpha2.LabelValue{"app": "vllm-llama3-8b-instruct"}, "non-existent-service")
+	pool := fakeInferencePool("test-pool", "test-ns", map[k8s_inference_v1.LabelKey]k8s_inference_v1.LabelValue{"app": "vllm-llama3-8b-instruct"}, "non-existent-service")
 	workloads := models.Workloads{
 		data.CreateWorkload("test-ns", "workload1", map[string]string{"app": "vllm-llama3-8b-instruct"}),
 	}
@@ -117,10 +117,10 @@ func TestK8sInferencePoolNoReferences(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	kind := k8s_networking_v1.Kind(kubernetes.K8sInferencePoolsType)
-	group := k8s_networking_v1.Group("inference.networking.x-k8s.io")
+	group := k8s_networking_v1.Group("inference.networking.k8s.io")
 
 	// Create a pool with a selector that won't match and a reference to a non-existent service
-	pool := fakeInferencePool("test-pool", "test-ns", map[k8s_inference_v1alpha2.LabelKey]k8s_inference_v1alpha2.LabelValue{"app": "non-existent"}, "non-existent")
+	pool := fakeInferencePool("test-pool", "test-ns", map[k8s_inference_v1.LabelKey]k8s_inference_v1.LabelValue{"app": "non-existent"}, "non-existent")
 	workloads := models.Workloads{
 		data.CreateWorkload("test-ns", "workload1", map[string]string{"app": "my-app"}),
 	}
@@ -153,22 +153,18 @@ func TestK8sInferencePoolNoReferences(t *testing.T) {
 }
 
 // fakeInferencePool is a helper to create K8sInferencePool objects for testing.
-func fakeInferencePool(name, namespace string, selector map[k8s_inference_v1alpha2.LabelKey]k8s_inference_v1alpha2.LabelValue, serviceRefName string) *k8s_inference_v1alpha2.InferencePool {
-	kind := k8s_inference_v1alpha2.Kind("Service")
-	return &k8s_inference_v1alpha2.InferencePool{
+func fakeInferencePool(name, namespace string, selector map[k8s_inference_v1.LabelKey]k8s_inference_v1.LabelValue, serviceRefName string) *k8s_inference_v1.InferencePool {
+	kind := k8s_inference_v1.Kind("Service")
+	return &k8s_inference_v1.InferencePool{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: k8s_inference_v1alpha2.InferencePoolSpec{
-			Selector: selector,
-			EndpointPickerConfig: k8s_inference_v1alpha2.EndpointPickerConfig{
-				ExtensionRef: &k8s_inference_v1alpha2.Extension{
-					ExtensionReference: k8s_inference_v1alpha2.ExtensionReference{
-						Name: k8s_inference_v1alpha2.ObjectName(serviceRefName),
-						Kind: &kind,
-					},
-				},
+		Spec: k8s_inference_v1.InferencePoolSpec{
+			Selector: k8s_inference_v1.LabelSelector{MatchLabels: selector},
+			EndpointPickerRef: k8s_inference_v1.EndpointPickerRef{
+				Name: k8s_inference_v1.ObjectName(serviceRefName),
+				Kind: kind,
 			},
 		},
 	}
@@ -177,7 +173,7 @@ func fakeInferencePool(name, namespace string, selector map[k8s_inference_v1alph
 // fakeHTTPRoute is a helper to create K8s HTTPRoute objects for testing.
 func fakeHTTPRoute(name, namespace, poolRefName string) *k8s_networking_v1.HTTPRoute {
 	kind := k8s_networking_v1.Kind(kubernetes.K8sInferencePoolsType)
-	group := k8s_networking_v1.Group("inference.networking.x-k8s.io")
+	group := k8s_networking_v1.Group("inference.networking.k8s.io")
 
 	return &k8s_networking_v1.HTTPRoute{
 		ObjectMeta: metav1.ObjectMeta{

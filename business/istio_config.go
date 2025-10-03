@@ -18,7 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	api_types "k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	k8s_inference_v1alpha2 "sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
+	k8s_inference_v1 "sigs.k8s.io/gateway-api-inference-extension/api/v1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
@@ -218,7 +218,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		K8sGateways:        []*k8s_networking_v1.Gateway{},
 		K8sGRPCRoutes:      []*k8s_networking_v1.GRPCRoute{},
 		K8sHTTPRoutes:      []*k8s_networking_v1.HTTPRoute{},
-		K8sInferencePools:  []*k8s_inference_v1alpha2.InferencePool{},
+		K8sInferencePools:  []*k8s_inference_v1.InferencePool{},
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{},
 		K8sTCPRoutes:       []*k8s_networking_v1alpha2.TCPRoute{},
 		K8sTLSRoutes:       []*k8s_networking_v1alpha2.TLSRoute{},
@@ -331,7 +331,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 	}
 
 	if userClient.IsInferenceAPI() && criteria.Include(kubernetes.K8sInferencePools) {
-		list := &k8s_inference_v1alpha2.InferencePoolList{}
+		list := &k8s_inference_v1.InferencePoolList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
 		}
@@ -605,7 +605,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 			istioConfigDetail.Object = istioConfigDetail.K8sHTTPRoute
 		}
 	case kubernetes.K8sInferencePools:
-		istioConfigDetail.K8sInferencePool, err = in.userClients[cluster].InferenceAPI().InferenceV1alpha2().InferencePools(namespace).Get(ctx, object, getOpts)
+		istioConfigDetail.K8sInferencePool, err = in.userClients[cluster].InferenceAPI().InferenceV1().InferencePools(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.K8sInferencePool.Kind = kubernetes.K8sInferencePools.Kind
 			istioConfigDetail.K8sInferencePool.APIVersion = kubernetes.K8sInferencePools.GroupVersion().String()
@@ -752,7 +752,7 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(ctx context.Context, clust
 	case kubernetes.K8sHTTPRoutes:
 		err = userClient.GatewayAPI().GatewayV1().HTTPRoutes(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.K8sInferencePools:
-		err = userClient.InferenceAPI().InferenceV1alpha2().InferencePools(namespace).Delete(ctx, name, delOpts)
+		err = userClient.InferenceAPI().InferenceV1().InferencePools(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.K8sReferenceGrants:
 		err = userClient.GatewayAPI().GatewayV1beta1().ReferenceGrants(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.K8sTCPRoutes:
@@ -888,8 +888,8 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, clust
 		istioConfigDetail.K8sHTTPRoute, err = userClient.GatewayAPI().GatewayV1().HTTPRoutes(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 		istioConfigDetail.Object = istioConfigDetail.K8sHTTPRoute
 	case kubernetes.K8sInferencePools.String():
-		istioConfigDetail.K8sInferencePool = &k8s_inference_v1alpha2.InferencePool{}
-		istioConfigDetail.K8sInferencePool, err = userClient.InferenceAPI().InferenceV1alpha2().InferencePools(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.K8sInferencePool = &k8s_inference_v1.InferencePool{}
+		istioConfigDetail.K8sInferencePool, err = userClient.InferenceAPI().InferenceV1().InferencePools(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 		istioConfigDetail.Object = istioConfigDetail.K8sInferencePool
 	case kubernetes.K8sReferenceGrants.String():
 		istioConfigDetail.K8sReferenceGrant = &k8s_networking_v1beta1.ReferenceGrant{}
@@ -1026,12 +1026,12 @@ func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, clust
 		istioConfigDetail.Object = istioConfigDetail.K8sHTTPRoute
 		name = istioConfigDetail.K8sHTTPRoute.Name
 	case kubernetes.K8sInferencePools.String():
-		istioConfigDetail.K8sInferencePool = &k8s_inference_v1alpha2.InferencePool{}
+		istioConfigDetail.K8sInferencePool = &k8s_inference_v1.InferencePool{}
 		err = json.Unmarshal(body, istioConfigDetail.K8sInferencePool)
 		if err != nil {
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
-		istioConfigDetail.K8sInferencePool, err = userClient.InferenceAPI().InferenceV1alpha2().InferencePools(namespace).Create(ctx, istioConfigDetail.K8sInferencePool, createOpts)
+		istioConfigDetail.K8sInferencePool, err = userClient.InferenceAPI().InferenceV1().InferencePools(namespace).Create(ctx, istioConfigDetail.K8sInferencePool, createOpts)
 		istioConfigDetail.Object = istioConfigDetail.K8sInferencePool
 		name = istioConfigDetail.K8sInferencePool.Name
 	case kubernetes.K8sGRPCRoutes.String():

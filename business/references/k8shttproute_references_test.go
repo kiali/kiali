@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	k8s_inference_v1alpha2 "sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
+	k8s_inference_v1 "sigs.k8s.io/gateway-api-inference-extension/api/v1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
@@ -15,7 +15,7 @@ import (
 	"github.com/kiali/kiali/tests/data"
 )
 
-func prepareTestForK8sHTTPRoute(route *k8s_networking_v1.HTTPRoute, inferencePools []*k8s_inference_v1alpha2.InferencePool) models.IstioReferences {
+func prepareTestForK8sHTTPRoute(route *k8s_networking_v1.HTTPRoute, inferencePools []*k8s_inference_v1.InferencePool) models.IstioReferences {
 	routeReferences := K8sHTTPRouteReferences{
 		Conf:               config.Get(),
 		Namespaces:         []string{"bookinfo", "bookinfo2", "bookinfo3"},
@@ -59,9 +59,9 @@ func TestK8sHTTPRouteInferencePoolReferences(t *testing.T) {
 	config.Set(conf)
 
 	// Setup mocks
-	inferencePools := []*k8s_inference_v1alpha2.InferencePool{
-		fakeInferencePool("test-pool", "test-ns", map[k8s_inference_v1alpha2.LabelKey]k8s_inference_v1alpha2.LabelValue{"app": "vllm-llama3-8b-instruct"}, "my-service-epp"),
-		fakeInferencePool("test-pool2", "test-ns", map[k8s_inference_v1alpha2.LabelKey]k8s_inference_v1alpha2.LabelValue{"app": "vllm-llama3-8b-instruct"}, "my-service-epp"),
+	inferencePools := []*k8s_inference_v1.InferencePool{
+		fakeInferencePool("test-pool", "test-ns", map[k8s_inference_v1.LabelKey]k8s_inference_v1.LabelValue{"app": "vllm-llama3-8b-instruct"}, "my-service-epp"),
+		fakeInferencePool("test-pool2", "test-ns", map[k8s_inference_v1.LabelKey]k8s_inference_v1.LabelValue{"app": "vllm-llama3-8b-instruct"}, "my-service-epp"),
 	}
 	httpRoute := fakeHTTPRoute("route-to-pool", "test-ns", "test-pool")
 	references := prepareTestForK8sHTTPRoute(httpRoute, inferencePools)

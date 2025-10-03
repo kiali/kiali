@@ -10,7 +10,7 @@ import (
 	telemetry_v1 "istio.io/client-go/pkg/apis/telemetry/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	k8s_inference_v1alpha2 "sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
+	k8s_inference_v1 "sigs.k8s.io/gateway-api-inference-extension/api/v1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
@@ -36,7 +36,7 @@ type IstioConfigList struct {
 	K8sGateways        []*k8s_networking_v1.Gateway             `json:"-"`
 	K8sGRPCRoutes      []*k8s_networking_v1.GRPCRoute           `json:"-"`
 	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute           `json:"-"`
-	K8sInferencePools  []*k8s_inference_v1alpha2.InferencePool  `json:"-"`
+	K8sInferencePools  []*k8s_inference_v1.InferencePool        `json:"-"`
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant `json:"-"`
 	K8sTCPRoutes       []*k8s_networking_v1alpha2.TCPRoute      `json:"-"`
 	K8sTLSRoutes       []*k8s_networking_v1alpha2.TLSRoute      `json:"-"`
@@ -236,7 +236,7 @@ func (i *IstioConfigList) ConvertToResponse() {
 		i.K8sHTTPRoutes = []*k8s_networking_v1.HTTPRoute{}
 	}
 	if i.K8sInferencePools == nil {
-		i.K8sInferencePools = []*k8s_inference_v1alpha2.InferencePool{}
+		i.K8sInferencePools = []*k8s_inference_v1.InferencePool{}
 	}
 	if i.K8sReferenceGrants == nil {
 		i.K8sReferenceGrants = []*k8s_networking_v1beta1.ReferenceGrant{}
@@ -285,7 +285,7 @@ type IstioConfigDetails struct {
 	K8sGateway        *k8s_networking_v1.Gateway             `json:"-"`
 	K8sGRPCRoute      *k8s_networking_v1.GRPCRoute           `json:"-"`
 	K8sHTTPRoute      *k8s_networking_v1.HTTPRoute           `json:"-"`
-	K8sInferencePool  *k8s_inference_v1alpha2.InferencePool  `json:"-"`
+	K8sInferencePool  *k8s_inference_v1.InferencePool        `json:"-"`
 	K8sReferenceGrant *k8s_networking_v1beta1.ReferenceGrant `json:"-"`
 	K8sTCPRoute       *k8s_networking_v1alpha2.TCPRoute      `json:"-"`
 	K8sTLSRoute       *k8s_networking_v1alpha2.TLSRoute      `json:"-"`
@@ -493,7 +493,7 @@ func (icd *IstioConfigDetails) UnmarshalJSON(data []byte) error {
 		icd.K8sHTTPRoute = &httpRoute
 
 	case kubernetes.K8sInferencePools:
-		var inferencePool k8s_inference_v1alpha2.InferencePool
+		var inferencePool k8s_inference_v1.InferencePool
 		if err := json.Unmarshal(temp.Resource, &inferencePool); err != nil {
 			return err
 		}
@@ -694,7 +694,7 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 			filtered[ns].K8sGateways = []*k8s_networking_v1.Gateway{}
 			filtered[ns].K8sGRPCRoutes = []*k8s_networking_v1.GRPCRoute{}
 			filtered[ns].K8sHTTPRoutes = []*k8s_networking_v1.HTTPRoute{}
-			filtered[ns].K8sInferencePools = []*k8s_inference_v1alpha2.InferencePool{}
+			filtered[ns].K8sInferencePools = []*k8s_inference_v1.InferencePool{}
 			filtered[ns].K8sReferenceGrants = []*k8s_networking_v1beta1.ReferenceGrant{}
 			filtered[ns].K8sTCPRoutes = []*k8s_networking_v1alpha2.TCPRoute{}
 			filtered[ns].K8sTLSRoutes = []*k8s_networking_v1alpha2.TLSRoute{}

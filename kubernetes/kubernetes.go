@@ -250,7 +250,7 @@ func (in *K8SClient) IsInferenceAPI() bool {
 		v1alpha2Types := map[string]string{
 			K8sInferencePoolsType: "inferencepools",
 		}
-		isInferenceAPI := checkInferenceAPIs(in, K8sInferenceGroupVersionV1Alpha2.String(), v1alpha2Types)
+		isInferenceAPI := checkInferenceAPIs(in, K8sInferenceGroupVersionV1.String(), v1alpha2Types)
 		in.isInferenceAPI = &isInferenceAPI
 	}
 	return *in.isInferenceAPI
