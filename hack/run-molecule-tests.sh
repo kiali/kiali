@@ -183,7 +183,7 @@ if [ "${CLUSTER_TYPE}" == "openshift" ]; then
 elif [ "${CLUSTER_TYPE}" == "minikube" ]; then
   SKIP_TESTS="${SKIP_TESTS:-os-console-links-test ossmconsole-config-values-test}"
 elif [ "${CLUSTER_TYPE}" == "kind" ]; then
-  SKIP_TESTS="${SKIP_TESTS:-header-auth-test openid-test os-console-links-test ossmconsole-config-values-test}"
+  SKIP_TESTS="${SKIP_TESTS:-os-console-links-test ossmconsole-config-values-test}"
 fi
 
 # If you want to test the latest release from quay, set this to "false".

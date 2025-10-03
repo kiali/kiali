@@ -4,6 +4,9 @@
 # Refer to the --help output for a description of this script and its available options.
 #
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 infomsg() {
   if [ -z "${1}" ]; then
     echo
@@ -55,6 +58,10 @@ Options:
 -hb|--helm-branch <branch name>
     The helm-chart branch to clone.
     Default: master
+
+-he|--hydra-enabled <true|false>
+    If true, install Ory Hydra for OpenID Connect support in the KinD cluster.
+    Default: false
 
 -hf|--helm-fork <name>
     The helm-chart fork to clone.
@@ -131,6 +138,11 @@ Options:
     If true, any existing cluster will be destroyed and a new one will be rebuilt.
     Default: false
 
+-rt|--run-tests <true|false>
+    If true, molecule tests will be executed after setup is complete.
+    If false, the script will only set up the environment (cluster, images, etc.) but skip test execution.
+    Default: true
+
 -sd|--src-dir <directory>
     Where the git source repositories will be cloned.
     Default: /tmp/KIALI-GIT-KIND
@@ -173,6 +185,7 @@ while [[ $# -gt 0 ]]; do
     -gcp|--git-clone-protocol)    GIT_CLONE_PROTOCOL="$2";    shift;shift; ;;
     -hb|--helm-branch)            HELM_BRANCH="$2";           shift;shift; ;;
     -h|--help)                    helpmsg;                    exit 1       ;;
+    -he|--hydra-enabled)          HYDRA_ENABLED="$2";         shift;shift; ;;
     -hf|--helm-fork)              HELM_FORK="$2";             shift;shift; ;;
     -ii|--install-istio)          INSTALL_ISTIO="$2";         shift;shift; ;;
     -ir|--irc-room)               IRC_ROOM="$2";              shift;shift; ;;
@@ -189,6 +202,7 @@ while [[ $# -gt 0 ]]; do
     -oi|--operator-installer)     OPERATOR_INSTALLER="$2";    shift;shift; ;;
     -ov|--olm-version)            OLM_VERSION="$2";           shift;shift; ;;
     -rc|--rebuild-cluster)        REBUILD_CLUSTER="$2";       shift;shift; ;;
+    -rt|--run-tests)              RUN_TESTS="$2";             shift;shift; ;;
     -sd|--src-dir)                SRC="$2";                   shift;shift; ;;
     -st|--skip-tests)             SKIP_TESTS="$2";            shift;shift; ;;
     -sv|--spec-version)           SPEC_VERSION="$2";          shift;shift; ;;
@@ -205,7 +219,8 @@ set -e
 CLIENT_EXE=${CLIENT_EXE:-kubectl}
 KIND_EXE=${KIND_EXE:-kind}
 SRC="${SRC:-/tmp/KIALI-GIT-KIND}"
-DORP="${DORP:-docker}"
+# Force DORP to docker for KinD (KinD only works with Docker, not Podman)
+DORP="docker"
 GIT_CLONE_PROTOCOL="${GIT_CLONE_PROTOCOL:-git}"
 OLM_ENABLED="${OLM_ENABLED:-false}"
 OLM_VERSION="${OLM_VERSION:-latest}"
@@ -265,11 +280,17 @@ UPLOAD_LOGS="${UPLOAD_LOGS:-false}"
 # Only if this is set to "true" will Istio be installed if it is missing
 INSTALL_ISTIO="${INSTALL_ISTIO:-true}"
 
+# Only if this is set to "true" will Hydra be installed for OIDC support
+HYDRA_ENABLED="${HYDRA_ENABLED:-false}"
+
 # Determines if we should build and push dev images
 USE_DEV_IMAGES="${USE_DEV_IMAGES:-false}"
 
 # Determines what Kiali CR spec.version the tests should use
 SPEC_VERSION="${SPEC_VERSION:-default}"
+
+# Determines whether to run molecule tests or just do setup
+RUN_TESTS="${RUN_TESTS:-true}"
 
 # print out our settings for debug purposes
 cat <<EOM
@@ -280,6 +301,7 @@ DORP=$DORP
 GIT_CLONE_PROTOCOL=$GIT_CLONE_PROTOCOL
 HELM_BRANCH=$HELM_BRANCH
 HELM_FORK=$HELM_FORK
+HYDRA_ENABLED=$HYDRA_ENABLED
 INSTALL_ISTIO=$INSTALL_ISTIO
 IRC_ROOM=$IRC_ROOM
 ISTIO_VERSION=$ISTIO_VERSION
@@ -301,6 +323,7 @@ OLM_ENABLED=$OLM_ENABLED
 OLM_VERSION=$OLM_VERSION
 OPERATOR_INSTALLER=$OPERATOR_INSTALLER
 REBUILD_CLUSTER=$REBUILD_CLUSTER
+RUN_TESTS=$RUN_TESTS
 SKIP_TESTS=$SKIP_TESTS
 SPEC_VERSION=$SPEC_VERSION
 SRC=$SRC
@@ -337,6 +360,11 @@ fi
 if [ "${LOGS_PROJECT_NAME}" == "" ]; then
   infomsg "LOGS_PROJECT_NAME is empty - aborting"
   exit 1
+fi
+# Fix permissions on any root-owned or read-only files before cleanup
+if [ -d "${SRC}" ]; then
+  infomsg "Fixing permissions on ${SRC} to allow cleanup..."
+  docker run --rm -v ${SRC}:/data alpine sh -c "chmod -R u+w /data 2>/dev/null; chown -R $(id -u):$(id -g) /data 2>/dev/null" || true
 fi
 test -d ${SRC}/helm-charts && rm -rf ${SRC}/helm-charts
 test -d ${SRC}/kiali-operator && rm -rf ${SRC}/kiali-operator
@@ -379,13 +407,103 @@ cd kiali
 if [ "${REBUILD_CLUSTER}" == "true" ]; then
   infomsg "Destroying any existing cluster to ensure a new one will be rebuilt."
   ${KIND_EXE} delete cluster --name ${KIND_NAME}
+
+  # Stop and remove kind-registry if it exists
+  if docker ps -a --format '{{.Names}}' | grep -q '^kind-registry$'; then
+    infomsg "Removing kind-registry container..."
+    docker kill kind-registry 2>/dev/null || true
+    docker rm kind-registry 2>/dev/null || true
+  fi
+
+  # Force disconnect all containers from the kind network and delete it
+  infomsg "Cleaning up docker network 'kind'..."
+  for container in $(docker network inspect kind -f '{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null); do
+    infomsg "Disconnecting container ${container} from kind network"
+    docker network disconnect -f kind ${container} 2>/dev/null || true
+  done
+  docker network rm kind 2>/dev/null || true
+  infomsg "Docker network 'kind' removed for clean rebuild"
+
+  # Clean up temp directories to ensure fresh state
+  if [ -d "${SRC}" ]; then
+    infomsg "Cleaning up temp directories in ${SRC}..."
+    docker run --rm -v ${SRC}:/data alpine sh -c "chmod -R u+w /data 2>/dev/null; chown -R $(id -u):$(id -g) /data 2>/dev/null" || true
+    rm -rf ${SRC}/kiali/_output 2>/dev/null || true
+    rm -rf ${SRC}/kiali-operator/_output 2>/dev/null || true
+  fi
+  infomsg "Clean rebuild environment ready"
 fi
 
 if ${KIND_EXE} get kubeconfig --name ${KIND_NAME} > /dev/null 2>&1; then
   infomsg "Kind cluster named [${KIND_NAME}] already exists - it will be used as-is"
+  # If Hydra is enabled and cluster exists, we need to determine the certs path
+  if [ "${HYDRA_ENABLED}" == "true" ]; then
+    # Use deterministic IP selection (lowest cluster node IP) to match certificate generation logic
+    KIND_CLUSTER_IP=$(docker network inspect kind | jq -r '.[0].Containers | to_entries | map(select(.value.Name | test("-(control-plane|worker)$"))) | map(.value.IPv4Address | split("/")[0]) | sort | .[0]')
+    KIND_CLUSTER_IP_DASHED=$(echo -n ${KIND_CLUSTER_IP} | sed 's/\./-/g')
+    KUBE_HOSTNAME="${KIND_CLUSTER_IP_DASHED}.nip.io"
+    CERTS_PATH="${SRC}/kiali/_output/hydra/ssl_${KUBE_HOSTNAME}"
+    infomsg "Will use certificates from: ${CERTS_PATH}/ssl"
+  fi
 else
   infomsg "Kind cluster to be created with name [${KIND_NAME}]"
-  hack/start-kind.sh --name ${KIND_NAME} --enable-image-registry true --enable-keycloak false
+  if [ "${HYDRA_ENABLED}" == "true" ]; then
+    # KinD requires OIDC config at cluster creation, but we need actual IP for certificates.
+    # Solution: create cluster twice - first to get IP, second with proper OIDC config.
+    infomsg "Creating initial cluster to determine actual cluster IP..."
+    hack/start-kind.sh --name ${KIND_NAME} --enable-image-registry true --enable-keycloak false --enable-hydra false
+
+    # Extract actual cluster IP and create nip.io hostname for certificates
+    # Use the lowest cluster node IP (control-plane or worker) to avoid race condition where
+    # they may get assigned IPs non-deterministically. Exclude registry container.
+    KIND_CLUSTER_IP=$(docker network inspect kind | jq -r '.[0].Containers | to_entries | map(select(.value.Name | test("-(control-plane|worker)$"))) | map(.value.IPv4Address | split("/")[0]) | sort | .[0]')
+    KIND_CLUSTER_IP_DASHED=$(echo -n ${KIND_CLUSTER_IP} | sed 's/\./-/g')
+    KUBE_HOSTNAME="${KIND_CLUSTER_IP_DASHED}.nip.io"
+
+    HYDRA_PATH="${SRC}/kiali/_output/hydra"
+    CERTS_PATH="${HYDRA_PATH}/ssl_${KUBE_HOSTNAME}"
+    mkdir -p ${CERTS_PATH}
+
+    # Generate certificates for nip.io hostname (matches test expectations)
+    infomsg "Generating Hydra certificates for actual cluster IP: ${KIND_CLUSTER_IP} (${KUBE_HOSTNAME})"
+    bash hack/ory-hydra/scripts/gencert.sh --hostname "${KUBE_HOSTNAME}" --cluster-ip "${KIND_CLUSTER_IP}" --cert-dir "${CERTS_PATH}/ssl"
+    [ "$?" != "0" ] && infomsg "ERROR: Failed to generate certificates for Hydra" && exit 1
+    openssl x509 -in ${CERTS_PATH}/ssl/cert.pem -out ${CERTS_PATH}/ssl/hydra-ca.pem 2>/dev/null || cp ${CERTS_PATH}/ssl/cert.pem ${CERTS_PATH}/ssl/hydra-ca.pem
+    HYDRA_ISSUER_URI="https://${KUBE_HOSTNAME}:30967"
+    infomsg "Hydra certificates generated. Issuer URI: ${HYDRA_ISSUER_URI}"
+
+    # Recreate cluster with OIDC configuration using the generated certificates
+    infomsg "Recreating cluster with OIDC configuration for Hydra..."
+    ${KIND_EXE} delete cluster --name ${KIND_NAME}
+    hack/start-kind.sh --name ${KIND_NAME} --enable-image-registry true --enable-keycloak false --enable-hydra true --hydra-certs-dir "${CERTS_PATH}/ssl" --hydra-issuer-uri "${HYDRA_ISSUER_URI}"
+
+    # Validate that the predicted cluster IP matches the actual cluster IP
+    infomsg "Validating that predicted cluster IP matches actual cluster IP..."
+    # Use same logic as prediction: lowest cluster node IP (control-plane or worker)
+    ACTUAL_CLUSTER_IP=$(docker network inspect kind | jq -r '.[0].Containers | to_entries | map(select(.value.Name | test("-(control-plane|worker)$"))) | map(.value.IPv4Address | split("/")[0]) | sort | .[0]')
+    infomsg "Predicted cluster IP: ${KIND_CLUSTER_IP}"
+    infomsg "Actual cluster IP: ${ACTUAL_CLUSTER_IP}"
+
+    if [ "${KIND_CLUSTER_IP}" != "${ACTUAL_CLUSTER_IP}" ]; then
+      infomsg "ERROR: IP mismatch! Predicted [${KIND_CLUSTER_IP}] but actual [${ACTUAL_CLUSTER_IP}]"
+      infomsg "This will cause OIDC authentication to fail since certificates were generated for the wrong IP."
+      infomsg "The molecule test would fail, so stopping here to save time."
+      exit 1
+    else
+      infomsg "SUCCESS: IP prediction is correct! Both predicted and actual IPs are [${KIND_CLUSTER_IP}]"
+    fi
+  else
+    hack/start-kind.sh --name ${KIND_NAME} --enable-image-registry true --enable-keycloak false --enable-hydra false
+  fi
+fi
+
+# Install Hydra with pre-generated certificates (API server already configured for OIDC)
+if [ "${HYDRA_ENABLED}" == "true" ]; then
+  infomsg "Installing Ory Hydra for OpenID Connect support..."
+  ${SCRIPT_DIR}/install-hydra-kind.sh --kind-exe "${KIND_EXE}" --kind-name "${KIND_NAME}" --client-exe "${CLIENT_EXE}" --certs-dir "${CERTS_PATH}/ssl"
+  [ "$?" != "0" ] && infomsg "ERROR: Failed to install Hydra" && exit 1
+else
+  infomsg "Hydra installation is disabled."
 fi
 
 if [ "${USE_DEV_IMAGES}" == "true" ]; then
@@ -583,63 +701,75 @@ else
   infomsg "There is an 'istio-system' namespace - assuming Istio is installed and ready."
 fi
 
-infomsg "Building the Molecule test docker image using [podman]"
-# Need to build molecule test image with podman here because the
-# tests run with podman and the image won't be available in the
-# local registry if we build with docker.
-make -e FORCE_MOLECULE_BUILD="true" -e DORP="podman" molecule-build
+if [ "${RUN_TESTS}" == "true" ]; then
+  infomsg "Building the Molecule test docker image using [podman]"
+  # Need to build molecule test image with podman here because the
+  # tests run with podman and the image won't be available in the
+  # local registry if we build with docker.
+  make -e FORCE_MOLECULE_BUILD="true" -e DORP="podman" molecule-build
 
-mkdir -p "${LOGS_LOCAL_SUBDIR_ABS}"
-infomsg "Running the tests - logs are going here: ${LOGS_LOCAL_SUBDIR_ABS}"
-if [ "${CI}" == "true" ]; then
-  eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$CLIENT_EXE" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --cluster-type "kind" --operator-installer "${OPERATOR_INSTALLER:-helm}" -ci true --kind-name "${KIND_NAME}" --kind-exe "${KIND_EXE}"
+  mkdir -p "${LOGS_LOCAL_SUBDIR_ABS}"
+  infomsg "Running the tests - logs are going here: ${LOGS_LOCAL_SUBDIR_ABS}"
+  if [ "${CI}" == "true" ]; then
+    eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$CLIENT_EXE" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --cluster-type "kind" --operator-installer "${OPERATOR_INSTALLER:-helm}" -ci true --kind-name "${KIND_NAME}" --kind-exe "${KIND_EXE}"
+  else
+    eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$CLIENT_EXE" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --cluster-type "kind" --operator-installer "${OPERATOR_INSTALLER:-helm}" -ci false --kind-name "${KIND_NAME}" --kind-exe "${KIND_EXE}" > "${LOGS_LOCAL_RESULTS}"
+  fi
+
+  cd ${LOGS_LOCAL_SUBDIR_ABS}
+
+  # compress large log files
+  MAX_LOG_FILE_SIZE="50M"
+  for bigfile in $(find ${LOGS_LOCAL_SUBDIR_ABS} -maxdepth 1 -type f -size +${MAX_LOG_FILE_SIZE})
+  do
+    infomsg "This file is large and needs to be compressed: $(basename ${bigfile})"
+    tar -czf ${bigfile}.tgz -C ${LOGS_LOCAL_SUBDIR_ABS} --remove-files $(basename ${bigfile})
+  done
+
+  if [ "${UPLOAD_LOGS}" == "true" ]; then
+    infomsg "Committing the logs to github: ${LOGS_GITHUB_HTTPS_SUBDIR}"
+    git add -A
+    git commit -m "Test results for ${LOGS_LOCAL_SUBDIR}"
+    git push
+  else
+    infomsg "The logs will not be uploaded. Test results can be found here: ${LOGS_LOCAL_SUBDIR_ABS}"
+  fi
+
+  # determine what message to send to IRC based on test results
+  if grep FAILURE "${LOGS_LOCAL_RESULTS}"; then
+    irc_msg="a FAILURE occurred in [$(grep FAILURE "${LOGS_LOCAL_RESULTS}" | wc -l)] tests"
+  else
+    irc_msg="all tests passed"
+  fi
+
+  if [ "${UPLOAD_LOGS}" == "true" ]; then
+    irc_msg="kiali tests are done [${irc_msg}]: ${LOGS_GITHUB_HTTPS_RESULTS} (test logs directory: ${LOGS_GITHUB_HTTPS_SUBDIR})"
+  else
+    irc_msg="kiali tests are done [${irc_msg}]: Logs were not uploaded. See the local machine directory: ${LOGS_LOCAL_SUBDIR_ABS}"
+  fi
+
+  if [ "${IRC_ROOM}" == "" ]; then
+    infomsg "Not sending IRC notification - results are: ${irc_msg}"
+  else
+    infomsg "Sending IRC notification to room [#${IRC_ROOM}]. msg=${irc_msg}"
+    (
+    echo 'NICK kiali-test-bot'
+    echo 'USER kiali-test-bot 8 * : kiali-test-bot'
+    sleep 10
+    echo "JOIN #${IRC_ROOM}"
+    sleep 5
+    echo "PRIVMSG #${IRC_ROOM} : ${irc_msg}"
+    echo QUIT
+    ) | nc irc.libera.chat 6667
+  fi
 else
-  eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$CLIENT_EXE" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --cluster-type "kind" --operator-installer "${OPERATOR_INSTALLER:-helm}" -ci false --kind-name "${KIND_NAME}" --kind-exe "${KIND_EXE}" > "${LOGS_LOCAL_RESULTS}"
-fi
-
-cd ${LOGS_LOCAL_SUBDIR_ABS}
-
-# compress large log files
-MAX_LOG_FILE_SIZE="50M"
-for bigfile in $(find ${LOGS_LOCAL_SUBDIR_ABS} -maxdepth 1 -type f -size +${MAX_LOG_FILE_SIZE})
-do
-  infomsg "This file is large and needs to be compressed: $(basename ${bigfile})"
-  tar -czf ${bigfile}.tgz -C ${LOGS_LOCAL_SUBDIR_ABS} --remove-files $(basename ${bigfile})
-done
-
-if [ "${UPLOAD_LOGS}" == "true" ]; then
-  infomsg "Committing the logs to github: ${LOGS_GITHUB_HTTPS_SUBDIR}"
-  git add -A
-  git commit -m "Test results for ${LOGS_LOCAL_SUBDIR}"
-  git push
-else
-  infomsg "The logs will not be uploaded. Test results can be found here: ${LOGS_LOCAL_SUBDIR_ABS}"
-fi
-
-# determine what message to send to IRC based on test results
-if grep FAILURE "${LOGS_LOCAL_RESULTS}"; then
-  irc_msg="a FAILURE occurred in [$(grep FAILURE "${LOGS_LOCAL_RESULTS}" | wc -l)] tests"
-else
-  irc_msg="all tests passed"
-fi
-
-if [ "${UPLOAD_LOGS}" == "true" ]; then
-  irc_msg="kiali tests are done [${irc_msg}]: ${LOGS_GITHUB_HTTPS_RESULTS} (test logs directory: ${LOGS_GITHUB_HTTPS_SUBDIR})"
-else
-  irc_msg="kiali tests are done [${irc_msg}]: Logs were not uploaded. See the local machine directory: ${LOGS_LOCAL_SUBDIR_ABS}"
-fi
-
-if [ "${IRC_ROOM}" == "" ]; then
-  infomsg "Not sending IRC notification - results are: ${irc_msg}"
-else
-  infomsg "Sending IRC notification to room [#${IRC_ROOM}]. msg=${irc_msg}"
-  (
-  echo 'NICK kiali-test-bot'
-  echo 'USER kiali-test-bot 8 * : kiali-test-bot'
-  sleep 10
-  echo "JOIN #${IRC_ROOM}"
-  sleep 5
-  echo "PRIVMSG #${IRC_ROOM} : ${irc_msg}"
-  echo QUIT
-  ) | nc irc.libera.chat 6667
+  infomsg "Test execution is disabled (--run-tests false). Environment setup is complete."
+  infomsg "You can now manually run molecule tests using:"
+  infomsg "  hack/run-molecule-tests.sh --client-exe \"$CLIENT_EXE\" --cluster-type kind --kind-exe \"${KIND_EXE}\" --kind-name \"${KIND_NAME}\" --use-dev-images \"${USE_DEV_IMAGES}\" --helm-charts-repo \"${SRC}/helm-charts\" [additional options]"
+  infomsg "Environment setup complete. KIND cluster '${KIND_NAME}' is ready for testing."
+  infomsg "Cluster details:"
+  infomsg "  - Istio: $([ "${INSTALL_ISTIO}" == "true" ] && echo "installed" || echo "skipped")"
+  infomsg "  - Hydra: $([ "${HYDRA_ENABLED}" == "true" ] && echo "installed" || echo "not installed")"
+  infomsg "  - Dev images: $([ "${USE_DEV_IMAGES}" == "true" ] && echo "built and pushed" || echo "using published images")"
+  infomsg "  - OLM: $([ "${OLM_ENABLED}" == "true" ] && echo "installed" || echo "not installed")"
 fi
