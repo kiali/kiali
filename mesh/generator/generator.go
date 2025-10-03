@@ -155,7 +155,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 
 		// add any Kiali instances
 		for _, ki := range cp.Cluster.KialiInstances {
-			kiali, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cp.Cluster.Name, ki.Namespace, ki.ServiceName, es.Istio, ki.Version, true, "")
+			kiali, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cp.Cluster.Name, ki.Namespace, ki.ServiceName, es.Istio, ki.Version, false, "")
 			mesh.CheckError(err)
 
 			if es.Istio.IstioAPIEnabled {
