@@ -37,17 +37,39 @@ export class OpenShiftUrlProvider implements TracingUrlProvider {
     params.append('namespace', namespace);
     params.append('name', name);
     params.append('tenant', tenant);
-    params.append('limit', limit.toString());
+
+    // Map limit to one of the predefined values: 20, 50, 100, 500, 1000, 5000
+    const limitRanges = [
+      { max: 20, value: 20 },
+      { max: 50, value: 50 },
+      { max: 100, value: 100 },
+      { max: 500, value: 500 },
+      { max: 1000, value: 1000 }
+    ];
+
+    const limitValue = limitRanges.find(range => limit <= range.max)?.value || 5000;
+    params.append('limit', limitValue.toString());
 
     // Add time range parameters
     if (bounds.from) {
-      params.append('start', (bounds.from * 1000).toString());
-    }
-    if (bounds.to && bounds.from) {
-      const duration = bounds.to - bounds.from;
-      // Convert duration to hours for the duration parameter
-      const durationHours = Math.max(1, Math.ceil(duration / 3600));
-      params.append('duration', `${durationHours}h`);
+      // If to is not provided, use current time (now)
+      const to = bounds.to || Date.now();
+      // Convert from milliseconds to seconds
+      const durationSeconds = (to - bounds.from) / 1000;
+
+      // Convert duration to one of the predefined values: 5m, 15m, 30m, 1h, 6h, 12h, 1d, 7d
+      const durationRanges = [
+        { max: 5 * 60, value: '5m' },
+        { max: 15 * 60, value: '15m' },
+        { max: 30 * 60, value: '30m' },
+        { max: 60 * 60, value: '1h' },
+        { max: 6 * 60 * 60, value: '6h' },
+        { max: 12 * 60 * 60, value: '12h' },
+        { max: 24 * 60 * 60, value: '1d' }
+      ];
+
+      const durationValue = durationRanges.find(range => durationSeconds <= range.max)?.value || '7d';
+      params.append('duration', durationValue);
     }
 
     // Add tags as query parameter
