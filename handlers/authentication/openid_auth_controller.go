@@ -1117,6 +1117,44 @@ func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 	fetchedMetadata, fetchError, _ := openIdFlightGroup.Do("metadata", func() (interface{}, error) {
 		cfg := conf.Auth.OpenId
 
+		// Check if we have explicit endpoint configuration (new grouped structure)
+		var authEndpoint, tokenEndpoint, jwksUri, userInfoEndpoint string
+
+		// Prefer new grouped structure, fall back to legacy flat structure for backward compatibility
+		if cfg.DiscoveryOverride.AuthorizationEndpoint != "" && cfg.DiscoveryOverride.TokenEndpoint != "" {
+			authEndpoint = cfg.DiscoveryOverride.AuthorizationEndpoint
+			tokenEndpoint = cfg.DiscoveryOverride.TokenEndpoint
+			jwksUri = cfg.DiscoveryOverride.JwksUri
+			userInfoEndpoint = cfg.DiscoveryOverride.UserInfoEndpoint
+		} else if cfg.AuthorizationEndpoint != "" && cfg.TokenEndpoint != "" {
+			// Legacy flat structure for backward compatibility
+			log.Warning("OpenID configuration is using deprecated fields (authorization_endpoint, token_endpoint, etc.). Please migrate to the new 'discovery_override' configuration structure.")
+			authEndpoint = cfg.AuthorizationEndpoint
+			tokenEndpoint = cfg.TokenEndpoint
+			jwksUri = cfg.JwksUri
+			userInfoEndpoint = cfg.UserInfoEndpoint
+		}
+
+		if authEndpoint != "" && tokenEndpoint != "" {
+			// Use explicit configuration for security-hardened environments
+			log.Infof("Using explicit OpenID endpoints for restricted environment")
+
+			metadata := &openIdMetadata{
+				Issuer:      cfg.IssuerUri,
+				AuthURL:     authEndpoint,
+				TokenURL:    tokenEndpoint,
+				JWKSURL:     jwksUri,
+				UserInfoURL: userInfoEndpoint,
+				// Assume "code" is supported when explicit config is provided
+				ResponseTypesSupported: []string{"code"},
+			}
+
+			return metadata, nil
+		}
+
+		// Original auto-discovery logic continues here...
+		log.Infof("Using OpenID auto-discovery from provider")
+
 		// Remove trailing slash from issuer URI, if needed
 		trimmedIssuerUri := strings.TrimRight(cfg.IssuerUri, "/")
 
