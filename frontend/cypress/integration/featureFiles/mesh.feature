@@ -190,3 +190,7 @@ Feature: Kiali Mesh page
     And user sees 0 "dataplane" nodes on the "mgmt" cluster
     And user sees 0 "istiod" nodes on the "mgmt" cluster
     And user sees the "kiali" node connected to the 1 "istiod" nodes
+
+  @smoke
+  Scenario: Local-kiali: see kiali node in local mode
+    And user sees the "kiali" node connected to the 1 "istiod" nodes
