@@ -26,7 +26,7 @@ Feature: Kiali Mesh page
     Then user "does not see" mesh tour
 
   @core-2
-  @multiple-controlplanes
+  @multi-mesh
   # TODO: offline - number of infra nodes don't match up because no grafana/tracing.
   Scenario: See mesh
     When user sees mesh side panel

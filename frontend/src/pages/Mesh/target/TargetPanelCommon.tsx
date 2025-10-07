@@ -141,7 +141,16 @@ const meshTitleStyle = kialiStyle({
 const expandTitleStyle = kialiStyle({
   fontWeight: 'bold',
   fontSize: '0.875rem',
-  paddingLeft: '0.125rem'
+  paddingLeft: '0 !important'
+});
+
+const expandBodyStyle = kialiStyle({
+  padding: '0 0 0 0.125rem !important',
+  $nest: {
+    '& .pf-v5-c-table__expandable-row-content': {
+      padding: '0 0 0 0.5rem !important'
+    }
+  }
 });
 
 interface NodeHeaderOptions {
@@ -559,7 +568,7 @@ const MeshTabsComponent: React.FC<{
                 </Td>
               </Tr>
               <Tr isExpanded={isExpanded(meshName)}>
-                <Td dataLabel={`mesh-detail-${meshName}`} noPadding={true} colSpan={2}>
+                <Td dataLabel={`mesh-detail-${meshName}`} className={expandBodyStyle} colSpan={2}>
                   <ExpandableRowContent>
                     {renderMeshControlPlanes(meshName, controlPlaneNodes, dataPlaneNodes)}
                   </ExpandableRowContent>
