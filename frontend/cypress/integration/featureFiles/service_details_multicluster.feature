@@ -42,7 +42,7 @@ Feature: Kiali Service Details page for remote cluster
 
   Scenario: See span info after selecting service span
     And user sees trace information
-    When user selects a trace
+    When user selects a trace with at least 2 spans
     Then user sees span details
 
   Scenario: Don't see tracing info

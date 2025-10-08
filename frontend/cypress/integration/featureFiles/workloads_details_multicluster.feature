@@ -29,7 +29,7 @@ Feature: Kiali Workload Details page
 
   Scenario: See workload span info after selecting a span
     And user sees trace information
-    When user selects a trace
+    When user selects a trace with at least 2 spans
     And user sees span details
     And user can filter spans by workload "details-v1"
 
