@@ -133,12 +133,14 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 
 	var u *url.URL
 	var errParse error
+	isInternalURL := false
 	if cfgTracing.InternalURL != "" {
 		u, errParse = url.Parse(cfgTracing.InternalURL)
 		if errParse != nil {
 			zl.Error().Msgf("Error parsing tracing InternalURL: %s", errParse)
 			return nil, errParse
 		}
+		isInternalURL = true
 	} else {
 		u, errParse = url.Parse(cfgTracing.ExternalURL)
 		if errParse != nil {
@@ -154,7 +156,8 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 	}
 
 	// For Tempo provider with tenant, construct tenant-specific URL if needed
-	if cfgTracing.Provider == config.TempoProvider && cfgTracing.TempoConfig.Tenant != "" {
+	// Just for internal URL, the external URL can be exposed on a different URL, hidden internal path
+	if cfgTracing.Provider == config.TempoProvider && cfgTracing.TempoConfig.Tenant != "" && isInternalURL {
 		// Check if the URL is just the base server URL (no path or minimal path)
 		// If so, append the tenant-specific path
 		if u.Path == "" || u.Path == "/" {
