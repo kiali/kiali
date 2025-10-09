@@ -14,5 +14,9 @@
   "overview": "2",
   "graphAllIdle": "6",
   "graphAll": "4",
-  "graphSelected": "2"
+  "graphSelected": "2",
+  "graphIssueBaseline": "4",
+  "graphWithoutIstio": "3",
+  "graphOnlyIstio": "2",
+  "graphCore": "2"
 }
