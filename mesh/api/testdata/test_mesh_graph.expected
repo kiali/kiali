@@ -169,10 +169,7 @@
           "provider" : "jaeger",
           "tempoConfig" : {
             "cacheCapacity" : 200,
-            "cacheEnabled" : true,
-            "name" : "sample",
-            "namespace" : "tempo",
-            "tenant" : "default"
+            "cacheEnabled" : true
           },
           "namespaceSelector" : true,
           "queryTimeout" : 5,
