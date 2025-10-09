@@ -152,6 +152,17 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 		p, _ := net.LookupPort("tcp", u.Scheme)
 		port = strconv.Itoa(p)
 	}
+
+	// For Tempo provider with tenant, construct tenant-specific URL if needed
+	if cfgTracing.Provider == config.TempoProvider && cfgTracing.TempoConfig.Tenant != "" {
+		// Check if the URL is just the base server URL (no path or minimal path)
+		// If so, append the tenant-specific path
+		if u.Path == "" || u.Path == "/" {
+			u.Path = fmt.Sprintf("/api/traces/v1/%s/tempo", cfgTracing.TempoConfig.Tenant)
+			zl.Debug().Msgf("Constructed Tempo tenant URL: %s", u.String())
+		}
+	}
+
 	opts, err := grpcutil.GetAuthDialOptions(conf, u.Scheme == "https", &auth)
 	if err != nil {
 		zl.Error().Msgf("Error while building GRPC dial options: %v", err)

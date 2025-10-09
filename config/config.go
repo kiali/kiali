@@ -860,9 +860,9 @@ func NewConfig() (c *Config) {
 				TempoConfig: TempoConfig{
 					CacheCapacity: 200,
 					CacheEnabled:  true,
-					Name:          "sample",
-					Namespace:     "tempo",
-					Tenant:        "default",
+					Name:          "",
+					Namespace:     "",
+					Tenant:        "",
 				},
 				UseGRPC:              true,
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
