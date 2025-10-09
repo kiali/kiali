@@ -627,7 +627,11 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   fi
 
   cd "${SCRIPT_DIR}"/../frontend
-  yarn run cypress:run:multi-primary
+  if [ -n "$AMBIENT" ]; then
+    yarn run cypress:run:ambient-multi-primary
+  else
+    yarn run cypress:run:multi-primary
+  fi
   detectRaceConditions ${CYPRESS_CLUSTER1_CONTEXT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_EXTERNAL_KIALI}" ]; then
   ensureCypressInstalled
