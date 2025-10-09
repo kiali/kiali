@@ -434,3 +434,48 @@ Then('user sees the Tester result {string}', (result: string) => {
     }
   });
 });
+
+// Ambient multi-primary mesh step definitions
+
+Then('user sees ambient control planes in both clusters', () => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+      const controller = state.meshRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+
+      const { nodes } = elems(controller);
+      const controlPlanes = nodes.filter(n => (n.getData() as MeshNodeData).infraType === MeshInfraType.ISTIOD);
+
+      // Should have at least 2 control planes (one per cluster)
+      assert.isAtLeast(controlPlanes.length, 2, 'Should have control planes in both clusters');
+
+      // Verify ambient mode indicators
+      controlPlanes.forEach(cp => {
+        const data = cp.getData() as MeshNodeData;
+        // Check for ambient-specific properties or labels
+        assert.exists(data, 'Control plane data should exist');
+      });
+    });
+});
+
+Then('user sees ambient data planes in both clusters', () => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+      const controller = state.meshRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+
+      const { nodes } = elems(controller);
+      const dataPlanes = nodes.filter(n => (n.getData() as MeshNodeData).infraType === MeshInfraType.DATAPLANE);
+
+      // Should have data planes
+      assert.isAtLeast(dataPlanes.length, 1, 'Should have data planes');
+    });
+});

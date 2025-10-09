@@ -114,6 +114,14 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
+  integration_tests_frontend_ambient_multi_primary:
+    name: Run Ambient Multi-Primary frontend integration tests
+    uses: ./.github/workflows/integration-tests-frontend-ambient-multi-primary.yml
+    needs: [build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
   integration_tests_frontend_tempo:
     name: Run tracing frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-tempo.yml
