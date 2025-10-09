@@ -15,6 +15,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/tracing/tempo"
 	"github.com/kiali/kiali/util/httputil"
 )
 
@@ -90,11 +91,18 @@ func tracingVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientIn
 
 	// we want to go to the internal URL to obtain the version. If it isn't specified, fallback to the external URL.
 	versionUrl := tracingConfig.InternalURL
+	isInternalURL := versionUrl != ""
 	if versionUrl == "" {
 		versionUrl = tracingConfig.ExternalURL
 	}
 
 	if versionUrl != "" && !tracingConfig.DisableVersionCheck {
+		// Parse URL to apply Tempo tenant-specific path if needed
+		parsedUrl, err := url.Parse(versionUrl)
+		if err == nil {
+			tempo.ConstructTempoTenantURL(parsedUrl, &tracingConfig, isInternalURL)
+			versionUrl = parsedUrl.String()
+		}
 		// try to determine version by querying
 		if tracingConfig.Provider == config.JaegerProvider {
 			auth := tracingConfig.Auth
@@ -137,7 +145,11 @@ func tracingVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientIn
 		} else {
 			// Tempo
 			if tracingConfig.Provider == config.TempoProvider {
-				body, statusCode, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/status/buildinfo", versionUrl), &tracingConfig.Auth, 10*time.Second, nil, nil, conf)
+				auth := tracingConfig.Auth
+				if auth.UseKialiToken {
+					auth.Token = homeClusterSAClient.GetToken()
+				}
+				body, statusCode, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/status/buildinfo", versionUrl), &auth, 10*time.Second, tracingConfig.CustomHeaders, nil, conf)
 				if err != nil || statusCode > 399 {
 					log.Infof("tempo version check failed: url=[%v], code=[%v], err=[%v]", versionUrl, statusCode, err)
 				} else {

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/store"
 	"github.com/kiali/kiali/tracing/jaeger/model"
@@ -341,4 +342,18 @@ func getServiceName(attributes []otelJson.Attribute) string {
 		}
 	}
 	return ""
+}
+
+// ConstructTempoTenantURL constructs a tenant-specific URL for Tempo provider if needed.
+// This function checks if the URL is just the base server URL (no path or minimal path)
+// and if so, appends the tenant-specific path.
+func ConstructTempoTenantURL(u *url.URL, cfgTracing *config.TracingConfig, isInternalURL bool) {
+	if cfgTracing.Provider == config.TempoProvider && cfgTracing.TempoConfig.Tenant != "" && isInternalURL {
+		// Check if the URL is just the base server URL (no path or minimal path)
+		// If so, append the tenant-specific path
+		if u.Path == "" || u.Path == "/" {
+			u.Path = fmt.Sprintf("/api/traces/v1/%s/tempo", cfgTracing.TempoConfig.Tenant)
+			log.Debugf("Constructed Tempo tenant URL: %s", u.String())
+		}
+	}
 }
