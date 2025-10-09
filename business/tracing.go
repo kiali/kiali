@@ -426,8 +426,11 @@ func (in *TracingService) ValidateConfiguration(ctx context.Context, conf *confi
 	// Test any service
 	_, err = client.GetServices(ctx)
 	if err != nil {
-		validation.Error = fmt.Sprintf("Error getting services list: [%v]. ", err)
-		return &validation
+		_, err = client.GetServiceStatus(ctx)
+		if err != nil {
+			validation.Error = fmt.Sprintf("Error getting services list: [%v]. ", err)
+			return &validation
+		}
 	}
 
 	validation.Message = "Success getting service status"

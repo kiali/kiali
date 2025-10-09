@@ -161,6 +161,12 @@ func mockMakeRequestTempo(ctx context.Context, client http.Client, endpoint stri
 		return []byte(`{"traces":[{"rootServiceName":"svc.namespace"}]}`), 200, nil
 	case "http://tempo-host:3100/api/traces/v1/api/traces/v1/api/services":
 		return []byte(`{"data":["svc.namespace"]}`), 200, nil
+	case "http://tempo-host:3100/api/search?q={}":
+		return []byte(`{"traces":[{"rootServiceName":"svc.namespace"}]}`), 200, nil
+	case "http://tempo-host:3100/api/services":
+		return []byte(`{"data":["svc.namespace"]}`), 200, nil
+	case "http://tempo-host:3100/api/traces/v1/api/services":
+		return []byte(`{"data":["svc.namespace"]}`), 200, nil
 	default:
 		return nil, 500, errors.New("not found")
 	}
