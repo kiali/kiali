@@ -61,10 +61,15 @@ export const validateExternalUrl = (
       if (!urlProvider.HomeUrl() || !urlProvider.valid) {
         return '"View in Tracing" is hidden because external_url is empty';
       }
+    } else if (svc.tempoConfig?.urlFormat === TempoUrlFormat.OPENSHIFT) {
+      const urlProvider = new TempoUrlProvider(svc, externalServices);
+      if (!urlProvider.HomeUrl() || !urlProvider.valid) {
+        return '"View in Tracing" is hidden because external_url is empty or invalid for OpenShift console';
+      }
     } else {
       const urlProvider = new TempoUrlProvider(svc, externalServices);
       if (!urlProvider.HomeUrl() || !urlProvider.valid) {
-        return "\"View in Tracing\" link is hidden because Grafana is not enabled. To use external_url as 'View in tracing' link, tempo_config.url_format must be set to 'jaeger'";
+        return "\"View in Tracing\" link is hidden because Grafana is not enabled. To use external_url as 'View in tracing' link, tempo_config.url_format must be set to 'jaeger' or 'openshift'";
       }
     }
   }

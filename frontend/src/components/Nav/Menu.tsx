@@ -9,6 +9,8 @@ import { KialiIcon } from 'config/KialiIcon';
 import { GetTracingUrlProvider } from '../../utils/tracing/UrlProviders';
 import { t } from 'utils/I18nUtils';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
+import { isTempoService } from '../../utils/tracing/UrlProviders/Tempo';
+import { TempoUrlFormat } from '../../types/StatusState';
 
 const externalLinkStyle = kialiStyle({
   $nest: {
@@ -70,7 +72,39 @@ export const Menu: React.FC<MenuProps> = (props: MenuProps) => {
       return isRoute;
     });
 
-    const tracingUrl = GetTracingUrlProvider(props.externalServices)?.HomeUrl();
+    const tracingUrlProvider = GetTracingUrlProvider(props.externalServices);
+    const baseTracingUrl = tracingUrlProvider?.HomeUrl();
+
+    // Helper function to build tracing URL with appropriate parameters
+    const buildTracingUrlWithParams = (baseUrl: string): string => {
+      const urlParams = new URLSearchParams();
+
+      // Find the tracing service to check its configuration
+      const tracingService = props.externalServices.find(service =>
+        ['tempo', 'jaeger'].includes(service.name.toLowerCase())
+      );
+
+      // Check if it's a Tempo service with OpenShift format
+      if (
+        tracingService &&
+        isTempoService(tracingService) &&
+        tracingService.tempoConfig?.urlFormat === TempoUrlFormat.OPENSHIFT
+      ) {
+        // Add OpenShift-specific parameters
+        if (tracingService.tempoConfig?.namespace) {
+          urlParams.append('namespace', tracingService.tempoConfig?.namespace);
+        }
+        if (tracingService.tempoConfig?.name) {
+          urlParams.append('name', tracingService.tempoConfig?.name);
+        }
+        if (tracingService.tempoConfig?.tenant) {
+          urlParams.append('tenant', tracingService.tempoConfig?.tenant);
+        }
+        return `${baseUrl}?${urlParams.toString()}`;
+      }
+
+      return baseUrl;
+    };
 
     return allNavMenuItems
       .filter(item => {
@@ -84,7 +118,11 @@ export const Menu: React.FC<MenuProps> = (props: MenuProps) => {
         let title = item.title;
 
         if (item.id === 'tracing') {
-          return tracingUrl && <ExternalLink key={item.to} href={tracingUrl} name={t(title)} />;
+          if (baseTracingUrl) {
+            const tracingUrlWithParams = buildTracingUrlWithParams(baseTracingUrl);
+            return <ExternalLink key={item.to} href={tracingUrlWithParams} name={t(title)} />;
+          }
+          return null;
         }
 
         return (

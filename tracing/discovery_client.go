@@ -321,11 +321,17 @@ func validateTempoHTTP(ctx context.Context, client http.Client, zl *zerolog.Logg
 	if strings.Contains(parsedUrl.Host, "gateway") {
 		splitUrl := strings.Split(parsedUrl.Path, "/")
 		tenant := ""
-		if len(splitUrl) > 4 {
-			tenant = splitUrl[4]
+		conf := config.Get()
+		if conf.ExternalServices.Tracing.TempoConfig.Tenant != "" {
+			tenant = conf.ExternalServices.Tracing.TempoConfig.Tenant
 		} else {
-			logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create http client in port 8080", Result: fmt.Sprintf("tenant name not found: %s", parsedUrl.Path)})
+			if len(splitUrl) > 4 {
+				tenant = splitUrl[4]
+			} else {
+				logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create http client in port 8080", Result: fmt.Sprintf("tenant name not found: %s", parsedUrl.Path)})
+			}
 		}
+
 		validEndpoint := fmt.Sprintf("%s://%s:%s/api/traces/v1/%s/tempo", parsedUrl.Scheme, parsedUrl.Host, port, tenant)
 		endpointJ := fmt.Sprintf("%s/api/search?q={}", validEndpoint)
 		vc, ll, err := validateEndpoint(ctx, client, zl, endpointJ, validEndpoint, "tempo")

@@ -40,7 +40,7 @@ import { MetricsStatsResult } from 'types/Metrics';
 import { getSpanId } from 'utils/SearchParamUtils';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { subTabStyle } from 'styles/TabStyles';
-import { TracingUrlProvider } from 'types/Tracing';
+import { JAEGER, TracingUrlProvider } from 'types/Tracing';
 import { GetTracingUrlProvider } from 'utils/tracing/UrlProviders';
 import { ExternalServiceInfo } from 'types/StatusState';
 import { retrieveTimeRange } from '../Time/TimeRangeHelper';
@@ -312,7 +312,9 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                   </ToolbarItem>
                   {(tracingURL || isParentKiosk(this.props.kiosk)) && (
                     <ToolbarItem>
-                      <Tooltip content={<>Open Chart in {this.props.provider} UI</>}>
+                      <Tooltip
+                        content={<>Open Chart in {this.props.provider === JAEGER ? this.props.provider : 'the'} UI</>}
+                      >
                         <a
                           href={tracingURL}
                           target="_blank"

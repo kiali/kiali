@@ -133,12 +133,14 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 
 	var u *url.URL
 	var errParse error
+	isInternalURL := false
 	if cfgTracing.InternalURL != "" {
 		u, errParse = url.Parse(cfgTracing.InternalURL)
 		if errParse != nil {
 			zl.Error().Msgf("Error parsing tracing InternalURL: %s", errParse)
 			return nil, errParse
 		}
+		isInternalURL = true
 	} else {
 		u, errParse = url.Parse(cfgTracing.ExternalURL)
 		if errParse != nil {
@@ -152,6 +154,11 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 		p, _ := net.LookupPort("tcp", u.Scheme)
 		port = strconv.Itoa(p)
 	}
+
+	// For Tempo provider with tenant, construct tenant-specific URL if needed
+	// Just for internal URL, the external URL can be exposed on a different URL, hidden internal path
+	tempo.ConstructTempoTenantURL(u, &cfgTracing, isInternalURL)
+
 	opts, err := grpcutil.GetAuthDialOptions(conf, u.Scheme == "https", &auth)
 	if err != nil {
 		zl.Error().Msgf("Error while building GRPC dial options: %v", err)

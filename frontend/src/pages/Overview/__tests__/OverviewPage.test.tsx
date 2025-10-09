@@ -110,7 +110,10 @@ const externalServices: ExternalServiceInfo[] = [
     tempoConfig: {
       datasourceUID: 'ee347fx2g9ypse',
       urlFormat: TempoUrlFormat.GRAFANA,
-      orgID: '2'
+      name: '',
+      namespace: '',
+      orgID: '2',
+      tenant: ''
     }
   }
 ];
