@@ -127,12 +127,12 @@ func (oc *OtelHTTPClient) GetServiceStatusHTTP(ctx context.Context, client http.
 		u = *url
 	} else {
 		u = *baseURL
-		u.Path = path.Join(u.Path, "/status/services")
+		u.Path = path.Join(u.Path, "/api/echo")
 	}
 
 	_, status, reqError := otel.MakeRequest(ctx, client, u.String(), nil)
 	if status != 200 {
-		return false, fmt.Errorf("[HTTP Tempo] Error %d getting status services", status)
+		return false, fmt.Errorf("[HTTP Tempo] Error %d getting status", status)
 	}
 	return reqError == nil, reqError
 }
