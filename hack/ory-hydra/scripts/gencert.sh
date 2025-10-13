@@ -1,18 +1,52 @@
 #!/bin/bash
 
-# Ory Hydra Certificate Generation Script
-# Based on DEX gencert.sh pattern but adapted for Hydra with enhanced TLS support
+# Generates TLS certificates for Hydra with cluster IP and nip.io support
 
 set -e
 
-# Parameters
-HOSTNAME="${1:-hydra.example.com}"
-MINIKUBE_IP="${2:-}"
-CERT_DIR="${3:-ssl}"
+# Default values
+HOSTNAME="hydra.example.com"
+CLUSTER_IP=""
+CERT_DIR="ssl"
+
+helpmsg() {
+  cat <<HELP
+This script generates TLS certificates for Ory Hydra.
+
+Options:
+
+-hn|--hostname <hostname>
+    Hostname for the certificate.
+    Default: hydra.example.com
+
+-ci|--cluster-ip <ip>
+    Cluster IP address to include in certificate SAN.
+    Default: <none>
+
+-cd|--cert-dir <directory>
+    Directory where certificates will be generated.
+    Default: ssl
+
+-h|--help
+    Show this help message.
+HELP
+}
+
+# Process command line arguments
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+    -hn|--hostname)   HOSTNAME="$2";   shift;shift; ;;
+    -ci|--cluster-ip) CLUSTER_IP="$2"; shift;shift; ;;
+    -cd|--cert-dir)   CERT_DIR="$2";   shift;shift; ;;
+    -h|--help)        helpmsg;          exit 0       ;;
+    *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
+  esac
+done
 
 echo "=== Ory Hydra Certificate Generation ==="
 echo "Hostname: ${HOSTNAME}"
-echo "Minikube IP: ${MINIKUBE_IP}"
+echo "Cluster IP: ${CLUSTER_IP}"
 echo "Certificate Directory: ${CERT_DIR}"
 echo ""
 
@@ -23,15 +57,15 @@ mkdir -p "${CERT_DIR}"
 SAN_ENTRIES="DNS.1 = ${HOSTNAME}"
 SAN_COUNT=1
 
-# Add minikube IP if provided
-if [[ -n "${MINIKUBE_IP}" ]]; then
+# Add cluster IP if provided
+if [[ -n "${CLUSTER_IP}" ]]; then
     SAN_COUNT=$((SAN_COUNT + 1))
     SAN_ENTRIES="${SAN_ENTRIES}
-IP.1 = ${MINIKUBE_IP}"
-    echo "Adding minikube IP ${MINIKUBE_IP} to certificate"
+IP.1 = ${CLUSTER_IP}"
+    echo "Adding cluster IP ${CLUSTER_IP} to certificate"
 
     # Add nip.io hostname for external access
-    HOSTNAME_DASHED=$(echo "${MINIKUBE_IP}" | sed 's/\./-/g')
+    HOSTNAME_DASHED=$(echo "${CLUSTER_IP}" | sed 's/\./-/g')
     SAN_COUNT=$((SAN_COUNT + 1))
     SAN_ENTRIES="${SAN_ENTRIES}
 DNS.${SAN_COUNT} = ${HOSTNAME_DASHED}.nip.io"
@@ -126,28 +160,28 @@ openssl x509 -req \
 # Verify certificate
 echo "Verifying certificate..."
 if openssl verify -CAfile "${CERT_DIR}/ca.pem" "${CERT_DIR}/cert.pem"; then
-    echo "✅ Certificate verification successful"
+    echo "Certificate verification successful"
 else
-    echo "❌ Certificate verification failed"
+    echo "Certificate verification failed"
     exit 1
 fi
 
 echo ""
-echo "🎉 Certificate generation complete!"
+echo "Certificate generation complete!"
 echo ""
 echo "Files generated in ${CERT_DIR}/ directory:"
 ls -la "${CERT_DIR}/"
 
 echo ""
-echo "📋 Certificate details:"
+echo "Certificate details:"
 echo "Subject: $(openssl x509 -in "${CERT_DIR}/cert.pem" -noout -subject)"
 echo "Issuer: $(openssl x509 -in "${CERT_DIR}/cert.pem" -noout -issuer)"
 echo "Valid from: $(openssl x509 -in "${CERT_DIR}/cert.pem" -noout -startdate)"
 echo "Valid to: $(openssl x509 -in "${CERT_DIR}/cert.pem" -noout -enddate)"
 
 echo ""
-echo "🔍 Subject Alternative Names:"
+echo "Subject Alternative Names:"
 openssl x509 -in "${CERT_DIR}/cert.pem" -text -noout | grep -A 10 "Subject Alternative Name" || echo "No SAN found"
 
 echo ""
-echo "📁 Certificate files ready for Kubernetes secret creation"
+echo "Certificate files ready for Kubernetes secret creation"

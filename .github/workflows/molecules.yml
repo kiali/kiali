@@ -139,7 +139,7 @@ jobs:
         echo "Testing with Istio version [${ISTIO_VERSION}] using helm install"
         echo "================================================================"
         echo
-        ./hack/ci-kind-molecule-tests.sh --istio-version ${ISTIO_VERSION} --client-exe $(which kubectl) --kind-exe $(which kind) --all-tests "${{ inputs.all_tests }}" --git-clone-protocol https --irc-room "" --upload-logs false --rebuild-cluster true -ci true --operator-installer helm --olm-enabled false
+        ./hack/ci-kind-molecule-tests.sh --istio-version ${ISTIO_VERSION} --client-exe $(which kubectl) --kind-exe $(which kind) --all-tests "${{ inputs.all_tests }}" --git-clone-protocol https --irc-room "" --upload-logs false --rebuild-cluster true -ci true --operator-installer helm --olm-enabled false --hydra-enabled true
     - name: Run molecule tests OLM
       id: run-molecule-tests-olm
       run: |
@@ -156,4 +156,4 @@ jobs:
         echo "Testing with Istio version [${ISTIO_VERSION}] using OLM install"
         echo "================================================================"
         echo
-        ./hack/ci-kind-molecule-tests.sh --istio-version ${ISTIO_VERSION} --client-exe $(which kubectl) --kind-exe $(which kind) --all-tests "${{ inputs.all_tests }}" --git-clone-protocol https --irc-room "" --upload-logs false --rebuild-cluster false -ci true --operator-installer skip --olm-enabled true --olm-version "${{ inputs.olm_version }}"
+        ./hack/ci-kind-molecule-tests.sh --istio-version ${ISTIO_VERSION} --client-exe $(which kubectl) --kind-exe $(which kind) --all-tests "${{ inputs.all_tests }}" --git-clone-protocol https --irc-room "" --upload-logs false --rebuild-cluster false -ci true --operator-installer skip --olm-enabled true --olm-version "${{ inputs.olm_version }}" --hydra-enabled true

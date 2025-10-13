@@ -130,7 +130,7 @@ install_hydra() {
 
     # Run certificate generation
     mkdir -p ${CERTS_PATH}
-    MINIKUBE_IP=${MINIKUBE_IP} KUBE_HOSTNAME=${KUBE_HOSTNAME} bash ${HYDRA_GENCERT_SCRIPT} "${KUBE_HOSTNAME}" "${MINIKUBE_IP}" "${CERTS_PATH}/ssl"
+    bash ${HYDRA_GENCERT_SCRIPT} --hostname "${KUBE_HOSTNAME}" --cluster-ip "${MINIKUBE_IP}" --cert-dir "${CERTS_PATH}/ssl"
     [ "$?" != "0" ] && echo "ERROR: Failed to generate certificates for Hydra" && exit 1
   fi
 
@@ -152,7 +152,12 @@ install_hydra() {
   fi
 
   # Run Hydra installation with minikube context
-  MINIKUBE_IP=${MINIKUBE_IP} KUBE_HOSTNAME=${KUBE_HOSTNAME} KUBECTL_CMD="${MINIKUBE_EXEC_WITH_PROFILE} kubectl --" HYDRA_VERSION=${HYDRA_VERSION} MINIKUBE_PROFILE=${MINIKUBE_PROFILE} bash ${HYDRA_INSTALL_SCRIPT}
+  bash ${HYDRA_INSTALL_SCRIPT} \
+    --cluster-ip "${MINIKUBE_IP}" \
+    --client-exe "${MINIKUBE_EXEC_WITH_PROFILE} kubectl --" \
+    --hydra-version "${HYDRA_VERSION}" \
+    --minikube-profile "${MINIKUBE_PROFILE}" \
+    --cluster-type "minikube"
   [ "$?" != "0" ] && echo "ERROR: Failed to install Hydra" && exit 1
 
   # Restart minikube with OIDC configuration
