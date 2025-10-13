@@ -138,7 +138,7 @@ lint:
 ## Download setup-envtest locally if necessary.
 .ensure-envtest-exists:
 	@if [ ! -x envtest ]; then \
-	  ${GO} install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest; \
+	  ${GO} install sigs.k8s.io/controller-runtime/tools/setup-envtest@release-0.20; \
 	fi
 
 YQ := $(shell command -v yq 2> /dev/null)
