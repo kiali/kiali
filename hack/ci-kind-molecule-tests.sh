@@ -61,7 +61,9 @@ Options:
 
 -he|--hydra-enabled <true|false>
     If true, install Ory Hydra for OpenID Connect support in the KinD cluster.
-    Default: false
+    If not explicitly set, this will be automatically set to false if neither
+    openid-test nor header-auth-test will be run (based on --all-tests and --skip-tests).
+    Default: false (or auto-determined based on tests to run)
 
 -hf|--helm-fork <name>
     The helm-chart fork to clone.
@@ -185,7 +187,7 @@ while [[ $# -gt 0 ]]; do
     -gcp|--git-clone-protocol)    GIT_CLONE_PROTOCOL="$2";    shift;shift; ;;
     -hb|--helm-branch)            HELM_BRANCH="$2";           shift;shift; ;;
     -h|--help)                    helpmsg;                    exit 1       ;;
-    -he|--hydra-enabled)          HYDRA_ENABLED="$2";         shift;shift; ;;
+    -he|--hydra-enabled)          HYDRA_ENABLED="$2"; HYDRA_ENABLED_USER_SET="true"; shift;shift; ;;
     -hf|--helm-fork)              HELM_FORK="$2";             shift;shift; ;;
     -ii|--install-istio)          INSTALL_ISTIO="$2";         shift;shift; ;;
     -ir|--irc-room)               IRC_ROOM="$2";              shift;shift; ;;
@@ -291,6 +293,45 @@ SPEC_VERSION="${SPEC_VERSION:-default}"
 
 # Determines whether to run molecule tests or just do setup
 RUN_TESTS="${RUN_TESTS:-true}"
+
+# Auto-disable Hydra if neither openid-test nor header-auth-test will run
+# Only do this if HYDRA_ENABLED was not explicitly set by the user
+if [ -z "${HYDRA_ENABLED_USER_SET}" ]; then
+  HYDRA_NEEDED="false"
+
+  # Check if either openid-test or header-auth-test is in ALL_TESTS (if ALL_TESTS is specified)
+  if [ ! -z "${ALL_TESTS}" ]; then
+    if echo "${ALL_TESTS}" | grep -qE "(^|[[:space:]])(openid-test|header-auth-test)([[:space:]]|$)"; then
+      HYDRA_NEEDED="true"
+    fi
+  else
+    # If ALL_TESTS is not specified, all tests will run by default, so Hydra is needed
+    HYDRA_NEEDED="true"
+  fi
+
+  # Check if both openid-test and header-auth-test are in SKIP_TESTS
+  if [ ! -z "${SKIP_TESTS}" ]; then
+    OPENID_SKIPPED="false"
+    HEADER_AUTH_SKIPPED="false"
+    if echo "${SKIP_TESTS}" | grep -qE "(^|[[:space:]])openid-test([[:space:]]|$)"; then
+      OPENID_SKIPPED="true"
+    fi
+    if echo "${SKIP_TESTS}" | grep -qE "(^|[[:space:]])header-auth-test([[:space:]]|$)"; then
+      HEADER_AUTH_SKIPPED="true"
+    fi
+    # If both tests are skipped, Hydra is not needed
+    if [ "${OPENID_SKIPPED}" == "true" ] && [ "${HEADER_AUTH_SKIPPED}" == "true" ]; then
+      HYDRA_NEEDED="false"
+    fi
+  fi
+
+  # Set HYDRA_ENABLED based on whether Hydra is needed
+  if [ "${HYDRA_NEEDED}" == "false" ]; then
+    HYDRA_ENABLED="false"
+  else
+    HYDRA_ENABLED="true"
+  fi
+fi
 
 # print out our settings for debug purposes
 cat <<EOM
