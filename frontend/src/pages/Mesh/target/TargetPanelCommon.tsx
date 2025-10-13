@@ -6,7 +6,7 @@ import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 't
 import { ValidationTypes } from 'types/IstioObjects';
 import { Status, statusMsg } from 'types/IstioStatus';
 import { Validation } from 'components/Validations/Validation';
-import { Title, Tooltip, TooltipPosition, SearchInput } from '@patternfly/react-core';
+import { Title, Tooltip, TooltipPosition, SearchInput, Tabs, Tab, TabTitleText } from '@patternfly/react-core';
 import { ExpandableRowContent, Table, Tbody, Td, Tr } from '@patternfly/react-table';
 import { t } from 'utils/I18nUtils';
 import { PFBadge, PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
@@ -504,6 +504,7 @@ const MeshTabsComponent: React.FC<{
 }) => {
   const [expanded, setExpanded] = React.useState<string[]>([]);
   const [filter, setFilter] = React.useState<string>('');
+  const [activeTabKey, setActiveTabKey] = React.useState<string | number>(0);
 
   const isExpanded = (meshName: string): boolean => {
     return expanded.includes(meshName);
@@ -523,6 +524,15 @@ const MeshTabsComponent: React.FC<{
     return meshControlPlanes.length > 0;
   });
 
+  // If no meshes with control planes, render only shared infrastructure without tabs
+  if (meshesWithControlPlanes.length === 0) {
+    return (
+      <div>
+        {renderSharedInfrastructure(clusterNodes, gatewayNodes, waypointNodes, kialiNodes, observeNodes, forCluster)}
+      </div>
+    );
+  }
+
   // If only one mesh has control planes, render without table
   if (meshesWithControlPlanes.length === 1) {
     const meshName = meshesWithControlPlanes[0];
@@ -541,45 +551,54 @@ const MeshTabsComponent: React.FC<{
 
   return (
     <div>
-      <SearchInput
-        placeholder="Filter meshes..."
-        value={filter}
-        onChange={(_event, value) => setFilter(value)}
-        onClear={() => setFilter('')}
-      />
-      <Table aria-label="Mesh table" variant="compact">
-        {meshesWithControlPlanes
-          .filter(meshName => filter === '' || meshName.toLowerCase().includes(filter.toLowerCase()))
-          .sort((a, b) => a.localeCompare(b))
-          .map((meshName, i) => (
-            <Tbody key={meshName} isExpanded={isExpanded(meshName)}>
-              <Tr>
-                <Td
-                  expand={{
-                    rowIndex: i,
-                    isExpanded: isExpanded(meshName),
-                    onToggle: () => toggleExpanded(meshName),
-                    expandId: `mesh-${meshName}`
-                  }}
-                  style={{ paddingRight: '0.125rem' }}
-                />
-                <Td dataLabel={t('Mesh')} className={expandTitleStyle}>
-                  {t('Mesh: {{meshName}}', { meshName })}
-                </Td>
-              </Tr>
-              <Tr isExpanded={isExpanded(meshName)}>
-                <Td dataLabel={`mesh-detail-${meshName}`} className={expandBodyStyle} colSpan={2}>
-                  <ExpandableRowContent>
-                    {renderMeshControlPlanes(meshName, controlPlaneNodes, dataPlaneNodes)}
-                  </ExpandableRowContent>
-                </Td>
-              </Tr>
-            </Tbody>
-          ))}
-      </Table>
-
-      {/* Shared infrastructure outside expandable sections */}
-      {renderSharedInfrastructure(clusterNodes, gatewayNodes, waypointNodes, kialiNodes, observeNodes, forCluster)}
+      <Tabs
+        activeKey={activeTabKey}
+        onSelect={(_event, tabIndex) => setActiveTabKey(tabIndex)}
+        aria-label="Mesh tabs"
+        data-test="mesh-tabs"
+      >
+        <Tab eventKey={0} title={<TabTitleText>{t('Meshes')}</TabTitleText>}>
+          <SearchInput
+            placeholder="Filter meshes..."
+            value={filter}
+            onChange={(_event, value) => setFilter(value)}
+            onClear={() => setFilter('')}
+          />
+          <Table aria-label="Mesh table" variant="compact">
+            {meshesWithControlPlanes
+              .filter(meshName => filter === '' || meshName.toLowerCase().includes(filter.toLowerCase()))
+              .sort((a, b) => a.localeCompare(b))
+              .map((meshName, i) => (
+                <Tbody key={meshName} isExpanded={isExpanded(meshName)}>
+                  <Tr>
+                    <Td
+                      expand={{
+                        rowIndex: i,
+                        isExpanded: isExpanded(meshName),
+                        onToggle: () => toggleExpanded(meshName),
+                        expandId: `mesh-${meshName}`
+                      }}
+                      style={{ paddingRight: '0.125rem' }}
+                    />
+                    <Td dataLabel={t('Mesh')} className={expandTitleStyle}>
+                      {t('Mesh: {{meshName}}', { meshName })}
+                    </Td>
+                  </Tr>
+                  <Tr isExpanded={isExpanded(meshName)}>
+                    <Td dataLabel={`mesh-detail-${meshName}`} className={expandBodyStyle} colSpan={2}>
+                      <ExpandableRowContent>
+                        {renderMeshControlPlanes(meshName, controlPlaneNodes, dataPlaneNodes)}
+                      </ExpandableRowContent>
+                    </Td>
+                  </Tr>
+                </Tbody>
+              ))}
+          </Table>
+        </Tab>
+        <Tab eventKey={1} title={<TabTitleText>{t('Details')}</TabTitleText>}>
+          {renderSharedInfrastructure(clusterNodes, gatewayNodes, waypointNodes, kialiNodes, observeNodes, forCluster)}
+        </Tab>
+      </Tabs>
     </div>
   );
 };

@@ -218,6 +218,19 @@ Then('user sees expected mesh infra', () => {
       assert.isTrue(nodeNames.some(n => n === 'jaeger' || n === 'tempo'));
       assert.isTrue(nodeNames.some(n => n === 'kiali'));
       assert.isTrue(nodeNames.some(n => n === 'prometheus'));
+
+      // Check tabs existence based on multi-control plane setup
+      if (isMultiControlplane) {
+        // Multiple control planes - tabs should exist
+        cy.getBySel('mesh-tabs').should('exist');
+        cy.getBySel('mesh-tabs').within(() => {
+          cy.contains('button', 'Meshes').should('exist');
+          cy.contains('button', 'Details').should('exist');
+        });
+      } else {
+        // Single control plane - tabs should not exist
+        cy.getBySel('mesh-tabs').should('not.exist');
+      }
     });
 });
 
