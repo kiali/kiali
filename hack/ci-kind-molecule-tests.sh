@@ -727,19 +727,22 @@ else
   infomsg "Operator installation is being skipped so it is assumed you already have Kiali operator installed. No cleanup of residual Kiali installs will be performed. Make sure you do not have a Kiali CR installed - only the operator should be installed."
 fi
 
-if ! $CLIENT_EXE get namespace istio-system > /dev/null; then
+# Check if Istio control plane (istiod) is actually installed, not just if the namespace exists
+# This prevents false positives when istio-system namespace exists but Istio isn't installed
+if ! $CLIENT_EXE get deployment istiod -n istio-system > /dev/null 2>&1; then
   if [ "${INSTALL_ISTIO}" == "true" ]; then
+    infomsg "Istio control plane (istiod) not found - installing Istio now..."
     if [ ! -z "${ISTIO_VERSION}" ]; then
       DOWNLOAD_ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
     fi
     hack/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
     hack/istio/install-istio-via-istioctl.sh --client-exe-path "$CLIENT_EXE"
   else
-    infomsg "There is no 'istio-system' namespace, and this script was told not to install Istio. Aborting."
+    infomsg "Istio control plane (istiod) is not installed, and this script was told not to install Istio. Aborting."
     exit 1
   fi
 else
-  infomsg "There is an 'istio-system' namespace - assuming Istio is installed and ready."
+  infomsg "Istio control plane (istiod) is installed - assuming Istio is ready."
 fi
 
 if [ "${RUN_TESTS}" == "true" ]; then
