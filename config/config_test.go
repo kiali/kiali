@@ -797,18 +797,16 @@ func TestLoadingCertPool(t *testing.T) {
 	}
 }
 
-// TestOpenIdConfigDefaults tests that deprecated OIDC endpoint fields are initialized to empty strings
+// TestOpenIdConfigDefaults tests that deprecated OIDC endpoint field is initialized to empty string
 func TestOpenIdConfigDefaults(t *testing.T) {
 	conf := NewConfig()
 
-	// Test that deprecated OIDC endpoint fields are initialized to empty strings
+	// Test that deprecated authorization_endpoint field is initialized to empty string
+	// Note: TokenEndpoint, UserInfoEndpoint, JwksUri never existed in OpenIdConfig
 	assert.Equal(t, "", conf.Auth.OpenId.AuthorizationEndpoint)
-	assert.Equal(t, "", conf.Auth.OpenId.TokenEndpoint)
-	assert.Equal(t, "", conf.Auth.OpenId.UserInfoEndpoint)
-	assert.Equal(t, "", conf.Auth.OpenId.JwksUri)
 }
 
-// TestOpenIdConfigUnmarshaling tests that deprecated OIDC endpoint fields can be unmarshaled
+// TestOpenIdConfigUnmarshaling tests that deprecated authorization_endpoint field can be unmarshaled
 func TestOpenIdConfigUnmarshaling(t *testing.T) {
 	yamlConfig := `
 auth:
@@ -818,9 +816,6 @@ auth:
     client_id: "kiali-client"
     client_secret: "secret"
     authorization_endpoint: "https://example.com/auth"
-    token_endpoint: "https://example.com/token"
-    userinfo_endpoint: "https://example.com/userinfo"
-    jwks_uri: "https://example.com/jwks"
 `
 
 	conf, err := Unmarshal(yamlConfig)
@@ -831,23 +826,17 @@ auth:
 	assert.Equal(t, "kiali-client", conf.Auth.OpenId.ClientId)
 	assert.Equal(t, "secret", conf.Auth.OpenId.ClientSecret)
 	assert.Equal(t, "https://example.com/auth", conf.Auth.OpenId.AuthorizationEndpoint)
-	assert.Equal(t, "https://example.com/token", conf.Auth.OpenId.TokenEndpoint)
-	assert.Equal(t, "https://example.com/userinfo", conf.Auth.OpenId.UserInfoEndpoint)
-	assert.Equal(t, "https://example.com/jwks", conf.Auth.OpenId.JwksUri)
 }
 
-// TestOpenIdConfigMarshalUnmarshal tests that deprecated OIDC endpoint fields are preserved during marshal/unmarshal
+// TestOpenIdConfigMarshalUnmarshal tests that deprecated authorization_endpoint field is preserved during marshal/unmarshal
 func TestOpenIdConfigMarshalUnmarshal(t *testing.T) {
-	// Create a config with explicit OIDC endpoints using deprecated fields
+	// Create a config with explicit OIDC endpoint using deprecated field
 	conf := NewConfig()
 	conf.Auth.Strategy = "openid"
 	conf.Auth.OpenId.IssuerUri = "https://example.com"
 	conf.Auth.OpenId.ClientId = "kiali-client"
 	conf.Auth.OpenId.ClientSecret = "secret"
 	conf.Auth.OpenId.AuthorizationEndpoint = "https://example.com/auth"
-	conf.Auth.OpenId.TokenEndpoint = "https://example.com/token"
-	conf.Auth.OpenId.UserInfoEndpoint = "https://example.com/userinfo"
-	conf.Auth.OpenId.JwksUri = "https://example.com/jwks"
 
 	// Marshal to YAML
 	yamlData, err := Marshal(conf)
@@ -863,9 +852,6 @@ func TestOpenIdConfigMarshalUnmarshal(t *testing.T) {
 	assert.Equal(t, conf.Auth.OpenId.ClientId, conf2.Auth.OpenId.ClientId)
 	assert.Equal(t, conf.Auth.OpenId.ClientSecret, conf2.Auth.OpenId.ClientSecret)
 	assert.Equal(t, conf.Auth.OpenId.AuthorizationEndpoint, conf2.Auth.OpenId.AuthorizationEndpoint)
-	assert.Equal(t, conf.Auth.OpenId.TokenEndpoint, conf2.Auth.OpenId.TokenEndpoint)
-	assert.Equal(t, conf.Auth.OpenId.UserInfoEndpoint, conf2.Auth.OpenId.UserInfoEndpoint)
-	assert.Equal(t, conf.Auth.OpenId.JwksUri, conf2.Auth.OpenId.JwksUri)
 }
 
 // TestOpenIdDiscoveryOverrideDefaults tests that DiscoveryOverride fields are initialized to empty
@@ -977,7 +963,6 @@ auth:
     client_id: "kiali-client"
     client_secret: "secret"
     authorization_endpoint: "https://deprecated.example.com/auth"
-    token_endpoint: "https://deprecated.example.com/token"
     discovery_override:
       authorization_endpoint: "https://override.example.com/auth"
       token_endpoint: "https://override.example.com/token"
@@ -988,8 +973,8 @@ auth:
 
 	// Both deprecated and new fields should be set (for backward compatibility)
 	// But the new DiscoveryOverride fields should have the override values
+	// Note: token_endpoint never existed as a deprecated field, only in DiscoveryOverride
 	assert.Equal(t, "https://deprecated.example.com/auth", conf.Auth.OpenId.AuthorizationEndpoint)
-	assert.Equal(t, "https://deprecated.example.com/token", conf.Auth.OpenId.TokenEndpoint)
 	assert.Equal(t, "https://override.example.com/auth", conf.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint)
 	assert.Equal(t, "https://override.example.com/token", conf.Auth.OpenId.DiscoveryOverride.TokenEndpoint)
 }

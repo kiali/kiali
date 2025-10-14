@@ -1321,11 +1321,12 @@ func TestOpenIdAuthControllerUsesExplicitEndpointsWhenProvided(t *testing.T) {
 	conf.LoginToken.ExpirationSeconds = 1
 	conf.Auth.OpenId.IssuerUri = testServer.URL
 	conf.Auth.OpenId.ClientId = "kiali-client"
-	// Set explicit endpoints using deprecated fields to test backward compatibility
-	// Note: userInfoEndpoint will be tested in TestOpenIdAuthControllerHandlesOptionalUserInfoEndpoint
-	conf.Auth.OpenId.AuthorizationEndpoint = testServer.URL + "/auth"
-	conf.Auth.OpenId.TokenEndpoint = testServer.URL + "/token"
-	conf.Auth.OpenId.JwksUri = testServer.URL + "/jwks"
+	// Set explicit endpoints using DiscoveryOverride (not deprecated fields that never existed)
+	conf.Auth.OpenId.DiscoveryOverride = config.DiscoveryOverrideConfig{
+		AuthorizationEndpoint: testServer.URL + "/auth",
+		TokenEndpoint:         testServer.URL + "/token",
+		JwksUri:               testServer.URL + "/jwks",
+	}
 	conf.Identity.CertFile = "foo.cert"
 	conf.Identity.PrivateKeyFile = "foo.key"
 	config.Set(conf)
@@ -1457,56 +1458,6 @@ func TestOpenIdAuthControllerFallsBackToAutoDiscoveryWhenExplicitEndpointsMissin
 	assert.Equal(t, testServer.URL+"/jwks", metadata.JWKSURL)
 }
 
-func TestOpenIdAuthControllerRequiresBothAuthorizationAndTokenEndpointsForExplicitMode(t *testing.T) {
-	cachedOpenIdMetadata = nil
-
-	autoDiscoveryCallCount := 0
-	var oidcMetadata []byte
-	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/.well-known/openid-configuration" {
-			autoDiscoveryCallCount++
-			w.WriteHeader(200)
-			_, _ = w.Write(oidcMetadata)
-		}
-	}))
-	defer testServer.Close()
-
-	oidcMeta := openIdMetadata{
-		Issuer:                 testServer.URL,
-		AuthURL:                testServer.URL + "/auth",
-		TokenURL:               testServer.URL + "/token",
-		JWKSURL:                testServer.URL + "/jwks",
-		ResponseTypesSupported: []string{"code"},
-	}
-	oidcMetadata, err := json.Marshal(oidcMeta)
-	require.NoError(t, err)
-
-	// Test case 1: Only authorization_endpoint provided with deprecated fields (should use auto-discovery)
-	conf := config.NewConfig()
-	conf.Auth.OpenId.IssuerUri = testServer.URL
-	conf.Auth.OpenId.ClientId = "kiali-client"
-	conf.Auth.OpenId.AuthorizationEndpoint = testServer.URL + "/auth"
-	// TokenEndpoint is missing - should trigger auto-discovery
-	config.Set(conf)
-
-	_, err1 := getOpenIdMetadata(conf)
-	require.NoError(t, err1)
-	assert.Equal(t, 1, autoDiscoveryCallCount, "Auto-discovery should be called when token_endpoint is missing")
-
-	// Reset for next test
-	cachedOpenIdMetadata = nil
-	autoDiscoveryCallCount = 0
-
-	// Test case 2: Only token_endpoint provided (should use auto-discovery)
-	conf.Auth.OpenId.AuthorizationEndpoint = ""
-	conf.Auth.OpenId.TokenEndpoint = testServer.URL + "/token"
-	config.Set(conf)
-
-	_, err2 := getOpenIdMetadata(conf)
-	require.NoError(t, err2)
-	assert.Equal(t, 1, autoDiscoveryCallCount, "Auto-discovery should be called when authorization_endpoint is missing")
-}
-
 func TestOpenIdAuthControllerRequiresBothAuthorizationAndTokenEndpointsForDiscoveryOverride(t *testing.T) {
 	cachedOpenIdMetadata = nil
 
@@ -1559,37 +1510,6 @@ func TestOpenIdAuthControllerRequiresBothAuthorizationAndTokenEndpointsForDiscov
 	_, err2 := getOpenIdMetadata(conf)
 	require.NoError(t, err2)
 	assert.Equal(t, 1, autoDiscoveryCallCount, "Auto-discovery should be called when authorization_endpoint is missing in DiscoveryOverride")
-}
-
-func TestOpenIdAuthControllerHandlesOptionalUserInfoEndpoint(t *testing.T) {
-	cachedOpenIdMetadata = nil
-
-	conf := config.NewConfig()
-	conf.Auth.OpenId.IssuerUri = "https://example.com"
-	conf.Auth.OpenId.ClientId = "kiali-client"
-	conf.Auth.OpenId.AuthorizationEndpoint = "https://example.com/auth"
-	conf.Auth.OpenId.TokenEndpoint = "https://example.com/token"
-	conf.Auth.OpenId.JwksUri = "https://example.com/jwks"
-	// UserInfoEndpoint is optional - not provided (testing deprecated fields)
-	config.Set(conf)
-
-	metadata, err := getOpenIdMetadata(conf)
-	require.NoError(t, err)
-
-	// Verify explicit endpoints are used
-	assert.Equal(t, "https://example.com/auth", metadata.AuthURL)
-	assert.Equal(t, "https://example.com/token", metadata.TokenURL)
-	assert.Equal(t, "https://example.com/jwks", metadata.JWKSURL)
-	assert.Equal(t, "", metadata.UserInfoURL, "UserInfoURL should be empty when not provided")
-
-	// Test with UserInfoEndpoint provided (testing deprecated fields)
-	conf.Auth.OpenId.UserInfoEndpoint = "https://example.com/userinfo"
-	config.Set(conf)
-	cachedOpenIdMetadata = nil // Reset cache
-
-	metadata, err = getOpenIdMetadata(conf)
-	require.NoError(t, err)
-	assert.Equal(t, "https://example.com/userinfo", metadata.UserInfoURL)
 }
 
 func TestOpenIdAuthControllerHandlesOptionalUserInfoEndpointWithDiscoveryOverride(t *testing.T) {

@@ -1117,22 +1117,22 @@ func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 	fetchedMetadata, fetchError, _ := openIdFlightGroup.Do("metadata", func() (interface{}, error) {
 		cfg := conf.Auth.OpenId
 
-		// Check if we have explicit endpoint configuration (new grouped structure)
+		// Check if we have explicit endpoint configuration
 		var authEndpoint, tokenEndpoint, jwksUri, userInfoEndpoint string
 
-		// Prefer new grouped structure, fall back to legacy flat structure for backward compatibility
+		// Use discovery_override for explicit endpoint configuration
 		if cfg.DiscoveryOverride.AuthorizationEndpoint != "" && cfg.DiscoveryOverride.TokenEndpoint != "" {
 			authEndpoint = cfg.DiscoveryOverride.AuthorizationEndpoint
 			tokenEndpoint = cfg.DiscoveryOverride.TokenEndpoint
 			jwksUri = cfg.DiscoveryOverride.JwksUri
 			userInfoEndpoint = cfg.DiscoveryOverride.UserInfoEndpoint
-		} else if cfg.AuthorizationEndpoint != "" && cfg.TokenEndpoint != "" {
-			// Legacy flat structure for backward compatibility
-			log.Warning("OpenID configuration is using deprecated fields (authorization_endpoint, token_endpoint, etc.). Please migrate to the new 'discovery_override' configuration structure.")
+		} else if cfg.AuthorizationEndpoint != "" {
+			// Fall back to deprecated authorization_endpoint if set (for backward compatibility)
+			// Note: Only authorization_endpoint existed in the old config, other endpoints were never supported
+			log.Warning("OpenID configuration is using deprecated field 'authorization_endpoint'. Please migrate to the new 'discovery_override.authorization_endpoint' configuration.")
 			authEndpoint = cfg.AuthorizationEndpoint
-			tokenEndpoint = cfg.TokenEndpoint
-			jwksUri = cfg.JwksUri
-			userInfoEndpoint = cfg.UserInfoEndpoint
+			// For deprecated config, we still need to discover other endpoints
+			// tokenEndpoint, jwksUri, userInfoEndpoint will be discovered from issuer_uri
 		}
 
 		if authEndpoint != "" && tokenEndpoint != "" {
