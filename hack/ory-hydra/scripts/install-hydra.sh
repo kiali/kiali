@@ -115,10 +115,17 @@ if ! command -v helm &> /dev/null; then
     exit 1
 fi
 
-# Add Ory Helm repository
-echo "Adding Ory Helm repository..."
-helm repo add ory https://k8s.ory.sh/helm/charts
-helm repo update
+# Clone or update the Ory k8s repository to get Helm charts
+# This approach is used because k8s.ory.sh has certificate issues
+echo "Preparing Ory Helm charts from GitHub..."
+HELM_CHARTS_DIR="/tmp/ory-k8s-charts-$$"
+if [ ! -d "${HELM_CHARTS_DIR}" ]; then
+    echo "Cloning ory/k8s repository..."
+    git clone --depth 1 https://github.com/ory/k8s.git "${HELM_CHARTS_DIR}"
+else
+    echo "Using existing ory/k8s repository..."
+fi
+HYDRA_CHART_PATH="${HELM_CHARTS_DIR}/helm/charts/hydra"
 
 # Create namespace if it doesn't exist
 echo "Creating namespace ${NAMESPACE}..."
@@ -330,9 +337,9 @@ deployment:
     failureThreshold: 30
 EOF
 
-# Install Hydra using Helm chart
-echo "Installing Ory Hydra..."
-helm upgrade --install ${HELM_RELEASE_NAME} ory/hydra \
+# Install Hydra using Helm chart from local repository
+echo "Installing Ory Hydra from local chart..."
+helm upgrade --install ${HELM_RELEASE_NAME} "${HYDRA_CHART_PATH}" \
     --namespace ${NAMESPACE} \
     --values /tmp/hydra-values.yaml \
     --timeout=300s
@@ -489,4 +496,8 @@ echo "2. Test with molecule tests"
 rm -f /tmp/hydra-values.yaml
 if [ "${CLEANUP_CERTS_DIR:-false}" == "true" ]; then
     rm -rf "$(dirname "${CERTS_DIR}")"
+fi
+if [ -d "${HELM_CHARTS_DIR}" ]; then
+    echo "Cleaning up cloned Helm charts repository..."
+    rm -rf "${HELM_CHARTS_DIR}"
 fi
