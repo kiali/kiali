@@ -1,15 +1,15 @@
 import * as React from 'react';
 import {
-  Chart,
+	Chart,
+	ChartVoronoiContainer,
+	ChartAxis,
+	ChartScatter,
+	ChartArea,
+	ChartLabel,
+	ChartLegend,
   ChartProps,
-  ChartVoronoiContainer,
-  ChartAxis,
-  ChartScatter,
-  ChartArea,
-  ChartLabel,
-  ChartLegend,
-  ChartThreshold
-} from '@patternfly/react-charts';
+	ChartThreshold
+} from '@patternfly/react-charts/victory';
 
 import { VCLines, VCDataPoint, RichDataPoint } from 'types/VictoryChartInfo';
 import { CustomTooltip } from './CustomTooltip';

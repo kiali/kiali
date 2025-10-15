@@ -6,8 +6,7 @@ import {
   ButtonVariant,
   EmptyState,
   EmptyStateBody,
-  EmptyStateIcon,
-  EmptyStateHeader
+  
 } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import { Outlet } from 'react-router-dom-v5-compat';
@@ -24,14 +23,9 @@ const containerError = kialiStyle({ height: `calc(100vh - ${MASTHEAD_HEIGHT})` }
 // Add error boundary element to every path route
 pathRoutes.forEach(route => {
   route.errorElement = (
-    <EmptyState className={containerError} variant="lg">
-      <EmptyStateHeader
-        titleText={t('Something went wrong')}
-        icon={<EmptyStateIcon icon={KialiIcon.Error} />}
-        headingLevel="h1"
-      />
+    <EmptyState  headingLevel="h1" icon={KialiIcon.Error}  titleText={t('Something went wrong')} className={containerError} variant="lg">
       <EmptyStateBody>
-        <p style={{ marginBottom: 'var(--pf-v5-global--spacer--lg)' }}>
+        <p style={{ marginBottom: "var(--pf-t--global--spacer--lg)" }}>
           {t('Sorry, there was a problem. Try a refresh or navigate to a different page.')}
         </p>
         <Button

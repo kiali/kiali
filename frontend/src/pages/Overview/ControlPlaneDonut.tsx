@@ -1,4 +1,8 @@
-import { ChartDonut, ChartLabel, ChartLegend } from '@patternfly/react-charts';
+import {
+	ChartDonut,
+	ChartLabel,
+	ChartLegend
+} from '@patternfly/react-charts/victory';
 import * as React from 'react';
 import { ControlPlane } from 'types/Mesh';
 import { kialiStyle } from 'styles/StyleUtils';

@@ -1,16 +1,18 @@
 import * as React from 'react';
 import {
-  ChartAxis,
-  Chart,
-  ChartGroup,
-  ChartScatter,
-  ChartProps,
-  ChartTooltipProps,
-  ChartLabel,
-  ChartLegend,
-  ChartLine,
-  createContainer
-} from '@patternfly/react-charts';
+	ChartProps,
+	ChartTooltipProps
+} from '@patternfly/react-charts/victory';
+import {
+	ChartAxis,
+	Chart,
+	ChartGroup,
+	ChartScatter,
+	ChartLabel,
+	ChartLegend,
+	ChartLine,
+	createContainer
+} from '@patternfly/react-charts/victory';
 import { VictoryPortal } from 'victory-core';
 import { VictoryBoxPlot } from 'victory-box-plot';
 import { format as d3Format } from 'd3-format';
@@ -98,7 +100,6 @@ const overlayLegendStyle = kialiStyle({
   flexWrap: 'wrap',
   flexDirection: 'column',
   position: 'relative',
-  background: 'var(--pf-v5-global--BackgroundColor--dark-100)',
   opacity: 0.7,
   overflow: 'auto'
 });

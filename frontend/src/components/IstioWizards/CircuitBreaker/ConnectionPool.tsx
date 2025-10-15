@@ -18,7 +18,7 @@ export class ConnectionPool extends React.Component<Props> {
           <Switch
             id="cpSwitch"
             label={' '}
-            labelOff={' '}
+            
             isChecked={this.props.isConnectionPool}
             onChange={() => this.props.onConnectionPool(!this.props.isConnectionPool, this.props.connectionPool)}
           />

@@ -84,6 +84,7 @@ import { classes } from 'typestyle';
 
 export interface IconProps {
   className?: string;
+  status?: string;
   color?: string;
   dataTest?: string;
   icon?: React.ComponentClass<SVGIconProps>;
@@ -183,7 +184,7 @@ export const createIcon = (
   const iconStyle = iconColor ? kialiStyle({ color: iconColor }) : undefined;
 
   return (
-    <Icon className={classes(props.className, iconStyle)} size={props.size} data-test={props.dataTest}>
+    <Icon className={classes(props.className, iconStyle)} size={props.size} data-test={props.dataTest} status={props.status as any}>
       {React.createElement(iconComponent)}
     </Icon>
   );

@@ -4,7 +4,7 @@ import { bindActionCreators } from 'redux';
 import { KialiDispatch } from 'types/Redux';
 import { KialiAppState } from 'store/Store';
 import { replayQueryTimeSelector, durationSelector } from 'store/Selectors';
-import { Tooltip, ButtonVariant, Button, Text } from '@patternfly/react-core';
+import { Tooltip, ButtonVariant, Button, Content } from '@patternfly/react-core';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
@@ -70,7 +70,7 @@ const replaySliderStyle = kialiStyle({
     '& .slider': {
       $nest: {
         '& .slider-selection.tick-slider-selection': {
-          background: 'var(--pf-v5-global--active-color--300)' // should match PFColors.Replay
+          background: `${PFColors.Replay}`/* CODEMODS: original v5 color was --pf-v5-global--active-color--300 */ // should match PFColors.Replay
         },
 
         '& .tooltip': {
@@ -343,7 +343,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
               </Tooltip>
             )}
 
-            <Text className={frameStyle}>{this.formatFrame(this.state.replayFrame)}</Text>
+            <Content component="p" className={frameStyle}>{this.formatFrame(this.state.replayFrame)}</Content>
 
             {replaySpeeds.map((s, i, a) => this.speedButton(s, i === a.length - 1))}
           </span>
@@ -482,16 +482,14 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
 
     return (
       <>
-        <Button
+        <Button icon={<Content className={isActive ? speedActiveStyle : undefined}>{replaySpeed.text}</Content>}
           data-test={`speed-${replaySpeed.text}`}
           key={`speed-${replaySpeed.text}`}
           className={speedStyle}
           variant={ButtonVariant.plain}
-          isActive={isActive}
+          isClicked={isActive}
           onClick={() => this.setReplaySpeed(replaySpeed.speed)}
-        >
-          <Text className={isActive ? speedActiveStyle : undefined}>{replaySpeed.text}</Text>
-        </Button>
+         />
 
         {!isLast && <div className={vrStyle} />}
       </>
