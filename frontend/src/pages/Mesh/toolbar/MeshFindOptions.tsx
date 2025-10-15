@@ -13,7 +13,7 @@ type MeshFindOptionsProps = {
 const menuToggleStyle = kialiStyle({
   paddingRight: 0,
   $nest: {
-    '& .pf-v5-c-menu-toggle__controls': {
+    '& .pf-v6-c-menu-toggle__controls': {
       paddingLeft: 0
     }
   }

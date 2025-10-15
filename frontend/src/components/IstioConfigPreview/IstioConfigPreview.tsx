@@ -1,16 +1,18 @@
 import * as React from 'react';
 import {
-  Button,
-  ButtonVariant,
-  Modal,
-  Tab,
-  TabProps,
-  Tabs,
-  Toolbar,
-  ToolbarGroup,
-  ToolbarItem,
-  Tooltip
+	Button,
+	ButtonVariant,
+	Tab,
+	TabProps,
+	Tabs,
+	Toolbar,
+	ToolbarGroup,
+	ToolbarItem,
+	Tooltip
 } from '@patternfly/react-core';
+import {
+	Modal
+} from '@patternfly/react-core/deprecated';
 import {
   AuthorizationPolicy,
   DestinationRule,

@@ -100,7 +100,7 @@ const gridStyle = kialiStyle({
 const graphFindStyle = kialiStyle({
   marginRight: '0.75rem',
   $nest: {
-    '& > .pf-v5-c-form__group-control': {
+    '& > .pf-v6-c-form__group-control': {
       display: 'flex'
     }
   }
@@ -108,7 +108,7 @@ const graphFindStyle = kialiStyle({
 
 const graphHideStyle = kialiStyle({
   $nest: {
-    '& > .pf-v5-c-form__group-control': {
+    '& > .pf-v6-c-form__group-control': {
       display: 'flex'
     }
   }
