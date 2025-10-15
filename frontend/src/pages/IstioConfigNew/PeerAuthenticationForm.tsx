@@ -304,7 +304,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
           <Switch
             id="workloadSelectorSwitch"
             label={' '}
-            labelOff={' '}
+            
             isChecked={this.state.addWorkloadSelector}
             onChange={this.onChangeWorkloadSelector}
           />
@@ -345,7 +345,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
           <Switch
             id="addPortMtls"
             label={' '}
-            labelOff={' '}
+            
             isChecked={this.state.addPortMtls}
             onChange={this.onChangeAddPortMtls}
           />
