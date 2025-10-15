@@ -1,33 +1,35 @@
 import * as React from 'react';
 import {
-  Alert,
-  AlertActionCloseButton,
-  AlertVariant,
-  Button,
-  ButtonVariant,
-  Card,
-  CardBody,
-  Checkbox,
-  Divider,
-  Dropdown,
-  DropdownItem,
-  DropdownList,
-  Form,
-  FormGroup,
-  Grid,
-  GridItem,
-  MenuGroup,
-  MenuToggle,
-  MenuToggleElement,
-  Modal,
-  Tab,
-  TextInput,
-  Toolbar,
-  ToolbarGroup,
-  ToolbarItem,
-  Tooltip,
-  TooltipPosition
+	Alert,
+	AlertActionCloseButton,
+	AlertVariant,
+	Button,
+	ButtonVariant,
+	Card,
+	CardBody,
+	Checkbox,
+	Divider,
+	Dropdown,
+	DropdownItem,
+	DropdownList,
+	Form,
+	FormGroup,
+	Grid,
+	GridItem,
+	MenuGroup,
+	MenuToggle,
+	MenuToggleElement,
+	Tab,
+	TextInput,
+	Toolbar,
+	ToolbarGroup,
+	ToolbarItem,
+	Tooltip,
+	TooltipPosition
 } from '@patternfly/react-core';
+import {
+	Modal
+} from '@patternfly/react-core/deprecated';
 import memoize from 'micro-memoize';
 import { AutoSizer, List } from 'react-virtualized';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -189,7 +191,7 @@ const modalStyle = kialiStyle({
   width: '50%',
   height: '70%',
   $nest: {
-    '& .pf-v5-c-tab-content': {
+    '& .pf-v6-c-tab-content': {
       height: '100%',
       overflowY: 'auto'
     }
@@ -325,7 +327,7 @@ const logsHeight = (showToolbar: boolean, fullscreen: boolean, showMaxLinesWarni
 
 const tabStyle = kialiStyle({
   $nest: {
-    '&& .pf-v5-c-tabs__list': {
+    '&& .pf-v6-c-tabs__list': {
       marginLeft: 0
     }
   }
@@ -765,16 +767,14 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             entryDelay={1000}
             content="Click to navigate to span detail"
           >
-            <Button
+            <Button icon={<KialiIcon.Info key={`al-i-${index}`} className={alInfoIcon} color={spanColor} />}
               key={`s-b-${index}`}
               variant={ButtonVariant.plain}
               className={logInfoStyle}
               onClick={() => {
                 this.gotoSpan(e.span!);
               }}
-            >
-              <KialiIcon.Info key={`al-i-${index}`} className={alInfoIcon} color={spanColor} />
-            </Button>
+             />
           </Tooltip>
           <p key={`al-p-${index}`} className={logMessageStyle} style={{ color: spanColor }}>
             {this.entryToString(e)}
@@ -795,14 +795,12 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             entryDelay={1000}
             content="Click for JSON object details"
           >
-            <Button
+            <Button icon={<KialiIcon.Info key={`jod-i-${index}`} className={alInfoIcon} color={messageColor} />}
               key={`jod-b-${index}`}
               variant={ButtonVariant.plain}
               className={logInfoStyle}
               onClick={() => this.openJSONModal(e)}
-            >
-              <KialiIcon.Info key={`jod-i-${index}`} className={alInfoIcon} color={messageColor} />
-            </Button>
+             />
           </Tooltip>
         )}
         <p key={`le-${index}`} className={logMessageStyle} style={{ color: messageColor }}>
@@ -823,16 +821,14 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           entryDelay={1000}
           content="Click for Envoy Access Log details"
         >
-          <Button
+          <Button icon={<KialiIcon.Info key={`al-i-${index}`} className={alInfoIcon} color={messageColor} />}
             key={`al-b-${index}`}
             variant={ButtonVariant.plain}
             className={logInfoStyle}
             onClick={() => {
               this.addAccessLogModal(le.message, le.accessLog!);
             }}
-          >
-            <KialiIcon.Info key={`al-i-${index}`} className={alInfoIcon} color={messageColor} />
-          </Button>
+           />
         </Tooltip>
 
         <p key={`al-p-${index}`} className={logMessageStyle} style={{ color: messageColor }}>
@@ -863,7 +859,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     });
 
     const dropdownGroupLabel = (
-      <h1 className="pf-v5-c-menu__group-title">
+      <h1 className="pf-v6-c-menu__group-title">
         Set Proxy Log Level
         <Tooltip
           position={TooltipPosition.right}

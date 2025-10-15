@@ -11,10 +11,6 @@ import { KialiIcon } from 'config/KialiIcon';
 import { classes } from 'typestyle';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
-const iconStyle = kialiStyle({
-  color: PFColors.Color100
-});
-
 const buttonStyle = kialiStyle({
   fontSize: '1rem',
   $nest: {
@@ -85,14 +81,14 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
           className={classes(buttonStyle, lightButtonStyle)}
           onClick={handleTheme}
         >
-          <KialiIcon.Sun className={iconStyle}></KialiIcon.Sun>
+          <KialiIcon.Sun />
         </Button>
         <Button
           variant={darkTheme ? 'primary' : 'secondary'}
           className={classes(buttonStyle, darkButtonStyle)}
           onClick={handleTheme}
         >
-          <KialiIcon.Moon className={iconStyle}></KialiIcon.Moon>
+          <KialiIcon.Moon />
         </Button>
       </div>
     </Tooltip>
