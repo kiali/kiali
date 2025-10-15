@@ -230,10 +230,10 @@ Then('user sees ambient workloads in the graph', () => {
   cy.get('#loading_kiali_spinner').should('not.exist');
 
   // Look for ambient-specific indicators in the graph
-  cy.get('[data-test="graph-node"]').should('exist');
+  cy.get('[data-test="topology-view-pf"]').should('exist');
 
   // Check for ambient mesh indicators (ztunnel, waypoint proxies, etc.)
-  cy.get('[data-test="graph-node"]').then($nodes => {
+  cy.get('[data-test="topology-view-pf"]').then($nodes => {
     // Verify we have workload nodes that could be in ambient mode
     assert.isAtLeast($nodes.length, 1, 'Should have workload nodes in the graph');
   });
@@ -244,10 +244,10 @@ Then('user sees workloads from both clusters', () => {
   cy.get('#loading_kiali_spinner').should('not.exist');
 
   // Check for cluster indicators or multi-cluster workloads
-  cy.get('[data-test="graph-node"]').should('exist');
+  cy.get('[data-test="topology-view-pf"]').should('exist');
 
   // Look for cluster badges or multi-cluster indicators
-  cy.get('[data-test="graph-node"]').then($nodes => {
+  cy.get('[data-test="topology-view-pf"]').then($nodes => {
     assert.isAtLeast($nodes.length, 2, 'Should have workloads from multiple clusters');
   });
 });

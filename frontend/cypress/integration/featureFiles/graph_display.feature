@@ -398,8 +398,8 @@ Feature: Kiali Graph page - Display menu
   @ambient-multi-primary
   Scenario: Ambient Multi-Primary: Graph shows ambient workloads across clusters
     Given user is at the "graph" page
-    When user selects "bookinfo" namespaces
-    And user selects "Workload" graph type
+    When user graphs "bookinfo" namespaces
+    And user selects "WORKLOAD" graph type
     Then user sees the "bookinfo" namespace
     And user sees ambient workloads in the graph
     And user sees workloads from both clusters
