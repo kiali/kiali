@@ -557,7 +557,10 @@ const MeshTabsComponent: React.FC<{
         aria-label="Mesh tabs"
         data-test="mesh-tabs"
       >
-        <Tab eventKey={0} title={<TabTitleText>{t('Meshes')}</TabTitleText>}>
+        <Tab eventKey={0} title={<TabTitleText>{t('Overview')}</TabTitleText>}>
+          {renderSharedInfrastructure(clusterNodes, gatewayNodes, waypointNodes, kialiNodes, observeNodes, forCluster)}
+        </Tab>
+        <Tab eventKey={1} title={<TabTitleText>{t('Meshes')}</TabTitleText>}>
           <SearchInput
             placeholder="Filter meshes..."
             value={filter}
@@ -594,9 +597,6 @@ const MeshTabsComponent: React.FC<{
                 </Tbody>
               ))}
           </Table>
-        </Tab>
-        <Tab eventKey={1} title={<TabTitleText>{t('Details')}</TabTitleText>}>
-          {renderSharedInfrastructure(clusterNodes, gatewayNodes, waypointNodes, kialiNodes, observeNodes, forCluster)}
         </Tab>
       </Tabs>
     </div>

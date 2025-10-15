@@ -224,8 +224,8 @@ Then('user sees expected mesh infra', () => {
         // Multiple control planes - tabs should exist
         cy.getBySel('mesh-tabs').should('exist');
         cy.getBySel('mesh-tabs').within(() => {
+          cy.contains('button', 'Overview').should('exist');
           cy.contains('button', 'Meshes').should('exist');
-          cy.contains('button', 'Details').should('exist');
         });
       } else {
         // Single control plane - tabs should not exist
