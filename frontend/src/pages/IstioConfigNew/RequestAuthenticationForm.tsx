@@ -155,7 +155,7 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
           <Switch
             id="workloadSelectorSwitch"
             label=" "
-            labelOff=" "
+            
             isChecked={this.state.addWorkloadSelector}
             onChange={this.onChangeWorkloadSelector}
           />
@@ -188,7 +188,7 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
           <Switch
             id="addJWTRules"
             label=" "
-            labelOff=" "
+            
             isChecked={this.state.addJWTRules}
             onChange={this.onChangeJwtRules}
           />

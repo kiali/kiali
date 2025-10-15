@@ -10,7 +10,7 @@ const buttonClick = (id: string): void => {
 const buttonPrepare = (id: string, active: boolean): void => {
   cy.waitForReact();
 
-  cy.get(`button#${id} > span.pf-v5-c-icon`)
+  cy.get(`button#${id} > span.pf-v6-c-icon`)
     .should('have.length', '1')
     .then(el => {
       cy.log(el.css('color'));
@@ -23,7 +23,7 @@ const buttonPrepare = (id: string, active: boolean): void => {
 const buttonState = (id: string, active: boolean): void => {
   cy.waitForReact();
 
-  cy.get(`button#${id} > span.pf-v5-c-icon`)
+  cy.get(`button#${id} > span.pf-v6-c-icon`)
     .should('have.length', '1')
     .should('have.css', 'color', `${active ? ACTIVE_COLOR : INACTIVE_COLOR}`);
 };

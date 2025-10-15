@@ -131,7 +131,7 @@ export class GatewayForm extends React.Component<Props, GatewayState> {
           <Switch
             id="workloadSelectorSwitch"
             label=" "
-            labelOff=" "
+            
             isChecked={this.state.addWorkloadSelector}
             onChange={() => {
               this.setState(

@@ -8,7 +8,7 @@ import {
   Masthead,
   MastheadToggle,
   MastheadMain,
-  MastheadBrand,
+  MastheadLogo, MastheadBrand,
   MastheadContent,
   PageSection,
   PageSidebar,
@@ -16,7 +16,7 @@ import {
   ButtonVariant,
   PageSidebarBody
 } from '@patternfly/react-core';
-import { BarsIcon } from '@patternfly/react-icons';
+
 import { kialiStyle } from 'styles/StyleUtils';
 import { MessageCenter } from '../MessageCenter/MessageCenter';
 import { homeCluster, kialiLogoDark, serverConfig } from '../../config';
@@ -89,20 +89,20 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 
   const masthead = (
     <Masthead role="kiali_header" style={{ height: MASTHEAD_HEIGHT }}>
-      <MastheadToggle>
-        <PageToggleButton
+      
+      <MastheadMain><MastheadToggle>
+        <PageToggleButton isHamburgerButton
           variant={ButtonVariant.plain}
           aria-label="Kiali navigation"
           isSidebarOpen={isNavOpen}
           onSidebarToggle={isMobileView ? onNavToggleMobile : onNavToggleDesktop}
         >
-          <BarsIcon />
+          
         </PageToggleButton>
       </MastheadToggle>
-      <MastheadMain>
-        <MastheadBrand component={props => <Link {...props} to="#" />}>
+        <MastheadBrand data-codemods><MastheadLogo data-codemods component={props => <Link {...props} to="#" />}>
           <img src={kialiLogoDark} alt="Kiali Logo" />
-        </MastheadBrand>
+        </MastheadLogo></MastheadBrand>
       </MastheadMain>
       <MastheadContent style={{ height: MASTHEAD_HEIGHT }}>
         <MastheadItems />
@@ -120,12 +120,12 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 
   return (
     <Page
-      header={masthead}
+      masthead={masthead}
       sidebar={Sidebar}
       onPageResize={(_, { mobileView, windowSize }) => onPageResize({ mobileView, windowSize })}
     >
       <MessageCenter drawerTitle="Message Center" />
-      <PageSection className={flexBoxColumnStyle} variant="light">
+      <PageSection hasBodyWrapper={false} className={flexBoxColumnStyle} >
         <RenderPage isGraph={isGraph()} />
       </PageSection>
     </Page>

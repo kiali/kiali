@@ -2,9 +2,7 @@ import * as React from 'react';
 import {
   EmptyState,
   EmptyStateBody,
-  EmptyStateIcon,
   EmptyStateVariant,
-  EmptyStateHeader,
   EmptyStateFooter
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -58,33 +56,26 @@ export class EmptyMeshLayout extends React.Component<EmptyMeshLayoutProps, Empty
   render() {
     if (this.props.isError) {
       return (
-        <EmptyState id="empty-mesh-error" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader
-            titleText={t('Error loading Mesh')}
-            icon={<EmptyStateIcon icon={KialiIcon.Error} />}
-            headingLevel="h5"
-          />
+        <EmptyState  headingLevel="h5" icon={KialiIcon.Error}  titleText={t('Error loading Mesh')} id="empty-mesh-error" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
           <EmptyStateBody>{this.props.error}</EmptyStateBody>
         </EmptyState>
       );
     }
     if (this.props.isLoading) {
       return (
-        <EmptyState id="empty-mesh-is-loading" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText={t('Loading Mesh')} headingLevel="h5" />
-        </EmptyState>
+        <EmptyState  headingLevel="h5"   titleText={t('Loading Mesh')} id="empty-mesh-is-loading" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
+          </EmptyState>
       );
     }
 
     if (this.props.refreshInterval === RefreshIntervalManual && !this.props.loaded && !this.props.isMiniMesh) {
       return (
-        <EmptyState
+        <EmptyState  headingLevel="h5"   titleText={t('Manual refresh required')}
           id="empty-graph-manual"
           data-test="manual-refresh"
           variant={EmptyStateVariant.lg}
           className={emptyStateStyle}
         >
-          <EmptyStateHeader titleText={t('Manual refresh required')} headingLevel="h5" />
           <EmptyStateBody>
             {t(
               'The refresh interval is set to "Manual". To render the mesh, select your desired filters and options and then click the Refresh button. Or, if preferred, change the setting to the desired interval.'
@@ -97,8 +88,7 @@ export class EmptyMeshLayout extends React.Component<EmptyMeshLayoutProps, Empty
     const isMeshEmpty = !this.props.elements || !this.props.elements.nodes || this.props.elements.nodes.length < 1;
     if (isMeshEmpty && !this.props.isMiniMesh) {
       return (
-        <EmptyState id="empty-mesh" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText={t('Empty Mesh')} headingLevel="h5" />
+        <EmptyState  headingLevel="h5"   titleText={t('Empty Mesh')} id="empty-mesh" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
           <EmptyStateBody>
             {t(
               'There is currently no mesh information available. This may mean you do not have permission to see any mesh information or have no access to any of the mesh namespaces.'
@@ -111,8 +101,7 @@ export class EmptyMeshLayout extends React.Component<EmptyMeshLayoutProps, Empty
 
     if (isMeshEmpty && this.props.isMiniMesh) {
       return (
-        <EmptyState id="empty-mini-mesh" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText={t('Empty Mesh')} headingLevel="h5" />
+        <EmptyState  headingLevel="h5"   titleText={t('Empty Mesh')} id="empty-mini-mesh" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
           <EmptyStateBody>{t('No mesh information available.')}</EmptyStateBody>
         </EmptyState>
       );

@@ -23,7 +23,7 @@ export const RefreshButton: React.FC<RefreshButtonProps> = (props: RefreshButton
 
   return (
     <Tooltip position="bottom" content={<>Refresh</>}>
-      <Button
+      <Button icon={<SyncAltIcon />}
         id={props.id ?? 'refresh_button'}
         data-test="refresh-button"
         onClick={handleRefresh}
@@ -31,7 +31,7 @@ export const RefreshButton: React.FC<RefreshButtonProps> = (props: RefreshButton
         aria-label="Action"
         variant={ButtonVariant.primary}
       >
-        <SyncAltIcon />
+        
       </Button>
     </Tooltip>
   );
