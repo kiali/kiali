@@ -172,9 +172,32 @@ func (s *Service) GetAuth(ctx context.Context) *config.Auth {
 				log.Errorf("Error loggin %s", err.Error())
 			}
 			newAuth.Token = token
-			return &newAuth
+		} else {
+			newAuth.Token = s.sessionData.AccessToken
 		}
-		newAuth.Token = s.sessionData.AccessToken
+
+		// Preserve TLS configuration
+		newAuth.InsecureSkipVerify = auth.InsecureSkipVerify
+		newAuth.CAFile = auth.CAFile
+
+		return &newAuth
+	}
+
+	if auth.Type == config.AuthTypeBearer {
+		newAuth.Type = config.AuthTypeBearer
+
+		if auth.UseKialiToken {
+			// Use the Kiali service account token for authentication
+			newAuth.Token = s.homeClusterSAClient.GetToken()
+		} else {
+			// Use the configured token
+			newAuth.Token = auth.Token
+		}
+
+		// Preserve TLS configuration
+		newAuth.InsecureSkipVerify = auth.InsecureSkipVerify
+		newAuth.CAFile = auth.CAFile
+
 		return &newAuth
 	}
 
@@ -202,9 +225,20 @@ func (s *Service) Info(ctx context.Context, dashboardSupplier DashboardSupplierF
 
 	// Call Perses REST API to get dashboard urls
 	links := []models.ExternalLink{}
+
+	// Select the appropriate dashboard supplier based on url_format
+	var supplier DashboardSupplierFunc
+	if persesConfig.URLFormat == "openshift" {
+		supplier = checkDashboardOpenShift
+	} else {
+		supplier = dashboardSupplier
+	}
+
 	for _, dashboardConfig := range persesConfig.Dashboards {
-		dashboardPath, err := getDashboardPath(ctx, project, dashboardConfig.Name, conn, dashboardSupplier)
+		dashboardPath, err := getDashboardPath(ctx, project, dashboardConfig.Name, conn, supplier)
+
 		if err != nil {
+			log.Infof("Error getting dashboardPath %s: %s", dashboardPath, err.Error())
 			return nil, http.StatusServiceUnavailable, err
 		}
 		if dashboardPath != "" {
@@ -227,6 +261,7 @@ func (s *Service) Info(ctx context.Context, dashboardSupplier DashboardSupplierF
 	persesInfo := models.PersesInfo{
 		ExternalLinks: links,
 		Project:       persesConfig.Project,
+		URLFormat:     persesConfig.URLFormat,
 	}
 
 	return &persesInfo, http.StatusOK, nil
@@ -250,7 +285,16 @@ func (s *Service) Links(ctx context.Context, linksSpec []dashboards.MonitoringDa
 		zl.Trace().Msgf("Skip checking Perses links as Perses is not configured")
 		return nil, 0, nil
 	}
-	return getPersesLinks(ctx, connectionInfo, persesConfig.Project, linksSpec, DashboardSupplier)
+
+	// Select the appropriate dashboard supplier based on url_format
+	var supplier DashboardSupplierFunc
+	if persesConfig.URLFormat == "openshift" {
+		supplier = checkDashboardOpenShift
+	} else {
+		supplier = DashboardSupplier
+	}
+
+	return getPersesLinks(ctx, connectionInfo, persesConfig.Project, linksSpec, supplier)
 }
 
 // VersionURL returns the Perses URL that can be used to obtain the Perses build information that includes its version.
@@ -409,5 +453,41 @@ func checkDashboard(conn PersesConnectionInfo, project, searchPattern string, au
 	if conn.ExternalURLParams != "" {
 		extUrl = fmt.Sprintf("%s%s", extUrl, conn.ExternalURLParams)
 	}
+	return resp, code, extUrl, err
+}
+
+// checkDashboardOpenShift uses the OpenShift monitoring format for dashboard URLs
+// Format: https://external_url/monitoring/v2/dashboards?project=istio-system&dashboard=istio-control-plane&start=30m&refresh=0s
+func checkDashboardOpenShift(conn PersesConnectionInfo, project, searchPattern string, auth *config.Auth) ([]byte, int, string, error) {
+	// For internal cluster access, use the internal URL directly
+	// For external access, use the console proxy
+	var query string
+	var code int
+	var resp []byte
+	var err error
+
+	if conn.InternalURL != "" && conn.InternalURL != conn.BaseExternalURL {
+		// Internal cluster access - use direct Perses API
+		query = fmt.Sprintf("%s/api/proxy/plugin/monitoring-console-plugin/perses/api/v1/projects/%s/dashboards/%s", conn.InternalURL, project, searchPattern)
+		log.Debugf("[Perses] Openshift Dashboard supplier (internal) checking: %s", query)
+		if auth.Token != "" {
+			tokenLen := len(auth.Token)
+			if tokenLen > 20 {
+				tokenLen = 20
+			}
+		}
+		resp, code, _, err = httputil.HttpGet(query, auth, time.Second*10, nil, nil, config.Get())
+	} else {
+		// External access - use console proxy might not be accessible - skip
+		resp = []byte(`{"status": "skip"}`)
+		code = http.StatusOK
+	}
+
+	useURL := conn.BaseExternalURL
+	extUrl := fmt.Sprintf("%s/monitoring/v2/dashboards?project=%s&dashboard=%s&start=30m&refresh=0s", useURL, project, searchPattern)
+	if conn.ExternalURLParams != "" {
+		extUrl = fmt.Sprintf("%s&%s", extUrl, conn.ExternalURLParams)
+	}
+	log.Debugf("[Perses] Openshift Dashboard supplier external URL: %s", extUrl)
 	return resp, code, extUrl, err
 }

@@ -18,32 +18,41 @@ const buildPersesLinks = (props: Props): [string, string][] => {
   const links: [string, string][] = [];
   props.links.forEach(d => {
     if (MetricsObjectTypes.ZTUNNEL !== props.objectType || d.name !== ISTIO_ZTUNNEL_DASHBOARD) {
-      const first = d.url.includes('?') ? '&' : '?';
-      const nsvar = d.variables.namespace ? `&${d.variables.namespace}=${props.namespace}` : '';
-      const dsvar = d.variables.datasource && props.project ? `&${d.variables.datasource}=${props.project}` : '';
-      const vervar = d.variables.version && props.version ? `&${d.variables.version}=${props.version}` : '';
-      switch (props.objectType) {
-        case MetricsObjectTypes.SERVICE:
-          const fullServiceName = `${props.object}.${props.namespace}.svc.cluster.local`;
-          if (d.variables.service) {
-            const url = `${d.url}${first}${d.variables.service}=${fullServiceName}${nsvar}${dsvar}${vervar}`;
-            links.push([d.name, url]);
-          }
-          break;
-        case MetricsObjectTypes.WORKLOAD:
-          if (d.variables.workload) {
-            const url = `${d.url}${first}${d.variables.workload}=${props.object}${nsvar}${dsvar}${vervar}`;
-            links.push([d.name, url]);
-          }
-          break;
-        case MetricsObjectTypes.APP:
-          if (d.variables.app) {
-            const url = `${d.url}${first}${d.variables.app}=${props.object}${nsvar}${dsvar}${vervar}`;
-            links.push([d.name, url]);
-          }
-          break;
-        default:
-          break;
+      // Check if this is OpenShift format
+      const isOpenShiftFormat = d.url.includes('/monitoring/v2/dashboards');
+
+      if (isOpenShiftFormat) {
+        // For OpenShift format, the URL is already formatted correctly
+        links.push([d.name, d.url]);
+      } else {
+        // For standard Perses format, build the URL with variables
+        const first = d.url.includes('?') ? '&' : '?';
+        const nsvar = d.variables.namespace ? `&${d.variables.namespace}=${props.namespace}` : '';
+        const dsvar = d.variables.datasource && props.project ? `&${d.variables.datasource}=${props.project}` : '';
+        const vervar = d.variables.version && props.version ? `&${d.variables.version}=${props.version}` : '';
+        switch (props.objectType) {
+          case MetricsObjectTypes.SERVICE:
+            const fullServiceName = `${props.object}.${props.namespace}.svc.cluster.local`;
+            if (d.variables.service) {
+              const url = `${d.url}${first}${d.variables.service}=${fullServiceName}${nsvar}${dsvar}${vervar}`;
+              links.push([d.name, url]);
+            }
+            break;
+          case MetricsObjectTypes.WORKLOAD:
+            if (d.variables.workload) {
+              const url = `${d.url}${first}${d.variables.workload}=${props.object}${nsvar}${dsvar}${vervar}`;
+              links.push([d.name, url]);
+            }
+            break;
+          case MetricsObjectTypes.APP:
+            if (d.variables.app) {
+              const url = `${d.url}${first}${d.variables.app}=${props.object}${nsvar}${dsvar}${vervar}`;
+              links.push([d.name, url]);
+            }
+            break;
+          default:
+            break;
+        }
       }
     } else {
       if (MetricsObjectTypes.ZTUNNEL === props.objectType && d.name === ISTIO_ZTUNNEL_DASHBOARD) {
