@@ -407,7 +407,7 @@ if ! $OC get deployment istiod -n istio-system > /dev/null 2>&1; then
       DOWNLOAD_ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
     fi
     hack/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
-    hack/istio/install-istio-via-istioctl.sh --client-exe-path "$OC" --reduce-resources "${REDUCE_RESOURCES}"
+    hack/istio/install-istio-via-istioctl.sh --client-exe-path "$OC" --reduce-resources "${REDUCE_RESOURCES}" --disable-ipv6 true
   else
     infomsg "Istio control plane (istiod) is not installed, and this script was told not to install Istio. Aborting."
     exit 1
