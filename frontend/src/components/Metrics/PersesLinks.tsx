@@ -22,8 +22,32 @@ const buildPersesLinks = (props: Props): [string, string][] => {
       const isOpenShiftFormat = d.url.includes('/monitoring/v2/dashboards');
 
       if (isOpenShiftFormat) {
-        // For OpenShift format, the URL is already formatted correctly
-        links.push([d.name, d.url]);
+        // For OpenShift format, we need to add the specific object variables
+        let openShiftUrl = d.url;
+        // Add object-specific variables for OpenShift
+        switch (props.objectType) {
+          case MetricsObjectTypes.SERVICE:
+            if (d.variables.service) {
+              const fullServiceName = `${props.object}.${props.namespace}.svc.cluster.local`;
+              openShiftUrl += `&${d.variables.service}=${fullServiceName}`;
+              links.push([d.name, openShiftUrl]);
+            }
+            break;
+          case MetricsObjectTypes.WORKLOAD:
+            if (d.variables.workload) {
+              openShiftUrl += `&${d.variables.workload}=${props.object}`;
+              links.push([d.name, openShiftUrl]);
+            }
+            break;
+          case MetricsObjectTypes.APP:
+            if (d.variables.app) {
+              openShiftUrl += `&${d.variables.app}=${props.object}`;
+              links.push([d.name, openShiftUrl]);
+            }
+            break;
+          default:
+            break;
+        }
       } else {
         // For standard Perses format, build the URL with variables
         const first = d.url.includes('?') ? '&' : '?';

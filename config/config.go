@@ -820,10 +820,9 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				Enabled:     false,
-				InternalURL: "http://perses.istio-system:4000",
-				IsCore:      false,
-				Project:     "istio",
+				Enabled: false,
+				IsCore:  false,
+				Project: "istio",
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{
