@@ -48,6 +48,13 @@ jobs:
       with:
         sparse-checkout: |
           hack/ci-kind-molecule-tests.sh
+          hack/install-hydra-kind.sh
+          hack/start-kind.sh
+          hack/ory-hydra/scripts/gencert.sh
+          hack/ory-hydra/scripts/install-hydra.sh
+          hack/ory-hydra/scripts/setup-clients.sh
+          hack/ory-hydra/manifests/postgresql.yaml
+          hack/ory-hydra/manifests/hydra-ui-simple.yaml
     - name: Install Helm
       uses: Azure/setup-helm@v4.3.1
       with:
