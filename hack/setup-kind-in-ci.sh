@@ -75,7 +75,7 @@ while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
     -a|--auth-strategy)           AUTH_STRATEGY="$2";         shift;shift; ;;
-    -ab|--ambient)                AMBIENT="true";             shift;shift; ;;
+    -ab|--ambient)                AMBIENT="$2";               shift;shift; ;;
     -dk|--deploy-kiali)           DEPLOY_KIALI="$2";          shift;shift; ;;
     -dorp|--docker-or-podman)     DORP="$2";                  shift;shift; ;;
     -h|--help)                    helpmsg;                    exit 1       ;;
