@@ -464,6 +464,25 @@ install_olm() {
     exit 1
   fi
 
+  # Install cert-manager (required by OLM v0.36.0+ for metrics TLS certificates)
+  if ! ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- get crd certificates.cert-manager.io > /dev/null 2>&1; then
+    echo "Installing cert-manager (required by OLM for TLS certificate management)..."
+    local CERT_MANAGER_VERSION="v1.19.1"
+    ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- apply -f https://github.com/cert-manager/cert-manager/releases/download/${CERT_MANAGER_VERSION}/cert-manager.yaml
+    [ "$?" != "0" ] && echo "ERROR: Failed to install cert-manager" && exit 1
+
+    echo "Waiting for cert-manager CRDs to be established..."
+    ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- wait --for condition=established --timeout=300s crd certificates.cert-manager.io
+    ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- wait --for condition=established --timeout=300s crd issuers.cert-manager.io
+
+    echo "Waiting for cert-manager deployments to be ready..."
+    ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- wait --for condition=available --timeout=300s --all --namespace cert-manager deployments
+
+    echo "cert-manager ${CERT_MANAGER_VERSION} is installed."
+  else
+    echo "cert-manager is already installed - skipping installation"
+  fi
+
   # force the install.sh script to go through minikube kubectl when it executes kubectl commands
   kubectl() {
     ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- $@
