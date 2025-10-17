@@ -73,6 +73,28 @@ install_olm() {
     exit 1
   fi
 
+  # Install cert-manager (required by OLM v0.36.0+ for metrics TLS certificates)
+  if ! ${OC} get crd certificates.cert-manager.io > /dev/null 2>&1; then
+    infomsg "Installing cert-manager (required by OLM for TLS certificate management)..."
+    local CERT_MANAGER_VERSION="v1.19.1"
+    ${OC} apply -f https://github.com/cert-manager/cert-manager/releases/download/${CERT_MANAGER_VERSION}/cert-manager.yaml
+    if [ "$?" != "0" ]; then
+      errormsg "ERROR: Failed to install cert-manager"
+      exit 1
+    fi
+
+    infomsg "Waiting for cert-manager CRDs to be established..."
+    ${OC} wait --for condition=established --timeout=300s crd certificates.cert-manager.io
+    ${OC} wait --for condition=established --timeout=300s crd issuers.cert-manager.io
+
+    infomsg "Waiting for cert-manager deployments to be ready..."
+    ${OC} wait --for condition=available --timeout=300s --all --namespace cert-manager deployments
+
+    infomsg "cert-manager ${CERT_MANAGER_VERSION} is installed."
+  else
+    infomsg "cert-manager is already installed - skipping installation"
+  fi
+
   # Write the downloaded script to a temporary file
   echo "$olm_install_script" > /tmp/olm-install-script.sh
   chmod +x /tmp/olm-install-script.sh

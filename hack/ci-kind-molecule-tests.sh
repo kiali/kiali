@@ -682,6 +682,25 @@ if [ "${OLM_ENABLED}" == "true" ]; then
     exit 1
   fi
 
+  # Install cert-manager (required by OLM v0.36.0+ for metrics TLS certificates)
+  if ! ${CLIENT_EXE} get crd certificates.cert-manager.io > /dev/null 2>&1; then
+    infomsg "Installing cert-manager (required by OLM for TLS certificate management)..."
+    CERT_MANAGER_VERSION="v1.19.1"
+    ${CLIENT_EXE} apply -f https://github.com/cert-manager/cert-manager/releases/download/${CERT_MANAGER_VERSION}/cert-manager.yaml
+    [ "$?" != "0" ] && infomsg "ERROR: Failed to install cert-manager" && exit 1
+
+    infomsg "Waiting for cert-manager CRDs to be established..."
+    ${CLIENT_EXE} wait --for condition=established --timeout=300s crd certificates.cert-manager.io
+    ${CLIENT_EXE} wait --for condition=established --timeout=300s crd issuers.cert-manager.io
+
+    infomsg "Waiting for cert-manager deployments to be ready..."
+    ${CLIENT_EXE} wait --for condition=available --timeout=300s --all --namespace cert-manager deployments
+
+    infomsg "cert-manager ${CERT_MANAGER_VERSION} is installed."
+  else
+    infomsg "cert-manager is already installed - skipping installation"
+  fi
+
   # force the install.sh script to go through our client executable when it executes kubectl commands
   kubectl() {
     ${CLIENT_EXE} "$@"
