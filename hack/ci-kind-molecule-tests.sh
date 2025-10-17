@@ -539,10 +539,16 @@ else
 fi
 
 # Install Hydra with pre-generated certificates (API server already configured for OIDC)
+# Only install if Hydra is not already installed (to support cluster reuse)
 if [ "${HYDRA_ENABLED}" == "true" ]; then
-  infomsg "Installing Ory Hydra for OpenID Connect support..."
-  ${SCRIPT_DIR}/install-hydra-kind.sh --kind-exe "${KIND_EXE}" --kind-name "${KIND_NAME}" --client-exe "${CLIENT_EXE}" --certs-dir "${CERTS_PATH}/ssl"
-  [ "$?" != "0" ] && infomsg "ERROR: Failed to install Hydra" && exit 1
+  HYDRA_DEPLOYMENT_COUNT=$(${CLIENT_EXE} get deployment -n ory -l app.kubernetes.io/name=hydra --ignore-not-found -o name 2>/dev/null | wc -l)
+  if [ "${HYDRA_DEPLOYMENT_COUNT}" -gt 0 ]; then
+    infomsg "Hydra deployment already exists - skipping installation"
+  else
+    infomsg "Installing Ory Hydra for OpenID Connect support..."
+    ${SCRIPT_DIR}/install-hydra-kind.sh --kind-exe "${KIND_EXE}" --kind-name "${KIND_NAME}" --client-exe "${CLIENT_EXE}" --certs-dir "${CERTS_PATH}/ssl"
+    [ "$?" != "0" ] && infomsg "ERROR: Failed to install Hydra" && exit 1
+  fi
 else
   infomsg "Hydra installation is disabled."
 fi
