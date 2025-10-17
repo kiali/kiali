@@ -517,6 +517,6 @@
       }
     } ]
   },
-  "meshName" : "",
+  "meshNames" : null,
   "timestamp" : 1523364075
 }

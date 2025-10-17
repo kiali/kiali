@@ -6,7 +6,8 @@ import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 't
 import { ValidationTypes } from 'types/IstioObjects';
 import { Status, statusMsg } from 'types/IstioStatus';
 import { Validation } from 'components/Validations/Validation';
-import { Title, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Title, Tooltip, TooltipPosition, SearchInput, Tabs, Tab, TabTitleText } from '@patternfly/react-core';
+import { ExpandableRowContent, Table, Tbody, Td, Tr } from '@patternfly/react-table';
 import { t } from 'utils/I18nUtils';
 import { PFBadge, PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
 import { AmbientLabel, tooltipMsgType } from '../../../components/Ambient/AmbientLabel';
@@ -15,12 +16,15 @@ import { KialiPageLink } from 'components/Link/KialiPageLink';
 import { classes } from 'typestyle';
 import { UNKNOWN } from 'types/Graph';
 import { elems, selectAnd } from 'helpers/GraphHelpers';
-import { Controller } from '@patternfly/react-topology';
+import { Controller, Node } from '@patternfly/react-topology';
+import { MeshData } from '../MeshPage';
+import { panelHeadingStyle } from '../../Graph/SummaryPanelStyle';
 
 export interface TargetPanelCommonProps {
   duration: DurationInSeconds;
   istioAPIEnabled: boolean;
   kiosk: string;
+  meshData: MeshData;
   refreshInterval: IntervalInMilliseconds;
   target: MeshTarget;
   updateTime: TimeInMilliseconds;
@@ -64,6 +68,14 @@ export const summaryTitle = kialiStyle({
   marginBottom: '0.25rem',
   textAlign: 'left'
 });
+
+export const getMeshId = (nodeData: MeshNodeData): string => {
+  return (
+    nodeData.infraData.config?.standardConfig.configMap.mesh.defaultConfig.meshId ||
+    nodeData.infraData.config?.standardConfig.configMap.mesh.trustDomain ||
+    t('Istio mesh')
+  );
+};
 
 export const targetPanelHR = <hr className={hrStyle} />;
 export const targetPanelUnderlineHR = <hr className={hrStyle} style={{ marginTop: 0 }} />;
@@ -119,6 +131,26 @@ export const renderHealthStatus = (data: MeshNodeData): React.ReactNode => {
 export const nodeStyle = kialiStyle({
   alignItems: 'center',
   display: 'flex'
+});
+
+const meshTitleStyle = kialiStyle({
+  fontWeight: 'bold',
+  fontSize: '0.875rem'
+});
+
+const expandTitleStyle = kialiStyle({
+  fontWeight: 'bold',
+  fontSize: '0.875rem',
+  paddingLeft: '0 !important'
+});
+
+const expandBodyStyle = kialiStyle({
+  padding: '0 0 0 0.125rem !important',
+  $nest: {
+    '& .pf-v5-c-table__expandable-row-content': {
+      padding: '0 0 0 0.5rem !important'
+    }
+  }
 });
 
 interface NodeHeaderOptions {
@@ -338,26 +370,269 @@ export const renderObservabilitySummary = (nodeData: MeshNodeData): React.ReactN
   );
 };
 
+// Helper function to filter nodes by mesh name
+const filterNodesByMesh = (nodes: Node[], meshName: string): Node[] => {
+  return nodes.filter(infra => getMeshId(infra.getData()) === meshName);
+};
+
+// Helper function to filter shared infrastructure nodes (not mesh-specific)
+// Based on data analysis: only control planes have explicit mesh associations
+// Everything else (Kiali, external observability, data planes) are shared
+const filterSharedInfrastructureNodes = (nodes: Node[]): Node[] => {
+  return nodes.filter(infra => {
+    const data = infra.getData();
+    // External observability tools (no mesh association)
+    if (
+      data.isExternal === true &&
+      (data.infraType === 'grafana' ||
+        data.infraType === 'metricStore' ||
+        data.infraType === 'traceStore' ||
+        data.infraType === 'perses')
+    ) {
+      return true;
+    }
+    // Kiali (no mesh association in data)
+    if (data.infraType === 'kiali') {
+      return true;
+    }
+    // Data planes (associated by revision, not mesh)
+    if (data.infraType === 'dataplane') {
+      return true;
+    }
+    // Gateways and waypoints (when they exist, likely shared)
+    if (data.infraType === 'gateway' || data.infraType === 'waypoint') {
+      return true;
+    }
+    return false;
+  });
+};
+
+// Helper function to render mesh control planes content
+const renderMeshControlPlanes = (
+  meshName: string,
+  controlPlaneNodes: Node[],
+  dataPlaneNodes: Node[]
+): React.ReactNode => {
+  const meshControlPlanes = filterNodesByMesh(controlPlaneNodes, meshName);
+
+  return (
+    <div key={meshName} style={{ marginLeft: '1rem', marginTop: '0.5rem' }}>
+      {t('ControlPlanes: {{num}}', { num: meshControlPlanes.length })}
+      <div>
+        {meshControlPlanes.map(infra => {
+          const cpRev = infra.getData().infraData.revision ?? 'default';
+          const dataPlaneNode = dataPlaneNodes.find(dpn => {
+            const dpRev = dpn.getData().version ?? 'default';
+            return cpRev === dpRev;
+          });
+          const dataPlaneNamespaceCount = dataPlaneNode?.getData().infraData?.length ?? 0;
+          return renderControlPlaneSummary(infra.getData(), dataPlaneNamespaceCount);
+        })}
+      </div>
+    </div>
+  );
+};
+
+// Helper function to render shared infrastructure content
+const renderSharedInfrastructure = (
+  clusterNodes: Node[],
+  gatewayNodes: Node[],
+  waypointNodes: Node[],
+  kialiNodes: Node[],
+  observeNodes: Node[],
+  forCluster?: string
+): React.ReactNode => {
+  // Everything is shared infrastructure (no mesh associations in data)
+  const sharedGateways = filterSharedInfrastructureNodes(gatewayNodes);
+  const sharedKiali = filterSharedInfrastructureNodes(kialiNodes);
+  const sharedObserve = filterSharedInfrastructureNodes(observeNodes);
+  const sharedWaypoints = filterSharedInfrastructureNodes(waypointNodes);
+
+  return (
+    <div id="target-panel-mesh-body" className={targetBodyStyle} style={{ paddingTop: 0 }}>
+      {!forCluster && (
+        <div className={infraStyle}>
+          {t('Clusters: {{num}}', { num: clusterNodes.length })}
+          {clusterNodes.map(infra => renderClusterSummary(infra.getData()))}
+        </div>
+      )}
+
+      <div className={infraStyle}>
+        {sharedGateways.length > 0 && t('Gateways: {{num}}', { num: sharedGateways.length })}
+        {sharedGateways.map(infra => renderGatewaySummary(infra.getData()))}
+      </div>
+
+      <div className={infraStyle}>
+        {sharedWaypoints.length > 0 && t('Waypoints: {{num}}', { num: sharedWaypoints.length })}
+        {sharedWaypoints.map(infra => renderGatewaySummary(infra.getData()))}
+      </div>
+
+      <div className={infraStyle}>
+        {sharedKiali.length > 0 && t('Kiali: {{num}}', { num: sharedKiali.length })}
+        {sharedKiali.map(infra => renderKialiSummary(infra.getData()))}
+      </div>
+
+      <div className={infraStyle}>
+        {sharedObserve.length > 0 && t('Observability: {{num}}', { num: sharedObserve.length })}
+        {sharedObserve.map(infra => renderObservabilitySummary(infra.getData()))}
+      </div>
+    </div>
+  );
+};
+
+// Component for mesh expandable table
+const MeshTabsComponent: React.FC<{
+  clusterNodes: Node[];
+  controlPlaneNodes: Node[];
+  dataPlaneNodes: Node[];
+  forCluster?: string;
+  gatewayNodes: Node[];
+  kialiNodes: Node[];
+  meshData: MeshData;
+  observeNodes: Node[];
+  waypointNodes: Node[];
+}> = ({
+  meshData,
+  clusterNodes,
+  controlPlaneNodes,
+  dataPlaneNodes,
+  gatewayNodes,
+  waypointNodes,
+  kialiNodes,
+  observeNodes,
+  forCluster
+}) => {
+  const [expanded, setExpanded] = React.useState<string[]>([]);
+  const [filter, setFilter] = React.useState<string>('');
+  const [activeTabKey, setActiveTabKey] = React.useState<string | number>(0);
+
+  const isExpanded = (meshName: string): boolean => {
+    return expanded.includes(meshName);
+  };
+
+  const toggleExpanded = (meshName: string): void => {
+    const updatedExpanded = expanded.filter(n => meshName !== n);
+    if (updatedExpanded.length === expanded.length) {
+      updatedExpanded.push(meshName);
+    }
+    setExpanded(updatedExpanded);
+  };
+
+  // Filter out meshes that have no control planes
+  const meshesWithControlPlanes = meshData.names.filter(meshName => {
+    const meshControlPlanes = filterNodesByMesh(controlPlaneNodes, meshName);
+    return meshControlPlanes.length > 0;
+  });
+
+  // If no meshes with control planes, render only shared infrastructure without tabs
+  if (meshesWithControlPlanes.length === 0) {
+    return (
+      <div>
+        {renderSharedInfrastructure(clusterNodes, gatewayNodes, waypointNodes, kialiNodes, observeNodes, forCluster)}
+      </div>
+    );
+  }
+
+  // If only one mesh has control planes, render without table
+  if (meshesWithControlPlanes.length === 1) {
+    const meshName = meshesWithControlPlanes[0];
+
+    return (
+      <div>
+        <div className={targetBodyStyle}>
+          <div className={meshTitleStyle}>{t('Mesh: {{meshName}}', { meshName })}</div>
+        </div>
+        {renderMeshControlPlanes(meshName, controlPlaneNodes, dataPlaneNodes)}
+
+        {renderSharedInfrastructure(clusterNodes, gatewayNodes, waypointNodes, kialiNodes, observeNodes, forCluster)}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <Tabs
+        activeKey={activeTabKey}
+        onSelect={(_event, tabIndex) => setActiveTabKey(tabIndex)}
+        aria-label="Mesh tabs"
+        data-test="mesh-tabs"
+      >
+        <Tab eventKey={0} title={<TabTitleText>{t('Overview')}</TabTitleText>}>
+          {renderSharedInfrastructure(clusterNodes, gatewayNodes, waypointNodes, kialiNodes, observeNodes, forCluster)}
+        </Tab>
+        <Tab
+          eventKey={1}
+          title={<TabTitleText>{t('Meshes ({{count}})', { count: meshData.names.length })}</TabTitleText>}
+        >
+          <SearchInput
+            placeholder="Filter meshes..."
+            value={filter}
+            onChange={(_event, value) => setFilter(value)}
+            onClear={() => setFilter('')}
+          />
+          <Table aria-label="Mesh table" variant="compact">
+            {meshesWithControlPlanes
+              .filter(meshName => filter === '' || meshName.toLowerCase().includes(filter.toLowerCase()))
+              .sort((a, b) => a.localeCompare(b))
+              .map((meshName, i) => (
+                <Tbody key={meshName} isExpanded={isExpanded(meshName)}>
+                  <Tr>
+                    <Td
+                      expand={{
+                        rowIndex: i,
+                        isExpanded: isExpanded(meshName),
+                        onToggle: () => toggleExpanded(meshName),
+                        expandId: `mesh-${meshName}`
+                      }}
+                      style={{ paddingRight: '0.125rem' }}
+                    />
+                    <Td dataLabel={t('Mesh')} className={expandTitleStyle}>
+                      {t('Mesh: {{meshName}}', { meshName })}
+                    </Td>
+                  </Tr>
+                  <Tr isExpanded={isExpanded(meshName)}>
+                    <Td dataLabel={`mesh-detail-${meshName}`} className={expandBodyStyle} colSpan={2}>
+                      <ExpandableRowContent>
+                        {renderMeshControlPlanes(meshName, controlPlaneNodes, dataPlaneNodes)}
+                      </ExpandableRowContent>
+                    </Td>
+                  </Tr>
+                </Tbody>
+              ))}
+          </Table>
+        </Tab>
+      </Tabs>
+    </div>
+  );
+};
+
 export const renderInfraSummary = (
   controller: Controller,
+  meshData: MeshData,
   forCluster?: string,
   forNamespace?: string
 ): React.ReactNode => {
   const { nodes } = elems(controller);
 
-  const clusterAndExternalNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.CLUSTER }]);
+  const clusterAndExternalNodes = selectAnd(nodes, [
+    { prop: MeshAttr.infraType, op: '=', val: MeshInfraType.CLUSTER }
+  ]) as Node[];
   const clusterNodes = clusterAndExternalNodes.filter(rcn => !rcn.getData().isExternal);
-  let controlPlaneNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.ISTIOD }]);
-  let dataPlaneNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.DATAPLANE }]);
-  let gatewayNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.GATEWAY }]);
-  let kialiNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.KIALI }]);
+  let controlPlaneNodes = selectAnd(nodes, [
+    { prop: MeshAttr.infraType, op: '=', val: MeshInfraType.ISTIOD }
+  ]) as Node[];
+  let dataPlaneNodes = selectAnd(nodes, [
+    { prop: MeshAttr.infraType, op: '=', val: MeshInfraType.DATAPLANE }
+  ]) as Node[];
+  let gatewayNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.GATEWAY }]) as Node[];
+  let kialiNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.KIALI }]) as Node[];
   let observeNodes = [
     ...selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.GRAFANA }]),
     ...selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.METRIC_STORE }]),
     ...selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.PERSES }]),
     ...selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.TRACE_STORE }])
-  ];
-  let waypointNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.WAYPOINT }]);
+  ] as Node[];
+  let waypointNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.WAYPOINT }]) as Node[];
 
   if (forCluster) {
     controlPlaneNodes = controlPlaneNodes.filter(
@@ -379,47 +654,33 @@ export const renderInfraSummary = (
     );
   }
 
-  return (
-    <div id="target-panel-mesh-body" className={targetBodyStyle} style={{ paddingTop: 0 }}>
-      {!forCluster && (
-        <div className={infraStyle}>
-          {t('Clusters: {{num}}', { num: clusterNodes.length })}
-          {clusterNodes.map(infra => renderClusterSummary(infra.getData()))}
+  // If only one mesh, render without tabs
+  if (meshData.names.length <= 1) {
+    return (
+      <div>
+        <div id="target-panel-mesh-heading" className={panelHeadingStyle}>
+          <div className={summaryTitle}>
+            {t('Mesh: {{meshName}}', { meshName: meshData.names })}
+            <br />
+          </div>
         </div>
-      )}
-
-      <div className={infraStyle}>
-        {controlPlaneNodes.length > 0 && t('ControlPlanes: {{num}}', { num: controlPlaneNodes.length })}
-        {controlPlaneNodes.map(infra => {
-          const cpRev = infra.getData().infraData.revision ?? 'default';
-          const dataPlaneNode = dataPlaneNodes.find(dpn => {
-            const dpRev = dpn.getData().version ?? 'default';
-            return cpRev === dpRev;
-          });
-          const dataPlaneNamespaceCount = dataPlaneNode?.getData().infraData?.length ?? 0;
-          return renderControlPlaneSummary(infra.getData(), dataPlaneNamespaceCount);
-        })}
+        {renderSharedInfrastructure(clusterNodes, gatewayNodes, waypointNodes, kialiNodes, observeNodes, forCluster)}
       </div>
+    );
+  }
 
-      <div className={infraStyle}>
-        {gatewayNodes.length > 0 && t('Gateways: {{num}}', { num: gatewayNodes.length })}
-        {gatewayNodes.map(infra => renderGatewaySummary(infra.getData()))}
-      </div>
-
-      <div className={infraStyle}>
-        {waypointNodes.length > 0 && t('Waypoints: {{num}}', { num: waypointNodes.length })}
-        {waypointNodes.map(infra => renderGatewaySummary(infra.getData()))}
-      </div>
-
-      <div className={infraStyle}>
-        {kialiNodes.length > 0 && t('Kiali: {{num}}', { num: kialiNodes.length })}
-        {kialiNodes.map(infra => renderKialiSummary(infra.getData()))}
-      </div>
-
-      <div className={infraStyle}>
-        {observeNodes.length > 0 && t('Observability: {{num}}', { num: observeNodes.length })}
-        {observeNodes.map(infra => renderObservabilitySummary(infra.getData()))}
-      </div>
-    </div>
+  // Multiple meshes - render with tabs
+  return (
+    <MeshTabsComponent
+      meshData={meshData}
+      clusterNodes={clusterNodes}
+      controlPlaneNodes={controlPlaneNodes}
+      dataPlaneNodes={dataPlaneNodes}
+      gatewayNodes={gatewayNodes}
+      waypointNodes={waypointNodes}
+      kialiNodes={kialiNodes}
+      observeNodes={observeNodes}
+      forCluster={forCluster}
+    />
   );
 };
