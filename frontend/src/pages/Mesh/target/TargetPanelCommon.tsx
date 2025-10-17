@@ -16,7 +16,7 @@ import { KialiPageLink } from 'components/Link/KialiPageLink';
 import { classes } from 'typestyle';
 import { UNKNOWN } from 'types/Graph';
 import { elems, selectAnd } from 'helpers/GraphHelpers';
-import { Controller } from '@patternfly/react-topology';
+import { Controller, Node } from '@patternfly/react-topology';
 import { MeshData } from '../MeshPage';
 import { panelHeadingStyle } from '../../Graph/SummaryPanelStyle';
 
@@ -371,14 +371,14 @@ export const renderObservabilitySummary = (nodeData: MeshNodeData): React.ReactN
 };
 
 // Helper function to filter nodes by mesh name
-const filterNodesByMesh = (nodes: any[], meshName: string): any[] => {
+const filterNodesByMesh = (nodes: Node[], meshName: string): Node[] => {
   return nodes.filter(infra => getMeshId(infra.getData()) === meshName);
 };
 
 // Helper function to filter shared infrastructure nodes (not mesh-specific)
 // Based on data analysis: only control planes have explicit mesh associations
 // Everything else (Kiali, external observability, data planes) are shared
-const filterSharedInfrastructureNodes = (nodes: any[]): any[] => {
+const filterSharedInfrastructureNodes = (nodes: Node[]): Node[] => {
   return nodes.filter(infra => {
     const data = infra.getData();
     // External observability tools (no mesh association)
@@ -410,8 +410,8 @@ const filterSharedInfrastructureNodes = (nodes: any[]): any[] => {
 // Helper function to render mesh control planes content
 const renderMeshControlPlanes = (
   meshName: string,
-  controlPlaneNodes: any[],
-  dataPlaneNodes: any[]
+  controlPlaneNodes: Node[],
+  dataPlaneNodes: Node[]
 ): React.ReactNode => {
   const meshControlPlanes = filterNodesByMesh(controlPlaneNodes, meshName);
 
@@ -435,11 +435,11 @@ const renderMeshControlPlanes = (
 
 // Helper function to render shared infrastructure content
 const renderSharedInfrastructure = (
-  clusterNodes: any[],
-  gatewayNodes: any[],
-  waypointNodes: any[],
-  kialiNodes: any[],
-  observeNodes: any[],
+  clusterNodes: Node[],
+  gatewayNodes: Node[],
+  waypointNodes: Node[],
+  kialiNodes: Node[],
+  observeNodes: Node[],
   forCluster?: string
 ): React.ReactNode => {
   // Everything is shared infrastructure (no mesh associations in data)
@@ -482,15 +482,15 @@ const renderSharedInfrastructure = (
 
 // Component for mesh expandable table
 const MeshTabsComponent: React.FC<{
-  clusterNodes: any[];
-  controlPlaneNodes: any[];
-  dataPlaneNodes: any[];
+  clusterNodes: Node[];
+  controlPlaneNodes: Node[];
+  dataPlaneNodes: Node[];
   forCluster?: string;
-  gatewayNodes: any[];
-  kialiNodes: any[];
+  gatewayNodes: Node[];
+  kialiNodes: Node[];
   meshData: MeshData;
-  observeNodes: any[];
-  waypointNodes: any[];
+  observeNodes: Node[];
+  waypointNodes: Node[];
 }> = ({
   meshData,
   clusterNodes,
@@ -560,7 +560,10 @@ const MeshTabsComponent: React.FC<{
         <Tab eventKey={0} title={<TabTitleText>{t('Overview')}</TabTitleText>}>
           {renderSharedInfrastructure(clusterNodes, gatewayNodes, waypointNodes, kialiNodes, observeNodes, forCluster)}
         </Tab>
-        <Tab eventKey={1} title={<TabTitleText>{t('Meshes')}</TabTitleText>}>
+        <Tab
+          eventKey={1}
+          title={<TabTitleText>{t('Meshes ({{count}})', { count: meshData.names.length })}</TabTitleText>}
+        >
           <SearchInput
             placeholder="Filter meshes..."
             value={filter}
@@ -611,19 +614,25 @@ export const renderInfraSummary = (
 ): React.ReactNode => {
   const { nodes } = elems(controller);
 
-  const clusterAndExternalNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.CLUSTER }]);
+  const clusterAndExternalNodes = selectAnd(nodes, [
+    { prop: MeshAttr.infraType, op: '=', val: MeshInfraType.CLUSTER }
+  ]) as Node[];
   const clusterNodes = clusterAndExternalNodes.filter(rcn => !rcn.getData().isExternal);
-  let controlPlaneNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.ISTIOD }]);
-  let dataPlaneNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.DATAPLANE }]);
-  let gatewayNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.GATEWAY }]);
-  let kialiNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.KIALI }]);
+  let controlPlaneNodes = selectAnd(nodes, [
+    { prop: MeshAttr.infraType, op: '=', val: MeshInfraType.ISTIOD }
+  ]) as Node[];
+  let dataPlaneNodes = selectAnd(nodes, [
+    { prop: MeshAttr.infraType, op: '=', val: MeshInfraType.DATAPLANE }
+  ]) as Node[];
+  let gatewayNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.GATEWAY }]) as Node[];
+  let kialiNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.KIALI }]) as Node[];
   let observeNodes = [
     ...selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.GRAFANA }]),
     ...selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.METRIC_STORE }]),
     ...selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.PERSES }]),
     ...selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.TRACE_STORE }])
-  ];
-  let waypointNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.WAYPOINT }]);
+  ] as Node[];
+  let waypointNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.WAYPOINT }]) as Node[];
 
   if (forCluster) {
     controlPlaneNodes = controlPlaneNodes.filter(
