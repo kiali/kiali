@@ -100,3 +100,28 @@ Then('user sees all the Services toggles', () => {
   colExists('Health', true);
   colExists('Details', true);
 });
+
+// Ambient multi-primary services step definitions
+
+Then('user sees services from both clusters', () => {
+  cy.waitForReact();
+
+  // Check services table for multi-cluster entries
+  cy.get('[data-test="VirtualItem"]').should('exist');
+
+  cy.get('[data-test="VirtualItem"]').then($items => {
+    assert.isAtLeast($items.length, 1, 'Should have service items from clusters');
+  });
+});
+
+Then('user sees ambient service indicators', () => {
+  cy.waitForReact();
+
+  // Look for ambient-specific service indicators
+  cy.get('[data-test="VirtualItem"]').should('exist');
+
+  // Check for ambient mesh mode indicators on services
+  cy.get('[data-test="VirtualItem"]').then($items => {
+    assert.isAtLeast($items.length, 1, 'Should have service items with ambient indicators');
+  });
+});

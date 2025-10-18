@@ -606,8 +606,17 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
      AMBIENT_ARG=""
   fi
 
+  # For ambient multi-cluster tests in CI, use anonymous auth instead of openid
+  # LoadBalancer IPs are not accessible from GitHub Actions runners, causing openid redirects to fail
+  if [ -n "$AMBIENT" ] && [ -n "${CI:-}" -o -n "${GITHUB_ACTIONS:-}" ]; then
+    AUTH_STRATEGY="anonymous"
+    echo "INFO: Using anonymous auth for ambient multi-cluster tests in CI (LoadBalancer IPs not accessible)"
+  else
+    AUTH_STRATEGY="openid"
+  fi
+
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy openid ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG $AMBIENT_ARG
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy ${AUTH_STRATEGY} ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG $AMBIENT_ARG
   fi
 
   ensureKialiServerReady
@@ -619,16 +628,26 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   export CYPRESS_CLUSTER2_CONTEXT="kind-west"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   export CYPRESS_VIDEO="${WITH_VIDEO}"
-  export CYPRESS_AUTH_PROVIDER="keycloak"
-  export CYPRESS_USERNAME="kiali"
-  export CYPRESS_PASSWD="kiali"
+  if [ "${AUTH_STRATEGY}" == "anonymous" ]; then
+    export CYPRESS_AUTH_PROVIDER="anonymous"
+    export CYPRESS_USERNAME=""
+    export CYPRESS_PASSWD=""
+  else
+    export CYPRESS_AUTH_PROVIDER="keycloak"
+    export CYPRESS_USERNAME="kiali"
+    export CYPRESS_PASSWD="kiali"
+  fi
 
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
   fi
 
   cd "${SCRIPT_DIR}"/../frontend
-  yarn run cypress:run:multi-primary
+  if [ -n "$AMBIENT" ]; then
+    yarn run cypress:run:ambient-multi-primary
+  else
+    yarn run cypress:run:multi-primary
+  fi
   detectRaceConditions ${CYPRESS_CLUSTER1_CONTEXT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_EXTERNAL_KIALI}" ]; then
   ensureCypressInstalled
