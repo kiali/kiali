@@ -4,4 +4,5 @@ package models
 type PersesInfo struct {
 	ExternalLinks []ExternalLink `json:"externalLinks"`
 	Project       string         `json:"project,omitempty"`
+	URLFormat     string         `json:"urlFormat,omitempty"`
 }
