@@ -15,11 +15,12 @@
 # │   Cluster 1: "mgmt"     │         │   Cluster 2: "mesh"     │
 # │   (Management)          │         │   (Service Mesh)        │
 # ├─────────────────────────┤         ├─────────────────────────┤
-# │ • Kiali                 │◄────────┤ • Istio Control Plane   │
-# │ • Prometheus (federated)│         │ • Istio Data Plane      │
-# │ • Grafana               │         │ • Bookinfo App          │
-# │ • Jaeger                │         │ • Prometheus (local)    │
-# │ • NO Istio              │         │ • Jaeger (local)        │
+# │ • Kiali ONLY            │◄────────┤ • Istio Control Plane   │
+# │                         │    │    │ • Istio Data Plane      │
+# │ • NO Istio              │    │    │ • Bookinfo App          │
+# │ • NO Prometheus         │    │    │ • Prometheus ◄──────────┼─── Istio metrics
+# │ • NO Grafana            │    │    │ • Jaeger                │
+# │ • NO Jaeger             │    └────┼─ Kiali queries          │
 # └─────────────────────────┘         └─────────────────────────┘
 # ```
 #
@@ -532,38 +533,20 @@ info "=== Step 5: Creating istio-system namespace on management cluster ==="
 switch_cluster "${MGMT_CONTEXT}"
 oc create namespace ${ISTIO_NAMESPACE} --dry-run=client -o yaml | oc apply -f -
 
-# Step 6: Install observability addons on management cluster
-info "=== Step 6: Installing observability addons on management cluster ==="
-
-# Get Istio version from mesh cluster
-switch_cluster "${MESH_CONTEXT}"
-ISTIO_VERSION=$(oc -n ${ISTIO_NAMESPACE} get istios -o jsonpath='{.items[0].spec.version}' 2>/dev/null || echo "v1.27.2")
-ADDON_VERSION="${ISTIO_VERSION:1:4}"
-info "Using Istio version ${ISTIO_VERSION} (addon version ${ADDON_VERSION})"
-
+# Step 6: Management cluster - no observability addons needed
+info "=== Step 6: Management cluster setup ==="
+info "Skipping observability addons on management cluster - only Kiali will be installed"
 switch_cluster "${MGMT_CONTEXT}"
-ADDONS="prometheus grafana jaeger"
-for addon in ${ADDONS}; do
-  info "Installing ${addon} on management cluster..."
-  # Try to use yq to set namespace if available, otherwise rely on oc -n flag
-  if command -v yq &> /dev/null; then
-    curl -s "https://raw.githubusercontent.com/istio/istio/refs/heads/release-${ADDON_VERSION}/samples/addons/${addon}.yaml" | \
-      yq "select(.metadata) | .metadata.namespace = \"${ISTIO_NAMESPACE}\"" - | \
-      oc apply -n ${ISTIO_NAMESPACE} -f - || \
-      error "Failed to install ${addon}"
-  else
-    curl -s "https://raw.githubusercontent.com/istio/istio/refs/heads/release-${ADDON_VERSION}/samples/addons/${addon}.yaml" | \
-      oc apply -n ${ISTIO_NAMESPACE} -f - || \
-      error "Failed to install ${addon}"
-  fi
-done
 
-# Step 7: Configure Prometheus federation
-info "=== Step 7: Configuring Prometheus federation ==="
+# Step 7: Expose mesh Prometheus for external access
+info "=== Step 7: Exposing mesh Prometheus for external access ==="
 switch_cluster "${MESH_CONTEXT}"
 
-# Expose Prometheus service via OpenShift route
-oc expose service prometheus -n ${ISTIO_NAMESPACE} --name=prometheus 2>/dev/null || \
+# Expose Prometheus service via OpenShift route with TLS
+oc create route edge prometheus \
+  --service=prometheus \
+  --insecure-policy=Redirect \
+  -n ${ISTIO_NAMESPACE} 2>/dev/null || \
   info "Prometheus route already exists or creation skipped"
 
 # Wait for the route to be created and get its hostname
@@ -579,46 +562,10 @@ for i in {1..30}; do
 done
 
 if [ -z "${MESH_PROM_ADDRESS}" ]; then
-  info "WARNING: Could not determine mesh Prometheus address. Federation may not work."
-  info "You may need to manually configure Prometheus federation later."
-else
-  info "Mesh Prometheus address: ${MESH_PROM_ADDRESS}"
-
-  # Configure federation on management cluster using the prometheus.yaml template
-  switch_cluster "${MGMT_CONTEXT}"
-
-  # Use the prometheus.yaml template from the multicluster directory
-  if [ -f "${SCRIPT_DIR}/prometheus.yaml" ]; then
-    info "Applying Prometheus federation configuration using template..."
-    cat ${SCRIPT_DIR}/prometheus.yaml | \
-      sed -e "s/WEST_PROMETHEUS_ADDRESS/${MESH_PROM_ADDRESS}/g" | \
-      sed -e "s/CLUSTER_NAME/mesh/g" | \
-      oc apply -n ${ISTIO_NAMESPACE} -f - || \
-      info "Prometheus ConfigMap may need manual adjustment"
-
-    # Restart Prometheus to pick up the new configuration
-    oc rollout restart deployment/prometheus -n ${ISTIO_NAMESPACE} 2>/dev/null || \
-      info "Prometheus deployment restart may be needed"
-  else
-    info "WARNING: prometheus.yaml template not found at ${SCRIPT_DIR}/prometheus.yaml"
-    info "You will need to manually configure Prometheus federation"
-    info "Add this federation job to the Prometheus ConfigMap:"
-    cat <<EOF
-- job_name: 'federate-mesh'
-  scrape_interval: 15s
-  honor_labels: true
-  metrics_path: '/federate'
-  params:
-    'match[]':
-      - '{job="kubernetes-pods"}'
-  static_configs:
-    - targets:
-      - '${MESH_PROM_ADDRESS}:9090'
-      labels:
-        cluster: 'mesh'
-EOF
-  fi
+  error "Could not determine mesh Prometheus address. Cannot continue."
 fi
+
+info "Mesh Prometheus accessible at: https://${MESH_PROM_ADDRESS}"
 
 # Step 8: Pull Kiali Helm Chart if not provided or if it's a repo reference
 if [ -z "${KIALI_SERVER_HELM_CHARTS}" ] || [ "${KIALI_SERVER_HELM_CHARTS}" == "kiali/kiali-server" ] || [ "${KIALI_SERVER_HELM_CHARTS}" == "kiali-server" ]; then
@@ -654,6 +601,13 @@ switch_cluster "${MGMT_CONTEXT}"
 MGMT_ROUTE_URL="https://kiali-${ISTIO_NAMESPACE}.$(oc get ingresses.config/cluster -o jsonpath='{.spec.domain}')"
 info "Kiali route URL will be: ${MGMT_ROUTE_URL}"
 
+# Configure Kiali to use the mesh cluster's Prometheus (via external route)
+MESH_PROM_URL="https://${MESH_PROM_ADDRESS}"
+info "Kiali will connect to mesh Prometheus at: ${MESH_PROM_URL}"
+
+# Note: Grafana and Jaeger are disabled since they don't exist on mgmt cluster
+# All observability tools are on the mesh cluster
+# Prometheus uses OpenShift route with self-signed cert, so skip TLS verification
 helm upgrade --install kiali-server ${KIALI_SERVER_HELM_CHARTS} \
   --namespace ${ISTIO_NAMESPACE} \
   --set auth.strategy=openshift \
@@ -663,11 +617,10 @@ helm upgrade --install kiali-server ${KIALI_SERVER_HELM_CHARTS} \
   --set deployment.logger.log_level=trace \
   --set deployment.ingress.enabled=true \
   --set deployment.service_type=ClusterIP \
-  --set external_services.tracing.enabled=true \
-  --set external_services.prometheus.url=http://prometheus.${ISTIO_NAMESPACE}:9090 \
-  --set external_services.grafana.external_url=http://grafana.${ISTIO_NAMESPACE}:3000 \
-  --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard" \
-  --set external_services.tracing.external_url=http://tracing.${ISTIO_NAMESPACE}/jaeger || \
+  --set external_services.tracing.enabled=false \
+  --set external_services.prometheus.url="${MESH_PROM_URL}" \
+  --set external_services.prometheus.auth.insecure_skip_verify=true \
+  --set external_services.grafana.enabled=false || \
   error "Failed to install Kiali"
 
 # Step 11: Configure OAuth for mesh cluster access
@@ -717,15 +670,20 @@ info "=== Installation Complete ==="
 info ""
 info "Management Cluster (${MGMT_CONTEXT}):"
 info "  - Kiali URL: https://${MGMT_ROUTE}"
-info "  - Prometheus: http://prometheus.${ISTIO_NAMESPACE}:9090"
-info "  - Grafana: http://grafana.${ISTIO_NAMESPACE}:3000"
-info "  - Jaeger: http://tracing.${ISTIO_NAMESPACE}"
+info "  - No other components installed (Kiali only)"
 info ""
 info "Mesh Cluster (${MESH_CONTEXT}):"
 info "  - Istio Control Plane: ${ISTIO_NAMESPACE}"
+info "  - Prometheus: ${MESH_PROM_URL} (used by Kiali)"
+info "  - Jaeger: ${ISTIO_NAMESPACE} namespace"
 if [ "${INSTALL_BOOKINFO}" == "true" ]; then
   info "  - Bookinfo Application: ${BOOKINFO_NAMESPACE}"
 fi
+info ""
+info "Architecture:"
+info "  - Management cluster has ONLY Kiali"
+info "  - All Istio components and observability tools are on the mesh cluster"
+info "  - Kiali connects to Prometheus on mesh cluster via HTTPS route (no authentication)"
 info ""
 info "Next Steps:"
 info "1. Open browser to https://${MGMT_ROUTE}"

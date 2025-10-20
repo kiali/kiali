@@ -16,11 +16,11 @@
 #
 # ## What This Script Does
 #
-# 1. Purges Kiali from management cluster
+# 1. Purges Kiali from management cluster (only component on mgmt)
 # 2. Deletes Bookinfo from mesh cluster
 # 3. Removes Istio CRs (with finalizer removal) from mesh cluster
 # 4. Purges Istio from mesh cluster
-# 5. Deletes observability addons from both clusters
+# 5. Deletes observability addons from mesh cluster only
 # 6. Removes Sail Operator from mesh cluster
 # 7. Deletes istio-system namespaces from both clusters
 # 8. Cleans up OAuth clients
@@ -169,6 +169,7 @@ sleep 5
 
 # Step 5: Delete observability addons from mesh cluster
 info "=== Step 5: Deleting observability addons from mesh cluster ==="
+oc delete route prometheus -n ${ISTIO_NAMESPACE} --ignore-not-found=true
 oc delete deployment prometheus -n ${ISTIO_NAMESPACE} --ignore-not-found=true
 oc delete deployment jaeger -n ${ISTIO_NAMESPACE} --ignore-not-found=true
 oc delete service prometheus tracing zipkin jaeger-collector -n ${ISTIO_NAMESPACE} --ignore-not-found=true
@@ -177,15 +178,10 @@ oc delete configmap prometheus -n ${ISTIO_NAMESPACE} --ignore-not-found=true
 oc delete clusterrole prometheus --ignore-not-found=true
 oc delete clusterrolebinding prometheus --ignore-not-found=true
 
-# Step 6: Delete observability addons from management cluster
-info "=== Step 6: Deleting observability addons from management cluster ==="
+# Step 6: Management cluster cleanup (no observability addons to delete)
+info "=== Step 6: Management cluster cleanup ==="
+info "No observability addons to delete from management cluster (Kiali only setup)"
 switch_cluster "${MGMT_CONTEXT}"
-oc delete deployment prometheus grafana jaeger -n ${ISTIO_NAMESPACE} --ignore-not-found=true
-oc delete service prometheus grafana tracing zipkin jaeger-collector -n ${ISTIO_NAMESPACE} --ignore-not-found=true
-oc delete serviceaccount prometheus grafana -n ${ISTIO_NAMESPACE} --ignore-not-found=true
-oc delete configmap prometheus grafana istio-grafana-dashboards istio-services-grafana-dashboards -n ${ISTIO_NAMESPACE} --ignore-not-found=true
-oc delete clusterrole prometheus --ignore-not-found=true
-oc delete clusterrolebinding prometheus --ignore-not-found=true
 
 # Step 7: Delete Sail Operator and istio-cni from mesh cluster
 info "=== Step 7: Deleting Sail Operator and istio-cni from mesh cluster ==="
