@@ -20,10 +20,11 @@
 # │                         │    │    │ • Bookinfo App          │
 # │ Namespaces:             │    │    │ • Prometheus ◄──────────┼─── Istio metrics
 # │ - kiali-operator        │    │    │ • Jaeger                │
-# │ - istio-system          │    └────┼─ Kiali queries (HTTPS)  │
+# │ - kiali-server          │    └────┼─ Kiali queries (HTTPS)  │
 # │                         │         │                         │
 # │ NO Istio components     │         │ Namespaces:             │
 # └─────────────────────────┘         │ - istio-system          │
+#                                     │ - kiali-server          │
 #                                     │ - bookinfo              │
 #                                     └─────────────────────────┘
 # ```
@@ -89,7 +90,7 @@ MESH_PASS="kiali"
 INSTALL_BOOKINFO="true"
 ISTIO_NAMESPACE="istio-system"
 KIALI_OPERATOR_NAMESPACE="kiali-operator"
-KIALI_NAMESPACE="istio-system"
+KIALI_NAMESPACE="kiali-server"
 BOOKINFO_NAMESPACE="bookinfo"
 MESH_ID="mesh-external"
 NETWORK_MESH="network-mesh"
@@ -292,7 +293,7 @@ oc --context=${MESH_CONTEXT} wait --for=condition=Ready istiocni/default --timeo
 info "=== Step 5: Creating namespaces on management cluster ==="
 switch_cluster "${MGMT_CONTEXT}"
 oc create namespace ${KIALI_OPERATOR_NAMESPACE} --dry-run=client -o yaml | oc apply -f -
-oc create namespace ${ISTIO_NAMESPACE} --dry-run=client -o yaml | oc apply -f -
+oc create namespace ${KIALI_NAMESPACE} --dry-run=client -o yaml | oc apply -f -
 
 # Step 6: Management cluster - no observability addons needed
 info "=== Step 6: Management cluster setup ==="
@@ -357,32 +358,34 @@ switch_cluster "${MESH_CONTEXT}"
 
 # Install Kiali Server helm chart in remote_cluster_resources_only mode
 # This creates the service account, clusterrole, and clusterrolebinding on mesh cluster
-# Install in istio-system namespace where the resources will be created
-# Provide redirect_uris to create the OAuth client on the remote cluster
+# Install in kiali-server namespace (create it first) to match where Kiali is deployed on mgmt
+# This ensures OAuth client name matches: kiali-kiali-server on both clusters
+oc --context=${MESH_CONTEXT} create namespace ${KIALI_NAMESPACE} --dry-run=client -o yaml | oc apply -f -
+
 MGMT_DOMAIN=$(oc --context=${MGMT_CONTEXT} get ingresses.config/cluster -o jsonpath='{.spec.domain}')
 KIALI_REDIRECT_URI="https://kiali-${KIALI_NAMESPACE}.${MGMT_DOMAIN}/api/auth/callback/mesh"
 helm upgrade --install kiali-remote-resources ${KIALI_SERVER_HELM_CHARTS} \
-  --namespace ${ISTIO_NAMESPACE} \
+  --namespace ${KIALI_NAMESPACE} \
   --set auth.strategy=openshift \
   --set "auth.openshift.redirect_uris[0]=${KIALI_REDIRECT_URI}" \
   --set deployment.remote_cluster_resources_only=true \
   --set deployment.instance_name=kiali \
-  --set deployment.namespace=${ISTIO_NAMESPACE} \
+  --set deployment.namespace=${KIALI_NAMESPACE} \
   --set deployment.view_only_mode=false || \
   error "Failed to create remote cluster resources"
 
 info "Remote cluster resources created on mesh cluster"
 
 # Create service account token secret for the remote cluster
-# The SA is in ${ISTIO_NAMESPACE} so the token secret must also be there
+# The SA is in ${KIALI_NAMESPACE} so the token secret must also be there
 # Name it "kiali" so the kiali-prepare-remote-cluster.sh script can find it
-info "Creating service account token secret in ${ISTIO_NAMESPACE} namespace on mesh cluster..."
+info "Creating service account token secret in ${KIALI_NAMESPACE} namespace on mesh cluster..."
 oc --context=${MESH_CONTEXT} apply -f - <<EOF
 apiVersion: v1
 kind: Secret
 metadata:
   name: kiali
-  namespace: ${ISTIO_NAMESPACE}
+  namespace: ${KIALI_NAMESPACE}
   annotations:
     kubernetes.io/service-account.name: kiali
 type: kubernetes.io/service-account-token
@@ -391,7 +394,7 @@ EOF
 # Wait for token to be generated
 info "Waiting for service account token to be generated..."
 for i in {1..30}; do
-  TOKEN=$(oc --context=${MESH_CONTEXT} get secret kiali -n ${ISTIO_NAMESPACE} -o jsonpath='{.data.token}' 2>/dev/null || echo "")
+  TOKEN=$(oc --context=${MESH_CONTEXT} get secret kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.data.token}' 2>/dev/null || echo "")
   if [ -n "${TOKEN}" ]; then
     info "Service account token generated"
     break
@@ -407,6 +410,7 @@ fi
 info "=== Step 9b: Creating remote cluster secret on mgmt cluster ==="
 
 # Use kiali-prepare-remote-cluster.sh ONLY to create the secret (not the remote resources)
+# Resources are already created by the helm chart above in kiali-server namespace
 ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh \
   -c oc \
   --remote-cluster-name mesh \
@@ -416,7 +420,7 @@ ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh \
   -vo false \
   --allow-skip-tls-verify true \
   --kiali-resource-name kiali \
-  -rcns ${ISTIO_NAMESPACE} \
+  -rcns ${KIALI_NAMESPACE} \
   --process-kiali-secret true \
   --process-remote-resources false \
   -kshc ${KIALI_SERVER_HELM_CHARTS} || \
@@ -523,7 +527,7 @@ info "=== Installation Complete ==="
 info ""
 info "Management Cluster (${MGMT_CONTEXT}):"
 info "  - Kiali Operator: ${KIALI_OPERATOR_NAMESPACE} namespace"
-info "  - Kiali Server: ${ISTIO_NAMESPACE} namespace"
+info "  - Kiali Server: ${KIALI_NAMESPACE} namespace"
 info "  - Kiali URL: https://${MGMT_ROUTE}"
 info "  - Authentication: OpenShift OAuth"
 info ""
@@ -531,7 +535,7 @@ info "Mesh Cluster (${MESH_CONTEXT}):"
 info "  - Istio Control Plane: ${ISTIO_NAMESPACE} namespace"
 info "  - Prometheus: ${MESH_PROM_URL}"
 info "  - Jaeger: ${ISTIO_NAMESPACE} namespace"
-info "  - Remote access: Service account 'kiali' in ${ISTIO_NAMESPACE}"
+info "  - Remote access: Service account 'kiali' in ${KIALI_NAMESPACE}"
 if [ "${INSTALL_BOOKINFO}" == "true" ]; then
   info "  - Bookinfo Application: ${BOOKINFO_NAMESPACE} namespace"
 fi
@@ -540,6 +544,7 @@ info "Configuration:"
 info "  - Kiali connects to mesh Prometheus via HTTPS route (insecure_skip_verify=true)"
 info "  - Remote cluster secret: kiali-remote-cluster-secret-mesh in ${KIALI_NAMESPACE}"
 info "  - Clustering: ignore_home_cluster=true, cluster_name=mgmt"
+info "  - OAuth client name: kiali-${KIALI_NAMESPACE} (same on both clusters)"
 info ""
 info "Next Steps:"
 info "1. Open browser to https://${MGMT_ROUTE}"

@@ -37,7 +37,7 @@ MGMT_CONTEXT="mgmt"
 MESH_CONTEXT="mesh"
 ISTIO_NAMESPACE="istio-system"
 KIALI_OPERATOR_NAMESPACE="kiali-operator"
-KIALI_NAMESPACE="istio-system"
+KIALI_NAMESPACE="kiali-server"
 BOOKINFO_NAMESPACE="bookinfo"
 
 # Parse command line arguments
@@ -109,7 +109,7 @@ fi
 info "Deleting kiali-operator namespace..."
 oc delete namespace ${KIALI_OPERATOR_NAMESPACE} --ignore-not-found=true
 
-info "Deleting istio-system namespace from mgmt cluster..."
+info "Deleting kiali-server namespace from mgmt cluster..."
 oc delete namespace ${KIALI_NAMESPACE} --ignore-not-found=true
 
 # Clean up any remaining cluster-scoped resources
@@ -125,16 +125,17 @@ oc delete namespace ${BOOKINFO_NAMESPACE} --ignore-not-found=true
 # Step 3: Delete Kiali remote cluster resources from mesh cluster
 info "=== Step 3: Deleting Kiali remote cluster resources from mesh cluster ==="
 
-# Uninstall the remote resources helm release (installed in istio-system namespace)
-if helm list -n ${ISTIO_NAMESPACE} 2>/dev/null | grep -q kiali-remote-resources; then
+# Uninstall the remote resources helm release (installed in kiali-server namespace on mesh)
+if helm list -n ${KIALI_NAMESPACE} 2>/dev/null | grep -q kiali-remote-resources; then
   info "Uninstalling Kiali remote resources helm release..."
-  helm uninstall kiali-remote-resources -n ${ISTIO_NAMESPACE} || info "Helm uninstall completed with warnings"
+  helm uninstall kiali-remote-resources -n ${KIALI_NAMESPACE} || info "Helm uninstall completed with warnings"
 fi
 
-# Clean up any remaining resources (in case they weren't managed by helm)
-oc delete serviceaccount kiali -n ${ISTIO_NAMESPACE} --ignore-not-found=true
-oc delete configmap kiali -n ${ISTIO_NAMESPACE} --ignore-not-found=true
-oc delete secret kiali kiali-sa-token -n ${ISTIO_NAMESPACE} --ignore-not-found=true
+# Delete kiali-server namespace on mesh cluster (contains the remote resources)
+info "Deleting kiali-server namespace from mesh cluster..."
+oc delete namespace ${KIALI_NAMESPACE} --ignore-not-found=true
+
+# Clean up any remaining cluster-scoped resources (in case they weren't managed by helm)
 oc delete clusterrole kiali kiali-viewer --ignore-not-found=true
 oc delete clusterrolebinding kiali kiali-viewer --ignore-not-found=true
 
