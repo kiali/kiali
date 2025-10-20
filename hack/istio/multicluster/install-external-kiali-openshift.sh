@@ -620,8 +620,8 @@ EOF
   fi
 fi
 
-# Step 8: Pull Kiali Helm Chart if not provided
-if [ -z "${KIALI_SERVER_HELM_CHARTS}" ]; then
+# Step 8: Pull Kiali Helm Chart if not provided or if it's a repo reference
+if [ -z "${KIALI_SERVER_HELM_CHARTS}" ] || [ "${KIALI_SERVER_HELM_CHARTS}" == "kiali/kiali-server" ] || [ "${KIALI_SERVER_HELM_CHARTS}" == "kiali-server" ]; then
   info "=== Step 8: Pulling Kiali Helm Chart ==="
   helm repo add kiali https://kiali.org/helm-charts --force-update
   helm repo update kiali
