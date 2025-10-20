@@ -16,15 +16,15 @@
 #
 # ## What This Script Does
 #
-# 1. Purges Kiali from management cluster (only component on mgmt)
-# 2. Deletes Bookinfo from mesh cluster
-# 3. Removes Istio CRs (with finalizer removal) from mesh cluster
-# 4. Purges Istio from mesh cluster
-# 5. Deletes observability addons from mesh cluster only
-# 6. Removes Sail Operator from mesh cluster
-# 7. Deletes istio-system namespaces from both clusters
-# 8. Cleans up OAuth clients
-# 9. Removes all Istio and Sail CRDs
+# 1. Deletes Kiali CR and uninstalls Kiali Operator from mgmt cluster
+# 2. Deletes kiali-operator and kiali-server namespaces from mgmt cluster
+# 3. Deletes Bookinfo from mesh cluster
+# 4. Uninstalls Kiali remote resources helm release from mesh cluster
+# 5. Removes Istio CRs (with finalizer removal) from mesh cluster
+# 6. Deletes observability addons (Prometheus, Jaeger, routes) from mesh cluster
+# 7. Removes Sail Operator from mesh cluster
+# 8. Deletes istio-system namespace from mesh cluster
+# 9. Removes all Istio and Sail CRDs from mesh cluster
 #
 ##############################################################################
 
@@ -36,6 +36,8 @@ SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 MGMT_CONTEXT="mgmt"
 MESH_CONTEXT="mesh"
 ISTIO_NAMESPACE="istio-system"
+KIALI_OPERATOR_NAMESPACE="kiali-operator"
+KIALI_NAMESPACE="istio-system"
 BOOKINFO_NAMESPACE="bookinfo"
 
 # Parse command line arguments
@@ -89,38 +91,52 @@ info "Management cluster: ${MGMT_CONTEXT}"
 info "Mesh cluster: ${MESH_CONTEXT}"
 
 # Step 1: Purge Kiali from management cluster
-info "=== Step 1: Purging Kiali from management cluster ==="
+info "=== Step 1: Purging Kiali Operator and CR from management cluster ==="
 switch_cluster "${MGMT_CONTEXT}"
 
-if [ -x "${SCRIPT_DIR}/../../purge-kiali-from-cluster.sh" ]; then
-  ${SCRIPT_DIR}/../../purge-kiali-from-cluster.sh -c oc || info "Kiali purge completed with warnings"
-else
-  info "Purge script not found, manually deleting Kiali resources..."
-  oc delete deployment kiali -n ${ISTIO_NAMESPACE} --ignore-not-found=true
-  oc delete service kiali -n ${ISTIO_NAMESPACE} --ignore-not-found=true
-  oc delete route kiali -n ${ISTIO_NAMESPACE} --ignore-not-found=true
-  oc delete serviceaccount kiali -n ${ISTIO_NAMESPACE} --ignore-not-found=true
-  oc delete configmap kiali -n ${ISTIO_NAMESPACE} --ignore-not-found=true
-  oc delete clusterrole kiali kiali-viewer --ignore-not-found=true
-  oc delete clusterrolebinding kiali kiali-viewer --ignore-not-found=true
+# Delete Kiali CR first (in kiali-server namespace)
+info "Deleting Kiali CR..."
+oc delete kiali kiali -n ${KIALI_NAMESPACE} --ignore-not-found=true --timeout=60s || \
+  info "Kiali CR deletion completed with warnings"
+
+# Uninstall Kiali Operator helm release (in kiali-operator namespace)
+if helm list -n ${KIALI_OPERATOR_NAMESPACE} 2>/dev/null | grep -q kiali-operator; then
+  info "Uninstalling Kiali Operator helm release..."
+  helm uninstall kiali-operator -n ${KIALI_OPERATOR_NAMESPACE} || info "Helm uninstall completed with warnings"
 fi
 
-# Delete remote cluster secret
-info "Deleting remote cluster secret..."
-oc delete secret kiali-remote-cluster-secret-mesh -n ${ISTIO_NAMESPACE} --ignore-not-found=true
+# Delete both Kiali namespaces
+info "Deleting kiali-operator namespace..."
+oc delete namespace ${KIALI_OPERATOR_NAMESPACE} --ignore-not-found=true
+
+info "Deleting istio-system namespace from mgmt cluster..."
+oc delete namespace ${KIALI_NAMESPACE} --ignore-not-found=true
+
+# Clean up any remaining cluster-scoped resources
+oc delete clusterrole kiali kiali-viewer --ignore-not-found=true
+oc delete clusterrolebinding kiali kiali-viewer --ignore-not-found=true
+oc delete oauthclient kiali-${KIALI_NAMESPACE} --ignore-not-found=true
 
 # Step 2: Delete Bookinfo from mesh cluster
 info "=== Step 2: Deleting Bookinfo from mesh cluster ==="
 switch_cluster "${MESH_CONTEXT}"
 oc delete namespace ${BOOKINFO_NAMESPACE} --ignore-not-found=true
 
-# Step 3: Delete Kiali service account and resources from mesh cluster
-info "=== Step 3: Deleting Kiali resources from mesh cluster ==="
+# Step 3: Delete Kiali remote cluster resources from mesh cluster
+info "=== Step 3: Deleting Kiali remote cluster resources from mesh cluster ==="
+
+# Uninstall the remote resources helm release (installed in istio-system namespace)
+if helm list -n ${ISTIO_NAMESPACE} 2>/dev/null | grep -q kiali-remote-resources; then
+  info "Uninstalling Kiali remote resources helm release..."
+  helm uninstall kiali-remote-resources -n ${ISTIO_NAMESPACE} || info "Helm uninstall completed with warnings"
+fi
+
+# Clean up any remaining resources (in case they weren't managed by helm)
 oc delete serviceaccount kiali -n ${ISTIO_NAMESPACE} --ignore-not-found=true
 oc delete configmap kiali -n ${ISTIO_NAMESPACE} --ignore-not-found=true
-oc delete secret kiali -n ${ISTIO_NAMESPACE} --ignore-not-found=true
-oc delete clusterrole kiali --ignore-not-found=true
-oc delete clusterrolebinding kiali --ignore-not-found=true
+oc delete secret kiali kiali-sa-token -n ${ISTIO_NAMESPACE} --ignore-not-found=true
+oc delete clusterrole kiali kiali-viewer --ignore-not-found=true
+oc delete clusterrolebinding kiali kiali-viewer --ignore-not-found=true
 
 # Step 4: Remove Istio CRs (CRITICAL: Must remove finalizers first!)
 info "=== Step 4: Removing Istio CRs with finalizer handling ==="
@@ -197,21 +213,16 @@ if helm list -n sail-operator 2>/dev/null | grep -q sail-operator; then
 fi
 oc delete namespace sail-operator --ignore-not-found=true
 
-# Step 8: Delete istio-system namespaces
-info "=== Step 8: Deleting istio-system namespaces ==="
+# Step 8: Delete istio-system namespace from mesh cluster only
+info "=== Step 8: Deleting istio-system namespace from mesh cluster ==="
 switch_cluster "${MESH_CONTEXT}"
 oc delete namespace ${ISTIO_NAMESPACE} --ignore-not-found=true
 
-switch_cluster "${MGMT_CONTEXT}"
-oc delete namespace ${ISTIO_NAMESPACE} --ignore-not-found=true
-
-# Step 9: Delete OAuth clients
-info "=== Step 9: Deleting OAuth clients ==="
-switch_cluster "${MGMT_CONTEXT}"
-oc delete oauthclient kiali-${ISTIO_NAMESPACE} --ignore-not-found=true
-
+# Step 9: Delete OAuth client from mesh cluster
+info "=== Step 9: Deleting OAuth client from mesh cluster ==="
 switch_cluster "${MESH_CONTEXT}"
-oc delete oauthclient kiali-${ISTIO_NAMESPACE} --ignore-not-found=true
+oc delete oauthclient kiali-${KIALI_NAMESPACE} --ignore-not-found=true
+info "OAuth client for mgmt cluster is automatically deleted with kiali-server namespace"
 
 # Step 10: Remove Istio and Sail CRDs from mesh cluster
 info "=== Step 10: Removing Istio and Sail CRDs from mesh cluster ==="

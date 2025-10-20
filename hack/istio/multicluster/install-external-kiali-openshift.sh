@@ -3,7 +3,7 @@
 ##############################################################################
 # install-external-kiali-openshift.sh
 #
-# # External Kiali on OpenShift - Setup Instructions
+# External Kiali on OpenShift - Setup Instructions
 #
 # This script sets up an "external control plane" architecture where Kiali
 # runs in a separate management cluster from the Istio service mesh.
@@ -15,298 +15,43 @@
 # │   Cluster 1: "mgmt"     │         │   Cluster 2: "mesh"     │
 # │   (Management)          │         │   (Service Mesh)        │
 # ├─────────────────────────┤         ├─────────────────────────┤
-# │ • Kiali ONLY            │◄────────┤ • Istio Control Plane   │
-# │                         │    │    │ • Istio Data Plane      │
-# │ • NO Istio              │    │    │ • Bookinfo App          │
-# │ • NO Prometheus         │    │    │ • Prometheus ◄──────────┼─── Istio metrics
-# │ • NO Grafana            │    │    │ • Jaeger                │
-# │ • NO Jaeger             │    └────┼─ Kiali queries          │
-# └─────────────────────────┘         └─────────────────────────┘
+# │ • Kiali Operator        │◄────────┤ • Istio Control Plane   │
+# │ • Kiali Server          │    │    │ • Istio Data Plane      │
+# │                         │    │    │ • Bookinfo App          │
+# │ Namespaces:             │    │    │ • Prometheus ◄──────────┼─── Istio metrics
+# │ - kiali-operator        │    │    │ • Jaeger                │
+# │ - istio-system          │    └────┼─ Kiali queries (HTTPS)  │
+# │                         │         │                         │
+# │ NO Istio components     │         │ Namespaces:             │
+# └─────────────────────────┘         │ - istio-system          │
+#                                     │ - bookinfo              │
+#                                     └─────────────────────────┘
 # ```
 #
 # ## Prerequisites
 #
-# 1. Two OpenShift clusters provisioned via Jenkins Hive
-# 2. Logged into both clusters with appropriate contexts named "mgmt" and "mesh"
-# 3. Cluster credentials and API URLs from Slackbot
-# 4. helm CLI installed
-# 5. oc CLI installed
-#
-# ## Manual Steps (if not using this script)
-#
-# ### Step 1: Login to Management Cluster
-#
-# ```bash
-# oc login <mgmt-api-url> -u=kubeadmin -p=<mgmt-password> --insecure-skip-tls-verify
-# oc config rename-context $(oc config current-context) mgmt
-# ```
-#
-# ### Step 2: Login to Mesh Cluster
-#
-# ```bash
-# oc login <mesh-api-url> -u=kubeadmin -p=<mesh-password> --insecure-skip-tls-verify
-# oc config rename-context $(oc config current-context) mesh
-# ```
-#
-# ### Step 3: Setup Certificate Authority (Shared)
-#
-# Create shared CA certificates for mTLS communication between clusters:
-#
-# ```bash
-# CERTS_DIR=/tmp/istio-multicluster-certs
-# mkdir -p ${CERTS_DIR}
-# cd ${CERTS_DIR}
-#
-# # Download Istio's cert generation Makefile
-# ISTIO_DIR=<path-to-istio>
-# make -f ${ISTIO_DIR}/tools/certs/Makefile.selfsigned.mk root-ca
-# make -f ${ISTIO_DIR}/tools/certs/Makefile.selfsigned.mk mgmt-cacerts
-# make -f ${ISTIO_DIR}/tools/certs/Makefile.selfsigned.mk mesh-cacerts
-# ```
-#
-# ### Step 4: Create istio-system namespace on Mesh Cluster
-#
-# ```bash
-# oc --context=mesh create namespace istio-system
-# oc --context=mesh label namespace istio-system topology.istio.io/network=network-mesh
-# ```
-#
-# ### Step 5: Install Certificates on Mesh Cluster
-#
-# ```bash
-# oc --context=mesh create secret generic cacerts -n istio-system \
-#   --from-file=${CERTS_DIR}/mesh/ca-cert.pem \
-#   --from-file=${CERTS_DIR}/mesh/ca-key.pem \
-#   --from-file=${CERTS_DIR}/mesh/root-cert.pem \
-#   --from-file=${CERTS_DIR}/mesh/cert-chain.pem
-# ```
-#
-# ### Step 6: Install Istio on Mesh Cluster
-#
-# Install Istio using Sail Operator with multi-cluster configuration:
-#
-# ```bash
-# # Install Sail Operator
-# oc --context=mesh apply -f - <<EOF
-# apiVersion: v1
-# kind: Namespace
-# metadata:
-#   name: sail-operator
-# EOF
-#
-# helm install sail-operator sail-operator \
-#   --kube-context mesh \
-#   --namespace sail-operator \
-#   --repository https://istio-release.storage.googleapis.com/charts \
-#   --wait
-#
-# # Create IstioCNI (required for OpenShift)
-# oc --context=mesh create namespace istio-cni
-#
-# # Note: Specify the same Istio version you plan to install
-# oc --context=mesh apply -f - <<EOF
-# apiVersion: sailoperator.io/v1
-# kind: IstioCNI
-# metadata:
-#   name: default
-# spec:
-#   version: v1.27.2
-#   namespace: istio-cni
-# EOF
-#
-# # Wait for IstioCNI to be ready
-# oc --context=mesh wait --for=condition=Ready istiocni/default --timeout=300s
-#
-# # Install Istio control plane
-# oc --context=mesh apply -f - <<EOF
-# apiVersion: sailoperator.io/v1alpha1
-# kind: Istio
-# metadata:
-#   name: default
-#   namespace: istio-system
-# spec:
-#   version: v1.27.2
-#   namespace: istio-system
-#   values:
-#     global:
-#       meshID: mesh-external
-#       multiCluster:
-#         clusterName: mesh
-#       network: network-mesh
-# EOF
-#
-# # Wait for Istio to be ready
-# oc --context=mesh wait --for=condition=Ready istio/default \
-#   -n istio-system --timeout=300s
-# ```
-#
-# ### Step 7: Install Observability Addons on Mesh Cluster
-#
-# ```bash
-# # Install Prometheus
-# oc --context=mesh apply -f \
-#   https://raw.githubusercontent.com/istio/istio/release-1.27/samples/addons/prometheus.yaml
-#
-# # Install Jaeger
-# oc --context=mesh apply -f \
-#   https://raw.githubusercontent.com/istio/istio/release-1.27/samples/addons/jaeger.yaml
-#
-# # Expose Prometheus via OpenShift route
-# oc --context=mesh expose service prometheus -n istio-system
-# ```
-#
-# ### Step 8: Create istio-system namespace on Management Cluster
-#
-# ```bash
-# oc --context=mgmt create namespace istio-system
-# ```
-#
-# ### Step 9: Install Observability Addons on Management Cluster
-#
-# Install Prometheus, Grafana, and Jaeger (without Istio):
-#
-# ```bash
-# # Install Prometheus
-# oc --context=mgmt apply -f \
-#   https://raw.githubusercontent.com/istio/istio/release-1.27/samples/addons/prometheus.yaml
-#
-# # Install Grafana
-# oc --context=mgmt apply -f \
-#   https://raw.githubusercontent.com/istio/istio/release-1.27/samples/addons/grafana.yaml
-#
-# # Install Jaeger
-# oc --context=mgmt apply -f \
-#   https://raw.githubusercontent.com/istio/istio/release-1.27/samples/addons/jaeger.yaml
-# ```
-#
-# ### Step 10: Configure Prometheus Federation
-#
-# Get the mesh cluster Prometheus route and configure federation:
-#
-# ```bash
-# # Get the mesh Prometheus external route
-# MESH_PROM_ROUTE=$(oc --context=mesh get route prometheus -n istio-system \
-#   -o jsonpath='{.spec.host}' 2>/dev/null || \
-#   oc --context=mesh get svc prometheus -n istio-system \
-#   -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-#
-# # Patch management cluster Prometheus to scrape from mesh cluster
-# oc --context=mgmt get configmap prometheus -n istio-system -o yaml > /tmp/prometheus-cm.yaml
-#
-# # Add scrape config for mesh cluster (manual edit required)
-# # Add this to the prometheus.yml section:
-# #
-# # - job_name: 'federate-mesh'
-# #   scrape_interval: 15s
-# #   honor_labels: true
-# #   metrics_path: '/federate'
-# #   params:
-# #     'match[]':
-# #       - '{__name__=~"istio_.*"}'
-# #   static_configs:
-# #     - targets: ['<MESH_PROM_ROUTE>:9090']
-#
-# oc --context=mgmt apply -f /tmp/prometheus-cm.yaml
-# oc --context=mgmt rollout restart deployment/prometheus -n istio-system
-# ```
-#
-# ### Step 11: Pull Kiali Helm Chart
-#
-# ```bash
-# helm repo add kiali https://kiali.org/helm-charts --force-update
-# helm repo update kiali
-# helm pull kiali/kiali-server --destination /tmp
-# TARBALL=$(ls -1 /tmp/kiali-server*.tgz | sort -V | tail -n1)
-# ```
-#
-# ### Step 12: Prepare Remote Cluster Secret
-#
-# Create resources in mesh cluster and secret in management cluster:
-#
-# ```bash
-# <kiali-repo>/hack/istio/multicluster/kiali-prepare-remote-cluster.sh \
-#   -c oc \
-#   --remote-cluster-name mesh \
-#   -kcc mgmt \
-#   -rcc mesh \
-#   -vo false \
-#   --allow-skip-tls-verify true \
-#   --kiali-resource-name kiali \
-#   -rcns istio-system \
-#   -kshc ${TARBALL}
-# ```
-#
-# ### Step 13: Install Kiali on Management Cluster
-#
-# ```bash
-# # Get the management cluster route URL
-# MGMT_ROUTE_URL="https://kiali-istio-system.$(oc --context=mgmt get \
-#   ingresses.config/cluster -o jsonpath='{.spec.domain}')"
-#
-# helm upgrade --install kiali-server ${TARBALL} \
-#   --kube-context mgmt \
-#   --namespace istio-system \
-#   --set auth.strategy=openshift \
-#   --set kiali_route_url="${MGMT_ROUTE_URL}" \
-#   --set kubernetes_config.cluster_name=mgmt \
-#   --set clustering.ignore_home_cluster=true \
-#   --set deployment.logger.log_level=trace \
-#   --set deployment.ingress.enabled=true \
-#   --set deployment.service_type=ClusterIP \
-#   --set external_services.tracing.enabled=true \
-#   --set external_services.prometheus.url=http://prometheus.istio-system:9090 \
-#   --set external_services.grafana.external_url=http://grafana.istio-system:3000 \
-#   --set external_services.tracing.external_url=http://tracing.istio-system/jaeger
-# ```
-#
-# ### Step 14: Configure OAuth for Mesh Cluster Access
-#
-# Create OAuth client in mesh cluster for Kiali authentication:
-#
-# ```bash
-# MGMT_ROUTE=$(oc --context=mgmt get route kiali -n istio-system \
-#   -o jsonpath='{.spec.host}')
-#
-# oc --context=mgmt get oauthclient kiali-istio-system -o json | \
-#   jq ".redirectURIs = [\"https://${MGMT_ROUTE}/api/auth/callback/mesh\"]" | \
-#   oc --context=mesh apply -f -
-# ```
-#
-# ### Step 15: Install Bookinfo on Mesh Cluster
-#
-# ```bash
-# oc --context=mesh create namespace bookinfo
-# oc --context=mesh label namespace bookinfo istio-injection=enabled
-#
-# oc --context=mesh apply -n bookinfo -f \
-#   https://raw.githubusercontent.com/istio/istio/release-1.27/samples/bookinfo/platform/kube/bookinfo.yaml
-#
-# oc --context=mesh apply -n bookinfo -f \
-#   https://raw.githubusercontent.com/istio/istio/release-1.27/samples/bookinfo/networking/bookinfo-gateway.yaml
-# ```
-#
-# ### Step 16: Access Kiali
-#
-# 1. Get the Kiali route:
-#    ```bash
-#    oc --context=mgmt get route kiali -n istio-system
-#    ```
-#
-# 2. Open browser to the route URL
-# 3. Login with management cluster kubeadmin credentials
-# 4. In Kiali UI, connect to "mesh" cluster using mesh cluster kubeadmin credentials
-# 5. You should now see the mesh cluster's Istio resources and Bookinfo app
+# 1. Two OpenShift clusters provisioned
+# 2. Logged into both clusters with kubectl contexts named "mgmt" and "mesh"
+# 3. helm CLI installed
+# 4. oc CLI installed
+# 5. jq CLI installed
 #
 # ## What This Script Does
 #
-# This script automates all the manual steps above:
-# 1. Validates that both cluster contexts exist
-# 2. Sets up shared CA certificates
-# 3. Installs Istio on the mesh cluster only
-# 4. Installs observability addons on both clusters
-# 5. Configures Prometheus federation from mesh to management cluster
-# 6. Deploys Kiali on the management cluster with remote cluster access
-# 7. Optionally installs Bookinfo demo on mesh cluster
+# 1. Creates CA certificates for Istio on mesh cluster
+# 2. Installs Istio (Sail Operator) on mesh cluster with Prometheus and Jaeger
+# 3. Exposes Prometheus via HTTPS route for external access
+# 4. Creates remote cluster resources on mesh cluster (using Kiali Server helm chart)
+# 5. Creates remote cluster secret on mgmt cluster for Kiali to access mesh
+# 6. Installs Kiali Operator on mgmt cluster (in kiali-operator namespace)
+# 7. Creates Kiali CR which deploys Kiali Server (in kiali-server namespace)
+# 8. Optionally installs Bookinfo demo on mesh cluster
+#
+# Key Features:
+# - Management cluster has ONLY Kiali (in kiali-operator and kiali-server namespaces)
+# - All Istio components and observability tools run on mesh cluster
+# - Kiali connects to Prometheus via HTTPS OpenShift route
+# - Remote cluster access uses service account token authentication
 #
 # ## Usage
 #
@@ -343,10 +88,13 @@ MESH_USER="kiali"
 MESH_PASS="kiali"
 INSTALL_BOOKINFO="true"
 ISTIO_NAMESPACE="istio-system"
+KIALI_OPERATOR_NAMESPACE="kiali-operator"
+KIALI_NAMESPACE="istio-system"
 BOOKINFO_NAMESPACE="bookinfo"
 MESH_ID="mesh-external"
 NETWORK_MESH="network-mesh"
 CERTS_DIR="/tmp/istio-multicluster-certs"
+KIALI_OPERATOR_HELM_CHARTS=""
 KIALI_SERVER_HELM_CHARTS=""
 
 # Parse command line arguments
@@ -470,9 +218,21 @@ switch_cluster() {
   info "Switched to cluster context: ${context}"
 }
 
-# Step 1: Setup Certificate Authority
-info "=== Step 1: Setting up Certificate Authority ==="
-source ${SCRIPT_DIR}/setup-ca.sh
+# Step 1: Setup Certificate Authority (mesh cluster only)
+info "=== Step 1: Setting up Certificate Authority for mesh cluster ==="
+
+# Create root CA and mesh cluster certs (no certs needed for mgmt since no Istio there)
+mkdir -p "${CERTS_DIR}"
+if [ ! -d "${CERTS_DIR}" ]; then
+  error "Cannot create certs directory - ${CERTS_DIR}"
+fi
+
+pushd "${CERTS_DIR}" > /dev/null
+make -f ${ISTIO_DIR}/tools/certs/Makefile.selfsigned.mk root-ca
+make -f ${ISTIO_DIR}/tools/certs/Makefile.selfsigned.mk mesh-cacerts
+popd > /dev/null
+
+info "Certificates created for mesh cluster"
 
 # Step 2: Create istio-system namespace on mesh cluster
 info "=== Step 2: Creating istio-system namespace on mesh cluster ==="
@@ -528,9 +288,10 @@ info "Waiting for IstioCNI to be ready..."
 oc --context=${MESH_CONTEXT} wait --for=condition=Ready istiocni/default --timeout=300s || \
   info "IstioCNI may still be initializing"
 
-# Step 5: Create istio-system namespace on management cluster
-info "=== Step 5: Creating istio-system namespace on management cluster ==="
+# Step 5: Create Kiali Operator and Kiali namespace on management cluster
+info "=== Step 5: Creating namespaces on management cluster ==="
 switch_cluster "${MGMT_CONTEXT}"
+oc create namespace ${KIALI_OPERATOR_NAMESPACE} --dry-run=client -o yaml | oc apply -f -
 oc create namespace ${ISTIO_NAMESPACE} --dry-run=client -o yaml | oc apply -f -
 
 # Step 6: Management cluster - no observability addons needed
@@ -567,69 +328,157 @@ fi
 
 info "Mesh Prometheus accessible at: https://${MESH_PROM_ADDRESS}"
 
-# Step 8: Pull Kiali Helm Chart if not provided or if it's a repo reference
-if [ -z "${KIALI_SERVER_HELM_CHARTS}" ] || [ "${KIALI_SERVER_HELM_CHARTS}" == "kiali/kiali-server" ] || [ "${KIALI_SERVER_HELM_CHARTS}" == "kiali-server" ]; then
-  info "=== Step 8: Pulling Kiali Helm Chart ==="
-  helm repo add kiali https://kiali.org/helm-charts --force-update
-  helm repo update kiali
-  helm pull kiali/kiali-server --destination /tmp
-  KIALI_SERVER_HELM_CHARTS=$(ls -1 /tmp/kiali-server*.tgz | sort -V | tail -n1)
-  info "Using Kiali helm chart: ${KIALI_SERVER_HELM_CHARTS}"
+# Step 8: Pull Kiali Helm Charts if not provided
+info "=== Step 8: Pulling Kiali Helm Charts ==="
+helm repo add kiali https://kiali.org/helm-charts --force-update
+helm repo update kiali
+
+# Pull Kiali Operator helm chart if not provided
+if [ -z "${KIALI_OPERATOR_HELM_CHARTS}" ]; then
+  helm pull kiali/kiali-operator --destination /tmp
+  KIALI_OPERATOR_HELM_CHARTS=$(ls -1 /tmp/kiali-operator*.tgz | sort -V | tail -n1)
+  info "Using Kiali Operator helm chart: ${KIALI_OPERATOR_HELM_CHARTS}"
 else
-  info "=== Step 8: Using provided Kiali Helm Chart: ${KIALI_SERVER_HELM_CHARTS} ==="
+  info "Using provided Kiali Operator Helm Chart: ${KIALI_OPERATOR_HELM_CHARTS}"
 fi
 
-# Step 9: Prepare remote cluster secret
-info "=== Step 9: Preparing remote cluster secret ==="
+# Pull Kiali Server helm chart if not provided (needed for kiali-prepare-remote-cluster.sh)
+if [ -z "${KIALI_SERVER_HELM_CHARTS}" ] || [ "${KIALI_SERVER_HELM_CHARTS}" == "kiali/kiali-server" ] || [ "${KIALI_SERVER_HELM_CHARTS}" == "kiali-server" ]; then
+  helm pull kiali/kiali-server --destination /tmp
+  KIALI_SERVER_HELM_CHARTS=$(ls -1 /tmp/kiali-server*.tgz | sort -V | tail -n1)
+  info "Using Kiali Server helm chart: ${KIALI_SERVER_HELM_CHARTS}"
+else
+  info "Using provided Kiali Server Helm Chart: ${KIALI_SERVER_HELM_CHARTS}"
+fi
+
+# Step 9a: Create remote cluster resources on mesh cluster using Server helm chart
+info "=== Step 9a: Creating remote cluster resources on mesh cluster ==="
+switch_cluster "${MESH_CONTEXT}"
+
+# Install Kiali Server helm chart in remote_cluster_resources_only mode
+# This creates the service account, clusterrole, and clusterrolebinding on mesh cluster
+# Install in istio-system namespace where the resources will be created
+# Provide redirect_uris to create the OAuth client on the remote cluster
+MGMT_DOMAIN=$(oc --context=${MGMT_CONTEXT} get ingresses.config/cluster -o jsonpath='{.spec.domain}')
+KIALI_REDIRECT_URI="https://kiali-${KIALI_NAMESPACE}.${MGMT_DOMAIN}/api/auth/callback/mesh"
+helm upgrade --install kiali-remote-resources ${KIALI_SERVER_HELM_CHARTS} \
+  --namespace ${ISTIO_NAMESPACE} \
+  --set auth.strategy=openshift \
+  --set "auth.openshift.redirect_uris[0]=${KIALI_REDIRECT_URI}" \
+  --set deployment.remote_cluster_resources_only=true \
+  --set deployment.instance_name=kiali \
+  --set deployment.namespace=${ISTIO_NAMESPACE} \
+  --set deployment.view_only_mode=false || \
+  error "Failed to create remote cluster resources"
+
+info "Remote cluster resources created on mesh cluster"
+
+# Create service account token secret for the remote cluster
+# The SA is in ${ISTIO_NAMESPACE} so the token secret must also be there
+# Name it "kiali" so the kiali-prepare-remote-cluster.sh script can find it
+info "Creating service account token secret in ${ISTIO_NAMESPACE} namespace on mesh cluster..."
+oc --context=${MESH_CONTEXT} apply -f - <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kiali
+  namespace: ${ISTIO_NAMESPACE}
+  annotations:
+    kubernetes.io/service-account.name: kiali
+type: kubernetes.io/service-account-token
+EOF
+
+# Wait for token to be generated
+info "Waiting for service account token to be generated..."
+for i in {1..30}; do
+  TOKEN=$(oc --context=${MESH_CONTEXT} get secret kiali -n ${ISTIO_NAMESPACE} -o jsonpath='{.data.token}' 2>/dev/null || echo "")
+  if [ -n "${TOKEN}" ]; then
+    info "Service account token generated"
+    break
+  fi
+  sleep 2
+done
+
+if [ -z "${TOKEN}" ]; then
+  error "Service account token was not generated"
+fi
+
+# Step 9b: Create remote cluster secret on mgmt cluster
+info "=== Step 9b: Creating remote cluster secret on mgmt cluster ==="
+
+# Use kiali-prepare-remote-cluster.sh ONLY to create the secret (not the remote resources)
 ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh \
   -c oc \
   --remote-cluster-name mesh \
   -kcc ${MGMT_CONTEXT} \
   -rcc ${MESH_CONTEXT} \
+  -kcn ${KIALI_NAMESPACE} \
   -vo false \
   --allow-skip-tls-verify true \
   --kiali-resource-name kiali \
   -rcns ${ISTIO_NAMESPACE} \
+  --process-kiali-secret true \
+  --process-remote-resources false \
   -kshc ${KIALI_SERVER_HELM_CHARTS} || \
-  error "Failed to prepare remote cluster secret"
+  error "Failed to create remote cluster secret"
 
-# Step 10: Install Kiali on management cluster
-info "=== Step 10: Installing Kiali on management cluster ==="
+# Step 10: Install Kiali Operator and CR on management cluster
+info "=== Step 10: Installing Kiali Operator on management cluster ==="
 switch_cluster "${MGMT_CONTEXT}"
 
 # Get the management cluster route URL
-MGMT_ROUTE_URL="https://kiali-${ISTIO_NAMESPACE}.$(oc get ingresses.config/cluster -o jsonpath='{.spec.domain}')"
+MGMT_ROUTE_URL="https://kiali-${KIALI_NAMESPACE}.${MGMT_DOMAIN}"
 info "Kiali route URL will be: ${MGMT_ROUTE_URL}"
 
 # Configure Kiali to use the mesh cluster's Prometheus (via external route)
 MESH_PROM_URL="https://${MESH_PROM_ADDRESS}"
 info "Kiali will connect to mesh Prometheus at: ${MESH_PROM_URL}"
 
+# Install Kiali Operator and create Kiali CR
 # Note: Grafana and Jaeger are disabled since they don't exist on mgmt cluster
 # All observability tools are on the mesh cluster
 # Prometheus uses OpenShift route with self-signed cert, so skip TLS verification
-helm upgrade --install kiali-server ${KIALI_SERVER_HELM_CHARTS} \
-  --namespace ${ISTIO_NAMESPACE} \
-  --set auth.strategy=openshift \
-  --set kiali_route_url="${MGMT_ROUTE_URL}" \
-  --set kubernetes_config.cluster_name=mgmt \
-  --set clustering.ignore_home_cluster=true \
-  --set deployment.logger.log_level=trace \
-  --set deployment.ingress.enabled=true \
-  --set deployment.service_type=ClusterIP \
-  --set external_services.tracing.enabled=false \
-  --set external_services.prometheus.url="${MESH_PROM_URL}" \
-  --set external_services.prometheus.auth.insecure_skip_verify=true \
-  --set external_services.grafana.enabled=false || \
-  error "Failed to install Kiali"
+info "Installing Kiali Operator in ${KIALI_OPERATOR_NAMESPACE} namespace..."
+helm upgrade --install kiali-operator ${KIALI_OPERATOR_HELM_CHARTS} \
+  --namespace ${KIALI_OPERATOR_NAMESPACE} \
+  --set cr.create=true \
+  --set cr.namespace=${KIALI_NAMESPACE} \
+  --set cr.spec.auth.strategy=openshift \
+  --set cr.spec.clustering.ignore_home_cluster=true \
+  --set cr.spec.deployment.cluster_wide_access=true \
+  --set cr.spec.deployment.logger.log_level=trace \
+  --set cr.spec.deployment.namespace=${KIALI_NAMESPACE} \
+  --set cr.spec.external_services.custom_dashboards.enabled=true \
+  --set cr.spec.external_services.grafana.enabled=false \
+  --set cr.spec.external_services.prometheus.url="${MESH_PROM_URL}" \
+  --set cr.spec.external_services.prometheus.auth.insecure_skip_verify=true \
+  --set cr.spec.external_services.tracing.enabled=false \
+  --set cr.spec.kiali_route_url="${MGMT_ROUTE_URL}" \
+  --set cr.spec.kubernetes_config.cluster_name=mgmt \
+  --set cr.spec.server.web_root=/ || \
+  error "Failed to install Kiali Operator"
 
-# Step 11: Configure OAuth for mesh cluster access
-info "=== Step 11: Configuring OAuth for mesh cluster access ==="
+info "Waiting for Kiali operator to be ready..."
+oc wait --for=condition=available --timeout=300s deployment/kiali-operator -n ${KIALI_OPERATOR_NAMESPACE} || \
+  info "Kiali operator may still be initializing"
 
-# Wait for Kiali route to be created
+info "Waiting for Kiali CR to be ready..."
+for i in {1..60}; do
+  KIALI_STATUS=$(oc get kiali kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.status.conditions[?(@.type=="Successful")].status}' 2>/dev/null || echo "")
+  if [ "${KIALI_STATUS}" == "True" ]; then
+    info "Kiali CR is ready"
+    break
+  fi
+  sleep 5
+done
+
+# Step 11: Verify Kiali installation
+info "=== Step 11: Verifying Kiali installation ==="
+
+# Wait for Kiali route to be created by the operator
 info "Waiting for Kiali route to be created..."
 for i in {1..30}; do
-  MGMT_ROUTE=$(oc --context=${MGMT_CONTEXT} get route kiali -n ${ISTIO_NAMESPACE} -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
+  MGMT_ROUTE=$(oc --context=${MGMT_CONTEXT} get route kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
   if [ -n "${MGMT_ROUTE}" ]; then
     info "Kiali route created: ${MGMT_ROUTE}"
     break
@@ -638,10 +487,14 @@ for i in {1..30}; do
 done
 
 if [ -z "${MGMT_ROUTE}" ]; then
-  info "WARNING: Could not get Kiali route. OAuth configuration may need to be done manually."
+  info "WARNING: Could not get Kiali route."
 else
-  # Create OAuth client in mesh cluster
-  oc --context=${MGMT_CONTEXT} get oauthclient kiali-${ISTIO_NAMESPACE} -o json 2>/dev/null | \
+  info "Kiali will be accessible at: https://${MGMT_ROUTE}"
+  
+  # Create OAuth client on mesh cluster for multi-cluster OpenShift authentication
+  # This allows Kiali to authenticate to the mesh cluster's OpenShift API
+  info "Creating OAuth client on mesh cluster..."
+  oc --context=${MGMT_CONTEXT} get oauthclient kiali-${KIALI_NAMESPACE} -o json 2>/dev/null | \
     jq ".redirectURIs = [\"https://${MGMT_ROUTE}/api/auth/callback/mesh\"]" | \
     oc --context=${MESH_CONTEXT} apply -f - || \
     info "OAuth client configuration may need manual adjustment"
@@ -669,25 +522,28 @@ fi
 info "=== Installation Complete ==="
 info ""
 info "Management Cluster (${MGMT_CONTEXT}):"
+info "  - Kiali Operator: ${KIALI_OPERATOR_NAMESPACE} namespace"
+info "  - Kiali Server: ${ISTIO_NAMESPACE} namespace"
 info "  - Kiali URL: https://${MGMT_ROUTE}"
-info "  - No other components installed (Kiali only)"
+info "  - Authentication: OpenShift OAuth"
 info ""
 info "Mesh Cluster (${MESH_CONTEXT}):"
-info "  - Istio Control Plane: ${ISTIO_NAMESPACE}"
-info "  - Prometheus: ${MESH_PROM_URL} (used by Kiali)"
+info "  - Istio Control Plane: ${ISTIO_NAMESPACE} namespace"
+info "  - Prometheus: ${MESH_PROM_URL}"
 info "  - Jaeger: ${ISTIO_NAMESPACE} namespace"
+info "  - Remote access: Service account 'kiali' in ${ISTIO_NAMESPACE}"
 if [ "${INSTALL_BOOKINFO}" == "true" ]; then
-  info "  - Bookinfo Application: ${BOOKINFO_NAMESPACE}"
+  info "  - Bookinfo Application: ${BOOKINFO_NAMESPACE} namespace"
 fi
 info ""
-info "Architecture:"
-info "  - Management cluster has ONLY Kiali"
-info "  - All Istio components and observability tools are on the mesh cluster"
-info "  - Kiali connects to Prometheus on mesh cluster via HTTPS route (no authentication)"
+info "Configuration:"
+info "  - Kiali connects to mesh Prometheus via HTTPS route (insecure_skip_verify=true)"
+info "  - Remote cluster secret: kiali-remote-cluster-secret-mesh in ${KIALI_NAMESPACE}"
+info "  - Clustering: ignore_home_cluster=true, cluster_name=mgmt"
 info ""
 info "Next Steps:"
 info "1. Open browser to https://${MGMT_ROUTE}"
-info "2. Login with management cluster kubeadmin credentials"
-info "3. In Kiali UI, connect to 'mesh' cluster using mesh cluster kubeadmin credentials"
-info "4. Verify you can see Istio resources and applications from the mesh cluster"
+info "2. Login with OpenShift OAuth (management cluster credentials)"
+info "3. Kiali will automatically connect to the mesh cluster using the remote cluster secret"
+info "4. Verify you can see Istio resources and Bookinfo application from the mesh cluster"
 
