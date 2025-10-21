@@ -302,6 +302,7 @@ type PersesConfig struct {
 	InternalURL    string            `yaml:"internal_url" json:"internalURL"` // replaces the old in_cluster_url
 	IsCore         bool              `yaml:"is_core,omitempty" json:"isCore,omitempty"`
 	Project        string            `yaml:"project,omitempty" json:"project,omitempty"`
+	URLFormat      string            `yaml:"url_format,omitempty" json:"urlFormat,omitempty"` // URL format: "perses" (default) or "openshift"
 }
 
 type TempoConfig struct {
@@ -819,10 +820,9 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				Enabled:     false,
-				InternalURL: "http://perses.istio-system:4000",
-				IsCore:      false,
-				Project:     "istio",
+				Enabled: false,
+				IsCore:  false,
+				Project: "istio",
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{
@@ -1242,9 +1242,6 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	if conf.ExternalServices.Tracing.XURL != "" {
 		conf.ExternalServices.Tracing.ExternalURL = conf.ExternalServices.Tracing.XURL
 		log.Info("DEPRECATION NOTICE: 'external_services.tracing.url' has been deprecated - switch to 'external_services.tracing.external_url'")
-	}
-	if conf.ExternalServices.Perses.Enabled && conf.ExternalServices.Perses.Auth.Type != AuthTypeBasic {
-		log.Errorf("Perses authentication not supported %s", conf.ExternalServices.Perses.Auth.Type)
 	}
 
 	// Validate tracing min and max values
