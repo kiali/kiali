@@ -289,13 +289,15 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 
     const workloadEntryLinks = nodeData.hasWorkloadEntry.map(we => (
       <div>
-        {getLink(nodeData, NodeType.WORKLOAD, () => ({
-          link: `/namespaces/${encodeURIComponent(nodeData.namespace)}/istio/${weGVK.Group}/${weGVK.Version}/${
-            weGVK.Kind
-          }/${encodeURIComponent(we.name)}`,
-          displayName: we.name,
-          key: `${nodeData.namespace}.wle.${we.name}`
-        }))}
+        {
+          getLink(nodeData, NodeType.WORKLOAD, () => ({
+            link: `/namespaces/${encodeURIComponent(nodeData.namespace)}/istio/${weGVK.Group}/${weGVK.Version}/${
+              weGVK.Kind
+            }/${encodeURIComponent(we.name)}`,
+            displayName: we.name,
+            key: `${nodeData.namespace}.wle.${we.name}`
+          })).elem
+        }
       </div>
     ));
 
