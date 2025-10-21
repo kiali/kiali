@@ -156,7 +156,7 @@ describe('SummaryPanelNodeComponent', () => {
     expect(rankText.length).toEqual(1);
   });
 
-  it('always renders NT badge for testing', () => {
+  it('does not render network traffic badge when netobserv is not available', () => {
     const wrapper = mount(
       <Provider store={store}>
         <MemoryRouter>
@@ -164,6 +164,18 @@ describe('SummaryPanelNodeComponent', () => {
         </MemoryRouter>
       </Provider>
     );
-    expect(wrapper.find('NTBadge').exists()).toBeTruthy();
+    // Network Traffic badge should not exist in upstream Kiali (NetObserv is OSSM Console only)
+    const ntBadge = wrapper.find('PFBadge').findWhere(badge => {
+      const props = badge.props();
+      return props.badge?.name === 'NetworkTraffic';
+    });
+    expect(ntBadge.exists()).toBeFalsy();
+
+    // Network traffic link should not exist
+    const ntLink = wrapper.find('a').findWhere(a => {
+      const text = a.text();
+      return text.includes('network traffic');
+    });
+    expect(ntLink.exists()).toBeFalsy();
   });
 });
