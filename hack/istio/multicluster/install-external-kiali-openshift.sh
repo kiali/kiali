@@ -96,10 +96,6 @@ SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 # Default values
 MGMT_CONTEXT="mgmt"
 MESH_CONTEXT="mesh"
-MGMT_USER="kiali"
-MGMT_PASS="kiali"
-MESH_USER="kiali"
-MESH_PASS="kiali"
 INSTALL_BOOKINFO="true"
 ISTIO_NAMESPACE="istio-system"
 KIALI_OPERATOR_NAMESPACE="kiali-operator"
@@ -123,22 +119,6 @@ while [[ $# -gt 0 ]]; do
       MESH_CONTEXT="$2"
       shift 2
       ;;
-    --mgmt-user)
-      MGMT_USER="$2"
-      shift 2
-      ;;
-    --mgmt-pass)
-      MGMT_PASS="$2"
-      shift 2
-      ;;
-    --mesh-user)
-      MESH_USER="$2"
-      shift 2
-      ;;
-    --mesh-pass)
-      MESH_PASS="$2"
-      shift 2
-      ;;
     --install-bookinfo)
       INSTALL_BOOKINFO="$2"
       shift 2
@@ -157,10 +137,6 @@ while [[ $# -gt 0 ]]; do
       echo "Options:"
       echo "  --mgmt-context <name>              Management cluster context name (default: mgmt)"
       echo "  --mesh-context <name>              Mesh cluster context name (default: mesh)"
-      echo "  --mgmt-user <user>                 Management cluster username (default: kiali)"
-      echo "  --mgmt-pass <pass>                 Management cluster password (default: kiali)"
-      echo "  --mesh-user <user>                 Mesh cluster username (default: kiali)"
-      echo "  --mesh-pass <pass>                 Mesh cluster password (default: kiali)"
       echo "  --install-bookinfo <true|false>    Install Bookinfo demo (default: true)"
       echo "  --kiali-server-helm-charts <path>  Path to Kiali helm chart tarball (default: downloads latest)"
       echo "  --remote-resources-installer <helm|operator>"
