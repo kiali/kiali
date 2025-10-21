@@ -125,17 +125,32 @@ oc delete namespace ${BOOKINFO_NAMESPACE} --ignore-not-found=true
 # Step 3: Delete Kiali remote cluster resources from mesh cluster
 info "=== Step 3: Deleting Kiali remote cluster resources from mesh cluster ==="
 
-# Uninstall the remote resources helm release (installed in kiali-server namespace on mesh)
+# Try to delete Kiali CR if it exists (operator method)
+info "Checking for Kiali CR on mesh cluster..."
+oc delete kiali kiali -n ${KIALI_NAMESPACE} --ignore-not-found=true --timeout=60s 2>/dev/null || \
+  info "No Kiali CR found or already deleted"
+
+# Try to uninstall Kiali Operator from mesh cluster (operator method)
+if helm list -n ${KIALI_OPERATOR_NAMESPACE} 2>/dev/null | grep -q kiali-operator; then
+  info "Uninstalling Kiali Operator helm release from mesh cluster..."
+  helm uninstall kiali-operator -n ${KIALI_OPERATOR_NAMESPACE} || info "Helm uninstall completed with warnings"
+fi
+
+# Delete kiali-operator namespace on mesh cluster
+info "Deleting kiali-operator namespace from mesh cluster..."
+oc delete namespace ${KIALI_OPERATOR_NAMESPACE} --ignore-not-found=true
+
+# Try to uninstall the remote resources helm release (helm method)
 if helm list -n ${KIALI_NAMESPACE} 2>/dev/null | grep -q kiali-remote-resources; then
-  info "Uninstalling Kiali remote resources helm release..."
+  info "Uninstalling Kiali remote resources helm release from mesh cluster..."
   helm uninstall kiali-remote-resources -n ${KIALI_NAMESPACE} || info "Helm uninstall completed with warnings"
 fi
 
-# Delete kiali-server namespace on mesh cluster (contains the remote resources)
+# Delete kiali-server namespace on mesh cluster
 info "Deleting kiali-server namespace from mesh cluster..."
 oc delete namespace ${KIALI_NAMESPACE} --ignore-not-found=true
 
-# Clean up any remaining cluster-scoped resources (in case they weren't managed by helm)
+# Clean up any remaining cluster-scoped resources (in case they weren't managed by helm/operator)
 oc delete clusterrole kiali kiali-viewer --ignore-not-found=true
 oc delete clusterrolebinding kiali kiali-viewer --ignore-not-found=true
 

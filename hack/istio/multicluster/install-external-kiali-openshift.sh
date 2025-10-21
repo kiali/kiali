@@ -25,7 +25,10 @@
 # │ NO Istio components     │         │ Namespaces:             │
 # └─────────────────────────┘         │ - istio-system          │
 #                                     │ - kiali-server          │
+#                                     │ - kiali-operator*       │
 #                                     │ - bookinfo              │
+#                                     │ * only if using operator│
+#                                     │   for remote resources  │
 #                                     └─────────────────────────┘
 # ```
 #
@@ -42,7 +45,7 @@
 # 1. Creates CA certificates for Istio on mesh cluster
 # 2. Installs Istio (Sail Operator) on mesh cluster with Prometheus and Jaeger
 # 3. Exposes Prometheus via HTTPS route for external access
-# 4. Creates remote cluster resources on mesh cluster (using Kiali Server helm chart)
+# 4. Creates remote cluster resources on mesh cluster (via Operator or Server helm chart)
 # 5. Creates remote cluster secret on mgmt cluster for Kiali to access mesh
 # 6. Installs Kiali Operator on mgmt cluster (in kiali-operator namespace)
 # 7. Creates Kiali CR which deploys Kiali Server (in kiali-server namespace)
@@ -53,14 +56,24 @@
 # - All Istio components and observability tools run on mesh cluster
 # - Kiali connects to Prometheus via HTTPS OpenShift route
 # - Remote cluster access uses service account token authentication
+# - Flexible remote resource creation (operator or helm chart)
 #
 # ## Usage
 #
 # ```bash
 # # After provisioning clusters and renaming contexts to "mgmt" and "mesh":
+# 
+# # Using operator for remote resources (default):
 # ./install-external-kiali-openshift.sh \
 #   --mgmt-context mgmt \
 #   --mesh-context mesh \
+#   --install-bookinfo true
+#
+# # Or using helm chart for remote resources:
+# ./install-external-kiali-openshift.sh \
+#   --mgmt-context mgmt \
+#   --mesh-context mesh \
+#   --remote-resources-installer helm \
 #   --install-bookinfo true
 # ```
 #
@@ -97,6 +110,7 @@ NETWORK_MESH="network-mesh"
 CERTS_DIR="/tmp/istio-multicluster-certs"
 KIALI_OPERATOR_HELM_CHARTS=""
 KIALI_SERVER_HELM_CHARTS=""
+REMOTE_RESOURCES_INSTALLER="operator"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -133,6 +147,10 @@ while [[ $# -gt 0 ]]; do
       KIALI_SERVER_HELM_CHARTS="$2"
       shift 2
       ;;
+    --remote-resources-installer)
+      REMOTE_RESOURCES_INSTALLER="$2"
+      shift 2
+      ;;
     --help)
       echo "Usage: $0 [options]"
       echo ""
@@ -145,6 +163,8 @@ while [[ $# -gt 0 ]]; do
       echo "  --mesh-pass <pass>                 Mesh cluster password (default: kiali)"
       echo "  --install-bookinfo <true|false>    Install Bookinfo demo (default: true)"
       echo "  --kiali-server-helm-charts <path>  Path to Kiali helm chart tarball (default: downloads latest)"
+      echo "  --remote-resources-installer <helm|operator>"
+      echo "                                     Method to create remote cluster resources (default: operator)"
       echo "  --help                             Show this help message"
       exit 0
       ;;
@@ -175,6 +195,10 @@ fi
 
 if ! command -v helm &> /dev/null; then
   error "helm is not installed or not in PATH"
+fi
+
+if [ "${REMOTE_RESOURCES_INSTALLER}" != "helm" ] && [ "${REMOTE_RESOURCES_INSTALLER}" != "operator" ]; then
+  error "Invalid value for --remote-resources-installer: ${REMOTE_RESOURCES_INSTALLER}. Must be 'helm' or 'operator'"
 fi
 
 if ! oc config get-contexts "${MGMT_CONTEXT}" &> /dev/null; then
@@ -352,34 +376,74 @@ else
   info "Using provided Kiali Server Helm Chart: ${KIALI_SERVER_HELM_CHARTS}"
 fi
 
-# Step 9a: Create remote cluster resources on mesh cluster using Server helm chart
-info "=== Step 9a: Creating remote cluster resources on mesh cluster ==="
+# Step 9a: Create remote cluster resources on mesh cluster
+info "=== Step 9a: Creating remote cluster resources on mesh cluster (using ${REMOTE_RESOURCES_INSTALLER}) ==="
 switch_cluster "${MESH_CONTEXT}"
-
-# Install Kiali Server helm chart in remote_cluster_resources_only mode
-# This creates the service account, clusterrole, and clusterrolebinding on mesh cluster
-# Install in kiali-server namespace (create it first) to match where Kiali is deployed on mgmt
-# This ensures OAuth client name matches: kiali-kiali-server on both clusters
-oc --context=${MESH_CONTEXT} create namespace ${KIALI_NAMESPACE} --dry-run=client -o yaml | oc apply -f -
 
 MGMT_DOMAIN=$(oc --context=${MGMT_CONTEXT} get ingresses.config/cluster -o jsonpath='{.spec.domain}')
 KIALI_REDIRECT_URI="https://kiali-${KIALI_NAMESPACE}.${MGMT_DOMAIN}/api/auth/callback/mesh"
-helm upgrade --install kiali-remote-resources ${KIALI_SERVER_HELM_CHARTS} \
-  --namespace ${KIALI_NAMESPACE} \
-  --set auth.strategy=openshift \
-  --set "auth.openshift.redirect_uris[0]=${KIALI_REDIRECT_URI}" \
-  --set deployment.remote_cluster_resources_only=true \
-  --set deployment.instance_name=kiali \
-  --set deployment.namespace=${KIALI_NAMESPACE} \
-  --set deployment.view_only_mode=false || \
-  error "Failed to create remote cluster resources"
 
-info "Remote cluster resources created on mesh cluster"
+if [ "${REMOTE_RESOURCES_INSTALLER}" == "helm" ]; then
+  # Method 1: Use Kiali Server helm chart in remote_cluster_resources_only mode
+  info "Using Server helm chart to create remote cluster resources..."
+  
+  # Create kiali-server namespace on mesh cluster
+  oc --context=${MESH_CONTEXT} create namespace ${KIALI_NAMESPACE} --dry-run=client -o yaml | oc apply -f -
+  
+  # Install Server helm chart with remote_cluster_resources_only=true
+  helm upgrade --install kiali-remote-resources ${KIALI_SERVER_HELM_CHARTS} \
+    --namespace ${KIALI_NAMESPACE} \
+    --set auth.strategy=openshift \
+    --set "auth.openshift.redirect_uris[0]=${KIALI_REDIRECT_URI}" \
+    --set deployment.remote_cluster_resources_only=true \
+    --set deployment.instance_name=kiali \
+    --set deployment.namespace=${KIALI_NAMESPACE} \
+    --set deployment.view_only_mode=false || \
+    error "Failed to create remote cluster resources via helm"
+    
+  info "Remote cluster resources created via Server helm chart"
+  
+else
+  # Method 2: Use Kiali Operator to create remote cluster resources
+  info "Using Kiali Operator to create remote cluster resources..."
+  
+  # Create namespaces on mesh cluster
+  oc --context=${MESH_CONTEXT} create namespace ${KIALI_OPERATOR_NAMESPACE} --dry-run=client -o yaml | oc apply -f -
+  oc --context=${MESH_CONTEXT} create namespace ${KIALI_NAMESPACE} --dry-run=client -o yaml | oc apply -f -
+  
+  # Install Kiali Operator on mesh cluster
+  info "Installing Kiali Operator on mesh cluster..."
+  helm upgrade --install kiali-operator ${KIALI_OPERATOR_HELM_CHARTS} \
+    --namespace ${KIALI_OPERATOR_NAMESPACE} \
+    --set cr.create=true \
+    --set cr.namespace=${KIALI_NAMESPACE} \
+    --set cr.spec.auth.strategy=openshift \
+    --set "cr.spec.auth.openshift.redirect_uris[0]=${KIALI_REDIRECT_URI}" \
+    --set cr.spec.deployment.instance_name=kiali \
+    --set cr.spec.deployment.namespace=${KIALI_NAMESPACE} \
+    --set cr.spec.deployment.remote_cluster_resources_only=true \
+    --set cr.spec.deployment.view_only_mode=false || \
+    error "Failed to install Kiali Operator on mesh cluster"
+  
+  info "Waiting for Kiali operator on mesh to be ready..."
+  oc wait --for=condition=available --timeout=300s deployment/kiali-operator -n ${KIALI_OPERATOR_NAMESPACE} || \
+    info "Kiali operator on mesh may still be initializing"
+  
+  info "Remote cluster resources created via Kiali Operator"
+fi
 
 # Create service account token secret for the remote cluster
-# The SA is in ${KIALI_NAMESPACE} so the token secret must also be there
-# Name it "kiali" so the kiali-prepare-remote-cluster.sh script can find it
-info "Creating service account token secret in ${KIALI_NAMESPACE} namespace on mesh cluster..."
+# The SA name depends on the installation method:
+# - Operator method: creates SA named "kiali-service-account"
+# - Helm method: creates SA named "kiali"
+# Name the secret "kiali" so the kiali-prepare-remote-cluster.sh script can find it
+if [ "${REMOTE_RESOURCES_INSTALLER}" == "operator" ]; then
+  SA_NAME="kiali-service-account"
+else
+  SA_NAME="kiali"
+fi
+
+info "Creating service account token secret in ${KIALI_NAMESPACE} namespace on mesh cluster (for SA: ${SA_NAME})..."
 oc --context=${MESH_CONTEXT} apply -f - <<EOF
 apiVersion: v1
 kind: Secret
@@ -387,7 +451,7 @@ metadata:
   name: kiali
   namespace: ${KIALI_NAMESPACE}
   annotations:
-    kubernetes.io/service-account.name: kiali
+    kubernetes.io/service-account.name: ${SA_NAME}
 type: kubernetes.io/service-account-token
 EOF
 
@@ -494,14 +558,7 @@ if [ -z "${MGMT_ROUTE}" ]; then
   info "WARNING: Could not get Kiali route."
 else
   info "Kiali will be accessible at: https://${MGMT_ROUTE}"
-  
-  # Create OAuth client on mesh cluster for multi-cluster OpenShift authentication
-  # This allows Kiali to authenticate to the mesh cluster's OpenShift API
-  info "Creating OAuth client on mesh cluster..."
-  oc --context=${MGMT_CONTEXT} get oauthclient kiali-${KIALI_NAMESPACE} -o json 2>/dev/null | \
-    jq ".redirectURIs = [\"https://${MGMT_ROUTE}/api/auth/callback/mesh\"]" | \
-    oc --context=${MESH_CONTEXT} apply -f - || \
-    info "OAuth client configuration may need manual adjustment"
+  info "OAuth client for mesh cluster was created by ${REMOTE_RESOURCES_INSTALLER} in Step 9a"
 fi
 
 # Step 12: Install Bookinfo on mesh cluster (optional)
@@ -541,6 +598,7 @@ if [ "${INSTALL_BOOKINFO}" == "true" ]; then
 fi
 info ""
 info "Configuration:"
+info "  - Remote resources installer: ${REMOTE_RESOURCES_INSTALLER}"
 info "  - Kiali connects to mesh Prometheus via HTTPS route (insecure_skip_verify=true)"
 info "  - Remote cluster secret: kiali-remote-cluster-secret-mesh in ${KIALI_NAMESPACE}"
 info "  - Clustering: ignore_home_cluster=true, cluster_name=mgmt"
