@@ -178,5 +178,5 @@ Feature: Kiali Workloads page
   Scenario: Ambient Multi-Primary: Workloads page shows ambient workloads from both clusters
     Given user is at the "workloads" page
     When user selects the "bookinfo" namespace
-    Then user sees workloads from both clusters for multicluster
-    And user sees ambient workload indicators for multicluster
+    Then user see the workload "productpage-v1" from cluster "east" and namespace "bookinfo"
+    Then user see the workload "productpage-v1" from cluster "west" and namespace "bookinfo"

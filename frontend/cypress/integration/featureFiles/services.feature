@@ -200,5 +200,5 @@ Feature: Kiali Services page
   Scenario: Ambient Multi-Primary: Services page shows ambient services across clusters
     Given user is at the "services" page
     When user selects the "bookinfo" namespace
-    Then user sees services from both clusters for multicluster
-    And user sees ambient service indicators for multicluster
+    Then user see the service "productpage" from cluster "east" and namespace "bookinfo"
+    Then user see the service "productpage" from cluster "west" and namespace "bookinfo"

@@ -120,6 +120,7 @@ Feature: Kiali Workload Details page
     Then the user sees the metrics tab
 
   @ambient
+  @ambient-multi-primary
   # TODO: offline - ambient support.
   Scenario: See ambient label for workload
     Then user sees "ambient" badge
