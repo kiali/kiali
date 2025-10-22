@@ -199,5 +199,5 @@ Feature: Kiali Mesh page
   Scenario: Ambient Multi-Primary: Mesh page shows ambient control planes in both clusters
     Then user sees the mesh
     And user sees "2" clusters in the mesh
-    And user sees ambient control planes in both clusters
+    And user sees ztunnel nodes in both clusters
     And user sees ambient data planes in both clusters

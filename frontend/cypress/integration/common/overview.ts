@@ -330,6 +330,15 @@ Then('user sees the {string} label in the {string} namespace card', (label: stri
   cy.get(`div[data-test^="${ns}"]`).contains(label).should('be.visible');
 });
 
+Then(
+  'user sees the {string} label in the {string} namespace card in the {string} cluster',
+  (label: string, ns: string, cluster: string) => {
+    cy.log(label);
+
+    cy.get(`div[data-test^="CardItem_${ns}_${cluster}"]`).contains(label).should('be.visible');
+  }
+);
+
 Then('user does not see any cluster badge in the {string} namespace card', (ns: string) => {
   cy.get(`[data-test="${ns}-EXPAND"]`).within($card => {
     cy.get('#pfbadge-C').should('not.exist');
@@ -381,18 +390,6 @@ Then('user sees {string} namespace in both clusters', (namespace: string) => {
     // Should see the namespace from multiple clusters
     const namespaceCards = Array.from($cards).filter(card => card.textContent?.includes(namespace));
     assert.isAtLeast(namespaceCards.length, 1, `Should have ${namespace} namespace cards`);
-  });
-});
-
-Then('user sees ambient namespace indicators', () => {
-  cy.waitForReact();
-
-  // Look for ambient mesh indicators on namespace cards
-  cy.get('[data-test="namespace-card"]').should('exist');
-
-  // Check for ambient-specific badges or indicators
-  cy.get('[data-test="namespace-card"]').then($cards => {
-    assert.isAtLeast($cards.length, 1, 'Should have namespace cards with ambient indicators');
   });
 });
 

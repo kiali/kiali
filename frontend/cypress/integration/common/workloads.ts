@@ -139,60 +139,19 @@ Then('user sees all the Workloads toggles', () => {
 
 // Ambient multi-primary workloads step definitions
 
-Then('user sees workloads from both clusters for multicluster', () => {
-  cy.waitForReact();
+Then(
+  'user see the workload {string} from cluster {string} and namespace {string}',
+  (workload: string, cluster: string, namespace: string) => {
+    cy.waitForReact();
 
-  // Check workloads table for multi-cluster entries using VirtualItem_Cluster pattern
-  cy.get('table').should('exist');
-  cy.get('tbody').should('exist');
+    // Check workloads table for multi-cluster entries using VirtualItem_Cluster pattern
+    cy.get('table').should('exist');
+    cy.get('tbody').should('exist');
 
-  // Look for workloads from different clusters using VirtualItem_Cluster pattern
-  cy.get('tbody').within(() => {
-    // Check for VirtualItem entries from different clusters
-    cy.get('[data-test*="VirtualItem_Cluster"]').then($items => {
-      assert.isAtLeast($items.length, 1, 'Should have workload items from clusters');
-
-      // Verify we have items from multiple clusters
-      const clusters = new Set();
-      $items.each((_, item) => {
-        if (item && item.getAttribute) {
-          const dataTest = item.getAttribute('data-test');
-          if (dataTest) {
-            const clusterMatch = dataTest.match(/VirtualItem_Cluster(\w+)_/);
-            if (clusterMatch) {
-              clusters.add(clusterMatch[1]);
-            }
-          }
-        }
-      });
-
-      assert.isAtLeast(clusters.size, 1, 'Should have workloads from clusters');
+    // Look for workloads from different clusters using VirtualItem_Cluster pattern
+    cy.get('tbody').within(() => {
+      // Check for VirtualItem entries from different clusters
+      cy.get(`[data-test*="VirtualItem_Cluster${cluster}_Ns${namespace}_Deployment_${workload}"]`).should('exist');
     });
-  });
-});
-
-Then('user sees ambient workload indicators for multicluster', () => {
-  cy.waitForReact();
-
-  // Look for ambient-specific indicators in workload list using VirtualItem_Cluster pattern
-  cy.get('table').should('exist');
-  cy.get('tbody').should('exist');
-
-  // Check for ambient mesh mode indicators
-  cy.get('tbody').within(() => {
-    cy.get('[data-test*="VirtualItem_Cluster"]').then($items => {
-      assert.isAtLeast($items.length, 1, 'Should have workload items with ambient indicators');
-
-      // Check for ambient-specific indicators in the workload items
-      $items.each((_, item) => {
-        if (item && item.getAttribute) {
-          const dataTest = item.getAttribute('data-test');
-          if (dataTest) {
-            // Verify it's a valid VirtualItem_Cluster pattern
-            assert.isTrue(dataTest.includes('VirtualItem_Cluster'), 'Should have VirtualItem_Cluster pattern');
-          }
-        }
-      });
-    });
-  });
-});
+  }
+);
