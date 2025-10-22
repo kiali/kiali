@@ -401,5 +401,8 @@ Feature: Kiali Graph page - Display menu
     When user graphs "bookinfo" namespaces
     And user selects "WORKLOAD" graph type
     Then user sees the "bookinfo" namespace
-    And user sees ambient workloads in the graph
+    Then user "opens" traffic menu
+    And user "disables" "http" traffic option
+    And user "closes" traffic menu
+    Then 13 edges appear in the graph
     And user sees graph workloads from both clusters

@@ -437,7 +437,7 @@ Then('user sees the Tester result {string}', (result: string) => {
 
 // Ambient multi-primary mesh step definitions
 
-Then('user sees ambient control planes in both clusters', () => {
+Then('user sees ztunnel nodes in both clusters', () => {
   cy.waitForReact();
   cy.get('#loading_kiali_spinner').should('not.exist');
   cy.getReact('MeshPageComponent', { state: { isReady: true } })
@@ -448,17 +448,10 @@ Then('user sees ambient control planes in both clusters', () => {
       assert.isTrue(controller.hasGraph());
 
       const { nodes } = elems(controller);
-      const controlPlanes = nodes.filter(n => (n.getData() as MeshNodeData).infraType === MeshInfraType.ISTIOD);
+      const ztunnelNodes = nodes.filter(n => (n.getData() as MeshNodeData).infraType === MeshInfraType.ZTUNNEL);
 
-      // Should have at least 2 control planes (one per cluster)
-      assert.isAtLeast(controlPlanes.length, 2, 'Should have control planes in both clusters');
-
-      // Verify ambient mode indicators
-      controlPlanes.forEach(cp => {
-        const data = cp.getData() as MeshNodeData;
-        // Check for ambient-specific properties or labels
-        assert.exists(data, 'Control plane data should exist');
-      });
+      // Should have at least 2 ztunnel (one per cluster)
+      assert.isAtLeast(ztunnelNodes.length, 2, 'Should have control planes in both clusters');
     });
 });
 
@@ -474,9 +467,14 @@ Then('user sees ambient data planes in both clusters', () => {
 
       const { nodes } = elems(controller);
       const dataPlanes = nodes.filter(n => (n.getData() as MeshNodeData).infraType === MeshInfraType.DATAPLANE);
-
       // Should have data planes
-      assert.isAtLeast(dataPlanes.length, 1, 'Should have data planes');
+      assert.isAtLeast(dataPlanes.length, 2, 'Should have data planes');
+      dataPlanes.forEach(cp => {
+        const data = cp.getData() as MeshNodeData;
+        const ambient = data.infraData.filter(n => n.isAmbient);
+        // Check for ambient-specific properties or labels
+        assert.exists(ambient, 'Control plane data should exist');
+      });
     });
 });
 
