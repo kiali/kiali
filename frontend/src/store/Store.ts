@@ -3,6 +3,8 @@ import { Namespace } from '../types/Namespace';
 import {
   DurationInSeconds,
   IntervalInMilliseconds,
+  KioskData,
+  KioskMode,
   RawDate,
   TimeInMilliseconds,
   TimeRange,
@@ -34,7 +36,8 @@ import { MeshLayout } from 'pages/Mesh/layouts/layoutFactory';
 
 export interface GlobalState {
   readonly isPageVisible: boolean;
-  readonly kiosk: string;
+  readonly kiosk: KioskMode;
+  readonly kioskData?: KioskData;
   readonly language: string;
   readonly loadingCounter: number;
   readonly theme: string;
