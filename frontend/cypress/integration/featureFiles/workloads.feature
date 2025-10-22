@@ -177,6 +177,6 @@ Feature: Kiali Workloads page
   @ambient-multi-primary
   Scenario: Ambient Multi-Primary: Workloads page shows ambient workloads from both clusters
     Given user is at the "workloads" page
-    When user selects "bookinfo" namespace
-    Then user sees workloads from both clusters
-    And user sees ambient workload indicators
+    When user selects the "bookinfo" namespace
+    Then user sees workloads from both clusters for multicluster
+    And user sees ambient workload indicators for multicluster
