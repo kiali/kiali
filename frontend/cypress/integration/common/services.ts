@@ -100,3 +100,21 @@ Then('user sees all the Services toggles', () => {
   colExists('Health', true);
   colExists('Details', true);
 });
+
+// Ambient multi-primary services step definitions
+Then(
+  'user see the service {string} from cluster {string} and namespace {string}',
+  (service: string, cluster: string, namespace: string) => {
+    cy.waitForReact();
+
+    // Check workloads table for multi-cluster entries using VirtualItem_Cluster pattern
+    cy.get('table').should('exist');
+    cy.get('tbody').should('exist');
+
+    // Look for workloads from different clusters using VirtualItem_Cluster pattern
+    cy.get('tbody').within(() => {
+      // Check for VirtualItem entries from different clusters
+      cy.get(`[data-test*="VirtualItem_Cluster${cluster}_Ns${namespace}_${service}"]`).should('exist');
+    });
+  }
+);

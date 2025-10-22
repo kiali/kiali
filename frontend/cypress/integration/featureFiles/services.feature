@@ -195,3 +195,10 @@ Feature: Kiali Services page
     And user filters for health "Healthy"
     Then user sees "something" in the table
     And user should only see healthy services in the table
+
+  @ambient-multi-primary
+  Scenario: Ambient Multi-Primary: Services page shows ambient services across clusters
+    Given user is at the "services" page
+    When user selects the "bookinfo" namespace
+    Then user see the service "productpage" from cluster "east" and namespace "bookinfo"
+    Then user see the service "productpage" from cluster "west" and namespace "bookinfo"

@@ -173,3 +173,10 @@ Feature: Kiali Workloads page
   Scenario: Out of mesh
     When user selects the "sleep" namespace
     Then user sees "Out of mesh" in the table
+
+  @ambient-multi-primary
+  Scenario: Ambient Multi-Primary: Workloads page shows ambient workloads from both clusters
+    Given user is at the "workloads" page
+    When user selects the "bookinfo" namespace
+    Then user see the workload "productpage-v1" from cluster "east" and namespace "bookinfo"
+    Then user see the workload "productpage-v1" from cluster "west" and namespace "bookinfo"

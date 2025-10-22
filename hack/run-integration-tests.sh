@@ -601,7 +601,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
      MEMORY_REQUEST_ARG=""
   fi
   if [ -n "$AMBIENT" ]; then
-     AMBIENT_ARG="-ab true"
+     AMBIENT_ARG="--ambient true"
   else
      AMBIENT_ARG=""
   fi
@@ -628,7 +628,11 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   fi
 
   cd "${SCRIPT_DIR}"/../frontend
-  yarn run cypress:run:multi-primary
+  if [ -n "$AMBIENT" ]; then
+    yarn run cypress:run:ambient-multi-primary
+  else
+    yarn run cypress:run:multi-primary
+  fi
   detectRaceConditions ${CYPRESS_CLUSTER1_CONTEXT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_EXTERNAL_KIALI}" ]; then
   ensureCypressInstalled

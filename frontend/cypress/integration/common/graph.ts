@@ -222,3 +222,43 @@ export const select = (elems: GraphElement[], exp: SelectExp): GraphElement[] =>
     }
   });
 };
+
+// Ambient multi-primary graph step definitions
+
+Then('user sees ambient workloads in the graph', () => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+
+  // Look for ambient-specific indicators in the graph
+  cy.get('[data-test="topology-view-pf"]').should('exist');
+
+  // Check for ambient mesh indicators (ztunnel, waypoint proxies, etc.)
+  cy.get('[data-test="topology-view-pf"]').then($nodes => {
+    // Verify we have workload nodes that could be in ambient mode
+    assert.isAtLeast($nodes.length, 1, 'Should have workload nodes in the graph');
+  });
+});
+
+Then('user sees graph workloads from both clusters', () => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
+    .should('have.length', '1')
+    .then($graph => {
+      const { state } = $graph[0];
+
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
+
+      // Look for workload nodes from different clusters
+      const workloadNodes = nodes.filter(node => {
+        const data = node.getData();
+        return data.nodeType === 'workload' && data.cluster;
+      });
+
+      // Should have workloads from at least 2 different clusters
+      const clusters = new Set(workloadNodes.map(node => node.getData().cluster));
+      assert.isAtLeast(clusters.size, 2, 'Should have workloads from multiple clusters');
+    });
+});

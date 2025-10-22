@@ -195,3 +195,10 @@ Feature: Kiali Mesh page
   @smoke
   Scenario: Local-kiali: see kiali node in local mode
     And user sees the "kiali" node connected to the 1 "istiod" nodes
+
+  @ambient-multi-primary
+  Scenario: Ambient Multi-Primary: Mesh page shows ambient control planes in both clusters
+    Then user sees the mesh
+    And user sees "2" clusters in the mesh
+    And user sees ztunnel nodes in both clusters
+    And user sees ambient data planes in both clusters

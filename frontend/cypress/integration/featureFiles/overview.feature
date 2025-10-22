@@ -241,3 +241,11 @@ Feature: Kiali Overview page
   Scenario: See bookinfo in mesh cluster only
     Then user sees the "bookinfo" namespace card in cluster "mesh"
     And user does not see the "bookinfo" namespace card in cluster "mgmt"
+
+  @ambient-multi-primary
+  Scenario: Ambient Multi-Primary: Overview page shows ambient namespaces in both clusters
+    Given user is at the "overview" page
+    Then user sees the "bookinfo" namespace card in cluster "east"
+    Then user sees the "bookinfo" namespace card in cluster "west"
+    And user sees the "Ambient" label in the "bookinfo" namespace card in the "east" cluster
+    And user sees the "Ambient" label in the "bookinfo" namespace card in the "west" cluster

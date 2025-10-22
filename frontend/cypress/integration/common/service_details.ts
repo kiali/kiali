@@ -93,3 +93,9 @@ When('user chooses the {string} option', (title: string) => {
 Then('the graph type is disabled', () => {
   cy.get('button#graph_type_dropdown-toggle').should('be.disabled');
 });
+
+Then('user sees {string} badge for service', (badge: string) => {
+  cy.get('#ServiceDescriptionCard').within(() => {
+    cy.get('.pf-v5-c-label__content').contains(badge);
+  });
+});

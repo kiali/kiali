@@ -74,3 +74,8 @@ Feature: Kiali Service Details page
     And user sees trace information
     When user selects a trace with at least 4 spans
     Then user sees span details
+
+  @ambient-multi-primary
+  # TODO: offline - ambient support.
+  Scenario: See ambient label for service
+    Then user sees "ambient" badge for service

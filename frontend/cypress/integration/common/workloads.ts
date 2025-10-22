@@ -84,7 +84,7 @@ Then('user should only see workloads with the {string} label', (label: string) =
 Then('user should only see workloads with an app label', () => {
   cy.wait('@refresh');
   cy.get('tbody').within(() => {
-    const regex = new RegExp(`app=|service\.istio\.io\/canonical-name=|app\.kubernetes\.io\/name=`);
+    const regex = new RegExp(`app=|service.istio.io/canonical-name=|app.kubernetes.io/name=`);
 
     cy.get('tr').each($item => {
       cy.wrap($item)
@@ -100,7 +100,7 @@ Then('user should only see workloads with an app label', () => {
 Then('user should only see workloads with a version label', () => {
   cy.wait('@refresh');
   cy.get('tbody').within(() => {
-    const regex = new RegExp(`version=|service\.istio\.io\/canonical-revision=|app\.kubernetes\.io\/version=`);
+    const regex = new RegExp(`version=|service.istio.io/canonical-revision=|app.kubernetes.io/version=`);
 
     cy.get('tr').each($item => {
       cy.wrap($item)
@@ -136,3 +136,22 @@ Then('user sees all the Workloads toggles', () => {
   colExists('Health', true);
   colExists('Details', true);
 });
+
+// Ambient multi-primary workloads step definitions
+
+Then(
+  'user see the workload {string} from cluster {string} and namespace {string}',
+  (workload: string, cluster: string, namespace: string) => {
+    cy.waitForReact();
+
+    // Check workloads table for multi-cluster entries using VirtualItem_Cluster pattern
+    cy.get('table').should('exist');
+    cy.get('tbody').should('exist');
+
+    // Look for workloads from different clusters using VirtualItem_Cluster pattern
+    cy.get('tbody').within(() => {
+      // Check for VirtualItem entries from different clusters
+      cy.get(`[data-test*="VirtualItem_Cluster${cluster}_Ns${namespace}_Deployment_${workload}"]`).should('exist');
+    });
+  }
+);

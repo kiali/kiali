@@ -394,3 +394,15 @@ Feature: Kiali Graph page - Display menu
     And user "disables" "tcp" traffic option
     And user "closes" traffic menu
     Then 2 edges appear in the graph
+
+  @ambient-multi-primary
+  Scenario: Ambient Multi-Primary: Graph shows ambient workloads across clusters
+    Given user is at the "graph" page
+    When user graphs "bookinfo" namespaces
+    And user selects "WORKLOAD" graph type
+    Then user sees the "bookinfo" namespace
+    Then user "opens" traffic menu
+    And user "disables" "http" traffic option
+    And user "closes" traffic menu
+    Then 13 edges appear in the graph
+    And user sees graph workloads from both clusters

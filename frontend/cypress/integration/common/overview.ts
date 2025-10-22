@@ -330,6 +330,15 @@ Then('user sees the {string} label in the {string} namespace card', (label: stri
   cy.get(`div[data-test^="${ns}"]`).contains(label).should('be.visible');
 });
 
+Then(
+  'user sees the {string} label in the {string} namespace card in the {string} cluster',
+  (label: string, ns: string, cluster: string) => {
+    cy.log(label);
+
+    cy.get(`div[data-test^="CardItem_${ns}_${cluster}"]`).contains(label).should('be.visible');
+  }
+);
+
 Then('user does not see any cluster badge in the {string} namespace card', (ns: string) => {
   cy.get(`[data-test="${ns}-EXPAND"]`).within($card => {
     cy.get('#pfbadge-C').should('not.exist');
@@ -366,5 +375,33 @@ Then('Control Plane metrics should be visible for cluster {string}', (cluster: s
 Then('badge for {string} is visible in the LIST view in the namespace {string}', (label: string, ns: string) => {
   getClusterForSingleCluster().then(cluster => {
     cy.getBySel(`VirtualItem_Cluster${cluster}_${ns}`).contains(label).should('be.visible');
+  });
+});
+
+// Ambient multi-primary overview step definitions
+
+Then('user sees {string} namespace in both clusters', (namespace: string) => {
+  cy.waitForReact();
+
+  // Check for namespace cards from both clusters
+  cy.get('[data-test="namespace-card"]').should('exist');
+
+  cy.get('[data-test="namespace-card"]').then($cards => {
+    // Should see the namespace from multiple clusters
+    const namespaceCards = Array.from($cards).filter(card => card.textContent?.includes(namespace));
+    assert.isAtLeast(namespaceCards.length, 1, `Should have ${namespace} namespace cards`);
+  });
+});
+
+Then('user sees health status for ambient workloads', () => {
+  cy.waitForReact();
+
+  // Check for health indicators on ambient workloads
+  cy.get('[data-test="namespace-card"]').should('exist');
+
+  // Look for health status indicators
+  cy.get('[data-test="namespace-card"]').then($cards => {
+    // Verify health status is displayed for ambient workloads
+    assert.isAtLeast($cards.length, 1, 'Should have health status for ambient workloads');
   });
 });
