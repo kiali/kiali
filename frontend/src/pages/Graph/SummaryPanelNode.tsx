@@ -41,6 +41,7 @@ import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelSty
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { renderWaypointLabel } from '../../components/Ambient/WaypointLabel';
 import { Node } from '@patternfly/react-topology';
+import { KialiPageLink } from 'components/Link/KialiPageLink';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -103,6 +104,11 @@ const nodeInfoStyle = kialiStyle({
 
 const workloadExpandableSectionStyle = classes(expandableSectionStyle, kialiStyle({ display: 'inline' }));
 
+// Helper function to check if Network Observability integration is available
+const isNetobservAvailable = (): boolean => {
+  return false;
+};
+
 export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeComponentProps, SummaryPanelNodeState> {
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;
 
@@ -128,11 +134,14 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     const servicesList = nodeType !== NodeType.SERVICE && renderDestServicesLinks(nodeData);
     const destsList = nodeType === NodeType.SERVICE && isServiceEntry && this.renderDestServices(nodeData);
 
+    const hasNetobserv = isNetobservAvailable();
     const shouldRenderDestsList = destsList && destsList.length > 0;
     const shouldRenderSvcList = servicesList && servicesList.length > 0;
     const shouldRenderService = service && ![NodeType.SERVICE, NodeType.UNKNOWN].includes(nodeType);
     const shouldRenderApp = app && ![NodeType.APP, NodeType.UNKNOWN].includes(nodeType) && !nodeData.isWaypoint;
     const shouldRenderWorkload = workload && ![NodeType.WORKLOAD, NodeType.UNKNOWN].includes(nodeType);
+    const shouldRenderNetobservWorkload = hasNetobserv && (nodeType === NodeType.WORKLOAD || shouldRenderWorkload);
+    const shouldRenderNetobservService = hasNetobserv && (nodeType === NodeType.SERVICE || shouldRenderService);
     const shouldRenderTraces =
       !isServiceEntry &&
       !nodeData.isInaccessible &&
@@ -192,6 +201,8 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       <></>
     );
 
+    // Note: NetObserv link removed per current requirements
+
     return (
       <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
         <div className={panelHeadingStyle}>
@@ -244,6 +255,8 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             {shouldRenderService && <div>{renderBadgedLink(nodeData, NodeType.SERVICE)}</div>}
             {shouldRenderApp && <div>{renderBadgedLink(nodeData, NodeType.APP)}</div>}
             {shouldRenderWorkload && this.renderWorkloadSection(nodeData)}
+            {shouldRenderNetobservService && this.renderNetobservLink(nodeData, NodeType.SERVICE)}
+            {shouldRenderNetobservWorkload && this.renderNetobservLink(nodeData, NodeType.WORKLOAD)}
           </div>
         </div>
 
@@ -251,6 +264,22 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       </div>
     );
   }
+
+  // this is relevant only to linking to a netobserv tab in OSSMC
+  private renderNetobservLink = (nodeData: DecoratedGraphNodeData, nodeType: NodeType): React.ReactNode => {
+    // prefix the workload or service link with '/netobserv' to indicate that we want to link
+    // to the netobserv 'Network Traffic' tab for the entity, not the 'Service Mesh' tab. The link will be intercepted
+    // by KialiIntegration in OSSM, and redirected as needed.
+    const link = `/netobserv${getLink(nodeData, nodeType).link}`;
+    return (
+      <div className={nodeInfoStyle}>
+        <PFBadge badge={PFBadges.NetworkTraffic} size="sm" />
+        <KialiPageLink href={link} cluster={nodeData.cluster}>
+          network traffic
+        </KialiPageLink>
+      </div>
+    );
+  };
 
   private renderWorkloadSection = (nodeData: DecoratedGraphNodeData): React.ReactNode => {
     if (!nodeData.hasWorkloadEntry) {
@@ -260,13 +289,15 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 
     const workloadEntryLinks = nodeData.hasWorkloadEntry.map(we => (
       <div>
-        {getLink(nodeData, NodeType.WORKLOAD, () => ({
-          link: `/namespaces/${encodeURIComponent(nodeData.namespace)}/istio/${weGVK.Group}/${weGVK.Version}/${
-            weGVK.Kind
-          }/${encodeURIComponent(we.name)}`,
-          displayName: we.name,
-          key: `${nodeData.namespace}.wle.${we.name}`
-        }))}
+        {
+          getLink(nodeData, NodeType.WORKLOAD, () => ({
+            link: `/namespaces/${encodeURIComponent(nodeData.namespace)}/istio/${weGVK.Group}/${weGVK.Version}/${
+              weGVK.Kind
+            }/${encodeURIComponent(we.name)}`,
+            displayName: we.name,
+            key: `${nodeData.namespace}.wle.${we.name}`
+          })).elem
+        }
       </div>
     ));
 
