@@ -239,15 +239,26 @@ Then('user sees ambient workloads in the graph', () => {
   });
 });
 
-Then('user sees workloads from both clusters', () => {
+Then('user sees graph workloads from both clusters', () => {
   cy.waitForReact();
   cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
+    .should('have.length', '1')
+    .then($graph => {
+      const { state } = $graph[0];
 
-  // Check for cluster indicators or multi-cluster workloads
-  cy.get('[data-test="topology-view-pf"]').should('exist');
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
 
-  // Look for cluster badges or multi-cluster indicators
-  cy.get('[data-test="topology-view-pf"]').then($nodes => {
-    assert.isAtLeast($nodes.length, 2, 'Should have workloads from multiple clusters');
-  });
+      // Look for workload nodes from different clusters
+      const workloadNodes = nodes.filter(node => {
+        const data = node.getData();
+        return data.nodeType === 'workload' && data.cluster;
+      });
+
+      // Should have workloads from at least 2 different clusters
+      const clusters = new Set(workloadNodes.map(node => node.getData().cluster));
+      assert.isAtLeast(clusters.size, 2, 'Should have workloads from multiple clusters');
+    });
 });

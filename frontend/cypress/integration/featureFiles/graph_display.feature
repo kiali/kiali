@@ -402,4 +402,4 @@ Feature: Kiali Graph page - Display menu
     And user selects "WORKLOAD" graph type
     Then user sees the "bookinfo" namespace
     And user sees ambient workloads in the graph
-    And user sees workloads from both clusters
+    And user sees graph workloads from both clusters

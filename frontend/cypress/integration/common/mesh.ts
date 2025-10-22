@@ -479,3 +479,32 @@ Then('user sees ambient data planes in both clusters', () => {
       assert.isAtLeast(dataPlanes.length, 1, 'Should have data planes');
     });
 });
+
+Then('user sees the mesh', () => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+      const controller = state.meshRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+    });
+});
+
+Then('user sees {string} clusters in the mesh', (clusterCount: string) => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+      const controller = state.meshRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+
+      const { nodes } = elems(controller);
+      const clusters = nodes.filter(n => (n.getData() as MeshNodeData).infraType === MeshInfraType.CLUSTER);
+
+      expect(clusters.length).to.equal(parseInt(clusterCount));
+    });
+});
