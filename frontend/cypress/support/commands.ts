@@ -98,6 +98,32 @@ function ensureMulticlusterApplicationsAreHealthy(startTime: number): void {
   });
 }
 
+function ensureAmbientMulticlusterApplicationsAreHealthy(startTime: number): void {
+  if (Date.now() - startTime > timeout) {
+    cy.log('Timeout reached without meeting the condition.');
+    return;
+  }
+
+  cy.request(
+    'api/namespaces/graph?duration=60s&graphType=versionedApp&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo'
+  ).then(resp => {
+    const has_tcp = resp.body.elements.nodes.some(
+      node =>
+        node.data.app === 'reviews' &&
+        node.data.cluster === 'west' &&
+        node.data.nodeType === 'app' &&
+        node.data.healthData.requests.inbound.tcp !== undefined
+    );
+    if (has_tcp) {
+      cy.log("'reviews' app in 'west' cluster is healthy enough.");
+    } else {
+      cy.log("'reviews' app in 'west' cluster is not healthy yet, checking again in 10 seconds...");
+      cy.wait(10000);
+      ensureAmbientMulticlusterApplicationsAreHealthy(startTime);
+    }
+  });
+}
+
 Cypress.Commands.add('login', (username: string, password: string) => {
   const auth_strategy = Cypress.env('AUTH_STRATEGY');
   cy.session(
@@ -163,8 +189,12 @@ Cypress.Commands.add('login', (username: string, password: string) => {
               }
             }).then(() => {
               const tags = Cypress.env('TAGS');
-              if (tags.includes('multi-cluster') || tags.includes('multi-primary')) {
-                ensureMulticlusterApplicationsAreHealthy(Date.now());
+              if (tags.includes('ambient-multi-primary')) {
+                ensureAmbientMulticlusterApplicationsAreHealthy(Date.now());
+              } else {
+                if (tags.includes('multi-cluster') || tags.includes('multi-primary')) {
+                  ensureMulticlusterApplicationsAreHealthy(Date.now());
+                }
               }
             });
           });

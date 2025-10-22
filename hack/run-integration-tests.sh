@@ -600,20 +600,13 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
      MEMORY_REQUEST_ARG=""
   fi
   if [ -n "$AMBIENT" ]; then
-     AMBIENT_ARG="-ab true"
+     AMBIENT_ARG="--ambient true"
   else
      AMBIENT_ARG=""
   fi
 
-  # For ambient multi-cluster tests in CI, use anonymous auth instead of openid
-  if [ -n "$AMBIENT" ]; then
-    AUTH_STRATEGY="anonymous"
-  else
-    AUTH_STRATEGY="openid"
-  fi
-
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy ${AUTH_STRATEGY} ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG $AMBIENT_ARG
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy openid ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG $AMBIENT_ARG
   fi
 
   ensureKialiServerReady
@@ -625,15 +618,9 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   export CYPRESS_CLUSTER2_CONTEXT="kind-west"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   export CYPRESS_VIDEO="${WITH_VIDEO}"
-  if [ "${AUTH_STRATEGY}" == "anonymous" ]; then
-    export CYPRESS_AUTH_PROVIDER="anonymous"
-    export CYPRESS_USERNAME=""
-    export CYPRESS_PASSWD=""
-  else
-    export CYPRESS_AUTH_PROVIDER="keycloak"
-    export CYPRESS_USERNAME="kiali"
-    export CYPRESS_PASSWD="kiali"
-  fi
+  export CYPRESS_AUTH_PROVIDER="keycloak"
+  export CYPRESS_USERNAME="kiali"
+  export CYPRESS_PASSWD="kiali"
 
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
