@@ -2,7 +2,6 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { SimpleList, SimpleListItem, Button, Divider, ButtonVariant } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-
 import { KialiAppState } from 'store/Store';
 import { TracingThunkActions } from 'actions/TracingThunkActions';
 import { router, URLParam } from '../../app/History';
@@ -11,7 +10,7 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import { JaegerTrace, TracingResponse } from 'types/TracingInfo';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { TracingQuery } from 'types/Tracing';
-import { TimeInSeconds } from 'types/Common';
+import { KioskMode, TimeInSeconds } from 'types/Common';
 import { TraceListItem } from 'components/TracingIntegration/TraceListItem';
 import { summaryFont } from './SummaryPanelCommon';
 import { DecoratedGraphNodeData } from 'types/Graph';
@@ -25,7 +24,6 @@ import { endPerfTimer, startPerfTimer } from '../../utils/PerformanceUtils';
 import { ApiResponse } from '../../types/Api';
 
 type ReduxStateProps = {
-  kiosk: string;
   selectedTrace?: JaegerTrace;
 };
 
@@ -35,6 +33,7 @@ type ReduxDispatchProps = {
 
 type Props = ReduxStateProps &
   ReduxDispatchProps & {
+    kiosk: KioskMode;
     nodeData: DecoratedGraphNodeData;
     queryTime: TimeInSeconds;
   };
@@ -224,7 +223,6 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
-  kiosk: state.globalState.kiosk,
   selectedTrace: state.tracingState.selectedTrace
 });
 
