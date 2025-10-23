@@ -42,6 +42,8 @@ import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { renderWaypointLabel } from '../../components/Ambient/WaypointLabel';
 import { Node } from '@patternfly/react-topology';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
+import { KioskData } from 'store/Store';
+import { KioskMode } from 'types/Common';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -52,7 +54,8 @@ const defaultState: SummaryPanelNodeState = {
 };
 
 type ReduxProps = {
-  kiosk: string;
+  kiosk: KioskMode;
+  kioskData: KioskData;
   rankResult: RankResult;
   showRank: boolean;
   tracingState: TracingState;
@@ -104,11 +107,6 @@ const nodeInfoStyle = kialiStyle({
 
 const workloadExpandableSectionStyle = classes(expandableSectionStyle, kialiStyle({ display: 'inline' }));
 
-// Helper function to check if Network Observability integration is available
-const isNetobservAvailable = (): boolean => {
-  return false;
-};
-
 export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeComponentProps, SummaryPanelNodeState> {
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;
 
@@ -134,7 +132,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     const servicesList = nodeType !== NodeType.SERVICE && renderDestServicesLinks(nodeData);
     const destsList = nodeType === NodeType.SERVICE && isServiceEntry && this.renderDestServices(nodeData);
 
-    const hasNetobserv = isNetobservAvailable();
+    const hasNetobserv = this.props.kioskData?.hasNetobserv;
     const shouldRenderDestsList = destsList && destsList.length > 0;
     const shouldRenderSvcList = servicesList && servicesList.length > 0;
     const shouldRenderService = service && ![NodeType.SERVICE, NodeType.UNKNOWN].includes(nodeType);
@@ -377,7 +375,11 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
           </Tab>
 
           <Tab style={summaryFont} title="Traces" eventKey={1}>
-            <SummaryPanelNodeTraces nodeData={nodeData} queryTime={this.props.queryTime - this.props.duration} />
+            <SummaryPanelNodeTraces
+              kiosk={this.props.kiosk}
+              nodeData={nodeData}
+              queryTime={this.props.queryTime - this.props.duration}
+            />
           </Tab>
         </SimpleTabs>
       </div>
@@ -602,6 +604,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 export const SummaryPanelNode: React.FC<SummaryPanelNodeProps> = (props: SummaryPanelNodeProps) => {
   const tracingState = useKialiSelector(state => state.tracingState);
   const kiosk = useKialiSelector(state => state.globalState.kiosk);
+  const kioskData = useKialiSelector(state => state.globalState.kioskData);
   const rankResult = useKialiSelector(state => state.graph.rankResult);
   const showRank = useKialiSelector(state => state.graph.toolbarState.showRank);
   const updateTime = useKialiSelector(state => state.graph.updateTime);
@@ -626,6 +629,7 @@ export const SummaryPanelNode: React.FC<SummaryPanelNodeProps> = (props: Summary
     <SummaryPanelNodeComponent
       tracingState={tracingState}
       kiosk={kiosk}
+      kioskData={kioskData}
       rankResult={rankResult}
       showRank={showRank}
       serviceDetails={isServiceDetailsLoading ? undefined : serviceDetails}
