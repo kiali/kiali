@@ -18,6 +18,8 @@
 
 # The version used by the getLatestIstio script - if empty, gets the latest version
 ISTIO_VERSION=
+# GitHub token for authenticated API requests (to avoid rate limiting)
+GITHUB_TOKEN=
 
 # process command line args
 while [ $# -gt 0 ]; do
@@ -35,6 +37,10 @@ while [ $# -gt 0 ]; do
       OUTPUT_DIR="$2"
       shift;shift
       ;;
+    -gt|--github-token)
+      GITHUB_TOKEN="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -43,6 +49,7 @@ Valid command line arguments:
                                       want the latest master build, set this to "latest".
   -iv|--istio-version <#.#.#>: Released version of Istio to download. (default will be the latest version)
   -o|--output <dir> : Output directory where Istio is (or will be downloaded to if it doesn't exist).
+  -gt|--github-token <token> : GitHub personal access token for authenticated API requests (avoids rate limiting).
   -h|--help : This message.
 HELPMSG
       exit 1
@@ -62,15 +69,43 @@ cd "$OUTPUT_DIR"
 OUTPUT_DIR="$(pwd)" # remove the .. references
 echo "Output Directory: ${OUTPUT_DIR}"
 
+# Prepare authentication header if token is provided
+AUTH_HEADER=""
+if [ -n "${GITHUB_TOKEN}" ]; then
+  AUTH_HEADER="Authorization: token ${GITHUB_TOKEN}"
+fi
+
 if [ -z "${ISTIO_VERSION}" ]; then
   if [ -z "${DEV_ISTIO_VERSION}" ]; then
     # get the latest released version with retry logic
     echo "Getting the latest Istio version from GitHub..."
+    
     for attempt in $(seq 1 120); do
-      VERSION_WE_WANT=$(curl -L -s https://api.github.com/repos/istio/istio/releases 2>/dev/null | \
+    # Get both response body and HTTP status code
+      if [ -n "${AUTH_HEADER}" ]; then
+        RESPONSE=$(curl -L -s -H "${AUTH_HEADER}" -w "\n%{http_code}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
+      else
+        RESPONSE=$(curl -L -s -w "\n%{http_code}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
+      fi
+      
+      HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+      RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
+      
+      # Check for rate limiting (403 or 429) - fail immediately, don't retry
+      if [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "429" ]; then
+        echo "ERROR: GitHub API rate limit exceeded (HTTP $HTTP_CODE)."
+        echo "Cannot retrieve the latest Istio version. Please try again later."
+        if [ -z "${GITHUB_TOKEN}" ]; then
+          echo "TIP: You can use --github-token <token> to authenticate and avoid rate limits."
+        fi
+        exit 1
+      fi
+      
+      VERSION_WE_WANT=$(echo "$RESPONSE_BODY" | \
             grep tag_name | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | \
             grep -v -E "(snapshot|alpha|beta|rc)\.[0-9]$" | sort -t"." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)
-      if [ $? -eq 0 ] && [ -n "${VERSION_WE_WANT}" ] && [ "${VERSION_WE_WANT}" != "null" ]; then
+      
+      if [ -n "${VERSION_WE_WANT}" ] && [ "${VERSION_WE_WANT}" != "null" ]; then
         echo "Successfully retrieved the latest Istio version: [$VERSION_WE_WANT]"
         break
       elif [ ${attempt} -eq 120 ]; then
@@ -109,18 +144,36 @@ if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
        exit 1
     fi
     VERSION_TO_MATCH="${major}.${minor}"
-    # Add retry logic for the second GitHub API call
     echo "Getting the latest patch version for [${VERSION_TO_MATCH}]..."
     for attempt in $(seq 1 120); do
-      LATEST=$(curl -L -s https://api.github.com/repos/istio/istio/releases 2>/dev/null \
-       | jq -r --arg VERSION_TO_MATCH "$VERSION_TO_MATCH" '.[] | select(.tag_name | startswith($VERSION_TO_MATCH)) | .tag_name' \
+      # Get both response body and HTTP status code
+      if [ -n "${AUTH_HEADER}" ]; then
+        RESPONSE=$(curl -L -s -H "${AUTH_HEADER}" -w "\n%{http_code}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
+      else
+        RESPONSE=$(curl -L -s -w "\n%{http_code}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
+      fi
+      
+      HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+      RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
+      # Check for rate limiting (403 or 429) - fail immediately, don't retry
+      if [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "429" ]; then
+        echo "ERROR: GitHub API rate limit exceeded (HTTP $HTTP_CODE)."
+        echo "Cannot retrieve the latest patch version. Please try again later."
+        if [ -z "${GITHUB_TOKEN}" ]; then
+          echo "TIP: You can use --github-token <token> to authenticate and avoid rate limits."
+        fi
+        exit 1
+      fi
+      
+      LATEST=$(echo "$RESPONSE_BODY" | \
+       jq -r --arg VERSION_TO_MATCH "$VERSION_TO_MATCH" '.[] | select(.tag_name | startswith($VERSION_TO_MATCH)) | .tag_name' \
        | sort -V \
        | tail -n 1)
-      if [ $? -eq 0 ] && [ -n "${LATEST}" ] && [ "${LATEST}" != "null" ]; then
+      if [ -n "${LATEST}" ] && [ "${LATEST}" != "null" ]; then
         echo "Successfully retrieved the latest patch version [${LATEST}]"
         break
       elif [ ${attempt} -eq 120 ]; then
-        echo "ERROR: Failed to get the latest patch version for [${VERSION_TO_MATCH}] from GitHub after 120 attempts (2 hours). Giving up."
+        echo "ERROR: Failed to get the latest patch version for [${VERSION_TO_MATCH}] from GitHub after 120 attemps (2 hours). Giving up."
         exit 1
       else
         echo "WARNING: Failed to get the latest patch version from GitHub. Will retry in 60 seconds... (attempt ${attempt}/120)"
