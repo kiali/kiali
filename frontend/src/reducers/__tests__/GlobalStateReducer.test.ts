@@ -1,7 +1,6 @@
 import { GlobalStateReducer } from '../GlobalState';
 import { GlobalActions } from '../../actions/GlobalActions';
 import { Language, Theme } from 'types/Common';
-import { KioskType } from 'store/Store';
 
 describe('GlobalStateReducer reducer', () => {
   const RealDate = Date.now;
@@ -204,13 +203,13 @@ describe('GlobalStateReducer reducer', () => {
           language: '',
           theme: Theme.LIGHT
         },
-        GlobalActions.setKioskData({ kioskType: KioskType.ossmc, hasDistributedTracing: false, hasNetobserv: false })
+        GlobalActions.setKioskData({ hasExternalTracing: false, hasNetobserv: false })
       )
     ).toEqual({
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: '',
-      kioskData: { kioskType: KioskType.ossmc, hasDistributedTracing: false, hasNetobserv: false },
+      kioskData: { hasExternalTracing: false, hasNetobserv: false },
       language: '',
       theme: Theme.LIGHT
     });

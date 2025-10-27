@@ -1,8 +1,7 @@
 // Action Creators allow us to create typesafe utilities for dispatching actions
 import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
 import { ActionKeys } from './ActionKeys';
-import { KioskMode } from '../types/Common';
-import { KioskData } from 'store/Store';
+import { KioskData, KioskMode } from '../types/Common';
 
 export const GlobalActions = {
   incrementLoadingCounter: createAction(ActionKeys.INCREMENT_LOADING_COUNTER),

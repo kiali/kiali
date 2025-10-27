@@ -3,6 +3,7 @@ import { Namespace } from '../types/Namespace';
 import {
   DurationInSeconds,
   IntervalInMilliseconds,
+  KioskData,
   KioskMode,
   RawDate,
   TimeInMilliseconds,
@@ -33,26 +34,10 @@ import { MeshLayout } from 'pages/Mesh/layouts/layoutFactory';
 
 // Store is the Redux Data store
 
-// KioskTypes can be added as needed, to support conditional logic based on parent types. Each
-// kiosk type can declare its own KioskData<KioskType>.  All KioskData objects must provide the
-// kioskType field, set appropriately.
-export enum KioskType {
-  ossmc
-}
-
-// KioskDataOssmc may be set when the parent is OpenShift OSSMC.
-export interface KioskDataOssmc {
-  readonly hasDistributedTracing: boolean;
-  readonly hasNetobserv: boolean;
-  readonly kioskType: KioskType; // "ossmc"
-}
-
-export type KioskData = undefined | KioskDataOssmc;
-
 export interface GlobalState {
   readonly isPageVisible: boolean;
   readonly kiosk: KioskMode;
-  readonly kioskData: KioskData;
+  readonly kioskData?: KioskData;
   readonly language: string;
   readonly loadingCounter: number;
   readonly theme: string;

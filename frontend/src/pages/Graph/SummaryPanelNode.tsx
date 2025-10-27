@@ -42,8 +42,7 @@ import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { renderWaypointLabel } from '../../components/Ambient/WaypointLabel';
 import { Node } from '@patternfly/react-topology';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
-import { KioskData } from 'store/Store';
-import { KioskMode } from 'types/Common';
+import { KioskData, KioskMode } from 'types/Common';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -55,7 +54,7 @@ const defaultState: SummaryPanelNodeState = {
 
 type ReduxProps = {
   kiosk: KioskMode;
-  kioskData: KioskData;
+  kioskData?: KioskData;
   rankResult: RankResult;
   showRank: boolean;
   tracingState: TracingState;
