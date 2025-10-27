@@ -103,12 +103,10 @@ Then('user should only see workloads with a version label', () => {
     const regex = new RegExp(`version=|service.istio.io/canonical-revision=|app.kubernetes.io/version=`);
 
     cy.get('tr').each($item => {
-      cy.wrap($item)
-        .find('td')
-        .eq(4)
-        .within(() => {
-          cy.get('span').children().contains(regex);
-        });
+      cy.wrap($item).find('td').eq(4).as('labelCell');
+      cy.get('@labelCell').within(() => {
+        cy.get('span').children().contains(regex);
+      });
     });
   });
 });
