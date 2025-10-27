@@ -173,7 +173,7 @@ if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
         echo "Successfully retrieved the latest patch version [${LATEST}]"
         break
       elif [ ${attempt} -eq 120 ]; then
-        echo "ERROR: Failed to get the latest patch version for [${VERSION_TO_MATCH}] from GitHub after 120 attemps (2 hours). Giving up."
+        echo "ERROR: Failed to get the latest patch version for [${VERSION_TO_MATCH}] from GitHub after 120 attempts (2 hours). Giving up."
         exit 1
       else
         echo "WARNING: Failed to get the latest patch version from GitHub. Will retry in 60 seconds... (attempt ${attempt}/120)"
