@@ -37,6 +37,7 @@ describe('SummaryPanelNodeComponent', () => {
       graphType: GraphType.VERSIONED_APP,
       injectServiceNodes: false,
       kiosk: '',
+      kioskData: undefined,
       namespaces: [],
       queryTime: 20,
       rankResult: { upperBound: 0 },

@@ -25,6 +25,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: '',
+      kioskData: undefined,
       language: '',
       theme: ''
     });
@@ -37,6 +38,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 0,
           isPageVisible: true,
           kiosk: '',
+          kioskData: undefined,
           language: '',
           theme: Theme.LIGHT
         },
@@ -46,6 +48,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 1,
       isPageVisible: true,
       kiosk: '',
+      kioskData: undefined,
       language: '',
       theme: Theme.LIGHT
     });
@@ -58,6 +61,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 1,
           isPageVisible: true,
           kiosk: '',
+          kioskData: undefined,
           language: '',
           theme: Theme.LIGHT
         },
@@ -67,6 +71,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: '',
+      kioskData: undefined,
       language: '',
       theme: Theme.LIGHT
     });
@@ -79,6 +84,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 1,
           isPageVisible: true,
           kiosk: '',
+          kioskData: undefined,
           language: '',
           theme: Theme.LIGHT
         },
@@ -88,6 +94,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 2,
       isPageVisible: true,
       kiosk: '',
+      kioskData: undefined,
       language: '',
       theme: Theme.LIGHT
     });
@@ -100,6 +107,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 2,
           isPageVisible: true,
           kiosk: '',
+          kioskData: undefined,
           language: '',
           theme: Theme.LIGHT
         },
@@ -109,6 +117,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 1,
       isPageVisible: true,
       kiosk: '',
+      kioskData: undefined,
       language: '',
       theme: Theme.LIGHT
     });
@@ -121,6 +130,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 0,
           isPageVisible: false,
           kiosk: '',
+          kioskData: undefined,
           language: '',
           theme: Theme.LIGHT
         },
@@ -130,6 +140,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: '',
+      kioskData: undefined,
       language: '',
       theme: Theme.LIGHT
     });
@@ -142,6 +153,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 0,
           isPageVisible: true,
           kiosk: '',
+          kioskData: undefined,
           language: '',
           theme: Theme.LIGHT
         },
@@ -151,6 +163,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 0,
       isPageVisible: false,
       kiosk: '',
+      kioskData: undefined,
       language: '',
       theme: Theme.LIGHT
     });
@@ -163,6 +176,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 0,
           isPageVisible: true,
           kiosk: '',
+          kioskData: undefined,
           language: '',
           theme: Theme.LIGHT
         },
@@ -172,6 +186,30 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: 'test',
+      kioskData: undefined,
+      language: '',
+      theme: Theme.LIGHT
+    });
+  });
+
+  it('should set kiosk data', () => {
+    expect(
+      GlobalStateReducer(
+        {
+          loadingCounter: 0,
+          isPageVisible: true,
+          kiosk: '',
+          kioskData: undefined,
+          language: '',
+          theme: Theme.LIGHT
+        },
+        GlobalActions.setKioskData({ hasExternalTracing: false, hasNetobserv: false })
+      )
+    ).toEqual({
+      loadingCounter: 0,
+      isPageVisible: true,
+      kiosk: '',
+      kioskData: { hasExternalTracing: false, hasNetobserv: false },
       language: '',
       theme: Theme.LIGHT
     });
@@ -184,6 +222,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 0,
           isPageVisible: true,
           kiosk: '',
+          kioskData: undefined,
           language: '',
           theme: Theme.LIGHT
         },
@@ -193,6 +232,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: '',
+      kioskData: undefined,
       language: Language.ENGLISH,
       theme: Theme.LIGHT
     });
@@ -205,6 +245,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 0,
           isPageVisible: true,
           kiosk: '',
+          kioskData: undefined,
           language: '',
           theme: Theme.LIGHT
         },
@@ -214,6 +255,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: '',
+      kioskData: undefined,
       language: '',
       theme: Theme.DARK
     });
