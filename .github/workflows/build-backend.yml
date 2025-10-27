@@ -39,7 +39,7 @@ jobs:
         CGO_ENABLED: ${{ github.base_ref && '1' }}
 
     - name: Upload go binary
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: kiali
         path: ~/go/bin/kiali
