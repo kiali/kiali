@@ -138,7 +138,6 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     const shouldRenderApp = app && ![NodeType.APP, NodeType.UNKNOWN].includes(nodeType) && !nodeData.isWaypoint;
     const shouldRenderWorkload = workload && ![NodeType.WORKLOAD, NodeType.UNKNOWN].includes(nodeType);
     const shouldRenderNetobservWorkload = hasNetobserv && (nodeType === NodeType.WORKLOAD || shouldRenderWorkload);
-    const shouldRenderNetobservService = hasNetobserv && (nodeType === NodeType.SERVICE || shouldRenderService);
     const shouldRenderTraces =
       !isServiceEntry &&
       !nodeData.isInaccessible &&
@@ -252,7 +251,6 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             {shouldRenderService && <div>{renderBadgedLink(nodeData, NodeType.SERVICE)}</div>}
             {shouldRenderApp && <div>{renderBadgedLink(nodeData, NodeType.APP)}</div>}
             {shouldRenderWorkload && this.renderWorkloadSection(nodeData)}
-            {shouldRenderNetobservService && this.renderNetobservLink(nodeData, NodeType.SERVICE)}
             {shouldRenderNetobservWorkload && this.renderNetobservLink(nodeData, NodeType.WORKLOAD)}
           </div>
         </div>
