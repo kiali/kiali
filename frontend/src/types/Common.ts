@@ -6,7 +6,15 @@ export type UserName = string;
 export type Password = string;
 export type RawDate = string;
 
+// KioskMode if truthy Kiali displays in kioskMode, if set to anything but "true" it means Kiali is
+// operating as a component embedded in some sort of parent (parent support is still experimental).
 export type KioskMode = string;
+
+// KioskData can be optionally be by a kiosk parent to declare capabilities of the parent.
+export interface KioskData {
+  readonly hasExternalTracing: boolean;
+  readonly hasNetobserv: boolean;
+}
 
 export enum HTTP_VERBS {
   DELETE = 'DELETE',

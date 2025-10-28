@@ -142,11 +142,12 @@ export const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType): React.Re
   }
 };
 
-export const getLink = (
-  nodeData: GraphNodeData,
-  nodeType?: NodeType,
-  linkGenerator?: () => LinkInfo
-): React.ReactNode => {
+export interface SummaryLink {
+  elem: React.ReactNode;
+  link: string;
+}
+
+export const getLink = (nodeData: GraphNodeData, nodeType?: NodeType, linkGenerator?: () => LinkInfo): SummaryLink => {
   const { app, cluster, namespace, service, workload } = nodeData;
 
   if (!nodeType || nodeData.nodeType === NodeType.UNKNOWN) {
@@ -226,17 +227,20 @@ export const getLink = (
   }
 
   if (link && !nodeData.isInaccessible) {
-    return (
-      <>
-        <KialiPageLink key={key} href={link} cluster={cluster}>
-          {displayName}
-        </KialiPageLink>
-        {extLink}
-      </>
-    );
+    return {
+      elem: (
+        <>
+          <KialiPageLink key={key} href={link} cluster={cluster}>
+            {displayName}
+          </KialiPageLink>
+          {extLink}
+        </>
+      ),
+      link: link
+    };
   }
 
-  return extLink ? extLink : <span key={key}>{displayName}</span>;
+  return { elem: extLink ? extLink : <span key={key}>{displayName}</span>, link: link! };
 };
 
 export const renderBadgedHost = (host: string): React.ReactNode => {
@@ -259,7 +263,7 @@ export const renderBadgedName = (nodeData: GraphNodeData, label?: string): React
         )}
 
         {getBadge(nodeData)}
-        {getLink({ ...nodeData, isInaccessible: true })}
+        {getLink({ ...nodeData, isInaccessible: true }).elem}
       </span>
     </div>
   );
@@ -272,7 +276,7 @@ export const renderBadgedLink = (
   linkGenerator?: () => LinkInfo,
   style?: string
 ): React.ReactNode => {
-  const link = getLink(nodeData, nodeType, linkGenerator);
+  const link = getLink(nodeData, nodeType, linkGenerator).elem;
 
   return (
     <div key={`node-${nodeData.id}`} className={style}>
