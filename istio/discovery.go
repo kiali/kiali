@@ -810,20 +810,22 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	}
 
 	// set the NamespaceMap, any previous map will get gc'd
+	// Use the namespaces already collected in namespacesByClusterAndRev which respects cluster_wide_access
 	in.namespaceMap = map[string]*models.ControlPlane{}
 	for _, cp := range controlPlanes {
-		ci := in.kialiSAClients[cp.ID]
-		if ci == nil {
-			ci = in.kialiSAClients[cp.Cluster.Name]
+		// For each control plane, find the namespaces that belong to it based on cluster and revision matching
+		cpRev := cp.Revision
+		if cp.Tag != nil {
+			cpRev = cp.Tag.Name
 		}
-		namespaces, err := ci.GetNamespaces("")
-		if err != nil {
-			log.Errorf("unable to populate NamespaceMap for controlPlane with ID [%s], name [%s]. Err: %s", cp.ID, cp.Cluster.Name, err)
-			continue
-		}
-		for _, ns := range namespaces {
-			key := in.namespaceMapKey(cp.ID, ns.Name)
-			in.namespaceMap[key] = cp
+
+		// Look up namespaces by cluster and revision
+		key := clusterRevisionKey{Cluster: cp.Cluster.Name, Revision: cpRev}
+		if namespaces, ok := namespacesByClusterAndRev[key]; ok {
+			for _, ns := range namespaces {
+				mapKey := in.namespaceMapKey(cp.Cluster.Name, ns.Name)
+				in.namespaceMap[mapKey] = cp
+			}
 		}
 	}
 
