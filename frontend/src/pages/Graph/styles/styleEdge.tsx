@@ -34,11 +34,11 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   let cssClasses: string[] = [];
 
   const onMouseEnter = (): void => {
-    data.onHover(element, true);
+    data.onHover?.(element, true);
   };
 
   const onMouseLeave = (): void => {
-    data.onHover(element, false);
+    data.onHover?.(element, false);
   };
 
   const edgeClass = kialiStyle({
