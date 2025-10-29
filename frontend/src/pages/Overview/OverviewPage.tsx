@@ -78,6 +78,9 @@ import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { PersesInfo } from '../../types/PersesInfo';
 import { ExternalServiceInfo } from '../../types/StatusState';
 
+// Maximum number of namespaces to include in a single backend API call
+const MAX_NAMESPACES_PER_CALL = 100;
+
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
   paddingBottom: '1.25rem',
@@ -116,6 +119,20 @@ const namespaceNameStyle = kialiStyle({
   whiteSpace: 'nowrap',
   textOverflow: 'ellipsis'
 });
+
+/**
+ * Chunks an array into smaller arrays of a specified size
+ * @param array The array to chunk
+ * @param size The maximum size of each chunk
+ * @returns An array of chunks
+ */
+const chunkArray = <T,>(array: T[], size: number): T[][] => {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+};
 
 export enum Show {
   GRAPH,
@@ -348,19 +365,25 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       API.getClustersWorkloadHealth
     );
 
-    const healthPromise: Promise<
-      Map<string, NamespaceAppHealth> | Map<string, NamespaceWorkloadHealth> | Map<string, NamespaceServiceHealth>
-    > = apiFunc(
-      namespaces
-        .filter(ns => ns.cluster === cluster)
-        .map(ns => ns.name)
-        .join(','),
-      duration,
-      cluster
-    );
+    // Filter namespaces for this cluster
+    const clusterNamespaces = namespaces.filter(ns => ns.cluster === cluster);
 
-    return healthPromise
-      .then(results => {
+    // Chunk namespaces to avoid overloading the backend and/or long URIs
+    const namespaceChunks = chunkArray(clusterNamespaces, MAX_NAMESPACES_PER_CALL);
+
+    // Make parallel API calls for each chunk
+    const healthPromises = namespaceChunks.map(chunk => apiFunc(chunk.map(ns => ns.name).join(','), duration, cluster));
+
+    return Promise.all(healthPromises)
+      .then(chunkedResults => {
+        // Merge all results from chunks
+        const results: Map<string, NamespaceAppHealth | NamespaceWorkloadHealth | NamespaceServiceHealth> = new Map();
+        chunkedResults.forEach(chunkResult => {
+          Object.keys(chunkResult).forEach(ns => {
+            results[ns] = chunkResult[ns];
+          });
+        });
+
         namespaces.forEach(nsInfo => {
           const nsStatus: NamespaceStatus = {
             inNotReady: [],
@@ -435,32 +458,43 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       step: rateParams.step
     };
 
-    return API.getClustersMetrics(
-      namespaces
-        .filter(ns => ns.cluster === cluster)
-        .map(ns => ns.name)
-        .join(','),
-      options,
-      cluster
-    )
-      .then(results => {
-        namespaces.forEach(nsInfo => {
-          if (((nsInfo.cluster && nsInfo.cluster === cluster) || !nsInfo.cluster) && results.data[nsInfo.name]) {
-            const rs = results.data[nsInfo.name];
-            nsInfo.metrics = rs.request_count;
-            nsInfo.errorMetrics = rs.request_error_count;
+    // Filter namespaces for this cluster
+    const clusterNamespaces = namespaces.filter(ns => ns.cluster === cluster);
 
-            /*
-            if (isIstioNamespace(nsInfo.name)) {
-              nsInfo.controlPlaneMetrics = {
-                istiod_proxy_time: rs.pilot_proxy_convergence_time,
-                istiod_container_cpu: rs.container_cpu_usage_seconds_total,
-                istiod_container_mem: rs.container_memory_working_set_bytes,
-                istiod_process_cpu: rs.process_cpu_seconds_total,
-                istiod_process_mem: rs.process_resident_memory_bytes
-              };
+    // Chunk namespaces to avoid overloading the backend and/or long URIs
+    const namespaceChunks = chunkArray(clusterNamespaces, MAX_NAMESPACES_PER_CALL);
+
+    // Make parallel API calls for each chunk
+    const metricsPromises = namespaceChunks.map(chunk =>
+      API.getClustersMetrics(chunk.map(ns => ns.name).join(','), options, cluster)
+    );
+
+    return Promise.all(metricsPromises)
+      .then(chunkedResults => {
+        // Process results from all chunks
+        namespaces.forEach(nsInfo => {
+          if ((nsInfo.cluster && nsInfo.cluster === cluster) || !nsInfo.cluster) {
+            // Find the result containing this namespace
+            for (const results of chunkedResults) {
+              if (results.data[nsInfo.name]) {
+                const rs = results.data[nsInfo.name];
+                nsInfo.metrics = rs.request_count;
+                nsInfo.errorMetrics = rs.request_error_count;
+
+                /*
+                if (isIstioNamespace(nsInfo.name)) {
+                  nsInfo.controlPlaneMetrics = {
+                    istiod_proxy_time: rs.pilot_proxy_convergence_time,
+                    istiod_container_cpu: rs.container_cpu_usage_seconds_total,
+                    istiod_container_mem: rs.container_memory_working_set_bytes,
+                    istiod_process_cpu: rs.process_cpu_seconds_total,
+                    istiod_process_mem: rs.process_resident_memory_bytes
+                  };
+                }
+                */
+                break;
+              }
             }
-            */
           }
         });
       })
@@ -494,32 +528,41 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   };
 
   fetchTLSForCluster = async (namespaces: NamespaceInfo[], cluster: string): Promise<void> => {
-    API.getClustersTls(
-      namespaces
-        .filter(ns => ns.cluster === cluster)
-        .map(ns => ns.name)
-        .join(','),
-      cluster
-    )
-      .then(results => {
+    // Filter namespaces for this cluster
+    const clusterNamespaces = namespaces.filter(ns => ns.cluster === cluster);
+
+    // Chunk namespaces to avoid overloading the backend
+    const namespaceChunks = chunkArray(clusterNamespaces, MAX_NAMESPACES_PER_CALL);
+
+    // Make parallel API calls for each chunk
+    const tlsPromises = namespaceChunks.map(chunk => API.getClustersTls(chunk.map(ns => ns.name).join(','), cluster));
+
+    return Promise.all(tlsPromises)
+      .then(chunkedResults => {
         const tlsByClusterAndNamespace = new Map<string, Map<string, TLSStatus>>();
-        results.data.forEach(tls => {
-          if (tls.cluster && !tlsByClusterAndNamespace.has(tls.cluster)) {
-            tlsByClusterAndNamespace.set(tls.cluster, new Map<string, TLSStatus>());
-          }
-          if (tls.cluster && tls.namespace) {
-            tlsByClusterAndNamespace.get(tls.cluster)!.set(tls.namespace, tls);
-          }
+
+        // Merge results from all chunks
+        chunkedResults.forEach(results => {
+          results.data.forEach(tls => {
+            if (tls.cluster && !tlsByClusterAndNamespace.has(tls.cluster)) {
+              tlsByClusterAndNamespace.set(tls.cluster, new Map<string, TLSStatus>());
+            }
+            if (tls.cluster && tls.namespace) {
+              tlsByClusterAndNamespace.get(tls.cluster)!.set(tls.namespace, tls);
+            }
+          });
         });
 
         namespaces.forEach(nsInfo => {
           if (nsInfo.cluster && nsInfo.cluster === cluster && tlsByClusterAndNamespace.get(cluster)) {
             const tlsStatus = tlsByClusterAndNamespace.get(cluster)!.get(nsInfo.name);
-            nsInfo.tlsStatus = {
-              status: nsWideMTLSStatus(tlsStatus!.status, this.props.meshStatus),
-              autoMTLSEnabled: tlsStatus!.autoMTLSEnabled,
-              minTLS: tlsStatus!.minTLS
-            };
+            if (tlsStatus) {
+              nsInfo.tlsStatus = {
+                status: nsWideMTLSStatus(tlsStatus.status, this.props.meshStatus),
+                autoMTLSEnabled: tlsStatus.autoMTLSEnabled,
+                minTLS: tlsStatus.minTLS
+              };
+            }
           }
         });
       })
@@ -555,27 +598,33 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   };
 
   fetchValidationResultForCluster = async (namespaces: NamespaceInfo[], cluster: string): Promise<void> => {
-    return Promise.all([
-      API.getConfigValidations(
-        namespaces
-          .filter(ns => ns.cluster === cluster)
-          .map(ns => ns.name)
-          .join(','),
-        cluster
-      ),
-      API.getAllIstioConfigs([], false, '', '', cluster)
-    ])
-      .then(results => {
-        const validations = results[0].data;
-        const istioConfig = results[1].data;
+    // Filter namespaces for this cluster
+    const clusterNamespaces = namespaces.filter(ns => ns.cluster === cluster);
+
+    // Chunk namespaces to avoid overloading the backend
+    const namespaceChunks = chunkArray(clusterNamespaces, MAX_NAMESPACES_PER_CALL);
+
+    // Make parallel API calls for validation chunks and istio configs
+    const validationPromises = namespaceChunks.map(chunk =>
+      API.getConfigValidations(chunk.map(ns => ns.name).join(','), cluster)
+    );
+
+    return Promise.all([Promise.all(validationPromises), API.getAllIstioConfigs([], false, '', '', cluster)])
+      .then(([validationResults, istioConfigResult]) => {
+        const istioConfig = istioConfigResult.data;
+
         const validationsByClusterAndNamespace = new Map<string, Map<string, ValidationStatus>>();
-        validations.forEach(validation => {
-          if (validation.cluster && !validationsByClusterAndNamespace.has(validation.cluster)) {
-            validationsByClusterAndNamespace.set(validation.cluster, new Map<string, ValidationStatus>());
-          }
-          if (validation.cluster && validation.namespace) {
-            validationsByClusterAndNamespace.get(validation.cluster)!.set(validation.namespace, validation);
-          }
+
+        // Merge validations from all chunks
+        validationResults.forEach(validationResult => {
+          validationResult.data.forEach(validation => {
+            if (validation.cluster && !validationsByClusterAndNamespace.has(validation.cluster)) {
+              validationsByClusterAndNamespace.set(validation.cluster, new Map<string, ValidationStatus>());
+            }
+            if (validation.cluster && validation.namespace) {
+              validationsByClusterAndNamespace.get(validation.cluster)!.set(validation.namespace, validation);
+            }
+          });
         });
 
         const istioConfigPerNamespace = new Map<string, IstioConfigList>();

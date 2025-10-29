@@ -31,7 +31,7 @@ const mockAPIToPromise = (func: keyof typeof API, obj: any, encapsData: boolean)
           } catch (e) {
             reject(e);
           }
-        }, 2);
+        }, 10);
       });
     });
   });
@@ -46,7 +46,7 @@ const mockNamespaces = (names: string[]): Promise<void> => {
 };
 
 const mockNamespaceHealth = (namespaces: string[], obj: NamespaceAppHealth): Promise<void> => {
-  const res: Map<string, NamespaceAppHealth> = new Map<string, NamespaceAppHealth>();
+  const res: any = {};
   namespaces.forEach(namespace => {
     res[namespace] = obj;
   });
@@ -123,14 +123,15 @@ describe('Overview page', () => {
     mounted = null;
 
     // Ignore other calls
-    mockAPIToPromise('getClustersServiceHealth', null, false);
-    mockAPIToPromise('getClustersWorkloadHealth', null, false);
-    mockAPIToPromise('getClustersMetrics', null, false);
+    mockAPIToPromise('getClustersServiceHealth', {}, false);
+    mockAPIToPromise('getClustersWorkloadHealth', {}, false);
+    mockAPIToPromise('getClustersMetrics', { data: {} }, false);
     mockAPIToPromise('getNamespaceMetrics', null, false);
-    mockAPIToPromise('getNamespaceTls', null, false);
-    mockAPIToPromise('getConfigValidations', null, false);
-    mockAPIToPromise('getAllIstioConfigs', null, false);
+    mockAPIToPromise('getClustersTls', [], true);
+    mockAPIToPromise('getConfigValidations', [], true);
+    mockAPIToPromise('getAllIstioConfigs', { resources: {} }, true);
     mockAPIToPromise('getIstioPermissions', {}, false);
+    mockAPIToPromise('getControlPlanes', [], true);
   });
 
   afterEach(() => {
@@ -286,9 +287,11 @@ describe('Overview page', () => {
   it('filters namespaces info name no match', done => {
     FilterSelected.setSelected(genActiveFilters(nameFilter, ['yz']));
     mockNamespaces(['abc', 'bce', 'ced']).then(() => {
-      mounted!.update();
-      expect(mounted!.find('Card')).toHaveLength(0);
-      done();
+      setTimeout(() => {
+        mounted!.update();
+        expect(mounted!.find('Card')).toHaveLength(0);
+        done();
+      }, 10);
     });
     mountPage();
   });
