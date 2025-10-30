@@ -435,6 +435,12 @@ func (in *Discovery) Clusters() []models.KubeCluster {
 		cluster.KialiInstances = instances
 	}
 
+	// Log discovered clusters for debugging
+	for _, cluster := range clusters {
+		log.Infof("Discovered cluster: Name=[%s], Accessible=%t, IsKialiHome=%t, ApiEndpoint=[%s], SecretName=[%s]",
+			cluster.Name, cluster.Accessible, cluster.IsKialiHome, cluster.ApiEndpoint, cluster.SecretName)
+	}
+
 	in.kialiCache.SetClusters(clusters)
 
 	return clusters
@@ -525,6 +531,8 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 						controlPlane.IsGatewayToNamespace = true
 					case env.Name == istiodClusterIDEnvKey:
 						controlPlane.ID = env.Value
+						log.Infof("Control plane [%s/%s] cluster ID set to [%s] (deployed on cluster [%s])",
+							istiod.Namespace, istiod.Name, env.Value, cluster.Name)
 					case env.Name == istiodSharedMeshConfigEnvKey:
 						controlPlane.SharedMeshConfig = env.Value
 					}
