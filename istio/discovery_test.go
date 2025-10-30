@@ -2195,6 +2195,12 @@ func TestDiscoverWithTags(t *testing.T) {
 						return n.Name == ns
 					}), "expected namespace %s to be managed by control plane %s", ns, clusterRev)
 				}
+
+				// Verify GetRootNamespace works for managed namespaces (tests namespace map population)
+				for _, ns := range expectedNamespaces {
+					rootNs := discovery.GetRootNamespace(context.Background(), clusterRev.Cluster, ns)
+					require.NotEmpty(rootNs, "GetRootNamespace should return a value for namespace %s in cluster %s", ns, clusterRev.Cluster)
+				}
 			}
 		})
 	}
@@ -2739,4 +2745,137 @@ trustDomain: cluster.local
 
 	namespaces = discoveryWithEmpty.GetControlPlaneNamespaces(ctx, "empty-cluster")
 	require.Empty(namespaces, "Should return empty slice for cluster with no control plane")
+}
+
+func TestNamespaceMapWithClusterWideAccessFalse(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "Kubernetes"
+	conf.Deployment.AccessibleNamespaces = []string{"bookinfo", "travels", "istio-system"}
+	conf.Deployment.ClusterWideAccess = false
+
+	defaultIstiod := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
+	defaultWebhook := &admissionregistrationv1.MutatingWebhookConfiguration{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "istio-revision-tag-default",
+			Labels: map[string]string{
+				config.IstioRevisionLabel: "default",
+				models.IstioTagLabel:      "default",
+			},
+		},
+	}
+
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "default"}}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "travels", Labels: map[string]string{config.IstioRevisionLabel: "default"}}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		defaultIstiod,
+		defaultWebhook,
+		fakeIstioConfigMap("default"),
+		FakeCertificateConfigMap("istio-system"),
+	)
+
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	kialiCache := cache.NewTestingCache(t, k8s, *conf)
+	discovery := istio.NewDiscovery(clients, kialiCache, conf)
+
+	ctx := context.Background()
+	mesh, err := discovery.Mesh(ctx)
+	require.NoError(err)
+	require.NotNil(mesh)
+
+	// Verify control plane was discovered
+	require.Len(mesh.ControlPlanes, 1, "Should have exactly one control plane")
+	cp := mesh.ControlPlanes[0]
+	require.Equal("default", cp.Revision)
+	require.Len(cp.ManagedNamespaces, 2, "Should manage bookinfo and travels namespaces")
+
+	// Verify GetRootNamespace works for accessible namespaces
+	// This tests that the namespaceMap was populated correctly without cluster-scoped queries
+	rootNs := discovery.GetRootNamespace(ctx, conf.KubernetesConfig.ClusterName, "bookinfo")
+	require.Equal("istio-system", rootNs, "GetRootNamespace should work for bookinfo namespace")
+
+	rootNs = discovery.GetRootNamespace(ctx, conf.KubernetesConfig.ClusterName, "travels")
+	require.Equal("istio-system", rootNs, "GetRootNamespace should work for travels namespace")
+
+	// Verify we can query root namespace for control plane namespace itself
+	rootNs = discovery.GetRootNamespace(ctx, conf.KubernetesConfig.ClusterName, "istio-system")
+	require.Equal("istio-system", rootNs, "GetRootNamespace should work for istio-system namespace")
+}
+
+func TestNamespaceMapWithTagsAndClusterWideAccessFalse(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "Kubernetes"
+	conf.Deployment.AccessibleNamespaces = []string{"bookinfo", "travels", "istio-system"}
+	conf.Deployment.ClusterWideAccess = false
+
+	// Create control plane with revision 1-23-0 and tag "prod"
+	istiod := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
+	istiod.Name = "istiod-1-23-0"
+	istiod.Labels[config.IstioRevisionLabel] = "1-23-0"
+
+	tagProd := &admissionregistrationv1.MutatingWebhookConfiguration{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "istio-revision-tag-prod",
+			Labels: map[string]string{
+				config.IstioRevisionLabel: "1-23-0",
+				models.IstioTagLabel:      "prod",
+			},
+		},
+	}
+
+	allowedToListWebhookReview := &authv1.SelfSubjectAccessReview{
+		Spec: authv1.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &authv1.ResourceAttributes{
+				Verb:     "list",
+				Resource: "mutatingwebhookconfigurations",
+				Group:    "admissionregistration.k8s.io",
+			},
+		},
+		Status: authv1.SubjectAccessReviewStatus{
+			Allowed: true,
+		},
+	}
+
+	k8s := kubetest.NewFakeK8sClient(
+		// Namespace labeled with tag "prod", not revision "1-23-0"
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "prod"}}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "travels", Labels: map[string]string{config.IstioRevisionLabel: "prod"}}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		istiod,
+		tagProd,
+		fakeIstioConfigMap("1-23-0"),
+		FakeCertificateConfigMap("istio-system"),
+	)
+
+	client := &accessReviewClient{
+		ClientInterface: k8s,
+		AccessReview:    []*authv1.SelfSubjectAccessReview{allowedToListWebhookReview},
+	}
+
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client}
+	kialiCache := cache.NewTestingCacheWithClients(t, clients, *conf)
+	discovery := istio.NewDiscovery(clients, kialiCache, conf)
+
+	ctx := context.Background()
+	mesh, err := discovery.Mesh(ctx)
+	require.NoError(err)
+	require.NotNil(mesh)
+
+	// Verify control plane was discovered with correct tag
+	require.Len(mesh.ControlPlanes, 1, "Should have exactly one control plane")
+	cp := mesh.ControlPlanes[0]
+	require.Equal("1-23-0", cp.Revision)
+	require.NotNil(cp.Tag, "Control plane should have a tag")
+	require.Equal("prod", cp.Tag.Name, "Tag should be named 'prod'")
+	require.Len(cp.ManagedNamespaces, 2, "Should manage bookinfo and travels namespaces")
+
+	// Verify GetRootNamespace works for namespaces labeled with tags
+	// This tests that the namespaceMap correctly maps namespaces using tag names
+	rootNs := discovery.GetRootNamespace(ctx, conf.KubernetesConfig.ClusterName, "bookinfo")
+	require.Equal("istio-system", rootNs, "GetRootNamespace should work for namespace with tag label")
+
+	rootNs = discovery.GetRootNamespace(ctx, conf.KubernetesConfig.ClusterName, "travels")
+	require.Equal("istio-system", rootNs, "GetRootNamespace should work for namespace with tag label")
 }
