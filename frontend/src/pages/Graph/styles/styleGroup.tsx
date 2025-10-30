@@ -78,11 +78,11 @@ const StyleGroupComponent: React.FC<StyleGroupProps> = ({
   }
 
   const onMouseEnter = (): void => {
-    data.onHover(element, true);
+    data.onHover?.(element, true);
   };
 
   const onMouseLeave = (): void => {
-    data.onHover(element, false);
+    data.onHover?.(element, false);
   };
 
   const passedData = React.useMemo(() => {

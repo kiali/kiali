@@ -248,9 +248,9 @@ export const setNodeLabel = (
   if (isBoxed && supportsGroups(layoutName)) {
     let box1: NodeModel | undefined, box2: NodeModel | undefined;
     box1 = nodeMap.get(data.parent!);
-    const box1Data = box1?.data as NodeData;
-    box1Type = box1Data.isBox;
-    box2 = box1Data.parent ? nodeMap.get(box1Data.parent!) : undefined;
+    const box1Data = box1?.data as NodeData | undefined;
+    box1Type = box1Data?.isBox;
+    box2 = box1Data?.parent ? nodeMap.get(box1Data.parent!) : undefined;
     box2Type = box2 ? (box2.data as NodeData).isBox : undefined;
   }
 
