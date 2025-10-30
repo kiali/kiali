@@ -532,7 +532,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 					case env.Name == istiodClusterIDEnvKey:
 						controlPlane.ID = env.Value
 						log.Infof("Control plane [%s/%s] cluster ID set to [%s] (deployed on cluster [%s])",
-							istiod.Namespace, istiod.Name, env.Value, cluster.Name)
+							istiod.Namespace, istiod.Name, controlPlane.ID, cluster.Name)
 					case env.Name == istiodSharedMeshConfigEnvKey:
 						controlPlane.SharedMeshConfig = env.Value
 					}
