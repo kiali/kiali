@@ -173,9 +173,11 @@ Feature: Kiali Mesh page
     And user verifies the Discovery information is correct
     When user switches to the Tester tab
     And user changes the provider in the Tester tab
+    And user changes the useGRPC in the Tester tab
     And user clicks the Test Configuration button
     Then user sees the Tester result "incorrect"
     And user changes the provider in the Tester tab
+    And user changes the useGRPC in the Tester tab
     And user clicks the Test Configuration button
     Then user sees the Tester result "correct"
 
