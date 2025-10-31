@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/config"
@@ -75,8 +76,23 @@ func (aHandler *AuthenticationHandler) Handle(next http.Handler) http.Handler {
 			sessions, err := aHandler.authController.ValidateSession(r, w)
 			if err != nil {
 				if errors.Is(err, authentication.ErrSessionNotFound) {
+					// Session doesn't exist - user needs to authenticate
 					statusCode = http.StatusUnauthorized
+				} else if k8serrors.IsUnauthorized(err) {
+					// Kubernetes API rejected the token as invalid/expired.
+					// This can occur when ValidateSession calls GetNamespaces, which makes K8s API calls.
+					statusCode = http.StatusUnauthorized
+				} else if k8serrors.IsForbidden(err) {
+					// Token is valid but user lacks sufficient RBAC privileges.
+					// Note: This may not always bubble up from ValidateSession because:
+					// - In ClusterWideAccess mode, Forbidden errors trigger a fallback to Kiali SA
+					// - In non-CWA mode, Forbidden errors on individual namespaces are caught and logged
+					// However, this check is still useful for cases where the fallback fails or
+					// for other K8s API calls that may return Forbidden.
+					statusCode = http.StatusForbidden
+					log.Errorf("User does not have sufficient privileges: %s", err.Error())
 				} else {
+					// Unexpected server error during validation
 					log.Errorf("Failed to validate session: %s", err.Error())
 					statusCode = http.StatusInternalServerError
 				}
@@ -108,9 +124,12 @@ func (aHandler *AuthenticationHandler) Handle(next http.Handler) http.Handler {
 				log.Errorf("Failed to clean a stale session: %s", err.Error())
 			}
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		case http.StatusForbidden:
+			// User is authenticated but lacks privileges - don't terminate session
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		default:
 			http.Error(w, http.StatusText(statusCode), statusCode)
-			log.Errorf("Cannot send response to unauthorized user: %v", statusCode)
+			log.Errorf("Cannot send response to user: %v", statusCode)
 		}
 	})
 }
