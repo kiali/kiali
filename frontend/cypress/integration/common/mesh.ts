@@ -419,6 +419,46 @@ When('user changes the provider in the Tester tab', () => {
   });
 });
 
+When('user changes the useGRPC in the Tester tab', () => {
+  cy.get('div[data-test="modal-configuration-tester"]').within(() => {
+    cy.window().then((win: any) => {
+      const editor = win.ace.edit('ace-editor-tester');
+      const session = editor.getSession();
+      const linesCount = session.getLength();
+      const searchText = 'useGRPC';
+      let currentValue: string | null = null;
+      let targetValue = 'true';
+
+      // Find the line containing useGRPC and determine current value
+      for (let i = 0; i < linesCount; i++) {
+        const line = session.getLine(i);
+        const lowerLine = line.toLowerCase();
+        if (lowerLine.includes(searchText.toLowerCase())) {
+          // Check for both true and false patterns
+          if (line.match(/:\s*(true|false)/i)) {
+            if (line.match(/:\s*true/i)) {
+              currentValue = 'true';
+              targetValue = 'false';
+            } else if (line.match(/:\s*false/i)) {
+              currentValue = 'false';
+              targetValue = 'true';
+            }
+          }
+          break;
+        }
+      }
+
+      // Replace the value using regex to handle various formats (with/without spaces, quotes, etc.)
+      let val: string = editor.getValue();
+      if (currentValue !== null) {
+        // Replace useGRPC with various formats: "useGRPC: true", "useGRPC:false", "useGRPC: true", etc.
+        val = val.replace(new RegExp(`(useGRPC\\s*:\\s*)${currentValue}`, 'gi'), `$1${targetValue}`);
+        editor.setValue(val);
+      }
+    });
+  });
+});
+
 When('user clicks the Test Configuration button', () => {
   cy.get('div[data-test="modal-configuration-tester"]').within(() => {
     cy.contains('Test Configuration').click();
