@@ -97,7 +97,7 @@ if [ "${DELETE_SLEEP}" == "true" ]; then
   echo "Deleting the 'sleep' app in the 'sleep' namespace..."
   # s390x/ppc64le specific images for curl in sleep.yaml (OSSM-6012)
   if [ "${ARCH}" == "s390x" ] || [ "${ARCH}" == "ppc64le" ]; then
-    sed -i "s;curlimages/curl;quay.io/curl/curl:8.4.0;g" ${ISTIO_DIR}/samples/sleep/sleep.yaml
+    sed -i -E "s;curlimages/curl(:.*)?;quay.io/curl/curl:8.4.0;g" ${ISTIO_DIR}/samples/sleep/sleep.yaml
     ${CLIENT_EXE} delete -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
   else
     ${CLIENT_EXE} delete -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
@@ -162,7 +162,7 @@ NAD
 
   if [ "${ARCH}" == "s390x" ] || [ "${ARCH}" == "ppc64le" ]; then
     echo "Using s390x/ppc64le specific images for curl in sleep.yaml"
-    sed -i "s;curlimages/curl;quay.io/curl/curl:8.4.0;g" ${ISTIO_DIR}/samples/sleep/sleep.yaml
+    sed -i -E "s;curlimages/curl(:.*)?;quay.io/curl/curl:8.4.0;g" ${ISTIO_DIR}/samples/sleep/sleep.yaml
   fi
   ${CLIENT_EXE} apply -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
 
