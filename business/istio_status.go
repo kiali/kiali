@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -61,8 +62,13 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 		return kubernetes.IstioComponentStatus{}, nil
 	}
 
-	if istioStatus, ok := iss.cache.GetIstioStatus(); ok {
-		return istioStatus, nil
+	// In autodiscovery mode, gateway health status can change independently and gateways
+	// use a separate cache with different expiration. To avoid showing stale gateway health,
+	// we always recompute status in autodiscovery mode to get fresh gateway data.
+	if len(iss.conf.ExternalServices.Istio.ComponentStatuses.Components) > 0 {
+		if istioStatus, ok := iss.cache.GetIstioStatus(); ok {
+			return istioStatus, nil
+		}
 	}
 
 	result := kubernetes.IstioComponentStatus{}
@@ -234,8 +240,12 @@ func istioCoreComponents(conf *config.Config) map[string]config.ComponentStatus 
 func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster string) kubernetes.IstioComponentStatus {
 	statusComponents := istioCoreComponents(iss.conf)
 	isc := kubernetes.IstioComponentStatus{}
+	// cf tracks which non-multicluster components (by appLabel) have been found
 	cf := map[string]bool{}
+	// mcf tracks which multicluster components (by appLabel) have been found and counts instances
 	mcf := map[string]int{}
+	// Track added components to prevent duplicates: cluster+namespace+name
+	addedComponents := make(map[string]bool)
 
 	// Map workloads there by app name
 	for _, workload := range workloads {
@@ -246,6 +256,20 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster
 
 		stat, found := statusComponents[appLabel]
 		if !found {
+			continue
+		}
+
+		// Determine namespace to use
+		namespace := func() string {
+			if stat.Namespace != "" {
+				return stat.Namespace
+			}
+			return workload.Namespace
+		}()
+
+		// Create unique key for this component to prevent duplicates
+		componentKey := fmt.Sprintf("%s:%s:%s", cluster, namespace, workload.Name)
+		if addedComponents[componentKey] {
 			continue
 		}
 
@@ -260,17 +284,13 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster
 		status := GetWorkloadStatus(*workload)
 		// Add status
 		isc = append(isc, kubernetes.ComponentStatus{
-			Cluster: cluster,
-			Namespace: func() string {
-				if stat.Namespace != "" {
-					return stat.Namespace
-				}
-				return workload.Namespace
-			}(),
-			Name:   workload.Name,
-			Status: status,
-			IsCore: stat.IsCore,
+			Cluster:   cluster,
+			Namespace: namespace,
+			Name:      workload.Name,
+			Status:    status,
+			IsCore:    stat.IsCore,
 		})
+		addedComponents[componentKey] = true
 
 	}
 
