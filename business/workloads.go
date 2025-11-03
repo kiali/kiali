@@ -2878,7 +2878,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 			// End the JSON document, setting the max-lines truncated flag
 			_, writeErr = w.Write([]byte("], \"linesTruncated\": true}"))
 			if writeErr != nil {
-				log.Errorf("Error when writing the outro of the JSON document while streaming pod logs: %s", err.Error())
+				log.Errorf("Error when writing the outro of the JSON document while streaming pod logs: %s", writeErr.Error())
 			}
 			break
 		} else {
@@ -2886,7 +2886,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 				// End the JSON document
 				_, writeErr = w.Write([]byte("]}"))
 				if writeErr != nil {
-					log.Errorf("Error when writing the outro of the JSON document while streaming pod logs: %s", err.Error())
+					log.Errorf("Error when writing the outro of the JSON document while streaming pod logs: %s", writeErr.Error())
 				}
 			}
 		}
