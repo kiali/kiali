@@ -194,10 +194,10 @@ EOF
       else
         ${CLIENT_EXE} apply -f "${SCRIPT_DIR}/ambient/resources/waypoint.yaml" -n bookinfo
         echo "Deploying waypoint proxies ..."
-        "${SCRIPT_DIR}/ambient/install-waypoints.sh" -c ${CLIENT_EXE}
+        "${SCRIPT_DIR}/ambient/install-waypoints.sh" -c ${CLIENT_EXE} -a ${ARCH}
 
         echo "Deploying sidecar-ambient ..."
-        "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh" -c ${CLIENT_EXE}
+        "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh" -c ${CLIENT_EXE} -a ${ARCH}
       fi
       echo "Deploying sleep demo ..."
       "${SCRIPT_DIR}/install-sleep-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
@@ -214,10 +214,10 @@ EOF
       "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
 
       echo "Deploying waypoint proxies ..."
-      "${SCRIPT_DIR}/ambient/install-waypoints.sh" -c ${CLIENT_EXE}
+      "${SCRIPT_DIR}/ambient/install-waypoints.sh" -c ${CLIENT_EXE} -a ${ARCH}
 
       echo "Deploying sidecar-ambient ..."
-      "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh" -c ${CLIENT_EXE}
+      "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh" -c ${CLIENT_EXE} -a ${ARCH}
     fi
 
   else

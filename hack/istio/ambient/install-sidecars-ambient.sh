@@ -11,6 +11,7 @@
 
 # Go to the main output directory and try to find an Istio there.
 AMBIENT_NS="test-ambient"
+: ${ARCH:=amd64}
 CLIENT_EXE="oc"
 HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../../_output}"
@@ -20,6 +21,10 @@ WAYPOINT="false"
 while [ $# -gt 0 ]; do
   key="$1"
   case $key in
+    -a|--arch)
+      ARCH="$2"
+      shift;shift
+      ;;
     -c|--client)
       CLIENT_EXE="$2"
       shift;shift
@@ -35,6 +40,7 @@ while [ $# -gt 0 ]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64).
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: either 'true' or 'false'. If 'true' the namespaces demo will be deleted, not installed.
   -w|--waypoint: Install a waypoint proxy in the ambient namespace. By default is false.
@@ -118,6 +124,13 @@ fi
 ${CLIENT_EXE} label ns ${SIDECAR_NS} istio-injection=enabled
 ${CLIENT_EXE} label ns ${AMBIENT_NS} istio.io/dataplane-mode=ambient
 
+# Determine curl image version based on ARCH
+if [ "${ARCH}" == "ppc64le" ] || [ "${ARCH}" == "s390x" ]; then
+  CURL_IMAGE="quay.io/curl/curl:8.4.0"
+else
+  CURL_IMAGE="quay.io/curl/curl:8.16.0"
+fi
+
 # Create the echo service
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n ${AMBIENT_NS}
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n ${SIDECAR_NS}
@@ -142,7 +155,7 @@ spec:
     spec:
       containers:
       - name: curl-client
-        image: curlimages/curl
+        image: ${CURL_IMAGE}
         command: ["/bin/sh", "-c"]
         args:
         - while true; do echo "Calling echo-service..."; curl -s http://echo-service.test-ambient sleep 5; done;
@@ -168,7 +181,7 @@ spec:
     spec:
       containers:
       - name: curl-client
-        image: curlimages/curl
+        image: ${CURL_IMAGE}
         command: ["/bin/sh", "-c"]
         args:
         - while true; do echo "Calling echo-service..."; curl -s http://echo-service.test-sidecar sleep 5; done;
