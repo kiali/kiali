@@ -62,15 +62,6 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 		return kubernetes.IstioComponentStatus{}, nil
 	}
 
-	// In autodiscovery mode, gateway health status can change independently and gateways
-	// use a separate cache with different expiration. To avoid showing stale gateway health,
-	// we always recompute status in autodiscovery mode to get fresh gateway data.
-	if len(iss.conf.ExternalServices.Istio.ComponentStatuses.Components) > 0 {
-		if istioStatus, ok := iss.cache.GetIstioStatus(); ok {
-			return istioStatus, nil
-		}
-	}
-
 	result := kubernetes.IstioComponentStatus{}
 
 	for cluster := range iss.userClients {
