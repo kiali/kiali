@@ -266,7 +266,7 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster
 		}
 
 		// Create unique key for this component to prevent duplicates
-		componentKey := fmt.Sprintf("%s:%s:%s", cluster, namespace, workload.Name)
+		componentKey := strings.Join([]string{cluster, namespace, workload.name}, ":")
 		if addedComponents[componentKey] {
 			continue
 		}
