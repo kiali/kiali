@@ -182,7 +182,16 @@ export const createIcon = (
   const iconColor = props.color ?? colorIcon;
 
   const iconStyle = iconColor ? kialiStyle({ color: iconColor }) : undefined;
-
+  console.log("Received props", props);
+  console.log("Received icon", icon);
+  console.log("Received colorIcon", colorIcon);
+  console.log("Received iconColor", iconColor);
+  console.log("Received iconStyle", iconStyle);
+  console.log("Received iconComponent", iconComponent);
+  console.log("Received status", props.status);
+  console.log("Received size", props.size);
+  console.log("Received dataTest", props.dataTest);
+  console.log("Printed")
   return (
     <Icon className={classes(props.className, iconStyle)} size={props.size} data-test={props.dataTest} status={props.status as any}>
       {React.createElement(iconComponent)}

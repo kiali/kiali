@@ -72,7 +72,7 @@ type ScaleInfo = { count: number; format: string };
 const overlayName = 'overlay';
 
 const axisStyle = {
-  tickLabels: { fontSize: 12, padding: 2, fill: PFColors.Color100 },
+  tickLabels: { fontSize: 12, padding: 2 },
   grid: {
     fill: 'none',
     stroke: PFColors.ColorLight300,
@@ -327,7 +327,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
             tickFormat={getFormatter(d3Format, this.props.unit)}
             label={getUnit(d3Format, this.props.unit, mainMax)}
             axisLabelComponent={
-              <ChartLabel y={-10} x={-15} angle={0} renderInPortal={true} style={{ fill: PFColors.Color100 }} />
+              <ChartLabel y={-10} x={-15} angle={0} renderInPortal={true} />
             }
             style={axisStyle}
           />
@@ -394,7 +394,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
               width={this.state.width}
               style={{
                 data: { cursor: 'pointer', padding: 0 },
-                labels: { cursor: 'pointer', fontSize: FONT_SIZE_LEGEND, fill: PFColors.Color100 }
+                labels: { cursor: 'pointer', fontSize: FONT_SIZE_LEGEND }
               }}
               borderPadding={{
                 top: 5,

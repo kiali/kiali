@@ -19,16 +19,18 @@ import {
 
 import { kialiStyle } from 'styles/StyleUtils';
 import { MessageCenter } from '../MessageCenter/MessageCenter';
-import { homeCluster, kialiLogoDark, serverConfig } from '../../config';
+import { homeCluster, kialiLogoDark, kialiLogoLight, serverConfig } from '../../config';
 import { KialiAppState } from '../../store/Store';
 import { UserSettingsThunkActions } from '../../actions/UserSettingsThunkActions';
 import { Menu } from './Menu';
 import { Link, useLocation } from 'react-router-dom-v5-compat';
 import { ExternalServiceInfo } from '../../types/StatusState';
+import { Theme } from 'types/Common';
 
 type ReduxStateProps = {
   externalServices: ExternalServiceInfo[];
   navCollapsed: boolean;
+  theme: string;
   tracingUrl?: string;
 };
 
@@ -87,6 +89,8 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 
   const isNavOpen = isMobileView ? isNavOpenMobile : isNavOpenDesktop || !props.navCollapsed;
 
+  const darkTheme = props.theme === Theme.DARK;
+
   const masthead = (
     <Masthead role="kiali_header" style={{ height: MASTHEAD_HEIGHT }}>
       
@@ -101,7 +105,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
         </PageToggleButton>
       </MastheadToggle>
         <MastheadBrand data-codemods><MastheadLogo data-codemods component={props => <Link {...props} to="#" />}>
-          <img src={kialiLogoDark} alt="Kiali Logo" />
+          <img src={darkTheme ? kialiLogoDark : kialiLogoLight} alt="Kiali Logo" />
         </MastheadLogo></MastheadBrand>
       </MastheadMain>
       <MastheadContent style={{ height: MASTHEAD_HEIGHT }}>
@@ -133,9 +137,10 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 };
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
+  externalServices: state.statusState.externalServices,
   navCollapsed: state.userSettings.interface.navCollapse,
-  tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined,
-  externalServices: state.statusState.externalServices
+  theme: state.globalState.theme,
+  tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined  
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
