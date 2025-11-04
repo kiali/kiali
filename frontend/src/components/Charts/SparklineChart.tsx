@@ -32,10 +32,6 @@ type State = {
   hiddenSeries: Set<number>;
 };
 
-const axisStyle = {
-  tickLabels: { fill: PFColors.Color100 }
-};
-
 export const INTERPOLATION_STRATEGY = 'monotoneX';
 
 export class SparklineChart extends React.Component<Props, State> {
@@ -144,7 +140,6 @@ export class SparklineChart extends React.Component<Props, State> {
             tickValues={this.props.series[0].datapoints.map(dp => dp.x)}
             tickFormat={x => (x as Date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             tickCount={2}
-            style={axisStyle}
           />
         ) : (
           <ChartAxis tickCount={15} style={hiddenAxisStyle} />
@@ -153,11 +148,10 @@ export class SparklineChart extends React.Component<Props, State> {
           <ChartAxis
             label={this.props.labelName}
             axisLabelComponent={
-              <ChartLabel y={-5} x={15} angle={0} renderInPortal={true} style={{ fill: PFColors.Color100 }} />
+              <ChartLabel y={-5} x={15} angle={0} renderInPortal={true} />
             }
             tickCount={2}
             dependentAxis={true}
-            style={axisStyle}
           />
         ) : (
           <ChartAxis dependentAxis={true} style={hiddenAxisStyle} />

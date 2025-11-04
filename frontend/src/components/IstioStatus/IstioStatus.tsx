@@ -163,7 +163,6 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   const tooltipContent = (): React.ReactNode => {
     return (
       <>
-        <Content style={{ color: PFColors.White }}>
           <Content component={ContentVariants.h4}>{t('Cluster Status')}</Content>
           {sortedClusters.map(cl => (
             <>
@@ -185,7 +184,6 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
               <Link to="/mesh">{t('Mesh page')}</Link>
             </div>
           )}
-        </Content>
       </>
     );
   };
