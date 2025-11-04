@@ -72,7 +72,8 @@ export const Validation: React.FC<ValidationProps> = (props: ValidationProps) =>
   const iconProps: IconProps = {
     className: iconStyle,
     icon: validation.icon,
-    dataTest: validation.dataTest
+    dataTest: validation.dataTest,
+    status: validation.status
   };
 
   if (hasMessage) {
