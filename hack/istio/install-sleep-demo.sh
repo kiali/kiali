@@ -95,15 +95,7 @@ if [ "${DELETE_SLEEP}" == "true" ]; then
   set +e
 
   echo "Deleting the 'sleep' app in the 'sleep' namespace..."
-  # s390x/ppc64le specific images for curl in sleep.yaml (OSSM-6012). Use 8.4 version since it is latest version for s390x!!!
-  if [ "${ARCH}" == "s390x" ] || [ "${ARCH}" == "ppc64le" ]; then
-    sed -i -E "s;image:(.*)curlimages/curl(:.*)?;image: quay.io/curl/curl:8.4.0;g" ${ISTIO_DIR}/samples/sleep/sleep.yaml
-    ${CLIENT_EXE} delete -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
-  # for other platforms, use the full name of the curl image since OCP 4.21+ doesn't allow using the short name of images (and it is bad practice)
-  else
-    sed -i -E "s;image:(.*)curlimages/curl(:.*)?;image: quay.io/curl/curl:8.16.0;g" ${ISTIO_DIR}/samples/sleep/sleep.yaml
-    ${CLIENT_EXE} delete -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
-  fi
+  ${CLIENT_EXE} delete -n sleep deployment sleep
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     ${CLIENT_EXE} delete network-attachment-definition istio-cni -n sleep

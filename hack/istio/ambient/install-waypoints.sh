@@ -8,10 +8,15 @@
 ##############################################################################
 
 CLIENT_EXE="oc"
+: ${ARCH:=amd64}
 
 while [ $# -gt 0 ]; do
   key="$1"
   case $key in
+    -a|--arch)
+      ARCH="$2"
+      shift;shift
+      ;;
     -c|--client)
       CLIENT_EXE="$2"
       shift;shift
@@ -23,6 +28,7 @@ while [ $# -gt 0 ]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64).
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: either 'true' or 'false'. If 'true' the waypoint namespaces demo will be deleted, not installed.
   -h|--help: this text
@@ -123,6 +129,13 @@ for namespace in "${waypoint_namespaces[@]}"; do
   ${CLIENT_EXE} label ns ${namespace} istio.io/dataplane-mode=ambient
 done
 
+# Determine curl image version based on ARCH
+if [ "${ARCH}" == "ppc64le" ] || [ "${ARCH}" == "s390x" ]; then
+  CURL_IMAGE="quay.io/curl/curl:8.4.0"
+else
+  CURL_IMAGE="quay.io/curl/curl:8.16.0"
+fi
+
 # Create a waypoint for service
 if [ "${IS_OPENSHIFT}" == "true" ]; then
   for namespace in "${waypoint_namespaces[@]}"; do
@@ -133,7 +146,7 @@ if [ "${IS_OPENSHIFT}" == "true" ]; then
 fi
 
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n waypoint-forservice
-${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/curl-pod.yaml -n waypoint-forservice
+sed "s|\${CURL_IMAGE}|${CURL_IMAGE}|g" ${HACK_SCRIPT_DIR}/resources/curl-pod.yaml | ${CLIENT_EXE} apply -f - -n waypoint-forservice
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/waypoint.yaml -n waypoint-forservice
 ${CLIENT_EXE} label ns waypoint-forservice istio.io/use-waypoint=waypoint
 
@@ -164,7 +177,7 @@ spec:
     spec:
       containers:
         - name: curl-client
-          image: curlimages/curl
+          image: ${CURL_IMAGE}
           command: ["/bin/sh", "-c"]
           args:
             - while true; do
@@ -178,26 +191,26 @@ ${CLIENT_EXE} label pod -l app=echo-server istio.io/use-waypoint=bwaypoint -n wa
 
 # Create a waypoint for all
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n waypoint-forall
-${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/curl-pod.yaml -n waypoint-forall
+sed "s|\${CURL_IMAGE}|${CURL_IMAGE}|g" ${HACK_SCRIPT_DIR}/resources/curl-pod.yaml | ${CLIENT_EXE} apply -f - -n waypoint-forall
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/waypoint-forall.yaml -n waypoint-forall
 ${CLIENT_EXE} label namespace waypoint-forall istio.io/use-waypoint=cgw
 
 # Create a waypoint for none (No L7 traffic should be seen)
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n waypoint-fornone
-${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/curl-pod.yaml -n waypoint-fornone
+sed "s|\${CURL_IMAGE}|${CURL_IMAGE}|g" ${HACK_SCRIPT_DIR}/resources/curl-pod.yaml | ${CLIENT_EXE} apply -f - -n waypoint-fornone
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/waypoint-fornone.yaml -n waypoint-fornone
 ${CLIENT_EXE} label namespace waypoint-fornone istio.io/use-waypoint=waypoint
 
 # Use a waypoint from another ns
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n waypoint-differentns
-${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/curl-pod.yaml -n waypoint-differentns
+sed "s|\${CURL_IMAGE}|${CURL_IMAGE}|g" ${HACK_SCRIPT_DIR}/resources/curl-pod.yaml | ${CLIENT_EXE} apply -f - -n waypoint-differentns
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/egress-gateway.yaml -n waypoint-common-infrastructure
 ${CLIENT_EXE} label namespace waypoint-differentns istio.io/use-waypoint=egress-gateway
 ${CLIENT_EXE} label namespace waypoint-differentns istio.io/use-waypoint-namespace=waypoint-common-infrastructure
 
 # Override ns waypoint labeling a service
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n waypoint-override
-${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/curl-pod.yaml -n waypoint-override
+sed "s|\${CURL_IMAGE}|${CURL_IMAGE}|g" ${HACK_SCRIPT_DIR}/resources/curl-pod.yaml | ${CLIENT_EXE} apply -f - -n waypoint-override
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/waypoint.yaml -n waypoint-override
 ${CLIENT_EXE} label namespace waypoint-override istio.io/use-waypoint=waypoint
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/waypoint-override.yaml -n waypoint-override
