@@ -1453,7 +1453,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       <div style={{ textAlign: 'left' }}>
         <span>
           {mainLink}
-
+        
           <div style={{ display: 'inline-block' }} data-test="overview-app-health">
             {ns.status && ns.status.inNotReady.length > 0 && (
               <OverviewStatus

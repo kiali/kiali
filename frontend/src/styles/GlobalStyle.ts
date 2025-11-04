@@ -89,6 +89,13 @@ export const globalStyle = kialiStyle({
     },
 
     /**
+     * Remove underline from links
+     */
+    '& a': {
+      textDecoration: 'none'
+    },
+
+    /**
      * Hide the kebab menu of Patternfly topology groups
      * TODO Remove when groups can hide the kebab menu - https://github.com/patternfly/react-topology/issues/254
      */
