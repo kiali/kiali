@@ -109,7 +109,12 @@ Before({ tags: '@gateway-api' }, () => {
 
       cy.exec('kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.3.0" | kubectl apply -f -;')
         .its('code')
-        .should('eq', 0);
+        .should('eq', 0)
+        .then(() => {
+          cy.exec(
+            'kubectl rollout restart deployment/kiali -n istio-system && kubectl rollout status deployment/kiali -n istio-system'
+          );
+        });
     }
   });
 });
@@ -123,7 +128,12 @@ Before({ tags: '@gateway-api-ie' }, () => {
         'kubectl kustomize "github.com/kubernetes-sigs/gateway-api-inference-extension/config/crd?ref=v1.0.0" | kubectl apply -f -;'
       )
         .its('code')
-        .should('eq', 0);
+        .should('eq', 0)
+        .then(() => {
+          cy.exec(
+            'kubectl rollout restart deployment/kiali -n istio-system && kubectl rollout status deployment/kiali -n istio-system'
+          );
+        });
     }
   });
 });
