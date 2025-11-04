@@ -260,12 +260,10 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster
 		}
 
 		// Determine namespace to use
-		namespace := func() string {
-			if stat.Namespace != "" {
-				return stat.Namespace
-			}
-			return workload.Namespace
-		}()
+		namespace := workload.namespace
+		if stat.Namespace != "" {
+			namespace = stat.Namespace
+		}
 
 		// Create unique key for this component to prevent duplicates
 		componentKey := fmt.Sprintf("%s:%s:%s", cluster, namespace, workload.Name)
