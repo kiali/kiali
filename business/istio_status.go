@@ -2,7 +2,7 @@ package business
 
 import (
 	"context"
-	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -260,13 +260,13 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster
 		}
 
 		// Determine namespace to use
-		namespace := workload.namespace
+		namespace := workload.Namespace
 		if stat.Namespace != "" {
 			namespace = stat.Namespace
 		}
 
 		// Create unique key for this component to prevent duplicates
-		componentKey := strings.Join([]string{cluster, namespace, workload.name}, ":")
+		componentKey := strings.Join([]string{cluster, namespace, workload.Name}, ":")
 		if addedComponents[componentKey] {
 			continue
 		}
