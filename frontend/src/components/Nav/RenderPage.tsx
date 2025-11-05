@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
-import { PFColors } from '../Pf/PfColors';
 import {
   Button,
   ButtonVariant,
@@ -17,7 +16,9 @@ import { MASTHEAD_HEIGHT } from './Navigation';
 
 const containerStyle = kialiStyle({ marginLeft: 0, marginRight: 0 });
 const containerPadding = kialiStyle({ padding: '0 20px 0 20px' });
-const containerGray = kialiStyle({ background: PFColors.BackgroundColor200, height: '100%' });
+const containerGray = kialiStyle({ height: '100%' });
+// Removing colors due PF6 dark mode changes
+//const containerGray = kialiStyle({ background: PFColors.BackgroundColor200, height: '100%' });
 const containerError = kialiStyle({ height: `calc(100vh - ${MASTHEAD_HEIGHT})` });
 
 // Add error boundary element to every path route

@@ -92,7 +92,8 @@
     .react-datepicker {
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
       font-size: 0.8rem;
-      background-color: var(--pf-v5-global--BackgroundColor--100);
+      // Removing colors due PF6 dark mode changes
+      //background-color: var(--pf-v5-global--BackgroundColor--100);
       color: var(--pf-v5-global--Color--100);
       border: 1px solid var(--pf-v5-global--BorderColor--200);
       border-radius: 0.3rem;
