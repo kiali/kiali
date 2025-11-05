@@ -103,7 +103,14 @@ export const globalStyle = kialiStyle({
     '& .pf-v6-c-page__main-container, & .pf-v6-c-card, & .pf-v6-c-menu-toggle, & .pf-v6-c-menu-toggle::before, & .pf-v6-c-form-control, & .pf-v6-c-form-control::before, & input': {
       borderRadius: 0
     },
-    
+
+    /**
+     * Remove color override for content in Cluster badge tooltip
+     */
+    '& .pf-v6-c-content, & .pf-v6-c-content > h4': {
+      color: 'unset'
+    },
+
     /**
      * Hide the kebab menu of Patternfly topology groups
      * TODO Remove when groups can hide the kebab menu - https://github.com/patternfly/react-topology/issues/254
