@@ -1,17 +1,14 @@
 import * as React from 'react';
+import { ChartProps, ChartTooltipProps } from '@patternfly/react-charts/victory';
 import {
-	ChartProps,
-	ChartTooltipProps
-} from '@patternfly/react-charts/victory';
-import {
-	ChartAxis,
-	Chart,
-	ChartGroup,
-	ChartScatter,
-	ChartLabel,
-	ChartLegend,
-	ChartLine,
-	createContainer
+  ChartAxis,
+  Chart,
+  ChartGroup,
+  ChartScatter,
+  ChartLabel,
+  ChartLegend,
+  ChartLine,
+  createContainer
 } from '@patternfly/react-charts/victory';
 import { VictoryPortal } from 'victory-core';
 import { VictoryBoxPlot } from 'victory-box-plot';
@@ -326,9 +323,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
             tickCount={chartHeight <= MIN_HEIGHT_YAXIS ? 1 : undefined}
             tickFormat={getFormatter(d3Format, this.props.unit)}
             label={getUnit(d3Format, this.props.unit, mainMax)}
-            axisLabelComponent={
-              <ChartLabel y={-10} x={-15} angle={0} renderInPortal={true} />
-            }
+            axisLabelComponent={<ChartLabel y={-10} x={-15} angle={0} renderInPortal={true} />}
             style={axisStyle}
           />
 
