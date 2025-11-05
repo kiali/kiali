@@ -17,7 +17,8 @@ export const basicTabStyle = kialiStyle({
 export const subTabStyle = kialiStyle({
   $nest: {
     '& .pf-v6-c-tabs__list': {
-      backgroundColor: PFColors.BackgroundColor100,
+      // Removing colors due PF6 dark mode changes
+      //backgroundColor: PFColors.BackgroundColor100,
       borderBottom: `1px solid ${PFColors.BorderColor100}`
     }
   }
