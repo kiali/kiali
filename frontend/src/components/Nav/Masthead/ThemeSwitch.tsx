@@ -28,18 +28,10 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
   return (
     <ToggleGroup>
       <Tooltip content={t('Switch to {{theme}} Mode', { theme: darkTheme ? 'Light' : 'Dark' })}>
-        <ToggleGroupItem
-          icon={<KialiIcon.Sun />}
-          onClick={handleTheme}
-          isSelected={!darkTheme}
-        />
+        <ToggleGroupItem icon={<KialiIcon.Sun />} onClick={handleTheme} isSelected={!darkTheme} />
       </Tooltip>
       <Tooltip content={t('Switch to {{theme}} Mode', { theme: darkTheme ? 'Light' : 'Dark' })}>
-        <ToggleGroupItem
-          icon={<KialiIcon.Moon />}
-          onClick={handleTheme}
-          isSelected={darkTheme}
-        />
+        <ToggleGroupItem icon={<KialiIcon.Moon />} onClick={handleTheme} isSelected={darkTheme} />
       </Tooltip>
     </ToggleGroup>
   );

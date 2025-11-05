@@ -14,41 +14,42 @@ import { OfflineStatus } from './OfflineStatus';
 
 export const MASTHEAD = 'masthead';
 
-
 export const MastheadItems: React.FC = () => {
   return (
-    <Flex style={{width: '100%'}}>
+    <Flex style={{ width: '100%' }}>
       {serverConfig.runMode === RunMode.OFFLINE ? (
-                <FlexItem>
-                  <OfflineStatus />
-                </FlexItem>
-              ) : (
-                <FlexItem>
-                  <IstioStatus location={MASTHEAD} />
-                </FlexItem>
-              )}
-            <FlexItem><PfSpinner /></FlexItem>
-            <FlexItem align={{default: "alignRight" }}>
-              <ThemeSwitch />
-            </FlexItem>
+        <FlexItem>
+          <OfflineStatus />
+        </FlexItem>
+      ) : (
+        <FlexItem>
+          <IstioStatus location={MASTHEAD} />
+        </FlexItem>
+      )}
+      <FlexItem>
+        <PfSpinner />
+      </FlexItem>
+      <FlexItem align={{ default: 'alignRight' }}>
+        <ThemeSwitch />
+      </FlexItem>
 
-            {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
-              <FlexItem>
-                <LanguageSwitch />
-              </FlexItem>
-            )}
+      {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
+        <FlexItem>
+          <LanguageSwitch />
+        </FlexItem>
+      )}
 
-            <FlexItem >
-              <MessageCenterTrigger />
-            </FlexItem>
+      <FlexItem>
+        <MessageCenterTrigger />
+      </FlexItem>
 
-            <FlexItem >
-              <HelpDropdown />
-            </FlexItem>
+      <FlexItem>
+        <HelpDropdown />
+      </FlexItem>
 
-            <FlexItem data-test="user-dropdown">
-              <UserDropdown />
-            </FlexItem>
-      </Flex>     
+      <FlexItem data-test="user-dropdown">
+        <UserDropdown />
+      </FlexItem>
+    </Flex>
   );
 };

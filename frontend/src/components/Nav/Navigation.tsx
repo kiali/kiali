@@ -8,7 +8,8 @@ import {
   Masthead,
   MastheadToggle,
   MastheadMain,
-  MastheadLogo, MastheadBrand,
+  MastheadLogo,
+  MastheadBrand,
   MastheadContent,
   PageSection,
   PageSidebar,
@@ -93,20 +94,21 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 
   const masthead = (
     <Masthead role="kiali_header" style={{ height: MASTHEAD_HEIGHT }}>
-      
-      <MastheadMain><MastheadToggle>
-        <PageToggleButton isHamburgerButton
-          variant={ButtonVariant.plain}
-          aria-label="Kiali navigation"
-          isSidebarOpen={isNavOpen}
-          onSidebarToggle={isMobileView ? onNavToggleMobile : onNavToggleDesktop}
-        >
-          
-        </PageToggleButton>
-      </MastheadToggle>
-        <MastheadBrand data-codemods><MastheadLogo data-codemods component={props => <Link {...props} to="#" />}>
-          <img src={darkTheme ? kialiLogoDark : kialiLogoLight} alt="Kiali Logo" />
-        </MastheadLogo></MastheadBrand>
+      <MastheadMain>
+        <MastheadToggle>
+          <PageToggleButton
+            isHamburgerButton
+            variant={ButtonVariant.plain}
+            aria-label="Kiali navigation"
+            isSidebarOpen={isNavOpen}
+            onSidebarToggle={isMobileView ? onNavToggleMobile : onNavToggleDesktop}
+          ></PageToggleButton>
+        </MastheadToggle>
+        <MastheadBrand data-codemods>
+          <MastheadLogo data-codemods component={props => <Link {...props} to="#" />}>
+            <img src={darkTheme ? kialiLogoDark : kialiLogoLight} alt="Kiali Logo" />
+          </MastheadLogo>
+        </MastheadBrand>
       </MastheadMain>
       <MastheadContent style={{ height: MASTHEAD_HEIGHT }}>
         <MastheadItems />
@@ -129,7 +131,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
       onPageResize={(_, { mobileView, windowSize }) => onPageResize({ mobileView, windowSize })}
     >
       <MessageCenter drawerTitle="Message Center" />
-      <PageSection hasBodyWrapper={false} className={flexBoxColumnStyle} >
+      <PageSection hasBodyWrapper={false} className={flexBoxColumnStyle}>
         <RenderPage isGraph={isGraph()} />
       </PageSection>
     </Page>
@@ -140,7 +142,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   externalServices: state.statusState.externalServices,
   navCollapsed: state.userSettings.interface.navCollapse,
   theme: state.globalState.theme,
-  tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined  
+  tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({

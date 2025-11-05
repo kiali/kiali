@@ -163,27 +163,27 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   const tooltipContent = (): React.ReactNode => {
     return (
       <>
-          <Content component={ContentVariants.h4}>{t('Cluster Status')}</Content>
-          {sortedClusters.map(cl => (
-            <>
-              <div className={clusterStyle}>
-                <PFBadge badge={PFBadges.Cluster} size="sm" />
-                {cl}
-                {cl === homeCluster?.name && (
-                  <span style={{ marginLeft: '0.25rem' }}>
-                    <KialiIcon.Star />
-                  </span>
-                )}
-              </div>
-              <IstioStatusList key={cl} status={props.statusMap[cl] || []} cluster={cl} />
-            </>
-          ))}
-          {!props.location?.endsWith('/mesh') && isControlPlaneAccessible() && (
-            <div className={meshLinkStyle}>
-              <span>{t('More info at')}</span>
-              <Link to="/mesh">{t('Mesh page')}</Link>
+        <Content component={ContentVariants.h4}>{t('Cluster Status')}</Content>
+        {sortedClusters.map(cl => (
+          <>
+            <div className={clusterStyle}>
+              <PFBadge badge={PFBadges.Cluster} size="sm" />
+              {cl}
+              {cl === homeCluster?.name && (
+                <span style={{ marginLeft: '0.25rem' }}>
+                  <KialiIcon.Star />
+                </span>
+              )}
             </div>
-          )}
+            <IstioStatusList key={cl} status={props.statusMap[cl] || []} cluster={cl} />
+          </>
+        ))}
+        {!props.location?.endsWith('/mesh') && isControlPlaneAccessible() && (
+          <div className={meshLinkStyle}>
+            <span>{t('More info at')}</span>
+            <Link to="/mesh">{t('Mesh page')}</Link>
+          </div>
+        )}
       </>
     );
   };

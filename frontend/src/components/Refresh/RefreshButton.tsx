@@ -29,7 +29,8 @@ export const RefreshButton: React.FC<RefreshButtonProps> = (props: RefreshButton
         onClick={handleRefresh}
         isDisabled={props.disabled ?? false}
         aria-label="Action"
-        variant={ButtonVariant.primary}
+        variant={ButtonVariant.stateful}
+        state="unread"
       >
         
       </Button>

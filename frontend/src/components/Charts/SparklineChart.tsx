@@ -1,14 +1,14 @@
 import * as React from 'react';
 import {
-	Chart,
-	ChartVoronoiContainer,
-	ChartAxis,
-	ChartScatter,
-	ChartArea,
-	ChartLabel,
-	ChartLegend,
+  Chart,
+  ChartVoronoiContainer,
+  ChartAxis,
+  ChartScatter,
+  ChartArea,
+  ChartLabel,
+  ChartLegend,
   ChartProps,
-	ChartThreshold
+  ChartThreshold
 } from '@patternfly/react-charts/victory';
 
 import { VCLines, VCDataPoint, RichDataPoint } from 'types/VictoryChartInfo';
@@ -147,9 +147,7 @@ export class SparklineChart extends React.Component<Props, State> {
         {this.props.showYAxis ? (
           <ChartAxis
             label={this.props.labelName}
-            axisLabelComponent={
-              <ChartLabel y={-5} x={15} angle={0} renderInPortal={true} />
-            }
+            axisLabelComponent={<ChartLabel y={-5} x={15} angle={0} renderInPortal={true} />}
             tickCount={2}
             dependentAxis={true}
           />
