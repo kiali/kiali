@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: reviews
-        image: istio/examples-bookinfo-reviews-v1:1.8.0
+        image: mirror.gcr.io/istio/examples-bookinfo-reviews-v1:1.8.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
@@ -35,7 +35,7 @@ spec:
     spec:
       containers:
       - name: reviews
-        image: istio/examples-bookinfo-reviews-v2:1.8.0
+        image: mirror.gcr.io/istio/examples-bookinfo-reviews-v2:1.8.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
@@ -58,7 +58,7 @@ spec:
     spec:
       containers:
       - name: reviews
-        image: istio/examples-bookinfo-reviews-v3:1.8.0
+        image: mirror.gcr.io/istio/examples-bookinfo-reviews-v3:1.8.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
@@ -76,7 +76,7 @@ spec:
       type: RuntimeDefault
   containers:
   - name: details
-    image: istio/examples-bookinfo-details-v1:1.8.0
+    image: mirror.gcr.io/istio/examples-bookinfo-details-v1:1.8.0
     imagePullPolicy: IfNotPresent
     ports:
     - containerPort: 9080
