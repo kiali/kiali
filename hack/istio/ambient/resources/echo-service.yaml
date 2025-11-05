@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: echo-server
-        image: ealen/echo-server
+        image: mirror.gcr.io/ealen/echo-server
         ports:
         - containerPort: 80
 ---
