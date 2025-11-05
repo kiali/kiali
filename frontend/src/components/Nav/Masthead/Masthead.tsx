@@ -14,7 +14,7 @@ import { OfflineStatus } from './OfflineStatus';
 
 export const MastheadItems: React.FC = () => {
   return (
-    <Flex style={{width: '100%'}}>
+    <Flex style={{ width: '100%' }}>
       {serverConfig.runMode === RunMode.OFFLINE ? (
                 <FlexItem>
                   <OfflineStatus />
@@ -29,23 +29,23 @@ export const MastheadItems: React.FC = () => {
               <ThemeSwitch />
             </FlexItem>
 
-            {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
-              <FlexItem>
-                <LanguageSwitch />
-              </FlexItem>
-            )}
+      {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
+        <FlexItem>
+          <LanguageSwitch />
+        </FlexItem>
+      )}
 
-            <FlexItem >
-              <MessageCenterTrigger />
-            </FlexItem>
+      <FlexItem>
+        <MessageCenterTrigger />
+      </FlexItem>
 
-            <FlexItem >
-              <HelpDropdown />
-            </FlexItem>
+      <FlexItem>
+        <HelpDropdown />
+      </FlexItem>
 
-            <FlexItem data-test="user-dropdown">
-              <UserDropdown />
-            </FlexItem>
-      </Flex>     
+      <FlexItem data-test="user-dropdown">
+        <UserDropdown />
+      </FlexItem>
+    </Flex>
   );
 };

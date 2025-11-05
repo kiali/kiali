@@ -4,7 +4,7 @@ export const globalStyle = kialiStyle({
   height: '100%',
   margin: 0,
   padding: 0,
-  fontFamily: "var(--pf-t--global--font--family--body)",
+  fontFamily: 'var(--pf-t--global--font--family--body)',
   fontSize: '14px',
   overflow: 'hidden',
   $nest: {
@@ -80,10 +80,12 @@ export const globalStyle = kialiStyle({
      * Light color for links in tooltips
      */
     '& .pf-v6-c-tooltip a': {
-      color: "var(pf-t--global--text--color--link--default)"/* CODEMODS: original v5 color was --pf-v5-global--link--Color--light */,
+      color:
+        'var(pf-t--global--text--color--link--default)' /* CODEMODS: original v5 color was --pf-v5-global--link--Color--light */,
       $nest: {
         '&:hover': {
-          color: "var(pf-t--global--text--color--link--hover)"/* CODEMODS: original v5 color was --pf-v5-global--link--Color--light--hover */
+          color:
+            'var(pf-t--global--text--color--link--hover)' /* CODEMODS: original v5 color was --pf-v5-global--link--Color--light--hover */
         }
       }
     },
@@ -95,6 +97,13 @@ export const globalStyle = kialiStyle({
       textDecoration: 'none'
     },
 
+    /**
+     * Remove border radius in Menus
+     */
+    '& .pf-v6-c-page__main-container, & .pf-v6-c-card, & .pf-v6-c-menu-toggle, & .pf-v6-c-menu-toggle::before, & .pf-v6-c-form-control, & .pf-v6-c-form-control::before, & input': {
+      borderRadius: 0
+    },
+    
     /**
      * Hide the kebab menu of Patternfly topology groups
      * TODO Remove when groups can hide the kebab menu - https://github.com/patternfly/react-topology/issues/254

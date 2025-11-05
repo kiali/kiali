@@ -106,7 +106,7 @@ export const FAILURE: Status = {
   color: PFColors.Danger,
   icon: ExclamationCircleIcon,
   name: t('Failure'),
-  status: "danger",
+  status: 'danger',
   priority: 4
 };
 
@@ -115,7 +115,7 @@ export const DEGRADED: Status = {
   color: PFColors.Warning,
   name: t('Degraded'),
   icon: ExclamationTriangleIcon,
-  status: "warning",
+  status: 'warning',
   priority: 3
 };
 
@@ -124,7 +124,7 @@ export const INFO: Status = {
   color: PFColors.Info,
   icon: InfoCircleIcon,
   name: t('Info'),
-  status: "info",
+  status: 'info',
   priority: 2
 };
 
@@ -133,7 +133,7 @@ export const NOT_READY: Status = {
   color: PFColors.Info,
   icon: MinusCircleIcon,
   name: t('Not Ready'),
-  status: "custom",
+  status: 'custom',
   priority: 2
 };
 
@@ -141,7 +141,7 @@ export const HEALTHY: Status = {
   className: 'icon-healthy',
   color: PFColors.Success,
   icon: CheckCircleIcon,
-  status: "success",
+  status: 'success',
   name: t('Healthy'),
   priority: 1
 };
@@ -151,7 +151,7 @@ export const NA: Status = {
   color: PFColors.Color200,
   name: t('No health information'),
   icon: UnknownIcon,
-  status: "custom",
+  status: 'custom',
   priority: 0
 };
 
