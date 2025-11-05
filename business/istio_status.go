@@ -62,6 +62,10 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 		return kubernetes.IstioComponentStatus{}, nil
 	}
 
+	if istioStatus, ok := iss.cache.GetIstioStatus(); ok {
+		return istioStatus, nil
+	}
+
 	result := kubernetes.IstioComponentStatus{}
 
 	for cluster := range iss.userClients {

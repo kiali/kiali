@@ -25,7 +25,7 @@ import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
 import { connectRefresh } from '../Refresh/connectRefresh';
 import { kialiStyle } from 'styles/StyleUtils';
 import { IconProps, createIcon, KialiIcon } from 'config/KialiIcon';
-import { Link } from 'react-router-dom-v5-compat';
+import { Link, useLocation } from 'react-router-dom-v5-compat';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { MASTHEAD } from 'components/Nav/Masthead/Masthead';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
@@ -107,8 +107,10 @@ export const meshLinkStyle = kialiStyle({
 
 export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
+  const location = useLocation();
 
   const { namespaces, setIstioStatus, refreshNamespaces, lastRefreshAt } = props;
+  const currentPathRef = React.useRef<string>(location.pathname);
 
   React.useEffect(() => {
     refreshNamespaces();
@@ -144,6 +146,22 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     // retrieve status for all clusters
     fetchStatus();
   }, [lastRefreshAt, fetchStatus]);
+
+  // Overview/Mesh pages do not have Namespaces selection, so separate fetchStatus call is necessary for them
+  React.useEffect(() => {
+    const currentPath = location.pathname;
+    const isOverviewOrMesh = currentPath.includes('/overview') || currentPath.includes('/mesh');
+    const pathChanged = currentPathRef.current !== currentPath;
+
+    if (pathChanged) {
+      currentPathRef.current = currentPath;
+
+      if (isOverviewOrMesh) {
+        fetchStatus();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, fetchStatus]);
 
   const getSeverity = (components: ComponentStatus[]): number =>
     Math.max(
