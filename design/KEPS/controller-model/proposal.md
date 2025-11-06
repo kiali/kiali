@@ -68,6 +68,62 @@ There are a few downsides to this approach:
 
    This is not a Kubernetes object but other controllers will probably want to know when this mesh model changes and reconcile their models when it does. This is doable with the existing Kubernetes tooling (controller-runtime) but will probably require some hacks where a fake Kube object is passed to the event handlers and the Kiali cache rather than the controller-runtime client is used to fetch the object.
 
+## Technical Hurdles
+
+One of Kiali's strengths is that it offers the end user a vast number of configuration options, such that views can be customized as needed to help visualize or troubleshoot the mesh. This is a big problem for pre-computing information. The processor and memory resources required to pre-compute the potential combinations is prohibitive.
+
+Note that the focus is on the cross-cluster/cross-namespace pages. When a user has navigated the view to a detail page, on-demand processing is typically both feasible, due to a narrow scope, and desired, even mildly stale data is less acceptable.
+
+### Time Periods
+
+One of the most important is the "Duration" drop down. This let's the user quickly change the time period for all of its data queries. If set to 2m then the time period is for the most recent 2 minutes. We typically offer 10 or more options, depending on the retention settings for the metric store.
+
+The probable solution here is to provide configuration that specifies a set of pre-computed durations. If unset then there will be no pre-compute for the relevant data, and requests will be handled on-demand. For example, if set to [5m, 6h], then those two durations would provide pre-computed data and should provide much faster responses because data would be returned from cache. Other values would not have pre-compute, and would be handled on-demand.
+
+### Graph Options
+
+The Traffic Graph offers many options and the option settings directly affect the back-end processing. The namespaces and graph-type alone will fundamentally determine the queries performed and the resulting graph.
+
+This is a difficult situation for pre-compute, as it's not possible to predict what the desired graph will be.
+
+Possible options:
+
+- **Predefinition (pre-compute)** - ❌ **ELIMINATED after analysis (Nov 2025)**
+
+  - Let users define graphs in the Kiali CR. These "favorite" graphs could be pre-computed and rendered quickly.
+  - Benefits:
+    - favorite graphs always ready
+  - Downsides:
+    - it may be very unlikely for users to want to define graph queries in config
+    - config-based queries are fixed may become dated
+    - updates require kiali pod restarts
+    - some users may not have permissions to view the data resulting from the predefined graph
+    - **CRITICAL**: Configuration barrier makes this impractical for real-world usage
+    - **CRITICAL**: Permission mismatch between controller SA and users has no good solution
+  - **Analysis**: See `ai-dev-context/APPROACH_1_DEEP_DIVE.md` and `APPROACH_DECISION.md`
+
+- **Background refresh (re-compute)** - ✅ **RECOMMENDED (Nov 2025)**
+
+  - Like today, users can set graph options as needed, and then launch a graph request. The user will wait for the initial graph to render. The result will be cached and the server will proactively re-compute the same graph, updating the cache. Requests for the same graph will return the most recent cached result. A change of page, graph or session would end the re-compute.
+  - Benefits:
+    - avoids permission issues and config, works with any graph at any time
+    - no user configuration required (automatic, self-service)
+    - permission-aware caching (per-user/token)
+    - self-optimizing (popular graphs stay cached)
+  - Downsides:
+    - still have to wait on the first request and any subsequent change to the requested graph
+
+- History-based pre-compute
+  - Keep N most recent graphs in memory and refreshed. A user could leave and come back to find the graph ready to go, if it was the same as the prior time.
+  - Questions:
+    - 1 per user?
+  - Benefits:
+    - avoids permission issues and config, works with any graph at any time
+    - may avoid initial wait, especially when just re-visiting the Traffic graph after leaving temporarily.
+  - Downsides:
+    - minor, Kiali restart would lose any cached graph definitions.
+  - **Note**: This is similar to "Background refresh" with LRU caching
+
 # Roadmap
 
 - [ ] Accept KEP.

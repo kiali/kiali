@@ -39,6 +39,36 @@ import (
 )
 ----
 
+=== Struct Fields
+
+All fields in struct type definitions must be listed in alphabetical order. This applies to both public and private fields.
+
+Example:
+
+[source,go]
+----
+type MyStruct struct {
+	Alpha   string
+	Beta    int
+	Gamma   bool
+	delta   time.Time  // private fields also alphabetical
+	epsilon float64
+}
+----
+
+When initializing structs, use the same alphabetical field order:
+
+[source,go]
+----
+instance := &MyStruct{
+	Alpha:   "value",
+	Beta:    42,
+	Gamma:   true,
+	delta:   time.Now(),
+	epsilon: 3.14,
+}
+----
+
 == Frontend - TypeScript
 
 === Default conventions
