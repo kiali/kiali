@@ -1,10 +1,11 @@
 package data
 
 import (
-	"github.com/kiali/kiali/kubernetes"
 	api_networking_v1 "istio.io/api/networking/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kiali/kiali/kubernetes"
 )
 
 func CreateEmptyGateway(name, namespace string, selector map[string]string) *networking_v1.Gateway {
