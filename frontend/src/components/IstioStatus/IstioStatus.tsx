@@ -55,7 +55,6 @@ type Props = ReduxStateProps &
   ReduxDispatchProps & {
     icons?: StatusIcons;
     lastRefreshAt: TimeInMilliseconds;
-    location?: string;
   };
 
 const ValidToColor = {
@@ -107,10 +106,10 @@ export const meshLinkStyle = kialiStyle({
 
 export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
-  const location = useLocation();
+  const { pathname } = useLocation();
 
   const { namespaces, setIstioStatus, refreshNamespaces, lastRefreshAt } = props;
-  const currentPathRef = React.useRef<string>(location.pathname);
+  const currentPathRef = React.useRef<string>(pathname);
 
   React.useEffect(() => {
     refreshNamespaces();
@@ -149,7 +148,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
 
   // Overview/Mesh pages do not have Namespaces selection, so separate fetchStatus call is necessary for them
   React.useEffect(() => {
-    const currentPath = location.pathname;
+    const currentPath = pathname;
     const isOverviewOrMesh = currentPath.includes('/overview') || currentPath.includes('/mesh');
     const pathChanged = currentPathRef.current !== currentPath;
 
@@ -161,7 +160,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, fetchStatus]);
+  }, [pathname, fetchStatus]);
 
   const getSeverity = (components: ComponentStatus[]): number =>
     Math.max(
@@ -197,7 +196,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
               <IstioStatusList key={cl} status={props.statusMap[cl] || []} cluster={cl} />
             </>
           ))}
-          {!props.location?.endsWith('/mesh') && isControlPlaneAccessible() && (
+          {!pathname.endsWith('/mesh') && isControlPlaneAccessible() && (
             <div className={meshLinkStyle}>
               <span>{t('More info at')}</span>
               <Link to="/mesh">{t('Mesh page')}</Link>
@@ -238,7 +237,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     }, true);
   };
 
-  const tooltipPosition = props.location === MASTHEAD ? TooltipPosition.bottom : TooltipPosition.top;
+  const tooltipPosition = pathname === MASTHEAD ? TooltipPosition.bottom : TooltipPosition.top;
 
   let statusIcon: React.ReactElement;
 

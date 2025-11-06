@@ -68,7 +68,7 @@ export const MastheadItems: React.FC = () => {
               </FlexItem>
             ) : (
               <FlexItem className={istioStatusStyle}>
-                <IstioStatus location={MASTHEAD} />
+                <IstioStatus />
               </FlexItem>
             )}
 
