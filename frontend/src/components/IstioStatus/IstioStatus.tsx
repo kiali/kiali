@@ -147,6 +147,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   }, [lastRefreshAt, fetchStatus]);
 
   // Overview/Mesh pages do not have Namespaces selection, so separate fetchStatus call is necessary for them
+  // @TODO could be merged with the useEffect above when Namespaces selector will be redesigned
   React.useEffect(() => {
     const currentPath = pathname;
     const isOverviewOrMesh = currentPath.includes('/overview') || currentPath.includes('/mesh');
