@@ -1,0 +1,38 @@
+apiVersion: tempo.grafana.com/v1alpha1
+kind: TempoStack
+metadata:
+  name: cr
+  namespace: ${TEMPO_NS}
+spec:
+  storageSize: 1Gi
+  storage:
+    secret:
+      type: s3
+      name: tempostack-dev-minio
+  observability:
+    tracing:
+      jaeger_agent_endpoint: 'localhost:6831'
+  tenants:
+    authentication:
+    - tenantId: f78bf974-aee2-47e8-8bb4-9ba41a41824a
+      tenantName: north
+    - tenantId: ac4dd897-40da-4403-9cab-53905e22ef78
+      tenantName: south
+    mode: openshift
+  managementState: Managed
+  template:
+    distributor:
+      tls:
+        enabled: true
+        certName: tempo-cert
+    gateway:
+      enabled: true
+    queryFrontend:
+      component:
+        resources:
+          limits:
+            cpu: "2"
+            memory: 2Gi
+      jaegerQuery:
+        enabled: true
+

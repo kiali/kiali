@@ -1,0 +1,27 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tempostack-traces-write-${TENANT_NAME}
+rules:
+- apiGroups:
+  - 'tempo.grafana.com'
+  resources:
+  - ${TENANT_NAME}
+  resourceNames:
+  - traces
+  verbs:
+  - 'create'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tempostack-traces-write-${TENANT_NAME}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tempostack-traces-write-${TENANT_NAME}
+subjects:
+- kind: ServiceAccount
+  name: otel-collector
+  namespace: ${ISTIO_NAMESPACE}
+

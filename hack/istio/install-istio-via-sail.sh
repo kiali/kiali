@@ -295,7 +295,7 @@ for addon in ${ADDONS}; do
     kubectl wait pods --all -n opentelemetry-operator-system --for=condition=Ready --timeout=5m
     # Wait 10 seconds until https://github.com/open-telemetry/opentelemetry-operator/issues/3194 is fixed.
     sleep 10
-    kubectl apply -f ${SCRIPT_DIR}/tempo/otel-collector.yaml
+    kubectl apply -f ${SCRIPT_DIR}/tempo/resources/otel-collector.yaml
   else
     istio_version=$(kubectl get istios "${ISTIO_NAME}" -o jsonpath='{.spec.version}')
     # Verison comes in the form v1.23.0 but we want 1.23

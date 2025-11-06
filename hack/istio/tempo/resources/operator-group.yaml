@@ -1,0 +1,8 @@
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: ${OPERATOR_GROUP_NAME}
+  namespace: ${OPERATOR_NAMESPACE}
+spec:
+  upgradeStrategy: Default
+

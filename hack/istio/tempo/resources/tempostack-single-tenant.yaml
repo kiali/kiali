@@ -1,0 +1,21 @@
+apiVersion: tempo.grafana.com/v1alpha1
+kind: TempoStack
+metadata:
+  name: cr
+  namespace: ${TEMPO_NS}
+spec:
+  storageSize: 1Gi
+  storage:
+    secret:
+      type: s3
+      name: tempostack-dev-minio
+  template:
+    queryFrontend:
+      component:
+        resources:
+          limits:
+            cpu: "2"
+            memory: 2Gi
+      jaegerQuery:
+        enabled: false
+

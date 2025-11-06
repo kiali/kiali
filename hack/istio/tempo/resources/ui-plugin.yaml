@@ -1,0 +1,15 @@
+apiVersion: observability.redhat.com/v1alpha1
+kind: UIPlugin
+metadata:
+  name: distributed-tracing
+  namespace: ${OPERATOR_NAMESPACE}
+spec:
+  displayName: Distributed Tracing
+  type: tracing
+  backend:
+    tempo:
+      enabled: true
+      namespace: ${TEMPO_NS}
+      name: cr
+      tenant: north
+

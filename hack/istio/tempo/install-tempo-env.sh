@@ -123,76 +123,23 @@ HELPMSG
 done
 
 SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
-MINIO_FILE="${SCRIPT_DIR}/minio.yaml"
+MINIO_FILE="${SCRIPT_DIR}/resources/minio.yaml"
 
 set -e
 
-# Function to wait for webhook readiness with retries
-wait_for_webhook_readiness() {
-  local webhook_name="$1"
-  local namespace="$2"
-  local max_retries="${3:-10}"
-  local retry_interval="${4:-10}"
-  
-  echo "Waiting for webhook '${webhook_name}' to be ready..."
-  
-  for ((i=1; i<=max_retries; i++)); do
-    echo "Attempt ${i}/${max_retries}: Checking webhook readiness..."
-    
-    # Check if the webhook service exists and has endpoints
-    if ${CLIENT_EXE} get service "${webhook_name}" -n "${namespace}" >/dev/null 2>&1; then
-      # Check if the service has endpoints (pods backing the service)
-      local endpoints=$(${CLIENT_EXE} get endpoints "${webhook_name}" -n "${namespace}" -o jsonpath='{.subsets[0].addresses[*].ip}' 2>/dev/null)
-      
-      if [ -n "${endpoints}" ] && [ "${endpoints}" != "null" ]; then
-        # Check if the webhook pods are ready (try both label selectors for community and Red Hat operators)
-        local ready_pods=$(${CLIENT_EXE} get pods -n "${namespace}" -l app.kubernetes.io/name=tempo-operator -o jsonpath='{.items[?(@.status.phase=="Running")].metadata.name}' 2>/dev/null)
-        if [ -z "${ready_pods}" ]; then
-          # Try alternative label selector for Red Hat operator
-          ready_pods=$(${CLIENT_EXE} get pods -n "${namespace}" -o jsonpath='{.items[?(@.status.phase=="Running")].metadata.name}' 2>/dev/null | grep -i tempo || true)
-        fi
-        
-        if [ -n "${ready_pods}" ]; then
-          # Additional check: try to create a test resource to verify webhook is working
-          echo "Testing webhook functionality by creating a test TempoStack..."
-          if ${CLIENT_EXE} apply -n "${namespace}" -f - <<EOF >/dev/null 2>&1; then
-apiVersion: tempo.grafana.com/v1alpha1
-kind: TempoStack
-metadata:
-  name: webhook-test
-  namespace: ${namespace}
-spec:
-  storageSize: 1Gi
-  storage:
-    secret:
-      type: s3
-      name: test-secret
-EOF
-            # Clean up the test resource
-            ${CLIENT_EXE} delete TempoStack webhook-test -n "${namespace}" --ignore-not-found=true >/dev/null 2>&1
-            echo "Webhook '${webhook_name}' is ready and functional!"
-            return 0
-          else
-            echo "Webhook service exists but is not yet functional"
-          fi
-        else
-          echo "Webhook service exists but pods are not ready yet"
-        fi
-      else
-        echo "Webhook service exists but has no endpoints yet"
-      fi
-    else
-      echo "Webhook service '${webhook_name}' does not exist yet"
-    fi
-    
-    if [ ${i} -lt ${max_retries} ]; then
-      echo "Webhook not ready yet, waiting ${retry_interval} seconds before retry..."
-      sleep ${retry_interval}
-    fi
+# Function to replace variables in YAML files
+replace_yaml_vars() {
+  local file="$1"
+  shift
+  local content=$(cat "$file")
+  while [ $# -gt 0 ]; do
+    local var_name="$1"
+    shift
+    local var_value="$1"
+    shift
+    content=$(echo "$content" | sed "s|\${${var_name}}|${var_value}|g")
   done
-  
-  echo "ERROR: Webhook '${webhook_name}' failed to become ready after ${max_retries} attempts"
-  return 1
+  echo "$content"
 }
 
 # Function to clean up failed Tempo installation
@@ -309,34 +256,8 @@ create_multi_tenant_rbac() {
   
   echo -e "Creating ClusterRole and ClusterRoleBinding for tenant '${tenant_name}' trace readers...\n"
   
-  ${CLIENT_EXE} apply -f - <<EOF
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: tempostack-traces-reader-${tenant_name}
-rules:
-  - apiGroups:
-      - 'tempo.grafana.com'
-    resources:
-      - ${tenant_name}
-    resourceNames:
-      - traces
-    verbs:
-      - 'get'
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: tempostack-traces-reader-${tenant_name}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: tempostack-traces-reader-${tenant_name}
-subjects:
-  - kind: Group
-    apiGroup: rbac.authorization.k8s.io
-    name: system:authenticated
-EOF
+  local yaml_file="${SCRIPT_DIR}/resources/multi-tenant-rbac.yaml"
+  replace_yaml_vars "$yaml_file" "TENANT_NAME" "$tenant_name" | ${CLIENT_EXE} apply -f -
 }
 
 # Function to install COO UI Plugin for distributed tracing
@@ -345,98 +266,60 @@ install_coo_ui_plugin() {
   
   echo -e "Creating COO UI Plugin for distributed tracing...\n"
   
-  ${CLIENT_EXE} apply -f - <<EOF
-apiVersion: observability.redhat.com/v1alpha1
-kind: UIPlugin
-metadata:
-  name: distributed-tracing
-  namespace: ${operator_namespace}
-spec:
-  displayName: Distributed Tracing
-  type: tracing
-  backend:
-    tempo:
-      enabled: true
-      namespace: ${TEMPO_NS}
-      name: cr
-      tenant: north
-EOF
+  local yaml_file="${SCRIPT_DIR}/resources/ui-plugin.yaml"
+  replace_yaml_vars "$yaml_file" "OPERATOR_NAMESPACE" "$operator_namespace" "TEMPO_NS" "$TEMPO_NS" | ${CLIENT_EXE} apply -f -
   
   echo -e "Waiting for UI Plugin to be ready...\n"
   ${CLIENT_EXE} wait --for=condition=Ready UIPlugin/distributed-tracing -n ${operator_namespace} --timeout=5m 2>/dev/null || echo "UI Plugin may take longer to become ready"
 }
 
-# Function to install Kiali Operator using Helm
-install_kiali_operator() {
-  local kiali_namespace="${1:-istio-system}"
-  local tempo_internal_url="${2:-}"
-  local tempo_external_url="${3:-}"
+# Function to install OpenTelemetryCollector CR for multi-tenant Tempo
+install_opentelemetry_collector() {
+  local istio_namespace="${1:-istio-system}"
+  local tempo_gateway_service="${2:-tempo-cr-gateway}"
+  local tempo_namespace="${3:-tempo}"
+  local tenant_name="${4:-north}"
   
-  echo -e "Installing Kiali Operator using Helm...\n"
+  echo -e "Installing OpenTelemetryCollector CR in ${istio_namespace} namespace...\n"
   
-  # Check if helm is available
-  if ! command -v helm >/dev/null 2>&1; then
-    echo "ERROR: helm command not found. Please install Helm first."
-    return 1
+  # Ensure istio-system namespace exists
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    ${CLIENT_EXE} get project ${istio_namespace} >/dev/null 2>&1 || ${CLIENT_EXE} new-project ${istio_namespace}
+  else
+    ${CLIENT_EXE} get namespace ${istio_namespace} >/dev/null 2>&1 || ${CLIENT_EXE} create namespace ${istio_namespace}
   fi
   
-  # Add Kiali Helm repository
-  echo -e "Adding Kiali Helm repository...\n"
-  helm repo add kiali https://kiali.org/helm-charts --force-update
-  helm repo update
+  # Create OpenTelemetryCollector CR
+  local yaml_file="${SCRIPT_DIR}/resources/opentelemetry-collector-multi-tenant.yaml"
+  replace_yaml_vars "$yaml_file" \
+    "ISTIO_NAMESPACE" "$istio_namespace" \
+    "TEMPO_GATEWAY_SERVICE" "$tempo_gateway_service" \
+    "TEMPO_NAMESPACE" "$tempo_namespace" \
+    "TENANT_NAME" "$tenant_name" | ${CLIENT_EXE} apply -f -
   
-  local operator_namespace="kiali-operator"
-  
-  # Build Helm install command with --set flags
-  # We'll install the operator without creating the CR, then configure it separately
-  local helm_args=(
-    "upgrade"
-    "--install"
-    "--create-namespace"
-    "--namespace" "${operator_namespace}"
-    "--set" "cr.create=false"
-    "--set" "allowAdHocKialiNamespace=true"
-    "--set" "allowAdHocKialiImage=true"
-    "--set" "allowSecurityContextOverride=true"
-    "--set" "allowAllAccessibleNamespaces=true"
-    "--set" "watchNamespace="
-    "kiali-operator"
-    "kiali/kiali-operator"
-  )
-  
-  echo -e "Installing Kiali Operator...\n"
-  helm "${helm_args[@]}"
-  
-  if [ "$?" != "0" ]; then
-    echo "ERROR: Failed to install Kiali Operator via Helm."
-    return 1
-  fi
-  
-  echo -e "Waiting for Kiali CRD to be created...\n"
-  local i=0
-  while [ ${i} -lt 60 ] && ! ${CLIENT_EXE} get crd kialis.kiali.io >/dev/null 2>&1; do
-    echo -n "."
-    sleep 2
-    (( i++ ))
-  done
-  echo ""
-  
-  if ! ${CLIENT_EXE} get crd kialis.kiali.io >/dev/null 2>&1; then
-    echo "ERROR: Kiali CRD was not created after installing operator."
-    return 1
-  fi
-  
-  echo -e "Waiting for Kiali CRD to be established...\n"
-  ${CLIENT_EXE} wait --for=condition=established --timeout=5m crd kialis.kiali.io
-  
-  echo -e "Waiting for Kiali operator deployment to be ready...\n"
-  ${CLIENT_EXE} wait --for=condition=available --timeout=10m deployment/kiali-operator -n ${operator_namespace} 2>/dev/null || {
-    echo "WARNING: Kiali operator deployment may still be initializing"
-    echo "Checking pods:"
-    ${CLIENT_EXE} get pods -n ${operator_namespace} | grep kiali || echo "No kiali pods found"
+  echo -e "Waiting for OpenTelemetryCollector to be ready...\n"
+  ${CLIENT_EXE} wait --for=condition=available deployment/otel-collector -n ${istio_namespace} --timeout=5m 2>/dev/null || {
+    echo "WARNING: OpenTelemetryCollector may still be initializing"
+    ${CLIENT_EXE} get opentelemetrycollector otel -n ${istio_namespace} 2>/dev/null || echo "OpenTelemetryCollector CR not found"
   }
   
-  echo -e "Kiali Operator installed successfully.\n"
+  # Create ClusterRole and ClusterRoleBinding for OpenTelemetry collector to write traces
+  echo -e "Creating RBAC for OpenTelemetry collector to write traces...\n"
+  local rbac_file="${SCRIPT_DIR}/resources/opentelemetry-collector-rbac.yaml"
+  replace_yaml_vars "$rbac_file" \
+    "TENANT_NAME" "$tenant_name" \
+    "ISTIO_NAMESPACE" "$istio_namespace" | ${CLIENT_EXE} apply -f -
+  
+  echo -e "OpenTelemetryCollector installed successfully.\n"
+}
+
+# Function to create Telemetry resource for Istio tracing
+create_telemetry_resource() {
+  local istio_namespace="${1:-istio-system}"
+  
+  echo -e "Creating Telemetry resource to enable tracing...\n"
+  local telemetry_file="${SCRIPT_DIR}/resources/telemetry-resource.yaml"
+  replace_yaml_vars "$telemetry_file" "ISTIO_NAMESPACE" "$istio_namespace" | ${CLIENT_EXE} apply -f -
 }
 
 install_tempo() {
@@ -448,24 +331,7 @@ install_tempo() {
     
     if install_tempo_single_attempt; then
       echo "Tempo installation completed successfully"
-      
-      # Wait for webhook readiness
-      # Determine operator namespace based on installation method
-      if [ "${MULTI_TENANT}" == "true" ] && [ "${IS_OPENSHIFT}" == "true" ]; then
-        TEMPO_OPERATOR_NS="openshift-tempo-operator"
-        WEBHOOK_SERVICE="tempo-operator-webhook-service"
-      else
-        TEMPO_OPERATOR_NS="tempo-operator-system"
-        WEBHOOK_SERVICE="tempo-operator-webhook-service"
-      fi
-      
-      if wait_for_webhook_readiness "${WEBHOOK_SERVICE}" "${TEMPO_OPERATOR_NS}" 30 10; then
-        echo "Tempo webhook is ready and functional!"
-        return 0
-      else
-        echo "Tempo webhook failed to become ready, will retry installation"
-        cleanup_failed_tempo_installation
-      fi
+      return 0
     else
       echo "Tempo installation failed on attempt ${attempt}"
       cleanup_failed_tempo_installation
@@ -488,11 +354,30 @@ install_tempo_single_attempt() {
   # Install Tempo operator based on cluster type and multi-tenant mode
   if [ "${MULTI_TENANT}" == "true" ] && [ "${IS_OPENSHIFT}" == "true" ]; then
     # For multi-tenant mode in OpenShift, use Red Hat operator from OLM
-    # cert-manager is NOT needed for Red Hat operators from OLM
-    echo -e "Installing Red Hat Tempo operator from OLM (required for multi-tenant mode)...\n"
+    # Note: Tempo operator doesn't need cert-manager, but OpenTelemetry operator does
     export TEMPO_OPERATOR_NS="openshift-tempo-operator"
     
-    # Create namespace/project for operator FIRST, before creating any resources
+    # Check if Tempo operator is already installed
+    if ${CLIENT_EXE} get crd tempostacks.tempo.grafana.com >/dev/null 2>&1; then
+      echo -e "Tempo operator CRD already exists. Checking if operator is ready...\n"
+      # Check if operator deployment exists and is ready
+      if ${CLIENT_EXE} get deployment --namespace ${TEMPO_OPERATOR_NS} -o name 2>/dev/null | grep -q tempo; then
+        echo -e "Tempo operator is already installed. Skipping operator installation.\n"
+        # Just verify pods are ready
+        ${CLIENT_EXE} wait pods --all -n ${TEMPO_OPERATOR_NS} --for=condition=Ready --timeout=2m 2>/dev/null || echo "Tempo operator pods may still be initializing"
+        # Continue to TempoStack installation - skip the rest of operator installation
+      else
+        echo -e "Tempo operator CRD exists but deployment not found. Will install operator.\n"
+        # Continue with installation below
+      fi
+    else
+      echo -e "Installing Red Hat Tempo operator from OLM (required for multi-tenant mode)...\n"
+    fi
+    
+    # Only proceed with operator installation if CRD doesn't exist or deployment doesn't exist
+    if ! ${CLIENT_EXE} get crd tempostacks.tempo.grafana.com >/dev/null 2>&1 || \
+       ! ${CLIENT_EXE} get deployment --namespace ${TEMPO_OPERATOR_NS} -o name 2>/dev/null | grep -q tempo; then
+      # Create namespace/project for operator FIRST, before creating any resources
     if [ "${IS_OPENSHIFT}" == "true" ]; then
       echo -e "Checking/creating project ${TEMPO_OPERATOR_NS}...\n"
       # Check if project already exists first
@@ -536,36 +421,20 @@ install_tempo_single_attempt() {
           fi
         fi
       fi
-    fi
+    fi  # End of namespace creation if
     
-    # Wait a moment for namespace to be fully ready
-    sleep 2
-    
-    # Create OperatorGroup
-    ${CLIENT_EXE} apply -f - <<EOF
-apiVersion: operators.coreos.com/v1
-kind: OperatorGroup
-metadata:
-  name: ${TEMPO_OPERATOR_NS}
-  namespace: ${TEMPO_OPERATOR_NS}
-spec:
-  upgradeStrategy: Default
-EOF
+      # Wait a moment for namespace to be fully ready
+      sleep 2
+      
+      # Create OperatorGroup
+      local og_file="${SCRIPT_DIR}/resources/operator-group.yaml"
+      replace_yaml_vars "$og_file" \
+        "OPERATOR_GROUP_NAME" "$TEMPO_OPERATOR_NS" \
+        "OPERATOR_NAMESPACE" "$TEMPO_OPERATOR_NS" | ${CLIENT_EXE} apply -f -
     
     # Create Subscription for Red Hat Tempo operator
-    ${CLIENT_EXE} apply -f - <<EOF
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: my-tempo-operator
-  namespace: ${TEMPO_OPERATOR_NS}
-spec:
-  channel: stable
-  installPlanApproval: Automatic
-  name: tempo-product
-  source: redhat-operators
-  sourceNamespace: openshift-marketplace
-EOF
+    local tempo_sub_file="${SCRIPT_DIR}/resources/tempo-operator-subscription.yaml"
+    replace_yaml_vars "$tempo_sub_file" "OPERATOR_NAMESPACE" "$TEMPO_OPERATOR_NS" | ${CLIENT_EXE} apply -f -
     
     echo -e "Waiting for Tempo operator CRDs to be established...\n"
     # Wait for CRDs to be established
@@ -601,20 +470,24 @@ EOF
     echo "done."
     
     # Install OpenTelemetry Operator (required for multi-tenant with COO)
+    # Note: OpenTelemetry operator requires cert-manager for webhook certificates
+    echo -e "Installing cert-manager (required for OpenTelemetry operator webhooks)...\n"
+    # Check if cert-manager is already installed
+    if ${CLIENT_EXE} get crd certificates.cert-manager.io >/dev/null 2>&1; then
+      echo -e "Cert-manager is already installed. Skipping cert-manager installation.\n"
+    else
+      ${CLIENT_EXE} apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
+      echo -e "Waiting for cert-manager pods to be ready... \n"
+      ${CLIENT_EXE} wait pods --all -n cert-manager --for=condition=Ready --timeout=5m 2>/dev/null || echo "Cert-manager pods may still be initializing"
+      
+      # Wait for cert-manager webhook to be ready
+      echo -e "Waiting for cert-manager webhook to be ready... \n"
+      sleep 10
+    fi
+    
     echo -e "Installing OpenTelemetry Operator from OLM...\n"
-    ${CLIENT_EXE} apply -f - <<EOF
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: my-opentelemetry-operator
-  namespace: ${TEMPO_OPERATOR_NS}
-spec:
-  channel: stable
-  installPlanApproval: Automatic
-  name: opentelemetry-product
-  source: redhat-operators
-  sourceNamespace: openshift-marketplace
-EOF
+    local otel_sub_file="${SCRIPT_DIR}/resources/opentelemetry-operator-subscription.yaml"
+    replace_yaml_vars "$otel_sub_file" "OPERATOR_NAMESPACE" "$TEMPO_OPERATOR_NS" | ${CLIENT_EXE} apply -f -
     
     echo -e "Waiting for OpenTelemetry operator CRDs to be established...\n"
     while ! ${CLIENT_EXE} get crd opentelemetrycollectors.opentelemetry.io >/dev/null 2>&1; do
@@ -635,19 +508,8 @@ EOF
     # Install Cluster Observability Operator (COO) only if COO plugin is requested
     if [ "${INSTALL_COO_PLUGIN}" == "true" ]; then
       echo -e "Installing Cluster Observability Operator from OLM...\n"
-      ${CLIENT_EXE} apply -f - <<EOF
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: my-cluster-observability-operator
-  namespace: ${TEMPO_OPERATOR_NS}
-spec:
-  channel: stable
-  installPlanApproval: Automatic
-  name: cluster-observability-operator
-  source: redhat-operators
-  sourceNamespace: openshift-marketplace
-EOF
+      local coo_sub_file="${SCRIPT_DIR}/resources/cluster-observability-operator-subscription.yaml"
+      replace_yaml_vars "$coo_sub_file" "OPERATOR_NAMESPACE" "$TEMPO_OPERATOR_NS" | ${CLIENT_EXE} apply -f -
       
       echo -e "Waiting for Cluster Observability operator CRDs to be established...\n"
       while ! ${CLIENT_EXE} get crd uiplugins.observability.redhat.com >/dev/null 2>&1; do
@@ -662,31 +524,52 @@ EOF
         echo -n "."
         sleep 2
       done
-      echo "done."
-      ${CLIENT_EXE} wait pods --all -n ${TEMPO_OPERATOR_NS} -l app.kubernetes.io/name=cluster-observability-operator --for=condition=Ready --timeout=10m
+    echo "done."
+    ${CLIENT_EXE} wait pods --all -n ${TEMPO_OPERATOR_NS} -l app.kubernetes.io/name=cluster-observability-operator --for=condition=Ready --timeout=10m
     else
       echo -e "Skipping Cluster Observability Operator installation (COO plugin not requested)...\n"
     fi
+    fi  # End of operator installation check (closes the if from line 714)
     
   else
     # For single-tenant or non-OpenShift, use community operator from GitHub
-    # cert-manager IS needed for community operator from GitHub
-    echo -e "Installing cert manager (required for community Tempo operator)...\n"
-    ${CLIENT_EXE} apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
-    echo -e "Waiting for cert-manager pods to be ready... \n"
-    $CLIENT_EXE wait pods --all -n cert-manager --for=condition=Ready --timeout=5m
-
-    # There's some issue with the cert-manager webhook where it fails to add the https cert to the webhook
-    # before it is marked as ready. So we need to wait for a small period of time before installing the Tempo operator
-    # because the tempo manifests rely on the cert-manager webhook to be ready.
-    echo -e "Waiting for cert-manager webhook to be ready... \n"
-    sleep 10
-    
-    echo -e "Installing latest Tempo operator from GitHub...\n"
     export TEMPO_OPERATOR_NS="tempo-operator-system"
-    ${CLIENT_EXE} apply -f https://github.com/grafana/tempo-operator/releases/latest/download/tempo-operator.yaml
-    echo -e "Waiting for Tempo operator to be ready... \n"
-    $CLIENT_EXE wait pods --all -n ${TEMPO_OPERATOR_NS} --for=condition=Ready --timeout=5m
+    
+    # Check if Tempo operator is already installed
+    if ${CLIENT_EXE} get crd tempostacks.tempo.grafana.com >/dev/null 2>&1; then
+      echo -e "Tempo operator CRD already exists. Checking if operator is ready...\n"
+      # Check if operator deployment exists and is ready
+      if ${CLIENT_EXE} get deployment --namespace ${TEMPO_OPERATOR_NS} -o name 2>/dev/null | grep -q tempo; then
+        echo -e "Tempo operator is already installed. Skipping operator installation.\n"
+        # Just verify pods are ready
+        ${CLIENT_EXE} wait pods --all -n ${TEMPO_OPERATOR_NS} --for=condition=Ready --timeout=2m 2>/dev/null || echo "Tempo operator pods may still be initializing"
+        # Continue to TempoStack installation
+      else
+        echo -e "Tempo operator CRD exists but deployment not found. Will install operator.\n"
+      fi
+    else
+      # cert-manager IS needed for community operator from GitHub
+      echo -e "Installing cert manager (required for community Tempo operator)...\n"
+      # Check if cert-manager is already installed
+      if ${CLIENT_EXE} get crd certificates.cert-manager.io >/dev/null 2>&1; then
+        echo -e "Cert-manager is already installed. Skipping cert-manager installation.\n"
+      else
+        ${CLIENT_EXE} apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
+        echo -e "Waiting for cert-manager pods to be ready... \n"
+        $CLIENT_EXE wait pods --all -n cert-manager --for=condition=Ready --timeout=5m
+
+        # There's some issue with the cert-manager webhook where it fails to add the https cert to the webhook
+        # before it is marked as ready. So we need to wait for a small period of time before installing the Tempo operator
+        # because the tempo manifests rely on the cert-manager webhook to be ready.
+        echo -e "Waiting for cert-manager webhook to be ready... \n"
+        sleep 10
+      fi
+      
+      echo -e "Installing latest Tempo operator from GitHub...\n"
+      ${CLIENT_EXE} apply -f https://github.com/grafana/tempo-operator/releases/latest/download/tempo-operator.yaml
+      echo -e "Waiting for Tempo operator to be ready... \n"
+      $CLIENT_EXE wait pods --all -n ${TEMPO_OPERATOR_NS} --for=condition=Ready --timeout=5m
+    fi
   fi
 
   # If OpenShift, we need to do some additional things
@@ -755,45 +638,8 @@ emailAddress=not@mail
       # Build and apply TempoStack spec based on multi-tenant mode
       if [ "${MULTI_TENANT}" == "true" ] && [ "${IS_OPENSHIFT}" == "true" ]; then
         # Multi-tenant TempoStack configuration
-        if ${CLIENT_EXE} apply -n ${TEMPO_NS} -f - <<EOF
-apiVersion: tempo.grafana.com/v1alpha1
-kind: TempoStack
-metadata:
-  name: cr
-spec:
-  storageSize: 1Gi
-  storage:
-    secret:
-      type: s3
-      name: tempostack-dev-minio
-  observability:
-    tracing:
-      jaeger_agent_endpoint: 'localhost:6831'
-  tenants:
-    authentication:
-      - tenantId: f78bf974-aee2-47e8-8bb4-9ba41a41824a
-        tenantName: north
-      - tenantId: ac4dd897-40da-4403-9cab-53905e22ef78
-        tenantName: south
-    mode: openshift
-  managementState: Managed
-  template:
-    distributor:
-      tls:
-        enabled: true
-        certName: tempo-cert
-    gateway:
-      enabled: true
-    queryFrontend:
-      component:
-        resources:
-          limits:
-            cpu: "2"
-            memory: 2Gi
-      jaegerQuery:
-        enabled: true
-EOF
-        then
+        local tempostack_file="${SCRIPT_DIR}/resources/tempostack-multi-tenant-tls.yaml"
+        if replace_yaml_vars "$tempostack_file" "TEMPO_NS" "$TEMPO_NS" | ${CLIENT_EXE} apply -n ${TEMPO_NS} -f -; then
           echo "TempoStack with TLS and multi-tenant installation successful"
           success=true
         else
@@ -805,32 +651,8 @@ EOF
         fi
       else
         # Single-tenant TempoStack configuration with TLS
-        if ${CLIENT_EXE} apply -n ${TEMPO_NS} -f - <<EOF
-apiVersion: tempo.grafana.com/v1alpha1
-kind: TempoStack
-metadata:
-  name: cr
-spec:
-  storageSize: 1Gi
-  storage:
-    secret:
-      type: s3
-      name: tempostack-dev-minio
-  template:
-    distributor:
-      tls:
-        enabled: true
-        certName: tempo-cert
-    queryFrontend:
-      component:
-        resources:
-          limits:
-            cpu: "2"
-            memory: 2Gi
-      jaegerQuery:
-        enabled: false
-EOF
-        then
+        local tempostack_file="${SCRIPT_DIR}/resources/tempostack-single-tenant-tls.yaml"
+        if replace_yaml_vars "$tempostack_file" "TEMPO_NS" "$TEMPO_NS" | ${CLIENT_EXE} apply -n ${TEMPO_NS} -f -; then
           echo "TempoStack with TLS installation successful"
           success=true
         else
@@ -876,41 +698,8 @@ EOF
         # Build and apply TempoStack spec based on multi-tenant mode
         if [ "${MULTI_TENANT}" == "true" ] && [ "${IS_OPENSHIFT}" == "true" ]; then
           # Multi-tenant TempoStack configuration
-          if ${CLIENT_EXE} apply -n ${TEMPO_NS} -f - <<EOF
-apiVersion: tempo.grafana.com/v1alpha1
-kind: TempoStack
-metadata:
-  name: cr
-spec:
-  storageSize: 1Gi
-  storage:
-    secret:
-      type: s3
-      name: tempostack-dev-minio
-  observability:
-    tracing:
-      jaeger_agent_endpoint: 'localhost:6831'
-  tenants:
-    authentication:
-      - tenantId: f78bf974-aee2-47e8-8bb4-9ba41a41824a
-        tenantName: north
-      - tenantId: ac4dd897-40da-4403-9cab-53905e22ef78
-        tenantName: south
-    mode: openshift
-  managementState: Managed
-  template:
-    gateway:
-      enabled: true
-    queryFrontend:
-      component:
-        resources:
-          limits:
-            cpu: "2"
-            memory: 2Gi
-      jaegerQuery:
-        enabled: true
-EOF
-          then
+          local tempostack_file="${SCRIPT_DIR}/resources/tempostack-multi-tenant.yaml"
+          if replace_yaml_vars "$tempostack_file" "TEMPO_NS" "$TEMPO_NS" | ${CLIENT_EXE} apply -n ${TEMPO_NS} -f -; then
             echo "TempoStack with multi-tenant installation successful"
             success=true
           else
@@ -922,28 +711,8 @@ EOF
           fi
         else
           # Single-tenant TempoStack configuration
-          if ${CLIENT_EXE} apply -n ${TEMPO_NS} -f - <<EOF
-apiVersion: tempo.grafana.com/v1alpha1
-kind: TempoStack
-metadata:
-  name: cr
-spec:
-  storageSize: 1Gi
-  storage:
-    secret:
-      type: s3
-      name: tempostack-dev-minio
-  template:
-    queryFrontend:
-      component:
-        resources:
-          limits:
-            cpu: "2"
-            memory: 2Gi
-      jaegerQuery:
-        enabled: false
-EOF
-          then
+          local tempostack_file="${SCRIPT_DIR}/resources/tempostack-single-tenant.yaml"
+          if replace_yaml_vars "$tempostack_file" "TEMPO_NS" "$TEMPO_NS" | ${CLIENT_EXE} apply -n ${TEMPO_NS} -f -; then
             echo "TempoStack installation successful"
             success=true
           else
@@ -994,7 +763,7 @@ EOF
     TEMPO_PORT="3100"
     helm repo add grafana https://grafana.github.io/helm-charts
     helm repo update
-    helm install tempo-cr grafana/tempo-distributed -n tempo -f ${SCRIPT_DIR}/helm.yaml
+    helm install tempo-cr grafana/tempo-distributed -n tempo -f ${SCRIPT_DIR}/resources/helm.yaml
 
   fi
 }
@@ -1069,36 +838,167 @@ else
   if [ "${ONLY_TEMPO}" != "true" ]; then
     echo "Script Directory: ${SCRIPT_DIR}"
 
+    # Wait for TempoStack to be ready before proceeding (especially for multi-tenant mode)
+    if [ "${MULTI_TENANT}" == "true" ] && [ "${IS_OPENSHIFT}" == "true" ]; then
+      echo -e "Waiting for TempoStack to be ready before configuring Istio...\n"
+      ${CLIENT_EXE} wait --for=condition=Ready TempoStack/cr -n ${TEMPO_NS} --timeout=10m 2>/dev/null || echo "Waiting for TempoStack pods to be ready..."
+      ${CLIENT_EXE} wait pods --all -n ${TEMPO_NS} --for=condition=Ready --timeout=10m 2>/dev/null || echo "TempoStack pods may still be initializing"
+      
+      # Wait for gateway service to be available
+      echo -e "Waiting for Tempo gateway service to be available...\n"
+      gateway_ready=false
+      for i in {1..30}; do
+        if ${CLIENT_EXE} get service tempo-cr-gateway -n ${TEMPO_NS} >/dev/null 2>&1; then
+          gateway_ready=true
+          break
+        fi
+        echo -n "."
+        sleep 2
+      done
+      echo ""
+      if [ "${gateway_ready}" == "true" ]; then
+        echo "Tempo gateway service is ready"
+      else
+        echo "WARNING: Tempo gateway service may not be ready yet"
+      fi
+      
+      # Install OpenTelemetryCollector for multi-tenant mode
+      echo -e "Installing OpenTelemetryCollector for multi-tenant Tempo...\n"
+      install_opentelemetry_collector "istio-system" "tempo-cr-gateway" "${TEMPO_NS}" "north"
+    fi
+
     if [ "${INSTALL_ISTIO}" == "true" ]; then
+
+      using_sail_operator=false
+      
       if [ "${AMBIENT}" == "true" ]; then
         echo -e "Installing istio Ambient \n"
-        ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -a "prometheus grafana" -cp ambient -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
+        if [ "${using_sail_operator}" == "true" ] && [ "${MULTI_TENANT}" == "true" ] && [ "${IS_OPENSHIFT}" == "true" ]; then
+          # For Sail operator with multi-tenant, pass extension provider configuration via -s parameter
+          ${SCRIPT_DIR}/../install-istio-via-sail.sh -a "prometheus grafana tempo" -cp ambient \
+            -s '.spec.values.meshConfig.enableTracing = true' \
+            -s '.spec.values.meshConfig.extensionProviders[0].name = "otel-tracing"' \
+            -s '.spec.values.meshConfig.extensionProviders[0].opentelemetry.port = 4317' \
+            -s '.spec.values.meshConfig.extensionProviders[0].opentelemetry.service = "otel-collector.istio-system.svc.cluster.local"'
+        else
+          ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -a "prometheus grafana" -cp ambient -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
+        fi
       else
         echo -e "Installing istio \n"
-        ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
+        if [ "${using_sail_operator}" == "true" ] && [ "${MULTI_TENANT}" == "true" ] && [ "${IS_OPENSHIFT}" == "true" ]; then
+          # For Sail operator with multi-tenant, pass extension provider configuration via -s parameter
+          ${SCRIPT_DIR}/../install-istio-via-sail.sh -a "prometheus grafana" \
+            -s '.spec.values.meshConfig.enableTracing = true' \
+            -s '.spec.values.meshConfig.extensionProviders[0].name = "otel-tracing"' \
+            -s '.spec.values.meshConfig.extensionProviders[0].opentelemetry.port = 4317' \
+            -s '.spec.values.meshConfig.extensionProviders[0].opentelemetry.service = "otel-collector.istio-system.svc.cluster.local"'
+        else
+          if [ "${MULTI_TENANT}" == "true" ] && [ "${IS_OPENSHIFT}" == "true" ]; then
+            ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -a "prometheus grafana" \
+                      -s 'values.meshConfig.enableTracing=true' \
+                      -s 'values.meshConfig.extensionProviders[0].name=otel-tracing' \
+                      -s 'values.meshConfig.extensionProviders[0].opentelemetry.port=4317' \
+                      -s 'values.meshConfig.extensionProviders[0].opentelemetry.service=otel-collector.istio-system.svc.cluster.local'
+          else
+            ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
+          fi
+        fi
+      fi
+      
+      # Create Telemetry resource for multi-tenant mode (both Sail operator and istioctl)
+      if [ "${MULTI_TENANT}" == "true" ] && [ "${IS_OPENSHIFT}" == "true" ]; then
+        if [ "${using_sail_operator}" == "true" ]; then
+          echo -e "Waiting for Istio to be ready before creating Telemetry resource...\n"
+          sleep 10  # Give Istio some time to start
+          
+          # Wait for Istio CR to exist
+          istio_ready=false
+          for i in {1..30}; do
+            if ${CLIENT_EXE} get istios default -n istio-system >/dev/null 2>&1; then
+              istio_ready=true
+              break
+            fi
+            echo -n "."
+            sleep 2
+          done
+          echo ""
+          
+          if [ "${istio_ready}" == "true" ]; then
+            create_telemetry_resource "istio-system"
+          else
+            echo "WARNING: Istio CR not found. Telemetry resource creation will be skipped."
+          fi
+        else
+          # For istioctl, create Telemetry resource directly
+          echo -e "Creating Telemetry resource for istioctl with multi-tenant mode...\n"
+          create_telemetry_resource "istio-system"
+        fi
       fi
     fi
 
     if [ "${INSTALL_KIALI}" == "true" ]; then
-
+      kiali_namespace="istio-system"
+      
+      # Determine Tempo URLs based on mode
+      tempo_internal_url=""
+      tempo_external_url=""
+      
+      if [ "${MULTI_TENANT}" == "true" ] && [ "${IS_OPENSHIFT}" == "true" ]; then
+        # Multi-tenant mode: use gateway with tenant-specific URL
+        tempo_internal_url="https://tempo-cr-gateway.${TEMPO_NS}.svc.cluster.local:8080/api/traces/v1/north/tempo"
+        tempo_external_url="$(${CLIENT_EXE} get route -n ${TEMPO_NS} -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=gateway -o jsonpath='https://{..spec.host}/api/traces/v1/north/search' 2>/dev/null || echo "")"
+      else
+        # Single-tenant mode
+        tempo_internal_url="http://cr-query-frontend.${TEMPO_NS}.svc.cluster.local:3200"
+        if [ "${IS_OPENSHIFT}" == "true" ]; then
+          tempo_external_url="$(${CLIENT_EXE} get route -n ${TEMPO_NS} -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='https://{..spec.host}' 2>/dev/null || echo "")"
+        fi
+      fi
+      
       echo "Installing Kiali via helm"
+      
+      if [ "${IS_OPENSHIFT}" == "true" ]; then
+        kiali_route_url="https://kiali-${kiali_namespace}.$(${CLIENT_EXE} get ingresses.config/cluster -o jsonpath='{.spec.domain}')"
+      else
+        kiali_route_url=""
+      fi
 
-      kiali_route_url="https://kiali-${kiali_namespace}.$(kubectl get ingresses.config/cluster -o jsonpath='{.spec.domain}')"
-
-      helm upgrade --install \
-         --namespace "${kiali_namespace}" \
-         --set deployment.logger.log_level="trace" \
-         --set external_services.tracing.enabled="true" \
-         --set external_services.tracing.internal_url="https://tempo-cr-gateway.tempo.svc:8080/api/traces/v1/north/tempo" \
-         --set external_services.tracing.external_url="https://tempo-cr-gateway-tempo.apps-crc.testing/api/traces/v1/north/search" \
-         --set external_services.tracing.provider="tempo" \
-         --set external_services.tracing.use_grpc="false" \
-         --set external_services.tracing.auth.ca_file="/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt" \
-         --set external_services.tracing.auth.type="bearer" \
-         --set external_services.tracing.auth.use_kiali_token="true" \
-         --set kiali_route_url="${kiali_route_url}" \
-         kiali-server \
-         kiali/kiali-server
+      helm_args=(
+        "upgrade"
+        "--install"
+        "--create-namespace"
+        "--namespace" "${kiali_namespace}"
+        "--set" "deployment.logger.log_level=trace"
+        "--set" "external_services.tracing.enabled=true"
+        "--set" "external_services.tracing.internal_url=${tempo_internal_url}"
+        "--set" "external_services.tracing.provider=tempo"
+        "--set" "external_services.tracing.use_grpc=false"
+      )
+      
+      if [ -n "${tempo_external_url}" ]; then
+        helm_args+=("--set" "external_services.tracing.external_url=${tempo_external_url}")
+      fi
+      
+      if [ "${MULTI_TENANT}" == "true" ] && [ "${IS_OPENSHIFT}" == "true" ]; then
+        helm_args+=(
+          "--set" "external_services.tracing.tempo_config.namespace=${TEMPO_NS}"
+          "--set" "external_services.tracing.tempo_config.name=cr"
+          "--set" "external_services.tracing.tempo_config.tenant=north"
+          "--set" "external_services.tracing.tempo_config.url_format=openshift"
+          "--set" "external_services.tracing.tempo_config.org_id=1"
+          "--set" "external_services.tracing.auth.ca_file=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt"
+          "--set" "external_services.tracing.auth.type=bearer"
+          "--set" "external_services.tracing.auth.use_kiali_token=true"
+        )
+      fi
+      
+      if [ -n "${kiali_route_url}" ]; then
+        helm_args+=("--set" "kiali_route_url=${kiali_route_url}")
+      fi
+      
+      helm_args+=("kiali-server" "kiali/kiali-server")
+      
+      helm "${helm_args[@]}"
     fi
 
     if [ "${INSTALL_BOOKINFO}" == "true" ]; then
