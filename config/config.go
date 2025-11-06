@@ -457,6 +457,7 @@ type CacheExpirationConfig struct {
 // unusual circumstances. It may be undocumented and is subject to change. It is unstructured in the CRD schema.
 type KialiInternalConfig struct {
 	CacheExpiration        CacheExpirationConfig `yaml:"cache_expiration,omitempty"`
+	GraphCache             GraphCacheConfig      `yaml:"graph_cache,omitempty"`
 	MetricLogDurationLimit time.Duration         `yaml:"metric_log_duration_limit,omitempty"`
 	// TODO: This is only used by `run-kiali`. Remove once we have a way to tell Kiali
 	// we are running outside the cluster. Part of: https://github.com/kiali/kiali/issues/8263.
@@ -672,6 +673,14 @@ type KialiURL struct {
 	InstanceName string `yaml:"instance_name,omitempty"`
 	Namespace    string `yaml:"namespace,omitempty"`
 	URL          string `yaml:"url,omitempty"`
+}
+
+// GraphCacheConfig configures per-user graph caching with background refresh
+type GraphCacheConfig struct {
+	Enabled           bool   `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	RefreshInterval   string `yaml:"refresh_interval,omitempty" json:"refreshInterval,omitempty"`     // Default: "60s"
+	InactivityTimeout string `yaml:"inactivity_timeout,omitempty" json:"inactivityTimeout,omitempty"` // Default: "10m"
+	MaxCacheMemoryMB  int    `yaml:"max_cache_memory_mb,omitempty" json:"maxCacheMemoryMB,omitempty"` // Default: 100
 }
 
 // KialiFeatureFlags available from the CR
@@ -977,6 +986,12 @@ func NewConfig() (c *Config) {
 				Mesh:          20 * time.Second,
 				Waypoint:      4 * time.Minute,
 				ZtunnelConfig: 2 * time.Minute,
+			},
+			GraphCache: GraphCacheConfig{
+				Enabled:           false, // Disabled by default
+				RefreshInterval:   "60s",
+				InactivityTimeout: "10m",
+				MaxCacheMemoryMB:  100,
 			},
 			MetricLogDurationLimit: 3 * time.Second, // set to 0 to log everything
 		},
