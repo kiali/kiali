@@ -278,7 +278,7 @@ if [ "${CONFIG_PROFILE}" == "ambient" ]; then
     ' -)
     ztunnelYAML=$(echo "$ztunnelYAML" | yq eval '
        .spec.values.ztunnel.multiCluster.clusterName = "'"${CLUSTER_NAME}"'" |
-       .spec.values.global.network = "'"${NETWORK_ID:-network-default}"'"
+       .spec.values.ztunnel.network = "'"${NETWORK_ID:-network-default}"'"
     ' -)
   else
     ztunnelYAML=$(echo "$ztunnelYAML" | yq eval '
