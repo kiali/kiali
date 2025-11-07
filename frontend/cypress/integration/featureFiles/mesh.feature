@@ -65,6 +65,8 @@ Feature: Kiali Mesh page
   Scenario: Test DataPlane
     When user selects mesh node with label "Data Plane"
     Then user sees data plane side panel
+    When user expands namespace
+    Then user sees config validation info
 
   @core-2
   @offline

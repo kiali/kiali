@@ -192,6 +192,33 @@ Then('user sees data plane side panel', () => {
     });
 });
 
+When('user expands namespace', () => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-data-plane')
+    .should('be.visible')
+    .within(() => {
+      // Find and click the expand button by its ID pattern (e.g., ns-bookinfo0)
+      cy.get('button[id^="ns-"]').first().click();
+      // Wait for the expanded content to load
+      cy.get('#loading_kiali_spinner').should('not.exist');
+    });
+});
+
+Then('user sees config validation info', () => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-data-plane')
+    .should('be.visible')
+    .within(() => {
+      // Check that Istio config section is visible
+      cy.contains('Istio config').should('be.visible');
+      // Verify that 'Istio config' does NOT have value 'N/A'
+      // This means validations should be present (not N/A)
+      cy.contains('Istio config').parent().should('not.contain.text', 'N/A');
+    });
+});
+
 // TODO: No jaeger and grafana in offline mode for now.
 Then('user sees expected mesh infra', () => {
   cy.waitForReact();
