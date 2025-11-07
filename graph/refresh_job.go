@@ -12,8 +12,9 @@ import (
 // This is injected into the cache to allow refresh jobs to regenerate graphs.
 type GraphGenerator func(ctx context.Context, options Options) (TrafficMap, error)
 
-// RefreshJob manages background refresh for a single user's graph.
+// RefreshJob manages background refresh for a single session's graph.
 // It runs on a ticker and updates the cached graph with current data.
+// Each browser session (identified by sessionID) gets its own refresh job.
 type RefreshJob struct {
 	cache           *graphCacheImpl
 	cancel          context.CancelFunc
@@ -22,16 +23,16 @@ type RefreshJob struct {
 	graphOptions    Options
 	mu              sync.Mutex
 	refreshInterval time.Duration
+	sessionID       string // Unique session identifier (different per browser/tab)
 	stopChan        chan struct{}
 	stopped         bool
 	ticker          *time.Ticker
-	userID          string
 }
 
-// NewRefreshJob creates a new refresh job for a user's graph.
+// NewRefreshJob creates a new refresh job for a session's graph.
 func NewRefreshJob(
 	ctx context.Context,
-	userID string,
+	sessionID string,
 	options Options,
 	cache *graphCacheImpl,
 	generator GraphGenerator,
@@ -46,9 +47,9 @@ func NewRefreshJob(
 		graphGenerator:  generator,
 		graphOptions:    options,
 		refreshInterval: refreshInterval,
+		sessionID:       sessionID,
 		stopChan:        make(chan struct{}),
 		stopped:         false,
-		userID:          userID,
 	}
 }
 
@@ -64,7 +65,7 @@ func (j *RefreshJob) Start() {
 	j.ticker = time.NewTicker(j.refreshInterval)
 	j.mu.Unlock()
 
-	log.Debugf("Starting refresh job for user %s (interval: %v)", j.userID, j.refreshInterval)
+	log.Debugf("Starting refresh job for session %s (interval: %v)", j.sessionID, j.refreshInterval)
 
 	// Run initial refresh immediately
 	go j.refresh()
@@ -75,11 +76,11 @@ func (j *RefreshJob) Start() {
 		case <-j.ticker.C:
 			go j.refresh()
 		case <-j.stopChan:
-			log.Debugf("Stopping refresh job for user %s", j.userID)
+			log.Debugf("Stopping refresh job for session %s", j.sessionID)
 			j.cleanup()
 			return
 		case <-j.ctx.Done():
-			log.Debugf("Context cancelled for refresh job (user %s)", j.userID)
+			log.Debugf("Context cancelled for refresh job (session %s)", j.sessionID)
 			j.cleanup()
 			return
 		}
@@ -113,16 +114,16 @@ func (j *RefreshJob) cleanup() {
 
 // refresh performs a single refresh cycle.
 // This is the core logic that:
-// 1. Checks if the user's graph still exists (not evicted)
-// 2. Checks if the user is still active (within inactivity timeout)
+// 1. Checks if the session's graph still exists (not evicted)
+// 2. Checks if the session is still active (within inactivity timeout)
 // 3. Updates QueryTime to current time (moving window)
 // 4. Generates a fresh graph
 // 5. Updates the cache
 func (j *RefreshJob) refresh() {
-	// Check if user's graph still exists (use internal method to not update LastAccessed)
-	cached, found := j.cache.getUserGraphInternal(j.userID)
+	// Check if session's graph still exists (use internal method to not update LastAccessed)
+	cached, found := j.cache.getSessionGraphInternal(j.sessionID)
 	if !found {
-		log.Debugf("Graph for user %s not found in cache, stopping refresh job", j.userID)
+		log.Debugf("Graph for session %s not found in cache, stopping refresh job", j.sessionID)
 		j.Stop()
 		return
 	}
@@ -134,9 +135,9 @@ func (j *RefreshJob) refresh() {
 
 	inactiveDuration := time.Since(lastAccessed)
 	if inactiveDuration > j.cache.config.InactivityTimeout {
-		log.Infof("User %s inactive for %v (timeout: %v), evicting and stopping refresh",
-			j.userID, inactiveDuration, j.cache.config.InactivityTimeout)
-		j.cache.Evict(j.userID)
+		log.Infof("Session %s inactive for %v (timeout: %v), evicting and stopping refresh",
+			j.sessionID, inactiveDuration, j.cache.config.InactivityTimeout)
+		j.cache.Evict(j.sessionID)
 		j.Stop()
 		return
 	}
@@ -146,8 +147,8 @@ func (j *RefreshJob) refresh() {
 	refreshedOptions := j.graphOptions
 	refreshedOptions.TelemetryOptions.QueryTime = time.Now().Unix()
 
-	log.Tracef("Refreshing graph for user %s (duration: %v, moving window to: %v)",
-		j.userID,
+	log.Tracef("Refreshing graph for session %s (duration: %v, moving window to: %v)",
+		j.sessionID,
 		refreshedOptions.TelemetryOptions.Duration,
 		time.Unix(refreshedOptions.TelemetryOptions.QueryTime, 0))
 
@@ -157,7 +158,7 @@ func (j *RefreshJob) refresh() {
 	generateDuration := time.Since(startTime)
 
 	if err != nil {
-		log.Errorf("Failed to refresh graph for user %s: %v", j.userID, err)
+		log.Errorf("Failed to refresh graph for session %s: %v", j.sessionID, err)
 		// Keep the old graph in cache rather than evicting on error
 		return
 	}
@@ -174,21 +175,22 @@ func (j *RefreshJob) refresh() {
 		TrafficMap:      trafficMap,
 	}
 
-	err = j.cache.SetUserGraph(j.userID, newCached)
+	err = j.cache.SetSessionGraph(j.sessionID, newCached)
 	if err != nil {
-		log.Errorf("Failed to update cache for user %s: %v", j.userID, err)
+		log.Errorf("Failed to update cache for session %s: %v", j.sessionID, err)
 		return
 	}
 
-	log.Debugf("Refreshed graph for user %s (%d nodes, %.2f MB, generated in %v)",
-		j.userID, len(trafficMap), newMemoryMB, generateDuration)
+	log.Debugf("Refreshed graph for session %s (%d nodes, %.2f MB, generated in %v)",
+		j.sessionID, len(trafficMap), newMemoryMB, generateDuration)
 }
 
-// RefreshJobManager manages all active refresh jobs across users.
+// RefreshJobManager manages all active refresh jobs across sessions.
+// Each session (identified by sessionID) can have its own refresh job.
 type RefreshJobManager struct {
 	cancel context.CancelFunc
 	ctx    context.Context
-	jobs   map[string]*RefreshJob
+	jobs   map[string]*RefreshJob // map key is sessionID
 	mu     sync.RWMutex
 }
 
@@ -203,10 +205,10 @@ func NewRefreshJobManager(ctx context.Context) *RefreshJobManager {
 	}
 }
 
-// StartJob creates and starts a refresh job for a user.
-// If a job already exists for the user, it's stopped and replaced.
+// StartJob creates and starts a refresh job for a session.
+// If a job already exists for the session, it's stopped and replaced.
 func (m *RefreshJobManager) StartJob(
-	userID string,
+	sessionID string,
 	options Options,
 	cache *graphCacheImpl,
 	generator GraphGenerator,
@@ -215,32 +217,32 @@ func (m *RefreshJobManager) StartJob(
 	m.mu.Lock()
 
 	// Stop existing job if present
-	if existingJob, exists := m.jobs[userID]; exists {
-		log.Debugf("Replacing existing refresh job for user %s", userID)
+	if existingJob, exists := m.jobs[sessionID]; exists {
+		log.Debugf("Replacing existing refresh job for session %s", sessionID)
 		existingJob.Stop()
-		delete(m.jobs, userID)
+		delete(m.jobs, sessionID)
 	}
 
 	// Create and start new job
-	job := NewRefreshJob(m.ctx, userID, options, cache, generator, refreshInterval)
-	m.jobs[userID] = job
+	job := NewRefreshJob(m.ctx, sessionID, options, cache, generator, refreshInterval)
+	m.jobs[sessionID] = job
 	m.mu.Unlock()
 
 	// Start the job in a goroutine
 	go job.Start()
 
-	log.Infof("Started refresh job for user %s (interval: %v)", userID, refreshInterval)
+	log.Infof("Started refresh job for session %s (interval: %v)", sessionID, refreshInterval)
 }
 
-// StopJob stops the refresh job for a specific user.
-func (m *RefreshJobManager) StopJob(userID string) {
+// StopJob stops the refresh job for a specific session.
+func (m *RefreshJobManager) StopJob(sessionID string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if job, exists := m.jobs[userID]; exists {
+	if job, exists := m.jobs[sessionID]; exists {
 		job.Stop()
-		delete(m.jobs, userID)
-		log.Infof("Stopped refresh job for user %s", userID)
+		delete(m.jobs, sessionID)
+		log.Infof("Stopped refresh job for session %s", sessionID)
 	}
 }
 
@@ -251,9 +253,9 @@ func (m *RefreshJobManager) StopAll() {
 
 	log.Infof("Stopping all refresh jobs (%d active)", len(m.jobs))
 
-	for userID, job := range m.jobs {
+	for sessionID, job := range m.jobs {
 		job.Stop()
-		delete(m.jobs, userID)
+		delete(m.jobs, sessionID)
 	}
 
 	m.cancel()
@@ -266,11 +268,11 @@ func (m *RefreshJobManager) ActiveJobCount() int {
 	return len(m.jobs)
 }
 
-// HasJob returns true if a refresh job exists for the given user.
-func (m *RefreshJobManager) HasJob(userID string) bool {
+// HasJob returns true if a refresh job exists for the given session.
+func (m *RefreshJobManager) HasJob(sessionID string) bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	_, exists := m.jobs[userID]
+	_, exists := m.jobs[sessionID]
 	return exists
 }
 

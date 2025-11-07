@@ -46,7 +46,7 @@ func TestNewGraphCache(t *testing.T) {
 	cache := NewGraphCache(ctx, config)
 	require.NotNil(t, cache)
 	assert.True(t, cache.Enabled())
-	assert.Equal(t, 0, cache.ActiveUsers())
+	assert.Equal(t, 0, cache.ActiveSessions())
 	assert.Equal(t, 0.0, cache.TotalMemoryMB())
 }
 
@@ -69,7 +69,7 @@ func TestGraphCache_SetAndGet(t *testing.T) {
 	}
 
 	cache := NewGraphCache(ctx, config)
-	userID := "test-user-1"
+	sessionID := "test-session-1"
 
 	// Create a cached graph
 	trafficMap := createTestTrafficMap(5)
@@ -82,15 +82,15 @@ func TestGraphCache_SetAndGet(t *testing.T) {
 	}
 
 	// Set the graph
-	err := cache.SetUserGraph(userID, cached)
+	err := cache.SetSessionGraph(sessionID, cached)
 	require.NoError(t, err)
 
 	// Verify it was set
-	assert.Equal(t, 1, cache.ActiveUsers())
+	assert.Equal(t, 1, cache.ActiveSessions())
 	assert.Greater(t, cache.TotalMemoryMB(), 0.0)
 
 	// Get the graph
-	retrieved, found := cache.GetUserGraph(userID)
+	retrieved, found := cache.GetSessionGraph(sessionID)
 	require.True(t, found)
 	assert.Equal(t, len(trafficMap), len(retrieved.TrafficMap))
 }
@@ -107,7 +107,7 @@ func TestGraphCache_GetNonExistent(t *testing.T) {
 	cache := NewGraphCache(ctx, config)
 
 	// Try to get a non-existent user's graph
-	_, found := cache.GetUserGraph("non-existent-user")
+	_, found := cache.GetSessionGraph("non-existent-session")
 	assert.False(t, found)
 }
 
@@ -121,7 +121,7 @@ func TestGraphCache_Evict(t *testing.T) {
 	}
 
 	cache := NewGraphCache(ctx, config)
-	userID := "test-user-1"
+	sessionID := "test-session-1"
 
 	// Set a graph
 	trafficMap := createTestTrafficMap(5)
@@ -133,16 +133,16 @@ func TestGraphCache_Evict(t *testing.T) {
 		TrafficMap:      trafficMap,
 	}
 
-	err := cache.SetUserGraph(userID, cached)
+	err := cache.SetSessionGraph(sessionID, cached)
 	require.NoError(t, err)
-	assert.Equal(t, 1, cache.ActiveUsers())
+	assert.Equal(t, 1, cache.ActiveSessions())
 
 	// Evict the graph
-	cache.Evict(userID)
+	cache.Evict(sessionID)
 
 	// Verify it was evicted
-	assert.Equal(t, 0, cache.ActiveUsers())
-	_, found := cache.GetUserGraph(userID)
+	assert.Equal(t, 0, cache.ActiveSessions())
+	_, found := cache.GetSessionGraph(sessionID)
 	assert.False(t, found)
 }
 
@@ -159,7 +159,7 @@ func TestGraphCache_Clear(t *testing.T) {
 
 	// Add multiple users
 	for i := 0; i < 3; i++ {
-		userID := "user-" + string(rune('A'+i))
+		sessionID := "session-" + string(rune('A'+i))
 		trafficMap := createTestTrafficMap(5)
 		cached := &CachedGraph{
 			LastAccessed:    time.Now(),
@@ -168,17 +168,17 @@ func TestGraphCache_Clear(t *testing.T) {
 			Timestamp:       time.Now(),
 			TrafficMap:      trafficMap,
 		}
-		err := cache.SetUserGraph(userID, cached)
+		err := cache.SetSessionGraph(sessionID, cached)
 		require.NoError(t, err)
 	}
 
-	assert.Equal(t, 3, cache.ActiveUsers())
+	assert.Equal(t, 3, cache.ActiveSessions())
 
 	// Clear all
 	cache.Clear()
 
 	// Verify all were cleared
-	assert.Equal(t, 0, cache.ActiveUsers())
+	assert.Equal(t, 0, cache.ActiveSessions())
 	assert.Equal(t, 0.0, cache.TotalMemoryMB())
 }
 
@@ -218,7 +218,7 @@ func TestGraphCache_MemoryLimit(t *testing.T) {
 	// Add multiple users until we exceed the limit
 	// The LRU eviction should kick in
 	for i := 0; i < 5; i++ {
-		userID := "user-" + string(rune('A'+i))
+		sessionID := "session-" + string(rune('A'+i))
 		trafficMap := createTestTrafficMap(50) // Larger graphs
 		cached := &CachedGraph{
 			LastAccessed:    time.Now().Add(-time.Duration(i) * time.Minute), // Older users first
@@ -227,7 +227,7 @@ func TestGraphCache_MemoryLimit(t *testing.T) {
 			Timestamp:       time.Now(),
 			TrafficMap:      trafficMap,
 		}
-		err := cache.SetUserGraph(userID, cached)
+		err := cache.SetSessionGraph(sessionID, cached)
 		require.NoError(t, err)
 
 		// Small sleep to ensure different last accessed times
@@ -235,7 +235,7 @@ func TestGraphCache_MemoryLimit(t *testing.T) {
 	}
 
 	// Should have evicted some users to stay under limit
-	assert.Less(t, cache.ActiveUsers(), 5)
+	assert.Less(t, cache.ActiveSessions(), 5)
 	assert.LessOrEqual(t, cache.TotalMemoryMB(), float64(config.MaxCacheMemoryMB)*1.1) // Allow 10% overhead
 }
 
@@ -249,7 +249,7 @@ func TestGraphCache_UpdateLastAccessed(t *testing.T) {
 	}
 
 	cache := NewGraphCache(ctx, config)
-	userID := "test-user"
+	sessionID := "test-session"
 
 	// Set a graph with old last accessed time
 	oldTime := time.Now().Add(-5 * time.Minute)
@@ -262,11 +262,11 @@ func TestGraphCache_UpdateLastAccessed(t *testing.T) {
 		TrafficMap:      trafficMap,
 	}
 
-	err := cache.SetUserGraph(userID, cached)
+	err := cache.SetSessionGraph(sessionID, cached)
 	require.NoError(t, err)
 
 	// Get the graph (should update LastAccessed)
-	retrieved, found := cache.GetUserGraph(userID)
+	retrieved, found := cache.GetSessionGraph(sessionID)
 	require.True(t, found)
 
 	// LastAccessed should be updated to recent time
@@ -284,7 +284,7 @@ func TestGraphCache_ReplaceExistingGraph(t *testing.T) {
 	}
 
 	cache := NewGraphCache(ctx, config)
-	userID := "test-user"
+	sessionID := "test-session"
 
 	// Set initial graph
 	trafficMap1 := createTestTrafficMap(5)
@@ -296,7 +296,7 @@ func TestGraphCache_ReplaceExistingGraph(t *testing.T) {
 		TrafficMap:      trafficMap1,
 	}
 
-	err := cache.SetUserGraph(userID, cached1)
+	err := cache.SetSessionGraph(sessionID, cached1)
 	require.NoError(t, err)
 
 	initialMemory := cache.TotalMemoryMB()
@@ -311,17 +311,17 @@ func TestGraphCache_ReplaceExistingGraph(t *testing.T) {
 		TrafficMap:      trafficMap2,
 	}
 
-	err = cache.SetUserGraph(userID, cached2)
+	err = cache.SetSessionGraph(sessionID, cached2)
 	require.NoError(t, err)
 
 	// Should still have only 1 user
-	assert.Equal(t, 1, cache.ActiveUsers())
+	assert.Equal(t, 1, cache.ActiveSessions())
 
 	// Memory should have increased
 	assert.Greater(t, cache.TotalMemoryMB(), initialMemory)
 
 	// Retrieved graph should be the new one
-	retrieved, found := cache.GetUserGraph(userID)
+	retrieved, found := cache.GetSessionGraph(sessionID)
 	require.True(t, found)
 	assert.Equal(t, len(trafficMap2), len(retrieved.TrafficMap))
 }
@@ -384,7 +384,7 @@ func TestGraphCache_ConcurrentAccess(t *testing.T) {
 	// Goroutine 1: Writing
 	go func() {
 		for i := 0; i < 10; i++ {
-			userID := "user-" + string(rune('A'+i%3))
+			sessionID := "session-" + string(rune('A'+i%3))
 			trafficMap := createTestTrafficMap(5)
 			cached := &CachedGraph{
 				TrafficMap:      trafficMap,
@@ -393,7 +393,7 @@ func TestGraphCache_ConcurrentAccess(t *testing.T) {
 				LastAccessed:    time.Now(),
 				RefreshInterval: 60 * time.Second,
 			}
-			_ = cache.SetUserGraph(userID, cached)
+			_ = cache.SetSessionGraph(sessionID, cached)
 			time.Sleep(5 * time.Millisecond)
 		}
 		done <- true
@@ -402,8 +402,8 @@ func TestGraphCache_ConcurrentAccess(t *testing.T) {
 	// Goroutine 2: Reading
 	go func() {
 		for i := 0; i < 10; i++ {
-			userID := "user-" + string(rune('A'+i%3))
-			_, _ = cache.GetUserGraph(userID)
+			sessionID := "session-" + string(rune('A'+i%3))
+			_, _ = cache.GetSessionGraph(sessionID)
 			time.Sleep(5 * time.Millisecond)
 		}
 		done <- true
@@ -412,7 +412,7 @@ func TestGraphCache_ConcurrentAccess(t *testing.T) {
 	// Goroutine 3: Reading metrics
 	go func() {
 		for i := 0; i < 10; i++ {
-			_ = cache.ActiveUsers()
+			_ = cache.ActiveSessions()
 			_ = cache.TotalMemoryMB()
 			time.Sleep(5 * time.Millisecond)
 		}
@@ -425,5 +425,5 @@ func TestGraphCache_ConcurrentAccess(t *testing.T) {
 	<-done
 
 	// Should not panic and should have some data
-	assert.Greater(t, cache.ActiveUsers(), 0)
+	assert.Greater(t, cache.ActiveSessions(), 0)
 }

@@ -10,18 +10,20 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-// GraphCache provides per-user graph caching with background refresh.
-// Each user's most recent graph is cached and refreshed in the background
+// GraphCache provides per-session graph caching with background refresh.
+// Each session's graph is cached and refreshed in the background
 // with a moving time window to ensure users always see current traffic data.
+// Sessions are uniquely identified by sessionID, allowing multiple concurrent
+// sessions per user (e.g., different browsers/tabs).
 type GraphCache interface {
-	// GetUserGraph retrieves a user's cached graph if it exists
-	GetUserGraph(userID string) (*CachedGraph, bool)
+	// GetSessionGraph retrieves a session's cached graph if it exists
+	GetSessionGraph(sessionID string) (*CachedGraph, bool)
 
-	// SetUserGraph stores or updates a user's cached graph
-	SetUserGraph(userID string, cached *CachedGraph) error
+	// SetSessionGraph stores or updates a session's cached graph
+	SetSessionGraph(sessionID string, cached *CachedGraph) error
 
-	// Evict removes a user's graph from cache and stops background refresh
-	Evict(userID string)
+	// Evict removes a session's graph from cache and stops background refresh
+	Evict(sessionID string)
 
 	// Clear removes all cached graphs (useful for testing and shutdown)
 	Clear()
@@ -32,8 +34,8 @@ type GraphCache interface {
 	// Enabled returns true if graph caching is enabled
 	Enabled() bool
 
-	// ActiveUsers returns the number of users with cached graphs
-	ActiveUsers() int
+	// ActiveSessions returns the number of sessions with cached graphs
+	ActiveSessions() int
 }
 
 // CachedGraph represents a user's cached graph with metadata
@@ -61,7 +63,7 @@ type graphCacheImpl struct {
 	ctx            context.Context
 	graphGenerator GraphGenerator // Injected function for refresh jobs to regenerate graphs
 	mu             sync.RWMutex
-	userGraphs     map[string]*CachedGraph
+	sessionGraphs  map[string]*CachedGraph // map key is sessionID
 }
 
 // NewGraphCache creates a new graph cache instance
@@ -77,18 +79,18 @@ func NewGraphCache(ctx context.Context, config *GraphCacheConfig) GraphCache {
 	}
 
 	return &graphCacheImpl{
-		config:     config,
-		ctx:        ctx,
-		userGraphs: make(map[string]*CachedGraph),
+		config:        config,
+		ctx:           ctx,
+		sessionGraphs: make(map[string]*CachedGraph),
 	}
 }
 
-// GetUserGraph retrieves a user's cached graph and updates last accessed time
-func (c *graphCacheImpl) GetUserGraph(userID string) (*CachedGraph, bool) {
+// GetSessionGraph retrieves a session's cached graph and updates last accessed time
+func (c *graphCacheImpl) GetSessionGraph(sessionID string) (*CachedGraph, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	cached, found := c.userGraphs[userID]
+	cached, found := c.sessionGraphs[sessionID]
 	if !found {
 		return nil, false
 	}
@@ -101,18 +103,18 @@ func (c *graphCacheImpl) GetUserGraph(userID string) (*CachedGraph, bool) {
 	return cached, true
 }
 
-// getUserGraphInternal retrieves a user's cached graph without updating last accessed time
+// getSessionGraphInternal retrieves a session's cached graph without updating last accessed time
 // This is used internally by refresh jobs to check inactivity without affecting the access time
-func (c *graphCacheImpl) getUserGraphInternal(userID string) (*CachedGraph, bool) {
+func (c *graphCacheImpl) getSessionGraphInternal(sessionID string) (*CachedGraph, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	cached, found := c.userGraphs[userID]
+	cached, found := c.sessionGraphs[sessionID]
 	return cached, found
 }
 
-// SetUserGraph stores a graph for a user
-func (c *graphCacheImpl) SetUserGraph(userID string, cached *CachedGraph) error {
+// SetSessionGraph stores a graph for a session
+func (c *graphCacheImpl) SetSessionGraph(sessionID string, cached *CachedGraph) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -122,26 +124,26 @@ func (c *graphCacheImpl) SetUserGraph(userID string, cached *CachedGraph) error 
 	}
 
 	// Check memory limits before adding
-	if err := c.checkMemoryLimits(userID, cached); err != nil {
+	if err := c.checkMemoryLimits(sessionID, cached); err != nil {
 		return err
 	}
 
-	c.userGraphs[userID] = cached
+	c.sessionGraphs[sessionID] = cached
 
-	log.Debugf("Cached graph for user %s (%d nodes, %.2f MB)",
-		userID, len(cached.TrafficMap), cached.estimatedMB)
+	log.Debugf("Cached graph for session %s (%d nodes, %.2f MB)",
+		sessionID, len(cached.TrafficMap), cached.estimatedMB)
 
 	return nil
 }
 
-// Evict removes a user's graph from cache
-func (c *graphCacheImpl) Evict(userID string) {
+// Evict removes a session's graph from cache
+func (c *graphCacheImpl) Evict(sessionID string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if cached, found := c.userGraphs[userID]; found {
-		delete(c.userGraphs, userID)
-		log.Debugf("Evicted graph for user %s (%.2f MB freed)", userID, cached.estimatedMB)
+	if cached, found := c.sessionGraphs[sessionID]; found {
+		delete(c.sessionGraphs, sessionID)
+		log.Debugf("Evicted graph for session %s (%.2f MB freed)", sessionID, cached.estimatedMB)
 	}
 }
 
@@ -150,10 +152,10 @@ func (c *graphCacheImpl) Clear() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	count := len(c.userGraphs)
-	c.userGraphs = make(map[string]*CachedGraph)
+	count := len(c.sessionGraphs)
+	c.sessionGraphs = make(map[string]*CachedGraph)
 
-	log.Infof("Cleared graph cache (%d users removed)", count)
+	log.Infof("Cleared graph cache (%d sessions removed)", count)
 }
 
 // TotalMemoryMB returns total cache memory usage
@@ -162,7 +164,7 @@ func (c *graphCacheImpl) TotalMemoryMB() float64 {
 	defer c.mu.RUnlock()
 
 	var totalMB float64
-	for _, cached := range c.userGraphs {
+	for _, cached := range c.sessionGraphs {
 		totalMB += cached.estimatedMB
 	}
 	return totalMB
@@ -173,28 +175,28 @@ func (c *graphCacheImpl) Enabled() bool {
 	return c.config.Enabled
 }
 
-// ActiveUsers returns the number of users with cached graphs
-func (c *graphCacheImpl) ActiveUsers() int {
+// ActiveSessions returns the number of sessions with cached graphs
+func (c *graphCacheImpl) ActiveSessions() int {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	return len(c.userGraphs)
+	return len(c.sessionGraphs)
 }
 
 // checkMemoryLimits ensures we don't exceed memory limits
 // Must be called with write lock held
-func (c *graphCacheImpl) checkMemoryLimits(userID string, newCached *CachedGraph) error {
+func (c *graphCacheImpl) checkMemoryLimits(sessionID string, newCached *CachedGraph) error {
 	// Calculate current memory usage
 	currentMemory := c.totalMemoryMBLocked()
 
 	// Subtract old graph memory if replacing
-	if old, exists := c.userGraphs[userID]; exists {
+	if old, exists := c.sessionGraphs[sessionID]; exists {
 		currentMemory -= old.estimatedMB
 	}
 
 	// Calculate projected memory
 	projectedMemory := currentMemory + newCached.estimatedMB
 
-	// If over limit, evict LRU users until under limit
+	// If over limit, evict LRU sessions until under limit
 	if projectedMemory > float64(c.config.MaxCacheMemoryMB) {
 		log.Infof("Graph cache memory limit approaching: %.2f MB / %d MB",
 			projectedMemory, c.config.MaxCacheMemoryMB)
@@ -209,57 +211,59 @@ func (c *graphCacheImpl) checkMemoryLimits(userID string, newCached *CachedGraph
 // totalMemoryMBLocked returns total memory usage (must be called with lock held)
 func (c *graphCacheImpl) totalMemoryMBLocked() float64 {
 	var totalMB float64
-	for _, cached := range c.userGraphs {
+	for _, cached := range c.sessionGraphs {
 		totalMB += cached.estimatedMB
 	}
 	return totalMB
 }
 
-// evictLRU evicts least recently accessed users until targetMB is freed
+// evictLRU evicts least recently accessed sessions until targetMB is freed
 // Must be called with write lock held
 func (c *graphCacheImpl) evictLRU(targetMB float64) {
-	// Create list of users sorted by last accessed time (oldest first)
-	type userEntry struct {
-		userID       string
+	// Create list of sessions sorted by last accessed time (oldest first)
+	type sessionEntry struct {
+		sessionID    string
 		lastAccessed time.Time
 		memoryMB     float64
 	}
 
-	var users []userEntry
-	for userID, cached := range c.userGraphs {
+	var sessions []sessionEntry
+	for sessionID, cached := range c.sessionGraphs {
 		cached.mu.RLock()
 		lastAccess := cached.LastAccessed
 		cached.mu.RUnlock()
 
-		users = append(users, userEntry{
-			userID:       userID,
+		sessions = append(sessions, sessionEntry{
+			sessionID:    sessionID,
 			lastAccessed: lastAccess,
 			memoryMB:     cached.estimatedMB,
 		})
 	}
 
 	// Sort by last accessed (oldest first)
-	sort.Slice(users, func(i, j int) bool {
-		return users[i].lastAccessed.Before(users[j].lastAccessed)
+	sort.Slice(sessions, func(i, j int) bool {
+		return sessions[i].lastAccessed.Before(sessions[j].lastAccessed)
 	})
 
-	// Evict oldest users until target memory is freed
+	// Evict oldest sessions until target memory is freed
 	var freedMB float64
-	for _, user := range users {
+	evictedCount := 0
+	for _, session := range sessions {
 		if freedMB >= targetMB {
 			break
 		}
 
-		log.Infof("Evicting user %s due to memory limit (last accessed: %v ago, %.2f MB)",
-			user.userID,
-			time.Since(user.lastAccessed).Round(time.Second),
-			user.memoryMB)
+		log.Infof("Evicting session %s due to memory limit (last accessed: %v ago, %.2f MB)",
+			session.sessionID,
+			time.Since(session.lastAccessed).Round(time.Second),
+			session.memoryMB)
 
-		delete(c.userGraphs, user.userID)
-		freedMB += user.memoryMB
+		delete(c.sessionGraphs, session.sessionID)
+		freedMB += session.memoryMB
+		evictedCount++
 	}
 
-	log.Infof("Freed %.2f MB by evicting %d users", freedMB, len(users))
+	log.Infof("Freed %.2f MB by evicting %d sessions", freedMB, evictedCount)
 }
 
 // EstimateGraphMemory estimates the memory usage of a TrafficMap in MB

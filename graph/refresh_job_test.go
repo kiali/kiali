@@ -54,10 +54,10 @@ func TestNewRefreshJob(t *testing.T) {
 		},
 	}
 
-	job := NewRefreshJob(ctx, "test-user", options, cache, generator, 30*time.Second)
+	job := NewRefreshJob(ctx, "test-session", options, cache, generator, 30*time.Second)
 
 	require.NotNil(t, job)
-	assert.Equal(t, "test-user", job.userID)
+	assert.Equal(t, "test-session", job.sessionID)
 	assert.Equal(t, 30*time.Second, job.refreshInterval)
 	assert.NotNil(t, job.stopChan)
 	assert.False(t, job.stopped)
@@ -81,7 +81,7 @@ func TestRefreshJob_Stop(t *testing.T) {
 		},
 	}
 
-	job := NewRefreshJob(ctx, "test-user", options, cache, generator, 30*time.Second)
+	job := NewRefreshJob(ctx, "test-session", options, cache, generator, 30*time.Second)
 
 	// Stop the job
 	job.Stop()
@@ -128,11 +128,11 @@ func TestRefreshJob_RefreshUpdatesQueryTime(t *testing.T) {
 		Timestamp:       time.Now(),
 		TrafficMap:      trafficMap,
 	}
-	err := cache.SetUserGraph("test-user", cached)
+	err := cache.SetSessionGraph("test-session", cached)
 	require.NoError(t, err)
 
 	// Create refresh job
-	job := NewRefreshJob(ctx, "test-user", options, cache, generator, 30*time.Second)
+	job := NewRefreshJob(ctx, "test-session", options, cache, generator, 30*time.Second)
 
 	// Manually call refresh
 	job.refresh()
@@ -176,11 +176,11 @@ func TestRefreshJob_InactivityTimeout(t *testing.T) {
 		Timestamp:       time.Now(),
 		TrafficMap:      trafficMap,
 	}
-	err := cache.SetUserGraph("test-user", cached)
+	err := cache.SetSessionGraph("test-session", cached)
 	require.NoError(t, err)
 
 	// Create refresh job
-	job := NewRefreshJob(ctx, "test-user", options, cache, generator, 30*time.Second)
+	job := NewRefreshJob(ctx, "test-session", options, cache, generator, 30*time.Second)
 
 	// Manually call refresh
 	job.refresh()
@@ -189,7 +189,7 @@ func TestRefreshJob_InactivityTimeout(t *testing.T) {
 	assert.True(t, job.stopped)
 
 	// Graph should be evicted from cache
-	_, found := cache.GetUserGraph("test-user")
+	_, found := cache.GetSessionGraph("test-session")
 	assert.False(t, found)
 }
 
@@ -212,7 +212,7 @@ func TestRefreshJob_GraphNotFound(t *testing.T) {
 	}
 
 	// Create job but don't add graph to cache
-	job := NewRefreshJob(ctx, "test-user", options, cache, generator, 30*time.Second)
+	job := NewRefreshJob(ctx, "test-session", options, cache, generator, 30*time.Second)
 
 	// Manually call refresh
 	job.refresh()
@@ -252,11 +252,11 @@ func TestRefreshJob_GeneratorError(t *testing.T) {
 		Timestamp:       time.Now(),
 		TrafficMap:      trafficMap,
 	}
-	err := cache.SetUserGraph("test-user", cached)
+	err := cache.SetSessionGraph("test-session", cached)
 	require.NoError(t, err)
 
 	// Create refresh job
-	job := NewRefreshJob(ctx, "test-user", options, cache, generator, 30*time.Second)
+	job := NewRefreshJob(ctx, "test-session", options, cache, generator, 30*time.Second)
 
 	// Manually call refresh
 	job.refresh()
@@ -265,7 +265,7 @@ func TestRefreshJob_GeneratorError(t *testing.T) {
 	assert.False(t, job.stopped)
 
 	// Old graph should still be in cache
-	retrieved, found := cache.GetUserGraph("test-user")
+	retrieved, found := cache.GetSessionGraph("test-session")
 	require.True(t, found)
 	assert.Equal(t, len(trafficMap), len(retrieved.TrafficMap))
 }
@@ -303,11 +303,11 @@ func TestRefreshJob_StartAndStop(t *testing.T) {
 		Timestamp:       time.Now(),
 		TrafficMap:      trafficMap,
 	}
-	err := cache.SetUserGraph("test-user", cached)
+	err := cache.SetSessionGraph("test-session", cached)
 	require.NoError(t, err)
 
 	// Create and start job
-	job := NewRefreshJob(ctx, "test-user", options, cache, generator, 100*time.Millisecond)
+	job := NewRefreshJob(ctx, "test-session", options, cache, generator, 100*time.Millisecond)
 	go job.Start()
 
 	// Wait for a few refresh cycles
@@ -351,11 +351,11 @@ func TestRefreshJob_ContextCancellation(t *testing.T) {
 		Timestamp:       time.Now(),
 		TrafficMap:      trafficMap,
 	}
-	err := cache.SetUserGraph("test-user", cached)
+	err := cache.SetSessionGraph("test-session", cached)
 	require.NoError(t, err)
 
 	// Create and start job
-	job := NewRefreshJob(ctx, "test-user", options, cache, generator, 100*time.Millisecond)
+	job := NewRefreshJob(ctx, "test-session", options, cache, generator, 100*time.Millisecond)
 	done := make(chan bool)
 	go func() {
 		job.Start()
@@ -416,19 +416,19 @@ func TestRefreshJobManager_StartJob(t *testing.T) {
 		Timestamp:       time.Now(),
 		TrafficMap:      trafficMap,
 	}
-	err := cache.SetUserGraph("test-user", cached)
+	err := cache.SetSessionGraph("test-session", cached)
 	require.NoError(t, err)
 
 	manager := NewRefreshJobManager(ctx)
 
 	// Start a job
-	manager.StartJob("test-user", options, cache, generator, 1*time.Hour)
+	manager.StartJob("test-session", options, cache, generator, 1*time.Hour)
 
 	// Give it a moment to start
 	time.Sleep(50 * time.Millisecond)
 
 	assert.Equal(t, 1, manager.ActiveJobCount())
-	assert.True(t, manager.HasJob("test-user"))
+	assert.True(t, manager.HasJob("test-session"))
 
 	// Clean up
 	manager.StopAll()
@@ -462,22 +462,22 @@ func TestRefreshJobManager_StopJob(t *testing.T) {
 		Timestamp:       time.Now(),
 		TrafficMap:      trafficMap,
 	}
-	err := cache.SetUserGraph("test-user", cached)
+	err := cache.SetSessionGraph("test-session", cached)
 	require.NoError(t, err)
 
 	manager := NewRefreshJobManager(ctx)
 
 	// Start a job
-	manager.StartJob("test-user", options, cache, generator, 1*time.Hour)
+	manager.StartJob("test-session", options, cache, generator, 1*time.Hour)
 	time.Sleep(50 * time.Millisecond)
 	assert.Equal(t, 1, manager.ActiveJobCount())
 
 	// Stop the job
-	manager.StopJob("test-user")
+	manager.StopJob("test-session")
 	time.Sleep(50 * time.Millisecond)
 
 	assert.Equal(t, 0, manager.ActiveJobCount())
-	assert.False(t, manager.HasJob("test-user"))
+	assert.False(t, manager.HasJob("test-session"))
 }
 
 func TestRefreshJobManager_ReplaceJob(t *testing.T) {
@@ -516,23 +516,23 @@ func TestRefreshJobManager_ReplaceJob(t *testing.T) {
 		Timestamp:       time.Now(),
 		TrafficMap:      trafficMap,
 	}
-	err := cache.SetUserGraph("test-user", cached)
+	err := cache.SetSessionGraph("test-session", cached)
 	require.NoError(t, err)
 
 	manager := NewRefreshJobManager(ctx)
 
 	// Start first job
-	manager.StartJob("test-user", options1, cache, generator, 1*time.Hour)
+	manager.StartJob("test-session", options1, cache, generator, 1*time.Hour)
 	time.Sleep(50 * time.Millisecond)
 	assert.Equal(t, 1, manager.ActiveJobCount())
 
-	// Start second job for same user (should replace)
-	manager.StartJob("test-user", options2, cache, generator, 1*time.Hour)
+	// Start second job for same session (should replace)
+	manager.StartJob("test-session", options2, cache, generator, 1*time.Hour)
 	time.Sleep(50 * time.Millisecond)
 
 	// Should still have only 1 job
 	assert.Equal(t, 1, manager.ActiveJobCount())
-	assert.True(t, manager.HasJob("test-user"))
+	assert.True(t, manager.HasJob("test-session"))
 
 	// Clean up
 	manager.StopAll()
@@ -553,7 +553,7 @@ func TestRefreshJobManager_StopAll(t *testing.T) {
 
 	// Start multiple jobs
 	for i := 0; i < 3; i++ {
-		userID := "user-" + string(rune('A'+i))
+		sessionID := "session-" + string(rune('A'+i))
 		options := Options{
 			TelemetryOptions: TelemetryOptions{
 				CommonOptions: CommonOptions{
@@ -572,10 +572,10 @@ func TestRefreshJobManager_StopAll(t *testing.T) {
 			Timestamp:       time.Now(),
 			TrafficMap:      trafficMap,
 		}
-		err := cache.SetUserGraph(userID, cached)
+		err := cache.SetSessionGraph(sessionID, cached)
 		require.NoError(t, err)
 
-		manager.StartJob(userID, options, cache, generator, 1*time.Hour)
+		manager.StartJob(sessionID, options, cache, generator, 1*time.Hour)
 	}
 
 	time.Sleep(50 * time.Millisecond)
@@ -606,7 +606,7 @@ func TestRefreshJobManager_ConcurrentAccess(t *testing.T) {
 	// Goroutine 1: Start jobs
 	go func() {
 		for i := 0; i < 5; i++ {
-			userID := "user-" + string(rune('A'+i))
+			sessionID := "session-" + string(rune('A'+i))
 			options := Options{
 				TelemetryOptions: TelemetryOptions{
 					CommonOptions: CommonOptions{
@@ -624,9 +624,9 @@ func TestRefreshJobManager_ConcurrentAccess(t *testing.T) {
 				LastAccessed:    time.Now(),
 				RefreshInterval: 1 * time.Hour,
 			}
-			_ = cache.SetUserGraph(userID, cached)
+			_ = cache.SetSessionGraph(sessionID, cached)
 
-			manager.StartJob(userID, options, cache, generator, 1*time.Hour)
+			manager.StartJob(sessionID, options, cache, generator, 1*time.Hour)
 			time.Sleep(5 * time.Millisecond)
 		}
 		done <- true
@@ -635,8 +635,8 @@ func TestRefreshJobManager_ConcurrentAccess(t *testing.T) {
 	// Goroutine 2: Stop jobs
 	go func() {
 		for i := 0; i < 5; i++ {
-			userID := "user-" + string(rune('A'+i))
-			manager.StopJob(userID)
+			sessionID := "session-" + string(rune('A'+i))
+			manager.StopJob(sessionID)
 			time.Sleep(5 * time.Millisecond)
 		}
 		done <- true
