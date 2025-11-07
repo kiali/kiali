@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
@@ -47,6 +48,10 @@ const (
 // ErrSessionNotFound is returned when a session or sessions do not exist.
 var ErrSessionNotFound = errors.New("not found")
 
+// AnonymousSessionID is the session ID used for anonymous/unauthenticated users.
+// All anonymous users share this single session ID.
+const AnonymousSessionID = "anonymous-shared"
+
 func sessionCookieName(cookieName, key string) string {
 	if key != "" {
 		cookieName = cookieName + "-" + key
@@ -72,9 +77,13 @@ func NewSessionData[T any](key string, strategy string, expiresOn time.Time, pay
 		return nil, errors.New("the expiration time of a session cannot be in the past")
 	}
 
+	// Generate unique session ID to allow multiple sessions per user
+	sessionID := uuid.New().String()
+
 	return &SessionData[T]{
 		ExpiresOn: expiresOn,
 		Key:       key,
+		SessionID: sessionID,
 		Strategy:  strategy,
 		Payload:   payload,
 	}, nil
@@ -119,6 +128,11 @@ type SessionData[T any] struct {
 	// Key should be a unique identifier for the session.
 	// For now this is just the cluster name.
 	Key string `json:"key,omitempty"`
+
+	// SessionID is a unique identifier for this specific session instance.
+	// This allows the same user to have multiple concurrent sessions (e.g., different browsers/tabs).
+	// Generated as a UUID when the session is created.
+	SessionID string `json:"sessionId"`
 
 	// Payload is the data being saved.
 	Payload *T `json:"payload,omitempty"`
@@ -409,4 +423,33 @@ func chunkString(s string, chunkSize int) []string {
 		chunks = append(chunks, string(runes[i:nn]))
 	}
 	return chunks
+}
+
+// GetSessionID extracts the unique session ID from a request.
+// For authenticated strategies, it reads the SessionID from the session cookie.
+// For anonymous strategy, it returns a shared constant session ID.
+// Returns empty string if no session is found.
+func GetSessionID(r *http.Request, authStrategy string, conf *config.Config) string {
+	// For anonymous authentication, all users share a single session ID
+	if authStrategy == config.AuthStrategyAnonymous {
+		return AnonymousSessionID
+	}
+
+	// For authenticated strategies, try to read the session cookie
+	// We don't know the payload type here, so we read as a generic map
+	persistor, err := NewCookieSessionPersistor[map[string]interface{}](conf)
+	if err != nil {
+		log.Warningf("Failed to create session persistor: %v", err)
+		return ""
+	}
+
+	// Read the session for the home cluster
+	sessionData, err := persistor.ReadSession(r, nil, conf.KubernetesConfig.ClusterName)
+	if err != nil {
+		// No session found or error reading - this is common for new requests
+		log.Tracef("No session found in request: %v", err)
+		return ""
+	}
+
+	return sessionData.SessionID
 }
