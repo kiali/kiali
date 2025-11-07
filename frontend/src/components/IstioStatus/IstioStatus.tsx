@@ -7,7 +7,7 @@ import { ComponentStatus, Status, statusSeverity } from '../../types/IstioStatus
 import { MessageType } from '../../types/MessageCenter';
 import { Namespace } from '../../types/Namespace';
 import { KialiAppState } from '../../store/Store';
-import { istioStatusSelector, namespaceItemsSelector } from '../../store/Selectors';
+import { istioStatusSelector } from '../../store/Selectors';
 import { IstioStatusActions } from '../../actions/IstioStatusActions';
 import { connect } from 'react-redux';
 import { Text, TextVariants, TextContent, Tooltip, TooltipPosition, Label } from '@patternfly/react-core';
@@ -21,7 +21,6 @@ import {
   QuestionCircleIcon
 } from '@patternfly/react-icons';
 import { KialiDispatch } from 'types/Redux';
-import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
 import { connectRefresh } from '../Refresh/connectRefresh';
 import { kialiStyle } from 'styles/StyleUtils';
 import { IconProps, createIcon, KialiIcon } from 'config/KialiIcon';
@@ -40,7 +39,6 @@ type ReduxStateProps = {
 };
 
 type ReduxDispatchProps = {
-  refreshNamespaces: () => void;
   setIstioStatus: (statusMap: ClusterStatusMap) => void;
 };
 
@@ -108,12 +106,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
   const { pathname } = useLocation();
 
-  const { namespaces, setIstioStatus, refreshNamespaces, lastRefreshAt } = props;
-  const currentPathRef = React.useRef<string>(pathname);
-
-  React.useEffect(() => {
-    refreshNamespaces();
-  }, [refreshNamespaces]);
+  const { namespaces, setIstioStatus, lastRefreshAt } = props;
 
   const fetchStatus = React.useCallback((): void => {
     API.getIstioStatus()
@@ -144,24 +137,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   React.useEffect(() => {
     // retrieve status for all clusters
     fetchStatus();
-  }, [lastRefreshAt, fetchStatus]);
-
-  // Overview/Mesh pages do not have Namespaces selection, so separate fetchStatus call is necessary for them
-  // @TODO could be merged with the useEffect above when Namespaces selector will be redesigned
-  React.useEffect(() => {
-    const currentPath = pathname;
-    const isOverviewOrMesh = currentPath.includes('/overview') || currentPath.includes('/mesh');
-    const pathChanged = currentPathRef.current !== currentPath;
-
-    if (pathChanged) {
-      currentPathRef.current = currentPath;
-
-      if (isOverviewOrMesh) {
-        fetchStatus();
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, fetchStatus]);
+  }, [pathname, lastRefreshAt, fetchStatus]);
 
   const getSeverity = (components: ComponentStatus[]): number =>
     Math.max(
@@ -298,16 +274,12 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
 };
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
-  statusMap: istioStatusSelector(state),
-  namespaces: namespaceItemsSelector(state)
+  statusMap: istioStatusSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setIstioStatus: (statusMap: ClusterStatusMap) => {
     dispatch(IstioStatusActions.setinfo(statusMap));
-  },
-  refreshNamespaces: () => {
-    dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded());
   }
 });
 
