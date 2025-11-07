@@ -331,7 +331,19 @@ install_tempo() {
     
     if install_tempo_single_attempt; then
       echo "Tempo installation completed successfully"
-      return 0
+
+      if [ "${MULTI_TENANT}" != "true" ] && [ "${IS_OPENSHIFT}" != "true" ]; then
+        # Wait for webhook readiness
+        if wait_for_webhook_readiness "tempo-operator-webhook-service" "tempo-operator-system" 30 10; then
+          echo "Tempo webhook is ready and functional!"
+          return 0
+        else
+          echo "Tempo webhook failed to become ready, will retry installation"
+          cleanup_failed_tempo_installation
+        fi
+      else
+        return 0
+      fi
     else
       echo "Tempo installation failed on attempt ${attempt}"
       cleanup_failed_tempo_installation
@@ -345,6 +357,69 @@ install_tempo() {
   
   echo "ERROR: Tempo installation failed after ${max_retries} attempts. Aborting."
   exit 1
+}
+
+# Function to wait for webhook readiness with retries
+wait_for_webhook_readiness() {
+  local webhook_name="$1"
+  local namespace="$2"
+  local max_retries="${3:-10}"
+  local retry_interval="${4:-10}"
+
+  echo "Waiting for webhook '${webhook_name}' to be ready..."
+
+  for ((i=1; i<=max_retries; i++)); do
+    echo "Attempt ${i}/${max_retries}: Checking webhook readiness..."
+
+    # Check if the webhook service exists and has endpoints
+    if ${CLIENT_EXE} get service "${webhook_name}" -n "${namespace}" >/dev/null 2>&1; then
+      # Check if the service has endpoints (pods backing the service)
+      local endpoints=$(${CLIENT_EXE} get endpoints "${webhook_name}" -n "${namespace}" -o jsonpath='{.subsets[0].addresses[*].ip}' 2>/dev/null)
+
+      if [ -n "${endpoints}" ] && [ "${endpoints}" != "null" ]; then
+        # Check if the webhook pods are ready
+        local ready_pods=$(${CLIENT_EXE} get pods -n "${namespace}" -l app.kubernetes.io/name=tempo-operator -o jsonpath='{.items[?(@.status.phase=="Running")].metadata.name}' 2>/dev/null)
+
+        if [ -n "${ready_pods}" ]; then
+          # Additional check: try to create a test resource to verify webhook is working
+          echo "Testing webhook functionality by creating a test TempoStack..."
+          if ${CLIENT_EXE} apply -n "${namespace}" -f - <<EOF >/dev/null 2>&1; then
+apiVersion: tempo.grafana.com/v1alpha1
+kind: TempoStack
+metadata:
+  name: webhook-test
+  namespace: ${namespace}
+spec:
+  storageSize: 1Gi
+  storage:
+    secret:
+      type: s3
+      name: test-secret
+EOF
+            # Clean up the test resource
+            ${CLIENT_EXE} delete TempoStack webhook-test -n "${namespace}" --ignore-not-found=true >/dev/null 2>&1
+            echo "Webhook '${webhook_name}' is ready and functional!"
+            return 0
+          else
+            echo "Webhook service exists but is not yet functional"
+          fi
+        else
+          echo "Webhook service exists but pods are not ready yet"
+        fi
+      else
+        echo "Webhook service exists but has no endpoints yet"
+      fi
+    else
+      echo "Webhook service '${webhook_name}' does not exist yet"
+    fi
+
+    if [ ${i} -lt ${max_retries} ]; then
+      echo "Webhook not ready yet, waiting ${retry_interval} seconds before retry..."
+      sleep ${retry_interval}
+    fi
+  done
+  echo "ERROR: Webhook '${webhook_name}' failed to become ready after ${max_retries} attempts"
+  return 1
 }
 
 install_tempo_single_attempt() {
