@@ -343,7 +343,8 @@ func (in *Discovery) HasControlPlane(ctx context.Context, cluster string, ns str
 	return false
 }
 
-// GetRootNamespace returns the Istio root namespace for the control plane managing the given namespace
+// GetRootNamespace returns the Istio root namespace for the control plane managing the given namespace.
+// If the namespace is not managed by any control plane, it returns an empty string.
 func (in *Discovery) GetRootNamespace(ctx context.Context, cluster, namespace string) string {
 	defer in.meshMutex.Unlock()
 	in.meshMutex.Lock()
@@ -353,8 +354,10 @@ func (in *Discovery) GetRootNamespace(ctx context.Context, cluster, namespace st
 		return cp.RootNamespace
 	}
 
-	log.Warningf("GetRootNamespace: failed to determine RootNamespace for cluster [%s] namespace [%s]. Returning [%s]", cluster, namespace, config.IstioNamespaceDefault)
-	return config.IstioNamespaceDefault
+	// Namespace is not in the map, which means it's not managed by any control plane.
+	// This is expected for namespaces without injection enabled or ambient mode.
+	// Return empty string to indicate the namespace is not part of the mesh.
+	return ""
 }
 
 // IsRemoteCluster determines if the cluster has a controlplane or if it's a remote cluster without one.
