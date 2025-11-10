@@ -158,7 +158,6 @@ if [ -z "${ISTIO_VERSION}" ]; then
       fi
     done
     ISTIO_VERSION="${VERSION_WE_WANT}"
-    echo "MAZZ [${ISTIO_VERSION}]" && exit 1
   else
     # See https://github.com/istio/istio/wiki/Dev%20Builds
     VERSION_WE_WANT="$(curl -L -s https://storage.googleapis.com/istio-build/dev/${DEV_ISTIO_VERSION})"
