@@ -22,7 +22,7 @@ export class AbortFault extends React.Component<Props> {
           <Switch
             id="abortSwitch"
             label={' '}
-            labelOff={' '}
+            
             isChecked={this.props.aborted}
             onChange={() => this.props.onAbort(!this.props.aborted, this.props.abort)}
           />

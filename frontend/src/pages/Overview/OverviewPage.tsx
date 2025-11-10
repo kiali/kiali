@@ -82,14 +82,12 @@ import { ExternalServiceInfo } from '../../types/StatusState';
 const MAX_NAMESPACES_PER_CALL = 100;
 
 const gridStyleCompact = kialiStyle({
-  backgroundColor: PFColors.BackgroundColor200,
   paddingBottom: '1.25rem',
   marginTop: 0,
   flex: '1'
 });
 
 const gridStyleList = kialiStyle({
-  backgroundColor: PFColors.BackgroundColor200,
   // The VirtualTable component has a different style than cards
   // We need to adjust the grid style if we are on compact vs list view
   padding: '0 !important',
@@ -105,7 +103,7 @@ const cardGridStyle = kialiStyle({
 
 const namespaceHeaderStyle = kialiStyle({
   $nest: {
-    '& .pf-v5-c-card__header-main': {
+    '& .pf-v6-c-card__header-main': {
       width: '85%'
     }
   }
@@ -1213,6 +1211,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                     >
                       <Card
                         isCompact={true}
+                        variant={"secondary"}
                         className={cardGridStyle}
                         data-test={`${ns.name}-${OverviewDisplayMode[this.state.displayMode]}`}
                       >

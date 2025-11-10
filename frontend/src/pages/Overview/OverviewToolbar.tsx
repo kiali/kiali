@@ -212,14 +212,12 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
               data-sort-field={this.state.sortField.id}
             />
 
-            <Button
+            <Button icon={this.state.isSortAscending ? <SortAlphaDownIcon /> : <SortAlphaUpIcon />}
               variant={ButtonVariant.plain}
               onClick={this.updateSortDirection}
               style={{ paddingLeft: '0.5rem', paddingRight: '0.5rem' }}
               data-sort-asc={this.state.isSortAscending}
-            >
-              {this.state.isSortAscending ? <SortAlphaDownIcon /> : <SortAlphaUpIcon />}
-            </Button>
+             />
           </>
         )}
       </StatefulFilters>
@@ -257,39 +255,33 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
         )}
 
         <Tooltip content={<>{t('Expand view')}</>} position={TooltipPosition.top}>
-          <Button
+          <Button icon={<ThLargeIcon />}
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.EXPAND)}
             variant={ButtonVariant.plain}
-            isActive={this.props.displayMode === OverviewDisplayMode.EXPAND}
+            isClicked={this.props.displayMode === OverviewDisplayMode.EXPAND}
             style={{ padding: '0 0.25rem 0 1rem' }}
             data-test={`overview-type-${OverviewDisplayMode[OverviewDisplayMode.EXPAND]}`}
-          >
-            <ThLargeIcon />
-          </Button>
+           />
         </Tooltip>
 
         <Tooltip content={<>{t('Compact view')}</>} position={TooltipPosition.top}>
-          <Button
+          <Button icon={<ThIcon />}
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.COMPACT)}
             variant={ButtonVariant.plain}
-            isActive={this.props.displayMode === OverviewDisplayMode.COMPACT}
+            isClicked={this.props.displayMode === OverviewDisplayMode.COMPACT}
             style={{ padding: '0 0.25rem 0 0.25rem' }}
             data-test={`overview-type-${OverviewDisplayMode[OverviewDisplayMode.COMPACT]}`}
-          >
-            <ThIcon />
-          </Button>
+           />
         </Tooltip>
 
         <Tooltip content={<>{t('List view')}</>} position={TooltipPosition.top}>
-          <Button
+          <Button icon={<ListIcon />}
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.LIST)}
             variant={ButtonVariant.plain}
-            isActive={this.props.displayMode === OverviewDisplayMode.LIST}
+            isClicked={this.props.displayMode === OverviewDisplayMode.LIST}
             style={{ padding: '0 0.25rem 0 0.25rem' }}
             data-test={`overview-type-${OverviewDisplayMode[OverviewDisplayMode.LIST]}`}
-          >
-            <ListIcon />
-          </Button>
+           />
         </Tooltip>
       </div>
     );

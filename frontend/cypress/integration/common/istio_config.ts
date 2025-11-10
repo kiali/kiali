@@ -690,7 +690,7 @@ function waitUntilConfigIsVisible(
             });
         } else if (dataTestAttr.value === `VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}` && !hasNA) {
           // Check if the health status icon is correct
-          cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}] span.pf-v5-c-icon`)
+          cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}] span.pf-v6-c-icon`)
             .should('be.visible')
             .then(icon => {
               const colorVar = `--pf-v5-global--${healthStatus}-color--100`;

@@ -224,7 +224,7 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
           <Switch
             id="workloadSelectorSwitch"
             label={' '}
-            labelOff={' '}
+            
             isChecked={this.state.addWorkloadSelector}
             onChange={() => {
               this.setState(

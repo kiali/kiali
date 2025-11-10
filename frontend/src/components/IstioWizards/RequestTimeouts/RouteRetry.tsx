@@ -22,7 +22,7 @@ export class RouteRetry extends React.Component<RouteRetryProps> {
           <Switch
             id="retrySwitch"
             label={' '}
-            labelOff={' '}
+            
             isChecked={this.props.isRetry}
             onChange={() => this.props.onRetry(!this.props.isRetry, this.props.retries)}
           />
