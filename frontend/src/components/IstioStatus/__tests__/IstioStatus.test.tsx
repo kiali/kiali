@@ -19,7 +19,6 @@ const mockIcon = (componentList: ComponentStatus[]): ReactWrapper => {
           { name: 'istio-system', cluster: CLUSTER_DEFAULT }
         ]}
         setIstioStatus={jest.fn()}
-        refreshNamespaces={jest.fn()}
       />
     </MemoryRouter>
   );

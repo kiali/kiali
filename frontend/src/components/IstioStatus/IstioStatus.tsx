@@ -7,7 +7,7 @@ import { ComponentStatus, Status, statusSeverity } from '../../types/IstioStatus
 import { MessageType } from '../../types/MessageCenter';
 import { Namespace } from '../../types/Namespace';
 import { KialiAppState } from '../../store/Store';
-import { istioStatusSelector } from '../../store/Selectors';
+import { istioStatusSelector, namespaceItemsSelector } from '../../store/Selectors';
 import { IstioStatusActions } from '../../actions/IstioStatusActions';
 import { connect } from 'react-redux';
 import { Text, TextVariants, TextContent, Tooltip, TooltipPosition, Label } from '@patternfly/react-core';
@@ -26,7 +26,6 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { IconProps, createIcon, KialiIcon } from 'config/KialiIcon';
 import { Link, useLocation } from 'react-router-dom-v5-compat';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { MASTHEAD } from 'components/Nav/Masthead/Masthead';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
 import { homeCluster } from '../../config';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
@@ -214,7 +213,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     }, true);
   };
 
-  const tooltipPosition = pathname === MASTHEAD ? TooltipPosition.bottom : TooltipPosition.top;
+  const tooltipPosition = TooltipPosition.top;
 
   let statusIcon: React.ReactElement;
 
@@ -274,6 +273,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
 };
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
+  namespaces: namespaceItemsSelector(state),
   statusMap: istioStatusSelector(state)
 });
 

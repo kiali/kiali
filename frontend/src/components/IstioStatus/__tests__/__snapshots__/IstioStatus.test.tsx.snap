@@ -15,19 +15,6 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
       },
     ]
   }
-  refreshNamespaces={
-    [MockFunction] {
-      "calls": Array [
-        Array [],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": undefined,
-        },
-      ],
-    }
-  }
   setIstioStatus={[MockFunction]}
   statusMap={
     Object {
@@ -408,19 +395,6 @@ exports[`When both core and addon component have problems any component is in no
         "name": "istio-system",
       },
     ]
-  }
-  refreshNamespaces={
-    [MockFunction] {
-      "calls": Array [
-        Array [],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": undefined,
-        },
-      ],
-    }
   }
   setIstioStatus={[MockFunction]}
   statusMap={
@@ -803,19 +777,6 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
       },
     ]
   }
-  refreshNamespaces={
-    [MockFunction] {
-      "calls": Array [
-        Array [],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": undefined,
-        },
-      ],
-    }
-  }
   setIstioStatus={[MockFunction]}
   statusMap={
     Object {
@@ -1197,19 +1158,6 @@ exports[`When there are not-ready components mixed with other not healthy compon
       },
     ]
   }
-  refreshNamespaces={
-    [MockFunction] {
-      "calls": Array [
-        Array [],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": undefined,
-        },
-      ],
-    }
-  }
   setIstioStatus={[MockFunction]}
   statusMap={
     Object {
@@ -1590,19 +1538,6 @@ exports[`When there are not-ready components mixed with other not healthy compon
         "name": "istio-system",
       },
     ]
-  }
-  refreshNamespaces={
-    [MockFunction] {
-      "calls": Array [
-        Array [],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": undefined,
-        },
-      ],
-    }
   }
   setIstioStatus={[MockFunction]}
   statusMap={
@@ -2021,19 +1956,6 @@ exports[`When there are not-ready components mixed with other not healthy compon
       },
     ]
   }
-  refreshNamespaces={
-    [MockFunction] {
-      "calls": Array [
-        Array [],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": undefined,
-        },
-      ],
-    }
-  }
   setIstioStatus={[MockFunction]}
   statusMap={
     Object {
@@ -2415,19 +2337,6 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
       },
     ]
   }
-  refreshNamespaces={
-    [MockFunction] {
-      "calls": Array [
-        Array [],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": undefined,
-        },
-      ],
-    }
-  }
   setIstioStatus={[MockFunction]}
   statusMap={
     Object {
@@ -2790,19 +2699,6 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
         "name": "istio-system",
       },
     ]
-  }
-  refreshNamespaces={
-    [MockFunction] {
-      "calls": Array [
-        Array [],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": undefined,
-        },
-      ],
-    }
   }
   setIstioStatus={[MockFunction]}
   statusMap={
