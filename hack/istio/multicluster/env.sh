@@ -642,7 +642,7 @@ echo "Istio is found here: ${ISTIO_DIR}"
 ISTIOCTL="${ISTIO_DIR}/bin/istioctl"
 if [ -x "${ISTIOCTL}" ]; then
   echo "istioctl is found here: ${ISTIOCTL}"
-  ${ISTIOCTL} version
+  ${ISTIOCTL} version --remote=false
 else
   echo "ERROR: istioctl is NOT found at ${ISTIOCTL}"
   exit 1
