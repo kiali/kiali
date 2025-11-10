@@ -289,7 +289,7 @@ ISTIO_DIR="$(pwd)"
 echo "Istio is found here: ${ISTIO_DIR}"
 if [ -x "${ISTIO_DIR}/bin/istioctl" ]; then
   ISTIOCTL="${ISTIO_DIR}/bin/istioctl"
-  ${ISTIOCTL} version
+  ${ISTIOCTL} version --remote=false
   echo "istioctl is found here: ${ISTIO_DIR}/bin/istioctl"
 else
   echo "WARNING: istioctl is NOT found at ${ISTIO_DIR}/bin/istioctl"
