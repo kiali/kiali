@@ -79,32 +79,73 @@ if [ -z "${ISTIO_VERSION}" ]; then
   if [ -z "${DEV_ISTIO_VERSION}" ]; then
     # get the latest released version with retry logic
     echo "Getting the latest Istio version from GitHub..."
-    
+
     for attempt in $(seq 1 120); do
-    # Get both response body and HTTP status code
+    # Get both response body, HTTP status code, and headers
       if [ -n "${AUTH_HEADER}" ]; then
-        RESPONSE=$(curl -L -s -H "${AUTH_HEADER}" -w "\n%{http_code}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
+        RESPONSE=$(curl -L -s -H "${AUTH_HEADER}" -w "\n%{http_code}\n%{header_json}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
       else
-        RESPONSE=$(curl -L -s -w "\n%{http_code}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
+        RESPONSE=$(curl -L -s -w "\n%{http_code}\n%{header_json}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
       fi
-      
-      HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-      RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
-      
-      # Check for rate limiting (403 or 429) - fail immediately, don't retry
+
+      HTTP_CODE=$(echo "$RESPONSE" | tail -n2 | head -n1)
+      HEADERS=$(echo "$RESPONSE" | tail -n1)
+      RESPONSE_BODY=$(echo "$RESPONSE" | sed -e '$d' -e '$d')
+
+      # Extract rate limit headers
+      RETRY_AFTER=$(echo "$HEADERS" | jq -r '.["retry-after"] // empty' 2>/dev/null)
+      RATELIMIT_REMAINING=$(echo "$HEADERS" | jq -r '.["x-ratelimit-remaining"] // empty' 2>/dev/null)
+      RATELIMIT_RESET=$(echo "$HEADERS" | jq -r '.["x-ratelimit-reset"] // empty' 2>/dev/null)
+
+      # Check for rate limiting (403 or 429) - implement retry with exponential backoff
       if [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "429" ]; then
-        echo "ERROR: GitHub API rate limit exceeded (HTTP $HTTP_CODE)."
-        echo "Cannot retrieve the latest Istio version. Please try again later."
+        echo "WARNING: GitHub API rate limit exceeded (HTTP $HTTP_CODE)."
+
+        # Determine wait time based on GitHub's guidance
+        # https://docs.github.com/en/rest/using-the-rest-api/troubleshooting-the-rest-api
+        WAIT_TIME=60
+
+        if [ -n "${RETRY_AFTER}" ]; then
+          # Respect the retry-after header (highest priority)
+          WAIT_TIME="${RETRY_AFTER}"
+          echo "GitHub provided retry-after header: ${RETRY_AFTER} seconds"
+        elif [ -n "${RATELIMIT_RESET}" ] && [ "${RATELIMIT_REMAINING}" = "0" ]; then
+          # Calculate time until rate limit reset
+          CURRENT_TIME=$(date +%s)
+          WAIT_TIME=$((RATELIMIT_RESET - CURRENT_TIME + 5))  # Add 5 second buffer
+          if [ $WAIT_TIME -lt 0 ]; then
+            WAIT_TIME=60
+          fi
+          echo "Rate limit will reset at $(date -d @${RATELIMIT_RESET})"
+        else
+          # Use exponential backoff: 2^attempt minutes (capped at 30 minutes)
+          BACKOFF_MINUTES=$((2 ** (attempt > 5 ? 5 : attempt)))
+          WAIT_TIME=$((BACKOFF_MINUTES * 60))
+          if [ $WAIT_TIME -gt 1800 ]; then
+            WAIT_TIME=1800  # Cap at 30 minutes
+          fi
+          echo "Using exponential backoff: ${BACKOFF_MINUTES} minutes"
+        fi
+
         if [ -z "${GITHUB_TOKEN}" ]; then
           echo "TIP: You can use --github-token <token> to authenticate and avoid rate limits."
         fi
-        exit 1
+
+        if [ ${attempt} -ge 5 ]; then
+          echo "ERROR: Failed to get Istio version after ${attempt} attempts due to rate limiting."
+          echo "Please try again later or use --github-token <token> to authenticate."
+          exit 1
+        fi
+
+        echo "Will retry after ${WAIT_TIME} seconds... (attempt ${attempt}/120)"
+        sleep ${WAIT_TIME}
+        continue
       fi
-      
+
       VERSION_WE_WANT=$(echo "$RESPONSE_BODY" | \
             grep tag_name | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | \
             grep -v -E "(snapshot|alpha|beta|rc)\.[0-9]$" | sort -t"." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)
-      
+
       if [ -n "${VERSION_WE_WANT}" ] && [ "${VERSION_WE_WANT}" != "null" ]; then
         echo "Successfully retrieved the latest Istio version: [$VERSION_WE_WANT]"
         break
@@ -146,25 +187,67 @@ if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
     VERSION_TO_MATCH="${major}.${minor}"
     echo "Getting the latest patch version for [${VERSION_TO_MATCH}]..."
     for attempt in $(seq 1 120); do
-      # Get both response body and HTTP status code
+      # Get both response body, HTTP status code, and headers
       if [ -n "${AUTH_HEADER}" ]; then
-        RESPONSE=$(curl -L -s -H "${AUTH_HEADER}" -w "\n%{http_code}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
+        RESPONSE=$(curl -L -s -H "${AUTH_HEADER}" -w "\n%{http_code}\n%{header_json}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
       else
-        RESPONSE=$(curl -L -s -w "\n%{http_code}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
+        RESPONSE=$(curl -L -s -w "\n%{http_code}\n%{header_json}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
       fi
-      
-      HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-      RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
-      # Check for rate limiting (403 or 429) - fail immediately, don't retry
+
+      HTTP_CODE=$(echo "$RESPONSE" | tail -n2 | head -n1)
+      HEADERS=$(echo "$RESPONSE" | tail -n1)
+      RESPONSE_BODY=$(echo "$RESPONSE" | sed -e '$d' -e '$d')
+
+      # Extract rate limit headers
+      RETRY_AFTER=$(echo "$HEADERS" | jq -r '.["retry-after"] // empty' 2>/dev/null)
+      RATELIMIT_REMAINING=$(echo "$HEADERS" | jq -r '.["x-ratelimit-remaining"] // empty' 2>/dev/null)
+      RATELIMIT_RESET=$(echo "$HEADERS" | jq -r '.["x-ratelimit-reset"] // empty' 2>/dev/null)
+
+      # Check for rate limiting (403 or 429) - implement retry with exponential backoff
       if [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "429" ]; then
-        echo "ERROR: GitHub API rate limit exceeded (HTTP $HTTP_CODE)."
-        echo "Cannot retrieve the latest patch version. Please try again later."
+        echo "WARNING: GitHub API rate limit exceeded (HTTP $HTTP_CODE)."
+
+        # Determine wait time based on GitHub's guidance
+        # https://docs.github.com/en/rest/using-the-rest-api/troubleshooting-the-rest-api
+        WAIT_TIME=60
+
+        if [ -n "${RETRY_AFTER}" ]; then
+          # Respect the retry-after header (highest priority)
+          WAIT_TIME="${RETRY_AFTER}"
+          echo "GitHub provided retry-after header: ${RETRY_AFTER} seconds"
+        elif [ -n "${RATELIMIT_RESET}" ] && [ "${RATELIMIT_REMAINING}" = "0" ]; then
+          # Calculate time until rate limit reset
+          CURRENT_TIME=$(date +%s)
+          WAIT_TIME=$((RATELIMIT_RESET - CURRENT_TIME + 5))  # Add 5 second buffer
+          if [ $WAIT_TIME -lt 0 ]; then
+            WAIT_TIME=60
+          fi
+          echo "Rate limit will reset at $(date -d @${RATELIMIT_RESET})"
+        else
+          # Use exponential backoff: 2^attempt minutes (capped at 30 minutes)
+          BACKOFF_MINUTES=$((2 ** (attempt > 5 ? 5 : attempt)))
+          WAIT_TIME=$((BACKOFF_MINUTES * 60))
+          if [ $WAIT_TIME -gt 1800 ]; then
+            WAIT_TIME=1800  # Cap at 30 minutes
+          fi
+          echo "Using exponential backoff: ${BACKOFF_MINUTES} minutes"
+        fi
+
         if [ -z "${GITHUB_TOKEN}" ]; then
           echo "TIP: You can use --github-token <token> to authenticate and avoid rate limits."
         fi
-        exit 1
+
+        if [ ${attempt} -ge 5 ]; then
+          echo "ERROR: Failed to get latest patch version after ${attempt} attempts due to rate limiting."
+          echo "Please try again later or use --github-token <token> to authenticate."
+          exit 1
+        fi
+
+        echo "Will retry after ${WAIT_TIME} seconds... (attempt ${attempt}/120)"
+        sleep ${WAIT_TIME}
+        continue
       fi
-      
+
       LATEST=$(echo "$RESPONSE_BODY" | \
        jq -r --arg VERSION_TO_MATCH "$VERSION_TO_MATCH" '.[] | select(.tag_name | startswith($VERSION_TO_MATCH)) | .tag_name' \
        | sort -V \
