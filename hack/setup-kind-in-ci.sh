@@ -12,6 +12,8 @@ PRIMARY_REMOTE="primary-remote"
 KEYCLOAK_LIMIT_MEMORY=""
 KEYCLOAK_REQUESTS_MEMORY=""
 
+CLUSTER2_AMBIENT="true"
+
 INSTALL_PERSES="false"
 
 infomsg() {
@@ -28,6 +30,7 @@ Options:
 -ab|--ambient
     Install Istio Ambient profile
     Default: Not set
+-c2a|--cluster2-ambient)       CLUSTER2_AMBIENT="$2";      shift;shift; ;;
 -dk|--deploy-kiali <true|false>
     Whether to deploy Kiali as part of the setup.
     Default: true
@@ -552,6 +555,11 @@ setup_kind_multicluster() {
   else
     AMBIENT_ARG=""
   fi
+  if [ -n "$AMBIENT" ] && [ "$CLUSTER2_AMBIENT" == "false" ]; then
+    CLUSTER2_AMBIENT_ARG="--cluster2-ambient false"
+  else
+    CLUSTER2_AMBIENT_ARG=""
+  fi
 
   local cluster1_context
   local cluster2_context
@@ -569,6 +577,7 @@ setup_kind_multicluster() {
       ${MEMORY_REQUEST_ARG} \
       ${MEMORY_LIMIT_ARG} \
       ${AMBIENT_ARG} \
+      ${CLUSTER2_AMBIENT_ARG} \
       ${kind_node_image:-} \
       ${hub_arg:-} \
       ${istio_version_arg}

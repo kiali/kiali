@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"fmt"
+	apps_v1 "k8s.io/api/apps/v1"
 	"sync"
 
 	core_v1 "k8s.io/api/core/v1"
@@ -207,6 +208,11 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 	for i := range namespaces {
 		_, ok := cpnSet[namespaces[i].Name]
 		namespaces[i].IsControlPlane = ok
+
+		if ok && in.kialiCache.IsAmbientEnabled(cluster) {
+			ztunnelDaemonSets := in.kialiCache.GetZtunnelDaemonset(cluster)
+			in.validateControlPlaneNamespaceAmbient(ctx, &namespaces[i], cluster, ztunnelDaemonSets)
+		}
 	}
 
 	namespaces = istio.FilterNamespacesWithDiscoverySelectors(namespaces, istio.GetDiscoverySelectorsForCluster(ctx, in.discovery, cluster, in.conf))
@@ -400,4 +406,41 @@ func (in *NamespaceService) HasMeshAccess(ctx context.Context, cluster string) b
 	}
 
 	return false
+}
+
+// validateControlPlaneNamespaceAmbient validates if a control plane namespace should be marked as ambient
+// by checking if there's a ztunnel daemonset with the same revision in the same cluster.
+// It modifies the namespace's IsAmbient field if validation fails.
+func (in *NamespaceService) validateControlPlaneNamespaceAmbient(ctx context.Context, ns *models.Namespace, cluster string, ztunnelDaemonSets []apps_v1.DaemonSet) {
+	// Get the revision that manages this namespace
+	nsRevision := istio.GetRevision(*ns)
+	if nsRevision == "" {
+		// No revision means namespace is not in the mesh
+		nsRevision = models.DefaultRevisionLabel
+	}
+
+	if cluster != ns.Cluster {
+		ns.IsAmbient = false
+		return
+	}
+	// Check if there's a ztunnel daemonset in the same cluster with matching revision
+	hasZtunnelWithRevision := false
+	for _, ds := range ztunnelDaemonSets {
+		// Check if the ztunnel daemonset has the same revision as the namespace
+		ztunnelRev := ds.Labels[config.IstioRevisionLabel]
+		if ztunnelRev == "" {
+			// If no revision label, it's the default revision
+			ztunnelRev = models.DefaultRevisionLabel
+		}
+		if ztunnelRev == nsRevision {
+			hasZtunnelWithRevision = true
+			ns.IsAmbient = true
+			break
+		}
+	}
+
+	// Only mark as ambient if there's a ztunnel daemonset with matching revision
+	if !hasZtunnelWithRevision {
+		ns.IsAmbient = false
+	}
 }
