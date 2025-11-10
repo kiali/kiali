@@ -346,16 +346,28 @@ func (in *Discovery) HasControlPlane(ctx context.Context, cluster string, ns str
 // GetRootNamespace returns the Istio root namespace for the control plane managing the given namespace.
 // If the namespace is not managed by any control plane, it returns an empty string.
 func (in *Discovery) GetRootNamespace(ctx context.Context, cluster, namespace string) string {
-	defer in.meshMutex.Unlock()
 	in.meshMutex.Lock()
+	defer in.meshMutex.Unlock()
 
 	cp := in.namespaceMap[in.namespaceMapKey(cluster, namespace)]
 	if cp != nil {
 		return cp.RootNamespace
 	}
 
-	// Namespace is not in the map, which means it's not managed by any control plane.
-	// This is expected for namespaces without injection enabled or ambient mode.
+	// Namespace is not in the map, which means it's not a data plane namespace.
+	// However, it might BE a root namespace itself (e.g., istio-system without injection).
+	// Check the cache to see if this namespace is the root namespace for any control plane.
+	mesh, ok := in.kialiCache.GetMesh()
+	if ok {
+		for _, controlPlane := range mesh.ControlPlanes {
+			if controlPlane.Cluster.Name == cluster && controlPlane.RootNamespace == namespace {
+				// This namespace IS a root namespace, return it
+				return namespace
+			}
+		}
+	}
+
+	// Namespace is not in the mesh and not a root namespace.
 	// Return empty string to indicate the namespace is not part of the mesh.
 	return ""
 }
