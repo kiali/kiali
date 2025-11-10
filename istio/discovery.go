@@ -369,6 +369,7 @@ func (in *Discovery) GetRootNamespace(ctx context.Context, cluster, namespace st
 
 	// Namespace is not in the mesh and not a root namespace.
 	// Return empty string to indicate the namespace is not part of the mesh.
+	log.Debugf("GetRootNamespace: namespace [%s] in cluster [%s] is not part of the mesh", namespace, cluster)
 	return ""
 }
 
