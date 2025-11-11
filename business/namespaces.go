@@ -412,11 +412,22 @@ func (in *NamespaceService) HasMeshAccess(ctx context.Context, cluster string) b
 // by checking if there's a ztunnel daemonset with the same revision in the same cluster.
 // It modifies the namespace's IsAmbient field if validation fails.
 func (in *NamespaceService) validateControlPlaneNamespaceAmbient(ctx context.Context, ns *models.Namespace, cluster string, ztunnelDaemonSets []apps_v1.DaemonSet) {
+	// Get the kubecache for the cluster
+	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
+		log.Errorf("Failed to get kubecache for cluster %s. Namespace: %s, Error: %s", cluster, ns.Name, err)
+		return
+	}
+
 	// Get the revision that manages this namespace
-	nsRevision := istio.GetRevision(*ns)
-	if nsRevision == "" {
+	nsRevisionList, err := istio.GetIstiodRevisions(kubeCache, ns.Name)
+	if err != nil {
+		log.Errorf("Failed to get Istiod revisions. Namespace: %s, Error: %s", ns.Name, err)
+		return
+	}
+	if len(nsRevisionList) == 0 {
 		// No revision means namespace is not in the mesh
-		nsRevision = models.DefaultRevisionLabel
+		nsRevisionList = append(nsRevisionList, models.DefaultRevisionLabel)
 	}
 
 	if cluster != ns.Cluster {
@@ -425,19 +436,22 @@ func (in *NamespaceService) validateControlPlaneNamespaceAmbient(ctx context.Con
 	}
 	// Check if there's a ztunnel daemonset in the same cluster with matching revision
 	hasZtunnelWithRevision := false
+
 	for _, ds := range ztunnelDaemonSets {
 		// Check if the ztunnel daemonset has the same revision as the namespace
 		// Even Ambient Canary upgrades are not supported, https://istio.io/latest/docs/ambient/upgrade/helm
 		// It is an extra check, as it check for the default (No labels) as well
-		ztunnelRev := ds.Labels[config.IstioRevisionLabel]
+		ztunnelRev := ds.Labels[in.conf.IstioLabels.VersionLabelName]
 		if ztunnelRev == "" {
 			// If no revision label, it's the default revision
 			ztunnelRev = models.DefaultRevisionLabel
 		}
-		if ztunnelRev == nsRevision {
-			hasZtunnelWithRevision = true
-			ns.IsAmbient = true
-			break
+		for _, nsRevision := range nsRevisionList {
+			if ztunnelRev == nsRevision {
+				hasZtunnelWithRevision = true
+				ns.IsAmbient = true
+				break
+			}
 		}
 	}
 
