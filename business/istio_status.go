@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"time"
 
@@ -234,8 +235,12 @@ func istioCoreComponents(conf *config.Config) map[string]config.ComponentStatus 
 func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster string) kubernetes.IstioComponentStatus {
 	statusComponents := istioCoreComponents(iss.conf)
 	isc := kubernetes.IstioComponentStatus{}
+	// cf tracks which non-multicluster components (by appLabel) have been found
 	cf := map[string]bool{}
+	// mcf tracks which multicluster components (by appLabel) have been found and counts instances
 	mcf := map[string]int{}
+	// Track added components to prevent duplicates: cluster+namespace+name
+	addedComponents := make(map[string]bool)
 
 	// Map workloads there by app name
 	for _, workload := range workloads {
@@ -246,6 +251,18 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster
 
 		stat, found := statusComponents[appLabel]
 		if !found {
+			continue
+		}
+
+		// Determine namespace to use
+		namespace := workload.Namespace
+		if stat.Namespace != "" {
+			namespace = stat.Namespace
+		}
+
+		// Create unique key for this component to prevent duplicates
+		componentKey := strings.Join([]string{cluster, namespace, workload.Name}, ":")
+		if addedComponents[componentKey] {
 			continue
 		}
 
@@ -260,17 +277,13 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster
 		status := GetWorkloadStatus(*workload)
 		// Add status
 		isc = append(isc, kubernetes.ComponentStatus{
-			Cluster: cluster,
-			Namespace: func() string {
-				if stat.Namespace != "" {
-					return stat.Namespace
-				}
-				return workload.Namespace
-			}(),
-			Name:   workload.Name,
-			Status: status,
-			IsCore: stat.IsCore,
+			Cluster:   cluster,
+			Namespace: namespace,
+			Name:      workload.Name,
+			Status:    status,
+			IsCore:    stat.IsCore,
 		})
+		addedComponents[componentKey] = true
 
 	}
 

@@ -13,8 +13,6 @@ import { PfSpinner } from 'components/Pf/PfSpinner';
 import { kialiStyle } from 'styles/StyleUtils';
 import { OfflineStatus } from './OfflineStatus';
 
-export const MASTHEAD = 'masthead';
-
 const toolbarStyle = kialiStyle({
   marginLeft: 'auto',
   $nest: {
@@ -68,7 +66,7 @@ export const MastheadItems: React.FC = () => {
               </FlexItem>
             ) : (
               <FlexItem className={istioStatusStyle}>
-                <IstioStatus location={MASTHEAD} />
+                <IstioStatus />
               </FlexItem>
             )}
 

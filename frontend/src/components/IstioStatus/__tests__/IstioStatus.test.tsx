@@ -1,46 +1,47 @@
 import * as React from 'react';
-import { ShallowWrapper, shallow } from 'enzyme';
+import { mount, ReactWrapper } from 'enzyme';
 import { ComponentStatus, Status } from '../../../types/IstioStatus';
 import { IstioStatusComponent } from '../IstioStatus';
-import { shallowToJson } from 'enzyme-to-json';
+import { mountToJson } from 'enzyme-to-json';
 import { CLUSTER_DEFAULT } from '../../../types/Graph';
 import { serverConfig } from '../../../config';
 import { setServerConfig } from '../../../config/ServerConfig';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 
-const mockIcon = (componentList: ComponentStatus[]): ShallowWrapper => {
-  return shallow(
-    <IstioStatusComponent
-      statusMap={{ Kubernetes: componentList }}
-      lastRefreshAt={848152}
-      namespaces={[
-        { name: 'bookinfo', cluster: CLUSTER_DEFAULT },
-        { name: 'istio-system', cluster: CLUSTER_DEFAULT }
-      ]}
-      setIstioStatus={jest.fn()}
-      refreshNamespaces={jest.fn()}
-    />
+const mockIcon = (componentList: ComponentStatus[]): ReactWrapper => {
+  return mount(
+    <MemoryRouter>
+      <IstioStatusComponent
+        statusMap={{ Kubernetes: componentList }}
+        lastRefreshAt={848152}
+        namespaces={[
+          { name: 'bookinfo', cluster: CLUSTER_DEFAULT },
+          { name: 'istio-system', cluster: CLUSTER_DEFAULT }
+        ]}
+        setIstioStatus={jest.fn()}
+      />
+    </MemoryRouter>
   );
 };
 
 const testSnapshot = (wrapper: any): void => {
-  expect(shallowToJson(wrapper)).toBeDefined();
-  expect(shallowToJson(wrapper)).toMatchSnapshot();
+  const component = wrapper.find('IstioStatusComponent').first();
+  expect(mountToJson(component)).toBeDefined();
+  expect(mountToJson(component)).toMatchSnapshot();
 };
 
 const testTooltip = (wrapper: any): void => {
-  expect(wrapper.name()).toEqual('Tooltip');
-  expect(wrapper.props().position).toEqual('top');
-  expect(wrapper.props().enableFlip).toEqual(true);
-  expect(wrapper.children.length).toEqual(1);
+  const tooltip = wrapper.find('Tooltip').first();
+  expect(tooltip.exists()).toBe(true);
+  expect(tooltip.props().position).toEqual('top');
+  expect(tooltip.props().enableFlip).toEqual(true);
 };
 
 const testIcon = (wrapper: any, dataTest: string, iconName: string): void => {
-  const clusterIcon = wrapper.childAt(0);
-  expect(clusterIcon).toBeDefined();
-  const icon = clusterIcon.childAt(1);
-  expect(icon).toBeDefined();
-  expect(icon.props()['data-test']).toEqual(dataTest);
-  expect(icon.childAt(0).name()).toEqual(iconName);
+  const iconWrapper = wrapper.find(`[data-test="${dataTest}"]`).first();
+  expect(iconWrapper.exists()).toBe(true);
+  const iconComponent = iconWrapper.find(iconName).first();
+  expect(iconComponent.exists()).toBe(true);
 };
 
 jest.mock('../../../utils/MeshUtils', () => ({

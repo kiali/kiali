@@ -1,801 +1,3049 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`When addon component has a problem the Icon shows is displayed in orange 1`] = `
-<Tooltip
-  content={
-    <React.Fragment>
-      <TextContent
+<IstioStatusComponent
+  lastRefreshAt={848152}
+  namespaces={
+    Array [
+      Object {
+        "cluster": "Kubernetes",
+        "name": "bookinfo",
+      },
+      Object {
+        "cluster": "Kubernetes",
+        "name": "istio-system",
+      },
+    ]
+  }
+  setIstioStatus={[MockFunction]}
+  statusMap={
+    Object {
+      "Kubernetes": Array [
+        Object {
+          "cluster": "Kubernetes",
+          "isCore": false,
+          "name": "grafana",
+          "status": "Unhealthy",
+        },
+        Object {
+          "cluster": "Kubernetes",
+          "isCore": true,
+          "name": "istio-egressgateway",
+          "status": "Healthy",
+        },
+      ],
+    }
+  }
+>
+  <Tooltip
+    content={
+      <React.Fragment>
+        <TextContent
+          style={
+            Object {
+              "color": "var(--pf-v5-global--palette--white)",
+            }
+          }
+        >
+          <Text
+            component="h4"
+          >
+            Cluster Status
+          </Text>
+          <React.Fragment>
+            <div
+              className="kiali_f8qnpeg"
+            >
+              <PFBadge
+                badge={
+                  Object {
+                    "badge": "C",
+                    "style": Object {
+                      "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                    },
+                    "tt": "Cluster",
+                  }
+                }
+                size="sm"
+              />
+              Kubernetes
+              <span
+                style={
+                  Object {
+                    "marginLeft": "0.25rem",
+                  }
+                }
+              >
+                <Star />
+              </span>
+            </div>
+            <IstioStatusList
+              cluster="Kubernetes"
+              status={
+                Array [
+                  Object {
+                    "cluster": "Kubernetes",
+                    "isCore": false,
+                    "name": "grafana",
+                    "status": "Unhealthy",
+                  },
+                  Object {
+                    "cluster": "Kubernetes",
+                    "isCore": true,
+                    "name": "istio-egressgateway",
+                    "status": "Healthy",
+                  },
+                ]
+              }
+            />
+          </React.Fragment>
+          <div
+            className="kiali_f1kewvaf"
+          >
+            <span>
+              More info at
+            </span>
+            <Link
+              to="/mesh"
+            >
+              Mesh page
+            </Link>
+          </div>
+        </TextContent>
+      </React.Fragment>
+    }
+    data-test="component-status-tooltip"
+    enableFlip={true}
+    maxWidth="25rem"
+    position="top"
+  >
+    <Popper
+      animationDuration={300}
+      appendTo={[Function]}
+      distance={15}
+      enableFlip={true}
+      entryDelay={300}
+      exitDelay={300}
+      flipBehavior={
+        Array [
+          "top",
+          "right",
+          "bottom",
+          "left",
+          "top",
+          "right",
+          "bottom",
+        ]
+      }
+      isVisible={false}
+      minWidth="revert"
+      onBlur={[Function]}
+      onDocumentClick={false}
+      onDocumentKeyDown={[Function]}
+      onFocus={[Function]}
+      onHidden={[Function]}
+      onMouseEnter={[Function]}
+      onMouseLeave={[Function]}
+      onPopperMouseEnter={[Function]}
+      onPopperMouseLeave={[Function]}
+      onTriggerEnter={[Function]}
+      placement="top"
+      popper={
+        <div
+          aria-live="off"
+          className="pf-v5-c-tooltip"
+          data-test="component-status-tooltip"
+          id="pf-tooltip-2"
+          role="tooltip"
+          style={
+            Object {
+              "maxWidth": "25rem",
+            }
+          }
+        >
+          <TooltipArrow />
+          <TooltipContent
+            isLeftAligned={false}
+          >
+            <React.Fragment>
+              <TextContent
+                style={
+                  Object {
+                    "color": "var(--pf-v5-global--palette--white)",
+                  }
+                }
+              >
+                <Text
+                  component="h4"
+                >
+                  Cluster Status
+                </Text>
+                <React.Fragment>
+                  <div
+                    className="kiali_f8qnpeg"
+                  >
+                    <PFBadge
+                      badge={
+                        Object {
+                          "badge": "C",
+                          "style": Object {
+                            "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                          },
+                          "tt": "Cluster",
+                        }
+                      }
+                      size="sm"
+                    />
+                    Kubernetes
+                    <span
+                      style={
+                        Object {
+                          "marginLeft": "0.25rem",
+                        }
+                      }
+                    >
+                      <Star />
+                    </span>
+                  </div>
+                  <IstioStatusList
+                    cluster="Kubernetes"
+                    status={
+                      Array [
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": false,
+                          "name": "grafana",
+                          "status": "Unhealthy",
+                        },
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": true,
+                          "name": "istio-egressgateway",
+                          "status": "Healthy",
+                        },
+                      ]
+                    }
+                  />
+                </React.Fragment>
+                <div
+                  className="kiali_f1kewvaf"
+                >
+                  <span>
+                    More info at
+                  </span>
+                  <Link
+                    to="/mesh"
+                  >
+                    Mesh page
+                  </Link>
+                </div>
+              </TextContent>
+            </React.Fragment>
+          </TooltipContent>
+        </div>
+      }
+      popperRef={
+        Object {
+          "current": null,
+        }
+      }
+      positionModifiers={
+        Object {
+          "bottom": "pf-m-bottom",
+          "bottom-end": "pf-m-bottom-right",
+          "bottom-start": "pf-m-bottom-left",
+          "left": "pf-m-left",
+          "left-end": "pf-m-left-bottom",
+          "left-start": "pf-m-left-top",
+          "right": "pf-m-right",
+          "right-end": "pf-m-right-bottom",
+          "right-start": "pf-m-right-top",
+          "top": "pf-m-top",
+          "top-end": "pf-m-top-right",
+          "top-start": "pf-m-top-left",
+        }
+      }
+      trigger={
+        <React.Fragment>
+          <Label
+            className="kiali_frds3np"
+            color="blue"
+            data-test="cluster-icon"
+            icon={<Cluster />}
+          >
+            Kubernetes
+            <Icon
+              className="kiali_f10wsz75 kiali_frkkrth"
+              data-test="istio-status-warning"
+            >
+              <ExclamationTriangleIcon />
+            </Icon>
+          </Label>
+        </React.Fragment>
+      }
+      zIndex={9999}
+    >
+      <div
         style={
           Object {
-            "color": "var(--pf-v5-global--palette--white)",
+            "display": "contents",
           }
         }
       >
-        <Text
-          component="h4"
+        <Label
+          className="kiali_frds3np"
+          color="blue"
+          data-test="cluster-icon"
+          icon={<Cluster />}
         >
-          Cluster Status
-        </Text>
-        <React.Fragment>
-          <div
-            className="kiali_f8qnpeg"
+          <span
+            className="pf-v5-c-label pf-m-blue kiali_frds3np"
+            data-test="cluster-icon"
           >
-            <PFBadge
-              badge={
-                Object {
-                  "badge": "C",
-                  "style": Object {
-                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
-                  },
-                  "tt": "Cluster",
-                }
-              }
-              size="sm"
-            />
-            Kubernetes
             <span
-              style={
-                Object {
-                  "marginLeft": "0.25rem",
-                }
-              }
+              className="pf-v5-c-label__content"
             >
-              <Star />
+              <span
+                className="pf-v5-c-label__icon"
+              >
+                <Cluster>
+                  <Icon
+                    className=""
+                  >
+                    <span
+                      className="pf-v5-c-icon"
+                    >
+                      <span
+                        className="pf-v5-c-icon__content"
+                      >
+                        <ClusterIcon>
+                          <svg
+                            aria-hidden={true}
+                            aria-labelledby={null}
+                            className="pf-v5-svg"
+                            fill="currentColor"
+                            height="1em"
+                            role="img"
+                            viewBox="0 0 1024 1024"
+                            width="1em"
+                          >
+                            <path
+                              d="M1013.1,330.877049 C1005.8,323.577049 997.2,319.977049 987.4,319.977049 L36.6,319.977049 C26.6,319.977049 18.2,323.577049 10.9,330.877049 C3.6,338.177049 0,346.777049 0,356.577049 L0,475.277049 C0,485.277049 3.6,493.677049 10.7,501.077049 C18,508.377049 26.4,511.977049 36.4,511.977049 L987.4,511.977049 C997.4,511.977049 1005.8,508.377049 1013.1,501.077049 C1020.4,493.777049 1024,485.377049 1024,475.377049 L1024,356.577049 C1024,346.577049 1020.4,338.177049 1013.1,330.877049 Z M128,447.977049 L64,447.977049 L64,383.977049 L128,383.977049 L128,447.977049 Z M256,447.977049 L192,447.977049 L192,383.977049 L256,383.977049 L256,447.977049 Z M384,447.977049 L320,447.977049 L320,383.977049 L384,383.977049 L384,447.977049 Z M512,447.977049 L448,447.977049 L448,383.977049 L512,383.977049 L512,447.977049 Z M960,447.977049 L896,447.977049 L896,383.977049 L960,383.977049 L960,447.977049 Z M0,245.177049 C0,235.977049 1.2,234.677049 9.6,226.477049 C9.6,226.477049 151.09,86.2970491 161.6,74.0070491 C172.11,61.7170491 185.5,64.2070491 185.5,64.2070491 L840.62,64.2070491 C840.62,64.2070491 852.42,62.8070491 863.11,74.4070491 C873.61,85.9970491 1013.5,226.407049 1013.5,226.407049 C1021.9,234.807049 1024,236.107049 1024,245.207049 C1024,254.807049 1012.3,256.007049 1000.7,256.007049 L22.1,256.007049 C10.8,256.077049 0,254.377049 0,245.177049 Z M1013.1,842.877049 C1005.8,835.577049 997.2,831.977049 987.4,831.977049 L36.6,831.977049 C26.6,831.977049 18.2,835.577049 10.9,842.877049 C3.6,850.177049 0,858.777049 0,868.577049 L0,987.277049 C0,997.277049 3.6,1005.67705 10.7,1013.07705 C18,1020.37705 26.4,1023.97705 36.4,1023.97705 L987.4,1023.97705 C997.4,1023.97705 1005.8,1020.37705 1013.1,1013.07705 C1020.4,1005.77705 1024,997.377049 1024,987.377049 L1024,868.577049 C1024,858.577049 1020.4,850.177049 1013.1,842.877049 Z M128,959.977049 L64,959.977049 L64,895.977049 L128,895.977049 L128,959.977049 Z M256,959.977049 L192,959.977049 L192,895.977049 L256,895.977049 L256,959.977049 Z M384,959.977049 L320,959.977049 L320,895.977049 L384,895.977049 L384,959.977049 Z M512,959.977049 L448,959.977049 L448,895.977049 L512,895.977049 L512,959.977049 Z M960,959.977049 L896,959.977049 L896,895.977049 L960,895.977049 L960,959.977049 Z M1013.1,586.877049 C1005.8,579.577049 997.2,575.977049 987.4,575.977049 L36.6,575.977049 C26.6,575.977049 18.2,579.577049 10.9,586.877049 C3.6,594.177049 0,602.777049 0,612.577049 L0,731.277049 C0,741.277049 3.6,749.677049 10.7,757.077049 C18,764.377049 26.4,767.977049 36.4,767.977049 L987.4,767.977049 C997.4,767.977049 1005.8,764.377049 1013.1,757.077049 C1020.4,749.777049 1024,741.377049 1024,731.377049 L1024,612.577049 C1024,602.577049 1020.4,594.177049 1013.1,586.877049 Z M128,703.977049 L64,703.977049 L64,639.977049 L128,639.977049 L128,703.977049 Z M256,703.977049 L192,703.977049 L192,639.977049 L256,639.977049 L256,703.977049 Z M384,703.977049 L320,703.977049 L320,639.977049 L384,639.977049 L384,703.977049 Z M512,703.977049 L448,703.977049 L448,639.977049 L512,639.977049 L512,703.977049 Z M960,703.977049 L896,703.977049 L896,639.977049 L960,639.977049 L960,703.977049 Z"
+                            />
+                          </svg>
+                        </ClusterIcon>
+                      </span>
+                    </span>
+                  </Icon>
+                </Cluster>
+              </span>
+              <span
+                className="pf-v5-c-label__text"
+              >
+                Kubernetes
+                <Icon
+                  className="kiali_f10wsz75 kiali_frkkrth"
+                  data-test="istio-status-warning"
+                >
+                  <span
+                    className="pf-v5-c-icon kiali_f10wsz75 kiali_frkkrth"
+                    data-test="istio-status-warning"
+                  >
+                    <span
+                      className="pf-v5-c-icon__content"
+                    >
+                      <ExclamationTriangleIcon>
+                        <svg
+                          aria-hidden={true}
+                          aria-labelledby={null}
+                          className="pf-v5-svg"
+                          fill="currentColor"
+                          height="1em"
+                          role="img"
+                          viewBox="0 0 576 512"
+                          width="1em"
+                        >
+                          <path
+                            d="M569.517 440.013C587.975 472.007 564.806 512 527.94 512H48.054c-36.937 0-59.999-40.055-41.577-71.987L246.423 23.985c18.467-32.009 64.72-31.951 83.154 0l239.94 416.028zM288 354c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                          />
+                        </svg>
+                      </ExclamationTriangleIcon>
+                    </span>
+                  </span>
+                </Icon>
+              </span>
             </span>
-          </div>
-          <IstioStatusList
-            cluster="Kubernetes"
-            status={
-              Array [
-                Object {
-                  "cluster": "Kubernetes",
-                  "isCore": false,
-                  "name": "grafana",
-                  "status": "Unhealthy",
-                },
-                Object {
-                  "cluster": "Kubernetes",
-                  "isCore": true,
-                  "name": "istio-egressgateway",
-                  "status": "Healthy",
-                },
-              ]
-            }
-          />
-        </React.Fragment>
-        <div
-          className="kiali_f1kewvaf"
-        >
-          <span>
-            More info at
           </span>
-          <Link
-            to="/mesh"
-          >
-            Mesh page
-          </Link>
-        </div>
-      </TextContent>
-    </React.Fragment>
-  }
-  data-test="component-status-tooltip"
-  enableFlip={true}
-  maxWidth="25rem"
-  position="top"
->
-  <Label
-    className="kiali_frds3np"
-    color="blue"
-    data-test="cluster-icon"
-    icon={<Cluster />}
-  >
-    Kubernetes
-    <Icon
-      className="kiali_f10wsz75 kiali_frkkrth"
-      data-test="istio-status-warning"
-    >
-      <ExclamationTriangleIcon />
-    </Icon>
-  </Label>
-</Tooltip>
+        </Label>
+      </div>
+    </Popper>
+  </Tooltip>
+</IstioStatusComponent>
 `;
 
 exports[`When both core and addon component have problems any component is in not ready the Icon shows is displayed in red 1`] = `
-<Tooltip
-  content={
-    <React.Fragment>
-      <TextContent
+<IstioStatusComponent
+  lastRefreshAt={848152}
+  namespaces={
+    Array [
+      Object {
+        "cluster": "Kubernetes",
+        "name": "bookinfo",
+      },
+      Object {
+        "cluster": "Kubernetes",
+        "name": "istio-system",
+      },
+    ]
+  }
+  setIstioStatus={[MockFunction]}
+  statusMap={
+    Object {
+      "Kubernetes": Array [
+        Object {
+          "cluster": "Kubernetes",
+          "isCore": false,
+          "name": "grafana",
+          "status": "Unhealthy",
+        },
+        Object {
+          "cluster": "Kubernetes",
+          "isCore": true,
+          "name": "istio-egressgateway",
+          "status": "Unhealthy",
+        },
+      ],
+    }
+  }
+>
+  <Tooltip
+    content={
+      <React.Fragment>
+        <TextContent
+          style={
+            Object {
+              "color": "var(--pf-v5-global--palette--white)",
+            }
+          }
+        >
+          <Text
+            component="h4"
+          >
+            Cluster Status
+          </Text>
+          <React.Fragment>
+            <div
+              className="kiali_f8qnpeg"
+            >
+              <PFBadge
+                badge={
+                  Object {
+                    "badge": "C",
+                    "style": Object {
+                      "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                    },
+                    "tt": "Cluster",
+                  }
+                }
+                size="sm"
+              />
+              Kubernetes
+              <span
+                style={
+                  Object {
+                    "marginLeft": "0.25rem",
+                  }
+                }
+              >
+                <Star />
+              </span>
+            </div>
+            <IstioStatusList
+              cluster="Kubernetes"
+              status={
+                Array [
+                  Object {
+                    "cluster": "Kubernetes",
+                    "isCore": false,
+                    "name": "grafana",
+                    "status": "Unhealthy",
+                  },
+                  Object {
+                    "cluster": "Kubernetes",
+                    "isCore": true,
+                    "name": "istio-egressgateway",
+                    "status": "Unhealthy",
+                  },
+                ]
+              }
+            />
+          </React.Fragment>
+          <div
+            className="kiali_f1kewvaf"
+          >
+            <span>
+              More info at
+            </span>
+            <Link
+              to="/mesh"
+            >
+              Mesh page
+            </Link>
+          </div>
+        </TextContent>
+      </React.Fragment>
+    }
+    data-test="component-status-tooltip"
+    enableFlip={true}
+    maxWidth="25rem"
+    position="top"
+  >
+    <Popper
+      animationDuration={300}
+      appendTo={[Function]}
+      distance={15}
+      enableFlip={true}
+      entryDelay={300}
+      exitDelay={300}
+      flipBehavior={
+        Array [
+          "top",
+          "right",
+          "bottom",
+          "left",
+          "top",
+          "right",
+          "bottom",
+        ]
+      }
+      isVisible={false}
+      minWidth="revert"
+      onBlur={[Function]}
+      onDocumentClick={false}
+      onDocumentKeyDown={[Function]}
+      onFocus={[Function]}
+      onHidden={[Function]}
+      onMouseEnter={[Function]}
+      onMouseLeave={[Function]}
+      onPopperMouseEnter={[Function]}
+      onPopperMouseLeave={[Function]}
+      onTriggerEnter={[Function]}
+      placement="top"
+      popper={
+        <div
+          aria-live="off"
+          className="pf-v5-c-tooltip"
+          data-test="component-status-tooltip"
+          id="pf-tooltip-3"
+          role="tooltip"
+          style={
+            Object {
+              "maxWidth": "25rem",
+            }
+          }
+        >
+          <TooltipArrow />
+          <TooltipContent
+            isLeftAligned={false}
+          >
+            <React.Fragment>
+              <TextContent
+                style={
+                  Object {
+                    "color": "var(--pf-v5-global--palette--white)",
+                  }
+                }
+              >
+                <Text
+                  component="h4"
+                >
+                  Cluster Status
+                </Text>
+                <React.Fragment>
+                  <div
+                    className="kiali_f8qnpeg"
+                  >
+                    <PFBadge
+                      badge={
+                        Object {
+                          "badge": "C",
+                          "style": Object {
+                            "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                          },
+                          "tt": "Cluster",
+                        }
+                      }
+                      size="sm"
+                    />
+                    Kubernetes
+                    <span
+                      style={
+                        Object {
+                          "marginLeft": "0.25rem",
+                        }
+                      }
+                    >
+                      <Star />
+                    </span>
+                  </div>
+                  <IstioStatusList
+                    cluster="Kubernetes"
+                    status={
+                      Array [
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": false,
+                          "name": "grafana",
+                          "status": "Unhealthy",
+                        },
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": true,
+                          "name": "istio-egressgateway",
+                          "status": "Unhealthy",
+                        },
+                      ]
+                    }
+                  />
+                </React.Fragment>
+                <div
+                  className="kiali_f1kewvaf"
+                >
+                  <span>
+                    More info at
+                  </span>
+                  <Link
+                    to="/mesh"
+                  >
+                    Mesh page
+                  </Link>
+                </div>
+              </TextContent>
+            </React.Fragment>
+          </TooltipContent>
+        </div>
+      }
+      popperRef={
+        Object {
+          "current": null,
+        }
+      }
+      positionModifiers={
+        Object {
+          "bottom": "pf-m-bottom",
+          "bottom-end": "pf-m-bottom-right",
+          "bottom-start": "pf-m-bottom-left",
+          "left": "pf-m-left",
+          "left-end": "pf-m-left-bottom",
+          "left-start": "pf-m-left-top",
+          "right": "pf-m-right",
+          "right-end": "pf-m-right-bottom",
+          "right-start": "pf-m-right-top",
+          "top": "pf-m-top",
+          "top-end": "pf-m-top-right",
+          "top-start": "pf-m-top-left",
+        }
+      }
+      trigger={
+        <React.Fragment>
+          <Label
+            className="kiali_frds3np"
+            color="blue"
+            data-test="cluster-icon"
+            icon={<Cluster />}
+          >
+            Kubernetes
+            <Icon
+              className="kiali_f10wsz75 kiali_f1h37jb8"
+              data-test="istio-status-danger"
+            >
+              <ExclamationCircleIcon />
+            </Icon>
+          </Label>
+        </React.Fragment>
+      }
+      zIndex={9999}
+    >
+      <div
         style={
           Object {
-            "color": "var(--pf-v5-global--palette--white)",
+            "display": "contents",
           }
         }
       >
-        <Text
-          component="h4"
+        <Label
+          className="kiali_frds3np"
+          color="blue"
+          data-test="cluster-icon"
+          icon={<Cluster />}
         >
-          Cluster Status
-        </Text>
-        <React.Fragment>
-          <div
-            className="kiali_f8qnpeg"
+          <span
+            className="pf-v5-c-label pf-m-blue kiali_frds3np"
+            data-test="cluster-icon"
           >
-            <PFBadge
-              badge={
-                Object {
-                  "badge": "C",
-                  "style": Object {
-                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
-                  },
-                  "tt": "Cluster",
-                }
-              }
-              size="sm"
-            />
-            Kubernetes
             <span
-              style={
-                Object {
-                  "marginLeft": "0.25rem",
-                }
-              }
+              className="pf-v5-c-label__content"
             >
-              <Star />
+              <span
+                className="pf-v5-c-label__icon"
+              >
+                <Cluster>
+                  <Icon
+                    className=""
+                  >
+                    <span
+                      className="pf-v5-c-icon"
+                    >
+                      <span
+                        className="pf-v5-c-icon__content"
+                      >
+                        <ClusterIcon>
+                          <svg
+                            aria-hidden={true}
+                            aria-labelledby={null}
+                            className="pf-v5-svg"
+                            fill="currentColor"
+                            height="1em"
+                            role="img"
+                            viewBox="0 0 1024 1024"
+                            width="1em"
+                          >
+                            <path
+                              d="M1013.1,330.877049 C1005.8,323.577049 997.2,319.977049 987.4,319.977049 L36.6,319.977049 C26.6,319.977049 18.2,323.577049 10.9,330.877049 C3.6,338.177049 0,346.777049 0,356.577049 L0,475.277049 C0,485.277049 3.6,493.677049 10.7,501.077049 C18,508.377049 26.4,511.977049 36.4,511.977049 L987.4,511.977049 C997.4,511.977049 1005.8,508.377049 1013.1,501.077049 C1020.4,493.777049 1024,485.377049 1024,475.377049 L1024,356.577049 C1024,346.577049 1020.4,338.177049 1013.1,330.877049 Z M128,447.977049 L64,447.977049 L64,383.977049 L128,383.977049 L128,447.977049 Z M256,447.977049 L192,447.977049 L192,383.977049 L256,383.977049 L256,447.977049 Z M384,447.977049 L320,447.977049 L320,383.977049 L384,383.977049 L384,447.977049 Z M512,447.977049 L448,447.977049 L448,383.977049 L512,383.977049 L512,447.977049 Z M960,447.977049 L896,447.977049 L896,383.977049 L960,383.977049 L960,447.977049 Z M0,245.177049 C0,235.977049 1.2,234.677049 9.6,226.477049 C9.6,226.477049 151.09,86.2970491 161.6,74.0070491 C172.11,61.7170491 185.5,64.2070491 185.5,64.2070491 L840.62,64.2070491 C840.62,64.2070491 852.42,62.8070491 863.11,74.4070491 C873.61,85.9970491 1013.5,226.407049 1013.5,226.407049 C1021.9,234.807049 1024,236.107049 1024,245.207049 C1024,254.807049 1012.3,256.007049 1000.7,256.007049 L22.1,256.007049 C10.8,256.077049 0,254.377049 0,245.177049 Z M1013.1,842.877049 C1005.8,835.577049 997.2,831.977049 987.4,831.977049 L36.6,831.977049 C26.6,831.977049 18.2,835.577049 10.9,842.877049 C3.6,850.177049 0,858.777049 0,868.577049 L0,987.277049 C0,997.277049 3.6,1005.67705 10.7,1013.07705 C18,1020.37705 26.4,1023.97705 36.4,1023.97705 L987.4,1023.97705 C997.4,1023.97705 1005.8,1020.37705 1013.1,1013.07705 C1020.4,1005.77705 1024,997.377049 1024,987.377049 L1024,868.577049 C1024,858.577049 1020.4,850.177049 1013.1,842.877049 Z M128,959.977049 L64,959.977049 L64,895.977049 L128,895.977049 L128,959.977049 Z M256,959.977049 L192,959.977049 L192,895.977049 L256,895.977049 L256,959.977049 Z M384,959.977049 L320,959.977049 L320,895.977049 L384,895.977049 L384,959.977049 Z M512,959.977049 L448,959.977049 L448,895.977049 L512,895.977049 L512,959.977049 Z M960,959.977049 L896,959.977049 L896,895.977049 L960,895.977049 L960,959.977049 Z M1013.1,586.877049 C1005.8,579.577049 997.2,575.977049 987.4,575.977049 L36.6,575.977049 C26.6,575.977049 18.2,579.577049 10.9,586.877049 C3.6,594.177049 0,602.777049 0,612.577049 L0,731.277049 C0,741.277049 3.6,749.677049 10.7,757.077049 C18,764.377049 26.4,767.977049 36.4,767.977049 L987.4,767.977049 C997.4,767.977049 1005.8,764.377049 1013.1,757.077049 C1020.4,749.777049 1024,741.377049 1024,731.377049 L1024,612.577049 C1024,602.577049 1020.4,594.177049 1013.1,586.877049 Z M128,703.977049 L64,703.977049 L64,639.977049 L128,639.977049 L128,703.977049 Z M256,703.977049 L192,703.977049 L192,639.977049 L256,639.977049 L256,703.977049 Z M384,703.977049 L320,703.977049 L320,639.977049 L384,639.977049 L384,703.977049 Z M512,703.977049 L448,703.977049 L448,639.977049 L512,639.977049 L512,703.977049 Z M960,703.977049 L896,703.977049 L896,639.977049 L960,639.977049 L960,703.977049 Z"
+                            />
+                          </svg>
+                        </ClusterIcon>
+                      </span>
+                    </span>
+                  </Icon>
+                </Cluster>
+              </span>
+              <span
+                className="pf-v5-c-label__text"
+              >
+                Kubernetes
+                <Icon
+                  className="kiali_f10wsz75 kiali_f1h37jb8"
+                  data-test="istio-status-danger"
+                >
+                  <span
+                    className="pf-v5-c-icon kiali_f10wsz75 kiali_f1h37jb8"
+                    data-test="istio-status-danger"
+                  >
+                    <span
+                      className="pf-v5-c-icon__content"
+                    >
+                      <ExclamationCircleIcon>
+                        <svg
+                          aria-hidden={true}
+                          aria-labelledby={null}
+                          className="pf-v5-svg"
+                          fill="currentColor"
+                          height="1em"
+                          role="img"
+                          viewBox="0 0 512 512"
+                          width="1em"
+                        >
+                          <path
+                            d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                          />
+                        </svg>
+                      </ExclamationCircleIcon>
+                    </span>
+                  </span>
+                </Icon>
+              </span>
             </span>
-          </div>
-          <IstioStatusList
-            cluster="Kubernetes"
-            status={
-              Array [
-                Object {
-                  "cluster": "Kubernetes",
-                  "isCore": false,
-                  "name": "grafana",
-                  "status": "Unhealthy",
-                },
-                Object {
-                  "cluster": "Kubernetes",
-                  "isCore": true,
-                  "name": "istio-egressgateway",
-                  "status": "Unhealthy",
-                },
-              ]
-            }
-          />
-        </React.Fragment>
-        <div
-          className="kiali_f1kewvaf"
-        >
-          <span>
-            More info at
           </span>
-          <Link
-            to="/mesh"
-          >
-            Mesh page
-          </Link>
-        </div>
-      </TextContent>
-    </React.Fragment>
-  }
-  data-test="component-status-tooltip"
-  enableFlip={true}
-  maxWidth="25rem"
-  position="top"
->
-  <Label
-    className="kiali_frds3np"
-    color="blue"
-    data-test="cluster-icon"
-    icon={<Cluster />}
-  >
-    Kubernetes
-    <Icon
-      className="kiali_f10wsz75 kiali_f1h37jb8"
-      data-test="istio-status-danger"
-    >
-      <ExclamationCircleIcon />
-    </Icon>
-  </Label>
-</Tooltip>
+        </Label>
+      </div>
+    </Popper>
+  </Tooltip>
+</IstioStatusComponent>
 `;
 
 exports[`When core component has a problem the Icon shows is displayed in Red 1`] = `
-<Tooltip
-  content={
-    <React.Fragment>
-      <TextContent
+<IstioStatusComponent
+  lastRefreshAt={848152}
+  namespaces={
+    Array [
+      Object {
+        "cluster": "Kubernetes",
+        "name": "bookinfo",
+      },
+      Object {
+        "cluster": "Kubernetes",
+        "name": "istio-system",
+      },
+    ]
+  }
+  setIstioStatus={[MockFunction]}
+  statusMap={
+    Object {
+      "Kubernetes": Array [
+        Object {
+          "cluster": "Kubernetes",
+          "isCore": false,
+          "name": "grafana",
+          "status": "Healthy",
+        },
+        Object {
+          "cluster": "Kubernetes",
+          "isCore": true,
+          "name": "istio-egressgateway",
+          "status": "Unhealthy",
+        },
+      ],
+    }
+  }
+>
+  <Tooltip
+    content={
+      <React.Fragment>
+        <TextContent
+          style={
+            Object {
+              "color": "var(--pf-v5-global--palette--white)",
+            }
+          }
+        >
+          <Text
+            component="h4"
+          >
+            Cluster Status
+          </Text>
+          <React.Fragment>
+            <div
+              className="kiali_f8qnpeg"
+            >
+              <PFBadge
+                badge={
+                  Object {
+                    "badge": "C",
+                    "style": Object {
+                      "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                    },
+                    "tt": "Cluster",
+                  }
+                }
+                size="sm"
+              />
+              Kubernetes
+              <span
+                style={
+                  Object {
+                    "marginLeft": "0.25rem",
+                  }
+                }
+              >
+                <Star />
+              </span>
+            </div>
+            <IstioStatusList
+              cluster="Kubernetes"
+              status={
+                Array [
+                  Object {
+                    "cluster": "Kubernetes",
+                    "isCore": false,
+                    "name": "grafana",
+                    "status": "Healthy",
+                  },
+                  Object {
+                    "cluster": "Kubernetes",
+                    "isCore": true,
+                    "name": "istio-egressgateway",
+                    "status": "Unhealthy",
+                  },
+                ]
+              }
+            />
+          </React.Fragment>
+          <div
+            className="kiali_f1kewvaf"
+          >
+            <span>
+              More info at
+            </span>
+            <Link
+              to="/mesh"
+            >
+              Mesh page
+            </Link>
+          </div>
+        </TextContent>
+      </React.Fragment>
+    }
+    data-test="component-status-tooltip"
+    enableFlip={true}
+    maxWidth="25rem"
+    position="top"
+  >
+    <Popper
+      animationDuration={300}
+      appendTo={[Function]}
+      distance={15}
+      enableFlip={true}
+      entryDelay={300}
+      exitDelay={300}
+      flipBehavior={
+        Array [
+          "top",
+          "right",
+          "bottom",
+          "left",
+          "top",
+          "right",
+          "bottom",
+        ]
+      }
+      isVisible={false}
+      minWidth="revert"
+      onBlur={[Function]}
+      onDocumentClick={false}
+      onDocumentKeyDown={[Function]}
+      onFocus={[Function]}
+      onHidden={[Function]}
+      onMouseEnter={[Function]}
+      onMouseLeave={[Function]}
+      onPopperMouseEnter={[Function]}
+      onPopperMouseLeave={[Function]}
+      onTriggerEnter={[Function]}
+      placement="top"
+      popper={
+        <div
+          aria-live="off"
+          className="pf-v5-c-tooltip"
+          data-test="component-status-tooltip"
+          id="pf-tooltip-1"
+          role="tooltip"
+          style={
+            Object {
+              "maxWidth": "25rem",
+            }
+          }
+        >
+          <TooltipArrow />
+          <TooltipContent
+            isLeftAligned={false}
+          >
+            <React.Fragment>
+              <TextContent
+                style={
+                  Object {
+                    "color": "var(--pf-v5-global--palette--white)",
+                  }
+                }
+              >
+                <Text
+                  component="h4"
+                >
+                  Cluster Status
+                </Text>
+                <React.Fragment>
+                  <div
+                    className="kiali_f8qnpeg"
+                  >
+                    <PFBadge
+                      badge={
+                        Object {
+                          "badge": "C",
+                          "style": Object {
+                            "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                          },
+                          "tt": "Cluster",
+                        }
+                      }
+                      size="sm"
+                    />
+                    Kubernetes
+                    <span
+                      style={
+                        Object {
+                          "marginLeft": "0.25rem",
+                        }
+                      }
+                    >
+                      <Star />
+                    </span>
+                  </div>
+                  <IstioStatusList
+                    cluster="Kubernetes"
+                    status={
+                      Array [
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": false,
+                          "name": "grafana",
+                          "status": "Healthy",
+                        },
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": true,
+                          "name": "istio-egressgateway",
+                          "status": "Unhealthy",
+                        },
+                      ]
+                    }
+                  />
+                </React.Fragment>
+                <div
+                  className="kiali_f1kewvaf"
+                >
+                  <span>
+                    More info at
+                  </span>
+                  <Link
+                    to="/mesh"
+                  >
+                    Mesh page
+                  </Link>
+                </div>
+              </TextContent>
+            </React.Fragment>
+          </TooltipContent>
+        </div>
+      }
+      popperRef={
+        Object {
+          "current": null,
+        }
+      }
+      positionModifiers={
+        Object {
+          "bottom": "pf-m-bottom",
+          "bottom-end": "pf-m-bottom-right",
+          "bottom-start": "pf-m-bottom-left",
+          "left": "pf-m-left",
+          "left-end": "pf-m-left-bottom",
+          "left-start": "pf-m-left-top",
+          "right": "pf-m-right",
+          "right-end": "pf-m-right-bottom",
+          "right-start": "pf-m-right-top",
+          "top": "pf-m-top",
+          "top-end": "pf-m-top-right",
+          "top-start": "pf-m-top-left",
+        }
+      }
+      trigger={
+        <React.Fragment>
+          <Label
+            className="kiali_frds3np"
+            color="blue"
+            data-test="cluster-icon"
+            icon={<Cluster />}
+          >
+            Kubernetes
+            <Icon
+              className="kiali_f10wsz75 kiali_f1h37jb8"
+              data-test="istio-status-danger"
+            >
+              <ExclamationCircleIcon />
+            </Icon>
+          </Label>
+        </React.Fragment>
+      }
+      zIndex={9999}
+    >
+      <div
         style={
           Object {
-            "color": "var(--pf-v5-global--palette--white)",
+            "display": "contents",
           }
         }
       >
-        <Text
-          component="h4"
+        <Label
+          className="kiali_frds3np"
+          color="blue"
+          data-test="cluster-icon"
+          icon={<Cluster />}
         >
-          Cluster Status
-        </Text>
-        <React.Fragment>
-          <div
-            className="kiali_f8qnpeg"
+          <span
+            className="pf-v5-c-label pf-m-blue kiali_frds3np"
+            data-test="cluster-icon"
           >
-            <PFBadge
-              badge={
-                Object {
-                  "badge": "C",
-                  "style": Object {
-                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
-                  },
-                  "tt": "Cluster",
-                }
-              }
-              size="sm"
-            />
-            Kubernetes
             <span
-              style={
-                Object {
-                  "marginLeft": "0.25rem",
-                }
-              }
+              className="pf-v5-c-label__content"
             >
-              <Star />
+              <span
+                className="pf-v5-c-label__icon"
+              >
+                <Cluster>
+                  <Icon
+                    className=""
+                  >
+                    <span
+                      className="pf-v5-c-icon"
+                    >
+                      <span
+                        className="pf-v5-c-icon__content"
+                      >
+                        <ClusterIcon>
+                          <svg
+                            aria-hidden={true}
+                            aria-labelledby={null}
+                            className="pf-v5-svg"
+                            fill="currentColor"
+                            height="1em"
+                            role="img"
+                            viewBox="0 0 1024 1024"
+                            width="1em"
+                          >
+                            <path
+                              d="M1013.1,330.877049 C1005.8,323.577049 997.2,319.977049 987.4,319.977049 L36.6,319.977049 C26.6,319.977049 18.2,323.577049 10.9,330.877049 C3.6,338.177049 0,346.777049 0,356.577049 L0,475.277049 C0,485.277049 3.6,493.677049 10.7,501.077049 C18,508.377049 26.4,511.977049 36.4,511.977049 L987.4,511.977049 C997.4,511.977049 1005.8,508.377049 1013.1,501.077049 C1020.4,493.777049 1024,485.377049 1024,475.377049 L1024,356.577049 C1024,346.577049 1020.4,338.177049 1013.1,330.877049 Z M128,447.977049 L64,447.977049 L64,383.977049 L128,383.977049 L128,447.977049 Z M256,447.977049 L192,447.977049 L192,383.977049 L256,383.977049 L256,447.977049 Z M384,447.977049 L320,447.977049 L320,383.977049 L384,383.977049 L384,447.977049 Z M512,447.977049 L448,447.977049 L448,383.977049 L512,383.977049 L512,447.977049 Z M960,447.977049 L896,447.977049 L896,383.977049 L960,383.977049 L960,447.977049 Z M0,245.177049 C0,235.977049 1.2,234.677049 9.6,226.477049 C9.6,226.477049 151.09,86.2970491 161.6,74.0070491 C172.11,61.7170491 185.5,64.2070491 185.5,64.2070491 L840.62,64.2070491 C840.62,64.2070491 852.42,62.8070491 863.11,74.4070491 C873.61,85.9970491 1013.5,226.407049 1013.5,226.407049 C1021.9,234.807049 1024,236.107049 1024,245.207049 C1024,254.807049 1012.3,256.007049 1000.7,256.007049 L22.1,256.007049 C10.8,256.077049 0,254.377049 0,245.177049 Z M1013.1,842.877049 C1005.8,835.577049 997.2,831.977049 987.4,831.977049 L36.6,831.977049 C26.6,831.977049 18.2,835.577049 10.9,842.877049 C3.6,850.177049 0,858.777049 0,868.577049 L0,987.277049 C0,997.277049 3.6,1005.67705 10.7,1013.07705 C18,1020.37705 26.4,1023.97705 36.4,1023.97705 L987.4,1023.97705 C997.4,1023.97705 1005.8,1020.37705 1013.1,1013.07705 C1020.4,1005.77705 1024,997.377049 1024,987.377049 L1024,868.577049 C1024,858.577049 1020.4,850.177049 1013.1,842.877049 Z M128,959.977049 L64,959.977049 L64,895.977049 L128,895.977049 L128,959.977049 Z M256,959.977049 L192,959.977049 L192,895.977049 L256,895.977049 L256,959.977049 Z M384,959.977049 L320,959.977049 L320,895.977049 L384,895.977049 L384,959.977049 Z M512,959.977049 L448,959.977049 L448,895.977049 L512,895.977049 L512,959.977049 Z M960,959.977049 L896,959.977049 L896,895.977049 L960,895.977049 L960,959.977049 Z M1013.1,586.877049 C1005.8,579.577049 997.2,575.977049 987.4,575.977049 L36.6,575.977049 C26.6,575.977049 18.2,579.577049 10.9,586.877049 C3.6,594.177049 0,602.777049 0,612.577049 L0,731.277049 C0,741.277049 3.6,749.677049 10.7,757.077049 C18,764.377049 26.4,767.977049 36.4,767.977049 L987.4,767.977049 C997.4,767.977049 1005.8,764.377049 1013.1,757.077049 C1020.4,749.777049 1024,741.377049 1024,731.377049 L1024,612.577049 C1024,602.577049 1020.4,594.177049 1013.1,586.877049 Z M128,703.977049 L64,703.977049 L64,639.977049 L128,639.977049 L128,703.977049 Z M256,703.977049 L192,703.977049 L192,639.977049 L256,639.977049 L256,703.977049 Z M384,703.977049 L320,703.977049 L320,639.977049 L384,639.977049 L384,703.977049 Z M512,703.977049 L448,703.977049 L448,639.977049 L512,639.977049 L512,703.977049 Z M960,703.977049 L896,703.977049 L896,639.977049 L960,639.977049 L960,703.977049 Z"
+                            />
+                          </svg>
+                        </ClusterIcon>
+                      </span>
+                    </span>
+                  </Icon>
+                </Cluster>
+              </span>
+              <span
+                className="pf-v5-c-label__text"
+              >
+                Kubernetes
+                <Icon
+                  className="kiali_f10wsz75 kiali_f1h37jb8"
+                  data-test="istio-status-danger"
+                >
+                  <span
+                    className="pf-v5-c-icon kiali_f10wsz75 kiali_f1h37jb8"
+                    data-test="istio-status-danger"
+                  >
+                    <span
+                      className="pf-v5-c-icon__content"
+                    >
+                      <ExclamationCircleIcon>
+                        <svg
+                          aria-hidden={true}
+                          aria-labelledby={null}
+                          className="pf-v5-svg"
+                          fill="currentColor"
+                          height="1em"
+                          role="img"
+                          viewBox="0 0 512 512"
+                          width="1em"
+                        >
+                          <path
+                            d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                          />
+                        </svg>
+                      </ExclamationCircleIcon>
+                    </span>
+                  </span>
+                </Icon>
+              </span>
             </span>
-          </div>
-          <IstioStatusList
-            cluster="Kubernetes"
-            status={
-              Array [
-                Object {
-                  "cluster": "Kubernetes",
-                  "isCore": false,
-                  "name": "grafana",
-                  "status": "Healthy",
-                },
-                Object {
-                  "cluster": "Kubernetes",
-                  "isCore": true,
-                  "name": "istio-egressgateway",
-                  "status": "Unhealthy",
-                },
-              ]
-            }
-          />
-        </React.Fragment>
-        <div
-          className="kiali_f1kewvaf"
-        >
-          <span>
-            More info at
           </span>
-          <Link
-            to="/mesh"
-          >
-            Mesh page
-          </Link>
-        </div>
-      </TextContent>
-    </React.Fragment>
-  }
-  data-test="component-status-tooltip"
-  enableFlip={true}
-  maxWidth="25rem"
-  position="top"
->
-  <Label
-    className="kiali_frds3np"
-    color="blue"
-    data-test="cluster-icon"
-    icon={<Cluster />}
-  >
-    Kubernetes
-    <Icon
-      className="kiali_f10wsz75 kiali_f1h37jb8"
-      data-test="istio-status-danger"
-    >
-      <ExclamationCircleIcon />
-    </Icon>
-  </Label>
-</Tooltip>
+        </Label>
+      </div>
+    </Popper>
+  </Tooltip>
+</IstioStatusComponent>
 `;
 
 exports[`When there are not-ready components mixed with other not healthy components in addons the Icon is displayed in orange 1`] = `
-<Tooltip
-  content={
-    <React.Fragment>
-      <TextContent
+<IstioStatusComponent
+  lastRefreshAt={848152}
+  namespaces={
+    Array [
+      Object {
+        "cluster": "Kubernetes",
+        "name": "bookinfo",
+      },
+      Object {
+        "cluster": "Kubernetes",
+        "name": "istio-system",
+      },
+    ]
+  }
+  setIstioStatus={[MockFunction]}
+  statusMap={
+    Object {
+      "Kubernetes": Array [
+        Object {
+          "cluster": "Kubernetes",
+          "isCore": false,
+          "name": "grafana",
+          "status": "Unhealthy",
+        },
+        Object {
+          "cluster": "Kubernetes",
+          "isCore": false,
+          "name": "jaeger",
+          "status": "NotReady",
+        },
+      ],
+    }
+  }
+>
+  <Tooltip
+    content={
+      <React.Fragment>
+        <TextContent
+          style={
+            Object {
+              "color": "var(--pf-v5-global--palette--white)",
+            }
+          }
+        >
+          <Text
+            component="h4"
+          >
+            Cluster Status
+          </Text>
+          <React.Fragment>
+            <div
+              className="kiali_f8qnpeg"
+            >
+              <PFBadge
+                badge={
+                  Object {
+                    "badge": "C",
+                    "style": Object {
+                      "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                    },
+                    "tt": "Cluster",
+                  }
+                }
+                size="sm"
+              />
+              Kubernetes
+              <span
+                style={
+                  Object {
+                    "marginLeft": "0.25rem",
+                  }
+                }
+              >
+                <Star />
+              </span>
+            </div>
+            <IstioStatusList
+              cluster="Kubernetes"
+              status={
+                Array [
+                  Object {
+                    "cluster": "Kubernetes",
+                    "isCore": false,
+                    "name": "grafana",
+                    "status": "Unhealthy",
+                  },
+                  Object {
+                    "cluster": "Kubernetes",
+                    "isCore": false,
+                    "name": "jaeger",
+                    "status": "NotReady",
+                  },
+                ]
+              }
+            />
+          </React.Fragment>
+          <div
+            className="kiali_f1kewvaf"
+          >
+            <span>
+              More info at
+            </span>
+            <Link
+              to="/mesh"
+            >
+              Mesh page
+            </Link>
+          </div>
+        </TextContent>
+      </React.Fragment>
+    }
+    data-test="component-status-tooltip"
+    enableFlip={true}
+    maxWidth="25rem"
+    position="top"
+  >
+    <Popper
+      animationDuration={300}
+      appendTo={[Function]}
+      distance={15}
+      enableFlip={true}
+      entryDelay={300}
+      exitDelay={300}
+      flipBehavior={
+        Array [
+          "top",
+          "right",
+          "bottom",
+          "left",
+          "top",
+          "right",
+          "bottom",
+        ]
+      }
+      isVisible={false}
+      minWidth="revert"
+      onBlur={[Function]}
+      onDocumentClick={false}
+      onDocumentKeyDown={[Function]}
+      onFocus={[Function]}
+      onHidden={[Function]}
+      onMouseEnter={[Function]}
+      onMouseLeave={[Function]}
+      onPopperMouseEnter={[Function]}
+      onPopperMouseLeave={[Function]}
+      onTriggerEnter={[Function]}
+      placement="top"
+      popper={
+        <div
+          aria-live="off"
+          className="pf-v5-c-tooltip"
+          data-test="component-status-tooltip"
+          id="pf-tooltip-5"
+          role="tooltip"
+          style={
+            Object {
+              "maxWidth": "25rem",
+            }
+          }
+        >
+          <TooltipArrow />
+          <TooltipContent
+            isLeftAligned={false}
+          >
+            <React.Fragment>
+              <TextContent
+                style={
+                  Object {
+                    "color": "var(--pf-v5-global--palette--white)",
+                  }
+                }
+              >
+                <Text
+                  component="h4"
+                >
+                  Cluster Status
+                </Text>
+                <React.Fragment>
+                  <div
+                    className="kiali_f8qnpeg"
+                  >
+                    <PFBadge
+                      badge={
+                        Object {
+                          "badge": "C",
+                          "style": Object {
+                            "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                          },
+                          "tt": "Cluster",
+                        }
+                      }
+                      size="sm"
+                    />
+                    Kubernetes
+                    <span
+                      style={
+                        Object {
+                          "marginLeft": "0.25rem",
+                        }
+                      }
+                    >
+                      <Star />
+                    </span>
+                  </div>
+                  <IstioStatusList
+                    cluster="Kubernetes"
+                    status={
+                      Array [
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": false,
+                          "name": "grafana",
+                          "status": "Unhealthy",
+                        },
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": false,
+                          "name": "jaeger",
+                          "status": "NotReady",
+                        },
+                      ]
+                    }
+                  />
+                </React.Fragment>
+                <div
+                  className="kiali_f1kewvaf"
+                >
+                  <span>
+                    More info at
+                  </span>
+                  <Link
+                    to="/mesh"
+                  >
+                    Mesh page
+                  </Link>
+                </div>
+              </TextContent>
+            </React.Fragment>
+          </TooltipContent>
+        </div>
+      }
+      popperRef={
+        Object {
+          "current": null,
+        }
+      }
+      positionModifiers={
+        Object {
+          "bottom": "pf-m-bottom",
+          "bottom-end": "pf-m-bottom-right",
+          "bottom-start": "pf-m-bottom-left",
+          "left": "pf-m-left",
+          "left-end": "pf-m-left-bottom",
+          "left-start": "pf-m-left-top",
+          "right": "pf-m-right",
+          "right-end": "pf-m-right-bottom",
+          "right-start": "pf-m-right-top",
+          "top": "pf-m-top",
+          "top-end": "pf-m-top-right",
+          "top-start": "pf-m-top-left",
+        }
+      }
+      trigger={
+        <React.Fragment>
+          <Label
+            className="kiali_frds3np"
+            color="blue"
+            data-test="cluster-icon"
+            icon={<Cluster />}
+          >
+            Kubernetes
+            <Icon
+              className="kiali_f10wsz75 kiali_frkkrth"
+              data-test="istio-status-warning"
+            >
+              <ExclamationTriangleIcon />
+            </Icon>
+          </Label>
+        </React.Fragment>
+      }
+      zIndex={9999}
+    >
+      <div
         style={
           Object {
-            "color": "var(--pf-v5-global--palette--white)",
+            "display": "contents",
           }
         }
       >
-        <Text
-          component="h4"
+        <Label
+          className="kiali_frds3np"
+          color="blue"
+          data-test="cluster-icon"
+          icon={<Cluster />}
         >
-          Cluster Status
-        </Text>
-        <React.Fragment>
-          <div
-            className="kiali_f8qnpeg"
+          <span
+            className="pf-v5-c-label pf-m-blue kiali_frds3np"
+            data-test="cluster-icon"
           >
-            <PFBadge
-              badge={
-                Object {
-                  "badge": "C",
-                  "style": Object {
-                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
-                  },
-                  "tt": "Cluster",
-                }
-              }
-              size="sm"
-            />
-            Kubernetes
             <span
-              style={
-                Object {
-                  "marginLeft": "0.25rem",
-                }
-              }
+              className="pf-v5-c-label__content"
             >
-              <Star />
+              <span
+                className="pf-v5-c-label__icon"
+              >
+                <Cluster>
+                  <Icon
+                    className=""
+                  >
+                    <span
+                      className="pf-v5-c-icon"
+                    >
+                      <span
+                        className="pf-v5-c-icon__content"
+                      >
+                        <ClusterIcon>
+                          <svg
+                            aria-hidden={true}
+                            aria-labelledby={null}
+                            className="pf-v5-svg"
+                            fill="currentColor"
+                            height="1em"
+                            role="img"
+                            viewBox="0 0 1024 1024"
+                            width="1em"
+                          >
+                            <path
+                              d="M1013.1,330.877049 C1005.8,323.577049 997.2,319.977049 987.4,319.977049 L36.6,319.977049 C26.6,319.977049 18.2,323.577049 10.9,330.877049 C3.6,338.177049 0,346.777049 0,356.577049 L0,475.277049 C0,485.277049 3.6,493.677049 10.7,501.077049 C18,508.377049 26.4,511.977049 36.4,511.977049 L987.4,511.977049 C997.4,511.977049 1005.8,508.377049 1013.1,501.077049 C1020.4,493.777049 1024,485.377049 1024,475.377049 L1024,356.577049 C1024,346.577049 1020.4,338.177049 1013.1,330.877049 Z M128,447.977049 L64,447.977049 L64,383.977049 L128,383.977049 L128,447.977049 Z M256,447.977049 L192,447.977049 L192,383.977049 L256,383.977049 L256,447.977049 Z M384,447.977049 L320,447.977049 L320,383.977049 L384,383.977049 L384,447.977049 Z M512,447.977049 L448,447.977049 L448,383.977049 L512,383.977049 L512,447.977049 Z M960,447.977049 L896,447.977049 L896,383.977049 L960,383.977049 L960,447.977049 Z M0,245.177049 C0,235.977049 1.2,234.677049 9.6,226.477049 C9.6,226.477049 151.09,86.2970491 161.6,74.0070491 C172.11,61.7170491 185.5,64.2070491 185.5,64.2070491 L840.62,64.2070491 C840.62,64.2070491 852.42,62.8070491 863.11,74.4070491 C873.61,85.9970491 1013.5,226.407049 1013.5,226.407049 C1021.9,234.807049 1024,236.107049 1024,245.207049 C1024,254.807049 1012.3,256.007049 1000.7,256.007049 L22.1,256.007049 C10.8,256.077049 0,254.377049 0,245.177049 Z M1013.1,842.877049 C1005.8,835.577049 997.2,831.977049 987.4,831.977049 L36.6,831.977049 C26.6,831.977049 18.2,835.577049 10.9,842.877049 C3.6,850.177049 0,858.777049 0,868.577049 L0,987.277049 C0,997.277049 3.6,1005.67705 10.7,1013.07705 C18,1020.37705 26.4,1023.97705 36.4,1023.97705 L987.4,1023.97705 C997.4,1023.97705 1005.8,1020.37705 1013.1,1013.07705 C1020.4,1005.77705 1024,997.377049 1024,987.377049 L1024,868.577049 C1024,858.577049 1020.4,850.177049 1013.1,842.877049 Z M128,959.977049 L64,959.977049 L64,895.977049 L128,895.977049 L128,959.977049 Z M256,959.977049 L192,959.977049 L192,895.977049 L256,895.977049 L256,959.977049 Z M384,959.977049 L320,959.977049 L320,895.977049 L384,895.977049 L384,959.977049 Z M512,959.977049 L448,959.977049 L448,895.977049 L512,895.977049 L512,959.977049 Z M960,959.977049 L896,959.977049 L896,895.977049 L960,895.977049 L960,959.977049 Z M1013.1,586.877049 C1005.8,579.577049 997.2,575.977049 987.4,575.977049 L36.6,575.977049 C26.6,575.977049 18.2,579.577049 10.9,586.877049 C3.6,594.177049 0,602.777049 0,612.577049 L0,731.277049 C0,741.277049 3.6,749.677049 10.7,757.077049 C18,764.377049 26.4,767.977049 36.4,767.977049 L987.4,767.977049 C997.4,767.977049 1005.8,764.377049 1013.1,757.077049 C1020.4,749.777049 1024,741.377049 1024,731.377049 L1024,612.577049 C1024,602.577049 1020.4,594.177049 1013.1,586.877049 Z M128,703.977049 L64,703.977049 L64,639.977049 L128,639.977049 L128,703.977049 Z M256,703.977049 L192,703.977049 L192,639.977049 L256,639.977049 L256,703.977049 Z M384,703.977049 L320,703.977049 L320,639.977049 L384,639.977049 L384,703.977049 Z M512,703.977049 L448,703.977049 L448,639.977049 L512,639.977049 L512,703.977049 Z M960,703.977049 L896,703.977049 L896,639.977049 L960,639.977049 L960,703.977049 Z"
+                            />
+                          </svg>
+                        </ClusterIcon>
+                      </span>
+                    </span>
+                  </Icon>
+                </Cluster>
+              </span>
+              <span
+                className="pf-v5-c-label__text"
+              >
+                Kubernetes
+                <Icon
+                  className="kiali_f10wsz75 kiali_frkkrth"
+                  data-test="istio-status-warning"
+                >
+                  <span
+                    className="pf-v5-c-icon kiali_f10wsz75 kiali_frkkrth"
+                    data-test="istio-status-warning"
+                  >
+                    <span
+                      className="pf-v5-c-icon__content"
+                    >
+                      <ExclamationTriangleIcon>
+                        <svg
+                          aria-hidden={true}
+                          aria-labelledby={null}
+                          className="pf-v5-svg"
+                          fill="currentColor"
+                          height="1em"
+                          role="img"
+                          viewBox="0 0 576 512"
+                          width="1em"
+                        >
+                          <path
+                            d="M569.517 440.013C587.975 472.007 564.806 512 527.94 512H48.054c-36.937 0-59.999-40.055-41.577-71.987L246.423 23.985c18.467-32.009 64.72-31.951 83.154 0l239.94 416.028zM288 354c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                          />
+                        </svg>
+                      </ExclamationTriangleIcon>
+                    </span>
+                  </span>
+                </Icon>
+              </span>
             </span>
-          </div>
-          <IstioStatusList
-            cluster="Kubernetes"
-            status={
-              Array [
-                Object {
-                  "cluster": "Kubernetes",
-                  "isCore": false,
-                  "name": "grafana",
-                  "status": "Unhealthy",
-                },
-                Object {
-                  "cluster": "Kubernetes",
-                  "isCore": false,
-                  "name": "jaeger",
-                  "status": "NotReady",
-                },
-              ]
-            }
-          />
-        </React.Fragment>
-        <div
-          className="kiali_f1kewvaf"
-        >
-          <span>
-            More info at
           </span>
-          <Link
-            to="/mesh"
-          >
-            Mesh page
-          </Link>
-        </div>
-      </TextContent>
-    </React.Fragment>
-  }
-  data-test="component-status-tooltip"
-  enableFlip={true}
-  maxWidth="25rem"
-  position="top"
->
-  <Label
-    className="kiali_frds3np"
-    color="blue"
-    data-test="cluster-icon"
-    icon={<Cluster />}
-  >
-    Kubernetes
-    <Icon
-      className="kiali_f10wsz75 kiali_frkkrth"
-      data-test="istio-status-warning"
-    >
-      <ExclamationTriangleIcon />
-    </Icon>
-  </Label>
-</Tooltip>
+        </Label>
+      </div>
+    </Popper>
+  </Tooltip>
+</IstioStatusComponent>
 `;
 
 exports[`When there are not-ready components mixed with other not healthy components in both the Icon shows is displayed in red 1`] = `
-<Tooltip
-  content={
-    <React.Fragment>
-      <TextContent
+<IstioStatusComponent
+  lastRefreshAt={848152}
+  namespaces={
+    Array [
+      Object {
+        "cluster": "Kubernetes",
+        "name": "bookinfo",
+      },
+      Object {
+        "cluster": "Kubernetes",
+        "name": "istio-system",
+      },
+    ]
+  }
+  setIstioStatus={[MockFunction]}
+  statusMap={
+    Object {
+      "Kubernetes": Array [
+        Object {
+          "cluster": "Kubernetes",
+          "isCore": false,
+          "name": "grafana",
+          "status": "Unhealthy",
+        },
+        Object {
+          "cluster": "Kubernetes",
+          "isCore": false,
+          "name": "jaeger",
+          "status": "NotReady",
+        },
+        Object {
+          "cluster": "Kubernetes",
+          "isCore": true,
+          "name": "istio-egressgateway",
+          "status": "Unhealthy",
+        },
+        Object {
+          "cluster": "Kubernetes",
+          "isCore": true,
+          "name": "istio-ingressgateway",
+          "status": "NotReady",
+        },
+      ],
+    }
+  }
+>
+  <Tooltip
+    content={
+      <React.Fragment>
+        <TextContent
+          style={
+            Object {
+              "color": "var(--pf-v5-global--palette--white)",
+            }
+          }
+        >
+          <Text
+            component="h4"
+          >
+            Cluster Status
+          </Text>
+          <React.Fragment>
+            <div
+              className="kiali_f8qnpeg"
+            >
+              <PFBadge
+                badge={
+                  Object {
+                    "badge": "C",
+                    "style": Object {
+                      "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                    },
+                    "tt": "Cluster",
+                  }
+                }
+                size="sm"
+              />
+              Kubernetes
+              <span
+                style={
+                  Object {
+                    "marginLeft": "0.25rem",
+                  }
+                }
+              >
+                <Star />
+              </span>
+            </div>
+            <IstioStatusList
+              cluster="Kubernetes"
+              status={
+                Array [
+                  Object {
+                    "cluster": "Kubernetes",
+                    "isCore": false,
+                    "name": "grafana",
+                    "status": "Unhealthy",
+                  },
+                  Object {
+                    "cluster": "Kubernetes",
+                    "isCore": false,
+                    "name": "jaeger",
+                    "status": "NotReady",
+                  },
+                  Object {
+                    "cluster": "Kubernetes",
+                    "isCore": true,
+                    "name": "istio-egressgateway",
+                    "status": "Unhealthy",
+                  },
+                  Object {
+                    "cluster": "Kubernetes",
+                    "isCore": true,
+                    "name": "istio-ingressgateway",
+                    "status": "NotReady",
+                  },
+                ]
+              }
+            />
+          </React.Fragment>
+          <div
+            className="kiali_f1kewvaf"
+          >
+            <span>
+              More info at
+            </span>
+            <Link
+              to="/mesh"
+            >
+              Mesh page
+            </Link>
+          </div>
+        </TextContent>
+      </React.Fragment>
+    }
+    data-test="component-status-tooltip"
+    enableFlip={true}
+    maxWidth="25rem"
+    position="top"
+  >
+    <Popper
+      animationDuration={300}
+      appendTo={[Function]}
+      distance={15}
+      enableFlip={true}
+      entryDelay={300}
+      exitDelay={300}
+      flipBehavior={
+        Array [
+          "top",
+          "right",
+          "bottom",
+          "left",
+          "top",
+          "right",
+          "bottom",
+        ]
+      }
+      isVisible={false}
+      minWidth="revert"
+      onBlur={[Function]}
+      onDocumentClick={false}
+      onDocumentKeyDown={[Function]}
+      onFocus={[Function]}
+      onHidden={[Function]}
+      onMouseEnter={[Function]}
+      onMouseLeave={[Function]}
+      onPopperMouseEnter={[Function]}
+      onPopperMouseLeave={[Function]}
+      onTriggerEnter={[Function]}
+      placement="top"
+      popper={
+        <div
+          aria-live="off"
+          className="pf-v5-c-tooltip"
+          data-test="component-status-tooltip"
+          id="pf-tooltip-6"
+          role="tooltip"
+          style={
+            Object {
+              "maxWidth": "25rem",
+            }
+          }
+        >
+          <TooltipArrow />
+          <TooltipContent
+            isLeftAligned={false}
+          >
+            <React.Fragment>
+              <TextContent
+                style={
+                  Object {
+                    "color": "var(--pf-v5-global--palette--white)",
+                  }
+                }
+              >
+                <Text
+                  component="h4"
+                >
+                  Cluster Status
+                </Text>
+                <React.Fragment>
+                  <div
+                    className="kiali_f8qnpeg"
+                  >
+                    <PFBadge
+                      badge={
+                        Object {
+                          "badge": "C",
+                          "style": Object {
+                            "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                          },
+                          "tt": "Cluster",
+                        }
+                      }
+                      size="sm"
+                    />
+                    Kubernetes
+                    <span
+                      style={
+                        Object {
+                          "marginLeft": "0.25rem",
+                        }
+                      }
+                    >
+                      <Star />
+                    </span>
+                  </div>
+                  <IstioStatusList
+                    cluster="Kubernetes"
+                    status={
+                      Array [
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": false,
+                          "name": "grafana",
+                          "status": "Unhealthy",
+                        },
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": false,
+                          "name": "jaeger",
+                          "status": "NotReady",
+                        },
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": true,
+                          "name": "istio-egressgateway",
+                          "status": "Unhealthy",
+                        },
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": true,
+                          "name": "istio-ingressgateway",
+                          "status": "NotReady",
+                        },
+                      ]
+                    }
+                  />
+                </React.Fragment>
+                <div
+                  className="kiali_f1kewvaf"
+                >
+                  <span>
+                    More info at
+                  </span>
+                  <Link
+                    to="/mesh"
+                  >
+                    Mesh page
+                  </Link>
+                </div>
+              </TextContent>
+            </React.Fragment>
+          </TooltipContent>
+        </div>
+      }
+      popperRef={
+        Object {
+          "current": null,
+        }
+      }
+      positionModifiers={
+        Object {
+          "bottom": "pf-m-bottom",
+          "bottom-end": "pf-m-bottom-right",
+          "bottom-start": "pf-m-bottom-left",
+          "left": "pf-m-left",
+          "left-end": "pf-m-left-bottom",
+          "left-start": "pf-m-left-top",
+          "right": "pf-m-right",
+          "right-end": "pf-m-right-bottom",
+          "right-start": "pf-m-right-top",
+          "top": "pf-m-top",
+          "top-end": "pf-m-top-right",
+          "top-start": "pf-m-top-left",
+        }
+      }
+      trigger={
+        <React.Fragment>
+          <Label
+            className="kiali_frds3np"
+            color="blue"
+            data-test="cluster-icon"
+            icon={<Cluster />}
+          >
+            Kubernetes
+            <Icon
+              className="kiali_f10wsz75 kiali_f1h37jb8"
+              data-test="istio-status-danger"
+            >
+              <ExclamationCircleIcon />
+            </Icon>
+          </Label>
+        </React.Fragment>
+      }
+      zIndex={9999}
+    >
+      <div
         style={
           Object {
-            "color": "var(--pf-v5-global--palette--white)",
+            "display": "contents",
           }
         }
       >
-        <Text
-          component="h4"
+        <Label
+          className="kiali_frds3np"
+          color="blue"
+          data-test="cluster-icon"
+          icon={<Cluster />}
         >
-          Cluster Status
-        </Text>
-        <React.Fragment>
-          <div
-            className="kiali_f8qnpeg"
+          <span
+            className="pf-v5-c-label pf-m-blue kiali_frds3np"
+            data-test="cluster-icon"
           >
-            <PFBadge
-              badge={
-                Object {
-                  "badge": "C",
-                  "style": Object {
-                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
-                  },
-                  "tt": "Cluster",
-                }
-              }
-              size="sm"
-            />
-            Kubernetes
             <span
-              style={
-                Object {
-                  "marginLeft": "0.25rem",
-                }
-              }
+              className="pf-v5-c-label__content"
             >
-              <Star />
+              <span
+                className="pf-v5-c-label__icon"
+              >
+                <Cluster>
+                  <Icon
+                    className=""
+                  >
+                    <span
+                      className="pf-v5-c-icon"
+                    >
+                      <span
+                        className="pf-v5-c-icon__content"
+                      >
+                        <ClusterIcon>
+                          <svg
+                            aria-hidden={true}
+                            aria-labelledby={null}
+                            className="pf-v5-svg"
+                            fill="currentColor"
+                            height="1em"
+                            role="img"
+                            viewBox="0 0 1024 1024"
+                            width="1em"
+                          >
+                            <path
+                              d="M1013.1,330.877049 C1005.8,323.577049 997.2,319.977049 987.4,319.977049 L36.6,319.977049 C26.6,319.977049 18.2,323.577049 10.9,330.877049 C3.6,338.177049 0,346.777049 0,356.577049 L0,475.277049 C0,485.277049 3.6,493.677049 10.7,501.077049 C18,508.377049 26.4,511.977049 36.4,511.977049 L987.4,511.977049 C997.4,511.977049 1005.8,508.377049 1013.1,501.077049 C1020.4,493.777049 1024,485.377049 1024,475.377049 L1024,356.577049 C1024,346.577049 1020.4,338.177049 1013.1,330.877049 Z M128,447.977049 L64,447.977049 L64,383.977049 L128,383.977049 L128,447.977049 Z M256,447.977049 L192,447.977049 L192,383.977049 L256,383.977049 L256,447.977049 Z M384,447.977049 L320,447.977049 L320,383.977049 L384,383.977049 L384,447.977049 Z M512,447.977049 L448,447.977049 L448,383.977049 L512,383.977049 L512,447.977049 Z M960,447.977049 L896,447.977049 L896,383.977049 L960,383.977049 L960,447.977049 Z M0,245.177049 C0,235.977049 1.2,234.677049 9.6,226.477049 C9.6,226.477049 151.09,86.2970491 161.6,74.0070491 C172.11,61.7170491 185.5,64.2070491 185.5,64.2070491 L840.62,64.2070491 C840.62,64.2070491 852.42,62.8070491 863.11,74.4070491 C873.61,85.9970491 1013.5,226.407049 1013.5,226.407049 C1021.9,234.807049 1024,236.107049 1024,245.207049 C1024,254.807049 1012.3,256.007049 1000.7,256.007049 L22.1,256.007049 C10.8,256.077049 0,254.377049 0,245.177049 Z M1013.1,842.877049 C1005.8,835.577049 997.2,831.977049 987.4,831.977049 L36.6,831.977049 C26.6,831.977049 18.2,835.577049 10.9,842.877049 C3.6,850.177049 0,858.777049 0,868.577049 L0,987.277049 C0,997.277049 3.6,1005.67705 10.7,1013.07705 C18,1020.37705 26.4,1023.97705 36.4,1023.97705 L987.4,1023.97705 C997.4,1023.97705 1005.8,1020.37705 1013.1,1013.07705 C1020.4,1005.77705 1024,997.377049 1024,987.377049 L1024,868.577049 C1024,858.577049 1020.4,850.177049 1013.1,842.877049 Z M128,959.977049 L64,959.977049 L64,895.977049 L128,895.977049 L128,959.977049 Z M256,959.977049 L192,959.977049 L192,895.977049 L256,895.977049 L256,959.977049 Z M384,959.977049 L320,959.977049 L320,895.977049 L384,895.977049 L384,959.977049 Z M512,959.977049 L448,959.977049 L448,895.977049 L512,895.977049 L512,959.977049 Z M960,959.977049 L896,959.977049 L896,895.977049 L960,895.977049 L960,959.977049 Z M1013.1,586.877049 C1005.8,579.577049 997.2,575.977049 987.4,575.977049 L36.6,575.977049 C26.6,575.977049 18.2,579.577049 10.9,586.877049 C3.6,594.177049 0,602.777049 0,612.577049 L0,731.277049 C0,741.277049 3.6,749.677049 10.7,757.077049 C18,764.377049 26.4,767.977049 36.4,767.977049 L987.4,767.977049 C997.4,767.977049 1005.8,764.377049 1013.1,757.077049 C1020.4,749.777049 1024,741.377049 1024,731.377049 L1024,612.577049 C1024,602.577049 1020.4,594.177049 1013.1,586.877049 Z M128,703.977049 L64,703.977049 L64,639.977049 L128,639.977049 L128,703.977049 Z M256,703.977049 L192,703.977049 L192,639.977049 L256,639.977049 L256,703.977049 Z M384,703.977049 L320,703.977049 L320,639.977049 L384,639.977049 L384,703.977049 Z M512,703.977049 L448,703.977049 L448,639.977049 L512,639.977049 L512,703.977049 Z M960,703.977049 L896,703.977049 L896,639.977049 L960,639.977049 L960,703.977049 Z"
+                            />
+                          </svg>
+                        </ClusterIcon>
+                      </span>
+                    </span>
+                  </Icon>
+                </Cluster>
+              </span>
+              <span
+                className="pf-v5-c-label__text"
+              >
+                Kubernetes
+                <Icon
+                  className="kiali_f10wsz75 kiali_f1h37jb8"
+                  data-test="istio-status-danger"
+                >
+                  <span
+                    className="pf-v5-c-icon kiali_f10wsz75 kiali_f1h37jb8"
+                    data-test="istio-status-danger"
+                  >
+                    <span
+                      className="pf-v5-c-icon__content"
+                    >
+                      <ExclamationCircleIcon>
+                        <svg
+                          aria-hidden={true}
+                          aria-labelledby={null}
+                          className="pf-v5-svg"
+                          fill="currentColor"
+                          height="1em"
+                          role="img"
+                          viewBox="0 0 512 512"
+                          width="1em"
+                        >
+                          <path
+                            d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                          />
+                        </svg>
+                      </ExclamationCircleIcon>
+                    </span>
+                  </span>
+                </Icon>
+              </span>
             </span>
-          </div>
-          <IstioStatusList
-            cluster="Kubernetes"
-            status={
-              Array [
-                Object {
-                  "cluster": "Kubernetes",
-                  "isCore": false,
-                  "name": "grafana",
-                  "status": "Unhealthy",
-                },
-                Object {
-                  "cluster": "Kubernetes",
-                  "isCore": false,
-                  "name": "jaeger",
-                  "status": "NotReady",
-                },
-                Object {
-                  "cluster": "Kubernetes",
-                  "isCore": true,
-                  "name": "istio-egressgateway",
-                  "status": "Unhealthy",
-                },
-                Object {
-                  "cluster": "Kubernetes",
-                  "isCore": true,
-                  "name": "istio-ingressgateway",
-                  "status": "NotReady",
-                },
-              ]
-            }
-          />
-        </React.Fragment>
-        <div
-          className="kiali_f1kewvaf"
-        >
-          <span>
-            More info at
           </span>
-          <Link
-            to="/mesh"
-          >
-            Mesh page
-          </Link>
-        </div>
-      </TextContent>
-    </React.Fragment>
-  }
-  data-test="component-status-tooltip"
-  enableFlip={true}
-  maxWidth="25rem"
-  position="top"
->
-  <Label
-    className="kiali_frds3np"
-    color="blue"
-    data-test="cluster-icon"
-    icon={<Cluster />}
-  >
-    Kubernetes
-    <Icon
-      className="kiali_f10wsz75 kiali_f1h37jb8"
-      data-test="istio-status-danger"
-    >
-      <ExclamationCircleIcon />
-    </Icon>
-  </Label>
-</Tooltip>
+        </Label>
+      </div>
+    </Popper>
+  </Tooltip>
+</IstioStatusComponent>
 `;
 
 exports[`When there are not-ready components mixed with other not healthy components in core the Icon is displayed in red 1`] = `
-<Tooltip
-  content={
-    <React.Fragment>
-      <TextContent
+<IstioStatusComponent
+  lastRefreshAt={848152}
+  namespaces={
+    Array [
+      Object {
+        "cluster": "Kubernetes",
+        "name": "bookinfo",
+      },
+      Object {
+        "cluster": "Kubernetes",
+        "name": "istio-system",
+      },
+    ]
+  }
+  setIstioStatus={[MockFunction]}
+  statusMap={
+    Object {
+      "Kubernetes": Array [
+        Object {
+          "cluster": "Kubernetes",
+          "isCore": true,
+          "name": "istio-egressgateway",
+          "status": "Unhealthy",
+        },
+        Object {
+          "cluster": "Kubernetes",
+          "isCore": true,
+          "name": "istio-ingressgateway",
+          "status": "NotReady",
+        },
+      ],
+    }
+  }
+>
+  <Tooltip
+    content={
+      <React.Fragment>
+        <TextContent
+          style={
+            Object {
+              "color": "var(--pf-v5-global--palette--white)",
+            }
+          }
+        >
+          <Text
+            component="h4"
+          >
+            Cluster Status
+          </Text>
+          <React.Fragment>
+            <div
+              className="kiali_f8qnpeg"
+            >
+              <PFBadge
+                badge={
+                  Object {
+                    "badge": "C",
+                    "style": Object {
+                      "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                    },
+                    "tt": "Cluster",
+                  }
+                }
+                size="sm"
+              />
+              Kubernetes
+              <span
+                style={
+                  Object {
+                    "marginLeft": "0.25rem",
+                  }
+                }
+              >
+                <Star />
+              </span>
+            </div>
+            <IstioStatusList
+              cluster="Kubernetes"
+              status={
+                Array [
+                  Object {
+                    "cluster": "Kubernetes",
+                    "isCore": true,
+                    "name": "istio-egressgateway",
+                    "status": "Unhealthy",
+                  },
+                  Object {
+                    "cluster": "Kubernetes",
+                    "isCore": true,
+                    "name": "istio-ingressgateway",
+                    "status": "NotReady",
+                  },
+                ]
+              }
+            />
+          </React.Fragment>
+          <div
+            className="kiali_f1kewvaf"
+          >
+            <span>
+              More info at
+            </span>
+            <Link
+              to="/mesh"
+            >
+              Mesh page
+            </Link>
+          </div>
+        </TextContent>
+      </React.Fragment>
+    }
+    data-test="component-status-tooltip"
+    enableFlip={true}
+    maxWidth="25rem"
+    position="top"
+  >
+    <Popper
+      animationDuration={300}
+      appendTo={[Function]}
+      distance={15}
+      enableFlip={true}
+      entryDelay={300}
+      exitDelay={300}
+      flipBehavior={
+        Array [
+          "top",
+          "right",
+          "bottom",
+          "left",
+          "top",
+          "right",
+          "bottom",
+        ]
+      }
+      isVisible={false}
+      minWidth="revert"
+      onBlur={[Function]}
+      onDocumentClick={false}
+      onDocumentKeyDown={[Function]}
+      onFocus={[Function]}
+      onHidden={[Function]}
+      onMouseEnter={[Function]}
+      onMouseLeave={[Function]}
+      onPopperMouseEnter={[Function]}
+      onPopperMouseLeave={[Function]}
+      onTriggerEnter={[Function]}
+      placement="top"
+      popper={
+        <div
+          aria-live="off"
+          className="pf-v5-c-tooltip"
+          data-test="component-status-tooltip"
+          id="pf-tooltip-4"
+          role="tooltip"
+          style={
+            Object {
+              "maxWidth": "25rem",
+            }
+          }
+        >
+          <TooltipArrow />
+          <TooltipContent
+            isLeftAligned={false}
+          >
+            <React.Fragment>
+              <TextContent
+                style={
+                  Object {
+                    "color": "var(--pf-v5-global--palette--white)",
+                  }
+                }
+              >
+                <Text
+                  component="h4"
+                >
+                  Cluster Status
+                </Text>
+                <React.Fragment>
+                  <div
+                    className="kiali_f8qnpeg"
+                  >
+                    <PFBadge
+                      badge={
+                        Object {
+                          "badge": "C",
+                          "style": Object {
+                            "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                          },
+                          "tt": "Cluster",
+                        }
+                      }
+                      size="sm"
+                    />
+                    Kubernetes
+                    <span
+                      style={
+                        Object {
+                          "marginLeft": "0.25rem",
+                        }
+                      }
+                    >
+                      <Star />
+                    </span>
+                  </div>
+                  <IstioStatusList
+                    cluster="Kubernetes"
+                    status={
+                      Array [
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": true,
+                          "name": "istio-egressgateway",
+                          "status": "Unhealthy",
+                        },
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": true,
+                          "name": "istio-ingressgateway",
+                          "status": "NotReady",
+                        },
+                      ]
+                    }
+                  />
+                </React.Fragment>
+                <div
+                  className="kiali_f1kewvaf"
+                >
+                  <span>
+                    More info at
+                  </span>
+                  <Link
+                    to="/mesh"
+                  >
+                    Mesh page
+                  </Link>
+                </div>
+              </TextContent>
+            </React.Fragment>
+          </TooltipContent>
+        </div>
+      }
+      popperRef={
+        Object {
+          "current": null,
+        }
+      }
+      positionModifiers={
+        Object {
+          "bottom": "pf-m-bottom",
+          "bottom-end": "pf-m-bottom-right",
+          "bottom-start": "pf-m-bottom-left",
+          "left": "pf-m-left",
+          "left-end": "pf-m-left-bottom",
+          "left-start": "pf-m-left-top",
+          "right": "pf-m-right",
+          "right-end": "pf-m-right-bottom",
+          "right-start": "pf-m-right-top",
+          "top": "pf-m-top",
+          "top-end": "pf-m-top-right",
+          "top-start": "pf-m-top-left",
+        }
+      }
+      trigger={
+        <React.Fragment>
+          <Label
+            className="kiali_frds3np"
+            color="blue"
+            data-test="cluster-icon"
+            icon={<Cluster />}
+          >
+            Kubernetes
+            <Icon
+              className="kiali_f10wsz75 kiali_f1h37jb8"
+              data-test="istio-status-danger"
+            >
+              <ExclamationCircleIcon />
+            </Icon>
+          </Label>
+        </React.Fragment>
+      }
+      zIndex={9999}
+    >
+      <div
         style={
           Object {
-            "color": "var(--pf-v5-global--palette--white)",
+            "display": "contents",
           }
         }
       >
-        <Text
-          component="h4"
+        <Label
+          className="kiali_frds3np"
+          color="blue"
+          data-test="cluster-icon"
+          icon={<Cluster />}
         >
-          Cluster Status
-        </Text>
-        <React.Fragment>
-          <div
-            className="kiali_f8qnpeg"
+          <span
+            className="pf-v5-c-label pf-m-blue kiali_frds3np"
+            data-test="cluster-icon"
           >
-            <PFBadge
-              badge={
-                Object {
-                  "badge": "C",
-                  "style": Object {
-                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
-                  },
-                  "tt": "Cluster",
-                }
-              }
-              size="sm"
-            />
-            Kubernetes
             <span
-              style={
-                Object {
-                  "marginLeft": "0.25rem",
-                }
-              }
+              className="pf-v5-c-label__content"
             >
-              <Star />
+              <span
+                className="pf-v5-c-label__icon"
+              >
+                <Cluster>
+                  <Icon
+                    className=""
+                  >
+                    <span
+                      className="pf-v5-c-icon"
+                    >
+                      <span
+                        className="pf-v5-c-icon__content"
+                      >
+                        <ClusterIcon>
+                          <svg
+                            aria-hidden={true}
+                            aria-labelledby={null}
+                            className="pf-v5-svg"
+                            fill="currentColor"
+                            height="1em"
+                            role="img"
+                            viewBox="0 0 1024 1024"
+                            width="1em"
+                          >
+                            <path
+                              d="M1013.1,330.877049 C1005.8,323.577049 997.2,319.977049 987.4,319.977049 L36.6,319.977049 C26.6,319.977049 18.2,323.577049 10.9,330.877049 C3.6,338.177049 0,346.777049 0,356.577049 L0,475.277049 C0,485.277049 3.6,493.677049 10.7,501.077049 C18,508.377049 26.4,511.977049 36.4,511.977049 L987.4,511.977049 C997.4,511.977049 1005.8,508.377049 1013.1,501.077049 C1020.4,493.777049 1024,485.377049 1024,475.377049 L1024,356.577049 C1024,346.577049 1020.4,338.177049 1013.1,330.877049 Z M128,447.977049 L64,447.977049 L64,383.977049 L128,383.977049 L128,447.977049 Z M256,447.977049 L192,447.977049 L192,383.977049 L256,383.977049 L256,447.977049 Z M384,447.977049 L320,447.977049 L320,383.977049 L384,383.977049 L384,447.977049 Z M512,447.977049 L448,447.977049 L448,383.977049 L512,383.977049 L512,447.977049 Z M960,447.977049 L896,447.977049 L896,383.977049 L960,383.977049 L960,447.977049 Z M0,245.177049 C0,235.977049 1.2,234.677049 9.6,226.477049 C9.6,226.477049 151.09,86.2970491 161.6,74.0070491 C172.11,61.7170491 185.5,64.2070491 185.5,64.2070491 L840.62,64.2070491 C840.62,64.2070491 852.42,62.8070491 863.11,74.4070491 C873.61,85.9970491 1013.5,226.407049 1013.5,226.407049 C1021.9,234.807049 1024,236.107049 1024,245.207049 C1024,254.807049 1012.3,256.007049 1000.7,256.007049 L22.1,256.007049 C10.8,256.077049 0,254.377049 0,245.177049 Z M1013.1,842.877049 C1005.8,835.577049 997.2,831.977049 987.4,831.977049 L36.6,831.977049 C26.6,831.977049 18.2,835.577049 10.9,842.877049 C3.6,850.177049 0,858.777049 0,868.577049 L0,987.277049 C0,997.277049 3.6,1005.67705 10.7,1013.07705 C18,1020.37705 26.4,1023.97705 36.4,1023.97705 L987.4,1023.97705 C997.4,1023.97705 1005.8,1020.37705 1013.1,1013.07705 C1020.4,1005.77705 1024,997.377049 1024,987.377049 L1024,868.577049 C1024,858.577049 1020.4,850.177049 1013.1,842.877049 Z M128,959.977049 L64,959.977049 L64,895.977049 L128,895.977049 L128,959.977049 Z M256,959.977049 L192,959.977049 L192,895.977049 L256,895.977049 L256,959.977049 Z M384,959.977049 L320,959.977049 L320,895.977049 L384,895.977049 L384,959.977049 Z M512,959.977049 L448,959.977049 L448,895.977049 L512,895.977049 L512,959.977049 Z M960,959.977049 L896,959.977049 L896,895.977049 L960,895.977049 L960,959.977049 Z M1013.1,586.877049 C1005.8,579.577049 997.2,575.977049 987.4,575.977049 L36.6,575.977049 C26.6,575.977049 18.2,579.577049 10.9,586.877049 C3.6,594.177049 0,602.777049 0,612.577049 L0,731.277049 C0,741.277049 3.6,749.677049 10.7,757.077049 C18,764.377049 26.4,767.977049 36.4,767.977049 L987.4,767.977049 C997.4,767.977049 1005.8,764.377049 1013.1,757.077049 C1020.4,749.777049 1024,741.377049 1024,731.377049 L1024,612.577049 C1024,602.577049 1020.4,594.177049 1013.1,586.877049 Z M128,703.977049 L64,703.977049 L64,639.977049 L128,639.977049 L128,703.977049 Z M256,703.977049 L192,703.977049 L192,639.977049 L256,639.977049 L256,703.977049 Z M384,703.977049 L320,703.977049 L320,639.977049 L384,639.977049 L384,703.977049 Z M512,703.977049 L448,703.977049 L448,639.977049 L512,639.977049 L512,703.977049 Z M960,703.977049 L896,703.977049 L896,639.977049 L960,639.977049 L960,703.977049 Z"
+                            />
+                          </svg>
+                        </ClusterIcon>
+                      </span>
+                    </span>
+                  </Icon>
+                </Cluster>
+              </span>
+              <span
+                className="pf-v5-c-label__text"
+              >
+                Kubernetes
+                <Icon
+                  className="kiali_f10wsz75 kiali_f1h37jb8"
+                  data-test="istio-status-danger"
+                >
+                  <span
+                    className="pf-v5-c-icon kiali_f10wsz75 kiali_f1h37jb8"
+                    data-test="istio-status-danger"
+                  >
+                    <span
+                      className="pf-v5-c-icon__content"
+                    >
+                      <ExclamationCircleIcon>
+                        <svg
+                          aria-hidden={true}
+                          aria-labelledby={null}
+                          className="pf-v5-svg"
+                          fill="currentColor"
+                          height="1em"
+                          role="img"
+                          viewBox="0 0 512 512"
+                          width="1em"
+                        >
+                          <path
+                            d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                          />
+                        </svg>
+                      </ExclamationCircleIcon>
+                    </span>
+                  </span>
+                </Icon>
+              </span>
             </span>
-          </div>
-          <IstioStatusList
-            cluster="Kubernetes"
-            status={
-              Array [
-                Object {
-                  "cluster": "Kubernetes",
-                  "isCore": true,
-                  "name": "istio-egressgateway",
-                  "status": "Unhealthy",
-                },
-                Object {
-                  "cluster": "Kubernetes",
-                  "isCore": true,
-                  "name": "istio-ingressgateway",
-                  "status": "NotReady",
-                },
-              ]
-            }
-          />
-        </React.Fragment>
-        <div
-          className="kiali_f1kewvaf"
-        >
-          <span>
-            More info at
           </span>
-          <Link
-            to="/mesh"
-          >
-            Mesh page
-          </Link>
-        </div>
-      </TextContent>
-    </React.Fragment>
-  }
-  data-test="component-status-tooltip"
-  enableFlip={true}
-  maxWidth="25rem"
-  position="top"
->
-  <Label
-    className="kiali_frds3np"
-    color="blue"
-    data-test="cluster-icon"
-    icon={<Cluster />}
-  >
-    Kubernetes
-    <Icon
-      className="kiali_f10wsz75 kiali_f1h37jb8"
-      data-test="istio-status-danger"
-    >
-      <ExclamationCircleIcon />
-    </Icon>
-  </Label>
-</Tooltip>
+        </Label>
+      </div>
+    </Popper>
+  </Tooltip>
+</IstioStatusComponent>
 `;
 
 exports[`When there are not-ready components not mixed with other unhealthy components in addons renders the Icon in blue 1`] = `
-<Tooltip
-  content={
-    <React.Fragment>
-      <TextContent
+<IstioStatusComponent
+  lastRefreshAt={848152}
+  namespaces={
+    Array [
+      Object {
+        "cluster": "Kubernetes",
+        "name": "bookinfo",
+      },
+      Object {
+        "cluster": "Kubernetes",
+        "name": "istio-system",
+      },
+    ]
+  }
+  setIstioStatus={[MockFunction]}
+  statusMap={
+    Object {
+      "Kubernetes": Array [
+        Object {
+          "cluster": "Kubernetes",
+          "isCore": true,
+          "name": "istiod",
+          "status": "NotReady",
+        },
+      ],
+    }
+  }
+>
+  <Tooltip
+    content={
+      <React.Fragment>
+        <TextContent
+          style={
+            Object {
+              "color": "var(--pf-v5-global--palette--white)",
+            }
+          }
+        >
+          <Text
+            component="h4"
+          >
+            Cluster Status
+          </Text>
+          <React.Fragment>
+            <div
+              className="kiali_f8qnpeg"
+            >
+              <PFBadge
+                badge={
+                  Object {
+                    "badge": "C",
+                    "style": Object {
+                      "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                    },
+                    "tt": "Cluster",
+                  }
+                }
+                size="sm"
+              />
+              Kubernetes
+              <span
+                style={
+                  Object {
+                    "marginLeft": "0.25rem",
+                  }
+                }
+              >
+                <Star />
+              </span>
+            </div>
+            <IstioStatusList
+              cluster="Kubernetes"
+              status={
+                Array [
+                  Object {
+                    "cluster": "Kubernetes",
+                    "isCore": true,
+                    "name": "istiod",
+                    "status": "NotReady",
+                  },
+                ]
+              }
+            />
+          </React.Fragment>
+          <div
+            className="kiali_f1kewvaf"
+          >
+            <span>
+              More info at
+            </span>
+            <Link
+              to="/mesh"
+            >
+              Mesh page
+            </Link>
+          </div>
+        </TextContent>
+      </React.Fragment>
+    }
+    data-test="component-status-tooltip"
+    enableFlip={true}
+    maxWidth="25rem"
+    position="top"
+  >
+    <Popper
+      animationDuration={300}
+      appendTo={[Function]}
+      distance={15}
+      enableFlip={true}
+      entryDelay={300}
+      exitDelay={300}
+      flipBehavior={
+        Array [
+          "top",
+          "right",
+          "bottom",
+          "left",
+          "top",
+          "right",
+          "bottom",
+        ]
+      }
+      isVisible={false}
+      minWidth="revert"
+      onBlur={[Function]}
+      onDocumentClick={false}
+      onDocumentKeyDown={[Function]}
+      onFocus={[Function]}
+      onHidden={[Function]}
+      onMouseEnter={[Function]}
+      onMouseLeave={[Function]}
+      onPopperMouseEnter={[Function]}
+      onPopperMouseLeave={[Function]}
+      onTriggerEnter={[Function]}
+      placement="top"
+      popper={
+        <div
+          aria-live="off"
+          className="pf-v5-c-tooltip"
+          data-test="component-status-tooltip"
+          id="pf-tooltip-8"
+          role="tooltip"
+          style={
+            Object {
+              "maxWidth": "25rem",
+            }
+          }
+        >
+          <TooltipArrow />
+          <TooltipContent
+            isLeftAligned={false}
+          >
+            <React.Fragment>
+              <TextContent
+                style={
+                  Object {
+                    "color": "var(--pf-v5-global--palette--white)",
+                  }
+                }
+              >
+                <Text
+                  component="h4"
+                >
+                  Cluster Status
+                </Text>
+                <React.Fragment>
+                  <div
+                    className="kiali_f8qnpeg"
+                  >
+                    <PFBadge
+                      badge={
+                        Object {
+                          "badge": "C",
+                          "style": Object {
+                            "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                          },
+                          "tt": "Cluster",
+                        }
+                      }
+                      size="sm"
+                    />
+                    Kubernetes
+                    <span
+                      style={
+                        Object {
+                          "marginLeft": "0.25rem",
+                        }
+                      }
+                    >
+                      <Star />
+                    </span>
+                  </div>
+                  <IstioStatusList
+                    cluster="Kubernetes"
+                    status={
+                      Array [
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": true,
+                          "name": "istiod",
+                          "status": "NotReady",
+                        },
+                      ]
+                    }
+                  />
+                </React.Fragment>
+                <div
+                  className="kiali_f1kewvaf"
+                >
+                  <span>
+                    More info at
+                  </span>
+                  <Link
+                    to="/mesh"
+                  >
+                    Mesh page
+                  </Link>
+                </div>
+              </TextContent>
+            </React.Fragment>
+          </TooltipContent>
+        </div>
+      }
+      popperRef={
+        Object {
+          "current": null,
+        }
+      }
+      positionModifiers={
+        Object {
+          "bottom": "pf-m-bottom",
+          "bottom-end": "pf-m-bottom-right",
+          "bottom-start": "pf-m-bottom-left",
+          "left": "pf-m-left",
+          "left-end": "pf-m-left-bottom",
+          "left-start": "pf-m-left-top",
+          "right": "pf-m-right",
+          "right-end": "pf-m-right-bottom",
+          "right-start": "pf-m-right-top",
+          "top": "pf-m-top",
+          "top-end": "pf-m-top-right",
+          "top-start": "pf-m-top-left",
+        }
+      }
+      trigger={
+        <React.Fragment>
+          <Label
+            className="kiali_frds3np"
+            color="blue"
+            data-test="cluster-icon"
+            icon={<Cluster />}
+          >
+            Kubernetes
+            <Icon
+              className="kiali_f10wsz75 kiali_f1elceoh"
+              data-test="istio-status-info"
+            >
+              <InfoCircleIcon />
+            </Icon>
+          </Label>
+        </React.Fragment>
+      }
+      zIndex={9999}
+    >
+      <div
         style={
           Object {
-            "color": "var(--pf-v5-global--palette--white)",
+            "display": "contents",
           }
         }
       >
-        <Text
-          component="h4"
+        <Label
+          className="kiali_frds3np"
+          color="blue"
+          data-test="cluster-icon"
+          icon={<Cluster />}
         >
-          Cluster Status
-        </Text>
-        <React.Fragment>
-          <div
-            className="kiali_f8qnpeg"
+          <span
+            className="pf-v5-c-label pf-m-blue kiali_frds3np"
+            data-test="cluster-icon"
           >
-            <PFBadge
-              badge={
-                Object {
-                  "badge": "C",
-                  "style": Object {
-                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
-                  },
-                  "tt": "Cluster",
-                }
-              }
-              size="sm"
-            />
-            Kubernetes
             <span
-              style={
-                Object {
-                  "marginLeft": "0.25rem",
-                }
-              }
+              className="pf-v5-c-label__content"
             >
-              <Star />
+              <span
+                className="pf-v5-c-label__icon"
+              >
+                <Cluster>
+                  <Icon
+                    className=""
+                  >
+                    <span
+                      className="pf-v5-c-icon"
+                    >
+                      <span
+                        className="pf-v5-c-icon__content"
+                      >
+                        <ClusterIcon>
+                          <svg
+                            aria-hidden={true}
+                            aria-labelledby={null}
+                            className="pf-v5-svg"
+                            fill="currentColor"
+                            height="1em"
+                            role="img"
+                            viewBox="0 0 1024 1024"
+                            width="1em"
+                          >
+                            <path
+                              d="M1013.1,330.877049 C1005.8,323.577049 997.2,319.977049 987.4,319.977049 L36.6,319.977049 C26.6,319.977049 18.2,323.577049 10.9,330.877049 C3.6,338.177049 0,346.777049 0,356.577049 L0,475.277049 C0,485.277049 3.6,493.677049 10.7,501.077049 C18,508.377049 26.4,511.977049 36.4,511.977049 L987.4,511.977049 C997.4,511.977049 1005.8,508.377049 1013.1,501.077049 C1020.4,493.777049 1024,485.377049 1024,475.377049 L1024,356.577049 C1024,346.577049 1020.4,338.177049 1013.1,330.877049 Z M128,447.977049 L64,447.977049 L64,383.977049 L128,383.977049 L128,447.977049 Z M256,447.977049 L192,447.977049 L192,383.977049 L256,383.977049 L256,447.977049 Z M384,447.977049 L320,447.977049 L320,383.977049 L384,383.977049 L384,447.977049 Z M512,447.977049 L448,447.977049 L448,383.977049 L512,383.977049 L512,447.977049 Z M960,447.977049 L896,447.977049 L896,383.977049 L960,383.977049 L960,447.977049 Z M0,245.177049 C0,235.977049 1.2,234.677049 9.6,226.477049 C9.6,226.477049 151.09,86.2970491 161.6,74.0070491 C172.11,61.7170491 185.5,64.2070491 185.5,64.2070491 L840.62,64.2070491 C840.62,64.2070491 852.42,62.8070491 863.11,74.4070491 C873.61,85.9970491 1013.5,226.407049 1013.5,226.407049 C1021.9,234.807049 1024,236.107049 1024,245.207049 C1024,254.807049 1012.3,256.007049 1000.7,256.007049 L22.1,256.007049 C10.8,256.077049 0,254.377049 0,245.177049 Z M1013.1,842.877049 C1005.8,835.577049 997.2,831.977049 987.4,831.977049 L36.6,831.977049 C26.6,831.977049 18.2,835.577049 10.9,842.877049 C3.6,850.177049 0,858.777049 0,868.577049 L0,987.277049 C0,997.277049 3.6,1005.67705 10.7,1013.07705 C18,1020.37705 26.4,1023.97705 36.4,1023.97705 L987.4,1023.97705 C997.4,1023.97705 1005.8,1020.37705 1013.1,1013.07705 C1020.4,1005.77705 1024,997.377049 1024,987.377049 L1024,868.577049 C1024,858.577049 1020.4,850.177049 1013.1,842.877049 Z M128,959.977049 L64,959.977049 L64,895.977049 L128,895.977049 L128,959.977049 Z M256,959.977049 L192,959.977049 L192,895.977049 L256,895.977049 L256,959.977049 Z M384,959.977049 L320,959.977049 L320,895.977049 L384,895.977049 L384,959.977049 Z M512,959.977049 L448,959.977049 L448,895.977049 L512,895.977049 L512,959.977049 Z M960,959.977049 L896,959.977049 L896,895.977049 L960,895.977049 L960,959.977049 Z M1013.1,586.877049 C1005.8,579.577049 997.2,575.977049 987.4,575.977049 L36.6,575.977049 C26.6,575.977049 18.2,579.577049 10.9,586.877049 C3.6,594.177049 0,602.777049 0,612.577049 L0,731.277049 C0,741.277049 3.6,749.677049 10.7,757.077049 C18,764.377049 26.4,767.977049 36.4,767.977049 L987.4,767.977049 C997.4,767.977049 1005.8,764.377049 1013.1,757.077049 C1020.4,749.777049 1024,741.377049 1024,731.377049 L1024,612.577049 C1024,602.577049 1020.4,594.177049 1013.1,586.877049 Z M128,703.977049 L64,703.977049 L64,639.977049 L128,639.977049 L128,703.977049 Z M256,703.977049 L192,703.977049 L192,639.977049 L256,639.977049 L256,703.977049 Z M384,703.977049 L320,703.977049 L320,639.977049 L384,639.977049 L384,703.977049 Z M512,703.977049 L448,703.977049 L448,639.977049 L512,639.977049 L512,703.977049 Z M960,703.977049 L896,703.977049 L896,639.977049 L960,639.977049 L960,703.977049 Z"
+                            />
+                          </svg>
+                        </ClusterIcon>
+                      </span>
+                    </span>
+                  </Icon>
+                </Cluster>
+              </span>
+              <span
+                className="pf-v5-c-label__text"
+              >
+                Kubernetes
+                <Icon
+                  className="kiali_f10wsz75 kiali_f1elceoh"
+                  data-test="istio-status-info"
+                >
+                  <span
+                    className="pf-v5-c-icon kiali_f10wsz75 kiali_f1elceoh"
+                    data-test="istio-status-info"
+                  >
+                    <span
+                      className="pf-v5-c-icon__content"
+                    >
+                      <InfoCircleIcon>
+                        <svg
+                          aria-hidden={true}
+                          aria-labelledby={null}
+                          className="pf-v5-svg"
+                          fill="currentColor"
+                          height="1em"
+                          role="img"
+                          viewBox="0 0 512 512"
+                          width="1em"
+                        >
+                          <path
+                            d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 110c23.196 0 42 18.804 42 42s-18.804 42-42 42-42-18.804-42-42 18.804-42 42-42zm56 254c0 6.627-5.373 12-12 12h-88c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h12v-64h-12c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h64c6.627 0 12 5.373 12 12v100h12c6.627 0 12 5.373 12 12v24z"
+                          />
+                        </svg>
+                      </InfoCircleIcon>
+                    </span>
+                  </span>
+                </Icon>
+              </span>
             </span>
-          </div>
-          <IstioStatusList
-            cluster="Kubernetes"
-            status={
-              Array [
-                Object {
-                  "cluster": "Kubernetes",
-                  "isCore": true,
-                  "name": "istiod",
-                  "status": "NotReady",
-                },
-              ]
-            }
-          />
-        </React.Fragment>
-        <div
-          className="kiali_f1kewvaf"
-        >
-          <span>
-            More info at
           </span>
-          <Link
-            to="/mesh"
-          >
-            Mesh page
-          </Link>
-        </div>
-      </TextContent>
-    </React.Fragment>
-  }
-  data-test="component-status-tooltip"
-  enableFlip={true}
-  maxWidth="25rem"
-  position="top"
->
-  <Label
-    className="kiali_frds3np"
-    color="blue"
-    data-test="cluster-icon"
-    icon={<Cluster />}
-  >
-    Kubernetes
-    <Icon
-      className="kiali_f10wsz75 kiali_f1elceoh"
-      data-test="istio-status-info"
-    >
-      <InfoCircleIcon />
-    </Icon>
-  </Label>
-</Tooltip>
+        </Label>
+      </div>
+    </Popper>
+  </Tooltip>
+</IstioStatusComponent>
 `;
 
 exports[`When there are not-ready components not mixed with other unhealthy components in core renders the Icon in blue 1`] = `
-<Tooltip
-  content={
-    <React.Fragment>
-      <TextContent
+<IstioStatusComponent
+  lastRefreshAt={848152}
+  namespaces={
+    Array [
+      Object {
+        "cluster": "Kubernetes",
+        "name": "bookinfo",
+      },
+      Object {
+        "cluster": "Kubernetes",
+        "name": "istio-system",
+      },
+    ]
+  }
+  setIstioStatus={[MockFunction]}
+  statusMap={
+    Object {
+      "Kubernetes": Array [
+        Object {
+          "cluster": "Kubernetes",
+          "isCore": false,
+          "name": "jaeger",
+          "status": "NotReady",
+        },
+      ],
+    }
+  }
+>
+  <Tooltip
+    content={
+      <React.Fragment>
+        <TextContent
+          style={
+            Object {
+              "color": "var(--pf-v5-global--palette--white)",
+            }
+          }
+        >
+          <Text
+            component="h4"
+          >
+            Cluster Status
+          </Text>
+          <React.Fragment>
+            <div
+              className="kiali_f8qnpeg"
+            >
+              <PFBadge
+                badge={
+                  Object {
+                    "badge": "C",
+                    "style": Object {
+                      "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                    },
+                    "tt": "Cluster",
+                  }
+                }
+                size="sm"
+              />
+              Kubernetes
+              <span
+                style={
+                  Object {
+                    "marginLeft": "0.25rem",
+                  }
+                }
+              >
+                <Star />
+              </span>
+            </div>
+            <IstioStatusList
+              cluster="Kubernetes"
+              status={
+                Array [
+                  Object {
+                    "cluster": "Kubernetes",
+                    "isCore": false,
+                    "name": "jaeger",
+                    "status": "NotReady",
+                  },
+                ]
+              }
+            />
+          </React.Fragment>
+          <div
+            className="kiali_f1kewvaf"
+          >
+            <span>
+              More info at
+            </span>
+            <Link
+              to="/mesh"
+            >
+              Mesh page
+            </Link>
+          </div>
+        </TextContent>
+      </React.Fragment>
+    }
+    data-test="component-status-tooltip"
+    enableFlip={true}
+    maxWidth="25rem"
+    position="top"
+  >
+    <Popper
+      animationDuration={300}
+      appendTo={[Function]}
+      distance={15}
+      enableFlip={true}
+      entryDelay={300}
+      exitDelay={300}
+      flipBehavior={
+        Array [
+          "top",
+          "right",
+          "bottom",
+          "left",
+          "top",
+          "right",
+          "bottom",
+        ]
+      }
+      isVisible={false}
+      minWidth="revert"
+      onBlur={[Function]}
+      onDocumentClick={false}
+      onDocumentKeyDown={[Function]}
+      onFocus={[Function]}
+      onHidden={[Function]}
+      onMouseEnter={[Function]}
+      onMouseLeave={[Function]}
+      onPopperMouseEnter={[Function]}
+      onPopperMouseLeave={[Function]}
+      onTriggerEnter={[Function]}
+      placement="top"
+      popper={
+        <div
+          aria-live="off"
+          className="pf-v5-c-tooltip"
+          data-test="component-status-tooltip"
+          id="pf-tooltip-7"
+          role="tooltip"
+          style={
+            Object {
+              "maxWidth": "25rem",
+            }
+          }
+        >
+          <TooltipArrow />
+          <TooltipContent
+            isLeftAligned={false}
+          >
+            <React.Fragment>
+              <TextContent
+                style={
+                  Object {
+                    "color": "var(--pf-v5-global--palette--white)",
+                  }
+                }
+              >
+                <Text
+                  component="h4"
+                >
+                  Cluster Status
+                </Text>
+                <React.Fragment>
+                  <div
+                    className="kiali_f8qnpeg"
+                  >
+                    <PFBadge
+                      badge={
+                        Object {
+                          "badge": "C",
+                          "style": Object {
+                            "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
+                          },
+                          "tt": "Cluster",
+                        }
+                      }
+                      size="sm"
+                    />
+                    Kubernetes
+                    <span
+                      style={
+                        Object {
+                          "marginLeft": "0.25rem",
+                        }
+                      }
+                    >
+                      <Star />
+                    </span>
+                  </div>
+                  <IstioStatusList
+                    cluster="Kubernetes"
+                    status={
+                      Array [
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": false,
+                          "name": "jaeger",
+                          "status": "NotReady",
+                        },
+                      ]
+                    }
+                  />
+                </React.Fragment>
+                <div
+                  className="kiali_f1kewvaf"
+                >
+                  <span>
+                    More info at
+                  </span>
+                  <Link
+                    to="/mesh"
+                  >
+                    Mesh page
+                  </Link>
+                </div>
+              </TextContent>
+            </React.Fragment>
+          </TooltipContent>
+        </div>
+      }
+      popperRef={
+        Object {
+          "current": null,
+        }
+      }
+      positionModifiers={
+        Object {
+          "bottom": "pf-m-bottom",
+          "bottom-end": "pf-m-bottom-right",
+          "bottom-start": "pf-m-bottom-left",
+          "left": "pf-m-left",
+          "left-end": "pf-m-left-bottom",
+          "left-start": "pf-m-left-top",
+          "right": "pf-m-right",
+          "right-end": "pf-m-right-bottom",
+          "right-start": "pf-m-right-top",
+          "top": "pf-m-top",
+          "top-end": "pf-m-top-right",
+          "top-start": "pf-m-top-left",
+        }
+      }
+      trigger={
+        <React.Fragment>
+          <Label
+            className="kiali_frds3np"
+            color="blue"
+            data-test="cluster-icon"
+            icon={<Cluster />}
+          >
+            Kubernetes
+            <Icon
+              className="kiali_f10wsz75 kiali_f1elceoh"
+              data-test="istio-status-info"
+            >
+              <InfoCircleIcon />
+            </Icon>
+          </Label>
+        </React.Fragment>
+      }
+      zIndex={9999}
+    >
+      <div
         style={
           Object {
-            "color": "var(--pf-v5-global--palette--white)",
+            "display": "contents",
           }
         }
       >
-        <Text
-          component="h4"
+        <Label
+          className="kiali_frds3np"
+          color="blue"
+          data-test="cluster-icon"
+          icon={<Cluster />}
         >
-          Cluster Status
-        </Text>
-        <React.Fragment>
-          <div
-            className="kiali_f8qnpeg"
+          <span
+            className="pf-v5-c-label pf-m-blue kiali_frds3np"
+            data-test="cluster-icon"
           >
-            <PFBadge
-              badge={
-                Object {
-                  "badge": "C",
-                  "style": Object {
-                    "backgroundColor": "var(--pf-v5-global--palette--blue-300)",
-                  },
-                  "tt": "Cluster",
-                }
-              }
-              size="sm"
-            />
-            Kubernetes
             <span
-              style={
-                Object {
-                  "marginLeft": "0.25rem",
-                }
-              }
+              className="pf-v5-c-label__content"
             >
-              <Star />
+              <span
+                className="pf-v5-c-label__icon"
+              >
+                <Cluster>
+                  <Icon
+                    className=""
+                  >
+                    <span
+                      className="pf-v5-c-icon"
+                    >
+                      <span
+                        className="pf-v5-c-icon__content"
+                      >
+                        <ClusterIcon>
+                          <svg
+                            aria-hidden={true}
+                            aria-labelledby={null}
+                            className="pf-v5-svg"
+                            fill="currentColor"
+                            height="1em"
+                            role="img"
+                            viewBox="0 0 1024 1024"
+                            width="1em"
+                          >
+                            <path
+                              d="M1013.1,330.877049 C1005.8,323.577049 997.2,319.977049 987.4,319.977049 L36.6,319.977049 C26.6,319.977049 18.2,323.577049 10.9,330.877049 C3.6,338.177049 0,346.777049 0,356.577049 L0,475.277049 C0,485.277049 3.6,493.677049 10.7,501.077049 C18,508.377049 26.4,511.977049 36.4,511.977049 L987.4,511.977049 C997.4,511.977049 1005.8,508.377049 1013.1,501.077049 C1020.4,493.777049 1024,485.377049 1024,475.377049 L1024,356.577049 C1024,346.577049 1020.4,338.177049 1013.1,330.877049 Z M128,447.977049 L64,447.977049 L64,383.977049 L128,383.977049 L128,447.977049 Z M256,447.977049 L192,447.977049 L192,383.977049 L256,383.977049 L256,447.977049 Z M384,447.977049 L320,447.977049 L320,383.977049 L384,383.977049 L384,447.977049 Z M512,447.977049 L448,447.977049 L448,383.977049 L512,383.977049 L512,447.977049 Z M960,447.977049 L896,447.977049 L896,383.977049 L960,383.977049 L960,447.977049 Z M0,245.177049 C0,235.977049 1.2,234.677049 9.6,226.477049 C9.6,226.477049 151.09,86.2970491 161.6,74.0070491 C172.11,61.7170491 185.5,64.2070491 185.5,64.2070491 L840.62,64.2070491 C840.62,64.2070491 852.42,62.8070491 863.11,74.4070491 C873.61,85.9970491 1013.5,226.407049 1013.5,226.407049 C1021.9,234.807049 1024,236.107049 1024,245.207049 C1024,254.807049 1012.3,256.007049 1000.7,256.007049 L22.1,256.007049 C10.8,256.077049 0,254.377049 0,245.177049 Z M1013.1,842.877049 C1005.8,835.577049 997.2,831.977049 987.4,831.977049 L36.6,831.977049 C26.6,831.977049 18.2,835.577049 10.9,842.877049 C3.6,850.177049 0,858.777049 0,868.577049 L0,987.277049 C0,997.277049 3.6,1005.67705 10.7,1013.07705 C18,1020.37705 26.4,1023.97705 36.4,1023.97705 L987.4,1023.97705 C997.4,1023.97705 1005.8,1020.37705 1013.1,1013.07705 C1020.4,1005.77705 1024,997.377049 1024,987.377049 L1024,868.577049 C1024,858.577049 1020.4,850.177049 1013.1,842.877049 Z M128,959.977049 L64,959.977049 L64,895.977049 L128,895.977049 L128,959.977049 Z M256,959.977049 L192,959.977049 L192,895.977049 L256,895.977049 L256,959.977049 Z M384,959.977049 L320,959.977049 L320,895.977049 L384,895.977049 L384,959.977049 Z M512,959.977049 L448,959.977049 L448,895.977049 L512,895.977049 L512,959.977049 Z M960,959.977049 L896,959.977049 L896,895.977049 L960,895.977049 L960,959.977049 Z M1013.1,586.877049 C1005.8,579.577049 997.2,575.977049 987.4,575.977049 L36.6,575.977049 C26.6,575.977049 18.2,579.577049 10.9,586.877049 C3.6,594.177049 0,602.777049 0,612.577049 L0,731.277049 C0,741.277049 3.6,749.677049 10.7,757.077049 C18,764.377049 26.4,767.977049 36.4,767.977049 L987.4,767.977049 C997.4,767.977049 1005.8,764.377049 1013.1,757.077049 C1020.4,749.777049 1024,741.377049 1024,731.377049 L1024,612.577049 C1024,602.577049 1020.4,594.177049 1013.1,586.877049 Z M128,703.977049 L64,703.977049 L64,639.977049 L128,639.977049 L128,703.977049 Z M256,703.977049 L192,703.977049 L192,639.977049 L256,639.977049 L256,703.977049 Z M384,703.977049 L320,703.977049 L320,639.977049 L384,639.977049 L384,703.977049 Z M512,703.977049 L448,703.977049 L448,639.977049 L512,639.977049 L512,703.977049 Z M960,703.977049 L896,703.977049 L896,639.977049 L960,639.977049 L960,703.977049 Z"
+                            />
+                          </svg>
+                        </ClusterIcon>
+                      </span>
+                    </span>
+                  </Icon>
+                </Cluster>
+              </span>
+              <span
+                className="pf-v5-c-label__text"
+              >
+                Kubernetes
+                <Icon
+                  className="kiali_f10wsz75 kiali_f1elceoh"
+                  data-test="istio-status-info"
+                >
+                  <span
+                    className="pf-v5-c-icon kiali_f10wsz75 kiali_f1elceoh"
+                    data-test="istio-status-info"
+                  >
+                    <span
+                      className="pf-v5-c-icon__content"
+                    >
+                      <InfoCircleIcon>
+                        <svg
+                          aria-hidden={true}
+                          aria-labelledby={null}
+                          className="pf-v5-svg"
+                          fill="currentColor"
+                          height="1em"
+                          role="img"
+                          viewBox="0 0 512 512"
+                          width="1em"
+                        >
+                          <path
+                            d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 110c23.196 0 42 18.804 42 42s-18.804 42-42 42-42-18.804-42-42 18.804-42 42-42zm56 254c0 6.627-5.373 12-12 12h-88c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h12v-64h-12c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h64c6.627 0 12 5.373 12 12v100h12c6.627 0 12 5.373 12 12v24z"
+                          />
+                        </svg>
+                      </InfoCircleIcon>
+                    </span>
+                  </span>
+                </Icon>
+              </span>
             </span>
-          </div>
-          <IstioStatusList
-            cluster="Kubernetes"
-            status={
-              Array [
-                Object {
-                  "cluster": "Kubernetes",
-                  "isCore": false,
-                  "name": "jaeger",
-                  "status": "NotReady",
-                },
-              ]
-            }
-          />
-        </React.Fragment>
-        <div
-          className="kiali_f1kewvaf"
-        >
-          <span>
-            More info at
           </span>
-          <Link
-            to="/mesh"
-          >
-            Mesh page
-          </Link>
-        </div>
-      </TextContent>
-    </React.Fragment>
-  }
-  data-test="component-status-tooltip"
-  enableFlip={true}
-  maxWidth="25rem"
-  position="top"
->
-  <Label
-    className="kiali_frds3np"
-    color="blue"
-    data-test="cluster-icon"
-    icon={<Cluster />}
-  >
-    Kubernetes
-    <Icon
-      className="kiali_f10wsz75 kiali_f1elceoh"
-      data-test="istio-status-info"
-    >
-      <InfoCircleIcon />
-    </Icon>
-  </Label>
-</Tooltip>
+        </Label>
+      </div>
+    </Popper>
+  </Tooltip>
+</IstioStatusComponent>
 `;

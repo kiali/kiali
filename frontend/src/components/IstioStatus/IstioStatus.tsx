@@ -21,13 +21,11 @@ import {
   QuestionCircleIcon
 } from '@patternfly/react-icons';
 import { KialiDispatch } from 'types/Redux';
-import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
 import { connectRefresh } from '../Refresh/connectRefresh';
 import { kialiStyle } from 'styles/StyleUtils';
 import { IconProps, createIcon, KialiIcon } from 'config/KialiIcon';
-import { Link } from 'react-router-dom-v5-compat';
+import { Link, useLocation } from 'react-router-dom-v5-compat';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { MASTHEAD } from 'components/Nav/Masthead/Masthead';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
 import { homeCluster } from '../../config';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
@@ -40,7 +38,6 @@ type ReduxStateProps = {
 };
 
 type ReduxDispatchProps = {
-  refreshNamespaces: () => void;
   setIstioStatus: (statusMap: ClusterStatusMap) => void;
 };
 
@@ -55,7 +52,6 @@ type Props = ReduxStateProps &
   ReduxDispatchProps & {
     icons?: StatusIcons;
     lastRefreshAt: TimeInMilliseconds;
-    location?: string;
   };
 
 const ValidToColor = {
@@ -107,12 +103,9 @@ export const meshLinkStyle = kialiStyle({
 
 export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
+  const { pathname } = useLocation();
 
-  const { namespaces, setIstioStatus, refreshNamespaces, lastRefreshAt } = props;
-
-  React.useEffect(() => {
-    refreshNamespaces();
-  }, [refreshNamespaces]);
+  const { namespaces, setIstioStatus, lastRefreshAt } = props;
 
   const fetchStatus = React.useCallback((): void => {
     API.getIstioStatus()
@@ -143,7 +136,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   React.useEffect(() => {
     // retrieve status for all clusters
     fetchStatus();
-  }, [lastRefreshAt, fetchStatus]);
+  }, [pathname, lastRefreshAt, fetchStatus]);
 
   const getSeverity = (components: ComponentStatus[]): number =>
     Math.max(
@@ -179,7 +172,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
               <IstioStatusList key={cl} status={props.statusMap[cl] || []} cluster={cl} />
             </>
           ))}
-          {!props.location?.endsWith('/mesh') && isControlPlaneAccessible() && (
+          {!pathname.endsWith('/mesh') && isControlPlaneAccessible() && (
             <div className={meshLinkStyle}>
               <span>{t('More info at')}</span>
               <Link to="/mesh">{t('Mesh page')}</Link>
@@ -220,7 +213,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     }, true);
   };
 
-  const tooltipPosition = props.location === MASTHEAD ? TooltipPosition.bottom : TooltipPosition.top;
+  const tooltipPosition = TooltipPosition.top;
 
   let statusIcon: React.ReactElement;
 
@@ -280,16 +273,13 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
 };
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
-  statusMap: istioStatusSelector(state),
-  namespaces: namespaceItemsSelector(state)
+  namespaces: namespaceItemsSelector(state),
+  statusMap: istioStatusSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setIstioStatus: (statusMap: ClusterStatusMap) => {
     dispatch(IstioStatusActions.setinfo(statusMap));
-  },
-  refreshNamespaces: () => {
-    dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded());
   }
 });
 
