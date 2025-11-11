@@ -36,6 +36,9 @@ type GraphCache interface {
 
 	// ActiveSessions returns the number of sessions with cached graphs
 	ActiveSessions() int
+
+	// SetGraphGenerator sets the graph generator function for background refresh
+	SetGraphGenerator(generator GraphGenerator)
 }
 
 // CachedGraph represents a user's cached graph with metadata
