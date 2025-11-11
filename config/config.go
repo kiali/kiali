@@ -988,7 +988,7 @@ func NewConfig() (c *Config) {
 				ZtunnelConfig: 2 * time.Minute,
 			},
 			GraphCache: GraphCacheConfig{
-				Enabled:           false, // Disabled by default
+				Enabled:           true,
 				RefreshInterval:   "60s",
 				InactivityTimeout: "10m",
 				MaxCacheMemoryMB:  100,

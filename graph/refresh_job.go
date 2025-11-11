@@ -16,7 +16,7 @@ type GraphGenerator func(ctx context.Context, options Options) (TrafficMap, erro
 // It runs on a ticker and updates the cached graph with current data.
 // Each browser session (identified by sessionID) gets its own refresh job.
 type RefreshJob struct {
-	cache           *graphCacheImpl
+	cache           *GraphCacheImpl
 	cancel          context.CancelFunc
 	ctx             context.Context
 	graphGenerator  GraphGenerator
@@ -34,7 +34,7 @@ func NewRefreshJob(
 	ctx context.Context,
 	sessionID string,
 	options Options,
-	cache *graphCacheImpl,
+	cache *GraphCacheImpl,
 	generator GraphGenerator,
 	refreshInterval time.Duration,
 ) *RefreshJob {
@@ -210,7 +210,7 @@ func NewRefreshJobManager(ctx context.Context) *RefreshJobManager {
 func (m *RefreshJobManager) StartJob(
 	sessionID string,
 	options Options,
-	cache *graphCacheImpl,
+	cache *GraphCacheImpl,
 	generator GraphGenerator,
 	refreshInterval time.Duration,
 ) {
@@ -274,19 +274,4 @@ func (m *RefreshJobManager) HasJob(sessionID string) bool {
 	defer m.mu.RUnlock()
 	_, exists := m.jobs[sessionID]
 	return exists
-}
-
-// SetGraphGenerator sets the graph generator for the cache.
-// This must be called before starting any refresh jobs.
-func (c *graphCacheImpl) SetGraphGenerator(generator GraphGenerator) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.graphGenerator = generator
-}
-
-// GetGraphGenerator returns the graph generator if set.
-func (c *graphCacheImpl) GetGraphGenerator() GraphGenerator {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.graphGenerator
 }
