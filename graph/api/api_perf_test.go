@@ -1148,7 +1148,7 @@ func BenchmarkVersionedAppGraph(b *testing.B) {
 		options := graph.NewOptions(r, biz)
 		options.Rates.Ambient = graph.AmbientTrafficNone
 		options.Appenders.AppenderNames = []string{"deadNode", "istio", "serviceEntry", "meshCheck", "workloadEntry", "health"}
-		code, config := graphNamespacesIstio(r.Context(), biz, client, options)
+		code, config, _ := graphNamespacesIstio(r.Context(), biz, client, options)
 		respond(w, code, config)
 	})
 
