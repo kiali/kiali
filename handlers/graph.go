@@ -34,6 +34,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime/debug"
+	"time"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -155,76 +156,136 @@ func graphNamespacesWithCache(
 ) (int, interface{}) {
 	// If cache is disabled, use traditional path
 	if !graphCache.Enabled() {
-		return api.GraphNamespaces(ctx, business, prom, o)
+		code, graphConfig, _ := api.GraphNamespaces(ctx, business, prom, o)
+		return code, graphConfig
 	}
 
 	sessionID := o.TelemetryOptions.SessionID
 	if sessionID == "" {
 		log.Tracef("No session ID found in options (unexpected), using non-cached graph generation")
-		return api.GraphNamespaces(ctx, business, prom, o)
+		code, graphConfig, _ := api.GraphNamespaces(ctx, business, prom, o)
+		return code, graphConfig
 	}
 
 	// Check cache for existing graph
 	if cached, found := graphCache.GetSessionGraph(sessionID); found {
-		log.Tracef("Cache hit for session %s", sessionID)
-		// Return cached graph with metadata
-		return wrapWithCacheMetadata(ctx, cached.TrafficMap, o, cached, true)
+		// Verify that the cached graph matches the requested options
+		if graphOptionsMatch(cached.Options, o) {
+			log.Tracef("Cache hit for session %s (options match)", sessionID)
+			// Generate vendor config from cached TrafficMap
+			code, graphConfig := generateGraphFromTrafficMap(ctx, cached.TrafficMap, o)
+			return code, graphConfig
+		}
+
+		// Options changed - invalidate cache and refresh job
+		log.Infof("Cache invalidated for session %s (options changed)", sessionID)
+		graphCache.Evict(sessionID)
+		refreshJobManager.StopJob(sessionID)
 	}
 
-	// Cache miss - generate new graph
+	// Cache miss (or invalidated) - generate new graph
 	log.Tracef("Cache miss for session %s, generating new graph", sessionID)
-	code, payload := api.GraphNamespaces(ctx, business, prom, o)
+
+	// Generate graph (returns both vendor config and TrafficMap)
+	code, graphConfig, trafficMap := api.GraphNamespaces(ctx, business, prom, o)
 
 	if code != http.StatusOK {
-		return code, payload
+		return code, graphConfig
 	}
 
-	// Extract TrafficMap from payload for caching
-	// The payload is the vendor config, we need to get the TrafficMap
-	// For now, we'll generate a new TrafficMap using the same options
-	// TODO: Optimize this to avoid regenerating
+	// Cache the TrafficMap
+	refreshInterval := graphCache.Config().RefreshInterval
+	cached := &graph.CachedGraph{
+		LastAccessed:    time.Now(),
+		Options:         o,
+		RefreshInterval: refreshInterval,
+		Timestamp:       time.Now(),
+		TrafficMap:      trafficMap,
+	}
 
-	// Create a GraphGenerator for background refresh
+	if err := graphCache.SetSessionGraph(sessionID, cached); err != nil {
+		log.Errorf("Failed to cache graph for session %s: %v", sessionID, err)
+		// Continue anyway - we can still return the graph
+	}
+
+	// Set up graph generator for background refresh (one time setup)
 	generator := createGraphGenerator(business, prom)
-	graphCache.SetGraphGenerator(generator)
+	if graphCache.GetGraphGenerator() == nil {
+		graphCache.SetGraphGenerator(generator)
+	}
 
-	// Cache the result
-	// Note: For simplicity, we're not caching the full config yet, just generating a placeholder
-	// This will be improved in a follow-up
+	// Start background refresh job for this session
+	// Note: RefreshJob needs the concrete cache implementation for internal methods
+	// This is safe because NewGraphCache always returns *GraphCacheImpl
+	cacheImpl := graphCache.(*graph.GraphCacheImpl)
+	refreshJobManager.StartJob(sessionID, o, cacheImpl, generator, refreshInterval)
 
-	return code, payload
+	return code, graphConfig
 }
 
-// graphNodeWithCache is no longer used - node graphs are not cached.
-// Keeping this as a placeholder in case we want to add node graph caching in the future.
-// Currently, only namespace graphs use caching via graphNamespacesWithCache.
+// graphOptionsMatch determines if two graph options are equivalent for caching purposes.
+// It compares the key fields that affect graph generation, ignoring QueryTime differences
+// within the refresh interval (since background refresh handles time progression).
+func graphOptionsMatch(cached, requested graph.Options) bool {
+	// Compare namespaces (critical - different namespaces = different graph)
+	if len(cached.TelemetryOptions.Namespaces) != len(requested.TelemetryOptions.Namespaces) {
+		return false
+	}
+	for ns := range requested.TelemetryOptions.Namespaces {
+		if _, exists := cached.TelemetryOptions.Namespaces[ns]; !exists {
+			return false
+		}
+	}
+
+	// Compare duration (different time range = different graph)
+	if cached.TelemetryOptions.CommonOptions.Duration != requested.TelemetryOptions.CommonOptions.Duration {
+		return false
+	}
+
+	// Compare graph type (app vs workload vs service)
+	if cached.TelemetryOptions.CommonOptions.GraphType != requested.TelemetryOptions.CommonOptions.GraphType {
+		return false
+	}
+
+	// Compare inject service nodes flag
+	if cached.TelemetryOptions.InjectServiceNodes != requested.TelemetryOptions.InjectServiceNodes {
+		return false
+	}
+
+	// Compare include idle edges flag
+	if cached.TelemetryOptions.IncludeIdleEdges != requested.TelemetryOptions.IncludeIdleEdges {
+		return false
+	}
+
+	// Compare appenders (different appenders = different graph decoration)
+	if len(cached.TelemetryOptions.Appenders.AppenderNames) != len(requested.TelemetryOptions.Appenders.AppenderNames) {
+		return false
+	}
+	for i, name := range cached.TelemetryOptions.Appenders.AppenderNames {
+		if name != requested.TelemetryOptions.Appenders.AppenderNames[i] {
+			return false
+		}
+	}
+
+	// Note: We intentionally do NOT compare QueryTime here
+	// The background refresh job handles moving the time window forward
+	// Users expect cached graphs to update over time automatically
+
+	return true
+}
 
 // createGraphGenerator creates a GraphGenerator function for background refresh
 func createGraphGenerator(business *business.Layer, prom prometheus.ClientInterface) graph.GraphGenerator {
 	return func(ctx context.Context, options graph.Options) (graph.TrafficMap, error) {
-		// Call the appropriate graph generation based on graph kind
-		// For now, use GraphNamespaces as the default
-		code, _ := api.GraphNamespaces(ctx, business, prom, options)
-		if code != http.StatusOK {
-			return nil, fmt.Errorf("graph generation failed with code %d", code)
-		}
-
-		// TODO: Extract and return the actual TrafficMap
-		// For now, return empty map as placeholder
-		return graph.TrafficMap{}, nil
+		// Call GraphNamespaces and extract just the TrafficMap
+		_, _, trafficMap := api.GraphNamespaces(ctx, business, prom, options)
+		return trafficMap, nil
 	}
 }
 
-// wrapWithCacheMetadata adds cache metadata to graph response
-func wrapWithCacheMetadata(
-	ctx context.Context,
-	trafficMap graph.TrafficMap,
-	o graph.Options,
-	cached *graph.CachedGraph,
-	fromCache bool,
-) (int, interface{}) {
-	// Generate the vendor config from TrafficMap
-	// TODO: This needs to properly convert TrafficMap to vendor config
-	// For now, we'll just pass through to the API layer
-	return http.StatusOK, nil
+// generateGraphFromTrafficMap converts a cached TrafficMap to vendor config
+// This is used when serving from cache
+func generateGraphFromTrafficMap(ctx context.Context, trafficMap graph.TrafficMap, o graph.Options) (int, interface{}) {
+	// Convert the TrafficMap to vendor-specific config format
+	return api.GenerateGraph(ctx, trafficMap, o)
 }

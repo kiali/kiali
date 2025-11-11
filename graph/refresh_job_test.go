@@ -44,7 +44,7 @@ func TestNewRefreshJob(t *testing.T) {
 		MaxCacheMemoryMB:  50,
 		RefreshInterval:   30 * time.Second,
 	}
-	cache := NewGraphCache(ctx, config).(*graphCacheImpl)
+	cache := NewGraphCache(ctx, config).(*GraphCacheImpl)
 	generator := createMockGenerator(5, false)
 	options := Options{
 		TelemetryOptions: TelemetryOptions{
@@ -71,7 +71,7 @@ func TestRefreshJob_Stop(t *testing.T) {
 		MaxCacheMemoryMB:  50,
 		RefreshInterval:   30 * time.Second,
 	}
-	cache := NewGraphCache(ctx, config).(*graphCacheImpl)
+	cache := NewGraphCache(ctx, config).(*GraphCacheImpl)
 	generator := createMockGenerator(5, false)
 	options := Options{
 		TelemetryOptions: TelemetryOptions{
@@ -101,7 +101,7 @@ func TestRefreshJob_RefreshUpdatesQueryTime(t *testing.T) {
 		MaxCacheMemoryMB:  50,
 		RefreshInterval:   1 * time.Hour, // Long interval, we'll call refresh manually
 	}
-	cache := NewGraphCache(ctx, config).(*graphCacheImpl)
+	cache := NewGraphCache(ctx, config).(*GraphCacheImpl)
 
 	// Track QueryTime values passed to generator
 	var queryTimes []int64
@@ -157,7 +157,7 @@ func TestRefreshJob_InactivityTimeout(t *testing.T) {
 		MaxCacheMemoryMB:  50,
 		RefreshInterval:   1 * time.Hour,
 	}
-	cache := NewGraphCache(ctx, config).(*graphCacheImpl)
+	cache := NewGraphCache(ctx, config).(*GraphCacheImpl)
 	generator := createMockGenerator(5, false)
 	options := Options{
 		TelemetryOptions: TelemetryOptions{
@@ -201,7 +201,7 @@ func TestRefreshJob_GraphNotFound(t *testing.T) {
 		MaxCacheMemoryMB:  50,
 		RefreshInterval:   30 * time.Second,
 	}
-	cache := NewGraphCache(ctx, config).(*graphCacheImpl)
+	cache := NewGraphCache(ctx, config).(*GraphCacheImpl)
 	generator := createMockGenerator(5, false)
 	options := Options{
 		TelemetryOptions: TelemetryOptions{
@@ -229,7 +229,7 @@ func TestRefreshJob_GeneratorError(t *testing.T) {
 		MaxCacheMemoryMB:  50,
 		RefreshInterval:   1 * time.Hour,
 	}
-	cache := NewGraphCache(ctx, config).(*graphCacheImpl)
+	cache := NewGraphCache(ctx, config).(*GraphCacheImpl)
 
 	// Generator that fails
 	generator := createMockGenerator(5, true)
@@ -278,7 +278,7 @@ func TestRefreshJob_StartAndStop(t *testing.T) {
 		MaxCacheMemoryMB:  50,
 		RefreshInterval:   100 * time.Millisecond, // Fast interval for testing
 	}
-	cache := NewGraphCache(ctx, config).(*graphCacheImpl)
+	cache := NewGraphCache(ctx, config).(*GraphCacheImpl)
 
 	// Count how many times generator is called
 	var callCount int32
@@ -329,7 +329,7 @@ func TestRefreshJob_ContextCancellation(t *testing.T) {
 		MaxCacheMemoryMB:  50,
 		RefreshInterval:   100 * time.Millisecond,
 	}
-	cache := NewGraphCache(ctx, config).(*graphCacheImpl)
+	cache := NewGraphCache(ctx, config).(*GraphCacheImpl)
 	generator := createMockGenerator(5, false)
 	cache.SetGraphGenerator(generator)
 
@@ -396,7 +396,7 @@ func TestRefreshJobManager_StartJob(t *testing.T) {
 		MaxCacheMemoryMB:  50,
 		RefreshInterval:   1 * time.Hour,
 	}
-	cache := NewGraphCache(ctx, config).(*graphCacheImpl)
+	cache := NewGraphCache(ctx, config).(*GraphCacheImpl)
 	generator := createMockGenerator(5, false)
 	options := Options{
 		TelemetryOptions: TelemetryOptions{
@@ -442,7 +442,7 @@ func TestRefreshJobManager_StopJob(t *testing.T) {
 		MaxCacheMemoryMB:  50,
 		RefreshInterval:   1 * time.Hour,
 	}
-	cache := NewGraphCache(ctx, config).(*graphCacheImpl)
+	cache := NewGraphCache(ctx, config).(*GraphCacheImpl)
 	generator := createMockGenerator(5, false)
 	options := Options{
 		TelemetryOptions: TelemetryOptions{
@@ -488,7 +488,7 @@ func TestRefreshJobManager_ReplaceJob(t *testing.T) {
 		MaxCacheMemoryMB:  50,
 		RefreshInterval:   1 * time.Hour,
 	}
-	cache := NewGraphCache(ctx, config).(*graphCacheImpl)
+	cache := NewGraphCache(ctx, config).(*GraphCacheImpl)
 	generator := createMockGenerator(5, false)
 	options1 := Options{
 		TelemetryOptions: TelemetryOptions{
@@ -546,7 +546,7 @@ func TestRefreshJobManager_StopAll(t *testing.T) {
 		MaxCacheMemoryMB:  50,
 		RefreshInterval:   1 * time.Hour,
 	}
-	cache := NewGraphCache(ctx, config).(*graphCacheImpl)
+	cache := NewGraphCache(ctx, config).(*GraphCacheImpl)
 	generator := createMockGenerator(5, false)
 
 	manager := NewRefreshJobManager(ctx)
@@ -595,7 +595,7 @@ func TestRefreshJobManager_ConcurrentAccess(t *testing.T) {
 		MaxCacheMemoryMB:  50,
 		RefreshInterval:   1 * time.Hour,
 	}
-	cache := NewGraphCache(ctx, config).(*graphCacheImpl)
+	cache := NewGraphCache(ctx, config).(*GraphCacheImpl)
 	generator := createMockGenerator(5, false)
 
 	manager := NewRefreshJobManager(ctx)
@@ -670,7 +670,7 @@ func TestGraphCache_SetAndGetGraphGenerator(t *testing.T) {
 		RefreshInterval:   30 * time.Second,
 	}
 
-	cache := NewGraphCache(ctx, config).(*graphCacheImpl)
+	cache := NewGraphCache(ctx, config).(*GraphCacheImpl)
 	generator := createMockGenerator(5, false)
 
 	// Should be nil initially

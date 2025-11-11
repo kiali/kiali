@@ -39,6 +39,12 @@ type GraphCache interface {
 
 	// SetGraphGenerator sets the graph generator function for background refresh
 	SetGraphGenerator(generator GraphGenerator)
+
+	// GetGraphGenerator returns the current graph generator (may be nil)
+	GetGraphGenerator() GraphGenerator
+
+	// Config returns the cache configuration
+	Config() *GraphCacheConfig
 }
 
 // CachedGraph represents a user's cached graph with metadata
@@ -60,8 +66,9 @@ type GraphCacheConfig struct {
 	RefreshInterval   time.Duration // Default refresh interval
 }
 
-// graphCacheImpl implements GraphCache interface
-type graphCacheImpl struct {
+// GraphCacheImpl implements GraphCache interface
+// Exported so RefreshJob can access internal methods (type assertion from interface)
+type GraphCacheImpl struct {
 	config         *GraphCacheConfig
 	ctx            context.Context
 	graphGenerator GraphGenerator // Injected function for refresh jobs to regenerate graphs
@@ -81,7 +88,7 @@ func NewGraphCache(ctx context.Context, config *GraphCacheConfig) GraphCache {
 		}
 	}
 
-	return &graphCacheImpl{
+	return &GraphCacheImpl{
 		config:        config,
 		ctx:           ctx,
 		sessionGraphs: make(map[string]*CachedGraph),
@@ -89,7 +96,7 @@ func NewGraphCache(ctx context.Context, config *GraphCacheConfig) GraphCache {
 }
 
 // GetSessionGraph retrieves a session's cached graph and updates last accessed time
-func (c *graphCacheImpl) GetSessionGraph(sessionID string) (*CachedGraph, bool) {
+func (c *GraphCacheImpl) GetSessionGraph(sessionID string) (*CachedGraph, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -108,7 +115,7 @@ func (c *graphCacheImpl) GetSessionGraph(sessionID string) (*CachedGraph, bool) 
 
 // getSessionGraphInternal retrieves a session's cached graph without updating last accessed time
 // This is used internally by refresh jobs to check inactivity without affecting the access time
-func (c *graphCacheImpl) getSessionGraphInternal(sessionID string) (*CachedGraph, bool) {
+func (c *GraphCacheImpl) getSessionGraphInternal(sessionID string) (*CachedGraph, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -117,7 +124,7 @@ func (c *graphCacheImpl) getSessionGraphInternal(sessionID string) (*CachedGraph
 }
 
 // SetSessionGraph stores a graph for a session
-func (c *graphCacheImpl) SetSessionGraph(sessionID string, cached *CachedGraph) error {
+func (c *GraphCacheImpl) SetSessionGraph(sessionID string, cached *CachedGraph) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -140,7 +147,7 @@ func (c *graphCacheImpl) SetSessionGraph(sessionID string, cached *CachedGraph) 
 }
 
 // Evict removes a session's graph from cache
-func (c *graphCacheImpl) Evict(sessionID string) {
+func (c *GraphCacheImpl) Evict(sessionID string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -151,7 +158,7 @@ func (c *graphCacheImpl) Evict(sessionID string) {
 }
 
 // Clear removes all cached graphs
-func (c *graphCacheImpl) Clear() {
+func (c *GraphCacheImpl) Clear() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -162,7 +169,7 @@ func (c *graphCacheImpl) Clear() {
 }
 
 // TotalMemoryMB returns total cache memory usage
-func (c *graphCacheImpl) TotalMemoryMB() float64 {
+func (c *GraphCacheImpl) TotalMemoryMB() float64 {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -174,12 +181,12 @@ func (c *graphCacheImpl) TotalMemoryMB() float64 {
 }
 
 // Enabled returns true if graph caching is enabled
-func (c *graphCacheImpl) Enabled() bool {
+func (c *GraphCacheImpl) Enabled() bool {
 	return c.config.Enabled
 }
 
 // ActiveSessions returns the number of sessions with cached graphs
-func (c *graphCacheImpl) ActiveSessions() int {
+func (c *GraphCacheImpl) ActiveSessions() int {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return len(c.sessionGraphs)
@@ -187,7 +194,7 @@ func (c *graphCacheImpl) ActiveSessions() int {
 
 // checkMemoryLimits ensures we don't exceed memory limits
 // Must be called with write lock held
-func (c *graphCacheImpl) checkMemoryLimits(sessionID string, newCached *CachedGraph) error {
+func (c *GraphCacheImpl) checkMemoryLimits(sessionID string, newCached *CachedGraph) error {
 	// Calculate current memory usage
 	currentMemory := c.totalMemoryMBLocked()
 
@@ -212,7 +219,7 @@ func (c *graphCacheImpl) checkMemoryLimits(sessionID string, newCached *CachedGr
 }
 
 // totalMemoryMBLocked returns total memory usage (must be called with lock held)
-func (c *graphCacheImpl) totalMemoryMBLocked() float64 {
+func (c *GraphCacheImpl) totalMemoryMBLocked() float64 {
 	var totalMB float64
 	for _, cached := range c.sessionGraphs {
 		totalMB += cached.estimatedMB
@@ -222,7 +229,7 @@ func (c *graphCacheImpl) totalMemoryMBLocked() float64 {
 
 // evictLRU evicts least recently accessed sessions until targetMB is freed
 // Must be called with write lock held
-func (c *graphCacheImpl) evictLRU(targetMB float64) {
+func (c *GraphCacheImpl) evictLRU(targetMB float64) {
 	// Create list of sessions sorted by last accessed time (oldest first)
 	type sessionEntry struct {
 		sessionID    string
@@ -330,5 +337,24 @@ func LoadGraphCacheConfig(cfg config.Config) *GraphCacheConfig {
 	}
 }
 
+// SetGraphGenerator sets the graph generator function for background refresh
+func (c *GraphCacheImpl) SetGraphGenerator(generator GraphGenerator) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.graphGenerator = generator
+}
+
+// GetGraphGenerator returns the current graph generator (may be nil)
+func (c *GraphCacheImpl) GetGraphGenerator() GraphGenerator {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.graphGenerator
+}
+
+// Config returns the cache configuration
+func (c *GraphCacheImpl) Config() *GraphCacheConfig {
+	return c.config
+}
+
 // Interface guard
-var _ GraphCache = (*graphCacheImpl)(nil)
+var _ GraphCache = (*GraphCacheImpl)(nil)
