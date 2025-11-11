@@ -80,6 +80,9 @@ type KialiCache interface {
 	// by checking if the ztunnel daemonset exists on the cluster.
 	IsAmbientEnabled(cluster string) bool
 
+	// IsControlPlaneNamespaceAmbient validates if a control plane namespace should be considered ambient
+	IsControlPlaneNamespaceAmbient(ctx context.Context, cluster string, namespace string, istiodName string) bool
+
 	// RefreshTokenNamespaces clears the in memory cache of namespaces.
 	RefreshTokenNamespaces(cluster string)
 
@@ -351,6 +354,51 @@ func (in *kialiCacheImpl) GetZtunnelDaemonset(cluster string) []appsv1.DaemonSet
 	}
 
 	return daemonSetList.Items
+}
+
+// IsControlPlaneNamespaceAmbient validates if a control plane namespace should be considered ambient
+// by checking if the istio deployment has PILOT_ENABLE_AMBIENT=true as ENVIRONMENT VAR.
+// If istiodName is provided and not empty, it will only check deployments with that name.
+// If istiodName is empty, it will check all istiod deployments in the namespace.
+func (in *kialiCacheImpl) IsControlPlaneNamespaceAmbient(ctx context.Context, cluster string, namespace string, istiodName string) bool {
+	// Get the kubecache for the cluster
+	kubeCache, err := in.GetKubeCache(cluster)
+	if err != nil {
+		in.zl.Error().Msgf("Failed to get kubecache for cluster %s. Namespace: %s, Error: %s", cluster, namespace, err)
+		return false
+	}
+	podLabels := map[string]string{
+		config.IstioAppLabel: "istiod",
+	}
+
+	deploymentList := &appsv1.DeploymentList{}
+	listOpts := []client.ListOption{client.InNamespace(namespace), client.MatchingLabels(podLabels)}
+	errKb := kubeCache.List(ctx, deploymentList, listOpts...)
+	if errKb != nil {
+		in.zl.Error().Msgf("Failed to list Istiod deployments. Namespace: %s, Error: %s", namespace, err)
+		return false
+	}
+
+	for i := range deploymentList.Items {
+		// If istiodName is provided, filter by deployment name
+		if istiodName != "" && deploymentList.Items[i].Name != istiodName {
+			continue
+		}
+
+		// Check if PILOT_ENABLE_AMBIENT is set to true in the deployment's environment variables
+		// Only consider this deployment if ambient is enabled
+		if containers := deploymentList.Items[i].Spec.Template.Spec.Containers; len(containers) > 0 {
+			for _, env := range containers[0].Env {
+				if env.Name == "PILOT_ENABLE_AMBIENT" {
+					// Check if the value is "true" (case-insensitive)
+					if strings.EqualFold(env.Value, "true") {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
 }
 
 // GetGateways Returns a list of all gateway workloads by cluster and namespace

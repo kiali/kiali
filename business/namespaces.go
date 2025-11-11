@@ -412,47 +412,7 @@ func (in *NamespaceService) HasMeshAccess(ctx context.Context, cluster string) b
 // by checking if there's a ztunnel daemonset with the same revision in the same cluster.
 // It modifies the namespace's IsAmbient field if validation fails.
 func (in *NamespaceService) validateControlPlaneNamespaceAmbient(ctx context.Context, ns *models.Namespace, cluster string, ztunnelDaemonSets []apps_v1.DaemonSet) {
-	// Get the kubecache for the cluster
-	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
-	if err != nil {
-		log.Errorf("Failed to get kubecache for cluster %s. Namespace: %s, Error: %s", cluster, ns.Name, err)
-		return
-	}
-
-	// Get the revision that manages this namespace
-	nsRevisionList, err := istio.GetIstiodRevisions(ctx, kubeCache, ns.Name)
-	if err != nil {
-		log.Errorf("Failed to get Istiod revisions. Namespace: %s, Error: %s", ns.Name, err)
-		return
-	}
-	if len(nsRevisionList) == 0 {
-		// No revision means namespace is not in the mesh
-		nsRevisionList = append(nsRevisionList, models.DefaultRevisionLabel)
-	}
-
-	// Check if there's a ztunnel daemonset in the same cluster with matching revision
-	hasZtunnelWithRevision := false
-
-	for _, ds := range ztunnelDaemonSets {
-		// Check if the ztunnel daemonset has the same revision as the namespace
-		// Even Ambient Canary upgrades are not supported, https://istio.io/latest/docs/ambient/upgrade/helm
-		// It is an extra check, as it check for the default (No labels) as well
-		ztunnelRev := ds.Labels[in.conf.IstioLabels.VersionLabelName]
-		if ztunnelRev == "" {
-			// If no revision label, it's the default revision
-			ztunnelRev = models.DefaultRevisionLabel
-		}
-		for _, nsRevision := range nsRevisionList {
-			if ztunnelRev == nsRevision {
-				hasZtunnelWithRevision = true
-				ns.IsAmbient = true
-				break
-			}
-		}
-	}
-
-	// Only mark as ambient if there's a ztunnel daemonset with matching revision
-	if !hasZtunnelWithRevision {
-		ns.IsAmbient = false
-	}
+	// Use the cache method to check if the namespace is ambient
+	// Pass empty string for istiodName to check all istiod deployments
+	ns.IsAmbient = in.kialiCache.IsControlPlaneNamespaceAmbient(ctx, cluster, ns.Name, "")
 }

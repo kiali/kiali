@@ -221,8 +221,11 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 							tag = cp.Tag.Name
 						}
 						if tag == ztunnelNode.Metadata[mesh.Version] {
-							infraNode.AddEdge(ztunnelNode)
-							break
+							// Validate that this control plane is actually ambient
+							if gi.KialiCache.IsControlPlaneNamespaceAmbient(ctx, ztunnel.Cluster, cp.IstiodNamespace, cp.IstiodName) {
+								infraNode.AddEdge(ztunnelNode)
+								break
+							}
 						}
 					}
 				}
