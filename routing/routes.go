@@ -9,6 +9,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/istio"
@@ -47,6 +48,8 @@ func NewRoutes(
 	grafana *grafana.Service,
 	perses *perses.Service,
 	discovery *istio.Discovery,
+	graphCache graph.GraphCache,
+	refreshJobManager *graph.RefreshJobManager,
 ) (r *Routes) {
 	r = new(Routes)
 
@@ -1285,7 +1288,7 @@ func NewRoutes(
 			log.GraphLogName,
 			"GET",
 			"/api/namespaces/graph",
-			handlers.GraphNamespaces(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
+			handlers.GraphNamespaces(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery, graphCache, refreshJobManager),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/graph graphs graphAggregate

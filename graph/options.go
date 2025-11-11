@@ -15,6 +15,8 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/log"
 )
 
@@ -120,6 +122,7 @@ type TelemetryOptions struct {
 	InjectServiceNodes   bool               // inject destination service nodes between source and destination nodes.
 	Namespaces           NamespaceInfoMap
 	Rates                RequestedRates
+	SessionID            string // unique session identifier for caching (extracted from session cookie)
 	CommonOptions
 	NodeOptions
 }
@@ -152,6 +155,10 @@ func NewOptions(r *net_http.Request, businessLayer *business.Layer) Options {
 	ambientTraffic := params.Get("ambientTraffic")
 	appenders := RequestedAppenders{All: true}
 	boxBy := params.Get("boxBy")
+
+	// Extract session ID for caching (empty string for anonymous/unauthenticated users)
+	cfg := config.Get()
+	sessionID := authentication.GetSessionID(r, cfg.Auth.Strategy, cfg)
 	// @TODO requires refactoring to use clusterNameFromQuery
 	cluster := params.Get("clusterName")
 	configVendor := params.Get("configVendor")
@@ -383,6 +390,7 @@ func NewOptions(r *net_http.Request, businessLayer *business.Layer) Options {
 			InjectServiceNodes:   injectServiceNodes,
 			Namespaces:           namespaceMap,
 			Rates:                rates,
+			SessionID:            sessionID,
 			CommonOptions: CommonOptions{
 				Duration:  time.Duration(duration),
 				GraphType: graphType,
