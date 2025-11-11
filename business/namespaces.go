@@ -427,6 +427,8 @@ func (in *NamespaceService) validateControlPlaneNamespaceAmbient(ctx context.Con
 	hasZtunnelWithRevision := false
 	for _, ds := range ztunnelDaemonSets {
 		// Check if the ztunnel daemonset has the same revision as the namespace
+		// Even Ambient Canary upgrades are not supported, https://istio.io/latest/docs/ambient/upgrade/helm
+		// It is an extra check, as it check for the default (No labels) as well
 		ztunnelRev := ds.Labels[config.IstioRevisionLabel]
 		if ztunnelRev == "" {
 			// If no revision label, it's the default revision

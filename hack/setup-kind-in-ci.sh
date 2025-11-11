@@ -30,7 +30,9 @@ Options:
 -ab|--ambient
     Install Istio Ambient profile
     Default: Not set
--c2a|--cluster2-ambient)       CLUSTER2_AMBIENT="$2";      shift;shift; ;;
+-c2a|--cluster2-ambient
+    Install Istio Ambient in the remote cluster
+    Default: true
 -dk|--deploy-kiali <true|false>
     Whether to deploy Kiali as part of the setup.
     Default: true
@@ -79,6 +81,7 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -a|--auth-strategy)           AUTH_STRATEGY="$2";         shift;shift; ;;
     -ab|--ambient)                AMBIENT="true";               shift;shift; ;;
+    -c2a|--cluster2-ambient)      CLUSTER2_AMBIENT="$2";      shift;shift; ;;
     -dk|--deploy-kiali)           DEPLOY_KIALI="$2";          shift;shift; ;;
     -dorp|--docker-or-podman)     DORP="$2";                  shift;shift; ;;
     -h|--help)                    helpmsg;                    exit 1       ;;
