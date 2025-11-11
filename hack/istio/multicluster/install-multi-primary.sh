@@ -175,9 +175,9 @@ source ${SCRIPT_DIR}/setup-ca.sh
 if [ "${AMBIENT}" == "true" ]; then
   echo "==== Installing Istio Ambient in multi cluster (Alpha)"
   kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-    kubectl --context=${CLUSTER1_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
+    kubectl --context=${CLUSTER1_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/standard-install.yaml
   kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-    kubectl --context=${CLUSTER2_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
+    kubectl --context=${CLUSTER2_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/standard-install.yaml
   install_ambient_multicluster
 else
   # Generate configuration for cluster 1

@@ -3,14 +3,20 @@ package data
 import (
 	api_networking_v1 "istio.io/api/networking/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kiali/kiali/kubernetes"
 )
 
 func CreateEmptyGateway(name, namespace string, selector map[string]string) *networking_v1.Gateway {
-	gw := networking_v1.Gateway{}
+	gw := networking_v1.Gateway{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       kubernetes.Gateways.Kind,
+			APIVersion: kubernetes.Gateways.GroupVersion().String(),
+		},
+	}
 	gw.Name = name
 	gw.Namespace = namespace
-	gw.Kind = "Gateway"
-	gw.APIVersion = "networking.istio.io/v1"
 	gw.Spec.Selector = selector
 	return &gw
 }
