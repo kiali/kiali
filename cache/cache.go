@@ -335,7 +335,7 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 func (in *kialiCacheImpl) GetZtunnelDaemonset(cluster string) []appsv1.DaemonSet {
 	kubeCache, err := in.GetKubeCache(cluster)
 	if err != nil {
-		in.zl.Debug().Msgf("Unable to get kube cache when checking for ambient profile: %s", err)
+		in.zl.Debug().Msgf("GetZtunnelDaemonset: Unable to get kube cache when checking for ztunnel daemonset: %s", err)
 		return nil
 	}
 

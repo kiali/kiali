@@ -420,7 +420,7 @@ func (in *NamespaceService) validateControlPlaneNamespaceAmbient(ctx context.Con
 	}
 
 	// Get the revision that manages this namespace
-	nsRevisionList, err := istio.GetIstiodRevisions(kubeCache, ns.Name)
+	nsRevisionList, err := istio.GetIstiodRevisions(ctx, kubeCache, ns.Name)
 	if err != nil {
 		log.Errorf("Failed to get Istiod revisions. Namespace: %s, Error: %s", ns.Name, err)
 		return
@@ -430,10 +430,6 @@ func (in *NamespaceService) validateControlPlaneNamespaceAmbient(ctx context.Con
 		nsRevisionList = append(nsRevisionList, models.DefaultRevisionLabel)
 	}
 
-	if cluster != ns.Cluster {
-		ns.IsAmbient = false
-		return
-	}
 	// Check if there's a ztunnel daemonset in the same cluster with matching revision
 	hasZtunnelWithRevision := false
 
