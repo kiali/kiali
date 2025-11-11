@@ -446,7 +446,7 @@ setup_kind_tempo() {
     kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
     kubectl wait pods --all -n opentelemetry-operator-system --for=condition=Ready --timeout=5m
 
-    kubectl apply -f ${SCRIPT_DIR}/istio/tempo/otel-collector.yaml
+    kubectl apply -f ${SCRIPT_DIR}/istio/tempo/resources/otel-collector.yaml
 
     infomsg "Installing istio"
     if [[ "${ISTIO_VERSION}" == *-dev ]]; then
