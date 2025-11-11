@@ -207,6 +207,8 @@ Feature: Kiali Overview page
   Scenario: There should be two control plane cards for each cluster
     Then user sees the "Control plane" label in the "east" "istio-system" namespace card
     Then user sees the "Control plane" label in the "west" "istio-system" namespace card
+    And user does not see the "Ambient" label in the "east" "istio-system" namespace card
+    And user does not see the "Ambient" label in the "west" "istio-system" namespace card
 
   # TODO: offline - provide ambient in must-gather example.
   @ambient
@@ -249,3 +251,13 @@ Feature: Kiali Overview page
     Then user sees the "bookinfo" namespace card in cluster "west"
     And user sees the "Ambient" label in the "bookinfo" namespace card in the "east" cluster
     And user sees the "Ambient" label in the "bookinfo" namespace card in the "west" cluster
+
+  @ambient-multi-primary
+  Scenario: Ambient Multi-Primary: Control plane cards show Ambient badge in both clusters
+    Given user is at the "overview" page
+    Then user sees the "istio-system" namespace card in cluster "east"
+    And user sees the "istio-system" namespace card in cluster "west"
+    And user sees the "Control plane" label in the "east" "istio-system" namespace card
+    And user sees the "Control plane" label in the "west" "istio-system" namespace card
+    And user sees the "Ambient" label in the "istio-system" namespace card in the "east" cluster
+    And user sees the "Ambient" label in the "istio-system" namespace card in the "west" cluster
