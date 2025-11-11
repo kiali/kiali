@@ -199,7 +199,7 @@ When('user expands namespace', () => {
     .should('be.visible')
     .within(() => {
       // Find and click the expand button by its ID pattern (e.g., ns-bookinfo0)
-      cy.get('button[id^="ns-"]').first().click();
+      cy.get('button[id^="ns-bookinfo"]').first().click();
       // Wait for the expanded content to load
       cy.get('#loading_kiali_spinner').should('not.exist');
     });
