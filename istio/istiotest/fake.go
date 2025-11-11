@@ -31,6 +31,9 @@ func (fmd *FakeDiscovery) GetControlPlaneNamespaces(ctx context.Context, cluster
 
 func (fmd *FakeDiscovery) GetRootNamespace(ctx context.Context, cluster, namespace string) string {
 	if fmd.GetRootNamespaceReturn == "" {
+		// Return the default Istio namespace when not explicitly set.
+		// This provides a sensible default for tests that check root namespace
+		// behavior without requiring them to explicitly configure it.
 		return config.IstioNamespaceDefault
 	}
 	return fmd.GetRootNamespaceReturn

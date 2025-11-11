@@ -2798,9 +2798,10 @@ func TestNamespaceMapWithClusterWideAccessFalse(t *testing.T) {
 	rootNs = discovery.GetRootNamespace(ctx, conf.KubernetesConfig.ClusterName, "travels")
 	require.Equal("istio-system", rootNs, "GetRootNamespace should work for travels namespace")
 
-	// Verify we can query root namespace for control plane namespace itself
+	// Verify that control plane namespace (the root namespace) returns itself
+	// Even without injection, the root namespace should be identified as such for mesh-wide policy detection
 	rootNs = discovery.GetRootNamespace(ctx, conf.KubernetesConfig.ClusterName, "istio-system")
-	require.Equal("istio-system", rootNs, "GetRootNamespace should work for istio-system namespace")
+	require.Equal("istio-system", rootNs, "GetRootNamespace should return the root namespace for itself")
 }
 
 func TestNamespaceMapWithTagsAndClusterWideAccessFalse(t *testing.T) {
