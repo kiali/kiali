@@ -160,7 +160,7 @@ func graphNamespacesWithCache(
 		return code, graphConfig
 	}
 
-	sessionID := o.TelemetryOptions.SessionID
+	sessionID := o.SessionID
 	if sessionID == "" {
 		log.Tracef("No session ID found in options (unexpected), using non-cached graph generation")
 		code, graphConfig, _ := api.GraphNamespaces(ctx, business, prom, o)
@@ -168,7 +168,7 @@ func graphNamespacesWithCache(
 	}
 
 	// Check if client provided queryTime (historical query - bypass cache)
-	if o.TelemetryOptions.QueryTimeProvided {
+	if o.QueryTimeProvided {
 		log.Tracef("Client requested historical graph for session [%s] (queryTime provided), bypassing cache", sessionID)
 		// Generate fresh graph without caching (leave existing cache/job intact)
 		code, graphConfig, _ := api.GraphNamespaces(ctx, business, prom, o)
@@ -176,7 +176,7 @@ func graphNamespacesWithCache(
 	}
 
 	// Check if client requested cache bypass (refreshInterval <= 0)
-	if o.TelemetryOptions.RefreshInterval <= 0 {
+	if o.RefreshInterval <= 0 {
 		log.Debugf("Client requested graph cache bypass for session [%s] (refreshInterval <= 0), clearing cache and stopping refresh job", sessionID)
 		// Stop any existing refresh job
 		refreshJobManager.StopJob(sessionID)
@@ -194,7 +194,7 @@ func graphNamespacesWithCache(
 			log.Tracef("Hit graph cache for session [%s] (options match)", sessionID)
 
 			// Check if refresh interval changed - update the job if needed
-			requestedInterval := o.TelemetryOptions.RefreshInterval
+			requestedInterval := o.RefreshInterval
 			if requestedInterval != cached.RefreshInterval {
 				log.Debugf("Changed graph cache refresh interval for session [%s] (from %v to %v), updating job",
 					sessionID, cached.RefreshInterval, requestedInterval)
@@ -234,7 +234,7 @@ func graphNamespacesWithCache(
 	cached := &graph.CachedGraph{
 		LastAccessed:    time.Now(),
 		Options:         o,
-		RefreshInterval: o.TelemetryOptions.RefreshInterval,
+		RefreshInterval: o.RefreshInterval,
 		Timestamp:       time.Now(),
 		TrafficMap:      trafficMap,
 	}
@@ -264,41 +264,41 @@ func graphNamespacesWithCache(
 // within the refresh interval (since background refresh handles time progression).
 func graphOptionsMatch(cached, requested graph.Options) bool {
 	// Compare namespaces (critical - different namespaces = different graph)
-	if len(cached.TelemetryOptions.Namespaces) != len(requested.TelemetryOptions.Namespaces) {
+	if len(cached.Namespaces) != len(requested.Namespaces) {
 		return false
 	}
-	for ns := range requested.TelemetryOptions.Namespaces {
-		if _, exists := cached.TelemetryOptions.Namespaces[ns]; !exists {
+	for ns := range requested.Namespaces {
+		if _, exists := cached.Namespaces[ns]; !exists {
 			return false
 		}
 	}
 
 	// Compare duration (different time range = different graph)
-	if cached.TelemetryOptions.CommonOptions.Duration != requested.TelemetryOptions.CommonOptions.Duration {
+	if cached.TelemetryOptions.Duration != requested.TelemetryOptions.Duration {
 		return false
 	}
 
 	// Compare graph type (app vs workload vs service)
-	if cached.TelemetryOptions.CommonOptions.GraphType != requested.TelemetryOptions.CommonOptions.GraphType {
+	if cached.TelemetryOptions.GraphType != requested.TelemetryOptions.GraphType {
 		return false
 	}
 
 	// Compare inject service nodes flag
-	if cached.TelemetryOptions.InjectServiceNodes != requested.TelemetryOptions.InjectServiceNodes {
+	if cached.InjectServiceNodes != requested.InjectServiceNodes {
 		return false
 	}
 
 	// Compare include idle edges flag
-	if cached.TelemetryOptions.IncludeIdleEdges != requested.TelemetryOptions.IncludeIdleEdges {
+	if cached.IncludeIdleEdges != requested.IncludeIdleEdges {
 		return false
 	}
 
 	// Compare appenders (different appenders = different graph decoration)
-	if len(cached.TelemetryOptions.Appenders.AppenderNames) != len(requested.TelemetryOptions.Appenders.AppenderNames) {
+	if len(cached.Appenders.AppenderNames) != len(requested.Appenders.AppenderNames) {
 		return false
 	}
-	for i, name := range cached.TelemetryOptions.Appenders.AppenderNames {
-		if name != requested.TelemetryOptions.Appenders.AppenderNames[i] {
+	for i, name := range cached.Appenders.AppenderNames {
+		if name != requested.Appenders.AppenderNames[i] {
 			return false
 		}
 	}
