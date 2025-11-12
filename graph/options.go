@@ -121,6 +121,7 @@ type TelemetryOptions struct {
 	IncludeIdleEdges     bool               // include edges with request rates of 0
 	InjectServiceNodes   bool               // inject destination service nodes between source and destination nodes.
 	Namespaces           NamespaceInfoMap
+	QueryTimeProvided    bool // true if queryTime was explicitly provided (historical query, bypass cache)
 	Rates                RequestedRates
 	RefreshInterval      time.Duration // requested refresh interval for background cache updates (<= 0 no refresh)
 	SessionID            string        // unique session identifier for caching (extracted from session cookie)
@@ -153,6 +154,7 @@ func NewOptions(r *net_http.Request, businessLayer *business.Layer) Options {
 	var includeIdleEdges bool
 	var injectServiceNodes bool
 	var queryTime int64
+	var queryTimeProvided bool
 	var refreshInterval time.Duration
 	ambientTraffic := params.Get("ambientTraffic")
 	appenders := RequestedAppenders{All: true}
@@ -250,12 +252,14 @@ func NewOptions(r *net_http.Request, businessLayer *business.Layer) Options {
 	}
 	if queryTimeString == "" {
 		queryTime = time.Now().Unix()
+		queryTimeProvided = false
 	} else {
 		var queryTimeErr error
 		queryTime, queryTimeErr = strconv.ParseInt(queryTimeString, 10, 64)
 		if queryTimeErr != nil {
 			BadRequest(fmt.Sprintf("Invalid queryTime [%s]", queryTimeString))
 		}
+		queryTimeProvided = true // Client requested specific time (historical query)
 	}
 	if refreshIntervalString == "" {
 		if parsed, err := time.ParseDuration(cfg.KialiInternal.GraphCache.RefreshInterval); err == nil {
@@ -418,6 +422,7 @@ func NewOptions(r *net_http.Request, businessLayer *business.Layer) Options {
 			IncludeIdleEdges:     includeIdleEdges,
 			InjectServiceNodes:   injectServiceNodes,
 			Namespaces:           namespaceMap,
+			QueryTimeProvided:    queryTimeProvided,
 			Rates:                rates,
 			RefreshInterval:      refreshInterval,
 			SessionID:            sessionID,

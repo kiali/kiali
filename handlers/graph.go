@@ -167,6 +167,14 @@ func graphNamespacesWithCache(
 		return code, graphConfig
 	}
 
+	// Check if client provided queryTime (historical query - bypass cache)
+	if o.TelemetryOptions.QueryTimeProvided {
+		log.Tracef("Client requested historical graph for session [%s] (queryTime provided), bypassing cache", sessionID)
+		// Generate fresh graph without caching (leave existing cache/job intact)
+		code, graphConfig, _ := api.GraphNamespaces(ctx, business, prom, o)
+		return code, graphConfig
+	}
+
 	// Check if client requested cache bypass (refreshInterval <= 0)
 	if o.TelemetryOptions.RefreshInterval <= 0 {
 		log.Debugf("Client requested graph cache bypass for session [%s] (refreshInterval <= 0), clearing cache and stopping refresh job", sessionID)
