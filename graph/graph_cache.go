@@ -6,9 +6,34 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 )
+
+var (
+	// Prometheus metrics for graph cache
+	cacheHitsTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "kiali_graph_cache_hits_total",
+		Help: "Total number of graph cache hits",
+	})
+	cacheMissesTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "kiali_graph_cache_misses_total",
+		Help: "Total number of graph cache misses",
+	})
+	cacheEvictionsTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "kiali_graph_cache_evictions_total",
+		Help: "Total number of graph cache evictions",
+	})
+)
+
+func init() {
+	// Register metrics with Prometheus
+	prometheus.MustRegister(cacheHitsTotal)
+	prometheus.MustRegister(cacheMissesTotal)
+	prometheus.MustRegister(cacheEvictionsTotal)
+}
 
 // GraphCache provides per-session graph caching with background refresh.
 // Each session's graph is cached and refreshed in the background
@@ -153,6 +178,7 @@ func (c *GraphCacheImpl) Evict(sessionID string) {
 
 	if cached, found := c.sessionGraphs[sessionID]; found {
 		delete(c.sessionGraphs, sessionID)
+		cacheEvictionsTotal.Inc()
 		log.Debugf("Evicted graph cache for session [%s] (%.2f MB freed)", sessionID, cached.estimatedMB)
 	}
 }
@@ -268,6 +294,7 @@ func (c *GraphCacheImpl) evictLRU(targetMB float64) {
 			session.memoryMB)
 
 		delete(c.sessionGraphs, session.sessionID)
+		cacheEvictionsTotal.Inc()
 		freedMB += session.memoryMB
 		evictedCount++
 	}
@@ -353,6 +380,16 @@ func (c *GraphCacheImpl) GetGraphGenerator() GraphGenerator {
 // Config returns the cache configuration
 func (c *GraphCacheImpl) Config() *GraphCacheConfig {
 	return c.config
+}
+
+// IncrementCacheHit increments the cache hit counter for Prometheus metrics
+func IncrementCacheHit() {
+	cacheHitsTotal.Inc()
+}
+
+// IncrementCacheMiss increments the cache miss counter for Prometheus metrics
+func IncrementCacheMiss() {
+	cacheMissesTotal.Inc()
 }
 
 // Interface guard
