@@ -167,24 +167,52 @@ func graphNamespacesWithCache(
 		return code, graphConfig
 	}
 
+	// Check if client requested cache bypass (refreshInterval <= 0)
+	if o.TelemetryOptions.RefreshInterval <= 0 {
+		log.Debugf("Client requested graph cache bypass for session [%s] (refreshInterval <= 0), clearing cache and stopping refresh job", sessionID)
+		// Stop any existing refresh job
+		refreshJobManager.StopJob(sessionID)
+		// Clear cached graph for this session
+		graphCache.Evict(sessionID)
+		// Generate fresh graph without caching
+		code, graphConfig, _ := api.GraphNamespaces(ctx, business, prom, o)
+		return code, graphConfig
+	}
+
 	// Check cache for existing graph
 	if cached, found := graphCache.GetSessionGraph(sessionID); found {
 		// Verify that the cached graph matches the requested options
 		if graphOptionsMatch(cached.Options, o) {
-			log.Tracef("Cache hit for session %s (options match)", sessionID)
-			// Generate vendor config from cached TrafficMap
+			log.Tracef("Hit graph cache for session [%s] (options match)", sessionID)
+
+			// Check if refresh interval changed - update the job if needed
+			requestedInterval := o.TelemetryOptions.RefreshInterval
+			if requestedInterval != cached.RefreshInterval {
+				log.Debugf("Changed graph cache refresh interval for session [%s] (from %v to %v), updating job",
+					sessionID, cached.RefreshInterval, requestedInterval)
+				if job := refreshJobManager.GetJob(sessionID); job != nil {
+					job.UpdateInterval(requestedInterval)
+					cached.RefreshInterval = requestedInterval
+					if err := graphCache.SetSessionGraph(sessionID, cached); err != nil {
+						log.Errorf("Failed to update graph cache refresh interval in cache for session [%s]: %v", sessionID, err)
+					}
+				}
+			}
+
+			// Always return cached graph immediately for fast response
+			// Background refresh ensures data is never older than interval/2
 			code, graphConfig := generateGraphFromTrafficMap(ctx, cached.TrafficMap, o)
 			return code, graphConfig
 		}
 
 		// Options changed - invalidate cache and refresh job
-		log.Infof("Cache invalidated for session %s (options changed)", sessionID)
+		log.Debugf("Invalidated graph cache for session [%s] (options changed)", sessionID)
 		graphCache.Evict(sessionID)
 		refreshJobManager.StopJob(sessionID)
 	}
 
 	// Cache miss (or invalidated) - generate new graph
-	log.Tracef("Cache miss for session %s, generating new graph", sessionID)
+	log.Tracef("Missed graph cache for session [%s], generating new graph", sessionID)
 
 	// Generate graph (returns both vendor config and TrafficMap)
 	code, graphConfig, trafficMap := api.GraphNamespaces(ctx, business, prom, o)
@@ -198,13 +226,13 @@ func graphNamespacesWithCache(
 	cached := &graph.CachedGraph{
 		LastAccessed:    time.Now(),
 		Options:         o,
-		RefreshInterval: refreshInterval,
+		RefreshInterval: o.TelemetryOptions.RefreshInterval,
 		Timestamp:       time.Now(),
 		TrafficMap:      trafficMap,
 	}
 
 	if err := graphCache.SetSessionGraph(sessionID, cached); err != nil {
-		log.Errorf("Failed to cache graph for session %s: %v", sessionID, err)
+		log.Errorf("Failed to add to graph cache for session [%s]: %v", sessionID, err)
 		// Continue anyway - we can still return the graph
 	}
 
