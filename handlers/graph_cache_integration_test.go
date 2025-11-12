@@ -33,7 +33,7 @@ func TestGraphNamespacesWithCache_CacheMiss(t *testing.T) {
 	}
 
 	// Initially, cache should be empty
-	_, found := cache.GetSessionGraph(opts.TelemetryOptions.SessionID)
+	_, found := cache.GetSessionGraph(opts.SessionID)
 	assert.False(t, found, "Cache should be empty initially")
 
 	// Note: This test is a basic structure - full integration would require
@@ -143,34 +143,34 @@ func TestGraphOptionsMatch(t *testing.T) {
 
 	// Test 2: Different namespace should NOT match
 	diffNamespace := baseOptions
-	diffNamespace.TelemetryOptions.Namespaces = graph.NamespaceInfoMap{
+	diffNamespace.Namespaces = graph.NamespaceInfoMap{
 		"istio-system": graph.NamespaceInfo{Name: "istio-system"},
 	}
 	assert.False(t, graphOptionsMatch(baseOptions, diffNamespace), "Different namespace should not match")
 
 	// Test 3: Different duration should NOT match
 	diffDuration := baseOptions
-	diffDuration.TelemetryOptions.CommonOptions.Duration = 300 * time.Second
+	diffDuration.TelemetryOptions.Duration = 300 * time.Second
 	assert.False(t, graphOptionsMatch(baseOptions, diffDuration), "Different duration should not match")
 
 	// Test 4: Different graph type should NOT match
 	diffGraphType := baseOptions
-	diffGraphType.TelemetryOptions.CommonOptions.GraphType = "workload"
+	diffGraphType.TelemetryOptions.GraphType = "workload"
 	assert.False(t, graphOptionsMatch(baseOptions, diffGraphType), "Different graph type should not match")
 
 	// Test 5: Different inject service nodes should NOT match
 	diffInjectNodes := baseOptions
-	diffInjectNodes.TelemetryOptions.InjectServiceNodes = false
+	diffInjectNodes.InjectServiceNodes = false
 	assert.False(t, graphOptionsMatch(baseOptions, diffInjectNodes), "Different InjectServiceNodes should not match")
 
 	// Test 6: Different idle edges flag should NOT match
 	diffIdleEdges := baseOptions
-	diffIdleEdges.TelemetryOptions.IncludeIdleEdges = true
+	diffIdleEdges.IncludeIdleEdges = true
 	assert.False(t, graphOptionsMatch(baseOptions, diffIdleEdges), "Different IncludeIdleEdges should not match")
 
 	// Test 7: Different appenders should NOT match
 	diffAppenders := baseOptions
-	diffAppenders.TelemetryOptions.Appenders.AppenderNames = []string{"deadNode"}
+	diffAppenders.Appenders.AppenderNames = []string{"deadNode"}
 	assert.False(t, graphOptionsMatch(baseOptions, diffAppenders), "Different appenders should not match")
 
 	t.Log("All graphOptionsMatch tests passed")
