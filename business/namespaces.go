@@ -414,5 +414,5 @@ func (in *NamespaceService) HasMeshAccess(ctx context.Context, cluster string) b
 func (in *NamespaceService) validateControlPlaneNamespaceAmbient(ctx context.Context, ns *models.Namespace, cluster string, ztunnelDaemonSets []apps_v1.DaemonSet) {
 	// Use the cache method to check if the namespace is ambient
 	// Pass empty string for istiodName to check all istiod deployments
-	ns.IsAmbient = in.kialiCache.IsControlPlaneNamespaceAmbient(ctx, cluster, ns.Name, "")
+	ns.IsAmbient = in.kialiCache.GetZtunnelForControlPlane(ctx, cluster, ns.Name, "") != nil
 }
