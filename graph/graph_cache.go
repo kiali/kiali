@@ -140,7 +140,7 @@ func (c *GraphCacheImpl) SetSessionGraph(sessionID string, cached *CachedGraph) 
 
 	c.sessionGraphs[sessionID] = cached
 
-	log.Debugf("Cached graph for session %s (%d nodes, %.2f MB)",
+	log.Debugf("Set graph cache for session [%s] (%d nodes, %.2f MB)",
 		sessionID, len(cached.TrafficMap), cached.estimatedMB)
 
 	return nil
@@ -153,7 +153,7 @@ func (c *GraphCacheImpl) Evict(sessionID string) {
 
 	if cached, found := c.sessionGraphs[sessionID]; found {
 		delete(c.sessionGraphs, sessionID)
-		log.Debugf("Evicted graph for session %s (%.2f MB freed)", sessionID, cached.estimatedMB)
+		log.Debugf("Evicted graph cache for session [%s] (%.2f MB freed)", sessionID, cached.estimatedMB)
 	}
 }
 
@@ -165,7 +165,7 @@ func (c *GraphCacheImpl) Clear() {
 	count := len(c.sessionGraphs)
 	c.sessionGraphs = make(map[string]*CachedGraph)
 
-	log.Infof("Cleared graph cache (%d sessions removed)", count)
+	log.Debugf("Cleared graph cache (%d sessions removed)", count)
 }
 
 // TotalMemoryMB returns total cache memory usage
@@ -208,8 +208,7 @@ func (c *GraphCacheImpl) checkMemoryLimits(sessionID string, newCached *CachedGr
 
 	// If over limit, evict LRU sessions until under limit
 	if projectedMemory > float64(c.config.MaxCacheMemoryMB) {
-		log.Infof("Graph cache memory limit approaching: %.2f MB / %d MB",
-			projectedMemory, c.config.MaxCacheMemoryMB)
+		log.Debugf("Approaching graph cache memory limit: %.2f MB / %d MB", projectedMemory, c.config.MaxCacheMemoryMB)
 
 		excessMB := projectedMemory - float64(c.config.MaxCacheMemoryMB)
 		c.evictLRU(excessMB)
@@ -263,7 +262,7 @@ func (c *GraphCacheImpl) evictLRU(targetMB float64) {
 			break
 		}
 
-		log.Infof("Evicting session %s due to memory limit (last accessed: %v ago, %.2f MB)",
+		log.Debugf("Evicting graph cache session [%s] due to memory limit (last accessed: %v ago, %.2f MB)",
 			session.sessionID,
 			time.Since(session.lastAccessed).Round(time.Second),
 			session.memoryMB)
@@ -273,7 +272,7 @@ func (c *GraphCacheImpl) evictLRU(targetMB float64) {
 		evictedCount++
 	}
 
-	log.Infof("Freed %.2f MB by evicting %d sessions", freedMB, evictedCount)
+	log.Debugf("Freed %.2f MB by evicting %d graph cache sessions", freedMB, evictedCount)
 }
 
 // EstimateGraphMemory estimates the memory usage of a TrafficMap in MB
