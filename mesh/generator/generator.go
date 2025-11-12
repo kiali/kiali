@@ -25,23 +25,6 @@ import (
 	"github.com/kiali/kiali/util/sliceutil"
 )
 
-// versionsMatch compares version labels between two label maps using the config's GetVersionLabelName
-// Returns true if both have version labels and they match, false otherwise
-func versionsMatch(conf *config.Config, labels1, labels2 map[string]string) bool {
-	verLabelName1, found1 := conf.GetVersionLabelName(labels1)
-	if !found1 {
-		return false
-	}
-	verLabelName2, found2 := conf.GetVersionLabelName(labels2)
-	if !found2 {
-		return false
-	}
-	// Both should use the same version label name scheme, but check both just in case
-	version1 := labels1[verLabelName1]
-	version2 := labels2[verLabelName2]
-	return version1 == version2
-}
-
 type componentHealthKey struct {
 	Cluster   string
 	Name      string
@@ -230,7 +213,6 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				mesh.CheckError(err)
 
 				// add edge to the managing control plane
-				// Find the control plane that matches this ztunnel by checking if it's ambient and if the versions match
 				for _, infraNode := range meshMap {
 					if infraNode.InfraType == mesh.InfraTypeIstiod && infraNode.Cluster == ztunnel.Cluster {
 						cp := infraNode.Metadata[mesh.InfraData].(models.ControlPlane)
@@ -238,14 +220,11 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 						if cp.Tag != nil {
 							tag = cp.Tag.Name
 						}
-						// First check if the revision/tag matches
 						if tag == ztunnelNode.Metadata[mesh.Version] {
-							// Get the associated ztunnel daemonset for this control plane
-							// This method already does version matching when there are multiple daemonsets
-							ztunnelDaemonset := gi.KialiCache.GetZtunnelForControlPlane(ctx, ztunnel.Cluster, cp.IstiodNamespace, cp.IstiodName)
-							if ztunnelDaemonset != nil && versionsMatch(gi.Conf, ztunnelDaemonset.Labels, ztunnel.Labels) {
+							// Validate that this control plane is actually ambient
+							if gi.KialiCache.IsControlPlaneNamespaceAmbient(ctx, ztunnel.Cluster, cp.IstiodNamespace, cp.IstiodName) {
 								infraNode.AddEdge(ztunnelNode)
-								break // Exit the control plane loop once we found the matching one
+								break
 							}
 						}
 					}

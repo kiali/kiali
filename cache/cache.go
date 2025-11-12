@@ -80,10 +80,8 @@ type KialiCache interface {
 	// by checking if the ztunnel daemonset exists on the cluster.
 	IsAmbientEnabled(cluster string) bool
 
-	// GetZtunnelForControlPlane returns the ztunnel daemonset associated with the given control plane.
-	// It validates if the control plane has ambient enabled and matches the daemonset by version when multiple exist.
-	// Returns nil if not ambient or if no matching daemonset is found.
-	GetZtunnelForControlPlane(ctx context.Context, cluster string, namespace string, istiodName string) *appsv1.DaemonSet
+	// IsControlPlaneNamespaceAmbient validates if a control plane namespace should be considered ambient
+	IsControlPlaneNamespaceAmbient(ctx context.Context, cluster string, namespace string, istiodName string) bool
 
 	// RefreshTokenNamespaces clears the in memory cache of namespaces.
 	RefreshTokenNamespaces(cluster string)
@@ -358,18 +356,16 @@ func (in *kialiCacheImpl) GetZtunnelDaemonset(cluster string) []appsv1.DaemonSet
 	return daemonSetList.Items
 }
 
-// GetZtunnelForControlPlane returns the ztunnel daemonset associated with the given control plane.
-// It validates if the control plane has ambient enabled by checking if the istio deployment has PILOT_ENABLE_AMBIENT=true.
+// IsControlPlaneNamespaceAmbient validates if a control plane namespace should be considered ambient
+// by checking if the istio deployment has PILOT_ENABLE_AMBIENT=true as ENVIRONMENT VAR.
 // If istiodName is provided and not empty, it will only check deployments with that name.
 // If istiodName is empty, it will check all istiod deployments in the namespace.
-// If there are multiple daemonsets, it matches by version label.
-// Returns nil if not ambient or if no matching daemonset is found.
-func (in *kialiCacheImpl) GetZtunnelForControlPlane(ctx context.Context, cluster string, namespace string, istiodName string) *appsv1.DaemonSet {
+func (in *kialiCacheImpl) IsControlPlaneNamespaceAmbient(ctx context.Context, cluster string, namespace string, istiodName string) bool {
 	// Get the kubecache for the cluster
 	kubeCache, err := in.GetKubeCache(cluster)
 	if err != nil {
 		in.zl.Error().Msgf("Failed to get kubecache for cluster %s. Namespace: %s, Error: %s", cluster, namespace, err)
-		return nil
+		return false
 	}
 	podLabels := map[string]string{
 		config.IstioAppLabel: "istiod",
@@ -380,23 +376,13 @@ func (in *kialiCacheImpl) GetZtunnelForControlPlane(ctx context.Context, cluster
 	errKb := kubeCache.List(ctx, deploymentList, listOpts...)
 	if errKb != nil {
 		in.zl.Error().Msgf("Failed to list Istiod deployments. Namespace: %s, Error: %s", namespace, err)
-		return nil
+		return false
 	}
-
-	var istiodVersion string
-	var isAmbientEnabled bool
 
 	for i := range deploymentList.Items {
 		// If istiodName is provided, filter by deployment name
 		if istiodName != "" && deploymentList.Items[i].Name != istiodName {
 			continue
-		}
-
-		// Get the version from the deployment labels using GetVersionLabelName for consistency
-		if verLabelName, found := in.conf.GetVersionLabelName(deploymentList.Items[i].Labels); found {
-			if version := deploymentList.Items[i].Labels[verLabelName]; version != "" {
-				istiodVersion = version
-			}
 		}
 
 		// Check if PILOT_ENABLE_AMBIENT is set to true in the deployment's environment variables
@@ -406,42 +392,13 @@ func (in *kialiCacheImpl) GetZtunnelForControlPlane(ctx context.Context, cluster
 				if env.Name == "PILOT_ENABLE_AMBIENT" {
 					// Check if the value is "true" (case-insensitive)
 					if strings.EqualFold(env.Value, "true") {
-						isAmbientEnabled = true
-						break
+						return true
 					}
 				}
 			}
 		}
 	}
-
-	if !isAmbientEnabled {
-		return nil
-	}
-
-	// Get ztunnel daemonsets
-	ztunnelDaemonSets := in.GetZtunnelDaemonset(cluster)
-	if len(ztunnelDaemonSets) == 0 {
-		return nil
-	}
-
-	// If there's only one daemonset, return it
-	if len(ztunnelDaemonSets) == 1 {
-		return &ztunnelDaemonSets[0]
-	}
-
-	// If there are multiple daemonsets, match by version label using GetVersionLabelName for consistency
-	if istiodVersion != "" {
-		for i := range ztunnelDaemonSets {
-			if verLabelName, found := in.conf.GetVersionLabelName(ztunnelDaemonSets[i].Labels); found {
-				if version := ztunnelDaemonSets[i].Labels[verLabelName]; version == istiodVersion {
-					return &ztunnelDaemonSets[i]
-				}
-			}
-		}
-	}
-
-	// If no version match found, return nil
-	return nil
+	return false
 }
 
 // GetGateways Returns a list of all gateway workloads by cluster and namespace
