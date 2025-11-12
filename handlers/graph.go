@@ -192,6 +192,7 @@ func graphNamespacesWithCache(
 		// Verify that the cached graph matches the requested options
 		if graphOptionsMatch(cached.Options, o) {
 			log.Tracef("Hit graph cache for session [%s] (options match)", sessionID)
+			graph.IncrementCacheHit()
 
 			// Check if refresh interval changed - update the job if needed
 			requestedInterval := o.RefreshInterval
@@ -221,6 +222,7 @@ func graphNamespacesWithCache(
 
 	// Cache miss (or invalidated) - generate new graph
 	log.Tracef("Missed graph cache for session [%s], generating new graph", sessionID)
+	graph.IncrementCacheMiss()
 
 	// Generate graph (returns both vendor config and TrafficMap)
 	code, graphConfig, trafficMap := api.GraphNamespaces(ctx, business, prom, o)
