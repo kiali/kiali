@@ -61,6 +61,7 @@ Feature: Kiali Mesh page
     Then user sees "Prometheus" node side panel
 
   @core-2
+  @offline
   Scenario: Test DataPlane
     When user selects mesh node with label "Data Plane"
     Then user sees data plane side panel
