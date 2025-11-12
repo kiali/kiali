@@ -3,6 +3,8 @@ import { Visualization } from '@patternfly/react-topology';
 import { MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { elems } from './graph';
 
+const IN_OFFLINE_MODE = Cypress.env('RUN_MODE') === 'offline';
+
 When('user closes mesh tour', () => {
   cy.waitForReact();
   cy.get('div[role="dialog"]').find('button[aria-label="Close"]').click();
@@ -215,7 +217,10 @@ Then('user sees config validation info', () => {
       cy.contains('Istio config').should('be.visible');
       // Verify that 'Istio config' does NOT have value 'N/A'
       // This means validations should be present (not N/A)
-      cy.contains('Istio config').parent().should('not.contain.text', 'N/A');
+      // Skip this check in offline mode
+      if (!IN_OFFLINE_MODE) {
+        cy.contains('Istio config').parent().should('not.contain.text', 'N/A');
+      }
     });
 });
 
