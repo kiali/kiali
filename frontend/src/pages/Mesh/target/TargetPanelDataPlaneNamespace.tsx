@@ -353,7 +353,8 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
           .registerAll(`promises-${cluster}:${namespace}`, [
             this.fetchHealthStatus(),
             this.fetchMetrics('inbound'),
-            this.fetchMetrics('outbound')
+            this.fetchMetrics('outbound'),
+            this.fetchValidations(nsInfo)
           ])
           .then(_ => {
             this.setState({ loading: false, nsInfo: nsInfo });
@@ -444,6 +445,23 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
         );
       })
       .catch(err => this.handleApiError(`Could not fetch ${direction} metrics for namespace [${namespace}]`, err));
+  };
+
+  private fetchValidations = async (nsInfo: NamespaceInfo): Promise<void> => {
+    const cluster = this.props.targetCluster;
+    const namespace = this.props.targetNamespace;
+
+    return API.getConfigValidations(namespace, cluster)
+      .then(validationResult => {
+        const validations = validationResult.data.find(
+          validation => validation.namespace === namespace && (!validation.cluster || validation.cluster === cluster)
+        );
+
+        if (validations) {
+          nsInfo.validations = validations;
+        }
+      })
+      .catch(err => this.handleApiError('Could not fetch validations status', err));
   };
 
   private handleApiError = (message: string, error: ApiError): void => {
