@@ -119,9 +119,18 @@ deploy_curl_tool() {
 install_helloworld_demo() {
   CLIENT_EXE="kubectl"
 
+  # Optional parameter: if CLUSTER2_AMBIENT is set to "false", cluster 2 will not be set up as ambient
+  local cluster2_ambient="${CLUSTER2_AMBIENT:-true}"
+
   # Setup ambient namespaces on both clusters
   setup_ambient_namespace "${CLUSTER1_CONTEXT}"
-  setup_ambient_namespace "${CLUSTER2_CONTEXT}"
+  # Setup namespace on cluster 2 (ambient or regular depending on CLUSTER2_AMBIENT)
+  if [ "${cluster2_ambient}" == "true" ]; then
+    setup_ambient_namespace "${CLUSTER2_CONTEXT}"
+  else
+    # Create regular namespace for cluster 2 (not ambient)
+    kubectl create --context="${CLUSTER2_CONTEXT}" namespace sample || true
+  fi
 
   # Deploy helloworld service on both clusters
   deploy_helloworld_service "${CLUSTER1_CONTEXT}"

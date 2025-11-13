@@ -207,6 +207,8 @@ Feature: Kiali Overview page
   Scenario: There should be two control plane cards for each cluster
     Then user sees the "Control plane" label in the "east" "istio-system" namespace card
     Then user sees the "Control plane" label in the "west" "istio-system" namespace card
+    And user does not see the "Ambient" label in the "east" "istio-system" namespace card
+    And user does not see the "Ambient" label in the "west" "istio-system" namespace card
 
   # TODO: offline - provide ambient in must-gather example.
   @ambient

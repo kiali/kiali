@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 
@@ -207,6 +208,11 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 	for i := range namespaces {
 		_, ok := cpnSet[namespaces[i].Name]
 		namespaces[i].IsControlPlane = ok
+
+		if ok && in.kialiCache.IsAmbientEnabled(cluster) {
+			ztunnelDaemonSets := in.kialiCache.GetZtunnelDaemonset(cluster)
+			in.validateControlPlaneNamespaceAmbient(ctx, &namespaces[i], cluster, ztunnelDaemonSets)
+		}
 	}
 
 	namespaces = istio.FilterNamespacesWithDiscoverySelectors(namespaces, istio.GetDiscoverySelectorsForCluster(ctx, in.discovery, cluster, in.conf))
@@ -400,4 +406,13 @@ func (in *NamespaceService) HasMeshAccess(ctx context.Context, cluster string) b
 	}
 
 	return false
+}
+
+// validateControlPlaneNamespaceAmbient validates if a control plane namespace should be marked as ambient
+// by checking if there's a ztunnel daemonset with the same revision in the same cluster.
+// It modifies the namespace's IsAmbient field if validation fails.
+func (in *NamespaceService) validateControlPlaneNamespaceAmbient(ctx context.Context, ns *models.Namespace, cluster string, ztunnelDaemonSets []apps_v1.DaemonSet) {
+	// Use the cache method to check if the namespace is ambient
+	// Pass empty string for istiodName to check all istiod deployments
+	ns.IsAmbient = in.kialiCache.IsControlPlaneNamespaceAmbient(ctx, cluster, ns.Name, "")
 }

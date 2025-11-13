@@ -173,12 +173,45 @@ fi
 source ${SCRIPT_DIR}/setup-ca.sh
 
 if [ "${AMBIENT}" == "true" ]; then
-  echo "==== Installing Istio Ambient in multi cluster (Alpha)"
-  kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-    kubectl --context=${CLUSTER1_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
-  kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-    kubectl --context=${CLUSTER2_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
-  install_ambient_multicluster
+ if [ "${CLUSTER2_AMBIENT}" == "true" ]; then
+    echo "==== Installing Istio Ambient on both clusters (default behavior)"
+    kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+      kubectl --context=${CLUSTER1_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
+    kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+      kubectl --context=${CLUSTER2_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
+    install_ambient_multicluster
+  else
+    echo "==== Installing Istio Ambient on cluster 1 (east) and regular Istio on cluster 2 (west)"
+    kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+      kubectl --context=${CLUSTER1_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
+    kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+      kubectl --context=${CLUSTER2_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
+
+    # Setup Istio environment (needed for install_ambient_on_cluster)
+    HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+    setup_istio_environment "${HACK_SCRIPT_DIR}"
+
+    # Install ambient on cluster 1 (east)
+    echo "==== INSTALL ISTIO AMBIENT ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+    install_ambient_on_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}" "${CLUSTER1_NAME}" "${NETWORK1_ID}"
+
+    # Install regular Istio on cluster 2 (west)
+    MC_WEST_YAML=$(mktemp)
+    cat <<EOF > "$MC_WEST_YAML"
+spec:
+  values:
+    global:
+      meshID: ${MESH_ID}
+      multiCluster:
+        clusterName: ${CLUSTER2_NAME}
+      network: ${NETWORK2_ID}
+EOF
+
+    echo "==== INSTALL ISTIO ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
+    switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
+    install_istio --patch-file "${MC_WEST_YAML}"
+    rm -f "${MC_WEST_YAML}"
+  fi
 else
   # Generate configuration for cluster 1
   MC_EAST_YAML=$(mktemp)
@@ -228,7 +261,16 @@ if [ "${CROSSNETWORK_GATEWAY_REQUIRED}" == "true" ]; then
 
   echo "==== CREATE CROSSNETWORK GATEWAY ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
   switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
-  create_crossnetwork_gateway "${CLUSTER2_NAME}" "${NETWORK2_ID}"
+  # Cluster 2 is not ambient when AMBIENT is true but CLUSTER2_AMBIENT is false
+  # In that case, temporarily override AMBIENT for this call
+  if [ "${AMBIENT}" == "true" ] && [ "${CLUSTER2_AMBIENT}" == "false" ]; then
+    AMBIENT_SAVE="${AMBIENT}"
+    AMBIENT="false"
+    create_crossnetwork_gateway "${CLUSTER2_NAME}" "${NETWORK2_ID}"
+    AMBIENT="${AMBIENT_SAVE}"
+  else
+    create_crossnetwork_gateway "${CLUSTER2_NAME}" "${NETWORK2_ID}"
+  fi
 
   echo "==== SETTING UP THE MESH NETWORK CONFIGURATION MANUALLY"
   source ${SCRIPT_DIR}/config-mesh-networks.sh
@@ -267,7 +309,12 @@ source ${SCRIPT_DIR}/split-bookinfo.sh
 
 if [ "${AMBIENT}" == "true" ]; then
   echo "==== Installing Istio Ambient hello world demo"
-  install_helloworld_demo
+  # If cluster 2 is not ambient, pass CLUSTER2_AMBIENT=false to the function
+  if [ "${CLUSTER2_AMBIENT}" == "false" ]; then
+    CLUSTER2_AMBIENT="false" install_helloworld_demo
+  else
+    install_helloworld_demo
+  fi
 fi
 
 # Install Kiali if enabled
