@@ -305,6 +305,20 @@ func graphOptionsMatch(cached, requested graph.Options) bool {
 		}
 	}
 
+	// Compare rates (different rate calculations = different graph metrics)
+	if cached.Rates.Ambient != requested.Rates.Ambient {
+		return false
+	}
+	if cached.Rates.Grpc != requested.Rates.Grpc {
+		return false
+	}
+	if cached.Rates.Http != requested.Rates.Http {
+		return false
+	}
+	if cached.Rates.Tcp != requested.Rates.Tcp {
+		return false
+	}
+
 	// Note: We intentionally do NOT compare QueryTime here
 	// The background refresh job handles moving the time window forward
 	// Users expect cached graphs to update over time automatically
