@@ -32,8 +32,7 @@ This code of conduct applies both within project spaces and in public spaces
 when an individual is representing the project or its community.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by 
-contacting a Kiali project maintainer,
-Jay Shaughnessy <jshaughn@redhat.com>, John Mazzitelli <jmazzite@redhat.com> and/or Lucas Ponce <lponce@redhat.com>.
+contacting a Kiali project maintainer and/or project team lead Jay Shaughnessy <jshaughn@redhat.com>.
 
 This Code of Conduct is adapted from the [CNCF Code of Conduct](https://github.com/cncf/foundation/blob/master/code-of-conduct.md) which is 
 adapted from the Contributor Covenant
