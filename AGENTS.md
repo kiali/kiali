@@ -1,6 +1,6 @@
 # AI Agent Development Guide for Kiali
 
-This guide provides coding standards, development workflows, and common commands for AI agents and developers contributing to the Kiali project. It complements the existing [CONTRIBUTING.md](./CONTRIBUTING.md) and [STYLE_GUIDE.adoc](./STYLE_GUIDE.adoc).
+This guide provides coding standards, development workflows, and common commands for AI agents and developers contributing to the Kiali project. It complements the existing [CONTRIBUTING.md](./CONTRIBUTING.md), [STYLE_GUIDE.adoc](./STYLE_GUIDE.adoc), and [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md).
 
 ## Table of Contents
 
