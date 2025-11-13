@@ -411,6 +411,7 @@ setup_kind_singlecluster() {
     --set kiali_internal.cache_expiration.istio_status="0" \
     --set kiali_internal.cache_expiration.mesh="10s" \
     --set kiali_internal.cache_expiration.waypoint="2m" \
+    --set kiali_internal.graph_cache.enabled="false" \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 
@@ -504,6 +505,7 @@ setup_kind_tempo() {
     --set kiali_internal.cache_expiration.istio_status="0" \
     --set kiali_internal.cache_expiration.mesh="10s" \
     --set kiali_internal.cache_expiration.waypoint="2m" \
+    --set kiali_internal.graph_cache.enabled="false" \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 
