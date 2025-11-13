@@ -259,6 +259,19 @@ make perf-tests-gui
 make perf-tests-run
 ```
 
+**Cypress Environment Variables:**
+
+These variables can be set when running tests outside of the local cluster or to customize test behavior:
+
+```bash
+export CYPRESS_BASE_URL=<value>                      # defaults to http://localhost:3000
+export CYPRESS_USERNAME=<value>                      # defaults to jenkins, opt. kubeadmin
+export CYPRESS_PASSWD=<value>                        # no defaults
+export CYPRESS_AUTH_PROVIDER=<value>                 # defaults to my_htpasswd_provider
+export CYPRESS_ALLOW_INSECURE_KIALI_API=<true|false> # Useful when running tests locally against an insecure endpoint like crc
+export CYPRESS_STERN=<true|false>                    # defaults to false
+```
+
 **Test Requirements:**
 - Istio installed
 - Kiali deployed
