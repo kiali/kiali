@@ -39,6 +39,10 @@ If you want to add a new language or improve an existing one, you can check the 
 
 See the [Style Guide](./STYLE_GUIDE.adoc) about getting your code in style.
 
+### AI-Assisted Contributions
+
+If you use AI tools (such as GitHub Copilot, ChatGPT, Claude, Cursor, or similar) to assist with your contributions, please review the [AI Policy](./AI_POLICY.md) for guidelines on responsible use, disclosure requirements, and quality standards.
+
 ### Submitting changes
 
 Once the issue has been agreed upon and developed, you can send a pull-request.
