@@ -73,12 +73,12 @@ func TestVSService(t *testing.T) {
 	assertGraphBadges(SERVICE_PARAMS, VIRTUAL_SERVICE_FILE, VS_BADGE, require)
 }
 
-func TestTraficShiftingVersionedApp(t *testing.T) {
+func TestTrafficShiftingVersionedApp(t *testing.T) {
 	require := require.New(t)
 	assertGraphBadges(VERSIONED_APP_PARAMS, TRAFFIC_SHIFTING_FILE, TF_BADGE, require)
 }
 
-func TestTcpTraficShiftingVersionedApp(t *testing.T) {
+func TestTcpTrafficShiftingVersionedApp(t *testing.T) {
 	require := require.New(t)
 	assertGraphBadges(VERSIONED_APP_PARAMS, TCP_TRAFFIC_SHIFTING_FILE, TCP_TF_BADGE, require)
 }
