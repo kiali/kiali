@@ -1245,7 +1245,7 @@ func TestAppGraph(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=app&appenders&queryTime=1523364075"
+	url := ts.URL + "/api/namespaces/graph?refreshInterval=0&namespaces=bookinfo&graphType=app&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -1280,7 +1280,7 @@ func TestVersionedAppGraph(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=versionedApp&appenders&queryTime=1523364075"
+	url := ts.URL + "/api/namespaces/graph?refreshInterval=0&namespaces=bookinfo&graphType=versionedApp&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -1315,7 +1315,7 @@ func TestServiceGraph(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=service&appenders&queryTime=1523364075"
+	url := ts.URL + "/api/namespaces/graph?refreshInterval=0&namespaces=bookinfo&graphType=service&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -1350,7 +1350,7 @@ func TestWorkloadGraph(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=workload&appenders&queryTime=1523364075"
+	url := ts.URL + "/api/namespaces/graph?refreshInterval=0&namespaces=bookinfo&graphType=workload&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -1386,7 +1386,7 @@ func TestRatesGraphSent(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=workload&appenders&queryTime=1523364075&rateGrpc=sent&rateHttp=requests&rateTcp=sent"
+	url := ts.URL + "/api/namespaces/graph?refreshInterval=0&namespaces=bookinfo&graphType=workload&appenders&queryTime=1523364075&rateGrpc=sent&rateHttp=requests&rateTcp=sent"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -1421,7 +1421,7 @@ func TestRatesGraphReceived(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=workload&appenders&queryTime=1523364075&rateGrpc=received&rateHttp=requests&rateTcp=received"
+	url := ts.URL + "/api/namespaces/graph?refreshInterval=0&namespaces=bookinfo&graphType=workload&appenders&queryTime=1523364075&rateGrpc=received&rateHttp=requests&rateTcp=received"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -1456,7 +1456,7 @@ func TestRatesGraphTotal(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=workload&appenders&queryTime=1523364075&rateGrpc=total&rateHttp=requests&rateTcp=total"
+	url := ts.URL + "/api/namespaces/graph?refreshInterval=0&namespaces=bookinfo&graphType=workload&appenders&queryTime=1523364075&rateGrpc=total&rateHttp=requests&rateTcp=total"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -1492,7 +1492,7 @@ func TestRatesGraphNone(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=workload&appenders&queryTime=1523364075&rateGrpc=total&rateHttp=none&rateTcp=total"
+	url := ts.URL + "/api/namespaces/graph?refreshInterval=0&namespaces=bookinfo&graphType=workload&appenders&queryTime=1523364075&rateGrpc=total&rateHttp=none&rateTcp=total"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -3525,7 +3525,7 @@ func TestComplexGraph(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	url := ts.URL + "/api/namespaces/graph?graphType=versionedApp&appenders=&queryTime=1523364075&namespaces=bookinfo,tutorial,istio-system"
+	url := ts.URL + "/api/namespaces/graph?refreshInterval=0&graphType=versionedApp&appenders=&queryTime=1523364075&namespaces=bookinfo,tutorial,istio-system"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -3841,7 +3841,7 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	url := ts.URL + "/api/namespaces/graph?graphType=versionedApp&injectServiceNodes=true&includeIdleEdges=true&appenders=&queryTime=1523364075&namespaces=bookinfo"
+	url := ts.URL + "/api/namespaces/graph?refreshInterval=0&graphType=versionedApp&injectServiceNodes=true&includeIdleEdges=true&appenders=&queryTime=1523364075&namespaces=bookinfo"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -4178,7 +4178,7 @@ func TestAmbientGraph(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=workload&appenders=ambient&queryTime=1523364075"
+	url := ts.URL + "/api/namespaces/graph?refreshInterval=0&namespaces=bookinfo&graphType=workload&appenders=ambient&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)

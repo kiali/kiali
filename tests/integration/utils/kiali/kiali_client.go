@@ -385,7 +385,7 @@ func IstioPermissions() (*models.IstioConfigPermissions, int, error) {
 }
 
 func Graph(params map[string]string) (*common.Config, int, error) {
-	url := fmt.Sprintf("%s/api/namespaces/graph?%s", client.kialiURL, ParamsAsString(params))
+	url := fmt.Sprintf("%s/api/namespaces/graph?refreshInterval=0&%s", client.kialiURL, ParamsAsString(params))
 	graph := new(common.Config)
 
 	code, err := getRequestAndUnmarshalInto(url, graph)
