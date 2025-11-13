@@ -1,12 +1,15 @@
 import { Label, Tooltip } from '@patternfly/react-core';
 import * as React from 'react';
-import { serverConfig } from '../../config';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { Link, useLocation } from 'react-router-dom-v5-compat';
 import { meshLinkStyle } from 'components/IstioStatus/IstioStatus';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
-export const ControlPlaneBadge: React.FC = () => {
+interface ControlPlaneBadgeProps {
+  isAmbient?: boolean;
+}
+
+export const ControlPlaneBadge: React.FC<ControlPlaneBadgeProps> = ({ isAmbient = false }) => {
   const { t } = useKialiTranslation();
   const { pathname } = useLocation();
 
@@ -32,9 +35,7 @@ export const ControlPlaneBadge: React.FC = () => {
         </Label>
       </Tooltip>
 
-      {serverConfig.ambientEnabled && (
-        <AmbientBadge tooltip={t('Istio Ambient ztunnel detected in the Control plane')}></AmbientBadge>
-      )}
+      {isAmbient && <AmbientBadge tooltip={t('Istio Ambient ztunnel detected in the Control plane')}></AmbientBadge>}
     </>
   );
 };
