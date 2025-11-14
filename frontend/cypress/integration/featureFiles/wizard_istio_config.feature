@@ -14,6 +14,7 @@ Feature: Kiali Istio Config wizard
 
   @bookinfo-app
   @core-2
+  @lpinterop
   Scenario: Dropdown for cluster selection should not be visible in single cluster setup
     When user clicks in the "Gateway" Istio config actions
     Then user sees the "Create Gateway" config wizard
@@ -21,6 +22,7 @@ Feature: Kiali Istio Config wizard
 
   @bookinfo-app
   @core-2
+  @lpinterop
   Scenario: Create an Sidecar with labels and annotations
     When user deletes sidecar named "mysidecarwithlabels" and the resource is no longer available
     And user clicks in the "Sidecar" Istio config actions
@@ -40,6 +42,7 @@ Feature: Kiali Istio Config wizard
   @gateway-api
   @bookinfo-app
   @core-2
+  @lpinterop
   Scenario: Create a K8s Gateway scenario
     When user deletes k8sgateway named "k8sapigateway" and the resource is no longer available
     And user clicks in the "K8sGateway" Istio config actions

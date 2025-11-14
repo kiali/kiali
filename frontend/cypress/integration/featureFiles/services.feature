@@ -11,6 +11,7 @@ Feature: Kiali Services page
   # TODO: offline - no bookinfo VirtualService?
   @bookinfo-app
   @core-2
+  @lpinterop
   Scenario: See services table with correct info
     And user is at the "services" page
     When user applies kiali api "rest" annotations
@@ -31,6 +32,7 @@ Feature: Kiali Services page
 
   @smoke
   @core-2
+  @lpinterop
   Scenario: See all Services toggles
     And user is at the "services" list page
     Then user sees all the Services toggles
@@ -152,7 +154,6 @@ Feature: Kiali Services page
 
   # TODO: offline - no service health
   @error-rates-app
-  @skip-lpinterop
   @core-2
   Scenario: The degraded status of a service is reported in the list of services
     And user is at the "services" page

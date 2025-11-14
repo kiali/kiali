@@ -26,18 +26,21 @@ Feature: Kiali Mesh page
     Then user "does not see" mesh tour
 
   @core-2
+  @lpinterop
   # TODO: offline - number of infra nodes don't match up because no grafana/tracing.
   Scenario: See mesh
     When user sees mesh side panel
     Then user sees expected mesh infra
 
   @core-2
+  @lpinterop
   # TODO: offline - no metrics for side panel yet.
   Scenario: Test istiod
     When user selects mesh node with label "istiod"
     Then user sees control plane side panel
 
   @core-2
+  @lpinterop
   # TODO: offline - no grafana.
   Scenario: Grafana Infra
     When user selects mesh node with label "Grafana"
@@ -55,12 +58,14 @@ Feature: Kiali Mesh page
     Then user sees tracing node side panel
 
   @core-2
+  @lpinterop
   Scenario: Prometheus Infra
     When user selects mesh node with label "Prometheus"
     Then user sees "Prometheus" node side panel
 
   @core-2
   @offline
+  @lpinterop
   Scenario: Test DataPlane
     When user selects mesh node with label "Data Plane"
     Then user sees data plane side panel
