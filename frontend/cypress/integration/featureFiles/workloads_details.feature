@@ -14,6 +14,7 @@ Feature: Kiali Workload Details page
 
   @bookinfo-app
   @core-2
+  @lpinterop
   Scenario: See details for workload
     Then user sees details information for workload
     But no cluster badge for the "workload" should be visible
@@ -21,12 +22,14 @@ Feature: Kiali Workload Details page
   # TODO: offline - workload health.
   @bookinfo-app
   @core-2
+  @lpinterop
   Scenario: See workload traffic information
     Then user sees workload inbound and outbound traffic information
     And the "Cluster" column "disappears"
 
   @bookinfo-app
   @core-2
+  @lpinterop
   Scenario: See workload Inbound Metrics
     Then user sees workload inbound metrics information
 
