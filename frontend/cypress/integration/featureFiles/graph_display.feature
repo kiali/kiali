@@ -16,6 +16,7 @@ Feature: Kiali Graph page - Display menu
   @error-rates-app
   @core-1
   @offline
+  @lpinterop
   Scenario: Graph no namespaces
     When user graphs "" namespaces
     Then user sees no namespace selected
@@ -23,6 +24,7 @@ Feature: Kiali Graph page - Display menu
   # default should show empty graph
   # TODO: default namespace does not exist in offline mode
   @core-1
+  @lpinterop
   Scenario: Show empty graph
     When user graphs "default" namespaces
     Then user sees empty graph
@@ -30,6 +32,7 @@ Feature: Kiali Graph page - Display menu
   @error-rates-app
   @core-1
   @offline
+  @lpinterop
   Scenario: Show idle nodes
     When user graphs "istio-system" namespaces
     And user "opens" display menu
@@ -41,6 +44,7 @@ Feature: Kiali Graph page - Display menu
   @error-rates-app
   @core-1
   @offline
+  @lpinterop
   Scenario: User disables idle nodes
     When user "opens" display menu
     And user "disables" "idle nodes" option
@@ -50,6 +54,7 @@ Feature: Kiali Graph page - Display menu
   @error-rates-app
   @core-1
   @offline
+  @lpinterop
   Scenario: Graph alpha and beta namespaces
     When user graphs "alpha,beta" namespaces
     Then user sees the "alpha" namespace

@@ -8,6 +8,7 @@ Feature: Kiali help about verify
 
   @smoke
   @core-2
+  @lpinterop
   Scenario: Open Kiali about page
     And user clicks on Help Button
     And user clicks on About Button

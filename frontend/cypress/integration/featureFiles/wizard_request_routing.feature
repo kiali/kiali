@@ -10,6 +10,7 @@ Feature: Service Details Wizard: Request Routing
 
   @bookinfo-app
   @core-2
+  @lpinterop
   Scenario: Create a Request Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "Request Routing" actions
@@ -34,6 +35,7 @@ Feature: Service Details Wizard: Request Routing
 
   @bookinfo-app
   @core-2
+  @lpinterop
   Scenario: See a DestinationRule generated
     When user clicks in the "Istio Config" table "DR" badge "reviews" name row link
     Then user sees the "kind: DestinationRule" regex in the editor
@@ -45,6 +47,7 @@ Feature: Service Details Wizard: Request Routing
 
   @bookinfo-app
   @core-2
+  @lpinterop
   Scenario: See a VirtualService generated
     When user clicks in the "bookinfo" "reviews" "VirtualService" reference
     Then user sees the "kind: VirtualService" regex in the editor

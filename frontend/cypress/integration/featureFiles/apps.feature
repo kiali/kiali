@@ -13,6 +13,7 @@ Feature: Kiali Apps List page
 
   @bookinfo-app
   @core-1
+  @lpinterop
   Scenario: See all Apps objects in the bookinfo namespace.
     Then user sees all the Apps in the bookinfo namespace
     And user sees Health information for Apps
@@ -25,6 +26,7 @@ Feature: Kiali Apps List page
   @bookinfo-app
   @core-1
   @offline
+  @lpinterop
   Scenario: See all Apps toggles
     Then user sees all the Apps toggles
 
@@ -114,7 +116,6 @@ Feature: Kiali Apps List page
 
   @bookinfo-app
   @error-rates-app
-  @skip-lpinterop
   @core-1
   Scenario: The degraded status of a logical mesh application is reported in the list of applications
     Given a degraded application in the mesh

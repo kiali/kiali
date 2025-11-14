@@ -14,6 +14,7 @@ Feature: Kiali Service Details page
   # TODO: offline - no tracing details yet
   @bookinfo-app
   @core-2
+  @lpinterop
   Scenario: See details for productpage
     Then sd::user sees a list with content "Overview"
     Then sd::user sees a list with content "Traffic"
@@ -24,6 +25,7 @@ Feature: Kiali Service Details page
   # TODO: offline - no "Hostname" found but this doesn't exist in regular runs either?
   @bookinfo-app
   @core-2
+  @lpinterop
   Scenario: See details for service
     Then sd::user sees "productpage" details information for service "v1"
     Then sd::user sees Network card
