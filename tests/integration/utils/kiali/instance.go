@@ -2,6 +2,7 @@ package kiali
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -128,6 +129,106 @@ func (in *Instance) GetConfig(ctx context.Context) (*config.Config, error) {
 	return currentConfig, nil
 }
 
+// sanitizeConfigForCR removes fields from the config that are not valid in the Kiali CR spec.
+// This only removes fields that NEVER existed in the CRD schema or are runtime-only.
+// It does NOT remove deprecated fields since they may still be valid in older versions.
+func sanitizeConfigForCR(configYAML string) (string, error) {
+	// Convert YAML to JSON to work with unstructured data
+	jsonData, err := yaml.ToJSON([]byte(configYAML))
+	if err != nil {
+		return "", err
+	}
+
+	var data map[string]any
+	if err := json.Unmarshal(jsonData, &data); err != nil {
+		return "", err
+	}
+
+	// Remove fields that NEVER existed in the Kiali CR schema
+	// These are truly unknown/invalid fields that cause warnings
+
+	// Remove unknown fields from auth
+	if auth, ok := data["auth"].(map[string]any); ok {
+		if openshift, ok := auth["openshift"].(map[string]any); ok {
+			delete(openshift, "server_prefix") // Not in current CRD schema
+		}
+	}
+
+	// Remove unknown fields from deployment (never in CRD schema)
+	if deployment, ok := data["deployment"].(map[string]any); ok {
+		delete(deployment, "remote_secret_path")   // Never in CRD schema
+		delete(deployment, "accessiblenamespaces") // Deprecated but still used internally; it should not be in the config
+		// Note: accessible_namespaces IS in CRD schema (even if deprecated in later versions), so keep it
+	}
+
+	// Remove unknown fields from external_services
+	if externalServices, ok := data["external_services"].(map[string]any); ok {
+		if istio, ok := externalServices["istio"].(map[string]any); ok {
+			delete(istio, "registry") // Never in CRD schema
+		}
+	}
+
+	// Remove unknown fields from istio_labels (never in CRD schema)
+	if istioLabels, ok := data["istio_labels"].(map[string]any); ok {
+		// These ambient fields were never in any CRD version
+		delete(istioLabels, "ambient_namespace_label")
+		delete(istioLabels, "ambient_namespace_label_value")
+		delete(istioLabels, "ambient_waypoint_label")
+		delete(istioLabels, "ambient_waypoint_label_value")
+		delete(istioLabels, "ambient_waypoint_use_label")
+		delete(istioLabels, "ambient_waypoint_gateway_label")
+		delete(istioLabels, "injection_label")            // Not in current CRD schema
+		delete(istioLabels, "service_canonical_name")     // Not in current CRD schema
+		delete(istioLabels, "service_canonical_revision") // Not in current CRD schema
+	}
+
+	// Fix invalid enum values in kiali_feature_flags
+	if kialiFeatureFlags, ok := data["kiali_feature_flags"].(map[string]any); ok {
+		if uiDefaults, ok := kialiFeatureFlags["ui_defaults"].(map[string]any); ok {
+			// Fix refresh_interval: "60s" should be "1m"
+			if refreshInterval, ok := uiDefaults["refresh_interval"].(string); ok && refreshInterval == "60s" {
+				uiDefaults["refresh_interval"] = "1m"
+			}
+			// Remove invalid graph fields (never in CRD schema)
+			if graph, ok := uiDefaults["graph"].(map[string]any); ok {
+				delete(graph, "impl")
+				if settings, ok := graph["settings"].(map[string]any); ok {
+					delete(settings, "font_label")
+					delete(settings, "min_font_badge")
+					delete(settings, "min_font_label")
+				}
+			}
+		}
+	}
+
+	// Remove unknown server fields (never in CRD schema)
+	if server, ok := data["server"].(map[string]any); ok {
+		delete(server, "static_content_root_directory")
+		if observability, ok := server["observability"].(map[string]any); ok {
+			if tracing, ok := observability["tracing"].(map[string]any); ok {
+				// Remove collector_type if it's "jaeger" (only "otel" is valid)
+				if collectorType, ok := tracing["collector_type"].(string); ok && collectorType == "jaeger" {
+					delete(tracing, "collector_type")
+				}
+			}
+		}
+	}
+
+	// Remove runtime-only fields that were never in any CRD schema version
+	// These fields are server runtime state, not configuration
+	delete(data, "in_cluster") // Never in CRD schema (deprecated/internal field)
+	delete(data, "runConfig")  // Runtime-only field for offline mode
+	delete(data, "runMode")    // Runtime-only field (app/local/offline)
+
+	// Convert back to JSON
+	cleanedJSON, err := json.Marshal(data)
+	if err != nil {
+		return "", err
+	}
+
+	return string(cleanedJSON), nil
+}
+
 // UpdateConfig will update the Kiali instance with the new config. It will ensure
 // that the underlying configmap is actually updated before returning.
 func (in *Instance) UpdateConfig(ctx context.Context, conf *config.Config) error {
@@ -149,12 +250,13 @@ func (in *Instance) UpdateConfig(ctx context.Context, conf *config.Config) error
 
 		log.Debugf("Diff between old config and new config: %s\n", cmp.Diff(cm.Data["config.yaml"], newConfig))
 
-		jsonConfig, err := yaml.ToJSON([]byte(newConfig))
+		// Sanitize the config to remove fields that are not valid in the Kiali CR spec
+		sanitizedConfig, err := sanitizeConfigForCR(newConfig)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to sanitize config for CR: %w", err)
 		}
 
-		mergePatch := []byte(fmt.Sprintf(`{"spec": %s}`, string(jsonConfig)))
+		mergePatch := []byte(fmt.Sprintf(`{"spec": %s}`, sanitizedConfig))
 		_, err = in.dynamicClient.Resource(kialiGroupVersionResource).Namespace(in.Namespace).Patch(ctx, in.Name, types.MergePatchType, mergePatch, metav1.PatchOptions{})
 		if err != nil {
 			return err
