@@ -10,6 +10,7 @@ import (
 
 	"golang.org/x/exp/maps"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -103,4 +104,26 @@ func GetRevision(namespace models.Namespace) string {
 	}
 
 	return rev
+}
+
+func GetIstiodRevisions(ctx context.Context, kubeCache ctrlclient.Reader, namespace string) ([]string, error) {
+	podLabels := map[string]string{
+		config.IstioAppLabel: istiodAppLabelValue,
+	}
+
+	podList := &appsv1.DeploymentList{}
+	err := kubeCache.List(ctx, podList, ctrlclient.InNamespace(namespace), ctrlclient.MatchingLabels(podLabels))
+	if err != nil {
+		return nil, err
+	}
+	istiods := podList.Items
+
+	istiodRevisions := make(map[string]bool)
+	for i := range istiods {
+		if revision, ok := istiods[i].Labels[config.IstioRevisionLabel]; ok {
+			istiodRevisions[revision] = true
+		}
+	}
+
+	return maps.Keys(istiodRevisions), nil
 }

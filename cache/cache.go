@@ -73,9 +73,15 @@ type KialiCache interface {
 	// GetZtunnelPods returns a list of ztunnel pods from the ztunnel daemonset
 	GetZtunnelPods(cluster string) []v1.Pod
 
+	// GetZtunnelDaemonset returns a list of ztunnel daemonset per cluster
+	GetZtunnelDaemonset(cluster string) []appsv1.DaemonSet
+
 	// IsAmbientEnabled checks if the istio Ambient profile was enabled
 	// by checking if the ztunnel daemonset exists on the cluster.
 	IsAmbientEnabled(cluster string) bool
+
+	// IsControlPlaneNamespaceAmbient validates if a control plane namespace should be considered ambient
+	IsControlPlaneNamespaceAmbient(ctx context.Context, cluster string, namespace string, istiodName string) bool
 
 	// RefreshTokenNamespaces clears the in memory cache of namespaces.
 	RefreshTokenNamespaces(cluster string)
@@ -327,6 +333,72 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 	}
 
 	return podList.Items
+}
+
+func (in *kialiCacheImpl) GetZtunnelDaemonset(cluster string) []appsv1.DaemonSet {
+	kubeCache, err := in.GetKubeCache(cluster)
+	if err != nil {
+		in.zl.Debug().Msgf("GetZtunnelDaemonset: Unable to get kube cache when checking for ztunnel daemonset: %s", err)
+		return nil
+	}
+
+	daemonSetList := &appsv1.DaemonSetList{}
+	selector := map[string]string{
+		config.KubernetesAppLabel: config.Ztunnel,
+	}
+	listOpts := []client.ListOption{client.MatchingLabels(selector)}
+	if err := kubeCache.List(context.TODO(), daemonSetList, listOpts...); err != nil {
+		// Don't set the check so we will check again the next time since this error may be transient.
+		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
+		return nil
+	}
+
+	return daemonSetList.Items
+}
+
+// IsControlPlaneNamespaceAmbient validates if a control plane namespace should be considered ambient
+// by checking if the istio deployment has PILOT_ENABLE_AMBIENT=true as ENVIRONMENT VAR.
+// If istiodName is provided and not empty, it will only check deployments with that name.
+// If istiodName is empty, it will check all istiod deployments in the namespace.
+func (in *kialiCacheImpl) IsControlPlaneNamespaceAmbient(ctx context.Context, cluster string, namespace string, istiodName string) bool {
+	// Get the kubecache for the cluster
+	kubeCache, err := in.GetKubeCache(cluster)
+	if err != nil {
+		in.zl.Error().Msgf("Failed to get kubecache for cluster %s. Namespace: %s, Error: %s", cluster, namespace, err)
+		return false
+	}
+	podLabels := map[string]string{
+		config.IstioAppLabel: "istiod",
+	}
+
+	deploymentList := &appsv1.DeploymentList{}
+	listOpts := []client.ListOption{client.InNamespace(namespace), client.MatchingLabels(podLabels)}
+	errKb := kubeCache.List(ctx, deploymentList, listOpts...)
+	if errKb != nil {
+		in.zl.Error().Msgf("Failed to list Istiod deployments. Namespace: %s, Error: %s", namespace, err)
+		return false
+	}
+
+	for i := range deploymentList.Items {
+		// If istiodName is provided, filter by deployment name
+		if istiodName != "" && deploymentList.Items[i].Name != istiodName {
+			continue
+		}
+
+		// Check if PILOT_ENABLE_AMBIENT is set to true in the deployment's environment variables
+		// Only consider this deployment if ambient is enabled
+		if containers := deploymentList.Items[i].Spec.Template.Spec.Containers; len(containers) > 0 {
+			for _, env := range containers[0].Env {
+				if env.Name == "PILOT_ENABLE_AMBIENT" {
+					// Check if the value is "true" (case-insensitive)
+					if strings.EqualFold(env.Value, "true") {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
 }
 
 // GetGateways Returns a list of all gateway workloads by cluster and namespace

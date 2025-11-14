@@ -198,6 +198,9 @@ SINGLE_CLUSTER="${SINGLE_CLUSTER:-false}"
 # If Ambient should be installed (Alpha, for multi primary)
 # https://istio.io/latest/docs/ambient/install/multicluster/
 AMBIENT="${AMBIENT:-false}"
+# If cluster 2 should use ambient (only valid when AMBIENT is true)
+# Default: true (both clusters use ambient when AMBIENT is true)
+CLUSTER2_AMBIENT="${CLUSTER2_AMBIENT:-true}"
 
 # Use groups for OpenId authorization (single cluster)
 AUTH_GROUPS="${AUTH_GROUPS:-}"
@@ -294,6 +297,10 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -a|--ambient)
       AMBIENT="$2"
+      shift;shift
+      ;;
+    -c2a|--cluster2-ambient)
+      CLUSTER2_AMBIENT="$2"
       shift;shift
       ;;
     -be|--bookinfo-enabled)

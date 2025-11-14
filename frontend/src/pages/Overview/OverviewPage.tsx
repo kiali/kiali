@@ -1455,7 +1455,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     const isControlPlane = ns.isControlPlane;
     return (
       <>
-        {isControlPlane && <ControlPlaneBadge />}
+        {isControlPlane && <ControlPlaneBadge isAmbient={ns.isAmbient} />}
 
         {!isControlPlane && ns.revision && <ControlPlaneVersionBadge version={ns.revision} />}
 

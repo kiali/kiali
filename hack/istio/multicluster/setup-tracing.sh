@@ -13,7 +13,9 @@ source ${SCRIPT_DIR}/env.sh $*
 # This adds a port to the istio-ingressgateway service. This could probably be done through istioctl and passing the right combination
 # of settings into the istioctl hack script but it's way simpler to just patch the service directly.
 if [ "${AMBIENT}" == "true" ]; then
-  ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" apply -f ${SCRIPT_DIR}/resources/zipkin-gw.yaml
+  # Check if Gateway API CRDs are available before trying to use them
+  if ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" get crd gateways.gateway.networking.k8s.io &>/dev/null; then
+    ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" apply -f ${SCRIPT_DIR}/resources/zipkin-gw.yaml
   
   # Wait for the zipkin-gateway-istio service to be created by Istio
   echo "Waiting for zipkin-gateway-istio service to be ready..."
@@ -26,7 +28,12 @@ if [ "${AMBIENT}" == "true" ]; then
     sleep 2
   done
   
-  ingress_output=$(${CLIENT_EXE} get svc -n istio-system --context "${CLUSTER1_CONTEXT}" zipkin-gateway-istio -o jsonpath='{.spec.ports[?(@.name=="zipkin")]}')
+    ingress_output=$(${CLIENT_EXE} get svc -n istio-system --context "${CLUSTER1_CONTEXT}" zipkin-gateway-istio -o jsonpath='{.spec.ports[?(@.name=="zipkin")]}')
+  else
+    # Gateway API CRDs not available, fall back to regular Istio Gateway
+    echo "Gateway API CRDs not found, using regular Istio Gateway instead"
+    ingress_output=$(${CLIENT_EXE} get svc -n istio-system --context "${CLUSTER1_CONTEXT}" istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="zipkin-http")]}')
+  fi
 else
   ingress_output=$(${CLIENT_EXE} get svc -n istio-system --context "${CLUSTER1_CONTEXT}" istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="zipkin-http")]}')
 fi
@@ -58,7 +65,8 @@ EOF
 
 else
 
-  if [ "${AMBIENT}" == "true" ]; then
+  # Check if Gateway API CRDs are available
+  if [ "${AMBIENT}" == "true" ] && ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" get crd gateways.gateway.networking.k8s.io &>/dev/null; then
     ${CLIENT_EXE} label --context="${CLUSTER1_CONTEXT}" svc zipkin -n istio-system istio.io/global="true"
   else
 
@@ -85,7 +93,8 @@ EOF
   fi
 fi
 
-if [ "${AMBIENT}" != "true" ]; then
+# Create Istio Gateway if Gateway API is not being used
+if [ "${AMBIENT}" != "true" ] || ! ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" get crd gateways.gateway.networking.k8s.io &>/dev/null; then
   ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" apply -f - <<EOF
 apiVersion: networking.istio.io/v1
 kind: Gateway
@@ -106,7 +115,12 @@ EOF
 
   ISTIO_INGRESS_IP=$(${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" get service -n istio-system istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 else
-  ISTIO_INGRESS_IP=$(${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" get service -n istio-system zipkin-gateway-istio -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  # Use Gateway API service if available, otherwise fall back to istio-ingressgateway
+  if ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" get svc -n istio-system zipkin-gateway-istio &>/dev/null; then
+    ISTIO_INGRESS_IP=$(${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" get service -n istio-system zipkin-gateway-istio -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  else
+    ISTIO_INGRESS_IP=$(${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" get service -n istio-system istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  fi
 fi
 
 helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
