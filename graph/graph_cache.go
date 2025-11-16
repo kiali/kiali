@@ -14,6 +14,10 @@ import (
 
 var (
 	// Prometheus metrics for graph cache
+	cacheEvictionsTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "kiali_graph_cache_evictions_total",
+		Help: "Total number of graph cache evictions",
+	})
 	cacheHitsTotal = prometheus.NewCounter(prometheus.CounterOpts{
 		Name: "kiali_graph_cache_hits_total",
 		Help: "Total number of graph cache hits",
@@ -22,17 +26,13 @@ var (
 		Name: "kiali_graph_cache_misses_total",
 		Help: "Total number of graph cache misses",
 	})
-	cacheEvictionsTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "kiali_graph_cache_evictions_total",
-		Help: "Total number of graph cache evictions",
-	})
 )
 
 func init() {
 	// Register metrics with Prometheus
+	prometheus.MustRegister(cacheEvictionsTotal)
 	prometheus.MustRegister(cacheHitsTotal)
 	prometheus.MustRegister(cacheMissesTotal)
-	prometheus.MustRegister(cacheEvictionsTotal)
 }
 
 // GraphCache provides per-session graph caching with background refresh.
@@ -41,35 +41,35 @@ func init() {
 // Sessions are uniquely identified by sessionID, allowing multiple concurrent
 // sessions per user (e.g., different browsers/tabs).
 type GraphCache interface {
-	// GetSessionGraph retrieves a session's cached graph if it exists
-	GetSessionGraph(sessionID string) (*CachedGraph, bool)
-
-	// SetSessionGraph stores or updates a session's cached graph
-	SetSessionGraph(sessionID string, cached *CachedGraph) error
-
-	// Evict removes a session's graph from cache and stops background refresh
-	Evict(sessionID string)
+	// ActiveSessions returns the number of sessions with cached graphs
+	ActiveSessions() int
 
 	// Clear removes all cached graphs (useful for testing and shutdown)
 	Clear()
 
-	// TotalMemoryMB returns estimated total memory usage of all cached graphs
-	TotalMemoryMB() float64
+	// Config returns the cache configuration
+	Config() *GraphCacheConfig
 
 	// Enabled returns true if graph caching is enabled
 	Enabled() bool
 
-	// ActiveSessions returns the number of sessions with cached graphs
-	ActiveSessions() int
-
-	// SetGraphGenerator sets the graph generator function for background refresh
-	SetGraphGenerator(generator GraphGenerator)
+	// Evict removes a session's graph from cache and stops background refresh
+	Evict(sessionID string)
 
 	// GetGraphGenerator returns the current graph generator (may be nil)
 	GetGraphGenerator() GraphGenerator
 
-	// Config returns the cache configuration
-	Config() *GraphCacheConfig
+	// GetSessionGraph retrieves a session's cached graph if it exists
+	GetSessionGraph(sessionID string) (*CachedGraph, bool)
+
+	// SetGraphGenerator sets the graph generator function for background refresh
+	SetGraphGenerator(generator GraphGenerator)
+
+	// SetSessionGraph stores or updates a session's cached graph
+	SetSessionGraph(sessionID string, cached *CachedGraph) error
+
+	// TotalMemoryMB returns estimated total memory usage of all cached graphs
+	TotalMemoryMB() float64
 }
 
 // CachedGraph represents a user's cached graph with metadata
@@ -257,9 +257,9 @@ func (c *GraphCacheImpl) totalMemoryMBLocked() float64 {
 func (c *GraphCacheImpl) evictLRU(targetMB float64) {
 	// Create list of sessions sorted by last accessed time (oldest first)
 	type sessionEntry struct {
-		sessionID    string
 		lastAccessed time.Time
 		memoryMB     float64
+		sessionID    string
 	}
 
 	var sessions []sessionEntry
@@ -269,9 +269,9 @@ func (c *GraphCacheImpl) evictLRU(targetMB float64) {
 		cached.mu.RUnlock()
 
 		sessions = append(sessions, sessionEntry{
-			sessionID:    sessionID,
 			lastAccessed: lastAccess,
 			memoryMB:     cached.estimatedMB,
+			sessionID:    sessionID,
 		})
 	}
 
@@ -357,9 +357,9 @@ func LoadGraphCacheConfig(cfg config.Config) *GraphCacheConfig {
 
 	return &GraphCacheConfig{
 		Enabled:           cfg.KialiInternal.GraphCache.Enabled,
-		RefreshInterval:   refreshInterval,
 		InactivityTimeout: inactivityTimeout,
 		MaxCacheMemoryMB:  maxMemory,
+		RefreshInterval:   refreshInterval,
 	}
 }
 
