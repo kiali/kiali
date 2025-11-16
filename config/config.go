@@ -677,10 +677,10 @@ type KialiURL struct {
 
 // GraphCacheConfig configures per-user graph caching with background refresh
 type GraphCacheConfig struct {
-	Enabled           bool   `yaml:"enabled,omitempty" json:"enabled,omitempty"`
-	RefreshInterval   string `yaml:"refresh_interval,omitempty" json:"refreshInterval,omitempty"`     // Default: "60s"
+	Enabled           bool   `yaml:"enabled" json:"enabled"`                                          // Default: true
 	InactivityTimeout string `yaml:"inactivity_timeout,omitempty" json:"inactivityTimeout,omitempty"` // Default: "10m"
 	MaxCacheMemoryMB  int    `yaml:"max_cache_memory_mb,omitempty" json:"maxCacheMemoryMB,omitempty"` // Default: 100
+	RefreshInterval   string `yaml:"refresh_interval,omitempty" json:"refreshInterval,omitempty"`     // Default: "60s"
 }
 
 // KialiFeatureFlags available from the CR
@@ -989,9 +989,9 @@ func NewConfig() (c *Config) {
 			},
 			GraphCache: GraphCacheConfig{
 				Enabled:           true,
-				RefreshInterval:   "60s",
 				InactivityTimeout: "10m",
 				MaxCacheMemoryMB:  100,
+				RefreshInterval:   "60s",
 			},
 			MetricLogDurationLimit: 3 * time.Second, // set to 0 to log everything
 		},
