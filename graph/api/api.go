@@ -18,8 +18,9 @@ import (
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
-// GraphNamespaces generates a namespaces graph using the provided options
-func GraphNamespaces(ctx context.Context, business *business.Layer, prom prometheus.ClientInterface, o graph.Options) (code int, graphConfig interface{}) {
+// GraphNamespaces generates a namespaces graph using the provided options.
+// Returns the HTTP status code, the vendor-specific graph config, and the TrafficMap (for caching).
+func GraphNamespaces(ctx context.Context, business *business.Layer, prom prometheus.ClientInterface, o graph.Options) (code int, graphConfig interface{}, trafficMap graph.TrafficMap) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(
 		ctx,
@@ -43,7 +44,7 @@ func GraphNamespaces(ctx context.Context, business *business.Layer, prom prometh
 
 	switch o.TelemetryVendor {
 	case graph.VendorIstio:
-		code, graphConfig = graphNamespacesIstio(ctx, business, prom, o)
+		code, graphConfig, trafficMap = graphNamespacesIstio(ctx, business, prom, o)
 	default:
 		graph.Error(fmt.Sprintf("TelemetryVendor [%s] not supported", o.TelemetryVendor))
 	}
@@ -54,20 +55,20 @@ func GraphNamespaces(ctx context.Context, business *business.Layer, prom prometh
 		internalmetrics.SetGraphNodes(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes, numNodes)
 	}
 
-	return code, graphConfig
+	return code, graphConfig, trafficMap
 }
 
 // graphNamespacesIstio provides a test hook that accepts mock clients
-func graphNamespacesIstio(ctx context.Context, business *business.Layer, prom prometheus.ClientInterface, o graph.Options) (code int, graphConfig interface{}) {
+func graphNamespacesIstio(ctx context.Context, business *business.Layer, prom prometheus.ClientInterface, o graph.Options) (code int, graphConfig interface{}, trafficMap graph.TrafficMap) {
 	clusters := business.Mesh.Clusters()
 	// Create a 'global' object to store the business. Global only to the request.
 	globalInfo := graph.NewGlobalInfo(business, prom, config.Get(), clusters, appender.NewGlobalIstioInfo())
 
-	trafficMap := istio.BuildNamespacesTrafficMap(ctx, o.TelemetryOptions, globalInfo)
+	trafficMap = istio.BuildNamespacesTrafficMap(ctx, o.TelemetryOptions, globalInfo)
 
 	code, graphConfig = generateGraph(ctx, trafficMap, o)
 
-	return code, graphConfig
+	return code, graphConfig, trafficMap
 }
 
 // GraphNode generates a node graph using the provided options
@@ -149,4 +150,9 @@ func generateGraph(ctx context.Context, trafficMap graph.TrafficMap, o graph.Opt
 
 	zl.Trace().Msgf("Done generating config for [%s] graph", o.ConfigVendor)
 	return http.StatusOK, vendorConfig
+}
+
+// GenerateGraph converts a TrafficMap to vendor-specific graph config (exported for caching)
+func GenerateGraph(ctx context.Context, trafficMap graph.TrafficMap, o graph.Options) (int, interface{}) {
+	return generateGraph(ctx, trafficMap, o)
 }
