@@ -177,7 +177,7 @@ func graphNamespacesWithCache(
 
 	// Check if client requested cache bypass (refreshInterval <= 0)
 	if o.RefreshInterval <= 0 {
-		log.Infof("Client requested graph cache bypass for session [%s] (refreshInterval <= 0), clearing cache and stopping refresh job", sessionID)
+		log.Debugf("Client requested graph cache bypass for session [%s] (refreshInterval <= 0), clearing cache and stopping refresh job", sessionID)
 		// Stop any existing refresh job
 		refreshJobManager.StopJob(sessionID)
 		// Clear cached graph for this session
@@ -191,13 +191,13 @@ func graphNamespacesWithCache(
 	if cached, found := graphCache.GetSessionGraph(sessionID); found {
 		// Verify that the cached graph matches the requested options
 		if graphOptionsMatch(cached.Options, o) {
-			log.Infof("Hit graph cache for session [%s] (options match)", sessionID)
+			log.Tracef("Hit graph cache for session [%s] (options match)", sessionID)
 			graph.IncrementCacheHit()
 
 			// Check if refresh interval changed - update the job if needed
 			requestedInterval := o.RefreshInterval
 			if requestedInterval != cached.RefreshInterval {
-				log.Infof("Changed graph cache refresh interval for session [%s] (from %v to %v), updating job",
+				log.Debugf("Changed graph cache refresh interval for session [%s] (from %v to %v), updating job",
 					sessionID, cached.RefreshInterval, requestedInterval)
 				if job := refreshJobManager.GetJob(sessionID); job != nil {
 					job.UpdateInterval(requestedInterval)
@@ -215,13 +215,13 @@ func graphNamespacesWithCache(
 		}
 
 		// Options changed - invalidate cache and refresh job
-		log.Infof("Invalidated graph cache for session [%s] (options changed)", sessionID)
+		log.Debugf("Invalidated graph cache for session [%s] (options changed)", sessionID)
 		graphCache.Evict(sessionID)
 		refreshJobManager.StopJob(sessionID)
 	}
 
 	// Cache miss (or invalidated) - generate new graph
-	log.Infof("Missed graph cache for session [%s], generating new graph", sessionID)
+	log.Tracef("Missed graph cache for session [%s], generating new graph", sessionID)
 	graph.IncrementCacheMiss()
 
 	// Generate graph (returns both vendor config and TrafficMap)
