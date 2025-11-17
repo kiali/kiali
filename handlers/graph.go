@@ -210,7 +210,8 @@ func graphNamespacesWithCache(
 
 			// Always return cached graph immediately for fast response
 			// Background refresh ensures data is never older than interval/2
-			code, graphConfig := generateGraphFromTrafficMap(ctx, cached.TrafficMap, o)
+			// Use cached.Options to preserve the original Config.Timestamp
+			code, graphConfig := generateGraphFromTrafficMap(ctx, cached.TrafficMap, cached.Options)
 			return code, graphConfig
 		}
 
@@ -232,12 +233,11 @@ func graphNamespacesWithCache(
 	}
 
 	// Cache the TrafficMap
-	refreshInterval := graphCache.Config().RefreshInterval
 	cached := &graph.CachedGraph{
 		LastAccessed:    time.Now(),
 		Options:         o,
 		RefreshInterval: o.RefreshInterval,
-		Timestamp:       time.Now(),
+		Timestamp:       time.Now(), // When the graph was actually generated (wall-clock time)
 		TrafficMap:      trafficMap,
 	}
 
@@ -252,11 +252,11 @@ func graphNamespacesWithCache(
 		graphCache.SetGraphGenerator(generator)
 	}
 
-	// Start background refresh job for this session
+	// Start background refresh job for this session using the user's requested refresh interval
 	// Note: RefreshJob needs the concrete cache implementation for internal methods
 	// This is safe because NewGraphCache always returns *GraphCacheImpl
 	cacheImpl := graphCache.(*graph.GraphCacheImpl)
-	refreshJobManager.StartJob(sessionID, o, cacheImpl, generator, refreshInterval)
+	refreshJobManager.StartJob(sessionID, o, cacheImpl, generator, o.RefreshInterval)
 
 	return code, graphConfig
 }

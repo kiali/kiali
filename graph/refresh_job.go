@@ -23,7 +23,8 @@ type RefreshJob struct {
 	graphOptions    Options
 	mu              sync.Mutex
 	refreshInterval time.Duration
-	sessionID       string // Unique session identifier (different per browser/tab)
+	resetChan       chan *time.Ticker // Signals Start loop when ticker changes
+	sessionID       string            // Unique session identifier (different per browser/tab)
 	stopChan        chan struct{}
 	stopped         bool
 	ticker          *time.Ticker
@@ -47,6 +48,7 @@ func NewRefreshJob(
 		graphGenerator:  generator,
 		graphOptions:    options,
 		refreshInterval: refreshInterval,
+		resetChan:       make(chan *time.Ticker, 1),
 		sessionID:       sessionID,
 		stopChan:        make(chan struct{}),
 		stopped:         false,
@@ -96,6 +98,12 @@ func (j *RefreshJob) Start() {
 		select {
 		case <-j.ticker.C:
 			go j.refresh()
+		case newTicker := <-j.resetChan:
+			// Interval changed - switch to new ticker
+			j.mu.Lock()
+			j.ticker = newTicker
+			j.mu.Unlock()
+			log.Tracef("Graph cache refresh job for session [%s] now using new ticker", j.sessionID)
 		case <-j.stopChan:
 			log.Debugf("Stopping graph cache refresh job for session [%s]", j.sessionID)
 			j.cleanup()
@@ -124,7 +132,7 @@ func (j *RefreshJob) Stop() {
 
 // UpdateInterval changes the refresh interval for a running job.
 // This allows dynamically adjusting the refresh rate based on client requests.
-// The ticker is reset to maintain the interval/2 offset pattern.
+// The ticker is reset and a refresh is scheduled at interval/2 to maintain the offset pattern.
 func (j *RefreshJob) UpdateInterval(newInterval time.Duration) {
 	j.mu.Lock()
 	defer j.mu.Unlock()
@@ -137,16 +145,36 @@ func (j *RefreshJob) UpdateInterval(newInterval time.Duration) {
 		return
 	}
 
-	log.Debugf("Updating graph cache refresh interval for session [%s] from %v to %v", j.sessionID, j.refreshInterval, newInterval)
+	log.Debugf("Updating graph cache refresh interval for session [%s] from %v to %v (next refresh in %v)",
+		j.sessionID, j.refreshInterval, newInterval, newInterval/2)
 
 	j.refreshInterval = newInterval
 
-	// Stop the old ticker and create a new one with the new interval
-	// Note: This resets the timing, so next refresh will happen at new interval
+	// Stop the old ticker
 	if j.ticker != nil {
 		j.ticker.Stop()
 	}
-	j.ticker = time.NewTicker(newInterval)
+
+	// To maintain the interval/2 offset pattern:
+	// 1. Wait interval/2 and do a refresh
+	// 2. Create the new ticker and send it to the Start loop via resetChan
+	// This ensures the ticker's schedule is naturally offset by interval/2
+	go func() {
+		time.Sleep(newInterval / 2)
+		j.refresh()
+
+		// Now create the new ticker and notify the Start loop
+		if !j.stopped {
+			newTicker := time.NewTicker(newInterval)
+			select {
+			case j.resetChan <- newTicker:
+				// Sent successfully
+			case <-j.stopChan:
+				// Job stopped while we were sleeping, clean up the new ticker
+				newTicker.Stop()
+			}
+		}
+	}()
 }
 
 // cleanup performs cleanup when the job stops.
@@ -192,8 +220,11 @@ func (j *RefreshJob) refresh() {
 
 	// CRITICAL: Update QueryTime to current time for moving window
 	// This ensures the graph always shows current data as time progresses
+	// Note: Options has both ConfigOptions and TelemetryOptions with QueryTime, update both
 	refreshedOptions := j.graphOptions
-	refreshedOptions.TelemetryOptions.QueryTime = time.Now().Unix()
+	refreshTimestamp := time.Now()
+	refreshedOptions.TelemetryOptions.QueryTime = refreshTimestamp.Unix()
+	refreshedOptions.ConfigOptions.QueryTime = refreshTimestamp.Unix()
 
 	log.Tracef("Refreshing graph cache for session [%s] (duration: %v, moving window to: %v)",
 		j.sessionID,
@@ -215,11 +246,12 @@ func (j *RefreshJob) refresh() {
 	newMemoryMB := EstimateGraphMemory(trafficMap)
 
 	// Update cache with fresh graph
+	// Use the same timestamp for both CachedGraph.Timestamp and Options.QueryTime
 	newCached := &CachedGraph{
 		LastAccessed:    cached.LastAccessed, // Preserve last access time
 		Options:         refreshedOptions,
 		RefreshInterval: j.refreshInterval,
-		Timestamp:       time.Now(),
+		Timestamp:       refreshTimestamp,
 		TrafficMap:      trafficMap,
 	}
 
@@ -279,7 +311,6 @@ func (m *RefreshJobManager) StartJob(
 	// Start the job in a goroutine
 	go job.Start()
 
-	log.Debugf("Started graph cache refresh job for session [%s] (interval: %v)", sessionID, refreshInterval)
 }
 
 // GetJob retrieves the refresh job for a specific session.
