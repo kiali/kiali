@@ -95,7 +95,9 @@
         "infraData" : {
           "auth" : {
             "caFile" : "xxx",
+            "certFile" : "xxx",
             "insecureSkipVerify" : false,
+            "keyFile" : "xxx",
             "password" : "xxx",
             "token" : "xxx",
             "type" : "none",
@@ -123,7 +125,9 @@
         "infraData" : {
           "auth" : {
             "caFile" : "xxx",
+            "certFile" : "xxx",
             "insecureSkipVerify" : false,
+            "keyFile" : "xxx",
             "password" : "xxx",
             "token" : "xxx",
             "type" : "none",
@@ -155,7 +159,9 @@
         "infraData" : {
           "auth" : {
             "caFile" : "xxx",
+            "certFile" : "xxx",
             "insecureSkipVerify" : false,
+            "keyFile" : "xxx",
             "password" : "xxx",
             "token" : "xxx",
             "type" : "none",

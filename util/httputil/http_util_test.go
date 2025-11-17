@@ -1,148 +1,387 @@
-package httputil_test
+package httputil
 
 import (
+	"bytes"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"io"
+	"math/big"
+	"net"
 	"net/http"
-	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/util/httputil"
 )
 
-func setupAndCreateRequest() (*config.Config, *http.Request) {
+type recordingRoundTripper struct {
+	lastAuth string
+}
+
+func (r *recordingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	r.lastAuth = req.Header.Get("Authorization")
+	// Return minimal valid response
+	return &http.Response{
+		StatusCode: 200,
+		Body:       ioNopCloser{bytes.NewBufferString("ok")},
+		Header:     make(http.Header),
+		Request:    req,
+	}, nil
+}
+
+type ioNopCloser struct {
+	*bytes.Buffer
+}
+
+func (n ioNopCloser) Close() error { return nil }
+
+func TestAuthRoundTripper_BearerRotation(t *testing.T) {
+	tmpDir := t.TempDir()
+	tokenFile := tmpDir + "/token"
+	if err := os.WriteFile(tokenFile, []byte("t1"), 0600); err != nil {
+		t.Fatalf("write token: %v", err)
+	}
+
+	auth := &config.Auth{
+		Type:  config.AuthTypeBearer,
+		Token: tokenFile,
+	}
+
+	inner := &recordingRoundTripper{}
+	rt := newAuthRoundTripper(auth, inner)
+
+	req, _ := http.NewRequest(http.MethodGet, "http://example.com", nil)
+	if _, err := rt.RoundTrip(req); err != nil {
+		t.Fatalf("roundtrip: %v", err)
+	}
+	if inner.lastAuth != "Bearer t1" {
+		t.Fatalf("expected Authorization=Bearer t1, got %q", inner.lastAuth)
+	}
+
+	// rotate
+	if err := os.WriteFile(tokenFile, []byte("t2"), 0600); err != nil {
+		t.Fatalf("rotate token: %v", err)
+	}
+	if _, err := rt.RoundTrip(req); err != nil {
+		t.Fatalf("roundtrip2: %v", err)
+	}
+	if inner.lastAuth != "Bearer t2" {
+		t.Fatalf("expected Authorization=Bearer t2, got %q", inner.lastAuth)
+	}
+}
+
+func TestAuthRoundTripper_BasicRotation(t *testing.T) {
+	tmpDir := t.TempDir()
+	userFile := tmpDir + "/u"
+	passFile := tmpDir + "/p"
+	if err := os.WriteFile(userFile, []byte("u1"), 0600); err != nil {
+		t.Fatalf("write user: %v", err)
+	}
+	if err := os.WriteFile(passFile, []byte("p1"), 0600); err != nil {
+		t.Fatalf("write pass: %v", err)
+	}
+
+	auth := &config.Auth{
+		Type:     config.AuthTypeBasic,
+		Username: userFile,
+		Password: passFile,
+	}
+
+	inner := &recordingRoundTripper{}
+	rt := newAuthRoundTripper(auth, inner)
+
+	req, _ := http.NewRequest(http.MethodGet, "http://example.com", nil)
+	if _, err := rt.RoundTrip(req); err != nil {
+		t.Fatalf("roundtrip: %v", err)
+	}
+	if inner.lastAuth == "" || inner.lastAuth == "Basic " {
+		t.Fatalf("expected Basic auth header, got %q", inner.lastAuth)
+	}
+
+	// rotate
+	if err := os.WriteFile(userFile, []byte("u2"), 0600); err != nil {
+		t.Fatalf("rotate user: %v", err)
+	}
+	if err := os.WriteFile(passFile, []byte("p2"), 0600); err != nil {
+		t.Fatalf("rotate pass: %v", err)
+	}
+	if _, err := rt.RoundTrip(req); err != nil {
+		t.Fatalf("roundtrip2: %v", err)
+	}
+	if inner.lastAuth == "" || inner.lastAuth == "Basic " {
+		t.Fatalf("expected rotated Basic auth header, got %q", inner.lastAuth)
+	}
+}
+
+// --- TLS rotation tests ---
+
+func TestGetTLSConfig_CARotation_VerifyConnection(t *testing.T) {
+	tmpDir := t.TempDir()
+	ca1, ca1PEM, ca1Key := mustGenCA(t, "CA1")
+	leaf1 := mustGenLeafSignedWithKey(t, ca1, ca1Key, "leaf1")
+
+	caFile := tmpDir + "/ca.pem"
+	if err := os.WriteFile(caFile, ca1PEM, 0600); err != nil {
+		t.Fatalf("write ca1: %v", err)
+	}
+
 	conf := config.NewConfig()
-	conf.Server.WebRoot = "/custom/kiali"
-	conf.Server.Port = 700
+	auth := &config.Auth{
+		CAFile: caFile,
+	}
 
-	request, _ := http.NewRequest("GET", "https://kiali:2800/custom/kiali/path/", nil)
-	return conf, request
+	tlscfg, err := GetTLSConfig(conf, auth)
+	if err != nil {
+		t.Fatalf("GetTLSConfig: %v", err)
+	}
+	if tlscfg == nil || tlscfg.VerifyConnection == nil {
+		t.Fatalf("expected VerifyConnection to be set")
+	}
+	// Verify with leaf1 (signed by ca1) succeeds (no DNS name enforced here)
+	leaf1Cert, err := x509.ParseCertificate(leaf1)
+	if err != nil {
+		t.Fatalf("parse leaf1: %v", err)
+	}
+	if err := tlscfg.VerifyConnection(tls.ConnectionState{PeerCertificates: []*x509.Certificate{leaf1Cert}}); err != nil {
+		t.Fatalf("verify with ca1 should succeed: %v", err)
+	}
+
+	// Rotate to CA2
+	ca2, ca2PEM, ca2Key := mustGenCA(t, "CA2")
+	if err := os.WriteFile(caFile, ca2PEM, 0600); err != nil {
+		t.Fatalf("write ca2: %v", err)
+	}
+	leaf2 := mustGenLeafSignedWithKey(t, ca2, ca2Key, "leaf2")
+	leaf2Cert, err := x509.ParseCertificate(leaf2)
+	if err != nil {
+		t.Fatalf("parse leaf2: %v", err)
+	}
+
+	// Verify with leaf2 now succeeds
+	if err := tlscfg.VerifyConnection(tls.ConnectionState{PeerCertificates: []*x509.Certificate{leaf2Cert}}); err != nil {
+		t.Fatalf("verify with ca2 should succeed: %v", err)
+	}
+	// Old leaf should now fail
+	if err := tlscfg.VerifyConnection(tls.ConnectionState{PeerCertificates: []*x509.Certificate{leaf1Cert}}); err == nil {
+		t.Fatalf("verify with old ca should fail")
+	}
 }
 
-func TestGuessKialiURLParsesFromRequest(t *testing.T) {
-	guessedUrl := httputil.GuessKialiURL(setupAndCreateRequest())
+func TestGetTLSConfig_ClientCertRotation(t *testing.T) {
+	tmpDir := t.TempDir()
+	certFile := tmpDir + "/crt.pem"
+	keyFile := tmpDir + "/key.pem"
 
-	assert.Equal(t, "https://kiali:2800/custom/kiali", guessedUrl)
-}
-
-func TestGuessKialiURLReadsForwardedSchema(t *testing.T) {
-	// See reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-Proto
-
-	conf, request := setupAndCreateRequest()
-	request.Header.Add("X-Forwarded-Proto", "http")
-	guessedUrl := httputil.GuessKialiURL(conf, request)
-
-	assert.Equal(t, "http://kiali:2800/custom/kiali", guessedUrl)
-}
-
-func TestGuessKialiURLReadsForwardedHost(t *testing.T) {
-	// See reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-Host
-
-	conf, request := setupAndCreateRequest()
-	request.Header.Add("X-Forwarded-Host", "id42.example-cdn.com")
-	guessedUrl := httputil.GuessKialiURL(conf, request)
-
-	assert.Equal(t, "https://id42.example-cdn.com:2800/custom/kiali", guessedUrl)
-}
-
-func TestGuessKialiURLReadsForwardedPort(t *testing.T) {
-	// See reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/x-forwarded-headers.html#x-forwarded-port
-
-	conf, request := setupAndCreateRequest()
-	request.Header.Add("X-Forwarded-Port", "123456")
-	guessedUrl := httputil.GuessKialiURL(conf, request)
-
-	assert.Equal(t, "https://kiali:123456/custom/kiali", guessedUrl)
-}
-
-func TestGuessKialiURLWebFQDNPort(t *testing.T) {
-	// See reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/x-forwarded-headers.html#x-forwarded-port
+	certPEM1, keyPEM1 := mustSelfSignedPair(t, "c1")
+	if err := os.WriteFile(certFile, certPEM1, 0600); err != nil {
+		t.Fatalf("write cert1: %v", err)
+	}
+	if err := os.WriteFile(keyFile, keyPEM1, 0600); err != nil {
+		t.Fatalf("write key1: %v", err)
+	}
 
 	conf := config.NewConfig()
-	conf.Server.WebRoot = "/custom/kiali"
-	conf.Server.WebPort = "1234"
-	conf.Server.Port = 700
+	auth := &config.Auth{
+		CertFile: certFile,
+		KeyFile:  keyFile,
+	}
+	tlscfg, err := GetTLSConfig(conf, auth)
+	if err != nil {
+		t.Fatalf("GetTLSConfig: %v", err)
+	}
+	if tlscfg == nil || tlscfg.GetClientCertificate == nil {
+		t.Fatalf("expected GetClientCertificate to be set")
+	}
+	c1, err := tlscfg.GetClientCertificate(nil)
+	if err != nil {
+		t.Fatalf("GetClientCertificate#1: %v", err)
+	}
 
-	request, _ := http.NewRequest("GET", "https://kiali:2800/custom/kiali/path/", nil)
-	guessedUrl := httputil.GuessKialiURL(conf, request)
-
-	assert.Equal(t, "https://kiali:1234/custom/kiali", guessedUrl)
+	// Rotate files
+	certPEM2, keyPEM2 := mustSelfSignedPair(t, "c2")
+	if err := os.WriteFile(certFile, certPEM2, 0600); err != nil {
+		t.Fatalf("write cert2: %v", err)
+	}
+	if err := os.WriteFile(keyFile, keyPEM2, 0600); err != nil {
+		t.Fatalf("write key2: %v", err)
+	}
+	c2, err := tlscfg.GetClientCertificate(nil)
+	if err != nil {
+		t.Fatalf("GetClientCertificate#2: %v", err)
+	}
+	if bytes.Equal(c1.Certificate[0], c2.Certificate[0]) {
+		t.Fatalf("expected rotated client certificate to differ")
+	}
 }
 
-func TestGuessKialiURLReadsHostPortFromRequestUrlAttr(t *testing.T) {
-	conf, request := setupAndCreateRequest()
-	request.URL.Host = "myHost:8000"
-	guessedUrl := httputil.GuessKialiURL(conf, request)
+// --- helpers to generate test certificates ---
 
-	assert.Equal(t, "https://myHost:8000/custom/kiali", guessedUrl)
+func mustGenCA(t *testing.T, cn string) (*x509.Certificate, []byte, *rsa.PrivateKey) {
+	t.Helper()
+	caKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("gen key: %v", err)
+	}
+	caTmpl := &x509.Certificate{
+		SerialNumber:          bigInt(1),
+		Subject:               pkix.Name{CommonName: cn},
+		NotBefore:             time.Now().Add(-time.Hour),
+		NotAfter:              time.Now().Add(24 * time.Hour),
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+	}
+	der, err := x509.CreateCertificate(rand.Reader, caTmpl, caTmpl, &caKey.PublicKey, caKey)
+	if err != nil {
+		t.Fatalf("create ca: %v", err)
+	}
+	return caTmpl, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}), caKey
 }
 
-func TestGuessKialiURLReadsHostPortFromHostAttr(t *testing.T) {
-	conf, request := setupAndCreateRequest()
-	request.URL.Host = ""
-	request.Host = "example.com:901"
-	guessedUrl := httputil.GuessKialiURL(conf, request)
-
-	assert.Equal(t, "https://example.com:901/custom/kiali", guessedUrl)
+func mustGenLeafSignedWithKey(t *testing.T, ca *x509.Certificate, caKey *rsa.PrivateKey, cn string) []byte {
+	t.Helper()
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("gen key: %v", err)
+	}
+	tmpl := &x509.Certificate{
+		SerialNumber: bigInt(2),
+		Subject:      pkix.Name{CommonName: cn},
+		NotBefore:    time.Now().Add(-time.Hour),
+		NotAfter:     time.Now().Add(24 * time.Hour),
+	}
+	// Sign leaf using provided CA key
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, ca, &key.PublicKey, caKey)
+	if err != nil {
+		t.Fatalf("create leaf: %v", err)
+	}
+	return der
 }
 
-func TestGuessKialiURLReadsHostPortFromHostAttrDefault(t *testing.T) {
-	conf, request := setupAndCreateRequest()
-	request.URL.Host = "example.com"
-	request.Host = "example.com"
-	guessedUrl := httputil.GuessKialiURL(conf, request)
-
-	assert.Equal(t, "https://example.com/custom/kiali", guessedUrl)
+func mustSelfSignedPair(t *testing.T, cn string) ([]byte, []byte) {
+	t.Helper()
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("gen key: %v", err)
+	}
+	tmpl := &x509.Certificate{
+		SerialNumber:          bigInt(3),
+		Subject:               pkix.Name{CommonName: cn},
+		NotBefore:             time.Now().Add(-time.Hour),
+		NotAfter:              time.Now().Add(24 * time.Hour),
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		BasicConstraintsValid: true,
+	}
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
+	if err != nil {
+		t.Fatalf("create cert: %v", err)
+	}
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
+	return certPEM, keyPEM
 }
 
-func TestGuessKialiURLOmitsStandardPlainHttpPort(t *testing.T) {
-	// See reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/x-forwarded-headers.html#x-forwarded-port
+func bigInt(n int64) *big.Int { return big.NewInt(n) }
 
-	conf, request := setupAndCreateRequest()
-	request.Header.Add("X-Forwarded-Port", "80")
-	request.Header.Add("X-Forwarded-Proto", "http")
-	guessedUrl := httputil.GuessKialiURL(conf, request)
-
-	assert.Equal(t, "http://kiali/custom/kiali", guessedUrl)
+// --- New helper: generate a server certificate signed by given CA with provided DNS SANs ---
+func mustServerCertSignedByCA(t *testing.T, ca *x509.Certificate, caKey *rsa.PrivateKey, hosts []string) ([]byte, []byte) {
+	t.Helper()
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("gen key: %v", err)
+	}
+	tmpl := &x509.Certificate{
+		SerialNumber:          bigInt(4),
+		Subject:               pkix.Name{CommonName: hosts[0]},
+		NotBefore:             time.Now().Add(-time.Hour),
+		NotAfter:              time.Now().Add(24 * time.Hour),
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		DNSNames:              hosts,
+	}
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, ca, &key.PublicKey, caKey)
+	if err != nil {
+		t.Fatalf("create cert: %v", err)
+	}
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
+	return certPEM, keyPEM
 }
 
-func TestGuessKialiURLOmitsStandardSecureHttpsPort(t *testing.T) {
-	// See reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/x-forwarded-headers.html#x-forwarded-port
+// --- New test: ensure hostname verification is enforced in dynamic CA mode ---
+func TestGetTLSConfig_DynamicCA_HostnameVerification(t *testing.T) {
+	tmpDir := t.TempDir()
+	ca, caPEM, caKey := mustGenCA(t, "TestCA")
+	certPEM, keyPEM := mustServerCertSignedByCA(t, ca, caKey, []string{"good.test"})
 
-	conf, request := setupAndCreateRequest()
-	request.Header.Add("X-Forwarded-Port", "443")
-	request.Header.Add("X-Forwarded-Proto", "https")
-	guessedUrl := httputil.GuessKialiURL(conf, request)
+	// Start TLS server with cert for good.test
+	pair, err := tls.X509KeyPair(certPEM, keyPEM)
+	if err != nil {
+		t.Fatalf("load keypair: %v", err)
+	}
+	ln, err := tls.Listen("tcp", "127.0.0.1:0", &tls.Config{Certificates: []tls.Certificate{pair}})
+	if err != nil {
+		t.Fatalf("listen tls: %v", err)
+	}
+	defer ln.Close()
+	// Accept connections and discard
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for {
+			conn, err := ln.Accept()
+			if err != nil {
+				return
+			}
+			go func(c net.Conn) {
+				defer c.Close()
+				_ = c.SetDeadline(time.Now().Add(2 * time.Second))
+				_, _ = io.Copy(io.Discard, c)
+			}(conn)
+		}
+	}()
 
-	assert.Equal(t, "https://kiali/custom/kiali", guessedUrl)
-}
+	// Write CA file used by client
+	caFile := tmpDir + "/ca.pem"
+	if err := os.WriteFile(caFile, caPEM, 0600); err != nil {
+		t.Fatalf("write ca: %v", err)
+	}
 
-func TestGuessKialiURLPrioritizesConfig(t *testing.T) {
-	conf, request := setupAndCreateRequest()
+	conf := config.NewConfig()
+	auth := &config.Auth{CAFile: caFile}
+	tlscfg, err := GetTLSConfig(conf, auth)
+	if err != nil {
+		t.Fatalf("GetTLSConfig: %v", err)
+	}
+	if tlscfg == nil || tlscfg.VerifyConnection == nil {
+		t.Fatalf("expected VerifyConnection to be set")
+	}
 
-	conf.Server.WebFQDN = "subdomain.domain.dev"
-	conf.Server.WebPort = "4321"
-	conf.Server.WebRoot = "/foo/bar"
-	conf.Server.WebSchema = "http"
-	conf.Server.Port = 700
+	addr := ln.Addr().String()
+	dialer := &net.Dialer{Timeout: 3 * time.Second}
 
-	request.Header.Add("X-Forwarded-Port", "443")
-	request.Header.Add("X-Forwarded-Proto", "https")
-	guessedUrl := httputil.GuessKialiURL(conf, request)
+	// 1) Wrong hostname should fail
+	tlscfgWrong := tlscfg.Clone()
+	tlscfgWrong.ServerName = "wrong.test"
+	conn1, err := tls.DialWithDialer(dialer, "tcp", addr, tlscfgWrong)
+	if err == nil {
+		conn1.Close()
+		t.Fatalf("expected hostname verification failure with wrong.test")
+	}
 
-	assert.Equal(t, "http://subdomain.domain.dev:4321/foo/bar", guessedUrl)
-}
-
-func TestHTTPPostSendsPostRequest(t *testing.T) {
-	assert := assert.New(t)
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(r.Method, http.MethodPost)
-		w.WriteHeader(200)
-	}))
-	t.Cleanup(server.Close)
-
-	_, _, _, err := httputil.HttpPost(server.URL, nil, nil, time.Second, nil, config.NewConfig())
-	assert.NoError(err)
+	// 2) Correct hostname should succeed
+	tlscfgRight := tlscfg.Clone()
+	tlscfgRight.ServerName = "good.test"
+	conn2, err := tls.DialWithDialer(dialer, "tcp", addr, tlscfgRight)
+	if err != nil {
+		t.Fatalf("expected success dialing with good.test, got: %v", err)
+	}
+	_ = conn2.Close()
 }

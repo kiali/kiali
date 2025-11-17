@@ -2,20 +2,15 @@ package tracing
 
 import (
 	"context"
-	"crypto/tls"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -68,20 +63,6 @@ type Client struct {
 	httpClient        http.Client
 	baseURL           *url.URL
 	customHeaders     map[string]string
-}
-
-type basicAuth struct {
-	Header string
-}
-
-func (c *basicAuth) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
-	return map[string]string{
-		"Authorization": c.Header,
-	}, nil
-}
-
-func (c *basicAuth) RequireTransportSecurity() bool {
-	return true
 }
 
 // NewClient creates a tracing Client. If it fails to create the client for any reason,
@@ -215,14 +196,10 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 			// Tempo uses gRPC stream client just for search
 			// Get a single trace requires the http client
 			if cfgTracing.UseGRPC {
-				var dialOps []grpc.DialOption
-				if cfgTracing.Auth.Type == "basic" {
-					dialOps = append(dialOps, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
-					dialOps = append(dialOps, grpc.WithPerRPCCredentials(&basicAuth{
-						Header: fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(strings.Join([]string{cfgTracing.Auth.Username, cfgTracing.Auth.Password}, ":")))),
-					}))
-				} else {
-					dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
+				dialOps, err := grpcutil.GetAuthDialOptions(conf, cfgTracing.Auth.Type == "basic", &cfgTracing.Auth)
+				if err != nil {
+					zl.Error().Msgf("Error creating gRPC dial options: %v", err)
+					return nil, err
 				}
 				grpcAddress := fmt.Sprintf("%s:%d", u.Hostname(), conf.ExternalServices.Tracing.GrpcPort)
 				clientConn, _ := grpc.NewClient(grpcAddress, dialOps...)

@@ -2,12 +2,12 @@ package httputil
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -75,7 +75,7 @@ func HttpPost(url string, auth *config.Auth, body io.Reader, timeout time.Durati
 }
 
 type authRoundTripper struct {
-	auth       string
+	auth       *config.Auth
 	originalRT http.RoundTripper
 }
 
@@ -85,7 +85,30 @@ type customHeadersRoundTripper struct {
 }
 
 func (rt *authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Set("Authorization", rt.auth)
+	// Build Authorization header dynamically on each request to support credential rotation
+	if rt.auth != nil {
+		switch rt.auth.Type {
+		case config.AuthTypeBearer:
+			if token, err := rt.auth.GetToken(); err == nil && token != "" {
+				req.Header.Set("Authorization", "Bearer "+token)
+			} else if err != nil {
+				log.Errorf("Failed to read token for bearer authentication: %v", err)
+			}
+		case config.AuthTypeBasic:
+			username, uerr := rt.auth.GetUsername()
+			if uerr != nil {
+				log.Errorf("Failed to read username for basic authentication: %v", uerr)
+				break
+			}
+			password, perr := rt.auth.GetPassword()
+			if perr != nil {
+				log.Errorf("Failed to read password for basic authentication: %v", perr)
+				break
+			}
+			encoded := base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
+			req.Header.Set("Authorization", "Basic "+encoded)
+		}
+	}
 	return rt.originalRT.RoundTrip(req)
 }
 
@@ -98,16 +121,8 @@ func (rt *customHeadersRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 }
 
 func newAuthRoundTripper(auth *config.Auth, rt http.RoundTripper) http.RoundTripper {
-	switch auth.Type {
-	case config.AuthTypeBearer:
-		token := auth.Token
-		return &authRoundTripper{auth: "Bearer " + token, originalRT: rt}
-	case config.AuthTypeBasic:
-		encoded := base64.StdEncoding.EncodeToString([]byte(auth.Username + ":" + auth.Password))
-		return &authRoundTripper{auth: "Basic " + encoded, originalRT: rt}
-	default:
-		return rt
-	}
+	// Always read credentials dynamically during RoundTrip
+	return &authRoundTripper{auth: auth, originalRT: rt}
 }
 
 func newCustomHeadersRoundTripper(headers map[string]string, rt http.RoundTripper) http.RoundTripper {
@@ -158,24 +173,102 @@ func CreateTransport(conf *config.Config, auth *config.Auth, transportConfig *ht
 }
 
 func GetTLSConfig(conf *config.Config, auth *config.Auth) (*tls.Config, error) {
+	if auth == nil {
+		return nil, nil
+	}
+
+	var tlsConfig *tls.Config
+
+	// Configure CA certificate pool for server verification
 	if auth.InsecureSkipVerify || auth.CAFile != "" {
 		certPool := conf.CertPool()
-		if auth.CAFile != "" {
-			cert, err := os.ReadFile(auth.CAFile)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get root CA certificates: %s", err)
-			}
-
-			if ok := certPool.AppendCertsFromPEM(cert); !ok {
-				return nil, fmt.Errorf("supplied CA file could not be parsed")
-			}
-		}
-		return &tls.Config{
+		tlsConfig = &tls.Config{
 			InsecureSkipVerify: auth.InsecureSkipVerify,
 			RootCAs:            certPool,
-		}, nil
+		}
+		// If a CA file is provided and we are not explicitly skipping verification, enable dynamic CA rotation by
+		// verifying the connection ourselves on each handshake using the latest CA content.
+		if auth.CAFile != "" && !auth.InsecureSkipVerify {
+			caFile := auth.CAFile
+			// Disable default verification so we can use a dynamically reloaded CA and enforce hostname checks.
+			tlsConfig.InsecureSkipVerify = true
+			tlsConfig.VerifyConnection = func(cs tls.ConnectionState) error {
+				// Build a root pool starting from configured/system CAs
+				roots := conf.CertPool()
+				if roots == nil {
+					roots = x509.NewCertPool()
+				}
+				// Load current CA content from file (supports rotation)
+				caContent, err := config.ReadCredential(caFile)
+				if err != nil {
+					return fmt.Errorf("failed to read CA file [%s]: %w", caFile, err)
+				}
+				if caContent != "" {
+					if ok := roots.AppendCertsFromPEM([]byte(caContent)); !ok {
+						return fmt.Errorf("supplied CA file [%s] could not be parsed", caFile)
+					}
+				}
+				if len(cs.PeerCertificates) == 0 {
+					return fmt.Errorf("no server certificates provided")
+				}
+				leaf := cs.PeerCertificates[0]
+				intermediates := x509.NewCertPool()
+				for i := 1; i < len(cs.PeerCertificates); i++ {
+					intermediates.AddCert(cs.PeerCertificates[i])
+				}
+				opts := x509.VerifyOptions{
+					Roots:         roots,
+					Intermediates: intermediates,
+				}
+				// Enforce hostname verification based on the ServerName negotiated for this connection.
+				// If ServerName is an IP, verify IP SANs; otherwise use DNSName.
+				if cs.ServerName != "" {
+					if ip := net.ParseIP(cs.ServerName); ip != nil {
+						if _, err := leaf.Verify(opts); err != nil {
+							return fmt.Errorf("failed to verify server certificate chain: %w", err)
+						}
+						found := false
+						for _, ipSAN := range leaf.IPAddresses {
+							if ipSAN.Equal(ip) {
+								found = true
+								break
+							}
+						}
+						if !found {
+							return fmt.Errorf("failed to verify server certificate: IP %s not present in SANs", cs.ServerName)
+						}
+						return nil
+					}
+					opts.DNSName = cs.ServerName
+				}
+				if _, err := leaf.Verify(opts); err != nil {
+					return fmt.Errorf("failed to verify server certificate: %w", err)
+				}
+				return nil
+			}
+		}
 	}
-	return nil, nil
+
+	// Configure client certificate for mTLS with dynamic loading for auto-rotation
+	if auth.CertFile != "" && auth.KeyFile != "" {
+		if tlsConfig == nil {
+			tlsConfig = &tls.Config{}
+		}
+
+		// Use GetClientCertificate callback to read cert/key on each TLS handshake.
+		// This enables automatic rotation without pod restart when certificates are updated.
+		certFile := auth.CertFile
+		keyFile := auth.KeyFile
+		tlsConfig.GetClientCertificate = func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
+			cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+			if err != nil {
+				return nil, fmt.Errorf("failed to load client certificate cert=[%s], key=[%s]: %w", certFile, keyFile, err)
+			}
+			return &cert, nil
+		}
+	}
+
+	return tlsConfig, nil
 }
 
 func GuessKialiURL(conf *config.Config, r *http.Request) string {

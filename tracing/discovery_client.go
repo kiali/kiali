@@ -2,9 +2,7 @@ package tracing
 
 import (
 	"context"
-	"crypto/tls"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,8 +15,6 @@ import (
 
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/kiali/kiali/config"
@@ -187,14 +183,11 @@ func discoverUrl(ctx context.Context, zl *zerolog.Logger, parsedUrl model.Parsed
 			{
 				// Try GRPC Tempo Client
 				// And this also requires HTTP Client
-				var dialOps []grpc.DialOption
-				if cfgTracing.Auth.Type == "basic" {
-					dialOps = append(dialOps, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
-					dialOps = append(dialOps, grpc.WithPerRPCCredentials(&basicAuth{
-						Header: fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(strings.Join([]string{cfgTracing.Auth.Username, cfgTracing.Auth.Password}, ":")))),
-					}))
-				} else {
-					dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
+				dialOps, err := grpcutil.GetAuthDialOptions(conf, cfgTracing.Auth.Type == "basic", &cfgTracing.Auth)
+				if err != nil {
+					msg := fmt.Sprintf("Error creating gRPC dial options: %v", err)
+					logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Dial Options 9095 error", Result: msg})
+					break
 				}
 				grpcAddress := fmt.Sprintf("%s:%s", parsedUrl.Host, port)
 				clientConn, _ := grpc.NewClient(grpcAddress, dialOps...)
