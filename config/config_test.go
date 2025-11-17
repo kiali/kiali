@@ -86,22 +86,35 @@ func TestSecretFileOverrides(t *testing.T) {
 
 	conf, _ = Unmarshal(yamlString)
 
-	// credentials are now set- values should be overridden
-	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Username, "grafanausernameENV")
-	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Password, "grafanapasswordENV")
-	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Token, "grafanatokenENV")
-	assert.Equal(t, conf.ExternalServices.Perses.Auth.Username, "persesusernameENV")
-	assert.Equal(t, conf.ExternalServices.Perses.Auth.Password, "persespasswordENV")
-	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Username, "prometheususernameENV")
-	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Password, "prometheuspasswordENV")
-	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, "prometheustokenENV")
-	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Username, "tracingusernameENV")
-	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, "tracingpasswordENV")
-	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, "tracingtokenENV")
-	assert.Equal(t, conf.LoginToken.SigningKey, "signingkeyENV")
-	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username, "cdprometheususernameENV")
-	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password, "cdprometheuspasswordENV")
-	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token, "cdprometheustokenENV")
+	// Config values should now be file paths (not the content)
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Username, overrideSecretsDir+"/"+SecretFileGrafanaUsername+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Password, overrideSecretsDir+"/"+SecretFileGrafanaPassword+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Token, overrideSecretsDir+"/"+SecretFileGrafanaToken+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Perses.Auth.Username, overrideSecretsDir+"/"+SecretFilePersesUsername+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Perses.Auth.Password, overrideSecretsDir+"/"+SecretFilePersesPassword+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Username, overrideSecretsDir+"/"+SecretFilePrometheusUsername+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Password, overrideSecretsDir+"/"+SecretFilePrometheusPassword+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, overrideSecretsDir+"/"+SecretFilePrometheusToken+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Username, overrideSecretsDir+"/"+SecretFileTracingUsername+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, overrideSecretsDir+"/"+SecretFileTracingPassword+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, overrideSecretsDir+"/"+SecretFileTracingToken+"/value.txt")
+	assert.Equal(t, conf.LoginToken.SigningKey, overrideSecretsDir+"/"+SecretFileLoginTokenSigningKey+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username, overrideSecretsDir+"/"+SecretFileCustomDashboardsPrometheusUsername+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password, overrideSecretsDir+"/"+SecretFileCustomDashboardsPrometheusPassword+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token, overrideSecretsDir+"/"+SecretFileCustomDashboardsPrometheusToken+"/value.txt")
+
+	// Verify the getter methods return the actual values from the files
+	username, err := conf.ExternalServices.Grafana.Auth.GetUsername()
+	assert.NoError(t, err)
+	assert.Equal(t, "grafanausernameENV", username)
+
+	password, err := conf.ExternalServices.Grafana.Auth.GetPassword()
+	assert.NoError(t, err)
+	assert.Equal(t, "grafanapasswordENV", password)
+
+	token, err := conf.ExternalServices.Prometheus.Auth.GetToken()
+	assert.NoError(t, err)
+	assert.Equal(t, "prometheustokenENV", token)
 }
 
 func createTestSecretFile(t *testing.T, parentDir string, name string, content string) {

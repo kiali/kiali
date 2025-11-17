@@ -42,6 +42,23 @@ const (
 	SecretFileCustomDashboardsPrometheusPassword = "customdashboards-prometheus-password"
 	SecretFileCustomDashboardsPrometheusToken    = "customdashboards-prometheus-token"
 
+	// External services certificate files
+	SecretFilePrometheusCA                   = "prometheus-ca"
+	SecretFilePrometheusCert                 = "prometheus-cert"
+	SecretFilePrometheusKey                  = "prometheus-key"
+	SecretFileGrafanaCA                      = "grafana-ca"
+	SecretFileGrafanaCert                    = "grafana-cert"
+	SecretFileGrafanaKey                     = "grafana-key"
+	SecretFileTracingCA                      = "tracing-ca"
+	SecretFileTracingCert                    = "tracing-cert"
+	SecretFileTracingKey                     = "tracing-key"
+	SecretFilePersesCA                       = "perses-ca"
+	SecretFilePersesCert                     = "perses-cert"
+	SecretFilePersesKey                      = "perses-key"
+	SecretFileCustomDashboardsPrometheusCA   = "customdashboards-prometheus-ca"
+	SecretFileCustomDashboardsPrometheusCert = "customdashboards-prometheus-cert"
+	SecretFileCustomDashboardsPrometheusKey  = "customdashboards-prometheus-key"
+
 	// Login Token signing key used to prepare the token for user login
 	SecretFileLoginTokenSigningKey = "login-token-signing-key"
 )
@@ -212,7 +229,9 @@ type Server struct {
 // Auth provides authentication data for external services
 type Auth struct {
 	CAFile             string `yaml:"ca_file" json:"caFile"`
+	CertFile           string `yaml:"cert_file" json:"certFile"`
 	InsecureSkipVerify bool   `yaml:"insecure_skip_verify" json:"insecureSkipVerify"`
+	KeyFile            string `yaml:"key_file" json:"keyFile"`
 	Password           string `yaml:"password" json:"password"`
 	Token              string `yaml:"token" json:"token"`
 	Type               string `yaml:"type" json:"type"`
@@ -221,10 +240,12 @@ type Auth struct {
 }
 
 func (a *Auth) Obfuscate() {
-	a.Token = "xxx"
-	a.Password = "xxx"
-	a.Username = "xxx"
 	a.CAFile = "xxx"
+	a.CertFile = "xxx"
+	a.KeyFile = "xxx"
+	a.Password = "xxx"
+	a.Token = "xxx"
+	a.Username = "xxx"
 }
 
 // ThanosProxy describes configuration of the Thanos proxy component
@@ -1258,29 +1279,18 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	}
 
 	overrides := []overridesType{
+		// Prometheus credentials and certificates
 		{
-			configValue: &conf.ExternalServices.Grafana.Auth.Username,
-			fileName:    SecretFileGrafanaUsername,
+			configValue: &conf.ExternalServices.Prometheus.Auth.CAFile,
+			fileName:    SecretFilePrometheusCA,
 		},
 		{
-			configValue: &conf.ExternalServices.Grafana.Auth.Password,
-			fileName:    SecretFileGrafanaPassword,
+			configValue: &conf.ExternalServices.Prometheus.Auth.CertFile,
+			fileName:    SecretFilePrometheusCert,
 		},
 		{
-			configValue: &conf.ExternalServices.Grafana.Auth.Token,
-			fileName:    SecretFileGrafanaToken,
-		},
-		{
-			configValue: &conf.ExternalServices.Perses.Auth.Username,
-			fileName:    SecretFilePersesUsername,
-		},
-		{
-			configValue: &conf.ExternalServices.Perses.Auth.Password,
-			fileName:    SecretFilePersesPassword,
-		},
-		{
-			configValue: &conf.ExternalServices.Prometheus.Auth.Username,
-			fileName:    SecretFilePrometheusUsername,
+			configValue: &conf.ExternalServices.Prometheus.Auth.KeyFile,
+			fileName:    SecretFilePrometheusKey,
 		},
 		{
 			configValue: &conf.ExternalServices.Prometheus.Auth.Password,
@@ -1291,8 +1301,46 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 			fileName:    SecretFilePrometheusToken,
 		},
 		{
-			configValue: &conf.ExternalServices.Tracing.Auth.Username,
-			fileName:    SecretFileTracingUsername,
+			configValue: &conf.ExternalServices.Prometheus.Auth.Username,
+			fileName:    SecretFilePrometheusUsername,
+		},
+		// Grafana credentials and certificates
+		{
+			configValue: &conf.ExternalServices.Grafana.Auth.CAFile,
+			fileName:    SecretFileGrafanaCA,
+		},
+		{
+			configValue: &conf.ExternalServices.Grafana.Auth.CertFile,
+			fileName:    SecretFileGrafanaCert,
+		},
+		{
+			configValue: &conf.ExternalServices.Grafana.Auth.KeyFile,
+			fileName:    SecretFileGrafanaKey,
+		},
+		{
+			configValue: &conf.ExternalServices.Grafana.Auth.Password,
+			fileName:    SecretFileGrafanaPassword,
+		},
+		{
+			configValue: &conf.ExternalServices.Grafana.Auth.Token,
+			fileName:    SecretFileGrafanaToken,
+		},
+		{
+			configValue: &conf.ExternalServices.Grafana.Auth.Username,
+			fileName:    SecretFileGrafanaUsername,
+		},
+		// Tracing credentials and certificates
+		{
+			configValue: &conf.ExternalServices.Tracing.Auth.CAFile,
+			fileName:    SecretFileTracingCA,
+		},
+		{
+			configValue: &conf.ExternalServices.Tracing.Auth.CertFile,
+			fileName:    SecretFileTracingCert,
+		},
+		{
+			configValue: &conf.ExternalServices.Tracing.Auth.KeyFile,
+			fileName:    SecretFileTracingKey,
 		},
 		{
 			configValue: &conf.ExternalServices.Tracing.Auth.Password,
@@ -1303,12 +1351,42 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 			fileName:    SecretFileTracingToken,
 		},
 		{
-			configValue: &conf.LoginToken.SigningKey,
-			fileName:    SecretFileLoginTokenSigningKey,
+			configValue: &conf.ExternalServices.Tracing.Auth.Username,
+			fileName:    SecretFileTracingUsername,
+		},
+		// Perses credentials and certificates
+		{
+			configValue: &conf.ExternalServices.Perses.Auth.CAFile,
+			fileName:    SecretFilePersesCA,
 		},
 		{
-			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username,
-			fileName:    SecretFileCustomDashboardsPrometheusUsername,
+			configValue: &conf.ExternalServices.Perses.Auth.CertFile,
+			fileName:    SecretFilePersesCert,
+		},
+		{
+			configValue: &conf.ExternalServices.Perses.Auth.KeyFile,
+			fileName:    SecretFilePersesKey,
+		},
+		{
+			configValue: &conf.ExternalServices.Perses.Auth.Password,
+			fileName:    SecretFilePersesPassword,
+		},
+		{
+			configValue: &conf.ExternalServices.Perses.Auth.Username,
+			fileName:    SecretFilePersesUsername,
+		},
+		// Custom Dashboards Prometheus credentials and certificates
+		{
+			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.CAFile,
+			fileName:    SecretFileCustomDashboardsPrometheusCA,
+		},
+		{
+			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.CertFile,
+			fileName:    SecretFileCustomDashboardsPrometheusCert,
+		},
+		{
+			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.KeyFile,
+			fileName:    SecretFileCustomDashboardsPrometheusKey,
 		},
 		{
 			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password,
@@ -1318,25 +1396,67 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token,
 			fileName:    SecretFileCustomDashboardsPrometheusToken,
 		},
+		{
+			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username,
+			fileName:    SecretFileCustomDashboardsPrometheusUsername,
+		},
+		// Login Token signing key
+		{
+			configValue: &conf.LoginToken.SigningKey,
+			fileName:    SecretFileLoginTokenSigningKey,
+		},
 	}
 
+	// For each override, check if a secret file exists and set the config value to the file path.
+	// This enables automatic credential rotation as credentials are read on-use, not at startup.
 	for _, override := range overrides {
-		fullFileName := overrideSecretsDir + "/" + override.fileName + "/value.txt"
-		b, err := os.ReadFile(fullFileName)
-		if err == nil {
-			fileContents := string(b)
-			if fileContents != "" {
-				*override.configValue = fileContents
-				log.Debugf("Credentials loaded from secret file [%s]", fullFileName)
-			} else {
-				log.Errorf("The credentials were empty in secret file [%s]", fullFileName)
+		secretDir := overrideSecretsDir + "/" + override.fileName
+
+		// First, check if the config value already contains a secret reference pattern (e.g., "secret:name:key")
+		// If so, the operator will have extracted the key name and we need to find the mounted file.
+		var fullFileName string
+		if *override.configValue != "" && strings.HasPrefix(*override.configValue, "secret:") {
+			// Extract the key name from the secret reference (third part after second colon)
+			parts := strings.Split(*override.configValue, ":")
+			if len(parts) == 3 {
+				keyName := parts[2]
+				// Check if a file with this specific key name exists (for certificates)
+				fullFileName = secretDir + "/" + keyName
 			}
-		} else if !errors.Is(err, os.ErrNotExist) {
-			log.Errorf("Failed reading secret file [%s]: %v", fullFileName, err)
+		}
+
+		// If we didn't find a specific file, fall back to the standard value.txt
+		if fullFileName == "" || !fileExists(fullFileName) {
+			fullFileName = secretDir + "/value.txt"
+		}
+
+		// Check if the file exists
+		if fileExists(fullFileName) {
+			// File exists - set config value to the file path (not the content)
+			// The credentials will be read on-use via ReadCredential() helper
+			*override.configValue = fullFileName
+			log.Debugf("Credential file path configured: [%s]", fullFileName)
+		} else {
+			// File doesn't exist - check if this was expected to be an error
+			if _, err := os.Stat(fullFileName); !errors.Is(err, os.ErrNotExist) {
+				log.Errorf("Failed checking secret file [%s]: %v", fullFileName, err)
+			} else {
+				// File simply doesn't exist - this is normal if the secret wasn't mounted
+				log.Tracef("Secret file [%s] not found - using configured value as-is", fullFileName)
+			}
 		}
 	}
 
 	return
+}
+
+// fileExists checks if a file exists and is not a directory.
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }
 
 // Marshal converts the Config object and returns its YAML string.
@@ -1520,6 +1640,10 @@ func Validate(conf *Config) error {
 
 	// Check the ciphering key for sessions
 	signingKey := conf.LoginToken.SigningKey
+	// If signing key is a file path, read the actual content for validation
+	if actualKey, err := ReadCredential(signingKey); err == nil {
+		signingKey = actualKey
+	}
 	if err := validateSigningKey(signingKey, auth.Strategy); err != nil {
 		return err
 	}

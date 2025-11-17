@@ -97,9 +97,21 @@ func (s *Service) getToken(ctx context.Context) (token string, err error) {
 
 	loginURL := fmt.Sprintf("%s/api/auth/providers/native/login", s.URL(ctx))
 
+	username, err := s.conf.ExternalServices.Perses.Auth.GetUsername()
+	if err != nil {
+		log.Errorf("Failed to read Perses username: %v", err)
+		return "", fmt.Errorf("failed to read Perses username: %w", err)
+	}
+
+	password, err := s.conf.ExternalServices.Perses.Auth.GetPassword()
+	if err != nil {
+		log.Errorf("Failed to read Perses password: %v", err)
+		return "", fmt.Errorf("failed to read Perses password: %w", err)
+	}
+
 	reqBody := loginRequest{
-		Login:    s.conf.ExternalServices.Perses.Auth.Username,
-		Password: s.conf.ExternalServices.Perses.Auth.Password,
+		Login:    username,
+		Password: password,
 	}
 
 	bodyBytes, err := json.Marshal(reqBody)

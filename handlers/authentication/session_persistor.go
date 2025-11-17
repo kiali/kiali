@@ -82,7 +82,13 @@ func NewSessionData[T any](key string, strategy string, expiresOn time.Time, pay
 
 // NewCookieSessionPersistor creates a new CookieSessionPersistor.
 func NewCookieSessionPersistor[T any](conf *config.Config) (*cookieSessionPersistor[T], error) {
-	block, err := aes.NewCipher([]byte(conf.LoginToken.SigningKey))
+	// Read the signing key (may be from file if using credential rotation)
+	signingKey, err := config.ReadCredential(conf.LoginToken.SigningKey)
+	if err != nil {
+		return nil, fmt.Errorf("error when creating the cookie persistor - failed to read signing key: %w", err)
+	}
+
+	block, err := aes.NewCipher([]byte(signingKey))
 	if err != nil {
 		return nil, fmt.Errorf("error when creating the cookie persistor - failed to create cipher: %w", err)
 	}
