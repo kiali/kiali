@@ -68,7 +68,7 @@ func (j *RefreshJob) Start() {
 	firstRefreshDelay := j.refreshInterval / 2
 	j.mu.Unlock()
 
-	log.Debugf("Starting graph cache refresh job for session [%s] (interval: %v, first refresh in: %v)",
+	log.Infof("Starting graph cache refresh job for session [%s] (interval: %v, first refresh in: %v)",
 		j.sessionID, j.refreshInterval, firstRefreshDelay)
 
 	// Wait for half the interval before first refresh
@@ -83,11 +83,11 @@ func (j *RefreshJob) Start() {
 		j.ticker = time.NewTicker(j.refreshInterval)
 		j.mu.Unlock()
 	case <-j.stopChan:
-		log.Debugf("Stopping graph cache refresh job for session [%s] before first refresh", j.sessionID)
+		log.Infof("Stopping graph cache refresh job for session [%s] before first refresh", j.sessionID)
 		j.cleanup()
 		return
 	case <-j.ctx.Done():
-		log.Debugf("Context cancelled for graph cache refresh job (session [%s]) before first refresh", j.sessionID)
+		log.Infof("Context cancelled for graph cache refresh job (session [%s]) before first refresh", j.sessionID)
 		j.cleanup()
 		return
 	}
@@ -97,11 +97,11 @@ func (j *RefreshJob) Start() {
 		case <-j.ticker.C:
 			go j.refresh()
 		case <-j.stopChan:
-			log.Debugf("Stopping graph cache refresh job for session [%s]", j.sessionID)
+			log.Infof("Stopping graph cache refresh job for session [%s]", j.sessionID)
 			j.cleanup()
 			return
 		case <-j.ctx.Done():
-			log.Debugf("Context cancelled for graph cache refresh job (session [%s])", j.sessionID)
+			log.Infof("Context cancelled for graph cache refresh job (session [%s])", j.sessionID)
 			j.cleanup()
 			return
 		}
@@ -137,7 +137,7 @@ func (j *RefreshJob) UpdateInterval(newInterval time.Duration) {
 		return
 	}
 
-	log.Debugf("Updating graph cache refresh interval for session [%s] from %v to %v", j.sessionID, j.refreshInterval, newInterval)
+	log.Infof("Updating graph cache refresh interval for session [%s] from %v to %v", j.sessionID, j.refreshInterval, newInterval)
 
 	j.refreshInterval = newInterval
 
@@ -171,7 +171,7 @@ func (j *RefreshJob) refresh() {
 	// Check if session's graph still exists (use internal method to not update LastAccessed)
 	cached, found := j.cache.getSessionGraphInternal(j.sessionID)
 	if !found {
-		log.Debugf("Graph for session [%s] not found in graph cache, stopping refresh job", j.sessionID)
+		log.Infof("Graph for session [%s] not found in graph cache, stopping refresh job", j.sessionID)
 		j.Stop()
 		return
 	}
@@ -183,7 +183,7 @@ func (j *RefreshJob) refresh() {
 
 	inactiveDuration := time.Since(lastAccessed)
 	if inactiveDuration > j.cache.config.InactivityTimeout {
-		log.Debugf("Session [%s] inactive for %v (timeout: %v), evicting from graph cache and stopping refresh",
+		log.Infof("Session [%s] inactive for %v (timeout: %v), evicting from graph cache and stopping refresh",
 			j.sessionID, inactiveDuration, j.cache.config.InactivityTimeout)
 		j.cache.Evict(j.sessionID)
 		j.Stop()
@@ -195,7 +195,7 @@ func (j *RefreshJob) refresh() {
 	refreshedOptions := j.graphOptions
 	refreshedOptions.TelemetryOptions.QueryTime = time.Now().Unix()
 
-	log.Tracef("Refreshing graph cache for session [%s] (duration: %v, moving window to: %v)",
+	log.Infof("Refreshing graph cache for session [%s] (duration: %v, moving window to: %v)",
 		j.sessionID,
 		refreshedOptions.TelemetryOptions.Duration,
 		time.Unix(refreshedOptions.TelemetryOptions.QueryTime, 0))
@@ -229,7 +229,7 @@ func (j *RefreshJob) refresh() {
 		return
 	}
 
-	log.Debugf("Refreshed graph cache for session [%s] (%d nodes, %.2f MB, generated in %v)",
+	log.Infof("Refreshed graph cache for session [%s] (%d nodes, %.2f MB, generated in %v)",
 		j.sessionID, len(trafficMap), newMemoryMB, generateDuration)
 }
 
@@ -266,7 +266,7 @@ func (m *RefreshJobManager) StartJob(
 
 	// Stop existing job if present
 	if existingJob, exists := m.jobs[sessionID]; exists {
-		log.Debugf("Replacing existing graph cache refresh job for session [%s]", sessionID)
+		log.Infof("Replacing existing graph cache refresh job for session [%s]", sessionID)
 		existingJob.Stop()
 		delete(m.jobs, sessionID)
 	}
@@ -279,7 +279,7 @@ func (m *RefreshJobManager) StartJob(
 	// Start the job in a goroutine
 	go job.Start()
 
-	log.Debugf("Started graph cache refresh job for session [%s] (interval: %v)", sessionID, refreshInterval)
+	log.Infof("Started graph cache refresh job for session [%s] (interval: %v)", sessionID, refreshInterval)
 }
 
 // GetJob retrieves the refresh job for a specific session.
@@ -299,7 +299,7 @@ func (m *RefreshJobManager) StopJob(sessionID string) {
 	if job, exists := m.jobs[sessionID]; exists {
 		job.Stop()
 		delete(m.jobs, sessionID)
-		log.Debugf("Stopped graph cache refresh job for session [%s]", sessionID)
+		log.Infof("Stopped graph cache refresh job for session [%s]", sessionID)
 	}
 }
 
@@ -308,7 +308,7 @@ func (m *RefreshJobManager) StopAll() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	log.Debugf("Stopping all graph cache refresh jobs (%d active)", len(m.jobs))
+	log.Infof("Stopping all graph cache refresh jobs (%d active)", len(m.jobs))
 
 	for sessionID, job := range m.jobs {
 		job.Stop()
