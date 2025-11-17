@@ -6,13 +6,8 @@ on:
       tag_branches:
         description: Branches to tag (Separate branches by commas)
         required: true
-        default: v1.73,v2.4,v2.11
+        default: v1.73,v2.4,v2.11,v2.17
         type: string
-      bump_next_version:
-        description: Bump to next version after creating release tag
-        required: true
-        default: true
-        type: boolean
 
 jobs:
   initialize:
@@ -86,7 +81,7 @@ jobs:
     name: Bump to Next Version
     needs: [initialize, release_tag]
     # Allow other branches to bump to the next version even if one of the branches failed to create the release tag
-    if: ${{ inputs.bump_next_version && always() }}
+    if: ${{ always() }}
     uses: ./.github/workflows/bump-release-version.yml
     with:
       tag_branches: ${{ inputs.tag_branches }}
