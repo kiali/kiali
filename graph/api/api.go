@@ -18,6 +18,24 @@ import (
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
+// GraphOptionsMatch is a passthrough to the proper vendr-specific impl of TelemetryVendor interface.
+// It returns true if there is any difference in the options that would result in a fundamental change
+// to the resulting traffic map (and therefore would invalidate any cached graph)
+func GraphOptionsMatch(a, b graph.Options) bool {
+	if a.TelemetryVendor != b.TelemetryVendor {
+		return false
+	}
+
+	switch a.TelemetryVendor {
+	case graph.VendorIstio:
+		return istio.GraphOptionsMatch(a.TelemetryOptions, b.TelemetryOptions)
+	default:
+		// skip
+	}
+
+	return true
+}
+
 // GraphNamespaces generates a namespaces graph using the provided options.
 // Returns the HTTP status code, the vendor-specific graph config, and the TrafficMap (for caching).
 func GraphNamespaces(ctx context.Context, business *business.Layer, prom prometheus.ClientInterface, o graph.Options) (code int, graphConfig interface{}, trafficMap graph.TrafficMap) {
