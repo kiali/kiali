@@ -14,6 +14,7 @@ Feature: Kiali Istio Config page
 
   @bookinfo-app
   @core-1
+  @lpinterop
   Scenario: See all Istio Config objects in the bookinfo namespace.
     Then user sees all the Istio Config objects in the bookinfo namespace
     And the "Cluster" column "disappears"
@@ -24,11 +25,13 @@ Feature: Kiali Istio Config page
 
   @bookinfo-app
   @core-1
+  @lpinterop
   Scenario: See all Istio Config toggles
     Then user sees all the Istio Config toggles
 
   @bookinfo-app
   @core-1
+  @lpinterop
   Scenario: Toggle Istio Config configuration toggle
     When user "unchecks" toggle "configuration"
     Then the "Configuration" column "disappears"
@@ -56,17 +59,20 @@ Feature: Kiali Istio Config page
 
   @bookinfo-app
   @core-1
+  @lpinterop
   Scenario: Ability to create an AuthorizationPolicy object
     Then the user can create a "security.istio.io" "v1" "AuthorizationPolicy" Istio object
 
   @bookinfo-app
   @core-1
+  @lpinterop
   Scenario: Ability to create a Gateway object
     Then the user can create a "networking.istio.io" "v1" "Gateway" Istio object
 
   @gateway-api
   @bookinfo-app
   @core-1
+  @lpinterop
   Scenario: Ability to create a K8sGateway object
     Then the user can create a "gateway.networking.k8s.io" "v1" "Gateway" K8s Istio object
 
@@ -83,21 +89,25 @@ Feature: Kiali Istio Config page
 
   @bookinfo-app
   @core-1
+  @lpinterop
   Scenario: Ability to create a PeerAuthentication object
     Then the user can create a "security.istio.io" "v1" "PeerAuthentication" Istio object
 
   @bookinfo-app
   @core-1
+  @lpinterop
   Scenario: Ability to create a RequestAuthentication object
     Then the user can create a "security.istio.io" "v1" "RequestAuthentication" Istio object
 
   @bookinfo-app
   @core-1
+  @lpinterop
   Scenario: Ability to create a ServiceEntry object
     Then the user can create a "networking.istio.io" "v1" "ServiceEntry" Istio object
 
   @bookinfo-app
   @core-1
+  @lpinterop
   Scenario: Ability to create a Sidecar object
     Then the user can create a "networking.istio.io" "v1" "Sidecar" Istio object
 

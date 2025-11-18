@@ -14,6 +14,7 @@ Feature: Workload logs tab
   @bookinfo-app
   @core-2
   @offline
+  @lpinterop
   Scenario: The logs tab should show the logs of a pod
     Given I am on the "ratings-v1" workload detail page of the "bookinfo" namespace
     When I go to the Logs tab of the workload detail page

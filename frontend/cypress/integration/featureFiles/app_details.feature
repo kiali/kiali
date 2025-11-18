@@ -16,12 +16,14 @@ Feature: Kiali App Details page
   @bookinfo-app
   @core-1
   @offline
+  @lpinterop
   Scenario: See details for app.
     Then user sees details information for the "details" app
     But no cluster badge for the "app" should be visible
 
   @bookinfo-app
   @core-1
+  @lpinterop
   Scenario: See app Traffic information
     Then user sees inbound and outbound traffic information
     And the "Cluster" column "disappears"

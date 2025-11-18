@@ -12,6 +12,7 @@ Feature: Kiali Workloads page
   @bookinfo-app
   @core-2
   @offline
+  @lpinterop
   Scenario: See workloads table with correct info
     When user selects the "bookinfo" namespace
     Then user sees a table with headings
@@ -121,6 +122,7 @@ Feature: Kiali Workloads page
   @bookinfo-app
   @core-2
   @offline
+  @lpinterop
   Scenario: The healthy status of a workload is reported in the list of workloads
     Given a healthy workload in the cluster
     When user selects the "bookinfo" namespace
@@ -144,7 +146,6 @@ Feature: Kiali Workloads page
     And the health status of the workload should be "Failure"
 
   @error-rates-app
-  @skip-lpinterop
   @core-2
   Scenario: The degraded status of a workload is reported in the list of workloads
     Given a degraded workload in the mesh
