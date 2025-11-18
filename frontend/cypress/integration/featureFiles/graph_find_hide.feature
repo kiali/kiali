@@ -17,6 +17,7 @@ Feature: Kiali Graph page - Find/Hide
 
   @error-rates-app
   @core-1
+  @lpinterop
   Scenario: Find unhealthy workloads
     Then user sees nothing highlighted on the graph
     When user finds unhealthy workloads
@@ -24,6 +25,7 @@ Feature: Kiali Graph page - Find/Hide
 
   @error-rates-app
   @core-1
+  @lpinterop
   Scenario: Hide unhealthy workloads
     When user hides unhealthy workloads
     Then user sees no unhealthy workloads on the graph
