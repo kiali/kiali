@@ -295,6 +295,11 @@ func graphOptionsMatch(cached, requested graph.Options) bool {
 		return false
 	}
 
+	// Compare boxBy (different boxing = different graph structure)
+	if cached.BoxBy != requested.BoxBy {
+		return false
+	}
+
 	// Compare appenders (different appenders = different graph decoration)
 	if len(cached.Appenders.AppenderNames) != len(requested.Appenders.AppenderNames) {
 		return false
@@ -316,6 +321,11 @@ func graphOptionsMatch(cached, requested graph.Options) bool {
 		return false
 	}
 	if cached.Rates.Tcp != requested.Rates.Tcp {
+		return false
+	}
+
+	// if everything matches we still need to ensure nothing vendor-specific has changed
+	if !api.GraphOptionsMatch(cached, requested) {
 		return false
 	}
 
