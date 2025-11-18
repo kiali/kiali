@@ -12,6 +12,7 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
     And user graphs "alpha,beta" namespaces
 
   @error-rates-app
+  @lpinterop
   Scenario Outline: Check if the <id> button is usable
     Then the toggle button "<id>" is enabled
     Examples:

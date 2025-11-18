@@ -15,12 +15,14 @@ Feature: Kiali Graph page - Find/Hide
     And user graphs "alpha,beta" namespaces
 
   @error-rates-app
+  @lpinterop
   Scenario: Find unhealthy workloads
     Then user sees nothing highlighted on the graph
     When user finds unhealthy workloads
     Then user sees unhealthy workloads highlighted on the graph
 
   @error-rates-app
+  @lpinterop
   Scenario: Hide unhealthy workloads
     When user hides unhealthy workloads
     Then user sees no unhealthy workloads on the graph

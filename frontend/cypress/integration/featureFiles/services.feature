@@ -9,6 +9,7 @@ Feature: Kiali Services page
     Given user is at administrator perspective
 
   @bookinfo-app
+  @lpinterop
   Scenario: See services table with correct info
     And user is at the "services" page
     When user applies kiali api "rest" annotations
@@ -28,6 +29,7 @@ Feature: Kiali Services page
     And the "Cluster" column "disappears"
 
   @smoke
+  @lpinterop
   Scenario: See all Services toggles
     And user is at the "services" list page
     Then user sees all the Services toggles
@@ -132,7 +134,6 @@ Feature: Kiali Services page
     And the health status of the service should be "Failure"
 
   @error-rates-app
-  @skip-lpinterop
   Scenario: The degraded status of a service is reported in the list of services
     And user is at the "services" page
     Given a service in the mesh with a degraded amount of traffic
