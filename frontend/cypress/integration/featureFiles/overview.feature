@@ -17,23 +17,28 @@ Feature: Kiali Overview page
     Given user is at administrator perspective
     And user is at the "overview" page
 
+  @lpinterop
   Scenario: See "alpha" and "beta" namespaces
     Then user sees the "alpha" namespace card
     And user does not see any cluster badge in the "alpha" namespace card
     And user sees the "beta" namespace card
     And user does not see any cluster badge in the "beta" namespace card
 
+  @lpinterop
   Scenario: Doesn't see a "bad" namespace
     Then user doesn't see the "bad" namespace card
 
+  @lpinterop
   Scenario: Select the COMPACT view
     When user clicks in the "COMPACT" view
     Then user sees a "COMPACT" "alpha" namespace
 
+  @lpinterop
   Scenario: Select the EXPAND view
     When user clicks in the "EXPAND" view
     Then user sees a "EXPAND" "beta" namespace
 
+  @lpinterop
   Scenario: Select the LIST view
     When user clicks in the "LIST" view
     Then user sees a "LIST" "beta" namespace
@@ -50,14 +55,17 @@ Feature: Kiali Overview page
     And user sorts by name desc
     Then user sees the "beta,alpha" namespace list
 
+  @lpinterop
   Scenario: Health for Apps
     When user selects Health for "Apps"
     Then user sees the "alpha" namespace with "Applications"
 
+  @lpinterop
   Scenario: Health for Workloads
     When user selects Health for "Workloads"
     Then user sees the "alpha" namespace with "Workloads"
 
+  @lpinterop
   Scenario: Health for Services
     When user selects Health for "Services"
     Then user sees the "alpha" namespace with "Services"
@@ -75,6 +83,7 @@ Feature: Kiali Overview page
 
   @error-rates-app
   @bookinfo-app
+  @lpinterop
   Scenario: The healthy status of a logical mesh application is reported in the overview of a namespace
     Given a healthy application in the cluster
     When I fetch the overview of the cluster
@@ -97,7 +106,6 @@ Feature: Kiali Overview page
     And the "failure" application indicator should list the application
 
   @error-rates-app
-  @skip-lpinterop
   Scenario: The degraded status of a logical mesh application is reported in the overview of a namespace
     Given a degraded application in the mesh
     When I fetch the overview of the cluster
