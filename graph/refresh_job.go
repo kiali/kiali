@@ -16,18 +16,19 @@ type GraphGenerator func(ctx context.Context, options Options) (TrafficMap, erro
 // It runs on a ticker and updates the cached graph with current data.
 // Each browser session (identified by sessionID) gets its own refresh job.
 type RefreshJob struct {
-	cache           *GraphCacheImpl
-	cancel          context.CancelFunc
-	ctx             context.Context
-	graphGenerator  GraphGenerator
-	graphOptions    Options
-	mu              sync.Mutex
-	refreshInterval time.Duration
-	resetChan       chan *time.Ticker // Signals Start loop when ticker changes
-	sessionID       string            // Unique session identifier (different per browser/tab)
-	stopChan        chan struct{}
-	stopped         bool
-	ticker          *time.Ticker
+	cache                *GraphCacheImpl
+	cancel               context.CancelFunc
+	ctx                  context.Context
+	graphGenerator       GraphGenerator
+	graphOptions         Options
+	mu                   sync.Mutex
+	refreshInterval      time.Duration
+	resetChan            chan *time.Ticker // Signals Start loop when ticker changes
+	sessionID            string            // Unique session identifier (different per browser/tab)
+	stopChan             chan struct{}
+	stopped              bool
+	ticker               *time.Ticker
+	updateIntervalCancel context.CancelFunc // Cancels pending UpdateInterval goroutine
 }
 
 // NewRefreshJob creates a new refresh job for a session's graph.
@@ -95,8 +96,13 @@ func (j *RefreshJob) Start() {
 	}
 
 	for {
+		// Capture ticker channel with proper synchronization to avoid race condition
+		j.mu.Lock()
+		tickerChan := j.ticker.C
+		j.mu.Unlock()
+
 		select {
-		case <-j.ticker.C:
+		case <-tickerChan:
 			go j.refresh()
 		case newTicker := <-j.resetChan:
 			// Interval changed - switch to new ticker
@@ -128,6 +134,11 @@ func (j *RefreshJob) Stop() {
 	j.stopped = true
 	close(j.stopChan)
 	j.cancel()
+
+	// Cancel any pending UpdateInterval goroutine
+	if j.updateIntervalCancel != nil {
+		j.updateIntervalCancel()
+	}
 }
 
 // UpdateInterval changes the refresh interval for a running job.
@@ -155,22 +166,49 @@ func (j *RefreshJob) UpdateInterval(newInterval time.Duration) {
 		j.ticker.Stop()
 	}
 
+	// Cancel any pending UpdateInterval goroutine to prevent leaks
+	if j.updateIntervalCancel != nil {
+		j.updateIntervalCancel()
+	}
+
+	// Create a new context for this UpdateInterval goroutine
+	updateCtx, updateCancel := context.WithCancel(j.ctx)
+	j.updateIntervalCancel = updateCancel
+
 	// To maintain the interval/2 offset pattern:
 	// 1. Wait interval/2 and do a refresh
 	// 2. Create the new ticker and send it to the Start loop via resetChan
 	// This ensures the ticker's schedule is naturally offset by interval/2
 	go func() {
-		time.Sleep(newInterval / 2)
+		// Use a timer instead of sleep so we can cancel during the wait
+		timer := time.NewTimer(newInterval / 2)
+		defer timer.Stop()
+
+		select {
+		case <-timer.C:
+			// Timer expired, proceed with refresh
+		case <-updateCtx.Done():
+			// Cancelled - another UpdateInterval was called or job stopped
+			return
+		}
+
 		j.refresh()
 
 		// Now create the new ticker and notify the Start loop
-		if !j.stopped {
+		j.mu.Lock()
+		stopped := j.stopped
+		j.mu.Unlock()
+
+		if !stopped {
 			newTicker := time.NewTicker(newInterval)
 			select {
 			case j.resetChan <- newTicker:
 				// Sent successfully
 			case <-j.stopChan:
 				// Job stopped while we were sleeping, clean up the new ticker
+				newTicker.Stop()
+			case <-updateCtx.Done():
+				// Cancelled - clean up the new ticker
 				newTicker.Stop()
 			}
 		}
@@ -245,12 +283,17 @@ func (j *RefreshJob) refresh() {
 	// Calculate memory for the new graph
 	newMemoryMB := EstimateGraphMemory(trafficMap)
 
+	// Capture refreshInterval with proper synchronization
+	j.mu.Lock()
+	refreshInterval := j.refreshInterval
+	j.mu.Unlock()
+
 	// Update cache with fresh graph
 	// Use the same timestamp for both CachedGraph.Timestamp and Options.QueryTime
 	newCached := &CachedGraph{
 		LastAccessed:    cached.LastAccessed, // Preserve last access time
 		Options:         refreshedOptions,
-		RefreshInterval: j.refreshInterval,
+		RefreshInterval: refreshInterval,
 		Timestamp:       refreshTimestamp,
 		TrafficMap:      trafficMap,
 	}
