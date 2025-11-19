@@ -6,34 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
-
-var (
-	// Prometheus metrics for graph cache
-	cacheEvictionsTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "kiali_graph_cache_evictions_total",
-		Help: "Total number of graph cache evictions",
-	})
-	cacheHitsTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "kiali_graph_cache_hits_total",
-		Help: "Total number of graph cache hits",
-	})
-	cacheMissesTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "kiali_graph_cache_misses_total",
-		Help: "Total number of graph cache misses",
-	})
-)
-
-func init() {
-	// Register metrics with Prometheus
-	prometheus.MustRegister(cacheEvictionsTotal)
-	prometheus.MustRegister(cacheHitsTotal)
-	prometheus.MustRegister(cacheMissesTotal)
-}
 
 // GraphCache provides per-session graph caching with background refresh.
 // Each session's graph is cached and refreshed in the background
@@ -178,7 +154,7 @@ func (c *GraphCacheImpl) Evict(sessionID string) {
 
 	if cached, found := c.sessionGraphs[sessionID]; found {
 		delete(c.sessionGraphs, sessionID)
-		cacheEvictionsTotal.Inc()
+		internalmetrics.GetGraphCacheEvictionsTotalMetric().Inc()
 		log.Debugf("Evicted graph cache for session [%s] (%.2f MB freed)", sessionID, cached.estimatedMB)
 	}
 }
@@ -294,7 +270,7 @@ func (c *GraphCacheImpl) evictLRU(targetMB float64) {
 			session.memoryMB)
 
 		delete(c.sessionGraphs, session.sessionID)
-		cacheEvictionsTotal.Inc()
+		internalmetrics.GetGraphCacheEvictionsTotalMetric().Inc()
 		freedMB += session.memoryMB
 		evictedCount++
 	}
@@ -384,12 +360,12 @@ func (c *GraphCacheImpl) Config() *GraphCacheConfig {
 
 // IncrementCacheHit increments the cache hit counter for Prometheus metrics
 func IncrementCacheHit() {
-	cacheHitsTotal.Inc()
+	internalmetrics.GetGraphCacheHitsTotalMetric().Inc()
 }
 
 // IncrementCacheMiss increments the cache miss counter for Prometheus metrics
 func IncrementCacheMiss() {
-	cacheMissesTotal.Inc()
+	internalmetrics.GetGraphCacheMissesTotalMetric().Inc()
 }
 
 // Interface guard
