@@ -12,6 +12,7 @@ Feature: Kiali Service Details page
     And user is at the details page for the "service" "bookinfo/productpage" located in the "" cluster
 
   @bookinfo-app
+  @lpinterop
   Scenario: See details for productpage
     Then sd::user sees a list with content "Overview"
     Then sd::user sees a list with content "Traffic"
@@ -20,6 +21,7 @@ Feature: Kiali Service Details page
     Then sd::user sees the service actions
 
   @bookinfo-app
+  @lpinterop
   Scenario: See details for service
     Then sd::user sees "productpage" details information for service "v1"
     Then sd::user sees Network card

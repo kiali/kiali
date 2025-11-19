@@ -12,6 +12,7 @@ Feature: Kiali Apps List page
     And user selects the "bookinfo" namespace
 
   @bookinfo-app
+  @lpinterop
   Scenario: See all Apps objects in the bookinfo namespace.
     Then user sees all the Apps in the bookinfo namespace
     And user sees Health information for Apps
@@ -22,6 +23,7 @@ Feature: Kiali Apps List page
     And the "Cluster" column "disappears"
 
   @bookinfo-app
+  @lpinterop
   Scenario: See all Apps toggles
     Then user sees all the Apps toggles
 
@@ -94,7 +96,6 @@ Feature: Kiali Apps List page
 
   @bookinfo-app
   @error-rates-app
-  @skip-lpinterop
   Scenario: The degraded status of a logical mesh application is reported in the list of applications
     Given a degraded application in the mesh
     When I fetch the list of applications
