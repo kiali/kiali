@@ -34,18 +34,21 @@ const (
 type MetricsType struct {
 	APIFailures                    *prometheus.CounterVec
 	APIProcessingTime              *prometheus.HistogramVec
+	CacheHitsTotal                 *prometheus.CounterVec
+	CacheRequestsTotal             *prometheus.CounterVec
 	CheckerProcessingTime          *prometheus.HistogramVec
 	GraphAppenderTime              *prometheus.HistogramVec
+	GraphCacheEvictionsTotal       prometheus.Counter
+	GraphCacheHitsTotal            prometheus.Counter
+	GraphCacheMissesTotal          prometheus.Counter
 	GraphGenerationTime            *prometheus.HistogramVec
 	GraphMarshalTime               *prometheus.HistogramVec
 	GraphNodes                     *prometheus.GaugeVec
 	KubernetesClients              *prometheus.GaugeVec
 	PrometheusProcessingTime       *prometheus.HistogramVec
 	SingleValidationProcessingTime *prometheus.HistogramVec
-	CacheRequestsTotal             *prometheus.CounterVec
-	CacheHitsTotal                 *prometheus.CounterVec
-	ValidationProcessingTime       *prometheus.HistogramVec
 	TracingProcessingTime          *prometheus.HistogramVec
+	ValidationProcessingTime       *prometheus.HistogramVec
 }
 
 // Metrics contains all of Kiali's own internal metrics.
@@ -142,6 +145,24 @@ var Metrics = MetricsType{
 			Help: "The number of total hits for the cache.",
 		},
 		[]string{labelName},
+	),
+	GraphCacheHitsTotal: prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "kiali_graph_cache_hits_total",
+			Help: "The number of total hits for the graph cache.",
+		},
+	),
+	GraphCacheMissesTotal: prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "kiali_graph_cache_misses_total",
+			Help: "The number of total misses for the graph cache.",
+		},
+	),
+	GraphCacheEvictionsTotal: prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "kiali_graph_cache_evictions_total",
+			Help: "The number of total evictions for the graph cache.",
+		},
 	),
 	TracingProcessingTime: prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -441,6 +462,18 @@ func GetCacheHitsTotalMetric(cache string) prometheus.Counter {
 	return Metrics.CacheHitsTotal.With(prometheus.Labels{
 		labelName: cache,
 	})
+}
+
+func GetGraphCacheHitsTotalMetric() prometheus.Counter {
+	return Metrics.GraphCacheHitsTotal
+}
+
+func GetGraphCacheMissesTotalMetric() prometheus.Counter {
+	return Metrics.GraphCacheMissesTotal
+}
+
+func GetGraphCacheEvictionsTotalMetric() prometheus.Counter {
+	return Metrics.GraphCacheEvictionsTotal
 }
 
 // GetTracingProcessingTimePrometheusTimer returns a timer that can be used to store
