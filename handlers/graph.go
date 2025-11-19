@@ -301,11 +301,22 @@ func graphOptionsMatch(cached, requested graph.Options) bool {
 	}
 
 	// Compare appenders (different appenders = different graph decoration)
+	// First check if the All flag matches
+	if cached.Appenders.All != requested.Appenders.All {
+		return false
+	}
+	// Compare as sets - order doesn't matter, only that the same appenders are present
 	if len(cached.Appenders.AppenderNames) != len(requested.Appenders.AppenderNames) {
 		return false
 	}
-	for i, name := range cached.Appenders.AppenderNames {
-		if name != requested.Appenders.AppenderNames[i] {
+	// Build a set from cached appenders
+	cachedAppenders := make(map[string]bool, len(cached.Appenders.AppenderNames))
+	for _, name := range cached.Appenders.AppenderNames {
+		cachedAppenders[name] = true
+	}
+	// Check that all requested appenders exist in cached
+	for _, name := range requested.Appenders.AppenderNames {
+		if !cachedAppenders[name] {
 			return false
 		}
 	}
