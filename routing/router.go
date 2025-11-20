@@ -175,10 +175,10 @@ func NewRouter(
 	refreshJobManager := graph.NewRefreshJobManager(context.Background())
 
 	if graphCacheConfig.Enabled {
-		zl.Info().Msgf("Graph caching enabled: refresh_interval=%v, inactivity_timeout=%v, max_memory=%dMB",
+		zl.Info().Msgf("graph cache enabled: refresh_interval=%v, inactivity_timeout=%v, max_memory=%dMB",
 			graphCacheConfig.RefreshInterval, graphCacheConfig.InactivityTimeout, graphCacheConfig.MaxCacheMemoryMB)
 	} else {
-		zl.Info().Msg("Graph caching disabled")
+		zl.Info().Msg("graph cache disabled")
 	}
 
 	// Build our API server routes and install them.
