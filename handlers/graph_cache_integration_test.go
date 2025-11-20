@@ -38,7 +38,7 @@ func TestGraphNamespacesWithCache_CacheMiss(t *testing.T) {
 
 	// Note: This test is a basic structure - full integration would require
 	// mocked business layer and prometheus client with test data
-	t.Log("Graph cache integration test structure created successfully")
+	t.Log("graph cache integration test structure created successfully")
 }
 
 // TestGraphNamespacesWithCache_CacheHit tests that a cache hit returns cached data

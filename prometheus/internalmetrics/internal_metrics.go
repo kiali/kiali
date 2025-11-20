@@ -258,20 +258,23 @@ func (sof *SuccessOrFailureMetricType) ObserveNow(err *error) {
 // RegisterInternalMetrics must be called at startup to prepare the Prometheus scrape endpoint.
 func RegisterInternalMetrics() {
 	prometheus.MustRegister(
-		Metrics.GraphNodes,
-		Metrics.GraphGenerationTime,
-		Metrics.GraphAppenderTime,
-		Metrics.GraphMarshalTime,
-		Metrics.APIProcessingTime,
-		Metrics.PrometheusProcessingTime,
-		Metrics.KubernetesClients,
 		Metrics.APIFailures,
-		Metrics.CheckerProcessingTime,
-		Metrics.ValidationProcessingTime,
-		Metrics.SingleValidationProcessingTime,
-		Metrics.CacheRequestsTotal,
+		Metrics.APIProcessingTime,
 		Metrics.CacheHitsTotal,
+		Metrics.CacheRequestsTotal,
+		Metrics.CheckerProcessingTime,
+		Metrics.GraphAppenderTime,
+		Metrics.GraphCacheEvictionsTotal,
+		Metrics.GraphCacheHitsTotal,
+		Metrics.GraphCacheMissesTotal,
+		Metrics.GraphGenerationTime,
+		Metrics.GraphMarshalTime,
+		Metrics.GraphNodes,
+		Metrics.KubernetesClients,
+		Metrics.PrometheusProcessingTime,
+		Metrics.SingleValidationProcessingTime,
 		Metrics.TracingProcessingTime,
+		Metrics.ValidationProcessingTime,
 	)
 }
 

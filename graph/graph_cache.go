@@ -129,7 +129,10 @@ func (c *GraphCacheImpl) SetSessionGraph(sessionID string, cached *CachedGraph) 
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	// Estimate memory if not already set
+	// Estimate memory if not already set. Note that on graph refresh it is feasible that the
+	// graph nodes/edges could change significantly, but in most cases it changes minimally
+	// or not at all. Since this is just an estimate, let's just assume the first instance is
+	// representative of future refreshes.
 	if cached.estimatedMB == 0 {
 		cached.estimatedMB = EstimateGraphMemory(cached.TrafficMap)
 	}

@@ -109,7 +109,7 @@ func (j *RefreshJob) Start() {
 			j.mu.Lock()
 			j.ticker = newTicker
 			j.mu.Unlock()
-			log.Tracef("Graph cache refresh job for session [%s] now using new ticker", j.sessionID)
+			log.Tracef("graph cache refresh job for session [%s] now using new ticker", j.sessionID)
 		case <-j.stopChan:
 			log.Debugf("Stopping graph cache refresh job for session [%s]", j.sessionID)
 			j.cleanup()
