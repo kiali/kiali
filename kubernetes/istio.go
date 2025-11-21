@@ -56,6 +56,11 @@ type ComponentStatus struct {
 	// example:  true
 	// required: true
 	IsCore bool `json:"isCore"`
+
+	// Mesh name or ID that this component belongs to.
+	// This is derived from the control plane's MeshId or TrustDomain.
+	// Empty if the mesh information cannot be determined.
+	Mesh string `json:"mesh,omitempty"`
 }
 
 type IstioComponentStatus []ComponentStatus

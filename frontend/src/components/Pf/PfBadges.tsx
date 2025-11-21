@@ -51,6 +51,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   Host: { badge: 'H', tt: 'Host' },
   Instance: { badge: 'I', tt: 'Instance' },
   Istio: { badge: 'IS', tt: 'Istio' } as PFBadgeType,
+  Mesh: { badge: 'M', tt: 'Mesh', style: { backgroundColor: PFColors.Cyan300 } } as PFBadgeType,
   MeshPolicy: { badge: 'MP', tt: 'Mesh Policy' } as PFBadgeType,
   MetricStore: { badge: 'MS', tt: 'Metric Store' } as PFBadgeType,
   MirroredWorkload: {
