@@ -45,11 +45,11 @@ Since login is performed per cluster, Kiali will need separate auth callback end
    user <-302 to OAuth server with callback- Kiali server
 3. Login to OAuth server
    user --> OAuth server
-3. OAuth server redirects to callback URL included in URL
+4. OAuth server redirects to callback URL included in URL
    user <-302 to /kiali/auth/callback/east- OAuth server
-4. Kiali checks the code received from the OAuth server against the "east" cluster's nonce
-5. Kiali exchanges the code for a token with the "east" OAuth server
-6. Kiali redirects the user back to the Kiali root with the `kiali-token-east` cookie that has the encrypted token
+5. Kiali checks the code received from the OAuth server against the "east" cluster's nonce
+6. Kiali exchanges the code for a token with the "east" OAuth server
+7. Kiali redirects the user back to the Kiali root with the `kiali-token-east` cookie that has the encrypted token
    user <-302 to /kiali with set-cookie="kiali-token-east"- Kiali server
 ```
 
