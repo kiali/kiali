@@ -126,7 +126,8 @@ func TestGetAuthDialOptions_BearerTokenRotation(t *testing.T) {
 	defer stopServer()
 
 	// Build dial options (per-RPC creds) once, as production would
-	opts, err := grpcutil.GetAuthDialOptions(conf, false, auth)
+	// Use TLS=true since the server is configured with TLS
+	opts, err := grpcutil.GetAuthDialOptions(conf, true, auth)
 	if err != nil {
 		t.Fatalf("GetAuthDialOptions failed: %v", err)
 	}
@@ -213,7 +214,8 @@ func TestGetAuthDialOptions_BasicAuthRotation(t *testing.T) {
 	defer stopServer()
 
 	// Build dial options once
-	opts, err := grpcutil.GetAuthDialOptions(conf, false, auth)
+	// Use TLS=true since the server is configured with TLS
+	opts, err := grpcutil.GetAuthDialOptions(conf, true, auth)
 	if err != nil {
 		t.Fatalf("GetAuthDialOptions failed: %v", err)
 	}
