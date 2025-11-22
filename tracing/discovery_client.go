@@ -183,7 +183,7 @@ func discoverUrl(ctx context.Context, zl *zerolog.Logger, parsedUrl model.Parsed
 			{
 				// Try GRPC Tempo Client
 				// And this also requires HTTP Client
-				dialOps, err := grpcutil.GetAuthDialOptions(conf, cfgTracing.Auth.Type == "basic", &cfgTracing.Auth)
+				dialOps, err := grpcutil.GetAuthDialOptions(conf, parsedUrl.Scheme == "https", &cfgTracing.Auth)
 				if err != nil {
 					msg := fmt.Sprintf("Error creating gRPC dial options: %v", err)
 					logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Dial Options 9095 error", Result: msg})
