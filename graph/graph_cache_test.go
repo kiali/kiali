@@ -64,7 +64,7 @@ func TestGraphCache_SetAndGet(t *testing.T) {
 	config := &GraphCacheConfig{
 		Enabled:           true,
 		InactivityTimeout: 10 * time.Minute,
-		MaxCacheMemoryMB:  100,
+		MaxCacheMemoryMB:  1024,
 		RefreshInterval:   60 * time.Second,
 	}
 
@@ -100,7 +100,7 @@ func TestGraphCache_GetNonExistent(t *testing.T) {
 	config := &GraphCacheConfig{
 		Enabled:           true,
 		InactivityTimeout: 10 * time.Minute,
-		MaxCacheMemoryMB:  100,
+		MaxCacheMemoryMB:  1024,
 		RefreshInterval:   60 * time.Second,
 	}
 
@@ -116,7 +116,7 @@ func TestGraphCache_Evict(t *testing.T) {
 	config := &GraphCacheConfig{
 		Enabled:           true,
 		InactivityTimeout: 10 * time.Minute,
-		MaxCacheMemoryMB:  100,
+		MaxCacheMemoryMB:  1024,
 		RefreshInterval:   60 * time.Second,
 	}
 
@@ -151,7 +151,7 @@ func TestGraphCache_Clear(t *testing.T) {
 	config := &GraphCacheConfig{
 		Enabled:           true,
 		InactivityTimeout: 10 * time.Minute,
-		MaxCacheMemoryMB:  100,
+		MaxCacheMemoryMB:  1024,
 		RefreshInterval:   60 * time.Second,
 	}
 
@@ -244,7 +244,7 @@ func TestGraphCache_UpdateLastAccessed(t *testing.T) {
 	config := &GraphCacheConfig{
 		Enabled:           true,
 		InactivityTimeout: 10 * time.Minute,
-		MaxCacheMemoryMB:  100,
+		MaxCacheMemoryMB:  1024,
 		RefreshInterval:   60 * time.Second,
 	}
 
@@ -279,7 +279,7 @@ func TestGraphCache_ReplaceExistingGraph(t *testing.T) {
 	config := &GraphCacheConfig{
 		Enabled:           true,
 		InactivityTimeout: 10 * time.Minute,
-		MaxCacheMemoryMB:  100,
+		MaxCacheMemoryMB:  1024,
 		RefreshInterval:   60 * time.Second,
 	}
 
@@ -364,7 +364,7 @@ func TestLoadGraphCacheConfig_InvalidDurations(t *testing.T) {
 	assert.True(t, graphCfg.Enabled)
 	assert.Equal(t, 60*time.Second, graphCfg.RefreshInterval)   // Default
 	assert.Equal(t, 10*time.Minute, graphCfg.InactivityTimeout) // Default
-	assert.Equal(t, 100, graphCfg.MaxCacheMemoryMB)             // Default
+	assert.Equal(t, 1024, graphCfg.MaxCacheMemoryMB)            // Default
 }
 
 func TestGraphCache_ConcurrentAccess(t *testing.T) {
@@ -372,7 +372,7 @@ func TestGraphCache_ConcurrentAccess(t *testing.T) {
 	config := &GraphCacheConfig{
 		Enabled:           true,
 		InactivityTimeout: 10 * time.Minute,
-		MaxCacheMemoryMB:  100,
+		MaxCacheMemoryMB:  1024,
 		RefreshInterval:   60 * time.Second,
 	}
 
