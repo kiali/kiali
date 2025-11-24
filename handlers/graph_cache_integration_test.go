@@ -19,7 +19,7 @@ func TestGraphNamespacesWithCache_CacheMiss(t *testing.T) {
 		Enabled:           true,
 		RefreshInterval:   60 * time.Second,
 		InactivityTimeout: 10 * time.Minute,
-		MaxCacheMemoryMB:  100,
+		MaxCacheMemoryMB:  1024,
 	}
 	cache := graph.NewGraphCache(ctx, config)
 	refreshMgr := graph.NewRefreshJobManager(ctx)
@@ -49,7 +49,7 @@ func TestGraphNamespacesWithCache_CacheHit(t *testing.T) {
 		Enabled:           true,
 		RefreshInterval:   60 * time.Second,
 		InactivityTimeout: 10 * time.Minute,
-		MaxCacheMemoryMB:  100,
+		MaxCacheMemoryMB:  1024,
 	}
 	cache := graph.NewGraphCache(ctx, config)
 	refreshMgr := graph.NewRefreshJobManager(ctx)
@@ -102,7 +102,7 @@ func TestCacheDisabled(t *testing.T) {
 		Enabled:           false, // Disabled
 		RefreshInterval:   60 * time.Second,
 		InactivityTimeout: 10 * time.Minute,
-		MaxCacheMemoryMB:  100,
+		MaxCacheMemoryMB:  1024,
 	}
 	cache := graph.NewGraphCache(ctx, config)
 

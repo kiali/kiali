@@ -84,7 +84,7 @@ func NewGraphCache(ctx context.Context, config *GraphCacheConfig) GraphCache {
 		config = &GraphCacheConfig{
 			Enabled:           false, // Disabled by default
 			InactivityTimeout: 10 * time.Minute,
-			MaxCacheMemoryMB:  100,
+			MaxCacheMemoryMB:  1024,
 			RefreshInterval:   60 * time.Second,
 		}
 	}
@@ -330,8 +330,8 @@ func LoadGraphCacheConfig(cfg config.Config) *GraphCacheConfig {
 
 	maxMemory := cfg.KialiInternal.GraphCache.MaxCacheMemoryMB
 	if maxMemory <= 0 {
-		log.Warningf("Invalid kiali_internal.graph_cache.max_cache_memory_mb %d, using default 100", maxMemory)
-		maxMemory = 100
+		log.Warningf("Invalid kiali_internal.graph_cache.max_cache_memory_mb %d, using default 1024", maxMemory)
+		maxMemory = 1024
 	}
 
 	return &GraphCacheConfig{
