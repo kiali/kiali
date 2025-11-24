@@ -41,6 +41,7 @@ type ioNopCloser struct {
 func (n ioNopCloser) Close() error { return nil }
 
 func TestAuthRoundTripper_BearerRotation(t *testing.T) {
+	t.Cleanup(config.CloseWatchedCredentials)
 	tmpDir := t.TempDir()
 	tokenFile := tmpDir + "/token"
 	if err := os.WriteFile(tokenFile, []byte("t1"), 0600); err != nil {
@@ -67,6 +68,16 @@ func TestAuthRoundTripper_BearerRotation(t *testing.T) {
 	if err := os.WriteFile(tokenFile, []byte("t2"), 0600); err != nil {
 		t.Fatalf("rotate token: %v", err)
 	}
+	// Wait for fsnotify to detect change and update cache (up to 2 seconds)
+	for i := 0; i < 40; i++ {
+		time.Sleep(50 * time.Millisecond)
+		if _, err := rt.RoundTrip(req); err != nil {
+			t.Fatalf("roundtrip poll: %v", err)
+		}
+		if inner.lastAuth == "Bearer t2" {
+			break
+		}
+	}
 	if _, err := rt.RoundTrip(req); err != nil {
 		t.Fatalf("roundtrip2: %v", err)
 	}
@@ -76,6 +87,7 @@ func TestAuthRoundTripper_BearerRotation(t *testing.T) {
 }
 
 func TestAuthRoundTripper_BasicRotation(t *testing.T) {
+	t.Cleanup(config.CloseWatchedCredentials)
 	tmpDir := t.TempDir()
 	userFile := tmpDir + "/u"
 	passFile := tmpDir + "/p"
@@ -109,6 +121,17 @@ func TestAuthRoundTripper_BasicRotation(t *testing.T) {
 	}
 	if err := os.WriteFile(passFile, []byte("p2"), 0600); err != nil {
 		t.Fatalf("rotate pass: %v", err)
+	}
+	// Wait for fsnotify to detect changes and update cache (up to 2 seconds)
+	expectedAuth := "Basic dTI6cDI=" // base64("u2:p2")
+	for i := 0; i < 40; i++ {
+		time.Sleep(50 * time.Millisecond)
+		if _, err := rt.RoundTrip(req); err != nil {
+			t.Fatalf("roundtrip poll: %v", err)
+		}
+		if inner.lastAuth == expectedAuth {
+			break
+		}
 	}
 	if _, err := rt.RoundTrip(req); err != nil {
 		t.Fatalf("roundtrip2: %v", err)
