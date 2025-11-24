@@ -48,7 +48,7 @@ Feature: Kiali Graph page - Toolbar (various)
   @core-1
   Scenario: Open traffic dropdown
     When user "opens" traffic menu
-    Then user sees "default" graph traffic menu
+    Then user sees graph traffic menu
 
   @offline
   @error-rates-app
@@ -82,7 +82,7 @@ Feature: Kiali Graph page - Toolbar (various)
   Scenario: User resets to factory default
     When user resets to factory default
     And user "opens" traffic menu
-    Then user sees "default" graph traffic menu
+    Then user sees graph traffic menu
 
   @offline
   @error-rates-app
@@ -159,7 +159,7 @@ Feature: Kiali Graph page - Toolbar (various)
   Scenario: Open traffic dropdown for ambient
     When user graphs "" namespaces
     And user "opens" traffic menu
-    Then user sees "ambient" graph traffic menu
+    Then user sees graph traffic menu
 
   # TODO: offline - ambient support.
   @ambient

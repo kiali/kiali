@@ -82,8 +82,18 @@ Then('user {string} graph tour', (action: string) => {
   }
 });
 
-Then('user sees {string} graph traffic menu', (menu: string) => {
+Then('user sees graph traffic menu', () => {
   cy.get('button#graph-traffic-dropdown').invoke('attr', 'aria-expanded').should('eq', 'true');
+
+  let menu = 'default';
+  cy.request({ url: '/api/config' }).then(response => {
+    cy.wrap(response.isOkStatusCode).should('be.true');
+
+    const ambientEnabled = response.body.ambientEnabled;
+    if (ambientEnabled) {
+      menu = 'ambient';
+    }
+  });
 
   cy.get('div#graph-traffic-menu').within(() => {
     if (menu === 'ambient') {
