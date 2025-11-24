@@ -150,6 +150,7 @@ func (s *Server) Stop() {
 	log.Infof("Server endpoint will stop at [%v]", s.httpServer.Addr)
 	s.httpServer.Close()
 	observability.StopTracer(s.tracer)
+	config.CloseWatchedCredentials()
 }
 
 func corsAllowed(next http.Handler) http.Handler {

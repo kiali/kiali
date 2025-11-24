@@ -103,6 +103,7 @@ func bigOne() *big.Int {
 }
 
 func TestGetAuthDialOptions_BearerTokenRotation(t *testing.T) {
+	t.Cleanup(config.CloseWatchedCredentials)
 	tmpDir := t.TempDir()
 	tokenFile := tmpDir + "/token"
 
@@ -153,7 +154,7 @@ func TestGetAuthDialOptions_BearerTokenRotation(t *testing.T) {
 	}
 	captured1 := <-authHeaderCh
 	if captured1 != "Bearer "+initialToken {
-		t.Fatalf("Expected first Authorization to be %q, got %q", "Bearer "+initialToken, captured1)
+		t.Fatalf("Expected first Authorization to be [%q], got [%q]", "Bearer "+initialToken, captured1)
 	}
 
 	// Rotate token on disk
@@ -163,27 +164,34 @@ func TestGetAuthDialOptions_BearerTokenRotation(t *testing.T) {
 		t.Fatalf("Failed to rotate token: %v", err)
 	}
 
-	// RPC 2 - expect rotated token to be used (verifies auto-rotation without pod restart)
-	ctx2, cancel2 := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel2()
-	if _, err := client.Check(ctx2, &grpc_health_v1.HealthCheckRequest{}); err != nil {
-		t.Fatalf("Second RPC failed: %v", err)
+	// Wait for fsnotify to detect change and update cache (up to 2 seconds)
+	// Poll by making RPCs until we see the rotated token
+	var captured2 string
+	tokenRotated := false
+	for i := 0; i < 40; i++ {
+		time.Sleep(50 * time.Millisecond)
+		ctx2, cancel2 := context.WithTimeout(context.Background(), 3*time.Second)
+		if _, err := client.Check(ctx2, &grpc_health_v1.HealthCheckRequest{}); err != nil {
+			cancel2()
+			t.Fatalf("RPC poll failed: %v", err)
+		}
+		captured2 = <-authHeaderCh
+		cancel2()
+		if captured2 == "Bearer "+rotatedToken {
+			tokenRotated = true
+			break
+		}
 	}
-	captured2 := <-authHeaderCh
 
-	switch captured2 {
-	case "Bearer " + rotatedToken:
-		t.Log("SUCCESS: gRPC Bearer token rotation worked - second RPC uses rotated token")
-	case "Bearer " + initialToken:
+	if !tokenRotated {
 		t.Logf("FAILURE: Second RPC still uses initial token %q", initialToken)
-		t.Logf("Expected rotated token %q but got %q", rotatedToken, captured2)
+		t.Logf("Expected rotated token [%q] but got [%q]", rotatedToken, captured2)
 		t.Error("gRPC Bearer token rotation failed - token was not re-read from file")
-	default:
-		t.Errorf("Unexpected Authorization header on second RPC: %q", captured2)
 	}
 }
 
 func TestGetAuthDialOptions_BasicAuthRotation(t *testing.T) {
+	t.Cleanup(config.CloseWatchedCredentials)
 	tmpDir := t.TempDir()
 	usernameFile := tmpDir + "/username"
 	passwordFile := tmpDir + "/password"
@@ -241,7 +249,7 @@ func TestGetAuthDialOptions_BasicAuthRotation(t *testing.T) {
 	initialEncoded := base64.StdEncoding.EncodeToString([]byte(initialUsername + ":" + initialPassword))
 	expectedInitial := "Basic " + initialEncoded
 	if captured1 != expectedInitial {
-		t.Fatalf("Expected first Authorization to be %q, got %q", expectedInitial, captured1)
+		t.Fatalf("Expected first Authorization to be [%q], got [%q]", expectedInitial, captured1)
 	}
 
 	// Rotate credentials
@@ -256,24 +264,30 @@ func TestGetAuthDialOptions_BasicAuthRotation(t *testing.T) {
 		t.Fatalf("Failed to rotate password: %v", err)
 	}
 
-	// RPC 2 - expect rotated credentials to be used (verifies auto-rotation without pod restart)
-	ctx2, cancel2 := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel2()
-	if _, err := client.Check(ctx2, &grpc_health_v1.HealthCheckRequest{}); err != nil {
-		t.Fatalf("Second RPC failed: %v", err)
-	}
-	captured2 := <-authHeaderCh
+	// Wait for fsnotify to detect changes and update cache (up to 2 seconds)
+	// Poll by making RPCs until we see the rotated credentials
 	rotatedEncoded := base64.StdEncoding.EncodeToString([]byte(rotatedUsername + ":" + rotatedPassword))
 	expectedRotated := "Basic " + rotatedEncoded
+	var captured2 string
+	credsRotated := false
+	for i := 0; i < 40; i++ {
+		time.Sleep(50 * time.Millisecond)
+		ctx2Poll, cancel2Poll := context.WithTimeout(context.Background(), 3*time.Second)
+		if _, err = client.Check(ctx2Poll, &grpc_health_v1.HealthCheckRequest{}); err != nil {
+			cancel2Poll()
+			t.Fatalf("RPC poll failed: %v", err)
+		}
+		captured2 = <-authHeaderCh
+		cancel2Poll()
+		if captured2 == expectedRotated {
+			credsRotated = true
+			break
+		}
+	}
 
-	switch captured2 {
-	case expectedRotated:
-		t.Log("SUCCESS: gRPC Basic auth rotation worked - second RPC uses rotated credentials")
-	case expectedInitial:
+	if !credsRotated {
 		t.Logf("FAILURE: Second RPC still uses initial credentials %q", expectedInitial)
-		t.Logf("Expected rotated credentials %q but got %q", expectedRotated, captured2)
+		t.Logf("Expected rotated credentials [%q] but got [%q]", expectedRotated, captured2)
 		t.Error("gRPC Basic auth rotation failed - credentials were not re-read from files")
-	default:
-		t.Errorf("Unexpected Authorization header on second RPC: %q", captured2)
 	}
 }
