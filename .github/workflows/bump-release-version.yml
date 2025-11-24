@@ -52,7 +52,7 @@ jobs:
         branch: ${{fromJson(needs.initialize.outputs.branches)}}
     steps:
     - name: Checkout branch
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         ref: ${{matrix.branch}}
         # We need to fetch the full history to determine the latest tag
