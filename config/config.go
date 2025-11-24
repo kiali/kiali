@@ -679,7 +679,7 @@ type KialiURL struct {
 type GraphCacheConfig struct {
 	Enabled           bool   `yaml:"enabled" json:"enabled"`                                          // Default: true
 	InactivityTimeout string `yaml:"inactivity_timeout,omitempty" json:"inactivityTimeout,omitempty"` // Default: "10m"
-	MaxCacheMemoryMB  int    `yaml:"max_cache_memory_mb,omitempty" json:"maxCacheMemoryMB,omitempty"` // Default: 100
+	MaxCacheMemoryMB  int    `yaml:"max_cache_memory_mb,omitempty" json:"maxCacheMemoryMB,omitempty"` // Default: 1024
 	RefreshInterval   string `yaml:"refresh_interval,omitempty" json:"refreshInterval,omitempty"`     // Default: "60s"
 }
 
