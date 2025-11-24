@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,6 +14,7 @@ import (
 
 // TestTracingBasicAuthFromFiles tests that tracing client properly reads basic auth credentials from files
 func TestTracingBasicAuthFromFiles(t *testing.T) {
+	t.Cleanup(config.CloseWatchedCredentials)
 	tmpDir := t.TempDir()
 	usernameFile := tmpDir + "/username"
 	passwordFile := tmpDir + "/password"
@@ -57,6 +59,24 @@ func TestTracingBasicAuthFromFiles(t *testing.T) {
 	err = os.WriteFile(passwordFile, []byte(rotatedPassword), 0600)
 	require.NoError(t, err)
 
+	// Wait for fsnotify to detect changes and update cache (up to 2 seconds)
+	usernameRotated := false
+	passwordRotated := false
+	for i := 0; i < 40; i++ {
+		time.Sleep(50 * time.Millisecond)
+		username, _ = conf.ExternalServices.Tracing.Auth.GetUsername()
+		password, _ = conf.ExternalServices.Tracing.Auth.GetPassword()
+		if username == rotatedUsername {
+			usernameRotated = true
+		}
+		if password == rotatedPassword {
+			passwordRotated = true
+		}
+		if usernameRotated && passwordRotated {
+			break
+		}
+	}
+
 	// Verify rotated credentials can be read (simulates what happens on next request)
 	username, err = conf.ExternalServices.Tracing.Auth.GetUsername()
 	assert.NoError(t, err)
@@ -69,6 +89,7 @@ func TestTracingBasicAuthFromFiles(t *testing.T) {
 
 // TestTracingBearerTokenFromFile tests that tracing client properly reads bearer token from file
 func TestTracingBearerTokenFromFile(t *testing.T) {
+	t.Cleanup(config.CloseWatchedCredentials)
 	tmpDir := t.TempDir()
 	tokenFile := tmpDir + "/token"
 
@@ -100,6 +121,15 @@ func TestTracingBearerTokenFromFile(t *testing.T) {
 	err = os.WriteFile(tokenFile, []byte(rotatedToken), 0600)
 	require.NoError(t, err)
 
+	// Wait for fsnotify to detect change and update cache (up to 2 seconds)
+	for i := 0; i < 40; i++ {
+		time.Sleep(50 * time.Millisecond)
+		token, _ = conf.ExternalServices.Tracing.Auth.GetToken()
+		if token == rotatedToken {
+			break
+		}
+	}
+
 	// Verify rotated token can be read
 	token, err = conf.ExternalServices.Tracing.Auth.GetToken()
 	assert.NoError(t, err)
@@ -108,6 +138,7 @@ func TestTracingBearerTokenFromFile(t *testing.T) {
 
 // TestTracingBearerTokenWithWhitespace tests that tracing properly trims whitespace from token files
 func TestTracingBearerTokenWithWhitespace(t *testing.T) {
+	t.Cleanup(config.CloseWatchedCredentials)
 	tmpDir := t.TempDir()
 	tokenFile := tmpDir + "/token"
 
