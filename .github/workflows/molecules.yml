@@ -59,6 +59,28 @@ jobs:
       uses: Azure/setup-helm@v4.3.1
       with:
         version: 'v3.18.4'
+    - name: Free Disk Space
+      run: |
+        echo "=== Disk space before cleanup ==="
+        df -h
+
+        echo "=== Cleaning up large directories ==="
+        # Remove large pre-installed packages that we don't need
+        [ -d /usr/share/dotnet ] && sudo rm -rf /usr/share/dotnet || echo "No dotnet to remove"
+        [ -d /usr/local/lib/android ] && sudo rm -rf /usr/local/lib/android || echo "No android to remove"
+        [ -d /opt/ghc ] && sudo rm -rf /opt/ghc || echo "No ghc to remove"
+        [ -d /opt/hostedtoolcache/CodeQL ] && sudo rm -rf /opt/hostedtoolcache/CodeQL || echo "No CodeQL to remove"
+
+        echo "=== Cleaning up Docker/container resources ==="
+        # Clean up docker and podman resources - podman is used for molecule image builds
+        docker system prune -af --volumes
+        podman system prune -af --volumes
+
+        echo "=== Cleaning apt cache ==="
+        sudo apt-get clean
+
+        echo "=== Disk space after cleanup ==="
+        df -h
     - name: Print the names of the tests that are to be run
       id: log-test-names
       run: |
