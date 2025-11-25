@@ -94,7 +94,6 @@ func (s *Service) discover(ctx context.Context) string {
 }
 
 func (s *Service) getToken(ctx context.Context) (token string, err error) {
-
 	loginURL := fmt.Sprintf("%s/api/auth/providers/native/login", s.URL(ctx))
 
 	username, err := s.conf.ExternalServices.Perses.Auth.GetUsername()
@@ -126,7 +125,23 @@ func (s *Service) getToken(ctx context.Context) (token string, err error) {
 		return "", fmt.Errorf("failed to create HTTP request: %s", err.Error())
 	}
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
+
+	// Reuse shared transport logic so TLS settings and rotating secrets apply to login flow.
+	loginAuth := s.conf.ExternalServices.Perses.Auth
+	loginAuth.Type = config.AuthTypeNone
+	loginAuth.Username = ""
+	loginAuth.Password = ""
+	loginTransport, err := httputil.CreateTransport(s.conf, &loginAuth, &http.Transport{}, httputil.DefaultTimeout, nil)
+	if err != nil {
+		log.Errorf("Failed to create Perses login transport: %v", err)
+		return "", fmt.Errorf("failed to create Perses login transport: %w", err)
+	}
+	httpClient := http.Client{
+		Transport: loginTransport,
+		Timeout:   httputil.DefaultTimeout,
+	}
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		log.Errorf("Failed to request login URL: %v", err)
 		return "", fmt.Errorf("failed to request login URL: %s", err.Error())
