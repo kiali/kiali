@@ -20,8 +20,17 @@ When('user closes graph tour', () => {
   cy.get('div[role="dialog"]').find('button[aria-label="Close"]').click();
 });
 
-When('user {string} traffic menu', (_action: string) => {
-  cy.get('button#graph-traffic-dropdown').click();
+When('user {string} traffic menu', (action: string) => {
+  cy.get('button#graph-traffic-dropdown').then($button => {
+    const currentState = $button.attr('aria-expanded');
+    const isCurrentlyOpen = currentState === 'true';
+    const shouldBeOpen = action.includes('open');
+
+    // Only click if the current state is different from the desired state
+    if (isCurrentlyOpen !== shouldBeOpen) {
+      cy.wrap($button).click();
+    }
+  });
 });
 
 When('user {string} {string} traffic option', (action: string, option: string) => {
@@ -82,8 +91,18 @@ Then('user {string} graph tour', (action: string) => {
   }
 });
 
-Then('user sees {string} graph traffic menu', (menu: string) => {
+Then('user sees graph traffic menu', () => {
   cy.get('button#graph-traffic-dropdown').invoke('attr', 'aria-expanded').should('eq', 'true');
+
+  let menu = 'default';
+  cy.request({ url: '/api/config' }).then(response => {
+    cy.wrap(response.isOkStatusCode).should('be.true');
+
+    const ambientEnabled = response.body.ambientEnabled;
+    if (ambientEnabled) {
+      menu = 'ambient';
+    }
+  });
 
   cy.get('div#graph-traffic-menu').within(() => {
     if (menu === 'ambient') {
