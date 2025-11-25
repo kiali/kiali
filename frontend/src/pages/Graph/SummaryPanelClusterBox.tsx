@@ -72,7 +72,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     const data = clusterBox.getData();
     const boxed = descendents(clusterBox);
     const cluster = data[NodeAttr.cluster];
-    const kialiInstances = serverConfig.clusters[cluster] ? serverConfig.clusters[cluster].kialiInstances : [];
+    const kialiInstances: KialiInstance[] = serverConfig.clusters?.[cluster]?.kialiInstances ?? [];
 
     const { numApps, numVersions } = this.countApps(boxed);
     const {
