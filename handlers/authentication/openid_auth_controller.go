@@ -339,6 +339,15 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 		return
 	}
 
+	// Read the signing key (may be from file if using credential rotation)
+	signingKey, err := config.ReadCredential(c.conf.LoginToken.SigningKey)
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte("Error reading signing key: " + err.Error()))
+		return
+	}
+
 	// Build scopes string
 	scopes := strings.Join(getConfiguredOpenIdScopes(c.conf), " ")
 
@@ -397,7 +406,7 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 	// Although this "binds" the id_token returned by the IdP with the CSRF mitigation, this should be OK
 	// because we are including a "secret" key (i.e. should an attacker steal the nonce code, he still needs to know
 	// the Kiali's signing key).
-	csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", nonceCode, nowTime.UTC().Format("060102150405"), c.conf.LoginToken.SigningKey)))
+	csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", nonceCode, nowTime.UTC().Format("060102150405"), signingKey)))
 
 	// Send redirection to browser
 	responseType := "code" // Request for the "authorization code" flow
@@ -756,12 +765,22 @@ func (p *openidFlowHelper) validateOpenIdState() *openidFlowHelper {
 		return p
 	}
 
+	// Read the signing key (may be from file if using credential rotation)
+	signingKey, err := config.ReadCredential(p.conf.LoginToken.SigningKey)
+	if err != nil {
+		p.Error = &AuthenticationFailureError{
+			HttpStatus: http.StatusInternalServerError,
+			Reason:     "Error reading signing key: " + err.Error(),
+		}
+		return p
+	}
+
 	state := p.State
 
 	separator := strings.LastIndexByte(state, '-')
 	if separator != -1 {
 		csrfToken, timestamp := state[:separator], state[separator+1:]
-		csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", p.Nonce, timestamp, p.conf.LoginToken.SigningKey)))
+		csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", p.Nonce, timestamp, signingKey)))
 
 		if fmt.Sprintf("%x", csrfHash) != csrfToken {
 			p.Error = &AuthenticationFailureError{
@@ -962,9 +981,16 @@ func createHttpClient(conf *config.Config, toUrl string) (*http.Client, error) {
 // isOpenIdCodeFlowPossible determines if the "authorization code" flow can be used
 // to do user authentication.
 func isOpenIdCodeFlowPossible(conf *config.Config) bool {
+	// Read the signing key (may be from file if using credential rotation)
+	signingKey, err := config.ReadCredential(conf.LoginToken.SigningKey)
+	if err != nil {
+		log.Warningf("Cannot use OpenId authorization code flow because signing key could not be read: %v", err)
+		return false
+	}
+
 	// Kiali's signing key length must be 16, 24 or 32 bytes in order to be able to use
 	// encoded cookies.
-	switch len(conf.LoginToken.SigningKey) {
+	switch len(signingKey) {
 	case 16, 24, 32:
 	default:
 		log.Warningf("Cannot use OpenId authorization code flow because signing key is not 16, 24 nor 32 bytes long")
