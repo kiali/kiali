@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { JWTHeader, JWTRule } from '../../../types/IstioObjects';
 import { IRow, ThProps } from '@patternfly/react-table';
-import { Button, ButtonVariant, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
+import { Button, ButtonVariant, MenuToggle, Select, SelectList, SelectOption, TextInput } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { isValidUrl } from '../../../utils/IstioConfigUtils';
@@ -13,6 +13,7 @@ type Props = {
 };
 
 type State = {
+  isJwtFieldSelectOpen: boolean;
   jwtRule: JWTRule;
   jwtRuleFields: string[];
   newJwtField: string;
@@ -95,9 +96,25 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
       jwtRuleFields: Object.assign([], INIT_JWT_RULE_FIELDS),
       jwtRule: {},
       newJwtField: 'issuer',
-      newValues: ''
+      newValues: '',
+      isJwtFieldSelectOpen: false
     };
   }
+
+  onToggleClick = (): void => {
+    this.setState(prevState => ({ isJwtFieldSelectOpen: !prevState.isJwtFieldSelectOpen }));
+  };
+
+  toggleMenu = (toggleRef: React.Ref<any>, label: string, isDisabled = false): React.ReactNode => (
+    <MenuToggle
+      ref={toggleRef}
+      onClick={this.onToggleClick}
+      isExpanded={this.state.isJwtFieldSelectOpen}
+      isDisabled={isDisabled}
+    >
+      {label}
+    </MenuToggle>
+  );
 
   onAddJwtField = (_event: React.FormEvent, value: string): void => {
     this.setState({
@@ -243,16 +260,38 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
         {
           key: 'jwtFieldKeyNew',
           cells: [
-            <FormSelect
-              value={this.state.newJwtField}
+            <Select
+              isOpen={this.state.isJwtFieldSelectOpen}
+              selected={this.state.newJwtField}
+              onSelect={(_event, value) => {
+                this.setState({
+                  newJwtField: value as string,
+                  isJwtFieldSelectOpen: false
+                });
+              }}
               id="addNewJwtField"
-              name="addNewJwtField"
-              onChange={this.onAddJwtField}
+              onOpenChange={isJwtFieldSelectOpen => this.setState({ isJwtFieldSelectOpen })}
+              toggle={toggleRef => (
+                <MenuToggle
+                  id="addNewJwtField-toggle"
+                  ref={toggleRef}
+                  onClick={() => this.setState({ isJwtFieldSelectOpen: !this.state.isJwtFieldSelectOpen })}
+                  isExpanded={this.state.isJwtFieldSelectOpen}
+                  isFullWidth
+                >
+                  {this.state.newJwtField}
+                </MenuToggle>
+              )}
+              aria-label="JWT Field Select"
             >
-              {this.state.jwtRuleFields.map((option, index) => (
-                <FormSelectOption isDisabled={false} key={`jwt_${index}`} value={option} label={option} />
-              ))}
-            </FormSelect>,
+              <SelectList>
+                {this.state.jwtRuleFields.map((option, index) => (
+                  <SelectOption key={`jwt_${index}`} value={option} isSelected={option === this.state.newJwtField}>
+                    {option}
+                  </SelectOption>
+                ))}
+              </SelectList>
+            </Select>,
             <>
               <TextInput
                 value={this.state.newValues}
