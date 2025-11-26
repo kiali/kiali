@@ -93,34 +93,13 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
+      isJwtFieldSelectOpen: false,
       jwtRuleFields: Object.assign([], INIT_JWT_RULE_FIELDS),
       jwtRule: {},
       newJwtField: 'issuer',
-      newValues: '',
-      isJwtFieldSelectOpen: false
+      newValues: ''
     };
   }
-
-  onToggleClick = (): void => {
-    this.setState(prevState => ({ isJwtFieldSelectOpen: !prevState.isJwtFieldSelectOpen }));
-  };
-
-  toggleMenu = (toggleRef: React.Ref<any>, label: string, isDisabled = false): React.ReactNode => (
-    <MenuToggle
-      ref={toggleRef}
-      onClick={this.onToggleClick}
-      isExpanded={this.state.isJwtFieldSelectOpen}
-      isDisabled={isDisabled}
-    >
-      {label}
-    </MenuToggle>
-  );
-
-  onAddJwtField = (_event: React.FormEvent, value: string): void => {
-    this.setState({
-      newJwtField: value
-    });
-  };
 
   onAddNewValues = (_event: React.FormEvent, value: string): void => {
     this.setState({
