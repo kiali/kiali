@@ -26,6 +26,17 @@ export type WorkloadInfo = {
 
 export type WaypointInfo = WorkloadInfo | ServiceInfo;
 
+export interface SpireManagedIdentityMatch {
+  matchType: string;
+  matchValue: string;
+}
+
+export interface SpireInfo {
+  isSpireManaged: boolean;
+  isSpireServer: boolean;
+  managedIdentityMatches?: SpireManagedIdentityMatch[];
+}
+
 export interface Workload {
   additionalDetails: AdditionalItem[];
   annotations: { [key: string]: string };
@@ -38,6 +49,7 @@ export interface Workload {
   instanceType: InstanceType.Workload;
   isAmbient: boolean;
   isGateway: boolean;
+  isSpire: boolean;
   isWaypoint: boolean;
   isZtunnel: boolean;
   istioInjectionAnnotation?: boolean;
@@ -50,6 +62,7 @@ export interface Workload {
   resourceVersion: string;
   runtimes: Runtime[];
   services: Service[];
+  spireInfo?: SpireInfo;
   validations?: Validations;
   versionLabel: boolean;
   waypointServices?: WaypointInfo[];
@@ -66,6 +79,7 @@ export const emptyWorkload: Workload = {
   gvk: { Group: '', Version: '', Kind: '' },
   isAmbient: false,
   isGateway: false,
+  isSpire: false,
   isWaypoint: false,
   isZtunnel: false,
   istioSidecar: true, // true until proven otherwise
@@ -99,6 +113,7 @@ export interface WorkloadListItem {
   labels: { [key: string]: string };
   name: string;
   namespace: string;
+  spireInfo?: SpireInfo;
   validations?: ObjectValidation;
   versionLabel: boolean;
 }

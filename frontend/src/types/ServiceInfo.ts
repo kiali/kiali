@@ -13,7 +13,7 @@ import {
   VirtualService
 } from './IstioObjects';
 import { TLSStatus } from './TLSStatus';
-import { AdditionalItem, WorkloadInfo } from './Workload';
+import { AdditionalItem, SpireInfo, WorkloadInfo } from './Workload';
 import { ResourcePermissions } from './Permissions';
 import { KIALI_WIZARD_LABEL } from '../components/IstioWizards/WizardActions';
 import { ServiceOverview } from './ServiceList';
@@ -65,6 +65,7 @@ export interface WorkloadOverview {
   namespace: string;
   resourceVersion: string;
   serviceAccountNames: string[];
+  spireInfo?: SpireInfo;
   type: string;
 }
 
