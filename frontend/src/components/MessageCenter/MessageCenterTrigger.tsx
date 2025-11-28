@@ -23,11 +23,7 @@ type ReduxDispatchProps = {
 type MessageCenterTriggerProps = ReduxStateProps & ReduxDispatchProps;
 
 const systemErrorCountStyle = kialiStyle({
-  marginLeft: '0.5rem'
-});
-
-const notificationBadgeStyle = kialiStyle({
-  fontSize: '1rem'
+  marginRight: '0.5rem'
 });
 
 const MessageCenterTriggerComponent: React.FC<MessageCenterTriggerProps> = (props: MessageCenterTriggerProps) => {
@@ -39,22 +35,22 @@ const MessageCenterTriggerComponent: React.FC<MessageCenterTriggerProps> = (prop
     }
 
     return (
-      <Button icon={<>
-        <KialiIcon.Warning />
-
-        <span className={systemErrorCountStyle}>
+      <Button
+        id="system-error-button"
+        icon={<KialiIcon.Warning />}
+        className={systemErrorCountStyle}
+        aria-label={t('System Error')}
+        onClick={props.toggleSystemErrorsCenter}
+        variant={ButtonVariant.plain}
+      >
+        <span>
           {t('{{count}} Open Issue', {
             count: props.systemErrorsCount,
             defaultValue_one: '{{count}} Open Issue',
             defaultValue_other: '{{count}} Open Issues'
           })}
         </span>
-      </>}
-        id={'icon_warning'}
-        aria-label={t('System Error')}
-        onClick={props.toggleSystemErrorsCenter}
-        variant={ButtonVariant.plain}
-       />
+      </Button>
     );
   };
 
@@ -71,7 +67,6 @@ const MessageCenterTriggerComponent: React.FC<MessageCenterTriggerProps> = (prop
 
     return (
       <NotificationBadge
-        className={notificationBadgeStyle}
         variant={notificationVariant}
         onClick={props.toggleMessageCenter}
         aria-label={t('Notification badge')}
