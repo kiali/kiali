@@ -27,6 +27,11 @@ const TOP_PADDING = 76 + 340;
 // 42px is the height of the first tab menu
 const EMBEDDED_PADDING = 42 + 200;
 
+const innerScrollContainerStyle = kialiStyle({
+  maxHeight: '95%',
+  paddingRight: '0.5rem'
+});
+
 export interface SortableTh extends ThProps {
   sortable: boolean;
 }
@@ -41,7 +46,7 @@ interface SimpleTableProps {
   onSort?: OnSort;
   rows: IRow[];
   sort?: (columnIndex: number) => ThProps['sort'];
-  sortBy?: ISortBy;    
+  sortBy?: ISortBy;
   theadStyle?: React.CSSProperties;
   variant?: TableVariant;
   verticalAlign?: string;
@@ -100,7 +105,12 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
   };
 
   const table = (
-    <Table aria-label={props.label} variant={props.variant} className={props.className} isStickyHeader={props.isStickyHeader}>
+    <Table
+      aria-label={props.label}
+      variant={props.variant}
+      className={props.className}
+      isStickyHeader={props.isStickyHeader}
+    >
       <Thead style={props.theadStyle}>
         <Tr>
           {props.columns.map((column: SortableTh | ThProps, index: number) => (
@@ -147,7 +157,7 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
     table
   ) : (
     <div style={{ height: heigth }}>
-      <InnerScrollContainer style={{ maxHeight: '95%' }}>{table}</InnerScrollContainer>
+      <InnerScrollContainer className={innerScrollContainerStyle}>{table}</InnerScrollContainer>
     </div>
   );
 };

@@ -321,9 +321,9 @@ Then(
 Then('user {string} mesh tour', (action: string) => {
   cy.waitForReact();
   if (action === 'sees') {
-    cy.get('.pf-v5-c-popover').find('span').contains('Shortcuts').should('exist');
+    cy.get('.pf-v6-c-popover').find('span').contains('Shortcuts').should('exist');
   } else {
-    cy.get('.pf-v5-c-popover').should('not.exist');
+    cy.get('.pf-v6-c-popover').should('not.exist');
   }
 });
 
@@ -405,18 +405,18 @@ When('user opens the Trace Configuration modal', () => {
 });
 
 Then('user sees the Trace Configuration modal', () => {
-  cy.get('.pf-v5-c-modal-box').should('be.visible');
+  cy.get('.pf-v6-c-modal-box').should('be.visible');
   cy.contains('Configuration Tester').should('be.visible');
 });
 
 Then('user sees the Discovery and Tester tabs', () => {
-  cy.get('.pf-v5-c-tabs__item').contains('Discovery').should('exist');
-  cy.get('.pf-v5-c-tabs__item').contains('Tester').should('exist');
+  cy.get('.pf-v6-c-tabs__item').contains('Discovery').should('exist');
+  cy.get('.pf-v6-c-tabs__item').contains('Tester').should('exist');
 });
 
 Then('user sees the action buttons fixed at the bottom', () => {
-  cy.get('.pf-v5-c-modal-box__footer').should('be.visible');
-  cy.get('.pf-v5-c-modal-box__footer').within(() => {
+  cy.get('.pf-v6-c-modal-box__footer').should('be.visible');
+  cy.get('.pf-v6-c-modal-box__footer').within(() => {
     cy.contains('Close').should('exist');
   });
 });
@@ -432,7 +432,7 @@ Then('user verifies the Discovery information is correct', () => {
 });
 
 When('user clicks the Rediscover button in the Discovery tab', () => {
-  cy.get('.pf-v5-c-modal-box').within(() => {
+  cy.get('.pf-v6-c-modal-box').within(() => {
     cy.contains('button', 'Rediscover').click();
   });
 });

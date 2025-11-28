@@ -60,7 +60,7 @@ export const InitializingScreen: React.FC<initializingScreenProps> = (props: ini
     document.body.classList.add('kiosk');
   }
 
-  const theme = getKialiTheme();
+  const theme = getKialiTheme();  
   if (theme === Theme.DARK) {
     document.documentElement.classList.add(PF_THEME_DARK);
   }

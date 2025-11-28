@@ -8,6 +8,7 @@ import {
   Masthead,
   MastheadToggle,
   MastheadMain,
+  MastheadLogo,
   MastheadBrand,
   MastheadContent,
   PageSection,
@@ -16,19 +17,21 @@ import {
   ButtonVariant,
   PageSidebarBody
 } from '@patternfly/react-core';
-import { BarsIcon } from '@patternfly/react-icons';
+
 import { kialiStyle } from 'styles/StyleUtils';
 import { MessageCenter } from '../MessageCenter/MessageCenter';
-import { homeCluster, kialiLogoDark, serverConfig } from '../../config';
+import { homeCluster, kialiLogoDark, kialiLogoLight, serverConfig } from '../../config';
 import { KialiAppState } from '../../store/Store';
 import { UserSettingsThunkActions } from '../../actions/UserSettingsThunkActions';
 import { Menu } from './Menu';
 import { Link, useLocation } from 'react-router-dom-v5-compat';
 import { ExternalServiceInfo } from '../../types/StatusState';
+import { Theme } from 'types/Common';
 
 type ReduxStateProps = {
   externalServices: ExternalServiceInfo[];
   navCollapsed: boolean;
+  theme: string;
   tracingUrl?: string;
 };
 
@@ -37,8 +40,6 @@ type ReduxDispatchProps = {
 };
 
 type NavigationProps = ReduxStateProps & ReduxDispatchProps;
-
-export const MASTHEAD_HEIGHT = '76px';
 
 const flexBoxColumnStyle = kialiStyle({
   display: 'flex',
@@ -87,24 +88,27 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 
   const isNavOpen = isMobileView ? isNavOpenMobile : isNavOpenDesktop || !props.navCollapsed;
 
+  const darkTheme = props.theme === Theme.DARK;
+
   const masthead = (
-    <Masthead role="kiali_header" style={{ height: MASTHEAD_HEIGHT }}>
-      <MastheadToggle>
-        <PageToggleButton
-          variant={ButtonVariant.plain}
-          aria-label="Kiali navigation"
-          isSidebarOpen={isNavOpen}
-          onSidebarToggle={isMobileView ? onNavToggleMobile : onNavToggleDesktop}
-        >
-          <BarsIcon />
-        </PageToggleButton>
-      </MastheadToggle>
+    <Masthead role="kiali_header">
       <MastheadMain>
-        <MastheadBrand component={props => <Link {...props} to="#" />}>
-          <img src={kialiLogoDark} alt="Kiali Logo" />
+        <MastheadToggle>
+          <PageToggleButton
+            isHamburgerButton
+            variant={ButtonVariant.plain}
+            aria-label="Kiali navigation"
+            isSidebarOpen={isNavOpen}
+            onSidebarToggle={isMobileView ? onNavToggleMobile : onNavToggleDesktop}
+          ></PageToggleButton>
+        </MastheadToggle>
+        <MastheadBrand data-codemods>
+          <MastheadLogo data-codemods component={props => <Link {...props} to="#" />}>
+            <img src={darkTheme ? kialiLogoDark : kialiLogoLight} alt="Kiali Logo" />
+          </MastheadLogo>
         </MastheadBrand>
       </MastheadMain>
-      <MastheadContent style={{ height: MASTHEAD_HEIGHT }}>
+      <MastheadContent>
         <MastheadItems />
       </MastheadContent>
     </Masthead>
@@ -113,19 +117,19 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
   const menu = <Menu isNavOpen={isNavOpen} externalServices={props.externalServices} />;
 
   const Sidebar = (
-    <PageSidebar style={{ width: '210px' }} isSidebarOpen={isNavOpen}>
+    <PageSidebar isSidebarOpen={isNavOpen}>
       <PageSidebarBody>{menu}</PageSidebarBody>
     </PageSidebar>
   );
 
   return (
     <Page
-      header={masthead}
+      masthead={masthead}
       sidebar={Sidebar}
       onPageResize={(_, { mobileView, windowSize }) => onPageResize({ mobileView, windowSize })}
     >
       <MessageCenter drawerTitle="Message Center" />
-      <PageSection className={flexBoxColumnStyle} variant="light">
+      <PageSection hasBodyWrapper={false} className={flexBoxColumnStyle}>
         <RenderPage isGraph={isGraph()} />
       </PageSection>
     </Page>
@@ -133,9 +137,10 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 };
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
+  externalServices: state.statusState.externalServices,
   navCollapsed: state.userSettings.interface.navCollapse,
-  tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined,
-  externalServices: state.statusState.externalServices
+  theme: state.globalState.theme,
+  tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({

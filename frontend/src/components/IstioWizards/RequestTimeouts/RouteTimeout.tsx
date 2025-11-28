@@ -20,7 +20,7 @@ export class RouteTimeout extends React.Component<RouteTimeoutProps> {
           <Switch
             id="timeoutSwitch"
             label={' '}
-            labelOff={' '}
+            
             isChecked={this.props.isTimeout}
             onChange={() => this.props.onTimeout(!this.props.isTimeout, this.props.timeout)}
           />

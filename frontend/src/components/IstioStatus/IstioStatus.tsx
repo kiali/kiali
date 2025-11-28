@@ -10,7 +10,7 @@ import { KialiAppState } from '../../store/Store';
 import { istioStatusSelector, namespaceItemsSelector } from '../../store/Selectors';
 import { IstioStatusActions } from '../../actions/IstioStatusActions';
 import { connect } from 'react-redux';
-import { Text, TextVariants, TextContent, Tooltip, TooltipPosition, Label } from '@patternfly/react-core';
+import { Content, ContentVariants, Tooltip, TooltipPosition, Label } from '@patternfly/react-core';
 import { IstioStatusList } from './IstioStatusList';
 import { PFColors } from '../Pf/PfColors';
 import {
@@ -84,7 +84,7 @@ const clusterStyle = kialiStyle({
 
 const labelStyle = kialiStyle({
   $nest: {
-    '& .pf-v5-c-label__icon': {
+    '& .pf-v6-c-label__icon': {
       marginRight: '0.5rem'
     }
   }
@@ -155,9 +155,8 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
 
   const tooltipContent = (): React.ReactNode => {
     return (
-      <>
-        <TextContent style={{ color: PFColors.White }}>
-          <Text component={TextVariants.h4}>{t('Cluster Status')}</Text>
+      <Content>
+          <Content component={ContentVariants.h4}>{t('Cluster Status')}</Content>
           {sortedClusters.map(cl => (
             <>
               <div className={clusterStyle}>
@@ -177,9 +176,8 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
               <span>{t('More info at')}</span>
               <Link to="/mesh">{t('Mesh page')}</Link>
             </div>
-          )}
-        </TextContent>
-      </>
+          )}     
+      </Content>
     );
   };
 
@@ -216,24 +214,29 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   const tooltipPosition = TooltipPosition.top;
 
   let statusIcon: React.ReactElement;
-
+  let status: 'info' | 'danger' | 'warning' | 'success' | 'custom' | undefined = 'success';
   if (!healthyComponents()) {
     const icons = props.icons ? { ...defaultIcons, ...props.icons } : defaultIcons;
     const iconColor = tooltipColor();
     let icon = QuestionCircleIcon;
     let dataTest = 'istio-status';
+    status = 'info';
 
     if (iconColor === PFColors.Danger) {
       icon = icons.ErrorIcon;
+      status = 'danger';
       dataTest = `${dataTest}-danger`;
     } else if (iconColor === PFColors.Warning) {
       icon = icons.WarningIcon;
+      status = 'warning';
       dataTest = `${dataTest}-warning`;
     } else if (iconColor === PFColors.Info) {
       icon = icons.InfoIcon;
+      status = 'success';
       dataTest = `${dataTest}-info`;
     } else if (iconColor === PFColors.Success) {
       icon = icons.HealthyIcon;
+      status = 'success';
       dataTest = `${dataTest}-success`;
     }
 
@@ -262,7 +265,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     >
       <>
         {homeCluster?.name && (
-          <Label className={labelStyle} data-test="cluster-icon" color="blue" icon={<KialiIcon.Cluster />}>
+          <Label className={labelStyle} data-test="cluster-icon" status={status}>
             {homeCluster?.name}
             {isControlPlaneAccessible() && statusIcon}
           </Label>

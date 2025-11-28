@@ -5,7 +5,7 @@ import { store } from '../../../store/ConfigStore';
 import { isKiosk } from '../../Kiosk/KioskActions';
 
 // TOP_PADDING constant is used to adjust the height of the main div to allow scrolling in the inner container layer.
-const TOP_PADDING = 76 + 118;
+const TOP_PADDING = 246;
 
 // EMBEDDED_PADDING constant is a magic number used to adjust the height of the main div to allow scrolling in the inner container layer.
 // 42px is the height of the first tab menu
@@ -18,10 +18,6 @@ const EMBEDDED_PADDING = 42;
  * GLOBAL_SCROLLBAR environment variable is not defined in standalone Kiali application (value is always false)
  */
 const globalScrollbar = process.env.GLOBAL_SCROLLBAR ?? 'false';
-
-const componentStyle = kialiStyle({
-  padding: '1.25rem'
-});
 
 interface Props {
   className?: any;
@@ -64,17 +60,17 @@ export class RenderComponentScroll extends React.Component<Props, State> {
   };
 
   render(): React.ReactNode {
-    let scrollStyle = {};
+    let scrollStyle = '';
 
     // If there is no global scrollbar, height is fixed to force the scrollbar to appear in the component
     if (globalScrollbar === 'false' && !this.props.containTable) {
-      scrollStyle = { height: this.state.height, overflowY: 'auto', width: '100%' };
+      scrollStyle = kialiStyle({
+        height: this.state.height,
+        overflowY: 'auto',
+        width: '100%'
+      });
     }
 
-    return (
-      <div style={scrollStyle} className={classes(componentStyle, this.props.className)}>
-        {this.props.children}
-      </div>
-    );
+    return <div className={classes(scrollStyle, this.props.className)}>{this.props.children}</div>;
   }
 }

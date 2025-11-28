@@ -1,5 +1,11 @@
 import * as React from 'react';
-import { ChartTooltip, ChartTooltipProps, ChartLabel, ChartPoint, ChartCursorFlyout } from '@patternfly/react-charts';
+import {
+  ChartTooltip,
+  ChartTooltipProps,
+  ChartLabel,
+  ChartPoint,
+  ChartCursorFlyout
+} from '@patternfly/react-charts/victory';
 import { VCDataPoint } from 'types/VictoryChartInfo';
 
 const dy = 15;
@@ -120,7 +126,7 @@ export class CustomTooltip extends React.Component<Props, State> {
         text={this.state.texts}
         flyoutWidth={this.state.width}
         flyoutHeight={this.state.height}
-        flyoutComponent={<ChartCursorFlyout style={{ stroke: 'none', fillOpacity: 0.6 }} />}
+        flyoutComponent={<ChartCursorFlyout />}
         labelComponent={<CustomLabel head={this.state.head} textWidth={this.state.textWidth} />}
       />
     );
