@@ -170,8 +170,21 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
       )
     ); // non-health core component has much higher severity
 
+  const healthyComponents = (): boolean => {
+    const values = Object.values(props.statusMap).flat();
+    return values.reduce((healthy: boolean, compStatus: ComponentStatus) => {
+      return healthy && compStatus.status === Status.Healthy;
+    }, true);
+  };
+
+  const allHealthy = healthyComponents();
   const sortedClusters = Object.keys(props.statusMap)
     .filter(cl => {
+      // When all components are healthy, show all clusters
+      // When there are failures, only show clusters with failures
+      if (allHealthy) {
+        return true;
+      }
       const components = props.statusMap[cl] || [];
       return components.some(comp => comp.status !== Status.Healthy);
     })
@@ -187,7 +200,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
       const worstB = getSeverity(props.statusMap[b]);
       return worstB - worstA;
     })
-    .slice(0, 2); // Show only top 2 clusters
+    .slice(0, allHealthy ? 5 : 2); // Show 5 clusters when healthy, top 2 when there are failures
 
   // Check if there are multiple distinct meshes across all components
   const hasMultipleMeshes = (): boolean => {
@@ -329,13 +342,6 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     });
 
     return ValidToColor[`${coreUnhealthy}-${addonUnhealthy}-${notReady}`];
-  };
-
-  const healthyComponents = (): boolean => {
-    const values = Object.values(props.statusMap).flat();
-    return values.reduce((healthy: boolean, compStatus: ComponentStatus) => {
-      return healthy && compStatus.status === Status.Healthy;
-    }, true);
   };
 
   const tooltipPosition = TooltipPosition.top;
