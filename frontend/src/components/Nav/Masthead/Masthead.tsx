@@ -16,24 +16,20 @@ export const MastheadItems: React.FC = () => {
   return (
     <Flex style={{ width: '100%' }}>
       {serverConfig.runMode === RunMode.OFFLINE ? (
-                <FlexItem>
-                  <OfflineStatus />
-                </FlexItem>
-              ) : (
-                <FlexItem>
-                  <IstioStatus />
-                </FlexItem>
-              )}
-            <FlexItem><PfSpinner /></FlexItem>
-            <FlexItem align={{default: "alignRight" }}>
-              <ThemeSwitch />
-            </FlexItem>
-
-      {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
         <FlexItem>
-          <LanguageSwitch />
+          <OfflineStatus />
+        </FlexItem>
+      ) : (
+        <FlexItem>
+          <IstioStatus />
         </FlexItem>
       )}
+      <FlexItem>
+        <PfSpinner />
+      </FlexItem>
+      <FlexItem align={{ default: 'alignRight' }}>
+        <ThemeSwitch />
+      </FlexItem>
 
       <FlexItem>
         <MessageCenterTrigger />
@@ -42,6 +38,12 @@ export const MastheadItems: React.FC = () => {
       <FlexItem>
         <HelpDropdown />
       </FlexItem>
+
+      {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
+        <FlexItem>
+          <LanguageSwitch />
+        </FlexItem>
+      )}
 
       <FlexItem data-test="user-dropdown">
         <UserDropdown />

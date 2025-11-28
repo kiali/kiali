@@ -89,14 +89,14 @@
     "start:dev": "sh -ac '. ./.env.upstream; npm run start:kiali'",
     "start:kiali": "npm run i18n && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) react-scripts start",
     "start:prod": "sh -ac '. ./.env.downstream; npm run start:kiali'",
-    "test": "tsc -p . && TEST_RUNNER=1 react-scripts test --env=jsdom __tests__ --transformIgnorePatterns='node_modules/(?!my-library-dir)/'"
+    "test": "tsc -p . && TEST_RUNNER=1 react-scripts test --env=jsdom __tests__ --transformIgnorePatterns='node_modules/(?!my-library-dir)/'",
+    "postinstall": "find node_modules/@patternfly -name '*.css' -exec sed -i -e 's/justify-content: start;/justify-content: flex-start;/g' -e 's/align-items: start;/align-items: flex-start;/g' {} +"
   },
   "dependencies": {
-    "@patternfly/patternfly": "6.4.0",
-    "@patternfly/react-charts": "8.4.0",
-    "@patternfly/react-core": "6.4.0",
-    "@patternfly/react-table": "6.4.0",
-    "@patternfly/react-topology": "6.4.0",
+    "@patternfly/patternfly": "^6.4.0",
+    "@patternfly/react-charts": "^8.4.0",
+    "@patternfly/react-table": "^6.4.0",
+    "@patternfly/react-topology": "^6.4.0",
     "axios": "^1.12.2",
     "bootstrap-slider-without-jquery": "10.0.0",
     "deep-freeze": "0.0.1",
@@ -184,7 +184,7 @@
   "browserslist": [
     ">10%",
     "last 2 versions",
-    "not ie <= 11"
+    "not dead"
   ],
   "cypress-cucumber-preprocessor": {
     "stepDefinitions": "cypress/integration/**/*.{js,ts}",
