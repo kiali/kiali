@@ -41,8 +41,6 @@ type ReduxDispatchProps = {
 
 type NavigationProps = ReduxStateProps & ReduxDispatchProps;
 
-export const MASTHEAD_HEIGHT = '76px';
-
 const flexBoxColumnStyle = kialiStyle({
   display: 'flex',
   flexDirection: 'column'
@@ -93,7 +91,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
   const darkTheme = props.theme === Theme.DARK;
 
   const masthead = (
-    <Masthead role="kiali_header" style={{ height: MASTHEAD_HEIGHT }}>
+    <Masthead role="kiali_header">
       <MastheadMain>
         <MastheadToggle>
           <PageToggleButton
@@ -110,7 +108,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
           </MastheadLogo>
         </MastheadBrand>
       </MastheadMain>
-      <MastheadContent style={{ height: MASTHEAD_HEIGHT }}>
+      <MastheadContent>
         <MastheadItems />
       </MastheadContent>
     </Masthead>
@@ -119,7 +117,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
   const menu = <Menu isNavOpen={isNavOpen} externalServices={props.externalServices} />;
 
   const Sidebar = (
-    <PageSidebar style={{ width: '210px' }} isSidebarOpen={isNavOpen}>
+    <PageSidebar isSidebarOpen={isNavOpen}>
       <PageSidebarBody>{menu}</PageSidebarBody>
     </PageSidebar>
   );
