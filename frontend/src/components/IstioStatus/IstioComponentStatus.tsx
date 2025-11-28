@@ -7,7 +7,7 @@ import {
   ExclamationTriangleIcon,
   MinusCircleIcon
 } from '@patternfly/react-icons';
-import { Split, SplitItem } from '@patternfly/react-core';
+import { Label, Split, SplitItem } from '@patternfly/react-core';
 import { IconProps, createIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
@@ -45,7 +45,18 @@ const validToIcon: { [valid: string]: IconProps } = {
 };
 
 const splitItemStyle = kialiStyle({
+  marginLeft: '0.25rem',
+  marginTop: '0.125rem',
   textAlign: 'left'
+});
+
+const labelStyle = kialiStyle({
+  height: '1.25rem',
+  $nest: {
+    '& .pf-v5-c-label__icon': {
+      marginRight: '0.125rem'
+    }
+  }
 });
 
 export const IstioComponentStatus: React.FC<Props> = (props: Props) => {
@@ -70,11 +81,15 @@ export const IstioComponentStatus: React.FC<Props> = (props: Props) => {
 
     return [
       <Split key={`cell-status-icon-${comp.name}`} hasGutter={true} className={splitItemStyle}>
-        <SplitItem style={{ paddingLeft: '0.5rem' }}>
-          {renderIcon(props.componentStatus.status, props.componentStatus.isCore)}
-        </SplitItem>
         <SplitItem isFilled={true}>{comp.name}</SplitItem>
-        <SplitItem>{t(statusMsg[comp.status])}</SplitItem>
+        <Label
+          className={labelStyle}
+          data-test="component-status-icon"
+          color="blue"
+          icon={renderIcon(props.componentStatus.status, props.componentStatus.isCore)}
+        >
+          {t(statusMsg[comp.status])}
+        </Label>
       </Split>
     ];
   };

@@ -52,7 +52,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
           </Text>
           <React.Fragment>
             <div
-              className="kiali_f8qnpeg"
+              className="kiali_fs8234v"
             >
               <PFBadge
                 badge={
@@ -77,36 +77,41 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
                 <Star />
               </span>
             </div>
-            <IstioStatusList
-              cluster="Kubernetes"
-              status={
-                Array [
-                  Object {
-                    "cluster": "Kubernetes",
-                    "isCore": false,
-                    "name": "grafana",
-                    "status": "Unhealthy",
-                  },
-                  Object {
-                    "cluster": "Kubernetes",
-                    "isCore": true,
-                    "name": "istio-egressgateway",
-                    "status": "Healthy",
-                  },
-                ]
-              }
-            />
+            <React.Fragment>
+              <React.Fragment>
+                <Text
+                  className="kiali_fnez44j"
+                  component="h6"
+                >
+                  Add-ons ({{count}} issues) {"count":1}
+                </Text>
+                <div
+                  className="kiali_f14rgqjc"
+                >
+                  <IstioStatusList
+                    cluster="Kubernetes"
+                    status={
+                      Array [
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": false,
+                          "name": "grafana",
+                          "status": "Unhealthy",
+                        },
+                      ]
+                    }
+                  />
+                </div>
+              </React.Fragment>
+            </React.Fragment>
           </React.Fragment>
           <div
             className="kiali_f1kewvaf"
           >
-            <span>
-              More info at
-            </span>
             <Link
               to="/mesh"
             >
-              Mesh page
+              Open Mesh View
             </Link>
           </div>
         </TextContent>
@@ -180,7 +185,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
                 </Text>
                 <React.Fragment>
                   <div
-                    className="kiali_f8qnpeg"
+                    className="kiali_fs8234v"
                   >
                     <PFBadge
                       badge={
@@ -205,36 +210,41 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
                       <Star />
                     </span>
                   </div>
-                  <IstioStatusList
-                    cluster="Kubernetes"
-                    status={
-                      Array [
-                        Object {
-                          "cluster": "Kubernetes",
-                          "isCore": false,
-                          "name": "grafana",
-                          "status": "Unhealthy",
-                        },
-                        Object {
-                          "cluster": "Kubernetes",
-                          "isCore": true,
-                          "name": "istio-egressgateway",
-                          "status": "Healthy",
-                        },
-                      ]
-                    }
-                  />
+                  <React.Fragment>
+                    <React.Fragment>
+                      <Text
+                        className="kiali_fnez44j"
+                        component="h6"
+                      >
+                        Add-ons ({{count}} issues) {"count":1}
+                      </Text>
+                      <div
+                        className="kiali_f14rgqjc"
+                      >
+                        <IstioStatusList
+                          cluster="Kubernetes"
+                          status={
+                            Array [
+                              Object {
+                                "cluster": "Kubernetes",
+                                "isCore": false,
+                                "name": "grafana",
+                                "status": "Unhealthy",
+                              },
+                            ]
+                          }
+                        />
+                      </div>
+                    </React.Fragment>
+                  </React.Fragment>
                 </React.Fragment>
                 <div
                   className="kiali_f1kewvaf"
                 >
-                  <span>
-                    More info at
-                  </span>
                   <Link
                     to="/mesh"
                   >
-                    Mesh page
+                    Open Mesh View
                   </Link>
                 </div>
               </TextContent>
@@ -433,7 +443,7 @@ exports[`When both core and addon component have problems any component is in no
           </Text>
           <React.Fragment>
             <div
-              className="kiali_f8qnpeg"
+              className="kiali_fs8234v"
             >
               <PFBadge
                 badge={
@@ -458,36 +468,66 @@ exports[`When both core and addon component have problems any component is in no
                 <Star />
               </span>
             </div>
-            <IstioStatusList
-              cluster="Kubernetes"
-              status={
-                Array [
-                  Object {
-                    "cluster": "Kubernetes",
-                    "isCore": false,
-                    "name": "grafana",
-                    "status": "Unhealthy",
-                  },
-                  Object {
-                    "cluster": "Kubernetes",
-                    "isCore": true,
-                    "name": "istio-egressgateway",
-                    "status": "Unhealthy",
-                  },
-                ]
-              }
-            />
+            <React.Fragment>
+              <React.Fragment>
+                <Text
+                  className="kiali_fnez44j"
+                  component="h6"
+                >
+                  Core ({{count}} issues) {"count":1}
+                </Text>
+                <div
+                  className="kiali_f14rgqjc"
+                >
+                  <IstioStatusList
+                    cluster="Kubernetes"
+                    status={
+                      Array [
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": true,
+                          "name": "istio-egressgateway",
+                          "status": "Unhealthy",
+                        },
+                      ]
+                    }
+                  />
+                </div>
+              </React.Fragment>
+              <React.Fragment>
+                <Text
+                  className="kiali_fnez44j"
+                  component="h6"
+                >
+                  Add-ons ({{count}} issues) {"count":1}
+                </Text>
+                <div
+                  className="kiali_f14rgqjc"
+                >
+                  <IstioStatusList
+                    cluster="Kubernetes"
+                    status={
+                      Array [
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": false,
+                          "name": "grafana",
+                          "status": "Unhealthy",
+                        },
+                      ]
+                    }
+                  />
+                </div>
+              </React.Fragment>
+            </React.Fragment>
           </React.Fragment>
           <div
             className="kiali_f1kewvaf"
           >
-            <span>
-              More info at
-            </span>
             <Link
               to="/mesh"
             >
-              Mesh page
+              Open Mesh View
             </Link>
           </div>
         </TextContent>
@@ -561,7 +601,7 @@ exports[`When both core and addon component have problems any component is in no
                 </Text>
                 <React.Fragment>
                   <div
-                    className="kiali_f8qnpeg"
+                    className="kiali_fs8234v"
                   >
                     <PFBadge
                       badge={
@@ -586,36 +626,66 @@ exports[`When both core and addon component have problems any component is in no
                       <Star />
                     </span>
                   </div>
-                  <IstioStatusList
-                    cluster="Kubernetes"
-                    status={
-                      Array [
-                        Object {
-                          "cluster": "Kubernetes",
-                          "isCore": false,
-                          "name": "grafana",
-                          "status": "Unhealthy",
-                        },
-                        Object {
-                          "cluster": "Kubernetes",
-                          "isCore": true,
-                          "name": "istio-egressgateway",
-                          "status": "Unhealthy",
-                        },
-                      ]
-                    }
-                  />
+                  <React.Fragment>
+                    <React.Fragment>
+                      <Text
+                        className="kiali_fnez44j"
+                        component="h6"
+                      >
+                        Core ({{count}} issues) {"count":1}
+                      </Text>
+                      <div
+                        className="kiali_f14rgqjc"
+                      >
+                        <IstioStatusList
+                          cluster="Kubernetes"
+                          status={
+                            Array [
+                              Object {
+                                "cluster": "Kubernetes",
+                                "isCore": true,
+                                "name": "istio-egressgateway",
+                                "status": "Unhealthy",
+                              },
+                            ]
+                          }
+                        />
+                      </div>
+                    </React.Fragment>
+                    <React.Fragment>
+                      <Text
+                        className="kiali_fnez44j"
+                        component="h6"
+                      >
+                        Add-ons ({{count}} issues) {"count":1}
+                      </Text>
+                      <div
+                        className="kiali_f14rgqjc"
+                      >
+                        <IstioStatusList
+                          cluster="Kubernetes"
+                          status={
+                            Array [
+                              Object {
+                                "cluster": "Kubernetes",
+                                "isCore": false,
+                                "name": "grafana",
+                                "status": "Unhealthy",
+                              },
+                            ]
+                          }
+                        />
+                      </div>
+                    </React.Fragment>
+                  </React.Fragment>
                 </React.Fragment>
                 <div
                   className="kiali_f1kewvaf"
                 >
-                  <span>
-                    More info at
-                  </span>
                   <Link
                     to="/mesh"
                   >
-                    Mesh page
+                    Open Mesh View
                   </Link>
                 </div>
               </TextContent>
@@ -814,7 +884,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
           </Text>
           <React.Fragment>
             <div
-              className="kiali_f8qnpeg"
+              className="kiali_fs8234v"
             >
               <PFBadge
                 badge={
@@ -839,36 +909,41 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
                 <Star />
               </span>
             </div>
-            <IstioStatusList
-              cluster="Kubernetes"
-              status={
-                Array [
-                  Object {
-                    "cluster": "Kubernetes",
-                    "isCore": false,
-                    "name": "grafana",
-                    "status": "Healthy",
-                  },
-                  Object {
-                    "cluster": "Kubernetes",
-                    "isCore": true,
-                    "name": "istio-egressgateway",
-                    "status": "Unhealthy",
-                  },
-                ]
-              }
-            />
+            <React.Fragment>
+              <React.Fragment>
+                <Text
+                  className="kiali_fnez44j"
+                  component="h6"
+                >
+                  Core ({{count}} issues) {"count":1}
+                </Text>
+                <div
+                  className="kiali_f14rgqjc"
+                >
+                  <IstioStatusList
+                    cluster="Kubernetes"
+                    status={
+                      Array [
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": true,
+                          "name": "istio-egressgateway",
+                          "status": "Unhealthy",
+                        },
+                      ]
+                    }
+                  />
+                </div>
+              </React.Fragment>
+            </React.Fragment>
           </React.Fragment>
           <div
             className="kiali_f1kewvaf"
           >
-            <span>
-              More info at
-            </span>
             <Link
               to="/mesh"
             >
-              Mesh page
+              Open Mesh View
             </Link>
           </div>
         </TextContent>
@@ -942,7 +1017,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
                 </Text>
                 <React.Fragment>
                   <div
-                    className="kiali_f8qnpeg"
+                    className="kiali_fs8234v"
                   >
                     <PFBadge
                       badge={
@@ -967,36 +1042,41 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
                       <Star />
                     </span>
                   </div>
-                  <IstioStatusList
-                    cluster="Kubernetes"
-                    status={
-                      Array [
-                        Object {
-                          "cluster": "Kubernetes",
-                          "isCore": false,
-                          "name": "grafana",
-                          "status": "Healthy",
-                        },
-                        Object {
-                          "cluster": "Kubernetes",
-                          "isCore": true,
-                          "name": "istio-egressgateway",
-                          "status": "Unhealthy",
-                        },
-                      ]
-                    }
-                  />
+                  <React.Fragment>
+                    <React.Fragment>
+                      <Text
+                        className="kiali_fnez44j"
+                        component="h6"
+                      >
+                        Core ({{count}} issues) {"count":1}
+                      </Text>
+                      <div
+                        className="kiali_f14rgqjc"
+                      >
+                        <IstioStatusList
+                          cluster="Kubernetes"
+                          status={
+                            Array [
+                              Object {
+                                "cluster": "Kubernetes",
+                                "isCore": true,
+                                "name": "istio-egressgateway",
+                                "status": "Unhealthy",
+                              },
+                            ]
+                          }
+                        />
+                      </div>
+                    </React.Fragment>
+                  </React.Fragment>
                 </React.Fragment>
                 <div
                   className="kiali_f1kewvaf"
                 >
-                  <span>
-                    More info at
-                  </span>
                   <Link
                     to="/mesh"
                   >
-                    Mesh page
+                    Open Mesh View
                   </Link>
                 </div>
               </TextContent>
@@ -1195,7 +1275,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
           </Text>
           <React.Fragment>
             <div
-              className="kiali_f8qnpeg"
+              className="kiali_fs8234v"
             >
               <PFBadge
                 badge={
@@ -1220,36 +1300,47 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 <Star />
               </span>
             </div>
-            <IstioStatusList
-              cluster="Kubernetes"
-              status={
-                Array [
-                  Object {
-                    "cluster": "Kubernetes",
-                    "isCore": false,
-                    "name": "grafana",
-                    "status": "Unhealthy",
-                  },
-                  Object {
-                    "cluster": "Kubernetes",
-                    "isCore": false,
-                    "name": "jaeger",
-                    "status": "NotReady",
-                  },
-                ]
-              }
-            />
+            <React.Fragment>
+              <React.Fragment>
+                <Text
+                  className="kiali_fnez44j"
+                  component="h6"
+                >
+                  Add-ons ({{count}} issues) {"count":2}
+                </Text>
+                <div
+                  className="kiali_f14rgqjc"
+                >
+                  <IstioStatusList
+                    cluster="Kubernetes"
+                    status={
+                      Array [
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": false,
+                          "name": "grafana",
+                          "status": "Unhealthy",
+                        },
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": false,
+                          "name": "jaeger",
+                          "status": "NotReady",
+                        },
+                      ]
+                    }
+                  />
+                </div>
+              </React.Fragment>
+            </React.Fragment>
           </React.Fragment>
           <div
             className="kiali_f1kewvaf"
           >
-            <span>
-              More info at
-            </span>
             <Link
               to="/mesh"
             >
-              Mesh page
+              Open Mesh View
             </Link>
           </div>
         </TextContent>
@@ -1323,7 +1414,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 </Text>
                 <React.Fragment>
                   <div
-                    className="kiali_f8qnpeg"
+                    className="kiali_fs8234v"
                   >
                     <PFBadge
                       badge={
@@ -1348,36 +1439,47 @@ exports[`When there are not-ready components mixed with other not healthy compon
                       <Star />
                     </span>
                   </div>
-                  <IstioStatusList
-                    cluster="Kubernetes"
-                    status={
-                      Array [
-                        Object {
-                          "cluster": "Kubernetes",
-                          "isCore": false,
-                          "name": "grafana",
-                          "status": "Unhealthy",
-                        },
-                        Object {
-                          "cluster": "Kubernetes",
-                          "isCore": false,
-                          "name": "jaeger",
-                          "status": "NotReady",
-                        },
-                      ]
-                    }
-                  />
+                  <React.Fragment>
+                    <React.Fragment>
+                      <Text
+                        className="kiali_fnez44j"
+                        component="h6"
+                      >
+                        Add-ons ({{count}} issues) {"count":2}
+                      </Text>
+                      <div
+                        className="kiali_f14rgqjc"
+                      >
+                        <IstioStatusList
+                          cluster="Kubernetes"
+                          status={
+                            Array [
+                              Object {
+                                "cluster": "Kubernetes",
+                                "isCore": false,
+                                "name": "grafana",
+                                "status": "Unhealthy",
+                              },
+                              Object {
+                                "cluster": "Kubernetes",
+                                "isCore": false,
+                                "name": "jaeger",
+                                "status": "NotReady",
+                              },
+                            ]
+                          }
+                        />
+                      </div>
+                    </React.Fragment>
+                  </React.Fragment>
                 </React.Fragment>
                 <div
                   className="kiali_f1kewvaf"
                 >
-                  <span>
-                    More info at
-                  </span>
                   <Link
                     to="/mesh"
                   >
-                    Mesh page
+                    Open Mesh View
                   </Link>
                 </div>
               </TextContent>
@@ -1588,7 +1690,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
           </Text>
           <React.Fragment>
             <div
-              className="kiali_f8qnpeg"
+              className="kiali_fs8234v"
             >
               <PFBadge
                 badge={
@@ -1613,48 +1715,78 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 <Star />
               </span>
             </div>
-            <IstioStatusList
-              cluster="Kubernetes"
-              status={
-                Array [
-                  Object {
-                    "cluster": "Kubernetes",
-                    "isCore": false,
-                    "name": "grafana",
-                    "status": "Unhealthy",
-                  },
-                  Object {
-                    "cluster": "Kubernetes",
-                    "isCore": false,
-                    "name": "jaeger",
-                    "status": "NotReady",
-                  },
-                  Object {
-                    "cluster": "Kubernetes",
-                    "isCore": true,
-                    "name": "istio-egressgateway",
-                    "status": "Unhealthy",
-                  },
-                  Object {
-                    "cluster": "Kubernetes",
-                    "isCore": true,
-                    "name": "istio-ingressgateway",
-                    "status": "NotReady",
-                  },
-                ]
-              }
-            />
+            <React.Fragment>
+              <React.Fragment>
+                <Text
+                  className="kiali_fnez44j"
+                  component="h6"
+                >
+                  Core ({{count}} issues) {"count":2}
+                </Text>
+                <div
+                  className="kiali_f14rgqjc"
+                >
+                  <IstioStatusList
+                    cluster="Kubernetes"
+                    status={
+                      Array [
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": true,
+                          "name": "istio-egressgateway",
+                          "status": "Unhealthy",
+                        },
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": true,
+                          "name": "istio-ingressgateway",
+                          "status": "NotReady",
+                        },
+                      ]
+                    }
+                  />
+                </div>
+              </React.Fragment>
+              <React.Fragment>
+                <Text
+                  className="kiali_fnez44j"
+                  component="h6"
+                >
+                  Add-ons ({{count}} issues) {"count":2}
+                </Text>
+                <div
+                  className="kiali_f14rgqjc"
+                >
+                  <IstioStatusList
+                    cluster="Kubernetes"
+                    status={
+                      Array [
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": false,
+                          "name": "grafana",
+                          "status": "Unhealthy",
+                        },
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": false,
+                          "name": "jaeger",
+                          "status": "NotReady",
+                        },
+                      ]
+                    }
+                  />
+                </div>
+              </React.Fragment>
+            </React.Fragment>
           </React.Fragment>
           <div
             className="kiali_f1kewvaf"
           >
-            <span>
-              More info at
-            </span>
             <Link
               to="/mesh"
             >
-              Mesh page
+              Open Mesh View
             </Link>
           </div>
         </TextContent>
@@ -1728,7 +1860,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 </Text>
                 <React.Fragment>
                   <div
-                    className="kiali_f8qnpeg"
+                    className="kiali_fs8234v"
                   >
                     <PFBadge
                       badge={
@@ -1753,48 +1885,78 @@ exports[`When there are not-ready components mixed with other not healthy compon
                       <Star />
                     </span>
                   </div>
-                  <IstioStatusList
-                    cluster="Kubernetes"
-                    status={
-                      Array [
-                        Object {
-                          "cluster": "Kubernetes",
-                          "isCore": false,
-                          "name": "grafana",
-                          "status": "Unhealthy",
-                        },
-                        Object {
-                          "cluster": "Kubernetes",
-                          "isCore": false,
-                          "name": "jaeger",
-                          "status": "NotReady",
-                        },
-                        Object {
-                          "cluster": "Kubernetes",
-                          "isCore": true,
-                          "name": "istio-egressgateway",
-                          "status": "Unhealthy",
-                        },
-                        Object {
-                          "cluster": "Kubernetes",
-                          "isCore": true,
-                          "name": "istio-ingressgateway",
-                          "status": "NotReady",
-                        },
-                      ]
-                    }
-                  />
+                  <React.Fragment>
+                    <React.Fragment>
+                      <Text
+                        className="kiali_fnez44j"
+                        component="h6"
+                      >
+                        Core ({{count}} issues) {"count":2}
+                      </Text>
+                      <div
+                        className="kiali_f14rgqjc"
+                      >
+                        <IstioStatusList
+                          cluster="Kubernetes"
+                          status={
+                            Array [
+                              Object {
+                                "cluster": "Kubernetes",
+                                "isCore": true,
+                                "name": "istio-egressgateway",
+                                "status": "Unhealthy",
+                              },
+                              Object {
+                                "cluster": "Kubernetes",
+                                "isCore": true,
+                                "name": "istio-ingressgateway",
+                                "status": "NotReady",
+                              },
+                            ]
+                          }
+                        />
+                      </div>
+                    </React.Fragment>
+                    <React.Fragment>
+                      <Text
+                        className="kiali_fnez44j"
+                        component="h6"
+                      >
+                        Add-ons ({{count}} issues) {"count":2}
+                      </Text>
+                      <div
+                        className="kiali_f14rgqjc"
+                      >
+                        <IstioStatusList
+                          cluster="Kubernetes"
+                          status={
+                            Array [
+                              Object {
+                                "cluster": "Kubernetes",
+                                "isCore": false,
+                                "name": "grafana",
+                                "status": "Unhealthy",
+                              },
+                              Object {
+                                "cluster": "Kubernetes",
+                                "isCore": false,
+                                "name": "jaeger",
+                                "status": "NotReady",
+                              },
+                            ]
+                          }
+                        />
+                      </div>
+                    </React.Fragment>
+                  </React.Fragment>
                 </React.Fragment>
                 <div
                   className="kiali_f1kewvaf"
                 >
-                  <span>
-                    More info at
-                  </span>
                   <Link
                     to="/mesh"
                   >
-                    Mesh page
+                    Open Mesh View
                   </Link>
                 </div>
               </TextContent>
@@ -1993,7 +2155,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
           </Text>
           <React.Fragment>
             <div
-              className="kiali_f8qnpeg"
+              className="kiali_fs8234v"
             >
               <PFBadge
                 badge={
@@ -2018,36 +2180,47 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 <Star />
               </span>
             </div>
-            <IstioStatusList
-              cluster="Kubernetes"
-              status={
-                Array [
-                  Object {
-                    "cluster": "Kubernetes",
-                    "isCore": true,
-                    "name": "istio-egressgateway",
-                    "status": "Unhealthy",
-                  },
-                  Object {
-                    "cluster": "Kubernetes",
-                    "isCore": true,
-                    "name": "istio-ingressgateway",
-                    "status": "NotReady",
-                  },
-                ]
-              }
-            />
+            <React.Fragment>
+              <React.Fragment>
+                <Text
+                  className="kiali_fnez44j"
+                  component="h6"
+                >
+                  Core ({{count}} issues) {"count":2}
+                </Text>
+                <div
+                  className="kiali_f14rgqjc"
+                >
+                  <IstioStatusList
+                    cluster="Kubernetes"
+                    status={
+                      Array [
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": true,
+                          "name": "istio-egressgateway",
+                          "status": "Unhealthy",
+                        },
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": true,
+                          "name": "istio-ingressgateway",
+                          "status": "NotReady",
+                        },
+                      ]
+                    }
+                  />
+                </div>
+              </React.Fragment>
+            </React.Fragment>
           </React.Fragment>
           <div
             className="kiali_f1kewvaf"
           >
-            <span>
-              More info at
-            </span>
             <Link
               to="/mesh"
             >
-              Mesh page
+              Open Mesh View
             </Link>
           </div>
         </TextContent>
@@ -2121,7 +2294,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 </Text>
                 <React.Fragment>
                   <div
-                    className="kiali_f8qnpeg"
+                    className="kiali_fs8234v"
                   >
                     <PFBadge
                       badge={
@@ -2146,36 +2319,47 @@ exports[`When there are not-ready components mixed with other not healthy compon
                       <Star />
                     </span>
                   </div>
-                  <IstioStatusList
-                    cluster="Kubernetes"
-                    status={
-                      Array [
-                        Object {
-                          "cluster": "Kubernetes",
-                          "isCore": true,
-                          "name": "istio-egressgateway",
-                          "status": "Unhealthy",
-                        },
-                        Object {
-                          "cluster": "Kubernetes",
-                          "isCore": true,
-                          "name": "istio-ingressgateway",
-                          "status": "NotReady",
-                        },
-                      ]
-                    }
-                  />
+                  <React.Fragment>
+                    <React.Fragment>
+                      <Text
+                        className="kiali_fnez44j"
+                        component="h6"
+                      >
+                        Core ({{count}} issues) {"count":2}
+                      </Text>
+                      <div
+                        className="kiali_f14rgqjc"
+                      >
+                        <IstioStatusList
+                          cluster="Kubernetes"
+                          status={
+                            Array [
+                              Object {
+                                "cluster": "Kubernetes",
+                                "isCore": true,
+                                "name": "istio-egressgateway",
+                                "status": "Unhealthy",
+                              },
+                              Object {
+                                "cluster": "Kubernetes",
+                                "isCore": true,
+                                "name": "istio-ingressgateway",
+                                "status": "NotReady",
+                              },
+                            ]
+                          }
+                        />
+                      </div>
+                    </React.Fragment>
+                  </React.Fragment>
                 </React.Fragment>
                 <div
                   className="kiali_f1kewvaf"
                 >
-                  <span>
-                    More info at
-                  </span>
                   <Link
                     to="/mesh"
                   >
-                    Mesh page
+                    Open Mesh View
                   </Link>
                 </div>
               </TextContent>
@@ -2368,7 +2552,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
           </Text>
           <React.Fragment>
             <div
-              className="kiali_f8qnpeg"
+              className="kiali_fs8234v"
             >
               <PFBadge
                 badge={
@@ -2393,30 +2577,41 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                 <Star />
               </span>
             </div>
-            <IstioStatusList
-              cluster="Kubernetes"
-              status={
-                Array [
-                  Object {
-                    "cluster": "Kubernetes",
-                    "isCore": true,
-                    "name": "istiod",
-                    "status": "NotReady",
-                  },
-                ]
-              }
-            />
+            <React.Fragment>
+              <React.Fragment>
+                <Text
+                  className="kiali_fnez44j"
+                  component="h6"
+                >
+                  Core ({{count}} issues) {"count":1}
+                </Text>
+                <div
+                  className="kiali_f14rgqjc"
+                >
+                  <IstioStatusList
+                    cluster="Kubernetes"
+                    status={
+                      Array [
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": true,
+                          "name": "istiod",
+                          "status": "NotReady",
+                        },
+                      ]
+                    }
+                  />
+                </div>
+              </React.Fragment>
+            </React.Fragment>
           </React.Fragment>
           <div
             className="kiali_f1kewvaf"
           >
-            <span>
-              More info at
-            </span>
             <Link
               to="/mesh"
             >
-              Mesh page
+              Open Mesh View
             </Link>
           </div>
         </TextContent>
@@ -2490,7 +2685,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                 </Text>
                 <React.Fragment>
                   <div
-                    className="kiali_f8qnpeg"
+                    className="kiali_fs8234v"
                   >
                     <PFBadge
                       badge={
@@ -2515,30 +2710,41 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                       <Star />
                     </span>
                   </div>
-                  <IstioStatusList
-                    cluster="Kubernetes"
-                    status={
-                      Array [
-                        Object {
-                          "cluster": "Kubernetes",
-                          "isCore": true,
-                          "name": "istiod",
-                          "status": "NotReady",
-                        },
-                      ]
-                    }
-                  />
+                  <React.Fragment>
+                    <React.Fragment>
+                      <Text
+                        className="kiali_fnez44j"
+                        component="h6"
+                      >
+                        Core ({{count}} issues) {"count":1}
+                      </Text>
+                      <div
+                        className="kiali_f14rgqjc"
+                      >
+                        <IstioStatusList
+                          cluster="Kubernetes"
+                          status={
+                            Array [
+                              Object {
+                                "cluster": "Kubernetes",
+                                "isCore": true,
+                                "name": "istiod",
+                                "status": "NotReady",
+                              },
+                            ]
+                          }
+                        />
+                      </div>
+                    </React.Fragment>
+                  </React.Fragment>
                 </React.Fragment>
                 <div
                   className="kiali_f1kewvaf"
                 >
-                  <span>
-                    More info at
-                  </span>
                   <Link
                     to="/mesh"
                   >
-                    Mesh page
+                    Open Mesh View
                   </Link>
                 </div>
               </TextContent>
@@ -2731,7 +2937,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
           </Text>
           <React.Fragment>
             <div
-              className="kiali_f8qnpeg"
+              className="kiali_fs8234v"
             >
               <PFBadge
                 badge={
@@ -2756,30 +2962,41 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                 <Star />
               </span>
             </div>
-            <IstioStatusList
-              cluster="Kubernetes"
-              status={
-                Array [
-                  Object {
-                    "cluster": "Kubernetes",
-                    "isCore": false,
-                    "name": "jaeger",
-                    "status": "NotReady",
-                  },
-                ]
-              }
-            />
+            <React.Fragment>
+              <React.Fragment>
+                <Text
+                  className="kiali_fnez44j"
+                  component="h6"
+                >
+                  Add-ons ({{count}} issues) {"count":1}
+                </Text>
+                <div
+                  className="kiali_f14rgqjc"
+                >
+                  <IstioStatusList
+                    cluster="Kubernetes"
+                    status={
+                      Array [
+                        Object {
+                          "cluster": "Kubernetes",
+                          "isCore": false,
+                          "name": "jaeger",
+                          "status": "NotReady",
+                        },
+                      ]
+                    }
+                  />
+                </div>
+              </React.Fragment>
+            </React.Fragment>
           </React.Fragment>
           <div
             className="kiali_f1kewvaf"
           >
-            <span>
-              More info at
-            </span>
             <Link
               to="/mesh"
             >
-              Mesh page
+              Open Mesh View
             </Link>
           </div>
         </TextContent>
@@ -2853,7 +3070,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                 </Text>
                 <React.Fragment>
                   <div
-                    className="kiali_f8qnpeg"
+                    className="kiali_fs8234v"
                   >
                     <PFBadge
                       badge={
@@ -2878,30 +3095,41 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                       <Star />
                     </span>
                   </div>
-                  <IstioStatusList
-                    cluster="Kubernetes"
-                    status={
-                      Array [
-                        Object {
-                          "cluster": "Kubernetes",
-                          "isCore": false,
-                          "name": "jaeger",
-                          "status": "NotReady",
-                        },
-                      ]
-                    }
-                  />
+                  <React.Fragment>
+                    <React.Fragment>
+                      <Text
+                        className="kiali_fnez44j"
+                        component="h6"
+                      >
+                        Add-ons ({{count}} issues) {"count":1}
+                      </Text>
+                      <div
+                        className="kiali_f14rgqjc"
+                      >
+                        <IstioStatusList
+                          cluster="Kubernetes"
+                          status={
+                            Array [
+                              Object {
+                                "cluster": "Kubernetes",
+                                "isCore": false,
+                                "name": "jaeger",
+                                "status": "NotReady",
+                              },
+                            ]
+                          }
+                        />
+                      </div>
+                    </React.Fragment>
+                  </React.Fragment>
                 </React.Fragment>
                 <div
                   className="kiali_f1kewvaf"
                 >
-                  <span>
-                    More info at
-                  </span>
                   <Link
                     to="/mesh"
                   >
-                    Mesh page
+                    Open Mesh View
                   </Link>
                 </div>
               </TextContent>
