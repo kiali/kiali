@@ -3,7 +3,6 @@ import { kialiStyle } from './StyleUtils';
 export const globalStyle = kialiStyle({
   height: '100%',
   margin: 0,
-  padding: 0,
   fontFamily: 'var(--pf-t--global--font--family--body)',
   fontSize: '14px',
   overflow: 'hidden',
@@ -29,15 +28,6 @@ export const globalStyle = kialiStyle({
 
     '& img': {
       verticalAlign: 'middle'
-    },
-
-    /**
-     * Remove global page padding by default
-     */
-    '& .pf-v6-c-page__main-section': {
-      padding: 0,
-      height: '100%',
-      overflowY: 'hidden'
     },
 
     /**
@@ -95,13 +85,6 @@ export const globalStyle = kialiStyle({
      */
     '& a': {
       textDecoration: 'none'
-    },
-
-    /**
-     * Remove border radius in Menus
-     */
-    '& .pf-v6-c-page__main-container, & .pf-v6-c-card, & .pf-v6-c-menu-toggle, & .pf-v6-c-menu-toggle::before, & .pf-v6-c-form-control, & .pf-v6-c-form-control::before, & input': {
-      borderRadius: 0
     },
 
     /**

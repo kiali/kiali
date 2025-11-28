@@ -12,7 +12,6 @@ import { connect } from 'react-redux';
 import { KialiAppState } from '../../../store/Store';
 import { TourStop } from 'components/Tour/TourStop';
 import { KialiIcon } from 'config/KialiIcon';
-import { kialiStyle } from 'styles/StyleUtils';
 import { MeshTarget } from 'types/Mesh';
 import { Controller } from '@patternfly/react-topology';
 import { MeshFind } from './MeshFind';
@@ -33,11 +32,6 @@ type MeshToolbarProps = ReduxProps & {
   onToggleHelp: () => void;
 };
 
-const helpStyle = kialiStyle({
-  marginRight: '0.5rem',
-  alignSelf: 'center'
-});
-
 export const MeshToolbarComponent: React.FC<MeshToolbarProps> = (props: MeshToolbarProps) => {
   const { t } = useKialiTranslation();
 
@@ -56,17 +50,15 @@ export const MeshToolbarComponent: React.FC<MeshToolbarProps> = (props: MeshTool
           </ToolbarItem>
 
           <ToolbarItem style={{ marginLeft: 'auto', alignSelf: 'center' }}>
-            <Tooltip key={'mesh-tour-help-ot'} position={TooltipPosition.right} content={t('Shortcuts and tips...')}>
+            <Tooltip key={'mesh-tour-help-ot'} position={TooltipPosition.bottom} content={t('Shortcuts and tips...')}>
               <TourStop info={MeshTourStops.Shortcuts}>
                 <Button
                   id="mesh-tour"
+                  icon={<KialiIcon.Help />}
                   variant={ButtonVariant.link}
-                  className={helpStyle}
                   onClick={props.onToggleHelp}
-                  isInline
                 >
-                  <KialiIcon.Help />
-                  <span style={{ marginLeft: '5px' }}>Help</span>
+                  <span>{t('Help')}</span>
                 </Button>
               </TourStop>
             </Tooltip>

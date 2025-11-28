@@ -36,7 +36,6 @@ import { GraphSecondaryMasthead } from './GraphSecondaryMasthead';
 import { INITIAL_USER_SETTINGS_STATE } from 'reducers/UserSettingsState';
 import { GraphReset } from './GraphReset';
 import { GraphFind } from './GraphFind';
-import { kialiStyle } from 'styles/StyleUtils';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 import { GraphElement } from '@patternfly/react-topology';
 
@@ -72,11 +71,6 @@ type GraphToolbarProps = ReduxProps & {
   elementsChanged: boolean;
   onToggleHelp: () => void;
 };
-
-const helpStyle = kialiStyle({
-  marginRight: '0.5rem',
-  alignSelf: 'center'
-});
 
 class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
   static contextTypes = {
@@ -206,7 +200,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
           isNodeGraph={!!this.props.node}
           onGraphTypeChange={this.props.setGraphType}
         />
-        <Toolbar style={{ width: '100%' }}>
+        <Toolbar style={{ paddingTop: '1rem', width: '100%' }}>
           <ToolbarGroup aria-label="graph settings" style={{ margin: 0, alignItems: 'flex-start' }}>
             {this.props.node && (
               <ToolbarItem style={{ margin: 0 }}>
@@ -233,13 +227,11 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
                 <TourStop info={GraphTourStops.Shortcuts}>
                   <Button
                     id="graph-tour"
+                    icon={<KialiIcon.Help />}
                     variant={ButtonVariant.link}
-                    className={helpStyle}
                     onClick={this.props.onToggleHelp}
-                    isInline
                   >
-                    <KialiIcon.Help />
-                    <span style={{ marginLeft: '5px' }}>Help</span>
+                    <span>Help</span>
                   </Button>
                 </TourStop>
               </Tooltip>
