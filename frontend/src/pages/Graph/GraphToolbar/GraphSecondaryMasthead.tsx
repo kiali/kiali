@@ -17,11 +17,6 @@ type GraphSecondaryMastheadProps = {
   onGraphTypeChange: (graphType: GraphType) => void;
 };
 
-const mastheadStyle = kialiStyle({
-  marginLeft: '-1.25rem',
-  marginRight: '-2.5rem'
-});
-
 const leftSpacerStyle = kialiStyle({
   marginLeft: '0.5rem'
 });
@@ -56,7 +51,7 @@ export const GraphSecondaryMasthead: React.FC<GraphSecondaryMastheadProps> = (pr
 
   return (
     <SecondaryMasthead>
-      <div className={mastheadStyle}>
+      <>
         <NamespaceDropdown disabled={props.isNodeGraph} />
 
         <span className={vrStyle} />
@@ -87,7 +82,7 @@ export const GraphSecondaryMasthead: React.FC<GraphSecondaryMastheadProps> = (pr
             <TimeDurationComponent id="graph_time_range" disabled={props.disabled} supportsReplay={true} />
           </TourStop>
         </div>
-      </div>
+      </>
     </SecondaryMasthead>
   );
 };

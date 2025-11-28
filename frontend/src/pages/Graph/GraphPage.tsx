@@ -48,9 +48,7 @@ import { PFColors } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
 import { arrayEquals } from 'utils/Common';
 import { isKioskMode, getFocusSelector, getTraceId, getClusterName, unsetFocusSelector } from 'utils/SearchParamUtils';
-import {
-	Label, Badge
-} from '@patternfly/react-core';
+import { Label, Badge } from '@patternfly/react-core';
 
 import { toRangeString } from 'components/Time/Utils';
 import { replayBorder } from 'components/Time/Replay';
@@ -195,7 +193,7 @@ const NUMBER_OF_DATAPOINTS = 30;
 const containerStyle = kialiStyle({
   minHeight: '350px',
   // TODO: try flexbox to remove this calc
-  height: 'calc(100vh - 113px)' // View height minus top bar height minus secondary masthead
+  height: 'calc(100vh - 136px)' // View height minus top bar height minus secondary masthead
 });
 
 const kioskContainerStyle = kialiStyle({
@@ -491,9 +489,9 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
             >
               {this.props.showLegend && <GraphLegend closeLegend={this.props.toggleLegend} />}
               {isReady && (
-                <Label variant="outline"
+                <Label
+                  variant="outline"
                   className={`${graphTimeRange} ${this.props.replayActive ? replayBackground : graphBackground}`}
-                  
                 >
                   {this.props.replayActive && <Badge style={{ marginRight: '4px' }} isRead={true}>{`Replay`}</Badge>}
                   {!isReplayReady && this.props.replayActive && `click Play to start`}

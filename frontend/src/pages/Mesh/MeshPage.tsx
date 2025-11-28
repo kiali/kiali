@@ -106,7 +106,7 @@ type MeshPageState = {
 const containerStyle = kialiStyle({
   minHeight: '350px',
   // TODO: try flexbox to remove this calc
-  height: 'calc(100vh - 113px)' // View height minus top bar height minus secondary masthead
+  height: 'calc(100vh - 136px)' // View height minus top bar height minus secondary masthead
 });
 
 const kioskContainerStyle = kialiStyle({
@@ -248,7 +248,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
               {this.props.showLegend && <MeshLegend closeLegend={this.props.toggleLegend} />}
 
               {isReady && (
-                <Label variant="outline" className={`${meshChip} ${meshBackground}`} >
+                <Label variant="outline" className={`${meshChip} ${meshBackground}`}>
                   {this.displayTimeRange()}
                 </Label>
               )}

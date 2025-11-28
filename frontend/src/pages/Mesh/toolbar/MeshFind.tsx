@@ -81,6 +81,7 @@ const thinGroupStyle = kialiStyle({
 });
 
 const buttonClearStyle = kialiStyle({
+  marginLeft: '0.125rem',
   paddingLeft: '0.75rem',
   paddingRight: '0.75rem'
 });

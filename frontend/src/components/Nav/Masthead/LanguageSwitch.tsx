@@ -10,22 +10,23 @@ import { connect } from 'react-redux';
 import { i18n } from 'i18n';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
-const iconStyle = kialiStyle({
-  verticalAlign: '-0.25rem',
-  $nest: {
-    '& svg': {
-      width: '1.5rem',
-      height: '1.5rem'
-    }
-  }
-});
-
 const checkStyle = kialiStyle({
   marginLeft: '0.5rem'
 });
 
 type LanguageSwitchProps = {
   language: string;
+};
+
+const getLanguageLabel = (language: Language): string => {
+  switch (language) {
+    case Language.ENGLISH:
+      return 'English';
+    case Language.SPANISH:
+      return 'Español';
+    case Language.CHINESE:
+      return '中文';
+  }
 };
 
 export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = ({ language }) => {
@@ -35,17 +36,17 @@ export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = ({ languag
 
   const languageItems: React.ReactNode[] = [
     <DropdownItem key="english" onClick={() => switchLanguage(Language.ENGLISH)}>
-      <span>English</span>
+      <span>{getLanguageLabel(Language.ENGLISH)}</span>
       {language === Language.ENGLISH && <KialiIcon.Check className={checkStyle} />}
     </DropdownItem>,
 
     <DropdownItem key="spanish" onClick={() => switchLanguage(Language.SPANISH)}>
-      <span>Español</span>
+      <span>{getLanguageLabel(Language.SPANISH)}</span>
       {language === Language.SPANISH && <KialiIcon.Check className={checkStyle} />}
     </DropdownItem>,
 
     <DropdownItem key="chinese" onClick={() => switchLanguage(Language.CHINESE)}>
-      <span>中文</span>
+      <span>{getLanguageLabel(Language.CHINESE)}</span>
       {language === Language.CHINESE && <KialiIcon.Check className={checkStyle} />}
     </DropdownItem>
   ];
@@ -67,10 +68,9 @@ export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = ({ languag
             data-test="switch-language-button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             aria-label={t('Switch language')}
-            variant="plain"
             isExpanded={isDropdownOpen}
           >
-            <KialiIcon.Language className={iconStyle} />
+            {getLanguageLabel(language as Language)}
           </MenuToggle>
         )}
         isOpen={isDropdownOpen}

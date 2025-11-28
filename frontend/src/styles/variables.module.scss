@@ -15,30 +15,30 @@
    */
   --kiali-global--font-size: kialiFontSize;
   --kiali-global--font-size-px: kialiFontSizePx;
-  
+
   // --pf-v5-global--FontSize--md renamed to --pf-t--global--font--size--md
   --pf-t--global--font--size--md: kialiFontSize;
-  
+
   /**
     * --pf-v5-c-page__header--MinHeight is the height of the masthead
     * 130px is the vertical space being used by the breadcrumb, tab headers, and the name of the {workload,svc,app}
     */
-    // --pf-v5-c-page__header--MinHeight Removed
-    // Replace =>  100vh - 130px - var(--pf-v5-c-page__header--MinHeight)
-    // by -calc(100% - --pf-t--global--spacer--lg)
-  --kiali-details-pages-tab-content-height: calc(100vh - 130px  - var(--pf-t--global--spacer--700));
+  // --pf-v5-c-page__header--MinHeight Removed
+  // Replace =>  100vh - 130px - var(--pf-v5-c-page__header--MinHeight)
+  // by -calc(100% - --pf-t--global--spacer--lg)
+  --kiali-details-pages-tab-content-height: calc(100vh - 130px - var(--pf-t--global--spacer--700));
 
   // Graph CSS variables
   --graph-side-panel--font-size: kialiFontSize;
   --graph-side-panel--font-size-px: kialiFontSizePx;
-  
+
   :global {
     /**
     * --pf-v5-c-page__header--MinHeight is the height of the masthead
     * 130px is the vertical space being used by the breadcrumb, tab headers, and the name of the {workload,svc,app}
     */
     .pf-v6-c-page__main-section {
-      --kiali-details-pages-tab-content-height: calc(100vh - 130px  - var(--pf-t--global--spacer--700));
+      --kiali-details-pages-tab-content-height: calc(100vh - 130px - var(--pf-t--global--spacer--700));
     }
 
     /**
@@ -64,7 +64,7 @@
     .pf-v6-c-chip__text {
       --pf-v6-c-chip__text--MaxWidth: 50em;
     }
-  /*  Removing colors due PF6 dark mode changes
+    /*  Removing colors due PF6 dark mode changes
     .pf-v6-c-masthead {
       background-color: "#383838";
     }
