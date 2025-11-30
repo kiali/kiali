@@ -3,11 +3,14 @@ import {
   Button,
   ButtonVariant,
   FormGroup,
-  FormSelect,
-  FormSelectOption,
   FormHelperText,
   HelperText,
   HelperTextItem,
+  MenuToggle,
+  MenuToggleElement,
+  Select,
+  SelectList,
+  SelectOption,
   Switch,
   TextInput
 } from '@patternfly/react-core';
@@ -52,6 +55,8 @@ export type PeerAuthenticationState = {
   addNewPortMtls: PortMtls;
   addPortMtls: boolean;
   addWorkloadSelector: boolean;
+  isMtlsSelectOpen: boolean;
+  isPortMtlsSelectOpen: boolean;
   mtls: string;
   portLevelMtls: PortMtls[];
   workloadSelector: string;
@@ -65,6 +70,8 @@ export const initPeerAuthentication = (): PeerAuthenticationState => ({
   },
   addPortMtls: false,
   addWorkloadSelector: false,
+  isMtlsSelectOpen: false,
+  isPortMtlsSelectOpen: false,
   mtls: PeerAuthenticationMutualTLSMode.UNSET,
   portLevelMtls: [],
   workloadSelector: '',
@@ -82,6 +89,8 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     super(props);
     this.state = {
       addWorkloadSelector: false,
+      isMtlsSelectOpen: false,
+      isPortMtlsSelectOpen: false,
       workloadSelectorValid: false,
       workloadSelector: this.props.peerAuthentication.workloadSelector,
       mtls: this.props.peerAuthentication.mtls,
@@ -102,7 +111,9 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
       mtls: this.props.peerAuthentication.mtls,
       addPortMtls: this.props.peerAuthentication.addPortMtls,
       portLevelMtls: this.props.peerAuthentication.portLevelMtls,
-      addNewPortMtls: this.props.peerAuthentication.addNewPortMtls
+      addNewPortMtls: this.props.peerAuthentication.addNewPortMtls,
+      isMtlsSelectOpen: this.props.peerAuthentication.isMtlsSelectOpen,
+      isPortMtlsSelectOpen: this.props.peerAuthentication.isPortMtlsSelectOpen
     });
   }
 
@@ -179,15 +190,6 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     this.props.onChange(this.state);
   };
 
-  onMutualTlsChange = (_event: React.FormEvent, value: string): void => {
-    this.setState(
-      {
-        mtls: value
-      },
-      () => this.onPeerAuthenticationChange()
-    );
-  };
-
   onAddPortNumber = (_event: React.FormEvent, value: string): void => {
     this.setState(
       prevState => {
@@ -201,21 +203,6 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
       () => this.onPeerAuthenticationChange()
     );
   };
-
-  onAddPortMtlsMode = (_event: React.FormEvent, value: string): void => {
-    this.setState(
-      prevState => {
-        return {
-          addNewPortMtls: {
-            port: prevState.addNewPortMtls.port,
-            mtls: value
-          }
-        };
-      },
-      () => this.onPeerAuthenticationChange()
-    );
-  };
-
   onAddPortMtls = (): void => {
     this.setState(
       prevState => {
@@ -274,16 +261,48 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
               )}
             />,
 
-            <FormSelect
-              value={this.state.addNewPortMtls.mtls}
+            <Select
+              isOpen={this.state.isPortMtlsSelectOpen}
+              selected={this.state.addNewPortMtls.mtls}
+              onSelect={(_event, value) => {
+                this.setState(
+                  prevState => ({
+                    addNewPortMtls: {
+                      port: prevState.addNewPortMtls.port,
+                      mtls: value as string
+                    },
+                    isPortMtlsSelectOpen: false
+                  }),
+                  () => this.onPeerAuthenticationChange()
+                );
+              }}
               id="addPortMtlsMode"
-              name="addPortMtlsMode"
-              onChange={this.onAddPortMtlsMode}
+              onOpenChange={isPortMtlsSelectOpen => this.setState({ isPortMtlsSelectOpen })}
+              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                <MenuToggle
+                  id="addPortMtlsMode-toggle"
+                  ref={toggleRef}
+                  onClick={() => this.setState({ isPortMtlsSelectOpen: !this.state.isPortMtlsSelectOpen })}
+                  isExpanded={this.state.isPortMtlsSelectOpen}
+                  isFullWidth
+                >
+                  {this.state.addNewPortMtls.mtls}
+                </MenuToggle>
+              )}
+              aria-label="Port MTLS Mode Select"
             >
-              {Object.keys(PeerAuthenticationMutualTLSMode).map((option, index) => (
-                <FormSelectOption key={`p_${index}`} value={option} label={option} />
-              ))}
-            </FormSelect>,
+              <SelectList>
+                {Object.keys(PeerAuthenticationMutualTLSMode).map((option, index) => (
+                  <SelectOption
+                    key={`p_${index}`}
+                    value={option}
+                    isSelected={option === this.state.addNewPortMtls.mtls}
+                  >
+                    {option}
+                  </SelectOption>
+                ))}
+              </SelectList>
+            </Select>,
 
             <Button
               id="addPortMtlsBtn"
@@ -334,11 +353,41 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
         )}
 
         <FormGroup label="Mutual TLS Mode" fieldId="mutualTls">
-          <FormSelect value={this.state.mtls} onChange={this.onMutualTlsChange} id="mutualTls" name="rules-form">
-            {Object.keys(PeerAuthenticationMutualTLSMode).map((option, index) => (
-              <FormSelectOption key={index} value={option} label={option} />
-            ))}
-          </FormSelect>
+          <Select
+            id="mutualTls"
+            selected={this.state.mtls}
+            onSelect={(_event, value) => {
+              this.setState(
+                {
+                  mtls: value as string,
+                  isMtlsSelectOpen: false
+                },
+                () => this.onPeerAuthenticationChange()
+              );
+            }}
+            onOpenChange={isMtlsSelectOpen => this.setState({ isMtlsSelectOpen })}
+            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+              <MenuToggle
+                id="mutualTls-toggle"
+                ref={toggleRef}
+                onClick={() => this.setState({ isMtlsSelectOpen: !this.state.isMtlsSelectOpen })}
+                isExpanded={this.state.isMtlsSelectOpen}
+                isFullWidth
+              >
+                {this.state.mtls}
+              </MenuToggle>
+            )}
+            isOpen={this.state.isMtlsSelectOpen}
+            aria-label="Mutual TLS Mode Select"
+          >
+            <SelectList>
+              {Object.keys(PeerAuthenticationMutualTLSMode).map((option, index) => (
+                <SelectOption key={index} value={option} isSelected={option === this.state.mtls}>
+                  {option}
+                </SelectOption>
+              ))}
+            </SelectList>
+          </Select>
         </FormGroup>
 
         <FormGroup label="Port Mutual TLS" fieldId="addPortMtls">
