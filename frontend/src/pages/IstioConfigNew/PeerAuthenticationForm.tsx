@@ -190,15 +190,6 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     this.props.onChange(this.state);
   };
 
-  onMutualTlsChange = (_event: React.FormEvent, value: string): void => {
-    this.setState(
-      {
-        mtls: value
-      },
-      () => this.onPeerAuthenticationChange()
-    );
-  };
-
   onAddPortNumber = (_event: React.FormEvent, value: string): void => {
     this.setState(
       prevState => {
