@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ToggleGroup, ToggleGroupItem, Tooltip } from '@patternfly/react-core';
+import { ToggleGroup, ToggleGroupItem } from '@patternfly/react-core';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
 import { KIALI_THEME, PF_THEME_DARK, Theme } from 'types/Common';
@@ -14,7 +14,6 @@ type ThemeSwitchProps = {
 
 export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwitchProps) => {
   const { t } = useKialiTranslation();
-
   const darkTheme = props.theme === Theme.DARK;
 
   const handleTheme = (): void => {
@@ -26,13 +25,19 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
   };
 
   return (
-    <ToggleGroup>
-      <Tooltip content={t('Switch to {{theme}} Mode', { theme: darkTheme ? 'Light' : 'Dark' })}>
-        <ToggleGroupItem icon={<KialiIcon.Sun />} onClick={handleTheme} isSelected={!darkTheme} />
-      </Tooltip>
-      <Tooltip content={t('Switch to {{theme}} Mode', { theme: darkTheme ? 'Light' : 'Dark' })}>
-        <ToggleGroupItem icon={<KialiIcon.Moon />} onClick={handleTheme} isSelected={darkTheme} />
-      </Tooltip>
+    <ToggleGroup aria-label={t('Theme switch')}>
+      <ToggleGroupItem
+        aria-label={t('Light theme')}
+        icon={<KialiIcon.Sun isInline />}
+        isSelected={!darkTheme}
+        onClick={handleTheme}
+      />
+      <ToggleGroupItem
+        aria-label={t('Dark theme')}
+        icon={<KialiIcon.Moon isInline />}
+        isSelected={darkTheme}
+        onClick={handleTheme}
+      />
     </ToggleGroup>
   );
 };

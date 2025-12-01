@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { Flex, FlexItem } from '@patternfly/react-core';
+import { Toolbar, ToolbarContent, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 
+import { kialiStyle } from 'styles/StyleUtils';
 import { serverConfig } from '../../../config';
 import { RunMode } from '../../../types/ServerConfig';
 import { IstioStatus } from '../../IstioStatus/IstioStatus';
@@ -12,42 +13,54 @@ import { LanguageSwitch } from './LanguageSwitch';
 import { PfSpinner } from 'components/Pf/PfSpinner';
 import { OfflineStatus } from './OfflineStatus';
 
+const centerItemStyle = kialiStyle({
+  alignSelf: 'center'
+});
+
 export const MastheadItems: React.FC = () => {
   return (
-    <Flex style={{ width: '100%' }}>
-      {serverConfig.runMode === RunMode.OFFLINE ? (
-        <FlexItem>
-          <OfflineStatus />
-        </FlexItem>
-      ) : (
-        <FlexItem>
-          <IstioStatus />
-        </FlexItem>
-      )}
-      <FlexItem>
-        <PfSpinner />
-      </FlexItem>
-      <FlexItem align={{ default: 'alignRight' }}>
-        <ThemeSwitch />
-      </FlexItem>
+    <Toolbar isFullHeight isStatic>
+      <ToolbarContent>
+        <ToolbarGroup>
+          {serverConfig.runMode === RunMode.OFFLINE ? (
+            <ToolbarItem className={centerItemStyle}>
+              <OfflineStatus />
+            </ToolbarItem>
+          ) : (
+            <ToolbarItem className={centerItemStyle}>
+              <IstioStatus />
+            </ToolbarItem>
+          )}
 
-      <FlexItem>
-        <MessageCenterTrigger />
-      </FlexItem>
+          <ToolbarItem className={centerItemStyle}>
+            <PfSpinner />
+          </ToolbarItem>
+        </ToolbarGroup>
 
-      <FlexItem>
-        <HelpDropdown />
-      </FlexItem>
+        <ToolbarGroup align={{ default: 'alignEnd' }}>
+          <ToolbarItem>
+            <ThemeSwitch />
+          </ToolbarItem>
 
-      {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
-        <FlexItem>
-          <LanguageSwitch />
-        </FlexItem>
-      )}
+          <ToolbarItem>
+            <MessageCenterTrigger />
+          </ToolbarItem>
 
-      <FlexItem data-test="user-dropdown">
-        <UserDropdown />
-      </FlexItem>
-    </Flex>
+          <ToolbarItem>
+            <HelpDropdown />
+          </ToolbarItem>
+
+          {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
+            <ToolbarItem>
+              <LanguageSwitch />
+            </ToolbarItem>
+          )}
+
+          <ToolbarItem className={centerItemStyle} data-test="user-dropdown">
+            <UserDropdown />
+          </ToolbarItem>
+        </ToolbarGroup>
+      </ToolbarContent>
+    </Toolbar>
   );
 };
