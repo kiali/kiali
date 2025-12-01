@@ -27,6 +27,7 @@ import { Menu } from './Menu';
 import { Link, useLocation } from 'react-router-dom-v5-compat';
 import { ExternalServiceInfo } from '../../types/StatusState';
 import { Theme } from 'types/Common';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
   externalServices: ExternalServiceInfo[];
@@ -51,6 +52,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
   const [isNavOpenDesktop, setIsNavOpenDesktop] = React.useState<boolean>(true);
   const [isNavOpenMobile, setIsNavOpenMobile] = React.useState<boolean>(false);
 
+  const { t } = useKialiTranslation();
   const { pathname } = useLocation();
 
   React.useEffect((): void => {
@@ -91,20 +93,20 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
   const darkTheme = props.theme === Theme.DARK;
 
   const masthead = (
-    <Masthead role="kiali_header">
+    <Masthead data-test="kiali-header">
       <MastheadMain>
         <MastheadToggle>
           <PageToggleButton
+            aria-label={t('Kiali navigation')}
             isHamburgerButton
-            variant={ButtonVariant.plain}
-            aria-label="Kiali navigation"
             isSidebarOpen={isNavOpen}
             onSidebarToggle={isMobileView ? onNavToggleMobile : onNavToggleDesktop}
-          ></PageToggleButton>
+            variant={ButtonVariant.plain}
+          />
         </MastheadToggle>
-        <MastheadBrand data-codemods>
-          <MastheadLogo data-codemods component={props => <Link {...props} to="#" />}>
-            <img src={darkTheme ? kialiLogoDark : kialiLogoLight} alt="Kiali Logo" />
+        <MastheadBrand>
+          <MastheadLogo component={linkProps => <Link {...linkProps} to="/" />}>
+            <img src={darkTheme ? kialiLogoDark : kialiLogoLight} alt={t('Kiali Logo')} />
           </MastheadLogo>
         </MastheadBrand>
       </MastheadMain>
@@ -128,7 +130,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
       sidebar={Sidebar}
       onPageResize={(_, { mobileView, windowSize }) => onPageResize({ mobileView, windowSize })}
     >
-      <MessageCenter drawerTitle="Message Center" />
+      <MessageCenter drawerTitle={t('Message Center')} />
       <PageSection hasBodyWrapper={false} className={flexBoxColumnStyle}>
         <RenderPage isGraph={isGraph()} />
       </PageSection>
