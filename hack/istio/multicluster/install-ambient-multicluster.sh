@@ -22,6 +22,8 @@ install_ambient_on_cluster() {
 
   if [ "${sail}" == "true" ]; then
 
+    echo "Using Sail to install Istio"
+
     # Use the existing install-istio-via-sail.sh script with ambient profile and multicluster configuration
     HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
     ISTIO_INSTALL_SCRIPT="${HACK_SCRIPT_DIR}/../install-istio-via-sail.sh"
@@ -90,7 +92,7 @@ EOF
 install_ambient_multicluster() {
 
   CLIENT_EXE="kubectl"
-  local SAIL="${1}"
+  local SAIL="${1:-true}"
   if [ "${SAIL}" == "true" ]; then
     # Setup Istio environment using shared function
     HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"

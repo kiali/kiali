@@ -210,12 +210,11 @@ EOF
 
 ztunnelYAML=$(
 cat <<EOF
-apiVersion: sailoperator.io/v1alpha1
+apiVersion: sailoperator.io/v1
 kind: ZTunnel
 metadata:
   name: default
 spec:
-  profile: ambient
   namespace: ztunnel
 EOF
 )
