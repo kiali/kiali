@@ -47,6 +47,11 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
         >
           <Text
             component="h4"
+            style={
+              Object {
+                "textAlign": "left",
+              }
+            }
           >
             Cluster Status
           </Text>
@@ -77,13 +82,16 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
                 <Star />
               </span>
             </div>
+            <Divider
+              className="kiali_f1s39s2g"
+            />
             <React.Fragment>
               <React.Fragment>
                 <Text
                   className="kiali_fnez44j"
                   component="h6"
                 >
-                  Add-ons ({{count}} issues) {"count":1}
+                  Add-ons
                 </Text>
                 <div
                   className="kiali_f14rgqjc"
@@ -106,7 +114,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
             </React.Fragment>
           </React.Fragment>
           <div
-            className="kiali_f1kewvaf"
+            className="kiali_fpbzwk1"
           >
             <Link
               to="/mesh"
@@ -180,6 +188,11 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
               >
                 <Text
                   component="h4"
+                  style={
+                    Object {
+                      "textAlign": "left",
+                    }
+                  }
                 >
                   Cluster Status
                 </Text>
@@ -210,13 +223,16 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
                       <Star />
                     </span>
                   </div>
+                  <Divider
+                    className="kiali_f1s39s2g"
+                  />
                   <React.Fragment>
                     <React.Fragment>
                       <Text
                         className="kiali_fnez44j"
                         component="h6"
                       >
-                        Add-ons ({{count}} issues) {"count":1}
+                        Add-ons
                       </Text>
                       <div
                         className="kiali_f14rgqjc"
@@ -239,7 +255,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
                   </React.Fragment>
                 </React.Fragment>
                 <div
-                  className="kiali_f1kewvaf"
+                  className="kiali_fpbzwk1"
                 >
                   <Link
                     to="/mesh"
@@ -438,6 +454,11 @@ exports[`When both core and addon component have problems any component is in no
         >
           <Text
             component="h4"
+            style={
+              Object {
+                "textAlign": "left",
+              }
+            }
           >
             Cluster Status
           </Text>
@@ -468,13 +489,16 @@ exports[`When both core and addon component have problems any component is in no
                 <Star />
               </span>
             </div>
+            <Divider
+              className="kiali_f1s39s2g"
+            />
             <React.Fragment>
               <React.Fragment>
                 <Text
                   className="kiali_fnez44j"
                   component="h6"
                 >
-                  Core ({{count}} issues) {"count":1}
+                  Core
                 </Text>
                 <div
                   className="kiali_f14rgqjc"
@@ -499,7 +523,7 @@ exports[`When both core and addon component have problems any component is in no
                   className="kiali_fnez44j"
                   component="h6"
                 >
-                  Add-ons ({{count}} issues) {"count":1}
+                  Add-ons
                 </Text>
                 <div
                   className="kiali_f14rgqjc"
@@ -522,7 +546,7 @@ exports[`When both core and addon component have problems any component is in no
             </React.Fragment>
           </React.Fragment>
           <div
-            className="kiali_f1kewvaf"
+            className="kiali_fpbzwk1"
           >
             <Link
               to="/mesh"
@@ -596,6 +620,11 @@ exports[`When both core and addon component have problems any component is in no
               >
                 <Text
                   component="h4"
+                  style={
+                    Object {
+                      "textAlign": "left",
+                    }
+                  }
                 >
                   Cluster Status
                 </Text>
@@ -626,13 +655,16 @@ exports[`When both core and addon component have problems any component is in no
                       <Star />
                     </span>
                   </div>
+                  <Divider
+                    className="kiali_f1s39s2g"
+                  />
                   <React.Fragment>
                     <React.Fragment>
                       <Text
                         className="kiali_fnez44j"
                         component="h6"
                       >
-                        Core ({{count}} issues) {"count":1}
+                        Core
                       </Text>
                       <div
                         className="kiali_f14rgqjc"
@@ -657,7 +689,7 @@ exports[`When both core and addon component have problems any component is in no
                         className="kiali_fnez44j"
                         component="h6"
                       >
-                        Add-ons ({{count}} issues) {"count":1}
+                        Add-ons
                       </Text>
                       <div
                         className="kiali_f14rgqjc"
@@ -680,7 +712,7 @@ exports[`When both core and addon component have problems any component is in no
                   </React.Fragment>
                 </React.Fragment>
                 <div
-                  className="kiali_f1kewvaf"
+                  className="kiali_fpbzwk1"
                 >
                   <Link
                     to="/mesh"
@@ -879,6 +911,11 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
         >
           <Text
             component="h4"
+            style={
+              Object {
+                "textAlign": "left",
+              }
+            }
           >
             Cluster Status
           </Text>
@@ -909,13 +946,16 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
                 <Star />
               </span>
             </div>
+            <Divider
+              className="kiali_f1s39s2g"
+            />
             <React.Fragment>
               <React.Fragment>
                 <Text
                   className="kiali_fnez44j"
                   component="h6"
                 >
-                  Core ({{count}} issues) {"count":1}
+                  Core
                 </Text>
                 <div
                   className="kiali_f14rgqjc"
@@ -938,7 +978,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
             </React.Fragment>
           </React.Fragment>
           <div
-            className="kiali_f1kewvaf"
+            className="kiali_fpbzwk1"
           >
             <Link
               to="/mesh"
@@ -1012,6 +1052,11 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
               >
                 <Text
                   component="h4"
+                  style={
+                    Object {
+                      "textAlign": "left",
+                    }
+                  }
                 >
                   Cluster Status
                 </Text>
@@ -1042,13 +1087,16 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
                       <Star />
                     </span>
                   </div>
+                  <Divider
+                    className="kiali_f1s39s2g"
+                  />
                   <React.Fragment>
                     <React.Fragment>
                       <Text
                         className="kiali_fnez44j"
                         component="h6"
                       >
-                        Core ({{count}} issues) {"count":1}
+                        Core
                       </Text>
                       <div
                         className="kiali_f14rgqjc"
@@ -1071,7 +1119,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
                   </React.Fragment>
                 </React.Fragment>
                 <div
-                  className="kiali_f1kewvaf"
+                  className="kiali_fpbzwk1"
                 >
                   <Link
                     to="/mesh"
@@ -1270,6 +1318,11 @@ exports[`When there are not-ready components mixed with other not healthy compon
         >
           <Text
             component="h4"
+            style={
+              Object {
+                "textAlign": "left",
+              }
+            }
           >
             Cluster Status
           </Text>
@@ -1300,13 +1353,16 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 <Star />
               </span>
             </div>
+            <Divider
+              className="kiali_f1s39s2g"
+            />
             <React.Fragment>
               <React.Fragment>
                 <Text
                   className="kiali_fnez44j"
                   component="h6"
                 >
-                  Add-ons ({{count}} issues) {"count":2}
+                  Add-ons
                 </Text>
                 <div
                   className="kiali_f14rgqjc"
@@ -1335,7 +1391,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
             </React.Fragment>
           </React.Fragment>
           <div
-            className="kiali_f1kewvaf"
+            className="kiali_fpbzwk1"
           >
             <Link
               to="/mesh"
@@ -1409,6 +1465,11 @@ exports[`When there are not-ready components mixed with other not healthy compon
               >
                 <Text
                   component="h4"
+                  style={
+                    Object {
+                      "textAlign": "left",
+                    }
+                  }
                 >
                   Cluster Status
                 </Text>
@@ -1439,13 +1500,16 @@ exports[`When there are not-ready components mixed with other not healthy compon
                       <Star />
                     </span>
                   </div>
+                  <Divider
+                    className="kiali_f1s39s2g"
+                  />
                   <React.Fragment>
                     <React.Fragment>
                       <Text
                         className="kiali_fnez44j"
                         component="h6"
                       >
-                        Add-ons ({{count}} issues) {"count":2}
+                        Add-ons
                       </Text>
                       <div
                         className="kiali_f14rgqjc"
@@ -1474,7 +1538,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                   </React.Fragment>
                 </React.Fragment>
                 <div
-                  className="kiali_f1kewvaf"
+                  className="kiali_fpbzwk1"
                 >
                   <Link
                     to="/mesh"
@@ -1685,6 +1749,11 @@ exports[`When there are not-ready components mixed with other not healthy compon
         >
           <Text
             component="h4"
+            style={
+              Object {
+                "textAlign": "left",
+              }
+            }
           >
             Cluster Status
           </Text>
@@ -1715,13 +1784,16 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 <Star />
               </span>
             </div>
+            <Divider
+              className="kiali_f1s39s2g"
+            />
             <React.Fragment>
               <React.Fragment>
                 <Text
                   className="kiali_fnez44j"
                   component="h6"
                 >
-                  Core ({{count}} issues) {"count":2}
+                  Core
                 </Text>
                 <div
                   className="kiali_f14rgqjc"
@@ -1752,7 +1824,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                   className="kiali_fnez44j"
                   component="h6"
                 >
-                  Add-ons ({{count}} issues) {"count":2}
+                  Add-ons
                 </Text>
                 <div
                   className="kiali_f14rgqjc"
@@ -1781,7 +1853,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
             </React.Fragment>
           </React.Fragment>
           <div
-            className="kiali_f1kewvaf"
+            className="kiali_fpbzwk1"
           >
             <Link
               to="/mesh"
@@ -1855,6 +1927,11 @@ exports[`When there are not-ready components mixed with other not healthy compon
               >
                 <Text
                   component="h4"
+                  style={
+                    Object {
+                      "textAlign": "left",
+                    }
+                  }
                 >
                   Cluster Status
                 </Text>
@@ -1885,13 +1962,16 @@ exports[`When there are not-ready components mixed with other not healthy compon
                       <Star />
                     </span>
                   </div>
+                  <Divider
+                    className="kiali_f1s39s2g"
+                  />
                   <React.Fragment>
                     <React.Fragment>
                       <Text
                         className="kiali_fnez44j"
                         component="h6"
                       >
-                        Core ({{count}} issues) {"count":2}
+                        Core
                       </Text>
                       <div
                         className="kiali_f14rgqjc"
@@ -1922,7 +2002,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                         className="kiali_fnez44j"
                         component="h6"
                       >
-                        Add-ons ({{count}} issues) {"count":2}
+                        Add-ons
                       </Text>
                       <div
                         className="kiali_f14rgqjc"
@@ -1951,7 +2031,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                   </React.Fragment>
                 </React.Fragment>
                 <div
-                  className="kiali_f1kewvaf"
+                  className="kiali_fpbzwk1"
                 >
                   <Link
                     to="/mesh"
@@ -2150,6 +2230,11 @@ exports[`When there are not-ready components mixed with other not healthy compon
         >
           <Text
             component="h4"
+            style={
+              Object {
+                "textAlign": "left",
+              }
+            }
           >
             Cluster Status
           </Text>
@@ -2180,13 +2265,16 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 <Star />
               </span>
             </div>
+            <Divider
+              className="kiali_f1s39s2g"
+            />
             <React.Fragment>
               <React.Fragment>
                 <Text
                   className="kiali_fnez44j"
                   component="h6"
                 >
-                  Core ({{count}} issues) {"count":2}
+                  Core
                 </Text>
                 <div
                   className="kiali_f14rgqjc"
@@ -2215,7 +2303,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
             </React.Fragment>
           </React.Fragment>
           <div
-            className="kiali_f1kewvaf"
+            className="kiali_fpbzwk1"
           >
             <Link
               to="/mesh"
@@ -2289,6 +2377,11 @@ exports[`When there are not-ready components mixed with other not healthy compon
               >
                 <Text
                   component="h4"
+                  style={
+                    Object {
+                      "textAlign": "left",
+                    }
+                  }
                 >
                   Cluster Status
                 </Text>
@@ -2319,13 +2412,16 @@ exports[`When there are not-ready components mixed with other not healthy compon
                       <Star />
                     </span>
                   </div>
+                  <Divider
+                    className="kiali_f1s39s2g"
+                  />
                   <React.Fragment>
                     <React.Fragment>
                       <Text
                         className="kiali_fnez44j"
                         component="h6"
                       >
-                        Core ({{count}} issues) {"count":2}
+                        Core
                       </Text>
                       <div
                         className="kiali_f14rgqjc"
@@ -2354,7 +2450,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                   </React.Fragment>
                 </React.Fragment>
                 <div
-                  className="kiali_f1kewvaf"
+                  className="kiali_fpbzwk1"
                 >
                   <Link
                     to="/mesh"
@@ -2547,6 +2643,11 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
         >
           <Text
             component="h4"
+            style={
+              Object {
+                "textAlign": "left",
+              }
+            }
           >
             Cluster Status
           </Text>
@@ -2577,13 +2678,16 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                 <Star />
               </span>
             </div>
+            <Divider
+              className="kiali_f1s39s2g"
+            />
             <React.Fragment>
               <React.Fragment>
                 <Text
                   className="kiali_fnez44j"
                   component="h6"
                 >
-                  Core ({{count}} issues) {"count":1}
+                  Core
                 </Text>
                 <div
                   className="kiali_f14rgqjc"
@@ -2606,7 +2710,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
             </React.Fragment>
           </React.Fragment>
           <div
-            className="kiali_f1kewvaf"
+            className="kiali_fpbzwk1"
           >
             <Link
               to="/mesh"
@@ -2680,6 +2784,11 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
               >
                 <Text
                   component="h4"
+                  style={
+                    Object {
+                      "textAlign": "left",
+                    }
+                  }
                 >
                   Cluster Status
                 </Text>
@@ -2710,13 +2819,16 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                       <Star />
                     </span>
                   </div>
+                  <Divider
+                    className="kiali_f1s39s2g"
+                  />
                   <React.Fragment>
                     <React.Fragment>
                       <Text
                         className="kiali_fnez44j"
                         component="h6"
                       >
-                        Core ({{count}} issues) {"count":1}
+                        Core
                       </Text>
                       <div
                         className="kiali_f14rgqjc"
@@ -2739,7 +2851,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                   </React.Fragment>
                 </React.Fragment>
                 <div
-                  className="kiali_f1kewvaf"
+                  className="kiali_fpbzwk1"
                 >
                   <Link
                     to="/mesh"
@@ -2932,6 +3044,11 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
         >
           <Text
             component="h4"
+            style={
+              Object {
+                "textAlign": "left",
+              }
+            }
           >
             Cluster Status
           </Text>
@@ -2962,13 +3079,16 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                 <Star />
               </span>
             </div>
+            <Divider
+              className="kiali_f1s39s2g"
+            />
             <React.Fragment>
               <React.Fragment>
                 <Text
                   className="kiali_fnez44j"
                   component="h6"
                 >
-                  Add-ons ({{count}} issues) {"count":1}
+                  Add-ons
                 </Text>
                 <div
                   className="kiali_f14rgqjc"
@@ -2991,7 +3111,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
             </React.Fragment>
           </React.Fragment>
           <div
-            className="kiali_f1kewvaf"
+            className="kiali_fpbzwk1"
           >
             <Link
               to="/mesh"
@@ -3065,6 +3185,11 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
               >
                 <Text
                   component="h4"
+                  style={
+                    Object {
+                      "textAlign": "left",
+                    }
+                  }
                 >
                   Cluster Status
                 </Text>
@@ -3095,13 +3220,16 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                       <Star />
                     </span>
                   </div>
+                  <Divider
+                    className="kiali_f1s39s2g"
+                  />
                   <React.Fragment>
                     <React.Fragment>
                       <Text
                         className="kiali_fnez44j"
                         component="h6"
                       >
-                        Add-ons ({{count}} issues) {"count":1}
+                        Add-ons
                       </Text>
                       <div
                         className="kiali_f14rgqjc"
@@ -3124,7 +3252,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                   </React.Fragment>
                 </React.Fragment>
                 <div
-                  className="kiali_f1kewvaf"
+                  className="kiali_fpbzwk1"
                 >
                   <Link
                     to="/mesh"

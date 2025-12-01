@@ -18,7 +18,8 @@ import {
   TooltipPosition,
   Label,
   Button,
-  ButtonVariant
+  ButtonVariant,
+  Divider
 } from '@patternfly/react-core';
 import { IstioStatusList } from './IstioStatusList';
 import { PFColors } from '../Pf/PfColors';
@@ -114,6 +115,11 @@ const addonListStyle = kialiStyle({
 
 const coreListStyle = kialiStyle({
   paddingLeft: '0.75rem'
+});
+
+const dividerStyle = kialiStyle({
+  borderTop: `1px solid ${PFColors.Blue300}`,
+  marginTop: '0.5rem'
 });
 
 const labelStyle = kialiStyle({
@@ -361,6 +367,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
                       </span>
                     )}
                   </div>
+                  <Divider className={dividerStyle} />
                   {isExpanded && renderComponents(components, cl, showMeshGrouping)}
                 </React.Fragment>
               );
@@ -377,6 +384,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
                     </span>
                   )}
                 </div>
+                <Divider className={dividerStyle} />
                 {renderComponents(components, cl, showMeshGrouping)}
               </React.Fragment>
             );

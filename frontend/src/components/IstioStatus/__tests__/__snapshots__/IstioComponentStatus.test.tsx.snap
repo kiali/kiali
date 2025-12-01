@@ -13,8 +13,7 @@ exports[`IstioComponentStatus renders error icon when core component is not foun
       isito-ingress
     </SplitItem>
     <Label
-      className="kiali_f1hw2p41"
-      color="blue"
+      className="kiali_f1coht39"
       data-test="component-status-icon"
       icon={
         <Icon
@@ -23,6 +22,7 @@ exports[`IstioComponentStatus renders error icon when core component is not foun
           <ExclamationCircleIcon />
         </Icon>
       }
+      variant="outline"
     >
       Not found
     </Label>
@@ -43,8 +43,7 @@ exports[`IstioComponentStatus renders error icon when core component is not runn
       isito-ingress
     </SplitItem>
     <Label
-      className="kiali_f1hw2p41"
-      color="blue"
+      className="kiali_f1coht39"
       data-test="component-status-icon"
       icon={
         <Icon
@@ -53,6 +52,7 @@ exports[`IstioComponentStatus renders error icon when core component is not runn
           <ExclamationCircleIcon />
         </Icon>
       }
+      variant="outline"
     >
       Not healthy
     </Label>
@@ -73,8 +73,7 @@ exports[`IstioComponentStatus renders minus icon when addon component is not rea
       addon
     </SplitItem>
     <Label
-      className="kiali_f1hw2p41"
-      color="blue"
+      className="kiali_f1coht39"
       data-test="component-status-icon"
       icon={
         <Icon
@@ -83,6 +82,7 @@ exports[`IstioComponentStatus renders minus icon when addon component is not rea
           <MinusCircleIcon />
         </Icon>
       }
+      variant="outline"
     >
       Not ready
     </Label>
@@ -103,8 +103,7 @@ exports[`IstioComponentStatus renders minus icon when core component is not read
       core
     </SplitItem>
     <Label
-      className="kiali_f1hw2p41"
-      color="blue"
+      className="kiali_f1coht39"
       data-test="component-status-icon"
       icon={
         <Icon
@@ -113,6 +112,7 @@ exports[`IstioComponentStatus renders minus icon when core component is not read
           <MinusCircleIcon />
         </Icon>
       }
+      variant="outline"
     >
       Not ready
     </Label>
@@ -133,8 +133,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
       isito-ingress
     </SplitItem>
     <Label
-      className="kiali_f1hw2p41"
-      color="blue"
+      className="kiali_f1coht39"
       data-test="component-status-icon"
       icon={
         <Icon
@@ -143,6 +142,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
           <CheckCircleIcon />
         </Icon>
       }
+      variant="outline"
     >
       Healthy
     </Label>
@@ -163,8 +163,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
       prometheus
     </SplitItem>
     <Label
-      className="kiali_f1hw2p41"
-      color="blue"
+      className="kiali_f1coht39"
       data-test="component-status-icon"
       icon={
         <Icon
@@ -173,6 +172,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
           <CheckCircleIcon />
         </Icon>
       }
+      variant="outline"
     >
       Healthy
     </Label>
@@ -193,8 +193,7 @@ exports[`IstioComponentStatus renders warning icon when core component is not fo
       prometheus
     </SplitItem>
     <Label
-      className="kiali_f1hw2p41"
-      color="blue"
+      className="kiali_f1coht39"
       data-test="component-status-icon"
       icon={
         <Icon
@@ -203,6 +202,7 @@ exports[`IstioComponentStatus renders warning icon when core component is not fo
           <ExclamationTriangleIcon />
         </Icon>
       }
+      variant="outline"
     >
       Not found
     </Label>
@@ -223,8 +223,7 @@ exports[`IstioComponentStatus renders warning icon when core component is not ru
       prometheus
     </SplitItem>
     <Label
-      className="kiali_f1hw2p41"
-      color="blue"
+      className="kiali_f1coht39"
       data-test="component-status-icon"
       icon={
         <Icon
@@ -233,6 +232,7 @@ exports[`IstioComponentStatus renders warning icon when core component is not ru
           <ExclamationTriangleIcon />
         </Icon>
       }
+      variant="outline"
     >
       Not healthy
     </Label>
