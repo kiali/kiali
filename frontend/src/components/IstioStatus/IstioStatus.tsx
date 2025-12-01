@@ -10,7 +10,16 @@ import { KialiAppState } from '../../store/Store';
 import { istioStatusSelector, namespaceItemsSelector } from '../../store/Selectors';
 import { IstioStatusActions } from '../../actions/IstioStatusActions';
 import { connect } from 'react-redux';
-import { Text, TextVariants, TextContent, Tooltip, TooltipPosition, Label } from '@patternfly/react-core';
+import {
+  Text,
+  TextVariants,
+  TextContent,
+  Tooltip,
+  TooltipPosition,
+  Label,
+  Button,
+  ButtonVariant
+} from '@patternfly/react-core';
 import { IstioStatusList } from './IstioStatusList';
 import { PFColors } from '../Pf/PfColors';
 import {
@@ -31,6 +40,8 @@ import { homeCluster } from '../../config';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
 
 export type ClusterStatusMap = { [cluster: string]: ComponentStatus[] };
+
+const ISSUE_COUNT_THRESHOLD = 3;
 
 type ReduxStateProps = {
   namespaces?: Namespace[];
@@ -115,8 +126,9 @@ const labelStyle = kialiStyle({
 
 export const meshLinkStyle = kialiStyle({
   display: 'flex',
-  justifyContent: 'center',
+  justifyContent: 'flex-start',
   marginTop: '0.75rem',
+  textAlign: 'left',
   $nest: {
     '& > span': {
       marginRight: '0.5rem'
@@ -127,6 +139,7 @@ export const meshLinkStyle = kialiStyle({
 export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
   const { pathname } = useLocation();
+  const [expandedClusters, setExpandedClusters] = React.useState<Set<string>>(new Set());
 
   const { namespaces, setIstioStatus, lastRefreshAt } = props;
 
@@ -178,29 +191,31 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   };
 
   const allHealthy = healthyComponents();
-  const sortedClusters = Object.keys(props.statusMap)
-    .filter(cl => {
-      // When all components are healthy, show all clusters
-      // When there are failures, only show clusters with failures
-      if (allHealthy) {
-        return true;
-      }
-      const components = props.statusMap[cl] || [];
-      return components.some(comp => comp.status !== Status.Healthy);
-    })
-    .sort((a, b) => {
-      // Prioritize home cluster if it has failures
-      const isHomeA = a === homeCluster?.name;
-      const isHomeB = b === homeCluster?.name;
-      if (isHomeA && !isHomeB) return -1;
-      if (!isHomeA && isHomeB) return 1;
+  const sortedClusters = React.useMemo(() => {
+    return Object.keys(props.statusMap)
+      .filter(cl => {
+        // When all components are healthy, show all clusters
+        // When there are failures, only show clusters with failures
+        if (allHealthy) {
+          return true;
+        }
+        const components = props.statusMap[cl] || [];
+        return components.some(comp => comp.status !== Status.Healthy);
+      })
+      .sort((a, b) => {
+        // Prioritize home cluster if it has failures
+        const isHomeA = a === homeCluster?.name;
+        const isHomeB = b === homeCluster?.name;
+        if (isHomeA && !isHomeB) return -1;
+        if (!isHomeA && isHomeB) return 1;
 
-      // Otherwise sort by severity
-      const worstA = getSeverity(props.statusMap[a]);
-      const worstB = getSeverity(props.statusMap[b]);
-      return worstB - worstA;
-    })
-    .slice(0, allHealthy ? 5 : 2); // Show 5 clusters when healthy, top 2 when there are failures
+        // Otherwise sort by severity
+        const worstA = getSeverity(props.statusMap[a]);
+        const worstB = getSeverity(props.statusMap[b]);
+        return worstB - worstA;
+      })
+      .slice(0, 5); // Show 5 clusters
+  }, [props.statusMap, allHealthy]);
 
   // Check if there are multiple distinct meshes across all components
   const hasMultipleMeshes = (): boolean => {
@@ -257,15 +272,22 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     // Always combine core and mesh, core first, then mesh
     const combinedCoreMesh = [...sortedCore, ...sortedMesh];
     const combinedCount = coreCount + meshCount;
-    const displayCoreMesh = combinedCoreMesh.slice(0, 3);
-    const displayAddon = sortedAddon.slice(0, 2);
+    const displayCoreMesh = combinedCoreMesh.slice(0, ISSUE_COUNT_THRESHOLD);
+    const displayAddon = sortedAddon.slice(0, ISSUE_COUNT_THRESHOLD);
+
+    const formatLabel = (baseLabel: string, count: number): string => {
+      if (count > ISSUE_COUNT_THRESHOLD) {
+        return t(`${baseLabel} ({{count}} issues)`, { count });
+      }
+      return t(baseLabel);
+    };
 
     return (
       <>
         {displayCoreMesh.length > 0 && (
           <>
             <Text component={TextVariants.h6} className={coreLabelStyle}>
-              {t(isMultiMesh ? 'Mesh ({{count}} issues)' : 'Core ({{count}} issues)', { count: combinedCount })}
+              {formatLabel(isMultiMesh ? 'Mesh' : 'Core', combinedCount)}
             </Text>
             <div className={coreListStyle}>
               <IstioStatusList status={displayCoreMesh} cluster={cluster} />
@@ -275,7 +297,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
         {displayAddon.length > 0 && (
           <>
             <Text component={TextVariants.h6} className={addonLabelStyle}>
-              {t('Add-ons ({{count}} issues)', { count: addonCount })}
+              {formatLabel('Add-ons', addonCount)}
             </Text>
             <div className={addonListStyle}>
               <IstioStatusList status={displayAddon} cluster={cluster} />
@@ -286,15 +308,63 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     );
   };
 
+  // Initialize first cluster as expanded when clusters change
+  React.useEffect(() => {
+    setExpandedClusters(prev => {
+      // Only initialize if we have multiple clusters and nothing is expanded yet
+      if (sortedClusters.length > 1 && prev.size === 0) {
+        return new Set([sortedClusters[0]]);
+      }
+      return prev;
+    });
+  }, [sortedClusters]);
+
+  const toggleCluster = (clusterName: string): void => {
+    setExpandedClusters(prev => {
+      // If clicking on an already expanded cluster, collapse it
+      if (prev.has(clusterName)) {
+        return new Set();
+      }
+      // Otherwise, expand only this cluster (accordion behavior)
+      return new Set([clusterName]);
+    });
+  };
+
   const tooltipContent = (): React.ReactNode => {
     const showMeshGrouping = hasMultipleMeshes();
+    const hasMultipleClusters = sortedClusters.length > 1;
 
     return (
       <>
         <TextContent style={{ color: PFColors.White }}>
-          <Text component={TextVariants.h4}>{t('Cluster Status')}</Text>
+          <Text component={TextVariants.h4} style={{ textAlign: 'left' }}>
+            {t('Cluster Status')}
+          </Text>
           {sortedClusters.map(cl => {
             const components = props.statusMap[cl] || [];
+            const isExpanded = expandedClusters.has(cl);
+
+            if (hasMultipleClusters) {
+              return (
+                <React.Fragment key={cl}>
+                  <div className={clusterStyle} onClick={() => toggleCluster(cl)}>
+                    <Button
+                      variant={ButtonVariant.plain}
+                      style={{ padding: 0, marginRight: '0.25rem', color: PFColors.White }}
+                      icon={isExpanded ? <KialiIcon.AngleDown /> : <KialiIcon.AngleRight />}
+                    />
+                    <PFBadge badge={PFBadges.Cluster} size="sm" />
+                    {cl}
+                    {cl === homeCluster?.name && (
+                      <span style={{ marginLeft: '0.25rem' }}>
+                        <KialiIcon.Star />
+                      </span>
+                    )}
+                  </div>
+                  {isExpanded && renderComponents(components, cl, showMeshGrouping)}
+                </React.Fragment>
+              );
+            }
 
             return (
               <React.Fragment key={cl}>

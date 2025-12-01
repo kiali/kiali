@@ -52,9 +52,13 @@ const splitItemStyle = kialiStyle({
 
 const labelStyle = kialiStyle({
   height: '1.25rem',
+  backgroundColor: 'var(--pf-v6-c-label--m-outline--BackgroundColor, transparent)',
   $nest: {
     '& .pf-v5-c-label__icon': {
       marginRight: '0.125rem'
+    },
+    '& .pf-v5-c-label__content': {
+      color: '#FFFFFF'
     }
   }
 });
@@ -62,12 +66,18 @@ const labelStyle = kialiStyle({
 export const IstioComponentStatus: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
 
-  const renderIcon = (status: Status, isCore: boolean): React.ReactNode => {
+  const getIcon = (status: Status, isCore: boolean): IconProps => {
     let compIcon = validToIcon[`${status === Status.Healthy}-${isCore}`];
 
     if (status === Status.NotReady) {
       compIcon = NotReadyComponent;
     }
+
+    return compIcon;
+  };
+
+  const renderIcon = (status: Status, isCore: boolean): React.ReactNode => {
+    let compIcon = getIcon(status, isCore);
 
     compIcon.className = kialiStyle({
       marginTop: '0.25rem'
@@ -85,7 +95,7 @@ export const IstioComponentStatus: React.FC<Props> = (props: Props) => {
         <Label
           className={labelStyle}
           data-test="component-status-icon"
-          color="blue"
+          variant={'outline'}
           icon={renderIcon(props.componentStatus.status, props.componentStatus.isCore)}
         >
           {t(statusMsg[comp.status])}
