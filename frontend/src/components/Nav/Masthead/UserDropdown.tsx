@@ -180,6 +180,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
                 onClick={() => this.onDropdownToggle(!isDropdownOpen)}
                 className={dropdownStyle}
                 isExpanded={isDropdownOpen}
+                variant="plainText"
               >
                 {this.props.session?.username}
               </MenuToggle>
