@@ -23,13 +23,13 @@ const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
 Then('user sees trace information', () => {
   openTab('Traces');
 
-  cy.getBySel('tracing-scatterplot');
+  cy.getBySel('tracing-scatterplot', { timeout: 120000 }).should('be.visible');
 
   // Ensures a trace hasn't been clicked on yet.
   cy.getBySel('trace-details-tabs').should('not.exist');
 
-  // Ensures traces have loaded.
-  cy.getBySel('tracing-scatterplot').contains('Traces');
+  // Ensures traces have loaded
+  cy.getBySel('tracing-scatterplot', { timeout: 120000 }).contains('Traces', { timeout: 120000 });
 });
 
 Then('user see no traces', () => {

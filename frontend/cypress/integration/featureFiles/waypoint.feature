@@ -43,6 +43,7 @@ Feature: Kiali Waypoint related features
     Then the user cannot see the "missing-sidecar" badge for "waypoint" workload in "bookinfo" namespace
     And the proxy status is "info" with "RDS: IGNORED" details
     And the user can see the "K8sGateway-bookinfo-waypoint" istio config and badge "pfbadge-G"
+    And traces are available for waypoint workload "waypoint" in namespace "bookinfo"
     And user sees trace information
     When user selects a trace
     Then user sees trace details

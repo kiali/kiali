@@ -105,6 +105,42 @@ const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: strin
   wait(0);
 };
 
+// waitForWorkloadTraces waits until traces are available for a specific workload
+// This is especially important for waypoint workloads where traces may take longer to appear
+const waitForWorkloadTraces = (name: string, namespace: string, cluster?: string): void => {
+  const maxRetries = 30;
+  // Get traces from the last 5 minutes
+  // Date.now() returns milliseconds, API expects microseconds, so multiply by 1000
+  const tracesDate = (Date.now() - 300000) * 1000; // Convert to microseconds
+  let url = `/api/namespaces/${namespace}/workloads/${name}/traces?startMicros=${tracesDate}&tags=&limit=100`;
+  if (cluster) {
+    url += `&cluster=${cluster}`;
+  }
+
+  const wait = (retryCount: number): void => {
+    if (retryCount >= maxRetries) {
+      throw new Error(
+        `Traces not available for workload ${name} in namespace ${namespace} after ${maxRetries} retries`
+      );
+    }
+    cy.request({
+      method: 'GET',
+      url: url,
+      failOnStatusCode: false
+    }).then(response => {
+      if (response.status === 200 && response.body?.data && response.body.data.length > 0) {
+        // Traces are available
+        return;
+      }
+
+      return cy.wait(10000).then(() => {
+        return wait(retryCount + 1);
+      });
+    });
+  };
+  wait(0);
+};
+
 Then('all waypoints are healthy', () => {
   cy.exec(
     `kubectl get deployments -A -l gateway.istio.io/managed=istio.io-mesh-controller -o jsonpath='{range .items[*]}{.metadata.name}/{.metadata.namespace} {end}'`
@@ -293,4 +329,8 @@ When('{string} badge {string}', (badge, option: string) => {
   }
 
   cy.get(`[data-test="${badgeSelector}"]`).should(selector);
+});
+
+Then('traces are available for waypoint workload {string} in namespace {string}', (name: string, namespace: string) => {
+  waitForWorkloadTraces(name, namespace);
 });
