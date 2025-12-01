@@ -2,9 +2,9 @@
 
 ## Current Status
 
-- **Phase**: 1 - Discovery & Research
-- **Status**: Phase 1 Complete - Approach Selected
-- **Last Updated**: 2025-11-19 (Session End)
+- **Phase**: 2 - Requirements Definition
+- **Status**: Phase 2 Complete - Under Review
+- **Last Updated**: 2025-11-25 (Session Paused)
 
 ## Project Overview
 
@@ -88,33 +88,95 @@ _(None yet - will document any failed approaches to avoid repetition)_
   - Addresses cardinality by only exporting computed health status
   - Maximum staleness: 2 minutes (configurable)
 
+## Current Phase Progress
+
+### Phase 2: Requirements Definition
+
+**Goal**: Define detailed requirements for Approach 5 implementation
+
+**Completed**:
+
+- ✅ Created PHASE2_REQUIREMENTS.md (comprehensive 700+ line document)
+- ✅ Defined 6 functional requirements covering all aspects
+- ✅ Designed cache structure (keys, values, expiration)
+- ✅ Specified 7 Prometheus metrics (3 health + 4 operational)
+- ✅ Documented API contracts (zero breaking changes guarantee)
+- ✅ Created configuration schema with 7 parameters
+- ✅ Designed HealthCacheService architecture
+- ✅ Identified 5 integration points with existing code
+- ✅ Defined 5 non-functional requirements
+- ✅ Created 8 detailed acceptance criteria
+- ✅ Designed comprehensive test strategy
+- ✅ Broke implementation into 5 phases with time estimates
+
+**Key Discovery**:
+- Confirmed health data is NOT currently stored anywhere
+- Everything computed fresh on every request
+- Clean slate for implementation (no legacy code to migrate)
+
+**Quality Gates Status**:
+
+- ✅ All functional requirements defined and documented
+- ✅ Cache design complete with key format and structure
+- ✅ Metrics specification complete with cardinality analysis
+- ✅ API contracts guaranteed (zero breaking changes)
+- ✅ Configuration schema defined and validated
+- ✅ Acceptance criteria established (8 major criteria)
+- ✅ Test strategy defined (unit, integration, performance, manual)
+- ✅ Implementation broken into manageable phases
+
+**Open Questions** (need decisions before implementation):
+
+1. Cache miss behavior: Return 503 vs fallback? (Recommend: 503)
+2. Metrics cardinality limits: How to handle? (Recommend: assume OK initially)
+3. Historical queries: Support queryTime? (Recommend: not in Phase 1)
+4. ✅ **DECIDED**: Rate intervals - Dynamically calculated from refresh interval
+   - If refresh_interval=2m, use rate_interval="2m" for Prometheus queries
+   - User-requested rateInterval parameter ignored (returns cached data)
+   - Simplifies cache key (no rateInterval dimension)
+5. Feature flag: Enabled by default? (Recommend: yes)
+
 ## Notes for Next Session
 
-**Phase 1 Complete! Ready for Phase 2.**
+**Phase 2 Complete - Under Review**
 
-When resuming, say **"Start session"** or **"Transition to Phase 2"**
+User is reviewing requirements document. When resuming, say **"Start session"** and continue review or proceed to Phase 3.
 
-### What's Been Decided:
+**Recent Changes** (2025-11-25):
+- ✅ Simplified cache key: removed rateInterval (now `health:{cluster}:{namespace}:{type}`)
+- ✅ Made rate interval dynamic: calculated from refresh_interval
+- ✅ Added `rate_interval_strategy` configuration option
+- ✅ Clarified API behavior: user-requested rateInterval parameter is ignored
+- ✅ Updated all sections to reflect dynamic rate interval approach
 
-- ✅ Approach 5 selected (Metrics-Based Background Pre-Computation)
-- ✅ Core requirement: No cache misses, always pre-computed health
-- ✅ Architectural requirement: Historical data preservation via Prometheus metrics
-- ✅ All Phase 1 documents complete and updated
+When resuming, say **"Start session"** or **"Continue reviewing requirements"**
 
-### Phase 2 Will Define:
+### What's Been Defined:
 
-1. Functional requirements (current + future historical queries)
-2. Metrics specification (exact format, labels, values)
-3. Cache structure and key design
-4. Prometheus integration details
-5. API contracts (zero breaking changes)
-6. Configuration schema (refresh interval, etc.)
-7. Acceptance criteria
-8. Test strategy
+- ✅ Complete requirements document (PHASE2_REQUIREMENTS.md)
+- ✅ Cache design: `health:{cluster}:{namespace}:{type}` (simplified - no rateInterval)
+- ✅ Rate interval dynamically calculated from refresh interval (e.g., refresh=2m → rate=2m)
+- ✅ 3 health metrics + 4 operational metrics
+- ✅ HealthCacheService architecture
+- ✅ 5-phase implementation plan
+- ✅ Comprehensive test strategy
+
+### Phase 3 Will Define:
+
+1. File-by-file implementation plan
+2. Detailed code structure for each component
+3. Complete interface definitions
+4. Data flow diagrams
+5. Step-by-step implementation guide
+6. Migration/rollout plan
+7. Monitoring and alerting setup
 
 ### Quick Reference:
 
 - **Selected Approach**: Approach 5 (Metrics-Based Background Pre-Computation)
-- **Development Estimate**: 4-5 days
-- **Max Staleness**: 2 minutes (configurable)
-- **Metric Cardinality**: ~45k time series (manageable)
+- **Development Estimate**: 4-5 days (Phase 1: 2d, Phase 2: 1d, Phase 3: 1d, Phase 4: 1d, Phase 5: 0.5-1d)
+- **Cache Key Format**: `health:{cluster}:{namespace}:{type}`
+- **Refresh Interval**: 2 minutes (configurable)
+- **Cache Expiration**: 6 minutes (3x refresh interval)
+- **Max Staleness**: 2 minutes
+- **Metric Cardinality**: ~15k-45k time series (manageable)
