@@ -1453,7 +1453,7 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 // fileExists checks if a file exists and is not a directory.
 func fileExists(filename string) bool {
 	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
+	if err != nil {
 		return false
 	}
 	return !info.IsDir()
@@ -1641,7 +1641,9 @@ func Validate(conf *Config) error {
 	// Check the ciphering key for sessions
 	signingKey := conf.LoginToken.SigningKey
 	// If signing key is a file path, read the actual content for validation
-	if actualKey, err := ReadCredential(signingKey); err == nil {
+	if actualKey, err := ReadCredential(signingKey); err != nil {
+		return err
+	} else {
 		signingKey = actualKey
 	}
 	if err := validateSigningKey(signingKey, auth.Strategy); err != nil {
