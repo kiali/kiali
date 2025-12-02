@@ -32,6 +32,7 @@ STERN="false"
 TEMPO="false"
 TEST_SUITE="${BACKEND}"
 TESTS_ONLY="false"
+WAYPOINT="false"
 WITH_VIDEO="false"
 
 # process command line args
@@ -114,6 +115,14 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
+    -w|--waypoint)
+      WAYPOINT="${2}"
+      if [ "${WAYPOINT}" != "true" -a "${WAYPOINT}" != "false" ]; then
+        echo "--waypoint option must be one of 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
     -wv|--with-video)
       WITH_VIDEO="${2}"
       if [ "${WITH_VIDEO}" != "true" -a "${WITH_VIDEO}" != "false" ]; then
@@ -162,6 +171,9 @@ Valid command line arguments:
   -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_CORE_1}|${FRONTEND_CORE_2}|${FRONTEND_CORE_OPTIONAL}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_MULTI_MESH}|${FRONTEND_MULTIPLE_CONTROLPLANES}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${LOCAL}|${OFFLINE}>
     Which test suite to run.
     Default: ${BACKEND}
+  -w|--waypoint <true|false>
+    If true, configure waypoint for bookinfo namespace in ambient multi-primary setup.
+    Default: false
   -wv|--with-video <true|false>
     If true, will record video for the cypress test run.
     Default: ${WITH_VIDEO}
@@ -204,6 +216,7 @@ SETUP_ONLY=$SETUP_ONLY
 STERN=$STERN
 TESTS_ONLY=$TESTS_ONLY
 TEST_SUITE=$TEST_SUITE
+WAYPOINT=$WAYPOINT
 WITH_VIDEO=$WITH_VIDEO
 TEMPO=$TEMPO
 === SETTINGS ===
@@ -631,8 +644,14 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
      CLUSTER2_AMBIENT_ARG=""
   fi
 
+  if [ "${WAYPOINT}" == "true" ]; then
+     WAYPOINT_ARG="--waypoint true"
+  else
+     WAYPOINT_ARG=""
+  fi
+
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy ${AUTH_STRATEGY} ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG $AMBIENT_ARG $CLUSTER2_AMBIENT_ARG
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy ${AUTH_STRATEGY} ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG $AMBIENT_ARG $CLUSTER2_AMBIENT_ARG $WAYPOINT_ARG
   fi
 
   ensureKialiServerReady

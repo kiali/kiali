@@ -202,6 +202,9 @@ AMBIENT="${AMBIENT:-false}"
 # If cluster 2 should use ambient (only valid when AMBIENT is true)
 # Default: true (both clusters use ambient when AMBIENT is true)
 CLUSTER2_AMBIENT="${CLUSTER2_AMBIENT:-true}"
+# If waypoint should be configured for bookinfo namespace (only valid when AMBIENT is true)
+# Default: false
+WAYPOINT="${WAYPOINT:-false}"
 
 # Use groups for OpenId authorization (single cluster)
 AUTH_GROUPS="${AUTH_GROUPS:-}"
@@ -536,6 +539,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     -te|--tempo)
       TEMPO="$2"
+      shift;shift
+      ;;
+    -w|--waypoint)
+      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--waypoint must be 'true' or 'false'" && exit 1
+      WAYPOINT="$2"
       shift;shift
       ;;
     -h|--help)

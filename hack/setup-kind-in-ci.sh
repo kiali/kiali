@@ -100,6 +100,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -s|--sail)                     SAIL="true";              shift;shift; ;;
     -te|--tempo)                   TEMPO="$2";               shift;shift; ;;
+    -w|--waypoint)                 WAYPOINT="$2";            shift;shift; ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
 done
@@ -576,6 +577,12 @@ setup_kind_multicluster() {
   else
     CLUSTER2_AMBIENT_ARG=()
   fi
+  # Build waypoint argument properly for array expansion
+  if [ "${WAYPOINT}" == "true" ]; then
+    WAYPOINT_ARG=(--waypoint true)
+  else
+    WAYPOINT_ARG=()
+  fi
 
   local cluster1_context
   local cluster2_context
@@ -615,22 +622,22 @@ setup_kind_multicluster() {
       -kas "${kiali_auth_strategy}"
     )
     if [ -n "${MEMORY_REQUEST_ARG}" ]; then
-      # MEMORY_REQUEST_ARG contains multiple words (e.g., "-krm 1Gi"), so expand it properly
+      # MEMORY_REQUEST_ARG contains multiple words (e.g., "-krm 1Gi")
       install_args+=(${MEMORY_REQUEST_ARG})
     fi
     if [ -n "${MEMORY_LIMIT_ARG}" ]; then
-      # MEMORY_LIMIT_ARG contains multiple words (e.g., "-kml 1Gi"), so expand it properly
+      # MEMORY_LIMIT_ARG contains multiple words (e.g., "-kml 1Gi")
       install_args+=(${MEMORY_LIMIT_ARG})
     fi
-    # AMBIENT_ARG is already an array, so expand it properly
     if [ ${#AMBIENT_ARG[@]} -gt 0 ]; then
       install_args+=("${AMBIENT_ARG[@]}")
     fi
-    # CLUSTER2_AMBIENT_ARG is already an array, so expand it properly
     if [ ${#CLUSTER2_AMBIENT_ARG[@]} -gt 0 ]; then
       install_args+=("${CLUSTER2_AMBIENT_ARG[@]}")
     fi
-    # kind_node_image, hub_arg, and istio_version_arg are already arrays, so expand them properly
+    if [ ${#WAYPOINT_ARG[@]} -gt 0 ]; then
+      install_args+=("${WAYPOINT_ARG[@]}")
+    fi
     if [ ${#kind_node_image[@]} -gt 0 ]; then
       install_args+=("${kind_node_image[@]}")
     fi
