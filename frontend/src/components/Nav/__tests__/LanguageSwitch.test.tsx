@@ -26,13 +26,17 @@ describe('Language switch', () => {
     const wrapper = mount(<LanguageSwitchComponent language={Language.CHINESE} />);
 
     // click menu toggle
-    wrapper.find(MenuToggle).simulate('click');
+    const toggle = wrapper.find(MenuToggle).find('button').first();
+    toggle.simulate('click');
+    wrapper.update();
 
     // select English option
-    wrapper
-      .findWhere(node => node.key() === 'english')
-      .findWhere(node => node.type() === 'button')
-      .simulate('click');
+    const englishOption = wrapper
+      .find('SelectOption')
+      .filterWhere(node => node.prop('value') === Language.ENGLISH)
+      .find('button')
+      .first();
+    englishOption.simulate('click');
 
     // wait a few ms for the language to be modified
     await delay(100);
@@ -44,13 +48,17 @@ describe('Language switch', () => {
     const wrapper = mount(<LanguageSwitchComponent language={Language.ENGLISH} />);
 
     // click menu toggle
-    wrapper.find(MenuToggle).simulate('click');
+    const toggle = wrapper.find(MenuToggle).find('button').first();
+    toggle.simulate('click');
+    wrapper.update();
 
-    // select Chinese option
-    wrapper
-      .findWhere(node => node.key() === 'spanish')
-      .findWhere(node => node.type() === 'button')
-      .simulate('click');
+    // select Spanish option
+    const spanishOption = wrapper
+      .find('SelectOption')
+      .filterWhere(node => node.prop('value') === Language.SPANISH)
+      .find('button')
+      .first();
+    spanishOption.simulate('click');
 
     // wait a few ms for the language to be modified
     await delay(100);
@@ -62,13 +70,17 @@ describe('Language switch', () => {
     const wrapper = mount(<LanguageSwitchComponent language={Language.ENGLISH} />);
 
     // click menu toggle
-    wrapper.find(MenuToggle).simulate('click');
+    const toggle = wrapper.find(MenuToggle).find('button').first();
+    toggle.simulate('click');
+    wrapper.update();
 
     // select Chinese option
-    wrapper
-      .findWhere(node => node.key() === 'chinese')
-      .findWhere(node => node.type() === 'button')
-      .simulate('click');
+    const chineseOption = wrapper
+      .find('SelectOption')
+      .filterWhere(node => node.prop('value') === Language.CHINESE)
+      .find('button')
+      .first();
+    chineseOption.simulate('click');
 
     // wait a few ms for the language to be modified
     await delay(100);

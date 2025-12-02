@@ -1,8 +1,5 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
-const ACTIVE_COLOR = 'rgb(0, 102, 204)';
-const INACTIVE_COLOR = 'rgb(21, 21, 21)';
-
 const buttonClick = (id: string): void => {
   cy.get(`button#${id}`).click();
 };
@@ -10,26 +7,42 @@ const buttonClick = (id: string): void => {
 const buttonPrepare = (id: string, active: boolean): void => {
   cy.waitForReact();
 
-  cy.get(`button#${id} > span.pf-v6-c-icon`)
-    .should('have.length', '1')
-    .then(el => {
-      cy.log(el.css('color'));
-      if (el.css('color') !== (active ? ACTIVE_COLOR : INACTIVE_COLOR)) {
-        buttonClick(id);
-      }
-    });
+  // Check that button has a span.pf-v6-c-icon child with length 1
+  cy.get(`button#${id} span.pf-v6-c-icon`)
+    .should('have.length', '1');
+
+  // Check if current state matches desired state by looking at pf-m-custom class
+  cy.get(`button#${id} span.pf-v6-c-icon span.pf-v6-c-icon__content`).then($content => {
+    const hasCustomClass = $content.hasClass('pf-m-custom');
+    // If state doesn't match, click to toggle
+    if (hasCustomClass !== active) {
+      buttonClick(id);
+    }
+  });
 };
 
 const buttonState = (id: string, active: boolean): void => {
   cy.waitForReact();
 
-  cy.get(`button#${id} > span.pf-v6-c-icon`)
-    .should('have.length', '1')
-    .should('have.css', 'color', `${active ? ACTIVE_COLOR : INACTIVE_COLOR}`);
+  // Check that button has a span.pf-v6-c-icon child with length 1
+  cy.get(`button#${id} span.pf-v6-c-icon`)
+    .should('have.length', '1');
+
+  // Inside span.pf-v6-c-icon, check if span.pf-v6-c-icon__content has pf-m-custom class
+  if (active) {
+    // Active: span should have both pf-v6-c-icon__content and pf-m-custom classes
+    cy.get(`button#${id} span.pf-v6-c-icon span.pf-v6-c-icon__content`)
+      .should('have.class', 'pf-m-custom');
+  } else {
+    // Inactive: span should have pf-v6-c-icon__content but NOT pf-m-custom
+    cy.get(`button#${id} span.pf-v6-c-icon span.pf-v6-c-icon__content`)
+      .should('not.have.class', 'pf-m-custom');
+  }
 };
 
+// Need to Fix. aria-disabled is not the correct attribute to check if the button is enabled in PF6
 Then('the toggle button {string} is enabled', (id: string) => {
-  cy.get(`button#${id}`).should('have.attr', 'aria-disabled', 'false');
+  cy.get(`button#${id}`).should('be.enabled');
 });
 
 When('the button {string} is clicked', (id: string) => {

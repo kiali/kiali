@@ -2,6 +2,7 @@ import { After, Given, Then, When } from '@badeball/cypress-cucumber-preprocesso
 import { colExists, getColWithRowText } from './table';
 import { ensureKialiFinishedLoading } from './transition';
 import { getGVKTypeString } from 'utils/IstioConfigUtils';
+import { gvkType } from 'types/IstioConfigList';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
@@ -586,9 +587,9 @@ Then('only {string} objects are visible in the {string} namespace', (sees: strin
 
   cy.request({
     method: 'GET',
-    url: `/api/namespaces/${ns}/istio?objects=${getGVKTypeString(sees)}&validate=true`
+    url: `/api/namespaces/${ns}/istio?objects=${getGVKTypeString(sees as gvkType)}&validate=true`
   }).then(response => {
-    count = response.body['resources'][getGVKTypeString(sees)].length;
+    count = response.body['resources'][getGVKTypeString(sees as gvkType)].length;
   });
 
   cy.get('tbody').contains('tr', sees);
@@ -652,12 +653,12 @@ Then('the AuthorizationPolicy should have a {string}', function (healthStatus: s
   );
 });
 
-const hexToRgb = (hex: string): string => {
-  const rValue = parseInt(hex.substring(0, 2), 16);
-  const gValue = parseInt(hex.substring(2, 4), 16);
-  const bValue = parseInt(hex.substring(4), 16);
-
-  return `rgb(${rValue}, ${gValue}, ${bValue})`;
+const severityIconSelectors: Record<string, string> = {
+  correct: 'icon-correct-validation',
+  danger: 'icon-error-validation',
+  error: 'icon-error-validation',
+  success: 'icon-correct-validation',
+  warning: 'icon-warning-validation'
 };
 
 function waitUntilConfigIsVisible(
@@ -667,57 +668,56 @@ function waitUntilConfigIsVisible(
   namespace: string,
   healthStatus: string
 ): void {
+  const rowSelector = `[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}]`;
   cy.request({ method: 'GET', url: `${Cypress.config('baseUrl')}/api/istio/config?refresh=0` });
   cy.get('[data-test="refresh-button"]').click();
   ensureKialiFinishedLoading();
 
+  const retryOrFail = (): void => {
+    if (retries === 0) {
+      throw new Error(`Condition not met after retries`);
+    }
+
+    cy.wait(10000).then(() => waitUntilConfigIsVisible(retries - 1, crdInstanceName, crdName, namespace, healthStatus));
+  };
+
   const shouldNA = healthStatus.includes('N/A');
-  let found = false;
-  cy.get('tr')
-    .each($row => {
-      const dataTestAttr = $row[0].attributes.getNamedItem('data-test');
-      const hasNA = $row[0].innerText.includes('N/A');
+  const normalizedStatus = healthStatus.toLowerCase();
 
-      if (dataTestAttr !== null) {
-        if (shouldNA) {
-          // Check if the row exists and contains healthStatus text (expected to be N/A)
-          cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}]`)
-            .should('be.visible')
-            .then(foundRow => {
-              if (foundRow.text().includes(healthStatus)) {
-                found = true;
-              }
-            });
-        } else if (dataTestAttr.value === `VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}` && !hasNA) {
-          // Check if the health status icon is correct
-          cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}] span.pf-v6-c-icon`)
-            .should('be.visible')
-            .then(icon => {
-              const colorVar = `--pf-v5-global--${healthStatus}-color--100`;
-              const statusColor = getComputedStyle(icon[0]).getPropertyValue(colorVar).replace('#', '');
+  cy.get('body').then($body => {
+    const row = $body.find(rowSelector);
 
-              cy.wrap(icon[0])
-                .invoke('css', 'color')
-                .then(iconColor => {
-                  // Convert the status color to RGB format to compare it with the icon color
-                  if (iconColor?.toString() === hexToRgb(statusColor)) {
-                    found = true;
-                  }
-                });
-            });
-        }
+    if (row.length === 0) {
+      retryOrFail();
+      return;
+    }
+
+    if (shouldNA) {
+      if (row.text().includes(healthStatus)) {
+        return;
       }
-    })
-    .then(() => {
-      if (!found) {
-        if (retries === 0) {
-          throw new Error(`Condition not met after retries`);
-        } else {
-          cy.wait(10000);
-          waitUntilConfigIsVisible(retries - 1, crdInstanceName, crdName, namespace, healthStatus);
-        }
+
+      retryOrFail();
+      return;
+    }
+
+    if (row.text().includes('N/A')) {
+      retryOrFail();
+      return;
+    }
+
+    const iconDataTest = severityIconSelectors[normalizedStatus];
+
+    if (iconDataTest) {
+      if (row.find(`[data-test="${iconDataTest}"]`).length > 0) {
+        return;
       }
-    });
+    } else if (row.text().toLowerCase().includes(normalizedStatus)) {
+      return;
+    }
+
+    retryOrFail();
+  });
 }
 
 Then(

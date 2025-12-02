@@ -119,7 +119,53 @@ When('user sees the {string} wizard', (title: string) => {
 });
 
 When('user clicks in the {string} tab', (tab: string) => {
-  cy.get(`button[data-test="${tab}"]`).click();
+  const tabSelector = `button[data-test="${tab}"]`;
+
+  const scrollTabs = (direction: 'right' | 'left' = 'right'): Cypress.Chainable<boolean> => {
+    const ariaLabel = direction === 'right' ? 'Scroll right' : 'Scroll left';
+    return cy.get('body').then($body => {
+      const button = $body.find(`button[aria-label="${ariaLabel}"]`).last();
+
+      if (button.length > 0) {
+        cy.wrap(button).click({ force: true });
+        return true;
+      }
+
+      return false;
+    });
+  };
+
+  const ensureTabVisible = (attemptsLeft = 5): Cypress.Chainable<JQuery<HTMLElement>> => {
+    return cy.get(tabSelector).then($tabs => {
+      const $visibleTab = $tabs.filter(':visible');
+
+      if ($visibleTab.length > 0) {
+        return cy.wrap($visibleTab.first());
+      }
+
+      if (attemptsLeft === 0) {
+        cy.log(`Tab "${tab}" is not visible after retries, forcing click`);
+        return cy.wrap($tabs.first());
+      }
+
+      return scrollTabs('right').then(scrolled => {
+        if (!scrolled) {
+          return scrollTabs('left').then(scrolledLeft => {
+            if (!scrolledLeft) {
+              cy.log(`No scroll buttons found for tab "${tab}", using fallback click`);
+              return cy.wrap($tabs.first());
+            }
+
+            return ensureTabVisible(attemptsLeft - 1);
+          });
+        }
+
+        return ensureTabVisible(attemptsLeft - 1);
+      });
+    });
+  };
+
+  ensureTabVisible().click({ force: true });
 });
 
 When('user clicks in the {string} request matching dropdown', (select: string) => {
@@ -244,7 +290,8 @@ When('user clicks on {string} Advanced Options', (action: string) => {
 });
 
 When('user clicks on Add Gateway', () => {
-  cy.get('input[id="advanced-gwSwitch"]').next().click();
+  cy.get('input[id="advanced-gwSwitch"]').should('exist').check({ force: true });
+  cy.get('input[id="advanced-gwSwitch"]').should('be.checked');
 });
 
 When('user selects Create Gateway', () => {

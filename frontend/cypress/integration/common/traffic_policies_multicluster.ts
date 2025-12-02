@@ -65,7 +65,7 @@ When('user confirms to {string} the Traffic Policy', (action: string) => {
   if (action === 'create' || action === 'update') {
     cy.get(`button[data-test="${action}"]`).click();
   }
-  cy.get('button[data-test="confirm-create"]').click();
+  cy.get('button[data-test="confirm-create"]').click({ force: true });
   ensureKialiFinishedLoading();
 });
 

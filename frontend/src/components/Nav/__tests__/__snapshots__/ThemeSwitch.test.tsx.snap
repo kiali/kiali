@@ -1,65 +1,55 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`ThemeSwitch renders dark theme 1`] = `
-<Tooltip
-  content={
-    <React.Fragment>
-      Switch to {{theme}} Mode {"theme":"Light"}
-    </React.Fragment>
-  }
-  position="bottom"
+<ToggleGroup
+  aria-label="Theme switch"
 >
-  <div>
-    <Button
-      className="kiali_f1gb5m5k kiali_fj999mp"
-      onClick={[Function]}
-      variant="secondary"
-    >
+  <ToggleGroupItem
+    aria-label="Light theme"
+    icon={
       <Sun
-        className="kiali_fb78s7m"
+        isInline={true}
       />
-    </Button>
-    <Button
-      className="kiali_f1gb5m5k kiali_fxx0nx6"
-      onClick={[Function]}
-      variant="primary"
-    >
+    }
+    isSelected={false}
+    onClick={[Function]}
+  />
+  <ToggleGroupItem
+    aria-label="Dark theme"
+    icon={
       <Moon
-        className="kiali_fb78s7m"
+        isInline={true}
       />
-    </Button>
-  </div>
-</Tooltip>
+    }
+    isSelected={true}
+    onClick={[Function]}
+  />
+</ToggleGroup>
 `;
 
 exports[`ThemeSwitch renders light theme 1`] = `
-<Tooltip
-  content={
-    <React.Fragment>
-      Switch to {{theme}} Mode {"theme":"Dark"}
-    </React.Fragment>
-  }
-  position="bottom"
+<ToggleGroup
+  aria-label="Theme switch"
 >
-  <div>
-    <Button
-      className="kiali_f1gb5m5k kiali_fj999mp"
-      onClick={[Function]}
-      variant="primary"
-    >
+  <ToggleGroupItem
+    aria-label="Light theme"
+    icon={
       <Sun
-        className="kiali_fb78s7m"
+        isInline={true}
       />
-    </Button>
-    <Button
-      className="kiali_f1gb5m5k kiali_fxx0nx6"
-      onClick={[Function]}
-      variant="secondary"
-    >
+    }
+    isSelected={true}
+    onClick={[Function]}
+  />
+  <ToggleGroupItem
+    aria-label="Dark theme"
+    icon={
       <Moon
-        className="kiali_fb78s7m"
+        isInline={true}
       />
-    </Button>
-  </div>
-</Tooltip>
+    }
+    isSelected={false}
+    onClick={[Function]}
+  />
+</ToggleGroup>
 `;

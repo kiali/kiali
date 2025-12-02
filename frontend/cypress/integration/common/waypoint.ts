@@ -6,6 +6,8 @@ import { Pod } from 'types/IstioObjects';
 // waitForWorkloadEnrolled waits until Kiali returns the namespace labels updated
 // Adding the waypoint label into the bookinfo namespace
 // This is usually enough (Slower) to have the workloads enrolled
+const waypointLabelKey = 'istio.io/use-waypoint';
+
 const waitForWorkloadEnrolled = (maxRetries = 30, retryCount = 0): void => {
   if (retryCount >= maxRetries) {
     throw new Error(`Condition not met after ${maxRetries} retries`);
@@ -18,14 +20,12 @@ const waitForWorkloadEnrolled = (maxRetries = 30, retryCount = 0): void => {
     let found = false;
 
     ns.forEach(namespace => {
-      if (namespace.name === 'bookinfo') {
-        const labels = namespace.labels;
-        Object.keys(labels).forEach(key => {
-          if (labels[key] === 'waypoint') {
-            found = true;
-            return;
-          }
-        });
+      if (namespace.name === 'bookinfo' && namespace.labels) {
+        const labelValue = namespace.labels[waypointLabelKey];
+
+        if (labelValue && labelValue.length > 0) {
+          found = true;
+        }
       }
     });
 
@@ -118,7 +118,7 @@ Then('all waypoints are healthy', () => {
 });
 
 Then('{string} namespace is labeled with the waypoint label', (namespace: string) => {
-  cy.exec(`kubectl label namespace ${namespace} istio.io/use-waypoint=waypoint`, { failOnNonZeroExit: false });
+  cy.exec(`kubectl label namespace ${namespace} ${waypointLabelKey}=waypoint --overwrite`, { failOnNonZeroExit: false });
   waitForWorkloadEnrolled();
 });
 
@@ -279,6 +279,8 @@ When('the user clicks on {string} for {string} namespace', (option, namespace: s
       break;
   }
   cy.get(`[data-test=${selector}]`).click();
+  // Wait for the dropdown menu to disappear before clicking the confirm button
+  cy.get('.pf-v6-c-menu').should('not.be.visible');
   cy.get(`[data-test="confirm-create"]`).click();
 });
 

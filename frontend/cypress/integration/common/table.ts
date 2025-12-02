@@ -260,10 +260,20 @@ export const checkHealthStatusInTable = (
     cy.wrap(clusterNames).should('have.length', 1);
     const cluster = clusterNames[0];
 
-    cy.get(
-      `[data-test=VirtualItem_Cluster${cluster}_Ns${selector}] td:first-child span[class=pf-v6-c-icon__content]`
-    ).trigger('mouseenter');
+    const rowSelector = `[data-test=VirtualItem_Cluster${cluster}_Ns${selector}]`;
+    // Use class selector with . (dot) to match the class
+    const iconSelector = `${rowSelector} td:first-child span.pf-v6-c-icon__content`;
 
+    // Check if the icon exists and log its HTML
+    cy.get(iconSelector).should('exist');
+
+    // Trigger mouseenter
+    cy.get(iconSelector).trigger('mouseenter');
+
+    // Wait for the tooltip to appear and log all matching elements
+    cy.get(`[aria-label='Health indicator']`).should('be.visible');
+
+    // Now check for the strong element
     cy.get(`[aria-label='Health indicator'] strong`).should('contain.text', healthStatus);
   });
 };

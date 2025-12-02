@@ -47,11 +47,47 @@ Then('user sees trace details', () => {
   cy.getBySel('trace-details-dropdown').contains('View on Graph');
 });
 
-When('user selects a trace', () => {
-  const tracingDotQuery =
-    "var(--pf-t--temp--dev--tbd)"/* CODEMODS: original v5 color was --pf-v5-global--palette--blue-200 */;
+const selectTraceViaReact = (): Cypress.Chainable<boolean> => {
+  cy.waitForReact();
+  return cy
+    .getReact('Point')
+    .then(($points: any) => {
+      if (!$points || !$points.length) {
+        return false;
+      }
+      return $points;
+    })
+    .then(($points: any) => {
+      const firstPoint = $points[0];
+      const pathDefinition = firstPoint?.children?.[0]?.props?.d;
 
-  cy.getBySel('tracing-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
+      if (pathDefinition) {
+        cy.get(`path[d="${pathDefinition}"]`).should('be.visible').click({ force: true });
+        return true;
+      }
+
+      return false;
+    });
+};
+
+const selectTraceViaDom = (): void => {
+  cy.getBySel('tracing-scatterplot')
+    .find('path[clip-path]')
+    .filter((_index, element) => {
+      const pathDefinition = element.getAttribute('d');
+      return !!pathDefinition && !pathDefinition.startsWith('M0,0');
+    })
+    .first()
+    .should('be.visible')
+    .click({ force: true });
+};
+
+When('user selects a trace', () => {
+  selectTraceViaReact().then(found => {
+    if (!found) {
+      selectTraceViaDom();
+    }
+  });
 });
 
 When('user selects a trace with at least {int} spans', (spans: number) => {
