@@ -153,7 +153,10 @@ const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState =>
       addConnectionPool: false,
       connectionPool: {},
       addOutlierDetection: false,
-      outlierDetection: {}
+      outlierDetection: {},
+      isLbSelectOpen: false,
+      isMtlsSelectOpen: false,
+      isPaModeSelectOpen: false
     },
     gateway: undefined,
     k8sGateway: undefined
@@ -259,7 +262,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
           ? initOutlierDetection
           : {
               consecutiveErrors: 1
-            }
+            },
+        isLbSelectOpen: false,
+        isMtlsSelectOpen: false,
+        isPaModeSelectOpen: false
       };
 
       const gateway: GatewaySelectorState = {
