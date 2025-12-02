@@ -747,6 +747,7 @@ type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
 	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
 	Clustering               Clustering                          `yaml:"clustering,omitempty"`
+	Credentials              *CredentialManager                  `yaml:"-"` // Not serialized; manages file-based credentials with auto-rotation
 	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
 	Deployment               DeploymentConfig                    `yaml:"deployment,omitempty"`
 	Extensions               []ExtensionConfig                   `yaml:"extensions,omitempty"`
@@ -759,9 +760,9 @@ type Config struct {
 	KialiInternal            KialiInternalConfig                 `yaml:"kiali_internal,omitempty"`
 	KubernetesConfig         KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
 	LoginToken               LoginToken                          `yaml:"login_token,omitempty"`
-	Server                   Server                              `yaml:",omitempty"`
 	RunConfig                *OfflineManifest                    `yaml:"runConfig,omitempty"`
 	RunMode                  RunMode                             `yaml:"runMode,omitempty"`
+	Server                   Server                              `yaml:",omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -1117,6 +1118,10 @@ func Get() (conf *Config) {
 func Set(conf *Config) {
 	rwMutex.Lock()
 	defer rwMutex.Unlock()
+
+	// Close the old CredentialManager to avoid leaking file watchers and goroutines
+	configuration.Close()
+
 	conf.AddHealthDefault()
 	configuration = *conf
 
@@ -1219,6 +1224,12 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	err = yaml.Unmarshal([]byte(yamlString), &conf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse yaml data. error=%v", err)
+	}
+
+	// Initialize the credential manager for file-based credential support with auto-rotation
+	conf.Credentials, err = NewCredentialManager()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize credential manager: %w", err)
 	}
 
 	// Determine what the accessible namespaces are. These are namespaces we must have permission to see
@@ -1433,7 +1444,7 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		// Check if the file exists
 		if fileExists(fullFileName) {
 			// File exists - set config value to the file path (not the content)
-			// The credentials will be read on-use via ReadCredential() helper
+			// The credentials will be read on-use via Config.GetCredential()
 			*override.configValue = fullFileName
 			log.Debugf("Credential file path configured: [%s]", fullFileName)
 		} else {
@@ -1641,7 +1652,7 @@ func Validate(conf *Config) error {
 	// Check the ciphering key for sessions
 	signingKey := conf.LoginToken.SigningKey
 	// If signing key is a file path, read the actual content for validation
-	if actualKey, err := ReadCredential(signingKey); err != nil {
+	if actualKey, err := conf.GetCredential(signingKey); err != nil {
 		return err
 	} else {
 		signingKey = actualKey
@@ -1840,6 +1851,38 @@ func (c *Config) CertPool() *x509.CertPool {
 		return pool.Clone()
 	}
 	return nil
+}
+
+// Close cleans up Config resources such as the credential file watcher.
+// Should be called during application shutdown.
+func (c *Config) Close() {
+	if c.Credentials != nil {
+		c.Credentials.Close()
+		c.Credentials = nil
+	}
+}
+
+// GetCredential reads a credential value, supporting both literal values and file paths.
+// If the value starts with "/", it's treated as a file path and read from disk with caching.
+// Otherwise, the literal value is returned as-is.
+//
+// This method supports automatic credential rotation - when files are updated (e.g., Kubernetes
+// secret rotation), the cache is automatically refreshed without requiring a pod restart.
+//
+// If the CredentialManager is not initialized, falls back to direct file reads without caching.
+func (c *Config) GetCredential(value string) (string, error) {
+	if c.Credentials != nil {
+		return c.Credentials.Get(value)
+	}
+	// Fallback for configs without credential manager (e.g., some tests)
+	if value == "" || !strings.HasPrefix(value, "/") {
+		return value, nil
+	}
+	content, err := os.ReadFile(value)
+	if err != nil {
+		return "", fmt.Errorf("failed to read credential from [%s]: %w", value, err)
+	}
+	return strings.TrimSpace(string(content)), nil
 }
 
 // LoadConfig loads config file if specified, otherwise, relies on environment variables to configure.

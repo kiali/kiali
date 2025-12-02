@@ -183,7 +183,8 @@ func discoverUrl(ctx context.Context, zl *zerolog.Logger, parsedUrl model.Parsed
 			{
 				// Try GRPC Tempo Client
 				// And this also requires HTTP Client
-				dialOps, err := grpcutil.GetAuthDialOptions(conf, parsedUrl.Scheme == "https", &cfgTracing.Auth)
+				targetHost := parsedURLHostname(parsedUrl)
+				dialOps, err := grpcutil.GetAuthDialOptions(conf, targetHost, parsedUrl.Scheme == "https", &cfgTracing.Auth)
 				if err != nil {
 					msg := fmt.Sprintf("Error creating gRPC dial options: %v", err)
 					logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Dial Options 9095 error", Result: msg})
@@ -239,7 +240,8 @@ func validateJaegerGRPC(ctx context.Context, conf *config.Config, auth *config.A
 func validateGRPCClient(ctx context.Context, conf *config.Config, auth *config.Auth, parsedUrl model.ParsedUrl, port string) (*model.ValidConfig, []model.LogLine, error) {
 	logs := []model.LogLine{}
 	cfgTracing := conf.ExternalServices.Tracing
-	opts, err := grpcutil.GetAuthDialOptions(conf, parsedUrl.Scheme == "https", auth)
+	targetHost := parsedURLHostname(parsedUrl)
+	opts, err := grpcutil.GetAuthDialOptions(conf, targetHost, parsedUrl.Scheme == "https", auth)
 	if err == nil {
 		address := parsedUrl.Host + ":" + port
 		logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC Client 16685", Result: fmt.Sprintf("%s GRPC client info: address=%s, auth.type=%s", cfgTracing.Provider, address, auth.Type)})
@@ -278,6 +280,16 @@ func validateGRPCClient(ctx context.Context, conf *config.Config, auth *config.A
 		return nil, logs, fmt.Errorf("error creating client %s", err.Error())
 	}
 	return nil, logs, nil
+}
+
+func parsedURLHostname(parsedUrl model.ParsedUrl) string {
+	if parsedUrl.Url != nil && parsedUrl.Url.Hostname() != "" {
+		return parsedUrl.Url.Hostname()
+	}
+	if host, _, err := net.SplitHostPort(parsedUrl.Host); err == nil {
+		return host
+	}
+	return parsedUrl.Host
 }
 
 // validateJaegerHTTP validate specific path for Jaeger and HTTP endpoint

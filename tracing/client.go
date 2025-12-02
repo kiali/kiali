@@ -135,17 +135,18 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 		p, _ := net.LookupPort("tcp", u.Scheme)
 		port = strconv.Itoa(p)
 	}
+	host := u.Hostname()
 
 	// For Tempo provider with tenant, construct tenant-specific URL if needed
 	// Just for internal URL, the external URL can be exposed on a different URL, hidden internal path
 	tempo.ConstructTempoTenantURL(u, &cfgTracing, isInternalURL)
 
-	opts, err := grpcutil.GetAuthDialOptions(conf, u.Scheme == "https", &auth)
+	opts, err := grpcutil.GetAuthDialOptions(conf, host, u.Scheme == "https", &auth)
 	if err != nil {
 		zl.Error().Msgf("Error while building GRPC dial options: %v", err)
 		return nil, err
 	}
-	address := u.Hostname() + ":" + port
+	address := host + ":" + port
 	zl.Trace().Msgf("[%s] GRPC client info: address=[%s], auth.type=[%s]", cfgTracing.Provider, address, auth.Type)
 
 	if cfgTracing.UseGRPC && cfgTracing.Provider != config.TempoProvider {
@@ -196,12 +197,12 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 			// Tempo uses gRPC stream client just for search
 			// Get a single trace requires the http client
 			if cfgTracing.UseGRPC {
-				dialOps, err := grpcutil.GetAuthDialOptions(conf, u.Scheme == "https", &cfgTracing.Auth)
+				dialOps, err := grpcutil.GetAuthDialOptions(conf, host, u.Scheme == "https", &cfgTracing.Auth)
 				if err != nil {
 					zl.Error().Msgf("Error creating gRPC dial options: %v", err)
 					return nil, err
 				}
-				grpcAddress := fmt.Sprintf("%s:%d", u.Hostname(), conf.ExternalServices.Tracing.GrpcPort)
+				grpcAddress := fmt.Sprintf("%s:%d", host, conf.ExternalServices.Tracing.GrpcPort)
 				clientConn, _ := grpc.NewClient(grpcAddress, dialOps...)
 				streamClient, err := tempo.NewgRPCClient(clientConn)
 				if err != nil {

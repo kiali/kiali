@@ -83,7 +83,7 @@ func NewSessionData[T any](key string, strategy string, expiresOn time.Time, pay
 // NewCookieSessionPersistor creates a new CookieSessionPersistor.
 func NewCookieSessionPersistor[T any](conf *config.Config) (*cookieSessionPersistor[T], error) {
 	// Read the signing key (may be from file if using credential rotation)
-	signingKey, err := config.ReadCredential(conf.LoginToken.SigningKey)
+	signingKey, err := conf.GetCredential(conf.LoginToken.SigningKey)
 	if err != nil {
 		return nil, fmt.Errorf("error when creating the cookie persistor - failed to read signing key: %w", err)
 	}

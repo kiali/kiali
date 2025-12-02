@@ -8,9 +8,15 @@ import (
 	"time"
 )
 
-func TestReadCredential_LiteralValue(t *testing.T) {
+func TestCredentialManager_LiteralValue(t *testing.T) {
+	cm, err := NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create CredentialManager: %v", err)
+	}
+	t.Cleanup(cm.Close)
+
 	// Test that literal values are returned as-is
-	result, err := ReadCredential("my-literal-token")
+	result, err := cm.Get("my-literal-token")
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
 	}
@@ -19,9 +25,15 @@ func TestReadCredential_LiteralValue(t *testing.T) {
 	}
 }
 
-func TestReadCredential_EmptyValue(t *testing.T) {
+func TestCredentialManager_EmptyValue(t *testing.T) {
+	cm, err := NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create CredentialManager: %v", err)
+	}
+	t.Cleanup(cm.Close)
+
 	// Test that empty values return empty string
-	result, err := ReadCredential("")
+	result, err := cm.Get("")
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
 	}
@@ -30,19 +42,25 @@ func TestReadCredential_EmptyValue(t *testing.T) {
 	}
 }
 
-func TestReadCredential_FilePath(t *testing.T) {
+func TestCredentialManager_FilePath(t *testing.T) {
+	cm, err := NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create CredentialManager: %v", err)
+	}
+	t.Cleanup(cm.Close)
+
 	// Create a temporary file
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "test-credential")
 	content := "test-token-from-file\n"
 
-	err := os.WriteFile(tmpFile, []byte(content), 0600)
+	err = os.WriteFile(tmpFile, []byte(content), 0600)
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 
 	// Test that file paths are read and trimmed
-	result, err := ReadCredential(tmpFile)
+	result, err := cm.Get(tmpFile)
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
 	}
@@ -51,126 +69,37 @@ func TestReadCredential_FilePath(t *testing.T) {
 	}
 }
 
-func TestReadCredential_NonExistentFile(t *testing.T) {
+func TestCredentialManager_NonExistentFile(t *testing.T) {
+	cm, err := NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create CredentialManager: %v", err)
+	}
+	t.Cleanup(cm.Close)
+
 	// Test that non-existent file paths return error
-	_, err := ReadCredential("/non/existent/file")
+	_, err = cm.Get("/non/existent/file")
 	if err == nil {
 		t.Error("Expected error for non-existent file, got nil")
 	}
 }
 
-func TestAuth_GetToken_Literal(t *testing.T) {
-	auth := Auth{Token: "literal-token"}
-	result, err := auth.GetToken()
+func TestCredentialManager_EmptyFile(t *testing.T) {
+	cm, err := NewCredentialManager()
 	if err != nil {
-		t.Errorf("Expected no error, got: %v", err)
+		t.Fatalf("Failed to create CredentialManager: %v", err)
 	}
-	if result != "literal-token" {
-		t.Errorf("Expected 'literal-token', got: %s", result)
-	}
-}
+	t.Cleanup(cm.Close)
 
-func TestAuth_GetToken_FilePath(t *testing.T) {
-	// Create a temporary file
-	tmpDir := t.TempDir()
-	tmpFile := filepath.Join(tmpDir, "token-file")
-	err := os.WriteFile(tmpFile, []byte("file-token\n"), 0600)
-	if err != nil {
-		t.Fatalf("Failed to create temp file: %v", err)
-	}
-
-	auth := Auth{Token: tmpFile}
-	result, err := auth.GetToken()
-	if err != nil {
-		t.Errorf("Expected no error, got: %v", err)
-	}
-	if result != "file-token" {
-		t.Errorf("Expected 'file-token', got: %s", result)
-	}
-}
-
-func TestAuth_GetPassword_Literal(t *testing.T) {
-	auth := Auth{Password: "literal-password"}
-	result, err := auth.GetPassword()
-	if err != nil {
-		t.Errorf("Expected no error, got: %v", err)
-	}
-	if result != "literal-password" {
-		t.Errorf("Expected 'literal-password', got: %s", result)
-	}
-}
-
-func TestAuth_GetPassword_FilePath(t *testing.T) {
-	// Create a temporary file
-	tmpDir := t.TempDir()
-	tmpFile := filepath.Join(tmpDir, "password-file")
-	err := os.WriteFile(tmpFile, []byte("file-password"), 0600)
-	if err != nil {
-		t.Fatalf("Failed to create temp file: %v", err)
-	}
-
-	auth := Auth{Password: tmpFile}
-	result, err := auth.GetPassword()
-	if err != nil {
-		t.Errorf("Expected no error, got: %v", err)
-	}
-	if result != "file-password" {
-		t.Errorf("Expected 'file-password', got: %s", result)
-	}
-}
-
-func TestAuth_GetUsername_Literal(t *testing.T) {
-	auth := Auth{Username: "literal-user"}
-	result, err := auth.GetUsername()
-	if err != nil {
-		t.Errorf("Expected no error, got: %v", err)
-	}
-	if result != "literal-user" {
-		t.Errorf("Expected 'literal-user', got: %s", result)
-	}
-}
-
-func TestAuth_GetUsername_FilePath(t *testing.T) {
-	// Create a temporary file
-	tmpDir := t.TempDir()
-	tmpFile := filepath.Join(tmpDir, "username-file")
-	err := os.WriteFile(tmpFile, []byte("file-user  \n"), 0600)
-	if err != nil {
-		t.Fatalf("Failed to create temp file: %v", err)
-	}
-
-	auth := Auth{Username: tmpFile}
-	result, err := auth.GetUsername()
-	if err != nil {
-		t.Errorf("Expected no error, got: %v", err)
-	}
-	if result != "file-user" {
-		t.Errorf("Expected 'file-user' (trimmed), got: %s", result)
-	}
-}
-
-func TestAuth_GetToken_Empty(t *testing.T) {
-	auth := Auth{Token: ""}
-	result, err := auth.GetToken()
-	if err != nil {
-		t.Errorf("Expected no error, got: %v", err)
-	}
-	if result != "" {
-		t.Errorf("Expected empty string, got: %s", result)
-	}
-}
-
-func TestReadCredential_EmptyFile(t *testing.T) {
 	// Test that empty files return empty string (not error)
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "empty-credential")
 
-	err := os.WriteFile(tmpFile, []byte(""), 0600)
+	err = os.WriteFile(tmpFile, []byte(""), 0600)
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 
-	result, err := ReadCredential(tmpFile)
+	result, err := cm.Get(tmpFile)
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
 	}
@@ -179,17 +108,23 @@ func TestReadCredential_EmptyFile(t *testing.T) {
 	}
 }
 
-func TestReadCredential_WhitespaceOnlyFile(t *testing.T) {
+func TestCredentialManager_WhitespaceOnlyFile(t *testing.T) {
+	cm, err := NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create CredentialManager: %v", err)
+	}
+	t.Cleanup(cm.Close)
+
 	// Test that whitespace-only files return empty string after trimming
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "whitespace-credential")
 
-	err := os.WriteFile(tmpFile, []byte("   \n\t  \n"), 0600)
+	err = os.WriteFile(tmpFile, []byte("   \n\t  \n"), 0600)
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 
-	result, err := ReadCredential(tmpFile)
+	result, err := cm.Get(tmpFile)
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
 	}
@@ -198,10 +133,16 @@ func TestReadCredential_WhitespaceOnlyFile(t *testing.T) {
 	}
 }
 
-func TestReadCredential_RelativePathTreatedAsLiteral(t *testing.T) {
+func TestCredentialManager_RelativePathTreatedAsLiteral(t *testing.T) {
+	cm, err := NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create CredentialManager: %v", err)
+	}
+	t.Cleanup(cm.Close)
+
 	// Test that relative paths (not starting with /) are treated as literal values
 	// This ensures we don't accidentally try to read from relative paths
-	result, err := ReadCredential("relative/path/to/file")
+	result, err := cm.Get("relative/path/to/file")
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
 	}
@@ -210,18 +151,24 @@ func TestReadCredential_RelativePathTreatedAsLiteral(t *testing.T) {
 	}
 }
 
-func TestReadCredential_FileWithTrailingWhitespace(t *testing.T) {
+func TestCredentialManager_FileWithTrailingWhitespace(t *testing.T) {
+	cm, err := NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create CredentialManager: %v", err)
+	}
+	t.Cleanup(cm.Close)
+
 	// Test that files with trailing whitespace/newlines are properly trimmed
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "credential-with-whitespace")
 	content := "my-token-value  \n\n\t"
 
-	err := os.WriteFile(tmpFile, []byte(content), 0600)
+	err = os.WriteFile(tmpFile, []byte(content), 0600)
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 
-	result, err := ReadCredential(tmpFile)
+	result, err := cm.Get(tmpFile)
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
 	}
@@ -230,20 +177,25 @@ func TestReadCredential_FileWithTrailingWhitespace(t *testing.T) {
 	}
 }
 
-func TestReadCredential_CachingBehavior(t *testing.T) {
-	t.Cleanup(CloseWatchedCredentials)
+func TestCredentialManager_CachingBehavior(t *testing.T) {
+	cm, err := NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create CredentialManager: %v", err)
+	}
+	t.Cleanup(cm.Close)
+
 	// Test that credential is cached and reused on subsequent calls
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "cached-credential")
 	initialContent := "initial-token"
 
-	err := os.WriteFile(tmpFile, []byte(initialContent), 0600)
+	err = os.WriteFile(tmpFile, []byte(initialContent), 0600)
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 
 	// First read - should load from file and cache
-	result1, err := ReadCredential(tmpFile)
+	result1, err := cm.Get(tmpFile)
 	if err != nil {
 		t.Errorf("Expected no error on first read, got: %v", err)
 	}
@@ -252,7 +204,7 @@ func TestReadCredential_CachingBehavior(t *testing.T) {
 	}
 
 	// Second read - should return cached value immediately
-	result2, err := ReadCredential(tmpFile)
+	result2, err := cm.Get(tmpFile)
 	if err != nil {
 		t.Errorf("Expected no error on second read, got: %v", err)
 	}
@@ -279,7 +231,7 @@ func TestReadCredential_CachingBehavior(t *testing.T) {
 	cacheUpdated := false
 	for i := 0; i < 40; i++ {
 		time.Sleep(50 * time.Millisecond)
-		result3, err = ReadCredential(tmpFile)
+		result3, err = cm.Get(tmpFile)
 		if err != nil {
 			t.Errorf("Expected no error after file update, got: %v", err)
 			break
@@ -295,19 +247,23 @@ func TestReadCredential_CachingBehavior(t *testing.T) {
 	}
 }
 
-func TestCloseWatchedCredentials_AllowsReinitialization(t *testing.T) {
-	t.Cleanup(CloseWatchedCredentials)
+func TestCredentialManager_Reinitialize(t *testing.T) {
 	// Test that cache can be re-initialized after closing
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "reinit-test")
 
-	// First initialization
+	// First manager
 	err := os.WriteFile(tmpFile, []byte("token1"), 0600)
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 
-	result1, err := ReadCredential(tmpFile)
+	cm1, err := NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create first CredentialManager: %v", err)
+	}
+
+	result1, err := cm1.Get(tmpFile)
 	if err != nil {
 		t.Fatalf("First read failed: %v", err)
 	}
@@ -315,8 +271,8 @@ func TestCloseWatchedCredentials_AllowsReinitialization(t *testing.T) {
 		t.Errorf("Expected 'token1', got: %s", result1)
 	}
 
-	// Close the cache
-	CloseWatchedCredentials()
+	// Close the first manager
+	cm1.Close()
 
 	// Update the file
 	err = os.WriteFile(tmpFile, []byte("token2"), 0600)
@@ -324,33 +280,32 @@ func TestCloseWatchedCredentials_AllowsReinitialization(t *testing.T) {
 		t.Fatalf("Failed to update temp file: %v", err)
 	}
 
-	// Read again - should re-initialize cache and get new value
-	result2, err := ReadCredential(tmpFile)
+	// Create new manager - should get the new value
+	cm2, err := NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create second CredentialManager: %v", err)
+	}
+	t.Cleanup(cm2.Close)
+
+	result2, err := cm2.Get(tmpFile)
 	if err != nil {
 		t.Fatalf("Second read after close failed: %v", err)
 	}
 	if result2 != "token2" {
 		t.Errorf("Expected 'token2' after re-initialization, got: %s", result2)
 	}
-
-	// Verify cache is working again by reading cached value
-	result3, err := ReadCredential(tmpFile)
-	if err != nil {
-		t.Fatalf("Third read failed: %v", err)
-	}
-	if result3 != "token2" {
-		t.Errorf("Expected cached 'token2', got: %s", result3)
-	}
-
-	// Clean up for other tests
-	CloseWatchedCredentials()
 }
 
-func TestReadCredential_SymlinkRotation(t *testing.T) {
+func TestCredentialManager_SymlinkRotation(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("symlink semantics differ on Windows")
 	}
-	t.Cleanup(CloseWatchedCredentials)
+
+	cm, err := NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create CredentialManager: %v", err)
+	}
+	t.Cleanup(cm.Close)
 
 	tmpDir := t.TempDir()
 	secretDir := filepath.Join(tmpDir, "secret")
@@ -374,7 +329,7 @@ func TestReadCredential_SymlinkRotation(t *testing.T) {
 		t.Fatalf("failed to symlink token: %v", err)
 	}
 
-	val, err := ReadCredential(mountedToken)
+	val, err := cm.Get(mountedToken)
 	if err != nil {
 		t.Fatalf("initial read failed: %v", err)
 	}
@@ -403,7 +358,7 @@ func TestReadCredential_SymlinkRotation(t *testing.T) {
 	var rotated string
 	for i := 0; i < 40; i++ {
 		time.Sleep(50 * time.Millisecond)
-		rotated, err = ReadCredential(mountedToken)
+		rotated, err = cm.Get(mountedToken)
 		if err != nil {
 			continue
 		}
@@ -417,8 +372,12 @@ func TestReadCredential_SymlinkRotation(t *testing.T) {
 	}
 }
 
-func TestReadCredential_RemovesCacheOnDelete(t *testing.T) {
-	t.Cleanup(CloseWatchedCredentials)
+func TestCredentialManager_RemovesCacheOnDelete(t *testing.T) {
+	cm, err := NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create CredentialManager: %v", err)
+	}
+	t.Cleanup(cm.Close)
 
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "credential")
@@ -426,7 +385,7 @@ func TestReadCredential_RemovesCacheOnDelete(t *testing.T) {
 		t.Fatalf("failed to write credential: %v", err)
 	}
 
-	if _, err := ReadCredential(tmpFile); err != nil {
+	if _, err := cm.Get(tmpFile); err != nil {
 		t.Fatalf("initial read failed: %v", err)
 	}
 
@@ -437,7 +396,7 @@ func TestReadCredential_RemovesCacheOnDelete(t *testing.T) {
 	var readErr error
 	for i := 0; i < 40; i++ {
 		time.Sleep(25 * time.Millisecond)
-		_, readErr = ReadCredential(tmpFile)
+		_, readErr = cm.Get(tmpFile)
 		if readErr != nil {
 			break
 		}
@@ -445,5 +404,257 @@ func TestReadCredential_RemovesCacheOnDelete(t *testing.T) {
 
 	if readErr == nil {
 		t.Fatal("expected error reading removed credential but got nil")
+	}
+}
+
+func TestConfig_GetCredential_WithCredentialManager(t *testing.T) {
+	// Test Config.GetCredential when CredentialManager is initialized
+	conf := NewConfig()
+	var err error
+	conf.Credentials, err = NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create CredentialManager: %v", err)
+	}
+	t.Cleanup(conf.Credentials.Close)
+
+	// Create a temp file
+	tmpDir := t.TempDir()
+	tmpFile := filepath.Join(tmpDir, "test-token")
+	if err := os.WriteFile(tmpFile, []byte("file-token-value\n"), 0600); err != nil {
+		t.Fatalf("Failed to create temp file: %v", err)
+	}
+
+	// Test literal value
+	result, err := conf.GetCredential("literal-value")
+	if err != nil {
+		t.Errorf("Expected no error for literal, got: %v", err)
+	}
+	if result != "literal-value" {
+		t.Errorf("Expected 'literal-value', got: %s", result)
+	}
+
+	// Test file path
+	result, err = conf.GetCredential(tmpFile)
+	if err != nil {
+		t.Errorf("Expected no error for file path, got: %v", err)
+	}
+	if result != "file-token-value" {
+		t.Errorf("Expected 'file-token-value', got: %s", result)
+	}
+}
+
+func TestConfig_GetCredential_WithoutCredentialManager(t *testing.T) {
+	// Test Config.GetCredential when CredentialManager is nil (fallback behavior)
+	conf := NewConfig()
+	// Explicitly don't initialize conf.Credentials
+
+	// Create a temp file
+	tmpDir := t.TempDir()
+	tmpFile := filepath.Join(tmpDir, "test-token")
+	if err := os.WriteFile(tmpFile, []byte("file-token-value\n"), 0600); err != nil {
+		t.Fatalf("Failed to create temp file: %v", err)
+	}
+
+	// Test literal value
+	result, err := conf.GetCredential("literal-value")
+	if err != nil {
+		t.Errorf("Expected no error for literal, got: %v", err)
+	}
+	if result != "literal-value" {
+		t.Errorf("Expected 'literal-value', got: %s", result)
+	}
+
+	// Test file path (should work via fallback, just without caching)
+	result, err = conf.GetCredential(tmpFile)
+	if err != nil {
+		t.Errorf("Expected no error for file path, got: %v", err)
+	}
+	if result != "file-token-value" {
+		t.Errorf("Expected 'file-token-value', got: %s", result)
+	}
+}
+
+func TestConfig_Close(t *testing.T) {
+	conf := NewConfig()
+	var err error
+	conf.Credentials, err = NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create CredentialManager: %v", err)
+	}
+
+	// Closing should not panic and should set Credentials to nil
+	conf.Close()
+	if conf.Credentials != nil {
+		t.Error("Expected Credentials to be nil after Close()")
+	}
+
+	// Closing again should be safe (no panic)
+	conf.Close()
+}
+
+func TestMultipleCredentialManagers(t *testing.T) {
+	// Test that multiple CredentialManagers can coexist (important for testing)
+	tmpDir := t.TempDir()
+	tmpFile := filepath.Join(tmpDir, "shared-credential")
+	if err := os.WriteFile(tmpFile, []byte("shared-value"), 0600); err != nil {
+		t.Fatalf("Failed to create temp file: %v", err)
+	}
+
+	cm1, err := NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create first CredentialManager: %v", err)
+	}
+	t.Cleanup(cm1.Close)
+
+	cm2, err := NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create second CredentialManager: %v", err)
+	}
+	t.Cleanup(cm2.Close)
+
+	// Both should be able to read the same file
+	result1, err := cm1.Get(tmpFile)
+	if err != nil {
+		t.Errorf("First manager read failed: %v", err)
+	}
+	result2, err := cm2.Get(tmpFile)
+	if err != nil {
+		t.Errorf("Second manager read failed: %v", err)
+	}
+
+	if result1 != "shared-value" || result2 != "shared-value" {
+		t.Errorf("Expected both managers to read 'shared-value', got: %s, %s", result1, result2)
+	}
+}
+
+// The following tests ensure that Auth struct fields work correctly with Config.GetCredential.
+
+func TestConfig_GetCredential_AuthToken_Literal(t *testing.T) {
+	conf := NewConfig()
+	conf.ExternalServices.Prometheus.Auth.Token = "literal-token"
+
+	result, err := conf.GetCredential(conf.ExternalServices.Prometheus.Auth.Token)
+	if err != nil {
+		t.Errorf("Expected no error, got: %v", err)
+	}
+	if result != "literal-token" {
+		t.Errorf("Expected 'literal-token', got: %s", result)
+	}
+}
+
+func TestConfig_GetCredential_AuthToken_FilePath(t *testing.T) {
+	conf := NewConfig()
+	var err error
+	conf.Credentials, err = NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create CredentialManager: %v", err)
+	}
+	t.Cleanup(conf.Close)
+
+	// Create a temporary file
+	tmpDir := t.TempDir()
+	tmpFile := filepath.Join(tmpDir, "token-file")
+	if err := os.WriteFile(tmpFile, []byte("file-token\n"), 0600); err != nil {
+		t.Fatalf("Failed to create temp file: %v", err)
+	}
+
+	conf.ExternalServices.Prometheus.Auth.Token = tmpFile
+	result, err := conf.GetCredential(conf.ExternalServices.Prometheus.Auth.Token)
+	if err != nil {
+		t.Errorf("Expected no error, got: %v", err)
+	}
+	if result != "file-token" {
+		t.Errorf("Expected 'file-token', got: %s", result)
+	}
+}
+
+func TestConfig_GetCredential_AuthPassword_Literal(t *testing.T) {
+	conf := NewConfig()
+	conf.ExternalServices.Grafana.Auth.Password = "literal-password"
+
+	result, err := conf.GetCredential(conf.ExternalServices.Grafana.Auth.Password)
+	if err != nil {
+		t.Errorf("Expected no error, got: %v", err)
+	}
+	if result != "literal-password" {
+		t.Errorf("Expected 'literal-password', got: %s", result)
+	}
+}
+
+func TestConfig_GetCredential_AuthPassword_FilePath(t *testing.T) {
+	conf := NewConfig()
+	var err error
+	conf.Credentials, err = NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create CredentialManager: %v", err)
+	}
+	t.Cleanup(conf.Close)
+
+	// Create a temporary file
+	tmpDir := t.TempDir()
+	tmpFile := filepath.Join(tmpDir, "password-file")
+	if err := os.WriteFile(tmpFile, []byte("file-password"), 0600); err != nil {
+		t.Fatalf("Failed to create temp file: %v", err)
+	}
+
+	conf.ExternalServices.Grafana.Auth.Password = tmpFile
+	result, err := conf.GetCredential(conf.ExternalServices.Grafana.Auth.Password)
+	if err != nil {
+		t.Errorf("Expected no error, got: %v", err)
+	}
+	if result != "file-password" {
+		t.Errorf("Expected 'file-password', got: %s", result)
+	}
+}
+
+func TestConfig_GetCredential_AuthUsername_Literal(t *testing.T) {
+	conf := NewConfig()
+	conf.ExternalServices.Grafana.Auth.Username = "literal-user"
+
+	result, err := conf.GetCredential(conf.ExternalServices.Grafana.Auth.Username)
+	if err != nil {
+		t.Errorf("Expected no error, got: %v", err)
+	}
+	if result != "literal-user" {
+		t.Errorf("Expected 'literal-user', got: %s", result)
+	}
+}
+
+func TestConfig_GetCredential_AuthUsername_FilePath(t *testing.T) {
+	conf := NewConfig()
+	var err error
+	conf.Credentials, err = NewCredentialManager()
+	if err != nil {
+		t.Fatalf("Failed to create CredentialManager: %v", err)
+	}
+	t.Cleanup(conf.Close)
+
+	// Create a temporary file with trailing whitespace (common scenario)
+	tmpDir := t.TempDir()
+	tmpFile := filepath.Join(tmpDir, "username-file")
+	if err := os.WriteFile(tmpFile, []byte("file-user  \n"), 0600); err != nil {
+		t.Fatalf("Failed to create temp file: %v", err)
+	}
+
+	conf.ExternalServices.Grafana.Auth.Username = tmpFile
+	result, err := conf.GetCredential(conf.ExternalServices.Grafana.Auth.Username)
+	if err != nil {
+		t.Errorf("Expected no error, got: %v", err)
+	}
+	if result != "file-user" {
+		t.Errorf("Expected 'file-user' (trimmed), got: %s", result)
+	}
+}
+
+func TestConfig_GetCredential_AuthToken_Empty(t *testing.T) {
+	conf := NewConfig()
+	conf.ExternalServices.Prometheus.Auth.Token = ""
+
+	result, err := conf.GetCredential(conf.ExternalServices.Prometheus.Auth.Token)
+	if err != nil {
+		t.Errorf("Expected no error, got: %v", err)
+	}
+	if result != "" {
+		t.Errorf("Expected empty string, got: %s", result)
 	}
 }

@@ -104,15 +104,15 @@ func TestSecretFileOverrides(t *testing.T) {
 	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token, overrideSecretsDir+"/"+SecretFileCustomDashboardsPrometheusToken+"/value.txt")
 
 	// Verify the getter methods return the actual values from the files
-	username, err := conf.ExternalServices.Grafana.Auth.GetUsername()
+	username, err := conf.GetCredential(conf.ExternalServices.Grafana.Auth.Username)
 	assert.NoError(t, err)
 	assert.Equal(t, "grafanausernameENV", username)
 
-	password, err := conf.ExternalServices.Grafana.Auth.GetPassword()
+	password, err := conf.GetCredential(conf.ExternalServices.Grafana.Auth.Password)
 	assert.NoError(t, err)
 	assert.Equal(t, "grafanapasswordENV", password)
 
-	token, err := conf.ExternalServices.Prometheus.Auth.GetToken()
+	token, err := conf.GetCredential(conf.ExternalServices.Prometheus.Auth.Token)
 	assert.NoError(t, err)
 	assert.Equal(t, "prometheustokenENV", token)
 }

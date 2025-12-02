@@ -103,18 +103,23 @@ func bigOne() *big.Int {
 }
 
 func TestGetAuthDialOptions_BearerTokenRotation(t *testing.T) {
-	t.Cleanup(config.CloseWatchedCredentials)
+	conf := config.NewConfig()
+	var err error
+	conf.Credentials, err = config.NewCredentialManager()
+	if err != nil {
+		t.Fatalf("failed to create credential manager: %v", err)
+	}
+	t.Cleanup(conf.Close)
+
 	tmpDir := t.TempDir()
 	tokenFile := tmpDir + "/token"
 
 	// Write initial token
 	initialToken := "initial-grpc-token-12345"
-	err := os.WriteFile(tokenFile, []byte(initialToken), 0600)
+	err = os.WriteFile(tokenFile, []byte(initialToken), 0600)
 	if err != nil {
 		t.Fatalf("Failed to create token file: %v", err)
 	}
-
-	conf := config.NewConfig()
 	auth := &config.Auth{
 		Type:               config.AuthTypeBearer,
 		Token:              tokenFile,
@@ -128,7 +133,7 @@ func TestGetAuthDialOptions_BearerTokenRotation(t *testing.T) {
 
 	// Build dial options (per-RPC creds) once, as production would
 	// Use TLS=true since the server is configured with TLS
-	opts, err := grpcutil.GetAuthDialOptions(conf, true, auth)
+	opts, err := grpcutil.GetAuthDialOptions(conf, "bufconn.local", true, auth)
 	if err != nil {
 		t.Fatalf("GetAuthDialOptions failed: %v", err)
 	}
@@ -191,7 +196,14 @@ func TestGetAuthDialOptions_BearerTokenRotation(t *testing.T) {
 }
 
 func TestGetAuthDialOptions_BasicAuthRotation(t *testing.T) {
-	t.Cleanup(config.CloseWatchedCredentials)
+	conf := config.NewConfig()
+	var err error
+	conf.Credentials, err = config.NewCredentialManager()
+	if err != nil {
+		t.Fatalf("failed to create credential manager: %v", err)
+	}
+	t.Cleanup(conf.Close)
+
 	tmpDir := t.TempDir()
 	usernameFile := tmpDir + "/username"
 	passwordFile := tmpDir + "/password"
@@ -199,7 +211,7 @@ func TestGetAuthDialOptions_BasicAuthRotation(t *testing.T) {
 	// Write initial credentials
 	initialUsername := "grpc-user1"
 	initialPassword := "grpc-pass1"
-	err := os.WriteFile(usernameFile, []byte(initialUsername), 0600)
+	err = os.WriteFile(usernameFile, []byte(initialUsername), 0600)
 	if err != nil {
 		t.Fatalf("Failed to create username file: %v", err)
 	}
@@ -207,8 +219,6 @@ func TestGetAuthDialOptions_BasicAuthRotation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create password file: %v", err)
 	}
-
-	conf := config.NewConfig()
 	auth := &config.Auth{
 		Type:               config.AuthTypeBasic,
 		Username:           usernameFile,
@@ -223,7 +233,7 @@ func TestGetAuthDialOptions_BasicAuthRotation(t *testing.T) {
 
 	// Build dial options once
 	// Use TLS=true since the server is configured with TLS
-	opts, err := grpcutil.GetAuthDialOptions(conf, true, auth)
+	opts, err := grpcutil.GetAuthDialOptions(conf, "bufconn.local", true, auth)
 	if err != nil {
 		t.Fatalf("GetAuthDialOptions failed: %v", err)
 	}

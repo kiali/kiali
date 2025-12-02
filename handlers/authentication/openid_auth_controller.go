@@ -340,7 +340,7 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 	}
 
 	// Read the signing key (may be from file if using credential rotation)
-	signingKey, err := config.ReadCredential(c.conf.LoginToken.SigningKey)
+	signingKey, err := c.conf.GetCredential(c.conf.LoginToken.SigningKey)
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -766,7 +766,7 @@ func (p *openidFlowHelper) validateOpenIdState() *openidFlowHelper {
 	}
 
 	// Read the signing key (may be from file if using credential rotation)
-	signingKey, err := config.ReadCredential(p.conf.LoginToken.SigningKey)
+	signingKey, err := p.conf.GetCredential(p.conf.LoginToken.SigningKey)
 	if err != nil {
 		p.Error = &AuthenticationFailureError{
 			HttpStatus: http.StatusInternalServerError,
@@ -982,7 +982,7 @@ func createHttpClient(conf *config.Config, toUrl string) (*http.Client, error) {
 // to do user authentication.
 func isOpenIdCodeFlowPossible(conf *config.Config) bool {
 	// Read the signing key (may be from file if using credential rotation)
-	signingKey, err := config.ReadCredential(conf.LoginToken.SigningKey)
+	signingKey, err := conf.GetCredential(conf.LoginToken.SigningKey)
 	if err != nil {
 		log.Warningf("Cannot use OpenId authorization code flow because signing key could not be read: %v", err)
 		return false

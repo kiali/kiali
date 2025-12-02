@@ -52,7 +52,7 @@ external_services:
 		"Expected Token to be set to the secret file path")
 
 	// Verify we can read the token from the file
-	token, err := conf.ExternalServices.Prometheus.Auth.GetToken()
+	token, err := conf.GetCredential(conf.ExternalServices.Prometheus.Auth.Token)
 	assert.NoError(t, err)
 	assert.Equal(t, "my-prometheus-token", token)
 }
@@ -123,15 +123,15 @@ external_services:
 		"Expected KeyFile to preserve key name 'tls.key'")
 
 	// Verify we can read the content
-	caContent, err := ReadCredential(conf.ExternalServices.Prometheus.Auth.CAFile)
+	caContent, err := conf.GetCredential(conf.ExternalServices.Prometheus.Auth.CAFile)
 	assert.NoError(t, err)
 	assert.Equal(t, "CA-CERT-CONTENT", caContent)
 
-	certContent, err := ReadCredential(conf.ExternalServices.Prometheus.Auth.CertFile)
+	certContent, err := conf.GetCredential(conf.ExternalServices.Prometheus.Auth.CertFile)
 	assert.NoError(t, err)
 	assert.Equal(t, "CERT-CONTENT", certContent)
 
-	keyContent, err := ReadCredential(conf.ExternalServices.Prometheus.Auth.KeyFile)
+	keyContent, err := conf.GetCredential(conf.ExternalServices.Prometheus.Auth.KeyFile)
 	assert.NoError(t, err)
 	assert.Equal(t, "KEY-CONTENT", keyContent)
 }
@@ -191,11 +191,11 @@ external_services:
 		"Expected Password to fall back to value.txt")
 
 	// Verify we can read the credentials
-	username, err := conf.ExternalServices.Grafana.Auth.GetUsername()
+	username, err := conf.GetCredential(conf.ExternalServices.Grafana.Auth.Username)
 	assert.NoError(t, err)
 	assert.Equal(t, "grafana-user", username)
 
-	password, err := conf.ExternalServices.Grafana.Auth.GetPassword()
+	password, err := conf.GetCredential(conf.ExternalServices.Grafana.Auth.Password)
 	assert.NoError(t, err)
 	assert.Equal(t, "grafana-pass", password)
 }
@@ -238,7 +238,7 @@ external_services:
 		"Expected Token to remain as literal value when no secret is mounted")
 
 	// Verify we can read the literal token
-	token, err := conf.ExternalServices.Prometheus.Auth.GetToken()
+	token, err := conf.GetCredential(conf.ExternalServices.Prometheus.Auth.Token)
 	assert.NoError(t, err)
 	assert.Equal(t, "my-literal-token", token)
 }
@@ -310,19 +310,19 @@ external_services:
 	require.NotNil(t, conf)
 
 	// Verify all services have their secrets configured
-	promToken, err := conf.ExternalServices.Prometheus.Auth.GetToken()
+	promToken, err := conf.GetCredential(conf.ExternalServices.Prometheus.Auth.Token)
 	assert.NoError(t, err)
 	assert.Equal(t, "prom-token", promToken)
 
-	grafUsername, err := conf.ExternalServices.Grafana.Auth.GetUsername()
+	grafUsername, err := conf.GetCredential(conf.ExternalServices.Grafana.Auth.Username)
 	assert.NoError(t, err)
 	assert.Equal(t, "graf-user", grafUsername)
 
-	grafPassword, err := conf.ExternalServices.Grafana.Auth.GetPassword()
+	grafPassword, err := conf.GetCredential(conf.ExternalServices.Grafana.Auth.Password)
 	assert.NoError(t, err)
 	assert.Equal(t, "graf-pass", grafPassword)
 
-	traceToken, err := conf.ExternalServices.Tracing.Auth.GetToken()
+	traceToken, err := conf.GetCredential(conf.ExternalServices.Tracing.Auth.Token)
 	assert.NoError(t, err)
 	assert.Equal(t, "trace-token", traceToken)
 }
