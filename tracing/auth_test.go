@@ -14,7 +14,12 @@ import (
 
 // TestTracingBasicAuthFromFiles tests that tracing client properly reads basic auth credentials from files
 func TestTracingBasicAuthFromFiles(t *testing.T) {
-	t.Cleanup(config.CloseWatchedCredentials)
+	conf := config.NewConfig()
+	var err error
+	conf.Credentials, err = config.NewCredentialManager()
+	require.NoError(t, err)
+	t.Cleanup(conf.Close)
+
 	tmpDir := t.TempDir()
 	usernameFile := tmpDir + "/username"
 	passwordFile := tmpDir + "/password"
@@ -22,12 +27,11 @@ func TestTracingBasicAuthFromFiles(t *testing.T) {
 	// Write initial credentials
 	initialUsername := "tracing-user1"
 	initialPassword := "tracing-pass1"
-	err := os.WriteFile(usernameFile, []byte(initialUsername), 0600)
+	err = os.WriteFile(usernameFile, []byte(initialUsername), 0600)
 	require.NoError(t, err)
 	err = os.WriteFile(passwordFile, []byte(initialPassword), 0600)
 	require.NoError(t, err)
 
-	conf := config.NewConfig()
 	conf.ExternalServices.Tracing.Enabled = true
 	conf.ExternalServices.Tracing.Provider = "tempo"
 	conf.ExternalServices.Tracing.UseGRPC = true
@@ -43,11 +47,11 @@ func TestTracingBasicAuthFromFiles(t *testing.T) {
 	assert.NotNil(t, client.grpcClient, "gRPC client should be created for tempo with UseGRPC=true")
 
 	// Verify that the auth credentials can be read
-	username, err := conf.ExternalServices.Tracing.Auth.GetUsername()
+	username, err := conf.GetCredential(conf.ExternalServices.Tracing.Auth.Username)
 	assert.NoError(t, err)
 	assert.Equal(t, initialUsername, username)
 
-	password, err := conf.ExternalServices.Tracing.Auth.GetPassword()
+	password, err := conf.GetCredential(conf.ExternalServices.Tracing.Auth.Password)
 	assert.NoError(t, err)
 	assert.Equal(t, initialPassword, password)
 
@@ -64,8 +68,8 @@ func TestTracingBasicAuthFromFiles(t *testing.T) {
 	passwordRotated := false
 	for i := 0; i < 40; i++ {
 		time.Sleep(50 * time.Millisecond)
-		username, _ = conf.ExternalServices.Tracing.Auth.GetUsername()
-		password, _ = conf.ExternalServices.Tracing.Auth.GetPassword()
+		username, _ = conf.GetCredential(conf.ExternalServices.Tracing.Auth.Username)
+		password, _ = conf.GetCredential(conf.ExternalServices.Tracing.Auth.Password)
 		if username == rotatedUsername {
 			usernameRotated = true
 		}
@@ -78,27 +82,31 @@ func TestTracingBasicAuthFromFiles(t *testing.T) {
 	}
 
 	// Verify rotated credentials can be read (simulates what happens on next request)
-	username, err = conf.ExternalServices.Tracing.Auth.GetUsername()
+	username, err = conf.GetCredential(conf.ExternalServices.Tracing.Auth.Username)
 	assert.NoError(t, err)
 	assert.Equal(t, rotatedUsername, username, "Username should be rotated")
 
-	password, err = conf.ExternalServices.Tracing.Auth.GetPassword()
+	password, err = conf.GetCredential(conf.ExternalServices.Tracing.Auth.Password)
 	assert.NoError(t, err)
 	assert.Equal(t, rotatedPassword, password, "Password should be rotated")
 }
 
 // TestTracingBearerTokenFromFile tests that tracing client properly reads bearer token from file
 func TestTracingBearerTokenFromFile(t *testing.T) {
-	t.Cleanup(config.CloseWatchedCredentials)
+	conf := config.NewConfig()
+	var err error
+	conf.Credentials, err = config.NewCredentialManager()
+	require.NoError(t, err)
+	t.Cleanup(conf.Close)
+
 	tmpDir := t.TempDir()
 	tokenFile := tmpDir + "/token"
 
 	// Write initial token
 	initialToken := "initial-tracing-token-12345"
-	err := os.WriteFile(tokenFile, []byte(initialToken), 0600)
+	err = os.WriteFile(tokenFile, []byte(initialToken), 0600)
 	require.NoError(t, err)
 
-	conf := config.NewConfig()
 	conf.ExternalServices.Tracing.Enabled = true
 	conf.ExternalServices.Tracing.Provider = "jaeger"
 	conf.ExternalServices.Tracing.UseGRPC = false
@@ -112,7 +120,7 @@ func TestTracingBearerTokenFromFile(t *testing.T) {
 	assert.NotNil(t, client)
 
 	// Verify that the token can be read
-	token, err := conf.ExternalServices.Tracing.Auth.GetToken()
+	token, err := conf.GetCredential(conf.ExternalServices.Tracing.Auth.Token)
 	assert.NoError(t, err)
 	assert.Equal(t, initialToken, token)
 
@@ -124,37 +132,41 @@ func TestTracingBearerTokenFromFile(t *testing.T) {
 	// Wait for fsnotify to detect change and update cache (up to 2 seconds)
 	for i := 0; i < 40; i++ {
 		time.Sleep(50 * time.Millisecond)
-		token, _ = conf.ExternalServices.Tracing.Auth.GetToken()
+		token, _ = conf.GetCredential(conf.ExternalServices.Tracing.Auth.Token)
 		if token == rotatedToken {
 			break
 		}
 	}
 
 	// Verify rotated token can be read
-	token, err = conf.ExternalServices.Tracing.Auth.GetToken()
+	token, err = conf.GetCredential(conf.ExternalServices.Tracing.Auth.Token)
 	assert.NoError(t, err)
 	assert.Equal(t, rotatedToken, token, "Token should be rotated")
 }
 
 // TestTracingBearerTokenWithWhitespace tests that tracing properly trims whitespace from token files
 func TestTracingBearerTokenWithWhitespace(t *testing.T) {
-	t.Cleanup(config.CloseWatchedCredentials)
+	conf := config.NewConfig()
+	var err error
+	conf.Credentials, err = config.NewCredentialManager()
+	require.NoError(t, err)
+	t.Cleanup(conf.Close)
+
 	tmpDir := t.TempDir()
 	tokenFile := tmpDir + "/token"
 
 	// Write token with trailing newline (common when using echo or kubectl)
 	tokenWithNewline := "my-token-with-newline\n"
-	err := os.WriteFile(tokenFile, []byte(tokenWithNewline), 0600)
+	err = os.WriteFile(tokenFile, []byte(tokenWithNewline), 0600)
 	require.NoError(t, err)
 
-	conf := config.NewConfig()
 	conf.ExternalServices.Tracing.Enabled = true
 	conf.ExternalServices.Tracing.Provider = "jaeger"
 	conf.ExternalServices.Tracing.Auth.Type = config.AuthTypeBearer
 	conf.ExternalServices.Tracing.Auth.Token = tokenFile
 
 	// Verify that the token is trimmed
-	token, err := conf.ExternalServices.Tracing.Auth.GetToken()
+	token, err := conf.GetCredential(conf.ExternalServices.Tracing.Auth.Token)
 	assert.NoError(t, err)
 	assert.Equal(t, "my-token-with-newline", token, "Token should be trimmed of whitespace")
 	assert.NotContains(t, token, "\n", "Token should not contain newlines")
@@ -176,11 +188,11 @@ func TestTracingLiteralCredentials(t *testing.T) {
 	assert.NotNil(t, client)
 
 	// Verify literal values are returned as-is
-	username, err := conf.ExternalServices.Tracing.Auth.GetUsername()
+	username, err := conf.GetCredential(conf.ExternalServices.Tracing.Auth.Username)
 	assert.NoError(t, err)
 	assert.Equal(t, "literal-user", username)
 
-	password, err := conf.ExternalServices.Tracing.Auth.GetPassword()
+	password, err := conf.GetCredential(conf.ExternalServices.Tracing.Auth.Password)
 	assert.NoError(t, err)
 	assert.Equal(t, "literal-password", password)
 }

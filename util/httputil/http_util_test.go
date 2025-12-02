@@ -41,7 +41,14 @@ type ioNopCloser struct {
 func (n ioNopCloser) Close() error { return nil }
 
 func TestAuthRoundTripper_BearerRotation(t *testing.T) {
-	t.Cleanup(config.CloseWatchedCredentials)
+	conf := config.NewConfig()
+	var err error
+	conf.Credentials, err = config.NewCredentialManager()
+	if err != nil {
+		t.Fatalf("failed to create credential manager: %v", err)
+	}
+	t.Cleanup(conf.Close)
+
 	tmpDir := t.TempDir()
 	tokenFile := tmpDir + "/token"
 	if err := os.WriteFile(tokenFile, []byte("t1"), 0600); err != nil {
@@ -54,7 +61,7 @@ func TestAuthRoundTripper_BearerRotation(t *testing.T) {
 	}
 
 	inner := &recordingRoundTripper{}
-	rt := newAuthRoundTripper(auth, inner)
+	rt := newAuthRoundTripper(conf, auth, inner)
 
 	req, _ := http.NewRequest(http.MethodGet, "http://example.com", nil)
 	if _, err := rt.RoundTrip(req); err != nil {
@@ -87,7 +94,14 @@ func TestAuthRoundTripper_BearerRotation(t *testing.T) {
 }
 
 func TestAuthRoundTripper_BasicRotation(t *testing.T) {
-	t.Cleanup(config.CloseWatchedCredentials)
+	conf := config.NewConfig()
+	var err error
+	conf.Credentials, err = config.NewCredentialManager()
+	if err != nil {
+		t.Fatalf("failed to create credential manager: %v", err)
+	}
+	t.Cleanup(conf.Close)
+
 	tmpDir := t.TempDir()
 	userFile := tmpDir + "/u"
 	passFile := tmpDir + "/p"
@@ -105,7 +119,7 @@ func TestAuthRoundTripper_BasicRotation(t *testing.T) {
 	}
 
 	inner := &recordingRoundTripper{}
-	rt := newAuthRoundTripper(auth, inner)
+	rt := newAuthRoundTripper(conf, auth, inner)
 
 	req, _ := http.NewRequest(http.MethodGet, "http://example.com", nil)
 	if _, err := rt.RoundTrip(req); err != nil {
@@ -145,8 +159,9 @@ func TestAuthRoundTripper_BasicRotation(t *testing.T) {
 
 func TestGetTLSConfig_CARotation_VerifyConnection(t *testing.T) {
 	tmpDir := t.TempDir()
+	const serverHost = "service.test"
 	ca1, ca1PEM, ca1Key := mustGenCA(t, "CA1")
-	leaf1 := mustGenLeafSignedWithKey(t, ca1, ca1Key, "leaf1")
+	leaf1 := mustGenLeafSignedWithKey(t, ca1, ca1Key, serverHost)
 
 	caFile := tmpDir + "/ca.pem"
 	if err := os.WriteFile(caFile, ca1PEM, 0600); err != nil {
@@ -158,7 +173,7 @@ func TestGetTLSConfig_CARotation_VerifyConnection(t *testing.T) {
 		CAFile: caFile,
 	}
 
-	tlscfg, err := GetTLSConfig(conf, auth)
+	tlscfg, err := GetTLSConfigForServer(conf, auth, serverHost)
 	if err != nil {
 		t.Fatalf("GetTLSConfig: %v", err)
 	}
@@ -170,7 +185,8 @@ func TestGetTLSConfig_CARotation_VerifyConnection(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse leaf1: %v", err)
 	}
-	if err := tlscfg.VerifyConnection(tls.ConnectionState{PeerCertificates: []*x509.Certificate{leaf1Cert}}); err != nil {
+	state := tls.ConnectionState{PeerCertificates: []*x509.Certificate{leaf1Cert}, ServerName: serverHost}
+	if err := tlscfg.VerifyConnection(state); err != nil {
 		t.Fatalf("verify with ca1 should succeed: %v", err)
 	}
 
@@ -179,18 +195,20 @@ func TestGetTLSConfig_CARotation_VerifyConnection(t *testing.T) {
 	if err := os.WriteFile(caFile, ca2PEM, 0600); err != nil {
 		t.Fatalf("write ca2: %v", err)
 	}
-	leaf2 := mustGenLeafSignedWithKey(t, ca2, ca2Key, "leaf2")
+	leaf2 := mustGenLeafSignedWithKey(t, ca2, ca2Key, serverHost)
 	leaf2Cert, err := x509.ParseCertificate(leaf2)
 	if err != nil {
 		t.Fatalf("parse leaf2: %v", err)
 	}
 
 	// Verify with leaf2 now succeeds
-	if err := tlscfg.VerifyConnection(tls.ConnectionState{PeerCertificates: []*x509.Certificate{leaf2Cert}}); err != nil {
+	state.PeerCertificates = []*x509.Certificate{leaf2Cert}
+	if err := tlscfg.VerifyConnection(state); err != nil {
 		t.Fatalf("verify with ca2 should succeed: %v", err)
 	}
 	// Old leaf should now fail
-	if err := tlscfg.VerifyConnection(tls.ConnectionState{PeerCertificates: []*x509.Certificate{leaf1Cert}}); err == nil {
+	state.PeerCertificates = []*x509.Certificate{leaf1Cert}
+	if err := tlscfg.VerifyConnection(state); err == nil {
 		t.Fatalf("verify with old ca should fail")
 	}
 }
@@ -273,10 +291,14 @@ func mustGenLeafSignedWithKey(t *testing.T, ca *x509.Certificate, caKey *rsa.Pri
 		t.Fatalf("gen key: %v", err)
 	}
 	tmpl := &x509.Certificate{
-		SerialNumber: bigInt(2),
-		Subject:      pkix.Name{CommonName: cn},
-		NotBefore:    time.Now().Add(-time.Hour),
-		NotAfter:     time.Now().Add(24 * time.Hour),
+		SerialNumber:          bigInt(2),
+		Subject:               pkix.Name{CommonName: cn},
+		NotBefore:             time.Now().Add(-time.Hour),
+		NotAfter:              time.Now().Add(24 * time.Hour),
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		DNSNames:              []string{cn},
 	}
 	// Sign leaf using provided CA key
 	der, err := x509.CreateCertificate(rand.Reader, tmpl, ca, &key.PublicKey, caKey)

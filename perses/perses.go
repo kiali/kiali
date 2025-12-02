@@ -96,13 +96,13 @@ func (s *Service) discover(ctx context.Context) string {
 func (s *Service) getToken(ctx context.Context) (token string, err error) {
 	loginURL := fmt.Sprintf("%s/api/auth/providers/native/login", s.URL(ctx))
 
-	username, err := s.conf.ExternalServices.Perses.Auth.GetUsername()
+	username, err := s.conf.GetCredential(s.conf.ExternalServices.Perses.Auth.Username)
 	if err != nil {
 		log.Errorf("Failed to read Perses username: %v", err)
 		return "", fmt.Errorf("failed to read Perses username: %w", err)
 	}
 
-	password, err := s.conf.ExternalServices.Perses.Auth.GetPassword()
+	password, err := s.conf.GetCredential(s.conf.ExternalServices.Perses.Auth.Password)
 	if err != nil {
 		log.Errorf("Failed to read Perses password: %v", err)
 		return "", fmt.Errorf("failed to read Perses password: %w", err)

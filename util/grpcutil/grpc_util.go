@@ -17,6 +17,7 @@ import (
 // Implements google.golang.org/grpc/credentials.PerRPCCredentials
 type perRPCCredentials struct {
 	auth            *config.Auth
+	conf            *config.Config
 	requireSecurity bool
 }
 
@@ -26,18 +27,18 @@ func (c perRPCCredentials) GetRequestMetadata(ctx context.Context, in ...string)
 	}
 	switch c.auth.Type {
 	case config.AuthTypeBasic:
-		username, err := c.auth.GetUsername()
+		username, err := c.conf.GetCredential(c.auth.Username)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read username for basic auth: %w", err)
 		}
-		password, err := c.auth.GetPassword()
+		password, err := c.conf.GetCredential(c.auth.Password)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read password for basic auth: %w", err)
 		}
 		encoded := base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
 		return map[string]string{"authorization": "Basic " + encoded}, nil
 	case config.AuthTypeBearer:
-		token, err := c.auth.GetToken()
+		token, err := c.conf.GetCredential(c.auth.Token)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read token for bearer auth: %w", err)
 		}
@@ -53,12 +54,14 @@ func (c perRPCCredentials) RequireTransportSecurity() bool {
 	return c.requireSecurity
 }
 
-func GetAuthDialOptions(conf *config.Config, useTLS bool, auth *config.Auth) ([]grpc.DialOption, error) {
+// GetAuthDialOptions builds secure dial options that keep credentials fresh and enforce
+// SAN validation for the provided serverName (host or IP) on every gRPC call.
+func GetAuthDialOptions(conf *config.Config, serverName string, useTLS bool, auth *config.Auth) ([]grpc.DialOption, error) {
 	var opts []grpc.DialOption
 
 	// Configure TLS transport if requested
 	if useTLS {
-		tlscfg, err := httputil.GetTLSConfig(conf, auth)
+		tlscfg, err := httputil.GetTLSConfigForServer(conf, auth, serverName)
 		if err != nil {
 			return nil, err
 		}
@@ -76,9 +79,9 @@ func GetAuthDialOptions(conf *config.Config, useTLS bool, auth *config.Auth) ([]
 	if auth != nil {
 		switch auth.Type {
 		case config.AuthTypeBasic:
-			opts = append(opts, grpc.WithPerRPCCredentials(perRPCCredentials{auth: auth, requireSecurity: useTLS}))
+			opts = append(opts, grpc.WithPerRPCCredentials(perRPCCredentials{auth: auth, conf: conf, requireSecurity: useTLS}))
 		case config.AuthTypeBearer:
-			opts = append(opts, grpc.WithPerRPCCredentials(perRPCCredentials{auth: auth, requireSecurity: useTLS}))
+			opts = append(opts, grpc.WithPerRPCCredentials(perRPCCredentials{auth: auth, conf: conf, requireSecurity: useTLS}))
 		}
 	}
 	return opts, nil
