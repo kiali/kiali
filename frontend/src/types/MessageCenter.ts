@@ -1,5 +1,6 @@
+// shold match the PF variant types: 'success' | 'danger' | 'warning' | 'info'
 export enum MessageType {
-  ERROR = 'error',
+  DANGER = 'danger',
   WARNING = 'warning',
   SUCCESS = 'success',
   INFO = 'info'
@@ -14,7 +15,6 @@ export interface NotificationMessage {
   created: Date;
   firstTriggered?: Date; // when was it first triggered
   count: number; // how many times did this message occur
-
   showDetail: boolean;
   show_notification: boolean;
   groupId?: string;
@@ -22,8 +22,9 @@ export interface NotificationMessage {
 
 export interface NotificationGroup {
   id: string;
-  title: string;
   messages: NotificationMessage[];
-  showActions: boolean;
-  hideIfEmpty: boolean;
+  title: string;
+  variant: 'success' | 'danger' | 'warning' | 'info';
+  //showActions: boolean;
+  //hideIfEmpty: boolean;
 }

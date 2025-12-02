@@ -54,7 +54,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
       props.workload.cluster
     )
       .then(_ => {
-        AlertUtils.add(`Workload ${props.workload.name} updated`, 'default', MessageType.SUCCESS);
+        AlertUtils.add(`Workload ${props.workload.name} updated`, MessageType.SUCCESS);
       })
       .catch(error => {
         AlertUtils.addError(`Could not update workload ${props.workload.name}`, error);

@@ -252,7 +252,6 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
         .catch(err => {
           AlertUtils.addMessage({
             ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
-            group: 'default',
             type: MessageType.INFO,
             showNotification: false
           });
@@ -283,7 +282,6 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
         .catch(err => {
           AlertUtils.addMessage({
             ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
-            group: 'default',
             type: MessageType.INFO,
             showNotification: false
           });

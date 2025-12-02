@@ -76,7 +76,6 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
         .catch(err => {
           AlertUtils.addMessage({
             ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
-            group: 'default',
             type: MessageType.INFO,
             showNotification: false
           });
@@ -95,7 +94,6 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
         .catch(err => {
           AlertUtils.addMessage({
             ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
-            group: 'default',
             type: MessageType.INFO,
             showNotification: false
           });

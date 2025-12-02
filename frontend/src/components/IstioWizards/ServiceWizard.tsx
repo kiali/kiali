@@ -1,15 +1,6 @@
 import * as React from 'react';
-import {
-	Button,
-	ButtonVariant,
-	ExpandableSection,
-	Tab,
-	Tabs
-} from '@patternfly/react-core';
-import {
-	Modal,
-	ModalVariant
-} from '@patternfly/react-core/deprecated';
+import { Button, ButtonVariant, ExpandableSection, Tab, Tabs } from '@patternfly/react-core';
+import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -529,7 +520,6 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         if (results.length > 0) {
           AlertUtils.add(
             `Istio Config ${this.props.update ? 'updated' : 'created'} for ${this.props.serviceName} service.`,
-            'default',
             MessageType.SUCCESS
           );
         }

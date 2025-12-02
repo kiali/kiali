@@ -1,12 +1,6 @@
 import * as React from 'react';
-import {
-	Button,
-	ButtonVariant
-} from '@patternfly/react-core';
-import {
-	Modal,
-	ModalVariant
-} from '@patternfly/react-core/deprecated';
+import { Button, ButtonVariant } from '@patternfly/react-core';
+import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { ControlPlane } from '../../types/Mesh';
 import { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
@@ -165,7 +159,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
 
     API.updateNamespace(this.props.nsTarget, jsonPatch, this.props.nsInfo.cluster)
       .then(_ => {
-        AlertUtils.add(`Namespace ${this.props.nsTarget} updated`, 'default', MessageType.SUCCESS);
+        AlertUtils.add(`Namespace ${this.props.nsTarget} updated`, MessageType.SUCCESS);
         this.props.load();
       })
       .catch(error => {
@@ -178,7 +172,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
 
     API.updateNamespace(this.props.nsTarget, jsonPatch, this.props.nsInfo.cluster)
       .then(_ => {
-        AlertUtils.add(`Namespace ${this.props.nsTarget} updated`, 'default', MessageType.SUCCESS);
+        AlertUtils.add(`Namespace ${this.props.nsTarget} updated`, MessageType.SUCCESS);
         this.props.load();
       })
       .catch(error => {
@@ -211,7 +205,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
           if (op !== 'delete') {
             this.createTrafficPolicies(ns, duration, apsP, sdsP, op, cluster);
           } else {
-            AlertUtils.add(`Traffic policies ${op}d for ${ns} namespace.`, 'default', MessageType.SUCCESS);
+            AlertUtils.add(`Traffic policies ${op}d for ${ns} namespace.`, MessageType.SUCCESS);
             this.props.load();
           }
         })
@@ -249,7 +243,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
         )
         .then(results => {
           if (results.length > 0) {
-            AlertUtils.add(`Traffic policies ${op}d for ${ns} namespace.`, 'default', MessageType.SUCCESS);
+            AlertUtils.add(`Traffic policies ${op}d for ${ns} namespace.`, MessageType.SUCCESS);
           }
 
           this.props.load();

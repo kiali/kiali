@@ -308,7 +308,6 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
           `${t('Istio {{type}} created', { type: getGVKTypeString(props.objectGVK) })}${
             cluster ? t(' in cluster {{clusterName}}', { clusterName: cluster }) : ''
           }`,
-          'default',
           MessageType.SUCCESS
         );
       }
@@ -497,7 +496,7 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
         <DefaultSecondaryMasthead showClusterSelector={false} hideNamespaceSelector={true} />
       </div>
 
-       <div style={{ flexGrow: 1, overflowY: 'auto' }}>
+      <div style={{ flexGrow: 1, overflowY: 'auto' }}>
         <RenderContent>
           <Form className={formPadding} isHorizontal={true}>
             <FormGroup label={t('Namespaces')} isRequired={true} fieldId="namespaces">

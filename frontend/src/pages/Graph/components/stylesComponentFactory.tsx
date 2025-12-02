@@ -197,13 +197,11 @@ const handleGraphNav = (fromNode: GraphElement, kiosk: string): void => {
     if (!serverConfig.ambientEnabled) {
       AlertUtils.add(
         `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`,
-        undefined,
         MessageType.WARNING
       );
     } else {
       AlertUtils.add(
         `A node out of the mesh provides no node-specific telemetry and can not provide a node detail graph.`,
-        undefined,
         MessageType.WARNING
       );
     }
@@ -213,7 +211,6 @@ const handleGraphNav = (fromNode: GraphElement, kiosk: string): void => {
   if (fromNodeData.isIdle) {
     AlertUtils.add(
       `An idle node has no node-specific traffic and can not provide a node detail graph.`,
-      undefined,
       MessageType.WARNING
     );
     return;

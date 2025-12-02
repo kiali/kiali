@@ -378,7 +378,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         const results: Map<string, NamespaceAppHealth | NamespaceWorkloadHealth | NamespaceServiceHealth> = new Map();
         chunkedResults.forEach(chunkResult => {
           Object.keys(chunkResult).forEach(ns => {
-            results[ns] = chunkResult[ns];
+            results.set(ns, chunkResult[ns]);
           });
         });
 
@@ -684,7 +684,6 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         .catch(err => {
           AlertUtils.addMessage({
             ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
-            group: 'default',
             type: MessageType.INFO,
             showNotification: false
           });
@@ -718,7 +717,6 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         .catch(err => {
           AlertUtils.addMessage({
             ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
-            group: 'default',
             type: MessageType.INFO,
             showNotification: false
           });
@@ -734,7 +732,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         });
       })
       .catch(error => {
-        AlertUtils.addError('Error fetching controlplanes.', error, 'default', MessageType.ERROR);
+        AlertUtils.addError('Error fetching controlplanes.', error, MessageType.DANGER);
       });
   };
 
@@ -1211,7 +1209,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                     >
                       <Card
                         isCompact={true}
-                        variant={"secondary"}
+                        variant={'secondary'}
                         className={cardGridStyle}
                         data-test={`${ns.name}-${OverviewDisplayMode[this.state.displayMode]}`}
                       >

@@ -318,7 +318,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       )
         .then(() => {
           const targetMessage = `${this.props.istioConfigId.namespace} / ${this.props.istioConfigId.objectKind} / ${this.props.istioConfigId.objectName}`;
-          AlertUtils.add(`Changes applied on ${targetMessage}`, 'default', MessageType.SUCCESS);
+          AlertUtils.add(`Changes applied on ${targetMessage}`, MessageType.SUCCESS);
           this.fetchIstioObjectDetails();
         })
         .catch(error => {
