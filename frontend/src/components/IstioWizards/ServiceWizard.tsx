@@ -526,7 +526,6 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         if (results.length > 0) {
           AlertUtils.add(
             `Istio Config ${this.props.update ? 'updated' : 'created'} for ${this.props.serviceName} service.`,
-            'default',
             MessageType.SUCCESS
           );
         }

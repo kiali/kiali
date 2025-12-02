@@ -186,7 +186,7 @@ describe('MessageCenterReducer reducer', () => {
                   content: 'other message',
                   detail: 'my detail',
                   showDetail: false,
-                  type: MessageType.ERROR,
+                  type: MessageType.DANGER,
                   count: 1,
                   created: date
                 },
@@ -224,7 +224,7 @@ describe('MessageCenterReducer reducer', () => {
               content: 'other message',
               detail: 'my detail',
               showDetail: false,
-              type: MessageType.ERROR,
+              type: MessageType.DANGER,
               count: 1,
               created: date
             }
@@ -270,7 +270,7 @@ describe('MessageCenterReducer reducer', () => {
                   content: 'other message',
                   detail: 'my detail',
                   showDetail: false,
-                  type: MessageType.ERROR,
+                  type: MessageType.DANGER,
                   count: 1,
                   created: date
                 },
@@ -319,7 +319,7 @@ describe('MessageCenterReducer reducer', () => {
               content: 'other message',
               detail: 'my detail',
               showDetail: false,
-              type: MessageType.ERROR,
+              type: MessageType.DANGER,
               count: 1,
               created: date
             },
@@ -376,7 +376,7 @@ describe('MessageCenterReducer reducer', () => {
                   content: 'other message',
                   detail: 'my detail',
                   showDetail: false,
-                  type: MessageType.ERROR,
+                  type: MessageType.DANGER,
                   count: 1,
                   created: date
                 }
@@ -414,7 +414,7 @@ describe('MessageCenterReducer reducer', () => {
               content: 'other message',
               detail: 'my detail',
               showDetail: false,
-              type: MessageType.ERROR,
+              type: MessageType.DANGER,
               count: 1,
               created: date
             }
@@ -520,7 +520,7 @@ describe('MessageCenterReducer reducer', () => {
           hidden: false,
           nextId: 0
         },
-        MessageCenterActions.toggleExpandedMessageCenter()
+        MessageCenterActions.toggleMessageCenter()
       )
     ).toEqual({
       expanded: true,

@@ -469,7 +469,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         });
       })
       .catch(error => {
-        AlertUtils.addError('Error fetching namespace info.', error, 'default', MessageType.ERROR);
+        AlertUtils.addError('Error fetching namespace info.', error, MessageType.DANGER);
       });
   };
 

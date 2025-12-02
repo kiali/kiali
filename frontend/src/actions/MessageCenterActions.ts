@@ -3,7 +3,7 @@ import { MessageType } from '../types/MessageCenter';
 import { ActionKeys } from './ActionKeys';
 
 const DEFAULT_GROUP_ID = 'default';
-const DEFAULT_MESSAGE_TYPE = MessageType.ERROR;
+const DEFAULT_MESSAGE_TYPE = MessageType.DANGER;
 
 type numberOrNumberArray = number | number[];
 
@@ -29,14 +29,12 @@ export const MessageCenterActions = {
   markAsRead: createAction(ActionKeys.MC_MARK_MESSAGE_AS_READ, resolve => (messageId: numberOrNumberArray) =>
     resolve({ messageId: toNumberArray(messageId) })
   ),
-  toggleGroup: createAction(ActionKeys.MC_TOGGLE_GROUP, resolve => (groupId: string) => resolve({ groupId })),
-  expandGroup: createAction(ActionKeys.MC_EXPAND_GROUP, resolve => (groupId: string) => resolve({ groupId })),
   hideNotification: createAction(ActionKeys.MC_HIDE_NOTIFICATION, resolve => (messageId: numberOrNumberArray) =>
     resolve({ messageId: toNumberArray(messageId) })
   ),
   showMessageCenter: createAction(ActionKeys.MC_SHOW),
   hideMessageCenter: createAction(ActionKeys.MC_HIDE),
-  toggleExpandedMessageCenter: createAction(ActionKeys.MC_TOGGLE_EXPAND)
+  toggleMessageCenter: createAction(ActionKeys.MC_TOGGLE_EXPAND)
 };
 
 export type MessageCenterAction = ActionType<typeof MessageCenterActions>;

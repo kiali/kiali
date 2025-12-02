@@ -184,7 +184,6 @@ class AuthenticationControllerComponent extends React.Component<
           AlertUtils.addError(
             'Could not fetch Tracing info. Turning off Tracing integration.',
             error,
-            'default',
             MessageType.INFO
           );
         });
@@ -193,7 +192,7 @@ class AuthenticationControllerComponent extends React.Component<
       API.getStatus()
         .then(response => this.processServerStatus(response.data))
         .catch(error => {
-          AlertUtils.addError('Error fetching server status.', error, 'default', MessageType.WARNING);
+          AlertUtils.addError('Error fetching server status.', error, MessageType.WARNING);
         });
 
       const configs = await Promise.all([getNamespaces, getServerConfig, getTracingInfoPromise]);

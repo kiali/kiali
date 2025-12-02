@@ -6,23 +6,10 @@ export const MessageCenterThunkActions = {
   toggleMessageCenter: () => {
     return (dispatch, getState) => {
       const state = getState();
-      if (state.messageCenter.hidden) {
-        dispatch(MessageCenterActions.showMessageCenter());
-        dispatch(MessageCenterActions.expandGroup('default'));
-      } else {
+      if (state.messageCenter.expanded) {
         dispatch(MessageCenterActions.hideMessageCenter());
-      }
-      return Promise.resolve();
-    };
-  },
-  toggleSystemErrorsCenter: () => {
-    return (dispatch, getState) => {
-      const state = getState();
-      if (state.messageCenter.hidden) {
-        dispatch(MessageCenterActions.showMessageCenter());
-        dispatch(MessageCenterActions.expandGroup('systemErrors'));
       } else {
-        dispatch(MessageCenterActions.hideMessageCenter());
+        dispatch(MessageCenterActions.showMessageCenter());
       }
       return Promise.resolve();
     };

@@ -8,26 +8,37 @@ import { LoginActions } from '../actions/LoginActions';
 import _ from 'lodash';
 
 export const INITIAL_MESSAGE_CENTER_STATE: MessageCenterState = {
-  nextId: 0,
+  // predefined groups are specifically ordered by severity
   groups: [
     {
-      id: 'systemErrors',
-      title: 'Open issues',
+      id: 'danger',
+      title: 'Danger',
       messages: [],
-      showActions: false,
-      hideIfEmpty: true
+      variant: 'danger'
+      //showActions: false,
+      //hideIfEmpty: true
     },
     {
-      id: 'default',
-      title: 'Notifications',
+      id: 'warning',
+      title: 'Warning',
       messages: [],
-      showActions: true,
-      hideIfEmpty: false
+      variant: 'warning'
+      //showActions: true,
+      //hideIfEmpty: false
+    },
+    {
+      id: 'info',
+      title: 'Info',
+      messages: [],
+      variant: 'info'
+      //showActions: true,
+      //hideIfEmpty: false
     }
   ],
-  hidden: true,
+  //hidden: true,
   expanded: false,
-  expandedGroupId: 'default'
+  //expandedGroupId: 'default'
+  nextId: 0
 };
 
 const createMessage = (
@@ -40,7 +51,7 @@ const createMessage = (
   created: Date,
   showDetail: boolean,
   firstTriggered?: Date
-) => {
+): NotificationMessage => {
   return {
     id,
     content,
@@ -161,35 +172,23 @@ export const MessageCenterReducer = (
     }
 
     case getType(MessageCenterActions.showMessageCenter):
-      if (state.hidden) {
-        return updateState(state, { hidden: false });
+      if (!state.expanded) {
+        return updateState(state, { expanded: true });
       }
       return state;
 
     case getType(MessageCenterActions.hideMessageCenter):
-      if (!state.hidden) {
-        return updateState(state, { hidden: true });
+      if (state.expanded) {
+        return updateState(state, { expanded: false });
       }
       return state;
 
-    case getType(MessageCenterActions.toggleExpandedMessageCenter):
+    case getType(MessageCenterActions.toggleMessageCenter):
       return updateState(state, { expanded: !state.expanded });
 
-    case getType(MessageCenterActions.toggleGroup): {
-      const { groupId } = action.payload;
-      if (state.expandedGroupId === groupId) {
-        return updateState(state, { expandedGroupId: undefined });
-      }
-      return updateState(state, { expandedGroupId: groupId });
-    }
-
-    case getType(MessageCenterActions.expandGroup): {
-      const { groupId } = action.payload;
-      return updateState(state, { expandedGroupId: groupId });
-    }
     case getType(LoginActions.loginRequest): {
-      // Let's clear the message center quen user is loggin-in. This ensures
-      // that messages from a past session won't persist because may be obsolete.
+      // Let's clear the message center when user is logging-in. This ensures
+      // that past messages won't persist.
       return INITIAL_MESSAGE_CENTER_STATE;
     }
     default:

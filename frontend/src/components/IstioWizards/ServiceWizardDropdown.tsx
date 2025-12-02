@@ -176,7 +176,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
 
     API.updateService(props.namespace, props.serviceName, jsonInjectionPatch, 'json', props.cluster)
       .then(_ => {
-        AlertUtils.add(`Service ${props.serviceName} updated`, 'default', MessageType.SUCCESS);
+        AlertUtils.add(`Service ${props.serviceName} updated`, MessageType.SUCCESS);
       })
       .catch(error => {
         AlertUtils.addError(`Could not update service ${props.serviceName}`, error);

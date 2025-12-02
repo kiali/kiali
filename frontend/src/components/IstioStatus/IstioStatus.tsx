@@ -127,9 +127,9 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
         const informative = namespaces && namespaces.length < 1;
 
         if (informative) {
-          AlertUtils.addError(t('Istio deployment status disabled.'), error, 'default', MessageType.INFO);
+          AlertUtils.addError(t('Istio deployment status disabled.'), error, MessageType.INFO);
         } else {
-          AlertUtils.addError(t('Error fetching Istio deployment status.'), error, 'default', MessageType.ERROR);
+          AlertUtils.addError(t('Error fetching Istio deployment status.'), error, MessageType.DANGER);
         }
       });
   }, [namespaces, setIstioStatus, t]);

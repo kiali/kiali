@@ -93,14 +93,6 @@ export interface GraphToolbarState {
   trafficRates: TrafficRate[];
 }
 
-export interface MessageCenterState {
-  expanded: boolean;
-  expandedGroupId?: string;
-  groups: NotificationGroup[];
-  hidden: boolean;
-  nextId: number; // This likely will go away once we have persistence
-}
-
 export interface GraphState {
   edgeMode: EdgeMode;
   graphDefinition: GraphDefinition | null; // Not for consumption. Only for "Debug" dialog.
@@ -158,10 +150,10 @@ export interface MeshState {
 
 export interface MessageCenterState {
   expanded: boolean;
-  expandedGroupId?: string;
+  //expandedGroupId?: string;
   groups: NotificationGroup[];
-  hidden: boolean;
-  nextId: number; // This likely will go away once we have persistence
+  //hidden: boolean;
+  nextId: number;
 }
 
 export interface InterfaceSettings {

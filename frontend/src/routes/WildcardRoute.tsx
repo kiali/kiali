@@ -12,13 +12,7 @@ export const WildcardRoute = (): JSX.Element => {
 
   if (openshiftError) {
     const clusterMessage = cluster ? `to cluster "${cluster}"` : 'to cluster';
-    AlertUtils.addError(
-      `Openshift authentication ${clusterMessage} failed`,
-      undefined,
-      undefined,
-      undefined,
-      openshiftError
-    );
+    AlertUtils.addError(`Openshift authentication ${clusterMessage} failed`, undefined, undefined, openshiftError);
   }
 
   return <Navigate to={OVERVIEW_ROUTE} replace />;
