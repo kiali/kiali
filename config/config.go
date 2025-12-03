@@ -1,7 +1,9 @@
 package config
 
 import (
+	"crypto/sha256"
 	"crypto/x509"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -519,8 +521,6 @@ type OpenIdConfig struct {
 
 // DeploymentConfig provides details on how Kiali was deployed.
 type DeploymentConfig struct {
-	certPool *x509.CertPool
-
 	AccessibleNamespaces []string                 // this is no longer part of the actual config - we will generate this in Unmarshal()
 	ClusterWideAccess    bool                     `yaml:"cluster_wide_access,omitempty"`
 	ClusterNameOverrides map[string]string        `yaml:"cluster_name_overrides,omitempty"`
@@ -528,6 +528,14 @@ type DeploymentConfig struct {
 	InstanceName         string                   `yaml:"instance_name"`
 	Namespace            string                   `yaml:"namespace,omitempty"` // Kiali deployment namespace
 	ViewOnlyMode         bool                     `yaml:"view_only_mode,omitempty"`
+}
+
+type certPoolState struct {
+	base        *x509.CertPool
+	current     *x509.CertPool
+	fingerprint string
+	paths       []string
+	mu          sync.RWMutex
 }
 
 // we need to play games with a custom unmarshaller/marshaller for metav1.LabelSelector because it has no yaml struct tags so
@@ -748,6 +756,7 @@ type Config struct {
 	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
 	Clustering               Clustering                          `yaml:"clustering,omitempty"`
 	Credentials              *CredentialManager                  `yaml:"-"` // Not serialized; manages file-based credentials with auto-rotation
+	certPoolState            *certPoolState                      `yaml:"-"`
 	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
 	Deployment               DeploymentConfig                    `yaml:"deployment,omitempty"`
 	Extensions               []ExtensionConfig                   `yaml:"extensions,omitempty"`
@@ -795,7 +804,6 @@ func NewConfig() (c *Config) {
 		},
 		CustomDashboards: dashboards.GetBuiltInMonitoringDashboards(),
 		Deployment: DeploymentConfig{
-			certPool:           x509.NewCertPool(),
 			ClusterWideAccess:  true,
 			DiscoverySelectors: DiscoverySelectorsConfig{Default: nil, Overrides: nil},
 			InstanceName:       "kiali",
@@ -1047,6 +1055,8 @@ func NewConfig() (c *Config) {
 		RunMode: RunModeApp,
 	}
 
+	c.certPoolState = &certPoolState{}
+
 	return
 }
 
@@ -1188,34 +1198,163 @@ func (conf *Config) prepareDashboards() {
 
 // loadCertPool loads system certs and additional CAs from config.
 func (conf *Config) loadCertPool(additionalCABundlePaths ...string) error {
-	if certPool, err := x509.SystemCertPool(); err != nil {
+	state := conf.ensureCertPoolState()
+
+	systemPool, err := x509.SystemCertPool()
+	if err != nil {
 		log.Warningf("Unable to load system cert pool. Falling back to empty cert pool. Error: %s", err)
-	} else {
-		conf.Deployment.certPool = certPool
+		systemPool = x509.NewCertPool()
 	}
 
-	for _, path := range additionalCABundlePaths {
-		if _, err := os.Stat(path); err != nil {
-			if errors.Is(err, fs.ErrNotExist) {
-				log.Debugf("Additional CA bundle %s does not exist. Skipping", path)
-			} else {
-				log.Debugf("Unable to read additional CA bundle %s. Skipping", path)
-			}
+	state.mu.Lock()
+	state.base = systemPool
+	state.paths = append([]string(nil), additionalCABundlePaths...)
+	state.current = cloneCertPool(systemPool)
+	state.mu.Unlock()
+
+	bundles, fingerprint, err := conf.collectCABundles(additionalCABundlePaths, true)
+	if err != nil {
+		return err
+	}
+
+	pool, err := buildCertPoolFromBundles(systemPool, bundles)
+	if err != nil {
+		return err
+	}
+
+	state.mu.Lock()
+	defer state.mu.Unlock()
+
+	state.current = pool
+	state.fingerprint = fingerprint
+
+	return nil
+}
+
+func (conf *Config) ensureCertPoolState() *certPoolState {
+	if conf.certPoolState == nil {
+		conf.certPoolState = &certPoolState{}
+	}
+	return conf.certPoolState
+}
+
+func (conf *Config) refreshCertPoolIfNeeded(state *certPoolState) error {
+	if state == nil {
+		return nil
+	}
+
+	state.mu.RLock()
+	base := state.base
+	paths := append([]string(nil), state.paths...)
+	current := state.current
+	currentFingerprint := state.fingerprint
+	state.mu.RUnlock()
+
+	if base == nil {
+		return nil
+	}
+
+	bundles, fingerprint, err := conf.collectCABundles(paths, false)
+	if err != nil {
+		return err
+	}
+
+	if current != nil && fingerprint == currentFingerprint {
+		return nil
+	}
+
+	pool, err := buildCertPoolFromBundles(base, bundles)
+	if err != nil {
+		return err
+	}
+
+	state.mu.Lock()
+	defer state.mu.Unlock()
+
+	state.current = pool
+	state.fingerprint = fingerprint
+
+	return nil
+}
+
+type caBundle struct {
+	path string
+	data []byte
+}
+
+func (conf *Config) collectCABundles(paths []string, logMissing bool) ([]caBundle, string, error) {
+	hasher := sha256.New()
+	bundles := make([]caBundle, 0, len(paths))
+
+	for _, path := range paths {
+		if path == "" {
 			continue
 		}
 
-		log.Tracef("Adding CA bundle %s to pool", path)
-		bundle, err := os.ReadFile(path)
+		info, err := os.Stat(path)
 		if err != nil {
-			return fmt.Errorf("unable to read CA bundle '%s': %s", path, err)
+			if errors.Is(err, fs.ErrNotExist) {
+				if logMissing {
+					log.Debugf("Additional CA bundle [%s] does not exist. Skipping", path)
+				} else {
+					log.Tracef("Additional CA bundle [%s] does not exist. Skipping", path)
+				}
+				continue
+			}
+			return nil, "", fmt.Errorf("unable to access CA bundle [%s]: %w", path, err)
+		}
+		if info.IsDir() {
+			log.Debugf("Additional CA bundle [%s] is a directory. Skipping", path)
+			continue
 		}
 
-		if !conf.Deployment.certPool.AppendCertsFromPEM(bundle) {
-			return fmt.Errorf("unable to append PEM bundle from file '%s': %s", path, err)
+		data, err := conf.readCABundle(path)
+		if err != nil {
+			return nil, "", fmt.Errorf("unable to read CA bundle [%s]: %w", path, err)
+		}
+		if len(data) == 0 {
+			continue
+		}
+
+		if _, err := hasher.Write(data); err != nil {
+			return nil, "", fmt.Errorf("unable to hash CA bundle [%s]: %w", path, err)
+		}
+
+		bundles = append(bundles, caBundle{path: path, data: data})
+	}
+
+	return bundles, hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
+func buildCertPoolFromBundles(base *x509.CertPool, bundles []caBundle) (*x509.CertPool, error) {
+	pool := cloneCertPool(base)
+
+	for _, b := range bundles {
+		if ok := pool.AppendCertsFromPEM(b.data); !ok {
+			return nil, fmt.Errorf("unable to append PEM bundle from file [%s]", b.path)
 		}
 	}
 
-	return nil
+	return pool, nil
+}
+
+func cloneCertPool(base *x509.CertPool) *x509.CertPool {
+	if base == nil {
+		return x509.NewCertPool()
+	}
+	return base.Clone()
+}
+
+func (conf *Config) readCABundle(path string) ([]byte, error) {
+	if conf.Credentials != nil && strings.HasPrefix(path, "/") {
+		value, err := conf.Credentials.Get(path)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(value), nil
+	}
+
+	return os.ReadFile(path)
 }
 
 // Unmarshal parses the given YAML string and returns its Config object representation.
@@ -1847,10 +1986,27 @@ func (config *Config) GetVersionLabelName(labels map[string]string) (string, boo
 }
 
 func (c *Config) CertPool() *x509.CertPool {
-	if pool := c.Deployment.certPool; pool != nil {
-		return pool.Clone()
+	state := c.ensureCertPoolState()
+
+	if err := c.refreshCertPoolIfNeeded(state); err != nil {
+		log.Warningf("Failed to refresh certificate pool: %v", err)
 	}
-	return nil
+
+	state.mu.RLock()
+	pool := state.current
+	state.mu.RUnlock()
+
+	if pool == nil {
+		// Fallback to system cert pool when loadCertPool hasn't been called
+		log.Warning("CertPool requested but no certificate pool has been initialized. Falling back to system cert pool. This may indicate loadCertPool() was not called during config initialization.")
+		systemPool, err := x509.SystemCertPool()
+		if err != nil {
+			log.Warningf("Unable to load system cert pool: %v", err)
+			return x509.NewCertPool()
+		}
+		return systemPool
+	}
+	return pool.Clone()
 }
 
 // Close cleans up Config resources such as the credential file watcher.
