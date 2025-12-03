@@ -80,6 +80,10 @@ Complete documentation is available at http://kiali.io/docs/.`,
 				return fmt.Errorf("failed to set maxprocs: %v", err)
 			}
 
+			// Ensure config resources are cleaned up when function exits
+			// This handles both normal shutdown and early returns due to errors
+			defer conf.Close()
+
 			if err := config.Validate(conf); err != nil {
 				return fmt.Errorf("invalid configuration: %v", err)
 			}
