@@ -205,7 +205,7 @@ func (s *Service) GetAuth(ctx context.Context) *config.Auth {
 
 		// Preserve TLS configuration
 		newAuth.InsecureSkipVerify = auth.InsecureSkipVerify
-		newAuth.CAFile = auth.CAFile
+		// Note: CAFile is deprecated and is not copied
 
 		return &newAuth
 	}
@@ -223,7 +223,7 @@ func (s *Service) GetAuth(ctx context.Context) *config.Auth {
 
 		// Preserve TLS configuration
 		newAuth.InsecureSkipVerify = auth.InsecureSkipVerify
-		newAuth.CAFile = auth.CAFile
+		// Note: CAFile is deprecated and is not copied
 
 		return &newAuth
 	}

@@ -184,6 +184,9 @@ func generateTestCertificate(t *testing.T, cn string) (certPEM, keyPEM []byte) {
 	return certPEM, keyPEM
 }
 
+// TestGetTLSConfig_WithCAFile verifies that CAFile is deprecated and ignored.
+// CAFile is deprecated and no longer used. Custom CA certificates should be configured
+// via the kiali-cabundle ConfigMap instead.
 func TestGetTLSConfig_WithCAFile(t *testing.T) {
 	// Create a temporary CA file
 	tmpDir := t.TempDir()
@@ -198,17 +201,17 @@ func TestGetTLSConfig_WithCAFile(t *testing.T) {
 	}
 
 	conf := config.NewConfig()
+	// CAFile is deprecated and should be ignored
 	auth := &config.Auth{CAFile: caFile}
 
 	tlsConfig, err := httputil.GetTLSConfig(conf, auth)
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
 	}
-	if tlsConfig == nil {
-		t.Error("Expected TLS config, got nil")
-	}
-	if tlsConfig != nil && tlsConfig.RootCAs == nil {
-		t.Error("Expected RootCAs to be set")
+	// Since CAFile is deprecated and ignored, and no other TLS options are set,
+	// GetTLSConfig should return nil (no TLS configuration needed)
+	if tlsConfig != nil {
+		t.Error("Expected nil TLS config since CAFile is deprecated, got non-nil")
 	}
 }
 

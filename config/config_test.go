@@ -917,6 +917,7 @@ func certPoolHasSubject(pool *x509.CertPool, subject []byte) bool {
 	if pool == nil {
 		return false
 	}
+	//nolint:staticcheck // SA1019: pool.Subjects is deprecated for system cert pools, but works fine for test cert pools
 	for _, s := range pool.Subjects() {
 		if bytes.Equal(s, subject) {
 			return true
