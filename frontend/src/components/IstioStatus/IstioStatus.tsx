@@ -209,21 +209,16 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   let status: 'info' | 'danger' | 'warning' | 'success' | 'custom' | undefined = 'success';
   if (!healthyComponents()) {
     const iconColor = tooltipColor();
-    let dataTest = 'istio-status';
     status = 'info';
 
     if (iconColor === PFColors.Danger) {
       status = 'danger';
-      dataTest = `${dataTest}-danger`;
     } else if (iconColor === PFColors.Warning) {
       status = 'warning';
-      dataTest = `${dataTest}-warning`;
     } else if (iconColor === PFColors.Info) {
       status = 'success';
-      dataTest = `${dataTest}-info`;
     } else if (iconColor === PFColors.Success) {
       status = 'success';
-      dataTest = `${dataTest}-success`;
     }
   }
 
