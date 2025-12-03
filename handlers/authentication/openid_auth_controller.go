@@ -4,14 +4,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -30,13 +28,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
 	"github.com/kiali/kiali/util/httputil"
-)
-
-const (
-	// OpenIdServerCAFile is a certificate file used to connect to the OpenID server.
-	// This is for cases when the authentication server is using TLS with a self-signed
-	// certificate.
-	OpenIdServerCAFile = "/kiali-cabundle/openid-server-ca.crt"
 )
 
 // cachedOpenIdKeySet stores the metadata obtained from the /.well-known/openid-configuration
@@ -930,7 +921,9 @@ func checkDomain(tokenClaims map[string]interface{}, allowedDomains []string) er
 }
 
 // createHttpClient is a helper for creating and configuring an http client that is ready
-// to do requests to the url in toUrl, which should be and endpoint of the OpenId server.
+// to do requests to the url in toUrl, which should be an endpoint of the OpenId server.
+// Custom CA certificates can be provided via the kiali-cabundle ConfigMap using either
+// the global additional-ca-bundle.pem key or the OpenID-specific openid-server-ca.crt key.
 func createHttpClient(conf *config.Config, toUrl string) (*http.Client, error) {
 	cfg := conf.Auth.OpenId
 	parsedUrl, err := url.Parse(toUrl)
@@ -938,31 +931,14 @@ func createHttpClient(conf *config.Config, toUrl string) (*http.Client, error) {
 		return nil, err
 	}
 
-	// Check if there is a user-configured custom certificate for the OpenID Server. Read it, if it exists
-	var cafile []byte
-	if _, customCaErr := os.Stat(OpenIdServerCAFile); customCaErr == nil {
-		var caReadErr error
-		if cafile, caReadErr = os.ReadFile(OpenIdServerCAFile); caReadErr != nil {
-			return nil, fmt.Errorf("failed to read the OpenId CA certificate: %w", caReadErr)
-		}
-	} else if !errors.Is(customCaErr, os.ErrNotExist) {
-		log.Warningf("Unable to read the provided OpenID Server CA file (%s). Ignoring...", customCaErr.Error())
-	}
-
 	httpTransport := &http.Transport{}
-	if cfg.InsecureSkipVerifyTLS || cafile != nil {
-		var certPool *x509.CertPool
-		if cafile != nil {
-			certPool = x509.NewCertPool()
-			if ok := certPool.AppendCertsFromPEM(cafile); !ok {
-				return nil, fmt.Errorf("supplied OpenId CA file cannot be parsed")
-			}
-		}
 
-		httpTransport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: cfg.InsecureSkipVerifyTLS,
-			RootCAs:            certPool,
-		}
+	// Use the global cert pool which includes system CAs and any additional CAs
+	// configured via the kiali-cabundle ConfigMap (including openid-server-ca.crt)
+	certPool := conf.CertPool()
+	httpTransport.TLSClientConfig = &tls.Config{
+		InsecureSkipVerify: cfg.InsecureSkipVerifyTLS,
+		RootCAs:            certPool,
 	}
 
 	if cfg.HTTPProxy != "" || cfg.HTTPSProxy != "" {

@@ -58,6 +58,8 @@ external_services:
 }
 
 // TestSecretOverride_CertFileWithKeyName tests that certificate files preserve the key name from secret:name:key pattern
+// Note: ca_file is deprecated and is no longer processed via secret overrides.
+// Only cert_file and key_file are tested here.
 func TestSecretOverride_CertFileWithKeyName(t *testing.T) {
 	// Create temporary config file with secret: pattern
 	tmpDir := t.TempDir()
@@ -70,7 +72,6 @@ external_services:
     url: http://prometheus:9090
     auth:
       type: none
-      ca_file: secret:prometheus-ca:ca.crt
       cert_file: secret:prometheus-cert:tls.crt
       key_file: secret:prometheus-key:tls.key
 `
@@ -79,14 +80,6 @@ external_services:
 
 	// Create temporary secret directory structure
 	secretsBaseDir := filepath.Join(tmpDir, "kiali-override-secrets")
-
-	// Create CA file with specific key name
-	caDir := filepath.Join(secretsBaseDir, "prometheus-ca")
-	err = os.MkdirAll(caDir, 0755)
-	require.NoError(t, err)
-	caFile := filepath.Join(caDir, "ca.crt")
-	err = os.WriteFile(caFile, []byte("CA-CERT-CONTENT"), 0600)
-	require.NoError(t, err)
 
 	// Create cert file with specific key name
 	certDir := filepath.Join(secretsBaseDir, "prometheus-cert")
@@ -115,18 +108,12 @@ external_services:
 	require.NotNil(t, conf)
 
 	// Verify that certificate files were set to the paths with preserved key names
-	assert.Equal(t, caFile, conf.ExternalServices.Prometheus.Auth.CAFile,
-		"Expected CAFile to preserve key name 'ca.crt'")
 	assert.Equal(t, certFile, conf.ExternalServices.Prometheus.Auth.CertFile,
 		"Expected CertFile to preserve key name 'tls.crt'")
 	assert.Equal(t, keyFile, conf.ExternalServices.Prometheus.Auth.KeyFile,
 		"Expected KeyFile to preserve key name 'tls.key'")
 
 	// Verify we can read the content
-	caContent, err := conf.GetCredential(conf.ExternalServices.Prometheus.Auth.CAFile)
-	assert.NoError(t, err)
-	assert.Equal(t, "CA-CERT-CONTENT", caContent)
-
 	certContent, err := conf.GetCredential(conf.ExternalServices.Prometheus.Auth.CertFile)
 	assert.NoError(t, err)
 	assert.Equal(t, "CERT-CONTENT", certContent)

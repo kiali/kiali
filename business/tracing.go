@@ -392,9 +392,7 @@ func (in *TracingService) ValidateConfiguration(ctx context.Context, conf *confi
 	if tracingConfig.Auth.Token == "xxx" {
 		tracingConfig.Auth.Token = conf.ExternalServices.Tracing.Auth.Token
 	}
-	if tracingConfig.Auth.CAFile == "xxx" {
-		tracingConfig.Auth.CAFile = conf.ExternalServices.Tracing.Auth.CAFile
-	}
+	// Note: CAFile is deprecated and is not processed
 	if tracingConfig.Auth.Username == "xxx" {
 		tracingConfig.Auth.Username = conf.ExternalServices.Tracing.Auth.Username
 	}

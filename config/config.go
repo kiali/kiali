@@ -44,20 +44,16 @@ const (
 	SecretFileCustomDashboardsPrometheusPassword = "customdashboards-prometheus-password"
 	SecretFileCustomDashboardsPrometheusToken    = "customdashboards-prometheus-token"
 
-	// External services certificate files
-	SecretFilePrometheusCA                   = "prometheus-ca"
+	// External services certificate files (for mTLS client certificates)
+	// Note: CA file constants removed - use kiali-cabundle ConfigMap instead
 	SecretFilePrometheusCert                 = "prometheus-cert"
 	SecretFilePrometheusKey                  = "prometheus-key"
-	SecretFileGrafanaCA                      = "grafana-ca"
 	SecretFileGrafanaCert                    = "grafana-cert"
 	SecretFileGrafanaKey                     = "grafana-key"
-	SecretFileTracingCA                      = "tracing-ca"
 	SecretFileTracingCert                    = "tracing-cert"
 	SecretFileTracingKey                     = "tracing-key"
-	SecretFilePersesCA                       = "perses-ca"
 	SecretFilePersesCert                     = "perses-cert"
 	SecretFilePersesKey                      = "perses-key"
-	SecretFileCustomDashboardsPrometheusCA   = "customdashboards-prometheus-ca"
 	SecretFileCustomDashboardsPrometheusCert = "customdashboards-prometheus-cert"
 	SecretFileCustomDashboardsPrometheusKey  = "customdashboards-prometheus-key"
 
@@ -121,6 +117,9 @@ const (
 
 const (
 	additionalCABundle = "/kiali-cabundle/additional-ca-bundle.pem"
+	// openidServerCA is the path to an optional CA certificate for the OpenID server.
+	// This is added to the global cert pool when using OpenID auth.
+	openidServerCA     = "/kiali-cabundle/openid-server-ca.crt"
 	openshiftServingCA = "/kiali-cabundle/service-ca.crt"
 	// This is an alternate location for the openshift serving cert. It's unclear which
 	// one to prefer so we try reading both.
@@ -230,7 +229,7 @@ type Server struct {
 
 // Auth provides authentication data for external services
 type Auth struct {
-	CAFile             string `yaml:"ca_file" json:"caFile"`
+	CAFile             string `yaml:"ca_file" json:"-"` // Deprecated: CAFile is ignored. Use kiali-cabundle ConfigMap instead.
 	CertFile           string `yaml:"cert_file" json:"certFile"`
 	InsecureSkipVerify bool   `yaml:"insecure_skip_verify" json:"insecureSkipVerify"`
 	KeyFile            string `yaml:"key_file" json:"keyFile"`
@@ -242,7 +241,6 @@ type Auth struct {
 }
 
 func (a *Auth) Obfuscate() {
-	a.CAFile = "xxx"
 	a.CertFile = "xxx"
 	a.KeyFile = "xxx"
 	a.Password = "xxx"
@@ -1196,6 +1194,12 @@ func (conf *Config) prepareDashboards() {
 	}
 }
 
+// LoadCertPool loads system certs and additional CAs from the specified paths.
+// This is primarily used for testing; normal initialization happens via Unmarshal.
+func (conf *Config) LoadCertPool(additionalCABundlePaths ...string) error {
+	return conf.loadCertPool(additionalCABundlePaths...)
+}
+
 // loadCertPool loads system certs and additional CAs from config.
 func (conf *Config) loadCertPool(additionalCABundlePaths ...string) error {
 	state := conf.ensureCertPoolState()
@@ -1392,8 +1396,11 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	if conf.Auth.Strategy == AuthStrategyOpenshift {
 		additionalCABundles = append(additionalCABundles, openshiftServingCAFromSA, openshiftServingCA)
 	}
+	if conf.Auth.Strategy == AuthStrategyOpenId {
+		additionalCABundles = append(additionalCABundles, openidServerCA)
+	}
 	if err := conf.loadCertPool(additionalCABundles...); err != nil {
-		return nil, fmt.Errorf("unable to load cert pool. Check additional CAs specified at %s and ensure the file is properly formatted: %s",
+		return nil, fmt.Errorf("unable to load cert pool. Check additional CAs specified at [%s] and ensure the file is properly formatted: %s",
 			strings.Join(additionalCABundles, ","), err)
 	}
 
@@ -1431,10 +1438,6 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	overrides := []overridesType{
 		// Prometheus credentials and certificates
 		{
-			configValue: &conf.ExternalServices.Prometheus.Auth.CAFile,
-			fileName:    SecretFilePrometheusCA,
-		},
-		{
 			configValue: &conf.ExternalServices.Prometheus.Auth.CertFile,
 			fileName:    SecretFilePrometheusCert,
 		},
@@ -1455,10 +1458,6 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 			fileName:    SecretFilePrometheusUsername,
 		},
 		// Grafana credentials and certificates
-		{
-			configValue: &conf.ExternalServices.Grafana.Auth.CAFile,
-			fileName:    SecretFileGrafanaCA,
-		},
 		{
 			configValue: &conf.ExternalServices.Grafana.Auth.CertFile,
 			fileName:    SecretFileGrafanaCert,
@@ -1481,10 +1480,6 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		},
 		// Tracing credentials and certificates
 		{
-			configValue: &conf.ExternalServices.Tracing.Auth.CAFile,
-			fileName:    SecretFileTracingCA,
-		},
-		{
 			configValue: &conf.ExternalServices.Tracing.Auth.CertFile,
 			fileName:    SecretFileTracingCert,
 		},
@@ -1506,10 +1501,6 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		},
 		// Perses credentials and certificates
 		{
-			configValue: &conf.ExternalServices.Perses.Auth.CAFile,
-			fileName:    SecretFilePersesCA,
-		},
-		{
 			configValue: &conf.ExternalServices.Perses.Auth.CertFile,
 			fileName:    SecretFilePersesCert,
 		},
@@ -1526,10 +1517,6 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 			fileName:    SecretFilePersesUsername,
 		},
 		// Custom Dashboards Prometheus credentials and certificates
-		{
-			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.CAFile,
-			fileName:    SecretFileCustomDashboardsPrometheusCA,
-		},
 		{
 			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.CertFile,
 			fileName:    SecretFileCustomDashboardsPrometheusCert,
@@ -1597,7 +1584,34 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		}
 	}
 
+	// Log deprecation warnings for deprecated ca_file settings
+	logCAFileDeprecationWarnings(conf)
+
 	return
+}
+
+// logCAFileDeprecationWarnings logs warnings if any deprecated ca_file settings are configured.
+// These settings are deprecated and will be ignored. Users should use the
+// kiali-cabundle ConfigMap instead.
+func logCAFileDeprecationWarnings(conf *Config) {
+	caFileSettings := []struct {
+		name  string
+		value string
+	}{
+		{"external_services.grafana.auth.ca_file", conf.ExternalServices.Grafana.Auth.CAFile},
+		{"external_services.perses.auth.ca_file", conf.ExternalServices.Perses.Auth.CAFile},
+		{"external_services.prometheus.auth.ca_file", conf.ExternalServices.Prometheus.Auth.CAFile},
+		{"external_services.custom_dashboards.prometheus.auth.ca_file", conf.ExternalServices.CustomDashboards.Prometheus.Auth.CAFile},
+		{"external_services.tracing.auth.ca_file", conf.ExternalServices.Tracing.Auth.CAFile},
+	}
+
+	for _, setting := range caFileSettings {
+		if setting.value != "" {
+			log.Warningf("DEPRECATION: [%s] is deprecated and will be ignored. "+
+				"To configure custom CA certificates, use the kiali-cabundle ConfigMap instead. "+
+				"See the TLS Configuration documentation for details.", setting.name)
+		}
+	}
 }
 
 // fileExists checks if a file exists and is not a directory.
@@ -1802,7 +1816,7 @@ func Validate(conf *Config) error {
 
 	// log a warning if the user is ignoring some validations
 	if len(conf.KialiFeatureFlags.Validations.Ignore) > 0 {
-		log.Infof("Some validation errors will be ignored %v. If these errors do occur, they will still be logged. If you think the validation errors you see are incorrect, please report them to the Kiali team if you have not done so already and provide the details of your scenario. This will keep Kiali validations strong for the whole community.", conf.KialiFeatureFlags.Validations.Ignore)
+		log.Infof("Some validation errors will be ignored [%v]. If these errors do occur, they will still be logged. If you think the validation errors you see are incorrect, please report them to the Kiali team if you have not done so already and provide the details of your scenario. This will keep Kiali validations strong for the whole community.", conf.KialiFeatureFlags.Validations.Ignore)
 	}
 
 	// log a info message if the user is disabling some features

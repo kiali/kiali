@@ -183,7 +183,7 @@ func GetTLSConfig(conf *config.Config, auth *config.Auth) (*tls.Config, error) {
 	if auth == nil {
 		return nil, nil
 	}
-	if auth.CAFile == "" && auth.CertFile == "" && auth.KeyFile == "" && !auth.InsecureSkipVerify {
+	if auth.CertFile == "" && auth.KeyFile == "" && !auth.InsecureSkipVerify {
 		return nil, nil
 	}
 	return buildTLSConfig(conf, auth, "")
@@ -238,63 +238,8 @@ func buildTLSConfig(conf *config.Config, auth *config.Auth, serverName string) (
 		}
 	}
 
-	// When a custom CA file is used (and verification is enabled) we reload the CA content
-	// on every handshake to pick up secret rotations immediately.
-	if auth.CAFile != "" && !auth.InsecureSkipVerify {
-		cfg.InsecureSkipVerify = true
-		targetName := serverName
-		cfg.VerifyConnection = func(cs tls.ConnectionState) error {
-			name := targetName
-			if name == "" {
-				name = cs.ServerName
-			}
-			if name == "" {
-				return fmt.Errorf("unable to verify TLS certificate: server name is empty")
-			}
-
-			roots := conf.CertPool()
-			caContent, err := conf.GetCredential(auth.CAFile)
-			if err != nil {
-				return fmt.Errorf("failed to read CA file [%s]: %w", auth.CAFile, err)
-			}
-			if caContent != "" {
-				if roots == nil {
-					roots = x509.NewCertPool()
-				}
-				if ok := roots.AppendCertsFromPEM([]byte(caContent)); !ok {
-					return fmt.Errorf("supplied CA file [%s] could not be parsed", auth.CAFile)
-				}
-			}
-			if len(cs.PeerCertificates) == 0 {
-				return fmt.Errorf("no server certificates provided")
-			}
-			leaf := cs.PeerCertificates[0]
-			intermediates := x509.NewCertPool()
-			for i := 1; i < len(cs.PeerCertificates); i++ {
-				intermediates.AddCert(cs.PeerCertificates[i])
-			}
-			opts := x509.VerifyOptions{
-				Roots:         roots,
-				Intermediates: intermediates,
-			}
-			if ip := net.ParseIP(name); ip != nil {
-				if _, err := leaf.Verify(opts); err != nil {
-					return fmt.Errorf("failed to verify server certificate chain: %w", err)
-				}
-				for _, ipSAN := range leaf.IPAddresses {
-					if ipSAN.Equal(ip) {
-						return nil
-					}
-				}
-				return fmt.Errorf("failed to verify server certificate: IP %s not present in SANs", name)
-			}
-			opts.DNSName = name
-			if _, err := leaf.Verify(opts); err != nil {
-				return fmt.Errorf("failed to verify server certificate: %w", err)
-			}
-			return nil
-		}
-	}
+	// Note: auth.CAFile is deprecated. Custom CA certificates should be configured
+	// via the kiali-cabundle ConfigMap instead. The CAFile setting is now ignored.
 
 	// When no custom verification is needed rely on the configured/system roots.
 	if roots == nil && !cfg.InsecureSkipVerify {
