@@ -207,18 +207,24 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   const tooltipPosition = TooltipPosition.top;
 
   let status: 'info' | 'danger' | 'warning' | 'success' | 'custom' | undefined = 'success';
+  let dataTest = 'istio-status-success';
   if (!healthyComponents()) {
     const iconColor = tooltipColor();
     status = 'info';
+    dataTest = 'istio-status';
 
     if (iconColor === PFColors.Danger) {
       status = 'danger';
+      dataTest = `${dataTest}-danger`;
     } else if (iconColor === PFColors.Warning) {
       status = 'warning';
+      dataTest = `${dataTest}-warning`;
     } else if (iconColor === PFColors.Info) {
       status = 'success';
+      dataTest = `${dataTest}-info`;
     } else if (iconColor === PFColors.Success) {
       status = 'success';
+      dataTest = `${dataTest}-success`;
     }
   }
 
@@ -233,7 +239,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     >
       <>
         {homeCluster?.name && (
-          <Label data-test="cluster-icon" status={status}>
+          <Label data-test={dataTest} status={status}>
             {homeCluster?.name}
           </Label>
         )}
