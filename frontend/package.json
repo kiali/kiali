@@ -159,7 +159,6 @@
     "typescript": "^4.9.5"
   },
   "resolutions": {
-    "glob": "^11.1.0",
     "nth-check": "^2.0.1",
     "postcss": "^8.4.31",
     "workbox-webpack-plugin": "^7.1.0"
