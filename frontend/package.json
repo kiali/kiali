@@ -155,7 +155,6 @@
   },
   "resolutions": {
     "esbuild": "^0.25.2",
-    "glob": "^11.1.0",
     "nth-check": "^2.0.1",
     "postcss": "^8.4.31",
     "workbox-webpack-plugin": "^7.1.0"
