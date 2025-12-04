@@ -4,11 +4,14 @@ import {
   Form,
   FormGroup,
   FormHelperText,
-  FormSelect,
-  FormSelectOption,
   HelperText,
   HelperTextItem,
+  MenuToggle,
+  MenuToggleElement,
   Radio,
+  Select,
+  SelectList,
+  SelectOption,
   Switch,
   TextInput
 } from '@patternfly/react-core';
@@ -42,20 +45,20 @@ type ReduxProps = {
 };
 
 type Props = ReduxProps & {
-  mtlsMode: string;
-  clientCertificate: string;
-  privateKey: string;
-  caCertificates: string;
-  hasLoadBalancer: boolean;
-  loadBalancer: LoadBalancerSettings;
-  onTrafficPolicyChange: (valid: boolean, trafficPolicy: TrafficPolicyState) => void;
-  nsWideStatus?: TLSStatus;
-  hasPeerAuthentication: boolean;
-  peerAuthenticationMode: PeerAuthenticationMutualTLSMode;
   addConnectionPool: boolean;
-  connectionPool: ConnectionPoolSettings;
   addOutlierDetection: boolean;
+  caCertificates: string;
+  clientCertificate: string;
+  connectionPool: ConnectionPoolSettings;
+  hasLoadBalancer: boolean;
+  hasPeerAuthentication: boolean;
+  loadBalancer: LoadBalancerSettings;
+  mtlsMode: string;
+  nsWideStatus?: TLSStatus;
+  onTrafficPolicyChange: (valid: boolean, trafficPolicy: TrafficPolicyState) => void;
   outlierDetection: OutlierDetectionProps;
+  peerAuthenticationMode: PeerAuthenticationMutualTLSMode;
+  privateKey: string;
 };
 
 export enum ConsistentHashType {
@@ -65,20 +68,23 @@ export enum ConsistentHashType {
 }
 
 export type TrafficPolicyState = {
-  tlsModified: boolean;
-  mtlsMode: string;
-  clientCertificate: string;
-  privateKey: string;
-  caCertificates: string;
-  addLoadBalancer: boolean;
-  simpleLB: boolean;
-  consistentHashType: ConsistentHashType;
-  loadBalancer: LoadBalancerSettings;
-  peerAuthnSelector: PeerAuthenticationSelectorState;
   addConnectionPool: boolean;
-  connectionPool: ConnectionPoolSettings;
+  addLoadBalancer: boolean;
   addOutlierDetection: boolean;
+  caCertificates: string;
+  clientCertificate: string;
+  connectionPool: ConnectionPoolSettings;
+  consistentHashType: ConsistentHashType;
+  isLbSelectOpen: boolean;
+  isMtlsSelectOpen: boolean;
+  isPaModeSelectOpen: boolean;
+  loadBalancer: LoadBalancerSettings;
+  mtlsMode: string;
   outlierDetection: OutlierDetectionProps;
+  peerAuthnSelector: PeerAuthenticationSelectorState;
+  privateKey: string;
+  simpleLB: boolean;
+  tlsModified: boolean;
 };
 
 export type PeerAuthenticationSelectorState = {
@@ -119,24 +125,27 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
       }
     }
     this.state = {
-      tlsModified: false,
-      mtlsMode: props.mtlsMode,
-      clientCertificate: props.clientCertificate,
-      privateKey: props.privateKey,
-      caCertificates: props.caCertificates,
+      addConnectionPool: props.addConnectionPool,
       addLoadBalancer: props.hasLoadBalancer,
-      simpleLB: props.loadBalancer && props.loadBalancer.simple !== undefined && props.loadBalancer.simple !== null,
+      addOutlierDetection: props.addOutlierDetection,
+      caCertificates: props.caCertificates,
+      clientCertificate: props.clientCertificate,
+      connectionPool: props.connectionPool,
       consistentHashType: consistentHashType,
+      isLbSelectOpen: false,
+      isMtlsSelectOpen: false,
+      isPaModeSelectOpen: false,
       loadBalancer: props.loadBalancer,
+      mtlsMode: props.mtlsMode,
+      outlierDetection: props.outlierDetection,
       peerAuthnSelector: {
         addPeerAuthentication: props.hasPeerAuthentication,
         addPeerAuthnModified: false,
         mode: props.peerAuthenticationMode
       },
-      addConnectionPool: props.addConnectionPool,
-      connectionPool: props.connectionPool,
-      addOutlierDetection: props.addOutlierDetection,
-      outlierDetection: props.outlierDetection
+      privateKey: props.privateKey,
+      simpleLB: props.loadBalancer && props.loadBalancer.simple !== undefined && props.loadBalancer.simple !== null,
+      tlsModified: false
     };
   }
 
@@ -219,7 +228,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
     return state.mtlsMode !== undefined;
   };
 
-  onFormChange = (component: TrafficPolicyForm, value: string) => {
+  onFormChange = (component: TrafficPolicyForm, value: string): void => {
     switch (component) {
       case TrafficPolicyForm.TLS:
         this.setState(
@@ -428,21 +437,41 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
     }
   };
 
-  render() {
+  render(): React.ReactNode {
     const isValidLB = this.isValidLB(this.state);
     return (
       <Form isHorizontal={true}>
         <FormGroup label="TLS" fieldId="advanced-tls">
-          <FormSelect
-            value={this.state.mtlsMode}
-            onChange={(_event, mtlsMode: string) => this.onFormChange(TrafficPolicyForm.TLS, mtlsMode)}
+          <Select
             id="advanced-tls"
-            name="advanced-tls"
+            isOpen={this.state.isMtlsSelectOpen}
+            selected={this.state.mtlsMode}
+            onSelect={(_event, value) => {
+              this.setState({ isMtlsSelectOpen: false });
+              this.onFormChange(TrafficPolicyForm.TLS, value as string);
+            }}
+            onOpenChange={isMtlsSelectOpen => this.setState({ isMtlsSelectOpen })}
+            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+              <MenuToggle
+                id="advanced-tls-toggle"
+                ref={toggleRef}
+                onClick={() => this.setState({ isMtlsSelectOpen: !this.state.isMtlsSelectOpen })}
+                isExpanded={this.state.isMtlsSelectOpen}
+                isFullWidth
+              >
+                {this.state.mtlsMode}
+              </MenuToggle>
+            )}
+            aria-label="TLS Mode Select"
           >
-            {mTLSMode.map(mode => (
-              <FormSelectOption key={mode} value={mode} label={mode} />
-            ))}
-          </FormSelect>
+            <SelectList>
+              {mTLSMode.map(mode => (
+                <SelectOption key={mode} value={mode} isSelected={mode === this.state.mtlsMode}>
+                  {mode}
+                </SelectOption>
+              ))}
+            </SelectList>
+          </Select>
           <FormHelperText>
             <HelperText>
               <HelperTextItem>{t('TLS related settings for connections to the upstream service.')}</HelperTextItem>
@@ -503,16 +532,36 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
         </FormGroup>
         {this.state.peerAuthnSelector.addPeerAuthentication && (
           <FormGroup fieldId="advanced-pa-mode" label="Mode">
-            <FormSelect
-              value={this.state.peerAuthnSelector.mode}
-              onChange={(_event, mode: string) => this.onFormChange(TrafficPolicyForm.PA_MODE, mode)}
+            <Select
               id="trafficPolicy-pa-mode"
-              name="trafficPolicy-pa-mode"
+              isOpen={this.state.isPaModeSelectOpen}
+              selected={this.state.peerAuthnSelector.mode}
+              onSelect={(_event, value) => {
+                this.setState({ isPaModeSelectOpen: false });
+                this.onFormChange(TrafficPolicyForm.PA_MODE, value as string);
+              }}
+              onOpenChange={isPaModeSelectOpen => this.setState({ isPaModeSelectOpen })}
+              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                <MenuToggle
+                  id="trafficPolicy-pa-mode-toggle"
+                  ref={toggleRef}
+                  onClick={() => this.setState({ isPaModeSelectOpen: !this.state.isPaModeSelectOpen })}
+                  isExpanded={this.state.isPaModeSelectOpen}
+                  isFullWidth
+                >
+                  {this.state.peerAuthnSelector.mode}
+                </MenuToggle>
+              )}
+              aria-label="PeerAuthentication Mode Select"
             >
-              {Object.keys(PeerAuthenticationMutualTLSMode).map(mode => (
-                <FormSelectOption key={mode} value={mode} label={mode} />
-              ))}
-            </FormSelect>
+              <SelectList>
+                {Object.keys(PeerAuthenticationMutualTLSMode).map(mode => (
+                  <SelectOption key={mode} value={mode} isSelected={mode === this.state.peerAuthnSelector.mode}>
+                    {mode}
+                  </SelectOption>
+                ))}
+              </SelectList>
+            </Select>
           </FormGroup>
         )}
         <FormGroup label={t('Add LoadBalancer')} fieldId="advanced-lbSwitch">
@@ -547,16 +596,36 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
             </FormGroup>
             {this.state.simpleLB && (
               <FormGroup fieldId="advanced-loadbalancer" label="LoadBalancer">
-                <FormSelect
-                  value={this.state.loadBalancer.simple}
-                  onChange={(_event, simple: string) => this.onFormChange(TrafficPolicyForm.LB_SIMPLE, simple)}
+                <Select
                   id="trafficPolicy-lb"
-                  name="trafficPolicy-lb"
+                  isOpen={this.state.isLbSelectOpen}
+                  selected={this.state.loadBalancer.simple}
+                  onSelect={(_event, value) => {
+                    this.setState({ isLbSelectOpen: false });
+                    this.onFormChange(TrafficPolicyForm.LB_SIMPLE, value as string);
+                  }}
+                  onOpenChange={isLbSelectOpen => this.setState({ isLbSelectOpen })}
+                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                    <MenuToggle
+                      id="trafficPolicy-lb-toggle"
+                      ref={toggleRef}
+                      onClick={() => this.setState({ isLbSelectOpen: !this.state.isLbSelectOpen })}
+                      isExpanded={this.state.isLbSelectOpen}
+                      isFullWidth
+                    >
+                      {this.state.loadBalancer.simple}
+                    </MenuToggle>
+                  )}
+                  aria-label="LoadBalancer Type Select"
                 >
-                  {loadBalancerSimple.map(simple => (
-                    <FormSelectOption key={simple} value={simple} label={simple} />
-                  ))}
-                </FormSelect>
+                  <SelectList>
+                    {loadBalancerSimple.map(simple => (
+                      <SelectOption key={simple} value={simple} isSelected={simple === this.state.loadBalancer.simple}>
+                        {simple}
+                      </SelectOption>
+                    ))}
+                  </SelectList>
+                </Select>
               </FormGroup>
             )}
             {!this.state.simpleLB && (
@@ -646,8 +715,12 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                     <HelperText>
                       <HelperTextItem>
                         {isValid(isValidLB)
-                          ? t('TTL is expressed in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).')
-                          : t('HTTP Cookie Name must be non empty and TTL must be expressed in in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).')}
+                          ? t(
+                              'TTL is expressed in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).'
+                            )
+                          : t(
+                              'HTTP Cookie Name must be non empty and TTL must be expressed in in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).'
+                            )}
                       </HelperTextItem>
                     </HelperText>
                   </FormHelperText>
@@ -661,7 +734,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   meshWideStatus: meshWideMTLSStatusSelector(state)
 });
 
