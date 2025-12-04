@@ -210,7 +210,8 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 	}
 
 	// In the future this could be any cluster and not just home cluster.
-	homeClusterInfo := clientFactory.GetSAHomeClusterClient().ClusterInfo()
+	homeClusterClient := clientFactory.GetSAHomeClusterClient()
+	homeClusterInfo := homeClusterClient.ClusterInfo()
 	var defaultNamespaces map[string]ctrlcache.Config
 	if !conf.AllNamespacesAccessible() {
 		defaultNamespaces = make(map[string]ctrlcache.Config)
@@ -218,6 +219,11 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 			defaultNamespaces[namespace] = ctrlcache.Config{}
 		}
 	}
+
+	// Check if APIs are available before trying to remove their informers
+	isGatewayAPI := homeClusterClient.IsGatewayAPI()
+	isInferenceAPI := homeClusterClient.IsInferenceAPI()
+	isExpGatewayAPI := homeClusterClient.IsExpGatewayAPI()
 
 	var mgr manager.Manager
 	mgr, err = ctrl.NewManager(homeClusterInfo.ClientConfig, ctrl.Options{
@@ -235,8 +241,8 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 			DefaultWatchErrorHandler: func(ctx context.Context, r *toolscache.Reflector, err error) {
 				if apierrors.IsForbidden(err) {
 					log.Infof("A namespace appears to have been deleted or Kiali is forbidden from seeing it [err=%v]. Shutting down cache.", err)
-					// These are all the types that Kiali caches.
-					for _, obj := range []client.Object{
+					// These are all the standard types that Kiali caches excluding GW API and experimental.
+					objectsToRemove := []client.Object{
 						&corev1.Pod{},
 						&corev1.Service{},
 						&appsv1.StatefulSet{},
@@ -259,15 +265,24 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 						&securityv1.PeerAuthentication{},
 						&securityv1.RequestAuthentication{},
 						&telemetryv1.Telemetry{},
-						&k8snetworkingv1.Gateway{},
-						&k8snetworkingv1.GatewayClass{},
-						&k8snetworkingv1.HTTPRoute{},
-						&k8snetworkingv1.GRPCRoute{},
-						&k8sinferencev1.InferencePool{},
-						&k8snetworkingv1beta1.ReferenceGrant{},
-						&k8snetworkingv1alpha2.TCPRoute{},
-						&k8snetworkingv1alpha2.TLSRoute{},
-					} {
+					}
+					// Include GW API standard types if available
+					if isGatewayAPI {
+						objectsToRemove = append(objectsToRemove, &k8snetworkingv1.Gateway{})
+						objectsToRemove = append(objectsToRemove, &k8snetworkingv1.GatewayClass{})
+						objectsToRemove = append(objectsToRemove, &k8snetworkingv1.HTTPRoute{})
+						objectsToRemove = append(objectsToRemove, &k8snetworkingv1.GRPCRoute{})
+						objectsToRemove = append(objectsToRemove, &k8snetworkingv1beta1.ReferenceGrant{})
+					}
+					// Only include experimental types if their APIs are available
+					if isInferenceAPI {
+						objectsToRemove = append(objectsToRemove, &k8sinferencev1.InferencePool{})
+					}
+					if isExpGatewayAPI {
+						objectsToRemove = append(objectsToRemove, &k8snetworkingv1alpha2.TCPRoute{})
+						objectsToRemove = append(objectsToRemove, &k8snetworkingv1alpha2.TLSRoute{})
+					}
+					for _, obj := range objectsToRemove {
 						log.Debugf("Removing informer for: %T", obj)
 						if err := mgr.GetCache().RemoveInformer(ctx, obj); err != nil {
 							log.Errorf("Unable to remove informer: %s", err)
