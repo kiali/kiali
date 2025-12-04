@@ -39,7 +39,6 @@ import { MessageType } from 'types/MessageCenter';
 import { OverviewStatus } from 'pages/Overview/OverviewStatus';
 import { switchType } from 'pages/Overview/OverviewHelper';
 import { TLSStatus } from 'types/TLSStatus';
-import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { Metric } from 'types/Metrics';
 import { classes } from 'typestyle';
 import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
@@ -542,7 +541,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   };
 
   private handleApiError = (message: string, error: ApiError): void => {
-    FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
+    AlertUtils.addDanger(message, API.getErrorString(error));
   };
 
   private renderCharts(): React.ReactNode {

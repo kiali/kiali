@@ -488,7 +488,6 @@
   "Traffic Status (Last {{duration}})": "Traffic Status (Last {{duration}})",
   "Traffic Weight": "流量权重",
   "TTL is expressed in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).": "TTL以纳秒（即1000、2000等）或秒（即10秒、1.5秒等）表示。",
-  "Unclear last": "Unclear last",
   "Unhealthy": "不健康",
   "unknown": "未知",
   "Unreachable": "不可达",

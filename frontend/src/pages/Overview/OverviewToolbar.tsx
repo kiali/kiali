@@ -35,7 +35,6 @@ type Props = ReduxStateProps &
   ReduxDispatchProps & {
     displayMode: OverviewDisplayMode;
     onChange: () => void;
-    onError: (msg: string) => void;
     onRefresh: () => void;
     setDisplayMode: (mode: OverviewDisplayMode) => void;
     sort: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;

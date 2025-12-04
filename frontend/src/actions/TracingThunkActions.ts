@@ -5,6 +5,7 @@ import { TracingActions } from './TracingActions';
 import { setTraceId as setURLTraceId } from 'utils/SearchParamUtils';
 import { transformTraceData } from 'utils/tracing/TraceTransform';
 import { ApiError } from 'types/Api';
+import { MessageType } from 'types/MessageCenter';
 
 export const TracingThunkActions = {
   setTraceId: (cluster?: string, traceId?: string): ((dispatch: KialiDispatch) => void) => {
@@ -31,7 +32,8 @@ export const TracingThunkActions = {
 
             AlertUtils.addMessage({
               ...AlertUtils.extractApiError('Could not fetch trace', error),
-              showNotification: false
+              showNotification: false,
+              type: MessageType.DANGER
             });
           });
       } else {

@@ -23,6 +23,7 @@ import {
 } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as AlertUtils from '../../utils/AlertUtils';
+import { MessageType } from '../../types/MessageCenter';
 import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
 import { GraphToolbar } from '../Graph/GraphToolbar/GraphToolbar';
 import { EmptyGraphLayout } from '../../pages/Graph/EmptyGraphLayout';
@@ -770,7 +771,10 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
   };
 
   private notifyError = (error: Error, _componentStack: string): void => {
-    AlertUtils.add(`There was an error when rendering the graph: ${error.message}, please try a different layout`);
+    AlertUtils.add(
+      `There was an error when rendering the graph: ${error.message}, please try a different layout`,
+      MessageType.DANGER
+    );
   };
 
   private displayTimeRange = (): string => {

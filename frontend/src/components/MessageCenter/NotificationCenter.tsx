@@ -27,6 +27,7 @@ import { NotificationGroup, NotificationMessage } from 'types/MessageCenter';
 import { KialiDispatch } from 'types/Redux';
 import { MessageCenterActions } from 'actions/MessageCenterActions';
 import { MessageCenterThunkActions } from 'actions/MessageCenterThunkActions';
+import { PFColors } from 'components/Pf/PfColors';
 
 type ReduxStateProps = {
   groups: NotificationGroup[];
@@ -46,7 +47,18 @@ type NotificationCenterProps = ReduxStateProps & ReduxDispatchProps;
 const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: NotificationCenterProps) => {
   const { t } = useKialiTranslation();
   const drawerRef = useRef<HTMLElement | null>(null);
-  const [expandedGroupIds, setExpandedGroupIds] = useState<Set<string>>(new Set());
+
+  const getUnseenGroups = (groups: NotificationGroup[]): Set<string> => {
+    const unseenGroups = new Set<string>();
+    groups.forEach(g => {
+      if (g.messages.some(m => !m.seen)) {
+        unseenGroups.add(g.id);
+      }
+    });
+    return unseenGroups;
+  };
+
+  const [expandedGroupIds, setExpandedGroupIds] = useState<Set<string>>(getUnseenGroups(props.groups));
 
   interface ActionsMenu {
     [toggleId: string]: boolean;
@@ -76,14 +88,14 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
   const markRead = (message: NotificationMessage) => {
     props.markAsRead(message);
     /*
-        if (!message.seen) {
-            message.seen = true;
-            setNumberUnread(numberUnread - 1)
-        }
-        props.groups.forEach(g => {
-            g.messages.forEach(m => m.seen = true);
-        })
-        */
+            if (!message.seen) {
+                message.seen = true;
+                setNumberUnread(numberUnread - 1)
+            }
+            props.groups.forEach(g => {
+                g.messages.forEach(m => m.seen = true);
+            })
+            */
   };
 
   const getNumberUnread = (group?: NotificationGroup) => {
@@ -111,20 +123,20 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
   };
 
   /*
-    const focusDrawer = (_event: any) => {
-        if (drawerRef.current === null) {
-            return;
-        }
-        // Prevent the NotificationDrawer from receiving focus if a drawer group item is opened
-        if (!document.activeElement?.closest(`.${drawerRef.current.className}`)) {
-            const firstTabbableItem = drawerRef.current.querySelector('a, button') as
-                | HTMLAnchorElement
-                | HTMLButtonElement
-                | null;
-            firstTabbableItem?.focus();
-        }
-    };
-    */
+      const focusDrawer = (_event: any) => {
+          if (drawerRef.current === null) {
+              return;
+          }
+          // Prevent the NotificationDrawer from receiving focus if a drawer group item is opened
+          if (!document.activeElement?.closest(`.${drawerRef.current.className}`)) {
+              const firstTabbableItem = drawerRef.current.querySelector('a, button') as
+                  | HTMLAnchorElement
+                  | HTMLButtonElement
+                  | null;
+              firstTabbableItem?.focus();
+          }
+      };
+      */
 
   const notificationDrawerActions = (
     <>
@@ -142,6 +154,17 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
       <DropdownItem key="detail">Show Detail</DropdownItem>
     </>
   );
+
+  const getGroupTitle = (group: NotificationGroup): React.ReactNode => {
+    switch (group.variant) {
+      case 'danger':
+        return <span style={{ color: PFColors.Danger }}>{group.title}</span>;
+      case 'warning':
+        return <span style={{ color: PFColors.Warning }}>{group.title}</span>;
+      default:
+        return <span style={{ color: PFColors.Info }}>{group.title}</span>;
+    }
+  };
 
   return (
     <NotificationDrawer ref={drawerRef}>
@@ -172,7 +195,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
           {props.groups.map(group => (
             <NotificationDrawerGroup
               key={group.id}
-              title={group.title}
+              title={getGroupTitle(group)}
               isExpanded={expandedGroupIds.has(group.id)}
               count={getNumberUnread(group)}
               onExpand={toggleGroupExpanded(group.id)}

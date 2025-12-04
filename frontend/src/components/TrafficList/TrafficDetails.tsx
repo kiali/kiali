@@ -216,7 +216,7 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
       errorMessage = 'Could not fetch traffic data.';
     }
 
-    AlertUtils.addError(errorMessage);
+    AlertUtils.addDanger(errorMessage);
   };
 
   private buildTrafficNode = (prefix: 'in' | 'out', node: GraphNodeData): TrafficNode => {
