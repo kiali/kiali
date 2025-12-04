@@ -100,6 +100,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -s|--sail)                     SAIL="true";              shift;shift; ;;
     -te|--tempo)                   TEMPO="$2";               shift;shift; ;;
+    -w|--waypoint)                 WAYPOINT="$2";            shift;shift; ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
 done
@@ -121,6 +122,7 @@ install_istio() {
   local image_tag_arg=${ISTIO_TAG:+--set ".spec.values.pilot.tag=\"${ISTIO_TAG}\""}
   local image_hub_arg=${ISTIO_HUB:+--set ".spec.values.pilot.hub=\"${ISTIO_HUB}\""}
   local version_arg=${ISTIO_VERSION:+--set ".spec.version=\"v${ISTIO_VERSION}\""}
+
   "${ISTIO_INSTALL_SCRIPT}" "$@" ${image_tag_arg} ${image_hub_arg} ${version_arg}
   if [ "$?" != "0" ]; then
     echo "Failed to install Istio"
@@ -529,18 +531,28 @@ setup_kind_multicluster() {
   # use the Istio release that was last downloaded (that's the -t option to ls)
   local istio_dir
   istio_dir=$(ls -dt1 ${output_dir}/istio-* | head -n1)
+  # Build hub_arg as an array for proper expansion
+  local hub_arg=()
   if [[ "${ISTIO_VERSION}" == *-dev ]]; then
-    local hub_arg="--istio-hub default"
+    hub_arg=(--istio-hub default)
   fi
 
   local certs_dir
+  # Always create a temporary directory for Istio multicluster certificates to avoid permission issues
+  # The default /tmp/istio-multicluster-certs may have permission problems
+  certs_dir=$(mktemp -d)
+  if [ ! -d "${certs_dir}" ]; then
+    echo "ERROR: Failed to create temporary certs directory"
+    exit 1
+  fi
   if [ "${AUTH_STRATEGY}" == "openid" ]; then
-    certs_dir=$(mktemp -d)
     mkdir -p "${certs_dir}"/keycloak
   fi
 
+  # Build kind_node_image as an array for proper expansion
+  local kind_node_image=()
   if [ -n "${KIND_NODE_IMAGE}" ]; then
-    local kind_node_image="--kind-node-image ${KIND_NODE_IMAGE}"
+    kind_node_image=(--kind-node-image "${KIND_NODE_IMAGE}")
   fi
 
   if [ -n "$KEYCLOAK_LIMIT_MEMORY" ]; then
@@ -553,15 +565,23 @@ setup_kind_multicluster() {
   else
     MEMORY_REQUEST_ARG=""
   fi
+  # Build ambient argument properly for array expansion
   if [ -n "$AMBIENT" ]; then
-    AMBIENT_ARG="-a true"
+    AMBIENT_ARG=(-a true)
   else
-    AMBIENT_ARG=""
+    AMBIENT_ARG=()
   fi
+  # Build cluster2 ambient argument properly for array expansion
   if [ -n "$AMBIENT" ] && [ "$CLUSTER2_AMBIENT" == "false" ]; then
-    CLUSTER2_AMBIENT_ARG="--cluster2-ambient false"
+    CLUSTER2_AMBIENT_ARG=(--cluster2-ambient false)
   else
-    CLUSTER2_AMBIENT_ARG=""
+    CLUSTER2_AMBIENT_ARG=()
+  fi
+  # Build waypoint argument properly for array expansion
+  if [ "${WAYPOINT}" == "true" ]; then
+    WAYPOINT_ARG=(--waypoint true)
+  else
+    WAYPOINT_ARG=()
   fi
 
   local cluster1_context
@@ -569,21 +589,65 @@ setup_kind_multicluster() {
   local cluster1_name
   local cluster2_name
   local ignore_home_cluster="false"
-  local istio_version_arg=${ISTIO_VERSION:+--istio-version ${ISTIO_VERSION}}
+  # Build istio_version_arg as an array for proper expansion
+  local istio_version_arg=()
+  if [ -n "${ISTIO_VERSION}" ]; then
+    istio_version_arg=(--istio-version "${ISTIO_VERSION}")
+  fi
+  # Always pass --certs-dir with a temporary directory to avoid permission issues with the default /tmp/istio-multicluster-certs
+  local certs_dir_arg="--certs-dir ${certs_dir}"
+
+  # Pass auth strategy to install-multi-primary.sh so it knows whether to set up Keycloak
+  # For multicluster, 'token' auth strategy maps to 'anonymous' (multicluster scripts only support anonymous, openid, or openshift)
+  local kiali_auth_strategy="${AUTH_STRATEGY}"
+  if [ "${AUTH_STRATEGY}" == "token" ]; then
+    kiali_auth_strategy="anonymous"
+  fi
+  # Ensure we only pass valid values (anonymous, openid, or openshift)
+  if [ "${kiali_auth_strategy}" != "anonymous" ] && [ "${kiali_auth_strategy}" != "openid" ] && [ "${kiali_auth_strategy}" != "openshift" ]; then
+    echo "ERROR: Invalid AUTH_STRATEGY '${AUTH_STRATEGY}' for multicluster. Must be 'token' (maps to 'anonymous'), 'openid', or 'openshift'"
+    exit 1
+  fi
+
   if [ "${MULTICLUSTER}" == "${MULTI_PRIMARY}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/install-multi-primary.sh \
-      --kiali-enabled false \
-      --manage-kind true \
-      --certs-dir "${certs_dir}" \
-      -dorp docker \
-      --istio-dir "${istio_dir}" \
-      ${MEMORY_REQUEST_ARG} \
-      ${MEMORY_LIMIT_ARG} \
-      ${AMBIENT_ARG} \
-      ${CLUSTER2_AMBIENT_ARG} \
-      ${kind_node_image:-} \
-      ${hub_arg:-} \
-      ${istio_version_arg}
+    # Build arguments array to ensure proper argument passing
+    local install_args=(
+      --kiali-enabled false
+      --manage-kind true
+      --certs-dir "${certs_dir}"
+    )
+    install_args+=(
+      -dorp docker
+      --istio-dir "${istio_dir}"
+      -kas "${kiali_auth_strategy}"
+    )
+    if [ -n "${MEMORY_REQUEST_ARG}" ]; then
+      # MEMORY_REQUEST_ARG contains multiple words (e.g., "-krm 1Gi")
+      install_args+=(${MEMORY_REQUEST_ARG})
+    fi
+    if [ -n "${MEMORY_LIMIT_ARG}" ]; then
+      # MEMORY_LIMIT_ARG contains multiple words (e.g., "-kml 1Gi")
+      install_args+=(${MEMORY_LIMIT_ARG})
+    fi
+    if [ ${#AMBIENT_ARG[@]} -gt 0 ]; then
+      install_args+=("${AMBIENT_ARG[@]}")
+    fi
+    if [ ${#CLUSTER2_AMBIENT_ARG[@]} -gt 0 ]; then
+      install_args+=("${CLUSTER2_AMBIENT_ARG[@]}")
+    fi
+    if [ ${#WAYPOINT_ARG[@]} -gt 0 ]; then
+      install_args+=("${WAYPOINT_ARG[@]}")
+    fi
+    if [ ${#kind_node_image[@]} -gt 0 ]; then
+      install_args+=("${kind_node_image[@]}")
+    fi
+    if [ ${#hub_arg[@]} -gt 0 ]; then
+      install_args+=("${hub_arg[@]}")
+    fi
+    if [ ${#istio_version_arg[@]} -gt 0 ]; then
+      install_args+=("${istio_version_arg[@]}")
+    fi
+    "${SCRIPT_DIR}"/istio/multicluster/install-multi-primary.sh "${install_args[@]}"
 
     cluster1_context="kind-east"
     cluster2_context="kind-west"
@@ -600,7 +664,12 @@ setup_kind_multicluster() {
     kubectl rollout status deployment prometheus -n istio-system --context kind-east
     kubectl rollout status deployment prometheus -n istio-system --context kind-west
   elif [ "${MULTICLUSTER}" == "${EXTERNAL_KIALI}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/install-external-kiali.sh --kiali-enabled false --manage-kind true --certs-dir "${certs_dir}" -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" ${kind_node_image:-} ${hub_arg:-} ${istio_version_arg}
+    # Only pass --certs-dir if certs_dir has a value to avoid argument parsing issues
+    local external_certs_dir_arg=""
+    if [ -n "${certs_dir}" ]; then
+      external_certs_dir_arg="--certs-dir ${certs_dir}"
+    fi
+    "${SCRIPT_DIR}"/istio/multicluster/install-external-kiali.sh --kiali-enabled false --manage-kind true ${external_certs_dir_arg} -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" ${kind_node_image:-} ${hub_arg:-} ${istio_version_arg}
     cluster1_context="kind-mgmt"
     cluster2_context="kind-mesh"
     cluster1_name="mgmt"
