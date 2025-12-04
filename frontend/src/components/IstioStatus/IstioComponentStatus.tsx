@@ -54,7 +54,7 @@ const labelStyle = kialiStyle({
   height: '1.25rem',
   backgroundColor: 'var(--pf-v6-c-label--m-outline--BackgroundColor, transparent)',
   $nest: {
-    '& .pf-v5-c-label__icon': {
+    '& .pf-v6-c-label__icon': {
       marginRight: '0.125rem',
       $nest: {
         '& svg': {
@@ -62,8 +62,8 @@ const labelStyle = kialiStyle({
         }
       }
     },
-    '& .pf-v5-c-label__content': {
-      color: '#FFFFFF'
+    '& .pf-v6-c-label__content': {
+      color: 'var(--pf-t--global--text--color--primary--default)'
     }
   }
 });
@@ -112,7 +112,7 @@ export const IstioComponentStatus: React.FC<Props> = (props: Props) => {
           variant={'outline'}
           style={
             {
-              '--pf-v5-c-label--m-outline--BorderColor': iconColor,
+              '--pf-v6-c-label--m-outline--BorderColor': iconColor,
               borderColor: iconColor,
               borderWidth: '1px',
               borderStyle: 'solid'
