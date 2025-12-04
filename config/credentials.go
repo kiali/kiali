@@ -34,6 +34,7 @@ type CredentialManager struct {
 	watchedDirs map[string]struct{}
 	watcher     *fsnotify.Watcher
 	done        chan struct{}
+	closeOnce   sync.Once
 }
 
 // NewCredentialManager creates a new credential manager with file watching enabled.
@@ -61,10 +62,12 @@ func (cm *CredentialManager) Close() {
 	if cm == nil {
 		return
 	}
-	close(cm.done)
-	if cm.watcher != nil {
-		cm.watcher.Close()
-	}
+	cm.closeOnce.Do(func() {
+		close(cm.done)
+		if cm.watcher != nil {
+			cm.watcher.Close()
+		}
+	})
 }
 
 // Get reads a credential, either from a file (if value starts with "/") or returns the literal value.
