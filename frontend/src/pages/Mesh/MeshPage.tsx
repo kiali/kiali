@@ -111,7 +111,7 @@ const containerStyle = kialiStyle({
 
 const kioskContainerStyle = kialiStyle({
   minHeight: '350px',
-  height: 'calc(100vh - 10px)' // View height minus top bar height
+  height: 'calc(100vh - 65px)' // View height minus top bar height
 });
 
 const meshChip = kialiStyle({

@@ -95,6 +95,8 @@
   "dependencies": {
     "@patternfly/patternfly": "^6.4.0",
     "@patternfly/react-charts": "^8.4.0",
+    "@patternfly/react-core": "^6.4.0",
+    "@patternfly/react-icons": "^6.4.0",
     "@patternfly/react-table": "^6.4.0",
     "@patternfly/react-topology": "^6.4.0",
     "axios": "^1.12.2",
