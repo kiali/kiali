@@ -220,7 +220,8 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 		}
 	}
 
-	// Check if experimental APIs are available before trying to remove their informers
+	// Check if APIs are available before trying to remove their informers
+	isGatewayAPI := homeClusterClient.IsGatewayAPI()
 	isInferenceAPI := homeClusterClient.IsInferenceAPI()
 	isExpGatewayAPI := homeClusterClient.IsExpGatewayAPI()
 
@@ -240,7 +241,7 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 			DefaultWatchErrorHandler: func(ctx context.Context, r *toolscache.Reflector, err error) {
 				if apierrors.IsForbidden(err) {
 					log.Infof("A namespace appears to have been deleted or Kiali is forbidden from seeing it [err=%v]. Shutting down cache.", err)
-					// These are all the standard types that Kiali caches excluding experimental.
+					// These are all the standard types that Kiali caches excluding GW API and experimental.
 					objectsToRemove := []client.Object{
 						&corev1.Pod{},
 						&corev1.Service{},
@@ -264,11 +265,14 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 						&securityv1.PeerAuthentication{},
 						&securityv1.RequestAuthentication{},
 						&telemetryv1.Telemetry{},
-						&k8snetworkingv1.Gateway{},
-						&k8snetworkingv1.GatewayClass{},
-						&k8snetworkingv1.HTTPRoute{},
-						&k8snetworkingv1.GRPCRoute{},
-						&k8snetworkingv1beta1.ReferenceGrant{},
+					}
+					// Include GW API standard types if available
+					if isGatewayAPI {
+						objectsToRemove = append(objectsToRemove, &k8snetworkingv1.Gateway{})
+						objectsToRemove = append(objectsToRemove, &k8snetworkingv1.GatewayClass{})
+						objectsToRemove = append(objectsToRemove, &k8snetworkingv1.HTTPRoute{})
+						objectsToRemove = append(objectsToRemove, &k8snetworkingv1.GRPCRoute{})
+						objectsToRemove = append(objectsToRemove, &k8snetworkingv1beta1.ReferenceGrant{})
 					}
 					// Only include experimental types if their APIs are available
 					if isInferenceAPI {
