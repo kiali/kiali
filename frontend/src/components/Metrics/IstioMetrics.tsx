@@ -428,7 +428,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
     return (
       <div ref={this.toolbarRef}>
         <Toolbar style={{ padding: 0, marginBottom: '1.25rem' }}>
-          <ToolbarGroup>
+          <ToolbarGroup style={{ alignItems: 'center' }}>
             <ToolbarItem>
               <MetricsSettingsDropdown
                 onChanged={this.onMetricsSettingsChanged}
@@ -450,7 +450,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
             </ToolbarItem>
 
             {this.props.tracingIntegration && (
-              <ToolbarItem style={{ alignSelf: 'center' }}>
+              <ToolbarItem>
                 <TraceSpansLimit
                   label="Spans"
                   onChange={this.onTraceSpansChange}
@@ -460,7 +460,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
               </ToolbarItem>
             )}
 
-            <ToolbarItem style={{ alignSelf: 'center' }}>
+            <ToolbarItem>
               <Checkbox
                 id="trendlines-show-"
                 isChecked={this.state.showTrendlines}

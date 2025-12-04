@@ -7,8 +7,7 @@ import {
   Card,
   CardBody,
   EmptyState,
-  EmptyStateVariant,
-  
+  EmptyStateVariant
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { router, HistoryManager, URLParam, location } from '../../app/History';
@@ -247,8 +246,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
   renderFetchMetrics = (title: string): React.ReactNode => {
     return (
       <div className={emptyStyle}>
-        <EmptyState  headingLevel="h5"   titleText={<>{title}</>} variant={EmptyStateVariant.sm}>
-          </EmptyState>
+        <EmptyState headingLevel="h5" titleText={<>{title}</>} variant={EmptyStateVariant.sm}></EmptyState>
       </div>
     );
   };
@@ -349,7 +347,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
             </ToolbarItem>
 
             {this.props.tracingIntegration && (
-              <ToolbarItem style={{ alignSelf: 'center' }}>
+              <ToolbarItem>
                 <TraceSpansLimit
                   label="Spans"
                   onChange={this.onTraceSpansChange}
