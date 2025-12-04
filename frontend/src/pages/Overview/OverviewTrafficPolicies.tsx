@@ -262,7 +262,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
         errorMessage = 'Could not fetch traffic data.';
       }
 
-      AlertUtils.addError(errorMessage);
+      AlertUtils.addDanger(errorMessage);
     });
 
     graphDataSource.fetchForNamespace(duration, ns);

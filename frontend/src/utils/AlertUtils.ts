@@ -8,7 +8,7 @@ export type Message = {
   content: string;
   detail?: string;
   showNotification?: boolean;
-  type?: MessageType;
+  type: MessageType;
 };
 
 const getMessageTypeGroup = (type?: MessageType): string => {
@@ -22,7 +22,7 @@ const getMessageTypeGroup = (type?: MessageType): string => {
   }
 };
 
-export const add = (content: string, type?: MessageType): void => {
+export const add = (content: string, type: MessageType): void => {
   store.dispatch(MessageCenterActions.addMessage(content, '', getMessageTypeGroup(type), type));
 };
 
@@ -38,9 +38,9 @@ export const addMessage = (msg: Message): void => {
   );
 };
 
-export const addError = (message: string, error?: Error, type?: MessageType, detail?: string): void => {
+export const addError = (message: string, error: Error, type?: MessageType): void => {
+  const finalType = type ?? MessageType.DANGER;
   if (isApiError(error)) {
-    const finalType: MessageType = type ?? MessageType.DANGER;
     const err = extractApiError(message, error);
 
     addMessage({
@@ -48,14 +48,7 @@ export const addError = (message: string, error?: Error, type?: MessageType, det
       type: finalType
     });
   } else {
-    store.dispatch(
-      MessageCenterActions.addMessage(
-        message,
-        detail ?? '',
-        getMessageTypeGroup(MessageType.DANGER),
-        MessageType.DANGER
-      )
-    );
+    store.dispatch(MessageCenterActions.addMessage(message, error.message, getMessageTypeGroup(finalType), finalType));
   }
 };
 
@@ -75,6 +68,12 @@ export const extractApiError = (message: string, error: ApiError): { content: st
   }
 
   return { content: errorString, detail: errorDetail };
+};
+
+export const addDanger = (content: string, detail?: string): void => {
+  store.dispatch(
+    MessageCenterActions.addMessage(content, detail ?? '', getMessageTypeGroup(MessageType.DANGER), MessageType.DANGER)
+  );
 };
 
 // info level message do not generate a toast notification

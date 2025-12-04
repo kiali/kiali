@@ -39,7 +39,7 @@ interface ReduxStateProps {
 }
 
 interface ReduxDispatchProps {
-  addMessage: (content: string, detail: string, groupId?: string, msgType?: MessageType, showNotif?: boolean) => void;
+  addMessage: (content: string, detail: string, groupId: string, msgType: MessageType, showNotif?: boolean) => void;
   checkCredentials: () => void;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
   setDuration: (duration: DurationInSeconds) => void;

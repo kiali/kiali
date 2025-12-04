@@ -13,7 +13,7 @@ const showInMessageCenterValidation = (validation: ObjectValidation): void => {
         AlertUtils.addWarning(validationMessage(validation, check), false);
         break;
       case ValidationTypes.Error:
-        AlertUtils.addError(validationMessage(validation, check));
+        AlertUtils.addDanger(validationMessage(validation, check));
         break;
     }
   }
@@ -35,7 +35,7 @@ const showInMessageCenterValidations = (validations: ObjectValidation[]): void =
   if (elementsWithFailedValidations.length > 0) {
     const detail = `${elementsWithFailedValidations.join('\n')}`;
     if (hasError) {
-      AlertUtils.addError('IstioConfig has errors', undefined, undefined, detail);
+      AlertUtils.addDanger('IstioConfig has errors', detail);
     } else {
       AlertUtils.addWarning('IstioConfig has warnings', false, detail);
     }

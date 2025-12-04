@@ -2,9 +2,6 @@ import { ActionType, createAction } from 'typesafe-actions';
 import { MessageType } from '../types/MessageCenter';
 import { ActionKeys } from './ActionKeys';
 
-const DEFAULT_GROUP_ID = 'default';
-const DEFAULT_MESSAGE_TYPE = MessageType.DANGER;
-
 type numberOrNumberArray = number | number[];
 
 const toNumberArray = (n: numberOrNumberArray) => (Array.isArray(n) ? n : [n]);
@@ -15,8 +12,8 @@ export const MessageCenterActions = {
     resolve => (
       content: string,
       detail: string,
-      groupId: string = DEFAULT_GROUP_ID,
-      messageType: MessageType = DEFAULT_MESSAGE_TYPE,
+      groupId: string,
+      messageType: MessageType,
       showNotification: boolean = true
     ) => resolve({ content, detail, groupId, messageType, showNotification })
   ),

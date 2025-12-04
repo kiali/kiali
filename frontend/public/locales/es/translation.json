@@ -504,7 +504,6 @@
   "Traffic Status (Last {{duration}})": "Estado de tráfico (Último {{duration}})",
   "Traffic Weight": "Peso de tráfico",
   "TTL is expressed in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).": "TTL se expresa en nanosegundos (por ejemplo, 1000, 2000, etc.) o segundos (por ejemplo, 10s, 1.5s, etc.).",
-  "Unclear last": "Unclear last",
   "Unhealthy": "No saludable",
   "unknown": "desconocido",
   "Unreachable": "Inalcanzable",

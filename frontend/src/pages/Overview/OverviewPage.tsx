@@ -737,7 +737,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   };
 
   handleApiError = (message: string, error: ApiError): void => {
-    FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
+    AlertUtils.addDanger(message, API.getErrorString(error));
   };
 
   sort = (sortField: SortField<NamespaceInfo>, isAscending: boolean): void => {
@@ -1173,7 +1173,6 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         <OverviewToolbar
           onChange={this.onChange}
           onRefresh={this.load}
-          onError={FilterHelper.handleError}
           sort={this.sort}
           displayMode={this.state.displayMode}
           setDisplayMode={this.setDisplayMode}

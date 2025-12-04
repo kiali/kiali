@@ -186,7 +186,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
           AlertUtils.addWarning('Cannot perform query above the requested percentile (value unknown).');
         }
       } catch (err) {
-        AlertUtils.addError(`Could not fetch percentiles: ${err}`);
+        AlertUtils.addDanger('Could not fetch percentiles', `${err}`);
       }
     }
     this.fetcher.fetch(options, this.state.traces);

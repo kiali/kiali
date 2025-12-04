@@ -11,15 +11,10 @@ import {
   RunnableFilter
 } from '../../types/Filters';
 import { SortField } from '../../types/SortFilters';
-import * as AlertUtils from '../../utils/AlertUtils';
 
 export const perPageOptions: number[] = [5, 10, 15];
 const defaultDuration = 600;
 const defaultRefreshInterval = config.toolbar.defaultRefreshInterval;
-
-export const handleError = (error: string): void => {
-  AlertUtils.add(error);
-};
 
 export const getFiltersFromURL = (filterTypes: FilterType[]): ActiveFiltersInfo => {
   const urlParams = new URLSearchParams(location.getSearch());
