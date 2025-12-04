@@ -123,6 +123,65 @@ func TestSecretFileOverrides(t *testing.T) {
 	assert.Equal(t, "prometheustokenENV", token)
 }
 
+// Ensures calling Set with a config that already carries a credential manager
+// does not tear it down or replace it.
+func TestSetKeepsExistingCredentialManager(t *testing.T) {
+	original := Get()
+	defer Set(original)
+
+	// First Set initializes credential manager if needed.
+	conf := NewConfig()
+	Set(conf)
+
+	firstMgr := Get().Credentials
+	if firstMgr == nil {
+		t.Fatalf("expected credential manager to be initialized")
+	}
+
+	// Calling Set with the same config (and same credential manager) should keep it.
+	Set(Get())
+	secondMgr := Get().Credentials
+
+	if secondMgr != firstMgr {
+		t.Fatalf("expected credential manager to remain the same")
+	}
+}
+
+// Ensures Set creates a new credential manager when the incoming config lacks one
+// and closes the previous manager.
+func TestSetCreatesNewCredentialManagerAndClosesOld(t *testing.T) {
+	original := Get()
+	defer Set(original)
+
+	conf := NewConfig()
+	Set(conf)
+	firstMgr := Get().Credentials
+	if firstMgr == nil {
+		t.Fatalf("expected credential manager to be initialized")
+	}
+
+	// Clear credentials to force Set to provision a new manager.
+	conf2 := NewConfig()
+	conf2.Credentials = nil
+	Set(conf2)
+	secondMgr := Get().Credentials
+
+	if secondMgr == nil {
+		t.Fatalf("expected new credential manager to be initialized")
+	}
+	if secondMgr == firstMgr {
+		t.Fatalf("expected credential manager to be replaced")
+	}
+
+	// The old manager should have been closed.
+	select {
+	case <-firstMgr.done:
+		// closed as expected
+	default:
+		t.Fatalf("expected old credential manager to be closed")
+	}
+}
+
 func createTestSecretFile(t *testing.T, parentDir string, name string, content string) {
 	childDir := fmt.Sprintf("%s/%s", parentDir, name)
 	filename := fmt.Sprintf("%s/value.txt", childDir)

@@ -1127,11 +1127,26 @@ func Set(conf *Config) {
 	rwMutex.Lock()
 	defer rwMutex.Unlock()
 
-	// Close the old CredentialManager to avoid leaking file watchers and goroutines
-	configuration.Close()
+	oldCreds := configuration.Credentials
+
+	// If the incoming config doesn't already carry a credential manager,
+	// initialize a fresh one. If it already has one (even the same instance),
+	// keep it to avoid tearing down active watchers unnecessarily.
+	if conf.Credentials == nil {
+		newCreds, err := NewCredentialManager()
+		if err != nil {
+			log.Fatalf("failed to initialize credential manager: %v", err)
+		}
+		conf.Credentials = newCreds
+	}
 
 	conf.AddHealthDefault()
 	configuration = *conf
+
+	// Only close the previous credential manager if we actually swapped it out.
+	if oldCreds != nil && oldCreds != configuration.Credentials {
+		oldCreds.Close()
+	}
 
 	// init these one time, they don't change
 	if appLabelNames == nil {
