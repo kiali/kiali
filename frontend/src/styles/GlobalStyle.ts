@@ -8,16 +8,19 @@ export const globalStyle = kialiStyle({
   overflow: 'hidden',
   $nest: {
     /**
-     * Kiosk mode (hide Kiali menu)
+     * Kiosk mode (hide Kiali menu and sidebar)
      */
     '&.kiosk': {
       $nest: {
-        '& #page-sidebar': {
-          display: 'none'
+        '& .pf-v6-c-page': {
+          gridTemplateAreas: '"main"',
+          gridTemplateColumns: '100%',
+          gridTemplateRows: '100%'
         },
 
-        '& header[role="kiali_header"]': {
-          display: 'none'
+        '& .pf-v6-c-page__main-container': {
+          height: '100%',
+          margin: '0.5rem 1rem'
         }
       }
     },
