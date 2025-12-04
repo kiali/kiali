@@ -1,4 +1,4 @@
-// shold match the PF variant types: 'success' | 'danger' | 'warning' | 'info'
+// should match the PF variant types: 'success' | 'danger' | 'warning' | 'info'
 export enum MessageType {
   DANGER = 'danger',
   WARNING = 'warning',

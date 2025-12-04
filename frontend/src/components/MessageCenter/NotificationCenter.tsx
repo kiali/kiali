@@ -28,18 +28,19 @@ import { KialiDispatch } from 'types/Redux';
 import { MessageCenterActions } from 'actions/MessageCenterActions';
 import { MessageCenterThunkActions } from 'actions/MessageCenterThunkActions';
 import { PFColors } from 'components/Pf/PfColors';
+import moment from 'moment';
 
 type ReduxStateProps = {
   groups: NotificationGroup[];
 };
 
 type ReduxDispatchProps = {
-  markAsRead: (NotificationMessage) => void;
+  markAsRead: (message) => void;
   clearGroup: (group) => void;
+  clearMessage: (message) => void;
   markGroupAsRead: (group) => void;
-  onDismissNotification: (NotificationMessage, boolean) => void;
   toggleMessageCenter: () => void;
-  toggleMessageDetail: (NotificationMessage) => void;
+  toggleMessageDetail: (message) => void;
 };
 
 type NotificationCenterProps = ReduxStateProps & ReduxDispatchProps;
@@ -88,14 +89,14 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
   const markRead = (message: NotificationMessage) => {
     props.markAsRead(message);
     /*
-            if (!message.seen) {
-                message.seen = true;
-                setNumberUnread(numberUnread - 1)
-            }
-            props.groups.forEach(g => {
-                g.messages.forEach(m => m.seen = true);
-            })
-            */
+                if (!message.seen) {
+                    message.seen = true;
+                    setNumberUnread(numberUnread - 1)
+                }
+                props.groups.forEach(g => {
+                    g.messages.forEach(m => m.seen = true);
+                })
+                */
   };
 
   const getNumberUnread = (group?: NotificationGroup) => {
@@ -123,20 +124,20 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
   };
 
   /*
-      const focusDrawer = (_event: any) => {
-          if (drawerRef.current === null) {
-              return;
-          }
-          // Prevent the NotificationDrawer from receiving focus if a drawer group item is opened
-          if (!document.activeElement?.closest(`.${drawerRef.current.className}`)) {
-              const firstTabbableItem = drawerRef.current.querySelector('a, button') as
-                  | HTMLAnchorElement
-                  | HTMLButtonElement
-                  | null;
-              firstTabbableItem?.focus();
-          }
-      };
-      */
+        const focusDrawer = (_event: any) => {
+            if (drawerRef.current === null) {
+                return;
+            }
+            // Prevent the NotificationDrawer from receiving focus if a drawer group item is opened
+            if (!document.activeElement?.closest(`.${drawerRef.current.className}`)) {
+                const firstTabbableItem = drawerRef.current.querySelector('a, button') as
+                    | HTMLAnchorElement
+                    | HTMLButtonElement
+                    | null;
+                firstTabbableItem?.focus();
+            }
+        };
+        */
 
   const notificationDrawerActions = (
     <>
@@ -149,9 +150,21 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
     </>
   );
 
-  const notificationDrawerDropdownItems = (
+  const notificationDrawerDropdownItems = (message: NotificationMessage) => (
     <>
-      <DropdownItem key="detail">Show Detail</DropdownItem>
+      <DropdownItem key="messageClear" onClick={() => props.clearMessage(message)}>
+        Clear
+      </DropdownItem>
+      {message.detail && message.showDetail && (
+        <DropdownItem key="messageDetail" onClick={() => props.toggleMessageDetail(message)}>
+          Hide Detail
+        </DropdownItem>
+      )}
+      {message.detail && !message.showDetail && (
+        <DropdownItem key="messageDetail" onClick={() => props.toggleMessageDetail(message)}>
+          Show Detail
+        </DropdownItem>
+      )}
     </>
   );
 
@@ -218,11 +231,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
                       onClick={() => markRead(message)}
                       isRead={!message.seen}
                     >
-                      <NotificationDrawerListItemHeader
-                        variant={message.type}
-                        title={message.content}
-                        srTitle={`${message.type} notification:`}
-                      >
+                      <NotificationDrawerListItemHeader title={message.content} variant={message.type}>
                         <Dropdown
                           onSelect={closeActionsMenu}
                           isOpen={isActionsMenuOpen[`toggle-${message.id}`] || false}
@@ -241,11 +250,16 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
                             />
                           )}
                         >
-                          <DropdownList>{notificationDrawerDropdownItems}</DropdownList>
+                          <DropdownList>{notificationDrawerDropdownItems(message)}</DropdownList>
                         </Dropdown>
                       </NotificationDrawerListItemHeader>
                       <NotificationDrawerListItemBody timestamp={message.created.toLocaleString()}>
-                        {message.detail}
+                        {message.showDetail && message.detail}
+                        {message.count > 1 && (
+                          <div>
+                            {message.count} {moment().from(message.firstTriggered)}
+                          </div>
+                        )}
                       </NotificationDrawerListItemBody>
                     </NotificationDrawerListItem>
                   ))
@@ -268,15 +282,9 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     clearGroup: group => dispatch(MessageCenterThunkActions.clearGroup(group.id)),
+    clearMessage: message => dispatch(MessageCenterActions.removeMessage(message.id)),
     markAsRead: message => dispatch(MessageCenterActions.markAsRead(message.id)),
     markGroupAsRead: group => dispatch(MessageCenterThunkActions.markGroupAsRead(group.id)),
-    onDismissNotification: (message, userDismissed) => {
-      if (userDismissed) {
-        dispatch(MessageCenterActions.markAsRead(message.id));
-      } else {
-        dispatch(MessageCenterActions.hideNotification(message.id));
-      }
-    },
     toggleMessageCenter: () => dispatch(MessageCenterThunkActions.toggleMessageCenter()),
     toggleMessageDetail: message => dispatch(MessageCenterActions.toggleMessageDetail(message.id))
   };
