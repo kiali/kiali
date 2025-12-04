@@ -5,13 +5,17 @@ import { KialiAppState } from 'store/Store';
 import { MessageType, NotificationGroup, NotificationMessage } from 'types/MessageCenter';
 import { MessageCenterThunkActions } from 'actions/MessageCenterThunkActions';
 import { KialiDispatch } from 'types/Redux';
+import { NotificationList } from './NotificationList';
+import { MessageCenterActions } from 'actions/MessageCenterActions';
 
 type ReduxStateProps = {
+  alerts: NotificationMessage[];
   needsAttention: boolean;
   newMessageCount: number;
 };
 
 type ReduxDispatchProps = {
+  onDismissNotification: (NotificationMessage, boolean) => void;
   toggleMessageCenter: () => void;
 };
 
@@ -42,12 +46,14 @@ export const NotificationCenterBadgeComponent: React.FunctionComponent<Notificat
         }}
         variant={variant}
       />
+      <NotificationList messages={props.alerts} onDismiss={props.onDismissNotification} />
     </>
   );
 };
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
   type propsToMap = {
+    alerts: NotificationMessage[];
     needsAttention: boolean;
     newMessageCount: number;
   };
@@ -67,16 +73,26 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
     }, [])
     .reduce(
       (propsToMap: propsToMap, message: NotificationMessage) => {
+        if (message.show_notification) {
+          propsToMap.alerts.push(message);
+        }
         propsToMap.newMessageCount++;
         propsToMap.needsAttention = propsToMap.needsAttention || attentionTypes.includes(message.type);
         return propsToMap;
       },
-      { needsAttention: false, newMessageCount: 0 }
+      { alerts: [], needsAttention: false, newMessageCount: 0 }
     );
 };
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
+    onDismissNotification: (message, userDismissed) => {
+      if (userDismissed) {
+        dispatch(MessageCenterActions.markAsRead(message.id));
+      } else {
+        dispatch(MessageCenterActions.hideNotification(message.id));
+      }
+    },
     toggleMessageCenter: () => dispatch(MessageCenterThunkActions.toggleMessageCenter())
   };
 };
