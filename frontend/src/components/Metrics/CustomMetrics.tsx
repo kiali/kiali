@@ -7,8 +7,7 @@ import {
   Card,
   CardBody,
   EmptyState,
-  EmptyStateVariant,
-  
+  EmptyStateVariant
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { router, HistoryManager, URLParam, location } from '../../app/History';
@@ -81,8 +80,8 @@ type Props = ReduxStateProps & ReduxDispatchProps & CustomMetricsProps;
 // lower that the standard default, we apply it to several small charts
 const traceLimitDefault = 20;
 
-const fullHeightStyle = kialiStyle({
-  height: '100%'
+const cardStyle = kialiStyle({
+  marginTop: '1rem'
 });
 
 const emptyStyle = kialiStyle({
@@ -247,8 +246,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
   renderFetchMetrics = (title: string): React.ReactNode => {
     return (
       <div className={emptyStyle}>
-        <EmptyState  headingLevel="h5"   titleText={<>{title}</>} variant={EmptyStateVariant.sm}>
-          </EmptyState>
+        <EmptyState headingLevel="h5" titleText={<>{title}</>} variant={EmptyStateVariant.sm}></EmptyState>
       </div>
     );
   };
@@ -292,7 +290,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
           <>{content}</>
         ) : (
           <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-            <Card className={fullHeightStyle}>
+            <Card className={cardStyle}>
               <CardBody>{content}</CardBody>
             </Card>
           </RenderComponentScroll>

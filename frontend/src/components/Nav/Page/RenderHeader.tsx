@@ -7,13 +7,9 @@ import { isKiosk } from '../../Kiosk/KioskActions';
 import { PFColors } from 'components/Pf/PfColors';
 
 const containerStyle = kialiStyle({
-  padding: '0 1.25rem 1.75rem 1.25rem',
+  paddingBottom: '1.5rem',
   backgroundColor: PFColors.BackgroundColor100
 });
-
-// This magic style tries to adjust Breadcrumb with Namespace selector
-// to give impression that both components are placed in the same location
-const breadcrumbMargin = kialiStyle({ padding: '0.75rem 0 0.25rem 0' });
 
 const breadcrumbStyle = kialiStyle({
   display: 'flex',
@@ -26,7 +22,7 @@ const rightToolbarStyle = kialiStyle({
 
 const actionsToolbarStyle = kialiStyle({
   float: 'right',
-  padding: '0 1.25rem 1.375rem 0.25rem',
+  padding: '0.75rem 1.25rem 0.85rem 0.25rem',
   marginTop: '-1rem',
   backgroundColor: PFColors.BackgroundColor100,
   borderBottom: `1px solid ${PFColors.BorderColor100}`
@@ -48,12 +44,10 @@ const RenderHeaderComponent: React.FC<RenderHeaderProps> = (props: RenderHeaderP
   return isKiosk(props.kiosk) ? null : (
     <>
       <div className={containerStyle}>
-        <div className={breadcrumbMargin}>
-          <div className={breadcrumbStyle}>
-            <BreadcrumbView />
+        <div className={breadcrumbStyle}>
+          <BreadcrumbView />
 
-            {props.rightToolbar && <div className={rightToolbarStyle}>{props.rightToolbar}</div>}
-          </div>
+          {props.rightToolbar && <div className={rightToolbarStyle}>{props.rightToolbar}</div>}
         </div>
 
         {props.children}

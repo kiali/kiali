@@ -28,9 +28,11 @@ import { Link, useLocation } from 'react-router-dom-v5-compat';
 import { ExternalServiceInfo } from '../../types/StatusState';
 import { Theme } from 'types/Common';
 import { useKialiTranslation } from 'utils/I18nUtils';
+import { isKiosk } from '../Kiosk/KioskActions';
 
 type ReduxStateProps = {
   externalServices: ExternalServiceInfo[];
+  kiosk: string;
   navCollapsed: boolean;
   theme: string;
   tracingUrl?: string;
@@ -91,9 +93,10 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
   const isNavOpen = isMobileView ? isNavOpenMobile : isNavOpenDesktop || !props.navCollapsed;
 
   const darkTheme = props.theme === Theme.DARK;
+  const kioskMode = isKiosk(props.kiosk);
 
-  const masthead = (
-    <Masthead data-test="kiali-header">
+  const masthead = kioskMode ? undefined : (
+    <Masthead>
       <MastheadMain>
         <MastheadToggle>
           <PageToggleButton
@@ -118,7 +121,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 
   const menu = <Menu isNavOpen={isNavOpen} externalServices={props.externalServices} />;
 
-  const Sidebar = (
+  const Sidebar = kioskMode ? undefined : (
     <PageSidebar isSidebarOpen={isNavOpen}>
       <PageSidebarBody>{menu}</PageSidebarBody>
     </PageSidebar>
@@ -140,6 +143,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   externalServices: state.statusState.externalServices,
+  kiosk: state.globalState.kiosk,
   navCollapsed: state.userSettings.interface.navCollapse,
   theme: state.globalState.theme,
   tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined

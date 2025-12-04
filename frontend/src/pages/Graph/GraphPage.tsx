@@ -198,7 +198,7 @@ const containerStyle = kialiStyle({
 
 const kioskContainerStyle = kialiStyle({
   minHeight: '350px',
-  height: 'calc(100vh - 10px)' // View height minus top bar height
+  height: 'calc(100vh - 75px)' // View height minus top bar height
 });
 
 const graphContainerStyle = kialiStyle({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
