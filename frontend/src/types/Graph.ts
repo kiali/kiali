@@ -476,6 +476,7 @@ export interface GraphElementsQuery {
   rateGrpc?: string;
   rateHttp?: string;
   rateTcp?: string;
+  refreshInterval?: string;
   responseTime?: string;
   throughputType?: string;
   waypoints?: boolean;
