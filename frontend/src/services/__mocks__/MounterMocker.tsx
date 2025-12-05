@@ -14,7 +14,7 @@ export class MounterMocker {
     store.subscribe(() => {
       this.caughtErrors = [];
       const state = store.getState();
-      state.messageCenter.groups.forEach(g => {
+      state.notificationCenter.groups.forEach(g => {
         g.messages.forEach(m => {
           this.caughtErrors.push(`${m.content} [${m.detail}]`);
         });

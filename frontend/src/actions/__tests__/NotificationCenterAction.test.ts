@@ -52,7 +52,7 @@ describe('NotificationCenterActions', () => {
   it('should only mark selected group as read', () => {
     const expectedActions = [NotificationCenterActions.markAsRead([1, 2, 3])];
     const store = mockStore({
-      messageCenter: {
+      notificationCenter: {
         groups: [
           {
             id: 'my-group',
@@ -72,7 +72,7 @@ describe('NotificationCenterActions', () => {
   it('should only clear messages of selected group', () => {
     const expectedActions = [NotificationCenterActions.removeMessage([5, 6, 7])];
     const store = mockStore({
-      messageCenter: {
+      notificationCenter: {
         groups: [
           {
             id: 'my-group',
