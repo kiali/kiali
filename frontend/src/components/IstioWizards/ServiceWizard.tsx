@@ -1,15 +1,6 @@
 import * as React from 'react';
-import {
-	Button,
-	ButtonVariant,
-	ExpandableSection,
-	Tab,
-	Tabs
-} from '@patternfly/react-core';
-import {
-	Modal,
-	ModalVariant
-} from '@patternfly/react-core/deprecated';
+import { Button, ButtonVariant, ExpandableSection, Tab, Tabs } from '@patternfly/react-core';
+import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -1018,6 +1009,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               isExpanded={this.state.showAdvanced}
               toggleText={`${this.state.showAdvanced ? t('Hide') : t('Show')} ${t('AdvancedOptions')}`}
               contentId={`${this.state.showAdvanced ? 'hide' : 'show'}_advanced_options`}
+              toggleId="advanced-options-expandable"
               onToggle={() => {
                 this.setState({
                   showAdvanced: !this.state.showAdvanced
