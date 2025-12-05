@@ -2,7 +2,7 @@ import * as React from 'react';
 import { shallowToJson } from 'enzyme-to-json';
 import { mount, shallow } from 'enzyme';
 import { LanguageSwitchComponent } from '../Masthead/LanguageSwitch';
-import { MenuToggle } from '@patternfly/react-core';
+import { MenuToggle, Select } from '@patternfly/react-core';
 import { store } from 'store/ConfigStore';
 import { Language } from 'types/Common';
 import { serverConfig, setServerConfig } from 'config/ServerConfig';
@@ -29,10 +29,8 @@ describe('Language switch', () => {
     wrapper.find(MenuToggle).simulate('click');
 
     // select English option
-    wrapper
-      .findWhere(node => node.key() === 'english')
-      .findWhere(node => node.type() === 'button')
-      .simulate('click');
+    const selectProps = wrapper.find(Select).props();
+    selectProps.onSelect && selectProps.onSelect({} as any, Language.ENGLISH);
 
     // wait a few ms for the language to be modified
     await delay(100);
@@ -46,11 +44,9 @@ describe('Language switch', () => {
     // click menu toggle
     wrapper.find(MenuToggle).simulate('click');
 
-    // select Chinese option
-    wrapper
-      .findWhere(node => node.key() === 'spanish')
-      .findWhere(node => node.type() === 'button')
-      .simulate('click');
+    // select Spanish option
+    const selectProps = wrapper.find(Select).props();
+    selectProps.onSelect && selectProps.onSelect({} as any, Language.SPANISH);
 
     // wait a few ms for the language to be modified
     await delay(100);
@@ -65,10 +61,8 @@ describe('Language switch', () => {
     wrapper.find(MenuToggle).simulate('click');
 
     // select Chinese option
-    wrapper
-      .findWhere(node => node.key() === 'chinese')
-      .findWhere(node => node.type() === 'button')
-      .simulate('click');
+    const selectProps = wrapper.find(Select).props();
+    selectProps.onSelect && selectProps.onSelect({} as any, Language.CHINESE);
 
     // wait a few ms for the language to be modified
     await delay(100);
