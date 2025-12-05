@@ -111,7 +111,7 @@ const controlStyle = kialiStyle({
 const controlButtonStyle = kialiStyle({
   marginLeft: '33%',
   paddingRight: '0.5rem',
-  height: '2.3125rem', // 37px to match speed button height
+  height: '37px', // 37px to match speed button height
   display: 'flex',
   alignItems: 'center'
 });
@@ -120,7 +120,7 @@ const frameStyle = kialiStyle({
   display: 'flex',
   alignItems: 'center',
   paddingRight: '1rem',
-  height: '2.3125rem' // 37px to match button height
+  height: '37px' // 37px to match button height
 });
 
 const isCustomStyle = kialiStyle({
