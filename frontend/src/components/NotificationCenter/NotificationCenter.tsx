@@ -88,15 +88,6 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
 
   const markRead = (message: NotificationMessage) => {
     props.markAsRead(message);
-    /*
-                    if (!message.seen) {
-                        message.seen = true;
-                        setNumberUnread(numberUnread - 1)
-                    }
-                    props.groups.forEach(g => {
-                        g.messages.forEach(m => m.seen = true);
-                    })
-                    */
   };
 
   const getNumberUnread = (group?: NotificationGroup) => {
@@ -123,22 +114,6 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
     });
   };
 
-  /*
-          const focusDrawer = (_event: any) => {
-              if (drawerRef.current === null) {
-                  return;
-              }
-              // Prevent the NotificationDrawer from receiving focus if a drawer group item is opened
-              if (!document.activeElement?.closest(`.${drawerRef.current.className}`)) {
-                  const firstTabbableItem = drawerRef.current.querySelector('a, button') as
-                      | HTMLAnchorElement
-                      | HTMLButtonElement
-                      | null;
-                  firstTabbableItem?.focus();
-              }
-          };
-          */
-
   const notificationDrawerActions = (
     <>
       <DropdownItem key="markAllRead" onClick={() => markAllRead()}>
@@ -153,16 +128,16 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
   const notificationDrawerDropdownItems = (message: NotificationMessage) => (
     <>
       <DropdownItem key="messageClear" onClick={() => props.clearMessage(message)}>
-        Clear
+        {t('Clear')}
       </DropdownItem>
       {message.detail && message.showDetail && (
         <DropdownItem key="messageDetail" onClick={() => props.toggleMessageDetail(message)}>
-          Hide Detail
+          {t('Hide Detail')}
         </DropdownItem>
       )}
       {message.detail && !message.showDetail && (
         <DropdownItem key="messageDetail" onClick={() => props.toggleMessageDetail(message)}>
-          Show Detail
+          {t('Show Detail')}
         </DropdownItem>
       )}
     </>
@@ -171,11 +146,11 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
   const getGroupTitle = (group: NotificationGroup): React.ReactNode => {
     switch (group.variant) {
       case 'danger':
-        return <span style={{ color: PFColors.Danger }}>{group.title}</span>;
+        return <span style={{ color: PFColors.Danger }}>{t(group.title)}</span>;
       case 'warning':
-        return <span style={{ color: PFColors.Warning }}>{group.title}</span>;
+        return <span style={{ color: PFColors.Warning }}>{t(group.title)}</span>;
       default:
-        return <span style={{ color: PFColors.Info }}>{group.title}</span>;
+        return <span style={{ color: PFColors.Info }}>{t(group.title)}</span>;
     }
   };
 
@@ -192,7 +167,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
             <MenuToggle
               ref={toggleRef}
               id="nc-actions-toggle"
-              aria-label="Notification drawer actions"
+              aria-label={t('Notification drawer actions')}
               variant="plain"
               onClick={() => onToggle('nc-actions')}
               isExpanded={isActionsMenuOpen['nc-actions'] || false}
