@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
+import { FormGroup, MenuToggle, MenuToggleElement, Select, SelectList, SelectOption } from '@patternfly/react-core';
 import { AddressList } from './GatewayForm/AddressList';
 import { Address, Listener, MAX_PORT, MIN_PORT } from '../../types/IstioObjects';
 import { addSelectorLabels, ListenerList } from './GatewayForm/ListenerList';
@@ -16,6 +16,7 @@ type Props = {
 export type K8sGatewayState = {
   addresses: Address[];
   gatewayClass: string;
+  isGatewayClassSelectOpen: boolean;
   listeners: Listener[];
   listenersForm: ListenerForm[];
   validHosts: boolean;
@@ -24,6 +25,7 @@ export type K8sGatewayState = {
 export const initK8sGateway = (): K8sGatewayState => ({
   addresses: [],
   gatewayClass: serverConfig.gatewayAPIClasses.length > 0 ? serverConfig.gatewayAPIClasses[0].className : '',
+  isGatewayClassSelectOpen: false,
   listeners: [],
   listenersForm: [],
   validHosts: false
@@ -94,30 +96,47 @@ export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
     this.setState({ addresses: addresses }, () => this.props.onChange(this.state));
   };
 
-  onChangeGatewayClass = (_event: React.FormEvent, value: string): void => {
-    this.setState(
-      {
-        gatewayClass: value
-      },
-      () => this.props.onChange(this.state)
-    );
-  };
-
   render(): React.ReactNode {
     return (
       <>
         {serverConfig.gatewayAPIClasses.length > 1 && (
           <FormGroup label="Gateway Class" fieldId="gatewayClass">
-            <FormSelect
-              value={this.state.gatewayClass}
-              onChange={this.onChangeGatewayClass}
+            <Select
               id="gatewayClass"
-              name="gatewayClass"
+              isOpen={this.state.isGatewayClassSelectOpen}
+              selected={this.state.gatewayClass}
+              onSelect={(_event, value) => {
+                this.setState(
+                  {
+                    gatewayClass: value as string,
+                    isGatewayClassSelectOpen: false
+                  },
+                  () => this.props.onChange(this.state)
+                );
+              }}
+              onOpenChange={isGatewayClassSelectOpen => this.setState({ isGatewayClassSelectOpen })}
+              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                <MenuToggle
+                  id="gatewayClass-toggle"
+                  ref={toggleRef}
+                  onClick={() => this.setState({ isGatewayClassSelectOpen: !this.state.isGatewayClassSelectOpen })}
+                  isExpanded={this.state.isGatewayClassSelectOpen}
+                  isFullWidth
+                >
+                  {serverConfig.gatewayAPIClasses.find(c => c.className === this.state.gatewayClass)?.name ||
+                    this.state.gatewayClass}
+                </MenuToggle>
+              )}
+              aria-label="Gateway Class Select"
             >
-              {serverConfig.gatewayAPIClasses.map((option, index) => (
-                <FormSelectOption key={index} value={option.className} label={option.name} />
-              ))}
-            </FormSelect>
+              <SelectList>
+                {serverConfig.gatewayAPIClasses.map((option, index) => (
+                  <SelectOption key={index} value={option.className}>
+                    {option.name}
+                  </SelectOption>
+                ))}
+              </SelectList>
+            </Select>
           </FormGroup>
         )}
 
