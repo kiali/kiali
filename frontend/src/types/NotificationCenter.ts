@@ -23,6 +23,6 @@ export interface NotificationMessage {
 export interface NotificationGroup {
   id: string;
   messages: NotificationMessage[];
-  title: React.ReactNode;
+  title: string;
   variant: 'success' | 'danger' | 'warning' | 'info';
 }
