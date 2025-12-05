@@ -2,11 +2,11 @@
 
 exports[`GraphLegend test should render correctly 1`] = `
 <div
-  className="kiali_f7z00y3"
+  className="kiali_fogtfx9"
   data-test="graph-legend"
 >
   <div
-    className="kiali_fhl98cw"
+    className="kiali_fokjcx6"
   >
     <span>
       Legend
@@ -15,12 +15,11 @@ exports[`GraphLegend test should render correctly 1`] = `
       content="Close Legend"
     >
       <Button
+        icon={<Close />}
         id="legend_close"
         onClick={[MockFunction]}
         variant="plain"
-      >
-        <Close />
-      </Button>
+      />
     </Tooltip>
   </div>
   <div
