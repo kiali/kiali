@@ -9,5 +9,5 @@ export const activeFilters = (count: number): void => {
 };
 
 export const showMore = (): void => {
-  cy.get('button[data-ouia-component-type="PF5/OverflowChip"]', { timeout: 1000 }).click();
+  cy.get('button[data-ouia-component-type="PF6/OverflowChip"]', { timeout: 1000 }).click();
 };

@@ -96,6 +96,6 @@ Then('the graph type is disabled', () => {
 
 Then('user sees {string} badge for service', (badge: string) => {
   cy.get('#ServiceDescriptionCard').within(() => {
-    cy.get('.pf-v5-c-label__content').contains(badge);
+    cy.get('.pf-v6-c-label__content').contains(badge);
   });
 });

@@ -123,7 +123,7 @@ When('user chooses {int} type filters', (count: number) => {
 
 When('user clicks the cross on one of them', () => {
   cy.get('#filter-selection > :nth-child(2)')
-    .find('[data-ouia-component-type="PF5/Button" data-ouia-component-id="close"]')
+    .find('[data-ouia-component-type="PF6/Button" data-ouia-component-id="close"]')
     .first()
     .click();
 });

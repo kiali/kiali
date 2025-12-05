@@ -98,7 +98,7 @@ Then('the log pane should only show log lines not containing {string}', (filterT
 
 Then('the log pane should only show json log lines', () => {
   cy.get('#logsText').within(() => {
-    cy.get('button').find('svg.pf-v5-svg').should('exist');
+    cy.get('button').find('svg.pf-v6-svg').should('exist');
   });
 });
 
@@ -153,7 +153,7 @@ Then('the log pane should show spans', () => {
 
 Then('I click a json log line', () => {
   cy.get('#logsText').within(() => {
-    cy.get('button').find('svg.pf-v5-svg').should('exist');
+    cy.get('button').find('svg.pf-6-svg').should('exist');
     cy.get('button').first().click();
   });
 });

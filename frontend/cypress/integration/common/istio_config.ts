@@ -693,7 +693,7 @@ function waitUntilConfigIsVisible(
           cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}] span.pf-v6-c-icon`)
             .should('be.visible')
             .then(icon => {
-              const colorVar = `--pf-v5-global--${healthStatus}-color--100`;
+              const colorVar = `--pf-v6-global--${healthStatus}-color--100`;
               const statusColor = getComputedStyle(icon[0]).getPropertyValue(colorVar).replace('#', '');
 
               cy.wrap(icon[0])
