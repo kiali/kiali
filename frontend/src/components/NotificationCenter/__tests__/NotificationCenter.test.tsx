@@ -17,7 +17,7 @@ describe('NotificationCenter', () => {
           content: 'show me',
           type: MessageType.DANGER,
           count: 0,
-          is_alert: true,
+          isAlert: true,
           created: new Date(),
           detail: '',
           showDetail: false
@@ -31,7 +31,7 @@ describe('NotificationCenter', () => {
           created: new Date(),
           detail: '',
           showDetail: false,
-          is_alert: true
+          isAlert: true
         }
       ],
       variant: 'danger'
@@ -46,7 +46,7 @@ describe('NotificationCenter', () => {
           content: 'show me too',
           type: MessageType.SUCCESS,
           count: 0,
-          is_alert: false,
+          isAlert: false,
           created: new Date(),
           detail: '',
           showDetail: false
@@ -62,7 +62,7 @@ describe('NotificationCenter', () => {
       .reduce((unreadMessages: NotificationMessage[], group: NotificationGroup) => {
         return unreadMessages.concat(group.messages.filter(message => !message.seen));
       }, [])
-      .filter(message => message.is_alert);
+      .filter(message => message.isAlert);
   };
 
   it('.getNotificationMessages only gets notifications', () => {

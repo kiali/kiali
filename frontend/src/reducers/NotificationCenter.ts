@@ -50,7 +50,7 @@ const createMessage = (
     detail,
     type,
     count,
-    is_alert: isAlert,
+    isAlert: isAlert,
     seen: false,
     created: created,
     showDetail: showDetail,
@@ -155,12 +155,12 @@ export const NotificationCenterReducer = (
       return updateMessage(state, action.payload.messageId, message => ({
         ...message,
         seen: true,
-        is_alert: false
+        isAlert: false
       }));
     }
 
     case getType(NotificationCenterActions.hideNotification): {
-      return updateMessage(state, action.payload.messageId, message => ({ ...message, is_alert: false }));
+      return updateMessage(state, action.payload.messageId, message => ({ ...message, isAlert: false }));
     }
 
     case getType(NotificationCenterActions.toggleNotificationCenter):
