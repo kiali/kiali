@@ -186,9 +186,9 @@ export interface KialiAppState {
   mesh: MeshState;
   /** Tracing Settings */
   meshTLSStatus: TLSStatus;
-  messageCenter: NotificationCenterState;
   metricsStats: MetricsStatsState;
   namespaces: NamespaceState;
+  notificationCenter: NotificationCenterState;
   statusState: StatusState;
   tourState: TourState;
   tracingState: TracingState;

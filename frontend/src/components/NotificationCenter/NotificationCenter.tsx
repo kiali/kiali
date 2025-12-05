@@ -250,7 +250,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
   return {
-    groups: state.messageCenter.groups
+    groups: state.notificationCenter.groups
   };
 };
 

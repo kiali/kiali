@@ -147,7 +147,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   externalServices: state.statusState.externalServices,
   kiosk: state.globalState.kiosk,
   navCollapsed: state.userSettings.interface.navCollapse,
-  showNotificationCenter: state.messageCenter.expanded,
+  showNotificationCenter: state.notificationCenter.expanded,
   theme: state.globalState.theme,
   tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined
 });

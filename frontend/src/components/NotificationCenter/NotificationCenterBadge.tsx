@@ -59,7 +59,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
 
   const attentionTypes = [MessageType.DANGER, MessageType.WARNING];
 
-  return state.messageCenter.groups
+  return state.notificationCenter.groups
     .reduce((unreadMessages: NotificationMessage[], group: NotificationGroup) => {
       return unreadMessages.concat(
         group.messages.reduce((unreadMessagesInGroup: NotificationMessage[], message: NotificationMessage) => {
