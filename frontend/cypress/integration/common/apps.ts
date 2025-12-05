@@ -49,7 +49,7 @@ Then('user sees trace details', () => {
 
 When('user selects a trace', () => {
   const tracingDotQuery =
-    "var(--pf-t--temp--dev--tbd)"/* CODEMODS: original v5 color was --pf-v5-global--palette--blue-200 */;
+    'var(--pf-t--temp--dev--tbd)'; /* CODEMODS: original v5 color was --pf-v5-global--palette--blue-200 */
 
   cy.getBySel('tracing-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
 });
@@ -57,7 +57,13 @@ When('user selects a trace', () => {
 When('user selects a trace with at least {int} spans', (spans: number) => {
   cy.getBySel('tracing-scatterplot').within(() => {
     cy.waitForReact();
-    cy.getReact('Point')
+    // This changed from Point to point_Point with the pf6 update.
+    // Very confusingly it is still Point when you run against the dev server
+    // but it is point_Point when you run against the prod build.
+    // Also there are ChartPoint which match *oint so we need to filter on the symbol.
+    // Even more aggravating is the fact that *Point doesn't match Point so that's why it's *oint.
+    // TODO: Find a more reliable way to do this.
+    cy.getReact('*oint', { props: { symbol: 'circle' } })
       .should('have.length.at.least', 1)
       .then(($points: any) => {
         // We want to find a point that has all of the specified number of spans loaded
