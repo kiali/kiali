@@ -100,7 +100,7 @@ When('user selects a trace with at least {int} spans', (spans: number) => {
       })
       .first()
       .should('be.visible')
-      .click({ force: true });
+      .click();
   });
 
   // Wait for trace details to appear (outside of within() since it's rendered outside the scatterplot)
