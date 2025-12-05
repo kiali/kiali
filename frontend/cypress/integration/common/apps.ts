@@ -215,5 +215,9 @@ Then('user should see no duplicate namespaces', () => {
   cy.exec(`kubectl get namespaces bookinfo --context ${CLUSTER1_CONTEXT}`);
   cy.exec(`kubectl get namespaces bookinfo --context ${CLUSTER2_CONTEXT}`);
 
-  cy.get('[data-test="namespace-dropdown"]').siblings().contains('bookinfo').should('be.visible').and('have.length', 1);
+  cy.getBySel('namespace-dropdown-list')
+    .should('exist')
+    .contains('bookinfo')
+    .should('be.visible')
+    .and('have.length', 1);
 });
