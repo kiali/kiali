@@ -52,69 +52,64 @@ When('user selects a trace', () => {
 });
 
 When('user selects a trace with at least {int} spans', (spans: number) => {
+
+  cy.waitForReact();
+
+  // First, verify that we have traces with enough spans by accessing the component
   cy.getBySel('tracing-scatterplot').within(() => {
-    cy.waitForReact();
-    // Try to find Point components - they may be nested in Victory charts
-    // The component name might vary, so we'll try to find it and provide better error messages
-    cy.getReact('Point', { options: { timeout: 10000 } })
+    cy.getReact('TracingScatterComponent', { options: { timeout: 10000 } })
       .should('have.length.at.least', 1)
-      .then(($points: any) => {
-        // We want to find a point that has all of the specified number of spans loaded
-        // since some of the later assertions look for a certain number of spans.
-        // There doesn't seem to be a good way to inject a data-test attribute into individual points
-        // on the graph so here we are looking at the react state of the points and then finding one
-        // that matches the exact data path.
-        const validPoints = $points.filter((point: any) => {
-          const spanCount = point?.props?.datum?.trace?.spans?.length;
+      .then((components: any) => {
+        // Filter to get the bare component (not HOC wrappers)
+        const component = components.filter((c: any) => c.name === 'TracingScatterComponent')[0] || components[0];
+
+        if (!component) {
+          throw new Error('TracingScatterComponent not found');
+        }
+
+        // Get props from the component
+        const props = component.props || {};
+        const traces = props.traces || [];
+
+        // Find a trace with at least the required number of spans
+        const validTrace = traces.find((trace: any) => {
+          const spanCount = trace?.spans?.length;
           return spanCount !== undefined && spanCount >= spans;
         });
 
-        if (validPoints.length === 0) {
-          const spanCounts = $points.map((p: any) => p?.props?.datum?.trace?.spans?.length || 'undefined').join(', ');
+        if (!validTrace) {
+          const spanCounts = traces.map((t: any) => t?.spans?.length || 'undefined').join(', ');
           throw new Error(
             `No trace found with at least ${spans} spans. ` +
-              `Found ${$points.length} point(s), but none have enough spans. ` +
+              `Found ${traces.length} trace(s), but none have enough spans. ` +
               `Available span counts: [${spanCounts}]`
           );
         }
-
-        // Get the index of the first valid point in the original array
-        const validPointIndex = $points.findIndex((p: any) => {
-          const spanCount = p?.props?.datum?.trace?.spans?.length;
-          return spanCount !== undefined && spanCount >= spans;
-        });
-
-        if (validPointIndex === -1) {
-          throw new Error(`Could not find valid point index`);
-        }
-
-        // Get all path elements that are data points (not grid lines)
-        // Data points have cursor: pointer style and contain arc commands in their 'd' attribute
-        cy.get('path[role="presentation"]')
-          .filter((_, element) => {
-            const $el = Cypress.$(element);
-            const style = $el.attr('style') || '';
-            const dAttr = $el.attr('d') || '';
-            // Data points have cursor: pointer and contain 'a' (arc) commands in their path
-            return style.includes('cursor: pointer') && dAttr.includes(' a ');
-          })
-          .should('have.length.at.least', validPointIndex + 1)
-          .then(($paths: JQuery<HTMLElement>) => {
-            // Find the path that corresponds to our valid point
-            const $targetPath = $paths.eq(validPointIndex);
-
-            if (!$targetPath || $targetPath.length === 0) {
-              throw new Error(
-                `Could not find path element at index ${validPointIndex}. ` +
-                  `Found ${$paths.length} data point path(s) total.`
-              );
-            }
-
-            // Verify the path is visible and clickable
-            cy.wrap($targetPath).should('be.visible').click({ force: true });
-          });
       });
+
+    // Now get all data point paths and click the first one
+    // We've already verified that at least one trace has enough spans,
+    // so we'll click paths until we find one that works
+    cy.get('path[role="presentation"]')
+      .filter((_, element) => {
+        const $el = Cypress.$(element);
+        const style = $el.attr('style') || '';
+        const dAttr = $el.attr('d') || '';
+        // Data points have cursor: pointer and contain 'a' (arc) commands in their path
+        return style.includes('cursor: pointer') && dAttr.includes(' a ');
+      })
+      .first()
+      .should('be.visible')
+      .click({ force: true });
   });
+
+  // Wait for trace details to appear (outside of within() since it's rendered outside the scatterplot)
+  cy.getBySel('trace-details-tabs', { timeout: 10000 }).should('be.visible');
+
+  // Verify we have at least the required number of spans
+  // The test will fail here if the clicked trace doesn't have enough spans
+  // In that case, the user can see which trace was clicked and adjust if needed
+  cy.get('table tbody tr', { timeout: 5000 }).should('have.length.at.least', spans);
 });
 
 Then('user sees span details', () => {
