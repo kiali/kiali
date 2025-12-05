@@ -48,7 +48,7 @@ Then('user sees trace details', () => {
 });
 
 When('user selects a trace', () => {
-  cy.getBySel('tracing-scatterplot').find('path').first().should('be.visible').click({ force: true });
+  cy.getBySel('tracing-scatterplot').find('path').first().should('be.visible').click();
 });
 
 When('user selects a trace with at least {int} spans', (spans: number) => {
@@ -99,7 +99,7 @@ When('user selects a trace with at least {int} spans', (spans: number) => {
       })
       .first()
       .should('be.visible')
-      .click({ force: true });
+      .click();
   });
 
   // Wait for trace details to appear (outside of within() since it's rendered outside the scatterplot)
