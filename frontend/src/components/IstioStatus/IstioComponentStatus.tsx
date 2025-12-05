@@ -5,9 +5,9 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
   ExclamationTriangleIcon,
-  MinusCircleIcon
+  InProgressIcon
 } from '@patternfly/react-icons';
-import { Split, SplitItem } from '@patternfly/react-core';
+import { Label, Split, SplitItem } from '@patternfly/react-core';
 import { IconProps, createIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
@@ -28,7 +28,7 @@ const ErrorAddonComponent: IconProps = {
 
 const NotReadyComponent: IconProps = {
   color: PFColors.Info,
-  icon: MinusCircleIcon
+  icon: InProgressIcon
 };
 
 const SuccessComponent: IconProps = {
@@ -45,21 +45,55 @@ const validToIcon: { [valid: string]: IconProps } = {
 };
 
 const splitItemStyle = kialiStyle({
+  marginLeft: '0.25rem',
+  marginTop: '0.125rem',
   textAlign: 'left'
+});
+
+const labelStyle = kialiStyle({
+  height: '1.25rem',
+  backgroundColor: 'var(--pf-v6-c-label--m-outline--BackgroundColor, transparent)',
+  $nest: {
+    '& .pf-v6-c-label__icon': {
+      marginRight: '0.125rem',
+      $nest: {
+        '& svg': {
+          color: 'inherit'
+        }
+      }
+    },
+    '& .pf-v6-c-label__content': {
+      color: 'var(--pf-t--global--text--color--primary--default)'
+    }
+  }
 });
 
 export const IstioComponentStatus: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
 
-  const renderIcon = (status: Status, isCore: boolean): React.ReactNode => {
+  const getIcon = (status: Status, isCore: boolean): IconProps => {
     let compIcon = validToIcon[`${status === Status.Healthy}-${isCore}`];
 
     if (status === Status.NotReady) {
       compIcon = NotReadyComponent;
     }
 
+    return compIcon;
+  };
+
+  const renderIcon = (status: Status, isCore: boolean): React.ReactNode => {
+    let compIcon = getIcon(status, isCore);
+    const iconColor = compIcon.color || PFColors.Success;
+
     compIcon.className = kialiStyle({
-      marginTop: '0.25rem'
+      marginTop: '0.25rem',
+      color: `${iconColor} !important`,
+      $nest: {
+        '& svg': {
+          color: `${iconColor} !important`,
+          fill: `${iconColor} !important`
+        }
+      }
     });
 
     return createIcon(compIcon);
@@ -67,14 +101,27 @@ export const IstioComponentStatus: React.FC<Props> = (props: Props) => {
 
   const renderCells = (): React.ReactNode => {
     const comp = props.componentStatus;
+    const iconColor = getIcon(comp.status, comp.isCore).color || PFColors.Success;
 
     return [
       <Split key={`cell-status-icon-${comp.name}`} hasGutter={true} className={splitItemStyle}>
-        <SplitItem style={{ paddingLeft: '0.5rem' }}>
-          {renderIcon(props.componentStatus.status, props.componentStatus.isCore)}
-        </SplitItem>
         <SplitItem isFilled={true}>{comp.name}</SplitItem>
-        <SplitItem>{t(statusMsg[comp.status])}</SplitItem>
+        <Label
+          className={labelStyle}
+          data-test="component-status-icon"
+          variant={'outline'}
+          style={
+            {
+              '--pf-v6-c-label--m-outline--BorderColor': iconColor,
+              borderColor: iconColor,
+              borderWidth: '1px',
+              borderStyle: 'solid'
+            } as React.CSSProperties
+          }
+          icon={renderIcon(props.componentStatus.status, props.componentStatus.isCore)}
+        >
+          {t(statusMsg[comp.status])}
+        </Label>
       </Split>
     ];
   };

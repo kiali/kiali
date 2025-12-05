@@ -1,12 +1,12 @@
 import { After, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
 Then('user sees {string} cluster label with a {string} icon', (clusterName: string, iconType: string) => {
-  cy.get('[data-test="cluster-icon"]').should('contain', clusterName);
+  cy.get(`[data-test="istio-status-${iconType}"]`).should('contain', clusterName);
   cy.get(`[data-test="istio-status-${iconType}"]`).should('be.visible');
 });
 
-When('user hovers over the cluster icon', () => {
-  cy.get('[data-test="cluster-icon"]').trigger('mouseenter');
+When('user hovers over the cluster label with a {string} icon', (iconType: string) => {
+  cy.get(`[data-test="istio-status-${iconType}"]`).trigger('mouseenter');
 });
 
 Then('user sees a tooltip with text {string}', (text: string) => {
