@@ -4,7 +4,7 @@
   pages since these are all similar.
 */
 
-import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Then, When, Step } from '@badeball/cypress-cucumber-preprocessor';
 import {
   checkHealthIndicatorInTable,
   checkHealthStatusInTable,
@@ -47,11 +47,8 @@ Then('user sees trace details', () => {
   cy.getBySel('trace-details-dropdown').contains('View on Graph');
 });
 
-When('user selects a trace', () => {
-  const tracingDotQuery =
-    'var(--pf-t--temp--dev--tbd)'; /* CODEMODS: original v5 color was --pf-v5-global--palette--blue-200 */
-
-  cy.getBySel('tracing-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
+When('user selects a trace', function () {
+  Step(this, 'user selects a trace with at least 0 spans');
 });
 
 When('user selects a trace with at least {int} spans', (spans: number) => {
