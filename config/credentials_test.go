@@ -319,13 +319,22 @@ func TestCredentialManager_SymlinkRotation(t *testing.T) {
 		t.Fatalf("failed to create data dir: %v", err)
 	}
 
+	// Write the initial secret content in the first data directory.
 	token1 := filepath.Join(dataDir1, "token")
 	if err := os.WriteFile(token1, []byte("first"), 0o600); err != nil {
 		t.Fatalf("failed to write first token: %v", err)
 	}
 
+	// Simulate the Kubernetes volume layout:
+	//   secretDir/token -> ..data/token
+	//   secretDir/..data -> dataDir1 (timestamped dir in real Kubernetes)
+	dataLink := filepath.Join(secretDir, "..data")
+	if err := os.Symlink(dataDir1, dataLink); err != nil {
+		t.Fatalf("failed to create ..data symlink: %v", err)
+	}
+
 	mountedToken := filepath.Join(secretDir, "token")
-	if err := os.Symlink(token1, mountedToken); err != nil {
+	if err := os.Symlink(filepath.Join("..data", "token"), mountedToken); err != nil {
 		t.Fatalf("failed to symlink token: %v", err)
 	}
 
@@ -346,12 +355,13 @@ func TestCredentialManager_SymlinkRotation(t *testing.T) {
 		t.Fatalf("failed to write rotated token: %v", err)
 	}
 
-	newLink := filepath.Join(secretDir, ".tmp-token")
-	if err := os.Symlink(token2, newLink); err != nil {
-		t.Fatalf("failed to create temporary symlink: %v", err)
+	// Rotate by flipping ..data to point to the new data directory (Kubernetes behavior).
+	newDataLink := filepath.Join(secretDir, ".tmp-data")
+	if err := os.Symlink(dataDir2, newDataLink); err != nil {
+		t.Fatalf("failed to create temporary ..data symlink: %v", err)
 	}
-	if err := os.Rename(newLink, mountedToken); err != nil {
-		t.Fatalf("failed to swap symlink: %v", err)
+	if err := os.Rename(newDataLink, dataLink); err != nil {
+		t.Fatalf("failed to swap ..data symlink: %v", err)
 	}
 
 	// Poll until cache returns rotated value.
