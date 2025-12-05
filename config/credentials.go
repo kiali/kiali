@@ -151,7 +151,15 @@ func (cm *CredentialManager) handleEvent(event fsnotify.Event) {
 	cm.mu.RLock()
 	_, tracked := cm.cache[event.Name]
 	cm.mu.RUnlock()
+
+	// Handle Kubernetes secret rotation: the ..data symlink in the watched directory
+	// changes to point to a new timestamped directory, but the per-file symlinks
+	// (e.g., tls.crt) are untouched. When ..data changes, refresh all cached files
+	// in that directory.
 	if !tracked {
+		if filepath.Base(event.Name) == "..data" {
+			cm.refreshDir(filepath.Dir(event.Name))
+		}
 		return
 	}
 
@@ -163,6 +171,23 @@ func (cm *CredentialManager) handleEvent(event fsnotify.Event) {
 
 	if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Chmod) != 0 {
 		cm.updateFile(event.Name)
+	}
+}
+
+// refreshDir updates all cached files that reside under the given directory.
+// Used to handle secret rotation where the ..data symlink flips to a new target.
+func (cm *CredentialManager) refreshDir(dir string) {
+	cm.mu.RLock()
+	paths := make([]string, 0)
+	for path := range cm.cache {
+		if filepath.Dir(path) == dir {
+			paths = append(paths, path)
+		}
+	}
+	cm.mu.RUnlock()
+
+	for _, path := range paths {
+		cm.updateFile(path)
 	}
 }
 
