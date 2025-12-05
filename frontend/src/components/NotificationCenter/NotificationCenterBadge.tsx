@@ -72,7 +72,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
     }, [])
     .reduce(
       (propsToMap: propsToMap, message: NotificationMessage) => {
-        if (message.is_alert) {
+        if (message.isAlert) {
           propsToMap.alerts.push(message);
         }
         propsToMap.newMessageCount++;

@@ -69,7 +69,7 @@ describe('NotificationCenterReducer reducer', () => {
             {
               id: 0,
               seen: false,
-              is_alert: true,
+              isAlert: true,
               content: 'my new message',
               detail: 'my detail',
               showDetail: false,
@@ -100,7 +100,7 @@ describe('NotificationCenterReducer reducer', () => {
                 {
                   id: 0,
                   seen: false,
-                  is_alert: true,
+                  isAlert: true,
                   content: 'my new message',
                   detail: 'my detail',
                   showDetail: false,
@@ -127,7 +127,7 @@ describe('NotificationCenterReducer reducer', () => {
             {
               id: 0,
               seen: false,
-              is_alert: true,
+              isAlert: true,
               content: 'my new message',
               detail: 'my detail',
               showDetail: false,
@@ -158,7 +158,7 @@ describe('NotificationCenterReducer reducer', () => {
                 {
                   id: 0,
                   seen: false,
-                  is_alert: true,
+                  isAlert: true,
                   content: 'my new message',
                   detail: 'my detail',
                   showDetail: false,
@@ -169,7 +169,7 @@ describe('NotificationCenterReducer reducer', () => {
                 {
                   id: 1,
                   seen: true,
-                  is_alert: false,
+                  isAlert: false,
                   content: 'other message',
                   detail: 'my detail',
                   showDetail: false,
@@ -180,7 +180,7 @@ describe('NotificationCenterReducer reducer', () => {
                 {
                   id: 2,
                   seen: true,
-                  is_alert: false,
+                  isAlert: false,
                   content: 'other',
                   detail: 'my detail',
                   showDetail: false,
@@ -206,7 +206,7 @@ describe('NotificationCenterReducer reducer', () => {
             {
               id: 1,
               seen: true,
-              is_alert: false,
+              isAlert: false,
               content: 'other message',
               detail: 'my detail',
               showDetail: false,
@@ -236,7 +236,7 @@ describe('NotificationCenterReducer reducer', () => {
                 {
                   id: 0,
                   seen: false,
-                  is_alert: true,
+                  isAlert: true,
                   content: 'my new message',
                   detail: 'my detail',
                   showDetail: false,
@@ -247,7 +247,7 @@ describe('NotificationCenterReducer reducer', () => {
                 {
                   id: 1,
                   seen: true,
-                  is_alert: false,
+                  isAlert: false,
                   content: 'other message',
                   detail: 'my detail',
                   showDetail: false,
@@ -258,7 +258,7 @@ describe('NotificationCenterReducer reducer', () => {
                 {
                   id: 2,
                   seen: false,
-                  is_alert: false,
+                  isAlert: false,
                   content: 'other',
                   detail: 'my detail',
                   showDetail: false,
@@ -284,7 +284,7 @@ describe('NotificationCenterReducer reducer', () => {
             {
               id: 0,
               seen: true,
-              is_alert: false,
+              isAlert: false,
               content: 'my new message',
               detail: 'my detail',
               showDetail: false,
@@ -295,7 +295,7 @@ describe('NotificationCenterReducer reducer', () => {
             {
               id: 1,
               seen: true,
-              is_alert: false,
+              isAlert: false,
               content: 'other message',
               detail: 'my detail',
               showDetail: false,
@@ -306,7 +306,7 @@ describe('NotificationCenterReducer reducer', () => {
             {
               id: 2,
               seen: false,
-              is_alert: false,
+              isAlert: false,
               content: 'other',
               detail: 'my detail',
               showDetail: false,
@@ -336,7 +336,7 @@ describe('NotificationCenterReducer reducer', () => {
                 {
                   id: 0,
                   seen: false,
-                  is_alert: true,
+                  isAlert: true,
                   content: 'my new message',
                   detail: 'my detail',
                   showDetail: false,
@@ -347,7 +347,7 @@ describe('NotificationCenterReducer reducer', () => {
                 {
                   id: 1,
                   seen: false,
-                  is_alert: true,
+                  isAlert: true,
                   content: 'other message',
                   detail: 'my detail',
                   showDetail: false,
@@ -373,7 +373,7 @@ describe('NotificationCenterReducer reducer', () => {
             {
               id: 0,
               seen: false,
-              is_alert: false,
+              isAlert: false,
               content: 'my new message',
               detail: 'my detail',
               showDetail: false,
@@ -384,7 +384,7 @@ describe('NotificationCenterReducer reducer', () => {
             {
               id: 1,
               seen: false,
-              is_alert: true,
+              isAlert: true,
               content: 'other message',
               detail: 'my detail',
               showDetail: false,

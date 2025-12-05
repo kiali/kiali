@@ -14,7 +14,7 @@ export interface NotificationMessage {
   firstTriggered?: Date; // when was it first triggered
   groupId?: string;
   id: number;
-  is_alert: boolean;
+  isAlert: boolean;
   seen: boolean;
   showDetail: boolean;
   type: MessageType;
