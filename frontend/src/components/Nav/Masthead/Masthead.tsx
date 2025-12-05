@@ -11,7 +11,7 @@ import { ThemeSwitch } from './ThemeSwitch';
 import { LanguageSwitch } from './LanguageSwitch';
 import { PfSpinner } from 'components/Pf/PfSpinner';
 import { OfflineStatus } from './OfflineStatus';
-import { NotificationCenterBadge } from 'components/MessageCenter/NotificationCenterBadge';
+import { NotificationCenterBadge } from 'components/NotificationCenter/NotificationCenterBadge';
 
 const centerItemStyle = kialiStyle({
   alignSelf: 'center'

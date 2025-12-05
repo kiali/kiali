@@ -7,7 +7,7 @@ import { meshWideMTLSEnabledSelector, meshWideMTLSStatusSelector, namespaceItems
 import { connect } from 'react-redux';
 import { MTLSStatuses, TLSStatus } from '../../types/TLSStatus';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { MessageType } from '../../types/MessageCenter';
+import { MessageType } from '../../types/NotificationCenter';
 import * as API from '../../services/Api';
 import { KialiDispatch } from '../../types/Redux';
 import { bindActionCreators } from 'redux';

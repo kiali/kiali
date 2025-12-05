@@ -7,17 +7,17 @@ export enum MessageType {
 }
 
 export interface NotificationMessage {
-  id: number;
-  seen: boolean;
-  type: MessageType;
   content: string;
-  detail: string;
-  created: Date;
-  firstTriggered?: Date; // when was it first triggered
   count: number; // how many times did this message occur
-  showDetail: boolean;
-  show_notification: boolean;
+  created: Date;
+  detail: string;
+  firstTriggered?: Date; // when was it first triggered
   groupId?: string;
+  id: number;
+  is_alert: boolean;
+  seen: boolean;
+  showDetail: boolean;
+  type: MessageType;
 }
 
 export interface NotificationGroup {
@@ -25,6 +25,4 @@ export interface NotificationGroup {
   messages: NotificationMessage[];
   title: React.ReactNode;
   variant: 'success' | 'danger' | 'warning' | 'info';
-  //showActions: boolean;
-  //hideIfEmpty: boolean;
 }

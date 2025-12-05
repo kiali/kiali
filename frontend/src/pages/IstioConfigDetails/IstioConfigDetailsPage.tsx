@@ -24,7 +24,7 @@ import { RenderComponentScroll } from '../../components/Nav/Page';
 import { IstioActionButtons } from '../../components/IstioActions/IstioActionsButtons';
 import { HistoryManager, router } from '../../app/History';
 import { Paths } from '../../config';
-import { MessageType } from '../../types/MessageCenter';
+import { MessageType } from '../../types/NotificationCenter';
 import { getIstioObject, mergeJsonPatch } from '../../utils/IstioConfigUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { ParameterizedTabs, activeTab } from '../../components/Tab/Tabs';
@@ -38,7 +38,7 @@ import {
   DrawerPanelContent,
   Tab
 } from '@patternfly/react-core';
-import { showInMessageCenter } from '../../utils/IstioValidationUtils';
+import { showInNotificationCenter } from '../../utils/IstioValidationUtils';
 import { Refresh } from '../../components/Refresh/Refresh';
 import { IstioConfigOverview } from './IstioObjectDetails/IstioConfigOverview';
 import { Annotation } from 'react-ace/types';
@@ -239,7 +239,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     }
 
     if (this.state.istioValidations && this.state.istioValidations !== prevState.istioValidations) {
-      showInMessageCenter(this.state.istioValidations);
+      showInNotificationCenter(this.state.istioValidations);
     }
   }
 

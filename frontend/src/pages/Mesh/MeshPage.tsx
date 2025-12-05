@@ -6,7 +6,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import { UNKNOWN } from '../../types/Graph';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { MessageType } from '../../types/MessageCenter';
+import { MessageType } from '../../types/NotificationCenter';
 import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
 import {
   durationSelector,

@@ -1,4 +1,4 @@
-import { NotificationGroup } from '../types/MessageCenter';
+import { NotificationGroup } from '../types/NotificationCenter';
 import { Namespace } from '../types/Namespace';
 import {
   DurationInSeconds,
@@ -148,11 +148,9 @@ export interface MeshState {
   updateTime: TimeInMilliseconds;
 }
 
-export interface MessageCenterState {
+export interface NotificationCenterState {
   expanded: boolean;
-  //expandedGroupId?: string;
   groups: NotificationGroup[];
-  //hidden: boolean;
   nextId: number;
 }
 
@@ -188,7 +186,7 @@ export interface KialiAppState {
   mesh: MeshState;
   /** Tracing Settings */
   meshTLSStatus: TLSStatus;
-  messageCenter: MessageCenterState;
+  messageCenter: NotificationCenterState;
   metricsStats: MetricsStatsState;
   namespaces: NamespaceState;
   statusState: StatusState;
