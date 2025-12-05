@@ -2,10 +2,13 @@ import * as React from 'react';
 import {
   FormGroup,
   FormHelperText,
-  FormSelect,
-  FormSelectOption,
   HelperText,
   HelperTextItem,
+  MenuToggle,
+  MenuToggleElement,
+  Select,
+  SelectList,
+  SelectOption,
   Switch,
   TextInput
 } from '@patternfly/react-core';
@@ -63,6 +66,8 @@ export const isAuthorizationPolicyStateValid = (ap: AuthorizationPolicyState): b
 
 export const AuthorizationPolicyForm: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
+  const [isPolicySelectOpen, setIsPolicySelectOpen] = React.useState(false);
+  const [isActionSelectOpen, setIsActionSelectOpen] = React.useState(false);
 
   const {
     action,
@@ -72,10 +77,6 @@ export const AuthorizationPolicyForm: React.FC<Props> = (props: Props) => {
     workloadSelector,
     workloadSelectorValid
   } = props.authorizationPolicy;
-
-  const onRulesFormChange = (_event: React.FormEvent, value: string): void => {
-    onAuthorizationChange({ policy: value });
-  };
 
   const onChangeWorkloadSelector = (_event: React.FormEvent, value: boolean): void => {
     onAuthorizationChange({ addWorkloadSelector: value });
@@ -117,10 +118,6 @@ export const AuthorizationPolicyForm: React.FC<Props> = (props: Props) => {
     onAuthorizationChange({ workloadSelector: value, workloadSelectorValid: isValid });
   };
 
-  const onActionChange = (_event: React.FormEvent, value: string): void => {
-    onAuthorizationChange({ action: value });
-  };
-
   const onAddRule = (rule: Rule): void => {
     const newRules = [...rules];
     newRules.push(rule);
@@ -142,11 +139,36 @@ export const AuthorizationPolicyForm: React.FC<Props> = (props: Props) => {
   return (
     <>
       <FormGroup label={t('Policy')} fieldId="rules-form">
-        <FormSelect value={policy} onChange={onRulesFormChange} id="rules-form" name="rules-form">
-          {rulesFormValues.map((option, index) => (
-            <FormSelectOption key={index} value={option} label={option} />
-          ))}
-        </FormSelect>
+        <Select
+          id="rules-form"
+          isOpen={isPolicySelectOpen}
+          selected={policy}
+          onSelect={(_event, value) => {
+            setIsPolicySelectOpen(false);
+            onAuthorizationChange({ policy: value as string });
+          }}
+          onOpenChange={setIsPolicySelectOpen}
+          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+            <MenuToggle
+              id="rules-form-toggle"
+              ref={toggleRef}
+              onClick={() => setIsPolicySelectOpen(!isPolicySelectOpen)}
+              isExpanded={isPolicySelectOpen}
+              isFullWidth
+            >
+              {policy}
+            </MenuToggle>
+          )}
+          aria-label="Policy Select"
+        >
+          <SelectList>
+            {rulesFormValues.map((option, index) => (
+              <SelectOption key={index} value={option}>
+                {option}
+              </SelectOption>
+            ))}
+          </SelectList>
+        </Select>
         <FormHelperText>
           <HelperText>
             <HelperTextItem>{t(HELPER_TEXT[policy])}</HelperTextItem>
@@ -191,11 +213,36 @@ export const AuthorizationPolicyForm: React.FC<Props> = (props: Props) => {
 
       {policy === RULES && (
         <FormGroup label={t('Action')} fieldId="action-form">
-          <FormSelect value={action} onChange={onActionChange} id="action-form" name="action-form">
-            {actions.map((option, index) => (
-              <FormSelectOption key={index} value={option} label={option} />
-            ))}
-          </FormSelect>
+          <Select
+            id="action-form"
+            isOpen={isActionSelectOpen}
+            selected={action}
+            onSelect={(_event, value) => {
+              setIsActionSelectOpen(false);
+              onAuthorizationChange({ action: value as string });
+            }}
+            onOpenChange={setIsActionSelectOpen}
+            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+              <MenuToggle
+                id="action-form-toggle"
+                ref={toggleRef}
+                onClick={() => setIsActionSelectOpen(!isActionSelectOpen)}
+                isExpanded={isActionSelectOpen}
+                isFullWidth
+              >
+                {action}
+              </MenuToggle>
+            )}
+            aria-label="Action Select"
+          >
+            <SelectList>
+              {actions.map((option, index) => (
+                <SelectOption key={index} value={option}>
+                  {option}
+                </SelectOption>
+              ))}
+            </SelectList>
+          </Select>
         </FormGroup>
       )}
 
