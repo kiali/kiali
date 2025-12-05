@@ -86,30 +86,58 @@ When('user selects a trace with at least {int} spans', (spans: number) => {
           );
         }
       });
-
-    // Now get all data point paths and click the first one
-    // We've already verified that at least one trace has enough spans,
-    // so we'll click paths until we find one that works
-    cy.get('path[role="presentation"]')
-      .filter((_, element) => {
-        const $el = Cypress.$(element);
-        const style = $el.attr('style') || '';
-        const dAttr = $el.attr('d') || '';
-        // Data points have cursor: pointer and contain 'a' (arc) commands in their path
-        return style.includes('cursor: pointer') && dAttr.includes(' a ');
-      })
-      .first()
-      .should('be.visible')
-      .click();
   });
 
-  // Wait for trace details to appear (outside of within() since it's rendered outside the scatterplot)
-  cy.getBySel('trace-details-tabs', { timeout: 10000 }).should('be.visible');
+  // Function to try clicking a path at a given index
+  const tryPathAtIndex = (pathIndex: number): void => {
+    cy.getBySel('tracing-scatterplot').within(() => {
+      cy.get('path[role="presentation"]')
+        .filter((_, element) => {
+          const $el = Cypress.$(element);
+          const style = $el.attr('style') || '';
+          const dAttr = $el.attr('d') || '';
+          // Data points have cursor: pointer and contain 'a' (arc) commands in their path
+          return style.includes('cursor: pointer') && dAttr.includes(' a ');
+        })
+        .then(($paths: JQuery<HTMLElement>) => {
+          const maxAttempts = Math.min($paths.length, 10);
 
-  // Verify we have at least the required number of spans
-  // The test will fail here if the clicked trace doesn't have enough spans
-  // In that case, the user can see which trace was clicked and adjust if needed
-  cy.get('table tbody tr', { timeout: 5000 }).should('have.length.at.least', spans);
+          if (pathIndex >= maxAttempts) {
+            throw new Error(
+              `Could not find a trace with at least ${spans} spans after trying ${maxAttempts} paths. ` +
+                `Found ${$paths.length} total data point path(s).`
+            );
+          }
+
+          const $path = $paths.eq(pathIndex);
+          if ($path.length === 0) {
+            tryPathAtIndex(pathIndex + 1);
+            return;
+          }
+
+          // Click the path
+          cy.wrap($path).should('be.visible').click({ force: true });
+        });
+    });
+
+    // Wait for trace details to appear
+    cy.getBySel('trace-details-tabs', { timeout: 10000 }).should('be.visible');
+
+    // Check if we have enough spans
+    cy.get('table tbody tr', { timeout: 5000 }).then($rows => {
+      if ($rows.length < spans) {
+        // Not enough spans, try the next path
+        cy.log(`Found ${$rows.length} spans, need ${spans}. Trying next path...`);
+        tryPathAtIndex(pathIndex + 1);
+      } else {
+        // We have enough spans, verify it
+        cy.wrap($rows).should('have.length.at.least', spans);
+      }
+    });
+  };
+
+  // Start trying from index 0
+  tryPathAtIndex(0);
 });
 
 Then('user sees span details', () => {
