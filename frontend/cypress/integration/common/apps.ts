@@ -90,7 +90,7 @@ When('user selects a trace with at least {int} spans', (spans: number) => {
     // We've already verified that at least one trace has enough spans,
     // so we'll click paths until we find one that works
     cy.get('path[role="presentation"]')
-      .filter((index, element) => {
+      .filter((_, element) => {
         const $el = Cypress.$(element);
         const style = $el.attr('style') || '';
         const dAttr = $el.attr('d') || '';
