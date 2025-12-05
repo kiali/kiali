@@ -54,7 +54,10 @@ When('user selects a trace', () => {
 When('user selects a trace with at least {int} spans', (spans: number) => {
   cy.getBySel('tracing-scatterplot').within(() => {
     cy.waitForReact();
-    cy.getReact('Point')
+
+    // Try to find Point components - they may be nested in Victory charts
+    // The component name might vary, so we'll try to find it and provide better error messages
+    cy.getReact('Point', { options: { timeout: 10000 } })
       .should('have.length.at.least', 1)
       .then(($points: any) => {
         // We want to find a point that has all of the specified number of spans loaded
@@ -62,9 +65,55 @@ When('user selects a trace with at least {int} spans', (spans: number) => {
         // There doesn't seem to be a good way to inject a data-test attribute into individual points
         // on the graph so here we are looking at the react state of the points and then finding one
         // that matches the exact data path.
-        const pointWithTraceName = $points.filter(point => point.props?.datum?.trace?.spans.length >= spans)[0];
-        const dataPointInGraph = pointWithTraceName.children[0].props.d;
-        cy.get(`path[d="${dataPointInGraph}"]`).should('be.visible').click({ force: true });
+        const validPoints = $points.filter((point: any) => {
+          const spanCount = point?.props?.datum?.trace?.spans?.length;
+          return spanCount !== undefined && spanCount >= spans;
+        });
+
+        if (validPoints.length === 0) {
+          const spanCounts = $points.map((p: any) => p?.props?.datum?.trace?.spans?.length || 'undefined').join(', ');
+          throw new Error(
+            `No trace found with at least ${spans} spans. ` +
+              `Found ${$points.length} point(s), but none have enough spans. ` +
+              `Available span counts: [${spanCounts}]`
+          );
+        }
+
+        // Get the index of the first valid point in the original array
+        const validPointIndex = $points.findIndex((p: any) => {
+          const spanCount = p?.props?.datum?.trace?.spans?.length;
+          return spanCount !== undefined && spanCount >= spans;
+        });
+
+        if (validPointIndex === -1) {
+          throw new Error(`Could not find valid point index`);
+        }
+
+        // Get all path elements that are data points (not grid lines)
+        // Data points have cursor: pointer style and contain arc commands in their 'd' attribute
+        cy.get('path[role="presentation"]')
+          .filter((index, element) => {
+            const $el = Cypress.$(element);
+            const style = $el.attr('style') || '';
+            const dAttr = $el.attr('d') || '';
+            // Data points have cursor: pointer and contain 'a' (arc) commands in their path
+            return style.includes('cursor: pointer') && dAttr.includes(' a ');
+          })
+          .should('have.length.at.least', validPointIndex + 1)
+          .then(($paths: JQuery<HTMLElement>) => {
+            // Find the path that corresponds to our valid point
+            const $targetPath = $paths.eq(validPointIndex);
+
+            if (!$targetPath || $targetPath.length === 0) {
+              throw new Error(
+                `Could not find path element at index ${validPointIndex}. ` +
+                  `Found ${$paths.length} data point path(s) total.`
+              );
+            }
+
+            // Verify the path is visible and clickable
+            cy.wrap($targetPath).should('be.visible').click({ force: true });
+          });
       });
   });
 });
