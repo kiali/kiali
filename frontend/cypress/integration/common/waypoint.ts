@@ -278,8 +278,14 @@ When('the user clicks on {string} for {string} namespace', (option, namespace: s
       selector = `enable-${namespace}-namespace-sidecar-injection`;
       break;
   }
-  cy.get(`[data-test=${selector}]`).click();
-  cy.get(`[data-test="confirm-create"]`).click();
+  // Click the menu item button (the button inside the li element)
+  cy.get(`[data-test=${selector}]`).find('button').click();
+  // Click outside the menu to close it before interacting with the modal
+  cy.get('body').click(0, 0);
+  // Wait for the modal to appear - check for modal content to ensure it's fully rendered
+  cy.contains('Are you sure?', { timeout: 10000 }).should('be.visible');
+  // Wait for modal confirm button to be visible and clickable
+  cy.get(`[data-test="confirm-create"]`).should('be.visible').should('not.be.disabled').click();
 });
 
 When('{string} badge {string}', (badge, option: string) => {
