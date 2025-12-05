@@ -48,10 +48,7 @@ Then('user sees trace details', () => {
 });
 
 When('user selects a trace', () => {
-  const tracingDotQuery =
-    "var(--pf-t--temp--dev--tbd)"/* CODEMODS: original v5 color was --pf-v5-global--palette--blue-200 */;
-
-  cy.getBySel('tracing-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
+  cy.getBySel('tracing-scatterplot').find('path').first().should('be.visible').click({ force: true });
 });
 
 When('user selects a trace with at least {int} spans', (spans: number) => {
