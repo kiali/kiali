@@ -23,10 +23,10 @@ import EllipsisVIcon from '@patternfly/react-icons/dist/esm/icons/ellipsis-v-ico
 import SearchIcon from '@patternfly/react-icons/dist/esm/icons/search-icon';
 import { connect } from 'react-redux';
 import { KialiAppState } from 'store/Store';
-import { NotificationGroup, NotificationMessage } from 'types/MessageCenter';
+import { NotificationGroup, NotificationMessage } from 'types/NotificationCenter';
 import { KialiDispatch } from 'types/Redux';
-import { MessageCenterActions } from 'actions/MessageCenterActions';
-import { MessageCenterThunkActions } from 'actions/MessageCenterThunkActions';
+import { NotificationCenterActions } from 'actions/NotificationCenterActions';
+import { NotificationCenterThunkActions } from 'actions/NotificationCenterThunkActions';
 import { PFColors } from 'components/Pf/PfColors';
 import moment from 'moment';
 
@@ -39,7 +39,7 @@ type ReduxDispatchProps = {
   clearGroup: (group) => void;
   clearMessage: (message) => void;
   markGroupAsRead: (group) => void;
-  toggleMessageCenter: () => void;
+  toggleNotificationCenter: () => void;
   toggleMessageDetail: (message) => void;
 };
 
@@ -89,14 +89,14 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
   const markRead = (message: NotificationMessage) => {
     props.markAsRead(message);
     /*
-                if (!message.seen) {
-                    message.seen = true;
-                    setNumberUnread(numberUnread - 1)
-                }
-                props.groups.forEach(g => {
-                    g.messages.forEach(m => m.seen = true);
-                })
-                */
+                    if (!message.seen) {
+                        message.seen = true;
+                        setNumberUnread(numberUnread - 1)
+                    }
+                    props.groups.forEach(g => {
+                        g.messages.forEach(m => m.seen = true);
+                    })
+                    */
   };
 
   const getNumberUnread = (group?: NotificationGroup) => {
@@ -124,20 +124,20 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
   };
 
   /*
-        const focusDrawer = (_event: any) => {
-            if (drawerRef.current === null) {
-                return;
-            }
-            // Prevent the NotificationDrawer from receiving focus if a drawer group item is opened
-            if (!document.activeElement?.closest(`.${drawerRef.current.className}`)) {
-                const firstTabbableItem = drawerRef.current.querySelector('a, button') as
-                    | HTMLAnchorElement
-                    | HTMLButtonElement
-                    | null;
-                firstTabbableItem?.focus();
-            }
-        };
-        */
+          const focusDrawer = (_event: any) => {
+              if (drawerRef.current === null) {
+                  return;
+              }
+              // Prevent the NotificationDrawer from receiving focus if a drawer group item is opened
+              if (!document.activeElement?.closest(`.${drawerRef.current.className}`)) {
+                  const firstTabbableItem = drawerRef.current.querySelector('a, button') as
+                      | HTMLAnchorElement
+                      | HTMLButtonElement
+                      | null;
+                  firstTabbableItem?.focus();
+              }
+          };
+          */
 
   const notificationDrawerActions = (
     <>
@@ -181,7 +181,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
 
   return (
     <NotificationDrawer ref={drawerRef}>
-      <NotificationDrawerHeader count={getNumberUnread()} onClose={() => props.toggleMessageCenter()}>
+      <NotificationDrawerHeader count={getNumberUnread()} onClose={() => props.toggleNotificationCenter()}>
         <Dropdown
           onSelect={closeActionsMenu}
           isOpen={isActionsMenuOpen['nc-actions'] || false}
@@ -281,12 +281,12 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
-    clearGroup: group => dispatch(MessageCenterThunkActions.clearGroup(group.id)),
-    clearMessage: message => dispatch(MessageCenterActions.removeMessage(message.id)),
-    markAsRead: message => dispatch(MessageCenterActions.markAsRead(message.id)),
-    markGroupAsRead: group => dispatch(MessageCenterThunkActions.markGroupAsRead(group.id)),
-    toggleMessageCenter: () => dispatch(MessageCenterThunkActions.toggleMessageCenter()),
-    toggleMessageDetail: message => dispatch(MessageCenterActions.toggleMessageDetail(message.id))
+    clearGroup: group => dispatch(NotificationCenterThunkActions.clearGroup(group.id)),
+    clearMessage: message => dispatch(NotificationCenterActions.removeMessage(message.id)),
+    markAsRead: message => dispatch(NotificationCenterActions.markAsRead(message.id)),
+    markGroupAsRead: group => dispatch(NotificationCenterThunkActions.markGroupAsRead(group.id)),
+    toggleNotificationCenter: () => dispatch(NotificationCenterActions.toggleNotificationCenter()),
+    toggleMessageDetail: message => dispatch(NotificationCenterActions.toggleMessageDetail(message.id))
   };
 };
 

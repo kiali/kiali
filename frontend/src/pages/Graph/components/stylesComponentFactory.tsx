@@ -18,7 +18,7 @@ import { StyleGroup } from '../styles/styleGroup';
 import { StyleNode } from '../styles/styleNode';
 import { BoxByType, DecoratedGraphNodeData, NodeParamsType, NodeType } from 'types/Graph';
 import * as AlertUtils from '../../../utils/AlertUtils';
-import { MessageType } from 'types/MessageCenter';
+import { MessageType } from 'types/NotificationCenter';
 import { store } from 'store/ConfigStore';
 import { NamespaceActions } from 'actions/NamespaceAction';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';

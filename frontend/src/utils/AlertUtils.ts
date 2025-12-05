@@ -1,13 +1,13 @@
 import { store } from '../store/ConfigStore';
-import { MessageType } from '../types/MessageCenter';
-import { MessageCenterActions } from '../actions/MessageCenterActions';
+import { MessageType } from '../types/NotificationCenter';
+import { NotificationCenterActions } from '../actions/NotificationCenterActions';
 import * as API from '../services/Api';
 import { ApiError, isApiError } from 'types/Api';
 
 export type Message = {
   content: string;
   detail?: string;
-  showNotification?: boolean;
+  isAlert?: boolean;
   type: MessageType;
 };
 
@@ -23,17 +23,17 @@ const getMessageTypeGroup = (type?: MessageType): string => {
 };
 
 export const add = (content: string, type: MessageType): void => {
-  store.dispatch(MessageCenterActions.addMessage(content, '', getMessageTypeGroup(type), type));
+  store.dispatch(NotificationCenterActions.addMessage(content, '', getMessageTypeGroup(type), type));
 };
 
 export const addMessage = (msg: Message): void => {
   store.dispatch(
-    MessageCenterActions.addMessage(
+    NotificationCenterActions.addMessage(
       msg.content,
       msg.detail ?? '',
       getMessageTypeGroup(msg.type),
       msg.type,
-      msg.showNotification
+      msg.isAlert
     )
   );
 };
@@ -48,7 +48,9 @@ export const addError = (message: string, error: Error, type?: MessageType): voi
       type: finalType
     });
   } else {
-    store.dispatch(MessageCenterActions.addMessage(message, error.message, getMessageTypeGroup(finalType), finalType));
+    store.dispatch(
+      NotificationCenterActions.addMessage(message, error.message, getMessageTypeGroup(finalType), finalType)
+    );
   }
 };
 
@@ -72,43 +74,48 @@ export const extractApiError = (message: string, error: ApiError): { content: st
 
 export const addDanger = (content: string, detail?: string): void => {
   store.dispatch(
-    MessageCenterActions.addMessage(content, detail ?? '', getMessageTypeGroup(MessageType.DANGER), MessageType.DANGER)
+    NotificationCenterActions.addMessage(
+      content,
+      detail ?? '',
+      getMessageTypeGroup(MessageType.DANGER),
+      MessageType.DANGER
+    )
   );
 };
 
 // info level message do not generate a toast notification
-export const addInfo = (content: string, showNotification?: boolean, detail?: string): void => {
+export const addInfo = (content: string, isAlert?: boolean, detail?: string): void => {
   store.dispatch(
-    MessageCenterActions.addMessage(
+    NotificationCenterActions.addMessage(
       content,
       detail ?? '',
       getMessageTypeGroup(MessageType.INFO),
       MessageType.INFO,
-      showNotification
+      isAlert
     )
   );
 };
 
-export const addSuccess = (content: string, showNotification?: boolean, detail?: string): void => {
+export const addSuccess = (content: string, isAlert?: boolean, detail?: string): void => {
   store.dispatch(
-    MessageCenterActions.addMessage(
+    NotificationCenterActions.addMessage(
       content,
       detail ?? '',
       getMessageTypeGroup(MessageType.SUCCESS),
       MessageType.SUCCESS,
-      showNotification
+      isAlert
     )
   );
 };
 
-export const addWarning = (content: string, showNotification?: boolean, detail?: string): void => {
+export const addWarning = (content: string, isAlert?: boolean, detail?: string): void => {
   store.dispatch(
-    MessageCenterActions.addMessage(
+    NotificationCenterActions.addMessage(
       content,
       detail ?? '',
       getMessageTypeGroup(MessageType.WARNING),
       MessageType.WARNING,
-      showNotification
+      isAlert
     )
   );
 };

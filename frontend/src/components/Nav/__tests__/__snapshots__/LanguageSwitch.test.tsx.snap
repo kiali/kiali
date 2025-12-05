@@ -1,56 +1,33 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Language switch renders correctly 1`] = `
-<Tooltip
-  content={
-    <React.Fragment>
-      Switch language
-    </React.Fragment>
-  }
-  exitDelay={0}
-  position="bottom"
-  trigger="mouseenter click"
+<Select
+  id="language-select"
+  isOpen={false}
+  onOpenChange={[Function]}
+  onSelect={[Function]}
+  selected="en"
+  toggle={[Function]}
 >
-  <Dropdown
-    isOpen={false}
-    onOpenChange={[Function]}
-    onSelect={[Function]}
-    popperProps={
-      Object {
-        "position": "center",
-      }
-    }
-    toggle={[Function]}
-  >
-    <DropdownList>
-      <DropdownItem
-        key="english"
-        onClick={[Function]}
-      >
-        <span>
-          English
-        </span>
-        <Check
-          className="kiali_fm5q8n4"
-        />
-      </DropdownItem>
-      <DropdownItem
-        key="spanish"
-        onClick={[Function]}
-      >
-        <span>
-          Español
-        </span>
-      </DropdownItem>
-      <DropdownItem
-        key="chinese"
-        onClick={[Function]}
-      >
-        <span>
-          中文
-        </span>
-      </DropdownItem>
-    </DropdownList>
-  </Dropdown>
-</Tooltip>
+  <SelectList>
+    <SelectOption
+      isSelected={true}
+      value="en"
+    >
+      English
+    </SelectOption>
+    <SelectOption
+      isSelected={false}
+      value="es"
+    >
+      Español
+    </SelectOption>
+    <SelectOption
+      isSelected={false}
+      value="zh"
+    >
+      中文
+    </SelectOption>
+  </SelectList>
+</Select>
 `;

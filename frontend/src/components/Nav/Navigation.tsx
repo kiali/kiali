@@ -28,7 +28,7 @@ import { ExternalServiceInfo } from '../../types/StatusState';
 import { Theme } from 'types/Common';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { isKiosk } from '../Kiosk/KioskActions';
-import { NotificationCenter } from 'components/MessageCenter/NotificationCenter';
+import { NotificationCenter } from 'components/NotificationCenter/NotificationCenter';
 
 type ReduxStateProps = {
   externalServices: ExternalServiceInfo[];
@@ -134,11 +134,6 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
       sidebar={Sidebar}
       notificationDrawer={<NotificationCenter />}
       isNotificationDrawerExpanded={props.showNotificationCenter}
-      /*
-      onNotificationDrawerExpand={(
-        event: React.MouseEvent<Element, MouseEvent> | KeyboardEvent | React.TransitionEvent<Element>
-      ) => focusDrawer(event)}
-      */
       onPageResize={(_, { mobileView, windowSize }) => onPageResize({ mobileView, windowSize })}
     >
       <PageSection hasBodyWrapper={false} className={flexBoxColumnStyle}>

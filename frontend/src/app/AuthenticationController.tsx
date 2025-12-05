@@ -7,8 +7,8 @@ import * as API from '../services/Api';
 import { HelpDropdownActions } from '../actions/HelpDropdownActions';
 import { TracingActions } from '../actions/TracingActions';
 import { LoginThunkActions } from '../actions/LoginThunkActions';
-import { MessageCenterActions } from '../actions/MessageCenterActions';
-import { MessageType } from '../types/MessageCenter';
+import { NotificationCenterActions } from '../actions/NotificationCenterActions';
+import { MessageType } from '../types/NotificationCenter';
 import { KialiDispatch } from '../types/Redux';
 import { InitializingScreen } from './InitializingScreen';
 import { getKioskMode, isKioskMode } from '../utils/SearchParamUtils';
@@ -39,7 +39,7 @@ interface ReduxStateProps {
 }
 
 interface ReduxDispatchProps {
-  addMessage: (content: string, detail: string, groupId: string, msgType: MessageType, showNotif?: boolean) => void;
+  addMessage: (content: string, detail: string, groupId: string, msgType: MessageType, isAlert?: boolean) => void;
   checkCredentials: () => void;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
   setDuration: (duration: DurationInSeconds) => void;
@@ -358,7 +358,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
-  addMessage: bindActionCreators(MessageCenterActions.addMessage, dispatch),
+  addMessage: bindActionCreators(NotificationCenterActions.addMessage, dispatch),
   checkCredentials: () => dispatch(LoginThunkActions.checkCredentials()),
   setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),
   setDuration: bindActionCreators(UserSettingsActions.setDuration, dispatch),

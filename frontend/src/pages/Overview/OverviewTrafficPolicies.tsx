@@ -4,7 +4,7 @@ import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { ControlPlane } from '../../types/Mesh';
 import { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
-import { MessageType } from 'types/MessageCenter';
+import { MessageType } from 'types/NotificationCenter';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { DurationInSeconds } from 'types/Common';
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';

@@ -6,7 +6,7 @@ const validationMessage = (validation: ObjectValidation, failedCheck: ObjectChec
   return `${getGVKTypeString(validation.objectGVK)}:${validation.name} ${failedCheck.message}`;
 };
 
-const showInMessageCenterValidation = (validation: ObjectValidation): void => {
+const showInNotificationCenterValidation = (validation: ObjectValidation): void => {
   for (let check of validation.checks) {
     switch (check.severity) {
       case ValidationTypes.Warning:
@@ -19,7 +19,7 @@ const showInMessageCenterValidation = (validation: ObjectValidation): void => {
   }
 };
 
-const showInMessageCenterValidations = (validations: ObjectValidation[]): void => {
+const showInNotificationCenterValidations = (validations: ObjectValidation[]): void => {
   const elementsWithFailedValidations: string[] = [];
   let hasError = false;
   for (let validation of validations) {
@@ -42,10 +42,10 @@ const showInMessageCenterValidations = (validations: ObjectValidation[]): void =
   }
 };
 
-export const showInMessageCenter = (validation: ObjectValidation | ObjectValidation[]): void => {
+export const showInNotificationCenter = (validation: ObjectValidation | ObjectValidation[]): void => {
   if (Array.isArray(validation)) {
-    showInMessageCenterValidations(validation);
+    showInNotificationCenterValidations(validation);
   } else {
-    showInMessageCenterValidation(validation);
+    showInNotificationCenterValidation(validation);
   }
 };

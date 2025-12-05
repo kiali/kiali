@@ -13,7 +13,7 @@ import { INITIAL_GLOBAL_STATE } from '../reducers/GlobalState';
 import { INITIAL_LOGIN_STATE } from '../reducers/LoginState';
 import { INITIAL_GRAPH_STATE } from '../reducers/GraphDataState';
 import { INITIAL_USER_SETTINGS_STATE } from '../reducers/UserSettingsState';
-import { INITIAL_MESSAGE_CENTER_STATE } from '../reducers/MessageCenter';
+import { INITIAL_NOTIFICATION_CENTER_STATE as INITIAL_MESSAGE_CENTER_STATE } from '../reducers/NotificationCenter';
 import { INITIAL_STATUS_STATE } from '../reducers/HelpDropdownState';
 import { INITIAL_NAMESPACE_STATE } from '../reducers/NamespaceState';
 import { INITIAL_CLUSTER_STATE } from '../reducers/ClusterState';

@@ -1,43 +1,35 @@
-import { MessageType, NotificationMessage } from '../types/MessageCenter';
-import { MessageCenterState } from '../store/Store';
+import { MessageType, NotificationMessage } from '../types/NotificationCenter';
+import { NotificationCenterState } from '../store/Store';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { getType } from 'typesafe-actions';
-import { MessageCenterActions } from '../actions/MessageCenterActions';
+import { NotificationCenterActions } from '../actions/NotificationCenterActions';
 import { updateState } from '../utils/Reducer';
 import { LoginActions } from '../actions/LoginActions';
 import _ from 'lodash';
 
-export const INITIAL_MESSAGE_CENTER_STATE: MessageCenterState = {
-  // predefined groups are specifically ordered by severity
+export const INITIAL_NOTIFICATION_CENTER_STATE: NotificationCenterState = {
+  // predefined groups are specifically ordered by status
   groups: [
     {
       id: 'danger',
       title: 'Danger',
       messages: [],
       variant: 'danger'
-      //showActions: false,
-      //hideIfEmpty: true
     },
     {
       id: 'warning',
       title: 'Warning',
       messages: [],
       variant: 'warning'
-      //showActions: true,
-      //hideIfEmpty: false
     },
     {
       id: 'info',
       title: 'Info',
       messages: [],
       variant: 'info'
-      //showActions: true,
-      //hideIfEmpty: false
     }
   ],
-  //hidden: true,
   expanded: false,
-  //expandedGroupId: 'default'
   nextId: 0
 };
 
@@ -47,7 +39,7 @@ const createMessage = (
   detail: string,
   type: MessageType,
   count: number,
-  showNotification: boolean,
+  isAlert: boolean,
   created: Date,
   showDetail: boolean,
   firstTriggered?: Date
@@ -58,7 +50,7 @@ const createMessage = (
     detail,
     type,
     count,
-    show_notification: showNotification,
+    is_alert: isAlert,
     seen: false,
     created: created,
     showDetail: showDetail,
@@ -68,7 +60,7 @@ const createMessage = (
 
 // Updates several messages with the same payload, useful for marking messages
 // returns the updated state
-const updateMessage = (state: MessageCenterState, messageIds: number[], updater) => {
+const updateMessage = (state: NotificationCenterState, messageIds: number[], updater) => {
   const groups = state.groups.map(group => {
     group = {
       ...group,
@@ -84,13 +76,13 @@ const updateMessage = (state: MessageCenterState, messageIds: number[], updater)
   return updateState(state, { groups });
 };
 
-export const MessageCenterReducer = (
-  state: MessageCenterState = INITIAL_MESSAGE_CENTER_STATE,
+export const NotificationCenterReducer = (
+  state: NotificationCenterState = INITIAL_NOTIFICATION_CENTER_STATE,
   action: KialiAppAction
-): MessageCenterState => {
+): NotificationCenterState => {
   switch (action.type) {
-    case getType(MessageCenterActions.addMessage): {
-      const { content, detail, groupId, messageType, showNotification } = action.payload;
+    case getType(NotificationCenterActions.addMessage): {
+      const { content, detail, groupId, messageType, isAlert } = action.payload;
 
       const groups = state.groups.map(group => {
         if (group.id === groupId) {
@@ -123,7 +115,7 @@ export const MessageCenterReducer = (
             detail,
             messageType,
             count,
-            showNotification,
+            isAlert,
             new Date(),
             false,
             firstTriggered
@@ -138,7 +130,7 @@ export const MessageCenterReducer = (
       return updateState(state, { groups: groups, nextId: state.nextId + 1 });
     }
 
-    case getType(MessageCenterActions.removeMessage): {
+    case getType(NotificationCenterActions.removeMessage): {
       const messageId = action.payload.messageId;
       const groups = state.groups.map(group => {
         group = {
@@ -152,44 +144,32 @@ export const MessageCenterReducer = (
       return updateState(state, { groups });
     }
 
-    case getType(MessageCenterActions.toggleMessageDetail): {
+    case getType(NotificationCenterActions.toggleMessageDetail): {
       return updateMessage(state, action.payload.messageId, message => ({
         ...message,
         showDetail: !message.showDetail
       }));
     }
 
-    case getType(MessageCenterActions.markAsRead): {
+    case getType(NotificationCenterActions.markAsRead): {
       return updateMessage(state, action.payload.messageId, message => ({
         ...message,
         seen: true,
-        show_notification: false
+        is_alert: false
       }));
     }
 
-    case getType(MessageCenterActions.hideNotification): {
-      return updateMessage(state, action.payload.messageId, message => ({ ...message, show_notification: false }));
+    case getType(NotificationCenterActions.hideNotification): {
+      return updateMessage(state, action.payload.messageId, message => ({ ...message, is_alert: false }));
     }
 
-    case getType(MessageCenterActions.showMessageCenter):
-      if (!state.expanded) {
-        return updateState(state, { expanded: true });
-      }
-      return state;
-
-    case getType(MessageCenterActions.hideMessageCenter):
-      if (state.expanded) {
-        return updateState(state, { expanded: false });
-      }
-      return state;
-
-    case getType(MessageCenterActions.toggleMessageCenter):
+    case getType(NotificationCenterActions.toggleNotificationCenter):
       return updateState(state, { expanded: !state.expanded });
 
     case getType(LoginActions.loginRequest): {
       // Let's clear the message center when user is logging-in. This ensures
       // that past messages won't persist.
-      return INITIAL_MESSAGE_CENTER_STATE;
+      return INITIAL_NOTIFICATION_CENTER_STATE;
     }
     default:
       return state;

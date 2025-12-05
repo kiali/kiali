@@ -43,7 +43,7 @@ import {
   buildServiceEntry,
   buildSidecar
 } from '../../components/IstioWizards/WizardActions';
-import { MessageType } from '../../types/MessageCenter';
+import { MessageType } from '../../types/NotificationCenter';
 import {
   AuthorizationPolicyForm,
   AuthorizationPolicyState,

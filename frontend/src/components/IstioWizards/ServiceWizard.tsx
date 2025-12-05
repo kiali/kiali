@@ -49,7 +49,7 @@ import {
   WizardPreviews,
   getInitK8sGRPCRules
 } from './WizardActions';
-import { MessageType } from '../../types/MessageCenter';
+import { MessageType } from '../../types/NotificationCenter';
 import { GatewaySelector, GatewaySelectorState } from './GatewaySelector';
 import { K8sGatewaySelector, K8sGatewaySelectorState } from './K8sGatewaySelector';
 import { VirtualServiceHosts } from './VirtualServiceHosts';

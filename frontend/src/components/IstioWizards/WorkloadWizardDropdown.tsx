@@ -12,7 +12,7 @@ import {
 } from './WizardActions';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { MessageType } from '../../types/MessageCenter';
+import { MessageType } from '../../types/NotificationCenter';
 import { WizardLabels } from './WizardLabels';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { WorkloadWizardActionsDropdownGroup } from './WorkloadWizardActionsDropdownGroup';

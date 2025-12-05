@@ -25,7 +25,7 @@ import {
   WIZARD_K8S_GRPC_REQUEST_ROUTING,
   WIZARD_EDIT_ANNOTATIONS
 } from './WizardActions';
-import { MessageType } from '../../types/MessageCenter';
+import { MessageType } from '../../types/NotificationCenter';
 import { WizardLabels } from './WizardLabels';
 import { ServiceWizard } from './ServiceWizard';
 import { canCreate, canUpdate, ResourcePermissions } from '../../types/Permissions';

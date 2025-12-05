@@ -3,7 +3,7 @@ import { GraphAction } from './GraphActions';
 import { GraphToolbarAction } from './GraphToolbarActions';
 import { HelpDropdownAction } from './HelpDropdownActions';
 import { LoginAction } from './LoginActions';
-import { MessageCenterAction } from './MessageCenterActions';
+import { NotificationCenterAction } from './NotificationCenterActions';
 import { NamespaceAction } from './NamespaceAction';
 import { ClusterAction } from './ClusterAction';
 import { UserSettingsAction } from './UserSettingsActions';
@@ -29,7 +29,7 @@ export type KialiAppAction =
   | MeshAction
   | MeshTlsAction
   | MeshToolbarAction
-  | MessageCenterAction
+  | NotificationCenterAction
   | MetricsStatsAction
   | NamespaceAction
   | TourAction

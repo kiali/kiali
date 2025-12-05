@@ -24,7 +24,7 @@ import { ApiError } from 'types/Api';
 import { DEGRADED, FAILURE, HEALTHY, Health, NOT_READY } from 'types/Health';
 import { router } from '../../../app/History';
 import * as AlertUtils from '../../../utils/AlertUtils';
-import { MessageType } from '../../../types/MessageCenter';
+import { MessageType } from '../../../types/NotificationCenter';
 import { OverviewStatus } from 'pages/Overview/OverviewStatus';
 import { switchType } from 'pages/Overview/OverviewHelper';
 import { TLSStatus } from 'types/TLSStatus';

@@ -2,11 +2,10 @@ import { NotificationBadge, NotificationBadgeVariant } from '@patternfly/react-c
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { connect } from 'react-redux';
 import { KialiAppState } from 'store/Store';
-import { MessageType, NotificationGroup, NotificationMessage } from 'types/MessageCenter';
-import { MessageCenterThunkActions } from 'actions/MessageCenterThunkActions';
+import { MessageType, NotificationGroup, NotificationMessage } from 'types/NotificationCenter';
 import { KialiDispatch } from 'types/Redux';
-import { NotificationList } from './NotificationList';
-import { MessageCenterActions } from 'actions/MessageCenterActions';
+import { NotificationAlerts } from './NotificationAlerts';
+import { NotificationCenterActions } from 'actions/NotificationCenterActions';
 
 type ReduxStateProps = {
   alerts: NotificationMessage[];
@@ -16,7 +15,7 @@ type ReduxStateProps = {
 
 type ReduxDispatchProps = {
   onDismissNotification: (NotificationMessage, boolean) => void;
-  toggleMessageCenter: () => void;
+  toggleNotificationCenter: () => void;
 };
 
 type NotificationCenterBadgeProps = ReduxStateProps & ReduxDispatchProps;
@@ -42,11 +41,11 @@ export const NotificationCenterBadgeComponent: React.FunctionComponent<Notificat
         count={props.newMessageCount}
         isExpanded={this}
         onClick={() => {
-          props.toggleMessageCenter();
+          props.toggleNotificationCenter();
         }}
         variant={variant}
       />
-      <NotificationList messages={props.alerts} onDismiss={props.onDismissNotification} />
+      <NotificationAlerts alerts={props.alerts} onDismiss={props.onDismissNotification} />
     </>
   );
 };
@@ -73,7 +72,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
     }, [])
     .reduce(
       (propsToMap: propsToMap, message: NotificationMessage) => {
-        if (message.show_notification) {
+        if (message.is_alert) {
           propsToMap.alerts.push(message);
         }
         propsToMap.newMessageCount++;
@@ -88,12 +87,12 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     onDismissNotification: (message, userDismissed) => {
       if (userDismissed) {
-        dispatch(MessageCenterActions.markAsRead(message.id));
+        dispatch(NotificationCenterActions.markAsRead(message.id));
       } else {
-        dispatch(MessageCenterActions.hideNotification(message.id));
+        dispatch(NotificationCenterActions.hideNotification(message.id));
       }
     },
-    toggleMessageCenter: () => dispatch(MessageCenterThunkActions.toggleMessageCenter())
+    toggleNotificationCenter: () => dispatch(NotificationCenterActions.toggleNotificationCenter())
   };
 };
 

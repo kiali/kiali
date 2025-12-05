@@ -57,7 +57,7 @@ import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { OverviewNamespaceAction, OverviewNamespaceActions } from './OverviewNamespaceActions';
 import { router, HistoryManager, URLParam } from '../../app/History';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { MessageType } from '../../types/MessageCenter';
+import { MessageType } from '../../types/NotificationCenter';
 import { ValidationStatus } from '../../types/IstioObjects';
 import { GrafanaInfo, ISTIO_DASHBOARDS } from '../../types/GrafanaInfo';
 import { ExternalLink } from '../../types/Dashboards';
@@ -685,7 +685,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           AlertUtils.addMessage({
             ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
             type: MessageType.INFO,
-            showNotification: false
+            isAlert: false
           });
         });
     }
@@ -718,7 +718,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           AlertUtils.addMessage({
             ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
             type: MessageType.INFO,
-            showNotification: false
+            isAlert: false
           });
         });
     }

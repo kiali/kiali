@@ -14,7 +14,7 @@ import { GrafanaLinks } from '../Metrics/GrafanaLinks';
 import { Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { GrafanaInfo } from '../../types/GrafanaInfo';
-import { MessageType } from '../../types/MessageCenter';
+import { MessageType } from '../../types/NotificationCenter';
 import { PersesInfo } from '../../types/PersesInfo';
 import { PersesLinks } from '../Metrics/PersesLinks';
 import { store } from '../../store/ConfigStore';
@@ -77,7 +77,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
           AlertUtils.addMessage({
             ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
             type: MessageType.INFO,
-            showNotification: false
+            isAlert: false
           });
         });
     }
@@ -95,7 +95,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
           AlertUtils.addMessage({
             ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
             type: MessageType.INFO,
-            showNotification: false
+            isAlert: false
           });
         });
     }

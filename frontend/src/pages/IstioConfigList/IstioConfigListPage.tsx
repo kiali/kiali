@@ -21,7 +21,7 @@ import { getFilterSelectedValues } from '../../components/Filters/CommonFilters'
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { ObjectValidation } from '../../types/IstioObjects';
-import { showInMessageCenter } from '../../utils/IstioValidationUtils';
+import { showInNotificationCenter } from '../../utils/IstioValidationUtils';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { RefreshButton } from '../../components/Refresh/RefreshButton';
 import { IstioActionsNamespaceDropdown } from '../../components/IstioActions/IstioActionsNamespaceDropdown';
@@ -162,7 +162,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
           .map(item => item.validation)
           .filter((validation): validation is ObjectValidation => validation !== undefined)
       )
-      .then(validations => showInMessageCenter(validations));
+      .then(validations => showInNotificationCenter(validations));
 
     configsPromises
       .then(configItems => filterByConfigValidation(configItems, configValidationFilters))
