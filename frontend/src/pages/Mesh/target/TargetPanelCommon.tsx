@@ -141,7 +141,8 @@ const meshTitleStyle = kialiStyle({
 const expandTitleStyle = kialiStyle({
   fontWeight: 'bold',
   fontSize: '0.875rem',
-  paddingLeft: '0 !important'
+  paddingLeft: '0 !important',
+  paddingTop: '0.75rem !important'
 });
 
 const expandBodyStyle = kialiStyle({
