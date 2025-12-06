@@ -1,6 +1,7 @@
 package config
 
 import (
+	"crypto/x509"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -35,6 +36,10 @@ type CredentialManager struct {
 	watcher     *fsnotify.Watcher
 	done        chan struct{}
 	closeOnce   sync.Once
+
+	// Certificate pool management
+	certPool      *x509.CertPool
+	caBundlePaths []string
 }
 
 // NewCredentialManager creates a new credential manager with file watching enabled.
@@ -66,8 +71,100 @@ func (cm *CredentialManager) Close() {
 		close(cm.done)
 		if cm.watcher != nil {
 			cm.watcher.Close()
+			// Note: Don't set cm.watcher = nil here
+			// The watchFiles goroutine may still be accessing cm.watcher.Events
+			// Closing the watcher closes its channels, causing watchFiles to exit gracefully
 		}
 	})
+}
+
+// InitializeCertPool sets up the certificate pool with system CAs and additional CA bundles.
+// This should be called once during configuration initialization.
+// The CA bundle files will be automatically watched and the pool rebuilt on changes.
+func (cm *CredentialManager) InitializeCertPool(caBundlePaths []string) error {
+	if cm == nil {
+		return fmt.Errorf("credential manager not initialized")
+	}
+
+	cm.mu.Lock()
+	cm.caBundlePaths = caBundlePaths
+	cm.mu.Unlock()
+
+	return cm.rebuildCertPool()
+}
+
+// rebuildCertPool rebuilds the certificate pool from system CAs and configured CA bundles.
+func (cm *CredentialManager) rebuildCertPool() error {
+	// Load system CAs
+	systemPool, err := x509.SystemCertPool()
+	if err != nil {
+		log.Warningf("Unable to load system cert pool. Falling back to empty cert pool. Error: %s", err)
+		systemPool = x509.NewCertPool()
+	}
+
+	cm.mu.RLock()
+	paths := cm.caBundlePaths
+	cm.mu.RUnlock()
+
+	// Load additional CA bundles
+	for _, path := range paths {
+		if path == "" {
+			continue
+		}
+
+		data, err := cm.readCABundle(path)
+		if err != nil {
+			log.Debugf("Unable to read CA bundle [%s]: %v", path, err)
+			continue
+		}
+
+		if len(data) > 0 {
+			if ok := systemPool.AppendCertsFromPEM(data); !ok {
+				return fmt.Errorf("unable to append PEM bundle from file [%s]", path)
+			}
+		}
+	}
+
+	// Update pool atomically
+	cm.mu.Lock()
+	cm.certPool = systemPool
+	cm.mu.Unlock()
+
+	return nil
+}
+
+// readCABundle reads a CA bundle file, using the credential cache for absolute paths
+// and direct file reading for relative paths.
+func (cm *CredentialManager) readCABundle(path string) ([]byte, error) {
+	if strings.HasPrefix(path, "/") {
+		// Absolute path - use credential manager for caching and watching
+		value, err := cm.Get(path)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(value), nil
+	}
+
+	// Relative path - read directly from file (typically for tests)
+	return os.ReadFile(path)
+}
+
+// GetCertPool returns a clone of the current certificate pool.
+// Returns nil if the certificate pool has not been initialized.
+func (cm *CredentialManager) GetCertPool() *x509.CertPool {
+	if cm == nil {
+		return nil
+	}
+
+	cm.mu.RLock()
+	pool := cm.certPool
+	cm.mu.RUnlock()
+
+	if pool == nil {
+		return nil
+	}
+
+	return pool.Clone()
 }
 
 // Get reads a credential, either from a file (if value starts with "/") or returns the literal value.
@@ -147,7 +244,41 @@ func (cm *CredentialManager) watchFiles() {
 
 // handleEvent processes a file system event and updates the cache accordingly.
 func (cm *CredentialManager) handleEvent(event fsnotify.Event) {
-	// Ignore directories or files we never cached
+	// Check if this event affects any of our CA bundle paths FIRST
+	// (before credential cache logic, since CA bundles might not be in the cache)
+	cm.mu.RLock()
+	isCAbundle := false
+	for _, path := range cm.caBundlePaths {
+		if path == event.Name || filepath.Dir(path) == event.Name ||
+			(filepath.Base(event.Name) == "..data" && filepath.Dir(event.Name) == filepath.Dir(path)) {
+			isCAbundle = true
+			break
+		}
+	}
+	cm.mu.RUnlock()
+
+	if isCAbundle {
+		log.Infof("CA bundle file change detected [%s], rebuilding certificate pool", event.Name)
+		// Invalidate cache for CA bundle paths so rebuildCertPool gets fresh data
+		cm.mu.Lock()
+		for _, path := range cm.caBundlePaths {
+			delete(cm.cache, path)
+		}
+		cm.mu.Unlock()
+
+		if err := cm.rebuildCertPool(); err != nil {
+			log.Errorf("Failed to rebuild certificate pool: %v", err)
+			// Don't return - let normal credential cache logic handle this file
+			// This ensures the cache gets restored even if cert pool rebuild fails
+		} else {
+			log.Info("Certificate pool successfully rebuilt")
+			// Success - cert pool rebuilt and Get() re-cached all paths
+			// No need to process this event again for credential cache
+			return
+		}
+	}
+
+	// Now handle credential cache updates
 	cm.mu.RLock()
 	_, tracked := cm.cache[event.Name]
 	cm.mu.RUnlock()

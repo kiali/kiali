@@ -860,8 +860,11 @@ func TestLoadingCertPool(t *testing.T) {
 			require := require.New(t)
 
 			conf := NewConfig()
+			conf.Credentials, err = NewCredentialManager()
+			require.NoError(err)
+			t.Cleanup(conf.Credentials.Close)
 
-			err = conf.loadCertPool(tc.addtionalBundles...)
+			err = conf.Credentials.InitializeCertPool(tc.addtionalBundles)
 			if tc.expectedErr {
 				require.Error(err)
 			} else {
@@ -885,7 +888,7 @@ func TestCertPoolReloadsOnCABundleRotation(t *testing.T) {
 
 	caFile := filetest.TempFile(t, testCA)
 
-	err = conf.loadCertPool(caFile.Name())
+	err = conf.Credentials.InitializeCertPool([]string{caFile.Name()})
 	require.NoError(t, err)
 
 	rotatedCA := buildTestCertificate(t, "rotated-ca")
@@ -912,7 +915,7 @@ func TestCertPoolGlobalConfigReturnsStalePoolAfterRotation(t *testing.T) {
 
 	caFile := filetest.TempFile(t, testCA)
 
-	require.NoError(t, conf.loadCertPool(caFile.Name()))
+	require.NoError(t, conf.Credentials.InitializeCertPool([]string{caFile.Name()}))
 
 	Set(conf)
 
