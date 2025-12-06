@@ -61,7 +61,7 @@ Feature: Service Details Wizard: Request Routing
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "Request Routing" actions
     And user sees the "Update Request Routing" wizard
-    And user clicks on "Show" Advanced Options
+    And user clicks on Advanced Options
     And user clicks in the "Gateways" tab
     And user clicks on Add Gateway
     And user selects Create Gateway
@@ -103,7 +103,7 @@ Feature: Service Details Wizard: Request Routing
     And user is at the details page for the "service" "bookinfo/details" located in the "east" cluster
     And user clicks in the "Request Routing" actions
     And user sees the "Update Request Routing" wizard
-    And user clicks on "Show" Advanced Options
+    And user clicks on Advanced Options
     And user clicks in the "Gateways" tab
     And user clicks on Add Gateway
     And user selects Create Gateway
@@ -144,7 +144,7 @@ Feature: Service Details Wizard: Request Routing
     And user is at the details page for the "service" "bookinfo/ratings" located in the "west" cluster
     And user clicks in the "Request Routing" actions
     And user sees the "Update Request Routing" wizard
-    And user clicks on "Show" Advanced Options
+    And user clicks on Advanced Options
     And user clicks in the "Gateways" tab
     And user clicks on Add Gateway
     And user selects Create Gateway
