@@ -6,6 +6,10 @@ import (
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/kiali/kiali/util/filetest"
 )
 
 func TestCredentialManager_LiteralValue(t *testing.T) {
@@ -667,4 +671,54 @@ func TestConfig_GetCredential_AuthToken_Empty(t *testing.T) {
 	if result != "" {
 		t.Errorf("Expected empty string, got: %s", result)
 	}
+}
+
+func TestCredentialManager_InitializeCertPool(t *testing.T) {
+	cm, err := NewCredentialManager()
+	require.NoError(t, err)
+	t.Cleanup(cm.Close)
+
+	caFile := filetest.TempFile(t, testCA)
+
+	err = cm.InitializeCertPool([]string{caFile.Name()})
+	require.NoError(t, err)
+
+	pool := cm.GetCertPool()
+	require.NotNil(t, pool)
+}
+
+func TestCredentialManager_CertPoolReloadsOnFileChange(t *testing.T) {
+	cm, err := NewCredentialManager()
+	require.NoError(t, err)
+	t.Cleanup(cm.Close)
+
+	tmpDir := t.TempDir()
+	caFile := filepath.Join(tmpDir, "ca.pem")
+
+	initialCA := buildTestCertificate(t, "initial-ca")
+	require.NoError(t, os.WriteFile(caFile, initialCA, 0o600))
+
+	err = cm.InitializeCertPool([]string{caFile})
+	require.NoError(t, err)
+
+	// Rotate CA
+	rotatedCA := buildTestCertificate(t, "rotated-ca")
+	require.NoError(t, os.WriteFile(caFile, rotatedCA, 0o600))
+
+	// Wait for fsnotify event and pool rebuild
+	rotatedSubject := subjectFromPEM(t, rotatedCA)
+	require.Eventually(t, func() bool {
+		pool := cm.GetCertPool()
+		return certPoolHasSubject(pool, rotatedSubject)
+	}, time.Second, 10*time.Millisecond, "pool should contain rotated CA")
+}
+
+func TestCredentialManager_GetCertPoolBeforeInit(t *testing.T) {
+	cm, err := NewCredentialManager()
+	require.NoError(t, err)
+	t.Cleanup(cm.Close)
+
+	// GetCertPool before InitializeCertPool should return nil
+	pool := cm.GetCertPool()
+	require.Nil(t, pool)
 }

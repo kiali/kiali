@@ -43,8 +43,7 @@ func (n ioNopCloser) Close() error { return nil }
 func TestAuthRoundTripper_BearerRotation(t *testing.T) {
 	conf := config.NewConfig()
 	var err error
-	conf.Credentials, err = config.NewCredentialManager()
-	if err != nil {
+	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
 		t.Fatalf("failed to create credential manager: %v", err)
 	}
 	t.Cleanup(conf.Close)
@@ -96,8 +95,7 @@ func TestAuthRoundTripper_BearerRotation(t *testing.T) {
 func TestAuthRoundTripper_BasicRotation(t *testing.T) {
 	conf := config.NewConfig()
 	var err error
-	conf.Credentials, err = config.NewCredentialManager()
-	if err != nil {
+	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
 		t.Fatalf("failed to create credential manager: %v", err)
 	}
 	t.Cleanup(conf.Close)
@@ -190,8 +188,7 @@ func TestGetTLSConfig_CAFileDeprecated(t *testing.T) {
 func TestGetTLSConfig_ClientCertRotation(t *testing.T) {
 	conf := config.NewConfig()
 	var err error
-	conf.Credentials, err = config.NewCredentialManager()
-	if err != nil {
+	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
 		t.Fatalf("failed to create credential manager: %v", err)
 	}
 	t.Cleanup(conf.Close)
@@ -372,8 +369,13 @@ func TestGetTLSConfig_UsesCertPool(t *testing.T) {
 
 	// Create config and load the custom CA into CertPool
 	conf := config.NewConfig()
-	if err := conf.LoadCertPool(caFile); err != nil {
-		t.Fatalf("LoadCertPool: %v", err)
+	var err error
+	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
+		t.Fatalf("NewCredentialManager: %v", err)
+	}
+	t.Cleanup(conf.Credentials.Close)
+	if err := conf.Credentials.InitializeCertPool([]string{caFile}); err != nil {
+		t.Fatalf("InitializeCertPool: %v", err)
 	}
 
 	// Use GetTLSConfigForServer with a server name - this is the realistic use case
@@ -472,8 +474,12 @@ func TestCertPool_CARotation(t *testing.T) {
 	}
 
 	conf := config.NewConfig()
-	if err := conf.LoadCertPool(caFile); err != nil {
-		t.Fatalf("LoadCertPool: %v", err)
+	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
+		t.Fatalf("NewCredentialManager: %v", err)
+	}
+	t.Cleanup(conf.Credentials.Close)
+	if err := conf.Credentials.InitializeCertPool([]string{caFile}); err != nil {
+		t.Fatalf("InitializeCertPool: %v", err)
 	}
 
 	// Verify leaf1 (signed by CA1) succeeds
@@ -568,8 +574,12 @@ func TestCertPool_HostnameVerification(t *testing.T) {
 		t.Fatalf("write ca: %v", err)
 	}
 	conf := config.NewConfig()
-	if err := conf.LoadCertPool(caFile); err != nil {
-		t.Fatalf("LoadCertPool: %v", err)
+	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
+		t.Fatalf("NewCredentialManager: %v", err)
+	}
+	t.Cleanup(conf.Credentials.Close)
+	if err := conf.Credentials.InitializeCertPool([]string{caFile}); err != nil {
+		t.Fatalf("InitializeCertPool: %v", err)
 	}
 
 	// Get TLS config for "good.test" - this should work
