@@ -1,0 +1,374 @@
+package config
+
+import (
+	"crypto/x509"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+
+	"github.com/fsnotify/fsnotify"
+
+	"github.com/kiali/kiali/log"
+)
+
+// CredentialManager handles reading credentials from files with caching and auto-rotation support.
+// It watches credential files for changes and automatically updates the cache when files are modified,
+// enabling automatic credential rotation without pod restart when credentials are mounted as Kubernetes secrets.
+//
+// File Path Detection:
+//   - Values starting with "/" are treated as absolute file paths and read from disk
+//   - All other values are returned as literal credential values (backward compatibility)
+//
+// Auto-Rotation Behavior:
+//   - When Kubernetes updates a mounted secret, the file content changes on disk (via atomic symlink swap)
+//   - The manager uses fsnotify to watch for file changes and updates the cache automatically
+//   - No pod restart is required - new credentials are used immediately after file update
+//
+// Usage:
+//
+//	token, err := conf.Credentials.Get(conf.ExternalServices.Prometheus.Auth.Token)
+type CredentialManager struct {
+	mu          sync.RWMutex
+	cache       map[string]string
+	watchedDirs map[string]struct{}
+	watcher     *fsnotify.Watcher
+	done        chan struct{}
+	closeOnce   sync.Once
+
+	// Certificate pool management
+	certPool      *x509.CertPool
+	caBundlePaths []string
+}
+
+// NewCredentialManager creates a new credential manager with file watching enabled.
+// Returns an error if the file watcher cannot be initialized.
+func NewCredentialManager() (*CredentialManager, error) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create credential file watcher: %w", err)
+	}
+
+	cm := &CredentialManager{
+		cache:       make(map[string]string),
+		watchedDirs: make(map[string]struct{}),
+		watcher:     watcher,
+		done:        make(chan struct{}),
+	}
+
+	go cm.watchFiles()
+	return cm, nil
+}
+
+// Close stops the file watcher and cleans up resources.
+// Should be called during application shutdown.
+func (cm *CredentialManager) Close() {
+	if cm == nil {
+		return
+	}
+	cm.closeOnce.Do(func() {
+		close(cm.done)
+		if cm.watcher != nil {
+			cm.watcher.Close()
+			// Note: Don't set cm.watcher = nil here
+			// The watchFiles goroutine may still be accessing cm.watcher.Events
+			// Closing the watcher closes its channels, causing watchFiles to exit gracefully
+		}
+	})
+}
+
+// InitializeCertPool sets up the certificate pool with system CAs and additional CA bundles.
+// This should be called once during configuration initialization.
+// The CA bundle files will be automatically watched and the pool rebuilt on changes.
+func (cm *CredentialManager) InitializeCertPool(caBundlePaths []string) error {
+	if cm == nil {
+		return fmt.Errorf("credential manager not initialized")
+	}
+
+	cm.mu.Lock()
+	cm.caBundlePaths = caBundlePaths
+	cm.mu.Unlock()
+
+	return cm.rebuildCertPool()
+}
+
+// rebuildCertPool rebuilds the certificate pool from system CAs and configured CA bundles.
+func (cm *CredentialManager) rebuildCertPool() error {
+	// Load system CAs
+	systemPool, err := x509.SystemCertPool()
+	if err != nil {
+		log.Warningf("Unable to load system cert pool. Falling back to empty cert pool. Error: %s", err)
+		systemPool = x509.NewCertPool()
+	}
+
+	cm.mu.RLock()
+	paths := cm.caBundlePaths
+	cm.mu.RUnlock()
+
+	// Load additional CA bundles
+	for _, path := range paths {
+		if path == "" {
+			continue
+		}
+
+		data, err := cm.readCABundle(path)
+		if err != nil {
+			log.Debugf("Unable to read CA bundle [%s]: %v", path, err)
+			continue
+		}
+
+		if len(data) > 0 {
+			if ok := systemPool.AppendCertsFromPEM(data); !ok {
+				return fmt.Errorf("unable to append PEM bundle from file [%s]", path)
+			}
+		}
+	}
+
+	// Update pool atomically
+	cm.mu.Lock()
+	cm.certPool = systemPool
+	cm.mu.Unlock()
+
+	return nil
+}
+
+// readCABundle reads a CA bundle file, using the credential cache for absolute paths
+// and direct file reading for relative paths.
+func (cm *CredentialManager) readCABundle(path string) ([]byte, error) {
+	if strings.HasPrefix(path, "/") {
+		// Absolute path - use credential manager for caching and watching
+		value, err := cm.Get(path)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(value), nil
+	}
+
+	// Relative path - read directly from file (typically for tests)
+	return os.ReadFile(path)
+}
+
+// GetCertPool returns a clone of the current certificate pool.
+// Returns nil if the certificate pool has not been initialized.
+func (cm *CredentialManager) GetCertPool() *x509.CertPool {
+	if cm == nil {
+		return nil
+	}
+
+	cm.mu.RLock()
+	pool := cm.certPool
+	cm.mu.RUnlock()
+
+	if pool == nil {
+		return nil
+	}
+
+	return pool.Clone()
+}
+
+// Get reads a credential, either from a file (if value starts with "/") or returns the literal value.
+//
+// File paths are cached and watched for changes. When the file is modified (e.g., during Kubernetes
+// secret rotation), the cache is automatically updated.
+//
+// Examples:
+//   - Get("/kiali-secrets/prometheus-token") → reads and caches file content
+//   - Get("my-static-token") → returns "my-static-token" as-is
+//   - Get("") → returns ""
+func (cm *CredentialManager) Get(value string) (string, error) {
+	if value == "" {
+		return "", nil
+	}
+
+	// Values not starting with "/" are treated as literal credentials
+	if !strings.HasPrefix(value, "/") {
+		return value, nil
+	}
+
+	// It's an absolute file path - use the cache
+	return cm.getFromCache(value)
+}
+
+// getFromCache retrieves a credential from cache or loads it from file.
+func (cm *CredentialManager) getFromCache(path string) (string, error) {
+	// Check if already cached
+	cm.mu.RLock()
+	if value, exists := cm.cache[path]; exists {
+		cm.mu.RUnlock()
+		return value, nil
+	}
+	cm.mu.RUnlock()
+
+	// Not in cache, read file and start watching
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to read credential from [%s]: %w", path, err)
+	}
+
+	value := strings.TrimSpace(string(content))
+
+	// Ensure we can watch the parent directory. If this fails, fall back to direct reads.
+	if err := cm.watchDir(path); err != nil {
+		log.Warningf("Failed to watch credential directory for [%s]: %v (falling back to direct reads)", path, err)
+		return value, nil
+	}
+
+	// Add to cache now that watching succeeded
+	cm.mu.Lock()
+	cm.cache[path] = value
+	cm.mu.Unlock()
+
+	return value, nil
+}
+
+// watchFiles monitors file changes and updates the cache.
+func (cm *CredentialManager) watchFiles() {
+	for {
+		select {
+		case <-cm.done:
+			return
+		case event, ok := <-cm.watcher.Events:
+			if !ok {
+				return
+			}
+			cm.handleEvent(event)
+		case err, ok := <-cm.watcher.Errors:
+			if !ok {
+				return
+			}
+			log.Errorf("Credential file watcher error: %v", err)
+		}
+	}
+}
+
+// handleEvent processes a file system event and updates the cache accordingly.
+func (cm *CredentialManager) handleEvent(event fsnotify.Event) {
+	// Check if this event affects any of our CA bundle paths FIRST
+	// (before credential cache logic, since CA bundles might not be in the cache)
+	cm.mu.RLock()
+	isCAbundle := false
+	for _, path := range cm.caBundlePaths {
+		if path == event.Name || filepath.Dir(path) == event.Name ||
+			(filepath.Base(event.Name) == "..data" && filepath.Dir(event.Name) == filepath.Dir(path)) {
+			isCAbundle = true
+			break
+		}
+	}
+	cm.mu.RUnlock()
+
+	if isCAbundle {
+		log.Infof("CA bundle file change detected [%s], rebuilding certificate pool", event.Name)
+		// Invalidate cache for CA bundle paths so rebuildCertPool gets fresh data
+		cm.mu.Lock()
+		for _, path := range cm.caBundlePaths {
+			delete(cm.cache, path)
+		}
+		cm.mu.Unlock()
+
+		if err := cm.rebuildCertPool(); err != nil {
+			log.Errorf("Failed to rebuild certificate pool: %v", err)
+			// Don't return - let normal credential cache logic handle this file
+			// This ensures the cache gets restored even if cert pool rebuild fails
+		} else {
+			log.Info("Certificate pool successfully rebuilt")
+			// Success - cert pool rebuilt and Get() re-cached all paths
+			// No need to process this event again for credential cache
+			return
+		}
+	}
+
+	// Now handle credential cache updates
+	cm.mu.RLock()
+	_, tracked := cm.cache[event.Name]
+	cm.mu.RUnlock()
+
+	// Handle Kubernetes secret rotation: the ..data symlink in the watched directory
+	// changes to point to a new timestamped directory, but the per-file symlinks
+	// (e.g., tls.crt) are untouched. When ..data changes, refresh all cached files
+	// in that directory.
+	if !tracked {
+		if filepath.Base(event.Name) == "..data" {
+			cm.refreshDir(filepath.Dir(event.Name))
+		}
+		return
+	}
+
+	// Kubernetes secret rotation typically performs Remove + Create/Rename
+	if event.Op&(fsnotify.Remove|fsnotify.Rename) != 0 {
+		cm.invalidate(event.Name)
+		return
+	}
+
+	if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Chmod) != 0 {
+		cm.updateFile(event.Name)
+	}
+}
+
+// refreshDir updates all cached files that reside under the given directory.
+// Used to handle secret rotation where the ..data symlink flips to a new target.
+func (cm *CredentialManager) refreshDir(dir string) {
+	cm.mu.RLock()
+	paths := make([]string, 0)
+	for path := range cm.cache {
+		if filepath.Dir(path) == dir {
+			paths = append(paths, path)
+		}
+	}
+	cm.mu.RUnlock()
+
+	for _, path := range paths {
+		cm.updateFile(path)
+	}
+}
+
+// updateFile re-reads a file and updates the cache.
+func (cm *CredentialManager) updateFile(path string) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		log.Warningf("Failed to re-read credential file [%s]: %v (removing from cache)", path, err)
+		cm.invalidate(path)
+		return
+	}
+
+	cm.mu.Lock()
+	cm.cache[path] = strings.TrimSpace(string(content))
+	cm.mu.Unlock()
+
+	log.Debugf("Credential file [%s] updated in cache", path)
+}
+
+// invalidate removes a cached credential, forcing the next read to hit the file system.
+func (cm *CredentialManager) invalidate(path string) {
+	cm.mu.Lock()
+	delete(cm.cache, path)
+	cm.mu.Unlock()
+}
+
+// watchDir ensures the directory containing the given file is being watched.
+func (cm *CredentialManager) watchDir(path string) error {
+	if cm.watcher == nil {
+		return fmt.Errorf("watcher not initialized")
+	}
+
+	dir := filepath.Dir(path)
+
+	cm.mu.RLock()
+	_, already := cm.watchedDirs[dir]
+	cm.mu.RUnlock()
+	if already {
+		return nil
+	}
+
+	// Attempt to watch directory before recording it to avoid false positives when Add fails
+	if err := cm.watcher.Add(dir); err != nil {
+		return err
+	}
+
+	cm.mu.Lock()
+	cm.watchedDirs[dir] = struct{}{}
+	cm.mu.Unlock()
+
+	log.Tracef("Watching credential directory [%s] for changes", dir)
+	return nil
+}

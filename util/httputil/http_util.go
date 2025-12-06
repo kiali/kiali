@@ -1,13 +1,14 @@
 package httputil
 
 import (
+	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -75,7 +76,8 @@ func HttpPost(url string, auth *config.Auth, body io.Reader, timeout time.Durati
 }
 
 type authRoundTripper struct {
-	auth       string
+	auth       *config.Auth
+	conf       *config.Config
 	originalRT http.RoundTripper
 }
 
@@ -85,7 +87,30 @@ type customHeadersRoundTripper struct {
 }
 
 func (rt *authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Set("Authorization", rt.auth)
+	// Build Authorization header dynamically on each request to support credential rotation
+	if rt.auth != nil {
+		switch rt.auth.Type {
+		case config.AuthTypeBearer:
+			if token, err := rt.conf.GetCredential(rt.auth.Token); err == nil && token != "" {
+				req.Header.Set("Authorization", "Bearer "+token)
+			} else if err != nil {
+				log.Errorf("Failed to read token for bearer authentication: %v", err)
+			}
+		case config.AuthTypeBasic:
+			username, uerr := rt.conf.GetCredential(rt.auth.Username)
+			if uerr != nil {
+				log.Errorf("Failed to read username for basic authentication: %v", uerr)
+				break
+			}
+			password, perr := rt.conf.GetCredential(rt.auth.Password)
+			if perr != nil {
+				log.Errorf("Failed to read password for basic authentication: %v", perr)
+				break
+			}
+			encoded := base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
+			req.Header.Set("Authorization", "Basic "+encoded)
+		}
+	}
 	return rt.originalRT.RoundTrip(req)
 }
 
@@ -97,17 +122,9 @@ func (rt *customHeadersRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 	return rt.originalRT.RoundTrip(req)
 }
 
-func newAuthRoundTripper(auth *config.Auth, rt http.RoundTripper) http.RoundTripper {
-	switch auth.Type {
-	case config.AuthTypeBearer:
-		token := auth.Token
-		return &authRoundTripper{auth: "Bearer " + token, originalRT: rt}
-	case config.AuthTypeBasic:
-		encoded := base64.StdEncoding.EncodeToString([]byte(auth.Username + ":" + auth.Password))
-		return &authRoundTripper{auth: "Basic " + encoded, originalRT: rt}
-	default:
-		return rt
-	}
+func newAuthRoundTripper(conf *config.Config, auth *config.Auth, rt http.RoundTripper) http.RoundTripper {
+	// Always read credentials dynamically during RoundTrip
+	return &authRoundTripper{auth: auth, conf: conf, originalRT: rt}
 }
 
 func newCustomHeadersRoundTripper(headers map[string]string, rt http.RoundTripper) http.RoundTripper {
@@ -144,38 +161,99 @@ func CreateTransport(conf *config.Config, auth *config.Auth, transportConfig *ht
 	outerRoundTripper := newCustomHeadersRoundTripper(customHeaders, transportConfig)
 
 	if auth != nil {
-		tlscfg, err := GetTLSConfig(conf, auth)
-		if err != nil {
-			return nil, err
+		transportConfig.DialTLSContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+			host, _, err := net.SplitHostPort(addr)
+			if err != nil {
+				host = addr
+			}
+			cfg, err := buildTLSConfig(conf, auth, host)
+			if err != nil {
+				return nil, err
+			}
+			dialer := tls.Dialer{Config: cfg}
+			return dialer.DialContext(ctx, network, addr)
 		}
-		if tlscfg != nil {
-			transportConfig.TLSClientConfig = tlscfg
-		}
-		outerRoundTripper = newAuthRoundTripper(auth, outerRoundTripper)
+		outerRoundTripper = newAuthRoundTripper(conf, auth, outerRoundTripper)
 	}
 
 	return outerRoundTripper, nil
 }
 
 func GetTLSConfig(conf *config.Config, auth *config.Auth) (*tls.Config, error) {
-	if auth.InsecureSkipVerify || auth.CAFile != "" {
-		certPool := conf.CertPool()
-		if auth.CAFile != "" {
-			cert, err := os.ReadFile(auth.CAFile)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get root CA certificates: %s", err)
-			}
-
-			if ok := certPool.AppendCertsFromPEM(cert); !ok {
-				return nil, fmt.Errorf("supplied CA file could not be parsed")
-			}
-		}
-		return &tls.Config{
-			InsecureSkipVerify: auth.InsecureSkipVerify,
-			RootCAs:            certPool,
-		}, nil
+	if auth == nil {
+		return nil, nil
 	}
-	return nil, nil
+	if auth.CertFile == "" && auth.KeyFile == "" && !auth.InsecureSkipVerify {
+		return nil, nil
+	}
+	return buildTLSConfig(conf, auth, "")
+}
+
+// GetTLSConfigForServer returns a tls.Config that is pre-configured for the provided server name.
+// This should be preferred when the target hostname/IP is known ahead of time (e.g. for gRPC clients)
+// so that certificate verification can enforce the correct SAN.
+func GetTLSConfigForServer(conf *config.Config, auth *config.Auth, serverName string) (*tls.Config, error) {
+	if auth == nil {
+		return nil, nil
+	}
+	return buildTLSConfig(conf, auth, serverName)
+}
+
+func buildTLSConfig(conf *config.Config, auth *config.Auth, serverName string) (*tls.Config, error) {
+	cfg := &tls.Config{
+		MinVersion: tls.VersionTLS12,
+	}
+
+	if serverName != "" {
+		cfg.ServerName = serverName
+	}
+
+	roots := conf.CertPool()
+
+	// When no auth is provided we still honour the configured/system roots.
+	if auth == nil {
+		cfg.RootCAs = roots
+		return cfg, nil
+	}
+
+	cfg.InsecureSkipVerify = auth.InsecureSkipVerify
+
+	if auth.CertFile != "" && auth.KeyFile != "" {
+		certFile := auth.CertFile
+		keyFile := auth.KeyFile
+		cfg.GetClientCertificate = func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
+			certContent, err := conf.GetCredential(certFile)
+			if err != nil {
+				return nil, fmt.Errorf("failed to load client certificate cert=[%s]: %w", certFile, err)
+			}
+			keyContent, err := conf.GetCredential(keyFile)
+			if err != nil {
+				return nil, fmt.Errorf("failed to load client certificate key=[%s]: %w", keyFile, err)
+			}
+			cert, err := tls.X509KeyPair([]byte(certContent), []byte(keyContent))
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse client certificate cert=[%s], key=[%s]: %w", certFile, keyFile, err)
+			}
+			return &cert, nil
+		}
+	}
+
+	// Note: auth.CAFile is deprecated. Custom CA certificates should be configured
+	// via the kiali-cabundle ConfigMap instead. The CAFile setting is now ignored.
+
+	// When no custom verification is needed rely on the configured/system roots.
+	if roots == nil && !cfg.InsecureSkipVerify {
+		systemPool, err := x509.SystemCertPool()
+		if err != nil {
+			log.Debugf("Failed to load system cert pool: %v", err)
+			systemPool = x509.NewCertPool()
+		}
+		roots = systemPool
+	}
+
+	cfg.RootCAs = roots
+
+	return cfg, nil
 }
 
 func GuessKialiURL(conf *config.Config, r *http.Request) string {
