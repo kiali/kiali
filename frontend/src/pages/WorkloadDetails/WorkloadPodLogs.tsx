@@ -278,6 +278,7 @@ const noLogsStyle = kialiStyle({
 
 const logLineStyle = kialiStyle({
   display: 'flex',
+  alignItems: 'center',
   height: '1.5rem',
   lineHeight: '1.5rem',
   paddingLeft: '0.75rem'
@@ -285,8 +286,7 @@ const logLineStyle = kialiStyle({
 
 const logInfoStyle = kialiStyle({
   paddingLeft: 0,
-  width: '0.75rem',
-  height: '0.75rem',
+  paddingRight: '0.5rem',
   fontFamily: 'monospace',
   fontSize: '0.75rem'
 });
@@ -774,6 +774,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
               key={`s-b-${index}`}
               variant={ButtonVariant.plain}
               className={logInfoStyle}
+              hasNoPadding={true}
               onClick={() => {
                 this.gotoSpan(e.span!);
               }}
@@ -799,15 +800,17 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             content="Click for JSON object details"
           >
             <Button
+              data-test="json-log-info-button"
               icon={<KialiIcon.Info key={`jod-i-${index}`} className={alInfoIcon} color={messageColor} />}
               key={`jod-b-${index}`}
               variant={ButtonVariant.plain}
               className={logInfoStyle}
+              hasNoPadding={true}
               onClick={() => this.openJSONModal(e)}
             />
           </Tooltip>
         )}
-        <p key={`le-${index}`} className={logMessageStyle} style={{ color: messageColor }}>
+        <p key={`le-${index}`} className={logMessageStyle} style={{ color: messageColor, paddingBottom: '2px' }}>
           {this.entryToString(e)}
         </p>
       </div>
@@ -830,6 +833,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             key={`al-b-${index}`}
             variant={ButtonVariant.plain}
             className={logInfoStyle}
+            hasNoPadding={true}
             onClick={() => {
               this.addAccessLogModal(le.message, le.accessLog!);
             }}
