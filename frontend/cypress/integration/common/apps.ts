@@ -4,7 +4,7 @@
   pages since these are all similar.
 */
 
-import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Then, When, Step } from '@badeball/cypress-cucumber-preprocessor';
 import {
   checkHealthIndicatorInTable,
   checkHealthStatusInTable,
@@ -47,8 +47,8 @@ Then('user sees trace details', () => {
   cy.getBySel('trace-details-dropdown').contains('View on Graph');
 });
 
-When('user selects a trace', () => {
-  cy.getBySel('tracing-scatterplot').find('path').first().should('be.visible').click();
+When('user selects a trace', function () {
+  Step(this, 'user selects a trace with at least 0 spans');
 });
 
 When('user selects a trace with at least {int} spans', (spans: number) => {
@@ -56,7 +56,14 @@ When('user selects a trace with at least {int} spans', (spans: number) => {
 
   // First, verify that we have traces with enough spans by accessing the component
   cy.getBySel('tracing-scatterplot').within(() => {
-    cy.getReact('TracingScatterComponent', { options: { timeout: 10000 } })
+    cy.waitForReact();
+    // This changed from Point to point_Point with the pf6 update.
+    // Very confusingly it is still Point when you run against the dev server
+    // but it is point_Point when you run against the prod build.
+    // Also there are ChartPoint which match *oint so we need to filter on the symbol.
+    // Even more aggravating is the fact that *Point doesn't match Point so that's why it's *oint.
+    // TODO: Find a more reliable way to do this.
+    cy.getReact('*oint', { props: { symbol: 'circle' } })
       .should('have.length.at.least', 1)
       .then((components: any) => {
         // Filter to get the bare component (not HOC wrappers)
@@ -279,5 +286,9 @@ Then('user should see no duplicate namespaces', () => {
   cy.exec(`kubectl get namespaces bookinfo --context ${CLUSTER1_CONTEXT}`);
   cy.exec(`kubectl get namespaces bookinfo --context ${CLUSTER2_CONTEXT}`);
 
-  cy.get('[data-test="namespace-dropdown"]').siblings().contains('bookinfo').should('be.visible').and('have.length', 1);
+  cy.getBySel('namespace-dropdown-list')
+    .should('exist')
+    .contains('bookinfo')
+    .should('be.visible')
+    .and('have.length', 1);
 });

@@ -46,7 +46,7 @@ Feature: Service Details Wizard: K8s HTTP Routing
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "K8s HTTP Routing" actions
     And user sees the "Update K8s HTTP Routing" wizard
-    And user clicks on "Show" Advanced Options
+    And user clicks on Advanced Options
     And user clicks in the "K8s Gateways" tab
     And user clicks on Add Gateway
     And user selects Create Gateway
