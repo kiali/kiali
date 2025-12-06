@@ -19,7 +19,6 @@ import {
 } from '@patternfly/react-core';
 
 import { kialiStyle } from 'styles/StyleUtils';
-import { MessageCenter } from '../MessageCenter/MessageCenter';
 import { homeCluster, kialiLogoDark, kialiLogoLight, serverConfig } from '../../config';
 import { KialiAppState } from '../../store/Store';
 import { UserSettingsThunkActions } from '../../actions/UserSettingsThunkActions';
@@ -29,11 +28,13 @@ import { ExternalServiceInfo } from '../../types/StatusState';
 import { Theme } from 'types/Common';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { isKiosk } from '../Kiosk/KioskActions';
+import { NotificationCenter } from 'components/NotificationCenter/NotificationCenter';
 
 type ReduxStateProps = {
   externalServices: ExternalServiceInfo[];
   kiosk: string;
   navCollapsed: boolean;
+  showNotificationCenter: boolean;
   theme: string;
   tracingUrl?: string;
 };
@@ -131,9 +132,10 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
     <Page
       masthead={masthead}
       sidebar={Sidebar}
+      notificationDrawer={<NotificationCenter />}
+      isNotificationDrawerExpanded={props.showNotificationCenter}
       onPageResize={(_, { mobileView, windowSize }) => onPageResize({ mobileView, windowSize })}
     >
-      <MessageCenter drawerTitle={t('Message Center')} />
       <PageSection hasBodyWrapper={false} className={flexBoxColumnStyle}>
         <RenderPage isGraph={isGraph()} />
       </PageSection>
@@ -145,6 +147,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   externalServices: state.statusState.externalServices,
   kiosk: state.globalState.kiosk,
   navCollapsed: state.userSettings.interface.navCollapse,
+  showNotificationCenter: state.notificationCenter.expanded,
   theme: state.globalState.theme,
   tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined
 });

@@ -19,7 +19,7 @@ import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { location, router, URLParam } from 'app/History';
 import { MetricsObjectTypes } from 'types/Metrics';
 import { GrafanaInfo } from 'types/GrafanaInfo';
-import { MessageType } from 'types/MessageCenter';
+import { MessageType } from 'types/NotificationCenter';
 import { SpanOverlay, JaegerLineInfo } from './SpanOverlay';
 import { ChartModel, DashboardModel } from 'types/Dashboards';
 import { Overlay } from 'types/Overlay';
@@ -252,9 +252,8 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
         .catch(err => {
           AlertUtils.addMessage({
             ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
-            group: 'default',
             type: MessageType.INFO,
-            showNotification: false
+            isAlert: false
           });
         });
     }
@@ -283,9 +282,8 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
         .catch(err => {
           AlertUtils.addMessage({
             ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
-            group: 'default',
             type: MessageType.INFO,
-            showNotification: false
+            isAlert: false
           });
         });
     }

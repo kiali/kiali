@@ -57,7 +57,7 @@ import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { OverviewNamespaceAction, OverviewNamespaceActions } from './OverviewNamespaceActions';
 import { router, HistoryManager, URLParam } from '../../app/History';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { MessageType } from '../../types/MessageCenter';
+import { MessageType } from '../../types/NotificationCenter';
 import { ValidationStatus } from '../../types/IstioObjects';
 import { GrafanaInfo, ISTIO_DASHBOARDS } from '../../types/GrafanaInfo';
 import { ExternalLink } from '../../types/Dashboards';
@@ -378,7 +378,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         const results: Map<string, NamespaceAppHealth | NamespaceWorkloadHealth | NamespaceServiceHealth> = new Map();
         chunkedResults.forEach(chunkResult => {
           Object.keys(chunkResult).forEach(ns => {
-            results[ns] = chunkResult[ns];
+            results.set(ns, chunkResult[ns]);
           });
         });
 
@@ -684,9 +684,8 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         .catch(err => {
           AlertUtils.addMessage({
             ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
-            group: 'default',
             type: MessageType.INFO,
-            showNotification: false
+            isAlert: false
           });
         });
     }
@@ -718,9 +717,8 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         .catch(err => {
           AlertUtils.addMessage({
             ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
-            group: 'default',
             type: MessageType.INFO,
-            showNotification: false
+            isAlert: false
           });
         });
     }
@@ -734,12 +732,12 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         });
       })
       .catch(error => {
-        AlertUtils.addError('Error fetching controlplanes.', error, 'default', MessageType.ERROR);
+        AlertUtils.addError('Error fetching controlplanes.', error, MessageType.DANGER);
       });
   };
 
   handleApiError = (message: string, error: ApiError): void => {
-    FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
+    AlertUtils.addDanger(message, API.getErrorString(error));
   };
 
   sort = (sortField: SortField<NamespaceInfo>, isAscending: boolean): void => {
@@ -1175,7 +1173,6 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         <OverviewToolbar
           onChange={this.onChange}
           onRefresh={this.load}
-          onError={FilterHelper.handleError}
           sort={this.sort}
           displayMode={this.state.displayMode}
           setDisplayMode={this.setDisplayMode}
@@ -1211,7 +1208,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                     >
                       <Card
                         isCompact={true}
-                        variant={"secondary"}
+                        variant={'secondary'}
                         className={cardGridStyle}
                         data-test={`${ns.name}-${OverviewDisplayMode[this.state.displayMode]}`}
                       >

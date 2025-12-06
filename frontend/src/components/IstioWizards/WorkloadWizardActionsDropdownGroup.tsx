@@ -12,7 +12,7 @@ import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { Workload } from 'types/Workload';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
-import { MessageType } from 'types/MessageCenter';
+import { MessageType } from 'types/NotificationCenter';
 import { groupMenuStyle } from 'styles/DropdownStyles';
 import { t } from 'utils/I18nUtils';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
@@ -46,7 +46,7 @@ export const WorkloadWizardActionsDropdownGroup: React.FunctionComponent<Props> 
           props.workload.cluster
         )
           .then(_ => {
-            AlertUtils.add(`Workload ${props.workload.name} updated`, 'default', MessageType.SUCCESS);
+            AlertUtils.add(`Workload ${props.workload.name} updated`, MessageType.SUCCESS);
           })
           .catch(error => {
             AlertUtils.addError(`Could not update workload ${props.workload.name}`, error);

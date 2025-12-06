@@ -7,11 +7,11 @@ import { RunMode } from '../../../types/ServerConfig';
 import { IstioStatus } from '../../IstioStatus/IstioStatus';
 import { UserDropdown } from './UserDropdown';
 import { HelpDropdown } from './HelpDropdown';
-import { MessageCenterTrigger } from '../../../components/MessageCenter/MessageCenterTrigger';
 import { ThemeSwitch } from './ThemeSwitch';
 import { LanguageSwitch } from './LanguageSwitch';
 import { PfSpinner } from 'components/Pf/PfSpinner';
 import { OfflineStatus } from './OfflineStatus';
+import { NotificationCenterBadge } from 'components/NotificationCenter/NotificationCenterBadge';
 
 const centerItemStyle = kialiStyle({
   alignSelf: 'center'
@@ -43,7 +43,7 @@ export const MastheadItems: React.FC = () => {
           </ToolbarItem>
 
           <ToolbarItem>
-            <MessageCenterTrigger />
+            <NotificationCenterBadge />
           </ToolbarItem>
 
           <ToolbarItem>

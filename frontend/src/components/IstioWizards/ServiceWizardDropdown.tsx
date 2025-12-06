@@ -25,7 +25,7 @@ import {
   WIZARD_K8S_GRPC_REQUEST_ROUTING,
   WIZARD_EDIT_ANNOTATIONS
 } from './WizardActions';
-import { MessageType } from '../../types/MessageCenter';
+import { MessageType } from '../../types/NotificationCenter';
 import { WizardLabels } from './WizardLabels';
 import { ServiceWizard } from './ServiceWizard';
 import { canCreate, canUpdate, ResourcePermissions } from '../../types/Permissions';
@@ -176,7 +176,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
 
     API.updateService(props.namespace, props.serviceName, jsonInjectionPatch, 'json', props.cluster)
       .then(_ => {
-        AlertUtils.add(`Service ${props.serviceName} updated`, 'default', MessageType.SUCCESS);
+        AlertUtils.add(`Service ${props.serviceName} updated`, MessageType.SUCCESS);
       })
       .catch(error => {
         AlertUtils.addError(`Could not update service ${props.serviceName}`, error);

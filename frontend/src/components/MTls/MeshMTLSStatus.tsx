@@ -7,7 +7,7 @@ import { meshWideMTLSEnabledSelector, meshWideMTLSStatusSelector, namespaceItems
 import { connect } from 'react-redux';
 import { MTLSStatuses, TLSStatus } from '../../types/TLSStatus';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { MessageType } from '../../types/MessageCenter';
+import { MessageType } from '../../types/NotificationCenter';
 import * as API from '../../services/Api';
 import { KialiDispatch } from '../../types/Redux';
 import { bindActionCreators } from 'redux';
@@ -104,9 +104,9 @@ class MeshMTLSStatusComponent extends React.Component<Props> {
         // User without namespaces can't have access to mTLS information. Reduce severity to info.
         const informative = this.props.namespaces && this.props.namespaces.length < 1;
         if (informative) {
-          AlertUtils.addError('Mesh-wide mTLS status feature disabled.', error, 'default', MessageType.INFO);
+          AlertUtils.addError('Mesh-wide mTLS status feature disabled.', error, MessageType.INFO);
         } else {
-          AlertUtils.addError('Error fetching Mesh-wide mTLS status.', error, 'default', MessageType.ERROR);
+          AlertUtils.addError('Error fetching Mesh-wide mTLS status.', error, MessageType.DANGER);
         }
       });
   };

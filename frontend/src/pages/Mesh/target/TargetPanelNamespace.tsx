@@ -35,11 +35,10 @@ import { ApiError } from 'types/Api';
 import { DEGRADED, FAILURE, HEALTHY, Health, NOT_READY } from 'types/Health';
 import { router } from '../../../app/History';
 import * as AlertUtils from '../../../utils/AlertUtils';
-import { MessageType } from 'types/MessageCenter';
+import { MessageType } from 'types/NotificationCenter';
 import { OverviewStatus } from 'pages/Overview/OverviewStatus';
 import { switchType } from 'pages/Overview/OverviewHelper';
 import { TLSStatus } from 'types/TLSStatus';
-import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { Metric } from 'types/Metrics';
 import { classes } from 'typestyle';
 import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
@@ -469,7 +468,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         });
       })
       .catch(error => {
-        AlertUtils.addError('Error fetching namespace info.', error, 'default', MessageType.ERROR);
+        AlertUtils.addError('Error fetching namespace info.', error, MessageType.DANGER);
       });
   };
 
@@ -542,7 +541,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   };
 
   private handleApiError = (message: string, error: ApiError): void => {
-    FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
+    AlertUtils.addDanger(message, API.getErrorString(error));
   };
 
   private renderCharts(): React.ReactNode {

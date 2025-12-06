@@ -1,9 +1,9 @@
-import { MessageCenterReducer } from '../MessageCenter';
-import { MessageType } from '../../types/MessageCenter';
+import { NotificationCenterReducer } from '../NotificationCenter';
+import { MessageType } from '../../types/NotificationCenter';
 import { GlobalActions } from '../../actions/GlobalActions';
-import { MessageCenterActions } from '../../actions/MessageCenterActions';
+import { NotificationCenterActions } from '../../actions/NotificationCenterActions';
 
-describe('MessageCenterReducer reducer', () => {
+describe('NotificationCenterReducer reducer', () => {
   const RealDate = Date;
 
   const mockDate = date => {
@@ -16,26 +16,28 @@ describe('MessageCenterReducer reducer', () => {
   });
 
   it('should return the initial state', () => {
-    expect(MessageCenterReducer(undefined, GlobalActions.unknown())).toEqual({
+    expect(NotificationCenterReducer(undefined, GlobalActions.unknown())).toEqual({
       expanded: false,
-      expandedGroupId: 'default',
       groups: [
         {
-          id: 'systemErrors',
-          title: 'Open issues',
+          id: 'danger',
+          title: 'Danger',
           messages: [],
-          showActions: false,
-          hideIfEmpty: true
+          variant: 'danger'
         },
         {
-          id: 'default',
+          id: 'warning',
+          title: 'Warning',
           messages: [],
-          title: 'Notifications',
-          showActions: true,
-          hideIfEmpty: false
+          variant: 'warning'
+        },
+        {
+          id: 'info',
+          title: 'Info',
+          messages: [],
+          variant: 'info'
         }
       ],
-      hidden: true,
       nextId: 0
     });
   });
@@ -43,35 +45,31 @@ describe('MessageCenterReducer reducer', () => {
   it('should handle ADD_MESSAGE', () => {
     const date = mockDate(new Date());
     expect(
-      MessageCenterReducer(
+      NotificationCenterReducer(
         {
           expanded: false,
-          expandedGroupId: 'default',
           groups: [
             {
-              id: 'default',
+              id: 'danger',
               messages: [],
-              title: 'Default',
-              showActions: true,
-              hideIfEmpty: false
+              title: 'danger',
+              variant: 'danger'
             }
           ],
-          hidden: true,
           nextId: 0
         },
-        MessageCenterActions.addMessage('my new message', 'my detail', 'default', MessageType.WARNING)
+        NotificationCenterActions.addMessage('my new message', 'my detail', 'danger', MessageType.WARNING)
       )
     ).toEqual({
       expanded: false,
-      expandedGroupId: 'default',
       groups: [
         {
-          id: 'default',
+          id: 'danger',
           messages: [
             {
               id: 0,
               seen: false,
-              show_notification: true,
+              isAlert: true,
               content: 'my new message',
               detail: 'my detail',
               showDetail: false,
@@ -81,12 +79,10 @@ describe('MessageCenterReducer reducer', () => {
               created: date
             }
           ],
-          title: 'Default',
-          showActions: true,
-          hideIfEmpty: false
+          title: 'danger',
+          variant: 'danger'
         }
       ],
-      hidden: true,
       nextId: 1
     });
   });
@@ -94,18 +90,17 @@ describe('MessageCenterReducer reducer', () => {
   it('should handle Duplicate Messages', () => {
     const date = mockDate(new Date());
     expect(
-      MessageCenterReducer(
+      NotificationCenterReducer(
         {
           expanded: false,
-          expandedGroupId: 'default',
           groups: [
             {
-              id: 'default',
+              id: 'danger',
               messages: [
                 {
                   id: 0,
                   seen: false,
-                  show_notification: true,
+                  isAlert: true,
                   content: 'my new message',
                   detail: 'my detail',
                   showDetail: false,
@@ -115,27 +110,24 @@ describe('MessageCenterReducer reducer', () => {
                   created: date
                 }
               ],
-              title: 'Default',
-              showActions: true,
-              hideIfEmpty: false
+              title: 'danger',
+              variant: 'danger'
             }
           ],
-          hidden: true,
           nextId: 0
         },
-        MessageCenterActions.addMessage('my new message', 'my detail', 'default', MessageType.WARNING)
+        NotificationCenterActions.addMessage('my new message', 'my detail', 'danger', MessageType.WARNING)
       )
     ).toEqual({
       expanded: false,
-      expandedGroupId: 'default',
       groups: [
         {
-          id: 'default',
+          id: 'danger',
           messages: [
             {
               id: 0,
               seen: false,
-              show_notification: true,
+              isAlert: true,
               content: 'my new message',
               detail: 'my detail',
               showDetail: false,
@@ -145,12 +137,10 @@ describe('MessageCenterReducer reducer', () => {
               created: date
             }
           ],
-          title: 'Default',
-          showActions: true,
-          hideIfEmpty: false
+          title: 'danger',
+          variant: 'danger'
         }
       ],
-      hidden: true,
       nextId: 1
     });
   });
@@ -158,20 +148,17 @@ describe('MessageCenterReducer reducer', () => {
   it('should handle REMOVE_MESSAGE', () => {
     const date = mockDate(new Date());
     expect(
-      MessageCenterReducer(
+      NotificationCenterReducer(
         {
           expanded: false,
-          expandedGroupId: 'default',
           groups: [
             {
-              id: 'default',
-              showActions: true,
-              hideIfEmpty: false,
+              id: 'danger',
               messages: [
                 {
                   id: 0,
                   seen: false,
-                  show_notification: true,
+                  isAlert: true,
                   content: 'my new message',
                   detail: 'my detail',
                   showDetail: false,
@@ -182,18 +169,18 @@ describe('MessageCenterReducer reducer', () => {
                 {
                   id: 1,
                   seen: true,
-                  show_notification: false,
+                  isAlert: false,
                   content: 'other message',
                   detail: 'my detail',
                   showDetail: false,
-                  type: MessageType.ERROR,
+                  type: MessageType.DANGER,
                   count: 1,
                   created: date
                 },
                 {
                   id: 2,
                   seen: true,
-                  show_notification: false,
+                  isAlert: false,
                   content: 'other',
                   detail: 'my detail',
                   showDetail: false,
@@ -202,39 +189,36 @@ describe('MessageCenterReducer reducer', () => {
                   created: date
                 }
               ],
-              title: 'Default'
+              title: 'danger',
+              variant: 'danger'
             }
           ],
-          hidden: true,
           nextId: 1
         },
-        MessageCenterActions.removeMessage([0, 2])
+        NotificationCenterActions.removeMessage([0, 2])
       )
     ).toEqual({
       expanded: false,
-      expandedGroupId: 'default',
       groups: [
         {
-          id: 'default',
+          id: 'danger',
           messages: [
             {
               id: 1,
               seen: true,
-              show_notification: false,
+              isAlert: false,
               content: 'other message',
               detail: 'my detail',
               showDetail: false,
-              type: MessageType.ERROR,
+              type: MessageType.DANGER,
               count: 1,
               created: date
             }
           ],
-          title: 'Default',
-          showActions: true,
-          hideIfEmpty: false
+          title: 'danger',
+          variant: 'danger'
         }
       ],
-      hidden: true,
       nextId: 1
     });
   });
@@ -242,20 +226,17 @@ describe('MessageCenterReducer reducer', () => {
   it('should handle MARK_MESSAGE_AS_READ', () => {
     const date = mockDate(new Date());
     expect(
-      MessageCenterReducer(
+      NotificationCenterReducer(
         {
           expanded: false,
-          expandedGroupId: 'default',
           groups: [
             {
-              id: 'default',
-              showActions: true,
-              hideIfEmpty: false,
+              id: 'danger',
               messages: [
                 {
                   id: 0,
                   seen: false,
-                  show_notification: true,
+                  isAlert: true,
                   content: 'my new message',
                   detail: 'my detail',
                   showDetail: false,
@@ -266,18 +247,18 @@ describe('MessageCenterReducer reducer', () => {
                 {
                   id: 1,
                   seen: true,
-                  show_notification: false,
+                  isAlert: false,
                   content: 'other message',
                   detail: 'my detail',
                   showDetail: false,
-                  type: MessageType.ERROR,
+                  type: MessageType.DANGER,
                   count: 1,
                   created: date
                 },
                 {
                   id: 2,
                   seen: false,
-                  show_notification: false,
+                  isAlert: false,
                   content: 'other',
                   detail: 'my detail',
                   showDetail: false,
@@ -286,25 +267,24 @@ describe('MessageCenterReducer reducer', () => {
                   created: date
                 }
               ],
-              title: 'Default'
+              title: 'danger',
+              variant: 'danger'
             }
           ],
-          hidden: true,
           nextId: 1
         },
-        MessageCenterActions.markAsRead([0, 1])
+        NotificationCenterActions.markAsRead([0, 1])
       )
     ).toEqual({
       expanded: false,
-      expandedGroupId: 'default',
       groups: [
         {
-          id: 'default',
+          id: 'danger',
           messages: [
             {
               id: 0,
               seen: true,
-              show_notification: false,
+              isAlert: false,
               content: 'my new message',
               detail: 'my detail',
               showDetail: false,
@@ -315,18 +295,18 @@ describe('MessageCenterReducer reducer', () => {
             {
               id: 1,
               seen: true,
-              show_notification: false,
+              isAlert: false,
               content: 'other message',
               detail: 'my detail',
               showDetail: false,
-              type: MessageType.ERROR,
+              type: MessageType.DANGER,
               count: 1,
               created: date
             },
             {
               id: 2,
               seen: false,
-              show_notification: false,
+              isAlert: false,
               content: 'other',
               detail: 'my detail',
               showDetail: false,
@@ -335,12 +315,10 @@ describe('MessageCenterReducer reducer', () => {
               created: date
             }
           ],
-          title: 'Default',
-          showActions: true,
-          hideIfEmpty: false
+          title: 'danger',
+          variant: 'danger'
         }
       ],
-      hidden: true,
       nextId: 1
     });
   });
@@ -348,20 +326,17 @@ describe('MessageCenterReducer reducer', () => {
   it('should handle HIDE_NOTIFICATION', () => {
     const date = mockDate(new Date());
     expect(
-      MessageCenterReducer(
+      NotificationCenterReducer(
         {
           expanded: false,
-          expandedGroupId: 'default',
           groups: [
             {
-              id: 'default',
-              showActions: true,
-              hideIfEmpty: false,
+              id: 'danger',
               messages: [
                 {
                   id: 0,
                   seen: false,
-                  show_notification: true,
+                  isAlert: true,
                   content: 'my new message',
                   detail: 'my detail',
                   showDetail: false,
@@ -372,34 +347,33 @@ describe('MessageCenterReducer reducer', () => {
                 {
                   id: 1,
                   seen: false,
-                  show_notification: true,
+                  isAlert: true,
                   content: 'other message',
                   detail: 'my detail',
                   showDetail: false,
-                  type: MessageType.ERROR,
+                  type: MessageType.DANGER,
                   count: 1,
                   created: date
                 }
               ],
-              title: 'Default'
+              title: 'danger',
+              variant: 'danger'
             }
           ],
-          hidden: true,
           nextId: 1
         },
-        MessageCenterActions.hideNotification(0)
+        NotificationCenterActions.hideNotification(0)
       )
     ).toEqual({
       expanded: false,
-      expandedGroupId: 'default',
       groups: [
         {
-          id: 'default',
+          id: 'danger',
           messages: [
             {
               id: 0,
               seen: false,
-              show_notification: false,
+              isAlert: false,
               content: 'my new message',
               detail: 'my detail',
               showDetail: false,
@@ -410,205 +384,50 @@ describe('MessageCenterReducer reducer', () => {
             {
               id: 1,
               seen: false,
-              show_notification: true,
+              isAlert: true,
               content: 'other message',
               detail: 'my detail',
               showDetail: false,
-              type: MessageType.ERROR,
+              type: MessageType.DANGER,
               count: 1,
               created: date
             }
           ],
-          title: 'Default',
-          showActions: true,
-          hideIfEmpty: false
+          title: 'danger',
+          variant: 'danger'
         }
       ],
-      hidden: true,
       nextId: 1
-    });
-  });
-
-  it('should handle SHOW', () => {
-    expect(
-      MessageCenterReducer(
-        {
-          expanded: false,
-          expandedGroupId: 'default',
-          groups: [
-            {
-              id: 'default',
-              messages: [],
-              title: 'Default',
-              showActions: true,
-              hideIfEmpty: false
-            }
-          ],
-          hidden: true,
-          nextId: 0
-        },
-        MessageCenterActions.showMessageCenter()
-      )
-    ).toEqual({
-      expanded: false,
-      expandedGroupId: 'default',
-      groups: [
-        {
-          id: 'default',
-          messages: [],
-          title: 'Default',
-          showActions: true,
-          hideIfEmpty: false
-        }
-      ],
-      hidden: false,
-      nextId: 0
-    });
-  });
-  it('should handle HIDE', () => {
-    expect(
-      MessageCenterReducer(
-        {
-          expanded: false,
-          expandedGroupId: 'default',
-          groups: [
-            {
-              id: 'default',
-              messages: [],
-              title: 'Default',
-              showActions: true,
-              hideIfEmpty: false
-            }
-          ],
-          hidden: false,
-          nextId: 0
-        },
-        MessageCenterActions.hideMessageCenter()
-      )
-    ).toEqual({
-      expanded: false,
-      expandedGroupId: 'default',
-      groups: [
-        {
-          id: 'default',
-          messages: [],
-          title: 'Default',
-          showActions: true,
-          hideIfEmpty: false
-        }
-      ],
-      hidden: true,
-      nextId: 0
     });
   });
 
   it('should handle TOGGLE_EXPAND', () => {
     expect(
-      MessageCenterReducer(
+      NotificationCenterReducer(
         {
           expanded: false,
-          expandedGroupId: 'default',
           groups: [
             {
-              id: 'default',
+              id: 'danger',
               messages: [],
-              title: 'Default',
-              showActions: true,
-              hideIfEmpty: false
+              title: 'danger',
+              variant: 'danger'
             }
           ],
-          hidden: false,
           nextId: 0
         },
-        MessageCenterActions.toggleExpandedMessageCenter()
+        NotificationCenterActions.toggleNotificationCenter()
       )
     ).toEqual({
       expanded: true,
-      expandedGroupId: 'default',
       groups: [
         {
-          id: 'default',
+          id: 'danger',
           messages: [],
-          title: 'Default',
-          showActions: true,
-          hideIfEmpty: false
+          title: 'danger',
+          variant: 'danger'
         }
       ],
-      hidden: false,
-      nextId: 0
-    });
-  });
-
-  it('should handle TOGGLE_GROUP to hide a group', () => {
-    expect(
-      MessageCenterReducer(
-        {
-          expanded: false,
-          expandedGroupId: 'default',
-          groups: [
-            {
-              id: 'default',
-              messages: [],
-              title: 'Default',
-              showActions: true,
-              hideIfEmpty: false
-            }
-          ],
-          hidden: false,
-          nextId: 0
-        },
-        MessageCenterActions.toggleGroup('default')
-      )
-    ).toEqual({
-      expanded: false,
-      expandedGroupId: undefined,
-      groups: [
-        {
-          id: 'default',
-          messages: [],
-          title: 'Default',
-          showActions: true,
-          hideIfEmpty: false
-        }
-      ],
-      hidden: false,
-      nextId: 0
-    });
-  });
-
-  it('should handle TOGGLE_GROUP to show a group', () => {
-    expect(
-      MessageCenterReducer(
-        {
-          expanded: false,
-          expandedGroupId: undefined,
-          groups: [
-            {
-              id: 'default',
-              messages: [],
-              title: 'Default',
-              showActions: true,
-              hideIfEmpty: false
-            }
-          ],
-          hidden: false,
-          nextId: 0
-        },
-        MessageCenterActions.toggleGroup('default')
-      )
-    ).toEqual({
-      expanded: false,
-      expandedGroupId: 'default',
-      groups: [
-        {
-          id: 'default',
-          messages: [],
-          title: 'Default',
-          showActions: true,
-          hideIfEmpty: false
-        }
-      ],
-      hidden: false,
       nextId: 0
     });
   });

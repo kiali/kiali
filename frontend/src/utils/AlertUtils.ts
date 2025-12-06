@@ -1,39 +1,56 @@
 import { store } from '../store/ConfigStore';
-import { MessageType } from '../types/MessageCenter';
-import { MessageCenterActions } from '../actions/MessageCenterActions';
+import { MessageType } from '../types/NotificationCenter';
+import { NotificationCenterActions } from '../actions/NotificationCenterActions';
 import * as API from '../services/Api';
 import { ApiError, isApiError } from 'types/Api';
 
 export type Message = {
   content: string;
   detail?: string;
-  group?: string;
-  showNotification?: boolean;
-  type?: MessageType;
+  isAlert?: boolean;
+  type: MessageType;
 };
 
-export const add = (content: string, group?: string, type?: MessageType): void => {
-  store.dispatch(MessageCenterActions.addMessage(content, '', group, type));
+const getMessageTypeGroup = (type?: MessageType): string => {
+  switch (type) {
+    case MessageType.DANGER:
+      return 'danger';
+    case MessageType.WARNING:
+      return 'warn';
+    default:
+      return 'info';
+  }
+};
+
+export const add = (content: string, type: MessageType): void => {
+  store.dispatch(NotificationCenterActions.addMessage(content, '', getMessageTypeGroup(type), type));
 };
 
 export const addMessage = (msg: Message): void => {
   store.dispatch(
-    MessageCenterActions.addMessage(msg.content, msg.detail ?? '', msg.group, msg.type, msg.showNotification)
+    NotificationCenterActions.addMessage(
+      msg.content,
+      msg.detail ?? '',
+      getMessageTypeGroup(msg.type),
+      msg.type,
+      msg.isAlert
+    )
   );
 };
 
-export const addError = (message: string, error?: Error, group?: string, type?: MessageType, detail?: string): void => {
+export const addError = (message: string, error: Error, type?: MessageType): void => {
+  const finalType = type ?? MessageType.DANGER;
   if (isApiError(error)) {
-    const finalType: MessageType = type ?? MessageType.ERROR;
     const err = extractApiError(message, error);
 
     addMessage({
       ...err,
-      group: group,
       type: finalType
     });
   } else {
-    store.dispatch(MessageCenterActions.addMessage(message, detail ?? '', group, MessageType.ERROR));
+    store.dispatch(
+      NotificationCenterActions.addMessage(message, error.message, getMessageTypeGroup(finalType), finalType)
+    );
   }
 };
 
@@ -55,15 +72,50 @@ export const extractApiError = (message: string, error: ApiError): { content: st
   return { content: errorString, detail: errorDetail };
 };
 
+export const addDanger = (content: string, detail?: string): void => {
+  store.dispatch(
+    NotificationCenterActions.addMessage(
+      content,
+      detail ?? '',
+      getMessageTypeGroup(MessageType.DANGER),
+      MessageType.DANGER
+    )
+  );
+};
+
 // info level message do not generate a toast notification
-export const addInfo = (content: string, showNotification?: boolean, group?: string, detail?: string): void => {
-  store.dispatch(MessageCenterActions.addMessage(content, detail ?? '', group, MessageType.INFO, showNotification));
+export const addInfo = (content: string, isAlert?: boolean, detail?: string): void => {
+  store.dispatch(
+    NotificationCenterActions.addMessage(
+      content,
+      detail ?? '',
+      getMessageTypeGroup(MessageType.INFO),
+      MessageType.INFO,
+      isAlert
+    )
+  );
 };
 
-export const addSuccess = (content: string, showNotification?: boolean, group?: string, detail?: string): void => {
-  store.dispatch(MessageCenterActions.addMessage(content, detail ?? '', group, MessageType.SUCCESS, showNotification));
+export const addSuccess = (content: string, isAlert?: boolean, detail?: string): void => {
+  store.dispatch(
+    NotificationCenterActions.addMessage(
+      content,
+      detail ?? '',
+      getMessageTypeGroup(MessageType.SUCCESS),
+      MessageType.SUCCESS,
+      isAlert
+    )
+  );
 };
 
-export const addWarning = (content: string, showNotification?: boolean, group?: string, detail?: string): void => {
-  store.dispatch(MessageCenterActions.addMessage(content, detail ?? '', group, MessageType.WARNING, showNotification));
+export const addWarning = (content: string, isAlert?: boolean, detail?: string): void => {
+  store.dispatch(
+    NotificationCenterActions.addMessage(
+      content,
+      detail ?? '',
+      getMessageTypeGroup(MessageType.WARNING),
+      MessageType.WARNING,
+      isAlert
+    )
+  );
 };
