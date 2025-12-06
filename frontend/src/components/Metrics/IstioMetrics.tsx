@@ -82,8 +82,8 @@ type Props = ReduxStateProps & ReduxDispatchProps & IstioMetricsProps;
 // lower that the standard default, we apply it to several small charts
 const traceLimitDefault = 20;
 
-const fullHeightStyle = kialiStyle({
-  height: '100%'
+const cardStyle = kialiStyle({
+  marginTop: '1rem'
 });
 
 class IstioMetricsComponent extends React.Component<Props, MetricsState> {
@@ -357,7 +357,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
     return (
       <>
         <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-          <Card className={fullHeightStyle}>
+          <Card className={cardStyle}>
             <CardBody>
               {this.renderOptionsBar()}
 

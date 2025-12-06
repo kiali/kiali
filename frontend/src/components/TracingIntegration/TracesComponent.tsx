@@ -45,6 +45,7 @@ import { GetTracingUrlProvider } from 'utils/tracing/UrlProviders';
 import { ExternalServiceInfo } from 'types/StatusState';
 import { retrieveTimeRange } from '../Time/TimeRangeHelper';
 import { isParentKiosk, kioskTracingAction } from '../Kiosk/KioskActions';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -83,6 +84,14 @@ interface TracesState {
 
 const traceDetailsTab = 0;
 const spansDetailsTab = 1;
+
+const cardStyle = kialiStyle({
+  marginTop: '1rem'
+});
+
+const containerStyle = kialiStyle({
+  paddingRight: '0.5rem'
+});
 
 class TracesComp extends React.Component<TracesProps, TracesState> {
   private fetcher: TracesFetcher;
@@ -281,8 +290,8 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     const tracingURL = this.getTracingUrl();
     return (
       <>
-        <RenderComponentScroll>
-          <Card>
+        <RenderComponentScroll className={containerStyle}>
+          <Card className={cardStyle}>
             <CardBody>
               <Toolbar style={{ padding: 0 }}>
                 {this.state.infoMessage && this.state.visibleAlert && (

@@ -524,7 +524,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
           <Switch
             id="advanced-paSwitch"
             label={' '}
-            labelOff={' '}
+            
             isChecked={this.state.peerAuthnSelector.addPeerAuthentication}
             onChange={() => this.onFormChange(TrafficPolicyForm.PA_SWITCH, '')}
           />
@@ -568,7 +568,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
           <Switch
             id="advanced-lbSwitch"
             label={' '}
-            labelOff={' '}
+            
             isChecked={this.state.addLoadBalancer}
             onChange={() => this.onFormChange(TrafficPolicyForm.LB_SWITCH, '')}
           />

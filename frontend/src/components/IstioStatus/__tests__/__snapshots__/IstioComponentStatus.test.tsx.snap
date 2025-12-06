@@ -15,7 +15,7 @@ exports[`IstioComponentStatus renders error icon when core component is not foun
       }
     >
       <Icon
-        className="kiali_fi2mdky kiali_f1h37jb8"
+        className="kiali_fi2mdky kiali_f7f7cpt"
       >
         <ExclamationCircleIcon />
       </Icon>
@@ -47,7 +47,7 @@ exports[`IstioComponentStatus renders error icon when core component is not runn
       }
     >
       <Icon
-        className="kiali_fi2mdky kiali_f1h37jb8"
+        className="kiali_fi2mdky kiali_f7f7cpt"
       >
         <ExclamationCircleIcon />
       </Icon>
@@ -79,7 +79,7 @@ exports[`IstioComponentStatus renders minus icon when addon component is not rea
       }
     >
       <Icon
-        className="kiali_fi2mdky kiali_f1elceoh"
+        className="kiali_fi2mdky kiali_f15a1iio"
       >
         <MinusCircleIcon />
       </Icon>
@@ -111,7 +111,7 @@ exports[`IstioComponentStatus renders minus icon when core component is not read
       }
     >
       <Icon
-        className="kiali_fi2mdky kiali_f1elceoh"
+        className="kiali_fi2mdky kiali_f15a1iio"
       >
         <MinusCircleIcon />
       </Icon>
@@ -143,7 +143,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
       }
     >
       <Icon
-        className="kiali_fi2mdky kiali_f1r5cf3w"
+        className="kiali_fi2mdky kiali_fza77py"
       >
         <CheckCircleIcon />
       </Icon>
@@ -175,7 +175,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
       }
     >
       <Icon
-        className="kiali_fi2mdky kiali_f1r5cf3w"
+        className="kiali_fi2mdky kiali_fza77py"
       >
         <CheckCircleIcon />
       </Icon>
@@ -207,7 +207,7 @@ exports[`IstioComponentStatus renders warning icon when core component is not fo
       }
     >
       <Icon
-        className="kiali_fi2mdky kiali_frkkrth"
+        className="kiali_fi2mdky kiali_feaah3f"
       >
         <ExclamationTriangleIcon />
       </Icon>
@@ -239,7 +239,7 @@ exports[`IstioComponentStatus renders warning icon when core component is not ru
       }
     >
       <Icon
-        className="kiali_fi2mdky kiali_frkkrth"
+        className="kiali_fi2mdky kiali_feaah3f"
       >
         <ExclamationTriangleIcon />
       </Icon>

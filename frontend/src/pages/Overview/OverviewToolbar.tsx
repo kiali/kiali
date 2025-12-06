@@ -18,7 +18,6 @@ import * as Filters from './Filters';
 import { kialiStyle } from 'styles/StyleUtils';
 import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
 import { KialiDispatch } from '../../types/Redux';
-import { PFColors } from 'components/Pf/PfColors';
 import { t, tMap } from 'utils/I18nUtils';
 
 // TODO: Are any of these redux state or dispatch props used?
@@ -35,8 +34,8 @@ type ReduxDispatchProps = {
 type Props = ReduxStateProps &
   ReduxDispatchProps & {
     displayMode: OverviewDisplayMode;
-    onError: (msg: string) => void;
     onChange: () => void;
+    onError: (msg: string) => void;
     onRefresh: () => void;
     setDisplayMode: (mode: OverviewDisplayMode) => void;
     sort: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
@@ -64,25 +63,14 @@ const sortTypes = (() => {
   return Object.fromEntries(Sorts.sortFields.map(sortType => [sortType.id, t(sortType.title)]));
 })();
 
-const containerStyle = kialiStyle({
-  padding: '0 1.25rem 0 1.25rem',
-  backgroundColor: PFColors.BackgroundColor100,
-  borderBottom: `1px solid ${PFColors.BorderColor100}`
-});
-
 const containerFlex = kialiStyle({
   display: 'flex',
   flexWrap: 'wrap'
 });
 
-const filterToolbarStyle = kialiStyle({
-  paddingTop: '0.625rem'
-});
-
 const rightToolbarStyle = kialiStyle({
   marginLeft: 'auto',
-  height: '118px',
-  padding: '0.625rem 0 0 0'
+  height: '110px'
 });
 
 const timeToolbarStyle = kialiStyle({
@@ -98,6 +86,10 @@ const actionsToolbarStyle = kialiStyle({
 
 const typeSelectStyle = kialiStyle({
   marginRight: '0.5rem'
+});
+
+const viewButtonStyle = kialiStyle({
+  marginLeft: '0.25rem'
 });
 
 export type OverviewType = keyof typeof overviewTypes;
@@ -213,13 +205,12 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
             />
 
             <Button
+              icon={this.state.isSortAscending ? <SortAlphaDownIcon /> : <SortAlphaUpIcon />}
               variant={ButtonVariant.plain}
               onClick={this.updateSortDirection}
               style={{ paddingLeft: '0.5rem', paddingRight: '0.5rem' }}
               data-sort-asc={this.state.isSortAscending}
-            >
-              {this.state.isSortAscending ? <SortAlphaDownIcon /> : <SortAlphaUpIcon />}
-            </Button>
+            />
           </>
         )}
       </StatefulFilters>
@@ -258,50 +249,45 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
 
         <Tooltip content={<>{t('Expand view')}</>} position={TooltipPosition.top}>
           <Button
+            icon={<ThLargeIcon />}
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.EXPAND)}
             variant={ButtonVariant.plain}
-            isActive={this.props.displayMode === OverviewDisplayMode.EXPAND}
-            style={{ padding: '0 0.25rem 0 1rem' }}
+            isClicked={this.props.displayMode === OverviewDisplayMode.EXPAND}
+            className={viewButtonStyle}
             data-test={`overview-type-${OverviewDisplayMode[OverviewDisplayMode.EXPAND]}`}
-          >
-            <ThLargeIcon />
-          </Button>
+          />
         </Tooltip>
 
         <Tooltip content={<>{t('Compact view')}</>} position={TooltipPosition.top}>
           <Button
+            icon={<ThIcon />}
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.COMPACT)}
             variant={ButtonVariant.plain}
-            isActive={this.props.displayMode === OverviewDisplayMode.COMPACT}
-            style={{ padding: '0 0.25rem 0 0.25rem' }}
+            isClicked={this.props.displayMode === OverviewDisplayMode.COMPACT}
+            className={viewButtonStyle}
             data-test={`overview-type-${OverviewDisplayMode[OverviewDisplayMode.COMPACT]}`}
-          >
-            <ThIcon />
-          </Button>
+          />
         </Tooltip>
 
         <Tooltip content={<>{t('List view')}</>} position={TooltipPosition.top}>
           <Button
+            icon={<ListIcon />}
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.LIST)}
             variant={ButtonVariant.plain}
-            isActive={this.props.displayMode === OverviewDisplayMode.LIST}
-            style={{ padding: '0 0.25rem 0 0.25rem' }}
+            isClicked={this.props.displayMode === OverviewDisplayMode.LIST}
+            className={viewButtonStyle}
             data-test={`overview-type-${OverviewDisplayMode[OverviewDisplayMode.LIST]}`}
-          >
-            <ListIcon />
-          </Button>
+          />
         </Tooltip>
       </div>
     );
 
     return (
-      <div className={containerStyle}>
-        <div className={containerFlex}>
-          <div className={filterToolbarStyle}>{filterToolbar}</div>
-          <div className={rightToolbarStyle}>
-            {timeToolbar}
-            {actionsToolbar}
-          </div>
+      <div className={containerFlex}>
+        {filterToolbar}
+        <div className={rightToolbarStyle}>
+          {timeToolbar}
+          {actionsToolbar}
         </div>
       </div>
     );

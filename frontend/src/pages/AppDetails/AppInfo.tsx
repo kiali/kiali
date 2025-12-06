@@ -20,8 +20,8 @@ type AppInfoState = {
   tabHeight?: number;
 };
 
-const fullHeightStyle = kialiStyle({
-  height: '100%'
+const gridStyle = kialiStyle({
+  marginTop: '1rem'
 });
 
 export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
@@ -62,7 +62,7 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
     const miniGraphSpan = 8;
     return (
       <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-        <Grid hasGutter={true} className={fullHeightStyle}>
+        <Grid hasGutter={true} className={gridStyle}>
           <GridItem span={4}>
             <AppDescription app={this.props.app} health={this.props.health} isSupported={this.props.isSupported} />
           </GridItem>

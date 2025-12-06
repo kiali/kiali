@@ -1,7 +1,5 @@
 import * as React from 'react';
-import { kialiStyle } from 'styles/StyleUtils';
-import { Dropdown, DropdownItem, DropdownList, MenuToggle, MenuToggleElement, Tooltip } from '@patternfly/react-core';
-import { KialiIcon } from 'config/KialiIcon';
+import { MenuToggle, MenuToggleElement, Select, SelectList, SelectOption } from '@patternfly/react-core';
 import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
 import { Language } from 'types/Common';
@@ -10,77 +8,69 @@ import { connect } from 'react-redux';
 import { i18n } from 'i18n';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
-const iconStyle = kialiStyle({
-  verticalAlign: '-0.25rem',
-  $nest: {
-    '& svg': {
-      width: '1.5rem',
-      height: '1.5rem'
-    }
-  }
-});
-
-const checkStyle = kialiStyle({
-  marginLeft: '0.5rem'
-});
-
 type LanguageSwitchProps = {
   language: string;
 };
 
+const getLanguageLabel = (language: Language): string => {
+  switch (language) {
+    case Language.ENGLISH:
+      return 'English';
+    case Language.SPANISH:
+      return 'Español';
+    case Language.CHINESE:
+      return '中文';
+  }
+};
+
 export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = ({ language }) => {
-  const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
+  const [isOpen, setIsOpen] = React.useState<boolean>(false);
 
   const { t } = useKialiTranslation();
 
-  const languageItems: React.ReactNode[] = [
-    <DropdownItem key="english" onClick={() => switchLanguage(Language.ENGLISH)}>
-      <span>English</span>
-      {language === Language.ENGLISH && <KialiIcon.Check className={checkStyle} />}
-    </DropdownItem>,
-
-    <DropdownItem key="spanish" onClick={() => switchLanguage(Language.SPANISH)}>
-      <span>Español</span>
-      {language === Language.SPANISH && <KialiIcon.Check className={checkStyle} />}
-    </DropdownItem>,
-
-    <DropdownItem key="chinese" onClick={() => switchLanguage(Language.CHINESE)}>
-      <span>中文</span>
-      {language === Language.CHINESE && <KialiIcon.Check className={checkStyle} />}
-    </DropdownItem>
-  ];
-
-  const switchLanguage = (language: string): void => {
-    i18n.changeLanguage(language).then(() => store.dispatch(GlobalActions.setLanguage(language)));
+  const onToggleClick = (): void => {
+    setIsOpen(!isOpen);
   };
 
-  const onDropdownSelect = (): void => {
-    setIsDropdownOpen(!isDropdownOpen);
+  const onSelect = (lang: Language): void => {
+    if (lang) {
+      i18n.changeLanguage(lang).then(() => store.dispatch(GlobalActions.setLanguage(lang)));
+    }
+
+    setIsOpen(false);
   };
 
   return (
-    <Tooltip position="bottom" content={<>{t('Switch language')}</>} trigger="mouseenter click" exitDelay={0}>
-      <Dropdown
-        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-          <MenuToggle
-            ref={toggleRef}
-            data-test="switch-language-button"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            aria-label={t('Switch language')}
-            variant="plain"
-            isExpanded={isDropdownOpen}
-          >
-            <KialiIcon.Language className={iconStyle} />
-          </MenuToggle>
-        )}
-        isOpen={isDropdownOpen}
-        popperProps={{ position: 'center' }}
-        onOpenChange={(isOpen: boolean) => setIsDropdownOpen(isOpen)}
-        onSelect={onDropdownSelect}
-      >
-        <DropdownList>{languageItems}</DropdownList>
-      </Dropdown>
-    </Tooltip>
+    <Select
+      id="language-select"
+      isOpen={isOpen}
+      selected={language}
+      onSelect={(_event, value) => onSelect(value as Language)}
+      onOpenChange={setIsOpen}
+      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+        <MenuToggle
+          ref={toggleRef}
+          data-test="switch-language-button"
+          onClick={onToggleClick}
+          aria-label={t('Switch language')}
+          isExpanded={isOpen}
+        >
+          {getLanguageLabel(language as Language)}
+        </MenuToggle>
+      )}
+    >
+      <SelectList>
+        <SelectOption value={Language.ENGLISH} isSelected={language === Language.ENGLISH}>
+          {getLanguageLabel(Language.ENGLISH)}
+        </SelectOption>
+        <SelectOption value={Language.SPANISH} isSelected={language === Language.SPANISH}>
+          {getLanguageLabel(Language.SPANISH)}
+        </SelectOption>
+        <SelectOption value={Language.CHINESE} isSelected={language === Language.CHINESE}>
+          {getLanguageLabel(Language.CHINESE)}
+        </SelectOption>
+      </SelectList>
+    </Select>
   );
 };
 

@@ -34,8 +34,9 @@ type WorkloadInfoState = {
   workloadIstioConfig?: IstioConfigList;
 };
 
-const fullHeightStyle = kialiStyle({
-  height: '100%'
+const gridStyle = kialiStyle({
+  height: '100%',
+  paddingTop: '1rem'
 });
 
 const tabName = 'list';
@@ -266,7 +267,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     return (
       <>
         <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-          <Grid hasGutter={true} className={fullHeightStyle}>
+          <Grid hasGutter={true} className={gridStyle}>
             <GridItem span={4}>
               <Stack hasGutter={true}>
                 <StackItem>

@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { KialiDispatch } from 'types/Redux';
 import _round from 'lodash/round';
 import { Button, ButtonVariant, Card, CardBody, Grid, GridItem, Tooltip } from '@patternfly/react-core';
+import { kialiStyle } from 'styles/StyleUtils';
 import { InfoAltIcon, WarningTriangleIcon } from '@patternfly/react-icons';
 import { JaegerTrace, RichSpanData } from 'types/TracingInfo';
 import { TracingTraceTitle } from './TracingTraceTitle';
@@ -53,6 +54,14 @@ type Props = ReduxProps &
   };
 
 interface State {}
+
+const gridStyle = kialiStyle({
+  paddingTop: '1rem'
+});
+
+const cardStyle = kialiStyle({
+  marginTop: '1rem'
+});
 
 class TraceDetailsComponent extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -192,7 +201,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
         : undefined;
 
     return (
-      <Card isCompact>
+      <Card isCompact className={cardStyle}>
         <TracingTraceTitle
           formattedTrace={formattedTrace}
           externalURL={this.props.tracingURLProvider?.TraceUrl(trace)}
@@ -201,7 +210,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
           traceId={trace.traceID}
         />
         <CardBody>
-          <Grid style={{ marginTop: '1.25rem' }}>
+          <Grid className={gridStyle}>
             <GridItem span={3}>
               <TraceLabels spans={trace.spans} oneline={false} />
             </GridItem>

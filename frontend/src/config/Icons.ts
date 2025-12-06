@@ -49,14 +49,14 @@ const mutIcons = {
       type: 'fa'
     } as IconType,
     gateway: {
-      className: 'pf-v5-pficon pf-v5-pficon-globe-route',
+      className: 'pf-v6-pficon pf-v6-pficon-globe-route',
       icon: GlobeRouteIcon,
       name: 'globe-route',
       text: 'Gateway',
       type: 'pf'
     } as IconType,
     mirroring: {
-      className: 'pf-v5-pficon pf-v5-pficon-migration',
+      className: 'pf-v6-pficon pf-v6-pficon-migration',
       icon: MigrationIcon,
       name: 'migration',
       text: 'Mirroring',
@@ -64,7 +64,7 @@ const mutIcons = {
     } as IconType,
     missingAuthPolicy: {
       ascii: '\ue946 ',
-      className: 'pf-v5-pficon pf-v5-pficon-security',
+      className: 'pf-v6-pficon pf-v6-pficon-security',
       color: 'red',
       icon: SecurityIcon,
       name: 'security',
@@ -82,7 +82,7 @@ const mutIcons = {
     } as IconType,
     missingSidecar: {
       ascii: '\ue915 ',
-      className: 'pf-v5-pficon pf-v5-pficon-blueprint',
+      className: 'pf-v6-pficon pf-v6-pficon-blueprint',
       color: 'red',
       icon: BlueprintIcon,
       name: 'blueprint',
@@ -91,7 +91,7 @@ const mutIcons = {
     } as IconType,
     mtls: {
       ascii: '\ue923 ',
-      className: 'pf-v5-pficon pf-v5-pficon-locked',
+      className: 'pf-v6-pficon pf-v6-pficon-locked',
       icon: LockedIcon,
       name: 'locked',
       text: 'mTLS',
@@ -139,7 +139,7 @@ const mutIcons = {
     } as IconType,
     workloadEntry: {
       ascii: '\uf126 ',
-      className: 'pf-v5-pficon pf-v5-pficon-virtual-machine',
+      className: 'pf-v6-pficon pf-v6-pficon-virtual-machine',
       icon: VirtualMachineIcon,
       name: 'virtual-machine',
       text: 'Workload Entry',
@@ -147,7 +147,7 @@ const mutIcons = {
     } as IconType,
     waypoint: {
       ascii: 'E93D ',
-      className: 'pf-v5-pficon pf-v5-pficon-infrastructure',
+      className: 'pf-v6-pficon pf-v6-pficon-infrastructure',
       icon: InfrastructureIcon,
       name: 'infrastructure',
       text: 'Waypoint Proxy',

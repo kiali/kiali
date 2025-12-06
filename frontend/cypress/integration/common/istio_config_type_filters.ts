@@ -10,7 +10,7 @@ When('user types {string} into the input', (input: string) => {
 });
 
 Then('the {string} phrase is displayed', (phrase: string) => {
-  cy.get('#filter-selection').contains(phrase).should('be.visible');
+  cy.get('#filter_select_value').contains(phrase).should('be.visible');
 });
 
 When('user filters by {string}', (filterCategory: string) => {
@@ -93,7 +93,12 @@ When('a type filter {string} is applied', (category: string) => {
 });
 
 When('user clicks the cross next to the {string}', (category: string) => {
-  cy.get('#filter-selection > :nth-child(2)').contains(category).parent().parent().find('[aria-label="close"]').click();
+  cy.get('#filter-selection > :nth-child(2)')
+    .contains(category)
+    .parent()
+    .parent()
+    .find(`button[aria-label="Close ${category}"]`)
+    .click();
 });
 
 Then('the filter is no longer active', () => {
@@ -123,7 +128,7 @@ When('user chooses {int} type filters', (count: number) => {
 
 When('user clicks the cross on one of them', () => {
   cy.get('#filter-selection > :nth-child(2)')
-    .find('[data-ouia-component-type="PF5/Button" data-ouia-component-id="close"]')
+    .find('button[aria-label^="Close "]')
     .first()
     .click();
 });

@@ -162,7 +162,7 @@ Then(`user sees the {string} namespace with {string}`, (ns: string, type: string
 Then(`user sees the {string} namespace list`, (nslist: string) => {
   const nss = nslist.split(',');
 
-  cy.get('div[data-ouia-component-type="PF5/Card"]')
+  cy.get('div[data-ouia-component-type="PF6/Card"]')
     .should('have.length', nss.length)
     .each(($a, i) => {
       expect($a.attr('data-test')).includes(nss[i]);

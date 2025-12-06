@@ -3,7 +3,7 @@ import { shallowToJson } from 'enzyme-to-json';
 import { mount, shallow } from 'enzyme';
 import { ThemeSwitchComponent } from '../Masthead/ThemeSwitch';
 import { PF_THEME_DARK, Theme } from 'types/Common';
-import { Button } from '@patternfly/react-core';
+import { ToggleGroupItem } from '@patternfly/react-core';
 import { store } from 'store/ConfigStore';
 
 describe('ThemeSwitch renders', () => {
@@ -27,7 +27,7 @@ describe('ThemeSwitch changes', () => {
     const wrapper = mount(<ThemeSwitchComponent theme={Theme.LIGHT} />);
 
     // Click dark button
-    wrapper.find(Button).at(1).simulate('click');
+    wrapper.find(ToggleGroupItem).at(1).simulate('click');
 
     expect(document.documentElement.classList.contains(PF_THEME_DARK)).toBe(true);
     expect(store.getState().globalState.theme).toBe(Theme.DARK);
@@ -37,7 +37,7 @@ describe('ThemeSwitch changes', () => {
     const wrapper = mount(<ThemeSwitchComponent theme={Theme.DARK} />);
 
     // Click light button
-    wrapper.find(Button).at(0).simulate('click');
+    wrapper.find(ToggleGroupItem).at(0).simulate('click');
 
     expect(document.documentElement.classList.contains(PF_THEME_DARK)).toBe(false);
     expect(store.getState().globalState.theme).toBe(Theme.LIGHT);

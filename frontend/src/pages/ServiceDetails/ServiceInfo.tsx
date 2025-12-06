@@ -69,8 +69,8 @@ type ServiceInfoState = {
   wizardType: string;
 };
 
-const fullHeightStyle = kialiStyle({
-  height: '100%'
+const gridStyle = kialiStyle({
+  marginTop: '1rem'
 });
 
 class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
@@ -249,7 +249,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
     return (
       <>
         <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-          <Grid hasGutter={true} className={fullHeightStyle}>
+          <Grid hasGutter={true} className={gridStyle}>
             <GridItem span={4}>
               <Stack hasGutter={true}>
                 <StackItem>

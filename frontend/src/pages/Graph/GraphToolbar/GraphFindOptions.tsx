@@ -11,12 +11,9 @@ type GraphFindOptionsProps = {
 };
 
 const menuToggleStyle = kialiStyle({
-  paddingRight: 0,
-  $nest: {
-    '& .pf-v5-c-menu-toggle__controls': {
-      paddingLeft: 0
-    }
-  }
+  marginLeft: '0.125rem',
+  paddingLeft: '0.75rem',
+  paddingRight: '0.75rem'
 });
 
 export const GraphFindOptions: React.FC<GraphFindOptionsProps> = (props: GraphFindOptionsProps) => {
@@ -42,7 +39,7 @@ export const GraphFindOptions: React.FC<GraphFindOptionsProps> = (props: GraphFi
     setOptions(getOptionItems(kind));
   }, [kind, onSelect]);
 
-  const onToggle = (isOpen: boolean) => {
+  const onToggle = (isOpen: boolean): void => {
     setIsOpen(isOpen);
   };
 

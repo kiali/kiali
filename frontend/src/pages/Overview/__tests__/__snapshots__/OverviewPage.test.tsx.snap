@@ -21,7 +21,7 @@ exports[`Overview page renders initial layout 1`] = `
     refreshInterval={10000}
   >
     <RenderComponentScroll
-      className="kiali_f10gijvm"
+      className="kiali_f41r0km"
     >
       <Grid />
     </RenderComponentScroll>
