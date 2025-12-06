@@ -255,7 +255,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
           isOpen={this.state.isOpen}
           onOpenChange={(isOpen: boolean) => this.onToggle(isOpen)}
         >
-          <DropdownList>
+          <DropdownList data-test="namespace-dropdown-list">
             {this.getHeader()}
             {this.getBody()}
           </DropdownList>

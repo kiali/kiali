@@ -239,8 +239,8 @@ Then('user sees the {string} regex in the editor', (regexContent: string) => {
   cy.get('.ace_content').invoke('text').should('match', re);
 });
 
-When('user clicks on {string} Advanced Options', (action: string) => {
-  cy.get(`div[id="${action.toLowerCase()}_advanced_options"]`).prev().click();
+When('user clicks on Advanced Options', () => {
+  cy.get('#advanced-options-expandable').should('be.visible').click();
 });
 
 When('user clicks on Add Gateway', () => {
