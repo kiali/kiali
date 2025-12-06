@@ -52,6 +52,9 @@ When('user selects a trace', function () {
 });
 
 When('user selects a trace with at least {int} spans', (spans: number) => {
+  cy.waitForReact();
+
+  // First, verify that we have traces with enough spans by accessing the component
   cy.getBySel('tracing-scatterplot').within(() => {
     cy.waitForReact();
     // This changed from Point to point_Point with the pf6 update.
@@ -62,17 +65,85 @@ When('user selects a trace with at least {int} spans', (spans: number) => {
     // TODO: Find a more reliable way to do this.
     cy.getReact('*oint', { props: { symbol: 'circle' } })
       .should('have.length.at.least', 1)
-      .then(($points: any) => {
-        // We want to find a point that has all of the specified number of spans loaded
-        // since some of the later assertions look for a certain number of spans.
-        // There doesn't seem to be a good way to inject a data-test attribute into individual points
-        // on the graph so here we are looking at the react state of the points and then finding one
-        // that matches the exact data path.
-        const pointWithTraceName = $points.filter(point => point.props?.datum?.trace?.spans.length >= spans)[0];
-        const dataPointInGraph = pointWithTraceName.children[0].props.d;
-        cy.get(`path[d="${dataPointInGraph}"]`).should('be.visible').click({ force: true });
+      .then((components: any) => {
+        // Filter to get the bare component (not HOC wrappers)
+        const component = components.filter((c: any) => c.name === 'TracingScatterComponent')[0] || components[0];
+
+        if (!component) {
+          throw new Error('TracingScatterComponent not found');
+        }
+
+        // Get props from the component
+        const props = component.props || {};
+        const traces = props.traces || [];
+
+        // Find a trace with at least the required number of spans
+        const validTrace = traces.find((trace: any) => {
+          const spanCount = trace?.spans?.length;
+          return spanCount !== undefined && spanCount >= spans;
+        });
+
+        if (!validTrace) {
+          const spanCounts = traces.map((t: any) => t?.spans?.length || 'undefined').join(', ');
+          throw new Error(
+            `No trace found with at least ${spans} spans. ` +
+              `Found ${traces.length} trace(s), but none have enough spans. ` +
+              `Available span counts: [${spanCounts}]`
+          );
+        }
       });
   });
+
+  // Function to try clicking a path at a given index
+  const tryPathAtIndex = (pathIndex: number): void => {
+    cy.getBySel('tracing-scatterplot').within(() => {
+      cy.get('path[role="presentation"]')
+        .filter((_, element) => {
+          const $el = Cypress.$(element);
+          const style = $el.attr('style') || '';
+          const dAttr = $el.attr('d') || '';
+          // Data points have cursor: pointer and contain 'a' (arc) commands in their path
+          return style.includes('cursor: pointer') && dAttr.includes(' a ');
+        })
+        .then(($paths: JQuery<HTMLElement>) => {
+          const maxAttempts = Math.min($paths.length, 10);
+
+          if (pathIndex >= maxAttempts) {
+            throw new Error(
+              `Could not find a trace with at least ${spans} spans after trying ${maxAttempts} paths. ` +
+                `Found ${$paths.length} total data point path(s).`
+            );
+          }
+
+          const $path = $paths.eq(pathIndex);
+          if ($path.length === 0) {
+            tryPathAtIndex(pathIndex + 1);
+            return;
+          }
+
+          // Click the path
+          cy.wrap($path).should('be.visible').click({ force: true });
+        });
+    });
+
+    // Wait for trace details to appear
+    cy.getBySel('trace-details-tabs', { timeout: 10000 }).should('be.visible');
+
+    // Check if we have enough spans
+    cy.get('table tbody tr', { timeout: 5000 }).then($rows => {
+      if ($rows.length < spans) {
+        // Not enough spans, try the next path
+        cy.log(`Found ${$rows.length} spans, need ${spans}. Trying next path...`);
+        tryPathAtIndex(pathIndex + 1);
+      } else {
+        // We have enough spans, verify it
+        cy.wrap($rows).should('have.length.at.least', spans);
+      }
+    });
+  };
+
+  // Start trying from index 0
+  tryPathAtIndex(0);
 });
 
 Then('user sees span details', () => {

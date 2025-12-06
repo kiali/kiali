@@ -593,7 +593,6 @@ Then('user sees {string} clusters in the mesh', (clusterCount: string) => {
 
       const { nodes } = elems(controller);
       const clusters = nodes.filter(n => (n.getData() as MeshNodeData).infraType === MeshInfraType.CLUSTER);
-
       expect(clusters.length).to.equal(parseInt(clusterCount));
     });
 });
