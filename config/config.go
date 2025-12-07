@@ -1212,9 +1212,9 @@ func (conf *Config) prepareDashboards() {
 	}
 }
 
-// LoadCertPool loads system certs and additional CAs from the specified paths.
-// This is primarily used for testing; normal initialization happens via Unmarshal.
 // Unmarshal parses the given YAML string and returns its Config object representation.
+// It also sets up supporting components such as the credential manager and certificate
+// pool, including additional CAs from the kiali-cabundle ConfigMap.
 func Unmarshal(yamlString string) (conf *Config, err error) {
 	conf = NewConfig()
 	err = yaml.Unmarshal([]byte(yamlString), &conf)
