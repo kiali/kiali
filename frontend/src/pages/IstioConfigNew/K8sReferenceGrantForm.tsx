@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
+import { FormGroup, MenuToggle, MenuToggleElement, Select, SelectList, SelectOption } from '@patternfly/react-core';
 import { GroupVersionKind, K8sReferenceRule } from '../../types/IstioObjects';
 import { Namespace } from '../../types/Namespace';
 import { KialiAppState } from '../../store/Store';
@@ -38,6 +38,9 @@ type Props = ReduxStateProps &
 
 export type K8sReferenceGrantState = {
   from: K8sReferenceRule[];
+  isFromKindSelectOpen: boolean;
+  isFromNamespaceSelectOpen: boolean;
+  isToKindSelectOpen: boolean;
   to: K8sReferenceRule[];
 };
 
@@ -49,6 +52,9 @@ export const initK8sReferenceGrant = (): K8sReferenceGrantState => ({
       namespace: ''
     }
   ],
+  isFromKindSelectOpen: false,
+  isFromNamespaceSelectOpen: false,
+  isToKindSelectOpen: false,
   to: [{ kind: Object.keys(TO_KINDS)[0], group: Object.values(TO_KINDS)[0] }]
 });
 
@@ -67,71 +73,127 @@ export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sRe
     this.setState(this.props.k8sReferenceGrant);
   }
 
-  onChangeReferenceGrantFromKind = (_event: React.FormEvent, value: string): void => {
-    this.setState(
-      {
-        from: [{ group: dicTypeToGVK[`K8s${value}`].Group, kind: value, namespace: this.state.from[0].namespace }]
-      },
-      () => this.props.onChange(this.state)
-    );
-  };
-
-  onChangeReferenceGrantFromNamespace = (_event: React.FormEvent, value: string): void => {
-    this.setState(
-      {
-        from: [{ group: this.state.from[0].group, kind: this.state.from[0].kind, namespace: value }]
-      },
-      () => this.props.onChange(this.state)
-    );
-  };
-
-  onChangeReferenceGrantToKind = (_event: React.FormEvent, value: string): void => {
-    this.setState(
-      {
-        to: [{ group: TO_KINDS[value], kind: value }]
-      },
-      () => this.props.onChange(this.state)
-    );
-  };
-
   render(): React.ReactNode {
     return (
       <>
         <FormGroup label="From Namespace" fieldId="FromNamespace">
-          <FormSelect
-            value={this.state.from[0].namespace}
-            onChange={this.onChangeReferenceGrantFromNamespace}
+          <Select
             id="ReferenceGrantFromNamespace"
-            name="ReferenceGrantFromNamespace"
+            isOpen={this.state.isFromNamespaceSelectOpen}
+            selected={this.state.from[0].namespace}
+            onSelect={(_event, value) => {
+              this.setState(
+                {
+                  from: [
+                    { group: this.state.from[0].group, kind: this.state.from[0].kind, namespace: value as string }
+                  ],
+                  isFromNamespaceSelectOpen: false
+                },
+                () => this.props.onChange(this.state)
+              );
+            }}
+            onOpenChange={isFromNamespaceSelectOpen => this.setState({ isFromNamespaceSelectOpen })}
+            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+              <MenuToggle
+                id="ReferenceGrantFromNamespace-toggle"
+                ref={toggleRef}
+                onClick={() => this.setState({ isFromNamespaceSelectOpen: !this.state.isFromNamespaceSelectOpen })}
+                isExpanded={this.state.isFromNamespaceSelectOpen}
+                isFullWidth
+              >
+                {this.state.from[0].namespace}
+              </MenuToggle>
+            )}
+            aria-label="From Namespace Select"
           >
-            {this.props.namespaces.map((option, index) => (
-              <FormSelectOption key={index} value={option.name} label={option.name} />
-            ))}
-          </FormSelect>
+            <SelectList>
+              {this.props.namespaces.map((option, index) => (
+                <SelectOption key={index} value={option.name}>
+                  {option.name}
+                </SelectOption>
+              ))}
+            </SelectList>
+          </Select>
         </FormGroup>
         <FormGroup label="From Kind" fieldId="FromKind">
-          <FormSelect
-            value={this.state.from[0].kind}
-            onChange={this.onChangeReferenceGrantFromKind}
+          <Select
             id="ReferenceGrantFromKind"
-            name="ReferenceGrantFromKind"
+            isOpen={this.state.isFromKindSelectOpen}
+            selected={this.state.from[0].kind}
+            onSelect={(_event, value) => {
+              this.setState(
+                {
+                  from: [
+                    {
+                      group: dicTypeToGVK[`K8s${value}`].Group,
+                      kind: value as string,
+                      namespace: this.state.from[0].namespace
+                    }
+                  ],
+                  isFromKindSelectOpen: false
+                },
+                () => this.props.onChange(this.state)
+              );
+            }}
+            onOpenChange={isFromKindSelectOpen => this.setState({ isFromKindSelectOpen })}
+            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+              <MenuToggle
+                id="ReferenceGrantFromKind-toggle"
+                ref={toggleRef}
+                onClick={() => this.setState({ isFromKindSelectOpen: !this.state.isFromKindSelectOpen })}
+                isExpanded={this.state.isFromKindSelectOpen}
+                isFullWidth
+              >
+                {`K8s ${this.state.from[0].kind}`}
+              </MenuToggle>
+            )}
+            aria-label="From Kind Select"
           >
-            {FROM_KINDS.map((fromKey: GroupVersionKind, index: number) => (
-              <FormSelectOption key={index} value={fromKey.Kind} label={`K8s ${fromKey.Kind}`} />
-            ))}
-          </FormSelect>
+            <SelectList>
+              {FROM_KINDS.map((fromKey: GroupVersionKind, index: number) => (
+                <SelectOption key={index} value={fromKey.Kind}>
+                  {`K8s ${fromKey.Kind}`}
+                </SelectOption>
+              ))}
+            </SelectList>
+          </Select>
         </FormGroup>
         <FormGroup label="To Kind" fieldId="ToKind">
-          <FormSelect
-            value={this.state.to[0].kind}
-            onChange={this.onChangeReferenceGrantToKind}
+          <Select
             id="ReferenceGrantToKind"
-            name="ReferenceGrantToKind"
+            isOpen={this.state.isToKindSelectOpen}
+            selected={this.state.to[0].kind}
+            onSelect={(_event, value) => {
+              this.setState(
+                {
+                  to: [{ group: TO_KINDS[value as string], kind: value as string }],
+                  isToKindSelectOpen: false
+                },
+                () => this.props.onChange(this.state)
+              );
+            }}
+            onOpenChange={isToKindSelectOpen => this.setState({ isToKindSelectOpen })}
+            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+              <MenuToggle
+                id="ReferenceGrantToKind-toggle"
+                ref={toggleRef}
+                onClick={() => this.setState({ isToKindSelectOpen: !this.state.isToKindSelectOpen })}
+                isExpanded={this.state.isToKindSelectOpen}
+                isFullWidth
+              >
+                {this.state.to[0].kind}
+              </MenuToggle>
+            )}
+            aria-label="To Kind Select"
           >
-            {Object.keys(TO_KINDS).map((toKey: string, index: number) => (
-              <FormSelectOption key={index} value={toKey} label={toKey} />
-            ))}
-          </FormSelect>
+            <SelectList>
+              {Object.keys(TO_KINDS).map((toKey: string, index: number) => (
+                <SelectOption key={index} value={toKey}>
+                  {toKey}
+                </SelectOption>
+              ))}
+            </SelectList>
+          </Select>
         </FormGroup>
       </>
     );
