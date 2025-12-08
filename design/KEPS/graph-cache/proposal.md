@@ -87,7 +87,7 @@ Possible options:
 
 ## Architecture
 
-The graph cache implementation uses a **per-session** caching strategy with background refresh jobs. Unlike the controller-based approach used for Validations and Health, the graph cache uses a custom in-memory cache for several key reasons:
+The graph cache implementation uses a **per-session** caching strategy with background refresh jobs. The graph cache uses a custom in-memory cache for several key reasons:
 
 ### Why Not a Kubernetes Controller?
 
@@ -99,15 +99,42 @@ The graph cache implementation uses a **per-session** caching strategy with back
 
 4. **Dynamic Configuration**: Graph options (namespaces, graph type, display options) are user-specified at request time, not pre-defined in configuration. This makes them unsuitable for controller-based pre-computation.
 
-5. **Session Lifecycle**: Graphs are ephemeral, tied to user sessions. They should be evicted when users navigate away, not persist indefinitely like other cached data.
+5. **Session Lifecycle**: Graphs are ephemeral, tied to user sessions. They should be evicted when users change focus, not persist indefinitely like other cached data.
+
+### Why Not the KialiCache?
+
+The existing KialiCache doesn't quite fit the model I think we want for the graph cache. The following table is AI-generated but summarizes some of the reasons pretty well:
+
+| Aspect                 | KialiCache                    | Graph Cache Needs               |
+| ---------------------- | ----------------------------- | ------------------------------- |
+| **Permission model**   | Kiali SA token → filter after | User's auth token per-session   |
+| **Lifecycle**          | Singleton, process-lifetime   | Per-session, ephemeral          |
+| **Key structure**      | cluster/namespace/token       | sessionID only                  |
+| **Eviction strategy**  | Simple TTL                    | LRU + memory limit + inactivity |
+| **Background refresh** | External (controllers)        | Built-in goroutine per entry    |
+| **Memory tracking**    | None                          | Per-entry estimation            |
+
+### Why not use store.Store as a Building Block?
+
+We could use the existing store.Store. But, it's not a drop-in solution and would require some customizations (LRU eviction, inactivity tracking, etc). In the end, the custom graph cache impl is preferred because it's not overly complex or a lot of code, and in this case a bespoke solution serves well given the differing needs of the graph cache.
+
+### Why not the golang-lru cache package?
+
+It's possible that we could build the cache off this existing library, but like the other alternatives, it doesn't fit perfectly. We'd like tyo keep memory-based eviction but I'm not sure it's something easily built into lru. I'm
+also not sure about a few other things desired features.
 
 ## Per-Session Caching
 
 Each user session maintains its own cached graph, uniquely identified by `sessionID`. This approach:
 
 - **Preserves permissions**: Each session uses the requesting user's auth token for Prometheus queries
-- **Supports concurrent users**: Multiple users (or same user in different tabs) cache independently
-- **Enables automatic eviction**: Inactive sessions are cleaned up after a configurable timeout
+- **Supports concurrent users**: Different users cache independently. Tabs in the same browser share a session (and cache); different browsers or incognito windows have separate sessions.
+- **Enables automatic eviction**:
+  - Inactivity timeout: session not accessed within configurable period
+  - Memory limit: LRU eviction when cache exceeds configured memory cap
+  - Options changed: user requests a different graph configuration
+  - Caching disabled: request explicitly disables caching
+  - note, user logout does not currently force eviction, it relies on inactivity.
 - **Optimizes for common case**: Users typically refresh the same graph repeatedly
 
 When a user requests a graph:
@@ -160,38 +187,46 @@ The proposal document (lines 92-103) explicitly addresses this and provides exce
 
 1. Data Source Mismatch
 
+   - Graphs are built from Prometheus time-series metrics, not Kubernetes objects
+   - Controllers watch K8s resources for changes - but there are no K8s resources to watch that would trigger graph updates
+   - The graph data fundamentally comes from outside the K8s API
 
-    - Graphs are built from Prometheus time-series metrics, not Kubernetes objects
-    - Controllers watch K8s resources for changes - but there are no K8s resources to watch that would trigger graph updates
-    - The graph data fundamentally comes from outside the K8s API
+     Counter-point:
+
+     The controller model still works with non-kube sources. You can configure any "Source" you want as long as you can send into a channel. Kiali's validations controller runs on a ticker that performs validation every reconcileInterval. So, point 1 is not a breaking issue. It's just not a perfect fit.
 
 2. Time-Based vs Event-Based
 
+   - Graphs must refresh based on time window advancement ("last 5 minutes" moves forward)
+   - Controllers are event-driven (reacting to K8s object changes)
+   - Graph refresh needs periodic polling, not event watching
 
-    - Graphs must refresh based on time window advancement ("last 5 minutes" moves forward)
-    - Controllers are event-driven (reacting to K8s object changes)
-    - Graph refresh needs periodic polling, not event watching
+   Counter-point:
+
+   Again, Kiali's validations controller is interval-based. So, point 2 is not a breaking issue. But also again,it's just a perfect fit given that the graph caching can be running multiple timers, each with different context.
 
 3. Permission Context is Critical
 
+   - Graph data MUST be generated using the user's auth token and RBAC permissions
+   - A controller runs with the Kiali service account (elevated privileges)
+   - Using a controller would bypass user access controls - a security issue
 
-    - Graph data MUST be generated using the user's auth token and RBAC permissions
-    - A controller runs with the Kiali service account (elevated privileges)
-    - Using a controller would bypass user access controls - a security issue
+   Counter-point:
+
+   This is not a blocking issue, as we could likely use the client factory to get the user's client, and not
+   have to use the Kiali SA.
 
 4. Session Lifecycle
 
-
-    - Graphs are ephemeral and session-specific (one per browser tab)
-    - Should be evicted when users navigate away
-    - Controllers maintain cluster-wide, persistent data - wrong model
+   - Graphs are ephemeral and session-specific
+   - Should be evicted when users change focus
+   - Controllers maintain cluster-wide, persistent data - wrong model
 
 5. Dynamic Configuration
 
-
-    - Graph options (namespaces, type, duration) are user-specified at request time
-    - Controllers work with pre-defined resource types
-    - Can't pre-compute all possible graph combinations
+   - Graph options (namespaces, type, duration) are user-specified at request time
+   - Controllers work with pre-defined resource types
+   - Can't pre-compute all possible graph combinations
 
 Implementation Quality
 
@@ -234,3 +269,5 @@ The implementation is correct. Using a Kubernetes controller store would be arch
 case.
 
 The design decision is well-documented in the proposal (lines 92-103), and the implementation properly follows that design.
+
+[jshaughn] The bottom line here is that, not unlike many things, there is a trade-off between a custom solution and trying to re-use existing solutions. In this case, I don't see a perfect fit. Despite the downsides of a custom graph impl (yet another mechanism, so complexity), I think it's important for the graph cache to serve as perfectly as possible, given the graph's critical nature to Kiali. And, the implemetation is not a huge amount of code, I think it should be quite manageable. If we find cracks that can't be rectified, we're not boxed in, another impl is still feasible.
