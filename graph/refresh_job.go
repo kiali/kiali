@@ -24,7 +24,7 @@ type RefreshJob struct {
 	mu                   sync.Mutex
 	refreshInterval      time.Duration
 	resetChan            chan *time.Ticker // Signals Start loop when ticker changes
-	sessionID            string            // Unique session identifier (different per browser/tab)
+	sessionID            string            // Unique session identifier (different per user, or same user+different browsers)
 	stopChan             chan struct{}
 	stopped              bool
 	ticker               *time.Ticker

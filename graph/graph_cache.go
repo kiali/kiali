@@ -14,8 +14,9 @@ import (
 // GraphCache provides per-session graph caching with background refresh.
 // Each session's graph is cached and refreshed in the background
 // with a moving time window to ensure users always see current traffic data.
-// Sessions are uniquely identified by sessionID, allowing multiple concurrent
-// sessions per user (e.g., different browsers/tabs).
+// Sessions are uniquely identified by sessionID (stored in browser cookies).
+// Multiple tabs in the same browser share the same session and cache.
+// Different browsers or incognito windows have separate sessions.
 type GraphCache interface {
 	// ActiveSessions returns the number of sessions with cached graphs
 	ActiveSessions() int
