@@ -391,9 +391,10 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             notAvailable: []
           };
 
-          if (((nsInfo.cluster && nsInfo.cluster === cluster) || !nsInfo.cluster) && results[nsInfo.name]) {
-            Object.keys(results[nsInfo.name]).forEach(k => {
-              const health: Health = results[nsInfo.name][k];
+          const nsHealth = results.get(nsInfo.name);
+          if (((nsInfo.cluster && nsInfo.cluster === cluster) || !nsInfo.cluster) && nsHealth) {
+            Object.keys(nsHealth).forEach(k => {
+              const health: Health = nsHealth[k];
               const status = health.getGlobalStatus();
 
               if (status === FAILURE) {
