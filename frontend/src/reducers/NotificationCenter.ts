@@ -11,19 +11,25 @@ export const INITIAL_NOTIFICATION_CENTER_STATE: NotificationCenterState = {
   // predefined groups are specifically ordered by status
   groups: [
     {
-      id: 'danger',
-      title: 'Danger',
+      id: MessageType.DANGER,
+      title: 'Error',
       messages: [],
       variant: 'danger'
     },
     {
-      id: 'warning',
+      id: MessageType.WARNING,
       title: 'Warning',
       messages: [],
       variant: 'warning'
     },
     {
-      id: 'info',
+      id: MessageType.SUCCESS,
+      title: 'Success',
+      messages: [],
+      variant: 'success'
+    },
+    {
+      id: MessageType.INFO,
       title: 'Info',
       messages: [],
       variant: 'info'

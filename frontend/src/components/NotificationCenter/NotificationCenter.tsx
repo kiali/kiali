@@ -102,7 +102,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
     return group.messages.filter(m => !m.seen).length;
   };
 
-  const toggleGroupExpanded = (groupId: string) => (_event: any, isExpanded: boolean) => {
+  const toggleGroupExpanded = (groupId: string) => (_event: React.MouseEvent, isExpanded: boolean) => {
     setExpandedGroupIds(prev => {
       const newSet = new Set(prev);
       if (isExpanded) {
@@ -149,6 +149,8 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
         return <span style={{ color: PFColors.Danger }}>{t(group.title)}</span>;
       case 'warning':
         return <span style={{ color: PFColors.Warning }}>{t(group.title)}</span>;
+      case 'success':
+        return <span style={{ color: PFColors.Success }}>{t(group.title)}</span>;
       default:
         return <span style={{ color: PFColors.Info }}>{t(group.title)}</span>;
     }

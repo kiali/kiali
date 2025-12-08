@@ -30,7 +30,7 @@ export const MetricsStatsThunkActions = {
             );
             dispatch(MetricsStatsActions.setStats(newStats));
             if (res.data.warnings && res.data.warnings.length > 0) {
-              addInfo(res.data.warnings.join('; '), false);
+              addInfo(res.data.warnings.join('; '), '', false);
             }
           })
           .catch(err => {

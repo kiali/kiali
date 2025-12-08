@@ -15,7 +15,7 @@ import {
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
 import * as API from 'services/Api';
-import * as AlertUtils from 'utils/AlertUtils';
+import { addDanger, addWarning } from 'utils/AlertUtils';
 import { RenderComponentScroll } from '../Nav/Page';
 import { KioskElement } from '../Kiosk/KioskElement';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
@@ -183,10 +183,10 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
         const percentiles = await this.percentilesPromise;
         options.minDuration = percentiles.get(this.state.querySettings.percentile);
         if (!options.minDuration) {
-          AlertUtils.addWarning('Cannot perform query above the requested percentile (value unknown).');
+          addWarning('Cannot perform query above the requested percentile (value unknown).');
         }
       } catch (err) {
-        AlertUtils.addDanger('Could not fetch percentiles', `${err}`);
+        addDanger('Could not fetch percentiles', `${err}`);
       }
     }
     this.fetcher.fetch(options, this.state.traces);
@@ -215,7 +215,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
 
   private percentilesFetched = (q: MetricsStatsQuery, r: MetricsStatsResult): Map<string, number> => {
     if (r.warnings) {
-      AlertUtils.addWarning(r.warnings.join(', '));
+      addWarning(r.warnings.join(', '));
     }
     const [mapInbound, mapOutbound] = (['inbound', 'outbound'] as Direction[]).map(dir => {
       const map = new Map<string, number>();

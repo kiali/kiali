@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { TimeInMilliseconds, TimeRange } from '../../types/Common';
 import * as API from '../../services/Api';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addError } from '../../utils/AlertUtils';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { location, router } from 'app/History';
@@ -60,7 +60,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
         setMetrics(response.data);
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch metrics.', error);
+        addError('Could not fetch metrics.', error);
         throw error;
       });
   };
@@ -74,11 +74,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
           }
         })
         .catch(err => {
-          AlertUtils.addMessage({
-            ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
-            type: MessageType.INFO,
-            isAlert: false
-          });
+          addError('Could not fetch Grafana info. Turning off links to Grafana.', err, false, MessageType.INFO);
         });
     }
   };
@@ -92,11 +88,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
           }
         })
         .catch(err => {
-          AlertUtils.addMessage({
-            ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
-            type: MessageType.INFO,
-            isAlert: false
-          });
+          addError('Could not fetch Perses info. Turning off links to Perses.', err, false, MessageType.INFO);
         });
     }
   };

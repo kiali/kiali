@@ -8,7 +8,7 @@ import * as API from 'services/Api';
 import { KialiAppState } from 'store/Store';
 import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange, IntervalInMilliseconds } from 'types/Common';
 import { Direction, IstioMetricsOptions, Reporter } from 'types/MetricsOptions';
-import * as AlertUtils from 'utils/AlertUtils';
+import { addError } from 'utils/AlertUtils';
 import { RenderComponentScroll } from 'components/Nav/Page';
 import * as MetricsHelper from './Helper';
 import { KioskElement } from '../Kiosk/KioskElement';
@@ -224,7 +224,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
         });
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch metrics.', error);
+        addError('Could not fetch metrics.', error);
         throw error;
       });
   };
@@ -250,11 +250,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
           }
         })
         .catch(err => {
-          AlertUtils.addMessage({
-            ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
-            type: MessageType.INFO,
-            isAlert: false
-          });
+          addError('Could not fetch Grafana info. Turning off links to Grafana.', err, false, MessageType.INFO);
         });
     }
   }
@@ -280,11 +276,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
           }
         })
         .catch(err => {
-          AlertUtils.addMessage({
-            ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
-            type: MessageType.INFO,
-            isAlert: false
-          });
+          addError('Could not fetch Perses info. Turning off links to Perses.', err, false, MessageType.INFO);
         });
     }
   }

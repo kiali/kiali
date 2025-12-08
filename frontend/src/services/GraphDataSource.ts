@@ -13,7 +13,7 @@ import {
   GraphElementsQuery
 } from '../types/Graph';
 import { Namespace } from '../types/Namespace';
-import * as AlertUtils from '../utils/AlertUtils';
+import { addError } from '../utils/AlertUtils';
 import { PromisesRegistry } from '../utils/CancelablePromises';
 import * as API from './Api';
 import { decorateGraphData } from '../store/Selectors/GraphData';
@@ -569,7 +569,7 @@ export class GraphDataSource {
 
         this._isError = true;
         this._errorMessage = API.getErrorString(error);
-        AlertUtils.addError('Cannot load the graph', error);
+        addError('Cannot load the graph', error);
         this.emit('fetchError', `Cannot load the graph: ${this.errorMessage}`, this.fetchParameters);
       }
     );
@@ -608,7 +608,7 @@ export class GraphDataSource {
 
           this._isError = true;
           this._errorMessage = API.getErrorString(error);
-          AlertUtils.addError('Cannot load the graph', error);
+          addError('Cannot load the graph', error);
           this.emit('fetchError', this.errorMessage, this.fetchParameters);
         }
       );

@@ -1,7 +1,6 @@
 import { NotificationCenterActions } from '../NotificationCenterActions';
 import { NotificationCenterThunkActions } from '../NotificationCenterThunkActions';
 import { MessageType } from '../../types/NotificationCenter';
-
 import thunk from 'redux-thunk';
 import configureMockStore from 'redux-mock-store';
 
@@ -21,7 +20,8 @@ describe('NotificationCenterActions', () => {
       'my message',
       'my detail',
       'great-messages',
-      MessageType.WARNING
+      MessageType.WARNING,
+      true
     );
     expect(action.payload).toEqual(expectedPayload);
   });

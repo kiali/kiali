@@ -56,7 +56,7 @@ import { PFColors } from '../../components/Pf/PfColors';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { OverviewNamespaceAction, OverviewNamespaceActions } from './OverviewNamespaceActions';
 import { router, HistoryManager, URLParam } from '../../app/History';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addDanger, addError } from '../../utils/AlertUtils';
 import { MessageType } from '../../types/NotificationCenter';
 import { ValidationStatus } from '../../types/IstioObjects';
 import { GrafanaInfo, ISTIO_DASHBOARDS } from '../../types/GrafanaInfo';
@@ -682,11 +682,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           }
         })
         .catch(err => {
-          AlertUtils.addMessage({
-            ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
-            type: MessageType.INFO,
-            isAlert: false
-          });
+          addError('Could not fetch Grafana info. Turning off links to Grafana.', err, false, MessageType.INFO);
         });
     }
   };
@@ -715,11 +711,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           }
         })
         .catch(err => {
-          AlertUtils.addMessage({
-            ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
-            type: MessageType.INFO,
-            isAlert: false
-          });
+          addError('Could not fetch Perses info. Turning off links to Perses.', err, false, MessageType.INFO);
         });
     }
   };
@@ -731,13 +723,13 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           controlPlanes: response.data
         });
       })
-      .catch(error => {
-        AlertUtils.addError('Error fetching controlplanes.', error, MessageType.DANGER);
+      .catch(err => {
+        addError('Error fetching control planes.', err);
       });
   };
 
   handleApiError = (message: string, error: ApiError): void => {
-    AlertUtils.addDanger(message, API.getErrorString(error));
+    addDanger(message, API.getErrorString(error));
   };
 
   sort = (sortField: SortField<NamespaceInfo>, isAscending: boolean): void => {

@@ -39,7 +39,7 @@ import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { HelpIcon } from '@patternfly/react-icons';
 import { OutboundTrafficPolicy } from 'types/IstioObjects';
 import { isIstioNamespace } from 'config/ServerConfig';
-import * as AlertUtils from '../../../utils/AlertUtils';
+import { addDanger } from '../../../utils/AlertUtils';
 
 type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
   meshStatus: string;
@@ -421,7 +421,7 @@ export class TargetPanelControlPlane extends React.Component<
   };
 
   private handleApiError = (message: string, error: ApiError): void => {
-    AlertUtils.addDanger(message, API.getErrorString(error));
+    addDanger(message, API.getErrorString(error));
   };
 
   private renderCharts = (): React.ReactNode => {

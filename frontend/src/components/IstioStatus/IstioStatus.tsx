@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import * as API from '../../services/Api';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addError } from '../../utils/AlertUtils';
 import { TimeInMilliseconds } from '../../types/Common';
 import { ComponentStatus, Status, statusSeverity } from '../../types/IstioStatus';
 import { MessageType } from '../../types/NotificationCenter';
@@ -127,9 +127,9 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
         const informative = namespaces && namespaces.length < 1;
 
         if (informative) {
-          AlertUtils.addError(t('Istio deployment status disabled.'), error, MessageType.INFO);
+          addError(t('Istio deployment status disabled.'), error, true, MessageType.INFO);
         } else {
-          AlertUtils.addError(t('Error fetching Istio deployment status.'), error, MessageType.DANGER);
+          addError(t('Error fetching Istio deployment status.'), error);
         }
       });
   }, [namespaces, setIstioStatus, t]);

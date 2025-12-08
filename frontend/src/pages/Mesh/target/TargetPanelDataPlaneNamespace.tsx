@@ -23,8 +23,7 @@ import { computePrometheusRateParams } from 'services/Prometheus';
 import { ApiError } from 'types/Api';
 import { DEGRADED, FAILURE, HEALTHY, Health, NOT_READY } from 'types/Health';
 import { router } from '../../../app/History';
-import * as AlertUtils from '../../../utils/AlertUtils';
-import { MessageType } from '../../../types/NotificationCenter';
+import { addDanger } from '../../../utils/AlertUtils';
 import { OverviewStatus } from 'pages/Overview/OverviewStatus';
 import { switchType } from 'pages/Overview/OverviewHelper';
 import { TLSStatus } from 'types/TLSStatus';
@@ -344,7 +343,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
       .then(result => {
         const nsInfo = result.data;
         if (!nsInfo) {
-          AlertUtils.add(`Failed to find |${cluster}:${namespace}| in GetNamespaceInfo() result`, MessageType.DANGER);
+          addDanger(`Failed to find |${cluster}:${namespace}| in GetNamespaceInfo() result`);
           this.setState({ ...defaultState, loading: false });
           return;
         }
@@ -465,7 +464,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
   };
 
   private handleApiError = (message: string, error: ApiError): void => {
-    AlertUtils.addDanger(message, API.getErrorString(error));
+    addDanger(message, API.getErrorString(error));
   };
 
   private renderCharts = (direction: DirectionType): React.ReactNode => {

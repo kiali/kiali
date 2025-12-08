@@ -34,8 +34,7 @@ import { computePrometheusRateParams } from 'services/Prometheus';
 import { ApiError } from 'types/Api';
 import { DEGRADED, FAILURE, HEALTHY, Health, NOT_READY } from 'types/Health';
 import { router } from '../../../app/History';
-import * as AlertUtils from '../../../utils/AlertUtils';
-import { MessageType } from 'types/NotificationCenter';
+import { addDanger, addError } from '../../../utils/AlertUtils';
 import { OverviewStatus } from 'pages/Overview/OverviewStatus';
 import { switchType } from 'pages/Overview/OverviewHelper';
 import { TLSStatus } from 'types/TLSStatus';
@@ -468,7 +467,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         });
       })
       .catch(error => {
-        AlertUtils.addError('Error fetching namespace info.', error, MessageType.DANGER);
+        addError('Error fetching namespace info.', error);
       });
   };
 
@@ -541,7 +540,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   };
 
   private handleApiError = (message: string, error: ApiError): void => {
-    AlertUtils.addDanger(message, API.getErrorString(error));
+    addDanger(message, API.getErrorString(error));
   };
 
   private renderCharts(): React.ReactNode {

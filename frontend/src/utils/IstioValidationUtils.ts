@@ -1,5 +1,5 @@
 import { ObjectCheck, ObjectValidation, ValidationTypes } from '../types/IstioObjects';
-import * as AlertUtils from './AlertUtils';
+import { addDanger, addWarning } from './AlertUtils';
 import { getGVKTypeString } from './IstioConfigUtils';
 
 const validationMessage = (validation: ObjectValidation, failedCheck: ObjectCheck): string => {
@@ -10,10 +10,10 @@ const showInNotificationCenterValidation = (validation: ObjectValidation): void 
   for (let check of validation.checks) {
     switch (check.severity) {
       case ValidationTypes.Warning:
-        AlertUtils.addWarning(validationMessage(validation, check), false);
+        addWarning(validationMessage(validation, check), '', false);
         break;
       case ValidationTypes.Error:
-        AlertUtils.addDanger(validationMessage(validation, check));
+        addDanger(validationMessage(validation, check));
         break;
     }
   }
@@ -35,9 +35,9 @@ const showInNotificationCenterValidations = (validations: ObjectValidation[]): v
   if (elementsWithFailedValidations.length > 0) {
     const detail = `${elementsWithFailedValidations.join('\n')}`;
     if (hasError) {
-      AlertUtils.addDanger('IstioConfig has errors', detail);
+      addDanger('IstioConfig has errors', detail);
     } else {
-      AlertUtils.addWarning('IstioConfig has warnings', false, detail);
+      addWarning('IstioConfig has warnings', detail, false);
     }
   }
 };

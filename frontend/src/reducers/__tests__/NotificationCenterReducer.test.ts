@@ -21,7 +21,7 @@ describe('NotificationCenterReducer reducer', () => {
       groups: [
         {
           id: 'danger',
-          title: 'Danger',
+          title: 'Error',
           messages: [],
           variant: 'danger'
         },
@@ -30,6 +30,12 @@ describe('NotificationCenterReducer reducer', () => {
           title: 'Warning',
           messages: [],
           variant: 'warning'
+        },
+        {
+          id: 'success',
+          title: 'Success',
+          messages: [],
+          variant: 'success'
         },
         {
           id: 'info',
@@ -58,7 +64,7 @@ describe('NotificationCenterReducer reducer', () => {
           ],
           nextId: 0
         },
-        NotificationCenterActions.addMessage('my new message', 'my detail', 'danger', MessageType.WARNING)
+        NotificationCenterActions.addMessage('my new message', 'my detail', 'danger', MessageType.WARNING, true)
       )
     ).toEqual({
       expanded: false,
@@ -116,7 +122,7 @@ describe('NotificationCenterReducer reducer', () => {
           ],
           nextId: 0
         },
-        NotificationCenterActions.addMessage('my new message', 'my detail', 'danger', MessageType.WARNING)
+        NotificationCenterActions.addMessage('my new message', 'my detail', 'danger', MessageType.WARNING, true)
       )
     ).toEqual({
       expanded: false,

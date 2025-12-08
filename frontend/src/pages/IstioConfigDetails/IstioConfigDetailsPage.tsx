@@ -1,7 +1,7 @@
 import * as React from 'react';
 // import { Prompt } from 'react-router-dom';
 import { aceOptions, IstioConfigDetails, IstioConfigId, yamlDumpOptions } from '../../types/IstioConfigDetails';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addError, addSuccess } from '../../utils/AlertUtils';
 import * as API from '../../services/Api';
 import AceEditor from 'react-ace';
 import {
@@ -24,7 +24,6 @@ import { RenderComponentScroll } from '../../components/Nav/Page';
 import { IstioActionButtons } from '../../components/IstioActions/IstioActionsButtons';
 import { HistoryManager, router } from '../../app/History';
 import { Paths } from '../../config';
-import { MessageType } from '../../types/NotificationCenter';
 import { getIstioObject, mergeJsonPatch } from '../../utils/IstioConfigUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { ParameterizedTabs, activeTab } from '../../components/Tab/Tabs';
@@ -192,7 +191,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
           error: msg
         });
 
-        AlertUtils.addError(
+        addError(
           `Could not fetch Istio object type [${props.objectKind}] name [${props.objectName}] in namespace [${props.namespace}].`,
           error
         );
@@ -295,7 +294,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     )
       .then(() => this.backToList())
       .catch(error => {
-        AlertUtils.addError('Could not delete IstioConfig details.', error);
+        addError('Could not delete IstioConfig details.', error);
       });
   };
 
@@ -318,11 +317,11 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       )
         .then(() => {
           const targetMessage = `${this.props.istioConfigId.namespace} / ${this.props.istioConfigId.objectKind} / ${this.props.istioConfigId.objectName}`;
-          AlertUtils.add(`Changes applied on ${targetMessage}`, MessageType.SUCCESS);
+          addSuccess(`Changes applied on ${targetMessage}`);
           this.fetchIstioObjectDetails();
         })
         .catch(error => {
-          AlertUtils.addError('Could not update IstioConfig details.', error);
+          addError('Could not update IstioConfig details.', error);
           this.setState({
             yamlValidations: this.injectGalleyError(error)
           });

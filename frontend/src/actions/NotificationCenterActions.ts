@@ -9,7 +9,7 @@ const toNumberArray = (n: numberOrNumberArray) => (Array.isArray(n) ? n : [n]);
 export const NotificationCenterActions = {
   addMessage: createAction(
     ActionKeys.NC_ADD_MESSAGE,
-    resolve => (content: string, detail: string, groupId: string, messageType: MessageType, isAlert: boolean = true) =>
+    resolve => (content: string, detail: string, groupId: string, messageType: MessageType, isAlert: boolean) =>
       resolve({ content, detail, groupId, messageType, isAlert })
   ),
   removeMessage: createAction(ActionKeys.NC_REMOVE_MESSAGE, resolve => (messageId: numberOrNumberArray) =>

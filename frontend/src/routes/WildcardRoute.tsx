@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom-v5-compat';
 
-import * as AlertUtils from '../utils/AlertUtils';
+import { addDanger } from '../utils/AlertUtils';
 
 const OVERVIEW_ROUTE = '/overview';
 
@@ -12,7 +12,7 @@ export const WildcardRoute = (): JSX.Element => {
 
   if (openshiftError) {
     const clusterMessage = cluster ? `to cluster "${cluster}"` : 'to cluster';
-    AlertUtils.addDanger(`Openshift authentication ${clusterMessage} failed`, openshiftError);
+    addDanger(`Openshift authentication ${clusterMessage} failed`, openshiftError);
   }
 
   return <Navigate to={OVERVIEW_ROUTE} replace />;

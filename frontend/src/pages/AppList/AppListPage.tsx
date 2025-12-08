@@ -16,7 +16,7 @@ import { SortField } from '../../types/SortFilters';
 import { ActiveFiltersInfo, ActiveTogglesInfo } from '../../types/Filters';
 import { FilterSelected, StatefulFilters, Toggles } from '../../components/Filters/StatefulFilters';
 import * as API from '../../services/Api';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addError } from '../../utils/AlertUtils';
 import * as AppListClass from './AppListClass';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
@@ -156,7 +156,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
       })
       .catch(err => {
         if (!err.isCanceled) {
-          AlertUtils.addError('Could not fetch apps list', err);
+          addError('Could not fetch apps list', err);
         }
       });
   }

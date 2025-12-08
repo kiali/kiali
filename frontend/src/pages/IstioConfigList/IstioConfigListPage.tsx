@@ -19,7 +19,7 @@ import { ActiveFiltersInfo, ActiveTogglesInfo } from '../../types/Filters';
 import { FilterSelected, StatefulFilters, Toggles } from '../../components/Filters/StatefulFilters';
 import { getFilterSelectedValues } from '../../components/Filters/CommonFilters';
 import * as API from '../../services/Api';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addError } from '../../utils/AlertUtils';
 import { ObjectValidation } from '../../types/IstioObjects';
 import { showInNotificationCenter } from '../../utils/IstioValidationUtils';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
@@ -178,7 +178,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
       })
       .catch(istioError => {
         if (!istioError.isCanceled) {
-          AlertUtils.addError('Could not fetch Istio objects list', istioError);
+          addError('Could not fetch Istio objects list', istioError);
         }
       });
   }
