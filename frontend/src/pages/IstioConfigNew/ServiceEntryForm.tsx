@@ -5,10 +5,13 @@ import {
   ButtonVariant,
   FormGroup,
   FormHelperText,
-  FormSelect,
-  FormSelectOption,
   HelperText,
   HelperTextItem,
+  MenuToggle,
+  MenuToggleElement,
+  Select,
+  SelectList,
+  SelectOption,
   TextInput
 } from '@patternfly/react-core';
 import { isGatewayHostValid } from '../../utils/IstioConfigUtils';
@@ -70,6 +73,7 @@ type Props = {
 };
 
 type FormPort = {
+  isProtocolSelectOpen: boolean;
   name: string;
   number: string;
   protocol: string;
@@ -78,12 +82,16 @@ type FormPort = {
 
 export type ServiceEntryState = {
   formPorts: FormPort[];
+  isLocationSelectOpen: boolean;
+  isResolutionSelectOpen: boolean;
   serviceEntry: ServiceEntrySpec;
   validHosts: boolean;
 };
 
 export const initServiceEntry = (): ServiceEntryState => ({
   formPorts: Array<FormPort>(),
+  isLocationSelectOpen: false,
+  isResolutionSelectOpen: false,
   serviceEntry: {
     location: location[0], // MESH_EXTERNAL
     resolution: resolution[0], // NONE
@@ -170,30 +178,6 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     );
   };
 
-  onAddLocation = (_event: React.FormEvent, value: string): void => {
-    this.setState(
-      prevState => {
-        prevState.serviceEntry.location = value;
-        return {
-          serviceEntry: prevState.serviceEntry
-        };
-      },
-      () => this.props.onChange(this.state)
-    );
-  };
-
-  onAddResolution = (_event: React.FormEvent, value: string): void => {
-    this.setState(
-      prevState => {
-        prevState.serviceEntry.resolution = value;
-        return {
-          serviceEntry: prevState.serviceEntry
-        };
-      },
-      () => this.props.onChange(this.state)
-    );
-  };
-
   onAddPortNumber = (event: React.FormEvent, value: string): void => {
     const formPorts = this.state.formPorts;
     const eName = event.currentTarget.getAttribute('name') !== null ? event.currentTarget.getAttribute('name') : '0';
@@ -227,28 +211,6 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
 
     if (se.ports !== undefined) {
       se.ports[i].name = value;
-    }
-
-    this.setState(
-      {
-        formPorts: formPorts,
-        serviceEntry: se
-      },
-      () => this.props.onChange(this.state)
-    );
-  };
-
-  onAddPortProtocol = (event: React.FormEvent, value: string): void => {
-    const formPorts = this.state.formPorts;
-    const eName = event.currentTarget.getAttribute('name') !== null ? event.currentTarget.getAttribute('name') : '0';
-    const i = parseInt(eName!);
-    formPorts[i].protocol = value;
-
-    // service entry
-    const se = this.checkDefined(i);
-
-    if (se.ports !== undefined) {
-      se.ports[i].protocol = value;
     }
 
     this.setState(
@@ -299,9 +261,10 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
 
   onAddNewPort = (): void => {
     const newPort: FormPort = {
+      isProtocolSelectOpen: false,
       name: '',
-      protocol: protocols[0],
       number: '',
+      protocol: protocols[0],
       targetPort: ''
     };
 
@@ -348,16 +311,50 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
           validated={isValid(isValidName(p.name) && noDuplicatePortNames(p.name, i, this.state.formPorts))}
         />,
 
-        <FormSelect
-          value={p.protocol}
+        <Select
           id={`addPortProtocol_${i}`}
-          name={i.toString()}
-          onChange={this.onAddPortProtocol}
+          isOpen={p.isProtocolSelectOpen}
+          selected={p.protocol}
+          onSelect={(_event, value) => {
+            const formPorts = this.state.formPorts;
+            formPorts[i].protocol = value as string;
+            formPorts[i].isProtocolSelectOpen = false;
+            const se = this.checkDefined(i);
+            if (se.ports !== undefined) {
+              se.ports[i].protocol = value as string;
+            }
+            this.setState({ formPorts, serviceEntry: se }, () => this.props.onChange(this.state));
+          }}
+          onOpenChange={isOpen => {
+            const formPorts = this.state.formPorts;
+            formPorts[i].isProtocolSelectOpen = isOpen;
+            this.setState({ formPorts });
+          }}
+          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+            <MenuToggle
+              id={`addPortProtocol_${i}-toggle`}
+              ref={toggleRef}
+              onClick={() => {
+                const formPorts = this.state.formPorts;
+                formPorts[i].isProtocolSelectOpen = !formPorts[i].isProtocolSelectOpen;
+                this.setState({ formPorts });
+              }}
+              isExpanded={p.isProtocolSelectOpen}
+              isFullWidth
+            >
+              {p.protocol}
+            </MenuToggle>
+          )}
+          aria-label="Protocol Select"
         >
-          {protocols.map((option, index) => (
-            <FormSelectOption key={`p_${index}`} value={option} label={option} />
-          ))}
-        </FormSelect>,
+          <SelectList>
+            {protocols.map((option, index) => (
+              <SelectOption key={`p_${index}`} value={option}>
+                {option}
+              </SelectOption>
+            ))}
+          </SelectList>
+        </Select>,
 
         <TextInput
           value={p.targetPort}
@@ -406,16 +403,44 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
         </FormGroup>
 
         <FormGroup label="Location" isRequired={true} fieldId="location">
-          <FormSelect
-            value={this.state.serviceEntry.location}
+          <Select
             id="location"
-            name="location"
-            onChange={this.onAddLocation}
+            isOpen={this.state.isLocationSelectOpen}
+            selected={this.state.serviceEntry.location}
+            onSelect={(_event, value) => {
+              this.setState(
+                prevState => {
+                  prevState.serviceEntry.location = value as string;
+                  return {
+                    isLocationSelectOpen: false,
+                    serviceEntry: prevState.serviceEntry
+                  };
+                },
+                () => this.props.onChange(this.state)
+              );
+            }}
+            onOpenChange={isLocationSelectOpen => this.setState({ isLocationSelectOpen })}
+            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+              <MenuToggle
+                id="location-toggle"
+                ref={toggleRef}
+                onClick={() => this.setState({ isLocationSelectOpen: !this.state.isLocationSelectOpen })}
+                isExpanded={this.state.isLocationSelectOpen}
+                isFullWidth
+              >
+                {this.state.serviceEntry.location}
+              </MenuToggle>
+            )}
+            aria-label="Location Select"
           >
-            {location.map((option, index) => (
-              <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
-            ))}
-          </FormSelect>
+            <SelectList>
+              {location.map((option, index) => (
+                <SelectOption key={`p_${index}`} value={option}>
+                  {option}
+                </SelectOption>
+              ))}
+            </SelectList>
+          </Select>
         </FormGroup>
 
         <FormGroup label="Ports" fieldId="ports" isRequired={true}>
@@ -437,16 +462,44 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
         </FormGroup>
 
         <FormGroup label="Resolution" isRequired={true} fieldId="resolution">
-          <FormSelect
-            value={this.state.serviceEntry.resolution}
+          <Select
             id="resolution"
-            name="resolution"
-            onChange={this.onAddResolution}
+            isOpen={this.state.isResolutionSelectOpen}
+            selected={this.state.serviceEntry.resolution}
+            onSelect={(_event, value) => {
+              this.setState(
+                prevState => {
+                  prevState.serviceEntry.resolution = value as string;
+                  return {
+                    isResolutionSelectOpen: false,
+                    serviceEntry: prevState.serviceEntry
+                  };
+                },
+                () => this.props.onChange(this.state)
+              );
+            }}
+            onOpenChange={isResolutionSelectOpen => this.setState({ isResolutionSelectOpen })}
+            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+              <MenuToggle
+                id="resolution-toggle"
+                ref={toggleRef}
+                onClick={() => this.setState({ isResolutionSelectOpen: !this.state.isResolutionSelectOpen })}
+                isExpanded={this.state.isResolutionSelectOpen}
+                isFullWidth
+              >
+                {this.state.serviceEntry.resolution}
+              </MenuToggle>
+            )}
+            aria-label="Resolution Select"
           >
-            {resolution.map((option, index) => (
-              <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
-            ))}
-          </FormSelect>
+            <SelectList>
+              {resolution.map((option, index) => (
+                <SelectOption key={`p_${index}`} value={option}>
+                  {option}
+                </SelectOption>
+              ))}
+            </SelectList>
+          </Select>
         </FormGroup>
       </>
     );
