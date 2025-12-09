@@ -298,13 +298,13 @@ export const setNodeLabel = (
     !isNamespaceBoxed &&
     isBox !== BoxByType.NAMESPACE
   ) {
-    content.push(`(${namespace})`);
+    content.push(`${namespace}`);
   }
 
   // append cluster if necessary
   const homeCluster = kialiHomeCluster?.name || CLUSTER_DEFAULT;
   if (!!cluster && cluster !== UNKNOWN && cluster !== homeCluster && !isBoxed && isBox !== BoxByType.CLUSTER) {
-    content.push(`(${cluster})`);
+    content.push(`${cluster}`);
   }
 
   switch (nodeType) {
