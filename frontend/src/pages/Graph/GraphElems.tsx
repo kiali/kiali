@@ -376,7 +376,7 @@ export const setNodeLabel = (
 
     if (pfBadge) {
       data.badge = pfBadge.badge;
-      data.badgeColor = PFColors.BackgroundColor100;
+      data.badgeColor = PFColors.Black1000;
       data.badgeBorderColor = PFColors.Blue300;
     }
   } else if (data.isExtension) {
