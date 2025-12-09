@@ -208,20 +208,17 @@ export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphSetting
 };
 
 const rootIconStyle = kialiStyle({
-  color: PFColors.White,
   display: 'flex',
   marginLeft: '0.125rem',
   marginTop: '0.125rem'
 });
 
 const gatewayIconStyle = kialiStyle({
-  color: PFColors.White,
   display: 'flex',
   marginTop: '-0.125rem'
 });
 
 const waypointIconStyle = kialiStyle({
-  color: PFColors.White,
   display: 'flex',
   marginLeft: '0.125rem',
   marginTop: '-0.125rem'
