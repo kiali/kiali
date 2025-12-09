@@ -1,5 +1,5 @@
 import { AppenderString, TimeInSeconds } from '../types/Common';
-import * as AlertUtils from '../utils/AlertUtils';
+import { addError } from '../utils/AlertUtils';
 import { PromisesRegistry } from '../utils/CancelablePromises';
 import * as API from './Api';
 import { decorateMeshData } from '../store/Selectors/MeshData';
@@ -175,7 +175,7 @@ export class MeshDataSource {
 
         this._isError = true;
         this._errorMessage = API.getErrorString(error);
-        AlertUtils.addError('Cannot load the mesh', error);
+        addError('Cannot load the mesh', error);
         this.emit('fetchError', `Cannot load the mesh: ${this.errorMessage}`, this.fetchParameters);
       }
     );

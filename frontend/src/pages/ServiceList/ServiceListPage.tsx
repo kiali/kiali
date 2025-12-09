@@ -12,6 +12,7 @@ import { SortField } from '../../types/SortFilters';
 import { ActiveFiltersInfo, ActiveTogglesInfo } from '../../types/Filters';
 import { FilterSelected, StatefulFilters, Toggles } from '../../components/Filters/StatefulFilters';
 import * as API from '../../services/Api';
+import { addError } from '../../utils/AlertUtils';
 import { ObjectValidation, Validations } from '../../types/IstioObjects';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { KialiAppState } from '../../store/Store';
@@ -201,7 +202,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
       })
       .catch(err => {
         if (!err.isCanceled) {
-          this.handleApiError('Could not fetch services list', err);
+          addError('Could not fetch services list', err);
         }
       });
   }

@@ -12,7 +12,7 @@ import { TracesComponent } from 'components/TracingIntegration/TracesComponent';
 import { TracingInfo } from 'types/TracingInfo';
 import { TrafficDetails } from 'components/TrafficList/TrafficDetails';
 import * as API from '../../services/Api';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addError } from '../../utils/AlertUtils';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ServiceId, getServiceWizardLabel, ServiceDetailsInfo } from '../../types/ServiceInfo';
 import {
@@ -134,7 +134,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         this.setState({ k8sGateways: response.data.resources[getGVKTypeString(gvkType.K8sGateway)] });
       })
       .catch(gwError => {
-        AlertUtils.addError('Could not fetch Gateways list.', gwError);
+        addError('Could not fetch Gateways list.', gwError);
       });
 
     const servicePromise = API.getServiceDetail(
@@ -151,7 +151,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         });
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch Service Details.', error);
+        addError('Could not fetch Service Details.', error);
         const msg: ErrorMsg = {
           title: 'No Service is selected',
           description: `${this.props.serviceId.service} is not found in the mesh`
@@ -173,7 +173,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         });
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch PeerAuthentications.', error);
+        addError('Could not fetch PeerAuthentications.', error);
       });
 
     return servicePromise;

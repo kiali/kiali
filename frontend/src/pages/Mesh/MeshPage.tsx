@@ -5,7 +5,7 @@ import FlexView from 'react-flexview';
 import { kialiStyle } from 'styles/StyleUtils';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import { UNKNOWN } from '../../types/Graph';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addDanger } from '../../utils/AlertUtils';
 import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
 import {
   durationSelector,
@@ -374,7 +374,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   };
 
   private notifyError = (error: Error, _componentStack: string): void => {
-    AlertUtils.add(`There was an error when rendering the mesh: ${error.message}, please try a different layout`);
+    addDanger(`There was an error when rendering the mesh: ${error.message}, please try a different layout`);
   };
 
   // It is common that when updating the mesh that the element topology (nodes, edges) remain the same,

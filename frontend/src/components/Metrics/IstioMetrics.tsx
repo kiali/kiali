@@ -8,7 +8,7 @@ import * as API from 'services/Api';
 import { KialiAppState } from 'store/Store';
 import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange, IntervalInMilliseconds } from 'types/Common';
 import { Direction, IstioMetricsOptions, Reporter } from 'types/MetricsOptions';
-import * as AlertUtils from 'utils/AlertUtils';
+import { addError } from 'utils/AlertUtils';
 import { RenderComponentScroll } from 'components/Nav/Page';
 import * as MetricsHelper from './Helper';
 import { KioskElement } from '../Kiosk/KioskElement';
@@ -19,7 +19,7 @@ import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { location, router, URLParam } from 'app/History';
 import { MetricsObjectTypes } from 'types/Metrics';
 import { GrafanaInfo } from 'types/GrafanaInfo';
-import { MessageType } from 'types/MessageCenter';
+import { MessageType } from 'types/NotificationCenter';
 import { SpanOverlay, JaegerLineInfo } from './SpanOverlay';
 import { ChartModel, DashboardModel } from 'types/Dashboards';
 import { Overlay } from 'types/Overlay';
@@ -224,7 +224,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
         });
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch metrics.', error);
+        addError('Could not fetch metrics.', error);
         throw error;
       });
   };
@@ -250,12 +250,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
           }
         })
         .catch(err => {
-          AlertUtils.addMessage({
-            ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
-            group: 'default',
-            type: MessageType.INFO,
-            showNotification: false
-          });
+          addError('Could not fetch Grafana info. Turning off links to Grafana.', err, false, MessageType.INFO);
         });
     }
   }
@@ -281,12 +276,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
           }
         })
         .catch(err => {
-          AlertUtils.addMessage({
-            ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
-            group: 'default',
-            type: MessageType.INFO,
-            showNotification: false
-          });
+          addError('Could not fetch Perses info. Turning off links to Perses.', err, false, MessageType.INFO);
         });
     }
   }

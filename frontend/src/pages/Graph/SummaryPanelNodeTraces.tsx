@@ -6,7 +6,7 @@ import { KialiAppState } from 'store/Store';
 import { TracingThunkActions } from 'actions/TracingThunkActions';
 import { router, URLParam } from '../../app/History';
 import * as API from '../../services/Api';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addError } from '../../utils/AlertUtils';
 import { JaegerTrace, TracingResponse } from 'types/TracingInfo';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { TracingQuery } from 'types/Tracing';
@@ -208,7 +208,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
         this.setState({ traces: traces });
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch traces.', error);
+        addError('Could not fetch traces.', error);
       });
   }
 

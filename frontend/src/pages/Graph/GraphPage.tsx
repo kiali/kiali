@@ -22,7 +22,7 @@ import {
   FocusNode
 } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addDanger, addError, addSuccess } from '../../utils/AlertUtils';
 import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
 import { GraphToolbar } from '../Graph/GraphToolbar/GraphToolbar';
 import { EmptyGraphLayout } from '../../pages/Graph/EmptyGraphLayout';
@@ -719,14 +719,12 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
 
     deleteServiceTrafficRouting(this.state.wizardsData!.serviceDetails!)
       .then(_results => {
-        AlertUtils.addSuccess(
-          `Istio Config deleted for ${this.state.wizardsData.serviceDetails?.service.name} service.`
-        );
+        addSuccess(`Istio Config deleted for ${this.state.wizardsData.serviceDetails?.service.name} service.`);
 
         triggerRefresh();
       })
       .catch(error => {
-        AlertUtils.addError('Could not delete Istio config objects.', error);
+        addError('Could not delete Istio config objects.', error);
       });
   };
 
@@ -770,7 +768,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
   };
 
   private notifyError = (error: Error, _componentStack: string): void => {
-    AlertUtils.add(`There was an error when rendering the graph: ${error.message}, please try a different layout`);
+    addDanger(`There was an error when rendering the graph: ${error.message}, please try a different layout`);
   };
 
   private displayTimeRange = (): string => {

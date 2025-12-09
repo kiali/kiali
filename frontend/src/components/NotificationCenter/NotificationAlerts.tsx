@@ -1,19 +1,19 @@
 import * as React from 'react';
-import { NotificationMessage, MessageType } from '../../types/MessageCenter';
+import { NotificationMessage, MessageType } from '../../types/NotificationCenter';
 import { Alert, AlertActionCloseButton, AlertGroup, AlertVariant } from '@patternfly/react-core';
 
-type NotificationListProps = {
-  messages: NotificationMessage[];
-  onDismiss: (message: NotificationMessage, userDismissed: boolean) => void;
+type NotificationAlertsProps = {
+  alerts: NotificationMessage[];
+  onDismiss: (alert: NotificationMessage, userDismissed: boolean) => void;
 };
 
-export const NotificationList: React.FC<NotificationListProps> = (props: NotificationListProps) => {
+export const NotificationAlerts: React.FC<NotificationAlertsProps> = (props: NotificationAlertsProps) => {
   return (
     <AlertGroup isToast isLiveRegion>
-      {props.messages.map(message => {
+      {props.alerts.map(alert => {
         let variant: AlertVariant;
 
-        switch (message.type) {
+        switch (alert.type) {
           case MessageType.SUCCESS:
             variant = AlertVariant.success;
             break;
@@ -29,11 +29,11 @@ export const NotificationList: React.FC<NotificationListProps> = (props: Notific
 
         return (
           <Alert
-            key={`toast_${message.id}`}
+            key={`toast_${alert.id}`}
             variant={variant}
-            title={message.content}
+            title={alert.content}
             timeout={true}
-            actionClose={<AlertActionCloseButton onClose={() => props.onDismiss(message, true)} />}
+            actionClose={<AlertActionCloseButton onClose={() => props.onDismiss(alert, true)} />}
           />
         );
       })}

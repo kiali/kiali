@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Workload } from 'types/Workload';
 import { Pod, ZtunnelConfigDump } from 'types/IstioObjects';
 import * as API from '../../services/Api';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addError } from '../../utils/AlertUtils';
 import { Card, CardBody, Tab, Tabs, TooltipPosition } from '@patternfly/react-core';
 import { activeTab } from '../../components/Tab/Tabs';
 import { location, router } from '../../app/History';
@@ -110,7 +110,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
         setFetch(false);
       })
       .catch(error => {
-        AlertUtils.addError(`Could not fetch ztunnel config for ${name}.`, error);
+        addError(`Could not fetch ztunnel config for ${name}.`, error);
       });
   }, []);
 

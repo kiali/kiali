@@ -26,6 +26,7 @@ const router = createMemoryRouter([
         externalServices={externalServicesInfo}
         kiosk={''}
         theme={Theme.LIGHT}
+        showNotificationCenter={false}
       />
     ),
     children: pathRoutes
