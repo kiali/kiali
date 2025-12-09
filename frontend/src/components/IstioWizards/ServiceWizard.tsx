@@ -865,6 +865,13 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
           : `${t('Create')} ${t(WIZARD_TITLES[this.props.type])}`
         : 'View Modal';
 
+    const isTrafficShifting =
+      this.props.type === WIZARD_TRAFFIC_SHIFTING || this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING;
+
+    const modalDescription = isTrafficShifting
+      ? t('Determine how traffic is distributed across different workloads.')
+      : undefined;
+
     return (
       <>
         <Modal
@@ -893,8 +900,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         </Modal>
 
         <Modal
-          width={'75%'}
+          maxWidth={'641px'}
+          variant={ModalVariant.medium}
           title={titleModal}
+          description={modalDescription}
           aria-label={titleModal}
           data-test={`${this.props.type}_modal`}
           isOpen={this.state.showWizard}

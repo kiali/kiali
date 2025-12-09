@@ -1,9 +1,18 @@
 import * as React from 'react';
 import { BootstrapSlider } from './BootstrapSlider';
-import { Button, ButtonVariant, InputGroupText, TextInput, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import {
+  Button,
+  ButtonVariant,
+  InputGroup,
+  InputGroupItem,
+  InputGroupText,
+  TextInput,
+  Tooltip,
+  TooltipPosition
+} from '@patternfly/react-core';
 import { Boundaries } from './Boundaries';
 import { kialiStyle } from 'styles/StyleUtils';
-import { MinusIcon, PlusIcon, ThumbTackIcon, MigrationIcon } from '@patternfly/react-icons';
+import { MigrationIcon, LockIcon as PFLockIcon, LockOpenIcon } from '@patternfly/react-icons';
 
 export const noop = Function.prototype;
 
@@ -140,33 +149,21 @@ export class Slider extends React.Component<SliderProps, SliderState> {
       />
     );
 
-    const leftButtonStyle = kialiStyle({
-      width: '20px',
-      paddingLeft: 0,
-      paddingRight: 0,
-      marginLeft: 0
-    });
-
     const inputStyle = kialiStyle({
-      width: '4.5rem',
+      width: '3.5rem',
       textAlign: 'center',
       marginLeft: 0,
       marginRight: 0
     });
 
-    const rightButtonStyle = kialiStyle({
-      width: '20px',
-      paddingLeft: 0,
-      paddingRight: 0
-    });
-
-    const pinButtonStyle = kialiStyle({
+    const lockButtonStyle = kialiStyle({
       paddingLeft: '8px',
       paddingRight: '8px'
     });
 
-    const inputFormatStyle = kialiStyle({
-      marginRight: '2px'
+    const inputGroupStyle = kialiStyle({
+      width: 'fit-content',
+      paddingRight: '4px'
     });
 
     const LockIcon = (
@@ -175,10 +172,10 @@ export class Slider extends React.Component<SliderProps, SliderState> {
         content={<>{this.props.locked ? 'Unlock' : 'Lock'} Weight for this Workload</>}
       >
         <Button
-          icon={<ThumbTackIcon />}
-          className={pinButtonStyle}
+          icon={this.props.locked ? <PFLockIcon /> : <LockOpenIcon />}
+          className={lockButtonStyle}
           isDisabled={this.props.mirrored}
-          variant={this.props.locked ? ButtonVariant.primary : ButtonVariant.secondary}
+          variant={ButtonVariant.plain}
           onClick={() => this.props.onLock(!this.props.locked)}
         ></Button>
       </Tooltip>
@@ -188,10 +185,9 @@ export class Slider extends React.Component<SliderProps, SliderState> {
       <Tooltip position={TooltipPosition.top} content={<>Mirror % traffic to this Workload</>}>
         <Button
           icon={<MigrationIcon />}
-          className={pinButtonStyle}
-          variant={this.props.mirrored ? ButtonVariant.primary : ButtonVariant.secondary}
+          className={lockButtonStyle}
+          variant={ButtonVariant.plain}
           onClick={() => this.props.onMirror(!this.props.mirrored)}
-          style={{ marginLeft: '10px', marginRight: '10px' }}
         ></Button>
       </Tooltip>
     );
@@ -200,32 +196,20 @@ export class Slider extends React.Component<SliderProps, SliderState> {
       <>
         <Boundaries slider={BSSlider} {...this.props}>
           {this.props.input && (
-            <>
-              <Button
-                icon={<MinusIcon />}
-                className={leftButtonStyle}
-                variant={ButtonVariant.link}
-                isDisabled={this.props.locked}
-                onClick={() => this.onMinus()}
-              ></Button>
-              <TextInput
-                className={inputStyle}
-                id="slider-text"
-                aria-label="slider-text"
-                value={this.state.value}
-                onChange={(_event, value: string | number) => this.onInputChange(value)}
-                isDisabled={this.props.locked}
-                data-test={`input-${this.props.id}`}
-              />
-              <Button
-                icon={<PlusIcon />}
-                className={rightButtonStyle}
-                variant={ButtonVariant.link}
-                isDisabled={this.props.locked}
-                onClick={() => this.onPlus()}
-              ></Button>
-              <InputGroupText className={inputFormatStyle}>{this.props.inputFormat}</InputGroupText>
-            </>
+            <InputGroup className={inputGroupStyle}>
+              <InputGroupItem>
+                <TextInput
+                  className={inputStyle}
+                  id="slider-text"
+                  aria-label="slider-text"
+                  value={this.state.value}
+                  onChange={(_event, value: string | number) => this.onInputChange(value)}
+                  isDisabled={this.props.locked}
+                  data-test={`input-${this.props.id}`}
+                />
+              </InputGroupItem>
+              <InputGroupText isDisabled={true}>{this.props.inputFormat}</InputGroupText>
+            </InputGroup>
           )}
 
           {this.props.showMirror ? MirrorIcon : <></>}

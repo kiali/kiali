@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { ThProps } from '@patternfly/react-table';
 import { Slider } from './Slider/Slider';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -7,9 +6,9 @@ import { PFColors } from '../Pf/PfColors';
 import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
 import { getDefaultWeights } from './WizardActions';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { KialiIcon } from 'config/KialiIcon';
-import { SimpleTable } from 'components/Table/SimpleTable';
+import { SimpleTable, SortableTh } from 'components/Table/SimpleTable';
 import { t } from 'utils/I18nUtils';
+import { BalanceScaleIcon } from '@patternfly/react-icons';
 
 type Props = {
   initWeights: WorkloadWeight[];
@@ -38,8 +37,17 @@ const validationStyle = kialiStyle({
 });
 
 const evenlyButtonStyle = kialiStyle({
-  width: '100%',
-  textAlign: 'right'
+  // Push the button to the right
+  marginLeft: 'auto',
+  // Remove the default button padding so that
+  // the button is aligned with the text to the left.
+  paddingBottom: '0'
+});
+
+const evenlyCellStyle = kialiStyle({
+  display: 'flex',
+  // Align the text to the bottom
+  alignItems: 'flex-end'
 });
 
 export const MSG_WEIGHTS_NOT_VALID = 'The sum of all non-mirrored weights must be 100 %';
@@ -204,14 +212,32 @@ export class TrafficShifting extends React.Component<Props, State> {
   render(): React.ReactNode {
     const isValid = this.checkTotalWeight();
 
-    const workloadColumns: ThProps[] = [
+    const workloadColumns: SortableTh[] = [
       {
         title: t('Destination Workload'),
-        width: 30
+        width: 30,
+        sortable: false
       },
       {
+        sortable: false,
         title: t('Traffic Weight'),
-        width: 70
+        width: 70,
+        headerContent: (
+          <div className={evenlyCellStyle}>
+            {t('Traffic Weight')}
+            {this.props.workloads.length > 1 ? (
+              <Button
+                className={evenlyButtonStyle}
+                variant={ButtonVariant.link}
+                icon={<BalanceScaleIcon className={kialiStyle({ color: PFColors.Link })} />}
+                onClick={() => this.resetState()}
+                aria-label={t('Evenly distribute traffic')}
+              >
+                {t('Evenly distribute')}
+              </Button>
+            ) : undefined}
+          </div>
+        )
       }
     ];
 
@@ -252,14 +278,16 @@ export class TrafficShifting extends React.Component<Props, State> {
         };
       });
 
-    const mirrorColumns: ThProps[] = [
+    const mirrorColumns: SortableTh[] = [
       {
         title: t('Mirrored Workload'),
-        width: 30
+        width: 30,
+        sortable: false
       },
       {
         title: t('Mirror Percentage'),
-        width: 70
+        width: 70,
+        sortable: false
       }
     ];
 
@@ -302,18 +330,15 @@ export class TrafficShifting extends React.Component<Props, State> {
 
     return (
       <>
-        <SimpleTable label={t('Weighted routing')} columns={workloadColumns} rows={workloadRows} verticalAlign="middle" />
+        <SimpleTable
+          label={t('Weighted routing')}
+          columns={workloadColumns}
+          rows={workloadRows}
+          verticalAlign="middle"
+        />
 
         {mirrorRows.length > 0 && (
           <SimpleTable label={t('Mirrors')} columns={mirrorColumns} rows={mirrorRows} verticalAlign="middle" />
-        )}
-
-        {this.props.workloads.length > 1 && (
-          <div className={evenlyButtonStyle}>
-            <Button variant={ButtonVariant.link} icon={<KialiIcon.Equalizer />} onClick={() => this.resetState()}>
-              {t('Evenly distribute traffic')}
-            </Button>{' '}
-          </div>
         )}
 
         {this.props.showValid && !isValid && <div className={validationStyle}>{MSG_WEIGHTS_NOT_VALID}</div>}
