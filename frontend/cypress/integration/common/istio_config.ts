@@ -652,14 +652,6 @@ Then('the AuthorizationPolicy should have a {string}', function (healthStatus: s
   );
 });
 
-const hexToRgb = (hex: string): string => {
-  const rValue = parseInt(hex.substring(0, 2), 16);
-  const gValue = parseInt(hex.substring(2, 4), 16);
-  const bValue = parseInt(hex.substring(4), 16);
-
-  return `rgb(${rValue}, ${gValue}, ${bValue})`;
-};
-
 function waitUntilConfigIsVisible(
   retries: number,
   crdInstanceName: string,
@@ -690,20 +682,13 @@ function waitUntilConfigIsVisible(
             });
         } else if (dataTestAttr.value === `VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}` && !hasNA) {
           // Check if the health status icon is correct
-          cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}] span.pf-v6-c-icon`)
+          // In PF6, the icon content has class pf-v6-c-icon__content with modifier class pf-m-${healthStatus}
+          cy.get(
+            `[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}] .pf-v6-c-icon__content.pf-m-${healthStatus}`
+          )
             .should('be.visible')
-            .then(icon => {
-              const colorVar = `--pf-v6-global--${healthStatus}-color--100`;
-              const statusColor = getComputedStyle(icon[0]).getPropertyValue(colorVar).replace('#', '');
-
-              cy.wrap(icon[0])
-                .invoke('css', 'color')
-                .then(iconColor => {
-                  // Convert the status color to RGB format to compare it with the icon color
-                  if (iconColor?.toString() === hexToRgb(statusColor)) {
-                    found = true;
-                  }
-                });
+            .then(() => {
+              found = true;
             });
         }
       }
