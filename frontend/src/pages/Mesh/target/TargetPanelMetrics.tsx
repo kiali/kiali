@@ -15,7 +15,7 @@ import { TargetPanelEditor } from './TargetPanelEditor';
 import { ResourceUsageMetricsMap } from '../../../types/Metrics';
 import { TargetPanelControlPlaneMetrics } from './TargetPanelControlPlaneMetrics';
 import * as API from '../../../services/Api';
-import * as AlertUtils from '../../../utils/AlertUtils';
+import { addError } from '../../../utils/AlertUtils';
 import { computePrometheusRateParams } from '../../../services/Prometheus';
 import { IstioMetricsOptions } from '../../../types/MetricsOptions';
 import { serverConfig } from '../../../config';
@@ -60,7 +60,7 @@ export const TargetPanelMetrics: React.FC<TargetPanelMetricsProps<MeshNodeData>>
         setMetrics(controlPlaneMetrics);
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch component metrics.', error);
+        addError('Could not fetch component metrics.', error);
         throw error;
       });
   };

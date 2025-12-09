@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import * as API from '../../services/Api';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addError } from '../../utils/AlertUtils';
 import { ObjectCheck, Validations, ValidationTypes } from '../../types/IstioObjects';
 import { WorkloadDescription } from './WorkloadDescription';
 import { WorkloadHealth } from '../../types/Health';
@@ -113,7 +113,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
         .then(results => {
           this.setState({ workloadIstioConfig: results.data });
         })
-        .catch(error => AlertUtils.addError('Could not fetch Health/IstioConfig.', error));
+        .catch(error => addError('Could not fetch Health/IstioConfig.', error));
     }
   };
 

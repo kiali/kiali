@@ -32,6 +32,7 @@ describe('Masthead Navigation', () => {
             externalServices={externalServicesInfo}
             kiosk={''}
             theme={Theme.LIGHT}
+            showNotificationCenter={false}
           />
         </MemoryRouter>
       </Provider>
@@ -51,6 +52,7 @@ describe('Masthead Navigation', () => {
             externalServices={externalServicesInfo}
             kiosk={'true'}
             theme={Theme.LIGHT}
+            showNotificationCenter={false}
           />
         </MemoryRouter>
       </Provider>

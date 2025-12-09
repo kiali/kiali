@@ -14,7 +14,7 @@ import { router, HistoryManager, URLParam, location } from '../../app/History';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
 import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from '../../types/Common';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addError } from '../../utils/AlertUtils';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import * as MetricsHelper from './Helper';
 import { KioskElement } from '../Kiosk/KioskElement';
@@ -196,7 +196,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
         });
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch custom dashboard.', error);
+        addError('Could not fetch custom dashboard.', error);
       });
   };
 

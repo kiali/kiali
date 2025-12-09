@@ -1,4 +1,4 @@
-import { NotificationGroup } from '../types/MessageCenter';
+import { NotificationGroup } from '../types/NotificationCenter';
 import { Namespace } from '../types/Namespace';
 import {
   DurationInSeconds,
@@ -93,14 +93,6 @@ export interface GraphToolbarState {
   trafficRates: TrafficRate[];
 }
 
-export interface MessageCenterState {
-  expanded: boolean;
-  expandedGroupId?: string;
-  groups: NotificationGroup[];
-  hidden: boolean;
-  nextId: number; // This likely will go away once we have persistence
-}
-
 export interface GraphState {
   edgeMode: EdgeMode;
   graphDefinition: GraphDefinition | null; // Not for consumption. Only for "Debug" dialog.
@@ -156,12 +148,10 @@ export interface MeshState {
   updateTime: TimeInMilliseconds;
 }
 
-export interface MessageCenterState {
+export interface NotificationCenterState {
   expanded: boolean;
-  expandedGroupId?: string;
   groups: NotificationGroup[];
-  hidden: boolean;
-  nextId: number; // This likely will go away once we have persistence
+  nextId: number;
 }
 
 export interface InterfaceSettings {
@@ -196,9 +186,9 @@ export interface KialiAppState {
   mesh: MeshState;
   /** Tracing Settings */
   meshTLSStatus: TLSStatus;
-  messageCenter: MessageCenterState;
   metricsStats: MetricsStatsState;
   namespaces: NamespaceState;
+  notificationCenter: NotificationCenterState;
   statusState: StatusState;
   tourState: TourState;
   tracingState: TracingState;

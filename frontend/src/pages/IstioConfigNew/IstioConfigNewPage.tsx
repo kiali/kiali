@@ -31,7 +31,7 @@ import { KialiIcon } from '../../config/KialiIcon';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import * as API from '../../services/Api';
 import { IstioPermissions } from '../../types/IstioConfigDetails';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addError, addInfo, addSuccess, addWarning } from '../../utils/AlertUtils';
 import { router } from '../../app/History';
 import {
   buildAuthorizationPolicy,
@@ -43,7 +43,6 @@ import {
   buildServiceEntry,
   buildSidecar
 } from '../../components/IstioWizards/WizardActions';
-import { MessageType } from '../../types/MessageCenter';
 import {
   AuthorizationPolicyForm,
   AuthorizationPolicyState,
@@ -195,7 +194,7 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
 
             activeNamespaces.forEach(ns => {
               if (!canCreateNamespace(ns.name, permResponse.data)) {
-                AlertUtils.addWarning(
+                addWarning(
                   `${t('User does not have permission to create Istio Config on namespace: {{namespace}}', {
                     namespace: ns.name
                   })}${cluster ? t(' in cluster {{clusterName}}', { clusterName: cluster }) : ''}`
@@ -203,7 +202,7 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
               }
 
               if (cluster && !isNamespaceInCluster(ns.name, cluster)) {
-                AlertUtils.addInfo(
+                addInfo(
                   t('Namespace: {{namespace}} is not found in cluster {{clusterName}}', {
                     namespace: ns.name,
                     clusterName: cluster
@@ -215,7 +214,7 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
           .catch(error => {
             // Canceled errors are expected on this query when page is unmounted
             if (!error.isCanceled) {
-              AlertUtils.addError(t('Could not fetch Permissions.'), error);
+              addError(t('Could not fetch Permissions.'), error);
             }
           });
       }
@@ -292,7 +291,7 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
               error.response.status !== 404 ||
               API.getErrorString(error).includes('the server could not find the requested resource')
             ) {
-              AlertUtils.addError(
+              addError(
                 `${t('Could not create Istio {{type}} objects', { type: getGVKTypeString(props.objectGVK) })}${
                   cluster ? t(' in cluster {{clusterName}}', { clusterName: cluster }) : ''
                 }`,
@@ -304,12 +303,10 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
         )
     ).then(results => {
       if (results.filter(value => value !== undefined).length > 0) {
-        AlertUtils.add(
+        addSuccess(
           `${t('Istio {{type}} created', { type: getGVKTypeString(props.objectGVK) })}${
             cluster ? t(' in cluster {{clusterName}}', { clusterName: cluster }) : ''
-          }`,
-          'default',
-          MessageType.SUCCESS
+          }`
         );
       }
     });
@@ -497,7 +494,7 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
         <DefaultSecondaryMasthead showClusterSelector={false} hideNamespaceSelector={true} />
       </div>
 
-       <div style={{ flexGrow: 1, overflowY: 'auto' }}>
+      <div style={{ flexGrow: 1, overflowY: 'auto' }}>
         <RenderContent>
           <Form className={formPadding} isHorizontal={true}>
             <FormGroup label={t('Namespaces')} isRequired={true} fieldId="namespaces">

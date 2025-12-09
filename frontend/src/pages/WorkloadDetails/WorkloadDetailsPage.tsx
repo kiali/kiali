@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab,  } from '@patternfly/react-core';
+import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab } from '@patternfly/react-core';
 import * as API from '../../services/Api';
 import { Workload, WorkloadId, WorkloadQuery } from '../../types/Workload';
 import { WorkloadInfo } from './WorkloadInfo';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addError } from '../../utils/AlertUtils';
 import { IstioMetrics } from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { CustomMetrics } from '../../components/Metrics/CustomMetrics';
@@ -143,7 +143,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         });
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch Workload.', error);
+        addError('Could not fetch Workload.', error);
 
         const msg: ErrorMsg = {
           title: 'No Workload is selected',
@@ -199,7 +199,11 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
                 waypointServiceFilter={this.state.waypointServiceFilter}
               />
             ) : (
-              <EmptyState  headingLevel="h5"   titleText={<>No logs for Workload{this.props.workloadId.workload}</>} variant={EmptyStateVariant.full}>
+              <EmptyState
+                headingLevel="h5"
+                titleText={<>No logs for Workload{this.props.workloadId.workload}</>}
+                variant={EmptyStateVariant.full}
+              >
                 <EmptyStateBody>There are no logs to display because the workload has no pods.</EmptyStateBody>
               </EmptyState>
             )}

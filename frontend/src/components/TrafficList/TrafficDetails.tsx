@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Card, CardBody, Grid, GridItem, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { kialiStyle } from '../../styles/StyleUtils';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addDanger } from '../../utils/AlertUtils';
 import {
   GraphDefinition,
   GraphEdgeWrapper,
@@ -216,7 +216,7 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
       errorMessage = 'Could not fetch traffic data.';
     }
 
-    AlertUtils.addError(errorMessage);
+    addDanger(errorMessage);
   };
 
   private buildTrafficNode = (prefix: 'in' | 'out', node: GraphNodeData): TrafficNode => {

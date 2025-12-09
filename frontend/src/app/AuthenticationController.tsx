@@ -7,12 +7,12 @@ import * as API from '../services/Api';
 import { HelpDropdownActions } from '../actions/HelpDropdownActions';
 import { TracingActions } from '../actions/TracingActions';
 import { LoginThunkActions } from '../actions/LoginThunkActions';
-import { MessageCenterActions } from '../actions/MessageCenterActions';
-import { MessageType } from '../types/MessageCenter';
+import { NotificationCenterActions } from '../actions/NotificationCenterActions';
+import { MessageType } from '../types/NotificationCenter';
 import { KialiDispatch } from '../types/Redux';
 import { InitializingScreen } from './InitializingScreen';
 import { getKioskMode, isKioskMode } from '../utils/SearchParamUtils';
-import * as AlertUtils from '../utils/AlertUtils';
+import { addError } from '../utils/AlertUtils';
 import { setServerConfig, serverConfig, humanDurations } from '../config/ServerConfig';
 import { AuthStrategy } from '../types/Auth';
 import { TracingInfo } from '../types/TracingInfo';
@@ -39,7 +39,7 @@ interface ReduxStateProps {
 }
 
 interface ReduxDispatchProps {
-  addMessage: (content: string, detail: string, groupId?: string, msgType?: MessageType, showNotif?: boolean) => void;
+  addMessage: (content: string, detail: string, groupId: string, msgType: MessageType, isAlert: boolean) => void;
   checkCredentials: () => void;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
   setDuration: (duration: DurationInSeconds) => void;
@@ -181,19 +181,14 @@ class AuthenticationControllerComponent extends React.Component<
         .then(response => this.props.setTracingInfo(response.data))
         .catch(error => {
           this.props.setTracingInfo(null);
-          AlertUtils.addError(
-            'Could not fetch Tracing info. Turning off Tracing integration.',
-            error,
-            'default',
-            MessageType.INFO
-          );
+          addError('Could not fetch Tracing info. Turning off Tracing integration.', error, false, MessageType.INFO);
         });
 
       // Get status is done outside await because it takes some time to respond, so the login screen is not blocked for this
       API.getStatus()
         .then(response => this.processServerStatus(response.data))
         .catch(error => {
-          AlertUtils.addError('Error fetching server status.', error, 'default', MessageType.WARNING);
+          addError('Error fetching server status.', error, true, MessageType.WARNING);
         });
 
       const configs = await Promise.all([getNamespaces, getServerConfig, getTracingInfoPromise]);
@@ -344,7 +339,7 @@ class AuthenticationControllerComponent extends React.Component<
       this.props.addMessage(
         `The following features are disabled: ${status.status[StatusKey.DISABLED_FEATURES]}`,
         '',
-        'default',
+        'info',
         MessageType.INFO,
         false
       );
@@ -359,7 +354,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
-  addMessage: bindActionCreators(MessageCenterActions.addMessage, dispatch),
+  addMessage: bindActionCreators(NotificationCenterActions.addMessage, dispatch),
   checkCredentials: () => dispatch(LoginThunkActions.checkCredentials()),
   setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),
   setDuration: bindActionCreators(UserSettingsActions.setDuration, dispatch),
