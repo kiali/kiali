@@ -2,6 +2,7 @@ import { After, Given, Then, When } from '@badeball/cypress-cucumber-preprocesso
 import { colExists, getColWithRowText } from './table';
 import { ensureKialiFinishedLoading } from './transition';
 import { getGVKTypeString } from 'utils/IstioConfigUtils';
+import { gvkType } from 'types/IstioConfigList';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
@@ -581,7 +582,7 @@ Then('user only sees {string}', (sees: string) => {
   });
 });
 
-Then('only {string} objects are visible in the {string} namespace', (sees: string, ns: string) => {
+Then('only {string} objects are visible in the {string} namespace', (sees: gvkType, ns: string) => {
   let count: number;
 
   cy.request({
@@ -652,12 +653,11 @@ Then('the AuthorizationPolicy should have a {string}', function (healthStatus: s
   );
 });
 
-const hexToRgb = (hex: string): string => {
-  const rValue = parseInt(hex.substring(0, 2), 16);
-  const gValue = parseInt(hex.substring(2, 4), 16);
-  const bValue = parseInt(hex.substring(4), 16);
-
-  return `rgb(${rValue}, ${gValue}, ${bValue})`;
+const iconValidationClasses: { [key: string]: string } = {
+  danger: 'pf-m-danger',
+  info: 'pf-m-info',
+  success: 'pf-m-success',
+  warning: 'pf-m-warning'
 };
 
 function waitUntilConfigIsVisible(
@@ -690,20 +690,21 @@ function waitUntilConfigIsVisible(
             });
         } else if (dataTestAttr.value === `VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}` && !hasNA) {
           // Check if the health status icon is correct
-          cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}] span.pf-v6-c-icon`)
+          cy.get(
+            `[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}] span.pf-v6-c-icon__content`
+          )
             .should('be.visible')
             .then(icon => {
-              const colorVar = `--pf-v6-global--${healthStatus}-color--100`;
-              const statusColor = getComputedStyle(icon[0]).getPropertyValue(colorVar).replace('#', '');
+              const normalizedStatus = healthStatus.toLowerCase();
+              const expectedClass = iconValidationClasses[normalizedStatus];
 
-              cy.wrap(icon[0])
-                .invoke('css', 'color')
-                .then(iconColor => {
-                  // Convert the status color to RGB format to compare it with the icon color
-                  if (iconColor?.toString() === hexToRgb(statusColor)) {
-                    found = true;
-                  }
-                });
+              if (expectedClass) {
+                cy.wrap(icon).should('have.class', expectedClass);
+              } else {
+                cy.wrap(icon).should('exist');
+              }
+
+              found = true;
             });
         }
       }
