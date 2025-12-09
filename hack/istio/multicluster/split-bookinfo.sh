@@ -145,4 +145,53 @@ else
   ${CLIENT_EXE} label --context="${CLUSTER2_CONTEXT}" svc reviews -n ${BOOKINFO_NAMESPACE} istio.io/global="true"
 fi
 
+# Configure waypoint for bookinfo namespace if requested
+if [ "${AMBIENT}" == "true" ] && [ "${WAYPOINT}" == "true" ]; then
+  echo "==== CONFIGURING WAYPOINT FOR BOOKINFO NAMESPACE IN BOTH CLUSTERS"
+  
+  # Create waypoint Gateway YAML
+  WAYPOINT_YAML=$(mktemp)
+  cat <<EOF > "$WAYPOINT_YAML"
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  labels:
+    istio.io/waypoint-for: service
+  name: waypoint
+  namespace: ${BOOKINFO_NAMESPACE}
+spec:
+  gatewayClassName: istio-waypoint
+  listeners:
+  - name: mesh
+    port: 15008
+    protocol: HBONE
+EOF
+
+  # Apply waypoint Gateway to both clusters
+  echo "==== APPLYING WAYPOINT GATEWAY TO CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+  ${CLIENT_EXE} --context="${CLUSTER1_CONTEXT}" apply -f "$WAYPOINT_YAML"
+  
+  echo "==== APPLYING WAYPOINT GATEWAY TO CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
+  ${CLIENT_EXE} --context="${CLUSTER2_CONTEXT}" apply -f "$WAYPOINT_YAML"
+  
+  # Label bookinfo namespace in both clusters
+  echo "==== LABELING BOOKINFO NAMESPACE IN CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+  ${CLIENT_EXE} --context="${CLUSTER1_CONTEXT}" label ns ${BOOKINFO_NAMESPACE} istio.io/use-waypoint=waypoint --overwrite
+  
+  echo "==== LABELING BOOKINFO NAMESPACE IN CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
+  ${CLIENT_EXE} --context="${CLUSTER2_CONTEXT}" label ns ${BOOKINFO_NAMESPACE} istio.io/use-waypoint=waypoint --overwrite
+  
+  # Label waypoint service in both clusters
+  echo "==== LABELING WAYPOINT SERVICE IN CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+  ${CLIENT_EXE} --context="${CLUSTER1_CONTEXT}" label svc waypoint -n ${BOOKINFO_NAMESPACE} istio.io/global=true --overwrite
+  
+  echo "==== LABELING WAYPOINT SERVICE IN CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
+  ${CLIENT_EXE} --context="${CLUSTER2_CONTEXT}" label svc waypoint -n ${BOOKINFO_NAMESPACE} istio.io/global=true --overwrite
+  
+  # Clean up temp file
+  rm -f "$WAYPOINT_YAML"
+  
+  echo "==== WAYPOINT CONFIGURATION COMPLETE"
+fi
+
 echo "Bookinfo application will be available soon at http://${INGRESS_HOST}/productpage"

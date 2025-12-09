@@ -40,6 +40,9 @@ CONFIG_PROFILE=""
 CUSTOM_INSTALL_SETTINGS=""
 PATCH_FILE=""
 WAIT=true
+MESH_ID=""
+CLUSTER_NAME=""
+NETWORK_ID=""
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -69,6 +72,18 @@ while [[ $# -gt 0 ]]; do
       WAIT="$2"
       shift;shift
       ;;
+    -m|--mesh-id)
+      MESH_ID="$2"
+      shift;shift
+      ;;
+    -cn|--cluster-name)
+      CLUSTER_NAME="$2"
+      shift;shift
+      ;;
+    -n|--network)
+      NETWORK_ID="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -89,6 +104,12 @@ Valid command line arguments:
   -w|--wait <true|false>:
        If true, will wait until istiod is ready.
        Default: true
+  -m|--mesh-id <mesh-id>:
+       Mesh ID for multicluster setup. Required for multicluster configurations.
+  -cn|--cluster-name <cluster-name>:
+       Cluster name for multicluster setup. Required for multicluster configurations.
+  -n|--network <network-id>:
+       Network ID for multicluster setup. Required for multicluster configurations.
   -h|--help:
        this message
 HELPMSG
@@ -189,14 +210,12 @@ EOF
 
 ztunnelYAML=$(
 cat <<EOF
-apiVersion: sailoperator.io/v1alpha1
+apiVersion: sailoperator.io/v1
 kind: ZTunnel
 metadata:
   name: default
 spec:
-  profile: ambient
   namespace: ztunnel
-  values: {}
 EOF
 )
 
@@ -223,8 +242,8 @@ spec:
           port: 4317
           service: ${SERVICE}
     global:
-      meshID: mesh-default
-      network: network-default
+      meshID: ${MESH_ID:-mesh-default}
+      network: ${NETWORK_ID:-network-default}
       proxy:
         resources:
           requests:
@@ -244,10 +263,27 @@ EOF
 )
 
 if [ "${CONFIG_PROFILE}" == "ambient" ]; then
+  # Configure ambient profile
   ISTIO_YAML=$(echo "$ISTIO_YAML" | yq eval '
     .spec.profile = "ambient" |
     .spec.values.pilot.trustedZtunnelNamespace = "ztunnel"
   ' -)
+
+  # Add multicluster configuration if provided
+  if [ -n "${CLUSTER_NAME}" ]; then
+    ISTIO_YAML=$(echo "$ISTIO_YAML" | yq eval '
+        .spec.values.global.multiCluster.clusterName = "'"${CLUSTER_NAME}"'" |
+        .spec.values.pilot.env.AMBIENT_ENABLE_MULTI_NETWORK = "true"
+    ' -)
+    ztunnelYAML=$(echo "$ztunnelYAML" | yq eval '
+       .spec.values.ztunnel.multiCluster.clusterName = "'"${CLUSTER_NAME}"'" |
+       .spec.values.ztunnel.network = "'"${NETWORK_ID:-network-default}"'"
+    ' -)
+  else
+    ztunnelYAML=$(echo "$ztunnelYAML" | yq eval '
+      .spec.values = {}
+    ' -)
+  fi
 else
   ISTIO_YAML=$(echo "$ISTIO_YAML" | yq eval '
     .spec.values.global.multiCluster.clusterName = "cluster-default"
@@ -269,6 +305,12 @@ ISTIO_NAMESPACE=$(yq '.spec.namespace' <<< "$ISTIO_YAML")
 
 kubectl get ns "${ISTIO_NAMESPACE}" || kubectl create ns "${ISTIO_NAMESPACE}"
 
+# Label namespace with network if provided
+if [ -n "${NETWORK_ID}" ]; then
+  echo "Labeling namespace ${ISTIO_NAMESPACE} with network: ${NETWORK_ID}"
+  kubectl label namespace "${ISTIO_NAMESPACE}" topology.istio.io/network="${NETWORK_ID}" --overwrite
+fi
+
 kubectl apply -f - <<<"$ISTIO_YAML"
 if [ "${WAIT}" == "true" ]; then
   kubectl wait --for=condition=Ready istios -l kiali.io/testing --timeout=300s
@@ -277,10 +319,23 @@ fi
 if [ "${CONFIG_PROFILE}" == "ambient" ]; then
   echo "Installing CNI for Ambient"
   kubectl get ns "istio-cni" || kubectl create ns "istio-cni"
+  if [ -n "${NETWORK_ID}" ]; then
+    echo "Labeling namespace istio-cni with network: ${NETWORK_ID}"
+    kubectl label namespace "istio-cni" topology.istio.io/network="${NETWORK_ID}" --overwrite
+  fi
+
   kubectl apply -f - <<<"$cniYAML"
 
-  echo "Create ztunnel namespace"
+  echo "Installing ztunnel for Ambient (must be installed before CNI)"
   kubectl get ns "ztunnel" || kubectl create ns "ztunnel"
+  if [ -n "${NETWORK_ID}" ]; then
+      echo "Labeling namespace ztunnel with network: ${NETWORK_ID}"
+      kubectl label namespace "ztunnel" topology.istio.io/network="${NETWORK_ID}" --overwrite
+  fi
+
+  echo "Applying ztunnel configuration..."
+  echo "ZTunnel YAML:"
+  echo "$ztunnelYAML"
   kubectl apply -f - <<<"$ztunnelYAML"
 fi
 
