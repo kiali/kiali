@@ -37,11 +37,10 @@ const testTooltip = (wrapper: any): void => {
   expect(tooltip.props().enableFlip).toEqual(true);
 };
 
-const testIcon = (wrapper: any, dataTest: string, iconName: string): void => {
-  const iconWrapper = wrapper.find(`[data-test="${dataTest}"]`).first();
-  expect(iconWrapper.exists()).toBe(true);
-  const iconComponent = iconWrapper.find(iconName).first();
-  expect(iconComponent.exists()).toBe(true);
+const testIcon = (wrapper: any, dataTest: string, expectedStatus: string): void => {
+  const labelWrapper = wrapper.find(`[data-test="${dataTest}"]`).first();
+  expect(labelWrapper.exists()).toBe(true);
+  expect(labelWrapper.prop('status')).toBe(expectedStatus);
 };
 
 jest.mock('../../../utils/MeshUtils', () => ({
@@ -81,7 +80,7 @@ describe('When core component has a problem', () => {
 
     testSnapshot(wrapper);
     testTooltip(wrapper);
-    testIcon(wrapper, 'istio-status-danger', 'ExclamationCircleIcon');
+    testIcon(wrapper, 'istio-status-danger', 'danger');
   });
 });
 
@@ -104,7 +103,7 @@ describe('When addon component has a problem', () => {
 
     testSnapshot(wrapper);
     testTooltip(wrapper);
-    testIcon(wrapper, 'istio-status-warning', 'ExclamationTriangleIcon');
+    testIcon(wrapper, 'istio-status-warning', 'warning');
   });
 });
 
@@ -128,7 +127,7 @@ describe('When both core and addon component have problems', () => {
 
       testSnapshot(wrapper);
       testTooltip(wrapper);
-      testIcon(wrapper, 'istio-status-danger', 'ExclamationCircleIcon');
+      testIcon(wrapper, 'istio-status-danger', 'danger');
     });
   });
 });
@@ -154,7 +153,7 @@ describe('When there are not-ready components', () => {
 
         testSnapshot(wrapper);
         testTooltip(wrapper);
-        testIcon(wrapper, 'istio-status-danger', 'ExclamationCircleIcon');
+        testIcon(wrapper, 'istio-status-danger', 'danger');
       });
     });
 
@@ -177,7 +176,7 @@ describe('When there are not-ready components', () => {
 
         testSnapshot(wrapper);
         testTooltip(wrapper);
-        testIcon(wrapper, 'istio-status-warning', 'ExclamationTriangleIcon');
+        testIcon(wrapper, 'istio-status-warning', 'warning');
       });
     });
 
@@ -212,7 +211,7 @@ describe('When there are not-ready components', () => {
 
         testSnapshot(wrapper);
         testTooltip(wrapper);
-        testIcon(wrapper, 'istio-status-danger', 'ExclamationCircleIcon');
+        testIcon(wrapper, 'istio-status-danger', 'danger');
       });
     });
   });
@@ -231,7 +230,7 @@ describe('When there are not-ready components', () => {
 
         testSnapshot(wrapper);
         testTooltip(wrapper);
-        testIcon(wrapper, 'istio-status-info', 'InfoCircleIcon');
+        testIcon(wrapper, 'istio-status-info', 'success');
       });
     });
 
@@ -248,7 +247,7 @@ describe('When there are not-ready components', () => {
 
         testSnapshot(wrapper);
         testTooltip(wrapper);
-        testIcon(wrapper, 'istio-status-info', 'InfoCircleIcon');
+        testIcon(wrapper, 'istio-status-info', 'success');
       });
     });
   });
@@ -271,6 +270,6 @@ describe('When all components are good', () => {
       }
     ]);
 
-    testIcon(wrapper, 'istio-status-success', 'CheckCircleIcon');
+    testIcon(wrapper, 'istio-status-success', 'success');
   });
 });
