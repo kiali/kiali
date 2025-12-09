@@ -696,7 +696,6 @@ function waitUntilConfigIsVisible(
   } else {
     // Check if the health status icon has the correct data-test attribute
     const expectedDataTest = healthStatusToDataTest[healthStatus];
-    const iconSelector = `${rowSelector} [data-test="${expectedDataTest}"]`;
 
     cy.get(rowSelector).then($row => {
       // Check if the expected icon exists within the row
