@@ -28,7 +28,7 @@ external_services:
 
 	// Create temporary secret directory structure
 	secretsBaseDir := filepath.Join(tmpDir, "kiali-override-secrets")
-	prometheusTokenDir := filepath.Join(secretsBaseDir, "prometheus-token")
+	prometheusTokenDir := filepath.Join(secretsBaseDir, SecretFilePrometheusToken)
 	err = os.MkdirAll(prometheusTokenDir, 0755)
 	require.NoError(t, err)
 
@@ -82,7 +82,7 @@ external_services:
 	secretsBaseDir := filepath.Join(tmpDir, "kiali-override-secrets")
 
 	// Create cert file with specific key name
-	certDir := filepath.Join(secretsBaseDir, "prometheus-cert")
+	certDir := filepath.Join(secretsBaseDir, SecretFilePrometheusCert)
 	err = os.MkdirAll(certDir, 0755)
 	require.NoError(t, err)
 	certFile := filepath.Join(certDir, "tls.crt")
@@ -90,7 +90,7 @@ external_services:
 	require.NoError(t, err)
 
 	// Create key file with specific key name
-	keyDir := filepath.Join(secretsBaseDir, "prometheus-key")
+	keyDir := filepath.Join(secretsBaseDir, SecretFilePrometheusKey)
 	err = os.MkdirAll(keyDir, 0755)
 	require.NoError(t, err)
 	keyFile := filepath.Join(keyDir, "tls.key")
@@ -146,7 +146,7 @@ external_services:
 	secretsBaseDir := filepath.Join(tmpDir, "kiali-override-secrets")
 
 	// For username, create only value.txt (not the specific key name)
-	usernameDir := filepath.Join(secretsBaseDir, "grafana-username")
+	usernameDir := filepath.Join(secretsBaseDir, SecretFileGrafanaUsername)
 	err = os.MkdirAll(usernameDir, 0755)
 	require.NoError(t, err)
 	usernameFile := filepath.Join(usernameDir, "value.txt")
@@ -154,7 +154,7 @@ external_services:
 	require.NoError(t, err)
 
 	// For password, create only value.txt (not the specific key name)
-	passwordDir := filepath.Join(secretsBaseDir, "grafana-password")
+	passwordDir := filepath.Join(secretsBaseDir, SecretFileGrafanaPassword)
 	err = os.MkdirAll(passwordDir, 0755)
 	require.NoError(t, err)
 	passwordFile := filepath.Join(passwordDir, "value.txt")
@@ -259,28 +259,28 @@ external_services:
 	secretsBaseDir := filepath.Join(tmpDir, "kiali-override-secrets")
 
 	// Prometheus token
-	prometheusTokenDir := filepath.Join(secretsBaseDir, "prometheus-token")
+	prometheusTokenDir := filepath.Join(secretsBaseDir, SecretFilePrometheusToken)
 	err = os.MkdirAll(prometheusTokenDir, 0755)
 	require.NoError(t, err)
 	err = os.WriteFile(filepath.Join(prometheusTokenDir, "value.txt"), []byte("prom-token"), 0600)
 	require.NoError(t, err)
 
 	// Grafana username
-	grafanaUsernameDir := filepath.Join(secretsBaseDir, "grafana-username")
+	grafanaUsernameDir := filepath.Join(secretsBaseDir, SecretFileGrafanaUsername)
 	err = os.MkdirAll(grafanaUsernameDir, 0755)
 	require.NoError(t, err)
 	err = os.WriteFile(filepath.Join(grafanaUsernameDir, "value.txt"), []byte("graf-user"), 0600)
 	require.NoError(t, err)
 
 	// Grafana password
-	grafanaPasswordDir := filepath.Join(secretsBaseDir, "grafana-password")
+	grafanaPasswordDir := filepath.Join(secretsBaseDir, SecretFileGrafanaPassword)
 	err = os.MkdirAll(grafanaPasswordDir, 0755)
 	require.NoError(t, err)
 	err = os.WriteFile(filepath.Join(grafanaPasswordDir, "value.txt"), []byte("graf-pass"), 0600)
 	require.NoError(t, err)
 
 	// Tracing token
-	tracingTokenDir := filepath.Join(secretsBaseDir, "tracing-token")
+	tracingTokenDir := filepath.Join(secretsBaseDir, SecretFileTracingToken)
 	err = os.MkdirAll(tracingTokenDir, 0755)
 	require.NoError(t, err)
 	err = os.WriteFile(filepath.Join(tracingTokenDir, "value.txt"), []byte("trace-token"), 0600)
