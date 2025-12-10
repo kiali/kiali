@@ -1061,7 +1061,6 @@ else
           "--set" "external_services.tracing.tempo_config.tenant=north"
           "--set" "external_services.tracing.tempo_config.url_format=openshift"
           "--set" "external_services.tracing.tempo_config.org_id=1"
-          "--set" "external_services.tracing.auth.ca_file=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt"
           "--set" "external_services.tracing.auth.type=bearer"
           "--set" "external_services.tracing.auth.use_kiali_token=true"
         )
