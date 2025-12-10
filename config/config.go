@@ -1219,7 +1219,7 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	conf = NewConfig()
 	err = yaml.Unmarshal([]byte(yamlString), &conf)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse yaml data. error=%v", err)
+		return nil, fmt.Errorf("failed to parse yaml data. error=%w", err)
 	}
 
 	// Initialize the credential manager for file-based credential support with auto-rotation
@@ -1482,7 +1482,7 @@ func fileExists(filename string) bool {
 func Marshal(conf *Config) (yamlString string, err error) {
 	yamlBytes, err := yaml.Marshal(&conf)
 	if err != nil {
-		return "", fmt.Errorf("failed to produce yaml. error=%v", err)
+		return "", fmt.Errorf("failed to produce yaml. error=%w", err)
 	}
 
 	yamlString = string(yamlBytes)
@@ -1494,7 +1494,7 @@ func LoadFromFile(filename string) (conf *Config, err error) {
 	log.Debugf("Reading YAML config from [%s]", filename)
 	fileContent, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load config file [%v]. error=%v", filename, err)
+		return nil, fmt.Errorf("failed to load config file [%v]. error=%w", filename, err)
 	}
 
 	conf, err = Unmarshal(string(fileContent))
@@ -1507,7 +1507,7 @@ func LoadFromFile(filename string) (conf *Config, err error) {
 		conf.Auth.OpenId.ClientSecret = string(oidcSecret)
 	} else {
 		if !os.IsNotExist(oidcErr) {
-			err = fmt.Errorf("failed to OIDC client secret file [%v]. error=%v", OidcClientSecretFile, oidcErr)
+			err = fmt.Errorf("failed to OIDC client secret file [%v]. error=%w", OidcClientSecretFile, oidcErr)
 		}
 
 		// ...else, if error indicates that secret does not exist, then ignore because the secret is optional
@@ -1520,7 +1520,7 @@ func LoadFromFile(filename string) (conf *Config, err error) {
 func SaveToFile(filename string, conf *Config) (err error) {
 	fileContent, err := Marshal(conf)
 	if err != nil {
-		return fmt.Errorf("failed to save config file [%v]. error=%v", filename, err)
+		return fmt.Errorf("failed to save config file [%v]. error=%w", filename, err)
 	}
 
 	log.Debugf("Writing YAML config to [%s]", filename)
