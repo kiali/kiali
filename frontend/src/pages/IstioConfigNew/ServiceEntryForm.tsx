@@ -73,28 +73,45 @@ type Props = {
 };
 
 type FormPort = {
-  isProtocolSelectOpen: boolean;
   name: string;
   number: string;
   protocol: string;
   targetPort: string;
 };
 
+type FormPortState = FormPort & {
+  isProtocolSelectOpen: boolean;
+};
+
 export type ServiceEntryState = {
   formPorts: FormPort[];
-  isLocationSelectOpen: boolean;
-  isResolutionSelectOpen: boolean;
   serviceEntry: ServiceEntrySpec;
   validHosts: boolean;
 };
 
+type ServiceEntryFormState = Omit<ServiceEntryState, 'formPorts'> & {
+  formPorts: FormPortState[];
+  isLocationSelectOpen: boolean;
+  isResolutionSelectOpen: boolean;
+};
+
 export const initServiceEntry = (): ServiceEntryState => ({
   formPorts: Array<FormPort>(),
-  isLocationSelectOpen: false,
-  isResolutionSelectOpen: false,
   serviceEntry: {
     location: location[0], // MESH_EXTERNAL
     resolution: resolution[0], // NONE
+    ports: []
+  },
+  validHosts: false
+});
+
+const initFormState = (): ServiceEntryFormState => ({
+  formPorts: Array<FormPortState>(),
+  isLocationSelectOpen: false,
+  isResolutionSelectOpen: false,
+  serviceEntry: {
+    location: location[0],
+    resolution: resolution[0],
     ports: []
   },
   validHosts: false
@@ -140,11 +157,19 @@ const isValidTargetPort = (targetPort: string): boolean => {
   return targetPort.length === 0 || isValidPortNumber(targetPort);
 };
 
-export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
+export class ServiceEntryForm extends React.Component<Props, ServiceEntryFormState> {
   constructor(props: Props) {
     super(props);
-    this.state = initServiceEntry();
+    this.state = initFormState();
   }
+
+  private getFormState = (): ServiceEntryState => {
+    const { isLocationSelectOpen, isResolutionSelectOpen, formPorts, ...rest } = this.state;
+    return {
+      ...rest,
+      formPorts: formPorts.map(({ isProtocolSelectOpen, ...port }) => port)
+    };
+  };
 
   areValidHosts = (hosts: string[]): boolean => {
     if (hosts.length === 0) {
@@ -167,22 +192,51 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     const hosts = value.trim().length === 0 ? [] : value.split(',').map(host => host.trim());
 
     this.setState(
-      prevState => {
-        prevState.serviceEntry.hosts = hosts;
-        return {
-          serviceEntry: prevState.serviceEntry,
-          validHosts: this.areValidHosts(hosts)
-        };
-      },
-      () => this.props.onChange(this.state)
+      prevState => ({
+        serviceEntry: { ...prevState.serviceEntry, hosts },
+        validHosts: this.areValidHosts(hosts)
+      }),
+      () => this.props.onChange(this.getFormState())
     );
   };
 
+  onAddLocation = (_event: React.FormEvent | undefined, value: string): void => {
+    this.setState(
+      prevState => ({
+        isLocationSelectOpen: false,
+        serviceEntry: { ...prevState.serviceEntry, location: value }
+      }),
+      () => this.props.onChange(this.getFormState())
+    );
+  };
+
+  onAddResolution = (_event: React.FormEvent | undefined, value: string): void => {
+    this.setState(
+      prevState => ({
+        isResolutionSelectOpen: false,
+        serviceEntry: { ...prevState.serviceEntry, resolution: value }
+      }),
+      () => this.props.onChange(this.getFormState())
+    );
+  };
+
+  onAddPortProtocol = (index: number, value: string): void => {
+    const formPorts = [...this.state.formPorts];
+    formPorts[index] = { ...formPorts[index], protocol: value, isProtocolSelectOpen: false };
+
+    const se = this.checkDefined(index);
+    if (se.ports !== undefined) {
+      se.ports[index].protocol = value;
+    }
+
+    this.setState({ formPorts, serviceEntry: se }, () => this.props.onChange(this.getFormState()));
+  };
+
   onAddPortNumber = (event: React.FormEvent, value: string): void => {
-    const formPorts = this.state.formPorts;
+    const formPorts = [...this.state.formPorts];
     const eName = event.currentTarget.getAttribute('name') !== null ? event.currentTarget.getAttribute('name') : '0';
     const i = parseInt(eName!);
-    formPorts[i].number = value;
+    formPorts[i] = { ...formPorts[i], number: value };
 
     // service entry
     const se = this.checkDefined(i);
@@ -196,15 +250,15 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
         formPorts: formPorts,
         serviceEntry: se
       },
-      () => this.props.onChange(this.state)
+      () => this.props.onChange(this.getFormState())
     );
   };
 
   onAddPortName = (event: React.FormEvent, value: string): void => {
-    const formPorts = this.state.formPorts;
+    const formPorts = [...this.state.formPorts];
     const eName = event.currentTarget.getAttribute('name') !== null ? event.currentTarget.getAttribute('name') : '0';
     const i = parseInt(eName!);
-    formPorts[i].name = value;
+    formPorts[i] = { ...formPorts[i], name: value };
 
     // service entry
     const se = this.checkDefined(i);
@@ -218,15 +272,15 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
         formPorts: formPorts,
         serviceEntry: se
       },
-      () => this.props.onChange(this.state)
+      () => this.props.onChange(this.getFormState())
     );
   };
 
   onAddTargetPort = (event: React.FormEvent, value: string): void => {
-    const formPorts = this.state.formPorts;
+    const formPorts = [...this.state.formPorts];
     const eName = event.currentTarget.getAttribute('name') !== null ? event.currentTarget.getAttribute('name') : '0';
     const i = parseInt(eName!);
-    formPorts[i].targetPort = value;
+    formPorts[i] = { ...formPorts[i], targetPort: value };
 
     // service entry
     const se = this.checkDefined(i);
@@ -240,7 +294,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
         formPorts: formPorts,
         serviceEntry: se
       },
-      () => this.props.onChange(this.state)
+      () => this.props.onChange(this.getFormState())
     );
   };
 
@@ -260,7 +314,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
   };
 
   onAddNewPort = (): void => {
-    const newPort: FormPort = {
+    const newPort: FormPortState = {
       isProtocolSelectOpen: false,
       name: '',
       number: '',
@@ -268,24 +322,28 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
       targetPort: ''
     };
 
-    const newports = this.state.formPorts;
-    newports.push(newPort);
-
     this.setState(
-      {
-        formPorts: newports
-      },
-      () => this.props.onChange(this.state)
+      prevState => ({
+        formPorts: [...prevState.formPorts, newPort]
+      }),
+      () => this.props.onChange(this.getFormState())
     );
   };
 
   handleDelete = (_event: React.MouseEvent, index: number): void => {
-    const state = this.state.formPorts;
-    state.splice(index, 1);
-    const se = this.state.serviceEntry;
-    se.ports?.splice(index, 1);
+    const formPorts = [...this.state.formPorts];
+    formPorts.splice(index, 1);
 
-    this.setState({ formPorts: state, serviceEntry: se }, () => this.props.onChange(this.state));
+    const ports = this.state.serviceEntry.ports ? [...this.state.serviceEntry.ports] : [];
+    ports.splice(index, 1);
+
+    this.setState(
+      prevState => ({
+        formPorts,
+        serviceEntry: { ...prevState.serviceEntry, ports }
+      }),
+      () => this.props.onChange(this.getFormState())
+    );
   };
 
   rows = (): IRow[] => {
@@ -315,19 +373,10 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
           id={`addPortProtocol_${i}`}
           isOpen={p.isProtocolSelectOpen}
           selected={p.protocol}
-          onSelect={(_event, value) => {
-            const formPorts = this.state.formPorts;
-            formPorts[i].protocol = value as string;
-            formPorts[i].isProtocolSelectOpen = false;
-            const se = this.checkDefined(i);
-            if (se.ports !== undefined) {
-              se.ports[i].protocol = value as string;
-            }
-            this.setState({ formPorts, serviceEntry: se }, () => this.props.onChange(this.state));
-          }}
+          onSelect={(_event, value) => this.onAddPortProtocol(i, value as string)}
           onOpenChange={isOpen => {
-            const formPorts = this.state.formPorts;
-            formPorts[i].isProtocolSelectOpen = isOpen;
+            const formPorts = [...this.state.formPorts];
+            formPorts[i] = { ...formPorts[i], isProtocolSelectOpen: isOpen };
             this.setState({ formPorts });
           }}
           toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
@@ -335,8 +384,8 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
               id={`addPortProtocol_${i}-toggle`}
               ref={toggleRef}
               onClick={() => {
-                const formPorts = this.state.formPorts;
-                formPorts[i].isProtocolSelectOpen = !formPorts[i].isProtocolSelectOpen;
+                const formPorts = [...this.state.formPorts];
+                formPorts[i] = { ...formPorts[i], isProtocolSelectOpen: !formPorts[i].isProtocolSelectOpen };
                 this.setState({ formPorts });
               }}
               isExpanded={p.isProtocolSelectOpen}
@@ -407,18 +456,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
             id="location"
             isOpen={this.state.isLocationSelectOpen}
             selected={this.state.serviceEntry.location}
-            onSelect={(_event, value) => {
-              this.setState(
-                prevState => {
-                  prevState.serviceEntry.location = value as string;
-                  return {
-                    isLocationSelectOpen: false,
-                    serviceEntry: prevState.serviceEntry
-                  };
-                },
-                () => this.props.onChange(this.state)
-              );
-            }}
+            onSelect={(_event, value) => this.onAddLocation(_event, value as string)}
             onOpenChange={isLocationSelectOpen => this.setState({ isLocationSelectOpen })}
             toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
               <MenuToggle
@@ -466,18 +504,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
             id="resolution"
             isOpen={this.state.isResolutionSelectOpen}
             selected={this.state.serviceEntry.resolution}
-            onSelect={(_event, value) => {
-              this.setState(
-                prevState => {
-                  prevState.serviceEntry.resolution = value as string;
-                  return {
-                    isResolutionSelectOpen: false,
-                    serviceEntry: prevState.serviceEntry
-                  };
-                },
-                () => this.props.onChange(this.state)
-              );
-            }}
+            onSelect={(_event, value) => this.onAddResolution(_event, value as string)}
             onOpenChange={isResolutionSelectOpen => this.setState({ isResolutionSelectOpen })}
             toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
               <MenuToggle
