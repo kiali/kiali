@@ -53,7 +53,7 @@ export enum PFColors {
   Active = 'var(--pf-t--color--blue--50)' /* CODEMODS: original v5 color was --pf-v5-global--active-color--100 */,
   Badge = 'var(	pf-t--color--blue--30)' /* CODEMODS: original v5 color was --pf-v5-global--palette--blue-300 */,
   Replay = 'var(--pf-t--global--color--brand--100)' /* CODEMODS: original v5 color was --pf-v5-global--active-color--300 */,
-  Link = 'var(--pf-t--color--blue--50)' /* CODEMODS: original v5 color was --pf-v5-global--link--Color */,
+  Link = 'var(--pf-t--global--text--color--link--default)' /* CODEMODS: original v5 color was --pf-v5-global--link--Color */,
 
   // Health/Alert colors https://www.patternfly.org/v4/design-guidelines/styles/colors
   Danger = 'var(--pf-t--global--icon--color--severity--critical--default)' /* CODEMODS: original v5 color was --pf-v5-global--danger-color--100 */,
@@ -88,6 +88,6 @@ export enum PFColors {
   BorderColorLight100 = 'var(--pf-t--global--border--color--50)' /* CODEMODS: original v5 color was --pf-v5-global--BorderColor--light-100 */,
 
   // PF colors suitable for dark backgrounds (don't change in Dark mode)
-  Color300 = "var(--pf-t--global--dark--background--color--300)"/* CODEMODS: original v5 color was --pf-v5-global--Color--300 */,
-  Color400 = "var(--pf-t--global--dark--background--color--400)"/* CODEMODS: original v5 color was --pf-v5-global--Color--400 */
+  Color300 = 'var(--pf-t--global--dark--background--color--300)' /* CODEMODS: original v5 color was --pf-v5-global--Color--300 */,
+  Color400 = 'var(--pf-t--global--dark--background--color--400)' /* CODEMODS: original v5 color was --pf-v5-global--Color--400 */
 }
