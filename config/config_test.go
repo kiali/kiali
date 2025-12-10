@@ -29,8 +29,10 @@ import (
 var testCA []byte
 
 func TestSecretFileOverrides(t *testing.T) {
-	// create a mock volume mount directory where the test secret content will go
+	// Temporarily override the package-level overrideSecretsDir variable for this test
+	originalSecretsDir := overrideSecretsDir
 	overrideSecretsDir = t.TempDir()
+	defer func() { overrideSecretsDir = originalSecretsDir }()
 
 	conf := NewConfig()
 	conf.ExternalServices.Grafana.Auth.Username = "grafanausername"
@@ -200,25 +202,37 @@ func createTestSecretFile(t *testing.T, parentDir string, name string, content s
 
 func TestSensitiveDataObfuscation(t *testing.T) {
 	conf := NewConfig()
+	conf.ExternalServices.Grafana.Auth.CertFile = "my-certfile"
+	conf.ExternalServices.Grafana.Auth.KeyFile = "my-keyfile"
 	conf.ExternalServices.Grafana.Auth.Username = "my-username"
 	conf.ExternalServices.Grafana.Auth.Password = "my-password"
 	conf.ExternalServices.Grafana.Auth.Token = "my-token"
+	conf.ExternalServices.Perses.Auth.CertFile = "my-certfile"
+	conf.ExternalServices.Perses.Auth.KeyFile = "my-keyfile"
 	conf.ExternalServices.Perses.Auth.Username = "my-username"
 	conf.ExternalServices.Perses.Auth.Password = "my-password"
+	conf.ExternalServices.Prometheus.Auth.CertFile = "my-certfile"
+	conf.ExternalServices.Prometheus.Auth.KeyFile = "my-keyfile"
 	conf.ExternalServices.Prometheus.Auth.Username = "my-username"
 	conf.ExternalServices.Prometheus.Auth.Password = "my-password"
 	conf.ExternalServices.Prometheus.Auth.Token = "my-token"
+	conf.ExternalServices.Tracing.Auth.CertFile = "my-certfile"
+	conf.ExternalServices.Tracing.Auth.KeyFile = "my-keyfile"
 	conf.ExternalServices.Tracing.Auth.Username = "my-username"
 	conf.ExternalServices.Tracing.Auth.Password = "my-password"
 	conf.ExternalServices.Tracing.Auth.Token = "my-token"
 	conf.LoginToken.SigningKey = "my-signkey"
 	conf.LoginToken.ExpirationSeconds = 12345
+	conf.ExternalServices.CustomDashboards.Prometheus.Auth.CertFile = "my-certfile"
+	conf.ExternalServices.CustomDashboards.Prometheus.Auth.KeyFile = "my-keyfile"
 	conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username = "my-username"
 	conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password = "my-password"
 	conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token = "my-token"
 
 	printed := fmt.Sprintf("%v", conf)
 
+	assert.NotContains(t, printed, "my-certfile")
+	assert.NotContains(t, printed, "my-keyfile")
 	assert.NotContains(t, printed, "my-username")
 	assert.NotContains(t, printed, "my-password")
 	assert.NotContains(t, printed, "my-token")
@@ -226,18 +240,28 @@ func TestSensitiveDataObfuscation(t *testing.T) {
 	assert.Contains(t, printed, "12345")
 
 	// Test that the original values are unchanged
+	assert.Equal(t, "my-certfile", conf.ExternalServices.Grafana.Auth.CertFile)
+	assert.Equal(t, "my-keyfile", conf.ExternalServices.Grafana.Auth.KeyFile)
 	assert.Equal(t, "my-username", conf.ExternalServices.Grafana.Auth.Username)
 	assert.Equal(t, "my-password", conf.ExternalServices.Grafana.Auth.Password)
 	assert.Equal(t, "my-token", conf.ExternalServices.Grafana.Auth.Token)
+	assert.Equal(t, "my-certfile", conf.ExternalServices.Perses.Auth.CertFile)
+	assert.Equal(t, "my-keyfile", conf.ExternalServices.Perses.Auth.KeyFile)
 	assert.Equal(t, "my-username", conf.ExternalServices.Perses.Auth.Username)
 	assert.Equal(t, "my-password", conf.ExternalServices.Perses.Auth.Password)
+	assert.Equal(t, "my-certfile", conf.ExternalServices.Prometheus.Auth.CertFile)
+	assert.Equal(t, "my-keyfile", conf.ExternalServices.Prometheus.Auth.KeyFile)
 	assert.Equal(t, "my-username", conf.ExternalServices.Prometheus.Auth.Username)
 	assert.Equal(t, "my-password", conf.ExternalServices.Prometheus.Auth.Password)
 	assert.Equal(t, "my-token", conf.ExternalServices.Prometheus.Auth.Token)
+	assert.Equal(t, "my-certfile", conf.ExternalServices.Tracing.Auth.CertFile)
+	assert.Equal(t, "my-keyfile", conf.ExternalServices.Tracing.Auth.KeyFile)
 	assert.Equal(t, "my-username", conf.ExternalServices.Tracing.Auth.Username)
 	assert.Equal(t, "my-password", conf.ExternalServices.Tracing.Auth.Password)
 	assert.Equal(t, "my-token", conf.ExternalServices.Tracing.Auth.Token)
 	assert.Equal(t, "my-signkey", conf.LoginToken.SigningKey)
+	assert.Equal(t, "my-certfile", conf.ExternalServices.CustomDashboards.Prometheus.Auth.CertFile)
+	assert.Equal(t, "my-keyfile", conf.ExternalServices.CustomDashboards.Prometheus.Auth.KeyFile)
 	assert.Equal(t, "my-username", conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username)
 	assert.Equal(t, "my-password", conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password)
 	assert.Equal(t, "my-token", conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token)
@@ -485,6 +509,40 @@ func TestValidateAuthStrategy(t *testing.T) {
 		if err := Validate(conf); err == nil {
 			t.Errorf("Auth Strategy validation should have failed [%v]", conf.Auth.Strategy)
 		}
+	}
+}
+
+func TestValidateSigningKeyLength(t *testing.T) {
+	// Valid signing key lengths are 16, 24, or 32 bytes
+	validLengths := []int{16, 24, 32}
+	invalidLengths := []int{0, 1, 8, 15, 17, 23, 25, 31, 33, 64}
+
+	// Test valid lengths with non-anonymous strategy
+	for _, length := range validLengths {
+		conf := NewConfig()
+		conf.Auth.Strategy = AuthStrategyToken
+		conf.LoginToken.SigningKey = strings.Repeat("x", length)
+		if err := Validate(conf); err != nil {
+			t.Errorf("Signing key validation should have succeeded for length [%d]: %v", length, err)
+		}
+	}
+
+	// Test invalid lengths with non-anonymous strategy
+	for _, length := range invalidLengths {
+		conf := NewConfig()
+		conf.Auth.Strategy = AuthStrategyToken
+		conf.LoginToken.SigningKey = strings.Repeat("x", length)
+		if err := Validate(conf); err == nil {
+			t.Errorf("Signing key validation should have failed for length [%d]", length)
+		}
+	}
+
+	// Test that anonymous strategy doesn't require valid signing key length
+	conf := NewConfig()
+	conf.Auth.Strategy = AuthStrategyAnonymous
+	conf.LoginToken.SigningKey = "short" // Invalid length, but should pass for anonymous
+	if err := Validate(conf); err != nil {
+		t.Errorf("Signing key validation should have succeeded for anonymous strategy regardless of key length: %v", err)
 	}
 }
 
