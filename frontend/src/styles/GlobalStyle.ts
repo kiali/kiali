@@ -41,21 +41,6 @@ export const globalStyle = kialiStyle({
     },
 
     /**
-     * Modal boxes should be above menus and dropdowns
-     */
-    '& .pf-v6-c-modal-box': {
-      zIndex: 300
-    },
-
-    /**
-     * Menus should be below modal boxes
-     * Override PatternFly's default z-index with !important
-     */
-    '& .pf-v6-c-menu': {
-      zIndex: '200 !important'
-    },
-
-    /**
      * Reduce padding of menu group title
      */
     '& .pf-v6-c-menu__group-title': {
