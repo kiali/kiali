@@ -38,10 +38,13 @@ type Props = ReduxStateProps &
 
 export type K8sReferenceGrantState = {
   from: K8sReferenceRule[];
+  to: K8sReferenceRule[];
+};
+
+type K8sReferenceGrantFormState = K8sReferenceGrantState & {
   isFromKindSelectOpen: boolean;
   isFromNamespaceSelectOpen: boolean;
   isToKindSelectOpen: boolean;
-  to: K8sReferenceRule[];
 };
 
 export const initK8sReferenceGrant = (): K8sReferenceGrantState => ({
@@ -52,9 +55,6 @@ export const initK8sReferenceGrant = (): K8sReferenceGrantState => ({
       namespace: ''
     }
   ],
-  isFromKindSelectOpen: false,
-  isFromNamespaceSelectOpen: false,
-  isToKindSelectOpen: false,
   to: [{ kind: Object.keys(TO_KINDS)[0], group: Object.values(TO_KINDS)[0] }]
 });
 
@@ -62,15 +62,30 @@ export const isK8sReferenceGrantStateValid = (g: K8sReferenceGrantState): boolea
   return g.from.length > 0 && g.to.length > 0;
 };
 
-export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sReferenceGrantState> {
+export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sReferenceGrantFormState> {
   constructor(props: Props) {
     super(props);
-    this.state = initK8sReferenceGrant();
+    this.state = {
+      ...initK8sReferenceGrant(),
+      isFromKindSelectOpen: false,
+      isFromNamespaceSelectOpen: false,
+      isToKindSelectOpen: false
+    };
   }
 
   componentDidMount(): void {
     this.props.k8sReferenceGrant.from[0].namespace = this.props.namespaces[0].name;
-    this.setState(this.props.k8sReferenceGrant);
+    this.setState({
+      ...this.props.k8sReferenceGrant,
+      isFromKindSelectOpen: false,
+      isFromNamespaceSelectOpen: false,
+      isToKindSelectOpen: false
+    });
+  }
+
+  private getFormState(): K8sReferenceGrantState {
+    const { isFromKindSelectOpen, isFromNamespaceSelectOpen, isToKindSelectOpen, ...formState } = this.state;
+    return formState;
   }
 
   render(): React.ReactNode {
@@ -89,7 +104,7 @@ export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sRe
                   ],
                   isFromNamespaceSelectOpen: false
                 },
-                () => this.props.onChange(this.state)
+                () => this.props.onChange(this.getFormState())
               );
             }}
             onOpenChange={isFromNamespaceSelectOpen => this.setState({ isFromNamespaceSelectOpen })}
@@ -132,7 +147,7 @@ export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sRe
                   ],
                   isFromKindSelectOpen: false
                 },
-                () => this.props.onChange(this.state)
+                () => this.props.onChange(this.getFormState())
               );
             }}
             onOpenChange={isFromKindSelectOpen => this.setState({ isFromKindSelectOpen })}
@@ -169,7 +184,7 @@ export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sRe
                   to: [{ group: TO_KINDS[value as string], kind: value as string }],
                   isToKindSelectOpen: false
                 },
-                () => this.props.onChange(this.state)
+                () => this.props.onChange(this.getFormState())
               );
             }}
             onOpenChange={isToKindSelectOpen => this.setState({ isToKindSelectOpen })}
