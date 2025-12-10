@@ -1137,7 +1137,7 @@ func Set(conf *Config) {
 	if conf.Credentials == nil {
 		newCreds, err := NewCredentialManager()
 		if err != nil {
-			log.Errorf("failed to initialize credential manager: %v. File-based credential rotation will not be available.", err)
+			log.Errorf("failed to initialize credential manager; file-based credential rotation will not be available: %v", err)
 		} else {
 			conf.Credentials = newCreds
 		}
