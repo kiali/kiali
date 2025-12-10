@@ -32,8 +32,12 @@ type Props = {
 export const OverviewNamespaceActions: React.FC<Props> = (props: Props) => {
   const [isKebabOpen, setIsKebabOpen] = React.useState<boolean>(false);
 
-  const onKebabToggle = (isOpen: boolean) => {
+  const onKebabToggle = (isOpen: boolean): void => {
     setIsKebabOpen(isOpen);
+  };
+
+  const onKebabSelect = (): void => {
+    setIsKebabOpen(!isKebabOpen);
   };
 
   const namespaceActions = props.actions.map((action, i) => {
@@ -112,6 +116,7 @@ export const OverviewNamespaceActions: React.FC<Props> = (props: Props) => {
       )}
       isOpen={isKebabOpen}
       onOpenChange={(isOpen: boolean) => onKebabToggle(isOpen)}
+      onSelect={onKebabSelect}
       popperProps={{ position: 'right' }}
     >
       <DropdownList>{namespaceActions}</DropdownList>
