@@ -1130,14 +1130,14 @@ func Set(conf *Config) {
 
 	oldCreds := configuration.Credentials
 
-	// If the incoming config doesn't already carry a credential manager,
-	// initialize a fresh one. If it already has one (even the same instance),
-	// keep it to avoid tearing down active watchers unnecessarily.
+	// If the incoming config already has a CredentialManager, keep it as-is.
+	// This preserves active file watchers and avoids unnecessary teardown,
+	// which is important when the same config (with the same CredentialManager)
+	// is passed back to Set(). Only create a new CredentialManager if none exists.
 	if conf.Credentials == nil {
 		newCreds, err := NewCredentialManager()
 		if err != nil {
 			log.Errorf("failed to initialize credential manager: %v. File-based credential rotation will not be available.", err)
-			conf.Credentials = nil
 		} else {
 			conf.Credentials = newCreds
 		}
