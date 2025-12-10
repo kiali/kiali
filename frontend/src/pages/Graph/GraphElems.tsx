@@ -376,11 +376,22 @@ export const setNodeLabel = (
 
     if (pfBadge) {
       data.badge = pfBadge.badge;
-      data.badgeColor = PFColors.Black1000;
-      data.badgeBorderColor = PFColors.Blue300;
     }
   } else if (data.isExtension) {
     data.badge = PFBadges.Extension.badge;
+  }
+
+  if (data.badge) {
+    // Different badge styles for groups and node labels
+    if (node.type === 'group') {
+      data.badgeColor = 'var(--pf-topology__group__label__node__label__background--Fill)';
+      data.badgeBorderColor = 'var(--pf-topology__group__label__text--Fill)';
+      data.badgeTextColor = 'var(--pf-topology__group__label__text--Fill)';
+    } else {
+      data.badgeColor = 'var(--pf-topology__node__label__background--Fill)';
+      data.badgeBorderColor = 'var(--pf-topology__node__label__text--Fill)';
+      data.badgeTextColor = 'var(--pf-topology__node__label__text--Fill)';
+    }
   }
 
   node.label = content.shift();

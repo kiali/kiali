@@ -372,7 +372,7 @@ const TopologyContent: React.FC<{
           group: true,
           id: data.id,
           status: getNodeStatus(data),
-          style: { padding: [35, 35, 35, 35] },
+          style: { padding: [25, 35, 50, 35] },
           type: 'group'
         };
         setNodeLabel(group, nodeMap, graphSettings, layoutName);
@@ -836,8 +836,12 @@ const TopologyContent: React.FC<{
                     graphLayout(controller, LayoutType.Layout);
                   },
                   legend: true,
-                  legendIcon: <KialiIcon.Map className={showLegend ? toolbarActiveStyle : undefined} 
-                  status={showLegend ? 'custom' : undefined}/>,
+                  legendIcon: (
+                    <KialiIcon.Map
+                      className={showLegend ? toolbarActiveStyle : undefined}
+                      status={showLegend ? 'custom' : undefined}
+                    />
+                  ),
                   legendTip: 'Legend',
                   legendCallback: () => {
                     if (toggleLegend) toggleLegend();
