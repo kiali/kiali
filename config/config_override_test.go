@@ -313,3 +313,79 @@ external_services:
 	assert.NoError(t, err)
 	assert.Equal(t, "trace-token", traceToken)
 }
+
+// TestSecretOverride_AllCredentials tests that ALL secret overrides work correctly.
+// This is a comprehensive test that covers every credential type for every service.
+func TestSecretOverride_AllCredentials(t *testing.T) {
+	// Define all secret overrides with their corresponding config accessor
+	type secretTest struct {
+		secretFileName string
+		expectedValue  string
+		getConfigValue func(*Config) string
+	}
+
+	tests := []secretTest{
+		// Prometheus
+		{SecretFilePrometheusUsername, "xyz-prom-user", func(c *Config) string { return c.ExternalServices.Prometheus.Auth.Username }},
+		{SecretFilePrometheusPassword, "xyz-prom-pass", func(c *Config) string { return c.ExternalServices.Prometheus.Auth.Password }},
+		{SecretFilePrometheusToken, "xyz-prom-token", func(c *Config) string { return c.ExternalServices.Prometheus.Auth.Token }},
+		{SecretFilePrometheusCert, "xyz-prom-cert", func(c *Config) string { return c.ExternalServices.Prometheus.Auth.CertFile }},
+		{SecretFilePrometheusKey, "xyz-prom-key", func(c *Config) string { return c.ExternalServices.Prometheus.Auth.KeyFile }},
+		// Grafana
+		{SecretFileGrafanaUsername, "xyz-graf-user", func(c *Config) string { return c.ExternalServices.Grafana.Auth.Username }},
+		{SecretFileGrafanaPassword, "xyz-graf-pass", func(c *Config) string { return c.ExternalServices.Grafana.Auth.Password }},
+		{SecretFileGrafanaToken, "xyz-graf-token", func(c *Config) string { return c.ExternalServices.Grafana.Auth.Token }},
+		{SecretFileGrafanaCert, "xyz-graf-cert", func(c *Config) string { return c.ExternalServices.Grafana.Auth.CertFile }},
+		{SecretFileGrafanaKey, "xyz-graf-key", func(c *Config) string { return c.ExternalServices.Grafana.Auth.KeyFile }},
+		// Tracing
+		{SecretFileTracingUsername, "xyz-trace-user", func(c *Config) string { return c.ExternalServices.Tracing.Auth.Username }},
+		{SecretFileTracingPassword, "xyz-trace-pass", func(c *Config) string { return c.ExternalServices.Tracing.Auth.Password }},
+		{SecretFileTracingToken, "xyz-trace-token", func(c *Config) string { return c.ExternalServices.Tracing.Auth.Token }},
+		{SecretFileTracingCert, "xyz-trace-cert", func(c *Config) string { return c.ExternalServices.Tracing.Auth.CertFile }},
+		{SecretFileTracingKey, "xyz-trace-key", func(c *Config) string { return c.ExternalServices.Tracing.Auth.KeyFile }},
+		// Perses
+		{SecretFilePersesUsername, "xyz-perses-user", func(c *Config) string { return c.ExternalServices.Perses.Auth.Username }},
+		{SecretFilePersesPassword, "xyz-perses-pass", func(c *Config) string { return c.ExternalServices.Perses.Auth.Password }},
+		{SecretFilePersesCert, "xyz-perses-cert", func(c *Config) string { return c.ExternalServices.Perses.Auth.CertFile }},
+		{SecretFilePersesKey, "xyz-perses-key", func(c *Config) string { return c.ExternalServices.Perses.Auth.KeyFile }},
+		// Custom Dashboards Prometheus
+		{SecretFileCustomDashboardsPrometheusUsername, "xyz-cd-prom-user", func(c *Config) string { return c.ExternalServices.CustomDashboards.Prometheus.Auth.Username }},
+		{SecretFileCustomDashboardsPrometheusPassword, "xyz-cd-prom-pass", func(c *Config) string { return c.ExternalServices.CustomDashboards.Prometheus.Auth.Password }},
+		{SecretFileCustomDashboardsPrometheusToken, "xyz-cd-prom-token", func(c *Config) string { return c.ExternalServices.CustomDashboards.Prometheus.Auth.Token }},
+		{SecretFileCustomDashboardsPrometheusCert, "xyz-cd-prom-cert", func(c *Config) string { return c.ExternalServices.CustomDashboards.Prometheus.Auth.CertFile }},
+		{SecretFileCustomDashboardsPrometheusKey, "xyz-cd-prom-key", func(c *Config) string { return c.ExternalServices.CustomDashboards.Prometheus.Auth.KeyFile }},
+		// Login Token Signing Key
+		{SecretFileLoginTokenSigningKey, "xyz-16-byte-sign", func(c *Config) string { return c.LoginToken.SigningKey }},
+	}
+
+	// Create temporary directories
+	tmpDir := t.TempDir()
+	secretsBaseDir := filepath.Join(tmpDir, "kiali-override-secrets")
+
+	// Create all secret files
+	for _, test := range tests {
+		dir := filepath.Join(secretsBaseDir, test.secretFileName)
+		require.NoError(t, os.MkdirAll(dir, 0755))
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "value.txt"), []byte(test.expectedValue), 0600))
+	}
+
+	// Create minimal config file
+	configFile := filepath.Join(tmpDir, "config.yaml")
+	require.NoError(t, os.WriteFile(configFile, []byte("server:\n  port: 20001\n"), 0600))
+
+	// Temporarily override the package-level overrideSecretsDir variable for this test
+	originalSecretsDir := overrideSecretsDir
+	overrideSecretsDir = secretsBaseDir
+	defer func() { overrideSecretsDir = originalSecretsDir }()
+
+	conf, err := LoadFromFile(configFile)
+	require.NoError(t, err)
+
+	// Verify all credentials
+	for _, test := range tests {
+		configValue := test.getConfigValue(conf)
+		credential, err := conf.GetCredential(configValue)
+		assert.NoError(t, err, "GetCredential failed for %s", test.secretFileName)
+		assert.Equal(t, test.expectedValue, credential, "Value mismatch for %s", test.secretFileName)
+	}
+}
