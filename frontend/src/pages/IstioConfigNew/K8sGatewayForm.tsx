@@ -16,16 +16,17 @@ type Props = {
 export type K8sGatewayState = {
   addresses: Address[];
   gatewayClass: string;
-  isGatewayClassSelectOpen: boolean;
   listeners: Listener[];
   listenersForm: ListenerForm[];
   validHosts: boolean;
+};
+type K8sGatewayFormState = K8sGatewayState & {
+  isGatewayClassSelectOpen: boolean;
 };
 
 export const initK8sGateway = (): K8sGatewayState => ({
   addresses: [],
   gatewayClass: serverConfig.gatewayAPIClasses.length > 0 ? serverConfig.gatewayAPIClasses[0].className : '',
-  isGatewayClassSelectOpen: false,
   listeners: [],
   listenersForm: [],
   validHosts: false
@@ -78,22 +79,35 @@ const validAddresses = (address: Address[]): boolean => {
   });
 };
 
-export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
+export class K8sGatewayForm extends React.Component<Props, K8sGatewayFormState> {
   constructor(props: Props) {
     super(props);
-    this.state = initK8sGateway();
+    this.state = {
+      ...initK8sGateway(),
+      isGatewayClassSelectOpen: false
+    };
   }
 
   componentDidMount(): void {
-    this.setState(this.props.k8sGateway);
+    this.setState({
+      ...this.props.k8sGateway,
+      isGatewayClassSelectOpen: false
+    });
+  }
+
+  private getFormState(): K8sGatewayState {
+    const { isGatewayClassSelectOpen, ...formState } = this.state;
+    return formState;
   }
 
   onChangeListener = (listeners: Listener[], listenersForm: ListenerForm[]): void => {
-    this.setState({ listeners: listeners, listenersForm: listenersForm }, () => this.props.onChange(this.state));
+    this.setState({ listeners: listeners, listenersForm: listenersForm }, () =>
+      this.props.onChange(this.getFormState())
+    );
   };
 
   onChangeAddress = (addresses: Address[]): void => {
-    this.setState({ addresses: addresses }, () => this.props.onChange(this.state));
+    this.setState({ addresses: addresses }, () => this.props.onChange(this.getFormState()));
   };
 
   render(): React.ReactNode {
@@ -111,7 +125,7 @@ export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
                     gatewayClass: value as string,
                     isGatewayClassSelectOpen: false
                   },
-                  () => this.props.onChange(this.state)
+                  () => this.props.onChange(this.getFormState())
                 );
               }}
               onOpenChange={isGatewayClassSelectOpen => this.setState({ isGatewayClassSelectOpen })}
