@@ -1237,6 +1237,8 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	if !conf.Deployment.ClusterWideAccess {
 		conf.Deployment.AccessibleNamespaces, err = conf.extractAccessibleNamespaceList()
 		if err != nil {
+			conf.Credentials.Close()
+			conf.Credentials = nil
 			return nil, err
 		}
 	}
@@ -1255,6 +1257,8 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 
 	// Initialize certificate pool in CredentialManager
 	if err := conf.Credentials.InitializeCertPool(additionalCABundles); err != nil {
+		conf.Credentials.Close()
+		conf.Credentials = nil
 		return nil, fmt.Errorf("unable to initialize cert pool. Check additional CAs specified at [%s]: %w",
 			strings.Join(additionalCABundles, ","), err)
 	}
@@ -1505,12 +1509,9 @@ func LoadFromFile(filename string) (conf *Config, err error) {
 	// Read OIDC secret, if present
 	if oidcSecret, oidcErr := os.ReadFile(OidcClientSecretFile); oidcErr == nil {
 		conf.Auth.OpenId.ClientSecret = string(oidcSecret)
-	} else {
-		if !os.IsNotExist(oidcErr) {
-			err = fmt.Errorf("failed to OIDC client secret file [%v]. error=%w", OidcClientSecretFile, oidcErr)
-		}
-
-		// ...else, if error indicates that secret does not exist, then ignore because the secret is optional
+	} else if !os.IsNotExist(oidcErr) {
+		// Return error for any issue other than file not existing (the secret is optional)
+		return nil, fmt.Errorf("failed to read OIDC client secret file [%v]. error=%w", OidcClientSecretFile, oidcErr)
 	}
 
 	return
