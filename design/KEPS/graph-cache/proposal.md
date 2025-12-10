@@ -142,6 +142,10 @@ When a user requests a graph:
 1. If cached, return immediately from cache
 2. If not cached, generate synchronously, cache it, and start background refresh job
 
+### OpenShift multi-cluster auth
+
+At this time (v2.19 Kiali), the OpenShift auth solution for multi-cluster may result in multiple session IDs for one user. There is a session ID for each cluster the user logs into via Kiali. Also at this time, the user must always log into the Kiali home cluster. For now, the caching mechanism will, when there are multiple possible session IDs, consstently select the home cluster session ID. This should effectively limit the "logical" user session to a single cache entry.
+
 ## Configuration
 
 Graph caching is controlled via the `kiali_internal.graph_cache` configuration block:
