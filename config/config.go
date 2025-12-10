@@ -1245,14 +1245,16 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 
 	conf.prepareDashboards()
 
-	additionalCABundles := []string{additionalCABundle}
 	// Auth strategy isn't a great proxy for whether the cluster is running on openshift or not
 	// but the config is the very first thing loaded so we don't have access to a client.
-	if conf.Auth.Strategy == AuthStrategyOpenshift {
-		additionalCABundles = append(additionalCABundles, openshiftServingCAFromSA, openshiftServingCA)
-	}
-	if conf.Auth.Strategy == AuthStrategyOpenId {
-		additionalCABundles = append(additionalCABundles, openidServerCA)
+	var additionalCABundles []string
+	switch conf.Auth.Strategy {
+	case AuthStrategyOpenshift:
+		additionalCABundles = []string{additionalCABundle, openshiftServingCAFromSA, openshiftServingCA}
+	case AuthStrategyOpenId:
+		additionalCABundles = []string{additionalCABundle, openidServerCA}
+	default:
+		additionalCABundles = []string{additionalCABundle}
 	}
 
 	// Initialize certificate pool in CredentialManager
