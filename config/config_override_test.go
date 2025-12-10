@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -384,6 +385,12 @@ func TestSecretOverride_AllCredentials(t *testing.T) {
 	// Verify all credentials
 	for _, test := range tests {
 		configValue := test.getConfigValue(conf)
+
+		// Verify the override mechanism set the config value to a file path (not a literal)
+		assert.True(t, strings.HasPrefix(configValue, secretsBaseDir),
+			"Expected [%s] config value to be a file path under [%s], got: [%s]", test.secretFileName, secretsBaseDir, configValue)
+
+		// Verify GetCredential reads the file and returns the expected content
 		credential, err := conf.GetCredential(configValue)
 		assert.NoError(t, err, "GetCredential failed for %s", test.secretFileName)
 		assert.Equal(t, test.expectedValue, credential, "Value mismatch for %s", test.secretFileName)
