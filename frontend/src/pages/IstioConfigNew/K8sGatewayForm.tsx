@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
+import { FormGroup, MenuToggle, MenuToggleElement, Select, SelectList, SelectOption } from '@patternfly/react-core';
 import { AddressList } from './GatewayForm/AddressList';
 import { Address, Listener, MAX_PORT, MIN_PORT } from '../../types/IstioObjects';
 import { addSelectorLabels, ListenerList } from './GatewayForm/ListenerList';
@@ -19,6 +19,9 @@ export type K8sGatewayState = {
   listeners: Listener[];
   listenersForm: ListenerForm[];
   validHosts: boolean;
+};
+type K8sGatewayFormState = K8sGatewayState & {
+  isGatewayClassSelectOpen: boolean;
 };
 
 export const initK8sGateway = (): K8sGatewayState => ({
@@ -76,31 +79,35 @@ const validAddresses = (address: Address[]): boolean => {
   });
 };
 
-export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
+export class K8sGatewayForm extends React.Component<Props, K8sGatewayFormState> {
   constructor(props: Props) {
     super(props);
-    this.state = initK8sGateway();
+    this.state = {
+      ...initK8sGateway(),
+      isGatewayClassSelectOpen: false
+    };
   }
 
   componentDidMount(): void {
-    this.setState(this.props.k8sGateway);
+    this.setState({
+      ...this.props.k8sGateway,
+      isGatewayClassSelectOpen: false
+    });
+  }
+
+  private getFormState(): K8sGatewayState {
+    const { isGatewayClassSelectOpen, ...formState } = this.state;
+    return formState;
   }
 
   onChangeListener = (listeners: Listener[], listenersForm: ListenerForm[]): void => {
-    this.setState({ listeners: listeners, listenersForm: listenersForm }, () => this.props.onChange(this.state));
+    this.setState({ listeners: listeners, listenersForm: listenersForm }, () =>
+      this.props.onChange(this.getFormState())
+    );
   };
 
   onChangeAddress = (addresses: Address[]): void => {
-    this.setState({ addresses: addresses }, () => this.props.onChange(this.state));
-  };
-
-  onChangeGatewayClass = (_event: React.FormEvent, value: string): void => {
-    this.setState(
-      {
-        gatewayClass: value
-      },
-      () => this.props.onChange(this.state)
-    );
+    this.setState({ addresses: addresses }, () => this.props.onChange(this.getFormState()));
   };
 
   render(): React.ReactNode {
@@ -108,16 +115,42 @@ export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
       <>
         {serverConfig.gatewayAPIClasses.length > 1 && (
           <FormGroup label="Gateway Class" fieldId="gatewayClass">
-            <FormSelect
-              value={this.state.gatewayClass}
-              onChange={this.onChangeGatewayClass}
+            <Select
               id="gatewayClass"
-              name="gatewayClass"
+              isOpen={this.state.isGatewayClassSelectOpen}
+              selected={this.state.gatewayClass}
+              onSelect={(_event, value) => {
+                this.setState(
+                  {
+                    gatewayClass: value as string,
+                    isGatewayClassSelectOpen: false
+                  },
+                  () => this.props.onChange(this.getFormState())
+                );
+              }}
+              onOpenChange={isGatewayClassSelectOpen => this.setState({ isGatewayClassSelectOpen })}
+              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                <MenuToggle
+                  id="gatewayClass-toggle"
+                  ref={toggleRef}
+                  onClick={() => this.setState({ isGatewayClassSelectOpen: !this.state.isGatewayClassSelectOpen })}
+                  isExpanded={this.state.isGatewayClassSelectOpen}
+                  isFullWidth
+                >
+                  {serverConfig.gatewayAPIClasses.find(c => c.className === this.state.gatewayClass)?.name ||
+                    this.state.gatewayClass}
+                </MenuToggle>
+              )}
+              aria-label="Gateway Class Select"
             >
-              {serverConfig.gatewayAPIClasses.map((option, index) => (
-                <FormSelectOption key={index} value={option.className} label={option.name} />
-              ))}
-            </FormSelect>
+              <SelectList>
+                {serverConfig.gatewayAPIClasses.map((option, index) => (
+                  <SelectOption key={index} value={option.className}>
+                    {option.name}
+                  </SelectOption>
+                ))}
+              </SelectList>
+            </Select>
           </FormGroup>
         )}
 
