@@ -2,6 +2,7 @@ package config
 
 import (
 	"crypto/x509"
+	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,6 +15,9 @@ import (
 
 	"github.com/kiali/kiali/util/filetest"
 )
+
+//go:embed testdata/test-ca.pem
+var testCA []byte
 
 func TestCredentialManager_LiteralValue(t *testing.T) {
 	cm, err := NewCredentialManager()
@@ -84,7 +88,7 @@ func TestCredentialManager_EmptyFile(t *testing.T) {
 		t.Errorf("Expected no error, got: %v", err)
 	}
 	if result != "" {
-		t.Errorf("Expected empty string, got: '%s'", result)
+		t.Errorf("Expected empty string, got [%s]", result)
 	}
 }
 
@@ -109,7 +113,7 @@ func TestCredentialManager_WhitespaceOnlyFile(t *testing.T) {
 		t.Errorf("Expected no error, got: %v", err)
 	}
 	if result != "" {
-		t.Errorf("Expected empty string after trim, got: '%s'", result)
+		t.Errorf("Expected empty string after trim, got [%s]", result)
 	}
 }
 
@@ -127,7 +131,7 @@ func TestCredentialManager_RelativePathTreatedAsLiteral(t *testing.T) {
 		t.Errorf("Expected no error, got: %v", err)
 	}
 	if result != "relative/path/to/file" {
-		t.Errorf("Expected 'relative/path/to/file' (literal), got: %s", result)
+		t.Errorf("Expected 'relative/path/to/file' (literal), got [%s]", result)
 	}
 }
 
@@ -153,7 +157,7 @@ func TestCredentialManager_FileWithTrailingWhitespace(t *testing.T) {
 		t.Errorf("Expected no error, got: %v", err)
 	}
 	if result != "my-token-value" {
-		t.Errorf("Expected 'my-token-value' (trimmed), got: '%s'", result)
+		t.Errorf("Expected 'my-token-value' (trimmed), got [%s]", result)
 	}
 }
 
@@ -180,7 +184,7 @@ func TestCredentialManager_CachingBehavior(t *testing.T) {
 		t.Errorf("Expected no error on first read, got: %v", err)
 	}
 	if result1 != "initial-token" {
-		t.Errorf("Expected 'initial-token' on first read, got: %s", result1)
+		t.Errorf("Expected 'initial-token' on first read, got [%s]", result1)
 	}
 
 	// Second read - should return cached value immediately
@@ -189,7 +193,7 @@ func TestCredentialManager_CachingBehavior(t *testing.T) {
 		t.Errorf("Expected no error on second read, got: %v", err)
 	}
 	if result2 != "initial-token" {
-		t.Errorf("Expected 'initial-token' on second read (from cache), got: %s", result2)
+		t.Errorf("Expected 'initial-token' on second read (from cache), got [%s]", result2)
 	}
 
 	// Verify both results are identical (proving cache works)
@@ -323,7 +327,7 @@ func TestCredentialManager_SymlinkRotation(t *testing.T) {
 		t.Fatalf("initial read failed: %v", err)
 	}
 	if val != "first" {
-		t.Fatalf("expected first token, got %s", val)
+		t.Fatalf("expected first token, got [%s]", val)
 	}
 
 	// Prepare rotated secret content similar to Kubernetes atomic symlink swap.
@@ -358,7 +362,7 @@ func TestCredentialManager_SymlinkRotation(t *testing.T) {
 	}
 
 	if rotated != "second" {
-		t.Fatalf("expected rotated token 'second', got %q (err=%v)", rotated, err)
+		t.Fatalf("expected rotated token 'second', got [%q]. err: %v", rotated, err)
 	}
 }
 
@@ -420,7 +424,7 @@ func TestConfig_GetCredential_WithCredentialManager(t *testing.T) {
 		t.Errorf("Expected no error for literal, got: %v", err)
 	}
 	if result != "literal-value" {
-		t.Errorf("Expected 'literal-value', got: %s", result)
+		t.Errorf("Expected 'literal-value', got [%s]", result)
 	}
 
 	// Test file path
@@ -429,7 +433,7 @@ func TestConfig_GetCredential_WithCredentialManager(t *testing.T) {
 		t.Errorf("Expected no error for file path, got: %v", err)
 	}
 	if result != "file-token-value" {
-		t.Errorf("Expected 'file-token-value', got: %s", result)
+		t.Errorf("Expected 'file-token-value', got [%s]", result)
 	}
 }
 
@@ -451,7 +455,7 @@ func TestConfig_GetCredential_WithoutCredentialManager(t *testing.T) {
 		t.Errorf("Expected no error for literal, got: %v", err)
 	}
 	if result != "literal-value" {
-		t.Errorf("Expected 'literal-value', got: %s", result)
+		t.Errorf("Expected 'literal-value', got [%s]", result)
 	}
 
 	// Test file path (should work via fallback, just without caching)
@@ -460,7 +464,7 @@ func TestConfig_GetCredential_WithoutCredentialManager(t *testing.T) {
 		t.Errorf("Expected no error for file path, got: %v", err)
 	}
 	if result != "file-token-value" {
-		t.Errorf("Expected 'file-token-value', got: %s", result)
+		t.Errorf("Expected 'file-token-value', got [%s]", result)
 	}
 }
 
@@ -513,7 +517,7 @@ func TestMultipleCredentialManagers(t *testing.T) {
 	}
 
 	if result1 != "shared-value" || result2 != "shared-value" {
-		t.Errorf("Expected both managers to read 'shared-value', got: %s, %s", result1, result2)
+		t.Errorf("Expected both managers to read 'shared-value', got [%s] and [%s]", result1, result2)
 	}
 }
 
@@ -528,7 +532,7 @@ func TestConfig_GetCredential_AuthToken_Literal(t *testing.T) {
 		t.Errorf("Expected no error, got: %v", err)
 	}
 	if result != "literal-token" {
-		t.Errorf("Expected 'literal-token', got: %s", result)
+		t.Errorf("Expected 'literal-token', got [%s]", result)
 	}
 }
 
@@ -554,7 +558,7 @@ func TestConfig_GetCredential_AuthToken_FilePath(t *testing.T) {
 		t.Errorf("Expected no error, got: %v", err)
 	}
 	if result != "file-token" {
-		t.Errorf("Expected 'file-token', got: %s", result)
+		t.Errorf("Expected 'file-token', got [%s]", result)
 	}
 }
 
@@ -567,7 +571,7 @@ func TestConfig_GetCredential_AuthPassword_Literal(t *testing.T) {
 		t.Errorf("Expected no error, got: %v", err)
 	}
 	if result != "literal-password" {
-		t.Errorf("Expected 'literal-password', got: %s", result)
+		t.Errorf("Expected 'literal-password', got [%s]", result)
 	}
 }
 
@@ -593,7 +597,7 @@ func TestConfig_GetCredential_AuthPassword_FilePath(t *testing.T) {
 		t.Errorf("Expected no error, got: %v", err)
 	}
 	if result != "file-password" {
-		t.Errorf("Expected 'file-password', got: %s", result)
+		t.Errorf("Expected 'file-password', got [%s]", result)
 	}
 }
 
@@ -606,7 +610,7 @@ func TestConfig_GetCredential_AuthUsername_Literal(t *testing.T) {
 		t.Errorf("Expected no error, got: %v", err)
 	}
 	if result != "literal-user" {
-		t.Errorf("Expected 'literal-user', got: %s", result)
+		t.Errorf("Expected 'literal-user', got [%s]", result)
 	}
 }
 
@@ -632,7 +636,7 @@ func TestConfig_GetCredential_AuthUsername_FilePath(t *testing.T) {
 		t.Errorf("Expected no error, got: %v", err)
 	}
 	if result != "file-user" {
-		t.Errorf("Expected 'file-user' (trimmed), got: %s", result)
+		t.Errorf("Expected 'file-user' (trimmed), got [%s]", result)
 	}
 }
 
@@ -645,7 +649,7 @@ func TestConfig_GetCredential_AuthToken_Empty(t *testing.T) {
 		t.Errorf("Expected no error, got: %v", err)
 	}
 	if result != "" {
-		t.Errorf("Expected empty string, got: %s", result)
+		t.Errorf("Expected empty string, got [%s]", result)
 	}
 }
 

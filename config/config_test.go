@@ -6,7 +6,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	_ "embed"
 	"encoding/pem"
 	"fmt"
 	"math/big"
@@ -23,9 +22,6 @@ import (
 
 	"github.com/kiali/kiali/util"
 )
-
-//go:embed testdata/test-ca.pem
-var testCA []byte
 
 func TestSecretFileOverrides(t *testing.T) {
 	// Temporarily override the package-level overrideSecretsDir variable for this test
