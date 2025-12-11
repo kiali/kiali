@@ -2,7 +2,15 @@ package tracing
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/base64"
+	"encoding/pem"
+	"math/big"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -423,4 +431,182 @@ func TestTracingClientUseKialiTokenIntegration(t *testing.T) {
 	require.NotNil(t, auth, "Authorization header should be captured")
 	assert.Equal(t, "Bearer "+kialiToken, auth.(string),
 		"Kiali token should be sent in Authorization header when UseKialiToken=true")
+}
+
+// TestTracingClientHTTPSWithCARotation tests that the tracing client correctly uses
+// custom CA bundles for TLS verification, and that CA rotation is reflected in
+// subsequent HTTPS connections.
+func TestTracingClientHTTPSWithCARotation(t *testing.T) {
+	tmpDir := t.TempDir()
+	caFile := tmpDir + "/ca.pem"
+
+	// Generate CA1 and server certificate signed by CA1
+	ca1, ca1PEM, ca1Key := mustGenCA(t, "TestCA1")
+	serverCert1PEM, serverKey1PEM := mustServerCertSignedByCA(t, ca1, ca1Key, []string{"localhost", "127.0.0.1"})
+
+	// Write CA1 to file
+	err := os.WriteFile(caFile, ca1PEM, 0600)
+	require.NoError(t, err)
+
+	// Create TLS server with CA1-signed certificate
+	serverCert1, err := tls.X509KeyPair(serverCert1PEM, serverKey1PEM)
+	require.NoError(t, err)
+
+	// Track requests to verify TLS succeeded
+	var requestCount atomic.Int32
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"data": []}`))
+	})
+
+	// Start HTTPS server with initial cert
+	server := httptest.NewUnstartedServer(handler)
+	server.TLS = &tls.Config{Certificates: []tls.Certificate{serverCert1}}
+	server.StartTLS()
+	defer server.Close()
+
+	// Setup config with custom CA bundle
+	conf := config.NewConfig()
+	conf.Credentials, err = config.NewCredentialManager()
+	require.NoError(t, err)
+	t.Cleanup(conf.Close)
+
+	// Initialize CertPool with our custom CA
+	err = conf.Credentials.InitializeCertPool([]string{caFile})
+	require.NoError(t, err)
+
+	conf.ExternalServices.Tracing.Enabled = true
+	conf.ExternalServices.Tracing.Provider = "jaeger"
+	conf.ExternalServices.Tracing.UseGRPC = false
+	conf.ExternalServices.Tracing.InternalURL = server.URL
+	conf.ExternalServices.Tracing.Auth.InsecureSkipVerify = false
+
+	// Create tracing client
+	ctx := context.Background()
+	client, err := NewClient(ctx, conf, "", true)
+	require.NoError(t, err)
+	require.NotNil(t, client)
+
+	// Make HTTPS request - should succeed with CA1
+	_, err = client.GetServiceStatus(ctx)
+	require.NoError(t, err, "HTTPS request should succeed with CA1")
+	assert.Equal(t, int32(1), requestCount.Load(), "Server should have received 1 request")
+
+	// Now rotate the CA - generate CA2 and new server cert
+	ca2, ca2PEM, ca2Key := mustGenCA(t, "TestCA2")
+	serverCert2PEM, serverKey2PEM := mustServerCertSignedByCA(t, ca2, ca2Key, []string{"localhost", "127.0.0.1"})
+
+	// Update server's certificate to one signed by CA2
+	serverCert2, err := tls.X509KeyPair(serverCert2PEM, serverKey2PEM)
+	require.NoError(t, err)
+
+	// Stop the old server and start a new one with the rotated cert
+	server.Close()
+
+	server2 := httptest.NewUnstartedServer(handler)
+	server2.TLS = &tls.Config{Certificates: []tls.Certificate{serverCert2}}
+	server2.StartTLS()
+	defer server2.Close()
+
+	// Update the tracing config to point to the new server
+	conf.ExternalServices.Tracing.InternalURL = server2.URL
+
+	// NEGATIVE TEST: Client still has CA1, server now uses CA2 - connection should FAIL
+	// The CA file has NOT been updated yet, so client's CertPool still contains CA1
+	clientWithOldCA, err := NewClient(ctx, conf, "", true)
+	require.NoError(t, err)
+	_, err = clientWithOldCA.GetServiceStatus(ctx)
+	require.Error(t, err, "Connection should FAIL when client CA (CA1) doesn't match server cert (signed by CA2)")
+	assert.Contains(t, err.Error(), "certificate",
+		"Error should be a certificate verification failure")
+
+	// Now write CA2 to the file (rotation) so client can pick up the new CA
+	err = os.WriteFile(caFile, ca2PEM, 0600)
+	require.NoError(t, err)
+
+	// Wait for fsnotify to detect the CA file change and verify connection succeeds
+	caRotated := false
+	for i := 0; i < 40; i++ {
+		time.Sleep(50 * time.Millisecond)
+
+		// Create new client with updated config
+		client2, err := NewClient(ctx, conf, "", true)
+		if err != nil {
+			continue
+		}
+
+		// Try to make request with new CA
+		_, err = client2.GetServiceStatus(ctx)
+		if err == nil {
+			caRotated = true
+			break
+		}
+	}
+
+	assert.True(t, caRotated, "Tracing client should successfully connect after CA rotation")
+	assert.GreaterOrEqual(t, requestCount.Load(), int32(2), "Server should have received at least 2 requests")
+}
+
+// =============================================================================
+// Certificate generation helpers (similar to http_util_test.go)
+// =============================================================================
+
+func mustGenCA(t *testing.T, cn string) (*x509.Certificate, []byte, *rsa.PrivateKey) {
+	t.Helper()
+	caKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err, "generate CA key")
+
+	caTmpl := &x509.Certificate{
+		SerialNumber:          big.NewInt(1),
+		Subject:               pkix.Name{CommonName: cn},
+		NotBefore:             time.Now().Add(-time.Hour),
+		NotAfter:              time.Now().Add(24 * time.Hour),
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+	}
+
+	der, err := x509.CreateCertificate(rand.Reader, caTmpl, caTmpl, &caKey.PublicKey, caKey)
+	require.NoError(t, err, "create CA certificate")
+
+	caPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
+	return caTmpl, caPEM, caKey
+}
+
+func mustServerCertSignedByCA(t *testing.T, ca *x509.Certificate, caKey *rsa.PrivateKey, hosts []string) ([]byte, []byte) {
+	t.Helper()
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err, "generate server key")
+
+	// Separate DNS names and IP addresses for SANs
+	var dnsNames []string
+	var ipAddresses []net.IP
+	for _, host := range hosts {
+		if ip := net.ParseIP(host); ip != nil {
+			ipAddresses = append(ipAddresses, ip)
+		} else {
+			dnsNames = append(dnsNames, host)
+		}
+	}
+
+	tmpl := &x509.Certificate{
+		SerialNumber:          big.NewInt(2),
+		Subject:               pkix.Name{CommonName: hosts[0]},
+		NotBefore:             time.Now().Add(-time.Hour),
+		NotAfter:              time.Now().Add(24 * time.Hour),
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		DNSNames:              dnsNames,
+		IPAddresses:           ipAddresses,
+	}
+
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, ca, &key.PublicKey, caKey)
+	require.NoError(t, err, "create server certificate")
+
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
+	return certPEM, keyPEM
 }
