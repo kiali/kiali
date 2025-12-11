@@ -14,15 +14,15 @@ const shortcuts: Shortcut[] = [
   { shortcut: 'Ctrl + Drag', description: t('Select zoom area') },
   { shortcut: 'Node Click', description: t('Select node + side panel') },
   { shortcut: 'Edge Click', description: t('Select edge + side panel') },
-  { shortcut: 'Right Click', description: t('Menu of options') },
-  { shortcut: 'Menu: Node Graph', description: t('Drill into node detail graph') }
+  { shortcut: 'Right Click Node', description: t('Menu of node options') },
+  { shortcut: 'Menu: Node Graph', description: t('Drill down to node graph') }
 ];
 
 const makeShortcut = (shortcut: Shortcut): React.ReactNode => {
   return (
     <div style={{ display: 'flex', marginBottom: '10px' }}>
       <div style={{ flex: '45%' }}>
-        <Label variant="outline" >{shortcut.shortcut}</Label>
+        <Label variant="outline">{shortcut.shortcut}</Label>
       </div>
 
       <div style={{ flex: '55%' }}>{shortcut.description}</div>

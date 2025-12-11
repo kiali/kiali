@@ -75,6 +75,18 @@ const MeshGroupComponent: React.FC<MeshGroupProps> = ({
     }
   });
 
+  // slightly increase the group label fonts for readability (same done for nodes)
+  const labelStyle = kialiStyle({
+    $nest: {
+      '& > text': {
+        fontSize: '1.25rem'
+      },
+      '& .pf-topology__group__label__badge > text': {
+        fontSize: '1rem'
+      }
+    }
+  });
+
   const passedData = React.useMemo(() => {
     const newData = { ...data };
     Object.keys(newData).forEach(key => {
@@ -103,7 +115,9 @@ const MeshGroupComponent: React.FC<MeshGroupProps> = ({
         collapsedWidth={collapsedWidth}
         collapsedHeight={collapsedHeight}
         element={element}
+        hideContextMenuKebab={true}
         hulledOutline={false}
+        labelClassName={labelStyle}
         showLabel={detailsLevel !== ScaleDetailsLevel.low}
         showLabelOnHover={true}
         {...rest}

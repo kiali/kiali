@@ -836,8 +836,12 @@ const TopologyContent: React.FC<{
                     graphLayout(controller, LayoutType.Layout);
                   },
                   legend: true,
-                  legendIcon: <KialiIcon.Map className={showLegend ? toolbarActiveStyle : undefined} 
-                  status={showLegend ? 'custom' : undefined}/>,
+                  legendIcon: (
+                    <KialiIcon.Map
+                      className={showLegend ? toolbarActiveStyle : undefined}
+                      status={showLegend ? 'custom' : undefined}
+                    />
+                  ),
                   legendTip: 'Legend',
                   legendCallback: () => {
                     if (toggleLegend) toggleLegend();
