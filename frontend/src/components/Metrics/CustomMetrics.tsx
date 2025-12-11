@@ -7,15 +7,14 @@ import {
   Card,
   CardBody,
   EmptyState,
-  EmptyStateVariant,
-  EmptyStateHeader
+  EmptyStateVariant
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { router, HistoryManager, URLParam, location } from '../../app/History';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
 import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from '../../types/Common';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addError } from '../../utils/AlertUtils';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import * as MetricsHelper from './Helper';
 import { KioskElement } from '../Kiosk/KioskElement';
@@ -81,8 +80,8 @@ type Props = ReduxStateProps & ReduxDispatchProps & CustomMetricsProps;
 // lower that the standard default, we apply it to several small charts
 const traceLimitDefault = 20;
 
-const fullHeightStyle = kialiStyle({
-  height: '100%'
+const cardStyle = kialiStyle({
+  marginTop: '1rem'
 });
 
 const emptyStyle = kialiStyle({
@@ -197,7 +196,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
         });
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch custom dashboard.', error);
+        addError('Could not fetch custom dashboard.', error);
       });
   };
 
@@ -247,9 +246,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
   renderFetchMetrics = (title: string): React.ReactNode => {
     return (
       <div className={emptyStyle}>
-        <EmptyState variant={EmptyStateVariant.sm}>
-          <EmptyStateHeader titleText={<>{title}</>} headingLevel="h5" />
-        </EmptyState>
+        <EmptyState headingLevel="h5" titleText={<>{title}</>} variant={EmptyStateVariant.sm}></EmptyState>
       </div>
     );
   };
@@ -293,7 +290,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
           <>{content}</>
         ) : (
           <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-            <Card className={fullHeightStyle}>
+            <Card className={cardStyle}>
               <CardBody>{content}</CardBody>
             </Card>
           </RenderComponentScroll>
@@ -350,7 +347,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
             </ToolbarItem>
 
             {this.props.tracingIntegration && (
-              <ToolbarItem style={{ alignSelf: 'center' }}>
+              <ToolbarItem>
                 <TraceSpansLimit
                   label="Spans"
                   onChange={this.onTraceSpansChange}

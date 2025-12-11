@@ -1,24 +1,17 @@
 import * as React from 'react';
-import {
-  AboutModal,
-  TextContent,
-  TextList,
-  TextListItem,
-  Title,
-  Button,
-  TitleSizes,
-  ButtonVariant,
-  Alert
-} from '@patternfly/react-core';
+import { AboutModal, Content, Title, Button, TitleSizes, ButtonVariant, Alert } from '@patternfly/react-core';
 import kialiIconAbout from '../../assets/img/kiali/icon-aboutbkg.svg';
 import { Status, StatusKey } from '../../types/StatusState';
-import { config, kialiLogoDark } from '../../config';
+import { config, kialiIconDark, kialiIconLight } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { ReactComponent as IstioLogo } from '../../assets/img/mesh/istio.svg';
 import { Link } from 'react-router-dom-v5-compat';
 import { PFColors } from 'components/Pf/PfColors';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
+import { useKialiTheme } from 'utils/ThemeUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
+import { Theme } from 'types/Common';
 
 type AboutUIModalProps = {
   isOpen: boolean;
@@ -34,20 +27,12 @@ const modalStyle = kialiStyle({
 
 const iconStyle = kialiStyle({
   height: '1rem',
-  marginBottom: '-2px',
+  marginBottom: '-0.25rem',
   marginRight: '0.5rem',
   marginTop: '1rem',
   $nest: {
     '& path': {
       fill: PFColors.Link
-    }
-  }
-});
-
-const textContentStyle = kialiStyle({
-  $nest: {
-    '& dt, & dd': {
-      lineHeight: 1.667
     }
   }
 });
@@ -59,13 +44,26 @@ const websiteStyle = kialiStyle({
 const alertStyle = kialiStyle({
   marginTop: '1rem',
   $nest: {
-    '& .pf-v5-c-alert__title': {
+    '& .pf-v6-c-alert__title': {
       marginTop: 0
     }
   }
 });
 
+const componentsTitleStyle = kialiStyle({
+  marginBottom: 0,
+  paddingTop: '2.5rem'
+});
+
+const externalLinksTitleStyle = kialiStyle({
+  marginBottom: 0,
+  paddingTop: '1rem'
+});
+
 export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalProps) => {
+  const { t } = useKialiTranslation();
+  const darkTheme = useKialiTheme() === Theme.DARK;
+
   const renderMeshLink = (): React.ReactNode => {
     if (config?.about?.mesh) {
       return (
@@ -123,49 +121,47 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
   return (
     <AboutModal
       backgroundImageSrc={kialiIconAbout}
-      brandImageSrc={kialiLogoDark}
-      brandImageAlt="Kiali Logo"
+      brandImageSrc={darkTheme ? kialiIconDark : kialiIconLight}
+      brandImageAlt={t('Kiali Logo')}
       className={modalStyle}
       isOpen={props.isOpen}
       onClose={props.onClose}
       productName="Kiali"
     >
-      <TextContent className={textContentStyle}>
-        <TextList component="dl">
-          <TextListItem key="kiali-name" component="dt">
-            Kiali
-          </TextListItem>
-          <TextListItem key="kiali-version" component="dd" data-test="kiali-version">
-            {coreVersion!}
-          </TextListItem>
-          <TextListItem key="kiali-container-name" component="dt">
-            Kiali Container
-          </TextListItem>
-          <TextListItem key="kiali-container-version" component="dd" data-test="kiali-container-version">
-            {containerVersion!}
-          </TextListItem>
-        </TextList>
-      </TextContent>
+      <Content component="dl">
+        <Content key="kiali-name" component="dt">
+          Kiali
+        </Content>
+        <Content key="kiali-version" component="dd" data-test="kiali-version">
+          {coreVersion!}
+        </Content>
+        <Content key="kiali-container-name" component="dt">
+          {t('Kiali Container')}
+        </Content>
+        <Content key="kiali-container-version" component="dd" data-test="kiali-container-version">
+          {containerVersion!}
+        </Content>
+      </Content>
 
       {props.warningMessages.length > 0 && (
         <Alert variant="warning" isInline={true} title={props.warningMessages[0]} className={alertStyle} />
       )}
 
-      <TextContent className={textContentStyle}>
+      <Content>
         {isControlPlaneAccessible() && (
           <>
-            <Title headingLevel="h3" size={TitleSizes.xl} style={{ padding: '2.5rem 0 0 0', marginBottom: '0' }}>
-              Components
+            <Title headingLevel="h3" size={TitleSizes.xl} className={componentsTitleStyle}>
+              {t('Components')}
             </Title>
             {renderMeshLink()}
           </>
         )}
-        <Title headingLevel="h3" size={TitleSizes.xl} style={{ padding: '1.0rem 0 0 0', marginBottom: '0' }}>
-          External Links
+        <Title headingLevel="h3" size={TitleSizes.xl} className={externalLinksTitleStyle}>
+          {t('External Links')}
         </Title>
         {renderWebsiteLink()}
         {renderProjectLink()}
-      </TextContent>
+      </Content>
     </AboutModal>
   );
 };

@@ -144,12 +144,11 @@ export class Slider extends React.Component<SliderProps, SliderState> {
       width: '20px',
       paddingLeft: 0,
       paddingRight: 0,
-      marginLeft: 0,
-      marginRight: '5px'
+      marginLeft: 0
     });
 
     const inputStyle = kialiStyle({
-      width: '3rem',
+      width: '4.5rem',
       textAlign: 'center',
       marginLeft: 0,
       marginRight: 0
@@ -158,14 +157,16 @@ export class Slider extends React.Component<SliderProps, SliderState> {
     const rightButtonStyle = kialiStyle({
       width: '20px',
       paddingLeft: 0,
-      paddingRight: 0,
-      marginLeft: '5px',
-      marginRight: '5px'
+      paddingRight: 0
     });
 
     const pinButtonStyle = kialiStyle({
       paddingLeft: '8px',
       paddingRight: '8px'
+    });
+
+    const inputFormatStyle = kialiStyle({
+      marginRight: '2px'
     });
 
     const LockIcon = (
@@ -174,26 +175,24 @@ export class Slider extends React.Component<SliderProps, SliderState> {
         content={<>{this.props.locked ? 'Unlock' : 'Lock'} Weight for this Workload</>}
       >
         <Button
+          icon={<ThumbTackIcon />}
           className={pinButtonStyle}
           isDisabled={this.props.mirrored}
           variant={this.props.locked ? ButtonVariant.primary : ButtonVariant.secondary}
           onClick={() => this.props.onLock(!this.props.locked)}
-        >
-          <ThumbTackIcon />
-        </Button>
+        ></Button>
       </Tooltip>
     );
 
     const MirrorIcon = (
       <Tooltip position={TooltipPosition.top} content={<>Mirror % traffic to this Workload</>}>
         <Button
+          icon={<MigrationIcon />}
           className={pinButtonStyle}
           variant={this.props.mirrored ? ButtonVariant.primary : ButtonVariant.secondary}
           onClick={() => this.props.onMirror(!this.props.mirrored)}
           style={{ marginLeft: '10px', marginRight: '10px' }}
-        >
-          <MigrationIcon />
-        </Button>
+        ></Button>
       </Tooltip>
     );
 
@@ -203,13 +202,12 @@ export class Slider extends React.Component<SliderProps, SliderState> {
           {this.props.input && (
             <>
               <Button
+                icon={<MinusIcon />}
                 className={leftButtonStyle}
                 variant={ButtonVariant.link}
                 isDisabled={this.props.locked}
                 onClick={() => this.onMinus()}
-              >
-                <MinusIcon />
-              </Button>
+              ></Button>
               <TextInput
                 className={inputStyle}
                 id="slider-text"
@@ -220,14 +218,13 @@ export class Slider extends React.Component<SliderProps, SliderState> {
                 data-test={`input-${this.props.id}`}
               />
               <Button
+                icon={<PlusIcon />}
                 className={rightButtonStyle}
                 variant={ButtonVariant.link}
                 isDisabled={this.props.locked}
                 onClick={() => this.onPlus()}
-              >
-                <PlusIcon />
-              </Button>
-              <InputGroupText>{this.props.inputFormat}</InputGroupText>
+              ></Button>
+              <InputGroupText className={inputFormatStyle}>{this.props.inputFormat}</InputGroupText>
             </>
           )}
 

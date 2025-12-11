@@ -1,7 +1,7 @@
 import { combineReducers } from 'redux';
 
 import { KialiAppState } from '../store/Store';
-import { MessageCenterReducer } from './MessageCenter';
+import { NotificationCenterReducer } from './NotificationCenter';
 import { LoginStateReducer } from './LoginState';
 import { HelpDropdownStateReducer } from './HelpDropdownState';
 import { GraphDataStateReducer } from './GraphDataState';
@@ -27,7 +27,7 @@ export const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
   istioCertsInfo: IstioCertsInfoStateReducer,
   mesh: MeshDataStateReducer,
   meshTLSStatus: MeshTlsStateReducer,
-  messageCenter: MessageCenterReducer,
+  notificationCenter: NotificationCenterReducer,
   metricsStats: MetricsStatsStateReducer,
   namespaces: NamespaceStateReducer,
   statusState: HelpDropdownStateReducer,

@@ -20,7 +20,7 @@ import { findValueSelector, hideValueSelector, edgeLabelsSelector, edgeModeSelec
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import { GraphHelpFind } from '../../../pages/Graph/GraphHelpFind';
 import { EdgeLabelMode, NodeType, EdgeMode, NodeAttr, EdgeAttr, LayoutType } from '../../../types/Graph';
-import * as AlertUtils from '../../../utils/AlertUtils';
+import { addSuccess } from '../../../utils/AlertUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { TourStop } from 'components/Tour/TourStop';
@@ -36,7 +36,6 @@ import { elems, SelectAnd, SelectExp, selectOr, SelectOr, setObserved, toSafeFie
 import { descendents } from 'helpers/GraphHelpers';
 import { isArray } from 'lodash';
 import { graphLayout } from 'pages/Graph/Graph';
-import { infoStyle } from 'styles/IconStyle';
 
 type ReduxStateProps = {
   edgeLabels: EdgeLabelMode[];
@@ -84,13 +83,13 @@ const thinGroupStyle = kialiStyle({
 });
 
 const buttonClearStyle = kialiStyle({
+  marginLeft: '0.125rem',
   paddingLeft: '0.75rem',
   paddingRight: '0.75rem'
 });
 
 const findHideHelpStyle = kialiStyle({
-  paddingLeft: '0',
-  paddingRight: '0'
+  marginLeft: '0.125rem'
 });
 
 const gridStyle = kialiStyle({
@@ -100,7 +99,7 @@ const gridStyle = kialiStyle({
 const graphFindStyle = kialiStyle({
   marginRight: '0.75rem',
   $nest: {
-    '& > .pf-v5-c-form__group-control': {
+    '& > .pf-v6-c-form__group-control': {
       display: 'flex'
     }
   }
@@ -108,7 +107,7 @@ const graphFindStyle = kialiStyle({
 
 const graphHideStyle = kialiStyle({
   $nest: {
-    '& > .pf-v5-c-form__group-control': {
+    '& > .pf-v6-c-form__group-control': {
       display: 'flex'
     }
   }
@@ -388,32 +387,30 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
                 )}
               </FormGroup>
             </GridItem>
+
+            {this.props.showFindHelp ? (
+              <GraphHelpFind onClose={this.toggleFindHelp}>
+                <Button
+                  data-test="graph-find-hide-help-button"
+                  icon={<KialiIcon.Info />}
+                  variant={ButtonVariant.link}
+                  className={findHideHelpStyle}
+                  onClick={this.toggleFindHelp}
+                />
+              </GraphHelpFind>
+            ) : (
+              <Tooltip key={'ot_graph_find_help'} position="top" content="Click to open Find/Hide help">
+                <Button
+                  data-test="graph-find-hide-help-button"
+                  icon={<KialiIcon.Info />}
+                  variant={ButtonVariant.link}
+                  className={findHideHelpStyle}
+                  onClick={this.toggleFindHelp}
+                />
+              </Tooltip>
+            )}
           </Grid>
         </Form>
-
-        {this.props.showFindHelp ? (
-          <GraphHelpFind onClose={this.toggleFindHelp}>
-            <Button
-              data-test="graph-find-hide-help-button"
-              variant={ButtonVariant.link}
-              className={findHideHelpStyle}
-              onClick={this.toggleFindHelp}
-            >
-              <KialiIcon.Info className={infoStyle} />
-            </Button>
-          </GraphHelpFind>
-        ) : (
-          <Tooltip key={'ot_graph_find_help'} position="top" content="Click to open Find/Hide help">
-            <Button
-              data-test="graph-find-hide-help-button"
-              variant={ButtonVariant.link}
-              className={findHideHelpStyle}
-              onClick={this.toggleFindHelp}
-            >
-              <KialiIcon.Info className={infoStyle} />
-            </Button>
-          </Tooltip>
-        )}
       </TourStop>
     );
   }
@@ -935,7 +932,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
         return { target: 'node', selector: { prop: NodeAttr.aggregateValue, op: op, val: val } };
       case 'rank': {
         if (!this.props.showRank) {
-          AlertUtils.addSuccess('Enabling "Rank" display option for graph find/hide expression');
+          addSuccess('Enabling "Rank" display option for graph find/hide expression');
           this.props.toggleRank();
         }
 
@@ -969,7 +966,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       //
       case 'destprincipal':
         if (!this.props.showSecurity) {
-          AlertUtils.addSuccess('Enabling "Security" display option for graph find/hide expression');
+          addSuccess('Enabling "Security" display option for graph find/hide expression');
           this.props.toggleGraphSecurity();
         }
 
@@ -1006,7 +1003,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       case 'rt':
       case 'responsetime': {
         if (!this.props.edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP)) {
-          AlertUtils.addSuccess('Enabling [P95] "Response Time" edge labels for this graph find/hide expression');
+          addSuccess('Enabling [P95] "Response Time" edge labels for this graph find/hide expression');
           this.props.setEdgeLabels([
             ...this.props.edgeLabels,
             EdgeLabelMode.RESPONSE_TIME_GROUP,
@@ -1019,7 +1016,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       }
       case 'sourceprincipal':
         if (!this.props.showSecurity) {
-          AlertUtils.addSuccess('Enabling "Security" display option for this graph find/hide expression');
+          addSuccess('Enabling "Security" display option for this graph find/hide expression');
           this.props.toggleGraphSecurity();
         }
 
@@ -1030,7 +1027,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       }
       case 'throughput': {
         if (!this.props.edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP)) {
-          AlertUtils.addSuccess('Enabling [Request] "Throughput" edge labels for this graph find/hide expression');
+          addSuccess('Enabling [Request] "Throughput" edge labels for this graph find/hide expression');
           this.props.setEdgeLabels([
             ...this.props.edgeLabels,
             EdgeLabelMode.THROUGHPUT_GROUP,
@@ -1093,7 +1090,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       case 'cb':
       case 'circuitbreaker':
         if (!this.props.showVirtualServices) {
-          AlertUtils.addSuccess('Enabling "Virtual Services" display option for graph find/hide expression');
+          addSuccess('Enabling "Virtual Services" display option for graph find/hide expression');
           this.props.toggleGraphVirtualServices();
         }
 
@@ -1103,7 +1100,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       case 'fi':
       case 'faultinjection':
         if (!this.props.showVirtualServices) {
-          AlertUtils.addSuccess('Enabling "Virtual Services" display option for graph find/hide expression');
+          addSuccess('Enabling "Virtual Services" display option for graph find/hide expression');
           this.props.toggleGraphVirtualServices();
         }
 
@@ -1129,13 +1126,13 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
         };
       case 'idle':
         if (!this.props.showIdleNodes) {
-          AlertUtils.addSuccess('Enabling "Idle nodes" display option for graph find/hide expression');
+          addSuccess('Enabling "Idle nodes" display option for graph find/hide expression');
           this.props.toggleIdleNodes();
         }
         return { target: 'node', selector: { prop: NodeAttr.isIdle, op: isNegation ? 'falsy' : 'truthy' } };
       case 'mirroring':
         if (!this.props.showVirtualServices) {
-          AlertUtils.addSuccess('Enabling "Virtual Services" display option for graph find/hide expression');
+          addSuccess('Enabling "Virtual Services" display option for graph find/hide expression');
           this.props.toggleGraphVirtualServices();
         }
 
@@ -1167,7 +1164,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       case 'tcpts':
       case 'tcptrafficshifting':
         if (!this.props.showVirtualServices) {
-          AlertUtils.addSuccess('Enabling "Virtual Services" display option for graph find/hide expression');
+          addSuccess('Enabling "Virtual Services" display option for graph find/hide expression');
           this.props.toggleGraphVirtualServices();
         }
 
@@ -1178,7 +1175,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       case 'ts':
       case 'trafficshifting':
         if (!this.props.showVirtualServices) {
-          AlertUtils.addSuccess('Enabling "Virtual Services" display option for graph find/hide expression');
+          addSuccess('Enabling "Virtual Services" display option for graph find/hide expression');
           this.props.toggleGraphVirtualServices();
         }
 
@@ -1192,7 +1189,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       case 'vs':
       case 'virtualservice':
         if (!this.props.showVirtualServices) {
-          AlertUtils.addSuccess('Enabling "Virtual Services" display option for graph find/hide expression');
+          addSuccess('Enabling "Virtual Services" display option for graph find/hide expression');
           this.props.toggleGraphVirtualServices();
         }
 
@@ -1208,7 +1205,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       //
       case 'mtls':
         if (!this.props.showSecurity) {
-          AlertUtils.addSuccess('Enabling "Security" display option for graph find/hide expression');
+          addSuccess('Enabling "Security" display option for graph find/hide expression');
           this.props.toggleGraphSecurity();
         }
 

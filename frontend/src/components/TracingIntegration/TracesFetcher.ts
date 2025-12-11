@@ -1,5 +1,5 @@
 import * as API from 'services/Api';
-import * as AlertUtils from 'utils/AlertUtils';
+import { addError } from 'utils/AlertUtils';
 import { JaegerTrace, TracingError } from 'types/TracingInfo';
 import { TracingQuery } from 'types/Tracing';
 import { TargetKind } from 'types/Common';
@@ -99,7 +99,7 @@ export class TracesFetcher {
         }
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch traces.', error);
+        addError('Could not fetch traces.', error);
         this.onErrors([{ msg: String(error) }]);
       });
   };

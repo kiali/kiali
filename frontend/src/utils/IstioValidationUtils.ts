@@ -1,25 +1,25 @@
 import { ObjectCheck, ObjectValidation, ValidationTypes } from '../types/IstioObjects';
-import * as AlertUtils from './AlertUtils';
+import { addDanger, addWarning } from './AlertUtils';
 import { getGVKTypeString } from './IstioConfigUtils';
 
 const validationMessage = (validation: ObjectValidation, failedCheck: ObjectCheck): string => {
   return `${getGVKTypeString(validation.objectGVK)}:${validation.name} ${failedCheck.message}`;
 };
 
-const showInMessageCenterValidation = (validation: ObjectValidation): void => {
+const showInNotificationCenterValidation = (validation: ObjectValidation): void => {
   for (let check of validation.checks) {
     switch (check.severity) {
       case ValidationTypes.Warning:
-        AlertUtils.addWarning(validationMessage(validation, check), false);
+        addWarning(validationMessage(validation, check), '', false);
         break;
       case ValidationTypes.Error:
-        AlertUtils.addError(validationMessage(validation, check));
+        addDanger(validationMessage(validation, check));
         break;
     }
   }
 };
 
-const showInMessageCenterValidations = (validations: ObjectValidation[]): void => {
+const showInNotificationCenterValidations = (validations: ObjectValidation[]): void => {
   const elementsWithFailedValidations: string[] = [];
   let hasError = false;
   for (let validation of validations) {
@@ -35,17 +35,17 @@ const showInMessageCenterValidations = (validations: ObjectValidation[]): void =
   if (elementsWithFailedValidations.length > 0) {
     const detail = `${elementsWithFailedValidations.join('\n')}`;
     if (hasError) {
-      AlertUtils.addError('IstioConfig has errors', undefined, undefined, undefined, detail);
+      addDanger('IstioConfig has errors', detail);
     } else {
-      AlertUtils.addWarning('IstioConfig has warnings', false, undefined, detail);
+      addWarning('IstioConfig has warnings', detail, false);
     }
   }
 };
 
-export const showInMessageCenter = (validation: ObjectValidation | ObjectValidation[]): void => {
+export const showInNotificationCenter = (validation: ObjectValidation | ObjectValidation[]): void => {
   if (Array.isArray(validation)) {
-    showInMessageCenterValidations(validation);
+    showInNotificationCenterValidations(validation);
   } else {
-    showInMessageCenterValidation(validation);
+    showInNotificationCenterValidation(validation);
   }
 };

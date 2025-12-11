@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Card, CardBody, Grid, GridItem, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { kialiStyle } from '../../styles/StyleUtils';
+import { addDanger } from '../../utils/AlertUtils';
 import {
   GraphDefinition,
   GraphEdgeWrapper,
@@ -25,36 +26,40 @@ import { KioskElement } from '../Kiosk/KioskElement';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 
+const gridStyle = kialiStyle({
+  marginTop: '1rem'
+});
+
 export interface AppNode {
-  id: string;
-  type: NodeType.APP;
-  namespace: string;
-  name: string;
-  version: string;
-  isInaccessible: boolean;
   cluster?: string;
+  id: string;
+  isInaccessible: boolean;
+  name: string;
+  namespace: string;
+  type: NodeType.APP;
+  version: string;
 }
 
 export interface WorkloadNode {
-  id: string;
-  type: NodeType.WORKLOAD;
-  namespace: string;
-  name: string;
-  isInaccessible: boolean;
-  healthAnnotation?: HealthAnnotationType;
   cluster?: string;
+  healthAnnotation?: HealthAnnotationType;
+  id: string;
+  isInaccessible: boolean;
+  name: string;
+  namespace: string;
+  type: NodeType.WORKLOAD;
 }
 
 export interface ServiceNode {
-  id: string;
-  type: NodeType.SERVICE;
-  namespace: string;
-  name: string;
-  isInaccessible: boolean;
-  isServiceEntry?: SEInfo;
+  cluster?: string;
   destServices?: DestService[];
   healthAnnotation?: HealthAnnotationType;
-  cluster?: string;
+  id: string;
+  isInaccessible: boolean;
+  isServiceEntry?: SEInfo;
+  name: string;
+  namespace: string;
+  type: NodeType.SERVICE;
 }
 
 export type TrafficNode = AppNode | ServiceNode | WorkloadNode;
@@ -63,10 +68,10 @@ export type TrafficDirection = 'inbound' | 'outbound';
 
 export interface TrafficItem {
   direction: TrafficDirection;
+  mTLS?: number;
   node: TrafficNode;
   proxy?: TrafficItem;
   traffic: ProtocolTraffic;
-  mTLS?: number;
 }
 
 type ReduxProps = {
@@ -74,11 +79,11 @@ type ReduxProps = {
 };
 
 type TrafficDetailsProps = ReduxProps & {
+  cluster?: string;
   itemName: string;
   itemType: MetricsObjectTypes;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
-  cluster?: string;
 };
 
 type TrafficDetailsState = {
@@ -97,18 +102,18 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.graphDataSource.on('fetchSuccess', this.graphDsFetchSuccess);
     this.graphDataSource.on('fetchError', this.graphDsFetchError);
     this.fetchDataSource();
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.graphDataSource.removeListener('fetchSuccess', this.graphDsFetchSuccess);
     this.graphDataSource.removeListener('fetchError', this.graphDsFetchError);
   }
 
-  componentDidUpdate(prevProps: TrafficDetailsProps) {
+  componentDidUpdate(prevProps: TrafficDetailsProps): void {
     const durationChanged = prevProps.duration !== this.props.duration;
     const itemNameChanged = prevProps.itemName !== this.props.itemName;
     const itemTypeChanged = prevProps.itemType !== this.props.itemType;
@@ -120,11 +125,11 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <RenderComponentScroll>
-          <Grid>
+          <Grid className={gridStyle}>
             <GridItem span={12}>
               <Card>
                 <CardBody>
@@ -157,7 +162,7 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
     );
   }
 
-  private fetchDataSource = () => {
+  private fetchDataSource = (): void => {
     switch (this.props.itemType) {
       case MetricsObjectTypes.SERVICE: {
         const params = this.graphDataSource.fetchForServiceParams(
@@ -200,18 +205,18 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
     }
   };
 
-  private graphDsFetchSuccess = () => {
+  private graphDsFetchSuccess = (): void => {
     this.processTrafficData(this.graphDataSource.graphDefinition);
   };
 
-  private graphDsFetchError = (errorMessage: string | null) => {
+  private graphDsFetchError = (errorMessage: string | null): void => {
     if (errorMessage !== '') {
-      errorMessage = 'Could not fetch traffic data: ' + errorMessage;
+      errorMessage = `Could not fetch traffic data: ${errorMessage}`;
     } else {
       errorMessage = 'Could not fetch traffic data.';
     }
 
-    AlertUtils.addError(errorMessage);
+    addDanger(errorMessage);
   };
 
   private buildTrafficNode = (prefix: 'in' | 'out', node: GraphNodeData): TrafficNode => {
@@ -256,12 +261,12 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
     edges: GraphEdgeWrapper[],
     nodes: { [key: string]: GraphNodeData },
     myNode: GraphNodeData
-  ) => {
+  ): { traffic: TrafficItem[] } => {
     const traffic: TrafficItem[] = [];
 
     edges.forEach(edge => {
-      const sourceNode = nodes['id-' + edge.data.source];
-      const targetNode = nodes['id-' + edge.data.target];
+      const sourceNode = nodes[`id-${edge.data.source}`];
+      const targetNode = nodes[`id-${edge.data.target}`];
       if (myNode.id === edge.data.source) {
         const trafficItem: TrafficItem = {
           direction: 'outbound',
@@ -284,7 +289,7 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
     return { traffic: traffic };
   };
 
-  private processTrafficData = (traffic: GraphDefinition | null) => {
+  private processTrafficData = (traffic: GraphDefinition | null): void => {
     if (
       !traffic ||
       !traffic.elements.nodes ||
@@ -304,7 +309,7 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
       // Ignore box nodes. They are not relevant for the traffic list because we
       // are interested in the actual apps.
       if (!element.data.isBox) {
-        nodes['id-' + element.data.id] = element.data;
+        nodes[`id-${element.data.id}`] = element.data;
         if (element.data.namespace) {
           const isMyWorkload =
             this.props.itemType === MetricsObjectTypes.WORKLOAD &&
@@ -336,12 +341,12 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
     this.setState(this.processTraffic(traffic.elements.edges!, nodes, myNode));
   };
 
-  private toggleTimeOptionsVisibility = () => {
+  private toggleTimeOptionsVisibility = (): void => {
     this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }));
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => {
+const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
     duration: durationSelector(state)
   };

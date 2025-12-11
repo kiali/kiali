@@ -1,99 +1,66 @@
 import * as React from 'react';
-import { Flex, FlexItem, Toolbar, ToolbarItem } from '@patternfly/react-core';
+import { Toolbar, ToolbarContent, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 
+import { kialiStyle } from 'styles/StyleUtils';
 import { serverConfig } from '../../../config';
 import { RunMode } from '../../../types/ServerConfig';
 import { IstioStatus } from '../../IstioStatus/IstioStatus';
 import { UserDropdown } from './UserDropdown';
 import { HelpDropdown } from './HelpDropdown';
-import { MessageCenterTrigger } from '../../../components/MessageCenter/MessageCenterTrigger';
 import { ThemeSwitch } from './ThemeSwitch';
 import { LanguageSwitch } from './LanguageSwitch';
 import { PfSpinner } from 'components/Pf/PfSpinner';
-import { kialiStyle } from 'styles/StyleUtils';
 import { OfflineStatus } from './OfflineStatus';
+import { NotificationCenterBadge } from 'components/NotificationCenter/NotificationCenterBadge';
 
-const toolbarStyle = kialiStyle({
-  marginLeft: 'auto',
-  $nest: {
-    '& .pf-v5-svg': {
-      fontSize: '1rem'
-    }
-  }
-});
-
-const istioStatusStyle = kialiStyle({
-  marginRight: '2.5rem'
-});
-
-const themeSwitchStyle = kialiStyle({
-  marginLeft: 0,
-  marginRight: '1.5rem'
-});
-
-const messageCenterStyle = kialiStyle({
-  marginRight: '0.25rem'
-});
-
-const helpDropdownStyle = kialiStyle({
-  marginRight: '0.5rem'
-});
-
-const languageSwitchStyle = kialiStyle({
-  marginRight: '0.75rem'
-});
-
-const userDropdownStyle = kialiStyle({
-  marginLeft: '0.5rem',
-  position: 'relative',
-  bottom: '0.125rem'
-});
-
-const offlineStatusStyle = kialiStyle({
-  marginRight: '2.5rem'
+const centerItemStyle = kialiStyle({
+  alignSelf: 'center'
 });
 
 export const MastheadItems: React.FC = () => {
   return (
-    <>
-      <PfSpinner />
-      <Toolbar>
-        <ToolbarItem className={toolbarStyle}>
-          <Flex>
-            {serverConfig.runMode === RunMode.OFFLINE ? (
-              <FlexItem className={offlineStatusStyle}>
-                <OfflineStatus />
-              </FlexItem>
-            ) : (
-              <FlexItem className={istioStatusStyle}>
-                <IstioStatus />
-              </FlexItem>
-            )}
+    <Toolbar isFullHeight isStatic>
+      <ToolbarContent>
+        <ToolbarGroup>
+          {serverConfig.runMode === RunMode.OFFLINE ? (
+            <ToolbarItem className={centerItemStyle}>
+              <OfflineStatus />
+            </ToolbarItem>
+          ) : (
+            <ToolbarItem className={centerItemStyle}>
+              <IstioStatus />
+            </ToolbarItem>
+          )}
 
-            <FlexItem className={themeSwitchStyle}>
-              <ThemeSwitch />
-            </FlexItem>
+          <ToolbarItem className={centerItemStyle}>
+            <PfSpinner />
+          </ToolbarItem>
+        </ToolbarGroup>
 
-            {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
-              <FlexItem className={languageSwitchStyle}>
-                <LanguageSwitch />
-              </FlexItem>
-            )}
+        <ToolbarGroup align={{ default: 'alignEnd' }}>
+          <ToolbarItem>
+            <ThemeSwitch />
+          </ToolbarItem>
 
-            <FlexItem className={messageCenterStyle}>
-              <MessageCenterTrigger />
-            </FlexItem>
+          <ToolbarItem>
+            <NotificationCenterBadge />
+          </ToolbarItem>
 
-            <FlexItem className={helpDropdownStyle}>
-              <HelpDropdown />
-            </FlexItem>
+          <ToolbarItem>
+            <HelpDropdown />
+          </ToolbarItem>
 
-            <FlexItem data-test="user-dropdown" className={userDropdownStyle}>
-              <UserDropdown />
-            </FlexItem>
-          </Flex>
-        </ToolbarItem>
-      </Toolbar>
-    </>
+          {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
+            <ToolbarItem>
+              <LanguageSwitch />
+            </ToolbarItem>
+          )}
+
+          <ToolbarItem className={centerItemStyle} data-test="user-dropdown">
+            <UserDropdown />
+          </ToolbarItem>
+        </ToolbarGroup>
+      </ToolbarContent>
+    </Toolbar>
   );
 };

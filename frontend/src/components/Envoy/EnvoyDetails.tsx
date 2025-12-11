@@ -6,7 +6,7 @@ import { ISortBy, SortByDirection } from '@patternfly/react-table';
 import { Workload } from 'types/Workload';
 import { EnvoyProxyDump, Pod } from 'types/IstioObjects';
 import * as API from '../../services/Api';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addError } from '../../utils/AlertUtils';
 import { Button, ButtonVariant, Card, CardBody, Tab, Tabs, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { SummaryTableBuilder } from './tables/BaseTable';
 import { Namespace } from 'types/Namespace';
@@ -80,6 +80,10 @@ type EnvoyDetailsState = {
 
 const fullHeightStyle = kialiStyle({
   height: '100%'
+});
+
+const cardStyle = kialiStyle({
+  marginTop: '1rem'
 });
 
 class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDetailsState> {
@@ -164,7 +168,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
         });
       })
       .catch(error => {
-        AlertUtils.addError(`Could not fetch envoy config ${resource} entries for ${this.state.pod.name}.`, error);
+        addError(`Could not fetch envoy config ${resource} entries for ${this.state.pod.name}.`, error);
       });
   };
 
@@ -177,7 +181,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
         });
       })
       .catch(error => {
-        AlertUtils.addError(`Could not fetch envoy config for ${this.state.pod.name}.`, error);
+        addError(`Could not fetch envoy config for ${this.state.pod.name}.`, error);
       });
   };
 
@@ -296,7 +300,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
 
       return (
         <Tab key={`tab_${value}`} eventKey={index} title={title}>
-          <Card className={fullHeightStyle}>
+          <Card className={cardStyle}>
             <CardBody>
               {this.showEditor() ? (
                 <div className={fullHeightStyle}>

@@ -56,8 +56,8 @@ import { PFColors } from '../../components/Pf/PfColors';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { OverviewNamespaceAction, OverviewNamespaceActions } from './OverviewNamespaceActions';
 import { router, HistoryManager, URLParam } from '../../app/History';
-import * as AlertUtils from '../../utils/AlertUtils';
-import { MessageType } from '../../types/MessageCenter';
+import { addDanger, addError } from '../../utils/AlertUtils';
+import { MessageType } from '../../types/NotificationCenter';
 import { ValidationStatus } from '../../types/IstioObjects';
 import { GrafanaInfo, ISTIO_DASHBOARDS } from '../../types/GrafanaInfo';
 import { ExternalLink } from '../../types/Dashboards';
@@ -82,14 +82,12 @@ import { ExternalServiceInfo } from '../../types/StatusState';
 const MAX_NAMESPACES_PER_CALL = 100;
 
 const gridStyleCompact = kialiStyle({
-  backgroundColor: PFColors.BackgroundColor200,
   paddingBottom: '1.25rem',
   marginTop: 0,
   flex: '1'
 });
 
 const gridStyleList = kialiStyle({
-  backgroundColor: PFColors.BackgroundColor200,
   // The VirtualTable component has a different style than cards
   // We need to adjust the grid style if we are on compact vs list view
   padding: '0 !important',
@@ -105,7 +103,7 @@ const cardGridStyle = kialiStyle({
 
 const namespaceHeaderStyle = kialiStyle({
   $nest: {
-    '& .pf-v5-c-card__header-main': {
+    '& .pf-v6-c-card__header-main': {
       width: '85%'
     }
   }
@@ -380,7 +378,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         const results: Map<string, NamespaceAppHealth | NamespaceWorkloadHealth | NamespaceServiceHealth> = new Map();
         chunkedResults.forEach(chunkResult => {
           Object.keys(chunkResult).forEach(ns => {
-            results[ns] = chunkResult[ns];
+            results.set(ns, chunkResult[ns]);
           });
         });
 
@@ -393,9 +391,10 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             notAvailable: []
           };
 
-          if (((nsInfo.cluster && nsInfo.cluster === cluster) || !nsInfo.cluster) && results[nsInfo.name]) {
-            Object.keys(results[nsInfo.name]).forEach(k => {
-              const health: Health = results[nsInfo.name][k];
+          const nsHealth = results.get(nsInfo.name);
+          if (((nsInfo.cluster && nsInfo.cluster === cluster) || !nsInfo.cluster) && nsHealth) {
+            Object.keys(nsHealth).forEach(k => {
+              const health: Health = nsHealth[k];
               const status = health.getGlobalStatus();
 
               if (status === FAILURE) {
@@ -684,12 +683,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           }
         })
         .catch(err => {
-          AlertUtils.addMessage({
-            ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
-            group: 'default',
-            type: MessageType.INFO,
-            showNotification: false
-          });
+          addError('Could not fetch Grafana info. Turning off links to Grafana.', err, false, MessageType.INFO);
         });
     }
   };
@@ -718,12 +712,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           }
         })
         .catch(err => {
-          AlertUtils.addMessage({
-            ...AlertUtils.extractApiError('Could not fetch Perses info. Turning off links to Perses.', err),
-            group: 'default',
-            type: MessageType.INFO,
-            showNotification: false
-          });
+          addError('Could not fetch Perses info. Turning off links to Perses.', err, false, MessageType.INFO);
         });
     }
   };
@@ -735,13 +724,13 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           controlPlanes: response.data
         });
       })
-      .catch(error => {
-        AlertUtils.addError('Error fetching controlplanes.', error, 'default', MessageType.ERROR);
+      .catch(err => {
+        addError('Error fetching control planes.', err);
       });
   };
 
   handleApiError = (message: string, error: ApiError): void => {
-    FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
+    addDanger(message, API.getErrorString(error));
   };
 
   sort = (sortField: SortField<NamespaceInfo>, isAscending: boolean): void => {
@@ -1177,7 +1166,6 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         <OverviewToolbar
           onChange={this.onChange}
           onRefresh={this.load}
-          onError={FilterHelper.handleError}
           sort={this.sort}
           displayMode={this.state.displayMode}
           setDisplayMode={this.setDisplayMode}
@@ -1213,6 +1201,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                     >
                       <Card
                         isCompact={true}
+                        variant={'secondary'}
                         className={cardGridStyle}
                         data-test={`${ns.name}-${OverviewDisplayMode[this.state.displayMode]}`}
                       >

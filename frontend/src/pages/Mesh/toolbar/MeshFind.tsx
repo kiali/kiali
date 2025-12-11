@@ -81,6 +81,7 @@ const thinGroupStyle = kialiStyle({
 });
 
 const buttonClearStyle = kialiStyle({
+  marginLeft: '0.125rem',
   paddingLeft: '0.75rem',
   paddingRight: '0.75rem'
 });
@@ -97,7 +98,7 @@ const gridStyle = kialiStyle({
 const meshFindStyle = kialiStyle({
   marginRight: '0.75rem',
   $nest: {
-    '& > .pf-v5-c-form__group-control': {
+    '& > .pf-v6-c-form__group-control': {
       display: 'flex'
     }
   }
@@ -105,7 +106,7 @@ const meshFindStyle = kialiStyle({
 
 const meshHideStyle = kialiStyle({
   $nest: {
-    '& > .pf-v5-c-form__group-control': {
+    '& > .pf-v6-c-form__group-control': {
       display: 'flex'
     }
   }

@@ -4,7 +4,7 @@ import { bindActionCreators } from 'redux';
 import { KialiDispatch } from 'types/Redux';
 import { KialiAppState } from 'store/Store';
 import { replayQueryTimeSelector, durationSelector } from 'store/Selectors';
-import { Tooltip, ButtonVariant, Button, Text } from '@patternfly/react-core';
+import { Tooltip, ButtonVariant, Button, Content } from '@patternfly/react-core';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
@@ -70,7 +70,7 @@ const replaySliderStyle = kialiStyle({
     '& .slider': {
       $nest: {
         '& .slider-selection.tick-slider-selection': {
-          background: 'var(--pf-v5-global--active-color--300)' // should match PFColors.Replay
+          background: `${PFColors.Replay}` // should match PFColors.Replay
         },
 
         '& .tooltip': {
@@ -105,22 +105,22 @@ const frameInterval: IntervalInMilliseconds = 10000; // clock advances 10s per f
 
 const controlStyle = kialiStyle({
   display: 'flex',
-  alignItems: 'center',
-  marginBottom: '0.25rem'
+  alignItems: 'center'
 });
 
 const controlButtonStyle = kialiStyle({
   marginLeft: '33%',
   paddingRight: '0.5rem',
-  height: '2rem'
-});
-
-const controlIconStyle = kialiStyle({
-  fontSize: '1.5em'
+  height: '37px', // 37px to match speed button height
+  display: 'flex',
+  alignItems: 'center'
 });
 
 const frameStyle = kialiStyle({
-  marginRight: '1.25rem'
+  display: 'flex',
+  alignItems: 'center',
+  paddingRight: '1rem',
+  height: '37px' // 37px to match button height
 });
 
 const isCustomStyle = kialiStyle({
@@ -144,7 +144,8 @@ const sliderStyle = kialiStyle({
 
 const speedStyle = kialiStyle({
   paddingLeft: '0.5rem',
-  paddingRight: '0.5rem'
+  paddingRight: '0.5rem',
+  backgroundColor: 'unset'
 });
 
 const speedActiveStyle = kialiStyle({
@@ -322,7 +323,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
                   variant={ButtonVariant.link}
                   onClick={this.pause}
                 >
-                  <KialiIcon.PauseCircle className={controlIconStyle} />
+                  <KialiIcon.PauseCircle isInline={true} size="xl" className={isCustomActiveStyle} />
                 </Button>
               </Tooltip>
             ) : (
@@ -338,12 +339,12 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
                   variant={ButtonVariant.link}
                   onClick={this.play}
                 >
-                  <KialiIcon.PlayCircle className={controlIconStyle} />
+                  <KialiIcon.PlayCircle isInline={true} size="xl" className={isCustomActiveStyle} />
                 </Button>
               </Tooltip>
             )}
 
-            <Text className={frameStyle}>{this.formatFrame(this.state.replayFrame)}</Text>
+            <Content className={frameStyle}>{this.formatFrame(this.state.replayFrame)}</Content>
 
             {replaySpeeds.map((s, i, a) => this.speedButton(s, i === a.length - 1))}
           </span>
@@ -483,15 +484,18 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     return (
       <>
         <Button
+          icon={
+            <Content component="p" className={isActive ? speedActiveStyle : undefined}>
+              {replaySpeed.text}
+            </Content>
+          }
           data-test={`speed-${replaySpeed.text}`}
           key={`speed-${replaySpeed.text}`}
           className={speedStyle}
           variant={ButtonVariant.plain}
-          isActive={isActive}
+          isClicked={isActive}
           onClick={() => this.setReplaySpeed(replaySpeed.speed)}
-        >
-          <Text className={isActive ? speedActiveStyle : undefined}>{replaySpeed.text}</Text>
-        </Button>
+        />
 
         {!isLast && <div className={vrStyle} />}
       </>

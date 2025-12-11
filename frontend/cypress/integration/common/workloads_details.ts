@@ -71,7 +71,7 @@ Then('user sees Perses link in the Inbound Metrics tab', () => {
   cy.waitForReact();
 
   // Check that the Perses link exists within the card body
-  cy.get('.pf-v5-c-card__body').within(() => {
+  cy.get('.pf-v6-c-card__body').within(() => {
     cy.get('#perses_link_0')
       .should('be.visible')
       .and('have.attr', 'title', 'Istio Mesh Dashboard')
@@ -201,8 +201,8 @@ Then('the user can see the {string} span link', (link: string) => {
 });
 
 Then('user sees {string} badge', (badge: string) => {
-  cy.getBySel('workload-description-card').within(() => {
-    cy.get('.pf-v5-c-label__content').contains(badge);
+  cy.get('#WorkloadDescriptionCard').within(() => {
+    cy.get('.pf-v6-c-label__content').contains(badge);
   });
 });
 

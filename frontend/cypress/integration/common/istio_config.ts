@@ -652,12 +652,12 @@ Then('the AuthorizationPolicy should have a {string}', function (healthStatus: s
   );
 });
 
-const hexToRgb = (hex: string): string => {
-  const rValue = parseInt(hex.substring(0, 2), 16);
-  const gValue = parseInt(hex.substring(2, 4), 16);
-  const bValue = parseInt(hex.substring(4), 16);
-
-  return `rgb(${rValue}, ${gValue}, ${bValue})`;
+// Map health status to the data-test attribute used by the Validation component
+const healthStatusToDataTest: { [status: string]: string } = {
+  danger: 'icon-error-validation',
+  error: 'icon-error-validation',
+  success: 'icon-correct-validation',
+  warning: 'icon-warning-validation'
 };
 
 function waitUntilConfigIsVisible(
@@ -667,57 +667,52 @@ function waitUntilConfigIsVisible(
   namespace: string,
   healthStatus: string
 ): void {
-  cy.request({ method: 'GET', url: `${Cypress.config('baseUrl')}/api/istio/config?refresh=0` });
+  if (retries < 0) {
+    throw new Error(
+      `Exceeded max retries waiting for ${crdName} ${crdInstanceName} in ${namespace} to have status ${healthStatus}`
+    );
+  }
+
+  // Force a refresh by making an API call with a timestamp to bypass cache
+  const timestamp = new Date().getTime();
+  cy.request({ method: 'GET', url: `${Cypress.config('baseUrl')}/api/istio/config?_=${timestamp}` });
   cy.get('[data-test="refresh-button"]').click();
   ensureKialiFinishedLoading();
 
   const shouldNA = healthStatus.includes('N/A');
-  let found = false;
-  cy.get('tr')
-    .each($row => {
-      const dataTestAttr = $row[0].attributes.getNamedItem('data-test');
-      const hasNA = $row[0].innerText.includes('N/A');
+  const rowSelector = `[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}]`;
 
-      if (dataTestAttr !== null) {
-        if (shouldNA) {
-          // Check if the row exists and contains healthStatus text (expected to be N/A)
-          cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}]`)
-            .should('be.visible')
-            .then(foundRow => {
-              if (foundRow.text().includes(healthStatus)) {
-                found = true;
-              }
-            });
-        } else if (dataTestAttr.value === `VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}` && !hasNA) {
-          // Check if the health status icon is correct
-          cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}] span.pf-v5-c-icon`)
-            .should('be.visible')
-            .then(icon => {
-              const colorVar = `--pf-v5-global--${healthStatus}-color--100`;
-              const statusColor = getComputedStyle(icon[0]).getPropertyValue(colorVar).replace('#', '');
-
-              cy.wrap(icon[0])
-                .invoke('css', 'color')
-                .then(iconColor => {
-                  // Convert the status color to RGB format to compare it with the icon color
-                  if (iconColor?.toString() === hexToRgb(statusColor)) {
-                    found = true;
-                  }
-                });
-            });
-        }
-      }
-    })
-    .then(() => {
-      if (!found) {
-        if (retries === 0) {
-          throw new Error(`Condition not met after retries`);
-        } else {
-          cy.wait(10000);
-          waitUntilConfigIsVisible(retries - 1, crdInstanceName, crdName, namespace, healthStatus);
-        }
+  if (shouldNA) {
+    // Check if the row contains the N/A text
+    cy.get(rowSelector).then($row => {
+      if ($row.text().includes(healthStatus)) {
+        cy.log(`Found N/A status for ${crdName} ${crdInstanceName}`);
+      } else {
+        cy.log(`N/A not found yet, retries left: ${retries}. Waiting 10s before retry...`);
+        cy.wait(10000);
+        waitUntilConfigIsVisible(retries - 1, crdInstanceName, crdName, namespace, healthStatus);
       }
     });
+  } else {
+    // Check if the health status icon has the correct data-test attribute
+    const expectedDataTest = healthStatusToDataTest[healthStatus];
+
+    cy.get(rowSelector).then($row => {
+      // Check if the expected icon exists within the row
+      if ($row.find(`[data-test="${expectedDataTest}"]`).length > 0) {
+        cy.log(`Found ${healthStatus} icon for ${crdName} ${crdInstanceName}`);
+      } else {
+        // Log what we actually found to help debug
+        const actualIcons = $row.find('[data-test*="icon-"][data-test*="-validation"]');
+        const foundIcon = actualIcons.length > 0 ? actualIcons.attr('data-test') : 'none';
+        cy.log(
+          `Expected: ${expectedDataTest}, Found: ${foundIcon}, retries left: ${retries}. Waiting 10s before retry...`
+        );
+        cy.wait(10000);
+        waitUntilConfigIsVisible(retries - 1, crdInstanceName, crdName, namespace, healthStatus);
+      }
+    });
+  }
 }
 
 Then(

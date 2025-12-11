@@ -11,12 +11,9 @@ type MeshFindOptionsProps = {
 };
 
 const menuToggleStyle = kialiStyle({
-  paddingRight: 0,
-  $nest: {
-    '& .pf-v5-c-menu-toggle__controls': {
-      paddingLeft: 0
-    }
-  }
+  paddingLeft: '0.75rem',
+  paddingRight: '0.75rem',
+  marginLeft: '0.125rem'
 });
 
 export const MeshFindOptions: React.FC<MeshFindOptionsProps> = (props: MeshFindOptionsProps) => {
@@ -42,7 +39,7 @@ export const MeshFindOptions: React.FC<MeshFindOptionsProps> = (props: MeshFindO
     setOptions(getOptionItems(kind));
   }, [kind, onSelect]);
 
-  const onToggle = (isOpen: boolean) => {
+  const onToggle = (isOpen: boolean): void => {
     setIsOpen(isOpen);
   };
 

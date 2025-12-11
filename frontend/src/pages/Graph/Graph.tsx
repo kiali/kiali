@@ -743,6 +743,7 @@ const TopologyContent: React.FC<{
                       icon: (
                         <KialiIcon.LongArrowRight
                           className={EdgeMode.UNHEALTHY === edgeMode ? toolbarActiveStyle : undefined}
+                          status={EdgeMode.UNHEALTHY === edgeMode ? 'custom' : undefined}
                         />
                       ),
                       id: 'toolbar_edge_mode_unhealthy',
@@ -754,6 +755,7 @@ const TopologyContent: React.FC<{
                       icon: (
                         <KialiIcon.LongArrowRight
                           className={EdgeMode.NONE === edgeMode ? toolbarActiveStyle : undefined}
+                          status={EdgeMode.NONE === edgeMode ? 'custom' : undefined}
                         />
                       ),
                       tooltip: 'Hide all edges',
@@ -767,6 +769,7 @@ const TopologyContent: React.FC<{
                       icon: (
                         <KialiIcon.Topology
                           className={GraphLayout.Dagre === layoutName ? toolbarActiveStyle : undefined}
+                          status={GraphLayout.Dagre === layoutName ? 'custom' : undefined}
                         />
                       ),
                       tooltip: 'Dagre - boxing layout',
@@ -780,6 +783,7 @@ const TopologyContent: React.FC<{
                       icon: (
                         <KialiIcon.Topology
                           className={GraphLayout.Grid === layoutName ? toolbarActiveStyle : undefined}
+                          status={GraphLayout.Grid === layoutName ? 'custom' : undefined}
                         />
                       ),
                       tooltip: 'Grid - non-boxing layout',
@@ -793,6 +797,7 @@ const TopologyContent: React.FC<{
                       icon: (
                         <KialiIcon.Topology
                           className={GraphLayout.Concentric === layoutName ? toolbarActiveStyle : undefined}
+                          status={GraphLayout.Concentric === layoutName ? 'custom' : undefined}
                         />
                       ),
                       tooltip: 'Concentric - non-boxing layout',
@@ -806,6 +811,7 @@ const TopologyContent: React.FC<{
                       icon: (
                         <KialiIcon.Topology
                           className={GraphLayout.BreadthFirst === layoutName ? toolbarActiveStyle : undefined}
+                          status={GraphLayout.BreadthFirst === layoutName ? 'custom' : undefined}
                         />
                       ),
                       tooltip: 'Breadth First - non-boxing layout',
@@ -830,7 +836,12 @@ const TopologyContent: React.FC<{
                     graphLayout(controller, LayoutType.Layout);
                   },
                   legend: true,
-                  legendIcon: <KialiIcon.Map className={showLegend ? toolbarActiveStyle : undefined} />,
+                  legendIcon: (
+                    <KialiIcon.Map
+                      className={showLegend ? toolbarActiveStyle : undefined}
+                      status={showLegend ? 'custom' : undefined}
+                    />
+                  ),
                   legendTip: 'Legend',
                   legendCallback: () => {
                     if (toggleLegend) toggleLegend();

@@ -3,31 +3,37 @@
 exports[`IstioComponentStatus renders error icon when core component is not found 1`] = `
 <Fragment>
   <Split
-    className="kiali_fuhkp1b"
+    className="kiali_f14xnozi"
     hasGutter={true}
     key="cell-status-icon-isito-ingress"
   >
-    <SplitItem
-      style={
-        Object {
-          "paddingLeft": "0.5rem",
-        }
-      }
-    >
-      <Icon
-        className="kiali_fi2mdky kiali_f1h37jb8"
-      >
-        <ExclamationCircleIcon />
-      </Icon>
-    </SplitItem>
     <SplitItem
       isFilled={true}
     >
       isito-ingress
     </SplitItem>
-    <SplitItem>
+    <Label
+      className="kiali_fpln1nr"
+      data-test="component-status-icon"
+      icon={
+        <Icon
+          className="kiali_f7aox2p kiali_f7f7cpt"
+        >
+          <ExclamationCircleIcon />
+        </Icon>
+      }
+      style={
+        Object {
+          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--severity--critical--default)",
+          "borderColor": "var(--pf-t--global--icon--color--severity--critical--default)",
+          "borderStyle": "solid",
+          "borderWidth": "1px",
+        }
+      }
+      variant="outline"
+    >
       Not found
-    </SplitItem>
+    </Label>
   </Split>
 </Fragment>
 `;
@@ -35,31 +41,37 @@ exports[`IstioComponentStatus renders error icon when core component is not foun
 exports[`IstioComponentStatus renders error icon when core component is not running 1`] = `
 <Fragment>
   <Split
-    className="kiali_fuhkp1b"
+    className="kiali_f14xnozi"
     hasGutter={true}
     key="cell-status-icon-isito-ingress"
   >
-    <SplitItem
-      style={
-        Object {
-          "paddingLeft": "0.5rem",
-        }
-      }
-    >
-      <Icon
-        className="kiali_fi2mdky kiali_f1h37jb8"
-      >
-        <ExclamationCircleIcon />
-      </Icon>
-    </SplitItem>
     <SplitItem
       isFilled={true}
     >
       isito-ingress
     </SplitItem>
-    <SplitItem>
+    <Label
+      className="kiali_fpln1nr"
+      data-test="component-status-icon"
+      icon={
+        <Icon
+          className="kiali_f7aox2p kiali_f7f7cpt"
+        >
+          <ExclamationCircleIcon />
+        </Icon>
+      }
+      style={
+        Object {
+          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--severity--critical--default)",
+          "borderColor": "var(--pf-t--global--icon--color--severity--critical--default)",
+          "borderStyle": "solid",
+          "borderWidth": "1px",
+        }
+      }
+      variant="outline"
+    >
       Not healthy
-    </SplitItem>
+    </Label>
   </Split>
 </Fragment>
 `;
@@ -67,31 +79,37 @@ exports[`IstioComponentStatus renders error icon when core component is not runn
 exports[`IstioComponentStatus renders minus icon when addon component is not ready 1`] = `
 <Fragment>
   <Split
-    className="kiali_fuhkp1b"
+    className="kiali_f14xnozi"
     hasGutter={true}
     key="cell-status-icon-addon"
   >
-    <SplitItem
-      style={
-        Object {
-          "paddingLeft": "0.5rem",
-        }
-      }
-    >
-      <Icon
-        className="kiali_fi2mdky kiali_f1elceoh"
-      >
-        <MinusCircleIcon />
-      </Icon>
-    </SplitItem>
     <SplitItem
       isFilled={true}
     >
       addon
     </SplitItem>
-    <SplitItem>
+    <Label
+      className="kiali_fpln1nr"
+      data-test="component-status-icon"
+      icon={
+        <Icon
+          className="kiali_fpvem4w kiali_f15a1iio"
+        >
+          <InProgressIcon />
+        </Icon>
+      }
+      style={
+        Object {
+          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--severity--none--default)",
+          "borderColor": "var(--pf-t--global--icon--color--severity--none--default)",
+          "borderStyle": "solid",
+          "borderWidth": "1px",
+        }
+      }
+      variant="outline"
+    >
       Not ready
-    </SplitItem>
+    </Label>
   </Split>
 </Fragment>
 `;
@@ -99,31 +117,37 @@ exports[`IstioComponentStatus renders minus icon when addon component is not rea
 exports[`IstioComponentStatus renders minus icon when core component is not ready 1`] = `
 <Fragment>
   <Split
-    className="kiali_fuhkp1b"
+    className="kiali_f14xnozi"
     hasGutter={true}
     key="cell-status-icon-core"
   >
-    <SplitItem
-      style={
-        Object {
-          "paddingLeft": "0.5rem",
-        }
-      }
-    >
-      <Icon
-        className="kiali_fi2mdky kiali_f1elceoh"
-      >
-        <MinusCircleIcon />
-      </Icon>
-    </SplitItem>
     <SplitItem
       isFilled={true}
     >
       core
     </SplitItem>
-    <SplitItem>
+    <Label
+      className="kiali_fpln1nr"
+      data-test="component-status-icon"
+      icon={
+        <Icon
+          className="kiali_fpvem4w kiali_f15a1iio"
+        >
+          <InProgressIcon />
+        </Icon>
+      }
+      style={
+        Object {
+          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--severity--none--default)",
+          "borderColor": "var(--pf-t--global--icon--color--severity--none--default)",
+          "borderStyle": "solid",
+          "borderWidth": "1px",
+        }
+      }
+      variant="outline"
+    >
       Not ready
-    </SplitItem>
+    </Label>
   </Split>
 </Fragment>
 `;
@@ -131,31 +155,37 @@ exports[`IstioComponentStatus renders minus icon when core component is not read
 exports[`IstioComponentStatus renders success icon when core component is running 1`] = `
 <Fragment>
   <Split
-    className="kiali_fuhkp1b"
+    className="kiali_f14xnozi"
     hasGutter={true}
     key="cell-status-icon-isito-ingress"
   >
-    <SplitItem
-      style={
-        Object {
-          "paddingLeft": "0.5rem",
-        }
-      }
-    >
-      <Icon
-        className="kiali_fi2mdky kiali_f1r5cf3w"
-      >
-        <CheckCircleIcon />
-      </Icon>
-    </SplitItem>
     <SplitItem
       isFilled={true}
     >
       isito-ingress
     </SplitItem>
-    <SplitItem>
+    <Label
+      className="kiali_fpln1nr"
+      data-test="component-status-icon"
+      icon={
+        <Icon
+          className="kiali_f1k0q3ly kiali_fza77py"
+        >
+          <CheckCircleIcon />
+        </Icon>
+      }
+      style={
+        Object {
+          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--chart--color--green--300)",
+          "borderColor": "var(--pf-t--chart--color--green--300)",
+          "borderStyle": "solid",
+          "borderWidth": "1px",
+        }
+      }
+      variant="outline"
+    >
       Healthy
-    </SplitItem>
+    </Label>
   </Split>
 </Fragment>
 `;
@@ -163,31 +193,37 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
 exports[`IstioComponentStatus renders success icon when core component is running 2`] = `
 <Fragment>
   <Split
-    className="kiali_fuhkp1b"
+    className="kiali_f14xnozi"
     hasGutter={true}
     key="cell-status-icon-prometheus"
   >
-    <SplitItem
-      style={
-        Object {
-          "paddingLeft": "0.5rem",
-        }
-      }
-    >
-      <Icon
-        className="kiali_fi2mdky kiali_f1r5cf3w"
-      >
-        <CheckCircleIcon />
-      </Icon>
-    </SplitItem>
     <SplitItem
       isFilled={true}
     >
       prometheus
     </SplitItem>
-    <SplitItem>
+    <Label
+      className="kiali_fpln1nr"
+      data-test="component-status-icon"
+      icon={
+        <Icon
+          className="kiali_f1k0q3ly kiali_fza77py"
+        >
+          <CheckCircleIcon />
+        </Icon>
+      }
+      style={
+        Object {
+          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--chart--color--green--300)",
+          "borderColor": "var(--pf-t--chart--color--green--300)",
+          "borderStyle": "solid",
+          "borderWidth": "1px",
+        }
+      }
+      variant="outline"
+    >
       Healthy
-    </SplitItem>
+    </Label>
   </Split>
 </Fragment>
 `;
@@ -195,31 +231,37 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
 exports[`IstioComponentStatus renders warning icon when core component is not found 1`] = `
 <Fragment>
   <Split
-    className="kiali_fuhkp1b"
+    className="kiali_f14xnozi"
     hasGutter={true}
     key="cell-status-icon-prometheus"
   >
-    <SplitItem
-      style={
-        Object {
-          "paddingLeft": "0.5rem",
-        }
-      }
-    >
-      <Icon
-        className="kiali_fi2mdky kiali_frkkrth"
-      >
-        <ExclamationTriangleIcon />
-      </Icon>
-    </SplitItem>
     <SplitItem
       isFilled={true}
     >
       prometheus
     </SplitItem>
-    <SplitItem>
+    <Label
+      className="kiali_fpln1nr"
+      data-test="component-status-icon"
+      icon={
+        <Icon
+          className="kiali_f1hzj123 kiali_feaah3f"
+        >
+          <ExclamationTriangleIcon />
+        </Icon>
+      }
+      style={
+        Object {
+          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--severity--moderate--default)",
+          "borderColor": "var(--pf-t--global--icon--color--severity--moderate--default)",
+          "borderStyle": "solid",
+          "borderWidth": "1px",
+        }
+      }
+      variant="outline"
+    >
       Not found
-    </SplitItem>
+    </Label>
   </Split>
 </Fragment>
 `;
@@ -227,31 +269,37 @@ exports[`IstioComponentStatus renders warning icon when core component is not fo
 exports[`IstioComponentStatus renders warning icon when core component is not running 1`] = `
 <Fragment>
   <Split
-    className="kiali_fuhkp1b"
+    className="kiali_f14xnozi"
     hasGutter={true}
     key="cell-status-icon-prometheus"
   >
-    <SplitItem
-      style={
-        Object {
-          "paddingLeft": "0.5rem",
-        }
-      }
-    >
-      <Icon
-        className="kiali_fi2mdky kiali_frkkrth"
-      >
-        <ExclamationTriangleIcon />
-      </Icon>
-    </SplitItem>
     <SplitItem
       isFilled={true}
     >
       prometheus
     </SplitItem>
-    <SplitItem>
+    <Label
+      className="kiali_fpln1nr"
+      data-test="component-status-icon"
+      icon={
+        <Icon
+          className="kiali_f1hzj123 kiali_feaah3f"
+        >
+          <ExclamationTriangleIcon />
+        </Icon>
+      }
+      style={
+        Object {
+          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--severity--moderate--default)",
+          "borderColor": "var(--pf-t--global--icon--color--severity--moderate--default)",
+          "borderStyle": "solid",
+          "borderWidth": "1px",
+        }
+      }
+      variant="outline"
+    >
       Not healthy
-    </SplitItem>
+    </Label>
   </Split>
 </Fragment>
 `;

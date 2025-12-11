@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { Button, ButtonVariant, ExpandableSection, Modal, ModalVariant, Tab, Tabs } from '@patternfly/react-core';
+import { Button, ButtonVariant, ExpandableSection, Tab, Tabs } from '@patternfly/react-core';
+import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addError, addSuccess } from '../../utils/AlertUtils';
 import { RequestRouting } from './RequestRouting';
 import { K8sRequestRouting } from './K8sRequestRouting';
 import { TrafficShifting, WorkloadWeight } from './TrafficShifting';
@@ -48,7 +49,6 @@ import {
   WizardPreviews,
   getInitK8sGRPCRules
 } from './WizardActions';
-import { MessageType } from '../../types/MessageCenter';
 import { GatewaySelector, GatewaySelectorState } from './GatewaySelector';
 import { K8sGatewaySelector, K8sGatewaySelectorState } from './K8sGatewaySelector';
 import { VirtualServiceHosts } from './VirtualServiceHosts';
@@ -523,16 +523,14 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     Promise.all(promises)
       .then(results => {
         if (results.length > 0) {
-          AlertUtils.add(
-            `Istio Config ${this.props.update ? 'updated' : 'created'} for ${this.props.serviceName} service.`,
-            'default',
-            MessageType.SUCCESS
+          addSuccess(
+            `Istio Config ${this.props.update ? 'updated' : 'created'} for ${this.props.serviceName} service.`
           );
         }
         this.onClose(true);
       })
       .catch(error => {
-        AlertUtils.addError(`Could not ${this.props.update ? 'update' : 'create'} Istio config objects.`, error);
+        addError(`Could not ${this.props.update ? 'update' : 'create'} Istio config objects.`, error);
         this.onClose(true);
       });
   };
@@ -1014,6 +1012,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               isExpanded={this.state.showAdvanced}
               toggleText={`${this.state.showAdvanced ? t('Hide') : t('Show')} ${t('AdvancedOptions')}`}
               contentId={`${this.state.showAdvanced ? 'hide' : 'show'}_advanced_options`}
+              toggleId="advanced-options-expandable"
               onToggle={() => {
                 this.setState({
                   showAdvanced: !this.state.showAdvanced

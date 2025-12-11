@@ -23,7 +23,6 @@ import { computePrometheusRateParams } from 'services/Prometheus';
 import { ApiError } from 'types/Api';
 import { DEGRADED, FAILURE, HEALTHY, Health, NOT_READY } from 'types/Health';
 import { TLSStatus, nsWideMTLSStatus } from 'types/TLSStatus';
-import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { ControlPlaneMetricsMap } from 'types/Metrics';
 import { classes } from 'typestyle';
 import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
@@ -40,6 +39,7 @@ import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { HelpIcon } from '@patternfly/react-icons';
 import { OutboundTrafficPolicy } from 'types/IstioObjects';
 import { isIstioNamespace } from 'config/ServerConfig';
+import { addDanger } from '../../../utils/AlertUtils';
 
 type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
   meshStatus: string;
@@ -421,7 +421,7 @@ export class TargetPanelControlPlane extends React.Component<
   };
 
   private handleApiError = (message: string, error: ApiError): void => {
-    FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
+    addDanger(message, API.getErrorString(error));
   };
 
   private renderCharts = (): React.ReactNode => {

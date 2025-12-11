@@ -55,7 +55,7 @@ const TimeDurationComp: React.FC<TimeControlsProps> = (props: TimeControlsProps)
           <Button
             data-test="graph-replay-button"
             variant={ButtonVariant.link}
-            style={{ padding: 0, marginRight: '0.5rem' }}
+            style={{ marginRight: '0.5rem' }}
             onClick={onToggleReplay}
           >
             <KialiIcon.History />

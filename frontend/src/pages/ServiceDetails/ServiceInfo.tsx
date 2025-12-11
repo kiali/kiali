@@ -39,7 +39,7 @@ import { ServiceWizard } from '../../components/IstioWizards/ServiceWizard';
 import { ConfirmDeleteTrafficRoutingModal } from '../../components/IstioWizards/ConfirmDeleteTrafficRoutingModal';
 import { WizardAction, WizardMode } from '../../components/IstioWizards/WizardActions';
 import { deleteServiceTrafficRouting } from '../../services/Api';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addError, addSuccess } from '../../utils/AlertUtils';
 import { triggerRefresh } from '../../hooks/refresh';
 import { serverConfig } from 'config';
 import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
@@ -69,8 +69,8 @@ type ServiceInfoState = {
   wizardType: string;
 };
 
-const fullHeightStyle = kialiStyle({
-  height: '100%'
+const gridStyle = kialiStyle({
+  marginTop: '1rem'
 });
 
 class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
@@ -139,12 +139,12 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
 
     deleteServiceTrafficRouting(this.props.serviceDetails!)
       .then(_results => {
-        AlertUtils.addSuccess(`Istio Config deleted for ${this.props.serviceDetails?.service.name} service.`);
+        addSuccess(`Istio Config deleted for ${this.props.serviceDetails?.service.name} service.`);
 
         triggerRefresh();
       })
       .catch(error => {
-        AlertUtils.addError('Could not delete Istio config objects.', error);
+        addError('Could not delete Istio config objects.', error);
       });
   };
 
@@ -249,7 +249,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
     return (
       <>
         <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-          <Grid hasGutter={true} className={fullHeightStyle}>
+          <Grid hasGutter={true} className={gridStyle}>
             <GridItem span={4}>
               <Stack hasGutter={true}>
                 <StackItem>

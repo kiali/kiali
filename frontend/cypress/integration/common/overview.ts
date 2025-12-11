@@ -162,7 +162,7 @@ Then(`user sees the {string} namespace with {string}`, (ns: string, type: string
 Then(`user sees the {string} namespace list`, (nslist: string) => {
   const nss = nslist.split(',');
 
-  cy.get('div[data-ouia-component-type="PF5/Card"]')
+  cy.get('div[data-ouia-component-type="PF6/Card"]')
     .should('have.length', nss.length)
     .each(($a, i) => {
       expect($a.attr('data-test')).includes(nss[i]);
@@ -250,7 +250,7 @@ Then('the toggle on the right side of the {string} namespace card exists', (ns: 
 });
 
 Then('user sees the {string} cluster badge in the Kiali header', (name: string) => {
-  cy.get('[data-test="cluster-icon"]').contains(name).should('be.visible');
+  cy.get('[data-test*="istio-status"]').contains(name).should('be.visible');
 });
 
 Then('user sees the {string} label in both {string} namespace cards', (label: string, ns: string) => {

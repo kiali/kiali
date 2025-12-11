@@ -1,6 +1,14 @@
 import * as React from 'react';
 import { TracingCheck, TracingInfo } from '../../types/TracingInfo';
-import { Button, Modal, ModalVariant, Tab, TabAction } from '@patternfly/react-core';
+import {
+	Button,
+	Tab,
+	TabAction
+} from '@patternfly/react-core';
+import {
+	Modal,
+	ModalVariant
+} from '@patternfly/react-core/deprecated';
 import { useKialiTranslation } from '../../utils/I18nUtils';
 import { ExternalServiceInfo, TempoUrlFormat } from '../../types/StatusState';
 import { isParentKiosk } from '../Kiosk/KioskActions';

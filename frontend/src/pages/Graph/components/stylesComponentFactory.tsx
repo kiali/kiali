@@ -17,8 +17,7 @@ import { StyleEdge } from '../styles/styleEdge';
 import { StyleGroup } from '../styles/styleGroup';
 import { StyleNode } from '../styles/styleNode';
 import { BoxByType, DecoratedGraphNodeData, NodeParamsType, NodeType } from 'types/Graph';
-import * as AlertUtils from '../../../utils/AlertUtils';
-import { MessageType } from 'types/MessageCenter';
+import { addWarning } from '../../../utils/AlertUtils';
 import { store } from 'store/ConfigStore';
 import { NamespaceActions } from 'actions/NamespaceAction';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
@@ -195,27 +194,17 @@ const handleGraphNav = (fromNode: GraphElement, kiosk: string): void => {
 
   if (fromNodeData.isOutOfMesh) {
     if (!serverConfig.ambientEnabled) {
-      AlertUtils.add(
-        `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`,
-        undefined,
-        MessageType.WARNING
+      addWarning(
+        `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`
       );
     } else {
-      AlertUtils.add(
-        `A node out of the mesh provides no node-specific telemetry and can not provide a node detail graph.`,
-        undefined,
-        MessageType.WARNING
-      );
+      addWarning(`A node out of the mesh provides no node-specific telemetry and can not provide a node detail graph.`);
     }
 
     return;
   }
   if (fromNodeData.isIdle) {
-    AlertUtils.add(
-      `An idle node has no node-specific traffic and can not provide a node detail graph.`,
-      undefined,
-      MessageType.WARNING
-    );
+    addWarning(`An idle node has no node-specific traffic and can not provide a node detail graph.`);
     return;
   }
   if (fromNodeData.isOutside) {

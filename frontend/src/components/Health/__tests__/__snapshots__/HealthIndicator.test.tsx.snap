@@ -3,7 +3,7 @@
 exports[`HealthIndicator proxy status section renders the degraded workloads 1`] = `
 <Tooltip
   aria-label="Health indicator"
-  className="kiali_f1icezv7"
+  className="kiali_f185fggs"
   content={
     <div>
       <strong>
@@ -19,20 +19,22 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                     Object {
                       "status": Object {
                         "className": "icon-degraded",
-                        "color": "var(--pf-v5-global--warning-color--100)",
+                        "color": "var(--pf-t--global--icon--color--severity--moderate--default)",
                         "icon": [Function],
                         "name": "Degraded",
                         "priority": 3,
+                        "status": "warning",
                       },
                       "text": "A: 2 / 2 (1 proxy unsynced)",
                     },
                   ],
                   "status": Object {
                     "className": "icon-degraded",
-                    "color": "var(--pf-v5-global--warning-color--100)",
+                    "color": "var(--pf-t--global--icon--color--severity--moderate--default)",
                     "icon": [Function],
                     "name": "Degraded",
                     "priority": 3,
+                    "status": "warning",
                   },
                   "title": "Pod Status",
                   "type": "pod_status",
@@ -42,10 +44,11 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                     Object {
                       "status": Object {
                         "className": "icon-na",
-                        "color": "var(--pf-v5-global--Color--200)",
+                        "color": "var(--pf-t--color--gray--50)",
                         "icon": [Function],
                         "name": "No health information",
                         "priority": 0,
+                        "status": "custom",
                       },
                       "text": "Inbound: No requests",
                       "value": 0,
@@ -53,10 +56,11 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                     Object {
                       "status": Object {
                         "className": "icon-na",
-                        "color": "var(--pf-v5-global--Color--200)",
+                        "color": "var(--pf-t--color--gray--50)",
                         "icon": [Function],
                         "name": "No health information",
                         "priority": 0,
+                        "status": "custom",
                       },
                       "text": "Outbound: No requests",
                       "value": 0,
@@ -64,10 +68,11 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                   ],
                   "status": Object {
                     "className": "icon-na",
-                    "color": "var(--pf-v5-global--Color--200)",
+                    "color": "var(--pf-t--color--gray--50)",
                     "icon": [Function],
                     "name": "No health information",
                     "priority": 0,
+                    "status": "custom",
                   },
                   "title": "Traffic Status (Last {{duration}}) {\\"duration\\":\\"10m\\"}",
                   "type": "traffic_status",
@@ -76,10 +81,11 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
               "statusConfig": Object {
                 "status": Object {
                   "className": "icon-na",
-                  "color": "var(--pf-v5-global--Color--200)",
+                  "color": "var(--pf-t--color--gray--50)",
                   "icon": [Function],
                   "name": "No health information",
                   "priority": 0,
+                  "status": "custom",
                 },
                 "threshold": undefined,
                 "title": "Traffic Status (Last {{duration}}) {\\"duration\\":\\"10m\\"}",
@@ -100,7 +106,8 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
 >
   <span>
     <Icon
-      className="icon-degraded kiali_frkkrth"
+      className="icon-degraded kiali_feaah3f"
+      status="warning"
     >
       <ExclamationTriangleIcon />
     </Icon>
@@ -111,7 +118,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
 exports[`HealthIndicator renders healthy 1`] = `
 <Tooltip
   aria-label="Health indicator"
-  className="kiali_f1icezv7"
+  className="kiali_f185fggs"
   content={
     <div>
       <strong>
@@ -127,30 +134,33 @@ exports[`HealthIndicator renders healthy 1`] = `
                     Object {
                       "status": Object {
                         "className": "icon-healthy",
-                        "color": "var(--pf-v5-global--success-color--100)",
+                        "color": "var(--pf-t--chart--color--green--300)",
                         "icon": [Function],
                         "name": "Healthy",
                         "priority": 1,
+                        "status": "success",
                       },
                       "text": "A: 1 / 1",
                     },
                     Object {
                       "status": Object {
                         "className": "icon-healthy",
-                        "color": "var(--pf-v5-global--success-color--100)",
+                        "color": "var(--pf-t--chart--color--green--300)",
                         "icon": [Function],
                         "name": "Healthy",
                         "priority": 1,
+                        "status": "success",
                       },
                       "text": "B: 2 / 2",
                     },
                   ],
                   "status": Object {
                     "className": "icon-healthy",
-                    "color": "var(--pf-v5-global--success-color--100)",
+                    "color": "var(--pf-t--chart--color--green--300)",
                     "icon": [Function],
                     "name": "Healthy",
                     "priority": 1,
+                    "status": "success",
                   },
                   "title": "Pod Status",
                   "type": "pod_status",
@@ -160,10 +170,11 @@ exports[`HealthIndicator renders healthy 1`] = `
                     Object {
                       "status": Object {
                         "className": "icon-na",
-                        "color": "var(--pf-v5-global--Color--200)",
+                        "color": "var(--pf-t--color--gray--50)",
                         "icon": [Function],
                         "name": "No health information",
                         "priority": 0,
+                        "status": "custom",
                       },
                       "text": "Inbound: No requests",
                       "value": 0,
@@ -171,10 +182,11 @@ exports[`HealthIndicator renders healthy 1`] = `
                     Object {
                       "status": Object {
                         "className": "icon-na",
-                        "color": "var(--pf-v5-global--Color--200)",
+                        "color": "var(--pf-t--color--gray--50)",
                         "icon": [Function],
                         "name": "No health information",
                         "priority": 0,
+                        "status": "custom",
                       },
                       "text": "Outbound: No requests",
                       "value": 0,
@@ -182,10 +194,11 @@ exports[`HealthIndicator renders healthy 1`] = `
                   ],
                   "status": Object {
                     "className": "icon-na",
-                    "color": "var(--pf-v5-global--Color--200)",
+                    "color": "var(--pf-t--color--gray--50)",
                     "icon": [Function],
                     "name": "No health information",
                     "priority": 0,
+                    "status": "custom",
                   },
                   "title": "Traffic Status (Last {{duration}}) {\\"duration\\":\\"10m\\"}",
                   "type": "traffic_status",
@@ -194,10 +207,11 @@ exports[`HealthIndicator renders healthy 1`] = `
               "statusConfig": Object {
                 "status": Object {
                   "className": "icon-na",
-                  "color": "var(--pf-v5-global--Color--200)",
+                  "color": "var(--pf-t--color--gray--50)",
                   "icon": [Function],
                   "name": "No health information",
                   "priority": 0,
+                  "status": "custom",
                 },
                 "threshold": undefined,
                 "title": "Traffic Status (Last {{duration}}) {\\"duration\\":\\"10m\\"}",
@@ -218,7 +232,8 @@ exports[`HealthIndicator renders healthy 1`] = `
 >
   <span>
     <Icon
-      className="icon-healthy kiali_f1r5cf3w"
+      className="icon-healthy kiali_fza77py"
+      status="success"
     >
       <CheckCircleIcon />
     </Icon>

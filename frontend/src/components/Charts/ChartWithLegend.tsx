@@ -1,16 +1,15 @@
 import * as React from 'react';
+import { ChartProps, ChartTooltipProps } from '@patternfly/react-charts/victory';
 import {
   ChartAxis,
   Chart,
   ChartGroup,
   ChartScatter,
-  ChartProps,
-  ChartTooltipProps,
   ChartLabel,
   ChartLegend,
   ChartLine,
   createContainer
-} from '@patternfly/react-charts';
+} from '@patternfly/react-charts/victory';
 import { VictoryPortal } from 'victory-core';
 import { VictoryBoxPlot } from 'victory-box-plot';
 import { format as d3Format } from 'd3-format';
@@ -70,7 +69,7 @@ type ScaleInfo = { count: number; format: string };
 const overlayName = 'overlay';
 
 const axisStyle = {
-  tickLabels: { fontSize: 12, padding: 2, fill: PFColors.Color100 },
+  tickLabels: { fontSize: 12, padding: 2 },
   grid: {
     fill: 'none',
     stroke: PFColors.ColorLight300,
@@ -98,7 +97,6 @@ const overlayLegendStyle = kialiStyle({
   flexWrap: 'wrap',
   flexDirection: 'column',
   position: 'relative',
-  background: 'var(--pf-v5-global--BackgroundColor--dark-100)',
   opacity: 0.7,
   overflow: 'auto'
 });
@@ -325,9 +323,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
             tickCount={chartHeight <= MIN_HEIGHT_YAXIS ? 1 : undefined}
             tickFormat={getFormatter(d3Format, this.props.unit)}
             label={getUnit(d3Format, this.props.unit, mainMax)}
-            axisLabelComponent={
-              <ChartLabel y={-10} x={-15} angle={0} renderInPortal={true} style={{ fill: PFColors.Color100 }} />
-            }
+            axisLabelComponent={<ChartLabel y={-10} x={-15} angle={0} renderInPortal={true} />}
             style={axisStyle}
           />
 
@@ -393,7 +389,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
               width={this.state.width}
               style={{
                 data: { cursor: 'pointer', padding: 0 },
-                labels: { cursor: 'pointer', fontSize: FONT_SIZE_LEGEND, fill: PFColors.Color100 }
+                labels: { cursor: 'pointer', fontSize: FONT_SIZE_LEGEND }
               }}
               borderPadding={{
                 top: 5,

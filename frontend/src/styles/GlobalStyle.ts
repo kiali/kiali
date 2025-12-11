@@ -3,22 +3,24 @@ import { kialiStyle } from './StyleUtils';
 export const globalStyle = kialiStyle({
   height: '100%',
   margin: 0,
-  padding: 0,
-  fontFamily: 'var(--pf-v5-global--FontFamily--text)',
+  fontFamily: 'var(--pf-t--global--font--family--body)',
   fontSize: '14px',
   overflow: 'hidden',
   $nest: {
     /**
-     * Kiosk mode (hide Kiali menu)
+     * Kiosk mode (hide Kiali menu and sidebar)
      */
     '&.kiosk': {
       $nest: {
-        '& #page-sidebar': {
-          display: 'none'
+        '& .pf-v6-c-page': {
+          gridTemplateAreas: '"main"',
+          gridTemplateColumns: '100%',
+          gridTemplateRows: '100%'
         },
 
-        '& header[role="kiali_header"]': {
-          display: 'none'
+        '& .pf-v6-c-page__main-container': {
+          height: '100%',
+          margin: '0.5rem 1rem'
         }
       }
     },
@@ -32,32 +34,23 @@ export const globalStyle = kialiStyle({
     },
 
     /**
-     * Remove global page padding by default
-     */
-    '& .pf-v5-c-page__main-section': {
-      padding: 0,
-      height: '100%',
-      overflowY: 'hidden'
-    },
-
-    /**
      * Drawer panels should have less z-index than dropdowns
      */
-    '& .pf-v5-c-drawer__panel': {
+    '& .pf-v6-c-drawer__panel': {
       zIndex: 199
     },
 
     /**
      * Reduce padding of menu group title
      */
-    '& .pf-v5-c-menu__group-title': {
+    '& .pf-v6-c-menu__group-title': {
       paddingTop: '0.5rem'
     },
 
     /**
      * Padding for table rows
      */
-    '& .pf-v5-c-table': {
+    '& .pf-v6-c-table': {
       $nest: {
         '&.pf-m-compact tr > *': {
           padding: '0.5rem'
@@ -72,52 +65,34 @@ export const globalStyle = kialiStyle({
     /**
      * Show graph legend
      */
-    '& .pf-v5-c-chart svg': {
+    '& .pf-v6-c-chart svg': {
       overflow: 'visible'
     },
 
     /**
      * Light color for links in tooltips
      */
-    '& .pf-v5-c-tooltip a': {
-      color: 'var(--pf-v5-global--link--Color--light)',
+    '& .pf-v6-c-tooltip a': {
+      color: 'var(pf-t--global--text--color--link--default)',
       $nest: {
         '&:hover': {
-          color: 'var(--pf-v5-global--link--Color--light--hover)'
+          color: 'var(pf-t--global--text--color--link--hover)'
         }
       }
     },
 
     /**
-     * Hide the kebab menu of Patternfly topology groups
-     * TODO Remove when groups can hide the kebab menu - https://github.com/patternfly/react-topology/issues/254
+     * Remove underline from links
      */
-    '& #pft-graph .pf-topology__group__label': {
-      $nest: {
-        '& .pf-topology__node__label__badge ~ text:not(.pf-m-secondary)': {
-          transform: 'translateX(10px)'
-        },
-        '& .pf-topology__node__action-icon': {
-          visibility: 'hidden'
-        },
-        '& text ~ .pf-topology__node__separator': {
-          visibility: 'hidden'
-        }
-      }
+    '& a': {
+      textDecoration: 'none'
     },
 
     /**
-     * TODO Move to labelClassName - https://github.com/patternfly/react-topology/issues/255
+     * Remove color override for content in Cluster badge tooltip
      */
-    '& #mesh-container .pf-topology__group__label': {
-      $nest: {
-        '& > text': {
-          fontSize: '1.25rem'
-        },
-        '& .pf-topology__node__label__badge > text': {
-          fontSize: '1rem'
-        }
-      }
+    '& .pf-v6-c-content, & .pf-v6-c-content > h4': {
+      color: 'unset'
     }
   }
 });

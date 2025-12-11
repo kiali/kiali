@@ -5,7 +5,7 @@ import FlexView from 'react-flexview';
 import { kialiStyle } from 'styles/StyleUtils';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import { UNKNOWN } from '../../types/Graph';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addDanger } from '../../utils/AlertUtils';
 import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
 import {
   durationSelector,
@@ -18,7 +18,7 @@ import { KialiAppState } from '../../store/Store';
 import { PFColors } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
 import { isKioskMode } from 'utils/SearchParamUtils';
-import { Chip } from '@patternfly/react-core';
+import { Label } from '@patternfly/react-core';
 import { EMPTY_MESH_DATA, MeshDataSource, MeshFetchParams } from '../../services/MeshDataSource';
 import { KialiDispatch } from 'types/Redux';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
@@ -106,12 +106,12 @@ type MeshPageState = {
 const containerStyle = kialiStyle({
   minHeight: '350px',
   // TODO: try flexbox to remove this calc
-  height: 'calc(100vh - 113px)' // View height minus top bar height minus secondary masthead
+  height: 'calc(100vh - 136px)' // View height minus top bar height minus secondary masthead
 });
 
 const kioskContainerStyle = kialiStyle({
   minHeight: '350px',
-  height: 'calc(100vh - 10px)' // View height minus top bar height
+  height: 'calc(100vh - 65px)' // View height minus top bar height
 });
 
 const meshChip = kialiStyle({
@@ -248,9 +248,9 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
               {this.props.showLegend && <MeshLegend closeLegend={this.props.toggleLegend} />}
 
               {isReady && (
-                <Chip className={`${meshChip} ${meshBackground}`} isReadOnly={true}>
+                <Label variant="outline" className={`${meshChip} ${meshBackground}`}>
                   {this.displayTimeRange()}
-                </Chip>
+                </Label>
               )}
 
               <div id="mesh-container" className={meshContainerStyle}>
@@ -374,7 +374,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   };
 
   private notifyError = (error: Error, _componentStack: string): void => {
-    AlertUtils.add(`There was an error when rendering the mesh: ${error.message}, please try a different layout`);
+    addDanger(`There was an error when rendering the mesh: ${error.message}, please try a different layout`);
   };
 
   // It is common that when updating the mesh that the element topology (nodes, edges) remain the same,

@@ -18,7 +18,7 @@ import {
 import { HistoryManager, URLParam } from '../../app/History';
 import { config, RenderResource, Resource, ResourceType } from './Config';
 import { VirtualItem } from './VirtualItem';
-import { EmptyState, EmptyStateBody, EmptyStateVariant, EmptyStateHeader } from '@patternfly/react-core';
+import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
@@ -39,7 +39,7 @@ const emptyStyle = kialiStyle({
 });
 
 // TOP_PADDING constant is used to adjust the height of the main div to allow scrolling in the inner container layer.
-const TOP_PADDING = 76 + 160;
+const TOP_PADDING = 269;
 
 // EMBEDDED_PADDING constant is a magic number used to adjust the height of the main div to allow scrolling in the inner container layer.
 // 42px is the height of the first tab menu
@@ -52,6 +52,11 @@ const EMBEDDED_PADDING = 42 + 100;
  * GLOBAL_SCROLLBAR environment variable is not defined in standalone Kiali application (value is always false)
  */
 const globalScrollbar = process.env.GLOBAL_SCROLLBAR ?? 'false';
+
+const innerScrollContainerStyle = kialiStyle({
+  maxHeight: '95%',
+  paddingRight: '0.5rem'
+});
 
 // ******************************
 // VirtualList and its associated classes are intended to be used for main list pages: Applications,
@@ -150,8 +155,6 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     if (globalScrollbar === 'false') {
       return kialiStyle({
         height: height,
-        padding: '1.25rem',
-        marginBottom: '1.25rem',
         width: '100%'
       });
     }
@@ -265,8 +268,11 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
             <Tr className={emptyStyle}>
               <Td colSpan={columns.length}>
                 {this.props.activeNamespaces.length > 0 ? (
-                  <EmptyState variant={EmptyStateVariant.full}>
-                    <EmptyStateHeader titleText={<>No {typeDisplay} found</>} headingLevel="h5" />
+                  <EmptyState
+                    headingLevel="h5"
+                    titleText={<>No {typeDisplay} found</>}
+                    variant={EmptyStateVariant.full}
+                  >
                     <EmptyStateBody>
                       No {typeDisplay} in namespace
                       {this.props.activeNamespaces.length === 1
@@ -275,8 +281,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
                     </EmptyStateBody>
                   </EmptyState>
                 ) : (
-                  <EmptyState variant={EmptyStateVariant.full}>
-                    <EmptyStateHeader titleText="No namespace is selected" headingLevel="h5" />
+                  <EmptyState headingLevel="h5" titleText="No namespace is selected" variant={EmptyStateVariant.full}>
                     <EmptyStateBody>
                       There is currently no namespace selected, please select one using the Namespace selector.
                     </EmptyStateBody>
@@ -291,7 +296,11 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     return (
       <div className={classes(this.state.scrollStyle, this.props.className)}>
         {childrenWithProps}
-        {this.props.actions ? table : <InnerScrollContainer style={{ maxHeight: '95%' }}>{table}</InnerScrollContainer>}
+        {this.props.actions ? (
+          table
+        ) : (
+          <InnerScrollContainer className={innerScrollContainerStyle}>{table}</InnerScrollContainer>
+        )}
       </div>
     );
   }

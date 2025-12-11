@@ -1,7 +1,7 @@
 import { PFColors } from 'components/Pf/PfColors';
 import * as API from 'services/Api';
 import { TimeRange, durationToBounds, guardTimeRange } from 'types/Common';
-import * as AlertUtils from 'utils/AlertUtils';
+import { addError } from 'utils/AlertUtils';
 import { Span, TracingQuery } from 'types/Tracing';
 import { MetricsObjectTypes } from 'types/Metrics';
 import { LineInfo } from 'types/VictoryChartInfo';
@@ -65,7 +65,7 @@ export class SpanOverlay {
       })
       .catch(err => {
         if (!this.lastFetchError) {
-          AlertUtils.addError('Could not fetch spans.', err);
+          addError('Could not fetch spans.', err);
           this.lastFetchError = true;
         }
       });

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import * as API from '../../services/Api';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addError } from '../../utils/AlertUtils';
 import { ObjectCheck, Validations, ValidationTypes } from '../../types/IstioObjects';
 import { WorkloadDescription } from './WorkloadDescription';
 import { WorkloadHealth } from '../../types/Health';
@@ -34,8 +34,9 @@ type WorkloadInfoState = {
   workloadIstioConfig?: IstioConfigList;
 };
 
-const fullHeightStyle = kialiStyle({
-  height: '100%'
+const gridStyle = kialiStyle({
+  height: '100%',
+  paddingTop: '1rem'
 });
 
 const tabName = 'list';
@@ -112,7 +113,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
         .then(results => {
           this.setState({ workloadIstioConfig: results.data });
         })
-        .catch(error => AlertUtils.addError('Could not fetch Health/IstioConfig.', error));
+        .catch(error => addError('Could not fetch Health/IstioConfig.', error));
     }
   };
 
@@ -266,7 +267,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     return (
       <>
         <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-          <Grid hasGutter={true} className={fullHeightStyle}>
+          <Grid hasGutter={true} className={gridStyle}>
             <GridItem span={4}>
               <Stack hasGutter={true}>
                 <StackItem>

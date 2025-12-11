@@ -1,8 +1,5 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
-const ACTIVE_COLOR = 'rgb(0, 102, 204)';
-const INACTIVE_COLOR = 'rgb(21, 21, 21)';
-
 const buttonClick = (id: string): void => {
   cy.get(`button#${id}`).click();
 };
@@ -10,11 +7,11 @@ const buttonClick = (id: string): void => {
 const buttonPrepare = (id: string, active: boolean): void => {
   cy.waitForReact();
 
-  cy.get(`button#${id} > span.pf-v5-c-icon`)
+  cy.get(`button#${id} .pf-v6-c-icon__content`)
     .should('have.length', '1')
     .then(el => {
-      cy.log(el.css('color'));
-      if (el.css('color') !== (active ? ACTIVE_COLOR : INACTIVE_COLOR)) {
+      const isActive = el.hasClass('pf-m-custom');
+      if (isActive !== active) {
         buttonClick(id);
       }
     });
@@ -23,13 +20,20 @@ const buttonPrepare = (id: string, active: boolean): void => {
 const buttonState = (id: string, active: boolean): void => {
   cy.waitForReact();
 
-  cy.get(`button#${id} > span.pf-v5-c-icon`)
+  const selector = `button#${id} .pf-v6-c-icon__content`;
+  cy.get(selector)
     .should('have.length', '1')
-    .should('have.css', 'color', `${active ? ACTIVE_COLOR : INACTIVE_COLOR}`);
+    .then(el => {
+      if (active) {
+        cy.wrap(el).should('have.class', 'pf-m-custom');
+      } else {
+        cy.wrap(el).should('not.have.class', 'pf-m-custom');
+      }
+    });
 };
 
 Then('the toggle button {string} is enabled', (id: string) => {
-  cy.get(`button#${id}`).should('have.attr', 'aria-disabled', 'false');
+  cy.get(`button#${id}`).should('be.enabled');
 });
 
 When('the button {string} is clicked', (id: string) => {

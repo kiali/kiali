@@ -108,7 +108,8 @@ const nodeStyle = kialiStyle({
   }
 });
 
-const labelNodeStyle = kialiStyle({
+// slightly increase the node label fonts for readability (same done for groups)
+const labelStyle = kialiStyle({
   $nest: {
     '& > text': {
       fontSize: '1.25rem'
@@ -169,7 +170,7 @@ const MeshNodeComponent: React.FC<MeshNodeProps> = ({ element, ...rest }) => {
       {data.isFind && <ShapeComponent className={findOverlayStyle} width={width} height={height} element={element} />}
       <DefaultNode
         className={nodeStyle}
-        labelClassName={labelNodeStyle}
+        labelClassName={labelStyle}
         element={element}
         {...rest}
         {...passedData}

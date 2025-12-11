@@ -15,7 +15,7 @@ import {
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
 import * as API from 'services/Api';
-import * as AlertUtils from 'utils/AlertUtils';
+import { addDanger, addWarning } from 'utils/AlertUtils';
 import { RenderComponentScroll } from '../Nav/Page';
 import { KioskElement } from '../Kiosk/KioskElement';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
@@ -45,6 +45,7 @@ import { GetTracingUrlProvider } from 'utils/tracing/UrlProviders';
 import { ExternalServiceInfo } from 'types/StatusState';
 import { retrieveTimeRange } from '../Time/TimeRangeHelper';
 import { isParentKiosk, kioskTracingAction } from '../Kiosk/KioskActions';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -83,6 +84,14 @@ interface TracesState {
 
 const traceDetailsTab = 0;
 const spansDetailsTab = 1;
+
+const cardStyle = kialiStyle({
+  marginTop: '1rem'
+});
+
+const containerStyle = kialiStyle({
+  paddingRight: '0.5rem'
+});
 
 class TracesComp extends React.Component<TracesProps, TracesState> {
   private fetcher: TracesFetcher;
@@ -174,10 +183,10 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
         const percentiles = await this.percentilesPromise;
         options.minDuration = percentiles.get(this.state.querySettings.percentile);
         if (!options.minDuration) {
-          AlertUtils.addWarning('Cannot perform query above the requested percentile (value unknown).');
+          addWarning('Cannot perform query above the requested percentile (value unknown).');
         }
       } catch (err) {
-        AlertUtils.addError(`Could not fetch percentiles: ${err}`);
+        addDanger('Could not fetch percentiles', `${err}`);
       }
     }
     this.fetcher.fetch(options, this.state.traces);
@@ -206,7 +215,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
 
   private percentilesFetched = (q: MetricsStatsQuery, r: MetricsStatsResult): Map<string, number> => {
     if (r.warnings) {
-      AlertUtils.addWarning(r.warnings.join(', '));
+      addWarning(r.warnings.join(', '));
     }
     const [mapInbound, mapOutbound] = (['inbound', 'outbound'] as Direction[]).map(dir => {
       const map = new Map<string, number>();
@@ -281,8 +290,8 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     const tracingURL = this.getTracingUrl();
     return (
       <>
-        <RenderComponentScroll>
-          <Card>
+        <RenderComponentScroll className={containerStyle}>
+          <Card className={cardStyle}>
             <CardBody>
               <Toolbar style={{ padding: 0 }}>
                 {this.state.infoMessage && this.state.visibleAlert && (

@@ -1,13 +1,13 @@
 import * as React from 'react';
-import { Button, ButtonVariant, Modal, ModalVariant } from '@patternfly/react-core';
+import { Button, ButtonVariant } from '@patternfly/react-core';
+import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { ControlPlane } from '../../types/Mesh';
 import { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
-import { MessageType } from 'types/MessageCenter';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { DurationInSeconds } from 'types/Common';
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
-import * as AlertUtils from 'utils/AlertUtils';
+import { addDanger, addError, addSuccess } from 'utils/AlertUtils';
 import * as API from 'services/Api';
 import { GraphDataSource } from 'services/GraphDataSource';
 import {
@@ -158,11 +158,11 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
 
     API.updateNamespace(this.props.nsTarget, jsonPatch, this.props.nsInfo.cluster)
       .then(_ => {
-        AlertUtils.add(`Namespace ${this.props.nsTarget} updated`, 'default', MessageType.SUCCESS);
+        addSuccess(`Namespace ${this.props.nsTarget} updated`);
         this.props.load();
       })
       .catch(error => {
-        AlertUtils.addError(`Could not update namespace ${this.props.nsTarget}`, error);
+        addError(`Could not update namespace ${this.props.nsTarget}`, error);
       });
   };
 
@@ -171,11 +171,11 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
 
     API.updateNamespace(this.props.nsTarget, jsonPatch, this.props.nsInfo.cluster)
       .then(_ => {
-        AlertUtils.add(`Namespace ${this.props.nsTarget} updated`, 'default', MessageType.SUCCESS);
+        addSuccess(`Namespace ${this.props.nsTarget} updated`);
         this.props.load();
       })
       .catch(error => {
-        AlertUtils.addError(`Could not update namespace ${this.props.nsTarget}`, error);
+        addError(`Could not update namespace ${this.props.nsTarget}`, error);
       });
   };
 
@@ -204,13 +204,13 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
           if (op !== 'delete') {
             this.createTrafficPolicies(ns, duration, apsP, sdsP, op, cluster);
           } else {
-            AlertUtils.add(`Traffic policies ${op}d for ${ns} namespace.`, 'default', MessageType.SUCCESS);
+            addSuccess(`Traffic policies ${op}d for ${ns} namespace.`);
             this.props.load();
           }
         })
         .catch(errorDelete => {
           if (!errorDelete.isCanceled) {
-            AlertUtils.addError('Could not delete traffic policies.', errorDelete);
+            addError('Could not delete traffic policies.', errorDelete);
           }
         });
     } else {
@@ -242,14 +242,14 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
         )
         .then(results => {
           if (results.length > 0) {
-            AlertUtils.add(`Traffic policies ${op}d for ${ns} namespace.`, 'default', MessageType.SUCCESS);
+            addSuccess(`Traffic policies ${op}d for ${ns} namespace.`);
           }
 
           this.props.load();
         })
         .catch(errorCreate => {
           if (!errorCreate.isCanceled) {
-            AlertUtils.addError(`Could not ${op} traffic policies.`, errorCreate);
+            addError(`Could not ${op} traffic policies.`, errorCreate);
           }
         });
     });
@@ -261,7 +261,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
         errorMessage = 'Could not fetch traffic data.';
       }
 
-      AlertUtils.addError(errorMessage);
+      addDanger(errorMessage);
     });
 
     graphDataSource.fetchForNamespace(duration, ns);

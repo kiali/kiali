@@ -7,6 +7,7 @@ import { pathRoutes } from 'routes';
 import { Provider } from 'react-redux';
 import { store } from 'store/ConfigStore';
 import { LoginActions } from 'actions/LoginActions';
+import { Theme } from 'types/Common';
 
 const session = {
   expiresOn: '2018-05-29 21:51:40.186179601 +0200 CEST m=+36039.431579761',
@@ -23,6 +24,9 @@ const router = createMemoryRouter([
         setNavCollapsed={() => {}}
         tracingUrl={''}
         externalServices={externalServicesInfo}
+        kiosk={''}
+        theme={Theme.LIGHT}
+        showNotificationCenter={false}
       />
     ),
     children: pathRoutes

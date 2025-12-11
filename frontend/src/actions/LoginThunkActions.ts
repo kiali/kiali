@@ -6,7 +6,7 @@ import * as Login from '../services/Login';
 import { AuthResult } from '../types/Auth';
 import { KialiDispatch } from '../types/Redux';
 import { isAuthStrategyOAuth } from '../config/AuthenticationConfig';
-import * as AlertUtils from '../utils/AlertUtils';
+import { addError } from '../utils/AlertUtils';
 
 const Dispatcher = new Login.LoginDispatcher();
 
@@ -76,7 +76,7 @@ export const LoginThunkActions = {
         }
       } catch (err) {
         if (err instanceof Error) {
-          AlertUtils.addError('Logout failed', err);
+          addError('Logout failed', err);
         }
       }
     };

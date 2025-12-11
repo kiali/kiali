@@ -13,7 +13,7 @@ Feature: Kiali masthead cluster components status
   @multi-cluster
   Scenario: Cluster components healthy
     Then user sees "east" cluster label with a "success" icon
-    When user hovers over the cluster icon
+    When user hovers over the cluster label with a "success" icon
     Then user sees a tooltip with text "east"
     Then user sees a tooltip with text "west"
     Then user does not see any "Not" in the tooltip
@@ -25,11 +25,11 @@ Feature: Kiali masthead cluster components status
     When user scales to "0" the "grafana" in namespace "istio-system"
     Then the user refreshes the page
     Then user sees "east" cluster label with a "warning" icon
-    When user hovers over the cluster icon
+    When user hovers over the cluster label with a "warning" icon
     Then user sees a tooltip with text "Unreachable"
     When user scales to "1" the "grafana" in namespace "istio-system"
     Then the user refreshes the page
     Then user sees "east" cluster label with a "success" icon
-    When user hovers over the cluster icon
+    When user hovers over the cluster label with a "success" icon
     Then user does not see any "Not" in the tooltip
     Then user does not see any "Unreachable" in the tooltip

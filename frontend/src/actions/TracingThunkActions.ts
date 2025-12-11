@@ -1,4 +1,4 @@
-import * as AlertUtils from '../utils/AlertUtils';
+import { addError } from '../utils/AlertUtils';
 import * as API from '../services/Api';
 import { KialiDispatch } from '../types/Redux';
 import { TracingActions } from './TracingActions';
@@ -22,17 +22,14 @@ export const TracingThunkActions = {
               }
             }
           })
-          .catch((error: ApiError) => {
-            if (error.response?.status === 404) {
+          .catch((err: ApiError) => {
+            if (err.response?.status === 404) {
               setURLTraceId(undefined);
             }
 
             dispatch(TracingActions.setTrace(undefined));
 
-            AlertUtils.addMessage({
-              ...AlertUtils.extractApiError('Could not fetch trace', error),
-              showNotification: false
-            });
+            addError('Could not fetch trace', err, false);
           });
       } else {
         dispatch(TracingActions.setTrace(undefined));

@@ -5,7 +5,7 @@ import { Tab } from '@patternfly/react-core';
 import * as API from '../../services/Api';
 import { App, AppId, AppQuery } from '../../types/App';
 import { AppInfo } from './AppInfo';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { addError } from '../../utils/AlertUtils';
 import { IstioMetrics } from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { CustomMetrics } from '../../components/Metrics/CustomMetrics';
@@ -114,7 +114,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
         });
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch App Details.', error);
+        addError('Could not fetch App Details.', error);
         const msg: ErrorMsg = {
           title: 'No App is selected',
           description: `${this.props.appId.app} is not found in the mesh`

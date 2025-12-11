@@ -87,7 +87,9 @@ export interface IconProps {
   color?: string;
   dataTest?: string;
   icon?: React.ComponentClass<SVGIconProps>;
+  isInline?: boolean;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  status?: string;
 }
 
 // keep alphabetized
@@ -183,7 +185,13 @@ export const createIcon = (
   const iconStyle = iconColor ? kialiStyle({ color: iconColor }) : undefined;
 
   return (
-    <Icon className={classes(props.className, iconStyle)} size={props.size} data-test={props.dataTest}>
+    <Icon
+      className={classes(props.className, iconStyle)}
+      data-test={props.dataTest}
+      isInline={props.isInline}
+      size={props.size}
+      status={props.status as any}
+    >
       {React.createElement(iconComponent)}
     </Icon>
   );

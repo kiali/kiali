@@ -115,7 +115,7 @@ Then(
 );
 
 When('user sees the {string} wizard', (title: string) => {
-  cy.get(`div[aria-label="${title}"]`);
+  cy.get(`div[aria-label="${title}"]`).should('be.visible');
 });
 
 When('user clicks in the {string} tab', (tab: string) => {
@@ -239,8 +239,10 @@ Then('user sees the {string} regex in the editor', (regexContent: string) => {
   cy.get('.ace_content').invoke('text').should('match', re);
 });
 
-When('user clicks on {string} Advanced Options', (action: string) => {
-  cy.get(`div[id="${action.toLowerCase()}_advanced_options"]`).prev().click();
+When('user clicks on Advanced Options', () => {
+  // In PatternFly 6, ExpandableSection doesn't use toggleId as button ID anymore
+  // Find the button by its text content instead
+  cy.contains('button', 'Show AdvancedOptions').should('be.visible').click();
 });
 
 When('user clicks on Add Gateway', () => {
