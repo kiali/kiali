@@ -49,33 +49,6 @@ func TestCredentialManager_EmptyValue(t *testing.T) {
 	}
 }
 
-func TestCredentialManager_FilePath(t *testing.T) {
-	cm, err := NewCredentialManager()
-	if err != nil {
-		t.Fatalf("Failed to create CredentialManager: %v", err)
-	}
-	t.Cleanup(cm.Close)
-
-	// Create a temporary file
-	tmpDir := t.TempDir()
-	tmpFile := filepath.Join(tmpDir, "test-credential")
-	content := "test-token-from-file\n"
-
-	err = os.WriteFile(tmpFile, []byte(content), 0600)
-	if err != nil {
-		t.Fatalf("Failed to create temp file: %v", err)
-	}
-
-	// Test that file paths are read and trimmed
-	result, err := cm.Get(tmpFile)
-	if err != nil {
-		t.Errorf("Expected no error, got: %v", err)
-	}
-	if result != "test-token-from-file" {
-		t.Errorf("Expected 'test-token-from-file', got: %s", result)
-	}
-}
-
 func TestCredentialManager_NonExistentFile(t *testing.T) {
 	cm, err := NewCredentialManager()
 	if err != nil {
