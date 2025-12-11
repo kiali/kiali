@@ -13,11 +13,27 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/kiali/kiali/util/certtest"
 	"github.com/kiali/kiali/util/filetest"
 )
 
 //go:embed testdata/test-ca.pem
 var testCA []byte
+
+// pollForCondition polls until a condition is met or timeout is reached.
+// Returns true if condition was met, false if timeout occurred.
+// This is used for waiting on fsnotify file change detection in tests.
+func pollForCondition(t *testing.T, timeout time.Duration, condition func() bool) bool {
+	t.Helper()
+	iterations := int(timeout / (50 * time.Millisecond))
+	for i := 0; i < iterations; i++ {
+		time.Sleep(50 * time.Millisecond)
+		if condition() {
+			return true
+		}
+	}
+	return false
+}
 
 func TestCredentialManager_LiteralValue(t *testing.T) {
 	cm, err := NewCredentialManager()
@@ -212,19 +228,14 @@ func TestCredentialManager_CachingBehavior(t *testing.T) {
 	// In real Kubernetes environments, this happens almost instantly
 	// We'll poll for up to 2 seconds to account for different system speeds
 	var result3 string
-	cacheUpdated := false
-	for i := 0; i < 40; i++ {
-		time.Sleep(50 * time.Millisecond)
+	cacheUpdated := pollForCondition(t, 2*time.Second, func() bool {
 		result3, err = cm.Get(tmpFile)
 		if err != nil {
 			t.Errorf("Expected no error after file update, got: %v", err)
-			break
+			return false
 		}
-		if result3 == "rotated-token" {
-			cacheUpdated = true
-			break
-		}
-	}
+		return result3 == "rotated-token"
+	})
 
 	if !cacheUpdated {
 		t.Errorf("Expected fsnotify to update cache to 'rotated-token', still got: %s", result3)
@@ -350,18 +361,12 @@ func TestCredentialManager_SymlinkRotation(t *testing.T) {
 
 	// Poll until cache returns rotated value.
 	var rotated string
-	for i := 0; i < 40; i++ {
-		time.Sleep(50 * time.Millisecond)
+	success := pollForCondition(t, 2*time.Second, func() bool {
 		rotated, err = cm.Get(mountedToken)
-		if err != nil {
-			continue
-		}
-		if rotated == "second" {
-			break
-		}
-	}
+		return err == nil && rotated == "second"
+	})
 
-	if rotated != "second" {
+	if !success {
 		t.Fatalf("expected rotated token 'second', got [%q]. err: %v", rotated, err)
 	}
 }
@@ -388,15 +393,13 @@ func TestCredentialManager_RemovesCacheOnDelete(t *testing.T) {
 	}
 
 	var readErr error
-	for i := 0; i < 40; i++ {
-		time.Sleep(25 * time.Millisecond)
+	// Poll with shorter interval (25ms) since we're waiting for error, not success
+	success := pollForCondition(t, 1*time.Second, func() bool {
 		_, readErr = cm.Get(tmpFile)
-		if readErr != nil {
-			break
-		}
-	}
+		return readErr != nil
+	})
 
-	if readErr == nil {
+	if !success || readErr == nil {
 		t.Fatal("expected error reading removed credential but got nil")
 	}
 }
@@ -724,21 +727,21 @@ func TestCredentialManager_CertPoolReloadsOnFileChange(t *testing.T) {
 	tmpDir := t.TempDir()
 	caFile := filepath.Join(tmpDir, "ca.pem")
 
-	initialCA := buildTestCertificate(t, "initial-ca")
+	initialCA := certtest.BuildTestCertificate(t, "initial-ca")
 	require.NoError(t, os.WriteFile(caFile, initialCA, 0o600))
 
 	err = cm.InitializeCertPool([]string{caFile})
 	require.NoError(t, err)
 
 	// Rotate CA
-	rotatedCA := buildTestCertificate(t, "rotated-ca")
+	rotatedCA := certtest.BuildTestCertificate(t, "rotated-ca")
 	require.NoError(t, os.WriteFile(caFile, rotatedCA, 0o600))
 
 	// Wait for fsnotify event and pool rebuild
-	rotatedSubject := subjectFromPEM(t, rotatedCA)
+	rotatedSubject := certtest.SubjectFromPEM(t, rotatedCA)
 	require.Eventually(t, func() bool {
 		pool := cm.GetCertPool()
-		return certPoolHasSubject(pool, rotatedSubject)
+		return certtest.CertPoolHasSubject(pool, rotatedSubject)
 	}, time.Second, 10*time.Millisecond, "pool should contain rotated CA")
 }
 
@@ -771,17 +774,17 @@ func TestCredentialManager_CertPoolGlobalConfig(t *testing.T) {
 
 	Set(conf)
 
-	rotatedCA := buildTestCertificate(t, "rotated-global")
+	rotatedCA := certtest.BuildTestCertificate(t, "rotated-global")
 	require.NoError(t, os.WriteFile(caFile.Name(), rotatedCA, 0o600))
-	rotatedSubject := subjectFromPEM(t, rotatedCA)
+	rotatedSubject := certtest.SubjectFromPEM(t, rotatedCA)
 
 	require.Eventually(t, func() bool {
 		pool := Get().CertPool()
-		return certPoolHasSubject(pool, rotatedSubject)
+		return certtest.CertPoolHasSubject(pool, rotatedSubject)
 	}, time.Second, 10*time.Millisecond, "global config never observed rotated CA bundle")
 
 	pool := Get().CertPool()
-	require.True(t, certPoolHasSubject(pool, rotatedSubject), "all callers should observe the rotated CA bundle")
+	require.True(t, certtest.CertPoolHasSubject(pool, rotatedSubject), "all callers should observe the rotated CA bundle")
 }
 
 // TestCredentialManager_CertPoolSymlinkRotation tests that the certificate pool is correctly
@@ -810,7 +813,7 @@ func TestCredentialManager_CertPoolSymlinkRotation(t *testing.T) {
 	require.NoError(t, os.MkdirAll(dataDir1, 0o700))
 
 	// Create initial CA certificate in first data directory
-	initialCA := buildTestCertificate(t, "initial-ca")
+	initialCA := certtest.BuildTestCertificate(t, "initial-ca")
 	caFile1 := filepath.Join(dataDir1, "ca.pem")
 	require.NoError(t, os.WriteFile(caFile1, initialCA, 0o600))
 
@@ -828,13 +831,13 @@ func TestCredentialManager_CertPoolSymlinkRotation(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify initial CA is in the pool
-	initialSubject := subjectFromPEM(t, initialCA)
+	initialSubject := certtest.SubjectFromPEM(t, initialCA)
 	pool := cm.GetCertPool()
-	require.True(t, certPoolHasSubject(pool, initialSubject), "pool should contain initial CA")
+	require.True(t, certtest.CertPoolHasSubject(pool, initialSubject), "pool should contain initial CA")
 
 	// Prepare rotated CA in second data directory
 	require.NoError(t, os.MkdirAll(dataDir2, 0o700))
-	rotatedCA := buildTestCertificate(t, "rotated-ca")
+	rotatedCA := certtest.BuildTestCertificate(t, "rotated-ca")
 	caFile2 := filepath.Join(dataDir2, "ca.pem")
 	require.NoError(t, os.WriteFile(caFile2, rotatedCA, 0o600))
 
@@ -844,10 +847,10 @@ func TestCredentialManager_CertPoolSymlinkRotation(t *testing.T) {
 	require.NoError(t, os.Rename(newDataLink, dataLink))
 
 	// Wait for fsnotify to detect ..data change and rebuild cert pool
-	rotatedSubject := subjectFromPEM(t, rotatedCA)
+	rotatedSubject := certtest.SubjectFromPEM(t, rotatedCA)
 	require.Eventually(t, func() bool {
 		pool := cm.GetCertPool()
-		return certPoolHasSubject(pool, rotatedSubject)
+		return certtest.CertPoolHasSubject(pool, rotatedSubject)
 	}, 2*time.Second, 50*time.Millisecond, "pool should contain rotated CA after symlink swap")
 }
 
