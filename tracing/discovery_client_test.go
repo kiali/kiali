@@ -35,7 +35,7 @@ func TestCreateClient(t *testing.T) {
 
 	k8s := fakeK8sNs()
 	conf := config.Get()
-	tc, err := TestNewClient(context.TODO(), conf, k8s.GetToken())
+	tc, err := DiagnoseTracingConfig(context.TODO(), conf, k8s.GetToken())
 
 	assert.Nil(t, err)
 	assert.NotNil(t, tc)
