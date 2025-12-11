@@ -18,8 +18,8 @@ import { KialiIcon } from 'config/KialiIcon';
 type AddressBuilderProps = {
   address: Address;
   index: number;
-  onRemoveAddress: (i: number) => void;
   onChange: (address: Address, i: number) => void;
+  onRemoveAddress: (i: number) => void;
 };
 
 export const isValidAddress = (address: Address): boolean => {
