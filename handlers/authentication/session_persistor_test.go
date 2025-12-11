@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -143,7 +142,7 @@ func TestCreateSessionWithChunks(t *testing.T) {
 	assert.Len(t, response.Cookies(), 3)
 	assert.Equal(t, SessionCookieName, response.Cookies()[0].Name)
 	assert.Equal(t, SessionCookieName+"-1", response.Cookies()[1].Name)
-	assert.Equal(t, SessionCookieName+"-chunks", response.Cookies()[2].Name)
+	assert.Equal(t, NumberOfChunksCookieName, response.Cookies()[2].Name)
 	assert.Equal(t, "2", response.Cookies()[2].Value)
 
 	for _, cookie := range response.Cookies() {
@@ -177,7 +176,7 @@ func TestNewSessionData(t *testing.T) {
 			strategy:  "",
 			expiresOn: oneDayFromNow,
 		},
-		"expriation time in the past that has already expired is rejected": {
+		"expiration time in the past is rejected": {
 			expectErr: true,
 			payload:   &testSessionPayload{},
 			strategy:  config.AuthStrategyToken,
@@ -705,9 +704,9 @@ func TestTerminateSessionClearsAesSessionWithOneChunk(t *testing.T) {
 	}
 }
 
-// TestTerminateSessionClearsAesSessionWithTwoChunks tests that the CookieSessionPersistor correctly
+// TestTerminateSessionClearsSessionWithTwoChunks tests that the CookieSessionPersistor correctly
 // clears a session where the payload didn't fit in a single browser cookie.
-func TestTerminateSessionClearsAesSessionWithTwoChunks(t *testing.T) {
+func TestTerminateSessionClearsSessionWithTwoChunks(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
 	conf.Server.WebRoot = "/kiali-app"
@@ -719,24 +718,21 @@ func TestTerminateSessionClearsAesSessionWithTwoChunks(t *testing.T) {
 	expireTime := now.Add(time.Hour)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/logout", nil)
-	cookie := http.Cookie{
-		Name:    SessionCookieName + "-aes",
+	request.AddCookie(&http.Cookie{
+		Name:    SessionCookieName,
 		Value:   "",
 		Expires: expireTime,
-	}
-	request.AddCookie(&cookie)
-	cookie = http.Cookie{
+	})
+	request.AddCookie(&http.Cookie{
 		Name:    NumberOfChunksCookieName,
 		Value:   "2",
 		Expires: expireTime,
-	}
-	request.AddCookie(&cookie)
-	cookie = http.Cookie{
-		Name:    SessionCookieName + "-aes-1",
+	})
+	request.AddCookie(&http.Cookie{
+		Name:    SessionCookieName + "-1",
 		Value:   "x",
 		Expires: expireTime,
-	}
-	request.AddCookie(&cookie)
+	})
 
 	persistor, err := NewCookieSessionPersistor[testSessionPayload](conf)
 	require.NoError(err)
@@ -746,18 +742,17 @@ func TestTerminateSessionClearsAesSessionWithTwoChunks(t *testing.T) {
 
 	response := rr.Result()
 	require.Len(response.Cookies(), 3)
-	// Sort by name to ensure the order is correct
-	cookies := response.Cookies()
-	slices.SortStableFunc(cookies, func(a, b *http.Cookie) int {
-		return strings.Compare(a.Name, b.Name)
-	})
-	assert.Equal(t, SessionCookieName+"-aes", response.Cookies()[0].Name)
-	assert.Equal(t, NumberOfChunksCookieName, response.Cookies()[1].Name)
-	assert.Equal(t, SessionCookieName+"-aes-1", response.Cookies()[2].Name)
 
-	for i := 0; i < 3; i++ {
-		assert.True(t, response.Cookies()[i].Expires.Before(util.Clock.Now()))
-		assert.Equal(t, "/kiali-app", response.Cookies()[i].Path)
-		assert.Empty(t, response.Cookies()[i].Value)
+	// Verify all cookies are dropped
+	droppedNames := make(map[string]bool)
+	for _, c := range response.Cookies() {
+		droppedNames[c.Name] = true
+		assert.True(t, c.Expires.Before(util.Clock.Now()), "cookie %s should be expired", c.Name)
+		assert.Equal(t, "/kiali-app", c.Path)
+		assert.Empty(t, c.Value)
 	}
+
+	assert.True(t, droppedNames[SessionCookieName], "main session cookie should be dropped")
+	assert.True(t, droppedNames[NumberOfChunksCookieName], "chunks count cookie should be dropped")
+	assert.True(t, droppedNames[SessionCookieName+"-1"], "chunk cookie should be dropped")
 }

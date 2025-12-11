@@ -152,7 +152,7 @@ type SessionData[T any] struct {
 	// Payload is the data being saved.
 	Payload *T `json:"payload,omitempty"`
 
-	// Strategy is the auth stretegy used to create the session.
+	// Strategy is the auth strategy used to create the session.
 	// Must match the currently configured strategy to be considered valid.
 	Strategy string `json:"strategy"`
 }
@@ -378,8 +378,8 @@ func (p *cookieSessionPersistor[T]) ReadAllSessions(r *http.Request, w http.Resp
 			log.Debugf("Reading session cookie: %s", cookie.Name)
 			sData, err := p.readKialiCookie(cookie.Name, r)
 			if err != nil {
-				if err == http.ErrNoCookie {
-					log.Debugf("Session cookie %s does not exist in request", cookie.Name)
+				if errors.Is(err, http.ErrNoCookie) {
+					log.Debugf("Session cookie [%s] does not exist in request", cookie.Name)
 				} else {
 					log.Infof("Error reading session cookie %s: %v", cookie.Name, err)
 					// If we can't read the cookie we should just drop it because it's probably malformed.
