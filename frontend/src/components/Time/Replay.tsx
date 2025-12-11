@@ -70,7 +70,7 @@ const replaySliderStyle = kialiStyle({
     '& .slider': {
       $nest: {
         '& .slider-selection.tick-slider-selection': {
-          background: `${PFColors.Replay}` /* CODEMODS: original v5 color was --pf-v5-global--active-color--300 */ // should match PFColors.Replay
+          background: `${PFColors.Replay}` // should match PFColors.Replay
         },
 
         '& .tooltip': {
