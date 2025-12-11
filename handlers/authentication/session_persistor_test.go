@@ -594,6 +594,47 @@ func TestReadSessionUsesCurrentKey(t *testing.T) {
 	require.Error(err, "reading old session with rotated key should fail")
 }
 
+// TestRotationToInvalidKeyLength tests that rotation to an invalid key
+// length is handled gracefully without crashing.
+func TestRotationToInvalidKeyLength(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyToken
+
+	credMgr, err := config.NewCredentialManager()
+	require.NoError(err)
+	conf.Credentials = credMgr
+	t.Cleanup(conf.Close)
+
+	tmpDir := t.TempDir()
+	keyFile := filepath.Join(tmpDir, "signing.key")
+	require.NoError(os.WriteFile(keyFile, []byte("kiali67890123456"), 0o600))
+	conf.LoginToken.SigningKey = keyFile
+
+	now := time.Now()
+	util.Clock = util.ClockMock{Time: now}
+
+	persistor, err := NewCookieSessionPersistor[testSessionPayload](conf)
+	require.NoError(err)
+
+	// Rotate to invalid key length (not 16/24/32 bytes)
+	require.NoError(os.WriteFile(keyFile, []byte("short"), 0o600))
+	require.Eventually(func() bool {
+		value, _ := conf.GetCredential(conf.LoginToken.SigningKey)
+		return value == "short"
+	}, 2*time.Second, 50*time.Millisecond)
+
+	// CreateSession should fail gracefully with clear error
+	payload := testSessionPayload{FirstField: "test"}
+	session, err := NewSessionData("test", config.AuthStrategyToken, now.Add(time.Hour), &payload)
+	require.NoError(err)
+
+	rr := httptest.NewRecorder()
+	err = persistor.CreateSession(nil, rr, *session)
+	require.Error(err, "should fail with invalid key length")
+	require.Contains(err.Error(), "cipher", "error should mention cipher failure")
+}
+
 // TestTerminateSessionClearsNonAesSession tests that the CookieSessionPersistor correctly clears
 // a session that was created with the old JWT method.
 func TestTerminateSessionClearsNonAesSession(t *testing.T) {
