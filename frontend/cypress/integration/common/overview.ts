@@ -250,7 +250,7 @@ Then('the toggle on the right side of the {string} namespace card exists', (ns: 
 });
 
 Then('user sees the {string} cluster badge in the Kiali header', (name: string) => {
-  cy.get('[data-test="cluster-icon"]').contains(name).should('be.visible');
+  cy.get('[data-test*="istio-status"]').contains(name).should('be.visible');
 });
 
 Then('user sees the {string} label in both {string} namespace cards', (label: string, ns: string) => {
