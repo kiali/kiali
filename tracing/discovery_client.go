@@ -32,7 +32,7 @@ type DialFunc func(network, address string, timeout time.Duration) (net.Conn, er
 
 var MakeRequestFunc = otel.MakeRequest
 
-func TestNewClient(ctx context.Context, conf *config.Config, token string) (*model.TracingDiagnose, error) {
+func DiagnoseTracingConfig(ctx context.Context, conf *config.Config, token string) (*model.TracingDiagnose, error) {
 	cfgTracing := conf.ExternalServices.Tracing
 	test := model.TracingDiagnose{}
 	logs := []model.LogLine{}
@@ -48,13 +48,10 @@ func TestNewClient(ctx context.Context, conf *config.Config, token string) (*mod
 	url := cfgTracing.InternalURL
 	if url == "" {
 		url = cfgTracing.ExternalURL
-		logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Using external url %s because not in cluster", url)})
+		logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Using external url [%s] because not in cluster", url)})
 		if url == "" {
-			return nil, fmt.Errorf("external_url should't be empty (Not in cluster)")
+			return nil, fmt.Errorf("external_url should not be empty (Not in cluster)")
 		}
-	}
-	if url == "" {
-		return nil, fmt.Errorf("internal_url should't be empty")
 	}
 
 	parsedURL, ll, err := parseUrl(url)
@@ -77,7 +74,6 @@ func TestNewClient(ctx context.Context, conf *config.Config, token string) (*mod
 	test.LogLine = append(logs, ll...)
 
 	return &test, nil
-
 }
 
 // Parse URL
@@ -338,7 +334,7 @@ func validateTempoHTTP(ctx context.Context, client http.Client, zl *zerolog.Logg
 			if len(splitUrl) > 4 {
 				tenant = splitUrl[4]
 			} else {
-				logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create http client in port 8080", Result: fmt.Sprintf("tenant name not found: %s", parsedUrl.Path)})
+				logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Create http client in port [%s]", port), Result: fmt.Sprintf("tenant name not found: %s", parsedUrl.Path)})
 			}
 		}
 

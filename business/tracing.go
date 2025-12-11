@@ -379,7 +379,7 @@ func tracesToSpans(ctx context.Context, app models.TracingName, r *model.Tracing
 }
 
 func (in *TracingService) TracingDiagnose(ctx context.Context, token string) (trace *model.TracingDiagnose, err error) {
-	return tracing.TestNewClient(ctx, in.conf, token)
+	return tracing.DiagnoseTracingConfig(ctx, in.conf, token)
 }
 
 func (in *TracingService) ValidateConfiguration(ctx context.Context, conf *config.Config, tracingConfig *config.TracingConfig, token string) *model.ConfigurationValidation {
