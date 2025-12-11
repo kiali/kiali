@@ -76,10 +76,9 @@ const healthType: OverviewType = 'app';
 const direction: DirectionType = 'outbound';
 
 const cardGridStyle = kialiStyle({
-  textAlign: 'center',
-  marginTop: 0,
+  borderRadius: 0,
   marginBottom: '0.5rem',
-  boxShadow: 'none'
+  textAlign: 'center'
 });
 
 const namespaceNameStyle = kialiStyle({
