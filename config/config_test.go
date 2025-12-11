@@ -22,7 +22,6 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/util"
-	"github.com/kiali/kiali/util/filetest"
 )
 
 //go:embed testdata/test-ca.pem
@@ -875,119 +874,6 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 			assert.Equal(tc.expectedNamespaces, actualNamespaces)
 		})
 	}
-}
-
-func TestLoadingCertPool(t *testing.T) {
-	systemPool, err := x509.SystemCertPool()
-	require.NoError(t, err)
-
-	addtionalCAPool := systemPool.Clone()
-	require.True(t, addtionalCAPool.AppendCertsFromPEM(testCA), "unable to add testCA to system pool")
-
-	invalidCA := filetest.TempFile(t, []byte("notarealCA")).Name()
-
-	cases := map[string]struct {
-		addtionalBundles []string
-		expected         *x509.CertPool
-		expectedErr      bool
-	}{
-		"No addtional CAs loads system Pool": {
-			expected: systemPool.Clone(),
-		},
-		"Addtional CAs loads system Pool": {
-			addtionalBundles: []string{"testdata/test-ca.pem"},
-			expected:         addtionalCAPool,
-		},
-		"Non-existant CA file does not return err and still loads system pool": {
-			addtionalBundles: []string{"non-existant"},
-			expected:         systemPool.Clone(),
-		},
-		"CA file with bogus contents returns err and still loads system pool": {
-			addtionalBundles: []string{invalidCA},
-			expected:         systemPool.Clone(),
-			expectedErr:      true,
-		},
-		// Need to test this for OpenShift serving cert that may come from multiple places.
-		"Loading the same CA multiple times": {
-			addtionalBundles: []string{"testdata/test-ca.pem", "testdata/test-ca.pem"},
-			expected:         addtionalCAPool,
-		},
-	}
-	for name, tc := range cases {
-		t.Run(name, func(t *testing.T) {
-			require := require.New(t)
-
-			conf := NewConfig()
-			conf.Credentials, err = NewCredentialManager()
-			require.NoError(err)
-			t.Cleanup(conf.Credentials.Close)
-
-			err = conf.Credentials.InitializeCertPool(tc.addtionalBundles)
-			if tc.expectedErr {
-				require.Error(err)
-			} else {
-				require.NoError(err)
-			}
-
-			actual := conf.CertPool()
-
-			require.True(tc.expected.Equal(actual))
-		})
-	}
-}
-
-func TestCertPoolReloadsOnCABundleRotation(t *testing.T) {
-	conf := NewConfig()
-
-	credentialManager, err := NewCredentialManager()
-	require.NoError(t, err)
-	conf.Credentials = credentialManager
-	t.Cleanup(conf.Close)
-
-	caFile := filetest.TempFile(t, testCA)
-
-	err = conf.Credentials.InitializeCertPool([]string{caFile.Name()})
-	require.NoError(t, err)
-
-	rotatedCA := buildTestCertificate(t, "rotated-ca")
-	err = os.WriteFile(caFile.Name(), rotatedCA, 0o600)
-	require.NoError(t, err)
-
-	rotatedSubject := subjectFromPEM(t, rotatedCA)
-
-	require.Eventually(t, func() bool {
-		pool := conf.CertPool()
-		return certPoolHasSubject(pool, rotatedSubject)
-	}, time.Second, 10*time.Millisecond, "cert pool never observed rotated CA bundle")
-}
-
-func TestCertPoolGlobalConfigReturnsStalePoolAfterRotation(t *testing.T) {
-	t.Cleanup(func() {
-		Set(NewConfig())
-	})
-
-	conf := NewConfig()
-	credentialManager, err := NewCredentialManager()
-	require.NoError(t, err)
-	conf.Credentials = credentialManager
-
-	caFile := filetest.TempFile(t, testCA)
-
-	require.NoError(t, conf.Credentials.InitializeCertPool([]string{caFile.Name()}))
-
-	Set(conf)
-
-	rotatedCA := buildTestCertificate(t, "rotated-global")
-	require.NoError(t, os.WriteFile(caFile.Name(), rotatedCA, 0o600))
-	rotatedSubject := subjectFromPEM(t, rotatedCA)
-
-	require.Eventually(t, func() bool {
-		pool := Get().CertPool()
-		return certPoolHasSubject(pool, rotatedSubject)
-	}, time.Second, 10*time.Millisecond, "global config never observed rotated CA bundle")
-
-	pool := Get().CertPool()
-	require.True(t, certPoolHasSubject(pool, rotatedSubject), "all callers should observe the rotated CA bundle")
 }
 
 func buildTestCertificate(t *testing.T, cn string) []byte {

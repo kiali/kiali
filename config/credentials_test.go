@@ -1,9 +1,12 @@
 package config
 
 import (
+	"crypto/x509"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"testing"
 	"time"
 
@@ -673,18 +676,67 @@ func TestConfig_GetCredential_AuthToken_Empty(t *testing.T) {
 	}
 }
 
+// TestCredentialManager_InitializeCertPool tests various scenarios for InitializeCertPool,
+// including valid CAs, non-existent files, invalid CA content, and loading the same CA multiple times.
 func TestCredentialManager_InitializeCertPool(t *testing.T) {
-	cm, err := NewCredentialManager()
-	require.NoError(t, err)
-	t.Cleanup(cm.Close)
-
-	caFile := filetest.TempFile(t, testCA)
-
-	err = cm.InitializeCertPool([]string{caFile.Name()})
+	systemPool, err := x509.SystemCertPool()
 	require.NoError(t, err)
 
-	pool := cm.GetCertPool()
-	require.NotNil(t, pool)
+	additionalCAPool := systemPool.Clone()
+	require.True(t, additionalCAPool.AppendCertsFromPEM(testCA), "unable to add testCA to system pool")
+
+	invalidCA := filetest.TempFile(t, []byte("notarealCA")).Name()
+
+	cases := map[string]struct {
+		additionalBundles []string
+		expected          *x509.CertPool
+		expectedErr       bool
+	}{
+		"No additional CAs loads system pool": {
+			expected: systemPool.Clone(),
+		},
+		"Additional CAs loads system pool plus custom CA": {
+			additionalBundles: []string{"testdata/test-ca.pem"},
+			expected:          additionalCAPool,
+		},
+		"Non-existent CA file does not return err and still loads system pool": {
+			additionalBundles: []string{"non-existent"},
+			expected:          systemPool.Clone(),
+		},
+		"CA file with bogus contents returns err": {
+			additionalBundles: []string{invalidCA},
+			expected:          nil, // Pool is not set when InitializeCertPool returns error
+			expectedErr:       true,
+		},
+		// Need to test this for OpenShift serving cert that may come from multiple places.
+		"Loading the same CA multiple times": {
+			additionalBundles: []string{"testdata/test-ca.pem", "testdata/test-ca.pem"},
+			expected:          additionalCAPool,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+
+			cm, err := NewCredentialManager()
+			require.NoError(err)
+			t.Cleanup(cm.Close)
+
+			err = cm.InitializeCertPool(tc.additionalBundles)
+			if tc.expectedErr {
+				require.Error(err)
+			} else {
+				require.NoError(err)
+			}
+
+			actual := cm.GetCertPool()
+			if tc.expected == nil {
+				require.Nil(actual)
+			} else {
+				require.True(tc.expected.Equal(actual))
+			}
+		})
+	}
 }
 
 func TestCredentialManager_CertPoolReloadsOnFileChange(t *testing.T) {
@@ -721,4 +773,246 @@ func TestCredentialManager_GetCertPoolBeforeInit(t *testing.T) {
 	// GetCertPool before InitializeCertPool should return nil
 	pool := cm.GetCertPool()
 	require.Nil(t, pool)
+}
+
+// TestCredentialManager_CertPoolGlobalConfig tests that when using the global config singleton
+// (via Get()/Set()), the rotated CA bundle is observed by all callers. This ensures the
+// CredentialManager's cert pool rotation works correctly when accessed through the global config.
+func TestCredentialManager_CertPoolGlobalConfig(t *testing.T) {
+	t.Cleanup(func() {
+		Set(NewConfig())
+	})
+
+	conf := NewConfig()
+	credentialManager, err := NewCredentialManager()
+	require.NoError(t, err)
+	conf.Credentials = credentialManager
+
+	caFile := filetest.TempFile(t, testCA)
+
+	require.NoError(t, conf.Credentials.InitializeCertPool([]string{caFile.Name()}))
+
+	Set(conf)
+
+	rotatedCA := buildTestCertificate(t, "rotated-global")
+	require.NoError(t, os.WriteFile(caFile.Name(), rotatedCA, 0o600))
+	rotatedSubject := subjectFromPEM(t, rotatedCA)
+
+	require.Eventually(t, func() bool {
+		pool := Get().CertPool()
+		return certPoolHasSubject(pool, rotatedSubject)
+	}, time.Second, 10*time.Millisecond, "global config never observed rotated CA bundle")
+
+	pool := Get().CertPool()
+	require.True(t, certPoolHasSubject(pool, rotatedSubject), "all callers should observe the rotated CA bundle")
+}
+
+// TestCredentialManager_CertPoolSymlinkRotation tests that the certificate pool is correctly
+// rebuilt when a CA bundle is rotated using the Kubernetes ..data symlink swap mechanism.
+//
+// This is different from TestCredentialManager_CertPoolReloadsOnFileChange, which tests
+// direct file writes (os.WriteFile). In real Kubernetes environments, secret rotation happens
+// via atomic symlink swap: Kubernetes creates a new timestamped directory with updated content,
+// then atomically swaps the ..data symlink to point to it. This test verifies that the
+// credential manager correctly detects the ..data change and rebuilds the certificate pool.
+func TestCredentialManager_CertPoolSymlinkRotation(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("symlink semantics differ on Windows")
+	}
+
+	cm, err := NewCredentialManager()
+	require.NoError(t, err)
+	t.Cleanup(cm.Close)
+
+	tmpDir := t.TempDir()
+	secretDir := filepath.Join(tmpDir, "ca-secret")
+	dataDir1 := filepath.Join(tmpDir, "data1")
+	dataDir2 := filepath.Join(tmpDir, "data2")
+
+	require.NoError(t, os.MkdirAll(secretDir, 0o700))
+	require.NoError(t, os.MkdirAll(dataDir1, 0o700))
+
+	// Create initial CA certificate in first data directory
+	initialCA := buildTestCertificate(t, "initial-ca")
+	caFile1 := filepath.Join(dataDir1, "ca.pem")
+	require.NoError(t, os.WriteFile(caFile1, initialCA, 0o600))
+
+	// Simulate Kubernetes volume layout:
+	//   secretDir/ca.pem -> ..data/ca.pem
+	//   secretDir/..data -> dataDir1
+	dataLink := filepath.Join(secretDir, "..data")
+	require.NoError(t, os.Symlink(dataDir1, dataLink))
+
+	mountedCA := filepath.Join(secretDir, "ca.pem")
+	require.NoError(t, os.Symlink(filepath.Join("..data", "ca.pem"), mountedCA))
+
+	// Initialize cert pool with the mounted CA path
+	err = cm.InitializeCertPool([]string{mountedCA})
+	require.NoError(t, err)
+
+	// Verify initial CA is in the pool
+	initialSubject := subjectFromPEM(t, initialCA)
+	pool := cm.GetCertPool()
+	require.True(t, certPoolHasSubject(pool, initialSubject), "pool should contain initial CA")
+
+	// Prepare rotated CA in second data directory
+	require.NoError(t, os.MkdirAll(dataDir2, 0o700))
+	rotatedCA := buildTestCertificate(t, "rotated-ca")
+	caFile2 := filepath.Join(dataDir2, "ca.pem")
+	require.NoError(t, os.WriteFile(caFile2, rotatedCA, 0o600))
+
+	// Rotate by atomically swapping ..data symlink (Kubernetes behavior)
+	newDataLink := filepath.Join(secretDir, ".tmp-data")
+	require.NoError(t, os.Symlink(dataDir2, newDataLink))
+	require.NoError(t, os.Rename(newDataLink, dataLink))
+
+	// Wait for fsnotify to detect ..data change and rebuild cert pool
+	rotatedSubject := subjectFromPEM(t, rotatedCA)
+	require.Eventually(t, func() bool {
+		pool := cm.GetCertPool()
+		return certPoolHasSubject(pool, rotatedSubject)
+	}, 2*time.Second, 50*time.Millisecond, "pool should contain rotated CA after symlink swap")
+}
+
+// TestCredentialManager_ConcurrentAccess tests thread safety of the CredentialManager
+// under concurrent access from multiple goroutines. It verifies that:
+//  1. Concurrent reads return correct values without data corruption
+//  2. Cache is properly populated after concurrent access
+//  3. Concurrent reads during file updates see consistent (old or new) values
+//
+// For stronger race detection, run with: CGO_ENABLED=1 go test -race -run TestCredentialManager_ConcurrentAccess
+// (requires GCC installed for CGO support)
+func TestCredentialManager_ConcurrentAccess(t *testing.T) {
+	cm, err := NewCredentialManager()
+	require.NoError(t, err)
+	t.Cleanup(cm.Close)
+
+	tmpDir := t.TempDir()
+
+	// Create multiple credential files
+	numFiles := 5
+	files := make([]string, numFiles)
+	for i := 0; i < numFiles; i++ {
+		files[i] = filepath.Join(tmpDir, fmt.Sprintf("credential-%d", i))
+		content := fmt.Sprintf("token-%d", i)
+		require.NoError(t, os.WriteFile(files[i], []byte(content), 0o600))
+	}
+
+	// Phase 1: Concurrent reads - multiple goroutines reading same files simultaneously
+	// This tests the check-then-act pattern in getFromCache() where multiple goroutines
+	// might see a cache miss and try to populate the cache concurrently.
+	numGoroutines := 20
+	numReadsPerGoroutine := 50
+	// Channel capacity must handle worst case: each goroutine sends up to (numFiles + 1 literal) errors per iteration
+	errChan := make(chan error, numGoroutines*numReadsPerGoroutine*(numFiles+1))
+	var wg sync.WaitGroup
+
+	for g := 0; g < numGoroutines; g++ {
+		wg.Add(1)
+		go func(goroutineID int) {
+			defer wg.Done()
+			for r := 0; r < numReadsPerGoroutine; r++ {
+				// Each goroutine reads from all files
+				for i, file := range files {
+					expected := fmt.Sprintf("token-%d", i)
+					result, err := cm.Get(file)
+					if err != nil {
+						errChan <- fmt.Errorf("goroutine %d, read %d, file %d: %w", goroutineID, r, i, err)
+						continue
+					}
+					if result != expected {
+						errChan <- fmt.Errorf("goroutine %d, read %d, file %d: expected %q, got %q", goroutineID, r, i, expected, result)
+					}
+				}
+				// Also test literal values concurrently (these bypass the cache)
+				literal := fmt.Sprintf("literal-%d-%d", goroutineID, r)
+				result, err := cm.Get(literal)
+				if err != nil {
+					errChan <- fmt.Errorf("goroutine %d, literal read %d: %w", goroutineID, r, err)
+					continue
+				}
+				if result != literal {
+					errChan <- fmt.Errorf("goroutine %d, literal read %d: expected %q, got %q", goroutineID, r, literal, result)
+				}
+			}
+		}(g)
+	}
+
+	wg.Wait()
+	close(errChan)
+
+	// Check for any errors from concurrent reads
+	var errors []error
+	for err := range errChan {
+		errors = append(errors, err)
+	}
+	require.Empty(t, errors, "concurrent reads produced errors: %v", errors)
+
+	// Phase 2: Verify caching behavior - all files should now be cached
+	// After concurrent access, verify files are in the cache by checking that
+	// subsequent reads return the same values (this also implicitly tests that
+	// the cache wasn't corrupted by concurrent writes).
+	for i, file := range files {
+		expected := fmt.Sprintf("token-%d", i)
+		result, err := cm.Get(file)
+		require.NoError(t, err, "post-concurrent read failed for file %d", i)
+		require.Equal(t, expected, result, "cached value incorrect for file %d", i)
+	}
+
+	// Phase 3: Concurrent reads during file updates
+	// This tests the interaction between the watcher goroutine updating the cache
+	// and reader goroutines accessing the cache simultaneously.
+	numReadsPhase3 := 10
+	// Channel capacity must handle worst case: each goroutine sends up to numFiles errors per iteration
+	errChan2 := make(chan error, numGoroutines*numReadsPhase3*numFiles)
+	var wg2 sync.WaitGroup
+
+	// Start readers
+	for g := 0; g < numGoroutines; g++ {
+		wg2.Add(1)
+		go func(goroutineID int) {
+			defer wg2.Done()
+			for r := 0; r < numReadsPhase3; r++ {
+				for i, file := range files {
+					result, err := cm.Get(file)
+					if err != nil {
+						errChan2 <- fmt.Errorf("concurrent read during update, goroutine %d: %w", goroutineID, err)
+						continue
+					}
+					// Value should be either old or new, but never corrupted
+					oldVal := fmt.Sprintf("token-%d", i)
+					newVal := fmt.Sprintf("updated-%d", i)
+					if result != oldVal && result != newVal {
+						errChan2 <- fmt.Errorf("goroutine %d got corrupted value %q for file %d", goroutineID, result, i)
+					}
+				}
+				time.Sleep(time.Millisecond) // Small delay to interleave with updates
+			}
+		}(g)
+	}
+
+	// Concurrently update files
+	for i, file := range files {
+		newContent := fmt.Sprintf("updated-%d", i)
+		require.NoError(t, os.WriteFile(file, []byte(newContent), 0o600))
+		time.Sleep(5 * time.Millisecond) // Stagger updates
+	}
+
+	wg2.Wait()
+	close(errChan2)
+
+	var errors2 []error
+	for err := range errChan2 {
+		errors2 = append(errors2, err)
+	}
+	require.Empty(t, errors2, "concurrent reads during updates produced errors: %v", errors2)
+
+	// Phase 4: Verify final state - all files should have updated values
+	for i, file := range files {
+		expected := fmt.Sprintf("updated-%d", i)
+		require.Eventually(t, func() bool {
+			result, err := cm.Get(file)
+			return err == nil && result == expected
+		}, 2*time.Second, 50*time.Millisecond, "file %d should have updated value", i)
+	}
 }
