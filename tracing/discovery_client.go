@@ -184,18 +184,23 @@ func discoverUrl(ctx context.Context, zl *zerolog.Logger, parsedUrl model.Parsed
 				// Try GRPC Tempo Client
 				// And this also requires HTTP Client
 				targetHost := parsedURLHostname(parsedUrl)
-				dialOps, err := grpcutil.GetAuthDialOptions(conf, targetHost, parsedUrl.Scheme == "https", &cfgTracing.Auth)
+				dialOps, err := grpcutil.GetAuthDialOptions(conf, targetHost, parsedUrl.Scheme == "https", auth)
 				if err != nil {
 					msg := fmt.Sprintf("Error creating gRPC dial options: %v", err)
-					logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Dial Options 9095 error", Result: msg})
+					logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Create gRPC Dial Options port [%s] error", port), Result: msg})
 					break
 				}
 				grpcAddress := fmt.Sprintf("%s:%s", parsedUrl.Host, port)
-				clientConn, _ := grpc.NewClient(grpcAddress, dialOps...)
+				clientConn, err := grpc.NewClient(grpcAddress, dialOps...)
+				if err != nil {
+					msg := fmt.Sprintf("Error creating gRPC client connection: %v", err)
+					logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Create gRPC Client Connection port [%s] error", port), Result: msg})
+					break
+				}
 				streamClient, err := tempo.NewgRPCClient(clientConn)
 				if err != nil {
 					msg := fmt.Sprintf("Error creating gRPC Client %s", err.Error())
-					logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Client 9095 error", Result: msg})
+					logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Create gRPC Tempo Client port [%s] error", port), Result: msg})
 					zl.Error().Msg(msg)
 				} else {
 					ok, err := streamClient.GetServices(ctx)
@@ -203,9 +208,9 @@ func discoverUrl(ctx context.Context, zl *zerolog.Logger, parsedUrl model.Parsed
 						// TODO: Different config gRPC Port!!!
 						vc := model.ValidConfig{Url: grpcAddress, Provider: "tempo", UseGRPC: true}
 						validConfigs = append(validConfigs, vc)
-						logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Tempo Client 9095 Ok", Result: "Valid gRPC Client found. Notice this config also requires any valid HTTP configuration. "})
+						logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Create gRPC Tempo Client port [%s] Ok", port), Result: "Valid gRPC Client found. Notice this config also requires any valid HTTP configuration. "})
 					} else {
-						logs = append(logs, model.LogLine{Time: time.Now(), Test: "GetServices gRPC Tempo Client 9095", Result: fmt.Sprintf("error getting gRPC Services: [%s]", err.Error())})
+						logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("GetServices gRPC Tempo Client port [%s]", port), Result: fmt.Sprintf("error getting gRPC Services: [%s]", err.Error())})
 					}
 				}
 			}
@@ -244,10 +249,10 @@ func validateGRPCClient(ctx context.Context, conf *config.Config, auth *config.A
 	opts, err := grpcutil.GetAuthDialOptions(conf, targetHost, parsedUrl.Scheme == "https", auth)
 	if err == nil {
 		address := parsedUrl.Host + ":" + port
-		logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC Client 16685", Result: fmt.Sprintf("%s GRPC client info: address=%s, auth.type=%s", cfgTracing.Provider, address, auth.Type)})
+		logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("gRPC Client port [%s]", port), Result: fmt.Sprintf("%s GRPC client info: address=%s, auth.type=%s", cfgTracing.Provider, address, auth.Type)})
 
 		if len(cfgTracing.CustomHeaders) > 0 {
-			logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC Client 16685", Result: fmt.Sprintf("Adding [%v] custom headers to Tracing client", len(cfgTracing.CustomHeaders))})
+			logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("gRPC Client port [%s]", port), Result: fmt.Sprintf("Adding [%v] custom headers to Tracing client", len(cfgTracing.CustomHeaders))})
 			ctx = metadata.NewOutgoingContext(ctx, metadata.New(cfgTracing.CustomHeaders))
 		}
 		conn, err := grpc.NewClient(address, opts...)
@@ -255,7 +260,7 @@ func validateGRPCClient(ctx context.Context, conf *config.Config, auth *config.A
 			cc := model.NewQueryServiceClient(conn)
 			clientgRPC, err := jaeger.NewGRPCJaegerClient(cc)
 			if err != nil {
-				logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Client 16685", Result: fmt.Sprintf("Error creating gRPC Client: [%s]", err.Error())})
+				logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Create gRPC Client port [%s]", port), Result: fmt.Sprintf("Error creating gRPC Client: [%s]", err.Error())})
 			} else {
 				ok, err := clientgRPC.GetServices(ctx)
 				if ok {
@@ -264,19 +269,19 @@ func validateGRPCClient(ctx context.Context, conf *config.Config, auth *config.A
 						authType = "none"
 					}
 					validConfig := model.ValidConfig{AuthType: authType, Url: fmt.Sprintf("%s://%s", parsedUrl.Scheme, address), Provider: "jaeger", UseGRPC: true}
-					logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Client 16685 Ok", Result: "Valid gRPC Client found"})
+					logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Create gRPC Client port [%s] Ok", port), Result: "Valid gRPC Client found"})
 					return &validConfig, logs, nil
 				} else {
-					logs = append(logs, model.LogLine{Time: time.Now(), Test: "GetServices gRPC Client 16685", Result: fmt.Sprintf("error getting gRPC Services: [%s]", err.Error())})
+					logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("GetServices gRPC Client port [%s]", port), Result: fmt.Sprintf("error getting gRPC Services: [%s]", err.Error())})
 					return nil, logs, fmt.Errorf("error getting gRPC Services: [%s]", err.Error())
 				}
 			}
 		} else {
-			logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC client 16685", Result: fmt.Sprintf("error creating client: %s", err.Error())})
+			logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("gRPC client port [%s]", port), Result: fmt.Sprintf("error creating client: %s", err.Error())})
 			return nil, logs, fmt.Errorf("error creating client %s", err.Error())
 		}
 	} else {
-		logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC client 16685", Result: fmt.Sprintf("Error creating dial options: %s", err.Error())})
+		logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("gRPC client port [%s]", port), Result: fmt.Sprintf("Error creating dial options: %s", err.Error())})
 		return nil, logs, fmt.Errorf("error creating client %s", err.Error())
 	}
 	return nil, logs, nil
