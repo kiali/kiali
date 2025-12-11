@@ -197,13 +197,17 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 			// Tempo uses gRPC stream client just for search
 			// Get a single trace requires the http client
 			if cfgTracing.UseGRPC {
-				dialOps, err := grpcutil.GetAuthDialOptions(conf, host, u.Scheme == "https", &cfgTracing.Auth)
+				dialOps, err := grpcutil.GetAuthDialOptions(conf, host, u.Scheme == "https", &auth)
 				if err != nil {
 					zl.Error().Msgf("Error creating gRPC dial options: %v", err)
 					return nil, err
 				}
 				grpcAddress := fmt.Sprintf("%s:%d", host, conf.ExternalServices.Tracing.GrpcPort)
-				clientConn, _ := grpc.NewClient(grpcAddress, dialOps...)
+				clientConn, err := grpc.NewClient(grpcAddress, dialOps...)
+				if err != nil {
+					zl.Error().Msgf("Error creating gRPC client connection: %v", err)
+					return nil, err
+				}
 				streamClient, err := tempo.NewgRPCClient(clientConn)
 				if err != nil {
 					zl.Error().Msgf("Error creating gRPC Tempo Client: %v", err)
