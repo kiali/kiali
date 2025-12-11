@@ -17,6 +17,9 @@ import (
 // It watches credential files for changes and automatically updates the cache when files are modified,
 // enabling automatic credential rotation without pod restart when credentials are mounted as Kubernetes secrets.
 //
+// Additionally, it manages a certificate pool that combines system CAs with custom CA bundles,
+// which is also automatically rebuilt when the CA bundle files change.
+//
 // File Path Detection:
 //   - Values starting with "/" are treated as absolute file paths and read from disk
 //   - All other values are returned as literal credential values (backward compatibility)
@@ -26,9 +29,39 @@ import (
 //   - The manager uses fsnotify to watch for file changes and updates the cache automatically
 //   - No pod restart is required - new credentials are used immediately after file update
 //
+// Kubernetes Secret Mount Structure:
+//
+// When a Secret is mounted as a volume, Kubernetes creates this symlink structure:
+//
+//	/secret-mount-path/
+//	├── ..data -> ..2024_01_15_10_30_00.123456   # Symlink to timestamped directory
+//	├── ..2024_01_15_10_30_00.123456/            # Directory with actual secret data
+//	│   ├── token                                # Actual file content
+//	│   └── ca-bundle.crt                        # Actual file content
+//	├── token -> ..data/token                    # Symlink through ..data
+//	└── ca-bundle.crt -> ..data/ca-bundle.crt    # Symlink through ..data
+//
+// During secret rotation, Kubernetes:
+//  1. Creates a new timestamped directory with updated content
+//  2. Atomically swaps the ..data symlink to point to the new directory
+//  3. Deletes the old timestamped directory
+//
+// The individual file symlinks (token, ca-bundle.crt) don't change - only ..data changes.
+// This is why the manager watches for ..data changes to detect secret rotation.
+//
+// Certificate Pool:
+//   - Call InitializeCertPool() to set up system CAs plus custom CA bundles
+//   - Use GetCertPool() to get a clone of the managed certificate pool
+//   - CA bundle files are watched and the pool is rebuilt automatically on changes
+//
 // Usage:
 //
 //	token, err := conf.Credentials.Get(conf.ExternalServices.Prometheus.Auth.Token)
+//	certPool := conf.Credentials.GetCertPool()
+//
+// Internal Data Structures:
+//   - cache: maps absolute file path → credential content (trimmed string)
+//   - watchedDirs: maps directory path → unused struct{} (used as a set of watched directories)
 type CredentialManager struct {
 	mu          sync.RWMutex
 	cache       map[string]string
@@ -96,10 +129,10 @@ func (cm *CredentialManager) InitializeCertPool(caBundlePaths []string) error {
 // rebuildCertPool rebuilds the certificate pool from system CAs and configured CA bundles.
 func (cm *CredentialManager) rebuildCertPool() error {
 	// Load system CAs
-	systemPool, err := x509.SystemCertPool()
+	combinedPool, err := x509.SystemCertPool()
 	if err != nil {
 		log.Warningf("Unable to load system cert pool. Falling back to empty cert pool. Error: %s", err)
-		systemPool = x509.NewCertPool()
+		combinedPool = x509.NewCertPool()
 	}
 
 	cm.mu.RLock()
@@ -114,12 +147,12 @@ func (cm *CredentialManager) rebuildCertPool() error {
 
 		data, err := cm.readCABundle(path)
 		if err != nil {
-			log.Debugf("Unable to read CA bundle [%s]: %v", path, err)
+			log.Warningf("Unable to read CA bundle [%s]: %v", path, err)
 			continue
 		}
 
 		if len(data) > 0 {
-			if ok := systemPool.AppendCertsFromPEM(data); !ok {
+			if ok := combinedPool.AppendCertsFromPEM(data); !ok {
 				return fmt.Errorf("unable to append PEM bundle from file [%s]", path)
 			}
 		}
@@ -127,7 +160,7 @@ func (cm *CredentialManager) rebuildCertPool() error {
 
 	// Update pool atomically
 	cm.mu.Lock()
-	cm.certPool = systemPool
+	cm.certPool = combinedPool
 	cm.mu.Unlock()
 
 	return nil
@@ -146,6 +179,7 @@ func (cm *CredentialManager) readCABundle(path string) ([]byte, error) {
 	}
 
 	// Relative path - read directly from file (typically for tests)
+	log.Tracef("CA bundle [%s] is a relative path - bypassing cache and reading directly from file (this should only happen in tests)", path)
 	return os.ReadFile(path)
 }
 
@@ -209,8 +243,8 @@ func (cm *CredentialManager) getFromCache(path string) (string, error) {
 	value := strings.TrimSpace(string(content))
 
 	// Ensure we can watch the parent directory. If this fails, fall back to direct reads.
-	if err := cm.watchDir(path); err != nil {
-		log.Warningf("Failed to watch credential directory for [%s]: %v (falling back to direct reads)", path, err)
+	if err := cm.watchParentDir(path); err != nil {
+		log.Warningf("Failed to watch credential directory for [%s] (falling back to direct reads): %v", path, err)
 		return value, nil
 	}
 
@@ -283,12 +317,15 @@ func (cm *CredentialManager) handleEvent(event fsnotify.Event) {
 	_, tracked := cm.cache[event.Name]
 	cm.mu.RUnlock()
 
-	// Handle Kubernetes secret rotation: the ..data symlink in the watched directory
-	// changes to point to a new timestamped directory, but the per-file symlinks
-	// (e.g., tls.crt) are untouched. When ..data changes, refresh all cached files
-	// in that directory.
+	// If the changed file is not in our cache, check if it's the special ..data symlink.
+	// During Kubernetes secret rotation, the ..data symlink is swapped to point to a new
+	// timestamped directory, but the per-file symlinks (e.g., token, tls.crt) remain unchanged.
+	// Our cache keys are the credential file paths (e.g., /secret/token), not ..data itself,
+	// so we detect rotation by watching for ..data changes and then refresh all cached files
+	// in that directory. If it's neither a cached file nor ..data, ignore the event.
 	if !tracked {
 		if filepath.Base(event.Name) == "..data" {
+			// Pass the secret mount directory (parent of ..data), not ..data itself
 			cm.refreshDir(filepath.Dir(event.Name))
 		}
 		return
@@ -296,18 +333,29 @@ func (cm *CredentialManager) handleEvent(event fsnotify.Event) {
 
 	// Kubernetes secret rotation typically performs Remove + Create/Rename
 	if event.Op&(fsnotify.Remove|fsnotify.Rename) != 0 {
-		cm.invalidate(event.Name)
+		cm.evictFromCache(event.Name)
 		return
 	}
 
 	if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Chmod) != 0 {
-		cm.updateFile(event.Name)
+		cm.refreshCachedFile(event.Name)
 	}
 }
 
 // refreshDir updates all cached files that reside under the given directory.
-// Used to handle secret rotation where the ..data symlink flips to a new target.
+// Used to handle Kubernetes secret rotation where the ..data symlink flips to a new target.
+//
+// The dir parameter should be the secret mount directory (e.g., /kiali-secrets), not ..data itself.
+// It is the parent directory that contains the credential files and the ..data symlink.
+//
+// Although our cache keys are file paths like /secret/token (not ..data), those paths are
+// symlinks that resolve through ..data (e.g., /secret/token -> ..data/token -> ..xxxxx/token).
+// When ..data is swapped to point to a new timestamped directory, re-reading the same path
+// (e.g., /secret/token) automatically returns the new content because the symlink chain
+// now resolves to the new directory. This function finds all cached paths in the affected
+// directory and re-reads them to pick up the rotated secret values.
 func (cm *CredentialManager) refreshDir(dir string) {
+	// Collect all cached file paths whose parent directory matches dir (the secret mount directory)
 	cm.mu.RLock()
 	paths := make([]string, 0)
 	for path := range cm.cache {
@@ -317,17 +365,18 @@ func (cm *CredentialManager) refreshDir(dir string) {
 	}
 	cm.mu.RUnlock()
 
+	// Re-read each file - the symlink chain now resolves to the new ..data target
 	for _, path := range paths {
-		cm.updateFile(path)
+		cm.refreshCachedFile(path)
 	}
 }
 
-// updateFile re-reads a file and updates the cache.
-func (cm *CredentialManager) updateFile(path string) {
+// refreshCachedFile re-reads a file and updates the cache.
+func (cm *CredentialManager) refreshCachedFile(path string) {
 	content, err := os.ReadFile(path)
 	if err != nil {
-		log.Warningf("Failed to re-read credential file [%s]: %v (removing from cache)", path, err)
-		cm.invalidate(path)
+		log.Warningf("Failed to re-read credential file [%s] (removing from cache): %v", path, err)
+		cm.evictFromCache(path)
 		return
 	}
 
@@ -338,15 +387,16 @@ func (cm *CredentialManager) updateFile(path string) {
 	log.Debugf("Credential file [%s] updated in cache", path)
 }
 
-// invalidate removes a cached credential, forcing the next read to hit the file system.
-func (cm *CredentialManager) invalidate(path string) {
+// evictFromCache removes a cached credential, forcing the next read to hit the file system.
+// File watching is not canceled, so future changes to the file will still be detected.
+func (cm *CredentialManager) evictFromCache(path string) {
 	cm.mu.Lock()
 	delete(cm.cache, path)
 	cm.mu.Unlock()
 }
 
-// watchDir ensures the directory containing the given file is being watched.
-func (cm *CredentialManager) watchDir(path string) error {
+// watchParentDir ensures the parent directory of the given file path is being watched.
+func (cm *CredentialManager) watchParentDir(path string) error {
 	if cm.watcher == nil {
 		return fmt.Errorf("watcher not initialized")
 	}
@@ -369,6 +419,6 @@ func (cm *CredentialManager) watchDir(path string) error {
 	cm.watchedDirs[dir] = struct{}{}
 	cm.mu.Unlock()
 
-	log.Tracef("Watching credential directory [%s] for changes", dir)
+	log.Tracef("Watching credential directory [%s] for changes to [%s]", dir, path)
 	return nil
 }
