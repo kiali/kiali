@@ -208,20 +208,17 @@ export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphSetting
 };
 
 const rootIconStyle = kialiStyle({
-  color: PFColors.White,
   display: 'flex',
   marginLeft: '0.125rem',
   marginTop: '0.125rem'
 });
 
 const gatewayIconStyle = kialiStyle({
-  color: PFColors.White,
   display: 'flex',
   marginTop: '-0.125rem'
 });
 
 const waypointIconStyle = kialiStyle({
-  color: PFColors.White,
   display: 'flex',
   marginLeft: '0.125rem',
   marginTop: '-0.125rem'
@@ -301,13 +298,13 @@ export const setNodeLabel = (
     !isNamespaceBoxed &&
     isBox !== BoxByType.NAMESPACE
   ) {
-    content.push(`(${namespace})`);
+    content.push(`${namespace}`);
   }
 
   // append cluster if necessary
   const homeCluster = kialiHomeCluster?.name || CLUSTER_DEFAULT;
   if (!!cluster && cluster !== UNKNOWN && cluster !== homeCluster && !isBoxed && isBox !== BoxByType.CLUSTER) {
-    content.push(`(${cluster})`);
+    content.push(`${cluster}`);
   }
 
   switch (nodeType) {
@@ -379,11 +376,22 @@ export const setNodeLabel = (
 
     if (pfBadge) {
       data.badge = pfBadge.badge;
-      data.badgeColor = PFColors.BackgroundColor100;
-      data.badgeBorderColor = PFColors.Blue300;
     }
   } else if (data.isExtension) {
     data.badge = PFBadges.Extension.badge;
+  }
+
+  if (data.badge) {
+    // Different badge styles for groups and node labels
+    if (node.type === 'group') {
+      data.badgeColor = 'var(--pf-topology__group__label__node__label__background--Fill)';
+      data.badgeBorderColor = 'var(--pf-topology__group__label__text--Fill)';
+      data.badgeTextColor = 'var(--pf-topology__group__label__text--Fill)';
+    } else {
+      data.badgeColor = 'var(--pf-topology__node__label__background--Fill)';
+      data.badgeBorderColor = 'var(--pf-topology__node__label__text--Fill)';
+      data.badgeTextColor = 'var(--pf-topology__node__label__text--Fill)';
+    }
   }
 
   node.label = content.shift();

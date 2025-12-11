@@ -125,6 +125,7 @@ const StyleGroupComponent: React.FC<StyleGroupProps> = ({
         collapsedWidth={collapsedWidth}
         collapsedHeight={collapsedHeight}
         element={element}
+        hideContextMenuKebab={true}
         hulledOutline={false}
         showLabel={detailsLevel === ScaleDetailsLevel.high}
         showLabelOnHover={true}

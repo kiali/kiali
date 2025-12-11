@@ -95,38 +95,6 @@ export const globalStyle = kialiStyle({
      */
     '& .pf-v6-c-content, & .pf-v6-c-content > h4': {
       color: 'unset'
-    },
-
-    /**
-     * Hide the kebab menu of Patternfly topology groups
-     * TODO Remove when groups can hide the kebab menu - https://github.com/patternfly/react-topology/issues/254
-     */
-    '& #pft-graph .pf-topology__group__label': {
-      $nest: {
-        '& .pf-topology__node__label__badge ~ text:not(.pf-m-secondary)': {
-          transform: 'translateX(10px)'
-        },
-        '& .pf-topology__node__action-icon': {
-          visibility: 'hidden'
-        },
-        '& text ~ .pf-topology__node__separator': {
-          visibility: 'hidden'
-        }
-      }
-    },
-
-    /**
-     * TODO Move to labelClassName - https://github.com/patternfly/react-topology/issues/255
-     */
-    '& #mesh-container .pf-topology__group__label': {
-      $nest: {
-        '& > text': {
-          fontSize: '1.25rem'
-        },
-        '& .pf-topology__node__label__badge > text': {
-          fontSize: '1rem'
-        }
-      }
     }
   }
 });
