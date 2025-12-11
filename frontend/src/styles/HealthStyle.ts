@@ -8,7 +8,7 @@ export const healthIndicatorStyle = kialiStyle({
     },
 
     '& .pf-v6-c-content ul': {
-      marginBottom: 'var(--pf-v5-c-content--ul--MarginTop)',
+      marginBottom: 'var(--pf-t--global--spacer--md)',
       marginTop: 0
     }
   }
