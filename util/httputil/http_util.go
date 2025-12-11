@@ -160,7 +160,11 @@ func CreateTransport(conf *config.Config, auth *config.Auth, transportConfig *ht
 	// Chain together the RoundTrippers that we need, retaining the outer-most round tripper so we can return it.
 	outerRoundTripper := newCustomHeadersRoundTripper(customHeaders, transportConfig)
 
-	if auth != nil {
+	// Part 1: Configure TLS if auth credentials OR custom CA bundle is present.
+	// Custom CA bundles (via conf.CertPool()) are independent of authentication - services
+	// may use self-signed certs or internal CAs without requiring auth credentials.
+	hasCustomCA := conf.Credentials != nil && conf.Credentials.HasCustomCAs()
+	if auth != nil || hasCustomCA {
 		transportConfig.DialTLSContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
 			host, _, err := net.SplitHostPort(addr)
 			if err != nil {
@@ -173,6 +177,11 @@ func CreateTransport(conf *config.Config, auth *config.Auth, transportConfig *ht
 			dialer := tls.Dialer{Config: cfg}
 			return dialer.DialContext(ctx, network, addr)
 		}
+	}
+
+	// Part 2: Wrap with auth RoundTripper only if auth credentials are provided.
+	// This is separate from TLS configuration because auth and TLS are orthogonal concerns.
+	if auth != nil {
 		outerRoundTripper = newAuthRoundTripper(conf, auth, outerRoundTripper)
 	}
 
@@ -180,10 +189,23 @@ func CreateTransport(conf *config.Config, auth *config.Auth, transportConfig *ht
 }
 
 func GetTLSConfig(conf *config.Config, auth *config.Auth) (*tls.Config, error) {
+	// Return TLS config if there's anything to configure: auth credentials OR custom CA bundle.
+	// Custom CA bundles are independent of authentication credentials.
+	hasCustomCA := conf.Credentials != nil && conf.Credentials.HasCustomCAs()
+
 	if auth == nil {
+		// No auth provided, but check if custom CA bundle is configured
+		if hasCustomCA {
+			return buildTLSConfig(conf, nil, "")
+		}
 		return nil, nil
 	}
 	if auth.CertFile == "" && auth.KeyFile == "" && !auth.InsecureSkipVerify {
+		// Auth object provided but contains no TLS-specific settings (no client certs or insecure skip).
+		// Check if custom CA bundle is configured to determine if TLS config is needed.
+		if hasCustomCA {
+			return buildTLSConfig(conf, auth, "")
+		}
 		return nil, nil
 	}
 	return buildTLSConfig(conf, auth, "")
@@ -193,7 +215,11 @@ func GetTLSConfig(conf *config.Config, auth *config.Auth) (*tls.Config, error) {
 // This should be preferred when the target hostname/IP is known ahead of time (e.g. for gRPC clients)
 // so that certificate verification can enforce the correct SAN.
 func GetTLSConfigForServer(conf *config.Config, auth *config.Auth, serverName string) (*tls.Config, error) {
-	if auth == nil {
+	// Return TLS config if there's anything to configure: auth credentials OR custom CA bundle.
+	// Custom CA bundles are independent of authentication credentials.
+	hasCustomCA := conf.Credentials != nil && conf.Credentials.HasCustomCAs()
+
+	if auth == nil && !hasCustomCA {
 		return nil, nil
 	}
 	return buildTLSConfig(conf, auth, serverName)

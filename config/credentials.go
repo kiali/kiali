@@ -71,8 +71,9 @@ type CredentialManager struct {
 	closeOnce   sync.Once
 
 	// Certificate pool management
-	certPool      *x509.CertPool
-	caBundlePaths []string
+	certPool         *x509.CertPool
+	caBundlePaths    []string
+	hasCustomCAsFlag bool // tracks whether custom CAs were successfully loaded
 }
 
 // NewCredentialManager creates a new credential manager with file watching enabled.
@@ -140,6 +141,7 @@ func (cm *CredentialManager) rebuildCertPool() error {
 	cm.mu.RUnlock()
 
 	// Load additional CA bundles
+	customCAsLoaded := false
 	for _, path := range paths {
 		if path == "" {
 			continue
@@ -155,12 +157,14 @@ func (cm *CredentialManager) rebuildCertPool() error {
 			if ok := combinedPool.AppendCertsFromPEM(data); !ok {
 				return fmt.Errorf("unable to append PEM bundle from file [%s]", path)
 			}
+			customCAsLoaded = true
 		}
 	}
 
-	// Update pool atomically
+	// Update pool and flag atomically
 	cm.mu.Lock()
 	cm.certPool = combinedPool
+	cm.hasCustomCAsFlag = customCAsLoaded
 	cm.mu.Unlock()
 
 	return nil
@@ -201,6 +205,22 @@ func (cm *CredentialManager) GetCertPool() *x509.CertPool {
 	return pool.Clone()
 }
 
+// HasCustomCAs returns true if custom CA certificates were successfully loaded into the pool.
+// This indicates whether custom CAs (beyond the system CAs) are present and active.
+func (cm *CredentialManager) HasCustomCAs() bool {
+	if cm == nil {
+		return false
+	}
+
+	// Note: While boolean reads are atomic in Go, we use RLock here for consistency with other
+	// methods, to satisfy the race detector, and because the cost is negligible (~20ns) compared
+	// to the actual HTTP operations this gates. This is a read-heavy workload where RWMutex excels.
+	cm.mu.RLock()
+	defer cm.mu.RUnlock()
+
+	return cm.hasCustomCAsFlag
+}
+
 // Get reads a credential, either from a file (if value starts with "/") or returns the literal value.
 //
 // File paths are cached and watched for changes. When the file is modified (e.g., during Kubernetes
@@ -226,7 +246,7 @@ func (cm *CredentialManager) Get(value string) (string, error) {
 
 // getFromCache retrieves a credential from cache or loads it from file.
 func (cm *CredentialManager) getFromCache(path string) (string, error) {
-	// Check if already cached
+	// Fast path: check if already cached
 	cm.mu.RLock()
 	if value, exists := cm.cache[path]; exists {
 		cm.mu.RUnlock()
@@ -234,24 +254,34 @@ func (cm *CredentialManager) getFromCache(path string) (string, error) {
 	}
 	cm.mu.RUnlock()
 
-	// Not in cache, read file and start watching
+	// Not in cache - we need to load it
+	// Upgrade to write lock to prevent multiple goroutines from loading the same file
+	cm.mu.Lock()
+
+	// Double-check: another goroutine might have loaded it while we waited for the lock
+	if value, exists := cm.cache[path]; exists {
+		cm.mu.Unlock()
+		return value, nil
+	}
+
+	// Still not in cache, we're the one to load it
+	// Read the file while holding the lock to ensure atomicity with cache operations
 	content, err := os.ReadFile(path)
 	if err != nil {
+		cm.mu.Unlock()
 		return "", fmt.Errorf("failed to read credential from [%s]: %w", path, err)
 	}
 
 	value := strings.TrimSpace(string(content))
 
-	// Ensure we can watch the parent directory. If this fails, fall back to direct reads.
-	if err := cm.watchParentDir(path); err != nil {
-		log.Warningf("Failed to watch credential directory for [%s] (falling back to direct reads): %v", path, err)
-		return value, nil
-	}
-
-	// Add to cache now that watching succeeded
-	cm.mu.Lock()
+	// Add to cache before releasing lock to ensure no other goroutine sees a cache miss
 	cm.cache[path] = value
 	cm.mu.Unlock()
+
+	// Watch the directory after releasing the lock (watching can be slow and doesn't need the lock)
+	if err := cm.watchParentDir(path); err != nil {
+		log.Warningf("Failed to watch credential directory for [%s] (falling back to direct reads): %v", path, err)
+	}
 
 	return value, nil
 }
@@ -373,17 +403,20 @@ func (cm *CredentialManager) refreshDir(dir string) {
 
 // refreshCachedFile re-reads a file and updates the cache.
 func (cm *CredentialManager) refreshCachedFile(path string) {
+	// Hold write lock during file read to ensure atomicity with cache operations
+	// This prevents other goroutines from seeing a cache miss and reading the file
+	// while it's being updated (which could result in reading an empty/partial file)
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+
 	content, err := os.ReadFile(path)
 	if err != nil {
 		log.Warningf("Failed to re-read credential file [%s] (removing from cache): %v", path, err)
-		cm.evictFromCache(path)
+		delete(cm.cache, path)
 		return
 	}
 
-	cm.mu.Lock()
 	cm.cache[path] = strings.TrimSpace(string(content))
-	cm.mu.Unlock()
-
 	log.Debugf("Credential file [%s] updated in cache", path)
 }
 

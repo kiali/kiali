@@ -2,14 +2,11 @@ package httputil
 
 import (
 	"bytes"
-	"crypto/rand"
-	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
-	"crypto/x509/pkix"
+	"encoding/base64"
 	"encoding/pem"
 	"io"
-	"math/big"
 	"net"
 	"net/http"
 	"os"
@@ -17,6 +14,7 @@ import (
 	"time"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/util/certtest"
 )
 
 type recordingRoundTripper struct {
@@ -39,6 +37,21 @@ type ioNopCloser struct {
 }
 
 func (n ioNopCloser) Close() error { return nil }
+
+// pollForCondition polls until a condition is met or timeout is reached.
+// Returns true if condition was met, false if timeout occurred.
+// This is used for waiting on fsnotify file change detection in credential rotation tests.
+func pollForCondition(t *testing.T, timeout time.Duration, condition func() bool) bool {
+	t.Helper()
+	iterations := int(timeout / (50 * time.Millisecond))
+	for i := 0; i < iterations; i++ {
+		time.Sleep(50 * time.Millisecond)
+		if condition() {
+			return true
+		}
+	}
+	return false
+}
 
 func TestAuthRoundTripper_BearerRotation(t *testing.T) {
 	conf := config.NewConfig()
@@ -74,21 +87,17 @@ func TestAuthRoundTripper_BearerRotation(t *testing.T) {
 	if err := os.WriteFile(tokenFile, []byte("t2"), 0600); err != nil {
 		t.Fatalf("rotate token: %v", err)
 	}
+
 	// Wait for fsnotify to detect change and update cache (up to 2 seconds)
-	for i := 0; i < 40; i++ {
-		time.Sleep(50 * time.Millisecond)
+	rotated := pollForCondition(t, 2*time.Second, func() bool {
 		if _, err := rt.RoundTrip(req); err != nil {
 			t.Fatalf("roundtrip poll: %v", err)
 		}
-		if inner.lastAuth == "Bearer t2" {
-			break
-		}
-	}
-	if _, err := rt.RoundTrip(req); err != nil {
-		t.Fatalf("roundtrip2: %v", err)
-	}
-	if inner.lastAuth != "Bearer t2" {
-		t.Fatalf("expected Authorization=Bearer t2, got %q", inner.lastAuth)
+		return inner.lastAuth == "Bearer t2"
+	})
+
+	if !rotated {
+		t.Fatalf("expected Authorization=Bearer t2 after rotation, got %q", inner.lastAuth)
 	}
 }
 
@@ -134,22 +143,283 @@ func TestAuthRoundTripper_BasicRotation(t *testing.T) {
 	if err := os.WriteFile(passFile, []byte("p2"), 0600); err != nil {
 		t.Fatalf("rotate pass: %v", err)
 	}
+
 	// Wait for fsnotify to detect changes and update cache (up to 2 seconds)
 	expectedAuth := "Basic dTI6cDI=" // base64("u2:p2")
-	for i := 0; i < 40; i++ {
-		time.Sleep(50 * time.Millisecond)
+	rotated := pollForCondition(t, 2*time.Second, func() bool {
 		if _, err := rt.RoundTrip(req); err != nil {
 			t.Fatalf("roundtrip poll: %v", err)
 		}
-		if inner.lastAuth == expectedAuth {
-			break
+		return inner.lastAuth == expectedAuth
+	})
+
+	if !rotated {
+		t.Fatalf("expected rotated Authorization=%q after rotation, got %q", expectedAuth, inner.lastAuth)
+	}
+}
+
+func TestHttpPost_BearerRotation(t *testing.T) {
+	conf := config.NewConfig()
+	var err error
+	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
+		t.Fatalf("failed to create credential manager: %v", err)
+	}
+	t.Cleanup(conf.Close)
+
+	tmpDir := t.TempDir()
+	tokenFile := tmpDir + "/token"
+	if err := os.WriteFile(tokenFile, []byte("post-t1"), 0600); err != nil {
+		t.Fatalf("write token: %v", err)
+	}
+
+	auth := &config.Auth{
+		Type:  config.AuthTypeBearer,
+		Token: tokenFile,
+	}
+
+	// Create a test server that captures the Authorization header and echoes the request body
+	var capturedAuth string
+	var capturedBody string
+	server := &http.Server{
+		Addr: "127.0.0.1:0",
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedAuth = r.Header.Get("Authorization")
+			body, _ := io.ReadAll(r.Body)
+			capturedBody = string(body)
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("response"))
+		}),
+	}
+
+	ln, err := net.Listen("tcp", server.Addr)
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	defer ln.Close()
+
+	go func() {
+		_ = server.Serve(ln)
+	}()
+	defer server.Close()
+
+	url := "http://" + ln.Addr().String() + "/"
+	requestBody := "test-post-body"
+
+	// First POST request
+	body, statusCode, _, err := HttpPost(url, auth, bytes.NewBufferString(requestBody), 5*time.Second, nil, conf)
+	if err != nil {
+		t.Fatalf("post1: %v", err)
+	}
+	if statusCode != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", statusCode)
+	}
+	if string(body) != "response" {
+		t.Fatalf("expected response body 'response', got %q", body)
+	}
+	if capturedAuth != "Bearer post-t1" {
+		t.Fatalf("expected Authorization=Bearer post-t1, got %q", capturedAuth)
+	}
+	if capturedBody != requestBody {
+		t.Fatalf("expected request body %q, got %q", requestBody, capturedBody)
+	}
+
+	// Rotate token
+	if err := os.WriteFile(tokenFile, []byte("post-t2"), 0600); err != nil {
+		t.Fatalf("rotate token: %v", err)
+	}
+
+	// Wait for fsnotify to detect change and update cache (up to 2 seconds)
+	requestBody2 := "rotated-post-body"
+	rotated := pollForCondition(t, 2*time.Second, func() bool {
+		_, _, _, err = HttpPost(url, auth, bytes.NewBufferString(requestBody2), 5*time.Second, nil, conf)
+		if err != nil {
+			t.Fatalf("post poll: %v", err)
+		}
+		return capturedAuth == "Bearer post-t2"
+	})
+
+	if !rotated {
+		t.Fatalf("expected rotated Authorization=Bearer post-t2 after rotation, got %q", capturedAuth)
+	}
+	if capturedBody != requestBody2 {
+		t.Fatalf("expected rotated request body %q, got %q", requestBody2, capturedBody)
+	}
+}
+
+func TestHttpPost_BasicRotation(t *testing.T) {
+	conf := config.NewConfig()
+	var err error
+	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
+		t.Fatalf("failed to create credential manager: %v", err)
+	}
+	t.Cleanup(conf.Close)
+
+	tmpDir := t.TempDir()
+	userFile := tmpDir + "/u"
+	passFile := tmpDir + "/p"
+	if err := os.WriteFile(userFile, []byte("post-u1"), 0600); err != nil {
+		t.Fatalf("write user: %v", err)
+	}
+	if err := os.WriteFile(passFile, []byte("post-p1"), 0600); err != nil {
+		t.Fatalf("write pass: %v", err)
+	}
+
+	auth := &config.Auth{
+		Type:     config.AuthTypeBasic,
+		Username: userFile,
+		Password: passFile,
+	}
+
+	// Create a test server that captures the Authorization header and echoes the request body
+	var capturedAuth string
+	var capturedBody string
+	server := &http.Server{
+		Addr: "127.0.0.1:0",
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedAuth = r.Header.Get("Authorization")
+			body, _ := io.ReadAll(r.Body)
+			capturedBody = string(body)
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("response"))
+		}),
+	}
+
+	ln, err := net.Listen("tcp", server.Addr)
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	defer ln.Close()
+
+	go func() {
+		_ = server.Serve(ln)
+	}()
+	defer server.Close()
+
+	url := "http://" + ln.Addr().String() + "/"
+	requestBody := "test-basic-post"
+
+	// First POST request
+	body, statusCode, _, err := HttpPost(url, auth, bytes.NewBufferString(requestBody), 5*time.Second, nil, conf)
+	if err != nil {
+		t.Fatalf("post1: %v", err)
+	}
+	if statusCode != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", statusCode)
+	}
+	if string(body) != "response" {
+		t.Fatalf("expected response body 'response', got %q", body)
+	}
+	if capturedAuth == "" || capturedAuth == "Basic " {
+		t.Fatalf("expected Basic auth header, got %q", capturedAuth)
+	}
+	if capturedBody != requestBody {
+		t.Fatalf("expected request body %q, got %q", requestBody, capturedBody)
+	}
+
+	initialAuth := capturedAuth
+
+	// Rotate credentials
+	if err := os.WriteFile(userFile, []byte("post-u2"), 0600); err != nil {
+		t.Fatalf("rotate user: %v", err)
+	}
+	if err := os.WriteFile(passFile, []byte("post-p2"), 0600); err != nil {
+		t.Fatalf("rotate pass: %v", err)
+	}
+
+	// Wait for fsnotify to detect changes and update cache (up to 2 seconds)
+	expectedAuth := "Basic " + base64.StdEncoding.EncodeToString([]byte("post-u2:post-p2"))
+	requestBody2 := "rotated-basic-post"
+	rotated := pollForCondition(t, 2*time.Second, func() bool {
+		_, _, _, err = HttpPost(url, auth, bytes.NewBufferString(requestBody2), 5*time.Second, nil, conf)
+		if err != nil {
+			t.Fatalf("post poll: %v", err)
+		}
+		return capturedAuth == expectedAuth
+	})
+
+	if !rotated {
+		t.Fatalf("expected rotated Authorization=%q after rotation, got %q", expectedAuth, capturedAuth)
+	}
+	if capturedAuth == initialAuth {
+		t.Fatalf("credentials did not rotate - still using initial auth")
+	}
+	if capturedBody != requestBody2 {
+		t.Fatalf("expected rotated request body %q, got %q", requestBody2, capturedBody)
+	}
+}
+
+// TestCreateTransport_CustomHeaders verifies that custom headers are properly set on HTTP requests.
+// The customHeadersRoundTripper should add all configured headers to each request.
+func TestCreateTransport_CustomHeaders(t *testing.T) {
+	conf := config.NewConfig()
+	var err error
+	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
+		t.Fatalf("failed to create credential manager: %v", err)
+	}
+	t.Cleanup(conf.Close)
+
+	// Track captured headers
+	capturedHeaders := make(map[string]string)
+	server := &http.Server{
+		Addr: "127.0.0.1:0",
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedHeaders["X-Custom-Header"] = r.Header.Get("X-Custom-Header")
+			capturedHeaders["X-Another-Header"] = r.Header.Get("X-Another-Header")
+			capturedHeaders["X-Third-Header"] = r.Header.Get("X-Third-Header")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("ok"))
+		}),
+	}
+
+	ln, err := net.Listen("tcp", server.Addr)
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	defer ln.Close()
+
+	go func() {
+		_ = server.Serve(ln)
+	}()
+	defer server.Close()
+
+	url := "http://" + ln.Addr().String() + "/"
+
+	// Test with multiple custom headers
+	customHeaders := map[string]string{
+		"X-Custom-Header":  "custom-value-1",
+		"X-Another-Header": "custom-value-2",
+		"X-Third-Header":   "custom-value-3",
+	}
+
+	body, statusCode, _, err := HttpGet(url, nil, 5*time.Second, customHeaders, nil, conf)
+	if err != nil {
+		t.Fatalf("HttpGet: %v", err)
+	}
+
+	if statusCode != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", statusCode)
+	}
+	if string(body) != "ok" {
+		t.Fatalf("expected body 'ok', got %q", body)
+	}
+
+	// Verify all custom headers were set correctly
+	for headerName, expectedValue := range customHeaders {
+		if capturedHeaders[headerName] != expectedValue {
+			t.Errorf("expected header [%s]=[%s], got [%s]", headerName, expectedValue, capturedHeaders[headerName])
 		}
 	}
-	if _, err := rt.RoundTrip(req); err != nil {
-		t.Fatalf("roundtrip2: %v", err)
+
+	// Test with empty custom headers - should not error
+	_, _, _, err = HttpGet(url, nil, 5*time.Second, nil, nil, conf)
+	if err != nil {
+		t.Fatalf("HttpGet with nil headers: %v", err)
 	}
-	if inner.lastAuth == "" || inner.lastAuth == "Basic " {
-		t.Fatalf("expected rotated Basic auth header, got %q", inner.lastAuth)
+
+	// Test with empty map - should not error
+	_, _, _, err = HttpGet(url, nil, 5*time.Second, map[string]string{}, nil, conf)
+	if err != nil {
+		t.Fatalf("HttpGet with empty headers map: %v", err)
 	}
 }
 
@@ -161,7 +431,7 @@ func TestAuthRoundTripper_BasicRotation(t *testing.T) {
 func TestGetTLSConfig_CAFileDeprecated(t *testing.T) {
 	tmpDir := t.TempDir()
 	const serverHost = "service.test"
-	_, ca1PEM, _ := mustGenCA(t, "CA1")
+	_, ca1PEM, _ := certtest.MustGenCA(t, "CA1")
 
 	caFile := tmpDir + "/ca.pem"
 	if err := os.WriteFile(caFile, ca1PEM, 0600); err != nil {
@@ -197,7 +467,7 @@ func TestGetTLSConfig_ClientCertRotation(t *testing.T) {
 	certFile := tmpDir + "/crt.pem"
 	keyFile := tmpDir + "/key.pem"
 
-	certPEM1, keyPEM1 := mustSelfSignedPair(t, "c1")
+	certPEM1, keyPEM1 := certtest.MustSelfSignedPair(t, "c1")
 	if err := os.WriteFile(certFile, certPEM1, 0600); err != nil {
 		t.Fatalf("write cert1: %v", err)
 	}
@@ -222,7 +492,7 @@ func TestGetTLSConfig_ClientCertRotation(t *testing.T) {
 	}
 
 	// Rotate files
-	certPEM2, keyPEM2 := mustSelfSignedPair(t, "c2")
+	certPEM2, keyPEM2 := certtest.MustSelfSignedPair(t, "c2")
 	if err := os.WriteFile(certFile, certPEM2, 0600); err != nil {
 		t.Fatalf("write cert2: %v", err)
 	}
@@ -232,134 +502,27 @@ func TestGetTLSConfig_ClientCertRotation(t *testing.T) {
 
 	// Wait for fsnotify to detect changes and update cache (up to 2 seconds)
 	var c2 *tls.Certificate
-	for i := 0; i < 40; i++ {
-		time.Sleep(50 * time.Millisecond)
+	rotated := pollForCondition(t, 2*time.Second, func() bool {
 		c2, err = tlscfg.GetClientCertificate(nil)
 		if err != nil {
 			t.Fatalf("GetClientCertificate poll: %v", err)
 		}
-		if !bytes.Equal(c1.Certificate[0], c2.Certificate[0]) {
-			break
-		}
-	}
+		return !bytes.Equal(c1.Certificate[0], c2.Certificate[0])
+	})
 
-	c2, err = tlscfg.GetClientCertificate(nil)
-	if err != nil {
-		t.Fatalf("GetClientCertificate#2: %v", err)
-	}
-	if bytes.Equal(c1.Certificate[0], c2.Certificate[0]) {
-		t.Fatalf("expected rotated client certificate to differ")
+	if !rotated {
+		t.Fatalf("expected client certificate to rotate, but it remained the same")
 	}
 }
 
 // --- helpers to generate test certificates ---
-
-func mustGenCA(t *testing.T, cn string) (*x509.Certificate, []byte, *rsa.PrivateKey) {
-	t.Helper()
-	caKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		t.Fatalf("gen key: %v", err)
-	}
-	caTmpl := &x509.Certificate{
-		SerialNumber:          bigInt(1),
-		Subject:               pkix.Name{CommonName: cn},
-		NotBefore:             time.Now().Add(-time.Hour),
-		NotAfter:              time.Now().Add(24 * time.Hour),
-		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
-		BasicConstraintsValid: true,
-		IsCA:                  true,
-	}
-	der, err := x509.CreateCertificate(rand.Reader, caTmpl, caTmpl, &caKey.PublicKey, caKey)
-	if err != nil {
-		t.Fatalf("create ca: %v", err)
-	}
-	return caTmpl, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}), caKey
-}
-
-func mustSelfSignedPair(t *testing.T, cn string) ([]byte, []byte) {
-	t.Helper()
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		t.Fatalf("gen key: %v", err)
-	}
-	tmpl := &x509.Certificate{
-		SerialNumber:          bigInt(3),
-		Subject:               pkix.Name{CommonName: cn},
-		NotBefore:             time.Now().Add(-time.Hour),
-		NotAfter:              time.Now().Add(24 * time.Hour),
-		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-		BasicConstraintsValid: true,
-	}
-	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
-	if err != nil {
-		t.Fatalf("create cert: %v", err)
-	}
-	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
-	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
-	return certPEM, keyPEM
-}
-
-func bigInt(n int64) *big.Int { return big.NewInt(n) }
-
-// mustGenLeafSignedWithKey generates a leaf certificate signed by the provided CA.
-// Used to test certificate verification against CA pools.
-func mustGenLeafSignedWithKey(t *testing.T, ca *x509.Certificate, caKey *rsa.PrivateKey, cn string) []byte {
-	t.Helper()
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		t.Fatalf("gen key: %v", err)
-	}
-	tmpl := &x509.Certificate{
-		SerialNumber:          bigInt(2),
-		Subject:               pkix.Name{CommonName: cn},
-		NotBefore:             time.Now().Add(-time.Hour),
-		NotAfter:              time.Now().Add(24 * time.Hour),
-		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		BasicConstraintsValid: true,
-		DNSNames:              []string{cn},
-	}
-	// Sign leaf using provided CA key
-	der, err := x509.CreateCertificate(rand.Reader, tmpl, ca, &key.PublicKey, caKey)
-	if err != nil {
-		t.Fatalf("create leaf: %v", err)
-	}
-	return der
-}
-
-// mustServerCertSignedByCA generates a server certificate (with key) signed by the provided CA.
-// Used to spin up test TLS servers with proper certificate chains.
-func mustServerCertSignedByCA(t *testing.T, ca *x509.Certificate, caKey *rsa.PrivateKey, hosts []string) ([]byte, []byte) {
-	t.Helper()
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		t.Fatalf("gen key: %v", err)
-	}
-	tmpl := &x509.Certificate{
-		SerialNumber:          bigInt(4),
-		Subject:               pkix.Name{CommonName: hosts[0]},
-		NotBefore:             time.Now().Add(-time.Hour),
-		NotAfter:              time.Now().Add(24 * time.Hour),
-		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		BasicConstraintsValid: true,
-		DNSNames:              hosts,
-	}
-	der, err := x509.CreateCertificate(rand.Reader, tmpl, ca, &key.PublicKey, caKey)
-	if err != nil {
-		t.Fatalf("create cert: %v", err)
-	}
-	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
-	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
-	return certPEM, keyPEM
-}
+// Note: Certificate generation helpers have been moved to util/certtest package for reuse
 
 // TestGetTLSConfig_UsesCertPool verifies that GetTLSConfig uses the config's CertPool
 // for RootCAs when the CertPool has been initialized with custom CAs.
 func TestGetTLSConfig_UsesCertPool(t *testing.T) {
 	tmpDir := t.TempDir()
-	_, caPEM, _ := mustGenCA(t, "CustomCA")
+	_, caPEM, _ := certtest.MustGenCA(t, "CustomCA")
 
 	// Write custom CA to file
 	caFile := tmpDir + "/custom-ca.pem"
@@ -396,7 +559,7 @@ func TestGetTLSConfig_UsesCertPool(t *testing.T) {
 
 	// Verify ServerName is set
 	if tlscfg.ServerName != "prometheus.example.com" {
-		t.Errorf("expected ServerName to be 'prometheus.example.com', got '%s'", tlscfg.ServerName)
+		t.Errorf("expected ServerName to be [prometheus.example.com], got [%s]", tlscfg.ServerName)
 	}
 
 	// Verify the custom CA is in RootCAs by checking the pool contains our CA
@@ -423,12 +586,179 @@ func TestGetTLSConfig_UsesCertPool(t *testing.T) {
 	}
 }
 
+// TestGetTLSConfig_CustomCAWithoutAuth verifies that GetTLSConfig returns a valid
+// TLS config with custom CA bundles even when no auth credentials are provided.
+// Custom CA bundles and authentication are independent - services may use custom CAs
+// without requiring authentication.
+func TestGetTLSConfig_CustomCAWithoutAuth(t *testing.T) {
+	tmpDir := t.TempDir()
+	_, caPEM, _ := certtest.MustGenCA(t, "CustomCA")
+
+	// Write custom CA to file
+	caFile := tmpDir + "/ca.pem"
+	if err := os.WriteFile(caFile, caPEM, 0600); err != nil {
+		t.Fatalf("write ca: %v", err)
+	}
+
+	// NEGATIVE TEST: First try without custom CA configured
+	confWithoutCA := config.NewConfig()
+	var err error
+	if confWithoutCA.Credentials, err = config.NewCredentialManager(); err != nil {
+		t.Fatalf("NewCredentialManager: %v", err)
+	}
+	t.Cleanup(confWithoutCA.Credentials.Close)
+	// No cert pool initialized - should return nil since there's nothing to configure
+
+	tlscfgWithoutCA, err := GetTLSConfig(confWithoutCA, nil)
+	if err != nil {
+		t.Fatalf("GetTLSConfig without CA: %v", err)
+	}
+	if tlscfgWithoutCA != nil {
+		t.Fatal("Expected nil TLS config when no CA bundle and no auth, but got non-nil")
+	}
+	t.Log("Negative test passed: GetTLSConfig correctly returns nil when nothing to configure")
+
+	// POSITIVE TEST: Now configure custom CA bundle
+	confWithCA := config.NewConfig()
+	if confWithCA.Credentials, err = config.NewCredentialManager(); err != nil {
+		t.Fatalf("NewCredentialManager: %v", err)
+	}
+	t.Cleanup(confWithCA.Credentials.Close)
+	if err := confWithCA.Credentials.InitializeCertPool([]string{caFile}); err != nil {
+		t.Fatalf("InitializeCertPool: %v", err)
+	}
+
+	// Call GetTLSConfig with custom CA but no auth - should return valid config
+	tlscfg, err := GetTLSConfig(confWithCA, nil)
+	if err != nil {
+		t.Fatalf("GetTLSConfig with CA: %v", err)
+	}
+
+	// Should return a TLS config even though auth is nil, because custom CA is configured
+	if tlscfg == nil {
+		t.Fatal("GetTLSConfig should return non-nil config when custom CA bundle is configured, even without auth")
+	}
+
+	// Verify RootCAs contains our custom CA
+	if tlscfg.RootCAs == nil {
+		t.Fatal("expected RootCAs to be set from CertPool")
+	}
+
+	// Verify the custom CA is in RootCAs
+	block, _ := pem.Decode(caPEM)
+	if block == nil {
+		t.Fatal("failed to decode CA PEM")
+	}
+	caCert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		t.Fatalf("parse CA cert: %v", err)
+	}
+
+	found := false
+	for _, subject := range tlscfg.RootCAs.Subjects() { //nolint:staticcheck // Subjects() is deprecated but still useful for testing
+		if bytes.Equal(subject, caCert.RawSubject) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("expected custom CA to be in RootCAs pool")
+	}
+	t.Log("Positive test passed: GetTLSConfig returns valid config with custom CA bundle")
+}
+
+// TestGetTLSConfigForServer_CustomCAWithoutAuth verifies that GetTLSConfigForServer
+// returns a valid TLS config with custom CA bundles even when no auth credentials are provided.
+// This is critical for gRPC clients connecting to services with custom CAs but no auth.
+func TestGetTLSConfigForServer_CustomCAWithoutAuth(t *testing.T) {
+	tmpDir := t.TempDir()
+	_, caPEM, _ := certtest.MustGenCA(t, "CustomCA")
+
+	// Write custom CA to file
+	caFile := tmpDir + "/ca.pem"
+	if err := os.WriteFile(caFile, caPEM, 0600); err != nil {
+		t.Fatalf("write ca: %v", err)
+	}
+
+	const serverName = "grpc-service.example.com"
+
+	// NEGATIVE TEST: First try without custom CA configured
+	confWithoutCA := config.NewConfig()
+	var err error
+	if confWithoutCA.Credentials, err = config.NewCredentialManager(); err != nil {
+		t.Fatalf("NewCredentialManager: %v", err)
+	}
+	t.Cleanup(confWithoutCA.Credentials.Close)
+
+	tlscfgWithoutCA, err := GetTLSConfigForServer(confWithoutCA, nil, serverName)
+	if err != nil {
+		t.Fatalf("GetTLSConfigForServer without CA: %v", err)
+	}
+	if tlscfgWithoutCA != nil {
+		t.Fatal("Expected nil TLS config when no CA bundle and no auth, but got non-nil")
+	}
+	t.Log("Negative test passed: GetTLSConfigForServer correctly returns nil when nothing to configure")
+
+	// POSITIVE TEST: Now configure custom CA bundle
+	confWithCA := config.NewConfig()
+	if confWithCA.Credentials, err = config.NewCredentialManager(); err != nil {
+		t.Fatalf("NewCredentialManager: %v", err)
+	}
+	t.Cleanup(confWithCA.Credentials.Close)
+	if err := confWithCA.Credentials.InitializeCertPool([]string{caFile}); err != nil {
+		t.Fatalf("InitializeCertPool: %v", err)
+	}
+
+	// Call GetTLSConfigForServer with custom CA but no auth - should return valid config
+	tlscfg, err := GetTLSConfigForServer(confWithCA, nil, serverName)
+	if err != nil {
+		t.Fatalf("GetTLSConfigForServer with CA: %v", err)
+	}
+
+	// Should return a TLS config even though auth is nil, because custom CA is configured
+	if tlscfg == nil {
+		t.Fatal("GetTLSConfigForServer should return non-nil config when custom CA bundle is configured, even without auth")
+	}
+
+	// Verify ServerName is set correctly
+	if tlscfg.ServerName != serverName {
+		t.Errorf("expected ServerName to be [%s], got [%s]", serverName, tlscfg.ServerName)
+	}
+
+	// Verify RootCAs contains our custom CA
+	if tlscfg.RootCAs == nil {
+		t.Fatal("expected RootCAs to be set from CertPool")
+	}
+
+	// Verify the custom CA is in RootCAs
+	block, _ := pem.Decode(caPEM)
+	if block == nil {
+		t.Fatal("failed to decode CA PEM")
+	}
+	caCert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		t.Fatalf("parse CA cert: %v", err)
+	}
+
+	found := false
+	for _, subject := range tlscfg.RootCAs.Subjects() { //nolint:staticcheck // Subjects() is deprecated but still useful for testing
+		if bytes.Equal(subject, caCert.RawSubject) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("expected custom CA to be in RootCAs pool")
+	}
+	t.Log("Positive test passed: GetTLSConfigForServer returns valid config with custom CA bundle and server name")
+}
+
 // TestGetTLSConfig_CAFileIgnored verifies that when only CAFile is set (deprecated),
 // no TLS config is returned since there's nothing to configure.
 // CAFile is deprecated and is ignored.
 func TestGetTLSConfig_CAFileIgnored(t *testing.T) {
 	tmpDir := t.TempDir()
-	_, caPEM, _ := mustGenCA(t, "TestCA")
+	_, caPEM, _ := certtest.MustGenCA(t, "TestCA")
 
 	// Write CA file used by client
 	caFile := tmpDir + "/ca.pem"
@@ -460,8 +790,8 @@ func TestCertPool_CARotation(t *testing.T) {
 	const serverHost = "service.test"
 
 	// Create CA1 and a leaf certificate signed by CA1
-	ca1, ca1PEM, ca1Key := mustGenCA(t, "CA1")
-	leaf1DER := mustGenLeafSignedWithKey(t, ca1, ca1Key, serverHost)
+	ca1, ca1PEM, ca1Key := certtest.MustGenCA(t, "CA1")
+	leaf1DER := certtest.MustGenLeafSignedWithKey(t, ca1, ca1Key, serverHost)
 	leaf1Cert, err := x509.ParseCertificate(leaf1DER)
 	if err != nil {
 		t.Fatalf("parse leaf1: %v", err)
@@ -494,13 +824,13 @@ func TestCertPool_CARotation(t *testing.T) {
 	}
 
 	// Create CA2 and rotate - write CA2 to the same file
-	ca2, ca2PEM, ca2Key := mustGenCA(t, "CA2")
+	ca2, ca2PEM, ca2Key := certtest.MustGenCA(t, "CA2")
 	if err := os.WriteFile(caFile, ca2PEM, 0600); err != nil {
 		t.Fatalf("write ca2: %v", err)
 	}
 
 	// Create leaf2 signed by CA2
-	leaf2DER := mustGenLeafSignedWithKey(t, ca2, ca2Key, serverHost)
+	leaf2DER := certtest.MustGenLeafSignedWithKey(t, ca2, ca2Key, serverHost)
 	leaf2Cert, err := x509.ParseCertificate(leaf2DER)
 	if err != nil {
 		t.Fatalf("parse leaf2: %v", err)
@@ -537,8 +867,8 @@ func TestCertPool_HostnameVerification(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Create CA and server certificate for "good.test"
-	ca, caPEM, caKey := mustGenCA(t, "TestCA")
-	certPEM, keyPEM := mustServerCertSignedByCA(t, ca, caKey, []string{"good.test"})
+	ca, caPEM, caKey := certtest.MustGenCA(t, "TestCA")
+	certPEM, keyPEM := certtest.MustServerCertSignedByCA(t, ca, caKey, []string{"good.test"})
 
 	// Start TLS server with cert for good.test
 	pair, err := tls.X509KeyPair(certPEM, keyPEM)
@@ -612,6 +942,98 @@ func TestCertPool_HostnameVerification(t *testing.T) {
 	if !isHostnameError(err) {
 		t.Fatalf("expected hostname verification error, got: %v", err)
 	}
+}
+
+// TestHttpGet_CustomCAWithoutAuth verifies that HttpGet properly uses custom CA bundles
+// for certificate verification even when no authentication credentials are configured.
+// This is important for scenarios like connecting to internal Prometheus/Grafana instances
+// that use self-signed certificates or internal CAs but don't require authentication.
+func TestHttpGet_CustomCAWithoutAuth(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create a custom CA and server certificate with IP SAN for 127.0.0.1
+	ca, caPEM, caKey := certtest.MustGenCA(t, "CustomCA")
+	serverCertPEM, serverKeyPEM := certtest.MustServerCertWithIPSignedByCA(t, ca, caKey, []net.IP{net.ParseIP("127.0.0.1")})
+
+	// Start HTTPS server with custom CA-signed certificate
+	serverCert, err := tls.X509KeyPair(serverCertPEM, serverKeyPEM)
+	if err != nil {
+		t.Fatalf("load server keypair: %v", err)
+	}
+	server := &http.Server{
+		Addr: "127.0.0.1:0",
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("success"))
+		}),
+		TLSConfig: &tls.Config{Certificates: []tls.Certificate{serverCert}},
+	}
+
+	ln, err := tls.Listen("tcp", server.Addr, server.TLSConfig)
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	defer ln.Close()
+
+	go func() {
+		_ = server.Serve(ln)
+	}()
+	defer server.Close()
+
+	url := "https://" + ln.Addr().String() + "/"
+
+	// No authentication credentials configured - this tests the scenario where
+	// a service requires custom CA trust but not authentication
+	var auth *config.Auth = nil
+
+	// NEGATIVE TEST: First attempt without custom CA bundle - should fail
+	confWithoutCA := config.NewConfig()
+	if confWithoutCA.Credentials, err = config.NewCredentialManager(); err != nil {
+		t.Fatalf("NewCredentialManager: %v", err)
+	}
+	t.Cleanup(confWithoutCA.Credentials.Close)
+	// Note: NOT initializing cert pool - this uses system CAs which won't trust our custom CA
+
+	_, _, _, errWithoutCA := HttpGet(url, auth, 5*time.Second, nil, nil, confWithoutCA)
+	if errWithoutCA == nil {
+		t.Fatal("Expected request to fail without custom CA bundle, but it succeeded")
+	}
+	// Verify it's a certificate verification error
+	if !bytes.Contains([]byte(errWithoutCA.Error()), []byte("certificate")) &&
+		!bytes.Contains([]byte(errWithoutCA.Error()), []byte("x509")) {
+		t.Fatalf("Expected certificate verification error, got: %v", errWithoutCA)
+	}
+	t.Logf("Negative test passed: Request correctly failed without custom CA: %v", errWithoutCA)
+
+	// POSITIVE TEST: Now configure custom CA bundle and retry - should succeed
+	caFile := tmpDir + "/ca.pem"
+	if err := os.WriteFile(caFile, caPEM, 0600); err != nil {
+		t.Fatalf("write ca: %v", err)
+	}
+
+	confWithCA := config.NewConfig()
+	if confWithCA.Credentials, err = config.NewCredentialManager(); err != nil {
+		t.Fatalf("NewCredentialManager: %v", err)
+	}
+	t.Cleanup(confWithCA.Credentials.Close)
+	if err := confWithCA.Credentials.InitializeCertPool([]string{caFile}); err != nil {
+		t.Fatalf("InitializeCertPool: %v", err)
+	}
+
+	body, statusCode, _, err := HttpGet(url, auth, 5*time.Second, nil, nil, confWithCA)
+
+	// Should succeed - CreateTransport must configure TLS even when auth is nil
+	if err != nil {
+		t.Fatalf("HttpGet should succeed with custom CA bundle even without auth, but got error: %v", err)
+	}
+
+	if statusCode != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", statusCode)
+	}
+	if string(body) != "success" {
+		t.Fatalf("expected body 'success', got %q", body)
+	}
+	t.Log("Positive test passed: Request succeeded with custom CA bundle")
 }
 
 // isHostnameError checks if the error is related to hostname/certificate verification
