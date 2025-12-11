@@ -73,12 +73,10 @@ export const globalStyle = kialiStyle({
      * Light color for links in tooltips
      */
     '& .pf-v6-c-tooltip a': {
-      color:
-        'var(pf-t--global--text--color--link--default)' /* CODEMODS: original v5 color was --pf-v5-global--link--Color--light */,
+      color: 'var(pf-t--global--text--color--link--default)',
       $nest: {
         '&:hover': {
-          color:
-            'var(pf-t--global--text--color--link--hover)' /* CODEMODS: original v5 color was --pf-v5-global--link--Color--light--hover */
+          color: 'var(pf-t--global--text--color--link--hover)'
         }
       }
     },

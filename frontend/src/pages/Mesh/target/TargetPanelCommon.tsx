@@ -148,8 +148,8 @@ const expandTitleStyle = kialiStyle({
 const expandBodyStyle = kialiStyle({
   padding: '0 0 0 0.125rem !important',
   $nest: {
-    '& .pf-v5-c-table__expandable-row-content': {
-      padding: '0 0 0 0.5rem !important'
+    '& .pf-v6-c-table__expandable-row-content': {
+      padding: '0 0 0 1.5rem !important'
     }
   }
 });
