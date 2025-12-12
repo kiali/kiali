@@ -2,15 +2,8 @@ package tracing
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/rsa"
 	"crypto/tls"
-	"crypto/x509"
-	"crypto/x509/pkix"
 	"encoding/base64"
-	"encoding/pem"
-	"math/big"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -22,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/util/certtest"
 	"github.com/kiali/kiali/util/polltest"
 )
 
@@ -420,8 +414,8 @@ func TestTracingClientHTTPSWithCARotation(t *testing.T) {
 	caFile := tmpDir + "/ca.pem"
 
 	// Generate CA1 and server certificate signed by CA1
-	ca1, ca1PEM, ca1Key := mustGenCA(t, "TestCA1")
-	serverCert1PEM, serverKey1PEM := mustServerCertSignedByCA(t, ca1, ca1Key, []string{"localhost", "127.0.0.1"})
+	ca1, ca1PEM, ca1Key := certtest.MustGenCA(t, "TestCA1")
+	serverCert1PEM, serverKey1PEM := certtest.MustServerCertSignedByCA(t, ca1, ca1Key, []string{"localhost", "127.0.0.1"})
 
 	// Write CA1 to file
 	err := os.WriteFile(caFile, ca1PEM, 0600)
@@ -470,8 +464,8 @@ func TestTracingClientHTTPSWithCARotation(t *testing.T) {
 	assert.Equal(t, int32(1), requestCount.Load(), "Server should have received 1 request")
 
 	// Now rotate the CA - generate CA2 and new server cert
-	ca2, ca2PEM, ca2Key := mustGenCA(t, "TestCA2")
-	serverCert2PEM, serverKey2PEM := mustServerCertSignedByCA(t, ca2, ca2Key, []string{"localhost", "127.0.0.1"})
+	ca2, ca2PEM, ca2Key := certtest.MustGenCA(t, "TestCA2")
+	serverCert2PEM, serverKey2PEM := certtest.MustServerCertSignedByCA(t, ca2, ca2Key, []string{"localhost", "127.0.0.1"})
 
 	// Update server's certificate to one signed by CA2
 	serverCert2, err := tls.X509KeyPair(serverCert2PEM, serverKey2PEM)
@@ -516,66 +510,4 @@ func TestTracingClientHTTPSWithCARotation(t *testing.T) {
 
 	assert.True(t, caRotated, "Tracing client should successfully connect after CA rotation")
 	assert.GreaterOrEqual(t, requestCount.Load(), int32(2), "Server should have received at least 2 requests")
-}
-
-// =============================================================================
-// Certificate generation helpers (similar to http_util_test.go)
-// =============================================================================
-
-func mustGenCA(t *testing.T, cn string) (*x509.Certificate, []byte, *rsa.PrivateKey) {
-	t.Helper()
-	caKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	require.NoError(t, err, "generate CA key")
-
-	caTmpl := &x509.Certificate{
-		SerialNumber:          big.NewInt(1),
-		Subject:               pkix.Name{CommonName: cn},
-		NotBefore:             time.Now().Add(-time.Hour),
-		NotAfter:              time.Now().Add(24 * time.Hour),
-		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
-		BasicConstraintsValid: true,
-		IsCA:                  true,
-	}
-
-	der, err := x509.CreateCertificate(rand.Reader, caTmpl, caTmpl, &caKey.PublicKey, caKey)
-	require.NoError(t, err, "create CA certificate")
-
-	caPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
-	return caTmpl, caPEM, caKey
-}
-
-func mustServerCertSignedByCA(t *testing.T, ca *x509.Certificate, caKey *rsa.PrivateKey, hosts []string) ([]byte, []byte) {
-	t.Helper()
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	require.NoError(t, err, "generate server key")
-
-	// Separate DNS names and IP addresses for SANs
-	var dnsNames []string
-	var ipAddresses []net.IP
-	for _, host := range hosts {
-		if ip := net.ParseIP(host); ip != nil {
-			ipAddresses = append(ipAddresses, ip)
-		} else {
-			dnsNames = append(dnsNames, host)
-		}
-	}
-
-	tmpl := &x509.Certificate{
-		SerialNumber:          big.NewInt(2),
-		Subject:               pkix.Name{CommonName: hosts[0]},
-		NotBefore:             time.Now().Add(-time.Hour),
-		NotAfter:              time.Now().Add(24 * time.Hour),
-		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		BasicConstraintsValid: true,
-		DNSNames:              dnsNames,
-		IPAddresses:           ipAddresses,
-	}
-
-	der, err := x509.CreateCertificate(rand.Reader, tmpl, ca, &key.PublicKey, caKey)
-	require.NoError(t, err, "create server certificate")
-
-	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
-	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
-	return certPEM, keyPEM
 }

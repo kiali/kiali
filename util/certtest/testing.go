@@ -73,13 +73,26 @@ func MustSelfSignedPair(t *testing.T, cn string) ([]byte, []byte) {
 }
 
 // MustServerCertSignedByCA generates a server certificate signed by the provided CA.
-// The certificate includes DNS names in the SAN field for hostname verification.
+// The certificate automatically detects and includes DNS names and/or IP addresses in the
+// appropriate SAN fields for hostname verification.
 func MustServerCertSignedByCA(t *testing.T, ca *x509.Certificate, caKey *rsa.PrivateKey, hosts []string) ([]byte, []byte) {
 	t.Helper()
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		t.Fatalf("gen server key: %v", err)
 	}
+
+	// Separate DNS names and IP addresses for SANs
+	var dnsNames []string
+	var ipAddresses []net.IP
+	for _, host := range hosts {
+		if ip := net.ParseIP(host); ip != nil {
+			ipAddresses = append(ipAddresses, ip)
+		} else {
+			dnsNames = append(dnsNames, host)
+		}
+	}
+
 	tmpl := &x509.Certificate{
 		SerialNumber:          big.NewInt(4),
 		Subject:               pkix.Name{CommonName: hosts[0]},
@@ -88,7 +101,8 @@ func MustServerCertSignedByCA(t *testing.T, ca *x509.Certificate, caKey *rsa.Pri
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
-		DNSNames:              hosts,
+		DNSNames:              dnsNames,
+		IPAddresses:           ipAddresses,
 	}
 	der, err := x509.CreateCertificate(rand.Reader, tmpl, ca, &key.PublicKey, caKey)
 	if err != nil {
