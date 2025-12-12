@@ -66,7 +66,7 @@ const createMessage = (
 
 // Updates several messages with the same payload, useful for marking messages
 // returns the updated state
-const updateMessage = (state: NotificationCenterState, messageIds: number[], updater) => {
+const updateMessage = (state: NotificationCenterState, messageIds: number[], updater): NotificationCenterState => {
   const groups = state.groups.map(group => {
     group = {
       ...group,
@@ -123,7 +123,7 @@ export const NotificationCenterReducer = (
             count,
             isAlert,
             new Date(),
-            false,
+            true,
             firstTriggered
           );
 
