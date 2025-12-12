@@ -975,7 +975,7 @@ func TestCredentialManager_ConcurrentAccess(t *testing.T) {
 // which returns a cloned cert pool with additional CA certificates appended.
 func TestConfig_CertPoolWithAdditionalPEM(t *testing.T) {
 	// Generate a test CA for additional PEM
-	_, additionalCAPEM, _ := certtest.MustGenCA(t, "AdditionalCA")
+	additionalCACert, additionalCAPEM, _ := certtest.MustGenCA(t, "AdditionalCA")
 
 	t.Run("returns base pool when additionalCA is nil", func(t *testing.T) {
 		require := require.New(t)
@@ -1023,6 +1023,10 @@ func TestConfig_CertPoolWithAdditionalPEM(t *testing.T) {
 
 		// The pool with additional CA should be different from the base pool
 		require.False(basePool.Equal(poolWithCA), "pool with additional CA should differ from base pool")
+
+		// Verify the additional CA is actually present in the pool
+		additionalSubject := certtest.SubjectFromPEM(t, additionalCAPEM)
+		require.True(certtest.CertPoolHasSubject(poolWithCA, additionalSubject), "pool should contain the additional CA")
 	})
 
 	t.Run("does not mutate the base pool", func(t *testing.T) {
@@ -1060,7 +1064,7 @@ func TestConfig_CertPoolWithAdditionalPEM(t *testing.T) {
 		require := require.New(t)
 
 		// Create a temp file with initial CA
-		_, initialCAPEM, _ := certtest.MustGenCA(t, "InitialCA")
+		initialCACert, initialCAPEM, _ := certtest.MustGenCA(t, "InitialCA")
 		tmpDir := t.TempDir()
 		caFile := filepath.Join(tmpDir, "ca.pem")
 		require.NoError(os.WriteFile(caFile, initialCAPEM, 0o644))
@@ -1075,10 +1079,20 @@ func TestConfig_CertPoolWithAdditionalPEM(t *testing.T) {
 		require.NoError(err)
 		require.NotNil(poolWithBothCAs)
 
-		// The resulting pool should have both CAs (initial + additional)
-		// Verify by checking it's different from base pool (which has initial CA)
-		basePool := conf.CertPool()
-		require.False(basePool.Equal(poolWithBothCAs), "pool with additional CA should differ from base pool")
+		// Verify BOTH CAs are in the combined pool
+		subjects := poolWithBothCAs.Subjects()
+		foundInitial := false
+		foundAdditional := false
+		for _, subject := range subjects {
+			if string(subject) == string(initialCACert.RawSubject) {
+				foundInitial = true
+			}
+			if string(subject) == string(additionalCACert.RawSubject) {
+				foundAdditional = true
+			}
+		}
+		require.True(foundInitial, "initial CA should be in combined pool")
+		require.True(foundAdditional, "additional CA should be in combined pool")
 	})
 
 	t.Run("fallback when CredentialManager is nil", func(t *testing.T) {
@@ -1090,6 +1104,43 @@ func TestConfig_CertPoolWithAdditionalPEM(t *testing.T) {
 		pool, err := conf.CertPoolWithAdditionalPEM(additionalCAPEM)
 		require.NoError(err)
 		require.NotNil(pool)
-		// Should still work using system cert pool as fallback
+
+		// Verify the additional CA was actually appended even in fallback mode
+		additionalSubject := certtest.SubjectFromPEM(t, additionalCAPEM)
+		require.True(certtest.CertPoolHasSubject(pool, additionalSubject), "fallback mode should still append the additional CA")
+	})
+
+	t.Run("appends multiple CAs from single PEM bundle", func(t *testing.T) {
+		require := require.New(t)
+
+		conf := NewConfig()
+		conf.Credentials, _ = NewCredentialManager(nil)
+		t.Cleanup(conf.Close)
+
+		// Generate two different CAs
+		ca1Cert, ca1PEM, _ := certtest.MustGenCA(t, "CA-One")
+		ca2Cert, ca2PEM, _ := certtest.MustGenCA(t, "CA-Two")
+
+		// Combine both CAs into a single PEM bundle
+		combinedPEM := append(ca1PEM, ca2PEM...)
+
+		poolWithBothCAs, err := conf.CertPoolWithAdditionalPEM(combinedPEM)
+		require.NoError(err)
+		require.NotNil(poolWithBothCAs)
+
+		// Verify BOTH CAs are present in the pool
+		subjects := poolWithBothCAs.Subjects()
+		foundCA1 := false
+		foundCA2 := false
+		for _, subject := range subjects {
+			if string(subject) == string(ca1Cert.RawSubject) {
+				foundCA1 = true
+			}
+			if string(subject) == string(ca2Cert.RawSubject) {
+				foundCA2 = true
+			}
+		}
+		require.True(foundCA1, "first CA should be in pool")
+		require.True(foundCA2, "second CA should be in pool")
 	})
 }
