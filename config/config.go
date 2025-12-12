@@ -534,7 +534,7 @@ type OpenIdConfig struct {
 	AuthenticationTimeout   int               `yaml:"authentication_timeout,omitempty"`
 	AuthorizationEndpoint   string            `yaml:"authorization_endpoint,omitempty"`
 	ClientId                string            `yaml:"client_id,omitempty"`
-	ClientSecret            string            `yaml:"client_secret,omitempty"`
+	ClientSecret            string            `yaml:"-"` // Runtime only - set from mounted file at /kiali-secret/oidc-secret, never from ConfigMap
 	DisableRBAC             bool              `yaml:"disable_rbac,omitempty"`
 	HTTPProxy               string            `yaml:"http_proxy,omitempty"`
 	HTTPSProxy              string            `yaml:"https_proxy,omitempty"`
@@ -1456,6 +1456,15 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		}
 	}
 
+	// Handle OIDC client secret from mounted kiali-secret volume.
+	// Unlike the overrides above (which are in /kiali-override-secrets), this comes from
+	// a different volume mount (/kiali-secret) but follows the same pattern: if the file
+	// exists, store its path so GetCredential() can read it with auto-rotation support.
+	if fileExists(oidcClientSecretFile) {
+		conf.Auth.OpenId.ClientSecret = oidcClientSecretFile
+		log.Debugf("OIDC client secret file path configured: [%s]", oidcClientSecretFile)
+	}
+
 	// Log deprecation warnings for deprecated ca_file settings
 	logCAFileDeprecationWarnings(conf)
 
@@ -1517,13 +1526,6 @@ func LoadFromFile(filename string) (conf *Config, err error) {
 	conf, err = Unmarshal(string(fileContent))
 	if err != nil {
 		return
-	}
-
-	// Read OIDC secret path if present. Store the path instead of reading the content,
-	// allowing CredentialManager to handle reading/caching/rotation.
-	if fileExists(oidcClientSecretFile) {
-		// Store path; CredentialManager will handle reading/caching/rotation
-		conf.Auth.OpenId.ClientSecret = oidcClientSecretFile
 	}
 
 	return
