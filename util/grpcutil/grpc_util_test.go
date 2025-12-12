@@ -19,6 +19,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/util/certtest"
 	"github.com/kiali/kiali/util/grpcutil"
+	"github.com/kiali/kiali/util/polltest"
 )
 
 const bufSize = 1024 * 1024
@@ -62,21 +63,6 @@ func startTLSGRPCServerWithAuthCapture(t *testing.T, authHeaderCh chan<- string)
 	return func() { s.Stop(); _ = lis.Close() }, func(ctx context.Context, s string) (net.Conn, error) {
 		return lis.Dial()
 	}
-}
-
-// pollForCondition polls until a condition is met or timeout is reached.
-// Returns true if condition was met, false if timeout occurred.
-// This is used for waiting on fsnotify file change detection in credential rotation tests.
-func pollForCondition(t *testing.T, timeout time.Duration, condition func() bool) bool {
-	t.Helper()
-	iterations := int(timeout / (50 * time.Millisecond))
-	for i := 0; i < iterations; i++ {
-		time.Sleep(50 * time.Millisecond)
-		if condition() {
-			return true
-		}
-	}
-	return false
 }
 
 func TestGetAuthDialOptions_BearerTokenRotation(t *testing.T) {
@@ -149,7 +135,7 @@ func TestGetAuthDialOptions_BearerTokenRotation(t *testing.T) {
 	// Wait for fsnotify to detect change and update cache (up to 2 seconds)
 	// Poll by making RPCs until we see the rotated token
 	var captured2 string
-	tokenRotated := pollForCondition(t, 2*time.Second, func() bool {
+	tokenRotated := polltest.PollForCondition(t, 2*time.Second, func() bool {
 		ctx2, cancel2 := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel2()
 		if _, err := client.Check(ctx2, &grpc_health_v1.HealthCheckRequest{}); err != nil {
@@ -250,7 +236,7 @@ func TestGetAuthDialOptions_BasicAuthRotation(t *testing.T) {
 	rotatedEncoded := base64.StdEncoding.EncodeToString([]byte(rotatedUsername + ":" + rotatedPassword))
 	expectedRotated := "Basic " + rotatedEncoded
 	var captured2 string
-	credsRotated := pollForCondition(t, 2*time.Second, func() bool {
+	credsRotated := polltest.PollForCondition(t, 2*time.Second, func() bool {
 		ctx2Poll, cancel2Poll := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel2Poll()
 		if _, err = client.Check(ctx2Poll, &grpc_health_v1.HealthCheckRequest{}); err != nil {
@@ -468,7 +454,7 @@ func TestGetAuthDialOptions_ClientCertRotation(t *testing.T) {
 	// Wait for fsnotify and establish new connection - the new connection should use rotated cert
 	// We need to establish a new connection because client certs are loaded during TLS handshake
 	var conn2 *grpc.ClientConn
-	certRotated := pollForCondition(t, 2*time.Second, func() bool {
+	certRotated := polltest.PollForCondition(t, 2*time.Second, func() bool {
 		ctx2, cancel2 := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel2()
 		conn2, err = grpc.DialContext(ctx2, "bufnet", opts...) //nolint:staticcheck

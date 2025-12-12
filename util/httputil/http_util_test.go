@@ -15,6 +15,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/util/certtest"
+	"github.com/kiali/kiali/util/polltest"
 )
 
 type recordingRoundTripper struct {
@@ -37,21 +38,6 @@ type ioNopCloser struct {
 }
 
 func (n ioNopCloser) Close() error { return nil }
-
-// pollForCondition polls until a condition is met or timeout is reached.
-// Returns true if condition was met, false if timeout occurred.
-// This is used for waiting on fsnotify file change detection in credential rotation tests.
-func pollForCondition(t *testing.T, timeout time.Duration, condition func() bool) bool {
-	t.Helper()
-	iterations := int(timeout / (50 * time.Millisecond))
-	for i := 0; i < iterations; i++ {
-		time.Sleep(50 * time.Millisecond)
-		if condition() {
-			return true
-		}
-	}
-	return false
-}
 
 func TestAuthRoundTripper_BearerRotation(t *testing.T) {
 	conf := config.NewConfig()
@@ -89,7 +75,7 @@ func TestAuthRoundTripper_BearerRotation(t *testing.T) {
 	}
 
 	// Wait for fsnotify to detect change and update cache (up to 2 seconds)
-	rotated := pollForCondition(t, 2*time.Second, func() bool {
+	rotated := polltest.PollForCondition(t, 2*time.Second, func() bool {
 		if _, err := rt.RoundTrip(req); err != nil {
 			t.Fatalf("roundtrip poll: %v", err)
 		}
@@ -146,7 +132,7 @@ func TestAuthRoundTripper_BasicRotation(t *testing.T) {
 
 	// Wait for fsnotify to detect changes and update cache (up to 2 seconds)
 	expectedAuth := "Basic dTI6cDI=" // base64("u2:p2")
-	rotated := pollForCondition(t, 2*time.Second, func() bool {
+	rotated := polltest.PollForCondition(t, 2*time.Second, func() bool {
 		if _, err := rt.RoundTrip(req); err != nil {
 			t.Fatalf("roundtrip poll: %v", err)
 		}
@@ -230,7 +216,7 @@ func TestHttpPost_BearerRotation(t *testing.T) {
 
 	// Wait for fsnotify to detect change and update cache (up to 2 seconds)
 	requestBody2 := "rotated-post-body"
-	rotated := pollForCondition(t, 2*time.Second, func() bool {
+	rotated := polltest.PollForCondition(t, 2*time.Second, func() bool {
 		_, _, _, err = HttpPost(url, auth, bytes.NewBufferString(requestBody2), 5*time.Second, nil, conf)
 		if err != nil {
 			t.Fatalf("post poll: %v", err)
@@ -329,7 +315,7 @@ func TestHttpPost_BasicRotation(t *testing.T) {
 	// Wait for fsnotify to detect changes and update cache (up to 2 seconds)
 	expectedAuth := "Basic " + base64.StdEncoding.EncodeToString([]byte("post-u2:post-p2"))
 	requestBody2 := "rotated-basic-post"
-	rotated := pollForCondition(t, 2*time.Second, func() bool {
+	rotated := polltest.PollForCondition(t, 2*time.Second, func() bool {
 		_, _, _, err = HttpPost(url, auth, bytes.NewBufferString(requestBody2), 5*time.Second, nil, conf)
 		if err != nil {
 			t.Fatalf("post poll: %v", err)
@@ -502,7 +488,7 @@ func TestGetTLSConfig_ClientCertRotation(t *testing.T) {
 
 	// Wait for fsnotify to detect changes and update cache (up to 2 seconds)
 	var c2 *tls.Certificate
-	rotated := pollForCondition(t, 2*time.Second, func() bool {
+	rotated := polltest.PollForCondition(t, 2*time.Second, func() bool {
 		c2, err = tlscfg.GetClientCertificate(nil)
 		if err != nil {
 			t.Fatalf("GetClientCertificate poll: %v", err)
