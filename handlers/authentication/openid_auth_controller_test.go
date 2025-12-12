@@ -1393,7 +1393,7 @@ func TestRequestOpenIdToken_UsesGetCredential(t *testing.T) {
 				"id_token":     "fake-id-token",
 				"access_token": "fake-access-token",
 			}
-			json.NewEncoder(w).Encode(response)
+			_ = json.NewEncoder(w).Encode(response)
 		}))
 		defer tokenServer.Close()
 
@@ -1445,7 +1445,7 @@ func TestRequestOpenIdToken_UsesGetCredential(t *testing.T) {
 				"id_token":     "fake-id-token",
 				"access_token": "fake-access-token",
 			}
-			json.NewEncoder(w).Encode(response)
+			_ = json.NewEncoder(w).Encode(response)
 		}))
 		defer tokenServer.Close()
 
