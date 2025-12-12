@@ -347,7 +347,7 @@ func TestSigningKeyRotation(t *testing.T) {
 	conf := config.NewConfig()
 	conf.Auth.Strategy = "test"
 
-	credMgr, err := config.NewCredentialManager()
+	credMgr, err := config.NewCredentialManager(nil)
 	require.NoError(err)
 	conf.Credentials = credMgr
 	t.Cleanup(conf.Close)
@@ -397,7 +397,7 @@ func TestOldSessionsFailAfterRotation(t *testing.T) {
 	conf := config.NewConfig()
 	conf.Auth.Strategy = "test"
 
-	credMgr, err := config.NewCredentialManager()
+	credMgr, err := config.NewCredentialManager(nil)
 	require.NoError(err)
 	conf.Credentials = credMgr
 	t.Cleanup(conf.Close)
@@ -452,7 +452,7 @@ func TestMultipleRotations(t *testing.T) {
 	conf := config.NewConfig()
 	conf.Auth.Strategy = "test"
 
-	credMgr, err := config.NewCredentialManager()
+	credMgr, err := config.NewCredentialManager(nil)
 	require.NoError(err)
 	conf.Credentials = credMgr
 	t.Cleanup(conf.Close)
@@ -544,7 +544,7 @@ func TestReadSessionUsesCurrentKey(t *testing.T) {
 	conf := config.NewConfig()
 	conf.Auth.Strategy = "test"
 
-	credMgr, err := config.NewCredentialManager()
+	credMgr, err := config.NewCredentialManager(nil)
 	require.NoError(err)
 	conf.Credentials = credMgr
 	t.Cleanup(conf.Close)
@@ -601,7 +601,7 @@ func TestRotationToInvalidKeyLength(t *testing.T) {
 	conf := config.NewConfig()
 	conf.Auth.Strategy = config.AuthStrategyToken
 
-	credMgr, err := config.NewCredentialManager()
+	credMgr, err := config.NewCredentialManager(nil)
 	require.NoError(err)
 	conf.Credentials = credMgr
 	t.Cleanup(conf.Close)

@@ -50,7 +50,7 @@ import (
 // This is why the manager watches for ..data changes to detect secret rotation.
 //
 // Certificate Pool:
-//   - Call InitializeCertPool() to set up system CAs plus custom CA bundles
+//   - Pass caBundlePaths to NewCredentialManager() to include custom CA bundles
 //   - Use GetCertPool() to get a clone of the managed certificate pool
 //   - CA bundle files are watched and the pool is rebuilt automatically on changes
 //
@@ -73,25 +73,35 @@ type CredentialManager struct {
 	// Certificate pool management
 	certPool         *x509.CertPool
 	caBundlePaths    []string
-	hasCustomCAsFlag bool // tracks whether custom CAs were successfully loaded
+	hasCustomCAsFlag bool // true if custom CAs were loaded; false when using only system CAs
 }
 
 // NewCredentialManager creates a new credential manager with file watching enabled.
-// Returns an error if the file watcher cannot be initialized.
-func NewCredentialManager() (*CredentialManager, error) {
+// The caBundlePaths parameter specifies additional CA bundle files to include in the
+// certificate pool (beyond system CAs). Pass nil or empty slice if no custom CAs are needed.
+// Returns an error if the file watcher cannot be initialized or CA bundles cannot be loaded.
+func NewCredentialManager(caBundlePaths []string) (*CredentialManager, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create credential file watcher: %w", err)
 	}
 
 	cm := &CredentialManager{
-		cache:       make(map[string]string),
-		watchedDirs: make(map[string]struct{}),
-		watcher:     watcher,
-		done:        make(chan struct{}),
+		cache:         make(map[string]string),
+		watchedDirs:   make(map[string]struct{}),
+		watcher:       watcher,
+		done:          make(chan struct{}),
+		caBundlePaths: caBundlePaths,
 	}
 
 	go cm.watchFiles()
+
+	// Initialize the certificate pool with system CAs and any configured custom CA bundles
+	if err := cm.rebuildCertPool(); err != nil {
+		cm.Close()
+		return nil, err
+	}
+
 	return cm, nil
 }
 
@@ -107,17 +117,6 @@ func (cm *CredentialManager) Close() {
 			// Closing the watcher closes its channels, causing watchFiles to exit gracefully
 		}
 	})
-}
-
-// InitializeCertPool sets up the certificate pool with system CAs and additional CA bundles.
-// This should be called once during configuration initialization.
-// The CA bundle files will be automatically watched and the pool rebuilt on changes.
-func (cm *CredentialManager) InitializeCertPool(caBundlePaths []string) error {
-	cm.mu.Lock()
-	cm.caBundlePaths = caBundlePaths
-	cm.mu.Unlock()
-
-	return cm.rebuildCertPool()
 }
 
 // rebuildCertPool rebuilds the certificate pool from system CAs and configured CA bundles.
