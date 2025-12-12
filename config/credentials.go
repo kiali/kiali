@@ -98,9 +98,6 @@ func NewCredentialManager() (*CredentialManager, error) {
 // Close stops the file watcher and cleans up resources.
 // Should be called during application shutdown.
 func (cm *CredentialManager) Close() {
-	if cm == nil {
-		return
-	}
 	cm.closeOnce.Do(func() {
 		close(cm.done)
 		if cm.watcher != nil {
@@ -116,10 +113,6 @@ func (cm *CredentialManager) Close() {
 // This should be called once during configuration initialization.
 // The CA bundle files will be automatically watched and the pool rebuilt on changes.
 func (cm *CredentialManager) InitializeCertPool(caBundlePaths []string) error {
-	if cm == nil {
-		return fmt.Errorf("credential manager not initialized")
-	}
-
 	cm.mu.Lock()
 	cm.caBundlePaths = caBundlePaths
 	cm.mu.Unlock()
@@ -200,10 +193,6 @@ func (cm *CredentialManager) readCABundle(path string) ([]byte, error) {
 // GetCertPool returns a clone of the current certificate pool.
 // Returns nil if the certificate pool has not been initialized.
 func (cm *CredentialManager) GetCertPool() *x509.CertPool {
-	if cm == nil {
-		return nil
-	}
-
 	cm.mu.RLock()
 	pool := cm.certPool
 	cm.mu.RUnlock()
@@ -218,10 +207,6 @@ func (cm *CredentialManager) GetCertPool() *x509.CertPool {
 // HasCustomCAs returns true if custom CA certificates were successfully loaded into the pool.
 // This indicates whether custom CAs (beyond the system CAs) are present and active.
 func (cm *CredentialManager) HasCustomCAs() bool {
-	if cm == nil {
-		return false
-	}
-
 	// Note: While boolean reads are atomic in Go, we use RLock here for consistency with other
 	// methods, to satisfy the race detector, and because the cost is negligible (~20ns) compared
 	// to the actual HTTP operations this gates. This is a read-heavy workload where RWMutex excels.
