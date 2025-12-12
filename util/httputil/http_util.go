@@ -3,7 +3,6 @@ package httputil
 import (
 	"context"
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -266,16 +265,6 @@ func buildTLSConfig(conf *config.Config, auth *config.Auth, serverName string) (
 
 	// Note: auth.CAFile is deprecated. Custom CA certificates should be configured
 	// via the kiali-cabundle ConfigMap instead. The CAFile setting is now ignored.
-
-	// When no custom verification is needed rely on the configured/system roots.
-	if roots == nil && !cfg.InsecureSkipVerify {
-		systemPool, err := x509.SystemCertPool()
-		if err != nil {
-			log.Debugf("Failed to load system cert pool: %v", err)
-			systemPool = x509.NewCertPool()
-		}
-		roots = systemPool
-	}
 
 	cfg.RootCAs = roots
 
