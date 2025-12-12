@@ -112,14 +112,28 @@ const (
 	Ztunnel                   = "ztunnel"
 )
 
+// CA bundle file paths used by CredentialManager.
+// These paths are checked based on auth strategy (see getCABundlePaths).
+// Files that don't exist are silently skipped.
 const (
+	// additionalCABundle is user-provided custom CA certificates.
 	additionalCABundle = "/kiali-cabundle/additional-ca-bundle.pem"
-	// openidServerCA is the path to an optional CA certificate for the OpenID server.
-	// This is added to the global cert pool when using OpenID auth.
-	openidServerCA     = "/kiali-cabundle/openid-server-ca.crt"
+
+	// openidServerCA is an optional CA originally intended for OpenID Connect servers.
+	// Like all CAs in this list, it's loaded into the global cert pool.
+	openidServerCA = "/kiali-cabundle/openid-server-ca.crt"
+
+	// openshiftOAuthServerCA is an optional CA from the kiali-oauth-cabundle ConfigMap.
+	// Originally intended for OAuth servers using external IdPs with self-signed certs,
+	// but like all CAs in this list, it's loaded into the global cert pool and trusted
+	// for all TLS connections.
+	openshiftOAuthServerCA = "/kiali-cabundle/oauth-server-ca.crt"
+
+	// openshiftServingCA is the OpenShift service CA injected by the service CA operator.
 	openshiftServingCA = "/kiali-cabundle/service-ca.crt"
-	// This is an alternate location for the openshift serving cert. It's unclear which
-	// one to prefer so we try reading both.
+
+	// openshiftServingCAFromSA is an alternate location for the OpenShift service CA
+	// from the service account mount. We try reading both locations.
 	openshiftServingCAFromSA = "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt"
 )
 
@@ -129,7 +143,7 @@ const (
 func getCABundlePaths(authStrategy string) []string {
 	switch authStrategy {
 	case AuthStrategyOpenshift:
-		return []string{additionalCABundle, openshiftServingCAFromSA, openshiftServingCA}
+		return []string{additionalCABundle, openshiftOAuthServerCA, openshiftServingCA, openshiftServingCAFromSA}
 	case AuthStrategyOpenId:
 		return []string{additionalCABundle, openidServerCA}
 	default:

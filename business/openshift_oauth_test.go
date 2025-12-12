@@ -93,7 +93,7 @@ func TestNewOpenshiftOAuthService(t *testing.T) {
 			clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: client}
 			clientFactory := kubetest.NewFakeClientFactory(conf, clients)
 
-			_, err := business.NewOpenshiftOAuthService(context.Background(), conf, kubernetes.ConvertFromUserClients(clients), clientFactory, business.OAuthServerCAFile)
+			_, err := business.NewOpenshiftOAuthService(context.Background(), conf, kubernetes.ConvertFromUserClients(clients), clientFactory)
 			if tc.expectErr {
 				require.Error(err)
 			} else {
@@ -127,7 +127,7 @@ func TestNewOAuthMixedClusters(t *testing.T) {
 	openshift.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
 	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
 
-	_, err := business.NewOpenshiftOAuthService(context.Background(), conf, kubernetes.ConvertFromUserClients(clients), clientFactory, business.OAuthServerCAFile)
+	_, err := business.NewOpenshiftOAuthService(context.Background(), conf, kubernetes.ConvertFromUserClients(clients), clientFactory)
 	require.NoError(err)
 }
 
@@ -135,6 +135,7 @@ func TestNewWithCustomOAuthCASucceeds(t *testing.T) {
 	require := require.New(t)
 	metadataServer := fakeOAuthServerWithTLS(t)
 
+	// Write the custom CA to a temp file
 	caFilePath := path.Join(t.TempDir(), "oauth-server-ca.crt")
 	file, err := os.OpenFile(caFilePath, os.O_WRONLY|os.O_CREATE, 0o644)
 	require.NoError(err)
@@ -147,6 +148,12 @@ func TestNewWithCustomOAuthCASucceeds(t *testing.T) {
 
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "openshift"
+
+	// Initialize CredentialManager with the custom CA bundle so that
+	// conf.CertPool() includes the OAuth server's CA.
+	conf.Credentials, err = config.NewCredentialManager([]string{caFilePath})
+	require.NoError(err)
+	t.Cleanup(conf.Close)
 
 	openshift := kubetest.NewFakeK8sClient(&osoauth_v1.OAuthClient{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -162,6 +169,6 @@ func TestNewWithCustomOAuthCASucceeds(t *testing.T) {
 	openshift.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
 	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
 
-	_, err = business.NewOpenshiftOAuthService(context.Background(), conf, kubernetes.ConvertFromUserClients(clients), clientFactory, caFilePath)
+	_, err = business.NewOpenshiftOAuthService(context.Background(), conf, kubernetes.ConvertFromUserClients(clients), clientFactory)
 	require.NoError(err)
 }
