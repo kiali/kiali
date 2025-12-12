@@ -813,12 +813,19 @@ func (p *openidFlowHelper) requestOpenIdToken(redirect_uri string) *openidFlowHe
 		return p
 	}
 
+	// Resolve the client secret via CredentialManager to support rotation
+	clientSecret, err := p.conf.GetCredential(cfg.ClientSecret)
+	if err != nil {
+		p.Error = fmt.Errorf("failed to read OpenID client secret: %w", err)
+		return p
+	}
+
 	// Exchange authorization code for a token
 	requestParams := url.Values{}
 	requestParams.Set("code", p.Code)
 	requestParams.Set("grant_type", "authorization_code")
 	requestParams.Set("redirect_uri", redirect_uri)
-	if len(cfg.ClientSecret) == 0 {
+	if len(clientSecret) == 0 {
 		requestParams.Set("client_id", cfg.ClientId)
 	}
 
@@ -828,8 +835,8 @@ func (p *openidFlowHelper) requestOpenIdToken(redirect_uri string) *openidFlowHe
 		return p
 	}
 
-	if len(cfg.ClientSecret) > 0 {
-		tokenRequest.SetBasicAuth(url.QueryEscape(cfg.ClientId), url.QueryEscape(cfg.ClientSecret))
+	if len(clientSecret) > 0 {
+		tokenRequest.SetBasicAuth(url.QueryEscape(cfg.ClientId), url.QueryEscape(clientSecret))
 	}
 
 	tokenRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")

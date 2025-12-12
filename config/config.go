@@ -1517,12 +1517,11 @@ func LoadFromFile(filename string) (conf *Config, err error) {
 		return
 	}
 
-	// Read OIDC secret, if present
-	if oidcSecret, oidcErr := os.ReadFile(OidcClientSecretFile); oidcErr == nil {
-		conf.Auth.OpenId.ClientSecret = string(oidcSecret)
-	} else if !os.IsNotExist(oidcErr) {
-		// Return error for any issue other than file not existing (the secret is optional)
-		return nil, fmt.Errorf("failed to read OIDC client secret file [%v]. error=%w", OidcClientSecretFile, oidcErr)
+	// Read OIDC secret path if present. Store the path instead of reading the content,
+	// allowing CredentialManager to handle reading/caching/rotation.
+	if fileExists(OidcClientSecretFile) {
+		// Store path; CredentialManager will handle reading/caching/rotation
+		conf.Auth.OpenId.ClientSecret = OidcClientSecretFile
 	}
 
 	return
@@ -1879,6 +1878,24 @@ func (c *Config) CertPool() *x509.CertPool {
 	}
 
 	return c.Credentials.GetCertPool()
+}
+
+// CertPoolWithAdditionalPEM returns a clone of the managed cert pool with additional CA certificates appended.
+// If additionalCA is empty, returns the standard CertPool.
+// This centralizes the "base pool + extra CA" pattern used when additional CA data needs to be trusted
+// alongside the global CA bundle (e.g., for OpenShift OAuth server CAs).
+func (c *Config) CertPoolWithAdditionalPEM(additionalCA []byte) (*x509.CertPool, error) {
+	pool := c.CertPool()
+	if len(additionalCA) == 0 {
+		return pool, nil
+	}
+
+	// Clone the pool to avoid modifying the shared pool
+	clonedPool := pool.Clone()
+	if !clonedPool.AppendCertsFromPEM(additionalCA) {
+		return nil, fmt.Errorf("unable to append additional CA bundle PEM")
+	}
+	return clonedPool, nil
 }
 
 // Close cleans up Config resources such as the credential file watcher.
