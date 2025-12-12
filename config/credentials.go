@@ -128,13 +128,17 @@ func (cm *CredentialManager) InitializeCertPool(caBundlePaths []string) error {
 }
 
 // rebuildCertPool rebuilds the certificate pool from system CAs and configured CA bundles.
+// On failure, it falls back to system CAs only (clearing any stale custom CAs) for security.
 func (cm *CredentialManager) rebuildCertPool() error {
 	// Load system CAs
-	combinedPool, err := x509.SystemCertPool()
+	systemPool, err := x509.SystemCertPool()
 	if err != nil {
 		log.Warningf("Unable to load system cert pool. Falling back to empty cert pool. Error: %s", err)
-		combinedPool = x509.NewCertPool()
+		systemPool = x509.NewCertPool()
 	}
+
+	// Clone the system pool to build the combined pool with custom CAs
+	combinedPool := systemPool.Clone()
 
 	cm.mu.RLock()
 	paths := cm.caBundlePaths
@@ -155,6 +159,12 @@ func (cm *CredentialManager) rebuildCertPool() error {
 
 		if len(data) > 0 {
 			if ok := combinedPool.AppendCertsFromPEM(data); !ok {
+				// Failed to parse PEM - fall back to system CAs only for security.
+				// This prevents stale custom CAs from remaining trusted after a failed rotation.
+				cm.mu.Lock()
+				cm.certPool = systemPool
+				cm.hasCustomCAsFlag = false
+				cm.mu.Unlock()
 				return fmt.Errorf("unable to append PEM bundle from file [%s]", path)
 			}
 			customCAsLoaded = true

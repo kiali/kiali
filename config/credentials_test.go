@@ -669,9 +669,9 @@ func TestCredentialManager_InitializeCertPool(t *testing.T) {
 			additionalBundles: []string{"non-existent"},
 			expected:          systemPool.Clone(),
 		},
-		"CA file with bogus contents returns err": {
+		"CA file with bogus contents returns err and falls back to system pool": {
 			additionalBundles: []string{invalidCA},
-			expected:          nil, // Pool is not set when InitializeCertPool returns error
+			expected:          systemPool.Clone(), // Falls back to system CAs on error for security
 			expectedErr:       true,
 		},
 		// Need to test this for OpenShift serving cert that may come from multiple places.
