@@ -411,7 +411,20 @@ func (cm *CredentialManager) refreshCachedFile(path string) {
 		return
 	}
 
-	cm.cache[path] = strings.TrimSpace(string(content))
+	value := strings.TrimSpace(string(content))
+
+	// Don't update cache with empty values during refresh - this can happen when
+	// os.WriteFile truncates the file before writing new content (non-atomic operation).
+	// Keep the existing cached value; the next event after write completes will refresh.
+	// Real credentials are never empty, so empty indicates a transient write state.
+	// Note: This won't occur in Kubernetes since secret rotation uses atomic symlink swaps;
+	// but it's a good defensive check in case something directly writes a file (like the tests do).
+	if value == "" {
+		log.Debugf("Credential file [%s] is empty during refresh (likely mid-write), keeping cached value", path)
+		return
+	}
+
+	cm.cache[path] = value
 	log.Debugf("Credential file [%s] updated in cache", path)
 }
 
