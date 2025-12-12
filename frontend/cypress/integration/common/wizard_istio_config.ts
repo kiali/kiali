@@ -105,7 +105,7 @@ When('user chooses {string} mode from the {string} select', (option: string, id:
       cy.get(`select[id="${id}"]`).select(option);
     } else {
       cy.get(`button[id="${id}-toggle"]`).click();
-      cy.get(`[id="${id}"] .pf-v6-c-select__list-item`).contains(option).click();
+      cy.get('.pf-v6-c-menu__list-item').contains(option).click();
     }
   });
 });
