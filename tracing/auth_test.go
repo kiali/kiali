@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/util/polltest"
 )
 
 // TestTracingBasicAuthFromFiles tests that tracing client properly reads basic auth credentials from files
@@ -76,22 +77,12 @@ func TestTracingBasicAuthFromFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	// Wait for fsnotify to detect changes and update cache (up to 2 seconds)
-	usernameRotated := false
-	passwordRotated := false
-	for i := 0; i < 40; i++ {
-		time.Sleep(50 * time.Millisecond)
+	rotated := polltest.PollForCondition(t, 2*time.Second, func() bool {
 		username, _ = conf.GetCredential(conf.ExternalServices.Tracing.Auth.Username)
 		password, _ = conf.GetCredential(conf.ExternalServices.Tracing.Auth.Password)
-		if username == rotatedUsername {
-			usernameRotated = true
-		}
-		if password == rotatedPassword {
-			passwordRotated = true
-		}
-		if usernameRotated && passwordRotated {
-			break
-		}
-	}
+		return username == rotatedUsername && password == rotatedPassword
+	})
+	assert.True(t, rotated, "Credentials should be rotated")
 
 	// Verify rotated credentials can be read (simulates what happens on next request)
 	username, err = conf.GetCredential(conf.ExternalServices.Tracing.Auth.Username)
@@ -142,13 +133,11 @@ func TestTracingBearerTokenFromFile(t *testing.T) {
 	require.NoError(t, err)
 
 	// Wait for fsnotify to detect change and update cache (up to 2 seconds)
-	for i := 0; i < 40; i++ {
-		time.Sleep(50 * time.Millisecond)
+	rotated := polltest.PollForCondition(t, 2*time.Second, func() bool {
 		token, _ = conf.GetCredential(conf.ExternalServices.Tracing.Auth.Token)
-		if token == rotatedToken {
-			break
-		}
-	}
+		return token == rotatedToken
+	})
+	assert.True(t, rotated, "Token should be rotated")
 
 	// Verify rotated token can be read
 	token, err = conf.GetCredential(conf.ExternalServices.Tracing.Auth.Token)
@@ -291,16 +280,11 @@ func TestTracingClientHTTPBearerAuth(t *testing.T) {
 	require.NoError(t, err)
 
 	// Wait for fsnotify to detect change and verify rotated token is used
-	tokenRotated := false
-	for i := 0; i < 40; i++ {
-		time.Sleep(50 * time.Millisecond)
+	tokenRotated := polltest.PollForCondition(t, 2*time.Second, func() bool {
 		_, _ = client.GetServiceStatus(ctx)
 		auth = capturedAuth.Load()
-		if auth != nil && auth.(string) == "Bearer "+rotatedToken {
-			tokenRotated = true
-			break
-		}
-	}
+		return auth != nil && auth.(string) == "Bearer "+rotatedToken
+	})
 
 	assert.True(t, tokenRotated, "Rotated bearer token should be sent in subsequent requests")
 	assert.Equal(t, "Bearer "+rotatedToken, capturedAuth.Load().(string),
@@ -375,16 +359,11 @@ func TestTracingClientHTTPBasicAuth(t *testing.T) {
 
 	// Wait for fsnotify to detect changes and verify rotated credentials are used
 	expectedRotatedAuth := "Basic " + base64.StdEncoding.EncodeToString([]byte(rotatedUsername+":"+rotatedPassword))
-	credentialsRotated := false
-	for i := 0; i < 40; i++ {
-		time.Sleep(50 * time.Millisecond)
+	credentialsRotated := polltest.PollForCondition(t, 2*time.Second, func() bool {
 		_, _ = client.GetServiceStatus(ctx)
 		auth = capturedAuth.Load()
-		if auth != nil && auth.(string) == expectedRotatedAuth {
-			credentialsRotated = true
-			break
-		}
-	}
+		return auth != nil && auth.(string) == expectedRotatedAuth
+	})
 
 	assert.True(t, credentialsRotated, "Rotated basic auth credentials should be sent in subsequent requests")
 	assert.Equal(t, expectedRotatedAuth, capturedAuth.Load().(string),
@@ -527,23 +506,17 @@ func TestTracingClientHTTPSWithCARotation(t *testing.T) {
 	require.NoError(t, err)
 
 	// Wait for fsnotify to detect the CA file change and verify connection succeeds
-	caRotated := false
-	for i := 0; i < 40; i++ {
-		time.Sleep(50 * time.Millisecond)
-
+	caRotated := polltest.PollForCondition(t, 2*time.Second, func() bool {
 		// Create new client with updated config
 		client2, err := NewClient(ctx, conf, "", true)
 		if err != nil {
-			continue
+			return false
 		}
 
 		// Try to make request with new CA
 		_, err = client2.GetServiceStatus(ctx)
-		if err == nil {
-			caRotated = true
-			break
-		}
-	}
+		return err == nil
+	})
 
 	assert.True(t, caRotated, "Tracing client should successfully connect after CA rotation")
 	assert.GreaterOrEqual(t, requestCount.Load(), int32(2), "Server should have received at least 2 requests")
