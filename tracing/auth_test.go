@@ -29,7 +29,7 @@ import (
 func TestTracingBasicAuthFromFiles(t *testing.T) {
 	conf := config.NewConfig()
 	var err error
-	conf.Credentials, err = config.NewCredentialManager()
+	conf.Credentials, err = config.NewCredentialManager(nil)
 	require.NoError(t, err)
 	t.Cleanup(conf.Close)
 
@@ -98,7 +98,7 @@ func TestTracingBasicAuthFromFiles(t *testing.T) {
 func TestTracingBearerTokenFromFile(t *testing.T) {
 	conf := config.NewConfig()
 	var err error
-	conf.Credentials, err = config.NewCredentialManager()
+	conf.Credentials, err = config.NewCredentialManager(nil)
 	require.NoError(t, err)
 	t.Cleanup(conf.Close)
 
@@ -149,7 +149,7 @@ func TestTracingBearerTokenFromFile(t *testing.T) {
 func TestTracingBearerTokenWithWhitespace(t *testing.T) {
 	conf := config.NewConfig()
 	var err error
-	conf.Credentials, err = config.NewCredentialManager()
+	conf.Credentials, err = config.NewCredentialManager(nil)
 	require.NoError(t, err)
 	t.Cleanup(conf.Close)
 
@@ -242,7 +242,7 @@ func TestTracingClientHTTPBearerAuth(t *testing.T) {
 	// Setup config with file-based bearer token
 	conf := config.NewConfig()
 	var err error
-	conf.Credentials, err = config.NewCredentialManager()
+	conf.Credentials, err = config.NewCredentialManager(nil)
 	require.NoError(t, err)
 	t.Cleanup(conf.Close)
 
@@ -309,7 +309,7 @@ func TestTracingClientHTTPBasicAuth(t *testing.T) {
 	// Setup config with file-based basic auth credentials
 	conf := config.NewConfig()
 	var err error
-	conf.Credentials, err = config.NewCredentialManager()
+	conf.Credentials, err = config.NewCredentialManager(nil)
 	require.NoError(t, err)
 	t.Cleanup(conf.Close)
 
@@ -448,13 +448,9 @@ func TestTracingClientHTTPSWithCARotation(t *testing.T) {
 
 	// Setup config with custom CA bundle
 	conf := config.NewConfig()
-	conf.Credentials, err = config.NewCredentialManager()
+	conf.Credentials, err = config.NewCredentialManager([]string{caFile})
 	require.NoError(t, err)
 	t.Cleanup(conf.Close)
-
-	// Initialize CertPool with our custom CA
-	err = conf.Credentials.InitializeCertPool([]string{caFile})
-	require.NoError(t, err)
 
 	conf.ExternalServices.Tracing.Enabled = true
 	conf.ExternalServices.Tracing.Provider = "jaeger"

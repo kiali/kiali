@@ -42,7 +42,7 @@ func (n ioNopCloser) Close() error { return nil }
 func TestAuthRoundTripper_BearerRotation(t *testing.T) {
 	conf := config.NewConfig()
 	var err error
-	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
+	if conf.Credentials, err = config.NewCredentialManager(nil); err != nil {
 		t.Fatalf("failed to create credential manager: %v", err)
 	}
 	t.Cleanup(conf.Close)
@@ -90,7 +90,7 @@ func TestAuthRoundTripper_BearerRotation(t *testing.T) {
 func TestAuthRoundTripper_BasicRotation(t *testing.T) {
 	conf := config.NewConfig()
 	var err error
-	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
+	if conf.Credentials, err = config.NewCredentialManager(nil); err != nil {
 		t.Fatalf("failed to create credential manager: %v", err)
 	}
 	t.Cleanup(conf.Close)
@@ -147,7 +147,7 @@ func TestAuthRoundTripper_BasicRotation(t *testing.T) {
 func TestHttpPost_BearerRotation(t *testing.T) {
 	conf := config.NewConfig()
 	var err error
-	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
+	if conf.Credentials, err = config.NewCredentialManager(nil); err != nil {
 		t.Fatalf("failed to create credential manager: %v", err)
 	}
 	t.Cleanup(conf.Close)
@@ -235,7 +235,7 @@ func TestHttpPost_BearerRotation(t *testing.T) {
 func TestHttpPost_BasicRotation(t *testing.T) {
 	conf := config.NewConfig()
 	var err error
-	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
+	if conf.Credentials, err = config.NewCredentialManager(nil); err != nil {
 		t.Fatalf("failed to create credential manager: %v", err)
 	}
 	t.Cleanup(conf.Close)
@@ -339,7 +339,7 @@ func TestHttpPost_BasicRotation(t *testing.T) {
 func TestCreateTransport_CustomHeaders(t *testing.T) {
 	conf := config.NewConfig()
 	var err error
-	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
+	if conf.Credentials, err = config.NewCredentialManager(nil); err != nil {
 		t.Fatalf("failed to create credential manager: %v", err)
 	}
 	t.Cleanup(conf.Close)
@@ -444,7 +444,7 @@ func TestGetTLSConfig_CAFileDeprecated(t *testing.T) {
 func TestGetTLSConfig_ClientCertRotation(t *testing.T) {
 	conf := config.NewConfig()
 	var err error
-	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
+	if conf.Credentials, err = config.NewCredentialManager(nil); err != nil {
 		t.Fatalf("failed to create credential manager: %v", err)
 	}
 	t.Cleanup(conf.Close)
@@ -519,13 +519,10 @@ func TestGetTLSConfig_UsesCertPool(t *testing.T) {
 	// Create config and load the custom CA into CertPool
 	conf := config.NewConfig()
 	var err error
-	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
+	if conf.Credentials, err = config.NewCredentialManager([]string{caFile}); err != nil {
 		t.Fatalf("NewCredentialManager: %v", err)
 	}
 	t.Cleanup(conf.Credentials.Close)
-	if err := conf.Credentials.InitializeCertPool([]string{caFile}); err != nil {
-		t.Fatalf("InitializeCertPool: %v", err)
-	}
 
 	// Use GetTLSConfigForServer with a server name - this is the realistic use case
 	// for connecting to external services like Prometheus, Grafana, etc.
@@ -589,11 +586,10 @@ func TestGetTLSConfig_CustomCAWithoutAuth(t *testing.T) {
 	// NEGATIVE TEST: First try without custom CA configured
 	confWithoutCA := config.NewConfig()
 	var err error
-	if confWithoutCA.Credentials, err = config.NewCredentialManager(); err != nil {
+	if confWithoutCA.Credentials, err = config.NewCredentialManager(nil); err != nil {
 		t.Fatalf("NewCredentialManager: %v", err)
 	}
 	t.Cleanup(confWithoutCA.Credentials.Close)
-	// No cert pool initialized - should return nil since there's nothing to configure
 
 	tlscfgWithoutCA, err := GetTLSConfig(confWithoutCA, nil)
 	if err != nil {
@@ -606,13 +602,10 @@ func TestGetTLSConfig_CustomCAWithoutAuth(t *testing.T) {
 
 	// POSITIVE TEST: Now configure custom CA bundle
 	confWithCA := config.NewConfig()
-	if confWithCA.Credentials, err = config.NewCredentialManager(); err != nil {
+	if confWithCA.Credentials, err = config.NewCredentialManager([]string{caFile}); err != nil {
 		t.Fatalf("NewCredentialManager: %v", err)
 	}
 	t.Cleanup(confWithCA.Credentials.Close)
-	if err := confWithCA.Credentials.InitializeCertPool([]string{caFile}); err != nil {
-		t.Fatalf("InitializeCertPool: %v", err)
-	}
 
 	// Call GetTLSConfig with custom CA but no auth - should return valid config
 	tlscfg, err := GetTLSConfig(confWithCA, nil)
@@ -671,7 +664,7 @@ func TestGetTLSConfigForServer_CustomCAWithoutAuth(t *testing.T) {
 	// NEGATIVE TEST: First try without custom CA configured
 	confWithoutCA := config.NewConfig()
 	var err error
-	if confWithoutCA.Credentials, err = config.NewCredentialManager(); err != nil {
+	if confWithoutCA.Credentials, err = config.NewCredentialManager(nil); err != nil {
 		t.Fatalf("NewCredentialManager: %v", err)
 	}
 	t.Cleanup(confWithoutCA.Credentials.Close)
@@ -687,13 +680,10 @@ func TestGetTLSConfigForServer_CustomCAWithoutAuth(t *testing.T) {
 
 	// POSITIVE TEST: Now configure custom CA bundle
 	confWithCA := config.NewConfig()
-	if confWithCA.Credentials, err = config.NewCredentialManager(); err != nil {
+	if confWithCA.Credentials, err = config.NewCredentialManager([]string{caFile}); err != nil {
 		t.Fatalf("NewCredentialManager: %v", err)
 	}
 	t.Cleanup(confWithCA.Credentials.Close)
-	if err := confWithCA.Credentials.InitializeCertPool([]string{caFile}); err != nil {
-		t.Fatalf("InitializeCertPool: %v", err)
-	}
 
 	// Call GetTLSConfigForServer with custom CA but no auth - should return valid config
 	tlscfg, err := GetTLSConfigForServer(confWithCA, nil, serverName)
@@ -790,13 +780,10 @@ func TestCertPool_CARotation(t *testing.T) {
 	}
 
 	conf := config.NewConfig()
-	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
+	if conf.Credentials, err = config.NewCredentialManager([]string{caFile}); err != nil {
 		t.Fatalf("NewCredentialManager: %v", err)
 	}
 	t.Cleanup(conf.Credentials.Close)
-	if err := conf.Credentials.InitializeCertPool([]string{caFile}); err != nil {
-		t.Fatalf("InitializeCertPool: %v", err)
-	}
 
 	// Verify leaf1 (signed by CA1) succeeds
 	pool1 := conf.CertPool()
@@ -890,13 +877,10 @@ func TestCertPool_HostnameVerification(t *testing.T) {
 		t.Fatalf("write ca: %v", err)
 	}
 	conf := config.NewConfig()
-	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
+	if conf.Credentials, err = config.NewCredentialManager([]string{caFile}); err != nil {
 		t.Fatalf("NewCredentialManager: %v", err)
 	}
 	t.Cleanup(conf.Credentials.Close)
-	if err := conf.Credentials.InitializeCertPool([]string{caFile}); err != nil {
-		t.Fatalf("InitializeCertPool: %v", err)
-	}
 
 	// Get TLS config for "good.test" - this should work
 	auth := &config.Auth{}
@@ -974,11 +958,11 @@ func TestHttpGet_CustomCAWithoutAuth(t *testing.T) {
 
 	// NEGATIVE TEST: First attempt without custom CA bundle - should fail
 	confWithoutCA := config.NewConfig()
-	if confWithoutCA.Credentials, err = config.NewCredentialManager(); err != nil {
+	if confWithoutCA.Credentials, err = config.NewCredentialManager(nil); err != nil {
 		t.Fatalf("NewCredentialManager: %v", err)
 	}
 	t.Cleanup(confWithoutCA.Credentials.Close)
-	// Note: NOT initializing cert pool - this uses system CAs which won't trust our custom CA
+	// Note: No custom CA bundle - this uses system CAs which won't trust our custom CA
 
 	_, _, _, errWithoutCA := HttpGet(url, auth, 5*time.Second, nil, nil, confWithoutCA)
 	if errWithoutCA == nil {
@@ -998,13 +982,10 @@ func TestHttpGet_CustomCAWithoutAuth(t *testing.T) {
 	}
 
 	confWithCA := config.NewConfig()
-	if confWithCA.Credentials, err = config.NewCredentialManager(); err != nil {
+	if confWithCA.Credentials, err = config.NewCredentialManager([]string{caFile}); err != nil {
 		t.Fatalf("NewCredentialManager: %v", err)
 	}
 	t.Cleanup(confWithCA.Credentials.Close)
-	if err := confWithCA.Credentials.InitializeCertPool([]string{caFile}); err != nil {
-		t.Fatalf("InitializeCertPool: %v", err)
-	}
 
 	body, statusCode, _, err := HttpGet(url, auth, 5*time.Second, nil, nil, confWithCA)
 

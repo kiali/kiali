@@ -68,7 +68,7 @@ func startTLSGRPCServerWithAuthCapture(t *testing.T, authHeaderCh chan<- string)
 func TestGetAuthDialOptions_BearerTokenRotation(t *testing.T) {
 	conf := config.NewConfig()
 	var err error
-	conf.Credentials, err = config.NewCredentialManager()
+	conf.Credentials, err = config.NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("failed to create credential manager: %v", err)
 	}
@@ -155,7 +155,7 @@ func TestGetAuthDialOptions_BearerTokenRotation(t *testing.T) {
 func TestGetAuthDialOptions_BasicAuthRotation(t *testing.T) {
 	conf := config.NewConfig()
 	var err error
-	conf.Credentials, err = config.NewCredentialManager()
+	conf.Credentials, err = config.NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("failed to create credential manager: %v", err)
 	}
@@ -304,11 +304,11 @@ func TestGetAuthDialOptions_CustomCAWithoutAuth(t *testing.T) {
 	// NEGATIVE TEST: First try without custom CA configured - should fail certificate verification
 	confWithoutCA := config.NewConfig()
 	var err error
-	if confWithoutCA.Credentials, err = config.NewCredentialManager(); err != nil {
+	if confWithoutCA.Credentials, err = config.NewCredentialManager(nil); err != nil {
 		t.Fatalf("NewCredentialManager: %v", err)
 	}
 	t.Cleanup(confWithoutCA.Credentials.Close)
-	// Note: NOT initializing cert pool - will use system CAs which won't trust our custom CA
+	// Note: No custom CA bundle - will use system CAs which won't trust our custom CA
 
 	optsWithoutCA, err := grpcutil.GetAuthDialOptions(confWithoutCA, serverName, true, auth)
 	if err != nil {
@@ -344,13 +344,10 @@ func TestGetAuthDialOptions_CustomCAWithoutAuth(t *testing.T) {
 	}
 
 	confWithCA := config.NewConfig()
-	if confWithCA.Credentials, err = config.NewCredentialManager(); err != nil {
+	if confWithCA.Credentials, err = config.NewCredentialManager([]string{caFile}); err != nil {
 		t.Fatalf("NewCredentialManager: %v", err)
 	}
 	t.Cleanup(confWithCA.Credentials.Close)
-	if err := confWithCA.Credentials.InitializeCertPool([]string{caFile}); err != nil {
-		t.Fatalf("InitializeCertPool: %v", err)
-	}
 
 	// Get dial options with custom CA - should verify server cert against custom CA
 	optsWithCA, err := grpcutil.GetAuthDialOptions(confWithCA, serverName, true, auth)
@@ -391,7 +388,7 @@ func TestGetAuthDialOptions_CustomCAWithoutAuth(t *testing.T) {
 func TestGetAuthDialOptions_ClientCertRotation(t *testing.T) {
 	conf := config.NewConfig()
 	var err error
-	if conf.Credentials, err = config.NewCredentialManager(); err != nil {
+	if conf.Credentials, err = config.NewCredentialManager(nil); err != nil {
 		t.Fatalf("failed to create credential manager: %v", err)
 	}
 	t.Cleanup(conf.Close)

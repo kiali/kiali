@@ -22,7 +22,7 @@ import (
 var testCA []byte
 
 func TestCredentialManager_LiteralValue(t *testing.T) {
-	cm, err := NewCredentialManager()
+	cm, err := NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create CredentialManager: %v", err)
 	}
@@ -39,7 +39,7 @@ func TestCredentialManager_LiteralValue(t *testing.T) {
 }
 
 func TestCredentialManager_EmptyValue(t *testing.T) {
-	cm, err := NewCredentialManager()
+	cm, err := NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create CredentialManager: %v", err)
 	}
@@ -56,7 +56,7 @@ func TestCredentialManager_EmptyValue(t *testing.T) {
 }
 
 func TestCredentialManager_NonExistentFile(t *testing.T) {
-	cm, err := NewCredentialManager()
+	cm, err := NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create CredentialManager: %v", err)
 	}
@@ -70,7 +70,7 @@ func TestCredentialManager_NonExistentFile(t *testing.T) {
 }
 
 func TestCredentialManager_EmptyFile(t *testing.T) {
-	cm, err := NewCredentialManager()
+	cm, err := NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create CredentialManager: %v", err)
 	}
@@ -95,7 +95,7 @@ func TestCredentialManager_EmptyFile(t *testing.T) {
 }
 
 func TestCredentialManager_WhitespaceOnlyFile(t *testing.T) {
-	cm, err := NewCredentialManager()
+	cm, err := NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create CredentialManager: %v", err)
 	}
@@ -120,7 +120,7 @@ func TestCredentialManager_WhitespaceOnlyFile(t *testing.T) {
 }
 
 func TestCredentialManager_RelativePathTreatedAsLiteral(t *testing.T) {
-	cm, err := NewCredentialManager()
+	cm, err := NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create CredentialManager: %v", err)
 	}
@@ -138,7 +138,7 @@ func TestCredentialManager_RelativePathTreatedAsLiteral(t *testing.T) {
 }
 
 func TestCredentialManager_FileWithTrailingWhitespace(t *testing.T) {
-	cm, err := NewCredentialManager()
+	cm, err := NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create CredentialManager: %v", err)
 	}
@@ -164,7 +164,7 @@ func TestCredentialManager_FileWithTrailingWhitespace(t *testing.T) {
 }
 
 func TestCredentialManager_CachingBehavior(t *testing.T) {
-	cm, err := NewCredentialManager()
+	cm, err := NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create CredentialManager: %v", err)
 	}
@@ -239,7 +239,7 @@ func TestCredentialManager_Reinitialize(t *testing.T) {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 
-	cm1, err := NewCredentialManager()
+	cm1, err := NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create first CredentialManager: %v", err)
 	}
@@ -262,7 +262,7 @@ func TestCredentialManager_Reinitialize(t *testing.T) {
 	}
 
 	// Create new manager - should get the new value
-	cm2, err := NewCredentialManager()
+	cm2, err := NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create second CredentialManager: %v", err)
 	}
@@ -282,7 +282,7 @@ func TestCredentialManager_SymlinkRotation(t *testing.T) {
 		t.Skip("symlink semantics differ on Windows")
 	}
 
-	cm, err := NewCredentialManager()
+	cm, err := NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create CredentialManager: %v", err)
 	}
@@ -358,7 +358,7 @@ func TestCredentialManager_SymlinkRotation(t *testing.T) {
 }
 
 func TestCredentialManager_RemovesCacheOnDelete(t *testing.T) {
-	cm, err := NewCredentialManager()
+	cm, err := NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create CredentialManager: %v", err)
 	}
@@ -394,7 +394,7 @@ func TestConfig_GetCredential_WithCredentialManager(t *testing.T) {
 	// Test Config.GetCredential when CredentialManager is initialized
 	conf := NewConfig()
 	var err error
-	conf.Credentials, err = NewCredentialManager()
+	conf.Credentials, err = NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create CredentialManager: %v", err)
 	}
@@ -460,7 +460,7 @@ func TestConfig_GetCredential_WithoutCredentialManager(t *testing.T) {
 func TestConfig_Close(t *testing.T) {
 	conf := NewConfig()
 	var err error
-	conf.Credentials, err = NewCredentialManager()
+	conf.Credentials, err = NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create CredentialManager: %v", err)
 	}
@@ -483,13 +483,13 @@ func TestMultipleCredentialManagers(t *testing.T) {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 
-	cm1, err := NewCredentialManager()
+	cm1, err := NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create first CredentialManager: %v", err)
 	}
 	t.Cleanup(cm1.Close)
 
-	cm2, err := NewCredentialManager()
+	cm2, err := NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create second CredentialManager: %v", err)
 	}
@@ -528,7 +528,7 @@ func TestConfig_GetCredential_AuthToken_Literal(t *testing.T) {
 func TestConfig_GetCredential_AuthToken_FilePath(t *testing.T) {
 	conf := NewConfig()
 	var err error
-	conf.Credentials, err = NewCredentialManager()
+	conf.Credentials, err = NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create CredentialManager: %v", err)
 	}
@@ -567,7 +567,7 @@ func TestConfig_GetCredential_AuthPassword_Literal(t *testing.T) {
 func TestConfig_GetCredential_AuthPassword_FilePath(t *testing.T) {
 	conf := NewConfig()
 	var err error
-	conf.Credentials, err = NewCredentialManager()
+	conf.Credentials, err = NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create CredentialManager: %v", err)
 	}
@@ -606,7 +606,7 @@ func TestConfig_GetCredential_AuthUsername_Literal(t *testing.T) {
 func TestConfig_GetCredential_AuthUsername_FilePath(t *testing.T) {
 	conf := NewConfig()
 	var err error
-	conf.Credentials, err = NewCredentialManager()
+	conf.Credentials, err = NewCredentialManager(nil)
 	if err != nil {
 		t.Fatalf("Failed to create CredentialManager: %v", err)
 	}
@@ -642,9 +642,9 @@ func TestConfig_GetCredential_AuthToken_Empty(t *testing.T) {
 	}
 }
 
-// TestCredentialManager_InitializeCertPool tests various scenarios for InitializeCertPool,
+// TestCredentialManager_CertPool tests various scenarios for certificate pool initialization,
 // including valid CAs, non-existent files, invalid CA content, and loading the same CA multiple times.
-func TestCredentialManager_InitializeCertPool(t *testing.T) {
+func TestCredentialManager_CertPool(t *testing.T) {
 	systemPool, err := x509.SystemCertPool()
 	require.NoError(t, err)
 
@@ -669,9 +669,8 @@ func TestCredentialManager_InitializeCertPool(t *testing.T) {
 			additionalBundles: []string{"non-existent"},
 			expected:          systemPool.Clone(),
 		},
-		"CA file with bogus contents returns err and falls back to system pool": {
+		"CA file with bogus contents returns err": {
 			additionalBundles: []string{invalidCA},
-			expected:          systemPool.Clone(), // Falls back to system CAs on error for security
 			expectedErr:       true,
 		},
 		// Need to test this for OpenShift serving cert that may come from multiple places.
@@ -684,16 +683,13 @@ func TestCredentialManager_InitializeCertPool(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			require := require.New(t)
 
-			cm, err := NewCredentialManager()
-			require.NoError(err)
-			t.Cleanup(cm.Close)
-
-			err = cm.InitializeCertPool(tc.additionalBundles)
+			cm, err := NewCredentialManager(tc.additionalBundles)
 			if tc.expectedErr {
 				require.Error(err)
-			} else {
-				require.NoError(err)
+				return
 			}
+			require.NoError(err)
+			t.Cleanup(cm.Close)
 
 			actual := cm.GetCertPool()
 			if tc.expected == nil {
@@ -706,18 +702,15 @@ func TestCredentialManager_InitializeCertPool(t *testing.T) {
 }
 
 func TestCredentialManager_CertPoolReloadsOnFileChange(t *testing.T) {
-	cm, err := NewCredentialManager()
-	require.NoError(t, err)
-	t.Cleanup(cm.Close)
-
 	tmpDir := t.TempDir()
 	caFile := filepath.Join(tmpDir, "ca.pem")
 
 	initialCA := certtest.BuildTestCertificate(t, "initial-ca")
 	require.NoError(t, os.WriteFile(caFile, initialCA, 0o600))
 
-	err = cm.InitializeCertPool([]string{caFile})
+	cm, err := NewCredentialManager([]string{caFile})
 	require.NoError(t, err)
+	t.Cleanup(cm.Close)
 
 	// Rotate CA
 	rotatedCA := certtest.BuildTestCertificate(t, "rotated-ca")
@@ -731,14 +724,14 @@ func TestCredentialManager_CertPoolReloadsOnFileChange(t *testing.T) {
 	}, time.Second, 10*time.Millisecond, "pool should contain rotated CA")
 }
 
-func TestCredentialManager_GetCertPoolBeforeInit(t *testing.T) {
-	cm, err := NewCredentialManager()
+func TestCredentialManager_GetCertPoolWithNilPaths(t *testing.T) {
+	cm, err := NewCredentialManager(nil)
 	require.NoError(t, err)
 	t.Cleanup(cm.Close)
 
-	// GetCertPool before InitializeCertPool should return nil
+	// GetCertPool with nil paths should return system cert pool
 	pool := cm.GetCertPool()
-	require.Nil(t, pool)
+	require.NotNil(t, pool)
 }
 
 // TestCredentialManager_CertPoolGlobalConfig tests that when using the global config singleton
@@ -749,14 +742,12 @@ func TestCredentialManager_CertPoolGlobalConfig(t *testing.T) {
 		Set(NewConfig())
 	})
 
-	conf := NewConfig()
-	credentialManager, err := NewCredentialManager()
-	require.NoError(t, err)
-	conf.Credentials = credentialManager
-
 	caFile := filetest.TempFile(t, testCA)
 
-	require.NoError(t, conf.Credentials.InitializeCertPool([]string{caFile.Name()}))
+	conf := NewConfig()
+	credentialManager, err := NewCredentialManager([]string{caFile.Name()})
+	require.NoError(t, err)
+	conf.Credentials = credentialManager
 
 	Set(conf)
 
@@ -786,10 +777,6 @@ func TestCredentialManager_CertPoolSymlinkRotation(t *testing.T) {
 		t.Skip("symlink semantics differ on Windows")
 	}
 
-	cm, err := NewCredentialManager()
-	require.NoError(t, err)
-	t.Cleanup(cm.Close)
-
 	tmpDir := t.TempDir()
 	secretDir := filepath.Join(tmpDir, "ca-secret")
 	dataDir1 := filepath.Join(tmpDir, "data1")
@@ -812,9 +799,10 @@ func TestCredentialManager_CertPoolSymlinkRotation(t *testing.T) {
 	mountedCA := filepath.Join(secretDir, "ca.pem")
 	require.NoError(t, os.Symlink(filepath.Join("..data", "ca.pem"), mountedCA))
 
-	// Initialize cert pool with the mounted CA path
-	err = cm.InitializeCertPool([]string{mountedCA})
+	// Initialize credential manager with the mounted CA path
+	cm, err := NewCredentialManager([]string{mountedCA})
 	require.NoError(t, err)
+	t.Cleanup(cm.Close)
 
 	// Verify initial CA is in the pool
 	initialSubject := certtest.SubjectFromPEM(t, initialCA)
@@ -849,7 +837,7 @@ func TestCredentialManager_CertPoolSymlinkRotation(t *testing.T) {
 // For stronger race detection, run with: CGO_ENABLED=1 go test -race -run TestCredentialManager_ConcurrentAccess
 // (requires GCC installed for CGO support)
 func TestCredentialManager_ConcurrentAccess(t *testing.T) {
-	cm, err := NewCredentialManager()
+	cm, err := NewCredentialManager(nil)
 	require.NoError(t, err)
 	t.Cleanup(cm.Close)
 

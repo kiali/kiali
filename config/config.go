@@ -123,6 +123,20 @@ const (
 	openshiftServingCAFromSA = "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt"
 )
 
+// getCABundlePaths returns the CA bundle paths to use based on the auth strategy.
+// Auth strategy isn't a great proxy for whether the cluster is running on openshift or not
+// but the config is the very first thing loaded so we don't have access to a client.
+func getCABundlePaths(authStrategy string) []string {
+	switch authStrategy {
+	case AuthStrategyOpenshift:
+		return []string{additionalCABundle, openshiftServingCAFromSA, openshiftServingCA}
+	case AuthStrategyOpenId:
+		return []string{additionalCABundle, openidServerCA}
+	default:
+		return []string{additionalCABundle}
+	}
+}
+
 // TracingProvider is the type of tracing provider that Kiali will connect to.
 type TracingProvider string
 
@@ -1135,7 +1149,8 @@ func Set(conf *Config) {
 	// which is important when the same config (with the same CredentialManager)
 	// is passed back to Set(). Only create a new CredentialManager if none exists.
 	if conf.Credentials == nil {
-		newCreds, err := NewCredentialManager()
+		caBundles := getCABundlePaths(conf.Auth.Strategy)
+		newCreds, err := NewCredentialManager(caBundles)
 		if err != nil {
 			log.Errorf("failed to initialize credential manager; file-based credential rotation will not be available: %v", err)
 		} else {
@@ -1223,9 +1238,11 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	}
 
 	// Initialize the credential manager for file-based credential support with auto-rotation
-	conf.Credentials, err = NewCredentialManager()
+	caBundles := getCABundlePaths(conf.Auth.Strategy)
+	conf.Credentials, err = NewCredentialManager(caBundles)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize credential manager: %w", err)
+		return nil, fmt.Errorf("failed to initialize credential manager (CA bundles: [%s]): %w",
+			strings.Join(caBundles, ","), err)
 	}
 
 	// Determine what the accessible namespaces are. These are namespaces we must have permission to see
@@ -1244,26 +1261,6 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	}
 
 	conf.prepareDashboards()
-
-	// Auth strategy isn't a great proxy for whether the cluster is running on openshift or not
-	// but the config is the very first thing loaded so we don't have access to a client.
-	var additionalCABundles []string
-	switch conf.Auth.Strategy {
-	case AuthStrategyOpenshift:
-		additionalCABundles = []string{additionalCABundle, openshiftServingCAFromSA, openshiftServingCA}
-	case AuthStrategyOpenId:
-		additionalCABundles = []string{additionalCABundle, openidServerCA}
-	default:
-		additionalCABundles = []string{additionalCABundle}
-	}
-
-	// Initialize certificate pool in CredentialManager
-	if err := conf.Credentials.InitializeCertPool(additionalCABundles); err != nil {
-		conf.Credentials.Close()
-		conf.Credentials = nil
-		return nil, fmt.Errorf("unable to initialize cert pool. Check additional CAs specified at [%s]: %w",
-			strings.Join(additionalCABundles, ","), err)
-	}
 
 	// TODO: Still support deprecated settings, but remove this support in future versions
 	if conf.ExternalServices.Grafana.XInClusterURL != "" {
