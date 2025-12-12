@@ -566,14 +566,14 @@ func (c *Cluster) killImageRegistryDaemon() {
 		return
 	}
 
-	c.log.Info().Msg("Removing existing stopped registry container")
+	c.log.Info().Msg("Removing existing running registry container")
 
 	if output, err := exec.Command(c.config.DockerOrPodman, "kill", c.config.registryName).CombinedOutput(); err != nil {
-		c.log.Info().Msgf("failed to kill image registry daemon: %s: %s", err, output)
+		c.log.Warn().Msgf("failed to kill image registry daemon: %s: %s", err, output)
 	}
 
 	if output, err := exec.Command(c.config.DockerOrPodman, "rm", c.config.registryName).CombinedOutput(); err != nil {
-		c.log.Info().Msgf("failed to remove image registry daemon: %s: %s", err, output)
+		c.log.Warn().Msgf("failed to remove image registry daemon: %s: %s", err, output)
 	}
 }
 
