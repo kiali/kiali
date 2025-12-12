@@ -47,7 +47,7 @@ func startTLSGRPCServerWithAuthCapture(t *testing.T, authHeaderCh chan<- string)
 	}
 
 	// Generate a self-signed server certificate for TLS
-	serverTLS := mustGenerateSelfSignedServerTLS(t)
+	serverTLS := certtest.MustGenerateSelfSignedServerTLS(t)
 
 	s := grpc.NewServer(
 		grpc.UnaryInterceptor(unaryInterceptor),
@@ -62,10 +62,6 @@ func startTLSGRPCServerWithAuthCapture(t *testing.T, authHeaderCh chan<- string)
 	return func() { s.Stop(); _ = lis.Close() }, func(ctx context.Context, s string) (net.Conn, error) {
 		return lis.Dial()
 	}
-}
-
-func mustGenerateSelfSignedServerTLS(t *testing.T) *tls.Config {
-	return certtest.MustGenerateSelfSignedServerTLS(t)
 }
 
 // pollForCondition polls until a condition is met or timeout is reached.
@@ -505,7 +501,7 @@ func startTLSGRPCServerWithClientAuth(t *testing.T) (stop func(), dialer func(co
 	lis := bufconn.Listen(bufSize)
 
 	// Generate server certificate
-	serverTLS := mustGenerateSelfSignedServerTLS(t)
+	serverTLS := certtest.MustGenerateSelfSignedServerTLS(t)
 	// Require client certificates but don't verify them (we're testing client cert rotation, not server verification)
 	serverTLS.ClientAuth = tls.RequireAnyClientCert
 
