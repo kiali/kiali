@@ -1866,19 +1866,7 @@ func (c *Config) CertPool() *x509.CertPool {
 		return systemPool
 	}
 
-	pool := c.Credentials.GetCertPool()
-	if pool == nil {
-		// Fallback if cert pool not initialized
-		log.Warning("CertPool not initialized in CredentialManager. Using system cert pool.")
-		systemPool, err := x509.SystemCertPool()
-		if err != nil {
-			log.Warningf("Unable to load system cert pool: %v", err)
-			return x509.NewCertPool()
-		}
-		return systemPool
-	}
-
-	return pool
+	return c.Credentials.GetCertPool()
 }
 
 // Close cleans up Config resources such as the credential file watcher.

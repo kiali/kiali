@@ -190,14 +190,14 @@ func (cm *CredentialManager) readCABundle(path string) ([]byte, error) {
 }
 
 // GetCertPool returns a clone of the current certificate pool.
-// Returns nil if the certificate pool has not been initialized.
 func (cm *CredentialManager) GetCertPool() *x509.CertPool {
 	cm.mu.RLock()
 	pool := cm.certPool
 	cm.mu.RUnlock()
 
 	if pool == nil {
-		return nil
+		log.Error("GetCertPool called but certPool is nil - report this as a bug in CredentialManager.")
+		return x509.NewCertPool()
 	}
 
 	return pool.Clone()
