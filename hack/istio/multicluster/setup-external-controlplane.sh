@@ -18,10 +18,10 @@ else
   exit 1
 fi
 
-# Find the installer used to create the kind clusters
+# Find the Go program used to create the kind clusters
 KIND_INSTALLER=${SCRIPT_DIR}/../../../tools/cmd/installer/main.go
 if [  -f "${KIND_INSTALLER}" ]; then
-  echo "Kind installer script: ${KIND_INSTALLER}"
+  echo "Kind installer Go program: ${KIND_INSTALLER}"
 else
   echo "Cannot find the Kind installer at: ${KIND_INSTALLER}"
   exit 1
