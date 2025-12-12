@@ -975,7 +975,7 @@ func TestCredentialManager_ConcurrentAccess(t *testing.T) {
 // which returns a cloned cert pool with additional CA certificates appended.
 func TestConfig_CertPoolWithAdditionalPEM(t *testing.T) {
 	// Generate a test CA for additional PEM
-	additionalCACert, additionalCAPEM, _ := certtest.MustGenCA(t, "AdditionalCA")
+	additionalCACert, additionalCAPEM, additionalCAKey := certtest.MustGenCA(t, "AdditionalCA")
 
 	t.Run("returns base pool when additionalCA is nil", func(t *testing.T) {
 		require := require.New(t)
@@ -1064,7 +1064,7 @@ func TestConfig_CertPoolWithAdditionalPEM(t *testing.T) {
 		require := require.New(t)
 
 		// Create a temp file with initial CA
-		initialCACert, initialCAPEM, _ := certtest.MustGenCA(t, "InitialCA")
+		initialCACert, initialCAPEM, initialCAKey := certtest.MustGenCA(t, "InitialCA")
 		tmpDir := t.TempDir()
 		caFile := filepath.Join(tmpDir, "ca.pem")
 		require.NoError(os.WriteFile(caFile, initialCAPEM, 0o644))
@@ -1079,19 +1079,10 @@ func TestConfig_CertPoolWithAdditionalPEM(t *testing.T) {
 		require.NoError(err)
 		require.NotNil(poolWithBothCAs)
 
-		// Verify BOTH CAs are in the combined pool
-		subjects := poolWithBothCAs.Subjects()
-		foundInitial := false
-		foundAdditional := false
-		for _, subject := range subjects {
-			if string(subject) == string(initialCACert.RawSubject) {
-				foundInitial = true
-			}
-			if string(subject) == string(additionalCACert.RawSubject) {
-				foundAdditional = true
-			}
-		}
+		// Verify BOTH CAs are trusted by the combined pool
+		foundInitial := certtest.VerifyCAInPool(t, initialCACert, initialCAKey, poolWithBothCAs)
 		require.True(foundInitial, "initial CA should be in combined pool")
+		foundAdditional := certtest.VerifyCAInPool(t, additionalCACert, additionalCAKey, poolWithBothCAs)
 		require.True(foundAdditional, "additional CA should be in combined pool")
 	})
 
@@ -1118,8 +1109,8 @@ func TestConfig_CertPoolWithAdditionalPEM(t *testing.T) {
 		t.Cleanup(conf.Close)
 
 		// Generate two different CAs
-		ca1Cert, ca1PEM, _ := certtest.MustGenCA(t, "CA-One")
-		ca2Cert, ca2PEM, _ := certtest.MustGenCA(t, "CA-Two")
+		ca1Cert, ca1PEM, ca1Key := certtest.MustGenCA(t, "CA-One")
+		ca2Cert, ca2PEM, ca2Key := certtest.MustGenCA(t, "CA-Two")
 
 		// Combine both CAs into a single PEM bundle
 		combinedPEM := append(ca1PEM, ca2PEM...)
@@ -1128,19 +1119,10 @@ func TestConfig_CertPoolWithAdditionalPEM(t *testing.T) {
 		require.NoError(err)
 		require.NotNil(poolWithBothCAs)
 
-		// Verify BOTH CAs are present in the pool
-		subjects := poolWithBothCAs.Subjects()
-		foundCA1 := false
-		foundCA2 := false
-		for _, subject := range subjects {
-			if string(subject) == string(ca1Cert.RawSubject) {
-				foundCA1 = true
-			}
-			if string(subject) == string(ca2Cert.RawSubject) {
-				foundCA2 = true
-			}
-		}
+		// Verify BOTH CAs are trusted by the pool
+		foundCA1 := certtest.VerifyCAInPool(t, ca1Cert, ca1Key, poolWithBothCAs)
 		require.True(foundCA1, "first CA should be in pool")
+		foundCA2 := certtest.VerifyCAInPool(t, ca2Cert, ca2Key, poolWithBothCAs)
 		require.True(foundCA2, "second CA should be in pool")
 	})
 }

@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"crypto/rsa"
 	"crypto/x509"
 	_ "embed"
 	"encoding/json"
@@ -21,48 +22,45 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
-)
-
-var (
-	//go:embed testdata/ca.crt
-	ca []byte
-	//go:embed testdata/ca2.crt
-	ca2 []byte
+	"github.com/kiali/kiali/util/certtest"
 )
 
 func TestSystemPoolAddedToClient(t *testing.T) {
-	p, _ := pem.Decode(ca)
-	caCert, err := x509.ParseCertificate(p.Bytes)
-	require.NoError(t, err)
-	p, _ = pem.Decode(ca2)
-	caCert2, err := x509.ParseCertificate(p.Bytes)
-	require.NoError(t, err)
+	// Generate test CAs dynamically so we have both certs and keys for verification
+	caCert, caPEM, caKey := certtest.MustGenCA(t, "test-ca-1")
+	caCert2, ca2PEM, caKey2 := certtest.MustGenCA(t, "test-ca-2")
 
-	cases := map[string]struct {
+	type testCase struct {
 		conf               *config.Config
 		managedPoolCertPEM []byte // PEM-encoded cert to include in the managed pool via CA bundle file
 		restConfig         rest.Config
-		expected           []*x509.Certificate
+		expectedCerts      []*x509.Certificate
+		expectedKeys       []*rsa.PrivateKey
 		expectedInsecure   bool
-	}{
+	}
+	cases := map[string]testCase{
 		"cert in managed pool but not in rest config has just one cert": {
-			managedPoolCertPEM: ca,
-			expected:           []*x509.Certificate{caCert},
+			managedPoolCertPEM: caPEM,
+			expectedCerts:      []*x509.Certificate{caCert},
+			expectedKeys:       []*rsa.PrivateKey{caKey},
 		},
 		"cert in rest config but not in managed pool has just one cert": {
-			restConfig: rest.Config{TLSClientConfig: rest.TLSClientConfig{CAData: ca}},
-			expected:   []*x509.Certificate{caCert},
+			restConfig:    rest.Config{TLSClientConfig: rest.TLSClientConfig{CAData: caPEM}},
+			expectedCerts: []*x509.Certificate{caCert},
+			expectedKeys:  []*rsa.PrivateKey{caKey},
 		},
 		"cert in both has two certs": {
-			restConfig:         rest.Config{TLSClientConfig: rest.TLSClientConfig{CAData: ca}},
-			managedPoolCertPEM: ca2,
-			expected:           []*x509.Certificate{caCert, caCert2},
+			restConfig:         rest.Config{TLSClientConfig: rest.TLSClientConfig{CAData: caPEM}},
+			managedPoolCertPEM: ca2PEM,
+			expectedCerts:      []*x509.Certificate{caCert, caCert2},
+			expectedKeys:       []*rsa.PrivateKey{caKey, caKey2},
 		},
 		"insecure setting has insecure set": {
 			conf:               &config.Config{Auth: config.AuthConfig{OpenShift: config.OpenShiftConfig{InsecureSkipVerifyTLS: true}}},
-			restConfig:         rest.Config{TLSClientConfig: rest.TLSClientConfig{CAData: ca}},
-			managedPoolCertPEM: ca2,
-			expected:           []*x509.Certificate{caCert}, // this will still get loaded from restconfig.
+			restConfig:         rest.Config{TLSClientConfig: rest.TLSClientConfig{CAData: caPEM}},
+			managedPoolCertPEM: ca2PEM,
+			expectedCerts:      []*x509.Certificate{caCert}, // this will still get loaded from restconfig.
+			expectedKeys:       []*rsa.PrivateKey{caKey},
 			expectedInsecure:   true,
 		},
 	}
@@ -85,12 +83,13 @@ func TestSystemPoolAddedToClient(t *testing.T) {
 			}
 
 			// Initialize CredentialManager with the CA bundle file(s)
+			var err error
 			tc.conf.Credentials, err = config.NewCredentialManager(caBundlePaths)
 			require.NoError(err)
 			t.Cleanup(tc.conf.Close)
 
 			expected := x509.NewCertPool()
-			for _, cert := range tc.expected {
+			for _, cert := range tc.expectedCerts {
 				expected.AddCert(cert)
 			}
 
@@ -105,17 +104,10 @@ func TestSystemPoolAddedToClient(t *testing.T) {
 				require.True(tr.TLSClientConfig.InsecureSkipVerify)
 			} else {
 				require.NotNil(tr.TLSClientConfig.RootCAs)
-				// Verify that the expected certificates are present in the pool
-				for _, cert := range tc.expected {
-					subjects := tr.TLSClientConfig.RootCAs.Subjects()
-					found := false
-					for _, subject := range subjects {
-						if string(subject) == string(cert.RawSubject) {
-							found = true
-							break
-						}
-					}
-					require.True(found, "expected cert with subject %s not found in pool", cert.Subject)
+				// Verify that the expected certificates are trusted by the pool
+				for i, cert := range tc.expectedCerts {
+					found := certtest.VerifyCAInPool(t, cert, tc.expectedKeys[i], tr.TLSClientConfig.RootCAs)
+					require.True(found, "expected cert with subject %s not trusted by pool", cert.Subject)
 				}
 			}
 		})
@@ -222,18 +214,20 @@ func TestExchangeUsesSystemPoolAndRestTLS(t *testing.T) {
 func TestOpenshiftOAuth_CARotation(t *testing.T) {
 	require := require.New(t)
 
+	// Generate test CAs dynamically
+	initialCACert, initialCAPEM, initialCAKey := certtest.MustGenCA(t, "initial-ca")
+	rotatedCACert, rotatedCAPEM, rotatedCAKey := certtest.MustGenCA(t, "rotated-ca")
+
 	// Create temporary CA file
 	tmpDir := t.TempDir()
 	caFile := tmpDir + "/oauth-ca.pem"
 
 	// Write initial CA
-	p, _ := pem.Decode(ca)
-	initialCACert, err := x509.ParseCertificate(p.Bytes)
-	require.NoError(err)
-	require.NoError(os.WriteFile(caFile, ca, 0o644))
+	require.NoError(os.WriteFile(caFile, initialCAPEM, 0o644))
 
 	// Initialize config with initial CA
 	conf := config.NewConfig()
+	var err error
 	conf.Credentials, err = config.NewCredentialManager([]string{caFile})
 	require.NoError(err)
 	t.Cleanup(conf.Close)
@@ -246,22 +240,12 @@ func TestOpenshiftOAuth_CARotation(t *testing.T) {
 	tr1 := client1.Transport.(*http.Transport)
 	pool1 := tr1.TLSClientConfig.RootCAs
 
-	// Verify initial CA is in the pool
-	subjects1 := pool1.Subjects()
-	foundInitialCA := false
-	for _, subject := range subjects1 {
-		if string(subject) == string(initialCACert.RawSubject) {
-			foundInitialCA = true
-			break
-		}
-	}
+	// Verify initial CA is trusted by the pool
+	foundInitialCA := certtest.VerifyCAInPool(t, initialCACert, initialCAKey, pool1)
 	require.True(foundInitialCA, "initial CA should be in pool")
 
 	// Rotate CA by writing a different CA to the file
-	p2, _ := pem.Decode(ca2)
-	rotatedCACert, err := x509.ParseCertificate(p2.Bytes)
-	require.NoError(err)
-	require.NoError(os.WriteFile(caFile, ca2, 0o644))
+	require.NoError(os.WriteFile(caFile, rotatedCAPEM, 0o644))
 
 	// Wait for the file watcher to detect the change and update the cache
 	// Subsequent calls to httpClientWithPool should use the rotated CA
@@ -274,14 +258,8 @@ func TestOpenshiftOAuth_CARotation(t *testing.T) {
 		tr2 := client2.Transport.(*http.Transport)
 		pool2 := tr2.TLSClientConfig.RootCAs
 
-		// Check if the rotated CA is now in the pool
-		subjects2 := pool2.Subjects()
-		for _, subject := range subjects2 {
-			if string(subject) == string(rotatedCACert.RawSubject) {
-				return true
-			}
-		}
-		return false
+		// Check if the rotated CA is now trusted by the pool
+		return certtest.VerifyCAInPool(t, rotatedCACert, rotatedCAKey, pool2)
 	}, 2*time.Second, 50*time.Millisecond, "rotated CA should be in pool after rotation")
 
 	// Verify the pool has changed (not equal to the original pool)

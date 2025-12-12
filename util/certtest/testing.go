@@ -113,6 +113,44 @@ func MustServerCertSignedByCA(t *testing.T, ca *x509.Certificate, caKey *rsa.Pri
 	return certPEM, keyPEM
 }
 
+// VerifyCAInPool checks if a CA certificate is trusted by a cert pool.
+// It does this by creating a test certificate signed by the CA and verifying it against the pool.
+func VerifyCAInPool(t *testing.T, ca *x509.Certificate, caKey *rsa.PrivateKey, pool *x509.CertPool) bool {
+	t.Helper()
+	// Generate a test certificate signed by the CA
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("gen test key: %v", err)
+	}
+	tmpl := &x509.Certificate{
+		SerialNumber:          big.NewInt(999),
+		Subject:               pkix.Name{CommonName: "test-cert-for-verification"},
+		NotBefore:             time.Now().Add(-time.Hour),
+		NotAfter:              time.Now().Add(24 * time.Hour),
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		DNSNames:              []string{"test.example.com"},
+	}
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, ca, &key.PublicKey, caKey)
+	if err != nil {
+		t.Fatalf("create test cert: %v", err)
+	}
+	testCert, err := x509.ParseCertificate(der)
+	if err != nil {
+		t.Fatalf("parse test cert: %v", err)
+	}
+
+	// Try to verify the test certificate against the pool
+	opts := x509.VerifyOptions{
+		Roots:     pool,
+		DNSName:   "test.example.com",
+		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+	}
+	_, err = testCert.Verify(opts)
+	return err == nil
+}
+
 // MustServerCertWithIPSignedByCA generates a server certificate with IP SANs signed by the provided CA.
 // This is useful for test servers accessed via IP address (e.g., 127.0.0.1).
 func MustServerCertWithIPSignedByCA(t *testing.T, ca *x509.Certificate, caKey *rsa.PrivateKey, ips []net.IP) ([]byte, []byte) {
