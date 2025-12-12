@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -1285,4 +1287,232 @@ func TestOpenIdCodeFlowShouldRejectMissingNonceInToken(t *testing.T) {
 	q.Add("openid_error", "OpenId token rejected: nonce code mismatch")
 	assert.Equal(t, "/kiali-test/?"+q.Encode(), response.Header.Get("Location"))
 	assert.Equal(t, http.StatusFound, response.StatusCode)
+}
+
+// TestOIDCClientSecretRotation verifies that when the OIDC client secret is stored
+// as a file path, the CredentialManager properly handles secret rotation.
+// This tests the integration between Config.GetCredential and the OIDC flow.
+func TestOIDCClientSecretRotation(t *testing.T) {
+	require := require.New(t)
+
+	tmpDir := t.TempDir()
+	secretFile := filepath.Join(tmpDir, "oidc-secret")
+
+	// Write initial secret
+	initialSecret := "initial-client-secret"
+	require.NoError(os.WriteFile(secretFile, []byte(initialSecret), 0o644))
+
+	// Create config with OIDC client secret pointing to file
+	conf := config.NewConfig()
+	conf.Auth.OpenId.ClientSecret = secretFile
+
+	// Initialize CredentialManager
+	var err error
+	conf.Credentials, err = config.NewCredentialManager(nil)
+	require.NoError(err)
+	t.Cleanup(conf.Close)
+
+	// First read should return initial secret
+	secret1, err := conf.GetCredential(conf.Auth.OpenId.ClientSecret)
+	require.NoError(err)
+	require.Equal(initialSecret, secret1)
+
+	// Rotate secret by writing new value
+	rotatedSecret := "rotated-client-secret"
+	require.NoError(os.WriteFile(secretFile, []byte(rotatedSecret), 0o644))
+
+	// Wait for file watcher to detect change and update cache
+	require.Eventually(func() bool {
+		secret, err := conf.GetCredential(conf.Auth.OpenId.ClientSecret)
+		return err == nil && secret == rotatedSecret
+	}, 2*time.Second, 50*time.Millisecond, "secret should be rotated")
+}
+
+// TestOIDCClientSecretLiteralValue verifies that literal (non-file-path) client secrets
+// are returned as-is, maintaining backward compatibility.
+func TestOIDCClientSecretLiteralValue(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.Auth.OpenId.ClientSecret = "my-literal-secret"
+
+	// Initialize CredentialManager
+	var err error
+	conf.Credentials, err = config.NewCredentialManager(nil)
+	require.NoError(err)
+	t.Cleanup(conf.Close)
+
+	// Literal values (not starting with "/") should be returned as-is
+	secret, err := conf.GetCredential(conf.Auth.OpenId.ClientSecret)
+	require.NoError(err)
+	require.Equal("my-literal-secret", secret)
+}
+
+// TestOIDCClientSecretEmptyValue verifies that empty client secret is handled correctly.
+func TestOIDCClientSecretEmptyValue(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.Auth.OpenId.ClientSecret = ""
+
+	// Initialize CredentialManager
+	var err error
+	conf.Credentials, err = config.NewCredentialManager(nil)
+	require.NoError(err)
+	t.Cleanup(conf.Close)
+
+	// Empty value should return empty string
+	secret, err := conf.GetCredential(conf.Auth.OpenId.ClientSecret)
+	require.NoError(err)
+	require.Equal("", secret)
+}
+
+// TestRequestOpenIdToken_UsesGetCredential verifies that the requestOpenIdToken method
+// actually calls GetCredential to resolve the client secret, supporting both file-based
+// and literal client secrets.
+func TestRequestOpenIdToken_UsesGetCredential(t *testing.T) {
+	t.Run("uses file-based client secret from GetCredential", func(t *testing.T) {
+		require := require.New(t)
+
+		// Create temporary secret file
+		tmpDir := t.TempDir()
+		secretFile := filepath.Join(tmpDir, "oidc-secret")
+		expectedSecret := "my-file-based-secret"
+		require.NoError(os.WriteFile(secretFile, []byte(expectedSecret), 0o644))
+
+		// Setup mock token endpoint that verifies the client secret
+		var receivedSecret string
+		tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Extract the client secret from Basic Auth
+			_, password, ok := r.BasicAuth()
+			if ok {
+				receivedSecret = password
+			}
+			// Return a fake token response
+			response := map[string]any{
+				"id_token":     "fake-id-token",
+				"access_token": "fake-access-token",
+			}
+			json.NewEncoder(w).Encode(response)
+		}))
+		defer tokenServer.Close()
+
+		// Create config pointing to the secret file
+		conf := config.NewConfig()
+		conf.Auth.OpenId.ClientId = "test-client"
+		conf.Auth.OpenId.ClientSecret = secretFile // File path, not literal value
+		conf.Auth.OpenId.InsecureSkipVerifyTLS = true
+
+		// Initialize CredentialManager
+		conf.Credentials, _ = config.NewCredentialManager(nil)
+		t.Cleanup(conf.Close)
+
+		// Create openidFlowHelper and call requestOpenIdToken
+		flow := &openidFlowHelper{
+			Code: "test-authorization-code",
+			conf: conf,
+		}
+
+		// Mock the metadata to point to our token server
+		cachedOpenIdMetadata = &openIdMetadata{
+			Issuer:   "https://example.com",
+			TokenURL: tokenServer.URL,
+		}
+		defer func() { cachedOpenIdMetadata = nil }()
+
+		flow.requestOpenIdToken("http://localhost/callback")
+
+		// Verify no error occurred
+		require.NoError(flow.Error)
+
+		// Verify that the secret from the file was used in the token request
+		require.Equal(expectedSecret, receivedSecret, "requestOpenIdToken should use secret from GetCredential")
+	})
+
+	t.Run("uses literal client secret from GetCredential", func(t *testing.T) {
+		require := require.New(t)
+
+		expectedSecret := "my-literal-secret"
+
+		// Setup mock token endpoint
+		var receivedSecret string
+		tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, password, ok := r.BasicAuth()
+			if ok {
+				receivedSecret = password
+			}
+			response := map[string]any{
+				"id_token":     "fake-id-token",
+				"access_token": "fake-access-token",
+			}
+			json.NewEncoder(w).Encode(response)
+		}))
+		defer tokenServer.Close()
+
+		// Create config with literal secret (not a file path)
+		conf := config.NewConfig()
+		conf.Auth.OpenId.ClientId = "test-client"
+		conf.Auth.OpenId.ClientSecret = expectedSecret // Literal value
+		conf.Auth.OpenId.InsecureSkipVerifyTLS = true
+
+		// Initialize CredentialManager
+		conf.Credentials, _ = config.NewCredentialManager(nil)
+		t.Cleanup(conf.Close)
+
+		// Create openidFlowHelper and call requestOpenIdToken
+		flow := &openidFlowHelper{
+			Code: "test-authorization-code",
+			conf: conf,
+		}
+
+		// Mock the metadata
+		cachedOpenIdMetadata = &openIdMetadata{
+			Issuer:   "https://example.com",
+			TokenURL: tokenServer.URL,
+		}
+		defer func() { cachedOpenIdMetadata = nil }()
+
+		flow.requestOpenIdToken("http://localhost/callback")
+
+		// Verify no error occurred
+		require.NoError(flow.Error)
+
+		// Verify that the literal secret was used
+		require.Equal(expectedSecret, receivedSecret, "requestOpenIdToken should use literal secret from GetCredential")
+	})
+
+	t.Run("handles GetCredential error gracefully", func(t *testing.T) {
+		require := require.New(t)
+
+		// Point to a non-existent file to trigger GetCredential error
+		nonExistentFile := "/tmp/non-existent-secret-file-that-should-not-exist"
+
+		// Create config pointing to non-existent file
+		conf := config.NewConfig()
+		conf.Auth.OpenId.ClientId = "test-client"
+		conf.Auth.OpenId.ClientSecret = nonExistentFile
+
+		// Initialize CredentialManager
+		conf.Credentials, _ = config.NewCredentialManager(nil)
+		t.Cleanup(conf.Close)
+
+		// Create openidFlowHelper and call requestOpenIdToken
+		flow := &openidFlowHelper{
+			Code: "test-authorization-code",
+			conf: conf,
+		}
+
+		// Mock the metadata
+		cachedOpenIdMetadata = &openIdMetadata{
+			Issuer:   "https://example.com",
+			TokenURL: "https://example.com/token",
+		}
+		defer func() { cachedOpenIdMetadata = nil }()
+
+		flow.requestOpenIdToken("http://localhost/callback")
+
+		// Verify that an error was set
+		require.Error(flow.Error)
+		require.Contains(flow.Error.Error(), "failed to read OpenID client secret")
+	})
 }

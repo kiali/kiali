@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -57,7 +56,6 @@ type OpenshiftOAuthService struct {
 	conf           *config.Config
 	kialiSAClients map[string]kubernetes.ClientInterface
 	oAuthConfigs   map[string]*oAuthConfig
-	certPool       *x509.CertPool
 }
 
 // Structure that's returned by the openshift oauth authorization server.
@@ -69,8 +67,9 @@ type OAuthAuthorizationServer struct {
 	Issuer                string `json:"issuer"`
 }
 
-// Generates an http.Client with RootCAs specified in kubeconfig along with the system certs.
-func httpClientWithPool(conf *config.Config, restConfig rest.Config, systemPool *x509.CertPool) (*http.Client, error) {
+// Generates an http.Client with RootCAs specified in kubeconfig along with the managed cert pool.
+// The managed cert pool includes system CAs and any additional CAs configured via the kiali-cabundle ConfigMap.
+func httpClientWithPool(conf *config.Config, restConfig rest.Config) (*http.Client, error) {
 	// Need to populate CAData from CAFile.
 	if err := rest.LoadTLSFiles(&restConfig); err != nil {
 		return nil, fmt.Errorf("unable to load CA info from restConfig")
@@ -93,13 +92,11 @@ func httpClientWithPool(conf *config.Config, restConfig rest.Config, systemPool 
 	}
 
 	if !tlsConfig.InsecureSkipVerify {
-		// Append system certs
-		pool := systemPool.Clone()
-		if restConfig.CAData != nil {
-			log.Trace("Appending CA data from tls client config to pool")
-			if !pool.AppendCertsFromPEM(restConfig.CAData) {
-				return nil, fmt.Errorf("unable to append CA from restConfig to system pool: %s", restConfig.CAData)
-			}
+		// Get the managed cert pool with additional CA data from the restConfig
+		// This supports CA rotation as the pool is fetched fresh each time
+		pool, err := conf.CertPoolWithAdditionalPEM(restConfig.CAData)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create cert pool with additional CA data: %w", err)
 		}
 		tlsConfig.RootCAs = pool
 	} else {
@@ -126,10 +123,6 @@ func NewOpenshiftOAuthService(ctx context.Context, conf *config.Config, kialiSAC
 	ctx, cancel = context.WithDeadline(ctx, oneMinuteFromNow)
 	defer cancel()
 
-	// Get the cert pool from config which includes system CAs plus any custom CA bundles
-	// configured for OpenShift (including the optional oauth-server-ca.crt).
-	pool := conf.CertPool()
-
 	// TODO: We could parallelize this to potentially speed up the process.
 	for cluster, client := range kialiSAClients {
 		if !client.IsOpenShift() {
@@ -146,7 +139,7 @@ func NewOpenshiftOAuthService(ctx context.Context, conf *config.Config, kialiSAC
 		}
 		request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.GetToken()))
 
-		httpClient, err := httpClientWithPool(conf, *client.ClusterInfo().ClientConfig, pool)
+		httpClient, err := httpClientWithPool(conf, *client.ClusterInfo().ClientConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create http client for fetching oauth server metadata from kube api server [%s], error: %s", url, err)
 		}
@@ -212,7 +205,6 @@ func NewOpenshiftOAuthService(ctx context.Context, conf *config.Config, kialiSAC
 		conf:           conf,
 		kialiSAClients: kialiSAClients,
 		oAuthConfigs:   oAuthConfigs,
-		certPool:       pool,
 	}, nil
 }
 
@@ -223,7 +215,7 @@ func (in *OpenshiftOAuthService) Exchange(ctx context.Context, code string, veri
 		return nil, fmt.Errorf("could not get ServiceAccount client for cluster [%s]", cluster)
 	}
 
-	httpClient, err := httpClientWithPool(in.conf, *client.ClusterInfo().ClientConfig, in.certPool)
+	httpClient, err := httpClientWithPool(in.conf, *client.ClusterInfo().ClientConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create http client for oauth consumption, error: %s", err)
 	}

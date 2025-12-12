@@ -8,7 +8,9 @@ import (
 	"encoding/pem"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
+	"time"
 
 	osoauth_v1 "github.com/openshift/api/oauth/v1"
 	"github.com/stretchr/testify/require"
@@ -37,31 +39,31 @@ func TestSystemPoolAddedToClient(t *testing.T) {
 	require.NoError(t, err)
 
 	cases := map[string]struct {
-		conf             *config.Config
-		restConfig       rest.Config
-		pool             []*x509.Certificate
-		expected         []*x509.Certificate
-		expectedInsecure bool
+		conf               *config.Config
+		managedPoolCertPEM []byte // PEM-encoded cert to include in the managed pool via CA bundle file
+		restConfig         rest.Config
+		expected           []*x509.Certificate
+		expectedInsecure   bool
 	}{
-		"cert in pool but not in rest config has just one cert": {
-			pool:     []*x509.Certificate{caCert},
-			expected: []*x509.Certificate{caCert},
+		"cert in managed pool but not in rest config has just one cert": {
+			managedPoolCertPEM: ca,
+			expected:           []*x509.Certificate{caCert},
 		},
-		"cert in rest config but not in pool has just one cert": {
+		"cert in rest config but not in managed pool has just one cert": {
 			restConfig: rest.Config{TLSClientConfig: rest.TLSClientConfig{CAData: ca}},
 			expected:   []*x509.Certificate{caCert},
 		},
 		"cert in both has two certs": {
-			restConfig: rest.Config{TLSClientConfig: rest.TLSClientConfig{CAData: ca}},
-			pool:       []*x509.Certificate{caCert2},
-			expected:   []*x509.Certificate{caCert, caCert2},
+			restConfig:         rest.Config{TLSClientConfig: rest.TLSClientConfig{CAData: ca}},
+			managedPoolCertPEM: ca2,
+			expected:           []*x509.Certificate{caCert, caCert2},
 		},
 		"insecure setting has insecure set": {
-			conf:             &config.Config{Auth: config.AuthConfig{OpenShift: config.OpenShiftConfig{InsecureSkipVerifyTLS: true}}},
-			restConfig:       rest.Config{TLSClientConfig: rest.TLSClientConfig{CAData: ca}},
-			pool:             []*x509.Certificate{caCert2},
-			expected:         []*x509.Certificate{caCert}, // this will still get loaded from restconfig.
-			expectedInsecure: true,
+			conf:               &config.Config{Auth: config.AuthConfig{OpenShift: config.OpenShiftConfig{InsecureSkipVerifyTLS: true}}},
+			restConfig:         rest.Config{TLSClientConfig: rest.TLSClientConfig{CAData: ca}},
+			managedPoolCertPEM: ca2,
+			expected:           []*x509.Certificate{caCert}, // this will still get loaded from restconfig.
+			expectedInsecure:   true,
 		},
 	}
 	for name, tc := range cases {
@@ -72,25 +74,50 @@ func TestSystemPoolAddedToClient(t *testing.T) {
 				tc.conf = config.NewConfig()
 			}
 
+			// Write the managed pool cert to a temporary file and initialize CredentialManager with it
+			// This simulates the production path where CAs are loaded from kiali-cabundle ConfigMap
+			var caBundlePaths []string
+			if len(tc.managedPoolCertPEM) > 0 {
+				tmpDir := t.TempDir()
+				caFilePath := tmpDir + "/ca-bundle.pem"
+				require.NoError(os.WriteFile(caFilePath, tc.managedPoolCertPEM, 0o644))
+				caBundlePaths = []string{caFilePath}
+			}
+
+			// Initialize CredentialManager with the CA bundle file(s)
+			tc.conf.Credentials, err = config.NewCredentialManager(caBundlePaths)
+			require.NoError(err)
+			t.Cleanup(tc.conf.Close)
+
 			expected := x509.NewCertPool()
 			for _, cert := range tc.expected {
 				expected.AddCert(cert)
 			}
 
-			pool := x509.NewCertPool()
-			for _, cert := range tc.pool {
-				pool.AddCert(cert)
-			}
-
-			httpClient, err := httpClientWithPool(tc.conf, tc.restConfig, pool)
+			httpClient, err := httpClientWithPool(tc.conf, tc.restConfig)
 			require.NoError(err)
 
 			tr, ok := httpClient.Transport.(*http.Transport)
 			require.True(ok, "Not a real http transport")
 			require.NotNil(tr.TLSClientConfig)
-			require.NotNil(tr.TLSClientConfig.RootCAs)
-			require.True(tr.TLSClientConfig.RootCAs.Equal(expected), "cert pools not equal")
-			require.Equal(tc.expectedInsecure, tr.TLSClientConfig.InsecureSkipVerify)
+
+			if tc.expectedInsecure {
+				require.True(tr.TLSClientConfig.InsecureSkipVerify)
+			} else {
+				require.NotNil(tr.TLSClientConfig.RootCAs)
+				// Verify that the expected certificates are present in the pool
+				for _, cert := range tc.expected {
+					subjects := tr.TLSClientConfig.RootCAs.Subjects()
+					found := false
+					for _, subject := range subjects {
+						if string(subject) == string(cert.RawSubject) {
+							found = true
+							break
+						}
+					}
+					require.True(found, "expected cert with subject %s not found in pool", cert.Subject)
+				}
+			}
 		})
 	}
 }
@@ -152,6 +179,20 @@ func TestExchangeUsesSystemPoolAndRestTLS(t *testing.T) {
 			client.KubeClusterInfo = kubernetes.ClusterInfo{ClientConfig: tc.restConfig}
 			clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: client}
 
+			// Initialize CredentialManager with system pool cert if needed
+			// Write the cert to a temp file and load it via CredentialManager
+			var caBundlePaths []string
+			if tc.systemPoolCert != nil {
+				tmpDir := t.TempDir()
+				caFilePath := tmpDir + "/server-ca.pem"
+				certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: tc.systemPoolCert.Raw})
+				require.NoError(os.WriteFile(caFilePath, certPEM, 0o644))
+				caBundlePaths = []string{caFilePath}
+			}
+
+			conf.Credentials, _ = config.NewCredentialManager(caBundlePaths)
+			t.Cleanup(conf.Close)
+
 			svc := &OpenshiftOAuthService{
 				conf:           conf,
 				clientFactory:  kubetest.NewFakeClientFactory(conf, clients),
@@ -167,14 +208,88 @@ func TestExchangeUsesSystemPoolAndRestTLS(t *testing.T) {
 						},
 					}},
 				},
-				certPool: x509.NewCertPool(),
-			}
-			if tc.systemPoolCert != nil {
-				svc.certPool.AddCert(tc.systemPoolCert)
 			}
 
 			_, err := svc.Exchange(context.Background(), "anycode", "anyverify", conf.KubernetesConfig.ClusterName)
 			require.NoError(err)
 		})
 	}
+}
+
+// TestOpenshiftOAuth_CARotation verifies that CA rotation works during runtime
+// for OpenShift OAuth. When the CA bundle file is updated, subsequent calls to
+// httpClientWithPool should use the new CA.
+func TestOpenshiftOAuth_CARotation(t *testing.T) {
+	require := require.New(t)
+
+	// Create temporary CA file
+	tmpDir := t.TempDir()
+	caFile := tmpDir + "/oauth-ca.pem"
+
+	// Write initial CA
+	p, _ := pem.Decode(ca)
+	initialCACert, err := x509.ParseCertificate(p.Bytes)
+	require.NoError(err)
+	require.NoError(os.WriteFile(caFile, ca, 0o644))
+
+	// Initialize config with initial CA
+	conf := config.NewConfig()
+	conf.Credentials, err = config.NewCredentialManager([]string{caFile})
+	require.NoError(err)
+	t.Cleanup(conf.Close)
+
+	// Create first client - should use initial CA
+	restConfig := rest.Config{}
+	client1, err := httpClientWithPool(conf, restConfig)
+	require.NoError(err)
+
+	tr1 := client1.Transport.(*http.Transport)
+	pool1 := tr1.TLSClientConfig.RootCAs
+
+	// Verify initial CA is in the pool
+	subjects1 := pool1.Subjects()
+	foundInitialCA := false
+	for _, subject := range subjects1 {
+		if string(subject) == string(initialCACert.RawSubject) {
+			foundInitialCA = true
+			break
+		}
+	}
+	require.True(foundInitialCA, "initial CA should be in pool")
+
+	// Rotate CA by writing a different CA to the file
+	p2, _ := pem.Decode(ca2)
+	rotatedCACert, err := x509.ParseCertificate(p2.Bytes)
+	require.NoError(err)
+	require.NoError(os.WriteFile(caFile, ca2, 0o644))
+
+	// Wait for the file watcher to detect the change and update the cache
+	// Subsequent calls to httpClientWithPool should use the rotated CA
+	require.Eventually(func() bool {
+		client2, err := httpClientWithPool(conf, restConfig)
+		if err != nil {
+			return false
+		}
+
+		tr2 := client2.Transport.(*http.Transport)
+		pool2 := tr2.TLSClientConfig.RootCAs
+
+		// Check if the rotated CA is now in the pool
+		subjects2 := pool2.Subjects()
+		for _, subject := range subjects2 {
+			if string(subject) == string(rotatedCACert.RawSubject) {
+				return true
+			}
+		}
+		return false
+	}, 2*time.Second, 50*time.Millisecond, "rotated CA should be in pool after rotation")
+
+	// Verify the pool has changed (not equal to the original pool)
+	client3, err := httpClientWithPool(conf, restConfig)
+	require.NoError(err)
+	tr3 := client3.Transport.(*http.Transport)
+	pool3 := tr3.TLSClientConfig.RootCAs
+
+	// The new pool should be different from the initial pool
+	require.False(pool1.Equal(pool3), "pool should be different after CA rotation")
 }

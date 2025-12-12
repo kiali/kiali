@@ -970,3 +970,126 @@ func TestCredentialManager_ConcurrentAccess(t *testing.T) {
 		}, 2*time.Second, 50*time.Millisecond, "file %d should have updated value", i)
 	}
 }
+
+// TestConfig_CertPoolWithAdditionalPEM tests the CertPoolWithAdditionalPEM method
+// which returns a cloned cert pool with additional CA certificates appended.
+func TestConfig_CertPoolWithAdditionalPEM(t *testing.T) {
+	// Generate a test CA for additional PEM
+	_, additionalCAPEM, _ := certtest.MustGenCA(t, "AdditionalCA")
+
+	t.Run("returns base pool when additionalCA is nil", func(t *testing.T) {
+		require := require.New(t)
+
+		conf := NewConfig()
+		conf.Credentials, _ = NewCredentialManager(nil)
+		t.Cleanup(conf.Close)
+
+		pool, err := conf.CertPoolWithAdditionalPEM(nil)
+		require.NoError(err)
+		require.NotNil(pool)
+
+		// Should be equivalent to the base CertPool
+		basePool := conf.CertPool()
+		require.True(basePool.Equal(pool))
+	})
+
+	t.Run("returns base pool when additionalCA is empty", func(t *testing.T) {
+		require := require.New(t)
+
+		conf := NewConfig()
+		conf.Credentials, _ = NewCredentialManager(nil)
+		t.Cleanup(conf.Close)
+
+		pool, err := conf.CertPoolWithAdditionalPEM([]byte{})
+		require.NoError(err)
+		require.NotNil(pool)
+
+		// Should be equivalent to the base CertPool
+		basePool := conf.CertPool()
+		require.True(basePool.Equal(pool))
+	})
+
+	t.Run("appends additional CA to cloned pool", func(t *testing.T) {
+		require := require.New(t)
+
+		conf := NewConfig()
+		conf.Credentials, _ = NewCredentialManager(nil)
+		t.Cleanup(conf.Close)
+
+		basePool := conf.CertPool()
+		poolWithCA, err := conf.CertPoolWithAdditionalPEM(additionalCAPEM)
+		require.NoError(err)
+		require.NotNil(poolWithCA)
+
+		// The pool with additional CA should be different from the base pool
+		require.False(basePool.Equal(poolWithCA), "pool with additional CA should differ from base pool")
+	})
+
+	t.Run("does not mutate the base pool", func(t *testing.T) {
+		require := require.New(t)
+
+		conf := NewConfig()
+		conf.Credentials, _ = NewCredentialManager(nil)
+		t.Cleanup(conf.Close)
+
+		// Get the base pool before adding additional CA
+		basePoolBefore := conf.CertPool()
+
+		// Add additional CA
+		_, err := conf.CertPoolWithAdditionalPEM(additionalCAPEM)
+		require.NoError(err)
+
+		// Get the base pool again - it should be unchanged
+		basePoolAfter := conf.CertPool()
+		require.True(basePoolBefore.Equal(basePoolAfter), "base pool should not be mutated")
+	})
+
+	t.Run("returns error for invalid PEM", func(t *testing.T) {
+		require := require.New(t)
+
+		conf := NewConfig()
+		conf.Credentials, _ = NewCredentialManager(nil)
+		t.Cleanup(conf.Close)
+
+		_, err := conf.CertPoolWithAdditionalPEM([]byte("not-valid-pem-data"))
+		require.Error(err)
+		require.Contains(err.Error(), "unable to append additional CA bundle PEM")
+	})
+
+	t.Run("works with custom CA bundle in base pool", func(t *testing.T) {
+		require := require.New(t)
+
+		// Create a temp file with initial CA
+		_, initialCAPEM, _ := certtest.MustGenCA(t, "InitialCA")
+		tmpDir := t.TempDir()
+		caFile := filepath.Join(tmpDir, "ca.pem")
+		require.NoError(os.WriteFile(caFile, initialCAPEM, 0o644))
+
+		// Initialize with custom CA bundle
+		conf := NewConfig()
+		conf.Credentials, _ = NewCredentialManager([]string{caFile})
+		t.Cleanup(conf.Close)
+
+		// Add another CA via CertPoolWithAdditionalPEM
+		poolWithBothCAs, err := conf.CertPoolWithAdditionalPEM(additionalCAPEM)
+		require.NoError(err)
+		require.NotNil(poolWithBothCAs)
+
+		// The resulting pool should have both CAs (initial + additional)
+		// Verify by checking it's different from base pool (which has initial CA)
+		basePool := conf.CertPool()
+		require.False(basePool.Equal(poolWithBothCAs), "pool with additional CA should differ from base pool")
+	})
+
+	t.Run("fallback when CredentialManager is nil", func(t *testing.T) {
+		require := require.New(t)
+
+		conf := NewConfig()
+		// Don't initialize CredentialManager - simulates edge case
+
+		pool, err := conf.CertPoolWithAdditionalPEM(additionalCAPEM)
+		require.NoError(err)
+		require.NotNil(pool)
+		// Should still work using system cert pool as fallback
+	})
+}
