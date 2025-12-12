@@ -210,10 +210,9 @@ type Metrics struct {
 	Port    int  `yaml:"port,omitempty"`
 }
 
-// OpenTelemetry collector configuration for tracing
+// OtelCollector is OpenTelemetry collector configuration for tracing.
 type OtelCollector struct {
-	CAName     string `yaml:"ca_name,omitempty"`
-	Protocol   string `yaml:"protocol,omitempty"` // http or https or grpc
+	Protocol   string `yaml:"protocol,omitempty"` // http, https, or grpc
 	SkipVerify bool   `yaml:"skip_verify,omitempty"`
 	TLSEnabled bool   `yaml:"tls_enabled,omitempty"`
 }
@@ -1064,7 +1063,6 @@ func NewConfig() (c *Config) {
 					CollectorURL:  "jaeger-collector.istio-system:4318",
 					Enabled:       false,
 					Otel: OtelCollector{
-						CAName:     "",
 						Protocol:   "http",
 						SkipVerify: false,
 						TLSEnabled: false,
