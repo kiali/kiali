@@ -75,7 +75,6 @@ const (
 const (
 	IstioMultiClusterHostSuffix = "global"
 	IstioNamespaceDefault       = "istio-system"
-	OidcClientSecretFile        = "/kiali-secret/oidc-secret"
 )
 
 const (
@@ -191,7 +190,10 @@ var (
 )
 
 // Defines where the files are located that contain the secrets content
-var overrideSecretsDir = "/kiali-override-secrets"
+var (
+	overrideSecretsDir   = "/kiali-override-secrets"
+	oidcClientSecretFile = "/kiali-secret/oidc-secret"
+)
 
 // Cluster is used to manually specify a cluster that there is no remote secret for.
 type Cluster struct {
@@ -1519,9 +1521,9 @@ func LoadFromFile(filename string) (conf *Config, err error) {
 
 	// Read OIDC secret path if present. Store the path instead of reading the content,
 	// allowing CredentialManager to handle reading/caching/rotation.
-	if fileExists(OidcClientSecretFile) {
+	if fileExists(oidcClientSecretFile) {
 		// Store path; CredentialManager will handle reading/caching/rotation
-		conf.Auth.OpenId.ClientSecret = OidcClientSecretFile
+		conf.Auth.OpenId.ClientSecret = oidcClientSecretFile
 	}
 
 	return

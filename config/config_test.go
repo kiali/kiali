@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -111,6 +112,63 @@ func TestSecretFileOverrides(t *testing.T) {
 	token, err := conf.GetCredential(conf.ExternalServices.Prometheus.Auth.Token)
 	assert.NoError(t, err)
 	assert.Equal(t, "prometheustokenENV", token)
+}
+
+// TestLoadFromFile_OidcClientSecretFile verifies that when the OIDC client secret file exists,
+// LoadFromFile stores the file path (not the content) in conf.Auth.OpenId.ClientSecret,
+// and that GetCredential can then resolve the actual secret value.
+func TestLoadFromFile_OidcClientSecretFile(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create the OIDC secret file with test content
+	secretFile := filepath.Join(tmpDir, "oidc-secret")
+	expectedSecret := "test-oidc-client-secret"
+	require.NoError(t, os.WriteFile(secretFile, []byte(expectedSecret), 0o644))
+
+	// Override the oidcClientSecretFile variable for testing
+	originalPath := oidcClientSecretFile
+	oidcClientSecretFile = secretFile
+	defer func() { oidcClientSecretFile = originalPath }()
+
+	// Create a minimal config file
+	configFile := filepath.Join(tmpDir, "config.yaml")
+	require.NoError(t, os.WriteFile(configFile, []byte("{}"), 0o644))
+
+	// Load config - should detect oidcClientSecretFile and store the path
+	conf, err := LoadFromFile(configFile)
+	require.NoError(t, err)
+	t.Cleanup(conf.Close)
+
+	// Verify the path was stored (not the content)
+	require.Equal(t, secretFile, conf.Auth.OpenId.ClientSecret, "ClientSecret should contain the file path")
+
+	// Verify GetCredential can resolve the secret
+	secret, err := conf.GetCredential(conf.Auth.OpenId.ClientSecret)
+	require.NoError(t, err)
+	require.Equal(t, expectedSecret, secret, "GetCredential should return the file content")
+}
+
+// TestLoadFromFile_OidcClientSecretFile_NotExists verifies that when the OIDC client secret
+// file does not exist, LoadFromFile does not set conf.Auth.OpenId.ClientSecret.
+func TestLoadFromFile_OidcClientSecretFile_NotExists(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Override the oidcClientSecretFile variable to a non-existent path
+	originalPath := oidcClientSecretFile
+	oidcClientSecretFile = filepath.Join(tmpDir, "non-existent-oidc-secret")
+	defer func() { oidcClientSecretFile = originalPath }()
+
+	// Create a minimal config file
+	configFile := filepath.Join(tmpDir, "config.yaml")
+	require.NoError(t, os.WriteFile(configFile, []byte("{}"), 0o644))
+
+	// Load config - should NOT set ClientSecret since file doesn't exist
+	conf, err := LoadFromFile(configFile)
+	require.NoError(t, err)
+	t.Cleanup(conf.Close)
+
+	// Verify ClientSecret remains empty (default)
+	require.Empty(t, conf.Auth.OpenId.ClientSecret, "ClientSecret should be empty when file doesn't exist")
 }
 
 // Ensures calling Set with a config that already carries a credential manager
