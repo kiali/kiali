@@ -291,6 +291,17 @@ const logInfoStyle = kialiStyle({
   fontSize: '0.75rem'
 });
 
+const getLogInfoWithMessageColorStyle = (messageColor: string): string => {
+  const messageColorStyle = kialiStyle({
+    $nest: {
+      '& .pf-v6-c-icon__content': {
+        color: messageColor
+      }
+    }
+  });
+  return classes(logInfoStyle, messageColorStyle);
+};
+
 const logMessageStyle = kialiStyle({
   fontSize: '0.75rem',
   paddingRight: '1rem'
@@ -804,7 +815,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
               icon={<KialiIcon.Info key={`jod-i-${index}`} className={alInfoIcon} color={messageColor} />}
               key={`jod-b-${index}`}
               variant={ButtonVariant.plain}
-              className={logInfoStyle}
+              className={getLogInfoWithMessageColorStyle(messageColor)}
               hasNoPadding={true}
               onClick={() => this.openJSONModal(e)}
             />
@@ -832,7 +843,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             icon={<KialiIcon.Info key={`al-i-${index}`} className={alInfoIcon} color={messageColor} />}
             key={`al-b-${index}`}
             variant={ButtonVariant.plain}
-            className={logInfoStyle}
+            className={getLogInfoWithMessageColorStyle(messageColor)}
             hasNoPadding={true}
             onClick={() => {
               this.addAccessLogModal(le.message, le.accessLog!);
