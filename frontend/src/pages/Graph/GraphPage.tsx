@@ -757,6 +757,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       namespaces: this.props.node ? [this.props.node.namespace] : this.props.activeNamespaces,
       node: this.props.node,
       queryTime: queryTime,
+      refreshInterval: this.props.refreshInterval,
       showIdleEdges: this.props.showIdleEdges,
       showIdleNodes: this.props.showIdleNodes,
       showOperationNodes: this.props.showOperationNodes,
