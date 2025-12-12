@@ -15,25 +15,11 @@ import (
 
 	"github.com/kiali/kiali/util/certtest"
 	"github.com/kiali/kiali/util/filetest"
+	"github.com/kiali/kiali/util/polltest"
 )
 
 //go:embed testdata/test-ca.pem
 var testCA []byte
-
-// pollForCondition polls until a condition is met or timeout is reached.
-// Returns true if condition was met, false if timeout occurred.
-// This is used for waiting on fsnotify file change detection in tests.
-func pollForCondition(t *testing.T, timeout time.Duration, condition func() bool) bool {
-	t.Helper()
-	iterations := int(timeout / (50 * time.Millisecond))
-	for i := 0; i < iterations; i++ {
-		time.Sleep(50 * time.Millisecond)
-		if condition() {
-			return true
-		}
-	}
-	return false
-}
 
 func TestCredentialManager_LiteralValue(t *testing.T) {
 	cm, err := NewCredentialManager()
@@ -228,7 +214,7 @@ func TestCredentialManager_CachingBehavior(t *testing.T) {
 	// In real Kubernetes environments, this happens almost instantly
 	// We'll poll for up to 2 seconds to account for different system speeds
 	var result3 string
-	cacheUpdated := pollForCondition(t, 2*time.Second, func() bool {
+	cacheUpdated := polltest.PollForCondition(t, 2*time.Second, func() bool {
 		result3, err = cm.Get(tmpFile)
 		if err != nil {
 			t.Errorf("Expected no error after file update, got: %v", err)
@@ -361,7 +347,7 @@ func TestCredentialManager_SymlinkRotation(t *testing.T) {
 
 	// Poll until cache returns rotated value.
 	var rotated string
-	success := pollForCondition(t, 2*time.Second, func() bool {
+	success := polltest.PollForCondition(t, 2*time.Second, func() bool {
 		rotated, err = cm.Get(mountedToken)
 		return err == nil && rotated == "second"
 	})
@@ -394,7 +380,7 @@ func TestCredentialManager_RemovesCacheOnDelete(t *testing.T) {
 
 	var readErr error
 	// Poll with shorter interval (25ms) since we're waiting for error, not success
-	success := pollForCondition(t, 1*time.Second, func() bool {
+	success := polltest.PollForCondition(t, 1*time.Second, func() bool {
 		_, readErr = cm.Get(tmpFile)
 		return readErr != nil
 	})
