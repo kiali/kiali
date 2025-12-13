@@ -18,26 +18,6 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-// parseCertificates splits a PEM bundle into individual certificates.
-// Returns a slice of PEM-encoded certificates, one per certificate in the bundle.
-// Each certificate is re-encoded as a standalone PEM block to ensure proper
-// validation and processing of individual certificates within a bundle.
-func parseCertificates(pemData []byte) [][]byte {
-	var certs [][]byte
-	for {
-		block, rest := pem.Decode(pemData)
-		if block == nil {
-			break
-		}
-		if block.Type == "CERTIFICATE" {
-			// Re-encode each cert as a standalone PEM block
-			certs = append(certs, pem.EncodeToMemory(block))
-		}
-		pemData = rest
-	}
-	return certs
-}
-
 // CredentialManager handles reading credentials from files with caching and auto-rotation support.
 // It watches credential files for changes and automatically updates the cache when files are modified,
 // enabling automatic credential rotation without pod restart when credentials are mounted as Kubernetes secrets.
@@ -148,7 +128,8 @@ func (cm *CredentialManager) Close() {
 }
 
 // rebuildCertPool rebuilds the certificate pool from system CAs and configured CA bundles.
-// On failure, it falls back to system CAs only (clearing any stale custom CAs) for security.
+// Uses best-effort loading: invalid bundles are logged but don't prevent loading valid bundles.
+// Falls back to system CAs only if no valid custom CAs can be loaded from any bundle.
 func (cm *CredentialManager) rebuildCertPool() error {
 	// Load system CAs
 	systemPool, err := x509.SystemCertPool()
@@ -164,61 +145,65 @@ func (cm *CredentialManager) rebuildCertPool() error {
 	paths := cm.caBundlePaths
 	cm.mu.RUnlock()
 
-	// Load additional CA bundles
+	// Track whether ANY valid CA was loaded across ALL bundles
 	customCAsLoaded := false
+
+	// Process each bundle with best-effort approach
 	for _, path := range paths {
 		if path == "" {
 			continue
 		}
 
+		// Try to read the bundle (warn and continue on failure)
 		data, err := cm.readCABundle(path)
 		if err != nil {
 			log.Warningf("Unable to read CA bundle [%s]: %v", path, err)
 			continue
 		}
 
-		if len(data) > 0 {
-			// Parse and validate each certificate individually
-			certs := parseCertificates(data)
-			if len(certs) == 0 {
-				// No valid PEM certificates found - this is a configuration error
-				// Fall back to system CAs only for security
-				cm.mu.Lock()
-				cm.certPool = systemPool
-				cm.hasCustomCAsFlag = false
-				cm.mu.Unlock()
-				return fmt.Errorf("no valid PEM certificates found in [%s]", path)
-			}
+		if len(data) == 0 {
+			continue
+		}
 
-			validCertsAdded := 0
-			for i, certPEM := range certs {
-				if err := cm.validateCertificate(certPEM); err != nil {
-					log.Warningf("Skipping invalid certificate #%d in [%s]: %v", i+1, path, err)
-					continue
-				}
-				if !combinedPool.AppendCertsFromPEM(certPEM) {
-					log.Warningf("Failed to append certificate #%d from [%s]", i+1, path)
-				} else {
-					validCertsAdded++
-					customCAsLoaded = true
-				}
-			}
+		// Parse certificates from this bundle
+		certs := parseCertificates(data)
+		if len(certs) == 0 {
+			log.Warningf("No valid PEM certificates found in [%s]", path)
+			continue
+		}
 
-			// If no valid certificates were added from this file, it's a configuration error
-			if validCertsAdded == 0 {
-				cm.mu.Lock()
-				cm.certPool = systemPool
-				cm.hasCustomCAsFlag = false
-				cm.mu.Unlock()
-				return fmt.Errorf("all certificates in [%s] failed validation", path)
+		// Validate and append each certificate individually
+		validCertsFromThisBundle := 0
+		for i, certPEM := range certs {
+			if err := cm.validateCertificate(certPEM); err != nil {
+				log.Warningf("Skipping invalid certificate #%d in [%s]: %v", i+1, path, err)
+				continue
 			}
+			if !combinedPool.AppendCertsFromPEM(certPEM) {
+				log.Warningf("Failed to append certificate #%d from [%s]", i+1, path)
+			} else {
+				validCertsFromThisBundle++
+				customCAsLoaded = true
+			}
+		}
+
+		// Log bundle-level results
+		if validCertsFromThisBundle == 0 {
+			log.Warningf("All certificates in [%s] failed validation", path)
+		} else {
+			log.Infof("Loaded [%d] valid CA certificate(s) from [%s]", validCertsFromThisBundle, path)
 		}
 	}
 
-	// Update pool and flag atomically
+	// Update pool and flag atomically based on overall result
 	cm.mu.Lock()
-	cm.certPool = combinedPool
-	cm.hasCustomCAsFlag = customCAsLoaded
+	if customCAsLoaded {
+		cm.certPool = combinedPool
+		cm.hasCustomCAsFlag = true
+	} else {
+		cm.certPool = systemPool
+		cm.hasCustomCAsFlag = false
+	}
 	cm.mu.Unlock()
 
 	return nil
@@ -280,10 +265,15 @@ func (cm *CredentialManager) validateCertificate(certPEM []byte) error {
 		return fmt.Errorf("failed to parse certificate: %w", err)
 	}
 
+	// Reject non-CA certificates
+	if !cert.IsCA {
+		return fmt.Errorf("certificate is not a CA certificate (IsCA=false)")
+	}
+
 	// Check expiration (reject expired, but allow not-yet-valid for pre-staging)
 	now := time.Now()
 	if now.After(cert.NotAfter) {
-		return fmt.Errorf("certificate expired on %v", cert.NotAfter)
+		return fmt.Errorf("certificate expired on [%v]", cert.NotAfter)
 	}
 
 	// Allow certificates that aren't valid yet (for pre-staging)
@@ -291,10 +281,10 @@ func (cm *CredentialManager) validateCertificate(certPEM []byte) error {
 	if now.Before(cert.NotBefore) {
 		daysUntilValid := cert.NotBefore.Sub(now).Hours() / 24
 		if daysUntilValid > 30 {
-			log.Warningf("Certificate won't be valid for [%.0f] days (until %v)",
+			log.Warningf("Certificate won't be valid for [%.0f] days (until [%v])",
 				daysUntilValid, cert.NotBefore)
 		} else {
-			log.Infof("Certificate will become valid in [%.0f] days (on %v)",
+			log.Infof("Certificate will become valid in [%.0f] days (on [%v])",
 				daysUntilValid, cert.NotBefore)
 		}
 		// Don't reject - allow pre-staging
@@ -339,7 +329,7 @@ func (cm *CredentialManager) validateCertificate(certPEM []byte) error {
 		return fmt.Errorf("DSA certificates are not supported - please use RSA, ECDSA, or Ed25519")
 	default:
 		// Unknown or unsupported key algorithm
-		return fmt.Errorf("unsupported public key algorithm: %v", cert.PublicKeyAlgorithm)
+		return fmt.Errorf("unsupported public key algorithm: [%v]", cert.PublicKeyAlgorithm)
 	}
 
 	return nil
@@ -620,4 +610,24 @@ func (cm *CredentialManager) watchParentDir(path string) error {
 
 	log.Tracef("Watching credential directory [%s] for changes to [%s]", dir, path)
 	return nil
+}
+
+// parseCertificates splits a PEM bundle into individual certificates.
+// Returns a slice of PEM-encoded certificates, one per certificate in the bundle.
+// Each certificate is re-encoded as a standalone PEM block to ensure proper
+// validation and processing of individual certificates within a bundle.
+func parseCertificates(pemData []byte) [][]byte {
+	var certs [][]byte
+	for {
+		block, rest := pem.Decode(pemData)
+		if block == nil {
+			break
+		}
+		if block.Type == "CERTIFICATE" {
+			// Re-encode each cert as a standalone PEM block
+			certs = append(certs, pem.EncodeToMemory(block))
+		}
+		pemData = rest
+	}
+	return certs
 }
