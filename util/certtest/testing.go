@@ -2,6 +2,8 @@ package certtest
 
 import (
 	"bytes"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -44,6 +46,95 @@ func MustGenCA(t *testing.T, cn string) (*x509.Certificate, []byte, *rsa.Private
 	}
 	caPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
 	return caCert, caPEM, caKey
+}
+
+// MustGenCAWithValidity generates a CA certificate with custom validity period for testing.
+// Useful for testing expired or not-yet-valid certificates.
+func MustGenCAWithValidity(t *testing.T, cn string, notBefore, notAfter time.Time) []byte {
+	t.Helper()
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("gen ca key: %v", err)
+	}
+	tmpl := &x509.Certificate{
+		SerialNumber:          big.NewInt(1),
+		Subject:               pkix.Name{CommonName: cn},
+		NotBefore:             notBefore,
+		NotAfter:              notAfter,
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+	}
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
+	if err != nil {
+		t.Fatalf("create ca: %v", err)
+	}
+	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
+}
+
+// MustGenCAWithKeySize generates a CA certificate with a specific RSA key size for testing.
+// Useful for testing key strength validation (e.g., rejecting weak 1024-bit keys).
+func MustGenCAWithKeySize(t *testing.T, cn string, keySize int) []byte {
+	t.Helper()
+	key, err := rsa.GenerateKey(rand.Reader, keySize)
+	if err != nil {
+		t.Fatalf("gen ca key: %v", err)
+	}
+	tmpl := &x509.Certificate{
+		SerialNumber:          big.NewInt(1),
+		Subject:               pkix.Name{CommonName: cn},
+		NotBefore:             time.Now().Add(-time.Hour),
+		NotAfter:              time.Now().Add(24 * time.Hour),
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+	}
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
+	if err != nil {
+		t.Fatalf("create ca: %v", err)
+	}
+	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
+}
+
+// MustGenECDSACA generates a CA certificate with an ECDSA key of the specified curve size.
+// Supported curve sizes: 224 (P-224), 256 (P-256), 384 (P-384), 521 (P-521).
+// Useful for testing ECDSA certificate validation and key strength requirements.
+func MustGenECDSACA(t *testing.T, cn string, curveSize int) []byte {
+	t.Helper()
+
+	var curve elliptic.Curve
+	switch curveSize {
+	case 224:
+		curve = elliptic.P224()
+	case 256:
+		curve = elliptic.P256()
+	case 384:
+		curve = elliptic.P384()
+	case 521:
+		curve = elliptic.P521()
+	default:
+		t.Fatalf("unsupported curve size: %d", curveSize)
+	}
+
+	key, err := ecdsa.GenerateKey(curve, rand.Reader)
+	if err != nil {
+		t.Fatalf("gen ecdsa key: %v", err)
+	}
+
+	tmpl := &x509.Certificate{
+		SerialNumber:          big.NewInt(1),
+		Subject:               pkix.Name{CommonName: cn},
+		NotBefore:             time.Now().Add(-time.Hour),
+		NotAfter:              time.Now().Add(24 * time.Hour),
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+	}
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
+	if err != nil {
+		t.Fatalf("create ca: %v", err)
+	}
+	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
 }
 
 // MustSelfSignedPair generates a self-signed certificate pair for testing client certificates.

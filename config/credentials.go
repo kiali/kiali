@@ -1,17 +1,42 @@
 package config
 
 import (
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/rsa"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 
 	"github.com/kiali/kiali/log"
 )
+
+// parseCertificates splits a PEM bundle into individual certificates.
+// Returns a slice of PEM-encoded certificates, one per certificate in the bundle.
+// Each certificate is re-encoded as a standalone PEM block to ensure proper
+// validation and processing of individual certificates within a bundle.
+func parseCertificates(pemData []byte) [][]byte {
+	var certs [][]byte
+	for {
+		block, rest := pem.Decode(pemData)
+		if block == nil {
+			break
+		}
+		if block.Type == "CERTIFICATE" {
+			// Re-encode each cert as a standalone PEM block
+			certs = append(certs, pem.EncodeToMemory(block))
+		}
+		pemData = rest
+	}
+	return certs
+}
 
 // CredentialManager handles reading credentials from files with caching and auto-rotation support.
 // It watches credential files for changes and automatically updates the cache when files are modified,
@@ -79,7 +104,8 @@ type CredentialManager struct {
 // NewCredentialManager creates a new credential manager with file watching enabled.
 // The caBundlePaths parameter specifies additional CA bundle files to include in the
 // certificate pool (beyond system CAs). Pass nil or empty slice if no custom CAs are needed.
-// Returns an error if the file watcher cannot be initialized or CA bundles cannot be loaded.
+// Returns an error only if the file watcher cannot be initialized. Invalid CA bundles are
+// logged but do not prevent creation - file watching remains active for auto-recovery.
 func NewCredentialManager(caBundlePaths []string) (*CredentialManager, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -96,10 +122,12 @@ func NewCredentialManager(caBundlePaths []string) (*CredentialManager, error) {
 
 	go cm.watchFiles()
 
-	// Initialize the certificate pool with system CAs and any configured custom CA bundles
+	// Initialize the certificate pool with system CAs and any configured custom CA bundles.
+	// If CA bundles are invalid, log the error but continue with system CAs.
+	// File watching remains active so rotation can recover when valid certs are deployed.
 	if err := cm.rebuildCertPool(); err != nil {
-		cm.Close()
-		return nil, err
+		log.Errorf("Failed to build initial certificate pool (continuing with system CAs): %v", err)
+		cm.auditRotation("ca_bundle", "startup", false, err.Error())
 	}
 
 	return cm, nil
@@ -150,16 +178,40 @@ func (cm *CredentialManager) rebuildCertPool() error {
 		}
 
 		if len(data) > 0 {
-			if ok := combinedPool.AppendCertsFromPEM(data); !ok {
-				// Failed to parse PEM - fall back to system CAs only for security.
-				// This prevents stale custom CAs from remaining trusted after a failed rotation.
+			// Parse and validate each certificate individually
+			certs := parseCertificates(data)
+			if len(certs) == 0 {
+				// No valid PEM certificates found - this is a configuration error
+				// Fall back to system CAs only for security
 				cm.mu.Lock()
 				cm.certPool = systemPool
 				cm.hasCustomCAsFlag = false
 				cm.mu.Unlock()
-				return fmt.Errorf("unable to append PEM bundle from file [%s]", path)
+				return fmt.Errorf("no valid PEM certificates found in [%s]", path)
 			}
-			customCAsLoaded = true
+
+			validCertsAdded := 0
+			for i, certPEM := range certs {
+				if err := cm.validateCertificate(certPEM); err != nil {
+					log.Warningf("Skipping invalid certificate #%d in [%s]: %v", i+1, path, err)
+					continue
+				}
+				if !combinedPool.AppendCertsFromPEM(certPEM) {
+					log.Warningf("Failed to append certificate #%d from [%s]", i+1, path)
+				} else {
+					validCertsAdded++
+					customCAsLoaded = true
+				}
+			}
+
+			// If no valid certificates were added from this file, it's a configuration error
+			if validCertsAdded == 0 {
+				cm.mu.Lock()
+				cm.certPool = systemPool
+				cm.hasCustomCAsFlag = false
+				cm.mu.Unlock()
+				return fmt.Errorf("all certificates in [%s] failed validation", path)
+			}
 		}
 	}
 
@@ -213,6 +265,109 @@ func (cm *CredentialManager) HasCustomCAs() bool {
 	defer cm.mu.RUnlock()
 
 	return cm.hasCustomCAsFlag
+}
+
+// validateCertificate ensures a certificate is safe to add to the trust store.
+// It checks expiration, key usage, and key strength using commonly accepted security minimums.
+func (cm *CredentialManager) validateCertificate(certPEM []byte) error {
+	block, _ := pem.Decode(certPEM)
+	if block == nil {
+		return fmt.Errorf("failed to decode PEM block")
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return fmt.Errorf("failed to parse certificate: %w", err)
+	}
+
+	// Check expiration (reject expired, but allow not-yet-valid for pre-staging)
+	now := time.Now()
+	if now.After(cert.NotAfter) {
+		return fmt.Errorf("certificate expired on %v", cert.NotAfter)
+	}
+
+	// Allow certificates that aren't valid yet (for pre-staging)
+	// but log a warning if they won't be valid soon
+	if now.Before(cert.NotBefore) {
+		daysUntilValid := cert.NotBefore.Sub(now).Hours() / 24
+		if daysUntilValid > 30 {
+			log.Warningf("Certificate won't be valid for [%.0f] days (until %v)",
+				daysUntilValid, cert.NotBefore)
+		} else {
+			log.Infof("Certificate will become valid in [%.0f] days (on %v)",
+				daysUntilValid, cert.NotBefore)
+		}
+		// Don't reject - allow pre-staging
+	}
+
+	// Check if it's actually a CA certificate with proper key usage
+	// Only validate KeyUsage if it's explicitly set (non-zero) - many valid CA certs
+	// don't have a KeyUsage extension at all, which results in KeyUsage = 0
+	if cert.IsCA && cert.KeyUsage != 0 {
+		if cert.KeyUsage&x509.KeyUsageCertSign == 0 {
+			return fmt.Errorf("CA certificate has KeyUsage extension but missing CertSign")
+		}
+	}
+
+	// Check key strength - using commonly accepted minimums for security
+	switch cert.PublicKeyAlgorithm {
+	case x509.RSA:
+		rsaKey, ok := cert.PublicKey.(*rsa.PublicKey)
+		if !ok {
+			return fmt.Errorf("failed to extract RSA public key from certificate")
+		}
+		if rsaKey.N.BitLen() < 2048 {
+			return fmt.Errorf("RSA key size [%d] bits too weak, must be 2048 or greater", rsaKey.N.BitLen())
+		}
+	case x509.ECDSA:
+		ecdsaKey, ok := cert.PublicKey.(*ecdsa.PublicKey)
+		if !ok {
+			return fmt.Errorf("failed to extract ECDSA public key from certificate")
+		}
+		if ecdsaKey.Curve.Params().BitSize < 256 {
+			return fmt.Errorf("ECDSA curve size [%d] bits too weak, must be 256 or greater",
+				ecdsaKey.Curve.Params().BitSize)
+		}
+	case x509.Ed25519:
+		// Ed25519 is always 256 bits - no validation needed
+		// But still verify we can extract the key
+		if _, ok := cert.PublicKey.(ed25519.PublicKey); !ok {
+			return fmt.Errorf("failed to extract Ed25519 public key from certificate")
+		}
+	case x509.DSA:
+		// DSA certificates are not supported due to limited functionality and declining usage
+		return fmt.Errorf("DSA certificates are not supported - please use RSA, ECDSA, or Ed25519")
+	default:
+		// Unknown or unsupported key algorithm
+		return fmt.Errorf("unsupported public key algorithm: %v", cert.PublicKeyAlgorithm)
+	}
+
+	return nil
+}
+
+// auditRotation logs a credential rotation event using Kiali's structured logging.
+// Only logs when audit logging is enabled via server.audit_log config.
+func (cm *CredentialManager) auditRotation(rotationType, path string, success bool, errorMsg string) {
+	if !Get().Server.AuditLog {
+		return
+	}
+
+	zl := log.WithGroup("credential-rotation")
+
+	if success {
+		zl.Info().
+			Str("operation", "ROTATE").
+			Str("type", rotationType). // "credential" or "ca_bundle"
+			Str("path", path).
+			Msgf("%s rotation successful", rotationType)
+	} else {
+		zl.Error().
+			Str("operation", "ROTATE_FAILED").
+			Str("type", rotationType).
+			Str("path", path).
+			Str("error", errorMsg).
+			Msgf("%s rotation failed", rotationType)
+	}
 }
 
 // Get reads a credential, either from a file (if value starts with "/") or returns the literal value.
@@ -325,10 +480,12 @@ func (cm *CredentialManager) handleEvent(event fsnotify.Event) {
 		cm.mu.Unlock()
 
 		if err := cm.rebuildCertPool(); err != nil {
+			cm.auditRotation("ca_bundle", event.Name, false, err.Error())
 			log.Errorf("Failed to rebuild certificate pool: %v", err)
 			// Don't return - let normal credential cache logic handle this file
 			// This ensures the cache gets restored even if cert pool rebuild fails
 		} else {
+			cm.auditRotation("ca_bundle", event.Name, true, "")
 			log.Info("Certificate pool successfully rebuilt")
 			// Success - cert pool rebuilt and Get() re-cached all paths
 			// No need to process this event again for credential cache
@@ -405,6 +562,7 @@ func (cm *CredentialManager) refreshCachedFile(path string) {
 
 	content, err := os.ReadFile(path)
 	if err != nil {
+		cm.auditRotation("credential", path, false, err.Error())
 		log.Warningf("Failed to re-read credential file [%s] (removing from cache): %v", path, err)
 		delete(cm.cache, path)
 		return
@@ -424,6 +582,7 @@ func (cm *CredentialManager) refreshCachedFile(path string) {
 	}
 
 	cm.cache[path] = value
+	cm.auditRotation("credential", path, true, "")
 	log.Debugf("Credential file [%s] updated in cache", path)
 }
 
