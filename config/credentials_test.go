@@ -1130,3 +1130,125 @@ func TestConfig_CertPoolWithAdditionalPEM(t *testing.T) {
 		require.True(foundCA2, "second CA should be in pool")
 	})
 }
+
+// TestCredentialManager_RejectsNonCACertificate verifies that non-CA certificates
+// are rejected from CA bundle files, even if they are valid certificates.
+func TestCredentialManager_RejectsNonCACertificate(t *testing.T) {
+	// Generate a non-CA certificate (leaf/client cert with IsCA=false)
+	// MustSelfSignedPair generates a client cert, not a CA
+	nonCACert, _ := certtest.MustSelfSignedPair(t, "non-ca-cert")
+
+	tmpDir := t.TempDir()
+	nonCABundle := filepath.Join(tmpDir, "non-ca.pem")
+	require.NoError(t, os.WriteFile(nonCABundle, nonCACert, 0o600))
+
+	// Initialize CredentialManager with the non-CA bundle
+	cm, err := NewCredentialManager([]string{nonCABundle})
+	require.NoError(t, err, "NewCredentialManager should not fail on invalid bundle content")
+	t.Cleanup(cm.Close)
+
+	// The non-CA cert should be rejected
+	require.False(t, cm.HasCustomCAs(), "HasCustomCAs should be false when only non-CA certs provided")
+
+	// Verify the cert pool doesn't contain the non-CA certificate
+	pool := cm.GetCertPool()
+	nonCASubject := certtest.SubjectFromPEM(t, nonCACert)
+	require.False(t, certtest.CertPoolHasSubject(pool, nonCASubject),
+		"pool should not contain non-CA certificate")
+}
+
+// TestCredentialManager_MixedValidity_ValidThenInvalid verifies that when multiple
+// CA bundles are configured and one is invalid, the valid CAs are still loaded.
+// This tests the order: [valid, invalid]
+func TestCredentialManager_MixedValidity_ValidThenInvalid(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create a valid CA bundle
+	validCA := certtest.BuildTestCertificate(t, "valid-ca")
+	validBundle := filepath.Join(tmpDir, "valid.pem")
+	require.NoError(t, os.WriteFile(validBundle, validCA, 0o600))
+
+	// Create an invalid bundle (expired CA)
+	expiredCA := certtest.MustGenCAWithValidity(t, "expired-ca",
+		time.Now().Add(-48*time.Hour), // NotBefore: 2 days ago
+		time.Now().Add(-24*time.Hour)) // NotAfter: 1 day ago (expired)
+	invalidBundle := filepath.Join(tmpDir, "expired.pem")
+	require.NoError(t, os.WriteFile(invalidBundle, expiredCA, 0o600))
+
+	// Initialize with [valid, invalid] order
+	cm, err := NewCredentialManager([]string{validBundle, invalidBundle})
+	require.NoError(t, err)
+	t.Cleanup(cm.Close)
+
+	// Should have custom CAs despite invalid bundle
+	require.True(t, cm.HasCustomCAs(),
+		"HasCustomCAs should be true when at least one bundle is valid")
+
+	// Verify valid CA is in the pool
+	pool := cm.GetCertPool()
+	validSubject := certtest.SubjectFromPEM(t, validCA)
+	require.True(t, certtest.CertPoolHasSubject(pool, validSubject),
+		"pool should contain valid CA from first bundle")
+}
+
+// TestCredentialManager_MixedValidity_InvalidThenValid verifies that bundle order
+// doesn't matter - valid CAs are loaded regardless of position in the bundle list.
+// This tests the order: [invalid, valid]
+func TestCredentialManager_MixedValidity_InvalidThenValid(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create an invalid bundle (weak key)
+	weakCA := certtest.MustGenCAWithKeySize(t, "weak-ca", 1024) // Too weak
+	invalidBundle := filepath.Join(tmpDir, "weak.pem")
+	require.NoError(t, os.WriteFile(invalidBundle, weakCA, 0o600))
+
+	// Create a valid CA bundle
+	validCA := certtest.BuildTestCertificate(t, "valid-ca")
+	validBundle := filepath.Join(tmpDir, "valid.pem")
+	require.NoError(t, os.WriteFile(validBundle, validCA, 0o600))
+
+	// Initialize with [invalid, valid] order (reversed from previous test)
+	cm, err := NewCredentialManager([]string{invalidBundle, validBundle})
+	require.NoError(t, err)
+	t.Cleanup(cm.Close)
+
+	// Should have custom CAs despite invalid bundle being first
+	require.True(t, cm.HasCustomCAs(),
+		"HasCustomCAs should be true regardless of bundle order")
+
+	// Verify valid CA is in the pool
+	pool := cm.GetCertPool()
+	validSubject := certtest.SubjectFromPEM(t, validCA)
+	require.True(t, certtest.CertPoolHasSubject(pool, validSubject),
+		"pool should contain valid CA from second bundle")
+}
+
+// TestCredentialManager_AllInvalidBundles_FallsBackToSystemPool verifies that when
+// all configured CA bundles are invalid, the system falls back to system CAs only.
+func TestCredentialManager_AllInvalidBundles_FallsBackToSystemPool(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create multiple invalid bundles
+	nonCABundle := filepath.Join(tmpDir, "non-ca.pem")
+	nonCACert, _ := certtest.MustSelfSignedPair(t, "non-ca")
+	require.NoError(t, os.WriteFile(nonCABundle, nonCACert, 0o600))
+
+	expiredBundle := filepath.Join(tmpDir, "expired.pem")
+	expiredCA := certtest.MustGenCAWithValidity(t, "expired",
+		time.Now().Add(-48*time.Hour),
+		time.Now().Add(-24*time.Hour))
+	require.NoError(t, os.WriteFile(expiredBundle, expiredCA, 0o600))
+
+	// Initialize with all invalid bundles
+	cm, err := NewCredentialManager([]string{nonCABundle, expiredBundle})
+	require.NoError(t, err, "should not fail even with all invalid bundles")
+	t.Cleanup(cm.Close)
+
+	// Should fall back to system pool
+	require.False(t, cm.HasCustomCAs(),
+		"HasCustomCAs should be false when all bundles are invalid")
+
+	// Verify we got a valid system pool (not nil)
+	pool := cm.GetCertPool()
+	require.NotNil(t, pool, "should have system cert pool")
+}
